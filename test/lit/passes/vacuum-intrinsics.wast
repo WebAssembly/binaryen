@@ -97,16 +97,20 @@
   ;; CHECK-NEXT:      (ref.func $i)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block $ifTrue (result i32)
-  ;; CHECK-NEXT:     (call $nop)
-  ;; CHECK-NEXT:     (call $call.without.effects
-  ;; CHECK-NEXT:      (ref.func $i)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (block $ifTrue (result i32)
+  ;; CHECK-NEXT:      (call $nop)
+  ;; CHECK-NEXT:      (call $call.without.effects
+  ;; CHECK-NEXT:       (ref.func $i)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block $ifFalse (result i32)
-  ;; CHECK-NEXT:     (call $nop)
-  ;; CHECK-NEXT:     (call $call.without.effects
-  ;; CHECK-NEXT:      (ref.func $i)
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (block $ifFalse (result i32)
+  ;; CHECK-NEXT:      (call $nop)
+  ;; CHECK-NEXT:      (call $call.without.effects
+  ;; CHECK-NEXT:       (ref.func $i)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -124,13 +128,17 @@
         )
         ;; The arms fall through their blocks and also through the if, and end
         ;; up used by the set.
-        (block $ifTrue (result i32)
-          (call $nop)
-          (call $call.without.effects (ref.func $i))
+        (then
+          (block $ifTrue (result i32)
+            (call $nop)
+            (call $call.without.effects (ref.func $i))
+          )
         )
-        (block $ifFalse (result i32)
-          (call $nop)
-          (call $call.without.effects (ref.func $i))
+        (else
+          (block $ifFalse (result i32)
+            (call $nop)
+            (call $call.without.effects (ref.func $i))
+          )
         )
       )
     )
@@ -145,13 +153,17 @@
   ;; CHECK-NEXT:      (ref.func $i)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block $ifTrue (result i32)
-  ;; CHECK-NEXT:     (call $nop)
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (block $ifTrue (result i32)
+  ;; CHECK-NEXT:      (call $nop)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block $ifFalse (result i32)
-  ;; CHECK-NEXT:     (call $nop)
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (block $ifFalse (result i32)
+  ;; CHECK-NEXT:      (call $nop)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -165,13 +177,17 @@
         )
         ;; As above, but now there is a drop outside the if, so the arms are
         ;; unused and we can optimize them.
-        (block $ifTrue (result i32)
-          (call $nop)
-          (call $call.without.effects (ref.func $i))
+        (then
+          (block $ifTrue (result i32)
+            (call $nop)
+            (call $call.without.effects (ref.func $i))
+          )
         )
-        (block $ifFalse (result i32)
-          (call $nop)
-          (call $call.without.effects (ref.func $i))
+        (else
+          (block $ifFalse (result i32)
+            (call $nop)
+            (call $call.without.effects (ref.func $i))
+          )
         )
       )
     )
@@ -181,11 +197,15 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if (result (ref any))
   ;; CHECK-NEXT:    (call $i)
-  ;; CHECK-NEXT:    (call $call.without.effects-ref
-  ;; CHECK-NEXT:     (ref.func $ref)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (call $call.without.effects-ref
+  ;; CHECK-NEXT:      (ref.func $ref)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (call $call.without.effects-ref
-  ;; CHECK-NEXT:     (ref.func $ref)
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (call $call.without.effects-ref
+  ;; CHECK-NEXT:      (ref.func $ref)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -196,8 +216,12 @@
         (call $i)
         ;; As above, but the type of these unused values prevents us from
         ;; optimizing as we cannot create a "zero" for them.
-        (call $call.without.effects-ref (ref.func $ref))
-        (call $call.without.effects-ref (ref.func $ref))
+        (then
+          (call $call.without.effects-ref (ref.func $ref))
+        )
+        (else
+          (call $call.without.effects-ref (ref.func $ref))
+        )
       )
     )
   )

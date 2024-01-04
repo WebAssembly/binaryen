@@ -58,7 +58,7 @@
   ;; CHECK-NEXT:    (global.get $__asyncify_state)
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (i32.store $asyncify_memory
   ;; CHECK-NEXT:     (global.get $__asyncify_data)
   ;; CHECK-NEXT:     (i32.add
@@ -94,7 +94,7 @@
   ;; CHECK-NEXT:        (global.get $__asyncify_state)
   ;; CHECK-NEXT:        (i32.const 2)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:       (then
   ;; CHECK-NEXT:        (i32.store $asyncify_memory
   ;; CHECK-NEXT:         (global.get $__asyncify_data)
   ;; CHECK-NEXT:         (i32.add
@@ -119,7 +119,7 @@
   ;; CHECK-NEXT:         (global.get $__asyncify_state)
   ;; CHECK-NEXT:         (i32.const 0)
   ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (block
+  ;; CHECK-NEXT:        (then
   ;; CHECK-NEXT:         (local.set $4
   ;; CHECK-NEXT:          (local.get $dead0)
   ;; CHECK-NEXT:         )
@@ -148,15 +148,17 @@
   ;; CHECK-NEXT:          (i32.const 0)
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (block
+  ;; CHECK-NEXT:        (then
   ;; CHECK-NEXT:         (call $import)
   ;; CHECK-NEXT:         (if
   ;; CHECK-NEXT:          (i32.eq
   ;; CHECK-NEXT:           (global.get $__asyncify_state)
   ;; CHECK-NEXT:           (i32.const 1)
   ;; CHECK-NEXT:          )
-  ;; CHECK-NEXT:          (br $__asyncify_unwind
-  ;; CHECK-NEXT:           (i32.const 0)
+  ;; CHECK-NEXT:          (then
+  ;; CHECK-NEXT:           (br $__asyncify_unwind
+  ;; CHECK-NEXT:            (i32.const 0)
+  ;; CHECK-NEXT:           )
   ;; CHECK-NEXT:          )
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
@@ -166,7 +168,7 @@
   ;; CHECK-NEXT:         (global.get $__asyncify_state)
   ;; CHECK-NEXT:         (i32.const 0)
   ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (block
+  ;; CHECK-NEXT:        (then
   ;; CHECK-NEXT:         (local.set $6
   ;; CHECK-NEXT:          (local.get $live0)
   ;; CHECK-NEXT:         )
@@ -266,7 +268,7 @@
   ;; SIZE-NEXT:    (global.get $__asyncify_state)
   ;; SIZE-NEXT:    (i32.const 2)
   ;; SIZE-NEXT:   )
-  ;; SIZE-NEXT:   (block
+  ;; SIZE-NEXT:   (then
   ;; SIZE-NEXT:    (i32.store $asyncify_memory
   ;; SIZE-NEXT:     (global.get $__asyncify_data)
   ;; SIZE-NEXT:     (i32.add
@@ -302,7 +304,7 @@
   ;; SIZE-NEXT:        (global.get $__asyncify_state)
   ;; SIZE-NEXT:        (i32.const 2)
   ;; SIZE-NEXT:       )
-  ;; SIZE-NEXT:       (block
+  ;; SIZE-NEXT:       (then
   ;; SIZE-NEXT:        (i32.store $asyncify_memory
   ;; SIZE-NEXT:         (global.get $__asyncify_data)
   ;; SIZE-NEXT:         (i32.add
@@ -327,7 +329,7 @@
   ;; SIZE-NEXT:         (global.get $__asyncify_state)
   ;; SIZE-NEXT:         (i32.const 0)
   ;; SIZE-NEXT:        )
-  ;; SIZE-NEXT:        (block
+  ;; SIZE-NEXT:        (then
   ;; SIZE-NEXT:         (local.set $4
   ;; SIZE-NEXT:          (local.get $dead0)
   ;; SIZE-NEXT:         )
@@ -356,15 +358,17 @@
   ;; SIZE-NEXT:          (i32.const 0)
   ;; SIZE-NEXT:         )
   ;; SIZE-NEXT:        )
-  ;; SIZE-NEXT:        (block
+  ;; SIZE-NEXT:        (then
   ;; SIZE-NEXT:         (call $import)
   ;; SIZE-NEXT:         (if
   ;; SIZE-NEXT:          (i32.eq
   ;; SIZE-NEXT:           (global.get $__asyncify_state)
   ;; SIZE-NEXT:           (i32.const 1)
   ;; SIZE-NEXT:          )
-  ;; SIZE-NEXT:          (br $__asyncify_unwind
-  ;; SIZE-NEXT:           (i32.const 0)
+  ;; SIZE-NEXT:          (then
+  ;; SIZE-NEXT:           (br $__asyncify_unwind
+  ;; SIZE-NEXT:            (i32.const 0)
+  ;; SIZE-NEXT:           )
   ;; SIZE-NEXT:          )
   ;; SIZE-NEXT:         )
   ;; SIZE-NEXT:        )
@@ -374,7 +378,7 @@
   ;; SIZE-NEXT:         (global.get $__asyncify_state)
   ;; SIZE-NEXT:         (i32.const 0)
   ;; SIZE-NEXT:        )
-  ;; SIZE-NEXT:        (block
+  ;; SIZE-NEXT:        (then
   ;; SIZE-NEXT:         (local.set $6
   ;; SIZE-NEXT:          (local.get $live0)
   ;; SIZE-NEXT:         )
@@ -466,7 +470,9 @@
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (unreachable)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
@@ -483,7 +489,9 @@
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (unreachable)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
@@ -503,7 +511,9 @@
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (unreachable)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
@@ -520,7 +530,9 @@
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (unreachable)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
@@ -544,7 +556,9 @@
 ;; SIZE-NEXT:     (global.get $__asyncify_data)
 ;; SIZE-NEXT:    )
 ;; SIZE-NEXT:   )
-;; SIZE-NEXT:   (unreachable)
+;; SIZE-NEXT:   (then
+;; SIZE-NEXT:    (unreachable)
+;; SIZE-NEXT:   )
 ;; SIZE-NEXT:  )
 ;; SIZE-NEXT: )
 
@@ -561,7 +575,9 @@
 ;; SIZE-NEXT:     (global.get $__asyncify_data)
 ;; SIZE-NEXT:    )
 ;; SIZE-NEXT:   )
-;; SIZE-NEXT:   (unreachable)
+;; SIZE-NEXT:   (then
+;; SIZE-NEXT:    (unreachable)
+;; SIZE-NEXT:   )
 ;; SIZE-NEXT:  )
 ;; SIZE-NEXT: )
 
@@ -581,7 +597,9 @@
 ;; SIZE-NEXT:     (global.get $__asyncify_data)
 ;; SIZE-NEXT:    )
 ;; SIZE-NEXT:   )
-;; SIZE-NEXT:   (unreachable)
+;; SIZE-NEXT:   (then
+;; SIZE-NEXT:    (unreachable)
+;; SIZE-NEXT:   )
 ;; SIZE-NEXT:  )
 ;; SIZE-NEXT: )
 
@@ -598,7 +616,9 @@
 ;; SIZE-NEXT:     (global.get $__asyncify_data)
 ;; SIZE-NEXT:    )
 ;; SIZE-NEXT:   )
-;; SIZE-NEXT:   (unreachable)
+;; SIZE-NEXT:   (then
+;; SIZE-NEXT:    (unreachable)
+;; SIZE-NEXT:   )
 ;; SIZE-NEXT:  )
 ;; SIZE-NEXT: )
 

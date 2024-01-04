@@ -275,8 +275,12 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result (ref $sub))
  ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:    (struct.new_default $sub)
- ;; CHECK-NEXT:    (struct.new_default $sub)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (struct.new_default $sub)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (struct.new_default $sub)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -285,8 +289,12 @@
    (if (result (ref $super))
     (i32.const 0)
     ;; This requires $sub <: $super.
-    (struct.new $sub)
-    (struct.new $sub)
+    (then
+     (struct.new $sub)
+    )
+    (else
+     (struct.new $sub)
+    )
    )
   )
  )

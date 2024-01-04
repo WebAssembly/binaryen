@@ -10,8 +10,8 @@
 ;; RUN: cat %t.bin.nodebug.wast | filecheck %s --check-prefix=CHECK-BIN-NODEBUG
 
 (module
- ;; CHECK-TEXT:      (memory $0 (shared 23 256))
- ;; CHECK-BIN:      (memory $0 (shared 23 256))
- ;; CHECK-BIN-NODEBUG:      (memory $0 (shared 23 256))
- (memory $0 (shared 23 256))
+ ;; CHECK-TEXT:      (memory $0 23 256 shared)
+ ;; CHECK-BIN:      (memory $0 23 256 shared)
+ ;; CHECK-BIN-NODEBUG:      (memory $0 23 256 shared)
+ (memory $0 23 256 shared)
 )

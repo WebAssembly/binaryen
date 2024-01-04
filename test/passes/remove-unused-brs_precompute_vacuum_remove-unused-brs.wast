@@ -11,14 +11,18 @@
      (i32.const 9)
      (i32.const 0)
     )
-    (return
-     (f64.const -3.4)
+    (then
+     (return
+      (f64.const -3.4)
+     )
     )
    )
    (if
     (local.get $x)
-    (return
-     (f64.const 5.6)
+    (then
+     (return
+      (f64.const 5.6)
+     )
     )
    )
    (return

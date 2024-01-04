@@ -1026,20 +1026,28 @@
   ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:   (if (result (ref $A))
   ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (struct.get $A 0
-  ;; CHECK-NEXT:     (local.get $A)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (struct.get $A 0
+  ;; CHECK-NEXT:      (local.get $A)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $A
   ;; CHECK-NEXT:    (if (result (ref $A))
   ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:     (struct.get $A 0
-  ;; CHECK-NEXT:      (local.get $A)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (struct.get $A 0
+  ;; CHECK-NEXT:       (local.get $A)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1056,20 +1064,28 @@
       (local.get $A)
       (if (result (ref null $A))
         (i32.const 1)
-        (struct.get $A 0
-          (local.get $A)
+        (then
+          (struct.get $A 0
+            (local.get $A)
+          )
         )
-        (unreachable)
+        (else
+          (unreachable)
+        )
       )
     )
     (drop
       (struct.new $A
         (if (result (ref null $A))
           (i32.const 1)
-          (struct.get $A 0
-            (local.get $A)
+          (then
+            (struct.get $A 0
+              (local.get $A)
+            )
           )
-          (unreachable)
+          (else
+            (unreachable)
+          )
         )
       )
     )

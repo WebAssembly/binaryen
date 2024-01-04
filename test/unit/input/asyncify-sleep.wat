@@ -53,9 +53,9 @@
     (global.set $temp (i32.const 1))
   )
   (func $inner (param $x i32)
-    (if (i32.eqz (local.get $x)) (call $post))
-    (if (local.get $x) (call $sleep))
-    (if (i32.eqz (local.get $x)) (call $post))
+    (if (i32.eqz (local.get $x)) (then (call $post)))
+    (if (local.get $x) (then (call $sleep)))
+    (if (i32.eqz (local.get $x)) (then (call $post)))
   )
   (func $post
     (global.set $temp
@@ -77,7 +77,9 @@
         (local.get $x)
         (i32.const 1)
       )
-      (return (i32.const 1))
+      (then
+        (return (i32.const 1))
+      )
     )
     (call $sleep)
     (return
@@ -103,7 +105,9 @@
           (local.get $i)
           (local.get $x)
         )
-        (return (local.get $ret))
+        (then
+          (return (local.get $ret))
+        )
       )
       (local.set $ret
         (i32.mul
@@ -164,28 +168,44 @@
   )
   (func $if_else (export "if_else") (param $x i32) (param $y i32) (result i32)
     (if (i32.eq (local.get $x) (i32.const 1))
-      (local.set $y
-        (i32.add (local.get $y) (i32.const 10))
+      (then
+        (local.set $y
+          (i32.add (local.get $y) (i32.const 10))
+        )
       )
-      (local.set $y
-        (i32.add (local.get $y) (i32.const 20))
-      )
-    )
-    (if (i32.eq (local.get $x) (i32.const 1))
-      (local.set $y
-        (i32.add (local.get $y) (i32.const 40))
-      )
-      (call $sleep)
-    )
-    (if (i32.eq (local.get $x) (i32.const 1))
-      (call $sleep)
-      (local.set $y
-        (i32.add (local.get $y) (i32.const 90))
+      (else
+        (local.set $y
+          (i32.add (local.get $y) (i32.const 20))
+        )
       )
     )
     (if (i32.eq (local.get $x) (i32.const 1))
-      (call $sleep)
-      (call $sleep)
+      (then
+        (local.set $y
+          (i32.add (local.get $y) (i32.const 40))
+        )
+      )
+      (else
+        (call $sleep)
+      )
+    )
+    (if (i32.eq (local.get $x) (i32.const 1))
+      (then
+        (call $sleep)
+      )
+      (else
+        (local.set $y
+          (i32.add (local.get $y) (i32.const 90))
+        )
+      )
+    )
+    (if (i32.eq (local.get $x) (i32.const 1))
+      (then
+        (call $sleep)
+      )
+      (else
+        (call $sleep)
+      )
     )
     (local.set $y
       (i32.add (local.get $y) (i32.const 160))

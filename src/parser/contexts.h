@@ -443,7 +443,8 @@ struct NullInstrParserCtx {
 
   Result<> makeBrOn(Index, LabelIdxT, BrOnOp) { return Ok{}; }
 
-  template<typename TypeT> Result<> makeBrOn(Index, LabelIdxT, BrOnOp, TypeT) {
+  template<typename TypeT>
+  Result<> makeBrOn(Index, LabelIdxT, BrOnOp, TypeT, TypeT) {
     return Ok{};
   }
 
@@ -515,6 +516,14 @@ struct NullInstrParserCtx {
   Result<> makeStringIterMove(Index, StringIterMoveOp) { return Ok{}; }
   Result<> makeStringSliceWTF(Index, StringSliceWTFOp) { return Ok{}; }
   Result<> makeStringSliceIter(Index) { return Ok{}; }
+};
+
+struct NullCtx : NullTypeParserCtx, NullInstrParserCtx {
+  ParseInput in;
+  NullCtx(const ParseInput& in) : in(in) {}
+  Result<> makeTypeUse(Index, std::optional<HeapTypeT>, ParamsT*, ResultsT*) {
+    return Ok{};
+  }
 };
 
 // Phase 1: Parse definition spans for top-level module elements and determine
@@ -1249,6 +1258,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return Ok{};
   }
 
+  Result<>
+  addMemory(Name, const std::vector<Name>&, ImportNames*, TableTypeT, Index) {
+    return Ok{};
+  }
+
   Result<> addGlobal(Name,
                      const std::vector<Name>&,
                      ImportNames*,
@@ -1259,7 +1273,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   Result<> addImplicitElems(Type type, std::vector<Expression*>&& elems);
 
   Result<> addDeclareElem(Name, std::vector<Expression*>&&, Index) {
-    // TODO: Validate that referenced functions appear in a declaratve element
+    // TODO: Validate that referenced functions appear in a declarative element
     // segment.
     return Ok{};
   }
@@ -1272,6 +1286,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<>
   addData(Name, Name* mem, std::optional<ExprT> offset, DataStringT, Index pos);
+
+  Result<>
+  addTag(Name, const std::vector<Name>, ImportNames*, TypeUseT, Index) {
+    return Ok{};
+  }
 
   Result<> addExport(Index, Name value, Name name, ExternalKind kind) {
     wasm.addExport(builder.makeExport(name, value, kind));
@@ -1672,9 +1691,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeRefCast(type));
   }
 
-  Result<>
-  makeBrOn(Index pos, Index label, BrOnOp op, Type castType = Type::none) {
-    return withLoc(pos, irBuilder.makeBrOn(label, op, castType));
+  Result<> makeBrOn(Index pos,
+                    Index label,
+                    BrOnOp op,
+                    Type in = Type::none,
+                    Type out = Type::none) {
+    return withLoc(pos, irBuilder.makeBrOn(label, op, in, out));
   }
 
   Result<> makeStructNew(Index pos, HeapType type) {

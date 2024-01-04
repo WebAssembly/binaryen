@@ -16,6 +16,8 @@ Current Trunk
 -------------
  - The `tuple.make` pseudoinstruction now requires an immediate giving its
    arity. For example, to make a tuple of two elements, use `tuple.make 2`.
+ - The text format for `if` expressions now requires `then` and `else` to
+   introduce the two branch arms, matching the spec.
 
 v116
 ----

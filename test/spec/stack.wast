@@ -34,15 +34,17 @@
         (i64.eq)
         (if
           (then (br $done))
-          (else
-            (local.get $i)
-            (local.get $res)
-            (i64.mul)
-            (local.set $res)
-            (local.get $i)
-            (i64.const 1)
-            (i64.sub)
-            (local.set $i)
+          (then
+            (else
+              (local.get $i)
+              (local.get $res)
+              (i64.mul)
+              (local.set $res)
+              (local.get $i)
+              (i64.const 1)
+              (i64.sub)
+              (local.set $i)
+            )
           )
         )
         (br $loop)
@@ -91,11 +93,13 @@
         (i64.eq (local.get $i) (i64.const 0))
         (if
           (then (br $done))
-          (else
-            (i64.mul (local.get $i) (local.get $res))
-            (local.set $res)
-            (i64.sub (local.get $i) (i64.const 1))
-            (local.set $i)
+          (then
+            (else
+              (i64.mul (local.get $i) (local.get $res))
+              (local.set $res)
+              (i64.sub (local.get $i) (i64.const 1))
+              (local.set $i)
+            )
           )
         )
         (br $loop)

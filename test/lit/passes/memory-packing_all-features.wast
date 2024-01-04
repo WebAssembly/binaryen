@@ -118,7 +118,9 @@
   ;; CHECK-NEXT:     (i32.const 16)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -186,7 +188,9 @@
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state)
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (memory.fill
   ;; CHECK-NEXT:    (i32.const 0)
@@ -511,7 +515,9 @@
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_1)
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (memory.fill
   ;; CHECK-NEXT:    (i32.const 0)
@@ -573,7 +579,9 @@
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_2)
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (memory.fill
   ;; CHECK-NEXT:    (i32.const 0)
@@ -624,7 +632,9 @@
   ;; CHECK-NEXT:     (i32.const 16)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
@@ -763,7 +773,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state)
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (memory.fill
   ;; CHECK-NEXT:    (local.get $0)
@@ -881,7 +893,9 @@
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_2)
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (memory.fill
   ;; CHECK-NEXT:    (i32.const 0)
@@ -993,7 +1007,9 @@
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_3)
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (memory.fill
   ;; CHECK-NEXT:    (i32.const 0)
@@ -1055,7 +1071,9 @@
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_4)
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (memory.fill
   ;; CHECK-NEXT:    (i32.const 0)
@@ -1112,7 +1130,9 @@
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_5)
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (memory.fill
   ;; CHECK-NEXT:    (i32.const 0)
@@ -1175,7 +1195,9 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_6)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_6
@@ -1209,7 +1231,9 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_7)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $zero-size-undropped
@@ -1312,7 +1336,9 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_8)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_8
@@ -1380,7 +1406,9 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state
@@ -1414,7 +1442,9 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_1
@@ -1448,7 +1478,9 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_2)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_2
@@ -1481,7 +1513,9 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (global.get $__mem_segment_drop_state_3)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (global.set $__mem_segment_drop_state_3
@@ -2234,7 +2268,9 @@
  ;; CHECK:      (func $0 (type $0)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (global.get $__mem_segment_drop_state)
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (memory.fill
  ;; CHECK-NEXT:   (i32.const 0)
@@ -2279,8 +2315,8 @@
  ;; the wrong segments in the presence of unreferenced segments.
  ;; CHECK:      (type $0 (func))
 
- ;; CHECK:      (memory $0 (shared 1 1))
- (memory $0 (shared 1 1))
+ ;; CHECK:      (memory $0 1 1 shared)
+ (memory $0 1 1 shared)
  (data (i32.const 0) "")
  (data "foo")
  ;; CHECK:      (data $1 "foo")
@@ -2316,7 +2352,9 @@
  ;; CHECK:      (func $0 (type $0)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (global.get $__mem_segment_drop_state)
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (memory.fill
  ;; CHECK-NEXT:   (i64.const 0)
@@ -2364,7 +2402,9 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (global.get $__mem_segment_drop_state)
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (memory.fill
  ;; CHECK-NEXT:   (local.get $0)
@@ -2394,8 +2434,8 @@
  (type $array (array (mut i32)))
  ;; CHECK:      (type $1 (func (param (ref $array) i32 i32 i32)))
 
- ;; CHECK:      (memory $0 (shared 16 17))
- (memory $0 (shared 16 17))
+ ;; CHECK:      (memory $0 16 17 shared)
+ (memory $0 16 17 shared)
  ;; CHECK:      (data $0 "")
  (data $0 "")
  ;; CHECK:      (func $0 (type $1) (param $0 (ref $array)) (param $1 i32) (param $2 i32) (param $3 i32)

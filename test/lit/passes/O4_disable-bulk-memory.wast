@@ -20,14 +20,18 @@
     )
     (i32.const 127)
    )
-   (unreachable)
+   (then
+    (unreachable)
+   )
   )
   (global.set $global$0
    (i32.const -1)
   )
   (if
    (global.get $global$0)
-   (unreachable)
+   (then
+    (unreachable)
+   )
   )
   (unreachable)
  )
@@ -162,30 +166,34 @@
      (i32.const 2)
     )
    )
-   (block (result i32)
-    (local.set $3
-     (local.get $2)
-    )
-    (local.set $4
-     (local.get $1)
-    )
-    (local.set $5
-     (i32.const 0)
-    )
-    (i32.load offset=8
-     (i32.add
+   (then
+    (block (result i32)
+     (local.set $3
+      (local.get $2)
+     )
+     (local.set $4
+      (local.get $1)
+     )
+     (local.set $5
+      (i32.const 0)
+     )
+     (i32.load offset=8
       (i32.add
-       (local.get $3)
-       (i32.shl
-        (local.get $4)
-        (i32.const 2)
+       (i32.add
+        (local.get $3)
+        (i32.shl
+         (local.get $4)
+         (i32.const 2)
+        )
        )
+       (local.get $5)
       )
-      (local.get $5)
      )
     )
    )
-   (unreachable)
+   (else
+    (unreachable)
+   )
   )
  )
  (func $assembly/index/Body#offsetMomentum (; 5 ;) (type $2) (param $0 i32) (param $1 f64) (param $2 f64) (param $3 f64) (result i32)
@@ -227,7 +235,9 @@
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:    (i32.const 1073741824)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.gt_u
@@ -259,42 +269,48 @@
  ;; CHECK-NEXT:     (i32.const 16)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (if
- ;; CHECK-NEXT:    (i32.lt_s
- ;; CHECK-NEXT:     (memory.grow
- ;; CHECK-NEXT:      (select
- ;; CHECK-NEXT:       (local.get $1)
- ;; CHECK-NEXT:       (local.tee $3
- ;; CHECK-NEXT:        (i32.shr_u
- ;; CHECK-NEXT:         (i32.and
- ;; CHECK-NEXT:          (i32.add
- ;; CHECK-NEXT:           (i32.sub
- ;; CHECK-NEXT:            (local.get $2)
- ;; CHECK-NEXT:            (local.get $0)
- ;; CHECK-NEXT:           )
- ;; CHECK-NEXT:           (i32.const 65535)
- ;; CHECK-NEXT:          )
- ;; CHECK-NEXT:          (i32.const -65536)
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (i32.const 16)
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (i32.gt_s
- ;; CHECK-NEXT:        (local.get $1)
- ;; CHECK-NEXT:        (local.get $3)
- ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (i32.const 0)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   (then
  ;; CHECK-NEXT:    (if
  ;; CHECK-NEXT:     (i32.lt_s
  ;; CHECK-NEXT:      (memory.grow
- ;; CHECK-NEXT:       (local.get $3)
+ ;; CHECK-NEXT:       (select
+ ;; CHECK-NEXT:        (local.get $1)
+ ;; CHECK-NEXT:        (local.tee $3
+ ;; CHECK-NEXT:         (i32.shr_u
+ ;; CHECK-NEXT:          (i32.and
+ ;; CHECK-NEXT:           (i32.add
+ ;; CHECK-NEXT:            (i32.sub
+ ;; CHECK-NEXT:             (local.get $2)
+ ;; CHECK-NEXT:             (local.get $0)
+ ;; CHECK-NEXT:            )
+ ;; CHECK-NEXT:            (i32.const 65535)
+ ;; CHECK-NEXT:           )
+ ;; CHECK-NEXT:           (i32.const -65536)
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:          (i32.const 16)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (i32.gt_s
+ ;; CHECK-NEXT:         (local.get $1)
+ ;; CHECK-NEXT:         (local.get $3)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:     (then
+ ;; CHECK-NEXT:      (if
+ ;; CHECK-NEXT:       (i32.lt_s
+ ;; CHECK-NEXT:        (memory.grow
+ ;; CHECK-NEXT:         (local.get $3)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (i32.const 0)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (then
+ ;; CHECK-NEXT:        (unreachable)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -315,7 +331,9 @@
     (local.get $0)
     (i32.const 1073741824)
    )
-   (unreachable)
+   (then
+    (unreachable)
+   )
   )
   (local.set $1
    (global.get $global$1)
@@ -357,54 +375,60 @@
      (i32.const 16)
     )
    )
-   (block
-    (local.set $2
-     (i32.shr_u
-      (i32.and
-       (i32.add
-        (i32.sub
-         (local.get $4)
-         (local.get $1)
+   (then
+    (block
+     (local.set $2
+      (i32.shr_u
+       (i32.and
+        (i32.add
+         (i32.sub
+          (local.get $4)
+          (local.get $1)
+         )
+         (i32.const 65535)
         )
-        (i32.const 65535)
+        (i32.xor
+         (i32.const 65535)
+         (i32.const -1)
+        )
        )
-       (i32.xor
-        (i32.const 65535)
-        (i32.const -1)
-       )
-      )
-      (i32.const 16)
-     )
-    )
-    (local.set $3
-     (select
-      (local.tee $3
-       (local.get $5)
-      )
-      (local.tee $6
-       (local.get $2)
-      )
-      (i32.gt_s
-       (local.get $3)
-       (local.get $6)
+       (i32.const 16)
       )
      )
-    )
-    (if
-     (i32.lt_s
-      (memory.grow
-       (local.get $3)
+     (local.set $3
+      (select
+       (local.tee $3
+        (local.get $5)
+       )
+       (local.tee $6
+        (local.get $2)
+       )
+       (i32.gt_s
+        (local.get $3)
+        (local.get $6)
+       )
       )
-      (i32.const 0)
      )
      (if
       (i32.lt_s
        (memory.grow
-        (local.get $2)
+        (local.get $3)
        )
        (i32.const 0)
       )
-      (unreachable)
+      (then
+       (if
+        (i32.lt_s
+         (memory.grow
+          (local.get $2)
+         )
+         (i32.const 0)
+        )
+        (then
+         (unreachable)
+        )
+       )
+      )
      )
     )
    )
@@ -531,9 +555,11 @@
    (i32.eqz
     (local.get $0)
    )
-   (local.set $0
-    (call $~lib/memory/memory.allocate
-     (i32.const 4)
+   (then
+    (local.set $0
+     (call $~lib/memory/memory.allocate
+      (i32.const 4)
+     )
     )
    )
   )
@@ -584,9 +610,11 @@
    (i32.eqz
     (local.get $0)
    )
-   (local.set $0
-    (call $~lib/memory/memory.allocate
-     (i32.const 56)
+   (then
+    (local.set $0
+     (call $~lib/memory/memory.allocate
+      (i32.const 56)
+     )
     )
    )
   )
@@ -755,14 +783,16 @@
      (i32.const 1073741816)
     )
    )
-   (block
-    (call $~lib/env/abort
-     (i32.const 0)
-     (i32.const 40)
-     (i32.const 26)
-     (i32.const 2)
+   (then
+    (block
+     (call $~lib/env/abort
+      (i32.const 0)
+      (i32.const 40)
+      (i32.const 26)
+      (i32.const 2)
+     )
+     (unreachable)
     )
-    (unreachable)
    )
   )
   (local.set $1
@@ -793,7 +823,9 @@
    (i32.eqz
     (local.get $2)
    )
-   (return)
+   (then
+    (return)
+   )
   )
   (i32.store8
    (local.get $0)
@@ -814,7 +846,9 @@
     (local.get $2)
     (i32.const 2)
    )
-   (return)
+   (then
+    (return)
+   )
   )
   (i32.store8
    (i32.add
@@ -855,7 +889,9 @@
     (local.get $2)
     (i32.const 6)
    )
-   (return)
+   (then
+    (return)
+   )
   )
   (i32.store8
    (i32.add
@@ -879,7 +915,9 @@
     (local.get $2)
     (i32.const 8)
    )
-   (return)
+   (then
+    (return)
+   )
   )
   (local.set $3
    (i32.and
@@ -939,7 +977,9 @@
     (local.get $2)
     (i32.const 8)
    )
-   (return)
+   (then
+    (return)
+   )
   )
   (i32.store
    (i32.add
@@ -980,7 +1020,9 @@
     (local.get $2)
     (i32.const 24)
    )
-   (return)
+   (then
+    (return)
+   )
   )
   (i32.store
    (i32.add
@@ -1091,47 +1133,49 @@
       (local.get $2)
       (i32.const 32)
      )
-     (block
-      (block $label$10
-       (i64.store
-        (local.get $0)
-        (local.get $5)
-       )
-       (i64.store
-        (i32.add
+     (then
+      (block
+       (block $label$10
+        (i64.store
          (local.get $0)
-         (i32.const 8)
+         (local.get $5)
         )
-        (local.get $5)
-       )
-       (i64.store
-        (i32.add
-         (local.get $0)
-         (i32.const 16)
+        (i64.store
+         (i32.add
+          (local.get $0)
+          (i32.const 8)
+         )
+         (local.get $5)
         )
-        (local.get $5)
-       )
-       (i64.store
-        (i32.add
-         (local.get $0)
-         (i32.const 24)
+        (i64.store
+         (i32.add
+          (local.get $0)
+          (i32.const 16)
+         )
+         (local.get $5)
         )
-        (local.get $5)
-       )
-       (local.set $2
-        (i32.sub
-         (local.get $2)
-         (i32.const 32)
+        (i64.store
+         (i32.add
+          (local.get $0)
+          (i32.const 24)
+         )
+         (local.get $5)
+        )
+        (local.set $2
+         (i32.sub
+          (local.get $2)
+          (i32.const 32)
+         )
+        )
+        (local.set $0
+         (i32.add
+          (local.get $0)
+          (i32.const 32)
+         )
         )
        )
-       (local.set $0
-        (i32.add
-         (local.get $0)
-         (i32.const 32)
-        )
-       )
+       (br $label$8)
       )
-      (br $label$8)
      )
     )
    )
@@ -1148,14 +1192,16 @@
     (local.get $1)
     (i32.const 268435454)
    )
-   (block
-    (call $~lib/env/abort
-     (i32.const 0)
-     (i32.const 8)
-     (i32.const 45)
-     (i32.const 39)
+   (then
+    (block
+     (call $~lib/env/abort
+      (i32.const 0)
+      (i32.const 8)
+      (i32.const 45)
+      (i32.const 39)
+     )
+     (unreachable)
     )
-    (unreachable)
    )
   )
   (local.set $2
@@ -1175,9 +1221,11 @@
      (i32.eqz
       (local.get $0)
      )
-     (local.set $0
-      (call $~lib/memory/memory.allocate
-       (i32.const 8)
+     (then
+      (local.set $0
+       (call $~lib/memory/memory.allocate
+        (i32.const 8)
+       )
       )
      )
     )
@@ -1514,7 +1562,7 @@
  ;; CHECK-NEXT:      (local.get $1)
  ;; CHECK-NEXT:      (i32.const 32)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (block
+ ;; CHECK-NEXT:     (then
  ;; CHECK-NEXT:      (i64.store
  ;; CHECK-NEXT:       (local.get $0)
  ;; CHECK-NEXT:       (i64.const 0)
@@ -1668,7 +1716,7 @@
  ;; CHECK-NEXT:     (local.get $0)
  ;; CHECK-NEXT:     (local.get $3)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (local.set $4
  ;; CHECK-NEXT:      (f64.load offset=48
  ;; CHECK-NEXT:       (local.tee $1
@@ -1742,10 +1790,14 @@
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (i32.const 2)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (i32.load offset=8
- ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:     (then
+ ;; CHECK-NEXT:      (i32.load offset=8
+ ;; CHECK-NEXT:       (local.get $0)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:     (else
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (f64.div
@@ -1854,7 +1906,7 @@
  ;; CHECK-NEXT:     (local.get $3)
  ;; CHECK-NEXT:     (local.get $13)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (local.set $14
  ;; CHECK-NEXT:      (f64.load
  ;; CHECK-NEXT:       (local.tee $0
@@ -1914,7 +1966,7 @@
  ;; CHECK-NEXT:        (local.get $7)
  ;; CHECK-NEXT:        (local.get $13)
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (block
+ ;; CHECK-NEXT:       (then
  ;; CHECK-NEXT:        (local.set $2
  ;; CHECK-NEXT:         (f64.mul
  ;; CHECK-NEXT:          (local.get $17)
@@ -2701,7 +2753,7 @@
  ;; CHECK-NEXT:     (local.get $2)
  ;; CHECK-NEXT:     (local.get $5)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (local.set $7
  ;; CHECK-NEXT:      (f64.load
  ;; CHECK-NEXT:       (local.tee $1
@@ -2784,7 +2836,7 @@
  ;; CHECK-NEXT:        (local.get $1)
  ;; CHECK-NEXT:        (local.get $5)
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (block
+ ;; CHECK-NEXT:       (then
  ;; CHECK-NEXT:        (local.set $6
  ;; CHECK-NEXT:         (f64.sub
  ;; CHECK-NEXT:          (local.get $7)
@@ -2946,32 +2998,40 @@
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (if (result i32)
- ;; CHECK-NEXT:    (i32.lt_u
- ;; CHECK-NEXT:     (local.get $0)
- ;; CHECK-NEXT:     (i32.shr_u
- ;; CHECK-NEXT:      (i32.load
- ;; CHECK-NEXT:       (local.tee $1
- ;; CHECK-NEXT:        (i32.load
- ;; CHECK-NEXT:         (local.get $1)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (if (result i32)
+ ;; CHECK-NEXT:     (i32.lt_u
+ ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:      (i32.shr_u
+ ;; CHECK-NEXT:       (i32.load
+ ;; CHECK-NEXT:        (local.tee $1
+ ;; CHECK-NEXT:         (i32.load
+ ;; CHECK-NEXT:          (local.get $1)
+ ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (i32.const 2)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (i32.load offset=8
- ;; CHECK-NEXT:     (i32.add
- ;; CHECK-NEXT:      (i32.shl
- ;; CHECK-NEXT:       (local.get $0)
  ;; CHECK-NEXT:       (i32.const 2)
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (then
+ ;; CHECK-NEXT:      (i32.load offset=8
+ ;; CHECK-NEXT:       (i32.add
+ ;; CHECK-NEXT:        (i32.shl
+ ;; CHECK-NEXT:         (local.get $0)
+ ;; CHECK-NEXT:         (i32.const 2)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (local.get $1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (else
+ ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $assembly/index/getBody (; 25 ;) (type $3) (param $0 i32) (result i32)
@@ -2994,11 +3054,15 @@
      )
     )
    )
-   (call $~lib/array/Array<Body>#__get
-    (local.get $1)
-    (local.get $0)
+   (then
+    (call $~lib/array/Array<Body>#__get
+     (local.get $1)
+     (local.get $0)
+    )
    )
-   (i32.const 0)
+   (else
+    (i32.const 0)
+   )
   )
  )
  ;; CHECK:      (func $start (; has Stack IR ;)

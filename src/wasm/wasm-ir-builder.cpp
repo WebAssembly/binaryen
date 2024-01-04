@@ -1420,12 +1420,20 @@ Result<> IRBuilder::makeRefCast(Type type) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type castType) {
+Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type in, Type out) {
   BrOn curr;
   CHECK_ERR(visitBrOn(&curr));
+  if (out != Type::none) {
+    if (!Type::isSubType(out, in)) {
+      return Err{"output type is not a subtype of the input type"};
+    }
+    if (!Type::isSubType(curr.ref->type, in)) {
+      return Err{"expected input to match input type annotation"};
+    }
+  }
   auto name = getLabelName(label);
   CHECK_ERR(name);
-  push(builder.makeBrOn(op, *name, curr.ref, castType));
+  push(builder.makeBrOn(op, *name, curr.ref, out));
   return Ok{};
 }
 

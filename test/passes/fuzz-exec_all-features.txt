@@ -75,7 +75,7 @@
  (type $2 (func (param i32 i32)))
  (type $3 (func))
  (import "fuzzing-support" "log-i32" (func $fimport$0 (type $1) (param i32)))
- (memory $0 (shared 1 1))
+ (memory $0 1 1 shared)
  (export "unaligned_load" (func $unaligned_load))
  (export "unaligned_load_offset" (func $unaligned_load_offset))
  (export "aligned_for_size" (func $aligned_for_size))
@@ -148,7 +148,7 @@
 [fuzz-exec] note result: unsigned_2_bytes => 65535
 (module
  (type $0 (func (result i32)))
- (memory $0 (shared 1 1))
+ (memory $0 1 1 shared)
  (data $0 (i32.const 0) "\ff\ff")
  (export "unsigned_2_bytes" (func $unsigned_2_bytes))
  (func $unsigned_2_bytes (type $0) (result i32)
@@ -167,7 +167,7 @@
  (type $0 (func (param i32)))
  (type $1 (func))
  (import "fuzzing-support" "log-i32" (func $fimport$0 (type $0) (param i32)))
- (memory $0 (shared 1 1))
+ (memory $0 1 1 shared)
  (export "rmw-reads-modifies-and-writes" (func $rmw-reads-modifies-and-writes))
  (func $rmw-reads-modifies-and-writes (type $1)
   (drop
@@ -192,7 +192,7 @@
  (type $0 (func (param i32)))
  (type $1 (func))
  (import "fuzzing-support" "log-i32" (func $fimport$0 (type $0) (param i32)))
- (memory $0 (shared 1 1))
+ (memory $0 1 1 shared)
  (export "rmw-reads-modifies-and-writes-asymmetrical" (func $rmw-reads-modifies-and-writes-asymmetrical))
  (func $rmw-reads-modifies-and-writes-asymmetrical (type $1)
   (drop

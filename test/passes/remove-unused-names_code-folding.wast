@@ -1,162 +1,222 @@
 (module
   (func $ifs
-    (if (i32.const 0) (nop))
-    (if (i32.const 0) (nop) (nop))
-    (if (i32.const 0) (nop) (unreachable))
+    (if (i32.const 0) (then (nop)))
+    (if (i32.const 0) (then (nop) )(else (nop)))
+    (if (i32.const 0) (then (nop) )(else (unreachable)))
     (drop
       (if (result i32) (i32.const 0)
-        (i32.add (i32.const 1) (i32.const 2))
-        (i32.add (i32.const 1) (i32.const 2))
+        (then
+          (i32.add (i32.const 1) (i32.const 2))
+        )
+        (else
+          (i32.add (i32.const 1) (i32.const 2))
+        )
       )
     )
     (drop
       (if (result i32) (i32.const 0)
-        (i32.add (i32.const 1) (i32.const 2))
-        (i32.add (i32.const 1) (i32.const 333333333))
+        (then
+          (i32.add (i32.const 1) (i32.const 2))
+        )
+        (else
+          (i32.add (i32.const 1) (i32.const 333333333))
+        )
       )
     )
   )
   (func $ifs-blocks
     (if (i32.const 0)
-      (block
-        (nop)
+      (then
+        (block
+          (nop)
+        )
       )
-      (block
-        (nop)
-      )
-    )
-    (if (i32.const 0)
-      (block
-        (unreachable)
-        (nop)
-      )
-      (block
-        (nop)
+      (else
+        (block
+          (nop)
+        )
       )
     )
     (if (i32.const 0)
-      (block
-        (nop)
+      (then
+        (block
+          (unreachable)
+          (nop)
+        )
       )
-      (block
-        (unreachable)
-        (nop)
-      )
-    )
-    (if (i32.const 0)
-      (block
-        (nop)
-        (unreachable)
-      )
-      (block
-        (nop)
+      (else
+        (block
+          (nop)
+        )
       )
     )
     (if (i32.const 0)
-      (block
-        (nop)
+      (then
+        (block
+          (nop)
+        )
       )
-      (block
-        (nop)
-        (unreachable)
+      (else
+        (block
+          (unreachable)
+          (nop)
+        )
+      )
+    )
+    (if (i32.const 0)
+      (then
+        (block
+          (nop)
+          (unreachable)
+        )
+      )
+      (else
+        (block
+          (nop)
+        )
+      )
+    )
+    (if (i32.const 0)
+      (then
+        (block
+          (nop)
+        )
+      )
+      (else
+        (block
+          (nop)
+          (unreachable)
+        )
       )
     )
   )
   (func $ifs-blocks-big
     (if (i32.const 0)
-      (block
-        (drop (i32.add (i32.const 1) (i32.const 2)))
+      (then
+        (block
+          (drop (i32.add (i32.const 1) (i32.const 2)))
+        )
       )
-      (block
-        (drop (i32.add (i32.const 1) (i32.const 2)))
-      )
-    )
-    (if (i32.const 0)
-      (block
-        (unreachable)
-        (drop (i32.add (i32.const 1) (i32.const 2)))
-      )
-      (block
-        (drop (i32.add (i32.const 1) (i32.const 2)))
+      (else
+        (block
+          (drop (i32.add (i32.const 1) (i32.const 2)))
+        )
       )
     )
     (if (i32.const 0)
-      (block
-        (drop (i32.add (i32.const 1) (i32.const 2)))
+      (then
+        (block
+          (unreachable)
+          (drop (i32.add (i32.const 1) (i32.const 2)))
+        )
       )
-      (block
-        (unreachable)
-        (drop (i32.add (i32.const 1) (i32.const 2)))
-      )
-    )
-    (if (i32.const 0)
-      (block
-        (drop (i32.add (i32.const 1) (i32.const 2)))
-        (unreachable)
-      )
-      (block
-        (drop (i32.add (i32.const 1) (i32.const 2)))
+      (else
+        (block
+          (drop (i32.add (i32.const 1) (i32.const 2)))
+        )
       )
     )
     (if (i32.const 0)
-      (block
-        (drop (i32.add (i32.const 1) (i32.const 2)))
+      (then
+        (block
+          (drop (i32.add (i32.const 1) (i32.const 2)))
+        )
       )
-      (block
-        (drop (i32.add (i32.const 1) (i32.const 2)))
-        (unreachable)
+      (else
+        (block
+          (unreachable)
+          (drop (i32.add (i32.const 1) (i32.const 2)))
+        )
+      )
+    )
+    (if (i32.const 0)
+      (then
+        (block
+          (drop (i32.add (i32.const 1) (i32.const 2)))
+          (unreachable)
+        )
+      )
+      (else
+        (block
+          (drop (i32.add (i32.const 1) (i32.const 2)))
+        )
+      )
+    )
+    (if (i32.const 0)
+      (then
+        (block
+          (drop (i32.add (i32.const 1) (i32.const 2)))
+        )
+      )
+      (else
+        (block
+          (drop (i32.add (i32.const 1) (i32.const 2)))
+          (unreachable)
+        )
       )
     )
   )
   (func $ifs-blocks-long
     (if (i32.const 1)
-      (block
-        (drop (i32.const -1234))
-        (drop (i32.const -1000))
-        (drop (i32.const 1))
-        (nop)
-        (unreachable)
-      )
-      (block
-        (drop (i32.const 999))
-        (drop (i32.const 1))
-        (nop)
-        (unreachable)
-      )
-    )
-    (drop
-      (if (result i32) (i32.const 2)
-        (block (result i32)
+      (then
+        (block
           (drop (i32.const -1234))
           (drop (i32.const -1000))
           (drop (i32.const 1))
           (nop)
           (unreachable)
-          (i32.const 2)
         )
-        (block (result i32)
+      )
+      (else
+        (block
           (drop (i32.const 999))
           (drop (i32.const 1))
           (nop)
           (unreachable)
-          (i32.const 2)
+        )
+      )
+    )
+    (drop
+      (if (result i32) (i32.const 2)
+        (then
+          (block (result i32)
+            (drop (i32.const -1234))
+            (drop (i32.const -1000))
+            (drop (i32.const 1))
+            (nop)
+            (unreachable)
+            (i32.const 2)
+          )
+        )
+        (else
+          (block (result i32)
+            (drop (i32.const 999))
+            (drop (i32.const 1))
+            (nop)
+            (unreachable)
+            (i32.const 2)
+          )
         )
       )
     )
     (drop
       (if (result i32) (i32.const 3)
-        (block (result i32)
-          (drop (i32.const -1234))
-          (drop (i32.const -1000))
-          (drop (i32.const 1))
-          (nop)
-          (i32.const 2)
+        (then
+          (block (result i32)
+            (drop (i32.const -1234))
+            (drop (i32.const -1000))
+            (drop (i32.const 1))
+            (nop)
+            (i32.const 2)
+          )
         )
-        (block (result i32)
-          (drop (i32.const 999))
-          (drop (i32.const 1))
-          (nop)
-          (i32.const 2)
+        (else
+          (block (result i32)
+            (drop (i32.const 999))
+            (drop (i32.const 1))
+            (nop)
+            (i32.const 2)
+          )
         )
       )
     )
@@ -164,84 +224,112 @@
   (func $if-worth-it-i-dunno
     ;; just 2, so not worth it
     (if (i32.const 0) ;; (put them in ifs, so no block outside which would make us more confident in creating a block in hopes it would vanish)
-      (if (i32.const 0)
-        (block
-          (drop (i32.const -1234))
-          (drop (i32.const -1000))
-          (unreachable)
-          (unreachable)
-        )
-        (block
-          (drop (i32.const 999))
-          (drop (i32.const 1))
-          (unreachable)
-          (unreachable)
+      (then
+        (if (i32.const 0)
+          (then
+            (block
+              (drop (i32.const -1234))
+              (drop (i32.const -1000))
+              (unreachable)
+              (unreachable)
+            )
+          )
+          (else
+            (block
+              (drop (i32.const 999))
+              (drop (i32.const 1))
+              (unreachable)
+              (unreachable)
+            )
+          )
         )
       )
     )
     ;; 3, so why not
     (if (i32.const 0) ;; (put them in ifs, so no block outside which would make us more confident in creating a block in hopes it would vanish)
-      (if (i32.const 0)
-        (block
-          (drop (i32.const -1234))
-          (drop (i32.const -1000))
-          (unreachable)
-          (unreachable)
-          (unreachable)
-        )
-        (block
-          (drop (i32.const 999))
-          (drop (i32.const 1))
-          (unreachable)
-          (unreachable)
-          (unreachable)
-        )
-      )
-    )
-    ;; just 2, but we'll empty out a block
-    (if (i32.const 0) ;; (put them in ifs, so no block outside which would make us more confident in creating a block in hopes it would vanish)
-      (if (i32.const 0)
-        (block
-          (unreachable)
-          (unreachable)
-        )
-        (block
-          (drop (i32.const 999))
-          (drop (i32.const 1))
-          (unreachable)
-          (unreachable)
+      (then
+        (if (i32.const 0)
+          (then
+            (block
+              (drop (i32.const -1234))
+              (drop (i32.const -1000))
+              (unreachable)
+              (unreachable)
+              (unreachable)
+            )
+          )
+          (else
+            (block
+              (drop (i32.const 999))
+              (drop (i32.const 1))
+              (unreachable)
+              (unreachable)
+              (unreachable)
+            )
+          )
         )
       )
     )
     ;; just 2, but we'll empty out a block
     (if (i32.const 0) ;; (put them in ifs, so no block outside which would make us more confident in creating a block in hopes it would vanish)
-      (if (i32.const 0)
-        (block
-          (drop (i32.const -1234))
-          (drop (i32.const -1000))
-          (unreachable)
-          (unreachable)
+      (then
+        (if (i32.const 0)
+          (then
+            (block
+              (unreachable)
+              (unreachable)
+            )
+          )
+          (else
+            (block
+              (drop (i32.const 999))
+              (drop (i32.const 1))
+              (unreachable)
+              (unreachable)
+            )
+          )
         )
-        (block
-          (unreachable)
-          (unreachable)
+      )
+    )
+    ;; just 2, but we'll empty out a block
+    (if (i32.const 0) ;; (put them in ifs, so no block outside which would make us more confident in creating a block in hopes it would vanish)
+      (then
+        (if (i32.const 0)
+          (then
+            (block
+              (drop (i32.const -1234))
+              (drop (i32.const -1000))
+              (unreachable)
+              (unreachable)
+            )
+          )
+          (else
+            (block
+              (unreachable)
+              (unreachable)
+            )
+          )
         )
       )
     )
     ;; just two, but on a block, so we hope to merge, and can optimize here
     (block $a-holding-block
       (if (i32.const 9999)
-        (block
-          (drop (i32.const -51234))
-          (drop (i32.const -51000))
-          (unreachable)
-          (unreachable)
+        (then
+          (block
+            (drop (i32.const -51234))
+            (drop (i32.const -51000))
+            (unreachable)
+            (unreachable)
+          )
         )
-        (block
-          (drop (i32.const 5999))
-          (drop (i32.const 51))
-          (unreachable)
-          (unreachable)
+        (else
+          (block
+            (drop (i32.const 5999))
+            (drop (i32.const 51))
+            (unreachable)
+            (unreachable)
+          )
         )
       )
     )
@@ -249,17 +337,21 @@
     (drop
       (block $b-holding-block (result i32)
         (if (result i32) (i32.const 9999)
-          (block (result i32)
-            (drop (i32.const -51234))
-            (drop (i32.const -51000))
-            (unreachable)
-            (i32.const 10)
+          (then
+            (block (result i32)
+              (drop (i32.const -51234))
+              (drop (i32.const -51000))
+              (unreachable)
+              (i32.const 10)
+            )
           )
-          (block (result i32)
-            (drop (i32.const 5999))
-            (drop (i32.const 51))
-            (unreachable)
-            (i32.const 10)
+          (else
+            (block (result i32)
+              (drop (i32.const 5999))
+              (drop (i32.const 51))
+              (unreachable)
+              (i32.const 10)
+            )
           )
         )
       )
@@ -268,17 +360,21 @@
     (block $c-holding-block
       (drop
         (if (result i32) (i32.const 9999)
-          (block (result i32)
-            (drop (i32.const -51234))
-            (drop (i32.const -51000))
-            (unreachable)
-            (i32.const 10)
+          (then
+            (block (result i32)
+              (drop (i32.const -51234))
+              (drop (i32.const -51000))
+              (unreachable)
+              (i32.const 10)
+            )
           )
-          (block (result i32)
-            (drop (i32.const 5999))
-            (drop (i32.const 51))
-            (unreachable)
-            (i32.const 10)
+          (else
+            (block (result i32)
+              (drop (i32.const 5999))
+              (drop (i32.const 51))
+              (unreachable)
+              (i32.const 10)
+            )
           )
         )
       )
@@ -287,29 +383,15 @@
   (func $no-grandparent
     ;; if we had a parent block, we might optimize this
     (if (i32.const 9999)
-      (block
-        (drop (i32.const -51234))
-        (drop (i32.const -51000))
-        (unreachable)
-        (unreachable)
-      )
-      (block
-        (drop (i32.const 5999))
-        (drop (i32.const 51))
-        (unreachable)
-        (unreachable)
-      )
-    )
-  )
-  (func $yes-grandparent
-    (block
-      (if (i32.const 9999)
+      (then
         (block
           (drop (i32.const -51234))
           (drop (i32.const -51000))
           (unreachable)
           (unreachable)
         )
+      )
+      (else
         (block
           (drop (i32.const 5999))
           (drop (i32.const 51))
@@ -319,61 +401,105 @@
       )
     )
   )
+  (func $yes-grandparent
+    (block
+      (if (i32.const 9999)
+        (then
+          (block
+            (drop (i32.const -51234))
+            (drop (i32.const -51000))
+            (unreachable)
+            (unreachable)
+          )
+        )
+        (else
+          (block
+            (drop (i32.const 5999))
+            (drop (i32.const 51))
+            (unreachable)
+            (unreachable)
+          )
+        )
+      )
+    )
+  )
   (func $ifs-named-block (param $x i32) (param $y i32) (result i32)
     (block $out
       (block $out2
         (if (local.get $x)
-          (block
-            (br_if $out (local.get $y i32))
-            (nop)
-          )
-          (block
-            (br_if $out (local.get $y i32))
-            (nop)
-          )
-        )
-        (if (local.get $x)
-          (block
-            (br_if $out (local.get $y i32))
-            (nop)
-          )
-          (block
-            (br_if $out2 (local.get $y i32))
-            (nop)
-          )
-        )
-        (if (i32.const 1234)
-          (if (local.get $x)
+          (then
             (block
-              (nop)
               (br_if $out (local.get $y i32))
               (nop)
             )
+          )
+          (else
             (block
+              (br_if $out (local.get $y i32))
               (nop)
+            )
+          )
+        )
+        (if (local.get $x)
+          (then
+            (block
+              (br_if $out (local.get $y i32))
+              (nop)
+            )
+          )
+          (else
+            (block
               (br_if $out2 (local.get $y i32))
               (nop)
             )
           )
         )
-        (if (local.get $x)
-          (block $left
-            (br_if $left (local.get $y i32))
-            (nop)
-          )
-          (block
-            (br_if $out (local.get $y i32))
-            (nop)
+        (if (i32.const 1234)
+          (then
+            (if (local.get $x)
+              (then
+                (block
+                  (nop)
+                  (br_if $out (local.get $y i32))
+                  (nop)
+                )
+              )
+              (else
+                (block
+                  (nop)
+                  (br_if $out2 (local.get $y i32))
+                  (nop)
+                )
+              )
+            )
           )
         )
         (if (local.get $x)
-          (block
-            (br_if $out (local.get $y i32))
-            (nop)
+          (then
+            (block $left
+              (br_if $left (local.get $y i32))
+              (nop)
+            )
           )
-          (block $right
-            (br_if $right (local.get $y i32))
-            (nop)
+          (else
+            (block
+              (br_if $out (local.get $y i32))
+              (nop)
+            )
+          )
+        )
+        (if (local.get $x)
+          (then
+            (block
+              (br_if $out (local.get $y i32))
+              (nop)
+            )
+          )
+          (else
+            (block $right
+              (br_if $right (local.get $y i32))
+              (nop)
+            )
           )
         )
       )
@@ -384,17 +510,21 @@
   (func $block
     (block $x
       (if (i32.const 0)
-        (block
-          (drop (i32.const 1))
-          (drop (i32.const 2))
-          (br $x)
+        (then
+          (block
+            (drop (i32.const 1))
+            (drop (i32.const 2))
+            (br $x)
+          )
         )
       )
       (if (i32.const 0)
-        (block
-          (drop (i32.const 1))
-          (drop (i32.const 2))
-          (br $x)
+        (then
+          (block
+            (drop (i32.const 1))
+            (drop (i32.const 2))
+            (br $x)
+          )
         )
       )
       ;; no fallthrough, another thing to merge
@@ -406,17 +536,21 @@
   (func $block2
     (block $x
       (if (i32.const 0)
-        (block
-          (drop (i32.const 1))
-          (drop (i32.const 333333))
-          (br $x)
+        (then
+          (block
+            (drop (i32.const 1))
+            (drop (i32.const 333333))
+            (br $x)
+          )
         )
       )
       (if (i32.const 0)
-        (block
-          (drop (i32.const 1))
-          (drop (i32.const 2))
-          (br $x)
+        (then
+          (block
+            (drop (i32.const 1))
+            (drop (i32.const 2))
+            (br $x)
+          )
         )
       )
       ;; no fallthrough, another thing to merge
@@ -428,20 +562,24 @@
   (func $block3
     (block $x
       (if (i32.const 0)
-        (block
-          (drop (i32.const 1000))
-          (drop (i32.const 1))
-          (drop (i32.const 2))
-          (br $x)
+        (then
+          (block
+            (drop (i32.const 1000))
+            (drop (i32.const 1))
+            (drop (i32.const 2))
+            (br $x)
+          )
         )
       )
       (if (i32.const 0)
-        (block
-          (drop (i32.const 2000))
-          (drop (i32.const 3000))
-          (drop (i32.const 1))
-          (drop (i32.const 2))
-          (br $x)
+        (then
+          (block
+            (drop (i32.const 2000))
+            (drop (i32.const 3000))
+            (drop (i32.const 1))
+            (drop (i32.const 2))
+            (br $x)
+          )
         )
       )
       (drop (i32.const 4000))
@@ -456,59 +594,75 @@
   (func $mixture
     (block $out ;; then we reach the block, and the tail infos are stale, should ignore
       (if (i32.const 1) ;; then we optimize the if, pushing those brs outside!
-        (block
-          (drop (i32.const 2)) ;; first we note the block tails for $out
-          (nop) (nop) (nop) (nop) (nop) (nop) ;; totally worth it
-          (br $out)
+        (then
+          (block
+            (drop (i32.const 2)) ;; first we note the block tails for $out
+            (nop) (nop) (nop) (nop) (nop) (nop) ;; totally worth it
+            (br $out)
+          )
         )
-        (block
-          (drop (i32.const 2))
-          (nop) (nop) (nop) (nop) (nop) (nop)
-          (br $out)
+        (else
+          (block
+            (drop (i32.const 2))
+            (nop) (nop) (nop) (nop) (nop) (nop)
+            (br $out)
+          )
         )
       )
     )
     (block $out2
       (if (i32.const 1)
-        (block
-          (drop (i32.const 3)) ;; leave something
-          (drop (i32.const 2))
-          (nop) (nop) (nop) (nop) (nop) (nop)
-          (br $out2)
+        (then
+          (block
+            (drop (i32.const 3)) ;; leave something
+            (drop (i32.const 2))
+            (nop) (nop) (nop) (nop) (nop) (nop)
+            (br $out2)
+          )
         )
-        (block
-          (drop (i32.const 4)) ;; leave something
-          (drop (i32.const 5)) ;; leave something
-          (drop (i32.const 2))
-          (nop) (nop) (nop) (nop) (nop) (nop)
-          (br $out2)
+        (else
+          (block
+            (drop (i32.const 4)) ;; leave something
+            (drop (i32.const 5)) ;; leave something
+            (drop (i32.const 2))
+            (nop) (nop) (nop) (nop) (nop) (nop)
+            (br $out2)
+          )
         )
       )
     )
     ;; now a case where do **do** want to fold for the block (which we can only do in a later pass)
     (block $out3
       (if (i32.const 1)
-        (block
-          (drop (i32.const 2))
-          (nop) (nop) (nop) (nop) (nop) (nop)
-          (br $out3)
+        (then
+          (block
+            (drop (i32.const 2))
+            (nop) (nop) (nop) (nop) (nop) (nop)
+            (br $out3)
+          )
         )
-        (block
-          (drop (i32.const 2))
-          (nop) (nop) (nop) (nop) (nop) (nop)
-          (br $out3)
+        (else
+          (block
+            (drop (i32.const 2))
+            (nop) (nop) (nop) (nop) (nop) (nop)
+            (br $out3)
+          )
         )
       )
       (if (i32.const 1)
-        (block
-          (drop (i32.const 2))
-          (nop) (nop) (nop) (nop) (nop) (nop)
-          (br $out3)
+        (then
+          (block
+            (drop (i32.const 2))
+            (nop) (nop) (nop) (nop) (nop) (nop)
+            (br $out3)
+          )
         )
-        (block
-          (drop (i32.const 2))
-          (nop) (nop) (nop) (nop) (nop) (nop)
-          (br $out3)
+        (else
+          (block
+            (drop (i32.const 2))
+            (nop) (nop) (nop) (nop) (nop) (nop)
+            (br $out3)
+          )
         )
       )
       (drop (i32.const 2))
@@ -520,10 +674,12 @@
     ;; these should be merged
     (block $x
       (if (i32.const 0)
-        (block
-          (drop (i32.const 1))
-          (drop (i32.const 2))
-          (br $x)
+        (then
+          (block
+            (drop (i32.const 1))
+            (drop (i32.const 2))
+            (br $x)
+          )
         )
       )
       (drop (i32.const 1))
@@ -534,10 +690,12 @@
     (drop
       (block $y (result i32)
         (if (i32.const 0)
-          (block
-            (drop (i32.const 1))
-            (drop (i32.const 2))
-            (br $y (i32.const 3))
+          (then
+            (block
+              (drop (i32.const 1))
+              (drop (i32.const 2))
+              (br $y (i32.const 3))
+            )
           )
         )
         (drop (i32.const 1))
@@ -548,10 +706,12 @@
     (drop
       (block $z (result i32)
         (if (i32.const 0)
-          (block
-            (drop (i32.const 1))
-            (drop (i32.const 2))
-            (br $z (i32.const 2))
+          (then
+            (block
+              (drop (i32.const 1))
+              (drop (i32.const 2))
+              (br $z (i32.const 2))
+            )
           )
         )
         (drop (i32.const 1))
@@ -562,10 +722,12 @@
     ;; condition
     (block $w
       (if (i32.const 0)
-        (block
-          (drop (i32.const 1))
-          (drop (i32.const 2))
-          (br_if $w (i32.const 3))
+        (then
+          (block
+            (drop (i32.const 1))
+            (drop (i32.const 2))
+            (br_if $w (i32.const 3))
+          )
         )
       )
       (drop (i32.const 1))
@@ -574,11 +736,13 @@
     ;; not at the end
     (block $x1
       (if (i32.const 0)
-        (block
-          (drop (i32.const 1))
-          (drop (i32.const 2))
-          (br $x1)
-          (nop)
+        (then
+          (block
+            (drop (i32.const 1))
+            (drop (i32.const 2))
+            (br $x1)
+            (nop)
+          )
         )
       )
       (drop (i32.const 1))
@@ -589,10 +753,12 @@
       (block $x2
         (br_table $x2 $side (i32.const 0))
         (if (i32.const 0)
-          (block
-            (drop (i32.const 1))
-            (drop (i32.const 2))
-            (br $x2)
+          (then
+            (block
+              (drop (i32.const 1))
+              (drop (i32.const 2))
+              (br $x2)
+            )
           )
         )
         (drop (i32.const 1))
@@ -601,10 +767,12 @@
       (block $x3
         (br_table $side $x3 (i32.const 0))
         (if (i32.const 0)
-          (block
-            (drop (i32.const 1))
-            (drop (i32.const 2))
-            (br $x3)
+          (then
+            (block
+              (drop (i32.const 1))
+              (drop (i32.const 2))
+              (br $x3)
+            )
           )
         )
         (drop (i32.const 1))
@@ -614,267 +782,339 @@
   )
   (func $terminating
     (if (i32.const 1)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (unreachable)
+        )
       )
     )
     (if (i32.const 2)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (unreachable)
+        )
       )
     )
     (if (i32.const 3)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (unreachable)
+        )
       )
     )
   )
   (func $terminating-unreachable
     (if (i32.const 1)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (unreachable)
+        )
       )
     )
     (if (i32.const 2)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (unreachable)
+        )
       )
     )
     (if (i32.const 3)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (unreachable)
+        )
       )
     )
     (unreachable)
   )
   (func $terminating-value (result i32)
     (if (i32.const 1)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (unreachable)
+        )
       )
     )
     (if (i32.const 2)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (unreachable)
+        )
       )
     )
     (if (i32.const 3)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (unreachable)
+        )
       )
     )
     (i32.const 4)
   )
   (func $terminating-just-2
     (if (i32.const 1)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (unreachable)
+        )
       )
     )
     (if (i32.const 2)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (unreachable)
+        )
       )
     )
     (if (i32.const 3)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (drop (i32.const 10))
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (drop (i32.const 10))
+          (unreachable)
+        )
       )
     )
   )
   (func $terminating-shortness
     (if (i32.const 1)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (unreachable)
+        )
       )
     )
     (if (i32.const 2)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) ;; shorter. we do the two long ones greedily, then the merged one and this can also be opted
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) ;; shorter. we do the two long ones greedily, then the merged one and this can also be opted
+          (unreachable)
+        )
       )
     )
     (if (i32.const 3)
-      (block
-        (drop (i32.const 10))
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (drop (i32.const 10))
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (unreachable)
+        )
       )
     )
   )
   (func $terminating-multiple-separate
     (if (i32.const 1)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (drop (i32.const 1))
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (drop (i32.const 1))
+          (unreachable)
+        )
       )
     )
     (if (i32.const 1)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (drop (i32.const 1))
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (drop (i32.const 1))
+          (unreachable)
+        )
       )
     )
     (if (i32.const 1)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (drop (i32.const 2))
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (drop (i32.const 2))
+          (unreachable)
+        )
       )
     )
     (if (i32.const 1)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (drop (i32.const 2))
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (drop (i32.const 2))
+          (unreachable)
+        )
       )
     )
   )
   (func $terminating-just-worth-it
     (if (i32.const 1)
-      (block
-        (nop) (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop)
+          (unreachable)
+        )
       )
     )
     (if (i32.const 2)
-      (block
-        (nop) (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop)
+          (unreachable)
+        )
       )
     )
     (if (i32.const 3)
-      (block
-        (nop) (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop) (nop)
+          (unreachable)
+        )
       )
     )
   )
   (func $terminating-not-worth-it
     (if (i32.const 1)
-      (block
-        (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop)
+          (unreachable)
+        )
       )
     )
     (if (i32.const 2)
-      (block
-        (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop)
+          (unreachable)
+        )
       )
     )
     (if (i32.const 3)
-      (block
-        (nop) (nop)
-        (unreachable)
+      (then
+        (block
+          (nop) (nop)
+          (unreachable)
+        )
       )
     )
   )
   (func $terminating-return
     (if (i32.const 1)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (return)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (return)
+        )
       )
     )
     (if (i32.const 2)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (return)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (return)
+        )
       )
     )
     (if (i32.const 3)
-      (block
-        (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
-        (return)
+      (then
+        (block
+          (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop) (nop)
+          (return)
+        )
       )
     )
   )
   (func $terminating-return-value (result i32)
     (if (i32.const 1)
-      (block
-        (nop)
-        (return (i32.add (i32.const 1) (i32.const 2)))
+      (then
+        (block
+          (nop)
+          (return (i32.add (i32.const 1) (i32.const 2)))
+        )
       )
     )
     (if (i32.const 2)
-      (block
-        (nop)
-        (return (i32.add (i32.const 1) (i32.const 2)))
+      (then
+        (block
+          (nop)
+          (return (i32.add (i32.const 1) (i32.const 2)))
+        )
       )
     )
     (if (i32.const 3)
-      (block
-        (nop)
-        (return (i32.add (i32.const 1) (i32.const 2)))
+      (then
+        (block
+          (nop)
+          (return (i32.add (i32.const 1) (i32.const 2)))
+        )
       )
     )
     (if (i32.const 3)
-      (block
-        (nop)
-        (return (i32.add (i32.const 111111111) (i32.const 2222222)))
+      (then
+        (block
+          (nop)
+          (return (i32.add (i32.const 111111111) (i32.const 2222222)))
+        )
       )
     )
     (return (i32.const 1234))
   )
   (func $terminating-fallthrough-value (result i32)
     (if (i32.const 1)
-      (block
-        (nop)
-        (return (i32.add (i32.const 1) (i32.const 2)))
+      (then
+        (block
+          (nop)
+          (return (i32.add (i32.const 1) (i32.const 2)))
+        )
       )
     )
     (if (i32.const 2)
-      (block
-        (nop)
-        (return (i32.add (i32.const 1) (i32.const 2)))
+      (then
+        (block
+          (nop)
+          (return (i32.add (i32.const 1) (i32.const 2)))
+        )
       )
     )
     (if (i32.const 3)
-      (block
-        (nop)
-        (return (i32.add (i32.const 1) (i32.const 2)))
+      (then
+        (block
+          (nop)
+          (return (i32.add (i32.const 1) (i32.const 2)))
+        )
       )
     )
     (if (i32.const 3)
-      (block
-        (nop)
-        (return (i32.add (i32.const 111111111) (i32.const 2222222)))
+      (then
+        (block
+          (nop)
+          (return (i32.add (i32.const 111111111) (i32.const 2222222)))
+        )
       )
     )
     (i32.const 1234)
   )
   (func $big-return (result i32)
-    (if (i32.const 1) (return (i32.add (i32.const 1) (i32.const 2))))
-    (if (i32.const 2) (return (i32.add (i32.const 1) (i32.const 2))))
-    (if (i32.const 3) (return (i32.add (i32.const 1) (i32.const 2))))
-    (if (i32.const 4) (return (i32.add (i32.const 1) (i32.const 2))))
-    (if (i32.const 5) (return (i32.add (i32.const 1) (i32.const 2))))
-    (if (i32.const 6) (return (i32.add (i32.const 1) (i32.const 2))))
+    (if (i32.const 1) (then (return (i32.add (i32.const 1) (i32.const 2)))))
+    (if (i32.const 2) (then (return (i32.add (i32.const 1) (i32.const 2)))))
+    (if (i32.const 3) (then (return (i32.add (i32.const 1) (i32.const 2)))))
+    (if (i32.const 4) (then (return (i32.add (i32.const 1) (i32.const 2)))))
+    (if (i32.const 5) (then (return (i32.add (i32.const 1) (i32.const 2)))))
+    (if (i32.const 6) (then (return (i32.add (i32.const 1) (i32.const 2)))))
     (unreachable)
   )
   (func $return-mix (result i32)
-    (if (i32.const 1) (return (i32.add (i32.const 1) (i32.const 2))))
-    (if (i32.const 2) (return (i32.add (i32.const 1) (i32.const 2))))
-    (if (i32.const 3) (return (i32.add (i32.const 1) (i32.const 2))))
-    (if (i32.const 4) (return (i32.add (i32.const 1) (i32.const 2))))
-    (if (i32.const 3) (return (i32.add (i32.const 1) (i32.const 234567))))
+    (if (i32.const 1) (then (return (i32.add (i32.const 1) (i32.const 2)))))
+    (if (i32.const 2) (then (return (i32.add (i32.const 1) (i32.const 2)))))
+    (if (i32.const 3) (then (return (i32.add (i32.const 1) (i32.const 2)))))
+    (if (i32.const 4) (then (return (i32.add (i32.const 1) (i32.const 2)))))
+    (if (i32.const 3) (then (return (i32.add (i32.const 1) (i32.const 234567)))))
     (return (i32.add (i32.const 1) (i32.const 2))) ;; on a block, and the toplevel in fact
   )
   (func $just-unreachable
@@ -887,42 +1127,56 @@
    (block $label$0
     (if
      (i32.const 0)
-     (block $label$1
-      (nop)
+     (then
+      (block $label$1
+       (nop)
+      )
      )
     )
     (if
      (i32.const 0)
-     (block $label$2
-      (nop)
+     (then
+      (block $label$2
+       (nop)
+      )
      )
-     (block $label$3
-      (nop)
+     (else
+      (block $label$3
+       (nop)
+      )
      )
     )
     (if
      (i32.const 0)
-     (block $label$4
-      (nop)
+     (then
+      (block $label$4
+       (nop)
+      )
      )
-     (block $label$5
-      (unreachable)
+     (else
+      (block $label$5
+       (unreachable)
+      )
      )
     )
     (nop)
     (drop
      (if (result i32) ;; we replace this if, must replace with same type!
       (unreachable)
-      (block $label$6 (result i32)
-       (i32.add
-        (i32.const 1)
-        (i32.const 2)
+      (then
+       (block $label$6 (result i32)
+        (i32.add
+         (i32.const 1)
+         (i32.const 2)
+        )
        )
       )
-      (block $label$7 (result i32)
-       (i32.add
-        (i32.const 1)
-        (i32.const 2)
+      (else
+       (block $label$7 (result i32)
+        (i32.add
+         (i32.const 1)
+         (i32.const 2)
+        )
        )
       )
      )
@@ -930,16 +1184,20 @@
     (drop
      (if (result i32)
       (i32.const 0)
-      (block $label$8 (result i32)
-       (i32.add
-        (i32.const 1)
-        (i32.const 2)
+      (then
+       (block $label$8 (result i32)
+        (i32.add
+         (i32.const 1)
+         (i32.const 2)
+        )
        )
       )
-      (block $label$9 (result i32)
-       (i32.add
-        (i32.const 1)
-        (i32.const 333333333)
+      (else
+       (block $label$9 (result i32)
+        (i32.add
+         (i32.const 1)
+         (i32.const 333333333)
+        )
        )
       )
      )
@@ -950,28 +1208,38 @@
     (block $out
       (block $x
         (if (i32.const 0)
-          (block
-            (if (i32.const 1)
-              (br $out)
+          (then
+            (block
+              (if (i32.const 1)
+                (then
+                  (br $out)
+                )
+              )
+              (drop (i32.const 1))
+              (drop (i32.const 2))
+              (br $x)
             )
-            (drop (i32.const 1))
-            (drop (i32.const 2))
-            (br $x)
           )
         )
         (if (i32.const 0)
-          (block
-            (if (i32.const 1)
-              (br $out)
+          (then
+            (block
+              (if (i32.const 1)
+                (then
+                  (br $out)
+                )
+              )
+              (drop (i32.const 1))
+              (drop (i32.const 2))
+              (br $x)
             )
-            (drop (i32.const 1))
-            (drop (i32.const 2))
-            (br $x)
           )
         )
         ;; no fallthrough, another thing to merge
         (if (i32.const 1)
-          (br $out)
+          (then
+            (br $out)
+          )
         )
         (drop (i32.const 1))
         (drop (i32.const 2))
@@ -984,28 +1252,38 @@
     (block $out
       (block $x
         (if (i32.const 0)
-          (block
-            (if (i32.const 1)
-              (br $out) ;; this br cannot be moved out of the $out block!
+          (then
+            (block
+              (if (i32.const 1)
+                (then
+                  (br $out) ;; this br cannot be moved out of the $out block!
+                )
+              )
+              (drop (i32.const 1))
+              (drop (i32.const 2))
+              (return)
             )
-            (drop (i32.const 1))
-            (drop (i32.const 2))
-            (return)
           )
         )
         (if (i32.const 0)
-          (block
-            (if (i32.const 1)
-              (br $out)
+          (then
+            (block
+              (if (i32.const 1)
+                (then
+                  (br $out)
+                )
+              )
+              (drop (i32.const 1))
+              (drop (i32.const 2))
+              (return)
             )
-            (drop (i32.const 1))
-            (drop (i32.const 2))
-            (return)
           )
         )
         ;; no fallthrough, another thing to merge
         (if (i32.const 1)
-          (br $out)
+          (then
+            (br $out)
+          )
         )
         (drop (i32.const 1))
         (drop (i32.const 2))
@@ -1019,28 +1297,38 @@
       (block $middle
         (block $x
           (if (i32.const 0)
-            (block
-              (if (i32.add (i32.const 0) (i32.const 1))
-                (br $middle)
+            (then
+              (block
+                (if (i32.add (i32.const 0) (i32.const 1))
+                  (then
+                    (br $middle)
+                  )
+                )
+                (drop (i32.const 1))
+                (drop (i32.const 2))
+                (return)
               )
-              (drop (i32.const 1))
-              (drop (i32.const 2))
-              (return)
             )
           )
           (if (i32.const 0)
-            (block
-              (if (i32.add (i32.const 0) (i32.const 1))
-                (br $middle)
+            (then
+              (block
+                (if (i32.add (i32.const 0) (i32.const 1))
+                  (then
+                    (br $middle)
+                  )
+                )
+                (drop (i32.const 1))
+                (drop (i32.const 2))
+                (return)
               )
-              (drop (i32.const 1))
-              (drop (i32.const 2))
-              (return)
             )
           )
           ;; no fallthrough, another thing to merge
           (if (i32.add (i32.const 0) (i32.const 1))
-            (br $middle)
+            (then
+              (br $middle)
+            )
           )
           (drop (i32.const 1))
           (drop (i32.const 2))
@@ -1055,40 +1343,50 @@
       (block $middle
         (block $x
           (if (i32.const 0)
-            (block
-              (if (i32.add (i32.const 0) (i32.const 1))
-                (br $middle) ;; this is dangerous - we branch to middle with is inside out, so we can't move this out of out
+            (then
+              (block
+                (if (i32.add (i32.const 0) (i32.const 1))
+                  (then
+                    (br $middle) ;; this is dangerous - we branch to middle with is inside out, so we can't move this out of out
+                  )
+                )
+                (drop (i32.const 1))
+                (drop (i32.const 2))
+                (drop (i32.const 3))
+                (drop (i32.const 4))
+                (drop (i32.const 1))
+                (drop (i32.const 2))
+                (drop (i32.const 3))
+                (drop (i32.const 4))
+                (br $out)
               )
-              (drop (i32.const 1))
-              (drop (i32.const 2))
-              (drop (i32.const 3))
-              (drop (i32.const 4))
-              (drop (i32.const 1))
-              (drop (i32.const 2))
-              (drop (i32.const 3))
-              (drop (i32.const 4))
-              (br $out)
             )
           )
           (if (i32.const 0)
-            (block
-              (if (i32.add (i32.const 0) (i32.const 1))
-                (br $middle)
+            (then
+              (block
+                (if (i32.add (i32.const 0) (i32.const 1))
+                  (then
+                    (br $middle)
+                  )
+                )
+                (drop (i32.const 1))
+                (drop (i32.const 2))
+                (drop (i32.const 3))
+                (drop (i32.const 4))
+                (drop (i32.const 1))
+                (drop (i32.const 2))
+                (drop (i32.const 3))
+                (drop (i32.const 4))
+                (br $out)
               )
-              (drop (i32.const 1))
-              (drop (i32.const 2))
-              (drop (i32.const 3))
-              (drop (i32.const 4))
-              (drop (i32.const 1))
-              (drop (i32.const 2))
-              (drop (i32.const 3))
-              (drop (i32.const 4))
-              (br $out)
             )
           )
           ;; no fallthrough, another thing to merge
           (if (i32.add (i32.const 0) (i32.const 1))
-            (br $middle)
+            (then
+              (br $middle)
+            )
           )
         )
       )
@@ -1100,28 +1398,38 @@
       (block $out
         (block $middle
           (if (i32.const 0)
-            (block
-              (if (i32.add (i32.const 0) (i32.const 1))
-                (br $x) ;; this is ok - we branch to x which is outside of out
+            (then
+              (block
+                (if (i32.add (i32.const 0) (i32.const 1))
+                  (then
+                    (br $x) ;; this is ok - we branch to x which is outside of out
+                  )
+                )
+                (drop (i32.const 1))
+                (drop (i32.const 2))
+                (br $out)
               )
-              (drop (i32.const 1))
-              (drop (i32.const 2))
-              (br $out)
             )
           )
           (if (i32.const 0)
-            (block
-              (if (i32.add (i32.const 0) (i32.const 1))
-                (br $x)
+            (then
+              (block
+                (if (i32.add (i32.const 0) (i32.const 1))
+                  (then
+                    (br $x)
+                  )
+                )
+                (drop (i32.const 1))
+                (drop (i32.const 2))
+                (br $out)
               )
-              (drop (i32.const 1))
-              (drop (i32.const 2))
-              (br $out)
             )
           )
           ;; no fallthrough, another thing to merge
           (if (i32.add (i32.const 0) (i32.const 1))
-            (br $x)
+            (then
+              (br $x)
+            )
           )
           (drop (i32.const 1))
           (drop (i32.const 2))
@@ -1137,33 +1445,43 @@
     (block $out
       (block $middle
         (if (i32.const 0)
-          (block
-            (block $x
-              (if (i32.add (i32.const 0) (i32.const 1))
-                (br $x) ;; this is ok - we branch to x which is nested in us
+          (then
+            (block
+              (block $x
+                (if (i32.add (i32.const 0) (i32.const 1))
+                  (then
+                    (br $x) ;; this is ok - we branch to x which is nested in us
+                  )
+                )
               )
+              (drop (i32.const 1))
+              (drop (i32.const 2))
+              (br $out)
             )
-            (drop (i32.const 1))
-            (drop (i32.const 2))
-            (br $out)
           )
         )
         (if (i32.const 0)
-          (block
-            (block $x
-              (if (i32.add (i32.const 0) (i32.const 1))
-                (br $x) ;; this is ok - we branch to x which is nested in us
+          (then
+            (block
+              (block $x
+                (if (i32.add (i32.const 0) (i32.const 1))
+                  (then
+                    (br $x) ;; this is ok - we branch to x which is nested in us
+                  )
+                )
               )
+              (drop (i32.const 1))
+              (drop (i32.const 2))
+              (br $out)
             )
-            (drop (i32.const 1))
-            (drop (i32.const 2))
-            (br $out)
           )
         )
         ;; no fallthrough, another thing to merge
         (block $x
           (if (i32.add (i32.const 0) (i32.const 1))
-            (br $x) ;; this is ok - we branch to x which is nested in us
+            (then
+              (br $x) ;; this is ok - we branch to x which is nested in us
+            )
           )
         )
         (drop (i32.const 1))
@@ -1176,18 +1494,26 @@
   (func $if-suffix (param $x i32) (result i32)
     (if
       (local.get $x)
-      (local.set $x (i32.const 1))
-      (block
-        (drop (call $if-suffix (i32.const -1)))
+      (then
         (local.set $x (i32.const 1))
+      )
+      (else
+        (block
+          (drop (call $if-suffix (i32.const -1)))
+          (local.set $x (i32.const 1))
+        )
       )
     )
     (if (result i32)
       (local.get $x)
-      (i32.const 2)
-      (block (result i32)
-        (drop (call $if-suffix (i32.const -2)))
+      (then
         (i32.const 2)
+      )
+      (else
+        (block (result i32)
+          (drop (call $if-suffix (i32.const -2)))
+          (i32.const 2)
+        )
       )
     )
   )

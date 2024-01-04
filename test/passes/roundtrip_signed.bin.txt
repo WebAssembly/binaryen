@@ -9,7 +9,9 @@
    (i32.eqz
     (global.get $global$0)
    )
-   (return)
+   (then
+    (return)
+   )
   )
   (global.set $global$0
    (i32.sub

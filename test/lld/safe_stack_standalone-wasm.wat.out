@@ -44,7 +44,9 @@
       (global.get $__stack_limit)
      )
     )
-    (unreachable)
+    (then
+     (unreachable)
+    )
    )
    (global.set $global$0
     (local.get $3)
@@ -81,7 +83,9 @@
       (global.get $__stack_limit)
      )
     )
-    (unreachable)
+    (then
+     (unreachable)
+    )
    )
    (global.set $global$0
     (local.get $4)
@@ -115,7 +119,9 @@
       (global.get $__stack_limit)
      )
     )
-    (unreachable)
+    (then
+     (unreachable)
+    )
    )
    (global.set $global$0
     (local.get $1)
@@ -151,7 +157,9 @@
       (global.get $__stack_limit)
      )
     )
-    (unreachable)
+    (then
+     (unreachable)
+    )
    )
    (global.set $global$0
     (local.get $2)

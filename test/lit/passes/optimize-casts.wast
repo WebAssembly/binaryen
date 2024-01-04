@@ -437,7 +437,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $x)
@@ -453,7 +455,9 @@
     ;; this atm.
     (if
       (i32.const 0)
-      (return)
+      (then
+        (return)
+      )
     )
     (drop
       (local.get $x)
@@ -1291,7 +1295,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.tee $1
   ;; CHECK-NEXT:      (ref.as_non_null
@@ -1322,16 +1326,18 @@
     )
     (if
       (i32.const 0)
-      (block
-        (drop
-          ;; The ref.as_non_null can be moved here because
-          ;; it is in the same block in the same arm of the
-          ;; if statement.
-          (local.get $x)
-        )
-        (drop
-          (ref.as_non_null
+      (then
+        (block
+          (drop
+            ;; The ref.as_non_null can be moved here because
+            ;; it is in the same block in the same arm of the
+            ;; if statement.
             (local.get $x)
+          )
+          (drop
+            (ref.as_non_null
+              (local.get $x)
+            )
           )
         )
       )

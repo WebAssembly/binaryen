@@ -24,7 +24,9 @@
   ;; CHECK:      (func $clinit-non-trivial_<once>_@Zoo (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $$class-initialized@Zoo)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $$class-initialized@Zoo
   ;; CHECK-NEXT:   (i32.const 1)
@@ -32,7 +34,9 @@
   ;; CHECK-NEXT: )
   (func $clinit-non-trivial_<once>_@Zoo
     (if (global.get $$class-initialized@Zoo)
-     (return)
+     (then
+      (return)
+     )
     )
     (global.set $$class-initialized@Zoo (i32.const 1))
   )

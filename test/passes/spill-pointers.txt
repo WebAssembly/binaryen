@@ -337,7 +337,7 @@
     )
     (if
      (i32.const 1)
-     (block
+     (then
       (local.set $2
        (i32.const 2)
       )
@@ -348,7 +348,7 @@
        (local.get $2)
       )
      )
-     (block
+     (else
       (local.set $3
        (i32.const 3)
       )
@@ -985,7 +985,7 @@
     )
     (if
      (i32.const 1)
-     (block
+     (then
       (local.set $2
        (i32.const 2)
       )
@@ -996,7 +996,7 @@
        (local.get $2)
       )
      )
-     (block
+     (else
       (local.set $3
        (i32.const 3)
       )

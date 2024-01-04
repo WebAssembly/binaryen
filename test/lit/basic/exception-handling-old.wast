@@ -1160,8 +1160,12 @@
   ;; CHECK-TEXT-NEXT:    (throw $e-i32
   ;; CHECK-TEXT-NEXT:     (if (result i32)
   ;; CHECK-TEXT-NEXT:      (pop i32)
-  ;; CHECK-TEXT-NEXT:      (i32.const 0)
-  ;; CHECK-TEXT-NEXT:      (i32.const 3)
+  ;; CHECK-TEXT-NEXT:      (then
+  ;; CHECK-TEXT-NEXT:       (i32.const 0)
+  ;; CHECK-TEXT-NEXT:      )
+  ;; CHECK-TEXT-NEXT:      (else
+  ;; CHECK-TEXT-NEXT:       (i32.const 3)
+  ;; CHECK-TEXT-NEXT:      )
   ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -1176,8 +1180,12 @@
   ;; CHECK-BIN-NEXT:    (throw $e-i32
   ;; CHECK-BIN-NEXT:     (if (result i32)
   ;; CHECK-BIN-NEXT:      (pop i32)
-  ;; CHECK-BIN-NEXT:      (i32.const 0)
-  ;; CHECK-BIN-NEXT:      (i32.const 3)
+  ;; CHECK-BIN-NEXT:      (then
+  ;; CHECK-BIN-NEXT:       (i32.const 0)
+  ;; CHECK-BIN-NEXT:      )
+  ;; CHECK-BIN-NEXT:      (else
+  ;; CHECK-BIN-NEXT:       (i32.const 3)
+  ;; CHECK-BIN-NEXT:      )
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
@@ -1191,8 +1199,12 @@
           (if (result i32)
             ;; pop is within an if condition, so this is OK.
             (pop i32)
-            (i32.const 0)
-            (i32.const 3)
+            (then
+              (i32.const 0)
+            )
+            (else
+              (i32.const 3)
+            )
           )
         )
       )
@@ -1764,8 +1776,12 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    (throw $tag$0
 ;; CHECK-BIN-NODEBUG-NEXT:     (if (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:      (pop i32)
-;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 0)
-;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 3)
+;; CHECK-BIN-NODEBUG-NEXT:      (then
+;; CHECK-BIN-NODEBUG-NEXT:       (i32.const 0)
+;; CHECK-BIN-NODEBUG-NEXT:      )
+;; CHECK-BIN-NODEBUG-NEXT:      (else
+;; CHECK-BIN-NODEBUG-NEXT:       (i32.const 3)
+;; CHECK-BIN-NODEBUG-NEXT:      )
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )

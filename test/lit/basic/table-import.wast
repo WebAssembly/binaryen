@@ -14,13 +14,16 @@
   ;; CHECK-BIN:      (type $0 (func))
   ;; CHECK-BIN-NODEBUG:      (type $0 (func))
   (type $0 (func))
-  ;; CHECK-TEXT:      (import "env" "table" (table $timport$0 1 1 funcref))
-  ;; CHECK-BIN:      (import "env" "table" (table $timport$0 1 1 funcref))
-  ;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $timport$0 1 1 funcref))
   (import "env" "table" (table 1 1 funcref))
   (elem (i32.const 0) $foo)
+  ;; CHECK-TEXT:      (import "env" "table" (table $timport$0 1 1 funcref))
+
   ;; CHECK-TEXT:      (memory $0 0)
+  ;; CHECK-BIN:      (import "env" "table" (table $timport$0 1 1 funcref))
+
   ;; CHECK-BIN:      (memory $0 0)
+  ;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $timport$0 1 1 funcref))
+
   ;; CHECK-BIN-NODEBUG:      (memory $0 0)
   (memory $0 0)
 

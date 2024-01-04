@@ -81,13 +81,13 @@
   )
 
   (func (export "as-if-cond") (result i32)
-    (if i32 (unreachable) (i32.const 0) (i32.const 1))
+    (if i32 (unreachable) (then (i32.const 0) )(else (i32.const 1)))
   )
   (func (export "as-if-then") (param i32 i32) (result i32)
-    (if i32 (local.get 0) (unreachable) (local.get 1))
+    (if i32 (local.get 0) (then (unreachable) )(else (local.get 1)))
   )
   (func (export "as-if-else") (param i32 i32) (result i32)
-    (if i32 (local.get 0) (local.get 1) (unreachable))
+    (if i32 (local.get 0) (then (local.get 1) )(else (unreachable)))
   )
 
   (func (export "as-select-first") (param i32 i32) (result i32)

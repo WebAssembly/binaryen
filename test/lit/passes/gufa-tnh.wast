@@ -465,7 +465,9 @@
   ;; CHECK-NEXT:  (local $local (ref null $A))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref $B)
@@ -478,7 +480,9 @@
     ;; Control flow before the cast *does* stop us from optimizing.
     (if
       (i32.const 0)
-      (return)
+      (then
+        (return)
+      )
     )
     (drop
       (ref.cast (ref $B)
@@ -689,7 +693,9 @@
   ;; CHECK-NEXT:   (block (result (ref $B))
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:     (return)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (return)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.cast (ref $B)
   ;; CHECK-NEXT:     (local.get $any)
@@ -717,7 +723,9 @@
       (block (result (ref $A))
         (if
           (i32.const 0)
-          (return)
+          (then
+            (return)
+          )
         )
         (ref.cast (ref $A)
           (local.get $any)
@@ -788,7 +796,9 @@
   ;; CHECK-NEXT:   (block (result (ref $A))
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:     (return)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (return)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.cast (ref $A)
   ;; CHECK-NEXT:     (local.get $any)
@@ -814,7 +824,9 @@
       (block (result (ref $A))
         (if
           (i32.const 0)
-          (return)
+          (then
+            (return)
+          )
         )
         (ref.cast (ref $A)
           (local.get $any)
@@ -976,9 +988,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (if (result (ref $A))
   ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:    (return)
-  ;; CHECK-NEXT:    (ref.cast (ref $A)
-  ;; CHECK-NEXT:     (local.get $any)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (return)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (ref.cast (ref $A)
+  ;; CHECK-NEXT:      (local.get $any)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (ref.cast (ref $B)
@@ -997,9 +1013,13 @@
       ;; very last cast.
       (if (result (ref $A))
         (i32.const 0)
-        (return)
-        (ref.cast (ref $A)
-          (local.get $any)
+        (then
+          (return)
+        )
+        (else
+          (ref.cast (ref $A)
+            (local.get $any)
+          )
         )
       )
       (ref.cast (ref $A)
@@ -1803,7 +1823,7 @@
       (i32.const 3)
     )
     (drop
-      (array.len $B
+      (array.len
         (local.get $array.len)
       )
     )

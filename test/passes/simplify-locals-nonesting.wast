@@ -113,69 +113,73 @@
    )
    (if
     (local.get $8)
-    (block
-     (block $block
-      (local.set $9
-       (local.get $a)
-      )
-      (local.set $10
-       (local.get $x)
-      )
-      (local.set $11
-       (i64.eq
-        (local.get $9)
-        (local.get $10)
+    (then
+     (block
+      (block $block
+       (local.set $9
+        (local.get $a)
        )
-      )
-      (local.set $i
-       (local.get $11)
-      )
-      (nop)
-      (local.set $12
-       (local.get $a)
-      )
-      (local.set $13
-       (local.get $y)
-      )
-      (local.set $14
-       (i64.ne
-        (local.get $12)
-        (local.get $13)
+       (local.set $10
+        (local.get $x)
        )
-      )
-      (local.set $j
-       (local.get $14)
-      )
-      (nop)
-      (local.set $15
-       (local.get $i)
-      )
-      (local.set $16
-       (local.get $j)
-      )
-      (local.set $17
-       (i32.and
-        (local.get $15)
-        (local.get $16)
+       (local.set $11
+        (i64.eq
+         (local.get $9)
+         (local.get $10)
+        )
        )
-      )
-      (local.set $r
-       (local.get $17)
-      )
-      (nop)
-      (local.set $18
-       (local.get $r)
-      )
-      (return
-       (local.get $18)
+       (local.set $i
+        (local.get $11)
+       )
+       (nop)
+       (local.set $12
+        (local.get $a)
+       )
+       (local.set $13
+        (local.get $y)
+       )
+       (local.set $14
+        (i64.ne
+         (local.get $12)
+         (local.get $13)
+        )
+       )
+       (local.set $j
+        (local.get $14)
+       )
+       (nop)
+       (local.set $15
+        (local.get $i)
+       )
+       (local.set $16
+        (local.get $j)
+       )
+       (local.set $17
+        (i32.and
+         (local.get $15)
+         (local.get $16)
+        )
+       )
+       (local.set $r
+        (local.get $17)
+       )
+       (nop)
+       (local.set $18
+        (local.get $r)
+       )
+       (return
+        (local.get $18)
+       )
+       (unreachable)
       )
       (unreachable)
      )
-     (unreachable)
     )
-    (block
-     (unreachable)
-     (unreachable)
+    (else
+     (block
+      (unreachable)
+      (unreachable)
+     )
     )
    )
   )
@@ -205,35 +209,39 @@
     )
     (if
      (local.get $2)
-     (block
-      (local.set $3
-       (local.get $x)
-      )
-      (local.set $4
-       (i32.add
-        (local.get $3)
-        (i32.const 1)
+     (then
+      (block
+       (local.set $3
+        (local.get $x)
        )
+       (local.set $4
+        (i32.add
+         (local.get $3)
+         (i32.const 1)
+        )
+       )
+       (local.set $x
+        (local.get $4)
+       )
+       (nop)
       )
-      (local.set $x
-       (local.get $4)
-      )
-      (nop)
      )
-     (block
-      (local.set $5
-       (local.get $x)
-      )
-      (local.set $6
-       (i32.add
-        (local.get $5)
-        (i32.const 2)
+     (else
+      (block
+       (local.set $5
+        (local.get $x)
        )
+       (local.set $6
+        (i32.add
+         (local.get $5)
+         (i32.const 2)
+        )
+       )
+       (local.set $x
+        (local.get $6)
+       )
+       (nop)
       )
-      (local.set $x
-       (local.get $6)
-      )
-      (nop)
      )
     )
    )

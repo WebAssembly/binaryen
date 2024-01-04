@@ -33,49 +33,51 @@
     ;; code offset: 0xd
     (i32.const 55)
    )
-   ;; code offset: 0x12
-   (loop $label$2
-    ;; code offset: 0x2e
-    (br_if $label$2
-     ;; code offset: 0x2d
-     (i32.ne
-      ;; code offset: 0x2a
-      (i32.rem_s
-       ;; code offset: 0x25
-       (local.tee $0
-        ;; code offset: 0x24
-        (i32.add
-         ;; code offset: 0x21
+   (then
+    ;; code offset: 0x12
+    (loop $label$2
+     ;; code offset: 0x2e
+     (br_if $label$2
+      ;; code offset: 0x2d
+      (i32.ne
+       ;; code offset: 0x2a
+       (i32.rem_s
+        ;; code offset: 0x25
+        (local.tee $0
+         ;; code offset: 0x24
          (i32.add
-          ;; code offset: 0x1b
-          (i32.mul
-           ;; code offset: 0x18
+          ;; code offset: 0x21
+          (i32.add
+           ;; code offset: 0x1b
            (i32.mul
-            ;; code offset: 0x14
-            (local.get $0)
-            ;; code offset: 0x16
+            ;; code offset: 0x18
+            (i32.mul
+             ;; code offset: 0x14
+             (local.get $0)
+             ;; code offset: 0x16
+             (local.get $0)
+            )
+            ;; code offset: 0x19
             (local.get $0)
            )
-           ;; code offset: 0x19
-           (local.get $0)
+           ;; code offset: 0x20
+           (i32.div_s
+            ;; code offset: 0x1c
+            (local.get $0)
+            ;; code offset: 0x1e
+            (i32.const -2)
+           )
           )
-          ;; code offset: 0x20
-          (i32.div_s
-           ;; code offset: 0x1c
-           (local.get $0)
-           ;; code offset: 0x1e
-           (i32.const -2)
-          )
+          ;; code offset: 0x22
+          (i32.const 13)
          )
-         ;; code offset: 0x22
-         (i32.const 13)
         )
+        ;; code offset: 0x27
+        (i32.const 120)
        )
-       ;; code offset: 0x27
-       (i32.const 120)
+       ;; code offset: 0x2b
+       (i32.const 55)
       )
-      ;; code offset: 0x2b
-      (i32.const 55)
      )
     )
    )
@@ -163,49 +165,51 @@
     ;; code offset: 0xd
     (i32.const 55)
    )
-   ;; code offset: 0x12
-   (loop $label$2
-    ;; code offset: 0x2e
-    (br_if $label$2
-     ;; code offset: 0x2d
-     (i32.ne
-      ;; code offset: 0x2a
-      (i32.rem_s
-       ;; code offset: 0x25
-       (local.tee $0
-        ;; code offset: 0x24
-        (i32.add
-         ;; code offset: 0x21
+   (then
+    ;; code offset: 0x12
+    (loop $label$2
+     ;; code offset: 0x2e
+     (br_if $label$2
+      ;; code offset: 0x2d
+      (i32.ne
+       ;; code offset: 0x2a
+       (i32.rem_s
+        ;; code offset: 0x25
+        (local.tee $0
+         ;; code offset: 0x24
          (i32.add
-          ;; code offset: 0x1b
-          (i32.mul
-           ;; code offset: 0x18
+          ;; code offset: 0x21
+          (i32.add
+           ;; code offset: 0x1b
            (i32.mul
-            ;; code offset: 0x14
-            (local.get $0)
-            ;; code offset: 0x16
+            ;; code offset: 0x18
+            (i32.mul
+             ;; code offset: 0x14
+             (local.get $0)
+             ;; code offset: 0x16
+             (local.get $0)
+            )
+            ;; code offset: 0x19
             (local.get $0)
            )
-           ;; code offset: 0x19
-           (local.get $0)
+           ;; code offset: 0x20
+           (i32.div_s
+            ;; code offset: 0x1c
+            (local.get $0)
+            ;; code offset: 0x1e
+            (i32.const -2)
+           )
           )
-          ;; code offset: 0x20
-          (i32.div_s
-           ;; code offset: 0x1c
-           (local.get $0)
-           ;; code offset: 0x1e
-           (i32.const -2)
-          )
+          ;; code offset: 0x22
+          (i32.const 13)
          )
-         ;; code offset: 0x22
-         (i32.const 13)
         )
+        ;; code offset: 0x27
+        (i32.const 120)
        )
-       ;; code offset: 0x27
-       (i32.const 120)
+       ;; code offset: 0x2b
+       (i32.const 55)
       )
-      ;; code offset: 0x2b
-      (i32.const 55)
      )
     )
    )

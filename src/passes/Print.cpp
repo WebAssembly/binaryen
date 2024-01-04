@@ -306,7 +306,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   // loop, if, and try can contain implicit blocks. But they are not needed to
   // be printed in some cases.
-  void maybePrintImplicitBlock(Expression* curr, bool allowMultipleInsts);
+  void maybePrintImplicitBlock(Expression* curr);
 
   // Generic visitor, overridden only when necessary.
   void visitExpression(Expression* curr);
@@ -2018,7 +2018,7 @@ struct PrintExpressionContents
     printMedium(o, "rethrow ");
     printName(curr->target, o);
   }
-  void visitThrowRef(ThrowRef* curr) { printMedium(o, "throw_ref "); }
+  void visitThrowRef(ThrowRef* curr) { printMedium(o, "throw_ref"); }
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
   void visitPop(Pop* curr) {
@@ -2563,11 +2563,9 @@ void PrintSExpression::printFullLine(Expression* expression) {
   o << maybeNewLine;
 }
 
-void PrintSExpression::maybePrintImplicitBlock(Expression* curr,
-                                               bool allowMultipleInsts) {
+void PrintSExpression::maybePrintImplicitBlock(Expression* curr) {
   auto block = curr->dynCast<Block>();
-  if (!full && block && block->name.isNull() &&
-      (allowMultipleInsts || block->list.size() == 1)) {
+  if (!full && block && block->name.isNull()) {
     for (auto expression : block->list) {
       printFullLine(expression);
     }
@@ -2657,13 +2655,23 @@ void PrintSExpression::visitIf(If* curr) {
   printExpressionContents(curr);
   incIndent();
   printFullLine(curr->condition);
-  maybePrintImplicitBlock(curr->ifTrue, false);
+  doIndent(o, indent);
+  o << "(then";
+  incIndent();
+  maybePrintImplicitBlock(curr->ifTrue);
+  decIndent();
+  o << maybeNewLine;
   if (curr->ifFalse) {
+    doIndent(o, indent);
+    o << "(else";
+    incIndent();
     // Note: debug info here is not used as LLVM does not emit ifs, and since
     // LLVM is the main source of DWARF, effectively we never encounter ifs
     // with DWARF.
     printDebugDelimiterLocation(curr, BinaryLocations::Else);
-    maybePrintImplicitBlock(curr->ifFalse, false);
+    maybePrintImplicitBlock(curr->ifFalse);
+    decIndent();
+    o << maybeNewLine;
   }
   decIndent();
   if (full) {
@@ -2677,7 +2685,7 @@ void PrintSExpression::visitLoop(Loop* curr) {
   o << '(';
   printExpressionContents(curr);
   incIndent();
-  maybePrintImplicitBlock(curr->body, true);
+  maybePrintImplicitBlock(curr->body);
   decIndent();
   if (full) {
     o << " ;; end loop";
@@ -2722,7 +2730,7 @@ void PrintSExpression::visitTry(Try* curr) {
   o << '(';
   printMedium(o, "do");
   incIndent();
-  maybePrintImplicitBlock(curr->body, true);
+  maybePrintImplicitBlock(curr->body);
   decIndent();
   o << "\n";
   for (size_t i = 0; i < curr->catchTags.size(); i++) {
@@ -2732,7 +2740,7 @@ void PrintSExpression::visitTry(Try* curr) {
     printMedium(o, "catch ");
     printName(curr->catchTags[i], o);
     incIndent();
-    maybePrintImplicitBlock(curr->catchBodies[i], true);
+    maybePrintImplicitBlock(curr->catchBodies[i]);
     decIndent();
     o << "\n";
   }
@@ -2742,7 +2750,7 @@ void PrintSExpression::visitTry(Try* curr) {
     o << '(';
     printMedium(o, "catch_all");
     incIndent();
-    maybePrintImplicitBlock(curr->catchBodies.back(), true);
+    maybePrintImplicitBlock(curr->catchBodies.back());
     decIndent();
     o << "\n";
   }
@@ -2770,7 +2778,7 @@ void PrintSExpression::visitTryTable(TryTable* curr) {
   o << '(';
   printExpressionContents(curr);
   incIndent();
-  maybePrintImplicitBlock(curr->body, true);
+  maybePrintImplicitBlock(curr->body);
   decIndent();
   if (full) {
     o << " ;; end if";
@@ -3148,10 +3156,6 @@ void PrintSExpression::printMemoryHeader(Memory* curr) {
   o << '(';
   printMedium(o, "memory") << ' ';
   printName(curr->name, o) << ' ';
-  if (curr->shared) {
-    o << '(';
-    printMedium(o, "shared ");
-  }
   if (curr->is64()) {
     o << "i64 ";
   }
@@ -3160,7 +3164,7 @@ void PrintSExpression::printMemoryHeader(Memory* curr) {
     o << ' ' << curr->max;
   }
   if (curr->shared) {
-    o << ")";
+    printMedium(o, " shared");
   }
   o << ")";
 }

@@ -52,23 +52,35 @@
   (func $if-arms-subtype-fold (result anyref)
     (if (result anyref)
       (i32.const 0)
-      (ref.null eq)
-      (ref.null eq)
+      (then
+        (ref.null eq)
+      )
+      (else
+        (ref.null eq)
+      )
     )
   )
   ;; 2. if its `ifTrue` and `ifFalse` arms are not identical (cannot fold)
   ;; CHECK:      (func $if-arms-subtype-nofold (type $27) (param $i31ref i31ref) (result anyref)
   ;; CHECK-NEXT:  (if (result anyref)
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (ref.null none)
-  ;; CHECK-NEXT:   (local.get $i31ref)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (local.get $i31ref)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $if-arms-subtype-nofold (param $i31ref i31ref) (result anyref)
     (if (result anyref)
       (i32.const 0)
-      (ref.null none)
-      (local.get $i31ref)
+      (then
+        (ref.null none)
+      )
+      (else
+        (local.get $i31ref)
+      )
     )
   )
 
@@ -366,7 +378,7 @@
       )
     )
     (drop
-      (array.len $array
+      (array.len
         (ref.as_non_null
           (local.get $y)
         )
@@ -669,8 +681,12 @@
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (if (result (ref null $struct))
   ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (local.get $y)
-  ;; CHECK-NEXT:     (local.get $z)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (local.get $z)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -679,8 +695,12 @@
     (drop
       (if (result i32)
         (local.get $x)
-        (ref.is_null (local.get $y))
-        (ref.is_null (local.get $z))
+        (then
+          (ref.is_null (local.get $y))
+        )
+        (else
+          (ref.is_null (local.get $z))
+        )
       )
     )
   )
@@ -741,8 +761,12 @@
   ;; CHECK-NEXT:   (struct.get_u $struct $i8
   ;; CHECK-NEXT:    (if (result (ref null $struct))
   ;; CHECK-NEXT:     (local.get $z)
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (local.get $y)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -753,11 +777,15 @@
         (local.get $z)
         ;; the arms are equal and have side effects, but that is ok with an if
         ;; which only executes one side anyhow
-        (struct.get_u $struct 0
-          (local.get $x)
+        (then
+          (struct.get_u $struct 0
+            (local.get $x)
+          )
         )
-        (struct.get_u $struct 0
-          (local.get $y)
+        (else
+          (struct.get_u $struct 0
+            (local.get $y)
+          )
         )
       )
     )
@@ -1058,11 +1086,15 @@
   ;; CHECK:      (func $hoist-LUB-danger (type $33) (param $x i32) (param $b (ref $B)) (param $c (ref $C)) (result i32)
   ;; CHECK-NEXT:  (if (result i32)
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (struct.get $B 1
-  ;; CHECK-NEXT:    (local.get $b)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (struct.get $B 1
+  ;; CHECK-NEXT:     (local.get $b)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (struct.get $C 1
-  ;; CHECK-NEXT:    (local.get $c)
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (struct.get $C 1
+  ;; CHECK-NEXT:     (local.get $c)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1077,11 +1109,15 @@
     ;; nominal typing.
     (if (result i32)
       (local.get $x)
-      (struct.get $B 1
-        (local.get $b)
+      (then
+        (struct.get $B 1
+          (local.get $b)
+        )
       )
-      (struct.get $C 1
-        (local.get $c)
+      (else
+        (struct.get $C 1
+          (local.get $c)
+        )
       )
     )
   )
@@ -3097,8 +3133,12 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (if (result i32)
   ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:     (br $block)
-  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $block)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:    (i32.const 42)
@@ -3117,8 +3157,12 @@
         )
         (if (result i32)
           (i32.const 1)
-          (br $block)
-          (i32.const 10)
+          (then
+            (br $block)
+          )
+          (else
+            (i32.const 10)
+          )
         )
         ;; There are no tricky effects after this, so this cast can be removed.
         (ref.as_non_null

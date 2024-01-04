@@ -4788,7 +4788,7 @@ file_names[  4]:
       ;; code offset: 0x4a
       (i32.const 0)
      )
-     (block
+     (then
       ;; code offset: 0x4f
       (loop $label$4
        ;; code offset: 0x5b
@@ -4899,52 +4899,54 @@ file_names[  4]:
          ;; code offset: 0x9c
          (i32.const 1)
         )
-        ;; code offset: 0xa1
-        (loop $label$7
-         ;; code offset: 0xb2
-         (i32.store
-          ;; code offset: 0xaf
-          (i32.add
-           ;; code offset: 0xa3
-           (local.get $9)
-           ;; code offset: 0xae
-           (i32.shl
-            ;; code offset: 0xaa
-            (local.tee $1
-             ;; code offset: 0xa9
-             (i32.sub
-              ;; code offset: 0xa5
-              (local.get $2)
-              ;; code offset: 0xa7
-              (i32.const 1)
+        (then
+         ;; code offset: 0xa1
+         (loop $label$7
+          ;; code offset: 0xb2
+          (i32.store
+           ;; code offset: 0xaf
+           (i32.add
+            ;; code offset: 0xa3
+            (local.get $9)
+            ;; code offset: 0xae
+            (i32.shl
+             ;; code offset: 0xaa
+             (local.tee $1
+              ;; code offset: 0xa9
+              (i32.sub
+               ;; code offset: 0xa5
+               (local.get $2)
+               ;; code offset: 0xa7
+               (i32.const 1)
+              )
              )
+             ;; code offset: 0xac
+             (i32.const 2)
             )
-            ;; code offset: 0xac
+           )
+           ;; code offset: 0xb0
+           (local.get $2)
+          )
+          ;; code offset: 0xba
+          (local.set $0
+           ;; code offset: 0xb9
+           (i32.gt_s
+            ;; code offset: 0xb5
+            (local.get $2)
+            ;; code offset: 0xb7
             (i32.const 2)
            )
           )
-          ;; code offset: 0xb0
-          (local.get $2)
-         )
-         ;; code offset: 0xba
-         (local.set $0
-          ;; code offset: 0xb9
-          (i32.gt_s
-           ;; code offset: 0xb5
-           (local.get $2)
-           ;; code offset: 0xb7
-           (i32.const 2)
+          ;; code offset: 0xbe
+          (local.set $2
+           ;; code offset: 0xbc
+           (local.get $1)
           )
-         )
-         ;; code offset: 0xbe
-         (local.set $2
-          ;; code offset: 0xbc
-          (local.get $1)
-         )
-         ;; code offset: 0xc2
-         (br_if $label$7
-          ;; code offset: 0xc0
-          (local.get $0)
+          ;; code offset: 0xc2
+          (br_if $label$7
+           ;; code offset: 0xc0
+           (local.get $0)
+          )
          )
         )
        )
@@ -5016,7 +5018,7 @@ file_names[  4]:
            ;; code offset: 0xf7
            (i32.const 3)
           )
-          (block
+          (then
            ;; code offset: 0x101
            (local.set $1
             ;; code offset: 0x100
@@ -5207,7 +5209,7 @@ file_names[  4]:
           ;; code offset: 0x186
           (i32.const 0)
          )
-         (block
+         (then
           ;; code offset: 0x18b
           (loop $label$14
            ;; code offset: 0x1a5
@@ -5419,52 +5421,54 @@ file_names[  4]:
       ;; code offset: 0x225
       (i32.const 2)
      )
-     ;; code offset: 0x22a
-     (loop $label$17
-      ;; code offset: 0x23b
-      (i32.store
-       ;; code offset: 0x238
-       (i32.add
-        ;; code offset: 0x22c
-        (local.get $9)
-        ;; code offset: 0x237
-        (i32.shl
-         ;; code offset: 0x233
-         (local.tee $1
-          ;; code offset: 0x232
-          (i32.sub
-           ;; code offset: 0x22e
-           (local.get $2)
-           ;; code offset: 0x230
-           (i32.const 1)
+     (then
+      ;; code offset: 0x22a
+      (loop $label$17
+       ;; code offset: 0x23b
+       (i32.store
+        ;; code offset: 0x238
+        (i32.add
+         ;; code offset: 0x22c
+         (local.get $9)
+         ;; code offset: 0x237
+         (i32.shl
+          ;; code offset: 0x233
+          (local.tee $1
+           ;; code offset: 0x232
+           (i32.sub
+            ;; code offset: 0x22e
+            (local.get $2)
+            ;; code offset: 0x230
+            (i32.const 1)
+           )
           )
+          ;; code offset: 0x235
+          (i32.const 2)
          )
-         ;; code offset: 0x235
+        )
+        ;; code offset: 0x239
+        (local.get $2)
+       )
+       ;; code offset: 0x243
+       (local.set $0
+        ;; code offset: 0x242
+        (i32.gt_s
+         ;; code offset: 0x23e
+         (local.get $2)
+         ;; code offset: 0x240
          (i32.const 2)
         )
        )
-       ;; code offset: 0x239
-       (local.get $2)
-      )
-      ;; code offset: 0x243
-      (local.set $0
-       ;; code offset: 0x242
-       (i32.gt_s
-        ;; code offset: 0x23e
-        (local.get $2)
-        ;; code offset: 0x240
-        (i32.const 2)
+       ;; code offset: 0x247
+       (local.set $2
+        ;; code offset: 0x245
+        (local.get $1)
        )
-      )
-      ;; code offset: 0x247
-      (local.set $2
-       ;; code offset: 0x245
-       (local.get $1)
-      )
-      ;; code offset: 0x24b
-      (br_if $label$17
-       ;; code offset: 0x249
-       (local.get $0)
+       ;; code offset: 0x24b
+       (br_if $label$17
+        ;; code offset: 0x249
+        (local.get $0)
+       )
       )
      )
     )
@@ -5526,7 +5530,7 @@ file_names[  4]:
         ;; code offset: 0x278
         (i32.const 3)
        )
-       (block
+       (then
         ;; code offset: 0x282
         (local.set $1
          ;; code offset: 0x281
@@ -5717,7 +5721,7 @@ file_names[  4]:
        ;; code offset: 0x307
        (i32.const 0)
       )
-      (block
+      (then
        ;; code offset: 0x30c
        (loop $label$24
         ;; code offset: 0x326
@@ -5916,23 +5920,25 @@ file_names[  4]:
       ;; code offset: 0x3aa
       (i32.const 2)
      )
-     ;; code offset: 0x3bb
-     (br_if $label$2
-      ;; code offset: 0x3ba
-      (i32.gt_s
-       ;; code offset: 0x3b6
-       (local.tee $3
-        ;; code offset: 0x3b4
-        (call $atoi
-         ;; code offset: 0x3b1
-         (i32.load offset=4
-          ;; code offset: 0x3af
-          (local.get $1)
+     (then
+      ;; code offset: 0x3bb
+      (br_if $label$2
+       ;; code offset: 0x3ba
+       (i32.gt_s
+        ;; code offset: 0x3b6
+        (local.tee $3
+         ;; code offset: 0x3b4
+         (call $atoi
+          ;; code offset: 0x3b1
+          (i32.load offset=4
+           ;; code offset: 0x3af
+           (local.get $1)
+          )
          )
         )
+        ;; code offset: 0x3b8
+        (i32.const 0)
        )
-       ;; code offset: 0x3b8
-       (i32.const 0)
       )
      )
     )
@@ -5961,7 +5967,7 @@ file_names[  4]:
      ;; code offset: 0x3cd
      (i32.const 1)
     )
-    (block
+    (then
      ;; code offset: 0x3d7
      (local.set $2
       ;; code offset: 0x3d6
@@ -6079,7 +6085,7 @@ file_names[  4]:
         ;; code offset: 0x42b
         (i32.const 0)
        )
-       (block
+       (then
         ;; code offset: 0x430
         (loop $label$10
          ;; code offset: 0x43c
@@ -6230,52 +6236,54 @@ file_names[  4]:
         ;; code offset: 0x49c
         (i32.const 1)
        )
-       ;; code offset: 0x4a1
-       (loop $label$14
-        ;; code offset: 0x4b2
-        (i32.store
-         ;; code offset: 0x4af
-         (i32.add
-          ;; code offset: 0x4a3
-          (local.get $5)
-          ;; code offset: 0x4ae
-          (i32.shl
-           ;; code offset: 0x4aa
-           (local.tee $0
-            ;; code offset: 0x4a9
-            (i32.sub
-             ;; code offset: 0x4a5
-             (local.get $2)
-             ;; code offset: 0x4a7
-             (i32.const 1)
+       (then
+        ;; code offset: 0x4a1
+        (loop $label$14
+         ;; code offset: 0x4b2
+         (i32.store
+          ;; code offset: 0x4af
+          (i32.add
+           ;; code offset: 0x4a3
+           (local.get $5)
+           ;; code offset: 0x4ae
+           (i32.shl
+            ;; code offset: 0x4aa
+            (local.tee $0
+             ;; code offset: 0x4a9
+             (i32.sub
+              ;; code offset: 0x4a5
+              (local.get $2)
+              ;; code offset: 0x4a7
+              (i32.const 1)
+             )
             )
+            ;; code offset: 0x4ac
+            (i32.const 2)
            )
-           ;; code offset: 0x4ac
+          )
+          ;; code offset: 0x4b0
+          (local.get $2)
+         )
+         ;; code offset: 0x4ba
+         (local.set $7
+          ;; code offset: 0x4b9
+          (i32.gt_s
+           ;; code offset: 0x4b5
+           (local.get $2)
+           ;; code offset: 0x4b7
            (i32.const 2)
           )
          )
-         ;; code offset: 0x4b0
-         (local.get $2)
-        )
-        ;; code offset: 0x4ba
-        (local.set $7
-         ;; code offset: 0x4b9
-         (i32.gt_s
-          ;; code offset: 0x4b5
-          (local.get $2)
-          ;; code offset: 0x4b7
-          (i32.const 2)
+         ;; code offset: 0x4be
+         (local.set $2
+          ;; code offset: 0x4bc
+          (local.get $0)
          )
-        )
-        ;; code offset: 0x4be
-        (local.set $2
-         ;; code offset: 0x4bc
-         (local.get $0)
-        )
-        ;; code offset: 0x4c2
-        (br_if $label$14
-         ;; code offset: 0x4c0
-         (local.get $7)
+         ;; code offset: 0x4c2
+         (br_if $label$14
+          ;; code offset: 0x4c0
+          (local.get $7)
+         )
         )
        )
       )
@@ -6323,7 +6331,7 @@ file_names[  4]:
          ;; code offset: 0x4e3
          (i32.const 0)
         )
-        (block
+        (then
          ;; code offset: 0x4e8
          (loop $label$17
           ;; code offset: 0x502
@@ -6439,7 +6447,7 @@ file_names[  4]:
          ;; code offset: 0x538
          (i32.const 1)
         )
-        (block
+        (then
          ;; code offset: 0x547
          (br_if $label$15
           ;; code offset: 0x546
@@ -6491,52 +6499,54 @@ file_names[  4]:
        ;; code offset: 0x55e
        (i32.const 1)
       )
-      ;; code offset: 0x563
-      (loop $label$21
-       ;; code offset: 0x574
-       (i32.store
-        ;; code offset: 0x571
-        (i32.add
-         ;; code offset: 0x565
-         (local.get $5)
-         ;; code offset: 0x570
-         (i32.shl
-          ;; code offset: 0x56c
-          (local.tee $0
-           ;; code offset: 0x56b
-           (i32.sub
-            ;; code offset: 0x567
-            (local.get $2)
-            ;; code offset: 0x569
-            (i32.const 1)
+      (then
+       ;; code offset: 0x563
+       (loop $label$21
+        ;; code offset: 0x574
+        (i32.store
+         ;; code offset: 0x571
+         (i32.add
+          ;; code offset: 0x565
+          (local.get $5)
+          ;; code offset: 0x570
+          (i32.shl
+           ;; code offset: 0x56c
+           (local.tee $0
+            ;; code offset: 0x56b
+            (i32.sub
+             ;; code offset: 0x567
+             (local.get $2)
+             ;; code offset: 0x569
+             (i32.const 1)
+            )
            )
+           ;; code offset: 0x56e
+           (i32.const 2)
           )
-          ;; code offset: 0x56e
+         )
+         ;; code offset: 0x572
+         (local.get $2)
+        )
+        ;; code offset: 0x57c
+        (local.set $7
+         ;; code offset: 0x57b
+         (i32.gt_s
+          ;; code offset: 0x577
+          (local.get $2)
+          ;; code offset: 0x579
           (i32.const 2)
          )
         )
-        ;; code offset: 0x572
-        (local.get $2)
-       )
-       ;; code offset: 0x57c
-       (local.set $7
-        ;; code offset: 0x57b
-        (i32.gt_s
-         ;; code offset: 0x577
-         (local.get $2)
-         ;; code offset: 0x579
-         (i32.const 2)
+        ;; code offset: 0x580
+        (local.set $2
+         ;; code offset: 0x57e
+         (local.get $0)
         )
-       )
-       ;; code offset: 0x580
-       (local.set $2
-        ;; code offset: 0x57e
-        (local.get $0)
-       )
-       ;; code offset: 0x584
-       (br_if $label$21
-        ;; code offset: 0x582
-        (local.get $7)
+        ;; code offset: 0x584
+        (br_if $label$21
+         ;; code offset: 0x582
+         (local.get $7)
+        )
        )
       )
      )
@@ -6584,7 +6594,7 @@ file_names[  4]:
         ;; code offset: 0x5a5
         (i32.const 0)
        )
-       (block
+       (then
         ;; code offset: 0x5aa
         (loop $label$24
          ;; code offset: 0x5c4
@@ -6700,7 +6710,7 @@ file_names[  4]:
         ;; code offset: 0x5fa
         (i32.const 1)
        )
-       (block
+       (then
         ;; code offset: 0x609
         (br_if $label$22
          ;; code offset: 0x608
@@ -6755,55 +6765,57 @@ file_names[  4]:
    (if
     ;; code offset: 0x625
     (local.get $4)
-    ;; code offset: 0x629
-    (loop $label$27
-     ;; code offset: 0x62f
-     (local.set $1
-      ;; code offset: 0x62d
-      (call $fannkuch_worker\28void*\29
-       ;; code offset: 0x62b
-       (local.get $4)
-      )
-     )
-     ;; code offset: 0x636
-     (local.set $2
-      ;; code offset: 0x633
-      (i32.load offset=8
-       ;; code offset: 0x631
-       (local.get $4)
-      )
-     )
-     ;; code offset: 0x63a
-     (call $free
-      ;; code offset: 0x638
-      (local.get $4)
-     )
-     ;; code offset: 0x646
-     (local.set $0
-      ;; code offset: 0x645
-      (select
-       ;; code offset: 0x63c
-       (local.get $1)
-       ;; code offset: 0x63e
-       (local.get $0)
-       ;; code offset: 0x644
-       (i32.lt_s
-        ;; code offset: 0x640
-        (local.get $0)
-        ;; code offset: 0x642
-        (local.get $1)
+    (then
+     ;; code offset: 0x629
+     (loop $label$27
+      ;; code offset: 0x62f
+      (local.set $1
+       ;; code offset: 0x62d
+       (call $fannkuch_worker\28void*\29
+        ;; code offset: 0x62b
+        (local.get $4)
        )
       )
-     )
-     ;; code offset: 0x64a
-     (local.set $4
-      ;; code offset: 0x648
-      (local.get $2)
-     )
-     ;; code offset: 0x64e
-     (br_if $label$27
-      ;; code offset: 0x64c
-      (local.get $2)
+      ;; code offset: 0x636
+      (local.set $2
+       ;; code offset: 0x633
+       (i32.load offset=8
+        ;; code offset: 0x631
+        (local.get $4)
+       )
+      )
+      ;; code offset: 0x63a
+      (call $free
+       ;; code offset: 0x638
+       (local.get $4)
+      )
+      ;; code offset: 0x646
+      (local.set $0
+       ;; code offset: 0x645
+       (select
+        ;; code offset: 0x63c
+        (local.get $1)
+        ;; code offset: 0x63e
+        (local.get $0)
+        ;; code offset: 0x644
+        (i32.lt_s
+         ;; code offset: 0x640
+         (local.get $0)
+         ;; code offset: 0x642
+         (local.get $1)
+        )
+       )
+      )
+      ;; code offset: 0x64a
+      (local.set $4
+       ;; code offset: 0x648
+       (local.get $2)
+      )
+      ;; code offset: 0x64e
+      (br_if $label$27
+       ;; code offset: 0x64c
+       (local.get $2)
+      )
      )
     )
    )

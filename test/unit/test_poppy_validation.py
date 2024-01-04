@@ -120,7 +120,7 @@ class PoppyValidationTest(utils.BinaryenTestCase):
             (i32.const 1)
             (if
               (i32.const 42)
-              (block)
+              (then)
             )
           )
         )
@@ -135,7 +135,7 @@ class PoppyValidationTest(utils.BinaryenTestCase):
             (i32.const 1)
             (if
               (pop i32)
-              (nop)
+              (then (nop))
             )
           )
         )
@@ -150,8 +150,8 @@ class PoppyValidationTest(utils.BinaryenTestCase):
             (i32.const 1)
             (if
               (pop i32)
-              (block)
-              (nop)
+              (then (block))
+              (else (nop))
             )
           )
         )
@@ -166,8 +166,8 @@ class PoppyValidationTest(utils.BinaryenTestCase):
             (i32.const 1)
             (if
               (pop i32)
-              (block)
-              (block)
+              (then)
+              (else)
             )
           )
         )
