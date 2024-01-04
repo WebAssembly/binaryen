@@ -435,15 +435,16 @@ struct Precompute
 
       void visitSelect(Select* curr) {
         if (parent.partiallyPrecomputable.count(curr)) {
-          // This is a relevant select. Note the stack, but also check if it is
-          // nested in another select, which is a case that for simplicity we
-          // don't handle yet TODO
-          assert(expressionStack.back() == select);
+          if (expressionStack.size() == 1) {
+            // There is nothing above this select, so nothing we can precompute
+            // into it.
+            return;
+          }
+
+          // Check if this is nested in another select, which is a case that for
+          // simplicity we don't handle yet TODO
           for (auto* item : expressionStack) {
-            if (item == select) {
-              continue;
-            }
-            if (item->is<Select>()) {
+            if (item != curr && item->is<Select>()) {
               // This is another select in the middle somewhere; give up.
               return;
             }
@@ -459,38 +460,50 @@ struct Precompute
     // TODO determinism
 
     for (auto& [select, stack] : stackFinder.stackMap) {
-      // Each stack ends in the select.
+      // Each stack ends in the select itself, and contains more than the select
+      // itself.
       assert(stack.back() == select);
+      assert(stack.size() >= 2);
 
-      // Don't
-    }
+      // Go up through the parents, until we can't do any more work.
+      Index i = stack.size() - 2;
+      while (1) {
+        auto* parent = stack[i];
+        if (!parent->type.isConcrete()) {
+          // The parent does not have a concrete type, so we can't move it
+          // into the select: the select needs a concrete type. (For example,
+          // if the parent is a drop or is unreachable, those are things we
+          // don't want to handle.) We stop here, as once we see one such
+          // parent we can't expect to make any more progress.
+          break;
+        }
+
+        // We are precomputing the select arms, but leaving the condition as-is.
+        // If the condition breaks to the parent, then we can't move the parent
+        // into the select arms:
+        //
+        //  (block $name ;; this must stack outside of the select
+        //    (select
+        //      (B)
+        //      (C)
+        //      (block ;; condition
+        //        (br_if $target
+        //
+        // Ignore all control flow for simplicity, as they aren't interesting
+        // for us (other passes remove them when possibly anyhow), and assume
+        // we can't do anything else later.
+        if (Properties::isControlFlowStructure(parent)) {
+          break;
+        }
+
+        // Continue to the next parent, if there is one.
+        if (i == 0) {
+          break;
+        }
+        i--;
+      }
 
 
-    // We can only optimize concrete types, so that the select has something to
-    // return.
-    if (!curr->type.isConcrete()) {
-      return;
-    }
-
-    // In normal precomputing we replace the entire expression with the result.
-    // Here we only precompute part of the expression, so we can have dangling
-    // references like this:
-    //
-    //  (block $name
-    //    (select
-    //      (B)
-    //      (C)
-    //      (block ;; condition
-    //        (br_if $target
-    //
-    // That is, the condition can refer to a control flow structure, and the
-    // condition remain in the output, so if we remove that structure - which
-    // can happen if it is A in the comment above - then we have a problem.
-    // Ignore all control flow for simplicity, as they don't control and useful
-    // computation we want to precompute away anyhow.
-    if (Properties::isControlFlowStructure(curr)) {
-      return;
-    }
 
     // We are looking for a single child which is a select.
     ChildIterator children(curr);
