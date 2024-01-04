@@ -521,12 +521,12 @@ struct Precompute
         auto** pointerToSelect =
           getChildPointerInParent(stack, selectIndex, func);
         *pointerToSelect = select->ifTrue;
-        auto ifTrue = precomputeExpression(copy);
+        auto ifTrue = precomputeExpression(parent);
         // TODO: We could handle breaks here perhaps, and remove the isConcrete
         //       check in that case.
         if (canEmitConstantFor(ifTrue.values) && ifTrue.values.isConcrete()) {
           *pointerToSelect = select->ifFalse;
-          auto ifFalse = precomputeExpression(copy);
+          auto ifFalse = precomputeExpression(parent);
           if (canEmitConstantFor(ifFalse.values) &&
               ifFalse.values.isConcrete()) {
             // Wonderful, we can precompute here! The select can now contain the
@@ -546,11 +546,12 @@ struct Precompute
           }
         }
 
-        // Continue to the next parent, if there is one.
-        if (i == 0) {
+        // Whether we succeeded to precompute here or not, continue to the next
+        // parent, if there is one.
+        if (parentIndex == 0) {
           break;
         }
-        i--;
+        parentIndex--;
       }
     }
   }
@@ -773,7 +774,7 @@ private:
   // Given a stack of expressions and the index of an expression in it, find
   // the pointer to that expression in the parent. This gives us a pointer that
   // allows us to replace the expression.
-  Expression** getChildPointerInParent(const ExpressionList& stack,
+  Expression** getChildPointerInParent(const ExpressionStack& stack,
                                        Index index,
                                        Function* func) {
     if (index == 0) {
