@@ -99,6 +99,38 @@
     )
   )
 
+  ;; CHECK:      (func $test-expanded-twice-stop (type $6) (param $x i32)
+  ;; CHECK-NEXT:  (call $send-i32
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-expanded-twice-stop (export "test-expanded-twice-stop") (param $x i32)
+    ;; As $test-expanded-twice, but we stop after two expansions when we fail on
+    ;; the call.
+    (call $send-i32
+      (ref.is_null
+        (struct.get $vtable 0
+          (select
+            (global.get $A$vtable)
+            (global.get $B$vtable)
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $send-i32 (type $6) (param $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $send-i32 (param $x i32)
+    ;; Helper for above.
+  )
+
   ;; CHECK:      (func $test-trap (type $1) (param $x i32) (result funcref)
   ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
   ;; CHECK-NEXT:   (drop
