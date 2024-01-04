@@ -347,6 +347,13 @@ struct Precompute
   // Note that in general for code size we want to move operations *out* of
   // selects and ifs (OptimizeInstructions does that), but here we are
   // computing two constant which replace four expressions, so it is worthwhile.
+  //
+  // XXX OR: use an ExpressionStackWalker if we see a select. Then as we go, keep
+  // the select in mind, and precompute two versions when it is a child of ours
+  // (enumerate all parents when we get to the select). Each version has
+  // (block (drop condition) value1or2). If we precompute both, replace this
+  // with that condition over those values. Ignore more than 1 nested select to
+  // avoid N^2
   void tryToPartiallyPrecompute(Expression* curr) {
     // We can only optimize concrete types, so that the select has something to
     // return.
@@ -379,6 +386,8 @@ struct Precompute
     if (children.getNumChildren() != 1) {
       return;
     }
+    // TODO: maybe only do this if the select arms have depth 1? They must be
+    //       constant, or global, for us to have any hope..? avoids N^2 too
     auto* select = children.getChild(0)->dynCast<Select>();
     if (!select) {
       return;
@@ -404,6 +413,7 @@ struct Precompute
 
     // Copy the entire expression. Then in the copy, replace the select with
     // each of its arms and precompute those.
+    // TODO: must we copy? Can we not replace twice or thrice?
     auto* copy = ExpressionManipulator::copy(curr, *getModule());
     ChildIterator copyChildren(copy);
     copyChildren.getChild(0) = select->ifTrue;
