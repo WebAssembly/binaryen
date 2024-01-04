@@ -162,6 +162,28 @@
     )
   )
 
+  ;; CHECK:      (func $tuple (type $1) (param $param i32) (result i32 i32)
+  ;; CHECK-NEXT:  (tuple.make 2
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $tuple (param $param i32) (result i32 i32)
+    ;; We should ignore tuples, as select outputs cannot be tuples.
+    (tuple.make 2
+      (select
+        (i32.const 0)
+        (i32.const 1)
+        (local.get $param)
+      )
+      (i32.const 2)
+    )
+  )
+
   ;; CHECK:      (func $control-flow (type $0) (param $param i32) (result i32)
   ;; CHECK-NEXT:  (block $target (result i32)
   ;; CHECK-NEXT:   (select

@@ -478,12 +478,12 @@ struct Precompute
       Index parentIndex = selectIndex - 1;
       while (1) {
         auto* parent = stack[parentIndex];
-        if (!parent->type.isConcrete()) {
-          // The parent does not have a concrete type, so we can't move it
-          // into the select: the select needs a concrete type. (For example,
-          // if the parent is a drop or is unreachable, those are things we
-          // don't want to handle.) We stop here, as once we see one such
-          // parent we can't expect to make any more progress.
+        // If the parent lacks a concrete type then we can't move it into the
+        // select: the select needs a concrete (and non-tuple) type. For example
+        // if the parent is a drop or is unreachable, those are things we don't
+        // want to handle, and we stop here (once we see one such parent we
+        // can't expect to make any more progress).
+        if (!parent->type.isConcrete() || parent->type.isTuple()) {
           break;
         }
 
