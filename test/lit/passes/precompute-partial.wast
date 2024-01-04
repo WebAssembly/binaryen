@@ -255,16 +255,17 @@
   )
 
   ;; CHECK:      (func $test-trap (type $0) (param $x i32) (result funcref)
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:  (struct.get $vtable 0
+  ;; CHECK-NEXT:   (select (result (ref null $vtable))
   ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:    (global.get $B$vtable)
+  ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test-trap (export "test-trap") (param $x i32) (result funcref)
-    ;; One arm has a null, which makes the struct.get trap, so we can turn this
-    ;; into an unreachable.
+    ;; One arm has a null, which makes the struct.get trap, so we ignore this
+    ;; for now. TODO: handle traps and breaks
     (struct.get $vtable 0
       (select
         (ref.null $vtable)
@@ -298,11 +299,14 @@
     ;; CHECK-NEXT:  (type $vtable (sub (struct (field funcref))))
     (type $vtable (sub (struct funcref)))
 
+    ;; CHECK:       (type $itable (sub (struct (field (ref $vtable)))))
     (type $itable (sub (struct (ref $vtable))))
   )
 
-  ;; CHECK:      (global $A$vtable (ref $vtable) (struct.new $vtable
-  ;; CHECK-NEXT:  (ref.func $A$func)
+  ;; CHECK:      (global $A$itable (ref $itable) (struct.new $itable
+  ;; CHECK-NEXT:  (struct.new $vtable
+  ;; CHECK-NEXT:   (ref.func $A$func)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
   (global $A$itable (ref $itable) (struct.new $itable
     (struct.new $vtable
@@ -310,8 +314,10 @@
     )
   ))
 
-  ;; CHECK:      (global $B$vtable (ref $vtable) (struct.new $vtable
-  ;; CHECK-NEXT:  (ref.func $B$func)
+  ;; CHECK:      (global $B$itable (ref $itable) (struct.new $itable
+  ;; CHECK-NEXT:  (struct.new $vtable
+  ;; CHECK-NEXT:   (ref.func $B$func)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
   (global $B$itable (ref $itable) (struct.new $itable
     (struct.new $vtable
@@ -319,6 +325,13 @@
     )
   ))
 
+  ;; CHECK:      (func $test-expanded (type $3) (param $x i32) (result funcref)
+  ;; CHECK-NEXT:  (select (result (ref $2))
+  ;; CHECK-NEXT:   (ref.func $A$func)
+  ;; CHECK-NEXT:   (ref.func $B$func)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $test-expanded (export "test-expanded") (param $x i32) (result funcref)
     ;; Nesting in the global declarations means we cannot precompute the inner
     ;; struct.get by itself (as that would return the inner struct.new), but
@@ -334,10 +347,16 @@
     )
   )
 
+  ;; CHECK:      (func $A$func (type $2)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $A$func
     ;; Helper for above.
   )
 
+  ;; CHECK:      (func $B$func (type $2)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $B$func
     ;; Helper for above.
   )

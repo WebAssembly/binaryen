@@ -229,12 +229,13 @@ struct Precompute
       // another walk to apply them and perhaps other optimizations that are
       // unlocked.
       super::doWalkFunction(func);
-      partiallyPrecompute(func);
+      // We could also try to partially precompute again, but that is a somewhat
+      // heavy operation, so we only do it the first time, and leave such things
+      // for later runs of this pass and for --converge.
     }
     // Note that in principle even more cycles could find further work here, in
     // very rare cases. To avoid constructing a LocalGraph again just for that
-    // unlikely chance, we leave such things for later runs of this pass and for
-    // --converge.
+    // unlikely chance, we leave such things for later.
   }
 
   template<typename T> void reuseConstantNode(T* curr, Flow flow) {
@@ -544,8 +545,12 @@ struct Precompute
           }
         }
 
-        // Whether we succeeded to precompute here or not, continue to the next
-        // parent, if there is one.
+        // Whether we succeeded to precompute here or not, restore the parent's
+        // pointer to its original state (if we precomputed, the parent is no
+        // longer in use, but there is no harm in modifying it).
+        *pointerToSelect = select;
+
+        // Continue to the outer parent, if there is one.
         if (parentIndex == 0) {
           break;
         }
