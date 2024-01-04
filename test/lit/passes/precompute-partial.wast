@@ -269,7 +269,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-expanded-twice (type $6) (param $x i32) (result i32)
+  ;; CHECK:      (func $test-expanded-twice (type $5) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 0)
@@ -290,7 +290,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-expanded-twice-stop (type $5) (param $x i32)
+  ;; CHECK:      (func $test-expanded-twice-stop (type $6) (param $x i32)
   ;; CHECK-NEXT:  (call $send-i32
   ;; CHECK-NEXT:   (select
   ;; CHECK-NEXT:    (i32.const 0)
@@ -315,11 +315,30 @@
     )
   )
 
-  ;; CHECK:      (func $send-i32 (type $5) (param $x i32)
+  ;; CHECK:      (func $send-i32 (type $6) (param $x i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $send-i32 (param $x i32)
     ;; Helper for above.
+  )
+
+  ;; CHECK:      (func $binary (type $5) (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (local.get $param)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $binary (param $param i32) (result i32)
+    ;; (Note that this works because immutable globals can be compared.)
+    (ref.eq
+      (select
+        (global.get $A$vtable)
+        (global.get $B$vtable)
+        (local.get $param)
+      )
+      (global.get $A$vtable)
+    )
   )
 
   ;; CHECK:      (func $test-trap (type $0) (param $x i32) (result funcref)
