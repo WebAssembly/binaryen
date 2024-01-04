@@ -414,15 +414,18 @@ Result<Expression*> IRBuilder::getBranchValue(Name labelName,
   }
   auto scope = getScope(*label);
   CHECK_ERR(scope);
-  std::vector<Expression*> values((*scope)->getResultType().size());
-  for (size_t i = 0, size = values.size(); i < size; ++i) {
+  // Loops would receive their input type rather than their output type, if we
+  // supported that.
+  size_t numValues = (*scope)->getLoop() ? 0 : (*scope)->getResultType().size();
+  std::vector<Expression*> values(numValues);
+  for (size_t i = 0; i < numValues; ++i) {
     auto val = pop();
     CHECK_ERR(val);
-    values[size - 1 - i] = *val;
+    values[numValues - 1 - i] = *val;
   }
-  if (values.size() == 0) {
+  if (numValues == 0) {
     return nullptr;
-  } else if (values.size() == 1) {
+  } else if (numValues == 1) {
     return values[0];
   } else {
     return builder.makeTupleMake(values);
