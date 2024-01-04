@@ -46,8 +46,10 @@
       (global.get $__stack_limit)
      )
     )
-    (call $__handle_stack_overflow
-     (local.get $3)
+    (then
+     (call $__handle_stack_overflow
+      (local.get $3)
+     )
     )
    )
    (global.set $global$0
@@ -85,8 +87,10 @@
       (global.get $__stack_limit)
      )
     )
-    (call $__handle_stack_overflow
-     (local.get $4)
+    (then
+     (call $__handle_stack_overflow
+      (local.get $4)
+     )
     )
    )
    (global.set $global$0
@@ -121,8 +125,10 @@
       (global.get $__stack_limit)
      )
     )
-    (call $__handle_stack_overflow
-     (local.get $1)
+    (then
+     (call $__handle_stack_overflow
+      (local.get $1)
+     )
     )
    )
    (global.set $global$0
@@ -159,8 +165,10 @@
       (global.get $__stack_limit)
      )
     )
-    (call $__handle_stack_overflow
-     (local.get $2)
+    (then
+     (call $__handle_stack_overflow
+      (local.get $2)
+     )
     )
    )
    (global.set $global$0

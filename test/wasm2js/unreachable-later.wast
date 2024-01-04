@@ -5,14 +5,18 @@
  (func $0 (; 0 ;) (type $0) (param $0 i32) (result i32)
   (if
    (global.get $global$0)
-   (return
-    (local.get $0)
+   (then
+    (return
+     (local.get $0)
+    )
    )
   )
   (if
    (global.get $global$0)
-   (return
-    (local.get $0)
+   (then
+    (return
+     (local.get $0)
+    )
    )
   )
   (global.set $global$0
@@ -29,8 +33,10 @@
           (block $label$4 (result i32)
            (if
             (global.get $global$0)
-            (return
-             (local.get $0)
+            (then
+             (return
+              (local.get $0)
+             )
             )
            )
            (drop
@@ -38,48 +44,70 @@
              (block $label$6 (result i32)
               (if
                (global.get $global$0)
-               (return
-                (local.get $0)
+               (then
+                (return
+                 (local.get $0)
+                )
                )
               )
               (i32.const 65445)
              )
-             (block (result f32)
-              (if
-               (global.get $global$0)
-               (return
-                (local.get $0)
+             (then
+              (block (result f32)
+               (if
+                (global.get $global$0)
+                (then
+                 (return
+                  (local.get $0)
+                 )
+                )
                )
+               (f32.const 0)
               )
-              (f32.const 0)
              )
-             (f32.const 1)
+             (else
+              (f32.const 1)
+             )
             )
            )
            (if
             (global.get $global$0)
-            (return
-             (local.get $0)
+            (then
+             (return
+              (local.get $0)
+             )
             )
            )
            (i32.const 1)
           )
-          (i32.const 32)
-          (i32.const 0)
+          (then
+           (i32.const 32)
+          )
+          (else
+           (i32.const 0)
+          )
          )
         )
        )
        (i32.const 1)
       )
      )
-     (i32.const 0)
-     (i32.const 1)
+     (then
+      (i32.const 0)
+     )
+     (else
+      (i32.const 1)
+     )
     )
    )
-   (return
-    (i32.const -255)
+   (then
+    (return
+     (i32.const -255)
+    )
    )
-   (unreachable)
+   (else
+    (unreachable)
+   )
   )
  )
 )

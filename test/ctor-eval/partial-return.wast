@@ -18,7 +18,9 @@
       (i32.load8_u
         (i32.const 12)
       )
-      (return)
+      (then
+        (return)
+      )
     )
 
     ;; This is unsafe to call, and would stop evalling here. But we exit due to

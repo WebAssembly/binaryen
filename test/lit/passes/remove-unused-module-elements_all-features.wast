@@ -576,8 +576,12 @@
     (f64.const 1)
     (f64.const 1)
    )
-   (f64.const 1)
-   (f64.const 0)
+   (then
+    (f64.const 1)
+   )
+   (else
+    (f64.const 0)
+   )
   )
  )
 )
@@ -590,8 +594,12 @@
     (f64.const 1)
     (f64.const 1)
    )
-   (call_indirect (type $0) (f64.const 1) (i32.const 0))
-   (f64.const 0)
+   (then
+    (call_indirect (type $0) (f64.const 1) (i32.const 0))
+   )
+   (else
+    (f64.const 0)
+   )
   )
  )
 )
@@ -634,8 +642,12 @@
  ;; CHECK-NEXT:    (f64.const 1)
  ;; CHECK-NEXT:    (f64.const 1)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (f64.const 1)
- ;; CHECK-NEXT:   (f64.const 0)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (f64.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (f64.const 0)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $0 (; 0 ;) (type $0) (param $var$0 f64) (result f64)
@@ -649,8 +661,12 @@
     (f64.const 1)
     (f64.const 1)
    )
-   (f64.const 1)
-   (f64.const 0)
+   (then
+    (f64.const 1)
+   )
+   (else
+    (f64.const 0)
+   )
   )
  )
 )

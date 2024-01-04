@@ -49,8 +49,12 @@
  ;; CHECK-NEXT:    (local.get $var$1)
  ;; CHECK-NEXT:    (i64.const 0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $set-unreachable (param $var$0 i64) (result i64)
@@ -64,11 +68,15 @@
        (local.get $var$1)
        (i64.const 0)
       )
-      (unreachable)
-      (local.set $var$2
-       (i64.mul
-        (unreachable)
-        (local.get $var$2)
+      (then
+       (unreachable)
+      )
+      (else
+       (local.set $var$2
+        (i64.mul
+         (unreachable)
+         (local.get $var$2)
+        )
        )
       )
      )

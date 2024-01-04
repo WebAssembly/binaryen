@@ -134,14 +134,16 @@
     (i32.const 0)
     (i32.const 1)
    )
-   (drop
-    (memory.atomic.wait32
-     (i32.const 4032)
-     (i32.const 1)
-     (i64.const -1)
+   (then
+    (drop
+     (memory.atomic.wait32
+      (i32.const 4032)
+      (i32.const 1)
+      (i64.const -1)
+     )
     )
    )
-   (block
+   (else
     (memory.init $0
      (i32.const 1024)
      (i32.const 0)

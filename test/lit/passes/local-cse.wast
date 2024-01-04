@@ -31,7 +31,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.add
@@ -77,7 +79,7 @@
     (drop
       (i32.add (i32.const 1) (i32.const 2))
     )
-    (if (i32.const 0) (nop))
+    (if (i32.const 0) (then (nop)))
     ;; This add is after an if, which means we are no longer in the same basic
     ;; block - which means we cannot optimize it with the previous identical
     ;; adds.
@@ -399,13 +401,17 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.add
-  ;; CHECK-NEXT:     (i32.const 2)
-  ;; CHECK-NEXT:     (i32.const 3)
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -420,17 +426,21 @@
     (if
       (i32.const 0)
       ;; This add is dominated by the above, so we can use a tee of it.
-      (drop
-        (i32.add
-          (i32.const 2)
-          (i32.const 3)
+      (then
+        (drop
+          (i32.add
+            (i32.const 2)
+            (i32.const 3)
+          )
         )
       )
       ;; We could optimize this add as well, but do not yet. TODO
-      (drop
-        (i32.add
-          (i32.const 2)
-          (i32.const 3)
+      (else
+        (drop
+          (i32.add
+            (i32.const 2)
+            (i32.const 3)
+          )
         )
       )
     )

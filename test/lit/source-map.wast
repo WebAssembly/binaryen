@@ -13,7 +13,9 @@
         (local.get $y)
       )
       ;;@ src.cpp:50:1
-      (return)
+      (then
+        (return)
+      )
     )
     ;;@ src.cpp:60:1
     (call $foo
@@ -35,8 +37,10 @@
 ;; CHECK-NEXT:     ;;@ src.cpp:40:1
 ;; CHECK-NEXT:     (local.get $y)
 ;; CHECK-NEXT:    )
-;; CHECK-NEXT:    ;;@ src.cpp:50:1
-;; CHECK-NEXT:    (return)
+;; CHECK-NEXT:    (then
+;; CHECK-NEXT:     ;;@ src.cpp:50:1
+;; CHECK-NEXT:     (return)
+;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:   ;;@ src.cpp:60:1
 ;; CHECK-NEXT:   (call $foo

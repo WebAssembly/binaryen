@@ -184,13 +184,17 @@
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (pop i32)
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $if
     (if
       (i32.const 0)
-      (nop)
+      (then
+        (nop)
+      )
     )
   )
 
@@ -198,15 +202,23 @@
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT:  (if (result i32)
   ;; CHECK-NEXT:   (pop i32)
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $if-else (result i32)
     (if i32
       (i32.const 0)
-      (i32.const 1)
-      (i32.const 2)
+      (then
+        (i32.const 1)
+      )
+      (else
+        (i32.const 2)
+      )
     )
   )
 

@@ -185,10 +185,14 @@
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:     (throw $e
-  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (throw $e
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch_all
@@ -210,8 +214,12 @@
       (do
         (if
           (local.get $0)
-          (throw $e (i32.const 0))
-          (unreachable)
+          (then
+            (throw $e (i32.const 0))
+          )
+          (else
+            (unreachable)
+          )
         )
       )
       (catch_all)

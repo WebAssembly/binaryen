@@ -1703,12 +1703,11 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
 // Similar to block, but the label is handled by the enclosing if (since there
 // might not be a then or else, ick)
 Expression* SExpressionWasmBuilder::makeThenOrElse(Element& s) {
-  auto ret = allocator.alloc<Block>();
-  size_t i = 1;
-  if (s.size() > 1 && s[1]->isStr()) {
-    i++;
+  if (s.size() == 2) {
+    return parseExpression(s[1]);
   }
-  for (; i < s.size(); i++) {
+  auto ret = allocator.alloc<Block>();
+  for (size_t i = 1; i < s.size(); i++) {
     ret->list.push_back(parseExpression(s[i]));
   }
   ret->finalize();
@@ -2415,8 +2414,14 @@ Expression* SExpressionWasmBuilder::makeIf(Element& s) {
   // if signature
   Type type = parseBlockType(s, i);
   ret->condition = parseExpression(s[i++]);
+  if (!elementStartsWith(*s[i], "then")) {
+    throw SParseException("expected 'then'", *s[i]);
+  }
   ret->ifTrue = parseExpression(*s[i++]);
   if (i < s.size()) {
+    if (!elementStartsWith(*s[i], "else")) {
+      throw SParseException("expected 'else'", *s[i]);
+    }
     ret->ifFalse = parseExpression(*s[i++]);
   }
   ret->finalize(type);

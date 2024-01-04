@@ -23,7 +23,9 @@
   (block
    (if
     (i32.const 0)
-    (nop)
+    (then
+     (nop)
+    )
    )
    (block
     (call $log_execution
@@ -51,11 +53,13 @@
    )
    (if
     (call $intt)
-    (loop $y
-     (call $log_execution
-      (i32.const 5)
+    (then
+     (loop $y
+      (call $log_execution
+       (i32.const 5)
+      )
+      (call $loops)
      )
-     (call $loops)
     )
    )
    (block

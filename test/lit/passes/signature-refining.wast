@@ -569,17 +569,25 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if (result (ref $struct))
   ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (call $func-can-refine)
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (call $func-can-refine)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if (result (ref $struct))
   ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (call_ref $sig-can-refine
-  ;; CHECK-NEXT:     (ref.func $func-can-refine)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (call_ref $sig-can-refine
+  ;; CHECK-NEXT:      (ref.func $func-can-refine)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -590,18 +598,26 @@
     (drop
       (if (result anyref)
         (i32.const 1)
-        (call $func-can-refine)
-        (unreachable)
+        (then
+          (call $func-can-refine)
+        )
+        (else
+          (unreachable)
+        )
       )
     )
     ;; The same with a call_ref.
     (drop
       (if (result anyref)
         (i32.const 1)
-        (call_ref $sig-can-refine
-          (ref.func $func-can-refine)
+        (then
+          (call_ref $sig-can-refine
+            (ref.func $func-can-refine)
+          )
         )
-        (unreachable)
+        (else
+          (unreachable)
+        )
       )
     )
   )
@@ -641,8 +657,10 @@
   ;; CHECK:      (func $func-4 (type $sig) (result (ref null $struct))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
@@ -650,8 +668,10 @@
   (func $func-4 (type $sig) (result anyref)
     (if
       (i32.const 1)
-      (return
-        (ref.null any)
+      (then
+        (return
+          (ref.null any)
+        )
       )
     )
     (unreachable)

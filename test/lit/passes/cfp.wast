@@ -417,8 +417,12 @@
   ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:   (if (result f32)
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (f32.const 42)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (f32.const 42)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -428,8 +432,12 @@
       ;; Fall though a 42 via an if.
       (if (result f32)
         (local.get $x)
-        (unreachable)
-        (f32.const 42)
+        (then
+          (unreachable)
+        )
+        (else
+          (f32.const 42)
+        )
       )
     )
   )

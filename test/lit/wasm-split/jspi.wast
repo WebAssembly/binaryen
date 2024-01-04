@@ -43,7 +43,9 @@
  ;; PRIMARY-NEXT:   (i32.eqz
  ;; PRIMARY-NEXT:    (global.get $global$1)
  ;; PRIMARY-NEXT:   )
- ;; PRIMARY-NEXT:   (call $__load_secondary_module)
+ ;; PRIMARY-NEXT:   (then
+ ;; PRIMARY-NEXT:    (call $__load_secondary_module)
+ ;; PRIMARY-NEXT:   )
  ;; PRIMARY-NEXT:  )
  ;; PRIMARY-NEXT:  (call_indirect (type $0)
  ;; PRIMARY-NEXT:   (i32.const 0)

@@ -23,17 +23,21 @@
     (call $print (i32.const 1000))
     (if
       (i32.eqz (global.get $sleeping))
-      (block
-        (call $print (i32.const 2000))
-        (global.set $sleeping (i32.const 1))
-        (i32.store (i32.const 16) (i32.const 24))
-        (i32.store (i32.const 20) (i32.const 1024))
-        (call $asyncify_start_unwind (i32.const 16))
+      (then
+        (block
+          (call $print (i32.const 2000))
+          (global.set $sleeping (i32.const 1))
+          (i32.store (i32.const 16) (i32.const 24))
+          (i32.store (i32.const 20) (i32.const 1024))
+          (call $asyncify_start_unwind (i32.const 16))
+        )
       )
-      (block
-        (call $print (i32.const 3000))
-        (call $asyncify_stop_rewind)
-        (global.set $sleeping (i32.const 0))
+      (else
+        (block
+          (call $print (i32.const 3000))
+          (call $asyncify_stop_rewind)
+          (global.set $sleeping (i32.const 0))
+        )
       )
     )
     (call $print (i32.const 4000))

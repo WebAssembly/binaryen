@@ -38,8 +38,12 @@
      (i32.const 1)
      (local.get $var$0)
     )
-    (i32.const -2405046)
-    (i32.const 1)
+    (then
+     (i32.const -2405046)
+    )
+    (else
+     (i32.const 1)
+    )
    )
   )
  )
@@ -51,7 +55,9 @@
    (i32.eqz
     (i32.const 0)
    )
-   (unreachable)
+   (then
+    (unreachable)
+   )
   )
   (f64.const -9223372036854775808)
  )
@@ -63,22 +69,28 @@
    (block $label$2
     (if
      (i32.const 1)
-     (block
-      (drop
-       (loop $label$5 (result i64)
-        (if (result i64)
-         (i32.const 0)
-         (i64.load offset=22
-          (i32.and
-           (br_if $label$1
-            (i32.const 0)
-            (i32.const 0)
+     (then
+      (block
+       (drop
+        (loop $label$5 (result i64)
+         (if (result i64)
+          (i32.const 0)
+          (then
+           (i64.load offset=22
+            (i32.and
+             (br_if $label$1
+              (i32.const 0)
+              (i32.const 0)
+             )
+             (i32.const 15)
+            )
+            (i64.const 1)
            )
-           (i32.const 15)
           )
-          (i64.const 1)
+          (else
+           (i64.const 1)
+          )
          )
-         (i64.const 1)
         )
        )
       )
@@ -102,8 +114,12 @@
        (i32.eqz
         (if (result i32)
          (i32.const 0)
-         (i32.const 0)
-         (local.get $var$2)
+         (then
+          (i32.const 0)
+         )
+         (else
+          (local.get $var$2)
+         )
         )
        )
       )
@@ -122,7 +138,7 @@
  ;; CHECK-NEXT:    (i32.eqz
  ;; CHECK-NEXT:     (local.get $1)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (local.set $1
  ;; CHECK-NEXT:      (i32.const -2147483648)
  ;; CHECK-NEXT:     )
@@ -149,15 +165,17 @@
     (i32.eqz
      (local.get $var$4)
     )
-    (block
-     (local.set $var$4
-      (select
-       (local.get $var$3)
-       (i32.const -2147483648)
-       (local.get $var$2)
+    (then
+     (block
+      (local.set $var$4
+       (select
+        (local.get $var$3)
+        (i32.const -2147483648)
+        (local.get $var$2)
+       )
       )
+      (br $label$1)
      )
-     (br $label$1)
     )
    )
   )

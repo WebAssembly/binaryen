@@ -11,8 +11,12 @@
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (local.get $x)
@@ -23,8 +27,12 @@
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (local.get $x)
@@ -35,8 +43,12 @@
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (drop
@@ -50,8 +62,12 @@
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (drop
@@ -68,17 +84,25 @@
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (if
    (i32.const 300)
-   (local.set $y
-    (i32.const 400)
+   (then
+    (local.set $y
+     (i32.const 400)
+    )
    )
-   (drop
-    (local.get $x)
+   (else
+    (drop
+     (local.get $x)
+    )
    )
   )
   (i32.const 500)
@@ -89,17 +113,25 @@
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (i32.const 200)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (i32.const 200)
+    )
    )
   )
   (if
    (i32.const 300)
-   (local.set $y
-    (i32.const 400)
+   (then
+    (local.set $y
+     (i32.const 400)
+    )
    )
-   (drop
-    (local.get $y)
+   (else
+    (drop
+     (local.get $y)
+    )
    )
   )
   (local.get $y)
@@ -110,8 +142,12 @@
     (local.tee $x
      (local.get $x)
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (local.get $y)
@@ -124,8 +160,12 @@
       (local.get $x)
      )
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (local.get $y)
@@ -149,8 +189,10 @@
   )
   (if
    (local.get $var$1)
-   (local.set $var$2
-    (i32.const 1)
+   (then
+    (local.set $var$2
+     (i32.const 1)
+    )
    )
   )
   (drop
@@ -163,8 +205,12 @@
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $y)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $y)
+    )
    )
   )
   (drop
@@ -172,8 +218,10 @@
   )
   (if
    (i32.const 1)
-   (local.set $y
-    (i32.const 200)
+   (then
+    (local.set $y
+     (i32.const 200)
+    )
    )
   )
   (drop
@@ -186,8 +234,12 @@
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
  )
@@ -197,8 +249,12 @@
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (local.set $y
@@ -214,8 +270,12 @@
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $y)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $y)
+    )
    )
   )
   (local.set $x
@@ -226,8 +286,10 @@
   )
   (if
    (i32.const 1)
-   (local.set $y
-    (i32.const 200)
+   (then
+    (local.set $y
+     (i32.const 200)
+    )
    )
   )
   (drop
@@ -240,8 +302,12 @@
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (i32.const 150)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (i32.const 150)
+    )
    )
   )
   (local.set $x
@@ -252,8 +318,10 @@
   )
   (if
    (i32.const 1)
-   (local.set $y
-    (i32.const 200)
+   (then
+    (local.set $y
+     (i32.const 200)
+    )
    )
   )
   (drop
@@ -266,14 +334,20 @@
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (i32.const 150)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (i32.const 150)
+    )
    )
   )
   (if
    (i32.const 1)
-   (local.set $x
-    (i32.const 300)
+   (then
+    (local.set $x
+     (i32.const 300)
+    )
    )
   )
   (drop
@@ -281,8 +355,10 @@
   )
   (if
    (i32.const 1)
-   (local.set $y
-    (i32.const 200)
+   (then
+    (local.set $y
+     (i32.const 200)
+    )
    )
   )
   (drop
@@ -295,14 +371,20 @@
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (if
    (i32.const 1)
-   (local.set $x
-    (i32.const 300)
+   (then
+    (local.set $x
+     (i32.const 300)
+    )
    )
   )
   (drop
@@ -310,8 +392,10 @@
   )
   (if
    (i32.const 1)
-   (local.set $y
-    (i32.const 200)
+   (then
+    (local.set $y
+     (i32.const 200)
+    )
    )
   )
   (drop
@@ -324,20 +408,28 @@
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (i32.const 150)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (i32.const 150)
+    )
    )
   )
   (if
    (i32.const 1)
-   (drop
-    (local.get $x)
+   (then
+    (drop
+     (local.get $x)
+    )
    )
-   (block
+   (else
     (if
      (i32.const 1)
-     (local.set $x
-      (i32.const 300)
+     (then
+      (local.set $x
+       (i32.const 300)
+      )
      )
     )
     (drop
@@ -347,8 +439,10 @@
   )
   (if
    (i32.const 1)
-   (local.set $y
-    (i32.const 200)
+   (then
+    (local.set $y
+     (i32.const 200)
+    )
    )
   )
   (drop
@@ -388,12 +482,14 @@
          (local.get $var$0)
         )
        )
-       (i32.const 0)
-       (block (result i32)
+       (then
+        (i32.const 0)
+       )
+       (else
         (local.set $var$3
          (if (result i32)
           (i32.const 0)
-          (block (result i32)
+          (then
            (block $label$7
             (block $label$8
              (local.set $var$0
@@ -403,13 +499,15 @@
            )
            (local.get $var$3)
           )
-          (block (result i32)
+          (else
            (if
             (i32.eqz
              (global.get $global$0)
             )
-            (return
-             (i64.const 137438953472)
+            (then
+             (return
+              (i64.const 137438953472)
+             )
             )
            )
            (global.set $global$0
@@ -443,8 +541,10 @@
   (loop $label$1
    (if
     (i32.const 1)
-    (drop
-     (local.get $result)
+    (then
+     (drop
+      (local.get $result)
+     )
     )
    )
    (local.set $result

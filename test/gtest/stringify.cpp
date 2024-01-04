@@ -20,13 +20,13 @@ TEST_F(StringifyTest, Print) {
       )
       (block $block_b
         (drop (if (i32.const 0)
-          (i32.const 40)
-          (i32.const 5)
+          (then (i32.const 40))
+          (else (i32.const 5))
         ))
       )
       (block $block_c
         (drop (if (i32.const 1)
-          (i32.const 30)
+          (then (i32.const 30))
         ))
       )
       (block $block_d
@@ -150,13 +150,13 @@ static auto dupModuleText = R"wasm(
         )
         (block $block_b
           (drop (if (i32.const 0)
-            (i32.const 40)
-            (i32.const 5)
+            (then (i32.const 40))
+            (else (i32.const 5))
           ))
         )
         (block $block_c
           (drop (if (i32.const 1)
-            (i32.const 30)
+            (then (i32.const 30))
           ))
         )
         (block $block_d
@@ -165,12 +165,12 @@ static auto dupModuleText = R"wasm(
         )
         (block $block_e
           (drop (if (i32.const 1)
-            (i32.const 30)
+            (then (i32.const 30))
           ))
         )
         (block $block_f
           (drop (if (i32.const 0)
-            (i32.const 30)
+            (then (i32.const 30))
           ))
         )
       )

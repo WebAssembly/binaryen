@@ -271,8 +271,10 @@
   (local $3 i32)
   (if
    (local.get $z)
-   (local.set $y
-    (i32.const -1)
+   (then
+    (local.set $y
+     (i32.const -1)
+    )
    )
   )
   (block
@@ -323,10 +325,12 @@
   )
   (if
    (i32.const 1)
-   (local.set $x
-    (i32.add
-     (i32.const 2)
-     (local.get $y)
+   (then
+    (local.set $x
+     (i32.add
+      (i32.const 2)
+      (local.get $y)
+     )
     )
    )
   )

@@ -19,8 +19,10 @@
   (local $x i32)
   (if
    (i32.const 1)
-   (local.set $x
-    (i32.const 10)
+   (then
+    (local.set $x
+     (i32.const 10)
+    )
    )
   )
   (call $basic
@@ -34,11 +36,15 @@
   (local $x i32)
   (if
    (i32.const 1)
-   (local.set $x
-    (i32.const 10)
+   (then
+    (local.set $x
+     (i32.const 10)
+    )
    )
-   (local.set $x
-    (i32.const 10)
+   (else
+    (local.set $x
+     (i32.const 10)
+    )
    )
   )
   (call $basic
@@ -49,11 +55,15 @@
   (local $x i32)
   (if
    (i32.const 1)
-   (local.set $x
-    (i32.const 10)
+   (then
+    (local.set $x
+     (i32.const 10)
+    )
    )
-   (local.set $x
-    (i32.const 20)
+   (else
+    (local.set $x
+     (i32.const 20)
+    )
    )
   )
   (call $basic
@@ -67,11 +77,15 @@
   (local $x i32)
   (if
    (i32.const 1)
-   (local.set $x
-    (i32.const 10)
+   (then
+    (local.set $x
+     (i32.const 10)
+    )
    )
-   (local.set $x
-    (local.get $p)
+   (else
+    (local.set $x
+     (local.get $p)
+    )
    )
   )
   (call $basic
@@ -85,8 +99,10 @@
   (local $x i32)
   (if
    (i32.const 1)
-   (local.set $x
-    (i32.const 0)
+   (then
+    (local.set $x
+     (i32.const 0)
+    )
    )
   )
   (call $basic
@@ -129,11 +145,15 @@
   )
   (if
    (i32.const 1)
-   (local.set $y
-    (i32.const 11)
+   (then
+    (local.set $y
+     (i32.const 11)
+    )
    )
-   (local.set $y
-    (i32.const 11)
+   (else
+    (local.set $y
+     (i32.const 11)
+    )
    )
   )
   (local.set $y
@@ -149,11 +169,15 @@
   )
   (if
    (i32.const 1)
-   (local.set $y
-    (i32.const 12)
+   (then
+    (local.set $y
+     (i32.const 12)
+    )
    )
-   (local.set $y
-    (i32.const 11)
+   (else
+    (local.set $y
+     (i32.const 11)
+    )
    )
   )
   (local.set $y
@@ -242,8 +266,10 @@
   (nop)
   (if
    (local.get $3)
-   (local.set $2
-    (i32.const 0)
+   (then
+    (local.set $2
+     (i32.const 0)
+    )
    )
   )
   (local.get $2)

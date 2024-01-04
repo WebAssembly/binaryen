@@ -227,8 +227,12 @@
     (f64.const 1)
     (f64.const 1)
    )
-   (f64.const 1)
-   (f64.const 0)
+   (then
+    (f64.const 1)
+   )
+   (else
+    (f64.const 0)
+   )
   )
  )
 )
@@ -241,8 +245,12 @@
     (f64.const 1)
     (f64.const 1)
    )
-   (call_indirect (type $0) (f64.const 1) (i32.const 0))
-   (f64.const 0)
+   (then
+    (call_indirect (type $0) (f64.const 1) (i32.const 0))
+   )
+   (else
+    (f64.const 0)
+   )
   )
  )
 )
@@ -256,8 +264,12 @@
     (f64.const 1)
     (f64.const 1)
    )
-   (f64.const 1)
-   (f64.const 0)
+   (then
+    (f64.const 1)
+   )
+   (else
+    (f64.const 0)
+   )
   )
  )
 )

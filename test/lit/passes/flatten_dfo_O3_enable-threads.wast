@@ -67,39 +67,43 @@
   (nop)
   (if
    (i32.const 0)
-   (i32.store8
-    (i32.const 8)
-    (block $label$2 (result i32)
-     (drop
-      (br_if $label$2
-       (i32.const 1)
-       (i32.const 0)
-      )
-     )
-     (if
-      (i32.const 0)
-      (drop
-       (br_if $label$2
-        (i32.const 1)
-        (i32.const 1)
-       )
-      )
-     )
-     (block $label$4
-      (br_if $label$4
-       (i32.const 0)
-      )
-      (br_if $label$4
-       (i32.const 0)
-      )
+   (then
+    (i32.store8
+     (i32.const 8)
+     (block $label$2 (result i32)
       (drop
        (br_if $label$2
         (i32.const 1)
         (i32.const 0)
        )
       )
+      (if
+       (i32.const 0)
+       (then
+        (drop
+         (br_if $label$2
+          (i32.const 1)
+          (i32.const 1)
+         )
+        )
+       )
+      )
+      (block $label$4
+       (br_if $label$4
+        (i32.const 0)
+       )
+       (br_if $label$4
+        (i32.const 0)
+       )
+       (drop
+        (br_if $label$2
+         (i32.const 1)
+         (i32.const 0)
+        )
+       )
+      )
+      (i32.const 6704)
      )
-     (i32.const 6704)
     )
    )
   )
@@ -121,44 +125,58 @@
     (i32.wrap_i64
      (if (result i64)
       (i32.const 0)
-      (i64.const 1)
-      (if (result i64)
-       (if (result i32)
-        (i32.const 0)
-        (unreachable)
-        (block $label$6 (result i32)
-         (block $label$7
-          (loop $label$8
-           (br_if $label$8
-            (br_if $label$6
-             (local.tee $var$2
-              (block $label$9 (result i32)
-               (local.get $var$1)
+      (then
+       (i64.const 1)
+      )
+      (else
+       (if (result i64)
+        (if (result i32)
+         (i32.const 0)
+         (then
+          (unreachable)
+         )
+         (else
+          (block $label$6 (result i32)
+           (block $label$7
+            (loop $label$8
+             (br_if $label$8
+              (br_if $label$6
+               (local.tee $var$2
+                (block $label$9 (result i32)
+                 (local.get $var$1)
+                )
+               )
+               (i32.const 0)
               )
              )
-             (i32.const 0)
-            )
-           )
-           (loop $label$10
-            (if
-             (i32.const 0)
-             (local.set $var$2
-              (local.get $var$1)
+             (loop $label$10
+              (if
+               (i32.const 0)
+               (then
+                (local.set $var$2
+                 (local.get $var$1)
+                )
+               )
+              )
+             )
+             (drop
+              (i32.eqz
+               (local.get $var$2)
+              )
              )
             )
            )
-           (drop
-            (i32.eqz
-             (local.get $var$2)
-            )
-           )
+           (unreachable)
           )
          )
+        )
+        (then
          (unreachable)
         )
+        (else
+         (i64.const 1)
+        )
        )
-       (unreachable)
-       (i64.const 1)
       )
      )
     )
@@ -180,27 +198,31 @@
     (local.set $var$4
      (if (result i32)
       (i32.const 0)
-      (block (result i32)
-       (local.set $var$4
-        (local.tee $var$2
-         (i32.xor
-          (i32.const 0)
-          (i32.const -1)
+      (then
+       (block (result i32)
+        (local.set $var$4
+         (local.tee $var$2
+          (i32.xor
+           (i32.const 0)
+           (i32.const -1)
+          )
          )
         )
+        (i32.const 0)
        )
-       (i32.const 0)
       )
-      (block (result i32)
-       (local.set $var$4
-        (local.tee $var$2
-         (i32.xor
-          (i32.const 0)
-          (i32.const -1)
+      (else
+       (block (result i32)
+        (local.set $var$4
+         (local.tee $var$2
+          (i32.xor
+           (i32.const 0)
+           (i32.const -1)
+          )
          )
         )
+        (i32.const 0)
        )
-       (i32.const 0)
       )
      )
     )
@@ -230,14 +252,18 @@
       (local.get $var$1)
      )
     )
-    (if
-     (local.get $var$2)
-     (i64.atomic.store32 offset=3
-      (i32.and
-       (local.get $var$1) ;; only dfo can figure out that this is 0
-       (i32.const 15)
+    (then
+     (if
+      (local.get $var$2)
+      (then
+       (i64.atomic.store32 offset=3
+        (i32.and
+         (local.get $var$1) ;; only dfo can figure out that this is 0
+         (i32.const 15)
+        )
+        (i64.const -32768)
+       )
       )
-      (i64.const -32768)
      )
     )
    )
@@ -253,14 +279,18 @@
    (local.tee $0
     (i32.const 1)
    )
-   (loop $label$2 (result i32)
-    (select
-     (i32.const 1)
-     (i32.const -1709605511)
-     (local.get $0)
+   (then
+    (loop $label$2 (result i32)
+     (select
+      (i32.const 1)
+      (i32.const -1709605511)
+      (local.get $0)
+     )
     )
    )
-   (unreachable)
+   (else
+    (unreachable)
+   )
   )
  )
 )

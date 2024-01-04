@@ -204,7 +204,7 @@ function asmFunc(imports) {
  }
  
  function $24() {
-  var $0 = 0, $5_1 = 0;
+  var $0 = 0, $1_1 = 0;
   if_ : {
    $0 = 2;
    break if_;
@@ -215,15 +215,15 @@ function asmFunc(imports) {
  function $25($0, $1_1) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
-  var $3_1 = 0, $7_1 = 0;
+  var $3_1 = 0, $5_1 = 0;
   block : {
    if ($0) {
     $3_1 = 3;
     break block;
    } else {
-    $7_1 = $1_1
+    $5_1 = $1_1
    }
-   $3_1 = $7_1;
+   $3_1 = $5_1;
   }
   return $3_1 | 0;
  }
@@ -231,17 +231,17 @@ function asmFunc(imports) {
  function $26($0, $1_1) {
   $0 = $0 | 0;
   $1_1 = $1_1 | 0;
-  var $6_1 = 0, $7_1 = 0;
+  var $4_1 = 0, $5_1 = 0;
   block : {
    if ($0) {
-    $7_1 = $1_1
+    $5_1 = $1_1
    } else {
-    $6_1 = 4;
+    $4_1 = 4;
     break block;
    }
-   $6_1 = $7_1;
+   $4_1 = $5_1;
   }
-  return $6_1 | 0;
+  return $4_1 | 0;
  }
  
  function $27($0, $1_1) {

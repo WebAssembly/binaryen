@@ -192,13 +192,13 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if (result i32)
  ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:   (then
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (i32.const 2)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (i32.const 3)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (block (result i32)
+ ;; CHECK-NEXT:   (else
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (i32.const 4)
  ;; CHECK-NEXT:    )
@@ -213,13 +213,17 @@
     (drop (i32.const 0))
     (i32.const 1)
    )
-   (block (result i32)
-    (drop (i32.const 2))
-    (i32.const 3)
+   (then
+    (block (result i32)
+     (drop (i32.const 2))
+     (i32.const 3)
+    )
    )
-   (block (result i32)
-    (drop (i32.const 4))
-    (i32.const 5)
+   (else
+    (block (result i32)
+     (drop (i32.const 4))
+     (i32.const 5)
+    )
    )
   )
  )

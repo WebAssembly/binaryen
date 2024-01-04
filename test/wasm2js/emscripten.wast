@@ -75,58 +75,94 @@
    (i32.add (i32.const 9) (i32.const 10))
   )
   (if (i32.eq (i32.load (i32.const 100)) (i32.const 1))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if (i32.lt_s (i32.load (i32.const 104)) (i32.const 2))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if (i32.lt_u (i32.load (i32.const 108)) (i32.const 3))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if (i32.eq (i32.load16_s (i32.const 112)) (i32.const 1))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if (i32.lt_s (i32.load16_s (i32.const 116)) (i32.const 2))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if (i32.lt_s (i32.load16_u (i32.const 120)) (i32.const 2))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if (i32.lt_u (i32.load16_s (i32.const 124)) (i32.const 3))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if (i32.lt_u (i32.load16_u (i32.const 128)) (i32.const 3))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if (i32.lt_s (i32.load8_s (i32.const 132)) (i32.const 2))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if (i32.lt_s (i32.load8_u (i32.const 136)) (i32.const 2))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if (i32.lt_u (i32.load8_s (i32.const 140)) (i32.const 3))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if (i32.lt_u (i32.load8_u (i32.const 144)) (i32.const 3))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if (i32.shr_u (call $bools (i32.const 314159)) (i32.const 7))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if (i32.shr_s (call $bools (i32.const 314159)) (i32.const 8))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if (i32.trunc_f32_u (call $getf32))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if (i32.trunc_f32_s (call $getf32))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if (i32.trunc_f64_u (call $getf64))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if (i32.trunc_f64_s (call $getf64))
-   (call  $bar)
+   (then
+    (call  $bar)
+   )
   )
   (if
     (i32.add
@@ -136,7 +172,9 @@
       )
       (call $geti32)
     )
-    (call $bar)
+    (then
+      (call $bar)
+    )
   )
   (if
     (i32.add
@@ -146,7 +184,9 @@
         (call $geti32)
       )
     )
-    (call $bar)
+    (then
+      (call $bar)
+    )
   )
   (if
     (i32.add
@@ -159,7 +199,9 @@
         (call $geti32)
       )
     )
-    (call $bar)
+    (then
+      (call $bar)
+    )
   )
   (if
     (i32.add
@@ -184,7 +226,9 @@
         )
       )
     )
-    (call $bar)
+    (then
+      (call $bar)
+    )
   )
  )
  (func $geti32 (result i32)
@@ -230,11 +274,15 @@
   (drop (call $bools (i32.xor (local.get $x) (i32.const 1))))
   (if
     (i32.xor (local.get $x) (i32.const 1))
-    (drop (call $bools (i32.const 2)))
+    (then
+      (drop (call $bools (i32.const 2)))
+    )
   )
   (if
     (i32.xor (local.get $x) (i32.const 2))
-    (drop (call $bools (i32.const 2)))
+    (then
+      (drop (call $bools (i32.const 2)))
+    )
   )
   (drop (call $bools (i32.eqz (i32.xor (local.get $x) (i32.const 1)))))
   (unreachable)

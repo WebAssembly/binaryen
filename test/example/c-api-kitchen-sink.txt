@@ -1969,17 +1969,23 @@ BinaryenFeatureAll: 131071
       )
       (if
        (i32.const 1)
-       (drop
-        (i32.const 2)
+       (then
+        (drop
+         (i32.const 2)
+        )
        )
-       (drop
-        (i32.const 3)
+       (else
+        (drop
+         (i32.const 3)
+        )
        )
       )
       (if
        (i32.const 4)
-       (drop
-        (i32.const 5)
+       (then
+        (drop
+         (i32.const 5)
+        )
        )
       )
       (drop
@@ -2685,14 +2691,18 @@ raw:
   )
   (if
    (i32.const 55)
-   (block
-    (call $check
-     (i32.const 1)
+   (then
+    (block
+     (call $check
+      (i32.const 1)
+     )
     )
    )
-   (block
-    (call $check
-     (i32.const 2)
+   (else
+    (block
+     (call $check
+      (i32.const 2)
+     )
     )
    )
   )
@@ -2704,7 +2714,7 @@ raw:
   )
   (if
    (i32.const 55)
-   (block
+   (then
     (drop
      (i32.const 10)
     )
@@ -2714,7 +2724,7 @@ raw:
      )
     )
    )
-   (block
+   (else
     (drop
      (i32.const 20)
     )
@@ -2734,15 +2744,19 @@ raw:
    )
    (if
     (i32.const 55)
-    (block
-     (call $check
-      (i32.const 1)
-     )
+    (then
      (block
-      (br $block$3$break)
+      (call $check
+       (i32.const 1)
+      )
+      (block
+       (br $block$3$break)
+      )
      )
     )
-    (br $block$3$break)
+    (else
+     (br $block$3$break)
+    )
    )
   )
   (block
@@ -2759,7 +2773,7 @@ raw:
    )
    (if
     (i32.const 55)
-    (block
+    (then
      (drop
       (i32.const -1)
      )
@@ -2775,7 +2789,7 @@ raw:
       )
      )
     )
-    (block
+    (else
      (drop
       (i32.const -2)
      )
@@ -2797,20 +2811,24 @@ raw:
    )
    (if
     (i32.const 55)
-    (block
-     (call $check
-      (i32.const 1)
-     )
+    (then
      (block
-      (br $block$4$break)
+      (call $check
+       (i32.const 1)
+      )
+      (block
+       (br $block$4$break)
+      )
      )
     )
-    (block
-     (call $check
-      (i32.const 2)
-     )
+    (else
      (block
-      (br $block$4$break)
+      (call $check
+       (i32.const 2)
+      )
+      (block
+       (br $block$4$break)
+      )
      )
     )
    )
@@ -2835,8 +2853,12 @@ raw:
     )
     (if
      (i32.const 10)
-     (br $shape$0$continue)
-     (br $block$3$break)
+     (then
+      (br $shape$0$continue)
+     )
+     (else
+      (br $block$3$break)
+     )
     )
    )
   )
@@ -2869,8 +2891,10 @@ raw:
        )
        (if
         (i32.const -2)
-        (br $block$3$break)
-        (block
+        (then
+         (br $block$3$break)
+        )
+        (else
          (drop
           (i32.const 20)
          )
@@ -2884,8 +2908,10 @@ raw:
        )
        (if
         (i32.const -6)
-        (br $block$4$break)
-        (block
+        (then
+         (br $block$4$break)
+        )
+        (else
          (drop
           (i32.const 30)
          )
@@ -2902,15 +2928,19 @@ raw:
       )
       (if
        (i32.const -10)
-       (block
-        (call $check
-         (i32.const 4)
-        )
+       (then
         (block
-         (br $block$6$break)
+         (call $check
+          (i32.const 4)
+         )
+         (block
+          (br $block$6$break)
+         )
         )
        )
-       (br $block$6$break)
+       (else
+        (br $block$6$break)
+       )
       )
      )
      (block
@@ -2993,13 +3023,13 @@ raw:
      )
      (if
       (i32.const 10)
-      (block
+      (then
        (local.set $3
         (i32.const 2)
        )
        (br $block$2$break)
       )
-      (block
+      (else
        (local.set $3
         (i32.const 3)
        )
@@ -3015,7 +3045,7 @@ raw:
      (local.get $3)
      (i32.const 2)
     )
-    (block
+    (then
      (local.set $3
       (i32.const 0)
      )
@@ -3029,23 +3059,25 @@ raw:
       (br $shape$1$continue)
      )
     )
-    (if
-     (i32.eq
-      (local.get $3)
-      (i32.const 3)
-     )
-     (block
-      (local.set $3
-       (i32.const 0)
+    (else
+     (if
+      (i32.eq
+       (local.get $3)
+       (i32.const 3)
       )
-      (call $check
-       (i32.const 2)
-      )
-      (block
+      (then
        (local.set $3
+        (i32.const 0)
+       )
+       (call $check
         (i32.const 2)
        )
-       (br $shape$1$continue)
+       (block
+        (local.set $3
+         (i32.const 2)
+        )
+        (br $shape$1$continue)
+       )
       )
      )
     )
