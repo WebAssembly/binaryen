@@ -3,170 +3,6 @@
 ;; RUN: foreach %s %t wasm-opt --precompute-propagate -all -S -o - | filecheck %s
 
 (module
-  (rec
-    ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $vtable (sub (struct (field funcref))))
-    (type $vtable (sub (struct funcref)))
-
-    ;; CHECK:       (type $specific-func (sub (func (result i32))))
-    (type $specific-func (sub (func (result i32))))
-
-    ;; CHECK:       (type $specific-func.sub (sub $specific-func (func (result i32))))
-    (type $specific-func.sub (sub $specific-func (func (result i32))))
-
-    ;; CHECK:       (type $vtable.sub (sub $vtable (struct (field (ref $specific-func)))))
-    (type $vtable.sub (sub $vtable (struct (field (ref $specific-func)))))
-  )
-
-  ;; CHECK:      (global $A$vtable (ref $vtable) (struct.new $vtable
-  ;; CHECK-NEXT:  (ref.func $A$func)
-  ;; CHECK-NEXT: ))
-  (global $A$vtable (ref $vtable) (struct.new $vtable
-    (ref.func $A$func)
-  ))
-
-  ;; CHECK:      (global $B$vtable (ref $vtable) (struct.new $vtable
-  ;; CHECK-NEXT:  (ref.func $B$func)
-  ;; CHECK-NEXT: ))
-  (global $B$vtable (ref $vtable) (struct.new $vtable
-    (ref.func $B$func)
-  ))
-
-  ;; CHECK:      (func $test-expanded (type $1) (param $x i32) (result funcref)
-  ;; CHECK-NEXT:  (select (result (ref $specific-func))
-  ;; CHECK-NEXT:   (ref.func $A$func)
-  ;; CHECK-NEXT:   (ref.func $B$func)
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $test-expanded (export "test-expanded") (param $x i32) (result funcref)
-    ;; We can apply the struct.get to the select arms: As the globals are all
-    ;; immutable, we can read the function references from them, and emit a
-    ;; select on those values, saving the struct.get operation entirely.
-    ;;
-    ;; Note that this test also checks updating the type of the select, which
-    ;; initially returned a struct, and afterwards returns a func.
-    (struct.get $vtable 0
-      (select
-        (global.get $A$vtable)
-        (global.get $B$vtable)
-        (local.get $x)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $test-subtyping (type $1) (param $x i32) (result funcref)
-  ;; CHECK-NEXT:  (select (result (ref $specific-func))
-  ;; CHECK-NEXT:   (ref.func $A$func)
-  ;; CHECK-NEXT:   (ref.func $B$func)
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $test-subtyping (export "test-subtyping") (param $x i32) (result funcref)
-    ;; As above, but now we have struct.news directly in the arms, and one is
-    ;; of a subtype of the final result (which should not prevent optimization).
-    (struct.get $vtable.sub 0
-      (select
-        (struct.new $vtable.sub
-          (ref.func $A$func)
-        )
-        (struct.new $vtable.sub
-          (ref.func $B$func) ;; this function is of a subtype of the field type
-        )
-        (local.get $x)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $test-expanded-twice (type $0) (param $x i32) (result i32)
-  ;; CHECK-NEXT:  (select
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $test-expanded-twice (export "test-expanded-twice") (param $x i32) (result i32)
-    ;; As $test-expanded, but we have two operations that can be applied. Both
-    ;; references are non-null, so the select arms will become 0.
-    (ref.is_null
-      (struct.get $vtable 0
-        (select
-          (global.get $A$vtable)
-          (global.get $B$vtable)
-          (local.get $x)
-        )
-      )
-    )
-  )
-
-  ;; CHECK:      (func $test-expanded-twice-stop (type $6) (param $x i32)
-  ;; CHECK-NEXT:  (call $send-i32
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $test-expanded-twice-stop (export "test-expanded-twice-stop") (param $x i32)
-    ;; As $test-expanded-twice, but we stop after two expansions when we fail on
-    ;; the call.
-    (call $send-i32
-      (ref.is_null
-        (struct.get $vtable 0
-          (select
-            (global.get $A$vtable)
-            (global.get $B$vtable)
-            (local.get $x)
-          )
-        )
-      )
-    )
-  )
-
-  ;; CHECK:      (func $send-i32 (type $6) (param $x i32)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
-  (func $send-i32 (param $x i32)
-    ;; Helper for above.
-  )
-
-  ;; CHECK:      (func $test-trap (type $1) (param $x i32) (result funcref)
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null none)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $test-trap (export "test-trap") (param $x i32) (result funcref)
-    ;; One arm has a null, which makes the struct.get trap, so we can turn this
-    ;; into an unreachable.
-    (struct.get $vtable 0
-      (select
-        (ref.null $vtable)
-        (global.get $B$vtable)
-        (local.get $x)
-      )
-    )
-  )
-
-  ;; CHECK:      (func $A$func (type $specific-func) (result i32)
-  ;; CHECK-NEXT:  (i32.const 1)
-  ;; CHECK-NEXT: )
-  (func $A$func (type $specific-func) (result i32)
-    ;; Helper for above.
-    (i32.const 1)
-  )
-
-  ;; CHECK:      (func $B$func (type $specific-func.sub) (result i32)
-  ;; CHECK-NEXT:  (i32.const 2)
-  ;; CHECK-NEXT: )
-  (func $B$func (type $specific-func.sub) (result i32)
-    ;; Helper for above.
-    (i32.const 2)
-  )
-
   ;; CHECK:      (func $simple-1 (type $0) (param $param i32) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.const 0)
@@ -175,7 +11,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $simple-1 (param $param i32) (result i32)
-    ;; Test simple i32 operations as well.
+    ;; Test simple i32 operations.
     (i32.eqz
       (select
         (i32.const 42)
@@ -285,5 +121,172 @@
         )
       )
     )
+  )
+)
+
+;; References.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $vtable (sub (struct (field funcref))))
+    (type $vtable (sub (struct funcref)))
+
+    ;; CHECK:       (type $specific-func (sub (func (result i32))))
+    (type $specific-func (sub (func (result i32))))
+
+    ;; CHECK:       (type $specific-func.sub (sub $specific-func (func (result i32))))
+    (type $specific-func.sub (sub $specific-func (func (result i32))))
+
+    ;; CHECK:       (type $vtable.sub (sub $vtable (struct (field (ref $specific-func)))))
+    (type $vtable.sub (sub $vtable (struct (field (ref $specific-func)))))
+  )
+
+  ;; CHECK:      (global $A$vtable (ref $vtable) (struct.new $vtable
+  ;; CHECK-NEXT:  (ref.func $A$func)
+  ;; CHECK-NEXT: ))
+  (global $A$vtable (ref $vtable) (struct.new $vtable
+    (ref.func $A$func)
+  ))
+
+  ;; CHECK:      (global $B$vtable (ref $vtable) (struct.new $vtable
+  ;; CHECK-NEXT:  (ref.func $B$func)
+  ;; CHECK-NEXT: ))
+  (global $B$vtable (ref $vtable) (struct.new $vtable
+    (ref.func $B$func)
+  ))
+
+  ;; CHECK:      (func $test-expanded (type $0) (param $x i32) (result funcref)
+  ;; CHECK-NEXT:  (select (result (ref $specific-func))
+  ;; CHECK-NEXT:   (ref.func $A$func)
+  ;; CHECK-NEXT:   (ref.func $B$func)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-expanded (export "test-expanded") (param $x i32) (result funcref)
+    ;; We can apply the struct.get to the select arms: As the globals are all
+    ;; immutable, we can read the function references from them, and emit a
+    ;; select on those values, saving the struct.get operation entirely.
+    ;;
+    ;; Note that this test also checks updating the type of the select, which
+    ;; initially returned a struct, and afterwards returns a func.
+    (struct.get $vtable 0
+      (select
+        (global.get $A$vtable)
+        (global.get $B$vtable)
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $test-subtyping (type $0) (param $x i32) (result funcref)
+  ;; CHECK-NEXT:  (select (result (ref $specific-func))
+  ;; CHECK-NEXT:   (ref.func $A$func)
+  ;; CHECK-NEXT:   (ref.func $B$func)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-subtyping (export "test-subtyping") (param $x i32) (result funcref)
+    ;; As above, but now we have struct.news directly in the arms, and one is
+    ;; of a subtype of the final result (which should not prevent optimization).
+    (struct.get $vtable.sub 0
+      (select
+        (struct.new $vtable.sub
+          (ref.func $A$func)
+        )
+        (struct.new $vtable.sub
+          (ref.func $B$func) ;; this function is of a subtype of the field type
+        )
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $test-expanded-twice (type $6) (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-expanded-twice (export "test-expanded-twice") (param $x i32) (result i32)
+    ;; As $test-expanded, but we have two operations that can be applied. Both
+    ;; references are non-null, so the select arms will become 0.
+    (ref.is_null
+      (struct.get $vtable 0
+        (select
+          (global.get $A$vtable)
+          (global.get $B$vtable)
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $test-expanded-twice-stop (type $5) (param $x i32)
+  ;; CHECK-NEXT:  (call $send-i32
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-expanded-twice-stop (export "test-expanded-twice-stop") (param $x i32)
+    ;; As $test-expanded-twice, but we stop after two expansions when we fail on
+    ;; the call.
+    (call $send-i32
+      (ref.is_null
+        (struct.get $vtable 0
+          (select
+            (global.get $A$vtable)
+            (global.get $B$vtable)
+            (local.get $x)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $send-i32 (type $5) (param $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $send-i32 (param $x i32)
+    ;; Helper for above.
+  )
+
+  ;; CHECK:      (func $test-trap (type $0) (param $x i32) (result funcref)
+  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-trap (export "test-trap") (param $x i32) (result funcref)
+    ;; One arm has a null, which makes the struct.get trap, so we can turn this
+    ;; into an unreachable.
+    (struct.get $vtable 0
+      (select
+        (ref.null $vtable)
+        (global.get $B$vtable)
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $A$func (type $specific-func) (result i32)
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: )
+  (func $A$func (type $specific-func) (result i32)
+    ;; Helper for above.
+    (i32.const 1)
+  )
+
+  ;; CHECK:      (func $B$func (type $specific-func.sub) (result i32)
+  ;; CHECK-NEXT:  (i32.const 2)
+  ;; CHECK-NEXT: )
+  (func $B$func (type $specific-func.sub) (result i32)
+    ;; Helper for above.
+    (i32.const 2)
   )
 )
