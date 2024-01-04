@@ -970,3 +970,134 @@
     )
   )
 )
+
+;; Several fields and several news.
+(module
+  ;; CHECK:      (type $struct (sub (struct (field i32) (field i64) (field f64) (field f32))))
+  (type $struct (sub (struct i32 i64 f64 f32)))
+  ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field i64) (field f64) (field f32))))
+  (type $substruct (sub $struct (struct i32 i64 f64 f32)))
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (type $3 (func (param (ref null $struct)) (result i32)))
+
+  ;; CHECK:      (type $4 (func (param (ref null $struct)) (result i64)))
+
+  ;; CHECK:      (type $5 (func (param (ref null $struct)) (result f64)))
+
+  ;; CHECK:      (type $6 (func (param (ref null $struct)) (result f32)))
+
+  ;; CHECK:      (func $create (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i64.const 20)
+  ;; CHECK-NEXT:    (f64.const 30.3)
+  ;; CHECK-NEXT:    (f32.const 40.400001525878906)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $substruct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i64.const 22)
+  ;; CHECK-NEXT:    (f64.const 36.36)
+  ;; CHECK-NEXT:    (f32.const 40.79999923706055)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $substruct
+  ;; CHECK-NEXT:    (i32.const 11)
+  ;; CHECK-NEXT:    (i64.const 22)
+  ;; CHECK-NEXT:    (f64.const 30.3)
+  ;; CHECK-NEXT:    (f32.const 40.79999923706055)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    ;; The first new is for $struct, the last two for $substruct.
+    ;; The first two news agree on field 0; the last two on fields 1&3; and the
+    ;; first and last on field 2. As a result, we can optimize only fields 1&3.
+    ;; field.
+    (drop
+      (struct.new $struct
+        (i32.const 10)
+        (i64.const 20)
+        (f64.const 30.3)
+        (f32.const 40.4)
+      )
+    )
+    (drop
+      (struct.new $substruct
+        (i32.const 10)
+        (i64.const 22)
+        (f64.const 36.36)
+        (f32.const 40.8)
+      )
+    )
+    (drop
+      (struct.new $substruct
+        (i32.const 11)
+        (i64.const 22)
+        (f64.const 30.3)
+        (f32.const 40.8)
+      )
+    )
+  )
+  ;; CHECK:      (func $get-0 (type $3) (param $struct (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (struct.get $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-0 (param $struct (ref null $struct)) (result i32)
+    (struct.get $struct 0
+      (local.get $struct)
+    )
+  )
+
+  ;; CHECK:      (func $get-1 (type $4) (param $struct (ref null $struct)) (result i64)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i64.const 22)
+  ;; CHECK-NEXT:   (i64.const 20)
+  ;; CHECK-NEXT:   (ref.test (ref $substruct)
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-1 (param $struct (ref null $struct)) (result i64)
+    (struct.get $struct 1
+      (local.get $struct)
+    )
+  )
+
+  ;; CHECK:      (func $get-2 (type $5) (param $struct (ref null $struct)) (result f64)
+  ;; CHECK-NEXT:  (struct.get $struct 2
+  ;; CHECK-NEXT:   (local.get $struct)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-2 (param $struct (ref null $struct)) (result f64)
+    (struct.get $struct 2
+      (local.get $struct)
+    )
+  )
+
+  ;; CHECK:      (func $get-3 (type $6) (param $struct (ref null $struct)) (result f32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (f32.const 40.79999923706055)
+  ;; CHECK-NEXT:   (f32.const 40.400001525878906)
+  ;; CHECK-NEXT:   (ref.test (ref $substruct)
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-3 (param $struct (ref null $struct)) (result f32)
+    (struct.get $struct 3
+      (local.get $struct)
+    )
+  )
+)
+
