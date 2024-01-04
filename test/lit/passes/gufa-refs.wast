@@ -1396,11 +1396,13 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (local.set $parent
-  ;; CHECK-NEXT:    (local.tee $child
-  ;; CHECK-NEXT:     (struct.new $child
-  ;; CHECK-NEXT:      (i32.const 20)
-  ;; CHECK-NEXT:      (i32.const 30)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $parent
+  ;; CHECK-NEXT:     (local.tee $child
+  ;; CHECK-NEXT:      (struct.new $child
+  ;; CHECK-NEXT:       (i32.const 20)
+  ;; CHECK-NEXT:       (i32.const 30)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1432,11 +1434,13 @@
     ;; Another, optional, set to $parent.
     (if
       (local.get $x)
-      (local.set $parent
-        (local.tee $child
-          (struct.new $child
-            (i32.const 20)
-            (i32.const 30)
+      (then
+        (local.set $parent
+          (local.tee $child
+            (struct.new $child
+              (i32.const 20)
+              (i32.const 30)
+            )
           )
         )
       )
@@ -3308,8 +3312,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (local.set $ref-null
-  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $ref-null
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -3330,8 +3336,10 @@
     )
     (if
       (local.get $x)
-      (local.set $ref-null
-        (local.get $ref)
+      (then
+        (local.set $ref-null
+          (local.get $ref)
+        )
       )
     )
     ;; If the |if| executed they are equal, but otherwise not, so we can't

@@ -96,7 +96,9 @@
   ;; BOUNDS-NEXT:       )
   ;; BOUNDS-NEXT:       (call $memory1_size)
   ;; BOUNDS-NEXT:      )
-  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:      (then
+  ;; BOUNDS-NEXT:       (unreachable)
+  ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:     (local.get $0)
   ;; BOUNDS-NEXT:    )
@@ -122,7 +124,9 @@
   ;; BOUNDS-NEXT:       )
   ;; BOUNDS-NEXT:       (call $memory2_size)
   ;; BOUNDS-NEXT:      )
-  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:      (then
+  ;; BOUNDS-NEXT:       (unreachable)
+  ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:     (local.get $1)
   ;; BOUNDS-NEXT:    )
@@ -148,7 +152,9 @@
   ;; BOUNDS-NEXT:       )
   ;; BOUNDS-NEXT:       (call $memory3_size)
   ;; BOUNDS-NEXT:      )
-  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:      (then
+  ;; BOUNDS-NEXT:       (unreachable)
+  ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:     (local.get $2)
   ;; BOUNDS-NEXT:    )
@@ -212,7 +218,9 @@
   ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:      (call $memory1_size)
   ;; BOUNDS-NEXT:     )
-  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:     (then
+  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:    )
   ;; BOUNDS-NEXT:    (local.get $0)
   ;; BOUNDS-NEXT:   )
@@ -237,7 +245,9 @@
   ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:      (call $memory2_size)
   ;; BOUNDS-NEXT:     )
-  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:     (then
+  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:    )
   ;; BOUNDS-NEXT:    (local.get $1)
   ;; BOUNDS-NEXT:   )
@@ -262,7 +272,9 @@
   ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:      (call $memory3_size)
   ;; BOUNDS-NEXT:     )
-  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:     (then
+  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:    )
   ;; BOUNDS-NEXT:    (local.get $2)
   ;; BOUNDS-NEXT:   )
@@ -307,7 +319,9 @@
   ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:      (call $memory1_size)
   ;; BOUNDS-NEXT:     )
-  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:     (then
+  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:    )
   ;; BOUNDS-NEXT:    (local.get $1)
   ;; BOUNDS-NEXT:   )
@@ -349,7 +363,9 @@
   ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:      (call $memory2_size)
   ;; BOUNDS-NEXT:     )
-  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:     (then
+  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:    )
   ;; BOUNDS-NEXT:    (local.get $2)
   ;; BOUNDS-NEXT:   )
@@ -392,7 +408,9 @@
   ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:      (call $memory3_size)
   ;; BOUNDS-NEXT:     )
-  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:     (then
+  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:    )
   ;; BOUNDS-NEXT:    (local.get $1)
   ;; BOUNDS-NEXT:   )
@@ -432,7 +450,9 @@
   ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:      (call $memory2_size)
   ;; BOUNDS-NEXT:     )
-  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:     (then
+  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:    )
   ;; BOUNDS-NEXT:    (local.get $1)
   ;; BOUNDS-NEXT:   )
@@ -506,7 +526,9 @@
   ;; BOUNDS-NEXT:       )
   ;; BOUNDS-NEXT:       (call $memory3_size)
   ;; BOUNDS-NEXT:      )
-  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:      (then
+  ;; BOUNDS-NEXT:       (unreachable)
+  ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:     (local.get $2)
   ;; BOUNDS-NEXT:    )
@@ -533,7 +555,9 @@
   ;; BOUNDS-NEXT:       )
   ;; BOUNDS-NEXT:       (call $memory2_size)
   ;; BOUNDS-NEXT:      )
-  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:      (then
+  ;; BOUNDS-NEXT:       (unreachable)
+  ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:     (local.get $3)
   ;; BOUNDS-NEXT:    )
@@ -558,7 +582,9 @@
   ;; BOUNDS-NEXT:       )
   ;; BOUNDS-NEXT:       (call $memory1_size)
   ;; BOUNDS-NEXT:      )
-  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:      (then
+  ;; BOUNDS-NEXT:       (unreachable)
+  ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:     (local.get $4)
   ;; BOUNDS-NEXT:    )
@@ -586,7 +612,9 @@
   ;; BOUNDS-NEXT:       )
   ;; BOUNDS-NEXT:       (call $memory2_size)
   ;; BOUNDS-NEXT:      )
-  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:      (then
+  ;; BOUNDS-NEXT:       (unreachable)
+  ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:     (local.get $5)
   ;; BOUNDS-NEXT:    )
@@ -653,7 +681,9 @@
   ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:      (call $memory1_size)
   ;; BOUNDS-NEXT:     )
-  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:     (then
+  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:    )
   ;; BOUNDS-NEXT:    (local.get $2)
   ;; BOUNDS-NEXT:   )
@@ -708,7 +738,9 @@
   ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:      (call $memory2_size)
   ;; BOUNDS-NEXT:     )
-  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:     (then
+  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:    )
   ;; BOUNDS-NEXT:    (local.get $2)
   ;; BOUNDS-NEXT:   )
@@ -721,7 +753,9 @@
   ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:      (call $memory3_size)
   ;; BOUNDS-NEXT:     )
-  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:     (then
+  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:    )
   ;; BOUNDS-NEXT:    (local.get $0)
   ;; BOUNDS-NEXT:   )
@@ -772,7 +806,9 @@
   ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:      (call $memory2_size)
   ;; BOUNDS-NEXT:     )
-  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:     (then
+  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:    )
   ;; BOUNDS-NEXT:    (if
   ;; BOUNDS-NEXT:     (i32.gt_u
@@ -782,7 +818,9 @@
   ;; BOUNDS-NEXT:      )
   ;; BOUNDS-NEXT:      (i32.const 1)
   ;; BOUNDS-NEXT:     )
-  ;; BOUNDS-NEXT:     (unreachable)
+  ;; BOUNDS-NEXT:     (then
+  ;; BOUNDS-NEXT:      (unreachable)
+  ;; BOUNDS-NEXT:     )
   ;; BOUNDS-NEXT:    )
   ;; BOUNDS-NEXT:    (local.get $2)
   ;; BOUNDS-NEXT:   )
@@ -851,8 +889,10 @@
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:    (i32.const -1)
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (return
-;; CHECK-NEXT:    (i32.const -1)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (return
+;; CHECK-NEXT:     (i32.const -1)
+;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (memory.copy
@@ -909,8 +949,10 @@
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:    (i32.const -1)
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (return
-;; CHECK-NEXT:    (i32.const -1)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (return
+;; CHECK-NEXT:     (i32.const -1)
+;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (memory.copy
@@ -954,8 +996,10 @@
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:    (i32.const -1)
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (return
-;; CHECK-NEXT:    (i32.const -1)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (return
+;; CHECK-NEXT:     (i32.const -1)
+;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (local.get $return_size)
@@ -1013,8 +1057,10 @@
 ;; BOUNDS-NEXT:    )
 ;; BOUNDS-NEXT:    (i32.const -1)
 ;; BOUNDS-NEXT:   )
-;; BOUNDS-NEXT:   (return
-;; BOUNDS-NEXT:    (i32.const -1)
+;; BOUNDS-NEXT:   (then
+;; BOUNDS-NEXT:    (return
+;; BOUNDS-NEXT:     (i32.const -1)
+;; BOUNDS-NEXT:    )
 ;; BOUNDS-NEXT:   )
 ;; BOUNDS-NEXT:  )
 ;; BOUNDS-NEXT:  (memory.copy
@@ -1071,8 +1117,10 @@
 ;; BOUNDS-NEXT:    )
 ;; BOUNDS-NEXT:    (i32.const -1)
 ;; BOUNDS-NEXT:   )
-;; BOUNDS-NEXT:   (return
-;; BOUNDS-NEXT:    (i32.const -1)
+;; BOUNDS-NEXT:   (then
+;; BOUNDS-NEXT:    (return
+;; BOUNDS-NEXT:     (i32.const -1)
+;; BOUNDS-NEXT:    )
 ;; BOUNDS-NEXT:   )
 ;; BOUNDS-NEXT:  )
 ;; BOUNDS-NEXT:  (memory.copy
@@ -1116,8 +1164,10 @@
 ;; BOUNDS-NEXT:    )
 ;; BOUNDS-NEXT:    (i32.const -1)
 ;; BOUNDS-NEXT:   )
-;; BOUNDS-NEXT:   (return
-;; BOUNDS-NEXT:    (i32.const -1)
+;; BOUNDS-NEXT:   (then
+;; BOUNDS-NEXT:    (return
+;; BOUNDS-NEXT:     (i32.const -1)
+;; BOUNDS-NEXT:    )
 ;; BOUNDS-NEXT:   )
 ;; BOUNDS-NEXT:  )
 ;; BOUNDS-NEXT:  (local.get $return_size)

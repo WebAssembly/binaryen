@@ -6,7 +6,9 @@
  (func $ifs
   (if
    (i32.const 0)
-   (nop)
+   (then
+    (nop)
+   )
   )
   (block
    (drop
@@ -16,8 +18,12 @@
   )
   (if
    (i32.const 0)
-   (nop)
-   (unreachable)
+   (then
+    (nop)
+   )
+   (else
+    (unreachable)
+   )
   )
   (drop
    (block (result i32)
@@ -33,13 +39,17 @@
   (drop
    (if (result i32)
     (i32.const 0)
-    (i32.add
-     (i32.const 1)
-     (i32.const 2)
+    (then
+     (i32.add
+      (i32.const 1)
+      (i32.const 2)
+     )
     )
-    (i32.add
-     (i32.const 1)
-     (i32.const 333333333)
+    (else
+     (i32.add
+      (i32.const 1)
+      (i32.const 333333333)
+     )
     )
    )
   )
@@ -56,8 +66,10 @@
   (block
    (if
     (i32.const 0)
-    (unreachable)
-    (block
+    (then
+     (unreachable)
+    )
+    (else
     )
    )
    (nop)
@@ -65,24 +77,30 @@
   (block
    (if
     (i32.const 0)
-    (block
+    (then
     )
-    (unreachable)
+    (else
+     (unreachable)
+    )
    )
    (nop)
   )
   (if
    (i32.const 0)
-   (block
+   (then
     (nop)
     (unreachable)
    )
-   (nop)
+   (else
+    (nop)
+   )
   )
   (if
    (i32.const 0)
-   (nop)
-   (block
+   (then
+    (nop)
+   )
+   (else
     (nop)
     (unreachable)
    )
@@ -105,8 +123,10 @@
   (block
    (if
     (i32.const 0)
-    (unreachable)
-    (block
+    (then
+     (unreachable)
+    )
+    (else
     )
    )
    (drop
@@ -119,9 +139,11 @@
   (block
    (if
     (i32.const 0)
-    (block
+    (then
     )
-    (unreachable)
+    (else
+     (unreachable)
+    )
    )
    (drop
     (i32.add
@@ -132,7 +154,7 @@
   )
   (if
    (i32.const 0)
-   (block
+   (then
     (drop
      (i32.add
       (i32.const 1)
@@ -141,22 +163,26 @@
     )
     (unreachable)
    )
-   (drop
-    (i32.add
-     (i32.const 1)
-     (i32.const 2)
+   (else
+    (drop
+     (i32.add
+      (i32.const 1)
+      (i32.const 2)
+     )
     )
    )
   )
   (if
    (i32.const 0)
-   (drop
-    (i32.add
-     (i32.const 1)
-     (i32.const 2)
+   (then
+    (drop
+     (i32.add
+      (i32.const 1)
+      (i32.const 2)
+     )
     )
    )
-   (block
+   (else
     (drop
      (i32.add
       (i32.const 1)
@@ -171,7 +197,7 @@
   (block
    (if
     (i32.const 1)
-    (block
+    (then
      (drop
       (i32.const -1234)
      )
@@ -179,8 +205,10 @@
       (i32.const -1000)
      )
     )
-    (drop
-     (i32.const 999)
+    (else
+     (drop
+      (i32.const 999)
+     )
     )
    )
    (drop
@@ -193,7 +221,7 @@
    (block (result i32)
     (if
      (i32.const 2)
-     (block
+     (then
       (drop
        (i32.const -1234)
       )
@@ -201,8 +229,10 @@
        (i32.const -1000)
       )
      )
-     (drop
-      (i32.const 999)
+     (else
+      (drop
+       (i32.const 999)
+      )
      )
     )
     (drop
@@ -217,7 +247,7 @@
    (block (result i32)
     (if
      (i32.const 3)
-     (block
+     (then
       (drop
        (i32.const -1234)
       )
@@ -225,8 +255,10 @@
        (i32.const -1000)
       )
      )
-     (drop
-      (i32.const 999)
+     (else
+      (drop
+       (i32.const 999)
+      )
      )
     )
     (drop
@@ -242,34 +274,36 @@
    (block
     (if
      (i32.const 0)
-     (if
-      (i32.const 0)
-      (block
-       (drop
-        (i32.const -1234)
+     (then
+      (if
+       (i32.const 0)
+       (then
+        (drop
+         (i32.const -1234)
+        )
+        (drop
+         (i32.const -1000)
+        )
+        (br $folding-inner0)
        )
-       (drop
-        (i32.const -1000)
+       (else
+        (drop
+         (i32.const 999)
+        )
+        (drop
+         (i32.const 1)
+        )
+        (br $folding-inner0)
        )
-       (br $folding-inner0)
-      )
-      (block
-       (drop
-        (i32.const 999)
-       )
-       (drop
-        (i32.const 1)
-       )
-       (br $folding-inner0)
       )
      )
     )
     (if
      (i32.const 0)
-     (block
+     (then
       (if
        (i32.const 0)
-       (block
+       (then
         (drop
          (i32.const -1234)
         )
@@ -277,7 +311,7 @@
          (i32.const -1000)
         )
        )
-       (block
+       (else
         (drop
          (i32.const 999)
         )
@@ -292,12 +326,12 @@
     )
     (if
      (i32.const 0)
-     (block
+     (then
       (if
        (i32.const 0)
-       (block
+       (then
        )
-       (block
+       (else
         (drop
          (i32.const 999)
         )
@@ -311,10 +345,10 @@
     )
     (if
      (i32.const 0)
-     (block
+     (then
       (if
        (i32.const 0)
-       (block
+       (then
         (drop
          (i32.const -1234)
         )
@@ -322,7 +356,7 @@
          (i32.const -1000)
         )
        )
-       (block
+       (else
        )
       )
       (br $folding-inner0)
@@ -332,7 +366,7 @@
      (block
       (if
        (i32.const 9999)
-       (block
+       (then
         (drop
          (i32.const -51234)
         )
@@ -340,7 +374,7 @@
          (i32.const -51000)
         )
        )
-       (block
+       (else
         (drop
          (i32.const 5999)
         )
@@ -357,7 +391,7 @@
       (block (result i32)
        (if
         (i32.const 9999)
-        (block
+        (then
          (drop
           (i32.const -51234)
          )
@@ -365,7 +399,7 @@
           (i32.const -51000)
          )
         )
-        (block
+        (else
          (drop
           (i32.const 5999)
          )
@@ -383,7 +417,7 @@
      (drop
       (if (result i32)
        (i32.const 9999)
-       (block (result i32)
+       (then
         (drop
          (i32.const -51234)
         )
@@ -393,7 +427,7 @@
         (unreachable)
         (i32.const 10)
        )
-       (block (result i32)
+       (else
         (drop
          (i32.const 5999)
         )
@@ -414,7 +448,7 @@
  (func $no-grandparent
   (if
    (i32.const 9999)
-   (block
+   (then
     (drop
      (i32.const -51234)
     )
@@ -424,7 +458,7 @@
     (unreachable)
     (unreachable)
    )
-   (block
+   (else
     (drop
      (i32.const 5999)
     )
@@ -440,7 +474,7 @@
   (block
    (if
     (i32.const 9999)
-    (block
+    (then
      (drop
       (i32.const -51234)
      )
@@ -448,7 +482,7 @@
       (i32.const -51000)
      )
     )
-    (block
+    (else
      (drop
       (i32.const 5999)
      )
@@ -478,44 +512,52 @@
     (block
      (if
       (local.get $x)
-      (br_if $out
-       (local.get $y)
+      (then
+       (br_if $out
+        (local.get $y)
+       )
       )
-      (br_if $out2
-       (local.get $y)
+      (else
+       (br_if $out2
+        (local.get $y)
+       )
       )
      )
      (nop)
     )
     (if
      (i32.const 1234)
-     (if
-      (local.get $x)
-      (block
-       (nop)
-       (br_if $out
-        (local.get $y)
+     (then
+      (if
+       (local.get $x)
+       (then
+        (nop)
+        (br_if $out
+         (local.get $y)
+        )
+        (nop)
        )
-       (nop)
-      )
-      (block
-       (nop)
-       (br_if $out2
-        (local.get $y)
+       (else
+        (nop)
+        (br_if $out2
+         (local.get $y)
+        )
+        (nop)
        )
-       (nop)
       )
      )
     )
     (if
      (local.get $x)
-     (block $left
-      (br_if $left
-       (local.get $y)
+     (then
+      (block $left
+       (br_if $left
+        (local.get $y)
+       )
+       (nop)
       )
-      (nop)
      )
-     (block
+     (else
       (br_if $out
        (local.get $y)
       )
@@ -524,17 +566,19 @@
     )
     (if
      (local.get $x)
-     (block
+     (then
       (br_if $out
        (local.get $y)
       )
       (nop)
      )
-     (block $right
-      (br_if $right
-       (local.get $y)
+     (else
+      (block $right
+       (br_if $right
+        (local.get $y)
+       )
+       (nop)
       )
-      (nop)
      )
     )
    )
@@ -550,11 +594,15 @@
   (block $x
    (if
     (i32.const 0)
-    (br $x)
+    (then
+     (br $x)
+    )
    )
    (if
     (i32.const 0)
-    (br $x)
+    (then
+     (br $x)
+    )
    )
    (br $x)
   )
@@ -569,7 +617,7 @@
   (block $x
    (if
     (i32.const 0)
-    (block
+    (then
      (drop
       (i32.const 1)
      )
@@ -581,7 +629,7 @@
    )
    (if
     (i32.const 0)
-    (block
+    (then
      (drop
       (i32.const 1)
      )
@@ -604,7 +652,7 @@
   (block $x
    (if
     (i32.const 0)
-    (block
+    (then
      (drop
       (i32.const 1000)
      )
@@ -613,7 +661,7 @@
    )
    (if
     (i32.const 0)
-    (block
+    (then
      (drop
       (i32.const 2000)
      )
@@ -665,10 +713,12 @@
    (block
     (if
      (i32.const 1)
-     (drop
-      (i32.const 3)
+     (then
+      (drop
+       (i32.const 3)
+      )
      )
-     (block
+     (else
       (drop
        (i32.const 4)
       )
@@ -725,7 +775,9 @@
    (block $x
     (if
      (i32.const 0)
-     (br $x)
+     (then
+      (br $x)
+     )
     )
    )
    (drop
@@ -739,7 +791,7 @@
    (block $y (result i32)
     (if
      (i32.const 0)
-     (block
+     (then
       (drop
        (i32.const 1)
       )
@@ -766,7 +818,7 @@
    (block $z (result i32)
     (if
      (i32.const 0)
-     (block
+     (then
       (drop
        (i32.const 1)
       )
@@ -790,7 +842,7 @@
   (block $w
    (if
     (i32.const 0)
-    (block
+    (then
      (drop
       (i32.const 1)
      )
@@ -812,7 +864,7 @@
   (block $x1
    (if
     (i32.const 0)
-    (block
+    (then
      (drop
       (i32.const 1)
      )
@@ -837,7 +889,7 @@
     )
     (if
      (i32.const 0)
-     (block
+     (then
       (drop
        (i32.const 1)
       )
@@ -860,7 +912,7 @@
     )
     (if
      (i32.const 0)
-     (block
+     (then
       (drop
        (i32.const 1)
       )
@@ -884,15 +936,21 @@
    (block
     (if
      (i32.const 1)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 2)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 3)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
    )
    (return)
@@ -915,15 +973,21 @@
    (block
     (if
      (i32.const 1)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 2)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 3)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (unreachable)
    )
@@ -947,15 +1011,21 @@
     (block (result i32)
      (if
       (i32.const 1)
-      (br $folding-inner0)
+      (then
+       (br $folding-inner0)
+      )
      )
      (if
       (i32.const 2)
-      (br $folding-inner0)
+      (then
+       (br $folding-inner0)
+      )
      )
      (if
       (i32.const 3)
-      (br $folding-inner0)
+      (then
+       (br $folding-inner0)
+      )
      )
      (i32.const 4)
     )
@@ -979,15 +1049,19 @@
    (block
     (if
      (i32.const 1)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 2)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 3)
-     (block
+     (then
       (nop)
       (nop)
       (nop)
@@ -1028,15 +1102,19 @@
      (block
       (if
        (i32.const 1)
-       (br $folding-inner0)
+       (then
+        (br $folding-inner0)
+       )
       )
       (if
        (i32.const 2)
-       (br $folding-inner1)
+       (then
+        (br $folding-inner1)
+       )
       )
       (if
        (i32.const 3)
-       (block
+       (then
         (drop
          (i32.const 10)
         )
@@ -1069,19 +1147,27 @@
      (block
       (if
        (i32.const 1)
-       (br $folding-inner0)
+       (then
+        (br $folding-inner0)
+       )
       )
       (if
        (i32.const 1)
-       (br $folding-inner0)
+       (then
+        (br $folding-inner0)
+       )
       )
       (if
        (i32.const 1)
-       (br $folding-inner1)
+       (then
+        (br $folding-inner1)
+       )
       )
       (if
        (i32.const 1)
-       (br $folding-inner1)
+       (then
+        (br $folding-inner1)
+       )
       )
      )
      (return)
@@ -1124,15 +1210,21 @@
    (block
     (if
      (i32.const 1)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 2)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 3)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
    )
    (return)
@@ -1145,7 +1237,7 @@
  (func $terminating-not-worth-it
   (if
    (i32.const 1)
-   (block
+   (then
     (nop)
     (nop)
     (unreachable)
@@ -1153,7 +1245,7 @@
   )
   (if
    (i32.const 2)
-   (block
+   (then
     (nop)
     (nop)
     (unreachable)
@@ -1161,7 +1253,7 @@
   )
   (if
    (i32.const 3)
-   (block
+   (then
     (nop)
     (nop)
     (unreachable)
@@ -1173,15 +1265,21 @@
    (block
     (if
      (i32.const 1)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 2)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 3)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
    )
    (return)
@@ -1204,19 +1302,25 @@
    (block
     (if
      (i32.const 1)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 2)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 3)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 3)
-     (block
+     (then
       (nop)
       (return
        (i32.add
@@ -1245,19 +1349,25 @@
     (block (result i32)
      (if
       (i32.const 1)
-      (br $folding-inner0)
+      (then
+       (br $folding-inner0)
+      )
      )
      (if
       (i32.const 2)
-      (br $folding-inner0)
+      (then
+       (br $folding-inner0)
+      )
      )
      (if
       (i32.const 3)
-      (br $folding-inner0)
+      (then
+       (br $folding-inner0)
+      )
      )
      (if
       (i32.const 3)
-      (block
+      (then
        (nop)
        (return
         (i32.add
@@ -1284,27 +1394,39 @@
    (block
     (if
      (i32.const 1)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 2)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 3)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 4)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 5)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 6)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (unreachable)
    )
@@ -1321,26 +1443,36 @@
    (block
     (if
      (i32.const 1)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 2)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 3)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 4)
-     (br $folding-inner0)
+     (then
+      (br $folding-inner0)
+     )
     )
     (if
      (i32.const 3)
-     (return
-      (i32.add
-       (i32.const 1)
-       (i32.const 234567)
+     (then
+      (return
+       (i32.add
+        (i32.const 1)
+        (i32.const 234567)
+       )
       )
      )
     )
@@ -1368,7 +1500,9 @@
  (func $drop-if-with-value-but-unreachable
   (if
    (i32.const 0)
-   (nop)
+   (then
+    (nop)
+   )
   )
   (block
    (drop
@@ -1380,8 +1514,12 @@
   )
   (if
    (i32.const 0)
-   (nop)
-   (unreachable)
+   (then
+    (nop)
+   )
+   (else
+    (unreachable)
+   )
   )
   (nop)
   (drop
@@ -1400,13 +1538,17 @@
   (drop
    (if (result i32)
     (i32.const 0)
-    (i32.add
-     (i32.const 1)
-     (i32.const 2)
+    (then
+     (i32.add
+      (i32.const 1)
+      (i32.const 2)
+     )
     )
-    (i32.add
-     (i32.const 1)
-     (i32.const 333333333)
+    (else
+     (i32.add
+      (i32.const 1)
+      (i32.const 333333333)
+     )
     )
    )
   )
@@ -1417,17 +1559,23 @@
     (block $x
      (if
       (i32.const 0)
-      (br $x)
+      (then
+       (br $x)
+      )
      )
      (if
       (i32.const 0)
-      (br $x)
+      (then
+       (br $x)
+      )
      )
      (br $x)
     )
     (if
      (i32.const 1)
-     (br $out)
+     (then
+      (br $out)
+     )
     )
     (drop
      (i32.const 1)
@@ -1447,27 +1595,33 @@
     (block
      (if
       (i32.const 0)
-      (block
+      (then
        (if
         (i32.const 1)
-        (br $out)
+        (then
+         (br $out)
+        )
        )
        (br $folding-inner0)
       )
      )
      (if
       (i32.const 0)
-      (block
+      (then
        (if
         (i32.const 1)
-        (br $out)
+        (then
+         (br $out)
+        )
        )
        (br $folding-inner0)
       )
      )
      (if
       (i32.const 1)
-      (br $out)
+      (then
+       (br $out)
+      )
      )
      (br $folding-inner0)
     )
@@ -1492,26 +1646,30 @@
      (block
       (if
        (i32.const 0)
-       (block
+       (then
         (if
          (i32.add
           (i32.const 0)
           (i32.const 1)
          )
-         (br $middle)
+         (then
+          (br $middle)
+         )
         )
         (br $folding-inner0)
        )
       )
       (if
        (i32.const 0)
-       (block
+       (then
         (if
          (i32.add
           (i32.const 0)
           (i32.const 1)
          )
-         (br $middle)
+         (then
+          (br $middle)
+         )
         )
         (br $folding-inner0)
        )
@@ -1521,7 +1679,9 @@
         (i32.const 0)
         (i32.const 1)
        )
-       (br $middle)
+       (then
+        (br $middle)
+       )
       )
       (br $folding-inner0)
      )
@@ -1546,26 +1706,30 @@
     (block
      (if
       (i32.const 0)
-      (block
+      (then
        (if
         (i32.add
          (i32.const 0)
          (i32.const 1)
         )
-        (br $middle)
+        (then
+         (br $middle)
+        )
        )
        (br $out)
       )
      )
      (if
       (i32.const 0)
-      (block
+      (then
        (if
         (i32.add
          (i32.const 0)
          (i32.const 1)
         )
-        (br $middle)
+        (then
+         (br $middle)
+        )
        )
        (br $out)
       )
@@ -1575,7 +1739,9 @@
        (i32.const 0)
        (i32.const 1)
       )
-      (br $middle)
+      (then
+       (br $middle)
+      )
      )
     )
    )
@@ -1613,11 +1779,15 @@
      (block
       (if
        (i32.const 0)
-       (br $out)
+       (then
+        (br $out)
+       )
       )
       (if
        (i32.const 0)
-       (br $out)
+       (then
+        (br $out)
+       )
       )
       (br $out)
      )
@@ -1628,7 +1798,9 @@
       (i32.const 0)
       (i32.const 1)
      )
-     (br $x)
+     (then
+      (br $x)
+     )
     )
     (drop
      (i32.const 1)
@@ -1649,11 +1821,15 @@
     (block
      (if
       (i32.const 0)
-      (br $out)
+      (then
+       (br $out)
+      )
      )
      (if
       (i32.const 0)
-      (br $out)
+      (then
+       (br $out)
+      )
      )
      (br $out)
     )
@@ -1664,7 +1840,9 @@
       (i32.const 0)
       (i32.const 1)
      )
-     (br $x)
+     (then
+      (br $x)
+     )
     )
    )
    (drop
@@ -1682,11 +1860,13 @@
   (block
    (if
     (local.get $x)
-    (block
+    (then
     )
-    (drop
-     (call $if-suffix
-      (i32.const -1)
+    (else
+     (drop
+      (call $if-suffix
+       (i32.const -1)
+      )
      )
     )
    )
@@ -1697,11 +1877,13 @@
   (block (result i32)
    (if
     (local.get $x)
-    (block
+    (then
     )
-    (drop
-     (call $if-suffix
-      (i32.const -2)
+    (else
+     (drop
+      (call $if-suffix
+       (i32.const -2)
+      )
      )
     )
    )

@@ -897,15 +897,15 @@
 ;; Test that x<y?x:y, etc. using if and else aren't folded to min, etc.
 
 (module
-  (func (export "f32.no_fold_lt_if") (param $x f32) (param $y f32) (result f32) (if f32 (f32.lt (local.get $x) (local.get $y)) (local.get $x) (local.get $y)))
-  (func (export "f32.no_fold_le_if") (param $x f32) (param $y f32) (result f32) (if f32 (f32.le (local.get $x) (local.get $y)) (local.get $x) (local.get $y)))
-  (func (export "f32.no_fold_gt_if") (param $x f32) (param $y f32) (result f32) (if f32 (f32.gt (local.get $x) (local.get $y)) (local.get $x) (local.get $y)))
-  (func (export "f32.no_fold_ge_if") (param $x f32) (param $y f32) (result f32) (if f32 (f32.ge (local.get $x) (local.get $y)) (local.get $x) (local.get $y)))
+  (func (export "f32.no_fold_lt_if") (param $x f32) (param $y f32) (result f32) (if f32 (f32.lt (local.get $x) (local.get $y)) (then (local.get $x) )(else (local.get $y))))
+  (func (export "f32.no_fold_le_if") (param $x f32) (param $y f32) (result f32) (if f32 (f32.le (local.get $x) (local.get $y)) (then (local.get $x) )(else (local.get $y))))
+  (func (export "f32.no_fold_gt_if") (param $x f32) (param $y f32) (result f32) (if f32 (f32.gt (local.get $x) (local.get $y)) (then (local.get $x) )(else (local.get $y))))
+  (func (export "f32.no_fold_ge_if") (param $x f32) (param $y f32) (result f32) (if f32 (f32.ge (local.get $x) (local.get $y)) (then (local.get $x) )(else (local.get $y))))
 
-  (func (export "f64.no_fold_lt_if") (param $x f64) (param $y f64) (result f64) (if f64 (f64.lt (local.get $x) (local.get $y)) (local.get $x) (local.get $y)))
-  (func (export "f64.no_fold_le_if") (param $x f64) (param $y f64) (result f64) (if f64 (f64.le (local.get $x) (local.get $y)) (local.get $x) (local.get $y)))
-  (func (export "f64.no_fold_gt_if") (param $x f64) (param $y f64) (result f64) (if f64 (f64.gt (local.get $x) (local.get $y)) (local.get $x) (local.get $y)))
-  (func (export "f64.no_fold_ge_if") (param $x f64) (param $y f64) (result f64) (if f64 (f64.ge (local.get $x) (local.get $y)) (local.get $x) (local.get $y)))
+  (func (export "f64.no_fold_lt_if") (param $x f64) (param $y f64) (result f64) (if f64 (f64.lt (local.get $x) (local.get $y)) (then (local.get $x) )(else (local.get $y))))
+  (func (export "f64.no_fold_le_if") (param $x f64) (param $y f64) (result f64) (if f64 (f64.le (local.get $x) (local.get $y)) (then (local.get $x) )(else (local.get $y))))
+  (func (export "f64.no_fold_gt_if") (param $x f64) (param $y f64) (result f64) (if f64 (f64.gt (local.get $x) (local.get $y)) (then (local.get $x) )(else (local.get $y))))
+  (func (export "f64.no_fold_ge_if") (param $x f64) (param $y f64) (result f64) (if f64 (f64.ge (local.get $x) (local.get $y)) (then (local.get $x) )(else (local.get $y))))
 )
 
 (assert_return (invoke "f32.no_fold_lt_if" (f32.const 0.0) (f32.const nan)) (f32.const nan))
@@ -991,15 +991,15 @@
 ;; Test that x<0?-x:0, etc. using if aren't folded to abs
 
 (module
-  (func (export "f32.no_fold_lt_if_to_abs") (param $x f32) (result f32) (if f32 (f32.lt (local.get $x) (f32.const 0.0)) (f32.neg (local.get $x)) (local.get $x)))
-  (func (export "f32.no_fold_le_if_to_abs") (param $x f32) (result f32) (if f32 (f32.le (local.get $x) (f32.const -0.0)) (f32.neg (local.get $x)) (local.get $x)))
-  (func (export "f32.no_fold_gt_if_to_abs") (param $x f32) (result f32) (if f32 (f32.gt (local.get $x) (f32.const -0.0)) (local.get $x) (f32.neg (local.get $x))))
-  (func (export "f32.no_fold_ge_if_to_abs") (param $x f32) (result f32) (if f32 (f32.ge (local.get $x) (f32.const 0.0)) (local.get $x) (f32.neg (local.get $x))))
+  (func (export "f32.no_fold_lt_if_to_abs") (param $x f32) (result f32) (if f32 (f32.lt (local.get $x) (f32.const 0.0)) (then (f32.neg (local.get $x)) )(else (local.get $x))))
+  (func (export "f32.no_fold_le_if_to_abs") (param $x f32) (result f32) (if f32 (f32.le (local.get $x) (f32.const -0.0)) (then (f32.neg (local.get $x)) )(else (local.get $x))))
+  (func (export "f32.no_fold_gt_if_to_abs") (param $x f32) (result f32) (if f32 (f32.gt (local.get $x) (f32.const -0.0)) (then (local.get $x) )(else (f32.neg (local.get $x)))))
+  (func (export "f32.no_fold_ge_if_to_abs") (param $x f32) (result f32) (if f32 (f32.ge (local.get $x) (f32.const 0.0)) (then (local.get $x) )(else (f32.neg (local.get $x)))))
 
-  (func (export "f64.no_fold_lt_if_to_abs") (param $x f64) (result f64) (if f64 (f64.lt (local.get $x) (f64.const 0.0)) (f64.neg (local.get $x)) (local.get $x)))
-  (func (export "f64.no_fold_le_if_to_abs") (param $x f64) (result f64) (if f64 (f64.le (local.get $x) (f64.const -0.0)) (f64.neg (local.get $x)) (local.get $x)))
-  (func (export "f64.no_fold_gt_if_to_abs") (param $x f64) (result f64) (if f64 (f64.gt (local.get $x) (f64.const -0.0)) (local.get $x) (f64.neg (local.get $x))))
-  (func (export "f64.no_fold_ge_if_to_abs") (param $x f64) (result f64) (if f64 (f64.ge (local.get $x) (f64.const 0.0)) (local.get $x) (f64.neg (local.get $x))))
+  (func (export "f64.no_fold_lt_if_to_abs") (param $x f64) (result f64) (if f64 (f64.lt (local.get $x) (f64.const 0.0)) (then (f64.neg (local.get $x)) )(else (local.get $x))))
+  (func (export "f64.no_fold_le_if_to_abs") (param $x f64) (result f64) (if f64 (f64.le (local.get $x) (f64.const -0.0)) (then (f64.neg (local.get $x)) )(else (local.get $x))))
+  (func (export "f64.no_fold_gt_if_to_abs") (param $x f64) (result f64) (if f64 (f64.gt (local.get $x) (f64.const -0.0)) (then (local.get $x) )(else (f64.neg (local.get $x)))))
+  (func (export "f64.no_fold_ge_if_to_abs") (param $x f64) (result f64) (if f64 (f64.ge (local.get $x) (f64.const 0.0)) (then (local.get $x) )(else (f64.neg (local.get $x)))))
 )
 
 (assert_return (invoke "f32.no_fold_lt_if_to_abs" (f32.const nan:0x200000)) (f32.const nan:0x200000))

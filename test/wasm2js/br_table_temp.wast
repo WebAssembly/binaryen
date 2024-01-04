@@ -910,8 +910,12 @@
     (block i32
       (if i32
         (br_table 0 (i32.const 2) (i32.const 0))
-        (i32.const 0)
-        (i32.const 1)
+        (then
+          (i32.const 0)
+        )
+        (else
+          (i32.const 1)
+        )
       )
     )
   )
@@ -919,8 +923,12 @@
     (block i32
       (if i32
         (local.get 0)
-        (br_table 1 (i32.const 3) (i32.const 0))
-        (local.get 1)
+        (then
+          (br_table 1 (i32.const 3) (i32.const 0))
+        )
+        (else
+          (local.get 1)
+        )
       )
     )
   )
@@ -928,8 +936,12 @@
     (block i32
       (if i32
         (local.get 0)
-        (local.get 1)
-        (br_table 1 0 (i32.const 4) (i32.const 0))
+        (then
+          (local.get 1)
+        )
+        (else
+          (br_table 1 0 (i32.const 4) (i32.const 0))
+        )
       )
     )
   )

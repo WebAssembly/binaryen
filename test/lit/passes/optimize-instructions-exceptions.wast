@@ -13,7 +13,9 @@
   ;; CHECK-NEXT:     (i32.const 456)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
@@ -34,7 +36,9 @@
           )
         )
       )
-      (nop)
+      (then
+        (nop)
+      )
     )
   )
 )

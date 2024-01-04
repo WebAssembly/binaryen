@@ -10,25 +10,33 @@
     )
     (i32.const 0)
    )
-   (loop $label$3
-    (block $label$4
-     (f32.store offset=22 align=2
-      (i32.const 0)
-      (local.get $2)
-     )
-     (drop
-      (local.tee $2
-       (if (result f32)
-        (i32.const -19666)
-        (local.get $2)
-        (unreachable)
+   (then
+    (loop $label$3
+     (block $label$4
+      (f32.store offset=22 align=2
+       (i32.const 0)
+       (local.get $2)
+      )
+      (drop
+       (local.tee $2
+        (if (result f32)
+         (i32.const -19666)
+         (then
+          (local.get $2)
+         )
+         (else
+          (unreachable)
+         )
+        )
        )
       )
      )
+     (br $label$3)
     )
-    (br $label$3)
    )
-   (i64.const 1)
+   (else
+    (i64.const 1)
+   )
   )
  )
 )

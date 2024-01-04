@@ -294,8 +294,10 @@
  ;; CHECK-NEXT:     (i32.eqz
  ;; CHECK-NEXT:      (global.get $hangLimit)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (return
- ;; CHECK-NEXT:      (i32.const 54)
+ ;; CHECK-NEXT:     (then
+ ;; CHECK-NEXT:      (return
+ ;; CHECK-NEXT:       (i32.const 54)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (global.set $hangLimit
@@ -308,27 +310,35 @@
  ;; CHECK-NEXT:   (i32.eqz
  ;; CHECK-NEXT:    (if (result i32)
  ;; CHECK-NEXT:     (i32.const 1)
- ;; CHECK-NEXT:     (if (result i32)
- ;; CHECK-NEXT:      (i32.eqz
- ;; CHECK-NEXT:       (block (result i32)
- ;; CHECK-NEXT:        (block $__inlined_func$func_3 (result i32)
- ;; CHECK-NEXT:         (local.set $8
- ;; CHECK-NEXT:          (i32.const 0)
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (select
- ;; CHECK-NEXT:          (local.get $8)
- ;; CHECK-NEXT:          (local.tee $8
- ;; CHECK-NEXT:           (i32.const -1)
+ ;; CHECK-NEXT:     (then
+ ;; CHECK-NEXT:      (if (result i32)
+ ;; CHECK-NEXT:       (i32.eqz
+ ;; CHECK-NEXT:        (block (result i32)
+ ;; CHECK-NEXT:         (block $__inlined_func$func_3 (result i32)
+ ;; CHECK-NEXT:          (local.set $8
+ ;; CHECK-NEXT:           (i32.const 0)
  ;; CHECK-NEXT:          )
- ;; CHECK-NEXT:          (i32.const 1)
+ ;; CHECK-NEXT:          (select
+ ;; CHECK-NEXT:           (local.get $8)
+ ;; CHECK-NEXT:           (local.tee $8
+ ;; CHECK-NEXT:            (i32.const -1)
+ ;; CHECK-NEXT:           )
+ ;; CHECK-NEXT:           (i32.const 1)
+ ;; CHECK-NEXT:          )
  ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (then
+ ;; CHECK-NEXT:        (br $label$0)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (else
+ ;; CHECK-NEXT:        (i32.const 0)
+ ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (br $label$0)
- ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:     (else
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -346,8 +356,10 @@
      (i32.eqz
       (global.get $hangLimit)
      )
-     (return
-      (i32.const 54)
+     (then
+      (return
+       (i32.const 54)
+      )
      )
     )
     (global.set $hangLimit
@@ -360,14 +372,22 @@
    (i32.eqz
     (if (result i32)
      (i32.const 1)
-     (if (result i32)
-      (i32.eqz
-       (call $func_3)
+     (then
+      (if (result i32)
+       (i32.eqz
+        (call $func_3)
+       )
+       (then
+        (br $label$0)
+       )
+       (else
+        (i32.const 0)
+       )
       )
-      (br $label$0)
-      (i32.const 0)
      )
-     (unreachable)
+     (else
+      (unreachable)
+     )
     )
    )
   )
@@ -396,8 +416,12 @@
  ;; CHECK-NEXT:   (call_indirect (type $T)
  ;; CHECK-NEXT:    (if
  ;; CHECK-NEXT:     (i32.const 0)
- ;; CHECK-NEXT:     (unreachable)
- ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:     (then
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (else
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (i32.const 1)
  ;; CHECK-NEXT:   )
@@ -410,8 +434,12 @@
   (call_indirect (type $T)
    (if (result i32) ;; if copy must preserve the forced type
     (i32.const 0)
-    (unreachable)
-    (unreachable)
+    (then
+     (unreachable)
+    )
+    (else
+     (unreachable)
+    )
    )
    (i32.const 1)
   )
@@ -653,7 +681,9 @@
  (func $2 (; 2 ;) (type $6)
   (if
    (global.get $global$0)
-   (return)
+   (then
+    (return)
+   )
   )
   (global.set $global$0
    (i32.const 1)
@@ -662,7 +692,9 @@
  (func $13 (; 13 ;) (type $6)
   (if
    (global.get $global$0)
-   (unreachable)
+   (then
+    (unreachable)
+   )
   )
   (return_call $2)
  )
@@ -673,7 +705,9 @@
  ;; CHECK-NEXT:     (block
  ;; CHECK-NEXT:      (if
  ;; CHECK-NEXT:       (global.get $global$0)
- ;; CHECK-NEXT:       (unreachable)
+ ;; CHECK-NEXT:       (then
+ ;; CHECK-NEXT:        (unreachable)
+ ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (block
  ;; CHECK-NEXT:       (block
@@ -681,7 +715,9 @@
  ;; CHECK-NEXT:         (block
  ;; CHECK-NEXT:          (if
  ;; CHECK-NEXT:           (global.get $global$0)
- ;; CHECK-NEXT:           (br $__inlined_func$2)
+ ;; CHECK-NEXT:           (then
+ ;; CHECK-NEXT:            (br $__inlined_func$2)
+ ;; CHECK-NEXT:           )
  ;; CHECK-NEXT:          )
  ;; CHECK-NEXT:          (global.set $global$0
  ;; CHECK-NEXT:           (i32.const 1)
@@ -714,24 +750,32 @@
  ;; CHECK-NEXT:   (i32.eqz
  ;; CHECK-NEXT:    (local.get $i)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (return
- ;; CHECK-NEXT:    (block $__inlined_func$is_odd (result i32)
- ;; CHECK-NEXT:     (local.set $1
- ;; CHECK-NEXT:      (i32.sub
- ;; CHECK-NEXT:       (local.get $i)
- ;; CHECK-NEXT:       (i32.const 1)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (if (result i32)
- ;; CHECK-NEXT:      (i32.eqz
- ;; CHECK-NEXT:       (local.get $1)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (i32.const 0)
- ;; CHECK-NEXT:      (return_call $is_even
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (return
+ ;; CHECK-NEXT:     (block $__inlined_func$is_odd (result i32)
+ ;; CHECK-NEXT:      (local.set $1
  ;; CHECK-NEXT:       (i32.sub
- ;; CHECK-NEXT:        (local.get $1)
+ ;; CHECK-NEXT:        (local.get $i)
  ;; CHECK-NEXT:        (i32.const 1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (if (result i32)
+ ;; CHECK-NEXT:       (i32.eqz
+ ;; CHECK-NEXT:        (local.get $1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (then
+ ;; CHECK-NEXT:        (i32.const 0)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (else
+ ;; CHECK-NEXT:        (return_call $is_even
+ ;; CHECK-NEXT:         (i32.sub
+ ;; CHECK-NEXT:          (local.get $1)
+ ;; CHECK-NEXT:          (i32.const 1)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
@@ -742,11 +786,15 @@
  (func $is_even (param $i i32) (result i32)
   (if (result i32)
    (i32.eqz (local.get $i))
-   (i32.const 1)
-   (return_call $is_odd
-    (i32.sub
-     (local.get $i)
-     (i32.const 1)
+   (then
+    (i32.const 1)
+   )
+   (else
+    (return_call $is_odd
+     (i32.sub
+      (local.get $i)
+      (i32.const 1)
+     )
     )
    )
   )
@@ -754,11 +802,15 @@
  (func $is_odd (param $i i32) (result i32)
   (if (result i32)
    (i32.eqz (local.get $i))
-   (i32.const 0)
-   (return_call $is_even
-    (i32.sub
-     (local.get $i)
-     (i32.const 1)
+   (then
+    (i32.const 0)
+   )
+   (else
+    (return_call $is_even
+     (i32.sub
+      (local.get $i)
+      (i32.const 1)
+     )
     )
    )
   )

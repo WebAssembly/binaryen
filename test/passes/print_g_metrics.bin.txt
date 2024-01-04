@@ -29,31 +29,33 @@
     )
     (i32.const 55)
    )
-   (loop $label$2
-    (br_if $label$2
-     (i32.ne
-      (i32.rem_s
-       (local.tee $0
-        (i32.add
+   (then
+    (loop $label$2
+     (br_if $label$2
+      (i32.ne
+       (i32.rem_s
+        (local.tee $0
          (i32.add
-          (i32.mul
+          (i32.add
            (i32.mul
-            (local.get $0)
+            (i32.mul
+             (local.get $0)
+             (local.get $0)
+            )
             (local.get $0)
            )
-           (local.get $0)
+           (i32.div_s
+            (local.get $0)
+            (i32.const -2)
+           )
           )
-          (i32.div_s
-           (local.get $0)
-           (i32.const -2)
-          )
+          (i32.const 13)
          )
-         (i32.const 13)
         )
+        (i32.const 120)
        )
-       (i32.const 120)
+       (i32.const 55)
       )
-      (i32.const 55)
      )
     )
    )
@@ -116,31 +118,33 @@ total
     )
     (i32.const 55)
    )
-   (loop $label$2
-    (br_if $label$2
-     (i32.ne
-      (i32.rem_s
-       (local.tee $0
-        (i32.add
+   (then
+    (loop $label$2
+     (br_if $label$2
+      (i32.ne
+       (i32.rem_s
+        (local.tee $0
          (i32.add
-          (i32.mul
+          (i32.add
            (i32.mul
-            (local.get $0)
+            (i32.mul
+             (local.get $0)
+             (local.get $0)
+            )
             (local.get $0)
            )
-           (local.get $0)
+           (i32.div_s
+            (local.get $0)
+            (i32.const -2)
+           )
           )
-          (i32.div_s
-           (local.get $0)
-           (i32.const -2)
-          )
+          (i32.const 13)
          )
-         (i32.const 13)
         )
+        (i32.const 120)
        )
-       (i32.const 120)
+       (i32.const 55)
       )
-      (i32.const 55)
      )
     )
    )

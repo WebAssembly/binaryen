@@ -93,8 +93,12 @@
  ;; CHECK-NEXT:  (local $y eqref)
  ;; CHECK-NEXT:  (if (result eqref)
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.get $y)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $if (result eqref)
@@ -103,9 +107,13 @@
   (if (result i31ref)
    (i32.const 0)
    ;; Require that typeof($x) <: eqref.
-   (local.get $x)
+   (then
+    (local.get $x)
+   )
    ;; Require that typeof($y) <: eqref.
-   (local.get $y)
+   (else
+    (local.get $y)
+   )
   )
  )
 

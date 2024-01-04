@@ -22,7 +22,9 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (global.get $__mem_segment_drop_state)
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (memory.fill
  ;; CHECK-NEXT:   (local.get $1)

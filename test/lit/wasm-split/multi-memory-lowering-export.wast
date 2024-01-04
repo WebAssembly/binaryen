@@ -55,8 +55,10 @@
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:    (i32.const -1)
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (return
-;; CHECK-NEXT:    (i32.const -1)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (return
+;; CHECK-NEXT:     (i32.const -1)
+;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (memory.copy
@@ -100,8 +102,10 @@
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:    (i32.const -1)
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (return
-;; CHECK-NEXT:    (i32.const -1)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (return
+;; CHECK-NEXT:     (i32.const -1)
+;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (local.get $return_size)

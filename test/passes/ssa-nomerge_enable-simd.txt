@@ -56,14 +56,20 @@
   (drop
    (if (result i32)
     (i32.const 1)
-    (i32.const 0)
-    (i32.const 0)
+    (then
+     (i32.const 0)
+    )
+    (else
+     (i32.const 0)
+    )
    )
   )
   (if
    (i32.const 1)
-   (local.set $x
-    (i32.const 1)
+   (then
+    (local.set $x
+     (i32.const 1)
+    )
    )
   )
   (drop
@@ -71,8 +77,10 @@
   )
   (if
    (i32.const 1)
-   (local.set $p
-    (i32.const 1)
+   (then
+    (local.set $p
+     (i32.const 1)
+    )
    )
   )
   (drop
@@ -80,19 +88,13 @@
   )
   (if
    (i32.const 1)
-   (local.set $x
-    (i32.const 2)
+   (then
+    (local.set $x
+     (i32.const 2)
+    )
    )
-   (nop)
-  )
-  (drop
-   (local.get $x)
-  )
-  (if
-   (i32.const 1)
-   (nop)
-   (local.set $x
-    (i32.const 3)
+   (else
+    (nop)
    )
   )
   (drop
@@ -100,11 +102,13 @@
   )
   (if
    (i32.const 1)
-   (local.set $x
-    (i32.const 4)
+   (then
+    (nop)
    )
-   (local.set $x
-    (i32.const 5)
+   (else
+    (local.set $x
+     (i32.const 3)
+    )
    )
   )
   (drop
@@ -112,10 +116,28 @@
   )
   (if
    (i32.const 1)
-   (local.set $x
-    (i32.const 6)
+   (then
+    (local.set $x
+     (i32.const 4)
+    )
    )
-   (block
+   (else
+    (local.set $x
+     (i32.const 5)
+    )
+   )
+  )
+  (drop
+   (local.get $x)
+  )
+  (if
+   (i32.const 1)
+   (then
+    (local.set $x
+     (i32.const 6)
+    )
+   )
+   (else
     (local.set $3
      (i32.const 7)
     )
@@ -131,7 +153,7 @@
  (func $if2 (param $x i32)
   (if
    (i32.const 1)
-   (block
+   (then
     (local.set $x
      (i32.const 1)
     )
@@ -172,8 +194,10 @@
   )
   (if
    (i32.const 1)
-   (local.set $x
-    (i32.const 4)
+   (then
+    (local.set $x
+     (i32.const 4)
+    )
    )
   )
   (call $nomerge
@@ -189,11 +213,15 @@
   )
   (if
    (i32.const 1)
-   (local.set $x
-    (i32.const 6)
+   (then
+    (local.set $x
+     (i32.const 6)
+    )
    )
-   (local.set $x
-    (i32.const 7)
+   (else
+    (local.set $x
+     (i32.const 7)
+    )
    )
   )
   (call $nomerge

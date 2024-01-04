@@ -73,17 +73,23 @@
    (drop
     (if (result i32)
      (i32.const 1)
-     (i32.const 0)
-     (i32.const 0)
+     (then
+      (i32.const 0)
+     )
+     (else
+      (i32.const 0)
+     )
     )
    )
    (if
     (i32.const 1)
-    (local.set $3
-     (local.tee $15
-      (local.tee $14
-       (local.tee $12
-        (i32.const 1)
+    (then
+     (local.set $3
+      (local.tee $15
+       (local.tee $14
+        (local.tee $12
+         (i32.const 1)
+        )
        )
       )
      )
@@ -94,9 +100,11 @@
    )
    (if
     (i32.const 1)
-    (local.set $4
-     (local.tee $13
-      (i32.const 1)
+    (then
+     (local.set $4
+      (local.tee $13
+       (i32.const 1)
+      )
      )
     )
    )
@@ -105,24 +113,32 @@
    )
    (if
     (i32.const 1)
-    (local.set $5
-     (local.tee $15
-      (local.tee $14
-       (i32.const 2)
+    (then
+     (local.set $5
+      (local.tee $15
+       (local.tee $14
+        (i32.const 2)
+       )
       )
      )
     )
-    (nop)
+    (else
+     (nop)
+    )
    )
    (drop
     (local.get $14)
    )
    (if
     (i32.const 1)
-    (nop)
-    (local.set $6
-     (local.tee $15
-      (i32.const 3)
+    (then
+     (nop)
+    )
+    (else
+     (local.set $6
+      (local.tee $15
+       (i32.const 3)
+      )
      )
     )
    )
@@ -131,14 +147,18 @@
    )
    (if
     (i32.const 1)
-    (local.set $7
-     (local.tee $16
-      (i32.const 4)
+    (then
+     (local.set $7
+      (local.tee $16
+       (i32.const 4)
+      )
      )
     )
-    (local.set $8
-     (local.tee $16
-      (i32.const 5)
+    (else
+     (local.set $8
+      (local.tee $16
+       (i32.const 5)
+      )
      )
     )
    )
@@ -147,12 +167,14 @@
    )
    (if
     (i32.const 1)
-    (local.set $9
-     (local.tee $17
-      (i32.const 6)
+    (then
+     (local.set $9
+      (local.tee $17
+       (i32.const 6)
+      )
      )
     )
-    (block
+    (else
      (local.set $10
       (i32.const 7)
      )
@@ -177,7 +199,7 @@
   (block
    (if
     (i32.const 1)
-    (block
+    (then
      (local.set $1
       (local.tee $2
        (i32.const 1)
@@ -239,7 +261,7 @@
    )
    (if
     (i32.const 3)
-    (block
+    (then
      (local.set $2
       (local.tee $6
        (i32.const 1)
@@ -264,19 +286,27 @@
    )
    (if
     (i32.const 5)
-    (br $out)
+    (then
+     (br $out)
+    )
    )
    (drop
     (local.get $3)
    )
    (if
     (i32.const 6)
-    (nop)
+    (then
+     (nop)
+    )
    )
    (if
     (i32.const 7)
-    (nop)
-    (nop)
+    (then
+     (nop)
+    )
+    (else
+     (nop)
+    )
    )
    (block $in
     (local.set $4
@@ -453,7 +483,9 @@
    (block $stop
     (if
      (i32.const 1)
-     (br $stop)
+     (then
+      (br $stop)
+     )
     )
     (local.set $inc
      (i32.add
@@ -493,7 +525,9 @@
    (loop $more
     (if
      (i32.const 1)
-     (br $stop)
+     (then
+      (br $stop)
+     )
     )
     (local.set $inc
      (i32.add
@@ -531,7 +565,9 @@
     (block $out1
      (if
       (local.get $3)
-      (br $out1)
+      (then
+       (br $out1)
+      )
      )
      (local.set $1
       (local.tee $4
@@ -547,7 +583,9 @@
     (block $out2
      (if
       (local.get $4)
-      (br $out2)
+      (then
+       (br $out2)
+      )
      )
      (local.set $2
       (local.tee $4
@@ -572,7 +610,9 @@
     )
     (if
      (local.get $1)
-     (br $out1)
+     (then
+      (br $out1)
+     )
     )
     (br $loop1)
    )
@@ -581,7 +621,9 @@
    (block $out2
     (if
      (local.get $3)
-     (br $out2)
+     (then
+      (br $out2)
+     )
     )
     (local.set $2
      (local.tee $3
@@ -612,12 +654,16 @@
     (loop $loop1
      (if
       (local.get $3)
-      (br $out)
+      (then
+       (br $out)
+      )
      )
      (loop $loop2
       (if
        (local.get $4)
-       (br $out)
+       (then
+        (br $out)
+       )
       )
       (local.set $1
        (local.tee $5
@@ -665,12 +711,16 @@
     (loop $loop1
      (if
       (local.get $3)
-      (br $out)
+      (then
+       (br $out)
+      )
      )
      (loop $loop2
       (if
        (local.get $4)
-       (br $out)
+       (then
+        (br $out)
+       )
       )
       (local.set $1
        (local.tee $5
@@ -711,8 +761,10 @@
     (i32.eqz
      (global.get $global$0)
     )
-    (return
-     (local.get $4)
+    (then
+     (return
+      (local.get $4)
+     )
     )
    )
    (global.set $global$0
@@ -758,8 +810,10 @@
     (i32.eqz
      (global.get $global$0)
     )
-    (return
-     (i32.const 12345)
+    (then
+     (return
+      (i32.const 12345)
+     )
     )
    )
    (global.set $global$0
@@ -769,11 +823,13 @@
     (i32.eqz
      (local.get $7)
     )
-    (br_if $label$1
-     (i32.eqz
-      (local.tee $4
-       (local.tee $7
-        (i32.const 1)
+    (then
+     (br_if $label$1
+      (i32.eqz
+       (local.tee $4
+        (local.tee $7
+         (i32.const 1)
+        )
        )
       )
      )

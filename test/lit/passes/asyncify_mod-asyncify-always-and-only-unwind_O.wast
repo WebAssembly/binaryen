@@ -89,7 +89,9 @@
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (unreachable)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
@@ -106,7 +108,9 @@
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (unreachable)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
@@ -126,7 +130,9 @@
 ;; CHECK-NEXT:     (global.get $__asyncify_data)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (unreachable)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (unreachable)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 

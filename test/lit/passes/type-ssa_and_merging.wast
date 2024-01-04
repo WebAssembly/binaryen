@@ -80,9 +80,11 @@
   ;; NOP:      (func $get-a-1 (type $0) (; has Stack IR ;) (param $0 (ref $A)) (result i32)
   ;; NOP-NEXT:  (if
   ;; NOP-NEXT:   (call $import)
-  ;; NOP-NEXT:   (return
-  ;; NOP-NEXT:    (call $get-a-1
-  ;; NOP-NEXT:     (local.get $0)
+  ;; NOP-NEXT:   (then
+  ;; NOP-NEXT:    (return
+  ;; NOP-NEXT:     (call $get-a-1
+  ;; NOP-NEXT:      (local.get $0)
+  ;; NOP-NEXT:     )
   ;; NOP-NEXT:    )
   ;; NOP-NEXT:   )
   ;; NOP-NEXT:  )
@@ -93,8 +95,10 @@
   ;; YES:      (func $get-a-1 (type $1) (param $0 (ref $A))
   ;; YES-NEXT:  (if
   ;; YES-NEXT:   (call $import)
-  ;; YES-NEXT:   (call $get-a-1
-  ;; YES-NEXT:    (local.get $0)
+  ;; YES-NEXT:   (then
+  ;; YES-NEXT:    (call $get-a-1
+  ;; YES-NEXT:     (local.get $0)
+  ;; YES-NEXT:    )
   ;; YES-NEXT:   )
   ;; YES-NEXT:  )
   ;; YES-NEXT: )
@@ -104,9 +108,11 @@
     ;; is necessary to avoid inlining making this testcase trivial even in NOP).
     (if
       (call $import)
-      (return
-        (call $get-a-1
-          (local.get $ref)
+      (then
+        (return
+          (call $get-a-1
+            (local.get $ref)
+          )
         )
       )
     )
@@ -116,9 +122,11 @@
   ;; NOP:      (func $get-a-2 (type $0) (; has Stack IR ;) (param $0 (ref $A)) (result i32)
   ;; NOP-NEXT:  (if
   ;; NOP-NEXT:   (call $import)
-  ;; NOP-NEXT:   (return
-  ;; NOP-NEXT:    (call $get-a-2
-  ;; NOP-NEXT:     (local.get $0)
+  ;; NOP-NEXT:   (then
+  ;; NOP-NEXT:    (return
+  ;; NOP-NEXT:     (call $get-a-2
+  ;; NOP-NEXT:      (local.get $0)
+  ;; NOP-NEXT:     )
   ;; NOP-NEXT:    )
   ;; NOP-NEXT:   )
   ;; NOP-NEXT:  )
@@ -129,8 +137,10 @@
   ;; YES:      (func $get-a-2 (type $1) (param $0 (ref $A))
   ;; YES-NEXT:  (if
   ;; YES-NEXT:   (call $import)
-  ;; YES-NEXT:   (call $get-a-2
-  ;; YES-NEXT:    (local.get $0)
+  ;; YES-NEXT:   (then
+  ;; YES-NEXT:    (call $get-a-2
+  ;; YES-NEXT:     (local.get $0)
+  ;; YES-NEXT:    )
   ;; YES-NEXT:   )
   ;; YES-NEXT:  )
   ;; YES-NEXT: )
@@ -138,9 +148,11 @@
     ;; Parallel to the above.
     (if
       (call $import)
-      (return
-        (call $get-a-2
-          (local.get $ref)
+      (then
+        (return
+          (call $get-a-2
+            (local.get $ref)
+          )
         )
       )
     )

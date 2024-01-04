@@ -166,8 +166,10 @@
   ;; CHECK-NEXT:  (local $x (ref func))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (local.set $x
-  ;; CHECK-NEXT:    (ref.func $if-nnl)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (ref.func $if-nnl)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $helper
@@ -195,8 +197,10 @@
    ;; do not optimize here.
    (if
     (i32.const 1)
-    (local.set $x
-     (ref.func $if-nnl)
+    (then
+     (local.set $x
+      (ref.func $if-nnl)
+     )
     )
    )
    ;; An exta set + gets, just to avoid other optimizations kicking in
@@ -219,8 +223,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (local.set $x
-  ;; CHECK-NEXT:    (ref.func $if-nnl)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (ref.func $if-nnl)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $helper
@@ -241,8 +247,10 @@
    )
    (if
     (i32.const 1)
-    (local.set $x
-     (ref.func $if-nnl)
+    (then
+     (local.set $x
+      (ref.func $if-nnl)
+     )
     )
    )
    (call $helper

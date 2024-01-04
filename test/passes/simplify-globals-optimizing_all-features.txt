@@ -82,8 +82,10 @@
   )
   (if
    (local.get $0)
-   (return
-    (i32.const 0)
+   (then
+    (return
+     (i32.const 0)
+    )
    )
   )
   (if
@@ -93,8 +95,10 @@
      (global.get $g2)
     )
    )
-   (return
-    (i32.const 1)
+   (then
+    (return
+     (i32.const 1)
+    )
    )
   )
   (global.set $g1

@@ -78,40 +78,54 @@
         (block $label$3
           (if
             (local.get $var$4)
-            (block $label$4
-              (if
-                (local.get $var$8)
-                (block $label$7
-                  (loop $label$8
-                    (block $label$9
-                      (if
-                        (local.get $var$3)
-                        (block $label$12 ;; these empty blocks must never be unreachable-typed
-                        )
-                        (block $label$13
-                          (br $label$9)
+            (then
+              (block $label$4
+                (if
+                  (local.get $var$8)
+                  (then
+                    (block $label$7
+                      (loop $label$8
+                        (block $label$9
+                          (if
+                            (local.get $var$3)
+                            (then
+                              (block $label$12 ;; these empty blocks must never be unreachable-typed
+                              )
+                            )
+                            (else
+                              (block $label$13
+                                (br $label$9)
+                              )
+                            )
+                          )
+                          (br $label$8)
                         )
                       )
-                      (br $label$8)
+                    )
+                  )
+                  (else
+                    (block $label$16
+                      (if
+                        (local.get $var$6)
+                        (then
+                          (block $label$17
+                          )
+                        )
+                        (else
+                          (block $label$18
+                            (br $label$3)
+                          )
+                        )
+                      )
                     )
                   )
                 )
-                (block $label$16
-                  (if
-                    (local.get $var$6)
-                    (block $label$17
-                    )
-                    (block $label$18
-                      (br $label$3)
-                    )
+                (drop
+                  (call $23
+                    (local.get $var$7)
+                    (local.get $var$4)
+                    (local.get $var$0)
                   )
-                )
-              )
-              (drop
-                (call $23
-                  (local.get $var$7)
-                  (local.get $var$4)
-                  (local.get $var$0)
                 )
               )
             )
@@ -130,10 +144,14 @@
       (i32.load8_s
        (i32.const 201460482)
       )
-      (br $label$0)
-      (block $label$3
-       (br_if $label$3
-        (local.get $0)
+      (then
+       (br $label$0)
+      )
+      (else
+       (block $label$3
+        (br_if $label$3
+         (local.get $0)
+        )
        )
       )
      )

@@ -1024,8 +1024,12 @@
  ;; CHECK:      (func $if-else (type $void)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (nop)
- ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $if-else
@@ -1040,8 +1044,12 @@
  ;; CHECK:      (func $if-else-empty (type $void)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (nop)
- ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $if-else-empty
@@ -1054,11 +1062,11 @@
  ;; CHECK:      (func $if-else-many (type $void)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:   (then
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:   (else
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
@@ -1078,11 +1086,15 @@
  ;; CHECK:      (func $if-else-single-nested (type $void)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (f32.const 1)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (f32.const 1)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (f64.const 2)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (f64.const 2)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1100,11 +1112,15 @@
  ;; CHECK:      (func $if-else-folded-body (type $void)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (f32.const 1)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (f32.const 1)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (f32.const 2)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (f32.const 2)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1125,8 +1141,12 @@
  ;; CHECK-NEXT:  (block $l
  ;; CHECK-NEXT:   (if
  ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (nop)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (nop)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1142,7 +1162,9 @@
  ;; CHECK:      (func $if-no-else (type $void)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $if-no-else
@@ -1155,8 +1177,12 @@
  ;; CHECK:      (func $if-else-result (type $1) (result i32)
  ;; CHECK-NEXT:  (if (result i32)
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $if-else-result (result i32)
@@ -1172,8 +1198,12 @@
  ;; CHECK-NEXT:  (block $l (result i32)
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1189,8 +1219,12 @@
  ;; CHECK:      (func $if-else-folded (type $void)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (nop)
- ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $if-else-folded
@@ -1208,8 +1242,12 @@
  ;; CHECK:      (func $if-else-folded-empty (type $void)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (nop)
- ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $if-else-folded-empty
@@ -1223,11 +1261,11 @@
  ;; CHECK:      (func $if-else-folded-many (type $void)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:   (then
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:   (else
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
@@ -1252,11 +1290,15 @@
  ;; CHECK-NEXT:   (i32.eqz
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1282,8 +1324,12 @@
  ;; CHECK-NEXT:  (block $l
  ;; CHECK-NEXT:   (if
  ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (nop)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (nop)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1302,7 +1348,9 @@
  ;; CHECK:      (func $if-no-else-folded (type $void)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $if-no-else-folded
@@ -1317,8 +1365,12 @@
  ;; CHECK:      (func $if-else-folded-result (type $1) (result i32)
  ;; CHECK-NEXT:  (if (result i32)
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $if-else-folded-result (result i32)
@@ -1337,8 +1389,12 @@
  ;; CHECK-NEXT:  (block $l (result i32)
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1357,15 +1413,23 @@
 ;; CHECK:      (func $if-else-atypical-condition (type $void)
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:   (nop)
-;; CHECK-NEXT:   (nop)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (nop)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (nop)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.eqz
 ;; CHECK-NEXT:    (i32.const 0)
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (nop)
-;; CHECK-NEXT:   (nop)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (nop)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (nop)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (func $if-else-atypical-condition
@@ -1378,19 +1442,33 @@
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:    (i32.const 2)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (if
- ;; CHECK-NEXT:    (if (result i32)
- ;; CHECK-NEXT:     (i32.const 3)
- ;; CHECK-NEXT:     (i32.const 4)
- ;; CHECK-NEXT:     (i32.const 5)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (i32.const 1)
  ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
  ;; CHECK-NEXT:    (if
- ;; CHECK-NEXT:     (i32.const 6)
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (i32.const 7)
+ ;; CHECK-NEXT:     (if (result i32)
+ ;; CHECK-NEXT:      (i32.const 3)
+ ;; CHECK-NEXT:      (then
+ ;; CHECK-NEXT:       (i32.const 4)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (else
+ ;; CHECK-NEXT:       (i32.const 5)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (then
+ ;; CHECK-NEXT:      (if
+ ;; CHECK-NEXT:       (i32.const 6)
+ ;; CHECK-NEXT:       (then
+ ;; CHECK-NEXT:        (drop
+ ;; CHECK-NEXT:         (i32.const 7)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -1429,8 +1507,12 @@
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (if
  ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:    (br $label)
- ;; CHECK-NEXT:    (br $label)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (br $label)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (br $label)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1447,11 +1529,15 @@
  ;; CHECK-NEXT:  (block $label (result i32)
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:    (br $label
- ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (br $label
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (br $label
- ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (br $label
+ ;; CHECK-NEXT:      (i32.const 2)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -2264,7 +2350,9 @@
  ;; CHECK-NEXT:  (block $l_1
  ;; CHECK-NEXT:   (if
  ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:    (br $l_1)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (br $l_1)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -2289,7 +2377,9 @@
  ;; CHECK-NEXT:    (block $l_1
  ;; CHECK-NEXT:     (if
  ;; CHECK-NEXT:      (i32.const 0)
- ;; CHECK-NEXT:      (br $l_1)
+ ;; CHECK-NEXT:      (then
+ ;; CHECK-NEXT:       (br $l_1)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (br $l_0)

@@ -94,7 +94,9 @@
               (throw $e)
             )
           )
-          (nop)
+          (then
+            (nop)
+          )
         )
         (ref.null extern)
       )

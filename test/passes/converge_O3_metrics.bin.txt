@@ -92,19 +92,21 @@ total
      (i32.const 10888)
     )
    )
-   (block $label$2
-    (br_if $label$2
-     (call_indirect (type $0)
-      (local.get $1)
-      (i32.const 10888)
-      (local.get $0)
-      (i32.add
-       (i32.load offset=48
-        (i32.load
-         (local.get $1)
+   (then
+    (block $label$2
+     (br_if $label$2
+      (call_indirect (type $0)
+       (local.get $1)
+       (i32.const 10888)
+       (local.get $0)
+       (i32.add
+        (i32.load offset=48
+         (i32.load
+          (local.get $1)
+         )
         )
+        (i32.const 8)
        )
-       (i32.const 8)
       )
      )
     )
@@ -133,17 +135,21 @@ total
        (i32.const 24)
       )
      )
-     (i32.const 0)
-     (call_indirect (type $1)
-      (local.get $0)
-      (i32.const 10)
-      (i32.add
-       (i32.load offset=52
-        (i32.load
-         (local.get $0)
+     (then
+      (i32.const 0)
+     )
+     (else
+      (call_indirect (type $1)
+       (local.get $0)
+       (i32.const 10)
+       (i32.add
+        (i32.load offset=52
+         (i32.load
+          (local.get $0)
+         )
         )
+        (i32.const 422)
        )
-       (i32.const 422)
       )
      )
     )
@@ -317,19 +323,21 @@ total
      (i32.const 10888)
     )
    )
-   (block $label$2
-    (br_if $label$2
-     (call_indirect (type $0)
-      (local.get $1)
-      (i32.const 10888)
-      (local.get $0)
-      (i32.add
-       (i32.load offset=48
-        (i32.load
-         (local.get $1)
+   (then
+    (block $label$2
+     (br_if $label$2
+      (call_indirect (type $0)
+       (local.get $1)
+       (i32.const 10888)
+       (local.get $0)
+       (i32.add
+        (i32.load offset=48
+         (i32.load
+          (local.get $1)
+         )
         )
+        (i32.const 8)
        )
-       (i32.const 8)
       )
      )
     )
@@ -358,17 +366,21 @@ total
        (i32.const 24)
       )
      )
-     (i32.const 0)
-     (call_indirect (type $1)
-      (local.get $0)
-      (i32.const 10)
-      (i32.add
-       (i32.load offset=52
-        (i32.load
-         (local.get $0)
+     (then
+      (i32.const 0)
+     )
+     (else
+      (call_indirect (type $1)
+       (local.get $0)
+       (i32.const 10)
+       (i32.add
+        (i32.load offset=52
+         (i32.load
+          (local.get $0)
+         )
         )
+        (i32.const 422)
        )
-       (i32.const 422)
       )
      )
     )
@@ -537,19 +549,21 @@ total
      (i32.const 10888)
     )
    )
-   (block $label$2
-    (br_if $label$2
-     (call_indirect (type $0)
-      (local.get $1)
-      (i32.const 10888)
-      (local.get $0)
-      (i32.add
-       (i32.load offset=48
-        (i32.load
-         (local.get $1)
+   (then
+    (block $label$2
+     (br_if $label$2
+      (call_indirect (type $0)
+       (local.get $1)
+       (i32.const 10888)
+       (local.get $0)
+       (i32.add
+        (i32.load offset=48
+         (i32.load
+          (local.get $1)
+         )
         )
+        (i32.const 8)
        )
-       (i32.const 8)
       )
      )
     )
@@ -578,17 +592,21 @@ total
        (i32.const 24)
       )
      )
-     (i32.const 0)
-     (call_indirect (type $1)
-      (local.get $0)
-      (i32.const 10)
-      (i32.add
-       (i32.load offset=52
-        (i32.load
-         (local.get $0)
+     (then
+      (i32.const 0)
+     )
+     (else
+      (call_indirect (type $1)
+       (local.get $0)
+       (i32.const 10)
+       (i32.add
+        (i32.load offset=52
+         (i32.load
+          (local.get $0)
+         )
         )
+        (i32.const 422)
        )
-       (i32.const 422)
       )
      )
     )

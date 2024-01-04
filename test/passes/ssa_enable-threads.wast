@@ -24,46 +24,70 @@
     (drop
       (if i32
         (i32.const 1)
-        (local.get $x)
-        (local.get $y)
+        (then
+          (local.get $x)
+        )
+        (else
+          (local.get $y)
+        )
       )
     )
     (if
       (i32.const 1)
-      (local.set $x (i32.const 1))
+      (then
+        (local.set $x (i32.const 1))
+      )
     )
     (drop (local.get $x))
     ;; same but with param
     (if
       (i32.const 1)
-      (local.set $p (i32.const 1))
+      (then
+        (local.set $p (i32.const 1))
+      )
     )
     (drop (local.get $p))
     ;; if-else
     (if
       (i32.const 1)
-      (local.set $x (i32.const 2))
-      (nop)
+      (then
+        (local.set $x (i32.const 2))
+      )
+      (else
+        (nop)
+      )
     )
     (drop (local.get $x))
     (if
       (i32.const 1)
-      (nop)
-      (local.set $x (i32.const 3))
+      (then
+        (nop)
+      )
+      (else
+        (local.set $x (i32.const 3))
+      )
     )
     (drop (local.get $x))
     (if
       (i32.const 1)
-      (local.set $x (i32.const 4))
-      (local.set $x (i32.const 5))
+      (then
+        (local.set $x (i32.const 4))
+      )
+      (else
+        (local.set $x (i32.const 5))
+      )
     )
     (drop (local.get $x))
     (if
       (i32.const 1)
-      (local.set $x (i32.const 6))
-      (block
-        (local.set $x (i32.const 7))
-        (local.set $x (i32.const 8))
+      (then
+        (local.set $x (i32.const 6))
+      )
+      (else
+        (block
+          (local.set $x (i32.const 7))
+          (local.set $x (i32.const 8))
+        )
       )
     )
     (drop (local.get $x))
@@ -71,9 +95,11 @@
   (func $if2 (param $x i32)
     (if
       (i32.const 1)
-      (block
-        (local.set $x (i32.const 1))
-        (drop (local.get $x)) ;; use between phi set and use
+      (then
+        (block
+          (local.set $x (i32.const 1))
+          (drop (local.get $x)) ;; use between phi set and use
+        )
       )
     )
     (drop (local.get $x))
@@ -92,25 +118,35 @@
       (br_if $out (i32.const 2))
       (drop (local.get $x))
       (if (i32.const 3)
-        (block
-          (local.set $x (i32.const 1))
-          (drop (local.get $x))
-          (br $out)
+        (then
+          (block
+            (local.set $x (i32.const 1))
+            (drop (local.get $x))
+            (br $out)
+          )
         )
       )
       (drop (local.get $x))
       (local.set $x (i32.const 4))
       (drop (local.get $x))
       (if (i32.const 5)
-        (br $out)
+        (then
+          (br $out)
+        )
       )
       (drop (local.get $x))
       (if (i32.const 6)
-        (nop)
+        (then
+          (nop)
+        )
       )
       (if (i32.const 7)
-        (nop)
-        (nop)
+        (then
+          (nop)
+        )
+        (else
+          (nop)
+        )
       )
       ;; finally, switching
       (block $in
@@ -179,7 +215,9 @@
      (block $stop
       (if
        (i32.const 1)
-       (br $stop)
+       (then
+        (br $stop)
+       )
       )
       (local.set $inc
        (i32.add
@@ -206,7 +244,9 @@
      (loop $more
       (if
        (i32.const 1)
-       (br $stop)
+       (then
+        (br $stop)
+       )
       )
       (local.set $inc
        (i32.add
@@ -228,7 +268,9 @@
       (block $out1
         (if
           (local.get $param)
-          (br $out1)
+          (then
+            (br $out1)
+          )
         )
         (local.set $param (i32.const 1))
         (br $loop1)
@@ -238,7 +280,9 @@
       (block $out2
         (if
           (local.get $param)
-          (br $out2)
+          (then
+            (br $out2)
+          )
         )
         (local.set $param (i32.const 2))
         (br $loop2)
@@ -252,7 +296,9 @@
         (local.set $param (i32.const 1))
         (if
           (local.get $param)
-          (br $out1)
+          (then
+            (br $out1)
+          )
         )
         (br $loop1)
       )
@@ -261,7 +307,9 @@
       (block $out2
         (if
           (local.get $param)
-          (br $out2)
+          (then
+            (br $out2)
+          )
         )
         (local.set $param (i32.const 2))
         (br $loop2)
@@ -274,12 +322,16 @@
       (loop $loop1
         (if
           (local.get $x)
-          (br $out)
+          (then
+            (br $out)
+          )
         )
         (loop $loop2
           (if
             (local.get $x)
-            (br $out)
+            (then
+              (br $out)
+            )
           )
           (local.set $x (i32.const 1))
           (br $loop2)
@@ -296,12 +348,16 @@
       (loop $loop1
         (if
           (local.get $x)
-          (br $out)
+          (then
+            (br $out)
+          )
         )
         (loop $loop2
           (if
             (local.get $x)
-            (br $out)
+            (then
+              (br $out)
+            )
           )
           (local.set $x (i32.const 1))
           (br_if $loop2 (i32.const 3)) ;; add fallthrough
@@ -320,8 +376,10 @@
      (i32.eqz
       (global.get $global$0)
      )
-     (return
-      (local.get $result) ;; we eventually reach here
+     (then
+      (return
+       (local.get $result) ;; we eventually reach here
+      )
      )
     )
     (global.set $global$0
@@ -352,8 +410,10 @@
      (i32.eqz
       (global.get $global$0)
      )
-     (return
-      (i32.const 12345)
+     (then
+      (return
+       (i32.const 12345)
+      )
      )
     )
     (global.set $global$0
@@ -363,10 +423,12 @@
      (i32.eqz
       (local.get $var$0) ;; check $0 here. this will get a phi var
      )
-     (br_if $label$1
-      (i32.eqz
-       (local.tee $var$0 ;; set $0 to 1. here the two diverge. for the phi, we'll get a set here and above
-        (i32.const 1)
+     (then
+      (br_if $label$1
+       (i32.eqz
+        (local.tee $var$0 ;; set $0 to 1. here the two diverge. for the phi, we'll get a set here and above
+         (i32.const 1)
+        )
        )
       )
      )

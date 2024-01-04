@@ -200,7 +200,9 @@
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $x
   ;; CHECK-NEXT:    (i32.const 1)
@@ -214,7 +216,7 @@
     (local $x i32)
     (block $out
       (local.set $x (i32.const 1))
-      (if (i32.const 2) (nop))
+      (if (i32.const 2) (then (nop)))
       (drop (local.get $x))
     )
   )
@@ -510,7 +512,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (call $value-interferes)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (call $value-interferes)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (local.get $x)
@@ -522,7 +526,9 @@
     (block $out
       (local.set $x (i32.load (i32.const 0)))
       (if (i32.const 1)
-        (call $value-interferes)
+        (then
+          (call $value-interferes)
+        )
       )
       (drop (local.get $x))
     )
@@ -696,7 +702,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -707,7 +715,9 @@
       (br_if $out (i32.const 1))
       (if
         (local.get $x)
-        (nop)
+        (then
+          (nop)
+        )
       )
     )
   )

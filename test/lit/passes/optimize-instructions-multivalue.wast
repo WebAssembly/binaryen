@@ -8,8 +8,12 @@
   ;; CHECK-NEXT:  (tuple.extract 2 0
   ;; CHECK-NEXT:   (if (type $2) (result i32 i32)
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (local.get $tuple)
-  ;; CHECK-NEXT:    (local.get $tuple2)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (local.get $tuple)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (local.get $tuple2)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -19,11 +23,15 @@
     (if (result i32)
       (local.get $x)
       ;; The tuple.extract can be hoisted out.
-      (tuple.extract 2 0
-        (local.get $tuple)
+      (then
+        (tuple.extract 2 0
+          (local.get $tuple)
+        )
       )
-      (tuple.extract 2 0
-        (local.get $tuple2)
+      (else
+        (tuple.extract 2 0
+          (local.get $tuple2)
+        )
       )
     )
   )

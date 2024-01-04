@@ -83,8 +83,12 @@
     (call $nothing)
     (drop (local.get $x))
     (if (i32.const 1)
-      (return (i32.const 2))
-      (return (i32.const 3))
+      (then
+        (return (i32.const 2))
+      )
+      (else
+        (return (i32.const 3))
+      )
     )
     (i32.const 4)
   )
@@ -254,8 +258,12 @@
     (call $nothing)
     (drop (local.get $x))
     (if (i32.const 1)
-      (return (i32.const 2))
-      (return (i32.const 3))
+      (then
+        (return (i32.const 2))
+      )
+      (else
+        (return (i32.const 3))
+      )
     )
     (i32.const 4)
   )

@@ -62,10 +62,12 @@
  ;; CHECK-NEXT:       (local.get $i64toi32_i32$4)
  ;; CHECK-NEXT:       (local.get $i64toi32_i32$3)
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (local.set $i64toi32_i32$5
- ;; CHECK-NEXT:       (i32.add
- ;; CHECK-NEXT:        (local.get $i64toi32_i32$5)
- ;; CHECK-NEXT:        (i32.const 1)
+ ;; CHECK-NEXT:      (then
+ ;; CHECK-NEXT:       (local.set $i64toi32_i32$5
+ ;; CHECK-NEXT:        (i32.add
+ ;; CHECK-NEXT:         (local.get $i64toi32_i32$5)
+ ;; CHECK-NEXT:         (i32.const 1)
+ ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )

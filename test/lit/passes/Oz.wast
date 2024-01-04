@@ -166,8 +166,10 @@
   ;; CHECK:      (func $11 (type $1) (; has Stack IR ;) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
@@ -175,9 +177,13 @@
   (func $11 (export "eliminate-redundant-checks-1") (param $0 i32) (result i32)
     (if
       (local.get $0)
-      (if
-        (local.get $0)
-        (return (local.get $0))
+      (then
+        (if
+          (local.get $0)
+          (then
+            (return (local.get $0))
+          )
+        )
       )
     )
     (i32.const 0)
@@ -189,15 +195,19 @@
         (i32.const 0)
         (local.get $0)
       )
-      (return (local.get $0))
+      (then
+        (return (local.get $0))
+      )
     )
     (i32.const 0)
   )
   ;; CHECK:      (func $12 (type $0) (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
@@ -205,9 +215,13 @@
   (func $12 (export "eliminate-redundant-checks-2") (param $0 i32) (param $1 i32) (result i32)
     (if
       (local.tee $1 (local.get $0))
-      (if
-        (local.get $1)
-        (return (local.get $1))
+      (then
+        (if
+          (local.get $1)
+          (then
+            (return (local.get $1))
+          )
+        )
       )
     )
     (i32.const 0)
@@ -219,7 +233,9 @@
         (i32.const 0)
         (local.get $1)
       )
-      (return (local.get $1))
+      (then
+        (return (local.get $1))
+      )
     )
     (i32.const 0)
   )
@@ -230,8 +246,10 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
@@ -243,7 +261,9 @@
         (i32.const 0)
         (local.tee $1 (local.get $0))
       )
-      (return (local.get $1))
+      (then
+        (return (local.get $1))
+      )
     )
     (i32.const 0)
   )
@@ -255,8 +275,10 @@
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
@@ -268,7 +290,9 @@
         (local.get $1)
         (local.tee $1 (local.get $0))
       )
-      (return (local.get $1))
+      (then
+        (return (local.get $1))
+      )
     )
     (i32.const 0)
   )
