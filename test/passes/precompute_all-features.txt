@@ -8,7 +8,7 @@
  (type $6 (func (result externref)))
  (global $global i32 (i32.const 1))
  (global $global-mut (mut i32) (i32.const 2))
- (memory $0 512 512)
+ (memory $0 6 65536)
  (data $0 (i32.const 0) "hello!")
  (elem declare func $dummy)
  (func $x (type $0) (param $x i32)

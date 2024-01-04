@@ -1,7 +1,5 @@
 (module
-  (memory 512 512
-   (data "hello!")
-  )
+  (memory (data "hello!") 512 512)
   (type $0 (func (param i32)))
   (global $global i32 (i32.const 1))
   (global $global-mut (mut i32) (i32.const 2))

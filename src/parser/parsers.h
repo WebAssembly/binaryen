@@ -18,6 +18,7 @@
 #define parser_parsers_h
 
 #include "common.h"
+#include "contexts.h"
 #include "input.h"
 
 namespace wasm::WATParser {
@@ -706,14 +707,13 @@ template<typename Ctx> MaybeResult<> instr(Ctx& ctx) {
 }
 
 template<typename Ctx> MaybeResult<> foldedinstr(Ctx& ctx) {
-  // Check for valid strings that are not instructions.
-  if (ctx.in.peekSExprStart("then"sv) || ctx.in.peekSExprStart("else")) {
+  // We must have an '(' to start a folded instruction.
+  if (auto tok = ctx.in.peek(); !tok || !tok->isLParen()) {
     return {};
   }
-  if (auto inst = foldedBlockinstr(ctx)) {
-    return inst;
-  }
-  if (!ctx.in.takeLParen()) {
+
+  // Check for valid strings that look like folded instructions but are not.
+  if (ctx.in.peekSExprStart("then"sv) || ctx.in.peekSExprStart("else")) {
     return {};
   }
 
@@ -721,47 +721,52 @@ template<typename Ctx> MaybeResult<> foldedinstr(Ctx& ctx) {
   // instructions that need to be parsed after their folded children.
   std::vector<std::pair<Index, std::optional<Index>>> foldedInstrs;
 
-  // Begin a folded instruction. Push its start position and a placeholder
-  // end position.
-  foldedInstrs.push_back({ctx.in.getPos(), {}});
-  while (!foldedInstrs.empty()) {
-    // Consume everything up to the next paren. This span will be parsed as
-    // an instruction later after its folded children have been parsed.
-    if (!ctx.in.takeUntilParen()) {
-      return ctx.in.err(foldedInstrs.back().first,
-                        "unterminated folded instruction");
-    }
-
-    if (!foldedInstrs.back().second) {
-      // The folded instruction we just started should end here.
-      foldedInstrs.back().second = ctx.in.getPos();
-    }
-
-    // We have either the start of a new folded child or the end of the last
-    // one.
-    if (auto blockinst = foldedBlockinstr(ctx)) {
-      CHECK_ERR(blockinst);
-    } else if (ctx.in.takeLParen()) {
-      foldedInstrs.push_back({ctx.in.getPos(), {}});
-    } else if (ctx.in.takeRParen()) {
+  do {
+    if (ctx.in.takeRParen()) {
+      // We've reached the end of a folded instruction. Parse it for real.
       auto [start, end] = foldedInstrs.back();
-      assert(end && "Should have found end of instruction");
+      if (!end) {
+        return ctx.in.err("unexpected end of folded instruction");
+      }
       foldedInstrs.pop_back();
 
       WithPosition with(ctx, start);
-      if (auto inst = plaininstr(ctx)) {
-        CHECK_ERR(inst);
-      } else {
-        return ctx.in.err(start, "expected folded instruction");
-      }
-
-      if (ctx.in.getPos() != *end) {
-        return ctx.in.err("expected end of instruction");
-      }
-    } else {
-      WASM_UNREACHABLE("expected paren");
+      auto inst = plaininstr(ctx);
+      assert(inst && "unexpectedly failed to parse instruction");
+      CHECK_ERR(inst);
+      assert(ctx.in.getPos() == *end && "expected end of instruction");
+      continue;
     }
-  }
+
+    // We're not ending an instruction, so we must be starting a new one. Maybe
+    // it is a block instruction.
+    if (auto blockinst = foldedBlockinstr(ctx)) {
+      CHECK_ERR(blockinst);
+      continue;
+    }
+
+    // We must be starting a new plain instruction.
+    if (!ctx.in.takeLParen()) {
+      return ctx.in.err("expected folded instruction");
+    }
+    foldedInstrs.push_back({ctx.in.getPos(), {}});
+
+    // Consume the span for the instruction without meaningfully parsing it yet.
+    // It will be parsed for real using the real context after its s-expression
+    // children have been found and parsed.
+    NullCtx nullCtx(ctx.in);
+    if (auto inst = plaininstr(nullCtx)) {
+      CHECK_ERR(inst);
+      ctx.in = nullCtx.in;
+    } else {
+      return ctx.in.err("expected instruction");
+    }
+
+    // The folded instruction we just started ends here.
+    assert(!foldedInstrs.back().second);
+    foldedInstrs.back().second = ctx.in.getPos();
+  } while (!foldedInstrs.empty());
+
   return Ok{};
 }
 
@@ -1589,9 +1594,11 @@ template<typename Ctx> Result<> makeBrOnNull(Ctx& ctx, Index pos, bool onFail) {
 template<typename Ctx> Result<> makeBrOnCast(Ctx& ctx, Index pos, bool onFail) {
   auto label = labelidx(ctx);
   CHECK_ERR(label);
-  auto type = reftype(ctx);
-  CHECK_ERR(type);
-  return ctx.makeBrOn(pos, *label, onFail ? BrOnCastFail : BrOnCast, *type);
+  auto in = reftype(ctx);
+  CHECK_ERR(in);
+  auto out = reftype(ctx);
+  CHECK_ERR(out);
+  return ctx.makeBrOn(pos, *label, onFail ? BrOnCastFail : BrOnCast, *in, *out);
 }
 
 template<typename Ctx>
@@ -2087,7 +2094,7 @@ template<typename Ctx> MaybeResult<> subtype(Ctx& ctx) {
   }
 
   if (ctx.in.takeSExprStart("sub"sv)) {
-    if (ctx.in.takeKeyword("open"sv)) {
+    if (!ctx.in.takeKeyword("final"sv)) {
       ctx.setOpen();
     }
     if (auto super = maybeTypeidx(ctx)) {

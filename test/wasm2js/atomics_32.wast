@@ -1,5 +1,5 @@
 (module
-  (memory (shared 256 256))
+  (memory 256 256 shared)
   (data "hello,")
   (data "world!")
   (func $test (export "test")

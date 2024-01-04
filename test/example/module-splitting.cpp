@@ -73,7 +73,7 @@ int main() {
   // Global stuff
   do_test({}, R"(
     (module
-     (memory $mem (shared 3 42))
+     (memory $mem 3 42 shared)
      (table $tab 3 42 funcref)
      (global $glob (mut i32) (i32.const 7))
      (tag $e (param i32))
@@ -82,7 +82,7 @@ int main() {
   // Imported global stuff
   do_test({}, R"(
     (module
-     (import "env" "mem" (memory $mem (shared 3 42)))
+     (import "env" "mem" (memory $mem 3 42 shared))
      (import "env" "tab" (table $tab 3 42 funcref))
      (import "env" "glob" (global $glob (mut i32)))
      (import "env" "e" (tag $e (param i32)))
@@ -91,7 +91,7 @@ int main() {
   // Exported global stuff
   do_test({}, R"(
     (module
-     (memory $mem (shared 3 42))
+     (memory $mem 3 42 shared)
      (table $tab 3 42 funcref)
      (global $glob (mut i32) (i32.const 7))
      (tag $e (param i32))

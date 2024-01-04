@@ -38,7 +38,7 @@
  (type $36 (func (param i32 f64) (result i32)))
  (type $37 (func (param i32 i32 i32 i32) (result f64)))
  (type $38 (func (param i32 i32 i64 i32) (result i64)))
- (import "env" "memory" (memory $mimport$0 (shared 256 256)))
+ (import "env" "memory" (memory $mimport$0 256 256 shared))
  (import "env" "emscripten_asm_const_int" (func $fimport$0 (param i32 i32 i32) (result i32)))
  (import "env" "world" (func $fimport$1))
  (import "env" "__cxa_thread_atexit" (func $fimport$2 (param i32 i32 i32) (result i32)))

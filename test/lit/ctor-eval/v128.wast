@@ -6,8 +6,8 @@
 
   ;; CHECK:      (type $1 (func (result v128)))
 
-  ;; CHECK:      (memory $0 (shared 16 17))
-  (memory $0 (shared 16 17))
+  ;; CHECK:      (memory $0 16 17 shared)
+  (memory $0 16 17 shared)
 
   (export "v128" (func $v128))
   ;; CHECK:      (data $0 (i32.const 23) "\e0\ff\c0N\8e\00\00\fe\01\00\12\81\85\fd\ff\90")

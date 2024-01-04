@@ -1,5 +1,5 @@
 (module
-  (memory (shared 256 256))
+  (memory 256 256 shared)
   (type $i (func (param i32)))
   (type $ii (func (param i32 i32)))
   (type $iii (func (param i32 i32 i32)))

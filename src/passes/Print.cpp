@@ -2018,7 +2018,7 @@ struct PrintExpressionContents
     printMedium(o, "rethrow ");
     printName(curr->target, o);
   }
-  void visitThrowRef(ThrowRef* curr) { printMedium(o, "throw_ref "); }
+  void visitThrowRef(ThrowRef* curr) { printMedium(o, "throw_ref"); }
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
   void visitPop(Pop* curr) {
@@ -3148,10 +3148,6 @@ void PrintSExpression::printMemoryHeader(Memory* curr) {
   o << '(';
   printMedium(o, "memory") << ' ';
   printName(curr->name, o) << ' ';
-  if (curr->shared) {
-    o << '(';
-    printMedium(o, "shared ");
-  }
   if (curr->is64()) {
     o << "i64 ";
   }
@@ -3160,7 +3156,7 @@ void PrintSExpression::printMemoryHeader(Memory* curr) {
     o << ' ' << curr->max;
   }
   if (curr->shared) {
-    o << ")";
+    printMedium(o, " shared");
   }
   o << ")";
 }

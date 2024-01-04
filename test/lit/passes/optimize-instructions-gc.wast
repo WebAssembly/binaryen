@@ -366,7 +366,7 @@
       )
     )
     (drop
-      (array.len $array
+      (array.len
         (ref.as_non_null
           (local.get $y)
         )

@@ -10,11 +10,11 @@
 ;; RUN: cat %t.bin.nodebug.wast | filecheck %s --check-prefix=CHECK-BIN-NODEBUG
 
 (module
-  (memory (shared 1 1))
+  (memory 1 1 shared)
 
   ;; CHECK-TEXT:      (type $0 (func))
 
-  ;; CHECK-TEXT:      (memory $0 (shared 1 1))
+  ;; CHECK-TEXT:      (memory $0 1 1 shared)
 
   ;; CHECK-TEXT:      (func $test (type $0)
   ;; CHECK-TEXT-NEXT:  (i32.load
@@ -41,7 +41,7 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (type $0 (func))
 
-  ;; CHECK-BIN:      (memory $0 (shared 1 1))
+  ;; CHECK-BIN:      (memory $0 1 1 shared)
 
   ;; CHECK-BIN:      (func $test (type $0)
   ;; CHECK-BIN-NEXT:  (unreachable)
@@ -74,7 +74,7 @@
 )
 ;; CHECK-BIN-NODEBUG:      (type $0 (func))
 
-;; CHECK-BIN-NODEBUG:      (memory $0 (shared 1 1))
+;; CHECK-BIN-NODEBUG:      (memory $0 1 1 shared)
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)

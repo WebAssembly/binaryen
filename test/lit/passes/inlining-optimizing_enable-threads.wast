@@ -153,8 +153,8 @@
 (module
  ;; CHECK:      (type $0 (func (result i64)))
 
- ;; CHECK:      (memory $0 (shared 1 1))
- (memory $0 (shared 1 1))
+ ;; CHECK:      (memory $0 1 1 shared)
+ (memory $0 1 1 shared)
  (func $0 (result i32)
   (i32.atomic.store16
    (i32.const 0)

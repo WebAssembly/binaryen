@@ -443,7 +443,8 @@ struct NullInstrParserCtx {
 
   Result<> makeBrOn(Index, LabelIdxT, BrOnOp) { return Ok{}; }
 
-  template<typename TypeT> Result<> makeBrOn(Index, LabelIdxT, BrOnOp, TypeT) {
+  template<typename TypeT>
+  Result<> makeBrOn(Index, LabelIdxT, BrOnOp, TypeT, TypeT) {
     return Ok{};
   }
 
@@ -515,6 +516,14 @@ struct NullInstrParserCtx {
   Result<> makeStringIterMove(Index, StringIterMoveOp) { return Ok{}; }
   Result<> makeStringSliceWTF(Index, StringSliceWTFOp) { return Ok{}; }
   Result<> makeStringSliceIter(Index) { return Ok{}; }
+};
+
+struct NullCtx : NullTypeParserCtx, NullInstrParserCtx {
+  ParseInput in;
+  NullCtx(const ParseInput& in) : in(in) {}
+  Result<> makeTypeUse(Index, std::optional<HeapTypeT>, ParamsT*, ResultsT*) {
+    return Ok{};
+  }
 };
 
 // Phase 1: Parse definition spans for top-level module elements and determine
@@ -1682,9 +1691,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeRefCast(type));
   }
 
-  Result<>
-  makeBrOn(Index pos, Index label, BrOnOp op, Type castType = Type::none) {
-    return withLoc(pos, irBuilder.makeBrOn(label, op, castType));
+  Result<> makeBrOn(Index pos,
+                    Index label,
+                    BrOnOp op,
+                    Type in = Type::none,
+                    Type out = Type::none) {
+    return withLoc(pos, irBuilder.makeBrOn(label, op, in, out));
   }
 
   Result<> makeStructNew(Index pos, HeapType type) {
