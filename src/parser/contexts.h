@@ -411,7 +411,7 @@ struct NullInstrParserCtx {
   Result<> makeCallIndirect(Index, TableIdxT*, TypeUseT, bool) {
     return Ok{};
   }
-  Result<> makeBreak(Index, LabelIdxT) { return Ok{}; }
+  Result<> makeBreak(Index, LabelIdxT, bool) { return Ok{}; }
   Result<> makeSwitch(Index, const std::vector<LabelIdxT>&, LabelIdxT) {
     return Ok{};
   }
@@ -1586,8 +1586,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeCallIndirect(*t, type, isReturn));
   }
 
-  Result<> makeBreak(Index pos, Index label) {
-    return withLoc(pos, irBuilder.makeBreak(label));
+  Result<> makeBreak(Index pos, Index label, bool isConditional) {
+    return withLoc(pos, irBuilder.makeBreak(label, isConditional));
   }
 
   Result<>
