@@ -215,6 +215,7 @@ struct Precompute
   void doWalkFunction(Function* func) {
     // Walk the function and precompute things.
     super::doWalkFunction(func);
+    partiallyPrecompute(func);
     if (!propagate) {
       return;
     }
@@ -228,6 +229,7 @@ struct Precompute
       // another walk to apply them and perhaps other optimizations that are
       // unlocked.
       super::doWalkFunction(func);
+      partiallyPrecompute(func);
     }
     // Note that in principle even more cycles could find further work here, in
     // very rare cases. To avoid constructing a LocalGraph again just for that
@@ -285,7 +287,7 @@ struct Precompute
       if (flow.breakTo == NONCONSTANT_FLOW) {
         // This cannot be turned into a constant, but perhaps we can partially
         // precompute it.
-        tryToPartiallyPrecompute(curr);
+        considerPartiallyPrecomputing(curr);
         return;
       }
       if (flow.breakTo == RETURN_FLOW) {
@@ -348,13 +350,122 @@ struct Precompute
   // selects and ifs (OptimizeInstructions does that), but here we are
   // computing two constant which replace four expressions, so it is worthwhile.
   //
-  // XXX OR: use an ExpressionStackWalker if we see a select. Then as we go, keep
-  // the select in mind, and precompute two versions when it is a child of ours
-  // (enumerate all parents when we get to the select). Each version has
-  // (block (drop condition) value1or2). If we precompute both, replace this
-  // with that condition over those values. Ignore more than 1 nested select to
-  // avoid N^2
-  void tryToPartiallyPrecompute(Expression* curr) {
+  // To do such partial precomputing, in the main pass we note selects that look
+  // promising. If we find any then we do a second pass later just for that (as
+  // doing so requires walking up the stack in a manner that we want to avoid in
+  // main pass, for overhead reasons; see below).
+  //
+  // Note that selects are all we really need here: Other passes would turn an
+  // if into a select if the arms are simple enough, and only in those cases
+  // (simple arms) do we have a chance at partially precomputing. (For example,
+  // if an arm is a constant then we can, but if it is a call then we can't.)
+  std::unordered_set<Select*> partiallyPrecomputable;
+
+  void considerPartiallyPrecomputing(Expression* curr) {
+    if (auto* select = curr->dynCast<Select>()) {
+      // We only have a reasonable hope of success if the select arms are things
+      // like constants or global gets.
+      auto isValid = [](Expression* arm) {
+        // TODO: more?
+        return arm->is<Const>() || arm->is<RefFunc>() || arm->is<GlobalGet>();
+      };
+      if (isValid(select->ifTrue) && isValid(select->ifFalse)) {
+        partiallyPrecomputable.insert(select);
+      }
+    }
+  }
+
+  // To partially precompute selects we walk up the stack from them, like this:
+  //
+  //  (A
+  //    (B
+  //      (select
+  //        (C)
+  //        (D)
+  //        (condition)
+  //      )
+  //    )
+  //  )
+  //
+  // First we try to apply B to C and D. If that works, we arrive at this:
+  //
+  //  (A
+  //    (select
+  //      (constant result of B(C))
+  //      (constant result of B(D))
+  //      (condition)
+  //    )
+  //  )
+  //
+  // We can then proceed to perhaps apply A. However, even if we failed to apply
+  // B then we can try to apply A and B together, because that combination may
+  // succeed where incremental work fails, for example:
+  //
+  //  (global $C
+  //    (struct.new    ;; outer
+  //      (struct.new  ;; inner
+  //        (i32.const 10)
+  //      )
+  //    )
+  //  )
+  //
+  //  (struct.get    ;; outer
+  //    (struct.get  ;; inner
+  //      (select
+  //        (global.get $C)
+  //        (global.get $D)
+  //        (condition)
+  //      )
+  //    )
+  //  )
+  //
+  // Applying the inner struct.get to $C leads us to the inner struct.new, but
+  // that is an interior pointer in the global - it is not something we can
+  // refer to using a global.get, so precomputing it fails. However, when we
+  // apply the outer struct.get we arrive at the outer struct.new, which is in
+  // fact the global $C, and we succeed.
+  void partiallyPrecompute(Function* func) {
+    // Walk the function to find the parent stacks of the selects.
+    struct StackFinder : public ExpressionStackWalker<StackFinder> {
+      Precompute& parent;
+
+      StackFinder(Precompute& parent) : parent(parent) {}
+
+      std::unordered_map<Select*, ExpressionStack> stackMap;
+
+      void visitSelect(Select* curr) {
+        if (parent.partiallyPrecomputable.count(curr)) {
+          // This is a relevant select. Note the stack, but also check if it is
+          // nested in another select, which is a case that for simplicity we
+          // don't handle yet TODO
+          assert(expressionStack.back() == select);
+          for (auto* item : expressionStack) {
+            if (item == select) {
+              continue;
+            }
+            if (item->is<Select>()) {
+              // This is another select in the middle somewhere; give up.
+              return;
+            }
+          }
+
+          // This select looks promising, note it and its stack.
+          stackMap[curr] = expressionStack;
+        }
+      }
+    } stackFinder(*this);
+    stackFinder.walkFunction(func);
+
+    // TODO determinism
+
+    for (auto& [select, stack] : stackFinder.stackMap) {
+      // Each stack ends in the select.
+      assert(stack.back() == select);
+
+      // Don't
+    }
+
+
     // We can only optimize concrete types, so that the select has something to
     // return.
     if (!curr->type.isConcrete()) {
