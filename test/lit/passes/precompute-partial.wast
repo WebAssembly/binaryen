@@ -487,7 +487,7 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test-expanded (export "test-expanded") (param $x i32) (result funcref)
+  (func $test-expanded (param $x i32) (result funcref)
     ;; We can apply the struct.get to the select arms: As the globals are all
     ;; immutable, we can read the function references from them, and emit a
     ;; select on those values, saving the struct.get operation entirely.
@@ -510,7 +510,7 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test-subtyping (export "test-subtyping") (param $x i32) (result funcref)
+  (func $test-subtyping (param $x i32) (result funcref)
     ;; As above, but now we have struct.news directly in the arms, and one is
     ;; of a subtype of the final result (which should not prevent optimization).
     (struct.get $vtable.sub 0
@@ -533,7 +533,7 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test-expanded-twice (export "test-expanded-twice") (param $x i32) (result i32)
+  (func $test-expanded-twice (param $x i32) (result i32)
     ;; As $test-expanded, but we have two operations that can be applied. Both
     ;; references are non-null, so the select arms will become 0.
     (ref.is_null
@@ -556,7 +556,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test-expanded-twice-stop (export "test-expanded-twice-stop") (param $x i32)
+  (func $test-expanded-twice-stop (param $x i32)
     ;; As $test-expanded-twice, but we stop after two expansions when we fail on
     ;; the call.
     (call $send-i32
@@ -607,7 +607,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test-trap (export "test-trap") (param $x i32) (result funcref)
+  (func $test-trap (param $x i32) (result funcref)
     ;; One arm has a null, which makes the struct.get trap, so we ignore this
     ;; for now. TODO: handle traps
     (struct.get $vtable 0
@@ -676,7 +676,7 @@
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test-expanded (export "test-expanded") (param $x i32) (result funcref)
+  (func $test-expanded (param $x i32) (result funcref)
     ;; Nesting in the global declarations means we cannot precompute the inner
     ;; struct.get by itself (as that would return the inner struct.new), but
     ;; when we do the outer struct.get, it all comes together.
