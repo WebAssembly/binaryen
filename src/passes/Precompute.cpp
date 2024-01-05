@@ -212,7 +212,13 @@ struct Precompute
   GetValues getValues;
   HeapValues heapValues;
 
+  bool canPartiallyPrecompute;
+
   void doWalkFunction(Function* func) {
+    // Perform partial precomputing only when the optimization level is non-
+    // trivial, as it is slower and less likely to help.
+    canPartiallyPrecompute = getPassOptions().optimizeLevel >= 2;
+
     // Walk the function and precompute things.
     super::doWalkFunction(func);
     partiallyPrecompute(func);
@@ -363,6 +369,10 @@ struct Precompute
   std::unordered_set<Select*> partiallyPrecomputable;
 
   void considerPartiallyPrecomputing(Expression* curr) {
+    if (!canPartiallyPrecompute) {
+      return;
+    }
+
     if (auto* select = curr->dynCast<Select>()) {
       // We only have a reasonable hope of success if the select arms are things
       // like constants or global gets. At a first approximation, allow the set
@@ -430,7 +440,7 @@ struct Precompute
   // apply the outer struct.get we arrive at the outer struct.new, which is in
   // fact the global $C, and we succeed.
   void partiallyPrecompute(Function* func) {
-    if (partiallyPrecomputable.empty()) {
+    if (!canPartiallyPrecompute || partiallyPrecomputable.empty()) {
       // Nothing to do.
       return;
     }
