@@ -453,6 +453,25 @@ struct Precompute
 
     // TODO determinism
 
+    // Note which expressions we've modified as we go, as it is invalid to
+    // modify more than once. This could happen in theory in a situation like
+    // this:
+    //
+    //  (ternary.f32.max
+    //    (select ..)
+    //    (select ..)
+    //    (f32.infinity)
+    //  )
+    //
+    // When we consider the first select we can see that the computation result
+    // is always infinity, so we can modify, and the same thing happens with the
+    // second select, causing a second modification. In practice it does not
+    // seem that wasm has instructions that allow this situation to occur, but
+    // this code is still useful to guard against future problems, and also it
+    // is a minor optimization (once we've modified something, we never need to
+    // consider it again).
+    std::unordered_set<Expression*> modified;
+
     for (auto& [select, stack] : stackFinder.stackMap) {
       // Each stack ends in the select itself, and contains more than the select
       // itself (otherwise we'd have ignored the select), i.e., the select has a
@@ -462,10 +481,18 @@ struct Precompute
       Index selectIndex = stack.size() - 1;
       assert(selectIndex >= 1);
 
+      if (modified.count(select)) {
+        continue;
+      }
+
       // Go up through the parents, until we can't do any more work.
       Index parentIndex = selectIndex - 1;
       while (1) {
         auto* parent = stack[parentIndex];
+        if (modified.count(parent)) {
+          break;
+        }
+
         // If the parent lacks a concrete type then we can't move it into the
         // select: the select needs a concrete (and non-tuple) type. For example
         // if the parent is a drop or is unreachable, those are things we don't
@@ -529,7 +556,11 @@ struct Precompute
             // Update state for further iterations, as we may push this select
             // even further in the parents. The new stack now ends at the
             // select we just moved (as we do not need to consider anything
-            // below it, as before).
+            // below it, as before), and everything there is now modified.
+            for (Index i = parentIndex; i <= selectIndex; i++) {
+std::cout << "mod " << i << '\n';
+              modified.insert(stack[i]);
+            }
             selectIndex = parentIndex;
             stack[selectIndex] = select;
             stack.resize(selectIndex + 1);

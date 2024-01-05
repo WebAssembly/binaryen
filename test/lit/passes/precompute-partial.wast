@@ -264,13 +264,55 @@
 
   ;; CHECK:      (func $toplevel-nested (type $0) (param $param i32) (result i32)
   ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (local.get $param)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $toplevel-nested (param $param i32) (result i32)
+    ;; The inner select can be optimized: here we apply the outer select onto
+    ;; the inner one (the same as any other thing we apply into the select arms,
+    ;; but it happens to be a select itself).
+    (select
+      (i32.const 0)
+      (i32.const 10)
+      (select
+        (i32.const 0)
+        (i32.const 20)
+        (local.get $param)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $toplevel-nested-flip (type $0) (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:   (local.get $param)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $toplevel-nested (param $param i32) (result i32)
-    ;; The inner select can be optimized. XXX why
+  (func $toplevel-nested-flip (param $param i32) (result i32)
+    ;; As above but with inner select arms flipped. That flips the result.
+    (select
+      (i32.const 0)
+      (i32.const 10)
+      (select
+        (i32.const 20)
+        (i32.const 0)
+        (local.get $param)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $toplevel-nested-indirect (type $0) (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (local.get $param)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $toplevel-nested-indirect (param $param i32) (result i32)
+    ;; As above, with an instruction in the middle. Again, we can optimize.
     (select
       (i32.const 0)
       (i32.const 10)
@@ -286,13 +328,18 @@
 
   ;; CHECK:      (func $nested (type $0) (param $param i32) (result i32)
   ;; CHECK-NEXT:  (select
-  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (local.get $param)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $nested (param $param i32) (result i32)
-    ;; Both the outer and inner selects can be optimized.
+    ;; Both the outer and inner selects can be optimized, separately. They
+    ;; could then be further optimized, but we leave that for later iterations. FIXME
     (i32.eqz
       (select
         (i32.const 0)
