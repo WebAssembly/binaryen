@@ -11,7 +11,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $simple-1 (param $param i32) (result i32)
-    ;; Test simple i32 operations.
+    ;; The eqz can be applied to the select arms.
     (i32.eqz
       (select
         (i32.const 42)
