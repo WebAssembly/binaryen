@@ -214,9 +214,9 @@
   )
 
   ;; CHECK:      (func $break (type $0) (param $x i32) (result i32)
-  ;; CHECK-NEXT:  (block $label$1 (result i32)
+  ;; CHECK-NEXT:  (block $label (result i32)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_if $label$1
+  ;; CHECK-NEXT:    (br_if $label
   ;; CHECK-NEXT:     (select
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:      (i32.const 1)
@@ -229,9 +229,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $break (param $x i32) (result i32)
-    (block $label$1 (result i32)
+    (block $label (result i32)
       (drop
-        (br_if $label$1
+        (br_if $label
           (select
             (i32.const 0)
             (i32.const 1)
