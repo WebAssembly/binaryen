@@ -216,10 +216,13 @@
   ;; CHECK:      (func $break (type $0) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (block $label$1 (result i32)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (select
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    (br_if $label$1
+  ;; CHECK-NEXT:     (select
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 2)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (i32.const 3)

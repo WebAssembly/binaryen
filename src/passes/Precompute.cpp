@@ -510,6 +510,12 @@ struct Precompute
         // and once with the right. If both succeed then we can create a new
         // select (with the same condition as before) whose arms are the
         // precomputed values.
+        auto isValidPrecomputation = [&](const Flow& flow) {
+          // For now we handle simple concrete values. We could also handle
+          // breaks in principle TODO
+          return canEmitConstantFor(flow.values) && !flow.breaking() &&
+                 flow.values.isConcrete();
+        };
 
         // Find the pointer to the select in its immediate parent so that we can
         // replace it first with one arm and then the other.
@@ -517,13 +523,10 @@ struct Precompute
           getChildPointerInImmediateParent(stack, selectIndex, func);
         *pointerToSelect = select->ifTrue;
         auto ifTrue = precomputeExpression(parent);
-        // TODO: We could handle breaks here perhaps, and remove the isConcrete
-        //       check in that case.
-        if (canEmitConstantFor(ifTrue.values) && ifTrue.values.isConcrete()) {
+        if (isValidPrecomputation(ifTrue)) {
           *pointerToSelect = select->ifFalse;
           auto ifFalse = precomputeExpression(parent);
-          if (canEmitConstantFor(ifFalse.values) &&
-              ifFalse.values.isConcrete()) {
+          if (isValidPrecomputation(ifFalse)) {
             // Wonderful, we can precompute here! The select can now contain the
             // computed values in its arms.
             select->ifTrue = ifTrue.getConstExpression(*getModule());
