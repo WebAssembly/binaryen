@@ -454,6 +454,13 @@ struct Precompute
 
       StackFinder(Precompute& parent) : parent(parent) {}
 
+      // We will later iterate on this in the order of insertion, which keeps
+      // things deterministic, and also usually lets us do consecutive work
+      // like a select nested in another select's condition, simply because we
+      // will traverse the selects in postorder (however, because we cannot
+      // always succeed in an incremental manner - see the comment on this
+      // function - it is possible in theory that some work can happen in a
+      // later execution o the pass).
       InsertOrderedMap<Select*, ExpressionStack> stackMap;
 
       void visitSelect(Select* curr) {
@@ -478,29 +485,9 @@ struct Precompute
     // is always infinity, so we can modify, and the same thing happens with the
     // second select, causing a second modification. In practice it does not
     // seem that wasm has instructions that allow this situation to occur, but
-    // this code is still useful to guard against future problems.
-    //
-    // In some cases we could modify more than once in a consecutive manner:
-    //
-    //  (i32.eqz
-    //    (select
-    //      (i32.const 0)
-    //      (i32.const 10)
-    //      (i32.eqz
-    //        (select
-    //          (i32.const 0)
-    //          (i32.const 20)
-    //          (local.get $param)
-    //        )
-    //      )
-    //    )
-    //  )
-    //
-    // After optimizing the eqzs into the selects, they can be optimized
-    // together. However, that would require updating the stack for the outer
-    // one (so it doesn't see stale information). To keep things simple we just
-    // avoid processing already-modified code, which leaves such situations for
-    // later iterations of the pass.
+    // this code is still useful to guard against future problems, and it may
+    // also speed things up (if something was modified, we need never consider
+    // it again).
     std::unordered_set<Expression*> modified;
 
     for (auto& [select, stack] : stackFinder.stackMap) {
