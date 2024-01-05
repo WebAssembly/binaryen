@@ -588,7 +588,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $binary (param $param i32) (result i32)
-    ;; (Note that this works because immutable globals can be compared.)
+    ;; This is a common pattern in J2Wasm output. Note that this is optimized
+    ;; because immutable globals can be compared at compile time.
     (ref.eq
       (select
         (global.get $A$vtable)
@@ -637,7 +638,7 @@
   )
 )
 
-;; References with nesting.
+;; References with nested globals.
 (module
   (rec
     ;; CHECK:      (rec
@@ -680,7 +681,8 @@
   (func $test-expanded (param $x i32) (result funcref)
     ;; Nesting in the global declarations means we cannot precompute the inner
     ;; struct.get by itself (as that would return the inner struct.new), but
-    ;; when we do the outer struct.get, it all comes together.
+    ;; when we do the outer struct.get, it all comes together. This is a common
+    ;; pattern in J2Wasm output.
     (struct.get $vtable 0
       (struct.get $itable 0
         (select
@@ -688,6 +690,27 @@
           (global.get $B$itable)
           (local.get $x)
         )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $test-expanded-almost (type $4) (param $x i32) (result anyref)
+  ;; CHECK-NEXT:  (struct.get $itable 0
+  ;; CHECK-NEXT:   (select (result (ref $itable))
+  ;; CHECK-NEXT:    (global.get $A$itable)
+  ;; CHECK-NEXT:    (global.get $B$itable)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-expanded-almost (param $x i32) (result anyref)
+    ;; As above, but without the outer struct.get. We get "stuck" with the
+    ;; inner part of the global, as explained there, and fail to optimize here.
+    (struct.get $itable 0
+      (select
+        (global.get $A$itable)
+        (global.get $B$itable)
+        (local.get $x)
       )
     )
   )
