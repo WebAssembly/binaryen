@@ -229,6 +229,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $break (param $x i32) (result i32)
+    ;; We should change nothing here: we cannot precompute breaks yet TODO
     (block $label (result i32)
       (drop
         (br_if $label
@@ -405,7 +406,7 @@
   ;; CHECK-NEXT: )
   (func $test-trap (export "test-trap") (param $x i32) (result funcref)
     ;; One arm has a null, which makes the struct.get trap, so we ignore this
-    ;; for now. TODO: handle traps and breaks
+    ;; for now. TODO: handle traps
     (struct.get $vtable 0
       (select
         (ref.null $vtable)
