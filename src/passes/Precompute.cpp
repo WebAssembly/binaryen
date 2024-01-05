@@ -459,8 +459,8 @@ struct Precompute
       // like a select nested in another select's condition, simply because we
       // will traverse the selects in postorder (however, because we cannot
       // always succeed in an incremental manner - see the comment on this
-      // function - it is possible in theory that some work can happen in a
-      // later execution o the pass).
+      // function - it is possible in theory that some work can happen only in a
+      // later execution of the pass).
       InsertOrderedMap<Select*, ExpressionStack> stackMap;
 
       void visitSelect(Select* curr) {
@@ -483,11 +483,12 @@ struct Precompute
     //
     // When we consider the first select we can see that the computation result
     // is always infinity, so we can modify, and the same thing happens with the
-    // second select, causing a second modification. In practice it does not
-    // seem that wasm has instructions that allow this situation to occur, but
-    // this code is still useful to guard against future problems, and it may
-    // also speed things up (if something was modified, we need never consider
-    // it again).
+    // second select, causing a second modification. In this example the result
+    // is the same either way, but at least in theory an actual problem can
+    // occur. Note that in practice it does not seem that wasm has instructions
+    // that enable it atm, but this code is still useful to guard against future
+    // problems, and as a minor speedup (quickly skip code if it was already
+    // modified).
     std::unordered_set<Expression*> modified;
 
     for (auto& [select, stack] : stackFinder.stackMap) {
@@ -500,14 +501,19 @@ struct Precompute
       assert(selectIndex >= 1);
 
       if (modified.count(select)) {
+        // This select was modified; go to the next one.
         continue;
       }
 
-      // Go up through the parents, until we can't do any more work.
+      // Go up through the parents, until we can't do any more work. At each
+      // parent we'll try to execute it and all intermediate parents into the
+      // select arms.
       Index parentIndex = selectIndex - 1;
       while (1) {
         auto* parent = stack[parentIndex];
         if (modified.count(parent)) {
+          // This parent was modified; exit the loop on parents as no upper
+          // parent is valid to try either.
           break;
         }
 
@@ -524,7 +530,7 @@ struct Precompute
         // If the condition breaks to the parent, then we can't move the parent
         // into the select arms:
         //
-        //  (block $name ;; this must stack outside of the select
+        //  (block $name ;; this must stay outside of the select
         //    (select
         //      (B)
         //      (C)
@@ -532,8 +538,7 @@ struct Precompute
         //        (br_if $target
         //
         // Ignore all control flow for simplicity, as they aren't interesting
-        // for us (other passes remove them when possibly anyhow), and assume
-        // we can't do anything else later.
+        // for us, and other passes should have removed them anyhow.
         if (Properties::isControlFlowStructure(parent)) {
           break;
         }
@@ -566,15 +571,13 @@ struct Precompute
             select->ifFalse = ifFalse.getConstExpression(*getModule());
             select->finalize();
 
-            // And the parent of the select is replaced by the select.
+            // The parent of the select is now replaced by the select.
             auto** pointerToParent =
               getChildPointerInImmediateParent(stack, parentIndex, func);
             *pointerToParent = select;
 
-            // Update state for further iterations, as we may push this select
-            // even further in the parents. The new stack now ends at the
-            // select we just moved (as we do not need to consider anything
-            // below it, as before), and everything there is now modified.
+            // Update state for further iterations: Mark everything modified and
+            // move the select to the parent's location.
             for (Index i = parentIndex; i <= selectIndex; i++) {
               modified.insert(stack[i]);
             }
@@ -821,7 +824,7 @@ private:
                                                 Function* func) {
     if (index == 0) {
       // There is nothing above this expression, so the pointer referring to it
-      // is the function's body pointer.
+      // is the function's body.
       return &func->body;
     }
 
