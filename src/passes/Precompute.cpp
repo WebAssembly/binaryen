@@ -470,6 +470,28 @@ struct Precompute
     // this code is still useful to guard against future problems, and also it
     // is a minor optimization (once we've modified something, we never need to
     // consider it again).
+    //
+    // Note that this check may leave work for further iterations, if we have
+    // nested selects, like here:
+    //
+    //  (i32.eqz
+    //    (select
+    //      (i32.const 0)
+    //      (i32.const 10)
+    //      (i32.eqz
+    //        (select
+    //          (i32.const 0)
+    //          (i32.const 20)
+    //          (local.get $param)
+    //        )
+    //      )
+    //    )
+    //  )
+    //
+    // After optimizing the eqzs into the selects, they can be optimized
+    // together. For simplicity we don't handle that here. It could be done with
+    // another cycle in the pass, but it is rare enough that we leave it for
+    // future iterations of the pass.
     std::unordered_set<Expression*> modified;
 
     for (auto& [select, stack] : stackFinder.stackMap) {
