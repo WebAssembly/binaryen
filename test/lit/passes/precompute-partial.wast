@@ -366,17 +366,13 @@
   ;; CHECK-NEXT:     (i32.const 40)
   ;; CHECK-NEXT:     (local.get $param)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (select
-  ;; CHECK-NEXT:     (i32.const 50)
-  ;; CHECK-NEXT:     (i32.const 60)
-  ;; CHECK-NEXT:     (local.get $param)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $param)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $nested-arms (param $param i32) (result i32)
-    ;; We can do nothing for selects nested directly in other selects, but do
-    ;; not error at least.
+    ;; We can do nothing for selects nested directly in select arms, but do not
+    ;; error at least.
     (i32.eqz
       (select
         (select
@@ -389,11 +385,7 @@
           (i32.const 40)
           (local.get $param)
         )
-        (select
-          (i32.const 50)
-          (i32.const 60)
-          (local.get $param)
-        )
+        (local.get $param)
       )
     )
   )
