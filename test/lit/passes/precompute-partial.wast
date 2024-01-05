@@ -262,20 +262,37 @@
     )
   )
 
+  ;; CHECK:      (func $toplevel-nested (type $0) (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (local.get $param)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $toplevel-nested (param $param i32) (result i32)
+    ;; The inner select can be optimized. XXX why
+    (select
+      (i32.const 0)
+      (i32.const 10)
+      (i32.eqz
+        (select
+          (i32.const 0)
+          (i32.const 20)
+          (local.get $param)
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $nested (type $0) (param $param i32) (result i32)
   ;; CHECK-NEXT:  (select
-  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (select
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:     (i32.const 10)
-  ;; CHECK-NEXT:     (local.get $param)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (local.get $param)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $nested (param $param i32) (result i32)
+    ;; Both the outer and inner selects can be optimized.
     (i32.eqz
       (select
         (i32.const 0)
@@ -283,7 +300,103 @@
         (i32.eqz
           (select
             (i32.const 0)
+            (i32.const 20)
+            (local.get $param)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $nested-arms (type $0) (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (i32.eqz
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (i32.const 30)
+  ;; CHECK-NEXT:     (i32.const 40)
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (i32.const 50)
+  ;; CHECK-NEXT:     (i32.const 60)
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-arms (param $param i32) (result i32)
+    ;; We can do nothing for selects nested directly in other selects, but do
+    ;; not error at least.
+    (i32.eqz
+      (select
+        (select
+          (i32.const 10)
+          (i32.const 20)
+          (local.get $param)
+        )
+        (select
+          (i32.const 30)
+          (i32.const 40)
+          (local.get $param)
+        )
+        (select
+          (i32.const 50)
+          (i32.const 60)
+          (local.get $param)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $nested-indirect-arms (type $0) (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (i32.eqz
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-indirect-arms (param $param i32) (result i32)
+    ;; As above, but now there is something in the middle, that can be optimized
+    ;; into those selects.
+    (i32.eqz
+      (select
+        (i32.eqz
+          (select
+            (i32.const 0)
             (i32.const 10)
+            (local.get $param)
+          )
+        )
+        (i32.eqz
+          (select
+            (i32.const 20)
+            (i32.const 0)
+            (local.get $param)
+          )
+        )
+        (i32.eqz
+          (select
+            (i32.const 0)
+            (i32.const 30)
             (local.get $param)
           )
         )

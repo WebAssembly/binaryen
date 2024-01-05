@@ -368,9 +368,13 @@ struct Precompute
       // like constants or global gets. At a first approximation, allow the set
       // of things we allow in constant initializers (but we can probably allow
       // more here TODO).
+      //
+      // We also ignore selects with no parent (that are the entire function
+      // body) as then there is nothing to optimize into their arms.
       auto& wasm = *getModule();
       if (Properties::isValidConstantExpression(wasm, select->ifTrue) &&
-          Properties::isValidConstantExpression(wasm, select->ifFalse)) {
+          Properties::isValidConstantExpression(wasm, select->ifFalse) &&
+          getFunction()->body != select) {
         partiallyPrecomputable.insert(select);
       }
     }
@@ -431,7 +435,7 @@ struct Precompute
       return;
     }
 
-    // Walk the function to find the parent stacks of the selects.
+    // Walk the function to find the parent stacks of the promising selects.
     struct StackFinder : public ExpressionStackWalker<StackFinder> {
       Precompute& parent;
 
@@ -441,22 +445,6 @@ struct Precompute
 
       void visitSelect(Select* curr) {
         if (parent.partiallyPrecomputable.count(curr)) {
-          if (expressionStack.size() == 1) {
-            // There is nothing above this select, so nothing we can precompute
-            // into it.
-            return;
-          }
-
-          // Check if this is nested in another select, which is a case that for
-          // simplicity we don't handle yet TODO
-          for (auto* item : expressionStack) {
-            if (item != curr && item->is<Select>()) {
-              // This is another select in the middle somewhere; give up.
-              return;
-            }
-          }
-
-          // This select looks promising, note it and its stack.
           stackMap[curr] = expressionStack;
         }
       }
@@ -468,7 +456,7 @@ struct Precompute
     for (auto& [select, stack] : stackFinder.stackMap) {
       // Each stack ends in the select itself, and contains more than the select
       // itself (otherwise we'd have ignored the select), i.e., the select has a
-      // parent.
+      // parent that we can try to optimize into the arms.
       assert(stack.back() == select);
       assert(stack.size() >= 2);
       Index selectIndex = stack.size() - 1;
