@@ -371,8 +371,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $nested-arms (param $param i32) (result i32)
-    ;; We can do nothing for selects nested directly in select arms, but do not
-    ;; error at least.
+    ;; We do nothing for selects nested directly in select arms, but do not
+    ;; error at least. Note that we could apply the eqz two levels deep TODO
     (i32.eqz
       (select
         (select
