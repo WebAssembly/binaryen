@@ -580,7 +580,6 @@ struct Precompute
             // select we just moved (as we do not need to consider anything
             // below it, as before), and everything there is now modified.
             for (Index i = parentIndex; i <= selectIndex; i++) {
-std::cout << "mod " << i << '\n';
               modified.insert(stack[i]);
             }
             selectIndex = parentIndex;
