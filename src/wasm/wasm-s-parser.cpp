@@ -2580,7 +2580,7 @@ Name SExpressionWasmBuilder::getLabel(Element& s, LabelType labelType) {
   }
 }
 
-Expression* SExpressionWasmBuilder::makeBreak(Element& s) {
+Expression* SExpressionWasmBuilder::makeBreak(Element& s, bool isConditional) {
   auto ret = allocator.alloc<Break>();
   size_t i = 1;
   ret->name = getLabel(*s[i]);
@@ -2588,7 +2588,7 @@ Expression* SExpressionWasmBuilder::makeBreak(Element& s) {
   if (i == s.size()) {
     return ret;
   }
-  if (elementStartsWith(s, BR_IF)) {
+  if (isConditional) {
     if (i + 1 < s.size()) {
       ret->value = parseExpression(s[i]);
       i++;

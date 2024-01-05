@@ -104,7 +104,7 @@ template<typename Ctx> Result<> makeMemoryFill(Ctx&, Index);
 template<typename Ctx> Result<> makePop(Ctx&, Index);
 template<typename Ctx> Result<> makeCall(Ctx&, Index, bool isReturn);
 template<typename Ctx> Result<> makeCallIndirect(Ctx&, Index, bool isReturn);
-template<typename Ctx> Result<> makeBreak(Ctx&, Index);
+template<typename Ctx> Result<> makeBreak(Ctx&, Index, bool isConditional);
 template<typename Ctx> Result<> makeBreakTable(Ctx&, Index);
 template<typename Ctx> Result<> makeReturn(Ctx&, Index);
 template<typename Ctx> Result<> makeRefNull(Ctx&, Index);
@@ -1432,10 +1432,11 @@ Result<> makeCallIndirect(Ctx& ctx, Index pos, bool isReturn) {
   return ctx.makeCallIndirect(pos, table.getPtr(), *type, isReturn);
 }
 
-template<typename Ctx> Result<> makeBreak(Ctx& ctx, Index pos) {
+template<typename Ctx>
+Result<> makeBreak(Ctx& ctx, Index pos, bool isConditional) {
   auto label = labelidx(ctx);
   CHECK_ERR(label);
-  return ctx.makeBreak(pos, *label);
+  return ctx.makeBreak(pos, *label, isConditional);
 }
 
 template<typename Ctx> Result<> makeBreakTable(Ctx& ctx, Index pos) {

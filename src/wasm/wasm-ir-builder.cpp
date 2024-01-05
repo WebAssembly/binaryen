@@ -430,6 +430,11 @@ Result<Expression*> IRBuilder::getBranchValue(Name labelName,
 }
 
 Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
+  if (curr->condition) {
+    auto cond = pop();
+    CHECK_ERR(cond);
+    curr->condition = *cond;
+  }
   auto value = getBranchValue(curr->name, label);
   CHECK_ERR(value);
   curr->value = *value;
@@ -961,13 +966,15 @@ Result<> IRBuilder::makeLoop(Name label, Type type) {
   return visitLoopStart(loop);
 }
 
-Result<> IRBuilder::makeBreak(Index label) {
+Result<> IRBuilder::makeBreak(Index label, bool isConditional) {
   auto name = getLabelName(label);
   CHECK_ERR(name);
   Break curr;
   curr.name = *name;
+  // Use a dummy condition value if we need to pop a condition.
+  curr.condition = isConditional ? &curr : nullptr;
   CHECK_ERR(visitBreak(&curr, label));
-  push(builder.makeBreak(curr.name, curr.value));
+  push(builder.makeBreak(curr.name, curr.value, curr.condition));
   return Ok{};
 }
 
