@@ -467,12 +467,9 @@ struct Precompute
     // is always infinity, so we can modify, and the same thing happens with the
     // second select, causing a second modification. In practice it does not
     // seem that wasm has instructions that allow this situation to occur, but
-    // this code is still useful to guard against future problems, and also it
-    // is a minor optimization (once we've modified something, we never need to
-    // consider it again).
+    // this code is still useful to guard against future problems.
     //
-    // Note that this check may leave work for further iterations, if we have
-    // nested selects, like here:
+    // In some cases we could modify more than once in a consecutive manner:
     //
     //  (i32.eqz
     //    (select
@@ -489,9 +486,10 @@ struct Precompute
     //  )
     //
     // After optimizing the eqzs into the selects, they can be optimized
-    // together. For simplicity we don't handle that here. It could be done with
-    // another cycle in the pass, but it is rare enough that we leave it for
-    // future iterations of the pass.
+    // together. However, that would require updating the stack for the outer
+    // one (so it doesn't see stale information). To keep things simple we just
+    // avoid processing already-modified code, which leaves such situations for
+    // later iterations of the pass.
     std::unordered_set<Expression*> modified;
 
     for (auto& [select, stack] : stackFinder.stackMap) {
