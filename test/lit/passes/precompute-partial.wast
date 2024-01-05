@@ -244,6 +244,52 @@
       (i32.const 3)
     )
   )
+
+  ;; CHECK:      (func $toplevel (type $0) (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:   (local.get $param)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $toplevel (param $param i32) (result i32)
+    ;; There is nothing to do for a select with no parent, but do not error at
+    ;; least.
+    (select
+      (i32.const 10)
+      (i32.const 20)
+      (local.get $param)
+    )
+  )
+
+  ;; CHECK:      (func $nested (type $0) (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (i32.eqz
+  ;; CHECK-NEXT:    (select
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested (param $param i32) (result i32)
+    (i32.eqz
+      (select
+        (i32.const 0)
+        (i32.const 10)
+        (i32.eqz
+          (select
+            (i32.const 0)
+            (i32.const 10)
+            (local.get $param)
+          )
+        )
+      )
+    )
+  )
 )
 
 ;; References.
