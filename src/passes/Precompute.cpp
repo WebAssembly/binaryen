@@ -35,6 +35,7 @@
 #include "ir/properties.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/insert_ordered.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
@@ -346,26 +347,28 @@ struct Precompute
   //
   // Perhaps we can compute A(B) and A(C). If so, we can emit a better select:
   //
-  //    (select
-  //      (constant result of A(B))
-  //      (constant result of A(C))
-  //      (condition)
-  //    )
+  //  (select
+  //    (constant result of A(B))
+  //    (constant result of A(C))
+  //    (condition)
   //  )
   //
   // Note that in general for code size we want to move operations *out* of
   // selects and ifs (OptimizeInstructions does that), but here we are
-  // computing two constant which replace four expressions, so it is worthwhile.
+  // computing two constants which replace three expressions, so it is
+  // worthwhile.
   //
   // To do such partial precomputing, in the main pass we note selects that look
   // promising. If we find any then we do a second pass later just for that (as
   // doing so requires walking up the stack in a manner that we want to avoid in
-  // main pass, for overhead reasons; see below).
+  // the main pass for overhead reasons; see below).
   //
   // Note that selects are all we really need here: Other passes would turn an
   // if into a select if the arms are simple enough, and only in those cases
-  // (simple arms) do we have a chance at partially precomputing. (For example,
+  // (simple arms) do we have a chance at partially precomputing. For example,
   // if an arm is a constant then we can, but if it is a call then we can't.)
+  // However, there are cases like an if with arms with side effects that end in
+  // precomputable things, that are missed atm TODO
   std::unordered_set<Select*> partiallyPrecomputable;
 
   void considerPartiallyPrecomputing(Expression* curr) {
@@ -437,8 +440,8 @@ struct Precompute
   // Applying the inner struct.get to $C leads us to the inner struct.new, but
   // that is an interior pointer in the global - it is not something we can
   // refer to using a global.get, so precomputing it fails. However, when we
-  // apply the outer struct.get we arrive at the outer struct.new, which is in
-  // fact the global $C, and we succeed.
+  // apply both struct.gets at once we arrive at the outer struct.new, which is
+  // in fact the global $C, and we succeed.
   void partiallyPrecompute(Function* func) {
     if (!canPartiallyPrecompute || partiallyPrecomputable.empty()) {
       // Nothing to do.
@@ -451,7 +454,7 @@ struct Precompute
 
       StackFinder(Precompute& parent) : parent(parent) {}
 
-      std::unordered_map<Select*, ExpressionStack> stackMap;
+      InsertOrderedMap<Select*, ExpressionStack> stackMap;
 
       void visitSelect(Select* curr) {
         if (parent.partiallyPrecomputable.count(curr)) {
@@ -460,8 +463,6 @@ struct Precompute
       }
     } stackFinder(*this);
     stackFinder.walkFunction(func);
-
-    // TODO determinism
 
     // Note which expressions we've modified as we go, as it is invalid to
     // modify more than once. This could happen in theory in a situation like

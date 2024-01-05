@@ -330,16 +330,13 @@
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:    (local.get $param)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $param)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $nested (param $param i32) (result i32)
-    ;; Both the outer and inner selects can be optimized, separately. They
-    ;; could then be further optimized, but we leave that for later iterations. FIXME
+    ;; As above, with an outer eqz as well. Now both the outer and inner selects
+    ;; can be optimized, and after the inner one is it can be optimized with the
+    ;; outer one as well.
     (i32.eqz
       (select
         (i32.const 0)
