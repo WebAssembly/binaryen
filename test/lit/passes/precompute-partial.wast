@@ -336,8 +336,8 @@
   ;; CHECK-NEXT: )
   (func $nested (param $param i32) (result i32)
     ;; As above, with an outer eqz as well. Now both the outer and inner selects
-    ;; can be optimized, and after the inner one is it can be optimized with the
-    ;; outer one as well.
+    ;; can be optimized, and after the inner one is, it can be optimized with
+    ;; the outer one as well, leaving a single select and no eqz.
     (i32.eqz
       (select
         (i32.const 0)
