@@ -229,7 +229,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $break (param $x i32) (result i32)
-    ;; We should change nothing here: we cannot precompute breaks yet TODO
+    ;; We should change nothing here: we do not partially precompute breaks yet
+    ;; TODO
     (block $label (result i32)
       (drop
         (br_if $label
