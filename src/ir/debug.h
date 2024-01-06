@@ -17,12 +17,13 @@
 #ifndef wasm_ir_debug_h
 #define wasm_ir_debug_h
 
-#include <wasm-traversal.h>
+#include "wasm-traversal.h"
 
 namespace wasm::debug {
 
 // Given an expression and a copy of it in another function, copy the debug
-// info into the second function.
+// info into the second function. This does a deep copy through all the children
+// of the expression and its copy.
 inline void copyDebugInfo(Expression* origin,
                           Expression* copy,
                           Function* originFunc,
@@ -49,6 +50,13 @@ inline void copyDebugInfo(Expression* origin,
     }
   }
 };
+
+// Given a replacement expression and an original that it will replace, try to
+// scavenge debug info from the original to use on the replacement. Any useful
+// debug info will be used, including from a child of the original if relevant.
+void scavengeDebugInfo(Expression* replacement,
+                       Expression* original,
+                       Function* func);
 
 } // namespace wasm::debug
 

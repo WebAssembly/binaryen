@@ -27,6 +27,7 @@
 // looked at.
 //
 
+#include <ir/debug.h>
 #include <ir/literal-utils.h>
 #include <ir/local-graph.h>
 #include <ir/manipulation.h>
@@ -313,7 +314,9 @@ struct Precompute
     }
     // this was precomputed
     if (flow.values.isConcrete()) {
-      replaceCurrent(flow.getConstExpression(*getModule()));
+      auto* replacement = flow.getConstExpression(*getModule());
+      debug::scavengeDebugInfo(replacement, curr, getFunction());
+      replaceCurrent(replacement);
     } else {
       ExpressionManipulator::nop(curr);
     }
