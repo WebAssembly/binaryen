@@ -2260,10 +2260,12 @@ export class Module {
                     __i32_store(offset, value);
                     offset += 4;
                 })
-                return JSModule['_BinaryenArrayNewFixed'](this.ptr, heapType, ptr, values.length);
-             }
-
-
+                const result = JSModule['_BinaryenArrayNewFixed'](this.ptr, heapType, ptr, values.length);
+                _free(ptr);
+                return result;
+            },
+            getItem: (array: ExpressionRef, item: ExpressionRef, type: Type, signed: boolean): ExpressionRef =>
+                JSModule['_BinaryenArrayGet'](this.ptr, array, item, type, signed)
         }
    }
 }
