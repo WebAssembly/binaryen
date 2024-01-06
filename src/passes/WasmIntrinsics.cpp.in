@@ -1,7 +1,7 @@
 #include "passes/intrinsics-module.h"
 
-static const char theModule[@WASM_INTRINSICS_SIZE_2@] = {
-@WASM_INTRINSICS_EMBED_2@
+static const char theModule[] = {
+@WASM_INTRINSICS_EMBED@
 };
 
 namespace wasm {
