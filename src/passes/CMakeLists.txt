@@ -2,12 +2,18 @@ file(READ wasm-intrinsics.wat WASM_INTRINSICS_WAT HEX)
 
 string(REGEX MATCHALL "([A-Fa-f0-9][A-Fa-f0-9])" SEPARATED_HEX ${WASM_INTRINSICS_WAT})
 
-set(WASM_INTRINSICS_SIZE 1)
+# WASM_INTRINSICS_EMBED_2 and WASM_INTRINSICS_SIZE_2 should be renamed each time
+# the content of the wat file changes. This is not strictly necessary, as CMake
+# should use the fresh contents each time, but even just re-running CMake
+# manually is not enough in practice (one needs to also erase the CMake temp
+# files, or use a fresh build dir). Renaming the vars keeps things working
+# smoothly for people with existing checkouts.
+set(WASM_INTRINSICS_SIZE_2 1)
 foreach (hex IN LISTS SEPARATED_HEX)
-  string(APPEND WASM_INTRINSICS_EMBED "0x${hex},")
-  math(EXPR WASM_INTRINSICS_SIZE "${WASM_INTRINSICS_SIZE}+1")
+  string(APPEND WASM_INTRINSICS_EMBED_2 "0x${hex},")
+  math(EXPR WASM_INTRINSICS_SIZE_2 "${WASM_INTRINSICS_SIZE_2}+1")
 endforeach ()
-string(APPEND WASM_INTRINSICS_EMBED "0x00")
+string(APPEND WASM_INTRINSICS_EMBED_2 "0x00")
 
 configure_file(WasmIntrinsics.cpp.in WasmIntrinsics.cpp @ONLY)
 
