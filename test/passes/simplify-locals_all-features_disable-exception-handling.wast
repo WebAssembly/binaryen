@@ -7,11 +7,11 @@
   (type $4 (func (param i32)))
   (type $5 (func (param i32) (result i32)))
   (type $6 (func (param i32 i32 i32 i32 i32 i32)))
-  (import $waka "env" "waka")
-  (import $waka_int "env" "waka_int" (result i32))
-  (import $_i64Subtract "env" "i64sub" (param i32 i32 i32 i32) (result i32))
-  (import $___udivmoddi4 "env" "moddi" (param i32 i32 i32 i32 i32) (result i32))
-  (import $lp "env" "lp" (param i32 i32) (result i32))
+  (import "env" "waka" (func $waka))
+  (import "env" "waka_int" (func $waka_int (result i32)))
+  (import "env" "i64sub" (func $_i64Subtract (param i32 i32 i32 i32) (result i32)))
+  (import "env" "moddi" (func $___udivmoddi4 (param i32 i32 i32 i32 i32) (result i32)))
+  (import "env" "lp" (func $lp (param i32 i32) (result i32)))
   (import "fuzzing-support" "log-f32" (func $fimport$0 (param f32)))
   (global $global$0 (mut i32) (i32.const 10))
   (func $contrast ;; check for tee and structure sinking
@@ -1710,7 +1710,7 @@
  (func $memory-init-store
   (local $x i32)
   (local.set $x
-   (block i32
+   (block (result i32)
     (i32.store (i32.const 0) (i32.const 42))
     (i32.const 0)
    )
@@ -1733,7 +1733,7 @@
  (func $memory-copy-store
   (local $x i32)
   (local.set $x
-   (block i32
+   (block (result i32)
     (i32.store (i32.const 0) (i32.const 42))
     (i32.const 0)
    )
@@ -1756,7 +1756,7 @@
  (func $memory-fill-store
   (local $x i32)
   (local.set $x
-   (block i32
+   (block (result i32)
     (i32.store (i32.const 0) (i32.const 42))
     (i32.const 0)
    )
@@ -1779,7 +1779,7 @@
  (func $data-drop-store
   (local $x i32)
   (local.set $x
-   (block i32
+   (block (result i32)
     (i32.store (i32.const 0) (i32.const 42))
     (i32.const 0)
    )
@@ -1792,7 +1792,7 @@
  (func $data-drop-memory-init
   (local $x i32)
   (local.set $x
-   (block i32
+   (block (result i32)
     (memory.init 0 (i32.const 0) (i32.const 0) (i32.const 5))
     (i32.const 0)
    )

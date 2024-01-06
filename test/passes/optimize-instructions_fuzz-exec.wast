@@ -4,57 +4,57 @@
  (func $test32 (export "test32")
   (call $logf32
    (f32.add
-    (f32.const -nan:0xffff82)
+    (f32.const -nan:0x7fff82)
     (f32.neg
-     (f32.const -nan:0xfff622)
+     (f32.const -nan:0x7ff622)
     )
    )
   )
   (call $logf32
    (f32.sub
-    (f32.const -nan:0xffff82)
+    (f32.const -nan:0x7fff82)
     (f32.neg
-     (f32.const -nan:0xfff622)
+     (f32.const -nan:0x7ff622)
     )
    )
   )
   (call $logf32
    (f32.mul
-    (f32.const -nan:0xffff82)
+    (f32.const -nan:0x7fff82)
     (f32.neg
-     (f32.const -nan:0xfff622)
+     (f32.const -nan:0x7ff622)
     )
    )
   )
   (call $logf32
    (f32.div
-    (f32.const -nan:0xffff82)
+    (f32.const -nan:0x7fff82)
     (f32.neg
-     (f32.const -nan:0xfff622)
+     (f32.const -nan:0x7ff622)
     )
    )
   )
   (call $logf32
    (f32.copysign
-    (f32.const -nan:0xffff82)
+    (f32.const -nan:0x7fff82)
     (f32.neg
-     (f32.const -nan:0xfff622)
+     (f32.const -nan:0x7ff622)
     )
    )
   )
   (call $logf32
    (f32.min
-    (f32.const -nan:0xffff82)
+    (f32.const -nan:0x7fff82)
     (f32.neg
-     (f32.const -nan:0xfff622)
+     (f32.const -nan:0x7ff622)
     )
    )
   )
   (call $logf32
    (f32.max
-    (f32.const -nan:0xffff82)
+    (f32.const -nan:0x7fff82)
     (f32.neg
-     (f32.const -nan:0xfff622)
+     (f32.const -nan:0x7ff622)
     )
    )
   )
@@ -122,13 +122,13 @@
    (f32.add
     (f32.const 0)
     (f32.neg
-     (f32.const -nan:0xfff622)
+     (f32.const -nan:0x7ff622)
     )
    )
   )
   (call $logf32
    (f32.add
-    (f32.const -nan:0xfff622)
+    (f32.const -nan:0x7ff622)
     (f32.neg
      (f32.const 0)
     )
@@ -138,13 +138,13 @@
    (f32.add
     (f32.const -0)
     (f32.neg
-     (f32.const -nan:0xfff622)
+     (f32.const -nan:0x7ff622)
     )
    )
   )
   (call $logf32
    (f32.add
-    (f32.const -nan:0xfff622)
+    (f32.const -nan:0x7ff622)
     (f32.neg
      (f32.const -0)
     )
@@ -154,13 +154,13 @@
    (f32.add
     (f32.const 0)
     (f32.neg
-     (f32.const nan:0xfff622)
+     (f32.const nan:0x7ff622)
     )
    )
   )
   (call $logf32
    (f32.add
-    (f32.const nan:0xfff622)
+    (f32.const nan:0x7ff622)
     (f32.neg
      (f32.const 0)
     )

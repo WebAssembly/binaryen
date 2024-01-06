@@ -731,12 +731,12 @@
 ;; Test outlining works with call_indirect
 ;; 0 results, 2 params, 3 operands
 (module
-  (table funcref)
+  (table 1 1 funcref)
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (type $1 (func (param i32 i32)))
 
-  ;; CHECK:      (table $0 0 funcref)
+  ;; CHECK:      (table $0 1 1 funcref)
 
   ;; CHECK:      (func $outline$ (type $0)
   ;; CHECK-NEXT:  (call_indirect $0 (type $1)
@@ -769,10 +769,10 @@
 ;; Test outlining works with call_indirect
 ;; 0 results, 0 params, 1 operand
 (module
-  (table funcref)
+  (table 1 1 funcref)
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (table $0 0 funcref)
+  ;; CHECK:      (table $0 1 1 funcref)
 
   ;; CHECK:      (func $outline$ (type $0)
   ;; CHECK-NEXT:  (call_indirect $0 (type $0)
@@ -797,12 +797,12 @@
 ;; Test outlining works with call_indirect
 ;; 1 result, 0 params, 1 operand
 (module
-  (table funcref)
+  (table 1 1 funcref)
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (type $1 (func (result i32)))
 
-  ;; CHECK:      (table $0 0 funcref)
+  ;; CHECK:      (table $0 1 1 funcref)
 
   ;; CHECK:      (func $outline$ (type $0)
   ;; CHECK-NEXT:  (drop
@@ -835,12 +835,12 @@
 ;; Test outlining works with call_indirect
 ;; 2 results, 0 params, 1 operand
 (module
-  (table funcref)
+  (table 1 1 funcref)
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (type $1 (func (result i32 i32)))
 
-  ;; CHECK:      (table $0 0 funcref)
+  ;; CHECK:      (table $0 1 1 funcref)
 
   ;; CHECK:      (func $outline$ (type $0)
   ;; CHECK-NEXT:  (tuple.drop 2

@@ -20,9 +20,9 @@
 
   (table $other 70 80 funcref)
 
-  (elem $other (ref null func) $foo $other)
+  (elem $other func $foo $other)
 
-  (elem $bar (ref null func) $other $foo)
+  (elem $bar func $other $foo)
 
   (global $other i32 (i32.const 3))
 

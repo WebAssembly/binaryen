@@ -48,7 +48,7 @@
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $basics (export "localcse") (param $x i32) ($param $y i32) (result i32) ;; -O3 does localcse
+  (func $basics (export "localcse") (param $x i32) (param $y i32) (result i32) ;; -O3 does localcse
     (local $x2 i32)
     (local $y2 i32)
     (local.set $x2

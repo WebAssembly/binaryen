@@ -1738,7 +1738,7 @@
  ;; CHECK-BIN-NEXT:  )
  ;; CHECK-BIN-NEXT: )
  (func $v128.load64_lane_align_offset (param $0 i32) (param $1 v128) (result v128)
-  (v128.load64_lane align=1 offset=32 0
+  (v128.load64_lane offset=32 align=1 0
    (local.get $0)
    (local.get $1)
   )
@@ -1871,7 +1871,7 @@
  ;; CHECK-BIN-NEXT:  )
  ;; CHECK-BIN-NEXT: )
  (func $v128.store64_lane_align_offset (param $0 i32) (param $1 v128)
-  (v128.store64_lane align=1 offset=32 0
+  (v128.store64_lane offset=32 align=1 0
    (local.get $0)
    (local.get $1)
   )
