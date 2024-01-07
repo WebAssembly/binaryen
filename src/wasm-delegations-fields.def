@@ -948,6 +948,7 @@ switch (DELEGATE_ID) {
 
   case Expression::Id::ResumeId: {
     DELEGATE_START(Resume);
+    DELEGATE_FIELD_TYPE_VECTOR(Resume, sentTypes);
     DELEGATE_FIELD_CHILD(Resume, cont);
     DELEGATE_FIELD_CHILD_VECTOR(Resume, operands);
     DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(Resume, handlerBlocks);
