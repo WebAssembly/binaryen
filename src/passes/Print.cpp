@@ -2402,7 +2402,24 @@ struct PrintExpressionContents
   void visitStringSliceIter(StringSliceIter* curr) {
     printMedium(o, "stringview_iter.slice");
   }
-  void visitResume(Resume* curr) { printMedium(o, "resume"); }
+
+  void visitResume(Resume* curr) {
+    printMedium(o, "resume");
+
+    o << ' ';
+    printHeapType(curr->contType);
+
+    // We deliberate keep all (tag ...) clauses on the same line as the resume
+    // itself to work around a quirk in update_lit_checks.py
+    for (Index i = 0; i < curr->handlerTags.size(); i++) {
+      o << " (";
+      printMedium(o, "tag ");
+      printName(curr->handlerTags[i], o);
+      o << ' ';
+      printName(curr->handlerBlocks[i], o);
+      o << ')';
+    }
+  }
 };
 
 void PrintSExpression::setModule(Module* module) {
@@ -2734,23 +2751,10 @@ void PrintSExpression::visitResume(Resume* curr) {
   controlFlowDepth++;
   o << '(';
   printExpressionContents(curr);
-  o << ' ';
-  printHeapType(curr->contType);
-
-  // We deliberate keep all (tag ...) clauses on the same line as the resume
-  // itself to work around a quirk in update_lit_checks.py
-  for (size_t i = 0; i < curr->handlerTags.size(); i++) {
-    o << maybeSpace << '(';
-    printMedium(o, "tag ");
-    printName(curr->handlerTags[i], o);
-    o << " ";
-    printName(curr->handlerBlocks[i], o);
-    o << ")";
-  }
 
   incIndent();
 
-  for (size_t i = 0; i < curr->operands.size(); i++) {
+  for (Index i = 0; i < curr->operands.size(); i++) {
     printFullLine(curr->operands[i]);
   }
 
