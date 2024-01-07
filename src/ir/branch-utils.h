@@ -116,7 +116,7 @@ void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
       func(name, nullptr);
     } else if (auto* res = expr->dynCast<Resume>()) {
       // The values are supplied by suspend instructions executed while running
-      // the continuation. Thus, we have no chance to get a hold of them here.
+      // the continuation, so we are unable to know what they will be here.
       func(name, nullptr);
     } else {
       assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
