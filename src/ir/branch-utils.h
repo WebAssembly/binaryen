@@ -83,11 +83,10 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
         }
       }
     } else if (auto* r = expr->dynCast<Resume>()) {
-      auto& sentTypes = r->getSentTypes();
       for (Index i = 0; i < r->handlerTags.size(); i++) {
         auto dest = r->handlerTags[i];
         if (dest == name) {
-          func(name, sentTypes[i]);
+          func(name, r->sentTypes[i]);
         }
       }
     } else {

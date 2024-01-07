@@ -1351,38 +1351,14 @@ void StringSliceIter::finalize() {
   }
 }
 
-ArenaVector<Type>& Resume::getSentTypes() {
-  if (this->sentTypes.size() != this->handlerBlocks.size()) {
-    Fatal() << "Types sent to blocks have not been determined, yet.";
-  }
-  return this->sentTypes;
-}
-
-void Resume::finalize() {
-  // Only performing some validation, but no finalization. The finalize(Module*)
-  // function must have been called previously.
-
-  if (!(this->contType.isContinuation() &&
-        this->contType.getContinuation().type.isSignature())) {
-    Fatal() << "ill-formed Resume expression";
+static void populateResumeSentTypes(Resume* curr, Module* wasm) {
+  if (!wasm) {
+    return;
   }
 
-  if (this->sentTypes.size() != this->handlerBlocks.size()) {
-    Fatal() << "Resume node was not finalized";
-  }
-}
-
-void Resume::finalize(Module* wasm) {
-  if (!(this->contType.isContinuation() &&
-        this->contType.getContinuation().type.isSignature())) {
-    Fatal() << "ill-formed Resume expression";
-  }
   const Signature& contSig =
-    this->contType.getContinuation().type.getSignature();
-  type = contSig.results;
+    curr->contType.getContinuation().type.getSignature();
 
-  // Determine sentTypes based on tag information stored in the module.
-  //
   // Let $tag be a tag with type [tgp*] -> [tgr*]. Let $ct be a continuation
   // type (cont $ft), where $ft is [ctp*] -> [ctr*]. Then an instruction (resume
   // $ct ... (tag $tag $block) ... ) causes $block to receive values of the
@@ -1390,10 +1366,10 @@ void Resume::finalize(Module* wasm) {
   // $ft') and ft' = [tgr*] -> [ctr*].
   //
   auto& ctrs = contSig.results;
-  this->sentTypes.clear();
-  this->sentTypes.resize(this->handlerTags.size());
-  for (size_t i = 0; i < this->handlerTags.size(); i++) {
-    auto& tag = this->handlerTags[i];
+  curr->sentTypes.clear();
+  curr->sentTypes.resize(curr->handlerTags.size());
+  for (Index i = 0; i < curr->handlerTags.size(); i++) {
+    auto& tag = curr->handlerTags[i];
     auto& tagSig = wasm->getTag(tag)->sig;
 
     auto& tgps = tagSig.params;
@@ -1409,11 +1385,23 @@ void Resume::finalize(Module* wasm) {
 
       sentValueTypes.insert(sentValueTypes.begin(), tgps.begin(), tgps.end());
       sentValueTypes.push_back(ctPrimeRef);
-      this->sentTypes[i] = Type(sentValueTypes);
+      curr->sentTypes[i] = Type(sentValueTypes);
     } else {
-      this->sentTypes[i] = ctPrimeRef;
+      curr->sentTypes[i] = ctPrimeRef;
     }
   }
+}
+
+void Resume::finalize(Module* wasm) {
+  if (!(this->contType.isContinuation() &&
+        this->contType.getContinuation().type.isSignature())) {
+    Fatal() << "ill-formed Resume expression";
+  }
+  const Signature& contSig =
+    this->contType.getContinuation().type.getSignature();
+  type = contSig.results;
+
+  populateResumeSentTypes(this, wasm);
 }
 
 size_t Function::getNumParams() { return getParams().size(); }
