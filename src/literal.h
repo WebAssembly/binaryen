@@ -698,7 +698,7 @@ public:
   }
   Literals(size_t initialSize) : SmallVector(initialSize) {}
 
-  Type getType() {
+  Type getType() const {
     if (empty()) {
       return Type::none;
     }
@@ -711,8 +711,8 @@ public:
     }
     return Type(types);
   }
-  bool isNone() { return size() == 0; }
-  bool isConcrete() { return size() != 0; }
+  bool isNone() const { return size() == 0; }
+  bool isConcrete() const { return size() != 0; }
 };
 
 std::ostream& operator<<(std::ostream& o, wasm::Literal literal);

@@ -103,12 +103,16 @@
 
   (func $fac (export "fac") (type $over-i64)
     (if i64 (i64.eqz (local.get 0))
-      (i64.const 1)
-      (i64.mul
-        (local.get 0)
-        (call_indirect (type $over-i64)
-          (i64.sub (local.get 0) (i64.const 1))
-          (i32.const 12)
+      (then
+        (i64.const 1)
+      )
+      (else
+        (i64.mul
+          (local.get 0)
+          (call_indirect (type $over-i64)
+            (i64.sub (local.get 0) (i64.const 1))
+            (i32.const 12)
+          )
         )
       )
     )
@@ -116,15 +120,19 @@
 
   (func $fib (export "fib") (type $over-i64)
     (if i64 (i64.le_u (local.get 0) (i64.const 1))
-      (i64.const 1)
-      (i64.add
-        (call_indirect (type $over-i64)
-          (i64.sub (local.get 0) (i64.const 2))
-          (i32.const 13)
-        )
-        (call_indirect (type $over-i64)
-          (i64.sub (local.get 0) (i64.const 1))
-          (i32.const 13)
+      (then
+        (i64.const 1)
+      )
+      (else
+        (i64.add
+          (call_indirect (type $over-i64)
+            (i64.sub (local.get 0) (i64.const 2))
+            (i32.const 13)
+          )
+          (call_indirect (type $over-i64)
+            (i64.sub (local.get 0) (i64.const 1))
+            (i32.const 13)
+          )
         )
       )
     )
@@ -132,19 +140,27 @@
 
   (func $even (export "even") (param i32) (result i32)
     (if i32 (i32.eqz (local.get 0))
-      (i32.const 44)
-      (call_indirect (type $over-i32)
-        (i32.sub (local.get 0) (i32.const 1))
-        (i32.const 15)
+      (then
+        (i32.const 44)
+      )
+      (else
+        (call_indirect (type $over-i32)
+          (i32.sub (local.get 0) (i32.const 1))
+          (i32.const 15)
+        )
       )
     )
   )
   (func $odd (export "odd") (param i32) (result i32)
     (if i32 (i32.eqz (local.get 0))
-      (i32.const 99)
-      (call_indirect (type $over-i32)
-        (i32.sub (local.get 0) (i32.const 1))
-        (i32.const 14)
+      (then
+        (i32.const 99)
+      )
+      (else
+        (call_indirect (type $over-i32)
+          (i32.sub (local.get 0) (i32.const 1))
+          (i32.const 14)
+        )
       )
     )
   )

@@ -30,7 +30,7 @@ namespace wasm {
 
 namespace {
 
-bool isOnceFunction(Function* f) { return f->name.hasSubstring("_@once@_"); }
+bool isOnceFunction(Function* f) { return f->name.hasSubstring("_<once>_"); }
 
 using AssignmentCountMap = std::unordered_map<Name, Index>;
 

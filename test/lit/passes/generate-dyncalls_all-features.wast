@@ -73,8 +73,9 @@
  ;; CHECK:      (type $3 (func (param i32 i32)))
 
  ;; CHECK:      (import "env" "table" (table $timport$0 1 1 funcref))
- (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
+
  ;; CHECK:      (import "env" "invoke_vii" (func $invoke_vii (type $0) (param i32 i32 i32)))
+ (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
  (import "env" "table" (table 1 1 funcref))
  (elem (i32.const 0) $f)
  ;; CHECK:      (elem $0 (i32.const 0) $f)

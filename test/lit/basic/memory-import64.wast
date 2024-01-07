@@ -16,7 +16,6 @@
   (type $0 (func (result i32)))
   ;; CHECK-TEXT:      (import "env" "memory" (memory $0 i64 1 1))
   ;; CHECK-BIN:      (import "env" "memory" (memory $0 i64 1 1))
-  ;; CHECK-BIN-NODEBUG:      (import "env" "memory" (memory $mimport$0 i64 1 1))
   (import "env" "memory" (memory $0 i64 1 1))
 
   ;; CHECK-TEXT:      (func $foo (type $0) (result i32)
@@ -35,6 +34,8 @@
     )
   )
 )
+;; CHECK-BIN-NODEBUG:      (import "env" "memory" (memory $mimport$0 i64 1 1))
+
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i32.load offset=13
 ;; CHECK-BIN-NODEBUG-NEXT:   (i64.const 37)

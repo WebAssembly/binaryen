@@ -32,8 +32,10 @@
      (global.get $__stack_limit)
     )
    )
-   (call $__handle_stack_overflow
-    (local.get $1)
+   (then
+    (call $__handle_stack_overflow
+     (local.get $1)
+    )
    )
   )
   (global.set $__stack_pointer
@@ -66,8 +68,10 @@
       (global.get $__stack_limit)
      )
     )
-    (call $__handle_stack_overflow
-     (local.get $3)
+    (then
+     (call $__handle_stack_overflow
+      (local.get $3)
+     )
     )
    )
    (global.set $__stack_pointer

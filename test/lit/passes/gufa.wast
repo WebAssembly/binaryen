@@ -104,8 +104,10 @@
   ;; CHECK:      (func $return (type $0) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 2)
@@ -116,8 +118,10 @@
     ;; below.
     (if
       (i32.const 0)
-      (return
-        (i32.const 1)
+      (then
+        (return
+          (i32.const 1)
+        )
       )
     )
     (i32.const 2)
@@ -139,8 +143,10 @@
   ;; CHECK:      (func $return-same (type $0) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 1)
@@ -152,8 +158,10 @@
     ;; but see the caller below.
     (if
       (i32.const 0)
-      (return
-        (i32.const 1)
+      (then
+        (return
+          (i32.const 1)
+        )
       )
     )
     (i32.const 1)
@@ -180,8 +188,10 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (call $import)
-  ;; CHECK-NEXT:   (local.set $x
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $x)
@@ -190,8 +200,10 @@
     (local $x i32)
     (if
       (call $import)
-      (local.set $x
-        (i32.const 1)
+      (then
+        (local.set $x
+          (i32.const 1)
+        )
       )
     )
     ;; $x has two possible values, 1 and the default 0, so we cannot optimize
@@ -203,8 +215,10 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (call $import)
-  ;; CHECK-NEXT:   (local.set $x
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
@@ -213,10 +227,12 @@
     (local $x i32)
     (if
       (call $import)
-      (local.set $x
-        ;; As above, but now we set 0 here. We can optimize the local.get to 0
-        ;; in this case.
-        (i32.const 0)
+      (then
+        (local.set $x
+          ;; As above, but now we set 0 here. We can optimize the local.get to 0
+          ;; in this case.
+          (i32.const 0)
+        )
       )
     )
     (local.get $x)
@@ -225,8 +241,10 @@
   ;; CHECK:      (func $param-no (type $3) (param $param i32) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $param)
-  ;; CHECK-NEXT:   (local.set $param
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $param
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.get $param)
@@ -234,8 +252,10 @@
   (func $param-no (export "param-no") (param $param i32) (result i32)
     (if
       (local.get $param)
-      (local.set $param
-        (i32.const 1)
+      (then
+        (local.set $param
+          (i32.const 1)
+        )
       )
     )
     ;; $x has two possible values, the incoming param value and 1, so we cannot
@@ -247,8 +267,10 @@
   ;; CHECK:      (func $param-yes (type $3) (param $param i32) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:   (local.set $param
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $param
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 1)
@@ -260,8 +282,10 @@
     ;; local.set in the if, so we'll optimize it to 1.
     (if
       (local.get $param)
-      (local.set $param
-        (i32.const 1)
+      (then
+        (local.set $param
+          (i32.const 1)
+        )
       )
     )
     (local.get $param)
@@ -523,8 +547,10 @@
   ;; CHECK-NEXT:     (block $named (result i32)
   ;; CHECK-NEXT:      (if
   ;; CHECK-NEXT:       (i32.const 0)
-  ;; CHECK-NEXT:       (br $named
-  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       (then
+  ;; CHECK-NEXT:        (br $named
+  ;; CHECK-NEXT:         (i32.const 1)
+  ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (i32.const 1)
@@ -537,8 +563,10 @@
   ;; CHECK-NEXT:   (block $named0 (result i32)
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:     (br $named0
-  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $named0
+  ;; CHECK-NEXT:       (i32.const 2)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.const 1)
@@ -551,8 +579,10 @@
       (block $named (result i32)
         (if
           (i32.const 0)
-          (br $named
-            (i32.const 1)
+          (then
+            (br $named
+              (i32.const 1)
+            )
           )
         )
         (i32.const 1)
@@ -564,8 +594,10 @@
       (block $named (result i32)
         (if
           (i32.const 0)
-          (br $named
-            (i32.const 2) ;; this changed
+          (then
+            (br $named
+              (i32.const 2) ;; this changed
+            )
           )
         )
         (i32.const 1)
@@ -583,6 +615,8 @@
     (ref.func $reffed)
   )
 
+  (export "table" (table 0))
+
   ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (table $0 10 funcref)
@@ -590,7 +624,6 @@
   ;; CHECK:      (elem $0 (i32.const 0) $reffed)
 
   ;; CHECK:      (export "table" (table $0))
-  (export "table" (table 0))
 
   ;; CHECK:      (func $reffed (type $i) (param $x i32)
   ;; CHECK-NEXT:  (drop
@@ -924,6 +957,12 @@
   ;; CHECK:      (type $A (func (param i32)))
   (type $A (func (param i32)))
 
+  (import "binaryen-intrinsics" "call.without.effects"
+    (func $call-without-effects (param i32 funcref)))
+
+  (import "other" "import"
+    (func $other-import (param funcref)))
+
   ;; CHECK:      (type $1 (func (param i32 funcref)))
 
   ;; CHECK:      (type $2 (func (param funcref)))
@@ -931,12 +970,8 @@
   ;; CHECK:      (type $3 (func))
 
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $1) (param i32 funcref)))
-  (import "binaryen-intrinsics" "call.without.effects"
-    (func $call-without-effects (param i32 funcref)))
 
   ;; CHECK:      (import "other" "import" (func $other-import (type $2) (param funcref)))
-  (import "other" "import"
-    (func $other-import (param funcref)))
 
   ;; CHECK:      (elem declare func $target-drop $target-keep)
 
@@ -994,6 +1029,12 @@
   ;; CHECK:      (type $A (func (param i32)))
   (type $A (func (param i32)))
 
+  (import "binaryen-intrinsics" "call.without.effects"
+    (func $call-without-effects (param i32 funcref)))
+
+  (import "other" "import"
+    (func $other-import (param funcref)))
+
   ;; CHECK:      (type $1 (func (param i32 funcref)))
 
   ;; CHECK:      (type $2 (func (param funcref)))
@@ -1001,12 +1042,8 @@
   ;; CHECK:      (type $3 (func (param (ref null $A))))
 
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call-without-effects (type $1) (param i32 funcref)))
-  (import "binaryen-intrinsics" "call.without.effects"
-    (func $call-without-effects (param i32 funcref)))
 
   ;; CHECK:      (import "other" "import" (func $other-import (type $2) (param funcref)))
-  (import "other" "import"
-    (func $other-import (param funcref)))
 
   ;; CHECK:      (elem declare func $target-keep $target-keep-2)
 

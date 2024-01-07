@@ -703,8 +703,10 @@ public:
     TableFillId,
     TableCopyId,
     TryId,
+    TryTableId,
     ThrowId,
     RethrowId,
+    ThrowRefId,
     TupleMakeId,
     TupleExtractId,
     RefI31Id,
@@ -827,23 +829,21 @@ public:
   Name name;
   ExpressionList list;
 
-  // set the type purely based on its contents. this scans the block, so it is
-  // not fast.
-  void finalize();
-
-  // set the type given you know its type, which is the case when parsing
-  // s-expression or binary, as explicit types are given. the only additional
-  // work this does is to set the type to unreachable in the cases that is
-  // needed (which may require scanning the block)
-  void finalize(Type type_);
-
   enum Breakability { Unknown, HasBreak, NoBreak };
 
-  // set the type given you know its type, and you know if there is a break to
-  // this block. this avoids the need to scan the contents of the block in the
-  // case that it might be unreachable, so it is recommended if you already know
-  // the type and breakability anyhow.
-  void finalize(Type type_, Breakability breakability);
+  // If type_ is not given, set the type purely based on its contents. this
+  // scans the block, so it is not fast.
+  // If type_ is given, set the type given you know its type, which is the case
+  // when parsing s-expression or binary, as explicit types are given. the only
+  // additional work this does is to set the type to unreachable in the cases
+  // that is needed (which may require scanning the block)
+  //
+  // If breakability is given, you know if there is a break to this block. this
+  // avoids the need to scan the contents of the block in the case that it might
+  // be unreachable, so it is recommended if you already know the type and
+  // breakability anyhow.
+  void finalize(std::optional<Type> type_ = std::nullopt,
+                Breakability breakability = Unknown);
 };
 
 class If : public SpecificExpression<Expression::IfId> {
@@ -855,14 +855,12 @@ public:
   Expression* ifTrue;
   Expression* ifFalse;
 
-  // set the type given you know its type, which is the case when parsing
-  // s-expression or binary, as explicit types are given. the only additional
-  // work this does is to set the type to unreachable in the cases that is
-  // needed.
-  void finalize(Type type_);
-
-  // set the type purely based on its contents.
-  void finalize();
+  // If type_ is not given, set the type purely based on its contents.
+  // If type_ is given, set the type given you know its type, which is the case
+  // when parsing s-expression or binary, as explicit types are given. the only
+  // additional work this does is to set the type to unreachable in the cases
+  // that is needed.
+  void finalize(std::optional<Type> type_ = std::nullopt);
 };
 
 class Loop : public SpecificExpression<Expression::LoopId> {
@@ -873,14 +871,12 @@ public:
   Name name;
   Expression* body;
 
-  // set the type given you know its type, which is the case when parsing
-  // s-expression or binary, as explicit types are given. the only additional
-  // work this does is to set the type to unreachable in the cases that is
-  // needed.
-  void finalize(Type type_);
-
-  // set the type purely based on its contents.
-  void finalize();
+  // If type_ is not given, set the type purely based on its contents.
+  // If type_ is given, set the type given you know its type, which is the case
+  // when parsing s-expression or binary, as explicit types are given. the only
+  // additional work this does is to set the type to unreachable in the cases
+  // that is needed.
+  void finalize(std::optional<Type> type_ = std::nullopt);
 };
 
 class Break : public SpecificExpression<Expression::BreakId> {
@@ -1455,6 +1451,7 @@ public:
   void finalize();
 };
 
+// 'try' from the old (Phase 3) EH proposal
 class Try : public SpecificExpression<Expression::TryId> {
 public:
   Try(MixedArena& allocator) : catchTags(allocator), catchBodies(allocator) {}
@@ -1470,8 +1467,36 @@ public:
   }
   bool isCatch() const { return !catchBodies.empty(); }
   bool isDelegate() const { return delegateTarget.is(); }
-  void finalize();
-  void finalize(Type type_);
+  void finalize(std::optional<Type> type_ = std::nullopt);
+};
+
+// 'try_table' from the new EH proposal
+class TryTable : public SpecificExpression<Expression::TryTableId> {
+public:
+  TryTable(MixedArena& allocator)
+    : catchTags(allocator), catchDests(allocator), catchRefs(allocator),
+      sentTypes(allocator) {}
+
+  Expression* body;
+
+  // Tag names. Empty names (Name()) for catch_all and catch_all_ref
+  ArenaVector<Name> catchTags;
+  // catches' destination blocks
+  ArenaVector<Name> catchDests;
+  // true for catch_ref and catch_all_ref
+  ArenaVector<bool> catchRefs;
+
+  bool hasCatchAll() const;
+
+  // When 'Module*' parameter is given, we cache catch tags' types into
+  // 'sentTypes' array, so that the types can be accessed in other analyses
+  // without accessing the module.
+  void finalize(std::optional<Type> type_ = std::nullopt,
+                Module* wasm = nullptr);
+
+  // Caches tags' types in the catch clauses in order not to query the module
+  // every time we query the sent types
+  ArenaVector<Type> sentTypes;
 };
 
 class Throw : public SpecificExpression<Expression::ThrowId> {
@@ -1484,11 +1509,22 @@ public:
   void finalize();
 };
 
+// 'rethrow' from the old (Phase 3) EH proposal
 class Rethrow : public SpecificExpression<Expression::RethrowId> {
 public:
   Rethrow(MixedArena& allocator) {}
 
   Name target;
+
+  void finalize();
+};
+
+// 'throw_ref' from the new EH proposal
+class ThrowRef : public SpecificExpression<Expression::ThrowRefId> {
+public:
+  ThrowRef(MixedArena& allocator) {}
+
+  Expression* exnref;
 
   void finalize();
 };
@@ -1504,6 +1540,7 @@ public:
 
 class TupleExtract : public SpecificExpression<Expression::TupleExtractId> {
 public:
+  TupleExtract() = default;
   TupleExtract(MixedArena& allocator) {}
 
   Expression* tuple;

@@ -12,7 +12,7 @@
 
  ;; CHECK:      [fuzz-exec] calling array
  ;; CHECK-NEXT: [exception thrown: A [ref (type $array.0 (array (mut i32))) (0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0[..])]]
- (func "array" (result (ref $A))
+ (func $array (export "array") (result (ref $A))
   ;; Throw a very large array. We should not print all 12K items in it, as that
   ;; would be very verbose. Instead we stop after a reasonable amount and
   ;; print [..] for the rest.
@@ -25,7 +25,7 @@
 
  ;; CHECK:      [fuzz-exec] calling struct
  ;; CHECK-NEXT: [exception thrown: B [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [ref (type $struct.0 (struct (field (mut anyref)))) [..]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]]
- (func "struct" (result (ref $B))
+ (func $struct (export "struct") (result (ref $B))
   (local $x (ref $B))
   ;; As above, but now with a recursive struct.
   (local.set $x
@@ -40,4 +40,3 @@
   )
  )
 )
-

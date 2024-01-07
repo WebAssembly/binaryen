@@ -146,16 +146,18 @@
  (func $__wasm_ctz_i32 (; 7 ;) (type $3) (param $var$0 i32) (result i32)
   (if
    (local.get $var$0)
-   (return
-    (i32.sub
-     (i32.const 31)
-     (i32.clz
-      (i32.xor
-       (i32.add
+   (then
+    (return
+     (i32.sub
+      (i32.const 31)
+      (i32.clz
+       (i32.xor
+        (i32.add
+         (local.get $var$0)
+         (i32.const -1)
+        )
         (local.get $var$0)
-        (i32.const -1)
        )
-       (local.get $var$0)
       )
      )
     )
@@ -171,16 +173,18 @@
      (local.get $var$0)
     )
    )
-   (return
-    (i64.sub
-     (i64.const 63)
-     (i64.clz
-      (i64.xor
-       (i64.add
+   (then
+    (return
+     (i64.sub
+      (i64.const 63)
+      (i64.clz
+       (i64.xor
+        (i64.add
+         (local.get $var$0)
+         (i64.const -1)
+        )
         (local.get $var$0)
-        (i64.const -1)
        )
-       (local.get $var$0)
       )
      )
     )
@@ -369,38 +373,42 @@
      (f32.const 0.5)
     )
    )
-   (block
-    (local.set $var$0
-     (f32.ceil
-      (local.get $var$0)
+   (then
+    (block
+     (local.set $var$0
+      (f32.ceil
+       (local.get $var$0)
+      )
      )
-    )
-    (if
-     (f32.gt
-      (local.get $var$2)
-      (f32.const 0.5)
+     (if
+      (f32.gt
+       (local.get $var$2)
+       (f32.const 0.5)
+      )
+      (then
+       (return
+        (local.get $var$0)
+       )
+      )
      )
-     (return
-      (local.get $var$0)
-     )
-    )
-    (local.set $var$1
-     (select
-      (local.get $var$1)
-      (local.get $var$0)
-      (f32.eq
-       (f32.sub
-        (local.tee $var$2
-         (f32.mul
-          (local.get $var$1)
-          (f32.const 0.5)
+     (local.set $var$1
+      (select
+       (local.get $var$1)
+       (local.get $var$0)
+       (f32.eq
+        (f32.sub
+         (local.tee $var$2
+          (f32.mul
+           (local.get $var$1)
+           (f32.const 0.5)
+          )
+         )
+         (f32.floor
+          (local.get $var$2)
          )
         )
-        (f32.floor
-         (local.get $var$2)
-        )
+        (f32.const 0)
        )
-       (f32.const 0)
       )
      )
     )
@@ -429,38 +437,42 @@
      (f64.const 0.5)
     )
    )
-   (block
-    (local.set $var$0
-     (f64.ceil
-      (local.get $var$0)
+   (then
+    (block
+     (local.set $var$0
+      (f64.ceil
+       (local.get $var$0)
+      )
      )
-    )
-    (if
-     (f64.gt
-      (local.get $var$2)
-      (f64.const 0.5)
+     (if
+      (f64.gt
+       (local.get $var$2)
+       (f64.const 0.5)
+      )
+      (then
+       (return
+        (local.get $var$0)
+       )
+      )
      )
-     (return
-      (local.get $var$0)
-     )
-    )
-    (local.set $var$1
-     (select
-      (local.get $var$1)
-      (local.get $var$0)
-      (f64.eq
-       (f64.sub
-        (local.tee $var$2
-         (f64.mul
-          (local.get $var$1)
-          (f64.const 0.5)
+     (local.set $var$1
+      (select
+       (local.get $var$1)
+       (local.get $var$0)
+       (f64.eq
+        (f64.sub
+         (local.tee $var$2
+          (f64.mul
+           (local.get $var$1)
+           (f64.const 0.5)
+          )
+         )
+         (f64.floor
+          (local.get $var$2)
          )
         )
-        (f64.floor
-         (local.get $var$2)
-        )
+        (f64.const 0)
        )
-       (f64.const 0)
       )
      )
     )
@@ -496,44 +508,46 @@
                 )
                )
               )
-              (block
-               (br_if $label$11
-                (i32.eqz
-                 (local.tee $var$3
-                  (i32.wrap_i64
-                   (local.get $var$1)
-                  )
-                 )
-                )
-               )
-               (br_if $label$9
-                (i32.eqz
-                 (local.tee $var$4
-                  (i32.wrap_i64
-                   (i64.shr_u
+              (then
+               (block
+                (br_if $label$11
+                 (i32.eqz
+                  (local.tee $var$3
+                   (i32.wrap_i64
                     (local.get $var$1)
-                    (i64.const 32)
                    )
                   )
                  )
                 )
-               )
-               (br_if $label$8
-                (i32.le_u
-                 (local.tee $var$2
-                  (i32.sub
-                   (i32.clz
-                    (local.get $var$4)
-                   )
-                   (i32.clz
-                    (local.get $var$2)
+                (br_if $label$9
+                 (i32.eqz
+                  (local.tee $var$4
+                   (i32.wrap_i64
+                    (i64.shr_u
+                     (local.get $var$1)
+                     (i64.const 32)
+                    )
                    )
                   )
                  )
-                 (i32.const 31)
                 )
+                (br_if $label$8
+                 (i32.le_u
+                  (local.tee $var$2
+                   (i32.sub
+                    (i32.clz
+                     (local.get $var$4)
+                    )
+                    (i32.clz
+                     (local.get $var$2)
+                    )
+                   )
+                  )
+                  (i32.const 31)
+                 )
+                )
+                (br $label$2)
                )
-               (br $label$2)
               )
              )
              (br_if $label$2
@@ -790,69 +804,71 @@
     (block $label$13
      (if
       (local.get $var$2)
-      (block
-       (local.set $var$8
-        (i64.add
-         (local.get $var$1)
-         (i64.const -1)
+      (then
+       (block
+        (local.set $var$8
+         (i64.add
+          (local.get $var$1)
+          (i64.const -1)
+         )
         )
-       )
-       (loop $label$15
-        (local.set $var$5
-         (i64.sub
-          (local.tee $var$5
-           (i64.or
-            (i64.shl
-             (local.get $var$5)
-             (i64.const 1)
-            )
-            (i64.shr_u
-             (local.get $var$0)
-             (i64.const 63)
-            )
-           )
-          )
-          (i64.and
-           (local.tee $var$6
-            (i64.shr_s
-             (i64.sub
-              (local.get $var$8)
+        (loop $label$15
+         (local.set $var$5
+          (i64.sub
+           (local.tee $var$5
+            (i64.or
+             (i64.shl
               (local.get $var$5)
+              (i64.const 1)
              )
-             (i64.const 63)
+             (i64.shr_u
+              (local.get $var$0)
+              (i64.const 63)
+             )
             )
            )
-           (local.get $var$1)
+           (i64.and
+            (local.tee $var$6
+             (i64.shr_s
+              (i64.sub
+               (local.get $var$8)
+               (local.get $var$5)
+              )
+              (i64.const 63)
+             )
+            )
+            (local.get $var$1)
+           )
+          )
+         )
+         (local.set $var$0
+          (i64.or
+           (i64.shl
+            (local.get $var$0)
+            (i64.const 1)
+           )
+           (local.get $var$7)
+          )
+         )
+         (local.set $var$7
+          (local.tee $var$6
+           (i64.and
+            (local.get $var$6)
+            (i64.const 1)
+           )
+          )
+         )
+         (br_if $label$15
+          (local.tee $var$2
+           (i32.add
+            (local.get $var$2)
+            (i32.const -1)
+           )
           )
          )
         )
-        (local.set $var$0
-         (i64.or
-          (i64.shl
-           (local.get $var$0)
-           (i64.const 1)
-          )
-          (local.get $var$7)
-         )
-        )
-        (local.set $var$7
-         (local.tee $var$6
-          (i64.and
-           (local.get $var$6)
-           (i64.const 1)
-          )
-         )
-        )
-        (br_if $label$15
-         (local.tee $var$2
-          (i32.add
-           (local.get $var$2)
-           (i32.const -1)
-          )
-         )
-        )
+        (br $label$13)
        )
-       (br $label$13)
       )
      )
     )

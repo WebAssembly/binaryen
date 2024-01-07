@@ -5,7 +5,7 @@
 (module
   ;; CHECK:      [fuzz-exec] calling get-ref
   ;; CHECK-NEXT: [trap fuzzer can only send defaultable parameters to exports]
-  (func "get-ref" (param $0 (ref any))
+  (func $get-ref (export "get-ref") (param $0 (ref any))
     (nop)
   )
 )

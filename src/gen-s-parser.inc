@@ -102,12 +102,12 @@ switch (buf[0]) {
       case 'r': {
         switch (buf[2]) {
           case '\0':
-            if (op == "br"sv) { return makeBreak(s); }
+            if (op == "br"sv) { return makeBreak(s, false); }
             goto parse_error;
           case '_': {
             switch (buf[3]) {
               case 'i':
-                if (op == "br_if"sv) { return makeBreak(s); }
+                if (op == "br_if"sv) { return makeBreak(s, true); }
                 goto parse_error;
               case 'o': {
                 switch (buf[6]) {
@@ -3396,15 +3396,31 @@ switch (buf[0]) {
           case 'e':
             if (op == "then"sv) { return makeThenOrElse(s); }
             goto parse_error;
-          case 'r':
-            if (op == "throw"sv) { return makeThrow(s); }
+          case 'r': {
+            switch (buf[5]) {
+              case '\0':
+                if (op == "throw"sv) { return makeThrow(s); }
+                goto parse_error;
+              case '_':
+                if (op == "throw_ref"sv) { return makeThrowRef(s); }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          default: goto parse_error;
+        }
+      }
+      case 'r': {
+        switch (buf[3]) {
+          case '\0':
+            if (op == "try"sv) { return makeTry(s); }
+            goto parse_error;
+          case '_':
+            if (op == "try_table"sv) { return makeTryTable(s); }
             goto parse_error;
           default: goto parse_error;
         }
       }
-      case 'r':
-        if (op == "try"sv) { return makeTry(s); }
-        goto parse_error;
       case 'u': {
         switch (buf[6]) {
           case 'd':
@@ -3736,7 +3752,7 @@ switch (buf[0]) {
     switch (buf[2]) {
       case '\0':
         if (op == "br"sv) {
-          CHECK_ERR(makeBreak(ctx, pos));
+          CHECK_ERR(makeBreak(ctx, pos, false));
           return Ok{};
         }
         goto parse_error;
@@ -3744,7 +3760,7 @@ switch (buf[0]) {
         switch (buf[3]) {
           case 'i':
             if (op == "br_if"sv) {
-              CHECK_ERR(makeBreak(ctx, pos));
+              CHECK_ERR(makeBreak(ctx, pos, true));
               return Ok{};
             }
             goto parse_error;
@@ -8655,12 +8671,23 @@ switch (buf[0]) {
           default: goto parse_error;
         }
       }
-      case 'h':
-        if (op == "throw"sv) {
-          CHECK_ERR(makeThrow(ctx, pos));
-          return Ok{};
+      case 'h': {
+        switch (buf[5]) {
+          case '\0':
+            if (op == "throw"sv) {
+              CHECK_ERR(makeThrow(ctx, pos));
+              return Ok{};
+            }
+            goto parse_error;
+          case '_':
+            if (op == "throw_ref"sv) {
+              CHECK_ERR(makeThrowRef(ctx, pos));
+              return Ok{};
+            }
+            goto parse_error;
+          default: goto parse_error;
         }
-        goto parse_error;
+      }
       case 'u': {
         switch (buf[6]) {
           case 'd':

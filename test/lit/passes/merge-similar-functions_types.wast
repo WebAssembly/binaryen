@@ -120,8 +120,8 @@
 
  ;; CHECK:      (global $global$0 (mut i32) (i32.const 10))
  (global $global$0 (mut i32) (i32.const 10))
- ;; CHECK:      (memory $0 (shared 16 17))
- (memory $0 (shared 16 17))
+ ;; CHECK:      (memory $0 16 17 shared)
+ (memory $0 16 17 shared)
 
  ;; CHECK:      (elem declare func $2 $3)
 

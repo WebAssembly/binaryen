@@ -12,33 +12,26 @@
 (module
   ;; CHECK-TEXT:      (type $0 (func))
 
-  ;; CHECK-TEXT:      (export "$zoo (.bar)" (func $1))
-
   ;; CHECK-TEXT:      (func $foo\20\28.bar\29 (type $0)
   ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (type $0 (func))
-
-  ;; CHECK-BIN:      (export "$zoo (.bar)" (func $1))
 
   ;; CHECK-BIN:      (func $foo\20\28.bar\29 (type $0)
   ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $foo\20\28.bar\29)
 
-  (func "$zoo (.bar)" (call $foo\20\28.bar\29))
+  ;; CHECK-TEXT:      (func $"zoo (.bar)" (type $0)
+  ;; CHECK-TEXT-NEXT:  (call $foo\20\28.bar\29)
+  ;; CHECK-TEXT-NEXT: )
+  (func $"zoo (.bar)" (call $foo\20\28.bar\29))
 )
-;; CHECK-TEXT:      (func $1 (type $0)
-;; CHECK-TEXT-NEXT:  (call $foo\20\28.bar\29)
-;; CHECK-TEXT-NEXT: )
-
-;; CHECK-BIN:      (func $1 (type $0)
+;; CHECK-BIN:      (func $zoo\20\28.bar\29 (type $0)
 ;; CHECK-BIN-NEXT:  (call $foo\20\28.bar\29)
 ;; CHECK-BIN-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (type $0 (func))
-
-;; CHECK-BIN-NODEBUG:      (export "$zoo (.bar)" (func $1))
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)

@@ -329,8 +329,10 @@
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $param)
-  ;; CHECK-NEXT:    (throw $e
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (throw $e
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $x
@@ -351,7 +353,9 @@
       (local.set $x (i32.const 1))
       (if
         (local.get $param)
-        (throw $e (i32.const 0))
+        (then
+          (throw $e (i32.const 0))
+        )
       )
       (drop (local.get $x))
     )
@@ -365,8 +369,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $param)
-  ;; CHECK-NEXT:    (throw $e
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (throw $e
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop
@@ -385,7 +391,9 @@
       (local.set $x (i32.const 1))
       (if
         (local.get $param)
-        (throw $e (i32.const 0))
+        (then
+          (throw $e (i32.const 0))
+        )
       )
       (drop (local.get $x))
     )

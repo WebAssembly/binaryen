@@ -44,9 +44,11 @@
   ;; CHECK-NEXT:  (local $x nullref)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $i)
-  ;; CHECK-NEXT:   (local.set $x
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -59,8 +61,10 @@
     (if
       (local.get $i)
       ;; The only set to this local uses a non-nullable type.
-      (local.set $x
-        (ref.as_non_null (ref.null $struct))
+      (then
+        (local.set $x
+          (ref.as_non_null (ref.null $struct))
+        )
       )
     )
     (drop

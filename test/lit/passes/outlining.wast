@@ -255,8 +255,10 @@
   ;; CHECK:      (func $a (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (call $outline$)
-  ;; CHECK-NEXT:   (global.set $global$1
-  ;; CHECK-NEXT:    (i32.const 15)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (global.set $global$1
+  ;; CHECK-NEXT:     (i32.const 15)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -265,16 +267,20 @@
       (i32.eqz
         (global.get $global$1)
       )
-      (global.set $global$1
-        (i32.const 15)
+      (then
+        (global.set $global$1
+          (i32.const 15)
+        )
       )
     )
   )
   ;; CHECK:      (func $b (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (call $outline$)
-  ;; CHECK-NEXT:   (global.set $global$1
-  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (global.set $global$1
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -283,8 +289,10 @@
       (i32.eqz
         (global.get $global$1)
       )
-      (global.set $global$1
-        (i32.const 20)
+      (then
+        (global.set $global$1
+          (i32.const 20)
+        )
       )
     )
   )
@@ -307,7 +315,9 @@
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $outline$)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $outline$)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $a (param i32)
@@ -315,8 +325,10 @@
       (i32.eqz
         (local.get 0)
       )
-      (drop
-        (i32.const 10)
+      (then
+        (drop
+          (i32.const 10)
+        )
       )
     )
   )
@@ -325,7 +337,9 @@
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $outline$)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $outline$)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $b (param i32)
@@ -333,8 +347,10 @@
       (i32.eqz
         (local.get 0)
       )
-      (drop
-        (i32.const 10)
+      (then
+        (drop
+          (i32.const 10)
+        )
       )
     )
   )
@@ -357,10 +373,14 @@
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (global.get $global$1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (global.set $global$1
-  ;; CHECK-NEXT:    (i32.const 15)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (global.set $global$1
+  ;; CHECK-NEXT:     (i32.const 15)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $outline$)
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (call $outline$)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $a
@@ -368,12 +388,16 @@
       (i32.eqz
         (global.get $global$1)
       )
-      (global.set $global$1
-        (i32.const 15)
-      )
-      (block
+      (then
         (global.set $global$1
-          (i32.const 100)
+          (i32.const 15)
+        )
+      )
+      (else
+        (block
+          (global.set $global$1
+            (i32.const 100)
+          )
         )
       )
     )
@@ -383,10 +407,14 @@
   ;; CHECK-NEXT:   (i32.ctz
   ;; CHECK-NEXT:    (global.get $global$1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (global.set $global$1
-  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (global.set $global$1
+  ;; CHECK-NEXT:     (i32.const 30)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $outline$)
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (call $outline$)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $b
@@ -394,12 +422,16 @@
       (i32.ctz
         (global.get $global$1)
       )
-      (global.set $global$1
-        (i32.const 30)
-      )
-      (block
+      (then
         (global.set $global$1
-          (i32.const 100)
+          (i32.const 30)
+        )
+      )
+      (else
+        (block
+          (global.set $global$1
+            (i32.const 100)
+          )
         )
       )
     )
@@ -421,8 +453,12 @@
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (global.get $global$1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $outline$_3)
-  ;; CHECK-NEXT:   (call $outline$_4)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $outline$_3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (call $outline$_4)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
 
@@ -446,11 +482,15 @@
       (i32.eqz
         (global.get $global$1)
       )
-      (drop
-        (i32.const 10)
+      (then
+        (drop
+          (i32.const 10)
+        )
       )
-      (global.set $global$1
-        (i32.const 20)
+      (else
+        (global.set $global$1
+          (i32.const 20)
+        )
       )
     )
   )
@@ -462,11 +502,15 @@
       (i32.eqz
         (global.get $global$1)
       )
-      (drop
-        (i32.const 10)
+      (then
+        (drop
+          (i32.const 10)
+        )
       )
-      (global.set $global$1
-        (i32.const 20)
+      (else
+        (global.set $global$1
+          (i32.const 20)
+        )
       )
     )
   )
@@ -645,12 +689,9 @@
   ;; CHECK-NEXT:  (local $scratch_1 (i32 i32))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.add
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (local.set $scratch
+  ;; CHECK-NEXT:    (tuple.extract 2 0
+  ;; CHECK-NEXT:     (local.tee $scratch
   ;; CHECK-NEXT:      (call $outline$)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (tuple.extract 2 0
-  ;; CHECK-NEXT:      (local.get $scratch)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (tuple.extract 2 1
@@ -660,12 +701,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.mul
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (local.set $scratch_1
+  ;; CHECK-NEXT:    (tuple.extract 2 0
+  ;; CHECK-NEXT:     (local.tee $scratch_1
   ;; CHECK-NEXT:      (call $outline$)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (tuple.extract 2 0
-  ;; CHECK-NEXT:      (local.get $scratch_1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (tuple.extract 2 1
@@ -686,44 +724,6 @@
         (i32.const 0)
         (i32.const 1)
       )
-    )
-  )
-)
-
-;; Test outlining works with call_indirect
-;; 0 results, 2 params, 3 operands
-(module
-  (table funcref)
-  ;; CHECK:      (type $0 (func))
-
-  ;; CHECK:      (type $1 (func (param i32 i32)))
-
-  ;; CHECK:      (table $0 0 funcref)
-
-  ;; CHECK:      (func $outline$ (type $0)
-  ;; CHECK-NEXT:  (call_indirect $0 (type $1)
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (i32.const 2)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-
-  ;; CHECK:      (func $a (type $0)
-  ;; CHECK-NEXT:  (call $outline$)
-  ;; CHECK-NEXT:  (call $outline$)
-  ;; CHECK-NEXT: )
-  (func $a
-    (call_indirect
-      (param i32 i32)
-      (i32.const 0)
-      (i32.const 1)
-      (i32.const 2)
-    )
-    (call_indirect
-      (param i32 i32)
-      (i32.const 0)
-      (i32.const 1)
-      (i32.const 2)
     )
   )
 )
@@ -826,6 +826,44 @@
     (drop
       (call_indirect
         (result i32)
+        (i32.const 0)
+      )
+    )
+  )
+)
+
+;; Test outlining works with call_indirect
+;; 2 results, 0 params, 1 operand
+(module
+  (table funcref)
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (result i32 i32)))
+
+  ;; CHECK:      (table $0 0 funcref)
+
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (tuple.drop 2
+  ;; CHECK-NEXT:   (call_indirect $0 (type $1)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT: )
+  (func $a
+    (tuple.drop 2
+      (call_indirect
+        (result i32 i32)
+        (i32.const 0)
+      )
+    )
+    (tuple.drop 2
+      (call_indirect
+        (result i32 i32)
         (i32.const 0)
       )
     )

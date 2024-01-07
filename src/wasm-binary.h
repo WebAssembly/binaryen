@@ -1170,11 +1170,17 @@ enum ASTNodes {
   // exception handling opcodes
 
   Try = 0x06,
-  Catch = 0x07,
-  CatchAll = 0x19,
+  Catch_P3 = 0x07,    // Old Phase 3 'catch'
+  CatchAll_P3 = 0x19, // Old Phase 3 'catch_all'
   Delegate = 0x18,
   Throw = 0x08,
   Rethrow = 0x09,
+  TryTable = 0x1f,
+  Catch = 0x00,
+  CatchRef = 0x01,
+  CatchAll = 0x02,
+  CatchAllRef = 0x03,
+  ThrowRef = 0x0a,
 
   // typed function references opcodes
 
@@ -1913,8 +1919,10 @@ public:
   void visitTableGet(TableGet* curr);
   void visitTableSet(TableSet* curr);
   void visitTryOrTryInBlock(Expression*& out);
+  void visitTryTable(TryTable* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
+  void visitThrowRef(ThrowRef* curr);
   void visitCallRef(CallRef* curr);
   void visitRefAsCast(RefCast* curr, uint32_t code);
   void visitRefAs(RefAs* curr, uint8_t code);

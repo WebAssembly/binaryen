@@ -69,7 +69,7 @@
 ;; NONE: Splitting out functions: bar, bar_callee, deep_foo_callee, foo, foo_callee, shared_callee, uncalled
 
 (module
-  (memory $mem (shared 1 1))
+  (memory $mem 1 1 shared)
   (export "memory" (memory $mem))
   (export "foo" (func $foo))
   (export "bar" (func $bar))

@@ -1,8 +1,8 @@
 (module
-  (memory (shared 256 256))
+  (memory 256 256 shared)
   (data "hello,")
   (data "world!")
-  (func "test"
+  (func $test (export "test")
     (local $x i32)
     (local $y i64)
     (local.set $x (i32.atomic.rmw8.cmpxchg_u (i32.const 1024) (i32.const 1) (i32.const 2)))

@@ -29,11 +29,11 @@
  ;; PRIMARY:      (elem $0 (i32.const 0) $placeholder_0)
 
  ;; PRIMARY:      (export "foo" (func $export$foo))
- (export "foo" (func $foo))
+
  ;; PRIMARY:      (export "load_secondary_module_status" (global $global$1))
 
  ;; PRIMARY:      (export "%foo" (func $foo))
-
+ (export "foo" (func $foo))
  ;; PRIMARY:      (export "%table" (table $0))
 
  ;; PRIMARY:      (export "%global" (global $suspender))
@@ -43,7 +43,9 @@
  ;; PRIMARY-NEXT:   (i32.eqz
  ;; PRIMARY-NEXT:    (global.get $global$1)
  ;; PRIMARY-NEXT:   )
- ;; PRIMARY-NEXT:   (call $__load_secondary_module)
+ ;; PRIMARY-NEXT:   (then
+ ;; PRIMARY-NEXT:    (call $__load_secondary_module)
+ ;; PRIMARY-NEXT:   )
  ;; PRIMARY-NEXT:  )
  ;; PRIMARY-NEXT:  (call_indirect (type $0)
  ;; PRIMARY-NEXT:   (i32.const 0)

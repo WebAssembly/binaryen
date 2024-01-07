@@ -36,7 +36,7 @@
 ;; CHECK-NEXT:     (i32.eqz
 ;; CHECK-NEXT:       (global.get $baz_timestamp)
 ;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (block
+;; CHECK-NEXT:     (then
 ;; CHECK-NEXT:       (global.set $monotonic_counter
 ;; CHECK-NEXT:         (i32.add
 ;; CHECK-NEXT:           (global.get $monotonic_counter)
@@ -59,7 +59,7 @@
 ;; CHECK-NEXT:       (local.get $size)
 ;; CHECK-NEXT:       (i32.const 16)
 ;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (block
+;; CHECK-NEXT:     (then
 ;; CHECK-NEXT:       (i64.store align=1
 ;; CHECK-NEXT:         (local.get $addr)
 ;; CHECK-NEXT:         (i64.const {{.*}})

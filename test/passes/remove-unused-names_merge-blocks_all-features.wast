@@ -1,5 +1,5 @@
 (module
-  (memory (shared 256 256))
+  (memory 256 256 shared)
   (type $i (func (param i32)))
   (type $ii (func (param i32 i32)))
   (type $iii (func (param i32 i32 i32)))
@@ -945,19 +945,23 @@
           (local.get $1)
         )
       )
-      (nop)
+      (then
+        (nop)
+      )
     )
   )
   (func $do-reorder (param $x i32)
     (local $y i32)
     (if (i32.const 1)
-      (block
-        (local.set $x
-          (i32.le_u
-            (local.get $x)
-            (block (result i32)
-              (local.set $y (i32.const 5))
-              (i32.const 10)
+      (then
+        (block
+          (local.set $x
+            (i32.le_u
+              (local.get $x)
+              (block (result i32)
+                (local.set $y (i32.const 5))
+                (i32.const 10)
+              )
             )
           )
         )
@@ -967,13 +971,15 @@
   (func $do-not-reorder (param $x i32)
     (local $y i32)
     (if (i32.const 1)
-      (block
-        (local.set $x
-          (i32.le_u
-            (local.get $y)
-            (block (result i32)
-              (local.set $y (i32.const 5))
-              (i32.const 10)
+      (then
+        (block
+          (local.set $x
+            (i32.le_u
+              (local.get $y)
+              (block (result i32)
+                (local.set $y (i32.const 5))
+                (i32.const 10)
+              )
             )
           )
         )
@@ -1123,7 +1129,9 @@
   )
   (block $l5
    (if (i32.const 10)
-    (br_if $l5 (i32.const 11))
+    (then
+     (br_if $l5 (i32.const 11))
+    )
    )
    (drop (i32.const 12))
   )
@@ -1201,7 +1209,9 @@
   )
   (loop $l5
    (if (i32.const 10)
-    (br_if $l5 (i32.const 11))
+    (then
+     (br_if $l5 (i32.const 11))
+    )
    )
    (drop (i32.const 12))
   )

@@ -175,11 +175,11 @@
   (elem (table $1) (offset (i32.const 1)) func)
 )
 (module ;; remove the first table and memory, but not the second one
+  (import "env" "memory" (memory $0 256))
+  (import "env" "table" (table 0 funcref))
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (import "env" "table2" (table $1 1 1 funcref))
-  (import "env" "memory" (memory $0 256))
-  (import "env" "table" (table 0 funcref))
   (import "env" "table2" (table $1 1 1 funcref))
   (elem (table $1) (offset (i32.const 0)) func)
   (elem (table $1) (offset (i32.const 0)) func $f)
@@ -203,22 +203,25 @@
 (module ;; but not when exported
   ;; CHECK:      (import "env" "memory" (memory $0 256))
   (import "env" "memory" (memory $0 256))
-  ;; CHECK:      (import "env" "table" (table $timport$0 1 funcref))
   (import "env" "table" (table 1 funcref))
-  ;; CHECK:      (export "mem" (memory $0))
   (export "mem" (memory 0))
-  ;; CHECK:      (export "tab" (table $timport$0))
   (export "tab" (table 0))
 )
+;; CHECK:      (import "env" "table" (table $timport$0 1 funcref))
+
+;; CHECK:      (export "mem" (memory $0))
+
+;; CHECK:      (export "tab" (table $timport$0))
 (module ;; and not when there are segments
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (import "env" "memory" (memory $0 256))
   (import "env" "memory" (memory $0 256))
-  ;; CHECK:      (import "env" "table" (table $timport$0 1 funcref))
   (import "env" "table" (table 1 funcref))
   (data (i32.const 1) "hello, world!")
   (elem (i32.const 0) $waka)
+  ;; CHECK:      (import "env" "table" (table $timport$0 1 funcref))
+
   ;; CHECK:      (data $0 (i32.const 1) "hello, world!")
 
   ;; CHECK:      (elem $0 (i32.const 0) $waka)
@@ -233,10 +236,12 @@
   (type $0 (func))
   ;; CHECK:      (import "env" "memory" (memory $0 256))
   (import "env" "memory" (memory $0 256))
-  ;; CHECK:      (import "env" "table" (table $timport$0 0 funcref))
   (import "env" "table" (table 0 funcref))
-  ;; CHECK:      (export "user" (func $user))
   (export "user" $user)
+  ;; CHECK:      (import "env" "table" (table $timport$0 0 funcref))
+
+  ;; CHECK:      (export "user" (func $user))
+
   ;; CHECK:      (func $user (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.load
@@ -255,10 +260,11 @@
 (module ;; more use checks
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (memory $0 (shared 23 256))
-  (memory $0 (shared 23 256))
-  ;; CHECK:      (export "user" (func $user))
+  ;; CHECK:      (memory $0 23 256 shared)
+  (memory $0 23 256 shared)
   (export "user" $user)
+  ;; CHECK:      (export "user" (func $user))
+
   ;; CHECK:      (func $user (type $0)
   ;; CHECK-NEXT:  (i32.store
   ;; CHECK-NEXT:   (i32.const 0)
@@ -272,10 +278,11 @@
 (module ;; more use checks
   ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (memory $0 (shared 23 256))
-  (memory $0 (shared 23 256))
-  ;; CHECK:      (export "user" (func $user))
+  ;; CHECK:      (memory $0 23 256 shared)
+  (memory $0 23 256 shared)
   (export "user" $user)
+  ;; CHECK:      (export "user" (func $user))
+
   ;; CHECK:      (func $user (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.atomic.rmw.add
   ;; CHECK-NEXT:   (i32.const 0)
@@ -289,10 +296,11 @@
 (module ;; more use checks
   ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (memory $0 (shared 23 256))
-  (memory $0 (shared 23 256))
-  ;; CHECK:      (export "user" (func $user))
+  ;; CHECK:      (memory $0 23 256 shared)
+  (memory $0 23 256 shared)
   (export "user" $user)
+  ;; CHECK:      (export "user" (func $user))
+
   ;; CHECK:      (func $user (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.atomic.rmw8.cmpxchg_u
   ;; CHECK-NEXT:   (i32.const 0)
@@ -307,10 +315,11 @@
 (module ;; more use checks
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (memory $0 (shared 23 256))
-  (memory $0 (shared 23 256))
-  ;; CHECK:      (export "user" (func $user))
+  ;; CHECK:      (memory $0 23 256 shared)
+  (memory $0 23 256 shared)
   (export "user" $user)
+  ;; CHECK:      (export "user" (func $user))
+
   ;; CHECK:      (func $user (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i64)
@@ -337,10 +346,11 @@
 (module ;; more use checks
   ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (memory $0 (shared 23 256))
-  (memory $0 (shared 23 256))
-  ;; CHECK:      (export "user" (func $user))
+  ;; CHECK:      (memory $0 23 256 shared)
+  (memory $0 23 256 shared)
   (export "user" $user)
+  ;; CHECK:      (export "user" (func $user))
+
   ;; CHECK:      (func $user (type $0) (result i32)
   ;; CHECK-NEXT:  (memory.atomic.notify
   ;; CHECK-NEXT:   (i32.const 0)
@@ -352,14 +362,15 @@
   )
 )
 (module ;; atomic.fence and data.drop do not use a memory, so should not keep the memory alive.
-  (memory $0 (shared 1 1))
+  (memory $0 1 1 shared)
   (data "")
+  (export "fake-user" $user)
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (data $0 "")
 
   ;; CHECK:      (export "fake-user" (func $user))
-  (export "fake-user" $user)
+
   ;; CHECK:      (func $user (type $0)
   ;; CHECK-NEXT:  (atomic.fence)
   ;; CHECK-NEXT:  (data.drop $0)
@@ -378,8 +389,9 @@
   (memory $1 23 256)
   (memory $unused 1 1)
 
-  ;; CHECK:      (export "user" (func $user))
   (export "user" $user)
+  ;; CHECK:      (export "user" (func $user))
+
   ;; CHECK:      (func $user (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (memory.grow $0
@@ -402,8 +414,9 @@
 
   ;; CHECK:      (memory $0 23 256)
   (memory $0 23 256)
-  ;; CHECK:      (export "user" (func $user))
   (export "user" $user)
+  ;; CHECK:      (export "user" (func $user))
+
   ;; CHECK:      (func $user (type $0) (result i32)
   ;; CHECK-NEXT:  (memory.size)
   ;; CHECK-NEXT: )
@@ -419,8 +432,9 @@
   ;; CHECK:      (memory $1 1 1)
   (memory $1 1 1)
   (memory $unused 1 1)
-  ;; CHECK:      (export "user" (func $user))
   (export "user" $user)
+  ;; CHECK:      (export "user" (func $user))
+
   ;; CHECK:      (func $user (type $0)
   ;; CHECK-NEXT:  (memory.copy $0 $1
   ;; CHECK-NEXT:   (i32.const 0)
@@ -441,8 +455,9 @@
 
   ;; CHECK:      (import "env" "memory" (memory $0 256))
   (import "env" "memory" (memory $0 256))
-  ;; CHECK:      (import "env" "table" (table $timport$0 0 funcref))
   (import "env" "table" (table 0 funcref))
+  ;; CHECK:      (import "env" "table" (table $timport$0 0 funcref))
+
   ;; CHECK:      (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "memoryBase" (global $memoryBase i32)) ;; used in init
   ;; CHECK:      (import "env" "tableBase" (global $tableBase i32))
@@ -467,8 +482,8 @@
 
   ;; CHECK:      (import "env" "imported" (global $imported i32))
   (import "env" "imported" (global $imported i32))
-  ;; CHECK:      (import "env" "_puts" (func $_puts (type $2) (param i32) (result i32)))
   (import "env" "forgetme" (global $forgetme i32))
+  ;; CHECK:      (import "env" "_puts" (func $_puts (type $2) (param i32) (result i32)))
   (import "env" "_puts" (func $_puts (param i32) (result i32)))
   (import "env" "forget_puts" (func $forget_puts (param i32) (result i32)))
   ;; CHECK:      (global $int (mut i32) (global.get $imported))
@@ -561,8 +576,12 @@
     (f64.const 1)
     (f64.const 1)
    )
-   (f64.const 1)
-   (f64.const 0)
+   (then
+    (f64.const 1)
+   )
+   (else
+    (f64.const 0)
+   )
   )
  )
 )
@@ -575,8 +594,12 @@
     (f64.const 1)
     (f64.const 1)
    )
-   (call_indirect (type $0) (f64.const 1) (i32.const 0))
-   (f64.const 0)
+   (then
+    (call_indirect (type $0) (f64.const 1) (i32.const 0))
+   )
+   (else
+    (f64.const 0)
+   )
   )
  )
 )
@@ -619,8 +642,12 @@
  ;; CHECK-NEXT:    (f64.const 1)
  ;; CHECK-NEXT:    (f64.const 1)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (f64.const 1)
- ;; CHECK-NEXT:   (f64.const 0)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (f64.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (f64.const 0)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $0 (; 0 ;) (type $0) (param $var$0 f64) (result f64)
@@ -634,8 +661,12 @@
     (f64.const 1)
     (f64.const 1)
    )
-   (f64.const 1)
-   (f64.const 0)
+   (then
+    (f64.const 1)
+   )
+   (else
+    (f64.const 0)
+   )
   )
  )
 )
@@ -732,7 +763,22 @@
  (memory $B 1 1)
  (memory $C-unused 1 1)
 
- (func "func"
+ ;; CHECK:      (export "func" (func $func))
+
+ ;; CHECK:      (func $func (type $0)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (v128.load64_splat $A
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (v128.load16_lane $B 0
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $func (export "func")
   (drop
    (v128.load64_splat $A
     (i32.const 0)
@@ -747,21 +793,6 @@
  )
 )
 
-;; CHECK:      (export "func" (func $0))
-
-;; CHECK:      (func $0 (type $0)
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (v128.load64_splat $A
-;; CHECK-NEXT:    (i32.const 0)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (v128.load16_lane $B 0
-;; CHECK-NEXT:    (i32.const 0)
-;; CHECK-NEXT:    (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
 (module
   ;; When we export a function that calls another, we can export the called
   ;; function, skipping the one in the middle. The exports of $middle and

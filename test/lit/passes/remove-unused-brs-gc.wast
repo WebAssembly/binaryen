@@ -36,8 +36,12 @@
      ;; (that is not specifically intended to be tested here).
      (if (result (ref struct))
       (i32.const 0)
-      (local.get $0)
-      (local.get $0)
+      (then
+       (local.get $0)
+      )
+      (else
+       (local.get $0)
+      )
      )
     )
    )
@@ -639,36 +643,48 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (ref.test (ref none)
- ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (ref.test (ref none)
+ ;; CHECK-NEXT:      (ref.null none)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result nullref)
  ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (ref.null none)
- ;; CHECK-NEXT:    (ref.cast nullref
+ ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (ref.null none)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (ref.cast nullref
+ ;; CHECK-NEXT:      (ref.null none)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result (ref null $struct))
  ;; CHECK-NEXT:    (local.get $x)
- ;; CHECK-NEXT:    (block $something (result (ref null $struct))
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (block (result nullref)
- ;; CHECK-NEXT:       (br_on_non_null $something
- ;; CHECK-NEXT:        (local.get $struct)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (block $something (result (ref null $struct))
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (block (result nullref)
+ ;; CHECK-NEXT:        (br_on_non_null $something
+ ;; CHECK-NEXT:         (local.get $struct)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (ref.null none)
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (ref.null none)
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (ref.null none)
  ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
@@ -699,18 +715,26 @@
   (drop
    (if (result i32)
     (local.get $x)
-    (ref.test (ref $struct)
-     (ref.null any)
+    (then
+     (ref.test (ref $struct)
+      (ref.null any)
+     )
     )
-    (i32.const 0)
+    (else
+     (i32.const 0)
+    )
    )
   )
   (drop
    (if (result anyref)
     (local.get $x)
-    (ref.null any)
-    (ref.cast (ref null $struct)
+    (then
      (ref.null any)
+    )
+    (else
+     (ref.cast (ref null $struct)
+      (ref.null any)
+     )
     )
    )
   )
@@ -719,34 +743,42 @@
   (drop
    (if (result anyref)
     (local.get $x)
-    (block (result anyref)
-     (block $something (result anyref)
-      (drop
-       (br_on_cast $something anyref (ref $struct)
-        (local.get $struct)
+    (then
+     (block (result anyref)
+      (block $something (result anyref)
+       (drop
+        (br_on_cast $something anyref (ref $struct)
+         (local.get $struct)
+        )
        )
+       (ref.null any)
       )
-      (ref.null any)
      )
     )
-    (ref.null any)
+    (else
+     (ref.null any)
+    )
    )
   )
   ;; However, null checks are fairly fast, and we will emit a select here.
   (drop
    (if (result anyref)
     (local.get $x)
-    (block (result anyref)
-     (block $nothing
-      (drop
-       (br_on_null $nothing
-        (ref.null $struct)
+    (then
+     (block (result anyref)
+      (block $nothing
+       (drop
+        (br_on_null $nothing
+         (ref.null $struct)
+        )
        )
       )
+      (ref.null any)
      )
+    )
+    (else
      (ref.null any)
     )
-    (ref.null any)
    )
   )
  )

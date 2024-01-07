@@ -10,15 +10,19 @@
    (i64.eqz
     (local.get $0)
    )
-   (i64.const 1)
-   (i64.mul
-    (call $0
-     (i64.sub
-      (local.get $0)
-      (i64.const 1)
+   (then
+    (i64.const 1)
+   )
+   (else
+    (i64.mul
+     (call $0
+      (i64.sub
+       (local.get $0)
+       (i64.const 1)
+      )
      )
+     (local.get $0)
     )
-    (local.get $0)
    )
   )
  )
@@ -27,15 +31,19 @@
    (i64.eqz
     (local.get $0)
    )
-   (i64.const 1)
-   (i64.mul
-    (call $1
-     (i64.sub
-      (local.get $0)
-      (i64.const 1)
+   (then
+    (i64.const 1)
+   )
+   (else
+    (i64.mul
+     (call $1
+      (i64.sub
+       (local.get $0)
+       (i64.const 1)
+      )
      )
+     (local.get $0)
     )
-    (local.get $0)
    )
   )
  )
@@ -54,7 +62,7 @@
       (local.get $0)
      )
     )
-    (block
+    (then
      (local.set $1
       (i64.mul
        (local.get $0)
@@ -83,22 +91,24 @@
     (local.get $0)
     (i64.const 2)
    )
-   (loop $label$3
-    (local.set $1
-     (i64.mul
-      (local.get $0)
-      (local.get $1)
-     )
-    )
-    (br_if $label$3
-     (i64.gt_s
-      (local.tee $0
-       (i64.sub
-        (local.get $0)
-        (i64.const 1)
-       )
+   (then
+    (loop $label$3
+     (local.set $1
+      (i64.mul
+       (local.get $0)
+       (local.get $1)
       )
-      (i64.const 1)
+     )
+     (br_if $label$3
+      (i64.gt_s
+       (local.tee $0
+        (i64.sub
+         (local.get $0)
+         (i64.const 1)
+        )
+       )
+       (i64.const 1)
+      )
      )
     )
    )

@@ -90,7 +90,8 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue() {
   return HoistedVal{Index(index), get};
 }
 
-Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted) {
+Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
+                                        size_t sizeHint) {
   auto& scope = getScope();
   assert(!scope.exprStack.empty());
 
@@ -106,17 +107,17 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted) {
 
   auto type = scope.exprStack.back()->type;
 
-  if (!type.isTuple()) {
+  if (type.size() == sizeHint || type.size() <= 1) {
     if (hoisted.get) {
       packageAsBlock(type);
     }
     return Ok{};
   }
 
-  // We need to break up the hoisted tuple. Create and push a block setting the
-  // tuple to a local and returning its first element, then push additional gets
-  // of each of its subsequent elements. Reuse the scratch local we used for
-  // hoisting, if it exists.
+  // We need to break up the hoisted tuple. Create and push an expression
+  // setting the tuple to a local and returning its first element, then push
+  // additional gets of each of its subsequent elements. Reuse the scratch local
+  // we used for hoisting, if it exists.
   Index scratchIdx;
   if (hoisted.get) {
     // Update the get on top of the stack to just return the first element.
@@ -126,12 +127,8 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted) {
   } else {
     auto scratch = addScratchLocal(type);
     CHECK_ERR(scratch);
-    auto* block = builder.makeSequence(
-      builder.makeLocalSet(*scratch, scope.exprStack.back()),
-      builder.makeTupleExtract(builder.makeLocalGet(*scratch, type), 0),
-      type[0]);
-    scope.exprStack.pop_back();
-    push(block);
+    scope.exprStack.back() = builder.makeTupleExtract(
+      builder.makeLocalTee(*scratch, scope.exprStack.back(), type), 0);
     scratchIdx = *scratch;
   }
   for (Index i = 1, size = type.size(); i < size; ++i) {
@@ -158,7 +155,8 @@ void IRBuilder::push(Expression* expr) {
   DBG(dump());
 }
 
-Result<Expression*> IRBuilder::pop() {
+Result<Expression*> IRBuilder::pop(size_t size) {
+  assert(size >= 1);
   auto& scope = getScope();
 
   // Find the suffix of expressions that do not produce values.
@@ -173,11 +171,25 @@ Result<Expression*> IRBuilder::pop() {
     return Err{"popping from empty stack"};
   }
 
-  CHECK_ERR(packageHoistedValue(*hoisted));
+  CHECK_ERR(packageHoistedValue(*hoisted, size));
 
   auto* ret = scope.exprStack.back();
-  scope.exprStack.pop_back();
-  return ret;
+  if (ret->type.size() == size) {
+    scope.exprStack.pop_back();
+    return ret;
+  }
+
+  // The last value-producing expression did not produce exactly the right
+  // number of values, so we need to construct a tuple piecewise instead.
+  assert(size > 1);
+  std::vector<Expression*> elems;
+  elems.resize(size);
+  for (int i = size - 1; i >= 0; --i) {
+    auto elem = pop();
+    CHECK_ERR(elem);
+    elems[i] = *elem;
+  }
+  return builder.makeTupleMake(elems);
 }
 
 Result<Expression*> IRBuilder::build() {
@@ -285,6 +297,7 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
 
 #define DELEGATE_ID curr->_id
 #define DELEGATE_START(id) [[maybe_unused]] auto* expr = curr->cast<id>();
+#define DELEGATE_GET_FIELD(id, field) expr->field
 #define DELEGATE_FIELD_CHILD(id, field)                                        \
   auto field = pop();                                                          \
   CHECK_ERR(field);                                                            \
@@ -303,12 +316,9 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
                    " has child vector " #field);
 
 #define DELEGATE_FIELD_INT(id, field)
-#define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 
 #define DELEGATE_FIELD_TYPE(id, field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field)
@@ -317,6 +327,20 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
 #include "wasm-delegations-fields.def"
 
   return Ok{};
+}
+
+Result<> IRBuilder::visitDrop(Drop* curr, std::optional<uint32_t> arity) {
+  // Multivalue drops must remain multivalue drops.
+  if (!arity) {
+    arity = curr->value->type.size();
+  }
+  if (*arity >= 2) {
+    auto val = pop(*arity);
+    CHECK_ERR(val);
+    curr->value = *val;
+    return Ok{};
+  }
+  return visitExpression(curr);
 }
 
 Result<> IRBuilder::visitIf(If* curr) {
@@ -390,15 +414,18 @@ Result<Expression*> IRBuilder::getBranchValue(Name labelName,
   }
   auto scope = getScope(*label);
   CHECK_ERR(scope);
-  std::vector<Expression*> values((*scope)->getResultType().size());
-  for (size_t i = 0, size = values.size(); i < size; ++i) {
+  // Loops would receive their input type rather than their output type, if we
+  // supported that.
+  size_t numValues = (*scope)->getLoop() ? 0 : (*scope)->getResultType().size();
+  std::vector<Expression*> values(numValues);
+  for (size_t i = 0; i < numValues; ++i) {
     auto val = pop();
     CHECK_ERR(val);
-    values[size - 1 - i] = *val;
+    values[numValues - 1 - i] = *val;
   }
-  if (values.size() == 0) {
+  if (numValues == 0) {
     return nullptr;
-  } else if (values.size() == 1) {
+  } else if (numValues == 1) {
     return values[0];
   } else {
     return builder.makeTupleMake(values);
@@ -406,6 +433,11 @@ Result<Expression*> IRBuilder::getBranchValue(Name labelName,
 }
 
 Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
+  if (curr->condition) {
+    auto cond = pop();
+    CHECK_ERR(cond);
+    curr->condition = *cond;
+  }
   auto value = getBranchValue(curr->name, label);
   CHECK_ERR(value);
   curr->value = *value;
@@ -528,6 +560,33 @@ Result<> IRBuilder::visitStringEncode(StringEncode* curr) {
     }
   }
   WASM_UNREACHABLE("unexpected op");
+}
+
+Result<> IRBuilder::visitTupleMake(TupleMake* curr) {
+  assert(curr->operands.size() >= 2);
+  for (size_t i = 0, size = curr->operands.size(); i < size; ++i) {
+    auto elem = pop();
+    CHECK_ERR(elem);
+    curr->operands[size - 1 - i] = *elem;
+  }
+  return Ok{};
+}
+
+Result<> IRBuilder::visitTupleExtract(TupleExtract* curr,
+                                      std::optional<uint32_t> arity) {
+  if (!arity) {
+    if (curr->tuple->type == Type::unreachable) {
+      // Fallback to an arbitrary valid arity.
+      arity = 2;
+    } else {
+      arity = curr->tuple->type.size();
+    }
+  }
+  assert(*arity >= 2);
+  auto tuple = pop(*arity);
+  CHECK_ERR(tuple);
+  curr->tuple = *tuple;
+  return Ok{};
 }
 
 Result<> IRBuilder::visitFunctionStart(Function* func) {
@@ -910,13 +969,15 @@ Result<> IRBuilder::makeLoop(Name label, Type type) {
   return visitLoopStart(loop);
 }
 
-Result<> IRBuilder::makeBreak(Index label) {
+Result<> IRBuilder::makeBreak(Index label, bool isConditional) {
   auto name = getLabelName(label);
   CHECK_ERR(name);
   Break curr;
   curr.name = *name;
+  // Use a dummy condition value if we need to pop a condition.
+  curr.condition = isConditional ? &curr : nullptr;
   CHECK_ERR(visitBreak(&curr, label));
-  push(builder.makeBreak(curr.name, curr.value));
+  push(builder.makeBreak(curr.name, curr.value, curr.condition));
   return Ok{};
 }
 
@@ -1183,7 +1244,7 @@ Result<> IRBuilder::makeSelect(std::optional<Type> type) {
 
 Result<> IRBuilder::makeDrop() {
   Drop curr;
-  CHECK_ERR(visitDrop(&curr));
+  CHECK_ERR(visitDrop(&curr, 1));
   push(builder.makeDrop(curr.value));
   return Ok{};
 }
@@ -1286,6 +1347,8 @@ Result<> IRBuilder::makeTry(Name label, Type type) {
   return visitTryStart(tryy, label);
 }
 
+// Result<> IRBuilder::makeTryTable() {}
+
 Result<> IRBuilder::makeThrow(Name tag) {
   Throw curr(wasm.allocator);
   curr.tag = tag;
@@ -1302,9 +1365,29 @@ Result<> IRBuilder::makeRethrow(Index label) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeTupleMake() {}
+// Result<> IRBuilder::makeThrowRef() {}
 
-// Result<> IRBuilder::makeTupleExtract() {}
+Result<> IRBuilder::makeTupleMake(uint32_t arity) {
+  TupleMake curr(wasm.allocator);
+  curr.operands.resize(arity);
+  CHECK_ERR(visitTupleMake(&curr));
+  push(builder.makeTupleMake(curr.operands));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeTupleExtract(uint32_t arity, uint32_t index) {
+  TupleExtract curr;
+  CHECK_ERR(visitTupleExtract(&curr, arity));
+  push(builder.makeTupleExtract(curr.tuple, index));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeTupleDrop(uint32_t arity) {
+  Drop curr;
+  CHECK_ERR(visitDrop(&curr, arity));
+  push(builder.makeDrop(curr.value));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeRefI31() {
   RefI31 curr;
@@ -1347,12 +1430,20 @@ Result<> IRBuilder::makeRefCast(Type type) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type castType) {
+Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type in, Type out) {
   BrOn curr;
   CHECK_ERR(visitBrOn(&curr));
+  if (out != Type::none) {
+    if (!Type::isSubType(out, in)) {
+      return Err{"output type is not a subtype of the input type"};
+    }
+    if (!Type::isSubType(curr.ref->type, in)) {
+      return Err{"expected input to match input type annotation"};
+    }
+  }
   auto name = getLabelName(label);
   CHECK_ERR(name);
-  push(builder.makeBrOn(op, *name, curr.ref, castType));
+  push(builder.makeBrOn(op, *name, curr.ref, out));
   return Ok{};
 }
 

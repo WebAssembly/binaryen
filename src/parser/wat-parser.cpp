@@ -80,9 +80,13 @@ Result<> parseDefs(Ctx& ctx,
   for (auto& def : defs) {
     ctx.index = def.index;
     WithPosition with(ctx, def.pos);
-    auto parsed = parser(ctx);
-    CHECK_ERR(parsed);
-    assert(parsed);
+    if (auto parsed = parser(ctx)) {
+      CHECK_ERR(parsed);
+    } else {
+      auto im = import_(ctx);
+      assert(im);
+      CHECK_ERR(im);
+    }
   }
   return Ok{};
 }
@@ -174,7 +178,21 @@ Result<> parseModule(Module& wasm, std::string_view input) {
       ctx.index = i;
       CHECK_ERR(ctx.visitFunctionStart(wasm.functions[i].get()));
       WithPosition with(ctx, decls.funcDefs[i].pos);
-      auto parsed = func(ctx);
+      if (auto parsed = func(ctx)) {
+        CHECK_ERR(parsed);
+      } else {
+        auto im = import_(ctx);
+        assert(im);
+        CHECK_ERR(im);
+      }
+    }
+
+    // Parse exports.
+    // TODO: It would be more technically correct to interleave these properly
+    // with the implicit inline exports in other module field definitions.
+    for (auto pos : decls.exportDefs) {
+      WithPosition with(ctx, pos);
+      auto parsed = export_(ctx);
       CHECK_ERR(parsed);
       assert(parsed);
     }

@@ -40,8 +40,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 30)
-  ;; CHECK-NEXT:   (local.set $y
-  ;; CHECK-NEXT:    (i32.const 50)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $y
+  ;; CHECK-NEXT:     (i32.const 50)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -89,8 +91,10 @@
     )
     (if
       (local.get $x)
-      (local.set $y
-        (i32.const 50)
+      (then
+        (local.set $y
+          (i32.const 50)
+        )
       )
     )
     ;; x is the same but y is no longer optimizable, since it might contain 50.

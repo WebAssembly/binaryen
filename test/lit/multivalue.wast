@@ -473,15 +473,19 @@
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (if (type $2) (result i32 i64 externref)
  ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:    (tuple.make 3
- ;; CHECK-NEXT:     (i32.const 42)
- ;; CHECK-NEXT:     (i64.const 42)
- ;; CHECK-NEXT:     (ref.null noextern)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (tuple.make 3
+ ;; CHECK-NEXT:      (i32.const 42)
+ ;; CHECK-NEXT:      (i64.const 42)
+ ;; CHECK-NEXT:      (ref.null noextern)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (tuple.make 3
- ;; CHECK-NEXT:     (i32.const 42)
- ;; CHECK-NEXT:     (i64.const 42)
- ;; CHECK-NEXT:     (ref.null noextern)
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (tuple.make 3
+ ;; CHECK-NEXT:      (i32.const 42)
+ ;; CHECK-NEXT:      (i64.const 42)
+ ;; CHECK-NEXT:      (ref.null noextern)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -500,15 +504,19 @@
  (func $mv-if (result i32 i64 externref)
   (if (result i32 i64 externref)
    (i32.const 1)
-   (tuple.make 3
-    (i32.const 42)
-    (i64.const 42)
-    (ref.null extern)
+   (then
+    (tuple.make 3
+     (i32.const 42)
+     (i64.const 42)
+     (ref.null extern)
+    )
    )
-   (tuple.make 3
-    (i32.const 42)
-    (i64.const 42)
-    (ref.null extern)
+   (else
+    (tuple.make 3
+     (i32.const 42)
+     (i64.const 42)
+     (ref.null extern)
+    )
    )
   )
  )

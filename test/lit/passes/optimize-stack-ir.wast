@@ -159,8 +159,10 @@
           )
           (i32.const 0)
         )
-        (br $topmost
-          (f64.const -3.4)
+        (then
+          (br $topmost
+            (f64.const -3.4)
+          )
         )
       )
       (if
@@ -170,8 +172,10 @@
           )
           (f64.const 0)
         )
-        (br $topmost
-          (f64.const 5.6)
+        (then
+          (br $topmost
+            (f64.const 5.6)
+          )
         )
       )
       (f64.const 1.2)
@@ -224,8 +228,10 @@
           (local.get $x)
           (f64.const 0)
         )
-        (br $topmost
-          (f64.const 1.2)
+        (then
+          (br $topmost
+            (f64.const 1.2)
+          )
         )
       )
       (if
@@ -233,8 +239,10 @@
           (local.get $Int)
           (f64.const 0)
         )
-        (br $topmost
-          (f64.const -3.4)
+        (then
+          (br $topmost
+            (f64.const -3.4)
+          )
         )
       )
       (if
@@ -242,8 +250,10 @@
           (local.get $Double)
           (i32.const 0)
         )
-        (br $topmost
-          (f64.const 5.6)
+        (then
+          (br $topmost
+            (f64.const 5.6)
+          )
         )
       )
       (if
@@ -251,8 +261,10 @@
           (local.get $x)
           (local.get $y)
         )
-        (br $topmost
-          (local.get $x)
+        (then
+          (br $topmost
+            (local.get $x)
+          )
         )
       )
       (local.get $y)
@@ -899,8 +911,12 @@
     (f64.abs
       (if ;; note no type - valid in binaryen IR, in wasm must be i32
         (i32.const 3)
-        (return (i32.const 2))
-        (return (i32.const 1))
+        (then
+          (return (i32.const 2))
+        )
+        (else
+          (return (i32.const 1))
+        )
       )
     )
   )
@@ -919,8 +935,12 @@
   (func $unreachable-if-toplevel (result i32)
     (if ;; note no type - valid in binaryen IR, in wasm must be i32
       (i32.const 3)
-      (return (i32.const 2))
-      (return (i32.const 1))
+      (then
+        (return (i32.const 2))
+      )
+      (else
+        (return (i32.const 1))
+      )
     )
   )
 
@@ -986,16 +1006,16 @@
   ;; CHECK-NEXT:  unreachable
   ;; CHECK-NEXT: )
   (func $unreachable-ifs
-    (if (unreachable) (nop))
-    (if (unreachable) (unreachable))
-    (if (unreachable) (nop) (nop))
-    (if (unreachable) (unreachable) (nop))
-    (if (unreachable) (nop) (unreachable))
-    (if (unreachable) (unreachable) (unreachable))
+    (if (unreachable) (then (nop)))
+    (if (unreachable) (then (unreachable)))
+    (if (unreachable) (then (nop) )(else (nop)))
+    (if (unreachable) (then (unreachable) )(else (nop)))
+    (if (unreachable) (then (nop) )(else (unreachable)))
+    (if (unreachable) (then (unreachable) )(else (unreachable)))
     ;;
-    (if (i32.const 1) (unreachable) (nop))
-    (if (i32.const 1) (nop) (unreachable))
-    (if (i32.const 1) (unreachable) (unreachable))
+    (if (i32.const 1) (then (unreachable) )(else (nop)))
+    (if (i32.const 1) (then (nop) )(else (unreachable)))
+    (if (i32.const 1) (then (unreachable) )(else (unreachable)))
   )
 
   ;; CHECK:      (func $unreachable-if-arm (type $FUNCSIG$v)
@@ -1008,13 +1028,17 @@
   (func $unreachable-if-arm
     (if
       (i32.const 1)
-      (block
-        (nop)
+      (then
+        (block
+          (nop)
+        )
       )
-      (block
-        (unreachable)
-        (drop
-          (i32.const 1)
+      (else
+        (block
+          (unreachable)
+          (drop
+            (i32.const 1)
+          )
         )
       )
     )
@@ -1137,8 +1161,12 @@
   (func $local-to-stack-3-no (param $x i32) (result i32)
     (local $temp i32)
     (if (i32.const 1)
-      (local.set $temp (call $local-to-stack (i32.const 1)))
-      (local.set $temp (call $local-to-stack (i32.const 2))) ;; two sets for that get
+      (then
+        (local.set $temp (call $local-to-stack (i32.const 1)))
+      )
+      (else
+        (local.set $temp (call $local-to-stack (i32.const 2))) ;; two sets for that get
+      )
     )
     (drop (call $local-to-stack (i32.const 3)))
     (local.get $temp)
@@ -1338,7 +1366,7 @@
     (local $temp2 i32)
     (local.set $temp2 (call $local-to-stack-multi-4 (i32.const 0)))
     (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
-    (if (i32.const 0) (nop))
+    (if (i32.const 0) (then (nop)))
     (drop (local.get $temp1))
     (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 2)))
     (block $block (br $block))
@@ -1362,13 +1390,17 @@
   (func $local-to-stack-in-control-flow
     (local $temp1 i32)
     (if (i32.const 0)
-      (block
-        (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 0)))
-        (drop (local.get $temp1))
+      (then
+        (block
+          (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 0)))
+          (drop (local.get $temp1))
+        )
       )
-      (block
-        (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
-        (drop (local.get $temp1))
+      (else
+        (block
+          (local.set $temp1 (call $local-to-stack-multi-4 (i32.const 1)))
+          (drop (local.get $temp1))
+        )
       )
     )
   )

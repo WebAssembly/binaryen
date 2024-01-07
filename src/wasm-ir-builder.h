@@ -87,7 +87,7 @@ public:
   [[nodiscard]] Result<> makeBlock(Name label, Type type);
   [[nodiscard]] Result<> makeIf(Name label, Type type);
   [[nodiscard]] Result<> makeLoop(Name label, Type type);
-  [[nodiscard]] Result<> makeBreak(Index label);
+  [[nodiscard]] Result<> makeBreak(Index label, bool isConditional);
   [[nodiscard]] Result<> makeSwitch(const std::vector<Index>& labels,
                                     Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
@@ -155,17 +155,20 @@ public:
   [[nodiscard]] Result<> makeTableFill(Name table);
   [[nodiscard]] Result<> makeTableCopy(Name destTable, Name srcTable);
   [[nodiscard]] Result<> makeTry(Name label, Type type);
+  // [[nodiscard]] Result<> makeTryTable();
   [[nodiscard]] Result<> makeThrow(Name tag);
   [[nodiscard]] Result<> makeRethrow(Index label);
-  // [[nodiscard]] Result<> makeTupleMake();
-  // [[nodiscard]] Result<> makeTupleExtract();
+  // [[nodiscard]] Result<> makeThrowRef();
+  [[nodiscard]] Result<> makeTupleMake(uint32_t arity);
+  [[nodiscard]] Result<> makeTupleExtract(uint32_t arity, uint32_t index);
+  [[nodiscard]] Result<> makeTupleDrop(uint32_t arity);
   [[nodiscard]] Result<> makeRefI31();
   [[nodiscard]] Result<> makeI31Get(bool signed_);
   [[nodiscard]] Result<> makeCallRef(HeapType type, bool isReturn);
   [[nodiscard]] Result<> makeRefTest(Type type);
   [[nodiscard]] Result<> makeRefCast(Type type);
   [[nodiscard]] Result<>
-  makeBrOn(Index label, BrOnOp op, Type castType = Type::none);
+  makeBrOn(Index label, BrOnOp op, Type in = Type::none, Type out = Type::none);
   [[nodiscard]] Result<> makeStructNew(HeapType type);
   [[nodiscard]] Result<> makeStructNewDefault(HeapType type);
   [[nodiscard]] Result<>
@@ -200,6 +203,8 @@ public:
 
   // Private functions that must be public for technical reasons.
   [[nodiscard]] Result<> visitExpression(Expression*);
+  [[nodiscard]] Result<>
+  visitDrop(Drop*, std::optional<uint32_t> arity = std::nullopt);
   [[nodiscard]] Result<> visitIf(If*);
   [[nodiscard]] Result<> visitReturn(Return*);
   [[nodiscard]] Result<> visitStructNew(StructNew*);
@@ -215,6 +220,10 @@ public:
   [[nodiscard]] Result<> visitThrow(Throw*);
   [[nodiscard]] Result<> visitStringNew(StringNew*);
   [[nodiscard]] Result<> visitStringEncode(StringEncode*);
+  [[nodiscard]] Result<> visitTupleMake(TupleMake*);
+  [[nodiscard]] Result<>
+  visitTupleExtract(TupleExtract*,
+                    std::optional<uint32_t> arity = std::nullopt);
 
 private:
   Module& wasm;
@@ -463,7 +472,7 @@ private:
   [[nodiscard]] Result<Name> getLabelName(Index label);
   [[nodiscard]] Result<Name> getDelegateLabelName(Index label);
   [[nodiscard]] Result<Index> addScratchLocal(Type);
-  [[nodiscard]] Result<Expression*> pop();
+  [[nodiscard]] Result<Expression*> pop(size_t size = 1);
 
   struct HoistedVal {
     // The index in the stack of the original value-producing expression.
@@ -478,8 +487,12 @@ private:
   // Transform the stack as necessary such that the original producer of the
   // hoisted value will be popped along with the final expression that produces
   // the value, if they are different. May only be called directly after
-  // hoistLastValue().
-  [[nodiscard]] Result<> packageHoistedValue(const HoistedVal&);
+  // hoistLastValue(). `sizeHint` is the size of the type we ultimately want to
+  // consume, so if the hoisted value has `sizeHint` elements, it is left intact
+  // even if it is a tuple. Otherwise, hoisted tuple values will be broken into
+  // pieces.
+  [[nodiscard]] Result<> packageHoistedValue(const HoistedVal&,
+                                             size_t sizeHint = 1);
 
   [[nodiscard]] Result<Expression*> getBranchValue(Name labelName,
                                                    std::optional<Index> label);

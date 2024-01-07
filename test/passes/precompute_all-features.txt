@@ -8,7 +8,7 @@
  (type $6 (func (result externref)))
  (global $global i32 (i32.const 1))
  (global $global-mut (mut i32) (i32.const 2))
- (memory $0 512 512)
+ (memory $0 6 65536)
  (data $0 (i32.const 0) "hello!")
  (elem declare func $dummy)
  (func $x (type $0) (param $x i32)
@@ -96,14 +96,18 @@
  (func $ret (type $1) (result i32)
   (if
    (call $ret)
-   (return
-    (i32.const 0)
+   (then
+    (return
+     (i32.const 0)
+    )
    )
   )
   (if
    (call $ret)
-   (return
-    (i32.const 1)
+   (then
+    (return
+     (i32.const 1)
+    )
    )
   )
   (i32.const 1)
@@ -111,7 +115,9 @@
  (func $noret (type $0)
   (if
    (call $ret)
-   (return)
+   (then
+    (return)
+   )
   )
  )
  (func $refinalize-br-condition-unreachable (type $0)
@@ -144,21 +150,25 @@
     (i32.const 1919623207)
     (if (result i32)
      (i32.const 1)
-     (block $label$2
-      (drop
-       (i64.and
-        (i64.trunc_f32_u
-         (f32.const 70847791997969805621592064)
+     (then
+      (block $label$2
+       (drop
+        (i64.and
+         (i64.trunc_f32_u
+          (f32.const 70847791997969805621592064)
+         )
+         (i64.const 729618461987467893)
         )
-        (i64.const 729618461987467893)
+       )
+       (br $label$0
+        (f64.const 6.134856208230095e-154)
        )
       )
-      (br $label$0
-       (f64.const 6.134856208230095e-154)
-      )
      )
-     (i32.load offset=3 align=2
-      (i32.const 169901344)
+     (else
+      (i32.load offset=3 align=2
+       (i32.const 169901344)
+      )
      )
     )
    )

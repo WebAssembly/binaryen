@@ -52,6 +52,10 @@
 // DELEGATE_FIELD_INT_ARRAY(id, field) - called for a std::array of fixed size
 //    of integer values (like a SIMD mask). If this is not defined, and
 //    DELEGATE_GET_FIELD is, then DELEGATE_FIELD_INT is called on them.
+
+// DELEGATE_FIELD_INT_VECTOR(id, field) - called for a variable-sized vector
+//    of integer values. If this is not defined, and DELEGATE_GET_FIELD is, then
+//    DELEGATE_FIELD_INT is called on them.
 //
 // DELEGATE_FIELD_LITERAL(id, field) - called for a Literal.
 //
@@ -84,6 +88,10 @@
 //    called.
 //
 // DELEGATE_FIELD_TYPE(id, field) - called for a Type.
+//
+// DELEGATE_FIELD_TYPE_VECTOR(id, field) - called for a variable-sized vector
+//    of Types. If this is not defined, and DELEGATE_GET_FIELD is, then
+//    DELEGATE_FIELD_TYPE is called on them.
 //
 // DELEGATE_FIELD_HEAPTYPE(id, field) - called for a HeapType.
 //
@@ -128,6 +136,17 @@
   }
 #else
 #error please define DELEGATE_FIELD_INT_ARRAY(id, field)
+#endif
+#endif
+
+#ifndef DELEGATE_FIELD_INT_VECTOR
+#ifdef DELEGATE_GET_FIELD
+#define DELEGATE_FIELD_INT_VECTOR(id, field)                                   \
+  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
+    DELEGATE_FIELD_INT(id, field[i]);                                          \
+  }
+#else
+#error please define DELEGATE_FIELD_INT_VECTOR(id, field)
 #endif
 #endif
 
@@ -188,6 +207,17 @@
 
 #ifndef DELEGATE_FIELD_TYPE
 #error please define DELEGATE_FIELD_TYPE(id, field)
+#endif
+
+#ifndef DELEGATE_FIELD_TYPE_VECTOR
+#ifdef DELEGATE_GET_FIELD
+#define DELEGATE_FIELD_TYPE_VECTOR(id, field)                                  \
+  for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
+    DELEGATE_FIELD_TYPE(id, field[i]);                                         \
+  }
+#else
+#error please define DELEGATE_FIELD_TYPE_VECTOR(id, field)
+#endif
 #endif
 
 #ifndef DELEGATE_FIELD_HEAPTYPE
@@ -596,6 +626,16 @@ switch (DELEGATE_ID) {
     DELEGATE_END(Try);
     break;
   }
+  case Expression::Id::TryTableId: {
+    DELEGATE_START(TryTable);
+    DELEGATE_FIELD_TYPE_VECTOR(TryTable, sentTypes);
+    DELEGATE_FIELD_INT_VECTOR(TryTable, catchRefs);
+    DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(TryTable, catchDests);
+    DELEGATE_FIELD_NAME_KIND_VECTOR(TryTable, catchTags, ModuleItemKind::Tag);
+    DELEGATE_FIELD_CHILD(TryTable, body);
+    DELEGATE_END(TryTable);
+    break;
+  }
   case Expression::Id::ThrowId: {
     DELEGATE_START(Throw);
     DELEGATE_FIELD_CHILD_VECTOR(Throw, operands);
@@ -607,6 +647,12 @@ switch (DELEGATE_ID) {
     DELEGATE_START(Rethrow);
     DELEGATE_FIELD_SCOPE_NAME_USE(Rethrow, target);
     DELEGATE_END(Rethrow);
+    break;
+  }
+  case Expression::Id::ThrowRefId: {
+    DELEGATE_START(ThrowRef);
+    DELEGATE_FIELD_CHILD(ThrowRef, exnref);
+    DELEGATE_END(ThrowRef);
     break;
   }
   case Expression::Id::NopId: {
@@ -920,6 +966,7 @@ switch (DELEGATE_ID) {
 #undef DELEGATE_FIELD_CHILD_VECTOR
 #undef DELEGATE_FIELD_INT
 #undef DELEGATE_FIELD_INT_ARRAY
+#undef DELEGATE_FIELD_INT_VECTOR
 #undef DELEGATE_FIELD_LITERAL
 #undef DELEGATE_FIELD_NAME
 #undef DELEGATE_FIELD_NAME_VECTOR
@@ -929,6 +976,7 @@ switch (DELEGATE_ID) {
 #undef DELEGATE_FIELD_NAME_KIND
 #undef DELEGATE_FIELD_NAME_KIND_VECTOR
 #undef DELEGATE_FIELD_TYPE
+#undef DELEGATE_FIELD_TYPE_VECTOR
 #undef DELEGATE_FIELD_HEAPTYPE
 #undef DELEGATE_FIELD_ADDRESS
 #undef DELEGATE_GET_FIELD

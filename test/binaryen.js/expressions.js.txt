@@ -7,13 +7,19 @@
 # If
 (if (result i32)
  (i32.const 4)
- (i32.const 5)
- (i32.const 6)
+ (then
+  (i32.const 5)
+ )
+ (else
+  (i32.const 6)
+ )
 )
 
 (if (result i32)
  (i32.const 4)
- (i32.const 5)
+ (then
+  (i32.const 5)
+ )
 )
 
 # Loop

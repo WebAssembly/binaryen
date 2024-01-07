@@ -170,6 +170,7 @@ public:
   void visitIf(If* curr);
   void visitLoop(Loop* curr);
   void visitTry(Try* curr);
+  void visitTryTable(TryTable* curr);
 
 protected:
   Function* func = nullptr;
@@ -399,6 +400,16 @@ template<typename SubType> void BinaryenIRWriter<SubType>::visitTry(Try* curr) {
   } else {
     emitScopeEnd(curr);
   }
+  if (curr->type == Type::unreachable) {
+    emitUnreachable();
+  }
+}
+
+template<typename SubType>
+void BinaryenIRWriter<SubType>::visitTryTable(TryTable* curr) {
+  emit(curr);
+  visitPossibleBlockContents(curr->body);
+  emitScopeEnd(curr);
   if (curr->type == Type::unreachable) {
     emitUnreachable();
   }

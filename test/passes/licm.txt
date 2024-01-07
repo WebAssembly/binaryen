@@ -444,8 +444,10 @@
  (func $conditional
   (if
    (i32.const 0)
-   (drop
-    (i32.const 10)
+   (then
+    (drop
+     (i32.const 10)
+    )
    )
   )
   (loop $loop
@@ -459,8 +461,10 @@
   (loop $loop
    (if
     (call $conditional1)
-    (drop
-     (i32.const 10)
+    (then
+     (drop
+      (i32.const 10)
+     )
     )
    )
    (br_if $loop

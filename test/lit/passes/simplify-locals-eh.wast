@@ -196,7 +196,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $p)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
@@ -204,7 +204,7 @@
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (else
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:    )
@@ -228,18 +228,22 @@
     (drop (local.get $1))
     (if
       (local.get $p)
-      (block
-        ;; We also optimize in this block, which is adjacent to the code before
-        ;; us. It is valid to optimize the 1 to a 0 here, as it is dominated by
-        ;; the code earlier.
-        (drop (local.get $0))
-        (drop (local.get $1))
+      (then
+        (block
+          ;; We also optimize in this block, which is adjacent to the code before
+          ;; us. It is valid to optimize the 1 to a 0 here, as it is dominated by
+          ;; the code earlier.
+          (drop (local.get $0))
+          (drop (local.get $1))
+        )
       )
-      (block
-        ;; We could also optimize here, but atm just look at code adjacent to
-        ;; its dominator. TODO
-        (drop (local.get $0))
-        (drop (local.get $1))
+      (else
+        (block
+          ;; We could also optimize here, but atm just look at code adjacent to
+          ;; its dominator. TODO
+          (drop (local.get $0))
+          (drop (local.get $1))
+        )
       )
     )
     ;; As in the else, this could be optimized. TODO

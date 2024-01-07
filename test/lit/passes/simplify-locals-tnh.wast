@@ -57,8 +57,10 @@
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (if
   ;; TNH-NEXT:   (i32.const 0)
-  ;; TNH-NEXT:   (return
-  ;; TNH-NEXT:    (i32.const 1)
+  ;; TNH-NEXT:   (then
+  ;; TNH-NEXT:    (return
+  ;; TNH-NEXT:     (i32.const 1)
+  ;; TNH-NEXT:    )
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (local.get $temp)
@@ -72,8 +74,10 @@
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (if
   ;; NO_TNH-NEXT:   (i32.const 0)
-  ;; NO_TNH-NEXT:   (return
-  ;; NO_TNH-NEXT:    (i32.const 1)
+  ;; NO_TNH-NEXT:   (then
+  ;; NO_TNH-NEXT:    (return
+  ;; NO_TNH-NEXT:     (i32.const 1)
+  ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (local.get $temp)
@@ -91,8 +95,10 @@
     )
     (if
       (i32.const 0)
-      (return
-        (i32.const 1)
+      (then
+        (return
+          (i32.const 1)
+        )
       )
     )
     (local.get $temp)

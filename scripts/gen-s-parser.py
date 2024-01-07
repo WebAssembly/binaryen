@@ -24,8 +24,8 @@ instructions = [
     ("if",             "makeIf(s)"),
     ("then",           "makeThenOrElse(s)"),
     ("else",           "makeThenOrElse(s)"),
-    ("br",             "makeBreak(s)"),
-    ("br_if",          "makeBreak(s)"),
+    ("br",             "makeBreak(s, false)"),
+    ("br_if",          "makeBreak(s, true)"),
     ("br_table",       "makeBreakTable(s)"),
     ("return",         "makeReturn(s)"),
     ("call",           "makeCall(s, /*isReturn=*/false)"),
@@ -554,8 +554,10 @@ instructions = [
     #
     # exception handling instructions
     ("try",                  "makeTry(s)"),
+    ("try_table",            "makeTryTable(s)"),
     ("throw",                "makeThrow(s)"),
     ("rethrow",              "makeRethrow(s)"),
+    ("throw_ref",            "makeThrowRef(s)"),
     # Multivalue pseudoinstructions
     ("tuple.make",           "makeTupleMake(s)"),
     ("tuple.extract",        "makeTupleExtract(s)"),
@@ -716,7 +718,7 @@ def instruction_parser(new_parser=False):
     inst_length = 0
     for inst, expr in instructions:
         if new_parser and inst in {"block", "loop", "if", "try", "then",
-                                   "else"}:
+                                   "else", "try_table"}:
             # These are either control flow handled manually or not real
             # instructions. Skip them.
             continue

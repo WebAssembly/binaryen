@@ -51,40 +51,6 @@ bool isFullForced() {
   return false;
 }
 
-std::ostream& printName(Name name, std::ostream& o) {
-  assert(name && "Cannot print an empty name");
-  // We need to quote names if they have tricky chars.
-  // TODO: This is not spec-compliant since the spec does not support quoted
-  // identifiers and has a limited set of valid idchars. We need a more robust
-  // escaping scheme here. Reusing `printEscapedString` is not sufficient,
-  // either.
-  if (name.str.find_first_of("()") == std::string_view::npos) {
-    o << '$' << name.str;
-  } else {
-    o << "\"$" << name.str << '"';
-  }
-  return o;
-}
-
-std::ostream& printMemoryName(Name name, std::ostream& o, Module* wasm) {
-  if (!wasm || wasm->memories.size() > 1) {
-    o << ' ';
-    printName(name, o);
-  }
-  return o;
-}
-
-std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
-  Name name;
-  if (func) {
-    name = func->getLocalNameOrDefault(index);
-  }
-  if (!name) {
-    name = Name::fromInt(index);
-  }
-  return printName(name, o);
-}
-
 std::ostream& printEscapedString(std::ostream& os, std::string_view str) {
   os << '"';
   for (unsigned char c : str) {
@@ -117,6 +83,56 @@ std::ostream& printEscapedString(std::ostream& os, std::string_view str) {
     }
   }
   return os << '"';
+}
+
+// TODO: Use unicode rather than char.
+bool isIDChar(char c) {
+  if ('0' <= c && c <= '9') {
+    return true;
+  }
+  if ('A' <= c && c <= 'Z') {
+    return true;
+  }
+  if ('a' <= c && c <= 'z') {
+    return true;
+  }
+  static std::array<char, 23> otherIDChars = {
+    {'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '/', ':',
+     '<', '=', '>', '?', '@', '\\', '^', '_', '`', '|', '~'}};
+  return std::find(otherIDChars.begin(), otherIDChars.end(), c) !=
+         otherIDChars.end();
+}
+
+std::ostream& printName(Name name, std::ostream& o) {
+  assert(name && "Cannot print an empty name");
+  // We need to quote names if they have tricky chars.
+  // TODO: This is not spec-compliant since the spec does not yet support quoted
+  // identifiers and has a limited set of valid idchars.
+  o << '$';
+  if (std::all_of(name.str.begin(), name.str.end(), isIDChar)) {
+    return o << name.str;
+  } else {
+    return printEscapedString(o, name.str);
+  }
+}
+
+std::ostream& printMemoryName(Name name, std::ostream& o, Module* wasm) {
+  if (!wasm || wasm->memories.size() > 1) {
+    o << ' ';
+    printName(name, o);
+  }
+  return o;
+}
+
+std::ostream& printLocal(Index index, Function* func, std::ostream& o) {
+  Name name;
+  if (func) {
+    name = func->getLocalNameOrDefault(index);
+  }
+  if (!name) {
+    name = Name::fromInt(index);
+  }
+  return printName(name, o);
 }
 
 // Print a name from the type section, if available. Otherwise print the type
@@ -290,7 +306,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   // loop, if, and try can contain implicit blocks. But they are not needed to
   // be printed in some cases.
-  void maybePrintImplicitBlock(Expression* curr, bool allowMultipleInsts);
+  void maybePrintImplicitBlock(Expression* curr);
 
   // Generic visitor, overridden only when necessary.
   void visitExpression(Expression* curr);
@@ -299,6 +315,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitIf(If* curr);
   void visitLoop(Loop* curr);
   void visitTry(Try* curr);
+  void visitTryTable(TryTable* curr);
   void visitResume(Resume* curr);
   void maybePrintUnreachableReplacement(Expression* curr, Type type);
   void maybePrintUnreachableOrNullReplacement(Expression* curr, Type type);
@@ -1975,6 +1992,25 @@ struct PrintExpressionContents
       printBlockType(Signature(Type::none, curr->type));
     }
   }
+  void visitTryTable(TryTable* curr) {
+    printMedium(o, "try_table");
+    if (curr->type.isConcrete()) {
+      o << ' ';
+      printBlockType(Signature(Type::none, curr->type));
+    }
+    for (Index i = 0; i < curr->catchTags.size(); i++) {
+      o << " (";
+      if (curr->catchTags[i]) {
+        printMedium(o, curr->catchRefs[i] ? "catch_ref " : "catch ");
+        printName(curr->catchTags[i], o);
+        o << ' ';
+      } else {
+        printMedium(o, curr->catchRefs[i] ? "catch_all_ref " : "catch_all ");
+      }
+      printName(curr->catchDests[i], o);
+      o << ')';
+    }
+  }
   void visitThrow(Throw* curr) {
     printMedium(o, "throw ");
     printName(curr->tag, o);
@@ -1983,6 +2019,7 @@ struct PrintExpressionContents
     printMedium(o, "rethrow ");
     printName(curr->target, o);
   }
+  void visitThrowRef(ThrowRef* curr) { printMedium(o, "throw_ref"); }
   void visitNop(Nop* curr) { printMinor(o, "nop"); }
   void visitUnreachable(Unreachable* curr) { printMinor(o, "unreachable"); }
   void visitPop(Pop* curr) {
@@ -2545,11 +2582,9 @@ void PrintSExpression::printFullLine(Expression* expression) {
   o << maybeNewLine;
 }
 
-void PrintSExpression::maybePrintImplicitBlock(Expression* curr,
-                                               bool allowMultipleInsts) {
+void PrintSExpression::maybePrintImplicitBlock(Expression* curr) {
   auto block = curr->dynCast<Block>();
-  if (!full && block && block->name.isNull() &&
-      (allowMultipleInsts || block->list.size() == 1)) {
+  if (!full && block && block->name.isNull()) {
     for (auto expression : block->list) {
       printFullLine(expression);
     }
@@ -2639,13 +2674,23 @@ void PrintSExpression::visitIf(If* curr) {
   printExpressionContents(curr);
   incIndent();
   printFullLine(curr->condition);
-  maybePrintImplicitBlock(curr->ifTrue, false);
+  doIndent(o, indent);
+  o << "(then";
+  incIndent();
+  maybePrintImplicitBlock(curr->ifTrue);
+  decIndent();
+  o << maybeNewLine;
   if (curr->ifFalse) {
+    doIndent(o, indent);
+    o << "(else";
+    incIndent();
     // Note: debug info here is not used as LLVM does not emit ifs, and since
     // LLVM is the main source of DWARF, effectively we never encounter ifs
     // with DWARF.
     printDebugDelimiterLocation(curr, BinaryLocations::Else);
-    maybePrintImplicitBlock(curr->ifFalse, false);
+    maybePrintImplicitBlock(curr->ifFalse);
+    decIndent();
+    o << maybeNewLine;
   }
   decIndent();
   if (full) {
@@ -2659,7 +2704,7 @@ void PrintSExpression::visitLoop(Loop* curr) {
   o << '(';
   printExpressionContents(curr);
   incIndent();
-  maybePrintImplicitBlock(curr->body, true);
+  maybePrintImplicitBlock(curr->body);
   decIndent();
   if (full) {
     o << " ;; end loop";
@@ -2704,7 +2749,7 @@ void PrintSExpression::visitTry(Try* curr) {
   o << '(';
   printMedium(o, "do");
   incIndent();
-  maybePrintImplicitBlock(curr->body, true);
+  maybePrintImplicitBlock(curr->body);
   decIndent();
   o << "\n";
   for (size_t i = 0; i < curr->catchTags.size(); i++) {
@@ -2714,7 +2759,7 @@ void PrintSExpression::visitTry(Try* curr) {
     printMedium(o, "catch ");
     printName(curr->catchTags[i], o);
     incIndent();
-    maybePrintImplicitBlock(curr->catchBodies[i], true);
+    maybePrintImplicitBlock(curr->catchBodies[i]);
     decIndent();
     o << "\n";
   }
@@ -2724,7 +2769,7 @@ void PrintSExpression::visitTry(Try* curr) {
     o << '(';
     printMedium(o, "catch_all");
     incIndent();
-    maybePrintImplicitBlock(curr->catchBodies.back(), true);
+    maybePrintImplicitBlock(curr->catchBodies.back());
     decIndent();
     o << "\n";
   }
@@ -2745,6 +2790,19 @@ void PrintSExpression::visitTry(Try* curr) {
   if (full) {
     o << " ;; end try";
   }
+}
+
+void PrintSExpression::visitTryTable(TryTable* curr) {
+  controlFlowDepth++;
+  o << '(';
+  printExpressionContents(curr);
+  incIndent();
+  maybePrintImplicitBlock(curr->body);
+  decIndent();
+  if (full) {
+    o << " ;; end if";
+  }
+  controlFlowDepth--;
 }
 
 void PrintSExpression::visitResume(Resume* curr) {
@@ -3134,10 +3192,6 @@ void PrintSExpression::printMemoryHeader(Memory* curr) {
   o << '(';
   printMedium(o, "memory") << ' ';
   printName(curr->name, o) << ' ';
-  if (curr->shared) {
-    o << '(';
-    printMedium(o, "shared ");
-  }
   if (curr->is64()) {
     o << "i64 ";
   }
@@ -3146,7 +3200,7 @@ void PrintSExpression::printMemoryHeader(Memory* curr) {
     o << ' ' << curr->max;
   }
   if (curr->shared) {
-    o << ")";
+    printMedium(o, " shared");
   }
   o << ")";
 }
@@ -3268,7 +3322,8 @@ void PrintSExpression::visitModule(Module* curr) {
     printMedium(o, "(elem");
     o << " declare func";
     for (auto name : elemDeclareNames) {
-      o << " $" << name;
+      o << ' ';
+      printName(name, o);
     }
     o << ')' << maybeNewLine;
   }

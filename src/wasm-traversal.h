@@ -383,13 +383,10 @@ struct PostWalker : public Walker<SubType, VisitorType> {
   self->maybePushTask(SubType::scan, &cast->field);
 
 #define DELEGATE_FIELD_INT(id, field)
-#define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 #define DELEGATE_FIELD_TYPE(id, field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
@@ -406,7 +403,8 @@ using ExpressionStack = SmallVector<Expression*, 10>;
 
 template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
-  ExpressionStack controlFlowStack; // contains blocks, loops, and ifs
+  // contains blocks, loops, ifs, trys, and try_tables
+  ExpressionStack controlFlowStack;
 
   // Uses the control flow stack to find the target of a break to a name
   Expression* findBreakTarget(Name name) {
@@ -423,8 +421,9 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
           return curr;
         }
       } else {
-        // an if or try, ignorable
-        assert(curr->template is<If>() || curr->template is<Try>());
+        // an if, try, or try_table, ignorable
+        assert(curr->template is<If>() || curr->template is<Try>() ||
+               curr->template is<TryTable>());
       }
       if (i == 0) {
         return nullptr;
@@ -450,7 +449,8 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::BlockId:
       case Expression::Id::IfId:
       case Expression::Id::LoopId:
-      case Expression::Id::TryId: {
+      case Expression::Id::TryId:
+      case Expression::Id::TryTableId: {
         self->pushTask(SubType::doPostVisitControlFlow, currp);
         break;
       }
@@ -464,7 +464,8 @@ struct ControlFlowWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::BlockId:
       case Expression::Id::IfId:
       case Expression::Id::LoopId:
-      case Expression::Id::TryId: {
+      case Expression::Id::TryId:
+      case Expression::Id::TryTableId: {
         self->pushTask(SubType::doPreVisitControlFlow, currp);
         break;
       }

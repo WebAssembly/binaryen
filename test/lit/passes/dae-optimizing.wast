@@ -20,25 +20,31 @@
  ;; CHECK-NEXT:    (local.tee $0
  ;; CHECK-NEXT:     (i32.const 33554432)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (loop $label$2 (result f32)
- ;; CHECK-NEXT:     (if
- ;; CHECK-NEXT:      (global.get $global$0)
- ;; CHECK-NEXT:      (return
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (loop $label$2 (result f32)
+ ;; CHECK-NEXT:      (if
+ ;; CHECK-NEXT:       (global.get $global$0)
+ ;; CHECK-NEXT:       (then
+ ;; CHECK-NEXT:        (return
+ ;; CHECK-NEXT:         (local.get $0)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.set $0
+ ;; CHECK-NEXT:       (local.get $1)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.set $1
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (br_if $label$2
  ;; CHECK-NEXT:       (local.get $0)
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (f32.const 1)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (local.set $0
- ;; CHECK-NEXT:      (local.get $1)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (local.set $1
- ;; CHECK-NEXT:      (i32.const 0)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (br_if $label$2
- ;; CHECK-NEXT:      (local.get $0)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (f32.const 1)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (call $1)
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (call $1)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (i32.const -11)
@@ -50,33 +56,39 @@
    (local.tee $7
     (i32.const 33554432)
    )
-   (drop
-    (loop $label$2 (result f32)
-     (if
-      (global.get $global$0)
-      (return
-       (local.get $7)
-      )
-     )
-     (local.set $8
-      (block $label$4 (result i32)
-       (drop
-        (local.tee $7
-         (local.get $8)
+   (then
+    (drop
+     (loop $label$2 (result f32)
+      (if
+       (global.get $global$0)
+       (then
+        (return
+         (local.get $7)
         )
        )
-       (i32.const 0)
       )
+      (local.set $8
+       (block $label$4 (result i32)
+        (drop
+         (local.tee $7
+          (local.get $8)
+         )
+        )
+        (i32.const 0)
+       )
+      )
+      (br_if $label$2
+       (local.get $7)
+      )
+      (f32.const 1)
      )
-     (br_if $label$2
-      (local.get $7)
-     )
-     (f32.const 1)
     )
    )
-   (drop
-    (call $1
-     (f32.const 1)
+   (else
+    (drop
+     (call $1
+      (f32.const 1)
+     )
     )
    )
   )

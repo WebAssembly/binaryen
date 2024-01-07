@@ -59,7 +59,7 @@ inline bool isSymmetric(Binary* binary) {
 
 inline bool isControlFlowStructure(Expression* curr) {
   return curr->is<Block>() || curr->is<If>() || curr->is<Loop>() ||
-         curr->is<Try>();
+         curr->is<Try>() || curr->is<TryTable>();
 }
 
 // Check if an expression is a control flow construct with a name, which implies
@@ -447,13 +447,10 @@ inline Index getNumChildren(Expression* curr) {
   }
 
 #define DELEGATE_FIELD_INT(id, field)
-#define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 #define DELEGATE_FIELD_TYPE(id, field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
@@ -478,8 +475,8 @@ inline bool isResultFallthrough(Expression* curr) {
   // unreachable, for example, but then there is no meaningful answer to give
   // anyhow.
   return curr->is<LocalSet>() || curr->is<Block>() || curr->is<If>() ||
-         curr->is<Loop>() || curr->is<Try>() || curr->is<Select>() ||
-         curr->is<Break>();
+         curr->is<Loop>() || curr->is<Try>() || curr->is<TryTable>() ||
+         curr->is<Select>() || curr->is<Break>();
 }
 
 inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {

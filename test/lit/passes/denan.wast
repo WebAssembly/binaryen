@@ -186,8 +186,12 @@
 ;; CHECK-NEXT:    (local.get $0)
 ;; CHECK-NEXT:    (local.get $0)
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:   (f32.const 0)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (f32.const 0)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
@@ -197,8 +201,12 @@
 ;; CHECK-NEXT:    (local.get $0)
 ;; CHECK-NEXT:    (local.get $0)
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:   (f64.const 0)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (f64.const 0)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 (module
@@ -255,8 +263,12 @@
 ;; CHECK-NEXT:    (local.get $0)
 ;; CHECK-NEXT:    (local.get $0)
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:   (f32.const 0)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (f32.const 0)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
@@ -266,7 +278,11 @@
 ;; CHECK-NEXT:    (local.get $0)
 ;; CHECK-NEXT:    (local.get $0)
 ;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:   (f64.const 0)
+;; CHECK-NEXT:   (then
+;; CHECK-NEXT:    (local.get $0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:   (else
+;; CHECK-NEXT:    (f64.const 0)
+;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
