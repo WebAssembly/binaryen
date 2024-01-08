@@ -13,11 +13,37 @@
 
   ;; CHECK_0:      (type $1 (func (result i32)))
 
-  ;; CHECK_0:      (export "export" (func $export))
+  ;; CHECK_0:      (export "main" (func $main))
+  ;; CHECK_1:      (type $0 (func))
+
+  ;; CHECK_1:      (type $1 (func (result i32)))
+
+  ;; CHECK_1:      (export "main" (func $main))
+  ;; CHECK_3:      (type $0 (func))
+
+  ;; CHECK_3:      (type $1 (func (result i32)))
+
+  ;; CHECK_3:      (export "main" (func $main))
+  ;; CHECK_s:      (type $0 (func))
+
+  ;; CHECK_s:      (type $1 (func (result i32)))
+
+  ;; CHECK_s:      (export "main" (func $main))
+  ;; CHECK_O:      (type $0 (func))
+
+  ;; CHECK_O:      (type $1 (func (result i32)))
+
+  ;; CHECK_O:      (export "main" (func $main))
+  (export "main" (func $main))
 
   ;; CHECK_0:      (export "pointless-work" (func $pointless-work))
+  ;; CHECK_1:      (export "pointless-work" (func $pointless-work))
+  ;; CHECK_3:      (export "pointless-work" (func $pointless-work))
+  ;; CHECK_s:      (export "pointless-work" (func $pointless-work))
+  ;; CHECK_O:      (export "pointless-work" (func $pointless-work))
+  (export "pointless-work" (func $pointless-work))
 
-  ;; CHECK_0:      (func $export (type $0)
+  ;; CHECK_0:      (func $main (type $0)
   ;; CHECK_0-NEXT:  (if
   ;; CHECK_0-NEXT:   (call $pointless-work)
   ;; CHECK_0-NEXT:   (then
@@ -27,51 +53,19 @@
   ;; CHECK_0-NEXT:   )
   ;; CHECK_0-NEXT:  )
   ;; CHECK_0-NEXT: )
-  ;; CHECK_1:      (type $0 (func))
-
-  ;; CHECK_1:      (type $1 (func (result i32)))
-
-  ;; CHECK_1:      (export "export" (func $export))
-
-  ;; CHECK_1:      (export "pointless-work" (func $pointless-work))
-
-  ;; CHECK_1:      (func $export (type $0)
+  ;; CHECK_1:      (func $main (type $0)
   ;; CHECK_1-NEXT:  (nop)
   ;; CHECK_1-NEXT: )
-  ;; CHECK_3:      (type $0 (func))
-
-  ;; CHECK_3:      (type $1 (func (result i32)))
-
-  ;; CHECK_3:      (export "export" (func $export))
-
-  ;; CHECK_3:      (export "pointless-work" (func $pointless-work))
-
-  ;; CHECK_3:      (func $export (type $0) (; has Stack IR ;)
+  ;; CHECK_3:      (func $main (type $0) (; has Stack IR ;)
   ;; CHECK_3-NEXT:  (nop)
   ;; CHECK_3-NEXT: )
-  ;; CHECK_s:      (type $0 (func))
-
-  ;; CHECK_s:      (type $1 (func (result i32)))
-
-  ;; CHECK_s:      (export "export" (func $export))
-
-  ;; CHECK_s:      (export "pointless-work" (func $pointless-work))
-
-  ;; CHECK_s:      (func $export (type $0) (; has Stack IR ;)
+  ;; CHECK_s:      (func $main (type $0) (; has Stack IR ;)
   ;; CHECK_s-NEXT:  (nop)
   ;; CHECK_s-NEXT: )
-  ;; CHECK_O:      (type $0 (func))
-
-  ;; CHECK_O:      (type $1 (func (result i32)))
-
-  ;; CHECK_O:      (export "export" (func $export))
-
-  ;; CHECK_O:      (export "pointless-work" (func $pointless-work))
-
-  ;; CHECK_O:      (func $export (type $0) (; has Stack IR ;)
+  ;; CHECK_O:      (func $main (type $0) (; has Stack IR ;)
   ;; CHECK_O-NEXT:  (nop)
   ;; CHECK_O-NEXT: )
-  (func $export (export "export")
+  (func $main
     ;; This calls a function that does pointless work. After generating global
     ;; effects we can see that it is pointless and remove this entire if (except
     ;; for -O0).
@@ -176,7 +170,7 @@
   ;; CHECK_O-NEXT:   (local.get $0)
   ;; CHECK_O-NEXT:  )
   ;; CHECK_O-NEXT: )
-  (func $pointless-work (export "pointless-work") (result i32)
+  (func $pointless-work (result i32)
     (local $x i32)
     ;; Some pointless work, with no side effects, that cannot be inlined. (The
     ;; changes here are not important for this test.)
