@@ -4047,9 +4047,7 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       break;
     }
     case BinaryConsts::Resume: {
-      auto resume = allocator.alloc<Resume>();
-      curr = resume;
-      visitResume(resume);
+      visitResume((curr = allocator.alloc<Resume>())->cast<Resume>());
       break;
     }
     case BinaryConsts::AtomicPrefix: {
@@ -7774,16 +7772,16 @@ void WasmBinaryReader::visitResume(Resume* curr) {
                curr->contType.toString());
   }
 
-  auto handlerNum = getU32LEB();
+  auto numHandlers = getU32LEB();
 
   // We *must* bring the handlerTags vector to an appropriate size to ensure
   // that we do not invalidate the pointers we add to tagRefs. They need to stay
   // valid until processNames ran.
-  curr->handlerTags.resize(handlerNum);
-  curr->handlerBlocks.resize(handlerNum);
+  curr->handlerTags.resize(numHandlers);
+  curr->handlerBlocks.resize(numHandlers);
 
-  BYN_TRACE("handler num: " << handlerNum << std::endl);
-  for (size_t i = 0; i < handlerNum; i++) {
+  BYN_TRACE("handler num: " << numHandlers << std::endl);
+  for (size_t i = 0; i < numHandlers; i++) {
     BYN_TRACE("read one tag handler pair \n");
     auto tagIndex = getU32LEB();
     auto tag = getTagName(tagIndex);
@@ -7800,11 +7798,11 @@ void WasmBinaryReader::visitResume(Resume* curr) {
 
   curr->cont = popNonVoidExpression();
 
-  auto argsNum =
+  auto numArgs =
     curr->contType.getContinuation().type.getSignature().params.size();
-  curr->operands.resize(argsNum);
-  for (size_t i = 0; i < argsNum; i++) {
-    curr->operands[argsNum - i - 1] = popNonVoidExpression();
+  curr->operands.resize(numArgs);
+  for (size_t i = 0; i < numArgs; i++) {
+    curr->operands[numArgs - i - 1] = popNonVoidExpression();
   }
 
   curr->finalize(&wasm);

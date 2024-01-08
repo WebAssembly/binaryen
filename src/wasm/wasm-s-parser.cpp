@@ -3006,7 +3006,7 @@ Expression* SExpressionWasmBuilder::makeResume(Element& s) {
     if (!wasm.getTagOrNull(tag)) {
       throw ParseException("bad tag name", inner[1]->line, inner[1]->col);
     }
-    ret->handlerTags.push_back(getTagName(*inner[1]));
+    ret->handlerTags.push_back(tag);
     ret->handlerBlocks.push_back(getLabel(*inner[2]));
   }
 

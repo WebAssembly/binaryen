@@ -2349,7 +2349,7 @@ public:
     }
     return ExpressionRunner<SubType>::visitRefAs(curr);
   }
-  Flow visitResume(Resume* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitResume(Resume* curr) { WASM_UNREACHABLE("unimplemented"); }
 
   void trap(const char* why) override { throw NonconstantException(); }
 
