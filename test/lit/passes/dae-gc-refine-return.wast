@@ -541,7 +541,7 @@
     (if
      (local.get $y)
      (then
-      (return (struct.new ${i32_f32}))
+      (return (struct.new_default ${i32_f32}))
      )
      (else
       (return (ref.null any))
@@ -549,7 +549,7 @@
     )
    )
    (else
-    (return (struct.new ${i32_i64}))
+    (return (struct.new_default ${i32_i64}))
    )
   )
  )
@@ -570,12 +570,12 @@
   ;; Call $update-null so it gets optimized. (Call it with various values so
   ;; that other opts do not inline the constants.)
   (drop
-   ($call $update-null
+   (call $update-null
     (i32.const 0)
     (i32.const 1)
    )
   )
-  ($call $update-null
+  (call $update-null
    (i32.const 1)
    (i32.const 0)
   )

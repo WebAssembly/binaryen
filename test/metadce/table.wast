@@ -6,7 +6,7 @@
  (table $table-unused 10 funcref)
 
  ;; An active element segment, which is always used.
- (elem $elem (table $table-used) (i32.const 0) $func)
+ (elem $elem (table $table-used) (i32.const 0) func $func)
 
  (elem $passive-elem-used $func)
 
@@ -27,4 +27,3 @@
   )
  )
 )
-

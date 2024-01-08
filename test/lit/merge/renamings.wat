@@ -72,12 +72,12 @@
   ;; CHECK:      (table $other 70 80 funcref)
 
   ;; CHECK:      (elem $foo func $foo $bar)
-  (elem $foo (ref null func) $foo $bar)
+  (elem $foo func $foo $bar)
 
   ;; This elem has a conflict in second.wat, and so second.wat's $bar
   ;; will be renamed.
   ;; CHECK:      (elem $bar func $bar $foo)
-  (elem $bar (ref null func) $bar $foo)
+  (elem $bar func $bar $foo)
 
   ;; CHECK:      (elem $other func $foo_3 $other)
 

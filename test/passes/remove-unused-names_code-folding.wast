@@ -429,13 +429,13 @@
         (if (local.get $x)
           (then
             (block
-              (br_if $out (local.get $y i32))
+              (br_if $out (local.get $y))
               (nop)
             )
           )
           (else
             (block
-              (br_if $out (local.get $y i32))
+              (br_if $out (local.get $y))
               (nop)
             )
           )
@@ -443,13 +443,13 @@
         (if (local.get $x)
           (then
             (block
-              (br_if $out (local.get $y i32))
+              (br_if $out (local.get $y))
               (nop)
             )
           )
           (else
             (block
-              (br_if $out2 (local.get $y i32))
+              (br_if $out2 (local.get $y))
               (nop)
             )
           )
@@ -460,14 +460,14 @@
               (then
                 (block
                   (nop)
-                  (br_if $out (local.get $y i32))
+                  (br_if $out (local.get $y))
                   (nop)
                 )
               )
               (else
                 (block
                   (nop)
-                  (br_if $out2 (local.get $y i32))
+                  (br_if $out2 (local.get $y))
                   (nop)
                 )
               )
@@ -477,13 +477,13 @@
         (if (local.get $x)
           (then
             (block $left
-              (br_if $left (local.get $y i32))
+              (br_if $left (local.get $y))
               (nop)
             )
           )
           (else
             (block
-              (br_if $out (local.get $y i32))
+              (br_if $out (local.get $y))
               (nop)
             )
           )
@@ -491,13 +491,13 @@
         (if (local.get $x)
           (then
             (block
-              (br_if $out (local.get $y i32))
+              (br_if $out (local.get $y))
               (nop)
             )
           )
           (else
             (block $right
-              (br_if $right (local.get $y i32))
+              (br_if $right (local.get $y))
               (nop)
             )
           )

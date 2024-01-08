@@ -36,13 +36,11 @@
  (func $unaligned_load (export "unaligned_load") (result i32)
   (i32.atomic.load
    (i32.const 1) ;; unaligned ptr
-   (i32.const 1)
   )
  )
  (func $unaligned_load_offset (export "unaligned_load_offset") (result i32)
   (i32.atomic.load offset=1 ;; unaligned with offset
    (i32.const 0)
-   (i32.const 1)
   )
  )
  (func $aligned_for_size (export "aligned_for_size") (result i32)

@@ -16,13 +16,12 @@
   (type $3 (func (result i32)))
   ;; CHECK:      (type $4 (func (param i32 f64 i32 i32)))
   (type $4 (func (param i32 f64 i32 i32)))
-  (import $int "env" "int" (result i32))
   ;; CHECK:      (type $5 (func (param i32) (result i32)))
 
   ;; CHECK:      (type $6 (func (result f64)))
 
   ;; CHECK:      (import "env" "int" (func $int (type $3) (result i32)))
-
+  (import "env" "int" (func $int (result i32)))
   ;; CHECK:      (global $Int i32 (i32.const 0))
   (global $Int i32 (i32.const 0))
   ;; CHECK:      (memory $0 256 256)
@@ -1148,7 +1147,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $_deflate (param i32) (result i32)
-  (call $_deflate (local.get $0))
+  (call $_deflate (local.get 0))
  )
  ;; CHECK:      (func $_deflateInit2_ (type $0) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (call $_deflateInit2_
@@ -1156,7 +1155,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $_deflateInit2_ (param i32) (result i32)
-  (call $_deflateInit2_ (local.get $0))
+  (call $_deflateInit2_ (local.get 0))
  )
  ;; CHECK:      (func $_deflateEnd (type $0) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (call $_deflateEnd
@@ -1164,7 +1163,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $_deflateEnd (param i32) (result i32)
-  (call $_deflateEnd (local.get $0))
+  (call $_deflateEnd (local.get 0))
  )
  ;; CHECK:      (func $compress (type $1) (param $0 i32) (param $1 i32) (param $2 i32)
  ;; CHECK-NEXT:  (local $3 i32)

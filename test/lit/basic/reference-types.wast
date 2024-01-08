@@ -174,7 +174,7 @@
 
   (import "env" "import_func" (func $import_func (param eqref) (result funcref)))
   (import "env" "import_global" (global $import_global eqref))
-  (export "export_func" (func $import_func (param eqref) (result funcref)))
+  (export "export_func" (func $import_func))
   (export "export_global" (global $import_global))
 
   ;; Test global initializer expressions

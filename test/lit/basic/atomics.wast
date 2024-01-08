@@ -546,7 +546,7 @@
    )
   )
   (drop
-   (memory.atomic.wait64 align=8 offset=16
+   (memory.atomic.wait64 offset=16 align=8
     (local.get $0)
     (local.get $1)
     (local.get $1)

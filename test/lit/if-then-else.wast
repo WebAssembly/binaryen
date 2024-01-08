@@ -30,14 +30,14 @@
   ;; CHECK-NEXT: )
   (func $test (param i32) (result i32)
     (if
-       (local.get $0)
+       (local.get 0)
        (then)
        (else
           (return (i32.const 0))
        )
     )
     (if
-       (local.get $0)
+       (local.get 0)
        (then
          (return
            (i32.const 1)

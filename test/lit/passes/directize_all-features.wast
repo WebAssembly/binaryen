@@ -1325,11 +1325,11 @@
 
  ;; CHECK:      (elem $0 (table $has-set) (i32.const 1) func $foo)
  ;; IMMUT:      (elem $0 (table $has-set) (i32.const 1) func $foo)
- (elem $0 (table $has-set) (i32.const 1) $foo)
+ (elem $0 (table $has-set) (i32.const 1) func $foo)
 
  ;; CHECK:      (elem $1 (table $no-set) (i32.const 1) func $foo)
  ;; IMMUT:      (elem $1 (table $no-set) (i32.const 1) func $foo)
- (elem $1 (table $no-set) (i32.const 1) $foo)
+ (elem $1 (table $no-set) (i32.const 1) func $foo)
 
  ;; CHECK:      (func $foo (type $v)
  ;; CHECK-NEXT:  (table.set $has-set
