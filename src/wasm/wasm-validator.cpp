@@ -3292,6 +3292,16 @@ void FunctionValidator::visitResume(Resume* curr) {
     !getModule() || getModule()->features.hasTypedContinuations(),
     curr,
     "resume requires typed-continuatons [--enable-typed-continuations]");
+
+  shouldBeTrue(
+    curr->sentTypes.size() == curr->handlerBlocks.size(),
+    curr,
+    "sentTypes cache in Resume instruction has not been initialised");
+
+  shouldBeTrue((curr->contType.isContinuation() &&
+                curr->contType.getContinuation().type.isSignature()),
+               curr,
+               "invalid type in Resume expression");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {

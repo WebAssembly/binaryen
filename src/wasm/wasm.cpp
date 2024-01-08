@@ -1393,10 +1393,6 @@ static void populateResumeSentTypes(Resume* curr, Module* wasm) {
 }
 
 void Resume::finalize(Module* wasm) {
-  if (!(this->contType.isContinuation() &&
-        this->contType.getContinuation().type.isSignature())) {
-    Fatal() << "ill-formed Resume expression";
-  }
   const Signature& contSig =
     this->contType.getContinuation().type.getSignature();
   type = contSig.results;
