@@ -1201,7 +1201,7 @@
   )
 
   ;; CHECK:      (func $deletate-target-outer-try-unreachable (type $1)
-  ;; CHECK-NEXT:  (block $outer1
+  ;; CHECK-NEXT:  (try_table
   ;; CHECK-NEXT:   (throw_ref
   ;; CHECK-NEXT:    (block $l00 (result exnref)
   ;; CHECK-NEXT:     (try_table (catch_all_ref $l00)
@@ -1357,12 +1357,14 @@
   ;; CHECK-NEXT:  (throw_ref
   ;; CHECK-NEXT:   (block $__binaryen_delegate_caller_target0 (result exnref)
   ;; CHECK-NEXT:    (block $outer2
-  ;; CHECK-NEXT:     (throw_ref
-  ;; CHECK-NEXT:      (block $l01 (result exnref)
-  ;; CHECK-NEXT:       (try_table (catch_all_ref $l01)
-  ;; CHECK-NEXT:        (nop)
+  ;; CHECK-NEXT:     (try_table (catch_all_ref $__binaryen_delegate_caller_target0)
+  ;; CHECK-NEXT:      (throw_ref
+  ;; CHECK-NEXT:       (block $l01 (result exnref)
+  ;; CHECK-NEXT:        (try_table (catch_all_ref $l01)
+  ;; CHECK-NEXT:         (nop)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (br $outer2)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (br $outer2)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -1389,11 +1391,13 @@
   ;; CHECK-NEXT:   (block $__binaryen_delegate_caller_target0 (result exnref)
   ;; CHECK-NEXT:    (return
   ;; CHECK-NEXT:     (block $outer2 (result i32)
-  ;; CHECK-NEXT:      (throw_ref
-  ;; CHECK-NEXT:       (block $l01 (result exnref)
-  ;; CHECK-NEXT:        (br $outer2
-  ;; CHECK-NEXT:         (try_table (result i32) (catch_all_ref $l01)
-  ;; CHECK-NEXT:          (i32.const 0)
+  ;; CHECK-NEXT:      (try_table (catch_all_ref $__binaryen_delegate_caller_target0)
+  ;; CHECK-NEXT:       (throw_ref
+  ;; CHECK-NEXT:        (block $l01 (result exnref)
+  ;; CHECK-NEXT:         (br $outer2
+  ;; CHECK-NEXT:          (try_table (result i32) (catch_all_ref $l01)
+  ;; CHECK-NEXT:           (i32.const 0)
+  ;; CHECK-NEXT:          )
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )

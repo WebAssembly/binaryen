@@ -313,11 +313,9 @@ struct TranslateEHOldToNew
         curr->body, delegateBrTarget, brToOuter, Type(HeapType::exn, Nullable));
     }
     curr->body = builder.makeThrowRef(innerBody);
-    assert(outerBlock->list.empty());
-    outerBlock->list.push_back(curr->body);
   }
 
-  void processDelegate(Try* curr) {
+  void processDelegate(Try* curr, Block* outerBlock) {
     Builder builder(*getModule());
     // Convert
     // (try
@@ -337,11 +335,20 @@ struct TranslateEHOldToNew
     // processDelegateTarget(), when we process the 'try' that is the target of
     // this try~delegate. See processDelegateTarget() for how the rest of the
     // conversion is completed.
-    replaceCurrent(
+    auto* tryTable =
       builder.makeTryTable(curr->body,
                            {Name()},
                            {delegateTargetToBrTarget[curr->delegateTarget]},
-                           {true}));
+                           {true});
+    // If we need an outer block for other reasons (if this is a target of a
+    // delegate), we insert the new try_table into it. If not we just replace
+    // the current try with the new try_table.
+    if (outerBlock) {
+      outerBlock->list.push_back(tryTable);
+      replaceCurrent(outerBlock);
+    } else {
+      replaceCurrent(tryTable);
+    }
   }
 
   void processCatches(Try* curr, Block* outerBlock) {
@@ -667,12 +674,10 @@ struct TranslateEHOldToNew
       items.swap(nextItems);
     }
 
-    // In case this was already popuated in processDelegateTarget(), we empty
-    // the block to repopulate with the newly created structures here
-    outerBlock->list.clear();
     for (auto* item : items) {
       outerBlock->list.push_back(item);
     }
+    replaceCurrent(outerBlock);
   }
 
   void visitTry(Try* curr) {
@@ -689,13 +694,9 @@ struct TranslateEHOldToNew
       processDelegateTarget(curr, outerBlock);
     }
     if (curr->isDelegate()) {
-      processDelegate(curr);
+      processDelegate(curr, outerBlock);
     } else { // try-catch or catch-less try
       processCatches(curr, outerBlock);
-    }
-
-    if (outerBlock) {
-      replaceCurrent(outerBlock);
     }
   }
 
