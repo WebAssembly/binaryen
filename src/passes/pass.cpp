@@ -882,9 +882,7 @@ void PassRunner::doAdd(std::unique_ptr<Pass> pass) {
   passes.emplace_back(std::move(pass));
 }
 
-void PassRunner::clear() {
-  passes.clear();
-}
+void PassRunner::clear() { passes.clear(); }
 
 // Checks that the state is valid before and after a
 // pass runs on a function. We run these extra checks when
