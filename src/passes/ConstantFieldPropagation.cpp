@@ -259,37 +259,27 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 
     // We have exactly two values to pick between. We can pick between those
     // values using a single ref.test if the two sets of types are actually
-    // disjoint. To do that, this helper function receives an index (0 or 1)
-    // and returns a type from that group that can be used in a ref.test, where
-    // yes will return that group and no will return the other group (i.e. the
-    // type cleanly distinguishes between them). Note that the returned type may
-    // not actually be in that group, but it is computed from it (see below).
-    auto findTestType = [&](Index index) -> std::optional<HeapType> {
-      auto& types = valueTypes[index]; // TODO make these params
-      auto& otherTypes = valueTypes[1 - index];
-      // Compute the LUB of this set of types. That is the best type we can use
-      // that includes all the types in it.
-      HeapType lub = types[0];
-      for (Index i = 1; i < types.size(); i++) {
-        auto newLub = HeapType::getLeastUpperBound(lub, types[i]);
-        // These are both struct types, so there must be a lub.
-        assert(newLub);
-        lub = *newLub;
-      }
-      // For that lub to work, the other types must all be disjoint.
-      for (auto otherType : otherTypes) {
-        if (HeapType::isSubType(otherType, lub)) {
-          // There is an intersection. Give up.
-          return {};
+    // disjoint. In general we could compute the LUB of each set and see if it
+    // overlaps with the other, but for efficiency we only want to do this
+    // optimization if the type we test on is closed/final: ref.test on a final
+    // type is very fast and in constant time, and anything else is risky. Given
+    // that, we can simply see if one of the sets contains a single type that is
+    // final.
+    auto isProperTestType = [&](Index index) -> std::optional<HeapType> {
+      auto& types = valueTypes[index];
+      if (types.size() == 1) {
+        auto type = types[0];
+        if (!types[0].isOpen()) {
+          return type;
         }
       }
-      return lub;
+      return {};
     };
 
     Index testIndex = -1;
     HeapType testType;
     for (Index i = 0; i < 2; i++) {
-      if (auto test = findTestType(i)) {
+      if (auto test = isProperTestType(i)) {
         testType = *test;
         testIndex = i;
         break;
