@@ -189,8 +189,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     auto refHeapType = refType.getHeapType();
 
     // The field must be immutable.
-    if (GCTypeUtils::getField(refType, curr->index)->mutable_ ==
-        Mutable) {
+    if (GCTypeUtils::getField(refType, curr->index)->mutable_ == Mutable) {
       return;
     }
 
