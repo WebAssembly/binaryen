@@ -49,16 +49,16 @@ struct TranslateEHOldToNew
   : public WalkerPass<PostWalker<TranslateEHOldToNew>> {
   bool isFunctionParallel() override { return true; }
 
-  // Scans and records which try labels are targetted by delegates and rethrows.
+  // Scans and records which try labels are targeted by delegates and rethrows.
   struct TargetTryLabelScanner : public PostWalker<TargetTryLabelScanner> {
     TargetTryLabelScanner(Function* func) { walkFunction(func); }
 
     std::unordered_set<Name> delegateTargets;
     std::unordered_set<Name> rethrowTargets;
-    bool isTargettedByDelegates(Try* curr) const {
+    bool isTargetedByDelegates(Try* curr) const {
       return delegateTargets.find(curr->name) != delegateTargets.end();
     }
-    bool isTargettedByRethrows(Try* curr) const {
+    bool isTargetedByRethrows(Try* curr) const {
       return rethrowTargets.find(curr->name) != rethrowTargets.end();
     }
 
@@ -71,7 +71,7 @@ struct TranslateEHOldToNew
     void visitRethrow(Rethrow* curr) { rethrowTargets.insert(curr->target); }
   };
 
-  // For each try label targetted by rethrows, assign a local that will contain
+  // For each try label targeted by rethrows, assign a local that will contain
   // its exnref in the new spec (via try + catch(_all)_ref instruction), so that
   // every 'rethrow $somelabel' can later be translated into
   // 'throw_ref $somelocal'.
@@ -95,8 +95,8 @@ struct TranslateEHOldToNew
   // In this case, we need two locals for exnrefs, each for $l0 and $l1.
   //
   // Note that the number of locals required is the maximum depth of try-catch
-  // nests, when only counting 'try's that are targetted by rethrows, which
-  // means the pattern below only needs one extra local:
+  // nests, when only counting 'try's that are targeted by rethrows, which means
+  // the pattern below only needs one extra local:
   // (try $l0
   //   (catch
   //     (rethrow $l0)
@@ -138,7 +138,7 @@ struct TranslateEHOldToNew
     std::vector<Index> exnrefLocals;
     std::unordered_map<Name, Index> rethrowTargetToExnrefLocal;
 
-    // Depth of the current try nest, when only counting trys targetted with
+    // Depth of the current try nest, when only counting trys targeted with
     // rethrows.
     size_t rethrowTryDepth = 0;
 
@@ -169,20 +169,20 @@ struct TranslateEHOldToNew
     static void scan(ExnrefLocalAssigner* self, Expression** currp) {
       auto* curr = *currp;
       if (auto* tryy = curr->dynCast<Try>()) {
-        if (self->labelScanner->isTargettedByRethrows(tryy)) {
+        if (self->labelScanner->isTargetedByRethrows(tryy)) {
           self->pushTask(decrementRethrowTryDepth, currp);
         }
       }
       PostWalker<ExnrefLocalAssigner>::scan(self, currp);
       if (auto* tryy = curr->dynCast<Try>()) {
-        if (self->labelScanner->isTargettedByRethrows(tryy)) {
+        if (self->labelScanner->isTargetedByRethrows(tryy)) {
           self->pushTask(incrementRethrowTryDepth, currp);
         }
       }
     }
 
     void visitTry(Try* curr) {
-      if (labelScanner->isTargettedByRethrows(curr)) {
+      if (labelScanner->isTargetedByRethrows(curr)) {
         while (exnrefLocals.size() < rethrowTryDepth) {
           exnrefLocals.push_back(
             Builder::addVar(getFunction(), Type(HeapType::exn, Nullable)));
@@ -221,7 +221,7 @@ struct TranslateEHOldToNew
     return it->second;
   }
 
-  // Process try labels targetted by rethrows. This does NOT transform the
+  // Process try labels targeted by rethrows. This does NOT transform the
   // current 'try' into 'try_table' yet; it only adds block, br, and throw_ref
   // instructions to complete the conversions of inner try~delegates that target
   // the current try.
@@ -295,7 +295,7 @@ struct TranslateEHOldToNew
     // processCatches().
     //
     // Also note that even in case there are multiple inner try~delegates
-    // targetting this try, we need to do this only once per try target. Those
+    // targeting this try, we need to do this only once per try target. Those
     // multiple try~delegates that used to target the same delegate target now
     // jump to the same $delegate_br_target using catch_all_ref.
     Name delegateBrTarget = delegateTargetToBrTarget[curr->name];
@@ -357,7 +357,7 @@ struct TranslateEHOldToNew
     // Determine whether a given catch body should be translated to
     // catch/catch_all vs. catch_ref/catch_all_ref.
     auto shouldBeRef = [&](Expression* catchBody) -> bool {
-      // If this try is targetted by rethrows and those rethrows exist in the
+      // If this try is targeted by rethrows and those rethrows exist in the
       // current catch body, we need to use catch_ref/catch_all_ref. By this
       // point, all rethrows in the catch bodies have been already converted to
       // throw_refs, so we check the local numbers to see if those (original)
@@ -709,11 +709,11 @@ struct TranslateEHOldToNew
   }
 
   void visitRethrow(Rethrow* curr) {
-    // After we assigned an exnref local for each try label targetted by
+    // After we assigned an exnref local for each try label targeted by
     // rethrows, we can assume the exnref we want to rethrow is located in that
-    // exnref local at this point. We ensure this to happen when converting
-    // the corresponding 'try' to 'try_table' by using catch_ref/catch_all_ref
-    // and assining the exnref to that local.
+    // exnref local at this point. We ensure this to happen when converting the
+    // corresponding 'try' to 'try_table' by using catch_ref/catch_all_ref and
+    // assining the exnref to that local.
     Builder builder(*getModule());
     Index exnrefLocal = localAssigner->getExnrefLocal(curr->target);
     replaceCurrent(builder.makeThrowRef(
