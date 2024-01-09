@@ -2253,7 +2253,9 @@ export class Module {
    }
    get arrays () {
         return {
-            fromValues: (heapType: HeapType, values: ExpressionRef[]): ExpressionRef => {
+            newWithInit: (heapType: HeapType, size: ExpressionRef, init: ExpressionRef): ExpressionRef =>
+                JSModule['BinaryenArrayNew'](this.ptr, heapType, size, init),
+            newFromValues: (heapType: HeapType, values: ExpressionRef[]): ExpressionRef => {
                 const ptr = _malloc(Math.max(8, values.length * 4));
                 let offset = ptr;
                 values.forEach(value => {
@@ -2264,8 +2266,14 @@ export class Module {
                 _free(ptr);
                 return result;
             },
+            copy: (destArray: ExpressionRef, destItem: ExpressionRef, srcArray: ExpressionRef, srcItem: ExpressionRef, numItems: ExpressionRef): ExpressionRef =>
+                JSModule['_BinaryenArrayCopy'](this.ptr, destArray, destItem, srcArray, srcItem, numItems),
             getItem: (array: ExpressionRef, item: ExpressionRef, type: Type, signed: boolean): ExpressionRef =>
-                JSModule['_BinaryenArrayGet'](this.ptr, array, item, type, signed)
+                JSModule['_BinaryenArrayGet'](this.ptr, array, item, type, signed),
+            setItem: (array: ExpressionRef, item: ExpressionRef, value: ExpressionRef): ExpressionRef =>
+                JSModule['_BinaryenArraySet'](this.ptr, array, item, value),
+            length: (array: ExpressionRef): ExpressionRef =>
+                JSModule['_BinaryenArrayLen'](this.ptr, array)
         }
    }
 }
