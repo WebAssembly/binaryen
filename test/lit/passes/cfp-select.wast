@@ -2,6 +2,8 @@
 
 ;; RUN: foreach %s %t wasm-opt --cfp -all -S -o - | filecheck %s
 
+;; When a struct.get can only read from two types, and those types have a
+;; constant field, we can select between those two values.
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
@@ -26,6 +28,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
+    ;; Used below.
     (drop
       (struct.new $struct
         (i32.const 10)
