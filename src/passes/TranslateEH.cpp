@@ -111,7 +111,7 @@ struct TranslateEHOldToNew
   // reused in both trys.
   //
   // Also even if there is a try-catch nest with depth N, if only some of them
-  // is targetted by rethrows, we only need that many extra local for the whole
+  // are targeted by rethrows, we only need that many extra locals for the whole
   // nest:
   // (try $l0
   //   (catch
@@ -214,12 +214,11 @@ struct TranslateEHOldToNew
   // reuse these for all extracted values and (extracted values, exnref) tuples
   // as long as the type matches.
   Index getScratchLocal(Type type) {
-    auto it = typeToScratchLocal.find(type);
-    if (it != typeToScratchLocal.end()) {
-      return it->second;
-    }
-    typeToScratchLocal[type] = Builder::addVar(getFunction(), type);
-    return typeToScratchLocal[type];
+    auto [it, inserted] = typeToScratchLocal.insert({type, 0});
+    if (inserted) {
+      it->second = Builder::addVar(getFuntion(), type);
+    )
+    return it->second;
   }
 
   // Process try labels targetted by rethrows. This does NOT transform the
@@ -275,7 +274,7 @@ struct TranslateEHOldToNew
     //     (do
     //       (throw_ref
     //         (block $delegate_br_target (result exnref)
-    //           (br $outer
+    //           (br $outer ;; Now has the try_table as a child.
     //             ...
     //             (try_table (catch_all_ref $delegate_br_target)
     //               ...
@@ -496,7 +495,7 @@ struct TranslateEHOldToNew
     // label, we use catch_ref (or catch_all_ref in case of catch_all), and
     // assign the block return value to a exnref local. rethrows would have been
     // converted to (local.get $exn) in visitRethrow() already. Unlike scratch
-    // locals used for pops, exnref locals can have longer lifetimes and
+    // locals used for pops, exnref locals can have longer lifetimes and are
     // assigned in ExnrefLocalAssigner. So for example,
     // (try $l0
     //   ...
@@ -522,7 +521,7 @@ struct TranslateEHOldToNew
     // )
     //
     // When the tag type is concrete and also there are rethrows within the
-    // catch body that targets this try's label, (extracted values, exnref)
+    // catch body that target this try's label, (extracted values, exnref)
     // is saved in a tuple local matching its tuple type, and tuple.extract
     // instructions are added to extract each of them and set them to a scratch
     // local for a later pop and exnref local for later throw_ref.
