@@ -764,9 +764,60 @@
   )
 )
 
-;; Subtyping: If we create both a subtype and a supertype, with different
-;; constants for the shared field, then we can at least pick between the two
-;; values using a select. That is tested in cfp-select.
+;; Subtyping: Create both a subtype and a supertype, with different constants
+;;            for the shared field, preventing optimization, as a get of the
+;;            supertype may receive an instance of the subtype.
+(module
+  ;; CHECK:      (type $struct (sub (struct (field i32))))
+  (type $struct (sub (struct i32)))
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
+  (type $substruct (sub $struct (struct i32 f64)))
+
+  ;; CHECK:      (type $3 (func (param (ref null $struct))))
+
+  ;; CHECK:      (func $create (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $substruct
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    (drop
+      (struct.new $struct
+        (i32.const 10)
+      )
+    )
+    (drop
+      (struct.new $substruct
+        (i32.const 20)
+        (f64.const 3.14159)
+      )
+    )
+  )
+  ;; CHECK:      (func $get (type $3) (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get (param $struct (ref null $struct))
+    (drop
+      (struct.get $struct 0
+        (local.get $struct)
+      )
+    )
+  )
+)
 
 ;; Subtyping: Create both a subtype and a supertype, with different constants
 ;;            for the shared field, but get from the subtype. The field is
@@ -1093,14 +1144,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (i32.const 999)
-  ;; CHECK-NEXT:    (i32.const 20)
-  ;; CHECK-NEXT:    (ref.test (ref $struct3)
-  ;; CHECK-NEXT:     (ref.as_non_null
-  ;; CHECK-NEXT:      (local.get $struct1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (struct.get $struct1 1
+  ;; CHECK-NEXT:    (local.get $struct1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -1206,9 +1251,6 @@
         (local.get $struct1)
       )
     )
-    ;; This one is optimized to a select, which overlaps with the testing in
-    ;; cfp-select, but for consistency with all the other gets here, keep it
-    ;; here as well.
     (drop
       (struct.get $struct1 1
         (local.get $struct1)
