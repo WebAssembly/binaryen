@@ -807,7 +807,7 @@ struct TranslateEHOldToNew
       processCallerDelegateTarget();
     }
   }
-  };
+};
 
 struct TranslateEHNewToOld
   : public WalkerPass<PostWalker<TranslateEHNewToOld>> {
