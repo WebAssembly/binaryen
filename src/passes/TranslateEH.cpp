@@ -216,8 +216,8 @@ struct TranslateEHOldToNew
   Index getScratchLocal(Type type) {
     auto [it, inserted] = typeToScratchLocal.insert({type, 0});
     if (inserted) {
-      it->second = Builder::addVar(getFuntion(), type);
-    )
+      it->second = Builder::addVar(getFunction(), type);
+    }
     return it->second;
   }
 
@@ -807,7 +807,7 @@ struct TranslateEHOldToNew
       processCallerDelegateTarget();
     }
   }
-};
+  };
 
 struct TranslateEHNewToOld
   : public WalkerPass<PostWalker<TranslateEHNewToOld>> {
