@@ -1323,13 +1323,16 @@ public:
       block = any->dynCast<Block>();
     }
     if (!block || block->name.is()) {
-      block = makeBlock(any);
+      block = makeBlock(name, any);
+    } else {
+      block->name = name;
     }
-    block->name = name;
     if (append) {
       block->list.push_back(append);
     }
-    block->finalize(type);
+    if (append || type) {
+      block->finalize(type);
+    }
     return block;
   }
 
