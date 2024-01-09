@@ -1526,7 +1526,16 @@ void test_core() {
   BinaryenModulePrint(module);
 
   // Verify it validates
-  assert(BinaryenModuleValidate(module));
+  int valid = BinaryenModuleValidate(module);
+  assert(valid);
+
+  // Verify no error occurs when writing out the code to binary.
+  size_t bufferSize = 10 * 1024 * 1024;
+  char* buffer = malloc(bufferSize);
+  size_t written = BinaryenModuleWrite(module, buffer, bufferSize);
+  // We wrote bytes, and we did not reach the end of the buffer (which would
+  // truncate).
+  assert(written > 0 && written < bufferSize);
 
   // Clean up the module, which owns all the objects we created above
   BinaryenModuleDispose(module);
