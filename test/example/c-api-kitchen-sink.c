@@ -1545,6 +1545,9 @@ void test_core() {
   BinaryenModuleSetFeatures(readModule, BinaryenFeatureAll());
   valid = BinaryenModuleValidate(readModule);
   assert(valid);
+  BinaryenModuleDispose(readModule);
+
+  free(buffer);
 }
 
 void test_unreachable() {
