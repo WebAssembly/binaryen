@@ -1542,6 +1542,7 @@ void test_core() {
 
   // See we can read the bytes and get a valid module from there.
   BinaryenModuleRef readModule = BinaryenModuleRead(buffer, written);
+  BinaryenModuleSetFeatures(readModule, BinaryenFeatureAll());
   valid = BinaryenModuleValidate(readModule);
   assert(valid);
 }
