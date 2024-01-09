@@ -4,7 +4,7 @@
   (memory 256 256)
   (data (i32.const 10) "_________________")
 
-  (export "test1" $test1)
+  (export "test1" (func $test1))
   (export "memory" (memory $0))
 
   (func $test1
@@ -18,7 +18,9 @@
       (i32.load8_u
         (i32.const 12)
       )
-      (return)
+      (then
+        (return)
+      )
     )
 
     ;; This is unsafe to call, and would stop evalling here. But we exit due to

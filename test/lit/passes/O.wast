@@ -26,8 +26,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (call $ret)
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 999)
@@ -36,9 +38,11 @@
     (block $out (result i32)
       (drop (call $ret))
       (if (call $ret)
-        (return
+        (then
           (return
-            (i32.const 1)
+            (return
+              (i32.const 1)
+            )
           )
         )
       )
@@ -55,8 +59,12 @@
    (block $label$1
     (if
      (i32.const 0)
-     (br $label$1)
-     (unreachable)
+     (then
+      (br $label$1)
+     )
+     (else
+      (unreachable)
+     )
     )
    )
   )
@@ -83,16 +91,22 @@
      (local.get $0)
      (i32.const -1073741824)
     )
-    (local.set $0
-     (i32.const -1073741824)
-    )
-    (if
-     (i32.gt_s
-      (local.get $0)
-      (i32.const 1073741823)
-     )
+    (then
      (local.set $0
-      (i32.const 1073741823)
+      (i32.const -1073741824)
+     )
+    )
+    (else
+     (if
+      (i32.gt_s
+       (local.get $0)
+       (i32.const 1073741823)
+      )
+      (then
+       (local.set $0
+        (i32.const 1073741823)
+       )
+      )
      )
     )
    )
@@ -108,8 +122,10 @@
   (func $end-if-else (export "end-if-else") (param $x i32) (result i32)
     (if
       (local.get $x)
-      (local.set $x
-        (i32.const 1)
+      (then
+        (local.set $x
+          (i32.const 1)
+        )
       )
     )
     (local.get $x)
@@ -117,15 +133,21 @@
   ;; CHECK:      (func $end-if-else-call (; has Stack IR ;) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (if (result i32)
   ;; CHECK-NEXT:   (local.get $0)
-  ;; CHECK-NEXT:   (call $ret)
-  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $ret)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $end-if-else-call (export "end-if-else-call") (param $x i32) (result i32)
     (if
       (local.get $x)
-      (local.set $x
-        (call $ret)
+      (then
+        (local.set $x
+          (call $ret)
+        )
       )
     )
     (local.get $x)

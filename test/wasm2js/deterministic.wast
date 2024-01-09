@@ -7,7 +7,9 @@
     (global.get $global$0)
     (i32.load (i32.const 0))
    )
-   (unreachable)
+   (then
+    (unreachable)
+   )
   )
   (i32.const 1)
  )

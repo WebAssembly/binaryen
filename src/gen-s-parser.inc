@@ -102,12 +102,12 @@ switch (buf[0]) {
       case 'r': {
         switch (buf[2]) {
           case '\0':
-            if (op == "br"sv) { return makeBreak(s); }
+            if (op == "br"sv) { return makeBreak(s, false); }
             goto parse_error;
           case '_': {
             switch (buf[3]) {
               case 'i':
-                if (op == "br_if"sv) { return makeBreak(s); }
+                if (op == "br_if"sv) { return makeBreak(s, true); }
                 goto parse_error;
               case 'o': {
                 switch (buf[6]) {
@@ -3749,7 +3749,7 @@ switch (buf[0]) {
     switch (buf[2]) {
       case '\0':
         if (op == "br"sv) {
-          CHECK_ERR(makeBreak(ctx, pos));
+          CHECK_ERR(makeBreak(ctx, pos, false));
           return Ok{};
         }
         goto parse_error;
@@ -3757,7 +3757,7 @@ switch (buf[0]) {
         switch (buf[3]) {
           case 'i':
             if (op == "br_if"sv) {
-              CHECK_ERR(makeBreak(ctx, pos));
+              CHECK_ERR(makeBreak(ctx, pos, true));
               return Ok{};
             }
             goto parse_error;

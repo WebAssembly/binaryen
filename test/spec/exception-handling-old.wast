@@ -605,8 +605,12 @@
           (throw $e-i32
             (if (result i32)
               (i32.const 0)
-              (pop i32) ;; pop is within an if true body
-              (i32.const 3)
+              (then
+                (pop i32) ;; pop is within an if true body
+              )
+              (else
+                (i32.const 3)
+              )
             )
           )
         )

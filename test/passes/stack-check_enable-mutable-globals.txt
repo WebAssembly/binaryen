@@ -22,7 +22,9 @@
       (global.get $__stack_limit)
      )
     )
-    (unreachable)
+    (then
+     (unreachable)
+    )
    )
    (global.set $sp
     (local.get $0)

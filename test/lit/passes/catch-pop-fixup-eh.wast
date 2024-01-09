@@ -250,8 +250,12 @@
   ;; CHECK-NEXT:   (catch $e-i32
   ;; CHECK-NEXT:    (if (result i32)
   ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -287,8 +291,12 @@
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (if (result i32)
   ;; CHECK-NEXT:       (local.get $0)
-  ;; CHECK-NEXT:       (i32.const 1)
-  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:       (then
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (else
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (br $l0)

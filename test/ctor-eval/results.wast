@@ -41,13 +41,17 @@
     ;; we should succeed. After that we should keep returning the constant 55
     (if (result i32)
       (i32.const 1)
-      (block (result i32)
-        (global.set $global4
-          (i32.const 14)
+      (then
+        (block (result i32)
+          (global.set $global4
+            (i32.const 14)
+          )
+          (i32.const 55)
         )
-        (i32.const 55)
       )
-      (i32.const 99)
+      (else
+        (i32.const 99)
+      )
     )
   )
 

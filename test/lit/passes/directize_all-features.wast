@@ -785,13 +785,17 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $z)
- ;; CHECK-NEXT:   (call $foo1
- ;; CHECK-NEXT:    (local.get $3)
- ;; CHECK-NEXT:    (local.get $4)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (call $foo1
+ ;; CHECK-NEXT:     (local.get $3)
+ ;; CHECK-NEXT:     (local.get $4)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (call $foo2
- ;; CHECK-NEXT:    (local.get $3)
- ;; CHECK-NEXT:    (local.get $4)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (call $foo2
+ ;; CHECK-NEXT:     (local.get $3)
+ ;; CHECK-NEXT:     (local.get $4)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -806,13 +810,17 @@
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT:  (if
  ;; IMMUT-NEXT:   (local.get $z)
- ;; IMMUT-NEXT:   (call $foo1
- ;; IMMUT-NEXT:    (local.get $3)
- ;; IMMUT-NEXT:    (local.get $4)
+ ;; IMMUT-NEXT:   (then
+ ;; IMMUT-NEXT:    (call $foo1
+ ;; IMMUT-NEXT:     (local.get $3)
+ ;; IMMUT-NEXT:     (local.get $4)
+ ;; IMMUT-NEXT:    )
  ;; IMMUT-NEXT:   )
- ;; IMMUT-NEXT:   (call $foo2
- ;; IMMUT-NEXT:    (local.get $3)
- ;; IMMUT-NEXT:    (local.get $4)
+ ;; IMMUT-NEXT:   (else
+ ;; IMMUT-NEXT:    (call $foo2
+ ;; IMMUT-NEXT:     (local.get $3)
+ ;; IMMUT-NEXT:     (local.get $4)
+ ;; IMMUT-NEXT:    )
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
@@ -908,10 +916,14 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $z)
- ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:   (call $foo2
- ;; CHECK-NEXT:    (local.get $3)
- ;; CHECK-NEXT:    (local.get $4)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (call $foo2
+ ;; CHECK-NEXT:     (local.get $3)
+ ;; CHECK-NEXT:     (local.get $4)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -926,10 +938,14 @@
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT:  (if
  ;; IMMUT-NEXT:   (local.get $z)
- ;; IMMUT-NEXT:   (unreachable)
- ;; IMMUT-NEXT:   (call $foo2
- ;; IMMUT-NEXT:    (local.get $3)
- ;; IMMUT-NEXT:    (local.get $4)
+ ;; IMMUT-NEXT:   (then
+ ;; IMMUT-NEXT:    (unreachable)
+ ;; IMMUT-NEXT:   )
+ ;; IMMUT-NEXT:   (else
+ ;; IMMUT-NEXT:    (call $foo2
+ ;; IMMUT-NEXT:     (local.get $3)
+ ;; IMMUT-NEXT:     (local.get $4)
+ ;; IMMUT-NEXT:    )
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
@@ -957,8 +973,12 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $z)
- ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $select-both-out-of-range (type $0) (param $x i32) (param $y i32) (param $z i32)
@@ -972,8 +992,12 @@
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT:  (if
  ;; IMMUT-NEXT:   (local.get $z)
- ;; IMMUT-NEXT:   (unreachable)
- ;; IMMUT-NEXT:   (unreachable)
+ ;; IMMUT-NEXT:   (then
+ ;; IMMUT-NEXT:    (unreachable)
+ ;; IMMUT-NEXT:   )
+ ;; IMMUT-NEXT:   (else
+ ;; IMMUT-NEXT:    (unreachable)
+ ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
  (func $select-both-out-of-range (param $x i32) (param $y i32) (param $z i32)
@@ -1060,15 +1084,23 @@
  ;; CHECK:      (func $select-bad-type (type $2) (param $z i32)
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $z)
- ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $select-bad-type (type $2) (param $z i32)
  ;; IMMUT-NEXT:  (if
  ;; IMMUT-NEXT:   (local.get $z)
- ;; IMMUT-NEXT:   (unreachable)
- ;; IMMUT-NEXT:   (unreachable)
+ ;; IMMUT-NEXT:   (then
+ ;; IMMUT-NEXT:    (unreachable)
+ ;; IMMUT-NEXT:   )
+ ;; IMMUT-NEXT:   (else
+ ;; IMMUT-NEXT:    (unreachable)
+ ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
  (func $select-bad-type (param $z i32)
@@ -1129,11 +1161,15 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (call $foo-ref
- ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (call $foo-ref
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (call $foo-ref
- ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (call $foo-ref
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1144,11 +1180,15 @@
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT:  (if
  ;; IMMUT-NEXT:   (local.get $x)
- ;; IMMUT-NEXT:   (call $foo-ref
- ;; IMMUT-NEXT:    (local.get $1)
+ ;; IMMUT-NEXT:   (then
+ ;; IMMUT-NEXT:    (call $foo-ref
+ ;; IMMUT-NEXT:     (local.get $1)
+ ;; IMMUT-NEXT:    )
  ;; IMMUT-NEXT:   )
- ;; IMMUT-NEXT:   (call $foo-ref
- ;; IMMUT-NEXT:    (local.get $1)
+ ;; IMMUT-NEXT:   (else
+ ;; IMMUT-NEXT:    (call $foo-ref
+ ;; IMMUT-NEXT:     (local.get $1)
+ ;; IMMUT-NEXT:    )
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
  ;; IMMUT-NEXT: )
@@ -1285,11 +1325,11 @@
 
  ;; CHECK:      (elem $0 (table $has-set) (i32.const 1) func $foo)
  ;; IMMUT:      (elem $0 (table $has-set) (i32.const 1) func $foo)
- (elem $0 (table $has-set) (i32.const 1) $foo)
+ (elem $0 (table $has-set) (i32.const 1) func $foo)
 
  ;; CHECK:      (elem $1 (table $no-set) (i32.const 1) func $foo)
  ;; IMMUT:      (elem $1 (table $no-set) (i32.const 1) func $foo)
- (elem $1 (table $no-set) (i32.const 1) $foo)
+ (elem $1 (table $no-set) (i32.const 1) func $foo)
 
  ;; CHECK:      (func $foo (type $v)
  ;; CHECK-NEXT:  (table.set $has-set

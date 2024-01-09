@@ -154,7 +154,9 @@
   ;; CHECK-NEXT:  (local $temp ((ref func) nullref))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $if-return-tuple-nn
@@ -165,10 +167,12 @@
     ;; Instead, we can remove the local.set entirely, as it has no gets.
     (if
       (i32.const 0)
-      (local.set $temp
-        (tuple.make 2
-          (ref.func $if-return-tuple-nn)
-          (ref.null none)
+      (then
+        (local.set $temp
+          (tuple.make 2
+            (ref.func $if-return-tuple-nn)
+            (ref.null none)
+          )
         )
       )
     )

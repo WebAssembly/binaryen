@@ -14,7 +14,9 @@
     )
     (i32.const 108)
    )
-   (unreachable)
+   (then
+    (unreachable)
+   )
   )
   (i32.store
    (i32.const 4)

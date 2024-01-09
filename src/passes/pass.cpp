@@ -739,9 +739,6 @@ static void dumpWasm(Name name, Module* wasm) {
 }
 
 void PassRunner::run() {
-  assert(!ran);
-  ran = true;
-
   static const int passDebug = getPassDebug();
   // Emit logging information when asked for. At passDebug level 1+ we log
   // the main passes, while in 2 we also log nested ones. Note that for
@@ -884,6 +881,8 @@ void PassRunner::doAdd(std::unique_ptr<Pass> pass) {
   }
   passes.emplace_back(std::move(pass));
 }
+
+void PassRunner::clear() { passes.clear(); }
 
 // Checks that the state is valid before and after a
 // pass runs on a function. We run these extra checks when

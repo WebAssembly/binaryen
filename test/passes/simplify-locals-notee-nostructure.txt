@@ -11,18 +11,26 @@
   )
   (if
    (local.get $x)
-   (nop)
+   (then
+    (nop)
+   )
   )
   (if
    (local.get $x)
-   (nop)
+   (then
+    (nop)
+   )
   )
   (nop)
   (drop
    (if (result i32)
     (i32.const 2)
-    (i32.const 3)
-    (i32.const 4)
+    (then
+     (i32.const 3)
+    )
+    (else
+     (i32.const 4)
+    )
    )
   )
   (nop)
@@ -33,11 +41,15 @@
   )
   (if
    (i32.const 6)
-   (local.set $a
-    (i32.const 7)
+   (then
+    (local.set $a
+     (i32.const 7)
+    )
    )
-   (local.set $a
-    (i32.const 8)
+   (else
+    (local.set $a
+     (i32.const 8)
+    )
    )
   )
   (drop
@@ -46,7 +58,7 @@
   (block $val
    (if
     (i32.const 10)
-    (block
+    (then
      (local.set $b
       (i32.const 11)
      )

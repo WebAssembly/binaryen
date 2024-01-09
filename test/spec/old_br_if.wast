@@ -37,10 +37,10 @@
   )
 
   (func (export "as-if-then") (param i32 i32)
-    (block (if (local.get 0) (br_if 1 (local.get 1)) (call $dummy)))
+    (block (if (local.get 0) (then (br_if 1 (local.get 1)) )(else (call $dummy))))
   )
   (func (export "as-if-else") (param i32 i32)
-    (block (if (local.get 0) (call $dummy) (br_if 1 (local.get 1))))
+    (block (if (local.get 0) (then (call $dummy) )(else (br_if 1 (local.get 1)))))
   )
 
   (func (export "nested-block-value") (param i32) (result i32)

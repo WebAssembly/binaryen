@@ -49,10 +49,14 @@
     (if
       (i32.const 1)
       ;; Superficially the order is right, but not really.
-      (local.set $x
-        (ref.func $helper)
+      (then
+        (local.set $x
+          (ref.func $helper)
+        )
       )
-      (local.get $x)
+      (else
+        (local.get $x)
+      )
     )
   )
 

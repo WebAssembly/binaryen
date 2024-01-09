@@ -69,14 +69,14 @@
   (func $f (param $x i32) (result i32)
     (global.set $g1 (i32.const 100))
     (global.set $g2 (local.get $x))
-    (if (local.get $x) (return (i32.const 0)))
+    (if (local.get $x) (then (return (i32.const 0))))
     (local.set $x
       (i32.add
         (global.get $g1)
         (global.get $g2)
       )
     )
-    (if (local.get $x) (return (i32.const 1)))
+    (if (local.get $x) (then (return (i32.const 1))))
     (global.set $g1 (i32.const 200))
     (global.set $g2 (local.get $x))
     (local.set $x

@@ -5,7 +5,7 @@
   (import "env" "_abort" (func $_abort))
   (table 2 2 funcref)
   (elem (i32.const 0) $_abort $call-indirect)
-  (export "test1" $test1)
+  (export "test1" (func $test1))
   (func $test1
     (call_indirect (type $v) (i32.const 1)) ;; safe to call
     (i32.store8 (i32.const 20) (i32.const 120))

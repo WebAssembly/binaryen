@@ -79,7 +79,7 @@
    (struct.new_default $struct)
   )
   (drop
-   (block $block (result ($ref $struct))
+   (block $block (result (ref $struct))
     (drop
      (block $extendedblock (result (ref $extendedstruct))
       (drop
@@ -348,7 +348,7 @@
    (struct.new_default $struct)
   )
   (drop
-   (block $block (result ($ref $struct))
+   (block $block (result (ref $struct))
     (drop
      (block $extendedblock (result (ref $extendedstruct))
       (drop

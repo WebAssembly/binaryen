@@ -83,7 +83,7 @@
   ;; table.
   ;; CHECK-TEXT:      (elem $especial (table $tspecial) (i32.const 0) (ref null $none_=>_none) (ref.func $f) (ref.func $h))
   ;; CHECK-BIN:      (elem $especial (table $tspecial) (i32.const 0) (ref null $none_=>_none) (ref.func $f) (ref.func $h))
-  (elem $especial (table $tspecial) (i32.const 0) (ref null $none_=>_none) $f $h)
+  (elem $especial (table $tspecial) (i32.const 0) (ref null $none_=>_none) (ref.func $f) (ref.func $h))
 
   ;; CHECK-TEXT:      (func $f (type $none_=>_none)
   ;; CHECK-TEXT-NEXT:  (drop

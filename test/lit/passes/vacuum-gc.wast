@@ -51,10 +51,14 @@
         ;; synthesize and allocate a new struct value.  Vacuum should not error
         ;; on this case, though. Instead, the end result of this function should
         ;; simply be empty, as everything here can be vacuumed away.
-        (block (result (ref ${}))
-          (struct.new ${})
+        (then
+          (block (result (ref ${}))
+            (struct.new ${})
+          )
         )
-        (unreachable)
+        (else
+          (unreachable)
+        )
       )
     )
   )

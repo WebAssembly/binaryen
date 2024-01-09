@@ -22,9 +22,11 @@
   ;; CHECK-TEXT:      (func $0 (type $0)
   ;; CHECK-TEXT-NEXT:  (if
   ;; CHECK-TEXT-NEXT:   (i32.const 0)
-  ;; CHECK-TEXT-NEXT:   (block $A
-  ;; CHECK-TEXT-NEXT:    (br_table $A
-  ;; CHECK-TEXT-NEXT:     (i32.const 0)
+  ;; CHECK-TEXT-NEXT:   (then
+  ;; CHECK-TEXT-NEXT:    (block $A
+  ;; CHECK-TEXT-NEXT:     (br_table $A
+  ;; CHECK-TEXT-NEXT:      (i32.const 0)
+  ;; CHECK-TEXT-NEXT:     )
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
@@ -32,9 +34,11 @@
   ;; CHECK-BIN:      (func $0 (type $0)
   ;; CHECK-BIN-NEXT:  (if
   ;; CHECK-BIN-NEXT:   (i32.const 0)
-  ;; CHECK-BIN-NEXT:   (block $label$2
-  ;; CHECK-BIN-NEXT:    (br_table $label$2
-  ;; CHECK-BIN-NEXT:     (i32.const 0)
+  ;; CHECK-BIN-NEXT:   (then
+  ;; CHECK-BIN-NEXT:    (block $label$2
+  ;; CHECK-BIN-NEXT:     (br_table $label$2
+  ;; CHECK-BIN-NEXT:      (i32.const 0)
+  ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
@@ -42,9 +46,11 @@
   ;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
   ;; CHECK-BIN-NODEBUG-NEXT:  (if
   ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
-  ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$2
-  ;; CHECK-BIN-NODEBUG-NEXT:    (br_table $label$2
-  ;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 0)
+  ;; CHECK-BIN-NODEBUG-NEXT:   (then
+  ;; CHECK-BIN-NODEBUG-NEXT:    (block $label$2
+  ;; CHECK-BIN-NODEBUG-NEXT:     (br_table $label$2
+  ;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 0)
+  ;; CHECK-BIN-NODEBUG-NEXT:     )
   ;; CHECK-BIN-NODEBUG-NEXT:    )
   ;; CHECK-BIN-NODEBUG-NEXT:   )
   ;; CHECK-BIN-NODEBUG-NEXT:  )
@@ -52,9 +58,11 @@
   (func $0 (type $0)
     (if
       (i32.const 0)
-      (block $A
-        (br_table $A
-          (i32.const 0)
+      (then
+        (block $A
+          (br_table $A
+            (i32.const 0)
+          )
         )
       )
     )

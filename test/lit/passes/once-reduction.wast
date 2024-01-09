@@ -14,7 +14,9 @@
     ;; A minimal "once" function. It is so trivial we can remove its body.
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
   )
@@ -40,7 +42,9 @@
   ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -52,7 +56,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
     ;; Add some more content in the function.
@@ -62,7 +68,7 @@
   ;; CHECK:      (func $caller-if-1 (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (call $once)
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:    (nop)
@@ -76,11 +82,13 @@
     ;; Add more calls, and ones that are conditional.
     (if
       (i32.const 1)
-      (block
-        (call $once)
-        (call $once)
-        (call $once)
-        (call $once)
+      (then
+        (block
+          (call $once)
+          (call $once)
+          (call $once)
+          (call $once)
+        )
       )
     )
     (call $once)
@@ -90,8 +98,10 @@
   ;; CHECK:      (func $caller-if-2 (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (call $once)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $once)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
   ;; CHECK-NEXT:    (call $once)
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -104,10 +114,14 @@
     ;; call after the if is *not* optimized.
     (if
       (i32.const 1)
-      (call $once)
-      (block
+      (then
         (call $once)
-        (call $once)
+      )
+      (else
+        (block
+          (call $once)
+          (call $once)
+        )
       )
     )
     (call $once)
@@ -118,7 +132,9 @@
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (call $once)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (call $once)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call $once)
   ;; CHECK-NEXT:   (nop)
@@ -134,7 +150,9 @@
     (loop $loop
       (if
         (i32.const 1)
-        (call $once)
+        (then
+          (call $once)
+        )
       )
       (call $once)
       (call $once)
@@ -148,7 +166,9 @@
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (call $once)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (call $once)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (br_if $loop
   ;; CHECK-NEXT:    (i32.const 1)
@@ -162,7 +182,9 @@
     (loop $loop
       (if
         (i32.const 1)
-        (call $once)
+        (then
+          (call $once)
+        )
       )
       (br_if $loop (i32.const 1))
     )
@@ -202,7 +224,9 @@
   ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -212,7 +236,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
     (call $foo)
@@ -243,7 +269,9 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -254,7 +282,9 @@
     (nop)
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
     (call $foo)
@@ -283,7 +313,9 @@
   ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (global.set $once
@@ -294,7 +326,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (nop)
     (global.set $once (i32.const 1))
@@ -324,8 +358,12 @@
   ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:   (call $foo)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (call $foo)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -335,8 +373,12 @@
   (func $once
     (if
       (global.get $once)
-      (return)
-      (call $foo)
+      (then
+        (return)
+      )
+      (else
+        (call $foo)
+      )
     )
     (global.set $once (i32.const 1))
     (call $foo)
@@ -364,7 +406,9 @@
   ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once1)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once2
   ;; CHECK-NEXT:   (i32.const 1)
@@ -373,7 +417,9 @@
   (func $once
     (if
       (global.get $once1)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once2 (i32.const 1))
   )
@@ -398,7 +444,9 @@
   ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 0)
@@ -407,7 +455,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 0))
   )
@@ -432,7 +482,9 @@
   ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -441,7 +493,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
   )
@@ -475,7 +529,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 42))
   )
@@ -517,7 +573,9 @@
   ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -527,7 +585,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
     (call $once)
@@ -546,7 +606,9 @@
   ;; CHECK-NEXT:   (i32.trunc_f64_s
   ;; CHECK-NEXT:    (global.get $once)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (f64.const 1)
@@ -558,7 +620,9 @@
       (i32.trunc_f64_s
         (global.get $once)
       )
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (f64.const 1))
   )
@@ -592,7 +656,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
   )
@@ -617,7 +683,9 @@
   ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.eqz
@@ -630,7 +698,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.eqz (i32.eqz (i32.const 1))))
   )
@@ -657,7 +727,9 @@
   ;; CHECK:      (func $once (type $0) (param $x i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -666,7 +738,9 @@
   (func $once (param $x i32)
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
   )
@@ -697,8 +771,10 @@
   ;; CHECK:      (func $once (type $0) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
@@ -709,7 +785,9 @@
   (func $once (result i32)
     (if
       (global.get $once)
-      (return (i32.const 2))
+      (then
+        (return (i32.const 2))
+      )
     )
     (global.set $once (i32.const 1))
     (i32.const 3)
@@ -740,7 +818,9 @@
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (global.get $once)
-  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (return)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (global.set $once
   ;; CHECK-NEXT:    (i32.const 1)
@@ -751,7 +831,9 @@
     (loop $loop
       (if
         (global.get $once)
-        (return)
+        (then
+          (return)
+        )
       )
       (global.set $once (i32.const 1))
     )
@@ -777,13 +859,17 @@
   ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
   )
 
@@ -807,7 +893,9 @@
   ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -816,7 +904,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
   )
@@ -845,7 +935,9 @@
   ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -857,7 +949,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
     (drop (global.get $once))
@@ -887,7 +981,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
   )
@@ -921,7 +1017,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
   )
@@ -929,53 +1027,79 @@
   ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (call $once)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $once)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (call $once)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $once)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (call $once)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (call $once)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call $once)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (nop)
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (nop)
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (nop)
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)
@@ -983,53 +1107,79 @@
   (func $caller
     (if
       (i32.const 1)
-      (call $once)
+      (then
+        (call $once)
+      )
     )
     (if
       (i32.const 1)
-      (call $once)
+      (then
+        (call $once)
+      )
     )
     (if
       (i32.const 1)
-      (call $once)
-    )
-    (call $once)
-    (if
-      (i32.const 1)
-      (call $once)
-    )
-    (call $once)
-    (if
-      (i32.const 1)
-      (nop)
-      (nop)
+      (then
+        (call $once)
+      )
     )
     (call $once)
     (if
       (i32.const 1)
-      (nop)
-      (call $once)
+      (then
+        (call $once)
+      )
     )
     (call $once)
     (if
       (i32.const 1)
-      (call $once)
+      (then
+        (nop)
+      )
+      (else
+        (nop)
+      )
     )
     (call $once)
     (if
       (i32.const 1)
-      (nop)
-      (call $once)
+      (then
+        (nop)
+      )
+      (else
+        (call $once)
+      )
     )
     (call $once)
     (if
       (i32.const 1)
-      (call $once)
+      (then
+        (call $once)
+      )
     )
     (call $once)
     (if
       (i32.const 1)
-      (call $once)
+      (then
+        (nop)
+      )
+      (else
+        (call $once)
+      )
+    )
+    (call $once)
+    (if
+      (i32.const 1)
+      (then
+        (call $once)
+      )
+    )
+    (call $once)
+    (if
+      (i32.const 1)
+      (then
+        (call $once)
+      )
     )
     (call $once)
     (call $once)
@@ -1056,7 +1206,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
   )
@@ -1066,7 +1218,9 @@
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:     (call $once)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (call $once)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
@@ -1081,7 +1235,9 @@
       (do
         (if
           (i32.const 1)
-          (call $once)
+          (then
+            (call $once)
+          )
         )
       )
       (catch $tag
@@ -1111,7 +1267,9 @@
   ;; CHECK:      (func $once1 (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once1)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once1
   ;; CHECK-NEXT:   (i32.const 1)
@@ -1128,7 +1286,9 @@
   (func $once1
     (if
       (global.get $once1)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once1 (i32.const 1))
     (call $once1)
@@ -1144,7 +1304,9 @@
   ;; CHECK:      (func $many1 (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $many1)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $many1
   ;; CHECK-NEXT:   (i32.const 0)
@@ -1161,7 +1323,9 @@
   (func $many1
     (if
       (global.get $many1)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $many1 (i32.const 0)) ;; prevent this global being "once"
     (call $many2)
@@ -1177,7 +1341,9 @@
   ;; CHECK:      (func $once2 (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once2)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once2
   ;; CHECK-NEXT:   (i32.const 2)
@@ -1194,7 +1360,9 @@
   (func $once2
     (if
       (global.get $once2)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once2 (i32.const 2))
     (call $once2)
@@ -1210,7 +1378,9 @@
   ;; CHECK:      (func $many2 (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $many2)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $many1
   ;; CHECK-NEXT:   (i32.const 0)
@@ -1227,7 +1397,9 @@
   (func $many2
     (if
       (global.get $many2)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $many1 (i32.const 0))
     (call $many1)
@@ -1256,7 +1428,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
   )
@@ -1324,7 +1498,9 @@
   ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -1333,7 +1509,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
   )
@@ -1362,7 +1540,9 @@
   ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -1371,7 +1551,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
   )
@@ -1406,7 +1588,9 @@
     ;; two lines here (the early-exit logic).
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
     (call $once.1)
@@ -1420,7 +1604,9 @@
     ;; out.
     (if
       (global.get $once.1)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once.1 (i32.const 1))
   )
@@ -1501,7 +1687,9 @@
     ;; logic.
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
     (call $once.1)
@@ -1510,7 +1698,9 @@
   ;; CHECK:      (func $once.1 (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once.1)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once.1
   ;; CHECK-NEXT:   (i32.const 1)
@@ -1523,7 +1713,9 @@
     ;; cannot do so here (it would risk an infinite loop).
     (if
       (global.get $once.1)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once.1 (i32.const 1))
     (call $once) ;; This call was added.
@@ -1593,7 +1785,9 @@
   ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -1607,7 +1801,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
     (call $once.1)
@@ -1634,7 +1830,9 @@
   ;; CHECK:      (func $once.1 (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once.1)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once.1
   ;; CHECK-NEXT:   (i32.const 1)
@@ -1648,7 +1846,9 @@
   (func $once.1
     (if
       (global.get $once.1)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once.1 (i32.const 1))
     (call $once)
@@ -1662,7 +1862,9 @@
   ;; CHECK:      (func $once.2 (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once.2)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once.2
   ;; CHECK-NEXT:   (i32.const 1)
@@ -1676,7 +1878,9 @@
   (func $once.2
     (if
       (global.get $once.2)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once.2 (i32.const 1))
     (call $once)
@@ -1699,7 +1903,9 @@
   ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -1709,7 +1915,9 @@
   (func $once
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
     ;; A recursive call. This of course does not recurse infinitely since the
@@ -1743,7 +1951,9 @@
     ;; A minimal "once" function.
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
   )
@@ -1789,7 +1999,9 @@
   ;; CHECK:      (func $once (type $0)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -1800,7 +2012,9 @@
     ;; We should not remove this early-exit logic.
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once (i32.const 1))
     ;; A call to a non-"once" function.

@@ -1,103 +1,139 @@
 (module
  (global $global$0 (mut i32) (i32.const 10))
- (func $test (param $x $i32) (param $y i32) (result i32)
+ (func $test (param $x i32) (param $y i32) (result i32)
   (drop
    (if (result i32)
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (local.get $y) ;; turn this into $x
  )
- (func $test2 (param $x $i32) (param $y i32) (result i32)
+ (func $test2 (param $x i32) (param $y i32) (result i32)
   (drop
    (if (result i32)
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (local.get $x)
  )
- (func $test-multiple (param $x $i32) (param $y i32) (result i32)
+ (func $test-multiple (param $x i32) (param $y i32) (result i32)
   (drop
    (if (result i32)
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (drop (local.get $y)) ;; turn this into $x
   (local.get $y) ;; turn this into $x
  )
- (func $test-just-some (param $x $i32) (param $y i32) (result i32)
+ (func $test-just-some (param $x i32) (param $y i32) (result i32)
   (drop
    (if (result i32)
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (drop (local.get $y)) ;; turn this into $x
   (local.set $y (i32.const 200))
   (local.get $y) ;; but not this one!
  )
- (func $test-just-some2 (param $x $i32) (param $y i32) (result i32)
+ (func $test-just-some2 (param $x i32) (param $y i32) (result i32)
   (drop
    (if (result i32)
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (if
    (i32.const 300)
-   (local.set $y (i32.const 400))
-   (drop (local.get $y)) ;; turn this into $x
+   (then
+    (local.set $y (i32.const 400))
+   )
+   (else
+    (drop (local.get $y)) ;; turn this into $x
+   )
   )
   (i32.const 500)
  )
- (func $test-just-some3 (param $x $i32) (param $y i32) (result i32)
+ (func $test-just-some3 (param $x i32) (param $y i32) (result i32)
   (drop
    (if (result i32)
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (i32.const 200)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (i32.const 200)
+    )
    )
   )
   (if
    (i32.const 300)
-   (local.set $y (i32.const 400))
-   (drop (local.get $y)) ;; can turn this into $x, but another exists we can't, so do nothing
+   (then
+    (local.set $y (i32.const 400))
+   )
+   (else
+    (drop (local.get $y)) ;; can turn this into $x, but another exists we can't, so do nothing
+   )
   )
   (local.get $y) ;; but not this one!
  )
- (func $silly-self (param $x $i32) (param $y i32) (result i32)
+ (func $silly-self (param $x i32) (param $y i32) (result i32)
   (drop
    (if (result i32)
     (local.tee $x
      (local.get $x)
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (local.get $y) ;; turn this into $x
  )
- (func $silly-multi (param $x $i32) (param $y i32) (result i32)
+ (func $silly-multi (param $x i32) (param $y i32) (result i32)
   (drop
    (if (result i32)
     (local.tee $x
@@ -105,8 +141,12 @@
       (local.get $x)
      )
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (local.get $y) ;; turn this into $x
@@ -129,147 +169,203 @@
    (local.get $var$1)
   )
   (if (local.get $var$1)
-   (local.set $var$2 ;; conditional overwrite 2
-    (i32.const 1)
+   (then
+    (local.set $var$2 ;; conditional overwrite 2
+     (i32.const 1)
+    )
    )
   )
   (drop
    (local.get $var$1) ;; can't be changed to $var$2, as it changes
   )
  )
- (func $reverse (param $x $i32) (param $y i32)
+ (func $reverse (param $x i32) (param $y i32)
   (drop
    (if (result i32)
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (drop (local.get $x)) ;; (read lower down first) but the reverse can work!
   (if (i32.const 1)
-   (local.set $y (i32.const 200))
+   (then
+    (local.set $y (i32.const 200))
+   )
   )
   (drop (local.get $y)) ;; cannot this into $x, since this $y has multiple sources
  )
- (func $reverse-end (param $x $i32) (param $y i32)
+ (func $reverse-end (param $x i32) (param $y i32)
   (drop
    (if (result i32)
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x) ;; don't change to $y, as its lifetime ended. leave it ended
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x) ;; don't change to $y, as its lifetime ended. leave it ended
+    )
    )
   )
  )
- (func $reverse-lone-end-2 (param $x $i32) (param $y i32)
+ (func $reverse-lone-end-2 (param $x i32) (param $y i32)
   (drop
    (if (result i32)
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x) ;; don't change to $y, as its lifetime ended. leave it ended
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x) ;; don't change to $y, as its lifetime ended. leave it ended
+    )
    )
   )
   (local.set $y (i32.const 200))
   (drop (local.get $y)) ;; cannot this into $x, since this $y has multiple sources
  )
- (func $reverse-undo (param $x $i32) (param $y i32)
+ (func $reverse-undo (param $x i32) (param $y i32)
   (drop
    (if (result i32)
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x) ;; can optimize this ($y lives on)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x) ;; can optimize this ($y lives on)
+    )
    )
   )
   (local.set $x (i32.const 300)) ;; force an undo
   (drop (local.get $x)) ;; (read lower down first) but the reverse can almost work
   (if (i32.const 1)
-   (local.set $y (i32.const 200))
+   (then
+    (local.set $y (i32.const 200))
+   )
   )
   (drop (local.get $y)) ;; cannot this into $x, since this $y has multiple sources
  )
- (func $reverse-undo2 (param $x $i32) (param $y i32)
+ (func $reverse-undo2 (param $x i32) (param $y i32)
   (drop
    (if (result i32)
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (i32.const 150)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (i32.const 150)
+    )
    )
   )
   (local.set $x (i32.const 300)) ;; force an undo
   (drop (local.get $x)) ;; (read lower down first) but the reverse can almost work
   (if (i32.const 1)
-   (local.set $y (i32.const 200))
+   (then
+    (local.set $y (i32.const 200))
+   )
   )
   (drop (local.get $y)) ;; cannot this into $x, since this $y has multiple sources
  )
- (func $reverse-undo3-conditional (param $x $i32) (param $y i32)
+ (func $reverse-undo3-conditional (param $x i32) (param $y i32)
   (drop
    (if (result i32)
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (i32.const 150)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (i32.const 150)
+    )
    )
   )
   (if (i32.const 1)
-   (local.set $x (i32.const 300)) ;; force an undo
+   (then
+    (local.set $x (i32.const 300)) ;; force an undo
+   )
   )
   (drop (local.get $x)) ;; (read lower down first) but the reverse can almost work
   (if (i32.const 1)
-   (local.set $y (i32.const 200))
+   (then
+    (local.set $y (i32.const 200))
+   )
   )
   (drop (local.get $y)) ;; cannot this into $x, since this $y has multiple sources
  )
- (func $reverse-undo3-conditional-b (param $x $i32) (param $y i32)
+ (func $reverse-undo3-conditional-b (param $x i32) (param $y i32)
   (drop
    (if (result i32)
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (local.get $x)
+    (then
+     (i32.const 100)
+    )
+    (else
+     (local.get $x)
+    )
    )
   )
   (if (i32.const 1)
-   (local.set $x (i32.const 300)) ;; force an undo
+   (then
+    (local.set $x (i32.const 300)) ;; force an undo
+   )
   )
   (drop (local.get $x)) ;; (read lower down first) but the reverse can almost work
   (if (i32.const 1)
-   (local.set $y (i32.const 200))
+   (then
+    (local.set $y (i32.const 200))
+   )
   )
   (drop (local.get $y)) ;; cannot this into $x, since this $y has multiple sources
  )
- (func $reverse-undo3-conditional-c (param $x $i32) (param $y i32)
+ (func $reverse-undo3-conditional-c (param $x i32) (param $y i32)
   (drop
    (if (result i32)
     (local.tee $x
      (local.get $y)
     )
-    (i32.const 100)
-    (i32.const 150)
-   )
-  )
-  (if (i32.const 1)
-   (drop (local.get $x))
-   (block
-    (if (i32.const 1)
-     (local.set $x (i32.const 300)) ;; force an undo
+    (then
+     (i32.const 100)
     )
-    (drop (local.get $x)) ;; (read lower down first) but the reverse can almost work
+    (else
+     (i32.const 150)
+    )
    )
   )
   (if (i32.const 1)
-   (local.set $y (i32.const 200))
+   (then
+    (drop (local.get $x))
+   )
+   (else
+    (block
+     (if (i32.const 1)
+      (then
+       (local.set $x (i32.const 300)) ;; force an undo
+      )
+     )
+     (drop (local.get $x)) ;; (read lower down first) but the reverse can almost work
+    )
+   )
+  )
+  (if (i32.const 1)
+   (then
+    (local.set $y (i32.const 200))
+   )
   )
   (drop (local.get $y)) ;; cannot this into $x, since this $y has multiple sources
  )
@@ -306,48 +402,58 @@
          (local.get $var$0)
         )
        )
-       (i32.const 0)
-       (block (result i32)
-        (local.set $var$3
-         (if (result i32)
-          (i32.const 0)
-          (block (result i32)
-           (block $label$7
-            (block $label$8
-             (local.set $var$0
-              (i32.const 34738786)
+       (then
+        (i32.const 0)
+       )
+       (else
+        (block (result i32)
+         (local.set $var$3
+          (if (result i32)
+           (i32.const 0)
+           (then
+            (block (result i32)
+             (block $label$7
+              (block $label$8
+               (local.set $var$0
+                (i32.const 34738786)
+               )
+              )
              )
-            )
-           )
-           (local.get $var$3)
-          )
-          (block (result i32)
-           (if
-            (i32.eqz
-             (global.get $global$0)
-            )
-            (return
-             (i64.const 137438953472)
-            )
-           )
-           (global.set $global$0
-            (i32.sub
-             (global.get $global$0)
-             (i32.const 1)
-            )
-           )
-           (br_if $label$1
-            (i32.eqz
              (local.get $var$3)
             )
            )
-           (return
-            (i64.const 44125)
+           (else
+            (block (result i32)
+             (if
+              (i32.eqz
+               (global.get $global$0)
+              )
+              (then
+               (return
+                (i64.const 137438953472)
+               )
+              )
+             )
+             (global.set $global$0
+              (i32.sub
+               (global.get $global$0)
+               (i32.const 1)
+              )
+             )
+             (br_if $label$1
+              (i32.eqz
+               (local.get $var$3)
+              )
+             )
+             (return
+              (i64.const 44125)
+             )
+            )
            )
           )
          )
+         (i32.const -129)
         )
-        (i32.const -129)
        )
       )
      )
@@ -361,8 +467,10 @@
   (loop $label$1
    (if
     (i32.const 1)
-    (drop
-     (local.get $result)
+    (then
+     (drop
+      (local.get $result)
+     )
     )
    )
    (local.set $result ;; vanishes

@@ -414,15 +414,18 @@ Result<Expression*> IRBuilder::getBranchValue(Name labelName,
   }
   auto scope = getScope(*label);
   CHECK_ERR(scope);
-  std::vector<Expression*> values((*scope)->getResultType().size());
-  for (size_t i = 0, size = values.size(); i < size; ++i) {
+  // Loops would receive their input type rather than their output type, if we
+  // supported that.
+  size_t numValues = (*scope)->getLoop() ? 0 : (*scope)->getResultType().size();
+  std::vector<Expression*> values(numValues);
+  for (size_t i = 0; i < numValues; ++i) {
     auto val = pop();
     CHECK_ERR(val);
-    values[size - 1 - i] = *val;
+    values[numValues - 1 - i] = *val;
   }
-  if (values.size() == 0) {
+  if (numValues == 0) {
     return nullptr;
-  } else if (values.size() == 1) {
+  } else if (numValues == 1) {
     return values[0];
   } else {
     return builder.makeTupleMake(values);
@@ -430,6 +433,11 @@ Result<Expression*> IRBuilder::getBranchValue(Name labelName,
 }
 
 Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
+  if (curr->condition) {
+    auto cond = pop();
+    CHECK_ERR(cond);
+    curr->condition = *cond;
+  }
   auto value = getBranchValue(curr->name, label);
   CHECK_ERR(value);
   curr->value = *value;
@@ -961,13 +969,15 @@ Result<> IRBuilder::makeLoop(Name label, Type type) {
   return visitLoopStart(loop);
 }
 
-Result<> IRBuilder::makeBreak(Index label) {
+Result<> IRBuilder::makeBreak(Index label, bool isConditional) {
   auto name = getLabelName(label);
   CHECK_ERR(name);
   Break curr;
   curr.name = *name;
+  // Use a dummy condition value if we need to pop a condition.
+  curr.condition = isConditional ? &curr : nullptr;
   CHECK_ERR(visitBreak(&curr, label));
-  push(builder.makeBreak(curr.name, curr.value));
+  push(builder.makeBreak(curr.name, curr.value, curr.condition));
   return Ok{};
 }
 

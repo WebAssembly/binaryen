@@ -14,7 +14,9 @@
     )
     (i32.const 108)
    )
-   (unreachable)
+   (then
+    (unreachable)
+   )
   )
   (i32.store
    (i32.const 4)
@@ -172,23 +174,25 @@
         )
         (i32.const 0)
        )
-       (block
+       (then
         (local.set $1
          (i32.const 6)
         )
         (br $block$6$break)
        )
-       (block
+       (else
         (block
-         (call $print
-          (i32.const 8)
+         (block
+          (call $print
+           (i32.const 8)
+          )
+          (local.set $0
+           (call $check)
+          )
          )
-         (local.set $0
-          (call $check)
+         (block
+          (br $block$5$break)
          )
-        )
-        (block
-         (br $block$5$break)
         )
        )
       )
@@ -202,7 +206,7 @@
        (local.get $1)
        (i32.const 6)
       )
-      (block
+      (then
        (local.set $1
         (i32.const 0)
        )
@@ -222,8 +226,10 @@
          )
          (i32.const 0)
         )
-        (br $shape$3$continue)
-        (block
+        (then
+         (br $shape$3$continue)
+        )
+        (else
          (local.set $1
           (i32.const 6)
          )
@@ -251,22 +257,28 @@
         )
         (i32.const 0)
        )
-       (br $shape$3$continue)
-       (if
-        (i32.eq
-         (i32.rem_u
-          (local.get $0)
-          (i32.const 3)
+       (then
+        (br $shape$3$continue)
+       )
+       (else
+        (if
+         (i32.eq
+          (i32.rem_u
+           (local.get $0)
+           (i32.const 3)
+          )
+          (i32.const 1)
          )
-         (i32.const 1)
-        )
-        (block
-         (local.set $1
-          (i32.const 6)
+         (then
+          (local.set $1
+           (i32.const 6)
+          )
+          (br $shape$3$continue)
          )
-         (br $shape$3$continue)
+         (else
+          (br $block$3$break)
+         )
         )
-        (br $block$3$break)
        )
       )
      )
@@ -307,7 +319,9 @@
     )
     (i32.const 108)
    )
-   (unreachable)
+   (then
+    (unreachable)
+   )
   )
   (i32.store
    (i32.const 4)
@@ -453,7 +467,7 @@
     (call $check)
     (i32.const 1)
    )
-   (block
+   (then
     (call $print
      (i32.const 8)
     )
@@ -461,8 +475,10 @@
      (call $check)
     )
    )
-   (local.set $0
-    (i32.const 6)
+   (else
+    (local.set $0
+     (i32.const 6)
+    )
    )
   )
   (loop $shape$3$continue
@@ -471,7 +487,7 @@
      (local.get $0)
      (i32.const 6)
     )
-    (block
+    (then
      (local.set $0
       (i32.const 0)
      )
@@ -513,13 +529,13 @@
      )
      (i32.const 1)
     )
-    (block
+    (then
      (local.set $0
       (i32.const 6)
      )
      (br $shape$3$continue)
     )
-    (block
+    (else
      (call $print
       (i32.const 2)
      )

@@ -64,11 +64,15 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $B)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $B)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $B)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $B)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
@@ -95,11 +99,15 @@
   )
   (if
    (local.get $x)
-   (drop
-    (local.get $A)
+   (then
+    (drop
+     (local.get $A)
+    )
    )
-   (drop
-    (local.get $B)
+   (else
+    (drop
+     (local.get $B)
+    )
    )
   )
   (drop

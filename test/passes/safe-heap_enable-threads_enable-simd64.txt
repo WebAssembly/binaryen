@@ -208,7 +208,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.shr_s
    (i32.shl
@@ -244,7 +246,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.load8_s
    (local.get $2)
@@ -274,7 +278,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.atomic.load8_u
    (local.get $2)
@@ -304,7 +310,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.load8_u
    (local.get $2)
@@ -334,7 +342,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.load16_s align=1
    (local.get $2)
@@ -364,7 +374,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -373,7 +385,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.shr_s
    (i32.shl
@@ -409,7 +423,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -418,7 +434,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.load16_s
    (local.get $2)
@@ -448,7 +466,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.load16_u align=1
    (local.get $2)
@@ -478,7 +498,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -487,7 +509,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.atomic.load16_u
    (local.get $2)
@@ -517,7 +541,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -526,7 +552,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.load16_u
    (local.get $2)
@@ -556,7 +584,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.load align=1
    (local.get $2)
@@ -586,7 +616,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -595,7 +627,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.load align=2
    (local.get $2)
@@ -625,7 +659,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -634,7 +670,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.atomic.load
    (local.get $2)
@@ -664,7 +702,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -673,7 +713,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.load
    (local.get $2)
@@ -703,7 +745,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.shr_s
    (i64.shl
@@ -739,7 +783,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load8_s
    (local.get $2)
@@ -769,7 +815,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.atomic.load8_u
    (local.get $2)
@@ -799,7 +847,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load8_u
    (local.get $2)
@@ -829,7 +879,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load16_s align=1
    (local.get $2)
@@ -859,7 +911,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -868,7 +922,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.shr_s
    (i64.shl
@@ -904,7 +960,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -913,7 +971,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load16_s
    (local.get $2)
@@ -943,7 +1003,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load16_u align=1
    (local.get $2)
@@ -973,7 +1035,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -982,7 +1046,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.atomic.load16_u
    (local.get $2)
@@ -1012,7 +1078,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1021,7 +1089,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load16_u
    (local.get $2)
@@ -1051,7 +1121,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load32_s align=1
    (local.get $2)
@@ -1081,7 +1153,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1090,7 +1164,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load32_s align=2
    (local.get $2)
@@ -1120,7 +1196,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1129,7 +1207,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.shr_s
    (i64.shl
@@ -1165,7 +1245,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1174,7 +1256,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load32_s
    (local.get $2)
@@ -1204,7 +1288,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load32_u align=1
    (local.get $2)
@@ -1234,7 +1320,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1243,7 +1331,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load32_u align=2
    (local.get $2)
@@ -1273,7 +1363,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1282,7 +1374,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.atomic.load32_u
    (local.get $2)
@@ -1312,7 +1406,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1321,7 +1417,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load32_u
    (local.get $2)
@@ -1351,7 +1449,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load align=1
    (local.get $2)
@@ -1381,7 +1481,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1390,7 +1492,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load align=2
    (local.get $2)
@@ -1420,7 +1524,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1429,7 +1535,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load align=4
    (local.get $2)
@@ -1459,7 +1567,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1468,7 +1578,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.atomic.load
    (local.get $2)
@@ -1498,7 +1610,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1507,7 +1621,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load
    (local.get $2)
@@ -1537,7 +1653,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (f32.load align=1
    (local.get $2)
@@ -1567,7 +1685,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1576,7 +1696,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f32.load align=2
    (local.get $2)
@@ -1606,7 +1728,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1615,7 +1739,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f32.load
    (local.get $2)
@@ -1645,7 +1771,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (f64.load align=1
    (local.get $2)
@@ -1675,7 +1803,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1684,7 +1814,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.load align=2
    (local.get $2)
@@ -1714,7 +1846,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1723,7 +1857,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.load align=4
    (local.get $2)
@@ -1753,7 +1889,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1762,7 +1900,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.load
    (local.get $2)
@@ -1792,7 +1932,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (v128.load align=1
    (local.get $2)
@@ -1822,7 +1964,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1831,7 +1975,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.load align=2
    (local.get $2)
@@ -1861,7 +2007,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1870,7 +2018,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.load align=4
    (local.get $2)
@@ -1900,7 +2050,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1909,7 +2061,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.load align=8
    (local.get $2)
@@ -1939,7 +2093,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -1948,7 +2104,9 @@
     )
     (i32.const 15)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.load
    (local.get $2)
@@ -1978,7 +2136,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.atomic.store8
    (local.get $3)
@@ -2009,7 +2169,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.store8
    (local.get $3)
@@ -2040,7 +2202,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.store16 align=1
    (local.get $3)
@@ -2071,7 +2235,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -2080,7 +2246,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.atomic.store16
    (local.get $3)
@@ -2111,7 +2279,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -2120,7 +2290,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.store16
    (local.get $3)
@@ -2151,7 +2323,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.store align=1
    (local.get $3)
@@ -2182,7 +2356,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -2191,7 +2367,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.store align=2
    (local.get $3)
@@ -2222,7 +2400,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -2231,7 +2411,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.atomic.store
    (local.get $3)
@@ -2262,7 +2444,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -2271,7 +2455,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.store
    (local.get $3)
@@ -2302,7 +2488,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.atomic.store8
    (local.get $3)
@@ -2333,7 +2521,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.store8
    (local.get $3)
@@ -2364,7 +2554,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.store16 align=1
    (local.get $3)
@@ -2395,7 +2587,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -2404,7 +2598,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.atomic.store16
    (local.get $3)
@@ -2435,7 +2631,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -2444,7 +2642,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store16
    (local.get $3)
@@ -2475,7 +2675,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.store32 align=1
    (local.get $3)
@@ -2506,7 +2708,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -2515,7 +2719,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store32 align=2
    (local.get $3)
@@ -2546,7 +2752,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -2555,7 +2763,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.atomic.store32
    (local.get $3)
@@ -2586,7 +2796,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -2595,7 +2807,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store32
    (local.get $3)
@@ -2626,7 +2840,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.store align=1
    (local.get $3)
@@ -2657,7 +2873,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -2666,7 +2884,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store align=2
    (local.get $3)
@@ -2697,7 +2917,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -2706,7 +2928,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store align=4
    (local.get $3)
@@ -2737,7 +2961,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -2746,7 +2972,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.atomic.store
    (local.get $3)
@@ -2777,7 +3005,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -2786,7 +3016,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store
    (local.get $3)
@@ -2817,7 +3049,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (f32.store align=1
    (local.get $3)
@@ -2848,7 +3082,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -2857,7 +3093,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f32.store align=2
    (local.get $3)
@@ -2888,7 +3126,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -2897,7 +3137,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f32.store
    (local.get $3)
@@ -2928,7 +3170,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (f64.store align=1
    (local.get $3)
@@ -2959,7 +3203,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -2968,7 +3214,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.store align=2
    (local.get $3)
@@ -2999,7 +3247,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -3008,7 +3258,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.store align=4
    (local.get $3)
@@ -3039,7 +3291,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -3048,7 +3302,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.store
    (local.get $3)
@@ -3079,7 +3335,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (v128.store align=1
    (local.get $3)
@@ -3110,7 +3368,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -3119,7 +3379,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.store align=2
    (local.get $3)
@@ -3150,7 +3412,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -3159,7 +3423,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.store align=4
    (local.get $3)
@@ -3190,7 +3456,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -3199,7 +3467,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.store align=8
    (local.get $3)
@@ -3230,7 +3500,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -3239,7 +3511,9 @@
     )
     (i32.const 15)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.store
    (local.get $3)
@@ -3296,7 +3570,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.load8_s
    (local.get $2)
@@ -3326,7 +3602,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.load8_u
    (local.get $2)
@@ -3356,7 +3634,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.load16_s align=1
    (local.get $2)
@@ -3386,7 +3666,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -3395,7 +3677,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.load16_s
    (local.get $2)
@@ -3425,7 +3709,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.load16_u align=1
    (local.get $2)
@@ -3455,7 +3741,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -3464,7 +3752,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.load16_u
    (local.get $2)
@@ -3494,7 +3784,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.load align=1
    (local.get $2)
@@ -3524,7 +3816,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -3533,7 +3827,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.load align=2
    (local.get $2)
@@ -3563,7 +3859,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -3572,7 +3870,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.load
    (local.get $2)
@@ -3602,7 +3902,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load8_s
    (local.get $2)
@@ -3632,7 +3934,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load8_u
    (local.get $2)
@@ -3662,7 +3966,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load16_s align=1
    (local.get $2)
@@ -3692,7 +3998,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -3701,7 +4009,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load16_s
    (local.get $2)
@@ -3731,7 +4041,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load16_u align=1
    (local.get $2)
@@ -3761,7 +4073,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -3770,7 +4084,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load16_u
    (local.get $2)
@@ -3800,7 +4116,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load32_s align=1
    (local.get $2)
@@ -3830,7 +4148,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -3839,7 +4159,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load32_s align=2
    (local.get $2)
@@ -3869,7 +4191,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -3878,7 +4202,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load32_s
    (local.get $2)
@@ -3908,7 +4234,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load32_u align=1
    (local.get $2)
@@ -3938,7 +4266,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -3947,7 +4277,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load32_u align=2
    (local.get $2)
@@ -3977,7 +4309,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -3986,7 +4320,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load32_u
    (local.get $2)
@@ -4016,7 +4352,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load align=1
    (local.get $2)
@@ -4046,7 +4384,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4055,7 +4395,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load align=2
    (local.get $2)
@@ -4085,7 +4427,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4094,7 +4438,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load align=4
    (local.get $2)
@@ -4124,7 +4470,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4133,7 +4481,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load
    (local.get $2)
@@ -4163,7 +4513,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (f32.load align=1
    (local.get $2)
@@ -4193,7 +4545,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4202,7 +4556,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f32.load align=2
    (local.get $2)
@@ -4232,7 +4588,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4241,7 +4599,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f32.load
    (local.get $2)
@@ -4271,7 +4631,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (f64.load align=1
    (local.get $2)
@@ -4301,7 +4663,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4310,7 +4674,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.load align=2
    (local.get $2)
@@ -4340,7 +4706,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4349,7 +4717,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.load align=4
    (local.get $2)
@@ -4379,7 +4749,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4388,7 +4760,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.load
    (local.get $2)
@@ -4418,7 +4792,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (v128.load align=1
    (local.get $2)
@@ -4448,7 +4824,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4457,7 +4835,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.load align=2
    (local.get $2)
@@ -4487,7 +4867,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4496,7 +4878,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.load align=4
    (local.get $2)
@@ -4526,7 +4910,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4535,7 +4921,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.load align=8
    (local.get $2)
@@ -4565,7 +4953,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4574,7 +4964,9 @@
     )
     (i32.const 15)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.load
    (local.get $2)
@@ -4604,7 +4996,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.store8
    (local.get $3)
@@ -4635,7 +5029,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.store16 align=1
    (local.get $3)
@@ -4666,7 +5062,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4675,7 +5073,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.store16
    (local.get $3)
@@ -4706,7 +5106,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.store align=1
    (local.get $3)
@@ -4737,7 +5139,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4746,7 +5150,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.store align=2
    (local.get $3)
@@ -4777,7 +5183,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4786,7 +5194,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.store
    (local.get $3)
@@ -4817,7 +5227,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.store8
    (local.get $3)
@@ -4848,7 +5260,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.store16 align=1
    (local.get $3)
@@ -4879,7 +5293,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4888,7 +5304,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store16
    (local.get $3)
@@ -4919,7 +5337,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.store32 align=1
    (local.get $3)
@@ -4950,7 +5370,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4959,7 +5381,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store32 align=2
    (local.get $3)
@@ -4990,7 +5414,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -4999,7 +5425,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store32
    (local.get $3)
@@ -5030,7 +5458,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.store align=1
    (local.get $3)
@@ -5061,7 +5491,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -5070,7 +5502,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store align=2
    (local.get $3)
@@ -5101,7 +5535,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -5110,7 +5546,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store align=4
    (local.get $3)
@@ -5141,7 +5579,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -5150,7 +5590,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store
    (local.get $3)
@@ -5181,7 +5623,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (f32.store align=1
    (local.get $3)
@@ -5212,7 +5656,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -5221,7 +5667,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f32.store align=2
    (local.get $3)
@@ -5252,7 +5700,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -5261,7 +5711,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f32.store
    (local.get $3)
@@ -5292,7 +5744,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (f64.store align=1
    (local.get $3)
@@ -5323,7 +5777,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -5332,7 +5788,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.store align=2
    (local.get $3)
@@ -5363,7 +5821,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -5372,7 +5832,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.store align=4
    (local.get $3)
@@ -5403,7 +5865,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -5412,7 +5876,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.store
    (local.get $3)
@@ -5443,7 +5909,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (v128.store align=1
    (local.get $3)
@@ -5474,7 +5942,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -5483,7 +5953,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.store align=2
    (local.get $3)
@@ -5514,7 +5986,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -5523,7 +5997,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.store align=4
    (local.get $3)
@@ -5554,7 +6030,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -5563,7 +6041,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.store align=8
    (local.get $3)
@@ -5594,7 +6074,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -5603,7 +6085,9 @@
     )
     (i32.const 15)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.store
    (local.get $3)
@@ -5665,7 +6149,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.shr_s
    (i32.shl
@@ -5701,7 +6187,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.load8_s
    (local.get $2)
@@ -5731,7 +6219,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.atomic.load8_u
    (local.get $2)
@@ -5761,7 +6251,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.load8_u
    (local.get $2)
@@ -5791,7 +6283,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.load16_s align=1
    (local.get $2)
@@ -5821,7 +6315,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -5830,7 +6326,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.shr_s
    (i32.shl
@@ -5866,7 +6364,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -5875,7 +6375,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.load16_s
    (local.get $2)
@@ -5905,7 +6407,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.load16_u align=1
    (local.get $2)
@@ -5935,7 +6439,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -5944,7 +6450,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.atomic.load16_u
    (local.get $2)
@@ -5974,7 +6482,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -5983,7 +6493,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.load16_u
    (local.get $2)
@@ -6013,7 +6525,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.load align=1
    (local.get $2)
@@ -6043,7 +6557,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -6052,7 +6568,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.load align=2
    (local.get $2)
@@ -6082,7 +6600,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -6091,7 +6611,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.atomic.load
    (local.get $2)
@@ -6121,7 +6643,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -6130,7 +6654,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.load
    (local.get $2)
@@ -6160,7 +6686,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.shr_s
    (i64.shl
@@ -6196,7 +6724,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load8_s
    (local.get $2)
@@ -6226,7 +6756,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.atomic.load8_u
    (local.get $2)
@@ -6256,7 +6788,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load8_u
    (local.get $2)
@@ -6286,7 +6820,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load16_s align=1
    (local.get $2)
@@ -6316,7 +6852,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -6325,7 +6863,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.shr_s
    (i64.shl
@@ -6361,7 +6901,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -6370,7 +6912,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load16_s
    (local.get $2)
@@ -6400,7 +6944,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load16_u align=1
    (local.get $2)
@@ -6430,7 +6976,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -6439,7 +6987,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.atomic.load16_u
    (local.get $2)
@@ -6469,7 +7019,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -6478,7 +7030,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load16_u
    (local.get $2)
@@ -6508,7 +7062,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load32_s align=1
    (local.get $2)
@@ -6538,7 +7094,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -6547,7 +7105,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load32_s align=2
    (local.get $2)
@@ -6577,7 +7137,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -6586,7 +7148,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.shr_s
    (i64.shl
@@ -6622,7 +7186,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -6631,7 +7197,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load32_s
    (local.get $2)
@@ -6661,7 +7229,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load32_u align=1
    (local.get $2)
@@ -6691,7 +7261,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -6700,7 +7272,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load32_u align=2
    (local.get $2)
@@ -6730,7 +7304,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -6739,7 +7315,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.atomic.load32_u
    (local.get $2)
@@ -6769,7 +7347,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -6778,7 +7358,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load32_u
    (local.get $2)
@@ -6808,7 +7390,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.load align=1
    (local.get $2)
@@ -6838,7 +7422,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -6847,7 +7433,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load align=2
    (local.get $2)
@@ -6877,7 +7465,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -6886,7 +7476,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load align=4
    (local.get $2)
@@ -6916,7 +7508,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -6925,7 +7519,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.atomic.load
    (local.get $2)
@@ -6955,7 +7551,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -6964,7 +7562,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.load
    (local.get $2)
@@ -6994,7 +7594,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (f32.load align=1
    (local.get $2)
@@ -7024,7 +7626,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -7033,7 +7637,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f32.load align=2
    (local.get $2)
@@ -7063,7 +7669,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -7072,7 +7680,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f32.load
    (local.get $2)
@@ -7102,7 +7712,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (f64.load align=1
    (local.get $2)
@@ -7132,7 +7744,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -7141,7 +7755,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.load align=2
    (local.get $2)
@@ -7171,7 +7787,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -7180,7 +7798,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.load align=4
    (local.get $2)
@@ -7210,7 +7830,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -7219,7 +7841,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.load
    (local.get $2)
@@ -7249,7 +7873,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (v128.load align=1
    (local.get $2)
@@ -7279,7 +7905,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -7288,7 +7916,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.load align=2
    (local.get $2)
@@ -7318,7 +7948,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -7327,7 +7959,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.load align=4
    (local.get $2)
@@ -7357,7 +7991,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -7366,7 +8002,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.load align=8
    (local.get $2)
@@ -7396,7 +8034,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -7405,7 +8045,9 @@
     )
     (i32.const 15)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.load
    (local.get $2)
@@ -7435,7 +8077,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.atomic.store8
    (local.get $3)
@@ -7466,7 +8110,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.store8
    (local.get $3)
@@ -7497,7 +8143,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.store16 align=1
    (local.get $3)
@@ -7528,7 +8176,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -7537,7 +8187,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.atomic.store16
    (local.get $3)
@@ -7568,7 +8220,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -7577,7 +8231,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.store16
    (local.get $3)
@@ -7608,7 +8264,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i32.store align=1
    (local.get $3)
@@ -7639,7 +8297,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -7648,7 +8308,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.store align=2
    (local.get $3)
@@ -7679,7 +8341,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -7688,7 +8352,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.atomic.store
    (local.get $3)
@@ -7719,7 +8385,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -7728,7 +8396,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i32.store
    (local.get $3)
@@ -7759,7 +8429,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.atomic.store8
    (local.get $3)
@@ -7790,7 +8462,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.store8
    (local.get $3)
@@ -7821,7 +8495,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.store16 align=1
    (local.get $3)
@@ -7852,7 +8528,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -7861,7 +8539,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.atomic.store16
    (local.get $3)
@@ -7892,7 +8572,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -7901,7 +8583,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store16
    (local.get $3)
@@ -7932,7 +8616,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.store32 align=1
    (local.get $3)
@@ -7963,7 +8649,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -7972,7 +8660,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store32 align=2
    (local.get $3)
@@ -8003,7 +8693,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -8012,7 +8704,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.atomic.store32
    (local.get $3)
@@ -8043,7 +8737,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -8052,7 +8748,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store32
    (local.get $3)
@@ -8083,7 +8781,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (i64.store align=1
    (local.get $3)
@@ -8114,7 +8814,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -8123,7 +8825,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store align=2
    (local.get $3)
@@ -8154,7 +8858,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -8163,7 +8869,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store align=4
    (local.get $3)
@@ -8194,7 +8902,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -8203,7 +8913,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.atomic.store
    (local.get $3)
@@ -8234,7 +8946,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -8243,7 +8957,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (i64.store
    (local.get $3)
@@ -8274,7 +8990,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (f32.store align=1
    (local.get $3)
@@ -8305,7 +9023,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -8314,7 +9034,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f32.store align=2
    (local.get $3)
@@ -8345,7 +9067,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -8354,7 +9078,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f32.store
    (local.get $3)
@@ -8385,7 +9111,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (f64.store align=1
    (local.get $3)
@@ -8416,7 +9144,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -8425,7 +9155,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.store align=2
    (local.get $3)
@@ -8456,7 +9188,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -8465,7 +9199,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.store align=4
    (local.get $3)
@@ -8496,7 +9232,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -8505,7 +9243,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (f64.store
    (local.get $3)
@@ -8536,7 +9276,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (v128.store align=1
    (local.get $3)
@@ -8567,7 +9309,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -8576,7 +9320,9 @@
     )
     (i32.const 1)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.store align=2
    (local.get $3)
@@ -8607,7 +9353,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -8616,7 +9364,9 @@
     )
     (i32.const 3)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.store align=4
    (local.get $3)
@@ -8647,7 +9397,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -8656,7 +9408,9 @@
     )
     (i32.const 7)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.store align=8
    (local.get $3)
@@ -8687,7 +9441,9 @@
      )
     )
    )
-   (call $segfault)
+   (then
+    (call $segfault)
+   )
   )
   (if
    (i32.and
@@ -8696,7 +9452,9 @@
     )
     (i32.const 15)
    )
-   (call $alignfault)
+   (then
+    (call $alignfault)
+   )
   )
   (v128.store
    (local.get $3)

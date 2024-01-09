@@ -19,7 +19,7 @@
  ;; CHECK-NEXT:  (block $label$1
  ;; CHECK-NEXT:   (if
  ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (block $label$3
  ;; CHECK-NEXT:      (call_indirect (type $13)
  ;; CHECK-NEXT:       (block $label$4
@@ -37,15 +37,17 @@
   (block $label$1
    (if
     (i32.const 1)
-    (block $label$3
-     (call_indirect (type $13)
-      (block $label$4 (result f32) ;; but this type may change dangerously
-       (nop) ;; fold this
-       (br $label$3)
+    (then
+     (block $label$3
+      (call_indirect (type $13)
+       (block $label$4 (result f32) ;; but this type may change dangerously
+        (nop) ;; fold this
+        (br $label$3)
+       )
+       (i32.const 105)
       )
-      (i32.const 105)
+      (nop) ;; with this
      )
-     (nop) ;; with this
     )
    )
   )
@@ -53,22 +55,30 @@
  ;; CHECK:      (func $negative-zero (result f32)
  ;; CHECK-NEXT:  (if (result f32)
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (block $label$0 (result f32)
- ;; CHECK-NEXT:    (f32.const 0)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (block $label$0 (result f32)
+ ;; CHECK-NEXT:     (f32.const 0)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (block $label$1 (result f32)
- ;; CHECK-NEXT:    (f32.const -0)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (block $label$1 (result f32)
+ ;; CHECK-NEXT:     (f32.const -0)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $negative-zero (result f32)
   (if (result f32)
    (i32.const 0)
-   (block $label$0 (result f32)
-    (f32.const 0)
+   (then
+    (block $label$0 (result f32)
+     (f32.const 0)
+    )
    )
-   (block $label$1 (result f32)
-    (f32.const -0)
+   (else
+    (block $label$1 (result f32)
+     (f32.const -0)
+    )
    )
   )
  )
@@ -83,11 +93,15 @@
  (func $negative-zero-b (result f32)
   (if (result f32)
    (i32.const 0)
-   (block $label$0 (result f32)
-    (f32.const -0)
+   (then
+    (block $label$0 (result f32)
+     (f32.const -0)
+    )
    )
-   (block $label$1 (result f32)
-    (f32.const -0)
+   (else
+    (block $label$1 (result f32)
+     (f32.const -0)
+    )
    )
   )
  )
@@ -102,11 +116,15 @@
  (func $negative-zero-c (result f32)
   (if (result f32)
    (i32.const 0)
-   (block $label$0 (result f32)
-    (f32.const 0)
+   (then
+    (block $label$0 (result f32)
+     (f32.const 0)
+    )
    )
-   (block $label$1 (result f32)
-    (f32.const 0)
+   (else
+    (block $label$1 (result f32)
+     (f32.const 0)
+    )
    )
   )
  )
@@ -114,23 +132,29 @@
  ;; CHECK-NEXT:  (block $label$A
  ;; CHECK-NEXT:   (if
  ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (block $label$B
- ;; CHECK-NEXT:      (if
- ;; CHECK-NEXT:       (unreachable)
- ;; CHECK-NEXT:       (br_table $label$A $label$B
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (block
+ ;; CHECK-NEXT:      (block $label$B
+ ;; CHECK-NEXT:       (if
  ;; CHECK-NEXT:        (unreachable)
+ ;; CHECK-NEXT:        (then
+ ;; CHECK-NEXT:         (br_table $label$A $label$B
+ ;; CHECK-NEXT:          (unreachable)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (return)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (return)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:    (else
  ;; CHECK-NEXT:     (block $label$C
  ;; CHECK-NEXT:      (if
  ;; CHECK-NEXT:       (unreachable)
- ;; CHECK-NEXT:       (br_table $label$A $label$C
- ;; CHECK-NEXT:        (unreachable)
+ ;; CHECK-NEXT:       (then
+ ;; CHECK-NEXT:        (br_table $label$A $label$C
+ ;; CHECK-NEXT:         (unreachable)
+ ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
@@ -143,29 +167,37 @@
   (block $label$A
    (if
     (unreachable)
-    (block
+    (then
      (block
-      (block $label$B
+      (block
+       (block $label$B
+        (if
+         (unreachable)
+         (then
+          (br_table $label$A $label$B
+           (unreachable)
+          )
+         )
+        )
+       )
+       (return)
+      )
+     )
+    )
+    (else
+     (block
+      (block $label$C
        (if
         (unreachable)
-        (br_table $label$A $label$B
-         (unreachable)
+        (then
+         (br_table $label$A $label$C ;; this all looks mergeable, but $label$A is outside
+          (unreachable)
+         )
         )
        )
       )
       (return)
      )
-    )
-    (block
-     (block $label$C
-      (if
-       (unreachable)
-       (br_table $label$A $label$C ;; this all looks mergeable, but $label$A is outside
-        (unreachable)
-       )
-      )
-     )
-     (return)
     )
    )
   )
@@ -175,18 +207,24 @@
  ;; CHECK-NEXT:   (block $label$A
  ;; CHECK-NEXT:    (if
  ;; CHECK-NEXT:     (unreachable)
- ;; CHECK-NEXT:     (block
+ ;; CHECK-NEXT:     (then
+ ;; CHECK-NEXT:      (block
+ ;; CHECK-NEXT:       (br $folding-inner0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (else
  ;; CHECK-NEXT:      (br $folding-inner0)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (br $folding-inner0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block $label$B
  ;; CHECK-NEXT:   (if
  ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:    (br_table $label$B $label$B
- ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (br_table $label$B $label$B
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -196,29 +234,37 @@
   (block $label$A
    (if
     (unreachable)
-    (block
+    (then
      (block
-      (block $label$B
+      (block
+       (block $label$B
+        (if
+         (unreachable)
+         (then
+          (br_table $label$B $label$B
+           (unreachable)
+          )
+         )
+        )
+       )
+       (return)
+      )
+     )
+    )
+    (else
+     (block
+      (block $label$C
        (if
         (unreachable)
-        (br_table $label$B $label$B
-         (unreachable)
+        (then
+         (br_table $label$C $label$C ;; this all looks mergeable, and is, B ~~ C
+          (unreachable)
+         )
         )
        )
       )
       (return)
      )
-    )
-    (block
-     (block $label$C
-      (if
-       (unreachable)
-       (br_table $label$C $label$C ;; this all looks mergeable, and is, B ~~ C
-        (unreachable)
-       )
-      )
-     )
-     (return)
     )
    )
   )
@@ -270,11 +316,15 @@
  ;; CHECK-NEXT:  (local $var$0 i32)
  ;; CHECK-NEXT:  (if (result i32)
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.load offset=22
- ;; CHECK-NEXT:    (local.get $var$0)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (i32.load offset=22
+ ;; CHECK-NEXT:     (local.get $var$0)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (i32.atomic.load offset=22
- ;; CHECK-NEXT:    (local.get $var$0)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (i32.atomic.load offset=22
+ ;; CHECK-NEXT:     (local.get $var$0)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -282,11 +332,15 @@
   (local $var$0 i32)
   (if (result i32)
    (i32.const 0)
-   (i32.load offset=22
-    (local.get $var$0)
+   (then
+    (i32.load offset=22
+     (local.get $var$0)
+    )
    )
-   (i32.atomic.load offset=22
-    (local.get $var$0)
+   (else
+    (i32.atomic.load offset=22
+     (local.get $var$0)
+    )
    )
   )
  )
@@ -313,13 +367,17 @@
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (if
  ;; CHECK-NEXT:      (global.get $global$0)
- ;; CHECK-NEXT:      (br $folding-inner0)
+ ;; CHECK-NEXT:      (then
+ ;; CHECK-NEXT:       (br $folding-inner0)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (if
  ;; CHECK-NEXT:     (global.get $global$0)
- ;; CHECK-NEXT:     (br $folding-inner0)
+ ;; CHECK-NEXT:     (then
+ ;; CHECK-NEXT:      (br $folding-inner0)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
@@ -351,6 +409,23 @@
    )
    (if
     (global.get $global$0)
+    (then
+     (block
+      (global.set $global$0
+       (i32.sub
+        (global.get $global$0)
+        (i32.const 1)
+       )
+      )
+      (unreachable)
+     )
+    )
+   )
+   (unreachable)
+  )
+  (if
+   (global.get $global$0)
+   (then
     (block
      (global.set $global$0
       (i32.sub
@@ -360,19 +435,6 @@
      )
      (unreachable)
     )
-   )
-   (unreachable)
-  )
-  (if
-   (global.get $global$0)
-   (block
-    (global.set $global$0
-     (i32.sub
-      (global.get $global$0)
-      (i32.const 1)
-     )
-    )
-    (unreachable)
    )
   )
   (unreachable)

@@ -12,15 +12,19 @@
   ;; CHECK:      (func $simple
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $simple
     (if
       (global.get $global)
-      (global.set $global (i32.const 1))
+      (then
+        (global.set $global (i32.const 1))
+      )
     )
   )
   ;; CHECK:      (func $more-with-no-side-effects
@@ -28,7 +32,7 @@
   ;; CHECK-NEXT:   (i32.eqz
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 1)
@@ -43,9 +47,11 @@
         (global.get $global)
       )
       ;; Also test for other operations in the body, with no effects.
-      (block
-        (nop)
-        (global.set $global (i32.const 1))
+      (then
+        (block
+          (nop)
+          (global.set $global (i32.const 1))
+        )
       )
     )
   )
@@ -69,8 +75,10 @@
   ;; CHECK:      (func $additional-read
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $global)
-  ;; CHECK-NEXT:   (global.set $global
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (global.set $global
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -80,7 +88,9 @@
   (func $additional-read
     (if
       (global.get $global)
-      (global.set $global (i32.const 1))
+      (then
+        (global.set $global (i32.const 1))
+      )
     )
     (drop
       (global.get $global)
@@ -96,17 +106,25 @@
   ;; CHECK:      (func $if-else
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $global)
-  ;; CHECK-NEXT:   (global.set $global
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (global.set $global
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $if-else
     (if
       (global.get $global)
-      (global.set $global (i32.const 1))
-      (nop)
+      (then
+        (global.set $global (i32.const 1))
+      )
+      (else
+        (nop)
+      )
     )
   )
 )
@@ -121,7 +139,7 @@
   ;; CHECK:      (func $side-effects-in-body
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $global)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (global.set $global
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
@@ -137,10 +155,12 @@
   (func $side-effects-in-body
     (if
       (global.get $global)
-      (block
-        (global.set $global (i32.const 1))
-        (global.set $other (i32.const 2))
-        (drop (global.get $other))
+      (then
+        (block
+          (global.set $global (i32.const 1))
+          (global.set $other (i32.const 2))
+          (drop (global.get $other))
+        )
       )
     )
   )
@@ -159,17 +179,19 @@
   ;; CHECK:      (func $nested
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:     (then
   ;; CHECK-NEXT:      (if
   ;; CHECK-NEXT:       (i32.const 0)
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (i32.const 2)
+  ;; CHECK-NEXT:       (then
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (i32.const 2)
+  ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (drop
@@ -183,18 +205,24 @@
   (func $nested
     (if
       (global.get $a)
-      (block
-        (global.set $a (i32.const 1))
-        (if
-          (global.get $b)
-          (block
-            (if
-              (global.get $c)
+      (then
+        (block
+          (global.set $a (i32.const 1))
+          (if
+            (global.get $b)
+            (then
               (block
-                (global.set $c (i32.const 2))
+                (if
+                  (global.get $c)
+                  (then
+                    (block
+                      (global.set $c (i32.const 2))
+                    )
+                  )
+                )
+                (global.set $b (i32.const 3))
               )
             )
-            (global.set $b (i32.const 3))
           )
         )
       )
@@ -211,7 +239,9 @@
   ;; CHECK:      (func $clinit
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
@@ -223,7 +253,9 @@
     ;; in the if body in this case.
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once
       (i32.const 1)
@@ -240,7 +272,9 @@
   ;; CHECK:      (func $clinit
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -252,7 +286,9 @@
     ;; many elements - a nop is added at the end.
     (if
       (global.get $once)
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once
       (i32.const 1)
@@ -270,8 +306,12 @@
   ;; CHECK:      (func $clinit
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (return)
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -281,8 +321,12 @@
     ;; As above, but the optimization fails because the if has an else.
     (if
       (global.get $once)
-      (return)
-      (nop)
+      (then
+        (return)
+      )
+      (else
+        (nop)
+      )
     )
     (global.set $once
       (i32.const 1)
@@ -299,7 +343,9 @@
   ;; CHECK:      (func $clinit
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (global.get $once)
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -310,7 +356,9 @@
     ;; return.
     (if
       (global.get $once)
-      (nop)
+      (then
+        (nop)
+      )
     )
     (global.set $once
       (i32.const 1)
@@ -331,7 +379,9 @@
   ;; CHECK-NEXT:   (call $foo
   ;; CHECK-NEXT:    (global.get $once)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (return)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.set $once
   ;; CHECK-NEXT:   (i32.const 1)
@@ -344,7 +394,9 @@
                  ;; value, which is dangerous.
         (global.get $once)
       )
-      (return)
+      (then
+        (return)
+      )
     )
     (global.set $once
       (i32.const 1)
@@ -374,11 +426,17 @@
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (if (result i32)
   ;; CHECK-NEXT:    (global.get $global)
-  ;; CHECK-NEXT:    (call $foo)
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (call $foo)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (global.set $global
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (global.set $global
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -386,10 +444,16 @@
     (if
       (if (result i32)
         (global.get $global) ;; the global's value may cause foo() to be called
-        (call $foo)
-        (i32.const 1)
+        (then
+          (call $foo)
+        )
+        (else
+          (i32.const 1)
+        )
       )
-      (global.set $global (i32.const 1))
+      (then
+        (global.set $global (i32.const 1))
+      )
     )
   )
 
@@ -416,11 +480,17 @@
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (if (result i32)
   ;; CHECK-NEXT:    (call $foo)
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -429,11 +499,17 @@
       (if (result i32)
         (call $foo) ;; these side effects are not a problem, as the global's
                     ;; value cannot reach them.
-        (i32.const 1)
-        (global.get $global) ;; the global's value flows out through the if,
+        (then
+          (i32.const 1)
+        )
+        (else
+          (global.get $global) ;; the global's value flows out through the if,
+        )
                              ;; safely
       )
-      (global.set $global (i32.const 1))
+      (then
+        (global.set $global (i32.const 1))
+      )
     )
   )
 
@@ -459,8 +535,10 @@
   ;; CHECK-NEXT:   (local.tee $temp
   ;; CHECK-NEXT:    (global.get $global)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (global.set $global
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (global.set $global
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -470,7 +548,9 @@
       (local.tee $temp
         (global.get $global) ;; the global's value flows into a place that has
       )                      ;; side effects, so it may be noticed.
-      (global.set $global (i32.const 1))
+      (then
+        (global.set $global (i32.const 1))
+      )
     )
   )
 )
@@ -505,8 +585,10 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -528,8 +610,10 @@
           )
         )
       )
-      (global.set $once
-        (i32.const 1)
+      (then
+        (global.set $once
+          (i32.const 1)
+        )
       )
     )
   )
@@ -554,8 +638,10 @@
   ;; CHECK-NEXT:     (i32.eqz
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.eq
@@ -563,8 +649,10 @@
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -579,8 +667,10 @@
           (i32.eqz
             (global.get $once)
           )
-          (global.set $once
-            (i32.const 1)
+          (then
+            (global.set $once
+              (i32.const 1)
+            )
           )
         )
         (i32.eq
@@ -588,8 +678,10 @@
           (i32.const 0)
         )
       )
-      (global.set $once
-        (i32.const 1)
+      (then
+        (global.set $once
+          (i32.const 1)
+        )
       )
     )
   )
@@ -614,18 +706,24 @@
   ;; CHECK-NEXT:     (i32.eqz
   ;; CHECK-NEXT:      (global.get $once)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (global.set $once
-  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (global.set $once
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.eq
   ;; CHECK-NEXT:     (global.get $once)
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (global.set $once
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (global.set $once
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -640,18 +738,24 @@
           (i32.eqz
             (global.get $once)
           )
-          (global.set $once
-            (i32.const 1)
+          (then
+            (global.set $once
+              (i32.const 1)
+            )
           )
-          (nop) ;; This breaks the pattern we are looking for.
+          (else
+            (nop) ;; This breaks the pattern we are looking for.
+          )
         )
         (i32.eq
           (global.get $once)
           (i32.const 0)
         )
       )
-      (global.set $once
-        (i32.const 1)
+      (then
+        (global.set $once
+          (i32.const 1)
+        )
       )
     )
   )
@@ -677,15 +781,19 @@
   ;; CHECK-NEXT:      (block (result i32)
   ;; CHECK-NEXT:       (if
   ;; CHECK-NEXT:        (i32.const 0)
-  ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (i32.const 1)
+  ;; CHECK-NEXT:        (then
+  ;; CHECK-NEXT:         (drop
+  ;; CHECK-NEXT:          (i32.const 1)
+  ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.eq
@@ -693,8 +801,10 @@
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -709,15 +819,19 @@
               ;; A third nested appearance.
               (if
                 (global.get $once)
-                (global.set $once
-                  (i32.const 1)
+                (then
+                  (global.set $once
+                    (i32.const 1)
+                  )
                 )
               )
               (global.get $once)
             )
           )
-          (global.set $once
-            (i32.const 1)
+          (then
+            (global.set $once
+              (i32.const 1)
+            )
           )
         )
         (i32.eq
@@ -725,8 +839,10 @@
           (i32.const 0)
         )
       )
-      (global.set $once
-        (i32.const 1)
+      (then
+        (global.set $once
+          (i32.const 1)
+        )
       )
     )
   )
@@ -754,8 +870,10 @@
   ;; CHECK-NEXT:     (i32.eqz
   ;; CHECK-NEXT:      (global.get $once)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (global.set $once
-  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (global.set $once
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (i32.eq
@@ -763,8 +881,10 @@
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (global.set $once
-  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (global.set $once
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -788,8 +908,10 @@
           (i32.eqz
             (global.get $once)
           )
-          (global.set $once
-            (i32.const 1)
+          (then
+            (global.set $once
+              (i32.const 1)
+            )
           )
         )
         (i32.eq
@@ -797,8 +919,10 @@
           (i32.const 0)
         )
       )
-      (global.set $once
-        (i32.const 1)
+      (then
+        (global.set $once
+          (i32.const 1)
+        )
       )
     )
   )

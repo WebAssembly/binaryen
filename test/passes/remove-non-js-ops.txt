@@ -379,7 +379,7 @@
                 )
                )
               )
-              (block
+              (then
                (br_if $label$11
                 (i32.eqz
                  (local.tee $var$3
@@ -673,7 +673,7 @@
     (block $label$13
      (if
       (local.get $var$2)
-      (block
+      (then
        (local.set $var$8
         (i64.add
          (local.get $var$1)
@@ -764,16 +764,18 @@
  (func $__wasm_ctz_i32 (param $var$0 i32) (result i32)
   (if
    (local.get $var$0)
-   (return
-    (i32.sub
-     (i32.const 31)
-     (i32.clz
-      (i32.xor
-       (i32.add
+   (then
+    (return
+     (i32.sub
+      (i32.const 31)
+      (i32.clz
+       (i32.xor
+        (i32.add
+         (local.get $var$0)
+         (i32.const -1)
+        )
         (local.get $var$0)
-        (i32.const -1)
        )
-       (local.get $var$0)
       )
      )
     )
@@ -833,7 +835,7 @@
      (f32.const 0.5)
     )
    )
-   (block
+   (then
     (local.set $var$0
      (f32.ceil
       (local.get $var$0)
@@ -844,8 +846,10 @@
       (local.get $var$2)
       (f32.const 0.5)
      )
-     (return
-      (local.get $var$0)
+     (then
+      (return
+       (local.get $var$0)
+      )
      )
     )
     (local.set $var$1
@@ -891,7 +895,7 @@
      (f64.const 0.5)
     )
    )
-   (block
+   (then
     (local.set $var$0
      (f64.ceil
       (local.get $var$0)
@@ -902,8 +906,10 @@
       (local.get $var$2)
       (f64.const 0.5)
      )
-     (return
-      (local.get $var$0)
+     (then
+      (return
+       (local.get $var$0)
+      )
      )
     )
     (local.set $var$1

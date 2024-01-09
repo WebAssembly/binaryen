@@ -256,13 +256,17 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (if
  ;; CHECK-NEXT:    (local.get $z)
- ;; CHECK-NEXT:    (call $foo
- ;; CHECK-NEXT:     (local.get $4)
- ;; CHECK-NEXT:     (local.get $5)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (call $foo
+ ;; CHECK-NEXT:      (local.get $4)
+ ;; CHECK-NEXT:      (local.get $5)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (call $bar
- ;; CHECK-NEXT:     (local.get $4)
- ;; CHECK-NEXT:     (local.get $5)
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (call $bar
+ ;; CHECK-NEXT:      (local.get $4)
+ ;; CHECK-NEXT:      (local.get $5)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -311,13 +315,17 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (call $get-i32)
- ;; CHECK-NEXT:   (return_call $foo
- ;; CHECK-NEXT:    (local.get $2)
- ;; CHECK-NEXT:    (local.get $3)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (return_call $foo
+ ;; CHECK-NEXT:     (local.get $2)
+ ;; CHECK-NEXT:     (local.get $3)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (return_call $bar
- ;; CHECK-NEXT:    (local.get $2)
- ;; CHECK-NEXT:    (local.get $3)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (return_call $bar
+ ;; CHECK-NEXT:     (local.get $2)
+ ;; CHECK-NEXT:     (local.get $3)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

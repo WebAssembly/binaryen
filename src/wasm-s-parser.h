@@ -270,7 +270,7 @@ private:
   }
   enum class LabelType { Break, Exception };
   Name getLabel(Element& s, LabelType labelType = LabelType::Break);
-  Expression* makeBreak(Element& s);
+  Expression* makeBreak(Element& s, bool isConditional);
   Expression* makeBreakTable(Element& s);
   Expression* makeReturn(Element& s);
   Expression* makeRefNull(Element& s);

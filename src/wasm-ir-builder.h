@@ -87,7 +87,7 @@ public:
   [[nodiscard]] Result<> makeBlock(Name label, Type type);
   [[nodiscard]] Result<> makeIf(Name label, Type type);
   [[nodiscard]] Result<> makeLoop(Name label, Type type);
-  [[nodiscard]] Result<> makeBreak(Index label);
+  [[nodiscard]] Result<> makeBreak(Index label, bool isConditional);
   [[nodiscard]] Result<> makeSwitch(const std::vector<Index>& labels,
                                     Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
