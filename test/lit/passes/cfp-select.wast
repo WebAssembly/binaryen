@@ -7,7 +7,7 @@
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
-  ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
+  ;; CHECK:      (type $substruct (sub final $struct (struct (field i32) (field f64))))
   (type $substruct (sub final $struct (struct i32 f64)))
 
   ;; CHECK:      (type $2 (func))
@@ -65,14 +65,14 @@
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
+  ;; CHECK:      (type $1 (func))
+
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (sub $struct (struct i32 f64)))
 
-  ;; CHECK:      (type $2 (func))
-
   ;; CHECK:      (type $3 (func (param (ref null $struct)) (result i32)))
 
-  ;; CHECK:      (func $create (type $2)
+  ;; CHECK:      (func $create (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
@@ -100,14 +100,8 @@
     )
   )
   ;; CHECK:      (func $get (type $3) (param $struct (ref null $struct)) (result i32)
-  ;; CHECK-NEXT:  (select
-  ;; CHECK-NEXT:   (i32.const 20)
-  ;; CHECK-NEXT:   (i32.const 10)
-  ;; CHECK-NEXT:   (ref.test (ref $substruct)
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (local.get $struct)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (struct.get $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get (param $struct (ref null $struct)) (result i32)
@@ -124,7 +118,7 @@
   (type $struct (sub (struct i32)))
   ;; CHECK:      (type $1 (func (param i32)))
 
-  ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
+  ;; CHECK:      (type $substruct (sub final $struct (struct (field i32) (field f64))))
   (type $substruct (sub final $struct (struct i32 f64)))
 
   ;; CHECK:      (type $3 (func (param (ref null $struct)) (result i32)))
@@ -174,7 +168,7 @@
   (type $struct (sub (struct i32)))
   ;; CHECK:      (type $1 (func (param i32)))
 
-  ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
+  ;; CHECK:      (type $substruct (sub final $struct (struct (field i32) (field f64))))
   (type $substruct (sub final $struct (struct i32 f64)))
 
   ;; CHECK:      (type $3 (func (param (ref null $struct)) (result i32)))
@@ -224,7 +218,7 @@
   (type $struct (sub (struct (mut i32))))
   ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $substruct (sub $struct (struct (field (mut i32)) (field f64))))
+  ;; CHECK:      (type $substruct (sub final $struct (struct (field (mut i32)) (field f64))))
   (type $substruct (sub final $struct (struct (mut i32) f64)))
 
   ;; CHECK:      (type $3 (func (param (ref null $struct)) (result i32)))
@@ -275,7 +269,7 @@
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (sub $struct (struct i32 f64)))
 
-  ;; CHECK:      (type $subsubstruct (sub $substruct (struct (field i32) (field f64) (field anyref))))
+  ;; CHECK:      (type $subsubstruct (sub final $substruct (struct (field i32) (field f64) (field anyref))))
   (type $subsubstruct (sub final $substruct (struct i32 f64 anyref)))
 
   ;; CHECK:      (type $3 (func))
@@ -360,17 +354,17 @@
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
+  ;; CHECK:      (type $1 (func))
+
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (sub $struct (struct i32 f64)))
 
-  ;; CHECK:      (type $2 (func))
-
-  ;; CHECK:      (type $subsubstruct (sub $substruct (struct (field i32) (field f64) (field anyref))))
+  ;; CHECK:      (type $subsubstruct (sub final $substruct (struct (field i32) (field f64) (field anyref))))
   (type $subsubstruct (sub final $substruct (struct i32 f64 anyref)))
 
   ;; CHECK:      (type $4 (func (param (ref null $struct)) (result i32)))
 
-  ;; CHECK:      (func $create (type $2)
+  ;; CHECK:      (func $create (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
@@ -411,19 +405,14 @@
     )
   )
   ;; CHECK:      (func $get (type $4) (param $struct (ref null $struct)) (result i32)
-  ;; CHECK-NEXT:  (select
-  ;; CHECK-NEXT:   (i32.const 20)
-  ;; CHECK-NEXT:   (i32.const 10)
-  ;; CHECK-NEXT:   (ref.test (ref $substruct)
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (local.get $struct)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (struct.get $struct 0
+  ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get (param $struct (ref null $struct)) (result i32)
     ;; Three types are possible here, but two have the same value, and we can
-    ;; differentiate between them with a test.
+    ;; differentiate between them with a test. However, the test would be on
+    ;; $substruct, which is not a final type, so we do not optimize.
     (struct.get $struct 0
       (local.get $struct)
     )
@@ -439,7 +428,7 @@
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (sub $struct (struct i32 f64)))
 
-  ;; CHECK:      (type $subsubstruct (sub $substruct (struct (field i32) (field f64) (field anyref))))
+  ;; CHECK:      (type $subsubstruct (sub final $substruct (struct (field i32) (field f64) (field anyref))))
   (type $subsubstruct (sub final $substruct (struct i32 f64 anyref)))
 
   ;; CHECK:      (type $4 (func (param (ref null $struct)) (result i32)))
@@ -506,7 +495,7 @@
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (sub $struct (struct i32 f64)))
 
-  ;; CHECK:      (type $subsubstruct (sub $substruct (struct (field i32) (field f64) (field anyref))))
+  ;; CHECK:      (type $subsubstruct (sub final $substruct (struct (field i32) (field f64) (field anyref))))
   (type $subsubstruct (sub final $substruct (struct i32 f64 anyref)))
 
   ;; CHECK:      (type $3 (func))
@@ -567,10 +556,10 @@
   (type $struct (sub (struct i32)))
   ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $substruct.A (sub $struct (struct (field i32) (field f64))))
+  ;; CHECK:      (type $substruct.A (sub final $struct (struct (field i32) (field f64))))
   (type $substruct.A (sub final $struct (struct i32 f64)))
 
-  ;; CHECK:      (type $substruct.B (sub $struct (struct (field i32) (field f64) (field anyref))))
+  ;; CHECK:      (type $substruct.B (sub final $struct (struct (field i32) (field f64) (field anyref))))
   (type $substruct.B (sub final $struct (struct i32 f64 anyref)))
 
   ;; CHECK:      (type $4 (func (param (ref null $struct)) (result i32)))
@@ -701,12 +690,12 @@
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
-  ;; CHECK:      (type $substruct.A (sub $struct (struct (field i32) (field f64))))
+  ;; CHECK:      (type $substruct.A (sub final $struct (struct (field i32) (field f64))))
   (type $substruct.A (sub final $struct (struct i32 f64)))
 
   ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (type $substruct.B (sub $struct (struct (field i32) (field f64) (field anyref))))
+  ;; CHECK:      (type $substruct.B (sub final $struct (struct (field i32) (field f64) (field anyref))))
   (type $substruct.B (sub final $struct (struct i32 f64 anyref)))
 
   ;; CHECK:      (type $4 (func (param (ref null $struct)) (result i32)))
@@ -774,11 +763,11 @@
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
-  ;; CHECK:      (type $substruct.B (sub $struct (struct (field i32) (field f64) (field anyref))))
+  ;; CHECK:      (type $substruct.B (sub final $struct (struct (field i32) (field f64) (field anyref))))
 
   ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (type $substruct.A (sub $struct (struct (field i32) (field f64))))
+  ;; CHECK:      (type $substruct.A (sub final $struct (struct (field i32) (field f64))))
   (type $substruct.A (sub final $struct (struct i32 f64)))
 
   (type $substruct.B (sub final $struct (struct i32 f64 anyref)))
@@ -848,12 +837,12 @@
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
-  ;; CHECK:      (type $substruct.A (sub $struct (struct (field i32) (field f64))))
+  ;; CHECK:      (type $substruct.A (sub final $struct (struct (field i32) (field f64))))
   (type $substruct.A (sub final $struct (struct i32 f64)))
 
   ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (type $substruct.B (sub $struct (struct (field i32) (field f64) (field anyref))))
+  ;; CHECK:      (type $substruct.B (sub final $struct (struct (field i32) (field f64) (field anyref))))
   (type $substruct.B (sub final $struct (struct i32 f64 anyref)))
 
   ;; CHECK:      (type $4 (func (param (ref null $struct)) (result i32)))
@@ -975,7 +964,7 @@
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
-  ;; CHECK:      (type $substruct.A (sub $struct (struct (field i32) (field f64))))
+  ;; CHECK:      (type $substruct.A (sub final $struct (struct (field i32) (field f64))))
   (type $substruct.A (sub final $struct (struct i32 f64)))
 
   (type $substruct.B (sub final $struct (struct i32 f64 anyref)))
@@ -1035,7 +1024,7 @@
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32) (field i64) (field f64) (field f32))))
   (type $struct (sub (struct i32 i64 f64 f32)))
-  ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field i64) (field f64) (field f32))))
+  ;; CHECK:      (type $substruct (sub final $struct (struct (field i32) (field i64) (field f64) (field f32))))
   (type $substruct (sub final $struct (struct i32 i64 f64 f32)))
 
   ;; CHECK:      (type $2 (func))
