@@ -214,9 +214,27 @@
  ;; CHECK:      (type $submany (sub final $many (func (param i32 i64 f32 f64) (result anyref (ref func)))))
  (type $submany (sub final $many (func (param i32 i64 f32 f64) (result anyref (ref func)))))
 
+ ;; CHECK:      (type $all-types (struct (field externref) (field (ref extern)) (field funcref) (field (ref func)) (field anyref) (field (ref any)) (field eqref) (field (ref eq)) (field i31ref) (field (ref i31)) (field structref) (field (ref struct)) (field arrayref) (field (ref array)) (field exnref) (field (ref exn)) (field stringref) (field (ref string)) (field stringview_wtf8) (field (ref stringview_wtf8)) (field stringview_wtf16) (field (ref stringview_wtf16)) (field stringview_iter) (field (ref stringview_iter)) (field nullref) (field (ref none)) (field nullexternref) (field (ref noextern)) (field nullfuncref) (field (ref nofunc)) (field nullexnref) (field (ref noexn))))
+ (type $all-types (struct externref (ref extern)
+                          funcref (ref func)
+                          anyref (ref any)
+                          eqref (ref eq)
+                          i31ref (ref i31)
+                          structref (ref struct)
+                          arrayref (ref array)
+                          exnref (ref exn)
+                          stringref (ref string)
+                          stringview_wtf8 (ref stringview_wtf8)
+                          stringview_wtf16 (ref stringview_wtf16)
+                          stringview_iter (ref stringview_iter)
+                          nullref (ref none)
+                          nullexternref (ref noextern)
+                          nullfuncref (ref nofunc)
+                          nullexnref (ref noexn)))
+
  ;; imported memories
  (memory (export "mem") (export "mem2") (import "" "mem") 0)
- ;; CHECK:      (type $90 (func (param (ref $s0) (ref $s1) (ref $s2) (ref $s3) (ref $s4) (ref $s5) (ref $s6) (ref $s7) (ref $s8) (ref $a0) (ref $a1) (ref $a2) (ref $a3) (ref $subvoid) (ref $submany))))
+ ;; CHECK:      (type $91 (func (param (ref $s0) (ref $s1) (ref $s2) (ref $s3) (ref $s4) (ref $s5) (ref $s6) (ref $s7) (ref $s8) (ref $a0) (ref $a1) (ref $a2) (ref $a3) (ref $subvoid) (ref $submany) (ref $all-types))))
 
  ;; CHECK:      (import "" "mem" (memory $mimport$0 0))
 
@@ -4724,7 +4742,7 @@
   )
  )
 
- ;; CHECK:      (func $use-types (type $90) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany))
+ ;; CHECK:      (func $use-types (type $91) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany)) (param $15 (ref $all-types))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $use-types
@@ -4743,5 +4761,6 @@
   (param (ref $a3))
   (param (ref $subvoid))
   (param (ref $submany))
+  (param (ref $all-types))
  )
 )

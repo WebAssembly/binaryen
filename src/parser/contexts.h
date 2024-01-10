@@ -97,17 +97,22 @@ struct NullTypeParserCtx {
   using ElemListT = Ok;
   using DataStringT = Ok;
 
-  HeapTypeT makeFunc() { return Ok{}; }
-  HeapTypeT makeAny() { return Ok{}; }
-  HeapTypeT makeExtern() { return Ok{}; }
-  HeapTypeT makeEq() { return Ok{}; }
-  HeapTypeT makeI31() { return Ok{}; }
+  HeapTypeT makeFuncType() { return Ok{}; }
+  HeapTypeT makeAnyType() { return Ok{}; }
+  HeapTypeT makeExternType() { return Ok{}; }
+  HeapTypeT makeEqType() { return Ok{}; }
+  HeapTypeT makeI31Type() { return Ok{}; }
   HeapTypeT makeStructType() { return Ok{}; }
   HeapTypeT makeArrayType() { return Ok{}; }
+  HeapTypeT makeExnType() { return Ok{}; }
   HeapTypeT makeStringType() { return Ok{}; }
   HeapTypeT makeStringViewWTF8Type() { return Ok{}; }
   HeapTypeT makeStringViewWTF16Type() { return Ok{}; }
   HeapTypeT makeStringViewIterType() { return Ok{}; }
+  HeapTypeT makeNoneType() { return Ok{}; }
+  HeapTypeT makeNoextType() { return Ok{}; }
+  HeapTypeT makeNofuncType() { return Ok{}; }
+  HeapTypeT makeNoexnType() { return Ok{}; }
 
   TypeT makeI32() { return Ok{}; }
   TypeT makeI64() { return Ok{}; }
@@ -187,17 +192,22 @@ template<typename Ctx> struct TypeParserCtx {
 
   Ctx& self() { return *static_cast<Ctx*>(this); }
 
-  HeapTypeT makeFunc() { return HeapType::func; }
-  HeapTypeT makeAny() { return HeapType::any; }
-  HeapTypeT makeExtern() { return HeapType::ext; }
-  HeapTypeT makeEq() { return HeapType::eq; }
-  HeapTypeT makeI31() { return HeapType::i31; }
+  HeapTypeT makeFuncType() { return HeapType::func; }
+  HeapTypeT makeAnyType() { return HeapType::any; }
+  HeapTypeT makeExternType() { return HeapType::ext; }
+  HeapTypeT makeEqType() { return HeapType::eq; }
+  HeapTypeT makeI31Type() { return HeapType::i31; }
   HeapTypeT makeStructType() { return HeapType::struct_; }
   HeapTypeT makeArrayType() { return HeapType::array; }
+  HeapTypeT makeExnType() { return HeapType::exn; }
   HeapTypeT makeStringType() { return HeapType::string; }
   HeapTypeT makeStringViewWTF8Type() { return HeapType::stringview_wtf8; }
   HeapTypeT makeStringViewWTF16Type() { return HeapType::stringview_wtf16; }
   HeapTypeT makeStringViewIterType() { return HeapType::stringview_iter; }
+  HeapTypeT makeNoneType() { return HeapType::none; }
+  HeapTypeT makeNoextType() { return HeapType::noext; }
+  HeapTypeT makeNofuncType() { return HeapType::nofunc; }
+  HeapTypeT makeNoexnType() { return HeapType::noexn; }
 
   TypeT makeI32() { return Type::i32; }
   TypeT makeI64() { return Type::i64; }
