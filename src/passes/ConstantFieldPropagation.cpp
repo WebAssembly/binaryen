@@ -265,6 +265,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // type is very fast and in constant time, and anything else is risky. Given
     // that, we can simply see if one of the sets contains a single type that is
     // final.
+    // TODO: Consider adding a variation on this pass that uses non-final types.
     auto isProperTestType = [&](Index index) -> std::optional<HeapType> {
       auto& types = valueTypes[index];
       if (types.size() == 1) {
