@@ -514,8 +514,7 @@ struct Precompute
       // Go up through the parents, until we can't do any more work. At each
       // parent we'll try to execute it and all intermediate parents into the
       // select arms.
-      for (Index parentIndex = selectIndex - 1;
-           parentIndex != Index(-1);
+      for (Index parentIndex = selectIndex - 1; parentIndex != Index(-1);
            parentIndex--) {
         auto* parent = stack[parentIndex];
         if (modified.count(parent)) {
