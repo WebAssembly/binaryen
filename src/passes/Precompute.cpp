@@ -488,8 +488,9 @@ struct Precompute
     // When we consider the first select we can see that the computation result
     // is always infinity, so we can optimize here and replace the ternary. Then
     // the same thing happens with the second select, causing the ternary to be
-    // replaced again, which is unsafe. (Note that in this example the result
-    // is the same either way, but at least in theory an instruction could exist
+    // replaced again, which is unsafe because it no longer exists after we
+    // precomputed it the first time. (Note that in this example the result is
+    // the same either way, but at least in theory an instruction could exist
     // for whom there was a difference.) In practice it does not seem that wasm
     // has instructions capable of this atm but this code is still useful to
     // guard against future problems, and as a minor speedup (quickly skip code
