@@ -448,7 +448,11 @@ struct Precompute
       return;
     }
 
-    // Walk the function to find the parent stacks of the promising selects.
+    // Walk the function to find the parent stacks of the promising selects. We
+    // copy the stacks and process them later. We do it like this because if we
+    // wanted to process stacks as we reached them then we'd trip over
+    // ourselves: when we optimize we replace a parent, but that parent is an
+    // expression we'll reach later in the walk, so modifying it is unsafe.
     struct StackFinder : public ExpressionStackWalker<StackFinder> {
       Precompute& parent;
 
