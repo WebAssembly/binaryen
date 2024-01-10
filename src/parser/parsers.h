@@ -236,25 +236,28 @@ template<typename Ctx> WithPosition(Ctx& ctx, Index) -> WithPosition<Ctx>;
 //            | 'extern'  => extern
 template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
   if (ctx.in.takeKeyword("func"sv)) {
-    return ctx.makeFunc();
+    return ctx.makeFuncType();
   }
   if (ctx.in.takeKeyword("any"sv)) {
-    return ctx.makeAny();
+    return ctx.makeAnyType();
   }
   if (ctx.in.takeKeyword("extern"sv)) {
-    return ctx.makeExtern();
+    return ctx.makeExternType();
   }
   if (ctx.in.takeKeyword("eq"sv)) {
-    return ctx.makeEq();
+    return ctx.makeEqType();
   }
   if (ctx.in.takeKeyword("i31"sv)) {
-    return ctx.makeI31();
+    return ctx.makeI31Type();
   }
   if (ctx.in.takeKeyword("struct"sv)) {
     return ctx.makeStructType();
   }
   if (ctx.in.takeKeyword("array"sv)) {
     return ctx.makeArrayType();
+  }
+  if (ctx.in.takeKeyword("exn"sv)) {
+    return ctx.makeExnType();
   }
   if (ctx.in.takeKeyword("string"sv)) {
     return ctx.makeStringType();
@@ -267,6 +270,18 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
   }
   if (ctx.in.takeKeyword("stringview_iter"sv)) {
     return ctx.makeStringViewIterType();
+  }
+  if (ctx.in.takeKeyword("none"sv)) {
+    return ctx.makeNoneType();
+  }
+  if (ctx.in.takeKeyword("noextern"sv)) {
+    return ctx.makeNoextType();
+  }
+  if (ctx.in.takeKeyword("nofunc"sv)) {
+    return ctx.makeNofuncType();
+  }
+  if (ctx.in.takeKeyword("noexn"sv)) {
+    return ctx.makeNoexnType();
   }
   auto type = typeidx(ctx);
   CHECK_ERR(type);
@@ -283,25 +298,28 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
 //           | '(' ref null? t:heaptype ')' => ref null? t
 template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
   if (ctx.in.takeKeyword("funcref"sv)) {
-    return ctx.makeRefType(ctx.makeFunc(), Nullable);
+    return ctx.makeRefType(ctx.makeFuncType(), Nullable);
   }
   if (ctx.in.takeKeyword("externref"sv)) {
-    return ctx.makeRefType(ctx.makeExtern(), Nullable);
+    return ctx.makeRefType(ctx.makeExternType(), Nullable);
   }
   if (ctx.in.takeKeyword("anyref"sv)) {
-    return ctx.makeRefType(ctx.makeAny(), Nullable);
+    return ctx.makeRefType(ctx.makeAnyType(), Nullable);
   }
   if (ctx.in.takeKeyword("eqref"sv)) {
-    return ctx.makeRefType(ctx.makeEq(), Nullable);
+    return ctx.makeRefType(ctx.makeEqType(), Nullable);
   }
   if (ctx.in.takeKeyword("i31ref"sv)) {
-    return ctx.makeRefType(ctx.makeI31(), Nullable);
+    return ctx.makeRefType(ctx.makeI31Type(), Nullable);
   }
   if (ctx.in.takeKeyword("structref"sv)) {
     return ctx.makeRefType(ctx.makeStructType(), Nullable);
   }
   if (ctx.in.takeKeyword("arrayref"sv)) {
     return ctx.makeRefType(ctx.makeArrayType(), Nullable);
+  }
+  if (ctx.in.takeKeyword("exnref"sv)) {
+    return ctx.makeRefType(ctx.makeExnType(), Nullable);
   }
   if (ctx.in.takeKeyword("stringref"sv)) {
     return ctx.makeRefType(ctx.makeStringType(), Nullable);
@@ -314,6 +332,18 @@ template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
   }
   if (ctx.in.takeKeyword("stringview_iter"sv)) {
     return ctx.makeRefType(ctx.makeStringViewIterType(), Nullable);
+  }
+  if (ctx.in.takeKeyword("nullref"sv)) {
+    return ctx.makeRefType(ctx.makeNoneType(), Nullable);
+  }
+  if (ctx.in.takeKeyword("nullexternref"sv)) {
+    return ctx.makeRefType(ctx.makeNoextType(), Nullable);
+  }
+  if (ctx.in.takeKeyword("nullfuncref"sv)) {
+    return ctx.makeRefType(ctx.makeNofuncType(), Nullable);
+  }
+  if (ctx.in.takeKeyword("nullexnref"sv)) {
+    return ctx.makeRefType(ctx.makeNoexnType(), Nullable);
   }
 
   if (!ctx.in.takeSExprStart("ref"sv)) {
