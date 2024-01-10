@@ -72,6 +72,63 @@
     )
   )
 
+  ;; CHECK:      (func $not-left (type $0) (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (i32.eqz
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $not-left (param $param i32) (result i32)
+    (i32.eqz
+      (select
+        (local.get $param) ;; this cannot be precomputed, so we do nothing
+        (i32.const 0)
+        (local.get $param)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $not-right (type $0) (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (i32.eqz
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $not-right (param $param i32) (result i32)
+    (i32.eqz
+      (select
+        (i32.const 0)
+        (local.get $param) ;; this cannot be precomputed, so we do nothing
+        (local.get $param)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $not-neither (type $0) (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (i32.eqz
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $not-neither (param $param i32) (result i32)
+    (i32.eqz
+      (select
+        (local.get $param) ;; these cannot be precomputed,
+        (local.get $param) ;; so we do nothing
+        (local.get $param)
+      )
+    )
+  )
+
   ;; CHECK:      (func $binary (type $0) (param $param i32) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.const 11)
