@@ -270,7 +270,11 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       auto& types = valueTypes[index];
       if (types.size() == 1) {
         auto type = types[0];
-        if (!types[0].isOpen()) {
+        // Do not test finality using isOpen(), as that may only be applied late
+        // in the optimization pipeline. We are in closed-world here, so just
+        // see if there are subtypes if practice (if not, this can be marked as
+        // final later, and we assume optimistically that it will).
+        if (subTypes.getImmediateSubTypes(type).empty()) {
           return type;
         }
       }

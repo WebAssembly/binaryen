@@ -61,7 +61,7 @@
   )
 )
 
-;; As above, but now the subtype is not final.
+;; As above, but now the subtype has subtypes.
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
@@ -71,6 +71,9 @@
   (type $substruct (sub $struct (struct i32 f64)))
 
   ;; CHECK:      (type $3 (func (param (ref null $struct)) (result i32)))
+
+  ;; CHECK:      (type $subsubstruct (sub $substruct (struct (field i32) (field f64))))
+  (type $subsubstruct (sub $substruct (struct i32 f64)))
 
   ;; CHECK:      (func $create (type $1)
   ;; CHECK-NEXT:  (drop
@@ -100,12 +103,19 @@
     )
   )
   ;; CHECK:      (func $get (type $3) (param $struct (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (local $x (ref $subsubstruct))
   ;; CHECK-NEXT:  (struct.get $struct 0
   ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get (param $struct (ref null $struct)) (result i32)
+    ;; Keep this type alive.
+    (local $x (ref $subsubstruct))
+
     ;; We only test on final types for efficiency, so we do not optimize here.
+    ;; The type we'd like to test on here has subtypes so it cannot be marked
+    ;; final; otherwise if there are no subtypes we assume it will be marked
+    ;; final later and optimize.
     (struct.get $struct 0
       (local.get $struct)
     )
