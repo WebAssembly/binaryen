@@ -23,7 +23,7 @@
     (local $x i32)
     (local $y i32)
     (drop
-      (if i32
+      (if (result i32)
         (i32.const 1)
         (then
           (local.get $x)

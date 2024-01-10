@@ -18,9 +18,8 @@
   (type $3 (func (param i32 f32)))
   ;; CHECK:      (type $4 (func (param i32)))
   (type $4 (func (param i32)))
-  (import $_emscripten_autodebug_i32 "env" "_emscripten_autodebug_i32" (param i32 i32) (result i32))
   ;; CHECK:      (import "env" "_emscripten_autodebug_i32" (func $_emscripten_autodebug_i32 (param i32 i32) (result i32)))
-
+  (import "env" "_emscripten_autodebug_i32" (func $_emscripten_autodebug_i32 (param i32 i32) (result i32)))
   ;; CHECK:      (memory $0 10)
 
   ;; CHECK:      (func $nothing-to-do

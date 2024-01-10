@@ -1,6 +1,6 @@
 (module
  (global $global$0 (mut i32) (i32.const 10))
- (func $test (param $x $i32) (param $y i32) (result i32)
+ (func $test (param $x i32) (param $y i32) (result i32)
   (drop
    (if (result i32)
     (local.tee $x
@@ -16,7 +16,7 @@
   )
   (local.get $y) ;; turn this into $x
  )
- (func $test2 (param $x $i32) (param $y i32) (result i32)
+ (func $test2 (param $x i32) (param $y i32) (result i32)
   (drop
    (if (result i32)
     (local.tee $x
@@ -32,7 +32,7 @@
   )
   (local.get $x)
  )
- (func $test-multiple (param $x $i32) (param $y i32) (result i32)
+ (func $test-multiple (param $x i32) (param $y i32) (result i32)
   (drop
    (if (result i32)
     (local.tee $x
@@ -49,7 +49,7 @@
   (drop (local.get $y)) ;; turn this into $x
   (local.get $y) ;; turn this into $x
  )
- (func $test-just-some (param $x $i32) (param $y i32) (result i32)
+ (func $test-just-some (param $x i32) (param $y i32) (result i32)
   (drop
    (if (result i32)
     (local.tee $x
@@ -67,7 +67,7 @@
   (local.set $y (i32.const 200))
   (local.get $y) ;; but not this one!
  )
- (func $test-just-some2 (param $x $i32) (param $y i32) (result i32)
+ (func $test-just-some2 (param $x i32) (param $y i32) (result i32)
   (drop
    (if (result i32)
     (local.tee $x
@@ -92,7 +92,7 @@
   )
   (i32.const 500)
  )
- (func $test-just-some3 (param $x $i32) (param $y i32) (result i32)
+ (func $test-just-some3 (param $x i32) (param $y i32) (result i32)
   (drop
    (if (result i32)
     (local.tee $x
@@ -117,7 +117,7 @@
   )
   (local.get $y) ;; but not this one!
  )
- (func $silly-self (param $x $i32) (param $y i32) (result i32)
+ (func $silly-self (param $x i32) (param $y i32) (result i32)
   (drop
    (if (result i32)
     (local.tee $x
@@ -133,7 +133,7 @@
   )
   (local.get $y) ;; turn this into $x
  )
- (func $silly-multi (param $x $i32) (param $y i32) (result i32)
+ (func $silly-multi (param $x i32) (param $y i32) (result i32)
   (drop
    (if (result i32)
     (local.tee $x
@@ -179,7 +179,7 @@
    (local.get $var$1) ;; can't be changed to $var$2, as it changes
   )
  )
- (func $reverse (param $x $i32) (param $y i32)
+ (func $reverse (param $x i32) (param $y i32)
   (drop
    (if (result i32)
     (local.tee $x
@@ -201,7 +201,7 @@
   )
   (drop (local.get $y)) ;; cannot this into $x, since this $y has multiple sources
  )
- (func $reverse-end (param $x $i32) (param $y i32)
+ (func $reverse-end (param $x i32) (param $y i32)
   (drop
    (if (result i32)
     (local.tee $x
@@ -216,7 +216,7 @@
    )
   )
  )
- (func $reverse-lone-end-2 (param $x $i32) (param $y i32)
+ (func $reverse-lone-end-2 (param $x i32) (param $y i32)
   (drop
    (if (result i32)
     (local.tee $x
@@ -233,7 +233,7 @@
   (local.set $y (i32.const 200))
   (drop (local.get $y)) ;; cannot this into $x, since this $y has multiple sources
  )
- (func $reverse-undo (param $x $i32) (param $y i32)
+ (func $reverse-undo (param $x i32) (param $y i32)
   (drop
    (if (result i32)
     (local.tee $x
@@ -256,7 +256,7 @@
   )
   (drop (local.get $y)) ;; cannot this into $x, since this $y has multiple sources
  )
- (func $reverse-undo2 (param $x $i32) (param $y i32)
+ (func $reverse-undo2 (param $x i32) (param $y i32)
   (drop
    (if (result i32)
     (local.tee $x
@@ -279,7 +279,7 @@
   )
   (drop (local.get $y)) ;; cannot this into $x, since this $y has multiple sources
  )
- (func $reverse-undo3-conditional (param $x $i32) (param $y i32)
+ (func $reverse-undo3-conditional (param $x i32) (param $y i32)
   (drop
    (if (result i32)
     (local.tee $x
@@ -306,7 +306,7 @@
   )
   (drop (local.get $y)) ;; cannot this into $x, since this $y has multiple sources
  )
- (func $reverse-undo3-conditional-b (param $x $i32) (param $y i32)
+ (func $reverse-undo3-conditional-b (param $x i32) (param $y i32)
   (drop
    (if (result i32)
     (local.tee $x
@@ -333,7 +333,7 @@
   )
   (drop (local.get $y)) ;; cannot this into $x, since this $y has multiple sources
  )
- (func $reverse-undo3-conditional-c (param $x $i32) (param $y i32)
+ (func $reverse-undo3-conditional-c (param $x i32) (param $y i32)
   (drop
    (if (result i32)
     (local.tee $x

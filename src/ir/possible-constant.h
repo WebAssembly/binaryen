@@ -48,6 +48,10 @@ private:
 public:
   PossibleConstantValues() : value(None()) {}
 
+  bool operator==(const PossibleConstantValues& other) const {
+    return value == other.value;
+  }
+
   // Notes the contents of an expression and update our internal knowledge based
   // on it and all previous values noted.
   void note(Expression* expr, Module& wasm) {
@@ -155,7 +159,7 @@ public:
   }
 
   // Assuming we have a single value, make an expression containing that value.
-  Expression* makeExpression(Module& wasm) {
+  Expression* makeExpression(Module& wasm) const {
     Builder builder(wasm);
     if (isConstantLiteral()) {
       return builder.makeConstantExpression(getConstantLiteral());

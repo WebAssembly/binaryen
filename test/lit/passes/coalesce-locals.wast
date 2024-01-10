@@ -23,9 +23,6 @@
   (type $2 (func))
   (type $3 (func (param i32 f32)))
   (type $4 (func (param i32)))
-  (import $_emscripten_autodebug_i32 "env" "_emscripten_autodebug_i32" (param i32 i32) (result i32))
-  (import $get "env" "get" (result i32))
-  (import $set "env" "set" (param i32))
   ;; CHECK:      (type $7 (func (param i32) (result i32)))
 
   ;; CHECK:      (type $8 (func (param i32 i32)))
@@ -33,11 +30,11 @@
   ;; CHECK:      (type $9 (func (result f64)))
 
   ;; CHECK:      (import "env" "_emscripten_autodebug_i32" (func $_emscripten_autodebug_i32 (param i32 i32) (result i32)))
-
+  (import "env" "_emscripten_autodebug_i32" (func $_emscripten_autodebug_i32 (param i32 i32) (result i32)))
   ;; CHECK:      (import "env" "get" (func $get (result i32)))
-
+  (import "env" "get" (func $get (result i32)))
   ;; CHECK:      (import "env" "set" (func $set (param i32)))
-
+  (import "env" "set" (func $set (param i32)))
   ;; CHECK:      (memory $0 10)
 
   ;; CHECK:      (func $nothing-to-do

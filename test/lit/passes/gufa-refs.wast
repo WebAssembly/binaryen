@@ -4361,7 +4361,6 @@
         (i32.const 22)
         (f64.const 3.14159)
       )
-      (i32.const 11)
     )
     ;; This write might alias both types now.
     (struct.set $struct 0
@@ -4433,7 +4432,6 @@
         (i32.const 10)
         (f64.const 3.14159)
       )
-      (i32.const 10)
     )
     (struct.set $struct 0
       (global.get $something)

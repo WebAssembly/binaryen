@@ -982,7 +982,7 @@
   (drop (i64.load align=1 (i32.const 12)))
   (drop (i64.load align=2 (i32.const 16)))
   (drop (i64.load align=4 (i32.const 20)))
-  (drop (i64.load align=1 offset=3 (i32.const 20)))
+  (drop (i64.load offset=3 align=1 (i32.const 20)))
   (drop (i64.load16_s align=1 (i32.const 28)))
   (drop (i64.load32_s align=1 (i32.const 32)))
   (drop (i64.load16_u align=1 (i32.const 40)))
@@ -1088,7 +1088,7 @@
  (func $f32-load
   (drop (f32.load align=1 (i32.const 12)))
   (drop (f32.load align=2 (i32.const 16)))
-  (drop (f32.load align=1 offset=3 (i32.const 20)))
+  (drop (f32.load offset=3 align=1 (i32.const 20)))
  )
  ;; CHECK:      (func $f64-load
  ;; CHECK-NEXT:  (local $0 i32)
@@ -1344,7 +1344,7 @@
   (drop (f64.load align=1 (i32.const 12)))
   (drop (f64.load align=2 (i32.const 16)))
   (drop (f64.load align=4 (i32.const 20)))
-  (drop (f64.load align=1 offset=3 (i32.const 20)))
+  (drop (f64.load offset=3 align=1 (i32.const 20)))
  )
  ;; CHECK:      (func $i64-store
  ;; CHECK-NEXT:  (local $0 i32)
@@ -1670,7 +1670,7 @@
   (i64.store align=1 (i32.const 12) (i64.const 100))
   (i64.store align=2 (i32.const 16) (i64.const 200))
   (i64.store align=4 (i32.const 20) (i64.const 300))
-  (i64.store align=1 offset=3 (i32.const 24) (i64.const 400))
+  (i64.store offset=3 align=1 (i32.const 24) (i64.const 400))
   (i64.store16 align=1 (i32.const 20) (i64.const 600))
   (i64.store32 align=1 (i32.const 20) (i64.const 700))
  )
@@ -1776,7 +1776,7 @@
  (func $f32-store
   (f32.store align=1 (i32.const 12) (f32.const 100))
   (f32.store align=2 (i32.const 16) (f32.const 200))
-  (f32.store align=1 offset=3 (i32.const 24) (f32.const 400))
+  (f32.store offset=3 align=1 (i32.const 24) (f32.const 400))
  )
  ;; CHECK:      (func $f64-store
  ;; CHECK-NEXT:  (local $0 i32)
@@ -2050,6 +2050,6 @@
   (f64.store align=1 (i32.const 12) (f64.const 100))
   (f64.store align=2 (i32.const 16) (f64.const 200))
   (f64.store align=4 (i32.const 20) (f64.const 300))
-  (f64.store align=1 offset=3 (i32.const 24) (f64.const 400))
+  (f64.store offset=3 align=1 (i32.const 24) (f64.const 400))
  )
 )

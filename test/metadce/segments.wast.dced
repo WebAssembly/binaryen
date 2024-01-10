@@ -4,7 +4,7 @@
  (import "env" "g2" (global $g2 i32))
  (memory $0 3)
  (data $0 (global.get $g2) "xxx")
- (table $tbl 0 funcref)
+ (table $tbl 1 funcref)
  (elem $0 (global.get $g1) $f)
  (export "f" (func $f))
  (func $f (type $0) (param $0 i32)
