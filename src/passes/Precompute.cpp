@@ -479,20 +479,21 @@ struct Precompute
     // modify more than once. This could happen in theory in a situation like
     // this:
     //
-    //  (ternary.f32.max
+    //  (ternary.f32.max  ;; fictional instruction for explanatory purposes
     //    (select ..)
     //    (select ..)
     //    (f32.infinity)
     //  )
     //
     // When we consider the first select we can see that the computation result
-    // is always infinity, so we can modify, and the same thing happens with the
-    // second select, causing a second modification. In this example the result
-    // is the same either way, but at least in theory an actual problem can
-    // occur. Note that in practice it does not seem that wasm has instructions
-    // that enable it atm, but this code is still useful to guard against future
-    // problems, and as a minor speedup (quickly skip code if it was already
-    // modified).
+    // is always infinity, so we can optimize here and replace the ternary. Then
+    // the same thing happens with the second select, causing the ternary to be
+    // replaced again, which is unsafe. (Note that in this example the result
+    // is the same either way, but at least in theory an instruction could exist
+    // for whom there was a difference.) In practice it does not seem that wasm
+    // has instructions capable of this atm but this code is still useful to
+    // guard against future problems, and as a minor speedup (quickly skip code
+    // if it was already modified).
     std::unordered_set<Expression*> modified;
 
     for (auto& [select, stack] : stackFinder.stackMap) {
