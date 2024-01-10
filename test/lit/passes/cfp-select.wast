@@ -61,6 +61,63 @@
   )
 )
 
+;; As above, but now the child is a final type. This does not matter as we
+;; optimize either way, if the child has no children (since without children it
+;; could be marked final later, which we assume).
+(module
+  ;; CHECK:      (type $struct (sub (struct (field i32))))
+  (type $struct (sub (struct i32)))
+  ;; CHECK:      (type $substruct (sub final $struct (struct (field i32) (field f64))))
+  (type $substruct (sub final $struct (struct i32 f64)))
+
+  ;; CHECK:      (type $2 (func))
+
+  ;; CHECK:      (type $3 (func (param (ref null $struct)) (result i32)))
+
+  ;; CHECK:      (func $create (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $substruct
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    (drop
+      (struct.new $struct
+        (i32.const 10)
+      )
+    )
+    (drop
+      (struct.new $substruct
+        (i32.const 20)
+        (f64.const 3.14159)
+      )
+    )
+  )
+  ;; CHECK:      (func $get (type $3) (param $struct (ref null $struct)) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (ref.test (ref $substruct)
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get (param $struct (ref null $struct)) (result i32)
+    (struct.get $struct 0
+      (local.get $struct)
+    )
+  )
+)
+
 ;; As above, but now the subtype has subtypes.
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
