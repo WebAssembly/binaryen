@@ -513,8 +513,9 @@ struct Precompute
       // Go up through the parents, until we can't do any more work. At each
       // parent we'll try to execute it and all intermediate parents into the
       // select arms.
-      Index parentIndex = selectIndex - 1;
-      while (1) {
+      for (Index parentIndex = selectIndex - 1;
+           parentIndex != Index(-1);
+           parentIndex--) {
         auto* parent = stack[parentIndex];
         if (modified.count(parent)) {
           // This parent was modified; exit the loop on parents as no upper
@@ -596,12 +597,6 @@ struct Precompute
         // pointer to its original state (if we precomputed, the parent is no
         // longer in use, but there is no harm in modifying it).
         *pointerToSelect = select;
-
-        // Continue to the outer parent, if there is one.
-        if (parentIndex == 0) {
-          break;
-        }
-        parentIndex--;
       }
     }
   }
