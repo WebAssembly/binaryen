@@ -3198,9 +3198,9 @@ BINARYEN_API BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func);
 BINARYEN_API BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func,
                                                  BinaryenIndex index);
 // Appends a local variable to the specified `Function`, returning its
-// insertion index.
-BINARYEN_API BinaryenIndex BinaryenFunctionAppendVar(BinaryenFunctionRef func,
-                                                     BinaryenType type);
+// index.
+BINARYEN_API BinaryenIndex BinaryenFunctionAddVar(BinaryenFunctionRef func,
+                                                  BinaryenType type);
 // Gets the number of locals within the specified function. Includes parameters.
 BINARYEN_API BinaryenIndex
 BinaryenFunctionGetNumLocals(BinaryenFunctionRef func);

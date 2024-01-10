@@ -1417,6 +1417,16 @@ void test_core() {
   BinaryenFunctionRef sinker = BinaryenAddFunction(
     module, "kitchen()sinker", iIfF, BinaryenTypeInt32(), localTypes, 2, body);
 
+  BinaryenIndex numLocals = BinaryenFunctionGetNumLocals(sinker);
+  BinaryenIndex numParams =
+    BinaryenTypeArity(BinaryenFunctionGetParams(sinker));
+  BinaryenIndex newLocalIdx =
+    BinaryenFunctionAddVar(sinker, BinaryenTypeFloat32());
+  assert(newLocalIdx == numLocals);
+  assert(BinaryenFunctionGetNumLocals(sinker) == numLocals + 1);
+  assert(BinaryenFunctionGetVar(sinker, newLocalIdx - numParams) ==
+         BinaryenTypeFloat32());
+
   // Globals
 
   BinaryenAddGlobal(
