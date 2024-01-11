@@ -3296,7 +3296,7 @@ void FunctionValidator::visitResume(Resume* curr) {
   shouldBeTrue(
     curr->sentTypes.size() == curr->handlerBlocks.size(),
     curr,
-    "sentTypes cache in Resume instruction has not been initialised");
+    "sentTypes cache in Resume instruction has not been initialized");
 
   shouldBeTrue((curr->contType.isContinuation() &&
                 curr->contType.getContinuation().type.isSignature()),
