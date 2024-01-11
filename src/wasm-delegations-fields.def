@@ -945,6 +945,18 @@ switch (DELEGATE_ID) {
     DELEGATE_END(StringSliceIter);
     break;
   }
+
+  case Expression::Id::ResumeId: {
+    DELEGATE_START(Resume);
+    DELEGATE_FIELD_TYPE_VECTOR(Resume, sentTypes);
+    DELEGATE_FIELD_CHILD(Resume, cont);
+    DELEGATE_FIELD_CHILD_VECTOR(Resume, operands);
+    DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(Resume, handlerBlocks);
+    DELEGATE_FIELD_NAME_KIND_VECTOR(Resume, handlerTags, ModuleItemKind::Tag);
+    DELEGATE_FIELD_HEAPTYPE(Resume, contType);
+    DELEGATE_END(Resume);
+    break;
+  }
 }
 
 #undef DELEGATE_ID

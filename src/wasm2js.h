@@ -2428,6 +2428,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
 
+    Ref visitResume(Resume* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+
   private:
     Ref makePointer(Expression* ptr, Address offset) {
       auto ret = visit(ptr, EXPRESSION_RESULT);

@@ -105,5 +105,6 @@ DELEGATE(StringIterNext);
 DELEGATE(StringIterMove);
 DELEGATE(StringSliceWTF);
 DELEGATE(StringSliceIter);
+DELEGATE(Resume);
 
 #undef DELEGATE
