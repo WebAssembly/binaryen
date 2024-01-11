@@ -4046,6 +4046,10 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       visitCallRef(call);
       break;
     }
+    case BinaryConsts::Resume: {
+      visitResume((curr = allocator.alloc<Resume>())->cast<Resume>());
+      break;
+    }
     case BinaryConsts::AtomicPrefix: {
       code = static_cast<uint8_t>(getU32LEB());
       if (maybeVisitLoad(curr, code, /*isAtomic=*/true)) {
@@ -7756,6 +7760,52 @@ void WasmBinaryReader::visitRefAs(RefAs* curr, uint8_t code) {
     throwError("bad input type for ref.as: " + curr->value->type.toString());
   }
   curr->finalize();
+}
+
+void WasmBinaryReader::visitResume(Resume* curr) {
+  BYN_TRACE("zz node: Resume\n");
+
+  auto contTypeIndex = getU32LEB();
+  curr->contType = getTypeByIndex(contTypeIndex);
+  if (!curr->contType.isContinuation()) {
+    throwError("non-continuation type in resume instruction " +
+               curr->contType.toString());
+  }
+
+  auto numHandlers = getU32LEB();
+
+  // We *must* bring the handlerTags vector to an appropriate size to ensure
+  // that we do not invalidate the pointers we add to tagRefs. They need to stay
+  // valid until processNames ran.
+  curr->handlerTags.resize(numHandlers);
+  curr->handlerBlocks.resize(numHandlers);
+
+  BYN_TRACE("handler num: " << numHandlers << std::endl);
+  for (size_t i = 0; i < numHandlers; i++) {
+    BYN_TRACE("read one tag handler pair \n");
+    auto tagIndex = getU32LEB();
+    auto tag = getTagName(tagIndex);
+
+    auto handlerIndex = getU32LEB();
+    auto handler = getBreakTarget(handlerIndex).name;
+
+    curr->handlerTags[i] = tag;
+    curr->handlerBlocks[i] = handler;
+
+    // We don't know the final name yet
+    tagRefs[tagIndex].push_back(&curr->handlerTags[i]);
+  }
+
+  curr->cont = popNonVoidExpression();
+
+  auto numArgs =
+    curr->contType.getContinuation().type.getSignature().params.size();
+  curr->operands.resize(numArgs);
+  for (size_t i = 0; i < numArgs; i++) {
+    curr->operands[numArgs - i - 1] = popNonVoidExpression();
+  }
+
+  curr->finalize(&wasm);
 }
 
 void WasmBinaryReader::throwError(std::string text) {

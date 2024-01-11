@@ -82,6 +82,13 @@ void operateOnScopeNameUsesAndSentTypes(Expression* expr, T func) {
           func(name, tt->sentTypes[i]);
         }
       }
+    } else if (auto* r = expr->dynCast<Resume>()) {
+      for (Index i = 0; i < r->handlerTags.size(); i++) {
+        auto dest = r->handlerTags[i];
+        if (dest == name) {
+          func(name, r->sentTypes[i]);
+        }
+      }
     } else {
       assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow
     }
@@ -105,6 +112,10 @@ void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
     } else if (auto* tt = expr->dynCast<TryTable>()) {
       // The values are supplied by throwing instructions, so we are unable to
       // know what they will be here.
+      func(name, nullptr);
+    } else if (auto* res = expr->dynCast<Resume>()) {
+      // The values are supplied by suspend instructions executed while running
+      // the continuation, so we are unable to know what they will be here.
       func(name, nullptr);
     } else {
       assert(expr->is<Try>() || expr->is<Rethrow>()); // delegate or rethrow

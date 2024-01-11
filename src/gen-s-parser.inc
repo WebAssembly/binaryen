@@ -3004,6 +3004,9 @@ switch (buf[0]) {
           default: goto parse_error;
         }
       }
+      case 's':
+        if (op == "resume"sv) { return makeResume(s); }
+        goto parse_error;
       case 't': {
         switch (buf[3]) {
           case 'h':
@@ -8104,6 +8107,12 @@ switch (buf[0]) {
           default: goto parse_error;
         }
       }
+      case 's':
+        if (op == "resume"sv) {
+          CHECK_ERR(makeResume(ctx, pos));
+          return Ok{};
+        }
+        goto parse_error;
       case 't': {
         switch (buf[3]) {
           case 'h':

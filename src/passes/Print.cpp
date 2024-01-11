@@ -316,6 +316,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitLoop(Loop* curr);
   void visitTry(Try* curr);
   void visitTryTable(TryTable* curr);
+  void visitResume(Resume* curr);
   void maybePrintUnreachableReplacement(Expression* curr, Type type);
   void maybePrintUnreachableOrNullReplacement(Expression* curr, Type type);
   void visitCallRef(CallRef* curr) {
@@ -2438,6 +2439,24 @@ struct PrintExpressionContents
   void visitStringSliceIter(StringSliceIter* curr) {
     printMedium(o, "stringview_iter.slice");
   }
+
+  void visitResume(Resume* curr) {
+    printMedium(o, "resume");
+
+    o << ' ';
+    printHeapType(curr->contType);
+
+    // We deliberate keep all (tag ...) clauses on the same line as the resume
+    // itself to work around a quirk in update_lit_checks.py
+    for (Index i = 0; i < curr->handlerTags.size(); i++) {
+      o << " (";
+      printMedium(o, "tag ");
+      printName(curr->handlerTags[i], o);
+      o << ' ';
+      printName(curr->handlerBlocks[i], o);
+      o << ')';
+    }
+  }
 };
 
 void PrintSExpression::setModule(Module* module) {
@@ -2784,6 +2803,23 @@ void PrintSExpression::visitTryTable(TryTable* curr) {
     o << " ;; end if";
   }
   controlFlowDepth--;
+}
+
+void PrintSExpression::visitResume(Resume* curr) {
+  controlFlowDepth++;
+  o << '(';
+  printExpressionContents(curr);
+
+  incIndent();
+
+  for (Index i = 0; i < curr->operands.size(); i++) {
+    printFullLine(curr->operands[i]);
+  }
+
+  printFullLine(curr->cont);
+
+  controlFlowDepth--;
+  decIndent();
 }
 
 void PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,

@@ -487,6 +487,7 @@ public:
   void visitStringIterMove(StringIterMove* curr);
   void visitStringSliceWTF(StringSliceWTF* curr);
   void visitStringSliceIter(StringSliceIter* curr);
+  void visitResume(Resume* curr);
 
   void visitFunction(Function* curr);
 
@@ -3283,6 +3284,24 @@ void FunctionValidator::visitStringSliceIter(StringSliceIter* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
                "string operations require reference-types [--enable-strings]");
+}
+
+void FunctionValidator::visitResume(Resume* curr) {
+  // TODO implement actual type-checking
+  shouldBeTrue(
+    !getModule() || getModule()->features.hasTypedContinuations(),
+    curr,
+    "resume requires typed-continuatons [--enable-typed-continuations]");
+
+  shouldBeTrue(
+    curr->sentTypes.size() == curr->handlerBlocks.size(),
+    curr,
+    "sentTypes cache in Resume instruction has not been initialised");
+
+  shouldBeTrue((curr->contType.isContinuation() &&
+                curr->contType.getContinuation().type.isSignature()),
+               curr,
+               "invalid type in Resume expression");
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
