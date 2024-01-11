@@ -586,13 +586,17 @@ Note that filenames and modules names are interleaved (which is hopefully less c
   // module.
   fuseImportsAndExports();
 
-  // Remove unused things. This is obviously a useful optimization, but it also
-  // makes using the output easier: if an import was resolved by an export
-  // during the merge, then that import will have no more uses and it will be
-  // optimized out (while if we didn't optimize it out then instantiating the
-  // module would still be forced to provide something for that import).
   {
     PassRunner passRunner(&merged);
+    // We might have made some globals read from others that now appear after
+    // them (if the one they read was appended from a later module). Sort them
+    // to fix that. TODO: we could do this only if we actually append globals
+    passRunner.add("reorder-globals-always");
+    // Remove unused things. This is obviously a useful optimization but it also
+    // makes using the output easier: if an import was resolved by an export
+    // during the merge, then that import will have no more uses and it will be
+    // optimized out (while if we didn't optimize it out then instantiating the
+    // module would still be forced to provide something for that import).
     passRunner.add("remove-unused-module-elements");
     passRunner.run();
   }
