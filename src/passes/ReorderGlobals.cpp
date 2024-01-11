@@ -61,8 +61,8 @@ struct ReorderGlobals : public Pass {
   // benefit is minor. That is useful for testing, and also internally in passes
   // that use us to reorder them so dependencies appear first (that is, if a
   // pass ends up with an earlier global reading a later one, the sorting in
-  // this pass will reorder them properly; we need to take those depdencies into
-  // account anyhow when sorting by size).
+  // this pass will reorder them properly; we need to take those dependencies
+  // into account anyhow here).
   bool always;
 
   ReorderGlobals(bool always) : always(always) {}
