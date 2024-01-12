@@ -306,6 +306,120 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     changed = true;
   }
 
+  void visitRefTest(RefTest* curr) {
+    // When we see
+    //
+    //  (ref.test TYPE
+    //    (struct.get
+    //      (REF)))     ;; the type of this is |refHeapType| below.
+    //
+    // then we may be able to fold them together. Imagine that we read a vtable
+    // from a class and ref.test it, then if there is a 1:1 relationship between
+    // vtables and classes then we could have simply tested the class itself and
+    // saved the struct.get. (We actually do not need a 1:1 isomorphism here, in
+    // fact: all we need is to that a ref.test can be done that separates the
+    // two groups in the same way; but for now we handle the simple case TODO)
+    auto* get = curr->ref->dynCast<StructGet>();
+    if (!get) {
+      return;
+    }
+    auto* ref = get->ref;
+    if (!ref->type.isRef()) {
+      return;
+    }
+    auto refHeapType = ref->type.getHeapType();
+    if (!refHeapType.isStruct()) {
+      return;
+    }
+
+    auto testType = curr->type;
+
+    // Go through the reference's subtypes. Each of them must have an item in
+    // the relevant field that must pass or must fail the test. Otherwise, the
+    // test might pass or fail, which means the reference's type is not enough
+    // to know the outcome of the test.
+    std::unordered_set<HeapType> passing, failing;
+    auto fail = false;
+
+    subTypes.iterSubTypes(refHeapType, [&](HeapType type, Index depth) {
+      auto iter = rawNewInfos.find(type);
+      if (iter == rawNewInfos.end()) {
+        // This type has no struct.news, so we can ignore it: it is abstract.
+        return;
+      }
+
+      // XXX we don't need a constant value here...
+      auto value = iter->second[get->index];
+      if (!value.isConstant()) {
+        // The value here is not constant, so give up entirely.
+        fail = true;
+        return;
+      }
+
+      auto valueType = value.getType();
+      if (Type::isSubType(valueType, testType)) {
+        passing.insert(type);
+      } else if (!Type::isSubType(testType, valueType)) {
+        failing.insert(type);
+      } else {
+        // This could pass or fail, so give up.
+        fail = true;
+      }
+    });
+
+    if (fail) {
+      return;
+    }
+
+    // Each reference type possibility has an entry in the field that must or
+    // must not pass the test. We also need there to be a test that
+    // differentiates the set of those passing from the one of those failing.
+    // TODO: Also do not regress finality: if the current test is over a type
+    // with no subtypes, we need the same here to keep performance.
+    auto considerTest = [&](const std::unordered_set<HeapType>& a, const std::unordered_set<HeapType>& b) -> std::optional<HeapType> {
+      // Given two sets a and b, see if we can test between them using the lub
+      // of a. We can do no better than the lub, as it is the minimal type that
+      // accepts the entire set a.
+      if (a.empty()) {
+        // We can test using an impossible type.
+        return Type(HeapType::none, NonNullable);
+      }
+      std::optional<HeapType> lub;
+      for (auto type : a) {
+        if (!lub) {
+          lub = a;
+        } else {
+          auto currLUB = HeapType::getLeastUpperBound(*lub, type);
+          // The current LUB must exist as these are all subtypes of the ref.
+          assert(currLUB);
+          lub = *currLUB;
+        }
+      }
+      for (auto type : b) {
+        if (HeapType::isSubType(type, *lub)) {
+          // We failed to separate the sets.
+          return {};
+        }
+      }
+      // Success!
+      return *lub;
+    };
+
+    // TODO: add RefAsNonNull as the struct.get would trap. Also justifies NN
+    // below.
+    if (auto testType = considerTest(passing, failing)) {
+      curr->ref = get->ref;
+      curr->type = Type(*testType, NonNullable);
+    } else if (auto testType = considerTest(failing, passing)) {
+      // We can optimize if we test on this and reverse the output. We are
+      // removing a struct.get and adding an i32.eqz, so this is still great.
+      Builder builder(*getModule());
+      curr->ref = get->ref;
+      curr->type = Type(*testType, NonNullable);
+      replaceCurrent(builder.makeUnary(EqZInt32, curr));
+    }
+  }
+
   void doWalkFunction(Function* func) {
     WalkerPass<PostWalker<FunctionOptimizer>>::doWalkFunction(func);
 
