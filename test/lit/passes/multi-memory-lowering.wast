@@ -373,7 +373,7 @@
   ;; BOUNDS-NEXT:  )
   ;; BOUNDS-NEXT: )
   (func $v128.load16_lane (param $0 i32) (param $1 v128) (result v128)
-  (v128.load16_lane $memory2 align=1 offset=32 0
+  (v128.load16_lane $memory2 offset=32 align=1 0
    (local.get $0)
    (local.get $1)
   )
@@ -417,7 +417,7 @@
   ;; BOUNDS-NEXT:  )
   ;; BOUNDS-NEXT: )
   (func $v128.load32_zero (param $0 i32) (result v128)
-  (v128.load32_zero $memory3 align=1 offset=16
+  (v128.load32_zero $memory3 offset=16 align=1
    (local.get $0)
   )
  )

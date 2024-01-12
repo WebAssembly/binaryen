@@ -2988,6 +2988,38 @@ Expression* SExpressionWasmBuilder::makeCallRef(Element& s, bool isReturn) {
     target, operands, sigType.getSignature().results, isReturn);
 }
 
+Expression* SExpressionWasmBuilder::makeResume(Element& s) {
+  auto ret = allocator.alloc<Resume>();
+
+  ret->contType = parseHeapType(*s[1]);
+  if (!ret->contType.isContinuation()) {
+    throw ParseException("expected continuation type", s[1]->line, s[1]->col);
+  }
+
+  Index i = 2;
+  while (i < s.size() && elementStartsWith(*s[i], "tag")) {
+    Element& inner = *s[i++];
+    if (inner.size() < 3) {
+      throw ParseException("invalid tag block", inner.line, inner.col);
+    }
+    Name tag = getTagName(*inner[1]);
+    if (!wasm.getTagOrNull(tag)) {
+      throw ParseException("bad tag name", inner[1]->line, inner[1]->col);
+    }
+    ret->handlerTags.push_back(tag);
+    ret->handlerBlocks.push_back(getLabel(*inner[2]));
+  }
+
+  while (i < s.size() - 1) {
+    ret->operands.push_back(parseExpression(s[i++]));
+  }
+
+  ret->cont = parseExpression(s[i]);
+
+  ret->finalize(&wasm);
+  return ret;
+}
+
 Expression* SExpressionWasmBuilder::makeRefI31(Element& s) {
   auto ret = allocator.alloc<RefI31>();
   ret->value = parseExpression(s[1]);

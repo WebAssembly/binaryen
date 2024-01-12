@@ -973,6 +973,19 @@ private:
       // traps when ref is null.
       parent.implicitTrap = true;
     }
+
+    void visitResume(Resume* curr) {
+      // This acts as a kitchen sink effect.
+      parent.calls = true;
+
+      // resume instructions accept nullable continuation references and trap
+      // on null.
+      parent.implicitTrap = true;
+
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+        parent.throws_ = true;
+      }
+    }
   };
 
 public:

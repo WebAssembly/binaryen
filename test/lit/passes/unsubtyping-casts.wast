@@ -424,21 +424,21 @@
   (local $l (ref null $topA))
   (local.set $l
    ;; Require $botA <: $topA.
-   (struct.new $botA)
+   (struct.new_default $botA)
   )
   (drop
    ;; Now the cast requires $midA <: $topA so that a $botA value appearing in
    ;; the $topA location would still pass the cast to $midA. This will
    ;; transitively require $botB <: $topB.
    (ref.cast (ref $midA)
-    (struct.new $topA)
+    (struct.new_default $topA)
    )
   )
   (drop
    ;; Same as before, but now for the B types. This requires $botC <: $topC, but
    ;; only after the previous cast has already been analyzed.
    (ref.cast (ref $midB)
-    (struct.new $topB)
+    (struct.new_default $topB)
    )
   )
   (drop

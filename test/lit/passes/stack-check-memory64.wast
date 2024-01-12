@@ -4,7 +4,7 @@
 ;; RUN: foreach %s %t wasm-opt --stack-check --enable-memory64 -S -o - | filecheck %s
 
 (module
- (memory i64 (data))
+ (memory i64 0 0)
  ;; CHECK:      (type $0 (func (result i64)))
 
  ;; CHECK:      (type $1 (func (param i64 i64)))
@@ -15,9 +15,7 @@
 
  ;; CHECK:      (global $__stack_limit (mut i64) (i64.const 0))
 
- ;; CHECK:      (memory $0 i64 0 65536)
-
- ;; CHECK:      (data $0 (i64.const 0) "")
+ ;; CHECK:      (memory $0 i64 0 0)
 
  ;; CHECK:      (export "use_stack" (func $use_stack))
 
@@ -64,7 +62,7 @@
 ;; CHECK-NEXT: )
 (module
  ;; if the global names are taken we should not crash
- (memory i64 (data))
+ (memory i64 0 0)
  ;; CHECK:      (type $0 (func (result i64)))
 
  ;; CHECK:      (type $1 (func (param i64 i64)))
@@ -79,9 +77,7 @@
 
  ;; CHECK:      (global $__stack_limit_3 (mut i64) (i64.const 0))
 
- ;; CHECK:      (memory $0 i64 0 65536)
-
- ;; CHECK:      (data $0 (i64.const 0) "")
+ ;; CHECK:      (memory $0 i64 0 0)
 
  ;; CHECK:      (export "use_stack" (func $0))
  (export "use_stack" (func $0))

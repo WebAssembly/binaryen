@@ -328,21 +328,17 @@ struct OptimizationOptions : public ToolOptions {
   bool runningPasses() { return passes.size() > 0; }
 
   void runPasses(Module& wasm) {
-    std::unique_ptr<PassRunner> passRunner;
+    PassRunner passRunner(&wasm, passOptions);
+    if (debug) {
+      passRunner.setDebug(true);
+    }
 
     // Flush anything in the current pass runner, and then reset it to a fresh
     // state so it is ready for new things.
-    auto flushAndReset = [&]() {
-      if (passRunner) {
-        passRunner->run();
-      }
-      passRunner = std::make_unique<PassRunner>(&wasm, passOptions);
-      if (debug) {
-        passRunner->setDebug(true);
-      }
+    auto flush = [&]() {
+      passRunner.run();
+      passRunner.clear();
     };
-
-    flushAndReset();
 
     for (auto& pass : passes) {
       if (pass.name == DEFAULT_OPT_PASSES) {
@@ -350,22 +346,28 @@ struct OptimizationOptions : public ToolOptions {
         // set the proper opt and shrink levels. To do that, first reset the
         // runner so that anything already queued is run (since we can only run
         // after those things).
-        flushAndReset();
+        flush();
 
         // -O3/-Oz etc. always set their own optimize/shrinkLevels.
         assert(pass.optimizeLevel);
         assert(pass.shrinkLevel);
-        passRunner->options.optimizeLevel = *pass.optimizeLevel;
-        passRunner->options.shrinkLevel = *pass.shrinkLevel;
 
-        // Run our optimizations now, and reset the runner so that the default
-        // pass options are used later (and not the temporary optimize/
-        // shrinkLevels we just set).
-        passRunner->addDefaultOptimizationPasses();
-        flushAndReset();
+        // Temporarily override the default levels.
+        assert(passRunner.options.optimizeLevel == passOptions.optimizeLevel);
+        assert(passRunner.options.shrinkLevel == passOptions.shrinkLevel);
+        passRunner.options.optimizeLevel = *pass.optimizeLevel;
+        passRunner.options.shrinkLevel = *pass.shrinkLevel;
+
+        // Run our optimizations now with the custom levels.
+        passRunner.addDefaultOptimizationPasses();
+        flush();
+
+        // Restore the default optimize/shrinkLevels.
+        passRunner.options.optimizeLevel = passOptions.optimizeLevel;
+        passRunner.options.shrinkLevel = passOptions.shrinkLevel;
       } else {
         // This is a normal pass. Add it to the queue for execution.
-        passRunner->add(pass.name);
+        passRunner.add(pass.name);
 
         // Normal passes do not set their own optimize/shrinkLevels.
         assert(!pass.optimizeLevel);
@@ -373,7 +375,7 @@ struct OptimizationOptions : public ToolOptions {
       }
     }
 
-    flushAndReset();
+    flush();
   }
 };
 

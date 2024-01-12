@@ -743,6 +743,7 @@ public:
     StringIterMoveId,
     StringSliceWTFId,
     StringSliceIterId,
+    ResumeId,
     NumExpressionIds
   };
   Id _id;
@@ -1993,6 +1994,32 @@ public:
   Expression* num;
 
   void finalize();
+};
+
+class Resume : public SpecificExpression<Expression::ResumeId> {
+public:
+  Resume(MixedArena& allocator)
+    : handlerTags(allocator), handlerBlocks(allocator), operands(allocator),
+      sentTypes(allocator) {}
+
+  HeapType contType;
+  ArenaVector<Name> handlerTags;
+  ArenaVector<Name> handlerBlocks;
+
+  ExpressionList operands;
+  Expression* cont;
+
+  // When 'Module*' parameter is given, we populate the 'sentTypes' array, so
+  // that the types can be accessed in other analyses without accessing the
+  // module.
+  void finalize(Module* wasm = nullptr);
+
+  // sentTypes[i] contains the type of the values that will be sent to the block
+  // handlerBlocks[i] if suspending with tag handlerTags[i]. Not part of the
+  // instruction's syntax, but stored here for subsequent use.
+  // This information is cached here in order not to query the module
+  // every time we query the sent types.
+  ArenaVector<Type> sentTypes;
 };
 
 // Globals

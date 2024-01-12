@@ -2488,6 +2488,18 @@ void BinaryInstWriter::visitStringSliceIter(StringSliceIter* curr) {
     << U32LEB(BinaryConsts::StringViewIterSlice);
 }
 
+void BinaryInstWriter::visitResume(Resume* curr) {
+  o << int8_t(BinaryConsts::Resume);
+  parent.writeIndexedHeapType(curr->contType);
+
+  size_t handlerNum = curr->handlerTags.size();
+  o << U32LEB(handlerNum);
+  for (size_t i = 0; i < handlerNum; i++) {
+    o << U32LEB(parent.getTagIndex(curr->handlerTags[i]))
+      << U32LEB(getBreakIndex(curr->handlerBlocks[i]));
+  }
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();

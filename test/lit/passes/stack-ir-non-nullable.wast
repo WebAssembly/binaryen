@@ -535,7 +535,6 @@
   (if
    (i32.eqz
     (local.get $temp)
-    (i32.const 0)
    )
    (then
     (local.set $temp

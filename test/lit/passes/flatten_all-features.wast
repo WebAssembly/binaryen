@@ -661,8 +661,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $a13 (result i32)
-  (block $x i32
-   (if i32
+  (block $x (result i32)
+   (if (result i32)
     (br_table $x (i32.const 2) (i32.const 0))
     (then
      (i32.const 0)
@@ -702,7 +702,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $a14 (result i32)
-  (block i32
+  (block (result i32)
    (select
     (i32.const 0) (i32.const 1) (br_table 0 (i32.const 7) (i32.const 1))
    )
