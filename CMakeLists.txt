@@ -459,10 +459,17 @@ if(EMSCRIPTEN)
   add_custom_target(binaryen_post_js
               COMMAND tsc --target ES2020 --module ES2022 --outDir ${CMAKE_BINARY_DIR}/bin ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_post.ts)
   # compile the TypeScript file that wraps the generated js
+  if(WIN32) # not tested!
+    add_custom_target(binaryen_wasm_wrapper
+              COMMAND (Get-content ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen.ts) | Foreach-Object {$_ -replace "TARGET", "wasm"} | Set-Content ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_wasm.ts &&
+                      tsc --target ES2020 --module ES2022 --declaration --declarationMap --outDir ${CMAKE_BINARY_DIR}/bin ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_wasm.ts &&
+                      rm ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_wasm.ts)
+  else()
   add_custom_target(binaryen_wasm_wrapper
               COMMAND sed -e 's/TARGET/wasm/g'  ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen.ts >> ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_wasm.ts &&
                       tsc --target ES2020 --module ES2022 --declaration --declarationMap --outDir ${CMAKE_BINARY_DIR}/bin ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_wasm.ts &&
                       rm ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_wasm.ts)
+  endif()
   add_executable(binaryen_wasm
                  ${binaryen_emscripten_SOURCES})
   add_dependencies(binaryen_wasm binaryen_post_js binaryen_wasm_wrapper)
@@ -489,10 +496,17 @@ if(EMSCRIPTEN)
 
   # binaryen.js JavaScript variant
   # compile the TypeScript file that wraps the generated js
+  if(WIN32) # not tested!
+    add_custom_target(binaryen_js_wrapper
+              COMMAND (Get-content ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen.ts) | Foreach-Object {$_ -replace "TARGET", "js"} | Set-Content ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_js.ts &&
+                      tsc --target ES2020 --module ES2022 --declaration --declarationMap --outDir ${CMAKE_BINARY_DIR}/bin ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_js.ts &&
+                      rm ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_js.ts)
+  else()
   add_custom_target(binaryen_js_wrapper
               COMMAND sed -e 's/TARGET/js/g' ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen.ts >> ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_js.ts &&
                       tsc --target ES2020 --module ES2022 --declaration --declarationMap --outDir ${CMAKE_BINARY_DIR}/bin ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_js.ts &&
                       rm ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_js.ts)
+  endif()
   add_executable(binaryen_js
                  ${binaryen_emscripten_SOURCES})
   add_dependencies(binaryen_js binaryen_post_js binaryen_js_wrapper)
