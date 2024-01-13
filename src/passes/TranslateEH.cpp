@@ -364,6 +364,8 @@ struct TranslateEHOldToNew
       std::optional<Index> local = localAssigner->getExnrefLocal(curr->name);
       if (local) {
         for (auto* throwRef : FindAll<ThrowRef>(catchBody).list) {
+          // All throw_refs generated in this pass has a local.get as its child.
+          // See visitRethrow().
           if (auto* localGet = throwRef->exnref->cast<LocalGet>()) {
             if (localGet->index == *local) {
               return true;
