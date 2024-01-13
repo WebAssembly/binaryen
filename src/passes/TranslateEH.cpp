@@ -759,8 +759,6 @@ struct TranslateEHOldToNew
     //   )
     // )
     //
-    // If sometype (func's type) is none:
-    // INNER_BODY =
     // If sometype (func's type) is concrete:
     //   (throw_ref
     //     (block $caller_delegate_br_target (result exnref)
