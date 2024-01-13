@@ -147,14 +147,13 @@ struct TranslateEHOldToNew
       walkFunction(func);
     }
 
-    bool hasExnrefLocal(Name rethrowTarget) const {
-      return rethrowTargetToExnrefLocal.find(rethrowTarget) !=
-             rethrowTargetToExnrefLocal.end();
-    }
-    Index getExnrefLocal(Name rethrowTarget) const {
+    std::optional<Index> getExnrefLocal(Name rethrowTarget) const {
       auto it = rethrowTargetToExnrefLocal.find(rethrowTarget);
-      assert(it != rethrowTargetToExnrefLocal.end());
-      return it->second;
+      if (it == rethrowTargetToExnrefLocal.end()) {
+        return {};
+      } else {
+        return it->second;
+      }
     }
 
     static void incrementRethrowTryDepth(ExnrefLocalAssigner* self,
@@ -362,11 +361,11 @@ struct TranslateEHOldToNew
       // point, all rethrows in the catch bodies have been already converted to
       // throw_refs, so we check the local numbers to see if those (original)
       // rethrows used to target the current try label.
-      if (localAssigner->hasExnrefLocal(curr->name)) {
-        Index local = localAssigner->getExnrefLocal(curr->name);
+      std::optional<Index> local = localAssigner->getExnrefLocal(curr->name);
+      if (local) {
         for (auto* throwRef : FindAll<ThrowRef>(catchBody).list) {
           if (auto* localGet = throwRef->exnref->cast<LocalGet>()) {
-            if (localGet->index == local) {
+            if (localGet->index == *local) {
               return true;
             }
           }
@@ -599,7 +598,7 @@ struct TranslateEHOldToNew
 
       if (tryTable->catchRefs[i]) {
         // When we use the exnref (i.e., there are throw_refs in the catch body)
-        Index exnrefLocal = localAssigner->getExnrefLocal(curr->name);
+        Index exnrefLocal = *localAssigner->getExnrefLocal(curr->name);
         if (tagType.isConcrete()) {
           // If the tag type is single and we use the exnref, the block
           // returns (tagtype, exnref). Get a scratch local to contain this
@@ -715,7 +714,7 @@ struct TranslateEHOldToNew
     // corresponding 'try' to 'try_table' by using catch_ref/catch_all_ref and
     // assining the exnref to that local.
     Builder builder(*getModule());
-    Index exnrefLocal = localAssigner->getExnrefLocal(curr->target);
+    Index exnrefLocal = *localAssigner->getExnrefLocal(curr->target);
     replaceCurrent(builder.makeThrowRef(
       builder.makeLocalGet(exnrefLocal, Type(HeapType::exn, Nullable))));
   }
