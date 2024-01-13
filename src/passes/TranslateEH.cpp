@@ -193,9 +193,9 @@ struct TranslateEHOldToNew
     }
   };
 
-  std::unique_ptr<LabelUtils::LabelManager> labels;
-  std::unique_ptr<TargetTryLabelScanner> labelScanner;
-  std::unique_ptr<ExnrefLocalAssigner> localAssigner;
+  std::optional<LabelUtils::LabelManager> labels;
+  std::optional<TargetTryLabelScanner> labelScanner;
+  std::optional<ExnrefLocalAssigner> localAssigner;
 
   std::unordered_map<Name, Name> delegateTargetToBrTarget;
   // Scratch locals used to contain extracted values and (extracted values,
@@ -787,10 +787,10 @@ struct TranslateEHOldToNew
   }
 
   void doWalkFunction(Function* func) {
-    labels = std::make_unique<LabelUtils::LabelManager>(func);
-    labelScanner = std::make_unique<TargetTryLabelScanner>(func);
+    labels = std::make_optional<LabelUtils::LabelManager>(func);
+    labelScanner = std::make_optional<TargetTryLabelScanner>(func);
     localAssigner =
-      std::make_unique<ExnrefLocalAssigner>(func, labelScanner.get());
+      std::make_optional<ExnrefLocalAssigner>(func, &labelScanner.value());
 
     // Create a unique br target label for each existing delegate target label,
     // because we are going to achieve 'delegate's effects with 'br's. See
