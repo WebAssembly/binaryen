@@ -2255,7 +2255,7 @@ export class Module {
         return {
             newWithInit: (heapType: HeapType, size: ExpressionRef, init: ExpressionRef): ExpressionRef =>
                 JSModule['BinaryenArrayNew'](this.ptr, heapType, size, init),
-            newFromValues: (heapType: HeapType, values: ExpressionRef[]): ExpressionRef => {
+            newFromItems: (heapType: HeapType, values: ExpressionRef[]): ExpressionRef => {
                 const ptr = _malloc(Math.max(8, values.length * 4));
                 let offset = ptr;
                 values.forEach(value => {
@@ -2274,6 +2274,25 @@ export class Module {
                 JSModule['_BinaryenArraySet'](this.ptr, array, item, value),
             length: (array: ExpressionRef): ExpressionRef =>
                 JSModule['_BinaryenArrayLen'](this.ptr, array)
+        }
+   }
+   get structs () {
+        return {
+            newFromFields: (heapType: HeapType, values: ExpressionRef[]): ExpressionRef => {
+                const ptr = _malloc(4 * values.length);
+                let offset = ptr;
+                values.forEach(value => {
+                    __i32_store(offset, value);
+                    offset += 4;
+                });
+                const result = JSModule['_BinaryenStructNew'](this.ptr, ptr, values.length, heapType);
+                _free(ptr);
+                return result;
+            },
+            getMember: (struct: ExpressionRef, memberIndex: number, resultType: Type, signed: boolean) =>
+                JSModule['_BinaryenStructGet'](this.ptr, memberIndex, struct, resultType, signed),
+            setMember: (struct: ExpressionRef, memberIndex: number, value: ExpressionRef) =>
+                JSModule['_BinaryenStructSet'](this.ptr, memberIndex, struct, value)
         }
    }
 }
@@ -2332,6 +2351,11 @@ export interface TypeBuilderResult {
     errorReason: number | null;
 }
 
+export interface FieldType {
+    type: Type,
+    packedType: PackedType,
+    mutable: boolean
+}
 export class TypeBuilder {
 
     static typeFromTempHeapType(heapType: HeapType, nullable: boolean): Type {
@@ -2344,8 +2368,26 @@ export class TypeBuilder {
         this.ref = JSModule['_TypeBuilderCreate'](slots);
     }
 
-    setArrayType(slot: number, elementType: Type, elementPackedType: PackedType, mutable: boolean): TypeBuilder {
-        JSModule['_TypeBuilderSetArrayType'](this.ref, slot, elementType, elementPackedType, mutable);
+    setArrayType(slot: number, elementType: FieldType): TypeBuilder {
+        JSModule['_TypeBuilderSetArrayType'](this.ref, slot, elementType.type, elementType.packedType, elementType.mutable);
+        return this;
+    }
+
+    setStructType(slot: number, fieldTypes: FieldType[]): TypeBuilder {
+        const types = _malloc(4 * fieldTypes.length);
+        const packedTypes = _malloc(4 * fieldTypes.length);
+        // assume sizeof(bool) is 4
+        const mutables = _malloc(4 * fieldTypes.length);
+        let typesPtr = types, packedTypesPtr = packedTypes, mutablesPtr = mutables;
+        fieldTypes.forEach(field => {
+            __i32_store(typesPtr, field.type); typesPtr += 4;
+            __i32_store(packedTypesPtr, field.packedType); packedTypesPtr += 4;
+            __i32_store(mutablesPtr, field.mutable ? 1 : 0); mutablesPtr += 4;
+        });
+        JSModule['_TypeBuilderSetStructType'](this.ref, slot, types, packedTypes, mutables, fieldTypes.length);
+        _free(mutables);
+        _free(packedTypes);
+        _free(types);
         return this;
     }
 
