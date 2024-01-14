@@ -7,19 +7,19 @@ const HEAP8: Int8Array = JSModule.HEAP8;
 const HEAPU8: Uint8Array = JSModule.HEAPU8;
 const HEAP32: Int32Array = JSModule.HEAP32;
 const HEAPU32: Uint32Array = JSModule.HEAPU32;
-type Writer = (s: string) => void;
-const utils = JSModule['utils'];
-const swapOut: (func: Writer) => Writer = utils.swapOut;
-const stringToAscii: (s: string, ptr: number) => void = utils.stringToAscii;
-const stackSave: () => number = utils.stackSave;
-const stackAlloc: (size: number) => number = utils.stackAlloc;
-const stackRestore: (ref: number) => void = utils.stackRestore;
-const allocateUTF8OnStack: (s: string) => number = utils.allocateUTF8OnStack;
-const _BinaryenSizeofLiteral: () => number = utils._BinaryenSizeofLiteral;
-const _BinaryenSizeofAllocateAndWriteResult: () => number = utils._BinaryenSizeofAllocateAndWriteResult;
-const UTF8ToString: (ptr: number) => string | null = utils.UTF8ToString;
+const stringToAscii: (s: string, ptr: number) => void = JSModule.stringToAscii;
+const stackSave: () => number = JSModule.stackSave;
+const stackAlloc: (size: number) => number = JSModule.stackAlloc;
+const stackRestore: (ref: number) => void = JSModule.stackRestore;
+const allocateUTF8OnStack: (s: string) => number = JSModule.allocateUTF8OnStack;
+const UTF8ToString: (ptr: number) => string | null = JSModule.UTF8ToString;
 const __i32_store: (offset: number, value: number) => void = JSModule['__i32_store'];
 const __i32_load: (offset: number) => number = JSModule['__i32_load'];
+const utils = JSModule['utils'];
+type Writer = (s: string) => void;
+const swapOut: (func: Writer) => Writer = utils.swapOut;
+const _BinaryenSizeofLiteral: () => number = utils._BinaryenSizeofLiteral;
+const _BinaryenSizeofAllocateAndWriteResult: () => number = utils._BinaryenSizeofAllocateAndWriteResult;
 
 
 function preserveStack<R>(func: () => R): R {

@@ -465,7 +465,7 @@ if(EMSCRIPTEN)
                       tsc --target ES2020 --module ES2022 --declaration --declarationMap --outDir ${CMAKE_BINARY_DIR}/bin ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_wasm.ts &&
                       rm ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_wasm.ts)
   else()
-  add_custom_target(binaryen_wasm_wrapper
+    add_custom_target(binaryen_wasm_wrapper
               COMMAND sed -e 's/TARGET/wasm/g'  ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen.ts >> ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_wasm.ts &&
                       tsc --target ES2020 --module ES2022 --declaration --declarationMap --outDir ${CMAKE_BINARY_DIR}/bin ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_wasm.ts &&
                       rm ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_wasm.ts)
@@ -479,7 +479,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm "-sEXPORT_NAME=Binaryen")
   target_link_libraries(binaryen_wasm "-sNODERAWFS=0")
   target_link_libraries(binaryen_wasm "-sEXPORT_ES6")
-  target_link_libraries(binaryen_wasm "-sEXPORTED_RUNTIME_METHODS=allocateUTF8OnStack,stringToAscii")
+  target_link_libraries(binaryen_wasm "-sEXPORTED_RUNTIME_METHODS=allocateUTF8OnStack,stringToAscii,stackSave,stackAlloc,stackRestore,UTF8ToString")
   target_link_libraries(binaryen_wasm "-sEXPORTED_FUNCTIONS=_malloc,_free")
   # useful when working on --post-js file
   # target_link_libraries(binaryen_wasm "--minify=0")
@@ -502,7 +502,7 @@ if(EMSCRIPTEN)
                       tsc --target ES2020 --module ES2022 --declaration --declarationMap --outDir ${CMAKE_BINARY_DIR}/bin ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_js.ts &&
                       rm ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_js.ts)
   else()
-  add_custom_target(binaryen_js_wrapper
+    add_custom_target(binaryen_js_wrapper
               COMMAND sed -e 's/TARGET/js/g' ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen.ts >> ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_js.ts &&
                       tsc --target ES2020 --module ES2022 --declaration --declarationMap --outDir ${CMAKE_BINARY_DIR}/bin ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_js.ts &&
                       rm ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_js.ts)
@@ -534,7 +534,7 @@ if(EMSCRIPTEN)
   else()
     target_link_libraries(binaryen_js "-sEXPORT_ES6=1")
   endif()
-  target_link_libraries(binaryen_js "-sEXPORTED_RUNTIME_METHODS=allocateUTF8OnStack,stringToAscii")
+  target_link_libraries(binaryen_js "-sEXPORTED_RUNTIME_METHODS=allocateUTF8OnStack,stringToAscii,stackSave,stackAlloc,stackRestore,UTF8ToString")
   target_link_libraries(binaryen_js "-sEXPORTED_FUNCTIONS=_malloc,_free")
   # useful when working on --post-js file
   # target_link_libraries(binaryen_js "--minify=0")
