@@ -26,8 +26,6 @@ Use this handy checklist to make sure your new instructions are fully supported:
  - [ ] Support added in various classes inheriting OverriddenVisitor (and possibly other non-OverriddenVisitor classes as necessary)
  - [ ] Support added to src/tools/fuzzing.h
  - [ ] C API support added in src/binaryen-c.h and src/binaryen-c.cpp
- - [ ] JS API support added in src/js/binaryen.js-post.js
  - [ ] C API tested in test/example/c-api-kitchen-sink.c
- - [ ] JS API tested in test/binaryen.js/kitchen-sink.js
  - [ ] Tests added in test/spec
  - [ ] Tests added in top-level test/

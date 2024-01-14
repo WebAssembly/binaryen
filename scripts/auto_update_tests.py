@@ -19,7 +19,6 @@ import subprocess
 import sys
 from collections import OrderedDict
 
-from test import binaryenjs
 from test import lld
 from test import shared
 from test import support
@@ -173,14 +172,13 @@ TEST_SUITES = OrderedDict([
     ('spec', update_spec_tests),
     ('lld', lld.update_lld_tests),
     ('wasm2js', wasm2js.update_wasm2js_tests),
-    ('binaryenjs', binaryenjs.update_binaryen_js_tests),
     ('lit', update_lit_tests),
 ])
 
 
 def main():
     all_suites = TEST_SUITES.keys()
-    skip_by_default = ['binaryenjs']
+    skip_by_default = []
 
     if shared.options.list_suites:
         for suite in all_suites:
