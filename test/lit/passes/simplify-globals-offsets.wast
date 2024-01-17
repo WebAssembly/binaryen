@@ -4,7 +4,7 @@
 ;; RUN: foreach %s %t wasm-opt --simplify-globals -all -S -o - | filecheck %s
 
 ;; Apply constant globals to segment offsets. The non-imported global.gets will
-;; be applied in the segments named $1.
+;; be applied in the segments named $use-defined.
 
 (module
   ;; CHECK:      (type $0 (func))
@@ -24,17 +24,20 @@
   ;; CHECK:      (global $use-defined i32 (i32.const 42))
   (global $use-defined i32 (global.get $defined))
 
-  ;; CHECK:      (data $0 (global.get $imported) "hello, world!")
-  (data $0 (global.get $imported) "hello, world!")
+  ;; CHECK:      (data $use-imported (global.get $imported) "hello, world!")
+  (data $use-imported (global.get $imported) "hello, world!")
 
-  ;; CHECK:      (data $1 (i32.const 42) "hello, world!")
-  (data $1 (global.get $defined) "hello, world!")
+  ;; CHECK:      (data $use-defined (i32.const 42) "hello, world!")
+  (data $use-defined (global.get $defined) "hello, world!")
 
-  ;; CHECK:      (elem $0 (global.get $imported) $func)
-  (elem $0 (global.get $imported) $func)
+  ;; CHECK:      (data $dropped "hello, world!")
+  (data $dropped "hello, world!")
 
-  ;; CHECK:      (elem $1 (i32.const 42) $func $func)
-  (elem $1 (global.get $defined) $func $func)
+  ;; CHECK:      (elem $use-imported (global.get $imported) $func)
+  (elem $use-imported (global.get $imported) $func)
+
+  ;; CHECK:      (elem $use-defined (i32.const 42) $func $func)
+  (elem $use-defined (global.get $defined) $func $func)
 
   ;; CHECK:      (export "func" (func $func))
   (export "func" (func $func))
@@ -53,6 +56,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (data.drop $dropped)
   ;; CHECK-NEXT: )
   (func $func
     ;; Use things to avoid DCE.
@@ -69,5 +73,6 @@
     (drop
       (global.get $use-defined)
     )
+    (data.drop $dropped)
   )
 )

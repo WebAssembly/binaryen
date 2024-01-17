@@ -655,6 +655,10 @@ struct SimplifyGlobals : public Pass {
     // segment), see if it is a simple global.get of a constant that we can
     // apply.
     auto applyGlobals = [&](Expression*& init) {
+      if (!init) {
+        // This is the init of a passive segment, which is null.
+        return;
+      }
       if (auto* get = init->dynCast<GlobalGet>()) {
         auto iter = constantGlobals.find(get->name);
         if (iter != constantGlobals.end()) {
