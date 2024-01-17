@@ -3,7 +3,9 @@
 
 ;; RUN: foreach %s %t wasm-opt --simplify-globals -all -S -o - | filecheck %s
 
-;; Apply constant globals to segment offsets.
+;; Apply constant globals to segment offsets. The non-imported global.gets will
+;; be applied in the segments named $1.
+
 (module
   ;; CHECK:      (type $0 (func))
 
