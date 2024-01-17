@@ -675,19 +675,14 @@ struct SimplifyGlobals : public Pass {
         }
       }
     }
-#if 0
+
     // Go over other things with inits and apply globals there.
     for (auto& elementSegment : module->elementSegments) {
-      if (!elementSegment->imported()) {
-        applyGlobals(elementSegment->offset);
-      }
+      applyGlobals(elementSegment->offset);
     }
     for (auto& dataSegment : module->dataSegments) {
-      if (!dataSegment->imported()) {
-        applyGlobals(dataSegment->offset);
-      }
+      applyGlobals(dataSegment->offset);
     }
-    #endif
   }
 
   // Constant propagation part 2: apply the values of immutable globals
