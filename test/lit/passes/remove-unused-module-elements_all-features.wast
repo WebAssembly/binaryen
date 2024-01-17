@@ -1026,3 +1026,61 @@
     (return_call $import)
   )
 )
+
+;; Apply constant globals to segment offsets.
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (import "env" "memory" (memory $memory 256))
+  (import "env" "memory" (memory $memory 256))
+
+  ;; CHECK:      (import "env" "table" (table $table 0 funcref))
+  (import "env" "table" (table $table 0 funcref))
+
+  ;; CHECK:      (import "env" "imported" (global $imported i32))
+  (import "env" "imported" (global $imported i32))
+
+  ;; CHECK:      (global $defined i32 (i32.const 42))
+  (global $defined i32 (i32.const 42))
+
+  ;; CHECK:      (data $0 (global.get $imported) "hello, world!")
+  (data $0 (global.get $imported) "hello, world!")
+
+  ;; CHECK:      (data $1 (global.get $defined) "hello, world!")
+  (data $1 (global.get $defined) "hello, world!")
+
+  ;; CHECK:      (elem $0 (global.get $imported) $func)
+  (elem $0 (global.get $imported) $func)
+
+  ;; CHECK:      (elem $1 (global.get $defined) $func $func)
+  (elem $1 (global.get $defined) $func $func)
+
+  ;; CHECK:      (export "func" (func $func))
+  (export "func" (func $func))
+
+  ;; CHECK:      (func $func (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.load
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (table.get $table
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    ;; Use the table and memory to avoid DCE.
+    (drop
+      (i32.load
+        (i32.const 0)
+      )
+    )
+    (drop
+      (table.get $table
+        (i32.const 0)
+      )
+    )
+  )
+)
