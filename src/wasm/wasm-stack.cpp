@@ -2680,6 +2680,8 @@ void StackIRGenerator::emit(Expression* curr) {
     stackInst = makeStackInst(StackInst::LoopBegin, curr);
   } else if (curr->is<Try>()) {
     stackInst = makeStackInst(StackInst::TryBegin, curr);
+  } else if (curr->is<TryTable>()) {
+    stackInst = makeStackInst(StackInst::TryTableBegin, curr);
   } else {
     stackInst = makeStackInst(curr);
   }
@@ -2696,6 +2698,8 @@ void StackIRGenerator::emitScopeEnd(Expression* curr) {
     stackInst = makeStackInst(StackInst::LoopEnd, curr);
   } else if (curr->is<Try>()) {
     stackInst = makeStackInst(StackInst::TryEnd, curr);
+  } else if (curr->is<TryTable>()) {
+    stackInst = makeStackInst(StackInst::TryTableEnd, curr);
   } else {
     WASM_UNREACHABLE("unexpected expr type");
   }
@@ -2709,14 +2713,15 @@ StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
   ret->origin = origin;
   auto stackType = origin->type;
   if (origin->is<Block>() || origin->is<Loop>() || origin->is<If>() ||
-      origin->is<Try>()) {
+      origin->is<Try>() || origin->is<TryTable>()) {
     if (stackType == Type::unreachable) {
-      // There are no unreachable blocks, loops, or ifs. we emit extra
-      // unreachables to fix that up, so that they are valid as having none
-      // type.
+      // There are no unreachable blocks, loops, ifs, trys, or try_tables. we
+      // emit extra unreachables to fix that up, so that they are valid as
+      // having none type.
       stackType = Type::none;
     } else if (op != StackInst::BlockEnd && op != StackInst::IfEnd &&
-               op != StackInst::LoopEnd && op != StackInst::TryEnd) {
+               op != StackInst::LoopEnd && op != StackInst::TryEnd &&
+               op != StackInst::TryTableEnd) {
       // If a concrete type is returned, we mark the end of the construct has
       // having that type (as it is pushed to the value stack at that point),
       // other parts are marked as none).
@@ -2742,7 +2747,8 @@ void StackIRToBinaryWriter::write() {
       case StackInst::Basic:
       case StackInst::BlockBegin:
       case StackInst::IfBegin:
-      case StackInst::LoopBegin: {
+      case StackInst::LoopBegin:
+      case StackInst::TryTableBegin: {
         writer.visit(inst->origin);
         break;
       }
@@ -2751,7 +2757,8 @@ void StackIRToBinaryWriter::write() {
         [[fallthrough]];
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
-      case StackInst::LoopEnd: {
+      case StackInst::LoopEnd:
+      case StackInst::TryTableEnd: {
         writer.emitScopeEnd(inst->origin);
         break;
       }

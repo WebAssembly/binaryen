@@ -3550,7 +3550,8 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
         [[fallthrough]];
       case StackInst::BlockBegin:
       case StackInst::IfBegin:
-      case StackInst::LoopBegin: {
+      case StackInst::LoopBegin:
+      case StackInst::TryTableBegin: {
         controlFlowDepth++;
         doIndent();
         PrintExpressionContents(printer).visit(inst->origin);
@@ -3562,7 +3563,8 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
         [[fallthrough]];
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
-      case StackInst::LoopEnd: {
+      case StackInst::LoopEnd:
+      case StackInst::TryTableEnd: {
         controlFlowDepth--;
         indent--;
         doIndent();
