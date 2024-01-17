@@ -102,6 +102,7 @@ BinaryenFeatureAll: 131071
  (func $"kitchen()sinker" (type $2) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
   (local $5 externref)
+  (local $6 f32)
   (block $the-body (result i32)
    (block $the-nothing
     (drop
