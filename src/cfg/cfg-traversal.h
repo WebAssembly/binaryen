@@ -86,12 +86,12 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
   std::map<Name, std::vector<BasicBlock*>> branches;
   // stack of the last blocks of if conditions + the last blocks of if true
   // bodies
-  std::vector<BasicBlock*> ifStack;
+  std::vector<BasicBlock*> ifLastBlockStack;
   // stack of the first blocks of loops
-  std::vector<BasicBlock*> loopStack;
+  std::vector<BasicBlock*> loopLastBlockStack;
 
   // stack of the last blocks of try bodies
-  std::vector<BasicBlock*> tryStack;
+  std::vector<BasicBlock*> tryLastBlockStack;
   // Stack of the blocks that contain a throwing instruction, and therefore they
   // can reach the first blocks of catches that throwing instructions should
   // unwind to at any moment. That is, the topmost item in this vector relates
@@ -100,7 +100,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
   // of the catches, although that could be improved perhaps).
   std::vector<std::vector<BasicBlock*>> throwingInstsStack;
   // stack of 'Try' expressions corresponding to throwingInstsStack.
-  std::vector<Expression*> unwindExprStack;
+  std::vector<Expression*> tryStack;
   // A stack for each try, where each entry is a list of blocks, one for each
   // catch, used during processing. We start by assigning the start blocks to
   // here, and then read those at the appropriate time; when we finish a catch
@@ -186,12 +186,13 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
   static void doStartIfTrue(SubType* self, Expression** currp) {
     auto* last = self->currBasicBlock;
     self->link(last, self->startBasicBlock()); // ifTrue
-    self->ifStack.push_back(last);          // the block before the ifTrue
+    self->ifLastBlockStack.push_back(last);    // the block before the ifTrue
   }
 
   static void doStartIfFalse(SubType* self, Expression** currp) {
-    self->ifStack.push_back(self->currBasicBlock); // the ifTrue fallthrough
-    self->link(self->ifStack[self->ifStack.size() - 2],
+    self->ifLastBlockStack.push_back(
+      self->currBasicBlock); // the ifTrue fallthrough
+    self->link(self->ifLastBlockStack[self->ifLastBlockStack.size() - 2],
                self->startBasicBlock()); // before if -> ifFalse
   }
 
@@ -203,13 +204,13 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     self->link(last, self->currBasicBlock);
     if ((*currp)->cast<If>()->ifFalse) {
       // we just linked ifFalse, need to link ifTrue to the end
-      self->link(self->ifStack.back(), self->currBasicBlock);
-      self->ifStack.pop_back();
+      self->link(self->ifLastBlockStack.back(), self->currBasicBlock);
+      self->ifLastBlockStack.pop_back();
     } else {
       // no ifFalse, so add a fallthrough for if the if is not taken
-      self->link(self->ifStack.back(), self->currBasicBlock);
+      self->link(self->ifLastBlockStack.back(), self->currBasicBlock);
     }
-    self->ifStack.pop_back();
+    self->ifLastBlockStack.pop_back();
   }
 
   static void doStartLoop(SubType* self, Expression** currp) {
@@ -218,7 +219,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     // a loop with no backedges would still be counted here, but oh well
     self->loopTops.push_back(self->currBasicBlock);
     self->link(last, self->currBasicBlock);
-    self->loopStack.push_back(self->currBasicBlock);
+    self->loopLastBlockStack.push_back(self->currBasicBlock);
   }
 
   static void doEndLoop(SubType* self, Expression** currp) {
@@ -227,14 +228,14 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     auto* curr = (*currp)->cast<Loop>();
     // branches to the top of the loop
     if (curr->name.is()) {
-      auto* loopStart = self->loopStack.back();
+      auto* loopStart = self->loopLastBlockStack.back();
       auto& origins = self->branches[curr->name];
       for (auto* origin : origins) {
         self->link(origin, loopStart);
       }
       self->branches.erase(curr->name);
     }
-    self->loopStack.pop_back();
+    self->loopLastBlockStack.pop_back();
   }
 
   static void doEndBranch(SubType* self, Expression** currp) {
@@ -278,9 +279,13 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     // catch $e3
     //   ...
     // end
-    assert(self->unwindExprStack.size() == self->throwingInstsStack.size());
+    assert(self->tryStack.size() == self->throwingInstsStack.size());
     for (int i = self->throwingInstsStack.size() - 1; i >= 0;) {
-      auto* tryy = self->unwindExprStack[i]->template cast<Try>();
+      // Exception thrown. Note outselves so that we will create a link to each
+      // catch within the try when we get there.
+      self->throwingInstsStack[i].push_back(self->currBasicBlock);
+
+      auto* tryy = self->tryStack[i]->template cast<Try>();
       if (tryy->isDelegate()) {
         // If this delegates to the caller, there is no possibility that this
         // instruction can throw to outer catches.
@@ -291,7 +296,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
         // and the target try.
         [[maybe_unused]] bool found = false;
         for (int j = i - 1; j >= 0; j--) {
-          if (self->unwindExprStack[j]->template cast<Try>()->name ==
+          if (self->tryStack[j]->template cast<Try>()->name ==
               tryy->delegateTarget) {
             i = j;
             found = true;
@@ -301,10 +306,6 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
         assert(found);
         continue;
       }
-
-      // Exception thrown. Note outselves so that we will create a link to each
-      // catch within the try when we get there.
-      self->throwingInstsStack[i].push_back(self->currBasicBlock);
 
       // If this try has catch_all, there is no possibility that this
       // instruction can throw to outer catches. Stop here.
@@ -348,11 +349,12 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
   static void doStartTry(SubType* self, Expression** currp) {
     auto* curr = (*currp)->cast<Try>();
     self->throwingInstsStack.emplace_back();
-    self->unwindExprStack.push_back(curr);
+    self->tryStack.push_back(curr);
   }
 
   static void doStartCatches(SubType* self, Expression** currp) {
-    self->tryStack.push_back(self->currBasicBlock); // last block of try body
+    self->tryLastBlockStack.push_back(
+      self->currBasicBlock); // last block of try body
 
     // Now that we are starting the catches, create the basic blocks that they
     // begin with.
@@ -374,7 +376,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     }
 
     self->throwingInstsStack.pop_back();
-    self->unwindExprStack.pop_back();
+    self->tryStack.pop_back();
     self->catchIndexStack.push_back(0);
   }
 
@@ -398,8 +400,8 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
       self->link(last, self->currBasicBlock);
     }
     // try body's last block -> continuation block
-    self->link(self->tryStack.back(), self->currBasicBlock);
-    self->tryStack.pop_back();
+    self->link(self->tryLastBlockStack.back(), self->currBasicBlock);
+    self->tryLastBlockStack.pop_back();
     self->processCatchStack.pop_back();
     self->catchIndexStack.pop_back();
   }
@@ -522,11 +524,11 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     }
 
     assert(branches.size() == 0);
-    assert(ifStack.size() == 0);
-    assert(loopStack.size() == 0);
-    assert(tryStack.size() == 0);
+    assert(ifLastBlockStack.size() == 0);
+    assert(loopLastBlockStack.size() == 0);
+    assert(tryLastBlockStack.size() == 0);
     assert(throwingInstsStack.size() == 0);
-    assert(unwindExprStack.size() == 0);
+    assert(tryStack.size() == 0);
     assert(processCatchStack.size() == 0);
   }
 
