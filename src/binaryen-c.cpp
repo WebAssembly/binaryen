@@ -5878,6 +5878,10 @@ BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func,
   assert(index < vars.size());
   return vars[index].getID();
 }
+BinaryenIndex BinaryenFunctionAddVar(BinaryenFunctionRef func,
+                                     BinaryenType type) {
+  return Builder::addVar((Function*)func, (Type)type);
+}
 BinaryenIndex BinaryenFunctionGetNumLocals(BinaryenFunctionRef func) {
   return ((Function*)func)->getNumLocals();
 }
