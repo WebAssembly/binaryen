@@ -30,6 +30,7 @@
   ;; CHECK:      (data $use-defined (i32.const 42) "hello, world!")
   (data $use-defined (global.get $defined) "hello, world!")
 
+  ;; A passive segment has no offset to test, which we should not error on.
   ;; CHECK:      (data $dropped "hello, world!")
   (data $dropped "hello, world!")
 
@@ -54,6 +55,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $imported)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (data.drop $dropped)
@@ -69,6 +73,9 @@
       (table.get $table
         (i32.const 0)
       )
+    )
+    (drop
+      (global.get $imported)
     )
     (drop
       (global.get $use-defined)
