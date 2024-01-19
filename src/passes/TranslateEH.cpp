@@ -53,8 +53,8 @@ struct TranslateEHOldToNew
   struct TargetTryLabelScanner : public PostWalker<TargetTryLabelScanner> {
     TargetTryLabelScanner(Function* func) { walkFunction(func); }
 
-    std::unordered_set<Name> delegateTargets;
-    std::unordered_set<Name> rethrowTargets;
+    std::set<Name> delegateTargets;
+    std::set<Name> rethrowTargets;
     bool isTargetedByDelegates(Try* curr) const {
       return delegateTargets.find(curr->name) != delegateTargets.end();
     }
