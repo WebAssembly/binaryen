@@ -646,22 +646,46 @@ struct SimplifyGlobals : public Pass {
   // since we do know the value during startup, it can't be modified until
   // code runs.
   void propagateConstantsToGlobals() {
-    // Go over the list of globals in order, which is the order of
-    // initialization as well, tracking their constant values.
+    Builder builder(*module);
+
+    // We will note constant globals here as we compute them.
     std::map<Name, Literals> constantGlobals;
+
+    // Given an init expression (something like the init of a global or a
+    // segment), see if it is a simple global.get of a constant that we can
+    // apply.
+    auto applyGlobals = [&](Expression*& init) {
+      if (!init) {
+        // This is the init of a passive segment, which is null.
+        return;
+      }
+      if (auto* get = init->dynCast<GlobalGet>()) {
+        auto iter = constantGlobals.find(get->name);
+        if (iter != constantGlobals.end()) {
+          init = builder.makeConstantExpression(iter->second);
+        }
+      }
+    };
+
+    // Go over the list of globals first, and note their constant values as we
+    // go, as well as applying them where possible.
     for (auto& global : module->globals) {
       if (!global->imported()) {
         if (Properties::isConstantExpression(global->init)) {
           constantGlobals[global->name] =
             getLiteralsFromConstExpression(global->init);
-        } else if (auto* get = global->init->dynCast<GlobalGet>()) {
-          auto iter = constantGlobals.find(get->name);
-          if (iter != constantGlobals.end()) {
-            Builder builder(*module);
-            global->init = builder.makeConstantExpression(iter->second);
-          }
+        } else {
+          applyGlobals(global->init);
         }
       }
+    }
+
+    // Go over other things with inits and apply globals there.
+    for (auto& elementSegment : module->elementSegments) {
+      applyGlobals(elementSegment->offset);
+    }
+    for (auto& dataSegment : module->dataSegments) {
+      applyGlobals(dataSegment->offset);
     }
   }
 
