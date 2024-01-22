@@ -46,7 +46,7 @@
   ;; CHECK-NEXT:   (block $catch_all2
   ;; CHECK-NEXT:    (block $catch1
   ;; CHECK-NEXT:     (try_table (catch $e-empty $catch1) (catch_all $catch_all2)
-  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:      (call $foo)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (br $outer0)
   ;; CHECK-NEXT:    )
@@ -59,7 +59,9 @@
   (func $try-none-tag-none
     ;; try's type is none and catch's tag type is none
     (try $l0
-      (do)
+      (do
+        (call $foo)
+      )
       (catch $e-empty ;; converted to catch
         (call $foo)
       )
@@ -77,7 +79,7 @@
   ;; CHECK-NEXT:     (local.set $0
   ;; CHECK-NEXT:      (block $catch1 (result exnref)
   ;; CHECK-NEXT:       (try_table (catch_ref $e-empty $catch1) (catch_all_ref $catch_all2)
-  ;; CHECK-NEXT:        (nop)
+  ;; CHECK-NEXT:        (call $foo)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (br $outer0)
   ;; CHECK-NEXT:      )
@@ -95,7 +97,9 @@
   (func $try-none-tag-none-with-rethrow
     ;; try's type is none and catch's tag type is none, and there are rethrows
     (try $l0
-      (do)
+      (do
+        (call $foo)
+      )
       (catch $e-empty ;; converted to catch_ref, because of rethrow
         (rethrow $l0)
       )
@@ -112,7 +116,7 @@
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (block $catch1 (result i32)
   ;; CHECK-NEXT:      (try_table (catch $e-i32 $catch1) (catch_all $catch_all2)
-  ;; CHECK-NEXT:       (nop)
+  ;; CHECK-NEXT:       (call $foo)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (br $outer0)
   ;; CHECK-NEXT:     )
@@ -128,7 +132,9 @@
   (func $try-none-tag-single
     ;; try's type is none and catch's tag type is single
     (try $l0
-      (do)
+      (do
+        (call $foo)
+      )
       (catch $e-i32
         (drop
           (pop i32)
@@ -150,7 +156,7 @@
   ;; CHECK-NEXT:     (local.set $2
   ;; CHECK-NEXT:      (block $catch1 (type $3) (result i32 exnref)
   ;; CHECK-NEXT:       (try_table (catch_ref $e-i32 $catch1) (catch_all_ref $catch_all2)
-  ;; CHECK-NEXT:        (nop)
+  ;; CHECK-NEXT:        (call $foo)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (br $outer0)
   ;; CHECK-NEXT:      )
@@ -183,7 +189,9 @@
   (func $try-none-tag-single-with-rethrow
     ;; try's type is none and catch's tag type is single, and there are rethrows
     (try $l0
-      (do)
+      (do
+        (call $foo)
+      )
       (catch $e-i32
         (drop
           (pop i32)
@@ -203,7 +211,7 @@
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (block $catch1 (type $0) (result i32 i64)
   ;; CHECK-NEXT:      (try_table (catch $e-i32-i64 $catch1) (catch_all $catch_all2)
-  ;; CHECK-NEXT:       (nop)
+  ;; CHECK-NEXT:       (call $foo)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (br $outer0)
   ;; CHECK-NEXT:     )
@@ -219,7 +227,9 @@
   (func $try-none-tag-tuple
     ;; try's type is none and catch's tag type is tuple
     (try $l0
-      (do)
+      (do
+        (call $foo)
+      )
       (catch $e-i32-i64
         (tuple.drop 2
           (pop i32 i64)
@@ -241,7 +251,7 @@
   ;; CHECK-NEXT:     (local.set $2
   ;; CHECK-NEXT:      (block $catch1 (type $4) (result i32 i64 exnref)
   ;; CHECK-NEXT:       (try_table (catch_ref $e-i32-i64 $catch1) (catch_all_ref $catch_all2)
-  ;; CHECK-NEXT:        (nop)
+  ;; CHECK-NEXT:        (call $foo)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (br $outer0)
   ;; CHECK-NEXT:      )
@@ -279,7 +289,9 @@
   (func $try-none-tag-tuple-with-rethrow
     ;; try's type is none and catch's tag type is tuple, and there are rethrows
     (try $l0
-      (do)
+      (do
+        (call $foo)
+      )
       (catch $e-i32-i64
         (tuple.drop 2
           (pop i32 i64)
@@ -298,6 +310,7 @@
   ;; CHECK-NEXT:    (block $catch1
   ;; CHECK-NEXT:     (br $outer0
   ;; CHECK-NEXT:      (try_table (result i32) (catch $e-empty $catch1) (catch_all $catch_all2)
+  ;; CHECK-NEXT:       (call $foo)
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
@@ -313,6 +326,7 @@
     ;; try's type is single and catch's tag type is none
     (try $l0 (result i32)
       (do
+        (call $foo)
         (i32.const 0)
       )
       (catch $e-empty
@@ -333,6 +347,7 @@
   ;; CHECK-NEXT:      (block $catch1 (result exnref)
   ;; CHECK-NEXT:       (br $outer0
   ;; CHECK-NEXT:        (try_table (result i32) (catch_ref $e-empty $catch1) (catch_all_ref $catch_all2)
+  ;; CHECK-NEXT:         (call $foo)
   ;; CHECK-NEXT:         (i32.const 0)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
@@ -352,6 +367,7 @@
     ;; try's type is single and catch's tag type is none, and there are rethrows
     (try $l0 (result i32)
       (do
+        (call $foo)
         (i32.const 0)
       )
       (catch $e-empty
@@ -371,6 +387,7 @@
   ;; CHECK-NEXT:     (block $catch1 (result i32)
   ;; CHECK-NEXT:      (br $outer0
   ;; CHECK-NEXT:       (try_table (result i32) (catch $e-i32 $catch1) (catch_all $catch_all2)
+  ;; CHECK-NEXT:        (call $foo)
   ;; CHECK-NEXT:        (i32.const 0)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
@@ -387,6 +404,7 @@
     ;; try's type is single and catch's tag type is single
     (try $l0 (result i32)
       (do
+        (call $foo)
         (i32.const 0)
       )
       (catch $e-i32
@@ -409,6 +427,7 @@
   ;; CHECK-NEXT:      (block $catch1 (type $3) (result i32 exnref)
   ;; CHECK-NEXT:       (br $outer0
   ;; CHECK-NEXT:        (try_table (result i32) (catch_ref $e-i32 $catch1) (catch_all_ref $catch_all2)
+  ;; CHECK-NEXT:         (call $foo)
   ;; CHECK-NEXT:         (i32.const 0)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
@@ -446,6 +465,7 @@
     ;; rethrows
     (try $l0 (result i32)
       (do
+        (call $foo)
         (i32.const 0)
       )
       (catch $e-i32
@@ -468,6 +488,7 @@
   ;; CHECK-NEXT:     (block $catch1 (type $0) (result i32 i64)
   ;; CHECK-NEXT:      (br $outer0
   ;; CHECK-NEXT:       (try_table (result i32) (catch $e-i32-i64 $catch1) (catch_all $catch_all2)
+  ;; CHECK-NEXT:        (call $foo)
   ;; CHECK-NEXT:        (i32.const 0)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
@@ -489,6 +510,7 @@
     ;; try's type is single and catch's tag type is tuple
     (try $l0 (result i32)
       (do
+        (call $foo)
         (i32.const 0)
       )
       (catch $e-i32-i64
@@ -514,6 +536,7 @@
   ;; CHECK-NEXT:      (block $catch1 (type $4) (result i32 i64 exnref)
   ;; CHECK-NEXT:       (br $outer0
   ;; CHECK-NEXT:        (try_table (result i32) (catch_ref $e-i32-i64 $catch1) (catch_all_ref $catch_all2)
+  ;; CHECK-NEXT:         (call $foo)
   ;; CHECK-NEXT:         (i32.const 0)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
@@ -556,6 +579,7 @@
     ;; rethrows
     (try $l0 (result i32)
       (do
+        (call $foo)
         (i32.const 0)
       )
       (catch $e-i32-i64
@@ -576,6 +600,7 @@
   ;; CHECK-NEXT:    (block $catch1
   ;; CHECK-NEXT:     (br $outer0
   ;; CHECK-NEXT:      (try_table (type $0) (result i32 i64) (catch $e-empty $catch1) (catch_all $catch_all2)
+  ;; CHECK-NEXT:       (call $foo)
   ;; CHECK-NEXT:       (tuple.make 2
   ;; CHECK-NEXT:        (i32.const 0)
   ;; CHECK-NEXT:        (i64.const 0)
@@ -600,6 +625,7 @@
     ;; try's type is tuple and catch's tag type is none
     (try $l0 (result i32 i64)
       (do
+        (call $foo)
         (tuple.make 2
           (i32.const 0)
           (i64.const 0)
@@ -629,6 +655,7 @@
   ;; CHECK-NEXT:      (block $catch1 (result exnref)
   ;; CHECK-NEXT:       (br $outer0
   ;; CHECK-NEXT:        (try_table (type $0) (result i32 i64) (catch_ref $e-empty $catch1) (catch_all_ref $catch_all2)
+  ;; CHECK-NEXT:         (call $foo)
   ;; CHECK-NEXT:         (tuple.make 2
   ;; CHECK-NEXT:          (i32.const 0)
   ;; CHECK-NEXT:          (i64.const 0)
@@ -651,6 +678,7 @@
     ;; try's type is tuple and catch's tag type is none, and there are rethrows
     (try $l0 (result i32 i64)
       (do
+        (call $foo)
         (tuple.make 2
           (i32.const 0)
           (i64.const 0)
@@ -673,6 +701,7 @@
   ;; CHECK-NEXT:     (block $catch1 (result i32)
   ;; CHECK-NEXT:      (br $outer0
   ;; CHECK-NEXT:       (try_table (type $0) (result i32 i64) (catch $e-i32 $catch1) (catch_all $catch_all2)
+  ;; CHECK-NEXT:        (call $foo)
   ;; CHECK-NEXT:        (tuple.make 2
   ;; CHECK-NEXT:         (i32.const 0)
   ;; CHECK-NEXT:         (i64.const 0)
@@ -698,6 +727,7 @@
     ;; try's type is tuple and catch's tag type is single
     (try $l0 (result i32 i64)
       (do
+        (call $foo)
         (tuple.make 2
           (i32.const 0)
           (i64.const 0)
@@ -729,6 +759,7 @@
   ;; CHECK-NEXT:      (block $catch1 (type $3) (result i32 exnref)
   ;; CHECK-NEXT:       (br $outer0
   ;; CHECK-NEXT:        (try_table (type $0) (result i32 i64) (catch_ref $e-i32 $catch1) (catch_all_ref $catch_all2)
+  ;; CHECK-NEXT:         (call $foo)
   ;; CHECK-NEXT:         (tuple.make 2
   ;; CHECK-NEXT:          (i32.const 0)
   ;; CHECK-NEXT:          (i64.const 0)
@@ -769,6 +800,7 @@
     ;; rethrows
     (try $l0 (result i32 i64)
       (do
+        (call $foo)
         (tuple.make 2
           (i32.const 0)
           (i64.const 0)
@@ -794,6 +826,7 @@
   ;; CHECK-NEXT:     (block $catch1 (type $0) (result i32 i64)
   ;; CHECK-NEXT:      (br $outer0
   ;; CHECK-NEXT:       (try_table (type $0) (result i32 i64) (catch $e-i32-i64 $catch1) (catch_all $catch_all2)
+  ;; CHECK-NEXT:        (call $foo)
   ;; CHECK-NEXT:        (tuple.make 2
   ;; CHECK-NEXT:         (i32.const 0)
   ;; CHECK-NEXT:         (i64.const 0)
@@ -816,6 +849,7 @@
     ;; try's type is tuple and catch's tag type is tuple
     (try $l0 (result i32 i64)
       (do
+        (call $foo)
         (tuple.make 2
           (i32.const 0)
           (i64.const 0)
@@ -844,6 +878,7 @@
   ;; CHECK-NEXT:      (block $catch1 (type $4) (result i32 i64 exnref)
   ;; CHECK-NEXT:       (br $outer0
   ;; CHECK-NEXT:        (try_table (type $0) (result i32 i64) (catch_ref $e-i32-i64 $catch1) (catch_all_ref $catch_all2)
+  ;; CHECK-NEXT:         (call $foo)
   ;; CHECK-NEXT:         (tuple.make 2
   ;; CHECK-NEXT:          (i32.const 0)
   ;; CHECK-NEXT:          (i64.const 0)
@@ -889,6 +924,7 @@
     ;; rethrows
     (try $l0 (result i32 i64)
       (do
+        (call $foo)
         (tuple.make 2
           (i32.const 0)
           (i64.const 0)
@@ -911,12 +947,14 @@
 
   ;; CHECK:      (func $catchless-delegateless-try (type $1)
   ;; CHECK-NEXT:  (try_table
-  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (call $foo)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $catchless-delegateless-try
     (try
-      (do)
+      (do
+        (call $foo)
+      )
     )
   )
 
@@ -936,7 +974,7 @@
   ;; CHECK-NEXT:         (local.set $0
   ;; CHECK-NEXT:          (block $catch1 (result exnref)
   ;; CHECK-NEXT:           (try_table (catch_ref $e-empty $catch1) (catch_ref $e-i32 $catch2) (catch_ref $e-i32-i64 $catch3) (catch_all_ref $catch_all4)
-  ;; CHECK-NEXT:            (nop)
+  ;; CHECK-NEXT:            (call $foo)
   ;; CHECK-NEXT:           )
   ;; CHECK-NEXT:           (br $outer0)
   ;; CHECK-NEXT:          )
@@ -998,7 +1036,9 @@
   ;; CHECK-NEXT: )
   (func $multiple-catches-and-catch_all
     (try $l0
-      (do)
+      (do
+        (call $foo)
+      )
       (catch $e-empty
         (rethrow $l0)
       )
@@ -1027,7 +1067,7 @@
   ;; CHECK-NEXT:   (local.set $0
   ;; CHECK-NEXT:    (block $catch_all4 (result exnref)
   ;; CHECK-NEXT:     (try_table (catch_all_ref $catch_all4)
-  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:      (call $foo)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (br $outer3)
   ;; CHECK-NEXT:    )
@@ -1037,7 +1077,7 @@
   ;; CHECK-NEXT:     (block $catch2 (result exnref)
   ;; CHECK-NEXT:      (block $catch1
   ;; CHECK-NEXT:       (try_table (catch $e-empty $catch1) (catch_ref $e-empty $catch2)
-  ;; CHECK-NEXT:        (nop)
+  ;; CHECK-NEXT:        (call $foo)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (br $outer0)
   ;; CHECK-NEXT:      )
@@ -1054,10 +1094,14 @@
   ;; CHECK-NEXT: )
   (func $nested-catch-rethrows
     (try $l0
-      (do)
+      (do
+        (call $foo)
+      )
       (catch_all
         (try $l1
-          (do)
+          (do
+            (call $foo)
+          )
           ;; This catch will be converted to a 'catch' clause in a try_table,
           ;; because the rethrow in this catch body does not refer to the
           ;; current try
@@ -1170,6 +1214,7 @@
   ;; CHECK-NEXT:         (block (result i32)
   ;; CHECK-NEXT:          (call $foo)
   ;; CHECK-NEXT:          (try_table (result i32) (catch_all_ref $l00)
+  ;; CHECK-NEXT:           (call $bar)
   ;; CHECK-NEXT:           (i32.const 0)
   ;; CHECK-NEXT:          )
   ;; CHECK-NEXT:         )
@@ -1189,6 +1234,7 @@
         (call $foo)
         (try (result i32)
           (do
+            (call $bar)
             (i32.const 0)
           )
           (delegate $l0)
@@ -1205,7 +1251,7 @@
   ;; CHECK-NEXT:   (throw_ref
   ;; CHECK-NEXT:    (block $l00 (result exnref)
   ;; CHECK-NEXT:     (try_table (catch_all_ref $l00)
-  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:      (call $foo)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (return)
   ;; CHECK-NEXT:    )
@@ -1219,7 +1265,9 @@
     (try $l0
       (do
         (try
-          (do)
+          (do
+            (call $foo)
+          )
           (delegate $l0)
         )
         (return)
@@ -1291,6 +1339,7 @@
   ;; CHECK-NEXT:     (block (result i32)
   ;; CHECK-NEXT:      (call $foo)
   ;; CHECK-NEXT:      (try_table (result i32) (catch_all_ref $__binaryen_delegate_caller_target0)
+  ;; CHECK-NEXT:       (call $bar)
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
@@ -1303,6 +1352,7 @@
     (call $foo)
     (try (result i32)
       (do
+        (call $bar)
         (i32.const 0)
       )
       (delegate 0)
@@ -1361,7 +1411,7 @@
   ;; CHECK-NEXT:      (throw_ref
   ;; CHECK-NEXT:       (block $l01 (result exnref)
   ;; CHECK-NEXT:        (try_table (catch_all_ref $l01)
-  ;; CHECK-NEXT:         (nop)
+  ;; CHECK-NEXT:         (call $foo)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:        (br $outer2)
   ;; CHECK-NEXT:       )
@@ -1378,7 +1428,9 @@
     (try $l0
       (do
         (try
-          (do)
+          (do
+            (call $foo)
+          )
           (delegate $l0)
         )
       )
@@ -1396,6 +1448,7 @@
   ;; CHECK-NEXT:        (block $l01 (result exnref)
   ;; CHECK-NEXT:         (br $outer2
   ;; CHECK-NEXT:          (try_table (result i32) (catch_all_ref $l01)
+  ;; CHECK-NEXT:           (call $foo)
   ;; CHECK-NEXT:           (i32.const 0)
   ;; CHECK-NEXT:          )
   ;; CHECK-NEXT:         )
@@ -1414,6 +1467,7 @@
       (do
         (try (result i32)
           (do
+            (call $foo)
             (i32.const 0)
           )
           (delegate $l0)
