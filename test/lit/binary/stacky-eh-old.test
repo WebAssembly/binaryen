@@ -1,6 +1,6 @@
 ;; Verify stacky EH binary can be parsed correctly.
 ;;
-;; stacky-eh.test.wasm contains below:
+;; stacky-eh-old.test.wasm contains below:
 ;; try
 ;;   nop
 ;; catch 0 # tag type i32
