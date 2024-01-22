@@ -3656,7 +3656,6 @@ static void validateMemories(Module& module, ValidationInfo& info) {
 
 static void validateDataSegments(Module& module, ValidationInfo& info) {
   for (auto& segment : module.dataSegments) {
-    auto size = segment->data.size();
     if (segment->isPassive) {
       info.shouldBeTrue(
         module.features.hasBulkMemory(),
@@ -3693,14 +3692,6 @@ static void validateDataSegments(Module& module, ValidationInfo& info) {
         segment->offset,
         "memory segment offset should be constant");
       FunctionValidator(module, &info).validate(segment->offset);
-      // If the memory is imported we don't actually know its initial size.
-      // Specifically wasm dll's import a zero sized memory which is perfectly
-      // valid.
-      if (!memory->imported()) {
-        info.shouldBeTrue(size <= memory->initial * Memory::kPageSize,
-                          segment->data.size(),
-                          "segment size should fit in memory (initial)");
-      }
     }
   }
 }
