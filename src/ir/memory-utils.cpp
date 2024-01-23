@@ -15,6 +15,7 @@
  */
 
 #include "ir/memory-utils.h"
+#include "support/safe_math.h"
 #include "wasm.h"
 
 namespace wasm::MemoryUtils {
@@ -94,7 +95,11 @@ bool flatten(Module& wasm) {
   for (auto& segment : dataSegments) {
     auto* offset = segment->offset->dynCast<Const>();
     Index start = offset->value.getInteger();
-    Index end = start + segment->data.size();
+    Index size = segment->data.size();
+    Index end;
+    if (__builtin_add_overflow(start, size, &end)) {
+      return false;
+    }
     if (end > data.size()) {
       data.resize(end);
     }
