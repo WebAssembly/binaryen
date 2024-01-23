@@ -1021,10 +1021,10 @@
  ;; CHECK-NEXT:   (string.const "hello, world")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $strings
- ;; CHECK-NEXT:   (string.const "hello, world")
+ ;; CHECK-NEXT:   (local.get $s)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $strings
- ;; CHECK-NEXT:   (string.const "hello, world")
+ ;; CHECK-NEXT:   (local.get $s)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $strings (param $param (ref string))
@@ -1032,7 +1032,9 @@
   (local.set $s
    (string.const "hello, world")
   )
-  ;; The constant string should be propagated twice, to both of these calls.
+  ;; The constant string could be propagated twice, to both of these calls, but
+  ;; we do not do so as it might cause more allocations to happen.
+  ;; TODO if VMs optimize that, handle it
   (call $strings
    (local.get $s)
   )
