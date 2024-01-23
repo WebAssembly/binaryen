@@ -2253,7 +2253,7 @@ export class Module {
    }
    get arrays () {
         return {
-            newWithInit: (heapType: HeapType, size: ExpressionRef, init: ExpressionRef): ExpressionRef =>
+            newFromInit: (heapType: HeapType, size: ExpressionRef, init: ExpressionRef): ExpressionRef =>
                 JSModule['BinaryenArrayNew'](this.ptr, heapType, size, init),
             newFromItems: (heapType: HeapType, values: ExpressionRef[]): ExpressionRef => {
                 const ptr = _malloc(Math.max(8, values.length * 4));
@@ -2360,6 +2360,22 @@ export class TypeBuilder {
 
     static typeFromTempHeapType(heapType: HeapType, nullable: boolean): Type {
         return JSModule['_BinaryenTypeFromHeapType'](heapType, nullable);
+    }
+
+    static heapTypeFromType(type: Type): HeapType {
+        return JSModule['_BinaryenTypeGetHeapType'](type);
+    }
+
+    static arrayElementType(heapType: HeapType): Type {
+        return JSModule['_BinaryenArrayTypeGetElementType'](heapType);
+    }
+
+    static structMemberCount(heapType: HeapType): number {
+        return JSModule['_BinaryenStructTypeGetNumFields'](heapType);
+    }
+
+    static structMemberType(heapType: HeapType, index: number): Type {
+        return JSModule['_BinaryenStructTypeGetFieldType'](heapType, index);
     }
 
     readonly ref: TypeBuilderRef;
