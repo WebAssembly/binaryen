@@ -52,7 +52,7 @@ namespace wasm {
 
 namespace {
 
-// Checks if an expresion is a constant, and one that we can copy without
+// Checks if an expression is a constant, and one that we can copy without
 // downsides. This is the set of constant values that we will inline from
 // globals.
 bool isCopyableConstant(Expression* curr) {
