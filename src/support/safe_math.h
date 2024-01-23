@@ -23,6 +23,9 @@ namespace wasm {
 
 #if !__has_builtin(__builtin_add_overflow)
 template<typename T> bool __builtin_add_overflow(T a, T b, T* output) {
+  // Atm this only supports unsigned types.
+  static_assert(std::is_unsigned_v<T>);
+
   T result = a + b;
   if (result < a) {
     return true;
