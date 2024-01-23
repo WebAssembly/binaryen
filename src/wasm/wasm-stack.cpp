@@ -16,6 +16,7 @@
 
 #include "wasm-stack.h"
 #include "ir/find_all.h"
+#include "ir/properties.h"
 #include "wasm-binary.h"
 #include "wasm-debug.h"
 
@@ -2712,8 +2713,7 @@ StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
   ret->op = op;
   ret->origin = origin;
   auto stackType = origin->type;
-  if (origin->is<Block>() || origin->is<Loop>() || origin->is<If>() ||
-      origin->is<Try>() || origin->is<TryTable>()) {
+  if (Properties::isControlFlowStructure(origin)) {
     if (stackType == Type::unreachable) {
       // There are no unreachable blocks, loops, ifs, trys, or try_tables. we
       // emit extra unreachables to fix that up, so that they are valid as
