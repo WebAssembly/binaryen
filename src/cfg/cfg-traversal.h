@@ -281,10 +281,6 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     // end
     assert(self->tryStack.size() == self->throwingInstsStack.size());
     for (int i = self->throwingInstsStack.size() - 1; i >= 0;) {
-      // Exception thrown. Note outselves so that we will create a link to each
-      // catch within the try when we get there.
-      self->throwingInstsStack[i].push_back(self->currBasicBlock);
-
       auto* tryy = self->tryStack[i]->template cast<Try>();
       if (tryy->isDelegate()) {
         // If this delegates to the caller, there is no possibility that this
@@ -306,6 +302,10 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
         assert(found);
         continue;
       }
+
+      // Exception thrown. Note outselves so that we will create a link to each
+      // catch within the try when we get there.
+      self->throwingInstsStack[i].push_back(self->currBasicBlock);
 
       // If this try has catch_all, there is no possibility that this
       // instruction can throw to outer catches. Stop here.
