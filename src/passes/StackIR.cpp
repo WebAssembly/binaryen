@@ -292,7 +292,8 @@ private:
       case StackInst::Catch:
       case StackInst::CatchAll:
       case StackInst::Delegate:
-      case StackInst::TryEnd: {
+      case StackInst::TryEnd:
+      case StackInst::TryTableEnd: {
         return true;
       }
       default: { return false; }
@@ -305,7 +306,8 @@ private:
       case StackInst::BlockBegin:
       case StackInst::IfBegin:
       case StackInst::LoopBegin:
-      case StackInst::TryBegin: {
+      case StackInst::TryBegin:
+      case StackInst::TryTableBegin: {
         return true;
       }
       default: { return false; }
@@ -319,7 +321,8 @@ private:
       case StackInst::IfEnd:
       case StackInst::LoopEnd:
       case StackInst::TryEnd:
-      case StackInst::Delegate: {
+      case StackInst::Delegate:
+      case StackInst::TryTableEnd: {
         return true;
       }
       default: { return false; }
