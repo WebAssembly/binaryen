@@ -22,8 +22,7 @@
 namespace wasm {
 
 #if !__has_builtin(__builtin_add_overflow)
-template<typename T>
-bool __builtin_add_overflow(T a, T b, T* output) {
+template<typename T> bool __builtin_add_overflow(T a, T b, T* output) {
   T result = a + b;
   if (result < a) {
     return true;
