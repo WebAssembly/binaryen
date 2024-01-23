@@ -17,8 +17,6 @@
 #ifndef wasm_safe_math_h
 #define wasm_safe_math_h
 
-#include <cstdint>
-
 namespace wasm {
 
 #if !__has_builtin(__builtin_add_overflow)
