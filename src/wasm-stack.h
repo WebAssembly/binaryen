@@ -60,20 +60,22 @@ public:
   StackInst(MixedArena&) {}
 
   enum Op {
-    Basic,      // an instruction directly corresponding to a non-control-flow
-                // Binaryen IR node
-    BlockBegin, // the beginning of a block
-    BlockEnd,   // the ending of a block
-    IfBegin,    // the beginning of a if
-    IfElse,     // the else of a if
-    IfEnd,      // the ending of a if
-    LoopBegin,  // the beginning of a loop
-    LoopEnd,    // the ending of a loop
-    TryBegin,   // the beginning of a try
-    Catch,      // the catch within a try
-    CatchAll,   // the catch_all within a try
-    Delegate,   // the delegate within a try
-    TryEnd      // the ending of a try
+    Basic,         // an instruction directly corresponding to a
+                   // non-control-flow Binaryen IR node
+    BlockBegin,    // the beginning of a block
+    BlockEnd,      // the ending of a block
+    IfBegin,       // the beginning of a if
+    IfElse,        // the else of a if
+    IfEnd,         // the ending of a if
+    LoopBegin,     // the beginning of a loop
+    LoopEnd,       // the ending of a loop
+    TryBegin,      // the beginning of a try
+    Catch,         // the catch within a try
+    CatchAll,      // the catch_all within a try
+    Delegate,      // the delegate within a try
+    TryEnd,        // the ending of a try
+    TryTableBegin, // the beginning of a try_table
+    TryTableEnd    // the ending of a try_table
   } op;
 
   Expression* origin; // the expression this originates from
