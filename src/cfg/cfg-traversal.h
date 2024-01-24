@@ -321,7 +321,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
           break;
         }
       } else {
-        assert(false);
+        WASM_UNREACHABLE("invalid throwingInstsStack item");
       }
       i--;
     }
