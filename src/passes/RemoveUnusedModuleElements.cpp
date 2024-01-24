@@ -638,24 +638,30 @@ struct RemoveUnusedModuleElements : public Pass {
     //
     // Likewise, if traps are possible during startup then just trapping is an
     // effect (which can happen if the offset is out of bounds).
-    // TODO: We could infer a trap cannot happen if we see the offset is in
-    //       bounds.
-    auto trapsMatter = !getPassOptions().trapsNeverHappen;
-    ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) {
-      auto writesToVisible = module->getMemory(segment->memory)->imported() &&
-          !segment->data.empty();
-      if (writesToVisible || trapsMatter) {
-        roots.emplace_back(ModuleElementKind::DataSegment, segment->name);
+    auto mustRootSegment = [&](ModuleElementKind kind, Name segmentName, Index segmentSize, Expression* offset, Importable* parent, Index parentSize) {
+      auto writesToVisible = parent->imported() && segmentSize;
+      auto mayTrap = false;
+      if (!getPassOptions().trapsNeverHappen) {
+        // Check if this might trap. If it is obviously in bounds then it
+        // cannot.
+        auto* c = offset->dynCast<Const>();
+        Address maxWritten;
+        // If there is no integer, or if there is and the addition overflows, or
+        // if the addition leads to a too-large value, then we may trap.
+        mayTrap = !c || ckd_add(&maxWritten, segmentSize, c->value.getInteger()) || maxWritten >= parentSize;
       }
+      if (writesToVisible || trapsNeverHappen) {
+        roots.emplace_back(kind, name);
+      }
+    };
+    ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) {
+      auto* memory = module->getMemory(segment->memory);
+      maybeRootSegment(ModuleElementKind::DataSegment, segment->name, segment->data.size(), segment->offset, memory, memory->initialSize * Memory::kPageSize);
     });
     ModuleUtils::iterActiveElementSegments(
-      *module, [&](ElementSegment* segment) {
-        auto writesToVisible = module->getTable(segment->table)->imported() &&
-            !segment->data.empty();
-        if (writesToVisible || trapsMatter) {
-          roots.emplace_back(ModuleElementKind::ElementSegment, segment->name);
-        }
-      });
+      auto* table = module->getTable(segment->table);
+      maybeRootSegment(ModuleElementKind::DataSegment, segment->name, segment->data.size(), segment->offset, table, table->initialSize * Table::kPageSize);
+    });
 
     // For now, all functions that can be called indirectly are marked as roots.
     // TODO: Compute this based on which ElementSegments are actually used,
