@@ -635,16 +635,24 @@ struct RemoveUnusedModuleElements : public Pass {
     // Active segments that write to imported tables and memories are roots
     // because those writes are externally observable even if the module does
     // not otherwise use the tables or memories.
+    //
+    // Likewise, if traps are possible during startup then just trapping is an
+    // effect (which can happen if the offset is out of bounds).
+    // TODO: We could infer a trap cannot happen if we see the offset is in
+    //       bounds.
+    auto trapsMatter = !getPassOptions().trapsNeverHappen;
     ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) {
-      if (module->getMemory(segment->memory)->imported() &&
-          !segment->data.empty()) {
+      auto writesToVisible = module->getMemory(segment->memory)->imported() &&
+          !segment->data.empty();
+      if (writesToVisible || trapsMatter) {
         roots.emplace_back(ModuleElementKind::DataSegment, segment->name);
       }
     });
     ModuleUtils::iterActiveElementSegments(
       *module, [&](ElementSegment* segment) {
-        if (module->getTable(segment->table)->imported() &&
-            !segment->data.empty()) {
+        auto writesToVisible = module->getTable(segment->table)->imported() &&
+            !segment->data.empty();
+        if (writesToVisible || trapsMatter) {
           roots.emplace_back(ModuleElementKind::ElementSegment, segment->name);
         }
       });
@@ -700,13 +708,11 @@ struct RemoveUnusedModuleElements : public Pass {
     module->removeTables([&](Table* curr) {
       return !needed(ModuleElement(ModuleElementKind::Table, curr->name));
     });
-    // Segments that are not used may still have a noticeable effect, if they
-    // cause a trap during startup.
     module->removeDataSegments([&](DataSegment* curr) {
-      return !needed(ModuleElement(ModuleElementKind::DataSegment, curr->name)) && (!curr->offset || options.trapsNeverHappen);
+      return !needed(ModuleElement(ModuleElementKind::DataSegment, curr->name));
     });
     module->removeElementSegments([&](ElementSegment* curr) {
-      return !needed({ModuleElementKind::ElementSegment, curr->name}) && (!curr->offset || options.trapsNeverHappen);
+      return !needed({ModuleElementKind::ElementSegment, curr->name});
     });
     // TODO: After removing elements, we may be able to remove more things, and
     //       should continue to work. (For example, after removing a reference

@@ -20,7 +20,9 @@
  ;; T_N_H:      (import "fuzzing-support" "log-i32" (func $fimport$0 (type $0) (param i32)))
  (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
 
+ ;; CHECK:      (memory $0 16 17 shared)
  (memory $0 16 17 shared)
+ ;; CHECK:      (data $1 (i32.const -1) "")
  (data $1 (i32.const -1) "")
 
  ;; CHECK:      (export "func_13_invoker" (func $0))
