@@ -654,16 +654,20 @@ struct RemoveUnusedModuleElements : public Pass {
         mayTrap = !c || std::ckd_add(&maxWritten, (AddressType)segmentSize, (AddressType)c->value.getInteger()) || maxWritten >= parentSize;
       }
       if (writesToVisible || mayTrap) {
-        roots.emplace_back(kind, name);
+        roots.emplace_back(kind, segmentName);
       }
     };
     ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) {
-      auto* memory = module->getMemory(segment->memory);
-      maybeRootSegment(ModuleElementKind::DataSegment, segment->name, segment->data.size(), segment->offset, memory, memory->initial * Memory::kPageSize);
+      if (segment->memory.is()) {
+        auto* memory = module->getMemory(segment->memory);
+        maybeRootSegment(ModuleElementKind::DataSegment, segment->name, segment->data.size(), segment->offset, memory, memory->initial * Memory::kPageSize);
+      }
     });
     ModuleUtils::iterActiveElementSegments(*module, [&](ElementSegment* segment) {
-      auto* table = module->getTable(segment->table);
-      maybeRootSegment(ModuleElementKind::DataSegment, segment->name, segment->data.size(), segment->offset, table, table->initial * Table::kPageSize);
+      if (segment->table.is()) {
+        auto* table = module->getTable(segment->table);
+        maybeRootSegment(ModuleElementKind::ElementSegment, segment->name, segment->data.size(), segment->offset, table, table->initial * Table::kPageSize);
+      }
     });
 
     // For now, all functions that can be called indirectly are marked as roots.
