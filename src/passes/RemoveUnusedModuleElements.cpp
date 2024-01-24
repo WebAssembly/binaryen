@@ -700,11 +700,13 @@ struct RemoveUnusedModuleElements : public Pass {
     module->removeTables([&](Table* curr) {
       return !needed(ModuleElement(ModuleElementKind::Table, curr->name));
     });
+    // Segments that are not used may still have a noticeable effect, if they
+    // cause a trap during startup.
     module->removeDataSegments([&](DataSegment* curr) {
-      return !needed(ModuleElement(ModuleElementKind::DataSegment, curr->name));
+      return !needed(ModuleElement(ModuleElementKind::DataSegment, curr->name)) && (!curr->offset || options.trapsNeverHappen);
     });
     module->removeElementSegments([&](ElementSegment* curr) {
-      return !needed({ModuleElementKind::ElementSegment, curr->name});
+      return !needed({ModuleElementKind::ElementSegment, curr->name}) && (!curr->offset || options.trapsNeverHappen);;
     });
     // TODO: After removing elements, we may be able to remove more things, and
     //       should continue to work. (For example, after removing a reference
