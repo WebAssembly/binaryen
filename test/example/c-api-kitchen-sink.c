@@ -1128,6 +1128,11 @@ void test_core() {
                      BinaryenTypeGetHeapType(i8Array),
                      makeInt32(module, 3),
                      makeInt32(module, 42)),
+    BinaryenArrayNewData(module,
+                              BinaryenTypeGetHeapType(i8Array),
+                              "some-data-segment"
+                              makeInt32(module, 0),
+                              makeInt32(module, 16)),
     BinaryenArrayNewFixed(module,
                           BinaryenTypeGetHeapType(i8Array),
                           (BinaryenExpressionRef[]){makeInt32(module, 1),
