@@ -45,6 +45,7 @@
 #include "ir/subtypes.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/stdckdint.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -638,29 +639,31 @@ struct RemoveUnusedModuleElements : public Pass {
     //
     // Likewise, if traps are possible during startup then just trapping is an
     // effect (which can happen if the offset is out of bounds).
-    auto mustRootSegment = [&](ModuleElementKind kind, Name segmentName, Index segmentSize, Expression* offset, Importable* parent, Index parentSize) {
+    auto maybeRootSegment = [&](ModuleElementKind kind, Name segmentName, Index segmentSize, Expression* offset, Importable* parent, Index parentSize) {
       auto writesToVisible = parent->imported() && segmentSize;
       auto mayTrap = false;
       if (!getPassOptions().trapsNeverHappen) {
         // Check if this might trap. If it is obviously in bounds then it
         // cannot.
         auto* c = offset->dynCast<Const>();
-        Address maxWritten;
+        // Check for overflow in the largest possible space of addresses.
+        using AddressType = Address::address64_t;
+        AddressType maxWritten;
         // If there is no integer, or if there is and the addition overflows, or
         // if the addition leads to a too-large value, then we may trap.
-        mayTrap = !c || ckd_add(&maxWritten, segmentSize, c->value.getInteger()) || maxWritten >= parentSize;
+        mayTrap = !c || std::ckd_add(&maxWritten, (AddressType)segmentSize, (AddressType)c->value.getInteger()) || maxWritten >= parentSize;
       }
-      if (writesToVisible || trapsNeverHappen) {
+      if (writesToVisible || mayTrap) {
         roots.emplace_back(kind, name);
       }
     };
     ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) {
       auto* memory = module->getMemory(segment->memory);
-      maybeRootSegment(ModuleElementKind::DataSegment, segment->name, segment->data.size(), segment->offset, memory, memory->initialSize * Memory::kPageSize);
+      maybeRootSegment(ModuleElementKind::DataSegment, segment->name, segment->data.size(), segment->offset, memory, memory->initial * Memory::kPageSize);
     });
-    ModuleUtils::iterActiveElementSegments(
+    ModuleUtils::iterActiveElementSegments(*module, [&](ElementSegment* segment) {
       auto* table = module->getTable(segment->table);
-      maybeRootSegment(ModuleElementKind::DataSegment, segment->name, segment->data.size(), segment->offset, table, table->initialSize * Table::kPageSize);
+      maybeRootSegment(ModuleElementKind::DataSegment, segment->name, segment->data.size(), segment->offset, table, table->initial * Table::kPageSize);
     });
 
     // For now, all functions that can be called indirectly are marked as roots.
