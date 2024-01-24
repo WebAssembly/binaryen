@@ -119,6 +119,7 @@ set(passes_SOURCES
   StripEH.cpp
   SSAify.cpp
   TupleOptimization.cpp
+  TranslateEH.cpp
   TypeFinalizing.cpp
   Unsubtyping.cpp
   Untee.cpp

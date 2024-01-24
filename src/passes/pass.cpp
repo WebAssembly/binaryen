@@ -491,6 +491,9 @@ void PassRegistry::registerPasses() {
   registerPass("strip-target-features",
                "strip the wasm target features section",
                createStripTargetFeaturesPass);
+  registerPass("translate-eh-old-to-new",
+               "translate old EH instructions to new ones",
+               createTranslateEHOldToNewPass);
   registerPass("trap-mode-clamp",
                "replace trapping operations with clamping semantics",
                createTrapModeClamp);

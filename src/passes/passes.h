@@ -164,6 +164,7 @@ Pass* createStripEHPass();
 Pass* createStubUnsupportedJSOpsPass();
 Pass* createSSAifyPass();
 Pass* createSSAifyNoMergePass();
+Pass* createTranslateEHOldToNewPass();
 Pass* createTrapModeClamp();
 Pass* createTrapModeJS();
 Pass* createTupleOptimizationPass();
