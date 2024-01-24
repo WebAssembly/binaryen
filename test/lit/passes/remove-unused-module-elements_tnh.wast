@@ -22,24 +22,33 @@
 
  ;; CHECK:      (memory $0 16 17 shared)
  (memory $0 16 17 shared)
+
  ;; CHECK:      (data $1 (i32.const -1) "")
  (data $1 (i32.const -1) "")
 
- ;; CHECK:      (export "func_13_invoker" (func $0))
- ;; T_N_H:      (export "func_13_invoker" (func $0))
- (export "func_13_invoker" (func $0))
+ (table 1 1 funcref)
 
- ;; CHECK:      (func $0 (type $1)
+ (elem (i32.const -1) $func)
+
+ ;; CHECK:      (table $0 1 1 funcref)
+
+ ;; CHECK:      (elem $0 (i32.const -1) $func)
+
+ ;; CHECK:      (export "func" (func $func))
+ ;; T_N_H:      (export "func" (func $func))
+ (export "func" (func $func))
+
+ ;; CHECK:      (func $func (type $1)
  ;; CHECK-NEXT:  (call $fimport$0
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; T_N_H:      (func $0 (type $1)
+ ;; T_N_H:      (func $func (type $1)
  ;; T_N_H-NEXT:  (call $fimport$0
  ;; T_N_H-NEXT:   (i32.const 0)
  ;; T_N_H-NEXT:  )
  ;; T_N_H-NEXT: )
- (func $0
+ (func $func
   (call $fimport$0
    (i32.const 0)
   )
