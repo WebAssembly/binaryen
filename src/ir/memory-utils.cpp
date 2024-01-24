@@ -15,7 +15,7 @@
  */
 
 #include "ir/memory-utils.h"
-#include "support/safe_math.h"
+#include "support/stdckdint.h"
 #include "wasm.h"
 
 namespace wasm::MemoryUtils {
@@ -97,7 +97,7 @@ bool flatten(Module& wasm) {
     Index start = offset->value.getInteger();
     Index size = segment->data.size();
     Index end;
-    if (__builtin_add_overflow(start, size, &end)) {
+    if (std::ckd_add(&end, start, size)) {
       return false;
     }
     if (end > data.size()) {

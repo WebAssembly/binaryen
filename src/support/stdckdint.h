@@ -14,14 +14,19 @@
  * limitations under the License.
  */
 
-#ifndef wasm_safe_math_h
-#define wasm_safe_math_h
+#ifndef wasm_stdckdint_h
+#define wasm_stdckdint_h
 
-namespace wasm {
+// This is a partial "polyfill" for the C23 file stdckdint.h. It allows us to
+// use that API even in older compilers.
 
-#if !__has_builtin(__builtin_add_overflow)
-template<typename T> bool __builtin_add_overflow(T a, T b, T* output) {
-  // Atm this only supports unsigned types.
+namespace std {
+
+template<typename T> bool ckd_add(T* output, T a, T b) {
+#if __has_builtin(__builtin_add_overflow)
+  return __builtin_add_overflow(a, b, output);
+#else
+  // Atm this polyfill only supports unsigned types.
   static_assert(std::is_unsigned_v<T>);
 
   T result = a + b;
@@ -30,9 +35,9 @@ template<typename T> bool __builtin_add_overflow(T a, T b, T* output) {
   }
   *output = result;
   return false;
-}
 #endif
+}
 
-} // namespace wasm
+} // namespace std
 
-#endif // wasm_safe_math_h
+#endif // wasm_stdckdint_h
