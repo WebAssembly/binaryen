@@ -2254,7 +2254,9 @@ export class Module {
    get arrays () {
         return {
             newFromInit: (heapType: HeapType, size: ExpressionRef, init: ExpressionRef): ExpressionRef =>
-                JSModule['BinaryenArrayNew'](this.ptr, heapType, size, init),
+                JSModule['_BinaryenArrayNew'](this.ptr, heapType, size, init),
+            newFromData: (heapType: HeapType, name: string, offset: ExpressionRef, size: ExpressionRef): ExpressionRef =>
+                JSModule['_BinaryenArrayNewData'](this.ptr, heapType, strToStack(name), offset, size),
             newFromItems: (heapType: HeapType, values: ExpressionRef[]): ExpressionRef => {
                 const ptr = _malloc(Math.max(8, values.length * 4));
                 let offset = ptr;
