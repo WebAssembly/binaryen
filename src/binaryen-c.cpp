@@ -1819,6 +1819,16 @@ BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
     Builder(*(Module*)module)
       .makeArrayNew(HeapType(type), (Expression*)size, (Expression*)init));
 }
+BinaryenExpressionRef BinaryenArrayNewData(BinaryenModuleRef module,
+                                            BinaryenHeapType type,
+                                            const char* name,
+                                            BinaryenExpressionRef offset,
+                                            BinaryenExpressionRef size) {
+return static_cast<Expression*>(
+    Builder(*(Module*)module)
+      .makeArrayNewData(HeapType(type), name, (Expression*)offset, (Expression*)size));
+}
+
 BinaryenExpressionRef BinaryenArrayNewFixed(BinaryenModuleRef module,
                                             BinaryenHeapType type,
                                             BinaryenExpressionRef* values,
