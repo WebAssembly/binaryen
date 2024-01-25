@@ -8,8 +8,6 @@
 ;; can only remove such segments if we assume TrapsNeverHappen.
 
 (module
- (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
-
  ;; CHECK:      (type $0 (func))
 
  ;; CHECK:      (memory $0 16 17 shared)
