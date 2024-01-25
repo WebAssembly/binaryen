@@ -18,9 +18,12 @@
   ;; CHECK:      (memory $0 2048 2048)
   (memory $0 2048 2048)
   (import "env" "memoryBase" (global $memoryBase i32))
-  (data (i32.const 4066) "") ;; empty
+  (data (i32.const 4066) "") ;; empty; leave it as is
+                             ;; (remove-unused-module-elements handles such
+                             ;; things, taking into account possible traps etc.)
 )
 
+;; CHECK:      (data $0 (i32.const 4066) "")
 (module
   ;; CHECK:      (import "env" "memoryBase" (global $memoryBase i32))
 
@@ -2319,6 +2322,8 @@
  (memory $0 1 1 shared)
  (data (i32.const 0) "")
  (data "foo")
+ ;; CHECK:      (data $0 (i32.const 0) "")
+
  ;; CHECK:      (data $1 "foo")
 
  ;; CHECK:      (func $0 (type $0)

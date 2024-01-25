@@ -270,6 +270,13 @@ bool MemoryPacking::canSplit(const std::unique_ptr<DataSegment>& segment,
     return false;
   }
 
+  if (segment->data.empty()) {
+    // Ignore empty segments, leaving them in place. We may not need them, but
+    // leave that for RemoveUnusedModuleElements to decide (as they may trap
+    // during startup if out of bounds, which is an effect).
+    return false;
+  }
+
   for (auto* referrer : referrers) {
     if (auto* curr = referrer->dynCast<MemoryInit>()) {
       if (segment->isPassive) {
