@@ -6,32 +6,25 @@
 
 ;; The segments here will trap during startup as they are out of bounds. We
 ;; can only remove such segments if we assume TrapsNeverHappen.
+;;
+;; The passive segments, however, can be removed: they do nothing during
+;; startup, and have no uses.
 (module
- ;; CHECK:      (type $0 (func))
-
  ;; CHECK:      (memory $0 16 17 shared)
  (memory $0 16 17 shared)
 
- ;; CHECK:      (data $1 (i32.const -1) "")
- (data $1 (i32.const -1) "")
+ ;; CHECK:      (data $0 (i32.const -1) "")
+ (data $0 (i32.const -1) "")
 
- (table 1 1 funcref)
-
- (elem (i32.const -1) $func)
+ (data $1 "")
 
  ;; CHECK:      (table $0 1 1 funcref)
+ (table $0 1 1 funcref)
 
- ;; CHECK:      (elem $0 (i32.const -1) $func)
+ ;; CHECK:      (elem $0 (i32.const -1))
+ (elem $0 (i32.const -1))
 
- ;; CHECK:      (func $func (type $0)
- ;; CHECK-NEXT:  (nop)
- ;; CHECK-NEXT: )
- ;; T_N_H:      (type $0 (func))
-
- ;; T_N_H:      (func $func (type $0)
- ;; T_N_H-NEXT:  (nop)
- ;; T_N_H-NEXT: )
- (func $func)
+ (elem $1 func)
 )
 
 ;; Some segments can be removed: any segment that writes to address 131072 or
