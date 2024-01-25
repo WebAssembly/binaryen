@@ -651,7 +651,7 @@ struct RemoveUnusedModuleElements : public Pass {
         AddressType maxWritten;
         // If there is no integer, or if there is and the addition overflows, or
         // if the addition leads to a too-large value, then we may trap.
-        mayTrap = !c || std::ckd_add(&maxWritten, (AddressType)segmentSize, (AddressType)c->value.getInteger()) || maxWritten >= parentSize;
+        mayTrap = !c || std::ckd_add(&maxWritten, (AddressType)segmentSize, (AddressType)c->value.getInteger()) || maxWritten > parentSize;
       }
       if (writesToVisible || mayTrap) {
         roots.emplace_back(kind, segmentName);
