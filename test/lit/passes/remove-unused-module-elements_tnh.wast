@@ -232,7 +232,7 @@
  ;; CHECK:      (data $a (i32.const 100000) "ab")
  (data $a (memory $small) (i32.const 100000) "ab") ;; fits in $big; not $small
 
- (data $b (memory $big)   (i32.const 100000) "ab")
+ (data $b (memory $big)   (i32.const 100000) "cd")
 )
 
 ;; Reverse order of memories.
@@ -245,5 +245,5 @@
  ;; CHECK:      (data $a (i32.const 100000) "ab")
  (data $a (memory $small) (i32.const 100000) "ab") ;; fits in $big; not $small
 
- (data $b (memory $big)   (i32.const 100000) "ab")
+ (data $b (memory $big)   (i32.const 100000) "cd")
 )
