@@ -98,8 +98,8 @@
  (data $ok2 (i32.const 1000) "a")
  ;; CHECK:      (data $ok3 (i32.const 131071) "a")
  (data $ok3 (i32.const 131071) "a")
- ;; CHECK:      (data $bad (i32.const -2) "abcdefg")
- (data $bad (i32.const 4294967294) "abcdefg")
+ ;; CHECK:      (data $bad (i32.const -6) "abcdefg")
+ (data $bad (i32.const 4294967290) "abcdefg")
 )
 
 (module
