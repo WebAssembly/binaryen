@@ -152,3 +152,31 @@
  (data $ok2 (i32.const 1000) "a")
  (data $ok3 (i32.const 131070) "a")
 )
+
+;; Similar testing for element segments. One bad segment keeps it all alive
+;; here.
+(module
+ (table 10 10 funcref)
+
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (table $0 10 10 funcref)
+
+ ;; CHECK:      (elem $ok1 (i32.const 0) $func)
+ (elem $ok1 (i32.const 0) $func)
+ ;; CHECK:      (elem $ok2 (i32.const 8) $func $func)
+ (elem $ok2 (i32.const 8) $func $func)
+ ;; CHECK:      (elem $ok3 (i32.const 9) $func)
+ (elem $ok3 (i32.const 9) $func)
+
+ ;; CHECK:      (func $func (type $0)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ ;; T_N_H:      (type $0 (func))
+
+ ;; T_N_H:      (func $func (type $0)
+ ;; T_N_H-NEXT:  (nop)
+ ;; T_N_H-NEXT: )
+ (func $func)
+)
+
