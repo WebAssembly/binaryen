@@ -128,10 +128,10 @@
  (data $ok1 (i32.const 0) "a")
  ;; CHECK:      (data $ok2 (i32.const 1000) "a")
  (data $ok2 (i32.const 1000) "a")
- ;; CHECK:      (data $ok3 (global.get $imported) "a")
- (data $ok3 (global.get $imported) "a")
- ;; CHECK:      (data $bad (i32.const -2) "a")
- (data $bad (i32.const -2) "a")
+ ;; CHECK:      (data $ok3 (i32.const 131071) "a")
+ (data $ok3 (i32.const 131071) "a")
+ ;; CHECK:      (data $bad (global.get $imported) "a")
+ (data $bad (global.get $imported) "a")
 )
 
 ;; Finally, a module with no bad segments. We can remove all the contents.
