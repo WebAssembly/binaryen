@@ -4,9 +4,8 @@
 ;; RUN: foreach %s %t wasm-opt --remove-unused-module-elements -all      -S -o - | filecheck %s
 ;; RUN: foreach %s %t wasm-opt --remove-unused-module-elements -tnh -all -S -o - | filecheck %s --check-prefix=T_N_H
 
-;; The data segment here will trap during startup as it is out of bounds. We
+;; The segments here will trap during startup as they are out of bounds. We
 ;; can only remove such segments if we assume TrapsNeverHappen.
-
 (module
  ;; CHECK:      (type $0 (func))
 
@@ -19,7 +18,6 @@
  (table 1 1 funcref)
 
  (elem (i32.const -1) $func)
-
 
  ;; CHECK:      (table $0 1 1 funcref)
 
