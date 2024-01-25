@@ -1356,8 +1356,11 @@ Result<> IRBuilder::makeTry(Name label, Type type) {
   return visitTryStart(tryy, label);
 }
 
-Result<> IRBuilder::makeTryTable(Name label, Type type, const std::vector<Name>& tags,
-                                 const std::vector<Index>& labels, const std::vector<bool>& isRefs) {
+Result<> IRBuilder::makeTryTable(Name label,
+                                 Type type,
+                                 const std::vector<Name>& tags,
+                                 const std::vector<Index>& labels,
+                                 const std::vector<bool>& isRefs) {
   auto* trytable = wasm.allocator.alloc<TryTable>();
   trytable->type = type;
   trytable->catchTags.set(tags);

@@ -65,7 +65,8 @@ public:
   [[nodiscard]] Result<> visitElse();
   [[nodiscard]] Result<> visitLoopStart(Loop* iff);
   [[nodiscard]] Result<> visitTryStart(Try* tryy, Name label = {});
-  [[nodiscard]] Result<> visitTryTableStart(TryTable* trytable, Name label = {});
+  [[nodiscard]] Result<> visitTryTableStart(TryTable* trytable,
+                                            Name label = {});
   [[nodiscard]] Result<> visitCatch(Name tag);
   [[nodiscard]] Result<> visitCatchAll();
   [[nodiscard]] Result<> visitDelegate(Index label);
@@ -156,7 +157,11 @@ public:
   [[nodiscard]] Result<> makeTableFill(Name table);
   [[nodiscard]] Result<> makeTableCopy(Name destTable, Name srcTable);
   [[nodiscard]] Result<> makeTry(Name label, Type type);
-  [[nodiscard]] Result<> makeTryTable(Name label, Type type, const std::vector<Name>& tags, const std::vector<Index>& labels, const std::vector<bool>& isRefs);
+  [[nodiscard]] Result<> makeTryTable(Name label,
+                                      Type type,
+                                      const std::vector<Name>& tags,
+                                      const std::vector<Index>& labels,
+                                      const std::vector<bool>& isRefs);
   [[nodiscard]] Result<> makeThrow(Name tag);
   [[nodiscard]] Result<> makeRethrow(Index label);
   // [[nodiscard]] Result<> makeThrowRef();

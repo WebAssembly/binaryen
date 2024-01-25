@@ -1406,7 +1406,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       irBuilder.makeTry(label ? *label : Name{}, type.getSignature().results));
   }
 
-  Result<> makeTryTable(Index pos, std::optional<Name> label, HeapType type,
+  Result<> makeTryTable(Index pos,
+                        std::optional<Name> label,
+                        HeapType type,
                         const std::vector<CatchInfo>& info) {
     std::vector<Name> tags;
     std::vector<Index> labels;
@@ -1416,10 +1418,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       labels.push_back(info.label);
       isRefs.push_back(info.isRef);
     }
-    return withLoc(
-      pos,
-      irBuilder.makeTryTable(label ? *label : Name{}, type.getSignature().results,
-                             tags, labels, isRefs));
+    return withLoc(pos,
+                   irBuilder.makeTryTable(label ? *label : Name{},
+                                          type.getSignature().results,
+                                          tags,
+                                          labels,
+                                          isRefs));
   }
 
   Result<> visitCatch(Index pos, Name tag) {
