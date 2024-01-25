@@ -1068,18 +1068,17 @@ BinaryenStructSet(BinaryenModuleRef module,
                   BinaryenIndex index,
                   BinaryenExpressionRef ref,
                   BinaryenExpressionRef value);
-BINARYEN_API BinaryenExpressionRef
-BinaryenArrayNew(BinaryenModuleRef module,
-                  BinaryenHeapType type,
-                  BinaryenExpressionRef size,
-                  BinaryenExpressionRef init);
+BINARYEN_API BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
+                                                    BinaryenHeapType type,
+                                                    BinaryenExpressionRef size,
+                                                    BinaryenExpressionRef init);
 
 BINARYEN_API BinaryenExpressionRef
 BinaryenArrayNewData(BinaryenModuleRef module,
-                  BinaryenHeapType type,
-                  const char* name,
-                  BinaryenExpressionRef offset,
-                  BinaryenExpressionRef size);
+                     BinaryenHeapType type,
+                     const char* name,
+                     BinaryenExpressionRef offset,
+                     BinaryenExpressionRef size);
 BINARYEN_API BinaryenExpressionRef
 BinaryenArrayNewFixed(BinaryenModuleRef module,
                       BinaryenHeapType type,
