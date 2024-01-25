@@ -2298,6 +2298,12 @@ BinaryenFeatureAll: 131071
        )
       )
       (drop
+       (array.new_data $0 $0
+        (i32.const 0)
+        (i32.const 2)
+       )
+      )
+      (drop
        (array.new_fixed $0 3
         (i32.const 1)
         (i32.const 2)
