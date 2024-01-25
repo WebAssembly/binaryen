@@ -1073,8 +1073,12 @@ BINARYEN_API BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
                                                     BinaryenExpressionRef size,
                                                     BinaryenExpressionRef init);
 
-// TODO: BinaryenArrayNewSeg
-
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayNewData(BinaryenModuleRef module,
+                     BinaryenHeapType type,
+                     const char* name,
+                     BinaryenExpressionRef offset,
+                     BinaryenExpressionRef size);
 BINARYEN_API BinaryenExpressionRef
 BinaryenArrayNewFixed(BinaryenModuleRef module,
                       BinaryenHeapType type,
