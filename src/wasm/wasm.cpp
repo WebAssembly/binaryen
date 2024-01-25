@@ -99,6 +99,7 @@ Name PRINT("print");
 Name EXIT("exit");
 Name SHARED("shared");
 Name TAG("tag");
+Name TUPLE("tuple");
 
 // Expressions
 

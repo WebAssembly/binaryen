@@ -32,7 +32,7 @@
   ;; CHECK:      (global $field2@Foo (mut anyref) (ref.null none))
 
   ;; CHECK:      (global $referredField@Foo i32 (i32.const 42))
-  (global $referredField@Foo (i32) (i32.const 42))
+  (global $referredField@Foo i32 (i32.const 42))
 
   ;; CHECK:      (global $field1@Foo anyref (struct.new $A
   ;; CHECK-NEXT:  (global.get $referredField@Foo)

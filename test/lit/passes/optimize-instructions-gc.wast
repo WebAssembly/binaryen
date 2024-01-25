@@ -1931,7 +1931,7 @@
       ;; However, we do not remove it, as it may be necessary for validation,
       ;; and we hope other opts help out here.
       (ref.cast (ref null $B)
-        (block (result (eqref))
+        (block (result eqref)
           (call $ref-cast-static-fallthrough-remaining-child
             (local.get $x)
           )

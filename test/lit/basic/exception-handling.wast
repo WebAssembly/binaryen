@@ -237,9 +237,9 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $try-table-multivalue-tag (type $0)
-  ;; CHECK-BIN-NEXT:  (local $0 (i32 i64))
+  ;; CHECK-BIN-NEXT:  (local $0 (tuple i32 i64))
   ;; CHECK-BIN-NEXT:  (local $1 i32)
-  ;; CHECK-BIN-NEXT:  (local $2 (i32 i64 exnref))
+  ;; CHECK-BIN-NEXT:  (local $2 (tuple i32 i64 exnref))
   ;; CHECK-BIN-NEXT:  (local $3 i64)
   ;; CHECK-BIN-NEXT:  (local $4 i32)
   ;; CHECK-BIN-NEXT:  (block $label$1
@@ -419,7 +419,7 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $try-table-all-catch-clauses-i32-tag (type $0)
-  ;; CHECK-BIN-NEXT:  (local $0 (i32 exnref))
+  ;; CHECK-BIN-NEXT:  (local $0 (tuple i32 exnref))
   ;; CHECK-BIN-NEXT:  (local $1 i32)
   ;; CHECK-BIN-NEXT:  (block $label$1
   ;; CHECK-BIN-NEXT:   (drop
@@ -517,10 +517,10 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $try-table-all-catch-clauses-multivalue-tag (type $0)
-  ;; CHECK-BIN-NEXT:  (local $0 (i32 i64 exnref))
+  ;; CHECK-BIN-NEXT:  (local $0 (tuple i32 i64 exnref))
   ;; CHECK-BIN-NEXT:  (local $1 i64)
   ;; CHECK-BIN-NEXT:  (local $2 i32)
-  ;; CHECK-BIN-NEXT:  (local $3 (i32 i64))
+  ;; CHECK-BIN-NEXT:  (local $3 (tuple i32 i64))
   ;; CHECK-BIN-NEXT:  (local $4 i32)
   ;; CHECK-BIN-NEXT:  (block $label$1
   ;; CHECK-BIN-NEXT:   (local.set $3
@@ -810,9 +810,9 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $5 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (local $0 (i32 i64))
+;; CHECK-BIN-NODEBUG-NEXT:  (local $0 (tuple i32 i64))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (local $2 (i32 i64 exnref))
+;; CHECK-BIN-NODEBUG-NEXT:  (local $2 (tuple i32 i64 exnref))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $3 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $4 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1
@@ -899,7 +899,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $7 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (local $0 (i32 exnref))
+;; CHECK-BIN-NODEBUG-NEXT:  (local $0 (tuple i32 exnref))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1
 ;; CHECK-BIN-NODEBUG-NEXT:   (drop
@@ -942,10 +942,10 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $8 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (local $0 (i32 i64 exnref))
+;; CHECK-BIN-NODEBUG-NEXT:  (local $0 (tuple i32 i64 exnref))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (local $3 (i32 i64))
+;; CHECK-BIN-NODEBUG-NEXT:  (local $3 (tuple i32 i64))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $4 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.set $3

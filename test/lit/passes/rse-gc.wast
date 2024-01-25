@@ -12,7 +12,7 @@
 
  ;; CHECK:      (func $test (type $3)
  ;; CHECK-NEXT:  (local $single (ref func))
- ;; CHECK-NEXT:  (local $tuple ((ref any) (ref any)))
+ ;; CHECK-NEXT:  (local $tuple (tuple (ref any) (ref any)))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $test
@@ -21,7 +21,7 @@
   ;; it, so no sets can be redundant in that sense).
   (local $single (ref func))
   ;; A non-nullable tuple.
-  (local $tuple ((ref any) (ref any)))
+  (local $tuple (tuple (ref any) (ref any)))
  )
 
  ;; CHECK:      (func $needs-refinalize (type $4) (param $b (ref $B)) (result anyref)

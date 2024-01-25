@@ -53,7 +53,7 @@
  ;; CHECK:      (func $unconstrained (type $void)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (local $y anyref)
- ;; CHECK-NEXT:  (local $z (anyref i32))
+ ;; CHECK-NEXT:  (local $z (tuple anyref i32))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $unconstrained
@@ -62,7 +62,7 @@
   ;; There is no constraint on the type of this local, so make it top.
   (local $y i31ref)
   ;; We cannot optimize tuple locals yet, so leave it unchanged.
-  (local $z (anyref i32))
+  (local $z (tuple anyref i32))
  )
 
  ;; CHECK:      (func $implicit-return (type $1) (result eqref)

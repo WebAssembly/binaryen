@@ -40,10 +40,10 @@ i31ref
 (ref null $array.0)
 
 ;; Tuple
-()
+(tuple)
 none
-(i32 f64)
-(i32 f64)
+(tuple i32 f64)
+(tuple i32 f64)
 
 ;; Signature of references (param/result)
 (func (param (ref null $struct.0)) (result (ref $array.0)))
@@ -77,8 +77,8 @@ none
 (ref null $array.0)
 
 ;; Tuple of references
-((ref $func.0) (ref null $func.0) (ref $struct.0) (ref null $struct.0) (ref $array.0) (ref null $array.0))
-((ref $func.0) (ref null $func.0) (ref $struct.0) (ref null $struct.0) (ref $array.0) (ref null $array.0))
+(tuple (ref $func.0) (ref null $func.0) (ref $struct.0) (ref null $struct.0) (ref $array.0) (ref null $array.0))
+(tuple (ref $func.0) (ref null $func.0) (ref $struct.0) (ref null $struct.0) (ref $array.0) (ref null $array.0))
 
 ;; Recursive (not really)
 (func (param (ref $func.0)))

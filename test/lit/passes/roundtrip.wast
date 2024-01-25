@@ -5,7 +5,7 @@
  ;; CHECK:      (type $none (func))
  (type $none (func))
  ;; CHECK:      (func $foo (type $none)
- ;; CHECK-NEXT:  (local $0 (funcref (ref $none)))
+ ;; CHECK-NEXT:  (local $0 (tuple funcref (ref $none)))
  ;; CHECK-NEXT:  (local $1 funcref)
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (block $label$1 (type $1) (result funcref (ref $none))

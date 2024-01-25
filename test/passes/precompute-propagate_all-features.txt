@@ -297,8 +297,8 @@
   (local.get $x)
  )
  (func $tuple-local (type $3) (result i32 i64)
-  (local $i32s (i32 i32))
-  (local $i64s (i64 i64))
+  (local $i32s (tuple i32 i32))
+  (local $i64s (tuple i64 i64))
   (local.set $i32s
    (tuple.make 2
     (i32.const 42)

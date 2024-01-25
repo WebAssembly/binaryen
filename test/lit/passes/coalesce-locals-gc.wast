@@ -16,13 +16,13 @@
  ;; CHECK:      (global $global (ref null $array) (ref.null none))
  (global $global (ref null $array) (ref.null $array))
 
- ;; CHECK:      (global $nn-tuple-global (mut ((ref any) i32)) (tuple.make 2
+ ;; CHECK:      (global $nn-tuple-global (mut (tuple (ref any) i32)) (tuple.make 2
  ;; CHECK-NEXT:  (ref.i31
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (i32.const 1)
  ;; CHECK-NEXT: ))
- (global $nn-tuple-global (mut ((ref any) i32)) (tuple.make 2 (ref.i31 (i32.const 0)) (i32.const 1)))
+ (global $nn-tuple-global (mut (tuple (ref any) i32)) (tuple.make 2 (ref.i31 (i32.const 0)) (i32.const 1)))
 
 
  ;; CHECK:      (func $test-dead-get-non-nullable (type $6) (param $0 (ref struct))
@@ -284,7 +284,7 @@
  )
 
  ;; CHECK:      (func $test (type $10) (param $0 (ref any)) (result (ref any) i32)
- ;; CHECK-NEXT:  (local $1 (anyref i32))
+ ;; CHECK-NEXT:  (local $1 (tuple anyref i32))
  ;; CHECK-NEXT:  (tuple.drop 2
  ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (local.get $0)
@@ -365,8 +365,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $test (param $any (ref any)) (result (ref any) i32)
-  (local $x ((ref any) i32))
-  (local $y ((ref any) i32))
+  (local $x (tuple (ref any) i32))
+  (local $y (tuple (ref any) i32))
   ;; This store is dead and will be removed.
   (local.set $x
    (tuple.make 2

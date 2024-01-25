@@ -405,14 +405,14 @@
   )
 
   ;; CHECK:      (func $local-get-tuple (type $1) (result i32 i64)
-  ;; CHECK-NEXT:  (local $x (i32 i64))
+  ;; CHECK-NEXT:  (local $x (tuple i32 i64))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (local.get $1)
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
   (func $local-get-tuple (result i32 i64)
-    (local $x (i32 i64))
+    (local $x (tuple i32 i64))
     (local.get $x)
   )
 
@@ -431,7 +431,7 @@
   )
 
   ;; CHECK:      (func $local-set-tuple (type $2)
-  ;; CHECK-NEXT:  (local $x (i32 i64))
+  ;; CHECK-NEXT:  (local $x (tuple i32 i64))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (i32.const 0)
@@ -444,7 +444,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $local-set-tuple
-    (local $x (i32 i64))
+    (local $x (tuple i32 i64))
     (local.set $x
       (tuple.make 2
         (i32.const 0)
@@ -454,7 +454,7 @@
   )
 
   ;; CHECK:      (func $local-tee-tuple (type $1) (result i32 i64)
-  ;; CHECK-NEXT:  (local $x (i32 i64))
+  ;; CHECK-NEXT:  (local $x (tuple i32 i64))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i64)
   ;; CHECK-NEXT:  (i32.const 0)
@@ -468,7 +468,7 @@
   ;; CHECK-NEXT:  (local.get $2)
   ;; CHECK-NEXT: )
   (func $local-tee-tuple (result i32 i64)
-    (local $x (i32 i64))
+    (local $x (tuple i32 i64))
     (local.tee $x
       (tuple.make 2
         (i32.const 0)
