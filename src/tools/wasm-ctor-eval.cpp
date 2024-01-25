@@ -889,6 +889,12 @@ public:
       } else if (heapType.isArray()) {
         // TODO: for repeated identical values, can use ArrayNew
         init = builder.makeArrayNewFixed(heapType, args);
+      } else if (heapType.isString()) {
+        std::string s;
+        for (auto c : values) {
+          s += char(c.getInteger());
+        }
+        init = builder.makeStringConst(s);
       } else {
         WASM_UNREACHABLE("bad gc type");
       }
