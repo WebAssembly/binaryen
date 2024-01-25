@@ -1522,6 +1522,7 @@ public:
 // 'throw_ref' from the new EH proposal
 class ThrowRef : public SpecificExpression<Expression::ThrowRefId> {
 public:
+  ThrowRef() {}
   ThrowRef(MixedArena& allocator) {}
 
   Expression* exnref;

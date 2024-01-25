@@ -1646,7 +1646,7 @@ template<typename Ctx> Result<> makeRethrow(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeThrowRef(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeThrowRef(pos);
 }
 
 template<typename Ctx> Result<> makeTupleMake(Ctx& ctx, Index pos) {
