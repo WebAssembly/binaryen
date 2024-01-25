@@ -1390,7 +1390,12 @@ Result<> IRBuilder::makeRethrow(Index label) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeThrowRef() {}
+Result<> IRBuilder::makeThrowRef() {
+  ThrowRef curr;
+  CHECK_ERR(visitThrowRef(&curr));
+  push(builder.makeThrowRef(curr.exnref));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeTupleMake(uint32_t arity) {
   TupleMake curr(wasm.allocator);

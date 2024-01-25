@@ -453,6 +453,7 @@ struct NullInstrParserCtx {
   Result<> makeTableCopy(Index, TableIdxT*, TableIdxT*) { return Ok{}; }
   Result<> makeThrow(Index, TagIdxT) { return Ok{}; }
   Result<> makeRethrow(Index, LabelIdxT) { return Ok{}; }
+  Result<> makeThrowRef(Index) { return Ok{}; }
   Result<> makeTupleMake(Index, uint32_t) { return Ok{}; }
   Result<> makeTupleExtract(Index, uint32_t, uint32_t) { return Ok{}; }
   Result<> makeTupleDrop(Index, uint32_t) { return Ok{}; }
@@ -1719,6 +1720,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeRethrow(Index pos, Index label) {
     return withLoc(pos, irBuilder.makeRethrow(label));
+  }
+
+  Result<> makeThrowRef(Index pos) {
+    return withLoc(pos, irBuilder.makeThrowRef());
   }
 
   Result<> makeTupleMake(Index pos, uint32_t arity) {
