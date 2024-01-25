@@ -54,3 +54,101 @@
   )
  )
 )
+
+;; Some segments can be removed: any segment that writes to address 131072 or
+;; higher will trap, and must be kept (unless TNH). Only the $bad segment
+;; should remain for that reason, however, it keeps the memory alive which
+;; keeps the $ok* segments alive too.
+(module
+ ;; CHECK:      (memory $0 2 2)
+ (memory $0 2 2)
+
+ ;; CHECK:      (data $ok1 (i32.const 0) "a")
+ (data $ok1 (i32.const 0) "a")
+ ;; CHECK:      (data $ok2 (i32.const 1000) "a")
+ (data $ok2 (i32.const 1000) "a")
+ ;; CHECK:      (data $ok3 (i32.const 131070) "a")
+ (data $ok3 (i32.const 131070) "a")
+ ;; CHECK:      (data $bad (i32.const 131070) "ab")
+ (data $bad (i32.const 131070) "ab")
+)
+
+;; The following modules have variations on the bad segment.
+(module
+ ;; CHECK:      (memory $0 2 2)
+ (memory $0 2 2)
+
+ ;; CHECK:      (data $ok1 (i32.const 0) "a")
+ (data $ok1 (i32.const 0) "a")
+ ;; CHECK:      (data $ok2 (i32.const 1000) "a")
+ (data $ok2 (i32.const 1000) "a")
+ ;; CHECK:      (data $ok3 (i32.const 131070) "a")
+ (data $ok3 (i32.const 131070) "a")
+ ;; CHECK:      (data $bad (i32.const 131071) "a")
+ (data $bad (i32.const 131071) "a")
+)
+
+(module
+ ;; CHECK:      (memory $0 2 2)
+ (memory $0 2 2)
+
+ ;; CHECK:      (data $ok1 (i32.const 0) "a")
+ (data $ok1 (i32.const 0) "a")
+ ;; CHECK:      (data $ok2 (i32.const 1000) "a")
+ (data $ok2 (i32.const 1000) "a")
+ ;; CHECK:      (data $ok3 (i32.const 131070) "a")
+ (data $ok3 (i32.const 131070) "a")
+ ;; CHECK:      (data $bad (i32.const 9999999) "a")
+ (data $bad (i32.const 9999999) "a")
+)
+
+(module
+ ;; CHECK:      (memory $0 2 2)
+ (memory $0 2 2)
+
+ ;; CHECK:      (data $ok1 (i32.const 0) "a")
+ (data $ok1 (i32.const 0) "a")
+ ;; CHECK:      (data $ok2 (i32.const 1000) "a")
+ (data $ok2 (i32.const 1000) "a")
+ ;; CHECK:      (data $ok3 (i32.const 131070) "a")
+ (data $ok3 (i32.const 131070) "a")
+ ;; CHECK:      (data $bad (i32.const -2) "a")
+ (data $bad (i32.const 4294967294) "a")
+)
+
+(module
+ ;; CHECK:      (memory $0 2 2)
+ (memory $0 2 2)
+
+ ;; CHECK:      (data $ok1 (i32.const 0) "a")
+ (data $ok1 (i32.const 0) "a")
+ ;; CHECK:      (data $ok2 (i32.const 1000) "a")
+ (data $ok2 (i32.const 1000) "a")
+ ;; CHECK:      (data $ok3 (i32.const 131070) "a")
+ (data $ok3 (i32.const 131070) "a")
+ ;; CHECK:      (data $bad (i32.const -2) "abcdefg")
+ (data $bad (i32.const 4294967294) "abcdefg")
+)
+
+(module
+ ;; CHECK:      (memory $0 2 2)
+ (memory $0 2 2)
+
+ ;; CHECK:      (data $ok1 (i32.const 0) "a")
+ (data $ok1 (i32.const 0) "a")
+ ;; CHECK:      (data $ok2 (i32.const 1000) "a")
+ (data $ok2 (i32.const 1000) "a")
+ ;; CHECK:      (data $ok3 (i32.const 131070) "a")
+ (data $ok3 (i32.const 131070) "a")
+ ;; CHECK:      (data $bad (i32.const -2) "a")
+ (data $bad (i32.const -2) "a")
+)
+
+;; Finally, a module with no bad segments. We can remove all the contents.
+(module
+ (memory $0 2 2)
+
+ (data $ok1 (i32.const 0) "a")
+ (data $ok2 (i32.const 1000) "a")
+ (data $ok3 (i32.const 131070) "a")
+)
