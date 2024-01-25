@@ -624,6 +624,11 @@ Result<> IRBuilder::visitTryStart(Try* tryy, Name label) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitTryTableStart(TryTable* trytable, Name label) {
+  pushScope(ScopeCtx::makeTryTable(trytable, label));
+  return Ok{};
+}
+
 Result<Expression*> IRBuilder::finishScope(Block* block) {
   if (scopeStack.empty() || scopeStack.back().isNone()) {
     return Err{"unexpected end of scope"};
@@ -895,6 +900,10 @@ Result<> IRBuilder::visitEnd() {
     tryy->catchBodies.push_back(*expr);
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
+  } else if (auto* trytable = scope.getTryTable()) {
+    trytable->body = *expr;
+    trytable->finalize(trytable->type, &wasm);
+    push(maybeWrapForLabel(trytable));
   } else {
     WASM_UNREACHABLE("unexpected scope kind");
   }
@@ -1347,7 +1356,23 @@ Result<> IRBuilder::makeTry(Name label, Type type) {
   return visitTryStart(tryy, label);
 }
 
-// Result<> IRBuilder::makeTryTable() {}
+Result<> IRBuilder::makeTryTable(Name label,
+                                 Type type,
+                                 const std::vector<Name>& tags,
+                                 const std::vector<Index>& labels,
+                                 const std::vector<bool>& isRefs) {
+  auto* trytable = wasm.allocator.alloc<TryTable>();
+  trytable->type = type;
+  trytable->catchTags.set(tags);
+  trytable->catchRefs.set(isRefs);
+  trytable->catchDests.reserve(labels.size());
+  for (auto label : labels) {
+    auto name = getLabelName(label);
+    CHECK_ERR(name);
+    trytable->catchDests.push_back(*name);
+  }
+  return visitTryTableStart(trytable, label);
+}
 
 Result<> IRBuilder::makeThrow(Name tag) {
   Throw curr(wasm.allocator);

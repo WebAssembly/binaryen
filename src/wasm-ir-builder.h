@@ -65,6 +65,8 @@ public:
   [[nodiscard]] Result<> visitElse();
   [[nodiscard]] Result<> visitLoopStart(Loop* iff);
   [[nodiscard]] Result<> visitTryStart(Try* tryy, Name label = {});
+  [[nodiscard]] Result<> visitTryTableStart(TryTable* trytable,
+                                            Name label = {});
   [[nodiscard]] Result<> visitCatch(Name tag);
   [[nodiscard]] Result<> visitCatchAll();
   [[nodiscard]] Result<> visitDelegate(Index label);
@@ -155,7 +157,11 @@ public:
   [[nodiscard]] Result<> makeTableFill(Name table);
   [[nodiscard]] Result<> makeTableCopy(Name destTable, Name srcTable);
   [[nodiscard]] Result<> makeTry(Name label, Type type);
-  // [[nodiscard]] Result<> makeTryTable();
+  [[nodiscard]] Result<> makeTryTable(Name label,
+                                      Type type,
+                                      const std::vector<Name>& tags,
+                                      const std::vector<Index>& labels,
+                                      const std::vector<bool>& isRefs);
   [[nodiscard]] Result<> makeThrow(Name tag);
   [[nodiscard]] Result<> makeRethrow(Index label);
   // [[nodiscard]] Result<> makeThrowRef();
@@ -264,6 +270,10 @@ private:
       Try* tryy;
       Name originalLabel;
     };
+    struct TryTableScope {
+      TryTable* trytable;
+      Name originalLabel;
+    };
     using Scope = std::variant<NoScope,
                                FuncScope,
                                BlockScope,
@@ -272,7 +282,8 @@ private:
                                LoopScope,
                                TryScope,
                                CatchScope,
-                               CatchAllScope>;
+                               CatchAllScope,
+                               TryTableScope>;
 
     // The control flow structure we are building expressions for.
     Scope scope;
@@ -311,6 +322,9 @@ private:
     }
     static ScopeCtx makeCatchAll(Try* tryy, Name originalLabel, Name label) {
       return ScopeCtx(CatchAllScope{tryy, originalLabel}, label);
+    }
+    static ScopeCtx makeTryTable(TryTable* trytable, Name originalLabel = {}) {
+      return ScopeCtx(TryTableScope{trytable, originalLabel});
     }
 
     bool isNone() { return std::get_if<NoScope>(&scope); }
@@ -362,6 +376,12 @@ private:
       }
       return nullptr;
     }
+    TryTable* getTryTable() {
+      if (auto* tryTableScope = std::get_if<TryTableScope>(&scope)) {
+        return tryTableScope->trytable;
+      }
+      return nullptr;
+    }
     Type getResultType() {
       if (auto* func = getFunction()) {
         return func->type.getSignature().results;
@@ -386,6 +406,9 @@ private:
       }
       if (auto* tryy = getCatchAll()) {
         return tryy->type;
+      }
+      if (auto* trytable = getTryTable()) {
+        return trytable->type;
       }
       WASM_UNREACHABLE("unexpected scope kind");
     }
@@ -413,6 +436,9 @@ private:
       }
       if (auto* catchAllScope = std::get_if<CatchAllScope>(&scope)) {
         return catchAllScope->originalLabel;
+      }
+      if (auto* tryTableScope = std::get_if<TryTableScope>(&scope)) {
+        return tryTableScope->originalLabel;
       }
       WASM_UNREACHABLE("unexpected scope kind");
     }

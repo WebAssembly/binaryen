@@ -297,6 +297,8 @@ template<typename Ctx> struct TypeParserCtx {
 
 struct NullInstrParserCtx {
   using ExprT = Ok;
+  using CatchT = Ok;
+  using CatchListT = Ok;
 
   using FieldIdxT = Ok;
   using FuncIdxT = Ok;
@@ -361,6 +363,17 @@ struct NullInstrParserCtx {
   Result<> visitCatchAll(Index) { return Ok{}; }
   Result<> visitDelegate(Index, LabelIdxT) { return Ok{}; }
   Result<> visitEnd() { return Ok{}; }
+
+  CatchListT makeCatchList() { return Ok{}; }
+  void appendCatch(CatchListT&, CatchT) {}
+  CatchT makeCatch(TagIdxT, LabelIdxT) { return Ok{}; }
+  CatchT makeCatchRef(TagIdxT, LabelIdxT) { return Ok{}; }
+  CatchT makeCatchAll(LabelIdxT) { return Ok{}; }
+  CatchT makeCatchAllRef(LabelIdxT) { return Ok{}; }
+  template<typename BlockTypeT>
+  Result<> makeTryTable(Index, std::optional<Name>, BlockTypeT, CatchListT) {
+    return Ok{};
+  }
 
   Result<> makeUnreachable(Index) { return Ok{}; }
   Result<> makeNop(Index) { return Ok{}; }
@@ -1023,6 +1036,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   using ExprT = Expression*;
   using ElemListT = std::vector<Expression*>;
 
+  struct CatchInfo;
+  using CatchT = CatchInfo;
+  using CatchListT = std::vector<CatchInfo>;
+
   using FieldIdxT = Index;
   using FuncIdxT = Name;
   using LocalIdxT = Index;
@@ -1105,6 +1122,21 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   LimitsT getLimitsFromElems(std::vector<Expression*>& elems) { return Ok{}; }
 
   TableTypeT makeTableType(LimitsT, Type) { return Ok{}; }
+
+  struct CatchInfo {
+    Name tag;
+    Index label;
+    bool isRef;
+  };
+
+  std::vector<CatchInfo> makeCatchList() { return {}; }
+  void appendCatch(std::vector<CatchInfo>& list, CatchInfo info) {
+    list.push_back(info);
+  }
+  CatchInfo makeCatch(Name tag, Index label) { return {tag, label, false}; }
+  CatchInfo makeCatchRef(Name tag, Index label) { return {tag, label, true}; }
+  CatchInfo makeCatchAll(Index label) { return {{}, label, false}; }
+  CatchInfo makeCatchAllRef(Index label) { return {{}, label, true}; }
 
   Result<HeapTypeT> getHeapTypeFromIdx(Index idx) {
     if (idx >= types.size()) {
@@ -1372,6 +1404,26 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(
       pos,
       irBuilder.makeTry(label ? *label : Name{}, type.getSignature().results));
+  }
+
+  Result<> makeTryTable(Index pos,
+                        std::optional<Name> label,
+                        HeapType type,
+                        const std::vector<CatchInfo>& info) {
+    std::vector<Name> tags;
+    std::vector<Index> labels;
+    std::vector<bool> isRefs;
+    for (auto& info : info) {
+      tags.push_back(info.tag);
+      labels.push_back(info.label);
+      isRefs.push_back(info.isRef);
+    }
+    return withLoc(pos,
+                   irBuilder.makeTryTable(label ? *label : Name{},
+                                          type.getSignature().results,
+                                          tags,
+                                          labels,
+                                          isRefs));
   }
 
   Result<> visitCatch(Index pos, Name tag) {
