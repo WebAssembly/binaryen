@@ -60,6 +60,8 @@ template<typename Ctx> MaybeResult<> block(Ctx&, bool);
 template<typename Ctx> MaybeResult<> ifelse(Ctx&, bool);
 template<typename Ctx> MaybeResult<> loop(Ctx&, bool);
 template<typename Ctx> MaybeResult<> trycatch(Ctx&, bool);
+template<typename Ctx> MaybeResult<typename Ctx::CatchT> catchinstr(Ctx&);
+template<typename Ctx> MaybeResult<> trytable(Ctx&, bool);
 template<typename Ctx> Result<> makeUnreachable(Ctx&, Index);
 template<typename Ctx> Result<> makeNop(Ctx&, Index);
 template<typename Ctx> Result<> makeBinary(Ctx&, Index, BinaryOp op);
@@ -657,7 +659,7 @@ template<typename Ctx> Result<uint32_t> tupleArity(Ctx& ctx) {
 // Instructions
 // ============
 
-// blockinstr ::= block | loop | if-else | try-catch
+// blockinstr ::= block | loop | if-else | try-catch | try_table
 template<typename Ctx> MaybeResult<> foldedBlockinstr(Ctx& ctx) {
   if (auto i = block(ctx, true)) {
     return i;
@@ -671,7 +673,9 @@ template<typename Ctx> MaybeResult<> foldedBlockinstr(Ctx& ctx) {
   if (auto i = trycatch(ctx, true)) {
     return i;
   }
-  // TODO: Other block instructions
+  if (auto i = trytable(ctx, true)) {
+    return i;
+  }
   return {};
 }
 
@@ -688,7 +692,9 @@ template<typename Ctx> MaybeResult<> unfoldedBlockinstr(Ctx& ctx) {
   if (auto i = trycatch(ctx, false)) {
     return i;
   }
-  // TODO: Other block instructions
+  if (auto i = trytable(ctx, false)) {
+    return i;
+  }
   return {};
 }
 
@@ -1154,6 +1160,81 @@ template<typename Ctx> MaybeResult<> trycatch(Ctx& ctx, bool folded) {
     auto id = ctx.in.takeID();
     if (id && id != label) {
       return ctx.in.err("end label does not match try label");
+    }
+  }
+  return ctx.visitEnd();
+}
+
+template<typename Ctx> MaybeResult<typename Ctx::CatchT> catchinstr(Ctx& ctx) {
+  typename Ctx::CatchT result;
+  if (ctx.in.takeSExprStart("catch"sv)) {
+    auto tag = tagidx(ctx);
+    CHECK_ERR(tag);
+    auto label = labelidx(ctx);
+    CHECK_ERR(label);
+    result = ctx.makeCatch(*tag, *label);
+  } else if (ctx.in.takeSExprStart("catch_ref"sv)) {
+    auto tag = tagidx(ctx);
+    CHECK_ERR(tag);
+    auto label = labelidx(ctx);
+    CHECK_ERR(label);
+    result = ctx.makeCatchRef(*tag, *label);
+  } else if (ctx.in.takeSExprStart("catch_all"sv)) {
+    auto label = labelidx(ctx);
+    CHECK_ERR(label);
+    result = ctx.makeCatchAll(*label);
+  } else if (ctx.in.takeSExprStart("catch_all_ref"sv)) {
+    auto label = labelidx(ctx);
+    CHECK_ERR(label);
+    result = ctx.makeCatchAllRef(*label);
+  } else {
+    return {};
+  }
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected ')' at end of catch clause");
+  }
+
+  return result;
+}
+
+// trytable ::= 'try_table' label blocktype catchinstr* instr* end id?
+//            | '(' 'try_table' label blocktype catchinstr* instr* ')'
+template<typename Ctx> MaybeResult<> trytable(Ctx& ctx, bool folded) {
+  auto pos = ctx.in.getPos();
+
+  if ((folded && !ctx.in.takeSExprStart("try_table"sv)) ||
+      (!folded && !ctx.in.takeKeyword("try_table"sv))) {
+    return {};
+  }
+
+  auto label = ctx.in.takeID();
+
+  auto type = blocktype(ctx);
+  CHECK_ERR(type);
+
+  auto catches = ctx.makeCatchList();
+  while (auto c = catchinstr(ctx)) {
+    CHECK_ERR(c);
+    ctx.appendCatch(catches, *c);
+  }
+
+  CHECK_ERR(ctx.makeTryTable(pos, label, *type, catches));
+
+  CHECK_ERR(instrs(ctx));
+
+  if (folded) {
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected ')' at end of try_table");
+    }
+  } else {
+    if (!ctx.in.takeKeyword("end"sv)) {
+      return ctx.in.err("expected 'end' at end of try_table");
+    }
+
+    auto id = ctx.in.takeID();
+    if (id && id != label) {
+      return ctx.in.err("end label does not match try_table label");
     }
   }
   return ctx.visitEnd();
