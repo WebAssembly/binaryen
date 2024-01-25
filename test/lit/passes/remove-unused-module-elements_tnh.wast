@@ -221,3 +221,29 @@
  (func $func)
 )
 
+;; Multiple memories. One can be removed, the other remains due to a trapping
+;; segment.
+(module
+ ;; CHECK:      (memory $small 1 1)
+ (memory $small 1 1)
+
+ (memory $big 2 2)
+
+ ;; CHECK:      (data $a (i32.const 100000) "ab")
+ (data $a (memory $small) (i32.const 100000) "ab") ;; fits in $big; not $small
+
+ (data $b (memory $big)   (i32.const 100000) "ab")
+)
+
+;; Reverse order of memories.
+(module
+ (memory $big 2 2)
+
+ ;; CHECK:      (memory $small 1 1)
+ (memory $small 1 1)
+
+ ;; CHECK:      (data $a (i32.const 100000) "ab")
+ (data $a (memory $small) (i32.const 100000) "ab") ;; fits in $big; not $small
+
+ (data $b (memory $big)   (i32.const 100000) "ab")
+)
