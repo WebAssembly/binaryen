@@ -125,6 +125,24 @@
  (data $bad (i32.const -2) "a")
 )
 
+;; An imported global is an unknown offset, so it might trap.
+(module
+ ;; CHECK:      (import "a" "b" (global $imported i32))
+ (import "a" "b" (global $imported i32))
+
+ ;; CHECK:      (memory $0 2 2)
+ (memory $0 2 2)
+
+ ;; CHECK:      (data $ok1 (i32.const 0) "a")
+ (data $ok1 (i32.const 0) "a")
+ ;; CHECK:      (data $ok2 (i32.const 1000) "a")
+ (data $ok2 (i32.const 1000) "a")
+ ;; CHECK:      (data $ok3 (global.get $imported) "a")
+ (data $ok3 (global.get $imported) "a")
+ ;; CHECK:      (data $bad (i32.const -2) "a")
+ (data $bad (i32.const -2) "a")
+)
+
 ;; Finally, a module with no bad segments. We can remove all the contents.
 (module
  (memory $0 2 2)
