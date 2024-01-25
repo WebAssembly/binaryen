@@ -170,7 +170,7 @@
 (module ;; remove all tables and the memory
   (import "env" "memory" (memory $0 256))
   (import "env" "table" (table 0 funcref))
-  (import "env" "table2" (table $1 1 2 funcref))
+  (import "env" "table2" (table $1 2 2 funcref))
   (elem (table $1) (offset (i32.const 0)) func)
   (elem (table $1) (offset (i32.const 1)) func)
 )
