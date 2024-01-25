@@ -8,17 +8,9 @@
 ;; can only remove such segments if we assume TrapsNeverHappen.
 
 (module
- ;; CHECK:      (type $0 (func (param i32)))
-
- ;; CHECK:      (type $1 (func))
-
- ;; CHECK:      (import "fuzzing-support" "log-i32" (func $fimport$0 (type $0) (param i32)))
- ;; T_N_H:      (type $0 (func (param i32)))
-
- ;; T_N_H:      (type $1 (func))
-
- ;; T_N_H:      (import "fuzzing-support" "log-i32" (func $fimport$0 (type $0) (param i32)))
  (import "fuzzing-support" "log-i32" (func $fimport$0 (param i32)))
+
+ ;; CHECK:      (type $0 (func))
 
  ;; CHECK:      (memory $0 16 17 shared)
  (memory $0 16 17 shared)
@@ -30,29 +22,20 @@
 
  (elem (i32.const -1) $func)
 
+
  ;; CHECK:      (table $0 1 1 funcref)
 
  ;; CHECK:      (elem $0 (i32.const -1) $func)
 
- ;; CHECK:      (export "func" (func $func))
- ;; T_N_H:      (export "func" (func $func))
- (export "func" (func $func))
-
- ;; CHECK:      (func $func (type $1)
- ;; CHECK-NEXT:  (call $fimport$0
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:  )
+ ;; CHECK:      (func $func (type $0)
+ ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
- ;; T_N_H:      (func $func (type $1)
- ;; T_N_H-NEXT:  (call $fimport$0
- ;; T_N_H-NEXT:   (i32.const 0)
- ;; T_N_H-NEXT:  )
+ ;; T_N_H:      (type $0 (func))
+
+ ;; T_N_H:      (func $func (type $0)
+ ;; T_N_H-NEXT:  (nop)
  ;; T_N_H-NEXT: )
- (func $func
-  (call $fimport$0
-   (i32.const 0)
-  )
- )
+ (func $func)
 )
 
 ;; Some segments can be removed: any segment that writes to address 131072 or
