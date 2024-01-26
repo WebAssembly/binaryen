@@ -78,6 +78,7 @@ struct TypeUse {
 struct NullTypeParserCtx {
   using IndexT = Ok;
   using HeapTypeT = Ok;
+  using TupleElemListT = Ok;
   using TypeT = Ok;
   using ParamsT = Ok;
   using ResultsT = size_t;
@@ -121,6 +122,10 @@ struct NullTypeParserCtx {
   TypeT makeV128() { return Ok{}; }
 
   TypeT makeRefType(HeapTypeT, Nullability) { return Ok{}; }
+
+  TupleElemListT makeTupleElemList() { return Ok{}; }
+  void appendTupleElem(TupleElemListT&, TypeT) {}
+  TypeT makeTupleType(TupleElemListT) { return Ok{}; }
 
   ParamsT makeParams() { return Ok{}; }
   void appendParam(ParamsT&, Name, TypeT) {}
@@ -219,7 +224,13 @@ template<typename Ctx> struct TypeParserCtx {
     return Type(ht, nullability);
   }
 
-  TypeT makeTupleType(const std::vector<Type> types) { return Tuple(types); }
+  std::vector<Type> makeTupleElemList() { return {}; }
+  void appendTupleElem(std::vector<Type>& elems, Type elem) {
+    elems.push_back(elem);
+  }
+  Result<TypeT> makeTupleType(const std::vector<Type>& types) {
+    return Tuple(types);
+  }
 
   ParamsT makeParams() { return {}; }
   void appendParam(ParamsT& params, Name id, TypeT type) {

@@ -457,6 +457,8 @@
  ;; CHECK-NEXT: )
  (func $f4 (type 18) (local i32 i64) (local $l f32))
 
+ (func $tuple-locals (local (tuple i32 i32)))
+
  ;; CHECK:      (func $nop-skate (type $void)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (nop)

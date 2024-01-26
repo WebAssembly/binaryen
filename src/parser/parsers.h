@@ -28,6 +28,7 @@ using namespace std::string_view_literals;
 // Types
 template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::RefTypeT> reftype(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::TypeT> tupletype(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::ParamsT> params(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::ResultsT> results(Ctx&);
@@ -365,15 +366,34 @@ template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
   return ctx.makeRefType(*type, nullability);
 }
 
+// tupletype ::= '(' 'tuple' valtype* ')'
+template<typename Ctx> MaybeResult<typename Ctx::TypeT> tupletype(Ctx& ctx) {
+  if (!ctx.in.takeSExprStart("tuple"sv)) {
+    return {};
+  }
+  auto elems = ctx.makeTupleElemList();
+  size_t numElems = 0;
+  while (!ctx.in.takeRParen()) {
+    auto elem = singlevaltype(ctx);
+    CHECK_ERR(elem);
+    ctx.appendTupleElem(elems, *elem);
+    ++numElems;
+  }
+  if (numElems < 2) {
+    return ctx.in.err("tuples must have at least two elements");
+  }
+  return ctx.makeTupleType(elems);
+}
+
 // numtype ::= 'i32' => i32
 //           | 'i64' => i64
 //           | 'f32' => f32
 //           | 'f64' => f64
 // vectype ::= 'v128' => v128
-// valtype ::= t:numtype => t
-//           | t:vectype => t
-//           | t:reftype => t
-template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx& ctx) {
+// singlevaltype ::= t:numtype => t
+//                 | t:vectype => t
+//                 | t:reftype => t
+template<typename Ctx> Result<typename Ctx::TypeT> singlevaltype(Ctx& ctx) {
   if (ctx.in.takeKeyword("i32"sv)) {
     return ctx.makeI32();
   } else if (ctx.in.takeKeyword("i64"sv)) {
@@ -390,6 +410,15 @@ template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx& ctx) {
   } else {
     return ctx.in.err("expected valtype");
   }
+}
+
+// valtype ::= singlevaltype | tupletype
+template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx& ctx) {
+  if (auto type = tupletype(ctx)) {
+    CHECK_ERR(type);
+    return *type;
+  }
+  return singlevaltype(ctx);
 }
 
 // param  ::= '(' 'param id? t:valtype ')' => [t]
