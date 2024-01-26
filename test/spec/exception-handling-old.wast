@@ -75,7 +75,7 @@
     )
   )
 
-  (func (export "try_throw_multivalue_catch") (result i32) (local $x (i32 f32))
+  (func (export "try_throw_multivalue_catch") (result i32) (local $x (tuple i32 f32))
     (try (result i32)
       (do
         (throw $e-i32-f32 (i32.const 5) (f32.const 1.5))
