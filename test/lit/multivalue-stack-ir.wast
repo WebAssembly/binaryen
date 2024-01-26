@@ -26,7 +26,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $test
-  (local $pair (f32 i32))
+  (local $pair (tuple f32 i32))
   (local $f32 f32)
   ;; Normally this get-set pair would be eliminated by stack IR optimizations,
   ;; but then the binary writer's tuple optimizations would leave the only the
