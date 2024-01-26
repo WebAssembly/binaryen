@@ -334,7 +334,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $e-i32-f32
   ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (pop i32 f32)
+  ;; CHECK-NEXT:     (pop (tuple i32 f32))
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (throw $e-i32
   ;; CHECK-NEXT:     (block (result i32)
@@ -354,7 +354,7 @@
         (throw $e-i32
           ;; This tests a pop taking a tuple type.
           (block (result i32)
-            (local.set $x (pop i32 f32))
+            (local.set $x (pop (tuple i32 f32)))
             (i32.const 0)
           )
         )

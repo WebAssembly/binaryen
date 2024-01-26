@@ -1824,7 +1824,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch $tag-pair
- ;; CHECK-NEXT:    (pop i32 i64)
+ ;; CHECK-NEXT:    (pop (tuple i32 i64))
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

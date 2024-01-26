@@ -2394,11 +2394,10 @@ Expression* SExpressionWasmBuilder::makeMemoryFill(Element& s) {
 
 Expression* SExpressionWasmBuilder::makePop(Element& s) {
   auto ret = allocator.alloc<Pop>();
-  std::vector<Type> types;
-  for (size_t i = 1; i < s.size(); ++i) {
-    types.push_back(elementToType(*s[i]));
+  if (s.size() != 2) {
+    throw SParseException("expected 'pop <valtype>'", s);
   }
-  ret->type = Type(types);
+  ret->type = elementToType(*s[1]);
   ret->finalize();
   return ret;
 }

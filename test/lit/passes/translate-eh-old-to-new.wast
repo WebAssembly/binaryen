@@ -232,7 +232,7 @@
       )
       (catch $e-i32-i64
         (tuple.drop 2
-          (pop i32 i64)
+          (pop (tuple i32 i64))
         )
       )
       (catch_all
@@ -294,7 +294,7 @@
       )
       (catch $e-i32-i64
         (tuple.drop 2
-          (pop i32 i64)
+          (pop (tuple i32 i64))
         )
         (rethrow $l0)
       )
@@ -515,7 +515,7 @@
       )
       (catch $e-i32-i64
         (tuple.drop 2
-          (pop i32 i64)
+          (pop (tuple i32 i64))
         )
         (i32.const 1)
       )
@@ -584,7 +584,7 @@
       )
       (catch $e-i32-i64
         (tuple.drop 2
-          (pop i32 i64)
+          (pop (tuple i32 i64))
         )
         (rethrow $l0)
       )
@@ -856,7 +856,7 @@
         )
       )
       (catch $e-i32-i64
-        (pop i32 i64)
+        (pop (tuple i32 i64))
       )
       (catch_all
         (tuple.make 2
@@ -932,7 +932,7 @@
       )
       (catch $e-i32-i64
         (tuple.drop 2
-          (pop i32 i64)
+          (pop (tuple i32 i64))
         )
         (rethrow $l0)
       )
@@ -1050,7 +1050,7 @@
       )
       (catch $e-i32-i64
         (tuple.drop 2
-          (pop i32 i64)
+          (pop (tuple i32 i64))
         )
         (rethrow $l0)
       )
