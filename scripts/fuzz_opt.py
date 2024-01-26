@@ -319,6 +319,7 @@ INITIAL_CONTENTS_IGNORE = [
     # New EH implementation is in progress
     'exception-handling.wast',
     'translate-eh-old-to-new.wast',
+    'rse-eh.wast',
 ]
 
 

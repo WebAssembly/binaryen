@@ -99,7 +99,7 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
   // that can reach catch blocks (each item is assumed to be able to reach any
   // of the catches, although that could be improved perhaps).
   std::vector<std::vector<BasicBlock*>> throwingInstsStack;
-  // stack of 'Try' expressions corresponding to throwingInstsStack.
+  // stack of 'Try'/'TryTable' expressions corresponding to throwingInstsStack.
   std::vector<Expression*> tryStack;
   // A stack for each try, where each entry is a list of blocks, one for each
   // catch, used during processing. We start by assigning the start blocks to
@@ -254,11 +254,11 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
   }
 
   static void doEndThrowingInst(SubType* self, Expression** currp) {
-    // If the innermost try does not have a catch_all clause, an exception
-    // thrown can be caught by any of its outer catch block. And if that outer
-    // try-catch also does not have a catch_all, this continues until we
-    // encounter a try-catch_all. Create a link to all those possible catch
-    // unwind destinations.
+    // If the innermost try/try_table does not have a catch_all clause, an
+    // exception thrown can be caught by any of its outer catch block. And if
+    // that outer try/try_table also does not have a catch_all, this continues
+    // until we encounter a try/try_table-catch_all. Create a link to all those
+    // possible catch unwind destinations.
     // TODO This can be more precise for `throw`s if we compare tag types and
     // create links to outer catch BBs only when the exception is not caught.
     // TODO This can also be more precise if we analyze the structure of nested
@@ -281,36 +281,47 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     // end
     assert(self->tryStack.size() == self->throwingInstsStack.size());
     for (int i = self->throwingInstsStack.size() - 1; i >= 0;) {
-      auto* tryy = self->tryStack[i]->template cast<Try>();
-      if (tryy->isDelegate()) {
-        // If this delegates to the caller, there is no possibility that this
-        // instruction can throw to outer catches.
-        if (tryy->delegateTarget == DELEGATE_CALLER_TARGET) {
-          break;
-        }
-        // If this delegates to an outer try, we skip catches between this try
-        // and the target try.
-        [[maybe_unused]] bool found = false;
-        for (int j = i - 1; j >= 0; j--) {
-          if (self->tryStack[j]->template cast<Try>()->name ==
-              tryy->delegateTarget) {
-            i = j;
-            found = true;
+      if (auto* tryy = self->tryStack[i]->template dynCast<Try>()) {
+        if (tryy->isDelegate()) {
+          // If this delegates to the caller, there is no possibility that this
+          // instruction can throw to outer catches.
+          if (tryy->delegateTarget == DELEGATE_CALLER_TARGET) {
             break;
           }
+          // If this delegates to an outer try, we skip catches between this try
+          // and the target try.
+          [[maybe_unused]] bool found = false;
+          for (int j = i - 1; j >= 0; j--) {
+            if (self->tryStack[j]->template cast<Try>()->name ==
+                tryy->delegateTarget) {
+              i = j;
+              found = true;
+              break;
+            }
+          }
+          assert(found);
+          continue;
         }
-        assert(found);
-        continue;
       }
 
       // Exception thrown. Note outselves so that we will create a link to each
-      // catch within the try when we get there.
+      // catch within the try / each destination block within the try_table when
+      // we get there.
       self->throwingInstsStack[i].push_back(self->currBasicBlock);
 
-      // If this try has catch_all, there is no possibility that this
-      // instruction can throw to outer catches. Stop here.
-      if (tryy->hasCatchAll()) {
-        break;
+      if (auto* tryy = self->tryStack[i]->template dynCast<Try>()) {
+        // If this try has catch_all, there is no possibility that this
+        // instruction can throw to outer catches. Stop here.
+        if (tryy->hasCatchAll()) {
+          break;
+        }
+      } else if (auto* tryTable =
+                   self->tryStack[i]->template dynCast<TryTable>()) {
+        if (tryTable->hasCatchAll()) {
+          break;
+        }
+      } else {
+        WASM_UNREACHABLE("invalid throwingInstsStack item");
       }
       i--;
     }
@@ -411,6 +422,28 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     self->startUnreachableBlock();
   }
 
+  static void doStartTryTable(SubType* self, Expression** currp) {
+    auto* curr = (*currp)->cast<TryTable>();
+    self->throwingInstsStack.emplace_back();
+    self->tryStack.push_back(curr);
+  }
+
+  static void doEndTryTable(SubType* self, Expression** currp) {
+    auto* curr = (*currp)->cast<TryTable>();
+
+    auto catchTargets = BranchUtils::getUniqueTargets(curr);
+    // Add catch destinations to the targets.
+    for (auto target : catchTargets) {
+      auto& preds = self->throwingInstsStack.back();
+      for (auto* pred : preds) {
+        self->branches[target].push_back(pred);
+      }
+    }
+
+    self->throwingInstsStack.pop_back();
+    self->tryStack.pop_back();
+  }
+
   static bool isReturnCall(Expression* curr) {
     switch (curr->_id) {
       case Expression::Id::CallId:
@@ -478,8 +511,13 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
         self->pushTask(SubType::doStartTry, currp);
         return; // don't do anything else
       }
+      case Expression::Id::TryTableId: {
+        self->pushTask(SubType::doEndTryTable, currp);
+        break;
+      }
       case Expression::Id::ThrowId:
-      case Expression::Id::RethrowId: {
+      case Expression::Id::RethrowId:
+      case Expression::Id::ThrowRefId: {
         self->pushTask(SubType::doEndThrow, currp);
         break;
       }
@@ -497,6 +535,10 @@ struct CFGWalker : public PostWalker<SubType, VisitorType> {
     switch (curr->_id) {
       case Expression::Id::LoopId: {
         self->pushTask(SubType::doStartLoop, currp);
+        break;
+      }
+      case Expression::Id::TryTableId: {
+        self->pushTask(SubType::doStartTryTable, currp);
         break;
       }
       default: {}
