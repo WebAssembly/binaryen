@@ -149,7 +149,7 @@
   ;; CHECK:      (func $try-none-tag-single-with-rethrow (type $1)
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 (i32 exnref))
+  ;; CHECK-NEXT:  (local $2 (tuple i32 exnref))
   ;; CHECK-NEXT:  (block $outer0
   ;; CHECK-NEXT:   (local.set $0
   ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
@@ -205,7 +205,7 @@
   )
 
   ;; CHECK:      (func $try-none-tag-tuple (type $1)
-  ;; CHECK-NEXT:  (local $0 (i32 i64))
+  ;; CHECK-NEXT:  (local $0 (tuple i32 i64))
   ;; CHECK-NEXT:  (block $outer0
   ;; CHECK-NEXT:   (block $catch_all2
   ;; CHECK-NEXT:    (local.set $0
@@ -243,8 +243,8 @@
 
   ;; CHECK:      (func $try-none-tag-tuple-with-rethrow (type $1)
   ;; CHECK-NEXT:  (local $0 exnref)
-  ;; CHECK-NEXT:  (local $1 (i32 i64))
-  ;; CHECK-NEXT:  (local $2 (i32 i64 exnref))
+  ;; CHECK-NEXT:  (local $1 (tuple i32 i64))
+  ;; CHECK-NEXT:  (local $2 (tuple i32 i64 exnref))
   ;; CHECK-NEXT:  (block $outer0
   ;; CHECK-NEXT:   (local.set $0
   ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
@@ -419,7 +419,7 @@
   ;; CHECK:      (func $try-single-tag-single-with-rethrow (type $2) (result i32)
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 (i32 exnref))
+  ;; CHECK-NEXT:  (local $2 (tuple i32 exnref))
   ;; CHECK-NEXT:  (block $outer0 (result i32)
   ;; CHECK-NEXT:   (local.set $0
   ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
@@ -481,7 +481,7 @@
   )
 
   ;; CHECK:      (func $try-single-tag-tuple (type $2) (result i32)
-  ;; CHECK-NEXT:  (local $0 (i32 i64))
+  ;; CHECK-NEXT:  (local $0 (tuple i32 i64))
   ;; CHECK-NEXT:  (block $outer0 (result i32)
   ;; CHECK-NEXT:   (block $catch_all2
   ;; CHECK-NEXT:    (local.set $0
@@ -527,8 +527,8 @@
 
   ;; CHECK:      (func $try-single-tag-tuple-with-rethrow (type $2) (result i32)
   ;; CHECK-NEXT:  (local $0 exnref)
-  ;; CHECK-NEXT:  (local $1 (i32 i64))
-  ;; CHECK-NEXT:  (local $2 (i32 i64 exnref))
+  ;; CHECK-NEXT:  (local $1 (tuple i32 i64))
+  ;; CHECK-NEXT:  (local $2 (tuple i32 i64 exnref))
   ;; CHECK-NEXT:  (block $outer0 (result i32)
   ;; CHECK-NEXT:   (local.set $0
   ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
@@ -751,7 +751,7 @@
   ;; CHECK:      (func $try-tuple-tag-single-with-rethrow (type $0) (result i32 i64)
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 (i32 exnref))
+  ;; CHECK-NEXT:  (local $2 (tuple i32 exnref))
   ;; CHECK-NEXT:  (block $outer0 (type $0) (result i32 i64)
   ;; CHECK-NEXT:   (local.set $0
   ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
@@ -819,7 +819,7 @@
   )
 
   ;; CHECK:      (func $try-tuple-tag-tuple (type $0) (result i32 i64)
-  ;; CHECK-NEXT:  (local $0 (i32 i64))
+  ;; CHECK-NEXT:  (local $0 (tuple i32 i64))
   ;; CHECK-NEXT:  (block $outer0 (type $0) (result i32 i64)
   ;; CHECK-NEXT:   (block $catch_all2
   ;; CHECK-NEXT:    (local.set $0
@@ -869,8 +869,8 @@
 
   ;; CHECK:      (func $try-tuple-tag-tuple-with-rethrow (type $0) (result i32 i64)
   ;; CHECK-NEXT:  (local $0 exnref)
-  ;; CHECK-NEXT:  (local $1 (i32 i64))
-  ;; CHECK-NEXT:  (local $2 (i32 i64 exnref))
+  ;; CHECK-NEXT:  (local $1 (tuple i32 i64))
+  ;; CHECK-NEXT:  (local $2 (tuple i32 i64 exnref))
   ;; CHECK-NEXT:  (block $outer0 (type $0) (result i32 i64)
   ;; CHECK-NEXT:   (local.set $0
   ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
@@ -961,9 +961,9 @@
   ;; CHECK:      (func $multiple-catches-and-catch_all (type $1)
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 (i32 i64))
-  ;; CHECK-NEXT:  (local $3 (i32 exnref))
-  ;; CHECK-NEXT:  (local $4 (i32 i64 exnref))
+  ;; CHECK-NEXT:  (local $2 (tuple i32 i64))
+  ;; CHECK-NEXT:  (local $3 (tuple i32 exnref))
+  ;; CHECK-NEXT:  (local $4 (tuple i32 i64 exnref))
   ;; CHECK-NEXT:  (block $outer0
   ;; CHECK-NEXT:   (local.set $0
   ;; CHECK-NEXT:    (block $catch_all4 (result exnref)

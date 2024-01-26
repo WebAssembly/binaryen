@@ -105,7 +105,7 @@
   )
 
   ;; CHECK-TEXT:      (func $try-catch-multivalue-tag (type $0)
-  ;; CHECK-TEXT-NEXT:  (local $x (i32 i64))
+  ;; CHECK-TEXT-NEXT:  (local $x (tuple i32 i64))
   ;; CHECK-TEXT-NEXT:  (try $try
   ;; CHECK-TEXT-NEXT:   (do
   ;; CHECK-TEXT-NEXT:    (throw $e-i32-i64
@@ -128,7 +128,7 @@
   ;; CHECK-BIN:      (func $try-catch-multivalue-tag (type $0)
   ;; CHECK-BIN-NEXT:  (local $x i32)
   ;; CHECK-BIN-NEXT:  (local $1 i64)
-  ;; CHECK-BIN-NEXT:  (local $2 (i32 i64))
+  ;; CHECK-BIN-NEXT:  (local $2 (tuple i32 i64))
   ;; CHECK-BIN-NEXT:  (local $3 i32)
   ;; CHECK-BIN-NEXT:  (try $label$3
   ;; CHECK-BIN-NEXT:   (do
@@ -162,7 +162,7 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  (func $try-catch-multivalue-tag (local $x (i32 i64))
+  (func $try-catch-multivalue-tag (local $x (tuple i32 i64))
     (try
       (do
         (throw $e-i32-i64 (i32.const 0) (i64.const 0))
@@ -1376,7 +1376,7 @@
 ;; CHECK-BIN-NODEBUG:      (func $3 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
-;; CHECK-BIN-NODEBUG-NEXT:  (local $2 (i32 i64))
+;; CHECK-BIN-NODEBUG-NEXT:  (local $2 (tuple i32 i64))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $3 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (try $label$3
 ;; CHECK-BIN-NODEBUG-NEXT:   (do

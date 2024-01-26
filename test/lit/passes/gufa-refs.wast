@@ -2139,7 +2139,7 @@
   (tag $tag (param (ref null any)) (param (ref null any)))
 
   ;; CHECK:      (func $func (type $1)
-  ;; CHECK-NEXT:  (local $0 (anyref anyref))
+  ;; CHECK-NEXT:  (local $0 (tuple anyref anyref))
   ;; CHECK-NEXT:  (throw $tag
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:   (struct.new_default $struct)

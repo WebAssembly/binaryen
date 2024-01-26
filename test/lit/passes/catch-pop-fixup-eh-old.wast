@@ -326,8 +326,8 @@
   )
 
   ;; CHECK:      (func $pop-tuple-within-block (type $0)
-  ;; CHECK-NEXT:  (local $x (i32 f32))
-  ;; CHECK-NEXT:  (local $1 (i32 f32))
+  ;; CHECK-NEXT:  (local $x (tuple i32 f32))
+  ;; CHECK-NEXT:  (local $1 (tuple i32 f32))
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
@@ -347,7 +347,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $pop-tuple-within-block (local $x (i32 f32))
+  (func $pop-tuple-within-block (local $x (tuple i32 f32))
     (try
       (do)
       (catch $e-i32-f32

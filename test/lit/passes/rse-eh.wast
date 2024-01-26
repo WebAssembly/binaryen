@@ -194,7 +194,7 @@
   ;; CHECK:      (func $nested-try_table2 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $exn exnref)
-  ;; CHECK-NEXT:  (local $pair (i32 exnref))
+  ;; CHECK-NEXT:  (local $pair (tuple i32 exnref))
   ;; CHECK-NEXT:  (block $catch_all0
   ;; CHECK-NEXT:   (try_table (catch_all $catch_all0)
   ;; CHECK-NEXT:    (local.set $pair
@@ -226,7 +226,7 @@
   (func $nested-try_table2
     (local $x i32)
     (local $exn exnref)
-    (local $pair (i32 exnref))
+    (local $pair (tuple i32 exnref))
     (block $catch_all0
       (try_table (catch_all $catch_all0)
         (local.set $pair
@@ -254,7 +254,7 @@
   ;; CHECK:      (func $nested-try_table3 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $exn exnref)
-  ;; CHECK-NEXT:  (local $pair (i32 exnref))
+  ;; CHECK-NEXT:  (local $pair (tuple i32 exnref))
   ;; CHECK-NEXT:  (block $catch_all0
   ;; CHECK-NEXT:   (try_table (catch_all $catch_all0)
   ;; CHECK-NEXT:    (block $outer1
@@ -287,7 +287,7 @@
   (func $nested-try_table3
     (local $x i32)
     (local $exn exnref)
-    (local $pair (i32 exnref))
+    (local $pair (tuple i32 exnref))
     (block $catch_all0
       (try_table (catch_all $catch_all0)
         (block $outer1

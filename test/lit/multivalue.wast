@@ -8,9 +8,9 @@
  ;; CHECK:      (import "env" "pair" (func $pair (type $0) (result i32 i64)))
  (import "env" "pair" (func $pair (result i32 i64)))
  ;; CHECK:      (global $g1 (mut i32) (i32.const 0))
- (global $g1 (mut (i32 i64)) (tuple.make 2 (i32.const 0) (i64.const 0)))
+ (global $g1 (mut (tuple i32 i64)) (tuple.make 2 (i32.const 0) (i64.const 0)))
  ;; CHECK:      (global $g2 (mut i64) (i64.const 0))
- (global $g2 (i32 i64) (tuple.make 2 (i32.const 0) (i64.const 0)))
+ (global $g2 (tuple i32 i64) (tuple.make 2 (i32.const 0) (i64.const 0)))
 
  ;; CHECK:      (func $triple (type $5) (result i32 i64 f32)
  ;; CHECK-NEXT:  (tuple.make 3
@@ -28,7 +28,7 @@
  )
 
  ;; CHECK:      (func $get-first (type $6) (result i32)
- ;; CHECK-NEXT:  (local $0 (i32 i64 f32))
+ ;; CHECK-NEXT:  (local $0 (tuple i32 i64 f32))
  ;; CHECK-NEXT:  (local $1 i64)
  ;; CHECK-NEXT:  (local $2 i32)
  ;; CHECK-NEXT:  (local.set $0
@@ -66,7 +66,7 @@
 
  ;; CHECK:      (func $get-second (type $3) (result i64)
  ;; CHECK-NEXT:  (local $0 i64)
- ;; CHECK-NEXT:  (local $1 (i32 i64 f32))
+ ;; CHECK-NEXT:  (local $1 (tuple i32 i64 f32))
  ;; CHECK-NEXT:  (local $2 i64)
  ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (local.set $1
@@ -107,7 +107,7 @@
 
  ;; CHECK:      (func $get-third (type $7) (result f32)
  ;; CHECK-NEXT:  (local $0 f32)
- ;; CHECK-NEXT:  (local $1 (i32 i64 f32))
+ ;; CHECK-NEXT:  (local $1 (tuple i32 i64 f32))
  ;; CHECK-NEXT:  (local $2 i64)
  ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (local.set $1
@@ -152,7 +152,7 @@
  ;; CHECK-NEXT:  (local $2 i64)
  ;; CHECK-NEXT:  (local $3 f32)
  ;; CHECK-NEXT:  (local $4 f32)
- ;; CHECK-NEXT:  (local $5 (i32 i64 f32))
+ ;; CHECK-NEXT:  (local $5 (tuple i32 i64 f32))
  ;; CHECK-NEXT:  (local $6 i64)
  ;; CHECK-NEXT:  (local $7 i32)
  ;; CHECK-NEXT:  (local.set $5
@@ -190,7 +190,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $reverse (result f32 i64 i32)
-  (local $x (i32 i64 f32))
+  (local $x (tuple i32 i64 f32))
   (local.set $x
    (call $triple)
   )
@@ -266,7 +266,7 @@
 
  ;; Test lowering of multivalue drops
  ;; CHECK:      (func $drop-call (type $1)
- ;; CHECK-NEXT:  (local $0 (i32 i64))
+ ;; CHECK-NEXT:  (local $0 (tuple i32 i64))
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (call $pair)
@@ -317,7 +317,7 @@
  )
 
  ;; CHECK:      (func $drop-block (type $1)
- ;; CHECK-NEXT:  (local $0 (i32 i64))
+ ;; CHECK-NEXT:  (local $0 (tuple i32 i64))
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (block $label$1 (type $0) (result i32 i64)
@@ -392,7 +392,7 @@
  )
 
  ;; CHECK:      (func $mv-block-break (type $0) (result i32 i64)
- ;; CHECK-NEXT:  (local $0 (i32 i64))
+ ;; CHECK-NEXT:  (local $0 (tuple i32 i64))
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (block $label$1 (type $0) (result i32 i64)
  ;; CHECK-NEXT:    (br $label$1
@@ -424,8 +424,8 @@
  )
 
  ;; CHECK:      (func $mv-block-br-if (type $0) (result i32 i64)
- ;; CHECK-NEXT:  (local $0 (i32 i64))
- ;; CHECK-NEXT:  (local $1 (i32 i64))
+ ;; CHECK-NEXT:  (local $0 (tuple i32 i64))
+ ;; CHECK-NEXT:  (local $1 (tuple i32 i64))
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (block $label$1 (type $0) (result i32 i64)
  ;; CHECK-NEXT:    (local.set $0
@@ -469,7 +469,7 @@
  )
 
  ;; CHECK:      (func $mv-if (type $2) (result i32 i64 externref)
- ;; CHECK-NEXT:  (local $0 (i32 i64 externref))
+ ;; CHECK-NEXT:  (local $0 (tuple i32 i64 externref))
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (if (type $2) (result i32 i64 externref)
  ;; CHECK-NEXT:    (i32.const 1)
@@ -522,7 +522,7 @@
  )
 
  ;; CHECK:      (func $mv-loop (type $0) (result i32 i64)
- ;; CHECK-NEXT:  (local $0 (i32 i64))
+ ;; CHECK-NEXT:  (local $0 (tuple i32 i64))
  ;; CHECK-NEXT:  (local.set $0
  ;; CHECK-NEXT:   (loop $label$1 (type $0) (result i32 i64)
  ;; CHECK-NEXT:    (tuple.make 2
@@ -550,8 +550,8 @@
  )
 
  ;; CHECK:      (func $mv-switch (type $0) (result i32 i64)
- ;; CHECK-NEXT:  (local $0 (i32 i64))
- ;; CHECK-NEXT:  (local $1 (i32 i64))
+ ;; CHECK-NEXT:  (local $0 (tuple i32 i64))
+ ;; CHECK-NEXT:  (local $1 (tuple i32 i64))
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (block $label$1 (type $0) (result i32 i64)
  ;; CHECK-NEXT:    (local.set $0

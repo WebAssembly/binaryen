@@ -964,7 +964,7 @@
 
  ;; CHECK:      (func $block-mix (type $void)
  ;; CHECK-NEXT:  (local $scratch i32)
- ;; CHECK-NEXT:  (local $scratch_1 (i32 i32))
+ ;; CHECK-NEXT:  (local $scratch_1 (tuple i32 i32))
  ;; CHECK-NEXT:  (local $scratch_2 i32)
  ;; CHECK-NEXT:  (block $0
  ;; CHECK-NEXT:   (drop
@@ -1019,7 +1019,7 @@
 
 
  ;; CHECK:      (func $multivalue-nested (type $ret2) (result i32 i32)
- ;; CHECK-NEXT:  (local $scratch (i32 i32))
+ ;; CHECK-NEXT:  (local $scratch (tuple i32 i32))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (local.set $scratch
  ;; CHECK-NEXT:   (block (type $ret2) (result i32 i32)
@@ -3754,9 +3754,9 @@
  ;; CHECK-NEXT:  (local $0 (ref null $void))
  ;; CHECK-NEXT:  (local $1 (ref null $ret2))
  ;; CHECK-NEXT:  (local $2 (ref null $many))
- ;; CHECK-NEXT:  (local $scratch (i32 i32))
+ ;; CHECK-NEXT:  (local $scratch (tuple i32 i32))
  ;; CHECK-NEXT:  (local $scratch_4 i32)
- ;; CHECK-NEXT:  (local $scratch_5 (anyref (ref func)))
+ ;; CHECK-NEXT:  (local $scratch_5 (tuple anyref (ref func)))
  ;; CHECK-NEXT:  (local $scratch_6 anyref)
  ;; CHECK-NEXT:  (call_ref $void
  ;; CHECK-NEXT:   (local.get $0)

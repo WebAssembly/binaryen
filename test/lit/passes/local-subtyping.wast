@@ -256,7 +256,7 @@
   ;; CHECK-NEXT: )
   (func $multiple-iterations-refinalize-call-ref
     (local $f (ref null $ret-any))
-    (local $x (anyref))
+    (local $x anyref)
     (local.set $f
       (ref.func $ret-i31)
     )
@@ -286,7 +286,7 @@
   ;; CHECK-NEXT: )
   (func $multiple-iterations-refinalize-call-ref-bottom
     (local $f (ref null $ret-any))
-    (local $x (anyref))
+    (local $x anyref)
     ;; Same as above, but now we refine $f to nullfuncref. Check that we don't crash.
     (local.set $f
       (ref.null nofunc)
@@ -308,7 +308,7 @@
   )
 
   ;; CHECK:      (func $nondefaultable (type $0)
-  ;; CHECK-NEXT:  (local $x (funcref funcref))
+  ;; CHECK-NEXT:  (local $x (tuple funcref funcref))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (tuple.make 2
   ;; CHECK-NEXT:    (ref.func $i32)
@@ -317,7 +317,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $nondefaultable
-    (local $x (funcref funcref))
+    (local $x (tuple funcref funcref))
     ;; This tuple is assigned non-nullable values, which means the subtype is
     ;; nondefaultable, and we must not apply it.
     (local.set $x

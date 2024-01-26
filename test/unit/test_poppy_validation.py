@@ -59,7 +59,7 @@ class PoppyValidationTest(utils.BinaryenTestCase):
         )
         '''
         self.check_invalid(module, "block element has incompatible type")
-        self.check_invalid(module, "required: (i32 i32), available: (f32 i32)")
+        self.check_invalid(module, "required: (tuple i32 i32), available: (tuple f32 i32)")
 
     def test_incorrect_pop_type(self):
         module = '''

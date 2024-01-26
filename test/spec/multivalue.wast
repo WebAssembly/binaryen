@@ -1,5 +1,5 @@
 (module
- (global $global_pair (mut (i32 i64)) (tuple.make 2 (i32.const 0) (i64.const 0)))
+ (global $global_pair (mut (tuple i32 i64)) (tuple.make 2 (i32.const 0) (i64.const 0)))
  (func $pair (export "pair") (result i32 i64)
   (tuple.make 2
    (i32.const 42)
@@ -7,7 +7,7 @@
   )
  )
  (func (export "tuple-local") (result i32 i64)
-  (local $x (i32 i64))
+  (local $x (tuple i32 i64))
   (local.get $x)
  )
  (func (export "tuple-global-get") (result i32 i64)

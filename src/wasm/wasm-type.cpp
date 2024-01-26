@@ -1952,11 +1952,9 @@ std::ostream& TypePrinter::print(HeapType type) {
 }
 
 std::ostream& TypePrinter::print(const Tuple& tuple) {
-  os << '(';
-  auto sep = "";
+  os << "(tuple";
   for (Type type : tuple) {
-    os << sep;
-    sep = " ";
+    os << ' ';
     print(type);
   }
   return os << ')';

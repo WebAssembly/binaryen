@@ -11,7 +11,7 @@
 
  (func $multivalue-local (export "multivalue-local") (result i32)
   (local $0 i32)
-  (local $1 (i32 i32))
+  (local $1 (tuple i32 i32))
 
   ;; We can eval this line. But we will stop evalling at the line after it, the
   ;; import call. As a result we'll only have a partial evalling of this

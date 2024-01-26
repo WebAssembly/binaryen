@@ -1393,12 +1393,15 @@ Type SExpressionWasmBuilder::elementToType(Element& s) {
     }
     return Type(parseHeapType(*s[i]), nullable);
   }
-  // It's a tuple.
-  std::vector<Type> types;
-  for (size_t i = 0; i < s.size(); ++i) {
-    types.push_back(elementToType(*list[i]));
+  if (elementStartsWith(s, TUPLE)) {
+    // It's a tuple.
+    std::vector<Type> types;
+    for (size_t i = 1; i < s.size(); ++i) {
+      types.push_back(elementToType(*list[i]));
+    }
+    return Type(types);
   }
-  return Type(types);
+  throw SParseException(std::string("expected type, got list"), s);
 }
 
 Type SExpressionWasmBuilder::stringToLaneType(const char* str) {

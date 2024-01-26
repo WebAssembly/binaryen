@@ -685,8 +685,8 @@
   ;; CHECK-NEXT: )
 
   ;; CHECK:      (func $a (type $1)
-  ;; CHECK-NEXT:  (local $scratch (i32 i32))
-  ;; CHECK-NEXT:  (local $scratch_1 (i32 i32))
+  ;; CHECK-NEXT:  (local $scratch (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $scratch_1 (tuple i32 i32))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.add
   ;; CHECK-NEXT:    (tuple.extract 2 0

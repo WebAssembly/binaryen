@@ -21,7 +21,7 @@
     (local.set $a (i32.const 0))
   )
   (func $tuple-value
-    (local $x (i32 i64))
+    (local $x (tuple i32 i64))
     (local.set $x
       (tuple.make 2 (i32.const 42) (i64.const 42))
     )
