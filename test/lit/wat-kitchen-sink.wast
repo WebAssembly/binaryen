@@ -457,6 +457,10 @@
  ;; CHECK-NEXT: )
  (func $f4 (type 18) (local i32 i64) (local $l f32))
 
+ ;; CHECK:      (func $tuple-locals (type $void)
+ ;; CHECK-NEXT:  (local $0 (tuple i32 i32))
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
  (func $tuple-locals (local (tuple i32 i32)))
 
  ;; CHECK:      (func $nop-skate (type $void)
@@ -3521,7 +3525,7 @@
  (func $ref-func
   ref.func $ref-func
   drop
-  ref.func 151
+  ref.func 152
   drop
  )
 
