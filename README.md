@@ -920,12 +920,18 @@ fully optimized release build, but it can be useful for local debugging.
 
 * Why the weird name for the project?
 
-"Binaryen" is a combination of **binary** - since WebAssembly is a binary format
-for the web - and **Emscripten** - with which it can integrate in order to
-compile C and C++ all the way to WebAssembly, via asm.js. Binaryen began as
-Emscripten's WebAssembly processing library (`wasm-emscripten`).
+Binaryen's name was inspired by *Emscripten*'s: Emscripten's name
+[suggests](https://en.wikipedia.org/wiki/Lisa_the_Iconoclast#Embiggen_and_cromulent)
+it converts something into a **script** - specifically *JavaScript* - and
+Binaryen's suggests it converts something into a **binary** - specifically
+*WebAssembly*. Binaryen began as Emscripten's WebAssembly generation and
+optimization tool, so the name fit as it moved Emscripten from something that
+emitted the text-based format JavaScript (as it did from its early days) to the
+binary format WebAssembly (which it has done since WebAssembly launched).
 
-"Binaryen" is pronounced [in the same manner](http://www.makinggameofthrones.com/production-diary/2011/2/11/official-pronunciation-guide-for-game-of-thrones.html) as "[Targaryen](https://en.wikipedia.org/wiki/List_of_A_Song_of_Ice_and_Fire_characters#House_Targaryen)": *bi-NAIR-ee-in*. Or something like that? Anyhow, however Targaryen is correctly pronounced, they should rhyme. Aside from pronunciation, the Targaryen house words, "Fire and Blood", have also inspired Binaryen's: "Code and Bugs."
+"Binaryen" is pronounced [in the same manner](https://www.makinggameofthrones.com/production-diary/2011/2/11/official-pronunciation-guide-for-game-of-thrones.html#:~:text=Targaryen%20%2D%20AIR%2Deez-,Tar%2DGAIR%2Dee%2Din,-Alliser%20Thorne%20%2D%20AL)
+as
+"[Targaryen](https://en.wikipedia.org/wiki/List_of_A_Song_of_Ice_and_Fire_characters#House_Targaryen)".
 
 * Does it compile under Windows and/or Visual Studio?
 
