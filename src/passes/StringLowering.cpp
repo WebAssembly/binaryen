@@ -41,6 +41,9 @@
 //    string.const: JSON.stringify(stringConstsString) // ["foo.bar"]
 // });
 //
+// After running this you may benefit from --simplify-globals and
+// --reorder-globals.
+//
 
 #include "ir/module-utils.h"
 #include "ir/find_all.h"
@@ -55,29 +58,34 @@ struct StringLowering : public Pass {
   std::vector<Name> strings;
   std::unordered_map<Name, Index> stringIndexes;
 
+  // Pointers to all StringConsts, so that we can replace them.
+  using StringPtrs = std::vector<StringConst**>;
+  StringPtrs stringPtrs;
+
+  // Main entry point.
   void run(Module* module) override {
     scanStrings(module);
+    addImports(module);
     replaceStrings(module);
-    addGlobals(module);
   }
 
-  // Scan the entire wasm to find the relevant strings and populate strings and
-  // stringIndexes.
+  // Scan the entire wasm to find the relevant strings and populate our global
+  // data structures.
   void scanStrings() {
-    using StringSet = std::unordered_set<Name>;
-
     struct StringWalker : public PostWalker<StringWalker> {
-      StringSet& strings;
+      StringPtr& stringPtrs;
 
-      StringWalker(StringSet& strings) : strings(strings) {}
+      StringWalker(StringPtr& stringPtrs) : stringPtrs(stringPtrs) {}
 
-      void visitStringConst(StringConst* curr) { strings.insert(curr->string); }
+      void visitStringConst(StringConst* curr) {
+        stringPtrs.push_back(getCurrentPointer());
+      }
     };
 
-    ModuleUtils::ParallelFunctionAnalysis<StringSet> analysis(
-      *wasm, [&](Function* func, StringSet& strings) {
+    ModuleUtils::ParallelFunctionAnalysis<StringPtrs> analysis(
+      *wasm, [&](Function* func, StringPtrs& stringPtrs) {
         if (!func->imported()) {
-          StringWalker(strings).walk(func->body);
+          StringWalker(stringPtrs).walk(func->body);
         }
       });
 
@@ -86,15 +94,17 @@ struct StringLowering : public Pass {
     auto& globalStrings = analysis.map[nullptr];
     StringWalker(globalStrings).walkModuleCode(wasm);
 
-    // Generate the indexes from the combined set of necessary strings,
-    // which we sort for determinism.
-    StringSet allStrings;
-    for (auto& [func, strings] : analysis.map) {
-      for (auto& string : strings) {
-        allStrings.insert(string);
+    // Combine all the strings.
+    std::unordered_set<Name> stringSet;
+    for (auto& [_, stringPtrs] : analysis.map) {
+      for (auto** stringPtr : stringPtrs) {
+        stringSet.insert((*stringPtr)->name);
+        stringPtrs.push_back(stringPtr);
       }
     }
-    for (auto& string : allStrings) {
+    // Generate the indexes from the combined set of necessary strings, which we
+    // sort for determinism.
+    for (auto& string : stringSet) {
       strings.push_back(string);
     }
     std::sort(strings.begin(), strings.end());
@@ -103,10 +113,27 @@ struct StringLowering : public Pass {
     }
   }
 
-  void replaceStrings(Module* module) {
+  // For each string index, the name of the import that replaces it.
+  std::vector<Name> importNames;
+
+  void addImports(Module* module) {
+    // TOOD: imports should be in front, so they can be used from globals, or
+    // run sort-globals internally..
+    Builder builder(*module);
+    for (auto& string : strings) {
+      auto name = Names::getValidGlobalName(*module, std::string("string.const_") + string.str);
+      importNames.push_back(name);
+      module->addGlobal(builder.makeGlobal(name, Type::externref, nullptr, Builder::Immutable));
+    }
   }
 
-  void addGlobals(Module* module) {
+  void replaceStrings(Module* module) {
+    Builder builder(*module);
+    for (auto** stringPtr : stringPtrs) {
+      auto stringConst = *stringPtr;
+      auto importName = importNames[stringIndexes[stringConst->string]];
+      *stringPtr = builder.makeGlobalGet(importName, Type::externref);
+    }
   }
 };
 
