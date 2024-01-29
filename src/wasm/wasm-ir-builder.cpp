@@ -1055,6 +1055,7 @@ Result<> IRBuilder::makeLocalSet(Index local) {
 
 Result<> IRBuilder::makeLocalTee(Index local) {
   LocalSet curr;
+  curr.index = local;
   CHECK_ERR(visitLocalSet(&curr));
   push(builder.makeLocalTee(local, curr.value, func->getLocalType(local)));
   return Ok{};
