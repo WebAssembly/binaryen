@@ -927,7 +927,7 @@ optimization tool, so the name fit as it moved Emscripten from something that
 emitted the text-based format JavaScript (as it did from its early days) to the
 binary format WebAssembly (which it has done since WebAssembly launched).
 
-"Binaryen" is pronounced [in the same manner](http://www.makinggameofthrones.com/production-diary/2011/2/11/official-pronunciation-guide-for-game-of-thrones.html)
+"Binaryen" is pronounced [in the same manner](https://www.makinggameofthrones.com/production-diary/2011/2/11/official-pronunciation-guide-for-game-of-thrones.html#:~:text=Targaryen%20%2D%20AIR%2Deez-,Tar%2DGAIR%2Dee%2Din,-Alliser%20Thorne%20%2D%20AL)
 as
 "[Targaryen](https://en.wikipedia.org/wiki/List_of_A_Song_of_Ice_and_Fire_characters#House_Targaryen)".
 
