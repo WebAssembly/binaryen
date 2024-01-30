@@ -68,3 +68,5 @@
     )
   )
 )
+
+;; test reusing existing globalses

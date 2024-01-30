@@ -102,14 +102,56 @@ struct StringLowering : public Pass {
 
   Type nnstringref = Type(HeapType::string, NonNullable);
 
+  // Existing globals already in the form we emit can be reused. That is, if
+  // we see
+  //
+  //  (global $foo (ref null string) (string.const ..))
+  //
+  // then we can just use that as the global for that string. This avoids
+  // repeated executions of the pass adding more and more globals.
+  //
+  // Note that we don't note these in newNames: They are already in the right
+  // sorted position, before any uses, as we use the first of them for each
+  // string. Only actually new names need sorting.
+  //
+  // Any time we reuse a global, we must not modify its body (or else we'd
+  // replace the global that all others read from); we note them here and
+  // avoid them in replaceStrings later to avoid such trampling.
+  std::unordered_set<Expression**> stringPtrsToPreserve;
+
   void addGlobals(Module* module) {
     // Note all the new names we create for the sorting later.
     std::unordered_set<Name> newNames;
 
+    // Each string will get a global.
+    globalNames.resize(strings.size());
+
+    // Find globals to reuse (see comment on stringPtrsToPreserve for context).
+    for (auto& global : module->globals) {
+      if (global->type == nnstringref && !global->imported()) {
+        if (auto* stringConst = global->init->dynCast<StringConst>()) {
+          auto stringIndex = stringIndexes[stringConst->string];
+          auto& globalName = globalNames[stringIndex];
+          if (!globalName.is()) {
+            // This is the first global for this string, use it.
+            globalName = global->name;
+            stringPtrsToPreserve.insert(&global->init);
+          }
+        }
+      }
+    }
+
     Builder builder(*module);
-    for (auto& string : strings) {
+    for (Index i = 0; i < strings.size(); i++) {
+      auto& globalName = globalNames[i];
+      if (globalName.is()) {
+        // We are reusing a global for this one.
+        continue;
+      }
+
+      auto& string = strings[i];
       auto name = Names::getValidGlobalName(*module, std::string("string.const_") + std::string(string.str));
-      globalNames.push_back(name);
+      globalName = name;
       newNames.insert(name);
       auto* stringConst = builder.makeStringConst(string);
       auto global = builder.makeGlobal(name, nnstringref, stringConst, Builder::Immutable);
@@ -125,6 +167,9 @@ struct StringLowering : public Pass {
   void replaceStrings(Module* module) {
     Builder builder(*module);
     for (auto** stringPtr : stringPtrs) {
+      if (stringPtrsToPreserve.count(stringPtr)) {
+        continue;
+      }
       auto* stringConst = (*stringPtr)->cast<StringConst>();
       auto importName = globalNames[stringIndexes[stringConst->string]];
       *stringPtr = builder.makeGlobalGet(importName, nnstringref);
