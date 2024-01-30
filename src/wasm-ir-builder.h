@@ -222,8 +222,10 @@ public:
   [[nodiscard]] Result<> visitArrayNewFixed(ArrayNewFixed*);
   [[nodiscard]] Result<> visitBreak(Break*,
                                     std::optional<Index> label = std::nullopt);
+  [[nodiscard]] Result<> visitBreakWithType(Break*, Type);
   [[nodiscard]] Result<>
   visitSwitch(Switch*, std::optional<Index> defaultLabel = std::nullopt);
+  [[nodiscard]] Result<> visitSwitchWithType(Switch*, Type);
   [[nodiscard]] Result<> visitCall(Call*);
   [[nodiscard]] Result<> visitCallIndirect(CallIndirect*);
   [[nodiscard]] Result<> visitCallRef(CallRef*);

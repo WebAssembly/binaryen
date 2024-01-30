@@ -614,6 +614,48 @@
   )
 )
 
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (block $label1
+  ;; CHECK-NEXT:   (call $outline$)
+  ;; CHECK-NEXT:   (loop $loop-in
+  ;; CHECK-NEXT:    (br $label1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $outline$)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $a
+    (block $label1
+      (drop
+        (i32.const 2)
+      )
+      (drop
+        (i32.const 1)
+      )
+      (loop
+        (br $label1)
+      )
+      (drop
+        (i32.const 2)
+      )
+      (drop
+        (i32.const 1)
+      )
+    )
+  )
+)
+
 ;; Tests return instructions are correctly filtered from being outlined.
 (module
   ;; CHECK:      (type $0 (func (result i32)))
