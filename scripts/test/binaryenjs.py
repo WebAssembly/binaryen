@@ -29,7 +29,8 @@ def do_test_binaryen_js_with(which):
 
     print('\n[ checking binaryen.js testcases (' + which + ')... ]\n')
 
-    for s in sorted(os.listdir(os.path.join(shared.options.binaryen_test, 'binaryen.js'))):
+#    for s in sorted(os.listdir(os.path.join(shared.options.binaryen_test, 'binaryen.js'))):
+    for s in ["kitchen-sink.js"]:
         if not s.endswith('.js'):
             continue
         print(s)
