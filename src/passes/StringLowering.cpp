@@ -65,21 +65,31 @@ struct StringLowering : public Pass {
 
   // Main entry point.
   void run(Module* module) override {
-    scanStrings(module);
+    processModule(module);
     addImports(module);
     replaceStrings(module);
   }
 
-  // Scan the entire wasm to find the relevant strings and populate our global
+  // Scan the entire wasm to find the relevant strings to populate our global
   // data structures.
-  void scanStrings(Module* module) {
-    struct StringWalker : public PostWalker<StringWalker> {
+  void processModule(Module* module) {
+    struct StringWalker : public PostWalker<StringWalker, UnifiedExpressionVisitor<StringWalker>> {
       StringPtrs& stringPtrs;
 
       StringWalker(StringPtrs& stringPtrs) : stringPtrs(stringPtrs) {}
 
+      void visitExpression(Expression* curr) {
+        if (curr->is<StringConst>()) {
+          stringPtrs.push_back(getCurrentPointer());
+        }
+
+        // We must replace all string heap types with extern. Do so now in this
+        // operation to avoid needing a second pass.
+        if (curr->type.isRef() && curr->type.getHeapType() == HeapType::string) {
+          curr->type = Type(HeapType::ext, curr->type.getNullability());
+        }
+      }
       void visitStringConst(StringConst* curr) {
-        stringPtrs.push_back(getCurrentPointer());
       }
     };
 std::cout << "a1\n";

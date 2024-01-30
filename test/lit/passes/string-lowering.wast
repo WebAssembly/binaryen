@@ -3,7 +3,9 @@
 ;; RUN: foreach %s %t wasm-opt --string-lowering -all -S -o - | filecheck %s
 
 (module
-  (global $global anyref (string.const "foo"))
+  (global $global (ref string) (string.const "foo"))
+
+  (global $global2 (ref null string) (string.const "bar"))
 
   (func $a
     (drop
@@ -14,12 +16,18 @@
     )
   )
 
-  (func $b
+  (func $b ;; TODO params and results and tuples and what not
     (drop
       (string.const "bar")
     )
     (drop
-      (string.const "foo")
+      (string.const "other")
+    )
+    (drop
+      (global.get $global)
+    )
+    (drop
+      (global.get $global2)
     )
   )
 )
