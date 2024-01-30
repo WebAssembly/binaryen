@@ -132,7 +132,15 @@ struct ReconstructStringifyWalker
                          : state == NotInSeq ? &existingBuilder
                                              : nullptr;
     if (builder) {
-      ASSERT_OK(builder->visit(curr));
+      if (auto* expr = curr->dynCast<Break>()) {
+        Type type = expr->value ? expr->value->type : Type::none;
+        ASSERT_OK(builder->visitBreakWithType(expr, type));
+      } else if (auto* expr = curr->dynCast<Switch>()) {
+        Type type = expr->value ? expr->value->type : Type::none;
+        ASSERT_OK(builder->visitSwitchWithType(expr, type));
+      } else {
+        ASSERT_OK(builder->visit(curr));
+      }
     }
     DBG(printVisitExpression(curr));
 

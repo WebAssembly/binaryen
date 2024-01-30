@@ -431,6 +431,26 @@ Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitBreakWithType(Break* curr, Type type) {
+  if (curr->condition) {
+    auto cond = pop();
+    CHECK_ERR(cond);
+    curr->condition = *cond;
+  }
+  if (!curr->value) {
+    curr->value = nullptr;
+  } else {
+    auto value = pop(type.size());
+    CHECK_ERR(value)
+    curr->value = *value;
+  }
+  // TODO: Call more efficient versions of finalize() that take the known type
+  // for other kinds of nodes as well, as done above.
+  ReFinalizeNode{}.visit(curr);
+  push(curr);
+  return Ok{};
+}
+
 Result<> IRBuilder::visitSwitch(Switch* curr,
                                 std::optional<Index> defaultLabel) {
   auto cond = pop();
@@ -439,6 +459,24 @@ Result<> IRBuilder::visitSwitch(Switch* curr,
   auto value = getBranchValue(curr->default_, defaultLabel);
   CHECK_ERR(value);
   curr->value = *value;
+  return Ok{};
+}
+
+Result<> IRBuilder::visitSwitchWithType(Switch* curr, Type type) {
+  auto cond = pop();
+  CHECK_ERR(cond);
+  curr->condition = *cond;
+  if (!curr->value) {
+    curr->value = nullptr;
+  } else {
+    auto value = pop(type.size());
+    CHECK_ERR(value)
+    curr->value = *value;
+  }
+  // TODO: Call more efficient versions of finalize() that take the known type
+  // for other kinds of nodes as well, as done above.
+  ReFinalizeNode{}.visit(curr);
+  push(curr);
   return Ok{};
 }
 
