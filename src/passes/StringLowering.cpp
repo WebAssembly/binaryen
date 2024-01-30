@@ -150,18 +150,23 @@ struct StringLowering : public Pass {
       }
 
       auto& string = strings[i];
-      auto name = Names::getValidGlobalName(*module, std::string("string.const_") + std::string(string.str));
+      auto name = Names::getValidGlobalName(
+        *module, std::string("string.const_") + std::string(string.str));
       globalName = name;
       newNames.insert(name);
       auto* stringConst = builder.makeStringConst(string);
-      auto global = builder.makeGlobal(name, nnstringref, stringConst, Builder::Immutable);
+      auto global =
+        builder.makeGlobal(name, nnstringref, stringConst, Builder::Immutable);
       module->addGlobal(std::move(global));
     }
 
     // Sort our new globals to the start, as others may use them.
-    std::stable_sort(module->globals.begin(), module->globals.end(), [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
-      return newNames.count(a->name) && !newNames.count(b->name);
-    });
+    std::stable_sort(
+      module->globals.begin(),
+      module->globals.end(),
+      [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
+        return newNames.count(a->name) && !newNames.count(b->name);
+      });
   }
 
   void replaceStrings(Module* module) {
