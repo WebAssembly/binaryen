@@ -1555,7 +1555,9 @@ template<typename Ctx> Result<> makeMemoryFill(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makePop(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = valtype(ctx);
+  CHECK_ERR(type);
+  return ctx.makePop(pos, *type);
 }
 
 template<typename Ctx> Result<> makeCall(Ctx& ctx, Index pos, bool isReturn) {

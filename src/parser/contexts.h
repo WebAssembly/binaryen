@@ -440,6 +440,7 @@ struct NullInstrParserCtx {
 
   Result<> makeMemoryCopy(Index, MemoryIdxT*, MemoryIdxT*) { return Ok{}; }
   Result<> makeMemoryFill(Index, MemoryIdxT*) { return Ok{}; }
+  template<typename TypeT> Result<> makePop(Index, TypeT) { return Ok{}; }
   Result<> makeCall(Index, FuncIdxT, bool) { return Ok{}; }
   template<typename TypeUseT>
   Result<> makeCallIndirect(Index, TableIdxT*, TypeUseT, bool) {
@@ -1647,6 +1648,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     return withLoc(pos, irBuilder.makeMemoryFill(*m));
+  }
+
+  Result<> makePop(Index pos, Type type) {
+    return withLoc(pos, irBuilder.makePop(type));
   }
 
   Result<> makeCall(Index pos, Name func, bool isReturn) {
