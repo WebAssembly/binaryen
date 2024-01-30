@@ -15,40 +15,19 @@
  */
 
 //
-// Lowers string.const etc. into imports. That is,
+// Utilities for lowering strings into simpler things.
 //
-//  (local.set $x (string.const "foo.bar"))
+// StringGathering collects all string.const operations and stores them in
+// globals, avoiding them appearing in code that can run more than once (which
+// can have overhead in VMs).
 //
-// will turn into
-//
-//  (import "string.const" "0" (global externref $string.const_foo_bar))
-//  ..
-//  (local.set $x (global.get $string.const_foo.bar))
-//
-// as well as a custom section "string.consts" containing a JSON string of an
-// array with the string contents:
-//
-//  ["foo.bar"]
-//
-// The expectation is that the host environment will read the custom section and
-// then provide the imports, resulting in something like this:
-//
-//  let stringConstsBuffer =
-//      WebAssembly.Module.customSections(module, 'string.consts');
-//  let stringConstsString =
-//      new TextDecoder().decode(new Uint8Array(stringConstsBuffer, 'name'));
-//  WebAssembly.instantiate(module, {
-//    string.const: JSON.stringify(stringConstsString) // ["foo.bar"]
-// });
-//
-// After running this you may benefit from --simplify-globals and
-// --reorder-globals.
+// Building on that, an extended version of StringGathering will also replace
+// those new globals with imported globals of type externref, for use with the
+// string imports proposal. String operations will likewise need to be lowered.
 //
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
-#include "ir/find_all.h"
-#include "ir/type-updating.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -67,9 +46,8 @@ struct StringLowering : public Pass {
   // Main entry point.
   void run(Module* module) override {
     processModule(module);
-    addImports(module);
+    addGlobals(module);
     replaceStrings(module);
-    updateTypes(module);
   }
 
   // Scan the entire wasm to find the relevant strings to populate our global
@@ -125,21 +103,19 @@ struct StringLowering : public Pass {
     }
   }
 
-  // For each string index, the name of the import that replaces it.
-  std::vector<Name> importNames;
+  // For each string index, the name of the global that replaces it.
+  std::vector<Name> globalNames;
 
-  Type nnexternref = Type(HeapType::ext, NonNullable);
+  Type nnstringref = Type(HeapType::string, NonNullable);
 
-  void addImports(Module* module) {
-    // TOOD: imports should be in front, so they can be used from globals, or
-    // run sort-globals internally..
+  void addGlobals(Module* module) {
+    // TODO: Add them frist
     Builder builder(*module);
-    for (Index i = 0; i < strings.size(); i++) {
-      auto name = Names::getValidGlobalName(*module, std::string("string.const_") + std::string(strings[i].str));
-      importNames.push_back(name);
-      auto global = builder.makeGlobal(name, nnexternref, nullptr, Builder::Immutable);
-      global->module = "string.const";
-      global->base = std::to_string(i);
+    for (auto& string : strings) {
+      auto name = Names::getValidGlobalName(*module, std::string("string.const_") + std::string(string.str));
+      globalNames.push_back(name);
+      auto* stringConst = builder.makeStringConst(string);
+      auto global = builder.makeGlobal(name, nnstringref, stringConst, Builder::Immutable);
       module->addGlobal(std::move(global));
     }
   }
@@ -148,15 +124,9 @@ struct StringLowering : public Pass {
     Builder builder(*module);
     for (auto** stringPtr : stringPtrs) {
       auto* stringConst = (*stringPtr)->cast<StringConst>();
-      auto importName = importNames[stringIndexes[stringConst->string]];
-      *stringPtr = builder.makeGlobalGet(importName, nnexternref);
+      auto importName = globalNames[stringIndexes[stringConst->string]];
+      *stringPtr = builder.makeGlobalGet(importName, nnstringref);
     }
-  }
-
-  void updateTypes(Module* module) {
-    TypeMapper::TypeUpdates updates;
-    updates[HeapType::string] = HeapType::ext;
-    TypeMapper(*module, updates).map();
   }
 };
 
