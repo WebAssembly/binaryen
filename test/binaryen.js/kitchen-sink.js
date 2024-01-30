@@ -196,11 +196,13 @@ function test_core() {
   // Memory
   module.setMemory(1, 256, "mem", [
     {
+      name: "x0",
       passive: false,
       offset: module.i32.const(10),
       data: "hello, world".split('').map(function(x) { return x.charCodeAt(0) })
     },
     {
+      name: "y1",
       passive: true,
       offset: null,
       data: "I am passive".split('').map(function(x) { return x.charCodeAt(0) })
@@ -1125,7 +1127,7 @@ function test_for_each() {
     }
   ], false);
   for (i = 0; i < module.getNumMemorySegments(); i++) {
-    var segment = module.getMemorySegmentInfoByIndex(i);
+    var segment = module.getMemorySegmentInfo(expected_names[i]);
     assert(expected_offsets[i] === segment.offset);
     var data8 = new Uint8Array(segment.data);
     var str = String.fromCharCode.apply(null, data8);
