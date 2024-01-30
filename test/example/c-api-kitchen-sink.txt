@@ -2237,7 +2237,7 @@ BinaryenFeatureAll: 131071
        (pop externref)
       )
       (tuple.drop 4
-       (pop i32 i64 f32 f64)
+       (pop (tuple i32 i64 f32 f64))
       )
       (drop
        (memory.size)

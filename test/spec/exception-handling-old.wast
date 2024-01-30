@@ -82,7 +82,7 @@
       )
       (catch $e-i32-f32
         (local.set $x
-          (pop i32 f32)
+          (pop (tuple i32 f32))
         )
         (tuple.extract 2 0
           (local.get $x)
