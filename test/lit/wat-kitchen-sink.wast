@@ -432,10 +432,14 @@
  (export "exported-global" (global $g1))
  (export "exported-tag" (tag 0))
 
+ ;; start function
+ ;; CHECK:      (export "exported-tag" (tag $imported))
+
+ ;; CHECK:      (start $return-none)
+ (start $return-none)
+
  ;; functions
  (func)
-
- ;; CHECK:      (export "exported-tag" (tag $imported))
 
  ;; CHECK:      (func $2 (type $void)
  ;; CHECK-NEXT:  (nop)
