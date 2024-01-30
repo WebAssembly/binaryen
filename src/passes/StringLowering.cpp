@@ -81,9 +81,7 @@ struct StringLowering : public Pass {
       StringWalker(StringPtrs& stringPtrs) : stringPtrs(stringPtrs) {}
 
       void visitExpression(Expression* curr) {
-std::cout << "visit " << *curr << '\n';
         if (curr->is<StringConst>()) {
-std::cout << "  stash!\n";
           stringPtrs.push_back(getCurrentPointer());
         }
 
@@ -94,45 +92,37 @@ std::cout << "  stash!\n";
         }
       }
     };
-std::cout << "a1\n";
+
     ModuleUtils::ParallelFunctionAnalysis<StringPtrs> analysis(
       *module, [&](Function* func, StringPtrs& stringPtrs) {
         if (!func->imported()) {
           StringWalker(stringPtrs).walk(func->body);
         }
       });
-std::cout << "a2\n";
 
     // Also walk the global module code (for simplicity, also add it to the
     // function map, using a "function" key of nullptr).
     auto& globalStrings = analysis.map[nullptr];
     StringWalker(globalStrings).walkModuleCode(module);
-std::cout << "a3\n";
 
     // Combine all the strings.
     std::unordered_set<Name> stringSet;
     for (auto& [_, currStringPtrs] : analysis.map) {
       for (auto** stringPtr : currStringPtrs) {
-std::cout << "  b1 " << stringPtr << "\n";
-std::cout << "  b2 " << *stringPtr << "\n";
-std::cout << "  b3 " << **stringPtr << "\n";
         stringSet.insert((*stringPtr)->cast<StringConst>()->string);
         stringPtrs.push_back(stringPtr);
       }
     }
 
-std::cout << "a4 " << stringPtrs.size() << "\n";
     // Generate the indexes from the combined set of necessary strings, which we
     // sort for determinism.
     for (auto& string : stringSet) {
       strings.push_back(string);
     }
-std::cout << "a5\n";
     std::sort(strings.begin(), strings.end());
     for (Index i = 0; i < strings.size(); i++) {
       stringIndexes[strings[i]] = i;
     }
-std::cout << "a6\n";
   }
 
   // For each string index, the name of the import that replaces it.
@@ -155,14 +145,11 @@ std::cout << "a6\n";
   }
 
   void replaceStrings(Module* module) {
-std::cout << "rep1 " << stringPtrs.size() << "\n";
     Builder builder(*module);
     for (auto** stringPtr : stringPtrs) {
       auto* stringConst = (*stringPtr)->cast<StringConst>();
       auto importName = importNames[stringIndexes[stringConst->string]];
-std::cout << "  rep2 " << importName << " : " << **stringPtr << "\n";
       *stringPtr = builder.makeGlobalGet(importName, nnexternref);
-std::cout << "  rep3 " << **stringPtr << "\n";
     }
   }
 
