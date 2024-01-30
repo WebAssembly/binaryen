@@ -5355,15 +5355,15 @@ void BinaryenSetMemory(BinaryenModuleRef module,
     return true;
   });
   for (BinaryenIndex i = 0; i < numSegments; i++) {
-    const name = (segmentNames && segmentNames[i]) ? Name(segmentNames[i])
-                                                   : Name::fromInt(i);
+    const explicitName = segmentNames && segmentNames[i];
+    const name = explicitName ? Name(segmentNames[i]) : Name::fromInt(i);
     auto curr = Builder::makeDataSegment(name,
                                          memory->name,
                                          segmentPassives[i],
                                          (Expression*)segmentOffsets[i],
                                          segmentDatas[i],
                                          segmentSizes[i]);
-    curr->hasExplicitName = true;
+    curr->hasExplicitName = explicitName;
     ((Module*)module)->addDataSegment(std::move(curr));
   }
   ((Module*)module)->removeMemories([&](Memory* curr) { return true; });
