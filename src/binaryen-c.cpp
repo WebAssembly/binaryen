@@ -5329,7 +5329,7 @@ void BinaryenSetMemory(BinaryenModuleRef module,
                        BinaryenIndex initial,
                        BinaryenIndex maximum,
                        const char* exportName,
-                       const char** segmentNames
+                       const char** segmentNames,
                        const char** segmentDatas,
                        bool* segmentPassives,
                        BinaryenExpressionRef* segmentOffsets,
@@ -5355,7 +5355,7 @@ void BinaryenSetMemory(BinaryenModuleRef module,
     return true;
   });
   for (BinaryenIndex i = 0; i < numSegments; i++) {
-    auto curr = Builder::makeDataSegment(Name(segmentNames(i)),
+    auto curr = Builder::makeDataSegment(Name(segmentNames[i]),
                                          memory->name,
                                          segmentPassives[i],
                                          (Expression*)segmentOffsets[i],
