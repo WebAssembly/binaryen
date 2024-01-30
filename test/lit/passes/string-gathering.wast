@@ -59,6 +59,9 @@
     (drop
       (string.const "other")
     )
+    ;; Existing global.gets are not modified (but after this pass,
+    ;; SimplifyGlobals could help; though in practice the globals would have
+    ;; been propagated here anyhow).
     (drop
       (global.get $global)
     )
