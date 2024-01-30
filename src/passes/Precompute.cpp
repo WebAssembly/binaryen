@@ -799,11 +799,9 @@ private:
     if (type.isFunction()) {
       return true;
     }
-    // We can emit a StringConst for a string constant in principle, but we do
-    // not want to as that might cause more allocations to happen. See similar
-    // code in SimplifyGlobals.
+    // We can emit a StringConst for a string constant.
     if (type.isString()) {
-      return false;
+      return true;
     }
     // All other reference types cannot be precomputed. Even an immutable GC
     // reference is not currently something this pass can handle, as it will
