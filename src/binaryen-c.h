@@ -2912,8 +2912,9 @@ BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
                                     BinaryenIndex initial,
                                     BinaryenIndex maximum,
                                     const char* exportName,
-                                    const char** segments,
-                                    bool* segmentPassive,
+                                    const char** segmentNames,
+                                    const char** segmentDatas,
+                                    bool* segmentPassives,
                                     BinaryenExpressionRef* segmentOffsets,
                                     BinaryenIndex* segmentSizes,
                                     BinaryenIndex numSegments,
@@ -2941,13 +2942,13 @@ BINARYEN_API bool BinaryenMemoryIs64(BinaryenModuleRef module,
 
 BINARYEN_API uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module);
 BINARYEN_API uint32_t
-BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module, BinaryenIndex id);
+BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module, const char* segmentName);
 BINARYEN_API size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
-                                                       BinaryenIndex id);
+                                                       const char* segmentName);
 BINARYEN_API bool BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
-                                                  BinaryenIndex id);
+                                                  const char* segmentName);
 BINARYEN_API void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
-                                                BinaryenIndex id,
+                                                const char* segmentName,
                                                 char* buffer);
 
 // Start function. One per module
