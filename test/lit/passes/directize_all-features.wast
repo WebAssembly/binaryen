@@ -1586,3 +1586,177 @@
   )
  )
 )
+
+;; The elem's offset is way out of bounds, which we should not error on, and do
+;; nothing otherwise.
+(module
+ ;; CHECK:      (type $v (func))
+ ;; IMMUT:      (type $v (func))
+ (type $v (func))
+
+ (table 10 10 funcref)
+
+ (elem (i32.const -1) $0)
+
+ ;; CHECK:      (table $0 10 10 funcref)
+
+ ;; CHECK:      (elem $0 (i32.const -1) $0)
+
+ ;; CHECK:      (func $0 (type $v)
+ ;; CHECK-NEXT:  (call_indirect $0 (type $v)
+ ;; CHECK-NEXT:   (i32.const -1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (table $0 10 10 funcref)
+
+ ;; IMMUT:      (elem $0 (i32.const -1) $0)
+
+ ;; IMMUT:      (func $0 (type $v)
+ ;; IMMUT-NEXT:  (call_indirect $0 (type $v)
+ ;; IMMUT-NEXT:   (i32.const -1)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT: )
+ (func $0
+  (call_indirect (type $v)
+   (i32.const -1)
+  )
+ )
+)
+
+;; Another elem offset that is way out of bounds.
+(module
+ ;; CHECK:      (type $v (func))
+ ;; IMMUT:      (type $v (func))
+ (type $v (func))
+
+ (table 10 10 funcref)
+
+ (elem (i32.const -2) $0)
+
+ ;; CHECK:      (table $0 10 10 funcref)
+
+ ;; CHECK:      (elem $0 (i32.const -2) $0)
+
+ ;; CHECK:      (func $0 (type $v)
+ ;; CHECK-NEXT:  (call_indirect $0 (type $v)
+ ;; CHECK-NEXT:   (i32.const -2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (table $0 10 10 funcref)
+
+ ;; IMMUT:      (elem $0 (i32.const -2) $0)
+
+ ;; IMMUT:      (func $0 (type $v)
+ ;; IMMUT-NEXT:  (call_indirect $0 (type $v)
+ ;; IMMUT-NEXT:   (i32.const -2)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT: )
+ (func $0
+  (call_indirect (type $v)
+   (i32.const -2)
+  )
+ )
+)
+
+;; The elem is just out of bounds due to its offset.
+(module
+ ;; CHECK:      (type $v (func))
+ ;; IMMUT:      (type $v (func))
+ (type $v (func))
+
+ (table 10 10 funcref)
+
+ (elem (i32.const 10) $0)
+
+ ;; CHECK:      (table $0 10 10 funcref)
+
+ ;; CHECK:      (elem $0 (i32.const 10) $0)
+
+ ;; CHECK:      (func $0 (type $v)
+ ;; CHECK-NEXT:  (call_indirect $0 (type $v)
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (table $0 10 10 funcref)
+
+ ;; IMMUT:      (elem $0 (i32.const 10) $0)
+
+ ;; IMMUT:      (func $0 (type $v)
+ ;; IMMUT-NEXT:  (call_indirect $0 (type $v)
+ ;; IMMUT-NEXT:   (i32.const 10)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT: )
+ (func $0
+  (call_indirect (type $v)
+   (i32.const 10)
+  )
+ )
+)
+
+;; The elem is just out of bounds due to its length.
+(module
+ ;; CHECK:      (type $v (func))
+ ;; IMMUT:      (type $v (func))
+ (type $v (func))
+
+ (table 10 10 funcref)
+
+ (elem (i32.const 9) $0 $0)
+
+ ;; CHECK:      (table $0 10 10 funcref)
+
+ ;; CHECK:      (elem $0 (i32.const 9) $0 $0)
+
+ ;; CHECK:      (func $0 (type $v)
+ ;; CHECK-NEXT:  (call_indirect $0 (type $v)
+ ;; CHECK-NEXT:   (i32.const 9)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (table $0 10 10 funcref)
+
+ ;; IMMUT:      (elem $0 (i32.const 9) $0 $0)
+
+ ;; IMMUT:      (func $0 (type $v)
+ ;; IMMUT-NEXT:  (call_indirect $0 (type $v)
+ ;; IMMUT-NEXT:   (i32.const 9)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT: )
+ (func $0
+  (call_indirect (type $v)
+   ;; We could in theory optimize this, as the out of bounds part is after us,
+   ;; but the wasm traps anyhow, so leave it alone.
+   (i32.const 9)
+  )
+ )
+)
+
+;; The elem is ok, and we can optimize.
+(module
+ ;; CHECK:      (type $v (func))
+ ;; IMMUT:      (type $v (func))
+ (type $v (func))
+
+ (table 10 10 funcref)
+
+ (elem (i32.const 9) $0)
+
+ ;; CHECK:      (table $0 10 10 funcref)
+
+ ;; CHECK:      (elem $0 (i32.const 9) $0)
+
+ ;; CHECK:      (func $0 (type $v)
+ ;; CHECK-NEXT:  (call $0)
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (table $0 10 10 funcref)
+
+ ;; IMMUT:      (elem $0 (i32.const 9) $0)
+
+ ;; IMMUT:      (func $0 (type $v)
+ ;; IMMUT-NEXT:  (call $0)
+ ;; IMMUT-NEXT: )
+ (func $0
+  (call_indirect (type $v)
+   (i32.const 9)
+  )
+ )
+)
