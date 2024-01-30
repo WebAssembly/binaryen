@@ -2572,7 +2572,7 @@ function wrapModule(module, self = {}) {
       const offsets = new Array(segmentsLen);
       for (let i = 0; i < segmentsLen; i++) {
         const { name, data, offset, passive } = segments[i];
-        names[i] = strToStack(name);
+        names[i] = name ? strToStack(name) : null;
         datas[i] = _malloc(data.length);
         HEAP8.set(data, datas[i]);
         lengths[i] = data.length;
