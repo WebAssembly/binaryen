@@ -604,6 +604,12 @@ Result<> IRBuilder::visitTupleExtract(TupleExtract* curr,
   return Ok{};
 }
 
+Result<> IRBuilder::visitPop(Pop*) {
+  // Do not actually push this pop onto the stack since we generate our own pops
+  // as necessary when visiting the beginnings of try blocks.
+  return Ok{};
+}
+
 Result<> IRBuilder::visitFunctionStart(Function* func) {
   if (!scopeStack.empty()) {
     return Err{"unexpected start of function"};
@@ -1300,7 +1306,23 @@ Result<> IRBuilder::makeUnreachable() {
   return Ok{};
 }
 
-// Result<> IRBuilder::makePop() {}
+Result<> IRBuilder::makePop(Type type) {
+  // We don't actually want to create a new Pop expression here because we
+  // already create them automatically when starting a legacy catch block that
+  // needs one. Just verify that the Pop we are being asked to make is the same
+  // type as the Pop we have already made.
+  auto& scope = getScope();
+  if (!scope.getCatch() || scope.exprStack.size() != 1 ||
+      !scope.exprStack[0]->is<Pop>()) {
+    return Err{
+      "pop instructions may only appear at the beginning of catch blocks"};
+  }
+  auto expectedType = scope.exprStack[0]->type;
+  if (type != expectedType) {
+    return Err{std::string("Expected pop of type ") + expectedType.toString()};
+  }
+  return Ok{};
+}
 
 Result<> IRBuilder::makeRefNull(HeapType type) {
   push(builder.makeRefNull(type));
