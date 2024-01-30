@@ -79,7 +79,9 @@ struct StringLowering : public Pass {
       StringWalker(StringPtrs& stringPtrs) : stringPtrs(stringPtrs) {}
 
       void visitExpression(Expression* curr) {
+std::cout << "visit " << *curr << '\n';
         if (curr->is<StringConst>()) {
+std::cout << "  stash!\n";
           stringPtrs.push_back(getCurrentPointer());
         }
 
@@ -88,8 +90,6 @@ struct StringLowering : public Pass {
         if (curr->type.isRef() && curr->type.getHeapType() == HeapType::string) {
           curr->type = Type(HeapType::ext, curr->type.getNullability());
         }
-      }
-      void visitStringConst(StringConst* curr) {
       }
     };
 std::cout << "a1\n";
@@ -119,7 +119,7 @@ std::cout << "  b3 " << **stringPtr << "\n";
       }
     }
 
-std::cout << "a4\n";
+std::cout << "a4 " << stringPtrs.size() << "\n";
     // Generate the indexes from the combined set of necessary strings, which we
     // sort for determinism.
     for (auto& string : stringSet) {
@@ -153,11 +153,14 @@ std::cout << "a6\n";
   }
 
   void replaceStrings(Module* module) {
+std::cout << "rep1 " << stringPtrs.size() << "\n";
     Builder builder(*module);
     for (auto** stringPtr : stringPtrs) {
       auto* stringConst = (*stringPtr)->cast<StringConst>();
       auto importName = importNames[stringIndexes[stringConst->string]];
+std::cout << "  rep2 " << importName << " : " << **stringPtr << "\n";
       *stringPtr = builder.makeGlobalGet(importName, nnexternref);
+std::cout << "  rep3 " << **stringPtr << "\n";
     }
   }
 };
