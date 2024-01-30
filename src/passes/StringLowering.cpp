@@ -46,6 +46,7 @@
 //
 
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/find_all.h"
 #include "pass.h"
 #include "wasm-builder.h"
@@ -59,7 +60,7 @@ struct StringLowering : public Pass {
   std::unordered_map<Name, Index> stringIndexes;
 
   // Pointers to all StringConsts, so that we can replace them.
-  using StringPtrs = std::vector<StringConst**>;
+  using StringPtrs = std::vector<Expression**>;
   StringPtrs stringPtrs;
 
   // Main entry point.
@@ -71,11 +72,11 @@ struct StringLowering : public Pass {
 
   // Scan the entire wasm to find the relevant strings and populate our global
   // data structures.
-  void scanStrings() {
+  void scanStrings(Module* module) {
     struct StringWalker : public PostWalker<StringWalker> {
-      StringPtr& stringPtrs;
+      StringPtrs& stringPtrs;
 
-      StringWalker(StringPtr& stringPtrs) : stringPtrs(stringPtrs) {}
+      StringWalker(StringPtrs& stringPtrs) : stringPtrs(stringPtrs) {}
 
       void visitStringConst(StringConst* curr) {
         stringPtrs.push_back(getCurrentPointer());
@@ -83,7 +84,7 @@ struct StringLowering : public Pass {
     };
 
     ModuleUtils::ParallelFunctionAnalysis<StringPtrs> analysis(
-      *wasm, [&](Function* func, StringPtrs& stringPtrs) {
+      *module, [&](Function* func, StringPtrs& stringPtrs) {
         if (!func->imported()) {
           StringWalker(stringPtrs).walk(func->body);
         }
@@ -92,13 +93,13 @@ struct StringLowering : public Pass {
     // Also walk the global module code (for simplicity, also add it to the
     // function map, using a "function" key of nullptr).
     auto& globalStrings = analysis.map[nullptr];
-    StringWalker(globalStrings).walkModuleCode(wasm);
+    StringWalker(globalStrings).walkModuleCode(module);
 
     // Combine all the strings.
     std::unordered_set<Name> stringSet;
     for (auto& [_, stringPtrs] : analysis.map) {
       for (auto** stringPtr : stringPtrs) {
-        stringSet.insert((*stringPtr)->name);
+        stringSet.insert((*stringPtr)->cast<StringConst>()->string);
         stringPtrs.push_back(stringPtr);
       }
     }
@@ -116,23 +117,25 @@ struct StringLowering : public Pass {
   // For each string index, the name of the import that replaces it.
   std::vector<Name> importNames;
 
+  Type nnexternref = Type(HeapType::ext, NonNullable);
+
   void addImports(Module* module) {
     // TOOD: imports should be in front, so they can be used from globals, or
     // run sort-globals internally..
     Builder builder(*module);
     for (auto& string : strings) {
-      auto name = Names::getValidGlobalName(*module, std::string("string.const_") + string.str);
+      auto name = Names::getValidGlobalName(*module, std::string("string.const_") + std::string(string.str));
       importNames.push_back(name);
-      module->addGlobal(builder.makeGlobal(name, Type::externref, nullptr, Builder::Immutable));
+      module->addGlobal(builder.makeGlobal(name, nnexternref, nullptr, Builder::Immutable));
     }
   }
 
   void replaceStrings(Module* module) {
     Builder builder(*module);
     for (auto** stringPtr : stringPtrs) {
-      auto stringConst = *stringPtr;
+      auto* stringConst = (*stringPtr)->cast<StringConst>();
       auto importName = importNames[stringIndexes[stringConst->string]];
-      *stringPtr = builder.makeGlobalGet(importName, Type::externref);
+      *stringPtr = builder.makeGlobalGet(importName, nnexternref);
     }
   }
 };
