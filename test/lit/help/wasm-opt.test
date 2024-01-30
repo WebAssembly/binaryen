@@ -467,6 +467,8 @@
 ;; CHECK-NEXT:   --stack-check                                 enforce limits on llvm's
 ;; CHECK-NEXT:                                                 __stack_pointer global
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --string-gathering                            gathers wasm strings to globals
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip                                       deprecated; same as strip-debug
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip-debug                                 strip debug info (including the
