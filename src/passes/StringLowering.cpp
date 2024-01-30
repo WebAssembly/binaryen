@@ -21,10 +21,9 @@
 // globals, avoiding them appearing in code that can run more than once (which
 // can have overhead in VMs).
 //
-// Building on that, an extended version of StringGathering will also replace
-// those new globals with imported globals of type externref, for use with the
-// string imports proposal. String operations will likewise need to be lowered.
-// TODO
+// StringLowering does the same, and also replaces those new globals with
+// imported globals of type externref, for use with the string imports proposal.
+// String operations will likewise need to be lowered. TODO
 //
 
 #include <algorithm>
@@ -32,6 +31,7 @@
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "pass.h"
+#include "support/json.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -183,6 +183,44 @@ struct StringGathering : public Pass {
   }
 };
 
+struct StringLowering : public StringGathering {
+  void run(Module* module) override {
+    if (!module->features.has(FeatureSet::Strings)) {
+      return;
+    }
+
+    // First, run the gathering operation so all string.consts are in one place.
+    StringGathering::run(module);
+
+    // Lower the string.const globals into imports.
+    makeImports(module);
+
+    // Now that no string contents remain, disable the feature.
+    module->features.disable(FeatureSet::Strings);
+  }
+
+  void makeImports(Module* module) {
+    Index importIndex = 0;
+    json::value stringArray;
+    stringArray.setArray();
+    std::vector<Name> importedStrings;
+    for (auto& global : module->globals) {
+      if (global->init) {
+        if (auto* c = global->init->dynCast<StringConst>()) {
+          global->module = "string.const";
+          global->base = std::to_string(importIndex);
+          importIndex++;
+          global->init = nullptr;
+          stringArray.push_back(c->string.str);
+        }
+      }
+    }
+
+    stringArray.stringify(std::cout);
+  }
+}
+
 Pass* createStringGatheringPass() { return new StringGathering(); }
+Pass* createStringLoweringPass() { return new StringLowering(); }
 
 } // namespace wasm
