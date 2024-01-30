@@ -3,10 +3,30 @@
 ;; RUN: foreach %s %t wasm-opt --string-lowering -all -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (global $string.const_bar (ref string) (string.const "bar"))
+
+  ;; CHECK:      (global $string.const_baz (ref string) (string.const "baz"))
+
+  ;; CHECK:      (global $string.const_foo (ref string) (string.const "foo"))
+
+  ;; CHECK:      (global $string.const_other (ref string) (string.const "other"))
+
+  ;; CHECK:      (global $global (ref string) (global.get $string.const_foo))
   (global $global (ref string) (string.const "foo"))
 
+  ;; CHECK:      (global $global2 stringref (global.get $string.const_bar))
   (global $global2 (ref null string) (string.const "bar"))
 
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $string.const_bar)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $string.const_baz)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $a
     (drop
       (string.const "bar")
@@ -16,6 +36,20 @@
     )
   )
 
+  ;; CHECK:      (func $b (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $string.const_bar)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $string.const_other)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $global)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $global2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $b ;; TODO params and results and tuples and what not
     (drop
       (string.const "bar")
