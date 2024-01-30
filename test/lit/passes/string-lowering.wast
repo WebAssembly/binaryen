@@ -2,6 +2,9 @@
 
 ;; RUN: foreach %s %t wasm-opt --string-lowering -all -S -o - | filecheck %s
 
+;; All the strings should be collected into globals and used from there. They
+;; should also be sorted deterministically (alphabetically).
+
 (module
   ;; CHECK:      (type $0 (func))
 

@@ -55,21 +55,13 @@ struct StringLowering : public Pass {
   // Scan the entire wasm to find the relevant strings to populate our global
   // data structures.
   void processModule(Module* module) {
-    struct StringWalker : public PostWalker<StringWalker, UnifiedExpressionVisitor<StringWalker>> {
+    struct StringWalker : public PostWalker<StringWalker> {
       StringPtrs& stringPtrs;
 
       StringWalker(StringPtrs& stringPtrs) : stringPtrs(stringPtrs) {}
 
-      void visitExpression(Expression* curr) {
-        if (curr->is<StringConst>()) {
-          stringPtrs.push_back(getCurrentPointer());
-        }
-
-        // We must replace all string heap types with extern. Do so now in this
-        // operation to avoid needing a second pass.
-        if (curr->type.isRef() && curr->type.getHeapType() == HeapType::string) {
-//          curr->type = Type(HeapType::ext, curr->type.getNullability());
-        }
+      void visitStringConst(StringConst* curr) {
+        stringPtrs.push_back(getCurrentPointer());
       }
     };
 
@@ -95,7 +87,7 @@ struct StringLowering : public Pass {
     }
 
     // Generate the indexes from the combined set of necessary strings, which we
-    // sort for determinism.
+    // sort for determinism (alphabetically).
     for (auto& string : stringSet) {
       strings.push_back(string);
     }
