@@ -5355,7 +5355,7 @@ void BinaryenSetMemory(BinaryenModuleRef module,
     return true;
   });
   for (BinaryenIndex i = 0; i < numSegments; i++) {
-    const explicitName = segmentNames && segmentNames[i];
+    auto explicitName = segmentNames && segmentNames[i];
     const name = explicitName ? Name(segmentNames[i]) : Name::fromInt(i);
     auto curr = Builder::makeDataSegment(name,
                                          memory->name,
