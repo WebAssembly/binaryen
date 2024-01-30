@@ -24,12 +24,6 @@
 // end of the Binaryen pipeline to produce binaries for the new spec while the
 // end-to-end toolchain implementation for the new spec is in progress.
 //
-// TODO
-// TranslateToOldEH translates the new EH instructions to the old ones. This
-// can be used as a stopgap tool while Binaryen implementation for the whole
-// optimization pipeline is not complete but we need to test our LLVM
-// implementation for the new spec. This has not been implemented yet.
-//
 
 #include <ir/drop.h>
 #include <ir/find_all.h>
@@ -803,14 +797,8 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
   }
 };
 
-struct TranslateToOldEH : public WalkerPass<PostWalker<TranslateToOldEH>> {
-  // TODO
-};
-
 } // namespace
 
 Pass* createTranslateToNewEHPass() { return new TranslateToNewEH(); }
-
-Pass* createTranslateToOldEHPass() { return new TranslateToOldEH(); }
 
 } // namespace wasm
