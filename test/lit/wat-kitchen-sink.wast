@@ -296,6 +296,12 @@
  ;; CHECK:      (global $i32 i32 (i32.const 42))
  (global $i32 i32 i32.const 42)
 
+ ;; CHECK:      (global $pair (mut (tuple i32 i64)) (tuple.make 2
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT:  (i64.const 1)
+ ;; CHECK-NEXT: ))
+ (global $pair (mut (tuple i32 i64)) (tuple.make 2 (i32.const 0) (i64.const 1)))
+
  ;; memories
  ;; CHECK:      (memory $mem 1 1 shared)
  (memory $mem 1 1 shared)
@@ -456,12 +462,6 @@
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $f4 (type 18) (local i32 i64) (local $l f32))
-
- ;; CHECK:      (func $tuple-locals (type $void)
- ;; CHECK-NEXT:  (local $0 (tuple i32 i32))
- ;; CHECK-NEXT:  (nop)
- ;; CHECK-NEXT: )
- (func $tuple-locals (local (tuple i32 i32)))
 
  ;; CHECK:      (func $nop-skate (type $void)
  ;; CHECK-NEXT:  (nop)
@@ -928,6 +928,30 @@
   local.get $y
   local.tee 3
   drop
+ )
+
+ ;; CHECK:      (func $tuple-locals (type $void)
+ ;; CHECK-NEXT:  (local $0 (tuple i32 i64))
+ ;; CHECK-NEXT:  (local.set $0
+ ;; CHECK-NEXT:   (local.tee $0
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $0
+ ;; CHECK-NEXT:   (tuple.make 2
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (i64.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tuple-locals
+  (local (tuple i32 i64))
+  local.get 0
+  local.tee 0
+  local.set 0
+  i32.const 1
+  i64.const 2
+  local.set 0
  )
 
  ;; CHECK:      (func $block (type $void)
@@ -3064,6 +3088,25 @@
   global.set 4
  )
 
+ ;; CHECK:      (func $tuple-globals (type $void)
+ ;; CHECK-NEXT:  (global.set $pair
+ ;; CHECK-NEXT:   (global.get $pair)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (global.set $pair
+ ;; CHECK-NEXT:   (tuple.make 2
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:    (i64.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $tuple-globals
+  global.get $pair
+  global.set $pair
+  i32.const 1
+  i64.const 2
+  global.set $pair
+ )
+
  ;; CHECK:      (func $load (type $4) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.load $mimport$0 offset=42
@@ -3525,7 +3568,7 @@
  (func $ref-func
   ref.func $ref-func
   drop
-  ref.func 152
+  ref.func 153
   drop
  )
 

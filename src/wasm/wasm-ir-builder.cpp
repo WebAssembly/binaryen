@@ -492,6 +492,21 @@ Result<> IRBuilder::visitCallRef(CallRef* curr) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitLocalSet(LocalSet* curr) {
+  auto type = func->getLocalType(curr->index);
+  auto val = pop(type.size());
+  CHECK_ERR(val);
+  curr->value = *val;
+  return Ok{};
+}
+
+Result<> IRBuilder::visitGlobalSet(GlobalSet* curr) {
+  auto type = wasm.getGlobal(curr->name)->type;
+  auto val = pop(type.size());
+  CHECK_ERR(val);
+  curr->value = *val;
+  return Ok{};
+}
 Result<> IRBuilder::visitThrow(Throw* curr) {
   auto numArgs = wasm.getTag(curr->tag)->sig.params.size();
   curr->operands.resize(numArgs);
@@ -1032,6 +1047,7 @@ Result<> IRBuilder::makeLocalGet(Index local) {
 
 Result<> IRBuilder::makeLocalSet(Index local) {
   LocalSet curr;
+  curr.index = local;
   CHECK_ERR(visitLocalSet(&curr));
   push(builder.makeLocalSet(local, curr.value));
   return Ok{};
@@ -1039,6 +1055,7 @@ Result<> IRBuilder::makeLocalSet(Index local) {
 
 Result<> IRBuilder::makeLocalTee(Index local) {
   LocalSet curr;
+  curr.index = local;
   CHECK_ERR(visitLocalSet(&curr));
   push(builder.makeLocalTee(local, curr.value, func->getLocalType(local)));
   return Ok{};
@@ -1051,6 +1068,7 @@ Result<> IRBuilder::makeGlobalGet(Name global) {
 
 Result<> IRBuilder::makeGlobalSet(Name global) {
   GlobalSet curr;
+  curr.name = global;
   CHECK_ERR(visitGlobalSet(&curr));
   push(builder.makeGlobalSet(global, curr.value));
   return Ok{};

@@ -223,6 +223,8 @@ public:
   [[nodiscard]] Result<> visitCall(Call*);
   [[nodiscard]] Result<> visitCallIndirect(CallIndirect*);
   [[nodiscard]] Result<> visitCallRef(CallRef*);
+  [[nodiscard]] Result<> visitLocalSet(LocalSet*);
+  [[nodiscard]] Result<> visitGlobalSet(GlobalSet*);
   [[nodiscard]] Result<> visitThrow(Throw*);
   [[nodiscard]] Result<> visitStringNew(StringNew*);
   [[nodiscard]] Result<> visitStringEncode(StringEncode*);
