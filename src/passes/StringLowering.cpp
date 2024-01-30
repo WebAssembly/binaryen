@@ -36,7 +36,7 @@
 
 namespace wasm {
 
-struct StringLowering : public Pass {
+struct StringGathering : public Pass {
   // All the strings we found in the module, and a reverse mapping.
   std::vector<Name> strings;
   std::unordered_map<Name, Index> stringIndexes;
@@ -182,6 +182,6 @@ struct StringLowering : public Pass {
   }
 };
 
-Pass* createStringLoweringPass() { return new StringLowering(); }
+Pass* createStringGatheringPass() { return new StringGathering(); }
 
 } // namespace wasm
