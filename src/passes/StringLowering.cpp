@@ -48,6 +48,7 @@
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/find_all.h"
+#include "ir/type-updating.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -68,6 +69,7 @@ struct StringLowering : public Pass {
     processModule(module);
     addImports(module);
     replaceStrings(module);
+    updateTypes(module);
   }
 
   // Scan the entire wasm to find the relevant strings to populate our global
@@ -88,7 +90,7 @@ std::cout << "  stash!\n";
         // We must replace all string heap types with extern. Do so now in this
         // operation to avoid needing a second pass.
         if (curr->type.isRef() && curr->type.getHeapType() == HeapType::string) {
-          curr->type = Type(HeapType::ext, curr->type.getNullability());
+//          curr->type = Type(HeapType::ext, curr->type.getNullability());
         }
       }
     };
@@ -162,6 +164,12 @@ std::cout << "  rep2 " << importName << " : " << **stringPtr << "\n";
       *stringPtr = builder.makeGlobalGet(importName, nnexternref);
 std::cout << "  rep3 " << **stringPtr << "\n";
     }
+  }
+
+  void updateTypes(Module* module) {
+    TypeMapper::TypeUpdates updates;
+    updates[HeapType::string] = HeapType::ext;
+    TypeMapper(*module, updates).map();
   }
 };
 
