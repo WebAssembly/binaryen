@@ -14,7 +14,7 @@
     )
   )
 
-  (func $a
+  (func $b
     (drop
       (string.const "bar")
     )

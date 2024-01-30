@@ -82,36 +82,45 @@ struct StringLowering : public Pass {
         stringPtrs.push_back(getCurrentPointer());
       }
     };
-
+std::cout << "a1\n";
     ModuleUtils::ParallelFunctionAnalysis<StringPtrs> analysis(
       *module, [&](Function* func, StringPtrs& stringPtrs) {
         if (!func->imported()) {
           StringWalker(stringPtrs).walk(func->body);
         }
       });
+std::cout << "a2\n";
 
     // Also walk the global module code (for simplicity, also add it to the
     // function map, using a "function" key of nullptr).
     auto& globalStrings = analysis.map[nullptr];
     StringWalker(globalStrings).walkModuleCode(module);
+std::cout << "a3\n";
 
     // Combine all the strings.
     std::unordered_set<Name> stringSet;
-    for (auto& [_, stringPtrs] : analysis.map) {
-      for (auto** stringPtr : stringPtrs) {
+    for (auto& [_, currStringPtrs] : analysis.map) {
+      for (auto** stringPtr : currStringPtrs) {
+std::cout << "  b1 " << stringPtr << "\n";
+std::cout << "  b2 " << *stringPtr << "\n";
+std::cout << "  b3 " << **stringPtr << "\n";
         stringSet.insert((*stringPtr)->cast<StringConst>()->string);
         stringPtrs.push_back(stringPtr);
       }
     }
+
+std::cout << "a4\n";
     // Generate the indexes from the combined set of necessary strings, which we
     // sort for determinism.
     for (auto& string : stringSet) {
       strings.push_back(string);
     }
+std::cout << "a5\n";
     std::sort(strings.begin(), strings.end());
     for (Index i = 0; i < strings.size(); i++) {
       stringIndexes[strings[i]] = i;
     }
+std::cout << "a6\n";
   }
 
   // For each string index, the name of the import that replaces it.
@@ -123,10 +132,13 @@ struct StringLowering : public Pass {
     // TOOD: imports should be in front, so they can be used from globals, or
     // run sort-globals internally..
     Builder builder(*module);
-    for (auto& string : strings) {
-      auto name = Names::getValidGlobalName(*module, std::string("string.const_") + std::string(string.str));
+    for (Index i = 0; i < strings.size(); i++) {
+      auto name = Names::getValidGlobalName(*module, std::string("string.const_") + std::string(strings[i].str));
       importNames.push_back(name);
-      module->addGlobal(builder.makeGlobal(name, nnexternref, nullptr, Builder::Immutable));
+      auto global = builder.makeGlobal(name, nnexternref, nullptr, Builder::Immutable);
+      global->module = "string.const";
+      global->base = std::to_string(i);
+      module->addGlobal(std::move(global));
     }
   }
 
