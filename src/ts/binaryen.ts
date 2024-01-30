@@ -2134,31 +2134,31 @@ export class Module {
             set: (initial: number, maximum: number, exportName?: string | null, segments?: SegmentInfo[] | null, shared?: boolean, memory64?: boolean, internalName?: string): void =>
                 preserveStack(() => {
                       const segmentsLen = segments ? segments.length : 0;
-                      const segmentData = new Array(segmentsLen);
-                      const segmentDataLen = new Array(segmentsLen);
-                      const segmentPassive = new Array(segmentsLen);
-                      const segmentOffset = new Array(segmentsLen);
+                      const datas = new Array(segmentsLen);
+                      const lengths = new Array(segmentsLen);
+                      const passives = new Array(segmentsLen);
+                      const offsets = new Array(segmentsLen);
                       for (let i = 0; i < segmentsLen; i++) {
                         const { data, offset, passive } = segments[i];
-                        segmentData[i] = _malloc(data.length);
-                        HEAP8.set(data, segmentData[i]);
-                        segmentDataLen[i] = data.length;
-                        segmentPassive[i] = passive;
-                        segmentOffset[i] = offset;
+                          datas[i] = _malloc(data.length);
+                        HEAP8.set(data, datas[i]);
+                          lengths[i] = data.length;
+                          passives[i] = passive;
+                          offsets[i] = offset;
                       }
                       const ret = JSModule['_BinaryenSetMemory'](
                         this.ptr, initial, maximum, strToStack(exportName),
-                        i32sToStack(segmentData),
-                        i8sToStack(segmentPassive),
-                        i32sToStack(segmentOffset),
-                        i32sToStack(segmentDataLen),
+                        i32sToStack(datas),
+                        i8sToStack(passives),
+                        i32sToStack(offsets),
+                        i32sToStack(lengths),
                         segmentsLen,
                         shared,
                         memory64,
                         strToStack(internalName)
                       );
-                      for (let i = 0; i < segmentsLen; i++) {
-                        _free(segmentData[i]);
+                      for (let i = segmentsLen - 1; i >= 0; i--) {
+                        _free(datas[i]);
                       }
                       return ret;
                     }),
@@ -2394,13 +2394,13 @@ export class TypeBuilder {
     setStructType(slot: number, fieldTypes: FieldType[]): TypeBuilder {
         const types = _malloc(4 * fieldTypes.length);
         const packedTypes = _malloc(4 * fieldTypes.length);
-        // assume sizeof(bool) is 4
-        const mutables = _malloc(4 * fieldTypes.length);
+        // assume sizeof(bool) is 1
+        const mutables = _malloc(fieldTypes.length);
         let typesPtr = types, packedTypesPtr = packedTypes, mutablesPtr = mutables;
         fieldTypes.forEach(field => {
             __i32_store(typesPtr, field.type); typesPtr += 4;
             __i32_store(packedTypesPtr, field.packedType); packedTypesPtr += 4;
-            __i32_store(mutablesPtr, field.mutable ? 1 : 0); mutablesPtr += 4;
+            __i32_store(mutablesPtr, field.mutable ? 1 : 0); mutablesPtr ++;
         });
         JSModule['_TypeBuilderSetStructType'](this.ref, slot, types, packedTypes, mutables, fieldTypes.length);
         _free(mutables);
