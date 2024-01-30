@@ -15,7 +15,7 @@
  */
 
 //
-// TranslateEHOldToNew translates the old Phase 3 EH instructions, which include
+// TranslateToNewEH translates the old Phase 3 EH instructions, which include
 // try, catch, catch_all, delegate, and rethrow, into the new EH instructions,
 // which include try_table (with catch / catch_ref / catch_all / catch_all_ref)
 // and throw_ref, passed at the Oct 2023 CG meeting. This translator can be used
@@ -25,7 +25,7 @@
 // end-to-end toolchain implementation for the new spec is in progress.
 //
 // TODO
-// TranslateEHNewToOld translates the new EH instructions to the old ones. This
+// TranslateToOldEH translates the new EH instructions to the old ones. This
 // can be used as a stopgap tool while Binaryen implementation for the whole
 // optimization pipeline is not complete but we need to test our LLVM
 // implementation for the new spec. This has not been implemented yet.
@@ -45,8 +45,7 @@ namespace {
 // Translates the old EH instructions (try / catch / catch_all / delegate /
 // rethrow) into the new ones (try_table (+ catch / catch_ref / catch_all /
 // catch_all_ref) / throw_ref).
-struct TranslateEHOldToNew
-  : public WalkerPass<PostWalker<TranslateEHOldToNew>> {
+struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
   bool isFunctionParallel() override { return true; }
 
   // Scans and records which try labels are targeted by delegates and rethrows.
@@ -201,10 +200,8 @@ struct TranslateEHOldToNew
   // exnref) tuples for a short time.
   std::unordered_map<Type, Index> typeToScratchLocal;
 
-  bool refinalize = false;
-
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<TranslateEHOldToNew>();
+    return std::make_unique<TranslateToNewEH>();
   }
 
   // Get a scratch local for a given type. These locals are used to contain
@@ -680,7 +677,6 @@ struct TranslateEHOldToNew
   }
 
   void visitTry(Try* curr) {
-    refinalize = true;
     Builder builder(*getModule());
     Block* outerBlock = nullptr;
     auto it = delegateTargetToBrTarget.find(curr->name);
@@ -807,15 +803,14 @@ struct TranslateEHOldToNew
   }
 };
 
-struct TranslateEHNewToOld
-  : public WalkerPass<PostWalker<TranslateEHNewToOld>> {
+struct TranslateToOldEH : public WalkerPass<PostWalker<TranslateToOldEH>> {
   // TODO
 };
 
 } // namespace
 
-Pass* createTranslateEHOldToNewPass() { return new TranslateEHOldToNew(); }
+Pass* createTranslateToNewEHPass() { return new TranslateToNewEH(); }
 
-Pass* createTranslateEHNewToOldPass() { return new TranslateEHNewToOld(); }
+Pass* createTranslateToOldEHPass() { return new TranslateToOldEH(); }
 
 } // namespace wasm
