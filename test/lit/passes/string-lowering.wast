@@ -6,17 +6,16 @@
 ;; should also be sorted deterministically (alphabetically).
 
 (module
+  ;; Note that $global will be reused: no new global will be added for "foo".
+  ;; $global2 almost can, but it has the wrong type, so it won't.
+
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (global $string.const_bar (ref string) (string.const "bar"))
 
-  ;; CHECK:      (global $string.const_baz (ref string) (string.const "baz"))
-
-  ;; CHECK:      (global $string.const_foo (ref string) (string.const "foo"))
-
   ;; CHECK:      (global $string.const_other (ref string) (string.const "other"))
 
-  ;; CHECK:      (global $global (ref string) (global.get $string.const_foo))
+  ;; CHECK:      (global $global (ref string) (string.const "foo"))
   (global $global (ref string) (string.const "foo"))
 
   ;; CHECK:      (global $global2 stringref (global.get $string.const_bar))
@@ -27,7 +26,7 @@
   ;; CHECK-NEXT:   (global.get $string.const_bar)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $string.const_baz)
+  ;; CHECK-NEXT:   (global.get $global)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $a
@@ -35,7 +34,7 @@
       (string.const "bar")
     )
     (drop
-      (string.const "baz")
+      (string.const "foo")
     )
   )
 
@@ -53,7 +52,7 @@
   ;; CHECK-NEXT:   (global.get $global2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $b ;; TODO params and results and tuples and what not
+  (func $b
     (drop
       (string.const "bar")
     )
@@ -69,4 +68,26 @@
   )
 )
 
-;; test reusing existing globalses
+;; Multiple possible reusable globals. Also test ignoring of imports.
+(module
+  ;; CHECK:      (import "a" "b" (global $import (ref string)))
+  (import "a" "b" (global $import (ref string)))
+
+  ;; CHECK:      (global $global1 (ref string) (string.const "foo"))
+  (global $global1 (ref string) (string.const "foo"))
+
+  ;; CHECK:      (global $global2 (ref string) (global.get $global1))
+  (global $global2 (ref string) (string.const "foo"))
+
+  ;; CHECK:      (global $global3 (ref string) (global.get $global1))
+  (global $global3 (ref string) (string.const "foo"))
+
+  ;; CHECK:      (global $global4 (ref string) (string.const "bar"))
+  (global $global4 (ref string) (string.const "bar"))
+
+  ;; CHECK:      (global $global5 (ref string) (global.get $global4))
+  (global $global5 (ref string) (string.const "bar"))
+
+  ;; CHECK:      (global $global6 (ref string) (global.get $global4))
+  (global $global6 (ref string) (string.const "bar"))
+)
