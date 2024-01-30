@@ -476,6 +476,8 @@ void PassRegistry::registerPasses() {
     "ssa-ify variables so that they have a single assignment, ignoring merges",
     createSSAifyNoMergePass);
   registerPass(
+    "string-lowering", "lower wasm strings to imports", createStringLoweringPass);
+  registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
   registerPass("stack-check",
                "enforce limits on llvm's __stack_pointer global",
