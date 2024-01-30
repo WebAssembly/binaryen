@@ -5361,7 +5361,7 @@ void BinaryenSetMemory(BinaryenModuleRef module,
                                          (Expression*)segmentOffsets[i],
                                          segmentDatas[i],
                                          segmentSizes[i]);
-    curr->hasExplicitName = false;
+    curr->hasExplicitName = true;
     ((Module*)module)->addDataSegment(std::move(curr));
   }
   ((Module*)module)->removeMemories([&](Memory* curr) { return true; });
