@@ -1090,6 +1090,7 @@ function test_for_each() {
   }
 
   var expected_offsets = [10, 125, null];
+  var expected_names = ["x0", "y1", "z2"];
   var expected_data = ["hello, world", "segment data 2", "hello, passive"];
   var expected_passive = [false, false, true];
 
@@ -1105,16 +1106,19 @@ function test_for_each() {
 
   module.setMemory(1, 256, "mem", [
     {
+      name: expected_names[0],
       passive: expected_passive[0],
       offset: module.i32.const(expected_offsets[0]),
       data: expected_data[0].split('').map(function(x) { return x.charCodeAt(0) })
     },
     {
+      name: expected_names[1],
       passive: expected_passive[1],
       offset: module.global.get("a-global"),
       data: expected_data[1].split('').map(function(x) { return x.charCodeAt(0) })
     },
     {
+      name: expected_names[2],
       passive: expected_passive[2],
       offset: expected_offsets[2],
       data: expected_data[2].split('').map(function(x) { return x.charCodeAt(0) })
