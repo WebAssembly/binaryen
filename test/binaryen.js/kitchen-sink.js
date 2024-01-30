@@ -557,8 +557,8 @@ function test_core() {
     module.i8x16.shuffle(module.v128.const(v128_bytes), module.v128.const(v128_bytes), v128_bytes),
     module.v128.bitselect(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     // Bulk memory
-    module.memory.init("0", makeInt32(1024), makeInt32(0), makeInt32(12)),
-    module.data.drop("0"),
+    module.memory.init("x0", makeInt32(1024), makeInt32(0), makeInt32(12)),
+    module.data.drop("x0"),
     module.memory.copy(makeInt32(2048), makeInt32(1024), makeInt32(12)),
     module.memory.fill(makeInt32(0), makeInt32(42), makeInt32(1024)),
     // All the rest
