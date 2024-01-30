@@ -24,6 +24,7 @@
 // Building on that, an extended version of StringGathering will also replace
 // those new globals with imported globals of type externref, for use with the
 // string imports proposal. String operations will likewise need to be lowered.
+// TODO
 //
 
 #include <algorithm>
