@@ -202,6 +202,7 @@ template<typename Ctx> MaybeResult<> table(Ctx&);
 template<typename Ctx> MaybeResult<> memory(Ctx&);
 template<typename Ctx> MaybeResult<> global(Ctx&);
 template<typename Ctx> MaybeResult<> export_(Ctx&);
+template<typename Ctx> MaybeResult<> start(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::ExprT> maybeElemexpr(Ctx&);
 template<typename Ctx> Result<typename Ctx::ElemListT> elemlist(Ctx&, bool);
 template<typename Ctx> MaybeResult<> elem(Ctx&);
@@ -2648,6 +2649,23 @@ template<typename Ctx> MaybeResult<> export_(Ctx& ctx) {
   return Ok{};
 }
 
+// start ::= '(' 'start' funcidx ')'
+template<typename Ctx> MaybeResult<> start(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
+  if (!ctx.in.takeSExprStart("start"sv)) {
+    return {};
+  }
+  auto func = funcidx(ctx);
+  CHECK_ERR(func);
+
+  CHECK_ERR(ctx.addStart(*func, pos));
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of start declaration");
+  }
+  return Ok{};
+}
+
 // elemexpr ::= '(' 'item' expr ')' | '(' instr ')'
 template<typename Ctx>
 MaybeResult<typename Ctx::ExprT> maybeElemexpr(Ctx& ctx) {
@@ -2893,6 +2911,10 @@ template<typename Ctx> MaybeResult<> modulefield(Ctx& ctx) {
     return Ok{};
   }
   if (auto res = export_(ctx)) {
+    CHECK_ERR(res);
+    return Ok{};
+  }
+  if (auto res = start(ctx)) {
     CHECK_ERR(res);
     return Ok{};
   }

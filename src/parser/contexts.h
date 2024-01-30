@@ -589,6 +589,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   std::vector<DefPos> tableDefs;
   std::vector<DefPos> memoryDefs;
   std::vector<DefPos> globalDefs;
+  std::vector<DefPos> startDefs;
   std::vector<DefPos> elemDefs;
   std::vector<DefPos> dataDefs;
   std::vector<DefPos> tagDefs;
@@ -714,6 +715,14 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                      GlobalTypeT,
                      std::optional<ExprT>,
                      Index pos);
+
+  Result<> addStart(FuncIdxT, Index pos) {
+    if (!startDefs.empty()) {
+      return Err{"unexpected extra 'start' function"};
+    }
+    startDefs.push_back({{}, pos, 0});
+    return Ok{};
+  }
 
   Result<> addElem(Name, TableIdxT*, std::optional<ExprT>, ElemListT&&, Index);
 
@@ -1324,6 +1333,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                      GlobalTypeT,
                      std::optional<ExprT> exp,
                      Index);
+
+  Result<> addStart(Name name, Index pos) {
+    wasm.start = name;
+    return Ok{};
+  }
 
   Result<> addImplicitElems(Type type, std::vector<Expression*>&& elems);
 
