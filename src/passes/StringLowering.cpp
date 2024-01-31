@@ -195,8 +195,8 @@ struct StringLowering : public StringGathering {
     // Lower the string.const globals into imports.
     makeImports(module);
 
-    // Now that no string contents remain, disable the feature.
-    module->features.disable(FeatureSet::Strings);
+    // TODO: disable the feature here after we lower everything away.
+    // module->features.disable(FeatureSet::Strings);
   }
 
   void makeImports(Module* module) {

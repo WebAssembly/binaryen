@@ -23,6 +23,15 @@
   (global $global (ref string) (string.const "foo"))
 
   ;; CHECK:      (global $global2 stringref (global.get $string.const_bar))
+  ;; LOWER:      (type $0 (func))
+
+  ;; LOWER:      (import "string.const" "0" (global $string.const_bar (ref string)))
+
+  ;; LOWER:      (import "string.const" "1" (global $string.const_other (ref string)))
+
+  ;; LOWER:      (import "string.const" "2" (global $global (ref string)))
+
+  ;; LOWER:      (global $global2 stringref (global.get $string.const_bar))
   (global $global2 (ref null string) (string.const "bar"))
 
   ;; CHECK:      (func $a (type $0)
@@ -33,6 +42,14 @@
   ;; CHECK-NEXT:   (global.get $global)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; LOWER:      (func $a (type $0)
+  ;; LOWER-NEXT:  (drop
+  ;; LOWER-NEXT:   (global.get $string.const_bar)
+  ;; LOWER-NEXT:  )
+  ;; LOWER-NEXT:  (drop
+  ;; LOWER-NEXT:   (global.get $global)
+  ;; LOWER-NEXT:  )
+  ;; LOWER-NEXT: )
   (func $a
     (drop
       (string.const "bar")
@@ -56,6 +73,20 @@
   ;; CHECK-NEXT:   (global.get $global2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; LOWER:      (func $b (type $0)
+  ;; LOWER-NEXT:  (drop
+  ;; LOWER-NEXT:   (global.get $string.const_bar)
+  ;; LOWER-NEXT:  )
+  ;; LOWER-NEXT:  (drop
+  ;; LOWER-NEXT:   (global.get $string.const_other)
+  ;; LOWER-NEXT:  )
+  ;; LOWER-NEXT:  (drop
+  ;; LOWER-NEXT:   (global.get $global)
+  ;; LOWER-NEXT:  )
+  ;; LOWER-NEXT:  (drop
+  ;; LOWER-NEXT:   (global.get $global2)
+  ;; LOWER-NEXT:  )
+  ;; LOWER-NEXT: )
   (func $b
     (drop
       (string.const "bar")
@@ -78,23 +109,32 @@
 ;; Multiple possible reusable globals. Also test ignoring of imports.
 (module
   ;; CHECK:      (import "a" "b" (global $import (ref string)))
+  ;; LOWER:      (import "a" "b" (global $import (ref string)))
   (import "a" "b" (global $import (ref string)))
 
   ;; CHECK:      (global $global1 (ref string) (string.const "foo"))
   (global $global1 (ref string) (string.const "foo"))
 
   ;; CHECK:      (global $global2 (ref string) (global.get $global1))
+  ;; LOWER:      (import "string.const" "0" (global $global1 (ref string)))
+
+  ;; LOWER:      (import "string.const" "1" (global $global4 (ref string)))
+
+  ;; LOWER:      (global $global2 (ref string) (global.get $global1))
   (global $global2 (ref string) (string.const "foo"))
 
   ;; CHECK:      (global $global3 (ref string) (global.get $global1))
+  ;; LOWER:      (global $global3 (ref string) (global.get $global1))
   (global $global3 (ref string) (string.const "foo"))
 
   ;; CHECK:      (global $global4 (ref string) (string.const "bar"))
   (global $global4 (ref string) (string.const "bar"))
 
   ;; CHECK:      (global $global5 (ref string) (global.get $global4))
+  ;; LOWER:      (global $global5 (ref string) (global.get $global4))
   (global $global5 (ref string) (string.const "bar"))
 
   ;; CHECK:      (global $global6 (ref string) (global.get $global4))
+  ;; LOWER:      (global $global6 (ref string) (global.get $global4))
   (global $global6 (ref string) (string.const "bar"))
 )
