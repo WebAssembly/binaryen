@@ -69,6 +69,8 @@
 ;; _TNH_:      (memory $0 1 2 shared)
 (module
   ;; This offset is unknown, so assume the worst.
+  ;; TODO: We could remove it in TNH mode
+
   ;; CHECK:      (import "a" "b" (global $g i32))
   ;; _TNH_:      (import "a" "b" (global $g i32))
   (import "a" "b" (global $g i32))
