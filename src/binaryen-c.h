@@ -2906,8 +2906,10 @@ BINARYEN_API BinaryenElementSegmentRef
 BinaryenGetElementSegmentByIndex(BinaryenModuleRef module, BinaryenIndex index);
 
 // This will create a memory, overwriting any existing memory
-// Each memory has data in segments, a start offset in segmentOffsets, and a
-// size in segmentSizes. exportName can be NULL
+// Each memory segment has a name in segmentNames, data in segmentDatas,
+// a start offset in segmentOffsets, a passive flag in segmentPassives
+// and a size in segmentSizes. segmentNames and exportName can be NULL
+// If segmentNames is null, BinaryenSetMemory will create one from the segment index
 BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
                                     BinaryenIndex initial,
                                     BinaryenIndex maximum,
