@@ -18,7 +18,7 @@
 
 namespace json {
 
-void stringify(std::ostream& os, bool pretty) {
+void Value::stringify(std::ostream& os, bool pretty) {
   if (isString()) {
     // TODO: escaping
     os << '"' << getCString() << '"';
@@ -32,7 +32,7 @@ void stringify(std::ostream& os, bool pretty) {
         // TODO prety whitespace
         os << ',';
       }
-      item.stringify(os, pretty);
+      item->stringify(os, pretty);
     }
     os << ']';
   } else {
