@@ -10,6 +10,29 @@
   ;; CHECK:      (global $bar (mut (ref string)) (string.const "bar"))
   (global $bar (mut (ref string)) (string.const "bar"))
 
+  ;; CHECK:      (global $baz (mut (ref string)) (string.const "baz"))
+  (global $baz (mut (ref string)) (string.const "baz"))
+
+  ;; CHECK:      (func $set (type $0)
+  ;; CHECK-NEXT:  (global.set $foo
+  ;; CHECK-NEXT:   (string.const "foo")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $bar
+  ;; CHECK-NEXT:   (string.const "BAR_BAR_BAR")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $set
+    ;; Modify $foo to the same value as it begins.
+    (global.set $foo
+      (string.const "foo")
+    )
+    ;; Modify $bar to a new value
+    (global.set $bar
+      (string.const "BAR_BAR_BAR")
+    )
+    ;; Do not modify $baz at all.
+  )
+
   ;; CHECK:      (func $get (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.const "foo")
@@ -17,26 +40,20 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $bar)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.const "baz")
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get
-    ;; $foo can be optimized to a string.const, but not $bar which is modified
-    ;; in the function below us.
+    ;; $foo and $baz can be optimized, but not $bar.
     (drop
       (global.get $foo)
     )
     (drop
       (global.get $bar)
     )
-  )
-
-  ;; CHECK:      (func $set (type $0)
-  ;; CHECK-NEXT:  (global.set $bar
-  ;; CHECK-NEXT:   (string.const "bar2")
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $set
-    (global.set $bar
-      (string.const "bar2")
+    (drop
+      (global.get $baz)
     )
   )
 )
