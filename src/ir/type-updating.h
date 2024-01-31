@@ -443,7 +443,6 @@ public:
 
   std::unordered_map<HeapType, Signature> newSignatures;
 
-public:
   TypeMapper(Module& wasm, const TypeUpdates& mapping)
     : GlobalTypeRewriter(wasm), mapping(mapping) {}
 
