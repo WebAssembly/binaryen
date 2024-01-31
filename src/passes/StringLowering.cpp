@@ -106,7 +106,7 @@ struct StringGathering : public Pass {
   // Existing globals already in the form we emit can be reused. That is, if
   // we see
   //
-  //  (global $foo (ref null string) (string.const ..))
+  //  (global $foo (ref string) (string.const ..))
   //
   // then we can just use that as the global for that string. This avoids
   // repeated executions of the pass adding more and more globals.
