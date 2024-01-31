@@ -2582,15 +2582,15 @@ function wrapModule(module, self = {}) {
       const ret = Module['_BinaryenSetMemory'](
         module, initial, maximum, strToStack(exportName),
           i32sToStack(names),
-        i32sToStack(datas),
-        i8sToStack(passives),
-        i32sToStack(offsets),
-        i32sToStack(lengths),
-        segmentsLen,
-        shared,
-        memory64,
-        strToStack(internalName)
-      );
+          i32sToStack(datas),
+          i8sToStack(passives),
+          i32sToStack(offsets),
+          i32sToStack(lengths),
+          segmentsLen,
+          shared,
+          memory64,
+          strToStack(internalName)
+        );
       for (let i = 0; i < segmentsLen; i++) {
         _free(datas[i]);
       }
