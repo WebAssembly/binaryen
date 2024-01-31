@@ -2028,11 +2028,11 @@ BINARYEN_API bool BinaryenSIMDLoadStoreLaneIsStore(BinaryenExpressionRef expr);
 
 // MemoryInit
 
-// Gets the index of the segment being initialized by a `memory.init`
+// Gets the name of the segment being initialized by a `memory.init`
 // expression.
 BINARYEN_API const char*
 BinaryenMemoryInitGetSegment(BinaryenExpressionRef expr);
-// Sets the index of the segment being initialized by a `memory.init`
+// Sets the name of the segment being initialized by a `memory.init`
 // expression.
 BINARYEN_API void BinaryenMemoryInitSetSegment(BinaryenExpressionRef expr,
                                                const char* segment);
@@ -2057,9 +2057,9 @@ BINARYEN_API void BinaryenMemoryInitSetSize(BinaryenExpressionRef expr,
 
 // DataDrop
 
-// Gets the index of the segment being dropped by a `data.drop` expression.
+// Gets the name of the segment being dropped by a `data.drop` expression.
 BINARYEN_API const char* BinaryenDataDropGetSegment(BinaryenExpressionRef expr);
-// Sets the index of the segment being dropped by a `data.drop` expression.
+// Sets the name of the segment being dropped by a `data.drop` expression.
 BINARYEN_API void BinaryenDataDropSetSegment(BinaryenExpressionRef expr,
                                              const char* segment);
 
@@ -2909,7 +2909,7 @@ BinaryenGetElementSegmentByIndex(BinaryenModuleRef module, BinaryenIndex index);
 // Each memory segment has a name in segmentNames, data in segmentDatas,
 // a start offset in segmentOffsets, a passive flag in segmentPassives
 // and a size in segmentSizes. segmentNames and exportName can be NULL
-// If segmentNames is null, BinaryenSetMemory will create one from the segment index
+// If segmentNames is null, BinaryenSetMemory creates names from indices
 BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
                                     BinaryenIndex initial,
                                     BinaryenIndex maximum,
