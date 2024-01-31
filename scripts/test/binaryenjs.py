@@ -53,8 +53,8 @@ def do_test_binaryen_js_with(which):
                 out = support.run_command(cmd, stderr=subprocess.STDOUT, expected_status=None)
             expected = open(os.path.join(shared.options.binaryen_test, 'binaryen.js', s + '.txt')).read()
             # ignore rhs whitespace
-            expected = "\n".join([ line.rstrip() for line in expected.split('\n') ])
-            out = "\n".join([ line.rstrip() for line in out.split('\n') ])
+            expected = "\n".join([line.rstrip() for line in expected.split('\n')])
+            out = "\n".join([line.rstrip() for line in out.split('\n')])
             if expected not in out:
                 shared.fail(out, expected)
 
