@@ -54,10 +54,7 @@ struct Value {
     Ref& operator[](IString x) { return (*this->get())[x]; }
   };
 
-  template<typename T>
-  static Ref make(T t) {
-    return Ref(new Value(t));
-  }
+  template<typename T> static Ref make(T t) { return Ref(new Value(t)); }
 
   enum Type {
     String = 0,

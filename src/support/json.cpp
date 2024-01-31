@@ -40,5 +40,4 @@ void Value::stringify(std::ostream& os, bool pretty) {
   }
 }
 
-}
-
+} // namespace json
