@@ -87,9 +87,7 @@ struct StringGathering : public Pass {
     }
 
     // Sort the strings for determinism (alphabetically).
-    for (auto& string : stringSet) {
-      strings.push_back(string);
-    }
+    strings = std::vector<Name>(stringSet.begin(), stringSet.end());
     std::sort(strings.begin(), strings.end());
   }
 
