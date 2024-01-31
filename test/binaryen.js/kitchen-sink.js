@@ -1171,6 +1171,15 @@ function test_expression_info() {
   module.dispose();
 }
 
+function test(m) {
+  try {
+    m();
+  } catch(e) {
+    console.trace();
+    throw e;
+  }
+}
+
 test_types();
 test_features();
 test_ids();
