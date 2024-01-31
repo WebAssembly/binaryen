@@ -88,9 +88,7 @@ struct StringGathering : public Pass {
     }
 
     // Sort the strings for determinism (alphabetically).
-    for (auto& string : stringSet) {
-      strings.push_back(string);
-    }
+    strings = std::vector<Name>(stringSet.begin(), stringSet.end());
     std::sort(strings.begin(), strings.end());
   }
 
@@ -153,7 +151,10 @@ struct StringGathering : public Pass {
       module->addGlobal(std::move(global));
     }
 
-    // Sort our new globals to the start, as others may use them.
+    // Sort our new globals to the start, as other global initializers may use
+    // them (and it would be invalid for us to appear after a use). This sort is
+    // a simple way to ensure that we validate, but it may be unoptimal (we
+    // leave that for reorder-globals).
     std::stable_sort(
       module->globals.begin(),
       module->globals.end(),
