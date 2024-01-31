@@ -2,10 +2,22 @@
 ;; RUN: foreach %s %t wasm-opt -all --gufa -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (global $foo (mut (ref string)) (string.const "foo"))
   (global $foo (mut (ref string)) (string.const "foo"))
 
+  ;; CHECK:      (global $bar (mut (ref string)) (string.const "bar"))
   (global $bar (mut (ref string)) (string.const "bar"))
 
+  ;; CHECK:      (func $get (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (string.const "foo")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $bar)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $get
     ;; $foo can be optimized to a string.const, but not $bar which is modified
     ;; in the function below us.
@@ -17,6 +29,11 @@
     )
   )
 
+  ;; CHECK:      (func $set (type $0)
+  ;; CHECK-NEXT:  (global.set $bar
+  ;; CHECK-NEXT:   (string.const "bar2")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $set
     (global.set $bar
       (string.const "bar2")
