@@ -34,6 +34,7 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/space.h"
+#include "support/stdckdint.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -46,6 +47,7 @@ namespace {
 // will be used instead of memory.init for this range.
 struct Range {
   bool isZero;
+  // The range [start, end) - that is, start is included while end is not.
   size_t start;
   size_t end;
 };
@@ -107,7 +109,8 @@ struct MemoryPacking : public Pass {
   void dropUnusedSegments(Module* module,
                           std::vector<std::unique_ptr<DataSegment>>& segments,
                           ReferrersMap& referrers);
-  bool canSplit(const std::unique_ptr<DataSegment>& segment,
+  bool canSplit(Module* module,
+                const std::unique_ptr<DataSegment>& segment,
                 const Referrers& referrers);
   void calculateRanges(const std::unique_ptr<DataSegment>& segment,
                        const Referrers& referrers,
@@ -161,7 +164,7 @@ void MemoryPacking::run(Module* module) {
 
     std::vector<Range> ranges;
 
-    if (canSplit(segment, currReferrers)) {
+    if (canSplit(module, segment, currReferrers)) {
       calculateRanges(segment, currReferrers, ranges);
     } else {
       // A single range covers the entire segment. Set isZero to false so the
@@ -260,7 +263,8 @@ bool MemoryPacking::canOptimize(
   return true;
 }
 
-bool MemoryPacking::canSplit(const std::unique_ptr<DataSegment>& segment,
+bool MemoryPacking::canSplit(Module* module,
+                             const std::unique_ptr<DataSegment>& segment,
                              const Referrers& referrers) {
   // Don't mess with segments related to llvm coverage tools such as
   // __llvm_covfun. There segments are expected/parsed by external downstream
@@ -275,6 +279,24 @@ bool MemoryPacking::canSplit(const std::unique_ptr<DataSegment>& segment,
     // leave that for RemoveUnusedModuleElements to decide (as they may trap
     // during startup if out of bounds, which is an effect).
     return false;
+  }
+
+  // Do not split an active segment that might trap.
+  if (!getPassOptions().trapsNeverHappen && segment->offset) {
+    auto* c = segment->offset->dynCast<Const>();
+    if (!c) {
+      // We can't tell if this will trap or not.
+      return false;
+    }
+    auto* memory = module->getMemory(segment->memory);
+    auto memorySize = memory->initial * Memory::kPageSize;
+    Index start = c->value.getUnsigned();
+    Index size = segment->data.size();
+    Index end;
+    if (std::ckd_add(&end, start, size) || end > memorySize) {
+      // This traps.
+      return false;
+    }
   }
 
   for (auto* referrer : referrers) {
