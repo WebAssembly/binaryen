@@ -30,6 +30,7 @@
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/type-updating.h"
 #include "pass.h"
 #include "support/json.h"
 #include "wasm-builder.h"
@@ -195,8 +196,11 @@ struct StringLowering : public StringGathering {
     // Lower the string.const globals into imports.
     makeImports(module);
 
-    // TODO: disable the feature here after we lower everything away.
-    // module->features.disable(FeatureSet::Strings);
+    // Remove all HeapType::string etc. in favor of externref.
+    updateTypes(module);
+
+    // Disable the feature here after we lowered everything away.
+    module->features.disable(FeatureSet::Strings);
   }
 
   void makeImports(Module* module) {
@@ -226,6 +230,12 @@ struct StringLowering : public StringGathering {
     std::vector<char> vec(str.begin(), str.end());
     module->customSections.emplace_back(
       CustomSection{"string.consts", std::move(vec)});
+  }
+
+  void updateTypes(Module* module) {
+    TypeMapper::TypeUpdates updates;
+    updates[HeapType::string] = HeapType::ext;
+    TypeMapper(*module, updates).map();
   }
 };
 
