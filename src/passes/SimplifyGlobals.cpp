@@ -52,20 +52,6 @@ namespace wasm {
 
 namespace {
 
-// Checks if an expression is a constant, and one that we can copy without
-// downsides. This is the set of constant values that we will inline from
-// globals.
-bool isCopyableConstant(Expression* curr) {
-  // Anything that is truly constant is suitable for us, *except* for string
-  // constants, which in VMs may be implemented not as a constant but as an
-  // allocation. We prefer to keep string.const in globals where any such
-  // allocation only happens once (note that that makes them equivalent to
-  // strings imported from JS, which would be in imported globals, which are
-  // similarly not optimizable).
-  // TODO: revisit this if/when VMs implement and optimize string.const.
-  return Properties::isConstantExpression(curr) && !curr->is<StringConst>();
-}
-
 struct GlobalInfo {
   // Whether the global is imported and exported.
   bool imported = false;
@@ -372,7 +358,7 @@ struct ConstantGlobalApplier
 
   void visitExpression(Expression* curr) {
     if (auto* set = curr->dynCast<GlobalSet>()) {
-      if (isCopyableConstant(set->value)) {
+      if (Properties::isConstantExpression(set->value)) {
         currConstantGlobals[set->name] =
           getLiteralsFromConstExpression(set->value);
       } else {
@@ -383,7 +369,7 @@ struct ConstantGlobalApplier
       // Check if the global is known to be constant all the time.
       if (constantGlobals->count(get->name)) {
         auto* global = getModule()->getGlobal(get->name);
-        assert(isCopyableConstant(global->init));
+        assert(Properties::isConstantExpression(global->init));
         replaceCurrent(ExpressionManipulator::copy(global->init, *getModule()));
         replaced = true;
         return;
@@ -685,7 +671,7 @@ struct SimplifyGlobals : public Pass {
     // go, as well as applying them where possible.
     for (auto& global : module->globals) {
       if (!global->imported()) {
-        if (isCopyableConstant(global->init)) {
+        if (Properties::isConstantExpression(global->init)) {
           constantGlobals[global->name] =
             getLiteralsFromConstExpression(global->init);
         } else {
@@ -709,7 +695,7 @@ struct SimplifyGlobals : public Pass {
     NameSet constantGlobals;
     for (auto& global : module->globals) {
       if (!global->mutable_ && !global->imported() &&
-          isCopyableConstant(global->init)) {
+          Properties::isConstantExpression(global->init)) {
         constantGlobals.insert(global->name);
       }
     }

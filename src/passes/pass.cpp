@@ -475,6 +475,9 @@ void PassRegistry::registerPasses() {
     "ssa-nomerge",
     "ssa-ify variables so that they have a single assignment, ignoring merges",
     createSSAifyNoMergePass);
+  registerPass("string-gathering",
+               "gathers wasm strings to globals",
+               createStringGatheringPass);
   registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
   registerPass("stack-check",
@@ -710,6 +713,11 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
     addIfNoDWARFIssues("simplify-globals");
   }
   addIfNoDWARFIssues("remove-unused-module-elements");
+  if (options.optimizeLevel >= 2 && wasm->features.hasStrings()) {
+    // Gather strings to globals right before reorder-globals, which will then
+    // sort them properly.
+    addIfNoDWARFIssues("string-gathering");
+  }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues("reorder-globals");
   }

@@ -153,6 +153,7 @@ Pass* createSimplifyLocalsNoTeePass();
 Pass* createSimplifyLocalsNoStructurePass();
 Pass* createSimplifyLocalsNoTeeNoStructurePass();
 Pass* createStackCheckPass();
+Pass* createStringGatheringPass();
 Pass* createStripDebugPass();
 Pass* createStripDWARFPass();
 Pass* createStripProducersPass();
