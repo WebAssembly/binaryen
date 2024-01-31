@@ -38,9 +38,8 @@
 namespace wasm {
 
 struct StringGathering : public Pass {
-  // All the strings we found in the module, and a reverse mapping.
+  // All the strings we found in the module.
   std::vector<Name> strings;
-  std::unordered_map<Name, Index> stringIndexes;
 
   // Pointers to all StringConsts, so that we can replace them.
   using StringPtrs = std::vector<Expression**>;
@@ -87,19 +86,15 @@ struct StringGathering : public Pass {
       }
     }
 
-    // Generate the indexes from the combined set of necessary strings, which we
-    // sort for determinism (alphabetically).
+    // Sort the strings for determinism (alphabetically).
     for (auto& string : stringSet) {
       strings.push_back(string);
     }
     std::sort(strings.begin(), strings.end());
-    for (Index i = 0; i < strings.size(); i++) {
-      stringIndexes[strings[i]] = i;
-    }
   }
 
-  // For each string index, the name of the global that replaces it.
-  std::vector<Name> globalNames;
+  // For each string, the name of the global that replaces it.
+  std::unordered_map<Name, Name> stringToGlobalName;
 
   Type nnstringref = Type(HeapType::string, NonNullable);
 
@@ -124,15 +119,11 @@ struct StringGathering : public Pass {
     // Note all the new names we create for the sorting later.
     std::unordered_set<Name> newNames;
 
-    // Each string will get a global.
-    globalNames.resize(strings.size());
-
     // Find globals to reuse (see comment on stringPtrsToPreserve for context).
     for (auto& global : module->globals) {
       if (global->type == nnstringref && !global->imported()) {
         if (auto* stringConst = global->init->dynCast<StringConst>()) {
-          auto stringIndex = stringIndexes[stringConst->string];
-          auto& globalName = globalNames[stringIndex];
+          auto& globalName = stringToGlobalName[stringConst->string];
           if (!globalName.is()) {
             // This is the first global for this string, use it.
             globalName = global->name;
@@ -144,7 +135,7 @@ struct StringGathering : public Pass {
 
     Builder builder(*module);
     for (Index i = 0; i < strings.size(); i++) {
-      auto& globalName = globalNames[i];
+      auto& globalName = stringToGlobalName[strings[i]];
       if (globalName.is()) {
         // We are reusing a global for this one.
         continue;
@@ -177,7 +168,7 @@ struct StringGathering : public Pass {
         continue;
       }
       auto* stringConst = (*stringPtr)->cast<StringConst>();
-      auto importName = globalNames[stringIndexes[stringConst->string]];
+      auto importName = stringToGlobalName[stringConst->string];
       *stringPtr = builder.makeGlobalGet(importName, nnstringref);
     }
   }
