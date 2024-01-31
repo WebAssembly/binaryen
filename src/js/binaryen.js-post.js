@@ -2617,17 +2617,17 @@ function wrapModule(module, self = {}) {
     return Module['_BinaryenGetNumMemorySegments'](module);
   };
   self['getMemorySegmentInfo'] = function(name) {
-    const passive = Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, name));
+    const passive = Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, strToStack(name)));
     let offset = null;
     if (!passive) {
-      offset = Module['_BinaryenGetMemorySegmentByteOffset'](module, name);
+      offset = Module['_BinaryenGetMemorySegmentByteOffset'](module, strToStack(name));
     }
     return {
       'offset': offset,
       'data': (function(){
-        const size = Module['_BinaryenGetMemorySegmentByteLength'](module, name);
+        const size = Module['_BinaryenGetMemorySegmentByteLength'](module, strToStack(name));
         const ptr = _malloc(size);
-        Module['_BinaryenCopyMemorySegmentData'](module, name, ptr);
+        Module['_BinaryenCopyMemorySegmentData'](module, strToStack(name), ptr);
         const res = new Uint8Array(size);
         res.set(HEAP8.subarray(ptr, ptr + size));
         _free(ptr);
