@@ -1,7 +1,7 @@
   // BinaryenTypeNone: 0
   //
   // BinaryenTypeUnreachable: 1
-  // 1
+  // 12
   // BinaryenTypeInt32: 2
   // 2
   // BinaryenTypeInt64: 3
