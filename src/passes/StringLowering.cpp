@@ -168,8 +168,8 @@ struct StringGathering : public Pass {
         continue;
       }
       auto* stringConst = (*stringPtr)->cast<StringConst>();
-      auto importName = stringToGlobalName[stringConst->string];
-      *stringPtr = builder.makeGlobalGet(importName, nnstringref);
+      auto globalName = stringToGlobalName[stringConst->string];
+      *stringPtr = builder.makeGlobalGet(globalName, nnstringref);
     }
   }
 };
