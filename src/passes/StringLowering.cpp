@@ -201,7 +201,7 @@ struct StringLowering : public StringGathering {
 
   void makeImports(Module* module) {
     Index importIndex = 0;
-    json::value stringArray;
+    json::Value stringArray;
     stringArray.setArray();
     std::vector<Name> importedStrings;
     for (auto& global : module->globals) {
@@ -211,14 +211,16 @@ struct StringLowering : public StringGathering {
           global->base = std::to_string(importIndex);
           importIndex++;
           global->init = nullptr;
-          stringArray.push_back(c->string.str);
+
+          auto str = json::Value::make(std::string(c->string.str).c_str());
+          stringArray.push_back(str);
         }
       }
     }
 
     stringArray.stringify(std::cout);
   }
-}
+};
 
 Pass* createStringGatheringPass() { return new StringGathering(); }
 Pass* createStringLoweringPass() { return new StringLowering(); }
