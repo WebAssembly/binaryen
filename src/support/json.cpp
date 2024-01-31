@@ -29,7 +29,7 @@ void Value::stringify(std::ostream& os, bool pretty) {
       if (first) {
         first = false;
       } else {
-        // TODO prety whitespace
+        // TODO pretty whitespace
         os << ',';
       }
       item->stringify(os, pretty);

@@ -221,9 +221,11 @@ struct StringLowering : public StringGathering {
     // Add a custom section with the JSON.
     std::stringstream stream;
     stringArray.stringify(stream);
+    stringArray.stringify(std::cerr);
     auto str = stream.str();
     std::vector<char> vec(str.begin(), str.end());
     module->customSections.emplace_back(CustomSection{"string.consts", std::move(vec)});
+    
   }
 };
 
