@@ -3,7 +3,25 @@
 ;; RUN: foreach %s %t wasm-opt --string-lowering -all -S -o - | filecheck %s
 
 (module
-  (func $a
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (import "string.const" "0" (global $string.const_bar (ref string)))
+
+  ;; CHECK:      (import "string.const" "1" (global $string.const_foo (ref string)))
+
+  ;; CHECK:      (func $consts (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $string.const_foo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $string.const_bar)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $string.const_foo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $consts
+    ;; These consts will become global.gets of new imported globals.
     (drop
       (string.const "foo")
     )
