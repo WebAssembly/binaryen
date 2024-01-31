@@ -77,6 +77,7 @@
   (memory 1 2 shared)
   (data (global.get $g) "\00")
 )
+
 ;; CHECK:      (memory $0 1 2 shared)
 
 ;; CHECK:      (data $0 (global.get $g) "\00")
@@ -84,3 +85,12 @@
 ;; _TNH_:      (memory $0 1 2 shared)
 
 ;; _TNH_:      (data $0 (global.get $g) "\00")
+(module
+  ;; Passive segments cannot trap during startup and are removable if they have
+  ;; no uses, like here.
+  (memory 1 2 shared)
+  (data $data "\00\00\00")
+)
+;; CHECK:      (memory $0 1 2 shared)
+
+;; _TNH_:      (memory $0 1 2 shared)
