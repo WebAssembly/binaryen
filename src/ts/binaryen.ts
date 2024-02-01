@@ -2122,8 +2122,8 @@ export class Module {
     }
     get memory () {
         return {
-            init: (segment: string, dest: ExpressionRef, offset: ExpressionRef, size: ExpressionRef, name?: string): ExpressionRef =>
-                preserveStack(() => JSModule['_BinaryenMemoryInit'](this.ptr, strToStack(segment), dest, offset, size, strToStack(name))),
+            init: (data: string, dest: ExpressionRef, offset: ExpressionRef, size: ExpressionRef, name?: string): ExpressionRef =>
+                preserveStack(() => JSModule['_BinaryenMemoryInit'](this.ptr, strToStack(data), dest, offset, size, strToStack(name))),
             has: () => Boolean(JSModule['_BinaryenHasMemory'](this.ptr)),
             size: (name?: string, memory64?: boolean): ExpressionRef => JSModule['_BinaryenMemorySize'](this.ptr, strToStack(name), memory64),
             grow: (value: ExpressionRef, name?: string, memory64?: boolean): ExpressionRef => JSModule['_BinaryenMemoryGrow'](this.ptr, value, strToStack(name), memory64),
@@ -2134,20 +2134,23 @@ export class Module {
             set: (initial: number, maximum: number, exportName?: string | null, segments?: SegmentInfo[] | null, shared?: boolean, memory64?: boolean, internalName?: string): void =>
                 preserveStack(() => {
                       const segmentsLen = segments ? segments.length : 0;
+                      const names = new Array(segmentsLen);
                       const datas = new Array(segmentsLen);
                       const lengths = new Array(segmentsLen);
                       const passives = new Array(segmentsLen);
                       const offsets = new Array(segmentsLen);
                       for (let i = 0; i < segmentsLen; i++) {
-                        const { data, offset, passive } = segments[i];
-                          datas[i] = _malloc(data.length);
+                        const { name, data, offset, passive } = segments[i];
+                        names[i] = strToStack(name);
+                        datas[i] = _malloc(data.length);
                         HEAP8.set(data, datas[i]);
-                          lengths[i] = data.length;
-                          passives[i] = passive;
-                          offsets[i] = offset;
+                        lengths[i] = data.length;
+                        passives[i] = passive;
+                        offsets[i] = offset;
                       }
                       const ret = JSModule['_BinaryenSetMemory'](
                         this.ptr, initial, maximum, strToStack(exportName),
+                        i32sToStack(names),
                         i32sToStack(datas),
                         i8sToStack(passives),
                         i32sToStack(offsets),
@@ -2174,12 +2177,12 @@ export class Module {
                     }, withMax);
                 },
             countSegments: (): number => JSModule['_BinaryenGetNumMemorySegments'](this.ptr),
-            getSegmentInfoByIndex: (index: number): SegmentInfo => {
-                    const passive = Boolean(JSModule['_BinaryenGetMemorySegmentPassive'](this.ptr, index));
-                    const offset = passive ? 0 : JSModule['_BinaryenGetMemorySegmentByteOffset'](this.ptr, index);
-                    const size = JSModule['_BinaryenGetMemorySegmentByteLength'](this.ptr, index);
+            getSegmentInfo: (name: string): SegmentInfo => {
+                    const passive = Boolean(JSModule['_BinaryenGetMemorySegmentPassive'](this.ptr, strToStack(name)));
+                    const offset = passive ? 0 : JSModule['_BinaryenGetMemorySegmentByteOffset'](this.ptr, strToStack(name));
+                    const size = JSModule['_BinaryenGetMemorySegmentByteLength'](this.ptr, strToStack(name));
                     const ptr = _malloc(size);
-                    JSModule['_BinaryenCopyMemorySegmentData'](this.ptr, index, ptr);
+                    JSModule['_BinaryenCopyMemorySegmentData'](this.ptr, strToStack(name), ptr);
                     const data = new Uint8Array(size);
                     data.set(HEAP8.subarray(ptr, ptr + size));
                     _free(ptr);
@@ -2437,6 +2440,7 @@ export class TypeBuilder {
 
 
 export interface SegmentInfo {
+    name: string;
     offset: ExpressionRef;
     data: Uint8Array;
     passive?: boolean;
