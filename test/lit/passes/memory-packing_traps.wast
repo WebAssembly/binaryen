@@ -6,9 +6,9 @@
 (module
   ;; We should not optimize out a segment that will trap, as that is an effect
   ;; we need to preserve (unless TrapsNeverHappen).
-  ;; CHECK:      (memory $memory 1 2 shared)
-  ;; TNH__:      (memory $memory 1 2 shared)
-  (memory $memory 1 2 shared)
+  ;; CHECK:      (memory $memory 1 2)
+  ;; TNH__:      (memory $memory 1 2)
+  (memory $memory 1 2)
   ;; CHECK:      (data $data (i32.const -1) "\00")
   (data $data (i32.const -1) "\00")
 )
@@ -16,43 +16,43 @@
 (module
   ;; We should handle the possible overflow in adding the offset and size, and
   ;; see this might trap.
-  ;; CHECK:      (memory $memory 1 2 shared)
-  ;; TNH__:      (memory $memory 1 2 shared)
-  (memory $memory 1 2 shared)
+  ;; CHECK:      (memory $memory 1 2)
+  ;; TNH__:      (memory $memory 1 2)
+  (memory $memory 1 2)
   ;; CHECK:      (data $data (i32.const -2) "\00\00\00")
   (data $data (i32.const -2) "\00\00\00")
 )
 
 (module
   ;; This segment will almost trap, but not.
-  ;; CHECK:      (memory $memory 1 2 shared)
-  ;; TNH__:      (memory $memory 1 2 shared)
-  (memory $memory 1 2 shared)
+  ;; CHECK:      (memory $memory 1 2)
+  ;; TNH__:      (memory $memory 1 2)
+  (memory $memory 1 2)
   (data $data (i32.const 65535) "\00")
 )
 
 (module
   ;; This one is slightly larger, and will trap.
-  ;; CHECK:      (memory $memory 1 2 shared)
-  ;; TNH__:      (memory $memory 1 2 shared)
-  (memory $memory 1 2 shared)
+  ;; CHECK:      (memory $memory 1 2)
+  ;; TNH__:      (memory $memory 1 2)
+  (memory $memory 1 2)
   ;; CHECK:      (data $data (i32.const 65535) "\00\00")
   (data $data (i32.const 65535) "\00\00")
 )
 
 (module
   ;; This one is slightly larger, but the offset is lower so it will not trap.
-  ;; CHECK:      (memory $memory 1 2 shared)
-  ;; TNH__:      (memory $memory 1 2 shared)
-  (memory $memory 1 2 shared)
+  ;; CHECK:      (memory $memory 1 2)
+  ;; TNH__:      (memory $memory 1 2)
+  (memory $memory 1 2)
   (data $data (i32.const 65534) "\00\00")
 )
 
 (module
   ;; This one's offset is just large enough to trap.
-  ;; CHECK:      (memory $memory 1 2 shared)
-  ;; TNH__:      (memory $memory 1 2 shared)
-  (memory $memory 1 2 shared)
+  ;; CHECK:      (memory $memory 1 2)
+  ;; TNH__:      (memory $memory 1 2)
+  (memory $memory 1 2)
   ;; CHECK:      (data $data (i32.const 65536) "\00")
   (data $data (i32.const 65536) "\00")
 )
@@ -64,9 +64,9 @@
   ;; CHECK:      (import "a" "b" (global $g i32))
   ;; TNH__:      (import "a" "b" (global $g i32))
   (import "a" "b" (global $g i32))
-  ;; CHECK:      (memory $memory 1 2 shared)
-  ;; TNH__:      (memory $memory 1 2 shared)
-  (memory $memory 1 2 shared)
+  ;; CHECK:      (memory $memory 1 2)
+  ;; TNH__:      (memory $memory 1 2)
+  (memory $memory 1 2)
   ;; CHECK:      (data $data (global.get $g) "\00")
   ;; TNH__:      (data $data (global.get $g) "\00")
   (data $data (global.get $g) "\00")
@@ -75,8 +75,8 @@
 (module
   ;; Passive segments cannot trap during startup and are removable if they have
   ;; no uses, like here.
-  ;; CHECK:      (memory $memory 1 2 shared)
-  ;; TNH__:      (memory $memory 1 2 shared)
-  (memory $memory 1 2 shared)
+  ;; CHECK:      (memory $memory 1 2)
+  ;; TNH__:      (memory $memory 1 2)
+  (memory $memory 1 2)
   (data $data "\00\00\00")
 )
