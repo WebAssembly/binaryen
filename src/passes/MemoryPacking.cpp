@@ -627,14 +627,12 @@ void MemoryPacking::createSplitSegments(
     if (!segment->isPassive) {
       if (auto* c = segment->offset->dynCast<Const>()) {
         if (c->value.type == Type::i32) {
-          offset = addStartAndOffset<uint32_t>(range.start,
-                                               c->value.geti32(),
-                                               builder);
+          offset = addStartAndOffset<uint32_t>(
+            range.start, c->value.geti32(), builder);
         } else {
           assert(c->value.type == Type::i64);
-          offset = addStartAndOffset<uint64_t>(range.start,
-                                               c->value.geti64(),
-                                               builder);
+          offset = addStartAndOffset<uint64_t>(
+            range.start, c->value.geti64(), builder);
         }
       } else {
         assert(ranges.size() == 1);
