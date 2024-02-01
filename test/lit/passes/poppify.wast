@@ -482,7 +482,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i64.const 1)
   ;; CHECK-NEXT:   (br $l
-  ;; CHECK-NEXT:    (pop i32 i64)
+  ;; CHECK-NEXT:    (pop (tuple i32 i64))
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -501,7 +501,7 @@
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT:  (i64.const 1)
   ;; CHECK-NEXT:  (return
-  ;; CHECK-NEXT:   (pop i32 i64)
+  ;; CHECK-NEXT:   (pop (tuple i32 i64))
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $return-tuple (result i32 i64)

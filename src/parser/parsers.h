@@ -28,6 +28,7 @@ using namespace std::string_view_literals;
 // Types
 template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::RefTypeT> reftype(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::TypeT> tupletype(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::ParamsT> params(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::ResultsT> results(Ctx&);
@@ -201,6 +202,7 @@ template<typename Ctx> MaybeResult<> table(Ctx&);
 template<typename Ctx> MaybeResult<> memory(Ctx&);
 template<typename Ctx> MaybeResult<> global(Ctx&);
 template<typename Ctx> MaybeResult<> export_(Ctx&);
+template<typename Ctx> MaybeResult<> start(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::ExprT> maybeElemexpr(Ctx&);
 template<typename Ctx> Result<typename Ctx::ElemListT> elemlist(Ctx&, bool);
 template<typename Ctx> MaybeResult<> elem(Ctx&);
@@ -365,15 +367,34 @@ template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
   return ctx.makeRefType(*type, nullability);
 }
 
+// tupletype ::= '(' 'tuple' valtype* ')'
+template<typename Ctx> MaybeResult<typename Ctx::TypeT> tupletype(Ctx& ctx) {
+  if (!ctx.in.takeSExprStart("tuple"sv)) {
+    return {};
+  }
+  auto elems = ctx.makeTupleElemList();
+  size_t numElems = 0;
+  while (!ctx.in.takeRParen()) {
+    auto elem = singlevaltype(ctx);
+    CHECK_ERR(elem);
+    ctx.appendTupleElem(elems, *elem);
+    ++numElems;
+  }
+  if (numElems < 2) {
+    return ctx.in.err("tuples must have at least two elements");
+  }
+  return ctx.makeTupleType(elems);
+}
+
 // numtype ::= 'i32' => i32
 //           | 'i64' => i64
 //           | 'f32' => f32
 //           | 'f64' => f64
 // vectype ::= 'v128' => v128
-// valtype ::= t:numtype => t
-//           | t:vectype => t
-//           | t:reftype => t
-template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx& ctx) {
+// singlevaltype ::= t:numtype => t
+//                 | t:vectype => t
+//                 | t:reftype => t
+template<typename Ctx> Result<typename Ctx::TypeT> singlevaltype(Ctx& ctx) {
   if (ctx.in.takeKeyword("i32"sv)) {
     return ctx.makeI32();
   } else if (ctx.in.takeKeyword("i64"sv)) {
@@ -390,6 +411,15 @@ template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx& ctx) {
   } else {
     return ctx.in.err("expected valtype");
   }
+}
+
+// valtype ::= singlevaltype | tupletype
+template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx& ctx) {
+  if (auto type = tupletype(ctx)) {
+    CHECK_ERR(type);
+    return *type;
+  }
+  return singlevaltype(ctx);
 }
 
 // param  ::= '(' 'param id? t:valtype ')' => [t]
@@ -1526,7 +1556,9 @@ template<typename Ctx> Result<> makeMemoryFill(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makePop(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = valtype(ctx);
+  CHECK_ERR(type);
+  return ctx.makePop(pos, *type);
 }
 
 template<typename Ctx> Result<> makeCall(Ctx& ctx, Index pos, bool isReturn) {
@@ -2617,6 +2649,23 @@ template<typename Ctx> MaybeResult<> export_(Ctx& ctx) {
   return Ok{};
 }
 
+// start ::= '(' 'start' funcidx ')'
+template<typename Ctx> MaybeResult<> start(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
+  if (!ctx.in.takeSExprStart("start"sv)) {
+    return {};
+  }
+  auto func = funcidx(ctx);
+  CHECK_ERR(func);
+
+  CHECK_ERR(ctx.addStart(*func, pos));
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of start declaration");
+  }
+  return Ok{};
+}
+
 // elemexpr ::= '(' 'item' expr ')' | '(' instr ')'
 template<typename Ctx>
 MaybeResult<typename Ctx::ExprT> maybeElemexpr(Ctx& ctx) {
@@ -2862,6 +2911,10 @@ template<typename Ctx> MaybeResult<> modulefield(Ctx& ctx) {
     return Ok{};
   }
   if (auto res = export_(ctx)) {
+    CHECK_ERR(res);
+    return Ok{};
+  }
+  if (auto res = start(ctx)) {
     CHECK_ERR(res);
     return Ok{};
   }

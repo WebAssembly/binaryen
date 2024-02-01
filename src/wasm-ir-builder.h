@@ -145,7 +145,7 @@ public:
   [[nodiscard]] Result<> makeMemorySize(Name mem);
   [[nodiscard]] Result<> makeMemoryGrow(Name mem);
   [[nodiscard]] Result<> makeUnreachable();
-  // [[nodiscard]] Result<> makePop();
+  [[nodiscard]] Result<> makePop(Type type);
   [[nodiscard]] Result<> makeRefNull(HeapType type);
   [[nodiscard]] Result<> makeRefIsNull();
   [[nodiscard]] Result<> makeRefFunc(Name func);
@@ -223,6 +223,8 @@ public:
   [[nodiscard]] Result<> visitCall(Call*);
   [[nodiscard]] Result<> visitCallIndirect(CallIndirect*);
   [[nodiscard]] Result<> visitCallRef(CallRef*);
+  [[nodiscard]] Result<> visitLocalSet(LocalSet*);
+  [[nodiscard]] Result<> visitGlobalSet(GlobalSet*);
   [[nodiscard]] Result<> visitThrow(Throw*);
   [[nodiscard]] Result<> visitStringNew(StringNew*);
   [[nodiscard]] Result<> visitStringEncode(StringEncode*);
@@ -230,6 +232,7 @@ public:
   [[nodiscard]] Result<>
   visitTupleExtract(TupleExtract*,
                     std::optional<uint32_t> arity = std::nullopt);
+  [[nodiscard]] Result<> visitPop(Pop*);
 
 private:
   Module& wasm;

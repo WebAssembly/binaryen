@@ -492,6 +492,21 @@ Result<> IRBuilder::visitCallRef(CallRef* curr) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitLocalSet(LocalSet* curr) {
+  auto type = func->getLocalType(curr->index);
+  auto val = pop(type.size());
+  CHECK_ERR(val);
+  curr->value = *val;
+  return Ok{};
+}
+
+Result<> IRBuilder::visitGlobalSet(GlobalSet* curr) {
+  auto type = wasm.getGlobal(curr->name)->type;
+  auto val = pop(type.size());
+  CHECK_ERR(val);
+  curr->value = *val;
+  return Ok{};
+}
 Result<> IRBuilder::visitThrow(Throw* curr) {
   auto numArgs = wasm.getTag(curr->tag)->sig.params.size();
   curr->operands.resize(numArgs);
@@ -586,6 +601,12 @@ Result<> IRBuilder::visitTupleExtract(TupleExtract* curr,
   auto tuple = pop(*arity);
   CHECK_ERR(tuple);
   curr->tuple = *tuple;
+  return Ok{};
+}
+
+Result<> IRBuilder::visitPop(Pop*) {
+  // Do not actually push this pop onto the stack since we generate our own pops
+  // as necessary when visiting the beginnings of try blocks.
   return Ok{};
 }
 
@@ -1032,6 +1053,7 @@ Result<> IRBuilder::makeLocalGet(Index local) {
 
 Result<> IRBuilder::makeLocalSet(Index local) {
   LocalSet curr;
+  curr.index = local;
   CHECK_ERR(visitLocalSet(&curr));
   push(builder.makeLocalSet(local, curr.value));
   return Ok{};
@@ -1039,6 +1061,7 @@ Result<> IRBuilder::makeLocalSet(Index local) {
 
 Result<> IRBuilder::makeLocalTee(Index local) {
   LocalSet curr;
+  curr.index = local;
   CHECK_ERR(visitLocalSet(&curr));
   push(builder.makeLocalTee(local, curr.value, func->getLocalType(local)));
   return Ok{};
@@ -1051,6 +1074,7 @@ Result<> IRBuilder::makeGlobalGet(Name global) {
 
 Result<> IRBuilder::makeGlobalSet(Name global) {
   GlobalSet curr;
+  curr.name = global;
   CHECK_ERR(visitGlobalSet(&curr));
   push(builder.makeGlobalSet(global, curr.value));
   return Ok{};
@@ -1282,7 +1306,23 @@ Result<> IRBuilder::makeUnreachable() {
   return Ok{};
 }
 
-// Result<> IRBuilder::makePop() {}
+Result<> IRBuilder::makePop(Type type) {
+  // We don't actually want to create a new Pop expression here because we
+  // already create them automatically when starting a legacy catch block that
+  // needs one. Just verify that the Pop we are being asked to make is the same
+  // type as the Pop we have already made.
+  auto& scope = getScope();
+  if (!scope.getCatch() || scope.exprStack.size() != 1 ||
+      !scope.exprStack[0]->is<Pop>()) {
+    return Err{
+      "pop instructions may only appear at the beginning of catch blocks"};
+  }
+  auto expectedType = scope.exprStack[0]->type;
+  if (type != expectedType) {
+    return Err{std::string("Expected pop of type ") + expectedType.toString()};
+  }
+  return Ok{};
+}
 
 Result<> IRBuilder::makeRefNull(HeapType type) {
   push(builder.makeRefNull(type));

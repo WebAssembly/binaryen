@@ -78,6 +78,7 @@ struct TypeUse {
 struct NullTypeParserCtx {
   using IndexT = Ok;
   using HeapTypeT = Ok;
+  using TupleElemListT = Ok;
   using TypeT = Ok;
   using ParamsT = Ok;
   using ResultsT = size_t;
@@ -121,6 +122,10 @@ struct NullTypeParserCtx {
   TypeT makeV128() { return Ok{}; }
 
   TypeT makeRefType(HeapTypeT, Nullability) { return Ok{}; }
+
+  TupleElemListT makeTupleElemList() { return Ok{}; }
+  void appendTupleElem(TupleElemListT&, TypeT) {}
+  TypeT makeTupleType(TupleElemListT) { return Ok{}; }
 
   ParamsT makeParams() { return Ok{}; }
   void appendParam(ParamsT&, Name, TypeT) {}
@@ -219,7 +224,13 @@ template<typename Ctx> struct TypeParserCtx {
     return Type(ht, nullability);
   }
 
-  TypeT makeTupleType(const std::vector<Type> types) { return Tuple(types); }
+  std::vector<Type> makeTupleElemList() { return {}; }
+  void appendTupleElem(std::vector<Type>& elems, Type elem) {
+    elems.push_back(elem);
+  }
+  Result<TypeT> makeTupleType(const std::vector<Type>& types) {
+    return Tuple(types);
+  }
 
   ParamsT makeParams() { return {}; }
   void appendParam(ParamsT& params, Name id, TypeT type) {
@@ -429,6 +440,7 @@ struct NullInstrParserCtx {
 
   Result<> makeMemoryCopy(Index, MemoryIdxT*, MemoryIdxT*) { return Ok{}; }
   Result<> makeMemoryFill(Index, MemoryIdxT*) { return Ok{}; }
+  template<typename TypeT> Result<> makePop(Index, TypeT) { return Ok{}; }
   Result<> makeCall(Index, FuncIdxT, bool) { return Ok{}; }
   template<typename TypeUseT>
   Result<> makeCallIndirect(Index, TableIdxT*, TypeUseT, bool) {
@@ -577,6 +589,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   std::vector<DefPos> tableDefs;
   std::vector<DefPos> memoryDefs;
   std::vector<DefPos> globalDefs;
+  std::vector<DefPos> startDefs;
   std::vector<DefPos> elemDefs;
   std::vector<DefPos> dataDefs;
   std::vector<DefPos> tagDefs;
@@ -702,6 +715,14 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                      GlobalTypeT,
                      std::optional<ExprT>,
                      Index pos);
+
+  Result<> addStart(FuncIdxT, Index pos) {
+    if (!startDefs.empty()) {
+      return Err{"unexpected extra 'start' function"};
+    }
+    startDefs.push_back({{}, pos, 0});
+    return Ok{};
+  }
 
   Result<> addElem(Name, TableIdxT*, std::optional<ExprT>, ElemListT&&, Index);
 
@@ -1313,6 +1334,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                      std::optional<ExprT> exp,
                      Index);
 
+  Result<> addStart(Name name, Index pos) {
+    wasm.start = name;
+    return Ok{};
+  }
+
   Result<> addImplicitElems(Type type, std::vector<Expression*>&& elems);
 
   Result<> addDeclareElem(Name, std::vector<Expression*>&&, Index) {
@@ -1636,6 +1662,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     return withLoc(pos, irBuilder.makeMemoryFill(*m));
+  }
+
+  Result<> makePop(Index pos, Type type) {
+    return withLoc(pos, irBuilder.makePop(type));
   }
 
   Result<> makeCall(Index pos, Name func, bool isReturn) {

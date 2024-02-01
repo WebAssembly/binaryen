@@ -115,7 +115,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:   (catch $e-i32-i64
   ;; CHECK-TEXT-NEXT:    (local.set $x
-  ;; CHECK-TEXT-NEXT:     (pop i32 i64)
+  ;; CHECK-TEXT-NEXT:     (pop (tuple i32 i64))
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:    (drop
   ;; CHECK-TEXT-NEXT:     (tuple.extract 2 0
@@ -139,7 +139,7 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (catch $e-i32-i64
   ;; CHECK-BIN-NEXT:    (local.set $2
-  ;; CHECK-BIN-NEXT:     (pop i32 i64)
+  ;; CHECK-BIN-NEXT:     (pop (tuple i32 i64))
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (local.set $x
   ;; CHECK-BIN-NEXT:     (block (result i32)
@@ -168,7 +168,7 @@
         (throw $e-i32-i64 (i32.const 0) (i64.const 0))
       )
       (catch $e-i32-i64
-        (local.set $x (pop i32 i64))
+        (local.set $x (pop (tuple i32 i64)))
         (drop
           (tuple.extract 2 0
             (local.get $x)
@@ -1387,7 +1387,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (catch $tag$2
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.set $2
-;; CHECK-BIN-NODEBUG-NEXT:     (pop i32 i64)
+;; CHECK-BIN-NODEBUG-NEXT:     (pop (tuple i32 i64))
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.set $0
 ;; CHECK-BIN-NODEBUG-NEXT:     (block (result i32)

@@ -2150,7 +2150,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag
   ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (pop anyref anyref)
+  ;; CHECK-NEXT:     (pop (tuple anyref anyref))
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
@@ -2169,7 +2169,7 @@
   ;; CHECK-NEXT:   (catch $tag
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (tuple.extract 2 1
-  ;; CHECK-NEXT:      (pop anyref anyref)
+  ;; CHECK-NEXT:      (pop (tuple anyref anyref))
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -2187,7 +2187,7 @@
       (catch $tag
         (drop
           (tuple.extract 2 0
-            (pop (ref null any) (ref null any))
+            (pop (tuple (ref null any) (ref null any)))
           )
         )
       )
@@ -2198,7 +2198,7 @@
       (catch $tag
         (drop
           (tuple.extract 2 1
-            (pop (ref null any) (ref null any))
+            (pop (tuple (ref null any) (ref null any)))
           )
         )
       )

@@ -171,6 +171,7 @@ Result<> parseModule(Module& wasm, std::string_view input) {
                      *typeIndices);
     CHECK_ERR(parseDefs(ctx, decls.tableDefs, table));
     CHECK_ERR(parseDefs(ctx, decls.globalDefs, global));
+    CHECK_ERR(parseDefs(ctx, decls.startDefs, start));
     CHECK_ERR(parseDefs(ctx, decls.elemDefs, elem));
     CHECK_ERR(parseDefs(ctx, decls.dataDefs, data));
 
