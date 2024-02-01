@@ -1,5 +1,5 @@
-#include "gtest/gtest.h"
 #include "support/json.h"
+#include "gtest/gtest.h"
 
 using JSONTest = ::testing::Test;
 
