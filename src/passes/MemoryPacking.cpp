@@ -423,10 +423,13 @@ void MemoryPacking::calculateRanges(Module* module,
     // is preserved later in the output.)
     auto& back = mergedRanges.back();
     if (back.isZero) {
-      // Note that this might make |back| have size 0, but that is not a problem
-      // as it will be dropped later anyhow.
+      // Remove the last byte from |back|. Decrementing this prevents it from
+      // overlapping with the new segment we are about to add. Note that this
+      // might make |back| have size 0, but that is not a problem as it will be
+      // dropped later anyhow, since it contains zeroes.
       back.end--;
-      mergedRanges.push_back({false, back.end, back.end + 1});
+      auto lastByte = data.size() - 1;
+      mergedRanges.push_back({false, lastByte, lastByte + 1});
     }
   }
   std::swap(ranges, mergedRanges);
@@ -593,6 +596,20 @@ void MemoryPacking::dropUnusedSegments(
   module->updateDataSegmentsMap();
 }
 
+// Given the start of a segment and an offset into it, compute the sum of the
+// two to get the absolute address the data should be at. This takes into
+// account overflows in that we saturate to UINT_MAX: we do not want an overflow
+// to take us down into a small address; in the invalid case of an overflow we
+// stay at the largest possible unsigned value, which will keep us trapping.
+template<typename T>
+Expression* addStartAndOffset(T start, T offset, Builder& builder) {
+  T total;
+  if (std::ckd_add(&total, start, offset)) {
+    total = std::numeric_limits<T>::max();
+  }
+  return builder.makeConst(T(total));
+}
+
 void MemoryPacking::createSplitSegments(
   Builder& builder,
   const DataSegment* segment,
@@ -610,10 +627,14 @@ void MemoryPacking::createSplitSegments(
     if (!segment->isPassive) {
       if (auto* c = segment->offset->dynCast<Const>()) {
         if (c->value.type == Type::i32) {
-          offset = builder.makeConst(int32_t(c->value.geti32() + range.start));
+          offset = addStartAndOffset<uint32_t>(range.start,
+                                               c->value.geti32(),
+                                               builder);
         } else {
           assert(c->value.type == Type::i64);
-          offset = builder.makeConst(int64_t(c->value.geti64() + range.start));
+          offset = addStartAndOffset<uint64_t>(range.start,
+                                               c->value.geti64(),
+                                               builder);
         }
       } else {
         assert(ranges.size() == 1);

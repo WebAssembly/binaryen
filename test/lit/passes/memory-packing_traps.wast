@@ -15,11 +15,12 @@
 
 (module
   ;; We should handle the possible overflow in adding the offset and size, and
-  ;; see this might trap.
+  ;; see this might trap. To keep the segment trapping, we will emit a segment
+  ;; with offset -1 of size 1 (which is the minimal thing we need for a trap).
   ;; CHECK:      (memory $memory 1 2)
   ;; TNH__:      (memory $memory 1 2)
   (memory $memory 1 2)
-  ;; CHECK:      (data $data (i32.const -2) "\00\00\00")
+  ;; CHECK:      (data $data (i32.const -1) "\00")
   (data $data (i32.const -2) "\00\00\00")
 )
 
@@ -32,11 +33,13 @@
 )
 
 (module
-  ;; This one is slightly larger, and will trap.
+  ;; This one is slightly larger, and will trap. We can at least shorten the
+  ;; segment to only contain one byte, at the highest address the segment would
+  ;; write to.
   ;; CHECK:      (memory $memory 1 2)
   ;; TNH__:      (memory $memory 1 2)
   (memory $memory 1 2)
-  ;; CHECK:      (data $data (i32.const 65535) "\00\00")
+  ;; CHECK:      (data $data (i32.const 65536) "\00")
   (data $data (i32.const 65535) "\00\00")
 )
 
