@@ -1171,24 +1171,15 @@ function test_expression_info() {
   module.dispose();
 }
 
-function test(m) {
-  try {
-    m();
-  } catch(e) {
-    console.trace();
-    throw e;
-  }
-}
-
-[ test_types,
-  test_features,
-  test_ids,
-  test_core,
-  test_relooper,
-  test_binaries,
-  test_interpret,
-  test_nonvalid,
-  test_parsing,
-  test_internals,
-  test_for_each,
-  test_expression_info].forEach(m => test(m))
+test_types();
+test_features();
+test_ids();
+test_core();
+test_relooper();
+test_binaries();
+test_interpret();
+test_nonvalid();
+test_parsing();
+test_internals();
+test_for_each();
+test_expression_info();
