@@ -109,8 +109,7 @@ struct MemoryPacking : public Pass {
   void dropUnusedSegments(Module* module,
                           std::vector<std::unique_ptr<DataSegment>>& segments,
                           ReferrersMap& referrers);
-  bool canSplit(Module* module,
-                const std::unique_ptr<DataSegment>& segment,
+  bool canSplit(const std::unique_ptr<DataSegment>& segment,
                 const Referrers& referrers);
   void calculateRanges(Module* module,
                        const std::unique_ptr<DataSegment>& segment,
@@ -165,7 +164,7 @@ void MemoryPacking::run(Module* module) {
 
     std::vector<Range> ranges;
 
-    if (canSplit(module, segment, currReferrers)) {
+    if (canSplit(segment, currReferrers)) {
       calculateRanges(module, segment, currReferrers, ranges);
     } else {
       // A single range covers the entire segment. Set isZero to false so the
@@ -264,8 +263,7 @@ bool MemoryPacking::canOptimize(
   return true;
 }
 
-bool MemoryPacking::canSplit(Module* module,
-                             const std::unique_ptr<DataSegment>& segment,
+bool MemoryPacking::canSplit(const std::unique_ptr<DataSegment>& segment,
                              const Referrers& referrers) {
   // Don't mess with segments related to llvm coverage tools such as
   // __llvm_covfun. There segments are expected/parsed by external downstream
