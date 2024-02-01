@@ -7,7 +7,9 @@
 ;; should also be sorted deterministically (alphabetically).
 ;;
 ;; LOWER also lowers away strings entirely, leaving only imports and a custom
-;; section (that part is tested in string-lowering.wast).
+;; section (that part is tested in string-lowering.wast). It also removes all
+;; uses of the string heap type, leaving extern instead for the imported
+;; strings.
 
 (module
   ;; Note that $global will be reused: no new global will be added for "foo".
@@ -25,13 +27,13 @@
   ;; CHECK:      (global $global2 stringref (global.get $string.const_bar))
   ;; LOWER:      (type $0 (func))
 
-  ;; LOWER:      (import "string.const" "0" (global $string.const_bar (ref string)))
+  ;; LOWER:      (import "string.const" "0" (global $string.const_bar (ref extern)))
 
-  ;; LOWER:      (import "string.const" "1" (global $string.const_other (ref string)))
+  ;; LOWER:      (import "string.const" "1" (global $string.const_other (ref extern)))
 
-  ;; LOWER:      (import "string.const" "2" (global $global (ref string)))
+  ;; LOWER:      (import "string.const" "2" (global $global (ref extern)))
 
-  ;; LOWER:      (global $global2 stringref (global.get $string.const_bar))
+  ;; LOWER:      (global $global2 externref (global.get $string.const_bar))
   (global $global2 (ref null string) (string.const "bar"))
 
   ;; CHECK:      (func $a (type $0)
@@ -109,32 +111,32 @@
 ;; Multiple possible reusable globals. Also test ignoring of imports.
 (module
   ;; CHECK:      (import "a" "b" (global $import (ref string)))
-  ;; LOWER:      (import "a" "b" (global $import (ref string)))
+  ;; LOWER:      (import "a" "b" (global $import (ref extern)))
   (import "a" "b" (global $import (ref string)))
 
   ;; CHECK:      (global $global1 (ref string) (string.const "foo"))
   (global $global1 (ref string) (string.const "foo"))
 
   ;; CHECK:      (global $global2 (ref string) (global.get $global1))
-  ;; LOWER:      (import "string.const" "0" (global $global1 (ref string)))
+  ;; LOWER:      (import "string.const" "0" (global $global1 (ref extern)))
 
-  ;; LOWER:      (import "string.const" "1" (global $global4 (ref string)))
+  ;; LOWER:      (import "string.const" "1" (global $global4 (ref extern)))
 
-  ;; LOWER:      (global $global2 (ref string) (global.get $global1))
+  ;; LOWER:      (global $global2 (ref extern) (global.get $global1))
   (global $global2 (ref string) (string.const "foo"))
 
   ;; CHECK:      (global $global3 (ref string) (global.get $global1))
-  ;; LOWER:      (global $global3 (ref string) (global.get $global1))
+  ;; LOWER:      (global $global3 (ref extern) (global.get $global1))
   (global $global3 (ref string) (string.const "foo"))
 
   ;; CHECK:      (global $global4 (ref string) (string.const "bar"))
   (global $global4 (ref string) (string.const "bar"))
 
   ;; CHECK:      (global $global5 (ref string) (global.get $global4))
-  ;; LOWER:      (global $global5 (ref string) (global.get $global4))
+  ;; LOWER:      (global $global5 (ref extern) (global.get $global4))
   (global $global5 (ref string) (string.const "bar"))
 
   ;; CHECK:      (global $global6 (ref string) (global.get $global4))
-  ;; LOWER:      (global $global6 (ref string) (global.get $global4))
+  ;; LOWER:      (global $global6 (ref extern) (global.get $global4))
   (global $global6 (ref string) (string.const "bar"))
 )
