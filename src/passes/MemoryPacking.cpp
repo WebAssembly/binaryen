@@ -112,7 +112,8 @@ struct MemoryPacking : public Pass {
   bool canSplit(Module* module,
                 const std::unique_ptr<DataSegment>& segment,
                 const Referrers& referrers);
-  void calculateRanges(const std::unique_ptr<DataSegment>& segment,
+  void calculateRanges(Module* module,
+                       const std::unique_ptr<DataSegment>& segment,
                        const Referrers& referrers,
                        std::vector<Range>& ranges);
   void createSplitSegments(Builder& builder,
@@ -165,7 +166,7 @@ void MemoryPacking::run(Module* module) {
     std::vector<Range> ranges;
 
     if (canSplit(module, segment, currReferrers)) {
-      calculateRanges(segment, currReferrers, ranges);
+      calculateRanges(module, segment, currReferrers, ranges);
     } else {
       // A single range covers the entire segment. Set isZero to false so the
       // original memory.init will be used even if segment is all zeroes.
@@ -281,24 +282,6 @@ bool MemoryPacking::canSplit(Module* module,
     return false;
   }
 
-  // Do not split an active segment that might trap.
-  if (!getPassOptions().trapsNeverHappen && segment->offset) {
-    auto* c = segment->offset->dynCast<Const>();
-    if (!c) {
-      // We can't tell if this will trap or not.
-      return false;
-    }
-    auto* memory = module->getMemory(segment->memory);
-    auto memorySize = memory->initial * Memory::kPageSize;
-    Index start = c->value.getUnsigned();
-    Index size = segment->data.size();
-    Index end;
-    if (std::ckd_add(&end, start, size) || end > memorySize) {
-      // This traps.
-      return false;
-    }
-  }
-
   for (auto* referrer : referrers) {
     if (auto* curr = referrer->dynCast<MemoryInit>()) {
       if (segment->isPassive) {
@@ -317,12 +300,31 @@ bool MemoryPacking::canSplit(Module* module,
   return segment->isPassive || segment->offset->is<Const>();
 }
 
-void MemoryPacking::calculateRanges(const std::unique_ptr<DataSegment>& segment,
+void MemoryPacking::calculateRanges(Module* module,
+                                    const std::unique_ptr<DataSegment>& segment,
                                     const Referrers& referrers,
                                     std::vector<Range>& ranges) {
   auto& data = segment->data;
   if (data.size() == 0) {
     return;
+  }
+
+  // A segment that might trap during startup must be handled carefully, as we
+  // do not want to remove that trap (unless we are allowed to by TNH).
+  auto preserveTrap = !getPassOptions().trapsNeverHappen && segment->offset;
+  if (preserveTrap) {
+    // Check if we can rule out a trap by it being in bounds.
+    if (auto* c = segment->offset->dynCast<Const>()) {
+      auto* memory = module->getMemory(segment->memory);
+      auto memorySize = memory->initial * Memory::kPageSize;
+      Index start = c->value.getUnsigned();
+      Index size = segment->data.size();
+      Index end;
+      if (!std::ckd_add(&end, start, size) && end <= memorySize) {
+        // This is in bounds.
+        preserveTrap = false;
+      }
+    }
   }
 
   // Calculate initial zero and nonzero ranges
@@ -368,7 +370,10 @@ void MemoryPacking::calculateRanges(const std::unique_ptr<DataSegment>& segment,
       }
     }
 
-    // Merge edge zeroes if they are not worth splitting
+    // Merge edge zeroes if they are not worth splitting. Note that we must not
+    // have a trap we must preserve here (if we did, we'd need to handle that in
+    // the code below).
+    assert(!preserveTrap);
     if (ranges.size() >= 2) {
       auto last = ranges.end() - 1;
       auto penultimate = ranges.end() - 2;
@@ -386,12 +391,12 @@ void MemoryPacking::calculateRanges(const std::unique_ptr<DataSegment>& segment,
       }
     }
   } else {
-    // Legacy ballpark overhead of active segment with offset
+    // Legacy ballpark overhead of active segment with offset.
     // TODO: Tune this
     threshold = 8;
   }
 
-  // Merge ranges across small spans of zeroes
+  // Merge ranges across small spans of zeroes.
   std::vector<Range> mergedRanges = {ranges.front()};
   size_t i;
   for (i = 1; i < ranges.size() - 1; ++i) {
@@ -405,9 +410,24 @@ void MemoryPacking::calculateRanges(const std::unique_ptr<DataSegment>& segment,
       mergedRanges.push_back(*curr);
     }
   }
-  // Add the final range if it hasn't already been merged in
+  // Add the final range if it hasn't already been merged in.
   if (i < ranges.size()) {
     mergedRanges.push_back(ranges.back());
+  }
+  // If we need to preserve a trap then we must keep the topmost byte of the
+  // segment, which is enough to cause a trap if we do in fact trap.
+  if (preserveTrap) {
+    // Check if the last byte is in a zero range. Such a range will be dropped
+    // later, so add a non-zero range with that byte. (It is slightly odd to
+    // add a range with a zero marked as non-zero, but that is how we ensure it
+    // is preserved later in the output.)
+    auto& back = mergedRanges.back();
+    if (back.isZero) {
+      // Note that this might make |back| have size 0, but that is not a problem
+      // as it will be dropped later anyhow.
+      back.end--;
+      mergedRanges.push_back({false, back.end, back.end + 1});
+    }
   }
   std::swap(ranges, mergedRanges);
 }
