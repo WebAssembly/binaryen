@@ -176,9 +176,6 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
     }
 
     HeapType getNew(HeapType type) {
-      if (type.isBasic()) {
-        return type;
-      }
       auto iter = oldToNewTypes.find(type);
       if (iter != oldToNewTypes.end()) {
         return iter->second;
