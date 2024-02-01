@@ -285,6 +285,17 @@ struct OptimizationOptions : public ToolOptions {
            Options::Arguments::One,
            [this](Options*, const std::string& pass) {
              passOptions.passesToSkip.insert(pass);
+           })
+      .add("--experimental-new-eh",
+           "",
+           "After running all requested transformations / optimizations, "
+           "translate the instruction to use the new EH instructions at the "
+           "end. Depending on the optimization level specified, this may do "
+           "some more post-translation optimizations.",
+           OptimizationOptionsCategory,
+           Options::Arguments::Zero,
+           [this](Options*, const std::string&) {
+             passOptions.experimentalNewEH = true;
            });
 
     // add passes in registry
@@ -325,7 +336,9 @@ struct OptimizationOptions : public ToolOptions {
     return false;
   }
 
-  bool runningPasses() { return passes.size() > 0; }
+  bool runningPasses() {
+    return passes.size() > 0 || passOptions.experimentalNewEH;
+  }
 
   void runPasses(Module& wasm) {
     PassRunner passRunner(&wasm, passOptions);
@@ -373,6 +386,14 @@ struct OptimizationOptions : public ToolOptions {
         assert(!pass.optimizeLevel);
         assert(!pass.shrinkLevel);
       }
+    }
+
+    // If "--experimental-new-eh" is requtested and the default optimization
+    // passes have been seen, it would have been added as a part of
+    // addDefaultGlobalOptimizationPostPasses(). If not, we add it here.
+    if (wasm.features.hasExceptionHandling() && passOptions.experimentalNewEH &&
+        !runningDefaultOptimizationPasses()) {
+      passRunner.add("translate-to-new-eh");
     }
 
     flush();

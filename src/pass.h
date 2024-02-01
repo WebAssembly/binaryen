@@ -225,6 +225,11 @@ struct PassOptions {
   // that needs lowering, then we lower it, then we can optimize it again to the
   // original form).
   bool targetJS = false;
+  // After running all requested transformations / optimizations, translate the
+  // instruction to use the new EH instructions at the end. Depending on the
+  // optimization level specified, this may do some more post-translation
+  // optimizations.
+  bool experimentalNewEH = false;
   // Arbitrary string arguments from the commandline, which we forward to
   // passes.
   std::unordered_map<std::string, std::string> arguments;

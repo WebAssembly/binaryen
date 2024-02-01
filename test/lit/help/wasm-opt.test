@@ -612,6 +612,15 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --skip-pass,-sp                               Skip a pass (do not run it)
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --experimental-new-eh                         After running all requested
+;; CHECK-NEXT:                                                 transformations / optimizations,
+;; CHECK-NEXT:                                                 translate the instruction to use
+;; CHECK-NEXT:                                                 the new EH instructions at the
+;; CHECK-NEXT:                                                 end. Depending on the
+;; CHECK-NEXT:                                                 optimization level specified,
+;; CHECK-NEXT:                                                 this may do some more
+;; CHECK-NEXT:                                                 post-translation optimizations.
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Tool options:
 ;; CHECK-NEXT: -------------

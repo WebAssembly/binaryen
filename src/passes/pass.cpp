@@ -723,6 +723,12 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   }
   // may allow more inlining/dae/etc., need --converge for that
   addIfNoDWARFIssues("directize");
+
+  // Translate to use the new EH instructions if requested.
+  if (wasm->features.hasExceptionHandling() && options.experimentalNewEH) {
+    addIfNoDWARFIssues("translate-to-new-eh");
+  }
+
   // perform Stack IR optimizations here, at the very end of the
   // optimization pipeline
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
