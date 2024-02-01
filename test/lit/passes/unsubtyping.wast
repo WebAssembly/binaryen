@@ -275,8 +275,12 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result (ref $sub))
  ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:    (struct.new_default $sub)
- ;; CHECK-NEXT:    (struct.new_default $sub)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (struct.new_default $sub)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (struct.new_default $sub)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -285,8 +289,12 @@
    (if (result (ref $super))
     (i32.const 0)
     ;; This requires $sub <: $super.
-    (struct.new $sub)
-    (struct.new $sub)
+    (then
+     (struct.new $sub)
+    )
+    (else
+     (struct.new $sub)
+    )
    )
   )
  )
@@ -460,8 +468,8 @@
 
  ;; CHECK:       (type $2 (func (param (ref $super))))
 
- ;; CHECK:      (table $t 0 funcref)
- (table $t funcref)
+ ;; CHECK:      (table $t 1 1 funcref)
+ (table $t 1 1 funcref)
 
  ;; CHECK:      (func $call-indirect (type $2) (param $0 (ref $super))
  ;; CHECK-NEXT:  (call_indirect $t (type $2)
@@ -489,8 +497,8 @@
 
  ;; CHECK:       (type $3 (func (result (ref $super))))
 
- ;; CHECK:      (table $t 0 funcref)
- (table $t funcref)
+ ;; CHECK:      (table $t 1 1 funcref)
+ (table $t 1 1 funcref)
 
  ;; CHECK:      (func $return-call-indirect (type $3) (result (ref $super))
  ;; CHECK-NEXT:  (return_call_indirect $t (type $2)
@@ -513,8 +521,8 @@
  (type $super (sub (func)))
  (type $sub (sub $super (func)))
 
- ;; CHECK:      (table $t 0 (ref null $super))
- (table $t (ref null $super) 1 1)
+ ;; CHECK:      (table $t 1 1 (ref null $super))
+ (table $t 1 1 (ref null $super))
 
  ;; CHECK:      (func $call-indirect-table (type $sub)
  ;; CHECK-NEXT:  (call_indirect $t (type $sub)
@@ -705,7 +713,7 @@
 
  ;; CHECK:      (func $return-many (type $4) (result (ref $super1) (ref $super2))
  ;; CHECK-NEXT:  (return
- ;; CHECK-NEXT:   (tuple.make
+ ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (struct.new_default $sub1)
  ;; CHECK-NEXT:    (struct.new_default $sub2)
  ;; CHECK-NEXT:   )
@@ -714,7 +722,7 @@
  (func $return-many (result (ref $super1) (ref $super2))
   ;; This requires $sub1 <: $super1 and $sub2 <: super2.
   (return
-   (tuple.make
+   (tuple.make 2
     (struct.new $sub1)
     (struct.new $sub2)
    )
@@ -731,8 +739,8 @@
 
  ;; CHECK:       (type $2 (func))
 
- ;; CHECK:      (table $t 0 (ref null $super))
- (table $t (ref null $super) 1 1)
+ ;; CHECK:      (table $t 1 1 (ref null $super))
+ (table $t 1 1 (ref null $super))
 
  ;; CHECK:      (func $table-set (type $2)
  ;; CHECK-NEXT:  (table.set $t
@@ -758,8 +766,8 @@
 
  ;; CHECK:       (type $2 (func))
 
- ;; CHECK:      (table $t 0 (ref null $super))
- (table $t (ref null $super) 1 1)
+ ;; CHECK:      (table $t 1 1 (ref null $super))
+ (table $t 1 1 (ref null $super))
 
  ;; CHECK:      (func $table-fill (type $2)
  ;; CHECK-NEXT:  (table.fill $t
@@ -787,11 +795,11 @@
  ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
- ;; CHECK:      (table $super 0 (ref null $super))
- (table $super (ref null $super) 1 1)
+ ;; CHECK:      (table $super 1 1 (ref null $super))
+ (table $super 1 1 (ref null $super))
 
- ;; CHECK:      (table $sub 0 (ref null $sub))
- (table $sub (ref null $sub) 1 1)
+ ;; CHECK:      (table $sub 1 1 (ref null $sub))
+ (table $sub 1 1 (ref null $sub))
 
  ;; CHECK:      (func $table-copy (type $0)
  ;; CHECK-NEXT:  (table.copy $super $sub

@@ -123,11 +123,15 @@
   ;; CHECK-NEXT:     (ref.func $helper)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -140,11 +144,15 @@
           (ref.func $helper)
         )
       )
-      (drop
-        (local.get $x)
+      (then
+        (drop
+          (local.get $x)
+        )
       )
-      (drop
-        (local.get $x)
+      (else
+        (drop
+          (local.get $x)
+        )
       )
     )
   )

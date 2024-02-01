@@ -13,19 +13,19 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $0(x) {
+ function foo_true(x) {
   x = x | 0;
   return FUNCTION_TABLE[(x ? 1 : 0) | 0]() | 0 | 0;
  }
  
- function $1(x) {
+ function foo_false(x) {
   x = x | 0;
   return FUNCTION_TABLE[(x ? 0 : 1) | 0]() | 0 | 0;
  }
  
  return {
-  "foo_true": $0, 
-  "foo_false": $1
+  "foo_true": foo_true, 
+  "foo_false": foo_false
  };
 }
 

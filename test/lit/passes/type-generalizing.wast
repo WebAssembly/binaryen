@@ -53,7 +53,7 @@
  ;; CHECK:      (func $unconstrained (type $void)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (local $y anyref)
- ;; CHECK-NEXT:  (local $z (anyref i32))
+ ;; CHECK-NEXT:  (local $z (tuple anyref i32))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $unconstrained
@@ -62,7 +62,7 @@
   ;; There is no constraint on the type of this local, so make it top.
   (local $y i31ref)
   ;; We cannot optimize tuple locals yet, so leave it unchanged.
-  (local $z (anyref i32))
+  (local $z (tuple anyref i32))
  )
 
  ;; CHECK:      (func $implicit-return (type $1) (result eqref)
@@ -93,8 +93,12 @@
  ;; CHECK-NEXT:  (local $y eqref)
  ;; CHECK-NEXT:  (if (result eqref)
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.get $y)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $if (result eqref)
@@ -103,9 +107,13 @@
   (if (result i31ref)
    (i32.const 0)
    ;; Require that typeof($x) <: eqref.
-   (local.get $x)
+   (then
+    (local.get $x)
+   )
    ;; Require that typeof($y) <: eqref.
-   (local.get $y)
+   (else
+    (local.get $y)
+   )
   )
  )
 

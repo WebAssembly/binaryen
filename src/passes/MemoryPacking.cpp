@@ -270,6 +270,13 @@ bool MemoryPacking::canSplit(const std::unique_ptr<DataSegment>& segment,
     return false;
   }
 
+  if (segment->data.empty()) {
+    // Ignore empty segments, leaving them in place. We may not need them, but
+    // leave that for RemoveUnusedModuleElements to decide (as they may trap
+    // during startup if out of bounds, which is an effect).
+    return false;
+  }
+
   for (auto* referrer : referrers) {
     if (auto* curr = referrer->dynCast<MemoryInit>()) {
       if (segment->isPassive) {
@@ -481,13 +488,10 @@ void MemoryPacking::getSegmentReferrers(Module* module,
 #define DELEGATE_FIELD_CHILD(id, field)
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
 #define DELEGATE_FIELD_INT(id, field)
-#define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
 
 #define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \

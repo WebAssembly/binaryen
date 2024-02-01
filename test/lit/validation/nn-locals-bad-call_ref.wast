@@ -17,7 +17,7 @@
       )
       (catch $tag
         (drop
-          (pop (i32))
+          (pop i32)
         )
         ;; The path to here is from a possible exception thrown in the call_ref.
         ;; This is a regression test for call_ref not being seen as possibly

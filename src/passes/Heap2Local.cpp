@@ -38,7 +38,7 @@
 //
 //    (import "env" "import" (func $import (param i32) (result i32)))
 //
-//    (func "example"
+//    (func $example
 //     (local $ref (ref null $boxed-int))
 //
 //     ;; Allocate a boxed integer of 42 and save the reference to it.

@@ -3,58 +3,59 @@
 ;; RUN:   -all --print-stack-ir | filecheck %s
 
 (module
-  ;; CHECK:      (tag $e0 (param i32))
-  (tag $e0 (param i32))
+  ;; CHECK:      (tag $e-i32 (param i32))
+  (tag $e-i32 (param i32))
 
-  ;; CHECK:      (func $eh (type $1)
-  ;; CHECK-NEXT:  try $l0
-  ;; CHECK-NEXT:   i32.const 0
-  ;; CHECK-NEXT:   throw $e0
-  ;; CHECK-NEXT:  catch $e0
-  ;; CHECK-NEXT:   
-  ;; CHECK-NEXT:   drop
-  ;; CHECK-NEXT:  catch_all
-  ;; CHECK-NEXT:   rethrow $l0
-  ;; CHECK-NEXT:  end
-  ;; CHECK-NEXT:  try $l00
-  ;; CHECK-NEXT:   try $try
-  ;; CHECK-NEXT:    i32.const 0
-  ;; CHECK-NEXT:    throw $e0
-  ;; CHECK-NEXT:   delegate $l00
-  ;; CHECK-NEXT:   unreachable
-  ;; CHECK-NEXT:  catch_all
-  ;; CHECK-NEXT:  end
-  ;; CHECK-NEXT:  try $l01
-  ;; CHECK-NEXT:  delegate 0
+  ;; CHECK:      (func $foo (type $0)
   ;; CHECK-NEXT: )
-  (func $eh
-    (try $l0
-      (do
-        (throw $e0 (i32.const 0))
-      )
-      (catch $e0
-        (drop (pop i32))
-      )
-      (catch_all
-        (rethrow $l0)
-      )
-    )
+  (func $foo)
 
-    (try $l0
-      (do
-        (try
-          (do
-            (throw $e0 (i32.const 0))
+  ;; CHECK:      (func $test (type $0)
+  ;; CHECK-NEXT:  block $outer
+  ;; CHECK-NEXT:   block $l-catch (result i32)
+  ;; CHECK-NEXT:    block $l-catch-ref (type $1) (result i32 exnref)
+  ;; CHECK-NEXT:     block $l-catch-all
+  ;; CHECK-NEXT:      block $l-catch-all-ref (result exnref)
+  ;; CHECK-NEXT:       try_table (catch $e-i32 $l-catch) (catch_ref $e-i32 $l-catch-ref) (catch_all $l-catch-all) (catch_all_ref $l-catch-all-ref)
+  ;; CHECK-NEXT:        call $foo
+  ;; CHECK-NEXT:       end
+  ;; CHECK-NEXT:       br $outer
+  ;; CHECK-NEXT:      end
+  ;; CHECK-NEXT:      throw_ref
+  ;; CHECK-NEXT:     end
+  ;; CHECK-NEXT:     br $outer
+  ;; CHECK-NEXT:    end
+  ;; CHECK-NEXT:    tuple.drop 2
+  ;; CHECK-NEXT:    br $outer
+  ;; CHECK-NEXT:   end
+  ;; CHECK-NEXT:   drop
+  ;; CHECK-NEXT:  end
+  ;; CHECK-NEXT: )
+  (func $test
+    (block $outer
+      (drop
+        (block $l-catch (result i32)
+          (tuple.drop 2
+            (block $l-catch-ref (result i32 exnref)
+              (block $l-catch-all
+                (throw_ref
+                  (block $l-catch-all-ref (result exnref)
+                    (try_table (catch $e-i32 $l-catch)
+                               (catch_ref $e-i32 $l-catch-ref)
+                               (catch_all $l-catch-all)
+                               (catch_all_ref $l-catch-all-ref)
+                      (call $foo)
+                    )
+                    (br $outer)
+                  )
+                )
+              )
+              (br $outer)
+            )
           )
-          (delegate $l0)
+          (br $outer)
         )
       )
-      (catch_all)
-    )
-
-    (try $l0
-      (do)
-      (delegate 0) ;; delegate to caller
     )
   )
 )

@@ -65,6 +65,8 @@ public:
   [[nodiscard]] Result<> visitElse();
   [[nodiscard]] Result<> visitLoopStart(Loop* iff);
   [[nodiscard]] Result<> visitTryStart(Try* tryy, Name label = {});
+  [[nodiscard]] Result<> visitTryTableStart(TryTable* trytable,
+                                            Name label = {});
   [[nodiscard]] Result<> visitCatch(Name tag);
   [[nodiscard]] Result<> visitCatchAll();
   [[nodiscard]] Result<> visitDelegate(Index label);
@@ -87,12 +89,13 @@ public:
   [[nodiscard]] Result<> makeBlock(Name label, Type type);
   [[nodiscard]] Result<> makeIf(Name label, Type type);
   [[nodiscard]] Result<> makeLoop(Name label, Type type);
-  [[nodiscard]] Result<> makeBreak(Index label);
+  [[nodiscard]] Result<> makeBreak(Index label, bool isConditional);
   [[nodiscard]] Result<> makeSwitch(const std::vector<Index>& labels,
                                     Index defaultLabel);
   // Unlike Builder::makeCall, this assumes the function already exists.
   [[nodiscard]] Result<> makeCall(Name func, bool isReturn);
-  // [[nodiscard]] Result<> makeCallIndirect();
+  [[nodiscard]] Result<>
+  makeCallIndirect(Name table, HeapType type, bool isReturn);
   [[nodiscard]] Result<> makeLocalGet(Index local);
   [[nodiscard]] Result<> makeLocalSet(Index local);
   [[nodiscard]] Result<> makeLocalTee(Index local);
@@ -142,29 +145,36 @@ public:
   [[nodiscard]] Result<> makeMemorySize(Name mem);
   [[nodiscard]] Result<> makeMemoryGrow(Name mem);
   [[nodiscard]] Result<> makeUnreachable();
-  // [[nodiscard]] Result<> makePop();
+  [[nodiscard]] Result<> makePop(Type type);
   [[nodiscard]] Result<> makeRefNull(HeapType type);
   [[nodiscard]] Result<> makeRefIsNull();
   [[nodiscard]] Result<> makeRefFunc(Name func);
   [[nodiscard]] Result<> makeRefEq();
-  // [[nodiscard]] Result<> makeTableGet();
-  // [[nodiscard]] Result<> makeTableSet();
-  // [[nodiscard]] Result<> makeTableSize();
-  // [[nodiscard]] Result<> makeTableGrow();
-  // [[nodiscard]] Result<> makeTableFill();
-  // [[nodiscard]] Result<> makeTableCopy();
+  [[nodiscard]] Result<> makeTableGet(Name table);
+  [[nodiscard]] Result<> makeTableSet(Name table);
+  [[nodiscard]] Result<> makeTableSize(Name table);
+  [[nodiscard]] Result<> makeTableGrow(Name table);
+  [[nodiscard]] Result<> makeTableFill(Name table);
+  [[nodiscard]] Result<> makeTableCopy(Name destTable, Name srcTable);
   [[nodiscard]] Result<> makeTry(Name label, Type type);
+  [[nodiscard]] Result<> makeTryTable(Name label,
+                                      Type type,
+                                      const std::vector<Name>& tags,
+                                      const std::vector<Index>& labels,
+                                      const std::vector<bool>& isRefs);
   [[nodiscard]] Result<> makeThrow(Name tag);
-  // [[nodiscard]] Result<> makeRethrow();
-  // [[nodiscard]] Result<> makeTupleMake();
-  // [[nodiscard]] Result<> makeTupleExtract();
+  [[nodiscard]] Result<> makeRethrow(Index label);
+  [[nodiscard]] Result<> makeThrowRef();
+  [[nodiscard]] Result<> makeTupleMake(uint32_t arity);
+  [[nodiscard]] Result<> makeTupleExtract(uint32_t arity, uint32_t index);
+  [[nodiscard]] Result<> makeTupleDrop(uint32_t arity);
   [[nodiscard]] Result<> makeRefI31();
   [[nodiscard]] Result<> makeI31Get(bool signed_);
   [[nodiscard]] Result<> makeCallRef(HeapType type, bool isReturn);
   [[nodiscard]] Result<> makeRefTest(Type type);
   [[nodiscard]] Result<> makeRefCast(Type type);
   [[nodiscard]] Result<>
-  makeBrOn(Index label, BrOnOp op, Type castType = Type::none);
+  makeBrOn(Index label, BrOnOp op, Type in = Type::none, Type out = Type::none);
   [[nodiscard]] Result<> makeStructNew(HeapType type);
   [[nodiscard]] Result<> makeStructNewDefault(HeapType type);
   [[nodiscard]] Result<>
@@ -180,25 +190,27 @@ public:
   [[nodiscard]] Result<> makeArrayLen();
   [[nodiscard]] Result<> makeArrayCopy(HeapType destType, HeapType srcType);
   [[nodiscard]] Result<> makeArrayFill(HeapType type);
-  // [[nodiscard]] Result<> makeArrayInitData();
-  // [[nodiscard]] Result<> makeArrayInitElem();
+  [[nodiscard]] Result<> makeArrayInitData(HeapType type, Name data);
+  [[nodiscard]] Result<> makeArrayInitElem(HeapType type, Name elem);
   [[nodiscard]] Result<> makeRefAs(RefAsOp op);
-  // [[nodiscard]] Result<> makeStringNew();
-  // [[nodiscard]] Result<> makeStringConst();
-  // [[nodiscard]] Result<> makeStringMeasure();
-  // [[nodiscard]] Result<> makeStringEncode();
-  // [[nodiscard]] Result<> makeStringConcat();
-  // [[nodiscard]] Result<> makeStringEq();
-  // [[nodiscard]] Result<> makeStringAs();
-  // [[nodiscard]] Result<> makeStringWTF8Advance();
-  // [[nodiscard]] Result<> makeStringWTF16Get();
-  // [[nodiscard]] Result<> makeStringIterNext();
-  // [[nodiscard]] Result<> makeStringIterMove();
-  // [[nodiscard]] Result<> makeStringSliceWTF();
-  // [[nodiscard]] Result<> makeStringSliceIter();
+  [[nodiscard]] Result<> makeStringNew(StringNewOp op, bool try_, Name mem);
+  [[nodiscard]] Result<> makeStringConst(Name string);
+  [[nodiscard]] Result<> makeStringMeasure(StringMeasureOp op);
+  [[nodiscard]] Result<> makeStringEncode(StringEncodeOp op, Name mem);
+  [[nodiscard]] Result<> makeStringConcat();
+  [[nodiscard]] Result<> makeStringEq(StringEqOp op);
+  [[nodiscard]] Result<> makeStringAs(StringAsOp op);
+  [[nodiscard]] Result<> makeStringWTF8Advance();
+  [[nodiscard]] Result<> makeStringWTF16Get();
+  [[nodiscard]] Result<> makeStringIterNext();
+  [[nodiscard]] Result<> makeStringIterMove(StringIterMoveOp op);
+  [[nodiscard]] Result<> makeStringSliceWTF(StringSliceWTFOp op);
+  [[nodiscard]] Result<> makeStringSliceIter();
 
   // Private functions that must be public for technical reasons.
   [[nodiscard]] Result<> visitExpression(Expression*);
+  [[nodiscard]] Result<>
+  visitDrop(Drop*, std::optional<uint32_t> arity = std::nullopt);
   [[nodiscard]] Result<> visitIf(If*);
   [[nodiscard]] Result<> visitReturn(Return*);
   [[nodiscard]] Result<> visitStructNew(StructNew*);
@@ -211,7 +223,16 @@ public:
   [[nodiscard]] Result<> visitCall(Call*);
   [[nodiscard]] Result<> visitCallIndirect(CallIndirect*);
   [[nodiscard]] Result<> visitCallRef(CallRef*);
+  [[nodiscard]] Result<> visitLocalSet(LocalSet*);
+  [[nodiscard]] Result<> visitGlobalSet(GlobalSet*);
   [[nodiscard]] Result<> visitThrow(Throw*);
+  [[nodiscard]] Result<> visitStringNew(StringNew*);
+  [[nodiscard]] Result<> visitStringEncode(StringEncode*);
+  [[nodiscard]] Result<> visitTupleMake(TupleMake*);
+  [[nodiscard]] Result<>
+  visitTupleExtract(TupleExtract*,
+                    std::optional<uint32_t> arity = std::nullopt);
+  [[nodiscard]] Result<> visitPop(Pop*);
 
 private:
   Module& wasm;
@@ -252,6 +273,10 @@ private:
       Try* tryy;
       Name originalLabel;
     };
+    struct TryTableScope {
+      TryTable* trytable;
+      Name originalLabel;
+    };
     using Scope = std::variant<NoScope,
                                FuncScope,
                                BlockScope,
@@ -260,7 +285,8 @@ private:
                                LoopScope,
                                TryScope,
                                CatchScope,
-                               CatchAllScope>;
+                               CatchAllScope,
+                               TryTableScope>;
 
     // The control flow structure we are building expressions for.
     Scope scope;
@@ -299,6 +325,9 @@ private:
     }
     static ScopeCtx makeCatchAll(Try* tryy, Name originalLabel, Name label) {
       return ScopeCtx(CatchAllScope{tryy, originalLabel}, label);
+    }
+    static ScopeCtx makeTryTable(TryTable* trytable, Name originalLabel = {}) {
+      return ScopeCtx(TryTableScope{trytable, originalLabel});
     }
 
     bool isNone() { return std::get_if<NoScope>(&scope); }
@@ -350,6 +379,12 @@ private:
       }
       return nullptr;
     }
+    TryTable* getTryTable() {
+      if (auto* tryTableScope = std::get_if<TryTableScope>(&scope)) {
+        return tryTableScope->trytable;
+      }
+      return nullptr;
+    }
     Type getResultType() {
       if (auto* func = getFunction()) {
         return func->type.getSignature().results;
@@ -374,6 +409,9 @@ private:
       }
       if (auto* tryy = getCatchAll()) {
         return tryy->type;
+      }
+      if (auto* trytable = getTryTable()) {
+        return trytable->type;
       }
       WASM_UNREACHABLE("unexpected scope kind");
     }
@@ -401,6 +439,9 @@ private:
       }
       if (auto* catchAllScope = std::get_if<CatchAllScope>(&scope)) {
         return catchAllScope->originalLabel;
+      }
+      if (auto* tryTableScope = std::get_if<TryTableScope>(&scope)) {
+        return tryTableScope->originalLabel;
       }
       WASM_UNREACHABLE("unexpected scope kind");
     }
@@ -458,8 +499,9 @@ private:
   Result<Expression*> finishScope(Block* block = nullptr);
 
   [[nodiscard]] Result<Name> getLabelName(Index label);
+  [[nodiscard]] Result<Name> getDelegateLabelName(Index label);
   [[nodiscard]] Result<Index> addScratchLocal(Type);
-  [[nodiscard]] Result<Expression*> pop();
+  [[nodiscard]] Result<Expression*> pop(size_t size = 1);
 
   struct HoistedVal {
     // The index in the stack of the original value-producing expression.
@@ -474,8 +516,12 @@ private:
   // Transform the stack as necessary such that the original producer of the
   // hoisted value will be popped along with the final expression that produces
   // the value, if they are different. May only be called directly after
-  // hoistLastValue().
-  [[nodiscard]] Result<> packageHoistedValue(const HoistedVal&);
+  // hoistLastValue(). `sizeHint` is the size of the type we ultimately want to
+  // consume, so if the hoisted value has `sizeHint` elements, it is left intact
+  // even if it is a tuple. Otherwise, hoisted tuple values will be broken into
+  // pieces.
+  [[nodiscard]] Result<> packageHoistedValue(const HoistedVal&,
+                                             size_t sizeHint = 1);
 
   [[nodiscard]] Result<Expression*> getBranchValue(Name labelName,
                                                    std::optional<Index> label);

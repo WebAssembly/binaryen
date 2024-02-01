@@ -9,7 +9,7 @@
 
   (elem $b (table $other) (i32.const 0) func)
 
-  (func "keepalive2"
+  (func $keepalive2 (export "keepalive2")
     (drop
       (table.get $foo
         (i32.const 1)

@@ -30,11 +30,15 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if (result (ref i31))
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (ref.i31
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (ref.i31
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (ref.i31
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (ref.i31
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -55,8 +59,12 @@
     (drop
       (if (result anyref)
         (local.get $x)
-        (ref.i31 (i32.const 0))
-        (ref.i31 (i32.const 1))
+        (then
+          (ref.i31 (i32.const 0))
+        )
+        (else
+          (ref.i31 (i32.const 1))
+        )
       )
     )
     (drop
@@ -248,7 +256,7 @@
   ;; CHECK-NEXT: )
   (func $multiple-iterations-refinalize-call-ref
     (local $f (ref null $ret-any))
-    (local $x (anyref))
+    (local $x anyref)
     (local.set $f
       (ref.func $ret-i31)
     )
@@ -278,7 +286,7 @@
   ;; CHECK-NEXT: )
   (func $multiple-iterations-refinalize-call-ref-bottom
     (local $f (ref null $ret-any))
-    (local $x (anyref))
+    (local $x anyref)
     ;; Same as above, but now we refine $f to nullfuncref. Check that we don't crash.
     (local.set $f
       (ref.null nofunc)
@@ -300,20 +308,20 @@
   )
 
   ;; CHECK:      (func $nondefaultable (type $0)
-  ;; CHECK-NEXT:  (local $x (funcref funcref))
+  ;; CHECK-NEXT:  (local $x (tuple funcref funcref))
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (tuple.make
+  ;; CHECK-NEXT:   (tuple.make 2
   ;; CHECK-NEXT:    (ref.func $i32)
   ;; CHECK-NEXT:    (ref.func $i32)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $nondefaultable
-    (local $x (funcref funcref))
+    (local $x (tuple funcref funcref))
     ;; This tuple is assigned non-nullable values, which means the subtype is
     ;; nondefaultable, and we must not apply it.
     (local.set $x
-      (tuple.make
+      (tuple.make 2
         (ref.func $i32)
         (ref.func $i32)
       )
@@ -324,8 +332,10 @@
   ;; CHECK-NEXT:  (local $x (ref null $2))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $i)
-  ;; CHECK-NEXT:   (local.set $x
-  ;; CHECK-NEXT:    (ref.func $uses-default)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (ref.func $uses-default)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -337,7 +347,9 @@
     (if
       (local.get $i)
       ;; The only set to this local uses a more specific type than funcref.
-      (local.set $x (ref.func $uses-default))
+      (then
+        (local.set $x (ref.func $uses-default))
+      )
     )
     (drop
       ;; This get may use the default value, but it is ok to have a null of a
@@ -472,8 +484,10 @@
   ;; CHECK-NEXT:  (local $x (ref null $0))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:   (local.set $x
-  ;; CHECK-NEXT:    (ref.func $become-non-nullable)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (ref.func $become-non-nullable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -487,8 +501,10 @@
     ;; though.)
     (if
       (i32.const 1)
-      (local.set $x
-        (ref.func $become-non-nullable)
+      (then
+        (local.set $x
+          (ref.func $become-non-nullable)
+        )
       )
     )
     (drop

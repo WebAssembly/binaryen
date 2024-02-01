@@ -212,6 +212,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       self()->noteSubtype(body, curr);
     }
   }
+  void visitTryTable(TryTable* curr) { self()->noteSubtype(curr->body, curr); }
   void visitThrow(Throw* curr) {
     Type params = self()->getModule()->getTag(curr->tag)->sig.params;
     assert(params.size() == curr->operands.size());
@@ -220,6 +221,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     }
   }
   void visitRethrow(Rethrow* curr) {}
+  void visitThrowRef(ThrowRef* curr) {}
   void visitTupleMake(TupleMake* curr) {}
   void visitTupleExtract(TupleExtract* curr) {}
   void visitRefI31(RefI31* curr) {}
@@ -331,6 +333,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitStringIterMove(StringIterMove* curr) {}
   void visitStringSliceWTF(StringSliceWTF* curr) {}
   void visitStringSliceIter(StringSliceIter* curr) {}
+
+  void visitResume(Resume* curr) { WASM_UNREACHABLE("not implemented"); }
 };
 
 } // namespace wasm

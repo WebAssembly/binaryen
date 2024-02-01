@@ -10,7 +10,22 @@
     )
   )
 
-  (func "export" (param $x i32) (result i32)
+  ;; CHECK:      (type $0 (func (param i32) (result i32)))
+
+  ;; CHECK:      (export "export" (func $export))
+
+  ;; CHECK:      (func $export (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $export (export "export") (param $x i32) (result i32)
     ;; $inline.me is called twice, so we do not always inline it like called-
     ;; once functions are. -Oz is too cautious to inline such things that may
     ;; end up increasing total code size, but we are running -O3 -Oz here and so
@@ -28,18 +43,3 @@
     )
   )
 )
-;; CHECK:      (type $0 (func (param i32) (result i32)))
-
-;; CHECK:      (export "export" (func $1))
-
-;; CHECK:      (func $1 (; has Stack IR ;) (param $0 i32) (result i32)
-;; CHECK-NEXT:  (i32.add
-;; CHECK-NEXT:   (local.tee $0
-;; CHECK-NEXT:    (i32.add
-;; CHECK-NEXT:     (local.get $0)
-;; CHECK-NEXT:     (i32.const 2)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )

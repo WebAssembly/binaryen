@@ -1,5 +1,5 @@
 (module
-  (func "foo"
+  (func $foo (export "foo")
     ;; binaryen skips unreachable code while reading the binary format
     (unreachable)
     (nop)

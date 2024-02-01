@@ -243,16 +243,24 @@
   ;; NO_TNH-NEXT:  (struct.set $struct 0
   ;; NO_TNH-NEXT:   (if (result (ref null $struct))
   ;; NO_TNH-NEXT:    (local.get $x)
-  ;; NO_TNH-NEXT:    (local.get $ref)
-  ;; NO_TNH-NEXT:    (ref.null none)
+  ;; NO_TNH-NEXT:    (then
+  ;; NO_TNH-NEXT:     (local.get $ref)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (else
+  ;; NO_TNH-NEXT:     (ref.null none)
+  ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:   (i32.const 1)
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (struct.set $struct 0
   ;; NO_TNH-NEXT:   (if (result (ref null $struct))
   ;; NO_TNH-NEXT:    (local.get $x)
-  ;; NO_TNH-NEXT:    (ref.null none)
-  ;; NO_TNH-NEXT:    (local.get $ref)
+  ;; NO_TNH-NEXT:    (then
+  ;; NO_TNH-NEXT:     (ref.null none)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (else
+  ;; NO_TNH-NEXT:     (local.get $ref)
+  ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:   (i32.const 2)
   ;; NO_TNH-NEXT:  )
@@ -263,16 +271,24 @@
     (struct.set $struct 0
       (if (result (ref null $struct))
         (local.get $x)
-        (local.get $ref)
-        (ref.null none)
+        (then
+          (local.get $ref)
+        )
+        (else
+          (ref.null none)
+        )
       )
       (i32.const 1)
     )
     (struct.set $struct 0
       (if (result (ref null $struct))
         (local.get $x)
-        (ref.null none)
-        (local.get $ref)
+        (then
+          (ref.null none)
+        )
+        (else
+          (local.get $ref)
+        )
       )
       (i32.const 2)
     )
@@ -655,8 +671,12 @@
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (if (result (ref none))
   ;; NO_TNH-NEXT:    (i32.const 1)
-  ;; NO_TNH-NEXT:    (unreachable)
-  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:    (then
+  ;; NO_TNH-NEXT:     (unreachable)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (else
+  ;; NO_TNH-NEXT:     (local.get $x)
+  ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (unreachable)
@@ -668,8 +688,12 @@
     (ref.cast (ref $struct)
       (if (result (ref none))
         (i32.const 1)
-        (unreachable)
-        (local.get $x)
+        (then
+          (unreachable)
+        )
+        (else
+          (local.get $x)
+        )
       )
     )
   )
@@ -689,8 +713,12 @@
   ;; NO_TNH-NEXT:  (drop
   ;; NO_TNH-NEXT:   (if (result (ref none))
   ;; NO_TNH-NEXT:    (i32.const 1)
-  ;; NO_TNH-NEXT:    (local.get $x)
-  ;; NO_TNH-NEXT:    (unreachable)
+  ;; NO_TNH-NEXT:    (then
+  ;; NO_TNH-NEXT:     (local.get $x)
+  ;; NO_TNH-NEXT:    )
+  ;; NO_TNH-NEXT:    (else
+  ;; NO_TNH-NEXT:     (unreachable)
+  ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (unreachable)
@@ -700,8 +728,12 @@
     (ref.cast (ref $struct)
       (if (result (ref none))
         (i32.const 1)
-        (local.get $x)
-        (unreachable)
+        (then
+          (local.get $x)
+        )
+        (else
+          (unreachable)
+        )
       )
     )
   )
@@ -936,8 +968,12 @@
   ;; TNH-NEXT:    (drop
   ;; TNH-NEXT:     (if (result (ref nofunc))
   ;; TNH-NEXT:      (i32.const 1)
-  ;; TNH-NEXT:      (return)
-  ;; TNH-NEXT:      (unreachable)
+  ;; TNH-NEXT:      (then
+  ;; TNH-NEXT:       (return)
+  ;; TNH-NEXT:      )
+  ;; TNH-NEXT:      (else
+  ;; TNH-NEXT:       (unreachable)
+  ;; TNH-NEXT:      )
   ;; TNH-NEXT:     )
   ;; TNH-NEXT:    )
   ;; TNH-NEXT:    (unreachable)
@@ -950,8 +986,12 @@
   ;; NO_TNH-NEXT:    (drop
   ;; NO_TNH-NEXT:     (if (result (ref nofunc))
   ;; NO_TNH-NEXT:      (i32.const 1)
-  ;; NO_TNH-NEXT:      (return)
-  ;; NO_TNH-NEXT:      (unreachable)
+  ;; NO_TNH-NEXT:      (then
+  ;; NO_TNH-NEXT:       (return)
+  ;; NO_TNH-NEXT:      )
+  ;; NO_TNH-NEXT:      (else
+  ;; NO_TNH-NEXT:       (unreachable)
+  ;; NO_TNH-NEXT:      )
   ;; NO_TNH-NEXT:     )
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:    (unreachable)
@@ -968,10 +1008,14 @@
       (ref.cast (ref func)
         (if (result (ref nofunc))
           (i32.const 1)
-          (block (result (ref nofunc))
-            (return)
+          (then
+            (block (result (ref nofunc))
+              (return)
+            )
           )
-          (unreachable)
+          (else
+            (unreachable)
+          )
         )
       )
     )

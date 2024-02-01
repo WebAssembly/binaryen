@@ -33,25 +33,33 @@
  ;; CHECK:      (func $foo (type $3) (result (ref null $struct))
  ;; CHECK-NEXT:  (if (result (ref null $struct))
  ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (struct.new $struct
- ;; CHECK-NEXT:    (array.new_default $vector
- ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (struct.new $struct
+ ;; CHECK-NEXT:     (array.new_default $vector
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (ref.null none)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $foo (result (ref null $struct))
   (if (result (ref null $struct))
    (i32.const 1)
-   (struct.new $struct
-    ;; regression test for computing the cost of an array.new_default, which
-    ;; lacks the optional field "init"
-    (array.new_default $vector
-     (i32.const 1)
+   (then
+    (struct.new $struct
+     ;; regression test for computing the cost of an array.new_default, which
+     ;; lacks the optional field "init"
+     (array.new_default $vector
+      (i32.const 1)
+     )
     )
    )
-   (ref.null $struct)
+   (else
+    (ref.null $struct)
+   )
   )
  )
 
@@ -59,15 +67,19 @@
  ;; CHECK-NEXT:  (loop $loop (result f64)
  ;; CHECK-NEXT:   (if (result f64)
  ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:    (f64.const 0)
- ;; CHECK-NEXT:    (block $block (result f64)
- ;; CHECK-NEXT:     (nop)
- ;; CHECK-NEXT:     (br_if $loop
- ;; CHECK-NEXT:      (i32.eqz
- ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (f64.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (block $block (result f64)
+ ;; CHECK-NEXT:      (nop)
+ ;; CHECK-NEXT:      (br_if $loop
+ ;; CHECK-NEXT:       (i32.eqz
+ ;; CHECK-NEXT:        (i32.const 0)
+ ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -83,7 +95,9 @@
     )
     (if
      (i32.const 0)
-     (unreachable)
+     (then
+      (unreachable)
+     )
     )
     ;; this will be moved from $block into the if right before it. we must be
     ;; careful to properly finalize() things, as if we finalize the block too
@@ -117,8 +131,12 @@
   ;; LUB
   (if (result funcref)
    (local.get $x)
-   (ref.func $none_=>_i32)
-   (ref.func $i32_=>_none)
+   (then
+    (ref.func $none_=>_i32)
+   )
+   (else
+    (ref.func $i32_=>_none)
+   )
   )
  )
 

@@ -8,7 +8,7 @@
 
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
- (func "structs"
+ (func $structs (export "structs")
   (local $x (ref null $struct))
   (local $y (ref null $struct))
   (local.set $x
@@ -42,7 +42,7 @@
    (struct.get $struct 0 (local.get $y))
   )
  )
- (func "arrays"
+ (func $arrays (export "arrays")
   (local $x (ref null $bytes))
   (local.set $x
    (array.new $bytes
@@ -52,7 +52,7 @@
   )
   ;; The length should be 50
   (call $log
-   (array.len $bytes (local.get $x))
+   (array.len (local.get $x))
   )
   ;; The value should be 42
   (call $log
@@ -72,14 +72,14 @@
    (array.get_s $bytes (local.get $x) (i32.const 20))
   )
  )
- (func "br_on_cast"
+ (func $br_on_cast (export "br_on_cast")
   (local $any anyref)
   ;; create a simple $struct, store it in an anyref
   (local.set $any
    (struct.new_default $struct)
   )
   (drop
-   (block $block (result ($ref $struct))
+   (block $block (result (ref $struct))
     (drop
      (block $extendedblock (result (ref $extendedstruct))
       (drop
@@ -101,7 +101,7 @@
   )
   (call $log (i32.const 3)) ;; we should get here
  )
- (func "br_on_failed_cast-1"
+ (func $br_on_failed_cast-1 (export "br_on_failed_cast-1")
   (local $any anyref)
   ;; create a simple $struct, store it in an anyref
   (local.set $any
@@ -122,7 +122,7 @@
    )
   )
  )
- (func "br_on_failed_cast-2"
+ (func $br_on_failed_cast-2 (export "br_on_failed_cast-2")
   (local $any anyref)
   ;; create an $extendedstruct, store it in an anyref
   (local.set $any
@@ -143,7 +143,7 @@
    )
   )
  )
- (func "cast-null-anyref-to-gc"
+ (func $cast-null-anyref-to-gc (export "cast-null-anyref-to-gc")
   ;; a null anyref is a literal which is not even of GC data, as it's not an
   ;; array or a struct, so our casting code should not assume it is. it is ok
   ;; to try to cast it, and the result should be 0.
@@ -156,7 +156,7 @@
  (func $get_struct (result structref)
   (struct.new_default $struct)
  )
- (func "br-on_non_null"
+ (func $br-on_non_null (export "br-on_non_null")
   (drop
    (block $non-null (result (ref any))
     (br_on_non_null $non-null (ref.i31 (i32.const 0)))
@@ -167,7 +167,7 @@
    )
   )
  )
- (func "br-on_non_null-2"
+ (func $br-on_non_null-2 (export "br-on_non_null-2")
   (drop
    (block $non-null (result (ref any))
     (br_on_non_null $non-null (ref.null any))
@@ -177,17 +177,17 @@
    )
   )
  )
- (func "ref-as-func-of-func"
+ (func $ref-as-func-of-func (export "ref-as-func-of-func")
   (drop
    (ref.cast (ref func)
-    (ref.func $0)
+    (ref.func $structs)
    )
   )
  )
  (func $a-void-func
   (call $log (i32.const 1337))
  )
- (func "cast-on-func"
+ (func $cast-on-func (export "cast-on-func")
   (call $log (i32.const 0))
   ;; a valid cast
   (call_ref $void_func
@@ -201,14 +201,14 @@
   ;; will never be reached
   (call $log (i32.const 2))
  )
- (func "array-alloc-failure"
+ (func $array-alloc-failure (export "array-alloc-failure")
   (drop
    (array.new_default $bytes
     (i32.const -1) ;; un-allocatable size (4GB * sizeof(Literal))
    )
   )
  )
- (func "init-array-packed" (result i32)
+ (func $init-array-packed (export "init-array-packed") (result i32)
   (local $x (ref null $bytes))
   (local.set $x
    (array.new $bytes
@@ -225,7 +225,7 @@
  (func $call-target (param $0 eqref)
   (nop)
  )
- (func "array-copy"
+ (func $array-copy (export "array-copy")
   (local $x (ref null $bytes))
   (local $y (ref null $bytes))
   ;; Create an array of 10's, of size 100.
@@ -271,7 +271,7 @@
    (array.get_u $bytes (local.get $x) (i32.const 12))
   )
  )
- (func "array.new_fixed"
+ (func $array.new_fixed (export "array.new_fixed")
   (local $x (ref null $bytes))
   (local.set $x
    (array.new_fixed $bytes 2
@@ -281,7 +281,7 @@
   )
   ;; The length should be 2
   (call $log
-   (array.len $bytes (local.get $x))
+   (array.len (local.get $x))
   )
   ;; The first value should be 42
   (call $log
@@ -292,7 +292,7 @@
    (array.get_u $bytes (local.get $x) (i32.const 1))
   )
  )
- (func "array.new_fixed-packed"
+ (func $array.new_fixed-packed (export "array.new_fixed-packed")
   (local $x (ref null $bytes))
   (local.set $x
    (array.new_fixed $bytes 1
@@ -304,7 +304,7 @@
    (array.get_u $bytes (local.get $x) (i32.const 0))
   )
  )
- (func "static-casts"
+ (func $static-casts (export "static-casts")
   ;; Casting null returns null.
   (call $log (ref.is_null
    (ref.cast (ref null $struct) (ref.null $struct))
@@ -341,14 +341,14 @@
    )
   )
  )
- (func "static-br_on_cast"
+ (func $static-br_on_cast (export "static-br_on_cast")
   (local $any anyref)
   ;; create a simple $struct, store it in an anyref
   (local.set $any
    (struct.new_default $struct)
   )
   (drop
-   (block $block (result ($ref $struct))
+   (block $block (result (ref $struct))
     (drop
      (block $extendedblock (result (ref $extendedstruct))
       (drop
@@ -370,7 +370,7 @@
   )
   (call $log (i32.const 3)) ;; we should get here
  )
- (func "static-br_on_cast_fail"
+ (func $static-br_on_cast_fail (export "static-br_on_cast_fail")
   (local $any anyref)
   ;; create a simple $struct, store it in an anyref
   (local.set $any
@@ -394,7 +394,7 @@
 )
 (module
  (type $[mut:i8] (array (mut i8)))
- (func "foo" (result i32)
+ (func $foo (export "foo") (result i32)
   ;; before opts this will trap on failing to allocate -1 >>> 0 bytes. after
   ;; opts the unused value is removed so there is no trap, and a value is
   ;; returned, which should not confuse the fuzzer.

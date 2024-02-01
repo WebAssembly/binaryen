@@ -16,13 +16,13 @@
  ;; CHECK:      (global $global (ref null $array) (ref.null none))
  (global $global (ref null $array) (ref.null $array))
 
- ;; CHECK:      (global $nn-tuple-global (mut ((ref any) i32)) (tuple.make
+ ;; CHECK:      (global $nn-tuple-global (mut (tuple (ref any) i32)) (tuple.make 2
  ;; CHECK-NEXT:  (ref.i31
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (i32.const 1)
  ;; CHECK-NEXT: ))
- (global $nn-tuple-global (mut ((ref any) i32)) (tuple.make (ref.i31 (i32.const 0)) (i32.const 1)))
+ (global $nn-tuple-global (mut (tuple (ref any) i32)) (tuple.make 2 (ref.i31 (i32.const 0)) (i32.const 1)))
 
 
  ;; CHECK:      (func $test-dead-get-non-nullable (type $6) (param $0 (ref struct))
@@ -284,25 +284,29 @@
  )
 
  ;; CHECK:      (func $test (type $10) (param $0 (ref any)) (result (ref any) i32)
- ;; CHECK-NEXT:  (local $1 (anyref i32))
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (tuple.make
+ ;; CHECK-NEXT:  (local $1 (tuple anyref i32))
+ ;; CHECK-NEXT:  (tuple.drop 2
+ ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (local.set $1
- ;; CHECK-NEXT:    (tuple.make
- ;; CHECK-NEXT:     (local.get $0)
- ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $1
+ ;; CHECK-NEXT:     (tuple.make 2
+ ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.set $1
- ;; CHECK-NEXT:    (tuple.make
- ;; CHECK-NEXT:     (local.get $0)
- ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $1
+ ;; CHECK-NEXT:     (tuple.make 2
+ ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:      (i32.const 2)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -311,57 +315,61 @@
  ;; CHECK-NEXT:    (local.set $1
  ;; CHECK-NEXT:     (if (type $1) (result (ref any) i32)
  ;; CHECK-NEXT:      (i32.const 0)
- ;; CHECK-NEXT:      (tuple.make
- ;; CHECK-NEXT:       (ref.as_non_null
- ;; CHECK-NEXT:        (tuple.extract 0
+ ;; CHECK-NEXT:      (then
+ ;; CHECK-NEXT:       (tuple.make 2
+ ;; CHECK-NEXT:        (ref.as_non_null
+ ;; CHECK-NEXT:         (tuple.extract 2 0
+ ;; CHECK-NEXT:          (local.get $1)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (tuple.extract 2 1
  ;; CHECK-NEXT:         (local.get $1)
  ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (tuple.extract 1
- ;; CHECK-NEXT:        (local.get $1)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (tuple.make
- ;; CHECK-NEXT:       (ref.as_non_null
- ;; CHECK-NEXT:        (tuple.extract 0
+ ;; CHECK-NEXT:      (else
+ ;; CHECK-NEXT:       (tuple.make 2
+ ;; CHECK-NEXT:        (ref.as_non_null
+ ;; CHECK-NEXT:         (tuple.extract 2 0
+ ;; CHECK-NEXT:          (local.get $1)
+ ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (tuple.extract 2 1
  ;; CHECK-NEXT:         (local.get $1)
  ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (tuple.extract 1
- ;; CHECK-NEXT:        (local.get $1)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (tuple.make
+ ;; CHECK-NEXT:    (tuple.make 2
  ;; CHECK-NEXT:     (ref.as_non_null
- ;; CHECK-NEXT:      (tuple.extract 0
+ ;; CHECK-NEXT:      (tuple.extract 2 0
  ;; CHECK-NEXT:       (local.get $1)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (tuple.extract 1
+ ;; CHECK-NEXT:     (tuple.extract 2 1
  ;; CHECK-NEXT:      (local.get $1)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (tuple.make
+ ;; CHECK-NEXT:  (tuple.make 2
  ;; CHECK-NEXT:   (ref.as_non_null
- ;; CHECK-NEXT:    (tuple.extract 0
+ ;; CHECK-NEXT:    (tuple.extract 2 0
  ;; CHECK-NEXT:     (local.get $1)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (tuple.extract 1
+ ;; CHECK-NEXT:   (tuple.extract 2 1
  ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $test (param $any (ref any)) (result (ref any) i32)
-  (local $x ((ref any) i32))
-  (local $y ((ref any) i32))
+  (local $x (tuple (ref any) i32))
+  (local $y (tuple (ref any) i32))
   ;; This store is dead and will be removed.
   (local.set $x
-   (tuple.make
+   (tuple.make 2
     (local.get $any)
     (i32.const 0)
    )
@@ -369,16 +377,20 @@
   (if
    (i32.const 0)
    ;; These two sets will remain.
-   (local.set $x
-    (tuple.make
-     (local.get $any)
-     (i32.const 1)
+   (then
+    (local.set $x
+     (tuple.make 2
+      (local.get $any)
+      (i32.const 1)
+     )
     )
    )
-   (local.set $x
-    (tuple.make
-     (local.get $any)
-     (i32.const 2)
+   (else
+    (local.set $x
+     (tuple.make 2
+      (local.get $any)
+      (i32.const 2)
+     )
     )
    )
   )
@@ -388,8 +400,12 @@
     (if (result (ref any) i32)
      (i32.const 0)
      ;; These gets will be invalid, so the local will have to be made nullable.
-     (local.get $x)
-     (local.get $x)
+     (then
+      (local.get $x)
+     )
+     (else
+      (local.get $x)
+     )
     )
    )
   )

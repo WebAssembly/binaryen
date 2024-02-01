@@ -16,13 +16,12 @@
   (type $3 (func (result i32)))
   ;; CHECK:      (type $4 (func (param i32 f64 i32 i32)))
   (type $4 (func (param i32 f64 i32 i32)))
-  (import $int "env" "int" (result i32))
   ;; CHECK:      (type $5 (func (param i32) (result i32)))
 
   ;; CHECK:      (type $6 (func (result f64)))
 
   ;; CHECK:      (import "env" "int" (func $int (type $3) (result i32)))
-
+  (import "env" "int" (func $int (result i32)))
   ;; CHECK:      (global $Int i32 (i32.const 0))
   (global $Int i32 (i32.const 0))
   ;; CHECK:      (memory $0 256 256)
@@ -69,22 +68,34 @@
     )
     (if
       (i32.const 100)
-      (nop)
-      (drop
-        (i32.const 101)
+      (then
+        (nop)
+      )
+      (else
+        (drop
+          (i32.const 101)
+        )
       )
     )
     (if
       (i32.const 102)
-      (drop
-        (i32.const 103)
+      (then
+        (drop
+          (i32.const 103)
+        )
       )
-      (nop)
+      (else
+        (nop)
+      )
     )
     (if
       (i32.const 104)
-      (nop)
-      (nop)
+      (then
+        (nop)
+      )
+      (else
+        (nop)
+      )
     )
   )
   ;; CHECK:      (func $l (type $3) (result i32)
@@ -350,63 +361,83 @@
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (if (result i32)
   ;; CHECK-NEXT:    (local.get $d)
-  ;; CHECK-NEXT:    (f64.ne
-  ;; CHECK-NEXT:     (f64.promote_f32
-  ;; CHECK-NEXT:      (f32.load
-  ;; CHECK-NEXT:       (local.tee $l
-  ;; CHECK-NEXT:        (i32.add
-  ;; CHECK-NEXT:         (local.get $b)
-  ;; CHECK-NEXT:         (i32.const 60)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (f64.ne
+  ;; CHECK-NEXT:      (f64.promote_f32
+  ;; CHECK-NEXT:       (f32.load
+  ;; CHECK-NEXT:        (local.tee $l
+  ;; CHECK-NEXT:         (i32.add
+  ;; CHECK-NEXT:          (local.get $b)
+  ;; CHECK-NEXT:          (i32.const 60)
+  ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $e)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $e)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $Gu (type $4) (param $b i32) (param $e f64) (param $l i32) (param $d i32)
     (if
       (if (result i32)
         (local.get $d)
-        (block $block1 (result i32)
-          (nop)
-          (f64.ne
-            (f64.promote_f32
-              (f32.load
-                (local.tee $l
-                  (i32.add
-                    (local.get $b)
-                    (i32.const 60)
+        (then
+          (block $block1 (result i32)
+            (nop)
+            (f64.ne
+              (f64.promote_f32
+                (f32.load
+                  (local.tee $l
+                    (i32.add
+                      (local.get $b)
+                      (i32.const 60)
+                    )
                   )
                 )
               )
+              (local.get $e)
             )
-            (local.get $e)
           )
         )
-        (i32.const 0)
+        (else
+          (i32.const 0)
+        )
       )
-      (unreachable)
+      (then
+        (unreachable)
+      )
     )
   )
   ;; CHECK:      (func $if-drop (type $3) (result i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (call $if-drop)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (call $int)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (call $int)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (br $out)
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (br $out)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (call $if-drop)
-  ;; CHECK-NEXT:    (br $out)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (call $int)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (br $out)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (call $int)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -417,15 +448,23 @@
       (drop
         (if (result i32)
           (call $if-drop)
-          (call $int)
-          (br $out)
+          (then
+            (call $int)
+          )
+          (else
+            (br $out)
+          )
         )
       )
       (drop
         (if (result i32)
           (call $if-drop)
-          (br $out)
-          (call $int)
+          (then
+            (br $out)
+          )
+          (else
+            (call $int)
+          )
         )
       )
     )
@@ -565,8 +604,12 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if (result i32)
   ;; CHECK-NEXT:    (call $if2drops)
-  ;; CHECK-NEXT:    (call $if2drops)
-  ;; CHECK-NEXT:    (call $if2drops)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (call $if2drops)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (call $if2drops)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 2)
@@ -574,11 +617,15 @@
   (func $if2drops (result i32)
     (if
       (call $if2drops)
-      (drop
-        (call $if2drops)
+      (then
+        (drop
+          (call $if2drops)
+        )
       )
-      (drop
-        (call $if2drops)
+      (else
+        (drop
+          (call $if2drops)
+        )
       )
     )
     (i32.const 2)
@@ -586,11 +633,15 @@
   ;; CHECK:      (func $if2drops-different (type $3) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (call $if2drops)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (call $if2drops)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $if2drops)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (call $unary)
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (call $unary)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 2)
@@ -598,11 +649,15 @@
   (func $if2drops-different (result i32)
     (if
       (call $if2drops)
-      (drop
-        (call $if2drops) ;; i32
+      (then
+        (drop
+          (call $if2drops) ;; i32
+        )
       )
-      (drop
-        (call $unary) ;; f32!
+      (else
+        (drop
+          (call $unary) ;; f32!
+        )
       )
     )
     (i32.const 2)
@@ -619,26 +674,34 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $if-const (param $x i32)
-    (if (i32.const 0) (call $if-const (i32.const 1)))
-    (if (i32.const 2) (call $if-const (i32.const 3)))
-    (if (i32.const 0) (call $if-const (i32.const 4)) (call $if-const (i32.const 5)))
-    (if (i32.const 6) (call $if-const (i32.const 7)) (call $if-const (i32.const 8)))
+    (if (i32.const 0) (then (call $if-const (i32.const 1))))
+    (if (i32.const 2) (then (call $if-const (i32.const 3))))
+    (if (i32.const 0) (then (call $if-const (i32.const 4)) )(else (call $if-const (i32.const 5))))
+    (if (i32.const 6) (then (call $if-const (i32.const 7)) )(else (call $if-const (i32.const 8))))
   )
   ;; CHECK:      (func $drop-if-both-unreachable (type $1) (param $0 i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:     (br $out)
-  ;; CHECK-NEXT:     (br $out)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $out)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (br $out)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -647,16 +710,24 @@
       (drop
         (if (result i32)
           (local.get $0)
-          (br $out)
-          (br $out)
+          (then
+            (br $out)
+          )
+          (else
+            (br $out)
+          )
         )
       )
     )
     (drop
       (if (result i32)
         (local.get $0)
-        (unreachable)
-        (unreachable)
+        (then
+          (unreachable)
+        )
+        (else
+          (unreachable)
+        )
       )
     )
   )
@@ -664,7 +735,7 @@
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:    (then
   ;; CHECK-NEXT:     (local.set $x
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
@@ -678,14 +749,18 @@
    (block $out
     (if
      (local.get $x)
-     (block
-      (if
-       (i32.const 1)
-       (block
-        (local.set $x
-         (local.get $x)
+     (then
+      (block
+       (if
+        (i32.const 1)
+        (then
+         (block
+          (local.set $x
+           (local.get $x)
+          )
+          (br $out)
+         )
         )
-        (br $out)
        )
       )
      )
@@ -804,8 +879,12 @@
     (block $label$0
      (if
       (i32.const 170996275)
-      (unreachable)
-      (br $label$0)
+      (then
+       (unreachable)
+      )
+      (else
+       (br $label$0)
+      )
      )
     )
     (unreachable)
@@ -817,8 +896,12 @@
     (block $label$0
      (if
       (i32.const 170996275)
-      (nop)
-      (br $label$0)
+      (then
+       (nop)
+      )
+      (else
+       (br $label$0)
+      )
      )
     )
     (unreachable)
@@ -833,8 +916,12 @@
     (block $label$0
      (if
       (i32.const 170996275)
-      (br $label$0)
-      (nop)
+      (then
+       (br $label$0)
+      )
+      (else
+       (nop)
+      )
      )
     )
     (unreachable)
@@ -911,8 +998,12 @@
          (br $label$9)
         )
        )
-       (unreachable)
-       (i32.const 1920103026)
+       (then
+        (unreachable)
+       )
+       (else
+        (i32.const 1920103026)
+       )
       )
      )
     )
@@ -932,7 +1023,9 @@
       (br $label$0
        (i32.const 1)
       )
-      (br $label$1)
+      (then
+       (br $label$1)
+      )
      )
     )
     (i32.const 1579493952)
@@ -952,7 +1045,9 @@
       (br $label$0
        (i32.const 1)
       )
-      (br $label$1)
+      (then
+       (br $label$1)
+      )
      )
     )
     (i32.const 1579493952)
@@ -969,16 +1064,20 @@
      (i32.eqz
       (local.get $0)
      )
-     (block $label$1
-      (block
-       (if ;; we nop this if, which has a type change for block $label$1, no more brs to it
-        (i32.const 0)
-        (br_if $label$1
-          (i32.const 1717966400)
+     (then
+      (block $label$1
+       (block
+        (if ;; we nop this if, which has a type change for block $label$1, no more brs to it
+         (i32.const 0)
+         (then
+          (br_if $label$1
+            (i32.const 1717966400)
+          )
+         )
         )
-       )
-       (drop
-        (br $label$0)
+        (drop
+         (br $label$0)
+        )
        )
       )
      )
@@ -1040,7 +1139,7 @@
  (global $global$1 (mut i32) (i32.const 0))
  ;; CHECK:      (memory $0 1 1)
 
- ;; CHECK:      (export "compress" (func $3))
+ ;; CHECK:      (export "compress" (func $compress))
 
  ;; CHECK:      (func $_deflate (type $0) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (call $_deflate
@@ -1048,7 +1147,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $_deflate (param i32) (result i32)
-  (call $_deflate (local.get $0))
+  (call $_deflate (local.get 0))
  )
  ;; CHECK:      (func $_deflateInit2_ (type $0) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (call $_deflateInit2_
@@ -1056,7 +1155,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $_deflateInit2_ (param i32) (result i32)
-  (call $_deflateInit2_ (local.get $0))
+  (call $_deflateInit2_ (local.get 0))
  )
  ;; CHECK:      (func $_deflateEnd (type $0) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (call $_deflateEnd
@@ -1064,9 +1163,102 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $_deflateEnd (param i32) (result i32)
-  (call $_deflateEnd (local.get $0))
+  (call $_deflateEnd (local.get 0))
  )
- (func "compress" (param $0 i32) (param $1 i32) (param $2 i32)
+ ;; CHECK:      (func $compress (type $1) (param $0 i32) (param $1 i32) (param $2 i32)
+ ;; CHECK-NEXT:  (local $3 i32)
+ ;; CHECK-NEXT:  (local.set $3
+ ;; CHECK-NEXT:   (global.get $global$1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (global.set $global$1
+ ;; CHECK-NEXT:   (i32.sub
+ ;; CHECK-NEXT:    (global.get $global$1)
+ ;; CHECK-NEXT:    (i32.const -64)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:   (local.get $2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store offset=4
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:   (i32.const 100000)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store offset=12
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store offset=16
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:   (i32.load
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store offset=32
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store offset=36
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.store offset=40
+ ;; CHECK-NEXT:   (local.get $3)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (call $_deflateInit2_
+ ;; CHECK-NEXT:    (local.get $3)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (global.set $global$1
+ ;; CHECK-NEXT:     (local.get $3)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (return)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (if (result i32)
+ ;; CHECK-NEXT:    (i32.eq
+ ;; CHECK-NEXT:     (local.tee $0
+ ;; CHECK-NEXT:      (call $_deflate
+ ;; CHECK-NEXT:       (local.get $3)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (i32.store
+ ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:      (i32.load offset=20
+ ;; CHECK-NEXT:       (local.get $3)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.set $0
+ ;; CHECK-NEXT:      (call $_deflateEnd
+ ;; CHECK-NEXT:       (local.get $3)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (global.set $global$1
+ ;; CHECK-NEXT:      (local.get $3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:      (call $_deflateEnd
+ ;; CHECK-NEXT:       (local.get $3)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (global.set $global$1
+ ;; CHECK-NEXT:      (local.get $3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $compress (export "compress") (param $0 i32) (param $1 i32) (param $2 i32)
   (local $3 i32)
   (local.set $3
    (global.get $global$1)
@@ -1111,11 +1303,13 @@
    (call $_deflateInit2_
     (local.get $3)
    )
-   (block
-    (global.set $global$1
-     (local.get $3)
+   (then
+    (block
+     (global.set $global$1
+      (local.get $3)
+     )
+     (return)
     )
-    (return)
    )
   )
   (drop
@@ -1128,36 +1322,40 @@
      )
      (i32.const 1)
     )
-    (block (result i32)
-     (i32.store
-      (local.get $1)
-      (i32.load offset=20
+    (then
+     (block (result i32)
+      (i32.store
+       (local.get $1)
+       (i32.load offset=20
+        (local.get $3)
+       )
+      )
+      (local.set $0
+       (call $_deflateEnd
+        (local.get $3)
+       )
+      )
+      (global.set $global$1
        (local.get $3)
       )
+      (local.get $0)
      )
-     (local.set $0
-      (call $_deflateEnd
-       (local.get $3)
-      )
-     )
-     (global.set $global$1
-      (local.get $3)
-     )
-     (local.get $0)
     )
-    (block (result i32)
-     (drop
-      (call $_deflateEnd
+    (else
+     (block (result i32)
+      (drop
+       (call $_deflateEnd
+        (local.get $3)
+       )
+      )
+      (global.set $global$1
        (local.get $3)
       )
-     )
-     (global.set $global$1
-      (local.get $3)
-     )
-     (select
-      (local.get $0)
-      (i32.const -5)
-      (local.get $0)
+      (select
+       (local.get $0)
+       (i32.const -5)
+       (local.get $0)
+      )
      )
     )
    )
@@ -1165,99 +1363,6 @@
  )
 )
 
-;; CHECK:      (func $3 (type $1) (param $0 i32) (param $1 i32) (param $2 i32)
-;; CHECK-NEXT:  (local $3 i32)
-;; CHECK-NEXT:  (local.set $3
-;; CHECK-NEXT:   (global.get $global$1)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (global.set $global$1
-;; CHECK-NEXT:   (i32.sub
-;; CHECK-NEXT:    (global.get $global$1)
-;; CHECK-NEXT:    (i32.const -64)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.store
-;; CHECK-NEXT:   (local.get $3)
-;; CHECK-NEXT:   (local.get $2)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.store offset=4
-;; CHECK-NEXT:   (local.get $3)
-;; CHECK-NEXT:   (i32.const 100000)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.store offset=12
-;; CHECK-NEXT:   (local.get $3)
-;; CHECK-NEXT:   (local.get $0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.store offset=16
-;; CHECK-NEXT:   (local.get $3)
-;; CHECK-NEXT:   (i32.load
-;; CHECK-NEXT:    (local.get $1)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.store offset=32
-;; CHECK-NEXT:   (local.get $3)
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.store offset=36
-;; CHECK-NEXT:   (local.get $3)
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.store offset=40
-;; CHECK-NEXT:   (local.get $3)
-;; CHECK-NEXT:   (i32.const 0)
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (if
-;; CHECK-NEXT:   (call $_deflateInit2_
-;; CHECK-NEXT:    (local.get $3)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:   (block
-;; CHECK-NEXT:    (global.set $global$1
-;; CHECK-NEXT:     (local.get $3)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (return)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (if (result i32)
-;; CHECK-NEXT:    (i32.eq
-;; CHECK-NEXT:     (local.tee $0
-;; CHECK-NEXT:      (call $_deflate
-;; CHECK-NEXT:       (local.get $3)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (i32.const 1)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (block (result i32)
-;; CHECK-NEXT:     (i32.store
-;; CHECK-NEXT:      (local.get $1)
-;; CHECK-NEXT:      (i32.load offset=20
-;; CHECK-NEXT:       (local.get $3)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (local.set $0
-;; CHECK-NEXT:      (call $_deflateEnd
-;; CHECK-NEXT:       (local.get $3)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (global.set $global$1
-;; CHECK-NEXT:      (local.get $3)
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (i32.const 0)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (block (result i32)
-;; CHECK-NEXT:     (drop
-;; CHECK-NEXT:      (call $_deflateEnd
-;; CHECK-NEXT:       (local.get $3)
-;; CHECK-NEXT:      )
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (global.set $global$1
-;; CHECK-NEXT:      (local.get $3)
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (i32.const 0)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
 (module
  (type $A (struct (field (mut i32))))
  ;; CHECK:      (type $0 (func))
@@ -1286,16 +1391,16 @@
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $1
-  (drop
+  (tuple.drop 2
    (block $block (result funcref i32)
     ;; we can vaccum out all parts of this block: the br_if is not taken, there
     ;; is a nop, and the tuple at the end goes to a dropped block anyhow. this
     ;; test specifically verifies handling of tuples containing non-nullable
     ;; types, for which we try to create a zero in an intermediate step along
     ;; the way.
-    (drop
+    (tuple.drop 2
      (br_if $block
-      (tuple.make
+      (tuple.make 2
        (ref.func $1)
        (i32.const 0)
       )
@@ -1303,7 +1408,7 @@
      )
     )
     (nop)
-    (tuple.make
+    (tuple.make 2
      (ref.func $1)
      (i32.const 1)
     )

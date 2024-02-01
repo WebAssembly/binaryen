@@ -1073,12 +1073,12 @@ BINARYEN_API BinaryenExpressionRef BinaryenArrayNew(BinaryenModuleRef module,
                                                     BinaryenExpressionRef size,
                                                     BinaryenExpressionRef init);
 
-BINARYEN_API BinaryenExpressionRef BinaryenArrayNewData(BinaryenModuleRef module,
-                                            BinaryenHeapType type,
-                                            const char* name,
-                                            BinaryenExpressionRef offset,
-                                            BinaryenExpressionRef size);
-
+BINARYEN_API BinaryenExpressionRef
+BinaryenArrayNewData(BinaryenModuleRef module,
+                     BinaryenHeapType type,
+                     const char* name,
+                     BinaryenExpressionRef offset,
+                     BinaryenExpressionRef size);
 BINARYEN_API BinaryenExpressionRef
 BinaryenArrayNewFixed(BinaryenModuleRef module,
                       BinaryenHeapType type,
@@ -2028,11 +2028,11 @@ BINARYEN_API bool BinaryenSIMDLoadStoreLaneIsStore(BinaryenExpressionRef expr);
 
 // MemoryInit
 
-// Gets the index of the segment being initialized by a `memory.init`
+// Gets the name of the segment being initialized by a `memory.init`
 // expression.
 BINARYEN_API const char*
 BinaryenMemoryInitGetSegment(BinaryenExpressionRef expr);
-// Sets the index of the segment being initialized by a `memory.init`
+// Sets the name of the segment being initialized by a `memory.init`
 // expression.
 BINARYEN_API void BinaryenMemoryInitSetSegment(BinaryenExpressionRef expr,
                                                const char* segment);
@@ -2057,9 +2057,9 @@ BINARYEN_API void BinaryenMemoryInitSetSize(BinaryenExpressionRef expr,
 
 // DataDrop
 
-// Gets the index of the segment being dropped by a `data.drop` expression.
+// Gets the name of the segment being dropped by a `data.drop` expression.
 BINARYEN_API const char* BinaryenDataDropGetSegment(BinaryenExpressionRef expr);
-// Sets the index of the segment being dropped by a `data.drop` expression.
+// Sets the name of the segment being dropped by a `data.drop` expression.
 BINARYEN_API void BinaryenDataDropSetSegment(BinaryenExpressionRef expr,
                                              const char* segment);
 
@@ -2906,14 +2906,17 @@ BINARYEN_API BinaryenElementSegmentRef
 BinaryenGetElementSegmentByIndex(BinaryenModuleRef module, BinaryenIndex index);
 
 // This will create a memory, overwriting any existing memory
-// Each memory has data in segments, a start offset in segmentOffsets, and a
-// size in segmentSizes. exportName can be NULL
+// Each memory segment has a name in segmentNames, data in segmentDatas,
+// a start offset in segmentOffsets, a passive flag in segmentPassives
+// and a size in segmentSizes. segmentNames and exportName can be NULL
+// If segmentNames is null, BinaryenSetMemory creates names from indices
 BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
                                     BinaryenIndex initial,
                                     BinaryenIndex maximum,
                                     const char* exportName,
-                                    const char** segments,
-                                    bool* segmentPassive,
+                                    const char** segmentNames,
+                                    const char** segmentDatas,
+                                    bool* segmentPassives,
                                     BinaryenExpressionRef* segmentOffsets,
                                     BinaryenIndex* segmentSizes,
                                     BinaryenIndex numSegments,
@@ -2940,14 +2943,14 @@ BINARYEN_API bool BinaryenMemoryIs64(BinaryenModuleRef module,
 // Memory segments. Query utilities.
 
 BINARYEN_API uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module);
-BINARYEN_API uint32_t
-BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module, BinaryenIndex id);
+BINARYEN_API uint32_t BinaryenGetMemorySegmentByteOffset(
+  BinaryenModuleRef module, const char* segmentName);
 BINARYEN_API size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
-                                                       BinaryenIndex id);
+                                                       const char* segmentName);
 BINARYEN_API bool BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
-                                                  BinaryenIndex id);
+                                                  const char* segmentName);
 BINARYEN_API void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
-                                                BinaryenIndex id,
+                                                const char* segmentName,
                                                 char* buffer);
 
 // Start function. One per module
@@ -3201,6 +3204,10 @@ BINARYEN_API BinaryenIndex BinaryenFunctionGetNumVars(BinaryenFunctionRef func);
 // specified `Function`.
 BINARYEN_API BinaryenType BinaryenFunctionGetVar(BinaryenFunctionRef func,
                                                  BinaryenIndex index);
+// Appends a local variable to the specified `Function`, returning its
+// index.
+BINARYEN_API BinaryenIndex BinaryenFunctionAddVar(BinaryenFunctionRef func,
+                                                  BinaryenType type);
 // Gets the number of locals within the specified function. Includes parameters.
 BINARYEN_API BinaryenIndex
 BinaryenFunctionGetNumLocals(BinaryenFunctionRef func);

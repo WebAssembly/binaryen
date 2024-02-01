@@ -59,7 +59,9 @@
   ;; CHECK-NEXT:  (local $y i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (i32.const 1)
@@ -78,7 +80,9 @@
     ;; test at least.)
     (if
       (local.get $x)
-      (unreachable)
+      (then
+        (unreachable)
+      )
     )
 
     (local.set $x

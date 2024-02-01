@@ -499,8 +499,10 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   }
 
   void visitTry(Try* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitTryTable(TryTable* curr) { WASM_UNREACHABLE("TODO"); }
   void visitThrow(Throw* curr) { WASM_UNREACHABLE("TODO"); }
   void visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitThrowRef(ThrowRef* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTupleMake(TupleMake* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTupleExtract(TupleExtract* curr) { WASM_UNREACHABLE("TODO"); }
 
@@ -872,6 +874,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitStringIterMove(StringIterMove* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStringSliceWTF(StringSliceWTF* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStringSliceIter(StringSliceIter* curr) { WASM_UNREACHABLE("TODO"); }
+
+  void visitResume(Resume* curr) { WASM_UNREACHABLE("TODO"); }
 };
 
 struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {

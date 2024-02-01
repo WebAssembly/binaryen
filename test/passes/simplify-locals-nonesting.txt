@@ -87,7 +87,7 @@
    )
    (if
     (local.get $8)
-    (block
+    (then
      (block $block1
       (nop)
       (nop)
@@ -127,7 +127,7 @@
      )
      (unreachable)
     )
-    (block
+    (else
      (unreachable)
      (unreachable)
     )
@@ -157,7 +157,7 @@
     )
     (if
      (local.get $2)
-     (block
+     (then
       (nop)
       (nop)
       (local.set $x
@@ -168,7 +168,7 @@
       )
       (nop)
      )
-     (block
+     (else
       (nop)
       (nop)
       (local.set $x

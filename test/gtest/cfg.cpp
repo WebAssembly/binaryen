@@ -26,7 +26,7 @@ TEST_F(CFGTest, Print) {
         (drop
           (if (result i32)
             (i32.const 1)
-            (block
+            (then
               (loop $loop
                 (br_if $loop
                   (i32.const 2)
@@ -34,8 +34,10 @@ TEST_F(CFGTest, Print) {
               )
               (i32.const 3)
             )
-            (return
-              (i32.const 4)
+            (else
+              (return
+               (i32.const 4)
+              )
             )
           )
         )
@@ -65,7 +67,7 @@ TEST_F(CFGTest, Print) {
 ;; preds: [3], succs: [6]
 4:
   6: i32.const 3
-  7: block
+  7: block (result i32)
 
 ;; preds: [0], succs: [7]
 5:
@@ -230,7 +232,7 @@ TEST_F(CFGTest, BlockIndexes) {
       (func $foo
         (if
           (i32.const 1)
-          (block
+          (then
             (drop
               (i32.const 2)
             )
@@ -268,9 +270,9 @@ TEST_F(CFGTest, LinearReachingDefinitions) {
   auto moduleText = R"wasm(
     (module
       (func $bar
-        (local $a (i32))
-        (local $b (i32))
-        (local $c (i32))
+        (local $a i32)
+        (local $b i32)
+        (local $c i32)
         (local.set $a
           (i32.const 1)
         )
@@ -333,8 +335,8 @@ TEST_F(CFGTest, ReachingDefinitionsIf) {
   auto moduleText = R"wasm(
     (module
       (func $bar
-        (local $a (i32))
-        (local $b (i32))
+        (local $a i32)
+        (local $b i32)
         (local.set $a
           (i32.const 1)
         )
@@ -343,11 +345,15 @@ TEST_F(CFGTest, ReachingDefinitionsIf) {
             (local.get $a)
             (i32.const 2)
           )
-          (local.set $b
-            (i32.const 3)
+          (then
+            (local.set $b
+              (i32.const 3)
+            )
           )
-          (local.set $a
-            (i32.const 4)
+          (else
+            (local.set $a
+              (i32.const 4)
+            )
           )
         )
         (drop
@@ -400,7 +406,7 @@ TEST_F(CFGTest, ReachingDefinitionsIf) {
 TEST_F(CFGTest, ReachingDefinitionsLoop) {
   auto moduleText = R"wasm(
     (module
-      (func $bar (param $a (i32)) (param $b (i32))
+      (func $bar (param $a i32) (param $b i32)
         (loop $loop
           (drop
             (local.get $a)

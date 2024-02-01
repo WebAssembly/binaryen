@@ -41,14 +41,18 @@
      (i32.const 0)
     )
    )
-   (local.set $temp
-    (i31.new
-     (i32.const 1)
+   (then
+    (local.set $temp
+     (i31.new
+      (i32.const 1)
+     )
     )
    )
-   (local.set $temp
-    (i31.new
-     (i32.const 2)
+   (else
+    (local.set $temp
+     (i31.new
+      (i32.const 2)
+     )
     )
    )
   )
@@ -86,14 +90,18 @@
      (i32.const 0)
     )
    )
-   (local.set $temp
-    (i31.new
-     (i32.const 1)
+   (then
+    (local.set $temp
+     (i31.new
+      (i32.const 1)
+     )
     )
    )
-   (local.set $temp
-    (i31.new
-     (i32.const 2)
+   (else
+    (local.set $temp
+     (i31.new
+      (i32.const 2)
+     )
     )
    )
   )
@@ -131,14 +139,18 @@
      (i32.const 0)
     )
    )
-   (local.set $temp
-    (i31.new
-     (i32.const 1)
+   (then
+    (local.set $temp
+     (i31.new
+      (i32.const 1)
+     )
     )
    )
-   (local.set $temp
-    (i31.new
-     (i32.const 2)
+   (else
+    (local.set $temp
+     (i31.new
+      (i32.const 2)
+     )
     )
    )
   )
@@ -183,14 +195,18 @@
      (i32.const 0)
     )
    )
-   (local.set $temp
-    (i31.new
-     (i32.const 1)
+   (then
+    (local.set $temp
+     (i31.new
+      (i32.const 1)
+     )
     )
    )
-   (local.set $temp
-    (i31.new
-     (i32.const 2)
+   (else
+    (local.set $temp
+     (i31.new
+      (i32.const 2)
+     )
     )
    )
   )
@@ -233,14 +249,18 @@
      (i32.const 0)
     )
    )
-   (local.set $temp
-    (i31.new
-     (i32.const 1)
+   (then
+    (local.set $temp
+     (i31.new
+      (i32.const 1)
+     )
     )
    )
-   (local.set $temp
-    (i31.new
-     (i32.const 2)
+   (else
+    (local.set $temp
+     (i31.new
+      (i32.const 2)
+     )
     )
    )
   )
@@ -280,14 +300,18 @@
      (i32.const 0)
     )
    )
-   (local.set $temp
-    (i31.new
-     (i32.const 1)
+   (then
+    (local.set $temp
+     (i31.new
+      (i32.const 1)
+     )
     )
    )
-   (local.set $temp
-    (i31.new
-     (i32.const 2)
+   (else
+    (local.set $temp
+     (i31.new
+      (i32.const 2)
+     )
     )
    )
   )
@@ -325,14 +349,18 @@
      (i32.const 0)
     )
    )
-   (local.set $temp
-    (i31.new
-     (i32.const 1)
+   (then
+    (local.set $temp
+     (i31.new
+      (i32.const 1)
+     )
     )
    )
-   (local.set $temp
-    (i31.new
-     (i32.const 2)
+   (else
+    (local.set $temp
+     (i31.new
+      (i32.const 2)
+     )
     )
    )
   )
@@ -340,13 +368,13 @@
  )
 
  ;; CHECK:      (func $if-nondefaultable (type $1) (param $param (ref eq)) (result (ref eq))
- ;; CHECK-NEXT:  (local $temp (i32 (ref eq)))
+ ;; CHECK-NEXT:  (local $temp (tuple i32 (ref eq)))
  ;; CHECK-NEXT:  i32.const 0
  ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  tuple.make
+ ;; CHECK-NEXT:  tuple.make 2
  ;; CHECK-NEXT:  local.set $temp
  ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  tuple.extract 1
+ ;; CHECK-NEXT:  tuple.extract 2 1
  ;; CHECK-NEXT:  i32.const 1
  ;; CHECK-NEXT:  ref.i31
  ;; CHECK-NEXT:  ref.eq
@@ -354,68 +382,72 @@
  ;; CHECK-NEXT:   i32.const 2
  ;; CHECK-NEXT:   i32.const 3
  ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   tuple.make
+ ;; CHECK-NEXT:   tuple.make 2
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  else
  ;; CHECK-NEXT:   i32.const 4
  ;; CHECK-NEXT:   i32.const 5
  ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   tuple.make
+ ;; CHECK-NEXT:   tuple.make 2
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  end
  ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  tuple.extract 1
+ ;; CHECK-NEXT:  tuple.extract 2 1
  ;; CHECK-NEXT: )
  (func $if-nondefaultable (param $param (ref eq)) (result (ref eq))
-  (local $temp (i32 (ref eq)))
+  (local $temp (tuple i32 (ref eq)))
   ;; As the original testcase, but now $temp is a nondefaultable tuple rather
   ;; than a non-nullable reference by itself. We cannot remove the first set
   ;; here.
   (local.set $temp
-   (tuple.make
+   (tuple.make 2
     (i32.const 0)
     (local.get $param)
    )
   )
   (if
    (ref.eq
-    (tuple.extract 1
+    (tuple.extract 2 1
      (local.get $temp)
     )
     (i31.new
      (i32.const 1)
     )
    )
-   (local.set $temp
-    (tuple.make
-     (i32.const 2)
-     (i31.new
-      (i32.const 3)
+   (then
+    (local.set $temp
+     (tuple.make 2
+      (i32.const 2)
+      (i31.new
+       (i32.const 3)
+      )
      )
     )
    )
-   (local.set $temp
-    (tuple.make
-     (i32.const 4)
-     (i31.new
-      (i32.const 5)
+   (else
+    (local.set $temp
+     (tuple.make 2
+      (i32.const 4)
+      (i31.new
+       (i32.const 5)
+      )
      )
     )
    )
   )
-  (tuple.extract 1
+  (tuple.extract 2 1
    (local.get $temp)
   )
  )
 
  ;; CHECK:      (func $if-defaultable (type $4) (param $param eqref) (result eqref)
- ;; CHECK-NEXT:  (local $temp (i32 eqref))
+ ;; CHECK-NEXT:  (local $temp (tuple i32 eqref))
  ;; CHECK-NEXT:  i32.const 0
  ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  tuple.make
+ ;; CHECK-NEXT:  tuple.make 2
  ;; CHECK-NEXT:  local.set $temp
  ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  tuple.extract 1
+ ;; CHECK-NEXT:  tuple.extract 2 1
  ;; CHECK-NEXT:  i32.const 1
  ;; CHECK-NEXT:  ref.i31
  ;; CHECK-NEXT:  ref.eq
@@ -423,55 +455,59 @@
  ;; CHECK-NEXT:   i32.const 2
  ;; CHECK-NEXT:   i32.const 3
  ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   tuple.make
+ ;; CHECK-NEXT:   tuple.make 2
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  else
  ;; CHECK-NEXT:   i32.const 4
  ;; CHECK-NEXT:   i32.const 5
  ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   tuple.make
+ ;; CHECK-NEXT:   tuple.make 2
  ;; CHECK-NEXT:   local.set $temp
  ;; CHECK-NEXT:  end
  ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  tuple.extract 1
+ ;; CHECK-NEXT:  tuple.extract 2 1
  ;; CHECK-NEXT: )
  (func $if-defaultable (param $param (ref null eq)) (result (ref null eq))
-  (local $temp (i32 (ref null eq)))
+  (local $temp (tuple i32 (ref null eq)))
   ;; As the last testcase, but now $temp is a defaultable tuple. We still do not
   ;; optimize away the set here, as we ignore tuples in local2stack.
   (local.set $temp
-   (tuple.make
+   (tuple.make 2
     (i32.const 0)
     (local.get $param)
    )
   )
   (if
    (ref.eq
-    (tuple.extract 1
+    (tuple.extract 2 1
      (local.get $temp)
     )
     (i31.new
      (i32.const 1)
     )
    )
-   (local.set $temp
-    (tuple.make
-     (i32.const 2)
-     (i31.new
-      (i32.const 3)
+   (then
+    (local.set $temp
+     (tuple.make 2
+      (i32.const 2)
+      (i31.new
+       (i32.const 3)
+      )
      )
     )
    )
-   (local.set $temp
-    (tuple.make
-     (i32.const 4)
-     (i31.new
-      (i32.const 5)
+   (else
+    (local.set $temp
+     (tuple.make 2
+      (i32.const 4)
+      (i31.new
+       (i32.const 5)
+      )
      )
     )
    )
   )
-  (tuple.extract 1
+  (tuple.extract 2 1
    (local.get $temp)
   )
  )
@@ -499,13 +535,16 @@
   (if
    (i32.eqz
     (local.get $temp)
-    (i32.const 0)
    )
-   (local.set $temp
-    (i32.const 1)
+   (then
+    (local.set $temp
+     (i32.const 1)
+    )
    )
-   (local.set $temp
-    (i32.const 2)
+   (else
+    (local.set $temp
+     (i32.const 2)
+    )
    )
   )
   (local.get $temp)
@@ -544,26 +583,30 @@
   )
   (if
    (i32.const 0)
-   (block
-    (local.set $temp
-     (local.get $param)
-    )
-    (drop
-     (local.get $temp)
-    )
-    (drop
-     (local.get $temp)
+   (then
+    (block
+     (local.set $temp
+      (local.get $param)
+     )
+     (drop
+      (local.get $temp)
+     )
+     (drop
+      (local.get $temp)
+     )
     )
    )
-   (block
-    (local.set $temp
-     (local.get $param)
-    )
-    (drop
-     (local.get $temp)
-    )
-    (drop
-     (local.get $temp)
+   (else
+    (block
+     (local.set $temp
+      (local.get $param)
+     )
+     (drop
+      (local.get $temp)
+     )
+     (drop
+      (local.get $temp)
+     )
     )
    )
   )
@@ -597,24 +640,28 @@
   )
   (if
    (i32.const 0)
-   (block
-    (local.set $temp
-     (local.get $param)
+   (then
+    (block
+     (local.set $temp
+      (local.get $param)
+     )
+     (drop
+      (local.get $temp)
+     )
+     ;; A get was removed here.
     )
-    (drop
-     (local.get $temp)
-    )
-    ;; A get was removed here.
    )
-   (block
-    (local.set $temp
-     (local.get $param)
-    )
-    (drop
-     (local.get $temp)
-    )
-    (drop
-     (local.get $temp)
+   (else
+    (block
+     (local.set $temp
+      (local.get $param)
+     )
+     (drop
+      (local.get $temp)
+     )
+     (drop
+      (local.get $temp)
+     )
     )
    )
   )
@@ -645,25 +692,29 @@
   )
   (if
    (i32.const 0)
-   (block
-    (local.set $temp
-     (local.get $param)
-    )
-    (drop
-     (local.get $temp)
-    )
-    (drop
-     (local.get $temp)
+   (then
+    (block
+     (local.set $temp
+      (local.get $param)
+     )
+     (drop
+      (local.get $temp)
+     )
+     (drop
+      (local.get $temp)
+     )
     )
    )
-   (block
-    (local.set $temp
-     (local.get $param)
+   (else
+    (block
+     (local.set $temp
+      (local.get $param)
+     )
+     (drop
+      (local.get $temp)
+     )
+     ;; A get was removed here.
     )
-    (drop
-     (local.get $temp)
-    )
-    ;; A get was removed here.
    )
   )
  )
@@ -689,23 +740,27 @@
   )
   (if
    (i32.const 0)
-   (block
-    (local.set $temp
-     (local.get $param)
+   (then
+    (block
+     (local.set $temp
+      (local.get $param)
+     )
+     (drop
+      (local.get $temp)
+     )
+     ;; A get was removed here.
     )
-    (drop
-     (local.get $temp)
-    )
-    ;; A get was removed here.
    )
-   (block
-    (local.set $temp
-     (local.get $param)
+   (else
+    (block
+     (local.set $temp
+      (local.get $param)
+     )
+     (drop
+      (local.get $temp)
+     )
+     ;; A get was removed here.
     )
-    (drop
-     (local.get $temp)
-    )
-    ;; A get was removed here.
    )
   )
  )
@@ -727,20 +782,24 @@
   ;; optimize both arms.
   (if
    (i32.const 0)
-   (block
-    (local.set $temp
-     (local.get $param)
-    )
-    (drop
-     (local.get $temp)
+   (then
+    (block
+     (local.set $temp
+      (local.get $param)
+     )
+     (drop
+      (local.get $temp)
+     )
     )
    )
-   (block
-    (local.set $temp
-     (local.get $param)
-    )
-    (drop
-     (local.get $temp)
+   (else
+    (block
+     (local.set $temp
+      (local.get $param)
+     )
+     (drop
+      (local.get $temp)
+     )
     )
    )
   )
@@ -766,20 +825,24 @@
   ;; them as well.
   (if
    (i32.const 0)
-   (block
-    (local.set $temp
-     (local.get $param)
-    )
-    (drop
-     (local.get $temp)
+   (then
+    (block
+     (local.set $temp
+      (local.get $param)
+     )
+     (drop
+      (local.get $temp)
+     )
     )
    )
-   (block
-    (local.set $temp
-     (local.get $param)
-    )
-    (drop
-     (local.get $temp)
+   (else
+    (block
+     (local.set $temp
+      (local.get $param)
+     )
+     (drop
+      (local.get $temp)
+     )
     )
    )
   )
@@ -959,13 +1022,17 @@
    ;; In this if arm we write to $temp twice. That shouldn't confuse us; there's
    ;; still a use after the if, and we should not remove the set-get pair before
    ;; the if.
-   (local.set $temp
-    (local.tee $temp
-     (local.get $param)
+   (then
+    (local.set $temp
+     (local.tee $temp
+      (local.get $param)
+     )
     )
    )
-   (local.set $temp
-    (local.get $param)
+   (else
+    (local.set $temp
+     (local.get $param)
+    )
    )
   )
   (local.get $temp)

@@ -193,6 +193,8 @@ void PassRegistry::registerPasses() {
   registerPass("gufa-optimizing",
                "GUFA plus local optimizations in functions we modified",
                createGUFAOptimizingPass);
+  registerPass(
+    "optimize-j2cl", "optimizes J2CL specific constructs.", createJ2CLOptsPass);
   registerPass("type-refining",
                "apply more specific subtypes to type fields where possible",
                createTypeRefiningPass);
@@ -294,6 +296,13 @@ void PassRegistry::registerPasses() {
     createMultiMemoryLoweringWithBoundsChecksPass);
   registerPass("nm", "name list", createNameListPass);
   registerPass("name-types", "(re)name all heap types", createNameTypesPass);
+  registerPass("no-inline", "mark functions as no-inline", createNoInlinePass);
+  registerPass("no-full-inline",
+               "mark functions as no-inline (for full inlining only)",
+               createNoFullInlinePass);
+  registerPass("no-partial-inline",
+               "mark functions as no-inline (for partial inlining only)",
+               createNoPartialInlinePass);
   registerPass("once-reduction",
                "reduces calls to code that only runs once",
                createOnceReductionPass);
@@ -466,6 +475,9 @@ void PassRegistry::registerPasses() {
     "ssa-nomerge",
     "ssa-ify variables so that they have a single assignment, ignoring merges",
     createSSAifyNoMergePass);
+  registerPass("string-gathering",
+               "gathers wasm strings to globals",
+               createStringGatheringPass);
   registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
   registerPass("stack-check",
@@ -482,6 +494,9 @@ void PassRegistry::registerPasses() {
   registerPass("strip-target-features",
                "strip the wasm target features section",
                createStripTargetFeaturesPass);
+  registerPass("translate-to-new-eh",
+               "translate old EH instructions to new ones",
+               createTranslateToNewEHPass);
   registerPass("trap-mode-clamp",
                "replace trapping operations with clamping semantics",
                createTrapModeClamp);
@@ -698,6 +713,11 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
     addIfNoDWARFIssues("simplify-globals");
   }
   addIfNoDWARFIssues("remove-unused-module-elements");
+  if (options.optimizeLevel >= 2 && wasm->features.hasStrings()) {
+    // Gather strings to globals right before reorder-globals, which will then
+    // sort them properly.
+    addIfNoDWARFIssues("string-gathering");
+  }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues("reorder-globals");
   }
@@ -730,9 +750,6 @@ static void dumpWasm(Name name, Module* wasm) {
 }
 
 void PassRunner::run() {
-  assert(!ran);
-  ran = true;
-
   static const int passDebug = getPassDebug();
   // Emit logging information when asked for. At passDebug level 1+ we log
   // the main passes, while in 2 we also log nested ones. Note that for
@@ -875,6 +892,8 @@ void PassRunner::doAdd(std::unique_ptr<Pass> pass) {
   }
   passes.emplace_back(std::move(pass));
 }
+
+void PassRunner::clear() { passes.clear(); }
 
 // Checks that the state is valid before and after a
 // pass runs on a function. We run these extra checks when

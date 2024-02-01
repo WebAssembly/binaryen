@@ -646,8 +646,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result f64)
@@ -666,8 +668,10 @@
     ;; that as a result of this the final local.get has two sets that send it
     ;; values, but we know they are both the same allocation.
     (if (local.get $x)
-      (local.set $ref
-        (local.get $ref)
+      (then
+        (local.set $ref
+          (local.get $ref)
+        )
       )
     )
     (struct.get $struct.A 1
@@ -726,8 +730,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (local.set $ref
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $ref
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.get $struct.A 1
@@ -740,8 +746,10 @@
       (struct.new_default $struct.A)
     )
     (if (local.get $x)
-      (local.set $ref
-        (ref.null $struct.A)
+      (then
+        (local.set $ref
+          (ref.null $struct.A)
+        )
       )
     )
     ;; A get that receives two different allocations, and so we should not try
@@ -985,15 +993,17 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result f64)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (block (result f64)
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.get $3)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $3)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:    (else
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
@@ -1025,20 +1035,24 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $x)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (block (result i32)
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.get $2)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $2)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result f64)
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:    (else
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (block (result f64)
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.get $3)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $3)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1062,14 +1076,18 @@
         )
       )
       (if (local.get $x)
-        (drop
-          (struct.get $struct.A 1
-            (local.get $ref)
+        (then
+          (drop
+            (struct.get $struct.A 1
+              (local.get $ref)
+            )
           )
         )
-        (struct.set $struct.A 1
-          (local.get $ref)
-          (f64.const 42)
+        (else
+          (struct.set $struct.A 1
+            (local.get $ref)
+            (f64.const 42)
+          )
         )
       )
       (loop $inner
@@ -1087,14 +1105,18 @@
         )
       )
       (if (local.get $x)
-        (drop
-          (struct.get $struct.A 0
-            (local.get $ref)
+        (then
+          (drop
+            (struct.get $struct.A 0
+              (local.get $ref)
+            )
           )
         )
-        (drop
-          (struct.get $struct.A 1
-            (local.get $ref)
+        (else
+          (drop
+            (struct.get $struct.A 1
+              (local.get $ref)
+            )
           )
         )
       )

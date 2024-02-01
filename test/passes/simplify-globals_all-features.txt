@@ -120,8 +120,10 @@
   )
   (if
    (local.get $x)
-   (return
-    (i32.const 0)
+   (then
+    (return
+     (i32.const 0)
+    )
    )
   )
   (local.set $x
@@ -132,8 +134,10 @@
   )
   (if
    (local.get $x)
-   (return
-    (i32.const 1)
+   (then
+    (return
+     (i32.const 1)
+    )
    )
   )
   (global.set $g1

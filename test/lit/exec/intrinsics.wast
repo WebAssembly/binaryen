@@ -7,7 +7,7 @@
 
   ;; CHECK:      [fuzz-exec] calling get-ref
   ;; CHECK-NEXT: [fuzz-exec] note result: get-ref => 42
-  (func "get-ref" (result i32)
+  (func $get-ref (export "get-ref") (result i32)
     (call $cwe
       (i32.const 41)
       (ref.func $add-one)
@@ -21,4 +21,3 @@
     )
   )
 )
-

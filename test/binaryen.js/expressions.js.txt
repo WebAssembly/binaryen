@@ -7,13 +7,19 @@
 # If
 (if (result i32)
  (i32.const 4)
- (i32.const 5)
- (i32.const 6)
+ (then
+  (i32.const 5)
+ )
+ (else
+  (i32.const 6)
+ )
 )
 
 (if (result i32)
  (i32.const 4)
- (i32.const 5)
+ (then
+  (i32.const 5)
+ )
 )
 
 # Loop
@@ -317,14 +323,14 @@
 (rethrow $l1)
 
 # TupleMake
-(tuple.make
+(tuple.make 2
  (i32.const 6)
  (i32.const 7)
 )
 
 # TupleExtract
-(tuple.extract 0
- (tuple.make
+(tuple.extract 2 0
+ (tuple.make 2
   (f64.const 3)
   (f64.const 4)
  )

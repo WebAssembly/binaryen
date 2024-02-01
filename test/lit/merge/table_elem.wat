@@ -29,7 +29,39 @@
   ;; CHECK:      (elem $b (table $bar) (i32.const 0) func)
   (elem $b (table $bar) (i32.const 0) func)
 
-  (func "keepalive2"
+  ;; CHECK:      (elem $a_2 (table $foo_2) (i32.const 0) func)
+
+  ;; CHECK:      (elem $b_2 (table $other) (i32.const 0) func)
+
+  ;; CHECK:      (export "keepalive2" (func $keepalive2))
+
+  ;; CHECK:      (export "keepalive2_1" (func $keepalive2_1))
+
+  ;; CHECK:      (func $keepalive2 (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (table.get $foo
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (table.get $bar
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_elem $vec $a
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_elem $vec $b
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:    (i32.const 4)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $keepalive2 (export "keepalive2")
     (drop
       (table.get $foo
         (i32.const 1)
@@ -55,40 +87,7 @@
     )
   )
 )
-;; CHECK:      (elem $a_2 (table $foo_2) (i32.const 0) func)
-
-;; CHECK:      (elem $b_2 (table $other) (i32.const 0) func)
-
-;; CHECK:      (export "keepalive2" (func $0))
-
-;; CHECK:      (export "keepalive2_1" (func $0_1))
-
-;; CHECK:      (func $0 (type $1)
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (table.get $foo
-;; CHECK-NEXT:    (i32.const 1)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (table.get $bar
-;; CHECK-NEXT:    (i32.const 1)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (array.new_elem $vec $a
-;; CHECK-NEXT:    (i32.const 1)
-;; CHECK-NEXT:    (i32.const 2)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (drop
-;; CHECK-NEXT:   (array.new_elem $vec $b
-;; CHECK-NEXT:    (i32.const 3)
-;; CHECK-NEXT:    (i32.const 4)
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $0_1 (type $1)
+;; CHECK:      (func $keepalive2_1 (type $1)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (table.get $foo_2
 ;; CHECK-NEXT:    (i32.const 1)

@@ -12,7 +12,7 @@
 
  ;; CHECK:      (func $test (type $3)
  ;; CHECK-NEXT:  (local $single (ref func))
- ;; CHECK-NEXT:  (local $tuple ((ref any) (ref any)))
+ ;; CHECK-NEXT:  (local $tuple (tuple (ref any) (ref any)))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $test
@@ -21,7 +21,7 @@
   ;; it, so no sets can be redundant in that sense).
   (local $single (ref func))
   ;; A non-nullable tuple.
-  (local $tuple ((ref any) (ref any)))
+  (local $tuple (tuple (ref any) (ref any)))
  )
 
  ;; CHECK:      (func $needs-refinalize (type $4) (param $b (ref $B)) (result anyref)
@@ -64,11 +64,15 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $B)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $B)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.get $B)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $B)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
@@ -95,11 +99,15 @@
   )
   (if
    (local.get $x)
-   (drop
-    (local.get $A)
+   (then
+    (drop
+     (local.get $A)
+    )
    )
-   (drop
-    (local.get $B)
+   (else
+    (drop
+     (local.get $B)
+    )
    )
   )
   (drop

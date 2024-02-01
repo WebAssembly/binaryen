@@ -1065,7 +1065,8 @@ struct InfoCollector
     addRoot(curr, PossibleContents::exactType(curr->type));
   }
   void visitStringConst(StringConst* curr) {
-    addRoot(curr, PossibleContents::exactType(curr->type));
+    addRoot(curr,
+            PossibleContents::literal(Literal(std::string(curr->string.str))));
   }
   void visitStringMeasure(StringMeasure* curr) {
     // TODO: optimize when possible
@@ -1152,6 +1153,10 @@ struct InfoCollector
 #endif
     }
   }
+  void visitTryTable(TryTable* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
   void visitThrow(Throw* curr) {
     auto& operands = curr->operands;
     if (!isRelevant(operands)) {
@@ -1165,6 +1170,7 @@ struct InfoCollector
     }
   }
   void visitRethrow(Rethrow* curr) {}
+  void visitThrowRef(ThrowRef* curr) {}
 
   void visitTupleMake(TupleMake* curr) {
     if (isRelevant(curr->type)) {
@@ -1193,6 +1199,11 @@ struct InfoCollector
   }
 
   void visitReturn(Return* curr) { addResult(curr->value); }
+
+  void visitResume(Resume* curr) {
+    // TODO: optimize when possible
+    addRoot(curr);
+  }
 
   void visitFunction(Function* func) {
     // Functions with a result can flow a value out from their body.

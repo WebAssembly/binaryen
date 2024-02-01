@@ -530,8 +530,9 @@ void test_core() {
 
   // Memory. Add it before creating any memory-using instructions.
 
-  const char* segments[] = {"hello, world", "I am passive"};
-  bool segmentPassive[] = {false, true};
+  const char* segmentNames[] = {"0", "1"};
+  const char* segmentDatas[] = {"hello, world", "I am passive"};
+  bool segmentPassives[] = {false, true};
   BinaryenExpressionRef segmentOffsets[] = {
     BinaryenConst(module, BinaryenLiteralInt32(10)), NULL};
   BinaryenIndex segmentSizes[] = {12, 12};
@@ -539,8 +540,9 @@ void test_core() {
                     1,
                     256,
                     "mem",
-                    segments,
-                    segmentPassive,
+                    segmentNames,
+                    segmentDatas,
+                    segmentPassives,
                     segmentOffsets,
                     segmentSizes,
                     2,
@@ -1128,6 +1130,11 @@ void test_core() {
                      BinaryenTypeGetHeapType(i8Array),
                      makeInt32(module, 3),
                      makeInt32(module, 42)),
+    BinaryenArrayNewData(module,
+                         BinaryenTypeGetHeapType(i8Array),
+                         "0",
+                         makeInt32(module, 0),
+                         makeInt32(module, 2)),
     BinaryenArrayNewFixed(module,
                           BinaryenTypeGetHeapType(i8Array),
                           (BinaryenExpressionRef[]){makeInt32(module, 1),
@@ -1417,6 +1424,16 @@ void test_core() {
   BinaryenFunctionRef sinker = BinaryenAddFunction(
     module, "kitchen()sinker", iIfF, BinaryenTypeInt32(), localTypes, 2, body);
 
+  BinaryenIndex numLocals = BinaryenFunctionGetNumLocals(sinker);
+  BinaryenIndex numParams =
+    BinaryenTypeArity(BinaryenFunctionGetParams(sinker));
+  BinaryenIndex newLocalIdx =
+    BinaryenFunctionAddVar(sinker, BinaryenTypeFloat32());
+  assert(newLocalIdx == numLocals);
+  assert(BinaryenFunctionGetNumLocals(sinker) == numLocals + 1);
+  assert(BinaryenFunctionGetVar(sinker, newLocalIdx - numParams) ==
+         BinaryenTypeFloat32());
+
   // Globals
 
   BinaryenAddGlobal(
@@ -1526,10 +1543,28 @@ void test_core() {
   BinaryenModulePrint(module);
 
   // Verify it validates
-  assert(BinaryenModuleValidate(module));
+  int valid = BinaryenModuleValidate(module);
+  assert(valid);
+
+  // Verify no error occurs when writing out the code to binary.
+  size_t bufferSize = 10 * 1024 * 1024;
+  char* buffer = malloc(bufferSize);
+  size_t written = BinaryenModuleWrite(module, buffer, bufferSize);
+  // We wrote bytes, and we did not reach the end of the buffer (which would
+  // truncate).
+  assert(written > 0 && written < bufferSize);
 
   // Clean up the module, which owns all the objects we created above
   BinaryenModuleDispose(module);
+
+  // See we can read the bytes and get a valid module from there.
+  BinaryenModuleRef readModule = BinaryenModuleRead(buffer, written);
+  BinaryenModuleSetFeatures(readModule, BinaryenFeatureAll());
+  valid = BinaryenModuleValidate(readModule);
+  assert(valid);
+  BinaryenModuleDispose(readModule);
+
+  free(buffer);
 }
 
 void test_unreachable() {
@@ -2052,9 +2087,10 @@ void test_for_each() {
       assert(BinaryenGetExportByIndex(module, i) == exps[i]);
     }
 
-    const char* segments[] = {"hello, world", "segment data 2"};
+    const char* segmentNames[] = {"0", "1"};
+    const char* segmentDatas[] = {"hello, world", "segment data 2"};
     const uint32_t expected_offsets[] = {10, 125};
-    bool segmentPassive[] = {false, false};
+    bool segmentPassives[] = {false, false};
     BinaryenIndex segmentSizes[] = {12, 14};
 
     BinaryenExpressionRef segmentOffsets[] = {
@@ -2064,8 +2100,9 @@ void test_for_each() {
                       1,
                       256,
                       "mem",
-                      segments,
-                      segmentPassive,
+                      segmentNames,
+                      segmentDatas,
+                      segmentPassives,
                       segmentOffsets,
                       segmentSizes,
                       2,
@@ -2080,11 +2117,12 @@ void test_for_each() {
 
     for (i = 0; i < BinaryenGetNumMemorySegments(module); i++) {
       char out[15] = {};
-      assert(BinaryenGetMemorySegmentByteOffset(module, i) ==
+      assert(BinaryenGetMemorySegmentByteOffset(module, segmentNames[i]) ==
              expected_offsets[i]);
-      assert(BinaryenGetMemorySegmentByteLength(module, i) == segmentSizes[i]);
-      BinaryenCopyMemorySegmentData(module, i, out);
-      assert(0 == strcmp(segments[i], out));
+      assert(BinaryenGetMemorySegmentByteLength(module, segmentNames[i]) ==
+             segmentSizes[i]);
+      BinaryenCopyMemorySegmentData(module, segmentNames[i], out);
+      assert(0 == strcmp(segmentDatas[i], out));
     }
   }
   {

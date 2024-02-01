@@ -297,6 +297,14 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --nm                                          name list
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-full-inline                              mark functions as no-inline (for
+;; CHECK-NEXT:                                                 full inlining only)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-inline                                   mark functions as no-inline
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-partial-inline                           mark functions as no-inline (for
+;; CHECK-NEXT:                                                 partial inlining only)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --once-reduction                              reduces calls to code that only
 ;; CHECK-NEXT:                                                 runs once
 ;; CHECK-NEXT:
@@ -314,6 +322,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --optimize-instructions                       optimizes instruction
 ;; CHECK-NEXT:                                                 combinations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --optimize-j2cl                               optimizes J2CL specific
+;; CHECK-NEXT:                                                 constructs.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --optimize-stack-ir                           optimize Stack IR
 ;; CHECK-NEXT:
@@ -456,6 +467,8 @@
 ;; CHECK-NEXT:   --stack-check                                 enforce limits on llvm's
 ;; CHECK-NEXT:                                                 __stack_pointer global
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --string-gathering                            gathers wasm strings to globals
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip                                       deprecated; same as strip-debug
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip-debug                                 strip debug info (including the
@@ -474,6 +487,9 @@
 ;; CHECK-NEXT:                                                 operations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --symbolmap                                   (alias for print-function-map)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --translate-to-new-eh                         translate old EH instructions to
+;; CHECK-NEXT:                                                 new ones
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --trap-mode-clamp                             replace trapping operations with
 ;; CHECK-NEXT:                                                 clamping semantics

@@ -26,20 +26,20 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $test
-  (local $pair (f32 i32))
+  (local $pair (tuple f32 i32))
   (local $f32 f32)
   ;; Normally this get-set pair would be eliminated by stack IR optimizations,
   ;; but then the binary writer's tuple optimizations would leave the only the
   ;; f32 on the stack where an f32 and i32 would be expected. We disable stack
   ;; IR optimizations on tuples to avoid this.
   (local.set $pair
-   (tuple.make
+   (tuple.make 2
     (f32.const 0)
     (i32.const 0)
    )
   )
   (local.set $f32
-   (tuple.extract 0
+   (tuple.extract 2 0
     (local.get $pair)
    )
   )

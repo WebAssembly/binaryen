@@ -45,6 +45,7 @@
 #include "ir/subtypes.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/stdckdint.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -88,13 +89,10 @@ struct ReferenceFinder
 #define DELEGATE_FIELD_CHILD(id, field)
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
 #define DELEGATE_FIELD_INT(id, field)
-#define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 #define DELEGATE_FIELD_ADDRESS(id, field)
 
 #define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
@@ -638,17 +636,57 @@ struct RemoveUnusedModuleElements : public Pass {
     // Active segments that write to imported tables and memories are roots
     // because those writes are externally observable even if the module does
     // not otherwise use the tables or memories.
+    //
+    // Likewise, if traps are possible during startup then just trapping is an
+    // effect (which can happen if the offset is out of bounds).
+    auto maybeRootSegment = [&](ModuleElementKind kind,
+                                Name segmentName,
+                                Index segmentSize,
+                                Expression* offset,
+                                Importable* parent,
+                                Index parentSize) {
+      auto writesToVisible = parent->imported() && segmentSize;
+      auto mayTrap = false;
+      if (!getPassOptions().trapsNeverHappen) {
+        // Check if this might trap. If it is obviously in bounds then it
+        // cannot.
+        auto* c = offset->dynCast<Const>();
+        // Check for overflow in the largest possible space of addresses.
+        using AddressType = Address::address64_t;
+        AddressType maxWritten;
+        // If there is no integer, or if there is and the addition overflows, or
+        // if the addition leads to a too-large value, then we may trap.
+        mayTrap = !c ||
+                  std::ckd_add(&maxWritten,
+                               (AddressType)segmentSize,
+                               (AddressType)c->value.getInteger()) ||
+                  maxWritten > parentSize;
+      }
+      if (writesToVisible || mayTrap) {
+        roots.emplace_back(kind, segmentName);
+      }
+    };
     ModuleUtils::iterActiveDataSegments(*module, [&](DataSegment* segment) {
-      if (module->getMemory(segment->memory)->imported() &&
-          !segment->data.empty()) {
-        roots.emplace_back(ModuleElementKind::DataSegment, segment->name);
+      if (segment->memory.is()) {
+        auto* memory = module->getMemory(segment->memory);
+        maybeRootSegment(ModuleElementKind::DataSegment,
+                         segment->name,
+                         segment->data.size(),
+                         segment->offset,
+                         memory,
+                         memory->initial * Memory::kPageSize);
       }
     });
     ModuleUtils::iterActiveElementSegments(
       *module, [&](ElementSegment* segment) {
-        if (module->getTable(segment->table)->imported() &&
-            !segment->data.empty()) {
-          roots.emplace_back(ModuleElementKind::ElementSegment, segment->name);
+        if (segment->table.is()) {
+          auto* table = module->getTable(segment->table);
+          maybeRootSegment(ModuleElementKind::ElementSegment,
+                           segment->name,
+                           segment->data.size(),
+                           segment->offset,
+                           table,
+                           table->initial * Table::kPageSize);
         }
       });
 

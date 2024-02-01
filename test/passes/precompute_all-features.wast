@@ -1,7 +1,6 @@
 (module
-  (memory 512 512
-   (data "hello!")
-  )
+  (memory $m 512 512)
+  (data (memory $m) (i32.const 0) "hello!")
   (type $0 (func (param i32)))
   (global $global i32 (i32.const 1))
   (global $global-mut (mut i32) (i32.const 2))
@@ -48,16 +47,16 @@
         (i32.const 1)
       )
     )
-    (drop
-     (tuple.make
-      (tuple.extract 0
-       (tuple.make
+    (tuple.drop 2
+     (tuple.make 2
+      (tuple.extract 2 0
+       (tuple.make 2
         (i32.const 42)
         (i32.const 0)
        )
       )
-      (tuple.extract 1
-       (tuple.make
+      (tuple.extract 2 1
+       (tuple.make 2
         (i64.const 0)
         (i64.const 42)
        )
@@ -194,16 +193,22 @@
   )
   (func $ret (result i32)
     (if (call $ret)
-      (return (i32.const 0))
+      (then
+        (return (i32.const 0))
+      )
     )
     (if (call $ret)
-      (return (return (i32.const 1)))
+      (then
+        (return (return (i32.const 1)))
+      )
     )
     (i32.const 1)
   )
   (func $noret
     (if (call $ret)
-      (return)
+      (then
+        (return)
+      )
     )
   )
   (func $refinalize-br-condition-unreachable
@@ -236,33 +241,37 @@
      (i32.const 1919623207)
      (if (result i32)
       (i32.const 1)
-      (block $label$2 (result i32)
-       (drop
-        (i64.and
-         (i64.trunc_f32_u
-          (f32.const 70847791997969805621592064)
-         )
-         (i64.const 729618461987467893)
-        )
-       )
-       (br_if $label$2
-        (i32.const 2049535349)
-        (f32.eq
-         (f32.demote_f64
-          (f64.mul
-           (br_if $label$0 ;; this br is optimized, and br *and* values reused
-            (f64.const 6.134856208230095e-154)
-            (i32.const 690910817)
-           )
-           (f64.const 1.515470884183969e-152)
+      (then
+       (block $label$2 (result i32)
+        (drop
+         (i64.and
+          (i64.trunc_f32_u
+           (f32.const 70847791997969805621592064)
           )
+          (i64.const 729618461987467893)
          )
-         (f32.const 66524025679377434935296)
+        )
+        (br_if $label$2
+         (i32.const 2049535349)
+         (f32.eq
+          (f32.demote_f64
+           (f64.mul
+            (br_if $label$0 ;; this br is optimized, and br *and* values reused
+             (f64.const 6.134856208230095e-154)
+             (i32.const 690910817)
+            )
+            (f64.const 1.515470884183969e-152)
+           )
+          )
+          (f32.const 66524025679377434935296)
+         )
         )
        )
       )
-      (i32.load offset=3 align=2
-        (i32.const 169901344)
+      (else
+       (i32.load offset=3 align=2
+         (i32.const 169901344)
+       )
       )
      )
     )
@@ -354,15 +363,15 @@
    )
   )
   (func $tuple-precompute (result i32 i64)
-   (tuple.make
-    (tuple.extract 0
-     (tuple.make
+   (tuple.make 2
+    (tuple.extract 2 0
+     (tuple.make 2
       (i32.const 42)
       (i32.const 0)
      )
     )
-    (tuple.extract 1
-     (tuple.make
+    (tuple.extract 2 1
+     (tuple.make 2
       (i64.const 0)
       (i64.const 42)
      )

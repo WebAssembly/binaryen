@@ -160,14 +160,18 @@
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (local.set $ref-imm
-  ;; CHECK-NEXT:    (struct.new $struct-imm
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $ref-imm
+  ;; CHECK-NEXT:     (struct.new $struct-imm
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $ref-imm
-  ;; CHECK-NEXT:    (struct.new $struct-imm
-  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (local.set $ref-imm
+  ;; CHECK-NEXT:     (struct.new $struct-imm
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -183,14 +187,18 @@
     ;; different values.
     (if
       (local.get $x)
-      (local.set $ref-imm
-        (struct.new $struct-imm
-          (i32.const 1)
+      (then
+        (local.set $ref-imm
+          (struct.new $struct-imm
+            (i32.const 1)
+          )
         )
       )
-      (local.set $ref-imm
-        (struct.new $struct-imm
-          (i32.const 2)
+      (else
+        (local.set $ref-imm
+          (struct.new $struct-imm
+            (i32.const 2)
+          )
         )
       )
     )
@@ -205,14 +213,18 @@
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (local.set $ref-imm
-  ;; CHECK-NEXT:    (struct.new $struct-imm
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $ref-imm
+  ;; CHECK-NEXT:     (struct.new $struct-imm
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $ref-imm
-  ;; CHECK-NEXT:    (struct.new $struct-imm
-  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (local.set $ref-imm
+  ;; CHECK-NEXT:     (struct.new $struct-imm
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -230,14 +242,18 @@
     ;; possible values).
     (if
       (local.get $x)
-      (local.set $ref-imm
-        (struct.new $struct-imm
-          (i32.const 1)
+      (then
+        (local.set $ref-imm
+          (struct.new $struct-imm
+            (i32.const 1)
+          )
         )
       )
-      (local.set $ref-imm
-        (struct.new $struct-imm
-          (i32.const 1)
+      (else
+        (local.set $ref-imm
+          (struct.new $struct-imm
+            (i32.const 1)
+          )
         )
       )
     )
@@ -252,7 +268,7 @@
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (local.get $x)
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (then
   ;; CHECK-NEXT:    (local.set $ref-imm
   ;; CHECK-NEXT:     (struct.new $struct-imm
   ;; CHECK-NEXT:      (i32.const 1)
@@ -262,7 +278,7 @@
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:   (else
   ;; CHECK-NEXT:    (local.set $ref-imm
   ;; CHECK-NEXT:     (struct.new $struct-imm
   ;; CHECK-NEXT:      (i32.const 2)
@@ -280,27 +296,31 @@
     ;; reused.
     (if
       (local.get $x)
-      (block
-        (local.set $ref-imm
-          (struct.new $struct-imm
-            (i32.const 1)
+      (then
+        (block
+          (local.set $ref-imm
+            (struct.new $struct-imm
+              (i32.const 1)
+            )
           )
-        )
-        (call $helper
-          (struct.get $struct-imm 0
-            (local.get $ref-imm)
+          (call $helper
+            (struct.get $struct-imm 0
+              (local.get $ref-imm)
+            )
           )
         )
       )
-      (block
-        (local.set $ref-imm
-          (struct.new $struct-imm
-            (i32.const 2)
+      (else
+        (block
+          (local.set $ref-imm
+            (struct.new $struct-imm
+              (i32.const 2)
+            )
           )
-        )
-        (call $helper
-          (struct.get $struct-imm 0
-            (local.get $ref-imm)
+          (call $helper
+            (struct.get $struct-imm 0
+              (local.get $ref-imm)
+            )
           )
         )
       )

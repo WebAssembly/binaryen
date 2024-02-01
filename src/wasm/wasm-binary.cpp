@@ -1472,6 +1472,10 @@ void WasmBinaryWriter::writeType(Type type) {
         o << S32LEB(BinaryConsts::EncodedType::externref);
         return;
       }
+      if (Type::isSubType(type, Type(HeapType::exn, Nullable))) {
+        o << S32LEB(BinaryConsts::EncodedType::exnref);
+        return;
+      }
       if (Type::isSubType(type, Type(HeapType::string, Nullable))) {
         o << S32LEB(BinaryConsts::EncodedType::stringref);
         return;
@@ -1502,6 +1506,9 @@ void WasmBinaryWriter::writeType(Type type) {
         case HeapType::array:
           o << S32LEB(BinaryConsts::EncodedType::arrayref);
           return;
+        case HeapType::exn:
+          o << S32LEB(BinaryConsts::EncodedType::exnref);
+          return;
         case HeapType::string:
           o << S32LEB(BinaryConsts::EncodedType::stringref);
           return;
@@ -1522,6 +1529,9 @@ void WasmBinaryWriter::writeType(Type type) {
           return;
         case HeapType::nofunc:
           o << S32LEB(BinaryConsts::EncodedType::nullfuncref);
+          return;
+        case HeapType::noexn:
+          o << S32LEB(BinaryConsts::EncodedType::nullexnref);
           return;
       }
     }
@@ -1570,6 +1580,8 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
       type = HeapType::func;
     } else if (HeapType::isSubType(type, HeapType::ext)) {
       type = HeapType::ext;
+    } else if (HeapType::isSubType(type, HeapType::exn)) {
+      type = HeapType::exn;
     } else if (wasm->features.hasStrings()) {
       // Strings are enabled, and this isn't a func or an ext, so it must be a
       // string type (string or stringview), which we'll emit below, or a bottom
@@ -1609,6 +1621,9 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
     case HeapType::array:
       ret = BinaryConsts::EncodedHeapType::array;
       break;
+    case HeapType::exn:
+      ret = BinaryConsts::EncodedHeapType::exn;
+      break;
     case HeapType::string:
       ret = BinaryConsts::EncodedHeapType::string;
       break;
@@ -1629,6 +1644,9 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
       break;
     case HeapType::nofunc:
       ret = BinaryConsts::EncodedHeapType::nofunc;
+      break;
+    case HeapType::noexn:
+      ret = BinaryConsts::EncodedHeapType::noexn;
       break;
   }
   o << S64LEB(ret); // TODO: Actually s33
@@ -1980,6 +1998,9 @@ bool WasmBinaryReader::getBasicType(int32_t code, Type& out) {
     case BinaryConsts::EncodedType::arrayref:
       out = Type(HeapType::array, Nullable);
       return true;
+    case BinaryConsts::EncodedType::exnref:
+      out = Type(HeapType::exn, Nullable);
+      return true;
     case BinaryConsts::EncodedType::stringref:
       out = Type(HeapType::string, Nullable);
       return true;
@@ -2000,6 +2021,9 @@ bool WasmBinaryReader::getBasicType(int32_t code, Type& out) {
       return true;
     case BinaryConsts::EncodedType::nullfuncref:
       out = Type(HeapType::nofunc, Nullable);
+      return true;
+    case BinaryConsts::EncodedType::nullexnref:
+      out = Type(HeapType::noexn, Nullable);
       return true;
     default:
       return false;
@@ -2029,6 +2053,9 @@ bool WasmBinaryReader::getBasicHeapType(int64_t code, HeapType& out) {
     case BinaryConsts::EncodedHeapType::array:
       out = HeapType::array;
       return true;
+    case BinaryConsts::EncodedHeapType::exn:
+      out = HeapType::exn;
+      return true;
     case BinaryConsts::EncodedHeapType::string:
       out = HeapType::string;
       return true;
@@ -2049,6 +2076,9 @@ bool WasmBinaryReader::getBasicHeapType(int64_t code, HeapType& out) {
       return true;
     case BinaryConsts::EncodedHeapType::nofunc:
       out = HeapType::nofunc;
+      return true;
+    case BinaryConsts::EncodedHeapType::noexn:
+      out = HeapType::noexn;
       return true;
     default:
       return false;
@@ -2980,7 +3010,7 @@ void WasmBinaryReader::processExpressions() {
       }
       auto peek = input[pos];
       if (peek == BinaryConsts::End || peek == BinaryConsts::Else ||
-          peek == BinaryConsts::Catch || peek == BinaryConsts::CatchAll ||
+          peek == BinaryConsts::Catch_P3 || peek == BinaryConsts::CatchAll_P3 ||
           peek == BinaryConsts::Delegate) {
         BYN_TRACE("== processExpressions finished with unreachable"
                   << std::endl);
@@ -3925,8 +3955,8 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       }
       break;
     case BinaryConsts::Else:
-    case BinaryConsts::Catch:
-    case BinaryConsts::CatchAll: {
+    case BinaryConsts::Catch_P3:
+    case BinaryConsts::CatchAll_P3: {
       curr = nullptr;
       if (DWARF && currFunction) {
         assert(!controlFlowStack.empty());
@@ -3984,11 +4014,17 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
     case BinaryConsts::Try:
       visitTryOrTryInBlock(curr);
       break;
+    case BinaryConsts::TryTable:
+      visitTryTable((curr = allocator.alloc<TryTable>())->cast<TryTable>());
+      break;
     case BinaryConsts::Throw:
       visitThrow((curr = allocator.alloc<Throw>())->cast<Throw>());
       break;
     case BinaryConsts::Rethrow:
       visitRethrow((curr = allocator.alloc<Rethrow>())->cast<Rethrow>());
+      break;
+    case BinaryConsts::ThrowRef:
+      visitThrowRef((curr = allocator.alloc<ThrowRef>())->cast<ThrowRef>());
       break;
     case BinaryConsts::MemorySize: {
       auto size = allocator.alloc<MemorySize>();
@@ -4008,6 +4044,10 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       call->isReturn = code == BinaryConsts::RetCallRef;
       curr = call;
       visitCallRef(call);
+      break;
+    }
+    case BinaryConsts::Resume: {
+      visitResume((curr = allocator.alloc<Resume>())->cast<Resume>());
       break;
     }
     case BinaryConsts::AtomicPrefix: {
@@ -6887,9 +6927,9 @@ void WasmBinaryReader::visitTryOrTryInBlock(Expression*& out) {
   // here, then do that later.
   std::vector<Index> tagIndexes;
 
-  while (lastSeparator == BinaryConsts::Catch ||
-         lastSeparator == BinaryConsts::CatchAll) {
-    if (lastSeparator == BinaryConsts::Catch) {
+  while (lastSeparator == BinaryConsts::Catch_P3 ||
+         lastSeparator == BinaryConsts::CatchAll_P3) {
+    if (lastSeparator == BinaryConsts::Catch_P3) {
       auto index = getU32LEB();
       if (index >= wasm.tags.size()) {
         throwError("bad tag index");
@@ -7000,6 +7040,51 @@ void WasmBinaryReader::visitTryOrTryInBlock(Expression*& out) {
   breakTargetNames.erase(catchLabel);
 }
 
+void WasmBinaryReader::visitTryTable(TryTable* curr) {
+  BYN_TRACE("zz node: TryTable\n");
+
+  // For simplicity of implementation, like if scopes, we create a hidden block
+  // within each try-body, and let branches target those inner blocks instead.
+  curr->type = getType();
+  auto numCatches = getU32LEB();
+  // We cannot immediately update tagRefs in the loop below, as catchTags is
+  // being grown, an so references would get invalidated. Store the indexes
+  // here, then do that later.
+  std::vector<Index> tagIndexes;
+
+  for (size_t i = 0; i < numCatches; i++) {
+    uint8_t code = getInt8();
+    if (code == BinaryConsts::Catch || code == BinaryConsts::CatchRef) {
+      auto index = getU32LEB();
+      if (index >= wasm.tags.size()) {
+        throwError("bad tag index");
+      }
+      tagIndexes.push_back(index);
+      auto* tag = wasm.tags[index].get();
+      curr->catchTags.push_back(tag->name);
+    } else {
+      tagIndexes.push_back(-1); // unused
+      curr->catchTags.push_back(Name());
+    }
+    curr->catchDests.push_back(getBreakTarget(getU32LEB()).name);
+    curr->catchRefs.push_back(code == BinaryConsts::CatchRef ||
+                              code == BinaryConsts::CatchAllRef);
+  }
+
+  for (Index i = 0; i < tagIndexes.size(); i++) {
+    if (curr->catchTags[i]) {
+      // We don't know the final name yet.
+      tagRefs[tagIndexes[i]].push_back(&curr->catchTags[i]);
+    }
+  }
+
+  // catch_*** clauses should refer to block labels without entering the try
+  // scope. So we do this after reading catch clauses.
+  startControlFlow(curr);
+  curr->body = getBlockOrSingleton(curr->type);
+  curr->finalize(curr->type, &wasm);
+}
+
 void WasmBinaryReader::visitThrow(Throw* curr) {
   BYN_TRACE("zz node: Throw\n");
   auto index = getU32LEB();
@@ -7025,6 +7110,12 @@ void WasmBinaryReader::visitRethrow(Rethrow* curr) {
     throwError(std::string("rethrow target cannot use internal name ") +
                DELEGATE_CALLER_TARGET.toString());
   }
+  curr->finalize();
+}
+
+void WasmBinaryReader::visitThrowRef(ThrowRef* curr) {
+  BYN_TRACE("zz node: ThrowRef\n");
+  curr->exnref = popNonVoidExpression();
   curr->finalize();
 }
 
@@ -7669,6 +7760,52 @@ void WasmBinaryReader::visitRefAs(RefAs* curr, uint8_t code) {
     throwError("bad input type for ref.as: " + curr->value->type.toString());
   }
   curr->finalize();
+}
+
+void WasmBinaryReader::visitResume(Resume* curr) {
+  BYN_TRACE("zz node: Resume\n");
+
+  auto contTypeIndex = getU32LEB();
+  curr->contType = getTypeByIndex(contTypeIndex);
+  if (!curr->contType.isContinuation()) {
+    throwError("non-continuation type in resume instruction " +
+               curr->contType.toString());
+  }
+
+  auto numHandlers = getU32LEB();
+
+  // We *must* bring the handlerTags vector to an appropriate size to ensure
+  // that we do not invalidate the pointers we add to tagRefs. They need to stay
+  // valid until processNames ran.
+  curr->handlerTags.resize(numHandlers);
+  curr->handlerBlocks.resize(numHandlers);
+
+  BYN_TRACE("handler num: " << numHandlers << std::endl);
+  for (size_t i = 0; i < numHandlers; i++) {
+    BYN_TRACE("read one tag handler pair \n");
+    auto tagIndex = getU32LEB();
+    auto tag = getTagName(tagIndex);
+
+    auto handlerIndex = getU32LEB();
+    auto handler = getBreakTarget(handlerIndex).name;
+
+    curr->handlerTags[i] = tag;
+    curr->handlerBlocks[i] = handler;
+
+    // We don't know the final name yet
+    tagRefs[tagIndex].push_back(&curr->handlerTags[i]);
+  }
+
+  curr->cont = popNonVoidExpression();
+
+  auto numArgs =
+    curr->contType.getContinuation().type.getSignature().params.size();
+  curr->operands.resize(numArgs);
+  for (size_t i = 0; i < numArgs; i++) {
+    curr->operands[numArgs - i - 1] = popNonVoidExpression();
+  }
+
+  curr->finalize(&wasm);
 }
 
 void WasmBinaryReader::throwError(std::string text) {

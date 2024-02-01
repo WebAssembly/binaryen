@@ -16,6 +16,8 @@
 
 #include "wasm-stack.h"
 #include "ir/find_all.h"
+#include "ir/properties.h"
+#include "wasm-binary.h"
 #include "wasm-debug.h"
 
 namespace wasm {
@@ -1953,11 +1955,32 @@ void BinaryInstWriter::visitTry(Try* curr) {
   emitResultType(curr->type);
 }
 
+void BinaryInstWriter::visitTryTable(TryTable* curr) {
+  o << int8_t(BinaryConsts::TryTable);
+  emitResultType(curr->type);
+  o << U32LEB(curr->catchTags.size());
+  for (Index i = 0; i < curr->catchTags.size(); i++) {
+    if (curr->catchTags[i]) {
+      o << (curr->catchRefs[i] ? int8_t(BinaryConsts::CatchRef)
+                               : int8_t(BinaryConsts::Catch));
+      o << U32LEB(parent.getTagIndex(curr->catchTags[i]));
+    } else {
+      o << (curr->catchRefs[i] ? int8_t(BinaryConsts::CatchAllRef)
+                               : int8_t(BinaryConsts::CatchAll));
+    }
+    o << U32LEB(getBreakIndex(curr->catchDests[i]));
+  }
+  // the binary format requires this; we have a block if we need one
+  // catch_*** clauses should refer to block labels without entering the try
+  // scope. So we do this at the end.
+  breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
+}
+
 void BinaryInstWriter::emitCatch(Try* curr, Index i) {
   if (func && !sourceMap) {
     parent.writeExtraDebugLocation(curr, func, i);
   }
-  o << int8_t(BinaryConsts::Catch)
+  o << int8_t(BinaryConsts::Catch_P3)
     << U32LEB(parent.getTagIndex(curr->catchTags[i]));
 }
 
@@ -1965,7 +1988,7 @@ void BinaryInstWriter::emitCatchAll(Try* curr) {
   if (func && !sourceMap) {
     parent.writeExtraDebugLocation(curr, func, curr->catchBodies.size());
   }
-  o << int8_t(BinaryConsts::CatchAll);
+  o << int8_t(BinaryConsts::CatchAll_P3);
 }
 
 void BinaryInstWriter::emitDelegate(Try* curr) {
@@ -1984,6 +2007,10 @@ void BinaryInstWriter::visitThrow(Throw* curr) {
 
 void BinaryInstWriter::visitRethrow(Rethrow* curr) {
   o << int8_t(BinaryConsts::Rethrow) << U32LEB(getBreakIndex(curr->target));
+}
+
+void BinaryInstWriter::visitThrowRef(ThrowRef* curr) {
+  o << int8_t(BinaryConsts::ThrowRef);
 }
 
 void BinaryInstWriter::visitNop(Nop* curr) { o << int8_t(BinaryConsts::Nop); }
@@ -2462,6 +2489,18 @@ void BinaryInstWriter::visitStringSliceIter(StringSliceIter* curr) {
     << U32LEB(BinaryConsts::StringViewIterSlice);
 }
 
+void BinaryInstWriter::visitResume(Resume* curr) {
+  o << int8_t(BinaryConsts::Resume);
+  parent.writeIndexedHeapType(curr->contType);
+
+  size_t handlerNum = curr->handlerTags.size();
+  o << U32LEB(handlerNum);
+  for (size_t i = 0; i < handlerNum; i++) {
+    o << U32LEB(parent.getTagIndex(curr->handlerTags[i]))
+      << U32LEB(getBreakIndex(curr->handlerBlocks[i]));
+  }
+}
+
 void BinaryInstWriter::emitScopeEnd(Expression* curr) {
   assert(!breakStack.empty());
   breakStack.pop_back();
@@ -2642,6 +2681,8 @@ void StackIRGenerator::emit(Expression* curr) {
     stackInst = makeStackInst(StackInst::LoopBegin, curr);
   } else if (curr->is<Try>()) {
     stackInst = makeStackInst(StackInst::TryBegin, curr);
+  } else if (curr->is<TryTable>()) {
+    stackInst = makeStackInst(StackInst::TryTableBegin, curr);
   } else {
     stackInst = makeStackInst(curr);
   }
@@ -2658,6 +2699,8 @@ void StackIRGenerator::emitScopeEnd(Expression* curr) {
     stackInst = makeStackInst(StackInst::LoopEnd, curr);
   } else if (curr->is<Try>()) {
     stackInst = makeStackInst(StackInst::TryEnd, curr);
+  } else if (curr->is<TryTable>()) {
+    stackInst = makeStackInst(StackInst::TryTableEnd, curr);
   } else {
     WASM_UNREACHABLE("unexpected expr type");
   }
@@ -2670,15 +2713,15 @@ StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
   ret->op = op;
   ret->origin = origin;
   auto stackType = origin->type;
-  if (origin->is<Block>() || origin->is<Loop>() || origin->is<If>() ||
-      origin->is<Try>()) {
+  if (Properties::isControlFlowStructure(origin)) {
     if (stackType == Type::unreachable) {
-      // There are no unreachable blocks, loops, or ifs. we emit extra
-      // unreachables to fix that up, so that they are valid as having none
-      // type.
+      // There are no unreachable blocks, loops, ifs, trys, or try_tables. we
+      // emit extra unreachables to fix that up, so that they are valid as
+      // having none type.
       stackType = Type::none;
     } else if (op != StackInst::BlockEnd && op != StackInst::IfEnd &&
-               op != StackInst::LoopEnd && op != StackInst::TryEnd) {
+               op != StackInst::LoopEnd && op != StackInst::TryEnd &&
+               op != StackInst::TryTableEnd) {
       // If a concrete type is returned, we mark the end of the construct has
       // having that type (as it is pushed to the value stack at that point),
       // other parts are marked as none).
@@ -2704,7 +2747,8 @@ void StackIRToBinaryWriter::write() {
       case StackInst::Basic:
       case StackInst::BlockBegin:
       case StackInst::IfBegin:
-      case StackInst::LoopBegin: {
+      case StackInst::LoopBegin:
+      case StackInst::TryTableBegin: {
         writer.visit(inst->origin);
         break;
       }
@@ -2713,7 +2757,8 @@ void StackIRToBinaryWriter::write() {
         [[fallthrough]];
       case StackInst::BlockEnd:
       case StackInst::IfEnd:
-      case StackInst::LoopEnd: {
+      case StackInst::LoopEnd:
+      case StackInst::TryTableEnd: {
         writer.emitScopeEnd(inst->origin);
         break;
       }

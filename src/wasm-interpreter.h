@@ -80,7 +80,7 @@ public:
     return builder.makeConstantExpression(values);
   }
 
-  bool breaking() { return breakTo.is(); }
+  bool breaking() const { return breakTo.is(); }
 
   void clearIf(Name target) {
     if (breakTo == target) {
@@ -1394,6 +1394,7 @@ public:
   Flow visitTableFill(TableFill* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableCopy(TableCopy* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTryTable(TryTable* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
     NOTE_ENTER("Throw");
     Literals arguments;
@@ -1411,6 +1412,7 @@ public:
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitThrowRef(ThrowRef* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitRefI31(RefI31* curr) {
     NOTE_ENTER("RefI31");
     Flow flow = visit(curr->value);
@@ -2347,6 +2349,7 @@ public:
     }
     return ExpressionRunner<SubType>::visitRefAs(curr);
   }
+  Flow visitResume(Resume* curr) { WASM_UNREACHABLE("unimplemented"); }
 
   void trap(const char* why) override { throw NonconstantException(); }
 
@@ -3913,6 +3916,7 @@ public:
     multiValues.pop_back();
     return ret;
   }
+  Flow visitResume(Resume* curr) { return Flow(NONCONSTANT_FLOW); }
 
   void trap(const char* why) override { externalInterface->trap(why); }
 

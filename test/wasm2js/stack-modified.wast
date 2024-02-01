@@ -21,18 +21,22 @@
       (local.get $var$1)
       (i64.const 0)
      )
-     (br $label$1)
-     (block $label$5
-      (local.set $var$2
-       (i64.mul
-        (local.get $var$1)
-        (local.get $var$2)
+     (then
+      (br $label$1)
+     )
+     (else
+      (block $label$5
+       (local.set $var$2
+        (i64.mul
+         (local.get $var$1)
+         (local.get $var$2)
+        )
        )
-      )
-      (local.set $var$1
-       (i64.sub
-        (local.get $var$1)
-        (i64.const 1)
+       (local.set $var$1
+        (i64.sub
+         (local.get $var$1)
+         (i64.const 1)
+        )
        )
       )
      )
@@ -58,18 +62,22 @@
       (local.get $var$1)
       (i64.const 0)
      )
-     (br $label$1)
-     (block
-      (local.set $var$2
-       (i64.mul
-        (local.get $var$1)
-        (local.get $var$2)
+     (then
+      (br $label$1)
+     )
+     (else
+      (block
+       (local.set $var$2
+        (i64.mul
+         (local.get $var$1)
+         (local.get $var$2)
+        )
        )
-      )
-      (local.set $var$1
-       (i64.sub
-        (local.get $var$1)
-        (i64.const 1)
+       (local.set $var$1
+        (i64.sub
+         (local.get $var$1)
+         (i64.const 1)
+        )
        )
       )
      )
@@ -95,18 +103,22 @@
       (local.get $var$1)
       (i64.const 0)
      )
-     (br $label$1)
-     (block
-      (local.set $var$2
-       (i64.mul
-        (local.get $var$1)
-        (local.get $var$2)
+     (then
+      (br $label$1)
+     )
+     (else
+      (block
+       (local.set $var$2
+        (i64.mul
+         (local.get $var$1)
+         (local.get $var$2)
+        )
        )
-      )
-      (local.set $var$1
-       (i64.sub
-        (local.get $var$1)
-        (i64.const 1)
+       (local.set $var$1
+        (i64.sub
+         (local.get $var$1)
+         (i64.const 1)
+        )
        )
       )
      )
@@ -132,18 +144,22 @@
       (local.get $var$1)
       (i64.const 0)
      )
-     (br $label$1)
-     (block
-      (local.set $var$2
-       (i64.mul
-        (local.get $var$1)
-        (local.get $var$2)
+     (then
+      (br $label$1)
+     )
+     (else
+      (block
+       (local.set $var$2
+        (i64.mul
+         (local.get $var$1)
+         (local.get $var$2)
+        )
        )
-      )
-      (local.set $var$1
-       (i64.sub
-        (local.get $var$1)
-        (i64.const 1)
+       (local.set $var$1
+        (i64.sub
+         (local.get $var$1)
+         (i64.const 1)
+        )
        )
       )
      )
@@ -169,18 +185,22 @@
       (local.get $var$1)
       (i64.const 0)
      )
-     (br $label$1)
-     (block
-      (local.set $var$2
-       (i64.mul
-        (local.get $var$1)
-        (local.get $var$2)
+     (then
+      (br $label$1)
+     )
+     (else
+      (block
+       (local.set $var$2
+        (i64.mul
+         (local.get $var$1)
+         (local.get $var$2)
+        )
        )
-      )
-      (local.set $var$1
-       (i64.sub
-        (local.get $var$1)
-        (i64.const 1)
+       (local.set $var$1
+        (i64.sub
+         (local.get $var$1)
+         (i64.const 1)
+        )
        )
       )
      )

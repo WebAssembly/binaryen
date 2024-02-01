@@ -36,6 +36,9 @@ Function* copyFunction(Function* func, Module& out, Name newName) {
   ret->body = ExpressionManipulator::copy(func->body, out);
   ret->module = func->module;
   ret->base = func->base;
+  ret->noFullInline = func->noFullInline;
+  ret->noPartialInline = func->noPartialInline;
+
   // TODO: copy Stack IR
   assert(!func->stackIR);
   return out.addFunction(std::move(ret));
@@ -338,6 +341,8 @@ struct CodeScanner
       counts.include(get->type);
     } else if (auto* set = curr->dynCast<ArraySet>()) {
       counts.note(set->ref->type);
+    } else if (auto* resume = curr->dynCast<Resume>()) {
+      counts.note(resume->contType);
     } else if (Properties::isControlFlowStructure(curr)) {
       counts.noteControlFlow(Signature(Type::none, curr->type));
     }

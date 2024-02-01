@@ -381,8 +381,12 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (if (result f32)
   ;; CHECK-NEXT:      (call $import)
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:      (f32.const 42)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (else
+  ;; CHECK-NEXT:       (f32.const 42)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (f32.const 42)
@@ -395,8 +399,12 @@
       ;; Fall though a 42 via an if.
       (if (result f32)
         (call $import)
-        (unreachable)
-        (f32.const 42)
+        (then
+          (unreachable)
+        )
+        (else
+          (f32.const 42)
+        )
       )
     )
   )

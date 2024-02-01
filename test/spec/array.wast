@@ -83,7 +83,7 @@
   )
 
   (func $len (param $v (ref $vec)) (result i32)
-    (array.len $vec (local.get $v))
+    (array.len (local.get $v))
   )
   (func (export "len") (result i32)
     (call $len (array.new_default $vec (i32.const 3)))

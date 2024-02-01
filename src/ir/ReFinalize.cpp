@@ -127,8 +127,10 @@ void ReFinalize::visitTableGrow(TableGrow* curr) { curr->finalize(); }
 void ReFinalize::visitTableFill(TableFill* curr) { curr->finalize(); }
 void ReFinalize::visitTableCopy(TableCopy* curr) { curr->finalize(); }
 void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
+void ReFinalize::visitTryTable(TryTable* curr) { curr->finalize(); }
 void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
+void ReFinalize::visitThrowRef(ThrowRef* curr) { curr->finalize(); }
 void ReFinalize::visitNop(Nop* curr) { curr->finalize(); }
 void ReFinalize::visitUnreachable(Unreachable* curr) { curr->finalize(); }
 void ReFinalize::visitPop(Pop* curr) { curr->finalize(); }
@@ -179,6 +181,8 @@ void ReFinalize::visitStringSliceWTF(StringSliceWTF* curr) { curr->finalize(); }
 void ReFinalize::visitStringSliceIter(StringSliceIter* curr) {
   curr->finalize();
 }
+
+void ReFinalize::visitResume(Resume* curr) { curr->finalize(); }
 
 void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }
 void ReFinalize::visitGlobal(Global* curr) { WASM_UNREACHABLE("unimp"); }

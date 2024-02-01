@@ -13,7 +13,9 @@
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (local.get $y)
-  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (return)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $temp
   ;; CHECK-NEXT:    (i32.div_u
@@ -39,7 +41,9 @@
       )
       (if
         (local.get $y)
-        (return)
+        (then
+          (return)
+        )
       )
       (drop
         (local.get $temp)
@@ -54,8 +58,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -68,8 +74,10 @@
     )
     (if
       (i32.const 0)
-      (drop
-        (local.get $x)
+      (then
+        (drop
+          (local.get $x)
+        )
       )
     )
   )

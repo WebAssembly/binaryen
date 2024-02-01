@@ -27,16 +27,19 @@
 // looked at.
 //
 
-#include <ir/literal-utils.h>
-#include <ir/local-graph.h>
-#include <ir/manipulation.h>
-#include <ir/properties.h>
-#include <ir/utils.h>
-#include <pass.h>
-#include <support/unique_deferring_queue.h>
-#include <wasm-builder.h>
-#include <wasm-interpreter.h>
-#include <wasm.h>
+#include "ir/effects.h"
+#include "ir/iteration.h"
+#include "ir/literal-utils.h"
+#include "ir/local-graph.h"
+#include "ir/manipulation.h"
+#include "ir/properties.h"
+#include "ir/utils.h"
+#include "pass.h"
+#include "support/insert_ordered.h"
+#include "support/unique_deferring_queue.h"
+#include "wasm-builder.h"
+#include "wasm-interpreter.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -210,9 +213,16 @@ struct Precompute
   GetValues getValues;
   HeapValues heapValues;
 
+  bool canPartiallyPrecompute;
+
   void doWalkFunction(Function* func) {
+    // Perform partial precomputing only when the optimization level is non-
+    // trivial, as it is slower and less likely to help.
+    canPartiallyPrecompute = getPassOptions().optimizeLevel >= 2;
+
     // Walk the function and precompute things.
     super::doWalkFunction(func);
+    partiallyPrecompute(func);
     if (!propagate) {
       return;
     }
@@ -226,11 +236,13 @@ struct Precompute
       // another walk to apply them and perhaps other optimizations that are
       // unlocked.
       super::doWalkFunction(func);
+      // We could also try to partially precompute again, but that is a somewhat
+      // heavy operation, so we only do it the first time, and leave such things
+      // for later runs of this pass and for --converge.
     }
     // Note that in principle even more cycles could find further work here, in
     // very rare cases. To avoid constructing a LocalGraph again just for that
-    // unlikely chance, we leave such things for later runs of this pass and for
-    // --converge.
+    // unlikely chance, we leave such things for later.
   }
 
   template<typename T> void reuseConstantNode(T* curr, Flow flow) {
@@ -281,6 +293,9 @@ struct Precompute
     }
     if (flow.breaking()) {
       if (flow.breakTo == NONCONSTANT_FLOW) {
+        // This cannot be turned into a constant, but perhaps we can partially
+        // precompute it.
+        considerPartiallyPrecomputing(curr);
         return;
       }
       if (flow.breakTo == RETURN_FLOW) {
@@ -316,6 +331,273 @@ struct Precompute
       replaceCurrent(flow.getConstExpression(*getModule()));
     } else {
       ExpressionManipulator::nop(curr);
+    }
+  }
+
+  // If we failed to precompute a constant, perhaps we can still precompute part
+  // of an expression. Specifically, consider this case:
+  //
+  //  (A
+  //    (select
+  //      (B)
+  //      (C)
+  //      (condition)
+  //    )
+  //  )
+  //
+  // Perhaps we can compute A(B) and A(C). If so, we can emit a better select:
+  //
+  //  (select
+  //    (constant result of A(B))
+  //    (constant result of A(C))
+  //    (condition)
+  //  )
+  //
+  // Note that in general for code size we want to move operations *out* of
+  // selects and ifs (OptimizeInstructions does that), but here we are
+  // computing two constants which replace three expressions, so it is
+  // worthwhile.
+  //
+  // To do such partial precomputing, in the main pass we note selects that look
+  // promising. If we find any then we do a second pass later just for that (as
+  // doing so requires walking up the stack in a manner that we want to avoid in
+  // the main pass for overhead reasons; see below).
+  //
+  // Note that selects are all we really need here: Other passes would turn an
+  // if into a select if the arms are simple enough, and only in those cases
+  // (simple arms) do we have a chance at partially precomputing. For example,
+  // if an arm is a constant then we can, but if it is a call then we can't.)
+  // However, there are cases like an if with arms with side effects that end in
+  // precomputable things, that are missed atm TODO
+  std::unordered_set<Select*> partiallyPrecomputable;
+
+  void considerPartiallyPrecomputing(Expression* curr) {
+    if (!canPartiallyPrecompute) {
+      return;
+    }
+
+    if (auto* select = curr->dynCast<Select>()) {
+      // We only have a reasonable hope of success if the select arms are things
+      // like constants or global gets. At a first approximation, allow the set
+      // of things we allow in constant initializers (but we can probably allow
+      // more here TODO).
+      //
+      // We also ignore selects with no parent (that are the entire function
+      // body) as then there is nothing to optimize into their arms.
+      auto& wasm = *getModule();
+      if (Properties::isValidConstantExpression(wasm, select->ifTrue) &&
+          Properties::isValidConstantExpression(wasm, select->ifFalse) &&
+          getFunction()->body != select) {
+        partiallyPrecomputable.insert(select);
+      }
+    }
+  }
+
+  // To partially precompute selects we walk up the stack from them, like this:
+  //
+  //  (A
+  //    (B
+  //      (select
+  //        (C)
+  //        (D)
+  //        (condition)
+  //      )
+  //    )
+  //  )
+  //
+  // First we try to apply B to C and D. If that works, we arrive at this:
+  //
+  //  (A
+  //    (select
+  //      (constant result of B(C))
+  //      (constant result of B(D))
+  //      (condition)
+  //    )
+  //  )
+  //
+  // We can then proceed to perhaps apply A. However, even if we failed to apply
+  // B then we can try to apply A and B together, because that combination may
+  // succeed where incremental work fails, for example:
+  //
+  //  (global $C
+  //    (struct.new    ;; outer
+  //      (struct.new  ;; inner
+  //        (i32.const 10)
+  //      )
+  //    )
+  //  )
+  //
+  //  (struct.get    ;; outer
+  //    (struct.get  ;; inner
+  //      (select
+  //        (global.get $C)
+  //        (global.get $D)
+  //        (condition)
+  //      )
+  //    )
+  //  )
+  //
+  // Applying the inner struct.get to $C leads us to the inner struct.new, but
+  // that is an interior pointer in the global - it is not something we can
+  // refer to using a global.get, so precomputing it fails. However, when we
+  // apply both struct.gets at once we arrive at the outer struct.new, which is
+  // in fact the global $C, and we succeed.
+  void partiallyPrecompute(Function* func) {
+    if (!canPartiallyPrecompute || partiallyPrecomputable.empty()) {
+      // Nothing to do.
+      return;
+    }
+
+    // Walk the function to find the parent stacks of the promising selects. We
+    // copy the stacks and process them later. We do it like this because if we
+    // wanted to process stacks as we reached them then we'd trip over
+    // ourselves: when we optimize we replace a parent, but that parent is an
+    // expression we'll reach later in the walk, so modifying it is unsafe.
+    struct StackFinder : public ExpressionStackWalker<StackFinder> {
+      Precompute& parent;
+
+      StackFinder(Precompute& parent) : parent(parent) {}
+
+      // We will later iterate on this in the order of insertion, which keeps
+      // things deterministic, and also usually lets us do consecutive work
+      // like a select nested in another select's condition, simply because we
+      // will traverse the selects in postorder (however, because we cannot
+      // always succeed in an incremental manner - see the comment on this
+      // function - it is possible in theory that some work can happen only in a
+      // later execution of the pass).
+      InsertOrderedMap<Select*, ExpressionStack> stackMap;
+
+      void visitSelect(Select* curr) {
+        if (parent.partiallyPrecomputable.count(curr)) {
+          stackMap[curr] = expressionStack;
+        }
+      }
+    } stackFinder(*this);
+    stackFinder.walkFunction(func);
+
+    // Note which expressions we've modified as we go, as it is invalid to
+    // modify more than once. This could happen in theory in a situation like
+    // this:
+    //
+    //  (ternary.f32.max  ;; fictional instruction for explanatory purposes
+    //    (select ..)
+    //    (select ..)
+    //    (f32.infinity)
+    //  )
+    //
+    // When we consider the first select we can see that the computation result
+    // is always infinity, so we can optimize here and replace the ternary. Then
+    // the same thing happens with the second select, causing the ternary to be
+    // replaced again, which is unsafe because it no longer exists after we
+    // precomputed it the first time. (Note that in this example the result is
+    // the same either way, but at least in theory an instruction could exist
+    // for whom there was a difference.) In practice it does not seem that wasm
+    // has instructions capable of this atm but this code is still useful to
+    // guard against future problems, and as a minor speedup (quickly skip code
+    // if it was already modified).
+    std::unordered_set<Expression*> modified;
+
+    for (auto& [select, stack] : stackFinder.stackMap) {
+      // Each stack ends in the select itself, and contains more than the select
+      // itself (otherwise we'd have ignored the select), i.e., the select has a
+      // parent that we can try to optimize into the arms.
+      assert(stack.back() == select);
+      assert(stack.size() >= 2);
+      Index selectIndex = stack.size() - 1;
+      assert(selectIndex >= 1);
+
+      if (modified.count(select)) {
+        // This select was modified; go to the next one.
+        continue;
+      }
+
+      // Go up through the parents, until we can't do any more work. At each
+      // parent we'll try to execute it and all intermediate parents into the
+      // select arms.
+      for (Index parentIndex = selectIndex - 1; parentIndex != Index(-1);
+           parentIndex--) {
+        auto* parent = stack[parentIndex];
+        if (modified.count(parent)) {
+          // This parent was modified; exit the loop on parents as no upper
+          // parent is valid to try either.
+          break;
+        }
+
+        // If the parent lacks a concrete type then we can't move it into the
+        // select: the select needs a concrete (and non-tuple) type. For example
+        // if the parent is a drop or is unreachable, those are things we don't
+        // want to handle, and we stop here (once we see one such parent we
+        // can't expect to make any more progress).
+        if (!parent->type.isConcrete() || parent->type.isTuple()) {
+          break;
+        }
+
+        // We are precomputing the select arms, but leaving the condition as-is.
+        // If the condition breaks to the parent, then we can't move the parent
+        // into the select arms:
+        //
+        //  (block $name ;; this must stay outside of the select
+        //    (select
+        //      (B)
+        //      (C)
+        //      (block ;; condition
+        //        (br_if $target
+        //
+        // Ignore all control flow for simplicity, as they aren't interesting
+        // for us, and other passes should have removed them anyhow.
+        if (Properties::isControlFlowStructure(parent)) {
+          break;
+        }
+
+        // This looks promising, so try to precompute here. What we do is
+        // precompute twice, once with the select replaced with the left arm,
+        // and once with the right. If both succeed then we can create a new
+        // select (with the same condition as before) whose arms are the
+        // precomputed values.
+        auto isValidPrecomputation = [&](const Flow& flow) {
+          // For now we handle simple concrete values. We could also handle
+          // breaks in principle TODO
+          return canEmitConstantFor(flow.values) && !flow.breaking() &&
+                 flow.values.isConcrete();
+        };
+
+        // Find the pointer to the select in its immediate parent so that we can
+        // replace it first with one arm and then the other.
+        auto** pointerToSelect =
+          getChildPointerInImmediateParent(stack, selectIndex, func);
+        *pointerToSelect = select->ifTrue;
+        auto ifTrue = precomputeExpression(parent);
+        if (isValidPrecomputation(ifTrue)) {
+          *pointerToSelect = select->ifFalse;
+          auto ifFalse = precomputeExpression(parent);
+          if (isValidPrecomputation(ifFalse)) {
+            // Wonderful, we can precompute here! The select can now contain the
+            // computed values in its arms.
+            select->ifTrue = ifTrue.getConstExpression(*getModule());
+            select->ifFalse = ifFalse.getConstExpression(*getModule());
+            select->finalize();
+
+            // The parent of the select is now replaced by the select.
+            auto** pointerToParent =
+              getChildPointerInImmediateParent(stack, parentIndex, func);
+            *pointerToParent = select;
+
+            // Update state for further iterations: Mark everything modified and
+            // move the select to the parent's location.
+            for (Index i = parentIndex; i <= selectIndex; i++) {
+              modified.insert(stack[i]);
+            }
+            selectIndex = parentIndex;
+            stack[selectIndex] = select;
+            stack.resize(selectIndex + 1);
+          }
+        }
+
+        // Whether we succeeded to precompute here or not, restore the parent's
+        // pointer to its original state (if we precomputed, the parent is no
+        // longer in use, but there is no harm in modifying it).
+        *pointerToSelect = select;
+      }
     }
   }
 
@@ -530,6 +812,30 @@ private:
     }
 
     return true;
+  }
+
+  // Helpers for partial precomputing.
+
+  // Given a stack of expressions and the index of an expression in it, find
+  // the pointer to that expression in the parent. This gives us a pointer that
+  // allows us to replace the expression.
+  Expression** getChildPointerInImmediateParent(const ExpressionStack& stack,
+                                                Index index,
+                                                Function* func) {
+    if (index == 0) {
+      // There is nothing above this expression, so the pointer referring to it
+      // is the function's body.
+      return &func->body;
+    }
+
+    auto* child = stack[index];
+    for (auto** currChild : ChildIterator(stack[index - 1]).children) {
+      if (*currChild == child) {
+        return currChild;
+      }
+    }
+
+    WASM_UNREACHABLE("child not found in parent");
   }
 };
 

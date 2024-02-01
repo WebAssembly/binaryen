@@ -60,8 +60,7 @@
  ;; ROUNDTRIP-NEXT:  )
  ;; ROUNDTRIP-NEXT: )
  (func $len (param $a (ref array)) (result i32)
-  ;; TODO: remove the unused type annotation
-  (array.len $byte-array
+  (array.len
    (local.get $a)
   )
  )
@@ -77,7 +76,7 @@
  ;; ROUNDTRIP-NEXT:  )
  ;; ROUNDTRIP-NEXT: )
  (func $impossible-len (param $none nullref) (result i32)
-  (array.len $byte-array
+  (array.len
    (local.get $none)
   )
  )
@@ -91,7 +90,7 @@
  ;; ROUNDTRIP-NEXT:  (unreachable)
  ;; ROUNDTRIP-NEXT: )
  (func $unreachable-len (param $a arrayref) (result i32)
-  (array.len $byte-array
+  (array.len
    (unreachable)
   )
  )

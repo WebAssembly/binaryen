@@ -1019,10 +1019,6 @@
  (global $g2 (ref $C') (struct.new_default $D2'))
 )
 
- (global $g1 (ref $B) (struct.new_default $D1))
- (global $g2 (ref $C) (struct.new_default $D2))
-)
-
 ;; Check that a ref.test inhibits merging (ref.cast is already checked above).
 (module
   ;; CHECK:      (rec

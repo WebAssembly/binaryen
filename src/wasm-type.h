@@ -137,6 +137,9 @@ public:
   // │ eqref       ║ x │   │ x │ x │    n  │ │  n_ullable
   // │ i31ref      ║ x │   │ x │ x │    n  │ │
   // │ structref   ║ x │   │ x │ x │    n  │ │
+  // │ arrayref    ║ x │   │ x │ x │    n  │ │
+  // │ exnref      ║ x │   │ x │ x │    n  │ │
+  // │ stringref   ║ x │   │ x │ x │    n  │ │
   // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
   // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
   // │ Tuple       ║   │ x │   │ x │       │
@@ -167,6 +170,7 @@ public:
   bool isSignature() const;
   bool isStruct() const;
   bool isArray() const;
+  bool isException() const;
   bool isString() const;
   bool isDefaultable() const;
 
@@ -322,6 +326,7 @@ public:
     i31,
     struct_,
     array,
+    exn,
     string,
     stringview_wtf8,
     stringview_wtf16,
@@ -329,8 +334,9 @@ public:
     none,
     noext,
     nofunc,
+    noexn,
   };
-  static constexpr BasicHeapType _last_basic_type = nofunc;
+  static constexpr BasicHeapType _last_basic_type = noexn;
 
   // BasicHeapType can be implicitly upgraded to HeapType
   constexpr HeapType(BasicHeapType id) : id(id) {}
@@ -364,6 +370,7 @@ public:
   bool isContinuation() const;
   bool isStruct() const;
   bool isArray() const;
+  bool isException() const;
   bool isString() const;
   bool isBottom() const;
   bool isOpen() const;

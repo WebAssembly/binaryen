@@ -42,6 +42,8 @@
 
 namespace wasm {
 
+class Module;
+
 // An index in a wasm module
 using Index = uint32_t;
 
@@ -701,8 +703,10 @@ public:
     TableFillId,
     TableCopyId,
     TryId,
+    TryTableId,
     ThrowId,
     RethrowId,
+    ThrowRefId,
     TupleMakeId,
     TupleExtractId,
     RefI31Id,
@@ -739,6 +743,7 @@ public:
     StringIterMoveId,
     StringSliceWTFId,
     StringSliceIterId,
+    ResumeId,
     NumExpressionIds
   };
   Id _id;
@@ -824,23 +829,21 @@ public:
   Name name;
   ExpressionList list;
 
-  // set the type purely based on its contents. this scans the block, so it is
-  // not fast.
-  void finalize();
-
-  // set the type given you know its type, which is the case when parsing
-  // s-expression or binary, as explicit types are given. the only additional
-  // work this does is to set the type to unreachable in the cases that is
-  // needed (which may require scanning the block)
-  void finalize(Type type_);
-
   enum Breakability { Unknown, HasBreak, NoBreak };
 
-  // set the type given you know its type, and you know if there is a break to
-  // this block. this avoids the need to scan the contents of the block in the
-  // case that it might be unreachable, so it is recommended if you already know
-  // the type and breakability anyhow.
-  void finalize(Type type_, Breakability breakability);
+  // If type_ is not given, set the type purely based on its contents. this
+  // scans the block, so it is not fast.
+  // If type_ is given, set the type given you know its type, which is the case
+  // when parsing s-expression or binary, as explicit types are given. the only
+  // additional work this does is to set the type to unreachable in the cases
+  // that is needed (which may require scanning the block)
+  //
+  // If breakability is given, you know if there is a break to this block. this
+  // avoids the need to scan the contents of the block in the case that it might
+  // be unreachable, so it is recommended if you already know the type and
+  // breakability anyhow.
+  void finalize(std::optional<Type> type_ = std::nullopt,
+                Breakability breakability = Unknown);
 };
 
 class If : public SpecificExpression<Expression::IfId> {
@@ -852,14 +855,12 @@ public:
   Expression* ifTrue;
   Expression* ifFalse;
 
-  // set the type given you know its type, which is the case when parsing
-  // s-expression or binary, as explicit types are given. the only additional
-  // work this does is to set the type to unreachable in the cases that is
-  // needed.
-  void finalize(Type type_);
-
-  // set the type purely based on its contents.
-  void finalize();
+  // If type_ is not given, set the type purely based on its contents.
+  // If type_ is given, set the type given you know its type, which is the case
+  // when parsing s-expression or binary, as explicit types are given. the only
+  // additional work this does is to set the type to unreachable in the cases
+  // that is needed.
+  void finalize(std::optional<Type> type_ = std::nullopt);
 };
 
 class Loop : public SpecificExpression<Expression::LoopId> {
@@ -870,14 +871,12 @@ public:
   Name name;
   Expression* body;
 
-  // set the type given you know its type, which is the case when parsing
-  // s-expression or binary, as explicit types are given. the only additional
-  // work this does is to set the type to unreachable in the cases that is
-  // needed.
-  void finalize(Type type_);
-
-  // set the type purely based on its contents.
-  void finalize();
+  // If type_ is not given, set the type purely based on its contents.
+  // If type_ is given, set the type given you know its type, which is the case
+  // when parsing s-expression or binary, as explicit types are given. the only
+  // additional work this does is to set the type to unreachable in the cases
+  // that is needed.
+  void finalize(std::optional<Type> type_ = std::nullopt);
 };
 
 class Break : public SpecificExpression<Expression::BreakId> {
@@ -1380,6 +1379,7 @@ public:
 
 class TableGet : public SpecificExpression<Expression::TableGetId> {
 public:
+  TableGet() = default;
   TableGet(MixedArena& allocator) {}
 
   Name table;
@@ -1391,6 +1391,7 @@ public:
 
 class TableSet : public SpecificExpression<Expression::TableSetId> {
 public:
+  TableSet() = default;
   TableSet(MixedArena& allocator) {}
 
   Name table;
@@ -1450,6 +1451,7 @@ public:
   void finalize();
 };
 
+// 'try' from the old (Phase 3) EH proposal
 class Try : public SpecificExpression<Expression::TryId> {
 public:
   Try(MixedArena& allocator) : catchTags(allocator), catchBodies(allocator) {}
@@ -1465,8 +1467,36 @@ public:
   }
   bool isCatch() const { return !catchBodies.empty(); }
   bool isDelegate() const { return delegateTarget.is(); }
-  void finalize();
-  void finalize(Type type_);
+  void finalize(std::optional<Type> type_ = std::nullopt);
+};
+
+// 'try_table' from the new EH proposal
+class TryTable : public SpecificExpression<Expression::TryTableId> {
+public:
+  TryTable(MixedArena& allocator)
+    : catchTags(allocator), catchDests(allocator), catchRefs(allocator),
+      sentTypes(allocator) {}
+
+  Expression* body;
+
+  // Tag names. Empty names (Name()) for catch_all and catch_all_ref
+  ArenaVector<Name> catchTags;
+  // catches' destination blocks
+  ArenaVector<Name> catchDests;
+  // true for catch_ref and catch_all_ref
+  ArenaVector<bool> catchRefs;
+
+  bool hasCatchAll() const;
+
+  // When 'Module*' parameter is given, we cache catch tags' types into
+  // 'sentTypes' array, so that the types can be accessed in other analyses
+  // without accessing the module.
+  void finalize(std::optional<Type> type_ = std::nullopt,
+                Module* wasm = nullptr);
+
+  // Caches tags' types in the catch clauses in order not to query the module
+  // every time we query the sent types
+  ArenaVector<Type> sentTypes;
 };
 
 class Throw : public SpecificExpression<Expression::ThrowId> {
@@ -1479,11 +1509,23 @@ public:
   void finalize();
 };
 
+// 'rethrow' from the old (Phase 3) EH proposal
 class Rethrow : public SpecificExpression<Expression::RethrowId> {
 public:
   Rethrow(MixedArena& allocator) {}
 
   Name target;
+
+  void finalize();
+};
+
+// 'throw_ref' from the new EH proposal
+class ThrowRef : public SpecificExpression<Expression::ThrowRefId> {
+public:
+  ThrowRef() = default;
+  ThrowRef(MixedArena& allocator) {}
+
+  Expression* exnref;
 
   void finalize();
 };
@@ -1499,6 +1541,7 @@ public:
 
 class TupleExtract : public SpecificExpression<Expression::TupleExtractId> {
 public:
+  TupleExtract() = default;
   TupleExtract(MixedArena& allocator) {}
 
   Expression* tuple;
@@ -1734,6 +1777,7 @@ public:
 
 class ArrayInitData : public SpecificExpression<Expression::ArrayInitDataId> {
 public:
+  ArrayInitData() = default;
   ArrayInitData(MixedArena& allocator) {}
 
   Name segment;
@@ -1747,6 +1791,7 @@ public:
 
 class ArrayInitElem : public SpecificExpression<Expression::ArrayInitElemId> {
 public:
+  ArrayInitElem() = default;
   ArrayInitElem(MixedArena& allocator) {}
 
   Name segment;
@@ -1772,6 +1817,7 @@ public:
 
 class StringNew : public SpecificExpression<Expression::StringNewId> {
 public:
+  StringNew() = default;
   StringNew(MixedArena& allocator) {}
 
   StringNewOp op;
@@ -1796,6 +1842,7 @@ public:
 
 class StringConst : public SpecificExpression<Expression::StringConstId> {
 public:
+  StringConst() = default;
   StringConst(MixedArena& allocator) {}
 
   // TODO: Use a different type to allow null bytes in the middle -
@@ -1808,6 +1855,7 @@ public:
 
 class StringMeasure : public SpecificExpression<Expression::StringMeasureId> {
 public:
+  StringMeasure() = default;
   StringMeasure(MixedArena& allocator) {}
 
   StringMeasureOp op;
@@ -1819,6 +1867,7 @@ public:
 
 class StringEncode : public SpecificExpression<Expression::StringEncodeId> {
 public:
+  StringEncode() = default;
   StringEncode(MixedArena& allocator) {}
 
   StringEncodeOp op;
@@ -1838,6 +1887,7 @@ public:
 
 class StringConcat : public SpecificExpression<Expression::StringConcatId> {
 public:
+  StringConcat() = default;
   StringConcat(MixedArena& allocator) {}
 
   Expression* left;
@@ -1848,6 +1898,7 @@ public:
 
 class StringEq : public SpecificExpression<Expression::StringEqId> {
 public:
+  StringEq() = default;
   StringEq(MixedArena& allocator) {}
 
   StringEqOp op;
@@ -1860,6 +1911,7 @@ public:
 
 class StringAs : public SpecificExpression<Expression::StringAsId> {
 public:
+  StringAs() = default;
   StringAs(MixedArena& allocator) {}
 
   StringAsOp op;
@@ -1872,6 +1924,7 @@ public:
 class StringWTF8Advance
   : public SpecificExpression<Expression::StringWTF8AdvanceId> {
 public:
+  StringWTF8Advance() = default;
   StringWTF8Advance(MixedArena& allocator) {}
 
   Expression* ref;
@@ -1883,6 +1936,7 @@ public:
 
 class StringWTF16Get : public SpecificExpression<Expression::StringWTF16GetId> {
 public:
+  StringWTF16Get() = default;
   StringWTF16Get(MixedArena& allocator) {}
 
   Expression* ref;
@@ -1893,6 +1947,7 @@ public:
 
 class StringIterNext : public SpecificExpression<Expression::StringIterNextId> {
 public:
+  StringIterNext() = default;
   StringIterNext(MixedArena& allocator) {}
 
   Expression* ref;
@@ -1902,6 +1957,7 @@ public:
 
 class StringIterMove : public SpecificExpression<Expression::StringIterMoveId> {
 public:
+  StringIterMove() = default;
   StringIterMove(MixedArena& allocator) {}
 
   // Whether the movement is to advance or reverse.
@@ -1917,6 +1973,7 @@ public:
 
 class StringSliceWTF : public SpecificExpression<Expression::StringSliceWTFId> {
 public:
+  StringSliceWTF() = default;
   StringSliceWTF(MixedArena& allocator) {}
 
   StringSliceWTFOp op;
@@ -1931,12 +1988,39 @@ public:
 class StringSliceIter
   : public SpecificExpression<Expression::StringSliceIterId> {
 public:
+  StringSliceIter() = default;
   StringSliceIter(MixedArena& allocator) {}
 
   Expression* ref;
   Expression* num;
 
   void finalize();
+};
+
+class Resume : public SpecificExpression<Expression::ResumeId> {
+public:
+  Resume(MixedArena& allocator)
+    : handlerTags(allocator), handlerBlocks(allocator), operands(allocator),
+      sentTypes(allocator) {}
+
+  HeapType contType;
+  ArenaVector<Name> handlerTags;
+  ArenaVector<Name> handlerBlocks;
+
+  ExpressionList operands;
+  Expression* cont;
+
+  // When 'Module*' parameter is given, we populate the 'sentTypes' array, so
+  // that the types can be accessed in other analyses without accessing the
+  // module.
+  void finalize(Module* wasm = nullptr);
+
+  // sentTypes[i] contains the type of the values that will be sent to the block
+  // handlerBlocks[i] if suspending with tag handlerTags[i]. Not part of the
+  // instruction's syntax, but stored here for subsequent use.
+  // This information is cached here in order not to query the module
+  // every time we query the sent types.
+  ArenaVector<Type> sentTypes;
 };
 
 // Globals
@@ -2072,6 +2156,12 @@ public:
     delimiterLocations;
   BinaryLocations::FunctionLocations funcLocation;
 
+  // Inlining metadata: whether to disallow full and/or partial inlining (for
+  // details on what those mean, see Inlining.cpp).
+  bool noFullInline = false;
+  bool noPartialInline = false;
+
+  // Methods
   Signature getSig() { return type.getSignature(); }
   Type getParams() { return getSig().params; }
   Type getResults() { return getSig().results; }

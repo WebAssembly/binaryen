@@ -354,7 +354,8 @@ public:
         case Expression::ReturnId:
         case Expression::UnreachableId:
         case Expression::ThrowId:
-        case Expression::RethrowId: {
+        case Expression::RethrowId:
+        case Expression::ThrowRefId: {
           // These can all be unreachable without an unreachable child.
           return;
         }
@@ -445,8 +446,10 @@ public:
   void noteDelegate(Name name, Expression* curr);
   void noteRethrow(Name name, Expression* curr);
   void visitTry(Try* curr);
+  void visitTryTable(TryTable* curr);
   void visitThrow(Throw* curr);
   void visitRethrow(Rethrow* curr);
+  void visitThrowRef(ThrowRef* curr);
   void visitTupleMake(TupleMake* curr);
   void visitTupleExtract(TupleExtract* curr);
   void visitCallRef(CallRef* curr);
@@ -484,6 +487,7 @@ public:
   void visitStringIterMove(StringIterMove* curr);
   void visitStringSliceWTF(StringSliceWTF* curr);
   void visitStringSliceIter(StringSliceIter* curr);
+  void visitResume(Resume* curr);
 
   void visitFunction(Function* curr);
 
@@ -2120,6 +2124,11 @@ void FunctionValidator::visitDrop(Drop* curr) {
                  curr->value->type == Type::unreachable,
                curr,
                "can only drop a valid value");
+  if (curr->value->type.isTuple()) {
+    shouldBeTrue(getModule()->features.hasMultivalue(),
+                 curr,
+                 "Tuples drops are not allowed unless multivalue is enabled");
+  }
 }
 
 void FunctionValidator::visitReturn(Return* curr) {
@@ -2442,6 +2451,78 @@ void FunctionValidator::visitTry(Try* curr) {
   rethrowTargetNames.erase(curr->name);
 }
 
+void FunctionValidator::visitTryTable(TryTable* curr) {
+  shouldBeTrue(
+    getModule()->features.hasExceptionHandling(),
+    curr,
+    "try_table requires exception-handling [--enable-exception-handling]");
+  if (curr->type != Type::unreachable) {
+    shouldBeSubType(curr->body->type,
+                    curr->type,
+                    curr->body,
+                    "try_table's type does not match try_table body's type");
+  }
+
+  shouldBeEqual(curr->catchTags.size(),
+                curr->catchDests.size(),
+                curr,
+                "the number of catch tags and catch destinations do not match");
+  shouldBeEqual(curr->catchTags.size(),
+                curr->catchRefs.size(),
+                curr,
+                "the number of catch tags and catch refs do not match");
+  shouldBeEqual(curr->catchTags.size(),
+                curr->sentTypes.size(),
+                curr,
+                "the number of catch tags and sent types do not match");
+
+  const char* invalidSentTypeMsg = "invalid catch sent type information";
+  Type exnref = Type(HeapType::exn, Nullable);
+  for (Index i = 0; i < curr->catchTags.size(); i++) {
+    auto sentType = curr->sentTypes[i];
+    size_t tagTypeSize;
+
+    Name tagName = curr->catchTags[i];
+    if (!tagName) { // catch_all or catch_all_ref
+      tagTypeSize = 0;
+    } else { // catch or catch_ref
+      // Check tag validity
+      auto* tag = getModule()->getTagOrNull(tagName);
+      if (!shouldBeTrue(tag != nullptr, curr, "")) {
+        getStream() << "catch's tag name is invalid: " << tagName << "\n";
+      } else if (!shouldBeEqual(tag->sig.results, Type(Type::none), curr, "")) {
+        getStream()
+          << "catch's tag (" << tagName
+          << ") has result values, which is not allowed for exception handling";
+      }
+
+      // tagType and sentType should be the same (except for the possible exnref
+      // at the end of sentType)
+      auto tagType = tag->sig.params;
+      tagTypeSize = tagType.size();
+      for (Index j = 0; j < tagType.size(); j++) {
+        shouldBeEqual(tagType[j], sentType[j], curr, invalidSentTypeMsg);
+      }
+    }
+
+    // If this is catch_ref or catch_all_ref, sentType.size() should be
+    // tagType.size() + 1 because there is an exrnef tacked at the end. If
+    // this is catch/catch_all, the two sizes should be the same.
+    if (curr->catchRefs[i]) {
+      if (shouldBeTrue(
+            sentType.size() == tagTypeSize + 1, curr, invalidSentTypeMsg)) {
+        shouldBeEqual(
+          sentType[sentType.size() - 1], exnref, curr, invalidSentTypeMsg);
+      }
+    } else {
+      shouldBeTrue(sentType.size() == tagTypeSize, curr, invalidSentTypeMsg);
+    }
+
+    // Note catch destinations with sent types
+    noteBreak(curr->catchDests[i], curr->sentTypes[i], curr);
+  }
+}
+
 void FunctionValidator::visitThrow(Throw* curr) {
   shouldBeTrue(
     getModule()->features.hasExceptionHandling(),
@@ -2463,9 +2544,10 @@ void FunctionValidator::visitThrow(Throw* curr) {
     Type(Type::none),
     curr,
     "tags with result types must not be used for exception handling");
-  if (!shouldBeTrue(curr->operands.size() == tag->sig.params.size(),
-                    curr,
-                    "tag's param numbers must match")) {
+  if (!shouldBeEqual(curr->operands.size(),
+                     tag->sig.params.size(),
+                     curr,
+                     "tag's param numbers must match")) {
     return;
   }
   size_t i = 0;
@@ -2514,6 +2596,14 @@ void FunctionValidator::visitTupleMake(TupleMake* curr) {
                   curr->type,
                   curr,
                   "Type of tuple.make does not match types of its operands");
+}
+
+void FunctionValidator::visitThrowRef(ThrowRef* curr) {
+  Type exnref = Type(HeapType::exn, Nullable);
+  shouldBeSubType(curr->exnref->type,
+                  exnref,
+                  curr,
+                  "throw_ref's argument should be a subtype of exnref");
 }
 
 void FunctionValidator::visitTupleExtract(TupleExtract* curr) {
@@ -3196,6 +3286,24 @@ void FunctionValidator::visitStringSliceIter(StringSliceIter* curr) {
                "string operations require reference-types [--enable-strings]");
 }
 
+void FunctionValidator::visitResume(Resume* curr) {
+  // TODO implement actual type-checking
+  shouldBeTrue(
+    !getModule() || getModule()->features.hasTypedContinuations(),
+    curr,
+    "resume requires typed-continuatons [--enable-typed-continuations]");
+
+  shouldBeTrue(
+    curr->sentTypes.size() == curr->handlerBlocks.size(),
+    curr,
+    "sentTypes cache in Resume instruction has not been initialized");
+
+  shouldBeTrue((curr->contType.isContinuation() &&
+                curr->contType.getContinuation().type.isSignature()),
+               curr,
+               "invalid type in Resume expression");
+}
+
 void FunctionValidator::visitFunction(Function* curr) {
   if (curr->getResults().isTuple()) {
     shouldBeTrue(getModule()->features.hasMultivalue(),
@@ -3548,7 +3656,6 @@ static void validateMemories(Module& module, ValidationInfo& info) {
 
 static void validateDataSegments(Module& module, ValidationInfo& info) {
   for (auto& segment : module.dataSegments) {
-    auto size = segment->data.size();
     if (segment->isPassive) {
       info.shouldBeTrue(
         module.features.hasBulkMemory(),
@@ -3585,14 +3692,6 @@ static void validateDataSegments(Module& module, ValidationInfo& info) {
         segment->offset,
         "memory segment offset should be constant");
       FunctionValidator(module, &info).validate(segment->offset);
-      // If the memory is imported we don't actually know its initial size.
-      // Specifically wasm dll's import a zero sized memory which is perfectly
-      // valid.
-      if (!memory->imported()) {
-        info.shouldBeTrue(size <= memory->initial * Memory::kPageSize,
-                          segment->data.size(),
-                          "segment size should fit in memory (initial)");
-      }
     }
   }
 }

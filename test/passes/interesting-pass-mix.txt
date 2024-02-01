@@ -34,23 +34,29 @@
  (func $loops (param $0 i32)
   (if
    (local.get $0)
-   (loop $shape$2$continue
-    (call $trivial)
-    (br $shape$2$continue)
+   (then
+    (loop $shape$2$continue
+     (call $trivial)
+     (br $shape$2$continue)
+    )
    )
   )
   (loop $shape$4$continue
    (call $trivial)
    (if
     (local.get $0)
-    (br $shape$4$continue)
+    (then
+     (br $shape$4$continue)
+    )
    )
   )
   (loop $shape$6$continue
    (call $trivial)
    (if
     (local.get $0)
-    (br $shape$6$continue)
+    (then
+     (br $shape$6$continue)
+    )
    )
   )
  )
@@ -64,7 +70,7 @@
    (i32.eqz
     (local.get $0)
    )
-   (block
+   (then
     (call $unreachable
      (i32.const 5)
     )
@@ -73,14 +79,16 @@
   )
   (if
    (local.get $0)
-   (block
+   (then
     (call $unreachable
      (i32.const 1)
     )
     (unreachable)
    )
-   (call $unreachable
-    (i32.const 3)
+   (else
+    (call $unreachable
+     (i32.const 3)
+    )
    )
   )
  )
@@ -104,8 +112,10 @@
    (i32.eqz
     (local.get $0)
    )
-   (call $before-and-after
-    (i32.const 5)
+   (then
+    (call $before-and-after
+     (i32.const 5)
+    )
    )
   )
   (call $before-and-after
@@ -123,7 +133,9 @@
    )
    (if
     (local.get $0)
-    (br $shape$4$continue)
+    (then
+     (br $shape$4$continue)
+    )
    )
   )
   (call $before-and-after
@@ -134,8 +146,10 @@
   )
   (if
    (local.get $0)
-   (call $before-and-after
-    (i32.const 12)
+   (then
+    (call $before-and-after
+     (i32.const 12)
+    )
    )
   )
   (call $before-and-after
@@ -143,17 +157,23 @@
   )
   (if
    (local.get $0)
-   (call $before-and-after
-    (i32.const 14)
+   (then
+    (call $before-and-after
+     (i32.const 14)
+    )
    )
-   (call $before-and-after
-    (i32.const 15)
+   (else
+    (call $before-and-after
+     (i32.const 15)
+    )
    )
   )
   (if
    (local.get $0)
-   (call $before-and-after
-    (i32.const 16)
+   (then
+    (call $before-and-after
+     (i32.const 16)
+    )
    )
   )
   (call $before-and-after
@@ -215,12 +235,18 @@
   (block $block$2$break
    (if
     (local.get $0)
-    (call $if-br-wat
-     (i32.const 1)
+    (then
+     (call $if-br-wat
+      (i32.const 1)
+     )
     )
-    (if
-     (local.get $0)
-     (br $block$2$break)
+    (else
+     (if
+      (local.get $0)
+      (then
+       (br $block$2$break)
+      )
+     )
     )
    )
    (call $if-br-wat

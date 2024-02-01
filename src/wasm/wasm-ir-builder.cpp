@@ -90,7 +90,8 @@ MaybeResult<IRBuilder::HoistedVal> IRBuilder::hoistLastValue() {
   return HoistedVal{Index(index), get};
 }
 
-Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted) {
+Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted,
+                                        size_t sizeHint) {
   auto& scope = getScope();
   assert(!scope.exprStack.empty());
 
@@ -106,17 +107,17 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted) {
 
   auto type = scope.exprStack.back()->type;
 
-  if (!type.isTuple()) {
+  if (type.size() == sizeHint || type.size() <= 1) {
     if (hoisted.get) {
       packageAsBlock(type);
     }
     return Ok{};
   }
 
-  // We need to break up the hoisted tuple. Create and push a block setting the
-  // tuple to a local and returning its first element, then push additional gets
-  // of each of its subsequent elements. Reuse the scratch local we used for
-  // hoisting, if it exists.
+  // We need to break up the hoisted tuple. Create and push an expression
+  // setting the tuple to a local and returning its first element, then push
+  // additional gets of each of its subsequent elements. Reuse the scratch local
+  // we used for hoisting, if it exists.
   Index scratchIdx;
   if (hoisted.get) {
     // Update the get on top of the stack to just return the first element.
@@ -126,12 +127,8 @@ Result<> IRBuilder::packageHoistedValue(const HoistedVal& hoisted) {
   } else {
     auto scratch = addScratchLocal(type);
     CHECK_ERR(scratch);
-    auto* block = builder.makeSequence(
-      builder.makeLocalSet(*scratch, scope.exprStack.back()),
-      builder.makeTupleExtract(builder.makeLocalGet(*scratch, type), 0),
-      type[0]);
-    scope.exprStack.pop_back();
-    push(block);
+    scope.exprStack.back() = builder.makeTupleExtract(
+      builder.makeLocalTee(*scratch, scope.exprStack.back(), type), 0);
     scratchIdx = *scratch;
   }
   for (Index i = 1, size = type.size(); i < size; ++i) {
@@ -154,11 +151,12 @@ void IRBuilder::push(Expression* expr) {
   }
   scope.exprStack.push_back(expr);
 
-  DBG(std::cerr << "After pushing " << ShallowExpression(expr) << ":\n");
+  DBG(std::cerr << "After pushing " << ShallowExpression{expr} << ":\n");
   DBG(dump());
 }
 
-Result<Expression*> IRBuilder::pop() {
+Result<Expression*> IRBuilder::pop(size_t size) {
+  assert(size >= 1);
   auto& scope = getScope();
 
   // Find the suffix of expressions that do not produce values.
@@ -173,11 +171,25 @@ Result<Expression*> IRBuilder::pop() {
     return Err{"popping from empty stack"};
   }
 
-  CHECK_ERR(packageHoistedValue(*hoisted));
+  CHECK_ERR(packageHoistedValue(*hoisted, size));
 
   auto* ret = scope.exprStack.back();
-  scope.exprStack.pop_back();
-  return ret;
+  if (ret->type.size() == size) {
+    scope.exprStack.pop_back();
+    return ret;
+  }
+
+  // The last value-producing expression did not produce exactly the right
+  // number of values, so we need to construct a tuple piecewise instead.
+  assert(size > 1);
+  std::vector<Expression*> elems;
+  elems.resize(size);
+  for (int i = size - 1; i >= 0; --i) {
+    auto elem = pop();
+    CHECK_ERR(elem);
+    elems[i] = *elem;
+  }
+  return builder.makeTupleMake(elems);
 }
 
 Result<Expression*> IRBuilder::build() {
@@ -253,7 +265,7 @@ void IRBuilder::dump() {
     std::cerr << ":\n";
 
     for (auto* expr : scope.exprStack) {
-      std::cerr << "    " << ShallowExpression(expr) << "\n";
+      std::cerr << "    " << ShallowExpression{expr} << "\n";
     }
   }
 #endif // IR_BUILDER_DEBUG
@@ -285,6 +297,7 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
 
 #define DELEGATE_ID curr->_id
 #define DELEGATE_START(id) [[maybe_unused]] auto* expr = curr->cast<id>();
+#define DELEGATE_GET_FIELD(id, field) expr->field
 #define DELEGATE_FIELD_CHILD(id, field)                                        \
   auto field = pop();                                                          \
   CHECK_ERR(field);                                                            \
@@ -303,12 +316,9 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
                    " has child vector " #field);
 
 #define DELEGATE_FIELD_INT(id, field)
-#define DELEGATE_FIELD_INT_ARRAY(id, field)
 #define DELEGATE_FIELD_LITERAL(id, field)
 #define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_NAME_VECTOR(id, field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
 
 #define DELEGATE_FIELD_TYPE(id, field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field)
@@ -317,6 +327,20 @@ Result<> IRBuilder::visitExpression(Expression* curr) {
 #include "wasm-delegations-fields.def"
 
   return Ok{};
+}
+
+Result<> IRBuilder::visitDrop(Drop* curr, std::optional<uint32_t> arity) {
+  // Multivalue drops must remain multivalue drops.
+  if (!arity) {
+    arity = curr->value->type.size();
+  }
+  if (*arity >= 2) {
+    auto val = pop(*arity);
+    CHECK_ERR(val);
+    curr->value = *val;
+    return Ok{};
+  }
+  return visitExpression(curr);
 }
 
 Result<> IRBuilder::visitIf(If* curr) {
@@ -390,15 +414,18 @@ Result<Expression*> IRBuilder::getBranchValue(Name labelName,
   }
   auto scope = getScope(*label);
   CHECK_ERR(scope);
-  std::vector<Expression*> values((*scope)->getResultType().size());
-  for (size_t i = 0, size = values.size(); i < size; ++i) {
+  // Loops would receive their input type rather than their output type, if we
+  // supported that.
+  size_t numValues = (*scope)->getLoop() ? 0 : (*scope)->getResultType().size();
+  std::vector<Expression*> values(numValues);
+  for (size_t i = 0; i < numValues; ++i) {
     auto val = pop();
     CHECK_ERR(val);
-    values[size - 1 - i] = *val;
+    values[numValues - 1 - i] = *val;
   }
-  if (values.size() == 0) {
+  if (numValues == 0) {
     return nullptr;
-  } else if (values.size() == 1) {
+  } else if (numValues == 1) {
     return values[0];
   } else {
     return builder.makeTupleMake(values);
@@ -406,6 +433,11 @@ Result<Expression*> IRBuilder::getBranchValue(Name labelName,
 }
 
 Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
+  if (curr->condition) {
+    auto cond = pop();
+    CHECK_ERR(cond);
+    curr->condition = *cond;
+  }
   auto value = getBranchValue(curr->name, label);
   CHECK_ERR(value);
   curr->value = *value;
@@ -460,6 +492,21 @@ Result<> IRBuilder::visitCallRef(CallRef* curr) {
   return Ok{};
 }
 
+Result<> IRBuilder::visitLocalSet(LocalSet* curr) {
+  auto type = func->getLocalType(curr->index);
+  auto val = pop(type.size());
+  CHECK_ERR(val);
+  curr->value = *val;
+  return Ok{};
+}
+
+Result<> IRBuilder::visitGlobalSet(GlobalSet* curr) {
+  auto type = wasm.getGlobal(curr->name)->type;
+  auto val = pop(type.size());
+  CHECK_ERR(val);
+  curr->value = *val;
+  return Ok{};
+}
 Result<> IRBuilder::visitThrow(Throw* curr) {
   auto numArgs = wasm.getTag(curr->tag)->sig.params.size();
   curr->operands.resize(numArgs);
@@ -468,6 +515,98 @@ Result<> IRBuilder::visitThrow(Throw* curr) {
     CHECK_ERR(arg);
     curr->operands[numArgs - 1 - i] = *arg;
   }
+  return Ok{};
+}
+
+Result<> IRBuilder::visitStringNew(StringNew* curr) {
+  switch (curr->op) {
+    case StringNewUTF8:
+    case StringNewWTF8:
+    case StringNewLossyUTF8:
+    case StringNewWTF16: {
+      auto len = pop();
+      CHECK_ERR(len);
+      curr->length = *len;
+      break;
+    }
+    case StringNewUTF8Array:
+    case StringNewWTF8Array:
+    case StringNewLossyUTF8Array:
+    case StringNewWTF16Array: {
+      auto end = pop();
+      CHECK_ERR(end);
+      curr->end = *end;
+      auto start = pop();
+      CHECK_ERR(start);
+      curr->start = *start;
+      break;
+    }
+    case StringNewFromCodePoint:
+      break;
+  }
+  auto ptr = pop();
+  CHECK_ERR(ptr);
+  curr->ptr = *ptr;
+  return Ok{};
+}
+
+Result<> IRBuilder::visitStringEncode(StringEncode* curr) {
+  switch (curr->op) {
+    case StringEncodeUTF8Array:
+    case StringEncodeLossyUTF8Array:
+    case StringEncodeWTF8Array:
+    case StringEncodeWTF16Array: {
+      auto start = pop();
+      CHECK_ERR(start);
+      curr->start = *start;
+    }
+      [[fallthrough]];
+    case StringEncodeUTF8:
+    case StringEncodeLossyUTF8:
+    case StringEncodeWTF8:
+    case StringEncodeWTF16: {
+      auto ptr = pop();
+      CHECK_ERR(ptr);
+      curr->ptr = *ptr;
+      auto ref = pop();
+      CHECK_ERR(ref);
+      curr->ref = *ref;
+      return Ok{};
+    }
+  }
+  WASM_UNREACHABLE("unexpected op");
+}
+
+Result<> IRBuilder::visitTupleMake(TupleMake* curr) {
+  assert(curr->operands.size() >= 2);
+  for (size_t i = 0, size = curr->operands.size(); i < size; ++i) {
+    auto elem = pop();
+    CHECK_ERR(elem);
+    curr->operands[size - 1 - i] = *elem;
+  }
+  return Ok{};
+}
+
+Result<> IRBuilder::visitTupleExtract(TupleExtract* curr,
+                                      std::optional<uint32_t> arity) {
+  if (!arity) {
+    if (curr->tuple->type == Type::unreachable) {
+      // Fallback to an arbitrary valid arity.
+      arity = 2;
+    } else {
+      arity = curr->tuple->type.size();
+    }
+  }
+  assert(*arity >= 2);
+  auto tuple = pop(*arity);
+  CHECK_ERR(tuple);
+  curr->tuple = *tuple;
+  return Ok{};
+}
+
+Result<> IRBuilder::visitPop(Pop*) {
+  // Do not actually push this pop onto the stack since we generate our own pops
+  // as necessary when visiting the beginnings of try blocks.
   return Ok{};
 }
 
@@ -499,10 +638,15 @@ Result<> IRBuilder::visitLoopStart(Loop* loop) {
 }
 
 Result<> IRBuilder::visitTryStart(Try* tryy, Name label) {
-  // The delegate label will be regenerated if we need it. See `visitDelegate`
-  // for details.
+  // The delegate label will be regenerated if we need it. See
+  // `getDelegateLabelName` for details.
   tryy->name = Name();
   pushScope(ScopeCtx::makeTry(tryy, label));
+  return Ok{};
+}
+
+Result<> IRBuilder::visitTryTableStart(TryTable* trytable, Name label) {
+  pushScope(ScopeCtx::makeTryTable(trytable, label));
   return Ok{};
 }
 
@@ -663,6 +807,33 @@ Result<> IRBuilder::visitCatchAll() {
   return Ok{};
 }
 
+Result<Name> IRBuilder::getDelegateLabelName(Index label) {
+  if (label >= scopeStack.size()) {
+    return Err{"invalid label: " + std::to_string(label)};
+  }
+  auto& scope = scopeStack[scopeStack.size() - label - 1];
+  auto* delegateTry = scope.getTry();
+  if (!delegateTry) {
+    delegateTry = scope.getCatch();
+  }
+  if (!delegateTry) {
+    delegateTry = scope.getCatchAll();
+  }
+  if (!delegateTry) {
+    return Err{"expected try scope at label " + std::to_string(label)};
+  }
+  // Only delegate and rethrow can reference the try name in Binaryen IR, so
+  // trys might need two labels: one for delegate/rethrow and one for all
+  // other control flow. These labels must be different to satisfy the
+  // Binaryen validator. To keep this complexity contained within the
+  // handling of trys and delegates, pretend there is just the single normal
+  // label and add a prefix to it to generate the delegate label.
+  auto delegateName =
+    Name(std::string("__delegate__") + getLabelName(label)->toString());
+  delegateTry->name = delegateName;
+  return delegateName;
+}
+
 Result<> IRBuilder::visitDelegate(Index label) {
   auto& scope = getScope();
   auto* tryy = scope.getTry();
@@ -676,17 +847,10 @@ Result<> IRBuilder::visitDelegate(Index label) {
   ++label;
   for (size_t size = scopeStack.size(); label < size; ++label) {
     auto& delegateScope = scopeStack[size - label - 1];
-    if (auto* delegateTry = delegateScope.getTry()) {
-      // Only delegates can reference the try name in Binaryen IR, so trys might
-      // need two labels: one for delegates and one for all other control flow.
-      // These labels must be different to satisfy the Binaryen validator. To
-      // keep this complexity contained within the handling of trys and
-      // delegates, pretend there is just the single normal label and add a
-      // prefix to it to generate the delegate label.
-      auto delegateName =
-        Name(std::string("__delegate__") + getLabelName(label)->toString());
-      delegateTry->name = delegateName;
-      tryy->delegateTarget = delegateName;
+    if (delegateScope.getTry()) {
+      auto delegateName = getDelegateLabelName(label);
+      CHECK_ERR(delegateName);
+      tryy->delegateTarget = *delegateName;
       break;
     } else if (delegateScope.getFunction()) {
       tryy->delegateTarget = DELEGATE_CALLER_TARGET;
@@ -757,6 +921,10 @@ Result<> IRBuilder::visitEnd() {
     tryy->catchBodies.push_back(*expr);
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
+  } else if (auto* trytable = scope.getTryTable()) {
+    trytable->body = *expr;
+    trytable->finalize(trytable->type, &wasm);
+    push(maybeWrapForLabel(trytable));
   } else {
     WASM_UNREACHABLE("unexpected scope kind");
   }
@@ -831,13 +999,15 @@ Result<> IRBuilder::makeLoop(Name label, Type type) {
   return visitLoopStart(loop);
 }
 
-Result<> IRBuilder::makeBreak(Index label) {
+Result<> IRBuilder::makeBreak(Index label, bool isConditional) {
   auto name = getLabelName(label);
   CHECK_ERR(name);
   Break curr;
   curr.name = *name;
+  // Use a dummy condition value if we need to pop a condition.
+  curr.condition = isConditional ? &curr : nullptr;
   CHECK_ERR(visitBreak(&curr, label));
-  push(builder.makeBreak(curr.name, curr.value));
+  push(builder.makeBreak(curr.name, curr.value, curr.condition));
   return Ok{};
 }
 
@@ -867,7 +1037,14 @@ Result<> IRBuilder::makeCall(Name func, bool isReturn) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeCallIndirect() {}
+Result<> IRBuilder::makeCallIndirect(Name table, HeapType type, bool isReturn) {
+  CallIndirect curr(wasm.allocator);
+  curr.heapType = type;
+  CHECK_ERR(visitCallIndirect(&curr));
+  push(builder.makeCallIndirect(
+    table, curr.target, curr.operands, type, isReturn));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeLocalGet(Index local) {
   push(builder.makeLocalGet(local, func->getLocalType(local)));
@@ -876,6 +1053,7 @@ Result<> IRBuilder::makeLocalGet(Index local) {
 
 Result<> IRBuilder::makeLocalSet(Index local) {
   LocalSet curr;
+  curr.index = local;
   CHECK_ERR(visitLocalSet(&curr));
   push(builder.makeLocalSet(local, curr.value));
   return Ok{};
@@ -883,6 +1061,7 @@ Result<> IRBuilder::makeLocalSet(Index local) {
 
 Result<> IRBuilder::makeLocalTee(Index local) {
   LocalSet curr;
+  curr.index = local;
   CHECK_ERR(visitLocalSet(&curr));
   push(builder.makeLocalTee(local, curr.value, func->getLocalType(local)));
   return Ok{};
@@ -895,6 +1074,7 @@ Result<> IRBuilder::makeGlobalGet(Name global) {
 
 Result<> IRBuilder::makeGlobalSet(Name global) {
   GlobalSet curr;
+  curr.name = global;
   CHECK_ERR(visitGlobalSet(&curr));
   push(builder.makeGlobalSet(global, curr.value));
   return Ok{};
@@ -1097,7 +1277,7 @@ Result<> IRBuilder::makeSelect(std::optional<Type> type) {
 
 Result<> IRBuilder::makeDrop() {
   Drop curr;
-  CHECK_ERR(visitDrop(&curr));
+  CHECK_ERR(visitDrop(&curr, 1));
   push(builder.makeDrop(curr.value));
   return Ok{};
 }
@@ -1126,7 +1306,23 @@ Result<> IRBuilder::makeUnreachable() {
   return Ok{};
 }
 
-// Result<> IRBuilder::makePop() {}
+Result<> IRBuilder::makePop(Type type) {
+  // We don't actually want to create a new Pop expression here because we
+  // already create them automatically when starting a legacy catch block that
+  // needs one. Just verify that the Pop we are being asked to make is the same
+  // type as the Pop we have already made.
+  auto& scope = getScope();
+  if (!scope.getCatch() || scope.exprStack.size() != 1 ||
+      !scope.exprStack[0]->is<Pop>()) {
+    return Err{
+      "pop instructions may only appear at the beginning of catch blocks"};
+  }
+  auto expectedType = scope.exprStack[0]->type;
+  if (type != expectedType) {
+    return Err{std::string("Expected pop of type ") + expectedType.toString()};
+  }
+  return Ok{};
+}
 
 Result<> IRBuilder::makeRefNull(HeapType type) {
   push(builder.makeRefNull(type));
@@ -1152,18 +1348,70 @@ Result<> IRBuilder::makeRefEq() {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeTableGet() {}
+Result<> IRBuilder::makeTableGet(Name table) {
+  TableGet curr;
+  CHECK_ERR(visitTableGet(&curr));
+  auto type = wasm.getTable(table)->type;
+  push(builder.makeTableGet(table, curr.index, type));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeTableSet() {}
+Result<> IRBuilder::makeTableSet(Name table) {
+  TableSet curr;
+  CHECK_ERR(visitTableSet(&curr));
+  push(builder.makeTableSet(table, curr.index, curr.value));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeTableSize() {}
+Result<> IRBuilder::makeTableSize(Name table) {
+  push(builder.makeTableSize(table));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeTableGrow() {}
+Result<> IRBuilder::makeTableGrow(Name table) {
+  TableGrow curr;
+  CHECK_ERR(visitTableGrow(&curr));
+  push(builder.makeTableGrow(table, curr.value, curr.delta));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeTableFill(Name table) {
+  TableFill curr;
+  CHECK_ERR(visitTableFill(&curr));
+  push(builder.makeTableFill(table, curr.dest, curr.value, curr.size));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeTableCopy(Name destTable, Name srcTable) {
+  TableCopy curr;
+  CHECK_ERR(visitTableCopy(&curr));
+  push(builder.makeTableCopy(
+    curr.dest, curr.source, curr.size, destTable, srcTable));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeTry(Name label, Type type) {
   auto* tryy = wasm.allocator.alloc<Try>();
   tryy->type = type;
   return visitTryStart(tryy, label);
+}
+
+Result<> IRBuilder::makeTryTable(Name label,
+                                 Type type,
+                                 const std::vector<Name>& tags,
+                                 const std::vector<Index>& labels,
+                                 const std::vector<bool>& isRefs) {
+  auto* trytable = wasm.allocator.alloc<TryTable>();
+  trytable->type = type;
+  trytable->catchTags.set(tags);
+  trytable->catchRefs.set(isRefs);
+  trytable->catchDests.reserve(labels.size());
+  for (auto label : labels) {
+    auto name = getLabelName(label);
+    CHECK_ERR(name);
+    trytable->catchDests.push_back(*name);
+  }
+  return visitTryTableStart(trytable, label);
 }
 
 Result<> IRBuilder::makeThrow(Name tag) {
@@ -1174,11 +1422,42 @@ Result<> IRBuilder::makeThrow(Name tag) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeRethrow() {}
+Result<> IRBuilder::makeRethrow(Index label) {
+  // Rethrow references `Try` labels directly, just like `delegate`.
+  auto name = getDelegateLabelName(label);
+  CHECK_ERR(name);
+  push(builder.makeRethrow(*name));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeTupleMake() {}
+Result<> IRBuilder::makeThrowRef() {
+  ThrowRef curr;
+  CHECK_ERR(visitThrowRef(&curr));
+  push(builder.makeThrowRef(curr.exnref));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeTupleExtract() {}
+Result<> IRBuilder::makeTupleMake(uint32_t arity) {
+  TupleMake curr(wasm.allocator);
+  curr.operands.resize(arity);
+  CHECK_ERR(visitTupleMake(&curr));
+  push(builder.makeTupleMake(curr.operands));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeTupleExtract(uint32_t arity, uint32_t index) {
+  TupleExtract curr;
+  CHECK_ERR(visitTupleExtract(&curr, arity));
+  push(builder.makeTupleExtract(curr.tuple, index));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeTupleDrop(uint32_t arity) {
+  Drop curr;
+  CHECK_ERR(visitDrop(&curr, arity));
+  push(builder.makeDrop(curr.value));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeRefI31() {
   RefI31 curr;
@@ -1221,12 +1500,20 @@ Result<> IRBuilder::makeRefCast(Type type) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type castType) {
+Result<> IRBuilder::makeBrOn(Index label, BrOnOp op, Type in, Type out) {
   BrOn curr;
   CHECK_ERR(visitBrOn(&curr));
+  if (out != Type::none) {
+    if (!Type::isSubType(out, in)) {
+      return Err{"output type is not a subtype of the input type"};
+    }
+    if (!Type::isSubType(curr.ref->type, in)) {
+      return Err{"expected input to match input type annotation"};
+    }
+  }
   auto name = getLabelName(label);
   CHECK_ERR(name);
-  push(builder.makeBrOn(op, *name, curr.ref, castType));
+  push(builder.makeBrOn(op, *name, curr.ref, out));
   return Ok{};
 }
 
@@ -1341,9 +1628,23 @@ Result<> IRBuilder::makeArrayFill(HeapType type) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeArrayInitData() {}
+Result<> IRBuilder::makeArrayInitData(HeapType type, Name data) {
+  ArrayInitData curr;
+  CHECK_ERR(visitArrayInitData(&curr));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeArrayInitData(
+    data, curr.ref, curr.index, curr.offset, curr.size));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeArrayInitElem() {}
+Result<> IRBuilder::makeArrayInitElem(HeapType type, Name elem) {
+  ArrayInitElem curr;
+  CHECK_ERR(visitArrayInitElem(&curr));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
+  push(builder.makeArrayInitElem(
+    elem, curr.ref, curr.index, curr.offset, curr.size));
+  return Ok{};
+}
 
 Result<> IRBuilder::makeRefAs(RefAsOp op) {
   RefAs curr;
@@ -1352,30 +1653,113 @@ Result<> IRBuilder::makeRefAs(RefAsOp op) {
   return Ok{};
 }
 
-// Result<> IRBuilder::makeStringNew() {}
+Result<> IRBuilder::makeStringNew(StringNewOp op, bool try_, Name mem) {
+  StringNew curr;
+  curr.op = op;
+  CHECK_ERR(visitStringNew(&curr));
+  // TODO: Store the memory in the IR.
+  switch (op) {
+    case StringNewUTF8:
+    case StringNewWTF8:
+    case StringNewLossyUTF8:
+    case StringNewWTF16:
+      push(builder.makeStringNew(op, curr.ptr, curr.length, try_));
+      return Ok{};
+    case StringNewUTF8Array:
+    case StringNewWTF8Array:
+    case StringNewLossyUTF8Array:
+    case StringNewWTF16Array:
+      push(builder.makeStringNew(op, curr.ptr, curr.start, curr.end, try_));
+      return Ok{};
+    case StringNewFromCodePoint:
+      push(builder.makeStringNew(op, curr.ptr, nullptr, try_));
+      return Ok{};
+  }
+  WASM_UNREACHABLE("unexpected op");
+}
 
-// Result<> IRBuilder::makeStringConst() {}
+Result<> IRBuilder::makeStringConst(Name string) {
+  push(builder.makeStringConst(string));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringMeasure() {}
+Result<> IRBuilder::makeStringMeasure(StringMeasureOp op) {
+  StringMeasure curr;
+  CHECK_ERR(visitStringMeasure(&curr));
+  push(builder.makeStringMeasure(op, curr.ref));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringEncode() {}
+Result<> IRBuilder::makeStringEncode(StringEncodeOp op, Name mem) {
+  StringEncode curr;
+  curr.op = op;
+  CHECK_ERR(visitStringEncode(&curr));
+  // TODO: Store the memory in the IR.
+  push(builder.makeStringEncode(op, curr.ref, curr.ptr, curr.start));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringConcat() {}
+Result<> IRBuilder::makeStringConcat() {
+  StringConcat curr;
+  CHECK_ERR(visitStringConcat(&curr));
+  push(builder.makeStringConcat(curr.left, curr.right));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringEq() {}
+Result<> IRBuilder::makeStringEq(StringEqOp op) {
+  StringEq curr;
+  CHECK_ERR(visitStringEq(&curr));
+  push(builder.makeStringEq(op, curr.left, curr.right));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringAs() {}
+Result<> IRBuilder::makeStringAs(StringAsOp op) {
+  StringAs curr;
+  CHECK_ERR(visitStringAs(&curr));
+  push(builder.makeStringAs(op, curr.ref));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringWTF8Advance() {}
+Result<> IRBuilder::makeStringWTF8Advance() {
+  StringWTF8Advance curr;
+  CHECK_ERR(visitStringWTF8Advance(&curr));
+  push(builder.makeStringWTF8Advance(curr.ref, curr.pos, curr.bytes));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringWTF16Get() {}
+Result<> IRBuilder::makeStringWTF16Get() {
+  StringWTF16Get curr;
+  CHECK_ERR(visitStringWTF16Get(&curr));
+  push(builder.makeStringWTF16Get(curr.ref, curr.pos));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringIterNext() {}
+Result<> IRBuilder::makeStringIterNext() {
+  StringIterNext curr;
+  CHECK_ERR(visitStringIterNext(&curr));
+  push(builder.makeStringIterNext(curr.ref));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringIterMove() {}
+Result<> IRBuilder::makeStringIterMove(StringIterMoveOp op) {
+  StringIterMove curr;
+  CHECK_ERR(visitStringIterMove(&curr));
+  push(builder.makeStringIterMove(op, curr.ref, curr.num));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringSliceWTF() {}
+Result<> IRBuilder::makeStringSliceWTF(StringSliceWTFOp op) {
+  StringSliceWTF curr;
+  CHECK_ERR(visitStringSliceWTF(&curr));
+  push(builder.makeStringSliceWTF(op, curr.ref, curr.start, curr.end));
+  return Ok{};
+}
 
-// Result<> IRBuilder::makeStringSliceIter() {}
+Result<> IRBuilder::makeStringSliceIter() {
+  StringSliceIter curr;
+  CHECK_ERR(visitStringSliceIter(&curr));
+  push(builder.makeStringSliceIter(curr.ref, curr.num));
+  return Ok{};
+}
 
 } // namespace wasm

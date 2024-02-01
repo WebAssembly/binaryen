@@ -21,12 +21,12 @@
     (local.set $a (i32.const 0))
   )
   (func $tuple-value
-    (local $x (i32 i64))
+    (local $x (tuple i32 i64))
     (local.set $x
-      (tuple.make (i32.const 42) (i64.const 42))
+      (tuple.make 2 (i32.const 42) (i64.const 42))
     )
     (local.set $x
-      (tuple.make (i32.const 42) (i64.const 42))
+      (tuple.make 2 (i32.const 42) (i64.const 42))
     )
   )
   (func $unreach
@@ -59,24 +59,36 @@
   (func $if
     (local $x i32)
     (if (local.tee $x (i32.const 0))
-      (local.set $x (i32.const 1))
-      (local.set $x (i32.const 1))
+      (then
+        (local.set $x (i32.const 1))
+      )
+      (else
+        (local.set $x (i32.const 1))
+      )
     )
     (local.set $x (i32.const 1))
   )
   (func $if2
     (local $x i32)
     (if (local.tee $x (i32.const 1))
-      (local.set $x (i32.const 1))
-      (local.set $x (i32.const 1))
+      (then
+        (local.set $x (i32.const 1))
+      )
+      (else
+        (local.set $x (i32.const 1))
+      )
     )
     (local.set $x (i32.const 1))
   )
   (func $if3
     (local $x i32)
     (if (local.tee $x (i32.const 1))
-      (local.set $x (i32.const 1))
-      (local.set $x (i32.const 2))
+      (then
+        (local.set $x (i32.const 1))
+      )
+      (else
+        (local.set $x (i32.const 2))
+      )
     )
     (local.set $x (i32.const 1))
   )
@@ -87,10 +99,10 @@
     (local.set $y (local.get $x))
     (local.set $y (i32.const 1))
     (local.set $x (i32.const 2))
-    (if (i32.const 1) (nop) (nop)) ;; control flow
+    (if (i32.const 1) (then (nop) )(else (nop))) ;; control flow
     (local.set $y (local.get $x))
     (local.set $y (i32.const 2))
-    (if (i32.const 1) (nop) (nop)) ;; control flow
+    (if (i32.const 1) (then (nop) )(else (nop))) ;; control flow
     (local.set $y (i32.const 2))
     ;; flip
     (local.set $x (i32.const 3))
@@ -116,12 +128,12 @@
     (local.set $y (local.get $x))
     (local.set $y (local.get $x))
     (local.set $x (i32.eqz (i32.const 789)))
-    (if (i32.const 1) (nop) (nop)) ;; control flow
+    (if (i32.const 1) (then (nop) )(else (nop))) ;; control flow
     (local.set $y (local.get $x))
     (local.set $y (local.get $x))
     (local.set $x (i32.eqz (i32.const 1000)))
     (local.set $y (local.get $x))
-    (if (i32.const 1) (nop) (nop)) ;; control flow
+    (if (i32.const 1) (then (nop) )(else (nop))) ;; control flow
     (local.set $y (local.get $x))
   )
   (func $identical_complex (param $x i32)
@@ -136,8 +148,12 @@
   (func $merge
     (local $x i32)
     (if (i32.const 1)
-      (local.set $x (i32.const 1))
-      (local.set $x (i32.const 1))
+      (then
+        (local.set $x (i32.const 1))
+      )
+      (else
+        (local.set $x (i32.const 1))
+      )
     )
     (local.set $x (i32.const 1))
     (local.set $x (i32.const 2))
@@ -157,9 +173,13 @@
    )
    (if
     (i32.const 1)
-    (nop)
-    (local.set $3
-     (local.get $1)
+    (then
+     (nop)
+    )
+    (else
+     (local.set $3
+      (local.get $1)
+     )
     )
    )
   )
@@ -171,8 +191,10 @@
    )
    (if
     (i32.const 1)
-    (local.set $3
-     (local.get $1)
+    (then
+     (local.set $3
+      (local.get $1)
+     )
     )
    )
   )
@@ -200,8 +222,10 @@
    )
    (if
     (i32.const 0)
-    (local.set $1 ;; we can drop this
-     (local.get $0)
+    (then
+     (local.set $1 ;; we can drop this
+      (local.get $0)
+     )
     )
    )
   )
@@ -211,11 +235,13 @@
     (block $label$5
      (if
       (i32.const 1)
-      (block
-       (local.set $x
-        (i32.const 203)
+      (then
+       (block
+        (local.set $x
+         (i32.const 203)
+        )
+        (br $label$5)
        )
-       (br $label$5)
       )
      )
      (br_if $label$4
@@ -227,10 +253,16 @@
     (if
      (if (result i32)
       (i32.const 3)
-      (i32.const 4)
-      (i32.const 5)
+      (then
+       (i32.const 4)
+      )
+      (else
+       (i32.const 5)
+      )
      )
-     (br $label$7)
+     (then
+      (br $label$7)
+     )
     )
    )
   )
@@ -238,10 +270,14 @@
    (local $var$1 i32)
    (if
     (i32.const 0)
-    (if
-     (i32.const 1)
-     (local.set $var$1
-      (i32.const 2)
+    (then
+     (if
+      (i32.const 1)
+      (then
+       (local.set $var$1
+        (i32.const 2)
+       )
+      )
      )
     )
    )
@@ -249,8 +285,10 @@
     (block $label$11
      (if
       (i32.const 5)
-      (br_if $label$11
-       (i32.const 6)
+      (then
+       (br_if $label$11
+        (i32.const 6)
+       )
       )
      )
      (br $label$10)
@@ -281,8 +319,10 @@
    )
    (if
     (i32.const 0)
-    (local.set $1 ;; we can drop this
-     (local.get $0)
+    (then
+     (local.set $1 ;; we can drop this
+      (local.get $0)
+     )
     )
    )
   )

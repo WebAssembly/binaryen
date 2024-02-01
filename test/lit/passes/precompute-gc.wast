@@ -45,7 +45,7 @@
    ;; the fallthrough value should be used. for that to be possible with a block
    ;; we need for it not to have a name, which is why --remove-unused-names is
    ;; run
-   (block (result (funcref))
+   (block (result funcref)
     ;; make a call so the block is not trivially removable
     (drop
      (call $test-fallthrough)
@@ -125,14 +125,18 @@
  ;; CHECK-NEXT:  (local $x (ref null $struct))
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $i)
- ;; CHECK-NEXT:   (local.set $x
- ;; CHECK-NEXT:    (struct.new $struct
- ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $x
+ ;; CHECK-NEXT:     (struct.new $struct
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.set $x
- ;; CHECK-NEXT:    (struct.new $struct
- ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $x
+ ;; CHECK-NEXT:     (struct.new $struct
+ ;; CHECK-NEXT:      (i32.const 2)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -147,14 +151,18 @@
   ;; a merge of two different $x values cannot be precomputed
   (if
    (local.get $i)
-   (local.set $x
-    (struct.new $struct
-     (i32.const 1)
+   (then
+    (local.set $x
+     (struct.new $struct
+      (i32.const 1)
+     )
     )
    )
-   (local.set $x
-    (struct.new $struct
-     (i32.const 2)
+   (else
+    (local.set $x
+     (struct.new $struct
+      (i32.const 2)
+     )
     )
    )
   )
@@ -466,8 +474,10 @@
  ;; CHECK-NEXT:   (call $helper
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (local.set $tempref
- ;; CHECK-NEXT:    (struct.new_default $empty)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $tempref
+ ;; CHECK-NEXT:     (struct.new_default $empty)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.set $tempresult
@@ -494,8 +504,10 @@
    (call $helper
     (i32.const 0)
    )
-   (local.set $tempref
-    (struct.new $empty)
+   (then
+    (local.set $tempref
+     (struct.new $empty)
+    )
    )
   )
   (local.set $tempresult
@@ -669,8 +681,10 @@
  ;; CHECK-NEXT:    (call $helper
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.set $tempref
- ;; CHECK-NEXT:     (struct.new_default $empty)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (local.set $tempref
+ ;; CHECK-NEXT:      (struct.new_default $empty)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (local.set $stashedref
@@ -702,8 +716,10 @@
     (call $helper
      (i32.const 0)
     )
-    (local.set $tempref
-     (struct.new $empty)
+    (then
+     (local.set $tempref
+      (struct.new $empty)
+     )
     )
    )
    (local.set $stashedref
@@ -765,9 +781,9 @@
  )
 
  ;; CHECK:      (func $odd-cast-and-get-tuple (type $3)
- ;; CHECK-NEXT:  (local $temp ((ref null $B) i32))
+ ;; CHECK-NEXT:  (local $temp (tuple (ref null $B) i32))
  ;; CHECK-NEXT:  (local.set $temp
- ;; CHECK-NEXT:   (tuple.make
+ ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:    (i32.const 10)
  ;; CHECK-NEXT:   )
@@ -782,10 +798,10 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $odd-cast-and-get-tuple
-  (local $temp ((ref null $B) i32))
+  (local $temp (tuple (ref null $B) i32))
   ;; As above, but with a tuple.
   (local.set $temp
-   (tuple.make
+   (tuple.make 2
     (ref.cast (ref null $B)
      (ref.null $A)
     )
@@ -794,7 +810,7 @@
   )
   (drop
    (struct.get $B 0
-    (tuple.extract 0
+    (tuple.extract 2 0
      (local.get $temp)
     )
    )
@@ -898,8 +914,10 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $param)
- ;; CHECK-NEXT:   (local.set $ref
- ;; CHECK-NEXT:    (struct.new_default $empty)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $ref
+ ;; CHECK-NEXT:     (struct.new_default $empty)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
@@ -938,8 +956,10 @@
   )
   (if
    (local.get $param)
-   (local.set $ref
-    (struct.new $empty)
+   (then
+    (local.set $ref
+     (struct.new $empty)
+    )
    )
   )
   (drop
@@ -1041,7 +1061,9 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $x)
  ;; CHECK-NEXT: )
@@ -1062,7 +1084,9 @@
   ;; later block.
   (if
    (i32.const 1)
-   (unreachable)
+   (then
+    (unreachable)
+   )
   )
   (local.get $x)
  )
@@ -1105,7 +1129,9 @@
  ;; CHECK-NEXT:  (local $0 (ref any))
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $x)
- ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (local.set $0
@@ -1126,7 +1152,9 @@
   ;; Otherwise this is the same as before.
   (if
    (local.get $x)
-   (nop)
+   (then
+    (nop)
+   )
   )
   (unreachable)
   (local.set $0
@@ -1143,26 +1171,30 @@
  )
 
  ;; CHECK:      (func $get-nonnullable-in-unreachable-tuple (type $19) (result anyref i32)
- ;; CHECK-NEXT:  (local $x ((ref any) i32))
+ ;; CHECK-NEXT:  (local $x (tuple (ref any) i32))
  ;; CHECK-NEXT:  (local.tee $x
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.get $x)
  ;; CHECK-NEXT: )
  (func $get-nonnullable-in-unreachable-tuple (result anyref i32)
   ;; As $get-nonnullable-in-unreachable but the local is a tuple (so we need to
   ;; check isDefaultable, and not just isNullable).
-  (local $x ((ref any) i32))
+  (local $x (tuple (ref any) i32))
   (local.set $x
    (unreachable)
   )
   (if
    (i32.const 1)
-   (unreachable)
+   (then
+    (unreachable)
+   )
   )
   (local.get $x)
  )

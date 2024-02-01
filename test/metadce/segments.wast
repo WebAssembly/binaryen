@@ -2,7 +2,7 @@
  (import "env" "g1" (global $g1 i32))
  (import "env" "g2" (global $g2 i32))
 
- (table $tbl funcref)
+ (table $tbl 1 funcref)
  (elem (offset (global.get $g1)) funcref (ref.func $f))
 
  (memory 3)

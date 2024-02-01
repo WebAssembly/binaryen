@@ -49,7 +49,7 @@
   (block $x
    (if
     (i32.const 100)
-    (block
+    (then
      (drop
       (i32.const 1)
      )
@@ -121,7 +121,7 @@
   (block $label
    (if
     (i32.const 1)
-    (block
+    (then
      (drop
       (i32.const 2)
      )
@@ -136,7 +136,7 @@
   (block $label
    (if
     (br $label)
-    (block
+    (then
      (drop
       (i32.const 2)
      )
@@ -151,7 +151,9 @@
   (block $label
    (if
     (i32.const 1)
-    (br $label)
+    (then
+     (br $label)
+    )
    )
   )
  )
@@ -159,9 +161,13 @@
   (block $label
    (if
     (i32.const 1)
-    (br $label)
-    (drop
-     (i32.const 3)
+    (then
+     (br $label)
+    )
+    (else
+     (drop
+      (i32.const 3)
+     )
     )
    )
   )
@@ -170,10 +176,14 @@
   (block $label
    (if
     (i32.const 1)
-    (drop
-     (i32.const 3)
+    (then
+     (drop
+      (i32.const 3)
+     )
     )
-    (br $label)
+    (else
+     (br $label)
+    )
    )
   )
  )
@@ -181,8 +191,12 @@
   (block $label
    (if
     (i32.const 1)
-    (br $label)
-    (br $label)
+    (then
+     (br $label)
+    )
+    (else
+     (br $label)
+    )
    )
   )
  )
@@ -190,11 +204,15 @@
   (block $label
    (if
     (i32.const 1)
-    (drop
-     (i32.const 2)
+    (then
+     (drop
+      (i32.const 2)
+     )
     )
-    (drop
-     (i32.const 3)
+    (else
+     (drop
+      (i32.const 3)
+     )
     )
    )
   )
@@ -203,8 +221,12 @@
   (block $label (result i32)
    (if (result i32)
     (i32.const 1)
-    (i32.const 2)
-    (i32.const 3)
+    (then
+     (i32.const 2)
+    )
+    (else
+     (i32.const 3)
+    )
    )
   )
  )
@@ -217,7 +239,9 @@
        (block $label$4
         (unreachable)
        )
-       (br $label$3)
+       (then
+        (br $label$3)
+       )
       )
      )
      (unreachable)
@@ -229,24 +253,34 @@
   (block $label$1
    (if
     (unreachable)
-    (nop)
-    (unreachable)
+    (then
+     (nop)
+    )
+    (else
+     (unreachable)
+    )
    )
   )
  )
  (func $propagate-type-if-we-optimize
   (if
    (i32.const 1)
-   (nop)
-   (block
+   (then
+    (nop)
+   )
+   (else
     (drop
      (loop $label$3 (result i64)
       (br_if $label$3
        (block $label$4 (result i32)
         (if
          (i32.const 0)
-         (unreachable)
-         (unreachable)
+         (then
+          (unreachable)
+         )
+         (else
+          (unreachable)
+         )
         )
        )
       )

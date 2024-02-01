@@ -584,6 +584,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     // We assume no exception will be thrown in most cases
     return visit(curr->body);
   }
+  CostType visitTryTable(TryTable* curr) {
+    // We assume no exception will be thrown in most cases
+    return visit(curr->body);
+  }
   CostType visitThrow(Throw* curr) {
     CostType ret = Unacceptable;
     for (auto* child : curr->operands) {
@@ -592,6 +596,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     return ret;
   }
   CostType visitRethrow(Rethrow* curr) { return Unacceptable; }
+  CostType visitThrowRef(ThrowRef* curr) { return Unacceptable; }
   CostType visitTupleMake(TupleMake* curr) {
     CostType ret = 0;
     for (auto* child : curr->operands) {
@@ -719,6 +724,11 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   }
   CostType visitStringSliceIter(StringSliceIter* curr) {
     return 8 + visit(curr->ref) + visit(curr->num);
+  }
+
+  CostType visitResume(Resume* curr) {
+    // Inspired by indirect calls, but twice the cost.
+    return 12 + visit(curr->cont);
   }
 
 private:

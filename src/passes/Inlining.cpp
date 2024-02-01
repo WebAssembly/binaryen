@@ -178,7 +178,7 @@ struct FunctionInfoScanner
   : public WalkerPass<PostWalker<FunctionInfoScanner>> {
   bool isFunctionParallel() override { return true; }
 
-  FunctionInfoScanner(NameInfoMap* infos) : infos(infos) {}
+  FunctionInfoScanner(NameInfoMap& infos) : infos(infos) {}
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<FunctionInfoScanner>(infos);
@@ -186,15 +186,15 @@ struct FunctionInfoScanner
 
   void visitLoop(Loop* curr) {
     // having a loop
-    (*infos)[getFunction()->name].hasLoops = true;
+    infos[getFunction()->name].hasLoops = true;
   }
 
   void visitCall(Call* curr) {
     // can't add a new element in parallel
-    assert(infos->count(curr->target) > 0);
-    (*infos)[curr->target].refs++;
+    assert(infos.count(curr->target) > 0);
+    infos[curr->target].refs++;
     // having a call
-    (*infos)[getFunction()->name].hasCalls = true;
+    infos[getFunction()->name].hasCalls = true;
   }
 
   // N.B.: CallIndirect and CallRef are intentionally omitted here, as we only
@@ -207,17 +207,17 @@ struct FunctionInfoScanner
 
   void visitTry(Try* curr) {
     if (curr->isDelegate()) {
-      (*infos)[getFunction()->name].hasTryDelegate = true;
+      infos[getFunction()->name].hasTryDelegate = true;
     }
   }
 
   void visitRefFunc(RefFunc* curr) {
-    assert(infos->count(curr->func) > 0);
-    (*infos)[curr->func].refs++;
+    assert(infos.count(curr->func) > 0);
+    infos[curr->func].refs++;
   }
 
   void visitFunction(Function* curr) {
-    auto& info = (*infos)[curr->name];
+    auto& info = infos[curr->name];
 
     if (!canHandleParams(curr)) {
       info.inliningMode = InliningMode::Uninlineable;
@@ -235,7 +235,7 @@ struct FunctionInfoScanner
   }
 
 private:
-  NameInfoMap* infos;
+  NameInfoMap& infos;
 };
 
 struct InliningAction {
@@ -686,8 +686,10 @@ struct FunctionSplitter {
 
       auto outlinedFunctionSize = info.size - Measurer::measure(iff);
       // If outlined function will be worth normal inline, skip the intermediate
-      // state and inline fully now.
-      if (outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
+      // state and inline fully now. Note that if full inlining is disabled we
+      // will not do this, and instead inline partially.
+      if (!func->noFullInline &&
+          outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
         return InliningMode::Full;
       }
 
@@ -763,18 +765,20 @@ struct FunctionSplitter {
           return InliningMode::Uninlineable;
         }
       } else {
-        // This is an if without an else, and so the type is either none of
-        // unreachable;
+        // This is an if without an else, and so the type is either none or
+        // unreachable, and we ruled out none before.
         assert(iff->ifTrue->type == Type::unreachable);
       }
     }
     // Success, this matches the pattern.
 
     // If the outlined function will be worth inlining normally, skip the
-    // intermediate state and inline fully now.
+    // intermediate state and inline fully now. (As above, if full inlining is
+    // disabled, we only partially inline.)
     if (numIfs == 1) {
       auto outlinedFunctionSize = Measurer::measure(iff->ifTrue);
-      if (outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
+      if (!func->noFullInline &&
+          outlinedFunctionWorthInlining(info, outlinedFunctionSize)) {
         return InliningMode::Full;
       }
     }
@@ -1090,7 +1094,7 @@ struct Inlining : public Pass {
       infos[func->name];
     }
     {
-      FunctionInfoScanner scanner(&infos);
+      FunctionInfoScanner scanner(infos);
       scanner.run(getPassRunner(), module);
       scanner.walkModuleCode(module);
     }
@@ -1197,7 +1201,9 @@ struct Inlining : public Pass {
   // See explanation in doInlining() for the parameter nameHint.
   Index inlinedNameHint = 0;
 
+  // Decide for a given function whether to inline, and if so in what mode.
   InliningMode getInliningMode(Name name) {
+    auto* func = module->getFunction(name);
     auto& info = infos[name];
 
     if (info.inliningMode != InliningMode::Unknown) {
@@ -1205,19 +1211,19 @@ struct Inlining : public Pass {
     }
 
     // Check if the function itself is worth inlining as it is.
-    if (info.worthFullInlining(getPassOptions())) {
-      info.inliningMode = InliningMode::Full;
-      return info.inliningMode;
+    if (!func->noFullInline && info.worthFullInlining(getPassOptions())) {
+      return info.inliningMode = InliningMode::Full;
     }
 
     // Otherwise, check if we can at least inline part of it, if we are
     // interested in such things.
-    if (functionSplitter) {
+    if (!func->noPartialInline && functionSplitter) {
       info.inliningMode = functionSplitter->getSplitDrivenInliningMode(
         module->getFunction(name), info);
       return info.inliningMode;
     }
 
+    // Cannot be fully or partially inlined => uninlineable.
     info.inliningMode = InliningMode::Uninlineable;
     return info.inliningMode;
   }

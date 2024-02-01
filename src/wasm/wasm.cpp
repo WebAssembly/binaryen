@@ -17,6 +17,7 @@
 #include "wasm.h"
 #include "ir/branch-utils.h"
 #include "wasm-traversal.h"
+#include "wasm-type.h"
 
 namespace wasm {
 
@@ -98,6 +99,7 @@ Name PRINT("print");
 Name EXIT("exit");
 Name SHARED("shared");
 Name TAG("tag");
+Name TUPLE("tuple");
 
 // Expressions
 
@@ -141,9 +143,7 @@ Literals getLiteralsFromConstExpression(Expression* curr) {
 // a block is unreachable if one of its elements is unreachable,
 // and there are no branches to it
 
-static void
-handleUnreachable(Block* block,
-                  Block::Breakability breakability = Block::Unknown) {
+static void handleUnreachable(Block* block, Block::Breakability breakability) {
   if (block->type == Type::unreachable) {
     return; // nothing to do
   }
@@ -174,13 +174,21 @@ handleUnreachable(Block* block,
   }
 }
 
-void Block::finalize() {
+void Block::finalize(std::optional<Type> type_, Breakability breakability) {
+  if (type_) {
+    type = *type_;
+    if (type == Type::none && list.size() > 0) {
+      handleUnreachable(this, breakability);
+    }
+    return;
+  }
+
   if (list.size() == 0) {
     type = Type::none;
     return;
   }
-  // The default type is what is at the end. Next we need to see if breaks and/
-  // or unreachability change that.
+  // The default type is what is at the end. Next we need to see if breaks
+  // and/ or unreachability change that.
   type = list.back()->type;
   if (!name.is()) {
     // Nothing branches here, so this is easy.
@@ -193,10 +201,7 @@ void Block::finalize() {
   Expression* temp = this;
   seeker.walk(temp);
   if (seeker.found) {
-    // Calculate the supertype of the branch types and the flowed-out type. If
-    // there is no supertype among the available types, assume the current type
-    // is already correct. TODO: calculate proper LUBs to compute a new correct
-    // type in this situation.
+    // Calculate the LUB of the branch types and the flowed-out type.
     seeker.types.insert(type);
     type = Type::getLeastUpperBound(seeker.types);
   } else {
@@ -205,30 +210,17 @@ void Block::finalize() {
   }
 }
 
-void Block::finalize(Type type_) {
-  type = type_;
-  if (type == Type::none && list.size() > 0) {
-    handleUnreachable(this);
+void If::finalize(std::optional<Type> type_) {
+  if (type_) {
+    type = *type_;
+    if (type == Type::none && (condition->type == Type::unreachable ||
+                               (ifFalse && ifTrue->type == Type::unreachable &&
+                                ifFalse->type == Type::unreachable))) {
+      type = Type::unreachable;
+    }
+    return;
   }
-}
 
-void Block::finalize(Type type_, Breakability breakability) {
-  type = type_;
-  if (type == Type::none && list.size() > 0) {
-    handleUnreachable(this, breakability);
-  }
-}
-
-void If::finalize(Type type_) {
-  type = type_;
-  if (type == Type::none && (condition->type == Type::unreachable ||
-                             (ifFalse && ifTrue->type == Type::unreachable &&
-                              ifFalse->type == Type::unreachable))) {
-    type = Type::unreachable;
-  }
-}
-
-void If::finalize() {
   type = ifFalse ? Type::getLeastUpperBound(ifTrue->type, ifFalse->type)
                  : Type::none;
   // if the arms return a value, leave it even if the condition
@@ -244,14 +236,16 @@ void If::finalize() {
   }
 }
 
-void Loop::finalize(Type type_) {
-  type = type_;
-  if (type == Type::none && body->type == Type::unreachable) {
-    type = Type::unreachable;
+void Loop::finalize(std::optional<Type> type_) {
+  if (type_) {
+    type = *type_;
+    if (type == Type::none && body->type == Type::unreachable) {
+      type = Type::unreachable;
+    }
+  } else {
+    type = body->type;
   }
 }
-
-void Loop::finalize() { type = body->type; }
 
 void Break::finalize() {
   if (condition) {
@@ -874,31 +868,71 @@ void TableCopy::finalize() {
   }
 }
 
-void Try::finalize() {
-  // If none of the component bodies' type is a supertype of the others, assume
-  // the current type is already correct. TODO: Calculate a proper LUB.
-  std::unordered_set<Type> types{body->type};
-  types.reserve(catchBodies.size());
-  for (auto catchBody : catchBodies) {
-    types.insert(catchBody->type);
-  }
-  type = Type::getLeastUpperBound(types);
-}
+void Try::finalize(std::optional<Type> type_) {
+  if (type_) {
+    type = *type_;
+    bool allUnreachable = body->type == Type::unreachable;
+    for (auto catchBody : catchBodies) {
+      allUnreachable &= catchBody->type == Type::unreachable;
+    }
+    if (type == Type::none && allUnreachable) {
+      type = Type::unreachable;
+    }
 
-void Try::finalize(Type type_) {
-  type = type_;
-  bool allUnreachable = body->type == Type::unreachable;
-  for (auto catchBody : catchBodies) {
-    allUnreachable &= catchBody->type == Type::unreachable;
-  }
-  if (type == Type::none && allUnreachable) {
-    type = Type::unreachable;
+  } else {
+    // Calculate the LUB of catch bodies' types.
+    std::unordered_set<Type> types{body->type};
+    types.reserve(catchBodies.size());
+    for (auto catchBody : catchBodies) {
+      types.insert(catchBody->type);
+    }
+    type = Type::getLeastUpperBound(types);
   }
 }
 
 void Throw::finalize() { type = Type::unreachable; }
 
 void Rethrow::finalize() { type = Type::unreachable; }
+
+void ThrowRef::finalize() { type = Type::unreachable; }
+
+bool TryTable::hasCatchAll() const {
+  return std::any_of(
+    catchTags.begin(), catchTags.end(), [](Name t) { return !t; });
+}
+
+static void populateTryTableSentTypes(TryTable* curr, Module* wasm) {
+  if (!wasm) {
+    return;
+  }
+  curr->sentTypes.clear();
+  Type exnref = Type(HeapType::exn, Nullable);
+  for (Index i = 0; i < curr->catchTags.size(); i++) {
+    auto tagName = curr->catchTags[i];
+    std::vector<Type> sentType;
+    if (tagName) {
+      for (auto t : wasm->getTag(tagName)->sig.params) {
+        sentType.push_back(t);
+      }
+    }
+    if (curr->catchRefs[i]) {
+      sentType.push_back(exnref);
+    }
+    curr->sentTypes.push_back(sentType.empty() ? Type::none : Type(sentType));
+  }
+}
+
+void TryTable::finalize(std::optional<Type> type_, Module* wasm) {
+  if (type_) {
+    type = *type_;
+    if (type == Type::none && body->type == Type::unreachable) {
+      type = Type::unreachable;
+    }
+  } else {
+    type = body->type;
+  }
+  populateTryTableSentTypes(this, wasm);
+}
 
 void TupleMake::finalize() {
   std::vector<Type> types;
@@ -1316,6 +1350,55 @@ void StringSliceIter::finalize() {
   } else {
     type = Type(HeapType::string, NonNullable);
   }
+}
+
+static void populateResumeSentTypes(Resume* curr, Module* wasm) {
+  if (!wasm) {
+    return;
+  }
+
+  const Signature& contSig =
+    curr->contType.getContinuation().type.getSignature();
+
+  // Let $tag be a tag with type [tgp*] -> [tgr*]. Let $ct be a continuation
+  // type (cont $ft), where $ft is [ctp*] -> [ctr*]. Then an instruction (resume
+  // $ct ... (tag $tag $block) ... ) causes $block to receive values of the
+  // following types when suspending to $tag: tgp* (ref $ct') where ct' = (cont
+  // $ft') and ft' = [tgr*] -> [ctr*].
+  //
+  auto& ctrs = contSig.results;
+  curr->sentTypes.clear();
+  curr->sentTypes.resize(curr->handlerTags.size());
+  for (Index i = 0; i < curr->handlerTags.size(); i++) {
+    auto& tag = curr->handlerTags[i];
+    auto& tagSig = wasm->getTag(tag)->sig;
+
+    auto& tgps = tagSig.params;
+    auto& tgrs = tagSig.results;
+
+    HeapType ftPrime{Signature(tgrs, ctrs)};
+    HeapType ctPrime{Continuation(ftPrime)};
+    Type ctPrimeRef(ctPrime, Nullability::NonNullable);
+
+    if (tgps.size() > 0) {
+      TypeList sentValueTypes;
+      sentValueTypes.reserve(tgps.size() + 1);
+
+      sentValueTypes.insert(sentValueTypes.begin(), tgps.begin(), tgps.end());
+      sentValueTypes.push_back(ctPrimeRef);
+      curr->sentTypes[i] = Type(sentValueTypes);
+    } else {
+      curr->sentTypes[i] = ctPrimeRef;
+    }
+  }
+}
+
+void Resume::finalize(Module* wasm) {
+  const Signature& contSig =
+    this->contType.getContinuation().type.getSignature();
+  type = contSig.results;
+
+  populateResumeSentTypes(this, wasm);
 }
 
 size_t Function::getNumParams() { return getParams().size(); }

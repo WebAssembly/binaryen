@@ -49,15 +49,15 @@
   )
  )
  (func $tuple-value (type $0)
-  (local $x (i32 i64))
+  (local $x (tuple i32 i64))
   (local.set $x
-   (tuple.make
+   (tuple.make 2
     (i32.const 42)
     (i64.const 42)
    )
   )
-  (drop
-   (tuple.make
+  (tuple.drop 2
+   (tuple.make 2
     (i32.const 42)
     (i64.const 42)
    )
@@ -118,11 +118,15 @@
   (local $x i32)
   (if
    (i32.const 0)
-   (local.set $x
-    (i32.const 1)
+   (then
+    (local.set $x
+     (i32.const 1)
+    )
    )
-   (local.set $x
-    (i32.const 1)
+   (else
+    (local.set $x
+     (i32.const 1)
+    )
    )
   )
   (drop
@@ -135,11 +139,15 @@
    (local.tee $x
     (i32.const 1)
    )
-   (drop
-    (i32.const 1)
+   (then
+    (drop
+     (i32.const 1)
+    )
    )
-   (drop
-    (i32.const 1)
+   (else
+    (drop
+     (i32.const 1)
+    )
    )
   )
   (drop
@@ -152,11 +160,15 @@
    (local.tee $x
     (i32.const 1)
    )
-   (drop
-    (i32.const 1)
+   (then
+    (drop
+     (i32.const 1)
+    )
    )
-   (local.set $x
-    (i32.const 2)
+   (else
+    (local.set $x
+     (i32.const 2)
+    )
    )
   )
   (local.set $x
@@ -180,8 +192,12 @@
   )
   (if
    (i32.const 1)
-   (nop)
-   (nop)
+   (then
+    (nop)
+   )
+   (else
+    (nop)
+   )
   )
   (local.set $y
    (local.get $x)
@@ -191,8 +207,12 @@
   )
   (if
    (i32.const 1)
-   (nop)
-   (nop)
+   (then
+    (nop)
+   )
+   (else
+    (nop)
+   )
   )
   (drop
    (i32.const 2)
@@ -259,8 +279,12 @@
   )
   (if
    (i32.const 1)
-   (nop)
-   (nop)
+   (then
+    (nop)
+   )
+   (else
+    (nop)
+   )
   )
   (local.set $y
    (local.get $x)
@@ -278,8 +302,12 @@
   )
   (if
    (i32.const 1)
-   (nop)
-   (nop)
+   (then
+    (nop)
+   )
+   (else
+    (nop)
+   )
   )
   (drop
    (local.get $x)
@@ -310,11 +338,15 @@
   (local $x i32)
   (if
    (i32.const 1)
-   (local.set $x
-    (i32.const 1)
+   (then
+    (local.set $x
+     (i32.const 1)
+    )
    )
-   (local.set $x
-    (i32.const 1)
+   (else
+    (local.set $x
+     (i32.const 1)
+    )
    )
   )
   (drop
@@ -347,9 +379,13 @@
   )
   (if
    (i32.const 1)
-   (nop)
-   (drop
-    (local.get $1)
+   (then
+    (nop)
+   )
+   (else
+    (drop
+     (local.get $1)
+    )
    )
   )
  )
@@ -359,8 +395,10 @@
   )
   (if
    (i32.const 1)
-   (drop
-    (local.get $1)
+   (then
+    (drop
+     (local.get $1)
+    )
    )
   )
  )
@@ -388,8 +426,10 @@
   )
   (if
    (i32.const 0)
-   (drop
-    (local.get $0)
+   (then
+    (drop
+     (local.get $0)
+    )
    )
   )
  )
@@ -399,7 +439,7 @@
    (block $label$5
     (if
      (i32.const 1)
-     (block
+     (then
       (local.set $x
        (i32.const 203)
       )
@@ -415,10 +455,16 @@
    (if
     (if (result i32)
      (i32.const 3)
-     (i32.const 4)
-     (i32.const 5)
+     (then
+      (i32.const 4)
+     )
+     (else
+      (i32.const 5)
+     )
     )
-    (br $label$7)
+    (then
+     (br $label$7)
+    )
    )
   )
  )
@@ -426,10 +472,14 @@
   (local $var$1 i32)
   (if
    (i32.const 0)
-   (if
-    (i32.const 1)
-    (local.set $var$1
-     (i32.const 2)
+   (then
+    (if
+     (i32.const 1)
+     (then
+      (local.set $var$1
+       (i32.const 2)
+      )
+     )
     )
    )
   )
@@ -437,8 +487,10 @@
    (block $label$11
     (if
      (i32.const 5)
-     (br_if $label$11
-      (i32.const 6)
+     (then
+      (br_if $label$11
+       (i32.const 6)
+      )
      )
     )
     (br $label$10)
@@ -469,8 +521,10 @@
   )
   (if
    (i32.const 0)
-   (drop
-    (local.get $0)
+   (then
+    (drop
+     (local.get $0)
+    )
    )
   )
  )

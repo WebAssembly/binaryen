@@ -5,7 +5,30 @@
 
 (module
  (memory 1)
- (func "if-select"
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (type $1 (func (result f64)))
+
+ ;; CHECK:      (type $2 (func (param i32 f64 f64) (result i32)))
+
+ ;; CHECK:      (type $3 (func (param i64)))
+
+ ;; CHECK:      (type $4 (func (param f64) (result i32)))
+
+ ;; CHECK:      (export "if-select" (func $if-select))
+
+ ;; CHECK:      (export "unreachable-body-update-zext" (func $unreachable-body-update-zext))
+
+ ;; CHECK:      (export "ssa-const" (func $ssa-const))
+
+ ;; CHECK:      (export "if-nothing" (func $if-nothing))
+
+ ;; CHECK:      (export "only-dfo" (func $only-dfo))
+
+ ;; CHECK:      (func $if-select (; has Stack IR ;)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $if-select (export "if-select")
   (local $var$0 i32)
   (nop)
   (drop
@@ -15,41 +38,58 @@
      (i32.const 1)
      (local.get $var$0)
     )
-    (i32.const -2405046)
-    (i32.const 1)
+    (then
+     (i32.const -2405046)
+    )
+    (else
+     (i32.const 1)
+    )
    )
   )
  )
- (func "unreachable-body-update-zext" (result f64)
+ ;; CHECK:      (func $unreachable-body-update-zext (; has Stack IR ;) (result f64)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $unreachable-body-update-zext (export "unreachable-body-update-zext") (result f64)
   (if
    (i32.eqz
     (i32.const 0)
    )
-   (unreachable)
+   (then
+    (unreachable)
+   )
   )
   (f64.const -9223372036854775808)
  )
- (func "ssa-const" (param $var$0 i32) (param $var$1 f64) (param $var$2 f64) (result i32)
+ ;; CHECK:      (func $ssa-const (; has Stack IR ;) (param $0 i32) (param $1 f64) (param $2 f64) (result i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $ssa-const (export "ssa-const") (param $var$0 i32) (param $var$1 f64) (param $var$2 f64) (result i32)
   (block $label$1 (result i32)
    (block $label$2
     (if
      (i32.const 1)
-     (block
-      (drop
-       (loop $label$5 (result i64)
-        (if (result i64)
-         (i32.const 0)
-         (i64.load offset=22
-          (i32.and
-           (br_if $label$1
-            (i32.const 0)
-            (i32.const 0)
+     (then
+      (block
+       (drop
+        (loop $label$5 (result i64)
+         (if (result i64)
+          (i32.const 0)
+          (then
+           (i64.load offset=22
+            (i32.and
+             (br_if $label$1
+              (i32.const 0)
+              (i32.const 0)
+             )
+             (i32.const 15)
+            )
            )
-           (i32.const 15)
           )
-          (i64.const 1)
+          (else
+           (i64.const 1)
+          )
          )
-         (i64.const 1)
         )
        )
       )
@@ -59,7 +99,10 @@
    )
   )
  )
- (func "if-nothing" (param $var$0 i64)
+ ;; CHECK:      (func $if-nothing (; has Stack IR ;) (param $0 i64)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $if-nothing (export "if-nothing") (param $var$0 i64)
   (local $var$1 i32)
   (local $var$2 i32)
   (block $label$1
@@ -70,8 +113,12 @@
        (i32.eqz
         (if (result i32)
          (i32.const 0)
-         (i32.const 0)
-         (local.get $var$2)
+         (then
+          (i32.const 0)
+         )
+         (else
+          (local.get $var$2)
+         )
         )
        )
       )
@@ -83,7 +130,24 @@
    (unreachable)
   )
  )
- (func "only-dfo" (param $var$0 f64) (result i32)
+ ;; CHECK:      (func $only-dfo (; has Stack IR ;) (param $0 f64) (result i32)
+ ;; CHECK-NEXT:  (local $1 i32)
+ ;; CHECK-NEXT:  (loop $label$1
+ ;; CHECK-NEXT:   (if
+ ;; CHECK-NEXT:    (i32.eqz
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (local.set $1
+ ;; CHECK-NEXT:      (i32.const -2147483648)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (br $label$1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const -2766)
+ ;; CHECK-NEXT: )
+ (func $only-dfo (export "only-dfo") (param $var$0 f64) (result i32)
   (local $var$1 i32)
   (local $var$2 i32)
   (local $var$3 i32)
@@ -100,72 +164,20 @@
     (i32.eqz
      (local.get $var$4)
     )
-    (block
-     (local.set $var$4
-      (select
-       (local.get $var$3)
-       (i32.const -2147483648)
-       (local.get $var$2)
+    (then
+     (block
+      (local.set $var$4
+       (select
+        (local.get $var$3)
+        (i32.const -2147483648)
+        (local.get $var$2)
+       )
       )
+      (br $label$1)
      )
-     (br $label$1)
     )
    )
   )
   (i32.const -2766)
  )
 )
-
-;; CHECK:      (type $0 (func))
-
-;; CHECK:      (type $1 (func (result f64)))
-
-;; CHECK:      (type $2 (func (param i32 f64 f64) (result i32)))
-
-;; CHECK:      (type $3 (func (param i64)))
-
-;; CHECK:      (type $4 (func (param f64) (result i32)))
-
-;; CHECK:      (export "if-select" (func $0))
-
-;; CHECK:      (export "unreachable-body-update-zext" (func $1))
-
-;; CHECK:      (export "ssa-const" (func $2))
-
-;; CHECK:      (export "if-nothing" (func $3))
-
-;; CHECK:      (export "only-dfo" (func $4))
-
-;; CHECK:      (func $0 (; has Stack IR ;)
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $1 (; has Stack IR ;) (result f64)
-;; CHECK-NEXT:  (unreachable)
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $2 (; has Stack IR ;) (param $0 i32) (param $1 f64) (param $2 f64) (result i32)
-;; CHECK-NEXT:  (unreachable)
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $3 (; has Stack IR ;) (param $0 i64)
-;; CHECK-NEXT:  (unreachable)
-;; CHECK-NEXT: )
-
-;; CHECK:      (func $4 (; has Stack IR ;) (param $0 f64) (result i32)
-;; CHECK-NEXT:  (local $1 i32)
-;; CHECK-NEXT:  (loop $label$1
-;; CHECK-NEXT:   (if
-;; CHECK-NEXT:    (i32.eqz
-;; CHECK-NEXT:     (local.get $1)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (block
-;; CHECK-NEXT:     (local.set $1
-;; CHECK-NEXT:      (i32.const -2147483648)
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:     (br $label$1)
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:   )
-;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (i32.const -2766)
-;; CHECK-NEXT: )

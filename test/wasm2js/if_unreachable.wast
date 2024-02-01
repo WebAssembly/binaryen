@@ -7,13 +7,17 @@
     (i32.const 0)
     (i32.const 48)
    )
-   (block $label$2
-    (br_if $label$2
-     (i32.const 0)
+   (then
+    (block $label$2
+     (br_if $label$2
+      (i32.const 0)
+     )
+     (unreachable)
     )
+   )
+   (else
     (unreachable)
    )
-   (unreachable)
   )
   (unreachable)
  )

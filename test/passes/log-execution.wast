@@ -7,7 +7,7 @@
     (i32.const 10)
   )
   (func $workk
-    (if (i32.const 0) (nop))
+    (if (i32.const 0) (then (nop)))
     (drop (i32.const 1))
   )
   (func $loops
@@ -16,8 +16,10 @@
       (br $x)
     )
     (if (call $intt)
-      (loop $y
-        (call $loops)
+      (then
+        (loop $y
+          (call $loops)
+        )
       )
     )
     (loop

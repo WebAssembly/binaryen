@@ -18,6 +18,7 @@
 #define parser_parsers_h
 
 #include "common.h"
+#include "contexts.h"
 #include "input.h"
 
 namespace wasm::WATParser {
@@ -27,6 +28,7 @@ using namespace std::string_view_literals;
 // Types
 template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::RefTypeT> reftype(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::TypeT> tupletype(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::ParamsT> params(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::ResultsT> results(Ctx&);
@@ -39,7 +41,9 @@ template<typename Ctx> MaybeResult<typename Ctx::ArrayT> arraytype(Ctx&);
 template<typename Ctx> Result<typename Ctx::LimitsT> limits32(Ctx&);
 template<typename Ctx> Result<typename Ctx::LimitsT> limits64(Ctx&);
 template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx&);
+template<typename Ctx> Result<typename Ctx::TableTypeT> tabletype(Ctx&);
 template<typename Ctx> Result<typename Ctx::GlobalTypeT> globaltype(Ctx&);
+template<typename Ctx> Result<uint32_t> tupleArity(Ctx&);
 
 // Instructions
 template<typename Ctx> MaybeResult<> foldedBlockinstr(Ctx&);
@@ -57,6 +61,8 @@ template<typename Ctx> MaybeResult<> block(Ctx&, bool);
 template<typename Ctx> MaybeResult<> ifelse(Ctx&, bool);
 template<typename Ctx> MaybeResult<> loop(Ctx&, bool);
 template<typename Ctx> MaybeResult<> trycatch(Ctx&, bool);
+template<typename Ctx> MaybeResult<typename Ctx::CatchT> catchinstr(Ctx&);
+template<typename Ctx> MaybeResult<> trytable(Ctx&, bool);
 template<typename Ctx> Result<> makeUnreachable(Ctx&, Index);
 template<typename Ctx> Result<> makeNop(Ctx&, Index);
 template<typename Ctx> Result<> makeBinary(Ctx&, Index, BinaryOp op);
@@ -101,7 +107,7 @@ template<typename Ctx> Result<> makeMemoryFill(Ctx&, Index);
 template<typename Ctx> Result<> makePop(Ctx&, Index);
 template<typename Ctx> Result<> makeCall(Ctx&, Index, bool isReturn);
 template<typename Ctx> Result<> makeCallIndirect(Ctx&, Index, bool isReturn);
-template<typename Ctx> Result<> makeBreak(Ctx&, Index);
+template<typename Ctx> Result<> makeBreak(Ctx&, Index, bool isConditional);
 template<typename Ctx> Result<> makeBreakTable(Ctx&, Index);
 template<typename Ctx> Result<> makeReturn(Ctx&, Index);
 template<typename Ctx> Result<> makeRefNull(Ctx&, Index);
@@ -116,8 +122,10 @@ template<typename Ctx> Result<> makeTableFill(Ctx&, Index);
 template<typename Ctx> Result<> makeTableCopy(Ctx&, Index);
 template<typename Ctx> Result<> makeThrow(Ctx&, Index);
 template<typename Ctx> Result<> makeRethrow(Ctx&, Index);
+template<typename Ctx> Result<> makeThrowRef(Ctx&, Index);
 template<typename Ctx> Result<> makeTupleMake(Ctx&, Index);
 template<typename Ctx> Result<> makeTupleExtract(Ctx&, Index);
+template<typename Ctx> Result<> makeTupleDrop(Ctx&, Index);
 template<typename Ctx> Result<> makeCallRef(Ctx&, Index, bool isReturn);
 template<typename Ctx> Result<> makeRefI31(Ctx&, Index);
 template<typename Ctx> Result<> makeI31Get(Ctx&, Index, bool signed_);
@@ -159,17 +167,24 @@ Result<> makeStringIterMove(Ctx&, Index, StringIterMoveOp op);
 template<typename Ctx>
 Result<> makeStringSliceWTF(Ctx&, Index, StringSliceWTFOp op);
 template<typename Ctx> Result<> makeStringSliceIter(Ctx&, Index);
+template<typename Ctx> Result<> makeResume(Ctx&, Index);
 
 // Modules
 template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx);
 template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::FieldIdxT> fieldidx(Ctx&, typename Ctx::HeapTypeT);
+template<typename Ctx> MaybeResult<typename Ctx::FuncIdxT> maybeFuncidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::FuncIdxT> funcidx(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::TableIdxT> maybeTableidx(Ctx&);
+template<typename Ctx> Result<typename Ctx::TableIdxT> tableidx(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::TableIdxT> maybeTableuse(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::MemoryIdxT> maybeMemidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::MemoryIdxT> memidx(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::MemoryIdxT> maybeMemuse(Ctx&);
 template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx&);
+template<typename Ctx> Result<typename Ctx::ElemIdxT> elemidx(Ctx&);
+template<typename Ctx> Result<typename Ctx::DataIdxT> dataidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::LocalIdxT> localidx(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::LabelIdxT> labelidx(Ctx&, bool inDelegate = false);
@@ -181,9 +196,16 @@ template<typename Ctx> Result<> strtype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::ModuleNameT> subtype(Ctx&);
 template<typename Ctx> MaybeResult<> deftype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx&);
+template<typename Ctx> MaybeResult<> import_(Ctx&);
 template<typename Ctx> MaybeResult<> func(Ctx&);
+template<typename Ctx> MaybeResult<> table(Ctx&);
 template<typename Ctx> MaybeResult<> memory(Ctx&);
 template<typename Ctx> MaybeResult<> global(Ctx&);
+template<typename Ctx> MaybeResult<> export_(Ctx&);
+template<typename Ctx> MaybeResult<> start(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::ExprT> maybeElemexpr(Ctx&);
+template<typename Ctx> Result<typename Ctx::ElemListT> elemlist(Ctx&, bool);
+template<typename Ctx> MaybeResult<> elem(Ctx&);
 template<typename Ctx> Result<typename Ctx::DataStringT> datastring(Ctx&);
 template<typename Ctx> MaybeResult<> data(Ctx&);
 template<typename Ctx> MaybeResult<> tag(Ctx&);
@@ -219,25 +241,52 @@ template<typename Ctx> WithPosition(Ctx& ctx, Index) -> WithPosition<Ctx>;
 //            | 'extern'  => extern
 template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
   if (ctx.in.takeKeyword("func"sv)) {
-    return ctx.makeFunc();
+    return ctx.makeFuncType();
   }
   if (ctx.in.takeKeyword("any"sv)) {
-    return ctx.makeAny();
+    return ctx.makeAnyType();
   }
   if (ctx.in.takeKeyword("extern"sv)) {
-    return ctx.makeExtern();
+    return ctx.makeExternType();
   }
   if (ctx.in.takeKeyword("eq"sv)) {
-    return ctx.makeEq();
+    return ctx.makeEqType();
   }
   if (ctx.in.takeKeyword("i31"sv)) {
-    return ctx.makeI31();
+    return ctx.makeI31Type();
   }
   if (ctx.in.takeKeyword("struct"sv)) {
     return ctx.makeStructType();
   }
   if (ctx.in.takeKeyword("array"sv)) {
     return ctx.makeArrayType();
+  }
+  if (ctx.in.takeKeyword("exn"sv)) {
+    return ctx.makeExnType();
+  }
+  if (ctx.in.takeKeyword("string"sv)) {
+    return ctx.makeStringType();
+  }
+  if (ctx.in.takeKeyword("stringview_wtf8"sv)) {
+    return ctx.makeStringViewWTF8Type();
+  }
+  if (ctx.in.takeKeyword("stringview_wtf16"sv)) {
+    return ctx.makeStringViewWTF16Type();
+  }
+  if (ctx.in.takeKeyword("stringview_iter"sv)) {
+    return ctx.makeStringViewIterType();
+  }
+  if (ctx.in.takeKeyword("none"sv)) {
+    return ctx.makeNoneType();
+  }
+  if (ctx.in.takeKeyword("noextern"sv)) {
+    return ctx.makeNoextType();
+  }
+  if (ctx.in.takeKeyword("nofunc"sv)) {
+    return ctx.makeNofuncType();
+  }
+  if (ctx.in.takeKeyword("noexn"sv)) {
+    return ctx.makeNoexnType();
   }
   auto type = typeidx(ctx);
   CHECK_ERR(type);
@@ -254,25 +303,52 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
 //           | '(' ref null? t:heaptype ')' => ref null? t
 template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
   if (ctx.in.takeKeyword("funcref"sv)) {
-    return ctx.makeRefType(ctx.makeFunc(), Nullable);
+    return ctx.makeRefType(ctx.makeFuncType(), Nullable);
   }
   if (ctx.in.takeKeyword("externref"sv)) {
-    return ctx.makeRefType(ctx.makeExtern(), Nullable);
+    return ctx.makeRefType(ctx.makeExternType(), Nullable);
   }
   if (ctx.in.takeKeyword("anyref"sv)) {
-    return ctx.makeRefType(ctx.makeAny(), Nullable);
+    return ctx.makeRefType(ctx.makeAnyType(), Nullable);
   }
   if (ctx.in.takeKeyword("eqref"sv)) {
-    return ctx.makeRefType(ctx.makeEq(), Nullable);
+    return ctx.makeRefType(ctx.makeEqType(), Nullable);
   }
   if (ctx.in.takeKeyword("i31ref"sv)) {
-    return ctx.makeRefType(ctx.makeI31(), Nullable);
+    return ctx.makeRefType(ctx.makeI31Type(), Nullable);
   }
   if (ctx.in.takeKeyword("structref"sv)) {
     return ctx.makeRefType(ctx.makeStructType(), Nullable);
   }
   if (ctx.in.takeKeyword("arrayref"sv)) {
-    return ctx.in.err("arrayref not yet supported");
+    return ctx.makeRefType(ctx.makeArrayType(), Nullable);
+  }
+  if (ctx.in.takeKeyword("exnref"sv)) {
+    return ctx.makeRefType(ctx.makeExnType(), Nullable);
+  }
+  if (ctx.in.takeKeyword("stringref"sv)) {
+    return ctx.makeRefType(ctx.makeStringType(), Nullable);
+  }
+  if (ctx.in.takeKeyword("stringview_wtf8"sv)) {
+    return ctx.makeRefType(ctx.makeStringViewWTF8Type(), Nullable);
+  }
+  if (ctx.in.takeKeyword("stringview_wtf16"sv)) {
+    return ctx.makeRefType(ctx.makeStringViewWTF16Type(), Nullable);
+  }
+  if (ctx.in.takeKeyword("stringview_iter"sv)) {
+    return ctx.makeRefType(ctx.makeStringViewIterType(), Nullable);
+  }
+  if (ctx.in.takeKeyword("nullref"sv)) {
+    return ctx.makeRefType(ctx.makeNoneType(), Nullable);
+  }
+  if (ctx.in.takeKeyword("nullexternref"sv)) {
+    return ctx.makeRefType(ctx.makeNoextType(), Nullable);
+  }
+  if (ctx.in.takeKeyword("nullfuncref"sv)) {
+    return ctx.makeRefType(ctx.makeNofuncType(), Nullable);
+  }
+  if (ctx.in.takeKeyword("nullexnref"sv)) {
+    return ctx.makeRefType(ctx.makeNoexnType(), Nullable);
   }
 
   if (!ctx.in.takeSExprStart("ref"sv)) {
@@ -291,15 +367,34 @@ template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
   return ctx.makeRefType(*type, nullability);
 }
 
+// tupletype ::= '(' 'tuple' valtype* ')'
+template<typename Ctx> MaybeResult<typename Ctx::TypeT> tupletype(Ctx& ctx) {
+  if (!ctx.in.takeSExprStart("tuple"sv)) {
+    return {};
+  }
+  auto elems = ctx.makeTupleElemList();
+  size_t numElems = 0;
+  while (!ctx.in.takeRParen()) {
+    auto elem = singlevaltype(ctx);
+    CHECK_ERR(elem);
+    ctx.appendTupleElem(elems, *elem);
+    ++numElems;
+  }
+  if (numElems < 2) {
+    return ctx.in.err("tuples must have at least two elements");
+  }
+  return ctx.makeTupleType(elems);
+}
+
 // numtype ::= 'i32' => i32
 //           | 'i64' => i64
 //           | 'f32' => f32
 //           | 'f64' => f64
 // vectype ::= 'v128' => v128
-// valtype ::= t:numtype => t
-//           | t:vectype => t
-//           | t:reftype => t
-template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx& ctx) {
+// singlevaltype ::= t:numtype => t
+//                 | t:vectype => t
+//                 | t:reftype => t
+template<typename Ctx> Result<typename Ctx::TypeT> singlevaltype(Ctx& ctx) {
   if (ctx.in.takeKeyword("i32"sv)) {
     return ctx.makeI32();
   } else if (ctx.in.takeKeyword("i64"sv)) {
@@ -316,6 +411,15 @@ template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx& ctx) {
   } else {
     return ctx.in.err("expected valtype");
   }
+}
+
+// valtype ::= singlevaltype | tupletype
+template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx& ctx) {
+  if (auto type = tupletype(ctx)) {
+    CHECK_ERR(type);
+    return *type;
+  }
+  return singlevaltype(ctx);
 }
 
 // param  ::= '(' 'param id? t:valtype ')' => [t]
@@ -539,6 +643,18 @@ template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx& ctx) {
   return ctx.makeMemType(type, *limits, shared);
 }
 
+// tabletype ::= limits32 reftype
+template<typename Ctx> Result<typename Ctx::TableTypeT> tabletype(Ctx& ctx) {
+  auto limits = limits32(ctx);
+  CHECK_ERR(limits);
+  auto type = reftype(ctx);
+  CHECK_ERR(type);
+  if (!type) {
+    return ctx.in.err("expected reftype");
+  }
+  return ctx.makeTableType(*limits, *type);
+}
+
 // globaltype ::= t:valtype               => const t
 //              | '(' 'mut' t:valtype ')' => var t
 template<typename Ctx> Result<typename Ctx::GlobalTypeT> globaltype(Ctx& ctx) {
@@ -557,11 +673,23 @@ template<typename Ctx> Result<typename Ctx::GlobalTypeT> globaltype(Ctx& ctx) {
   return ctx.makeGlobalType(mutability, *type);
 }
 
+// arity ::= x:u32    (if x >=2 )
+template<typename Ctx> Result<uint32_t> tupleArity(Ctx& ctx) {
+  auto arity = ctx.in.takeU32();
+  if (!arity) {
+    return ctx.in.err("expected tuple arity");
+  }
+  if (*arity < 2) {
+    return ctx.in.err("tuple arity must be at least 2");
+  }
+  return *arity;
+}
+
 // ============
 // Instructions
 // ============
 
-// blockinstr ::= block | loop | if-else | try-catch
+// blockinstr ::= block | loop | if-else | try-catch | try_table
 template<typename Ctx> MaybeResult<> foldedBlockinstr(Ctx& ctx) {
   if (auto i = block(ctx, true)) {
     return i;
@@ -575,7 +703,9 @@ template<typename Ctx> MaybeResult<> foldedBlockinstr(Ctx& ctx) {
   if (auto i = trycatch(ctx, true)) {
     return i;
   }
-  // TODO: Other block instructions
+  if (auto i = trytable(ctx, true)) {
+    return i;
+  }
   return {};
 }
 
@@ -592,7 +722,9 @@ template<typename Ctx> MaybeResult<> unfoldedBlockinstr(Ctx& ctx) {
   if (auto i = trycatch(ctx, false)) {
     return i;
   }
-  // TODO: Other block instructions
+  if (auto i = trytable(ctx, false)) {
+    return i;
+  }
   return {};
 }
 
@@ -626,7 +758,7 @@ template<typename Ctx> MaybeResult<> instr(Ctx& ctx) {
     if (auto keyword = tok->getKeyword()) {
       if (keyword == "end"sv || keyword == "then"sv || keyword == "else"sv ||
           keyword == "catch"sv || keyword == "catch_all"sv ||
-          keyword == "delegate"sv) {
+          keyword == "delegate"sv || keyword == "ref"sv) {
         return {};
       }
     }
@@ -642,14 +774,13 @@ template<typename Ctx> MaybeResult<> instr(Ctx& ctx) {
 }
 
 template<typename Ctx> MaybeResult<> foldedinstr(Ctx& ctx) {
-  // Check for valid strings that are not instructions.
-  if (ctx.in.peekSExprStart("then"sv) || ctx.in.peekSExprStart("else")) {
+  // We must have an '(' to start a folded instruction.
+  if (auto tok = ctx.in.peek(); !tok || !tok->isLParen()) {
     return {};
   }
-  if (auto inst = foldedBlockinstr(ctx)) {
-    return inst;
-  }
-  if (!ctx.in.takeLParen()) {
+
+  // Check for valid strings that look like folded instructions but are not.
+  if (ctx.in.peekSExprStart("then"sv) || ctx.in.peekSExprStart("else")) {
     return {};
   }
 
@@ -657,47 +788,52 @@ template<typename Ctx> MaybeResult<> foldedinstr(Ctx& ctx) {
   // instructions that need to be parsed after their folded children.
   std::vector<std::pair<Index, std::optional<Index>>> foldedInstrs;
 
-  // Begin a folded instruction. Push its start position and a placeholder
-  // end position.
-  foldedInstrs.push_back({ctx.in.getPos(), {}});
-  while (!foldedInstrs.empty()) {
-    // Consume everything up to the next paren. This span will be parsed as
-    // an instruction later after its folded children have been parsed.
-    if (!ctx.in.takeUntilParen()) {
-      return ctx.in.err(foldedInstrs.back().first,
-                        "unterminated folded instruction");
-    }
-
-    if (!foldedInstrs.back().second) {
-      // The folded instruction we just started should end here.
-      foldedInstrs.back().second = ctx.in.getPos();
-    }
-
-    // We have either the start of a new folded child or the end of the last
-    // one.
-    if (auto blockinst = foldedBlockinstr(ctx)) {
-      CHECK_ERR(blockinst);
-    } else if (ctx.in.takeLParen()) {
-      foldedInstrs.push_back({ctx.in.getPos(), {}});
-    } else if (ctx.in.takeRParen()) {
+  do {
+    if (ctx.in.takeRParen()) {
+      // We've reached the end of a folded instruction. Parse it for real.
       auto [start, end] = foldedInstrs.back();
-      assert(end && "Should have found end of instruction");
+      if (!end) {
+        return ctx.in.err("unexpected end of folded instruction");
+      }
       foldedInstrs.pop_back();
 
       WithPosition with(ctx, start);
-      if (auto inst = plaininstr(ctx)) {
-        CHECK_ERR(inst);
-      } else {
-        return ctx.in.err(start, "expected folded instruction");
-      }
-
-      if (ctx.in.getPos() != *end) {
-        return ctx.in.err("expected end of instruction");
-      }
-    } else {
-      WASM_UNREACHABLE("expected paren");
+      auto inst = plaininstr(ctx);
+      assert(inst && "unexpectedly failed to parse instruction");
+      CHECK_ERR(inst);
+      assert(ctx.in.getPos() == *end && "expected end of instruction");
+      continue;
     }
-  }
+
+    // We're not ending an instruction, so we must be starting a new one. Maybe
+    // it is a block instruction.
+    if (auto blockinst = foldedBlockinstr(ctx)) {
+      CHECK_ERR(blockinst);
+      continue;
+    }
+
+    // We must be starting a new plain instruction.
+    if (!ctx.in.takeLParen()) {
+      return ctx.in.err("expected folded instruction");
+    }
+    foldedInstrs.push_back({ctx.in.getPos(), {}});
+
+    // Consume the span for the instruction without meaningfully parsing it yet.
+    // It will be parsed for real using the real context after its s-expression
+    // children have been found and parsed.
+    NullCtx nullCtx(ctx.in);
+    if (auto inst = plaininstr(nullCtx)) {
+      CHECK_ERR(inst);
+      ctx.in = nullCtx.in;
+    } else {
+      return ctx.in.err("expected instruction");
+    }
+
+    // The folded instruction we just started ends here.
+    assert(!foldedInstrs.back().second);
+    foldedInstrs.back().second = ctx.in.getPos();
+  } while (!foldedInstrs.empty());
+
   return Ok{};
 }
 
@@ -1059,6 +1195,81 @@ template<typename Ctx> MaybeResult<> trycatch(Ctx& ctx, bool folded) {
   return ctx.visitEnd();
 }
 
+template<typename Ctx> MaybeResult<typename Ctx::CatchT> catchinstr(Ctx& ctx) {
+  typename Ctx::CatchT result;
+  if (ctx.in.takeSExprStart("catch"sv)) {
+    auto tag = tagidx(ctx);
+    CHECK_ERR(tag);
+    auto label = labelidx(ctx);
+    CHECK_ERR(label);
+    result = ctx.makeCatch(*tag, *label);
+  } else if (ctx.in.takeSExprStart("catch_ref"sv)) {
+    auto tag = tagidx(ctx);
+    CHECK_ERR(tag);
+    auto label = labelidx(ctx);
+    CHECK_ERR(label);
+    result = ctx.makeCatchRef(*tag, *label);
+  } else if (ctx.in.takeSExprStart("catch_all"sv)) {
+    auto label = labelidx(ctx);
+    CHECK_ERR(label);
+    result = ctx.makeCatchAll(*label);
+  } else if (ctx.in.takeSExprStart("catch_all_ref"sv)) {
+    auto label = labelidx(ctx);
+    CHECK_ERR(label);
+    result = ctx.makeCatchAllRef(*label);
+  } else {
+    return {};
+  }
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected ')' at end of catch clause");
+  }
+
+  return result;
+}
+
+// trytable ::= 'try_table' label blocktype catchinstr* instr* end id?
+//            | '(' 'try_table' label blocktype catchinstr* instr* ')'
+template<typename Ctx> MaybeResult<> trytable(Ctx& ctx, bool folded) {
+  auto pos = ctx.in.getPos();
+
+  if ((folded && !ctx.in.takeSExprStart("try_table"sv)) ||
+      (!folded && !ctx.in.takeKeyword("try_table"sv))) {
+    return {};
+  }
+
+  auto label = ctx.in.takeID();
+
+  auto type = blocktype(ctx);
+  CHECK_ERR(type);
+
+  auto catches = ctx.makeCatchList();
+  while (auto c = catchinstr(ctx)) {
+    CHECK_ERR(c);
+    ctx.appendCatch(catches, *c);
+  }
+
+  CHECK_ERR(ctx.makeTryTable(pos, label, *type, catches));
+
+  CHECK_ERR(instrs(ctx));
+
+  if (folded) {
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected ')' at end of try_table");
+    }
+  } else {
+    if (!ctx.in.takeKeyword("end"sv)) {
+      return ctx.in.err("expected 'end' at end of try_table");
+    }
+
+    auto id = ctx.in.takeID();
+    if (id && id != label) {
+      return ctx.in.err("end label does not match try_table label");
+    }
+  }
+  return ctx.visitEnd();
+}
+
 template<typename Ctx> Result<> makeUnreachable(Ctx& ctx, Index pos) {
   return ctx.makeUnreachable(pos);
 }
@@ -1345,7 +1556,9 @@ template<typename Ctx> Result<> makeMemoryFill(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makePop(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = valtype(ctx);
+  CHECK_ERR(type);
+  return ctx.makePop(pos, *type);
 }
 
 template<typename Ctx> Result<> makeCall(Ctx& ctx, Index pos, bool isReturn) {
@@ -1356,13 +1569,18 @@ template<typename Ctx> Result<> makeCall(Ctx& ctx, Index pos, bool isReturn) {
 
 template<typename Ctx>
 Result<> makeCallIndirect(Ctx& ctx, Index pos, bool isReturn) {
-  return ctx.in.err("unimplemented instruction");
+  auto table = maybeTableidx(ctx);
+  CHECK_ERR(table);
+  auto type = typeuse(ctx);
+  CHECK_ERR(type);
+  return ctx.makeCallIndirect(pos, table.getPtr(), *type, isReturn);
 }
 
-template<typename Ctx> Result<> makeBreak(Ctx& ctx, Index pos) {
+template<typename Ctx>
+Result<> makeBreak(Ctx& ctx, Index pos, bool isConditional) {
   auto label = labelidx(ctx);
   CHECK_ERR(label);
-  return ctx.makeBreak(pos, *label);
+  return ctx.makeBreak(pos, *label, isConditional);
 }
 
 template<typename Ctx> Result<> makeBreakTable(Ctx& ctx, Index pos) {
@@ -1407,27 +1625,44 @@ template<typename Ctx> Result<> makeRefEq(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeTableGet(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto table = maybeTableidx(ctx);
+  CHECK_ERR(table);
+  return ctx.makeTableGet(pos, table.getPtr());
 }
 
 template<typename Ctx> Result<> makeTableSet(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto table = maybeTableidx(ctx);
+  CHECK_ERR(table);
+  return ctx.makeTableSet(pos, table.getPtr());
 }
 
 template<typename Ctx> Result<> makeTableSize(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto table = maybeTableidx(ctx);
+  CHECK_ERR(table);
+  return ctx.makeTableSize(pos, table.getPtr());
 }
 
 template<typename Ctx> Result<> makeTableGrow(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto table = maybeTableidx(ctx);
+  CHECK_ERR(table);
+  return ctx.makeTableGrow(pos, table.getPtr());
 }
 
 template<typename Ctx> Result<> makeTableFill(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto table = maybeTableidx(ctx);
+  CHECK_ERR(table);
+  return ctx.makeTableFill(pos, table.getPtr());
 }
 
 template<typename Ctx> Result<> makeTableCopy(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto destTable = maybeTableidx(ctx);
+  CHECK_ERR(destTable);
+  auto srcTable = maybeTableidx(ctx);
+  CHECK_ERR(srcTable);
+  if (destTable && !srcTable) {
+    return ctx.in.err("expected table index or identifier");
+  }
+  return ctx.makeTableCopy(pos, destTable.getPtr(), srcTable.getPtr());
 }
 
 template<typename Ctx> Result<> makeThrow(Ctx& ctx, Index pos) {
@@ -1437,15 +1672,35 @@ template<typename Ctx> Result<> makeThrow(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeRethrow(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto label = labelidx(ctx);
+  CHECK_ERR(label);
+  return ctx.makeRethrow(pos, *label);
+}
+
+template<typename Ctx> Result<> makeThrowRef(Ctx& ctx, Index pos) {
+  return ctx.makeThrowRef(pos);
 }
 
 template<typename Ctx> Result<> makeTupleMake(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto arity = tupleArity(ctx);
+  CHECK_ERR(arity);
+  return ctx.makeTupleMake(pos, *arity);
 }
 
 template<typename Ctx> Result<> makeTupleExtract(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto arity = tupleArity(ctx);
+  CHECK_ERR(arity);
+  auto index = ctx.in.takeU32();
+  if (!index) {
+    return ctx.in.err("expected tuple index");
+  }
+  return ctx.makeTupleExtract(pos, *arity, *index);
+}
+
+template<typename Ctx> Result<> makeTupleDrop(Ctx& ctx, Index pos) {
+  auto arity = tupleArity(ctx);
+  CHECK_ERR(arity);
+  return ctx.makeTupleDrop(pos, *arity);
 }
 
 template<typename Ctx>
@@ -1484,9 +1739,11 @@ template<typename Ctx> Result<> makeBrOnNull(Ctx& ctx, Index pos, bool onFail) {
 template<typename Ctx> Result<> makeBrOnCast(Ctx& ctx, Index pos, bool onFail) {
   auto label = labelidx(ctx);
   CHECK_ERR(label);
-  auto type = reftype(ctx);
-  CHECK_ERR(type);
-  return ctx.makeBrOn(pos, *label, onFail ? BrOnCastFail : BrOnCast, *type);
+  auto in = reftype(ctx);
+  CHECK_ERR(in);
+  auto out = reftype(ctx);
+  CHECK_ERR(out);
+  return ctx.makeBrOn(pos, *label, onFail ? BrOnCastFail : BrOnCast, *in, *out);
 }
 
 template<typename Ctx>
@@ -1535,7 +1792,11 @@ template<typename Ctx> Result<> makeArrayNewData(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeArrayNewElem(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto elem = elemidx(ctx);
+  CHECK_ERR(elem);
+  return ctx.makeArrayNewElem(pos, *type, *elem);
 }
 
 template<typename Ctx> Result<> makeArrayNewFixed(Ctx& ctx, Index pos) {
@@ -1580,11 +1841,18 @@ template<typename Ctx> Result<> makeArrayFill(Ctx& ctx, Index pos) {
 }
 
 template<typename Ctx> Result<> makeArrayInitData(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto data = dataidx(ctx);
+  CHECK_ERR(data);
+  return ctx.makeArrayInitData(pos, *type, *data);
 }
 
 template<typename Ctx> Result<> makeArrayInitElem(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+  auto elem = elemidx(ctx);
+  return ctx.makeArrayInitElem(pos, *type, *elem);
 }
 
 template<typename Ctx> Result<> makeRefAs(Ctx& ctx, Index pos, RefAsOp op) {
@@ -1593,60 +1861,72 @@ template<typename Ctx> Result<> makeRefAs(Ctx& ctx, Index pos, RefAsOp op) {
 
 template<typename Ctx>
 Result<> makeStringNew(Ctx& ctx, Index pos, StringNewOp op, bool try_) {
-  return ctx.in.err("unimplemented instruction");
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
+  return ctx.makeStringNew(pos, op, try_, mem.getPtr());
 }
 
 template<typename Ctx> Result<> makeStringConst(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto str = ctx.in.takeString();
+  if (!str) {
+    return ctx.in.err("expected string");
+  }
+  return ctx.makeStringConst(pos, *str);
 }
 
 template<typename Ctx>
 Result<> makeStringMeasure(Ctx& ctx, Index pos, StringMeasureOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringMeasure(pos, op);
 }
 
 template<typename Ctx>
 Result<> makeStringEncode(Ctx& ctx, Index pos, StringEncodeOp op) {
-  return ctx.in.err("unimplemented instruction");
+  auto mem = maybeMemidx(ctx);
+  CHECK_ERR(mem);
+  return ctx.makeStringEncode(pos, op, mem.getPtr());
 }
 
 template<typename Ctx> Result<> makeStringConcat(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringConcat(pos);
 }
 
 template<typename Ctx>
 Result<> makeStringEq(Ctx& ctx, Index pos, StringEqOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringEq(pos, op);
 }
 
 template<typename Ctx>
 Result<> makeStringAs(Ctx& ctx, Index pos, StringAsOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringAs(pos, op);
 }
 
 template<typename Ctx> Result<> makeStringWTF8Advance(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringWTF8Advance(pos);
 }
 
 template<typename Ctx> Result<> makeStringWTF16Get(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringWTF16Get(pos);
 }
 
 template<typename Ctx> Result<> makeStringIterNext(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringIterNext(pos);
 }
 
 template<typename Ctx>
 Result<> makeStringIterMove(Ctx& ctx, Index pos, StringIterMoveOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringIterMove(pos, op);
 }
 
 template<typename Ctx>
 Result<> makeStringSliceWTF(Ctx& ctx, Index pos, StringSliceWTFOp op) {
-  return ctx.in.err("unimplemented instruction");
+  return ctx.makeStringSliceWTF(pos, op);
 }
 
 template<typename Ctx> Result<> makeStringSliceIter(Ctx& ctx, Index pos) {
+  return ctx.makeStringSliceIter(pos);
+}
+
+template<typename Ctx> Result<> makeResume(Ctx& ctx, Index pos) {
   return ctx.in.err("unimplemented instruction");
 }
 
@@ -1693,14 +1973,58 @@ Result<typename Ctx::FieldIdxT> fieldidx(Ctx& ctx,
 
 // funcidx ::= x:u32 => x
 //           | v:id => x (if t.funcs[x] = v)
-template<typename Ctx> Result<typename Ctx::FuncIdxT> funcidx(Ctx& ctx) {
+template<typename Ctx>
+MaybeResult<typename Ctx::FuncIdxT> maybeFuncidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
     return ctx.getFuncFromIdx(*x);
   }
   if (auto id = ctx.in.takeID()) {
     return ctx.getFuncFromName(*id);
   }
+  return {};
+}
+
+template<typename Ctx> Result<typename Ctx::FuncIdxT> funcidx(Ctx& ctx) {
+  if (auto idx = maybeFuncidx(ctx)) {
+    CHECK_ERR(idx);
+    return *idx;
+  }
   return ctx.in.err("expected function index or identifier");
+}
+
+// tableidx ::= x:u23 => x
+//            | v:id => x (if tables[x] = v)
+template<typename Ctx>
+MaybeResult<typename Ctx::TableIdxT> maybeTableidx(Ctx& ctx) {
+  if (auto x = ctx.in.takeU32()) {
+    return ctx.getTableFromIdx(*x);
+  }
+  if (auto id = ctx.in.takeID()) {
+    return ctx.getTableFromName(*id);
+  }
+  return {};
+}
+
+template<typename Ctx> Result<typename Ctx::TableIdxT> tableidx(Ctx& ctx) {
+  if (auto idx = maybeTableidx(ctx)) {
+    CHECK_ERR(idx);
+    return *idx;
+  }
+  return ctx.in.err("expected table index or identifier");
+}
+
+// tableuse ::= '(' 'table' x:tableidx ')'
+template<typename Ctx>
+MaybeResult<typename Ctx::TableIdxT> maybeTableuse(Ctx& ctx) {
+  if (!ctx.in.takeSExprStart("table"sv)) {
+    return {};
+  }
+  auto idx = tableidx(ctx);
+  CHECK_ERR(idx);
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("Expected end of memory use");
+  }
+  return *idx;
 }
 
 // memidx ::= x:u32 => x
@@ -1750,8 +2074,20 @@ template<typename Ctx> Result<typename Ctx::GlobalIdxT> globalidx(Ctx& ctx) {
   return ctx.in.err("expected global index or identifier");
 }
 
+// elemidx ::= x:u32 => x
+//           | v:id => x (if elems[x] = v)
+template<typename Ctx> Result<typename Ctx::ElemIdxT> elemidx(Ctx& ctx) {
+  if (auto x = ctx.in.takeU32()) {
+    return ctx.getElemFromIdx(*x);
+  }
+  if (auto id = ctx.in.takeID()) {
+    return ctx.getElemFromName(*id);
+  }
+  return ctx.in.err("expected elem index or identifier");
+}
+
 // dataidx ::= x:u32 => x
-//           | v:id => x (if data[x] = v)
+//           | v:id => x (if datas[x] = v)
 template<typename Ctx> Result<typename Ctx::DataIdxT> dataidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
     return ctx.getDataFromIdx(*x);
@@ -1907,7 +2243,7 @@ template<typename Ctx> MaybeResult<> subtype(Ctx& ctx) {
   }
 
   if (ctx.in.takeSExprStart("sub"sv)) {
-    if (ctx.in.takeKeyword("open"sv)) {
+    if (!ctx.in.takeKeyword("final"sv)) {
       ctx.setOpen();
     }
     if (auto super = maybeTypeidx(ctx)) {
@@ -1989,6 +2325,71 @@ template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx& ctx) {
   return {};
 }
 
+// import ::= '(' 'import' mod:name nm:name importdesc ')'
+// importdesc ::= '(' 'func' id? typeuse ')'
+//              | '(' 'table' id? tabletype ')'
+//              | '(' 'memory' id? memtype ')'
+//              | '(' 'global' id? globaltype ')'
+//              | '(' 'tag' id? typeuse ')'
+template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
+
+  if (!ctx.in.takeSExprStart("import"sv)) {
+    return {};
+  }
+
+  auto mod = ctx.in.takeName();
+  if (!mod) {
+    return ctx.in.err("expected import module name");
+  }
+
+  auto nm = ctx.in.takeName();
+  if (!nm) {
+    return ctx.in.err("expected import name");
+  }
+  ImportNames names{*mod, *nm};
+
+  if (ctx.in.takeSExprStart("func"sv)) {
+    auto name = ctx.in.takeID();
+    auto type = typeuse(ctx);
+    CHECK_ERR(type);
+    CHECK_ERR(
+      ctx.addFunc(name ? *name : Name{}, {}, &names, *type, std::nullopt, pos));
+  } else if (ctx.in.takeSExprStart("table"sv)) {
+    auto name = ctx.in.takeID();
+    auto type = tabletype(ctx);
+    CHECK_ERR(type);
+    CHECK_ERR(ctx.addTable(name ? *name : Name{}, {}, &names, *type, pos));
+  } else if (ctx.in.takeSExprStart("memory"sv)) {
+    auto name = ctx.in.takeID();
+    auto type = memtype(ctx);
+    CHECK_ERR(type);
+    CHECK_ERR(ctx.addMemory(name ? *name : Name{}, {}, &names, *type, pos));
+  } else if (ctx.in.takeSExprStart("global"sv)) {
+    auto name = ctx.in.takeID();
+    auto type = globaltype(ctx);
+    CHECK_ERR(type);
+    CHECK_ERR(ctx.addGlobal(
+      name ? *name : Name{}, {}, &names, *type, std::nullopt, pos));
+  } else if (ctx.in.takeSExprStart("tag"sv)) {
+    auto name = ctx.in.takeID();
+    auto type = typeuse(ctx);
+    CHECK_ERR(type);
+    CHECK_ERR(ctx.addTag(name ? *name : Name{}, {}, &names, *type, pos));
+  } else {
+    return ctx.in.err("expected import description");
+  }
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of import description");
+  }
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of import");
+  }
+
+  return Ok{};
+}
+
 // func ::= '(' 'func' id? ('(' 'export' name ')')*
 //              x,I:typeuse t*:vec(local) (in:instr)* ')'
 //        | '(' 'func' id? ('(' 'export' name ')')*
@@ -2028,6 +2429,82 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
 
   CHECK_ERR(
     ctx.addFunc(name, *exports, import.getPtr(), *type, localVars, pos));
+  return Ok{};
+}
+
+// table ::= '(' 'table' id? ('(' 'export' name ')')*
+//               '(' 'import' mod:name nm:name ')'? tabletype ')'
+//         | '(' 'table' id? ('(' 'export' name ')')*
+//               reftype '(' 'elem' (elemexpr* | funcidx*) ')' ')'
+template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
+  if (!ctx.in.takeSExprStart("table"sv)) {
+    return {};
+  }
+
+  Name name;
+  if (auto id = ctx.in.takeID()) {
+    name = *id;
+  }
+
+  auto exports = inlineExports(ctx.in);
+  CHECK_ERR(exports);
+
+  auto import = inlineImport(ctx.in);
+  CHECK_ERR(import);
+
+  // Reftype if we have inline elements.
+  auto type = reftype(ctx);
+  CHECK_ERR(type);
+
+  std::optional<typename Ctx::TableTypeT> ttype;
+  std::optional<typename Ctx::ElemListT> elems;
+  if (type) {
+    // We should have inline elements.
+    if (!ctx.in.takeSExprStart("elem"sv)) {
+      return ctx.in.err("expected table limits or inline elements");
+    }
+    if (import) {
+      return ctx.in.err("imported tables cannot have inline elements");
+    }
+
+    auto list = ctx.makeElemList(*type);
+    bool foundElem = false;
+    while (auto elem = maybeElemexpr(ctx)) {
+      CHECK_ERR(elem);
+      ctx.appendElem(list, *elem);
+      foundElem = true;
+    }
+
+    // If there were no elemexprs, then maybe we have funcidxs instead.
+    if (!foundElem) {
+      while (auto func = maybeFuncidx(ctx)) {
+        CHECK_ERR(func);
+        ctx.appendFuncElem(list, *func);
+      }
+    }
+
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of inline elems");
+    }
+    ttype = ctx.makeTableType(ctx.getLimitsFromElems(list), *type);
+    elems = std::move(list);
+  } else {
+    auto tabtype = tabletype(ctx);
+    CHECK_ERR(tabtype);
+    ttype = *tabtype;
+  }
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of table declaration");
+  }
+
+  CHECK_ERR(ctx.addTable(name, *exports, import.getPtr(), *ttype, pos));
+
+  if (elems) {
+    CHECK_ERR(ctx.addImplicitElems(*type, std::move(*elems)));
+  }
+
   return Ok{};
 }
 
@@ -2119,6 +2596,187 @@ template<typename Ctx> MaybeResult<> global(Ctx& ctx) {
   }
 
   CHECK_ERR(ctx.addGlobal(name, *exports, import.getPtr(), *type, exp, pos));
+  return Ok{};
+}
+
+// export ::= '(' 'export' nm:name exportdesc ')'
+// exportdesc ::= '(' 'func' x:funcidx ')'
+//              | '(' 'table' x:tableidx ')'
+//              | '(' 'memory' x:memidx ')'
+//              | '(' 'global' x:globalidx ')'
+//              | '(' 'tag' x:tagidx ')'
+template<typename Ctx> MaybeResult<> export_(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
+  if (!ctx.in.takeSExprStart("export"sv)) {
+    return {};
+  }
+
+  auto name = ctx.in.takeName();
+  if (!name) {
+    return ctx.in.err("expected export name");
+  }
+
+  if (ctx.in.takeSExprStart("func"sv)) {
+    auto idx = funcidx(ctx);
+    CHECK_ERR(idx);
+    CHECK_ERR(ctx.addExport(pos, *idx, *name, ExternalKind::Function));
+  } else if (ctx.in.takeSExprStart("table"sv)) {
+    auto idx = tableidx(ctx);
+    CHECK_ERR(idx);
+    CHECK_ERR(ctx.addExport(pos, *idx, *name, ExternalKind::Table));
+  } else if (ctx.in.takeSExprStart("memory"sv)) {
+    auto idx = memidx(ctx);
+    CHECK_ERR(idx);
+    CHECK_ERR(ctx.addExport(pos, *idx, *name, ExternalKind::Memory));
+  } else if (ctx.in.takeSExprStart("global"sv)) {
+    auto idx = globalidx(ctx);
+    CHECK_ERR(idx);
+    CHECK_ERR(ctx.addExport(pos, *idx, *name, ExternalKind::Global));
+  } else if (ctx.in.takeSExprStart("tag"sv)) {
+    auto idx = tagidx(ctx);
+    CHECK_ERR(idx);
+    CHECK_ERR(ctx.addExport(pos, *idx, *name, ExternalKind::Tag));
+  } else {
+    return ctx.in.err("expected export description");
+  }
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of export description");
+  }
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of export");
+  }
+  return Ok{};
+}
+
+// start ::= '(' 'start' funcidx ')'
+template<typename Ctx> MaybeResult<> start(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
+  if (!ctx.in.takeSExprStart("start"sv)) {
+    return {};
+  }
+  auto func = funcidx(ctx);
+  CHECK_ERR(func);
+
+  CHECK_ERR(ctx.addStart(*func, pos));
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of start declaration");
+  }
+  return Ok{};
+}
+
+// elemexpr ::= '(' 'item' expr ')' | '(' instr ')'
+template<typename Ctx>
+MaybeResult<typename Ctx::ExprT> maybeElemexpr(Ctx& ctx) {
+  MaybeResult<typename Ctx::ExprT> result;
+  if (ctx.in.takeSExprStart("item"sv)) {
+    result = expr(ctx);
+  } else if (ctx.in.takeLParen()) {
+    // TODO: `instr` should included both folded and unfolded instrs.
+    if (auto inst = instr(ctx)) {
+      CHECK_ERR(inst);
+    } else {
+      return ctx.in.err("expected instruction");
+    }
+    result = ctx.makeExpr();
+  } else {
+    return {};
+  }
+  CHECK_ERR(result);
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of element expression");
+  }
+  return result;
+}
+
+// elemlist ::= reftype elemexpr* | 'func' funcidx*
+//            | funcidx* (iff the tableuse is omitted)
+template<typename Ctx>
+Result<typename Ctx::ElemListT> elemlist(Ctx& ctx, bool legacy) {
+  if (auto type = reftype(ctx)) {
+    auto res = ctx.makeElemList(*type);
+    while (auto elem = maybeElemexpr(ctx)) {
+      CHECK_ERR(elem);
+      ctx.appendElem(res, *elem);
+    }
+    return res;
+  } else if (ctx.in.takeKeyword("func"sv) || legacy) {
+    auto res = ctx.makeFuncElemList();
+    while (auto func = maybeFuncidx(ctx)) {
+      CHECK_ERR(func);
+      ctx.appendFuncElem(res, *func);
+    }
+    return res;
+  }
+  return ctx.in.err("expected element list");
+}
+
+// elem ::= '(' 'elem' id? x:tableuse? ('(' ('offset' e:expr | e:instr) ')')?
+//               elemlist ')'
+//        | '(' 'elem' id? 'declare' elemlist ')'
+template<typename Ctx> MaybeResult<> elem(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
+  if (!ctx.in.takeSExprStart("elem"sv)) {
+    return {};
+  }
+
+  Name name;
+  if (auto id = ctx.in.takeID()) {
+    name = *id;
+  }
+
+  bool isDeclare = false;
+  MaybeResult<typename Ctx::TableIdxT> table;
+  std::optional<typename Ctx::ExprT> offset;
+
+  if (ctx.in.takeKeyword("declare"sv)) {
+    isDeclare = true;
+  } else {
+    table = maybeTableuse(ctx);
+    CHECK_ERR(table);
+
+    if (ctx.in.takeSExprStart("offset")) {
+      auto off = expr(ctx);
+      CHECK_ERR(off);
+      offset = *off;
+    } else {
+      // This may be an abbreviated offset instruction or it may be the
+      // beginning of the elemlist.
+      auto beforeLParen = ctx.in.getPos();
+      if (ctx.in.takeLParen()) {
+        if (auto inst = instr(ctx)) {
+          CHECK_ERR(inst);
+          auto off = ctx.makeExpr();
+          CHECK_ERR(off);
+          offset = *off;
+        } else {
+          // This must be the beginning of the elemlist instead.
+          ctx.in.lexer.setIndex(beforeLParen);
+        }
+      }
+    }
+    if (offset && !ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of offset expression");
+    }
+  }
+
+  // If there is no explicit tableuse, we can use the legacy elemlist format.
+  bool legacy = !table;
+  auto elems = elemlist(ctx, legacy);
+  CHECK_ERR(elems);
+
+  if (!ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of element segment");
+  }
+
+  if (isDeclare) {
+    CHECK_ERR(ctx.addDeclareElem(name, std::move(*elems), pos));
+  } else {
+    CHECK_ERR(
+      ctx.addElem(name, table.getPtr(), offset, std::move(*elems), pos));
+  }
+
   return Ok{};
 }
 
@@ -2232,7 +2890,15 @@ template<typename Ctx> MaybeResult<> modulefield(Ctx& ctx) {
     CHECK_ERR(res);
     return Ok{};
   }
+  if (auto res = import_(ctx)) {
+    CHECK_ERR(res);
+    return Ok{};
+  }
   if (auto res = func(ctx)) {
+    CHECK_ERR(res);
+    return Ok{};
+  }
+  if (auto res = table(ctx)) {
     CHECK_ERR(res);
     return Ok{};
   }
@@ -2241,6 +2907,18 @@ template<typename Ctx> MaybeResult<> modulefield(Ctx& ctx) {
     return Ok{};
   }
   if (auto res = global(ctx)) {
+    CHECK_ERR(res);
+    return Ok{};
+  }
+  if (auto res = export_(ctx)) {
+    CHECK_ERR(res);
+    return Ok{};
+  }
+  if (auto res = start(ctx)) {
+    CHECK_ERR(res);
+    return Ok{};
+  }
+  if (auto res = elem(ctx)) {
     CHECK_ERR(res);
     return Ok{};
   }

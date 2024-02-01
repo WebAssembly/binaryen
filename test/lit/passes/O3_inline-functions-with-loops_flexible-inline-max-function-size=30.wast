@@ -28,8 +28,10 @@
   ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (return
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.add
@@ -81,7 +83,7 @@
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:    (then
   ;; CHECK-NEXT:     (local.set $0
   ;; CHECK-NEXT:      (i32.sub
   ;; CHECK-NEXT:       (local.get $0)
@@ -134,7 +136,7 @@
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:    (then
   ;; CHECK-NEXT:     (local.set $0
   ;; CHECK-NEXT:      (i32.sub
   ;; CHECK-NEXT:       (local.get $0)
