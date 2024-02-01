@@ -8,6 +8,7 @@ set(support_SOURCES
   dfa_minimization.cpp
   file.cpp
   istring.cpp
+  json.cpp
   path.cpp
   safe_integer.cpp
   threads.cpp
