@@ -2565,31 +2565,34 @@ function wrapModule(module, self = {}) {
     // segments are assumed to be { passive: bool, offset: expression ref, data: array of 8-bit data }
     return preserveStack(() => {
       const segmentsLen = segments.length;
-      const segmentData = new Array(segmentsLen);
-      const segmentDataLen = new Array(segmentsLen);
-      const segmentPassive = new Array(segmentsLen);
-      const segmentOffset = new Array(segmentsLen);
+      const names = new Array(segmentsLen);
+      const datas = new Array(segmentsLen);
+      const lengths = new Array(segmentsLen);
+      const passives = new Array(segmentsLen);
+      const offsets = new Array(segmentsLen);
       for (let i = 0; i < segmentsLen; i++) {
-        const { data, offset, passive } = segments[i];
-        segmentData[i] = _malloc(data.length);
-        HEAP8.set(data, segmentData[i]);
-        segmentDataLen[i] = data.length;
-        segmentPassive[i] = passive;
-        segmentOffset[i] = offset;
+        const { name, data, offset, passive } = segments[i];
+        names[i] = name ? strToStack(name) : null;
+        datas[i] = _malloc(data.length);
+        HEAP8.set(data, datas[i]);
+        lengths[i] = data.length;
+        passives[i] = passive;
+        offsets[i] = offset;
       }
       const ret = Module['_BinaryenSetMemory'](
         module, initial, maximum, strToStack(exportName),
-        i32sToStack(segmentData),
-        i8sToStack(segmentPassive),
-        i32sToStack(segmentOffset),
-        i32sToStack(segmentDataLen),
-        segmentsLen,
-        shared,
-        memory64,
-        strToStack(internalName)
-      );
+          i32sToStack(names),
+          i32sToStack(datas),
+          i8sToStack(passives),
+          i32sToStack(offsets),
+          i32sToStack(lengths),
+          segmentsLen,
+          shared,
+          memory64,
+          strToStack(internalName)
+        );
       for (let i = 0; i < segmentsLen; i++) {
-        _free(segmentData[i]);
+        _free(datas[i]);
       }
       return ret;
     });
@@ -2613,18 +2616,18 @@ function wrapModule(module, self = {}) {
   self['getNumMemorySegments'] = function() {
     return Module['_BinaryenGetNumMemorySegments'](module);
   };
-  self['getMemorySegmentInfoByIndex'] = function(id) {
-    const passive = Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, id));
+  self['getMemorySegmentInfo'] = function(name) {
+    const passive = Boolean(Module['_BinaryenGetMemorySegmentPassive'](module, strToStack(name)));
     let offset = null;
     if (!passive) {
-      offset = Module['_BinaryenGetMemorySegmentByteOffset'](module, id);
+      offset = Module['_BinaryenGetMemorySegmentByteOffset'](module, strToStack(name));
     }
     return {
       'offset': offset,
       'data': (function(){
-        const size = Module['_BinaryenGetMemorySegmentByteLength'](module, id);
+        const size = Module['_BinaryenGetMemorySegmentByteLength'](module, strToStack(name));
         const ptr = _malloc(size);
-        Module['_BinaryenCopyMemorySegmentData'](module, id, ptr);
+        Module['_BinaryenCopyMemorySegmentData'](module, strToStack(name), ptr);
         const res = new Uint8Array(size);
         res.set(HEAP8.subarray(ptr, ptr + size));
         _free(ptr);

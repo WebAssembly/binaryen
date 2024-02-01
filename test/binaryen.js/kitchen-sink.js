@@ -196,11 +196,13 @@ function test_core() {
   // Memory
   module.setMemory(1, 256, "mem", [
     {
+      name: "x0",
       passive: false,
       offset: module.i32.const(10),
       data: "hello, world".split('').map(function(x) { return x.charCodeAt(0) })
     },
     {
+      name: "y1",
       passive: true,
       offset: null,
       data: "I am passive".split('').map(function(x) { return x.charCodeAt(0) })
@@ -555,8 +557,8 @@ function test_core() {
     module.i8x16.shuffle(module.v128.const(v128_bytes), module.v128.const(v128_bytes), v128_bytes),
     module.v128.bitselect(module.v128.const(v128_bytes), module.v128.const(v128_bytes), module.v128.const(v128_bytes)),
     // Bulk memory
-    module.memory.init("0", makeInt32(1024), makeInt32(0), makeInt32(12)),
-    module.data.drop("0"),
+    module.memory.init("x0", makeInt32(1024), makeInt32(0), makeInt32(12)),
+    module.data.drop("x0"),
     module.memory.copy(makeInt32(2048), makeInt32(1024), makeInt32(12)),
     module.memory.fill(makeInt32(0), makeInt32(42), makeInt32(1024)),
     // All the rest
@@ -1090,6 +1092,7 @@ function test_for_each() {
   }
 
   var expected_offsets = [10, 125, null];
+  var expected_names = ["x0", "y1", "z2"];
   var expected_data = ["hello, world", "segment data 2", "hello, passive"];
   var expected_passive = [false, false, true];
 
@@ -1105,23 +1108,26 @@ function test_for_each() {
 
   module.setMemory(1, 256, "mem", [
     {
+      name: expected_names[0],
       passive: expected_passive[0],
       offset: module.i32.const(expected_offsets[0]),
       data: expected_data[0].split('').map(function(x) { return x.charCodeAt(0) })
     },
     {
+      name: expected_names[1],
       passive: expected_passive[1],
       offset: module.global.get("a-global"),
       data: expected_data[1].split('').map(function(x) { return x.charCodeAt(0) })
     },
     {
+      name: expected_names[2],
       passive: expected_passive[2],
       offset: expected_offsets[2],
       data: expected_data[2].split('').map(function(x) { return x.charCodeAt(0) })
     }
   ], false);
   for (i = 0; i < module.getNumMemorySegments(); i++) {
-    var segment = module.getMemorySegmentInfoByIndex(i);
+    var segment = module.getMemorySegmentInfo(expected_names[i]);
     assert(expected_offsets[i] === segment.offset);
     var data8 = new Uint8Array(segment.data);
     var str = String.fromCharCode.apply(null, data8);

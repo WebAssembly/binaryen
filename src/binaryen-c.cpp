@@ -5329,8 +5329,9 @@ void BinaryenSetMemory(BinaryenModuleRef module,
                        BinaryenIndex initial,
                        BinaryenIndex maximum,
                        const char* exportName,
-                       const char** segments,
-                       bool* segmentPassive,
+                       const char** segmentNames,
+                       const char** segmentDatas,
+                       bool* segmentPassives,
                        BinaryenExpressionRef* segmentOffsets,
                        BinaryenIndex* segmentSizes,
                        BinaryenIndex numSegments,
@@ -5354,13 +5355,15 @@ void BinaryenSetMemory(BinaryenModuleRef module,
     return true;
   });
   for (BinaryenIndex i = 0; i < numSegments; i++) {
-    auto curr = Builder::makeDataSegment(Name::fromInt(i),
+    auto explicitName = segmentNames && segmentNames[i];
+    auto name = explicitName ? Name(segmentNames[i]) : Name::fromInt(i);
+    auto curr = Builder::makeDataSegment(name,
                                          memory->name,
-                                         segmentPassive[i],
+                                         segmentPassives[i],
                                          (Expression*)segmentOffsets[i],
-                                         segments[i],
+                                         segmentDatas[i],
                                          segmentSizes[i]);
-    curr->hasExplicitName = false;
+    curr->hasExplicitName = explicitName;
     ((Module*)module)->addDataSegment(std::move(curr));
   }
   ((Module*)module)->removeMemories([&](Memory* curr) { return true; });
@@ -5373,10 +5376,11 @@ uint32_t BinaryenGetNumMemorySegments(BinaryenModuleRef module) {
   return ((Module*)module)->dataSegments.size();
 }
 uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
-                                            BinaryenIndex id) {
+                                            const char* segmentName) {
   auto* wasm = (Module*)module;
-  if (wasm->dataSegments.size() <= id) {
-    Fatal() << "invalid segment id.";
+  const auto* segment = wasm->getDataSegmentOrNull(Name(segmentName));
+  if (segment == NULL) {
+    Fatal() << "invalid segment name.";
   }
 
   auto globalOffset = [&](const Expression* const& expr,
@@ -5387,8 +5391,6 @@ uint32_t BinaryenGetMemorySegmentByteOffset(BinaryenModuleRef module,
     }
     return false;
   };
-
-  const auto& segment = wasm->dataSegments[id];
 
   int64_t ret;
   if (globalOffset(segment->offset, ret)) {
@@ -5496,29 +5498,31 @@ bool BinaryenMemoryIs64(BinaryenModuleRef module, const char* name) {
   return memory->is64();
 }
 size_t BinaryenGetMemorySegmentByteLength(BinaryenModuleRef module,
-                                          BinaryenIndex id) {
-  const auto& segments = ((Module*)module)->dataSegments;
-  if (segments.size() <= id) {
-    Fatal() << "invalid segment id.";
+                                          const char* segmentName) {
+  auto* wasm = (Module*)module;
+  const auto* segment = wasm->getDataSegmentOrNull(Name(segmentName));
+  if (segment == NULL) {
+    Fatal() << "invalid segment name.";
   }
-  return segments[id]->data.size();
+  return segment->data.size();
 }
 bool BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
-                                     BinaryenIndex id) {
-  const auto& segments = ((Module*)module)->dataSegments;
-  if (segments.size() <= id) {
-    Fatal() << "invalid segment id.";
+                                     const char* segmentName) {
+  auto* wasm = (Module*)module;
+  const auto* segment = wasm->getDataSegmentOrNull(Name(segmentName));
+  if (segment == NULL) {
+    Fatal() << "invalid segment name.";
   }
-  return segments[id]->isPassive;
+  return segment->isPassive;
 }
 void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
-                                   BinaryenIndex id,
+                                   const char* segmentName,
                                    char* buffer) {
-  const auto& segments = ((Module*)module)->dataSegments;
-  if (segments.size() <= id) {
-    Fatal() << "invalid segment id.";
+  auto* wasm = (Module*)module;
+  const auto* segment = wasm->getDataSegmentOrNull(Name(segmentName));
+  if (segment == NULL) {
+    Fatal() << "invalid segment name.";
   }
-  const auto& segment = segments[id];
   std::copy(segment->data.cbegin(), segment->data.cend(), buffer);
 }
 
