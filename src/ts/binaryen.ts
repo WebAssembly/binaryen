@@ -2186,7 +2186,7 @@ export class Module {
                     const data = new Uint8Array(size);
                     data.set(HEAP8.subarray(ptr, ptr + size));
                     _free(ptr);
-                    return { offset, data, passive };
+                    return { name, offset, data, passive };
                 },
             countElementSegments: (): number => JSModule['_BinaryenGetNumElementSegments'](this.ptr),
             getElementSegmentByIndex: (index: number): ElementSegmentRef => JSModule['_BinaryenGetElementSegmentByIndex'](this.ptr, index),
@@ -2440,7 +2440,7 @@ export class TypeBuilder {
 
 
 export interface SegmentInfo {
-    name: string;
+    name?: string;
     offset: ExpressionRef;
     data: Uint8Array;
     passive?: boolean;
