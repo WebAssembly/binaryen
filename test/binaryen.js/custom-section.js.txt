@@ -1,4 +1,0 @@
-(module
- ;; custom section "hello", size 5, contents: "world"
-)
-

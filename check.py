@@ -21,7 +21,6 @@ import sys
 import unittest
 from collections import OrderedDict
 
-from scripts.test import binaryenjs
 from scripts.test import lld
 from scripts.test import shared
 from scripts.test import support
@@ -370,8 +369,6 @@ TEST_SUITES = OrderedDict([
     ('validator', run_validator_tests),
     ('example', run_example_tests),
     ('unit', run_unittest),
-    ('binaryenjs', binaryenjs.test_binaryen_js),
-    ('binaryenjs_wasm', binaryenjs.test_binaryen_wasm),
     ('lit', run_lit),
     ('gtest', run_gtest),
 ])
@@ -380,7 +377,7 @@ TEST_SUITES = OrderedDict([
 # Run all the tests
 def main():
     all_suites = TEST_SUITES.keys()
-    skip_by_default = ['binaryenjs', 'binaryenjs_wasm']
+    skip_by_default = []
 
     if shared.options.list_suites:
         for suite in all_suites:

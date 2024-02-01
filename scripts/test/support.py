@@ -188,20 +188,3 @@ def run_command(cmd, expected_status=0, stderr=None,
             raise Exception(('run_command unexpected stderr',
                              "expected '%s', actual '%s'" % (expected_err, err)))
     return out
-
-
-def node_has_webassembly(cmd):
-    cmd = [cmd, '-e', 'process.stdout.write(typeof WebAssembly)']
-    return run_command(cmd) == 'object'
-
-
-def js_test_wrap():
-    # common wrapper code for JS tests, waiting for binaryen.js to become ready
-    # and providing common utility used by all tests:
-    return '''
-        (async function __in_test_code__() {
-            var binaryen = await Binaryen()
-            function assert(x) { if (!x) throw Error('Test assertion failed'); }
-            %TEST%
-        })();
-    '''
