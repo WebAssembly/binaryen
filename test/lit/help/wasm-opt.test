@@ -79,6 +79,15 @@
 ;; CHECK-NEXT:   --new-wat-parser                              Use the experimental new WAT
 ;; CHECK-NEXT:                                                 parser
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --experimental-new-eh                         After running all requested
+;; CHECK-NEXT:                                                 transformations / optimizations,
+;; CHECK-NEXT:                                                 translate the instruction to use
+;; CHECK-NEXT:                                                 the new EH instructions at the
+;; CHECK-NEXT:                                                 end. Depending on the
+;; CHECK-NEXT:                                                 optimization level specified,
+;; CHECK-NEXT:                                                 this may do some more
+;; CHECK-NEXT:                                                 post-translation optimizations.
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: Optimization passes:
 ;; CHECK-NEXT: --------------------
