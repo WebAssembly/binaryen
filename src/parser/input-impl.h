@@ -100,7 +100,7 @@ inline std::optional<uint64_t> ParseInput::takeOffset() {
       if (subLexer == subLexer.end()) {
         return {};
       }
-      if (auto o = subLexer->getU64()) {
+      if (auto o = subLexer->getU<uint64_t>()) {
         ++subLexer;
         if (subLexer == subLexer.end()) {
           ++lexer;
@@ -122,7 +122,7 @@ inline std::optional<uint32_t> ParseInput::takeAlign() {
       if (subLexer == subLexer.end()) {
         return {};
       }
-      if (auto a = subLexer->getU32()) {
+      if (auto a = subLexer->getU<uint32_t>()) {
         ++subLexer;
         if (subLexer == subLexer.end()) {
           ++lexer;
@@ -134,9 +134,9 @@ inline std::optional<uint32_t> ParseInput::takeAlign() {
   return {};
 }
 
-inline std::optional<uint64_t> ParseInput::takeU64() {
+template<typename T> inline std::optional<T> ParseInput::takeU() {
   if (auto t = peek()) {
-    if (auto n = t->getU64()) {
+    if (auto n = t->getU<T>()) {
       ++lexer;
       return n;
     }
@@ -144,67 +144,33 @@ inline std::optional<uint64_t> ParseInput::takeU64() {
   return std::nullopt;
 }
 
-inline std::optional<int64_t> ParseInput::takeS64() {
+template<typename T> inline std::optional<T> ParseInput::takeI() {
   if (auto t = peek()) {
-    if (auto n = t->getS64()) {
+    if (auto n = t->getI<T>()) {
       ++lexer;
       return n;
     }
   }
-  return {};
+  return std::nullopt;
 }
 
-inline std::optional<int64_t> ParseInput::takeI64() {
-  if (auto t = peek()) {
-    if (auto n = t->getI64()) {
-      ++lexer;
-      return n;
-    }
-  }
-  return {};
+inline std::optional<uint64_t> ParseInput::takeU64() {
+  return takeU<uint64_t>();
+}
+
+inline std::optional<uint64_t> ParseInput::takeI64() {
+  return takeI<uint64_t>();
 }
 
 inline std::optional<uint32_t> ParseInput::takeU32() {
-  if (auto t = peek()) {
-    if (auto n = t->getU32()) {
-      ++lexer;
-      return n;
-    }
-  }
-  return std::nullopt;
+  return takeU<uint64_t>();
 }
 
-inline std::optional<int32_t> ParseInput::takeS32() {
-  if (auto t = peek()) {
-    if (auto n = t->getS32()) {
-      ++lexer;
-      return n;
-    }
-  }
-  return {};
+inline std::optional<uint32_t> ParseInput::takeI32() {
+  return takeI<uint32_t>();
 }
 
-inline std::optional<int32_t> ParseInput::takeI32() {
-  if (auto t = peek()) {
-    if (auto n = t->getI32()) {
-      ++lexer;
-      return n;
-    }
-  }
-  return {};
-}
-
-inline std::optional<uint8_t> ParseInput::takeU8() {
-  if (auto t = peek()) {
-    if (auto n = t->getU32()) {
-      if (n <= std::numeric_limits<uint8_t>::max()) {
-        ++lexer;
-        return uint8_t(*n);
-      }
-    }
-  }
-  return {};
-}
+inline std::optional<uint8_t> ParseInput::takeU8() { return takeU<uint8_t>(); }
 
 inline std::optional<double> ParseInput::takeF64() {
   if (auto t = peek()) {

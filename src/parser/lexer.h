@@ -125,12 +125,10 @@ struct Token {
     }
     return {};
   }
-  std::optional<uint64_t> getU64() const;
-  std::optional<int64_t> getS64() const;
-  std::optional<uint64_t> getI64() const;
-  std::optional<uint32_t> getU32() const;
-  std::optional<int32_t> getS32() const;
-  std::optional<uint32_t> getI32() const;
+
+  template<typename T> std::optional<T> getU() const;
+  template<typename T> std::optional<T> getS() const;
+  template<typename T> std::optional<T> getI() const;
   std::optional<double> getF64() const;
   std::optional<float> getF32() const;
   std::optional<std::string_view> getString() const;

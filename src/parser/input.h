@@ -51,11 +51,9 @@ struct ParseInput {
   std::optional<uint64_t> takeOffset();
   std::optional<uint32_t> takeAlign();
   std::optional<uint64_t> takeU64();
-  std::optional<int64_t> takeS64();
-  std::optional<int64_t> takeI64();
+  std::optional<uint64_t> takeI64();
   std::optional<uint32_t> takeU32();
-  std::optional<int32_t> takeS32();
-  std::optional<int32_t> takeI32();
+  std::optional<uint32_t> takeI32();
   std::optional<uint8_t> takeU8();
   std::optional<double> takeF64();
   std::optional<float> takeF32();
@@ -67,6 +65,11 @@ struct ParseInput {
   Index getPos();
   [[nodiscard]] Err err(Index pos, std::string reason);
   [[nodiscard]] Err err(std::string reason) { return err(getPos(), reason); }
+
+private:
+  template<typename T> std::optional<T> takeU();
+  template<typename T> std::optional<T> takeS();
+  template<typename T> std::optional<T> takeI();
 };
 
 #include "input-impl.h"
