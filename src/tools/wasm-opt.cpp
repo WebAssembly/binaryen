@@ -417,8 +417,8 @@ int main(int argc, const char* argv[]) {
     BYN_TRACE("translating to new EH instructions...\n");
     PassRunner runner(&wasm, options.passOptions);
     runner.add("translate-to-new-eh");
-    // perform Stack IR optimizations here, at the very end of the
-    // optimization pipeline
+    // Perform Stack IR optimizations here, at the very end of the
+    // optimization pipeline.
     if (options.passOptions.optimizeLevel >= 2 ||
         options.passOptions.shrinkLevel >= 1) {
       runner.addIfNoDWARFIssues("generate-stack-ir");
