@@ -218,7 +218,7 @@ struct StringLowering : public StringGathering {
     std::stringstream stream;
     stringArray.stringify(stream);
     auto str = stream.str();
-    std::vector<char> vec(str.begin(), str.end());
+    auto vec = std::vector<char>(str.begin(), str.end());
     module->customSections.emplace_back(
       CustomSection{"string.consts", std::move(vec)});
   }
