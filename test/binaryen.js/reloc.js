@@ -5,6 +5,7 @@ var module = new binaryen.Module();
 module.addGlobalImport("memory_base", "env", "memory_base", binaryen.i32, false);
 module.setMemory(1, -1, null, [
   {
+    name: "x0",
     offset: module.global.get("memory_base", binaryen.i32),
     data: "data data".split('').map(function(x) { return x.charCodeAt(0) })
   }

@@ -3,7 +3,7 @@
  (import "env" "memory_base" (global $memory_base i32))
  (import "env" "table_base" (global $table_base i32))
  (memory $0 1)
- (data $0 (global.get $memory_base) "data data")
+ (data $x0 (global.get $memory_base) "data data")
  (table $0 1 funcref)
  (elem $0 (global.get $table_base) $func $func)
  (func $func

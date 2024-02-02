@@ -530,8 +530,9 @@ void test_core() {
 
   // Memory. Add it before creating any memory-using instructions.
 
-  const char* segments[] = {"hello, world", "I am passive"};
-  bool segmentPassive[] = {false, true};
+  const char* segmentNames[] = {"0", "1"};
+  const char* segmentDatas[] = {"hello, world", "I am passive"};
+  bool segmentPassives[] = {false, true};
   BinaryenExpressionRef segmentOffsets[] = {
     BinaryenConst(module, BinaryenLiteralInt32(10)), NULL};
   BinaryenIndex segmentSizes[] = {12, 12};
@@ -539,8 +540,9 @@ void test_core() {
                     1,
                     256,
                     "mem",
-                    segments,
-                    segmentPassive,
+                    segmentNames,
+                    segmentDatas,
+                    segmentPassives,
                     segmentOffsets,
                     segmentSizes,
                     2,
@@ -2085,9 +2087,10 @@ void test_for_each() {
       assert(BinaryenGetExportByIndex(module, i) == exps[i]);
     }
 
-    const char* segments[] = {"hello, world", "segment data 2"};
+    const char* segmentNames[] = {"0", "1"};
+    const char* segmentDatas[] = {"hello, world", "segment data 2"};
     const uint32_t expected_offsets[] = {10, 125};
-    bool segmentPassive[] = {false, false};
+    bool segmentPassives[] = {false, false};
     BinaryenIndex segmentSizes[] = {12, 14};
 
     BinaryenExpressionRef segmentOffsets[] = {
@@ -2097,8 +2100,9 @@ void test_for_each() {
                       1,
                       256,
                       "mem",
-                      segments,
-                      segmentPassive,
+                      segmentNames,
+                      segmentDatas,
+                      segmentPassives,
                       segmentOffsets,
                       segmentSizes,
                       2,
@@ -2113,11 +2117,12 @@ void test_for_each() {
 
     for (i = 0; i < BinaryenGetNumMemorySegments(module); i++) {
       char out[15] = {};
-      assert(BinaryenGetMemorySegmentByteOffset(module, i) ==
+      assert(BinaryenGetMemorySegmentByteOffset(module, segmentNames[i]) ==
              expected_offsets[i]);
-      assert(BinaryenGetMemorySegmentByteLength(module, i) == segmentSizes[i]);
-      BinaryenCopyMemorySegmentData(module, i, out);
-      assert(0 == strcmp(segments[i], out));
+      assert(BinaryenGetMemorySegmentByteLength(module, segmentNames[i]) ==
+             segmentSizes[i]);
+      BinaryenCopyMemorySegmentData(module, segmentNames[i], out);
+      assert(0 == strcmp(segmentDatas[i], out));
     }
   }
   {

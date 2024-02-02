@@ -16,16 +16,18 @@ int main() {
   expressions[size_t(NULL)] = BinaryenExpressionRef(NULL);
   BinaryenModuleAutoDrop(the_module);
   {
-    const char* segments[] = {0};
-    bool segmentPassive[] = {false};
+    const char* segmentNames[] = {"0"};
+    const char* segmentDatas[] = {0};
+    bool segmentPassives[] = {false};
     BinaryenExpressionRef segmentOffsets[] = {0};
     BinaryenIndex segmentSizes[] = {0};
     BinaryenSetMemory(the_module,
                       256,
                       256,
                       "memory",
-                      segments,
-                      segmentPassive,
+                      segmentNames,
+                      segmentDatas,
+                      segmentPassives,
                       segmentOffsets,
                       segmentSizes,
                       0,
@@ -81,16 +83,18 @@ int main() {
   }
   BinaryenAddFunctionExport(the_module, "main", "main");
   {
-    const char* segments[] = {0};
-    bool segmentPassive[] = {false};
+    const char* segmentNames[] = {"0"};
+    const char* segmentDatas[] = {0};
+    bool segmentPassives[] = {false};
     BinaryenExpressionRef segmentOffsets[] = {0};
     BinaryenIndex segmentSizes[] = {0};
     BinaryenSetMemory(the_module,
                       1024,
                       1024,
                       NULL,
-                      segments,
-                      segmentPassive,
+                      segmentNames,
+                      segmentDatas,
+                      segmentPassives,
                       segmentOffsets,
                       segmentSizes,
                       0,
