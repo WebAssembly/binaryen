@@ -176,7 +176,6 @@ struct DeadCodeElimination
         typeUpdater.changeType(tryy, Type::unreachable);
       }
     } else {
-      WASM_UNREACHABLE("unimplemented DCE control flow structure");
     }
   }
 };

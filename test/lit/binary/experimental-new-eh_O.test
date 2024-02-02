@@ -1,0 +1,37 @@
+;; RUN: wasm-opt %s.old.wasm -all --experimental-new-eh -O -o %result.wasm
+;; RUN: diff %result.wasm %s.new.wasm
+
+;; experimental-new-eh_O.test.old.wasm was generated from:
+;; (module
+;;   (import "env" "foo" (func $fimport$0))
+;;   (start $0)
+;;   (func $0
+;;     (try $l
+;;       (do
+;;         (call $fimport$0)
+;;       )
+;;       (catch_all
+;;         (rethrow $l)
+;;       )
+;;     )
+;;   )
+;; )
+
+;; experimental-new-eh_O.test.new.wasm should be in the form of:
+;; (module
+;;   (import "env" "foo" (func $fimport$0))
+;;   (start $0)
+;;   (func $0
+;;     (local $0 exnref)
+;;     (block $label$1
+;;       (throw_ref
+;;         (block $label$2 (result exnref)
+;;           (try_table (catch_all_ref $label$2)
+;;             (call $fimport$0)
+;;           )
+;;           (br $label$1)
+;;         )
+;;       )
+;;     )
+;;   )
+;; )
