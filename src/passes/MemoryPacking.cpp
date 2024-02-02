@@ -34,6 +34,7 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/space.h"
+#include "support/stdckdint.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -46,6 +47,7 @@ namespace {
 // will be used instead of memory.init for this range.
 struct Range {
   bool isZero;
+  // The range [start, end) - that is, start is included while end is not.
   size_t start;
   size_t end;
 };
@@ -109,7 +111,8 @@ struct MemoryPacking : public Pass {
                           ReferrersMap& referrers);
   bool canSplit(const std::unique_ptr<DataSegment>& segment,
                 const Referrers& referrers);
-  void calculateRanges(const std::unique_ptr<DataSegment>& segment,
+  void calculateRanges(Module* module,
+                       const std::unique_ptr<DataSegment>& segment,
                        const Referrers& referrers,
                        std::vector<Range>& ranges);
   void createSplitSegments(Builder& builder,
@@ -162,7 +165,7 @@ void MemoryPacking::run(Module* module) {
     std::vector<Range> ranges;
 
     if (canSplit(segment, currReferrers)) {
-      calculateRanges(segment, currReferrers, ranges);
+      calculateRanges(module, segment, currReferrers, ranges);
     } else {
       // A single range covers the entire segment. Set isZero to false so the
       // original memory.init will be used even if segment is all zeroes.
@@ -295,12 +298,31 @@ bool MemoryPacking::canSplit(const std::unique_ptr<DataSegment>& segment,
   return segment->isPassive || segment->offset->is<Const>();
 }
 
-void MemoryPacking::calculateRanges(const std::unique_ptr<DataSegment>& segment,
+void MemoryPacking::calculateRanges(Module* module,
+                                    const std::unique_ptr<DataSegment>& segment,
                                     const Referrers& referrers,
                                     std::vector<Range>& ranges) {
   auto& data = segment->data;
   if (data.size() == 0) {
     return;
+  }
+
+  // A segment that might trap during startup must be handled carefully, as we
+  // do not want to remove that trap (unless we are allowed to by TNH).
+  auto preserveTrap = !getPassOptions().trapsNeverHappen && segment->offset;
+  if (preserveTrap) {
+    // Check if we can rule out a trap by it being in bounds.
+    if (auto* c = segment->offset->dynCast<Const>()) {
+      auto* memory = module->getMemory(segment->memory);
+      auto memorySize = memory->initial * Memory::kPageSize;
+      Index start = c->value.getUnsigned();
+      Index size = segment->data.size();
+      Index end;
+      if (!std::ckd_add(&end, start, size) && end <= memorySize) {
+        // This is in bounds.
+        preserveTrap = false;
+      }
+    }
   }
 
   // Calculate initial zero and nonzero ranges
@@ -346,7 +368,10 @@ void MemoryPacking::calculateRanges(const std::unique_ptr<DataSegment>& segment,
       }
     }
 
-    // Merge edge zeroes if they are not worth splitting
+    // Merge edge zeroes if they are not worth splitting. Note that we must not
+    // have a trap we must preserve here (if we did, we'd need to handle that in
+    // the code below).
+    assert(!preserveTrap);
     if (ranges.size() >= 2) {
       auto last = ranges.end() - 1;
       auto penultimate = ranges.end() - 2;
@@ -364,12 +389,12 @@ void MemoryPacking::calculateRanges(const std::unique_ptr<DataSegment>& segment,
       }
     }
   } else {
-    // Legacy ballpark overhead of active segment with offset
+    // Legacy ballpark overhead of active segment with offset.
     // TODO: Tune this
     threshold = 8;
   }
 
-  // Merge ranges across small spans of zeroes
+  // Merge ranges across small spans of zeroes.
   std::vector<Range> mergedRanges = {ranges.front()};
   size_t i;
   for (i = 1; i < ranges.size() - 1; ++i) {
@@ -383,9 +408,27 @@ void MemoryPacking::calculateRanges(const std::unique_ptr<DataSegment>& segment,
       mergedRanges.push_back(*curr);
     }
   }
-  // Add the final range if it hasn't already been merged in
+  // Add the final range if it hasn't already been merged in.
   if (i < ranges.size()) {
     mergedRanges.push_back(ranges.back());
+  }
+  // If we need to preserve a trap then we must keep the topmost byte of the
+  // segment, which is enough to cause a trap if we do in fact trap.
+  if (preserveTrap) {
+    // Check if the last byte is in a zero range. Such a range will be dropped
+    // later, so add a non-zero range with that byte. (It is slightly odd to
+    // add a range with a zero marked as non-zero, but that is how we ensure it
+    // is preserved later in the output.)
+    auto& back = mergedRanges.back();
+    if (back.isZero) {
+      // Remove the last byte from |back|. Decrementing this prevents it from
+      // overlapping with the new segment we are about to add. Note that this
+      // might make |back| have size 0, but that is not a problem as it will be
+      // dropped later anyhow, since it contains zeroes.
+      back.end--;
+      auto lastByte = data.size() - 1;
+      mergedRanges.push_back({false, lastByte, lastByte + 1});
+    }
   }
   std::swap(ranges, mergedRanges);
 }
@@ -551,6 +594,20 @@ void MemoryPacking::dropUnusedSegments(
   module->updateDataSegmentsMap();
 }
 
+// Given the start of a segment and an offset into it, compute the sum of the
+// two to get the absolute address the data should be at. This takes into
+// account overflows in that we saturate to UINT_MAX: we do not want an overflow
+// to take us down into a small address; in the invalid case of an overflow we
+// stay at the largest possible unsigned value, which will keep us trapping.
+template<typename T>
+Expression* addStartAndOffset(T start, T offset, Builder& builder) {
+  T total;
+  if (std::ckd_add(&total, start, offset)) {
+    total = std::numeric_limits<T>::max();
+  }
+  return builder.makeConst(T(total));
+}
+
 void MemoryPacking::createSplitSegments(
   Builder& builder,
   const DataSegment* segment,
@@ -568,10 +625,12 @@ void MemoryPacking::createSplitSegments(
     if (!segment->isPassive) {
       if (auto* c = segment->offset->dynCast<Const>()) {
         if (c->value.type == Type::i32) {
-          offset = builder.makeConst(int32_t(c->value.geti32() + range.start));
+          offset = addStartAndOffset<uint32_t>(
+            range.start, c->value.geti32(), builder);
         } else {
           assert(c->value.type == Type::i64);
-          offset = builder.makeConst(int64_t(c->value.geti64() + range.start));
+          offset = addStartAndOffset<uint64_t>(
+            range.start, c->value.geti64(), builder);
         }
       } else {
         assert(ranges.size() == 1);
