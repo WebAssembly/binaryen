@@ -811,7 +811,12 @@ template std::optional<uint64_t> Token::getI<uint64_t>() const;
 template std::optional<uint32_t> Token::getU<uint32_t>() const;
 template std::optional<int32_t> Token::getS<int32_t>() const;
 template std::optional<uint32_t> Token::getI<uint32_t>() const;
+template std::optional<uint16_t> Token::getU<uint16_t>() const;
+template std::optional<int16_t> Token::getS<int16_t>() const;
+template std::optional<uint16_t> Token::getI<uint16_t>() const;
 template std::optional<uint8_t> Token::getU<uint8_t>() const;
+template std::optional<int8_t> Token::getS<int8_t>() const;
+template std::optional<uint8_t> Token::getI<uint8_t>() const;
 
 std::optional<double> Token::getF64() const {
   constexpr int signif = 52;

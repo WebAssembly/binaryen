@@ -1362,7 +1362,73 @@ template<typename Ctx> Result<> makeConst(Ctx& ctx, Index pos, Type type) {
       }
       return ctx.in.err("expected f64");
     case Type::v128:
-      return ctx.in.err("unimplemented instruction");
+      if (ctx.in.takeKeyword("i8x16"sv)) {
+        std::array<uint8_t, 16> vals;
+        for (size_t i = 0; i < 16; ++i) {
+          auto val = ctx.in.takeI8();
+          if (!val) {
+            return ctx.in.err("expected i8 value");
+          }
+          vals[i] = *val;
+        }
+        return ctx.makeI8x16Const(pos, vals);
+      }
+      if (ctx.in.takeKeyword("i16x8"sv)) {
+        std::array<uint16_t, 8> vals;
+        for (size_t i = 0; i < 8; ++i) {
+          auto val = ctx.in.takeI16();
+          if (!val) {
+            return ctx.in.err("expected i16 value");
+          }
+          vals[i] = *val;
+        }
+        return ctx.makeI16x8Const(pos, vals);
+      }
+      if (ctx.in.takeKeyword("i32x4"sv)) {
+        std::array<uint32_t, 4> vals;
+        for (size_t i = 0; i < 4; ++i) {
+          auto val = ctx.in.takeI32();
+          if (!val) {
+            return ctx.in.err("expected i32 value");
+          }
+          vals[i] = *val;
+        }
+        return ctx.makeI32x4Const(pos, vals);
+      }
+      if (ctx.in.takeKeyword("i64x2"sv)) {
+        std::array<uint64_t, 2> vals;
+        for (size_t i = 0; i < 2; ++i) {
+          auto val = ctx.in.takeI64();
+          if (!val) {
+            return ctx.in.err("expected i64 value");
+          }
+          vals[i] = *val;
+        }
+        return ctx.makeI64x2Const(pos, vals);
+      }
+      if (ctx.in.takeKeyword("f32x4"sv)) {
+        std::array<float, 4> vals;
+        for (size_t i = 0; i < 4; ++i) {
+          auto val = ctx.in.takeF32();
+          if (!val) {
+            return ctx.in.err("expected f32 value");
+          }
+          vals[i] = *val;
+        }
+        return ctx.makeF32x4Const(pos, vals);
+      }
+      if (ctx.in.takeKeyword("f64x2"sv)) {
+        std::array<double, 2> vals;
+        for (size_t i = 0; i < 2; ++i) {
+          auto val = ctx.in.takeF64();
+          if (!val) {
+            return ctx.in.err("expected f64 value");
+          }
+          vals[i] = *val;
+        }
+        return ctx.makeF64x2Const(pos, vals);
+      }
+      return ctx.in.err("expected SIMD vector shape");
     case Type::none:
     case Type::unreachable:
       break;
