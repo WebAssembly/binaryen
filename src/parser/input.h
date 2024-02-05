@@ -54,7 +54,9 @@ struct ParseInput {
   std::optional<uint64_t> takeI64();
   std::optional<uint32_t> takeU32();
   std::optional<uint32_t> takeI32();
+  std::optional<uint16_t> takeI16();
   std::optional<uint8_t> takeU8();
+  std::optional<uint8_t> takeI8();
   std::optional<double> takeF64();
   std::optional<float> takeF32();
   std::optional<std::string> takeString();

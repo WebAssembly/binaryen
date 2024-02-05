@@ -406,6 +406,20 @@ struct NullInstrParserCtx {
   Result<> makeI64Const(Index, uint64_t) { return Ok{}; }
   Result<> makeF32Const(Index, float) { return Ok{}; }
   Result<> makeF64Const(Index, double) { return Ok{}; }
+  Result<> makeI8x16Const(Index, const std::array<uint8_t, 16>&) {
+    return Ok{};
+  }
+  Result<> makeI16x8Const(Index, const std::array<uint16_t, 8>&) {
+    return Ok{};
+  }
+  Result<> makeI32x4Const(Index, const std::array<uint32_t, 4>&) {
+    return Ok{};
+  }
+  Result<> makeI64x2Const(Index, const std::array<uint64_t, 2>&) {
+    return Ok{};
+  }
+  Result<> makeF32x4Const(Index, const std::array<float, 4>&) { return Ok{}; }
+  Result<> makeF64x2Const(Index, const std::array<double, 2>&) { return Ok{}; }
   Result<> makeLoad(Index, Type, bool, int, bool, MemoryIdxT*, MemargT) {
     return Ok{};
   }
@@ -1540,6 +1554,54 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeF64Const(Index pos, double c) {
     return withLoc(pos, irBuilder.makeConst(Literal(c)));
+  }
+
+  Result<> makeI8x16Const(Index pos, const std::array<uint8_t, 16>& vals) {
+    std::array<Literal, 16> lanes;
+    for (size_t i = 0; i < 16; ++i) {
+      lanes[i] = Literal(uint32_t(vals[i]));
+    }
+    return withLoc(pos, irBuilder.makeConst(Literal(lanes)));
+  }
+
+  Result<> makeI16x8Const(Index pos, const std::array<uint16_t, 8>& vals) {
+    std::array<Literal, 8> lanes;
+    for (size_t i = 0; i < 8; ++i) {
+      lanes[i] = Literal(uint32_t(vals[i]));
+    }
+    return withLoc(pos, irBuilder.makeConst(Literal(lanes)));
+  }
+
+  Result<> makeI32x4Const(Index pos, const std::array<uint32_t, 4>& vals) {
+    std::array<Literal, 4> lanes;
+    for (size_t i = 0; i < 4; ++i) {
+      lanes[i] = Literal(vals[i]);
+    }
+    return withLoc(pos, irBuilder.makeConst(Literal(lanes)));
+  }
+
+  Result<> makeI64x2Const(Index pos, const std::array<uint64_t, 2>& vals) {
+    std::array<Literal, 2> lanes;
+    for (size_t i = 0; i < 2; ++i) {
+      lanes[i] = Literal(vals[i]);
+    }
+    return withLoc(pos, irBuilder.makeConst(Literal(lanes)));
+  }
+
+  Result<> makeF32x4Const(Index pos, const std::array<float, 4>& vals) {
+    std::array<Literal, 4> lanes;
+    for (size_t i = 0; i < 4; ++i) {
+      lanes[i] = Literal(vals[i]);
+    }
+    return withLoc(pos, irBuilder.makeConst(Literal(lanes)));
+  }
+
+  Result<> makeF64x2Const(Index pos, const std::array<double, 2>& vals) {
+    std::array<Literal, 2> lanes;
+    for (size_t i = 0; i < 2; ++i) {
+      lanes[i] = Literal(vals[i]);
+    }
+    return withLoc(pos, irBuilder.makeConst(Literal(lanes)));
   }
 
   Result<> makeLoad(Index pos,

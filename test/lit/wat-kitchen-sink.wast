@@ -380,7 +380,7 @@
  ;; CHECK:      (elem $passive-2 anyref (struct.new_default $s0) (struct.new_default $s0))
  (elem $passive-2 anyref (item struct.new $s0) (struct.new $s0))
 
- ;; CHECK:      (elem declare func $ref-func $table-fill $table-grow $table-set)
+ ;; CHECK:      (elem declare func $ref-func $ref-is-null $table-fill $table-grow $table-set)
  (elem declare func 0 1 2 3)
 
  (elem $declare-2 declare funcref (item ref.func 0) (ref.func 1) (item (ref.func 2)))
@@ -3302,6 +3302,41 @@
   atomic.fence
  )
 
+ ;; CHECK:      (func $simd-const (type $void)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (v128.const i32x4 0x03020100 0x07060504 0x0b0a0908 0x0f0e0d0c)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (v128.const i32x4 0x00010000 0x00030002 0x00050004 0x00070006)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (v128.const i32x4 0x00000000 0x00000001 0x00000002 0x00000003)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (v128.const i32x4 0x00000000 0x00000000 0x00000001 0x00000000)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (v128.const i32x4 0x00000000 0x3f800000 0x40000000 0x40400000)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x3ff00000)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $simd-const
+  v128.const i8x16 0 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15
+  drop
+  v128.const i16x8 0 1 2 3 4 5 6 7
+  drop
+  v128.const i32x4 0 1 2 3
+  drop
+  v128.const i64x2 0 1
+  drop
+  v128.const f32x4 0.0 1.0 2.0 3.0
+  drop
+  v128.const f64x2 0.0 1.0
+  drop
+ )
+
  ;; CHECK:      (func $simd-extract (type $33) (param $0 v128) (result i32)
  ;; CHECK-NEXT:  (i32x4.extract_lane 3
  ;; CHECK-NEXT:   (local.get $0)
@@ -3587,7 +3622,7 @@
  ;; CHECK-NEXT:   (ref.func $ref-func)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.func $ref-func)
+ ;; CHECK-NEXT:   (ref.func $ref-is-null)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $ref-func

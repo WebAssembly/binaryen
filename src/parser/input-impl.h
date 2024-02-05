@@ -170,7 +170,13 @@ inline std::optional<uint32_t> ParseInput::takeI32() {
   return takeI<uint32_t>();
 }
 
+inline std::optional<uint16_t> ParseInput::takeI16() {
+  return takeI<uint16_t>();
+}
+
 inline std::optional<uint8_t> ParseInput::takeU8() { return takeU<uint8_t>(); }
+
+inline std::optional<uint8_t> ParseInput::takeI8() { return takeI<uint8_t>(); }
 
 inline std::optional<double> ParseInput::takeF64() {
   if (auto t = peek()) {
