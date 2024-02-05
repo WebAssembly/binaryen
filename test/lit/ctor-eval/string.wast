@@ -5,9 +5,6 @@
 ;; the output, as precomputing a string results in an identical string.
 
 (module
- ;; CHECK:      (type $0 (func (result anyref)))
-
- ;; CHECK:      (global $global (ref string) (string.const "one"))
  (global $global (ref string) (string.const "one"))
 
  (export "test" (func $test))
@@ -16,8 +13,10 @@
   (global.get $global)
  )
 )
+;; CHECK:      (type $0 (func (result anyref)))
+
 ;; CHECK:      (export "test" (func $test_1))
 
 ;; CHECK:      (func $test_1 (type $0) (result anyref)
-;; CHECK-NEXT:  (global.get $global)
+;; CHECK-NEXT:  (string.const "one")
 ;; CHECK-NEXT: )

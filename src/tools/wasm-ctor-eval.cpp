@@ -838,8 +838,9 @@ public:
     // GC data (structs and arrays) must be handled with the special global-
     // creating logic later down. But MVP types as well as i31s (even
     // externalized i31s) can be handled by the general makeConstantExpression
-    // logic (which knows how to handle externalization, for i31s).
-    if (!value.isData()) {
+    // logic (which knows how to handle externalization, for i31s; and it also
+    // can handle string constants).
+    if (!value.isData() || value.type.getHeapType().isString()) {
       return builder.makeConstantExpression(original);
     }
 
@@ -889,12 +890,6 @@ public:
       } else if (heapType.isArray()) {
         // TODO: for repeated identical values, can use ArrayNew
         init = builder.makeArrayNewFixed(heapType, args);
-      } else if (heapType.isString()) {
-        std::string s;
-        for (auto c : values) {
-          s += char(c.getInteger());
-        }
-        init = builder.makeStringConst(s);
       } else {
         WASM_UNREACHABLE("bad gc type");
       }
