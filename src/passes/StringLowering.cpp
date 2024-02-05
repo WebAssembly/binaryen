@@ -21,17 +21,18 @@
 // globals, avoiding them appearing in code that can run more than once (which
 // can have overhead in VMs).
 //
-// Building on that, an extended version of StringGathering will also replace
-// those new globals with imported globals of type externref, for use with the
-// string imports proposal. String operations will likewise need to be lowered.
-// TODO
+// StringLowering does the same, and also replaces those new globals with
+// imported globals of type externref, for use with the string imports proposal.
+// String operations will likewise need to be lowered. TODO
 //
 
 #include <algorithm>
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/type-updating.h"
 #include "pass.h"
+#include "support/json.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -175,6 +176,61 @@ struct StringGathering : public Pass {
   }
 };
 
+struct StringLowering : public StringGathering {
+  void run(Module* module) override {
+    if (!module->features.has(FeatureSet::Strings)) {
+      return;
+    }
+
+    // First, run the gathering operation so all string.consts are in one place.
+    StringGathering::run(module);
+
+    // Lower the string.const globals into imports.
+    makeImports(module);
+
+    // Remove all HeapType::string etc. in favor of externref.
+    updateTypes(module);
+
+    // Disable the feature here after we lowered everything away.
+    module->features.disable(FeatureSet::Strings);
+  }
+
+  void makeImports(Module* module) {
+    Index importIndex = 0;
+    json::Value stringArray;
+    stringArray.setArray();
+    std::vector<Name> importedStrings;
+    for (auto& global : module->globals) {
+      if (global->init) {
+        if (auto* c = global->init->dynCast<StringConst>()) {
+          global->module = "string.const";
+          global->base = std::to_string(importIndex);
+          importIndex++;
+          global->init = nullptr;
+
+          auto str = json::Value::make(std::string(c->string.str).c_str());
+          stringArray.push_back(str);
+        }
+      }
+    }
+
+    // Add a custom section with the JSON.
+    std::stringstream stream;
+    stringArray.stringify(stream);
+    auto str = stream.str();
+    auto vec = std::vector<char>(str.begin(), str.end());
+    module->customSections.emplace_back(
+      CustomSection{"string.consts", std::move(vec)});
+  }
+
+  void updateTypes(Module* module) {
+    TypeMapper::TypeUpdates updates;
+    updates[HeapType::string] = HeapType::ext;
+    TypeMapper(*module, updates).map();
+  }
+};
+
 Pass* createStringGatheringPass() { return new StringGathering(); }
+Pass* createStringLoweringPass() { return new StringLowering(); }
 
 } // namespace wasm

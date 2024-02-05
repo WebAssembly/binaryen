@@ -428,6 +428,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --string-gathering                            gathers wasm strings to globals
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --string-lowering                             lowers wasm strings and
+;; CHECK-NEXT:                                                 operations to imports
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip                                       deprecated; same as strip-debug
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip-debug                                 strip debug info (including the

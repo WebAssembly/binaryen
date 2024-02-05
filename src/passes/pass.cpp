@@ -478,6 +478,9 @@ void PassRegistry::registerPasses() {
   registerPass("string-gathering",
                "gathers wasm strings to globals",
                createStringGatheringPass);
+  registerPass("string-lowering",
+               "lowers wasm strings and operations to imports",
+               createStringLoweringPass);
   registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
   registerPass("stack-check",
