@@ -16,8 +16,9 @@ const UTF8ToString: (ptr: number) => string | null = JSModule.UTF8ToString;
 const __i32_store: (offset: number, value: number) => void = JSModule['__i32_store'];
 const __i32_load: (offset: number) => number = JSModule['__i32_load'];
 const utils = JSModule['utils'];
-type Writer = (s: string) => void;
+type Writer = (...data: any[]) => void;
 const swapOut: (func: Writer) => Writer = utils.swapOut;
+const swapErr: (func: Writer) => Writer = utils.swapErr;
 const _BinaryenSizeofLiteral: () => number = utils._BinaryenSizeofLiteral;
 const _BinaryenSizeofAllocateAndWriteResult: () => number = utils._BinaryenSizeofAllocateAndWriteResult;
 
@@ -853,8 +854,17 @@ export class Module {
     getDebugInfoFileName(index: number): string | null {
         return UTF8ToString(JSModule['_BinaryenModuleGetDebugInfoFileName'](this.ptr, index));
     }
-    validate(): number {
-        return JSModule['_BinaryenModuleValidate'](this.ptr);
+    validate(out?: (...data: any[]) => void): boolean {
+        if(out) {
+            const oldErr = swapErr(out);
+            try {
+                return JSModule['_BinaryenModuleValidate'](this.ptr);
+            } finally {
+                swapErr(oldErr);
+            }
+        } else {
+            return JSModule['_BinaryenModuleValidate'](this.ptr);
+        }
     }
     optimize(): void {
         return JSModule['_BinaryenModuleOptimize'](this.ptr);
