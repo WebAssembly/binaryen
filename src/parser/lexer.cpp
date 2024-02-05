@@ -767,76 +767,51 @@ std::optional<LexResult> keyword(std::string_view in) {
 
 } // anonymous namespace
 
-std::optional<uint64_t> Token::getU64() const {
+template<typename T> std::optional<T> Token::getU() const {
+  static_assert(std::is_integral_v<T> && std::is_unsigned_v<T>);
   if (auto* tok = std::get_if<IntTok>(&data)) {
-    if (tok->sign == NoSign) {
-      return tok->n;
-    }
-  }
-  return {};
-}
-
-std::optional<int64_t> Token::getS64() const {
-  if (auto* tok = std::get_if<IntTok>(&data)) {
-    if (tok->sign == Neg) {
-      if (uint64_t(INT64_MIN) <= tok->n || tok->n == 0) {
-        return int64_t(tok->n);
-      }
-      // TODO: Add error production for signed underflow.
-    } else {
-      if (tok->n <= uint64_t(INT64_MAX)) {
-        return int64_t(tok->n);
-      }
-      // TODO: Add error production for signed overflow.
-    }
-  }
-  return {};
-}
-
-std::optional<uint64_t> Token::getI64() const {
-  if (auto n = getU64()) {
-    return *n;
-  }
-  if (auto n = getS64()) {
-    return *n;
-  }
-  return {};
-}
-
-std::optional<uint32_t> Token::getU32() const {
-  if (auto* tok = std::get_if<IntTok>(&data)) {
-    if (tok->sign == NoSign && tok->n <= UINT32_MAX) {
-      return int32_t(tok->n);
+    if (tok->sign == NoSign && tok->n <= std::numeric_limits<T>::max()) {
+      return T(tok->n);
     }
     // TODO: Add error production for unsigned overflow.
   }
   return {};
 }
 
-std::optional<int32_t> Token::getS32() const {
+template<typename T> std::optional<T> Token::getS() const {
+  static_assert(std::is_integral_v<T> && std::is_signed_v<T>);
   if (auto* tok = std::get_if<IntTok>(&data)) {
     if (tok->sign == Neg) {
-      if (uint64_t(INT32_MIN) <= tok->n || tok->n == 0) {
-        return int32_t(tok->n);
+      if (uint64_t(std::numeric_limits<T>::min()) <= tok->n || tok->n == 0) {
+        return T(tok->n);
       }
     } else {
-      if (tok->n <= uint64_t(INT32_MAX)) {
-        return int32_t(tok->n);
+      if (tok->n <= uint64_t(std::numeric_limits<T>::max())) {
+        return T(tok->n);
       }
     }
   }
   return {};
 }
 
-std::optional<uint32_t> Token::getI32() const {
-  if (auto n = getU32()) {
+template<typename T> std::optional<T> Token::getI() const {
+  static_assert(std::is_integral_v<T> && std::is_unsigned_v<T>);
+  if (auto n = getU<T>()) {
     return *n;
   }
-  if (auto n = getS32()) {
-    return uint32_t(*n);
+  if (auto n = getS<std::make_signed_t<T>>()) {
+    return T(*n);
   }
   return {};
 }
+
+template std::optional<uint64_t> Token::getU<uint64_t>() const;
+template std::optional<int64_t> Token::getS<int64_t>() const;
+template std::optional<uint64_t> Token::getI<uint64_t>() const;
+template std::optional<uint32_t> Token::getU<uint32_t>() const;
+template std::optional<int32_t> Token::getS<int32_t>() const;
+template std::optional<uint32_t> Token::getI<uint32_t>() const;
+template std::optional<uint8_t> Token::getU<uint8_t>() const;
 
 std::optional<double> Token::getF64() const {
   constexpr int signif = 52;
