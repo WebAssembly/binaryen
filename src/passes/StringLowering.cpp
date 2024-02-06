@@ -237,32 +237,52 @@ struct StringLowering : public StringGathering {
     TypeMapper(*module, updates).map();
   }
 
-  enum StringImport {
-    Nothing = 0,
+  // Imported string functions.
+  Name fromCharCodeArrayImport;
+  Name fromCodePointImport;
 
-    First = 0,
-    Last = 1,
-  };
+  auto nnExt = Type(HeapType::ext, NonNullable);
 
   void replaceInstructions(Module* module) {
-    // As we work in parallel we'll collect the set of necessary imports to add.
-    using NeededImports = std::unordered_set<StringImport>;
-    // XXX aybe the opposite: create all imports eagerly, let optimizer remov
+    // Add all the possible imports up front, to avoid adding them during
+    // parallel work. Optimizations can remove unneeded ones later.
+    Builder builder(*module);
+    auto array16 = Array(Field(Field::i16, Mutable));
 
-    // Process functions in parallel.
-    struct Replacer : public PostWalker<Replacer> {
-      NeededImports& imports;
+    {
+      fromCharCodeArrayImport = Names::getValidFunctionName(
+          *module, "string.fromCharCodeArray");
+      auto sig = Signature({Type(array16, Nullable), Type::i32, Type::i32}, nnExt);
+      module->addFunction(builder.makeFunction(fromCharCodeArrayImport, sig, {}));
+    }
+    {
+      fromCodePointImport = Names::getValidFunctionName(
+          *module, "string.fromCodePoint");
+      auto sig = Signature({Type::i32, nnExt);
+      module->addFunction(builder.makeFunction(fromCodePointImport, sig, {}));
+    }
 
-      Replacer(NeededImports& imports) : imports(imports) {}
+    // Replace the string instructions in parallel.
+    struct Replacer : public WalkerPass<PostWalker<Replacer>> {
+      bool isFunctionParallel() override { return true; }
+
+      StringLowering& lowering;
+
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<Replacer>(lowering);
+      }
+
+      Replacer(StringLowering& lowering) : lowering(lowering) {}
 
       void visitStringNew(StringNew* curr) {
+        Builder builder(*getModule());
         switch (curr->op) {
           case StringNewWTF16Array:
-            printMedium(o, "string.new_wtf16_array");
-            break;
+            replaceCurrent(builder.makeCall(lowering.fromCharCodeArrayImport, {curr->ptr, curr->start, curr->end}, lowering.nnExt))
+            return;
           case StringNewFromCodePoint:
-            printMedium(o, "string.from_code_point");
-            break;
+            replaceCurrent(builder.makeCall(lowering.fromCodePointImport, {curr->ptr}, lowering.nnExt))
+            return;
           default:
             WASM_UNREACHABLE("TODO: all of string.new*");
         }
@@ -275,32 +295,9 @@ struct StringLowering : public StringGathering {
       }
     };
 
-    ModuleUtils::ParallelFunctionAnalysis<NeededImports> analysis(
-      *module, [&](Function* func, NeededImports& imports) {
-        if (!func->imported()) {
-          Replacer(imports).walk(func->body);
-        }
-      });
-
-    // Also scan global code.
-    NeededImports allImports;
-    Replacer(allImports).walkModuleCode(module);
-
-    // Gather all the imports from the functions.
-    for (auto& [_, imports] : analysis.map) {
-      for (auto import : imports) {
-        allImports.insert(import);
-      }
-    }
-
-    // Add the imports to the module.
-    for (int import = StringImport::First;
-         import != StringImport::Last;
-         import++) {
-      if (allImports.count(StringImport(import))) {
-        // Add
-      }
-    }
+    Replacer replacer(*this);
+    replacer.run(getPassRunner(), module);
+    replacer.walkModuleCode(module);
   }
 };
 
