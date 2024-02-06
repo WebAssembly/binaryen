@@ -2,8 +2,7 @@
 ;; RUN: foreach %s %t wasm-opt -all --dae -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type ${} (struct ))
- (type ${} (struct))
+ (type $"{}" (struct))
 
  ;; CHECK:      (func $foo (type $0)
  ;; CHECK-NEXT:  (call $bar)
@@ -53,7 +52,7 @@
  ;; CHECK-NEXT:  (local $0 (ref ${}))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
- (func $get-nonnull (param $0 (ref ${}))
+ (func $get-nonnull (param $0 (ref $"{}"))
   (nop)
  )
  ;; CHECK:      (func $send-nonnull (type $0)
@@ -61,7 +60,7 @@
  ;; CHECK-NEXT: )
  (func $send-nonnull
   (call $get-nonnull
-   (struct.new ${})
+   (struct.new $"{}")
   )
  )
 )

@@ -2,20 +2,15 @@
 ;; RUN: wasm-opt %s -all --dae -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type ${} (sub (struct )))
- (type ${} (sub (struct)))
+ (type $"{}" (sub (struct)))
 
- ;; CHECK:      (type $return_{} (func (result (ref ${}))))
- (type $return_{} (func (result (ref ${}))))
+ (type $"return_{}" (func (result (ref $"{}"))))
 
- ;; CHECK:      (type ${i32} (sub ${} (struct (field i32))))
- (type ${i32} (sub ${} (struct (field i32))))
+ (type $"{i32}" (sub $"{}" (struct (field i32))))
 
- ;; CHECK:      (type ${i32_f32} (sub ${i32} (struct (field i32) (field f32))))
- (type ${i32_f32} (sub ${i32} (struct (field i32) (field f32))))
+ (type $"{i32_f32}" (sub $"{i32}" (struct (field i32) (field f32))))
 
- ;; CHECK:      (type ${i32_i64} (sub ${i32} (struct (field i32) (field i64))))
- (type ${i32_i64} (sub ${i32} (struct (field i32) (field i64))))
+ (type $"{i32_i64}" (sub $"{i32}" (struct (field i32) (field i64))))
 
  (table 1 1 funcref)
 
@@ -318,7 +313,7 @@
  ;; CHECK:      (func $tail-callee (type $return_{}) (result (ref ${}))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- (func $tail-callee (result (ref ${}))
+ (func $tail-callee (result (ref $"{}"))
   (unreachable)
  )
  ;; CHECK:      (func $tail-caller-yes (type $return_{}) (result (ref ${}))
@@ -375,7 +370,7 @@
  ;; CHECK:      (func $tail-callee-indirect (type $return_{}) (result (ref ${}))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- (func $tail-callee-indirect (result (ref ${}))
+ (func $tail-callee-indirect (result (ref $"{}"))
   (unreachable)
  )
  ;; CHECK:      (func $tail-caller-indirect-yes (type $return_{}) (result (ref ${}))
@@ -384,7 +379,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $tail-caller-indirect-yes (result anyref)
-  (return_call_indirect (type $return_{}) (i32.const 0))
+  (return_call_indirect (type $"return_{}") (i32.const 0))
  )
  ;; CHECK:      (func $tail-caller-indirect-no (type $2) (result anyref)
  ;; CHECK-NEXT:  (local $any anyref)
@@ -408,7 +403,7 @@
     (return (local.get $any))
    )
   )
-  (return_call_indirect (type $return_{}) (i32.const 0))
+  (return_call_indirect (type $"return_{}") (i32.const 0))
  )
  ;; CHECK:      (func $tail-call-caller-indirect (type $4)
  ;; CHECK-NEXT:  (drop
@@ -431,7 +426,7 @@
  ;; CHECK:      (func $tail-callee-call_ref (type $return_{}) (result (ref ${}))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- (func $tail-callee-call_ref (result (ref ${}))
+ (func $tail-callee-call_ref (result (ref $"{}"))
   (unreachable)
  )
  ;; CHECK:      (func $tail-caller-call_ref-yes (type $return_{}) (result (ref ${}))
@@ -441,9 +436,9 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $tail-caller-call_ref-yes (result anyref)
-  (local $return_{} (ref null $return_{}))
+  (local $"return_{}" (ref null $"return_{}"))
 
-  (return_call_ref $return_{} (local.get $return_{}))
+  (return_call_ref $"return_{}" (local.get $"return_{}"))
  )
  ;; CHECK:      (func $tail-caller-call_ref-no (type $2) (result anyref)
  ;; CHECK-NEXT:  (local $any anyref)
@@ -462,14 +457,14 @@
  ;; CHECK-NEXT: )
  (func $tail-caller-call_ref-no (result anyref)
   (local $any anyref)
-  (local $return_{} (ref null $return_{}))
+  (local $"return_{}" (ref null $"return_{}"))
 
   (if (i32.const 1)
    (then
     (return (local.get $any))
    )
   )
-  (return_call_ref $return_{} (local.get $return_{}))
+  (return_call_ref $"return_{}" (local.get $"return_{}"))
  )
  ;; CHECK:      (func $tail-caller-call_ref-unreachable (type $2) (result anyref)
  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
@@ -482,7 +477,7 @@
  (func $tail-caller-call_ref-unreachable (result anyref)
   ;; An unreachable means there is no function signature to even look at. We
   ;; should not hit an assertion on such things.
-  (return_call_ref $return_{} (unreachable))
+  (return_call_ref $"return_{}" (unreachable))
  )
  ;; CHECK:      (func $tail-call-caller-call_ref (type $4)
  ;; CHECK-NEXT:  (drop
@@ -534,14 +529,14 @@
  ;; CHECK-NEXT: )
  (func $update-null (param $x i32) (param $y i32) (result anyref)
   ;; Of the three returns here, the null can be updated, and the LUB is
-  ;; determined by the other two, and is their shared parent ${}.
+  ;; determined by the other two, and is their shared parent $"{}."
   (if
    (local.get $x)
    (then
     (if
      (local.get $y)
      (then
-      (return (struct.new_default ${i32_f32}))
+      (return (struct.new_default $"{i32_f32}"))
      )
      (else
       (return (ref.null any))
@@ -549,7 +544,7 @@
     )
    )
    (else
-    (return (struct.new_default ${i32_i64}))
+    (return (struct.new_default $"{i32_i64}"))
    )
   )
  )

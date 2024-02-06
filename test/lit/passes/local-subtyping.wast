@@ -8,9 +8,9 @@
 ;; testcases.
 
 (module
-  (type ${} (sub (struct)))
+  (type $"{}" (sub (struct)))
 
-  (type ${i32} (sub (struct (field i32))))
+  (type $"{i32}" (sub (struct (field i32))))
 
   (type $array (sub (array i8)))
 
