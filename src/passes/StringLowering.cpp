@@ -245,7 +245,7 @@ struct StringLowering : public StringGathering {
   Name WasmStringsModule = "wasm:js-string";
 
   // Common types used in imports.
-  auto nullArray16 = Type(Array(Field(Field::i16, Mutable)), Nullable);
+  Type nullArray16 = Type(Array(Field(Field::i16, Mutable)), Nullable);
   Type nnExt = Type(HeapType::ext, NonNullable);
 
   // Creates an imported string function, returning its name (which is equal to
