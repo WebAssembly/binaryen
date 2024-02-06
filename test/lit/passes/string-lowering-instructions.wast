@@ -3,6 +3,19 @@
 ;; RUN: foreach %s %t wasm-opt --string-lowering  -all -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $0 (func (param externref externref externref externref)))
+
+  ;; CHECK:      (func $string.as (type $0) (param $a externref) (param $b externref) (param $c externref) (param $d externref)
+  ;; CHECK-NEXT:  (local.set $b
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $c
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $d
+  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $string.as
     (param $a stringref)
     (param $b stringview_wtf8)
