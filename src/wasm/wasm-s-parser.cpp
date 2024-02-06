@@ -3161,18 +3161,12 @@ Expression* SExpressionWasmBuilder::makeArrayNewElem(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeArrayNewFixed(Element& s) {
   auto heapType = parseHeapType(*s[1]);
-  size_t i = 2;
-  std::vector<Expression*> values;
-  if (i < s.size() && s[i]->isStr()) {
-    // With the standard syntax one should specify explicitly the size
-    // of the array
-    if ((size_t)parseIndex(*s[i]) != s.size() - 3) {
-      throw SParseException("wrong number of elements in array", s);
-    }
-    i++;
+  if ((size_t)parseIndex(*s[2]) != s.size() - 3) {
+    throw SParseException("wrong number of elements in array", s);
   }
-  while (i < s.size()) {
-    values.push_back(parseExpression(*s[i++]));
+  std::vector<Expression*> values;
+  for (size_t i = 3; i < s.size(); ++i) {
+    values.push_back(parseExpression(*s[i]));
   }
   return Builder(wasm).makeArrayNewFixed(heapType, values);
 }
