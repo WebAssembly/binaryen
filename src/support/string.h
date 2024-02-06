@@ -24,6 +24,7 @@
 #include "support/utilities.h"
 #include <algorithm>
 #include <cctype>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -150,6 +151,40 @@ inline std::string trim(const std::string& input) {
 
 inline bool isNumber(const std::string& str) {
   return !str.empty() && std::all_of(str.begin(), str.end(), ::isdigit);
+}
+
+inline std::ostream& printEscaped(std::ostream& os, std::string_view str) {
+  os << '"';
+  for (unsigned char c : str) {
+    switch (c) {
+      case '\t':
+        os << "\\t";
+        break;
+      case '\n':
+        os << "\\n";
+        break;
+      case '\r':
+        os << "\\r";
+        break;
+      case '"':
+        os << "\\\"";
+        break;
+      case '\'':
+        os << "\\'";
+        break;
+      case '\\':
+        os << "\\\\";
+        break;
+      default: {
+        if (c >= 32 && c < 127) {
+          os << c;
+        } else {
+          os << std::hex << '\\' << (c / 16) << (c % 16) << std::dec;
+        }
+      }
+    }
+  }
+  return os << '"';
 }
 
 } // namespace wasm::String

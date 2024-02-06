@@ -18,6 +18,7 @@
 #define wasm_support_name_h
 
 #include "support/istring.h"
+#include "support/string.h"
 
 namespace wasm {
 
@@ -57,6 +58,38 @@ struct Name : public IString {
   bool hasSubstring(IString substring) {
     // TODO: Use C++23 `contains`.
     return str.find(substring.str) != std::string_view::npos;
+  }
+
+  std::ostream& print(std::ostream& o) {
+    assert(*this && "Cannot print an empty name");
+    // We need to quote names if they have tricky chars.
+    // TODO: This is not spec-compliant since the spec does not yet support
+    // quoted identifiers and has a limited set of valid idchars.
+    o << '$';
+    if (std::all_of(str.begin(), str.end(), isIDChar)) {
+      return o << str;
+    } else {
+      return String::printEscaped(o, str);
+    }
+  }
+
+private:
+  // TODO: Use unicode rather than char.
+  static bool isIDChar(char c) {
+    if ('0' <= c && c <= '9') {
+      return true;
+    }
+    if ('A' <= c && c <= 'Z') {
+      return true;
+    }
+    if ('a' <= c && c <= 'z') {
+      return true;
+    }
+    static std::array<char, 23> otherIDChars = {
+      {'!', '#', '$', '%', '&', '\'', '*', '+', '-', '.', '/', ':',
+       '<', '=', '>', '?', '@', '\\', '^', '_', '`', '|', '~'}};
+    return std::find(otherIDChars.begin(), otherIDChars.end(), c) !=
+           otherIDChars.end();
   }
 };
 
