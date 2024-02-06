@@ -2,10 +2,11 @@
 ;; RUN: foreach %s %t wasm-opt --all-features --merge-similar-functions -S -o - | filecheck %s
 
 (module
+  (type $"[i8]" (array i8))
+
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (type $[i8] (array i8))
-  (type $[i8] (array i8))
 
   ;; CHECK:      (type $2 (func (param arrayref)))
 
@@ -58,7 +59,7 @@
     (nop) (nop) (nop) (nop) (nop) (nop)
     (nop) (nop) (nop) (nop) (nop) (nop)
     (call $take-ref-null-array
-      (array.new_fixed $[i8] 0)
+      (array.new_fixed $"[i8]" 0)
     )
   )
   ;; CHECK:      (func $no-call-subtyping-same-operand-1 (type $0)
@@ -89,7 +90,7 @@
     (nop) (nop) (nop) (nop) (nop) (nop)
     (nop) (nop) (nop) (nop) (nop) (nop)
     (call $take-ref-eq
-      (array.new_fixed $[i8] 0)
+      (array.new_fixed $"[i8]" 0)
     )
   )
 )

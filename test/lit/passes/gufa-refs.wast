@@ -2207,8 +2207,9 @@
 )
 
 (module
+  (type $"{}" (sub (struct)))
+
   ;; CHECK:      (type ${} (sub (struct )))
-  (type ${} (sub (struct)))
 
   ;; CHECK:      (type $1 (func (result (ref ${}))))
 
@@ -2223,7 +2224,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $func (result (ref ${}))
+  (func $func (result (ref $"{}"))
     ;; This block can only return a null in theory (in practice, not even that -
     ;; the br will not be taken, but this pass is not smart enough to see that).
     ;; We can optimize to an unreachable here, but must be careful - we cannot
@@ -2231,9 +2232,9 @@
     ;; removed the br, which we don't do atm). All we will do is add an
     ;; unreachable after the block, on the outside of it (which would help other
     ;; passes do more work).
-    (block $block (result (ref ${}))
+    (block $block (result (ref $"{}"))
       (br_on_non_null $block
-        (ref.null ${})
+        (ref.null $"{}")
       )
       (unreachable)
     )
@@ -5624,7 +5625,7 @@
 
 ;; Test that we do not error on array.init of a bottom type.
 (module
-  (type $[mut:i32] (array (mut i32)))
+  (type $"[mut:i32]" (array (mut i32)))
 
   ;; CHECK:      (type $0 (func))
 
@@ -5640,7 +5641,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
-    (array.init_data $[mut:i32] $0
+    (array.init_data $"[mut:i32]" $0
       (ref.as_non_null
         (ref.null none)
       )

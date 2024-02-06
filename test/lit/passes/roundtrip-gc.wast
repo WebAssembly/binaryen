@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s -all --generate-stack-ir --optimize-stack-ir --roundtrip -S -o - | filecheck %s
 
 (module
- (type ${i32} (struct (field i32)))
+ (type $"{i32}" (struct (field i32)))
  ;; CHECK:      (export "export" (func $test))
  (export "export" (func $test))
  ;; CHECK:      (func $test (type $1)
@@ -20,7 +20,7 @@
  ;; CHECK-NEXT: )
  (func $test
   (call $help
-   (struct.new_default ${i32})
+   (struct.new_default $"{i32}")
    ;; Stack IR optimizations can remove this block, leaving a call in an odd
    ;; "stacky" location. On load, we will use a local to work around that. It
    ;; is fine for the local to be non-nullable since the get is later in that
@@ -33,7 +33,7 @@
  )
  ;; CHECK:      (func $help (type $2) (param $3 (ref $\7bi32\7d)) (param $4 i32)
  ;; CHECK-NEXT: )
- (func $help (param $3 (ref ${i32})) (param $4 i32)
+ (func $help (param $3 (ref $"{i32}")) (param $4 i32)
   (nop)
  )
 

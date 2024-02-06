@@ -2,22 +2,15 @@
 ;; RUN: wasm-opt %s -all --dae -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type ${} (sub (struct )))
- (type ${} (sub (struct)))
+ (type $"{}" (sub (struct)))
 
- ;; CHECK:      (type ${i32} (sub ${} (struct (field i32))))
- (type ${i32} (sub ${} (struct (field i32))))
+ (type $"{i32}" (sub $"{}" (struct (field i32))))
 
- ;; CHECK:      (type ${i32_i64} (sub ${i32} (struct (field i32) (field i64))))
+ (type $"{f64}" (sub $"{}" (struct (field f64))))
 
- ;; CHECK:      (type ${i32_f32} (sub ${i32} (struct (field i32) (field f32))))
+ (type $"{i32_i64}" (sub $"{i32}" (struct (field i32) (field i64))))
 
- ;; CHECK:      (type ${f64} (sub ${} (struct (field f64))))
- (type ${f64} (sub ${} (struct (field f64))))
-
- (type ${i32_i64} (sub ${i32} (struct (field i32) (field i64))))
-
- (type ${i32_f32} (sub ${i32} (struct (field i32) (field f32))))
+ (type $"{i32_f32}" (sub $"{i32}" (struct (field i32) (field f32))))
 
  ;; CHECK:      (func $call-various-params-no (type $0)
  ;; CHECK-NEXT:  (call $various-params-no
@@ -35,12 +28,12 @@
   ;; all nulls are identical and we could do other optimization work due to
   ;; that.
   (call $various-params-no
-   (call $get_{})
-   (call $get_{i32})
+   (call $"get_{}")
+   (call $"get_{i32}")
   )
   (call $various-params-no
-   (call $get_{i32})
-   (call $get_{f64})
+   (call $"get_{i32}")
+   (call $"get_{f64}")
   )
  )
  ;; This function is called in ways that do not allow us to alter the types of
@@ -53,19 +46,28 @@
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $various-params-no (param $x (ref null ${})) (param $y (ref null ${}))
+ (func $various-params-no (param $x (ref null $"{}")) (param $y (ref null $"{}"))
   ;; "Use" the locals to avoid other optimizations kicking in.
   (drop (local.get $x))
   (drop (local.get $y))
  )
 
- (func $get_{} (result (ref null ${}))
+ ;; CHECK:      (func $"get_{}" (type $8) (result (ref null ${}))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $"get_{}" (result (ref null $"{}"))
   (unreachable)
  )
- (func $get_{i32} (result (ref null ${i32}))
+ ;; CHECK:      (func $"get_{i32}" (type $5) (result (ref null ${i32}))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $"get_{i32}" (result (ref null $"{i32}"))
   (unreachable)
  )
- (func $get_{f64} (result (ref null ${f64}))
+ ;; CHECK:      (func $"get_{f64}" (type $10) (result (ref null ${f64}))
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $"get_{f64}" (result (ref null $"{f64}"))
   (unreachable)
  )
 
@@ -86,14 +88,14 @@
   ;; both of those pairs can be optimized to {i32}.
   ;; There is also an i32 in the middle, which should not confuse us.
   (call $various-params-yes
-   (call $get_null_{i32})
+   (call $"get_null_{i32}")
    (i32.const 0)
-   (call $get_null_{i32})
+   (call $"get_null_{i32}")
   )
   (call $various-params-yes
-   (call $get_null_{i32})
+   (call $"get_null_{i32}")
    (i32.const 1)
-   (call $get_null_{i32_i64})
+   (call $"get_null_{i32_i64}")
   )
  )
  ;; This function is called in ways that *do* allow us to alter the types of
@@ -109,7 +111,7 @@
  ;; CHECK-NEXT:   (local.get $y)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $various-params-yes (param $x (ref null ${})) (param $i i32) (param $y (ref null ${}))
+ (func $various-params-yes (param $x (ref null $"{}")) (param $i i32) (param $y (ref null $"{}"))
   ;; "Use" the locals to avoid other optimizations kicking in.
   (drop (local.get $x))
   (drop (local.get $i))
@@ -130,12 +132,12 @@
   ;; The first argument gets {i32} and {i32}; the second {i32} and {i32_i64;
   ;; both of those pairs can be optimized to {i32}
   (call $various-params-set
-   (call $get_null_{i32})
-   (call $get_null_{i32})
+   (call $"get_null_{i32}")
+   (call $"get_null_{i32}")
   )
   (call $various-params-set
-   (call $get_null_{i32})
-   (call $get_null_{i32_i64})
+   (call $"get_null_{i32}")
+   (call $"get_null_{i32_i64}")
   )
  )
  ;; This function is called in ways that *do* allow us to alter the types of
@@ -167,7 +169,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $various-params-set (param $x (ref null ${})) (param $y (ref null ${}))
+ (func $various-params-set (param $x (ref null $"{}")) (param $y (ref null $"{}"))
   ;; "Use" the locals to avoid other optimizations kicking in.
   (drop (local.get $x))
   (drop (local.get $y))
@@ -175,13 +177,13 @@
   ;; force us to do a fixup: the param will get the new type, and a new local
   ;; will stay at the old type, and we will use that local throughout the
   ;; function.
-  (local.set $x (struct.new ${}))
+  (local.set $x (struct.new $"{}"))
   (drop
    (local.get $x)
   )
   ;; Write to $y in a way that does not cause any issue, and we should not do
   ;; any fixup while we refine the type.
-  (local.set $y (call $get_null_{i32_i64}))
+  (local.set $y (call $"get_null_{i32_i64}"))
   (drop
    (local.get $y)
   )
@@ -195,7 +197,7 @@
  (func $call-various-params-tee
   ;; The argument gets {i32}, which allows us to refine.
   (call $various-params-tee
-   (call $get_null_{i32})
+   (call $"get_null_{i32}")
   )
  )
  ;; CHECK:      (func $various-params-tee (type $6) (param $x (ref null ${i32}))
@@ -210,15 +212,15 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $various-params-tee (param $x (ref null ${}))
+ (func $various-params-tee (param $x (ref null $"{}"))
   ;; "Use" the locals to avoid other optimizations kicking in.
   (drop (local.get $x))
   ;; Write to $x in a way that allows us to make the type more specific. We
   ;; must also update the type of the tee (if we do not, a validation error
   ;; would occur), and that will also cause the block's type to update as well.
   (drop
-   (block (result (ref null ${}))
-    (local.tee $x (call $get_null_{i32_i64}))
+   (block (result (ref null $"{}"))
+    (local.tee $x (call $"get_null_{i32_i64}"))
    )
   )
  )
@@ -243,12 +245,12 @@
   ;; The first argument gets non-null values, allowing us to refine it. The
   ;; second gets only one.
   (call $various-params-null
-   (ref.as_non_null (ref.null ${i32}))
-   (call $get_null_{i32})
+   (ref.as_non_null (ref.null $"{i32}"))
+   (call $"get_null_{i32}")
   )
   (call $various-params-null
-   (ref.as_non_null (ref.null ${i32}))
-   (ref.as_non_null (ref.null ${i32}))
+   (ref.as_non_null (ref.null $"{i32}"))
+   (ref.as_non_null (ref.null $"{i32}"))
   )
  )
  ;; This function is called in ways that allow us to make the first parameter
@@ -265,7 +267,7 @@
  ;; CHECK-NEXT:   (local.get $temp)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $various-params-null (param $x (ref null ${})) (param $y (ref null ${}))
+ (func $various-params-null (param $x (ref null $"{}")) (param $y (ref null $"{}"))
   (local $temp i32)
   ;; "Use" the locals to avoid other optimizations kicking in.
   (drop (local.get $x))
@@ -289,10 +291,10 @@
   ;; The argument gets {i32_i64} and {i32_f32}. This allows us to refine from
   ;; {} to {i32}, a type "in the middle".
   (call $various-params-middle
-   (call $get_null_{i32_i64})
+   (call $"get_null_{i32_i64}")
   )
   (call $various-params-middle
-   (call $get_null_{i32_f32})
+   (call $"get_null_{i32_f32}")
   )
  )
  ;; CHECK:      (func $various-params-middle (type $6) (param $x (ref null ${i32}))
@@ -300,7 +302,7 @@
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $various-params-middle (param $x (ref null ${}))
+ (func $various-params-middle (param $x (ref null $"{}"))
   ;; "Use" the local to avoid other optimizations kicking in.
   (drop (local.get $x))
  )
@@ -310,14 +312,14 @@
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $unused-and-refinable (param $0 structref)
-  ;; This function does not use $0. It is called with ${}, so it is also
+  ;; This function does not use $0. It is called with $"{}", so it is also
   ;; a parameter whose type we can refine. Do not do both operations: instead,
   ;; just remove it because it is ignored, without altering the type (handling
   ;; both operations would introduce some corner cases, and it just isn't worth
   ;; handling them if the param is completely unused anyhow). We should see in
   ;; the test output that the local $0 (the unused param) becomes a local
   ;; because it is unused, and that local does *not* have its type refined to
-  ;; ${} (it will however be changed to be nullable, which it must be as a
+  ;; $"{}" (it will however be changed to be nullable, which it must be as a
   ;; local).
  )
 
@@ -326,7 +328,7 @@
  ;; CHECK-NEXT: )
  (func $call-unused-and-refinable
   (call $unused-and-refinable
-   (struct.new_default ${})
+   (struct.new_default $"{}")
   )
  )
 
@@ -355,7 +357,7 @@
  ;; CHECK-NEXT: )
  (func $call-non-nullable-fixup
   (call $non-nullable-fixup
-   (struct.new_default ${})
+   (struct.new_default $"{}")
   )
  )
 
@@ -374,7 +376,7 @@
    (ref.null any)
   )
   (call $update-null
-   (struct.new_default ${})
+   (struct.new_default $"{}")
   )
  )
 
@@ -385,33 +387,54 @@
  ;; CHECK-NEXT: )
  (func $update-null (param $x (ref null any))
   ;; "Use" the param to avoid other optimizations kicking in. We should only
-  ;; see the type of the param refined to a null ${} after updating the null
+  ;; see the type of the param refined to a null $"{}" after updating the null
   ;; in the caller.
   (drop (local.get $x))
  )
 
- (func $get_null_{i32} (result (ref null ${i32}))
-  ;; Helper function that returns a null value of ${i32}. We use this instead of
+ ;; CHECK:      (func $"get_null_{i32}" (type $5) (result (ref null ${i32}))
+ ;; CHECK-NEXT:  (select (result (ref null ${i32}))
+ ;; CHECK-NEXT:   (ref.null none)
+ ;; CHECK-NEXT:   (struct.new_default ${i32})
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $"get_null_{i32}" (result (ref null $"{i32}"))
+  ;; Helper function that returns a null value of $"{i32}." We use this instead of
   ;; a direct ref.null because those can be rewritten by LUBFinder.
   (select
    (ref.null none)
-   (struct.new_default ${i32})
+   (struct.new_default $"{i32}")
    (i32.const 0)
   )
  )
 
- (func $get_null_{i32_i64} (result (ref null ${i32_i64}))
+ ;; CHECK:      (func $"get_null_{i32_i64}" (type $16) (result (ref null ${i32_i64}))
+ ;; CHECK-NEXT:  (select (result (ref null ${i32_i64}))
+ ;; CHECK-NEXT:   (ref.null none)
+ ;; CHECK-NEXT:   (struct.new_default ${i32_i64})
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $"get_null_{i32_i64}" (result (ref null $"{i32_i64}"))
   (select
    (ref.null none)
-   (struct.new_default ${i32_i64})
+   (struct.new_default $"{i32_i64}")
    (i32.const 0)
   )
  )
 
- (func $get_null_{i32_f32} (result (ref null ${i32_f32}))
+ ;; CHECK:      (func $"get_null_{i32_f32}" (type $17) (result (ref null ${i32_f32}))
+ ;; CHECK-NEXT:  (select (result (ref null ${i32_f32}))
+ ;; CHECK-NEXT:   (ref.null none)
+ ;; CHECK-NEXT:   (struct.new_default ${i32_f32})
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $"get_null_{i32_f32}" (result (ref null $"{i32_f32}"))
   (select
    (ref.null none)
-   (struct.new_default ${i32_f32})
+   (struct.new_default $"{i32_f32}")
    (i32.const 0)
   )
  )
