@@ -9,8 +9,10 @@ set(support_SOURCES
   file.cpp
   istring.cpp
   json.cpp
+  name.cpp
   path.cpp
   safe_integer.cpp
+  string.cpp
   threads.cpp
   utilities.cpp
   ${support_HEADERS}
