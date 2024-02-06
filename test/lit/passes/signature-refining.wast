@@ -884,7 +884,7 @@
 
  ;; CHECK:      (func $0 (type $2)
  ;; CHECK-NEXT:  (call $1
- ;; CHECK-NEXT:   (array.new_fixed $[i8] 0)
+ ;; CHECK-NEXT:   (array.new_fixed $"[i8]" 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $0
