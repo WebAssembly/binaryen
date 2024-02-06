@@ -238,6 +238,10 @@ struct StringLowering : public StringGathering {
   }
 
   enum StringImport {
+    Nothing = 0,
+
+    First = 0,
+    Last = 1,
   };
 
   void replaceInstructions(Module* module) {
@@ -275,6 +279,9 @@ struct StringLowering : public StringGathering {
 
     // Add the imports to the module.
     for (StringImport import = StringImport::First; import++; import != StringImport::Last) {
+      if (allImports.count(import)) {
+        // Add
+      }
     }
   }
 };
