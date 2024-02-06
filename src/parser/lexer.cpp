@@ -329,6 +329,25 @@ public:
   }
 };
 
+struct LexIdResult : LexResult {
+  bool isStr = false;
+  std::optional<std::string> str;
+};
+
+struct LexIdCtx : LexCtx {
+  bool isStr = false;
+  std::optional<std::string> str;
+
+  LexIdCtx(std::string_view in) : LexCtx(in) {}
+
+  std::optional<LexIdResult> lexed() {
+    if (auto basic = LexCtx::lexed()) {
+      return LexIdResult{*basic, isStr, str};
+    }
+    return {};
+  }
+};
+
 std::optional<LexResult> lparen(std::string_view in) {
   LexCtx ctx(in);
   ctx.takePrefix("("sv);
@@ -647,26 +666,6 @@ std::optional<LexResult> idchar(std::string_view in) {
   return ctx.lexed();
 }
 
-// id ::= '$' idchar+
-std::optional<LexResult> ident(std::string_view in) {
-  LexCtx ctx(in);
-  if (!ctx.takePrefix("$"sv)) {
-    return {};
-  }
-  if (auto lexed = idchar(ctx.next())) {
-    ctx.take(*lexed);
-  } else {
-    return {};
-  }
-  while (auto lexed = idchar(ctx.next())) {
-    ctx.take(*lexed);
-  }
-  if (ctx.canFinish()) {
-    return ctx.lexed();
-  }
-  return {};
-}
-
 // string     ::= '"' (b*:stringelem)* '"'  => concat((b*)*)
 //                    (if |concat((b*)*)| < 2^32)
 // stringelem ::= c:stringchar              => utf8(c)
@@ -739,6 +738,30 @@ std::optional<LexStrResult> str(std::string_view in) {
     }
   }
   return ctx.lexed();
+}
+
+// id ::= '$' idchar+ | '$' str
+std::optional<LexIdResult> ident(std::string_view in) {
+  LexIdCtx ctx(in);
+  if (!ctx.takePrefix("$"sv)) {
+    return {};
+  }
+  if (auto s = str(ctx.next())) {
+    ctx.isStr = true;
+    ctx.str = s->str;
+    ctx.take(*s);
+  } else if (auto lexed = idchar(ctx.next())) {
+    ctx.take(*lexed);
+    while (auto lexed = idchar(ctx.next())) {
+      ctx.take(*lexed);
+    }
+  } else {
+    return {};
+  }
+  if (ctx.canFinish()) {
+    return ctx.lexed();
+  }
+  return {};
 }
 
 // keyword ::= ( 'a' | ... | 'z' ) idchar* (if literal terminal in grammar)
@@ -889,7 +912,23 @@ std::optional<std::string_view> Token::getString() const {
     if (tok->str) {
       return std::string_view(*tok->str);
     }
+    // Remove quotes.
     return span.substr(1, span.size() - 2);
+  }
+  return {};
+}
+
+std::optional<std::string_view> Token::getID() const {
+  if (auto* tok = std::get_if<IdTok>(&data)) {
+    if (tok->str) {
+      return std::string_view(*tok->str);
+    }
+    if (tok->isStr) {
+      // Remove '$' and quotes.
+      return span.substr(2, span.size() - 3);
+    }
+    // Remove '$'.
+    return span.substr(1);
   }
   return {};
 }
@@ -908,7 +947,7 @@ void Lexer::lexToken() {
   } else if (auto t = rparen(next())) {
     tok = Token{t->span, RParenTok{}};
   } else if (auto t = ident(next())) {
-    tok = Token{t->span, IdTok{}};
+    tok = Token{t->span, IdTok{t->isStr, t->str}};
   } else if (auto t = integer(next())) {
     tok = Token{t->span, IntTok{t->n, t->sign}};
   } else if (auto t = float_(next())) {

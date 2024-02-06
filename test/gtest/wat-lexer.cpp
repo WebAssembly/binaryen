@@ -1377,6 +1377,33 @@ TEST(LexerTest, LexIdent) {
     Lexer lexer("$"sv);
     EXPECT_TRUE(lexer.empty());
   }
+
+  // String IDs
+  {
+    Lexer lexer("$\"\"");
+    ASSERT_FALSE(lexer.empty());
+    Token expected{"$\"\""sv, IdTok{true, std::nullopt}};
+    EXPECT_EQ(*lexer, expected);
+    EXPECT_TRUE(lexer->getID());
+    EXPECT_EQ(*lexer->getID(), ""sv);
+  }
+  {
+    Lexer lexer("$\"hello\"");
+    ASSERT_FALSE(lexer.empty());
+    Token expected{"$\"hello\""sv, IdTok{true, std::nullopt}};
+    EXPECT_EQ(*lexer, expected);
+    EXPECT_TRUE(lexer->getID());
+    EXPECT_EQ(*lexer->getID(), "hello"sv);
+  }
+  {
+    // _$_£_€_𐍈_
+    auto unicode = "$\"_\\u{24}_\\u{00a3}_\\u{20AC}_\\u{10348}_\""sv;
+    Lexer lexer(unicode);
+    ASSERT_FALSE(lexer.empty());
+    std::string escaped{"_$_\xC2\xA3_\xE2\x82\xAC_\xF0\x90\x8D\x88_"};
+    Token expected{unicode, IdTok{true, {escaped}}};
+    EXPECT_EQ(*lexer, expected);
+  }
 }
 
 TEST(LexerTest, LexString) {

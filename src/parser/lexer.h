@@ -53,6 +53,12 @@ struct RParenTok {
 };
 
 struct IdTok {
+  // Whether this ID has `$"..."` format
+  bool isStr;
+
+  // If the ID is a string ID and contains escapes, this is its contents.
+  std::optional<std::string> str;
+
   bool operator==(const IdTok&) const { return true; }
   friend std::ostream& operator<<(std::ostream&, const IdTok&);
 };
@@ -81,6 +87,7 @@ struct FloatTok {
 };
 
 struct StringTok {
+  // If the string contains escapes, this is its contents.
   std::optional<std::string> str;
 
   bool operator==(const StringTok& other) const { return str == other.str; }
@@ -111,14 +118,6 @@ struct Token {
 
   bool isRParen() const { return std::get_if<RParenTok>(&data); }
 
-  std::optional<std::string_view> getID() const {
-    if (std::get_if<IdTok>(&data)) {
-      // Drop leading '$'.
-      return span.substr(1);
-    }
-    return {};
-  }
-
   std::optional<std::string_view> getKeyword() const {
     if (std::get_if<KeywordTok>(&data)) {
       return span;
@@ -132,6 +131,7 @@ struct Token {
   std::optional<double> getF64() const;
   std::optional<float> getF32() const;
   std::optional<std::string_view> getString() const;
+  std::optional<std::string_view> getID() const;
 
   bool operator==(const Token&) const;
   friend std::ostream& operator<<(std::ostream& os, const Token&);
