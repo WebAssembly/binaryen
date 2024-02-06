@@ -191,6 +191,9 @@ struct StringLowering : public StringGathering {
     // Remove all HeapType::string etc. in favor of externref.
     updateTypes(module);
 
+    // Replace string.* etc. operations with imported ones.
+    replaceInstructions(module);
+
     // Disable the feature here after we lowered everything away.
     module->features.disable(FeatureSet::Strings);
   }
@@ -225,8 +228,87 @@ struct StringLowering : public StringGathering {
 
   void updateTypes(Module* module) {
     TypeMapper::TypeUpdates updates;
+    // There is no difference between strings and views with imported strings:
+    // they are all just JS strings, so they all turn into externref.
     updates[HeapType::string] = HeapType::ext;
+    updates[HeapType::stringview_wtf8] = HeapType::ext;
+    updates[HeapType::stringview_wtf16] = HeapType::ext;
+    updates[HeapType::stringview_iter] = HeapType::ext;
     TypeMapper(*module, updates).map();
+  }
+
+  // Imported string functions.
+  Name fromCharCodeArrayImport;
+  Name fromCodePointImport;
+
+  // The name of the module to import string functions from.
+  Name WasmStringsModule = "wasm:js-string";
+
+  // Common types used in imports.
+  Type nullArray16 = Type(Array(Field(Field::i16, Mutable)), Nullable);
+  Type nnExt = Type(HeapType::ext, NonNullable);
+
+  // Creates an imported string function, returning its name (which is equal to
+  // the true name of the import, if there is no conflict).
+  Name addImport(Module* module, Name trueName, Type params, Type results) {
+    auto name = Names::getValidFunctionName(*module, trueName);
+    auto sig = Signature(params, results);
+    Builder builder(*module);
+    auto* func = module->addFunction(builder.makeFunction(name, sig, {}));
+    func->module = WasmStringsModule;
+    func->base = trueName;
+    return name;
+  }
+
+  void replaceInstructions(Module* module) {
+    // Add all the possible imports up front, to avoid adding them during
+    // parallel work. Optimizations can remove unneeded ones later.
+
+    // string.fromCharCodeArray: array, start, end -> ext
+    fromCharCodeArrayImport = addImport(
+      module, "fromCharCodeArray", {nullArray16, Type::i32, Type::i32}, nnExt);
+    // string.fromCodePoint: codepoint -> ext
+    fromCodePointImport = addImport(module, "fromCodePoint", Type::i32, nnExt);
+
+    // Replace the string instructions in parallel.
+    struct Replacer : public WalkerPass<PostWalker<Replacer>> {
+      bool isFunctionParallel() override { return true; }
+
+      StringLowering& lowering;
+
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<Replacer>(lowering);
+      }
+
+      Replacer(StringLowering& lowering) : lowering(lowering) {}
+
+      void visitStringNew(StringNew* curr) {
+        Builder builder(*getModule());
+        switch (curr->op) {
+          case StringNewWTF16Array:
+            replaceCurrent(builder.makeCall(lowering.fromCharCodeArrayImport,
+                                            {curr->ptr, curr->start, curr->end},
+                                            lowering.nnExt));
+            return;
+          case StringNewFromCodePoint:
+            replaceCurrent(builder.makeCall(
+              lowering.fromCodePointImport, {curr->ptr}, lowering.nnExt));
+            return;
+          default:
+            WASM_UNREACHABLE("TODO: all of string.new*");
+        }
+      }
+
+      void visitStringAs(StringAs* curr) {
+        // There is no difference between strings and views with imported
+        // strings: they are all just JS strings, so no conversion is needed.
+        replaceCurrent(curr->ref);
+      }
+    };
+
+    Replacer replacer(*this);
+    replacer.run(getPassRunner(), module);
+    replacer.walkModuleCode(module);
   }
 };
 
