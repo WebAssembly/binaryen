@@ -243,24 +243,27 @@ struct StringLowering : public StringGathering {
 
   Type nnExt = Type(HeapType::ext, NonNullable);
 
+  // Creates an imported string function, returning its name (which is equal to
+  // the true name of the import, if there is no conflict).
+  Name addImport(Module* module, Name trueName, Type params, Type results) {
+    auto name = Names::getValidFunctionName(*module, trueName);
+    auto sig = Signature(params, results);
+    Builder builder(*module);
+    auto* func = module->addFunction(builder.makeFunction(name, sig, {}));
+    func->module = "wasm:js-string";
+    func->base = trueName;
+    return name;
+  }
+
   void replaceInstructions(Module* module) {
     // Add all the possible imports up front, to avoid adding them during
     // parallel work. Optimizations can remove unneeded ones later.
-    Builder builder(*module);
-    auto array16 = Array(Field(Field::i16, Mutable));
+    auto nullArray16 = Type(Array(Field(Field::i16, Mutable)), Nullable);
 
-    {
-      fromCharCodeArrayImport = Names::getValidFunctionName(
-          *module, "string.fromCharCodeArray");
-      auto sig = Signature({Type(array16, Nullable), Type::i32, Type::i32}, nnExt);
-      module->addFunction(builder.makeFunction(fromCharCodeArrayImport, sig, {}));
-    }
-    {
-      fromCodePointImport = Names::getValidFunctionName(
-          *module, "string.fromCodePoint");
-      auto sig = Signature(Type::i32, nnExt);
-      module->addFunction(builder.makeFunction(fromCodePointImport, sig, {}));
-    }
+    // string.fromCharCodeArray: array, start, end -> ext
+    fromCharCodeArrayImport = addImport(module, "fromCharCodeArray", {nullArray16, Type::i32, Type::i32}, nnExt);
+    // string.fromCodePoint: codepoint -> ext
+    fromCodePointImport = addImport(module, "fromCodePoint", Type::i32, nnExt);
 
     // Replace the string instructions in parallel.
     struct Replacer : public WalkerPass<PostWalker<Replacer>> {

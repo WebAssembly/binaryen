@@ -5,6 +5,16 @@
 (module
   ;; CHECK:      (type $0 (func (param externref externref externref externref)))
 
+  ;; CHECK:      (type $1 (array (mut i16)))
+
+  ;; CHECK:      (type $2 (func (param (ref null $1) i32 i32) (result (ref extern))))
+
+  ;; CHECK:      (type $3 (func (param i32) (result (ref extern))))
+
+  ;; CHECK:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $2) (param (ref null $1) i32 i32) (result (ref extern))))
+
+  ;; CHECK:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $3) (param i32) (result (ref extern))))
+
   ;; CHECK:      (func $string.as (type $0) (param $a externref) (param $b externref) (param $c externref) (param $d externref)
   ;; CHECK-NEXT:  (local.set $b
   ;; CHECK-NEXT:   (local.get $a)
