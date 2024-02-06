@@ -241,7 +241,7 @@ struct StringLowering : public StringGathering {
   Name fromCharCodeArrayImport;
   Name fromCodePointImport;
 
-  auto nnExt = Type(HeapType::ext, NonNullable);
+  Type nnExt = Type(HeapType::ext, NonNullable);
 
   void replaceInstructions(Module* module) {
     // Add all the possible imports up front, to avoid adding them during
@@ -258,7 +258,7 @@ struct StringLowering : public StringGathering {
     {
       fromCodePointImport = Names::getValidFunctionName(
           *module, "string.fromCodePoint");
-      auto sig = Signature({Type::i32, nnExt);
+      auto sig = Signature(Type::i32, nnExt);
       module->addFunction(builder.makeFunction(fromCodePointImport, sig, {}));
     }
 
@@ -278,10 +278,10 @@ struct StringLowering : public StringGathering {
         Builder builder(*getModule());
         switch (curr->op) {
           case StringNewWTF16Array:
-            replaceCurrent(builder.makeCall(lowering.fromCharCodeArrayImport, {curr->ptr, curr->start, curr->end}, lowering.nnExt))
+            replaceCurrent(builder.makeCall(lowering.fromCharCodeArrayImport, {curr->ptr, curr->start, curr->end}, lowering.nnExt));
             return;
           case StringNewFromCodePoint:
-            replaceCurrent(builder.makeCall(lowering.fromCodePointImport, {curr->ptr}, lowering.nnExt))
+            replaceCurrent(builder.makeCall(lowering.fromCodePointImport, {curr->ptr}, lowering.nnExt));
             return;
           default:
             WASM_UNREACHABLE("TODO: all of string.new*");
