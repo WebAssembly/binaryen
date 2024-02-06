@@ -247,12 +247,26 @@ struct StringLowering : public StringGathering {
   void replaceInstructions(Module* module) {
     // As we work in parallel we'll collect the set of necessary imports to add.
     using NeededImports = std::unordered_set<StringImport>;
+    // XXX aybe the opposite: create all imports eagerly, let optimizer remov
 
     // Process functions in parallel.
     struct Replacer : public PostWalker<Replacer> {
       NeededImports& imports;
 
       Replacer(NeededImports& imports) : imports(imports) {}
+
+      void visitStringNew(StringNew* curr) {
+        switch (curr->op) {
+          case StringNewWTF16Array:
+            printMedium(o, "string.new_wtf16_array");
+            break;
+          case StringNewFromCodePoint:
+            printMedium(o, "string.from_code_point");
+            break;
+          default:
+            WASM_UNREACHABLE("TODO: all of string.new*");
+        }
+      }
 
       void visitStringAs(StringAs* curr) {
         // There is no difference between strings and views with imported
