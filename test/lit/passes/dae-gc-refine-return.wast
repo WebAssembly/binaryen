@@ -310,13 +310,13 @@
 
  ;; Show that we can optimize the return type of a function that does a tail
  ;; call.
- ;; CHECK:      (func $tail-callee (type $return_{}) (result (ref ${}))
+ ;; CHECK:      (func $tail-callee (type $"return_{}") (result (ref ${}))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $tail-callee (result (ref $"{}"))
   (unreachable)
  )
- ;; CHECK:      (func $tail-caller-yes (type $return_{}) (result (ref ${}))
+ ;; CHECK:      (func $tail-caller-yes (type $"return_{}") (result (ref ${}))
  ;; CHECK-NEXT:  (return_call $tail-callee)
  ;; CHECK-NEXT: )
  (func $tail-caller-yes (result anyref)
@@ -367,14 +367,14 @@
  )
 
  ;; As above, but with an indirect tail call.
- ;; CHECK:      (func $tail-callee-indirect (type $return_{}) (result (ref ${}))
+ ;; CHECK:      (func $tail-callee-indirect (type $"return_{}") (result (ref ${}))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $tail-callee-indirect (result (ref $"{}"))
   (unreachable)
  )
- ;; CHECK:      (func $tail-caller-indirect-yes (type $return_{}) (result (ref ${}))
- ;; CHECK-NEXT:  (return_call_indirect $0 (type $return_{})
+ ;; CHECK:      (func $tail-caller-indirect-yes (type $"return_{}") (result (ref ${}))
+ ;; CHECK-NEXT:  (return_call_indirect $0 (type $"return_{}")
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -391,7 +391,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (return_call_indirect $0 (type $return_{})
+ ;; CHECK-NEXT:  (return_call_indirect $0 (type $"return_{}")
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -423,15 +423,15 @@
  )
 
  ;; As above, but with a tail call by function reference.
- ;; CHECK:      (func $tail-callee-call_ref (type $return_{}) (result (ref ${}))
+ ;; CHECK:      (func $tail-callee-call_ref (type $"return_{}") (result (ref ${}))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $tail-callee-call_ref (result (ref $"{}"))
   (unreachable)
  )
- ;; CHECK:      (func $tail-caller-call_ref-yes (type $return_{}) (result (ref ${}))
+ ;; CHECK:      (func $tail-caller-call_ref-yes (type $"return_{}") (result (ref ${}))
  ;; CHECK-NEXT:  (local $"return_{}" (ref null $return_{}))
- ;; CHECK-NEXT:  (return_call_ref $return_{}
+ ;; CHECK-NEXT:  (return_call_ref $"return_{}"
  ;; CHECK-NEXT:   (local.get $"return_{}")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -451,7 +451,7 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (return_call_ref $return_{}
+ ;; CHECK-NEXT:  (return_call_ref $"return_{}"
  ;; CHECK-NEXT:   (local.get $"return_{}")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -510,7 +510,7 @@
  ;; CHECK-NEXT:     (local.get $y)
  ;; CHECK-NEXT:     (then
  ;; CHECK-NEXT:      (return
- ;; CHECK-NEXT:       (struct.new_default ${i32_f32})
+ ;; CHECK-NEXT:       (struct.new_default $"{i32_f32}")
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (else
@@ -522,7 +522,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (else
  ;; CHECK-NEXT:    (return
- ;; CHECK-NEXT:     (struct.new_default ${i32_i64})
+ ;; CHECK-NEXT:     (struct.new_default $"{i32_i64}")
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )

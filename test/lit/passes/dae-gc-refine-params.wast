@@ -156,7 +156,7 @@
  ;; CHECK-NEXT:    (local.get $y)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (local.set $2
- ;; CHECK-NEXT:    (struct.new_default ${})
+ ;; CHECK-NEXT:    (struct.new_default $"{}")
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $2)
@@ -352,7 +352,7 @@
 
  ;; CHECK:      (func $call-non-nullable-fixup (type $0)
  ;; CHECK-NEXT:  (call $non-nullable-fixup
- ;; CHECK-NEXT:   (struct.new_default ${})
+ ;; CHECK-NEXT:   (struct.new_default $"{}")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $call-non-nullable-fixup
@@ -366,7 +366,7 @@
  ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $update-null
- ;; CHECK-NEXT:   (struct.new_default ${})
+ ;; CHECK-NEXT:   (struct.new_default $"{}")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $call-update-null
@@ -395,7 +395,7 @@
  ;; CHECK:      (func $"get_null_{i32}" (type $5) (result (ref null ${i32}))
  ;; CHECK-NEXT:  (select (result (ref null ${i32}))
  ;; CHECK-NEXT:   (ref.null none)
- ;; CHECK-NEXT:   (struct.new_default ${i32})
+ ;; CHECK-NEXT:   (struct.new_default $"{i32}")
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -412,7 +412,7 @@
  ;; CHECK:      (func $"get_null_{i32_i64}" (type $16) (result (ref null ${i32_i64}))
  ;; CHECK-NEXT:  (select (result (ref null ${i32_i64}))
  ;; CHECK-NEXT:   (ref.null none)
- ;; CHECK-NEXT:   (struct.new_default ${i32_i64})
+ ;; CHECK-NEXT:   (struct.new_default $"{i32_i64}")
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -427,7 +427,7 @@
  ;; CHECK:      (func $"get_null_{i32_f32}" (type $17) (result (ref null ${i32_f32}))
  ;; CHECK-NEXT:  (select (result (ref null ${i32_f32}))
  ;; CHECK-NEXT:   (ref.null none)
- ;; CHECK-NEXT:   (struct.new_default ${i32_f32})
+ ;; CHECK-NEXT:   (struct.new_default $"{i32_f32}")
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

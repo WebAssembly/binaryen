@@ -246,7 +246,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     if (type.isBasic()) {
       return o << type;
     }
-    return o << '$' << typePrinter.getNames(type).name;
+    return printName(typePrinter.getNames(type).name, o);
   }
 
   std::ostream& printPrefixedTypes(const char* prefix, Type type);
@@ -871,13 +871,15 @@ struct PrintExpressionContents
     o << "memory.init";
     restoreNormalColor(o);
     printMemoryName(curr->memory, o, wasm);
-    o << " $" << curr->segment;
+    o << ' ';
+    printName(curr->segment, o);
   }
   void visitDataDrop(DataDrop* curr) {
     prepareColor(o);
     o << "data.drop";
     restoreNormalColor(o);
-    o << " $" << curr->segment;
+    o << ' ';
+    printName(curr->segment, o);
   }
   void visitMemoryCopy(MemoryCopy* curr) {
     prepareColor(o);
@@ -2126,7 +2128,7 @@ struct PrintExpressionContents
   void printFieldName(HeapType type, Index index) {
     auto names = parent.typePrinter.getNames(type).fieldNames;
     if (auto it = names.find(index); it != names.end()) {
-      o << '$' << it->second;
+      printName(it->second, o);
     } else {
       o << index;
     }
@@ -2178,7 +2180,8 @@ struct PrintExpressionContents
     printMedium(o, "array.new_data");
     o << ' ';
     printHeapType(curr->type.getHeapType());
-    o << " $" << curr->segment;
+    o << ' ';
+    printName(curr->segment, o);
   }
   void visitArrayNewElem(ArrayNewElem* curr) {
     if (printUnreachableReplacement(curr)) {
@@ -2187,7 +2190,8 @@ struct PrintExpressionContents
     printMedium(o, "array.new_elem");
     o << ' ';
     printHeapType(curr->type.getHeapType());
-    o << " $" << curr->segment;
+    o << ' ';
+    printName(curr->segment, o);
   }
   void visitArrayNewFixed(ArrayNewFixed* curr) {
     if (printUnreachableReplacement(curr)) {
@@ -2246,7 +2250,8 @@ struct PrintExpressionContents
     }
     printMedium(o, "array.init_data ");
     printHeapType(curr->ref->type.getHeapType());
-    o << " $" << curr->segment;
+    o << ' ';
+    printName(curr->segment, o);
   }
   void visitArrayInitElem(ArrayInitElem* curr) {
     if (printUnreachableOrNullReplacement(curr->ref)) {
@@ -2254,7 +2259,8 @@ struct PrintExpressionContents
     }
     printMedium(o, "array.init_elem ");
     printHeapType(curr->ref->type.getHeapType());
-    o << " $" << curr->segment;
+    o << ' ';
+    printName(curr->segment, o);
   }
   void visitRefAs(RefAs* curr) {
     switch (curr->op) {
@@ -2866,7 +2872,8 @@ void PrintSExpression::handleSignature(HeapType curr, Name name) {
   Signature sig = curr.getSignature();
   o << "(func";
   if (name.is()) {
-    o << " $" << name;
+    o << ' ';
+    printName(name, o);
     if (currModule && currModule->features.hasGC()) {
       o << " (type ";
       printHeapType(curr) << ')';
@@ -3225,7 +3232,9 @@ void PrintSExpression::visitDataSegment(DataSegment* curr) {
   if (!curr->isPassive) {
     assert(!currModule || currModule->memories.size() > 0);
     if (!currModule || curr->memory != currModule->memories[0]->name) {
-      o << "(memory $" << curr->memory << ") ";
+      o << "(memory ";
+      printName(curr->memory, o);
+      o << ") ";
     }
     visit(curr->offset);
     o << ' ';

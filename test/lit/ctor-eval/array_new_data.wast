@@ -19,7 +19,7 @@
 
  ;; CHECK:      (func $test (type $0)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (array.new_data $[i8] $1
+ ;; CHECK-NEXT:   (array.new_data $"[i8]" $1
  ;; CHECK-NEXT:    (i32.const 16)
  ;; CHECK-NEXT:    (i32.const 8)
  ;; CHECK-NEXT:   )
