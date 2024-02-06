@@ -3,13 +3,15 @@
 ;; RUN: foreach %s %t wasm-opt --string-lowering  -all -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $0 (func))
+
   ;; CHECK:      (type $array16 (array (mut i16)))
   (type $array16 (array (mut i16)))
 
-  ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $1 (func))
 
-  ;; CHECK:       (type $2 (func (param (ref $array16))))
+  ;; An existing import with a colliding name, to check that we handle that.
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $2 (func (param (ref $array16))))
 
   ;; CHECK:       (type $3 (func (param externref externref externref externref)))
 
@@ -17,9 +19,12 @@
 
   ;; CHECK:      (type $5 (func (param i32) (result (ref extern))))
 
+  ;; CHECK:      (import "existing" "import" (func $fromCodePoint (type $0)))
+  (import "existing" "import" (func $fromCodePoint))
+
   ;; CHECK:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $4) (param (ref null $array16) i32 i32) (result (ref extern))))
 
-  ;; CHECK:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $5) (param i32) (result (ref extern))))
+  ;; CHECK:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint_5 (type $5) (param i32) (result (ref extern))))
 
   ;; CHECK:      (func $string.as (type $3) (param $a externref) (param $b externref) (param $c externref) (param $d externref)
   ;; CHECK-NEXT:  (local.set $b
@@ -75,9 +80,9 @@
     )
   )
 
-  ;; CHECK:      (func $string.from_code_point (type $1)
+  ;; CHECK:      (func $string.from_code_point (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $fromCodePoint
+  ;; CHECK-NEXT:   (call $fromCodePoint_5
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
