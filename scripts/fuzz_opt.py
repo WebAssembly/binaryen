@@ -286,6 +286,7 @@ INITIAL_CONTENTS_IGNORE = [
     # TODO: fuzzer and interpreter support for strings
     'strings.wast',
     'simplify-locals-strings.wast',
+    'string-lowering-instructions.wast',
     # TODO: fuzzer and interpreter support for extern conversions
     'extern-conversions.wast',
     # ignore DWARF because it is incompatible with multivalue atm
