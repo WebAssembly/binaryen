@@ -237,15 +237,16 @@ struct StringLowering : public StringGathering {
     TypeMapper(*module, updates).map();
   }
 
+  enum StringImport {
+  };
+
   void replaceInstructions(Module* module) {
-    struct Replacer : public WalkerPass<PostWalker<Replacer>> {
-      bool isFunctionParallel() override { return true; }
+    // As we work in parallel we'll collect the set of necessary imports to add.
+    using NeededImports = std::unordered_set<StringImport>;
 
-      Replacer(NameInfoMap& infos) : infos(infos) {}
-
-      std::unique_ptr<Pass> create() override {
-        return std::make_unique<Replacer>(infos);
-      }
+    // Process functions in parallel.
+    struct Replacer : public PostWalker<Replacer> {
+      Replacer(NeededImports& imports) : imports(imports) {}
 
       void visitStringAs(StringAs* curr) {
         // There is no difference between strings and views with imported
@@ -254,9 +255,27 @@ struct StringLowering : public StringGathering {
       }
     };
 
-    Replacer replacer(infos);
-    replacer.run(getPassRunner(), module);
-    replacer.walkModuleCode(module);
+    ModuleUtils::ParallelFunctionAnalysis<NeededImports> analysis(
+      *module, [&](Function* func, NeededImports& imports) {
+        if (!func->imported()) {
+          NewFinder(imports).walk(func->body);
+        }
+      });
+
+    // Also scan global code.
+    NeededImports allImports;
+    Replacer(allImports).walkModuleCode(module);
+
+    // Gather all the imports from the functions.
+    for (auto& [_, imports] : analysis.map) {
+      for (auto import : imports) {
+        allImports.insert(import);
+      }
+    }
+
+    // Add the imports to the module.
+    for (StringImport import = StringImport::First; import++; import != StringImport::Last) {
+    }
   }
 };
 
