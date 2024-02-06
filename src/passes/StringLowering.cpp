@@ -241,6 +241,11 @@ struct StringLowering : public StringGathering {
   Name fromCharCodeArrayImport;
   Name fromCodePointImport;
 
+  // The name of the module to import string functions from.
+  Name WasmStringsModule = "wasm:js-string";
+
+  // Common types used in imports.
+  auto nullArray16 = Type(Array(Field(Field::i16, Mutable)), Nullable);
   Type nnExt = Type(HeapType::ext, NonNullable);
 
   // Creates an imported string function, returning its name (which is equal to
@@ -250,7 +255,7 @@ struct StringLowering : public StringGathering {
     auto sig = Signature(params, results);
     Builder builder(*module);
     auto* func = module->addFunction(builder.makeFunction(name, sig, {}));
-    func->module = "wasm:js-string";
+    func->module = WasmStringsModule;
     func->base = trueName;
     return name;
   }
@@ -258,7 +263,6 @@ struct StringLowering : public StringGathering {
   void replaceInstructions(Module* module) {
     // Add all the possible imports up front, to avoid adding them during
     // parallel work. Optimizations can remove unneeded ones later.
-    auto nullArray16 = Type(Array(Field(Field::i16, Mutable)), Nullable);
 
     // string.fromCharCodeArray: array, start, end -> ext
     fromCharCodeArrayImport = addImport(

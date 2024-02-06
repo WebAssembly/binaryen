@@ -8,8 +8,6 @@
   ;; CHECK:      (type $array16 (array (mut i16)))
   (type $array16 (array (mut i16)))
 
-
-  ;; An existing import with a colliding name, to check that we handle that.
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $2 (func (param (ref $array16))))
 
@@ -19,8 +17,8 @@
 
   ;; CHECK:      (type $5 (func (param i32) (result (ref extern))))
 
-  ;; CHECK:      (import "existing" "import" (func $fromCodePoint (type $0)))
-  (import "existing" "import" (func $fromCodePoint))
+  ;; CHECK:      (import "colliding" "name" (func $fromCodePoint (type $0)))
+  (import "colliding" "name" (func $fromCodePoint))
 
   ;; CHECK:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $4) (param (ref null $array16) i32 i32) (result (ref extern))))
 
