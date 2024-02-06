@@ -250,6 +250,8 @@ struct StringLowering : public StringGathering {
 
     // Process functions in parallel.
     struct Replacer : public PostWalker<Replacer> {
+      NeededImports& imports;
+
       Replacer(NeededImports& imports) : imports(imports) {}
 
       void visitStringAs(StringAs* curr) {
@@ -262,7 +264,7 @@ struct StringLowering : public StringGathering {
     ModuleUtils::ParallelFunctionAnalysis<NeededImports> analysis(
       *module, [&](Function* func, NeededImports& imports) {
         if (!func->imported()) {
-          NewFinder(imports).walk(func->body);
+          Replacer(imports).walk(func->body);
         }
       });
 
@@ -278,7 +280,7 @@ struct StringLowering : public StringGathering {
     }
 
     // Add the imports to the module.
-    for (StringImport import = StringImport::First; import++; import != StringImport::Last) {
+    for (StringImport import = StringImport::First; import != StringImport::Last; import++) {
       if (allImports.count(import)) {
         // Add
       }
