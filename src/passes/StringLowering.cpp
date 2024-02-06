@@ -280,8 +280,8 @@ struct StringLowering : public StringGathering {
     }
 
     // Add the imports to the module.
-    for (StringImport import = StringImport::First; import != StringImport::Last; import++) {
-      if (allImports.count(import)) {
+    for (int import = StringImport::First; import != StringImport::Last; import++) {
+      if (allImports.count(StringImport(import))) {
         // Add
       }
     }
