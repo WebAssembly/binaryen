@@ -92,6 +92,7 @@ int main(int argc, const char* argv[]) {
   std::string inputSourceMapFilename;
   std::string outputSourceMapFilename;
   std::string outputSourceMapUrl;
+  bool experimentalNewEH = false;
 
   const std::string WasmOptOption = "wasm-opt options";
 
@@ -240,7 +241,18 @@ int main(int argc, const char* argv[]) {
                     Options::Arguments::One,
                     [](Options* o, const std::string& argument) {
                       o->extra["infile"] = argument;
-                    });
+                    })
+    .add("--experimental-new-eh",
+         "",
+         "After running all requested transformations / optimizations, "
+         "translate the instruction to use the new EH instructions at the end. "
+         "Depending on the optimization level specified, this may do some more "
+         "post-translation optimizations.",
+         WasmOptOption,
+         Options::Arguments::Zero,
+         [&experimentalNewEH](Options*, const std::string&) {
+           experimentalNewEH = true;
+         });
   options.parse(argc, argv);
 
   Module wasm;
@@ -360,8 +372,11 @@ int main(int argc, const char* argv[]) {
     std::cout << "[extra-fuzz-command first output:]\n" << firstOutput << '\n';
   }
 
+  bool translateToNewEH =
+    wasm.features.hasExceptionHandling() && experimentalNewEH;
+
   if (!options.runningPasses()) {
-    if (!options.quiet) {
+    if (!options.quiet && !translateToNewEH) {
       std::cerr << "warning: no passes specified, not doing any work\n";
     }
   } else {
@@ -394,6 +409,26 @@ int main(int argc, const char* argv[]) {
           break;
         }
         lastSize = currSize;
+      }
+    }
+  }
+
+  if (translateToNewEH) {
+    BYN_TRACE("translating to new EH instructions...\n");
+    PassRunner runner(&wasm, options.passOptions);
+    runner.add("translate-to-new-eh");
+    // Perform Stack IR optimizations here, at the very end of the
+    // optimization pipeline.
+    if (options.passOptions.optimizeLevel >= 2 ||
+        options.passOptions.shrinkLevel >= 1) {
+      runner.addIfNoDWARFIssues("generate-stack-ir");
+      runner.addIfNoDWARFIssues("optimize-stack-ir");
+    }
+    runner.run();
+    if (options.passOptions.validate) {
+      bool valid = WasmValidator().validate(wasm, options.passOptions);
+      if (!valid) {
+        exitOnInvalidWasm("error after opts");
       }
     }
   }
