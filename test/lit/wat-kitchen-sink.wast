@@ -380,7 +380,7 @@
  ;; CHECK:      (elem $passive-2 anyref (struct.new_default $s0) (struct.new_default $s0))
  (elem $passive-2 anyref (item struct.new $s0) (struct.new $s0))
 
- ;; CHECK:      (elem declare func $ref-func $ref-is-null $table-fill $table-grow $table-set)
+ ;; CHECK:      (elem declare func $ref-func $table-fill $table-grow $table-set)
  (elem declare func 0 1 2 3)
 
  (elem $declare-2 declare funcref (item ref.func 0) (ref.func 1) (item (ref.func 2)))
@@ -466,6 +466,11 @@
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $f4 (type 18) (local i32 i64) (local $l f32))
+
+ ;; CHECK:      (func $"[quoted_name]" (type $void)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $"[quoted_name]")
 
  ;; CHECK:      (func $nop-skate (type $void)
  ;; CHECK-NEXT:  (nop)
@@ -3622,13 +3627,13 @@
  ;; CHECK-NEXT:   (ref.func $ref-func)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (ref.func $ref-is-null)
+ ;; CHECK-NEXT:   (ref.func $ref-func)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $ref-func
   ref.func $ref-func
   drop
-  ref.func 154
+  ref.func 156
   drop
  )
 
