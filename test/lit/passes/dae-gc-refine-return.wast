@@ -2,14 +2,19 @@
 ;; RUN: wasm-opt %s -all --dae -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $"{}" (sub (struct )))
  (type $"{}" (sub (struct)))
 
+ ;; CHECK:      (type $"return_{}" (func (result (ref $"{}"))))
  (type $"return_{}" (func (result (ref $"{}"))))
 
+ ;; CHECK:      (type $"{i32}" (sub $"{}" (struct (field i32))))
  (type $"{i32}" (sub $"{}" (struct (field i32))))
 
+ ;; CHECK:      (type $"{i32_f32}" (sub $"{i32}" (struct (field i32) (field f32))))
  (type $"{i32_f32}" (sub $"{i32}" (struct (field i32) (field f32))))
 
+ ;; CHECK:      (type $"{i32_i64}" (sub $"{i32}" (struct (field i32) (field i64))))
  (type $"{i32_i64}" (sub $"{i32}" (struct (field i32) (field i64))))
 
  (table 1 1 funcref)
@@ -310,13 +315,13 @@
 
  ;; Show that we can optimize the return type of a function that does a tail
  ;; call.
- ;; CHECK:      (func $tail-callee (type $"return_{}") (result (ref ${}))
+ ;; CHECK:      (func $tail-callee (type $"return_{}") (result (ref $"{}"))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $tail-callee (result (ref $"{}"))
   (unreachable)
  )
- ;; CHECK:      (func $tail-caller-yes (type $"return_{}") (result (ref ${}))
+ ;; CHECK:      (func $tail-caller-yes (type $"return_{}") (result (ref $"{}"))
  ;; CHECK-NEXT:  (return_call $tail-callee)
  ;; CHECK-NEXT: )
  (func $tail-caller-yes (result anyref)
@@ -367,13 +372,13 @@
  )
 
  ;; As above, but with an indirect tail call.
- ;; CHECK:      (func $tail-callee-indirect (type $"return_{}") (result (ref ${}))
+ ;; CHECK:      (func $tail-callee-indirect (type $"return_{}") (result (ref $"{}"))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $tail-callee-indirect (result (ref $"{}"))
   (unreachable)
  )
- ;; CHECK:      (func $tail-caller-indirect-yes (type $"return_{}") (result (ref ${}))
+ ;; CHECK:      (func $tail-caller-indirect-yes (type $"return_{}") (result (ref $"{}"))
  ;; CHECK-NEXT:  (return_call_indirect $0 (type $"return_{}")
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
@@ -423,14 +428,14 @@
  )
 
  ;; As above, but with a tail call by function reference.
- ;; CHECK:      (func $tail-callee-call_ref (type $"return_{}") (result (ref ${}))
+ ;; CHECK:      (func $tail-callee-call_ref (type $"return_{}") (result (ref $"{}"))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $tail-callee-call_ref (result (ref $"{}"))
   (unreachable)
  )
- ;; CHECK:      (func $tail-caller-call_ref-yes (type $"return_{}") (result (ref ${}))
- ;; CHECK-NEXT:  (local $"return_{}" (ref null $return_{}))
+ ;; CHECK:      (func $tail-caller-call_ref-yes (type $"return_{}") (result (ref $"{}"))
+ ;; CHECK-NEXT:  (local $"return_{}" (ref null $"return_{}"))
  ;; CHECK-NEXT:  (return_call_ref $"return_{}"
  ;; CHECK-NEXT:   (local.get $"return_{}")
  ;; CHECK-NEXT:  )
@@ -442,7 +447,7 @@
  )
  ;; CHECK:      (func $tail-caller-call_ref-no (type $2) (result anyref)
  ;; CHECK-NEXT:  (local $any anyref)
- ;; CHECK-NEXT:  (local $"return_{}" (ref null $return_{}))
+ ;; CHECK-NEXT:  (local $"return_{}" (ref null $"return_{}"))
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (then
@@ -502,7 +507,7 @@
   )
  )
 
- ;; CHECK:      (func $update-null (type $10) (param $x i32) (param $y i32) (result (ref null ${i32}))
+ ;; CHECK:      (func $update-null (type $10) (param $x i32) (param $y i32) (result (ref null $"{i32}"))
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (then

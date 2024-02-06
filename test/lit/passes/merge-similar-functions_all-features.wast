@@ -2,11 +2,10 @@
 ;; RUN: foreach %s %t wasm-opt --all-features --merge-similar-functions -S -o - | filecheck %s
 
 (module
-  (type $"[i8]" (array i8))
-
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $[i8] (array i8))
+  ;; CHECK:      (type $"[i8]" (array i8))
+  (type $"[i8]" (array i8))
 
   ;; CHECK:      (type $2 (func (param arrayref)))
 

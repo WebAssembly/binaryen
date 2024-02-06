@@ -2,6 +2,7 @@
 ;; RUN: foreach %s %t wasm-opt -all --dae -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $"{}" (struct ))
  (type $"{}" (struct))
 
  ;; CHECK:      (func $foo (type $0)
@@ -49,7 +50,7 @@
  ;; A function that gets a non-nullable reference that is never used. We can
  ;; still create a non-nullable local for that parameter.
  ;; CHECK:      (func $get-nonnull (type $0)
- ;; CHECK-NEXT:  (local $0 (ref ${}))
+ ;; CHECK-NEXT:  (local $0 (ref $"{}"))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $get-nonnull (param $0 (ref $"{}"))

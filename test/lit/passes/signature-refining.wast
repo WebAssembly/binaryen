@@ -728,13 +728,12 @@
 )
 
 (module
+  ;; CHECK:      (type $"{}" (struct ))
   (type $"{}" (struct))
 
-  ;; CHECK:      (type ${} (struct ))
+  ;; CHECK:      (type $1 (func (param (ref $"{}") i32)))
 
-  ;; CHECK:      (type $1 (func (param (ref ${}) i32)))
-
-  ;; CHECK:      (func $foo (type $1) (param $ref (ref ${})) (param $i32 i32)
+  ;; CHECK:      (func $foo (type $1) (param $ref (ref $"{}")) (param $i32 i32)
   ;; CHECK-NEXT:  (local $2 eqref)
   ;; CHECK-NEXT:  (local.set $2
   ;; CHECK-NEXT:   (local.get $ref)
@@ -873,12 +872,11 @@
 )
 
 (module
- (type $"[i8]" (array i8))
-
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $0 (func (param (ref $[i8]))))
+ ;; CHECK-NEXT:  (type $0 (func (param (ref $"[i8]"))))
 
- ;; CHECK:       (type $[i8] (array i8))
+ ;; CHECK:       (type $"[i8]" (array i8))
+ (type $"[i8]" (array i8))
 
  ;; CHECK:       (type $2 (func))
 
@@ -893,7 +891,7 @@
   )
  )
 
- ;; CHECK:      (func $1 (type $0) (param $2 (ref $[i8]))
+ ;; CHECK:      (func $1 (type $0) (param $2 (ref $"[i8]"))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.cast (ref none)
  ;; CHECK-NEXT:    (local.get $2)

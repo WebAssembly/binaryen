@@ -2207,13 +2207,12 @@
 )
 
 (module
+  ;; CHECK:      (type $"{}" (sub (struct )))
   (type $"{}" (sub (struct)))
 
-  ;; CHECK:      (type ${} (sub (struct )))
+  ;; CHECK:      (type $1 (func (result (ref $"{}"))))
 
-  ;; CHECK:      (type $1 (func (result (ref ${}))))
-
-  ;; CHECK:      (func $func (type $1) (result (ref ${}))
+  ;; CHECK:      (func $func (type $1) (result (ref $"{}"))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $block (result (ref none))
   ;; CHECK-NEXT:    (br_on_non_null $block

@@ -2,6 +2,8 @@
 ;; RUN: wasm-opt %s --vacuum -all -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $"{}" (struct ))
+
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $2) (param i32 i32 funcref) (result anyref)))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param i32 i32 funcref) (result (ref null any))))
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects.non.null (type $3) (param i32 i32 funcref) (result (ref any))))
@@ -82,8 +84,8 @@
     )
   )
 
-  ;; CHECK:      (func $ref.cast.null.block (type $6) (param $ref (ref ${})) (result structref)
-  ;; CHECK-NEXT:  (ref.cast (ref ${})
+  ;; CHECK:      (func $ref.cast.null.block (type $6) (param $ref (ref $"{}")) (result structref)
+  ;; CHECK-NEXT:  (ref.cast (ref $"{}")
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

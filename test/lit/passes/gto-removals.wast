@@ -795,23 +795,22 @@
 )
 
 (module
-  (type $"{mut:i8}" (sub (struct (field (mut i8)))))
-
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $0 (func (result (ref ${mut:i8}))))
+  ;; CHECK-NEXT:  (type $0 (func (result (ref $"{mut:i8}"))))
 
   ;; CHECK:       (type $1 (func (result i32)))
 
   ;; CHECK:       (type $2 (func))
 
-  ;; CHECK:       (type ${mut:i8} (sub (struct )))
+  ;; CHECK:       (type $"{mut:i8}" (sub (struct )))
+  (type $"{mut:i8}" (sub (struct (field (mut i8)))))
 
-  ;; CHECK:       (type $4 (func (param (ref null ${mut:i8}))))
+  ;; CHECK:       (type $4 (func (param (ref null $"{mut:i8}"))))
 
-  ;; CHECK:      (func $unreachable-set (type $4) (param $"{mut:i8}" (ref null ${mut:i8}))
+  ;; CHECK:      (func $unreachable-set (type $4) (param $"{mut:i8}" (ref null $"{mut:i8}"))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (block (result (ref null ${mut:i8}))
+  ;; CHECK-NEXT:    (block (result (ref null $"{mut:i8}"))
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (call $helper-i32)
   ;; CHECK-NEXT:     )
@@ -832,7 +831,7 @@
     )
   )
 
-  ;; CHECK:      (func $unreachable-set-2 (type $4) (param $"{mut:i8}" (ref null ${mut:i8}))
+  ;; CHECK:      (func $unreachable-set-2 (type $4) (param $"{mut:i8}" (ref null $"{mut:i8}"))
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.as_non_null
@@ -859,7 +858,7 @@
     )
   )
 
-  ;; CHECK:      (func $unreachable-set-2b (type $4) (param $"{mut:i8}" (ref null ${mut:i8}))
+  ;; CHECK:      (func $unreachable-set-2b (type $4) (param $"{mut:i8}" (ref null $"{mut:i8}"))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
@@ -887,10 +886,10 @@
   )
 
   ;; CHECK:      (func $unreachable-set-3 (type $2)
-  ;; CHECK-NEXT:  (local $0 (ref ${mut:i8}))
+  ;; CHECK-NEXT:  (local $0 (ref $"{mut:i8}"))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (block (result (ref ${mut:i8}))
+  ;; CHECK-NEXT:    (block (result (ref $"{mut:i8}"))
   ;; CHECK-NEXT:     (local.set $0
   ;; CHECK-NEXT:      (call $helper-ref)
   ;; CHECK-NEXT:     )
@@ -919,7 +918,7 @@
     (i32.const 1)
   )
 
-  ;; CHECK:      (func $helper-ref (type $0) (result (ref ${mut:i8}))
+  ;; CHECK:      (func $helper-ref (type $0) (result (ref $"{mut:i8}"))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $helper-ref (result (ref $"{mut:i8}"))

@@ -60,7 +60,7 @@ struct Name : public IString {
     return str.find(substring.str) != std::string_view::npos;
   }
 
-  std::ostream& print(std::ostream& o) {
+  std::ostream& print(std::ostream& o) const {
     assert(*this && "Cannot print an empty name");
     // We need to quote names if they have tricky chars.
     // TODO: This is not spec-compliant since the spec does not yet support

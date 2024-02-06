@@ -1788,7 +1788,7 @@ void TypePrinter::printHeapTypeName(HeapType type) {
     print(type);
     return;
   }
-  os << '$' << generator(type).name;
+  generator(type).name.print(os);
 #if TRACE_CANONICALIZATION
   os << "(;" << ((type.getID() >> 4) % 1000) << ";) ";
 #endif
@@ -1915,7 +1915,8 @@ std::ostream& TypePrinter::print(HeapType type) {
 
   auto names = generator(type);
 
-  os << "(type $" << names.name << ' ';
+  os << "(type ";
+  names.name.print(os) << ' ';
 
   if (isTemp(type)) {
     os << "(; temp ;) ";
@@ -2018,7 +2019,7 @@ TypePrinter::print(const Struct& struct_,
     // TODO: move this to the function for printing fields.
     os << " (field ";
     if (auto it = fieldNames.find(i); it != fieldNames.end()) {
-      os << '$' << it->second << ' ';
+      it->second.print(os) << ' ';
     }
     print(struct_.fields[i]);
     os << ')';

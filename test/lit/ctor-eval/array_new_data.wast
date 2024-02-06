@@ -2,11 +2,10 @@
 ;; RUN: wasm-ctor-eval %s --ctors=test --kept-exports=test --quiet -all -S -o - | filecheck %s
 
 (module
- (type $"[i8]" (array i8))
-
  ;; CHECK:      (type $0 (func))
 
- ;; CHECK:      (type $[i8] (array i8))
+ ;; CHECK:      (type $"[i8]" (array i8))
+ (type $"[i8]" (array i8))
 
  ;; CHECK:      (memory $0 16 17 shared)
  (memory $0 16 17 shared)
