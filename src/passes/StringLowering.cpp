@@ -51,7 +51,6 @@ struct StringGathering : public Pass {
     processModule(module);
     addGlobals(module);
     replaceStrings(module);
-    replaceInstructions(module);
   }
 
   // Scan the entire wasm to find the relevant strings to populate our global
@@ -175,28 +174,6 @@ struct StringGathering : public Pass {
       *stringPtr = builder.makeGlobalGet(globalName, nnstringref);
     }
   }
-
-  void replaceInstructions(Module* module) {
-    struct Replacer : public WalkerPass<PostWalker<Replacer>> {
-      bool isFunctionParallel() override { return true; }
-
-      Replacer(NameInfoMap& infos) : infos(infos) {}
-
-      std::unique_ptr<Pass> create() override {
-        return std::make_unique<Replacer>(infos);
-      }
-
-      void visitStringAs(StringAs* curr) {
-        // There is no difference between strings and views with imported
-        // strings: they are all just JS strings.
-        replaceCurrent(curr->ref);
-      }
-    };
-
-    Replacer replacer(infos);
-    replacer.run(getPassRunner(), module);
-    replacer.walkModuleCode(module);
-  }
 };
 
 struct StringLowering : public StringGathering {
@@ -213,6 +190,9 @@ struct StringLowering : public StringGathering {
 
     // Remove all HeapType::string etc. in favor of externref.
     updateTypes(module);
+
+    // Replace string.* etc. operations with imported ones.
+    replaceInstructions(module);
 
     // Disable the feature here after we lowered everything away.
     module->features.disable(FeatureSet::Strings);
@@ -248,8 +228,35 @@ struct StringLowering : public StringGathering {
 
   void updateTypes(Module* module) {
     TypeMapper::TypeUpdates updates;
+    // There is no difference between strings and views with imported strings:
+    // they are all just JS strings, so they all turn into externref.
     updates[HeapType::string] = HeapType::ext;
+    updates[HeapType::stringview_wtf8] = HeapType::ext;
+    updates[HeapType::stringview_wtf16] = HeapType::ext;
+    updates[HeapType::stringview_iter] = HeapType::ext;
     TypeMapper(*module, updates).map();
+  }
+
+  void replaceInstructions(Module* module) {
+    struct Replacer : public WalkerPass<PostWalker<Replacer>> {
+      bool isFunctionParallel() override { return true; }
+
+      Replacer(NameInfoMap& infos) : infos(infos) {}
+
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<Replacer>(infos);
+      }
+
+      void visitStringAs(StringAs* curr) {
+        // There is no difference between strings and views with imported
+        // strings: they are all just JS strings, so no conversion is needed.
+        replaceCurrent(curr->ref);
+      }
+    };
+
+    Replacer replacer(infos);
+    replacer.run(getPassRunner(), module);
+    replacer.walkModuleCode(module);
   }
 };
 
