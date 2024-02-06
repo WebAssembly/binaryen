@@ -796,21 +796,21 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $0 (func (result (ref ${mut:i8}))))
+  ;; CHECK-NEXT:  (type $0 (func (result (ref $"{mut:i8}"))))
 
   ;; CHECK:       (type $1 (func (result i32)))
 
   ;; CHECK:       (type $2 (func))
 
-  ;; CHECK:       (type ${mut:i8} (sub (struct )))
-  (type ${mut:i8} (sub (struct (field (mut i8)))))
+  ;; CHECK:       (type $"{mut:i8}" (sub (struct )))
+  (type $"{mut:i8}" (sub (struct (field (mut i8)))))
 
-  ;; CHECK:       (type $4 (func (param (ref null ${mut:i8}))))
+  ;; CHECK:       (type $4 (func (param (ref null $"{mut:i8}"))))
 
-  ;; CHECK:      (func $unreachable-set (type $4) (param $"{mut:i8}" (ref null ${mut:i8}))
+  ;; CHECK:      (func $unreachable-set (type $4) (param $"{mut:i8}" (ref null $"{mut:i8}"))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (block (result (ref null ${mut:i8}))
+  ;; CHECK-NEXT:    (block (result (ref null $"{mut:i8}"))
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (call $helper-i32)
   ;; CHECK-NEXT:     )
@@ -819,19 +819,19 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $unreachable-set (param ${mut:i8} (ref null ${mut:i8}))
+  (func $unreachable-set (param $"{mut:i8}" (ref null $"{mut:i8}"))
     ;; The struct type has no reads, so we want to remove all of the sets of it.
     ;; This struct.set will trap on null, but first the call must run. When we
     ;; optimize here we should be careful to not emit something with different
     ;; ordering (naively emitting ref.as_non_null on the reference would trap
     ;; before the call, so we must reorder).
-    (struct.set ${mut:i8} 0
-      (local.get ${mut:i8})
+    (struct.set $"{mut:i8}" 0
+      (local.get $"{mut:i8}")
       (call $helper-i32)
     )
   )
 
-  ;; CHECK:      (func $unreachable-set-2 (type $4) (param $"{mut:i8}" (ref null ${mut:i8}))
+  ;; CHECK:      (func $unreachable-set-2 (type $4) (param $"{mut:i8}" (ref null $"{mut:i8}"))
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.as_non_null
@@ -847,18 +847,18 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $unreachable-set-2 (param ${mut:i8} (ref null ${mut:i8}))
+  (func $unreachable-set-2 (param $"{mut:i8}" (ref null $"{mut:i8}"))
     ;; As above, but the side effects now are a br. Again, the br must happen
     ;; before the trap (in fact, the br will skip the trap here).
     (block
-      (struct.set ${mut:i8} 0
-        (local.get ${mut:i8})
+      (struct.set $"{mut:i8}" 0
+        (local.get $"{mut:i8}")
         (br $block)
       )
     )
   )
 
-  ;; CHECK:      (func $unreachable-set-2b (type $4) (param $"{mut:i8}" (ref null ${mut:i8}))
+  ;; CHECK:      (func $unreachable-set-2b (type $4) (param $"{mut:i8}" (ref null $"{mut:i8}"))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
@@ -873,23 +873,23 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $unreachable-set-2b (param ${mut:i8} (ref null ${mut:i8}))
+  (func $unreachable-set-2b (param $"{mut:i8}" (ref null $"{mut:i8}"))
     ;; As above, but with an unreachable instead of a br. We add a nop here so
     ;; that we are inside of a block, and then validation would fail if we do
     ;; not keep the type of the replacement for the struct.set identical to the
     ;; struct.set. That is, the type must remain unreachable.
     (nop)
-    (struct.set ${mut:i8} 0
-      (local.get ${mut:i8})
+    (struct.set $"{mut:i8}" 0
+      (local.get $"{mut:i8}")
       (unreachable)
     )
   )
 
   ;; CHECK:      (func $unreachable-set-3 (type $2)
-  ;; CHECK-NEXT:  (local $0 (ref ${mut:i8}))
+  ;; CHECK-NEXT:  (local $0 (ref $"{mut:i8}"))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (block (result (ref ${mut:i8}))
+  ;; CHECK-NEXT:    (block (result (ref $"{mut:i8}"))
   ;; CHECK-NEXT:     (local.set $0
   ;; CHECK-NEXT:      (call $helper-ref)
   ;; CHECK-NEXT:     )
@@ -904,7 +904,7 @@
   (func $unreachable-set-3
     ;; As above, but now we have side effects in both children.
     (block
-      (struct.set ${mut:i8} 0
+      (struct.set $"{mut:i8}" 0
         (call $helper-ref)
         (call $helper-i32)
       )
@@ -918,10 +918,10 @@
     (i32.const 1)
   )
 
-  ;; CHECK:      (func $helper-ref (type $0) (result (ref ${mut:i8}))
+  ;; CHECK:      (func $helper-ref (type $0) (result (ref $"{mut:i8}"))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
-  (func $helper-ref (result (ref ${mut:i8}))
+  (func $helper-ref (result (ref $"{mut:i8}"))
     (unreachable)
   )
 )

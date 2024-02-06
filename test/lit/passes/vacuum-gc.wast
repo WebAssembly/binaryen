@@ -2,14 +2,14 @@
 ;; RUN: wasm-opt %s --vacuum -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type ${} (struct ))
+  ;; CHECK:      (type $"{}" (struct ))
 
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $2) (param i32 i32 funcref) (result anyref)))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param i32 i32 funcref) (result (ref null any))))
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects.non.null (type $3) (param i32 i32 funcref) (result (ref any))))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects.non.null (param i32 i32 funcref) (result (ref any))))
 
-  (type ${} (struct))
+  (type $"{}" (struct))
 
   ;; CHECK:      (func $drop-ref-as (type $4) (param $x anyref)
   ;; CHECK-NEXT:  (drop
@@ -43,7 +43,7 @@
   ;; CHECK-NEXT: )
   (func $vacuum-nonnull
     (drop
-      (if (result (ref ${}))
+      (if (result (ref $"{}"))
         (i32.const 1)
         ;; This block's result is not used. As a consequence vacuum will try to
         ;; generate a replacement zero for the block's fallthrough value. A
@@ -52,8 +52,8 @@
         ;; on this case, though. Instead, the end result of this function should
         ;; simply be empty, as everything here can be vacuumed away.
         (then
-          (block (result (ref ${}))
-            (struct.new ${})
+          (block (result (ref $"{}"))
+            (struct.new $"{}")
           )
         )
         (else
@@ -84,18 +84,18 @@
     )
   )
 
-  ;; CHECK:      (func $ref.cast.null.block (type $6) (param $ref (ref ${})) (result structref)
-  ;; CHECK-NEXT:  (ref.cast (ref ${})
+  ;; CHECK:      (func $ref.cast.null.block (type $6) (param $ref (ref $"{}")) (result structref)
+  ;; CHECK-NEXT:  (ref.cast (ref $"{}")
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $ref.cast.null.block (param $ref (ref ${})) (result (ref null struct))
+  (func $ref.cast.null.block (param $ref (ref $"{}")) (result (ref null struct))
     ;; We can vacuum away the block, which will make this ref.cast null operate
     ;; on a non-nullable input. That is, we are refining the input to the cast.
     ;; The cast must be updated properly following that, to be a non-nullable
     ;; cast.
-    (ref.cast (ref null ${})
-      (block (result (ref null ${}))
+    (ref.cast (ref null $"{}")
+      (block (result (ref null $"{}"))
         (local.get $ref)
       )
     )
