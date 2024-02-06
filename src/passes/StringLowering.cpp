@@ -51,6 +51,7 @@ struct StringGathering : public Pass {
     processModule(module);
     addGlobals(module);
     replaceStrings(module);
+    replaceInstructions(module);
   }
 
   // Scan the entire wasm to find the relevant strings to populate our global
@@ -173,6 +174,28 @@ struct StringGathering : public Pass {
       auto globalName = stringToGlobalName[stringConst->string];
       *stringPtr = builder.makeGlobalGet(globalName, nnstringref);
     }
+  }
+
+  void replaceInstructions(Module* module) {
+    struct Replacer : public WalkerPass<PostWalker<Replacer>> {
+      bool isFunctionParallel() override { return true; }
+
+      Replacer(NameInfoMap& infos) : infos(infos) {}
+
+      std::unique_ptr<Pass> create() override {
+        return std::make_unique<Replacer>(infos);
+      }
+
+      void visitStringAs(StringAs* curr) {
+        // There is no difference between strings and views with imported
+        // strings: they are all just JS strings.
+        replaceCurrent(curr->ref);
+      }
+    };
+
+    Replacer replacer(infos);
+    replacer.run(getPassRunner(), module);
+    replacer.walkModuleCode(module);
   }
 };
 
