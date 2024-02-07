@@ -272,8 +272,10 @@ struct StringLowering : public StringGathering {
     // string.fromCodePoint: codepoint -> ext
     fromCodePointImport = addImport(module, "fromCodePoint", Type::i32, nnExt);
     // string.intoCharCodeArray: string, array, start -> num written
-    intoCharCodeArrayImport = addImport(
-      module, "intoCharCodeArray", {nullExt, nullArray16, Type::i32}, Type::i32);
+    intoCharCodeArrayImport = addImport(module,
+                                        "intoCharCodeArray",
+                                        {nullExt, nullArray16, Type::i32},
+                                        Type::i32);
 
     // Replace the string instructions in parallel.
     struct Replacer : public WalkerPass<PostWalker<Replacer>> {
