@@ -354,8 +354,8 @@ struct StringLowering : public StringGathering {
         Builder builder(*getModule());
         switch (curr->op) {
           case StringMeasureWTF16View:
-            replaceCurrent(builder.makeCall(
-              lowering.lengthImport, curr->ref, Type::i32));
+            replaceCurrent(
+              builder.makeCall(lowering.lengthImport, {curr->ref}, Type::i32));
             return;
           default:
             WASM_UNREACHABLE("invalid string.measure*");
