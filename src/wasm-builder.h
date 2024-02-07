@@ -362,6 +362,7 @@ public:
     ret->ptr = ptr;
     ret->type = type;
     ret->memory = memory;
+    ret->finalize();
     return ret;
   }
   Load* makeAtomicLoad(

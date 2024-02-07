@@ -39,28 +39,28 @@
 
   (type $private (func (param v128)))
 
-  (func $1 (export "test1") (type $void)
+  ;; Ok even though it is an import instead of an export.
+  (func $1 (import "env" "test5") (type $exported-pair-1))
+
+  (func $2 (export "test1") (type $void)
     (unreachable)
   )
 
   ;; Ok because it only refers to basic heap types
-  (func $2 (export "test2") (type $abstract)
+  (func $3 (export "test2") (type $abstract)
     (unreachable)
   )
 
   ;; Not ok because it refers to $struct.
-  (func $3 (export "test3") (type $concrete)
+  (func $4 (export "test3") (type $concrete)
     (unreachable)
   )
 
   ;; Ok even though it is in a rec group because the rest of the group and the
   ;; types this refers to are on the boundary as well.
-  (func $4 (export "test4") (type $exported-pair-0)
+  (func $5 (export "test4") (type $exported-pair-0)
     (unreachable)
   )
-
-  ;; Ok even though it is an import instead of an export.
-  (func $5 (import "env" "test5") (type $exported-pair-1))
 
   ;; Ok, and we also allow the other type in the group.
   (func $6 (export "test6") (type $partial-pair-0)
