@@ -31,12 +31,14 @@
 
   ;; CHECK:      (type $12 (func (param externref) (result i32)))
 
+  ;; CHECK:      (type $13 (func (param externref i32) (result i32)))
+
   ;; CHECK:      (import "colliding" "name" (func $fromCodePoint (type $8)))
   (import "colliding" "name" (func $fromCodePoint))
 
   ;; CHECK:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $9) (param (ref null $array16) i32 i32) (result (ref extern))))
 
-  ;; CHECK:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint_9 (type $10) (param i32) (result (ref extern))))
+  ;; CHECK:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint_10 (type $10) (param i32) (result (ref extern))))
 
   ;; CHECK:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (type $11) (param externref (ref null $array16) i32) (result i32)))
 
@@ -45,6 +47,8 @@
   ;; CHECK:      (import "wasm:js-string" "compare" (func $compare (type $1) (param externref externref) (result i32)))
 
   ;; CHECK:      (import "wasm:js-string" "length" (func $length (type $12) (param externref) (result i32)))
+
+  ;; CHECK:      (import "wasm:js-string" "codePointAt" (func $codePointAt (type $13) (param externref i32) (result i32)))
 
   ;; CHECK:      (func $string.as (type $7) (param $a externref) (param $b externref) (param $c externref) (param $d externref)
   ;; CHECK-NEXT:  (local.set $b
@@ -101,7 +105,7 @@
   )
 
   ;; CHECK:      (func $string.from_code_point (type $5) (result externref)
-  ;; CHECK-NEXT:  (call $fromCodePoint_9
+  ;; CHECK-NEXT:  (call $fromCodePoint_10
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -160,6 +164,19 @@
   (func $string.length (param $ref stringview_wtf16) (result i32)
     (stringview_wtf16.length
       (local.get $ref)
+    )
+  )
+
+  ;; CHECK:      (func $string.get_codeunit (type $2) (param $ref externref) (result i32)
+  ;; CHECK-NEXT:  (call $codePointAt
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $string.get_codeunit (param $ref stringview_wtf16) (result i32)
+    (stringview_wtf16.get_codeunit
+      (local.get $ref)
+      (i32.const 2)
     )
   )
 )
