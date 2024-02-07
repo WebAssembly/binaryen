@@ -241,6 +241,8 @@ struct StringLowering : public StringGathering {
   Name fromCharCodeArrayImport;
   Name intoCharCodeArrayImport;
   Name fromCodePointImport;
+  Name equalsImport;
+  Name compareImport;
 
   // The name of the module to import string functions from.
   Name WasmStringsModule = "wasm:js-string";
@@ -276,6 +278,10 @@ struct StringLowering : public StringGathering {
                                         "intoCharCodeArray",
                                         {nullExt, nullArray16, Type::i32},
                                         Type::i32);
+    // string.equals: string, string -> i32
+    equalsImport = addImport(module, "equals", {nullExt, nullExt}, Type::i32);
+    // string.compare: string, string -> i32
+    compareImport = addImport(module, "compare", {nullExt, nullExt}, Type::i32);
 
     // Replace the string instructions in parallel.
     struct Replacer : public WalkerPass<PostWalker<Replacer>> {
@@ -322,6 +328,24 @@ struct StringLowering : public StringGathering {
             return;
           default:
             WASM_UNREACHABLE("TODO: all of string.encode*");
+        }
+      }
+
+      void visitStringEq(StringEq* curr) {
+        Builder builder(*getModule());
+        switch (curr->op) {
+          case StringEqEqual:
+            replaceCurrent(builder.makeCall(lowering.equalsImport,
+                                            {curr->left, curr->right},
+                                            Type::i32));
+            return;
+          case StringEqCompare:
+            replaceCurrent(builder.makeCall(lowering.compareImport,
+                                            {curr->left, curr->right},
+                                            Type::i32));
+            return;
+          default:
+            WASM_UNREACHABLE("invalid string.eq*");
         }
       }
     };
