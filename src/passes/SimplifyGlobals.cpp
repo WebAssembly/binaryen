@@ -41,6 +41,7 @@
 #include <atomic>
 
 #include "ir/effects.h"
+#include "ir/find_all.h"
 #include "ir/linear-execution.h"
 #include "ir/properties.h"
 #include "ir/utils.h"
@@ -659,10 +660,11 @@ struct SimplifyGlobals : public Pass {
         // This is the init of a passive segment, which is null.
         return;
       }
-      if (auto* get = init->dynCast<GlobalGet>()) {
+      for (auto** getp : FindAllPointers<GlobalGet>(init).list) {
+        auto* get = (*getp)->cast<GlobalGet>();
         auto iter = constantGlobals.find(get->name);
         if (iter != constantGlobals.end()) {
-          init = builder.makeConstantExpression(iter->second);
+          *getp = builder.makeConstantExpression(iter->second);
         }
       }
     };
