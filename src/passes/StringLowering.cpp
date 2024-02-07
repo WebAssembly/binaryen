@@ -239,6 +239,7 @@ struct StringLowering : public StringGathering {
 
   // Imported string functions.
   Name fromCharCodeArrayImport;
+  Name intoCharCodeArrayImport;
   Name fromCodePointImport;
 
   // The name of the module to import string functions from.
@@ -246,6 +247,7 @@ struct StringLowering : public StringGathering {
 
   // Common types used in imports.
   Type nullArray16 = Type(Array(Field(Field::i16, Mutable)), Nullable);
+  Type nullExt = Type(HeapType::ext, Nullable);
   Type nnExt = Type(HeapType::ext, NonNullable);
 
   // Creates an imported string function, returning its name (which is equal to
@@ -269,6 +271,9 @@ struct StringLowering : public StringGathering {
       module, "fromCharCodeArray", {nullArray16, Type::i32, Type::i32}, nnExt);
     // string.fromCodePoint: codepoint -> ext
     fromCodePointImport = addImport(module, "fromCodePoint", Type::i32, nnExt);
+    // string.intoCharCodeArray: string, array, start -> num written
+    intoCharCodeArrayImport = addImport(
+      module, "intoCharCodeArray", {nullExt, nullArray16, Type::i32}, Type::i32);
 
     // Replace the string instructions in parallel.
     struct Replacer : public WalkerPass<PostWalker<Replacer>> {
@@ -303,6 +308,19 @@ struct StringLowering : public StringGathering {
         // There is no difference between strings and views with imported
         // strings: they are all just JS strings, so no conversion is needed.
         replaceCurrent(curr->ref);
+      }
+
+      void visitStringEncode(StringEncode* curr) {
+        Builder builder(*getModule());
+        switch (curr->op) {
+          case StringEncodeWTF16Array:
+            replaceCurrent(builder.makeCall(lowering.intoCharCodeArrayImport,
+                                            {curr->ref, curr->ptr, curr->start},
+                                            Type::i32));
+            return;
+          default:
+            WASM_UNREACHABLE("TODO: all of string.encode*");
+        }
       }
     };
 
