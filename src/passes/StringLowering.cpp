@@ -335,14 +335,12 @@ struct StringLowering : public StringGathering {
         Builder builder(*getModule());
         switch (curr->op) {
           case StringEqEqual:
-            replaceCurrent(builder.makeCall(lowering.equalsImport,
-                                            {curr->left, curr->right},
-                                            Type::i32));
+            replaceCurrent(builder.makeCall(
+              lowering.equalsImport, {curr->left, curr->right}, Type::i32));
             return;
           case StringEqCompare:
-            replaceCurrent(builder.makeCall(lowering.compareImport,
-                                            {curr->left, curr->right},
-                                            Type::i32));
+            replaceCurrent(builder.makeCall(
+              lowering.compareImport, {curr->left, curr->right}, Type::i32));
             return;
           default:
             WASM_UNREACHABLE("invalid string.eq*");
