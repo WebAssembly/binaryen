@@ -760,10 +760,22 @@ struct SimplifyGlobals : public Pass {
   }
 };
 
+struct PropagateGlobalsGlobally : public SimplifyGlobals {
+  void run(Module* module_) override {
+    module = module_;
+
+    propagateConstantsToGlobals();
+  }
+};
+
 Pass* createSimplifyGlobalsPass() { return new SimplifyGlobals(false); }
 
 Pass* createSimplifyGlobalsOptimizingPass() {
   return new SimplifyGlobals(true);
+}
+
+Pass* createPropagateGlobalsGloballyPass() {
+  return new PropagateGlobalsGlobally();
 }
 
 } // namespace wasm

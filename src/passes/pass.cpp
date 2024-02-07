@@ -369,6 +369,9 @@ void PassRegistry::registerPasses() {
   registerPass("print-stack-ir",
                "print out Stack IR (useful for internal debugging)",
                createPrintStackIRPass);
+  registerPass("propagate-globals-globally",
+               "propagate global values to other globals (useful for tests)",
+               createPropagateGlobalsGloballyPass);
   registerPass("remove-non-js-ops",
                "removes operations incompatible with js",
                createRemoveNonJSOpsPass);
