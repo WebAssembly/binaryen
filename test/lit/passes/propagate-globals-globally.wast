@@ -14,8 +14,14 @@
   ;; CHECK:      (global $B i32 (i32.const 42))
   (global $B i32 (global.get $A))
 
-  ;; CHECK:      (global $C i32 (global.get $B))
-  (global $C i32 (global.get $B))
+  ;; CHECK:      (global $C i32 (i32.add
+  ;; CHECK-NEXT:  (global.get $B)
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: ))
+  (global $C i32 (i32.add
+    (global.get $B)
+    (global.get $A)
+  ))
 
   ;; CHECK:      (global $D (ref string) (string.const "foo"))
   (global $D (ref string) (string.const "foo"))
