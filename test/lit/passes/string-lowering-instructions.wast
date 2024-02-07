@@ -145,4 +145,10 @@
       (local.get $b)
     )
   )
+
+  (func $string.length (param $ref stringview_wtf16) (result i32)
+    (stringview_wtf16.length
+      (local.get $ref)
+    )
+  )
 )

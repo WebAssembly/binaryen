@@ -243,6 +243,7 @@ struct StringLowering : public StringGathering {
   Name fromCodePointImport;
   Name equalsImport;
   Name compareImport;
+  Name lengthImport;
 
   // The name of the module to import string functions from.
   Name WasmStringsModule = "wasm:js-string";
@@ -282,6 +283,8 @@ struct StringLowering : public StringGathering {
     equalsImport = addImport(module, "equals", {nullExt, nullExt}, Type::i32);
     // string.compare: string, string -> i32
     compareImport = addImport(module, "compare", {nullExt, nullExt}, Type::i32);
+    // string.length: string -> i32
+    lengthImport = addImport(module, "length", nullExt, Type::i32);
 
     // Replace the string instructions in parallel.
     struct Replacer : public WalkerPass<PostWalker<Replacer>> {
@@ -344,6 +347,18 @@ struct StringLowering : public StringGathering {
             return;
           default:
             WASM_UNREACHABLE("invalid string.eq*");
+        }
+      }
+
+      void visitStringMeasure(StringMeasure* curr) {
+        Builder builder(*getModule());
+        switch (curr->op) {
+          case StringMeasureWTF16View:
+            replaceCurrent(builder.makeCall(
+              lowering.lengthImport, curr->ref, Type::i32));
+            return;
+          default:
+            WASM_UNREACHABLE("invalid string.measure*");
         }
       }
     };
