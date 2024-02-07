@@ -41,6 +41,8 @@
 
   ;; LOWER:      (type $7 (func (param externref i32) (result i32)))
 
+  ;; LOWER:      (type $8 (func (param externref i32 i32) (result (ref extern))))
+
   ;; LOWER:      (import "string.const" "0" (global $string.const_bar (ref extern)))
 
   ;; LOWER:      (import "string.const" "1" (global $string.const_other (ref extern)))
@@ -60,6 +62,8 @@
   ;; LOWER:      (import "wasm:js-string" "length" (func $length (type $6) (param externref) (result i32)))
 
   ;; LOWER:      (import "wasm:js-string" "codePointAt" (func $codePointAt (type $7) (param externref i32) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "substring" (func $substring (type $8) (param externref i32 i32) (result (ref extern))))
 
   ;; LOWER:      (global $global2 externref (global.get $string.const_bar))
   (global $global2 (ref null string) (string.const "bar"))
@@ -153,6 +157,8 @@
 
   ;; LOWER:      (type $6 (func (param externref i32) (result i32)))
 
+  ;; LOWER:      (type $7 (func (param externref i32 i32) (result (ref extern))))
+
   ;; LOWER:      (import "a" "b" (global $import (ref extern)))
   (import "a" "b" (global $import (ref string)))
 
@@ -177,6 +183,8 @@
   ;; LOWER:      (import "wasm:js-string" "length" (func $length (type $5) (param externref) (result i32)))
 
   ;; LOWER:      (import "wasm:js-string" "codePointAt" (func $codePointAt (type $6) (param externref i32) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "substring" (func $substring (type $7) (param externref i32 i32) (result (ref extern))))
 
   ;; LOWER:      (global $global2 (ref extern) (global.get $global1))
   (global $global2 (ref string) (string.const "foo"))

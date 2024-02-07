@@ -245,6 +245,7 @@ struct StringLowering : public StringGathering {
   Name compareImport;
   Name lengthImport;
   Name codePointAtImport;
+  Name substringImport;
 
   // The name of the module to import string functions from.
   Name WasmStringsModule = "wasm:js-string";
@@ -288,6 +289,8 @@ struct StringLowering : public StringGathering {
     lengthImport = addImport(module, "length", nullExt, Type::i32);
     // string.codePointAt: string, offset -> i32
     codePointAtImport = addImport(module, "codePointAt", {nullExt, Type::i32}, Type::i32);
+    // string.substring: string, start, end -> string
+    substringImport = addImport(module, "substring", {nullExt, Type::i32, Type::i32}, nnExt);
 
     // Replace the string instructions in parallel.
     struct Replacer : public WalkerPass<PostWalker<Replacer>> {
@@ -369,6 +372,18 @@ struct StringLowering : public StringGathering {
         Builder builder(*getModule());
         replaceCurrent(
           builder.makeCall(lowering.codePointAtImport, {curr->ref, curr->pos}, Type::i32));
+      }
+
+      void visitStringSliceWTF(StringSliceWTF* curr) {
+        Builder builder(*getModule());
+        switch (curr->op) {
+          case StringSliceWTF16:
+            replaceCurrent(
+              builder.makeCall(lowering.substringImport, {curr->ref, curr->start, curr->end}, lowering.nnExt));
+            return;
+          default:
+            WASM_UNREACHABLE("TODO: all string.slice*");
+        }
       }
     };
 
