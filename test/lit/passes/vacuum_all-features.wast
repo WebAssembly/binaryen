@@ -4,7 +4,6 @@
 ;; RUN: foreach %s %t wasm-opt --vacuum --all-features -S -o - | filecheck %s
 
 (module
-  (memory 256 256)
   ;; CHECK:      (type $0 (func))
   (type $0 (func))
   ;; CHECK:      (type $3 (func (result i32)))
@@ -16,14 +15,18 @@
   (type $3 (func (result i32)))
   ;; CHECK:      (type $4 (func (param i32 f64 i32 i32)))
   (type $4 (func (param i32 f64 i32 i32)))
+
   ;; CHECK:      (type $5 (func (param i32) (result i32)))
 
   ;; CHECK:      (type $6 (func (result f64)))
 
   ;; CHECK:      (import "env" "int" (func $int (type $3) (result i32)))
   (import "env" "int" (func $int (result i32)))
+
   ;; CHECK:      (global $Int i32 (i32.const 0))
   (global $Int i32 (i32.const 0))
+
+  (memory 256 256)
   ;; CHECK:      (memory $0 256 256)
 
   ;; CHECK:      (func $b (type $0)

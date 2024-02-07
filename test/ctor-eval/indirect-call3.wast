@@ -1,8 +1,8 @@
 (module
+  (import "env" "_abort" (func $_abort))
   (type $v (func))
   (memory 256 256)
   (data (i32.const 10) "waka waka waka waka waka")
-  (import "env" "_abort" (func $_abort))
   (table 2 2 funcref)
   (elem (i32.const 0) $_abort $call-indirect)
   (export "test1" (func $test1))

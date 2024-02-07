@@ -1,5 +1,4 @@
 (module
-  (memory 256 256)
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$i (func (result i32)))
   (type $FUNCSIG$iiiii (func (param i32 i32 i32 i32) (result i32)))
@@ -13,6 +12,7 @@
   (import "env" "moddi" (func $___udivmoddi4 (param i32 i32 i32 i32 i32) (result i32)))
   (import "env" "lp" (func $lp (param i32 i32) (result i32)))
   (import "fuzzing-support" "log-f32" (func $fimport$0 (param f32)))
+  (memory 256 256)
   (global $global$0 (mut i32) (i32.const 10))
   (func $contrast ;; check for tee and structure sinking
     (local $x i32)
@@ -1187,7 +1187,6 @@
   )
 )
 (module
-  (memory 256 256 shared)
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$i (func (result i32)))
   (type $FUNCSIG$iiiii (func (param i32 i32 i32 i32) (result i32)))
@@ -1198,6 +1197,7 @@
   (import "fuzzing-support" "log1" (func $fimport$0 (result i32)))
   (import "fuzzing-support" "log2" (func $fimport$1 (param i32)))
   (import "fuzzing-support" "log3" (func $fimport$2 (param f32)))
+  (memory 256 256 shared)
   (global $global$0 (mut i32) (i32.const 10))
   (func $nonatomics (result i32) ;; loads are reordered
     (local $x i32)

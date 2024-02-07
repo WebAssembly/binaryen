@@ -177,7 +177,7 @@ class FeatureValidationTest(utils.BinaryenTestCase):
         (module
          (import "env" "test1" (func $test1 (param externref) (result externref)))
          (import "env" "test2" (global $test2 externref))
-         (export "test1" (func $test1 (param externref) (result externref)))
+         (export "test1" (func $test1))
          (export "test2" (global $test2))
          (func $externref_test (param $0 externref) (result externref)
           (return

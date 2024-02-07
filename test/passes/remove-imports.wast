@@ -1,5 +1,4 @@
 (module
-  (memory 1024 1024)
   (type $FUNCSIG$v (func))
   (type $FUNCSIG$i (func (result i32)))
   (type $FUNCSIG$d (func (result f64)))
@@ -9,6 +8,7 @@
   (import "somewhere" "waka-sneaky" (func $waka-sneaky))
   (import "env" "memBase" (global i32))
   (import "env" "table" (table $table 1 1 funcref))
+  (memory 1024 1024)
   (elem (i32.const 0) $waka-sneaky)
   (func $nada (type $FUNCSIG$v)
     (call $waka)
