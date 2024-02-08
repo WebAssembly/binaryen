@@ -15,17 +15,16 @@
   (type $none_=>_none (func))
   (type $A (struct))
   ;; CHECK-TEXT:      (import "a" "b" (table $t1 1 10 funcref))
+  ;; CHECK-BIN:      (import "a" "b" (table $t1 1 10 funcref))
+  (import "a" "b" (table $t1 1 10 funcref))
 
   ;; CHECK-TEXT:      (global $g1 (ref null $none_=>_none) (ref.func $f))
-  ;; CHECK-BIN:      (import "a" "b" (table $t1 1 10 funcref))
-
   ;; CHECK-BIN:      (global $g1 (ref null $none_=>_none) (ref.func $f))
   (global $g1 (ref null $none_=>_none) (ref.func $f))
   ;; CHECK-TEXT:      (global $g2 i32 (i32.const 0))
   ;; CHECK-BIN:      (global $g2 i32 (i32.const 0))
   (global $g2 i32 (i32.const 0))
 
-  (import "a" "b" (table $t1 1 10 funcref))
   ;; CHECK-TEXT:      (table $t2 3 3 funcref)
   ;; CHECK-BIN:      (table $t2 3 3 funcref)
   (table $t2 3 3 funcref)

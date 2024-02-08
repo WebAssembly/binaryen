@@ -372,6 +372,8 @@
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
+ (global $g (import "env" "g") i32)
+
  ;; CHECK:      (import "env" "g" (global $g i32))
 
  ;; CHECK:      (table $0 5 5 funcref)
@@ -379,7 +381,7 @@
 
  ;; IMMUT:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
- (global $g (import "env" "g") i32)
+
  (elem (global.get $g) $foo)
  ;; CHECK:      (elem $0 (global.get $g) $foo)
 
@@ -421,6 +423,8 @@
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
+ (global $g (import "env" "g") i32)
+
  ;; CHECK:      (import "env" "g" (global $g i32))
 
  ;; CHECK:      (table $0 5 5 funcref)
@@ -431,7 +435,7 @@
  ;; CHECK:      (table $1 5 5 funcref)
  ;; IMMUT:      (table $1 5 5 funcref)
  (table $1 5 5 funcref)
- (global $g (import "env" "g") i32)
+
  (elem (table $1) (global.get $g) func $foo)
  ;; CHECK:      (elem $0 (table $1) (global.get $g) func $foo)
 

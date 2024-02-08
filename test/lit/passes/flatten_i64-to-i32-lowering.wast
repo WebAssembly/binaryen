@@ -4,7 +4,6 @@
 ;; RUN: foreach %s %t wasm-opt -all --flatten --i64-to-i32-lowering -S -o - | filecheck %s
 
 (module
- (memory 1 1)
  ;; CHECK:      (type $0 (func (result i32)))
 
  ;; CHECK:      (type $1 (func (result i64)))
@@ -13,6 +12,8 @@
 
  ;; CHECK:      (import "env" "func" (func $import (type $1) (result i64)))
  (import "env" "func" (func $import (result i64)))
+
+ (memory 1 1)
  ;; CHECK:      (global $i64toi32_i32$HIGH_BITS (mut i32) (i32.const 0))
 
  ;; CHECK:      (memory $0 1 1)

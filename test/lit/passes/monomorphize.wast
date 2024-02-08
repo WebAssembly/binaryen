@@ -342,8 +342,6 @@
   ;; ALWAYS:      (type $4 (func (param (ref $A))))
 
   ;; ALWAYS:      (import "a" "b" (func $import (type $2) (param (ref $B))))
-
-  ;; ALWAYS:      (global $global (mut i32) (i32.const 1))
   ;; CAREFUL:      (type $2 (func (param (ref $B))))
 
   ;; CAREFUL:      (type $3 (func))
@@ -351,11 +349,11 @@
   ;; CAREFUL:      (type $4 (func (param (ref $A))))
 
   ;; CAREFUL:      (import "a" "b" (func $import (type $2) (param (ref $B))))
+  (import "a" "b" (func $import (param (ref $B))))
 
+  ;; ALWAYS:      (global $global (mut i32) (i32.const 1))
   ;; CAREFUL:      (global $global (mut i32) (i32.const 1))
   (global $global (mut i32) (i32.const 1))
-
-  (import "a" "b" (func $import (param (ref $B))))
 
   ;; ALWAYS:      (func $calls (type $3)
   ;; ALWAYS-NEXT:  (call $refinable

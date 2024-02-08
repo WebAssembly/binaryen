@@ -4,6 +4,7 @@
 
 (module
   (type $array16 (array (mut i16)))
+  (memory 1 1)
 
   ;; CHECK:      [fuzz-exec] calling new_wtf16_array
   ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")

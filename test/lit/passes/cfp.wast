@@ -1461,7 +1461,6 @@
     (struct.set $struct2 0
       (local.get $struct2)
       (i32.const 9999) ;; use a different value here
-      (f64.const 0)
     )
     (drop
       (struct.new $struct3

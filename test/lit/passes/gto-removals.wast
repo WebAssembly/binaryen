@@ -850,7 +850,7 @@
   (func $unreachable-set-2 (param $"{mut:i8}" (ref null $"{mut:i8}"))
     ;; As above, but the side effects now are a br. Again, the br must happen
     ;; before the trap (in fact, the br will skip the trap here).
-    (block
+    (block $block
       (struct.set $"{mut:i8}" 0
         (local.get $"{mut:i8}")
         (br $block)
