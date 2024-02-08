@@ -24,9 +24,6 @@
 
   ;; CHECK:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint_5 (type $5) (param i32) (result (ref extern))))
 
-  ;; CHECK:      (memory $m 1)
-  (memory $m 1)
-
   ;; CHECK:      (func $string.as (type $3) (param $a externref) (param $b externref) (param $c externref) (param $d externref)
   ;; CHECK-NEXT:  (local.set $b
   ;; CHECK-NEXT:   (local.get $a)
