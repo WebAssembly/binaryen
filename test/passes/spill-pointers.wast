@@ -1,10 +1,10 @@
 (module
+  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
+  (import "env" "segfault" (func $segfault (param i32)))
   (memory 10)
   (type $ii (func (param i32 i32)))
   (table 1 1 funcref)
   (elem (i32.const 0))
-  (import "env" "STACKTOP" (global $STACKTOP$asm2wasm$import i32))
-  (import "env" "segfault" (func $segfault (param i32)))
   (global $stack_ptr (mut i32) (global.get $STACKTOP$asm2wasm$import))
 
   (func $nothing
@@ -171,13 +171,13 @@
 )
 
 (module
+  (import "env" "segfault" (func $segfault (param i32)))
   (memory 10)
   (type $ii (func (param i32 i32)))
   (table 1 1 funcref)
   (elem (i32.const 0))
   (global $stack_ptr (mut i32) (i32.const 1716592))
   (export "stackSave" (func $stack_save))
-  (import "env" "segfault" (func $segfault (param i32)))
   (func $stack_save (result i32)
     (global.get $stack_ptr)
   )

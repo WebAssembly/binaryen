@@ -1,8 +1,8 @@
 (module
-  (memory 1 2)
   ;; import a "yield" function that receives the current value,
   ;; then pauses execution until it is resumed later.
   (import "env" "yield" (func $yield (param i32)))
+  (memory 1 2)
   (export "memory" (memory 0))
   ;; simple linear progression in a loop
   (func $linear (export "linear") (result i32)

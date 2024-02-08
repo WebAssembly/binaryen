@@ -17,8 +17,8 @@
 ;; EXTENDED: ) "hello world")
 
 (module
-  (memory 1 1)
   (import "env" "global" (global i32))
+  (memory 1 1)
   (global i32 (i32.add (global.get 0) (i32.const 42)))
-  (data (i32.sub (global.get 0) (i32.const 10)) "hello world")
+  (data (offset (i32.sub (global.get 0) (i32.const 10))) "hello world")
 )

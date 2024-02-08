@@ -1,8 +1,8 @@
 (module
-  (memory 1 2)
-  (type $ii (func (param i32) (result i32)))
   (import "env" "sleep" (func $sleep))
   (import "env" "tunnel" (func $tunnel (param $x i32) (result i32)))
+  (memory 1 2)
+  (type $ii (func (param i32) (result i32)))
   (export "memory" (memory 0))
   (export "factorial-recursive" (func $factorial-recursive))
   (global $temp (mut i32) (i32.const 0))

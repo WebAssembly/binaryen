@@ -677,6 +677,9 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
     } else {
       auto hoisted = hoistLastValue();
       CHECK_ERR(hoisted);
+      if (!hoisted) {
+        return Err{"popping from empty stack"};
+      }
       auto hoistedType = scope.exprStack.back()->type;
       if (hoistedType.size() != type.size()) {
         // We cannot propagate the hoisted value directly because it does not
