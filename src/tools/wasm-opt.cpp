@@ -93,17 +93,18 @@ static void generateCAPIHeader() {
 
 #define DELEGATE_ID id
 
-#define DELEGATE_START(id) \
-  std::cout << "// " #id << '\n';
+#define DELEGATE_START(id) std::cout << "// " #id << '\n';
 
-#define DELEGATE_END(id) \
-  std::cout << '\n';
+#define DELEGATE_END(id) std::cout << '\n';
 
-#define DELEGATE_FIELD_CHILD(id, field) \
-  std::cout << "BINARYEN_API BinaryenExpressionRef Binaryen" << #id << "Get" << capitalize(#field) << "(BinaryenExpressionRef expr);\n";
+#define DELEGATE_FIELD_CHILD(id, field)                                        \
+  std::cout << "BINARYEN_API BinaryenExpressionRef Binaryen" << #id << "Get"   \
+            << capitalize(#field) << "(BinaryenExpressionRef expr);\n";
 
-#define DELEGATE_FIELD_CHILD_VECTOR(id, field) \
-  std::cout << "BINARYEN_API BinaryenExpressionRef Binaryen" << #id << "Get" << unpluralize(capitalize(#field)) << "At(BinaryenExpressionRef expr, BinaryenIndex index);\n";
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
+  std::cout << "BINARYEN_API BinaryenExpressionRef Binaryen" << #id << "Get"   \
+            << unpluralize(capitalize(#field))                                 \
+            << "At(BinaryenExpressionRef expr, BinaryenIndex index);\n";
 
 // TODO
 #define DELEGATE_FIELD_TYPE(id, field)
@@ -122,7 +123,6 @@ static void generateCAPIHeader() {
 #define DELEGATE_FIELD_TYPE_VECTOR(id, field)
 
 #include "wasm-delegations-fields.def"
-
   }
 }
 
