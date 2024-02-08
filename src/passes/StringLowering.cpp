@@ -25,6 +25,10 @@
 // imported globals of type externref, for use with the string imports proposal.
 // String operations will likewise need to be lowered. TODO
 //
+// Specs:
+// https://github.com/WebAssembly/stringref/blob/main/proposals/stringref/Overview.md
+// https://github.com/WebAssembly/js-string-builtins/blob/main/proposals/js-string-builtins/Overview.md
+//
 
 #include <algorithm>
 
