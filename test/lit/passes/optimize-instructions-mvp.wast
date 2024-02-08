@@ -2,7 +2,6 @@
 ;; RUN: wasm-opt %s --optimize-instructions --mvp-features -S -o - | filecheck %s
 
 (module
-  (memory 0)
   ;; CHECK:      (type $0 (func (result i32)))
   (type $0 (func (param i32 i64)))
 
@@ -10,6 +9,8 @@
 
   ;; CHECK:      (import "a" "b" (func $get-f64 (result f64)))
   (import "a" "b" (func $get-f64 (result f64)))
+
+  (memory 0)
 
   ;; CHECK:      (func $and-and (param $i1 i32) (result i32)
   ;; CHECK-NEXT:  (i32.and

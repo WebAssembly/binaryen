@@ -3,7 +3,6 @@
 ;; RUN: wasm-opt --enable-memory64 --enable-multimemory --asyncify --pass-arg=asyncify-in-secondary-memory %s -S -o - | filecheck %s
 
 (module
-  (memory i64 1 2)
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (type $1 (func (param i32)))
@@ -14,6 +13,9 @@
 
   ;; CHECK:      (import "env" "import" (func $import))
   (import "env" "import" (func $import))
+
+  (memory i64 1 2)
+
   ;; CHECK:      (global $__asyncify_state (mut i32) (i32.const 0))
 
   ;; CHECK:      (global $__asyncify_data (mut i32) (i32.const 0))

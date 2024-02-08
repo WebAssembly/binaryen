@@ -6,11 +6,10 @@
   ;; CHECK:      (type $0 (func (param i32 i32) (result i32)))
   (type $0 (func (param i32 i32) (result i32)))
   ;; CHECK:      (import "a" "b" (func $get-i32 (type $2) (result i32)))
+  (import "a" "b" (func $get-i32 (result i32)))
 
   ;; CHECK:      (memory $0 0)
   (memory $0 0)
-
-  (import "a" "b" (func $get-i32 (result i32)))
 
   ;; CHECK:      (func $conditionals (type $0) (param $0 i32) (param $1 i32) (result i32)
   ;; CHECK-NEXT:  (local $2 i32)

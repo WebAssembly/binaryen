@@ -6,15 +6,17 @@
 (module
   ;; CHECK:      (type $t (func))
   (type $t (func))
-  (memory 1 2)
-  (table 1 funcref)
-  (elem (i32.const 0))
   ;; CHECK:      (type $1 (func (param i32)))
 
   ;; CHECK:      (type $2 (func (result i32)))
 
   ;; CHECK:      (import "env" "import" (func $import))
   (import "env" "import" (func $import))
+
+  (memory 1 2)
+  (table 1 funcref)
+  (elem (i32.const 0))
+
   ;; CHECK:      (global $__asyncify_state (mut i32) (i32.const 0))
 
   ;; CHECK:      (global $__asyncify_data (mut i32) (i32.const 0))

@@ -4,7 +4,6 @@
 ;; RUN: foreach %s %t wasm-opt --coalesce-locals -S -o - | filecheck %s
 
 (module
-  (memory 10)
   ;; CHECK:      (type $2 (func))
 
   ;; CHECK:      (type $1 (func (result i32)))
@@ -35,6 +34,9 @@
   (import "env" "get" (func $get (result i32)))
   ;; CHECK:      (import "env" "set" (func $set (param i32)))
   (import "env" "set" (func $set (param i32)))
+
+  (memory 10)
+
   ;; CHECK:      (memory $0 10)
 
   ;; CHECK:      (func $nothing-to-do

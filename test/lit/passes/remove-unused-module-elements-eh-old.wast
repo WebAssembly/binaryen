@@ -4,6 +4,8 @@
 (module
   (type $0 (func (param i32)))
 
+  (import "env" "e" (tag $e-import (param i32)))
+
   ;; CHECK-NOT: (tag $e-remove
   ;; CHECK: (tag $e-export
   ;; CHECK: (tag $e-throw
@@ -14,7 +16,6 @@
   (tag $e-catch (type $0))    ;; cannot be removed (used in catch)
 
   (export "e-export" (tag $e-export))
-  (import "env" "e" (tag $e-import (param i32)))
 
   (start $start)
   (func $start

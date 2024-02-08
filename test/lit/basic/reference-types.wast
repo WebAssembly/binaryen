@@ -43,6 +43,19 @@
   ;; CHECK-TEXT:      (import "env" "import_global" (global $import_global eqref))
 
   ;; CHECK-TEXT:      (import "env" "import_func" (func $import_func (type $8) (param eqref) (result funcref)))
+  ;; CHECK-BIN:      (type $5 (func))
+
+  ;; CHECK-BIN:      (type $6 (func (result eqref)))
+
+  ;; CHECK-BIN:      (type $7 (func (param i32)))
+
+  ;; CHECK-BIN:      (type $8 (func (param eqref) (result funcref)))
+
+  ;; CHECK-BIN:      (import "env" "import_global" (global $import_global eqref))
+
+  ;; CHECK-BIN:      (import "env" "import_func" (func $import_func (type $8) (param eqref) (result funcref)))
+  (import "env" "import_func" (func $import_func (param eqref) (result funcref)))
+  (import "env" "import_global" (global $import_global eqref))
 
   ;; CHECK-TEXT:      (global $global_eqref (mut eqref) (ref.null none))
 
@@ -69,18 +82,6 @@
   ;; CHECK-TEXT:      (func $take_eqref (type $sig_eqref) (param $0 eqref)
   ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (type $5 (func))
-
-  ;; CHECK-BIN:      (type $6 (func (result eqref)))
-
-  ;; CHECK-BIN:      (type $7 (func (param i32)))
-
-  ;; CHECK-BIN:      (type $8 (func (param eqref) (result funcref)))
-
-  ;; CHECK-BIN:      (import "env" "import_global" (global $import_global eqref))
-
-  ;; CHECK-BIN:      (import "env" "import_func" (func $import_func (type $8) (param eqref) (result funcref)))
-
   ;; CHECK-BIN:      (global $global_eqref (mut eqref) (ref.null none))
 
   ;; CHECK-BIN:      (global $global_funcref (mut funcref) (ref.null nofunc))
@@ -172,8 +173,6 @@
   ;; CHECK-BIN-NODEBUG:      (elem declare func $23 $3)
   (elem declare func $ref-taken-but-not-in-table)
 
-  (import "env" "import_func" (func $import_func (param eqref) (result funcref)))
-  (import "env" "import_global" (global $import_global eqref))
   (export "export_func" (func $import_func))
   (export "export_global" (global $import_global))
 

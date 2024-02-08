@@ -16,8 +16,6 @@
   ;; WITHOUT:      (type $2 (func (param i32)))
 
   ;; WITHOUT:      (import "a" "b" (func $import (type $0)))
-
-  ;; WITHOUT:      (tag $tag)
   ;; INCLUDE:      (type $0 (func))
 
   ;; INCLUDE:      (type $1 (func (result i32)))
@@ -25,8 +23,6 @@
   ;; INCLUDE:      (type $2 (func (param i32)))
 
   ;; INCLUDE:      (import "a" "b" (func $import (type $0)))
-
-  ;; INCLUDE:      (tag $tag)
   ;; DISCARD:      (type $0 (func))
 
   ;; DISCARD:      (type $1 (func (result i32)))
@@ -34,11 +30,12 @@
   ;; DISCARD:      (type $2 (func (param i32)))
 
   ;; DISCARD:      (import "a" "b" (func $import (type $0)))
+  (import "a" "b" (func $import))
 
+  ;; WITHOUT:      (tag $tag)
+  ;; INCLUDE:      (tag $tag)
   ;; DISCARD:      (tag $tag)
   (tag $tag)
-
-  (import "a" "b" (func $import))
 
   ;; WITHOUT:      (func $main (type $0)
   ;; WITHOUT-NEXT:  (call $nop)

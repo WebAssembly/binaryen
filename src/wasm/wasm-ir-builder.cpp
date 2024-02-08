@@ -1323,7 +1323,7 @@ Result<> IRBuilder::makePop(Type type) {
       "pop instructions may only appear at the beginning of catch blocks"};
   }
   auto expectedType = scope.exprStack[0]->type;
-  if (type != expectedType) {
+  if (!Type::isSubType(expectedType, type)) {
     return Err{std::string("Expected pop of type ") + expectedType.toString()};
   }
   return Ok{};
