@@ -239,13 +239,20 @@ struct StringLowering : public StringGathering {
 
   // Imported string functions.
   Name fromCharCodeArrayImport;
+  Name intoCharCodeArrayImport;
   Name fromCodePointImport;
+  Name equalsImport;
+  Name compareImport;
+  Name lengthImport;
+  Name codePointAtImport;
+  Name substringImport;
 
   // The name of the module to import string functions from.
   Name WasmStringsModule = "wasm:js-string";
 
   // Common types used in imports.
   Type nullArray16 = Type(Array(Field(Field::i16, Mutable)), Nullable);
+  Type nullExt = Type(HeapType::ext, Nullable);
   Type nnExt = Type(HeapType::ext, NonNullable);
 
   // Creates an imported string function, returning its name (which is equal to
@@ -269,6 +276,23 @@ struct StringLowering : public StringGathering {
       module, "fromCharCodeArray", {nullArray16, Type::i32, Type::i32}, nnExt);
     // string.fromCodePoint: codepoint -> ext
     fromCodePointImport = addImport(module, "fromCodePoint", Type::i32, nnExt);
+    // string.intoCharCodeArray: string, array, start -> num written
+    intoCharCodeArrayImport = addImport(module,
+                                        "intoCharCodeArray",
+                                        {nullExt, nullArray16, Type::i32},
+                                        Type::i32);
+    // string.equals: string, string -> i32
+    equalsImport = addImport(module, "equals", {nullExt, nullExt}, Type::i32);
+    // string.compare: string, string -> i32
+    compareImport = addImport(module, "compare", {nullExt, nullExt}, Type::i32);
+    // string.length: string -> i32
+    lengthImport = addImport(module, "length", nullExt, Type::i32);
+    // string.codePointAt: string, offset -> i32
+    codePointAtImport =
+      addImport(module, "codePointAt", {nullExt, Type::i32}, Type::i32);
+    // string.substring: string, start, end -> string
+    substringImport =
+      addImport(module, "substring", {nullExt, Type::i32, Type::i32}, nnExt);
 
     // Replace the string instructions in parallel.
     struct Replacer : public WalkerPass<PostWalker<Replacer>> {
@@ -303,6 +327,66 @@ struct StringLowering : public StringGathering {
         // There is no difference between strings and views with imported
         // strings: they are all just JS strings, so no conversion is needed.
         replaceCurrent(curr->ref);
+      }
+
+      void visitStringEncode(StringEncode* curr) {
+        Builder builder(*getModule());
+        switch (curr->op) {
+          case StringEncodeWTF16Array:
+            replaceCurrent(builder.makeCall(lowering.intoCharCodeArrayImport,
+                                            {curr->ref, curr->ptr, curr->start},
+                                            Type::i32));
+            return;
+          default:
+            WASM_UNREACHABLE("TODO: all of string.encode*");
+        }
+      }
+
+      void visitStringEq(StringEq* curr) {
+        Builder builder(*getModule());
+        switch (curr->op) {
+          case StringEqEqual:
+            replaceCurrent(builder.makeCall(
+              lowering.equalsImport, {curr->left, curr->right}, Type::i32));
+            return;
+          case StringEqCompare:
+            replaceCurrent(builder.makeCall(
+              lowering.compareImport, {curr->left, curr->right}, Type::i32));
+            return;
+          default:
+            WASM_UNREACHABLE("invalid string.eq*");
+        }
+      }
+
+      void visitStringMeasure(StringMeasure* curr) {
+        Builder builder(*getModule());
+        switch (curr->op) {
+          case StringMeasureWTF16View:
+            replaceCurrent(
+              builder.makeCall(lowering.lengthImport, {curr->ref}, Type::i32));
+            return;
+          default:
+            WASM_UNREACHABLE("invalid string.measure*");
+        }
+      }
+
+      void visitStringWTF16Get(StringWTF16Get* curr) {
+        Builder builder(*getModule());
+        replaceCurrent(builder.makeCall(
+          lowering.codePointAtImport, {curr->ref, curr->pos}, Type::i32));
+      }
+
+      void visitStringSliceWTF(StringSliceWTF* curr) {
+        Builder builder(*getModule());
+        switch (curr->op) {
+          case StringSliceWTF16:
+            replaceCurrent(builder.makeCall(lowering.substringImport,
+                                            {curr->ref, curr->start, curr->end},
+                                            lowering.nnExt));
+            return;
+          default:
+            WASM_UNREACHABLE("TODO: all string.slice*");
+        }
       }
     };
 
