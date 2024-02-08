@@ -177,7 +177,10 @@ Result<> parseModule(Module& wasm, std::string_view input) {
 
     for (Index i = 0; i < decls.funcDefs.size(); ++i) {
       ctx.index = i;
-      CHECK_ERR(ctx.visitFunctionStart(wasm.functions[i].get()));
+      auto* f = wasm.functions[i].get();
+      if (!f->imported()) {
+        CHECK_ERR(ctx.visitFunctionStart(f));
+      }
       WithPosition with(ctx, decls.funcDefs[i].pos);
       if (auto parsed = func(ctx)) {
         CHECK_ERR(parsed);
@@ -185,6 +188,9 @@ Result<> parseModule(Module& wasm, std::string_view input) {
         auto im = import_(ctx);
         assert(im);
         CHECK_ERR(im);
+      }
+      if (!f->imported()) {
+        CHECK_ERR(ctx.irBuilder.visitEnd());
       }
     }
 
