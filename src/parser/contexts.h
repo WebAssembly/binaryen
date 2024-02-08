@@ -1324,12 +1324,15 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                                std::optional<HeapTypeT> type,
                                ParamsT* params,
                                ResultsT* results);
+
   Result<> addFunc(Name,
                    const std::vector<Name>&,
                    ImportNames*,
                    TypeUseT,
                    std::optional<LocalsT>,
-                   Index pos);
+                   Index) {
+    return Ok{};
+  }
 
   Result<>
   addTable(Name, const std::vector<Name>&, ImportNames*, TableTypeT, Index) {

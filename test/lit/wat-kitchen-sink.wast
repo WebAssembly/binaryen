@@ -271,7 +271,7 @@
 
  ;; imported functions
  (func (export "f5.0") (export "f5.1") (import "mod" "f5"))
- (import "mod" "imported-f" (func (param) (result)))
+ (import "mod" "imported-f" (func (param) (result i32 i64)))
 
  ;; imported tags
  (tag $imported (export "t0.0") (export "t0.1") (import "mod" "t0") (param i32 i64))
@@ -283,7 +283,7 @@
 
  ;; CHECK:      (import "mod" "f5" (func $fimport$0 (type $void)))
 
- ;; CHECK:      (import "mod" "imported-f" (func $fimport$1 (type $void)))
+ ;; CHECK:      (import "mod" "imported-f" (func $fimport$1 (type $3) (result i32 i64)))
 
  ;; CHECK:      (import "mod" "t0" (tag $imported (param i32 i64)))
 
