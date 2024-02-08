@@ -48,24 +48,6 @@
 
   ;; CHECK:      (func $string.new (type $5) (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter) (param $e stringref) (param $f stringview_wtf8) (param $g stringview_wtf16) (param $h stringview_iter) (param $i (ref string)) (param $j (ref stringview_wtf8)) (param $k (ref stringview_wtf16)) (param $l (ref stringview_iter))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_utf8
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_wtf8
-  ;; CHECK-NEXT:    (i32.const 3)
-  ;; CHECK-NEXT:    (i32.const 4)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_lossy_utf8
-  ;; CHECK-NEXT:    (i32.const 5)
-  ;; CHECK-NEXT:    (i32.const 6)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.new_wtf16
   ;; CHECK-NEXT:    (i32.const 7)
   ;; CHECK-NEXT:    (i32.const 8)
@@ -103,24 +85,6 @@
     (param $j (ref stringview_wtf8))
     (param $k (ref stringview_wtf16))
     (param $l (ref stringview_iter))
-    (drop
-      (string.new_wtf8 utf8
-        (i32.const 1)
-        (i32.const 2)
-      )
-    )
-    (drop
-      (string.new_wtf8 wtf8
-        (i32.const 3)
-        (i32.const 4)
-      )
-    )
-    (drop
-      (string.new_wtf8 replace
-        (i32.const 5)
-        (i32.const 6)
-      )
-    )
     (drop
       (string.new_wtf16
         (i32.const 7)
@@ -180,17 +144,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.measure_utf8
-  ;; CHECK-NEXT:    (local.get $ref)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.measure_wtf16
-  ;; CHECK-NEXT:    (local.get $ref)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.measure_wtf8
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -203,23 +157,13 @@
   (func $string.measure (param $ref stringref)
     (drop
       (i32.eqz ;; validate the output is i32
-        (string.measure_wtf8 wtf8
+        (string.measure_wtf8
           (local.get $ref)
         )
       )
     )
     (drop
-      (string.measure_wtf8 utf8
-        (local.get $ref)
-      )
-    )
-    (drop
       (string.measure_wtf16
-        (local.get $ref)
-      )
-    )
-    (drop
-      (string.measure_wtf8
         (local.get $ref)
       )
     )
@@ -248,27 +192,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_utf8
-  ;; CHECK-NEXT:    (local.get $ref)
-  ;; CHECK-NEXT:    (i32.const 20)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.encode_wtf16
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:    (i32.const 30)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_wtf8
-  ;; CHECK-NEXT:    (local.get $ref)
-  ;; CHECK-NEXT:    (i32.const 10)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_lossy_utf8
-  ;; CHECK-NEXT:    (local.get $ref)
-  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -281,7 +207,7 @@
   (func $string.encode (param $ref stringref)
     (drop
       (i32.eqz ;; validate the output is i32
-        (string.encode_wtf8 wtf8
+        (string.encode_wtf8
           (local.get $ref)
           (i32.const 10)
         )
@@ -289,34 +215,16 @@
     )
     (drop
       (i32.eqz ;; validate the output is i32
-        (string.encode_wtf8 replace
+        (string.encode_lossy_utf8
           (local.get $ref)
           (i32.const 10)
         )
       )
     )
     (drop
-      (string.encode_wtf8 utf8
-        (local.get $ref)
-        (i32.const 20)
-      )
-    )
-    (drop
       (string.encode_wtf16
         (local.get $ref)
         (i32.const 30)
-      )
-    )
-    (drop
-      (string.encode_wtf8
-        (local.get $ref)
-        (i32.const 10)
-      )
-    )
-    (drop
-      (string.encode_lossy_utf8
-        (local.get $ref)
-        (i32.const 10)
       )
     )
     (drop
@@ -584,27 +492,6 @@
 
   ;; CHECK:      (func $string.new.gc (type $8) (param $array (ref $array)) (param $array16 (ref $array16))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_utf8_array
-  ;; CHECK-NEXT:    (local.get $array)
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_wtf8_array
-  ;; CHECK-NEXT:    (local.get $array)
-  ;; CHECK-NEXT:    (i32.const 3)
-  ;; CHECK-NEXT:    (i32.const 4)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.new_lossy_utf8_array
-  ;; CHECK-NEXT:    (local.get $array)
-  ;; CHECK-NEXT:    (i32.const 5)
-  ;; CHECK-NEXT:    (i32.const 6)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.new_wtf16_array
   ;; CHECK-NEXT:    (local.get $array16)
   ;; CHECK-NEXT:    (i32.const 7)
@@ -634,27 +521,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $string.new.gc (param $array (ref $array)) (param $array16 (ref $array16))
-    (drop
-      (string.new_wtf8_array utf8
-        (local.get $array)
-        (i32.const 1)
-        (i32.const 2)
-      )
-    )
-    (drop
-      (string.new_wtf8_array wtf8
-        (local.get $array)
-        (i32.const 3)
-        (i32.const 4)
-      )
-    )
-    (drop
-      (string.new_wtf8_array replace
-        (local.get $array)
-        (i32.const 5)
-        (i32.const 6)
-      )
-    )
     (drop
       (string.new_wtf16_array
         (local.get $array16)
@@ -688,34 +554,11 @@
   ;; CHECK:      (func $string.encode.gc (type $9) (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (string.encode_wtf8_array
+  ;; CHECK-NEXT:    (string.encode_wtf16_array
   ;; CHECK-NEXT:     (local.get $ref)
-  ;; CHECK-NEXT:     (local.get $array)
-  ;; CHECK-NEXT:     (i32.const 10)
+  ;; CHECK-NEXT:     (local.get $array16)
+  ;; CHECK-NEXT:     (i32.const 30)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (i32.eqz
-  ;; CHECK-NEXT:    (string.encode_lossy_utf8_array
-  ;; CHECK-NEXT:     (local.get $ref)
-  ;; CHECK-NEXT:     (local.get $array)
-  ;; CHECK-NEXT:     (i32.const 10)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_utf8_array
-  ;; CHECK-NEXT:    (local.get $ref)
-  ;; CHECK-NEXT:    (local.get $array)
-  ;; CHECK-NEXT:    (i32.const 20)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (string.encode_wtf16_array
-  ;; CHECK-NEXT:    (local.get $ref)
-  ;; CHECK-NEXT:    (local.get $array16)
-  ;; CHECK-NEXT:    (i32.const 30)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -743,34 +586,11 @@
   (func $string.encode.gc (param $ref stringref) (param $array (ref $array)) (param $array16 (ref $array16))
     (drop
       (i32.eqz ;; validate the output is i32
-        (string.encode_wtf8_array wtf8
+        (string.encode_wtf16_array
           (local.get $ref)
-          (local.get $array)
-          (i32.const 10)
+          (local.get $array16)
+          (i32.const 30)
         )
-      )
-    )
-    (drop
-      (i32.eqz ;; validate the output is i32
-        (string.encode_wtf8_array replace
-          (local.get $ref)
-          (local.get $array)
-          (i32.const 10)
-        )
-      )
-    )
-    (drop
-      (string.encode_wtf8_array utf8
-        (local.get $ref)
-        (local.get $array)
-        (i32.const 20)
-      )
-    )
-    (drop
-      (string.encode_wtf16_array
-        (local.get $ref)
-        (local.get $array16)
-        (i32.const 30)
       )
     )
     (drop

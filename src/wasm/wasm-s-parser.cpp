@@ -3253,55 +3253,28 @@ Expression* SExpressionWasmBuilder::makeRefAs(Element& s, RefAsOp op) {
 
 Expression*
 SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op, bool try_) {
-  size_t i = 1;
   Expression* length = nullptr;
   if (op == StringNewWTF8) {
-    if (s[i]->isStr()) {
-      // legacy syntax
-      std::string_view str = s[i++]->str().str;
-      if (str == "utf8") {
-        op = StringNewUTF8;
-      } else if (str == "wtf8") {
-        op = StringNewWTF8;
-      } else if (str == "replace") {
-        op = StringNewLossyUTF8;
-      } else {
-        throw SParseException("bad string.new op", s);
-      }
-    }
-    length = parseExpression(s[i + 1]);
-    return Builder(wasm).makeStringNew(op, parseExpression(s[i]), length, try_);
+    length = parseExpression(s[2]);
+    return Builder(wasm).makeStringNew(op, parseExpression(s[1]), length, try_);
   } else if (op == StringNewUTF8 || op == StringNewLossyUTF8 ||
              op == StringNewWTF16) {
-    length = parseExpression(s[i + 1]);
-    return Builder(wasm).makeStringNew(op, parseExpression(s[i]), length, try_);
+    length = parseExpression(s[2]);
+    return Builder(wasm).makeStringNew(op, parseExpression(s[1]), length, try_);
   } else if (op == StringNewWTF8Array) {
-    if (s[i]->isStr()) {
-      // legacy syntax
-      std::string_view str = s[i++]->str().str;
-      if (str == "utf8") {
-        op = StringNewUTF8Array;
-      } else if (str == "wtf8") {
-        op = StringNewWTF8Array;
-      } else if (str == "replace") {
-        op = StringNewLossyUTF8Array;
-      } else {
-        throw SParseException("bad string.new op", s);
-      }
-    }
-    auto* start = parseExpression(s[i + 1]);
-    auto* end = parseExpression(s[i + 2]);
+    auto* start = parseExpression(s[2]);
+    auto* end = parseExpression(s[3]);
     return Builder(wasm).makeStringNew(
-      op, parseExpression(s[i]), start, end, try_);
+      op, parseExpression(s[1]), start, end, try_);
   } else if (op == StringNewUTF8Array || op == StringNewLossyUTF8Array ||
              op == StringNewWTF16Array) {
-    auto* start = parseExpression(s[i + 1]);
-    auto* end = parseExpression(s[i + 2]);
+    auto* start = parseExpression(s[2]);
+    auto* end = parseExpression(s[3]);
     return Builder(wasm).makeStringNew(
-      op, parseExpression(s[i]), start, end, try_);
+      op, parseExpression(s[1]), start, end, try_);
   } else if (op == StringNewFromCodePoint) {
     return Builder(wasm).makeStringNew(
-      op, parseExpression(s[i]), nullptr, try_);
+      op, parseExpression(s[1]), nullptr, try_);
   } else {
     throw SParseException("bad string.new op", s);
   }
@@ -3316,60 +3289,18 @@ Expression* SExpressionWasmBuilder::makeStringConst(Element& s) {
 
 Expression* SExpressionWasmBuilder::makeStringMeasure(Element& s,
                                                       StringMeasureOp op) {
-  size_t i = 1;
-  if (op == StringMeasureWTF8 && s[i]->isStr()) {
-    // legacy syntax
-    std::string_view str = s[i++]->str().str;
-    if (str == "utf8") {
-      op = StringMeasureUTF8;
-    } else if (str == "wtf8") {
-      op = StringMeasureWTF8;
-    } else {
-      throw SParseException("bad string.measure op", s);
-    }
-  }
-  return Builder(wasm).makeStringMeasure(op, parseExpression(s[i]));
+  return Builder(wasm).makeStringMeasure(op, parseExpression(s[1]));
 }
 
 Expression* SExpressionWasmBuilder::makeStringEncode(Element& s,
                                                      StringEncodeOp op) {
-  size_t i = 1;
   Expression* start = nullptr;
-  if (op == StringEncodeWTF8) {
-    if (s[i]->isStr()) {
-      // legacy syntax
-      std::string_view str = s[i++]->str().str;
-      if (str == "utf8") {
-        op = StringEncodeUTF8;
-      } else if (str == "replace") {
-        op = StringEncodeLossyUTF8;
-      } else if (str == "wtf8") {
-        op = StringEncodeWTF8;
-      } else {
-        throw SParseException("bad string.new op", s);
-      }
-    }
-  } else if (op == StringEncodeWTF8Array) {
-    if (s[i]->isStr()) {
-      // legacy syntax
-      std::string_view str = s[i++]->str().str;
-      if (str == "utf8") {
-        op = StringEncodeUTF8Array;
-      } else if (str == "replace") {
-        op = StringEncodeLossyUTF8Array;
-      } else if (str == "wtf8") {
-        op = StringEncodeWTF8Array;
-      } else {
-        throw SParseException("bad string.new op", s);
-      }
-    }
-    start = parseExpression(s[i + 2]);
-  } else if (op == StringEncodeUTF8Array || op == StringEncodeLossyUTF8Array ||
-             op == StringEncodeWTF16Array) {
-    start = parseExpression(s[i + 2]);
+  if (op == StringEncodeWTF8Array || op == StringEncodeUTF8Array ||
+      op == StringEncodeLossyUTF8Array || op == StringEncodeWTF16Array) {
+    start = parseExpression(s[3]);
   }
   return Builder(wasm).makeStringEncode(
-    op, parseExpression(s[i]), parseExpression(s[i + 1]), start);
+    op, parseExpression(s[1]), parseExpression(s[2]), start);
 }
 
 Expression* SExpressionWasmBuilder::makeStringConcat(Element& s) {
