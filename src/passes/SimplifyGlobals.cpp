@@ -673,11 +673,12 @@ struct SimplifyGlobals : public Pass {
     // go, as well as applying them where possible.
     for (auto& global : module->globals) {
       if (!global->imported()) {
+        // Apply globals to this value, which may turn it into a constant we can
+        // further propagate, or it may already have been one.
+        applyGlobals(global->init);
         if (Properties::isConstantExpression(global->init)) {
           constantGlobals[global->name] =
             getLiteralsFromConstExpression(global->init);
-        } else {
-          applyGlobals(global->init);
         }
       }
     }
@@ -762,10 +763,24 @@ struct SimplifyGlobals : public Pass {
   }
 };
 
+// A pass mainly useful for testing that only performs the operation to
+// propagate constant values between globals.
+struct PropagateGlobalsGlobally : public SimplifyGlobals {
+  void run(Module* module_) override {
+    module = module_;
+
+    propagateConstantsToGlobals();
+  }
+};
+
 Pass* createSimplifyGlobalsPass() { return new SimplifyGlobals(false); }
 
 Pass* createSimplifyGlobalsOptimizingPass() {
   return new SimplifyGlobals(true);
+}
+
+Pass* createPropagateGlobalsGloballyPass() {
+  return new PropagateGlobalsGlobally();
 }
 
 } // namespace wasm
