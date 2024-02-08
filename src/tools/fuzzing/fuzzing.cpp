@@ -519,7 +519,7 @@ void TranslateToFuzzReader::finalizeTable() {
         // emit.
         const Address ReasonableMaxTableSize = 10000;
         table->initial = std::min(table->initial, ReasonableMaxTableSize);
-        static_assert(ReasonableMaxTableSize <= Table::kMaxSize);
+        assert(ReasonableMaxTableSize <= Table::kMaxSize);
       });
     table->max = oneIn(2) ? Address(Table::kUnlimitedSize) : table->initial;
     // Avoid an imported table (which the fuzz harness would need to handle).
