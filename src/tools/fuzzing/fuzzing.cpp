@@ -512,11 +512,14 @@ void TranslateToFuzzReader::finalizeTable() {
           maxOffset = maxOffset + offset->value.getInteger();
         }
         table->initial = std::max(table->initial, maxOffset);
-        // Clamp the table size to the maximum possible size. The table may
-        // have segments that are at larger offsets that trap, for example, but
-        // even such modules at least validate, which we must not break.
-        table->initial =
-          std::max<decltype(Table::kMaxSize)>(table->initial, Table::kMaxSize);
+        // Clamp the table size to something reasonable, as huge tables (say of
+        // size 4GB) are very slow to interpret. Also, this avoids an issue
+        // where a segment has an offset at an address larger than kMaxSize,
+        // which traps at startup but would be a non-validating module for us to
+        // emit.
+        const Address ReasonableMaxTableSize = 10000;
+        table->initial = std::min(table->initial, ReasonableMaxTableSize);
+        static_assert(ReasonableMaxTableSize <= Table::kMaxSize);
       });
     table->max = oneIn(2) ? Address(Table::kUnlimitedSize) : table->initial;
     // Avoid an imported table (which the fuzz harness would need to handle).
