@@ -515,7 +515,7 @@ void TranslateToFuzzReader::finalizeTable() {
         // Clamp the table size to the maximum possible size. The table may
         // have segments that are at larger offsets that trap, for example, but
         // even such modules at least validate, which we must not break.
-        table->initial = std::max(decltype(Table::kMaxSize)(table->initial),
+        table->initial = std::max<decltype(Table::kMaxSize)>(table->initial,
                                   Table::kMaxSize);
       });
     table->max = oneIn(2) ? Address(Table::kUnlimitedSize) : table->initial;
