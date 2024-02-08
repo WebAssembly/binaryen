@@ -75,21 +75,22 @@
   ;; CHECK-NEXT: )
   ;; SIMGB:      (func $test (type $1)
   ;; SIMGB-NEXT:  (drop
-  ;; SIMGB-NEXT:   (global.get $A)
+  ;; SIMGB-NEXT:   (i32.const 42)
   ;; SIMGB-NEXT:  )
   ;; SIMGB-NEXT:  (drop
-  ;; SIMGB-NEXT:   (global.get $B)
+  ;; SIMGB-NEXT:   (i32.const 42)
   ;; SIMGB-NEXT:  )
   ;; SIMGB-NEXT:  (drop
   ;; SIMGB-NEXT:   (global.get $C)
   ;; SIMGB-NEXT:  )
   ;; SIMGB-NEXT:  (drop
-  ;; SIMGB-NEXT:   (global.get $D)
+  ;; SIMGB-NEXT:   (string.const "foo")
   ;; SIMGB-NEXT:  )
   ;; SIMGB-NEXT: )
   (func $test
     ;; We should not change anything here: this pass propagates globals
-    ;; *globally*, and not to functions. (but simplify-globals does)
+    ;; *globally*, and not to functions. (but simplify-globals does, except for
+    ;; $C which is not constant)
     (drop
       (global.get $A)
     )
