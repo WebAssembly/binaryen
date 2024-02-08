@@ -110,6 +110,7 @@ Result<> parseModule(Module& wasm, std::string_view input) {
 
   // Parse type definitions.
   std::vector<HeapType> types;
+  std::unordered_map<HeapType, std::unordered_map<Name, Index>> typeNames;
   {
     TypeBuilder builder(decls.subtypeDefs.size());
     ParseTypeDefsCtx ctx(input, builder, *typeIndices);
@@ -124,11 +125,16 @@ Result<> parseModule(Module& wasm, std::string_view input) {
       return ctx.in.err(decls.typeDefs[err->index].pos, msg.str());
     }
     types = *built;
-    // Record type names on the module.
+    // Record type names on the module and in typeNames.
     for (size_t i = 0; i < types.size(); ++i) {
       auto& names = ctx.names[i];
-      if (names.name.is() || names.fieldNames.size()) {
+      auto& fieldNames = names.fieldNames;
+      if (names.name.is() || fieldNames.size()) {
         wasm.typeNames.insert({types[i], names});
+        auto& fieldIdxMap = typeNames[types[i]];
+        for (auto [idx, name] : fieldNames) {
+          fieldIdxMap.insert({name, idx});
+        }
       }
     }
   }
@@ -167,6 +173,7 @@ Result<> parseModule(Module& wasm, std::string_view input) {
                      wasm,
                      types,
                      implicitTypes,
+                     typeNames,
                      decls.implicitElemIndices,
                      *typeIndices);
     CHECK_ERR(parseDefs(ctx, decls.tableDefs, table));

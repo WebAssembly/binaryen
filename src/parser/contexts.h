@@ -1096,6 +1096,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   const std::vector<HeapType>& types;
   const std::unordered_map<Index, HeapType>& implicitTypes;
+  const std::unordered_map<HeapType, std::unordered_map<Name, Index>>&
+    typeNames;
   const std::unordered_map<Index, Index>& implicitElemIndices;
 
   // The index of the current module element.
@@ -1113,14 +1115,17 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return Ok{};
   }
 
-  ParseDefsCtx(std::string_view in,
-               Module& wasm,
-               const std::vector<HeapType>& types,
-               const std::unordered_map<Index, HeapType>& implicitTypes,
-               const std::unordered_map<Index, Index>& implicitElemIndices,
-               const IndexMap& typeIndices)
+  ParseDefsCtx(
+    std::string_view in,
+    Module& wasm,
+    const std::vector<HeapType>& types,
+    const std::unordered_map<Index, HeapType>& implicitTypes,
+    const std::unordered_map<HeapType, std::unordered_map<Name, Index>>&
+      typeNames,
+    const std::unordered_map<Index, Index>& implicitElemIndices,
+    const IndexMap& typeIndices)
     : TypeParserCtx(typeIndices), in(in), wasm(wasm), builder(wasm),
-      types(types), implicitTypes(implicitTypes),
+      types(types), implicitTypes(implicitTypes), typeNames(typeNames),
       implicitElemIndices(implicitElemIndices), irBuilder(wasm) {}
 
   template<typename T> Result<T> withLoc(Index pos, Result<T> res) {
@@ -1192,8 +1197,13 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   }
 
   Result<Index> getFieldFromName(HeapType type, Name name) {
-    // TODO: Field names
-    return in.err("symbolic field names note yet supported");
+    if (auto typeIt = typeNames.find(type); typeIt != typeNames.end()) {
+      const auto& fieldIdxs = typeIt->second;
+      if (auto fieldIt = fieldIdxs.find(name); fieldIt != fieldIdxs.end()) {
+        return fieldIt->second;
+      }
+    }
+    return in.err("unrecognized field name");
   }
 
   Result<Index> getLocalFromIdx(uint32_t idx) {
