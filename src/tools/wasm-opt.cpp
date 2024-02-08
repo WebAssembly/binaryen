@@ -70,6 +70,62 @@ willRemoveDebugInfo(const std::vector<OptimizationOptions::PassInfo>& passes) {
   return false;
 }
 
+static std::string capitalize(std::string str) {
+  assert(!str.empty());
+  str[0] = std::toupper(str[0]);
+  return str;
+}
+
+static std::string unpluralize(std::string str) {
+  assert(!str.empty());
+  if (str.back() == 's') {
+    str.pop_back();
+  }
+  return str;
+}
+
+static void generateCAPIHeader() {
+  size_t id = Expression::InvalidId;
+  // No need to emit anything for the invalid ID.
+  id++;
+  // Iterate overall expressions and emit header info.
+  for (; id < Expression::NumExpressionIds; id++) {
+
+#define DELEGATE_ID id
+
+#define DELEGATE_START(id) \
+  std::cout << "// " #id << '\n';
+
+#define DELEGATE_END(id) \
+  std::cout << '\n';
+
+#define DELEGATE_FIELD_CHILD(id, field) \
+  std::cout << "BINARYEN_API BinaryenExpressionRef Binaryen" << #id << "Get" << capitalize(#field) << "(BinaryenExpressionRef expr);\n";
+
+#define DELEGATE_FIELD_CHILD_VECTOR(id, field) \
+  std::cout << "BINARYEN_API BinaryenExpressionRef Binaryen" << #id << "Get" << unpluralize(capitalize(#field)) << "At(BinaryenExpressionRef expr, BinaryenIndex index);\n";
+
+// TODO
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+#define DELEGATE_FIELD_INT_ARRAY(id, field)
+#define DELEGATE_FIELD_INT_VECTOR(id, field)
+#define DELEGATE_FIELD_NAME_VECTOR(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
+#define DELEGATE_FIELD_TYPE_VECTOR(id, field)
+
+#include "wasm-delegations-fields.def"
+
+  }
+}
+
 //
 // main
 //
@@ -237,6 +293,15 @@ int main(int argc, const char* argv[]) {
          WasmOptOption,
          Options::Arguments::Zero,
          [](Options*, const std::string&) { useNewWATParser = true; })
+    .add("--gen-c-api-h",
+         "",
+         "Generate C API header and exit",
+         WasmOptOption,
+         Options::Arguments::Zero,
+         [](Options* o, const std::string&) {
+           generateCAPIHeader();
+           exit(EXIT_SUCCESS);
+         })
     .add_positional("INFILE",
                     Options::Arguments::One,
                     [](Options* o, const std::string& argument) {
