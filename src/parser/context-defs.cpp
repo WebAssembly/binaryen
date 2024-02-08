@@ -50,16 +50,6 @@ ParseDefsCtx::makeTypeUse(Index pos,
   return it->second;
 }
 
-Result<> ParseDefsCtx::addFunc(Name,
-                               const std::vector<Name>&,
-                               ImportNames*,
-                               TypeUseT,
-                               std::optional<LocalsT>,
-                               Index pos) {
-  CHECK_ERR(withLoc(pos, irBuilder.visitEnd()));
-  return Ok{};
-}
-
 Result<> ParseDefsCtx::addGlobal(Name,
                                  const std::vector<Name>&,
                                  ImportNames*,

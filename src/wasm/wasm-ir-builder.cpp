@@ -162,7 +162,6 @@ Result<Expression*> IRBuilder::pop(size_t size) {
   // Find the suffix of expressions that do not produce values.
   auto hoisted = hoistLastValue();
   CHECK_ERR(hoisted);
-
   if (!hoisted) {
     // There are no expressions that produce values.
     if (scope.unreachable) {
@@ -700,6 +699,9 @@ Result<Expression*> IRBuilder::finishScope(Block* block) {
     // the top.
     auto hoisted = hoistLastValue();
     CHECK_ERR(hoisted);
+    if (!hoisted) {
+      return Err{"popping from empty stack"};
+    }
   }
 
   Expression* ret = nullptr;
