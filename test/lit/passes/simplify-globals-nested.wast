@@ -6,8 +6,11 @@
 ;; Test that we propagate globals into nested children of other globals.
 
 (module
- ;; CHECK:      (type $struct (struct (field i32) (field i32)))
- (type $struct (struct i32 i32))
+ ;; CHECK:      (type $struct (struct (field i32) (field i32) (field i32)))
+ (type $struct (struct i32 i32 i32))
+
+ ;; CHECK:      (import "x" "y" (global $no i32))
+ (import "x" "y" (global $no i32))
 
  ;; CHECK:      (global $a i32 (i32.const 42))
  (global $a i32 (i32.const 42))
@@ -17,10 +20,12 @@
 
  ;; CHECK:      (global $struct (ref $struct) (struct.new $struct
  ;; CHECK-NEXT:  (i32.const 42)
+ ;; CHECK-NEXT:  (global.get $no)
  ;; CHECK-NEXT:  (i32.const 1337)
  ;; CHECK-NEXT: ))
  (global $struct (ref $struct) (struct.new $struct
   (global.get $a)
+  (global.get $no) ;; the middle item cannot be optimized
   (global.get $b)
  ))
 )

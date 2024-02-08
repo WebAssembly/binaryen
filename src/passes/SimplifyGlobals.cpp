@@ -673,11 +673,12 @@ struct SimplifyGlobals : public Pass {
     // go, as well as applying them where possible.
     for (auto& global : module->globals) {
       if (!global->imported()) {
+        // Apply globals to this value, which may turn it into a constant we can
+        // further propagate, or it may already have been one.
+        applyGlobals(global->init);
         if (Properties::isConstantExpression(global->init)) {
           constantGlobals[global->name] =
             getLiteralsFromConstExpression(global->init);
-        } else {
-          applyGlobals(global->init);
         }
       }
     }

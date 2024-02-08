@@ -6,7 +6,10 @@
 ;; The global constants should be applied to other globals.
 
 (module
-  ;; CHECK:      (type $0 (func))
+  ;; CHECK:      (type $struct (struct (field stringref) (field stringref)))
+  (type $struct (struct stringref stringref))
+
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (global $A i32 (i32.const 42))
   (global $A i32 (i32.const 42))
@@ -15,10 +18,11 @@
   (global $B i32 (global.get $A))
 
   ;; CHECK:      (global $C i32 (i32.add
-  ;; CHECK-NEXT:  (global.get $B)
+  ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: ))
   (global $C i32 (i32.add
+    ;; Both of these can be optimized, including $B which reads from $A.
     (global.get $B)
     (global.get $A)
   ))
@@ -26,10 +30,19 @@
   ;; CHECK:      (global $D (ref string) (string.const "foo"))
   (global $D (ref string) (string.const "foo"))
 
-  ;; CHECK:      (global $E (ref string) (string.const "foo"))
-  (global $E (ref string) (global.get $D))
+  ;; CHECK:      (global $E (ref string) (string.const "bar"))
+  (global $E (ref string) (string.const "bar"))
 
-  ;; CHECK:      (func $test (type $0)
+  ;; CHECK:      (global $G (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (string.const "foo")
+  ;; CHECK-NEXT:  (string.const "bar")
+  ;; CHECK-NEXT: ))
+  (global $G (ref $struct) (struct.new $struct
+    (global.get $D)
+    (global.get $E)
+  ))
+
+  ;; CHECK:      (func $test (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $A)
   ;; CHECK-NEXT:  )
