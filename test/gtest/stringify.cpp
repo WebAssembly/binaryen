@@ -288,21 +288,27 @@ TEST_F(StringifyTest, DedupeSubstrings) {
       SuffixTree::RepeatedSubstring{3u, (std::vector<unsigned>{23, 34})}}));
 }
 
+// Tests that local.set instructions inside of control flow are filtered
+// from being candidates for outlining
 TEST_F(StringifyTest, FilterLocalSets) {
   static auto localSetModuleText = R"wasm(
   (module
     (func $a (result i32)
         (local $x i32)
-        (local.set $x
-          (i32.const 1)
+        (block (result i32)
+          (local.set $x
+            (i32.const 1)
+          )
         )
       (i32.const 0)
       (i32.const 1)
     )
     (func $b (result i32)
         (local $x i32)
-        (local.set $x
-          (i32.const 1)
+        (block (result i32)
+          (local.set $x
+            (i32.const 1)
+          )
         )
       (i32.const 5)
       (i32.const 0)

@@ -264,6 +264,77 @@ struct ReconstructStringifyWalker
 };
 
 struct Outlining : public Pass {
+  std::vector<SuffixTree::RepeatedSubstring>
+  blah(const std::vector<SuffixTree::RepeatedSubstring>& substrings) {
+
+    struct Interval {
+      unsigned startIdx;
+      unsigned endIdx;
+      unsigned idxOfRepeatedSubstring;
+      unsigned score;
+
+      Interval(unsigned startIdx,
+               unsigned endIdx,
+               unsigned idxOfRepeatedSubstring,
+               unsigned score)
+        : startIdx(startIdx), endIdx(endIdx),
+          idxOfRepeatedSubstring(idxOfRepeatedSubstring), score(score) {}
+    };
+
+    std::vector<Interval> intervals;
+
+    // Make a construct we can use for finding intervals
+    for (Index i = 0; i < substrings.size(); i++) {
+      auto substring = substrings[i];
+      for (auto startIdx : substring.StartIndices) {
+        intervals.emplace_back(startIdx,
+                               startIdx + substring.Length,
+                               i,
+                               substring.Length *
+                                 substring.StartIndices.size());
+      }
+    }
+
+    // Sort construct
+    std::sort(intervals.begin(), intervals.end(), [](Interval a, Interval b) {
+      return a.startIdx < b.startIdx;
+    });
+
+    // Add overlaps with lower scores to doNotInclude set
+    std::set<uint32_t> doNotInclude;
+    auto& ref_interval = intervals[0];
+    for (Index i = 1; i < intervals.size(); i++) {
+      auto& interval = intervals[i];
+      if (ref_interval.endIdx < interval.startIdx) {
+        ref_interval = interval;
+        continue;
+      }
+
+      // Keep the Interval with the higher score
+      // Update the ref_interval if its the one we're not keeping
+      if (interval.score > ref_interval.score) {
+        doNotInclude.insert(ref_interval.idxOfRepeatedSubstring);
+        ref_interval = interval;
+      } else {
+        doNotInclude.insert(interval.idxOfRepeatedSubstring);
+      }
+    }
+
+    std::vector<SuffixTree::RepeatedSubstring> result;
+
+    // Only include non-overlapping substrings
+    for (Index i = 0; i < substrings.size(); i++) {
+      if (doNotInclude.find(i) != doNotInclude.end()) {
+        continue;
+      }
+
+      auto substring = substrings[i];
+      result.push_back(substring);
+    }
+
+    return result;
+  }
+
   void run(Module* module) {
     HashStringifyWalker stringify;
     // Walk the module and create a "string representation" of the program.
@@ -275,6 +346,9 @@ struct Outlining : public Pass {
     DBG(printHashString(stringify.hashString, stringify.exprs));
     // Remove substrings that are substrings of longer repeat substrings.
     substrings = StringifyProcessor::dedupe(substrings);
+    ODBG(std::cerr << "\nSubstrings before blah: " << substrings.size());
+    substrings = blah(substrings);
+    ODBG(std::cerr << "\nSubstrings after blah: " << substrings.size());
     // Remove substrings with branch and return instructions until an analysis
     // is performed to see if the intended destination of the branch is included
     // in the substring to be outlined.
@@ -353,6 +427,11 @@ struct Outlining : public Pass {
                    keys.begin(),
                    [](auto pair) { return pair.first; });
     for (auto func : keys) {
+      std::sort(seqByFunc[func].begin(),
+                seqByFunc[func].end(),
+                [](OutliningSequence a, OutliningSequence b) {
+                  return a.startIdx < b.startIdx;
+                });
       reconstruct.sequences = std::move(seqByFunc[func]);
       reconstruct.doWalkFunction(module->getFunction(func));
     }
