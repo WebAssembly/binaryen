@@ -576,6 +576,22 @@ Result<> IRBuilder::visitStringEncode(StringEncode* curr) {
   WASM_UNREACHABLE("unexpected op");
 }
 
+Result<> IRBuilder::visitResume(Resume* curr) {
+  auto cont = pop();
+  CHECK_ERR(cont);
+  curr->cont = *cont;
+
+  auto sig = curr->contType.getContinuation().type.getSignature();
+  auto size = sig.params.size();
+  curr->operands.resize(size);
+  for (size_t i = 0; i < size; ++i) {
+    auto val = pop();
+    CHECK_ERR(val);
+    curr->operands[size - i - 1] = *val;
+  }
+  return Ok{};
+}
+
 Result<> IRBuilder::visitTupleMake(TupleMake* curr) {
   assert(curr->operands.size() >= 2);
   for (size_t i = 0, size = curr->operands.size(); i < size; ++i) {
@@ -1764,6 +1780,28 @@ Result<> IRBuilder::makeStringSliceIter() {
   StringSliceIter curr;
   CHECK_ERR(visitStringSliceIter(&curr));
   push(builder.makeStringSliceIter(curr.ref, curr.num));
+  return Ok{};
+}
+
+Result<> IRBuilder::makeResume(HeapType ct,
+                               const std::vector<Name>& tags,
+                               const std::vector<Index>& labels) {
+  if (!ct.isContinuation()) {
+    return Err{"expected continuation type"};
+  }
+  Resume curr(wasm.allocator);
+  curr.contType = ct;
+  CHECK_ERR(visitResume(&curr));
+
+  std::vector<Name> labelNames;
+  labelNames.reserve(labels.size());
+  for (auto label : labels) {
+    auto name = getLabelName(label);
+    CHECK_ERR(name);
+    labelNames.push_back(*name);
+  }
+  std::vector<Expression*> operands(curr.operands.begin(), curr.operands.end());
+  push(builder.makeResume(ct, tags, labelNames, operands, curr.cont));
   return Ok{};
 }
 

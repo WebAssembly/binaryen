@@ -65,11 +65,11 @@ public:
   [[nodiscard]] Result<> visitElse();
   [[nodiscard]] Result<> visitLoopStart(Loop* iff);
   [[nodiscard]] Result<> visitTryStart(Try* tryy, Name label = {});
-  [[nodiscard]] Result<> visitTryTableStart(TryTable* trytable,
-                                            Name label = {});
   [[nodiscard]] Result<> visitCatch(Name tag);
   [[nodiscard]] Result<> visitCatchAll();
   [[nodiscard]] Result<> visitDelegate(Index label);
+  [[nodiscard]] Result<> visitTryTableStart(TryTable* trytable,
+                                            Name label = {});
   [[nodiscard]] Result<> visitEnd();
 
   // Binaryen IR uses names to refer to branch targets, but in general there may
@@ -206,6 +206,9 @@ public:
   [[nodiscard]] Result<> makeStringIterMove(StringIterMoveOp op);
   [[nodiscard]] Result<> makeStringSliceWTF(StringSliceWTFOp op);
   [[nodiscard]] Result<> makeStringSliceIter();
+  [[nodiscard]] Result<> makeResume(HeapType ct,
+                                    const std::vector<Name>& tags,
+                                    const std::vector<Index>& labels);
 
   // Private functions that must be public for technical reasons.
   [[nodiscard]] Result<> visitExpression(Expression*);
@@ -228,6 +231,7 @@ public:
   [[nodiscard]] Result<> visitThrow(Throw*);
   [[nodiscard]] Result<> visitStringNew(StringNew*);
   [[nodiscard]] Result<> visitStringEncode(StringEncode*);
+  [[nodiscard]] Result<> visitResume(Resume*);
   [[nodiscard]] Result<> visitTupleMake(TupleMake*);
   [[nodiscard]] Result<>
   visitTupleExtract(TupleExtract*,

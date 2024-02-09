@@ -310,6 +310,7 @@ struct NullInstrParserCtx {
   using ExprT = Ok;
   using CatchT = Ok;
   using CatchListT = Ok;
+  using TagLabelListT = Ok;
 
   using FieldIdxT = Ok;
   using FuncIdxT = Ok;
@@ -385,6 +386,9 @@ struct NullInstrParserCtx {
   Result<> makeTryTable(Index, std::optional<Name>, BlockTypeT, CatchListT) {
     return Ok{};
   }
+
+  TagLabelListT makeTagLabelList() { return Ok{}; }
+  void appendTagLabel(TagLabelListT&, TagIdxT, LabelIdxT) {}
 
   Result<> makeUnreachable(Index) { return Ok{}; }
   Result<> makeNop(Index) { return Ok{}; }
@@ -566,6 +570,10 @@ struct NullInstrParserCtx {
   Result<> makeStringIterMove(Index, StringIterMoveOp) { return Ok{}; }
   Result<> makeStringSliceWTF(Index, StringSliceWTFOp) { return Ok{}; }
   Result<> makeStringSliceIter(Index) { return Ok{}; }
+  template<typename HeapTypeT>
+  Result<> makeResume(Index, HeapTypeT, const TagLabelListT&) {
+    return Ok{};
+  }
 };
 
 struct NullCtx : NullTypeParserCtx, NullInstrParserCtx {
@@ -1069,13 +1077,6 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   using TableTypeT = Ok;
   using TypeUseT = HeapType;
 
-  using ExprT = Expression*;
-  using ElemListT = std::vector<Expression*>;
-
-  struct CatchInfo;
-  using CatchT = CatchInfo;
-  using CatchListT = std::vector<CatchInfo>;
-
   using FieldIdxT = Index;
   using FuncIdxT = Name;
   using LocalIdxT = Index;
@@ -1088,6 +1089,15 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   using TagIdxT = Name;
 
   using MemargT = Memarg;
+
+  using ExprT = Expression*;
+  using ElemListT = std::vector<Expression*>;
+
+  struct CatchInfo;
+  using CatchT = CatchInfo;
+  using CatchListT = std::vector<CatchInfo>;
+
+  using TagLabelListT = std::vector<std::pair<TagIdxT, LabelIdxT>>;
 
   ParseInput in;
 
@@ -1178,6 +1188,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   CatchInfo makeCatchRef(Name tag, Index label) { return {tag, label, true}; }
   CatchInfo makeCatchAll(Index label) { return {{}, label, false}; }
   CatchInfo makeCatchAllRef(Index label) { return {{}, label, true}; }
+
+  TagLabelListT makeTagLabelList() { return {}; }
+  void appendTagLabel(TagLabelListT& tagLabels, Name tag, Index label) {
+    tagLabels.push_back({tag, label});
+  }
 
   Result<HeapTypeT> getHeapTypeFromIdx(Index idx) {
     if (idx >= types.size()) {
@@ -1993,6 +2008,19 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeStringSliceIter(Index pos) {
     return withLoc(pos, irBuilder.makeStringSliceIter());
+  }
+
+  Result<>
+  makeResume(Index pos, HeapType type, const TagLabelListT& tagLabels) {
+    std::vector<Name> tags;
+    std::vector<Index> labels;
+    tags.reserve(tagLabels.size());
+    labels.reserve(tagLabels.size());
+    for (auto& [tag, label] : tagLabels) {
+      tags.push_back(tag);
+      labels.push_back(label);
+    }
+    return withLoc(pos, irBuilder.makeResume(type, tags, labels));
   }
 };
 
