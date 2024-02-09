@@ -172,6 +172,10 @@ var imports = {
     'setTempRet0': function(x) { tempRet0 = x },
     'getTempRet0': function() { return tempRet0 },
   },
+  'imports': {
+    'j2wasm.ExceptionUtils.tag':
+      new WebAssembly.Tag({parameters: ['externref']}),
+  },
 };
 
 imports = Asyncify.instrumentImports(imports);
