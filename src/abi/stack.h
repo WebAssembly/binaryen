@@ -38,9 +38,6 @@ inline Index stackAlign(Index size) {
 // Allocate some space on the stack, and assign it to a local.
 // The local will have the same constant value in all the function, so you can
 // just local.get it anywhere there.
-//
-// FIXME: This function assumes that the stack grows upward, per the convention
-// used by fastcomp.  The stack grows downward when using the WASM backend.
 
 inline void
 getStackSpace(Index local, Function* func, Index size, Module& wasm) {
