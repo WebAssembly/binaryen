@@ -1228,7 +1228,7 @@ template<typename Ctx> MaybeResult<typename Ctx::CatchT> catchinstr(Ctx& ctx) {
   return result;
 }
 
-// trytable ::= 'try_table' label blocktype catchinstr* instr* end id?
+// trytable ::= 'try_table' label blocktype catchinstr* instr* 'end' id?
 //            | '(' 'try_table' label blocktype catchinstr* instr* ')'
 template<typename Ctx> MaybeResult<> trytable(Ctx& ctx, bool folded) {
   auto pos = ctx.in.getPos();
@@ -1992,8 +1992,24 @@ template<typename Ctx> Result<> makeStringSliceIter(Ctx& ctx, Index pos) {
   return ctx.makeStringSliceIter(pos);
 }
 
+// resume ::= 'resume' typeidx ('(' 'tag' tagidx labelidx ')')*
 template<typename Ctx> Result<> makeResume(Ctx& ctx, Index pos) {
-  return ctx.in.err("unimplemented instruction");
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+
+  auto tagLabels = ctx.makeTagLabelList();
+  while (ctx.in.takeSExprStart("tag"sv)) {
+    auto tag = tagidx(ctx);
+    CHECK_ERR(tag);
+    auto label = labelidx(ctx);
+    CHECK_ERR(label);
+    ctx.appendTagLabel(tagLabels, *tag, *label);
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected ')' at end of handler clause");
+    }
+  }
+
+  return ctx.makeResume(pos, *type, tagLabels);
 }
 
 // =======
