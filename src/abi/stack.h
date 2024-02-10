@@ -64,8 +64,9 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   } else {
     WASM_UNREACHABLE("unhandled pointerType");
   }
-  block->list.push_back(builder.makeGlobalSet(stackPointer->name, added));
   block->list.push_back(builder.makeLocalSet(local, added));
+  block->list.push_back(builder.makeGlobalSet(
+    stackPointer->name, builder.makeLocalGet(local, pointerType)));
   auto makeStackRestore = [&]() {
     return builder.makeGlobalSet(
       stackPointer->name,
