@@ -91,6 +91,10 @@ public:
   size_t size() const { return str.size(); }
 };
 
+// Dangerous! Frees all interned strings that have ever been created.
+// This is only really meant to be used for tests.
+void destroyAllStringsForTestingPurposesOnly();
+
 } // namespace wasm
 
 namespace std {

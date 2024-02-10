@@ -17,41 +17,61 @@
 #include "istring.h"
 
 namespace wasm {
+namespace {
+
+// We need a set of string_views that can be modified in-place to minimize
+// the number of lookups we do. Since set elements cannot normally be
+// modified, wrap the string_views in a container that provides mutability
+// even through a const reference.
+struct MutStringView {
+  mutable std::string_view str;
+  MutStringView(std::string_view str) : str(str) {}
+};
+struct MutStringViewHash {
+  size_t operator()(const MutStringView& mut) const {
+    return std::hash<std::string_view>{}(mut.str);
+  }
+};
+struct MutStringViewEqual {
+  bool operator()(const MutStringView& a, const MutStringView& b) const {
+    return a.str == b.str;
+  }
+};
+using StringSet =
+  std::unordered_set<MutStringView, MutStringViewHash, MutStringViewEqual>;
+
+// The authoritative global set of interned string views.
+StringSet& getGlobalStrings() {
+  static StringSet globalStrings;
+  return globalStrings;
+}
+
+// The global backing store for interned strings that do not otherwise have
+// stable addresses.
+std::vector<std::vector<char>>& getAllocated() {
+  static std::vector<std::vector<char>> allocated;
+  return allocated;
+}
+
+// Guards access to `globalStrings` and `allocated`.
+std::mutex& getMutex() {
+  static std::mutex mutex;
+  return mutex;
+}
+
+// A thread-local cache of strings to reduce contention.
+StringSet& getLocalStrings() {
+  thread_local static StringSet localStrings;
+  return localStrings;
+}
+
+} // anonymous namespace
 
 std::string_view IString::interned(std::string_view s, bool reuse) {
-  // We need a set of string_views that can be modified in-place to minimize
-  // the number of lookups we do. Since set elements cannot normally be
-  // modified, wrap the string_views in a container that provides mutability
-  // even through a const reference.
-  struct MutStringView {
-    mutable std::string_view str;
-    MutStringView(std::string_view str) : str(str) {}
-  };
-  struct MutStringViewHash {
-    size_t operator()(const MutStringView& mut) const {
-      return std::hash<std::string_view>{}(mut.str);
-    }
-  };
-  struct MutStringViewEqual {
-    bool operator()(const MutStringView& a, const MutStringView& b) const {
-      return a.str == b.str;
-    }
-  };
-  using StringSet =
-    std::unordered_set<MutStringView, MutStringViewHash, MutStringViewEqual>;
-
-  // The authoritative global set of interned string views.
-  static StringSet globalStrings;
-
-  // The global backing store for interned strings that do not otherwise have
-  // stable addresses.
-  static std::vector<std::vector<char>> allocated;
-
-  // Guards access to `globalStrings` and `allocated`.
-  static std::mutex mutex;
-
-  // A thread-local cache of strings to reduce contention.
-  thread_local static StringSet localStrings;
+  auto& mutex = getMutex();
+  auto& allocated = getAllocated();
+  auto& localStrings = getLocalStrings();
+  auto& globalStrings = getGlobalStrings();
 
   auto [localIt, localInserted] = localStrings.insert(s);
   if (!localInserted) {
@@ -83,6 +103,13 @@ std::string_view IString::interned(std::string_view s, bool reuse) {
   // Intern our new string.
   localIt->str = globalIt->str = s;
   return s;
+}
+
+void destroyAllStringsForTestingPurposesOnly() {
+  std::unique_lock<std::mutex> lock(getMutex());
+  getGlobalStrings().clear();
+  getLocalStrings().clear();
+  getAllocated().clear();
 }
 
 } // namespace wasm

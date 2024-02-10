@@ -3626,6 +3626,13 @@ BINARYEN_API void BinaryenSetColorsEnabled(bool enabled);
 
 // Query whether color is enable for the Wasm printer
 BINARYEN_API bool BinaryenAreColorsEnabled();
+
+// Clear up all interned types (dangerous)
+BINARYEN_API void BinaryenDangerClearInternedTypes();
+
+// Clear up all interned strings (dangerous)
+BINARYEN_API void BinaryenDangerClearInternedStrings();
+
 #ifdef __cplusplus
 } // extern "C"
 #endif

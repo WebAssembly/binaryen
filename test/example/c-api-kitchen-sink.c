@@ -2047,6 +2047,11 @@ void test_color_status() {
   BinaryenSetColorsEnabled(old_state);
 }
 
+void test_clear_interned() {
+  BinaryenDangerClearInternedTypes();
+  BinaryenDangerClearInternedStrings();
+}
+
 void test_for_each() {
   BinaryenIndex i;
 
@@ -2373,6 +2378,7 @@ int main() {
   test_for_each();
   test_func_opt();
   test_typebuilder();
+  test_clear_interned();
 
   return 0;
 }

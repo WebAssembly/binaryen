@@ -6490,6 +6490,14 @@ void BinaryenSetColorsEnabled(bool enabled) { Colors::setEnabled(enabled); }
 
 bool BinaryenAreColorsEnabled() { return Colors::isEnabled(); }
 
+void BinaryenDangerClearInternedTypes() {
+  destroyAllTypesForTestingPurposesOnly();
+}
+
+void BinaryenDangerClearInternedStrings() {
+  destroyAllStringsForTestingPurposesOnly();
+}
+
 #ifdef __EMSCRIPTEN__
 // Internal binaryen.js APIs
 
