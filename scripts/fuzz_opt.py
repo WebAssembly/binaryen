@@ -200,24 +200,12 @@ def randomize_fuzz_settings():
 
 
 def init_important_initial_contents():
-    FIXED_IMPORTANT_INITIAL_CONTENTS = [
-        # Perenially-important passes
-        os.path.join('lit', 'passes', 'optimize-instructions-mvp.wast'),
-        os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
-    ]
-    MANUAL_RECENT_INITIAL_CONTENTS = [
-        # Recently-added or modified passes. These can be added to and pruned
-        # frequently.
-        os.path.join('lit', 'passes', 'once-reduction.wast'),
-        os.path.join('passes', 'remove-unused-brs_enable-multivalue.wast'),
-        os.path.join('lit', 'passes', 'optimize-instructions-bulk-memory.wast'),
-        os.path.join('lit', 'passes', 'optimize-instructions-ignore-traps.wast'),
-        os.path.join('lit', 'passes', 'optimize-instructions-gc.wast'),
-        os.path.join('lit', 'passes', 'optimize-instructions-gc-iit.wast'),
-        os.path.join('lit', 'passes', 'optimize-instructions-call_ref.wast'),
-        os.path.join('lit', 'passes', 'inlining_splitting.wast'),
-        os.path.join('heap-types.wast'),
-    ]
+    # Always grab important fuzz testcases from the designated directory for
+    # that. We consider them fixed content to always use.
+    FIXED_IMPORTANT_INITIAL_CONTENTS = fuzz_cases
+
+    # If auto_initial_contents is set we'll also grab all test files that are
+    # recent.
     RECENT_DAYS = 30
 
     # Returns the list of test wast/wat files added or modified within the
@@ -268,9 +256,6 @@ def init_important_initial_contents():
     if shared.options.auto_initial_contents:
         print(f'(automatically selected: within last {RECENT_DAYS} days):')
         recent_contents += auto_select_recent_initial_contents()
-    else:
-        print('(manually selected):')
-        recent_contents = MANUAL_RECENT_INITIAL_CONTENTS
     for test in recent_contents:
         print('  ' + test)
     print()
@@ -335,7 +320,7 @@ def pick_initial_contents():
         return
     # some of the time use initial contents that are known to be especially
     # important
-    if random.random() < 0.5:
+    if IMPORTANT_INITIAL_CONTENTS and random.random() < 0.5:
         test_name = random.choice(IMPORTANT_INITIAL_CONTENTS)
     else:
         test_name = random.choice(all_tests)
@@ -1393,6 +1378,7 @@ testcase_handlers = [
 
 
 test_suffixes = ['*.wasm', '*.wast', '*.wat']
+
 core_tests = shared.get_tests(shared.get_test_dir('.'), test_suffixes)
 passes_tests = shared.get_tests(shared.get_test_dir('passes'), test_suffixes)
 spec_tests = shared.get_tests(shared.get_test_dir('spec'), test_suffixes)
@@ -1401,6 +1387,8 @@ lld_tests = shared.get_tests(shared.get_test_dir('lld'), test_suffixes)
 unit_tests = shared.get_tests(shared.get_test_dir(os.path.join('unit', 'input')), test_suffixes)
 lit_tests = shared.get_tests(shared.get_test_dir('lit'), test_suffixes, recursive=True)
 all_tests = core_tests + passes_tests + spec_tests + wasm2js_tests + lld_tests + unit_tests + lit_tests
+
+fuzz_cases = shared.get_tests(shared.get_test_dir('fuzz'), test_suffixes, recursive=True)
 
 
 # Do one test, given an input file for -ttf and some optimizations to run
