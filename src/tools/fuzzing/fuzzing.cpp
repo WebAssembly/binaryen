@@ -433,6 +433,8 @@ void TranslateToFuzzReader::setupGlobals() {
 }
 
 void TranslateToFuzzReader::setupTags() {
+  // Code here looks ok as getControlFlowType() below can create tuples up to
+  // size 6 already.
   Index num = upTo(3);
   for (size_t i = 0; i < num; i++) {
     addTag();
@@ -1176,6 +1178,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
            &Self::makeCallIndirect)
       .add(FeatureSet::ExceptionHandling, &Self::makeTry)
       .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
+    // TODO: add makeTry here
   }
   if (type.isSingle()) {
     options
@@ -1286,6 +1289,7 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
          &Self::makeReturn)
     .add(FeatureSet::ExceptionHandling, &Self::makeThrow)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
+  // TODO: add makeThrow here
   return (this->*pick(options))(Type::unreachable);
 }
 
