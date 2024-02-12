@@ -10,6 +10,10 @@ Usage:
 
 That will run forever or until it finds a problem.
 
+You can put files in the local directory 'fuzz' (under the top level of the
+binaryen repo) and the fuzzer will treat them as important content to fuzz
+with high frequency.
+
 Setup: Some tools are optional, like emcc and wasm2c. The v8 shell (d8),
 however, is used in various sub-fuzzers and so it is mandatory.
 
@@ -200,24 +204,13 @@ def randomize_fuzz_settings():
 
 
 def init_important_initial_contents():
-    FIXED_IMPORTANT_INITIAL_CONTENTS = [
-        # Perenially-important passes
-        os.path.join('lit', 'passes', 'optimize-instructions-mvp.wast'),
-        os.path.join('passes', 'optimize-instructions_fuzz-exec.wast'),
-    ]
-    MANUAL_RECENT_INITIAL_CONTENTS = [
-        # Recently-added or modified passes. These can be added to and pruned
-        # frequently.
-        os.path.join('lit', 'passes', 'once-reduction.wast'),
-        os.path.join('passes', 'remove-unused-brs_enable-multivalue.wast'),
-        os.path.join('lit', 'passes', 'optimize-instructions-bulk-memory.wast'),
-        os.path.join('lit', 'passes', 'optimize-instructions-ignore-traps.wast'),
-        os.path.join('lit', 'passes', 'optimize-instructions-gc.wast'),
-        os.path.join('lit', 'passes', 'optimize-instructions-gc-iit.wast'),
-        os.path.join('lit', 'passes', 'optimize-instructions-call_ref.wast'),
-        os.path.join('lit', 'passes', 'inlining_splitting.wast'),
-        os.path.join('heap-types.wast'),
-    ]
+    # Fuzz dir contents are always important to us.
+    fuzz_dir = os.path.join(shared.options.binaryen_root, 'fuzz')
+    fuzz_cases = shared.get_tests(fuzz_dir, test_suffixes, recursive=True)
+    FIXED_IMPORTANT_INITIAL_CONTENTS = fuzz_cases
+
+    # If auto_initial_contents is set we'll also grab all test files that are
+    # recent.
     RECENT_DAYS = 30
 
     # Returns the list of test wast/wat files added or modified within the
@@ -258,7 +251,7 @@ def init_important_initial_contents():
               'so not automatically selecting initial contents.')
         shared.options.auto_initial_contents = False
 
-    print('- Perenially-important initial contents:')
+    print('- Important provided initial contents:')
     for test in FIXED_IMPORTANT_INITIAL_CONTENTS:
         print('  ' + test)
     print()
@@ -268,9 +261,6 @@ def init_important_initial_contents():
     if shared.options.auto_initial_contents:
         print(f'(automatically selected: within last {RECENT_DAYS} days):')
         recent_contents += auto_select_recent_initial_contents()
-    else:
-        print('(manually selected):')
-        recent_contents = MANUAL_RECENT_INITIAL_CONTENTS
     for test in recent_contents:
         print('  ' + test)
     print()
@@ -335,7 +325,7 @@ def pick_initial_contents():
         return
     # some of the time use initial contents that are known to be especially
     # important
-    if random.random() < 0.5:
+    if IMPORTANT_INITIAL_CONTENTS and random.random() < 0.5:
         test_name = random.choice(IMPORTANT_INITIAL_CONTENTS)
     else:
         test_name = random.choice(all_tests)
@@ -1393,6 +1383,7 @@ testcase_handlers = [
 
 
 test_suffixes = ['*.wasm', '*.wast', '*.wat']
+
 core_tests = shared.get_tests(shared.get_test_dir('.'), test_suffixes)
 passes_tests = shared.get_tests(shared.get_test_dir('passes'), test_suffixes)
 spec_tests = shared.get_tests(shared.get_test_dir('spec'), test_suffixes)
