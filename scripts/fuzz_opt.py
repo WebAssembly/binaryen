@@ -200,9 +200,15 @@ def randomize_fuzz_settings():
 
 
 def init_important_initial_contents():
-    # Always grab important fuzz testcases from the designated directory for
-    # that. We consider them fixed content to always use.
-    FIXED_IMPORTANT_INITIAL_CONTENTS = fuzz_cases
+    # Always grab important fuzz testcases from the designated local directory
+    # for that, 'fuzz', if it exists. We consider them fixed content to always
+    # use. This is, you can easily add fuzz testcases to be handled with high
+    # importance by creating a directory ./fuzz (parallel to ./test etc.) and
+    # putting wasm files in it.
+    fuzz_dir = os.path.join(options.binaryen_root, 'fuzz')
+    if os.path.exists(fuzz_dir):
+        fuzz_cases = shared.get_tests(fuzz_dir, test_suffixes, recursive=True)
+        FIXED_IMPORTANT_INITIAL_CONTENTS = fuzz_cases
 
     # If auto_initial_contents is set we'll also grab all test files that are
     # recent.
@@ -1387,8 +1393,6 @@ lld_tests = shared.get_tests(shared.get_test_dir('lld'), test_suffixes)
 unit_tests = shared.get_tests(shared.get_test_dir(os.path.join('unit', 'input')), test_suffixes)
 lit_tests = shared.get_tests(shared.get_test_dir('lit'), test_suffixes, recursive=True)
 all_tests = core_tests + passes_tests + spec_tests + wasm2js_tests + lld_tests + unit_tests + lit_tests
-
-fuzz_cases = shared.get_tests(shared.get_test_dir('fuzz'), test_suffixes, recursive=True)
 
 
 # Do one test, given an input file for -ttf and some optimizations to run
