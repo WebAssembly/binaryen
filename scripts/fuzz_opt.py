@@ -10,6 +10,10 @@ Usage:
 
 That will run forever or until it finds a problem.
 
+If you create a local directory 'fuzz' (under the binaryen root directory,
+that is, parallel to 'test' etc.) and put wasm files in it then they are
+treated as important content to fuzz with high frequency.
+
 Setup: Some tools are optional, like emcc and wasm2c. The v8 shell (d8),
 however, is used in various sub-fuzzers and so it is mandatory.
 
@@ -202,11 +206,7 @@ def randomize_fuzz_settings():
 def init_important_initial_contents():
     FIXED_IMPORTANT_INITIAL_CONTENTS = []
 
-    # Always grab important fuzz testcases from the designated local directory
-    # for that, 'fuzz', if it exists. We consider them fixed content to always
-    # use. This is, you can easily add fuzz testcases to be handled with high
-    # importance by creating a directory ./fuzz (parallel to ./test etc.) and
-    # putting wasm files in it.
+    # If the fuzz dir exists, its contents are always important to us.
     fuzz_dir = os.path.join(shared.options.binaryen_root, 'fuzz')
     if os.path.exists(fuzz_dir):
         fuzz_cases = shared.get_tests(fuzz_dir, test_suffixes, recursive=True)
