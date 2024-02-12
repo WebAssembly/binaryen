@@ -514,10 +514,18 @@ void TranslateToFuzzReader::finalizeTable() {
         table->initial = std::max(table->initial, maxOffset);
       });
 
-    // Clamp the table size to something reasonable, as huge tables (say of size
-    // 4GB) are very slow to interpret. Also, this avoids an issue where a
-    // segment has an offset at an address larger than kMaxSize, which traps at
-    // startup but would be a non-validating module for us to emit.
+    // The code above raises table->initial to a size large enough to accomodate
+    // all of its segments, with the intention of avoiding a trap during
+    // startup. However, a single segment of size 4GB would lead to a table of
+    // that size, which will use a lot of memory and execute very slowly, so we
+    // prefer in the fuzzer to trap on such a thing. To achieve that, set a
+    // reasonable limit for the maximum table size.
+    //
+    // This also avoids an issue that arises from table->initial being an
+    // Address (64 bits) but Table::kMaxSize being an Index (32 bits), as a
+    // result of which we need to clamp to Table::kMaxSize as well in order for
+    // the module ot validate (but since we are clamping to a smaller value,
+    // there is no need).
     const Address ReasonableMaxTableSize = 10000;
     table->initial = std::min(table->initial, ReasonableMaxTableSize);
     assert(ReasonableMaxTableSize <= Table::kMaxSize);
