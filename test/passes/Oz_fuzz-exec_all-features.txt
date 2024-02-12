@@ -100,15 +100,14 @@
  )
  (func $arrays (type $void_func) (; has Stack IR ;)
   (local $0 (ref $bytes))
-  (call $log
-   (array.len
-    (local.tee $0
-     (array.new $bytes
-      (i32.const 42)
-      (i32.const 50)
-     )
-    )
+  (local.set $0
+   (array.new $bytes
+    (i32.const 42)
+    (i32.const 50)
    )
+  )
+  (call $log
+   (i32.const 50)
   )
   (call $log
    (array.get_u $bytes
@@ -271,15 +270,14 @@
  )
  (func $array.new_fixed (type $void_func) (; has Stack IR ;)
   (local $0 (ref $bytes))
-  (call $log
-   (array.len
-    (local.tee $0
-     (array.new_fixed $bytes 2
-      (i32.const 42)
-      (i32.const 50)
-     )
-    )
+  (local.set $0
+   (array.new_fixed $bytes 2
+    (i32.const 42)
+    (i32.const 50)
    )
+  )
+  (call $log
+   (i32.const 2)
   )
   (call $log
    (array.get_u $bytes
