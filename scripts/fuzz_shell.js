@@ -174,6 +174,15 @@ var imports = {
   },
 };
 
+// If Tags are available, add the import j2wasm expects.
+if (typeof WebAssembly.Tag !== 'undefined') {
+  imports['imports'] = {
+    'j2wasm.ExceptionUtils.tag': new WebAssembly.Tag({
+      'parameters': ['externref']
+    }),
+  };
+}
+
 imports = Asyncify.instrumentImports(imports);
 
 // Create the wasm.
