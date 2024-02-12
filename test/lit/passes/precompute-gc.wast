@@ -20,8 +20,6 @@
 
  (type $struct_i8 (struct (field i8)))
 
- (type $array16 (array (mut i16)))
-
  (type $func-return-i32 (func (result i32)))
 
  ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (type $4) (param i32)))

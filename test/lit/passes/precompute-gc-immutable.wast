@@ -9,7 +9,14 @@
   ;; CHECK:      (type $struct-mut (struct (field (mut i32))))
   (type $struct-mut (struct (mut i32)))
 
-  ;; CHECK:      (func $propagate (type $2)
+  ;; CHECK:      (type $array-mut (array (mut i32)))
+
+  ;; CHECK:      (type $array-imm (array i32))
+  (type $array-imm (array i32))
+
+  (type $array-mut (array (mut i32)))
+
+  ;; CHECK:      (func $propagate-struct (type $2)
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (local $ref-mut (ref null $struct-mut))
   ;; CHECK-NEXT:  (local.set $ref-imm
@@ -31,7 +38,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $propagate
+  (func $propagate-struct
     (local $ref-imm (ref null $struct-imm))
     (local $ref-mut (ref null $struct-mut))
     ;; We can propagate from an immutable field of a struct created in this
@@ -54,6 +61,85 @@
     )
     (call $helper
       (struct.get $struct-mut 0
+        (local.get $ref-mut)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $propagate-array (type $2)
+  ;; CHECK-NEXT:  (local $ref-imm (ref null $array-imm))
+  ;; CHECK-NEXT:  (local $ref-mut (ref null $array-mut))
+  ;; CHECK-NEXT:  (local.set $ref-imm
+  ;; CHECK-NEXT:   (array.new_fixed $array-imm 3
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (i32.const 30)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $ref-mut
+  ;; CHECK-NEXT:   (array.new_fixed $array-mut 3
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (array.get $array-mut
+  ;; CHECK-NEXT:    (local.get $ref-mut)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $helper
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $propagate-array
+    (local $ref-imm (ref null $array-imm))
+    (local $ref-mut (ref null $array-mut))
+    ;; We can propagate from a slot in an immutable array created in this
+    ;; function, and also get the length.
+    (local.set $ref-imm
+      (array.new_fixed $array-imm 3
+        (i32.const 10)
+        (i32.const 20)
+        (i32.const 30)
+      )
+    )
+    (call $helper
+      (array.get $array-imm  ;; this returns 30
+        (local.get $ref-imm)
+        (i32.const 2)
+      )
+    )
+    (call $helper
+      (array.len ;; this returns 3
+        (local.get $ref-imm)
+      )
+    )
+    ;; But the same thing on a mutable array fails.
+    (local.set $ref-mut
+      (array.new_fixed $array-mut 3
+        (i32.const 10)
+        (i32.const 20)
+        (i32.const 30)
+      )
+    )
+    (call $helper
+      (array.get $array-mut
+        (local.get $ref-mut)
+        (i32.const 2)
+      )
+    )
+    ;; We can, however, optimize array.len in both cases as that is an
+    ;; immutable property.
+    (call $helper
+      (array.len ;; this returns 3
         (local.get $ref-mut)
       )
     )
@@ -118,7 +204,7 @@
     )
   )
 
-  ;; CHECK:      (func $param (type $4) (param $ref-imm (ref null $struct-imm))
+  ;; CHECK:      (func $param (type $6) (param $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (call $helper
   ;; CHECK-NEXT:   (struct.get $struct-imm 0
   ;; CHECK-NEXT:    (local.get $ref-imm)
