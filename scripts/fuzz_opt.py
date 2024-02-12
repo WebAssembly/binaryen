@@ -200,12 +200,14 @@ def randomize_fuzz_settings():
 
 
 def init_important_initial_contents():
+    FIXED_IMPORTANT_INITIAL_CONTENTS = []
+
     # Always grab important fuzz testcases from the designated local directory
     # for that, 'fuzz', if it exists. We consider them fixed content to always
     # use. This is, you can easily add fuzz testcases to be handled with high
     # importance by creating a directory ./fuzz (parallel to ./test etc.) and
     # putting wasm files in it.
-    fuzz_dir = os.path.join(options.binaryen_root, 'fuzz')
+    fuzz_dir = os.path.join(shared.options.binaryen_root, 'fuzz')
     if os.path.exists(fuzz_dir):
         fuzz_cases = shared.get_tests(fuzz_dir, test_suffixes, recursive=True)
         FIXED_IMPORTANT_INITIAL_CONTENTS = fuzz_cases
@@ -252,7 +254,7 @@ def init_important_initial_contents():
               'so not automatically selecting initial contents.')
         shared.options.auto_initial_contents = False
 
-    print('- Perenially-important initial contents:')
+    print('- Important provided initial contents:')
     for test in FIXED_IMPORTANT_INITIAL_CONTENTS:
         print('  ' + test)
     print()
