@@ -312,7 +312,7 @@
   )
 
   ;; CHECK:      (func $use-struct-of-array (type $1)
-  ;; CHECK-NEXT:  (local $closed (ref $0))
+  ;; CHECK-NEXT:  (local $array16 (ref $0))
   ;; CHECK-NEXT:  (local $open (ref $array16-open))
   ;; CHECK-NEXT:  (local $32 (ref $array32))
   ;; CHECK-NEXT:  (local $imm (ref $array16-imm))
@@ -335,7 +335,7 @@
     ;; The array type here should switch to the new 16-bit array type that we
     ;; use for the new imports, so that it is compatible with them. Without
     ;; that, calling the import as we do below will fail.
-    (local $closed (ref $array16))
+    (local $array16 (ref $array16))
 
     ;; In comparison, the array16-open param should remain as it is: it is an
     ;; open type which is different then the one we care about.
