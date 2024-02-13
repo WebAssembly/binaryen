@@ -126,16 +126,33 @@ def no_pass_debug():
 def randomize_feature_opts():
     global FEATURE_OPTS
     FEATURE_OPTS = CONSTANT_FEATURE_OPTS[:]
-    # 1/3 the time apply all the possible opts, 1/3 none of them, to maximize
-    # coverage both ways, and 1/3 pick each one randomly
-    if random.random() < 0.33333:
+
+    # Note that POSSIBLE_FEATURE_OPTS contains --disable-X for each feature, so
+    # we enable all features when we add nothing from it, etc. (assert on that
+    # form here to guard against future refactorings making a mess here).
+    assert '--disable' in POSSIBLE_FEATURE_OPTS[0]
+    assert '--enable' not in POSSIBLE_FEATURE_OPTS[0]
+
+    if random.random() < 0.1:
+        # 10% of the time disable all features, i.e., fuzz the MVP featureset.
+        # Fuzzing that is less and less important as more features get enabled
+        # by default, but we don't want to lose all coverage for it entirely
+        # (and the odds of randomly not selecting any feature, below, is too
+        # small).
         FEATURE_OPTS += POSSIBLE_FEATURE_OPTS
-    elif random.random() < 0.5:
+    elif random.random() < 0.333:
+        # 1/3 of the remaining 90% pick each feature randomly.
         for possible in POSSIBLE_FEATURE_OPTS:
             if random.random() < 0.5:
                 FEATURE_OPTS.append(possible)
                 if possible in IMPLIED_FEATURE_OPTS:
                     FEATURE_OPTS.extend(IMPLIED_FEATURE_OPTS[possible])
+    else:
+        # 3/2 of the remaining 90% use them all. This is useful to maximize
+        # coverage, as enabling more features enables more optimizations and
+        # code paths, and also allows all initial contents to run.
+        pass
+
     print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
 
     # Pick closed or open with equal probability as both matter.
