@@ -249,7 +249,7 @@ struct StringLowering : public StringGathering {
     // imported strings expects that type in its own rec group as part of the
     // ABI. Fix that up here. (This is valid to do as this type has no sub- or
     // super-types anyhow; it is "plain old data" for communicating with the
-    // outside anyhow.)
+    // outside.)
     auto allTypes = ModuleUtils::collectHeapTypes(*module);
     auto array16 = nullArray16.getHeapType();
     auto array16Element = array16.getArray().element;
