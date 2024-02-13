@@ -1972,7 +1972,22 @@ public:
     return Literal(result);
   }
   Flow visitStringAs(StringAs* curr) {
-    // TODO
+    // For now we only support JS-style strings.
+    assert(curr->op == StringAsWTF16);
+
+    Flow flow = visit(curr->ref);
+    if (flow.breaking()) {
+      return flow;
+    }
+    auto value = flow.getSingleValue();
+    auto data = value.getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+
+    // A JS-style string can be viewed simply as the underlying data. All we
+    // need to do is fix up the type.
+    return Literal(data, curr->type.getHeapType());
   }
   Flow visitStringWTF8Advance(StringWTF8Advance* curr) {
     WASM_UNREACHABLE("unimp");

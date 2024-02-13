@@ -163,6 +163,8 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] calling get_codeunit
+  ;; CHECK-NEXT: [fuzz-exec] note result: get_codeunit => 99
   (func $get_codeunit (export "get_codeunit") (result i32)
     ;; Reads 'c' which is code 99
     (stringview_wtf16.get_codeunit
@@ -223,6 +225,9 @@
 
 ;; CHECK:      [fuzz-exec] calling compare.10
 ;; CHECK-NEXT: [fuzz-exec] note result: compare.10 => -1
+
+;; CHECK:      [fuzz-exec] calling get_codeunit
+;; CHECK-NEXT: [fuzz-exec] note result: get_codeunit => 99
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.1
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.10
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.2
@@ -239,4 +244,5 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.3
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.4
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.5
+;; CHECK-NEXT: [fuzz-exec] comparing get_codeunit
 ;; CHECK-NEXT: [fuzz-exec] comparing new_wtf16_array
