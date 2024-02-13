@@ -406,6 +406,27 @@ struct StringLowering : public StringGathering {
             WASM_UNREACHABLE("TODO: all string.slice*");
         }
       }
+
+      // Additional hacks.
+
+      void visitIf(If* curr) {
+        // Before the lowering we could have one arm be a ref.null none and the
+        // other a stringref; after the lowering that is invalid, because the
+        // string is now extern, which has no shared ancestor with none. Fix
+        // that up manually in the simple case of an if arm with a null by
+        // correcting the null's type. This is of course wildly insufficient (we
+        // need selects and blocks and all other joins) but in practice this is
+        // enough for now. TODO extend as needed
+        if (curr->type.isRef() && curr->type.getHeapType() == HeapType::ext) {
+          auto fixArm = [](Expression* arm) {
+            if (auto* null = arm->dynCast<RefNull>()) {
+              null->finalize(HeapType::noext);
+            }
+          };
+          fixArm(curr->ifTrue);
+          fixArm(curr->ifFalse);
+        }
+      }
     };
 
     Replacer replacer(*this);
