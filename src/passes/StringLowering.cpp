@@ -418,7 +418,7 @@ struct StringLowering : public StringGathering {
         // need selects and blocks and all other joins) but in practice this is
         // enough for now. TODO extend as needed
         if (curr->type.isRef() && curr->type.getHeapType() == HeapType::ext) {
-          auto fixArm = [this](Expression* arm) {
+          auto fixArm = [](Expression* arm) {
             if (auto* null = arm->dynCast<RefNull>()) {
               null->finalize(HeapType::noext);
             }
