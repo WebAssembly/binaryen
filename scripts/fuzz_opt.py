@@ -138,7 +138,7 @@ def randomize_feature_opts():
         # Fuzzing that is less and less important as more features get enabled
         # by default, but we don't want to lose all coverage for it entirely
         # (and the odds of randomly not selecting any feature, below, is too
-        # small).
+        # small - at 17 features it is far less than 1%).
         FEATURE_OPTS += POSSIBLE_FEATURE_OPTS
     elif random.random() < 0.333:
         # 1/3 of the remaining 90% pick each feature randomly.
@@ -148,7 +148,7 @@ def randomize_feature_opts():
                 if possible in IMPLIED_FEATURE_OPTS:
                     FEATURE_OPTS.extend(IMPLIED_FEATURE_OPTS[possible])
     else:
-        # 3/2 of the remaining 90% use them all. This is useful to maximize
+        # 2/3 of the remaining 90% use them all. This is useful to maximize
         # coverage, as enabling more features enables more optimizations and
         # code paths, and also allows all initial contents to run.
         pass
