@@ -24,17 +24,13 @@
  (func $spill
   (local $x i32)
   (local $1 i32)
-  (local.set $1
-   (global.get $stack_ptr)
-  )
-  (local.set $1
-   (i32.sub
-    (local.get $1)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $1)
+   (local.tee $1
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (block
    (block
@@ -61,17 +57,13 @@
   (local $z f32)
   (local $w f64)
   (local $4 i32)
-  (local.set $4
-   (global.get $stack_ptr)
-  )
-  (local.set $4
-   (i32.sub
-    (local.get $4)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $4)
+   (local.tee $4
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (block
    (local.set $x
@@ -119,17 +111,13 @@
   (local $z i32)
   (local $w i32)
   (local $4 i32)
-  (local.set $4
-   (global.get $stack_ptr)
-  )
-  (local.set $4
-   (i32.sub
-    (local.get $4)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $4)
+   (local.tee $4
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (block
    (local.set $x
@@ -190,17 +178,13 @@
   (local $w i32)
   (local $a i32)
   (local $5 i32)
-  (local.set $5
-   (global.get $stack_ptr)
-  )
-  (local.set $5
-   (i32.sub
-    (local.get $5)
-    (i32.const 32)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $5)
+   (local.tee $5
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 32)
+    )
+   )
   )
   (block
    (local.set $x
@@ -268,17 +252,13 @@
   (local $x i32)
   (local $y i32)
   (local $2 i32)
-  (local.set $2
-   (global.get $stack_ptr)
-  )
-  (local.set $2
-   (i32.sub
-    (local.get $2)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $2)
+   (local.tee $2
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (block
    (block
@@ -304,17 +284,13 @@
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
-  (local.set $3
-   (global.get $stack_ptr)
-  )
-  (local.set $3
-   (i32.sub
-    (local.get $3)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $3)
+   (local.tee $3
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (block
    (block
@@ -350,17 +326,13 @@
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
-  (local.set $1
-   (global.get $stack_ptr)
-  )
-  (local.set $1
-   (i32.sub
-    (local.get $1)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $1)
+   (local.tee $1
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (local.set $4
    (block (result i32)
@@ -420,17 +392,13 @@
   (local $x i32)
   (local $1 i32)
   (local $2 i32)
-  (local.set $1
-   (global.get $stack_ptr)
-  )
-  (local.set $1
-   (i32.sub
-    (local.get $1)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $1)
+   (local.tee $1
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (local.set $2
    (block (result i32)
@@ -464,17 +432,13 @@
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
-  (local.set $2
-   (global.get $stack_ptr)
-  )
-  (local.set $2
-   (i32.sub
-    (local.get $2)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $2)
+   (local.tee $2
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (local.set $5
    (block (result i32)
@@ -541,17 +505,13 @@
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
-  (local.set $1
-   (global.get $stack_ptr)
-  )
-  (local.set $1
-   (i32.sub
-    (local.get $1)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $1)
+   (local.tee $1
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (local.set $3
    (block (result i32)
@@ -606,17 +566,13 @@
   (local $x i32)
   (local $2 i32)
   (local $3 f64)
-  (local.set $2
-   (global.get $stack_ptr)
-  )
-  (local.set $2
-   (i32.sub
-    (local.get $2)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $2)
+   (local.tee $2
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (block
    (block
@@ -648,17 +604,13 @@
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
-  (local.set $1
-   (global.get $stack_ptr)
-  )
-  (local.set $1
-   (i32.sub
-    (local.get $1)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $1)
+   (local.tee $1
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (block
    (block
@@ -696,17 +648,13 @@
   (local $x i32)
   (local $1 i32)
   (local $2 i32)
-  (local.set $1
-   (global.get $stack_ptr)
-  )
-  (local.set $1
-   (i32.sub
-    (local.get $1)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $1)
+   (local.tee $1
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (block
    (block
@@ -762,17 +710,13 @@
  (func $spill
   (local $x i32)
   (local $1 i32)
-  (local.set $1
-   (global.get $stack_ptr)
-  )
-  (local.set $1
-   (i32.sub
-    (local.get $1)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $1)
+   (local.tee $1
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (block
    (block
@@ -799,17 +743,13 @@
   (local $z f32)
   (local $w f64)
   (local $4 i32)
-  (local.set $4
-   (global.get $stack_ptr)
-  )
-  (local.set $4
-   (i32.sub
-    (local.get $4)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $4)
+   (local.tee $4
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (block
    (local.set $x
@@ -857,17 +797,13 @@
   (local $z i32)
   (local $w i32)
   (local $4 i32)
-  (local.set $4
-   (global.get $stack_ptr)
-  )
-  (local.set $4
-   (i32.sub
-    (local.get $4)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $4)
+   (local.tee $4
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (block
    (local.set $x
@@ -928,17 +864,13 @@
   (local $w i32)
   (local $a i32)
   (local $5 i32)
-  (local.set $5
-   (global.get $stack_ptr)
-  )
-  (local.set $5
-   (i32.sub
-    (local.get $5)
-    (i32.const 32)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $5)
+   (local.tee $5
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 32)
+    )
+   )
   )
   (block
    (local.set $x
@@ -1006,17 +938,13 @@
   (local $x i32)
   (local $y i32)
   (local $2 i32)
-  (local.set $2
-   (global.get $stack_ptr)
-  )
-  (local.set $2
-   (i32.sub
-    (local.get $2)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $2)
+   (local.tee $2
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (block
    (block
@@ -1042,17 +970,13 @@
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
-  (local.set $3
-   (global.get $stack_ptr)
-  )
-  (local.set $3
-   (i32.sub
-    (local.get $3)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $3)
+   (local.tee $3
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (block
    (block
@@ -1088,17 +1012,13 @@
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
-  (local.set $1
-   (global.get $stack_ptr)
-  )
-  (local.set $1
-   (i32.sub
-    (local.get $1)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $1)
+   (local.tee $1
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (local.set $4
    (block (result i32)
@@ -1158,17 +1078,13 @@
   (local $x i32)
   (local $1 i32)
   (local $2 i32)
-  (local.set $1
-   (global.get $stack_ptr)
-  )
-  (local.set $1
-   (i32.sub
-    (local.get $1)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $1)
+   (local.tee $1
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (local.set $2
    (block (result i32)
@@ -1202,17 +1118,13 @@
   (local $3 i32)
   (local $4 i32)
   (local $5 i32)
-  (local.set $2
-   (global.get $stack_ptr)
-  )
-  (local.set $2
-   (i32.sub
-    (local.get $2)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $2)
+   (local.tee $2
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (local.set $5
    (block (result i32)
@@ -1279,17 +1191,13 @@
   (local $1 i32)
   (local $2 i32)
   (local $3 i32)
-  (local.set $1
-   (global.get $stack_ptr)
-  )
-  (local.set $1
-   (i32.sub
-    (local.get $1)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $1)
+   (local.tee $1
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (local.set $3
    (block (result i32)
@@ -1344,17 +1252,13 @@
   (local $x i32)
   (local $2 i32)
   (local $3 f64)
-  (local.set $2
-   (global.get $stack_ptr)
-  )
-  (local.set $2
-   (i32.sub
-    (local.get $2)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $2)
+   (local.tee $2
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (block
    (block
@@ -1386,17 +1290,13 @@
   (local $2 i32)
   (local $3 i32)
   (local $4 i32)
-  (local.set $1
-   (global.get $stack_ptr)
-  )
-  (local.set $1
-   (i32.sub
-    (local.get $1)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $1)
+   (local.tee $1
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (block
    (block
@@ -1434,17 +1334,13 @@
   (local $x i32)
   (local $1 i32)
   (local $2 i32)
-  (local.set $1
-   (global.get $stack_ptr)
-  )
-  (local.set $1
-   (i32.sub
-    (local.get $1)
-    (i32.const 16)
-   )
-  )
   (global.set $stack_ptr
-   (local.get $1)
+   (local.tee $1
+    (i32.sub
+     (global.get $stack_ptr)
+     (i32.const 16)
+    )
+   )
   )
   (block
    (block
