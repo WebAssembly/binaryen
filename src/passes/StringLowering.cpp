@@ -232,13 +232,27 @@ struct StringLowering : public StringGathering {
 
   void updateTypes(Module* module) {
     TypeMapper::TypeUpdates updates;
+
     // There is no difference between strings and views with imported strings:
     // they are all just JS strings, so they all turn into externref.
     updates[HeapType::string] = HeapType::ext;
     updates[HeapType::stringview_wtf8] = HeapType::ext;
     updates[HeapType::stringview_wtf16] = HeapType::ext;
     updates[HeapType::stringview_iter] = HeapType::ext;
-    TypeMapper(*module, updates).map();
+
+    // We consider all types that use strings as modifiable, which means we
+    // mark them as non-private. That is, we are doing something TypeMapper
+    // normally does not, as we are changing the external interface/ABI of the
+    // module: we are changing that ABI from using strings to externs.
+    auto publicTypes = ModuleUtils::getPublicHeapTypes(*module);
+    std::vector<HeapType> stringUsers;
+    for (auto t : publicTypes) {
+      if (Type(t, Nullable).getFeatures().hasStrings()) {
+        stringUsers.push_back(t);
+      }
+    }
+
+    TypeMapper(*module, updates).map(stringUsers);
   }
 
   // Imported string functions.

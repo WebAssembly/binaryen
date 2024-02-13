@@ -426,7 +426,11 @@ protected:
   // Builds new types after updating their contents using the hooks below and
   // returns a map from the old types to the modified types. Used internally in
   // update().
-  TypeMap rebuildTypes();
+  //
+  // This only operates on private types (so as not to modify the module's
+  // external ABI). It takes as a parameter a list of public types to consider
+  // private, which allows more flexibility.
+  TypeMap rebuildTypes(const std::vector<HeapType>& additionalPrivateTypes={});
 
 private:
   TypeBuilder typeBuilder;
@@ -446,10 +450,12 @@ public:
   TypeMapper(Module& wasm, const TypeUpdates& mapping)
     : GlobalTypeRewriter(wasm), mapping(mapping) {}
 
-  void map() {
+  // As rebuildTypes, this can take an optional set of additional types to
+  // consider private (and therefore to modify).
+  void map(const std::vector<HeapType>& additionalPrivateTypes={}) {
     // Update the internals of types (struct fields, signatures, etc.) to
     // refer to the merged types.
-    auto newMapping = rebuildTypes();
+    auto newMapping = rebuildTypes(additionalPrivateTypes);
 
     // Compose the user-provided mapping from old types to other old types with
     // the new mapping from old types to new types. `newMapping` will become
