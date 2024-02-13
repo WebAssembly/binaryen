@@ -189,11 +189,11 @@ struct StringLowering : public StringGathering {
     // First, run the gathering operation so all string.consts are in one place.
     StringGathering::run(module);
 
-    // Lower the string.const globals into imports.
-    makeImports(module);
-
     // Remove all HeapType::string etc. in favor of externref.
     updateTypes(module);
+
+    // Lower the string.const globals into imports.
+    makeImports(module);
 
     // Replace string.* etc. operations with imported ones.
     replaceInstructions(module);
