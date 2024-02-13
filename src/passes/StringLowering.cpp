@@ -255,10 +255,9 @@ struct StringLowering : public StringGathering {
     auto array16Element = array16.getArray().element;
     for (auto type : allTypes) {
       // Match an array type with no super and that is closed.
-      if (type.isArray() && !type.getDeclaredSuperType() && !type.isOpen()) {
-        if (type.getArray().element == array16Element) {
-          updates[type] = array16;
-        }
+      if (type.isArray() && !type.getDeclaredSuperType() && !type.isOpen() &&
+          type.getArray().element == array16Element) {
+        updates[type] = array16;
       }
     }
 
