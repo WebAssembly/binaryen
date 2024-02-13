@@ -30,7 +30,8 @@ GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm) : wasm(wasm) {}
 
 void GlobalTypeRewriter::update() { mapTypes(rebuildTypes()); }
 
-GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(const std::vector<HeapType>& additionalPrivateTypes) {
+GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
+  const std::vector<HeapType>& additionalPrivateTypes) {
   // Find the heap types that are not publicly observable. Even in a closed
   // world scenario, don't modify public types because we assume that they may
   // be reflected on or used for linking. Figure out where each private type

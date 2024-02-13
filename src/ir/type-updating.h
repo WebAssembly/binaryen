@@ -430,7 +430,8 @@ protected:
   // This only operates on private types (so as not to modify the module's
   // external ABI). It takes as a parameter a list of public types to consider
   // private, which allows more flexibility.
-  TypeMap rebuildTypes(const std::vector<HeapType>& additionalPrivateTypes={});
+  TypeMap
+  rebuildTypes(const std::vector<HeapType>& additionalPrivateTypes = {});
 
 private:
   TypeBuilder typeBuilder;
@@ -452,7 +453,7 @@ public:
 
   // As rebuildTypes, this can take an optional set of additional types to
   // consider private (and therefore to modify).
-  void map(const std::vector<HeapType>& additionalPrivateTypes={}) {
+  void map(const std::vector<HeapType>& additionalPrivateTypes = {}) {
     // Update the internals of types (struct fields, signatures, etc.) to
     // refer to the merged types.
     auto newMapping = rebuildTypes(additionalPrivateTypes);
