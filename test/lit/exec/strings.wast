@@ -166,12 +166,23 @@
   ;; CHECK:      [fuzz-exec] calling get_codeunit
   ;; CHECK-NEXT: [fuzz-exec] note result: get_codeunit => 99
   (func $get_codeunit (export "get_codeunit") (result i32)
-    ;; Reads 'c' which is code 99
+    ;; Reads 'c' which is code 99.
     (stringview_wtf16.get_codeunit
       (string.as_wtf16
         (string.const "abcdefg")
       )
       (i32.const 2)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling get_length
+  ;; CHECK-NEXT: [fuzz-exec] note result: get_length => 7
+  (func $get_length (export "get_length") (result i32)
+    ;; This should return 7.
+    (stringview_wtf16.length
+      (string.as_wtf16
+        (string.const "1234567")
+      )
     )
   )
 )
@@ -228,6 +239,9 @@
 
 ;; CHECK:      [fuzz-exec] calling get_codeunit
 ;; CHECK-NEXT: [fuzz-exec] note result: get_codeunit => 99
+
+;; CHECK:      [fuzz-exec] calling get_length
+;; CHECK-NEXT: [fuzz-exec] note result: get_length => 7
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.1
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.10
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.2
@@ -245,4 +259,5 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.4
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.5
 ;; CHECK-NEXT: [fuzz-exec] comparing get_codeunit
+;; CHECK-NEXT: [fuzz-exec] comparing get_length
 ;; CHECK-NEXT: [fuzz-exec] comparing new_wtf16_array

@@ -1902,7 +1902,21 @@ public:
   Flow visitStringConst(StringConst* curr) {
     return Literal(curr->string.toString());
   }
-  Flow visitStringMeasure(StringMeasure* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringMeasure(StringMeasure* curr) {
+    // For now we only support JS-style strings.
+    assert(curr->op == StringMeasureWTF16View);
+
+    Flow flow = visit(curr->ref);
+    if (flow.breaking()) {
+      return flow;
+    }
+    auto value = flow.getSingleValue();
+    auto data = value.getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    return Literal(int32_t(data->values.size()));
+  }
   Flow visitStringEncode(StringEncode* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringConcat(StringConcat* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringEq(StringEq* curr) {
