@@ -230,6 +230,11 @@ struct StringLowering : public StringGathering {
       CustomSection{"string.consts", std::move(vec)});
   }
 
+  // Common types used in imports.
+  Type nullArray16 = Type(Array(Field(Field::i16, Mutable)), Nullable);
+  Type nullExt = Type(HeapType::ext, Nullable);
+  Type nnExt = Type(HeapType::ext, NonNullable);
+
   void updateTypes(Module* module) {
     TypeMapper::TypeUpdates updates;
 
@@ -240,8 +245,24 @@ struct StringLowering : public StringGathering {
     updates[HeapType::stringview_wtf16] = HeapType::ext;
     updates[HeapType::stringview_iter] = HeapType::ext;
 
+    // The module may have its own array16 type inside a big rec group, but
+    // imported strings expects that type in its own rec group as part of the
+    // ABI. Fix that up here. (This is valid to do as this type has no sub- or
+    // super-types anyhow; it is "plain old data" for communicating with the
+    // outside anyhow.)
+    auto allTypes = ModuleUtils::collectHeapTypes(*module);
+    auto array16 = nullArray16.getHeapType();
+    auto array16Element = array16.getArray().element;
+    for (auto type : allTypes) {
+      if (type.isArray()) {
+        if (type.getArray().element == array16Element) {
+          updates[type] = array16;
+        }
+      }
+    }
+
     // We consider all types that use strings as modifiable, which means we
-    // mark them as non-private. That is, we are doing something TypeMapper
+    // mark them as non-public. That is, we are doing something TypeMapper
     // normally does not, as we are changing the external interface/ABI of the
     // module: we are changing that ABI from using strings to externs.
     auto publicTypes = ModuleUtils::getPublicHeapTypes(*module);
@@ -267,11 +288,6 @@ struct StringLowering : public StringGathering {
 
   // The name of the module to import string functions from.
   Name WasmStringsModule = "wasm:js-string";
-
-  // Common types used in imports.
-  Type nullArray16 = Type(Array(Field(Field::i16, Mutable)), Nullable);
-  Type nullExt = Type(HeapType::ext, Nullable);
-  Type nnExt = Type(HeapType::ext, NonNullable);
 
   // Creates an imported string function, returning its name (which is equal to
   // the true name of the import, if there is no conflict).
