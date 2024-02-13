@@ -162,6 +162,16 @@
       (string.const "hf")
     )
   )
+
+  (func $get_codeunit (export "get_codeunit") (result i32)
+    ;; Reads 'c' which is code 99
+    (stringview_wtf16.get_codeunit
+      (string.as_wtf16
+        (string.const "abcdefg")
+      )
+      (i32.const 2)
+    )
+  )
 )
 ;; CHECK:      [fuzz-exec] calling new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")

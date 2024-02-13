@@ -1971,7 +1971,9 @@ public:
     }
     return Literal(result);
   }
-  Flow visitStringAs(StringAs* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringAs(StringAs* curr) {
+    // TODO
+  }
   Flow visitStringWTF8Advance(StringWTF8Advance* curr) {
     WASM_UNREACHABLE("unimp");
   }
