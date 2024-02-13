@@ -52,21 +52,19 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   // TODO: find existing stack usage, and add on top of that - carefully
   Builder builder(wasm);
   auto* block = builder.makeBlock();
-  block->list.push_back(builder.makeLocalSet(
-    local, builder.makeGlobalGet(stackPointer->name, pointerType)));
   // TODO: add stack max check
   Expression* added;
   if (pointerType == Type::i32) {
     // The stack goes downward in the LLVM wasm backend.
-    added = builder.makeBinary(SubInt32,
-                               builder.makeLocalGet(local, pointerType),
-                               builder.makeConst(int32_t(size)));
+    added =
+      builder.makeBinary(SubInt32,
+                         builder.makeGlobalGet(stackPointer->name, pointerType),
+                         builder.makeConst(int32_t(size)));
   } else {
     WASM_UNREACHABLE("unhandled pointerType");
   }
-  block->list.push_back(builder.makeLocalSet(local, added));
   block->list.push_back(builder.makeGlobalSet(
-    stackPointer->name, builder.makeLocalGet(local, pointerType)));
+    stackPointer->name, builder.makeLocalTee(local, added, pointerType)));
   auto makeStackRestore = [&]() {
     return builder.makeGlobalSet(
       stackPointer->name,
