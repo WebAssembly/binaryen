@@ -19,19 +19,16 @@
     (type $struct-of-array (struct (field (ref $array16))))
 
     ;; CHECK:       (type $array16-imm (array i32))
+    (type $array16-imm (array i32))
 
     ;; CHECK:       (type $array32 (array (mut i32)))
+    (type $array32 (array (mut i32)))
 
     ;; CHECK:       (type $array16-open (sub (array (mut i16))))
+    (type $array16-open (sub (array (mut i16))))
 
     ;; CHECK:       (type $array16 (array (mut i16)))
     (type $array16 (array (mut i16)))
-
-    (type $array16-open (sub (array (mut i16))))
-
-    (type $array32 (array (mut i32)))
-
-    (type $array16-imm (array i32))
   )
 
   ;; CHECK:       (type $10 (func (param externref) (result externref)))
