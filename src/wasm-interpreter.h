@@ -1975,7 +1975,28 @@ public:
   Flow visitStringWTF8Advance(StringWTF8Advance* curr) {
     WASM_UNREACHABLE("unimp");
   }
-  Flow visitStringWTF16Get(StringWTF16Get* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringWTF16Get(StringWTF16Get* curr) {
+    NOTE_ENTER("StringEq");
+    Flow ref = visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow pos = visit(curr->pos);
+    if (pos.breaking()) {
+      return pos;
+    }
+    auto refValue = ref.getSingleValue();
+    auto data = refValue.getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    auto& values = data->values;
+    Index i = pos.getSingleValue().geti32();
+    if (i >= values.size()) {
+      trap("string oob");
+    }
+    return Literal(values[i].geti32());
+  }
   Flow visitStringIterNext(StringIterNext* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringIterMove(StringIterMove* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringSliceWTF(StringSliceWTF* curr) { WASM_UNREACHABLE("unimp"); }
