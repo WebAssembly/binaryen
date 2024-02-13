@@ -209,6 +209,52 @@
     )
   )
 
+  ;; CHECK:      (func $if.string (type $7) (param $ref externref) (result externref)
+  ;; CHECK-NEXT:  (if (result externref)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (ref.null noextern)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if.string (param $ref stringref) (result stringref)
+    (if (result stringref)
+      (i32.const 0)
+      (then
+        (ref.null none)
+      )
+      (else
+        (local.get $ref)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $if.string.flip (type $7) (param $ref externref) (result externref)
+  ;; CHECK-NEXT:  (if (result externref)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.get $ref)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (ref.null noextern)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if.string.flip (param $ref stringref) (result stringref)
+    (if (result stringref)
+      (i32.const 0)
+      (then
+        (local.get $ref)
+      )
+      (else
+        (ref.null none)
+      )
+    )
+  )
+
   ;; CHECK:      (func $exported-string-returner (type $3) (result externref)
   ;; CHECK-NEXT:  (global.get $string.const_exported)
   ;; CHECK-NEXT: )
