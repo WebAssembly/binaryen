@@ -254,7 +254,8 @@ struct StringLowering : public StringGathering {
     auto array16 = nullArray16.getHeapType();
     auto array16Element = array16.getArray().element;
     for (auto type : allTypes) {
-      if (type.isArray()) {
+      // Match an array type with no super and that is closed.
+      if (type.isArray() && !type.getDeclaredSuperType() && !type.isOpen()) {
         if (type.getArray().element == array16Element) {
           updates[type] = array16;
         }
