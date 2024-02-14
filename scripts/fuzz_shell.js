@@ -110,6 +110,19 @@ var Asyncify = {
     return ret;
   },
   instrumentExports: function(exports) {
+    // Do not instrument unnecessarily, as this adds overhead and makes
+    // debugging harder.
+    var hasAsyncify = false;
+    for (var e in exports) {
+      if (e.startsWith('asyncify_')) {
+        hasAsyncify = true;
+        break;
+      }
+    }
+    if (!hasAsyncify) {
+      return exports;
+    }
+
     var ret = {};
     for (var e in exports) {
       if (typeof exports[e] === 'function' &&
