@@ -121,8 +121,11 @@ struct ExecutionResults {
               // for example, which is not guaranteed to remain identical after
               // optimizations. Do not print the type in detail (as even that
               // may change due to closed-world optimizations); just print a
-              // simple type like JS does.
-              if (resultType.isFunction()) {
+              // simple type like JS does, but also specify null specifically
+              // (as in JS there is just one null, and typeof null is 'object').
+              if (values->size() == 1 && (*values)[0].isNull()) {
+                std::cout << "null\n";
+              } else if (resultType.isFunction()) {
                 std::cout << "function\n";
               } else {
                 std::cout << "object\n";

@@ -156,6 +156,10 @@ function printed(x, y) {
   if (typeof y !== 'undefined') {
     // A pair of i32s which are a legalized i64.
     return x + ' ' + y;
+  } else if (x === null) {
+    // JS has just one null. Print that out rather than typeof null which is
+    // 'object', below.
+    return 'null';
   } else if (typeof x !== 'number' && typeof x !== 'string') {
     // Something that is not a number or string, like a reference. We can't
     // print a reference because it could look different after opts - imagine
