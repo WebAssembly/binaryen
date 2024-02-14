@@ -127,22 +127,16 @@ def randomize_feature_opts():
     global FEATURE_OPTS
     FEATURE_OPTS = CONSTANT_FEATURE_OPTS[:]
 
-    # Note that POSSIBLE_FEATURE_OPTS contains --disable-X for each feature, so
-    # we enable all features when we add nothing from it, etc. (assert on that
-    # form here to guard against future refactorings making a mess here).
-    assert '--disable' in POSSIBLE_FEATURE_OPTS[0]
-    assert '--enable' not in POSSIBLE_FEATURE_OPTS[0]
-
     if random.random() < 0.1:
         # 10% of the time disable all features, i.e., fuzz the MVP featureset.
         # Fuzzing that is less and less important as more features get enabled
         # by default, but we don't want to lose all coverage for it entirely
         # (and the odds of randomly not selecting any feature, below, is too
         # small - at 17 features it is far less than 1%).
-        FEATURE_OPTS += POSSIBLE_FEATURE_OPTS
+        FEATURE_OPTS += FEATURE_DISABLE_FLAGS
     elif random.random() < 0.333:
         # 1/3 of the remaining 90% pick each feature randomly.
-        for possible in POSSIBLE_FEATURE_OPTS:
+        for possible in FEATURE_DISABLE_FLAGS:
             if random.random() < 0.5:
                 FEATURE_OPTS.append(possible)
                 if possible in IMPLIED_FEATURE_OPTS:
@@ -1673,11 +1667,10 @@ def get_random_opts():
 
 # main
 
-# possible feature options that are sometimes passed to the tools. this
-# contains the list of all possible feature flags we can disable (after
-# we enable all before that in the constant options)
-POSSIBLE_FEATURE_OPTS = run([in_bin('wasm-opt'), '--print-features', in_binaryen('test', 'hello_world.wat')] + CONSTANT_FEATURE_OPTS).replace('--enable', '--disable').strip().split('\n')
-print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
+# list of all the flags to disable all the features. if all of these are added
+# then we target the MVP.
+FEATURE_DISABLE_FLAGS = run([in_bin('wasm-opt'), '--print-features', in_binaryen('test', 'hello_world.wat')] + CONSTANT_FEATURE_OPTS).replace('--enable', '--disable').strip().split('\n')
+print('FEATURE_DISABLE_FLAGS:', FEATURE_DISABLE_FLAGS)
 
 # some features depend on other features, so if a required feature is
 # disabled, its dependent features need to be disabled as well.
