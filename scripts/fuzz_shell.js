@@ -238,7 +238,7 @@ for (var e in exports) {
     console.log('[fuzz-exec] calling ' + e);
     var result = exports[e]();
     if (typeof result !== 'undefined') {
-      console.log('[fuzz-exec] note result: $' + e + ' => ' + printed(result));
+      console.log('[fuzz-exec] note result: ' + e + ' => ' + printed(result));
     }
   } catch (e) {
     console.log('exception!');// + [e, e.stack]);
