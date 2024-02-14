@@ -1566,7 +1566,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           auto* condition = getProperBrIf(curr)->condition;
           if (auto* binary = condition->dynCast<Binary>()) {
             return binary->right->cast<Const>()->value.geti32();
-          } else if ([[maybe_unused]] auto* unary = condition->dynCast<Unary>()) {
+          } else if ([[maybe_unused]] auto* unary =
+                       condition->dynCast<Unary>()) {
             assert(unary->op == EqZInt32);
             return 0;
           } else {
