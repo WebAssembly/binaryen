@@ -217,7 +217,9 @@ for (var e in exports) {
   }
 
   Asyncify.check();
-  if (typeof exports[e] !== 'function') return;
+  if (typeof exports[e] !== 'function') {
+    continue;
+  }
   try {
     console.log('[fuzz-exec] calling ' + e);
     var result = exports[e]();
