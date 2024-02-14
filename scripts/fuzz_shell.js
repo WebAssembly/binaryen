@@ -156,8 +156,12 @@ function printed(x, y) {
   if (typeof y !== 'undefined') {
     // A pair of i32s which are a legalized i64.
     return x + ' ' + y;
-  } else if (typeof x !== 'number') {
-    // Something that is not a number, like a reference. Just print the type.
+  } else if (typeof x !== 'number' && typeof x !== 'string') {
+    // Something that is not a number or string, like a reference. We can't
+    // print a reference because it could look different after opts - imagine
+    // that a function gets renamed internally (that is, the problem is that
+    // JS printing will emit some info about the reference and not a stable
+    // external representation of it). In those cases just print the type.
     return typeof x;
   } else {
     // A number. Print the whole thing.
