@@ -15,8 +15,8 @@
 
     ;; CHECK:       (type $4 (func (result externref)))
 
-    ;; CHECK:       (type $struct-of-string (struct (field externref) (field i32)))
-    (type $struct-of-string (struct (field stringref) (field i32)))
+    ;; CHECK:       (type $struct-of-string (struct (field externref) (field i32) (field anyref)))
+    (type $struct-of-string (struct (field stringref) (field i32) (field anyref)))
 
     ;; CHECK:       (type $struct-of-array (struct (field (ref $0))))
     (type $struct-of-array (struct (field (ref $array16))))
@@ -377,12 +377,14 @@
   ;; CHECK-NEXT:   (struct.new $struct-of-string
   ;; CHECK-NEXT:    (ref.null noextern)
   ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct-of-string
   ;; CHECK-NEXT:    (global.get $string.const_value)
   ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -395,12 +397,14 @@
       (struct.new $struct-of-string
         (ref.null none) ;; This null must be fixed to be ext.
         (i32.const 10)
+        (ref.null none) ;; Nothing to do here (field remains anyref).
       )
     )
     (drop
       (struct.new $struct-of-string
         (string.const "value") ;; Nothing to do here.
         (i32.const 10)
+        (ref.null none)
       )
     )
     (drop
