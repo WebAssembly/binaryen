@@ -1902,7 +1902,21 @@ public:
   Flow visitStringConst(StringConst* curr) {
     return Literal(curr->string.toString());
   }
-  Flow visitStringMeasure(StringMeasure* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringMeasure(StringMeasure* curr) {
+    // For now we only support JS-style strings.
+    assert(curr->op == StringMeasureWTF16View);
+
+    Flow flow = visit(curr->ref);
+    if (flow.breaking()) {
+      return flow;
+    }
+    auto value = flow.getSingleValue();
+    auto data = value.getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    return Literal(int32_t(data->values.size()));
+  }
   Flow visitStringEncode(StringEncode* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringConcat(StringConcat* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringEq(StringEq* curr) {
@@ -1971,11 +1985,49 @@ public:
     }
     return Literal(result);
   }
-  Flow visitStringAs(StringAs* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringAs(StringAs* curr) {
+    // For now we only support JS-style strings.
+    assert(curr->op == StringAsWTF16);
+
+    Flow flow = visit(curr->ref);
+    if (flow.breaking()) {
+      return flow;
+    }
+    auto value = flow.getSingleValue();
+    auto data = value.getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+
+    // A JS-style string can be viewed simply as the underlying data. All we
+    // need to do is fix up the type.
+    return Literal(data, curr->type.getHeapType());
+  }
   Flow visitStringWTF8Advance(StringWTF8Advance* curr) {
     WASM_UNREACHABLE("unimp");
   }
-  Flow visitStringWTF16Get(StringWTF16Get* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringWTF16Get(StringWTF16Get* curr) {
+    NOTE_ENTER("StringEq");
+    Flow ref = visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow pos = visit(curr->pos);
+    if (pos.breaking()) {
+      return pos;
+    }
+    auto refValue = ref.getSingleValue();
+    auto data = refValue.getGCData();
+    if (!data) {
+      trap("null ref");
+    }
+    auto& values = data->values;
+    Index i = pos.getSingleValue().geti32();
+    if (i >= values.size()) {
+      trap("string oob");
+    }
+    return Literal(values[i].geti32());
+  }
   Flow visitStringIterNext(StringIterNext* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringIterMove(StringIterMove* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitStringSliceWTF(StringSliceWTF* curr) { WASM_UNREACHABLE("unimp"); }
