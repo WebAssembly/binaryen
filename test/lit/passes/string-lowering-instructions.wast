@@ -402,7 +402,7 @@
     )
     (drop
       (struct.new $struct-of-string
-        (string.const "value") ;; Nothing to do here.
+        (string.const "value") ;; Nothing to do besides change to a global.
         (i32.const 10)
         (ref.null none)
       )
