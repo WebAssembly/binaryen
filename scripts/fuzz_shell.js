@@ -210,15 +210,12 @@ function refreshView() {
 }
 
 // Run the wasm.
-var filteredExports = [];
 for (var e in exports) {
-  filteredExports.push(e);
-}
-filteredExports = filteredExports.filter(function(e) {
-  // Filter special intrinsic functions.
-  return !e.startsWith('asyncify_');
-});
-filteredExports.forEach(function(e) {
+  // Ignore special intrinsic functions.
+  if (e.startsWith('asyncify_')) {
+    continue;
+  }
+
   Asyncify.check();
   if (typeof exports[e] !== 'function') return;
   try {
@@ -230,7 +227,7 @@ filteredExports.forEach(function(e) {
   } catch (e) {
     console.log('exception!');// + [e, e.stack]);
   }
-});
+}
 
 // Finish up
 Asyncify.finish();
