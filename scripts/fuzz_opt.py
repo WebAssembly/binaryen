@@ -665,8 +665,11 @@ def run_d8_js(js, args=[], liftoff=True):
     return run_vm(cmd)
 
 
+FUZZ_SHELL_JS = in_binaryen('scripts', 'fuzz_shell.js')
+
+
 def run_d8_wasm(wasm, liftoff=True):
-    return run_d8_js(in_binaryen('scripts', 'fuzz_shell.js'), [wasm], liftoff=liftoff)
+    return run_d8_js(FUZZ_SHELL_JS, [wasm], liftoff=liftoff)
 
 
 def all_disallowed(features):
@@ -746,8 +749,7 @@ class CompareVMs(TestCaseHandler):
             name = 'd8'
 
             def run(self, wasm, extra_d8_flags=[]):
-                run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=' + wasm + '.js'] + FEATURE_OPTS)
-                return run_vm([shared.V8, wasm + '.js'] + shared.V8_OPTS + extra_d8_flags + ['--', wasm])
+                return run_vm([shared.V8, FUZZ_SHELL_JS] + shared.V8_OPTS + extra_d8_flags + ['--', wasm])
 
             def can_run(self, wasm):
                 # INITIAL_CONTENT is disallowed because some initial spec testcases
@@ -1036,7 +1038,8 @@ class Wasm2JS(TestCaseHandler):
                 compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
 
     def run(self, wasm):
-        wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
+        with open(FUZZ_SHELL_JS) as f:
+            wrapper = f.read()
         cmd = [in_bin('wasm2js'), wasm, '--emscripten']
         # avoid optimizations if we have nans, as we don't handle them with
         # full precision and optimizations can change things
