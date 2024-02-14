@@ -151,18 +151,23 @@ var Asyncify = {
   },
 };
 
-// Fuzz integration.
-function logValue(x, y) {
+// Print out a value in a way that works well for fuzzing.
+function printed(x, y) {
   if (typeof y !== 'undefined') {
     // A pair of i32s which are a legalized i64.
-    console.log('[LoggingExternalInterface logging ' + x + ' ' + y + ']');
+    return x + ' ' + y;
   } else if (typeof x !== 'number') {
     // Something that is not a number, like a reference. Just print the type.
-    console.log('[LoggingExternalInterface logging ' + typeof x + ']');
+    return typeof x;
   } else {
     // A number. Print the whole thing.
-    console.log('[LoggingExternalInterface logging ' + x + ']');
+    return '' + x;
   }
+}
+
+// Fuzzer integration.
+function logValue(x, y) {
+  console.log('[LoggingExternalInterface logging ' + printed(x, y) + ']');
 }
 
 // Set up the imports.
@@ -229,7 +234,7 @@ for (var e in exports) {
     console.log('[fuzz-exec] calling ' + e);
     var result = exports[e]();
     if (typeof result !== 'undefined') {
-      console.log('[fuzz-exec] note result: $' + e + ' => ' + result);
+      console.log('[fuzz-exec] note result: $' + e + ' => ' + printed(result));
     }
   } catch (e) {
     console.log('exception!');// + [e, e.stack]);
