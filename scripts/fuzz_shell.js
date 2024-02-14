@@ -210,16 +210,15 @@ function refreshView() {
 }
 
 // Run the wasm.
-var sortedExports = [];
+var filteredExports = [];
 for (var e in exports) {
-  sortedExports.push(e);
+  filteredExports.push(e);
 }
-sortedExports.sort();
-sortedExports = sortedExports.filter(function(e) {
+filteredExports = filteredExports.filter(function(e) {
   // Filter special intrinsic functions.
   return !e.startsWith('asyncify_');
 });
-sortedExports.forEach(function(e) {
+filteredExports.forEach(function(e) {
   Asyncify.check();
   if (typeof exports[e] !== 'function') return;
   try {
