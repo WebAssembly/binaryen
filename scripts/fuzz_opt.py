@@ -750,10 +750,7 @@ class CompareVMs(TestCaseHandler):
                 return run_vm([shared.V8, wasm + '.js'] + shared.V8_OPTS + extra_d8_flags + ['--', wasm])
 
             def can_run(self, wasm):
-                # INITIAL_CONTENT is disallowed because some initial spec testcases
-                # have names that require mangling, see
-                # https://github.com/WebAssembly/binaryen/pull/3216
-                return not INITIAL_CONTENTS
+                return True
 
             def can_compare_to_self(self):
                 # With nans, VM differences can confuse us, so only very simple VMs
@@ -924,6 +921,11 @@ class CompareVMs(TestCaseHandler):
                 compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
+        # XXX for simd and multivalue to be allowed, for v8, we can add a pass
+        # that removes them from the ABI. Like legalize but it can be
+        # simpler: remove such exports and replace such imports, e.g.
+        # the fuzzer can do that maybe, but we do want such coverage sometimes...
+        # like LEGALIZE_JS... an option?
         return all_disallowed(['simd', 'multivalue', 'multimemory'])
 
 
