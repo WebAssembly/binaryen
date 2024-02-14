@@ -119,8 +119,10 @@ struct ExecutionResults {
             if (resultType.isRef() && !resultType.isString()) {
               // Don't print reference values, as funcref(N) contains an index
               // for example, which is not guaranteed to remain identical after
-              // optimizations.
-              std::cout << resultType << '\n';
+              // optimizations. Do not print the type in detail (as even that
+              // may change due to closed-world optimizations); just print
+              // "object" like JS does.
+              std::cout << "object\n";
             } else {
               // Non-references can be printed in full. So can strings, since we
               // always know how to print them and there is just one string
