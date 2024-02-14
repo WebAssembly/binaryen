@@ -35,6 +35,7 @@
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/type-updating.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/json.h"
 #include "wasm-builder.h"
@@ -360,7 +361,13 @@ struct StringLowering : public StringGathering {
       void visitStringAs(StringAs* curr) {
         // There is no difference between strings and views with imported
         // strings: they are all just JS strings, so no conversion is needed.
-        replaceCurrent(curr->ref);
+        // However, we must keep the same nullability: the output of StringAs
+        // must be non-nullable.
+        auto* ref = curr->ref;
+        if (ref->type.isNullable()) {
+          ref = Builder(*getModule()).makeRefAs(RefAsNonNull, ref);
+        }
+        replaceCurrent(ref);
       }
 
       void visitStringEncode(StringEncode* curr) {
@@ -468,6 +475,9 @@ struct StringLowering : public StringGathering {
     Replacer replacer(*this);
     replacer.run(getPassRunner(), module);
     replacer.walkModuleCode(module);
+
+    // ReFinalize to apply changes to parents.
+    ReFinalize().run(getPassRunner(), module);
   }
 };
 
