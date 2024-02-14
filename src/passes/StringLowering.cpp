@@ -423,24 +423,44 @@ struct StringLowering : public StringGathering {
         }
       }
 
-      // Additional hacks.
+      // Additional hacks: We fix up a none that should be noext. Before the
+      // lowering we can use none for stringref, but after we must use noext as
+      // the two do not share a bottom type.
+      //
+      // The code here and in the visitors below is course wildly insufficient
+      // (we need selects and blocks and all other joins, and not just nulls,
+      // etc.) but in practice this is enough for now. TODO extend as needed
+      void fixNull(Expression* curr) {
+        if (auto* null = curr->dynCast<RefNull>()) {
+          null->finalize(HeapType::noext);
+        }
+      }
+
+      bool isExt(Type type) {
+        return type.isRef() && type.getHeapType() == HeapType::ext;
+      }
 
       void visitIf(If* curr) {
-        // Before the lowering we could have one arm be a ref.null none and the
-        // other a stringref; after the lowering that is invalid, because the
-        // string is now extern, which has no shared ancestor with none. Fix
-        // that up manually in the simple case of an if arm with a null by
-        // correcting the null's type. This is of course wildly insufficient (we
-        // need selects and blocks and all other joins) but in practice this is
-        // enough for now. TODO extend as needed
-        if (curr->type.isRef() && curr->type.getHeapType() == HeapType::ext) {
-          auto fixArm = [](Expression* arm) {
-            if (auto* null = arm->dynCast<RefNull>()) {
-              null->finalize(HeapType::noext);
-            }
-          };
-          fixArm(curr->ifTrue);
-          fixArm(curr->ifFalse);
+        // If the if outputs an ext, fix up the arms to contain proper nulls for
+        // that type.
+        if (isExt(curr->type)) {
+          fixNull(curr->ifTrue);
+          fixNull(curr->ifFalse);
+        }
+      }
+
+      void visitStructNew(StructNew* curr) {
+        if (curr->type == Type::unreachable || curr->operands.empty()) {
+          return;
+        }
+
+        // If we write a none into an ext field, fix that.
+        auto& fields = curr->type.getHeapType().getStruct().fields;
+        assert(curr->operands.size() == fields.size());
+        for (Index i = 0; i < fields.size(); i++) {
+          if (isExt(fields[i].type)) {
+            fixNull(curr->operands[i]);
+          }
         }
       }
     };
