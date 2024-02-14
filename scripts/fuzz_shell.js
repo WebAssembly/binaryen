@@ -154,8 +154,13 @@ var Asyncify = {
 // Fuzz integration.
 function logValue(x, y) {
   if (typeof y !== 'undefined') {
+    // A pair of i32s which are a legalized i64.
     console.log('[LoggingExternalInterface logging ' + x + ' ' + y + ']');
+  } else if (typeof x !== 'number') {
+    // Something that is not a number, like a reference. Just print the type.
+    console.log('[LoggingExternalInterface logging ' + typeof x + ']');
   } else {
+    // A number. Print the whole thing.
     console.log('[LoggingExternalInterface logging ' + x + ']');
   }
 }
