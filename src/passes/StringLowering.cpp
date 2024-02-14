@@ -468,6 +468,9 @@ struct StringLowering : public StringGathering {
     Replacer replacer(*this);
     replacer.run(getPassRunner(), module);
     replacer.walkModuleCode(module);
+
+    // ReFinalize to apply changes to parents.
+    ReFinalize().run(getPassRunner(), module);
   }
 };
 
