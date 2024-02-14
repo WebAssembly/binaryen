@@ -120,9 +120,13 @@ struct ExecutionResults {
               // Don't print reference values, as funcref(N) contains an index
               // for example, which is not guaranteed to remain identical after
               // optimizations. Do not print the type in detail (as even that
-              // may change due to closed-world optimizations); just print
-              // "object" like JS does.
-              std::cout << "object\n";
+              // may change due to closed-world optimizations); just print a
+              // simple type like JS does.
+              if (resultType.isFunction()) {
+                std::cout << "function\n";
+              } else {
+                std::cout << "object\n";
+              }
             } else {
               // Non-references can be printed in full. So can strings, since we
               // always know how to print them and there is just one string
