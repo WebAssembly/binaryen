@@ -49,7 +49,7 @@
 
   ;; CHECK:       (type $17 (func (param (ref $0))))
 
-  ;; CHECK:       (type $18 (func (param externref externref externref externref)))
+  ;; CHECK:       (type $18 (func (param externref (ref extern) externref externref externref (ref extern))))
 
   ;; CHECK:      (type $19 (func (param (ref null $0) i32 i32) (result (ref extern))))
 
@@ -90,22 +90,38 @@
 
   ;; CHECK:      (export "export.2" (func $exported-string-receiver))
 
-  ;; CHECK:      (func $string.as (type $18) (param $a externref) (param $b externref) (param $c externref) (param $d externref)
+  ;; CHECK:      (func $string.as (type $18) (param $a externref) (param $a_nn (ref extern)) (param $b externref) (param $c externref) (param $d externref) (param $nn_view (ref extern))
   ;; CHECK-NEXT:  (local.set $b
-  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $c
-  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $d
-  ;; CHECK-NEXT:   (local.get $a)
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $nn_view
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $nn_view
+  ;; CHECK-NEXT:   (local.get $a_nn)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $string.as
     (param $a stringref)
+    (param $a_nn (ref string))
     (param $b stringview_wtf8)
     (param $c stringview_wtf16)
     (param $d stringview_iter)
+    (param $nn_view (ref stringview_wtf16))
     ;; These operations all vanish in the lowering, as they all become extref
     ;; (JS strings).
     (local.set $b
@@ -121,6 +137,21 @@
     (local.set $d
       (string.as_iter
         (local.get $a)
+      )
+    )
+    ;; The input is nullable, and string.as casts to non-null, so we will need
+    ;; to keep a cast here in order to validate. (We also add a cast in all the
+    ;; above as the inputs are nullable, but this is the only one that will
+    ;; fail to validate. Other opts can remove the above ones.)
+    (local.set $nn_view
+      (string.as_wtf16
+        (local.get $a)
+      )
+    )
+    ;; The input is already non-nullable here, so no cast is needed.
+    (local.set $nn_view
+      (string.as_wtf16
+        (local.get $a_nn)
       )
     )
   )
