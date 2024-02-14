@@ -361,7 +361,13 @@ struct StringLowering : public StringGathering {
       void visitStringAs(StringAs* curr) {
         // There is no difference between strings and views with imported
         // strings: they are all just JS strings, so no conversion is needed.
-        replaceCurrent(curr->ref);
+        // However, we must keep the same nullability: the output of StringAs
+        // must be non-nullable.
+        auto* ref = curr->ref;
+        if (ref->type.isNullable()) {
+          ref = Builder(*getModule()).makeRefAs(RefAsNonNull, ref);
+        }
+        replaceCurrent(ref);
       }
 
       void visitStringEncode(StringEncode* curr) {
