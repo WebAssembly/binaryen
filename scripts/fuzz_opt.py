@@ -1074,76 +1074,6 @@ class Wasm2JS(TestCaseHandler):
         return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory'])
 
 
-class Asyncify(TestCaseHandler):
-    frequency = 0.1
-
-    def handle_pair(self, input, before_wasm, after_wasm, opts):
-        # we must legalize in order to run in JS
-        async_before_wasm = abspath('async.' + os.path.basename(before_wasm))
-        async_after_wasm = abspath('async.' + os.path.basename(after_wasm))
-        run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', async_before_wasm] + FEATURE_OPTS)
-        run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', async_after_wasm] + FEATURE_OPTS)
-        before_wasm = async_before_wasm
-        after_wasm = async_after_wasm
-        before = fix_output(run_d8_wasm(before_wasm))
-        after = fix_output(run_d8_wasm(after_wasm))
-
-        if STACK_LIMIT in run_bynterp(before_wasm, ['--fuzz-exec-before']):
-            # Running out of stack in infinite recursion can be a problem here
-            # as we compare a wasm before and after asyncify, and asyncify can
-            # add a lot of locals, which could mean the host limit can be
-            # reached earlier, and alter the output (less logging before we
-            # reach the host limit and trap).
-            # TODO This is not quite enough, as if we are just under the limit
-            #      then we may only hit the limit after running asyncify. But
-            #      then we'd also need to detect differences in the limit in
-            #      the JS VM's output (which can differ from Binaryen's). For
-            #      now, this rules out infinite recursion at least.
-            print('ignoring due to stack limit being hit')
-            return
-
-        try:
-            compare(before, after, 'Asyncify (before/after)')
-        except Exception:
-            # if we failed to just compare the builds before asyncify even runs,
-            # then it may use NaNs or be sensitive to legalization; ignore it
-            print('ignoring due to pre-asyncify difference')
-            return
-
-        def do_asyncify(wasm):
-            cmd = [in_bin('wasm-opt'), wasm, '--asyncify', '-o', abspath('async.t.wasm')]
-            # if we allow NaNs, running binaryen optimizations and then
-            # executing in d8 may lead to different results due to NaN
-            # nondeterminism between VMs.
-            if not NANS:
-                if random.random() < 0.5:
-                    cmd += ['--optimize-level=%d' % random.randint(1, 3)]
-                if random.random() < 0.5:
-                    cmd += ['--shrink-level=%d' % random.randint(1, 2)]
-            cmd += FEATURE_OPTS
-            run(cmd)
-            out = run_d8_wasm(abspath('async.t.wasm'))
-            # ignore the output from the new asyncify API calls - the ones with asserts will trap, too
-            for ignore in ['[fuzz-exec] calling asyncify_start_unwind\nexception!\n',
-                           '[fuzz-exec] calling asyncify_start_unwind\n',
-                           '[fuzz-exec] calling asyncify_start_rewind\nexception!\n',
-                           '[fuzz-exec] calling asyncify_start_rewind\n',
-                           '[fuzz-exec] calling asyncify_stop_rewind\n',
-                           '[fuzz-exec] calling asyncify_stop_unwind\n']:
-                out = out.replace(ignore, '')
-            out = '\n'.join([l for l in out.splitlines() if 'asyncify: ' not in l])
-            return fix_output(out)
-
-        before_asyncify = do_asyncify(before_wasm)
-        after_asyncify = do_asyncify(after_wasm)
-
-        compare(before, before_asyncify, 'Asyncify (before/before_asyncify)')
-        compare(before, after_asyncify, 'Asyncify (before/after_asyncify)')
-
-    def can_run_on_feature_opts(self, feature_opts):
-        return all_disallowed(['exception-handling', 'simd', 'tail-call', 'reference-types', 'multivalue', 'gc', 'multimemory'])
-
-
 # given a wasm and a list of exports we want to keep, remove all other exports.
 def filter_exports(wasm, output, keep):
     # based on
@@ -1376,7 +1306,6 @@ testcase_handlers = [
     CompareVMs(),
     CheckDeterminism(),
     Wasm2JS(),
-    #Asyncify(),
     TrapsNeverHappen(),
     CtorEval(),
     Merge(),
