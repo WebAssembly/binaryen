@@ -167,6 +167,7 @@ var imports = {
     'log-i64': logValue,
     'log-f32': logValue,
     'log-f64': logValue,
+    'log-v128': logValue,
   },
   'env': {
     'setTempRet0': function(x) { tempRet0 = x },
