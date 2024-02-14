@@ -430,7 +430,7 @@ struct StringLowering : public StringGathering {
       // The code here and in the visitors below is course wildly insufficient
       // (we need selects and blocks and all other joins, and not just nulls,
       // etc.) but in practice this is enough for now. TODO extend as needed
-      void fixNull(Expression* curr) {
+      void ensureNullIsExt(Expression* curr) {
         if (auto* null = curr->dynCast<RefNull>()) {
           null->finalize(HeapType::noext);
         }
@@ -444,8 +444,8 @@ struct StringLowering : public StringGathering {
         // If the if outputs an ext, fix up the arms to contain proper nulls for
         // that type.
         if (isExt(curr->type)) {
-          fixNull(curr->ifTrue);
-          fixNull(curr->ifFalse);
+          ensureNullIsExt(curr->ifTrue);
+          ensureNullIsExt(curr->ifFalse);
         }
       }
 
@@ -459,7 +459,7 @@ struct StringLowering : public StringGathering {
         assert(curr->operands.size() == fields.size());
         for (Index i = 0; i < fields.size(); i++) {
           if (isExt(fields[i].type)) {
-            fixNull(curr->operands[i]);
+            ensureNullIsExt(curr->operands[i]);
           }
         }
       }
