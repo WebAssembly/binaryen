@@ -35,6 +35,7 @@
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/type-updating.h"
+#include "ir/utils.h"
 #include "pass.h"
 #include "support/json.h"
 #include "wasm-builder.h"
