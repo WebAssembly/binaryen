@@ -251,9 +251,16 @@ for (var e in exports) {
   if (typeof exports[e] !== 'function') {
     continue;
   }
+  // Send the function a null for each parameter. Null can be converted without
+  // error to both a number and a reference.
+  var func = exports[e];
+  var args = [];
+  for (var i = 0; i < func.length; i++) {
+    args.push(null);
+  }
   try {
     console.log('[fuzz-exec] calling ' + e);
-    var result = exports[e]();
+    var result = func(args);
     if (typeof result !== 'undefined') {
       console.log('[fuzz-exec] note result: ' + e + ' => ' + printed(result));
     }
