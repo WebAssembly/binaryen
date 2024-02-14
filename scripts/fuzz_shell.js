@@ -260,7 +260,7 @@ for (var e in exports) {
   }
   try {
     console.log('[fuzz-exec] calling ' + e);
-    var result = func(args);
+    var result = func.apply(null, args);
     if (typeof result !== 'undefined') {
       console.log('[fuzz-exec] note result: ' + e + ' => ' + printed(result));
     }
