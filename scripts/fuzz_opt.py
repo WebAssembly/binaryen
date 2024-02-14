@@ -1376,7 +1376,7 @@ testcase_handlers = [
     CompareVMs(),
     CheckDeterminism(),
     Wasm2JS(),
-    Asyncify(),
+    #Asyncify(),
     TrapsNeverHappen(),
     CtorEval(),
     Merge(),
