@@ -159,8 +159,6 @@ struct DeNaN : public WalkerPass<
         // exponent vs 11), and it is checked in more places (4 32-bit values vs
         // 2 64-bit ones), so we can just check that. That is, this reduces to 4
         // checks of f32s, but is otherwise the same as a check of a single f32.
-        // The Binary above already does the 4 checks, so all we have left is to
-        // process those four results.
         //
         // However there is additional complexity, which is that if we do
         // EqVecF32x4 then we get all-1s for each case where we compare equal.
