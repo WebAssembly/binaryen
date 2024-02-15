@@ -376,6 +376,26 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
   }
 
   void prune(Module* module) {
+    std::vector<Name> toPrune;
+    for (auto& func : module->functions) {
+      // The params are allowed to be multivalue, but not the results. Otherwise
+      // look for SIMD.
+      auto sig = func->type.getSignature();
+      if (isIllegal(sig.results) || std::any_of(sig.params.begin(), sig.params.end(), [&](const Type& t) {
+        return isIllegal(t);
+      })) {
+        toPrune.push_back(func->name);
+      }
+    }
+    for (auto name : toPrune) {
+      module->removeFunction(name);
+    }
+    // TODO: globals etc.
+  }
+
+  bool isIllegal(Type type) {
+    auto features = type.getFeatures();
+    return features.hasSIMD() || features.hasMultivalue();
   }
 };
 
