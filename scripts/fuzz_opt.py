@@ -557,10 +557,6 @@ def fix_output(out):
     # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
     out = out.replace(TRAP_PREFIX, 'exception: ' + TRAP_PREFIX)
 
-    # funcref(0) has the index of the function in it, and optimizations can
-    # change that index, so ignore it
-    out = re.sub(r'funcref\([\d\w$+-_:]+\)', 'funcref()', out)
-
     lines = out.splitlines()
     for i in range(len(lines)):
         line = lines[i]
