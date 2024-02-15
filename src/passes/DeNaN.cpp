@@ -148,22 +148,20 @@ struct DeNaN : public WalkerPass<
       //     (f*.const 0)
       //   )
       Expression* condition = builder.makeBinary(
-          op, builder.makeLocalGet(0, type), builder.makeLocalGet(0, type));
+        op, builder.makeLocalGet(0, type), builder.makeLocalGet(0, type));
       if (type == Type::v128) {
-        // v128 is trickier as the 128 bits may contain f32s or f64s, and we need to
-        // check for nans both ways in principle. However, the f32 NaN pattern is a
-        // superset of f64, since it checks less bits (8 bit exponent vs 11), and it
-        // is checked in more places (4 32-bit values vs 2 64-bit ones), so we can
-        // just check that. That is, this reduces to 4 checks of f32s, but is
-        // otherwise the same as a check of a single f32. The Binary above
-        // already does the 4 checks, so all we have left is to process those
-        // four results.
+        // v128 is trickier as the 128 bits may contain f32s or f64s, and we
+        // need to check for nans both ways in principle. However, the f32 NaN
+        // pattern is a superset of f64, since it checks less bits (8 bit
+        // exponent vs 11), and it is checked in more places (4 32-bit values vs
+        // 2 64-bit ones), so we can just check that. That is, this reduces to 4
+        // checks of f32s, but is otherwise the same as a check of a single f32.
+        // The Binary above already does the 4 checks, so all we have left is to
+        // process those four results.
         condition = builder.makeUnary(AllTrueVecI32x4, condition);
       }
       func->body = builder.makeIf(
-        condition,
-        builder.makeLocalGet(0, type),
-        builder.makeConst(literal));
+        condition, builder.makeLocalGet(0, type), builder.makeConst(literal));
       module->addFunction(std::move(func));
     };
     add(deNan32, Type::f32, Literal(float(0)), EqFloat32);
