@@ -68,8 +68,12 @@ struct DeNaN : public WalkerPass<
         replacement = builder.makeCall(deNan64, {expr}, Type::f64);
       }
     } else if (expr->type == Type::v128) {
-      // Assume anything can be a nan TODO: optimize
-      replacement = builder.makeCall(deNan128, {expr}, Type::v128);
+      if (c && maybeNaN(c)) {
+        uint8_t zero[16] = {};
+        replacement = builder.makeConst(Literal(zero));
+      } else {
+        replacement = builder.makeCall(deNan128, {expr}, Type::v128);
+      }
     }
     if (replacement) {
       // We can't do this outside of a function, like in a global initializer,
@@ -163,26 +167,40 @@ struct DeNaN : public WalkerPass<
       Expression* test32 =
         builder.makeBinary(
           EqVecF32x4, builder.makeLocalGet(0, Type::v128), builder.makeLocalGet(0, Type::v128));
-      // Flip the bits, so that all 1's mean a nan.
-      test32 = builder.makeUnary(NotVec128, test32);
-      // Any 1 means we have a nan.
-      test32 = builder.makeUnary(AnyTrueVec128, test32);
+      // Check if all were 1.
+      test32 = builder.makeUnary(AllTrueVecI32x4, test32);
 
       // Ditto for f64.
       Expression* test64 =
         builder.makeBinary(
           EqVecF64x2, builder.makeLocalGet(0, Type::v128), builder.makeLocalGet(0, Type::v128));
-      test64 = builder.makeUnary(NotVec128, test64);
-      test64 = builder.makeUnary(AnyTrueVec128, test64);
+      test64 = builder.makeUnary(AllTrueVecI64x2, test64);
 
       // If either is a nan, we have a nan situation.
       auto* testBoth = builder.makeBinary(OrInt32, test32, test64);
 
+      uint8_t zero[16] = {};
       func->body = builder.makeIf(
         testBoth,
-        builder.makeConst(Literal({0, 0, 0, 0})));
+        builder.makeLocalGet(0, Type::v128),
+        builder.makeConst(Literal(zero)));
       module->addFunction(std::move(func));
     }
+  }
+
+  // Check if a contant v128 may contain f32 or f64 NaNs. This does a sequence
+  // of operations much like deNan128() that was constructed above.
+  bool maybeNaN(Const* c) {
+    assert(c->type == Type::v128);
+    auto value = c->value;
+
+    auto test32 = value.eqF32x4(value);
+    test32 = test32.allTrueI32x4();
+
+    auto test64 = value.eqF64x2(value);
+    test64 = test64.allTrueI64x2();
+
+    return test32.getInteger() | test64.getInteger();
   }
 };
 
