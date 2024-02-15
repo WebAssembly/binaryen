@@ -158,7 +158,11 @@ struct DeNaN : public WalkerPass<
     add(deNan64, Type::f64, Literal(double(0)), EqFloat64);
 
     // v128 is trickier as the 128 bits may contain f32s or f64s, and we need to
-    // check for nans both ways.
+    // check for nans both ways. Note that the f32 NaN pattern is a subset of
+    // f64, since f64 NaNs fill with 1 the 11 bits of their exponent, which
+    // encompasses the 8 bits of the f32 exponent, but the position of those
+    // bits matters (a v128 has 4 possible places for f32 exponents, and only 2
+    // for f64), so we must test both.
     if (module->features.hasSIMD()) {
       auto func = Builder::makeFunction(deNan128, Signature(Type::v128, Type::v128), {});
 
