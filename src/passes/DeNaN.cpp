@@ -147,48 +147,30 @@ struct DeNaN : public WalkerPass<
       //     (local.get $0)
       //     (f*.const 0)
       //   )
+      Expression* condition = builder.makeBinary(
+          op, builder.makeLocalGet(0, type), builder.makeLocalGet(0, type));
+      if (type == Type::v128) {
+        // v128 is trickier as the 128 bits may contain f32s or f64s, and we need to
+        // check for nans both ways in principle. However, the f32 NaN pattern is a
+        // superset of f64, since it checks less bits (8 bit exponent vs 11), and it
+        // is checked in more places (4 32-bit values vs 2 64-bit ones), so we can
+        // just check that. We do so as follows: first, compare f32s to themselves,
+        // giving all 1's where not NaN. That has already been done by the
+        // Binary above that uses EqVecF32x4, so all we have left is to check
+        // them all.
+        condition = builder.makeUnary(AllTrueVecI32x4, condition);
+      }
       func->body = builder.makeIf(
-        builder.makeBinary(
-          op, builder.makeLocalGet(0, type), builder.makeLocalGet(0, type)),
+        condition,
         builder.makeLocalGet(0, type),
         builder.makeConst(literal));
       module->addFunction(std::move(func));
     };
     add(deNan32, Type::f32, Literal(float(0)), EqFloat32);
     add(deNan64, Type::f64, Literal(double(0)), EqFloat64);
-
-    // v128 is trickier as the 128 bits may contain f32s or f64s, and we need to
-    // check for nans both ways. Note that the f32 NaN pattern is a subset of
-    // f64, since f64 NaNs fill with 1 the 11 bits of their exponent, which
-    // encompasses the 8 bits of the f32 exponent, but the position of those
-    // bits matters (a v128 has 4 possible places for f32 exponents, and only 2
-    // for f64), so we must test both.
     if (module->features.hasSIMD()) {
-      auto func = Builder::makeFunction(deNan128, Signature(Type::v128, Type::v128), {});
-
-      // Compare f32s to themselves, giving all 1's where equal and all 0's for
-      // a nan.
-      Expression* test32 =
-        builder.makeBinary(
-          EqVecF32x4, builder.makeLocalGet(0, Type::v128), builder.makeLocalGet(0, Type::v128));
-      // Check if all were 1.
-      test32 = builder.makeUnary(AllTrueVecI32x4, test32);
-
-      // Ditto for f64.
-      Expression* test64 =
-        builder.makeBinary(
-          EqVecF64x2, builder.makeLocalGet(0, Type::v128), builder.makeLocalGet(0, Type::v128));
-      test64 = builder.makeUnary(AllTrueVecI64x2, test64);
-
-      // If either is a nan, we have a nan situation.
-      auto* testBoth = builder.makeBinary(OrInt32, test32, test64);
-
-      uint8_t zero[16] = {};
-      func->body = builder.makeIf(
-        testBoth,
-        builder.makeLocalGet(0, Type::v128),
-        builder.makeConst(Literal(zero)));
-      module->addFunction(std::move(func));
+      uint8_t zero128[16] = {};
+      add(deNan128, Type::v128, Literal(zero128), EqVecF32x4);
     }
   }
 
@@ -202,12 +184,7 @@ struct DeNaN : public WalkerPass<
     auto test32 = value.eqF32x4(value);
     test32 = test32.allTrueI32x4();
 
-    // Compute if all f64s are equal to themselves.
-    auto test64 = value.eqF64x2(value);
-    test64 = test64.allTrueI64x2();
-
-    // If any was not equal, this might be a NaN.
-    return !(test32.getInteger() && test64.getInteger());
+    return !test32.getInteger();
   }
 };
 

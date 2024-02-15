@@ -83,18 +83,10 @@
 
 ;; CHECK:      (func $deNan128 (type $0) (param $0 v128) (result v128)
 ;; CHECK-NEXT:  (if (result v128)
-;; CHECK-NEXT:   (i32.or
-;; CHECK-NEXT:    (i32x4.all_true
-;; CHECK-NEXT:     (f32x4.eq
-;; CHECK-NEXT:      (local.get $0)
-;; CHECK-NEXT:      (local.get $0)
-;; CHECK-NEXT:     )
-;; CHECK-NEXT:    )
-;; CHECK-NEXT:    (i64x2.all_true
-;; CHECK-NEXT:     (f64x2.eq
-;; CHECK-NEXT:      (local.get $0)
-;; CHECK-NEXT:      (local.get $0)
-;; CHECK-NEXT:     )
+;; CHECK-NEXT:   (i32x4.all_true
+;; CHECK-NEXT:    (f32x4.eq
+;; CHECK-NEXT:     (local.get $0)
+;; CHECK-NEXT:     (local.get $0)
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:   (then
