@@ -154,10 +154,10 @@ struct DeNaN : public WalkerPass<
         // check for nans both ways in principle. However, the f32 NaN pattern is a
         // superset of f64, since it checks less bits (8 bit exponent vs 11), and it
         // is checked in more places (4 32-bit values vs 2 64-bit ones), so we can
-        // just check that. We do so as follows: first, compare f32s to themselves,
-        // giving all 1's where not NaN. That has already been done by the
-        // Binary above that uses EqVecF32x4, so all we have left is to check
-        // them all.
+        // just check that. That is, this reduces to 4 checks of f32s, but is
+        // otherwise the same as a check of a single f32. The Binary above
+        // already does the 4 checks, so all we have left is to process those
+        // four results.
         condition = builder.makeUnary(AllTrueVecI32x4, condition);
       }
       func->body = builder.makeIf(
