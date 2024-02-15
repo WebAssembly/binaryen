@@ -126,11 +126,13 @@
 
   ;; CHECK:      (type $2 (func (result v128)))
 
-  ;; CHECK:      (type $3 (func (param i32)))
+  ;; CHECK:      (type $3 (func (result i32 i32)))
 
-  ;; CHECK:      (type $4 (func (param i32 i32) (result i32)))
+  ;; CHECK:      (type $4 (func (param i32)))
 
-  ;; CHECK:      (import "env" "setTempRet0" (func $setTempRet0 (type $3) (param i32)))
+  ;; CHECK:      (type $5 (func (param i32 i32) (result i32)))
+
+  ;; CHECK:      (import "env" "setTempRet0" (func $setTempRet0 (type $4) (param i32)))
 
   ;; CHECK:      (export "export-64" (func $legalstub$export-64))
 
@@ -138,7 +140,7 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $export-64 (export "export-64") (param $x i64) (result i64)
-    ;; This can be legalized.
+    ;; This can be legalized. Note we have two params, but that's no problem.
     (unreachable)
   )
 
@@ -157,12 +159,20 @@
     ;; This will be pruned.
     (unreachable)
   )
+
+  ;; CHECK:      (func $export-mv (type $3) (result i32 i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $export-mv (export "export-mv") (result i32 i32)
+    ;; This will be pruned.
+    (unreachable)
+  )
 )
 
 ;; TODO exports
 ;; TODO: both import and export
 
-;; CHECK:      (func $legalstub$export-64 (type $4) (param $0 i32) (param $1 i32) (result i32)
+;; CHECK:      (func $legalstub$export-64 (type $5) (param $0 i32) (param $1 i32) (result i32)
 ;; CHECK-NEXT:  (local $2 i64)
 ;; CHECK-NEXT:  (local.set $2
 ;; CHECK-NEXT:   (call $export-64
