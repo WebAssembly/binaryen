@@ -39,11 +39,11 @@
     (drop
       (v128.const i32x4 0x00000001 0x00000002 0x00000003 0x00000004)
     )
-    ;; This is an f64 NaN and also an f32.
+    ;; This is an f64 NaN and also an f32. It will become 0's.
     (drop
       (v128.const i32x4 0xffffffff 0x00000002 0x00000003 0x00000004)
     )
-    ;; This is an f32 NaN and not an f64.
+    ;; This is an f32 NaN and not an f64. It will also become 0's.
     (drop
       (v128.const i32x4 0x00000001 0xffffffff 0x00000003 0x00000004)
     )
