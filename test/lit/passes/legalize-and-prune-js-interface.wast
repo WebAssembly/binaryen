@@ -12,23 +12,27 @@
 
   (import "env" "imported-v128-param" (func $imported-v128-param (param v128) (result i32)))
 
+  (import "env" "imported-v128-param-noresult" (func $imported-v128-param-noresult (param v128)))
+
   ;; CHECK:      (type $0 (func (result v128)))
 
   ;; CHECK:      (type $1 (func (result i32 f64)))
 
   ;; CHECK:      (type $2 (func (param v128) (result i32)))
 
-  ;; CHECK:      (type $3 (func))
+  ;; CHECK:      (type $3 (func (param v128)))
 
-  ;; CHECK:      (type $4 (func (result i32)))
+  ;; CHECK:      (type $4 (func))
 
-  ;; CHECK:      (type $5 (func (param i32 f64) (result i64)))
+  ;; CHECK:      (type $5 (func (result i32)))
 
-  ;; CHECK:      (type $6 (func (param i32 f64) (result i32)))
+  ;; CHECK:      (type $6 (func (param i32 f64) (result i64)))
 
-  ;; CHECK:      (import "env" "getTempRet0" (func $getTempRet0 (type $4) (result i32)))
+  ;; CHECK:      (type $7 (func (param i32 f64) (result i32)))
 
-  ;; CHECK:      (import "env" "imported-64" (func $legalimport$imported-64 (type $6) (param i32 f64) (result i32)))
+  ;; CHECK:      (import "env" "getTempRet0" (func $getTempRet0 (type $5) (result i32)))
+
+  ;; CHECK:      (import "env" "imported-64" (func $legalimport$imported-64 (type $7) (param i32 f64) (result i32)))
 
   ;; CHECK:      (func $imported-v128 (type $0) (result v128)
   ;; CHECK-NEXT:  (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
@@ -45,7 +49,11 @@
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
 
-  ;; CHECK:      (func $call-64 (type $3)
+  ;; CHECK:      (func $imported-v128-param-noresult (type $3) (param $0 v128)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $call-64 (type $4)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $legalfunc$imported-64
   ;; CHECK-NEXT:    (i32.const 0)
@@ -62,6 +70,9 @@
   ;; CHECK-NEXT:   (call $imported-v128-param
   ;; CHECK-NEXT:    (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $imported-v128-param-noresult
+  ;; CHECK-NEXT:   (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $call-64
@@ -84,13 +95,18 @@
     (drop (call $imported-v128-param
       (v128.const i32x4 0 0 0 0)
     ))
+
+    ;; Ditto, but no result this time.
+    (call $imported-v128-param-noresult
+      (v128.const i32x4 0 0 0 0)
+    )
   )
 )
 
 ;; TODO exports
 ;; TODO: both import and export
 
-;; CHECK:      (func $legalfunc$imported-64 (type $5) (param $0 i32) (param $1 f64) (result i64)
+;; CHECK:      (func $legalfunc$imported-64 (type $6) (param $0 i32) (param $1 f64) (result i64)
 ;; CHECK-NEXT:  (i64.or
 ;; CHECK-NEXT:   (i64.extend_i32_u
 ;; CHECK-NEXT:    (call $legalimport$imported-64

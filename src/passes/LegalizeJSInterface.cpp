@@ -414,7 +414,11 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
         func->module = func->base = Name();
 
         Builder builder(*module);
-        func->body = builder.makeConstantExpression(Literal::makeZeros(sig.results));
+        if (sig.results == Type::none) {
+          func->body = builder.makeNop();
+        } else {
+          func->body = builder.makeConstantExpression(Literal::makeZeros(sig.results));
+        }
       }
 
       // Prune an export by just removing it.
