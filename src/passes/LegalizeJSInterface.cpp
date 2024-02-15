@@ -376,20 +376,53 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
   }
 
   void prune(Module* module) {
-    std::vector<Name> toPrune;
+    // For each function name, the exported id it is exported with. For
+    // example,
+    //
+    //   (func $foo (export "bar")
+    //
+    // Would have exportedFunctions["foo"] = "bar";
+    std::unordered_map<Name, Name> exportedFunctions;
+    for (auto& exp : module->exports) {
+      if (exp->kind == ExternalKind::Function) {
+        exportedFunctions[exp->value] = exp->name;
+      }
+    }
+
     for (auto& func : module->functions) {
+      // If the function is neither exported nor imported, no problem.
+      auto imported = func->imported();
+      auto exported = exportedFunctions.count(func->name);
+      if (!imported && !exported) {
+        continue;
+      }
+
       // The params are allowed to be multivalue, but not the results. Otherwise
       // look for SIMD.
       auto sig = func->type.getSignature();
-      if (isIllegal(sig.results) || std::any_of(sig.params.begin(), sig.params.end(), [&](const Type& t) {
-        return isIllegal(t);
-      })) {
-        toPrune.push_back(func->name);
+      auto illegal = isIllegal(sig.results);
+      illegal = illegal ||
+          std::any_of(sig.params.begin(), sig.params.end(), [&](const Type& t) {
+            return isIllegal(t);
+          });
+      if (!illegal) {
+        continue;
+      }
+
+      // Prune an import by implementing it in a trivial manner.
+      if (imported) {
+        func->module = func->base = Name();
+
+        Builder builder(*module);
+        func->body = builder.makeConstantExpression(Literal::makeZeros(sig.results));
+      }
+
+      // Prune an export by just removing it.
+      if (exported) {
+        module->removeExport(exportedFunctions[func->name]);
       }
     }
-    for (auto name : toPrune) {
-      module->removeFunction(name);
-    }
+
     // TODO: globals etc.
   }
 
