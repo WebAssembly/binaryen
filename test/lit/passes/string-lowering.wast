@@ -2,8 +2,6 @@
 ;; operations are tested in string-gathering.wast (which is auto-updated, unlike
 ;; this which is manual).
 
-;; RUN: foreach %s %t wasm-opt --string-lowering -all -S -o - | filecheck %s
-
 (module
   (func $consts
     (drop
@@ -15,9 +13,16 @@
     (drop
       (string.const "foo")
     )
+    (drop
+      (string.const "needs\tescaping")
+    )
   )
 )
 
-;; The custom section should contain foo and bar, and foo only once.
-;; CHECK: custom section "string.consts", size 13, contents: "[\"bar\",\"foo\"]"
+;; RUN: foreach %s %t wasm-opt --string-lowering -all -S -o - | filecheck %s
+
+;; The custom section should contain foo and bar, and foo only once, and the
+;; string with \t should be escaped.
+
+;; CHECK: custom section "string.consts", size 31, contents: "[\"bar\",\"foo\",\"needs\\tescaping\"]"
 
