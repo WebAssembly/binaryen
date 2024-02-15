@@ -194,13 +194,16 @@ struct DeNaN : public WalkerPass<
     assert(c->type == Type::v128);
     auto value = c->value;
 
+    // Compute if all f32s are equal to themselves.
     auto test32 = value.eqF32x4(value);
     test32 = test32.allTrueI32x4();
 
+    // Compute if all f64s are equal to themselves.
     auto test64 = value.eqF64x2(value);
     test64 = test64.allTrueI64x2();
 
-    return test32.getInteger() | test64.getInteger();
+    // If any was not equal, this might be a NaN.
+    return !(test32.getInteger() && test64.getInteger());
   }
 };
 
