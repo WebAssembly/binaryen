@@ -3334,12 +3334,6 @@ void FunctionValidator::visitFunction(Function* curr) {
   }
 
   if (curr->body) {
-    assert(breakTypes.empty());
-    assert(delegateTargetNames.empty());
-    assert(rethrowTargetNames.empty());
-    returnTypes.clear();
-    labelNames.clear();
-
     if (curr->getResults().isTuple()) {
       shouldBeTrue(getModule()->features.hasMultivalue(),
                    curr->body,
@@ -3374,6 +3368,15 @@ void FunctionValidator::visitFunction(Function* curr) {
         }
       }
     }
+
+    // Assert that we finished with a clean state after processing the body's
+    // expressions, and reset the state for next time. Note that we use some of
+    // this state in the above validations, so this must appear last.
+    assert(breakTypes.empty());
+    assert(delegateTargetNames.empty());
+    assert(rethrowTargetNames.empty());
+    returnTypes.clear();
+    labelNames.clear();
   }
 }
 
