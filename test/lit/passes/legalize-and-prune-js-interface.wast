@@ -169,9 +169,6 @@
   )
 )
 
-;; TODO exports
-;; TODO: both import and export
-
 ;; CHECK:      (func $legalstub$export-64 (type $5) (param $0 i32) (param $1 i32) (result i32)
 ;; CHECK-NEXT:  (local $2 i64)
 ;; CHECK-NEXT:  (local.set $2
@@ -200,4 +197,16 @@
 ;; CHECK-NEXT:  (i32.wrap_i64
 ;; CHECK-NEXT:   (local.get $2)
 ;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(module
+  (import "env" "imported-v128" (func $imported-v128 (result v128)))
+
+  ;; The import is also exported. We will both implement it with a trivial body
+  ;; and also prune the export, so it remains neither an import nor an export.
+  (export "imported-v128" (func $imported-v128))
+)
+;; CHECK:      (type $0 (func (result v128)))
+
+;; CHECK:      (func $imported-v128 (type $0) (result v128)
+;; CHECK-NEXT:  (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
 ;; CHECK-NEXT: )
