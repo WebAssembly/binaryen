@@ -147,9 +147,12 @@ struct DeNaN : public WalkerPass<
       //     (local.get $0)
       //     (f*.const 0)
       //   )
-      Expression* condition = builder.makeBinary(
-        op, builder.makeLocalGet(0, type), builder.makeLocalGet(0, type));
-      if (type == Type::v128) {
+      Expression* condition;
+      if (type != Type::v128) {
+        // Generate a simple condition.
+        condition = builder.makeBinary(
+          op, builder.makeLocalGet(0, type), builder.makeLocalGet(0, type));
+      } else {
         // v128 is trickier as the 128 bits may contain f32s or f64s, and we
         // need to check for nans both ways in principle. However, the f32 NaN
         // pattern is a superset of f64, since it checks less bits (8 bit
@@ -158,22 +161,41 @@ struct DeNaN : public WalkerPass<
         // checks of f32s, but is otherwise the same as a check of a single f32.
         // The Binary above already does the 4 checks, so all we have left is to
         // process those four results.
-        condition = builder.makeUnary(AllTrueVecI32x4, condition);
+        //
+        // However there is additional complexity, which is that if we do
+        // EqVecF32x4 then we get all-1s for each case where we compare equal.
+        // That itself is a NaN pattern, which means that running this pass
+        // twice would interfere with itself. To avoid that we'd need a way to
+        // detect our previous instrumentation and not instrument it, but that
+        // is tricky (we can't depend on function names etc. while fuzzing).
+        // Instead, extract the lanes and use f32 checks.
+        auto getLane = [&](Index index) {
+          return builder.makeSIMDExtract(ExtractLaneVecF32x4, builder.makeLocalGet(0, type), index);
+        };
+        auto getLaneCheck = [&](Index index) {
+          return builder.makeBinary(EqFloat32, getLane(index), getLane(index));
+        };
+        auto* firstTwo = builder.makeBinary(AndInt32, getLaneCheck(0), getLaneCheck(1));
+        auto* lastTwo = builder.makeBinary(AndInt32, getLaneCheck(2), getLaneCheck(3));
+        condition = builder.makeBinary(AndInt32, firstTwo, lastTwo);
       }
       func->body = builder.makeIf(
         condition, builder.makeLocalGet(0, type), builder.makeConst(literal));
       module->addFunction(std::move(func));
     };
+
     add(deNan32, Type::f32, Literal(float(0)), EqFloat32);
     add(deNan64, Type::f64, Literal(double(0)), EqFloat64);
+
     if (module->features.hasSIMD()) {
       uint8_t zero128[16] = {};
-      add(deNan128, Type::v128, Literal(zero128), EqVecF32x4);
+      // InvalidBinary is passed here as the condition in this case is more
+      // complex and computed above.
+      add(deNan128, Type::v128, Literal(zero128), InvalidBinary);
     }
   }
 
-  // Check if a contant v128 may contain f32 or f64 NaNs. This does a sequence
-  // of operations much like deNan128() that was constructed above.
+  // Check if a contant v128 may contain f32 or f64 NaNs.
   bool maybeNaN(Const* c) {
     assert(c->type == Type::v128);
     auto value = c->value;

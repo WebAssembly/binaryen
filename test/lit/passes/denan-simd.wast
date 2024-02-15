@@ -83,10 +83,42 @@
 
 ;; CHECK:      (func $deNan128 (type $0) (param $0 v128) (result v128)
 ;; CHECK-NEXT:  (if (result v128)
-;; CHECK-NEXT:   (i32x4.all_true
-;; CHECK-NEXT:    (f32x4.eq
-;; CHECK-NEXT:     (local.get $0)
-;; CHECK-NEXT:     (local.get $0)
+;; CHECK-NEXT:   (i32.and
+;; CHECK-NEXT:    (i32.and
+;; CHECK-NEXT:     (f32.eq
+;; CHECK-NEXT:      (f32x4.extract_lane 0
+;; CHECK-NEXT:       (local.get $0)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (f32x4.extract_lane 0
+;; CHECK-NEXT:       (local.get $0)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (f32.eq
+;; CHECK-NEXT:      (f32x4.extract_lane 1
+;; CHECK-NEXT:       (local.get $0)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (f32x4.extract_lane 1
+;; CHECK-NEXT:       (local.get $0)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (i32.and
+;; CHECK-NEXT:     (f32.eq
+;; CHECK-NEXT:      (f32x4.extract_lane 2
+;; CHECK-NEXT:       (local.get $0)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (f32x4.extract_lane 2
+;; CHECK-NEXT:       (local.get $0)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (f32.eq
+;; CHECK-NEXT:      (f32x4.extract_lane 3
+;; CHECK-NEXT:       (local.get $0)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (f32x4.extract_lane 3
+;; CHECK-NEXT:       (local.get $0)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:     )
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:   (then
