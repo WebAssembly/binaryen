@@ -155,7 +155,7 @@ struct DeNaN : public WalkerPass<
 
     // v128 is trickier as the 128 bits may contain f32s or f64s, and we need to
     // check for nans both ways.
-    {
+    if (module->features.hasSIMD()) {
       auto func = Builder::makeFunction(deNan128, Signature(Type::v128, Type::v128), {});
 
       // Compare f32s to themselves, giving all 1's where equal and all 0's for
