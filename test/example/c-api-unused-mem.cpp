@@ -33,6 +33,7 @@ int main() {
                       0,
                       0,
                       0,
+                      0,
                       "0");
   }
   the_relooper = RelooperCreate(the_module);
@@ -97,6 +98,7 @@ int main() {
                       segmentPassives,
                       segmentOffsets,
                       segmentSizes,
+                      0,
                       0,
                       0,
                       0,

@@ -2910,6 +2910,8 @@ BinaryenGetElementSegmentByIndex(BinaryenModuleRef module, BinaryenIndex index);
 // a start offset in segmentOffsets, a passive flag in segmentPassives
 // and a size in segmentSizes. segmentNames and exportName can be NULL
 // If segmentNames is null, BinaryenSetMemory creates names from indices
+// If keepSegment is true, BinaryenSetMemory will not operate on memory
+// segments.
 BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
                                     BinaryenIndex initial,
                                     BinaryenIndex maximum,
@@ -2922,6 +2924,7 @@ BINARYEN_API void BinaryenSetMemory(BinaryenModuleRef module,
                                     BinaryenIndex numSegments,
                                     bool shared,
                                     bool memory64,
+                                    bool keepSegment,
                                     const char* name);
 
 BINARYEN_API bool BinaryenHasMemory(BinaryenModuleRef module);

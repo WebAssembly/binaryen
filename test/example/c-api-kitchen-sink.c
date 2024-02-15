@@ -548,6 +548,7 @@ void test_core() {
                     2,
                     1,
                     0,
+                    0,
                     "0");
 
   BinaryenExpressionRef valueList[] = {
@@ -2108,6 +2109,7 @@ void test_for_each() {
                       2,
                       0,
                       0,
+                      0,
                       "0");
     BinaryenAddGlobal(module,
                       "a-global",
@@ -2124,6 +2126,11 @@ void test_for_each() {
       BinaryenCopyMemorySegmentData(module, segmentNames[i], out);
       assert(0 == strcmp(segmentDatas[i], out));
     }
+
+    BinaryenIndex numSegments = BinaryenGetNumMemorySegments(module);
+    BinaryenSetMemory(
+      module, 1, 256, NULL, NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 1, "0");
+    assert(numSegments == BinaryenGetNumMemorySegments(module));
   }
   {
     const char* funcNames[] = {BinaryenFunctionGetName(fns[0]),

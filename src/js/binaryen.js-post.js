@@ -2561,7 +2561,7 @@ function wrapModule(module, self = {}) {
   self['removeExport'] = function(externalName) {
     return preserveStack(() => Module['_BinaryenRemoveExport'](module, strToStack(externalName)));
   };
-  self['setMemory'] = function(initial, maximum, exportName, segments = [], shared = false, memory64 = false, internalName = null) {
+  self['setMemory'] = function(initial, maximum, exportName, segments = [], shared = false, memory64 = false, keepSegment = false, internalName = null) {
     // segments are assumed to be { passive: bool, offset: expression ref, data: array of 8-bit data }
     return preserveStack(() => {
       const segmentsLen = segments.length;
@@ -2589,6 +2589,7 @@ function wrapModule(module, self = {}) {
           segmentsLen,
           shared,
           memory64,
+          keepSegment,
           strToStack(internalName)
         );
       for (let i = 0; i < segmentsLen; i++) {

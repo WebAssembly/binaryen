@@ -370,7 +370,7 @@ int main() {
 
   // memory
   BinaryenSetMemory(
-    module, 1, 1, "mem", NULL, NULL, NULL, NULL, NULL, 0, 0, 0, "0");
+    module, 1, 1, "mem", NULL, NULL, NULL, NULL, NULL, 0, 0, 0, 0, "0");
 
   assert(BinaryenModuleValidate(module));
 

@@ -5337,6 +5337,7 @@ void BinaryenSetMemory(BinaryenModuleRef module,
                        BinaryenIndex numSegments,
                        bool shared,
                        bool memory64,
+                       bool keepSegment,
                        const char* name) {
   auto memory = std::make_unique<Memory>();
   memory->name = name ? name : "0";
@@ -5351,20 +5352,22 @@ void BinaryenSetMemory(BinaryenModuleRef module,
     memoryExport->kind = ExternalKind::Memory;
     ((Module*)module)->addExport(memoryExport.release());
   }
-  ((Module*)module)->removeDataSegments([&](DataSegment* curr) {
-    return true;
-  });
-  for (BinaryenIndex i = 0; i < numSegments; i++) {
-    auto explicitName = segmentNames && segmentNames[i];
-    auto name = explicitName ? Name(segmentNames[i]) : Name::fromInt(i);
-    auto curr = Builder::makeDataSegment(name,
-                                         memory->name,
-                                         segmentPassives[i],
-                                         (Expression*)segmentOffsets[i],
-                                         segmentDatas[i],
-                                         segmentSizes[i]);
-    curr->hasExplicitName = explicitName;
-    ((Module*)module)->addDataSegment(std::move(curr));
+  if (!keepSegment) {
+    ((Module*)module)->removeDataSegments([&](DataSegment* curr) {
+      return true;
+    });
+    for (BinaryenIndex i = 0; i < numSegments; i++) {
+      auto explicitName = segmentNames && segmentNames[i];
+      auto name = explicitName ? Name(segmentNames[i]) : Name::fromInt(i);
+      auto curr = Builder::makeDataSegment(name,
+                                           memory->name,
+                                           segmentPassives[i],
+                                           (Expression*)segmentOffsets[i],
+                                           segmentDatas[i],
+                                           segmentSizes[i]);
+      curr->hasExplicitName = explicitName;
+      ((Module*)module)->addDataSegment(std::move(curr));
+    }
   }
   ((Module*)module)->removeMemories([&](Memory* curr) { return true; });
   ((Module*)module)->addMemory(std::move(memory));
