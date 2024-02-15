@@ -401,10 +401,10 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
       // look for SIMD.
       auto sig = func->type.getSignature();
       auto illegal = isIllegal(sig.results);
-      illegal = illegal ||
-          std::any_of(sig.params.begin(), sig.params.end(), [&](const Type& t) {
-            return isIllegal(t);
-          });
+      illegal =
+        illegal || std::any_of(sig.params.begin(),
+                               sig.params.end(),
+                               [&](const Type& t) { return isIllegal(t); });
       if (!illegal) {
         continue;
       }
@@ -417,7 +417,8 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
         if (sig.results == Type::none) {
           func->body = builder.makeNop();
         } else {
-          func->body = builder.makeConstantExpression(Literal::makeZeros(sig.results));
+          func->body =
+            builder.makeConstantExpression(Literal::makeZeros(sig.results));
         }
       }
 
