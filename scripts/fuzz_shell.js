@@ -54,6 +54,11 @@ var imports = {
     'log-i64': logValue,
     'log-f32': logValue,
     'log-f64': logValue,
+    // JS cannot log v128 values (we trap on the boundary), but we must still
+    // provide an import so that we do not trap during linking. (Alternatively,
+    // we could avoid running JS on code with SIMD in it, but it is useful to
+    // fuzz such code as much as we can.)
+    'log-v128': logValue,
   },
   'env': {
     'setTempRet0': function(x) { tempRet0 = x },
