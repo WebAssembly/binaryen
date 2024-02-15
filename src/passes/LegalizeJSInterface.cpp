@@ -29,6 +29,11 @@
 // across modules, we still want to legalize dynCalls so JS can call into the
 // tables even to a signature that is not legal.
 //
+// Another variation also "prunes" imports and exports that we cannot yet
+// legalize, like exports and imports with SIMD or multivalue. Until we write
+// the logic to legalize them, removing those imports/exports still allows us to
+// fuzz all the legal imports/exports.
+//
 
 #include "asmjs/shared-constants.h"
 #include "ir/element-utils.h"
@@ -42,6 +47,8 @@
 #include <utility>
 
 namespace wasm {
+
+namespace {
 
 // These are aliases for getTempRet0/setTempRet0 which emscripten defines in
 // compiler-rt and exports under these names.
@@ -358,10 +365,30 @@ private:
   }
 };
 
+struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
+  // Legalize fully (true) and add pruning on top.
+  LegalizeAndPruneJSInterface() : LegalizeJSInterface(true) {}
+
+  void run(Module* module) override {
+    LegalizeJSInterface::run(module);
+
+    prune(module);
+  }
+
+  void prune(Module* module) {
+  }
+};
+
+} // anonymous namespace
+
 Pass* createLegalizeJSInterfacePass() { return new LegalizeJSInterface(true); }
 
 Pass* createLegalizeJSInterfaceMinimallyPass() {
   return new LegalizeJSInterface(false);
+}
+
+Pass* createLegalizeAndPruneJSInterfacePass() {
+  return new LegalizeAndPruneJSInterface();
 }
 
 } // namespace wasm

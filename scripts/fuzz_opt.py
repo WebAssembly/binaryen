@@ -188,7 +188,7 @@ def randomize_fuzz_settings():
         FUZZ_OPTS += ['--no-fuzz-oob']
     if random.random() < 0.5:
         LEGALIZE = True
-        FUZZ_OPTS += ['--legalize-js-interface']
+        FUZZ_OPTS += ['--legalize-and-prune-js-interface']
     else:
         LEGALIZE = False
 
@@ -924,7 +924,7 @@ class CompareVMs(TestCaseHandler):
                 compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all_disallowed(['simd', 'multivalue', 'multimemory'])
+        return True
 
 
 # Check for determinism - the same command must have the same output.
