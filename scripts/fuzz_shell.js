@@ -52,7 +52,8 @@ function printed(x, y) {
     // print a reference because it could look different after opts - imagine
     // that a function gets renamed internally (that is, the problem is that
     // JS printing will emit some info about the reference and not a stable
-    // external representation of it). In those cases just print the type.
+    // external representation of it). In those cases just print the type,
+    // which will be 'object' or 'function'.
     return typeof x;
   } else {
     // A number. Print the whole thing.
