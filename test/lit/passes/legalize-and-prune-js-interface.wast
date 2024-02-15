@@ -103,9 +103,6 @@
   )
 )
 
-;; TODO exports
-;; TODO: both import and export
-
 ;; CHECK:      (func $legalfunc$imported-64 (type $6) (param $0 i32) (param $1 f64) (result i64)
 ;; CHECK-NEXT:  (i64.or
 ;; CHECK-NEXT:   (i64.extend_i32_u
@@ -120,5 +117,77 @@
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:    (i64.const 32)
 ;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT: )
+(module
+  ;; CHECK:      (type $0 (func (param i64) (result i64)))
+
+  ;; CHECK:      (type $1 (func (param v128)))
+
+  ;; CHECK:      (type $2 (func (result v128)))
+
+  ;; CHECK:      (type $3 (func (param i32)))
+
+  ;; CHECK:      (type $4 (func (param i32 i32) (result i32)))
+
+  ;; CHECK:      (import "env" "setTempRet0" (func $setTempRet0 (type $3) (param i32)))
+
+  ;; CHECK:      (export "export-64" (func $legalstub$export-64))
+
+  ;; CHECK:      (func $export-64 (type $0) (param $x i64) (result i64)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $export-64 (export "export-64") (param $x i64) (result i64)
+    ;; This can be legalized.
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $export-v128 (type $1) (param $x v128)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $export-v128 (export "export-v128") (param $x v128)
+    ;; This will be pruned.
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $export-v128-result (type $2) (result v128)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $export-v128-result (export "export-v128-result") (result v128)
+    ;; This will be pruned.
+    (unreachable)
+  )
+)
+
+;; TODO exports
+;; TODO: both import and export
+
+;; CHECK:      (func $legalstub$export-64 (type $4) (param $0 i32) (param $1 i32) (result i32)
+;; CHECK-NEXT:  (local $2 i64)
+;; CHECK-NEXT:  (local.set $2
+;; CHECK-NEXT:   (call $export-64
+;; CHECK-NEXT:    (i64.or
+;; CHECK-NEXT:     (i64.extend_i32_u
+;; CHECK-NEXT:      (local.get $0)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:     (i64.shl
+;; CHECK-NEXT:      (i64.extend_i32_u
+;; CHECK-NEXT:       (local.get $1)
+;; CHECK-NEXT:      )
+;; CHECK-NEXT:      (i64.const 32)
+;; CHECK-NEXT:     )
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (call $setTempRet0
+;; CHECK-NEXT:   (i32.wrap_i64
+;; CHECK-NEXT:    (i64.shr_u
+;; CHECK-NEXT:     (local.get $2)
+;; CHECK-NEXT:     (i64.const 32)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (i32.wrap_i64
+;; CHECK-NEXT:   (local.get $2)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
