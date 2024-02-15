@@ -170,13 +170,16 @@ struct DeNaN : public WalkerPass<
         // is tricky (we can't depend on function names etc. while fuzzing).
         // Instead, extract the lanes and use f32 checks.
         auto getLane = [&](Index index) {
-          return builder.makeSIMDExtract(ExtractLaneVecF32x4, builder.makeLocalGet(0, type), index);
+          return builder.makeSIMDExtract(
+            ExtractLaneVecF32x4, builder.makeLocalGet(0, type), index);
         };
         auto getLaneCheck = [&](Index index) {
           return builder.makeBinary(EqFloat32, getLane(index), getLane(index));
         };
-        auto* firstTwo = builder.makeBinary(AndInt32, getLaneCheck(0), getLaneCheck(1));
-        auto* lastTwo = builder.makeBinary(AndInt32, getLaneCheck(2), getLaneCheck(3));
+        auto* firstTwo =
+          builder.makeBinary(AndInt32, getLaneCheck(0), getLaneCheck(1));
+        auto* lastTwo =
+          builder.makeBinary(AndInt32, getLaneCheck(2), getLaneCheck(3));
         condition = builder.makeBinary(AndInt32, firstTwo, lastTwo);
       }
       func->body = builder.makeIf(
