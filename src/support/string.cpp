@@ -140,7 +140,6 @@ std::ostream& printEscaped(std::ostream& os, const std::string_view str) {
   return os << '"';
 }
 
-
 std::ostream& printEscapedJSON(std::ostream& os, const std::string_view str) {
   os << '"';
   for (size_t i = 0; i < str.size(); i++) {
