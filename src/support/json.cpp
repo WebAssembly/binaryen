@@ -21,7 +21,9 @@ namespace json {
 
 void Value::stringify(std::ostream& os, bool pretty) {
   if (isString()) {
-    wasm::String::printEscaped(os, getCString());
+    wasm::String::printEscaped(os,
+                               getCString(),
+                               wasm::String::EscapeMode::JSON);
   } else if (isArray()) {
     os << '[';
     auto first = true;

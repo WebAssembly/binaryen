@@ -106,7 +106,7 @@ std::string trim(const std::string& input) {
   return input.substr(0, size);
 }
 
-std::ostream& printEscaped(std::ostream& os, std::string_view str) {
+std::ostream& printEscaped(std::ostream& os, std::string_view str, EscapeMode mode) {
   os << '"';
   for (unsigned char c : str) {
     switch (c) {
@@ -132,7 +132,13 @@ std::ostream& printEscaped(std::ostream& os, std::string_view str) {
         if (c >= 32 && c < 127) {
           os << c;
         } else {
-          os << std::hex << '\\' << (c / 16) << (c % 16) << std::dec;
+          if (mode == EscapeMode::Normal) {
+            os << std::hex << '\\' << (c / 16) << (c % 16) << std::dec;
+          } else if (mode == EscapeMode::JSON) {
+            os << std::hex << "\\u00" << (c / 16) << (c % 16) << std::dec;
+          } else {
+            WASM_UNREACHABLE("bad mode");
+          }
         }
       }
     }

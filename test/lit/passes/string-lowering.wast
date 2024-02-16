@@ -14,7 +14,7 @@
       (string.const "foo")
     )
     (drop
-      (string.const "needs\tescaping")
+      (string.const "needs\tescaping\00.")
     )
   )
 )
@@ -24,7 +24,7 @@
 ;;
 ;; RUN: wasm-opt %s --string-lowering -all -S -o - | filecheck %s
 ;;
-;; CHECK: custom section "string.consts", size 31, contents: "[\"bar\",\"foo\",\"needs\\tescaping\"]"
+;; CHECK: custom section "string.consts", size 38, contents: "[\"bar\",\"foo\",\"needs\\tescaping\\u0000.\"]"
 
 ;; The custom section should parse OK using JSON.parse from node.
 ;; (Note we run --remove-unused-module-elements to remove externref-using
@@ -33,5 +33,5 @@
 ;; RUN: wasm-opt %s --string-lowering --remove-unused-module-elements -all -o %t.wasm
 ;; RUN: node %S/string-lowering.js %t.wasm | filecheck %s --check-prefix=CHECK-JS
 ;;
-;; CHECK-JS: JSON: ["bar","foo","needs\tescaping"]
+;; CHECK-JS: JSON: ["bar","foo","needs\tescaping\u0000."]
 
