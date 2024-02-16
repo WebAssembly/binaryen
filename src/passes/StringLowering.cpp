@@ -222,7 +222,7 @@ struct StringLowering : public StringGathering {
           } else {
             json << ',';
           }
-          String::printEscaped(json, c->string.str, String::EscapeMode::JSON);
+          String::printEscapedJSON(json, c->string.str);
         }
       }
     }

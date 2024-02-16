@@ -106,7 +106,12 @@ std::string trim(const std::string& input) {
   return input.substr(0, size);
 }
 
-std::ostream& printEscaped(std::ostream& os, std::string_view str, EscapeMode mode) {
+enum EscapeMode {
+  Normal,
+  JSON
+};
+
+std::ostream& printEscapedInternal(std::ostream& os, std::string_view str, EscapeMode mode) {
   os << '"';
   for (unsigned char c : str) {
     switch (c) {
@@ -144,6 +149,14 @@ std::ostream& printEscaped(std::ostream& os, std::string_view str, EscapeMode mo
     }
   }
   return os << '"';
+}
+
+std::ostream& printEscaped(std::ostream& os, std::string_view str) {
+  return printEscapedInternal(os, str, EscapeMode::Normal);
+}
+
+std::ostream& printEscapedJSON(std::ostream& os, std::string_view str) {
+  return printEscapedInternal(os, str, EscapeMode::JSON);
 }
 
 } // namespace wasm::String

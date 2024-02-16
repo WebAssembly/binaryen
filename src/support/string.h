@@ -75,14 +75,11 @@ inline bool isNumber(const std::string& str) {
   return !str.empty() && std::all_of(str.begin(), str.end(), ::isdigit);
 }
 
-enum EscapeMode {
-  Normal,
-  JSON
-};
-
 std::ostream& printEscaped(std::ostream& os,
-                           std::string_view str,
-                           EscapeMode mode = Normal);
+                           std::string_view str);
+
+std::ostream& printEscapedJSON(std::ostream& os,
+                               std::string_view str);
 
 } // namespace wasm::String
 
