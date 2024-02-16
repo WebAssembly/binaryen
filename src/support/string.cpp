@@ -106,12 +106,10 @@ std::string trim(const std::string& input) {
   return input.substr(0, size);
 }
 
-enum EscapeMode {
-  Normal,
-  JSON
-};
+enum EscapeMode { Normal, JSON };
 
-std::ostream& printEscapedInternal(std::ostream& os, std::string_view str, EscapeMode mode) {
+std::ostream&
+printEscapedInternal(std::ostream& os, std::string_view str, EscapeMode mode) {
   os << '"';
   for (unsigned char c : str) {
     switch (c) {
