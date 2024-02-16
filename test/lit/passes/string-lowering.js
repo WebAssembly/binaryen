@@ -3,6 +3,6 @@ var module = new WebAssembly.Module(require('fs').readFileSync(filename));
 var sections = WebAssembly.Module.customSections(module, 'string.consts');
 var array = new Uint8Array(sections[0]);
 var string = new TextDecoder('utf-8').decode(array);
-console.log("JSON:", string);
+console.log("string:", string);
 var json = JSON.parse(string);
-//console.log("JSON:", json);
+console.log("JSON:", json);
