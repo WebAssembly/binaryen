@@ -159,26 +159,36 @@ std::ostream& printEscapedJSON(std::ostream& os, const std::string_view str) {
         os << "\\\"";
         continue;
       case '\'':
-        os << "\\'";
+        os << "'";
         continue;
       case '\\':
         os << "\\\\";
         continue;
       default: {
+        auto uEscape = [&](uint32_t v) {
+          os << std::hex;
+          os << "\\u";
+          os << ((v >> 24) & 0xff);
+          os << ((v >> 16) & 0xff);
+          os << ((v >> 8) & 0xff);
+          os << (v & 0xff);
+          os << std::dec;
+        };
+
         // Based off of
         // https://github.com/emscripten-core/emscripten/blob/59e6b8f1262d75585d8416b728e8cbb3db176fe2/src/library_strings.js#L72-L91
         if (!(u0 & 0x80)) {
           if (u0 >= 32 && u0 < 127) {
             os << char(u0);
           } else {
-            os << std::hex << "\\u00" << (u0 / 16) << (u0 % 16) << std::dec;
+            uEscape(u0);
           }
           continue;
         }
         i++;
         int u1 = str[i] & 63;
         if ((u0 & 0xE0) == 0xC0) {
-          os << std::hex << "\\u" << (((u0 & 31) << 6) | u1) << std::dec;
+          uEscape((((u0 & 31) << 6) | u1));
           continue;
         }
         i++;
@@ -191,10 +201,11 @@ std::ostream& printEscapedJSON(std::ostream& os, const std::string_view str) {
         }
 
         if (u0 < 0x10000) {
-          os << std::hex << "\\u" << u0 << std::dec;
+          uEscape(u0);
         } else {
           auto ch = u0 - 0x10000;
-          os << std::hex << "\\u" << (0xD800 | (ch >> 10)) << "\\u" << (0xDC00 | (ch & 0x3FF)) << std::dec;
+          uEscape(0xD800 | (ch >> 10));
+          uEscape(0xDC00 | (ch & 0x3FF));
         }
       }
     }

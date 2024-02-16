@@ -86,10 +86,6 @@
 
   ;; CHECK:      (import "wasm:js-string" "substring" (func $substring (type $24) (param externref i32 i32) (result (ref extern))))
 
-  ;; CHECK:      (export "export.1" (func $exported-string-returner))
-
-  ;; CHECK:      (export "export.2" (func $exported-string-receiver))
-
   ;; CHECK:      (func $string.as (type $18) (param $a externref) (param $a_nn (ref extern)) (param $b externref) (param $c externref) (param $d externref) (param $nn_view (ref extern))
   ;; CHECK-NEXT:  (local.set $b
   ;; CHECK-NEXT:   (ref.as_non_null
