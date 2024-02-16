@@ -106,10 +106,7 @@ std::string trim(const std::string& input) {
   return input.substr(0, size);
 }
 
-enum EscapeMode { Normal, JSON };
-
-std::ostream&
-printEscapedInternal(std::ostream& os, std::string_view str, EscapeMode mode) {
+std::ostream& printEscaped(std::ostream& os, const std::string_view str) {
   os << '"';
   for (unsigned char c : str) {
     switch (c) {
@@ -135,13 +132,7 @@ printEscapedInternal(std::ostream& os, std::string_view str, EscapeMode mode) {
         if (c >= 32 && c < 127) {
           os << c;
         } else {
-          if (mode == EscapeMode::Normal) {
-            os << std::hex << '\\' << (c / 16) << (c % 16) << std::dec;
-          } else if (mode == EscapeMode::JSON) {
-            os << std::hex << "\\u00" << (c / 16) << (c % 16) << std::dec;
-          } else {
-            WASM_UNREACHABLE("bad mode");
-          }
+          os << std::hex << '\\' << (c / 16) << (c % 16) << std::dec;
         }
       }
     }
@@ -149,12 +140,66 @@ printEscapedInternal(std::ostream& os, std::string_view str, EscapeMode mode) {
   return os << '"';
 }
 
-std::ostream& printEscaped(std::ostream& os, std::string_view str) {
-  return printEscapedInternal(os, str, EscapeMode::Normal);
-}
 
-std::ostream& printEscapedJSON(std::ostream& os, std::string_view str) {
-  return printEscapedInternal(os, str, EscapeMode::JSON);
+std::ostream& printEscapedJSON(std::ostream& os, const std::string_view str) {
+  os << '"';
+  for (size_t i = 0; i < str.size(); i++) {
+    int u0 = str[i];
+    switch (u0) {
+      case '\t':
+        os << "\\t";
+        continue;
+      case '\n':
+        os << "\\n";
+        continue;
+      case '\r':
+        os << "\\r";
+        continue;
+      case '"':
+        os << "\\\"";
+        continue;
+      case '\'':
+        os << "\\'";
+        continue;
+      case '\\':
+        os << "\\\\";
+        continue;
+      default: {
+        // Based off of
+        // https://github.com/emscripten-core/emscripten/blob/59e6b8f1262d75585d8416b728e8cbb3db176fe2/src/library_strings.js#L72-L91
+        if (!(u0 & 0x80)) {
+          if (u0 >= 32 && u0 < 127) {
+            os << char(u0);
+          } else {
+            os << std::hex << "\\u00" << (u0 / 16) << (u0 % 16) << std::dec;
+          }
+          continue;
+        }
+        i++;
+        int u1 = str[i] & 63;
+        if ((u0 & 0xE0) == 0xC0) {
+          os << std::hex << "\\u" << (((u0 & 31) << 6) | u1) << std::dec;
+          continue;
+        }
+        i++;
+        int u2 = str[i] & 63;
+        if ((u0 & 0xF0) == 0xE0) {
+          u0 = ((u0 & 15) << 12) | (u1 << 6) | u2;
+        } else {
+          i++;
+          u0 = ((u0 & 7) << 18) | (u1 << 12) | (u2 << 6) | (str[i] & 63);
+        }
+
+        if (u0 < 0x10000) {
+          os << std::hex << "\\u" << u0 << std::dec;
+        } else {
+          auto ch = u0 - 0x10000;
+          os << std::hex << "\\u" << (0xD800 | (ch >> 10)) << "\\u" << (0xDC00 | (ch & 0x3FF)) << std::dec;
+        }
+      }
+    }
+  }
+  return os << '"';
 }
 
 } // namespace wasm::String
