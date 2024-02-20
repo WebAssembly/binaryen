@@ -9,7 +9,7 @@ function preserveStack(func) {
 }
 
 function strToStack(str) {
-  return str ? allocateUTF8OnStack(str) : 0;
+  return str ? stringToUTF8OnStack(str) : 0;
 }
 
 function i32sToStack(i32s) {
