@@ -195,6 +195,9 @@ std::ostream& printEscapedJSON(std::ostream& os, const std::string_view str) {
         if ((u0 & 0xF0) == 0xE0) {
           u0 = ((u0 & 15) << 12) | (u1 << 6) | u2;
         } else {
+          if ((u0 & 0xF8) != 0xF0) {
+            std::cerr << "warning: Bad UTF-8 leading byte " << int(u0) << '\n';
+          }
           i++;
           u0 = ((u0 & 7) << 18) | (u1 << 12) | (u2 << 6) | (str[i] & 63);
         }
