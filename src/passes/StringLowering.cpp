@@ -446,7 +446,9 @@ struct StringLowering : public StringGathering {
   // A ref.null of none needs to be noext if it is going to a location of type
   // stringref.
   void replaceNulls(Module* module) {
-    struct NullFixer : public WalkerPass<ControlFlowWalker<NullFixer, SubtypingDiscoverer<NullFixer>>> {
+    struct NullFixer
+      : public WalkerPass<
+          ControlFlowWalker<NullFixer, SubtypingDiscoverer<NullFixer>>> {
       // Hooks for SubtypingDiscoverer.
       void noteSubtype(Type, Type) {
         // Nothing to do for pure types.
