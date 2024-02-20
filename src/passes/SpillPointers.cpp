@@ -80,12 +80,9 @@ struct SpillPointers
   Type pointerType;
 
   void spillPointers() {
-    // TODO: Move these two lines somewhere earlier since it only needs to be
-    // done once (but where?)
-    const char* HANDLE_STACK_OVERFLOW =
-      "__handle_stack_overflow"; // TODO: This should be
-                                 // passRunner.options.arguments["stack-check-handler"],
-                                 // but don't know how to access it here.
+    std::string HANDLE_STACK_OVERFLOW =
+      getPassOptions().getArgumentOrDefault("stack-check-handler", "");
+
     ImportInfo info(*getModule());
     Function* stack_overflow_check =
       info.getImportedFunction(ENV, HANDLE_STACK_OVERFLOW);
