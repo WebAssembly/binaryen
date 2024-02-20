@@ -15,13 +15,13 @@
  */
 
 #include "support/json.h"
+#include "support/string.h"
 
 namespace json {
 
 void Value::stringify(std::ostream& os, bool pretty) {
   if (isString()) {
-    // TODO: escaping
-    os << '"' << getCString() << '"';
+    wasm::String::printEscapedJSON(os, getCString());
   } else if (isArray()) {
     os << '[';
     auto first = true;

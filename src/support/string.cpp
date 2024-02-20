@@ -106,7 +106,7 @@ std::string trim(const std::string& input) {
   return input.substr(0, size);
 }
 
-std::ostream& printEscaped(std::ostream& os, std::string_view str) {
+std::ostream& printEscaped(std::ostream& os, const std::string_view str) {
   os << '"';
   for (unsigned char c : str) {
     switch (c) {
@@ -133,6 +133,92 @@ std::ostream& printEscaped(std::ostream& os, std::string_view str) {
           os << c;
         } else {
           os << std::hex << '\\' << (c / 16) << (c % 16) << std::dec;
+        }
+      }
+    }
+  }
+  return os << '"';
+}
+
+std::ostream& printEscapedJSON(std::ostream& os, const std::string_view str) {
+  os << '"';
+  for (size_t i = 0; i < str.size(); i++) {
+    int u0 = str[i];
+    switch (u0) {
+      case '\t':
+        os << "\\t";
+        continue;
+      case '\n':
+        os << "\\n";
+        continue;
+      case '\r':
+        os << "\\r";
+        continue;
+      case '"':
+        os << "\\\"";
+        continue;
+      case '\'':
+        os << "'";
+        continue;
+      case '\\':
+        os << "\\\\";
+        continue;
+      default: {
+        // Emit something like \u006e, the JSON escaping of a 16-bit number.
+        auto uEscape = [&](uint32_t v) {
+          if (v > 0xffff) {
+            std::cerr << "warning: Bad 16-bit escapee " << int(u0) << '\n';
+          }
+          os << std::hex;
+          os << "\\u";
+          os << ((v >> 12) & 0xf);
+          os << ((v >> 8) & 0xf);
+          os << ((v >> 4) & 0xf);
+          os << (v & 0xf);
+          os << std::dec;
+        };
+
+        // Based off of
+        // https://github.com/emscripten-core/emscripten/blob/59e6b8f1262d75585d8416b728e8cbb3db176fe2/src/library_strings.js#L72-L91
+        if (!(u0 & 0x80)) {
+          if (u0 >= 32 && u0 < 127) {
+            // This requires no escaping at all.
+            os << char(u0);
+          } else {
+            uEscape(u0);
+          }
+          continue;
+        }
+
+        // This uses 2 bytes.
+        i++;
+        int u1 = str[i] & 63;
+        if ((u0 & 0xE0) == 0xC0) {
+          uEscape((((u0 & 31) << 6) | u1));
+          continue;
+        }
+
+        // This uses 3 bytes.
+        i++;
+        int u2 = str[i] & 63;
+        if ((u0 & 0xF0) == 0xE0) {
+          u0 = ((u0 & 15) << 12) | (u1 << 6) | u2;
+        } else {
+          // This uses 4 bytes.
+          if ((u0 & 0xF8) != 0xF0) {
+            std::cerr << "warning: Bad UTF-8 leading byte " << int(u0) << '\n';
+          }
+          i++;
+          u0 = ((u0 & 7) << 18) | (u1 << 12) | (u2 << 6) | (str[i] & 63);
+        }
+
+        if (u0 < 0x10000) {
+          uEscape(u0);
+        } else {
+          // There are two separate code points here.
+          auto ch = u0 - 0x10000;
+          uEscape(0xD800 | (ch >> 10));
+          uEscape(0xDC00 | (ch & 0x3FF));
         }
       }
     }
