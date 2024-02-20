@@ -52,10 +52,6 @@
 ;; RUN: not wasm-split %s --merge-profiles -g 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix MERGE-DEBUGINFO
 
-;; --profile cannot be used with --keep-funcs
-;; RUN: not wasm-split %s --profile=foo --keep-funcs=foo 2>&1 \
-;; RUN:   | filecheck %s --check-prefix PROFILE-KEEP
-
 ;; --profile cannot be used with --split-funcs
 ;; RUN: not wasm-split %s --profile=foo --split-funcs=foo 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix PROFILE-SPLIT
@@ -89,8 +85,6 @@
 ;; MERGE-EMIT-TEXT: error: Option --emit-text cannot be used in merge-profiles mode.
 
 ;; MERGE-DEBUGINFO: error: Option --debuginfo cannot be used in merge-profiles mode.
-
-;; PROFILE-KEEP: error: Cannot use both --profile and --keep-funcs.
 
 ;; PROFILE-SPLIT: error: Cannot use both --profile and --split-funcs.
 

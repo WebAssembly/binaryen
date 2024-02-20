@@ -129,8 +129,8 @@ WasmSplitOptions::WasmSplitOptions()
     .add("--keep-funcs",
          "",
          "Comma-separated list of functions to keep in the primary module. The "
-         "rest will be split out. Cannot be used with --profile or "
-         "--split-funcs. You can also pass a file with one function per line "
+         "rest will be split out. Cannot be used with --split-funcs."
+         "You can also pass a file with one function per line "
          "by passing @filename.",
          WasmSplitOption,
          {Mode::Split},
@@ -422,9 +422,6 @@ bool WasmSplitOptions::validate() {
   }
 
   if (mode == Mode::Split) {
-    if (profileFile.size() && keepFuncs.size()) {
-      fail("Cannot use both --profile and --keep-funcs.");
-    }
     if (profileFile.size() && splitFuncs.size()) {
       fail("Cannot use both --profile and --split-funcs.");
     }

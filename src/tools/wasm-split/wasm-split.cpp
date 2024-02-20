@@ -181,7 +181,7 @@ void getFunctionsToKeepAndSplit(Module& wasm,
     }
     if (profile.timestamps[i++] > 0) {
       keepFuncs.insert(func->name);
-    } else {
+    } else if (keepFuncs.count(func->name) == 0) {
       splitFuncs.insert(func->name);
     }
   });
@@ -213,13 +213,7 @@ void splitModule(const WasmSplitOptions& options) {
 
   std::set<Name> keepFuncs;
 
-  if (options.profileFile.size()) {
-    // Use the profile to set `keepFuncs`.
-    uint64_t hash = hashFile(options.inputFiles[0]);
-    std::set<Name> splitFuncs;
-    getFunctionsToKeepAndSplit(
-      wasm, hash, options.profileFile, keepFuncs, splitFuncs);
-  } else if (options.keepFuncs.size()) {
+  if (options.keepFuncs.size()) {
     // Use the explicitly provided `keepFuncs`.
     for (auto& func : options.keepFuncs) {
       if (!options.quiet && wasm.getFunctionOrNull(func) == nullptr) {
@@ -227,6 +221,14 @@ void splitModule(const WasmSplitOptions& options) {
       }
       keepFuncs.insert(func);
     }
+  }
+
+  if (options.profileFile.size()) {
+    // Use the profile to set `keepFuncs`.
+    uint64_t hash = hashFile(options.inputFiles[0]);
+    std::set<Name> splitFuncs;
+    getFunctionsToKeepAndSplit(
+      wasm, hash, options.profileFile, keepFuncs, splitFuncs);
   } else if (options.splitFuncs.size()) {
     // Use the explicitly provided `splitFuncs`.
     for (auto& func : wasm.functions) {

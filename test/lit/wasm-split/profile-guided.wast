@@ -25,6 +25,9 @@
 ;; RUN: wasm-split -all %s --profile=%t.none.prof -v -o1 %t.none.1.wasm -o2 %t.none.2.wasm \
 ;; RUN:   | filecheck %s --check-prefix NONE
 
+;; RUN: wasm-split -all %s --profile=%t.bar.prof --keep-funcs=uncalled -v -o1 %t.bar.1.wasm -o2 %t.bar.2.wasm \
+;; RUN:   | filecheck %s --check-prefix COMBINED
+
 ;; =================================
 ;; Do it all again using --in-memory
 ;; =================================
@@ -52,6 +55,9 @@
 ;; RUN: wasm-split -all %s --profile=%t.none.prof -v -o1 %t.none.1.wasm -o2 %t.none.2.wasm \
 ;; RUN:   | filecheck %s --check-prefix NONE
 
+;; RUN: wasm-split -all %s --profile=%t.bar.prof --keep-funcs=uncalled -v -o1 %t.bar.1.wasm -o2 %t.bar.2.wasm \
+;; RUN:   | filecheck %s --check-prefix COMBINED
+
 ;; =======
 ;; Results
 ;; =======
@@ -67,6 +73,9 @@
 
 ;; NONE: Keeping functions:
 ;; NONE: Splitting out functions: bar, bar_callee, deep_foo_callee, foo, foo_callee, shared_callee, uncalled
+
+;; COMBINED: Keeping functions: bar, bar_callee, shared_callee, uncalled
+;; COMBINED: Splitting out functions: deep_foo_callee, foo, foo_callee
 
 (module
   (memory $mem 1 1 shared)
