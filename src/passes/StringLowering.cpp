@@ -37,7 +37,7 @@
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
-#include "support/json.h"
+#include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -205,8 +205,9 @@ struct StringLowering : public StringGathering {
 
   void makeImports(Module* module) {
     Index importIndex = 0;
-    json::Value stringArray;
-    stringArray.setArray();
+    std::stringstream json;
+    json << '[';
+    bool first = true;
     std::vector<Name> importedStrings;
     for (auto& global : module->globals) {
       if (global->init) {
@@ -216,16 +217,19 @@ struct StringLowering : public StringGathering {
           importIndex++;
           global->init = nullptr;
 
-          auto str = json::Value::make(std::string(c->string.str).c_str());
-          stringArray.push_back(str);
+          if (first) {
+            first = false;
+          } else {
+            json << ',';
+          }
+          String::printEscapedJSON(json, c->string.str);
         }
       }
     }
 
     // Add a custom section with the JSON.
-    std::stringstream stream;
-    stringArray.stringify(stream);
-    auto str = stream.str();
+    json << ']';
+    auto str = json.str();
     auto vec = std::vector<char>(str.begin(), str.end());
     module->customSections.emplace_back(
       CustomSection{"string.consts", std::move(vec)});
@@ -453,6 +457,16 @@ struct StringLowering : public StringGathering {
         if (isExt(curr->type)) {
           ensureNullIsExt(curr->ifTrue);
           ensureNullIsExt(curr->ifFalse);
+        }
+      }
+
+      void visitCall(Call* curr) {
+        auto targetSig =
+          getModule()->getFunction(curr->target)->type.getSignature();
+        for (Index i = 0; i < curr->operands.size(); i++) {
+          if (isExt(targetSig.params[i])) {
+            ensureNullIsExt(curr->operands[i]);
+          }
         }
       }
 

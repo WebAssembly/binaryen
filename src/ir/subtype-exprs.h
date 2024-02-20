@@ -190,7 +190,10 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitRefNull(RefNull* curr) {}
   void visitRefIsNull(RefIsNull* curr) {}
   void visitRefFunc(RefFunc* curr) {}
-  void visitRefEq(RefEq* curr) {}
+  void visitRefEq(RefEq* curr) {
+    self()->noteSubtype(curr->left, Type(HeapType::eq, Nullable));
+    self()->noteSubtype(curr->right, Type(HeapType::eq, Nullable));
+  }
   void visitTableGet(TableGet* curr) {}
   void visitTableSet(TableSet* curr) {
     self()->noteSubtype(curr->value,
@@ -225,12 +228,27 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitTupleMake(TupleMake* curr) {}
   void visitTupleExtract(TupleExtract* curr) {}
   void visitRefI31(RefI31* curr) {}
-  void visitI31Get(I31Get* curr) {}
+  void visitI31Get(I31Get* curr) {
+    self()->noteSubtype(curr->i31, Type(HeapType::i31, Nullable));
+  }
   void visitCallRef(CallRef* curr) {
-    if (!curr->target->type.isSignature()) {
-      return;
+    // Even if we are unreachable, the target must be valid, and in particular
+    // it cannot be funcref - it must be a proper signature type. We could
+    // perhaps have |addStrictSubtype| to handle that, but for now just require
+    // that the target keep its type.
+    //
+    // Note that even if we are reachable, there is an interaction between the
+    // target and the the types of the parameters and results (the target's type
+    // must support the parameter and result types properly), and so it is not
+    // obvious how users would want to optimize here (if they are trying to
+    // generalize, should they generalize the target more or the parameters
+    // more? etc.), so we do the simple thing here for now of requiring the
+    // target type not generalize.
+    self()->noteSubtype(curr->target, curr->target->type);
+
+    if (curr->target->type.isSignature()) {
+      handleCall(curr, curr->target->type.getHeapType().getSignature());
     }
-    handleCall(curr, curr->target->type.getHeapType().getSignature());
   }
   void visitRefTest(RefTest* curr) {
     self()->noteCast(curr->ref, curr->castType);
@@ -286,13 +304,14 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       self()->noteSubtype(value, array.element.type);
     }
   }
+
   void visitArrayGet(ArrayGet* curr) {}
   void visitArraySet(ArraySet* curr) {
     if (!curr->ref->type.isArray()) {
       return;
     }
     auto array = curr->ref->type.getHeapType().getArray();
-    self()->noteSubtype(curr->value->type, array.element.type);
+    self()->noteSubtype(curr->value, array.element.type);
   }
   void visitArrayLen(ArrayLen* curr) {}
   void visitArrayCopy(ArrayCopy* curr) {
@@ -308,7 +327,7 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       return;
     }
     auto array = curr->ref->type.getHeapType().getArray();
-    self()->noteSubtype(curr->value->type, array.element.type);
+    self()->noteSubtype(curr->value, array.element.type);
   }
   void visitArrayInitData(ArrayInitData* curr) {}
   void visitArrayInitElem(ArrayInitElem* curr) {
@@ -319,7 +338,11 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     auto* seg = self()->getModule()->getElementSegment(curr->segment);
     self()->noteSubtype(seg->type, array.element.type);
   }
-  void visitRefAs(RefAs* curr) {}
+  void visitRefAs(RefAs* curr) {
+    if (curr->op == RefAsNonNull) {
+      self()->noteCast(curr->value, curr);
+    }
+  }
   void visitStringNew(StringNew* curr) {}
   void visitStringConst(StringConst* curr) {}
   void visitStringMeasure(StringMeasure* curr) {}
