@@ -33,6 +33,6 @@
 ;; RUN: wasm-opt %s --string-lowering --remove-unused-module-elements -all -o %t.wasm
 ;; RUN: node %S/string-lowering.js %t.wasm | filecheck %s --check-prefix=CHECK-JS
 ;;
-;; CHECK-JS: string: ["bar","foo","needs\tescaping\u0000.'#%\"- .\r\n\\.\ua66e"]
-;; CHECK-JS: JSON: [ 'bar', 'foo', `needs\tescaping\u0000.'#%"- .\r\n\\.ꙮ` ]
+;; CHECK-JS: string: ["bar","foo","needs\tescaping\x00.'#%\"- .\r\n\\.\ua66e"]
+;; CHECK-JS: JSON: ["bar","foo","needs\tescaping\x00.'#%\"- .\r\n\\.ꙮ"]
 
