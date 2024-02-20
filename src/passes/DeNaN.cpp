@@ -68,7 +68,7 @@ struct DeNaN : public WalkerPass<
         replacement = builder.makeCall(deNan64, {expr}, Type::f64);
       }
     } else if (expr->type == Type::v128) {
-      if (c && maybeNaN(c)) {
+      if (c && hasNaNLane(c)) {
         uint8_t zero[16] = {};
         replacement = builder.makeConst(Literal(zero));
       } else {
@@ -133,71 +133,76 @@ struct DeNaN : public WalkerPass<
       module);
 
     // Add helper functions after the walk, so they are not instrumented.
-    Builder builder(*module);
-    auto add = [&](Name name, Type type, Literal literal, BinaryOp op) {
-      auto func = Builder::makeFunction(name, Signature(type, type), {});
-      // Compare the value to itself to check if it is a NaN, and return 0 if
-      // so:
-      //
-      //   (if (result f*)
-      //     (f*.eq
-      //       (local.get $0)
-      //       (local.get $0)
-      //     )
-      //     (local.get $0)
-      //     (f*.const 0)
-      //   )
-      Expression* condition;
-      if (type != Type::v128) {
-        // Generate a simple condition.
-        condition = builder.makeBinary(
-          op, builder.makeLocalGet(0, type), builder.makeLocalGet(0, type));
-      } else {
-        // v128 is trickier as the 128 bits may contain f32s or f64s, and we
-        // need to check for nans both ways in principle. However, the f32 NaN
-        // pattern is a superset of f64, since it checks less bits (8 bit
-        // exponent vs 11), and it is checked in more places (4 32-bit values vs
-        // 2 64-bit ones), so we can just check that. That is, this reduces to 4
-        // checks of f32s, but is otherwise the same as a check of a single f32.
-        //
-        // However there is additional complexity, which is that if we do
-        // EqVecF32x4 then we get all-1s for each case where we compare equal.
-        // That itself is a NaN pattern, which means that running this pass
-        // twice would interfere with itself. To avoid that we'd need a way to
-        // detect our previous instrumentation and not instrument it, but that
-        // is tricky (we can't depend on function names etc. while fuzzing).
-        // Instead, extract the lanes and use f32 checks.
-        auto getLane = [&](Index index) {
-          return builder.makeSIMDExtract(
-            ExtractLaneVecF32x4, builder.makeLocalGet(0, type), index);
-        };
-        auto getLaneCheck = [&](Index index) {
-          return builder.makeBinary(EqFloat32, getLane(index), getLane(index));
-        };
-        auto* firstTwo =
-          builder.makeBinary(AndInt32, getLaneCheck(0), getLaneCheck(1));
-        auto* lastTwo =
-          builder.makeBinary(AndInt32, getLaneCheck(2), getLaneCheck(3));
-        condition = builder.makeBinary(AndInt32, firstTwo, lastTwo);
-      }
-      func->body = builder.makeIf(
-        condition, builder.makeLocalGet(0, type), builder.makeConst(literal));
-      module->addFunction(std::move(func));
-    };
-
-    add(deNan32, Type::f32, Literal(float(0)), EqFloat32);
-    add(deNan64, Type::f64, Literal(double(0)), EqFloat64);
+    addFunc(module, deNan32, Type::f32, Literal(float(0)), EqFloat32);
+    addFunc(module, deNan64, Type::f64, Literal(double(0)), EqFloat64);
 
     if (module->features.hasSIMD()) {
       uint8_t zero128[16] = {};
-      // InvalidBinary is passed here as the condition in this case is more
-      // complex and computed above.
-      add(deNan128, Type::v128, Literal(zero128), InvalidBinary);
+      addFunc(module, deNan128, Type::v128, Literal(zero128));
     }
   }
 
+  // Add a de-NaN-ing helper function.
+  void addFunc(Module* module,
+               Name name,
+               Type type,
+               Literal literal,
+               std::optional<BinaryOp> op={}) {
+    Builder builder(*module);
+    auto func = Builder::makeFunction(name, Signature(type, type), {});
+    // Compare the value to itself to check if it is a NaN, and return 0 if
+    // so:
+    //
+    //   (if (result f*)
+    //     (f*.eq
+    //       (local.get $0)
+    //       (local.get $0)
+    //     )
+    //     (local.get $0)
+    //     (f*.const 0)
+    //   )
+    Expression* condition;
+    if (type != Type::v128) {
+      // Generate a simple condition.
+      assert(op);
+      condition = builder.makeBinary(
+        *op, builder.makeLocalGet(0, type), builder.makeLocalGet(0, type));
+    } else {
+      assert(!op);
+      // v128 is trickier as the 128 bits may contain f32s or f64s, and we
+      // need to check for nans both ways in principle. However, the f32 NaN
+      // pattern is a superset of f64, since it checks less bits (8 bit
+      // exponent vs 11), and it is checked in more places (4 32-bit values vs
+      // 2 64-bit ones), so we can just check that. That is, this reduces to 4
+      // checks of f32s, but is otherwise the same as a check of a single f32.
+      //
+      // However there is additional complexity, which is that if we do
+      // EqVecF32x4 then we get all-1s for each case where we compare equal.
+      // That itself is a NaN pattern, which means that running this pass
+      // twice would interfere with itself. To avoid that we'd need a way to
+      // detect our previous instrumentation and not instrument it, but that
+      // is tricky (we can't depend on function names etc. while fuzzing).
+      // Instead, extract the lanes and use f32 checks.
+      auto getLane = [&](Index index) {
+        return builder.makeSIMDExtract(
+          ExtractLaneVecF32x4, builder.makeLocalGet(0, type), index);
+      };
+      auto getLaneCheck = [&](Index index) {
+        return builder.makeBinary(EqFloat32, getLane(index), getLane(index));
+      };
+      auto* firstTwo =
+        builder.makeBinary(AndInt32, getLaneCheck(0), getLaneCheck(1));
+      auto* lastTwo =
+        builder.makeBinary(AndInt32, getLaneCheck(2), getLaneCheck(3));
+      condition = builder.makeBinary(AndInt32, firstTwo, lastTwo);
+    }
+    func->body = builder.makeIf(
+      condition, builder.makeLocalGet(0, type), builder.makeConst(literal));
+    module->addFunction(std::move(func));
+  };
+
   // Check if a contant v128 may contain f32 or f64 NaNs.
-  bool maybeNaN(Const* c) {
+  bool hasNaNLane(Const* c) {
     assert(c->type == Type::v128);
     auto value = c->value;
 
