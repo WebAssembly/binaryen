@@ -164,6 +164,7 @@ std::ostream& printEscapedJSON(std::ostream& os, const std::string_view str) {
         os << "\\\\";
         continue;
       default: {
+        // Emit something like \u006e, the JSON escaping of a 16-bit number.
         auto uEscape = [&](uint32_t v) {
           os << std::hex;
           os << "\\u";
@@ -178,23 +179,29 @@ std::ostream& printEscapedJSON(std::ostream& os, const std::string_view str) {
         // https://github.com/emscripten-core/emscripten/blob/59e6b8f1262d75585d8416b728e8cbb3db176fe2/src/library_strings.js#L72-L91
         if (!(u0 & 0x80)) {
           if (u0 >= 32 && u0 < 127) {
+            // This requires no escaping at all.
             os << char(u0);
           } else {
             uEscape(u0);
           }
           continue;
         }
+
+        // This uses 2 bytes.
         i++;
         int u1 = str[i] & 63;
         if ((u0 & 0xE0) == 0xC0) {
           uEscape((((u0 & 31) << 6) | u1));
           continue;
         }
+
+        // This uses 3 bytes.
         i++;
         int u2 = str[i] & 63;
         if ((u0 & 0xF0) == 0xE0) {
           u0 = ((u0 & 15) << 12) | (u1 << 6) | u2;
         } else {
+          // This uses 4 bytes.
           if ((u0 & 0xF8) != 0xF0) {
             std::cerr << "warning: Bad UTF-8 leading byte " << int(u0) << '\n';
           }
@@ -205,6 +212,7 @@ std::ostream& printEscapedJSON(std::ostream& os, const std::string_view str) {
         if (u0 < 0x10000) {
           uEscape(u0);
         } else {
+          // There are two separate code points here.
           auto ch = u0 - 0x10000;
           uEscape(0xD800 | (ch >> 10));
           uEscape(0xDC00 | (ch & 0x3FF));
