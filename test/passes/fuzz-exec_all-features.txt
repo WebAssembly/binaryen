@@ -212,7 +212,7 @@
 [LoggingExternalInterface logging 214]
 [fuzz-exec] comparing rmw-reads-modifies-and-writes-asymmetrical
 [fuzz-exec] calling func
-[fuzz-exec] note result: func => funcref
+[fuzz-exec] note result: func => function
 (module
  (type $0 (func (result funcref)))
  (elem declare func $func)
@@ -222,5 +222,5 @@
  )
 )
 [fuzz-exec] calling func
-[fuzz-exec] note result: func => funcref
+[fuzz-exec] note result: func => function
 [fuzz-exec] comparing func
