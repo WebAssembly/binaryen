@@ -34,6 +34,7 @@
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/subtype-exprs.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -198,6 +199,12 @@ struct StringLowering : public StringGathering {
 
     // Replace string.* etc. operations with imported ones.
     replaceInstructions(module);
+
+    // Replace ref.null types as needed.
+    replaceNulls(module);
+
+    // ReFinalize to apply all the above changes.
+    ReFinalize().run(getPassRunner(), module);
 
     // Disable the feature here after we lowered everything away.
     module->features.disable(FeatureSet::Strings);
@@ -429,65 +436,54 @@ struct StringLowering : public StringGathering {
             WASM_UNREACHABLE("TODO: all string.slice*");
         }
       }
-
-      // Additional hacks: We fix up a none that should be noext. Before the
-      // lowering we can use none for stringref, but after we must use noext as
-      // the two do not share a bottom type.
-      //
-      // The code here and in the visitors below is course wildly insufficient
-      // (we need selects and blocks and all other joins, and not just nulls,
-      // etc.) but in practice this is enough for now. TODO extend as needed
-      void ensureNullIsExt(Expression* curr) {
-        if (auto* null = curr->dynCast<RefNull>()) {
-          null->finalize(HeapType::noext);
-        }
-      }
-
-      bool isExt(Type type) {
-        return type.isRef() && type.getHeapType() == HeapType::ext;
-      }
-
-      void visitIf(If* curr) {
-        // If the if outputs an ext, fix up the arms to contain proper nulls for
-        // that type.
-        if (isExt(curr->type)) {
-          ensureNullIsExt(curr->ifTrue);
-          ensureNullIsExt(curr->ifFalse);
-        }
-      }
-
-      void visitCall(Call* curr) {
-        auto targetSig =
-          getModule()->getFunction(curr->target)->type.getSignature();
-        for (Index i = 0; i < curr->operands.size(); i++) {
-          if (isExt(targetSig.params[i])) {
-            ensureNullIsExt(curr->operands[i]);
-          }
-        }
-      }
-
-      void visitStructNew(StructNew* curr) {
-        if (curr->type == Type::unreachable || curr->operands.empty()) {
-          return;
-        }
-
-        // If we write a none into an ext field, fix that.
-        auto& fields = curr->type.getHeapType().getStruct().fields;
-        assert(curr->operands.size() == fields.size());
-        for (Index i = 0; i < fields.size(); i++) {
-          if (isExt(fields[i].type)) {
-            ensureNullIsExt(curr->operands[i]);
-          }
-        }
-      }
     };
 
     Replacer replacer(*this);
     replacer.run(getPassRunner(), module);
     replacer.walkModuleCode(module);
+  }
 
-    // ReFinalize to apply changes to parents.
-    ReFinalize().run(getPassRunner(), module);
+  // A ref.null of none needs to be noext if it is going to a location of type
+  // stringref.
+  void replaceNulls(Module* module) {
+    struct NullFixer : public WalkerPass<ControlFlowWalker<NullFixer, SubtypingDiscoverer<NullFixer>>> {
+      // Hooks for SubtypingDiscoverer.
+      void noteSubtype(Type, Type) {
+        // Nothing to do for pure types.
+      }
+      void noteSubtype(HeapType, HeapType) {
+        // Nothing to do for pure types.
+      }
+      void noteSubtype(Type, Expression*) {
+        // Nothing to do for a subtype of an expression.
+      }
+      void noteSubtype(Expression* a, Type b) {
+        // This is the case we care about: if |a| is a null that must be a
+        // subtype of ext then we fix that up.
+        if (b.isRef() && b.getHeapType().getTop() == HeapType::ext) {
+          if (auto* null = a->dynCast<RefNull>()) {
+            null->finalize(HeapType::noext);
+          }
+        }
+      }
+      void noteSubtype(Expression* a, Expression* b) {
+        // Only the type matters of the place we assign to.
+        noteSubtype(a, b->type);
+      }
+      void noteCast(HeapType, HeapType) {
+        // Casts do not concern us.
+      }
+      void noteCast(Expression*, Type) {
+        // Casts do not concern us.
+      }
+      void noteCast(Expression*, Expression*) {
+        // Casts do not concern us.
+      }
+    };
+
+    NullFixer fixer;
+    fixer.run(getPassRunner(), module);
+    fixer.walkModuleCode(module);
   }
 };
 
