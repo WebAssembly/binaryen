@@ -14,7 +14,7 @@
       (string.const "foo")
     )
     (drop
-      (string.const "needs\tescaping\00.'#%\"- .\r\n\\.")
+      (string.const "needs\tescaping\00.'#%\"- .\r\n\\.ꙮ")
     )
   )
 )
@@ -24,7 +24,7 @@
 ;;
 ;; RUN: wasm-opt %s --string-lowering -all -S -o - | filecheck %s
 ;;
-;; CHECK: custom section "string.consts", size 53, contents: "[\"bar\",\"foo\",\"needs\\tescaping\\u0000.'#%\\\"- .\\r\\n\\\\.\"]"
+;; CHECK: custom section "string.consts", size 59, contents: "[\"bar\",\"foo\",\"needs\\tescaping\\u0000.'#%\\\"- .\\r\\n\\\\.\\ua66e\"]"
 
 ;; The custom section should parse OK using JSON.parse from node.
 ;; (Note we run --remove-unused-module-elements to remove externref-using
@@ -33,6 +33,6 @@
 ;; RUN: wasm-opt %s --string-lowering --remove-unused-module-elements -all -o %t.wasm
 ;; RUN: node %S/string-lowering.js %t.wasm | filecheck %s --check-prefix=CHECK-JS
 ;;
-;; CHECK-JS: string: ["bar","foo","needs\tescaping\u0000.'#%\"- .\r\n\\."]
-;; CHECK-JS: JSON: [ 'bar', 'foo', `needs\tescaping\u0000.'#%"- .\r\n\\.` ]
+;; CHECK-JS: string: ["bar","foo","needs\tescaping\u0000.'#%\"- .\r\n\\.\ua66e"]
+;; CHECK-JS: JSON: [ 'bar', 'foo', `needs\tescaping\u0000.'#%"- .\r\n\\.ꙮ` ]
 

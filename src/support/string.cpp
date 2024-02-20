@@ -166,12 +166,15 @@ std::ostream& printEscapedJSON(std::ostream& os, const std::string_view str) {
       default: {
         // Emit something like \u006e, the JSON escaping of a 16-bit number.
         auto uEscape = [&](uint32_t v) {
+          if (v > 0xffff) {
+            std::cerr << "warning: Bad 16-bit escapee " << int(u0) << '\n';
+          }
           os << std::hex;
           os << "\\u";
-          os << ((v >> 24) & 0xff);
-          os << ((v >> 16) & 0xff);
-          os << ((v >> 8) & 0xff);
-          os << (v & 0xff);
+          os << ((v >> 12) & 0xf);
+          os << ((v >> 8) & 0xf);
+          os << ((v >> 4) & 0xf);
+          os << (v & 0xf);
           os << std::dec;
         };
 
