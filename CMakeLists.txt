@@ -24,7 +24,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 
 if(NOT CMAKE_BUILD_TYPE)
   message(STATUS "No build type selected, default to Release")
-  set(CMAKE_BUILD_TYPE "Release")
+  set(CMAKE_BUILD_TYPE "Debug")
 endif()
 
 # We default to assertions enabled, even in release builds so that we get
@@ -352,7 +352,7 @@ if(EMSCRIPTEN)
     add_link_flag("-sMODULARIZE")
     add_link_flag("-sEXPORT_ES6")
     add_link_flag("-sFILESYSTEM")
-    add_link_flag("-sFORCE_FILESYSTEM")    
+    add_link_flag("-sFORCE_FILESYSTEM")
   else()
     # On Node.js, make the tools immediately usable.
     add_link_flag("-sNODERAWFS")
@@ -455,18 +455,39 @@ if(EMSCRIPTEN)
   )
 
   # binaryen.js WebAssembly variant
+  # compile the TypeScript file injected in the generated js
+  add_custom_target(binaryen_post_js
+              COMMAND tsc --target ES2020 --module ES2022 --outDir ${CMAKE_BINARY_DIR}/bin ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_post.ts)
+  # compile the TypeScript file that wraps the generated js
+  if(WIN32) # not tested!
+    add_custom_target(binaryen_wasm_wrapper
+              COMMAND (Get-content ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen.ts) | Foreach-Object {$_ -replace "TARGET", "wasm"} | Set-Content ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_wasm.ts &&
+                      tsc --target ES2020 --module ES2022 --declaration --declarationMap --outDir ${CMAKE_BINARY_DIR}/bin ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_wasm.ts &&
+                      rm ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_wasm.ts)
+  else()
+    add_custom_target(binaryen_wasm_wrapper
+              COMMAND sed -e 's/TARGET/wasm/g'  ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen.ts >> ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_wasm.ts &&
+                      tsc --target ES2020 --module ES2022 --declaration --declarationMap --outDir ${CMAKE_BINARY_DIR}/bin ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_wasm.ts &&
+                      rm ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_wasm.ts)
+  endif()
   add_executable(binaryen_wasm
                  ${binaryen_emscripten_SOURCES})
+  add_dependencies(binaryen_wasm binaryen_post_js binaryen_wasm_wrapper)
+  set_target_properties(binaryen_wasm PROPERTIES OUTPUT_NAME "binaryen_raw_wasm")
   target_link_libraries(binaryen_wasm wasm asmjs emscripten-optimizer passes ir cfg support analysis parser wasm)
   target_link_libraries(binaryen_wasm "-sFILESYSTEM")
   target_link_libraries(binaryen_wasm "-sEXPORT_NAME=Binaryen")
   target_link_libraries(binaryen_wasm "-sNODERAWFS=0")
   target_link_libraries(binaryen_wasm "-sEXPORT_ES6")
-  target_link_libraries(binaryen_wasm "-sEXPORTED_RUNTIME_METHODS=allocateUTF8OnStack,stringToAscii")
+  target_link_libraries(binaryen_wasm "-sEXPORTED_RUNTIME_METHODS=allocateUTF8OnStack,stringToAscii,stackSave,stackAlloc,stackRestore,UTF8ToString")
   target_link_libraries(binaryen_wasm "-sEXPORTED_FUNCTIONS=_malloc,_free")
-  target_link_libraries(binaryen_wasm "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
+  # useful when working on --post-js file
+  target_link_libraries(binaryen_wasm "--minify=0")
+  target_link_libraries(binaryen_wasm "--post-js=${CMAKE_BINARY_DIR}/bin/binaryen_post.js")
   target_link_libraries(binaryen_wasm "-msign-ext")
   target_link_libraries(binaryen_wasm "-mbulk-memory")
+  target_link_libraries(binaryen_wasm optimized "--closure=0")
+  target_link_libraries(binaryen_wasm optimized "--closure-args=\"--language_in=ECMASCRIPT6 --language_out=ECMASCRIPT6\"")
   target_link_libraries(binaryen_wasm optimized "--closure=1")
   # TODO: Fix closure warnings! (#5062)
   target_link_libraries(binaryen_wasm optimized "-Wno-error=closure")
@@ -475,8 +496,22 @@ if(EMSCRIPTEN)
   install(TARGETS binaryen_wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   # binaryen.js JavaScript variant
+  # compile the TypeScript file that wraps the generated js
+  if(WIN32) # not tested!
+    add_custom_target(binaryen_js_wrapper
+              COMMAND (Get-content ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen.ts) | Foreach-Object {$_ -replace "TARGET", "js"} | Set-Content ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_js.ts &&
+                      tsc --target ES2020 --module ES2022 --declaration --declarationMap --outDir ${CMAKE_BINARY_DIR}/bin ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_js.ts &&
+                      rm ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_js.ts)
+  else()
+    add_custom_target(binaryen_js_wrapper
+              COMMAND sed -e 's/TARGET/js/g' ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen.ts >> ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_js.ts &&
+                      tsc --target ES2020 --module ES2022 --declaration --declarationMap --outDir ${CMAKE_BINARY_DIR}/bin ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_js.ts &&
+                      rm ${CMAKE_CURRENT_SOURCE_DIR}/src/ts/binaryen_js.ts)
+  endif()
   add_executable(binaryen_js
                  ${binaryen_emscripten_SOURCES})
+  add_dependencies(binaryen_js binaryen_post_js binaryen_js_wrapper)
+  set_target_properties(binaryen_js PROPERTIES OUTPUT_NAME "binaryen_raw_js")
   target_link_libraries(binaryen_js wasm asmjs emscripten-optimizer passes ir cfg support analysis parser wasm)
   target_link_libraries(binaryen_js "-sWASM=0")
   target_link_libraries(binaryen_js "-sWASM_ASYNC_COMPILATION=0")
@@ -500,9 +535,11 @@ if(EMSCRIPTEN)
   else()
     target_link_libraries(binaryen_js "-sEXPORT_ES6=1")
   endif()
-  target_link_libraries(binaryen_js "-sEXPORTED_RUNTIME_METHODS=allocateUTF8OnStack,stringToAscii")
+  target_link_libraries(binaryen_js "-sEXPORTED_RUNTIME_METHODS=allocateUTF8OnStack,stringToAscii,stackSave,stackAlloc,stackRestore,UTF8ToString")
   target_link_libraries(binaryen_js "-sEXPORTED_FUNCTIONS=_malloc,_free")
-  target_link_libraries(binaryen_js "--post-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.js-post.js")
+  # useful when working on --post-js file
+  # target_link_libraries(binaryen_js "--minify=0")
+  target_link_libraries(binaryen_js "--post-js=${CMAKE_BINARY_DIR}/bin/binaryen_post.js")
   # js_of_ocaml needs a specified variable with special comment to provide the library to consumers
   if(JS_OF_OCAML)
     target_link_libraries(binaryen_js "--extern-pre-js=${CMAKE_CURRENT_SOURCE_DIR}/src/js/binaryen.jsoo-extern-pre.js")
@@ -518,6 +555,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_js debug "--profiling")
   target_link_libraries(binaryen_js debug "-sASSERTIONS")
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
+
 endif()
 
 configure_file(scripts/binaryen-lit.in ${CMAKE_BINARY_DIR}/bin/binaryen-lit @ONLY)
