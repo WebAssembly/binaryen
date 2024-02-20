@@ -72,6 +72,8 @@
   ;; CHECK:      (import "colliding" "name" (func $fromCodePoint (type $1)))
   (import "colliding" "name" (func $fromCodePoint))
 
+
+  ;; Test that we update nulls in the global scope.
   ;; CHECK:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $20) (param (ref null $0) i32 i32) (result (ref extern))))
 
   ;; CHECK:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint_18 (type $21) (param i32) (result (ref extern))))
@@ -87,6 +89,9 @@
   ;; CHECK:      (import "wasm:js-string" "codePointAt" (func $codePointAt (type $24) (param externref i32) (result i32)))
 
   ;; CHECK:      (import "wasm:js-string" "substring" (func $substring (type $25) (param externref i32 i32) (result (ref extern))))
+
+  ;; CHECK:      (global $string externref (ref.null noextern))
+  (global $string stringref (ref.null string))
 
   ;; CHECK:      (export "export.1" (func $exported-string-returner))
 
