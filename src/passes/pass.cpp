@@ -541,6 +541,9 @@ void PassRegistry::registerPasses() {
   registerTestPass("experimental-type-generalizing",
                    "generalize types (not yet sound)",
                    createTypeGeneralizingPass);
+  registerTestPass("experimental-type-generalizing2",
+                   "generalize types (not yet sound); alt version",
+                   createTypeGeneralizing2Pass);
 }
 
 void PassRunner::addIfNoDWARFIssues(std::string passName) {
