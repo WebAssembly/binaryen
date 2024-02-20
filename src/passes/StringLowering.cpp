@@ -456,6 +456,16 @@ struct StringLowering : public StringGathering {
         }
       }
 
+      void visitCall(Call* curr) {
+        auto targetSig =
+          getModule()->getFunction(curr->target)->type.getSignature();
+        for (Index i = 0; i < curr->operands.size(); i++) {
+          if (isExt(targetSig.params[i])) {
+            ensureNullIsExt(curr->operands[i]);
+          }
+        }
+      }
+
       void visitStructNew(StructNew* curr) {
         if (curr->type == Type::unreachable || curr->operands.empty()) {
           return;
