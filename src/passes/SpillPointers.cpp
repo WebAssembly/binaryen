@@ -27,6 +27,7 @@
 
 #include "abi/stack.h"
 #include "cfg/liveness-traversal.h"
+#include "ir/import-utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -79,6 +80,16 @@ struct SpillPointers
   Type pointerType;
 
   void spillPointers() {
+    // TODO: Move these two lines somewhere earlier since it only needs to be
+    // done once (but where?)
+    const char* HANDLE_STACK_OVERFLOW =
+      "__handle_stack_overflow"; // TODO: This should be
+                                 // passRunner.options.arguments["stack-check-handler"],
+                                 // but don't know how to access it here.
+    ImportInfo info(*getModule());
+    Function* stack_overflow_check =
+      info.getImportedFunction(ENV, HANDLE_STACK_OVERFLOW);
+
     pointerType = getModule()->memories[0]->indexType;
 
     // we only care about possible pointers
@@ -119,6 +130,27 @@ struct SpillPointers
         } else if (action.isSet()) {
           live.erase(action.index);
         } else if (action.isOther()) {
+          auto* pointer = actualPointers[action.origin];
+          auto* call = *pointer;
+          if (call->type == Type::unreachable) {
+            continue; // the call is never reached anyhow, ignore
+          }
+
+          // Do not spill pointers right before a call to function
+          // __handle_stack_overflow(). This does improve performance, but is
+          // primarily needed for correctness, to avoid creating a new stack
+          // frame inside function stackAlloc(), which should bump the stack
+          // pointer of the caller's stack frame, hence it cannot generate a
+          // stack frame inside the function itself. By default stackAlloc()
+          // does not call any other functions except __handle_stack_overflow().
+          // (same for stackRestore() and stackSave()).
+          Call* c = static_cast<Call*>(call);
+          if (c->target == HANDLE_STACK_OVERFLOW ||
+              (stack_overflow_check &&
+               c->target == stack_overflow_check->name)) {
+            continue;
+          }
+
           std::vector<Index> toSpill;
           for (auto index : live) {
             if (pointerMap.count(index) > 0) {
@@ -135,7 +167,6 @@ struct SpillPointers
               spilled = true;
             }
             // the origin was seen at walk, but the thing may have moved
-            auto* pointer = actualPointers[action.origin];
             spillPointersAroundCall(
               pointer, toSpill, spillLocal, pointerMap, func, getModule());
           }
@@ -160,9 +191,6 @@ struct SpillPointers
                                Function* func,
                                Module* module) {
     auto* call = *origin;
-    if (call->type == Type::unreachable) {
-      return; // the call is never reached anyhow, ignore
-    }
     Builder builder(*module);
     auto* block = builder.makeBlock();
     // move the operands into locals, as we must spill after they are executed
