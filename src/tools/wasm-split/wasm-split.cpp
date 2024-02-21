@@ -229,7 +229,7 @@ void splitModule(const WasmSplitOptions& options) {
       }
       keepFuncs.insert(func);
 
-      if (splitFuncs.count(func) != 0){
+      if (splitFuncs.count(func) > 0){
         splitFuncs.erase(func);
       }
     }
@@ -254,7 +254,7 @@ void splitModule(const WasmSplitOptions& options) {
                     << "\n";
         }
       } else {
-        if (!options.quiet && keepFuncs.count(func) != 0) {
+        if (!options.quiet && keepFuncs.count(func) > 0) {
           std::cerr << "warning: function " << func << " was to be kept in primary module. " 
                     << "However it will now be splitted out into secondary module.\n";
         }
