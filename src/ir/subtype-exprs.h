@@ -27,7 +27,7 @@ namespace wasm {
 // Analyze subtyping relationships between expressions. This must CRTP with a
 // class that implements:
 //
-//  * noteSubType(A, B) indicating A must be a subtype of B
+//  * noteSubtype(A, B) indicating A must be a subtype of B
 //  * noteCast(A, B) indicating A is cast to B
 //
 // There must be multiple versions of each of those, supporting A and B being
@@ -35,20 +35,20 @@ namespace wasm {
 // indicating a flexible requirement that depends on the type of that
 // expression. Specifically:
 //
-//  * noteSubType(Type, Type) - A constraint not involving expressions at all,
+//  * noteSubtype(Type, Type) - A constraint not involving expressions at all,
 //                              for example, an element segment's type must be
 //                              a subtype of the corresponding table's.
-//  * noteSubType(HeapType, HeapType) - Ditto, with heap types, for example in a
+//  * noteSubtype(HeapType, HeapType) - Ditto, with heap types, for example in a
 //                                      CallIndirect.
-//  * noteSubType(Type, Expression) - A fixed type must be a subtype of an
+//  * noteSubtype(Type, Expression) - A fixed type must be a subtype of an
 //                                    expression's type, for example, in BrOn
 //                                    (the declared sent type must be a subtype
 //                                    of the block we branch to).
-//  * noteSubType(Expression, Type) - An expression's type must be a subtype of
+//  * noteSubtype(Expression, Type) - An expression's type must be a subtype of
 //                                    a fixed type, for example, a Call operand
 //                                    must be a subtype of the signature's
 //                                    param.
-//  * noteSubType(Expression, Expression) - An expression's type must be a
+//  * noteSubtype(Expression, Expression) - An expression's type must be a
 //                                          subtype of anothers, for example,
 //                                          a block and its last child.
 //
@@ -58,6 +58,17 @@ namespace wasm {
 //                                 for example, in RefTest.
 //  * noteCast(Expression, Expression) - An expression's type is cast to
 //                                       another, for example, in RefCast.
+//
+// The concrete signatures are:
+//
+//      void noteSubtype(Type, Type);
+//      void noteSubtype(HeapType, HeapType);
+//      void noteSubtype(Type, Expression*);
+//      void noteSubtype(Expression*, Type);
+//      void noteSubtype(Expression*, Expression*);
+//      void noteCast(HeapType, HeapType);
+//      void noteCast(Expression*, Type);
+//      void noteCast(Expression*, Expression*);
 //
 // Note that noteCast(Type, Type) and noteCast(Type, Expression) never occur and
 // do not need to be implemented.
