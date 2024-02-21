@@ -421,7 +421,7 @@ enum EncodedType {
   // for the moment and assign a random value to it to prevent the clash.
   exnref = -0xfe,
 #endif
-  nullexnref = -0xff, // TODO
+  nullexnref = -0xc, // 0x74
 // string reference types
 #if STANDARD_GC_ENCODINGS
   stringref = -0x19,       // 0x67
@@ -475,7 +475,7 @@ enum EncodedHeapType {
   // for the moment and assign a random value to it to prevent the clash.
   exn = -0xfe,
 #endif
-  noexn = -0xff, // TODO
+  noexn = -0xc, // 0x74
 #if STANDARD_GC_ENCODINGS
   i31 = -0x14,     // 0x6c
   struct_ = -0x15, // 0x6b
