@@ -32,7 +32,8 @@
 // Another variation also "prunes" imports and exports that we cannot yet
 // legalize, like exports and imports with SIMD or multivalue. Until we write
 // the logic to legalize them, removing those imports/exports still allows us to
-// fuzz all the legal imports/exports.
+// fuzz all the legal imports/exports. (Note that multivalue is supported in
+// exports in newer VMs - node 16+ - so that part is only needed for older VMs.)
 //
 
 #include "asmjs/shared-constants.h"
