@@ -12,11 +12,11 @@
   ;; The type of the reference this function returns will change as a result of
   ;; signature pruning. The fuzzer should not complain about this.
   ;; CHECK:      [fuzz-exec] calling return-ref
-  ;; CHECK-NEXT: [fuzz-exec] note result: return-ref => funcref
+  ;; CHECK-NEXT: [fuzz-exec] note result: return-ref => function
   (func $return-ref (export "return-ref") (result funcref)
     (ref.func $no-use-param)
   )
 )
 ;; CHECK:      [fuzz-exec] calling return-ref
-;; CHECK-NEXT: [fuzz-exec] note result: return-ref => funcref
+;; CHECK-NEXT: [fuzz-exec] note result: return-ref => function
 ;; CHECK-NEXT: [fuzz-exec] comparing return-ref

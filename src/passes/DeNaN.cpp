@@ -71,7 +71,11 @@ struct DeNaN : public WalkerPass<
       if (c && hasNaNLane(c)) {
         uint8_t zero[16] = {};
         replacement = builder.makeConst(Literal(zero));
+<<<<<<< HEAD
       } else if (!c) {
+=======
+      } else {
+>>>>>>> origin/main
         replacement = builder.makeCall(deNan128, {expr}, Type::v128);
       }
     }

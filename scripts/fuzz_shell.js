@@ -38,13 +38,32 @@ var detrand = (function() {
   };
 })();
 
-// Fuzz integration.
-function logValue(x, y) {
+// Print out a value in a way that works well for fuzzing.
+function printed(x, y) {
   if (typeof y !== 'undefined') {
-    console.log('[LoggingExternalInterface logging ' + x + ' ' + y + ']');
+    // A pair of i32s which are a legalized i64.
+    return x + ' ' + y;
+  } else if (x === null) {
+    // JS has just one null. Print that out rather than typeof null which is
+    // 'object', below.
+    return 'null';
+  } else if (typeof x !== 'number' && typeof x !== 'string') {
+    // Something that is not a number or string, like a reference. We can't
+    // print a reference because it could look different after opts - imagine
+    // that a function gets renamed internally (that is, the problem is that
+    // JS printing will emit some info about the reference and not a stable
+    // external representation of it). In those cases just print the type,
+    // which will be 'object' or 'function'.
+    return typeof x;
   } else {
-    console.log('[LoggingExternalInterface logging ' + x + ']');
+    // A number. Print the whole thing.
+    return '' + x;
   }
+}
+
+// Fuzzer integration.
+function logValue(x, y) {
+  console.log('[LoggingExternalInterface logging ' + printed(x, y) + ']');
 }
 
 // Set up the imports.
@@ -94,21 +113,25 @@ function refreshView() {
 }
 
 // Run the wasm.
-var sortedExports = [];
 for (var e in exports) {
-  sortedExports.push(e);
-}
-sortedExports.sort();
-sortedExports.forEach(function(e) {
-  if (typeof exports[e] !== 'function') return;
+  if (typeof exports[e] !== 'function') {
+    continue;
+  }
+  // Send the function a null for each parameter. Null can be converted without
+  // error to both a number and a reference.
+  var func = exports[e];
+  var args = [];
+  for (var i = 0; i < func.length; i++) {
+    args.push(null);
+  }
   try {
     console.log('[fuzz-exec] calling ' + e);
-    var result = exports[e]();
+    var result = func.apply(null, args);
     if (typeof result !== 'undefined') {
-      console.log('[fuzz-exec] note result: $' + e + ' => ' + result);
+      console.log('[fuzz-exec] note result: ' + e + ' => ' + printed(result));
     }
   } catch (e) {
     console.log('exception!');// + [e, e.stack]);
   }
-});
+}
 
