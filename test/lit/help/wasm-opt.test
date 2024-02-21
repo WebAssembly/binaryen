@@ -225,6 +225,9 @@
 ;; CHECK-NEXT:   --jspi                                        wrap imports and exports for
 ;; CHECK-NEXT:                                                 JavaScript promise integration
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --legalize-and-prune-js-interface             legalizes the import/export
+;; CHECK-NEXT:                                                 boundary and prunes when needed
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --legalize-js-interface                       legalizes i64 types on the
 ;; CHECK-NEXT:                                                 import/export boundary
 ;; CHECK-NEXT:

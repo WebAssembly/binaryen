@@ -188,7 +188,7 @@ def randomize_fuzz_settings():
         FUZZ_OPTS += ['--no-fuzz-oob']
     if random.random() < 0.5:
         LEGALIZE = True
-        FUZZ_OPTS += ['--legalize-js-interface']
+        FUZZ_OPTS += ['--legalize-and-prune-js-interface']
     else:
         LEGALIZE = False
 
@@ -926,7 +926,7 @@ class CompareVMs(TestCaseHandler):
                 compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
-        return all_disallowed(['simd', 'multivalue', 'multimemory'])
+        return True
 
 
 # Check for determinism - the same command must have the same output.
@@ -957,7 +957,7 @@ class Wasm2JS(TestCaseHandler):
         # later make sense (if we don't do this, the wasm may have i64 exports).
         # after applying other necessary fixes, we'll recreate the after wasm
         # from scratch.
-        run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm_temp] + FEATURE_OPTS)
+        run([in_bin('wasm-opt'), before_wasm, '--legalize-and-prune-js-interface', '-o', before_wasm_temp] + FEATURE_OPTS)
         compare_before_to_after = random.random() < 0.5
         compare_to_interpreter = compare_before_to_after and random.random() < 0.5
         if compare_before_to_after:

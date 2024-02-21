@@ -67,6 +67,7 @@ Pass* createInliningPass();
 Pass* createInliningOptimizingPass();
 Pass* createJSPIPass();
 Pass* createJ2CLOptsPass();
+Pass* createLegalizeAndPruneJSInterfacePass();
 Pass* createLegalizeJSInterfacePass();
 Pass* createLegalizeJSInterfaceMinimallyPass();
 Pass* createLimitSegmentsPass();
