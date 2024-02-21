@@ -311,6 +311,8 @@ INITIAL_CONTENTS_IGNORE = [
     'exception-handling.wast',
     'translate-eh-old-to-new.wast',
     'rse-eh.wast',
+    # Non-UTF8 strings trap in V8
+    'string-lowering.wast',
 ]
 
 
