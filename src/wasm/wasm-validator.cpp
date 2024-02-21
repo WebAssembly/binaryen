@@ -2909,6 +2909,10 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
 void FunctionValidator::visitArrayNewData(ArrayNewData* curr) {
   visitArrayNew(curr);
 
+  shouldBeTrue(
+    getModule()->features.hasBulkMemory(),
+    curr,
+    "Data segment operations require bulk memory [--enable-bulk-memory]");
   if (!shouldBeTrue(getModule()->getDataSegment(curr->segment),
                     curr,
                     "array.new_data segment should exist")) {
@@ -3175,6 +3179,10 @@ void FunctionValidator::visitArrayInit(ArrayInit* curr) {
 void FunctionValidator::visitArrayInitData(ArrayInitData* curr) {
   visitArrayInit(curr);
 
+  shouldBeTrue(
+    getModule()->features.hasBulkMemory(),
+    curr,
+    "Data segment operations require bulk memory [--enable-bulk-memory]");
   shouldBeTrue(getModule()->getDataSegmentOrNull(curr->segment),
                curr,
                "array.init_data segment must exist");
