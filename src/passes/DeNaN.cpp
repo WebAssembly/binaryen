@@ -58,20 +58,20 @@ struct DeNaN : public WalkerPass<
     if (expr->type == Type::f32) {
       if (c && c->value.isNaN()) {
         replacement = builder.makeConst(float(0));
-      } else {
+      } else if (!c) {
         replacement = builder.makeCall(deNan32, {expr}, Type::f32);
       }
     } else if (expr->type == Type::f64) {
       if (c && c->value.isNaN()) {
         replacement = builder.makeConst(double(0));
-      } else {
+      } else if (!c) {
         replacement = builder.makeCall(deNan64, {expr}, Type::f64);
       }
     } else if (expr->type == Type::v128) {
       if (c && hasNaNLane(c)) {
         uint8_t zero[16] = {};
         replacement = builder.makeConst(Literal(zero));
-      } else {
+      } else if (!c) {
         replacement = builder.makeCall(deNan128, {expr}, Type::v128);
       }
     }
