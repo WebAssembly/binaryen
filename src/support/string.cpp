@@ -166,8 +166,8 @@ std::ostream& printEscapedJSON(std::ostream& os, const std::string_view str) {
       trailingBytes = 3;
       u = (leading & 0b00000111) << 18;
     } else {
-      std::cerr << "warning: Bad WTF-8 leading byte (" << std::hex << leading
-                << std::dec << "). Replacing.\n";
+      std::cerr << "warning: Bad WTF-8 leading byte (" << std::hex
+                << int(leading) << std::dec << "). Replacing.\n";
       trailingBytes = 0;
       u = replacementCharacter;
     }
@@ -182,7 +182,7 @@ std::ostream& printEscapedJSON(std::ostream& os, const std::string_view str) {
         uint8_t trailing = str[i + j];
         if ((trailing & 0b11000000) != 0b10000000) {
           std::cerr << "warning: Bad WTF-8 trailing byte (" << std::hex
-                    << trailing << std::dec << "). Replacing.\n";
+                    << int(trailing) << std::dec << "). Replacing.\n";
           u = replacementCharacter;
           break;
         }
