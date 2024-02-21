@@ -16,9 +16,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (call $deNan128
-  ;; CHECK-NEXT:    (v128.const i32x4 0x00000001 0x00000002 0x00000003 0x00000004)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (v128.const i32x4 0x00000001 0x00000002 0x00000003 0x00000004)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (v128.const i32x4 0x00000000 0x00000000 0x00000000 0x00000000)
@@ -35,7 +33,7 @@
   (func $foo128 (param $x v128) (result v128)
     ;; The incoming param will be de-naned.
 
-    ;; This is not a NaN. (We do still emit a call for it atm, FIXME)
+    ;; This is not a NaN.
     (drop
       (v128.const i32x4 0x00000001 0x00000002 0x00000003 0x00000004)
     )
@@ -48,6 +46,7 @@
       (v128.const i32x4 0x00000001 0xffffffff 0x00000003 0x00000004)
     )
 
+    ;; The result here will be de-naned.
     (call $foo128 (local.get $x))
   )
 )
