@@ -115,7 +115,7 @@ struct ExecutionResults {
           // ignore the result if we hit an unreachable and returned no value
           if (values->size() > 0) {
             std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
-            auto resultType = values->type;
+            auto resultType = values->getType();
             if (resultType.isRef() && !resultType.isString()) {
               // Don't print reference values, as funcref(N) contains an index
               // for example, which is not guaranteed to remain identical after
