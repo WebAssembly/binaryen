@@ -4,16 +4,16 @@
 
 ;; RUN: not wasm-opt --enable-reference-types --enable-gc %s 2>&1 | filecheck %s
 
-;; CHECK: all used types should be allowed
+;; CHECK: Data segment operations require bulk memory
 
 (module
  (type $0 (array i8))
 
- (memory $0 16 17 shared)
+ (memory $0 16 17)
 
  (data $0 (i32.const 0) "")
 
- (func $0 (result (ref $0))
+ (func $0
   (array.init_data $0 $0
    (ref.null $0)
    (i32.const 0)
