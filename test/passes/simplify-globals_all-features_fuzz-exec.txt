@@ -1,5 +1,5 @@
 [fuzz-exec] calling export
-[fuzz-exec] note result: export => funcref
+[fuzz-exec] note result: export => function
 (module
  (type $0 (func (param f32 i31ref i64 f64 funcref)))
  (type $1 (func (result funcref)))
@@ -17,5 +17,5 @@
  )
 )
 [fuzz-exec] calling export
-[fuzz-exec] note result: export => funcref
+[fuzz-exec] note result: export => function
 [fuzz-exec] comparing export

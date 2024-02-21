@@ -41,40 +41,47 @@ struct ParseInput {
 
   bool empty() { return lexer.empty(); }
 
-  std::optional<Token> peek();
-  bool takeLParen();
-  bool takeRParen();
-  bool takeUntilParen();
-  std::optional<Name> takeID();
-  std::optional<std::string_view> takeKeyword();
-  bool takeKeyword(std::string_view expected);
-  std::optional<uint64_t> takeOffset();
-  std::optional<uint32_t> takeAlign();
-  std::optional<uint64_t> takeU64();
-  std::optional<uint64_t> takeI64();
-  std::optional<uint32_t> takeU32();
-  std::optional<uint32_t> takeI32();
-  std::optional<uint16_t> takeI16();
-  std::optional<uint8_t> takeU8();
-  std::optional<uint8_t> takeI8();
-  std::optional<double> takeF64();
-  std::optional<float> takeF32();
-  std::optional<std::string> takeString();
-  std::optional<Name> takeName();
-  bool takeSExprStart(std::string_view expected);
-  bool peekSExprStart(std::string_view expected);
+  // TODO: Remove this useless layer of abstraction between the Lexer and
+  // Parser.
+  std::optional<Token> peek() { return lexer.peek(); }
+  bool takeLParen() { return lexer.takeLParen(); }
+  bool takeRParen() { return lexer.takeRParen(); }
+  bool takeUntilParen() { return lexer.takeUntilParen(); }
+  std::optional<Name> takeID() { return lexer.takeID(); }
+  std::optional<std::string_view> takeKeyword() { return lexer.takeKeyword(); }
+  bool takeKeyword(std::string_view expected) {
+    return lexer.takeKeyword(expected);
+  }
+  std::optional<uint64_t> takeOffset() { return lexer.takeOffset(); }
+  std::optional<uint32_t> takeAlign() { return lexer.takeAlign(); }
+  std::optional<uint64_t> takeU64() { return lexer.takeU64(); }
+  std::optional<uint64_t> takeI64() { return lexer.takeI64(); }
+  std::optional<uint32_t> takeU32() { return lexer.takeU32(); }
+  std::optional<uint32_t> takeI32() { return lexer.takeI32(); }
+  std::optional<uint16_t> takeI16() { return lexer.takeI16(); }
+  std::optional<uint8_t> takeU8() { return lexer.takeU8(); }
+  std::optional<uint8_t> takeI8() { return lexer.takeI8(); }
+  std::optional<double> takeF64() { return lexer.takeF64(); }
+  std::optional<float> takeF32() { return lexer.takeF32(); }
+  std::optional<std::string> takeString() { return lexer.takeString(); }
+  std::optional<Name> takeName() { return lexer.takeName(); }
+  bool takeSExprStart(std::string_view expected) {
+    return lexer.takeSExprStart(expected);
+  }
+  bool peekSExprStart(std::string_view expected) {
+    return lexer.peekSExprStart(expected);
+  }
 
-  Index getPos();
-  [[nodiscard]] Err err(Index pos, std::string reason);
+  Index getPos() { return lexer.getPos(); }
+
+  [[nodiscard]] Err err(Index pos, std::string reason) {
+    std::stringstream msg;
+    msg << lexer.position(pos) << ": error: " << reason;
+    return Err{msg.str()};
+  }
+
   [[nodiscard]] Err err(std::string reason) { return err(getPos(), reason); }
-
-private:
-  template<typename T> std::optional<T> takeU();
-  template<typename T> std::optional<T> takeS();
-  template<typename T> std::optional<T> takeI();
 };
-
-#include "input-impl.h"
 
 } // namespace wasm::WATParser
 

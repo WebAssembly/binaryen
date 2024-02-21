@@ -221,6 +221,9 @@ void PassRegistry::registerPasses() {
                "legalizes i64 types on the import/export boundary in a minimal "
                "manner, only on things only JS will call",
                createLegalizeJSInterfaceMinimallyPass);
+  registerPass("legalize-and-prune-js-interface",
+               "legalizes the import/export boundary and prunes when needed",
+               createLegalizeAndPruneJSInterfacePass);
   registerPass("local-cse",
                "common subexpression elimination inside basic blocks",
                createLocalCSEPass);

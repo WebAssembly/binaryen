@@ -34,9 +34,11 @@
 
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/subtype-exprs.h"
 #include "ir/type-updating.h"
+#include "ir/utils.h"
 #include "pass.h"
-#include "support/json.h"
+#include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -189,14 +191,20 @@ struct StringLowering : public StringGathering {
     // First, run the gathering operation so all string.consts are in one place.
     StringGathering::run(module);
 
-    // Lower the string.const globals into imports.
-    makeImports(module);
-
     // Remove all HeapType::string etc. in favor of externref.
     updateTypes(module);
 
+    // Lower the string.const globals into imports.
+    makeImports(module);
+
     // Replace string.* etc. operations with imported ones.
     replaceInstructions(module);
+
+    // Replace ref.null types as needed.
+    replaceNulls(module);
+
+    // ReFinalize to apply all the above changes.
+    ReFinalize().run(getPassRunner(), module);
 
     // Disable the feature here after we lowered everything away.
     module->features.disable(FeatureSet::Strings);
@@ -204,8 +212,9 @@ struct StringLowering : public StringGathering {
 
   void makeImports(Module* module) {
     Index importIndex = 0;
-    json::Value stringArray;
-    stringArray.setArray();
+    std::stringstream json;
+    json << '[';
+    bool first = true;
     std::vector<Name> importedStrings;
     for (auto& global : module->globals) {
       if (global->init) {
@@ -215,20 +224,28 @@ struct StringLowering : public StringGathering {
           importIndex++;
           global->init = nullptr;
 
-          auto str = json::Value::make(std::string(c->string.str).c_str());
-          stringArray.push_back(str);
+          if (first) {
+            first = false;
+          } else {
+            json << ',';
+          }
+          String::printEscapedJSON(json, c->string.str);
         }
       }
     }
 
     // Add a custom section with the JSON.
-    std::stringstream stream;
-    stringArray.stringify(stream);
-    auto str = stream.str();
+    json << ']';
+    auto str = json.str();
     auto vec = std::vector<char>(str.begin(), str.end());
     module->customSections.emplace_back(
       CustomSection{"string.consts", std::move(vec)});
   }
+
+  // Common types used in imports.
+  Type nullArray16 = Type(Array(Field(Field::i16, Mutable)), Nullable);
+  Type nullExt = Type(HeapType::ext, Nullable);
+  Type nnExt = Type(HeapType::ext, NonNullable);
 
   void updateTypes(Module* module) {
     TypeMapper::TypeUpdates updates;
@@ -240,8 +257,24 @@ struct StringLowering : public StringGathering {
     updates[HeapType::stringview_wtf16] = HeapType::ext;
     updates[HeapType::stringview_iter] = HeapType::ext;
 
+    // The module may have its own array16 type inside a big rec group, but
+    // imported strings expects that type in its own rec group as part of the
+    // ABI. Fix that up here. (This is valid to do as this type has no sub- or
+    // super-types anyhow; it is "plain old data" for communicating with the
+    // outside.)
+    auto allTypes = ModuleUtils::collectHeapTypes(*module);
+    auto array16 = nullArray16.getHeapType();
+    auto array16Element = array16.getArray().element;
+    for (auto type : allTypes) {
+      // Match an array type with no super and that is closed.
+      if (type.isArray() && !type.getDeclaredSuperType() && !type.isOpen() &&
+          type.getArray().element == array16Element) {
+        updates[type] = array16;
+      }
+    }
+
     // We consider all types that use strings as modifiable, which means we
-    // mark them as non-private. That is, we are doing something TypeMapper
+    // mark them as non-public. That is, we are doing something TypeMapper
     // normally does not, as we are changing the external interface/ABI of the
     // module: we are changing that ABI from using strings to externs.
     auto publicTypes = ModuleUtils::getPublicHeapTypes(*module);
@@ -267,11 +300,6 @@ struct StringLowering : public StringGathering {
 
   // The name of the module to import string functions from.
   Name WasmStringsModule = "wasm:js-string";
-
-  // Common types used in imports.
-  Type nullArray16 = Type(Array(Field(Field::i16, Mutable)), Nullable);
-  Type nullExt = Type(HeapType::ext, Nullable);
-  Type nnExt = Type(HeapType::ext, NonNullable);
 
   // Creates an imported string function, returning its name (which is equal to
   // the true name of the import, if there is no conflict).
@@ -344,7 +372,13 @@ struct StringLowering : public StringGathering {
       void visitStringAs(StringAs* curr) {
         // There is no difference between strings and views with imported
         // strings: they are all just JS strings, so no conversion is needed.
-        replaceCurrent(curr->ref);
+        // However, we must keep the same nullability: the output of StringAs
+        // must be non-nullable.
+        auto* ref = curr->ref;
+        if (ref->type.isNullable()) {
+          ref = Builder(*getModule()).makeRefAs(RefAsNonNull, ref);
+        }
+        replaceCurrent(ref);
       }
 
       void visitStringEncode(StringEncode* curr) {
@@ -406,32 +440,58 @@ struct StringLowering : public StringGathering {
             WASM_UNREACHABLE("TODO: all string.slice*");
         }
       }
-
-      // Additional hacks.
-
-      void visitIf(If* curr) {
-        // Before the lowering we could have one arm be a ref.null none and the
-        // other a stringref; after the lowering that is invalid, because the
-        // string is now extern, which has no shared ancestor with none. Fix
-        // that up manually in the simple case of an if arm with a null by
-        // correcting the null's type. This is of course wildly insufficient (we
-        // need selects and blocks and all other joins) but in practice this is
-        // enough for now. TODO extend as needed
-        if (curr->type.isRef() && curr->type.getHeapType() == HeapType::ext) {
-          auto fixArm = [](Expression* arm) {
-            if (auto* null = arm->dynCast<RefNull>()) {
-              null->finalize(HeapType::noext);
-            }
-          };
-          fixArm(curr->ifTrue);
-          fixArm(curr->ifFalse);
-        }
-      }
     };
 
     Replacer replacer(*this);
     replacer.run(getPassRunner(), module);
     replacer.walkModuleCode(module);
+  }
+
+  // A ref.null of none needs to be noext if it is going to a location of type
+  // stringref.
+  void replaceNulls(Module* module) {
+    // Use SubtypingDiscoverer to find when a ref.null of none flows into a
+    // place that has been changed from stringref to externref.
+    struct NullFixer
+      : public WalkerPass<
+          ControlFlowWalker<NullFixer, SubtypingDiscoverer<NullFixer>>> {
+      // Hooks for SubtypingDiscoverer.
+      void noteSubtype(Type, Type) {
+        // Nothing to do for pure types.
+      }
+      void noteSubtype(HeapType, HeapType) {
+        // Nothing to do for pure types.
+      }
+      void noteSubtype(Type, Expression*) {
+        // Nothing to do for a subtype of an expression.
+      }
+      void noteSubtype(Expression* a, Type b) {
+        // This is the case we care about: if |a| is a null that must be a
+        // subtype of ext then we fix that up.
+        if (b.isRef() && b.getHeapType().getTop() == HeapType::ext) {
+          if (auto* null = a->dynCast<RefNull>()) {
+            null->finalize(HeapType::noext);
+          }
+        }
+      }
+      void noteSubtype(Expression* a, Expression* b) {
+        // Only the type matters of the place we assign to.
+        noteSubtype(a, b->type);
+      }
+      void noteCast(HeapType, HeapType) {
+        // Casts do not concern us.
+      }
+      void noteCast(Expression*, Type) {
+        // Casts do not concern us.
+      }
+      void noteCast(Expression*, Expression*) {
+        // Casts do not concern us.
+      }
+    };
+
+    NullFixer fixer;
+    fixer.run(getPassRunner(), module);
+    fixer.walkModuleCode(module);
   }
 };
 

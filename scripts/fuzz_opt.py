@@ -188,7 +188,7 @@ def randomize_fuzz_settings():
         FUZZ_OPTS += ['--no-fuzz-oob']
     if random.random() < 0.5:
         LEGALIZE = True
-        FUZZ_OPTS += ['--legalize-js-interface']
+        FUZZ_OPTS += ['--legalize-and-prune-js-interface']
     else:
         LEGALIZE = False
 
@@ -665,8 +665,11 @@ def run_d8_js(js, args=[], liftoff=True):
     return run_vm(cmd)
 
 
+FUZZ_SHELL_JS = in_binaryen('scripts', 'fuzz_shell.js')
+
+
 def run_d8_wasm(wasm, liftoff=True):
-    return run_d8_js(in_binaryen('scripts', 'fuzz_shell.js'), [wasm], liftoff=liftoff)
+    return run_d8_js(FUZZ_SHELL_JS, [wasm], liftoff=liftoff)
 
 
 def all_disallowed(features):
@@ -746,8 +749,7 @@ class CompareVMs(TestCaseHandler):
             name = 'd8'
 
             def run(self, wasm, extra_d8_flags=[]):
-                run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=' + wasm + '.js'] + FEATURE_OPTS)
-                return run_vm([shared.V8, wasm + '.js'] + shared.V8_OPTS + extra_d8_flags + ['--', wasm])
+                return run_vm([shared.V8, FUZZ_SHELL_JS] + shared.V8_OPTS + extra_d8_flags + ['--', wasm])
 
             def can_run(self, wasm):
                 return True
@@ -921,12 +923,7 @@ class CompareVMs(TestCaseHandler):
                 compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
     def can_run_on_feature_opts(self, feature_opts):
-        # XXX for simd and multivalue to be allowed, for v8, we can add a pass
-        # that removes them from the ABI. Like legalize but it can be
-        # simpler: remove such exports and replace such imports, e.g.
-        # the fuzzer can do that maybe, but we do want such coverage sometimes...
-        # like LEGALIZE_JS... an option?
-        return all_disallowed(['simd', 'multivalue', 'multimemory'])
+        return True
 
 
 # Check for determinism - the same command must have the same output.
@@ -957,7 +954,7 @@ class Wasm2JS(TestCaseHandler):
         # later make sense (if we don't do this, the wasm may have i64 exports).
         # after applying other necessary fixes, we'll recreate the after wasm
         # from scratch.
-        run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', before_wasm_temp] + FEATURE_OPTS)
+        run([in_bin('wasm-opt'), before_wasm, '--legalize-and-prune-js-interface', '-o', before_wasm_temp] + FEATURE_OPTS)
         compare_before_to_after = random.random() < 0.5
         compare_to_interpreter = compare_before_to_after and random.random() < 0.5
         if compare_before_to_after:
@@ -1038,7 +1035,8 @@ class Wasm2JS(TestCaseHandler):
                 compare_between_vms(before, interpreter, 'Wasm2JS (vs interpreter)')
 
     def run(self, wasm):
-        wrapper = run([in_bin('wasm-opt'), wasm, '--emit-js-wrapper=/dev/stdout'] + FEATURE_OPTS)
+        with open(FUZZ_SHELL_JS) as f:
+            wrapper = f.read()
         cmd = [in_bin('wasm2js'), wasm, '--emscripten']
         # avoid optimizations if we have nans, as we don't handle them with
         # full precision and optimizations can change things
@@ -1071,76 +1069,6 @@ class Wasm2JS(TestCaseHandler):
         if INITIAL_CONTENTS:
             return False
         return all_disallowed(['exception-handling', 'simd', 'threads', 'bulk-memory', 'nontrapping-float-to-int', 'tail-call', 'sign-ext', 'reference-types', 'multivalue', 'gc', 'multimemory'])
-
-
-class Asyncify(TestCaseHandler):
-    frequency = 0.1
-
-    def handle_pair(self, input, before_wasm, after_wasm, opts):
-        # we must legalize in order to run in JS
-        async_before_wasm = abspath('async.' + os.path.basename(before_wasm))
-        async_after_wasm = abspath('async.' + os.path.basename(after_wasm))
-        run([in_bin('wasm-opt'), before_wasm, '--legalize-js-interface', '-o', async_before_wasm] + FEATURE_OPTS)
-        run([in_bin('wasm-opt'), after_wasm, '--legalize-js-interface', '-o', async_after_wasm] + FEATURE_OPTS)
-        before_wasm = async_before_wasm
-        after_wasm = async_after_wasm
-        before = fix_output(run_d8_wasm(before_wasm))
-        after = fix_output(run_d8_wasm(after_wasm))
-
-        if STACK_LIMIT in run_bynterp(before_wasm, ['--fuzz-exec-before']):
-            # Running out of stack in infinite recursion can be a problem here
-            # as we compare a wasm before and after asyncify, and asyncify can
-            # add a lot of locals, which could mean the host limit can be
-            # reached earlier, and alter the output (less logging before we
-            # reach the host limit and trap).
-            # TODO This is not quite enough, as if we are just under the limit
-            #      then we may only hit the limit after running asyncify. But
-            #      then we'd also need to detect differences in the limit in
-            #      the JS VM's output (which can differ from Binaryen's). For
-            #      now, this rules out infinite recursion at least.
-            print('ignoring due to stack limit being hit')
-            return
-
-        try:
-            compare(before, after, 'Asyncify (before/after)')
-        except Exception:
-            # if we failed to just compare the builds before asyncify even runs,
-            # then it may use NaNs or be sensitive to legalization; ignore it
-            print('ignoring due to pre-asyncify difference')
-            return
-
-        def do_asyncify(wasm):
-            cmd = [in_bin('wasm-opt'), wasm, '--asyncify', '-o', abspath('async.t.wasm')]
-            # if we allow NaNs, running binaryen optimizations and then
-            # executing in d8 may lead to different results due to NaN
-            # nondeterminism between VMs.
-            if not NANS:
-                if random.random() < 0.5:
-                    cmd += ['--optimize-level=%d' % random.randint(1, 3)]
-                if random.random() < 0.5:
-                    cmd += ['--shrink-level=%d' % random.randint(1, 2)]
-            cmd += FEATURE_OPTS
-            run(cmd)
-            out = run_d8_wasm(abspath('async.t.wasm'))
-            # ignore the output from the new asyncify API calls - the ones with asserts will trap, too
-            for ignore in ['[fuzz-exec] calling asyncify_start_unwind\nexception!\n',
-                           '[fuzz-exec] calling asyncify_start_unwind\n',
-                           '[fuzz-exec] calling asyncify_start_rewind\nexception!\n',
-                           '[fuzz-exec] calling asyncify_start_rewind\n',
-                           '[fuzz-exec] calling asyncify_stop_rewind\n',
-                           '[fuzz-exec] calling asyncify_stop_unwind\n']:
-                out = out.replace(ignore, '')
-            out = '\n'.join([l for l in out.splitlines() if 'asyncify: ' not in l])
-            return fix_output(out)
-
-        before_asyncify = do_asyncify(before_wasm)
-        after_asyncify = do_asyncify(after_wasm)
-
-        compare(before, before_asyncify, 'Asyncify (before/before_asyncify)')
-        compare(before, after_asyncify, 'Asyncify (before/after_asyncify)')
-
-    def can_run_on_feature_opts(self, feature_opts):
-        return all_disallowed(['exception-handling', 'simd', 'tail-call', 'reference-types', 'multivalue', 'gc', 'multimemory'])
 
 
 # given a wasm and a list of exports we want to keep, remove all other exports.
@@ -1375,7 +1303,6 @@ testcase_handlers = [
     CompareVMs(),
     CheckDeterminism(),
     Wasm2JS(),
-    Asyncify(),
     TrapsNeverHappen(),
     CtorEval(),
     Merge(),

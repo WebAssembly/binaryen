@@ -75,7 +75,9 @@ inline bool isNumber(const std::string& str) {
   return !str.empty() && std::all_of(str.begin(), str.end(), ::isdigit);
 }
 
-std::ostream& printEscaped(std::ostream& os, std::string_view str);
+std::ostream& printEscaped(std::ostream& os, const std::string_view str);
+
+std::ostream& printEscapedJSON(std::ostream& os, const std::string_view str);
 
 } // namespace wasm::String
 
