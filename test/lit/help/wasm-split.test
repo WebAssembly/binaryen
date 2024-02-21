@@ -39,9 +39,9 @@
 ;; CHECK-NEXT:                                        to split out to the secondary module. The
 ;; CHECK-NEXT:                                        rest will be kept. Can be used alongside
 ;; CHECK-NEXT:                                        --profile and --keep-funcs. This takes
-;; CHECK-NEXT:                                        precedence over other options. You can
-;; CHECK-NEXT:                                        also pass a file with one function per
-;; CHECK-NEXT:                                        line by passing @filename.
+;; CHECK-NEXT:                                        precedence over other split options. You
+;; CHECK-NEXT:                                        can also pass a file with one function
+;; CHECK-NEXT:                                        per line by passing @filename.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --primary-output,-o1                 [split] Output file for the primary
 ;; CHECK-NEXT:                                        module.
