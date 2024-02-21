@@ -260,6 +260,7 @@ V8_OPTS = [
     '--experimental-wasm-typed-funcref',
     '--experimental-wasm-memory64',
     '--experimental-wasm-extended-const',
+    '--experimental-wasm-stringref',
     '--wasm-final-types',
 ]
 
