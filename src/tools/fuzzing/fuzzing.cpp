@@ -433,6 +433,15 @@ void TranslateToFuzzReader::setupGlobals() {
 }
 
 void TranslateToFuzzReader::setupTags() {
+  // As in modifyInitialFunctions(), we can't allow tag imports as it would trap
+  // when the fuzzing infrastructure doesn't know what to provide.
+  for (auto& tag : wasm.tags) {
+    if (tag->imported()) {
+      tag->module = tag->base = Name();
+    }
+  }
+
+  // Add some random tags.
   Index num = upTo(3);
   for (size_t i = 0; i < num; i++) {
     addTag();
