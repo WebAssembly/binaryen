@@ -52,14 +52,6 @@
 ;; RUN: not wasm-split %s --merge-profiles -g 2>&1 \
 ;; RUN:   | filecheck %s --check-prefix MERGE-DEBUGINFO
 
-;; --profile cannot be used with --split-funcs
-;; RUN: not wasm-split %s --profile=foo --split-funcs=foo 2>&1 \
-;; RUN:   | filecheck %s --check-prefix PROFILE-SPLIT
-
-;; --keep-funcs cannot be used with --split-funcs
-;; RUN: not wasm-split %s  --keep-funcs=foo --split-funcs=foo 2>&1 \
-;; RUN:   | filecheck %s --check-prefix KEEP-SPLIT
-
 ;; INSTRUMENT-PROFILE: error: Option --profile cannot be used in instrument mode.
 
 ;; INSTRUMENT-OUT1: error: Option --primary-output cannot be used in instrument mode.
@@ -85,9 +77,5 @@
 ;; MERGE-EMIT-TEXT: error: Option --emit-text cannot be used in merge-profiles mode.
 
 ;; MERGE-DEBUGINFO: error: Option --debuginfo cannot be used in merge-profiles mode.
-
-;; PROFILE-SPLIT: error: Cannot use both --profile and --split-funcs.
-
-;; KEEP-SPLIT: error: Cannot use both --keep-funcs and --split-funcs.
 
 (module)

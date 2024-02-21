@@ -129,8 +129,8 @@ WasmSplitOptions::WasmSplitOptions()
     .add("--keep-funcs",
          "",
          "Comma-separated list of functions to keep in the primary module. The "
-         "rest will be split out. Cannot be used with --split-funcs."
-         "You can also pass a file with one function per line "
+         "rest will be split out. Can be used alongside --profile and "
+         "--split-funcs. You can also pass a file with one function per line "
          "by passing @filename.",
          WasmSplitOption,
          {Mode::Split},
@@ -141,8 +141,9 @@ WasmSplitOptions::WasmSplitOptions()
     .add("--split-funcs",
          "",
          "Comma-separated list of functions to split out to the secondary "
-         "module. The rest will be kept. Cannot be used with --profile or "
-         "--keep-funcs. You can also pass a file with one function per line "
+         "module. The rest will be kept. Can be used alongside --profile and "
+         "--keep-funcs. This takes precedence over other split options. "
+         "You can also pass a file with one function per line "
          "by passing @filename.",
          WasmSplitOption,
          {Mode::Split},
@@ -418,15 +419,6 @@ bool WasmSplitOptions::validate() {
       std::stringstream msg;
       msg << "Option " << opt << " cannot be used in " << mode << " mode.";
       fail(msg.str());
-    }
-  }
-
-  if (mode == Mode::Split) {
-    if (profileFile.size() && splitFuncs.size()) {
-      fail("Cannot use both --profile and --split-funcs.");
-    }
-    if (keepFuncs.size() && splitFuncs.size()) {
-      fail("Cannot use both --keep-funcs and --split-funcs.");
     }
   }
 

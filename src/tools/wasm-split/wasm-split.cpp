@@ -181,7 +181,7 @@ void getFunctionsToKeepAndSplit(Module& wasm,
     }
     if (profile.timestamps[i++] > 0) {
       keepFuncs.insert(func->name);
-    } else if (keepFuncs.count(func->name) == 0) {
+    } else {
       splitFuncs.insert(func->name);
     }
   });
@@ -212,6 +212,14 @@ void splitModule(const WasmSplitOptions& options) {
   parseInput(wasm, options);
 
   std::set<Name> keepFuncs;
+  std::set<Name> splitFuncs;
+
+  if (options.profileFile.size()) {
+    // Use the profile to set `keepFuncs`.
+    uint64_t hash = hashFile(options.inputFiles[0]);
+    getFunctionsToKeepAndSplit(
+      wasm, hash, options.profileFile, keepFuncs, splitFuncs);
+  }
 
   if (options.keepFuncs.size()) {
     // Use the explicitly provided `keepFuncs`.
@@ -220,20 +228,21 @@ void splitModule(const WasmSplitOptions& options) {
         std::cerr << "warning: function " << func << " does not exist\n";
       }
       keepFuncs.insert(func);
+
+      if (splitFuncs.count(func) != 0){
+        splitFuncs.erase(func);
+      }
     }
   }
 
-  if (options.profileFile.size()) {
-    // Use the profile to set `keepFuncs`.
-    uint64_t hash = hashFile(options.inputFiles[0]);
-    std::set<Name> splitFuncs;
-    getFunctionsToKeepAndSplit(
-      wasm, hash, options.profileFile, keepFuncs, splitFuncs);
-  } else if (options.splitFuncs.size()) {
+  if (options.splitFuncs.size()) {
     // Use the explicitly provided `splitFuncs`.
-    for (auto& func : wasm.functions) {
-      keepFuncs.insert(func->name);
+    if (keepFuncs.empty()) {
+      for (auto& func : wasm.functions) {
+        keepFuncs.insert(func->name);
+      }
     }
+
     for (auto& func : options.splitFuncs) {
       auto* function = wasm.getFunctionOrNull(func);
       if (!options.quiet && function == nullptr) {
@@ -245,18 +254,22 @@ void splitModule(const WasmSplitOptions& options) {
                     << "\n";
         }
       } else {
+        if (!options.quiet && keepFuncs.count(func) != 0) {
+          std::cerr << "warning: function " << func << " was to be kept in primary module. " 
+                    << "However it will now be splitted out into secondary module.\n";
+        }
         keepFuncs.erase(func);
       }
     }
   }
 
+  if (!options.quiet && keepFuncs.size() == 0) {
+    std::cerr << "warning: not keeping any functions in the primary module\n";
+  }
+
   if (options.jspi) {
     // The load secondary module function must be kept in the main module.
     keepFuncs.insert(ModuleSplitting::LOAD_SECONDARY_MODULE);
-  }
-
-  if (!options.quiet && keepFuncs.size() == 0) {
-    std::cerr << "warning: not keeping any functions in the primary module\n";
   }
 
   // If warnings are enabled, check that any functions are being split out.
