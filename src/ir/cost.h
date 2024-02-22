@@ -728,7 +728,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
 
   CostType visitContNew(ContNew* curr) {
     // Some arbitrary "high" value, reflecting that this may allocate a stack
-    return 10 + visit(curr->func);
+    return 14 + visit(curr->func);
   }
   CostType visitResume(Resume* curr) {
     // Inspired by indirect calls, but twice the cost.
