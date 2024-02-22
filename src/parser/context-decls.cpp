@@ -27,7 +27,7 @@ void applyImportNames(Importable& item, ImportNames* names) {
   }
 }
 
-Result<> addExports(ParseInput& in,
+Result<> addExports(Lexer& in,
                     Module& wasm,
                     const Named* item,
                     const std::vector<Name>& exports,

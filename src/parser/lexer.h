@@ -24,6 +24,7 @@
 #include <variant>
 
 #include "support/name.h"
+#include "support/result.h"
 
 #ifndef parser_lexer_h
 #define parser_lexer_h
@@ -396,6 +397,14 @@ public:
     }
     return getIndex();
   }
+
+  [[nodiscard]] Err err(size_t pos, std::string reason) {
+    std::stringstream msg;
+    msg << position(pos) << ": error: " << reason;
+    return Err{msg.str()};
+  }
+
+  [[nodiscard]] Err err(std::string reason) { return err(getPos(), reason); }
 
 private:
   void skipSpace();

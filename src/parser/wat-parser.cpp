@@ -60,8 +60,7 @@ namespace wasm::WATParser {
 
 namespace {
 
-Result<IndexMap> createIndexMap(ParseInput& in,
-                                const std::vector<DefPos>& defs) {
+Result<IndexMap> createIndexMap(Lexer& in, const std::vector<DefPos>& defs) {
   IndexMap indices;
   for (auto& def : defs) {
     if (def.name.is()) {
