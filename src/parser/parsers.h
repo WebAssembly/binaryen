@@ -549,7 +549,7 @@ template<typename Ctx> Result<typename Ctx::FieldT> fieldtype(Ctx& ctx) {
 template<typename Ctx> Result<typename Ctx::FieldsT> fields(Ctx& ctx) {
   auto res = ctx.makeFields();
   while (true) {
-    if (auto t = ctx.in.peek(); !t || t->isRParen()) {
+    if (ctx.in.empty() || ctx.in.peekRParen()) {
       return res;
     }
     if (ctx.in.takeSExprStart("field")) {
@@ -754,13 +754,11 @@ template<typename Ctx> MaybeResult<> plaininstr(Ctx& ctx) {
 // instr ::= plaininstr | blockinstr
 template<typename Ctx> MaybeResult<> instr(Ctx& ctx) {
   // Check for valid strings that are not instructions.
-  if (auto tok = ctx.in.peek()) {
-    if (auto keyword = tok->getKeyword()) {
-      if (keyword == "end"sv || keyword == "then"sv || keyword == "else"sv ||
-          keyword == "catch"sv || keyword == "catch_all"sv ||
-          keyword == "delegate"sv || keyword == "ref"sv) {
-        return {};
-      }
+  if (auto keyword = ctx.in.peekKeyword()) {
+    if (keyword == "end"sv || keyword == "then"sv || keyword == "else"sv ||
+        keyword == "catch"sv || keyword == "catch_all"sv ||
+        keyword == "delegate"sv || keyword == "ref"sv) {
+      return {};
     }
   }
   if (auto inst = blockinstr(ctx)) {
@@ -775,7 +773,7 @@ template<typename Ctx> MaybeResult<> instr(Ctx& ctx) {
 
 template<typename Ctx> MaybeResult<> foldedinstr(Ctx& ctx) {
   // We must have an '(' to start a folded instruction.
-  if (auto tok = ctx.in.peek(); !tok || !tok->isLParen()) {
+  if (!ctx.in.peekLParen()) {
     return {};
   }
 
@@ -2965,7 +2963,7 @@ template<typename Ctx> MaybeResult<> tag(Ctx& ctx) {
 //               | data
 //               | tag
 template<typename Ctx> MaybeResult<> modulefield(Ctx& ctx) {
-  if (auto t = ctx.in.peek(); !t || t->isRParen()) {
+  if (ctx.in.empty() || ctx.in.peekRParen()) {
     return {};
   }
   if (auto res = deftype(ctx)) {
