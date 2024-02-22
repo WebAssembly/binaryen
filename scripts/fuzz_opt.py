@@ -311,6 +311,8 @@ INITIAL_CONTENTS_IGNORE = [
     'exception-handling.wast',
     'translate-eh-old-to-new.wast',
     'rse-eh.wast',
+    # Non-UTF8 strings trap in V8
+    'string-lowering.wast',
 ]
 
 
@@ -756,10 +758,7 @@ class CompareVMs(TestCaseHandler):
                 return run_vm([shared.V8, FUZZ_SHELL_JS] + shared.V8_OPTS + extra_d8_flags + ['--', wasm])
 
             def can_run(self, wasm):
-                # INITIAL_CONTENT is disallowed because some initial spec testcases
-                # have names that require mangling, see
-                # https://github.com/WebAssembly/binaryen/pull/3216
-                return not INITIAL_CONTENTS
+                return True
 
             def can_compare_to_self(self):
                 # With nans, VM differences can confuse us, so only very simple VMs

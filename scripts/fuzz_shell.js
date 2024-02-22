@@ -47,7 +47,10 @@ function printed(x, y) {
     // JS has just one null. Print that out rather than typeof null which is
     // 'object', below.
     return 'null';
-  } else if (typeof x !== 'number' && typeof x !== 'string') {
+  } else if (typeof x === 'string') {
+    // Emit a string in the same format as the binaryen interpreter.
+    return 'string("' + x + '")';
+  } else if (typeof x !== 'number') {
     // Something that is not a number or string, like a reference. We can't
     // print a reference because it could look different after opts - imagine
     // that a function gets renamed internally (that is, the problem is that
