@@ -570,6 +570,9 @@ struct NullInstrParserCtx {
   Result<> makeStringIterMove(Index, StringIterMoveOp) { return Ok{}; }
   Result<> makeStringSliceWTF(Index, StringSliceWTFOp) { return Ok{}; }
   Result<> makeStringSliceIter(Index) { return Ok{}; }
+  template<typename HeapTypeT> Result<> makeContNew(Index, HeapTypeT) {
+    return Ok{};
+  }
   template<typename HeapTypeT>
   Result<> makeResume(Index, HeapTypeT, const TagLabelListT&) {
     return Ok{};
@@ -2008,6 +2011,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeStringSliceIter(Index pos) {
     return withLoc(pos, irBuilder.makeStringSliceIter());
+  }
+
+  Result<> makeContNew(Index pos, HeapType type) {
+    return withLoc(pos, irBuilder.makeContNew(type));
   }
 
   Result<>

@@ -182,6 +182,7 @@ void ReFinalize::visitStringSliceIter(StringSliceIter* curr) {
   curr->finalize();
 }
 
+void ReFinalize::visitContNew(ContNew* curr) { curr->finalize(); }
 void ReFinalize::visitResume(Resume* curr) { curr->finalize(); }
 
 void ReFinalize::visitExport(Export* curr) { WASM_UNREACHABLE("unimp"); }

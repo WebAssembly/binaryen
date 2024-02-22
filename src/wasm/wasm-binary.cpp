@@ -4046,6 +4046,12 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       visitCallRef(call);
       break;
     }
+    case BinaryConsts::ContNew: {
+      auto contNew = allocator.alloc<ContNew>();
+      curr = contNew;
+      visitContNew(contNew);
+      break;
+    }
     case BinaryConsts::Resume: {
       visitResume((curr = allocator.alloc<Resume>())->cast<Resume>());
       break;
@@ -7759,6 +7765,20 @@ void WasmBinaryReader::visitRefAs(RefAs* curr, uint8_t code) {
   if (!curr->value->type.isRef() && curr->value->type != Type::unreachable) {
     throwError("bad input type for ref.as: " + curr->value->type.toString());
   }
+  curr->finalize();
+}
+
+void WasmBinaryReader::visitContNew(ContNew* curr) {
+  BYN_TRACE("zz node: ContNew\n");
+
+  auto contTypeIndex = getU32LEB();
+  curr->contType = getTypeByIndex(contTypeIndex);
+  if (!curr->contType.isContinuation()) {
+    throwError("non-continuation type in cont.new instruction " +
+               curr->contType.toString());
+  }
+
+  curr->func = popNonVoidExpression();
   curr->finalize();
 }
 
