@@ -126,16 +126,27 @@ def no_pass_debug():
 def randomize_feature_opts():
     global FEATURE_OPTS
     FEATURE_OPTS = CONSTANT_FEATURE_OPTS[:]
-    # 1/3 the time apply all the possible opts, 1/3 none of them, to maximize
-    # coverage both ways, and 1/3 pick each one randomly
-    if random.random() < 0.33333:
-        FEATURE_OPTS += POSSIBLE_FEATURE_OPTS
-    elif random.random() < 0.5:
-        for possible in POSSIBLE_FEATURE_OPTS:
+
+    if random.random() < 0.1:
+        # 10% of the time disable all features, i.e., fuzz the MVP featureset.
+        # Fuzzing that is less and less important as more features get enabled
+        # by default, but we don't want to lose all coverage for it entirely
+        # (and the odds of randomly not selecting any feature, below, is too
+        # small - at 17 features it is far less than 1%).
+        FEATURE_OPTS += FEATURE_DISABLE_FLAGS
+    elif random.random() < 0.333:
+        # 1/3 of the remaining 90% pick each feature randomly.
+        for possible in FEATURE_DISABLE_FLAGS:
             if random.random() < 0.5:
                 FEATURE_OPTS.append(possible)
                 if possible in IMPLIED_FEATURE_OPTS:
                     FEATURE_OPTS.extend(IMPLIED_FEATURE_OPTS[possible])
+    else:
+        # 2/3 of the remaining 90% use them all. This is useful to maximize
+        # coverage, as enabling more features enables more optimizations and
+        # code paths, and also allows all initial contents to run.
+        pass
+
     print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
 
     # Pick closed or open with equal probability as both matter.
@@ -928,9 +939,6 @@ class CompareVMs(TestCaseHandler):
             if vm in after and vm.can_compare_to_self():
                 compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
-    def can_run_on_feature_opts(self, feature_opts):
-        return True
-
 
 # Check for determinism - the same command must have the same output.
 class CheckDeterminism(TestCaseHandler):
@@ -1591,11 +1599,10 @@ def get_random_opts():
 
 # main
 
-# possible feature options that are sometimes passed to the tools. this
-# contains the list of all possible feature flags we can disable (after
-# we enable all before that in the constant options)
-POSSIBLE_FEATURE_OPTS = run([in_bin('wasm-opt'), '--print-features', in_binaryen('test', 'hello_world.wat')] + CONSTANT_FEATURE_OPTS).replace('--enable', '--disable').strip().split('\n')
-print('POSSIBLE_FEATURE_OPTS:', POSSIBLE_FEATURE_OPTS)
+# list of all the flags to disable all the features. if all of these are added
+# then we target the MVP.
+FEATURE_DISABLE_FLAGS = run([in_bin('wasm-opt'), '--print-features', in_binaryen('test', 'hello_world.wat')] + CONSTANT_FEATURE_OPTS).replace('--enable', '--disable').strip().split('\n')
+print('FEATURE_DISABLE_FLAGS:', FEATURE_DISABLE_FLAGS)
 
 # some features depend on other features, so if a required feature is
 # disabled, its dependent features need to be disabled as well.
