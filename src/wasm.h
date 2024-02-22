@@ -2000,6 +2000,7 @@ public:
 
 class ContNew : public SpecificExpression<Expression::ContNewId> {
 public:
+  ContNew() = default;
   ContNew(MixedArena& allocator) {}
 
   HeapType contType;
