@@ -106,7 +106,7 @@ std::string trim(const std::string& input) {
   return input.substr(0, size);
 }
 
-std::ostream& printEscaped(std::ostream& os, std::string_view str) {
+std::ostream& printEscaped(std::ostream& os, const std::string_view str) {
   os << '"';
   for (unsigned char c : str) {
     switch (c) {
@@ -135,6 +135,126 @@ std::ostream& printEscaped(std::ostream& os, std::string_view str) {
           os << std::hex << '\\' << (c / 16) << (c % 16) << std::dec;
         }
       }
+    }
+  }
+  return os << '"';
+}
+
+std::ostream& printEscapedJSON(std::ostream& os, const std::string_view str) {
+  os << '"';
+  constexpr uint32_t replacementCharacter = 0xFFFD;
+  bool lastWasLeadingSurrogate = false;
+  for (size_t i = 0; i < str.size();) {
+    // Decode from WTF-8 into a unicode code point.
+    uint8_t leading = str[i];
+    size_t trailingBytes;
+    uint32_t u;
+    if ((leading & 0b10000000) == 0b00000000) {
+      // 0xxxxxxx
+      trailingBytes = 0;
+      u = leading;
+    } else if ((leading & 0b11100000) == 0b11000000) {
+      // 110xxxxx 10xxxxxx
+      trailingBytes = 1;
+      u = (leading & 0b00011111) << 6;
+    } else if ((leading & 0b11110000) == 0b11100000) {
+      // 1110xxxx 10xxxxxx 10xxxxxx
+      trailingBytes = 2;
+      u = (leading & 0b00001111) << 12;
+    } else if ((leading & 0b11111000) == 0b11110000) {
+      // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
+      trailingBytes = 3;
+      u = (leading & 0b00000111) << 18;
+    } else {
+      std::cerr << "warning: Bad WTF-8 leading byte (" << std::hex
+                << int(leading) << std::dec << "). Replacing.\n";
+      trailingBytes = 0;
+      u = replacementCharacter;
+    }
+
+    ++i;
+
+    if (i + trailingBytes > str.size()) {
+      std::cerr << "warning: Unexpected end of string. Replacing.\n";
+      u = replacementCharacter;
+    } else {
+      for (size_t j = 0; j < trailingBytes; ++j) {
+        uint8_t trailing = str[i + j];
+        if ((trailing & 0b11000000) != 0b10000000) {
+          std::cerr << "warning: Bad WTF-8 trailing byte (" << std::hex
+                    << int(trailing) << std::dec << "). Replacing.\n";
+          u = replacementCharacter;
+          break;
+        }
+        // Shift 6 bits for every remaining trailing byte after this one.
+        u |= (trailing & 0b00111111) << (6 * (trailingBytes - j - 1));
+      }
+    }
+
+    i += trailingBytes;
+
+    bool isLeadingSurrogate = 0xD800 <= u && u <= 0xDBFF;
+    bool isTrailingSurrogate = 0xDC00 <= u && u <= 0xDFFF;
+    if (lastWasLeadingSurrogate && isTrailingSurrogate) {
+      std::cerr << "warning: Invalid surrogate sequence in WTF-8.\n";
+    }
+    lastWasLeadingSurrogate = isLeadingSurrogate;
+
+    // Encode unicode code point into JSON.
+    switch (u) {
+      case '"':
+        os << "\\\"";
+        continue;
+      case '\\':
+        os << "\\\\";
+        continue;
+      case '\b':
+        os << "\\b";
+        continue;
+      case '\f':
+        os << "\\f";
+        continue;
+      case '\n':
+        os << "\\n";
+        continue;
+      case '\r':
+        os << "\\r";
+        continue;
+      case '\t':
+        os << "\\t";
+        continue;
+      default:
+        break;
+    }
+
+    // TODO: To minimize size, consider additionally escaping only other control
+    // characters (u <= 0x1F) and surrogates, emitting everything else directly
+    // assuming a UTF-8 encoding of the JSON text. We don't do this now because
+    // Print.cpp would consider the contents unprintable, messing up our test.
+    bool isNaivelyPrintable = 32 <= u && u < 127;
+    if (isNaivelyPrintable) {
+      assert(u < 0x80 && "need additional logic to emit valid UTF-8");
+      os << uint8_t(u);
+      continue;
+    }
+
+    // Escape as '\uXXXX` for code points less than 0x10000 or as a
+    // '\uXXXX\uYYYY' surrogate pair otherwise.
+    auto printEscape = [&os](uint32_t codePoint) {
+      assert(codePoint < 0x10000);
+      os << std::hex << "\\u";
+      os << ((codePoint & 0xF000) >> 12);
+      os << ((codePoint & 0x0F00) >> 8);
+      os << ((codePoint & 0x00F0) >> 4);
+      os << (codePoint & 0x000F);
+      os << std::dec;
+    };
+    if (u < 0x10000) {
+      printEscape(u);
+    } else {
+      assert(u <= 0x10FFFF && "unexpectedly high code point");
+      printEscape(0xD800 + ((u - 0x10000) >> 10));
+      printEscape(0xDC00 + ((u - 0x10000) & 0x3FF));
     }
   }
   return os << '"';

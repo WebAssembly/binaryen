@@ -38,9 +38,6 @@ inline Index stackAlign(Index size) {
 // Allocate some space on the stack, and assign it to a local.
 // The local will have the same constant value in all the function, so you can
 // just local.get it anywhere there.
-//
-// FIXME: This function assumes that the stack grows upward, per the convention
-// used by fastcomp.  The stack grows downward when using the WASM backend.
 
 inline void
 getStackSpace(Index local, Function* func, Index size, Module& wasm) {
@@ -55,22 +52,25 @@ getStackSpace(Index local, Function* func, Index size, Module& wasm) {
   // TODO: find existing stack usage, and add on top of that - carefully
   Builder builder(wasm);
   auto* block = builder.makeBlock();
-  block->list.push_back(builder.makeLocalSet(
-    local, builder.makeGlobalGet(stackPointer->name, pointerType)));
   // TODO: add stack max check
   Expression* added;
   if (pointerType == Type::i32) {
     // The stack goes downward in the LLVM wasm backend.
-    added = builder.makeBinary(SubInt32,
-                               builder.makeLocalGet(local, pointerType),
-                               builder.makeConst(int32_t(size)));
+    added =
+      builder.makeBinary(SubInt32,
+                         builder.makeGlobalGet(stackPointer->name, pointerType),
+                         builder.makeConst(int32_t(size)));
   } else {
     WASM_UNREACHABLE("unhandled pointerType");
   }
-  block->list.push_back(builder.makeGlobalSet(stackPointer->name, added));
+  block->list.push_back(builder.makeGlobalSet(
+    stackPointer->name, builder.makeLocalTee(local, added, pointerType)));
   auto makeStackRestore = [&]() {
-    return builder.makeGlobalSet(stackPointer->name,
-                                 builder.makeLocalGet(local, pointerType));
+    return builder.makeGlobalSet(
+      stackPointer->name,
+      builder.makeBinary(AddInt32,
+                         builder.makeLocalGet(local, pointerType),
+                         builder.makeConst(int32_t(size))));
   };
   // add stack restores to the returns
   FindAllPointers<Return> finder(func->body);

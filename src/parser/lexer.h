@@ -23,6 +23,9 @@
 #include <string_view>
 #include <variant>
 
+#include "support/name.h"
+#include "support/result.h"
+
 #ifndef parser_lexer_h
 #define parser_lexer_h
 
@@ -147,13 +150,6 @@ struct Token {
 // positions are computed on demand rather than eagerly because they are
 // typically only needed when there is an error to report.
 struct Lexer {
-  using iterator = Lexer;
-  using difference_type = std::ptrdiff_t;
-  using value_type = Token;
-  using pointer = const Token*;
-  using reference = const Token&;
-  using iterator_category = std::forward_iterator_tag;
-
 private:
   std::string_view buffer;
   size_t index = 0;
@@ -169,51 +165,250 @@ public:
 
   void setIndex(size_t i) {
     index = i;
-    skipSpace();
-    lexToken();
+    advance();
   }
 
-  std::string_view next() const { return buffer.substr(index); }
-  Lexer& operator++() {
-    // Preincrement
-    skipSpace();
-    lexToken();
-    return *this;
+  bool takeLParen() {
+    if (!curr || !curr->isLParen()) {
+      return false;
+    }
+    advance();
+    return true;
   }
 
-  Lexer operator++(int) {
-    // Postincrement
-    Lexer ret = *this;
-    ++(*this);
+  bool peekLParen() { return Lexer(*this).takeLParen(); }
+
+  bool takeRParen() {
+    if (!curr || !curr->isRParen()) {
+      return false;
+    }
+    advance();
+    return true;
+  }
+
+  bool peekRParen() { return Lexer(*this).takeRParen(); }
+
+  bool takeUntilParen() {
+    while (true) {
+      if (!curr) {
+        return false;
+      }
+      if (curr->isLParen() || curr->isRParen()) {
+        return true;
+      }
+      advance();
+    }
+  }
+
+  std::optional<Name> takeID() {
+    if (curr) {
+      if (auto id = curr->getID()) {
+        advance();
+        // See comment on takeName.
+        return Name(std::string(*id));
+      }
+    }
+    return {};
+  }
+
+  std::optional<std::string_view> takeKeyword() {
+    if (curr) {
+      if (auto keyword = curr->getKeyword()) {
+        advance();
+        return *keyword;
+      }
+    }
+    return {};
+  }
+
+  std::optional<std::string_view> peekKeyword() {
+    return Lexer(*this).takeKeyword();
+  }
+
+  bool takeKeyword(std::string_view expected) {
+    if (curr) {
+      if (auto keyword = curr->getKeyword()) {
+        if (*keyword == expected) {
+          advance();
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
+  std::optional<uint64_t> takeOffset() {
+    using namespace std::string_view_literals;
+    if (curr) {
+      if (auto keyword = curr->getKeyword()) {
+        if (keyword->substr(0, 7) != "offset="sv) {
+          return {};
+        }
+        Lexer subLexer(keyword->substr(7));
+        if (subLexer.empty()) {
+          return {};
+        }
+        if (auto o = subLexer.curr->getU<uint64_t>()) {
+          subLexer.advance();
+          if (subLexer.empty()) {
+            advance();
+            return o;
+          }
+        }
+      }
+    }
+    return std::nullopt;
+  }
+
+  std::optional<uint32_t> takeAlign() {
+    using namespace std::string_view_literals;
+    if (curr) {
+      if (auto keyword = curr->getKeyword()) {
+        if (keyword->substr(0, 6) != "align="sv) {
+          return {};
+        }
+        Lexer subLexer(keyword->substr(6));
+        if (subLexer.empty()) {
+          return {};
+        }
+        if (auto a = subLexer.curr->getU<uint32_t>()) {
+          subLexer.advance();
+          if (subLexer.empty()) {
+            advance();
+            return a;
+          }
+        }
+      }
+    }
+    return {};
+  }
+
+  template<typename T> std::optional<T> takeU() {
+    if (curr) {
+      if (auto n = curr->getU<T>()) {
+        advance();
+        return n;
+      }
+    }
+    return std::nullopt;
+  }
+
+  template<typename T> std::optional<T> takeI() {
+    if (curr) {
+      if (auto n = curr->getI<T>()) {
+        advance();
+        return n;
+      }
+    }
+    return std::nullopt;
+  }
+
+  std::optional<uint64_t> takeU64() { return takeU<uint64_t>(); }
+
+  std::optional<uint64_t> takeI64() { return takeI<uint64_t>(); }
+
+  std::optional<uint32_t> takeU32() { return takeU<uint32_t>(); }
+
+  std::optional<uint32_t> takeI32() { return takeI<uint32_t>(); }
+
+  std::optional<uint16_t> takeI16() { return takeI<uint16_t>(); }
+
+  std::optional<uint8_t> takeU8() { return takeU<uint8_t>(); }
+
+  std::optional<uint8_t> takeI8() { return takeI<uint8_t>(); }
+
+  std::optional<double> takeF64() {
+    if (curr) {
+      if (auto d = curr->getF64()) {
+        advance();
+        return d;
+      }
+    }
+    return std::nullopt;
+  }
+
+  std::optional<float> takeF32() {
+    if (curr) {
+      if (auto f = curr->getF32()) {
+        advance();
+        return f;
+      }
+    }
+    return std::nullopt;
+  }
+
+  std::optional<std::string> takeString() {
+    if (curr) {
+      if (auto s = curr->getString()) {
+        std::string ret(*s);
+        advance();
+        return ret;
+      }
+    }
+    return {};
+  }
+
+  std::optional<Name> takeName() {
+    // TODO: Move this to lexer and validate UTF.
+    if (auto str = takeString()) {
+      // Copy to a std::string to make sure we have a null terminator, otherwise
+      // the `Name` constructor won't work correctly.
+      // TODO: Update `Name` to use string_view instead of char* and/or to take
+      // rvalue strings to avoid this extra copy.
+      return Name(std::string(*str));
+    }
+    return {};
+  }
+
+  bool takeSExprStart(std::string_view expected) {
+    auto original = *this;
+    if (takeLParen() && takeKeyword(expected)) {
+      return true;
+    }
+    *this = original;
+    return false;
+  }
+
+  bool peekSExprStart(std::string_view expected) {
+    auto original = *this;
+    if (!takeLParen()) {
+      return false;
+    }
+    bool ret = takeKeyword(expected);
+    *this = original;
     return ret;
   }
 
-  const Token& operator*() { return *curr; }
-  const Token* operator->() { return &*curr; }
+  std::string_view next() const { return buffer.substr(index); }
 
-  bool operator==(const Lexer& other) const {
-    // The iterator is equal to the end sentinel when there is no current token.
-    if (!curr && !other.curr) {
-      return true;
-    }
-    // Otherwise they are equivalent when they are at the same position.
-    return index == other.index;
+  void advance() {
+    skipSpace();
+    lexToken();
   }
 
-  bool operator!=(const Lexer& other) const { return !(*this == other); }
-
-  Lexer begin() { return *this; }
-
-  Lexer end() const { return Lexer(); }
-
-  bool empty() const { return *this == end(); }
+  bool empty() const { return !curr; }
 
   TextPos position(const char* c) const;
   TextPos position(size_t i) const { return position(buffer.data() + i); }
   TextPos position(std::string_view span) const {
     return position(span.data());
   }
-  TextPos position(Token tok) const { return position(tok.span); }
+  TextPos position() const { return position(getPos()); }
+
+  size_t getPos() const {
+    if (curr) {
+      return getIndex() - curr->span.size();
+    }
+    return getIndex();
+  }
+
+  [[nodiscard]] Err err(size_t pos, std::string reason) {
+    std::stringstream msg;
+    msg << position(pos) << ": error: " << reason;
+    return Err{msg.str()};
+  }
+
+  [[nodiscard]] Err err(std::string reason) { return err(getPos(), reason); }
 
 private:
   void skipSpace();

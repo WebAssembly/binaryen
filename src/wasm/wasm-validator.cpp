@@ -2909,6 +2909,10 @@ void FunctionValidator::visitArrayNew(ArrayNew* curr) {
 void FunctionValidator::visitArrayNewData(ArrayNewData* curr) {
   visitArrayNew(curr);
 
+  shouldBeTrue(
+    getModule()->features.hasBulkMemory(),
+    curr,
+    "Data segment operations require bulk memory [--enable-bulk-memory]");
   if (!shouldBeTrue(getModule()->getDataSegment(curr->segment),
                     curr,
                     "array.new_data segment should exist")) {
@@ -3175,6 +3179,10 @@ void FunctionValidator::visitArrayInit(ArrayInit* curr) {
 void FunctionValidator::visitArrayInitData(ArrayInitData* curr) {
   visitArrayInit(curr);
 
+  shouldBeTrue(
+    getModule()->features.hasBulkMemory(),
+    curr,
+    "Data segment operations require bulk memory [--enable-bulk-memory]");
   shouldBeTrue(getModule()->getDataSegmentOrNull(curr->segment),
                curr,
                "array.init_data segment must exist");
@@ -3305,11 +3313,6 @@ void FunctionValidator::visitResume(Resume* curr) {
 }
 
 void FunctionValidator::visitFunction(Function* curr) {
-  if (curr->getResults().isTuple()) {
-    shouldBeTrue(getModule()->features.hasMultivalue(),
-                 curr->body,
-                 "Multivalue function results (multivalue is not enabled)");
-  }
   FeatureSet features;
   // Check for things like having a rec group with GC enabled. The type we're
   // checking is a reference type even if this an MVP function type, so ignore
@@ -3330,28 +3333,7 @@ void FunctionValidator::visitFunction(Function* curr) {
   shouldBeTrue(features <= getModule()->features,
                curr->name,
                "all used types should be allowed");
-  if (curr->profile == IRProfile::Poppy) {
-    shouldBeTrue(
-      curr->body->is<Block>(), curr->body, "Function body must be a block");
-  }
-  // if function has no result, it is ignored
-  // if body is unreachable, it might be e.g. a return
-  shouldBeSubType(curr->body->type,
-                  curr->getResults(),
-                  curr->body,
-                  "function body type must match, if function returns");
-  for (Type returnType : returnTypes) {
-    shouldBeSubType(returnType,
-                    curr->getResults(),
-                    curr->body,
-                    "function result must match, if function has returns");
-  }
 
-  assert(breakTypes.empty());
-  assert(delegateTargetNames.empty());
-  assert(rethrowTargetNames.empty());
-  returnTypes.clear();
-  labelNames.clear();
   // validate optional local names
   std::unordered_set<Name> seen;
   for (auto& pair : curr->localNames) {
@@ -3359,17 +3341,50 @@ void FunctionValidator::visitFunction(Function* curr) {
     shouldBeTrue(seen.insert(name).second, name, "local names must be unique");
   }
 
-  if (getModule()->features.hasGC()) {
-    // If we have non-nullable locals, verify that local.get are valid.
-    LocalStructuralDominance info(curr, *getModule());
-    for (auto index : info.nonDominatingIndices) {
-      auto localType = curr->getLocalType(index);
-      for (auto type : localType) {
-        shouldBeTrue(!type.isNonNullable(),
-                     index,
-                     "non-nullable local's sets must dominate gets");
+  if (curr->body) {
+    if (curr->getResults().isTuple()) {
+      shouldBeTrue(getModule()->features.hasMultivalue(),
+                   curr->body,
+                   "Multivalue function results (multivalue is not enabled)");
+    }
+    if (curr->profile == IRProfile::Poppy) {
+      shouldBeTrue(
+        curr->body->is<Block>(), curr->body, "Function body must be a block");
+    }
+    // if function has no result, it is ignored
+    // if body is unreachable, it might be e.g. a return
+    shouldBeSubType(curr->body->type,
+                    curr->getResults(),
+                    curr->body,
+                    "function body type must match, if function returns");
+    for (Type returnType : returnTypes) {
+      shouldBeSubType(returnType,
+                      curr->getResults(),
+                      curr->body,
+                      "function result must match, if function has returns");
+    }
+
+    if (getModule()->features.hasGC()) {
+      // If we have non-nullable locals, verify that local.get are valid.
+      LocalStructuralDominance info(curr, *getModule());
+      for (auto index : info.nonDominatingIndices) {
+        auto localType = curr->getLocalType(index);
+        for (auto type : localType) {
+          shouldBeTrue(!type.isNonNullable(),
+                       index,
+                       "non-nullable local's sets must dominate gets");
+        }
       }
     }
+
+    // Assert that we finished with a clean state after processing the body's
+    // expressions, and reset the state for next time. Note that we use some of
+    // this state in the above validations, so this must appear last.
+    assert(breakTypes.empty());
+    assert(delegateTargetNames.empty());
+    assert(rethrowTargetNames.empty());
+    returnTypes.clear();
+    labelNames.clear();
   }
 }
 
@@ -3904,10 +3919,21 @@ bool WasmValidator::validate(Module& module, Flags flags) {
   info.validateGlobally = (flags & Globally) != 0;
   info.quiet = (flags & Quiet) != 0;
   info.closedWorld = (flags & ClosedWorld) != 0;
-  // parallel wasm logic validation
+
+  // Parallel function validation.
   PassRunner runner(&module);
-  FunctionValidator(module, &info).validate(&runner);
-  // validate globally
+  FunctionValidator functionValidator(module, &info);
+  functionValidator.validate(&runner);
+
+  // Also validate imports, which were not covered in the parallel traversal
+  // since it is a function-parallel operation.
+  for (auto& func : module.functions) {
+    if (func->imported()) {
+      functionValidator.visitFunction(func.get());
+    }
+  }
+
+  // Validate globally.
   if (info.validateGlobally) {
     validateImports(module, info);
     validateExports(module, info);
@@ -3922,11 +3948,13 @@ bool WasmValidator::validate(Module& module, Flags flags) {
       validateClosedWorldInterface(module, info);
     }
   }
-  // validate additional internal IR details when in pass-debug mode
+
+  // Validate additional internal IR details when in pass-debug mode.
   if (PassRunner::getPassDebug()) {
     validateBinaryenIR(module, info);
   }
-  // print all the data
+
+  // Print all the data.
   if (!info.valid.load() && !info.quiet) {
     for (auto& func : module.functions) {
       std::cerr << info.getStream(func.get()).str();

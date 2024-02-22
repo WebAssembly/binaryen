@@ -53,10 +53,6 @@
 ;; CHECK-NEXT:                                                 loads/stores/indirect calls when
 ;; CHECK-NEXT:                                                 fuzzing
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --emit-js-wrapper,-ejw                        Emit a JavaScript wrapper file
-;; CHECK-NEXT:                                                 that can run the wasm with some
-;; CHECK-NEXT:                                                 test values, useful for fuzzing
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-spec-wrapper,-esw                      Emit a wasm spec interpreter
 ;; CHECK-NEXT:                                                 wrapper file that can run the
 ;; CHECK-NEXT:                                                 wasm with some test values,
@@ -228,6 +224,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --jspi                                        wrap imports and exports for
 ;; CHECK-NEXT:                                                 JavaScript promise integration
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --legalize-and-prune-js-interface             legalizes the import/export
+;; CHECK-NEXT:                                                 boundary and prunes when needed
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --legalize-js-interface                       legalizes i64 types on the
 ;; CHECK-NEXT:                                                 import/export boundary

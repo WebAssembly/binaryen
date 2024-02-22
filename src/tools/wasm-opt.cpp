@@ -23,7 +23,6 @@
 
 #include "execution-results.h"
 #include "fuzzing.h"
-#include "js-wrapper.h"
 #include "optimization-options.h"
 #include "pass.h"
 #include "shell-interface.h"
@@ -86,7 +85,6 @@ int main(int argc, const char* argv[]) {
   bool fuzzPasses = false;
   bool fuzzMemory = true;
   bool fuzzOOB = true;
-  std::string emitJSWrapper;
   std::string emitSpecWrapper;
   std::string emitWasm2CWrapper;
   std::string inputSourceMapFilename;
@@ -180,15 +178,6 @@ int main(int argc, const char* argv[]) {
          WasmOptOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { fuzzOOB = false; })
-    .add("--emit-js-wrapper",
-         "-ejw",
-         "Emit a JavaScript wrapper file that can run the wasm with some test "
-         "values, useful for fuzzing",
-         WasmOptOption,
-         Options::Arguments::One,
-         [&](Options* o, const std::string& arguments) {
-           emitJSWrapper = arguments;
-         })
     .add("--emit-spec-wrapper",
          "-esw",
          "Emit a wasm spec interpreter wrapper file that can run the wasm with "
@@ -329,24 +318,11 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (emitJSWrapper.size() > 0) {
-    // As the code will run in JS, we must legalize it.
-    PassRunner runner(&wasm);
-    runner.add("legalize-js-interface");
-    runner.run();
-  }
-
   ExecutionResults results;
   if (fuzzExecBefore) {
     results.get(wasm);
   }
 
-  if (emitJSWrapper.size() > 0) {
-    std::ofstream outfile;
-    outfile.open(wasm::Path::to_path(emitJSWrapper), std::ofstream::out);
-    outfile << generateJSWrapper(wasm);
-    outfile.close();
-  }
   if (emitSpecWrapper.size() > 0) {
     std::ofstream outfile;
     outfile.open(wasm::Path::to_path(emitSpecWrapper), std::ofstream::out);
