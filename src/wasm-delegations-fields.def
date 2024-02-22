@@ -946,6 +946,13 @@ switch (DELEGATE_ID) {
     break;
   }
 
+  case Expression::Id::ContNewId: {
+    DELEGATE_START(ContNew);
+    DELEGATE_FIELD_CHILD(ContNew, func);
+    DELEGATE_FIELD_HEAPTYPE(ContNew, contType);
+    DELEGATE_END(ContNew);
+    break;
+  }
   case Expression::Id::ResumeId: {
     DELEGATE_START(Resume);
     DELEGATE_FIELD_TYPE_VECTOR(Resume, sentTypes);

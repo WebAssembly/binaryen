@@ -206,6 +206,7 @@ public:
   [[nodiscard]] Result<> makeStringIterMove(StringIterMoveOp op);
   [[nodiscard]] Result<> makeStringSliceWTF(StringSliceWTFOp op);
   [[nodiscard]] Result<> makeStringSliceIter();
+  [[nodiscard]] Result<> makeContNew(HeapType ct);
   [[nodiscard]] Result<> makeResume(HeapType ct,
                                     const std::vector<Name>& tags,
                                     const std::vector<Index>& labels);

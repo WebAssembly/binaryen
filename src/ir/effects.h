@@ -974,6 +974,10 @@ private:
       parent.implicitTrap = true;
     }
 
+    void visitContNew(ContNew* curr) {
+      // traps when curr->func is null ref.
+      parent.implicitTrap = true;
+    }
     void visitResume(Resume* curr) {
       // This acts as a kitchen sink effect.
       parent.calls = true;

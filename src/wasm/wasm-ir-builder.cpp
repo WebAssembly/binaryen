@@ -1783,6 +1783,17 @@ Result<> IRBuilder::makeStringSliceIter() {
   return Ok{};
 }
 
+Result<> IRBuilder::makeContNew(HeapType ct) {
+  if (!ct.isContinuation()) {
+    return Err{"expected continuation type"};
+  }
+  ContNew curr;
+  CHECK_ERR(visitContNew(&curr));
+
+  push(builder.makeContNew(ct, curr.func));
+  return Ok{};
+}
+
 Result<> IRBuilder::makeResume(HeapType ct,
                                const std::vector<Name>& tags,
                                const std::vector<Index>& labels) {

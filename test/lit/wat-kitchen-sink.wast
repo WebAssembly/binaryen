@@ -27,6 +27,10 @@
 
   ;; CHECK:      (type $9 (func (param i32 i64 v128)))
 
+  ;; CHECK:      (type $simple (func (param i32 i64) (result f32)))
+
+  ;; CHECK:      (type $simple-cont (cont $simple))
+
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $s0 (struct ))
   (type $s0 (struct))
@@ -36,19 +40,15 @@
 
  (rec)
 
- ;; CHECK:      (type $12 (func))
+ ;; CHECK:      (type $14 (func))
 
  ;; CHECK:      (type $packed-i8 (array (mut i8)))
 
  ;; CHECK:      (type $many (sub (func (param i32 i64 f32 f64) (result anyref (ref func)))))
 
- ;; CHECK:      (type $15 (func (param i32)))
+ ;; CHECK:      (type $17 (func (param i32)))
 
  ;; CHECK:      (type $a0 (array i32))
-
- ;; CHECK:      (type $simple (func (param i32 i64) (result f32)))
-
- ;; CHECK:      (type $simple-cont (cont $simple))
 
  ;; CHECK:      (type $19 (func (param i32 i64) (result i32 i64)))
 
@@ -190,6 +190,8 @@
 
  ;; CHECK:      (type $to-f32-cont (cont $to-f32))
 
+ ;; CHECK:      (type $89 (func (param (ref $simple)) (result (ref $simple-cont))))
+
  ;; CHECK:      (type $s2 (struct (field i32)))
  (type $s2 (struct i32))
  ;; CHECK:      (type $s3 (struct (field i64)))
@@ -258,7 +260,7 @@
 
  ;; imported memories
  (memory (export "mem") (export "mem2") (import "" "mem") 0)
- ;; CHECK:      (type $100 (func (param (ref $s0) (ref $s1) (ref $s2) (ref $s3) (ref $s4) (ref $s5) (ref $s6) (ref $s7) (ref $s8) (ref $a0) (ref $a1) (ref $a2) (ref $a3) (ref $subvoid) (ref $submany) (ref $all-types))))
+ ;; CHECK:      (type $101 (func (param (ref $s0) (ref $s1) (ref $s2) (ref $s3) (ref $s4) (ref $s5) (ref $s6) (ref $s7) (ref $s8) (ref $a0) (ref $a1) (ref $a2) (ref $a3) (ref $subvoid) (ref $submany) (ref $all-types))))
 
  ;; CHECK:      (import "" "mem" (memory $mimport$0 0))
 
@@ -468,11 +470,11 @@
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
 
- ;; CHECK:      (func $f1 (type $15) (param $0 i32)
+ ;; CHECK:      (func $f1 (type $17) (param $0 i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $f1 (param i32))
- ;; CHECK:      (func $f2 (type $15) (param $x i32)
+ ;; CHECK:      (func $f2 (type $17) (param $x i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $f2 (param $x i32))
@@ -5080,7 +5082,17 @@
   br 0
  )
 
- ;; CHECK:      (func $use-types (type $100) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany)) (param $15 (ref $all-types))
+ ;; CHECK:      (func $contnew (type $89) (param $f (ref $simple)) (result (ref $simple-cont))
+ ;; CHECK-NEXT:  (cont.new $simple-cont
+ ;; CHECK-NEXT:   (local.get $f)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $contnew (param $f (ref $simple)) (result (ref $simple-cont))
+   local.get $f
+   cont.new $simple-cont
+ )
+
+ ;; CHECK:      (func $use-types (type $101) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany)) (param $15 (ref $all-types))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $use-types

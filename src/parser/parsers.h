@@ -167,6 +167,7 @@ Result<> makeStringIterMove(Ctx&, Index, StringIterMoveOp op);
 template<typename Ctx>
 Result<> makeStringSliceWTF(Ctx&, Index, StringSliceWTFOp op);
 template<typename Ctx> Result<> makeStringSliceIter(Ctx&, Index);
+template<typename Ctx> Result<> makeContNew(Ctx&, Index);
 template<typename Ctx> Result<> makeResume(Ctx&, Index);
 
 // Modules
@@ -1988,6 +1989,13 @@ Result<> makeStringSliceWTF(Ctx& ctx, Index pos, StringSliceWTFOp op) {
 
 template<typename Ctx> Result<> makeStringSliceIter(Ctx& ctx, Index pos) {
   return ctx.makeStringSliceIter(pos);
+}
+
+template<typename Ctx> Result<> makeContNew(Ctx& ctx, Index pos) {
+  auto type = typeidx(ctx);
+  CHECK_ERR(type);
+
+  return ctx.makeContNew(pos, *type);
 }
 
 // resume ::= 'resume' typeidx ('(' 'tag' tagidx labelidx ')')*
