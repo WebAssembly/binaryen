@@ -462,6 +462,13 @@ FUZZ_EXEC_CALL_PREFIX = '[fuzz-exec] calling'
 # --fuzz-exec reports a stack limit using this notation
 STACK_LIMIT = '[trap stack limit]'
 
+# V8 reports this error in rare cases due to limitations in our handling of non-
+# nullable locals in unreachable code, see
+#   https://github.com/WebAssembly/binaryen/pull/5665
+#   https://github.com/WebAssembly/binaryen/issues/5599
+# and also see the --dce workaround below that also links to those issues.
+V8_UNINITIALIZED_NONDEF_LOCAL = 'uninitialized non-defaultable local'
+
 
 # given a call line that includes FUZZ_EXEC_CALL_PREFIX, return the export that
 # is called
@@ -767,7 +774,10 @@ class CompareVMs(TestCaseHandler):
             name = 'd8'
 
             def run(self, wasm, extra_d8_flags=[]):
-                return run_vm([shared.V8, FUZZ_SHELL_JS] + shared.V8_OPTS + extra_d8_flags + ['--', wasm])
+                output = run_vm([shared.V8, FUZZ_SHELL_JS] + shared.V8_OPTS + extra_d8_flags + ['--', wasm])
+                if 'V8_UNINITIALIZED_NONDEF_LOCAL' in output:
+                    output = ignore
+                return output
 
             def can_run(self, wasm):
                 return True
