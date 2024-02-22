@@ -77,7 +77,9 @@
     )
   )
 
-  (func $return-i31 (result i31ref)
+  ;; CHECK:      [fuzz-exec] calling return-i31
+  ;; CHECK-NEXT: [fuzz-exec] note result: return-i31 => i31ref(42)
+  (func $return-i31 (export "return-i31") (result i31ref)
     ;; An i31 should be logged out using its integer value, unlike a struct or
     ;; array which ends up as only "object".
     (ref.i31
@@ -85,7 +87,9 @@
     )
   )
 
-  (func $return-exted-i31 (result i31ref)
+  ;; CHECK:      [fuzz-exec] calling return-exted-i31
+  ;; CHECK-NEXT: [fuzz-exec] note result: return-exted-i31 => i31ref(42)
+  (func $return-exted-i31 (export "return-exted-i31") (result externref)
     ;; Even an externalized i31 is logged out using its integer value.
     (extern.externalize
       (ref.i31
@@ -114,10 +118,18 @@
 
 ;; CHECK:      [fuzz-exec] calling trap
 ;; CHECK-NEXT: [trap null ref]
+
+;; CHECK:      [fuzz-exec] calling return-i31
+;; CHECK-NEXT: [fuzz-exec] note result: return-i31 => i31ref(42)
+
+;; CHECK:      [fuzz-exec] calling return-exted-i31
+;; CHECK-NEXT: [fuzz-exec] note result: return-exted-i31 => i31ref(42)
 ;; CHECK-NEXT: [fuzz-exec] comparing nn-s
 ;; CHECK-NEXT: [fuzz-exec] comparing nn-u
 ;; CHECK-NEXT: [fuzz-exec] comparing non-null
 ;; CHECK-NEXT: [fuzz-exec] comparing null-immediate
 ;; CHECK-NEXT: [fuzz-exec] comparing null-local
+;; CHECK-NEXT: [fuzz-exec] comparing return-exted-i31
+;; CHECK-NEXT: [fuzz-exec] comparing return-i31
 ;; CHECK-NEXT: [fuzz-exec] comparing trap
 ;; CHECK-NEXT: [fuzz-exec] comparing zero-is-not-null

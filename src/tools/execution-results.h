@@ -137,16 +137,20 @@ struct ExecutionResults {
       value = value.internalize();
     }
 
+    // Don't print most reference values, as e.g. funcref(N) contains an index,
+    // which is not guaranteed to remain identical after optimizations. Do not
+    // print the type in detail (as even that may change due to closed-world
+    // optimizations); just print a simple type like JS does, 'object' or
+    // 'function', but also print null for a null (so a null function does not
+    // get printed as object, as in JS we have typeof null == 'object').
+    //
+    // The only references we print in full are strings and i31s, which have
+    // simple and stable internal structures that optimizations will not alter.
     auto type = value.type;
-    if (type.isRef() && !type.isString()) {
-      // Don't print reference values, as funcref(N) contains an index
-      // for example, which is not guaranteed to remain identical after
-      // optimizations. Do not print the type in detail (as even that
-      // may change due to closed-world optimizations); just print a
-      // simple type like JS does, 'object' or 'function', but also
-      // print null for a null (so a null function does not get
-      // printed as object, as in JS we have typeof null == 'object').
-      if (value.isNull()) {
+    if (type.isRef()) {
+      if (type.isString() || type.getHeapType() == HeapType::i31) {
+        std::cout << value << '\n';
+      } else if (value.isNull()) {
         std::cout << "null\n";
       } else if (type.isFunction()) {
         std::cout << "function\n";
@@ -156,9 +160,7 @@ struct ExecutionResults {
       return;
     }
 
-    // Non-references can be printed in full. So can strings, since we
-    // always know how to print them and there is just one string
-    // type.
+    // Non-references can be printed in full.
     std::cout << value << '\n';
   }
 
