@@ -642,6 +642,8 @@ def run_vm(cmd):
             # strings in this list for known issues (to which more need to be
             # added as necessary).
             HOST_LIMIT_PREFIX,
+            # see comment above on this constant
+            V8_UNINITIALIZED_NONDEF_LOCAL,
         ]
         for issue in known_issues:
             if issue in output:
@@ -774,10 +776,7 @@ class CompareVMs(TestCaseHandler):
             name = 'd8'
 
             def run(self, wasm, extra_d8_flags=[]):
-                output = run_vm([shared.V8, FUZZ_SHELL_JS] + shared.V8_OPTS + extra_d8_flags + ['--', wasm])
-                if 'V8_UNINITIALIZED_NONDEF_LOCAL' in output:
-                    output = ignore
-                return output
+                return run_vm([shared.V8, FUZZ_SHELL_JS] + shared.V8_OPTS + extra_d8_flags + ['--', wasm])
 
             def can_run(self, wasm):
                 return True
