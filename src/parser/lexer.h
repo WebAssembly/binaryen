@@ -24,6 +24,7 @@
 #include <variant>
 
 #include "support/name.h"
+#include "support/result.h"
 
 #ifndef parser_lexer_h
 #define parser_lexer_h
@@ -167,33 +168,32 @@ public:
     advance();
   }
 
-  std::optional<Token> peek() const { return curr; }
-
   bool takeLParen() {
-    auto t = peek();
-    if (!t || !t->isLParen()) {
+    if (!curr || !curr->isLParen()) {
       return false;
     }
     advance();
     return true;
   }
+
+  bool peekLParen() { return Lexer(*this).takeLParen(); }
 
   bool takeRParen() {
-    auto t = peek();
-    if (!t || !t->isRParen()) {
+    if (!curr || !curr->isRParen()) {
       return false;
     }
     advance();
     return true;
   }
+
+  bool peekRParen() { return Lexer(*this).takeRParen(); }
 
   bool takeUntilParen() {
     while (true) {
-      auto t = peek();
-      if (!t) {
+      if (!curr) {
         return false;
       }
-      if (t->isLParen() || t->isRParen()) {
+      if (curr->isLParen() || curr->isRParen()) {
         return true;
       }
       advance();
@@ -201,8 +201,8 @@ public:
   }
 
   std::optional<Name> takeID() {
-    if (auto t = peek()) {
-      if (auto id = t->getID()) {
+    if (curr) {
+      if (auto id = curr->getID()) {
         advance();
         // See comment on takeName.
         return Name(std::string(*id));
@@ -212,8 +212,8 @@ public:
   }
 
   std::optional<std::string_view> takeKeyword() {
-    if (auto t = peek()) {
-      if (auto keyword = t->getKeyword()) {
+    if (curr) {
+      if (auto keyword = curr->getKeyword()) {
         advance();
         return *keyword;
       }
@@ -221,9 +221,13 @@ public:
     return {};
   }
 
+  std::optional<std::string_view> peekKeyword() {
+    return Lexer(*this).takeKeyword();
+  }
+
   bool takeKeyword(std::string_view expected) {
-    if (auto t = peek()) {
-      if (auto keyword = t->getKeyword()) {
+    if (curr) {
+      if (auto keyword = curr->getKeyword()) {
         if (*keyword == expected) {
           advance();
           return true;
@@ -235,8 +239,8 @@ public:
 
   std::optional<uint64_t> takeOffset() {
     using namespace std::string_view_literals;
-    if (auto t = peek()) {
-      if (auto keyword = t->getKeyword()) {
+    if (curr) {
+      if (auto keyword = curr->getKeyword()) {
         if (keyword->substr(0, 7) != "offset="sv) {
           return {};
         }
@@ -244,7 +248,7 @@ public:
         if (subLexer.empty()) {
           return {};
         }
-        if (auto o = subLexer.peek()->getU<uint64_t>()) {
+        if (auto o = subLexer.curr->getU<uint64_t>()) {
           subLexer.advance();
           if (subLexer.empty()) {
             advance();
@@ -258,8 +262,8 @@ public:
 
   std::optional<uint32_t> takeAlign() {
     using namespace std::string_view_literals;
-    if (auto t = peek()) {
-      if (auto keyword = t->getKeyword()) {
+    if (curr) {
+      if (auto keyword = curr->getKeyword()) {
         if (keyword->substr(0, 6) != "align="sv) {
           return {};
         }
@@ -267,7 +271,7 @@ public:
         if (subLexer.empty()) {
           return {};
         }
-        if (auto a = subLexer.peek()->getU<uint32_t>()) {
+        if (auto a = subLexer.curr->getU<uint32_t>()) {
           subLexer.advance();
           if (subLexer.empty()) {
             advance();
@@ -280,8 +284,8 @@ public:
   }
 
   template<typename T> std::optional<T> takeU() {
-    if (auto t = peek()) {
-      if (auto n = t->getU<T>()) {
+    if (curr) {
+      if (auto n = curr->getU<T>()) {
         advance();
         return n;
       }
@@ -290,8 +294,8 @@ public:
   }
 
   template<typename T> std::optional<T> takeI() {
-    if (auto t = peek()) {
-      if (auto n = t->getI<T>()) {
+    if (curr) {
+      if (auto n = curr->getI<T>()) {
         advance();
         return n;
       }
@@ -314,8 +318,8 @@ public:
   std::optional<uint8_t> takeI8() { return takeI<uint8_t>(); }
 
   std::optional<double> takeF64() {
-    if (auto t = peek()) {
-      if (auto d = t->getF64()) {
+    if (curr) {
+      if (auto d = curr->getF64()) {
         advance();
         return d;
       }
@@ -324,8 +328,8 @@ public:
   }
 
   std::optional<float> takeF32() {
-    if (auto t = peek()) {
-      if (auto f = t->getF32()) {
+    if (curr) {
+      if (auto f = curr->getF32()) {
         advance();
         return f;
       }
@@ -334,10 +338,11 @@ public:
   }
 
   std::optional<std::string> takeString() {
-    if (auto t = peek()) {
-      if (auto s = t->getString()) {
+    if (curr) {
+      if (auto s = curr->getString()) {
+        std::string ret(*s);
         advance();
-        return std::string(*s);
+        return ret;
       }
     }
     return {};
@@ -391,11 +396,19 @@ public:
   TextPos position() const { return position(getPos()); }
 
   size_t getPos() const {
-    if (auto t = peek()) {
-      return getIndex() - t->span.size();
+    if (curr) {
+      return getIndex() - curr->span.size();
     }
     return getIndex();
   }
+
+  [[nodiscard]] Err err(size_t pos, std::string reason) {
+    std::stringstream msg;
+    msg << position(pos) << ": error: " << reason;
+    return Err{msg.str()};
+  }
+
+  [[nodiscard]] Err err(std::string reason) { return err(getPos(), reason); }
 
 private:
   void skipSpace();
