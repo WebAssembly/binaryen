@@ -115,27 +115,8 @@ struct ExecutionResults {
           // ignore the result if we hit an unreachable and returned no value
           if (values->size() > 0) {
             std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
-            auto resultType = func->getResults();
-            if (resultType.isRef() && !resultType.isString()) {
-              // Don't print reference values, as funcref(N) contains an index
-              // for example, which is not guaranteed to remain identical after
-              // optimizations. Do not print the type in detail (as even that
-              // may change due to closed-world optimizations); just print a
-              // simple type like JS does, 'object' or 'function', but also
-              // print null for a null (so a null function does not get
-              // printed as object, as in JS we have typeof null == 'object').
-              if (values->size() == 1 && (*values)[0].isNull()) {
-                std::cout << "null\n";
-              } else if (resultType.isFunction()) {
-                std::cout << "function\n";
-              } else {
-                std::cout << "object\n";
-              }
-            } else {
-              // Non-references can be printed in full. So can strings, since we
-              // always know how to print them and there is just one string
-              // type.
-              std::cout << *values << '\n';
+            for (auto value : *values) {
+              printValue(value);
             }
           }
         }
@@ -148,6 +129,37 @@ struct ExecutionResults {
       // change whether a host limit is reached.
       ignore = true;
     }
+  }
+
+  void printValue(Literal value) {
+    // Unwrap an externalized value to get the actual value.
+    if (Type::isSubType(value.type, Type(HeapType::ext, Nullable))) {
+      value = value.internalize();
+    }
+
+    auto type = value.type;
+    if (type.isRef() && !type.isString()) {
+      // Don't print reference values, as funcref(N) contains an index
+      // for example, which is not guaranteed to remain identical after
+      // optimizations. Do not print the type in detail (as even that
+      // may change due to closed-world optimizations); just print a
+      // simple type like JS does, 'object' or 'function', but also
+      // print null for a null (so a null function does not get
+      // printed as object, as in JS we have typeof null == 'object').
+      if (value.isNull()) {
+        std::cout << "null\n";
+      } else if (type.isFunction()) {
+        std::cout << "function\n";
+      } else {
+        std::cout << "object\n";
+      }
+      return;
+    }
+
+    // Non-references can be printed in full. So can strings, since we
+    // always know how to print them and there is just one string
+    // type.
+    std::cout << value << '\n';
   }
 
   // get current results and check them against previous ones

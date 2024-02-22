@@ -76,6 +76,23 @@
       (ref.null i31)
     )
   )
+
+  (func $return-i31 (result i31ref)
+    ;; An i31 should be logged out using its integer value, unlike a struct or
+    ;; array which ends up as only "object".
+    (ref.i31
+      (i32.const 42)
+    )
+  )
+
+  (func $return-exted-i31 (result i31ref)
+    ;; Even an externalized i31 is logged out using its integer value.
+    (extern.externalize
+      (ref.i31
+        (i32.const 42)
+      )
+    )
+  )
 )
 ;; CHECK:      [fuzz-exec] calling null-local
 ;; CHECK-NEXT: [fuzz-exec] note result: null-local => 1
