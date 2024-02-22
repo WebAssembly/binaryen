@@ -543,11 +543,10 @@ private:
     return info.shouldBeSubType(left, right, curr, text, getFunction());
   }
 
-  bool
-  shouldBeSubType(HeapType left,
-                  HeapType right,
-                  Expression* curr,
-                  const char* text) {
+  bool shouldBeSubType(HeapType left,
+                       HeapType right,
+                       Expression* curr,
+                       const char* text) {
     return info.shouldBeSubType(left, right, curr, text, getFunction());
   }
 
