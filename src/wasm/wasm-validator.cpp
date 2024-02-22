@@ -209,6 +209,19 @@ struct ValidationInfo {
     fail(text, curr, func);
     return false;
   }
+
+  // HeapType 'left' should be a subtype of 'right'.
+  bool shouldBeSubType(HeapType left,
+                       HeapType right,
+                       Expression* curr,
+                       const char* text,
+                       Function* func = nullptr) {
+    if (HeapType::isSubType(left, right)) {
+      return true;
+    }
+    fail(text, curr, func);
+    return false;
+  }
 };
 
 struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
@@ -527,6 +540,14 @@ private:
 
   bool
   shouldBeSubType(Type left, Type right, Expression* curr, const char* text) {
+    return info.shouldBeSubType(left, right, curr, text, getFunction());
+  }
+
+  bool
+  shouldBeSubType(HeapType left,
+                  HeapType right,
+                  Expression* curr,
+                  const char* text) {
     return info.shouldBeSubType(left, right, curr, text, getFunction());
   }
 
@@ -958,11 +979,15 @@ void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
 
   if (curr->target->type != Type::unreachable) {
     auto* table = getModule()->getTableOrNull(curr->table);
-    shouldBeTrue(!!table, curr, "call-indirect table must exist");
-    if (table) {
-      shouldBeTrue(table->type.isFunction(),
-                   curr,
-                   "call-indirect table must be of function type.");
+    if (shouldBeTrue(!!table, curr, "call-indirect table must exist")) {
+      if (shouldBeTrue(table->type.isFunction(),
+                       curr,
+                       "call-indirect table must be of function type.")) {
+        shouldBeSubType(curr->heapType,
+                        table->type.getHeapType(),
+                        curr,
+                        "call-indirect cast type must be a subtype of table");
+      }
     }
   }
 
