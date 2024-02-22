@@ -1787,8 +1787,7 @@ Result<> IRBuilder::makeContNew(HeapType ct) {
   if (!ct.isContinuation()) {
     return Err{"expected continuation type"};
   }
-  ContNew curr(wasm.allocator);
-  curr.contType = ct;
+  ContNew curr;
   CHECK_ERR(visitContNew(&curr));
 
   push(builder.makeContNew(ct, curr.func));
