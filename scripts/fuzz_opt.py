@@ -561,6 +561,10 @@ def fix_output(out):
     # change that index, so ignore it
     out = re.sub(r'funcref\([\d\w$+-_:]+\)', 'funcref()', out)
 
+    # JS prints i31 as just a number, so change "i31ref(N)" (which C++ emits)
+    # to "N".
+    out = re.sub(r'i31ref\((\d+)\)', r'\1', out)
+
     lines = out.splitlines()
     for i in range(len(lines)):
         line = lines[i]
