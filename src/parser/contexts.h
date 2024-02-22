@@ -18,8 +18,8 @@
 #define parser_context_h
 
 #include "common.h"
-#include "input.h"
 #include "ir/names.h"
+#include "lexer.h"
 #include "support/name.h"
 #include "support/result.h"
 #include "wasm-builder.h"
@@ -577,8 +577,8 @@ struct NullInstrParserCtx {
 };
 
 struct NullCtx : NullTypeParserCtx, NullInstrParserCtx {
-  ParseInput in;
-  NullCtx(const ParseInput& in) : in(in) {}
+  Lexer in;
+  NullCtx(const Lexer& in) : in(in) {}
   Result<> makeTypeUse(Index, std::optional<HeapTypeT>, ParamsT*, ResultsT*) {
     return Ok{};
   }
@@ -594,7 +594,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   using TableTypeT = Limits;
   using MemTypeT = MemType;
 
-  ParseInput in;
+  Lexer in;
 
   // At this stage we only look at types to find implicit type definitions,
   // which are inserted directly into the context. We cannot materialize or
@@ -772,7 +772,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
 
 // Phase 2: Parse type definitions into a TypeBuilder.
 struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
-  ParseInput in;
+  Lexer in;
 
   // We update slots in this builder as we parse type definitions.
   TypeBuilder& builder;
@@ -844,7 +844,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
 struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
   using TypeUseT = Ok;
 
-  ParseInput in;
+  Lexer in;
 
   // Types parsed so far.
   std::vector<HeapType>& types;
@@ -914,7 +914,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
 
   using ElemListT = Type;
 
-  ParseInput in;
+  Lexer in;
 
   Module& wasm;
 
@@ -1099,7 +1099,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   using TagLabelListT = std::vector<std::pair<TagIdxT, LabelIdxT>>;
 
-  ParseInput in;
+  Lexer in;
 
   Module& wasm;
   Builder builder;

@@ -19,7 +19,7 @@
 
 #include "common.h"
 #include "contexts.h"
-#include "input.h"
+#include "lexer.h"
 
 namespace wasm::WATParser {
 
@@ -190,8 +190,8 @@ template<typename Ctx>
 Result<typename Ctx::LabelIdxT> labelidx(Ctx&, bool inDelegate = false);
 template<typename Ctx> Result<typename Ctx::TagIdxT> tagidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx&);
-MaybeResult<ImportNames> inlineImport(ParseInput&);
-Result<std::vector<Name>> inlineExports(ParseInput&);
+MaybeResult<ImportNames> inlineImport(Lexer&);
+Result<std::vector<Name>> inlineExports(Lexer&);
 template<typename Ctx> Result<> strtype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::ModuleNameT> subtype(Ctx&);
 template<typename Ctx> MaybeResult<> deftype(Ctx&);
@@ -223,10 +223,10 @@ template<typename Ctx> struct WithPosition {
   Index original;
 
   WithPosition(Ctx& ctx, Index pos) : ctx(ctx), original(ctx.in.getPos()) {
-    ctx.in.lexer.setIndex(pos);
+    ctx.in.setIndex(pos);
   }
 
-  ~WithPosition() { ctx.in.lexer.setIndex(original); }
+  ~WithPosition() { ctx.in.setIndex(original); }
 };
 
 // Deduction guide to satisfy -Wctad-maybe-unsupported.
@@ -786,7 +786,7 @@ template<typename Ctx> MaybeResult<> foldedinstr(Ctx& ctx) {
 
   // A stack of (start, end) position pairs defining the positions of
   // instructions that need to be parsed after their folded children.
-  std::vector<std::pair<Index, std::optional<Index>>> foldedInstrs;
+  std::vector<std::pair<size_t, std::optional<size_t>>> foldedInstrs;
 
   do {
     if (ctx.in.takeRParen()) {
@@ -893,7 +893,7 @@ template<typename Ctx> Result<typename Ctx::BlockTypeT> blocktype(Ctx& ctx) {
 
   // We either had no results or multiple results. Reset and parse again as a
   // type use.
-  ctx.in.lexer.setIndex(pos);
+  ctx.in.setIndex(pos);
   auto use = typeuse(ctx);
   CHECK_ERR(use);
 
@@ -1129,7 +1129,7 @@ template<typename Ctx> MaybeResult<> trycatch(Ctx& ctx, bool folded) {
         if (id && id != label) {
           // Instead of returning an error, retry without the ID.
           parseID = false;
-          ctx.in.lexer.setIndex(afterCatchPos);
+          ctx.in.setIndex(afterCatchPos);
           continue;
         }
       }
@@ -1138,7 +1138,7 @@ template<typename Ctx> MaybeResult<> trycatch(Ctx& ctx, bool folded) {
       if (parseID && tag.getErr()) {
         // Instead of returning an error, retry without the ID.
         parseID = false;
-        ctx.in.lexer.setIndex(afterCatchPos);
+        ctx.in.setIndex(afterCatchPos);
         continue;
       }
       CHECK_ERR(tag);
@@ -2247,7 +2247,7 @@ template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx& ctx) {
 }
 
 // ('(' 'import' mod:name nm:name ')')?
-MaybeResult<ImportNames> inlineImport(ParseInput& in) {
+MaybeResult<ImportNames> inlineImport(Lexer& in) {
   if (!in.takeSExprStart("import"sv)) {
     return {};
   }
@@ -2267,7 +2267,7 @@ MaybeResult<ImportNames> inlineImport(ParseInput& in) {
 }
 
 // ('(' 'export' name ')')*
-Result<std::vector<Name>> inlineExports(ParseInput& in) {
+Result<std::vector<Name>> inlineExports(Lexer& in) {
   std::vector<Name> exports;
   while (in.takeSExprStart("export"sv)) {
     auto name = in.takeName();
@@ -2834,7 +2834,7 @@ template<typename Ctx> MaybeResult<> elem(Ctx& ctx) {
           offset = *off;
         } else {
           // This must be the beginning of the elemlist instead.
-          ctx.in.lexer.setIndex(beforeLParen);
+          ctx.in.setIndex(beforeLParen);
         }
       }
     }
