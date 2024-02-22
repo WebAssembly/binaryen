@@ -939,9 +939,6 @@ class CompareVMs(TestCaseHandler):
             if vm in after and vm.can_compare_to_self():
                 compare(before[vm], after[vm], 'CompareVMs between before and after: ' + vm.name)
 
-    def can_run_on_feature_opts(self, feature_opts):
-        return True
-
 
 # Check for determinism - the same command must have the same output.
 class CheckDeterminism(TestCaseHandler):
