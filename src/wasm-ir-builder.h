@@ -232,7 +232,6 @@ public:
   [[nodiscard]] Result<> visitThrow(Throw*);
   [[nodiscard]] Result<> visitStringNew(StringNew*);
   [[nodiscard]] Result<> visitStringEncode(StringEncode*);
-  [[nodiscard]] Result<> visitContNew(ContNew*);
   [[nodiscard]] Result<> visitResume(Resume*);
   [[nodiscard]] Result<> visitTupleMake(TupleMake*);
   [[nodiscard]] Result<>

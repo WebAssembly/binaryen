@@ -576,14 +576,6 @@ Result<> IRBuilder::visitStringEncode(StringEncode* curr) {
   WASM_UNREACHABLE("unexpected op");
 }
 
-Result<> IRBuilder::visitContNew(ContNew* curr) {
-  auto func = pop();
-  CHECK_ERR(func);
-  curr->func = *func;
-
-  return Ok{};
-}
-
 Result<> IRBuilder::visitResume(Resume* curr) {
   auto cont = pop();
   CHECK_ERR(cont);
