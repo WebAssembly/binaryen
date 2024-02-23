@@ -2696,7 +2696,8 @@ private:
   // stack traces.
   std::vector<Name> functionStack;
 
-  std::unordered_set<Name> droppedSegments;
+  std::unordered_set<Name> droppedDataSegments;
+  std::unordered_set<Name> droppedElementSegments;
 
   struct TableInterfaceInfo {
     // The external interface in which the table is defined.
@@ -2746,6 +2747,8 @@ private:
         Flow ret = self()->visit(segment->data[i]);
         extInterface->tableStore(tableName, offset + i, ret.getSingleValue());
       }
+
+      droppedElementSegments.insert(segment->name);
     });
   }
 
@@ -3630,7 +3633,7 @@ public:
     Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
     Address sizeVal(uint32_t(size.getSingleValue().geti32()));
 
-    if (offsetVal + sizeVal > 0 && droppedSegments.count(curr->segment)) {
+    if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
       trap("out of bounds segment access in memory.init");
     }
     if ((uint64_t)offsetVal + sizeVal > segment->data.size()) {
@@ -3652,7 +3655,7 @@ public:
   }
   Flow visitDataDrop(DataDrop* curr) {
     NOTE_ENTER("DataDrop");
-    droppedSegments.insert(curr->segment);
+    droppedDataSegments.insert(curr->segment);
     return {};
   }
   Flow visitMemoryCopy(MemoryCopy* curr) {
@@ -3768,7 +3771,7 @@ public:
     const auto& seg = *wasm.getDataSegment(curr->segment);
     auto elemBytes = element.getByteSize();
     auto end = offset + size * elemBytes;
-    if ((size != 0ull && droppedSegments.count(curr->segment)) ||
+    if ((size != 0ull && droppedDataSegments.count(curr->segment)) ||
         end > seg.data.size()) {
       trap("out of bounds segment access in array.new_data");
     }
@@ -3797,8 +3800,10 @@ public:
 
     const auto& seg = *wasm.getElementSegment(curr->segment);
     auto end = offset + size;
-    // TODO: Handle dropped element segments once we support those.
     if (end > seg.data.size()) {
+      trap("out of bounds segment access in array.new_elem");
+    }
+    if (end > 0 && droppedElementSegments.count(curr->segment)) {
       trap("out of bounds segment access in array.new_elem");
     }
     contents.reserve(size);
@@ -3848,7 +3853,7 @@ public:
     if (offsetVal + readSize > seg->data.size()) {
       trap("out of bounds segment access in array.init_data");
     }
-    if (offsetVal + sizeVal > 0 && droppedSegments.count(curr->segment)) {
+    if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
       trap("out of bounds segment access in array.init_data");
     }
     for (size_t i = 0; i < sizeVal; i++) {
@@ -3891,11 +3896,13 @@ public:
     Module& wasm = *self()->getModule();
 
     auto* seg = wasm.getElementSegment(curr->segment);
-    if ((uint64_t)offsetVal + sizeVal > seg->data.size()) {
-      trap("out of bounds segment access in array.init");
+    auto max = (uint64_t)offsetVal + sizeVal;
+    if (max > seg->data.size()) {
+      trap("out of bounds segment access in array.init_elem");
     }
-    // TODO: Check whether the segment has been dropped once we support
-    // dropping element segments.
+    if (max > 0 && droppedElementSegments.count(curr->segment)) {
+      trap("out of bounds segment access in array.init_elem");
+    }
     for (size_t i = 0; i < sizeVal; i++) {
       // TODO: This is not correct because it does not preserve the identity
       // of references in the table! ArrayNew suffers the same problem.
