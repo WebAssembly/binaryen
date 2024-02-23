@@ -416,19 +416,7 @@ Result<Expression*> IRBuilder::getBranchValue(Name labelName,
   // Loops would receive their input type rather than their output type, if we
   // supported that.
   size_t numValues = (*scope)->getLoop() ? 0 : (*scope)->getResultType().size();
-  std::vector<Expression*> values(numValues);
-  for (size_t i = 0; i < numValues; ++i) {
-    auto val = pop();
-    CHECK_ERR(val);
-    values[numValues - 1 - i] = *val;
-  }
-  if (numValues == 0) {
-    return nullptr;
-  } else if (numValues == 1) {
-    return values[0];
-  } else {
-    return builder.makeTupleMake(values);
-  }
+  return numValues == 0 ? nullptr : pop(numValues);
 }
 
 Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
