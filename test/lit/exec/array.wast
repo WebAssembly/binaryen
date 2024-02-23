@@ -7,10 +7,6 @@
 
  (type $array-func (array (mut funcref)))
 
- (memory $mem 10 10)
-
- (data $data (i32.const 0) "a")
-
  (table $table 10 10 funcref)
 
  (elem $active (i32.const 0) $func)
