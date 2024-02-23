@@ -3801,10 +3801,10 @@ public:
     const auto& seg = *wasm.getElementSegment(curr->segment);
     auto end = offset + size;
     if (end > seg.data.size()) {
-      trap("out of bounds segment access in array.init_elem");
+      trap("out of bounds segment access in array.new_elem");
     }
     if (end > 0 && droppedElementSegments.count(curr->segment)) {
-      trap("out of bounds segment access in array.init_elem");
+      trap("out of bounds segment access in array.new_elem");
     }
     contents.reserve(size);
     for (Index i = offset; i < end; ++i) {
@@ -3896,11 +3896,13 @@ public:
     Module& wasm = *self()->getModule();
 
     auto* seg = wasm.getElementSegment(curr->segment);
-    if ((uint64_t)offsetVal + sizeVal > seg->data.size()) {
-      trap("out of bounds segment access in array.init");
+    auto max = (uint64_t)offsetVal + sizeVal;
+    if (max > seg->data.size()) {
+      trap("out of bounds segment access in array.init_elem");
     }
-    // TODO: Check whether the segment has been dropped once we support
-    // dropping element segments.
+    if (max > 0 && droppedElementSegments.count(curr->segment)) {
+      trap("out of bounds segment access in array.init_elem");
+    }
     for (size_t i = 0; i < sizeVal; i++) {
       // TODO: This is not correct because it does not preserve the identity
       // of references in the table! ArrayNew suffers the same problem.
