@@ -42,9 +42,7 @@ struct InstrumentCooperativeGC : public WalkerPass<PostWalker<InstrumentCooperat
   // Adds calls to internal function.
   bool addsEffects() override { return true; }
 
-  bool currentFunctionIsBlacklisted;
-
-  bool isBlacklistedFunctionName(const Name &n)
+  static bool isBlacklistedFunctionName(const Name &n)
   {
     const char *blacklisted[] = {
       "wait_for_all_participants",
@@ -68,6 +66,7 @@ struct InstrumentCooperativeGC : public WalkerPass<PostWalker<InstrumentCooperat
       "start_multithreaded_collection",
       "start_multithreaded_marking",
       "wait_for_all_threads_finished_marking",
+      "mark_current_thread_stack",
       "mark_from_queue",
       "finish_multithreaded_marking",
       "hash_root",
@@ -76,31 +75,71 @@ struct InstrumentCooperativeGC : public WalkerPass<PostWalker<InstrumentCooperat
       "realloc_table",
       "claim_more_memory",
       "main",
+      "exit_fenced_access",
+      "sbrk",
+      "dlcalloc",
       "__wasm_init_memory",
       "__wasm_call_ctors",
+      "strlen",
+      "strcpy",
       "stackSave",
       "stackRestore",
       "stackAlloc",
-      "emscripten_wasm_worker_initialize"
+      "emscripten_wasm_worker_initialize",
+      "dlfree"
     };
     for(int i = 0; i < sizeof(blacklisted)/sizeof(blacklisted[0]); ++i)
       if (n == blacklisted[i]) return true;
     return false;
   }
 
+  static bool functionIsBlacklisted(Function *curr) {
+    return (curr->imported() || curr->name.startsWith("gc_") || curr->name.startsWith("__") ||
+      curr->name.startsWith("emmalloc") || curr->name.startsWith("dlmalloc") ||
+      curr->name.startsWith("emscripten_stack") ||
+      isBlacklistedFunctionName(curr->name));
+  }
+
+  int numCheckpointsAddedInFunction = 0, numCheckpointsAddedTotal = 0, numFunctionsAnnotated = 0, numFunctionsNothingToAdd = 0, numFunctionsSkipped = 0;
+
+  void walkFunction(Function* func) {
+    if (!functionIsBlacklisted(func))
+    {
+      ++numFunctionsAnnotated;
+      setFunction(func);
+      visitFunction(func);
+      doWalkFunction(func);
+      setFunction(nullptr);
+      if (numCheckpointsAddedInFunction)
+        printf("InstrumentCooperativeGC: injected %d GC check points to function \"%s\".\n", numCheckpointsAddedInFunction, func->name.str.data());
+      else
+      {
+        printf("InstrumentCooperativeGC: \"%s\": no GC points to add.\n", func->name.str.data());
+        ++numFunctionsNothingToAdd;
+      }
+      numCheckpointsAddedTotal += numCheckpointsAddedInFunction;
+      numCheckpointsAddedInFunction = 0;
+    }
+    else
+      ++numFunctionsSkipped;
+  }
+
+  void visitModule(Module* curr) {
+    printf("InstrumentCooperativeGC summary: Injected a total of %d GC checkpoints to %d/%d (%.2f%%) functions. (%d had nothing to add, %d were blacklisted). Avg GC checkpoints: %.3f per added function, %.3f per all functions in program.\n",
+      numCheckpointsAddedTotal, numFunctionsAnnotated-numFunctionsNothingToAdd, numFunctionsAnnotated+numFunctionsSkipped,
+      (numFunctionsAnnotated-numFunctionsNothingToAdd)*100.0/(numFunctionsAnnotated+numFunctionsSkipped),
+      numFunctionsNothingToAdd, numFunctionsSkipped, 
+      (double)numCheckpointsAddedTotal / (numFunctionsAnnotated-numFunctionsNothingToAdd),
+      (double)numCheckpointsAddedTotal / (numFunctionsAnnotated+numFunctionsSkipped));
+  }
+
   void visitLoop(Loop* curr) {
-    if (currentFunctionIsBlacklisted) return;
+    ++numCheckpointsAddedInFunction;
 
     Builder builder(*getModule());
     curr->body = builder.makeSequence(
       builder.makeCall(GC_FUNC, {}, Type::none),
       curr->body);
-  }
-
-  void visitFunction(Function* curr) {
-    currentFunctionIsBlacklisted = (curr->imported() || curr->name.startsWith("gc_") || curr->name.startsWith("__") || 
-      curr->name.startsWith("emmalloc_") || curr->name.startsWith("dlmalloc_") ||
-      isBlacklistedFunctionName(curr->name));
   }
 
 private:
