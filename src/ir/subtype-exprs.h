@@ -59,6 +59,21 @@ namespace wasm {
 //  * noteCast(Expression, Expression) - An expression's type is cast to
 //                                       another, for example, in RefCast.
 //
+// In addition, we need to differentiate two situations that cause subtyping:
+//  * Flow-based subtyping: E.g. when a value flows out from a block, in which
+//    case the value must be a subtype of the block's type.
+//  * Non-flow-based subtyping: E.g. in RefEq, being in one of the arms means
+//    you must be a subtype of eqref, but your value does not flow anywhere,
+//    because it is processed by the RefEq and does not send it anywhere.
+// The difference between the two matters in some users of this class, and so
+// the above functions all handle flow-based subtyping, while there is also the
+// following:
+//
+//  * noteNonFlowSubtype(Expression, Type)
+//
+// This is the only signature we need for the non-flowing case since it always
+// stems from an expression that is compared against a type.
+//
 // The concrete signatures are:
 //
 //      void noteSubtype(Type, Type);
@@ -66,6 +81,7 @@ namespace wasm {
 //      void noteSubtype(Type, Expression*);
 //      void noteSubtype(Expression*, Type);
 //      void noteSubtype(Expression*, Expression*);
+//      void noteNonFlowSubtype(Expression*, Type);
 //      void noteCast(HeapType, HeapType);
 //      void noteCast(Expression*, Type);
 //      void noteCast(Expression*, Expression*);
@@ -202,8 +218,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitRefIsNull(RefIsNull* curr) {}
   void visitRefFunc(RefFunc* curr) {}
   void visitRefEq(RefEq* curr) {
-    self()->noteSubtype(curr->left, Type(HeapType::eq, Nullable));
-    self()->noteSubtype(curr->right, Type(HeapType::eq, Nullable));
+    self()->noteNonFlowSubtype(curr->left, Type(HeapType::eq, Nullable));
+    self()->noteNonFlowSubtype(curr->right, Type(HeapType::eq, Nullable));
   }
   void visitTableGet(TableGet* curr) {}
   void visitTableSet(TableSet* curr) {

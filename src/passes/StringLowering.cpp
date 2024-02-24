@@ -478,6 +478,10 @@ struct StringLowering : public StringGathering {
         // Only the type matters of the place we assign to.
         noteSubtype(a, b->type);
       }
+      void noteNonFlowSubtype(Expression* a, Type b) {
+        // Flow or non-flow is the same for us.
+        noteSubtype(a, b);
+      }
       void noteCast(HeapType, HeapType) {
         // Casts do not concern us.
       }
