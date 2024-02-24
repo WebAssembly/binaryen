@@ -382,7 +382,7 @@
   (type $top (sub (struct)))
   ;; CHECK:       (type $mid (sub $top (struct )))
   (type $mid (sub $top (struct)))
-  ;; CHECK:       (type $bot (sub $mid (struct )))
+  ;; CHECK:       (type $bot (sub (struct )))
   (type $bot (sub $mid (struct)))
  )
 
