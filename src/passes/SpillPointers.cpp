@@ -67,17 +67,149 @@ struct SpillPointers
   void visitCall(Call* curr) { visitSpillable(curr); }
   void visitCallIndirect(CallIndirect* curr) { visitSpillable(curr); }
 
+  static bool isBlacklistedFunctionName(const Name &n)
+  {
+    const char *blacklisted[] = {
+      // These functions need to be blacklisted for correctness: we cannot
+      // let the spill pointers pass create a temp stack frame to these functions,
+      // or the stackRestore/stackAlloc functions would become no-ops.
+      "stackAlloc",
+      "stackRestore",
+
+      // This needs to be blacklisted, or core0.test_pthread_dylink_basics fails. Not immediately sure why that is.
+      "_emscripten_tls_init",
+
+      // The following functions are blacklisted for performance optimization reasons: (and testing/debugging reasons.. not intended to be final code in any form)
+      // These won't ever deal with managed GC pointers, so we can get slightly
+      // improved codegen performance by skipping these.
+      "stackSave",
+      "_emscripten_thread_init",
+      "dlmalloc",
+      "dlrealloc",
+      "dlfree",
+      "tmalloc_small",
+      "prepend_alloc",
+      "sbrk",
+      "__emscripten_init_main_thread",
+      "__memcpy",
+      "__funcs_on_exit",
+      "start_multithreaded_collection",
+      "gc_collect",
+      "_emscripten_proxy_main",
+      "emscripten_proxy_async",
+      "init_pthread_self",
+      "gc_participate_to_garbage_collection",
+      "find_and_run_a_finalizer",
+      "sweep",
+      "gc_enter_fenced_access",
+      "gc_malloc",
+      "realloc_zeroed",
+      "gc_uninterrupted_sleep",
+      "gc_sleep",
+      "mark_from_queue",
+      "wait_for_all_threads_finished_marking",
+      "mark",
+      "gc_sleep",
+      "gc_enter_fence_cb",
+      "internal_memalign",
+      "realloc_table",
+      "dlcalloc",
+      "find_insert_index",
+      "find_index",
+      "free_at_index",
+      "find_finalizer_index",
+      "mark_current_thread_stack",
+      "gc_dump",
+      "table_insert",
+      "gc_is_ptr",
+
+      "getpid",
+      "out",
+      "frexp",
+      "wctomb",
+      "fwrite",
+      "fputs",
+      "vfprintf",
+      "pop_arg_long_double",
+      "strnlen",
+      "wcrtomb",
+      "printf",
+      "puts",
+      "pop_arg",
+      "pad",
+      "fflush",
+      "printf_core",
+      "fmt_fp",      
+    };
+    for(int i = 0; i < sizeof(blacklisted)/sizeof(blacklisted[0]); ++i)
+      if (n == blacklisted[i]) return true;
+    return false;
+  }
+
   // main entry point
+
+  int numPointersSpilledTotal = 0;
+  int numFunctionsPointersSpilled = 0, numFunctionsPointersNotSpilled = 0, numFunctionsBlacklisted = 0;
+  int numPointersSpilled;
+  int extraStackSpace;
 
   void doWalkFunction(Function* func) {
     super::doWalkFunction(func);
+    if (isBlacklistedFunctionName(func->name)
+      // The passes/SafeHeap.cpp pass replaces assignments with function calls, but the functions that call into SAFE_HEAP might not generate a stack frame (bump stack_pointer)
+      // for themselves if they don't call any other functions. This would cause pointer spilling inside SAFE_HEAP_ to stomp on the stack of the caller. So we must skip pointer
+      // spilling inside these dynamically code generated SAFE_HEAP functions (i.e. this is needed for correctness, but of course also good for performance in SAFE_HEAP mode)
+      || func->name.startsWith("SAFE_HEAP")
+
+      // The following are blacklisted for performance optimizations only:
+      || func->name.startsWith("em_task_")
+      || func->name.startsWith("_emscripten_thread_")
+      || func->name.startsWith("_pthread")
+      || func->name.startsWith("__pthread")
+      || func->name.startsWith("__wasm")
+      || func->name.startsWith("__wasi")
+      || func->name.startsWith("emscripten")
+      || func->name.startsWith("_emscripten")
+      || func->name.startsWith("pthread")
+      || func->name.startsWith("emmalloc")
+      || func->name.startsWith("legalstub$")
+      || func->name.startsWith("dynCall_")
+      || func->name.startsWith("__")
+
+)
+    {
+      ++numFunctionsBlacklisted;
+      return;
+    }
+    numPointersSpilledTotal += numPointersSpilled;
+    numPointersSpilled = 0;
+    extraStackSpace = 0;
     spillPointers();
+    if (numPointersSpilled || extraStackSpace)
+    {
+      ++numFunctionsPointersSpilled;
+      printf("SpillPointers: added %d pointer spill stores in function %s. Stack frame grew by %d bytes.\n",
+        numPointersSpilled, func->name.str.data(), extraStackSpace);
+    }
+    else
+      ++numFunctionsPointersNotSpilled;
   }
 
   // map pointers to their offset in the spill area
   using PointerMap = std::unordered_map<Index, Index>;
 
   Type pointerType;
+
+  /*
+  void visitModule(Module* curr) {
+    printf("SpillPointers summary: Added a total of %d spill stores to %d/%d (%.2f%%) functions. (%d had nothing to add, %d were blacklisted). Avg spill stores: %.3f per added function, %.3f per all functions in program.\n",
+      numPointersSpilledTotal, numFunctionsPointersSpilled, numFunctionsPointersSpilled + numFunctionsBlacklisted + numFunctionsPointersNotSpilled,
+      numFunctionsPointersSpilled * 100.0 / (numFunctionsPointersSpilled + numFunctionsBlacklisted + numFunctionsPointersNotSpilled),
+      numFunctionsPointersNotSpilled, numFunctionsBlacklisted,
+      (double)numPointersSpilledTotal / numFunctionsPointersSpilled,
+      (double)numPointersSpilledTotal / (numFunctionsPointersSpilled + numFunctionsBlacklisted + numFunctionsPointersNotSpilled));
+  }
+  */
 
   void spillPointers() {
     std::string HANDLE_STACK_OVERFLOW =
@@ -174,6 +306,13 @@ struct SpillPointers
     }
     if (spilled) {
       // get the stack space, and set the local to it
+      auto* stackPointer = getStackPointerGlobal(*getModule());
+      if (!stackPointer) {
+        printf("SpillPointers: unable to find stack pointer for function %s\n", func->name.str.data());
+        return;
+      }
+
+      extraStackSpace += pointerType.getByteSize() * pointerMap.size();
       ABI::getStackSpace(spillLocal,
                          func,
                          pointerType.getByteSize() * pointerMap.size(),
@@ -229,6 +368,8 @@ struct SpillPointers
     block->list.push_back(call);
     block->finalize();
     *origin = block;
+
+    numPointersSpilled += toSpill.size();
   }
 };
 

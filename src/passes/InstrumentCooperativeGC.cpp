@@ -86,7 +86,12 @@ struct InstrumentCooperativeGC : public WalkerPass<PostWalker<InstrumentCooperat
       "stackRestore",
       "stackAlloc",
       "emscripten_wasm_worker_initialize",
-      "dlfree"
+      "dlfree",
+      "internal_memalign",
+      "prepend_alloc",
+      "dispose_chunk",
+      "fflush",
+      "BITVEC_CAS_SET",
     };
     for(int i = 0; i < sizeof(blacklisted)/sizeof(blacklisted[0]); ++i)
       if (n == blacklisted[i]) return true;
@@ -94,9 +99,10 @@ struct InstrumentCooperativeGC : public WalkerPass<PostWalker<InstrumentCooperat
   }
 
   static bool functionIsBlacklisted(Function *curr) {
-    return (curr->imported() || curr->name.startsWith("gc_") || curr->name.startsWith("__") ||
+    return (curr->imported() || (curr->name.startsWith("gc_") && curr->name != "gc_sleep") || curr->name.startsWith("__") ||
       curr->name.startsWith("emmalloc") || curr->name.startsWith("dlmalloc") ||
       curr->name.startsWith("emscripten_stack") ||
+      curr->name.startsWith("SAFE_HEAP") ||
       isBlacklistedFunctionName(curr->name));
   }
 
@@ -114,7 +120,7 @@ struct InstrumentCooperativeGC : public WalkerPass<PostWalker<InstrumentCooperat
         printf("InstrumentCooperativeGC: injected %d GC check points to function \"%s\".\n", numCheckpointsAddedInFunction, func->name.str.data());
       else
       {
-        printf("InstrumentCooperativeGC: \"%s\": no GC points to add.\n", func->name.str.data());
+        //printf("InstrumentCooperativeGC: \"%s\": no GC points to add.\n", func->name.str.data());
         ++numFunctionsNothingToAdd;
       }
       numCheckpointsAddedTotal += numCheckpointsAddedInFunction;
