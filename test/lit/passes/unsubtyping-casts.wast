@@ -374,7 +374,10 @@
 
 ;; As above, but now with some ref.eq added. Those should not inhibit
 ;; optimizations: as before, $bot no longer needs to subtype from $mid (but
-;; $mid must subtype from $top).
+;; $mid must subtype from $top). ref.eq does add a requirement on subtyping
+;; (that the type be a subtype of eq), but ref.eq does not actually flow the
+;; inputs it receives anywhere, so that doesn't stop us from removing subtyping
+;; from user types.
 (module
  (rec
   ;; CHECK:      (rec
