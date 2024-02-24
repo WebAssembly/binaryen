@@ -140,25 +140,29 @@ struct Token {
   friend std::ostream& operator<<(std::ostream& os, const Token&);
 };
 
+// ===========
+// Annotations
+// ===========
+
+struct Annotation {
+  Name kind;
+  std::string_view contents;
+};
+
+extern Name srcAnnotationKind;
+
 // =====
 // Lexer
 // =====
 
-// Lexer's purpose is twofold. First, it wraps a buffer to provide a tokenizing
-// iterator over it. Second, it implements that iterator itself. Also provides
-// utilities for locating the text position of tokens within the buffer. Text
-// positions are computed on demand rather than eagerly because they are
-// typically only needed when there is an error to report.
 struct Lexer {
 private:
   std::string_view buffer;
   size_t index = 0;
   std::optional<Token> curr;
+  std::vector<Annotation> annotations;
 
 public:
-  // The end sentinel.
-  Lexer() = default;
-
   Lexer(std::string_view buffer) : buffer(buffer) { setIndex(0); }
 
   size_t getIndex() const { return index; }
@@ -382,6 +386,7 @@ public:
   std::string_view next() const { return buffer.substr(index); }
 
   void advance() {
+    annotations.clear();
     skipSpace();
     lexToken();
   }
@@ -409,6 +414,13 @@ public:
   }
 
   [[nodiscard]] Err err(std::string reason) { return err(getPos(), reason); }
+
+  const std::vector<Annotation> getAnnotations() { return annotations; }
+  std::vector<Annotation> takeAnnotations() { return std::move(annotations); }
+
+  void setAnnotations(std::vector<Annotation>&& annotations) {
+    this->annotations = std::move(annotations);
+  }
 
 private:
   void skipSpace();
