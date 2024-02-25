@@ -549,6 +549,14 @@ void test_core() {
                     1,
                     0,
                     "0");
+  BinaryenAddDataSegment(module, NULL, NULL, true, NULL, "data segment 2", 14);
+  BinaryenAddDataSegment(module,
+                         "seg",
+                         "0",
+                         false,
+                         BinaryenConst(module, BinaryenLiteralInt32(0)),
+                         "data segment 3",
+                         14);
 
   BinaryenExpressionRef valueList[] = {
     // Unary

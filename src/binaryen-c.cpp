@@ -5525,6 +5525,25 @@ void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
   }
   std::copy(segment->data.cbegin(), segment->data.cend(), buffer);
 }
+void BinaryenAddDataSegment(BinaryenModuleRef module,
+                            const char* segmentName,
+                            const char* memoryName,
+                            bool segmentPassive,
+                            BinaryenExpressionRef segmentOffset,
+                            const char* segmentData,
+                            BinaryenIndex segmentSize) {
+  auto* wasm = (Module*)module;
+  auto name =
+    segmentName ? Name(segmentName) : Name::fromInt(wasm->dataSegments.size());
+  auto curr = Builder::makeDataSegment(name,
+                                       memoryName ? memoryName : "0",
+                                       segmentPassive,
+                                       (Expression*)segmentOffset,
+                                       segmentData,
+                                       segmentSize);
+  curr->hasExplicitName = segmentName ? true : false;
+  wasm->addDataSegment(std::move(curr));
+}
 
 // Start function. One per module
 
