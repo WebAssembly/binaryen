@@ -179,6 +179,7 @@ def randomize_fuzz_settings():
 
     # a list of the optimizations to run on the wasm
     global FUZZ_OPTS
+    FUZZ_OPTS = []
 
     # a boolean whether NaN values are allowed, or we de-NaN them
     global NANS
