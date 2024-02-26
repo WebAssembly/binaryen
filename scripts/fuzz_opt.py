@@ -195,15 +195,14 @@ def randomize_fuzz_settings():
     else:
         NANS = False
         GEN_ARGS += ['--denan']
-    FUZZ_OPTS = []
     if random.random() < 0.5:
         OOB = True
     else:
         OOB = False
-        FUZZ_OPTS += ['--no-fuzz-oob']
+        GEN_ARGS += ['--no-fuzz-oob']
     if random.random() < 0.5:
         LEGALIZE = True
-        FUZZ_OPTS += ['--legalize-and-prune-js-interface']
+        GEN_ARGS += ['--legalize-and-prune-js-interface']
     else:
         LEGALIZE = False
 
@@ -213,6 +212,9 @@ def randomize_fuzz_settings():
     #   https://github.com/WebAssembly/binaryen/pull/5665
     #   https://github.com/WebAssembly/binaryen/issues/5599
     if '--disable-gc' not in FEATURE_OPTS:
+        GEN_ARGS += ['--dce']
+
+        FUZZ_OPTS = []
         FUZZ_OPTS += ['--dce']
 
     print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
