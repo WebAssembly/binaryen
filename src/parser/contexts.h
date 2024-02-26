@@ -2523,7 +2523,9 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeStringSliceIter());
   }
 
-  Result<> makeContNew(Index pos, const std::vector<Annotation>& annotations, HeapType type) {
+  Result<> makeContNew(Index pos,
+                       const std::vector<Annotation>& annotations,
+                       HeapType type) {
     return withLoc(pos, irBuilder.makeContNew(type));
   }
 

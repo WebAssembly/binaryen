@@ -2431,7 +2431,9 @@ Result<> makeStringSliceIter(Ctx& ctx,
   return ctx.makeStringSliceIter(pos, annotations);
 }
 
-template<typename Ctx> Result<> makeContNew(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
+template<typename Ctx>
+Result<>
+makeContNew(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   auto type = typeidx(ctx);
   CHECK_ERR(type);
 
