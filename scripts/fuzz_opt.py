@@ -174,6 +174,9 @@ def update_feature_opts(wasm):
 
 
 def randomize_fuzz_settings():
+    # a list of the arguments to pass to wasm-opt -ttf when generating the wasm
+    global GEN_ARGS
+
     # a list of the optimizations to run on the wasm
     global FUZZ_OPTS
 
@@ -186,12 +189,13 @@ def randomize_fuzz_settings():
     # a boolean whether we legalize the wasm for JS
     global LEGALIZE
 
-    FUZZ_OPTS = []
+    GEN_ARGS = []
     if random.random() < 0.5:
         NANS = True
     else:
         NANS = False
-        FUZZ_OPTS += ['--denan']
+        GEN_ARGS += ['--denan']
+    FUZZ_OPTS = []
     if random.random() < 0.5:
         OOB = True
     else:
@@ -1267,7 +1271,7 @@ class Merge(TestCaseHandler):
         second_input = abspath('second_input.dat')
         make_random_input(second_size, second_input)
         second_wasm = abspath('second.wasm')
-        run([in_bin('wasm-opt'), second_input, '-ttf', '-o', second_wasm] + FUZZ_OPTS + FEATURE_OPTS)
+        run([in_bin('wasm-opt'), second_input, '-ttf', '-o', second_wasm] + GEN_ARGS + FEATURE_OPTS)
 
         # sometimes also optimize the second module
         if random.random() < 0.5:
@@ -1364,14 +1368,14 @@ def test_one(random_input, given_wasm):
         # wasm had applied. that is, we need to preserve properties like not
         # having nans through reduction.
         try:
-            run([in_bin('wasm-opt'), given_wasm, '-o', abspath('a.wasm')] + FUZZ_OPTS + FEATURE_OPTS)
+            run([in_bin('wasm-opt'), given_wasm, '-o', abspath('a.wasm')] + GEN_ARGS + FEATURE_OPTS)
         except Exception as e:
             print("Internal error in fuzzer! Could not run given wasm")
             raise e
     else:
         # emit the target features section so that reduction can work later,
         # without needing to specify the features
-        generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', abspath('a.wasm')] + FUZZ_OPTS + FEATURE_OPTS
+        generate_command = [in_bin('wasm-opt'), random_input, '-ttf', '-o', abspath('a.wasm')] + GEN_ARGS + FEATURE_OPTS
         if INITIAL_CONTENTS:
             generate_command += ['--initial-fuzz=' + INITIAL_CONTENTS]
         if PRINT_WATS:
@@ -1385,7 +1389,7 @@ def test_one(random_input, given_wasm):
     print('pre wasm size:', wasm_size)
     update_feature_opts('a.wasm')
 
-    # create a second wasm for handlers that want to look at pairs.
+    # create a second (optimized) wasm for handlers that want to look at pairs.
     generate_command = [in_bin('wasm-opt'), abspath('a.wasm'), '-o', abspath('b.wasm')] + opts + FUZZ_OPTS + FEATURE_OPTS
     if PRINT_WATS:
         printed = run(generate_command + ['--print'])
