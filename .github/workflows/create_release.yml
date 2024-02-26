@@ -168,3 +168,63 @@ jobs:
         files: |
           ${{ steps.archive.outputs.tarball }}
           ${{ steps.archive.outputs.shasum }}
+
+  # Build to WebAssembly using Emscripten.
+  build-wasm:
+    name: wasm
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/setup-python@v1
+      with:
+        python-version: '3.x'
+    - uses: actions/checkout@v1
+      with:
+        submodules: true
+    - name: install ninja
+      run: sudo apt-get install ninja-build
+    - name: emsdk install
+      run: |
+        mkdir $HOME/emsdk
+        git clone --depth 1 https://github.com/emscripten-core/emsdk.git $HOME/emsdk
+        $HOME/emsdk/emsdk update-tags
+        $HOME/emsdk/emsdk install tot
+        $HOME/emsdk/emsdk activate tot
+    - name: update path
+      run:  echo "PATH=$PATH:$HOME/emsdk" >> $GITHUB_ENV
+
+    # Configure with wasm EH and pthreads for maximal performance
+    # is |source| needed?
+    - name: cmake
+      run: |
+        source $HOME/emsdk/emsdk_env.sh
+        emcmake cmake -S . -B out -G Ninja -DCMAKE_BUILD_TYPE=Release -DCMAKE_INSTALL_PREFIX=out/install -DEMSCRIPTEN_ENABLE_WASM_EH=ON -DEMSCRIPTEN_ENABLE_PTHREADS=ON
+
+    # Build wasm-opt for now TODO add other tools as desired
+    - name: build
+      run: ninja -C out wasm-opt
+
+    # TODO: Add some testing here. The full test suite is overkill as there is a
+    #       0.5 second startup cost to each run of wasm-opt.js
+
+    - name: archive
+      id: archive
+      run: |
+        VERSION=$GITHUB_REF_NAME
+        PKGNAME="binaryen-$VERSION-wasm"
+        TARBALL=$PKGNAME.tar.gz
+        SHASUM=$PKGNAME.tar.gz.sha256
+        mkdir install
+        cp out/bin/wasm-opt* install/
+        mv install binaryen-$VERSION
+        tar -czf $TARBALL binaryen-$VERSION
+        cmake -E sha256sum $TARBALL > $SHASUM
+        echo "::set-output name=tarball::$TARBALL"
+        echo "::set-output name=shasum::$SHASUM"
+
+    - name: upload tarball
+      uses: softprops/action-gh-release@v1
+      with:
+        draft: true
+        files: |
+          ${{ steps.archive.outputs.tarball }}
+          ${{ steps.archive.outputs.shasum }}
