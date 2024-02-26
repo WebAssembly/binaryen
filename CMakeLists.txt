@@ -52,6 +52,9 @@ option(BUILD_FOR_BROWSER "Build binaryen toolchain utilities for the browser" OF
 # Turn this on to use the Wasm EH feature instead of emscripten EH in the wasm/BinaryenJS builds
 option(EMSCRIPTEN_ENABLE_WASM_EH "Enable Wasm EH feature in emscripten build" OFF)
 
+# Turn this on to use pthreads feature in the wasm/BinaryenJS builds
+option(EMSCRIPTEN_ENABLE_PTHREADS "Enable pthreads in emscripten build" OFF)
+
 # For git users, attempt to generate a more useful version string
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
   find_package(Git QUIET REQUIRED)
@@ -342,6 +345,17 @@ if(EMSCRIPTEN)
     add_compile_flag("-sDISABLE_EXCEPTION_CATCHING=0")
     add_link_flag("-sDISABLE_EXCEPTION_CATCHING=0")
   endif()
+  if(EMSCRIPTEN_ENABLE_PTHREADS)
+    add_compile_flag("-pthread")
+    add_link_flag("-pthread")
+    # Use mimalloc to avoid a 5x slowdown:
+    # https://github.com/emscripten-core/emscripten/issues/15727#issuecomment-1960295018
+    add_link_flag("-sMALLOC=mimalloc")
+    # Disable the warning on pthreads+memory growth (we are not much affected by
+    # it as there is little wasm-JS transfer of data, almost all work is inside
+    # the wasm).
+    add_link_flag("-Wno-pthreads-mem-growth")
+  endif()
   # In the browser, there is no natural place to provide commandline arguments
   # for a commandline tool, so let the user run the main entry point themselves
   # and pass in the arguments there.
@@ -356,7 +370,6 @@ if(EMSCRIPTEN)
   else()
     # On Node.js, make the tools immediately usable.
     add_link_flag("-sNODERAWFS")
-    add_link_flag("-sSINGLE_FILE")
   endif()
     # in opt builds, LTO helps so much (>20%) it's worth slow compile times
     add_nondebug_compile_flag("-flto")
@@ -461,6 +474,9 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm "-sFILESYSTEM")
   target_link_libraries(binaryen_wasm "-sEXPORT_NAME=Binaryen")
   target_link_libraries(binaryen_wasm "-sNODERAWFS=0")
+  # Emit a single file for convenience of people using binaryen.js as a library,
+  # so they only need to distribute a single file.
+  target_link_libraries(binaryen_wasm "-sSINGLE_FILE")
   target_link_libraries(binaryen_wasm "-sEXPORT_ES6")
   target_link_libraries(binaryen_wasm "-sEXPORTED_RUNTIME_METHODS=stringToUTF8OnStack,stringToAscii")
   target_link_libraries(binaryen_wasm "-sEXPORTED_FUNCTIONS=_malloc,_free")
@@ -493,6 +509,7 @@ if(EMSCRIPTEN)
     target_link_libraries(binaryen_js "-sFILESYSTEM=1")
   endif()
   target_link_libraries(binaryen_js "-sNODERAWFS=0")
+  target_link_libraries(binaryen_js "-sSINGLE_FILE")
   target_link_libraries(binaryen_js "-sEXPORT_NAME=Binaryen")
   # Currently, js_of_ocaml can only process ES5 code
   if(JS_OF_OCAML)
