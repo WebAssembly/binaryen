@@ -192,8 +192,7 @@ jobs:
     - name: update path
       run:  echo "PATH=$PATH:$HOME/emsdk" >> $GITHUB_ENV
 
-    # Configure with wasm EH and pthreads for maximal performance
-    # is |source| needed?
+    # Configure with wasm EH and pthreads for maximal performance.
     - name: cmake
       run: |
         source $HOME/emsdk/emsdk_env.sh
