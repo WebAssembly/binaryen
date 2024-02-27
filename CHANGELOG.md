@@ -14,10 +14,27 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
- - The `tuple.make` pseudoinstruction now requires an immediate giving its
-   arity. For example, to make a tuple of two elements, use `tuple.make 2`.
+
+v117
+----
+ - Add a WebAssembly build to release (#6351)
+ - Add Linux aarch64 build to release (#6334).
+ - The text format for tuple instructions now requires immediates. For example,
+   to make a tuple of two elements, use `tuple.make 2` (#6169) (#6172) (#6170).
  - The text format for `if` expressions now requires `then` and `else` to
-   introduce the two branch arms, matching the spec.
+   introduce the two branch arms, matching the spec (#6201).
+ - Fuzzer: Remove --emit-js-shell logic and reuse fuzz_shell.js instead (#6310).
+ - [EH] Add --experimental-new-eh option to wasm-opt (#6270) (#6210).
+ - Add StringLowering pass, from stringref to imported-strings (#6271).
+ - C API: Add BinaryenFunctionAppendVar (#6213).
+ - Add J2CL optimization pass (#6151).
+ - Add no-inline IR annotation, and passes to set it based on function name
+   (#6146).
+ - C API: Add BinaryenTableGetType and BinaryenTableSetType (#6137).
+ - Add an Unsubtyping optimization (#5982).
+ - Compute full transitive closure in GlobalEffects (#5992).
+ - Add passes to finalize or unfinalize types (#5944).
+ - Add a tuple optimization pass (#5937).
 
 v116
 ----
