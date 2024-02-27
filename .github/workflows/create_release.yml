@@ -169,9 +169,9 @@ jobs:
           ${{ steps.archive.outputs.tarball }}
           ${{ steps.archive.outputs.shasum }}
 
-  # Build to WebAssembly using Emscripten.
-  build-wasm:
-    name: wasm
+  # Build using Emscripten to JavaScript+WebAssembly.
+  build-node:
+    name: node
     runs-on: ubuntu-latest
     defaults:
       run:
@@ -217,7 +217,7 @@ jobs:
       id: archive
       run: |
         VERSION=$GITHUB_REF_NAME
-        PKGNAME="binaryen-$VERSION-wasm"
+        PKGNAME="binaryen-$VERSION-node"
         TARBALL=$PKGNAME.tar.gz
         SHASUM=$PKGNAME.tar.gz.sha256
         mkdir binaryen-$VERSION
