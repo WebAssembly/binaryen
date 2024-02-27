@@ -15,8 +15,6 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
-v117
-----
  - Add a WebAssembly build to release (#6351)
  - Add Linux aarch64 build to release (#6334).
  - The text format for tuple instructions now requires immediates. For example,
