@@ -138,7 +138,10 @@ struct ReconstructStringifyWalker
       } else if (auto* expr = curr->dynCast<Switch>()) {
         Type type = expr->value ? expr->value->type : Type::none;
         ASSERT_OK(builder->visitSwitchWithType(expr, type));
+      } else if (curr->dynCast<BrOn>()) {
+        ASSERT_OK(builder->visit(curr));
       } else {
+        assert(!Properties::isBranch(curr));
         ASSERT_OK(builder->visit(curr));
       }
     }

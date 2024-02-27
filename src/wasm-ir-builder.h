@@ -544,8 +544,8 @@ private:
   [[nodiscard]] Result<> packageHoistedValue(const HoistedVal&,
                                              size_t sizeHint = 1);
 
-  [[nodiscard]] Result<Expression*> getBranchValue(Name labelName,
-                                                   std::optional<Index> label);
+  [[nodiscard]] Result<Expression*>
+  getBranchValue(Expression* curr, Name labelName, std::optional<Index> label);
 
   void dump();
 };

@@ -404,8 +404,10 @@ Result<> IRBuilder::visitArrayNewFixed(ArrayNewFixed* curr) {
   return Ok{};
 }
 
-Result<Expression*> IRBuilder::getBranchValue(Name labelName,
+Result<Expression*> IRBuilder::getBranchValue(Expression* curr,
+                                              Name labelName,
                                               std::optional<Index> label) {
+  assert(curr->is<Break>() || curr->is<Switch>());
   if (!label) {
     auto index = getLabelIndex(labelName);
     CHECK_ERR(index);
@@ -425,7 +427,7 @@ Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
     CHECK_ERR(cond);
     curr->condition = *cond;
   }
-  auto value = getBranchValue(curr->name, label);
+  auto value = getBranchValue(curr, curr->name, label);
   CHECK_ERR(value);
   curr->value = *value;
   return Ok{};
@@ -454,7 +456,7 @@ Result<> IRBuilder::visitSwitch(Switch* curr,
   auto cond = pop();
   CHECK_ERR(cond);
   curr->condition = *cond;
-  auto value = getBranchValue(curr->default_, defaultLabel);
+  auto value = getBranchValue(curr, curr->default_, defaultLabel);
   CHECK_ERR(value);
   curr->value = *value;
   return Ok{};
