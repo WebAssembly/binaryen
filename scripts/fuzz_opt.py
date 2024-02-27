@@ -176,6 +176,7 @@ def update_feature_opts(wasm):
 def randomize_fuzz_settings():
     # a list of the arguments to pass to wasm-opt -ttf when generating the wasm
     global GEN_ARGS
+    GEN_ARGS = []
 
     # a list of the optimizations to run on the wasm
     global FUZZ_OPTS
@@ -190,7 +191,6 @@ def randomize_fuzz_settings():
     # a boolean whether we legalize the wasm for JS
     global LEGALIZE
 
-    GEN_ARGS = []
     if random.random() < 0.5:
         NANS = True
     else:
@@ -217,7 +217,6 @@ def randomize_fuzz_settings():
 
         # Add --dce not only when generating the original wasm but to the
         # optimizations we use to create any other wasm file.
-        FUZZ_OPTS = []
         FUZZ_OPTS += ['--dce']
 
     print('randomized settings (NaNs, OOB, legalize):', NANS, OOB, LEGALIZE)
