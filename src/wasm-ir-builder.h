@@ -56,6 +56,10 @@ public:
   // any children or refinalization.
   void push(Expression*);
 
+  // Set the debug location to be attached to the next visited, created, or
+  // pushed instruction.
+  void setDebugLocation(const Function::DebugLocation&);
+
   // Handle the boundaries of control flow structures. Users may choose to use
   // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
   // either way must call `visitEnd` and friends at the appropriate times.
@@ -243,6 +247,9 @@ private:
   Module& wasm;
   Function* func;
   Builder builder;
+  std::optional<Function::DebugLocation> debugLoc;
+
+  void applyDebugLoc(Expression* expr);
 
   // The context for a single block scope, including the instructions parsed
   // inside that scope so far and the ultimate result type we expect this block

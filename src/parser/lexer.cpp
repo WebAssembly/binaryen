@@ -28,6 +28,8 @@ using namespace std::string_view_literals;
 
 namespace wasm::WATParser {
 
+Name srcAnnotationKind("src");
+
 namespace {
 
 // ================
@@ -348,6 +350,47 @@ struct LexIdCtx : LexCtx {
   }
 };
 
+struct LexAnnotationResult : LexResult {
+  Annotation annotation;
+};
+
+struct LexAnnotationCtx : LexCtx {
+  std::string_view kind;
+  size_t kindSize = 0;
+  std::string_view contents;
+  size_t contentsSize = 0;
+
+  explicit LexAnnotationCtx(std::string_view in) : LexCtx(in) {}
+
+  void startKind() { kind = next(); }
+
+  void takeKind(size_t size) {
+    kindSize += size;
+    take(size);
+  }
+
+  void setKind(std::string_view kind) {
+    this->kind = kind;
+    kindSize = kind.size();
+  }
+
+  void startContents() { contents = next(); }
+
+  void takeContents(size_t size) {
+    contentsSize += size;
+    take(size);
+  }
+
+  std::optional<LexAnnotationResult> lexed() {
+    if (auto basic = LexCtx::lexed()) {
+      return LexAnnotationResult{
+        *basic,
+        {Name(kind.substr(0, kindSize)), contents.substr(0, contentsSize)}};
+    }
+    return std::nullopt;
+  }
+};
+
 std::optional<LexResult> lparen(std::string_view in) {
   LexCtx ctx(in);
   ctx.takePrefix("("sv);
@@ -357,6 +400,101 @@ std::optional<LexResult> lparen(std::string_view in) {
 std::optional<LexResult> rparen(std::string_view in) {
   LexCtx ctx(in);
   ctx.takePrefix(")"sv);
+  return ctx.lexed();
+}
+
+std::optional<LexResult> idchar(std::string_view);
+std::optional<LexResult> space(std::string_view);
+std::optional<LexResult> keyword(std::string_view);
+std::optional<LexIntResult> integer(std::string_view);
+std::optional<LexFloatResult> float_(std::string_view);
+std::optional<LexStrResult> str(std::string_view);
+std::optional<LexIdResult> ident(std::string_view);
+
+// annotation ::= ';;@' [^\n]* | '(@'idchar+ annotelem* ')'
+// annotelem  ::= keyword | reserved | uN | sN | fN | string | id
+//              | '(' annotelem* ')' | '(@'idchar+ annotelem* ')'
+std::optional<LexAnnotationResult> annotation(std::string_view in) {
+  LexAnnotationCtx ctx(in);
+  if (ctx.takePrefix(";;@"sv)) {
+    ctx.setKind(srcAnnotationKind.str);
+    ctx.startContents();
+    if (auto size = ctx.next().find('\n'); size != ""sv.npos) {
+      ctx.takeContents(size);
+    } else {
+      ctx.takeContents(ctx.next().size());
+    }
+  } else if (ctx.takePrefix("(@"sv)) {
+    ctx.startKind();
+    bool hasIdchar = false;
+    while (auto lexed = idchar(ctx.next())) {
+      ctx.takeKind(1);
+      hasIdchar = true;
+    }
+    if (!hasIdchar) {
+      return std::nullopt;
+    }
+    ctx.startContents();
+    size_t depth = 1;
+    while (true) {
+      if (ctx.empty()) {
+        return std::nullopt;
+      }
+      if (auto lexed = space(ctx.next())) {
+        ctx.takeContents(lexed->span.size());
+        continue;
+      }
+      if (auto lexed = keyword(ctx.next())) {
+        ctx.takeContents(lexed->span.size());
+        continue;
+      }
+      if (auto lexed = integer(ctx.next())) {
+        ctx.takeContents(lexed->span.size());
+        continue;
+      }
+      if (auto lexed = float_(ctx.next())) {
+        ctx.takeContents(lexed->span.size());
+        continue;
+      }
+      if (auto lexed = str(ctx.next())) {
+        ctx.takeContents(lexed->span.size());
+        continue;
+      }
+      if (auto lexed = ident(ctx.next())) {
+        ctx.takeContents(lexed->span.size());
+        continue;
+      }
+      if (ctx.startsWith("(@"sv)) {
+        ctx.takeContents(2);
+        bool hasIdchar = false;
+        while (auto lexed = idchar(ctx.next())) {
+          ctx.takeContents(1);
+          hasIdchar = true;
+        }
+        if (!hasIdchar) {
+          return std::nullopt;
+        }
+        ++depth;
+        continue;
+      }
+      if (ctx.startsWith("("sv)) {
+        ctx.takeContents(1);
+        ++depth;
+        continue;
+      }
+      if (ctx.startsWith(")"sv)) {
+        --depth;
+        if (depth == 0) {
+          ctx.take(1);
+          break;
+        }
+        ctx.takeContents(1);
+        continue;
+      }
+      // Unrecognized token.
+      return std::nullopt;
+    }
+  }
   return ctx.lexed();
 }
 
@@ -375,7 +513,7 @@ std::optional<LexResult> comment(std::string_view in) {
   }
 
   // Line comment
-  if (ctx.takePrefix(";;"sv)) {
+  if (!ctx.startsWith(";;@"sv) && ctx.takePrefix(";;"sv)) {
     if (auto size = ctx.next().find('\n'); size != ""sv.npos) {
       ctx.take(size);
     } else {
@@ -934,8 +1072,17 @@ std::optional<std::string_view> Token::getID() const {
 }
 
 void Lexer::skipSpace() {
-  if (auto ctx = space(next())) {
-    index += ctx->span.size();
+  while (true) {
+    if (auto ctx = annotation(next())) {
+      index += ctx->span.size();
+      annotations.push_back(ctx->annotation);
+      continue;
+    }
+    if (auto ctx = space(next())) {
+      index += ctx->span.size();
+      continue;
+    }
+    break;
   }
 }
 
