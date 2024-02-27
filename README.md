@@ -374,26 +374,6 @@ Binaryen.js can be built using Emscripten, which can be installed via [the SDK](
   emcmake cmake -DBUILD_FOR_BROWSER=ON . && emmake make
   ```
 
-## Releases
-
-Builds are distributed by the various toolchains that use Binaryen, like
-Emscripten, `wasm-pack`, etc. There are also official releases on GitHub in this
-repo itself:
-
-https://github.com/WebAssembly/binaryen/releases
-
-Currently builds of the following platforms are included:
-
- * `Linux-x86_64`
- * `Linux-arm64`
- * `MacOS-x86_64`
- * `MacOS-arm64`
- * `Windows-x86_64`
- * `WebAssembly` (experimental): A port of `wasm-opt` itself to wasm. Run
-   `nodejs wasm-opt.js` as a drop-in replacement to a native build of
-   `wasm-opt`, on any platform that Node.js runs on. Requires Node.js 18+ (for
-   Wasm EH and Wasm Threads).
-
 ### Visual C++
 
 1. Using the Microsoft Visual Studio Installer, install the "Visual C++ tools for CMake" component.
@@ -417,6 +397,26 @@ Currently builds of the following platforms are included:
    ```
 
    CMake generates a project named "ALL_BUILD.vcxproj" for conveniently building all the projects.
+
+## Releases
+
+Builds are distributed by the various toolchains that use Binaryen, like
+Emscripten, `wasm-pack`, etc. There are also official releases on GitHub in this
+repo itself:
+
+https://github.com/WebAssembly/binaryen/releases
+
+Currently builds of the following platforms are included:
+
+ * `Linux-x86_64`
+ * `Linux-arm64`
+ * `MacOS-x86_64`
+ * `MacOS-arm64`
+ * `Windows-x86_64`
+ * `WebAssembly` (experimental): A port of `wasm-opt` itself to wasm. Run
+   `nodejs wasm-opt.js` as a drop-in replacement to a native build of
+   `wasm-opt`, on any platform that Node.js runs on. Requires Node.js 18+ (for
+   Wasm EH and Wasm Threads).
 
 ## Running
 
