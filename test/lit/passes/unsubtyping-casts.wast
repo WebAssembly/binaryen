@@ -372,6 +372,109 @@
  )
 )
 
+;; As above, but now with some ref.eq added. Those should not inhibit
+;; optimizations: as before, $bot no longer needs to subtype from $mid (but
+;; $mid must subtype from $top). ref.eq does add a requirement on subtyping
+;; (that the type be a subtype of eq), but ref.eq does not actually flow the
+;; inputs it receives anywhere, so that doesn't stop us from removing subtyping
+;; from user types.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $top (sub (struct )))
+  (type $top (sub (struct)))
+  ;; CHECK:       (type $mid (sub $top (struct )))
+  (type $mid (sub $top (struct)))
+  ;; CHECK:       (type $bot (sub (struct )))
+  (type $bot (sub $mid (struct)))
+ )
+
+ ;; CHECK:       (type $3 (func (param anyref (ref $top) (ref $mid) (ref $bot))))
+
+ ;; CHECK:      (func $cast (type $3) (param $any anyref) (param $top (ref $top)) (param $mid (ref $mid)) (param $bot (ref $bot))
+ ;; CHECK-NEXT:  (local $l anyref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $top)
+ ;; CHECK-NEXT:    (local.get $mid)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $top)
+ ;; CHECK-NEXT:    (local.get $bot)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $mid)
+ ;; CHECK-NEXT:    (local.get $bot)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.cast (ref $bot)
+ ;; CHECK-NEXT:    (local.get $any)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.cast (ref $top)
+ ;; CHECK-NEXT:    (local.get $any)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.cast (ref $mid)
+ ;; CHECK-NEXT:    (local.get $any)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $l
+ ;; CHECK-NEXT:   (struct.new_default $mid)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $cast (param $any anyref) (param $top (ref $top)) (param $mid (ref $mid)) (param $bot (ref $bot))
+  (local $l anyref)
+  (drop
+   (ref.eq
+    (local.get $top)
+    (local.get $mid)
+   )
+  )
+  (drop
+   (ref.eq
+    (local.get $top)
+    (local.get $bot)
+   )
+  )
+  (drop
+   (ref.eq
+    (local.get $mid)
+    (local.get $bot)
+   )
+  )
+  (drop
+   ;; Cast any -> $bot
+   (ref.cast (ref $bot)
+    (local.get $any)
+   )
+  )
+  (drop
+   ;; Cast any -> $top
+   (ref.cast (ref $top)
+    (local.get $any)
+   )
+  )
+  (drop
+   ;; Cast any -> $mid
+   (ref.cast (ref $mid)
+    (local.get $any)
+   )
+  )
+
+  (local.set $l
+   (struct.new $mid)
+  )
+ )
+)
+
 (module
  (rec
   ;; CHECK:      (rec

@@ -193,6 +193,22 @@ struct Unsubtyping
     noteSubtype(sub->type, super->type);
   }
 
+  void noteNonFlowSubtype(Expression* sub, Type super) {
+    // This expression's type must be a subtype of |super|, but the value does
+    // not flow anywhere - this is a static constraint. As the value does not
+    // flow, it cannot reach anywhere else, which means we need this in order to
+    // validate but it does not interact with casts. Given that, if super is a
+    // basic type then we can simply ignore this: we only remove subtyping
+    // between user types, so subtyping wrt basic types is unchanged, and so
+    // this constraint will never be a problem.
+    if (super.isRef() && super.getHeapType().isBasic()) {
+      return;
+    }
+
+    // Otherwise, we must take this into account.
+    noteSubtype(sub, super);
+  }
+
   void noteCast(HeapType src, HeapType dest) {
     if (src == dest || dest.isBottom()) {
       return;
