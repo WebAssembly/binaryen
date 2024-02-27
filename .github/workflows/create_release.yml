@@ -210,7 +210,7 @@ jobs:
     #       is a 0.5 second cost to each run of wasm-opt.js
     - name: test
       run: |
-        nodejs out/bin/wasm-opt.js test/hello_world.wat --print > out/t.wat
+        node out/bin/wasm-opt.js test/hello_world.wat --print > out/t.wat
         diff test/hello_world.wat out/t.wat
 
     - name: archive
