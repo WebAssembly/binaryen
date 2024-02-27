@@ -439,7 +439,7 @@ Result<> IRBuilder::visitBreakWithType(Break* curr, Type type) {
     CHECK_ERR(cond);
     curr->condition = *cond;
   }
-  if (!curr->value) {
+  if (type == Type::None) {
     curr->value = nullptr;
   } else {
     auto value = pop(type.size());
@@ -466,7 +466,7 @@ Result<> IRBuilder::visitSwitchWithType(Switch* curr, Type type) {
   auto cond = pop();
   CHECK_ERR(cond);
   curr->condition = *cond;
-  if (!curr->value) {
+  if (type == Type::None) {
     curr->value = nullptr;
   } else {
     auto value = pop(type.size());
