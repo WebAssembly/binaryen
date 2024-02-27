@@ -739,8 +739,8 @@ def instruction_parser(new_parser=False):
 
     def print_leaf(expr, inst):
         if new_parser:
-            expr = expr.replace("()", "(ctx, pos)")
-            expr = expr.replace("(s", "(ctx, pos")
+            expr = expr.replace("()", "(ctx, pos, annotations)")
+            expr = expr.replace("(s", "(ctx, pos, annotations")
             printer.print_line("if (op == \"{inst}\"sv) {{".format(inst=inst))
             with printer.indent():
                 printer.print_line("CHECK_ERR({expr});".format(expr=expr))

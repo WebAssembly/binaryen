@@ -151,6 +151,8 @@ void IRBuilder::push(Expression* expr) {
   }
   scope.exprStack.push_back(expr);
 
+  applyDebugLoc(expr);
+
   DBG(std::cerr << "After pushing " << ShallowExpression{expr} << ":\n");
   DBG(dump());
 }
@@ -206,6 +208,19 @@ Result<Expression*> IRBuilder::build() {
   scopeStack.clear();
   labelDepths.clear();
   return expr;
+}
+
+void IRBuilder::setDebugLocation(const Function::DebugLocation& loc) {
+  debugLoc = loc;
+}
+
+void IRBuilder::applyDebugLoc(Expression* expr) {
+  if (debugLoc) {
+    if (func) {
+      func->debugLocations[expr] = *debugLoc;
+    }
+    debugLoc.reset();
+  }
 }
 
 void IRBuilder::dump() {
@@ -623,11 +638,13 @@ Result<> IRBuilder::visitFunctionStart(Function* func) {
 }
 
 Result<> IRBuilder::visitBlockStart(Block* curr) {
+  applyDebugLoc(curr);
   pushScope(ScopeCtx::makeBlock(curr));
   return Ok{};
 }
 
 Result<> IRBuilder::visitIfStart(If* iff, Name label) {
+  applyDebugLoc(iff);
   auto cond = pop();
   CHECK_ERR(cond);
   iff->condition = *cond;
@@ -636,11 +653,13 @@ Result<> IRBuilder::visitIfStart(If* iff, Name label) {
 }
 
 Result<> IRBuilder::visitLoopStart(Loop* loop) {
+  applyDebugLoc(loop);
   pushScope(ScopeCtx::makeLoop(loop));
   return Ok{};
 }
 
 Result<> IRBuilder::visitTryStart(Try* tryy, Name label) {
+  applyDebugLoc(tryy);
   // The delegate label will be regenerated if we need it. See
   // `getDelegateLabelName` for details.
   tryy->name = Name();
@@ -649,11 +668,14 @@ Result<> IRBuilder::visitTryStart(Try* tryy, Name label) {
 }
 
 Result<> IRBuilder::visitTryTableStart(TryTable* trytable, Name label) {
+  applyDebugLoc(trytable);
   pushScope(ScopeCtx::makeTryTable(trytable, label));
   return Ok{};
 }
 
 Result<Expression*> IRBuilder::finishScope(Block* block) {
+  debugLoc.reset();
+
   if (scopeStack.empty() || scopeStack.back().isNone()) {
     return Err{"unexpected end of scope"};
   }
