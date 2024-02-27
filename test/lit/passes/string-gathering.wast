@@ -61,7 +61,7 @@
 
   ;; LOWER:      (import "wasm:js-string" "length" (func $length (type $6) (param externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "codePointAt" (func $codePointAt (type $7) (param externref i32) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $7) (param externref i32) (result i32)))
 
   ;; LOWER:      (import "wasm:js-string" "substring" (func $substring (type $8) (param externref i32 i32) (result (ref extern))))
 
@@ -182,7 +182,7 @@
 
   ;; LOWER:      (import "wasm:js-string" "length" (func $length (type $5) (param externref) (result i32)))
 
-  ;; LOWER:      (import "wasm:js-string" "codePointAt" (func $codePointAt (type $6) (param externref i32) (result i32)))
+  ;; LOWER:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $6) (param externref i32) (result i32)))
 
   ;; LOWER:      (import "wasm:js-string" "substring" (func $substring (type $7) (param externref i32 i32) (result (ref extern))))
 
