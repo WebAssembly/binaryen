@@ -826,7 +826,7 @@
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (f64.div
-  ;; CHECK-NEXT:   (f64.const -nan:0xfffffffffa361)
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:   (loop $label$1
   ;; CHECK-NEXT:    (br $label$1)
   ;; CHECK-NEXT:   )
@@ -846,7 +846,7 @@
   ;; CHECK:      (func $leave-block-even-if-br-not-taken (type $6) (result f64)
   ;; CHECK-NEXT:  (block $label$0
   ;; CHECK-NEXT:   (f64.store align=1
-  ;; CHECK-NEXT:    (i32.const 879179022)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:    (block
   ;; CHECK-NEXT:     (loop $label$9
   ;; CHECK-NEXT:      (br $label$9)

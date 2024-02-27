@@ -9,7 +9,7 @@
   (tag $e (param (ref null $struct.A)))
 
   ;; CHECK:      (func $ref-cast-statically-removed (type $2)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )

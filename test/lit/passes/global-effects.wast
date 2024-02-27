@@ -223,7 +223,7 @@
   )
 
   ;; WITHOUT:      (func $call-throw-and-catch (type $0)
-  ;; WITHOUT-NEXT:  (try $try
+  ;; WITHOUT-NEXT:  (try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $throw)
   ;; WITHOUT-NEXT:   )
@@ -231,7 +231,7 @@
   ;; WITHOUT-NEXT:    (nop)
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
-  ;; WITHOUT-NEXT:  (try $try0
+  ;; WITHOUT-NEXT:  (try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $throw-and-import)
   ;; WITHOUT-NEXT:   )
@@ -241,7 +241,7 @@
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (func $call-throw-and-catch (type $0)
-  ;; INCLUDE-NEXT:  (try $try0
+  ;; INCLUDE-NEXT:  (try
   ;; INCLUDE-NEXT:   (do
   ;; INCLUDE-NEXT:    (call $throw-and-import)
   ;; INCLUDE-NEXT:   )
@@ -251,7 +251,7 @@
   ;; INCLUDE-NEXT:  )
   ;; INCLUDE-NEXT: )
   ;; DISCARD:      (func $call-throw-and-catch (type $0)
-  ;; DISCARD-NEXT:  (try $try
+  ;; DISCARD-NEXT:  (try
   ;; DISCARD-NEXT:   (do
   ;; DISCARD-NEXT:    (call $throw)
   ;; DISCARD-NEXT:   )
@@ -259,7 +259,7 @@
   ;; DISCARD-NEXT:    (nop)
   ;; DISCARD-NEXT:   )
   ;; DISCARD-NEXT:  )
-  ;; DISCARD-NEXT:  (try $try0
+  ;; DISCARD-NEXT:  (try
   ;; DISCARD-NEXT:   (do
   ;; DISCARD-NEXT:    (call $throw-and-import)
   ;; DISCARD-NEXT:   )
@@ -288,7 +288,7 @@
   )
 
   ;; WITHOUT:      (func $call-unreachable-and-catch (type $0)
-  ;; WITHOUT-NEXT:  (try $try
+  ;; WITHOUT-NEXT:  (try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $unreachable)
   ;; WITHOUT-NEXT:   )
@@ -301,7 +301,7 @@
   ;; INCLUDE-NEXT:  (call $unreachable)
   ;; INCLUDE-NEXT: )
   ;; DISCARD:      (func $call-unreachable-and-catch (type $0)
-  ;; DISCARD-NEXT:  (try $try
+  ;; DISCARD-NEXT:  (try
   ;; DISCARD-NEXT:   (do
   ;; DISCARD-NEXT:    (call $unreachable)
   ;; DISCARD-NEXT:   )
@@ -323,7 +323,7 @@
   )
 
   ;; WITHOUT:      (func $call-throw-or-unreachable-and-catch (type $2) (param $x i32)
-  ;; WITHOUT-NEXT:  (try $try
+  ;; WITHOUT-NEXT:  (try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (if
   ;; WITHOUT-NEXT:     (local.get $x)
@@ -341,7 +341,7 @@
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (func $call-throw-or-unreachable-and-catch (type $2) (param $x i32)
-  ;; INCLUDE-NEXT:  (try $try
+  ;; INCLUDE-NEXT:  (try
   ;; INCLUDE-NEXT:   (do
   ;; INCLUDE-NEXT:    (if
   ;; INCLUDE-NEXT:     (local.get $x)
@@ -359,7 +359,7 @@
   ;; INCLUDE-NEXT:  )
   ;; INCLUDE-NEXT: )
   ;; DISCARD:      (func $call-throw-or-unreachable-and-catch (type $2) (param $x i32)
-  ;; DISCARD-NEXT:  (try $try
+  ;; DISCARD-NEXT:  (try
   ;; DISCARD-NEXT:   (do
   ;; DISCARD-NEXT:    (if
   ;; DISCARD-NEXT:     (local.get $x)

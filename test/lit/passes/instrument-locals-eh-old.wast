@@ -7,7 +7,7 @@
 
   ;; CHECK:      (func $test (type $8)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )

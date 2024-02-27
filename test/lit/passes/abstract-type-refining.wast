@@ -743,8 +743,8 @@
   ;; YESTNH-NEXT:   )
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT:  (drop
-  ;; YESTNH-NEXT:   (block $block0 (result (ref any))
-  ;; YESTNH-NEXT:    (br_on_non_null $block0
+  ;; YESTNH-NEXT:   (block $block_0 (result (ref any))
+  ;; YESTNH-NEXT:    (br_on_non_null $block_0
   ;; YESTNH-NEXT:     (local.get $x)
   ;; YESTNH-NEXT:    )
   ;; YESTNH-NEXT:    (unreachable)
@@ -763,8 +763,8 @@
   ;; NO_TNH-NEXT:   )
   ;; NO_TNH-NEXT:  )
   ;; NO_TNH-NEXT:  (drop
-  ;; NO_TNH-NEXT:   (block $block0 (result (ref any))
-  ;; NO_TNH-NEXT:    (br_on_non_null $block0
+  ;; NO_TNH-NEXT:   (block $block_0 (result (ref any))
+  ;; NO_TNH-NEXT:    (br_on_non_null $block_0
   ;; NO_TNH-NEXT:     (local.get $x)
   ;; NO_TNH-NEXT:    )
   ;; NO_TNH-NEXT:    (unreachable)

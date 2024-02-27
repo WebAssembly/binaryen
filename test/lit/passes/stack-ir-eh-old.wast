@@ -7,24 +7,24 @@
   (tag $e0 (param i32))
 
   ;; CHECK:      (func $eh (type $1)
-  ;; CHECK-NEXT:  try $l0
+  ;; CHECK-NEXT:  try $__delegate__l0
   ;; CHECK-NEXT:   i32.const 0
   ;; CHECK-NEXT:   throw $e0
   ;; CHECK-NEXT:  catch $e0
   ;; CHECK-NEXT:   
   ;; CHECK-NEXT:   drop
   ;; CHECK-NEXT:  catch_all
-  ;; CHECK-NEXT:   rethrow $l0
+  ;; CHECK-NEXT:   rethrow $__delegate__l0
   ;; CHECK-NEXT:  end
-  ;; CHECK-NEXT:  try $l00
-  ;; CHECK-NEXT:   try $try
+  ;; CHECK-NEXT:  try $__delegate__l0_0
+  ;; CHECK-NEXT:   try
   ;; CHECK-NEXT:    i32.const 0
   ;; CHECK-NEXT:    throw $e0
-  ;; CHECK-NEXT:   delegate $l00
+  ;; CHECK-NEXT:   delegate $__delegate__l0_0
   ;; CHECK-NEXT:   unreachable
   ;; CHECK-NEXT:  catch_all
   ;; CHECK-NEXT:  end
-  ;; CHECK-NEXT:  try $l01
+  ;; CHECK-NEXT:  try
   ;; CHECK-NEXT:  delegate 0
   ;; CHECK-NEXT: )
   (func $eh

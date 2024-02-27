@@ -1214,18 +1214,20 @@
   )
 
   ;; CHECK:      (func $try-catch (type $0)
-  ;; CHECK-NEXT:  (try $label$5
-  ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (if
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:     (then
-  ;; CHECK-NEXT:      (call $once)
+  ;; CHECK-NEXT:  (block $label$5
+  ;; CHECK-NEXT:   (try
+  ;; CHECK-NEXT:    (do
+  ;; CHECK-NEXT:     (if
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (call $once)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (catch $tag
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (pop i32)
+  ;; CHECK-NEXT:    (catch $tag
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (pop i32)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

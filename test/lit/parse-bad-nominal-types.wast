@@ -2,17 +2,17 @@
 
 ;; RUN: foreach %s %t not wasm-opt -all 2>&1 | filecheck %s
 
-;; CHECK: [parse exception: unknown supertype: ( type $bad-func ( sub $bad ( func ) ) ) (at 2:24)]
+;; CHECK: 2:28: error: unknown type identifier
 (module
   (type $bad-func (sub $bad (func)))
 )
 
-;; CHECK: [parse exception: unknown supertype: ( type $bad-struct ( sub $bad ( struct ) ) ) (at 2:26)]
+;; CHECK: 2:30: error: unknown type identifier
 (module
   (type $bad-struct (sub $bad (struct)))
 )
 
-;; CHECK: [parse exception: unknown supertype: ( type $bad-array ( sub $bad ( array i32 ) ) ) (at 2:25)]
+;; CHECK: 2:29: error: unknown type identifier
 (module
   (type $bad-array (sub $bad (array i32)))
 )

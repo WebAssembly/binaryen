@@ -1262,7 +1262,7 @@
   ;; CHECK:      (func $struct.new (type $4) (param $extern externref) (result anyref)
   ;; CHECK-NEXT:  (struct.new $A
   ;; CHECK-NEXT:   (ref.cast (ref noextern)
-  ;; CHECK-NEXT:    (try $try (result externref)
+  ;; CHECK-NEXT:    (try (result externref)
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (struct.get $A 0
   ;; CHECK-NEXT:       (struct.new $A
@@ -1314,7 +1314,7 @@
   ;; CHECK-NEXT:  (struct.set $A 0
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (ref.cast (ref noextern)
-  ;; CHECK-NEXT:    (try $try (result externref)
+  ;; CHECK-NEXT:    (try (result externref)
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (struct.get $A 0
   ;; CHECK-NEXT:       (struct.new $A

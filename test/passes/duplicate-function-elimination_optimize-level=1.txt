@@ -88,7 +88,7 @@
 (module
  (type $2 (func))
  (type $3 (func (param i32)))
- (type $S (func (result i32)))
+ (type $T (func (result i32)))
  (memory $0 0)
  (func $keep4-similar-but-func-sig-differs
   (drop
@@ -412,12 +412,12 @@
  )
 )
 (module
- (type $S (func))
+ (type $T (func))
  (memory $0 0)
  (table $0 2 2 funcref)
  (elem $0 (i32.const 0) $keep2 $keep2)
  (func $keep2
-  (call_indirect (type $S)
+  (call_indirect (type $T)
    (i32.const 0)
   )
  )

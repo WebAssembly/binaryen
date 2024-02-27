@@ -219,8 +219,11 @@
   ;; CHECK-TEXT:      (func $untaken-break-should-have-value (type $0) (result i32)
   ;; CHECK-TEXT-NEXT:  (block $x (result i32)
   ;; CHECK-TEXT-NEXT:   (block
-  ;; CHECK-TEXT-NEXT:    (br_if $x
+  ;; CHECK-TEXT-NEXT:    (drop
   ;; CHECK-TEXT-NEXT:     (i32.const 0)
+  ;; CHECK-TEXT-NEXT:    )
+  ;; CHECK-TEXT-NEXT:    (br_if $x
+  ;; CHECK-TEXT-NEXT:     (unreachable)
   ;; CHECK-TEXT-NEXT:     (unreachable)
   ;; CHECK-TEXT-NEXT:    )
   ;; CHECK-TEXT-NEXT:   )
@@ -258,8 +261,11 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (block $label$0 (result i32)
-  ;; CHECK-TEXT-NEXT:   (br_if $label$0
+  ;; CHECK-TEXT-NEXT:   (drop
   ;; CHECK-TEXT-NEXT:    (i32.const 0)
+  ;; CHECK-TEXT-NEXT:   )
+  ;; CHECK-TEXT-NEXT:   (br_if $label$0
+  ;; CHECK-TEXT-NEXT:    (unreachable)
   ;; CHECK-TEXT-NEXT:    (return
   ;; CHECK-TEXT-NEXT:     (i32.const -32)
   ;; CHECK-TEXT-NEXT:    )

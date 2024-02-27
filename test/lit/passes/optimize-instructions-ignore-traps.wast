@@ -213,30 +213,36 @@
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.eqz
+  ;; CHECK-NEXT:      (i32.rem_s
+  ;; CHECK-NEXT:       (i32.add
+  ;; CHECK-NEXT:        (i32.mul
+  ;; CHECK-NEXT:         (local.get $0)
+  ;; CHECK-NEXT:         (local.tee $7
+  ;; CHECK-NEXT:          (local.get $0)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (i32.const 17)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 5)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.mul
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (if (result i32)
   ;; CHECK-NEXT:      (i32.or
-  ;; CHECK-NEXT:       (i32.eqz
-  ;; CHECK-NEXT:        (i32.rem_s
-  ;; CHECK-NEXT:         (i32.add
-  ;; CHECK-NEXT:          (i32.mul
-  ;; CHECK-NEXT:           (local.get $0)
-  ;; CHECK-NEXT:           (local.tee $7
-  ;; CHECK-NEXT:            (local.get $0)
-  ;; CHECK-NEXT:           )
-  ;; CHECK-NEXT:          )
-  ;; CHECK-NEXT:          (i32.const 17)
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:         (i32.const 5)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (unreachable)
   ;; CHECK-NEXT:       (i32.eqz
   ;; CHECK-NEXT:        (i32.rem_u
   ;; CHECK-NEXT:         (i32.add
-  ;; CHECK-NEXT:          (i32.mul
-  ;; CHECK-NEXT:           (local.get $0)
-  ;; CHECK-NEXT:           (local.get $0)
-  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:          (unreachable)
   ;; CHECK-NEXT:          (unreachable)
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:         (i32.const 3)
@@ -693,13 +699,16 @@
  ;; CHECK-NEXT:    (block $label$2 (result f32)
  ;; CHECK-NEXT:     (drop
  ;; CHECK-NEXT:      (block $label$3 (result f32)
+ ;; CHECK-NEXT:       (drop
+ ;; CHECK-NEXT:        (br_if $label$3
+ ;; CHECK-NEXT:         (f32.const 1)
+ ;; CHECK-NEXT:         (local.get $0)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:       (br_if $label$1
  ;; CHECK-NEXT:        (i32.or
  ;; CHECK-NEXT:         (f32.gt
- ;; CHECK-NEXT:          (br_if $label$3
- ;; CHECK-NEXT:           (f32.const 1)
- ;; CHECK-NEXT:           (local.get $0)
- ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:          (unreachable)
  ;; CHECK-NEXT:          (br $label$2
  ;; CHECK-NEXT:           (f32.const 71)
  ;; CHECK-NEXT:          )

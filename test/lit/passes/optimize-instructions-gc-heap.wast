@@ -730,8 +730,16 @@
   ;; CHECK-NEXT:    (i32.const 20)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

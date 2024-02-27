@@ -356,10 +356,24 @@
 
  ;; Test multivalue control structures
  ;; CHECK:      (func $mv-return (type $0) (result i32 i64)
+ ;; CHECK-NEXT:  (local $scratch i32)
+ ;; CHECK-NEXT:  (local $1 i64)
+ ;; CHECK-NEXT:  (local $2 i64)
+ ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (return
  ;; CHECK-NEXT:   (tuple.make 2
- ;; CHECK-NEXT:    (i32.const 42)
- ;; CHECK-NEXT:    (i64.const 42)
+ ;; CHECK-NEXT:    (local.tee $scratch
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (local.set $3
+ ;; CHECK-NEXT:       (i32.const 42)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.set $1
+ ;; CHECK-NEXT:       (i64.const 42)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.get $3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -373,10 +387,24 @@
  )
 
  ;; CHECK:      (func $mv-return-in-block (type $0) (result i32 i64)
+ ;; CHECK-NEXT:  (local $scratch i32)
+ ;; CHECK-NEXT:  (local $1 i64)
+ ;; CHECK-NEXT:  (local $2 i64)
+ ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (return
  ;; CHECK-NEXT:   (tuple.make 2
- ;; CHECK-NEXT:    (i32.const 42)
- ;; CHECK-NEXT:    (i64.const 42)
+ ;; CHECK-NEXT:    (local.tee $scratch
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (local.set $3
+ ;; CHECK-NEXT:       (i32.const 42)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.set $1
+ ;; CHECK-NEXT:       (i64.const 42)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.get $3)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

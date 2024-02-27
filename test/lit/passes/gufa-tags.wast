@@ -19,7 +19,7 @@
   ;; CHECK:      (func $test (type $2)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (throw $tag$i32
   ;; CHECK-NEXT:     (i32.const 42)
@@ -78,7 +78,7 @@
 
   ;; CHECK:      (func $bar (type $3) (result i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (try $try (result i32)
+  ;; CHECK-NEXT:   (try (result i32)
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (i32.const 42)
   ;; CHECK-NEXT:    )

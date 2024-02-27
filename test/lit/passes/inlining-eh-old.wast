@@ -24,13 +24,15 @@
   ;; CHECK-NEXT:  (loop $label
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (block $__inlined_func$callee-with-label
-  ;; CHECK-NEXT:     (try $label0
-  ;; CHECK-NEXT:      (do
-  ;; CHECK-NEXT:       (nop)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (catch $tag$0
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (pop i32)
+  ;; CHECK-NEXT:     (block $label0
+  ;; CHECK-NEXT:      (try
+  ;; CHECK-NEXT:       (do
+  ;; CHECK-NEXT:        (nop)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (catch $tag$0
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (pop i32)
+  ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
@@ -52,11 +54,13 @@
 
   ;; ---------------------------------------------------------------------------
   ;; CHECK:      (func $callee-with-try-delegate (type $0)
-  ;; CHECK-NEXT:  (try $label$3
-  ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:  (block $label$3
+  ;; CHECK-NEXT:   (try
+  ;; CHECK-NEXT:    (do
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (delegate 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (delegate 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $callee-with-try-delegate
@@ -83,11 +87,13 @@
   ;; Properly support inlining into a function with a try-delegate
 
   ;; CHECK:      (func $caller-with-try-delegate (type $2) (result i32)
-  ;; CHECK-NEXT:  (try $label$3
-  ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:  (block $label$3
+  ;; CHECK-NEXT:   (try
+  ;; CHECK-NEXT:    (do
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (delegate 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (delegate 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result i32)
   ;; CHECK-NEXT:   (block $__inlined_func$callee-a$1 (result i32)
@@ -110,7 +116,7 @@
   ;; CHECK:      (func $caller-with-pop (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )

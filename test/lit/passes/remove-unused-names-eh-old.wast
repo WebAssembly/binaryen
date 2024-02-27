@@ -6,18 +6,18 @@
   (tag $tag$0 (param i32))
 
   ;; CHECK:      (func $func0 (type $0)
-  ;; CHECK-NEXT:  (try $label$9
+  ;; CHECK-NEXT:  (try $__delegate__label$9
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch_all
-  ;; CHECK-NEXT:    (try $label$8
+  ;; CHECK-NEXT:    (try $__delegate__label$8
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (try
   ;; CHECK-NEXT:       (do
-  ;; CHECK-NEXT:        (rethrow $label$9)
+  ;; CHECK-NEXT:        (rethrow $__delegate__label$9)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (delegate $label$8)
+  ;; CHECK-NEXT:       (delegate $__delegate__label$8)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (catch $tag$0

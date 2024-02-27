@@ -106,7 +106,10 @@
   ;; CHECK-NEXT:  (tuple.extract 1 0
   ;; CHECK-NEXT:   (tuple.make 2
   ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:    (tuple.make 2
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

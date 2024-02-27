@@ -560,9 +560,12 @@
 
   ;; CHECK:      (func $new-unreachable (type $4)
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
@@ -834,16 +837,16 @@
   ;; CHECK:      (func $unreachable-set-2 (type $4) (param $"{mut:i8}" (ref null $"{mut:i8}"))
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.as_non_null
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.get $"{mut:i8}")
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (br $block)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    (local.get $"{mut:i8}")
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructSet we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br $block)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -861,16 +864,16 @@
   ;; CHECK:      (func $unreachable-set-2b (type $4) (param $"{mut:i8}" (ref null $"{mut:i8}"))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (local.get $"{mut:i8}")
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (local.get $"{mut:i8}")
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unreachable-set-2b (param $"{mut:i8}" (ref null $"{mut:i8}"))

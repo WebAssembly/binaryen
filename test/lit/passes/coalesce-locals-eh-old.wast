@@ -13,7 +13,7 @@
 
  (tag $e)
   ;; CHECK:      (func $bug-cfg-traversal (type $2) (param $0 i32) (result i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (call $bar)

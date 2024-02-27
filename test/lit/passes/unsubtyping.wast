@@ -311,7 +311,7 @@
 
  ;; CHECK:      (func $loop (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (loop $loop-in (result (ref $sub))
+ ;; CHECK-NEXT:   (loop (result (ref $sub))
  ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -712,10 +712,20 @@
  ;; CHECK:       (type $4 (func (result (ref $super1) (ref $super2))))
 
  ;; CHECK:      (func $return-many (type $4) (result (ref $super1) (ref $super2))
+ ;; CHECK-NEXT:  (local $scratch (tuple (ref $sub1) (ref $sub2)))
  ;; CHECK-NEXT:  (return
  ;; CHECK-NEXT:   (tuple.make 2
- ;; CHECK-NEXT:    (struct.new_default $sub1)
- ;; CHECK-NEXT:    (struct.new_default $sub2)
+ ;; CHECK-NEXT:    (tuple.extract 2 0
+ ;; CHECK-NEXT:     (local.tee $scratch
+ ;; CHECK-NEXT:      (tuple.make 2
+ ;; CHECK-NEXT:       (struct.new_default $sub1)
+ ;; CHECK-NEXT:       (struct.new_default $sub2)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (tuple.extract 2 1
+ ;; CHECK-NEXT:     (local.get $scratch)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -829,7 +839,7 @@
 
  ;; CHECK:      (func $try (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (try $try (result (ref $super))
+ ;; CHECK-NEXT:   (try (result (ref $super))
  ;; CHECK-NEXT:    (do
  ;; CHECK-NEXT:     (struct.new_default $sub)
  ;; CHECK-NEXT:    )
@@ -865,7 +875,7 @@
 
  ;; CHECK:      (func $try-catch (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (try $try (result (ref $super))
+ ;; CHECK-NEXT:   (try (result (ref $super))
  ;; CHECK-NEXT:    (do
  ;; CHECK-NEXT:     (struct.new_default $super)
  ;; CHECK-NEXT:    )
@@ -936,9 +946,12 @@
  ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:   (ref.func $call-ref)
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (struct.new_default $sub)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (struct.new_default $sub)
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)

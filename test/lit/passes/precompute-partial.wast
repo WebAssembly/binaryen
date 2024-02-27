@@ -198,10 +198,12 @@
   )
 
   ;; CHECK:      (func $unreachable (type $0) (param $param i32) (result i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (i32.eqz
   ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

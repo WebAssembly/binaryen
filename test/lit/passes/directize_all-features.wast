@@ -1017,9 +1017,15 @@
   )
  )
  ;; CHECK:      (func $select-unreachable-operand (type $0) (param $x i32) (param $y i32) (param $z i32)
- ;; CHECK-NEXT:  (call_indirect $0 (type $ii)
+ ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call_indirect $0 (type $ii)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (select
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:    (i32.const 2)
@@ -1028,9 +1034,15 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $select-unreachable-operand (type $0) (param $x i32) (param $y i32) (param $z i32)
- ;; IMMUT-NEXT:  (call_indirect $0 (type $ii)
+ ;; IMMUT-NEXT:  (drop
  ;; IMMUT-NEXT:   (local.get $x)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (drop
  ;; IMMUT-NEXT:   (local.get $y)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (call_indirect $0 (type $ii)
+ ;; IMMUT-NEXT:   (unreachable)
+ ;; IMMUT-NEXT:   (unreachable)
  ;; IMMUT-NEXT:   (select
  ;; IMMUT-NEXT:    (unreachable)
  ;; IMMUT-NEXT:    (i32.const 2)
@@ -1051,23 +1063,47 @@
   )
  )
  ;; CHECK:      (func $select-unreachable-condition (type $0) (param $x i32) (param $y i32) (param $z i32)
- ;; CHECK-NEXT:  (call_indirect $0 (type $ii)
+ ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call_indirect $0 (type $ii)
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (select
- ;; CHECK-NEXT:    (i32.const 1)
- ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $select-unreachable-condition (type $0) (param $x i32) (param $y i32) (param $z i32)
- ;; IMMUT-NEXT:  (call_indirect $0 (type $ii)
+ ;; IMMUT-NEXT:  (drop
  ;; IMMUT-NEXT:   (local.get $x)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (drop
  ;; IMMUT-NEXT:   (local.get $y)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (drop
+ ;; IMMUT-NEXT:   (i32.const 1)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (drop
+ ;; IMMUT-NEXT:   (i32.const 2)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (call_indirect $0 (type $ii)
+ ;; IMMUT-NEXT:   (unreachable)
+ ;; IMMUT-NEXT:   (unreachable)
  ;; IMMUT-NEXT:   (select
- ;; IMMUT-NEXT:    (i32.const 1)
- ;; IMMUT-NEXT:    (i32.const 2)
+ ;; IMMUT-NEXT:    (unreachable)
+ ;; IMMUT-NEXT:    (unreachable)
  ;; IMMUT-NEXT:    (unreachable)
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
@@ -1211,21 +1247,39 @@
  )
 
  ;; CHECK:      (func $select-non-nullable-unreachable-condition (type $2)
- ;; CHECK-NEXT:  (call_indirect $0 (type $F)
+ ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.func $select-non-nullable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 11)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call_indirect $0 (type $F)
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (select
- ;; CHECK-NEXT:    (i32.const 10)
- ;; CHECK-NEXT:    (i32.const 11)
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $select-non-nullable-unreachable-condition (type $2)
- ;; IMMUT-NEXT:  (call_indirect $0 (type $F)
+ ;; IMMUT-NEXT:  (drop
  ;; IMMUT-NEXT:   (ref.func $select-non-nullable)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (drop
+ ;; IMMUT-NEXT:   (i32.const 10)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (drop
+ ;; IMMUT-NEXT:   (i32.const 11)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (call_indirect $0 (type $F)
+ ;; IMMUT-NEXT:   (unreachable)
  ;; IMMUT-NEXT:   (select
- ;; IMMUT-NEXT:    (i32.const 10)
- ;; IMMUT-NEXT:    (i32.const 11)
+ ;; IMMUT-NEXT:    (unreachable)
+ ;; IMMUT-NEXT:    (unreachable)
  ;; IMMUT-NEXT:    (unreachable)
  ;; IMMUT-NEXT:   )
  ;; IMMUT-NEXT:  )
@@ -1244,20 +1298,32 @@
  )
 
  ;; CHECK:      (func $select-non-nullable-unreachable-arm (type $2)
- ;; CHECK-NEXT:  (call_indirect $0 (type $F)
+ ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.func $select-non-nullable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (f32.const 3.141590118408203)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call_indirect $0 (type $F)
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:   (select
- ;; CHECK-NEXT:    (f32.const 3.141590118408203)
+ ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:    (i32.const 1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $select-non-nullable-unreachable-arm (type $2)
- ;; IMMUT-NEXT:  (call_indirect $0 (type $F)
+ ;; IMMUT-NEXT:  (drop
  ;; IMMUT-NEXT:   (ref.func $select-non-nullable)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (drop
+ ;; IMMUT-NEXT:   (f32.const 3.141590118408203)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT:  (call_indirect $0 (type $F)
+ ;; IMMUT-NEXT:   (unreachable)
  ;; IMMUT-NEXT:   (select
- ;; IMMUT-NEXT:    (f32.const 3.141590118408203)
+ ;; IMMUT-NEXT:    (unreachable)
  ;; IMMUT-NEXT:    (unreachable)
  ;; IMMUT-NEXT:    (i32.const 1)
  ;; IMMUT-NEXT:   )

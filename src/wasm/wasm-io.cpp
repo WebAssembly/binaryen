@@ -33,7 +33,7 @@
 
 namespace wasm {
 
-bool useNewWATParser = false;
+bool useNewWATParser = true;
 
 #define DEBUG_TYPE "writer"
 
