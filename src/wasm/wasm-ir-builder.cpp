@@ -444,9 +444,7 @@ Result<> IRBuilder::visitBreakWithType(Break* curr, Type type) {
     CHECK_ERR(value)
     curr->value = *value;
   }
-  // TODO: Call more efficient versions of finalize() that take the known type
-  // for other kinds of nodes as well, as done above.
-  ReFinalizeNode{}.visit(curr);
+  curr->finalize();
   push(curr);
   return Ok{};
 }
@@ -473,9 +471,7 @@ Result<> IRBuilder::visitSwitchWithType(Switch* curr, Type type) {
     CHECK_ERR(value)
     curr->value = *value;
   }
-  // TODO: Call more efficient versions of finalize() that take the known type
-  // for other kinds of nodes as well, as done above.
-  ReFinalizeNode{}.visit(curr);
+  curr->finalize();
   push(curr);
   return Ok{};
 }

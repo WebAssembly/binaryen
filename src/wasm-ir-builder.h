@@ -222,23 +222,23 @@ public:
   [[nodiscard]] Result<> visitArrayNewFixed(ArrayNewFixed*);
   // Used to visit break exprs when traversing the module in the fully nested
   // format. Break label destinations are assumed to have already been visited,
-  // with a corresponding push onto the scope stack. As a result, an exception
-  // will occur if a corresponding scope is not found for the break.
+  // with a corresponding push onto the scope stack. As a result, an error will
+  // return if a corresponding scope is not found for the break.
   [[nodiscard]] Result<> visitBreak(Break*,
                                     std::optional<Index> label = std::nullopt);
-  // Used to visit break nodes when traversing the module in the stacky format.
-  // The type indicates how many values need to be popped from the stack and
-  // consumed by the break.
+  // Used to visit break nodes when traversing a single block without its
+  // context. The type indicates how many values the break carries to its
+  // destination.
   [[nodiscard]] Result<> visitBreakWithType(Break*, Type);
   [[nodiscard]] Result<>
   // Used to visit switch exprs when traversing the module in the fully nested
   // format. Switch label destinations are assumed to have already been visited,
-  // with a corresponding push onto the scope stack. As a result, an exception
-  // will occur if a corresponding scope is not found for the switch.
+  // with a corresponding push onto the scope stack. As a result, an error will
+  // return if a corresponding scope is not found for the switch.
   visitSwitch(Switch*, std::optional<Index> defaultLabel = std::nullopt);
-  // Used to visit switch nodes when traversing the module in the stacky format.
-  // The type indicates how many values need to be popped from the stack and
-  // consumed by the switch.
+  // Used to visit switch nodes when traversing a single block without its
+  // context. The type indicates how many values the switch carries to its
+  // destination.
   [[nodiscard]] Result<> visitSwitchWithType(Switch*, Type);
   [[nodiscard]] Result<> visitCall(Call*);
   [[nodiscard]] Result<> visitCallIndirect(CallIndirect*);
