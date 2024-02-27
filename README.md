@@ -401,8 +401,7 @@ Binaryen.js can be built using Emscripten, which can be installed via [the SDK](
 ## Releases
 
 Builds are distributed by the various toolchains that use Binaryen, like
-Emscripten, `wasm-pack`, etc. There are also official releases on GitHub in this
-repo itself:
+Emscripten, `wasm-pack`, etc. There are also official releases on GitHub:
 
 https://github.com/WebAssembly/binaryen/releases
 

@@ -212,9 +212,8 @@ jobs:
         PKGNAME="binaryen-$VERSION-wasm"
         TARBALL=$PKGNAME.tar.gz
         SHASUM=$PKGNAME.tar.gz.sha256
-        mkdir install
-        cp out/bin/wasm-opt* install/
-        mv install binaryen-$VERSION
+        mkdir binaryen-$VERSION
+        cp out/bin/wasm-opt* binaryen-$VERSION/
         tar -czf $TARBALL binaryen-$VERSION
         cmake -E sha256sum $TARBALL > $SHASUM
         echo "::set-output name=tarball::$TARBALL"
