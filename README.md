@@ -384,12 +384,12 @@ https://github.com/WebAssembly/binaryen/releases
 
 Currently builds of the following platforms are included:
 
- * Linux-x86_64
- * Linux-arm64
- * MacOS-x86_64
- * MacOS-arm64
- * Windows-x86_64
- * WebAssembly (experimental): A port of `wasm-opt` itself to wasm. Run
+ * `Linux-x86_64`
+ * `Linux-arm64`
+ * `MacOS-x86_64`
+ * `MacOS-arm64`
+ * `Windows-x86_64`
+ * `WebAssembly` (experimental): A port of `wasm-opt` itself to wasm. Run
    `nodejs wasm-opt.js` as a drop-in replacement to a native build of
    `wasm-opt`, on any platform that Node.js runs on. Requires Node.js 18+ (for
    Wasm EH and Wasm Threads).
