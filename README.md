@@ -415,7 +415,8 @@ Currently builds of the following platforms are included:
  * `WebAssembly` (experimental): A port of `wasm-opt` itself to wasm. Run
    `nodejs wasm-opt.js` as a drop-in replacement for a native build of
    `wasm-opt`, on any platform that Node.js runs on. Requires Node.js 18+ (for
-   Wasm EH and Wasm Threads).
+   Wasm EH and Wasm Threads). (Note that this build may also run in Deno, Bun,
+   or other JavaScript+WebAssembly environments, but is tested only on Node.js.)
 
 ## Running
 
