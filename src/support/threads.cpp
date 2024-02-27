@@ -143,13 +143,13 @@ size_t ThreadPool::getNumCores() {
   // In an Emscripten build without pthreads support, avoid the overhead of
   // including support code for the below runtime checks.
   return 1;
-#endif
-
+#else
   size_t num = std::max(1U, std::thread::hardware_concurrency());
   if (getenv("BINARYEN_CORES")) {
     num = std::stoi(getenv("BINARYEN_CORES"));
   }
   return num;
+#endif
 }
 
 ThreadPool* ThreadPool::get() {
