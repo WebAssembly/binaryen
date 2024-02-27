@@ -24,7 +24,18 @@ effective**:
    wasm [minification], similar to minification for JavaScript, CSS, etc., all
    of which are language-specific.
 
-Compilers using Binaryen include:
+Toolchains using Binaryen as a **component** (typically running `wasm-opt`) include:
+
+  * [`Emscripten`](http://emscripten.org) (C/C++)
+  * [`wasm-pack`](https://github.com/rustwasm/wasm-pack) (Rust)
+  * [`J2CL`](https://j2cl.io/) (Java; [`J2Wasm`](https://github.com/google/j2cl/tree/master/samples/wasm))
+  * [`Kotlin`](https://kotl.in/wasmgc) (Kotlin/Wasm)
+  * [`Dart`](https://kotl.in/wasmgc)
+
+For more on how some of those work, see the toolchain architecture parts of
+the [V8 WasmGC porting blogpost](https://v8.dev/blog/wasm-gc-porting).
+
+Compilers using Binaryen as a **library** include:
 
  * [`AssemblyScript`](https://github.com/AssemblyScript/assemblyscript) which compiles a variant of TypeScript to WebAssembly
  * [`wasm2js`](https://github.com/WebAssembly/binaryen/blob/main/src/wasm2js.h) which compiles WebAssembly to JS
@@ -362,6 +373,26 @@ Binaryen.js can be built using Emscripten, which can be installed via [the SDK](
   ```bash
   emcmake cmake -DBUILD_FOR_BROWSER=ON . && emmake make
   ```
+
+## Releases
+
+Builds are distributed by the various toolchains that use Binaryen, like
+Emscripten, `wasm-pack`, etc. There are also official releases on GitHub in this
+repo itself:
+
+https://github.com/WebAssembly/binaryen/releases
+
+Currently builds of the following platforms are included:
+
+ * Linux-x86_64
+ * Linux-arm64
+ * MacOS-x86_64
+ * MacOS-arm64
+ * Windows-x86_64
+ * WebAssembly (experimental): A port of `wasm-opt` itself to wasm. Run
+   `nodejs wasm-opt.js` as a drop-in replacement to a native build of
+   `wasm-opt`, on any platform that Node.js runs on. Requires Node.js 18+ (for
+   Wasm EH and Wasm Threads).
 
 ### Visual C++
 
