@@ -173,6 +173,9 @@ jobs:
   build-wasm:
     name: wasm
     runs-on: ubuntu-latest
+    defaults:
+      run:
+        shell: bash
     steps:
     - uses: actions/setup-python@v1
       with:
@@ -202,8 +205,13 @@ jobs:
     - name: build
       run: ninja -C out wasm-opt
 
-    # TODO: Add some testing here. The full test suite is overkill as there is a
-    #       0.5 second startup cost to each run of wasm-opt.js
+    # Minimal smoke test: roundtrip a file.
+    # TODO: Add more testing here, but the full test suite is overkill as there
+    #       is a 0.5 second cost to each run of wasm-opt.js
+    - name: test
+      run: |
+        nodejs out/bin/wasm-opt.js test/hello_world.wat --print > out/t.wat
+        diff test/hello_world.wat out/t.wat
 
     - name: archive
       id: archive
