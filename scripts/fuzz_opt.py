@@ -215,6 +215,8 @@ def randomize_fuzz_settings():
     if '--disable-gc' not in FEATURE_OPTS:
         GEN_ARGS += ['--dce']
 
+        # Add --dce not only when generating the original wasm but to the
+        # optimizations we use to create any other wasm file.
         FUZZ_OPTS = []
         FUZZ_OPTS += ['--dce']
 
