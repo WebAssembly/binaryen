@@ -163,11 +163,7 @@ struct PrintCallGraph : public Pass {
 
     o << graphCreator.callGraphStream.rdbuf();
 
-    o << "}\n\n";
-
-    for (auto func : graphCreator.visitedTargets) {
-      o << "//" << func.toString() << "\n";
-    }
+    o << "}\n";
   }
 };
 
