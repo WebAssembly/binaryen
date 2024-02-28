@@ -142,7 +142,7 @@ struct ReconstructStringifyWalker
         // Assert ensures new unhandled branch instructions
         // will quickly cause an error. Serves as a reminder to
         // implement a new special-case visit*WithType.
-        assert(curr->is<BrOn> || !Properties::isBranch(curr));
+        assert(curr->is<BrOn>() || !Properties::isBranch(curr));
         ASSERT_OK(builder->visit(curr));
       }
     }
