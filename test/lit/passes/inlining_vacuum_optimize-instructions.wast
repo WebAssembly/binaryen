@@ -19,7 +19,7 @@
 
  ;; CHECK:      (func $target (type $2) (param $0 (ref null $A))
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit, for RefCast)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )

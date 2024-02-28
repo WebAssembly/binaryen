@@ -110,7 +110,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit, for RefCast)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
@@ -126,7 +126,7 @@
   ;; TNH-NEXT:   )
   ;; TNH-NEXT:  )
   ;; TNH-NEXT:  (drop
-  ;; TNH-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; TNH-NEXT:   (block ;; (replaces something unreachable we can't emit, for RefCast)
   ;; TNH-NEXT:    (drop
   ;; TNH-NEXT:     (unreachable)
   ;; TNH-NEXT:    )

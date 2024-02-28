@@ -472,7 +472,7 @@
   (return_call_ref $"return_{}" (local.get $"return_{}"))
  )
  ;; CHECK:      (func $tail-caller-call_ref-unreachable (type $2) (result anyref)
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit, for CallRef)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )

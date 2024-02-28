@@ -39,7 +39,7 @@
 
   ;; CHECK:      (func $non-exported (type $0) (param $ext externref) (param $any anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit, for RefCast)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (extern.internalize
   ;; CHECK-NEXT:      (unreachable)

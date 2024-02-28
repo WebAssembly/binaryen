@@ -215,9 +215,9 @@
 
   ;; CHECK:      (func $ignore-unreachable (type $1)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit, for StructGet)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:     (block ;; (replaces something unreachable we can't emit, for StructNew)
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (i32.const 2)
   ;; CHECK-NEXT:      )

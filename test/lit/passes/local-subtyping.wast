@@ -276,7 +276,7 @@
   ;; CHECK-NEXT:   (ref.null nofunc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $x
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit, for CallRef)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $f)
   ;; CHECK-NEXT:    )

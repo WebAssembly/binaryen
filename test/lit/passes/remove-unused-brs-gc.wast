@@ -602,7 +602,7 @@
  ;; CHECK:      (func $fallthrough-unreachable (type $6) (param $0 i31ref) (result anyref)
  ;; CHECK-NEXT:  (block $outer
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:    (block ;; (replaces something unreachable we can't emit, for RefCast)
  ;; CHECK-NEXT:     (drop
  ;; CHECK-NEXT:      (block
  ;; CHECK-NEXT:       (drop

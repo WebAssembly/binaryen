@@ -2786,7 +2786,8 @@ void PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,
   // Emit a block with drops of the children.
   o << "(block";
   if (!minify) {
-    o << " ;; (replaces something unreachable we can't emit)";
+    o << " ;; (replaces something unreachable we can't emit, for "
+      << getExpressionName(curr) << ')';
   }
   incIndent();
   for (auto* child : ChildIterator(curr)) {
