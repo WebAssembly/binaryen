@@ -36,7 +36,9 @@ bin/wasm-opt -all -ttf $1 --metrics > t
 
 That runs -ttf and then checks if there is any Drop instruction in the output,
 so it would lead to a reduction to the first byte in the input that causes -ttf
-to emit a Drop.
+to emit a Drop. You would use that script with something like
+
+python scripts/reduce_ttf.py ./a.sh input.dat
 '''
 
 import os, shlex, subprocess, sys
