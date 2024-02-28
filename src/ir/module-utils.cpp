@@ -15,6 +15,7 @@
  */
 
 #include "module-utils.h"
+#include "ir/debug.h"
 #include "ir/intrinsics.h"
 #include "ir/manipulation.h"
 #include "ir/properties.h"
@@ -23,17 +24,46 @@
 
 namespace wasm::ModuleUtils {
 
+static void updateLocationSet(std::set<Function::DebugLocation>& locations,
+                              std::vector<Index>* indexMap) {
+  std::set<Function::DebugLocation> updatedLocations;
+
+  for (auto iter : locations) {
+    iter.fileIndex = (*indexMap)[iter.fileIndex];
+    updatedLocations.insert(iter);
+  }
+  locations.clear();
+  std::swap(locations, updatedLocations);
+}
+
 // Copies a function into a module. If newName is provided it is used as the
-// name of the function (otherwise the original name is copied).
-Function* copyFunction(Function* func, Module& out, Name newName) {
+// name of the function (otherwise the original name is copied). If indexMap is
+// specified, it is used to rename source map filename indices when copying the
+// function from one module to another one.
+Function* copyFunction(Function* func,
+                       Module& out,
+                       Name newName,
+                       std::vector<Index>* indexMap) {
   auto ret = std::make_unique<Function>();
   ret->name = newName.is() ? newName : func->name;
   ret->type = func->type;
   ret->vars = func->vars;
   ret->localNames = func->localNames;
   ret->localIndices = func->localIndices;
-  ret->debugLocations = func->debugLocations;
   ret->body = ExpressionManipulator::copy(func->body, out);
+  if (ret->body) {
+    debug::copyDebugInfo(func->body, ret->body, func, ret.get());
+  }
+  ret->prologLocation = func->prologLocation;
+  ret->epilogLocation = func->epilogLocation;
+  // Update file indices if needed
+  if (indexMap) {
+    for (auto& iter : ret->debugLocations) {
+      iter.second.fileIndex = (*indexMap)[iter.second.fileIndex];
+    }
+    updateLocationSet(ret->prologLocation, indexMap);
+    updateLocationSet(ret->epilogLocation, indexMap);
+  }
   ret->module = func->module;
   ret->base = func->base;
   ret->noFullInline = func->noFullInline;
@@ -135,9 +165,13 @@ DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
 
 // Copies named toplevel module items (things of kind ModuleItemKind). See
 // copyModule() for something that also copies exports, the start function, etc.
-void copyModuleItems(const Module& in, Module& out) {
+// The indexMap is used to update source map information when copying functions
+// from one module to another.
+void copyModuleItems(const Module& in,
+                     Module& out,
+                     std::vector<Index>* indexMap) {
   for (auto& curr : in.functions) {
-    copyFunction(curr.get(), out);
+    copyFunction(curr.get(), out, Name(), indexMap);
   }
   for (auto& curr : in.globals) {
     copyGlobal(curr.get(), out);

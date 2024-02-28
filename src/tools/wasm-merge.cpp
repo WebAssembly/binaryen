@@ -324,9 +324,26 @@ void renameInputItems(Module& input) {
 }
 
 void copyModuleContents(Module& input, Name inputName) {
-  // First, copy the regular module items (functions, globals) etc. which we
+  // Source map filename index mapping
+  std::vector<Index> indexMap;
+  std::unordered_map<std::string, Index> debugInfoFileIndices;
+  for (Index i = 0; i < merged.debugInfoFileNames.size(); i++) {
+    debugInfoFileIndices[merged.debugInfoFileNames[i]] = i;
+  }
+  for (Index i = 0; i < input.debugInfoFileNames.size(); i++) {
+    std::string file = input.debugInfoFileNames[i];
+    auto iter = debugInfoFileIndices.find(file);
+    if (iter == debugInfoFileIndices.end()) {
+      Index index = merged.debugInfoFileNames.size();
+      merged.debugInfoFileNames.push_back(file);
+      debugInfoFileIndices[file] = index;
+    }
+    indexMap.push_back(debugInfoFileIndices[file]);
+  }
+
+  // Copy the regular module items (functions, globals) etc. which we
   // have proper names for, and can just copy.
-  ModuleUtils::copyModuleItems(input, merged);
+  ModuleUtils::copyModuleItems(input, merged, &indexMap);
 
   // We must handle exports in a special way, as we need to note their origin
   // module as we copy them in (also, they are not importable or exportable, so
