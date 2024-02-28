@@ -409,8 +409,8 @@ Result<Expression*> IRBuilder::getBranchValue(Expression* curr,
                                               std::optional<Index> label) {
   // As new branch instructions are added, one of the existing branch visit*
   // functions is likely to be copied, along with its call to getBranchValue().
-  // This assert serves as a reminder to also add an implementation of visit*WithType()
-  // for new branch instructions.
+  // This assert serves as a reminder to also add an implementation of
+  // visit*WithType() for new branch instructions.
   assert(curr->is<Break>() || curr->is<Switch>());
   if (!label) {
     auto index = getLabelIndex(labelName);
