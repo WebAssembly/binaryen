@@ -819,7 +819,7 @@
 
   ;; CHECK:      (func $0 (type $0)
   ;; CHECK-NEXT:  (local $0 f32)
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit, for RefCast)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable RefCast we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )

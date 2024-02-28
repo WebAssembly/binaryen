@@ -713,7 +713,7 @@
   ;; CHECK:      (func $unreachable (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.tee $ref
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit, for StructNew)
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )

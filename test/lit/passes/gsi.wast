@@ -1208,7 +1208,7 @@
   ))
 
   ;; CHECK:      (func $func (type $1) (param $ref (ref null $A)) (result i32)
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit, for StructGet)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructGet we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )

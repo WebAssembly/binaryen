@@ -497,7 +497,7 @@
   )
 
   ;; TNH:      (func $null.arm.null.effects (type $void)
-  ;; TNH-NEXT:  (block ;; (replaces something unreachable we can't emit, for StructSet)
+  ;; TNH-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
   ;; TNH-NEXT:   (drop
   ;; TNH-NEXT:    (select
   ;; TNH-NEXT:     (unreachable)
@@ -523,7 +523,7 @@
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $null.arm.null.effects (type $void)
-  ;; NO_TNH-NEXT:  (block ;; (replaces something unreachable we can't emit, for StructSet)
+  ;; NO_TNH-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
   ;; NO_TNH-NEXT:   (drop
   ;; NO_TNH-NEXT:    (select
   ;; NO_TNH-NEXT:     (unreachable)
@@ -904,7 +904,7 @@
   )
 
   ;; TNH:      (func $select.unreachable.child (type $6) (param $x (ref $struct)) (result (ref $struct))
-  ;; TNH-NEXT:  (block ;; (replaces something unreachable we can't emit, for RefCast)
+  ;; TNH-NEXT:  (block ;; (replaces unreachable RefCast we can't emit)
   ;; TNH-NEXT:   (drop
   ;; TNH-NEXT:    (unreachable)
   ;; TNH-NEXT:   )
@@ -912,7 +912,7 @@
   ;; TNH-NEXT:  )
   ;; TNH-NEXT: )
   ;; NO_TNH:      (func $select.unreachable.child (type $6) (param $x (ref $struct)) (result (ref $struct))
-  ;; NO_TNH-NEXT:  (block ;; (replaces something unreachable we can't emit, for RefCast)
+  ;; NO_TNH-NEXT:  (block ;; (replaces unreachable RefCast we can't emit)
   ;; NO_TNH-NEXT:   (drop
   ;; NO_TNH-NEXT:    (unreachable)
   ;; NO_TNH-NEXT:   )

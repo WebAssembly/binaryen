@@ -856,7 +856,7 @@
   (type $F (func))
 
   ;; CHECK:      (func $func (type $F)
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit, for CallRef)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.null nofunc)
   ;; CHECK-NEXT:   )

@@ -915,7 +915,7 @@
  ;; CHECK:      (func $call-ref-impossible (type $2) (result eqref)
  ;; CHECK-NEXT:  (local $f nullfuncref)
  ;; CHECK-NEXT:  (local $arg anyref)
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit, for CallRef)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $arg)
  ;; CHECK-NEXT:   )
@@ -1044,7 +1044,7 @@
 
  ;; CHECK:      (func $struct-get-impossible (type $0) (result anyref)
  ;; CHECK-NEXT:  (local $var nullref)
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit, for StructGet)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable StructGet we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $var)
  ;; CHECK-NEXT:   )
@@ -1101,7 +1101,7 @@
  ;; CHECK:      (func $struct-set-impossible (type $3)
  ;; CHECK-NEXT:  (local $ref nullref)
  ;; CHECK-NEXT:  (local $val anyref)
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit, for StructSet)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $ref)
  ;; CHECK-NEXT:   )
@@ -1246,7 +1246,7 @@
 
  ;; CHECK:      (func $array-get-impossible (type $3) (result anyref)
  ;; CHECK-NEXT:  (local $val nullref)
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit, for ArrayGet)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayGet we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $val)
  ;; CHECK-NEXT:   )
@@ -1289,7 +1289,7 @@
  ;; CHECK:      (func $array-set-impossible (type $0)
  ;; CHECK-NEXT:  (local $ref nullref)
  ;; CHECK-NEXT:  (local $val anyref)
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit, for ArraySet)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (local.get $ref)
  ;; CHECK-NEXT:   )

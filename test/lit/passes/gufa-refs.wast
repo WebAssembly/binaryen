@@ -4567,7 +4567,7 @@
   )
 
   ;; CHECK:      (func $call_ref-nofunc (type $2)
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit, for CallRef)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
