@@ -201,6 +201,17 @@ struct Unsubtyping
     // basic type then we can simply ignore this: we only remove subtyping
     // between user types, so subtyping wrt basic types is unchanged, and so
     // this constraint will never be a problem.
+    //
+    // This is sort of a hack because in general to be precise we should not
+    // just consider basic types here - in general, we should note for each
+    // constraint whether it is a flow-based one or not, and only take the
+    // flow-based ones into account when looking at the impact of casts.
+    // However, in practice this is enough as the only non-trivial case of
+    // |noteNonFlowSubtype| is for RefEq, which uses a basic type (eqref). Other
+    // cases of non-flow subtyping end up trivial, e.g., the target of a
+    // CallRef is compared to itself (and we ignore constraints of A :> A).
+    // However, if we change how |noteNonFlowSubtype| is used in
+    // SubtypingDiscoverer then we may need to generalize this.
     if (super.isRef() && super.getHeapType().isBasic()) {
       return;
     }
