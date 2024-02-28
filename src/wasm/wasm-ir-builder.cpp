@@ -419,8 +419,14 @@ Result<> IRBuilder::visitArrayNewFixed(ArrayNewFixed* curr) {
   return Ok{};
 }
 
-Result<Expression*> IRBuilder::getBranchValue(Name labelName,
+Result<Expression*> IRBuilder::getBranchValue(Expression* curr,
+                                              Name labelName,
                                               std::optional<Index> label) {
+  // As new branch instructions are added, one of the existing branch visit*
+  // functions is likely to be copied, along with its call to getBranchValue().
+  // This assert serves as a reminder to also add an implementation of
+  // visit*WithType() for new branch instructions.
+  assert(curr->is<Break>() || curr->is<Switch>());
   if (!label) {
     auto index = getLabelIndex(labelName);
     CHECK_ERR(index);
@@ -440,9 +446,27 @@ Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
     CHECK_ERR(cond);
     curr->condition = *cond;
   }
-  auto value = getBranchValue(curr->name, label);
+  auto value = getBranchValue(curr, curr->name, label);
   CHECK_ERR(value);
   curr->value = *value;
+  return Ok{};
+}
+
+Result<> IRBuilder::visitBreakWithType(Break* curr, Type type) {
+  if (curr->condition) {
+    auto cond = pop();
+    CHECK_ERR(cond);
+    curr->condition = *cond;
+  }
+  if (type == Type::none) {
+    curr->value = nullptr;
+  } else {
+    auto value = pop(type.size());
+    CHECK_ERR(value)
+    curr->value = *value;
+  }
+  curr->finalize();
+  push(curr);
   return Ok{};
 }
 
@@ -451,9 +475,25 @@ Result<> IRBuilder::visitSwitch(Switch* curr,
   auto cond = pop();
   CHECK_ERR(cond);
   curr->condition = *cond;
-  auto value = getBranchValue(curr->default_, defaultLabel);
+  auto value = getBranchValue(curr, curr->default_, defaultLabel);
   CHECK_ERR(value);
   curr->value = *value;
+  return Ok{};
+}
+
+Result<> IRBuilder::visitSwitchWithType(Switch* curr, Type type) {
+  auto cond = pop();
+  CHECK_ERR(cond);
+  curr->condition = *cond;
+  if (type == Type::none) {
+    curr->value = nullptr;
+  } else {
+    auto value = pop(type.size());
+    CHECK_ERR(value)
+    curr->value = *value;
+  }
+  curr->finalize();
+  push(curr);
   return Ok{};
 }
 

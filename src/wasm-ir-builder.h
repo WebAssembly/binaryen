@@ -224,10 +224,26 @@ public:
   [[nodiscard]] Result<> visitStructNew(StructNew*);
   [[nodiscard]] Result<> visitArrayNew(ArrayNew*);
   [[nodiscard]] Result<> visitArrayNewFixed(ArrayNewFixed*);
+  // Used to visit break exprs when traversing the module in the fully nested
+  // format. Break label destinations are assumed to have already been visited,
+  // with a corresponding push onto the scope stack. As a result, an error will
+  // return if a corresponding scope is not found for the break.
   [[nodiscard]] Result<> visitBreak(Break*,
                                     std::optional<Index> label = std::nullopt);
+  // Used to visit break nodes when traversing a single block without its
+  // context. The type indicates how many values the break carries to its
+  // destination.
+  [[nodiscard]] Result<> visitBreakWithType(Break*, Type);
   [[nodiscard]] Result<>
+  // Used to visit switch exprs when traversing the module in the fully nested
+  // format. Switch label destinations are assumed to have already been visited,
+  // with a corresponding push onto the scope stack. As a result, an error will
+  // return if a corresponding scope is not found for the switch.
   visitSwitch(Switch*, std::optional<Index> defaultLabel = std::nullopt);
+  // Used to visit switch nodes when traversing a single block without its
+  // context. The type indicates how many values the switch carries to its
+  // destination.
+  [[nodiscard]] Result<> visitSwitchWithType(Switch*, Type);
   [[nodiscard]] Result<> visitCall(Call*);
   [[nodiscard]] Result<> visitCallIndirect(CallIndirect*);
   [[nodiscard]] Result<> visitCallRef(CallRef*);
@@ -535,8 +551,8 @@ private:
   [[nodiscard]] Result<> packageHoistedValue(const HoistedVal&,
                                              size_t sizeHint = 1);
 
-  [[nodiscard]] Result<Expression*> getBranchValue(Name labelName,
-                                                   std::optional<Index> label);
+  [[nodiscard]] Result<Expression*>
+  getBranchValue(Expression* curr, Name labelName, std::optional<Index> label);
 
   void dump();
 };
