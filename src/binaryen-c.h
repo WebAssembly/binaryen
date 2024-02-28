@@ -2952,6 +2952,13 @@ BINARYEN_API bool BinaryenGetMemorySegmentPassive(BinaryenModuleRef module,
 BINARYEN_API void BinaryenCopyMemorySegmentData(BinaryenModuleRef module,
                                                 const char* segmentName,
                                                 char* buffer);
+BINARYEN_API void BinaryenAddDataSegment(BinaryenModuleRef module,
+                                         const char* segmentName,
+                                         const char* memoryName,
+                                         bool segmentPassive,
+                                         BinaryenExpressionRef segmentOffset,
+                                         const char* segmentData,
+                                         BinaryenIndex segmentSize);
 
 // Start function. One per module
 
