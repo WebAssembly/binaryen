@@ -64,12 +64,28 @@ if not is_interesting(initial_ttf_input_data):
     sys.exit(1)
 
 # Verify that we see a trivial input as "boring".
-if is_interesting(b'0'):
+if is_interesting(initial_ttf_input_data[0:1]):
     print('Trivial ttf input is interesting (return code should be == 0)')
     sys.exit(1)
 
-print(f'Bisecting between 1 and {len(initial_ttf_input_data)}')
-
 # Bisect on the length of the initial input.
 # TODO: Additional clever things.
+low = 1
+high = len(initial_ttf_input_data)
+print(f'Bisecting between {low} and {high}')
+while high - low > 1:
+    mid = (low + high) // 2
+    print(f'trying {mid}')
+    if is_interesting(initial_ttf_input_data[0:mid]):
+        high = mid
+    else:
+        low = mid
+print(f'Finished bisection: the difference happens at {low} - {high}).')
+low_file = curr_ttf_input_file + '.low'
+with open(low_file, mode='wb') as f:
+    f.write(initial_ttf_input_data[:low])
+high_file = curr_ttf_input_file + '.high'
+with open(high_file, mode='wb') as f:
+    f.write(initial_ttf_input_data[:high])
+print(f'Wrote low and high files for those: {low_file} - {high_file}).')
 
