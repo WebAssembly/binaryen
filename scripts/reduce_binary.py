@@ -1,11 +1,15 @@
 
 help = '''
-Helps reduce a fuzz testcase that fails right after the -ttf stage. That is,
-if the command that converts random bytes into a valid wasm emits an *in*valid
-wasm, then reducing the wasm is often not possible, and you need to reduce the
-input to -ttf. There is no perfect way to do that, since the input to -ttf is
-random bytes, but we can at least find the smallest change that causes the
-problem, which might help debug.
+Performs a testcase reduction on a binary file. This may be useful when
+wasm-reduce cannot be used, such as when the fuzzer generates a testcase that
+fails right after the -ttf stage, that is, if the command that converts random
+bytes into a valid wasm emits an *in*valid wasm, then reducing the wasm is often
+not possible, and you need to reduce the input to -ttf, which is a binary file.
+
+There is no perfect way to do that, since the input to -ttf is random bytes, but
+we can at least find the smallest change that causes the problem, which might
+help debug. This script bisects down to a single byte change in the random
+bytes, which should give you two very similar wasm files to compare.
 
 USAGE:
 
@@ -23,6 +27,16 @@ name of the current -ttf input.
 TEST_SCRIPT must be an executable script.
 
 All temp files are stored in out/test/.
+
+An example of a useful test script:
+
+#!/bin/bash
+bin/wasm-opt -all -ttf $1 --metrics > t
+! grep -q Drop t
+
+That runs -ttf and then checks if there is any Drop instruction in the output,
+so it would lead to a reduction to the first byte in the input that causes -ttf
+to emit a Drop.
 '''
 
 import os, shlex, subprocess, sys
