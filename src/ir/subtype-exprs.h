@@ -161,6 +161,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       // sources, call_indirect target types may be supertypes of their source
       // table types. In this case, the cast will always succeed, but only if we
       // keep the types related.
+      // TODO: No value flows here, so we could use |noteNonFlowSubtype|, but
+      //       this is a trivial situation that is not worth optimizing.
       self()->noteSubtype(tableType, curr->heapType);
     } else if (HeapType::isSubType(curr->heapType, tableType)) {
       self()->noteCast(tableType, curr->heapType);
@@ -256,6 +258,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitTupleExtract(TupleExtract* curr) {}
   void visitRefI31(RefI31* curr) {}
   void visitI31Get(I31Get* curr) {
+    // This could be |noteNonFlowSubtype| but as there are no subtypes of i31
+    // it does not matter.
     self()->noteSubtype(curr->i31, Type(HeapType::i31, Nullable));
   }
   void visitCallRef(CallRef* curr) {
@@ -271,6 +275,9 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
     // generalize, should they generalize the target more or the parameters
     // more? etc.), so we do the simple thing here for now of requiring the
     // target type not generalize.
+    //
+    // Note that this could be |noteNonFlowSubtype| but since we are comparing
+    // a type to itself here, that does not matter.
     self()->noteSubtype(curr->target, curr->target->type);
 
     if (curr->target->type.isSignature()) {
