@@ -687,7 +687,7 @@ V8_LIFTOFF_ARGS = ['--liftoff', '--no-wasm-tier-up']
 
 
 # default to running with liftoff enabled, because we need to pick either
-# liftoff or turbofan for consistency (otherwise running the same command twice
+# liftoff or turbo* for consistency (otherwise running the same command twice
 # may have different results due to NaN nondeterminism), and liftoff is faster
 # for small things
 def run_d8_js(js, args=[], liftoff=True):
@@ -805,6 +805,12 @@ class CompareVMs(TestCaseHandler):
             def run(self, wasm):
                 return super(D8Liftoff, self).run(wasm, extra_d8_flags=V8_LIFTOFF_ARGS)
 
+        class D8Turboshaft(D8):
+            name = 'd8_turboshaft'
+
+            def run(self, wasm):
+                return super(D8Turboshaft, self).run(wasm, extra_d8_flags=['--no-liftoff', '--turboshaft-wasm', '--turboshaft-wasm-instruction-selection-staged'])
+
         class D8TurboFan(D8):
             name = 'd8_turbofan'
 
@@ -908,6 +914,7 @@ class CompareVMs(TestCaseHandler):
         self.vms = [self.bynterpreter,
                     D8(),
                     D8Liftoff(),
+                    D8Turboshaft(),
                     D8TurboFan(),
                     # FIXME: Temprorary disable. See issue #4741 for more details
                     # Wasm2C(),
