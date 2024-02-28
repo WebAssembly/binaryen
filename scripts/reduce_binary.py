@@ -13,7 +13,7 @@ bytes, which should give you two very similar wasm files to compare.
 
 USAGE:
 
-reduce_ttf.py $TEST_SCRIPT $INITIAL_TTF_INPUT
+reduce_binary.py $TEST_SCRIPT $INITIAL_TTF_INPUT
 
 The script then runs
 
@@ -38,7 +38,17 @@ That runs -ttf and then checks if there is any Drop instruction in the output,
 so it would lead to a reduction to the first byte in the input that causes -ttf
 to emit a Drop. You would use that script with something like
 
-python scripts/reduce_ttf.py ./a.sh input.dat
+python scripts/reduce_binary.py ./a.sh input.dat
+
+Another example script:
+
+#!/bin/bash
+bin/wasm-opt -all -ttf $1 -o t.wasm
+d8 scripts/fuzz_shell.js -- t.wasm &> /dev/null
+
+That just converts the -ttf into a wasm file and checks if V8 accepts it, so it
+is useful to bisect on cases where our validator accepts something that V8's
+doesn't.
 '''
 
 import os, shlex, subprocess, sys
