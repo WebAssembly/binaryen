@@ -38,7 +38,7 @@
   )
 
   ;; CHECK:      (func $caller (type $2) (param $x funcref)
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -83,7 +83,7 @@
   )
 
   ;; CHECK:      (func $caller (type $0) (param $x funcref)
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -496,7 +496,7 @@
   ;; CHECK-NEXT:    (local.get $func3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (struct.new_default $Y2)
   ;; CHECK-NEXT:   )

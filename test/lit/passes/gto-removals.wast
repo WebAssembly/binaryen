@@ -560,7 +560,7 @@
 
   ;; CHECK:      (func $new-unreachable (type $4)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 2)
   ;; CHECK-NEXT:    )

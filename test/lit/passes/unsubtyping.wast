@@ -936,7 +936,7 @@
  ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:   (ref.func $call-ref)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
@@ -945,7 +945,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
@@ -1122,7 +1122,7 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (struct.new_default $struct)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable StructNew we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
@@ -1165,7 +1165,7 @@
  ;; CHECK-NEXT:   (local.get $struct)
  ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
@@ -1174,7 +1174,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
@@ -1229,7 +1229,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayNew we can't emit)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
@@ -1287,7 +1287,7 @@
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayNewElem we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
@@ -1332,7 +1332,7 @@
  ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayNewFixed we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
@@ -1371,7 +1371,7 @@
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
@@ -1383,7 +1383,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )

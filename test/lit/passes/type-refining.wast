@@ -844,7 +844,7 @@
 
   ;; CHECK:      (func $func (type $6) (param $Leaf1-Outer (ref null $Leaf1-Outer))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (drop
@@ -1106,7 +1106,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (local.get $struct)
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
   ;; CHECK-NEXT:      (ref.null none)
@@ -1196,9 +1196,9 @@
   ;; CHECK:       (type $2 (func))
 
   ;; CHECK:      (func $0 (type $2)
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (block ;; (replaces unreachable StructNew we can't emit)
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (block
   ;; CHECK-NEXT:       (drop
@@ -1352,7 +1352,7 @@
   )
 
   ;; CHECK:      (func $bottom.type (type $1) (param $ref (ref none)) (param $value (ref noextern))
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (local.get $ref)
   ;; CHECK-NEXT:   )
@@ -1371,7 +1371,7 @@
   )
 
   ;; CHECK:      (func $unreachable (type $0) (param $value (ref noextern))
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )

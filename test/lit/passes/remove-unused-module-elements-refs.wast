@@ -50,7 +50,7 @@
   ;; CHECK-NEXT:  (call_ref $A
   ;; CHECK-NEXT:   (local.get $A)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -80,7 +80,7 @@
   ;; OPEN_WORLD-NEXT:  (call_ref $A
   ;; OPEN_WORLD-NEXT:   (local.get $A)
   ;; OPEN_WORLD-NEXT:  )
-  ;; OPEN_WORLD-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; OPEN_WORLD-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
   ;; OPEN_WORLD-NEXT:   (drop
   ;; OPEN_WORLD-NEXT:    (unreachable)
   ;; OPEN_WORLD-NEXT:   )
@@ -810,7 +810,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
@@ -871,7 +871,7 @@
   ;; OPEN_WORLD-NEXT:   )
   ;; OPEN_WORLD-NEXT:  )
   ;; OPEN_WORLD-NEXT:  (drop
-  ;; OPEN_WORLD-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; OPEN_WORLD-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
   ;; OPEN_WORLD-NEXT:    (drop
   ;; OPEN_WORLD-NEXT:     (unreachable)
   ;; OPEN_WORLD-NEXT:    )
