@@ -36,7 +36,7 @@ struct PrintCallGraph : public Pass {
 
   void run(Module* module) override {
     Name caller = getPassOptions().getArgumentOrDefault(
-      "func",
+      "callgraph-entry",
       "");
 
     struct GraphCreator : public PostWalker<GraphCreator> {
@@ -44,7 +44,7 @@ struct PrintCallGraph : public Pass {
       Function* currFunction;
       std::set<Name> visitedTargets; // Used to avoid printing duplicate edges.
       std::vector<Function*> allIndirectTargets;
-      std::multimap<Name, Name> full_graph; // First param is the caller/parent, second is the callee/child
+      std::multimap<Name, Name> fullGraph; // First param is the caller/parent, second is the callee/child
       std::stringstream callGraphStream;
 
       GraphCreator(Module* module, Name caller) : module(module) {
@@ -60,12 +60,13 @@ struct PrintCallGraph : public Pass {
 
       void constructCallgraph(Name caller) {
         if (caller.toString().empty()) {
-          // whole callgraph, no filters
-          for (const auto& graph : full_graph) {
+          // construct callgraph for the entire module
+          for (const auto& graph : fullGraph) {
             callGraphStream << "  \"" << graph.first << "\" -> \"" << graph.second
                       << "\"; // call\n";
           }
         } else {
+          // construct callgraph for a given entry point
           std::set<Name> next{caller};
           visitedTargets.clear();
           
@@ -77,8 +78,8 @@ struct PrintCallGraph : public Pass {
               }
               visitedTargets.insert(curFunc);
 
-              auto count = full_graph.count(curFunc);
-              auto range = full_graph.equal_range(curFunc);
+              auto count = fullGraph.count(curFunc);
+              auto range = fullGraph.equal_range(curFunc);
               for (auto iter = range.first; iter != range.second; ++iter) {
                 Name callee = iter->second;
                 new_next.insert(callee);
@@ -97,7 +98,7 @@ struct PrintCallGraph : public Pass {
         if (!visitedTargets.emplace(target->name).second) {
           return;
         }
-        full_graph.emplace(currFunction->name, target->name);
+        fullGraph.emplace(currFunction->name, target->name);
       }
     };
     GraphCreator graphCreator(module, caller);
