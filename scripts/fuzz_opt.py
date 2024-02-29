@@ -597,6 +597,9 @@ def fix_output(out):
     # to "N".
     out = re.sub(r'i31ref\((-?\d+)\)', r'\1', out)
 
+    # Tag names may change due to opts, so canonicalize them.
+    out = re.sub(r' tag\$\d+', ' tag', out)
+
     lines = out.splitlines()
     for i in range(len(lines)):
         line = lines[i]
