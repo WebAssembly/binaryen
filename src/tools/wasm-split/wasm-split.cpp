@@ -250,7 +250,7 @@ void splitModule(const WasmSplitOptions& options) {
       } else {
         if (!options.quiet && keepFuncs.count(func) > 0) {
           std::cerr << "warning: function " << func << " was to be kept in primary module. " 
-                    << "However it will now be splited out into secondary module.\n";
+                    << "However it will now be split out into secondary module.\n";
         }
 
         splitFuncs.insert(func);
