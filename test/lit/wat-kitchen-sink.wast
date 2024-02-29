@@ -339,9 +339,19 @@
  ;; CHECK:      (memory $mem-init 1 1)
  (memory $mem-init (data "hello inline data"))
 
+ ;; CHECK:      (memory $mem-init-32 1 1)
+ (memory $mem-init-32 i32 (data "hello i32 inline data"))
+
+ ;; CHECK:      (memory $mem-init-64 i64 1 1)
+ (memory $mem-init-64 i64 (data "hello i64 inline data"))
+
  ;; data segments
  (data "hello world")
  ;; CHECK:      (data $implicit-data (memory $mem-init) (i32.const 0) "hello inline data")
+
+ ;; CHECK:      (data $implicit-data_1 (memory $mem-init-32) (i32.const 0) "hello i32 inline data")
+
+ ;; CHECK:      (data $implicit-data_2 (memory $mem-init-64) (i64.const 0) "hello i64 inline data")
 
  ;; CHECK:      (data $0 "hello world")
 
@@ -3500,7 +3510,7 @@
   i64.const 0
   local.get 1
   local.get 2
-  memory.init 5 1
+  memory.init 5 3
   local.get 0
   local.get 1
   local.get 2
