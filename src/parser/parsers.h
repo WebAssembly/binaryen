@@ -2330,7 +2330,6 @@ Result<> makeStringNew(Ctx& ctx,
                        const std::vector<Annotation>& annotations,
                        StringNewOp op,
                        bool try_) {
-  typename Ctx::MemoryIdxT* memptr = nullptr;
   switch (op) {
     case StringNewUTF8:
     case StringNewWTF8:
@@ -2338,13 +2337,11 @@ Result<> makeStringNew(Ctx& ctx,
     case StringNewWTF16: {
       auto mem = maybeMemidx(ctx);
       CHECK_ERR(mem);
-      memptr = mem.getPtr();
-      break;
+      return ctx.makeStringNew(pos, annotations, op, try_, mem.getPtr());
     }
     default:
-      break;
+      return ctx.makeStringNew(pos, annotations, op, try_, nullptr);
   }
-  return ctx.makeStringNew(pos, annotations, op, try_, memptr);
 }
 
 template<typename Ctx>
@@ -2371,7 +2368,6 @@ Result<> makeStringEncode(Ctx& ctx,
                           Index pos,
                           const std::vector<Annotation>& annotations,
                           StringEncodeOp op) {
-  typename Ctx::MemoryIdxT* memptr = nullptr;
   switch (op) {
     case StringEncodeUTF8:
     case StringEncodeLossyUTF8:
@@ -2379,13 +2375,11 @@ Result<> makeStringEncode(Ctx& ctx,
     case StringEncodeWTF16: {
       auto mem = maybeMemidx(ctx);
       CHECK_ERR(mem);
-      memptr = mem.getPtr();
-      break;
+      return ctx.makeStringEncode(pos, annotations, op, mem.getPtr());
     }
     default:
-      break;
+      return ctx.makeStringEncode(pos, annotations, op, nullptr);
   }
-  return ctx.makeStringEncode(pos, annotations, op, memptr);
 }
 
 template<typename Ctx>
