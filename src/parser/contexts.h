@@ -2448,9 +2448,21 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                          StringNewOp op,
                          bool try_,
                          Name* mem) {
-    auto m = getMemory(pos, mem);
-    CHECK_ERR(m);
-    return withLoc(pos, irBuilder.makeStringNew(op, try_, *m));
+    Name memName;
+    switch (op) {
+      case StringNewUTF8:
+      case StringNewWTF8:
+      case StringNewLossyUTF8:
+      case StringNewWTF16: {
+        auto m = getMemory(pos, mem);
+        CHECK_ERR(m);
+        memName = *m;
+        break;
+      }
+      default:
+        break;
+    }
+    return withLoc(pos, irBuilder.makeStringNew(op, try_, memName));
   }
 
   Result<> makeStringConst(Index pos,
@@ -2469,9 +2481,21 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                             const std::vector<Annotation>& annotations,
                             StringEncodeOp op,
                             Name* mem) {
-    auto m = getMemory(pos, mem);
-    CHECK_ERR(m);
-    return withLoc(pos, irBuilder.makeStringEncode(op, *m));
+    Name memName;
+    switch (op) {
+      case StringEncodeUTF8:
+      case StringEncodeLossyUTF8:
+      case StringEncodeWTF8:
+      case StringEncodeWTF16: {
+        auto m = getMemory(pos, mem);
+        CHECK_ERR(m);
+        memName = *m;
+        break;
+      }
+      default:
+        break;
+    }
+    return withLoc(pos, irBuilder.makeStringEncode(op, memName));
   }
 
   Result<> makeStringConcat(Index pos,

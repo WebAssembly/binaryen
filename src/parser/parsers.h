@@ -2330,9 +2330,18 @@ Result<> makeStringNew(Ctx& ctx,
                        const std::vector<Annotation>& annotations,
                        StringNewOp op,
                        bool try_) {
-  auto mem = maybeMemidx(ctx);
-  CHECK_ERR(mem);
-  return ctx.makeStringNew(pos, annotations, op, try_, mem.getPtr());
+  switch (op) {
+    case StringNewUTF8:
+    case StringNewWTF8:
+    case StringNewLossyUTF8:
+    case StringNewWTF16: {
+      auto mem = maybeMemidx(ctx);
+      CHECK_ERR(mem);
+      return ctx.makeStringNew(pos, annotations, op, try_, mem.getPtr());
+    }
+    default:
+      return ctx.makeStringNew(pos, annotations, op, try_, nullptr);
+  }
 }
 
 template<typename Ctx>
@@ -2359,9 +2368,18 @@ Result<> makeStringEncode(Ctx& ctx,
                           Index pos,
                           const std::vector<Annotation>& annotations,
                           StringEncodeOp op) {
-  auto mem = maybeMemidx(ctx);
-  CHECK_ERR(mem);
-  return ctx.makeStringEncode(pos, annotations, op, mem.getPtr());
+  switch (op) {
+    case StringEncodeUTF8:
+    case StringEncodeLossyUTF8:
+    case StringEncodeWTF8:
+    case StringEncodeWTF16: {
+      auto mem = maybeMemidx(ctx);
+      CHECK_ERR(mem);
+      return ctx.makeStringEncode(pos, annotations, op, mem.getPtr());
+    }
+    default:
+      return ctx.makeStringEncode(pos, annotations, op, nullptr);
+  }
 }
 
 template<typename Ctx>
