@@ -143,7 +143,7 @@ for (var e in exports) {
       console.log('[fuzz-exec] note result: ' + e + ' => ' + printed(result));
     }
   } catch (e) {
-    console.log('exception: ' + e);
+    console.log('exception thrown: ' + e);
   }
 }
 
