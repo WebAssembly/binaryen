@@ -295,7 +295,7 @@ struct StringLowering : public StringGathering {
   Name equalsImport;
   Name compareImport;
   Name lengthImport;
-  Name codePointAtImport;
+  Name charCodeAtImport;
   Name substringImport;
 
   // The name of the module to import string functions from.
@@ -334,8 +334,8 @@ struct StringLowering : public StringGathering {
     // string.length: string -> i32
     lengthImport = addImport(module, "length", nullExt, Type::i32);
     // string.codePointAt: string, offset -> i32
-    codePointAtImport =
-      addImport(module, "codePointAt", {nullExt, Type::i32}, Type::i32);
+    charCodeAtImport =
+      addImport(module, "charCodeAt", {nullExt, Type::i32}, Type::i32);
     // string.substring: string, start, end -> string
     substringImport =
       addImport(module, "substring", {nullExt, Type::i32, Type::i32}, nnExt);
@@ -425,7 +425,7 @@ struct StringLowering : public StringGathering {
       void visitStringWTF16Get(StringWTF16Get* curr) {
         Builder builder(*getModule());
         replaceCurrent(builder.makeCall(
-          lowering.codePointAtImport, {curr->ref, curr->pos}, Type::i32));
+          lowering.charCodeAtImport, {curr->ref, curr->pos}, Type::i32));
       }
 
       void visitStringSliceWTF(StringSliceWTF* curr) {
@@ -477,6 +477,10 @@ struct StringLowering : public StringGathering {
       void noteSubtype(Expression* a, Expression* b) {
         // Only the type matters of the place we assign to.
         noteSubtype(a, b->type);
+      }
+      void noteNonFlowSubtype(Expression* a, Type b) {
+        // Flow or non-flow is the same for us.
+        noteSubtype(a, b);
       }
       void noteCast(HeapType, HeapType) {
         // Casts do not concern us.

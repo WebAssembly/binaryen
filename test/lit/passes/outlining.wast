@@ -614,6 +614,106 @@
   )
 )
 
+;; Tests branch with condition is reconstructed without error.
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $0)
+  ;; CHECK-NEXT:  (block $label1
+  ;; CHECK-NEXT:   (call $outline$)
+  ;; CHECK-NEXT:   (loop $loop-in
+  ;; CHECK-NEXT:    (br $label1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $outline$)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $a
+    (block $label1
+      (drop
+        (i32.const 2)
+      )
+      (drop
+        (i32.const 1)
+      )
+      (loop
+        (br $label1)
+      )
+      (drop
+        (i32.const 2)
+      )
+      (drop
+        (i32.const 1)
+      )
+    )
+  )
+)
+
+;; Tests br_table instruction is reconstructed without error.
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (param i32) (result i32)))
+
+  ;; CHECK:      (func $outline$ (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+
+  ;; CHECK:      (func $a (type $1) (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (block $block
+  ;; CHECK-NEXT:   (block $block0
+  ;; CHECK-NEXT:    (br_table $block $block0
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (i32.const 21)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $outline$)
+  ;; CHECK-NEXT:  (i32.const 22)
+  ;; CHECK-NEXT: )
+  (func $a (param i32) (result i32)
+    (drop
+      (i32.const 2)
+    )
+    (drop
+      (i32.const 1)
+    )
+    (block
+      (block
+        (br_table 1 0 (local.get $0))
+        (return (i32.const 21))
+      )
+      (return (i32.const 20))
+    )
+    (drop
+      (i32.const 2)
+    )
+    (drop
+      (i32.const 1)
+    )
+    (i32.const 22)
+  )
+)
+
 ;; Tests return instructions are correctly filtered from being outlined.
 (module
   ;; CHECK:      (type $0 (func (result i32)))

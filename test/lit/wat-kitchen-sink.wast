@@ -463,6 +463,11 @@
  ;; CHECK:      (start $return-none)
  (start $return-none)
 
+ ;; Annotations
+ (@annotation this is a meaningless (@annotation ) ;; This is still a comment ))
+   it spans multiple lines just fine and can include $ids 0x42 numbers and "strings"
+ )
+
  ;; functions
  (func)
 
@@ -5090,6 +5095,67 @@
  (func $contnew (param $f (ref $simple)) (result (ref $simple-cont))
    local.get $f
    cont.new $simple-cont
+ )
+
+ ;; CHECK:      (func $source-maps (type $void)
+ ;; CHECK-NEXT:  ;;@ src.cpp:40:1
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   ;;@ src.cpp:30:1
+ ;; CHECK-NEXT:   (i32.add
+ ;; CHECK-NEXT:    ;;@ src.cpp:10:1
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    ;;@ src.cpp:20:1
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  ;;@ src.cpp:90:1
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   ;;@ src.cpp:70:1
+ ;; CHECK-NEXT:   (i32.add
+ ;; CHECK-NEXT:    ;;@ src.cpp:50:1
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:    ;;@ src.cpp:60:1
+ ;; CHECK-NEXT:    (block (result i32)
+ ;; CHECK-NEXT:     ;;@ src.cpp:70:1
+ ;; CHECK-NEXT:     (loop (result i32)
+ ;; CHECK-NEXT:      ;;@ src.cpp:80:1
+ ;; CHECK-NEXT:      (unreachable)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  ;;@ src.cpp:100:1
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $source-maps
+  ;;@ src.cpp:10:1
+  i32.const 0
+  ;;@ src.cpp:20:1
+  i32.const 1
+  (@src src.cpp:30:1)
+  i32.add
+  (@src src.cpp:40:1)
+  drop
+  ;;@ src.cpp:90:1
+  (drop
+   (@src src.cpp:70:1)
+   (i32.add
+    ;;@ src.cpp:50:1
+    (i32.const 2)
+    (@src src.cpp:60:1)
+    (block (result i32)
+     ;;@ src.cpp:70:1
+     (loop (result i32)
+       ;;@ src.cpp:80:1
+       (unreachable)
+     )
+    )
+   )
+  )
+  ;;@ src.cpp:100:1
+  block
+  end
  )
 
  ;; CHECK:      (func $use-types (type $101) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany)) (param $15 (ref $all-types))

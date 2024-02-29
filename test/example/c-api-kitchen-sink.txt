@@ -91,6 +91,8 @@ BinaryenFeatureAll: 131071
  (memory $0 1 256 shared)
  (data $0 (i32.const 10) "hello, world")
  (data $1 "I am passive")
+ (data $2 "data segment 2")
+ (data $seg (i32.const 0) "data segment 3")
  (table $tab 0 100 funcref)
  (table $0 1 1 funcref)
  (elem $0 (table $0) (i32.const 0) func $"kitchen()sinker")

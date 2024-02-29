@@ -85,7 +85,7 @@
 
   ;; CHECK:      (import "wasm:js-string" "length" (func $length (type $23) (param externref) (result i32)))
 
-  ;; CHECK:      (import "wasm:js-string" "codePointAt" (func $codePointAt (type $24) (param externref i32) (result i32)))
+  ;; CHECK:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $24) (param externref i32) (result i32)))
 
   ;; CHECK:      (import "wasm:js-string" "substring" (func $substring (type $25) (param externref i32 i32) (result (ref extern))))
 
@@ -245,7 +245,7 @@
   )
 
   ;; CHECK:      (func $string.get_codeunit (type $15) (param $ref externref) (result i32)
-  ;; CHECK-NEXT:  (call $codePointAt
+  ;; CHECK-NEXT:  (call $charCodeAt
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )

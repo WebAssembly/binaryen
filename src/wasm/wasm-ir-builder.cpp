@@ -151,6 +151,8 @@ void IRBuilder::push(Expression* expr) {
   }
   scope.exprStack.push_back(expr);
 
+  applyDebugLoc(expr);
+
   DBG(std::cerr << "After pushing " << ShallowExpression{expr} << ":\n");
   DBG(dump());
 }
@@ -206,6 +208,19 @@ Result<Expression*> IRBuilder::build() {
   scopeStack.clear();
   labelDepths.clear();
   return expr;
+}
+
+void IRBuilder::setDebugLocation(const Function::DebugLocation& loc) {
+  debugLoc = loc;
+}
+
+void IRBuilder::applyDebugLoc(Expression* expr) {
+  if (debugLoc) {
+    if (func) {
+      func->debugLocations[expr] = *debugLoc;
+    }
+    debugLoc.reset();
+  }
 }
 
 void IRBuilder::dump() {
@@ -404,8 +419,14 @@ Result<> IRBuilder::visitArrayNewFixed(ArrayNewFixed* curr) {
   return Ok{};
 }
 
-Result<Expression*> IRBuilder::getBranchValue(Name labelName,
+Result<Expression*> IRBuilder::getBranchValue(Expression* curr,
+                                              Name labelName,
                                               std::optional<Index> label) {
+  // As new branch instructions are added, one of the existing branch visit*
+  // functions is likely to be copied, along with its call to getBranchValue().
+  // This assert serves as a reminder to also add an implementation of
+  // visit*WithType() for new branch instructions.
+  assert(curr->is<Break>() || curr->is<Switch>());
   if (!label) {
     auto index = getLabelIndex(labelName);
     CHECK_ERR(index);
@@ -425,9 +446,27 @@ Result<> IRBuilder::visitBreak(Break* curr, std::optional<Index> label) {
     CHECK_ERR(cond);
     curr->condition = *cond;
   }
-  auto value = getBranchValue(curr->name, label);
+  auto value = getBranchValue(curr, curr->name, label);
   CHECK_ERR(value);
   curr->value = *value;
+  return Ok{};
+}
+
+Result<> IRBuilder::visitBreakWithType(Break* curr, Type type) {
+  if (curr->condition) {
+    auto cond = pop();
+    CHECK_ERR(cond);
+    curr->condition = *cond;
+  }
+  if (type == Type::none) {
+    curr->value = nullptr;
+  } else {
+    auto value = pop(type.size());
+    CHECK_ERR(value)
+    curr->value = *value;
+  }
+  curr->finalize();
+  push(curr);
   return Ok{};
 }
 
@@ -436,9 +475,25 @@ Result<> IRBuilder::visitSwitch(Switch* curr,
   auto cond = pop();
   CHECK_ERR(cond);
   curr->condition = *cond;
-  auto value = getBranchValue(curr->default_, defaultLabel);
+  auto value = getBranchValue(curr, curr->default_, defaultLabel);
   CHECK_ERR(value);
   curr->value = *value;
+  return Ok{};
+}
+
+Result<> IRBuilder::visitSwitchWithType(Switch* curr, Type type) {
+  auto cond = pop();
+  CHECK_ERR(cond);
+  curr->condition = *cond;
+  if (type == Type::none) {
+    curr->value = nullptr;
+  } else {
+    auto value = pop(type.size());
+    CHECK_ERR(value)
+    curr->value = *value;
+  }
+  curr->finalize();
+  push(curr);
   return Ok{};
 }
 
@@ -623,11 +678,13 @@ Result<> IRBuilder::visitFunctionStart(Function* func) {
 }
 
 Result<> IRBuilder::visitBlockStart(Block* curr) {
+  applyDebugLoc(curr);
   pushScope(ScopeCtx::makeBlock(curr));
   return Ok{};
 }
 
 Result<> IRBuilder::visitIfStart(If* iff, Name label) {
+  applyDebugLoc(iff);
   auto cond = pop();
   CHECK_ERR(cond);
   iff->condition = *cond;
@@ -636,11 +693,13 @@ Result<> IRBuilder::visitIfStart(If* iff, Name label) {
 }
 
 Result<> IRBuilder::visitLoopStart(Loop* loop) {
+  applyDebugLoc(loop);
   pushScope(ScopeCtx::makeLoop(loop));
   return Ok{};
 }
 
 Result<> IRBuilder::visitTryStart(Try* tryy, Name label) {
+  applyDebugLoc(tryy);
   // The delegate label will be regenerated if we need it. See
   // `getDelegateLabelName` for details.
   tryy->name = Name();
@@ -649,11 +708,14 @@ Result<> IRBuilder::visitTryStart(Try* tryy, Name label) {
 }
 
 Result<> IRBuilder::visitTryTableStart(TryTable* trytable, Name label) {
+  applyDebugLoc(trytable);
   pushScope(ScopeCtx::makeTryTable(trytable, label));
   return Ok{};
 }
 
 Result<Expression*> IRBuilder::finishScope(Block* block) {
+  debugLoc.reset();
+
   if (scopeStack.empty() || scopeStack.back().isNone()) {
     return Err{"unexpected end of scope"};
   }
