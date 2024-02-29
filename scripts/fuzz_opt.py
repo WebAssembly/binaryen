@@ -478,7 +478,7 @@ STACK_LIMIT = '[trap stack limit]'
 V8_UNINITIALIZED_NONDEF_LOCAL = 'uninitialized non-defaultable local'
 
 # JS exceptions are logged as exception: REASON
-EXCEPTION_PREFIX = 'exception: '
+EXCEPTION_PREFIX = 'exception thrown: '
 
 
 # given a call line that includes FUZZ_EXEC_CALL_PREFIX, return the export that
