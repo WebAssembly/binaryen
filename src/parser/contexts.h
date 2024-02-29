@@ -61,6 +61,7 @@ struct DefPos {
   Name name;
   Index pos;
   Index index;
+  std::vector<Annotation> annotations;
 };
 
 struct GlobalType {
@@ -903,12 +904,14 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   void setOpen() {}
   Result<> addSubtype(Index) { return Ok{}; }
   void finishSubtype(Name name, Index pos) {
-    subtypeDefs.push_back({name, pos, Index(subtypeDefs.size())});
+    // TODO: type annotations
+    subtypeDefs.push_back({name, pos, Index(subtypeDefs.size()), {}});
   }
   size_t getRecGroupStartIndex() { return 0; }
   void addRecGroup(Index, size_t) {}
   void finishDeftype(Index pos) {
-    typeDefs.push_back({{}, pos, Index(typeDefs.size())});
+    // TODO: type annotations
+    typeDefs.push_back({{}, pos, Index(typeDefs.size()), {}});
   }
 
   Limits makeLimits(uint64_t n, std::optional<uint64_t> m) {
@@ -952,6 +955,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                    ImportNames* import,
                    TypeUseT type,
                    std::optional<LocalsT>,
+                   std::vector<Annotation>&,
                    Index pos);
 
   Result<Table*>
@@ -986,7 +990,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     if (!startDefs.empty()) {
       return Err{"unexpected extra 'start' function"};
     }
-    startDefs.push_back({{}, pos, 0});
+    // TODO: start function annotations.
+    startDefs.push_back({{}, pos, 0, {}});
     return Ok{};
   }
 
@@ -1240,6 +1245,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                    ImportNames*,
                    TypeUse type,
                    std::optional<LocalsT> locals,
+                   std::vector<Annotation>&&,
                    Index pos) {
     auto& f = wasm.functions[index];
     if (!type.type.isSignature()) {
@@ -1601,6 +1607,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                    ImportNames*,
                    TypeUseT,
                    std::optional<LocalsT>,
+                   std::vector<Annotation>&&,
                    Index) {
     return Ok{};
   }

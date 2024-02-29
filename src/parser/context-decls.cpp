@@ -68,12 +68,14 @@ Result<> ParseDeclsCtx::addFunc(Name name,
                                 ImportNames* import,
                                 TypeUseT type,
                                 std::optional<LocalsT>,
+                                std::vector<Annotation>&& annotations,
                                 Index pos) {
   CHECK_ERR(checkImport(pos, import));
   auto f = addFuncDecl(pos, name, import);
   CHECK_ERR(f);
   CHECK_ERR(addExports(in, wasm, *f, exports, ExternalKind::Function));
-  funcDefs.push_back({name, pos, Index(funcDefs.size())});
+  funcDefs.push_back(
+    {name, pos, Index(funcDefs.size()), std::move(annotations)});
   return Ok{};
 }
 

@@ -2885,8 +2885,9 @@ template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
     auto name = ctx.in.takeID();
     auto type = typeuse(ctx);
     CHECK_ERR(type);
-    CHECK_ERR(
-      ctx.addFunc(name ? *name : Name{}, {}, &names, *type, std::nullopt, pos));
+    // TODO: function import annotations
+    CHECK_ERR(ctx.addFunc(
+      name ? *name : Name{}, {}, &names, *type, std::nullopt, {}, pos));
   } else if (ctx.in.takeSExprStart("table"sv)) {
     auto name = ctx.in.takeID();
     auto type = tabletype(ctx);
