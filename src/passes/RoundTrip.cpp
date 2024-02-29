@@ -28,6 +28,12 @@
 namespace wasm {
 
 struct RoundTrip : public Pass {
+  // Reloading the wasm may alter function names etc., which means our global
+  // function effect tracking can get confused, and effects may seem to appear.
+  // To avoid that, mark this pass as adding effects, which will clear all
+  // cached effects and such.
+  bool addsEffects() override { return true; }
+
   void run(Module* module) override {
     BufferWithRandomAccess buffer;
     // Save features, which would not otherwise make it through a round trip if
