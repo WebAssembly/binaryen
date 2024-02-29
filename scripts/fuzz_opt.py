@@ -477,7 +477,7 @@ STACK_LIMIT = '[trap stack limit]'
 # and also see the --dce workaround below that also links to those issues.
 V8_UNINITIALIZED_NONDEF_LOCAL = 'uninitialized non-defaultable local'
 
-# JS exceptions are logged as exception: REASON
+# JS exceptions are logged as exception thrown: REASON
 EXCEPTION_PREFIX = 'exception thrown: '
 
 
