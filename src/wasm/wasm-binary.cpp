@@ -7794,6 +7794,12 @@ void WasmBinaryReader::visitContBind(ContBind* curr) {
     curr->contTypeBefore.getContinuation().type.getSignature().params.size();
   size_t paramsAfter =
     curr->contTypeAfter.getContinuation().type.getSignature().params.size();
+  if (paramsBefore < paramsAfter) {
+    throwError("incompatible continuation types in cont.bind: source type " +
+               curr->contTypeBefore.toString() +
+               " has fewer parameters than destination " +
+               curr->contTypeAfter.toString());
+  }
   size_t numArgs = paramsBefore - paramsAfter;
   curr->operands.resize(numArgs);
   for (size_t i = 0; i < numArgs; i++) {
