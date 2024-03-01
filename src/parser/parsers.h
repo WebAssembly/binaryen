@@ -842,20 +842,11 @@ template<typename Ctx> Result<uint32_t> tupleArity(Ctx& ctx) {
 // Instructions
 // ============
 
-template<typename Ctx>
-void setSrcLoc(Ctx& ctx, const std::vector<Annotation>& annotations) {
-  for (const auto& annotation : annotations) {
-    if (annotation.kind == srcAnnotationKind) {
-      ctx.setSrcLoc(annotation);
-    }
-  }
-}
-
 // blockinstr ::= block | loop | if-else | try-catch | try_table
 template<typename Ctx>
 MaybeResult<> foldedBlockinstr(Ctx& ctx,
                                const std::vector<Annotation>& annotations) {
-  setSrcLoc(ctx, annotations);
+  ctx.setSrcLoc(annotations);
   if (auto i = block(ctx, annotations, true)) {
     return i;
   }
@@ -877,7 +868,7 @@ MaybeResult<> foldedBlockinstr(Ctx& ctx,
 template<typename Ctx>
 MaybeResult<> unfoldedBlockinstr(Ctx& ctx,
                                  const std::vector<Annotation>& annotations) {
-  setSrcLoc(ctx, annotations);
+  ctx.setSrcLoc(annotations);
   if (auto i = block(ctx, annotations, false)) {
     return i;
   }
@@ -910,7 +901,7 @@ MaybeResult<> blockinstr(Ctx& ctx, const std::vector<Annotation>& annotations) {
 // plaininstr ::= ... all plain instructions ...
 template<typename Ctx>
 MaybeResult<> plaininstr(Ctx& ctx, const std::vector<Annotation>& annotations) {
-  setSrcLoc(ctx, annotations);
+  ctx.setSrcLoc(annotations);
   auto pos = ctx.in.getPos();
   auto keyword = ctx.in.takeKeyword();
   if (!keyword) {
@@ -1059,6 +1050,7 @@ Result<typename Ctx::MemargT> memarg(Ctx& ctx, uint32_t n) {
 // blocktype ::= (t:result)? => t? | x,I:typeuse => x if I = {}
 template<typename Ctx> Result<typename Ctx::BlockTypeT> blocktype(Ctx& ctx) {
   auto pos = ctx.in.getPos();
+  auto initialLexer = ctx.in;
 
   if (auto res = results(ctx)) {
     CHECK_ERR(res);
@@ -1069,7 +1061,7 @@ template<typename Ctx> Result<typename Ctx::BlockTypeT> blocktype(Ctx& ctx) {
 
   // We either had no results or multiple results. Reset and parse again as a
   // type use.
-  ctx.in.setIndex(pos);
+  ctx.in = initialLexer;
   auto use = typeuse(ctx);
   CHECK_ERR(use);
 
@@ -1136,6 +1128,7 @@ ifelse(Ctx& ctx, const std::vector<Annotation>& annotations, bool folded) {
 
   if (folded) {
     CHECK_ERR(foldedinstrs(ctx));
+    ctx.setSrcLoc(annotations);
   }
 
   ctx.makeIf(pos, annotations, label, *type);
@@ -2913,8 +2906,9 @@ template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
     auto name = ctx.in.takeID();
     auto type = typeuse(ctx);
     CHECK_ERR(type);
-    CHECK_ERR(
-      ctx.addFunc(name ? *name : Name{}, {}, &names, *type, std::nullopt, pos));
+    // TODO: function import annotations
+    CHECK_ERR(ctx.addFunc(
+      name ? *name : Name{}, {}, &names, *type, std::nullopt, {}, pos));
   } else if (ctx.in.takeSExprStart("table"sv)) {
     auto name = ctx.in.takeID();
     auto type = tabletype(ctx);
@@ -2956,6 +2950,8 @@ template<typename Ctx> MaybeResult<> import_(Ctx& ctx) {
 //              '(' 'import' mod:name nm:name ')' typeuse ')'
 template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
   auto pos = ctx.in.getPos();
+  auto annotations = ctx.in.getAnnotations();
+
   if (!ctx.in.takeSExprStart("func"sv)) {
     return {};
   }
@@ -2981,14 +2977,20 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
       localVars = *l;
     }
     CHECK_ERR(instrs(ctx));
+    ctx.setSrcLoc(ctx.in.takeAnnotations());
   }
 
   if (!ctx.in.takeRParen()) {
     return ctx.in.err("expected end of function");
   }
 
-  CHECK_ERR(
-    ctx.addFunc(name, *exports, import.getPtr(), *type, localVars, pos));
+  CHECK_ERR(ctx.addFunc(name,
+                        *exports,
+                        import.getPtr(),
+                        *type,
+                        localVars,
+                        std::move(annotations),
+                        pos));
   return Ok{};
 }
 
