@@ -622,12 +622,17 @@ def fix_spec_output(out):
 
 
 ignored_vm_runs = 0
+ignored_vm_run_reasons = dict()
 
 
-def note_ignored_vm_run(text='(ignore VM run)'):
+# Notes a VM run that we ignore, and the reason for it (for metrics purposes).
+# Extra text can also be printed that is not included in the metrics.
+def note_ignored_vm_run(reason, extra_text=''):
     global ignored_vm_runs
-    print(text)
+    print(f'(ignore VM run: {reason}{extra_text})')
     ignored_vm_runs += 1
+    ignored_vm_run_reasons.setdefault(reason, 0)
+    ignored_vm_run_reasons[reason] += 1
 
 
 def run_vm(cmd):
@@ -644,6 +649,11 @@ def run_vm(cmd):
             # this text is emitted from V8 when it runs out of memory during a
             # GC allocation.
             'out of memory',
+            # if the call stack is exceeded we must ignore this, as
+            # optimizations can change whether this happens or not (e.g. by
+            # removing locals, which makes stack frames smaller), which is
+            # noticeable.
+            'Maximum call stack size exceeded',
             # all host limitations are arbitrary and may differ between VMs and
             # also be affected by optimizations, so ignore them.
             # this is the prefix that the binaryen interpreter emits. For V8,
@@ -656,7 +666,7 @@ def run_vm(cmd):
         ]
         for issue in known_issues:
             if issue in output:
-                note_ignored_vm_run()
+                note_ignored_vm_run(issue)
                 return IGNORE
         return output
 
@@ -769,7 +779,7 @@ class CompareVMs(TestCaseHandler):
                         # still be useful testing here (up to 50%), so we only
                         # note that this is a mostly-ignored run, but we do not
                         # ignore the parts that are useful.
-                        note_ignored_vm_run(f'(testcase mostly ignored: {calls} calls, {errors} errors)')
+                        note_ignored_vm_run('too many errors vs calls', extra_text=f' ({calls} calls, {errors} errors)')
                 return output
 
             def can_run(self, wasm):
@@ -1688,10 +1698,11 @@ if __name__ == '__main__':
         elapsed = max(0.000001, time.time() - start_time)
         print('ITERATION:', counter, 'seed:', seed, 'size:', input_size,
               '(mean:', str(mean) + ', stddev:', str(stddev) + ')',
-              'speed:', counter / elapsed,
-              'iters/sec, ', total_wasm_size / elapsed,
-              'wasm_bytes/sec, ', ignored_vm_runs,
-              'ignored\n')
+              'speed:', counter / elapsed, 'iters/sec, ',
+              total_wasm_size / counter, 'wasm_bytes/iter')
+        if ignored_vm_runs:
+            print(f'(ignored {ignored_vm_runs} iters, for reasons {ignored_vm_run_reasons})')
+        print()
         make_random_input(input_size, raw_input_data)
         assert os.path.getsize(raw_input_data) == input_size
         # remove the generated wasm file, so that we can tell if the fuzzer
