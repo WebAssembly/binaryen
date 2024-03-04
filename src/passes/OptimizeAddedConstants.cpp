@@ -285,8 +285,11 @@ struct OptimizeAddedConstants
   }
 
   void doWalkFunction(Function* func) {
-    // This pass is only valid under the assumption of unused low memory.
-    assert(getPassOptions().lowMemoryUnused);
+    if (!getPassOptions().lowMemoryUnused) {
+      Fatal() << "OptimizeAddedConstants can only be run when the "
+              << "--low-memory-unused flag is set.";
+    }
+
     // Multiple passes may be needed if we have x + 4 + 8 etc. (nested structs
     // in C can cause this, but it's rare). Note that we only need that for the
     // propagation case (as 4 + 8 would be optimized directly if it were
