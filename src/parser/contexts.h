@@ -808,6 +808,11 @@ struct NullInstrParserCtx {
     return Ok{};
   }
   template<typename HeapTypeT>
+  Result<>
+  makeContBind(Index, const std::vector<Annotation>&, HeapTypeT, HeapTypeT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
   Result<> makeContNew(Index, const std::vector<Annotation>&, HeapTypeT) {
     return Ok{};
   }
@@ -2545,6 +2550,13 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   Result<> makeStringSliceIter(Index pos,
                                const std::vector<Annotation>& annotations) {
     return withLoc(pos, irBuilder.makeStringSliceIter());
+  }
+
+  Result<> makeContBind(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        HeapType contTypeBefore,
+                        HeapType contTypeAfter) {
+    return withLoc(pos, irBuilder.makeContBind(contTypeBefore, contTypeAfter));
   }
 
   Result<> makeContNew(Index pos,

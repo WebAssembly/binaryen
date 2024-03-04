@@ -304,6 +304,8 @@ Result<> makeStringSliceWTF(Ctx&,
 template<typename Ctx>
 Result<> makeStringSliceIter(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
+Result<> makeContBind(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
 Result<> makeContNew(Ctx*, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeResume(Ctx&, Index, const std::vector<Annotation>&);
@@ -2457,6 +2459,19 @@ Result<> makeStringSliceIter(Ctx& ctx,
                              Index pos,
                              const std::vector<Annotation>& annotations) {
   return ctx.makeStringSliceIter(pos, annotations);
+}
+
+// contbind ::= 'cont.bind' typeidx typeidx
+template<typename Ctx>
+Result<>
+makeContBind(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
+  auto typeBefore = typeidx(ctx);
+  CHECK_ERR(typeBefore);
+
+  auto typeAfter = typeidx(ctx);
+  CHECK_ERR(typeAfter);
+
+  return ctx.makeContBind(pos, annotations, *typeBefore, *typeAfter);
 }
 
 template<typename Ctx>

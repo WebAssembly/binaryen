@@ -1299,6 +1299,7 @@ enum ASTNodes {
 
   // typed continuation opcodes
   ContNew = 0xe0,
+  ContBind = 0xe1,
   Resume = 0xe3,
 
 };
@@ -1928,6 +1929,7 @@ public:
   void visitRefAsCast(RefCast* curr, uint32_t code);
   void visitRefAs(RefAs* curr, uint8_t code);
   void visitContNew(ContNew* curr);
+  void visitContBind(ContBind* curr);
   void visitResume(Resume* curr);
 
   [[noreturn]] void throwError(std::string text);

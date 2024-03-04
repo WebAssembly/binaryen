@@ -1352,6 +1352,8 @@ void StringSliceIter::finalize() {
   }
 }
 
+void ContBind::finalize() { type = Type(contTypeAfter, NonNullable); }
+
 void ContNew::finalize() { type = Type(contType, NonNullable); }
 
 static void populateResumeSentTypes(Resume* curr, Module* wasm) {
