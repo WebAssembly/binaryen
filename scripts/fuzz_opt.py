@@ -628,7 +628,7 @@ ignored_vm_run_reasons = dict()
 # Extra text can also be printed that is not included in the metrics.
 def note_ignored_vm_run(reason, extra_text = ''):
     global ignored_vm_runs
-    print(f'(ignore VM run: {reason}{extra_text}')
+    print(f'(ignore VM run: {reason}{extra_text})')
     ignored_vm_runs += 1
     ignored_vm_run_reasons.setdefault(reason, 0)
     ignored_vm_run_reasons[reason] += 1
@@ -1698,9 +1698,10 @@ if __name__ == '__main__':
         print('ITERATION:', counter, 'seed:', seed, 'size:', input_size,
               '(mean:', str(mean) + ', stddev:', str(stddev) + ')',
               'speed:', counter / elapsed, 'iters/sec, ',
-              total_wasm_size / counter, 'wasm_bytes/iter\n')
+              total_wasm_size / counter, 'wasm_bytes/iter')
         if ignored_vm_runs:
-            print(f'(ignored {ignored_vm_run_reasons} iters, for reasons {ignored_vm_run_reasons})')
+            print(f'(ignored {ignored_vm_runs} iters, for reasons {ignored_vm_run_reasons})')
+        print()
         make_random_input(input_size, raw_input_data)
         assert os.path.getsize(raw_input_data) == input_size
         # remove the generated wasm file, so that we can tell if the fuzzer
