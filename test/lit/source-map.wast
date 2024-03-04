@@ -1,7 +1,10 @@
 ;; RUN: wasm-opt %s -o %t.wasm -osm %t.map -g -q
 ;; RUN: wasm-opt %t.wasm -ism %t.map -q -o - -S | filecheck %s
 
+;; RUN: wasm-opt %s --new-wat-parser -S -o - | filecheck %s
+
 (module
+  ;;@ src.cpp:0:1
   (func $foo (param $x i32) (param $y i32)
     ;;@ src.cpp:10:1
     (if
@@ -12,8 +15,11 @@
         ;;@ src.cpp:40:1
         (local.get $y)
       )
+      ;; For the legacy parser
       ;;@ src.cpp:50:1
       (then
+        ;; For the new parser
+        ;;@ src.cpp:50:1
         (return)
       )
     )
@@ -24,10 +30,12 @@
       ;;@ src.cpp:80:1
       (local.get $y)
     )
+    ;;@ src.cpp:90:1
   )
 )
 
-;; CHECK:  (func $foo (param $x i32) (param $y i32)
+;; CHECK:       ;;@ src.cpp:0:1
+;; CHECK-NEXT:  (func $foo (param $x i32) (param $y i32)
 ;; CHECK-NEXT:   ;;@ src.cpp:10:1
 ;; CHECK-NEXT:   (if
 ;; CHECK-NEXT:    ;;@ src.cpp:20:1
@@ -49,3 +57,5 @@
 ;; CHECK-NEXT:    ;;@ src.cpp:80:1
 ;; CHECK-NEXT:    (local.get $y)
 ;; CHECK-NEXT:   )
+;; CHECK-NEXT:   ;;@ src.cpp:90:1
+;; CHECK-NEXT:  )

@@ -15,6 +15,10 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - (If new wat parser is enabled) Source map comments on `else` branches must
+   now be placed above the instruction inside the `else` branch rather than on
+   the `else` branch itself.
+
 v117
 ----
 

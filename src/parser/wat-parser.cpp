@@ -184,10 +184,11 @@ Result<> parseModule(Module& wasm, std::string_view input) {
     for (Index i = 0; i < decls.funcDefs.size(); ++i) {
       ctx.index = i;
       auto* f = wasm.functions[i].get();
+      WithPosition with(ctx, decls.funcDefs[i].pos);
+      ctx.setSrcLoc(decls.funcDefs[i].annotations);
       if (!f->imported()) {
         CHECK_ERR(ctx.visitFunctionStart(f));
       }
-      WithPosition with(ctx, decls.funcDefs[i].pos);
       if (auto parsed = func(ctx)) {
         CHECK_ERR(parsed);
       } else {

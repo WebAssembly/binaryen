@@ -211,12 +211,17 @@ Result<Expression*> IRBuilder::build() {
 }
 
 void IRBuilder::setDebugLocation(const Function::DebugLocation& loc) {
+  DBG(std::cerr << "setting debugloc " << loc.fileIndex << ":" << loc.lineNumber
+                << ":" << loc.columnNumber << "\n";);
   debugLoc = loc;
 }
 
 void IRBuilder::applyDebugLoc(Expression* expr) {
   if (debugLoc) {
     if (func) {
+      DBG(std::cerr << "applying debugloc " << debugLoc->fileIndex << ":"
+                    << debugLoc->lineNumber << ":" << debugLoc->columnNumber
+                    << " to expression " << ShallowExpression{expr} << "\n");
       func->debugLocations[expr] = *debugLoc;
     }
     debugLoc.reset();
@@ -698,6 +703,10 @@ Result<> IRBuilder::visitFunctionStart(Function* func) {
   if (!scopeStack.empty()) {
     return Err{"unexpected start of function"};
   }
+  if (debugLoc) {
+    func->prologLocation.insert(*debugLoc);
+    debugLoc.reset();
+  }
   scopeStack.push_back(ScopeCtx::makeFunc(func));
   this->func = func;
   return Ok{};
@@ -740,6 +749,11 @@ Result<> IRBuilder::visitTryTableStart(TryTable* trytable, Name label) {
 }
 
 Result<Expression*> IRBuilder::finishScope(Block* block) {
+  if (debugLoc) {
+    DBG(std::cerr << "discarding debugloc " << debugLoc->fileIndex << ":"
+                  << debugLoc->lineNumber << ":" << debugLoc->columnNumber
+                  << "\n");
+  }
   debugLoc.reset();
 
   if (scopeStack.empty() || scopeStack.back().isNone()) {
@@ -965,6 +979,10 @@ Result<> IRBuilder::visitEnd() {
   auto scope = getScope();
   if (scope.isNone()) {
     return Err{"unexpected end"};
+  }
+  if (auto* func = scope.getFunction(); func && debugLoc) {
+    func->epilogLocation.insert(*debugLoc);
+    debugLoc.reset();
   }
   auto expr = finishScope(scope.getBlock());
   CHECK_ERR(expr);

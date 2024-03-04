@@ -68,12 +68,14 @@ Result<> ParseDeclsCtx::addFunc(Name name,
                                 ImportNames* import,
                                 TypeUseT type,
                                 std::optional<LocalsT>,
+                                std::vector<Annotation>&& annotations,
                                 Index pos) {
   CHECK_ERR(checkImport(pos, import));
   auto f = addFuncDecl(pos, name, import);
   CHECK_ERR(f);
   CHECK_ERR(addExports(in, wasm, *f, exports, ExternalKind::Function));
-  funcDefs.push_back({name, pos, Index(funcDefs.size())});
+  funcDefs.push_back(
+    {name, pos, Index(funcDefs.size()), std::move(annotations)});
   return Ok{};
 }
 
@@ -109,7 +111,8 @@ Result<> ParseDeclsCtx::addTable(Name name,
   auto t = addTableDecl(pos, name, import, limits);
   CHECK_ERR(t);
   CHECK_ERR(addExports(in, wasm, *t, exports, ExternalKind::Table));
-  tableDefs.push_back({name, pos, Index(tableDefs.size())});
+  // TODO: table annotations
+  tableDefs.push_back({name, pos, Index(tableDefs.size()), {}});
   return Ok{};
 }
 
@@ -164,7 +167,8 @@ Result<> ParseDeclsCtx::addMemory(Name name,
   auto m = addMemoryDecl(pos, name, import, type);
   CHECK_ERR(m);
   CHECK_ERR(addExports(in, wasm, *m, exports, ExternalKind::Memory));
-  memoryDefs.push_back({name, pos, Index(memoryDefs.size())});
+  // TODO: memory annotations
+  memoryDefs.push_back({name, pos, Index(memoryDefs.size()), {}});
   return Ok{};
 }
 
@@ -209,7 +213,8 @@ Result<> ParseDeclsCtx::addGlobal(Name name,
   auto g = addGlobalDecl(pos, name, import);
   CHECK_ERR(g);
   CHECK_ERR(addExports(in, wasm, *g, exports, ExternalKind::Global));
-  globalDefs.push_back({name, pos, Index(globalDefs.size())});
+  // TODO: global annotations
+  globalDefs.push_back({name, pos, Index(globalDefs.size()), {}});
   return Ok{};
 }
 
@@ -228,7 +233,8 @@ Result<> ParseDeclsCtx::addElem(
     name = Names::getValidElementSegmentName(wasm, name);
     e->name = name;
   }
-  elemDefs.push_back({name, pos, Index(wasm.elementSegments.size())});
+  // TODO: element segment annotations
+  elemDefs.push_back({name, pos, Index(wasm.elementSegments.size()), {}});
   wasm.addElementSegment(std::move(e));
   return Ok{};
 }
@@ -252,7 +258,8 @@ Result<> ParseDeclsCtx::addData(Name name,
     d->name = name;
   }
   d->data = std::move(data);
-  dataDefs.push_back({name, pos, Index(wasm.dataSegments.size())});
+  // TODO: data segment annotations
+  dataDefs.push_back({name, pos, Index(wasm.dataSegments.size()), {}});
   wasm.addDataSegment(std::move(d));
   return Ok{};
 }
@@ -285,7 +292,8 @@ Result<> ParseDeclsCtx::addTag(Name name,
   auto t = addTagDecl(pos, name, import);
   CHECK_ERR(t);
   CHECK_ERR(addExports(in, wasm, *t, exports, ExternalKind::Tag));
-  tagDefs.push_back({name, pos, Index(tagDefs.size())});
+  // TODO: tag annotations
+  tagDefs.push_back({name, pos, Index(tagDefs.size()), {}});
   return Ok{};
 }
 
