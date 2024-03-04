@@ -1043,6 +1043,21 @@ class Wasm2JS(TestCaseHandler):
             # start with the normal output fixes that all VMs need
             x = fix_output(x)
 
+            # replace null with 0. the fuzzing harness passes in nulls instead
+            # the specific type of a parameter (since null can be cast to
+            # anything without issue, and all fuzz_shell.js knows on the JS side
+            # is the number of parameters), which can be noticeable in a
+            # situation where we optimize and remove casts, like here:
+            #
+            # function foo(x) { return x | 0; }
+            #
+            # When optimizing we can remove that | 0, which is valid if the
+            # input is valid, but as we said, the fuzz harness passes in a value
+            # of the wrong type - which would be cast on use, but if we remove
+            # the casts, we end up returning null here and not 0, which the
+            # fuzzer can notice.
+            x = re.sub(r' null', ' 0', x)
+
             # check if a number is 0 or a subnormal, which is basically zero
             def is_basically_zero(x):
                 # to check if something is a subnormal, compare it to the largest one
