@@ -622,15 +622,16 @@ def fix_spec_output(out):
 
 
 ignored_vm_runs = 0
-ignored_vm_run_reasons = {}
+ignored_vm_run_reasons = dict()
 
 # Notes a VM run that we ignore, and the reason for it (for metrics purposes).
 # Extra text can also be printed that is not included in the metrics.
 def note_ignored_vm_run(reason, extra_text = ''):
     global ignored_vm_runs
-    print(f'(ignore VM run: {reason}{extra_text})
+    print(f'(ignore VM run: {reason}{extra_text}')
     ignored_vm_runs += 1
-    ignored_vm_run_reasons.setdefault(reason, 0) += 1
+    ignored_vm_run_reasons.setdefault(reason, 0)
+    ignored_vm_run_reasons[reason] += 1
 
 
 def run_vm(cmd):
