@@ -378,18 +378,10 @@ Result<> IRBuilder::visitReturn(Return* curr) {
   size_t n = func->getResults().size();
   if (n == 0) {
     curr->value = nullptr;
-  } else if (n == 1) {
-    auto val = pop();
+  } else {
+    auto val = pop(n);
     CHECK_ERR(val);
     curr->value = *val;
-  } else {
-    std::vector<Expression*> vals(n);
-    for (size_t i = 0; i < n; ++i) {
-      auto val = pop();
-      CHECK_ERR(val);
-      vals[n - i - 1] = *val;
-    }
-    curr->value = builder.makeTupleMake(vals);
   }
   return Ok{};
 }
