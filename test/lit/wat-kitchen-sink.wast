@@ -5192,6 +5192,32 @@
   end
  )
 
+ ;; CHECK:      (func $source-map-propagation (type $void)
+ ;; CHECK-NEXT:  ;;@ src.cpp:20:1
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.add
+ ;; CHECK-NEXT:    ;;@ src.cpp:10:1
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    ;;@ src.cpp:10:1
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  ;;@ src.cpp:20:1
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.const 2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $source-map-propagation
+  ;;@ src.cpp:10:1
+  i32.const 0
+  i32.const 1
+  i32.add
+  ;;@ src.cpp:20:1
+  drop
+  i32.const 2
+  drop
+ )
+
  ;; CHECK:      (func $use-types (type $104) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany)) (param $15 (ref $all-types))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
