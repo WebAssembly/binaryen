@@ -497,7 +497,7 @@ int main(int argc, const char* argv[]) {
     ModuleReader reader;
     reader.setDWARF(debugInfo);
     try {
-      reader.read(options.extra["infile"], wasm, input);
+      reader.read(options.extra["infile"], wasm, inputSourceMapFilename);
     } catch (ParseException& p) {
       p.dump(std::cerr);
       Fatal() << "error in parsing wasm input";
