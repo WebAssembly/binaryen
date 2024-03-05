@@ -92,8 +92,8 @@ Result<> parseDefs(Ctx& ctx,
 }
 
 void propagateDebugLocations(Module& wasm) {
-  // Copy debug locations from parents to children that do not already have
-  // their own debug locations.
+  // Copy debug locations from parents or previous siblings to expressions that
+  // do not already have their own debug locations.
   struct Propagator : WalkerPass<ExpressionStackWalker<Propagator>> {
     using Super = WalkerPass<ExpressionStackWalker<Propagator>>;
     bool isFunctionParallel() override { return true; }
@@ -112,11 +112,12 @@ void propagateDebugLocations(Module& wasm) {
 
     static void doPreVisit(Propagator* self, Expression** currp) {
       Super::doPreVisit(self, currp);
+      auto* curr = *currp;
       auto& locs = self->getFunction()->debugLocations;
       auto& parentDefaults = self->parentDefaults;
-      if (auto it = locs.find(*currp); it != locs.end()) {
+      if (auto it = locs.find(curr); it != locs.end()) {
         // Children will inherit this location.
-        parentDefaults[*currp] = it->second;
+        parentDefaults[curr] = it->second;
         if (auto* parent = self->getParent()) {
           // Subsequent siblings will inherit this location.
           parentDefaults[parent] = it->second;
@@ -127,7 +128,7 @@ void propagateDebugLocations(Module& wasm) {
           if (auto defaultIt = parentDefaults.find(parent);
               defaultIt != parentDefaults.end()) {
             // We have a default to inherit. Our children will inherit it, too.
-            locs[*currp] = parentDefaults[*currp] = defaultIt->second;
+            locs[curr] = parentDefaults[curr] = defaultIt->second;
           }
         }
       }
