@@ -500,31 +500,8 @@
   )
 
   ;; CHECK:      (func $return-tuple (type $1) (result i32 i64)
-  ;; CHECK-NEXT:  (local $scratch (tuple i32 i64))
-  ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 i64)
-  ;; CHECK-NEXT:  (local $3 i64)
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT:  (i64.const 1)
-  ;; CHECK-NEXT:  (local.set $2
-  ;; CHECK-NEXT:   (pop i64)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.tee $1
-  ;; CHECK-NEXT:   (pop i32)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $2)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (pop i64)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $1)
-  ;; CHECK-NEXT:  (local.get $2)
-  ;; CHECK-NEXT:  (local.set $3
-  ;; CHECK-NEXT:   (pop i64)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (pop i32)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.get $3)
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (pop (tuple i32 i64))
   ;; CHECK-NEXT:  )

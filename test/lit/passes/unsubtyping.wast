@@ -712,20 +712,10 @@
  ;; CHECK:       (type $4 (func (result (ref $super1) (ref $super2))))
 
  ;; CHECK:      (func $return-many (type $4) (result (ref $super1) (ref $super2))
- ;; CHECK-NEXT:  (local $scratch (tuple (ref $sub1) (ref $sub2)))
  ;; CHECK-NEXT:  (return
  ;; CHECK-NEXT:   (tuple.make 2
- ;; CHECK-NEXT:    (tuple.extract 2 0
- ;; CHECK-NEXT:     (local.tee $scratch
- ;; CHECK-NEXT:      (tuple.make 2
- ;; CHECK-NEXT:       (struct.new_default $sub1)
- ;; CHECK-NEXT:       (struct.new_default $sub2)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (tuple.extract 2 1
- ;; CHECK-NEXT:     (local.get $scratch)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (struct.new_default $sub1)
+ ;; CHECK-NEXT:    (struct.new_default $sub2)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
