@@ -3662,6 +3662,16 @@
   return
  )
 
+ ;; CHECK:      (func $return-multivalue (type $4) (result i32 i64)
+ ;; CHECK-NEXT:  (return
+ ;; CHECK-NEXT:   (call $return-multivalue)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $return-multivalue (result i32 i64)
+  call $return-multivalue
+  return
+ )
+
  ;; CHECK:      (func $ref-is-null (type $45) (param $0 anyref) (result i32)
  ;; CHECK-NEXT:  (ref.is_null
  ;; CHECK-NEXT:   (local.get $0)
@@ -3683,7 +3693,7 @@
  (func $ref-func
   ref.func $ref-func
   drop
-  ref.func 156
+  ref.func 157
   drop
  )
 
