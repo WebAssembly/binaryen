@@ -108,7 +108,7 @@ var instance;
 try {
   instance = new WebAssembly.Instance(module, imports);
 } catch (e) {
-  console.log('exception: failed to instantiate module');
+  console.log('exception thrown: failed to instantiate module');
   quit();
 }
 
@@ -143,7 +143,7 @@ for (var e in exports) {
       console.log('[fuzz-exec] note result: ' + e + ' => ' + printed(result));
     }
   } catch (e) {
-    console.log('exception!');// + [e, e.stack]);
+    console.log('exception thrown: ' + e);
   }
 }
 

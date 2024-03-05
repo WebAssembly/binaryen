@@ -478,6 +478,9 @@ STACK_LIMIT = '[trap stack limit]'
 # and also see the --dce workaround below that also links to those issues.
 V8_UNINITIALIZED_NONDEF_LOCAL = 'uninitialized non-defaultable local'
 
+# JS exceptions are logged as exception thrown: REASON
+EXCEPTION_PREFIX = 'exception thrown: '
+
 
 # given a call line that includes FUZZ_EXEC_CALL_PREFIX, return the export that
 # is called
@@ -585,7 +588,7 @@ def fix_output(out):
     out = re.sub(r'f64\.const (-?[nanN:abcdefxIity\d+-.]+)', fix_double, out)
 
     # mark traps from wasm-opt as exceptions, even though they didn't run in a vm
-    out = out.replace(TRAP_PREFIX, 'exception: ' + TRAP_PREFIX)
+    out = out.replace(TRAP_PREFIX, EXCEPTION_PREFIX + TRAP_PREFIX)
 
     # funcref(0) has the index of the function in it, and optimizations can
     # change that index, so ignore it
@@ -594,6 +597,9 @@ def fix_output(out):
     # JS prints i31 as just a number, so change "i31ref(N)" (which C++ emits)
     # to "N".
     out = re.sub(r'i31ref\((-?\d+)\)', r'\1', out)
+
+    # Tag names may change due to opts, so canonicalize them.
+    out = re.sub(r' tag\$\d+', ' tag', out)
 
     lines = out.splitlines()
     for i in range(len(lines)):
@@ -604,7 +610,7 @@ def fix_output(out):
             # developer can see it.
             print(line)
             lines[i] = None
-        elif 'exception' in line:
+        elif EXCEPTION_PREFIX in line:
             # exceptions may differ when optimizing, but an exception should
             # occur, so ignore their types (also js engines print them out
             # slightly differently)
