@@ -3176,6 +3176,10 @@ BINARYEN_API char*
 BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef module, bool optimize);
 
 // Deserialize a module from binary form.
+BINARYEN_API BinaryenModuleRef BinaryenModuleReadWithFeatures(char* input,
+                                                              size_t inputSize,
+                                                              BinaryenFeatures featureSet);
+// Deserialize a module from binary form.
 BINARYEN_API BinaryenModuleRef BinaryenModuleRead(char* input,
                                                   size_t inputSize);
 
