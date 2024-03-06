@@ -408,7 +408,8 @@ void test_read_with_feature() {
   BinaryenAddTable(module, "tab", 0, 100, BinaryenTypeFuncref());
   BinaryenAddTable(module, "tab2", 0, 100, BinaryenTypeFuncref());
 
-  BinaryenFeatures features = BinaryenFeatureMVP() | BinaryenFeatureReferenceTypes();
+  BinaryenFeatures features =
+    BinaryenFeatureMVP() | BinaryenFeatureReferenceTypes();
   BinaryenModuleSetFeatures(module, features);
 
   size_t bufferSize = 1024;
@@ -417,7 +418,8 @@ void test_read_with_feature() {
   BinaryenModuleDispose(module);
 
   // See we can read the bytes and get a valid module from there.
-  BinaryenModuleRef readModule = BinaryenModuleReadWithFeatures(buffer, written, features);
+  BinaryenModuleRef readModule =
+    BinaryenModuleReadWithFeatures(buffer, written, features);
   int valid = BinaryenModuleValidate(readModule);
   assert(valid);
   BinaryenModuleDispose(readModule);

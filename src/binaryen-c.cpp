@@ -5851,7 +5851,9 @@ char* BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef module,
   return output;
 }
 
-BinaryenModuleRef BinaryenModuleReadWithFeatures(char* input, size_t inputSize, BinaryenFeatures features) {
+BinaryenModuleRef BinaryenModuleReadWithFeatures(char* input,
+                                                 size_t inputSize,
+                                                 BinaryenFeatures features) {
   auto* wasm = new Module;
   std::vector<char> buffer(false);
   buffer.resize(inputSize);
@@ -5867,7 +5869,7 @@ BinaryenModuleRef BinaryenModuleReadWithFeatures(char* input, size_t inputSize, 
 }
 
 BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
-    return BinaryenModuleReadWithFeatures(input, inputSize, BinaryenFeatureMVP());
+  return BinaryenModuleReadWithFeatures(input, inputSize, BinaryenFeatureMVP());
 }
 
 void BinaryenModuleInterpret(BinaryenModuleRef module) {
