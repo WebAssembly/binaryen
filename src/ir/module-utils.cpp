@@ -53,9 +53,7 @@ Function* copyFunction(Function* func,
   ret->localNames = func->localNames;
   ret->localIndices = func->localIndices;
   ret->body = ExpressionManipulator::copy(func->body, out);
-  if (ret->body) {
-    debug::copyDebugInfo(func->body, ret->body, func, ret.get());
-  }
+  debug::copyDebugInfo(func->body, ret->body, func, ret.get());
   ret->prologLocation = func->prologLocation;
   ret->epilogLocation = func->epilogLocation;
   // Update file indices if needed
@@ -168,20 +166,26 @@ DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
 // Copies named toplevel module items (things of kind ModuleItemKind). See
 // copyModule() for something that also copies exports, the start function, etc.
 void copyModuleItems(const Module& in, Module& out) {
-  std::vector<Index> fileIndexMap;
-  std::unordered_map<std::string, Index> debugInfoFileIndices;
-  for (Index i = 0; i < out.debugInfoFileNames.size(); i++) {
-    debugInfoFileIndices[out.debugInfoFileNames[i]] = i;
-  }
-  for (Index i = 0; i < in.debugInfoFileNames.size(); i++) {
-    std::string file = in.debugInfoFileNames[i];
-    auto iter = debugInfoFileIndices.find(file);
-    if (iter == debugInfoFileIndices.end()) {
-      Index index = out.debugInfoFileNames.size();
-      out.debugInfoFileNames.push_back(file);
-      debugInfoFileIndices[file] = index;
+  // If the source module has some debug information, we first compute how
+  // to map file name indices from this modules to file name indices in
+  // the target module.
+  std::optional<std::vector<Index>> fileIndexMap;
+  if (!in.debugInfoFileNames.empty()) {
+    std::unordered_map<std::string, Index> debugInfoFileIndices;
+    for (Index i = 0; i < out.debugInfoFileNames.size(); i++) {
+      debugInfoFileIndices[out.debugInfoFileNames[i]] = i;
     }
-    fileIndexMap.push_back(debugInfoFileIndices[file]);
+    fileIndexMap.emplace();
+    for (Index i = 0; i < in.debugInfoFileNames.size(); i++) {
+      std::string file = in.debugInfoFileNames[i];
+      auto iter = debugInfoFileIndices.find(file);
+      if (iter == debugInfoFileIndices.end()) {
+        Index index = out.debugInfoFileNames.size();
+        out.debugInfoFileNames.push_back(file);
+        debugInfoFileIndices[file] = index;
+      }
+      fileIndexMap->push_back(debugInfoFileIndices[file]);
+    }
   }
 
   for (auto& curr : in.functions) {
