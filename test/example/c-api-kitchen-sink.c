@@ -408,8 +408,6 @@ void test_read_with_feature() {
   BinaryenAddTable(module, "tab", 0, 100, BinaryenTypeFuncref());
   BinaryenAddTable(module, "tab2", 0, 100, BinaryenTypeFuncref());
 
-  BinaryenModuleAutoDrop(module);
-
   BinaryenFeatures features = BinaryenFeatureMVP() | BinaryenFeatureReferenceTypes();
   BinaryenModuleSetFeatures(module, features);
 
