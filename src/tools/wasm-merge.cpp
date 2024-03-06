@@ -452,6 +452,9 @@ int main(int argc, const char* argv[]) {
   std::vector<std::string> inputFileNames;
   bool emitBinary = true;
   bool debugInfo = false;
+  std::map<size_t, std::string> inputSourceMapFilenames;
+  std::string outputSourceMapFilename;
+  std::string outputSourceMapUrl;
 
   const std::string WasmMergeOption = "wasm-merge options";
 
@@ -464,7 +467,11 @@ For example,
 
 will read foo.wasm and bar.wasm, with names 'foo' and 'bar' respectively, so if the second imports from 'foo', we will see that as an import from the first module after the merge. The merged output will be written to merged.wasm.
 
-Note that filenames and modules names are interleaved (which is hopefully less confusing).)");
+Note that filenames and modules names are interleaved (which is hopefully less confusing).
+
+Input source maps can be specified by adding an -ism option right after the module name:
+
+  wasm-merge foo.wasm foo -ism foo.wasm.map ...)");
 
   options
     .add("--output",
@@ -485,6 +492,37 @@ Note that filenames and modules names are interleaved (which is hopefully less c
                         inputFileNames.push_back(argument);
                       }
                     })
+    .add("--input-source-map",
+         "-ism",
+         "Consume source maps from the specified files",
+         WasmMergeOption,
+         Options::Arguments::N,
+         [&](Options* o, const std::string& argument) {
+           size_t pos = inputFiles.size();
+           if (pos == 0 || pos != inputFileNames.size() ||
+               inputSourceMapFilenames.count(pos - 1)) {
+             std::cerr << "Option '-ism " << argument
+                       << "' should be right after the module name\n";
+             exit(EXIT_FAILURE);
+           }
+           inputSourceMapFilenames.insert({pos - 1, argument});
+         })
+    .add("--output-source-map",
+         "-osm",
+         "Emit source map to the specified file",
+         WasmMergeOption,
+         Options::Arguments::One,
+         [&outputSourceMapFilename](Options* o, const std::string& argument) {
+           outputSourceMapFilename = argument;
+         })
+    .add("--output-source-map-url",
+         "-osu",
+         "Emit specified string as source map URL",
+         WasmMergeOption,
+         Options::Arguments::One,
+         [&outputSourceMapUrl](Options* o, const std::string& argument) {
+           outputSourceMapUrl = argument;
+         })
     .add("--rename-export-conflicts",
          "-rec",
          "Rename exports to avoid conflicts (rather than error)",
@@ -529,6 +567,9 @@ Note that filenames and modules names are interleaved (which is hopefully less c
   for (Index i = 0; i < inputFiles.size(); i++) {
     auto inputFile = inputFiles[i];
     auto inputFileName = inputFileNames[i];
+    auto iter = inputSourceMapFilenames.find(i);
+    auto inputSourceMapFilename =
+      (iter == inputSourceMapFilenames.end()) ? "" : iter->second;
 
     if (options.debug) {
       std::cerr << "reading input '" << inputFile << "' as '" << inputFileName
@@ -550,7 +591,7 @@ Note that filenames and modules names are interleaved (which is hopefully less c
 
     ModuleReader reader;
     try {
-      reader.read(inputFile, *currModule);
+      reader.read(inputFile, *currModule, inputSourceMapFilename);
     } catch (ParseException& p) {
       p.dump(std::cerr);
       Fatal() << "error in parsing wasm input: " << inputFile;
@@ -606,6 +647,10 @@ Note that filenames and modules names are interleaved (which is hopefully less c
     ModuleWriter writer;
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
+    if (outputSourceMapFilename.size()) {
+      writer.setSourceMapFilename(outputSourceMapFilename);
+      writer.setSourceMapUrl(outputSourceMapUrl);
+    }
     writer.write(merged, options.extra["output"]);
   }
 }

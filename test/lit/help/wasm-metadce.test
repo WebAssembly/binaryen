@@ -53,6 +53,13 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --output,-o                          Output file (stdout if not specified)
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --input-source-map,-ism              Consume source map from the specified
+;; CHECK-NEXT:                                        file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --output-source-map,-osm             Emit source map to the specified file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --output-source-map-url,-osu         Emit specified string as source map URL
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-text,-S                       Emit text instead of binary for the
 ;; CHECK-NEXT:                                        output file
 ;; CHECK-NEXT:

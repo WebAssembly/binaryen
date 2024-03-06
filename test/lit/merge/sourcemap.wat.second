@@ -1,0 +1,8 @@
+(module
+  ;;@ b:1:2
+  (func (export "g")
+     ;;@ b:2:2
+     (nop)
+     ;;@ b:3:2
+  )
+)

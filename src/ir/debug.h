@@ -27,6 +27,10 @@ inline void copyDebugInfo(Expression* origin,
                           Expression* copy,
                           Function* originFunc,
                           Function* copyFunc) {
+  if (originFunc->debugLocations.empty()) {
+    return; // No debug info to copy
+  }
+
   struct Lister : public PostWalker<Lister, UnifiedExpressionVisitor<Lister>> {
     std::vector<Expression*> list;
     void visitExpression(Expression* curr) { list.push_back(curr); }

@@ -24,8 +24,14 @@
 namespace wasm::ModuleUtils {
 
 // Copies a function into a module. If newName is provided it is used as the
-// name of the function (otherwise the original name is copied).
-Function* copyFunction(Function* func, Module& out, Name newName = Name());
+// name of the function (otherwise the original name is copied). If fileIndexMap
+// is specified, it is used to rename source map filename indices when copying
+// the function from one module to another one.
+Function*
+copyFunction(Function* func,
+             Module& out,
+             Name newName = Name(),
+             std::optional<std::vector<Index>> fileIndexMap = std::nullopt);
 
 Global* copyGlobal(Global* global, Module& out);
 

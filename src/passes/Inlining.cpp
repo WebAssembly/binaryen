@@ -456,9 +456,7 @@ static Expression* doInlining(Module* module,
   }
   // Generate and update the inlined contents
   auto* contents = ExpressionManipulator::copy(from->body, *module);
-  if (!from->debugLocations.empty()) {
-    debug::copyDebugInfo(from->body, contents, from, into);
-  }
+  debug::copyDebugInfo(from->body, contents, from, into);
   updater.walk(contents);
   block->list.push_back(contents);
   block->type = retType;
