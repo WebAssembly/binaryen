@@ -103,7 +103,7 @@
 
  ;; An active element segment requires subtyping. So does an element segment
  ;; element.
- ;; CHECK:      (elem $e (table $t) (i32.const 0) (ref null $sub) (struct.new_default $subsub))
+ ;; CHECK:      (elem $e (table $t) (offset (i32.const 0)) (ref null $sub) (struct.new_default $subsub))
  (elem $e (table $t) (offset (i32.const 0)) (ref null $sub) (struct.new $subsub))
 )
 

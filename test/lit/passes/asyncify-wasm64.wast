@@ -29,7 +29,7 @@
 
   ;; CHECK:      (table $0 2 2 funcref)
 
-  ;; CHECK:      (elem $0 (i32.const 0) $liveness2 $liveness2)
+  ;; CHECK:      (elem $0 (offset (i32.const 0)) $liveness2 $liveness2)
 
   ;; CHECK:      (export "asyncify_start_unwind" (func $asyncify_start_unwind))
 

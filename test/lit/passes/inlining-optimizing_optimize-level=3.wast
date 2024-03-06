@@ -100,9 +100,9 @@
  (global $tempRet0 (mut i32) (i32.const 0))
  (elem (global.get $tableBase) $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
  (data (i32.const 1024) "emcc_hello_world.asm.js")
- ;; CHECK:      (data $0 (i32.const 1024) "emcc_hello_world.asm.js")
+ ;; CHECK:      (data $0 (offset (i32.const 1024)) "emcc_hello_world.asm.js")
 
- ;; CHECK:      (elem $0 (global.get $tableBase) $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
+ ;; CHECK:      (elem $0 (offset (global.get $tableBase)) $b0 $___stdio_close $b1 $b1 $___stdout_write $___stdio_seek $___stdio_write $b1 $b1 $b1 $b2 $b2 $b2 $b2 $b2 $_cleanup $b2 $b2)
 
  ;; CHECK:      (export "_i64Subtract" (func $_i64Subtract))
  (export "_i64Subtract" (func $_i64Subtract))

@@ -3112,8 +3112,9 @@ void PrintSExpression::visitElementSegment(ElementSegment* curr) {
       o << ")";
     }
 
-    o << ' ';
+    o << " (offset ";
     visit(curr->offset);
+    o << ')';
 
     if (usesExpressions || currModule->tables.size() > 1) {
       o << ' ';
@@ -3183,8 +3184,9 @@ void PrintSExpression::visitDataSegment(DataSegment* curr) {
       curr->memory.print(o);
       o << ") ";
     }
+    o << "(offset ";
     visit(curr->offset);
-    o << ' ';
+    o << ") ";
   }
   String::printEscaped(o, {curr->data.data(), curr->data.size()});
   o << ')' << maybeNewLine;

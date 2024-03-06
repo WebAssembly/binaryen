@@ -15,7 +15,7 @@
   )
  )
 
- ;; CHECK:      (data $0 (i32.const 104857599) "*")
+ ;; CHECK:      (data $0 (offset (i32.const 104857599)) "*")
 
  ;; CHECK:      (export "test1" (func $test1_2))
 

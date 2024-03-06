@@ -15,7 +15,7 @@
  (import "env" "_Z16waka_func_theirsi" (func $waka_func_theirs\28int\29 (param i32) (result i32)))
  (global $global$0 i32 (i32.const 0))
  (global $global$1 i32 (i32.const 0))
- (data $0 (global.get $gimport$1) "*\00\00\00")
+ (data $0 (offset (global.get $gimport$1)) "*\00\00\00")
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "__wasm_apply_relocs" (func $__wasm_apply_relocs))
  (export "_Z14waka_func_minei" (func $waka_func_mine\28int\29))

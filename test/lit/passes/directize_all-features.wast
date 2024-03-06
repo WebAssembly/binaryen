@@ -14,12 +14,12 @@
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo)
 
- ;; CHECK:      (elem $0 (i32.const 1) $foo)
+ ;; CHECK:      (elem $0 (offset (i32.const 1)) $foo)
 
  ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (i32.const 1) $foo)
+ ;; IMMUT:      (elem $0 (offset (i32.const 1)) $foo)
 
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
@@ -66,16 +66,16 @@
  (table $1 5 5 funcref)
  (elem (table $0) (i32.const 1) func $dummy)
  (elem (table $1) (i32.const 1) func $f)
- ;; CHECK:      (elem $0 (table $0) (i32.const 1) func $dummy)
+ ;; CHECK:      (elem $0 (table $0) (offset (i32.const 1)) func $dummy)
 
- ;; CHECK:      (elem $1 (table $1) (i32.const 1) func $f)
+ ;; CHECK:      (elem $1 (table $1) (offset (i32.const 1)) func $f)
 
  ;; CHECK:      (func $dummy (type $1) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (local.get $0)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (table $0) (i32.const 1) func $dummy)
+ ;; IMMUT:      (elem $0 (table $0) (offset (i32.const 1)) func $dummy)
 
- ;; IMMUT:      (elem $1 (table $1) (i32.const 1) func $f)
+ ;; IMMUT:      (elem $1 (table $1) (offset (i32.const 1)) func $f)
 
  ;; IMMUT:      (func $dummy (type $1) (param $0 i32) (result i32)
  ;; IMMUT-NEXT:  (local.get $0)
@@ -125,12 +125,12 @@
  ;; IMMUT:      (table $1 5 5 funcref)
  (table $1 5 5 funcref)
  (elem (table $1) (i32.const 4) func $foo)
- ;; CHECK:      (elem $0 (table $1) (i32.const 4) func $foo)
+ ;; CHECK:      (elem $0 (table $1) (offset (i32.const 4)) func $foo)
 
  ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (table $1) (i32.const 4) func $foo)
+ ;; IMMUT:      (elem $0 (table $1) (offset (i32.const 4)) func $foo)
 
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
@@ -167,12 +167,12 @@
  ;; IMMUT:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  (elem (i32.const 0) $foo)
- ;; CHECK:      (elem $0 (i32.const 0) $foo)
+ ;; CHECK:      (elem $0 (offset (i32.const 0)) $foo)
 
  ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (i32.const 0) $foo)
+ ;; IMMUT:      (elem $0 (offset (i32.const 0)) $foo)
 
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
@@ -213,16 +213,16 @@
  (table $1 5 5 funcref)
  (elem (i32.const 0) $foo $foo $foo $foo $foo)
  (elem (table $1) (i32.const 0) func $foo $foo $foo $foo $foo)
- ;; CHECK:      (elem $0 (table $0) (i32.const 0) func $foo $foo $foo $foo $foo)
+ ;; CHECK:      (elem $0 (table $0) (offset (i32.const 0)) func $foo $foo $foo $foo $foo)
 
- ;; CHECK:      (elem $1 (table $1) (i32.const 0) func $foo $foo $foo $foo $foo)
+ ;; CHECK:      (elem $1 (table $1) (offset (i32.const 0)) func $foo $foo $foo $foo $foo)
 
  ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (table $0) (i32.const 0) func $foo $foo $foo $foo $foo)
+ ;; IMMUT:      (elem $0 (table $0) (offset (i32.const 0)) func $foo $foo $foo $foo $foo)
 
- ;; IMMUT:      (elem $1 (table $1) (i32.const 0) func $foo $foo $foo $foo $foo)
+ ;; IMMUT:      (elem $1 (table $1) (offset (i32.const 0)) func $foo $foo $foo $foo $foo)
 
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
@@ -260,12 +260,12 @@
  ;; IMMUT:      (import "env" "table" (table $table 5 5 funcref))
  (import "env" "table" (table $table 5 5 funcref))
  (elem (i32.const 1) $foo)
- ;; CHECK:      (elem $0 (i32.const 1) $foo)
+ ;; CHECK:      (elem $0 (offset (i32.const 1)) $foo)
 
  ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (i32.const 1) $foo)
+ ;; IMMUT:      (elem $0 (offset (i32.const 1)) $foo)
 
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
@@ -328,10 +328,10 @@
  ;; CHECK:      (table $0 5 5 funcref)
  ;; IMMUT:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
- ;; CHECK:      (elem $0 (i32.const 1) $foo)
+ ;; CHECK:      (elem $0 (offset (i32.const 1)) $foo)
 
  ;; CHECK:      (export "tab" (table $0))
- ;; IMMUT:      (elem $0 (i32.const 1) $foo)
+ ;; IMMUT:      (elem $0 (offset (i32.const 1)) $foo)
 
  ;; IMMUT:      (export "tab" (table $0))
  (export "tab" (table $0))
@@ -383,12 +383,12 @@
  (table $0 5 5 funcref)
 
  (elem (global.get $g) $foo)
- ;; CHECK:      (elem $0 (global.get $g) $foo)
+ ;; CHECK:      (elem $0 (offset (global.get $g)) $foo)
 
  ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (global.get $g) $foo)
+ ;; IMMUT:      (elem $0 (offset (global.get $g)) $foo)
 
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
@@ -437,12 +437,12 @@
  (table $1 5 5 funcref)
 
  (elem (table $1) (global.get $g) func $foo)
- ;; CHECK:      (elem $0 (table $1) (global.get $g) func $foo)
+ ;; CHECK:      (elem $0 (table $1) (offset (global.get $g)) func $foo)
 
  ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (table $1) (global.get $g) func $foo)
+ ;; IMMUT:      (elem $0 (table $1) (offset (global.get $g)) func $foo)
 
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
@@ -486,12 +486,12 @@
  ;; IMMUT:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo)
- ;; CHECK:      (elem $0 (i32.const 1) $foo)
+ ;; CHECK:      (elem $0 (offset (i32.const 1)) $foo)
 
  ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (i32.const 1) $foo)
+ ;; IMMUT:      (elem $0 (offset (i32.const 1)) $foo)
 
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
@@ -531,12 +531,12 @@
  ;; IMMUT:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo)
- ;; CHECK:      (elem $0 (i32.const 1) $foo)
+ ;; CHECK:      (elem $0 (offset (i32.const 1)) $foo)
 
  ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (i32.const 1) $foo)
+ ;; IMMUT:      (elem $0 (offset (i32.const 1)) $foo)
 
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
@@ -581,12 +581,12 @@
  ;; IMMUT:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo)
- ;; CHECK:      (elem $0 (i32.const 1) $foo)
+ ;; CHECK:      (elem $0 (offset (i32.const 1)) $foo)
 
  ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (i32.const 1) $foo)
+ ;; IMMUT:      (elem $0 (offset (i32.const 1)) $foo)
 
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
@@ -622,12 +622,12 @@
  ;; IMMUT:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo)
- ;; CHECK:      (elem $0 (i32.const 1) $foo)
+ ;; CHECK:      (elem $0 (offset (i32.const 1)) $foo)
 
  ;; CHECK:      (func $foo (type $0) (param $0 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (i32.const 1) $foo)
+ ;; IMMUT:      (elem $0 (offset (i32.const 1)) $foo)
 
  ;; IMMUT:      (func $foo (type $0) (param $0 i32)
  ;; IMMUT-NEXT:  (unreachable)
@@ -703,12 +703,12 @@
  ;; IMMUT:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo)
- ;; CHECK:      (elem $0 (i32.const 1) $foo)
+ ;; CHECK:      (elem $0 (offset (i32.const 1)) $foo)
 
  ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (i32.const 1) $foo)
+ ;; IMMUT:      (elem $0 (offset (i32.const 1)) $foo)
 
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
@@ -756,12 +756,12 @@
  ;; IMMUT:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
  (elem (i32.const 1) $foo1 $foo2)
- ;; CHECK:      (elem $0 (i32.const 1) $foo1 $foo2)
+ ;; CHECK:      (elem $0 (offset (i32.const 1)) $foo1 $foo2)
 
  ;; CHECK:      (func $foo1 (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (i32.const 1) $foo1 $foo2)
+ ;; IMMUT:      (elem $0 (offset (i32.const 1)) $foo1 $foo2)
 
  ;; IMMUT:      (func $foo1 (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
@@ -1139,14 +1139,14 @@
  (type $F (func (param (ref func))))
  (elem (i32.const 10) $foo-ref $foo-ref)
 
- ;; CHECK:      (elem $0 (i32.const 10) $foo-ref $foo-ref)
+ ;; CHECK:      (elem $0 (offset (i32.const 10)) $foo-ref $foo-ref)
 
  ;; CHECK:      (elem declare func $select-non-nullable)
 
  ;; CHECK:      (func $foo-ref (type $F) (param $0 (ref func))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (i32.const 10) $foo-ref $foo-ref)
+ ;; IMMUT:      (elem $0 (offset (i32.const 10)) $foo-ref $foo-ref)
 
  ;; IMMUT:      (elem declare func $select-non-nullable)
 
@@ -1327,12 +1327,12 @@
  ;; IMMUT:      (table $no-set 5 5 funcref)
  (table $no-set 5 5 funcref)
 
- ;; CHECK:      (elem $0 (table $has-set) (i32.const 1) func $foo)
- ;; IMMUT:      (elem $0 (table $has-set) (i32.const 1) func $foo)
+ ;; CHECK:      (elem $0 (table $has-set) (offset (i32.const 1)) func $foo)
+ ;; IMMUT:      (elem $0 (table $has-set) (offset (i32.const 1)) func $foo)
  (elem $0 (table $has-set) (i32.const 1) func $foo)
 
- ;; CHECK:      (elem $1 (table $no-set) (i32.const 1) func $foo)
- ;; IMMUT:      (elem $1 (table $no-set) (i32.const 1) func $foo)
+ ;; CHECK:      (elem $1 (table $no-set) (offset (i32.const 1)) func $foo)
+ ;; IMMUT:      (elem $1 (table $no-set) (offset (i32.const 1)) func $foo)
  (elem $1 (table $no-set) (i32.const 1) func $foo)
 
  ;; CHECK:      (func $foo (type $v)
@@ -1390,16 +1390,16 @@
  (elem (i32.const 1) $foo1)
  (elem (i32.const 3) $foo2)
 
- ;; CHECK:      (elem $0 (i32.const 1) $foo1)
+ ;; CHECK:      (elem $0 (offset (i32.const 1)) $foo1)
 
- ;; CHECK:      (elem $1 (i32.const 3) $foo2)
+ ;; CHECK:      (elem $1 (offset (i32.const 3)) $foo2)
 
  ;; CHECK:      (func $foo1 (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (i32.const 1) $foo1)
+ ;; IMMUT:      (elem $0 (offset (i32.const 1)) $foo1)
 
- ;; IMMUT:      (elem $1 (i32.const 3) $foo2)
+ ;; IMMUT:      (elem $1 (offset (i32.const 3)) $foo2)
 
  ;; IMMUT:      (func $foo1 (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
@@ -1511,12 +1511,12 @@
  (table $table 111 funcref)
  (elem (i32.const 0) $func-A)
 
- ;; CHECK:      (elem $0 (i32.const 0) $func-A)
+ ;; CHECK:      (elem $0 (offset (i32.const 0)) $func-A)
 
  ;; CHECK:      (elem declare func $func-B)
 
  ;; CHECK:      (export "a" (func $fill))
- ;; IMMUT:      (elem $0 (i32.const 0) $func-A)
+ ;; IMMUT:      (elem $0 (offset (i32.const 0)) $func-A)
 
  ;; IMMUT:      (elem declare func $func-B)
 
@@ -1604,7 +1604,7 @@
 
  ;; CHECK:      (table $0 10 10 funcref)
 
- ;; CHECK:      (elem $0 (i32.const -1) $0)
+ ;; CHECK:      (elem $0 (offset (i32.const -1)) $0)
 
  ;; CHECK:      (func $0 (type $v)
  ;; CHECK-NEXT:  (call_indirect $0 (type $v)
@@ -1613,7 +1613,7 @@
  ;; CHECK-NEXT: )
  ;; IMMUT:      (table $0 10 10 funcref)
 
- ;; IMMUT:      (elem $0 (i32.const -1) $0)
+ ;; IMMUT:      (elem $0 (offset (i32.const -1)) $0)
 
  ;; IMMUT:      (func $0 (type $v)
  ;; IMMUT-NEXT:  (call_indirect $0 (type $v)
@@ -1639,7 +1639,7 @@
 
  ;; CHECK:      (table $0 10 10 funcref)
 
- ;; CHECK:      (elem $0 (i32.const -2) $0)
+ ;; CHECK:      (elem $0 (offset (i32.const -2)) $0)
 
  ;; CHECK:      (func $0 (type $v)
  ;; CHECK-NEXT:  (call_indirect $0 (type $v)
@@ -1648,7 +1648,7 @@
  ;; CHECK-NEXT: )
  ;; IMMUT:      (table $0 10 10 funcref)
 
- ;; IMMUT:      (elem $0 (i32.const -2) $0)
+ ;; IMMUT:      (elem $0 (offset (i32.const -2)) $0)
 
  ;; IMMUT:      (func $0 (type $v)
  ;; IMMUT-NEXT:  (call_indirect $0 (type $v)
@@ -1674,7 +1674,7 @@
 
  ;; CHECK:      (table $0 10 10 funcref)
 
- ;; CHECK:      (elem $0 (i32.const 10) $0)
+ ;; CHECK:      (elem $0 (offset (i32.const 10)) $0)
 
  ;; CHECK:      (func $0 (type $v)
  ;; CHECK-NEXT:  (call_indirect $0 (type $v)
@@ -1683,7 +1683,7 @@
  ;; CHECK-NEXT: )
  ;; IMMUT:      (table $0 10 10 funcref)
 
- ;; IMMUT:      (elem $0 (i32.const 10) $0)
+ ;; IMMUT:      (elem $0 (offset (i32.const 10)) $0)
 
  ;; IMMUT:      (func $0 (type $v)
  ;; IMMUT-NEXT:  (call_indirect $0 (type $v)
@@ -1709,7 +1709,7 @@
 
  ;; CHECK:      (table $0 10 10 funcref)
 
- ;; CHECK:      (elem $0 (i32.const 9) $0 $0)
+ ;; CHECK:      (elem $0 (offset (i32.const 9)) $0 $0)
 
  ;; CHECK:      (func $0 (type $v)
  ;; CHECK-NEXT:  (call_indirect $0 (type $v)
@@ -1718,7 +1718,7 @@
  ;; CHECK-NEXT: )
  ;; IMMUT:      (table $0 10 10 funcref)
 
- ;; IMMUT:      (elem $0 (i32.const 9) $0 $0)
+ ;; IMMUT:      (elem $0 (offset (i32.const 9)) $0 $0)
 
  ;; IMMUT:      (func $0 (type $v)
  ;; IMMUT-NEXT:  (call_indirect $0 (type $v)
@@ -1746,14 +1746,14 @@
 
  ;; CHECK:      (table $0 10 10 funcref)
 
- ;; CHECK:      (elem $0 (i32.const 9) $0)
+ ;; CHECK:      (elem $0 (offset (i32.const 9)) $0)
 
  ;; CHECK:      (func $0 (type $v)
  ;; CHECK-NEXT:  (call $0)
  ;; CHECK-NEXT: )
  ;; IMMUT:      (table $0 10 10 funcref)
 
- ;; IMMUT:      (elem $0 (i32.const 9) $0)
+ ;; IMMUT:      (elem $0 (offset (i32.const 9)) $0)
 
  ;; IMMUT:      (func $0 (type $v)
  ;; IMMUT-NEXT:  (call $0)

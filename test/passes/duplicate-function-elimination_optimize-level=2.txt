@@ -44,7 +44,7 @@
  (type $0 (func))
  (memory $0 0)
  (table $0 3 3 funcref)
- (elem $0 (i32.const 0) $keep2 $keep2 $caller)
+ (elem $0 (offset (i32.const 0)) $keep2 $keep2 $caller)
  (export "keep2" (func $keep2))
  (export "other" (func $keep2))
  (start $keep2)
@@ -385,7 +385,7 @@
  (type $T (func))
  (memory $0 0)
  (table $0 2 2 funcref)
- (elem $0 (i32.const 0) $erase $erase)
+ (elem $0 (offset (i32.const 0)) $erase $erase)
  (func $erase
   (call_indirect (type $T)
    (i32.const 0)
@@ -396,7 +396,7 @@
  (type $T (func))
  (memory $0 0)
  (table $0 2 2 funcref)
- (elem $0 (i32.const 0) $keep2 $other)
+ (elem $0 (offset (i32.const 0)) $keep2 $other)
  (func $keep2
   (call_indirect (type $T)
    (i32.const 0)
@@ -412,7 +412,7 @@
  (type $S (func))
  (memory $0 0)
  (table $0 2 2 funcref)
- (elem $0 (i32.const 0) $keep2 $keep2)
+ (elem $0 (offset (i32.const 0)) $keep2 $keep2)
  (func $keep2
   (call_indirect (type $S)
    (i32.const 0)

@@ -28,7 +28,7 @@
 
   ;; CHECK:      (table $0 1 1 funcref)
 
-  ;; CHECK:      (elem $0 (i32.const 0) $call-me)
+  ;; CHECK:      (elem $0 (offset (i32.const 0)) $call-me)
 
   ;; CHECK:      (func $call-me (type $ii) (param $0 i32) (param $1 i32)
   ;; CHECK-NEXT:  (nop)

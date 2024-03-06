@@ -20,7 +20,7 @@
  (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
  ;; CHECK:      (table $0 2 2 funcref)
 
- ;; CHECK:      (elem $0 (i32.const 0) $f1 $f2)
+ ;; CHECK:      (elem $0 (offset (i32.const 0)) $f1 $f2)
 
  ;; CHECK:      (export "dynCall_i" (func $dynCall_i))
 
@@ -78,7 +78,7 @@
  (import "env" "invoke_vii" (func $invoke_vii (param i32 i32 i32)))
  (import "env" "table" (table 1 1 funcref))
  (elem (i32.const 0) $f)
- ;; CHECK:      (elem $0 (i32.const 0) $f)
+ ;; CHECK:      (elem $0 (offset (i32.const 0)) $f)
 
  ;; CHECK:      (export "dynCall_i" (func $dynCall_i))
 

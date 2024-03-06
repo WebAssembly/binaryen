@@ -357,33 +357,33 @@
 
  ;; data segments
  (data "hello world")
- ;; CHECK:      (data $implicit-data (memory $mem-init) (i32.const 0) "hello inline data")
+ ;; CHECK:      (data $implicit-data (memory $mem-init) (offset (i32.const 0)) "hello inline data")
 
- ;; CHECK:      (data $implicit-data_1 (memory $mem-init-32) (i32.const 0) "hello i32 inline data")
+ ;; CHECK:      (data $implicit-data_1 (memory $mem-init-32) (offset (i32.const 0)) "hello i32 inline data")
 
- ;; CHECK:      (data $implicit-data_2 (memory $mem-init-64) (i64.const 0) "hello i64 inline data")
+ ;; CHECK:      (data $implicit-data_2 (memory $mem-init-64) (offset (i64.const 0)) "hello i64 inline data")
 
  ;; CHECK:      (data $0 "hello world")
 
  ;; CHECK:      (data $passive "hello again")
  (data $passive "hello" " " "again")
 
- ;; CHECK:      (data $active (i32.const 0) "active hello")
+ ;; CHECK:      (data $active (offset (i32.const 0)) "active hello")
  (data $active (offset i32.const 0) "active hello" "" "")
 
- ;; CHECK:      (data $active2 (i32.const 1) "active again!")
+ ;; CHECK:      (data $active2 (offset (i32.const 1)) "active again!")
  (data $active2 (offset (i32.const 1)) "" "active again" "!")
 
- ;; CHECK:      (data $active3 (memory $mem) (i32.const 42) "active abbreviated")
+ ;; CHECK:      (data $active3 (memory $mem) (offset (i32.const 42)) "active abbreviated")
  (data $active3 (memory $mem) (i32.const 42) "" "active abbreviated" "")
 
- ;; CHECK:      (data $active4 (memory $mem-i32) (i32.const 16) "")
+ ;; CHECK:      (data $active4 (memory $mem-i32) (offset (i32.const 16)) "")
  (data $active4 (memory $mem-i32) (i32.const 16) "")
 
  (data (memory 5) (offset i64.const 0) "64-bit")
 
  ;; tables
- ;; CHECK:      (data $1 (memory $mem-i64) (i64.const 0) "64-bit")
+ ;; CHECK:      (data $1 (memory $mem-i64) (offset (i64.const 0)) "64-bit")
 
  ;; CHECK:      (table $funcs 1 2 funcref)
  (table $funcs 1 2 (ref null func))
@@ -392,28 +392,28 @@
  (table $table-any anyref (elem (item i32.const 0 ref.i31) (ref.null any) (item (ref.i31 (i32.const 0)))))
 
  ;; elems
- ;; CHECK:      (elem $implicit-elem (table $table-any) (i32.const 0) anyref (ref.i31
+ ;; CHECK:      (elem $implicit-elem (table $table-any) (offset (i32.const 0)) anyref (ref.i31
  ;; CHECK-NEXT:  (i32.const 0)
  ;; CHECK-NEXT: ) (ref.null none) (ref.i31
  ;; CHECK-NEXT:  (i32.const 0)
  ;; CHECK-NEXT: ))
 
- ;; CHECK:      (elem $implicit-table (table $timport$0) (i32.const 0) funcref (ref.null nofunc) (ref.null nofunc) (ref.null nofunc))
+ ;; CHECK:      (elem $implicit-table (table $timport$0) (offset (i32.const 0)) funcref (ref.null nofunc) (ref.null nofunc) (ref.null nofunc))
  (elem $implicit-table (offset i32.const 0) funcref (ref.null func) (item ref.null func) (item (ref.null func)))
 
- ;; CHECK:      (elem $implicit-table-2 (table $timport$0) (i32.const 1) func)
+ ;; CHECK:      (elem $implicit-table-2 (table $timport$0) (offset (i32.const 1)) func)
  (elem $implicit-table-2 (i32.const 1) funcref)
 
- ;; CHECK:      (elem $implicit-table-indices (table $timport$0) (i32.const 2) func $fimport$0 $fimport$1 $2)
+ ;; CHECK:      (elem $implicit-table-indices (table $timport$0) (offset (i32.const 2)) func $fimport$0 $fimport$1 $2)
  (elem $implicit-table-indices (offset (i32.const 2)) func 0 1 2)
 
- ;; CHECK:      (elem $implicit-table-legacy-indices (table $timport$0) (i32.const 3) func $fimport$0 $fimport$1 $2 $f1)
+ ;; CHECK:      (elem $implicit-table-legacy-indices (table $timport$0) (offset (i32.const 3)) func $fimport$0 $fimport$1 $2 $f1)
  (elem $implicit-table-legacy-indices (i32.const 3) 0 1 2 3)
 
- ;; CHECK:      (elem $explicit-table (table $timport$0) (i32.const 0) funcref (ref.null nofunc))
+ ;; CHECK:      (elem $explicit-table (table $timport$0) (offset (i32.const 0)) funcref (ref.null nofunc))
  (elem $explicit-table (table 0) (offset (i32.const 0)) funcref (item ref.null func))
 
- ;; CHECK:      (elem $explicit-table-named (table $table-any) (i32.const 1) anyref)
+ ;; CHECK:      (elem $explicit-table-named (table $table-any) (offset (i32.const 1)) anyref)
  (elem $explicit-table-named (table $table-any) (i32.const 1) anyref)
 
  ;; CHECK:      (elem $passive (ref null $s0) (struct.new_default $s0) (struct.new_default $s0))

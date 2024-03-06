@@ -20,7 +20,7 @@
   (memory $0 4096 4096)
   (data (i32.const 1026) "\14\00")
 
-  ;; CHECK-TEXT:      (data $0 (i32.const 1026) "\14\00")
+  ;; CHECK-TEXT:      (data $0 (offset (i32.const 1026)) "\14\00")
 
   ;; CHECK-TEXT:      (func $kitchensink (type $0) (result i32)
   ;; CHECK-TEXT-NEXT:  (block $block0 (result i32)
@@ -724,7 +724,7 @@
   ;; CHECK-TEXT-NEXT:   (i32.const 0)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (data $0 (i32.const 1026) "\14\00")
+  ;; CHECK-BIN:      (data $0 (offset (i32.const 1026)) "\14\00")
 
   ;; CHECK-BIN:      (func $kitchensink (type $0) (result i32)
   ;; CHECK-BIN-NEXT:  (drop
@@ -2129,7 +2129,7 @@
     )
   )
 )
-;; CHECK-BIN-NODEBUG:      (data $0 (i32.const 1026) "\14\00")
+;; CHECK-BIN-NODEBUG:      (data $0 (offset (i32.const 1026)) "\14\00")
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop

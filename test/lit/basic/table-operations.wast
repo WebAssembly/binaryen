@@ -42,16 +42,16 @@
     (elem $bar $bar $bar)
   )
 
-  ;; CHECK-TEXT:      (elem $0 (table $table-1) (i32.const 0) func $foo)
+  ;; CHECK-TEXT:      (elem $0 (table $table-1) (offset (i32.const 0)) func $foo)
 
-  ;; CHECK-TEXT:      (elem $1 (table $table-2) (i32.const 0) func $bar $bar $bar)
+  ;; CHECK-TEXT:      (elem $1 (table $table-2) (offset (i32.const 0)) func $bar $bar $bar)
 
   ;; CHECK-TEXT:      (func $foo (type $0)
   ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (elem $0 (table $table-1) (i32.const 0) func $foo)
+  ;; CHECK-BIN:      (elem $0 (table $table-1) (offset (i32.const 0)) func $foo)
 
-  ;; CHECK-BIN:      (elem $1 (table $table-2) (i32.const 0) func $bar $bar $bar)
+  ;; CHECK-BIN:      (elem $1 (table $table-2) (offset (i32.const 0)) func $bar $bar $bar)
 
   ;; CHECK-BIN:      (func $foo (type $0)
   ;; CHECK-BIN-NEXT:  (nop)
@@ -215,9 +215,9 @@
 
 ;; CHECK-BIN-NODEBUG:      (table $1 3 3 funcref)
 
-;; CHECK-BIN-NODEBUG:      (elem $0 (table $0) (i32.const 0) func $0)
+;; CHECK-BIN-NODEBUG:      (elem $0 (table $0) (offset (i32.const 0)) func $0)
 
-;; CHECK-BIN-NODEBUG:      (elem $1 (table $1) (i32.const 0) func $1 $1 $1)
+;; CHECK-BIN-NODEBUG:      (elem $1 (table $1) (offset (i32.const 0)) func $1 $1 $1)
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)

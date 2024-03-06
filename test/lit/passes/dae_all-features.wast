@@ -22,7 +22,7 @@
 
   ;; CHECK:      (table $0 2 2 funcref)
 
-  ;; CHECK:      (elem $0 (i32.const 0) $a9 $c8)
+  ;; CHECK:      (elem $0 (offset (i32.const 0)) $a9 $c8)
 
   ;; CHECK:      (export "a8" (func $a8))
   (export "a8" (func $a8))

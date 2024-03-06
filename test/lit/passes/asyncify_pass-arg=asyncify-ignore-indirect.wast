@@ -28,7 +28,7 @@
 
   ;; CHECK:      (table $0 2 2 funcref)
 
-  ;; CHECK:      (elem $0 (i32.const 0) $calls-import2-drop $calls-import2-drop)
+  ;; CHECK:      (elem $0 (offset (i32.const 0)) $calls-import2-drop $calls-import2-drop)
 
   ;; CHECK:      (export "asyncify_start_unwind" (func $asyncify_start_unwind))
 

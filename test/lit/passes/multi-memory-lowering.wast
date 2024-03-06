@@ -26,9 +26,9 @@
 
   ;; CHECK:      (memory $combined_memory 6)
 
-  ;; CHECK:      (data $0 (i32.const 0) "a")
+  ;; CHECK:      (data $0 (offset (i32.const 0)) "a")
 
-  ;; CHECK:      (data $1 (i32.const 196609) "123")
+  ;; CHECK:      (data $1 (offset (i32.const 196609)) "123")
 
   ;; CHECK:      (func $loads
   ;; CHECK-NEXT:  (drop
@@ -71,9 +71,9 @@
 
   ;; BOUNDS:      (memory $combined_memory 6)
 
-  ;; BOUNDS:      (data $0 (i32.const 0) "a")
+  ;; BOUNDS:      (data $0 (offset (i32.const 0)) "a")
 
-  ;; BOUNDS:      (data $1 (i32.const 196609) "123")
+  ;; BOUNDS:      (data $1 (offset (i32.const 196609)) "123")
 
   ;; BOUNDS:      (func $loads
   ;; BOUNDS-NEXT:  (local $0 i32)

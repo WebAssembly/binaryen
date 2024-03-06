@@ -2,7 +2,7 @@
  (type $0 (func))
  (import "import" "import" (func $import (type $0)))
  (memory $0 256 256)
- (data $0 (i32.const 10) "__s______________")
+ (data $0 (offset (i32.const 10)) "__s______________")
  (export "test1" (func $test1_2))
  (export "keepalive" (func $test1))
  (func $test1 (type $0)

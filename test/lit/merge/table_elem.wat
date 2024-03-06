@@ -23,15 +23,15 @@
 
   ;; CHECK:      (table $other 1000 funcref)
 
-  ;; CHECK:      (elem $a (table $foo) (i32.const 0) func)
+  ;; CHECK:      (elem $a (table $foo) (offset (i32.const 0)) func)
   (elem $a (table $foo) (i32.const 0) func)
 
-  ;; CHECK:      (elem $b (table $bar) (i32.const 0) func)
+  ;; CHECK:      (elem $b (table $bar) (offset (i32.const 0)) func)
   (elem $b (table $bar) (i32.const 0) func)
 
-  ;; CHECK:      (elem $a_2 (table $foo_2) (i32.const 0) func)
+  ;; CHECK:      (elem $a_2 (table $foo_2) (offset (i32.const 0)) func)
 
-  ;; CHECK:      (elem $b_2 (table $other) (i32.const 0) func)
+  ;; CHECK:      (elem $b_2 (table $other) (offset (i32.const 0)) func)
 
   ;; CHECK:      (export "keepalive2" (func $keepalive2))
 

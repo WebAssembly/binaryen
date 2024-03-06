@@ -15,7 +15,7 @@
  (global $global$3 (mut i32) (i32.const 0))
  (global $global$4 i32 (i32.const 0))
  (global $global$5 i32 (i32.const 0))
- (data $0 (global.get $gimport$0) "*\00\00\00")
+ (data $0 (offset (global.get $gimport$0)) "*\00\00\00")
  (export "__wasm_apply_relocs" (func $0))
  (export "_Z14waka_func_minei" (func $1))
  (export "__original_main" (func $2))

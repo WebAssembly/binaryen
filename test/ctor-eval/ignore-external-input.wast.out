@@ -3,7 +3,7 @@
  (type $1 (func))
  (import "wasi_snapshot_preview1" "something_else" (func $wasi_something_else (type $0) (result i32)))
  (memory $0 256 256)
- (data $0 (i32.const 28) "aaaa")
+ (data $0 (offset (i32.const 28)) "aaaa")
  (export "test3" (func $test3))
  (func $test3 (type $1)
   (drop

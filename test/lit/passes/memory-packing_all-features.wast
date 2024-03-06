@@ -21,7 +21,7 @@
                              ;; things, taking into account possible traps etc.)
 )
 
-;; CHECK:      (data $0 (i32.const 4066) "")
+;; CHECK:      (data $0 (offset (i32.const 4066)) "")
 (module
   ;; CHECK:      (import "env" "memoryBase" (global $memoryBase i32))
   (import "env" "memoryBase" (global $memoryBase i32))
@@ -32,7 +32,7 @@
   (data (global.get $memoryBase) "waka this cannot be optimized\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00we don't know where it will go")
 )
 
-;; CHECK:      (data $0 (global.get $memoryBase) "waka this cannot be optimized\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00we don\'t know where it will go")
+;; CHECK:      (data $0 (offset (global.get $memoryBase)) "waka this cannot be optimized\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00we don\'t know where it will go")
 (module
   (memory 1 1)
 
@@ -48,19 +48,19 @@
 
   ;; CHECK:      (memory $0 1 1)
 
-  ;; CHECK:      (data $0 (i32.const 1024) "waka this CAN be optimized")
+  ;; CHECK:      (data $0 (offset (i32.const 1024)) "waka this CAN be optimized")
 
-  ;; CHECK:      (data $0.1 (i32.const 1107) "we DO know where it will go")
+  ;; CHECK:      (data $0.1 (offset (i32.const 1107)) "we DO know where it will go")
 
-  ;; CHECK:      (data $1 (i32.const 2057) "zeros before")
+  ;; CHECK:      (data $1 (offset (i32.const 2057)) "zeros before")
 
-  ;; CHECK:      (data $2 (i32.const 3000) "zeros after")
+  ;; CHECK:      (data $2 (offset (i32.const 3000)) "zeros after")
 
-  ;; CHECK:      (data $3 (i32.const 4000) "zeros\00in\00the\00middle")
+  ;; CHECK:      (data $3 (offset (i32.const 4000)) "zeros\00in\00the\00middle")
 
-  ;; CHECK:      (data $3.1 (i32.const 4035) "nice skip here")
+  ;; CHECK:      (data $3.1 (offset (i32.const 4035)) "nice skip here")
 
-  ;; CHECK:      (data $3.2 (i32.const 4066) "another\00but no")
+  ;; CHECK:      (data $3.2 (offset (i32.const 4066)) "another\00but no")
 
   ;; CHECK:      (func $nonzero-size-init-of-active-will-trap (type $0)
   ;; CHECK-NEXT:  (block
@@ -2199,23 +2199,23 @@
  (data (i32.const 1024) "x")
  (data (i32.const 1024) "\00") ;; this tramples the "x", and so must be kept.
 )
-;; CHECK:      (data $0 (i32.const 1024) "x")
+;; CHECK:      (data $0 (offset (i32.const 1024)) "x")
 
-;; CHECK:      (data $1 (i32.const 1024) "\00")
+;; CHECK:      (data $1 (offset (i32.const 1024)) "\00")
 (module
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)
  (data (i32.const 1024) "x")
  (data (i32.const 1025) "\00")
 )
-;; CHECK:      (data $0 (i32.const 1024) "x")
+;; CHECK:      (data $0 (offset (i32.const 1024)) "x")
 (module
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)
  (data (i32.const 1024) "x")
  (data (i32.const 1023) "\00")
 )
-;; CHECK:      (data $0 (i32.const 1024) "x")
+;; CHECK:      (data $0 (offset (i32.const 1024)) "x")
 (module
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)
@@ -2223,11 +2223,11 @@
  (data (i32.const 1024) "\00") ;; when we see one bad thing, we give up
  (data (i32.const 4096) "\00")
 )
-;; CHECK:      (data $0 (i32.const 1024) "x")
+;; CHECK:      (data $0 (offset (i32.const 1024)) "x")
 
-;; CHECK:      (data $1 (i32.const 1024) "\00")
+;; CHECK:      (data $1 (offset (i32.const 1024)) "\00")
 
-;; CHECK:      (data $2 (i32.const 4096) "\00")
+;; CHECK:      (data $2 (offset (i32.const 4096)) "\00")
 (module
  ;; CHECK:      (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "memoryBase" (global $memoryBase i32))
@@ -2238,9 +2238,9 @@
  (data (i32.const 1024) "x")
  (data (global.get $memoryBase) "\00") ;; this could trample, or not
 )
-;; CHECK:      (data $0 (i32.const 1024) "x")
+;; CHECK:      (data $0 (offset (i32.const 1024)) "x")
 
-;; CHECK:      (data $1 (global.get $memoryBase) "\00")
+;; CHECK:      (data $1 (offset (global.get $memoryBase)) "\00")
 (module
  ;; CHECK:      (import "env" "memoryBase" (global $memoryBase i32))
  (import "env" "memoryBase" (global $memoryBase i32))
@@ -2251,9 +2251,9 @@
  (data (i32.const 1024) "\00") ;; this could trample, or not
  (data (global.get $memoryBase) "x")
 )
-;; CHECK:      (data $0 (i32.const 1024) "\00")
+;; CHECK:      (data $0 (offset (i32.const 1024)) "\00")
 
-;; CHECK:      (data $1 (global.get $memoryBase) "x")
+;; CHECK:      (data $1 (offset (global.get $memoryBase)) "x")
 (module
  ;; CHECK:      (type $0 (func))
 
@@ -2301,9 +2301,9 @@
  (data (i32.const 1024) "x")
  (data (i32.const 2048) "\00")
 )
-;; CHECK:      (data $0 (i32.const 1024) "x")
+;; CHECK:      (data $0 (offset (i32.const 1024)) "x")
 
-;; CHECK:      (data $1 (i32.const 2048) "\00")
+;; CHECK:      (data $1 (offset (i32.const 2048)) "\00")
 (module
  ;; we can when not imported
  ;; CHECK:      (memory $0 1 1)
@@ -2312,7 +2312,7 @@
  (data (i32.const 2048) "\00")
 )
 
-;; CHECK:      (data $0 (i32.const 1024) "x")
+;; CHECK:      (data $0 (offset (i32.const 1024)) "x")
 (module
  ;; Regression test for a bug where referrers were accidentally associated with
  ;; the wrong segments in the presence of unreferenced segments.
@@ -2322,7 +2322,7 @@
  (memory $0 1 1 shared)
  (data (i32.const 0) "")
  (data "foo")
- ;; CHECK:      (data $0 (i32.const 0) "")
+ ;; CHECK:      (data $0 (offset (i32.const 0)) "")
 
  ;; CHECK:      (data $1 "foo")
 

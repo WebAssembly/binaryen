@@ -30,7 +30,7 @@
   )
  )
 
- ;; CHECK:      (elem $0 (i32.const 0) $nop)
+ ;; CHECK:      (elem $0 (offset (i32.const 0)) $nop)
 
  ;; CHECK:      (elem declare func $trap)
 

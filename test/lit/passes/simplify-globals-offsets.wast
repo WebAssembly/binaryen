@@ -24,20 +24,20 @@
   ;; CHECK:      (global $use-defined i32 (i32.const 42))
   (global $use-defined i32 (global.get $defined))
 
-  ;; CHECK:      (data $use-imported (global.get $imported) "hello, world!")
+  ;; CHECK:      (data $use-imported (offset (global.get $imported)) "hello, world!")
   (data $use-imported (global.get $imported) "hello, world!")
 
-  ;; CHECK:      (data $use-defined (i32.const 42) "hello, world!")
+  ;; CHECK:      (data $use-defined (offset (i32.const 42)) "hello, world!")
   (data $use-defined (global.get $defined) "hello, world!")
 
   ;; A passive segment has no offset to test, which we should not error on.
   ;; CHECK:      (data $dropped "hello, world!")
   (data $dropped "hello, world!")
 
-  ;; CHECK:      (elem $use-imported (global.get $imported) $func)
+  ;; CHECK:      (elem $use-imported (offset (global.get $imported)) $func)
   (elem $use-imported (global.get $imported) $func)
 
-  ;; CHECK:      (elem $use-defined (i32.const 42) $func $func)
+  ;; CHECK:      (elem $use-defined (offset (i32.const 42)) $func $func)
   (elem $use-defined (global.get $defined) $func $func)
 
   ;; CHECK:      (export "func" (func $func))

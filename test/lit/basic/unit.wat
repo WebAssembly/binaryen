@@ -84,18 +84,18 @@
   ;; CHECK-BIN-NODEBUG:      (memory $0 4096 4096)
   (memory $0 4096 4096)
   (data (i32.const 1026) "\14\00")
-  ;; CHECK-TEXT:      (data $0 (i32.const 1026) "\14\00")
+  ;; CHECK-TEXT:      (data $0 (offset (i32.const 1026)) "\14\00")
 
   ;; CHECK-TEXT:      (table $0 10 funcref)
 
-  ;; CHECK-TEXT:      (elem $0 (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
+  ;; CHECK-TEXT:      (elem $0 (offset (i32.const 0)) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
 
   ;; CHECK-TEXT:      (export "big_negative" (func $big_negative))
-  ;; CHECK-BIN:      (data $0 (i32.const 1026) "\14\00")
+  ;; CHECK-BIN:      (data $0 (offset (i32.const 1026)) "\14\00")
 
   ;; CHECK-BIN:      (table $0 10 funcref)
 
-  ;; CHECK-BIN:      (elem $0 (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
+  ;; CHECK-BIN:      (elem $0 (offset (i32.const 0)) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
 
   ;; CHECK-BIN:      (export "big_negative" (func $big_negative))
   (export "big_negative" (func $big_negative))
@@ -1841,11 +1841,11 @@
     )
   )
 )
-;; CHECK-BIN-NODEBUG:      (data $0 (i32.const 1026) "\14\00")
+;; CHECK-BIN-NODEBUG:      (data $0 (offset (i32.const 1026)) "\14\00")
 
 ;; CHECK-BIN-NODEBUG:      (table $0 10 funcref)
 
-;; CHECK-BIN-NODEBUG:      (elem $0 (i32.const 0) $17 $0 $17 $17 $18 $18 $1 $18 $17 $15)
+;; CHECK-BIN-NODEBUG:      (elem $0 (offset (i32.const 0)) $17 $0 $17 $17 $18 $18 $1 $18 $17 $15)
 
 ;; CHECK-BIN-NODEBUG:      (export "big_negative" (func $0))
 

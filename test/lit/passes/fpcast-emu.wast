@@ -24,7 +24,7 @@
   (elem (i32.const 0) $a $b $c $d $e $e $imported-func)
   ;; CHECK:      (table $0 10 10 funcref)
 
-  ;; CHECK:      (elem $0 (i32.const 0) $byn$fpcast-emu$a $byn$fpcast-emu$b $byn$fpcast-emu$c $byn$fpcast-emu$d $byn$fpcast-emu$e $byn$fpcast-emu$e $byn$fpcast-emu$imported-func)
+  ;; CHECK:      (elem $0 (offset (i32.const 0)) $byn$fpcast-emu$a $byn$fpcast-emu$b $byn$fpcast-emu$c $byn$fpcast-emu$d $byn$fpcast-emu$e $byn$fpcast-emu$e $byn$fpcast-emu$imported-func)
 
   ;; CHECK:      (func $a (param $x i32) (param $y i64) (param $z f32) (param $w f64)
   ;; CHECK-NEXT:  (drop
@@ -363,7 +363,7 @@
 
  ;; CHECK:      (table $0 42 42 funcref)
 
- ;; CHECK:      (elem $0 (i32.const 0) $byn$fpcast-emu$a $byn$fpcast-emu$b)
+ ;; CHECK:      (elem $0 (offset (i32.const 0)) $byn$fpcast-emu$a $byn$fpcast-emu$b)
 
  ;; CHECK:      (export "dynCall_vf" (func $dynCall_vf))
  (export "dynCall_vf" (func $dynCall_vf))

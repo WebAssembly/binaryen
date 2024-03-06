@@ -5,7 +5,7 @@
  (import "env" "iprintf" (func $iprintf (param i32 i32) (result i32)))
  (global $__stack_pointer (mut i32) (i32.const 66128))
  (memory $0 2)
- (data $.rodata (i32.const 568) "%d:%d\n\00Result: %d\n\00")
+ (data $.rodata (offset (i32.const 568)) "%d:%d\n\00Result: %d\n\00")
  (table $0 1 1 funcref)
  (export "memory" (memory $0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))

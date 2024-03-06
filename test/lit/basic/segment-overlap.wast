@@ -17,14 +17,14 @@
  (data (i32.const 100) "\ff\ff\ff\ff\ff\ff\ff\ff") ;; overlaps with the next
  (data (i32.const 104) "\00\00\00\00")
 )
-;; CHECK-TEXT:      (data $0 (i32.const 100) "\ff\ff\ff\ff\ff\ff\ff\ff")
+;; CHECK-TEXT:      (data $0 (offset (i32.const 100)) "\ff\ff\ff\ff\ff\ff\ff\ff")
 
-;; CHECK-TEXT:      (data $1 (i32.const 104) "\00\00\00\00")
+;; CHECK-TEXT:      (data $1 (offset (i32.const 104)) "\00\00\00\00")
 
-;; CHECK-BIN:      (data $0 (i32.const 100) "\ff\ff\ff\ff\ff\ff\ff\ff")
+;; CHECK-BIN:      (data $0 (offset (i32.const 100)) "\ff\ff\ff\ff\ff\ff\ff\ff")
 
-;; CHECK-BIN:      (data $1 (i32.const 104) "\00\00\00\00")
+;; CHECK-BIN:      (data $1 (offset (i32.const 104)) "\00\00\00\00")
 
-;; CHECK-BIN-NODEBUG:      (data $0 (i32.const 100) "\ff\ff\ff\ff\ff\ff\ff\ff")
+;; CHECK-BIN-NODEBUG:      (data $0 (offset (i32.const 100)) "\ff\ff\ff\ff\ff\ff\ff\ff")
 
-;; CHECK-BIN-NODEBUG:      (data $1 (i32.const 104) "\00\00\00\00")
+;; CHECK-BIN-NODEBUG:      (data $1 (offset (i32.const 104)) "\00\00\00\00")

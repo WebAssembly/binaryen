@@ -69,7 +69,7 @@
 
   ;; CHECK-TEXT:      (table $0 3 3 funcref)
 
-  ;; CHECK-TEXT:      (elem $0 (i32.const 0) $take_eqref $take_funcref $take_anyref)
+  ;; CHECK-TEXT:      (elem $0 (offset (i32.const 0)) $take_eqref $take_funcref $take_anyref)
 
   ;; CHECK-TEXT:      (elem declare func $foo $ref-taken-but-not-in-table)
 
@@ -94,7 +94,7 @@
 
   ;; CHECK-BIN:      (table $0 3 3 funcref)
 
-  ;; CHECK-BIN:      (elem $0 (i32.const 0) $take_eqref $take_funcref $take_anyref)
+  ;; CHECK-BIN:      (elem $0 (offset (i32.const 0)) $take_eqref $take_funcref $take_anyref)
 
   ;; CHECK-BIN:      (elem declare func $foo $ref-taken-but-not-in-table)
 
@@ -168,7 +168,7 @@
 
   ;; CHECK-BIN-NODEBUG:      (table $0 3 3 funcref)
 
-  ;; CHECK-BIN-NODEBUG:      (elem $0 (i32.const 0) $0 $1 $2)
+  ;; CHECK-BIN-NODEBUG:      (elem $0 (offset (i32.const 0)) $0 $1 $2)
 
   ;; CHECK-BIN-NODEBUG:      (elem declare func $23 $3)
   (elem declare func $ref-taken-but-not-in-table)

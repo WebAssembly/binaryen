@@ -9,9 +9,9 @@
 
  ;; CHECK:      (memory $0 16 17 shared)
  (memory $0 16 17 shared)
- ;; CHECK:      (data $0 (i32.const 40) "")
+ ;; CHECK:      (data $0 (offset (i32.const 40)) "")
  (data $0 (i32.const 40) "")
- ;; CHECK:      (data $1 (i32.const 0) "")
+ ;; CHECK:      (data $1 (offset (i32.const 0)) "")
  (data $1 (i32.const 0) "")
 
  ;; CHECK:      (export "test" (func $test))

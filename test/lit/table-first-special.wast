@@ -18,8 +18,8 @@
  ;; CHECK-BINARY:      (table $table-1 10 10 (ref null $vii))
  ;; CHECK-TEXT:      (table $table-1 10 10 (ref null $vii))
  (table $table-1 10 10 (ref null $vii))
- ;; CHECK-BINARY:      (elem $elem-1 (table $table-1) (i32.const 0) (ref null $vii))
- ;; CHECK-TEXT:      (elem $elem-1 (table $table-1) (i32.const 0) (ref null $vii))
+ ;; CHECK-BINARY:      (elem $elem-1 (table $table-1) (offset (i32.const 0)) (ref null $vii))
+ ;; CHECK-TEXT:      (elem $elem-1 (table $table-1) (offset (i32.const 0)) (ref null $vii))
  (elem $elem-1 (table $table-1) (i32.const 0) (ref null $vii))
  ;; CHECK-BINARY:      (func $foo (type $vii) (param $0 i32) (param $1 i32)
  ;; CHECK-BINARY-NEXT:  (nop)
@@ -35,7 +35,7 @@
 
 ;; CHECK-NODEBUG:      (table $0 10 10 (ref null $0))
 
-;; CHECK-NODEBUG:      (elem $0 (table $0) (i32.const 0) (ref null $0))
+;; CHECK-NODEBUG:      (elem $0 (table $0) (offset (i32.const 0)) (ref null $0))
 
 ;; CHECK-NODEBUG:      (func $0 (type $0) (param $0 i32) (param $1 i32)
 ;; CHECK-NODEBUG-NEXT:  (nop)

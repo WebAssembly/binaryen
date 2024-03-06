@@ -28,7 +28,7 @@
  (memory $0 10)
  ;; CHECK:      (table $0 1 1 funcref)
 
- ;; CHECK:      (elem $0 (i32.const 0) $call-me)
+ ;; CHECK:      (elem $0 (offset (i32.const 0)) $call-me)
 
  ;; CHECK:      (func $a1 (type $1)
  ;; CHECK-NEXT:  (local $0 i32)

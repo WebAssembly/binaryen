@@ -3,8 +3,8 @@
  (import "env" "__memory_base" (global $__memory_base i64))
  (import "env" "__memory_base32" (global $__memory_base32 i32))
  (memory $0 1 1)
- (data $0 (i32.const 0) "\00\00\00\00\00\00\00\00\00\00")
- (data $1 (global.get $__memory_base32) "foo")
+ (data $0 (offset (i32.const 0)) "\00\00\00\00\00\00\00\00\00\00")
+ (data $1 (offset (global.get $__memory_base32)) "foo")
  (func $func_1
   (local $0 i64)
   (drop

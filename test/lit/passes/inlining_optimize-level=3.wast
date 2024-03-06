@@ -12,7 +12,7 @@
 
   ;; CHECK:      (table $0 1 1 funcref)
 
-  ;; CHECK:      (elem $0 (i32.const 0) $no-loops-but-one-use-but-tabled)
+  ;; CHECK:      (elem $0 (offset (i32.const 0)) $no-loops-but-one-use-but-tabled)
 
   ;; CHECK:      (export "yes" (func $yes))
   (export "yes" (func $yes))
@@ -578,7 +578,7 @@
 
  ;; CHECK:      (table $0 10 funcref)
 
- ;; CHECK:      (elem $0 (i32.const 0) $middle1 $middle2 $middle3)
+ ;; CHECK:      (elem $0 (offset (i32.const 0)) $middle1 $middle2 $middle3)
 
  ;; CHECK:      (func $top (param $x i32) (param $y i32) (param $z i32)
  ;; CHECK-NEXT:  (loop $loop
