@@ -15,10 +15,10 @@
 ;; CHECK-NEXT: Note that filenames and modules names are interleaved (which is hopefully less
 ;; CHECK-NEXT: confusing).
 ;; CHECK-NEXT:  
-;; CHECK-NEXT: Input source maps can be specified by adding an --ism option right after the 
+;; CHECK-NEXT: Input source maps can be specified by adding an -ism option right after the 
 ;; CHECK-NEXT: module name: 
 ;; CHECK-NEXT:  
-;; CHECK-NEXT:   wasm-merge foo.wasm foo --ism foo.wasm.map ... 
+;; CHECK-NEXT:   wasm-merge foo.wasm foo -ism foo.wasm.map ... 
 ;; CHECK-NEXT: ================================================================================
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:

@@ -469,9 +469,9 @@ will read foo.wasm and bar.wasm, with names 'foo' and 'bar' respectively, so if 
 
 Note that filenames and modules names are interleaved (which is hopefully less confusing).
 
-Input source maps can be specified by adding an --ism option right after the module name:
+Input source maps can be specified by adding an -ism option right after the module name:
 
-  wasm-merge foo.wasm foo --ism foo.wasm.map ...)");
+  wasm-merge foo.wasm foo -ism foo.wasm.map ...)");
 
   options
     .add("--output",
