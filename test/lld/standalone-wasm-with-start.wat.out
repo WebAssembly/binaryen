@@ -5,7 +5,7 @@
  (global $global$2 i32 (i32.const 576))
  (memory $0 2)
  (table $0 1 1 funcref)
- (elem $0 (offset (i32.const 0)) $foo)
+ (elem $0 (i32.const 0) $foo)
  (export "memory" (memory $0))
  (export "_start" (func $_start))
  (export "__heap_base" (global $global$1))

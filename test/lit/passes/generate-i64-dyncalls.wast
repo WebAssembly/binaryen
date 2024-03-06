@@ -12,7 +12,7 @@
 
  ;; CHECK:      (table $0 2 2 funcref)
 
- ;; CHECK:      (elem $0 (offset (i32.const 0)) $f1 $f2)
+ ;; CHECK:      (elem $0 (i32.const 0) $f1 $f2)
 
  ;; CHECK:      (export "dynCall_ji" (func $dynCall_ji))
 

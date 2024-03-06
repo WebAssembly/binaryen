@@ -13,7 +13,7 @@
  (data $.tdata "\00\00\00\00\00\00\00\00")
  ;; CHECK:      (global $__mem_segment_drop_state (mut i32) (i32.const 0))
 
- ;; CHECK:      (data $0 (offset (i64.const 1024)) "x")
+ ;; CHECK:      (data $0 (i64.const 1024) "x")
 
  ;; CHECK:      (func $__wasm_init_tls (type $0) (param $0 i64)
  ;; CHECK-NEXT:  (local $1 i64)

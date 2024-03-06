@@ -11,14 +11,20 @@
 ;; EXTENDED:  (global.get $gimport$0)
 ;; EXTENDED:  (i32.const 42)
 ;; EXTENDED: ))
-;; EXTENDED: (data $0 (i32.sub
+;; EXTENDED: (data $0 (offset (i32.sub
 ;; EXTENDED:  (global.get $gimport$0)
 ;; EXTENDED:  (i32.const 10)
-;; EXTENDED: ) "hello world")
+;; EXTENDED: )) "hello world")
+;; EXTENDED: (elem $0 (offset (i32.sub
+;; EXTENDED:  (global.get $gimport$0)
+;; EXTENDED:  (i32.const 10)
+;; EXTENDED: )))
 
 (module
   (import "env" "global" (global i32))
   (memory 1 1)
+  (table 1 1 funcref)
   (global i32 (i32.add (global.get 0) (i32.const 42)))
   (data (offset (i32.sub (global.get 0) (i32.const 10))) "hello world")
+  (elem (offset (i32.sub (global.get 0) (i32.const 10))) func)
 )

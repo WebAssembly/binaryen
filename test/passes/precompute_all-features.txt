@@ -9,7 +9,7 @@
  (global $global i32 (i32.const 1))
  (global $global-mut (mut i32) (i32.const 2))
  (memory $m 512 512)
- (data $0 (offset (i32.const 0)) "hello!")
+ (data $0 (i32.const 0) "hello!")
  (elem declare func $dummy)
  (func $x (type $0) (param $x i32)
   (call $x

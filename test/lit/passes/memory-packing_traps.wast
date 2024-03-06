@@ -9,7 +9,7 @@
   ;; CHECK:      (memory $memory 1 2)
   ;; TNH__:      (memory $memory 1 2)
   (memory $memory 1 2)
-  ;; CHECK:      (data $data (offset (i32.const -1)) "\00")
+  ;; CHECK:      (data $data (i32.const -1) "\00")
   (data $data (i32.const -1) "\00")
 )
 
@@ -20,7 +20,7 @@
   ;; CHECK:      (memory $memory 1 2)
   ;; TNH__:      (memory $memory 1 2)
   (memory $memory 1 2)
-  ;; CHECK:      (data $data (offset (i32.const -1)) "\00")
+  ;; CHECK:      (data $data (i32.const -1) "\00")
   (data $data (i32.const -2) "\00\00\00")
 )
 
@@ -39,7 +39,7 @@
   ;; CHECK:      (memory $memory 1 2)
   ;; TNH__:      (memory $memory 1 2)
   (memory $memory 1 2)
-  ;; CHECK:      (data $data (offset (i32.const 65536)) "\00")
+  ;; CHECK:      (data $data (i32.const 65536) "\00")
   (data $data (i32.const 65535) "\00\00")
 )
 
@@ -56,7 +56,7 @@
   ;; CHECK:      (memory $memory 1 2)
   ;; TNH__:      (memory $memory 1 2)
   (memory $memory 1 2)
-  ;; CHECK:      (data $data (offset (i32.const 65536)) "\00")
+  ;; CHECK:      (data $data (i32.const 65536) "\00")
   (data $data (i32.const 65536) "\00")
 )
 
@@ -70,8 +70,8 @@
   ;; CHECK:      (memory $memory 1 2)
   ;; TNH__:      (memory $memory 1 2)
   (memory $memory 1 2)
-  ;; CHECK:      (data $data (offset (global.get $g)) "\00")
-  ;; TNH__:      (data $data (offset (global.get $g)) "\00")
+  ;; CHECK:      (data $data (global.get $g) "\00")
+  ;; TNH__:      (data $data (global.get $g) "\00")
   (data $data (global.get $g) "\00")
 )
 

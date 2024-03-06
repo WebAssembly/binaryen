@@ -14,7 +14,7 @@
  (global $global$0 i32 (i32.const 16))
  (global $global$1 i32 (i32.const 20))
  (global $global i32 (i32.const 42))
- (data $0 (offset (global.get $gimport$2)) "Hello, world\00\00\00\00\00\00\00\00\00\00\00\00")
+ (data $0 (global.get $gimport$2) "Hello, world\00\00\00\00\00\00\00\00\00\00\00\00")
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "_Z13print_messagev" (func $print_message\28\29))
  (export "ptr_puts" (global $global$0))

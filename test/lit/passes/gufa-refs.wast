@@ -698,7 +698,7 @@
 
   ;; CHECK:      (table $0 10 funcref)
 
-  ;; CHECK:      (elem $0 (offset (i32.const 0)) $func-2params-a $func-2params-b $func-3params)
+  ;; CHECK:      (elem $0 (i32.const 0) $func-2params-a $func-2params-b $func-3params)
 
   ;; CHECK:      (func $func-2params-a (type $two-params) (param $x (ref $struct)) (param $y (ref $struct))
   ;; CHECK-NEXT:  (drop

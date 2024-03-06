@@ -21,6 +21,7 @@
 #include <ir/iteration.h>
 #include <ir/module-utils.h>
 #include <ir/table-utils.h>
+#include <ir/utils.h>
 #include <pass.h>
 #include <pretty_printing.h>
 #include <support/string.h>
@@ -3112,9 +3113,15 @@ void PrintSExpression::visitElementSegment(ElementSegment* curr) {
       o << ")";
     }
 
-    o << " (offset ";
+    o << ' ';
+    bool needExplicitOffset = Measurer{}.measure(curr->offset) > 1;
+    if (needExplicitOffset) {
+      o << "(offset ";
+    }
     visit(curr->offset);
-    o << ')';
+    if (needExplicitOffset) {
+      o << ')';
+    }
 
     if (usesExpressions || currModule->tables.size() > 1) {
       o << ' ';
@@ -3184,9 +3191,15 @@ void PrintSExpression::visitDataSegment(DataSegment* curr) {
       curr->memory.print(o);
       o << ") ";
     }
-    o << "(offset ";
+    bool needExplicitOffset = Measurer{}.measure(curr->offset) > 1;
+    if (needExplicitOffset) {
+      o << "(offset ";
+    }
     visit(curr->offset);
-    o << ") ";
+    if (needExplicitOffset) {
+      o << ")";
+    }
+    o << ' ';
   }
   String::printEscaped(o, {curr->data.data(), curr->data.size()});
   o << ')' << maybeNewLine;

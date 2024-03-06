@@ -15,7 +15,7 @@
 
   ;; CHECK:      (table $0 1 1 funcref)
 
-  ;; CHECK:      (elem $0 (offset (i32.const 0)) $called_indirect)
+  ;; CHECK:      (elem $0 (i32.const 0) $called_indirect)
 
   ;; CHECK:      (export "memory" (memory $0))
 
@@ -183,7 +183,7 @@
   (import "env" "table2" (table $1 1 1 funcref))
   (elem (table $1) (offset (i32.const 0)) func)
   (elem (table $1) (offset (i32.const 0)) func $f)
-  ;; CHECK:      (elem $1 (offset (i32.const 0)) $f)
+  ;; CHECK:      (elem $1 (i32.const 0) $f)
 
   ;; CHECK:      (func $f (type $0)
   ;; CHECK-NEXT:  (nop)
@@ -222,9 +222,9 @@
   (elem (i32.const 0) $waka)
   ;; CHECK:      (import "env" "table" (table $timport$0 1 funcref))
 
-  ;; CHECK:      (data $0 (offset (i32.const 1)) "hello, world!")
+  ;; CHECK:      (data $0 (i32.const 1) "hello, world!")
 
-  ;; CHECK:      (elem $0 (offset (i32.const 0)) $waka)
+  ;; CHECK:      (elem $0 (i32.const 0) $waka)
 
   ;; CHECK:      (func $waka (type $0)
   ;; CHECK-NEXT:  (nop)
@@ -454,9 +454,9 @@
   (import "env" "tableBase" (global $tableBase i32)) ;; used in init
   (data (global.get $memoryBase) "hello, world!")
   (elem (global.get $tableBase) $waka)
-  ;; CHECK:      (data $0 (offset (global.get $memoryBase)) "hello, world!")
+  ;; CHECK:      (data $0 (global.get $memoryBase) "hello, world!")
 
-  ;; CHECK:      (elem $0 (offset (global.get $tableBase)) $waka)
+  ;; CHECK:      (elem $0 (global.get $tableBase) $waka)
 
   ;; CHECK:      (func $waka (type $0)
   ;; CHECK-NEXT:  (nop)
@@ -609,7 +609,7 @@
  ;; CHECK:      (table $defined-used 6 6 funcref)
  (table $defined-used 6 6 funcref)
 
- ;; CHECK:      (elem $active1 (table $written) (offset (i32.const 0)) func $0)
+ ;; CHECK:      (elem $active1 (table $written) (i32.const 0) func $0)
  (elem $active1 (table $written) (i32.const 0) func $0)
 
  ;; This empty active segment doesn't keep the unwritten table alive.
@@ -617,7 +617,7 @@
 
  (elem $active3 (table $defined-unused) (i32.const 0) func $0)
 
- ;; CHECK:      (elem $active4 (table $defined-used) (offset (i32.const 0)) func $0)
+ ;; CHECK:      (elem $active4 (table $defined-used) (i32.const 0) func $0)
  (elem $active4 (table $defined-used) (i32.const 0) func $0)
 
  (elem $active5 (table $defined-used) (i32.const 0) func)
@@ -674,14 +674,14 @@
  ;; CHECK:      (memory $defined-used 1 1)
  (memory $defined-used 1 1)
 
- ;; CHECK:      (data $active1 (offset (i32.const 0)) "foobar")
+ ;; CHECK:      (data $active1 (i32.const 0) "foobar")
  (data $active1 (memory $written) (i32.const 0) "foobar")
 
  (data $active2 (memory $unwritten) (i32.const 0) "")
 
  (data $active3 (memory $defined-unused) (i32.const 0) "hello")
 
- ;; CHECK:      (data $active4 (memory $defined-used) (offset (i32.const 0)) "hello")
+ ;; CHECK:      (data $active4 (memory $defined-used) (i32.const 0) "hello")
  (data $active4 (memory $defined-used) (i32.const 0) "hello")
 
  (data $active5 (memory $defined-used) (i32.const 0) "")

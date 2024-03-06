@@ -65,7 +65,7 @@
   ;; CHECK:      (table $t 10 funcref)
   (table $t 10 funcref)
 
-  ;; CHECK:      (elem $0 (offset (i32.const 0)) $other)
+  ;; CHECK:      (elem $0 (i32.const 0) $other)
   (elem $0 (table $t) (i32.const 0) func $other)
 
   ;; Test that an existing export does not cause us to crash.

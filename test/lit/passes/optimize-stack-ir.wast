@@ -40,12 +40,12 @@
 
   ;; CHECK:      (memory $mem 4096 4096)
 
-  ;; CHECK:      (data $data (offset (i32.const 1026)) "\14\00")
+  ;; CHECK:      (data $data (i32.const 1026) "\14\00")
 
   ;; CHECK:      (table $table 10 funcref)
   (table $table 10 funcref)
 
-  ;; CHECK:      (elem $elem (offset (i32.const 0)) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
+  ;; CHECK:      (elem $elem (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
   (elem $elem (i32.const 0) $z $big_negative $z $z $w $w $importedDoubles $w $z $cneg)
 
   (memory $mem 4096 4096)

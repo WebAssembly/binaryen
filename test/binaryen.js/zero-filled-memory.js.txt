@@ -8,14 +8,14 @@
 === unoptimized ===
 (module
  (import "env" "memory" (memory $0 1))
- (data $0 (offset (i32.const 1024)) "\00\00\00\00")
+ (data $0 (i32.const 1024) "\00\00\00\00")
  (export "memory" (memory $0))
 )
 
 === optimized, zeroFilledMemory=false ===
 (module
  (import "env" "memory" (memory $0 1))
- (data $0 (offset (i32.const 1024)) "\00\00\00\00")
+ (data $0 (i32.const 1024) "\00\00\00\00")
  (export "memory" (memory $0))
 )
 

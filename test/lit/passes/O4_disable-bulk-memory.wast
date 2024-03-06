@@ -68,9 +68,9 @@
 
  ;; CHECK:      (global $global$5 (mut i32) (i32.const 0))
 
- ;; CHECK:      (data $0 (offset (i32.const 8)) "\r\00\00\00~\00l\00i\00b\00/\00a\00r\00r\00a\00y\00.\00t\00s\00")
+ ;; CHECK:      (data $0 (i32.const 8) "\r\00\00\00~\00l\00i\00b\00/\00a\00r\00r\00a\00y\00.\00t\00s\00")
 
- ;; CHECK:      (data $1 (offset (i32.const 40)) "\1c\00\00\00~\00l\00i\00b\00/\00i\00n\00t\00e\00r\00n\00a\00l\00/\00a\00r\00r\00a\00y\00b\00u\00f\00f\00e\00r\00.\00t\00s\00")
+ ;; CHECK:      (data $1 (i32.const 40) "\1c\00\00\00~\00l\00i\00b\00/\00i\00n\00t\00e\00r\00n\00a\00l\00/\00a\00r\00r\00a\00y\00b\00u\00f\00f\00e\00r\00.\00t\00s\00")
 
  ;; CHECK:      (table $0 1 funcref)
  (table $0 1 funcref)
@@ -82,7 +82,7 @@
  (global $global$4 f64 (f64.const 365.24))
  (global $global$5 (mut i32) (i32.const 0))
  (global $global$6 i32 (i32.const 100))
- ;; CHECK:      (elem $0 (offset (i32.const 0)) $null)
+ ;; CHECK:      (elem $0 (i32.const 0) $null)
 
  ;; CHECK:      (export "memory" (memory $1))
  (export "memory" (memory $1))

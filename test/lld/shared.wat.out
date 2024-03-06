@@ -12,7 +12,7 @@
  (import "env" "puts" (func $puts (param i32) (result i32)))
  (global $global$0 i32 (i32.const 16))
  (global $global$1 i32 (i32.const 20))
- (data $.data (offset (global.get $__memory_base)) "Hello, world\00\00\00\00\00\00\00\00\00\00\00\00")
+ (data $.data (global.get $__memory_base) "Hello, world\00\00\00\00\00\00\00\00\00\00\00\00")
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "__wasm_apply_data_relocs" (func $__wasm_apply_data_relocs))
  (export "_Z13print_messagev" (func $print_message\28\29))

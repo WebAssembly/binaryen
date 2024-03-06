@@ -13,7 +13,7 @@
  ;; CHECK:      (memory $0 16 17 shared)
  (memory $0 16 17 shared)
 
- ;; CHECK:      (data $0 (offset (i32.const -1)) "")
+ ;; CHECK:      (data $0 (i32.const -1) "")
  (data $0 (i32.const -1) "")
 
  (data $1 "")
@@ -21,7 +21,7 @@
  ;; CHECK:      (table $0 1 1 funcref)
  (table $0 1 1 funcref)
 
- ;; CHECK:      (elem $0 (offset (i32.const -1)))
+ ;; CHECK:      (elem $0 (i32.const -1))
  (elem $0 (i32.const -1))
 
  (elem $1 func)
@@ -35,13 +35,13 @@
  ;; CHECK:      (memory $0 2 2)
  (memory $0 2 2)
 
- ;; CHECK:      (data $ok1 (offset (i32.const 0)) "a")
+ ;; CHECK:      (data $ok1 (i32.const 0) "a")
  (data $ok1 (i32.const 0) "a")
- ;; CHECK:      (data $ok2 (offset (i32.const 1000)) "a")
+ ;; CHECK:      (data $ok2 (i32.const 1000) "a")
  (data $ok2 (i32.const 1000) "a")
- ;; CHECK:      (data $ok3 (offset (i32.const 131071)) "a")
+ ;; CHECK:      (data $ok3 (i32.const 131071) "a")
  (data $ok3 (i32.const 131071) "a")
- ;; CHECK:      (data $bad (offset (i32.const 131071)) "ab")
+ ;; CHECK:      (data $bad (i32.const 131071) "ab")
  (data $bad (i32.const 131071) "ab")
 )
 
@@ -50,13 +50,13 @@
  ;; CHECK:      (memory $0 2 2)
  (memory $0 2 2)
 
- ;; CHECK:      (data $ok1 (offset (i32.const 0)) "a")
+ ;; CHECK:      (data $ok1 (i32.const 0) "a")
  (data $ok1 (i32.const 0) "a")
- ;; CHECK:      (data $ok2 (offset (i32.const 1000)) "a")
+ ;; CHECK:      (data $ok2 (i32.const 1000) "a")
  (data $ok2 (i32.const 1000) "a")
- ;; CHECK:      (data $ok3 (offset (i32.const 131071)) "a")
+ ;; CHECK:      (data $ok3 (i32.const 131071) "a")
  (data $ok3 (i32.const 131071) "a")
- ;; CHECK:      (data $bad (offset (i32.const 131072)) "a")
+ ;; CHECK:      (data $bad (i32.const 131072) "a")
  (data $bad (i32.const 131072) "a")
 )
 
@@ -64,13 +64,13 @@
  ;; CHECK:      (memory $0 2 2)
  (memory $0 2 2)
 
- ;; CHECK:      (data $ok1 (offset (i32.const 0)) "a")
+ ;; CHECK:      (data $ok1 (i32.const 0) "a")
  (data $ok1 (i32.const 0) "a")
- ;; CHECK:      (data $ok2 (offset (i32.const 1000)) "a")
+ ;; CHECK:      (data $ok2 (i32.const 1000) "a")
  (data $ok2 (i32.const 1000) "a")
- ;; CHECK:      (data $ok3 (offset (i32.const 131071)) "a")
+ ;; CHECK:      (data $ok3 (i32.const 131071) "a")
  (data $ok3 (i32.const 131071) "a")
- ;; CHECK:      (data $bad (offset (i32.const 9999999)) "a")
+ ;; CHECK:      (data $bad (i32.const 9999999) "a")
  (data $bad (i32.const 9999999) "a")
 )
 
@@ -78,13 +78,13 @@
  ;; CHECK:      (memory $0 2 2)
  (memory $0 2 2)
 
- ;; CHECK:      (data $ok1 (offset (i32.const 0)) "a")
+ ;; CHECK:      (data $ok1 (i32.const 0) "a")
  (data $ok1 (i32.const 0) "a")
- ;; CHECK:      (data $ok2 (offset (i32.const 1000)) "a")
+ ;; CHECK:      (data $ok2 (i32.const 1000) "a")
  (data $ok2 (i32.const 1000) "a")
- ;; CHECK:      (data $ok3 (offset (i32.const 131071)) "a")
+ ;; CHECK:      (data $ok3 (i32.const 131071) "a")
  (data $ok3 (i32.const 131071) "a")
- ;; CHECK:      (data $bad (offset (i32.const -2)) "a")
+ ;; CHECK:      (data $bad (i32.const -2) "a")
  (data $bad (i32.const 4294967294) "a")
 )
 
@@ -92,13 +92,13 @@
  ;; CHECK:      (memory $0 2 2)
  (memory $0 2 2)
 
- ;; CHECK:      (data $ok1 (offset (i32.const 0)) "a")
+ ;; CHECK:      (data $ok1 (i32.const 0) "a")
  (data $ok1 (i32.const 0) "a")
- ;; CHECK:      (data $ok2 (offset (i32.const 1000)) "a")
+ ;; CHECK:      (data $ok2 (i32.const 1000) "a")
  (data $ok2 (i32.const 1000) "a")
- ;; CHECK:      (data $ok3 (offset (i32.const 131071)) "a")
+ ;; CHECK:      (data $ok3 (i32.const 131071) "a")
  (data $ok3 (i32.const 131071) "a")
- ;; CHECK:      (data $bad (offset (i32.const -6)) "abcdefghijklmnop_overflow")
+ ;; CHECK:      (data $bad (i32.const -6) "abcdefghijklmnop_overflow")
  (data $bad (i32.const 4294967290) "abcdefghijklmnop_overflow")
 )
 
@@ -106,13 +106,13 @@
  ;; CHECK:      (memory $0 2 2)
  (memory $0 2 2)
 
- ;; CHECK:      (data $ok1 (offset (i32.const 0)) "a")
+ ;; CHECK:      (data $ok1 (i32.const 0) "a")
  (data $ok1 (i32.const 0) "a")
- ;; CHECK:      (data $ok2 (offset (i32.const 1000)) "a")
+ ;; CHECK:      (data $ok2 (i32.const 1000) "a")
  (data $ok2 (i32.const 1000) "a")
- ;; CHECK:      (data $ok3 (offset (i32.const 131071)) "a")
+ ;; CHECK:      (data $ok3 (i32.const 131071) "a")
  (data $ok3 (i32.const 131071) "a")
- ;; CHECK:      (data $bad (offset (i32.const -2)) "a")
+ ;; CHECK:      (data $bad (i32.const -2) "a")
  (data $bad (i32.const -2) "a")
 )
 
@@ -124,13 +124,13 @@
  ;; CHECK:      (memory $0 2 2)
  (memory $0 2 2)
 
- ;; CHECK:      (data $ok1 (offset (i32.const 0)) "a")
+ ;; CHECK:      (data $ok1 (i32.const 0) "a")
  (data $ok1 (i32.const 0) "a")
- ;; CHECK:      (data $ok2 (offset (i32.const 1000)) "a")
+ ;; CHECK:      (data $ok2 (i32.const 1000) "a")
  (data $ok2 (i32.const 1000) "a")
- ;; CHECK:      (data $ok3 (offset (i32.const 131071)) "a")
+ ;; CHECK:      (data $ok3 (i32.const 131071) "a")
  (data $ok3 (i32.const 131071) "a")
- ;; CHECK:      (data $bad (offset (global.get $imported)) "a")
+ ;; CHECK:      (data $bad (global.get $imported) "a")
  (data $bad (global.get $imported) "a")
 )
 
@@ -152,13 +152,13 @@
 
  ;; CHECK:      (table $0 10 10 funcref)
 
- ;; CHECK:      (elem $ok1 (offset (i32.const 0)) $func)
+ ;; CHECK:      (elem $ok1 (i32.const 0) $func)
  (elem $ok1 (i32.const 0) $func)
- ;; CHECK:      (elem $ok2 (offset (i32.const 8)) $func $func)
+ ;; CHECK:      (elem $ok2 (i32.const 8) $func $func)
  (elem $ok2 (i32.const 8) $func $func)
- ;; CHECK:      (elem $ok3 (offset (i32.const 9)) $func)
+ ;; CHECK:      (elem $ok3 (i32.const 9) $func)
  (elem $ok3 (i32.const 9) $func)
- ;; CHECK:      (elem $bad (offset (i32.const 10)) $func)
+ ;; CHECK:      (elem $bad (i32.const 10) $func)
  (elem $bad (i32.const 10) $func)
 
  ;; CHECK:      (func $func (type $0)
@@ -180,13 +180,13 @@
 
  ;; CHECK:      (table $0 10 10 funcref)
 
- ;; CHECK:      (elem $ok1 (offset (i32.const 0)) $func)
+ ;; CHECK:      (elem $ok1 (i32.const 0) $func)
  (elem $ok1 (i32.const 0) $func)
- ;; CHECK:      (elem $ok2 (offset (i32.const 8)) $func $func)
+ ;; CHECK:      (elem $ok2 (i32.const 8) $func $func)
  (elem $ok2 (i32.const 8) $func $func)
- ;; CHECK:      (elem $ok3 (offset (i32.const 9)) $func)
+ ;; CHECK:      (elem $ok3 (i32.const 9) $func)
  (elem $ok3 (i32.const 9) $func)
- ;; CHECK:      (elem $bad (offset (i32.const 9)) $func $func)
+ ;; CHECK:      (elem $bad (i32.const 9) $func $func)
  (elem $bad (i32.const 9) $func $func)
 
  ;; CHECK:      (func $func (type $0)
@@ -229,7 +229,7 @@
 
  (memory $big 2 2)
 
- ;; CHECK:      (data $a (offset (i32.const 100000)) "ab")
+ ;; CHECK:      (data $a (i32.const 100000) "ab")
  (data $a (memory $small) (i32.const 100000) "ab") ;; fits in $big; not $small
 
  (data $b (memory $big)   (i32.const 100000) "cd")
@@ -242,7 +242,7 @@
  ;; CHECK:      (memory $small 1 1)
  (memory $small 1 1)
 
- ;; CHECK:      (data $a (offset (i32.const 100000)) "ab")
+ ;; CHECK:      (data $a (i32.const 100000) "ab")
  (data $a (memory $small) (i32.const 100000) "ab") ;; fits in $big; not $small
 
  (data $b (memory $big)   (i32.const 100000) "cd")

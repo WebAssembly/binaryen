@@ -4,7 +4,7 @@
  (import "env" "memBase" (global $gimport$0 i32))
  (import "somewhere" "waka-sneaky" (func $waka-sneaky))
  (memory $0 1024 1024)
- (elem $0 (offset (i32.const 0)) $waka-sneaky)
+ (elem $0 (i32.const 0) $waka-sneaky)
  (func $nada
   (nop)
   (drop

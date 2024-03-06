@@ -14,7 +14,7 @@
 
  ;; CHECK:      (table $0 269 269 funcref)
  (table $0 269 269 funcref)
- ;; CHECK:      (elem $0 (offset (i32.const 1)))
+ ;; CHECK:      (elem $0 (i32.const 1))
  (elem $0 (i32.const 1))
 
  ;; CHECK:      (func $0 (type $1)

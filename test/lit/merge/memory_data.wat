@@ -22,15 +22,15 @@
 
   ;; CHECK:      (memory $bar_3 1000)
 
-  ;; CHECK:      (data $a (offset (i32.const 0)) "a")
+  ;; CHECK:      (data $a (i32.const 0) "a")
   (data $a (memory $foo) (i32.const 0) "a")
 
-  ;; CHECK:      (data $b (memory $bar) (offset (i32.const 0)) "b")
+  ;; CHECK:      (data $b (memory $bar) (i32.const 0) "b")
   (data $b (memory $bar) (i32.const 0) "b")
 
-  ;; CHECK:      (data $a_2 (memory $other) (offset (i32.const 0)) "a2")
+  ;; CHECK:      (data $a_2 (memory $other) (i32.const 0) "a2")
 
-  ;; CHECK:      (data $b_2 (memory $bar_3) (offset (i32.const 0)) "b2")
+  ;; CHECK:      (data $b_2 (memory $bar_3) (i32.const 0) "b2")
 
   ;; CHECK:      (export "keepalive" (memory $foo))
   (export "keepalive" (memory $foo))

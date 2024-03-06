@@ -10,7 +10,7 @@
   (memory $0 16 17 shared)
 
   (export "v128" (func $v128))
-  ;; CHECK:      (data $0 (offset (i32.const 23)) "\e0\ff\c0N\8e\00\00\fe\01\00\12\81\85\fd\ff\90")
+  ;; CHECK:      (data $0 (i32.const 23) "\e0\ff\c0N\8e\00\00\fe\01\00\12\81\85\fd\ff\90")
 
   ;; CHECK:      (export "v128" (func $v128_2))
 

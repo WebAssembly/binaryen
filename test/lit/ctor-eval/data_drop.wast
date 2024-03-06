@@ -9,9 +9,9 @@
   (data (i32.const 0) "__________")
   (data (i32.const 20) "__________")
 
-  ;; CHECK:      (data $0 (offset (i32.const 0)) "__________")
+  ;; CHECK:      (data $0 (i32.const 0) "__________")
 
-  ;; CHECK:      (data $1 (offset (i32.const 20)) "__________")
+  ;; CHECK:      (data $1 (i32.const 20) "__________")
 
   ;; CHECK:      (export "test" (func $test))
 

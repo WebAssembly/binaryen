@@ -149,7 +149,7 @@
 (module
  (type $0 (func (result i32)))
  (memory $0 1 1 shared)
- (data $0 (offset (i32.const 0)) "\ff\ff")
+ (data $0 (i32.const 0) "\ff\ff")
  (export "unsigned_2_bytes" (func $unsigned_2_bytes))
  (func $unsigned_2_bytes (type $0) (result i32)
   (i32.atomic.rmw16.xor_u

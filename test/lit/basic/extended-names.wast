@@ -12,14 +12,14 @@
 (module $foo
   ;; CHECK-TEXT:      (memory $m1 1 1)
 
-  ;; CHECK-TEXT:      (data $mydata (offset (i32.const 0)) "a")
+  ;; CHECK-TEXT:      (data $mydata (i32.const 0) "a")
 
   ;; CHECK-TEXT:      (data $passive_data "b")
 
   ;; CHECK-TEXT:      (table $t1 1 funcref)
   ;; CHECK-BIN:      (memory $m1 1 1)
 
-  ;; CHECK-BIN:      (data $mydata (offset (i32.const 0)) "a")
+  ;; CHECK-BIN:      (data $mydata (i32.const 0) "a")
 
   ;; CHECK-BIN:      (data $passive_data "b")
 
@@ -31,7 +31,7 @@
 )
 ;; CHECK-BIN-NODEBUG:      (memory $0 1 1)
 
-;; CHECK-BIN-NODEBUG:      (data $0 (offset (i32.const 0)) "a")
+;; CHECK-BIN-NODEBUG:      (data $0 (i32.const 0) "a")
 
 ;; CHECK-BIN-NODEBUG:      (data $1 "b")
 

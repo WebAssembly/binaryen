@@ -3,9 +3,9 @@
  (type $1 (func))
  (type $funcref_=>_none (func (param funcref)))
  (memory $0 256 256)
- (data $0 (offset (i32.const 10)) "waka waka waka waka waka")
+ (data $0 (i32.const 10) "waka waka waka waka waka")
  (table $0 1 1 funcref)
- (elem $0 (offset (i32.const 0)) $callee)
+ (elem $0 (i32.const 0) $callee)
  (export "sig_mismatch" (func $sig_mismatch))
  (func $callee (type $0) (param $0 externref)
   (i32.store8

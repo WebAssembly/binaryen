@@ -27,12 +27,12 @@
   ;; CHECK-BIN-NODEBUG:      (memory $0 0)
   (memory $0 0)
 
-  ;; CHECK-TEXT:      (elem $0 (offset (i32.const 0)) $foo)
+  ;; CHECK-TEXT:      (elem $0 (i32.const 0) $foo)
 
   ;; CHECK-TEXT:      (func $foo (type $0)
   ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (elem $0 (offset (i32.const 0)) $foo)
+  ;; CHECK-BIN:      (elem $0 (i32.const 0) $foo)
 
   ;; CHECK-BIN:      (func $foo (type $0)
   ;; CHECK-BIN-NEXT:  (nop)
@@ -41,7 +41,7 @@
     (nop)
   )
 )
-;; CHECK-BIN-NODEBUG:      (elem $0 (offset (i32.const 0)) $0)
+;; CHECK-BIN-NODEBUG:      (elem $0 (i32.const 0) $0)
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)

@@ -17,7 +17,7 @@
 
  ;; SECONDARY:      (import "primary" "load_secondary_module_status" (global $gimport$1 (mut i32)))
 
- ;; SECONDARY:      (elem $0 (offset (i32.const 0)) $foo)
+ ;; SECONDARY:      (elem $0 (i32.const 0) $foo)
 
  ;; SECONDARY:      (func $foo (param $0 i32) (result i32)
  ;; SECONDARY-NEXT:  (i32.const 0)
@@ -44,7 +44,7 @@
 
 ;; PRIMARY:      (table $0 1 funcref)
 
-;; PRIMARY:      (elem $0 (offset (i32.const 0)) $placeholder_0)
+;; PRIMARY:      (elem $0 (i32.const 0) $placeholder_0)
 
 ;; PRIMARY:      (export "foo" (func $export$foo))
 

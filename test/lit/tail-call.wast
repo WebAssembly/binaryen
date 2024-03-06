@@ -11,7 +11,7 @@
   ;; CHECK:      (table $t 1 1 funcref)
   (table $t 1 1 funcref)
 
-  ;; CHECK:      (elem $e (offset (i32.const 0)) $foo)
+  ;; CHECK:      (elem $e (i32.const 0) $foo)
   (elem $e (i32.const 0) $foo)
 
   ;; CHECK:      (func $foo (type $void)
@@ -48,7 +48,7 @@
   ;; CHECK:      (table $t 1 1 funcref)
   (table $t 1 1 funcref)
 
-  ;; CHECK:      (elem $e (offset (i32.const 0)) $callee)
+  ;; CHECK:      (elem $e (i32.const 0) $callee)
   (elem $e (i32.const 0) $callee)
 
   ;; CHECK:      (func $caller (type $return-A) (result (ref null $A))

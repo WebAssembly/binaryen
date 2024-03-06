@@ -10,7 +10,7 @@
  (global $stack_ptr (mut i32) (global.get $STACKTOP$asm2wasm$import))
  (memory $0 10)
  (table $0 1 1 funcref)
- (elem $0 (offset (i32.const 0)))
+ (elem $0 (i32.const 0))
  (func $nothing
   (nop)
  )
@@ -692,7 +692,7 @@
  (global $stack_ptr (mut i32) (i32.const 1716592))
  (memory $0 10)
  (table $0 1 1 funcref)
- (elem $0 (offset (i32.const 0)))
+ (elem $0 (i32.const 0))
  (export "stackSave" (func $stack_save))
  (func $stack_save (result i32)
   (global.get $stack_ptr)
