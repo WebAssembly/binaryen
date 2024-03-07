@@ -239,11 +239,18 @@ public:
   }
   Break* makeBreak(Name name,
                    Expression* value = nullptr,
-                   Expression* condition = nullptr) {
+                   Expression* condition = nullptr,
+                   std::optional<Type> type = std::nullopt) {
     auto* ret = wasm.allocator.alloc<Break>();
     ret->name = name;
     ret->value = value;
     ret->condition = condition;
+    if (value && condition) {
+      // This is a br_if, for whom we must receive the type, as the type must
+      // match the block it targets (which we do not know here).
+      assert(type);
+      ret->type = *type;
+    }
     ret->finalize();
     return ret;
   }

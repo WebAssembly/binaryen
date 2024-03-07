@@ -1536,7 +1536,7 @@ Expression* TranslateToFuzzReader::makeBreak(Type type) {
         // we need to break to a proper place
         continue;
       }
-      auto* ret = builder.makeBreak(name, make(type), condition);
+      auto* ret = builder.makeBreak(name, make(type), condition, valueType);
       funcContext->hangStack.pop_back();
       return ret;
     } else if (type == Type::none) {
