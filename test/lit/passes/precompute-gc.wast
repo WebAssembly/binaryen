@@ -1197,13 +1197,29 @@
   (local.get $x)
  )
 
+ ;; CHECK:      (func $refinalize-refine-br_if (type $20) (param $nn-any (ref any)) (result anyref)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (block $block (result (ref any))
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block (result (ref any))
+ ;; CHECK-NEXT:     (br_if $block
+ ;; CHECK-NEXT:      (local.get $nn-any)
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.get $nn-any)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $refinalize-refine-br_if (param $nn-any (ref any)) (result anyref)
+  ;; A nop prevents the next block from being elided in printing.
+  (nop)
   ;; This tests refinalize (using precompute, because it always refinalizes).
   ;; When we refine the block to non-nullable we must also update the br_if to
   ;; the same type, as they must match.
   (block $block (result anyref)
    (drop
-    (block (result anyref) ;; This block will also get refined, after the br_if.
+    (block $ignore (result anyref) ;; This block will also get refined, after the br_if.
      (br_if $block
       (local.get $nn-any)
       (i32.const 1)
