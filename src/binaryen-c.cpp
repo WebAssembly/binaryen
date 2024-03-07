@@ -1120,10 +1120,21 @@ BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module,
 BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module,
                                     const char* name,
                                     BinaryenExpressionRef condition,
-                                    BinaryenExpressionRef value) {
+                                    BinaryenExpressionRef value,
+                                    BinaryenType* type) {
+  std::optional<Type> optType;
+  if (type) {
+    optType = *type;
+  } else {
+    // As a convenience for users, if type is not provided but we can infer the
+    // type - which is the case for MVP types - then infer it.
+    if (condition && value && !value->type.isRef()) {
+      optType = value->type;
+    }
+  }
   return static_cast<Expression*>(
     Builder(*(Module*)module)
-      .makeBreak(name, (Expression*)value, (Expression*)condition));
+      .makeBreak(name, (Expression*)value, (Expression*)condition, optType));
 }
 BinaryenExpressionRef BinaryenSwitch(BinaryenModuleRef module,
                                      const char** names,

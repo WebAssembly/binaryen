@@ -740,12 +740,15 @@ BINARYEN_API BinaryenExpressionRef BinaryenIf(BinaryenModuleRef module,
 BINARYEN_API BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module,
                                                 const char* in,
                                                 BinaryenExpressionRef body);
-// Break: value and condition can be NULL
+// Break: value and condition can be NULL. type can be NULL, but must be
+//        provided for a `br_if` with a value (as the type depends on the block
+//        that is targeted).
 BINARYEN_API BinaryenExpressionRef
 BinaryenBreak(BinaryenModuleRef module,
               const char* name,
               BinaryenExpressionRef condition,
-              BinaryenExpressionRef value);
+              BinaryenExpressionRef value,
+              BinaryenType* type);
 // Switch: value can be NULL
 BINARYEN_API BinaryenExpressionRef
 BinaryenSwitch(BinaryenModuleRef module,
@@ -1265,6 +1268,9 @@ BINARYEN_API void BinaryenBreakSetCondition(BinaryenExpressionRef expr,
 BINARYEN_API BinaryenExpressionRef
 BinaryenBreakGetValue(BinaryenExpressionRef expr);
 // Sets the value expression, if any, of a `br` or `br_if` expression.
+// Note that for a `br_if` with a value, if you change the type of the block
+// that this targets then you also need to change the type of the `br_if`, which
+// you can do using BinaryenExpressionSetType().
 BINARYEN_API void BinaryenBreakSetValue(BinaryenExpressionRef expr,
                                         BinaryenExpressionRef valueExpr);
 
