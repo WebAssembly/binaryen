@@ -623,10 +623,8 @@ void FunctionValidator::validateBrIfs(Name label, Type type) {
   if (auto iter = labelBrIfs.find(name); iter != labelBrIfs.end()) {
     for (auto* brIf : iter->second) {
       assert(brIf->value && brIf->condition); // This must be an actual br_if.
-      shouldBeEqual(type,
-                    brIf->type,
-                    brIf,
-                    "br_ifs to a block must have the block's type");
+      shouldBeEqual(
+        type, brIf->type, brIf, "br_ifs to a block must have the block's type");
     }
   }
 }
@@ -803,7 +801,8 @@ void FunctionValidator::visitLoop(Loop* curr) {
     }
     breakTypes.erase(iter);
 
-    //validateBrIfs(curr->name, curr->type); // XXX breaks must have type none, so no br_ifs!
+    // validateBrIfs(curr->name, curr->type); // XXX breaks must have type none,
+    // so no br_ifs!
   }
   if (curr->type == Type::none) {
     shouldBeFalse(curr->body->type.isConcrete(),
