@@ -134,9 +134,17 @@ struct ReFinalize
   std::unordered_map<Name, std::unordered_set<Type>> breakTypes;
 
   // Track br_ifs with values as we go, as those must be updated if their block
-  // type changes.
+  // type changes. We must also track block names to blocks for this, so we
+  // track all that using the block name as the key.
   // TODO: BrOn too
-  std::unordered_map<Block*, std::vector<Break*>> blockBrs;
+  struct BlockBrInfo {
+    Block* block = nullptr;
+    std::vector<Break*> brs;
+
+    BlockBrInfo() {}
+    BlockBrInfo(Block* block) : block(block) {}
+  };
+  std::unordered_map<Name, BlockBrInfo> blockBrInfoMap;
 
   void doWalkFunction(Function* func);
 
