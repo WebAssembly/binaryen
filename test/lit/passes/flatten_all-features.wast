@@ -3586,13 +3586,13 @@
   ;; value type, we need the value to be set into two locals: one with the outer
   ;; block's type, and one with its value type.
   ;; CHECK:      (func $subtype (type $6) (result anyref)
-  ;; CHECK-NEXT:  (local $0 eqref)
+  ;; CHECK-NEXT:  (local $0 anyref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 nullref)
   ;; CHECK-NEXT:  (local $3 nullref)
-  ;; CHECK-NEXT:  (local $4 eqref)
-  ;; CHECK-NEXT:  (local $5 eqref)
-  ;; CHECK-NEXT:  (local $6 eqref)
+  ;; CHECK-NEXT:  (local $4 anyref)
+  ;; CHECK-NEXT:  (local $5 anyref)
+  ;; CHECK-NEXT:  (local $6 anyref)
   ;; CHECK-NEXT:  (local $7 anyref)
   ;; CHECK-NEXT:  (block $label0
   ;; CHECK-NEXT:   (block
@@ -3633,9 +3633,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $subtype (result anyref)
-    (local $0 eqref)
+    (local $0 anyref)
     (block $label0 (result anyref)
-      (block (result eqref)
+      (block (result anyref)
         (local.tee $0
           (br_if $label0
             (ref.null eq)
