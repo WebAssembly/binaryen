@@ -608,11 +608,14 @@ struct SimplifyLocals
       auto* set = (*breakLocalSetPointer)->template cast<LocalSet>();
       if (br->condition) {
         br->value = set;
-        set->makeTee(this->getFunction()->getLocalType(set->index));
+        auto localType = this->getFunction()->getLocalType(set->index);
+        set->makeTee(localType);
         *breakLocalSetPointer =
           this->getModule()->allocator.template alloc<Nop>();
-        // in addition, as this is a conditional br that now has a value, it now
-        // returns a value, so it must be dropped
+        // In addition, as this is a conditional br that now has a value, it now
+        // returns a value, so we must update the type for that and also drop
+        // it.
+        br->type = localType;
         br->finalize();
         *brp = Builder(*this->getModule()).makeDrop(br);
       } else {
