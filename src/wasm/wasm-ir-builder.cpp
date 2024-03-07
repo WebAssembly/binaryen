@@ -1114,7 +1114,14 @@ Result<> IRBuilder::makeBreak(Index label, bool isConditional) {
   // Use a dummy condition value if we need to pop a condition.
   curr.condition = isConditional ? &curr : nullptr;
   CHECK_ERR(visitBreak(&curr, label));
-  push(builder.makeBreak(curr.name, curr.value, curr.condition));
+  // If this is a br_if then we must provide the type (which is the type of the
+  // block we target).
+  std::optional<Type> type;
+  if (curr.value && curr.condition) {
+    // N.B. the label was already validated above when we did getLabelName.
+    type = scopeStack[scopeStack.size() - label - 1].getResultType();
+  }
+  push(builder.makeBreak(curr.name, curr.value, curr.condition, type));
   return Ok{};
 }
 
