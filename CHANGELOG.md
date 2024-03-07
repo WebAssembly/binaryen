@@ -22,10 +22,11 @@ Current Trunk
  - Fix the result type of `br_if` to match the spec. This means that `br_if` now
    returns a less precise type than before. In the IR it means that the type of
    `br_if` with a value depends on the block it targets, which means it must be
-   provided when creating it, and updated if altered. The C API `BinaryenBreak`
-   now has a final parameter to allow setting the type (a `Type*`, which can be
-   NULL if the type can be inferred, which is the case for anything but a
-   `br_if` with a value, or even a `br_if` with a value for an MVP type).
+   provided when creating it, and updated if altered.
+   - As a result the C API `BinaryenBreak` now has a final parameter to allow
+     setting the type, which is a `Type*`. If NULL then the type will be
+     inferred in common cases (MVP types, or anything but a `br_if` with a
+     value).
 
 v117
 ----
