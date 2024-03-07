@@ -417,6 +417,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             br->condition =
               builder.makeSelect(br->condition, curr->condition, zero);
           }
+          if (br->value) {
+            // Update the br_if's type based on the block.
+            assert(concreteBlockTypes.count(br->name));
+            br->type = concreteBlockTypes[br->name];
+          }
           br->finalize();
           replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
           anotherCycle = true;
@@ -460,9 +465,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   static void scan(RemoveUnusedBrs* self, Expression** currp) {
     self->pushTask(visitAny, currp);
 
-    auto* iff = (*currp)->dynCast<If>();
+    auto* curr = *currp;
 
-    if (iff) {
+    if (auto* iff = curr->dynCast<If>()) {
       if (iff->condition->type == Type::unreachable) {
         // avoid trying to optimize this, we never reach it anyhow
         return;
@@ -478,10 +483,20 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       self->pushTask(scan, &iff->ifTrue);
       self->pushTask(clear, currp); // clear all flow after the condition
       self->pushTask(scan, &iff->condition);
-    } else {
-      super::scan(self, currp);
+      return;
     }
+
+    if (auto* block = curr->dynCast<Block>()) {
+      if (block->type.isConcrete()) {
+        self->concreteBlockTypes[block->name] = block->type;
+      }
+    }
+    super::scan(self, currp);
   }
+
+  // We track the types of blocks that have concrete types, as they may have
+  // br_ifs that target them, whose type depends on the block type.
+  std::unordered_map<Name, Type> concreteBlockTypes;
 
   // optimizes a loop. returns true if we made changes
   bool optimizeLoop(Loop* loop) {
@@ -1066,7 +1081,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // we are an if-else where the ifTrue is a break without a
             // condition, so we can do this
             ifTrueBreak->condition = iff->condition;
-            ifTrueBreak->finalize();
+            updateBrIfType(ifTrueBreak);
             list[i] = Builder(*getModule()).dropIfConcretelyTyped(ifTrueBreak);
             ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifFalse);
             continue;
@@ -1080,7 +1095,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                                 *getModule())) {
             ifFalseBreak->condition =
               Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
-            ifFalseBreak->finalize();
+            updateBrIfType(ifFalseBreak);
             list[i] = Builder(*getModule()).dropIfConcretelyTyped(ifFalseBreak);
             ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifTrue);
             continue;
@@ -1675,6 +1690,29 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           }
           start = end;
         }
+      }
+
+      // Note types of blocks. This parallels the logic in the parent class,
+      // but we do not want to just reuse the data structure there: things may
+      // have changed since then.
+      static void scan(FinalOptimizer* self, Expression** currp) {
+        if (auto* block = (*currp)->dynCast<Block>()) {
+          if (block->type.isConcrete()) {
+            self->concreteBlockTypes[block->name] = block->type;
+          }
+        }
+
+        PostWalker<FinalOptimizer>::scan(self, currp);
+      }
+
+      std::unordered_map<Name, Type> concreteBlockTypes;
+
+      // Update the br_if's type based on the block.
+      void updateBrIfType(Break* br) {
+        assert(br->condition && br->value);
+        assert(concreteBlockTypes.count(br->name));
+        br->type = concreteBlockTypes[br->name];
+        br->finalize();
       }
     };
     FinalOptimizer finalOptimizer(getPassOptions());
