@@ -251,12 +251,16 @@ void Break::finalize() {
   if (condition) {
     if (condition->type == Type::unreachable) {
       type = Type::unreachable;
+    } else if (value) {
+      if (value->type == Type::unreachable) {
+        type = Type::unreachable;
+      }
+      // Note that we do nothing for a reachable br_if. Its type must match the
+      // type of the block it targets, which we do not see here, so it is up to
+      // optimization passes to manually update it as (rarely) needed.
     } else if (!value) {
       type = Type::none;
     }
-    // Note that we do nothing for a reachable br_if. Its type must match the
-    // type of the block it targets, which we do not see here, so it is up to
-    // optimization passes to manually update it as (rarely) needed.
   } else {
     type = Type::unreachable;
   }

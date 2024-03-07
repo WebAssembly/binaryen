@@ -2600,14 +2600,17 @@ Expression* SExpressionWasmBuilder::makeBreak(Element& s, bool isConditional) {
   } else {
     ret->value = parseExpression(s[i]);
   }
+  std::cout << "maek break " << ret->condition << " : " << ret->value << '\n';
   if (isConditional && ret->value) {
     auto iter = blockTypes.find(ret->name);
     if (iter == blockTypes.end()) {
       throw SParseException("br_if to invalid target", s);
     }
     ret->type = iter->second;
+    std::cout << "  a.type " << ret->type << '\n';
   }
   ret->finalize();
+    std::cout << "  b.type " << ret->type << " : " << *ret << '\n';
   return ret;
 }
 
