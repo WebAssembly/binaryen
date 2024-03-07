@@ -22,7 +22,7 @@
 
  (type $func-return-i32 (func (result i32)))
 
- ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (type $4) (param i32)))
+ ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (type $5) (param i32)))
  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
  ;; CHECK:      (func $test-fallthrough (type $func-return-i32) (result i32)
@@ -119,7 +119,7 @@
    (struct.get $struct 0 (local.get $x))
   )
  )
- ;; CHECK:      (func $load-from-struct-bad-merge (type $4) (param $i i32)
+ ;; CHECK:      (func $load-from-struct-bad-merge (type $5) (param $i i32)
  ;; CHECK-NEXT:  (local $x (ref null $struct))
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $i)
@@ -168,7 +168,7 @@
    (struct.get $struct 0 (local.get $x))
   )
  )
- ;; CHECK:      (func $modify-gc-heap (type $5) (param $x (ref null $struct))
+ ;; CHECK:      (func $modify-gc-heap (type $6) (param $x (ref null $struct))
  ;; CHECK-NEXT:  (struct.set $struct 0
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:   (i32.add
@@ -222,7 +222,7 @@
    (struct.get $struct 0 (local.get $x))
   )
  )
- ;; CHECK:      (func $load-from-struct-bad-arrive (type $5) (param $x (ref null $struct))
+ ;; CHECK:      (func $load-from-struct-bad-arrive (type $6) (param $x (ref null $struct))
  ;; CHECK-NEXT:  (call $log
  ;; CHECK-NEXT:   (struct.get $struct 0
  ;; CHECK-NEXT:    (local.get $x)
@@ -388,7 +388,7 @@
   (local.get $tempresult)
  )
 
- ;; CHECK:      (func $propagate-uncertain-param (type $6) (param $input (ref $empty)) (result i32)
+ ;; CHECK:      (func $propagate-uncertain-param (type $7) (param $input (ref $empty)) (result i32)
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local $tempref (ref null $empty))
  ;; CHECK-NEXT:  (local.set $tempresult
@@ -435,7 +435,7 @@
   (local.get $tempresult)
  )
 
- ;; CHECK:      (func $propagate-same-param (type $6) (param $input (ref $empty)) (result i32)
+ ;; CHECK:      (func $propagate-same-param (type $7) (param $input (ref $empty)) (result i32)
  ;; CHECK-NEXT:  (local $tempresult i32)
  ;; CHECK-NEXT:  (local.set $tempresult
  ;; CHECK-NEXT:   (ref.eq
@@ -850,7 +850,7 @@
   )
  )
 
- ;; CHECK:      (func $new_block_unreachable (type $8) (result anyref)
+ ;; CHECK:      (func $new_block_unreachable (type $9) (result anyref)
  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructNew we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block
@@ -892,7 +892,7 @@
   )
  )
 
- ;; CHECK:      (func $ref.is_null (type $4) (param $param i32)
+ ;; CHECK:      (func $ref.is_null (type $5) (param $param i32)
  ;; CHECK-NEXT:  (local $ref (ref null $empty))
  ;; CHECK-NEXT:  (local.set $ref
  ;; CHECK-NEXT:   (struct.new_default $empty)
@@ -1052,7 +1052,7 @@
   )
  )
 
- ;; CHECK:      (func $get-nonnullable-in-unreachable (type $8) (result anyref)
+ ;; CHECK:      (func $get-nonnullable-in-unreachable (type $9) (result anyref)
  ;; CHECK-NEXT:  (local $x (ref any))
  ;; CHECK-NEXT:  (local.tee $x
  ;; CHECK-NEXT:   (unreachable)
@@ -1089,7 +1089,7 @@
   (local.get $x)
  )
 
- ;; CHECK:      (func $get-nonnullable-in-unreachable-entry (type $9) (param $x i32) (param $y (ref any))
+ ;; CHECK:      (func $get-nonnullable-in-unreachable-entry (type $10) (param $x i32) (param $y (ref any))
  ;; CHECK-NEXT:  (local $0 (ref any))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT:  (local.set $0
@@ -1123,7 +1123,7 @@
   )
  )
 
- ;; CHECK:      (func $get-nonnullable-in-unreachable-later-loop (type $9) (param $x i32) (param $y (ref any))
+ ;; CHECK:      (func $get-nonnullable-in-unreachable-later-loop (type $10) (param $x i32) (param $y (ref any))
  ;; CHECK-NEXT:  (local $0 (ref any))
  ;; CHECK-NEXT:  (if
  ;; CHECK-NEXT:   (local.get $x)
@@ -1230,6 +1230,26 @@
   )
  )
 
+ ;; CHECK:      (func $refinalize-refine-br_if-tuple (type $21) (param $nn-any (ref any)) (result anyref i32)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT:  (block $block (type $4) (result (ref any) i32)
+ ;; CHECK-NEXT:   (tuple.drop 2
+ ;; CHECK-NEXT:    (block (type $4) (result (ref any) i32)
+ ;; CHECK-NEXT:     (br_if $block
+ ;; CHECK-NEXT:      (tuple.make 2
+ ;; CHECK-NEXT:       (local.get $nn-any)
+ ;; CHECK-NEXT:       (i32.const 0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (tuple.make 2
+ ;; CHECK-NEXT:    (local.get $nn-any)
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
  (func $refinalize-refine-br_if-tuple (param $nn-any (ref any)) (result anyref i32)
   ;; As above, but with a tuple containing a reference.
   (nop)
