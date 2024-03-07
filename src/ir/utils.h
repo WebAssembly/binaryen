@@ -136,7 +136,6 @@ struct ReFinalize
   // Track br_ifs with values as we go, as those must be updated if their block
   // type changes. We must also track block names to blocks for this, so we
   // track all that using the block name as the key.
-  // TODO: BrOn too
   struct BlockBrInfo {
     Block* block = nullptr;
     std::vector<Break*> brs;
