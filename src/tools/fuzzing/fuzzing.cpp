@@ -2456,7 +2456,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return builder.makeArrayNewFixed(trivialArray, {});
     }
     case HeapType::exn: {
-      auto null = builder.makeRefNull(HeapType::ext);
+      auto null = builder.makeRefNull(HeapType::exn);
       if (!type.isNullable()) {
         assert(funcContext);
         return builder.makeRefAs(RefAsNonNull, null);
