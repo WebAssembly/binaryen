@@ -1124,7 +1124,7 @@ BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module,
                                     BinaryenType* type) {
   std::optional<Type> optType;
   if (type) {
-    optType = *type;
+    optType = Type(*type);
   } else {
     // As a convenience for users, if type is not provided but we can infer the
     // type - which is the case for MVP types - then infer it.
