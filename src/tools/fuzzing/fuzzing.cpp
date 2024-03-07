@@ -507,14 +507,14 @@ void TranslateToFuzzReader::finalizeTable() {
   for (auto& table : wasm.tables) {
     ModuleUtils::iterTableSegments(
       wasm, table->name, [&](ElementSegment* segment) {
-        // If the offset is a global that was imported (which is ok) but no
-        // longer is (not ok) we need to change that.
-        if (auto* offset = segment->offset->dynCast<GlobalGet>()) {
-          if (!wasm.getGlobal(offset->name)->imported()) {
-            // TODO: the segments must not overlap...
-            segment->offset =
-              builder.makeConst(Literal::makeFromInt32(0, Type::i32));
-          }
+        // If the offset contains a global that was imported (which is ok) but
+        // no longer is (not ok unless GC is enabled), we may need to change
+        // that.
+        if (!wasm.features.hasGC() &&
+            !FindAll<GlobalGet>(segment->offset).list.empty()) {
+          // TODO: the segments must not overlap...
+          segment->offset =
+            builder.makeConst(Literal::makeFromInt32(0, Type::i32));
         }
         Address maxOffset = segment->data.size();
         if (auto* offset = segment->offset->dynCast<Const>()) {
