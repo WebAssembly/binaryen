@@ -465,15 +465,12 @@ void TranslateToFuzzReader::finalizeMemory() {
         // definition to what used to be an imported global in initial contents.
         // To fix that, replace such invalid offsets with a constant.
         for (auto* get : FindAll<GlobalGet>(segment->offset).list) {
-          // N.B: We never currently encounter imported globals here, but we do
-          // the check for robustness.
-          if (!wasm.getGlobal(get->name)->imported()) {
-            // TODO: It would be better to avoid segment overlap so that
-            //       MemoryPacking can run.
-            segment->offset =
-              builder.makeConst(Literal::makeFromInt32(0, Type::i32));
-            break;
-          }
+          // No imported globals should remain.
+          assert(!wasm.getGlobal(get->name)->imported());
+          // TODO: It would be better to avoid segment overlap so that
+          //       MemoryPacking can run.
+          segment->offset =
+            builder.makeConst(Literal::makeFromInt32(0, Type::i32));
         }
       }
       if (auto* offset = segment->offset->dynCast<Const>()) {
@@ -507,10 +504,13 @@ void TranslateToFuzzReader::finalizeTable() {
   for (auto& table : wasm.tables) {
     ModuleUtils::iterTableSegments(
       wasm, table->name, [&](ElementSegment* segment) {
-        // If the offset is a global that was imported (which is ok) but no
-        // longer is (not ok) we need to change that.
-        if (auto* offset = segment->offset->dynCast<GlobalGet>()) {
-          if (!wasm.getGlobal(offset->name)->imported()) {
+        // If the offset contains a global that was imported (which is ok) but
+        // no longer is (not ok unless GC is enabled), we may need to change
+        // that.
+        if (!wasm.features.hasGC()) {
+          for (auto* get : FindAll<GlobalGet>(segment->offset).list) {
+            // No imported globals should remain.
+            assert(!wasm.getGlobal(get->name)->imported());
             // TODO: the segments must not overlap...
             segment->offset =
               builder.makeConst(Literal::makeFromInt32(0, Type::i32));
