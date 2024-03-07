@@ -1707,11 +1707,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
       std::unordered_map<Name, Type> concreteBlockTypes;
 
-      // Update the br_if's type based on the block.
+      // Update a br_if's type based on the block.
       void updateBrIfType(Break* br) {
-        assert(br->condition && br->value);
-        assert(concreteBlockTypes.count(br->name));
-        br->type = concreteBlockTypes[br->name];
+        assert(br->condition);
+        if (br->value) {
+          assert(concreteBlockTypes.count(br->name));
+          br->type = concreteBlockTypes[br->name];
+        }
         br->finalize();
       }
     };
