@@ -248,6 +248,9 @@ public:
     if (value && condition) {
       // This is a br_if, for whom we must receive the type, as the type must
       // match the block it targets (which we do not know here).
+      //
+      // Note that we could infer the type in some cases, like for MVP types,
+      // but we intentionally do not so as to catch bugs earlier.
       assert(type);
       ret->type = *type;
     }

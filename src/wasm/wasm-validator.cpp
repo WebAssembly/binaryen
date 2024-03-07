@@ -678,10 +678,11 @@ void FunctionValidator::visitBlock(Block* curr) {
       for (auto* brIf : iter->second) {
         // This must be an actual br_if with a value.
         assert(brIf->value && brIf->condition);
-        shouldBeEqual(curr->type,
-                      brIf->type,
-                      brIf,
-                      "br_ifs to a block must have the block's type");
+        shouldBeEqualOrFirstIsUnreachable(
+          brIf->type,
+          curr->type,
+          brIf,
+          "br_ifs to a block must have the block's type");
       }
     }
   }
