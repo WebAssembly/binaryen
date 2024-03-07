@@ -1196,4 +1196,21 @@
   )
   (local.get $x)
  )
+
+ (func $refinalize-refine-br_if (param $nn-any (ref any)) (result anyref)
+  ;; This tests refinalize (using precompute, because it always refinalizes).
+  ;; When we refine the block to non-nullable we must also update the br_if to
+  ;; the same type, as they must match.
+  (block $block (result anyref)
+   (drop
+    (block (result anyref) ;; This block will also get refined, after the br_if.
+     (br_if $block
+      (local.get $nn-any)
+      (i32.const 1)
+     )
+    )
+   )
+   (local.get $nn-any)
+  )
+ )
 )

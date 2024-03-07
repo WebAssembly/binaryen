@@ -24,6 +24,42 @@ static Type getValueType(Expression* value) {
   return value ? value->type : Type::none;
 }
 
+void ReFinalize::doWalkFunction(Function* func) {
+  using Super =
+    WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<ReFinalize>>>;
+
+  while (1) {
+    // Walk normally.
+    Super::doWalkFunction(func);
+
+    // After that walk we may have br_ifs in need of refinalization. Update them
+    // and refinalize again, as they may enable further improvements. This is in
+    // theory very slow, but in practice one or two cycles suffices and we can't
+    // try to be frugal here as must propagate all the possible improvements (or
+    // else we'd end up with a situation where ReFinalize^2 != ReFinalize).
+    auto updatedBr = false;
+
+    for (auto& [block, brs] : blockBrs) {
+      assert(block->type.isConcrete());
+      auto blockType = block->type;
+      for (auto* br : brs) {
+        if (br->type != Type::unreachable && br->type != blockType) {
+          br->type = blockType;
+          updateBr = true;
+        }
+      }
+    }
+
+    if (!updatedBr) {
+      return;
+    }
+
+    // Clear all state and loop/walk again.
+    breakTypes.clear();
+    blockBrs.clear();
+  }
+}
+
 void ReFinalize::visitBlock(Block* curr) {
   if (curr->list.size() == 0) {
     curr->type = Type::none;
