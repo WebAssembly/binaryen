@@ -3175,12 +3175,13 @@ BINARYEN_API char* BinaryenModuleAllocateAndWriteText(BinaryenModuleRef module);
 BINARYEN_API char*
 BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef module, bool optimize);
 
-// Deserialize a module from binary form.
-BINARYEN_API BinaryenModuleRef BinaryenModuleReadWithFeatures(
-  char* input, size_t inputSize, BinaryenFeatures featureSet);
-// Deserialize a module from binary form.
+// Deserialize a module from binary form, assuming the MVP feature set.
 BINARYEN_API BinaryenModuleRef BinaryenModuleRead(char* input,
                                                   size_t inputSize);
+
+// Deserialize a module from binary form, enabling the given feature set.
+BINARYEN_API BinaryenModuleRef BinaryenModuleReadWithFeatures(
+  char* input, size_t inputSize, BinaryenFeatures featureSet);
 
 // Execute a module in the Binaryen interpreter. This will create an instance of
 // the module, run it in the interpreter - which means running the start method
