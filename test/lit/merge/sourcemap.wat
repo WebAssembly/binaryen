@@ -22,15 +22,13 @@
 
 ;; CHECK-TEXT:      (export "g" (func $0_1))
 
-;; CHECK-TEXT:      ;;@ a:1:1
-;; CHECK-TEXT-NEXT: (func $0
+;; CHECK-TEXT:      (func $0
 ;; CHECK-TEXT-NEXT:  ;;@ a:2:1
 ;; CHECK-TEXT-NEXT:  (nop)
 ;; CHECK-TEXT-NEXT:  ;;@ a:3:1
 ;; CHECK-TEXT-NEXT: )
 
-;; CHECK-TEXT:      ;;@ b:1:2
-;; CHECK-TEXT-NEXT: (func $0_1
+;; CHECK-TEXT:      (func $0_1
 ;; CHECK-TEXT-NEXT:  ;;@ b:2:2
 ;; CHECK-TEXT-NEXT:  (nop)
 ;; CHECK-TEXT-NEXT:  ;;@ b:3:2
@@ -42,15 +40,13 @@
 
 ;; CHECK-BIN:      (export "g" (func $1))
 
-;; CHECK-BIN:      ;;@ a:1:1
-;; CHECK-BIN-NEXT: (func $0
+;; CHECK-BIN:      (func $0
 ;; CHECK-BIN-NEXT:  ;;@ a:2:1
 ;; CHECK-BIN-NEXT:  (nop)
 ;; CHECK-BIN-NEXT:  ;;@ a:3:1
 ;; CHECK-BIN-NEXT: )
 
-;; CHECK-BIN:      ;;@ b:1:2
-;; CHECK-BIN-NEXT: (func $1
+;; CHECK-BIN:      (func $1
 ;; CHECK-BIN-NEXT:  ;;@ b:2:2
 ;; CHECK-BIN-NEXT:  (nop)
 ;; CHECK-BIN-NEXT:  ;;@ b:3:2
