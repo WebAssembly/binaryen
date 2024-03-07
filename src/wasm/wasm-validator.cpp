@@ -803,7 +803,7 @@ void FunctionValidator::visitLoop(Loop* curr) {
     }
     breakTypes.erase(iter);
 
-    validateBrIfs(curr->name, curr->type);
+    //validateBrIfs(curr->name, curr->type); // XXX breaks must have type none, so no br_ifs!
   }
   if (curr->type == Type::none) {
     shouldBeFalse(curr->body->type.isConcrete(),

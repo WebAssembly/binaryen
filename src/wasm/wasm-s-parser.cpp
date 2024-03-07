@@ -1649,6 +1649,7 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
     curr->name = nameMapper.pushLabelName(sName);
     // block signature
     curr->type = parseBlockType(s, i);
+    blockTypes[curr->name] = curr->type;
     if (i >= s.size()) {
       break; // empty block
     }
@@ -2599,11 +2600,13 @@ Expression* SExpressionWasmBuilder::makeBreak(Element& s, bool isConditional) {
   } else {
     ret->value = parseExpression(s[i]);
   }
-#if 0
   if (isConditional && ret->value) {
-    ret->type = 
+    auto iter = blockTypes.find(ret->name);
+    if (iter == blockTypes.end()) {
+      throw SParseException("br_if to invalid target", s);
+    }
+    ret->type = iter->second;
   }
-#endif
   ret->finalize();
   return ret;
 }
