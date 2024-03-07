@@ -510,11 +510,16 @@ void TranslateToFuzzReader::finalizeTable() {
         // If the offset contains a global that was imported (which is ok) but
         // no longer is (not ok unless GC is enabled), we may need to change
         // that.
-        if (!wasm.features.hasGC() &&
-            !FindAll<GlobalGet>(segment->offset).list.empty()) {
-          // TODO: the segments must not overlap...
-          segment->offset =
-            builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+        if (!wasm.features.hasGC()) {
+          for (auto* get : FindAll<GlobalGet>(segment->offset).list) {
+            // N.B: We never currently encounter imported globals here, but we
+            // do the check for robustness.
+            if (!wasm.getGlobal(get->name)->imported()) {
+              // TODO: the segments must not overlap...
+              segment->offset =
+                builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+            }
+          }
         }
         Address maxOffset = segment->data.size();
         if (auto* offset = segment->offset->dynCast<Const>()) {
