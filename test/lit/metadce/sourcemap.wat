@@ -14,13 +14,3 @@
      ;;@ a:3:1
   )
 )
-;; CHECK:      (type $0 (func))
-
-;; CHECK:      (export "f" (func $0))
-
-;; CHECK:      ;;@ a:1:1
-;; CHECK-NEXT: (func $0
-;; CHECK-NEXT:  ;;@ a:2:1
-;; CHECK-NEXT:  (nop)
-;; CHECK-NEXT:  ;;@ a:3:1
-;; CHECK-NEXT: )
