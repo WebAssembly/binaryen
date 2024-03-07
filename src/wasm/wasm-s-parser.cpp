@@ -1491,10 +1491,9 @@ Expression* SExpressionWasmBuilder::makeSelect(Element& s) {
   ret->ifTrue = parseExpression(s[i++]);
   ret->ifFalse = parseExpression(s[i++]);
   ret->condition = parseExpression(s[i]);
-  if (type.isConcrete()) {
-    ret->finalize(type);
-  } else {
-    ret->finalize();
+  ret->finalize();
+  if (type != Type::none && !Type::isSubType(ret->type, type)) {
+    throw SParseException("select type does not match annotation", s);
   }
   return ret;
 }

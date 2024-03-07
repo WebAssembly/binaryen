@@ -1278,7 +1278,6 @@ public:
   Expression* condition;
 
   void finalize();
-  void finalize(Type type_);
 };
 
 class Drop : public SpecificExpression<Expression::DropId> {

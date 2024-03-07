@@ -847,8 +847,7 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenSelect(BinaryenModuleRef module,
                BinaryenExpressionRef condition,
                BinaryenExpressionRef ifTrue,
-               BinaryenExpressionRef ifFalse,
-               BinaryenType type);
+               BinaryenExpressionRef ifFalse);
 BINARYEN_API BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module,
                                                 BinaryenExpressionRef value);
 // Return: value can be NULL

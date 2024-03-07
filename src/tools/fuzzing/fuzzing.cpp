@@ -3041,15 +3041,14 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
   WASM_UNREACHABLE("invalid type");
 }
 
-Expression* TranslateToFuzzReader::buildSelect(const ThreeArgs& args,
-                                               Type type) {
-  return builder.makeSelect(args.a, args.b, args.c, type);
+Expression* TranslateToFuzzReader::buildSelect(const ThreeArgs& args) {
+  return builder.makeSelect(args.a, args.b, args.c);
 }
 
 Expression* TranslateToFuzzReader::makeSelect(Type type) {
   Type subType1 = getSubType(type);
   Type subType2 = getSubType(type);
-  return buildSelect({make(Type::i32), make(subType1), make(subType2)}, type);
+  return buildSelect({make(Type::i32), make(subType1), make(subType2)});
 }
 
 Expression* TranslateToFuzzReader::makeSwitch(Type type) {

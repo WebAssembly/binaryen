@@ -1372,9 +1372,7 @@ Result<> IRBuilder::makeBinary(BinaryOp op) {
 Result<> IRBuilder::makeSelect(std::optional<Type> type) {
   Select curr;
   CHECK_ERR(visitSelect(&curr));
-  auto* built =
-    type ? builder.makeSelect(curr.condition, curr.ifTrue, curr.ifFalse, *type)
-         : builder.makeSelect(curr.condition, curr.ifTrue, curr.ifFalse);
+  auto* built = builder.makeSelect(curr.condition, curr.ifTrue, curr.ifFalse);
   if (type && !Type::isSubType(built->type, *type)) {
     return Err{"select type does not match expected type"};
   }

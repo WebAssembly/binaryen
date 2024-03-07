@@ -630,17 +630,6 @@ public:
     ret->finalize();
     return ret;
   }
-  Select* makeSelect(Expression* condition,
-                     Expression* ifTrue,
-                     Expression* ifFalse,
-                     Type type) {
-    auto* ret = wasm.allocator.alloc<Select>();
-    ret->condition = condition;
-    ret->ifTrue = ifTrue;
-    ret->ifFalse = ifFalse;
-    ret->finalize(type);
-    return ret;
-  }
   Return* makeReturn(Expression* value = nullptr) {
     auto* ret = wasm.allocator.alloc<Return>();
     ret->value = value;

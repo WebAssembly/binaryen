@@ -6790,11 +6790,7 @@ void WasmBinaryReader::visitSelect(Select* curr, uint8_t code) {
   curr->condition = popNonVoidExpression();
   curr->ifFalse = popNonVoidExpression();
   curr->ifTrue = popNonVoidExpression();
-  if (code == BinaryConsts::SelectWithType) {
-    curr->finalize(curr->type);
-  } else {
-    curr->finalize();
-  }
+  curr->finalize();
 }
 
 void WasmBinaryReader::visitReturn(Return* curr) {

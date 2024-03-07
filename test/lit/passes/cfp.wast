@@ -2245,14 +2245,12 @@
   ;; CHECK-NEXT:  (local $A (ref $A))
   ;; CHECK-NEXT:  (local $B (ref $B))
   ;; CHECK-NEXT:  (struct.set $A 0
-  ;; CHECK-NEXT:   (select (result (ref null $A))
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   (block (result (ref null $A))
   ;; CHECK-NEXT:    (local.tee $B
   ;; CHECK-NEXT:     (struct.new $B
   ;; CHECK-NEXT:      (i32.const 20)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (struct.get $A 0
   ;; CHECK-NEXT:    (struct.new $A
@@ -2273,16 +2271,14 @@
     ;; that we track the copied value even though the copy is on $A but it
     ;; affects $B.
     (struct.set $A 0
-      ;; This select is used to keep the type that reaches the struct.set $A,
+      ;; This block is used to keep the type that reaches the struct.set $A,
       ;; and not $B, so it looks like a perfect copy of $A->$A.
-      (select (result (ref null $A))
-        (ref.null $A)
+      (block (result (ref null $A))
         (local.tee $B
           (struct.new $B
             (i32.const 20)
           )
         )
-        (i32.const 0)
       )
       (struct.get $A 0
         (struct.new $A

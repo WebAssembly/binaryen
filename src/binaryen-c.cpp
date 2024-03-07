@@ -1320,17 +1320,12 @@ BinaryenExpressionRef BinaryenBinary(BinaryenModuleRef module,
 BinaryenExpressionRef BinaryenSelect(BinaryenModuleRef module,
                                      BinaryenExpressionRef condition,
                                      BinaryenExpressionRef ifTrue,
-                                     BinaryenExpressionRef ifFalse,
-                                     BinaryenType type) {
+                                     BinaryenExpressionRef ifFalse) {
   auto* ret = ((Module*)module)->allocator.alloc<Select>();
   ret->condition = (Expression*)condition;
   ret->ifTrue = (Expression*)ifTrue;
   ret->ifFalse = (Expression*)ifFalse;
-  if (type != BinaryenTypeAuto()) {
-    ret->finalize(Type(type));
-  } else {
-    ret->finalize();
-  }
+  ret->finalize();
   return static_cast<Expression*>(ret);
 }
 BinaryenExpressionRef BinaryenDrop(BinaryenModuleRef module,

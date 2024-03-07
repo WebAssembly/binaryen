@@ -6,11 +6,10 @@
 ;; only used in that one place in the whole module.
 
 (module
-  ;; CHECK:      (type $struct (struct ))
   (type $struct (struct))
 
   ;; CHECK:      (func $foo (type $0) (result anyref)
-  ;; CHECK-NEXT:  (select (result (ref null $struct))
+  ;; CHECK-NEXT:  (select (result nullref)
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:   (i32.const 1)

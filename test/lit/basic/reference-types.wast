@@ -663,7 +663,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (select (result anyref)
+  ;; CHECK-TEXT-NEXT:   (select (result eqref)
   ;; CHECK-TEXT-NEXT:    (local.get $local_eqref)
   ;; CHECK-TEXT-NEXT:    (ref.i31
   ;; CHECK-TEXT-NEXT:     (i32.const 0)
@@ -1198,7 +1198,7 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (drop
-  ;; CHECK-BIN-NEXT:   (select (result anyref)
+  ;; CHECK-BIN-NEXT:   (select (result eqref)
   ;; CHECK-BIN-NEXT:    (local.get $local_eqref)
   ;; CHECK-BIN-NEXT:    (ref.i31
   ;; CHECK-BIN-NEXT:     (i32.const 0)
@@ -2411,7 +2411,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (select (result anyref)
+;; CHECK-BIN-NODEBUG-NEXT:   (select (result eqref)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (ref.i31
 ;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 0)

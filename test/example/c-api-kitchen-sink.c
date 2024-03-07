@@ -1045,7 +1045,7 @@ void test_core() {
       module, 8, 0, 2, 8, BinaryenTypeFloat64(), makeInt32(module, 9), "0"),
     BinaryenStore(module, 4, 0, 0, temp13, temp14, BinaryenTypeInt32(), "0"),
     BinaryenStore(module, 8, 2, 4, temp15, temp16, BinaryenTypeInt64(), "0"),
-    BinaryenSelect(module, temp10, temp11, temp12, BinaryenTypeAuto()),
+    BinaryenSelect(module, temp10, temp11, temp12),
     BinaryenReturn(module, makeInt32(module, 1337)),
     // Tail call
     BinaryenReturnCall(
@@ -1064,8 +1064,7 @@ void test_core() {
       module,
       temp10,
       BinaryenRefNull(module, BinaryenTypeNullFuncref()),
-      BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref()),
-      BinaryenTypeFuncref()),
+      BinaryenRefFunc(module, "kitchen()sinker", BinaryenTypeFuncref())),
     // GC
     BinaryenRefEq(module,
                   BinaryenRefNull(module, BinaryenTypeNullref()),

@@ -20,6 +20,7 @@ Current Trunk
    the `else` branch itself.
  - Add a new `BinaryenModuleReadWithFeatures` function to the C API that allows
    to configure which features to enable in the parser.
+ - `BinaryenSelect` no longer takes a `BinaryenType` parameter.
 
 v117
 ----

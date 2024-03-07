@@ -5133,7 +5133,7 @@ private:
         curr->ifTrue = updateArm(curr->ifTrue);
         curr->ifFalse = updateArm(curr->ifFalse);
         un->value = curr;
-        curr->finalize(newType);
+        curr->finalize();
         return replaceCurrent(un);
       }
     }
