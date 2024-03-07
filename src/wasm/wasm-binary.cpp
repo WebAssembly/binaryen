@@ -4513,6 +4513,10 @@ void WasmBinaryReader::visitBreak(Break* curr, uint8_t code) {
   }
   if (target.type.isConcrete()) {
     curr->value = popTypedExpression(target.type);
+    if (curr->condition) {
+      // This is a br_if; set the type based on the target.
+      curr->type = target.type;
+    }
   }
   curr->finalize();
 }
