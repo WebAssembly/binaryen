@@ -742,7 +742,8 @@ BINARYEN_API BinaryenExpressionRef BinaryenLoop(BinaryenModuleRef module,
                                                 BinaryenExpressionRef body);
 // Break: value and condition can be NULL. type can be NULL, but must be
 //        provided for a `br_if` with a value (as the type depends on the block
-//        that is targeted).
+//        that is targeted). The type can also be NULL if the value type is an
+//        MVP type.
 BINARYEN_API BinaryenExpressionRef
 BinaryenBreak(BinaryenModuleRef module,
               const char* name,
