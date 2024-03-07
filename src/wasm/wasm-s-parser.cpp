@@ -2603,9 +2603,15 @@ Expression* SExpressionWasmBuilder::makeBreak(Element& s, bool isConditional) {
   if (isConditional && ret->value) {
     auto iter = blockTypes.find(ret->name);
     if (iter == blockTypes.end()) {
-      throw SParseException("br_if to invalid target", s);
+      // There is no block by that name, so this must target the function scope.
+      // We could also validate that it is in fact the function scope, but the
+      // main validator does that anyhow; all we need here is to generate valid
+      // IR if it is valid.
+      ret->type = currFunction->getResults();
+    } else {
+      // Get the type from the block.
+      ret->type = iter->second;
     }
-    ret->type = iter->second;
   }
   ret->finalize();
   return ret;
