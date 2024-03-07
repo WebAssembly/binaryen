@@ -465,15 +465,12 @@ void TranslateToFuzzReader::finalizeMemory() {
         // definition to what used to be an imported global in initial contents.
         // To fix that, replace such invalid offsets with a constant.
         for (auto* get : FindAll<GlobalGet>(segment->offset).list) {
-          // N.B: We never currently encounter imported globals here, but we do
-          // the check for robustness.
-          if (!wasm.getGlobal(get->name)->imported()) {
-            // TODO: It would be better to avoid segment overlap so that
-            //       MemoryPacking can run.
-            segment->offset =
-              builder.makeConst(Literal::makeFromInt32(0, Type::i32));
-            break;
-          }
+          // No imported globals should remain.
+          assert(!wasm.getGlobal(get->name)->imported());
+          // TODO: It would be better to avoid segment overlap so that
+          //       MemoryPacking can run.
+          segment->offset =
+            builder.makeConst(Literal::makeFromInt32(0, Type::i32));
         }
       }
       if (auto* offset = segment->offset->dynCast<Const>()) {
@@ -512,13 +509,11 @@ void TranslateToFuzzReader::finalizeTable() {
         // that.
         if (!wasm.features.hasGC()) {
           for (auto* get : FindAll<GlobalGet>(segment->offset).list) {
-            // N.B: We never currently encounter imported globals here, but we
-            // do the check for robustness.
-            if (!wasm.getGlobal(get->name)->imported()) {
-              // TODO: the segments must not overlap...
-              segment->offset =
-                builder.makeConst(Literal::makeFromInt32(0, Type::i32));
-            }
+            // No imported globals should remain.
+            assert(!wasm.getGlobal(get->name)->imported());
+            // TODO: the segments must not overlap...
+            segment->offset =
+              builder.makeConst(Literal::makeFromInt32(0, Type::i32));
           }
         }
         Address maxOffset = segment->data.size();
