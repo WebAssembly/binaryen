@@ -1229,4 +1229,26 @@
    (local.get $nn-any)
   )
  )
+
+ (func $refinalize-refine-br_if-tuple (param $nn-any (ref any)) (result anyref i32)
+  ;; As above, but with a tuple containing a reference.
+  (nop)
+  (block $block (result anyref i32)
+   (tuple.drop 2
+    (block $ignore (result anyref i32)
+     (br_if $block
+      (tuple.make 2
+       (local.get $nn-any)
+       (i32.const 0)
+      )
+      (i32.const 1)
+     )
+    )
+   )
+   (tuple.make 2
+    (local.get $nn-any)
+    (i32.const 2)
+   )
+  )
+ )
 )

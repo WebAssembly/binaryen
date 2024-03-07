@@ -417,7 +417,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             br->condition =
               builder.makeSelect(br->condition, curr->condition, zero);
           }
-          if (br->value) {
+          if (br->value && br->value->type.containsRef()) {
             // Update the br_if's type based on the block.
             assert(concreteBlockTypes.count(br->name));
             br->type = concreteBlockTypes[br->name];
@@ -487,7 +487,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     }
 
     if (auto* block = curr->dynCast<Block>()) {
-      if (block->type.isConcrete()) {
+      if (block->type.containsRef()) {
         self->concreteBlockTypes[block->name] = block->type;
       }
     }
@@ -1697,7 +1697,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // have changed since then.
       static void scan(FinalOptimizer* self, Expression** currp) {
         if (auto* block = (*currp)->dynCast<Block>()) {
-          if (block->type.isConcrete()) {
+          if (block->type.containsRef()) {
             self->concreteBlockTypes[block->name] = block->type;
           }
         }
@@ -1710,7 +1710,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // Update a br_if's type based on the block.
       void updateBrIfType(Break* br) {
         assert(br->condition);
-        if (br->value) {
+        if (br->value && br->value->type.containsRef()) {
           assert(concreteBlockTypes.count(br->name));
           br->type = concreteBlockTypes[br->name];
         }

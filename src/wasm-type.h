@@ -173,6 +173,8 @@ public:
   bool isException() const;
   bool isString() const;
   bool isDefaultable() const;
+  // The same as isRef() but also returns true for a tuple containing a ref.
+  bool containsRef() const;
 
   Nullability getNullability() const;
 

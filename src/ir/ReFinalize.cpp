@@ -51,7 +51,7 @@ void ReFinalize::doWalkFunction(Function* func) {
       for (auto* br : info.brs) {
         // We would have ignored an unreachable or MVP br_if before; only
         // references must be refined.
-        assert(br->type.isRef());
+        assert(br->type.containsRef());
         if (br->type != blockType) {
           br->type = blockType;
           updatedBr = true;
@@ -117,7 +117,7 @@ void ReFinalize::visitBreak(Break* curr) {
     updateBreakValueType(curr->name, valueType);
   }
   // Note relevant br_ifs for type updating later.
-  if (curr->condition && curr->value && curr->type.isRef()) {
+  if (curr->condition && curr->value && curr->type.containsRef()) {
     blockBrInfoMap[curr->name].brs.push_back(curr);
   }
 }
