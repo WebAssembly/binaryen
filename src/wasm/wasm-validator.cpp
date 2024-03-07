@@ -250,10 +250,6 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   // Maps a label name (block etc.) to the br_ifs targetting it.
   std::unordered_map<Name, std::vector<Break*>> labelBrIfs;
 
-  // Given a label and the type of it, like a block's name and its type,
-  // validate all br_ifs we've seen that target it.
-  void validateBrIfs(Name label, Type type);
-
 public:
   // visitors
 
@@ -619,16 +615,6 @@ void FunctionValidator::noteLabelName(Name name) {
     "names in Binaryen IR must be unique - IR generators must ensure that");
 }
 
-void FunctionValidator::validateBrIfs(Name label, Type type) {
-  if (auto iter = labelBrIfs.find(name); iter != labelBrIfs.end()) {
-    for (auto* brIf : iter->second) {
-      assert(brIf->value && brIf->condition); // This must be an actual br_if.
-      shouldBeEqual(
-        type, brIf->type, brIf, "br_ifs to a block must have the block's type");
-    }
-  }
-}
-
 void FunctionValidator::validatePoppyExpression(Expression* curr) {
   if (curr->type == Type::unreachable) {
     shouldBeTrue(StackUtils::mayBeUnreachable(curr),
@@ -687,7 +673,15 @@ void FunctionValidator::visitBlock(Block* curr) {
     }
     breakTypes.erase(iter);
 
-    validateBrIfs(curr->name, curr->type);
+    // Validate br_if types as matching this block's type.
+    if (auto iter = labelBrIfs.find(curr->name); iter != labelBrIfs.end()) {
+      for (auto* brIf : iter->second) {
+        // This must be an actual br_if with a value.
+        assert(brIf->value && brIf->condition);
+        shouldBeEqual(
+          curr->type, brIf->type, brIf, "br_ifs to a block must have the block's type");
+      }
+    }
   }
   switch (getFunction()->profile) {
     case IRProfile::Normal:
@@ -801,8 +795,10 @@ void FunctionValidator::visitLoop(Loop* curr) {
     }
     breakTypes.erase(iter);
 
-    // validateBrIfs(curr->name, curr->type); // XXX breaks must have type none,
-    // so no br_ifs!
+    // Validate there are no br_ifs with values targeting us.
+    shouldBeTrue(!labelBrIfs.count(curr->name),
+                 curr,
+                 "loops cannot have br_ifs ith values targeting them");
   }
   if (curr->type == Type::none) {
     shouldBeFalse(curr->body->type.isConcrete(),
