@@ -457,7 +457,7 @@ options.spec_tests = [t for t in options.spec_tests if os.path.basename(t) not
 # check utilities
 
 def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
-                        binary_suffix='.fromBinary', original_wast=None):
+                        binary_suffix='.fromBinary'):
     # checks we can convert the wast to binary and back
 
     print('         (binary format check)')
