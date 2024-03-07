@@ -247,6 +247,13 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
 
   void noteLabelName(Name name);
 
+  // Maps a label name (block etc.) to the br_ifs targetting it.
+  std::unordered_map<Name, std::vector<Break*>> labelBrIfs;
+
+  // Given a label and the type of it, like a block's name and its type,
+  // validate all br_ifs we've seen that target it.
+  void validateBrIfs(Name label, Type type);
+
 public:
   // visitors
 
@@ -612,6 +619,18 @@ void FunctionValidator::noteLabelName(Name name) {
     "names in Binaryen IR must be unique - IR generators must ensure that");
 }
 
+void FunctionValidator::validateBrIfs(Name label, Type type) {
+  if (auto iter = labelBrIfs.find(name); iter != labelBrIfs.end()) {
+    for (auto* brIf : iter->second) {
+      assert(brIf->value && brIf->condition); // This must be an actual br_if.
+      shouldBeEqual(type,
+                    brIf->type,
+                    brIf,
+                    "br_ifs to a block must have the block's type");
+    }
+  }
+}
+
 void FunctionValidator::validatePoppyExpression(Expression* curr) {
   if (curr->type == Type::unreachable) {
     shouldBeTrue(StackUtils::mayBeUnreachable(curr),
@@ -652,8 +671,8 @@ void FunctionValidator::visitBlock(Block* curr) {
       curr,
       "Multivalue block type require multivalue [--enable-multivalue]");
   }
-  // if we are break'ed to, then the value must be right for us
   if (curr->name.is()) {
+    // If we are break'ed to, then the value must be right for us
     noteLabelName(curr->name);
     auto iter = breakTypes.find(curr->name);
     assert(iter != breakTypes.end()); // we set it ourselves
@@ -669,6 +688,8 @@ void FunctionValidator::visitBlock(Block* curr) {
                       "break type must be a subtype of the target block type");
     }
     breakTypes.erase(iter);
+
+    validateBrIfs(curr->name, curr->type);
   }
   switch (getFunction()->profile) {
     case IRProfile::Normal:
@@ -781,6 +802,8 @@ void FunctionValidator::visitLoop(Loop* curr) {
                     "breaks to a loop cannot pass a value");
     }
     breakTypes.erase(iter);
+
+    validateBrIfs(curr->name, curr->type);
   }
   if (curr->type == Type::none) {
     shouldBeFalse(curr->body->type.isConcrete(),
@@ -889,6 +912,9 @@ void FunctionValidator::visitBreak(Break* curr) {
                    curr->condition->type == Type::i32,
                  curr,
                  "break condition must be i32");
+  }
+  if (curr->condition && curr->value) {
+    labelBrIfs[curr->name].push_back(curr);
   }
 }
 

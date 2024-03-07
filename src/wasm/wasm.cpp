@@ -251,17 +251,12 @@ void Break::finalize() {
   if (condition) {
     if (condition->type == Type::unreachable) {
       type = Type::unreachable;
-    } else if (value) {
-      // N.B. This is not correct wrt the spec, which mandates that it be the
-      // type of the block we target. In practice this does not matter because
-      // the br_if return value is not really used in the wild. To fix this,
-      // we'd need to do something like what we do for local.tee's type, which
-      // is to fix it up in a way that is aware of function-level context and
-      // not just the instruction itself (which would be a pain).
-      type = value->type;
-    } else {
+    } else if (!value) {
       type = Type::none;
     }
+    // Note that we do nothing for a reachable br_if. Its type must match the
+    // type of the block it targets, which we do not see here, so it is up to
+    // optimization passes to manually update it as (rarely) needed.
   } else {
     type = Type::unreachable;
   }
