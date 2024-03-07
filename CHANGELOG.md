@@ -18,6 +18,8 @@ Current Trunk
  - (If new wat parser is enabled) Source map comments on `else` branches must
    now be placed above the instruction inside the `else` branch rather than on
    the `else` branch itself.
+ - Add a new `BinaryenModuleReadWithFeatures` function to the C API that allows
+   to configure which features to enable in the parser.
 
 v117
 ----
