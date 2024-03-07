@@ -1545,6 +1545,9 @@ Result<> IRBuilder::makeThrowRef() {
 }
 
 Result<> IRBuilder::makeTupleMake(uint32_t arity) {
+  if (arity < 2) {
+    return Err{"tuple arity must be at least 2"};
+  }
   TupleMake curr(wasm.allocator);
   curr.operands.resize(arity);
   CHECK_ERR(visitTupleMake(&curr));
@@ -1553,6 +1556,12 @@ Result<> IRBuilder::makeTupleMake(uint32_t arity) {
 }
 
 Result<> IRBuilder::makeTupleExtract(uint32_t arity, uint32_t index) {
+  if (index >= arity) {
+    return Err{"tuple index out of bounds"};
+  }
+  if (arity < 2) {
+    return Err{"tuple arity must be at least 2"};
+  }
   TupleExtract curr;
   CHECK_ERR(visitTupleExtract(&curr, arity));
   push(builder.makeTupleExtract(curr.tuple, index));
@@ -1560,6 +1569,9 @@ Result<> IRBuilder::makeTupleExtract(uint32_t arity, uint32_t index) {
 }
 
 Result<> IRBuilder::makeTupleDrop(uint32_t arity) {
+  if (arity < 2) {
+    return Err{"tuple arity must be at least 2"};
+  }
   Drop curr;
   CHECK_ERR(visitDrop(&curr, arity));
   push(builder.makeDrop(curr.value));
