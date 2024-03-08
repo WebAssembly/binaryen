@@ -145,13 +145,14 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
 // need to contain blocks with MVP types, as we can infer those from the value.
 // This also finalizes at the end.
 using BlockTypeMap = std::unordered_map<Name, Type>;
-void updateBrIfType(Break* br, const BlockTypeMap& blockTypeMap) {
+static void updateBrIfType(Break* br, const BlockTypeMap& blockTypeMap) {
   assert(br->condition);
   assert(br->condition);
   if (br->value) {
     if (br->value->type.containsRef()) {
-      assert(blockTypeMap.count(br->name));
-      br->type = blockTypeMap[br->name];
+      auto iter = blockTypeMap.find(br->name);
+      assert(iter != blockTypeMap.end());
+      br->type = iter->second;
     } else {
       // A simple type we can infer from the value.
       br->type = br->value->type;
@@ -1719,7 +1720,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         PostWalker<FinalOptimizer>::scan(self, currp);
       }
 
-      std::unordered_map<Name, Type> concreteBlockTypes;
+      std::unordered_map<Name, Type> blockTypes;
     };
     FinalOptimizer finalOptimizer(getPassOptions());
     finalOptimizer.setModule(getModule());
