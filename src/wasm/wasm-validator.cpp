@@ -918,7 +918,7 @@ void FunctionValidator::visitBreak(Break* curr) {
   // child.
   if (curr->type == Type::unreachable && curr->condition) {
     shouldBeTrue(curr->condition->type == Type::unreachable ||
-                 (curr->value && curr->value->type == Type::unreachable),
+                   (curr->value && curr->value->type == Type::unreachable),
                  curr,
                  "unreachable break with condition or no unreachable child");
   }
