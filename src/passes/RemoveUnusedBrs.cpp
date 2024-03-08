@@ -272,11 +272,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           break;
         }
       }
+      // Otherwise it is ok for properly-typed values to flow out.
+      self->stopUnrefinedValueFlow(curr->type);
     } else if (curr->is<Nop>()) {
       // ignore (could be result of a previous cycle)
       self->stopValueFlow();
     } else if (curr->is<Loop>()) {
-      // do nothing - it's ok for values to flow out
+      // As with a block, it is ok for properly-typed values to flow out.
+      self->stopUnrefinedValueFlow(curr->type);
     } else if (auto* sw = curr->dynCast<Switch>()) {
       self->stopFlow();
       self->optimizeSwitch(sw);
@@ -302,6 +305,44 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   }
 
   void stopValueFlow() { removeValueFlow(flows); }
+
+  // Stop a value from flowing that is not as refined as a given type. For
+  // example:
+  //
+  //  (block (result $sub)
+  //    ..maybe other branches to the block..
+  //    (return (super))    ;; the function returns super; the block is sub
+  //  )
+  //
+  //  If we let the value flow through, we'd be forced to unrefine the block:
+  //
+  //  (block (result $super)
+  //    ..maybe other branches to the block..
+  //    (super)
+  //  )
+  //
+  // It is best to avoid unrefining like that, so keep the |return|.
+  void stopUnrefinedValueFlow(Type type) {
+    if (!getModule()->features.hasGC()) {
+      return;
+    }
+    flows.erase(std::remove_if(flows.begin(),
+                               flows.end(),
+                               [&](Expression** currp) {
+                                 auto* curr = *currp;
+                                 Expression* value;
+                                 if (auto* ret = curr->dynCast<Return>()) {
+                                   value = ret->value;
+                                 } else {
+                                   value = curr->cast<Break>()->value;
+                                 }
+                                 // Remove if there is a value, and it is
+                                 // unrefined.
+                                 return value &&
+                                        !Type::isSubType(value->type, type);
+                               }),
+                flows.end());
+  }
 
   static void clear(RemoveUnusedBrs* self, Expression** currp) {
     self->flows.clear();
