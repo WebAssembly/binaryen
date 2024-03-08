@@ -18,6 +18,8 @@ Current Trunk
  - (If new wat parser is enabled) Source map comments on `else` branches must
    now be placed above the instruction inside the `else` branch rather than on
    the `else` branch itself.
+ - Add a new `BinaryenModuleReadWithFeatures` function to the C API that allows
+   to configure which features to enable in the parser.
 
  - Fix the result type of `br_if` to match the spec. This means that `br_if` now
    returns a less precise type than before. In the IR it means that the type of

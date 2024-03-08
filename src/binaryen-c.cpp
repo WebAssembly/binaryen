@@ -5862,20 +5862,25 @@ char* BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef module,
   return output;
 }
 
-BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
+BinaryenModuleRef BinaryenModuleReadWithFeatures(char* input,
+                                                 size_t inputSize,
+                                                 BinaryenFeatures features) {
   auto* wasm = new Module;
   std::vector<char> buffer(false);
   buffer.resize(inputSize);
   std::copy_n(input, inputSize, buffer.begin());
   try {
-    // TODO: allow providing features in the C API
-    WasmBinaryReader parser(*wasm, FeatureSet::MVP, buffer);
+    WasmBinaryReader parser(*wasm, features, buffer);
     parser.read();
   } catch (ParseException& p) {
     p.dump(std::cerr);
     Fatal() << "error in parsing wasm binary";
   }
   return wasm;
+}
+
+BinaryenModuleRef BinaryenModuleRead(char* input, size_t inputSize) {
+  return BinaryenModuleReadWithFeatures(input, inputSize, BinaryenFeatureMVP());
 }
 
 void BinaryenModuleInterpret(BinaryenModuleRef module) {

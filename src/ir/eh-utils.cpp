@@ -84,7 +84,7 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
         } else {
           isPopNested = true;
         }
-      } else if (firstChild->is<Try>()) {
+      } else if (firstChild->is<Try>() || firstChild->is<TryTable>()) {
         isPopNested = true;
       } else {
         WASM_UNREACHABLE("Unexpected control flow expression");

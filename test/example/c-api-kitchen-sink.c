@@ -401,6 +401,32 @@ void test_features() {
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
 }
 
+void test_read_with_feature() {
+  BinaryenModuleRef module = BinaryenModuleCreate();
+  // Having multiple tables makes this module inherently not MVP compatible
+  // and requires the externref feature enabled to parse successfully.
+  BinaryenAddTable(module, "tab", 0, 100, BinaryenTypeFuncref());
+  BinaryenAddTable(module, "tab2", 0, 100, BinaryenTypeFuncref());
+
+  BinaryenFeatures features =
+    BinaryenFeatureMVP() | BinaryenFeatureReferenceTypes();
+  BinaryenModuleSetFeatures(module, features);
+
+  size_t bufferSize = 1024;
+  char* buffer = malloc(bufferSize);
+  size_t written = BinaryenModuleWrite(module, buffer, bufferSize);
+  BinaryenModuleDispose(module);
+
+  // See we can read the bytes and get a valid module from there.
+  BinaryenModuleRef readModule =
+    BinaryenModuleReadWithFeatures(buffer, written, features);
+  int valid = BinaryenModuleValidate(readModule);
+  assert(valid);
+  BinaryenModuleDispose(readModule);
+
+  free(buffer);
+}
+
 void test_core() {
 
   // Module creation
