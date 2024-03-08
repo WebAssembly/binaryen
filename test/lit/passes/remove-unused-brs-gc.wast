@@ -190,7 +190,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_unrelated (type $4) (result (ref null $struct))
+ ;; CHECK:      (func $br_on_cast_unrelated (type $3) (result (ref null $struct))
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result nullref)
  ;; CHECK-NEXT:   (drop
@@ -244,7 +244,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_unrelated-fallthrough (type $4) (result (ref null $struct))
+ ;; CHECK:      (func $br_on_cast_unrelated-fallthrough (type $3) (result (ref null $struct))
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result nullref)
@@ -307,7 +307,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail (type $3) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail (type $4) (result anyref)
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref null $struct))
  ;; CHECK-NEXT:   (drop
@@ -354,7 +354,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail-fallthrough (type $3) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail-fallthrough (type $4) (result anyref)
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result anyref)
@@ -410,7 +410,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail_unrelated (type $3) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail_unrelated (type $4) (result anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result (ref null $struct2))
  ;; CHECK-NEXT:   (drop
@@ -472,7 +472,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail_unrelated-fallthrough (type $3) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail_unrelated-fallthrough (type $4) (result anyref)
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result anyref)
@@ -783,19 +783,40 @@
   )
  )
 
- ;; CHECK:      (func $never-unrefine (type $4) (result (ref null $struct))
- ;; CHECK-NEXT:  (block $block (result (ref $substruct))
+ ;; CHECK:      (func $never-unrefine (type $3) (result (ref null $struct))
+ ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (nop)
- ;; CHECK-NEXT:   (return
- ;; CHECK-NEXT:    (struct.new_default $struct)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (struct.new_default $struct)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $never-unrefine (result (ref null $struct))
+  ;; This block is more refined than the function's result, and we should not
+  ;; unrefine it (which would happen if we removed the |return|).
+  ;;
+  ;; In this trivial case the block would be removed by vacuum anyhow, but in
+  ;; other situations it can be harmful to unrefine; for example, if there are
+  ;; br_ifs targeting the block as well, then they would end up unrefined too.
   (block $block (result (ref $substruct))
    (nop) ;; avoid this being a trivial block
    (return
     (struct.new_default $struct)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $never-unrefine-ok (type $3) (result (ref null $struct))
+ ;; CHECK-NEXT:  (block $block (result (ref $substruct))
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (struct.new_default $substruct)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $never-unrefine-ok (result (ref null $struct))
+  ;; As above, but now we send in a sufficiently-refined type, so we can
+  ;; optimize and remove the return.
+  (block $block (result (ref $substruct))
+   (nop)
+   (return
+    (struct.new_default $substruct) ;; this changed
    )
   )
  )
