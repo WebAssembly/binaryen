@@ -914,6 +914,14 @@ void FunctionValidator::visitBreak(Break* curr) {
   if (curr->condition && curr->value) {
     labelBrIfs[curr->name].push_back(curr);
   }
+  // An unreachable br must have no condition, or it must have an unreachable
+  // child.
+  if (curr->type == Type::unreachable && curr->condition) {
+    shouldBeTrue(curr->condition->type == Type::unreachable ||
+                 (curr->value && curr->value->type == Type::unreachable),
+                 curr,
+                 "unreachable break with condition or no unreachable child");
+  }
 }
 
 void FunctionValidator::visitSwitch(Switch* curr) {
