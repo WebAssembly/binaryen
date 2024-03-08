@@ -104,7 +104,7 @@
   ;; CHECK_0-NEXT: )
   ;; CHECK_1:      (func $pointless-work (type $1) (result i32)
   ;; CHECK_1-NEXT:  (local $0 i32)
-  ;; CHECK_1-NEXT:  (loop $loop
+  ;; CHECK_1-NEXT:  (loop $loop (result i32)
   ;; CHECK_1-NEXT:   (br_if $loop
   ;; CHECK_1-NEXT:    (i32.lt_u
   ;; CHECK_1-NEXT:     (local.tee $0
@@ -116,14 +116,12 @@
   ;; CHECK_1-NEXT:     (i32.const 12345678)
   ;; CHECK_1-NEXT:    )
   ;; CHECK_1-NEXT:   )
-  ;; CHECK_1-NEXT:   (return
-  ;; CHECK_1-NEXT:    (local.get $0)
-  ;; CHECK_1-NEXT:   )
+  ;; CHECK_1-NEXT:   (local.get $0)
   ;; CHECK_1-NEXT:  )
   ;; CHECK_1-NEXT: )
   ;; CHECK_3:      (func $pointless-work (type $1) (; has Stack IR ;) (result i32)
   ;; CHECK_3-NEXT:  (local $0 i32)
-  ;; CHECK_3-NEXT:  (loop $loop
+  ;; CHECK_3-NEXT:  (loop $loop (result i32)
   ;; CHECK_3-NEXT:   (br_if $loop
   ;; CHECK_3-NEXT:    (i32.lt_u
   ;; CHECK_3-NEXT:     (local.tee $0
@@ -135,14 +133,12 @@
   ;; CHECK_3-NEXT:     (i32.const 12345678)
   ;; CHECK_3-NEXT:    )
   ;; CHECK_3-NEXT:   )
-  ;; CHECK_3-NEXT:   (return
-  ;; CHECK_3-NEXT:    (local.get $0)
-  ;; CHECK_3-NEXT:   )
+  ;; CHECK_3-NEXT:   (local.get $0)
   ;; CHECK_3-NEXT:  )
   ;; CHECK_3-NEXT: )
   ;; CHECK_s:      (func $pointless-work (type $1) (; has Stack IR ;) (result i32)
   ;; CHECK_s-NEXT:  (local $0 i32)
-  ;; CHECK_s-NEXT:  (loop $loop
+  ;; CHECK_s-NEXT:  (loop $loop (result i32)
   ;; CHECK_s-NEXT:   (br_if $loop
   ;; CHECK_s-NEXT:    (i32.lt_u
   ;; CHECK_s-NEXT:     (local.tee $0
@@ -154,14 +150,12 @@
   ;; CHECK_s-NEXT:     (i32.const 12345678)
   ;; CHECK_s-NEXT:    )
   ;; CHECK_s-NEXT:   )
-  ;; CHECK_s-NEXT:   (return
-  ;; CHECK_s-NEXT:    (local.get $0)
-  ;; CHECK_s-NEXT:   )
+  ;; CHECK_s-NEXT:   (local.get $0)
   ;; CHECK_s-NEXT:  )
   ;; CHECK_s-NEXT: )
   ;; CHECK_O:      (func $pointless-work (type $1) (; has Stack IR ;) (result i32)
   ;; CHECK_O-NEXT:  (local $0 i32)
-  ;; CHECK_O-NEXT:  (loop $loop
+  ;; CHECK_O-NEXT:  (loop $loop (result i32)
   ;; CHECK_O-NEXT:   (br_if $loop
   ;; CHECK_O-NEXT:    (i32.lt_u
   ;; CHECK_O-NEXT:     (local.tee $0
@@ -173,9 +167,7 @@
   ;; CHECK_O-NEXT:     (i32.const 12345678)
   ;; CHECK_O-NEXT:    )
   ;; CHECK_O-NEXT:   )
-  ;; CHECK_O-NEXT:   (return
-  ;; CHECK_O-NEXT:    (local.get $0)
-  ;; CHECK_O-NEXT:   )
+  ;; CHECK_O-NEXT:   (local.get $0)
   ;; CHECK_O-NEXT:  )
   ;; CHECK_O-NEXT: )
   (func $pointless-work (result i32)

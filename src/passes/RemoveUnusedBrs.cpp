@@ -326,7 +326,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   // It is best to avoid unrefining like that, so block the flow of such values
   // here.
   void stopUnrefinedValueFlow(Type type) {
-    if (!getModule()->features.hasGC()) {
+    if (type == Type::unreachable) {
+      // We are flowing through something currently unreachable. Us flowing
+      // through it may turn it reachable, which is fine, and there are no
+      // subtyping risks here, so nothing to check.
+      return;
+    }
+    if (!type.containsRef()) {
+      // Subtyping cannot be an issue here.
       return;
     }
     flows.erase(std::remove_if(flows.begin(),
