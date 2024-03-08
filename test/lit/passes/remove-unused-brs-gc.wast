@@ -48,7 +48,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast (type $4) (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast (type $5) (result (ref $struct))
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
@@ -99,7 +99,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast-fallthrough (type $4) (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast-fallthrough (type $5) (result (ref $struct))
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
@@ -190,7 +190,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_unrelated (type $5) (result (ref null $struct))
+ ;; CHECK:      (func $br_on_cast_unrelated (type $4) (result (ref null $struct))
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result nullref)
  ;; CHECK-NEXT:   (drop
@@ -244,7 +244,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_unrelated-fallthrough (type $5) (result (ref null $struct))
+ ;; CHECK:      (func $br_on_cast_unrelated-fallthrough (type $4) (result (ref null $struct))
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result nullref)
@@ -779,6 +779,23 @@
     (else
      (ref.null any)
     )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $never-unrefine (type $4) (result (ref null $struct))
+ ;; CHECK-NEXT:  (block $block (result (ref $substruct))
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (struct.new_default $struct)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $never-unrefine (result (ref null $struct))
+  (block $block (result (ref $substruct))
+   (nop) ;; avoid this being a trivial block
+   (return
+    (struct.new_default $struct)
    )
   )
  )
