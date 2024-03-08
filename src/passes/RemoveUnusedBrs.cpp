@@ -140,10 +140,12 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
   return tooCostlyToRunUnconditionally(passOptions, max);
 }
 
-// Utility to update a br_if type based on its value and the type of the block
-// it branches to. Receives a map of block name to block types. The map does not
-// need to contain blocks with MVP types, as we can infer those from the value.
-// This also finalizes at the end.
+// Utility to update a br_if type after a change. This receives the br and a
+// mapping of block names to their types, which it uses if it needs to (in
+// particular, we do not need the mapping to figure out the type of a br_if
+// when the value has MVP type, so the mapping can only contain things relevant
+// to GC). This also calls finalize as needed, so that after calling it the
+// br_if type is fully updated.
 using BlockTypeMap = std::unordered_map<Name, Type>;
 static void updateBrIfType(Break* br, const BlockTypeMap& blockTypeMap) {
   assert(br->condition);
