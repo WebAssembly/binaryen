@@ -137,6 +137,7 @@ struct ReFinalize
   // type changes. We must also track block names to blocks for this, so we
   // track all that using the block name as the key.
   struct BlockBrInfo {
+    // The block and its relevant breaks.
     Block* block = nullptr;
     std::vector<Break*> brs;
 
