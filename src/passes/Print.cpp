@@ -254,58 +254,83 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitTry(Try* curr);
   void visitTryTable(TryTable* curr);
   void visitResume(Resume* curr);
-  void maybePrintUnreachableReplacement(Expression* curr, Type type);
-  void maybePrintUnreachableOrNullReplacement(Expression* curr, Type type);
+  bool maybePrintUnreachableReplacement(Expression* curr, Type type);
+  bool maybePrintUnreachableOrNullReplacement(Expression* curr, Type type);
   void visitCallRef(CallRef* curr) {
-    maybePrintUnreachableOrNullReplacement(curr, curr->target->type);
+    if (!maybePrintUnreachableOrNullReplacement(curr, curr->target->type)) {
+      visitExpression(curr);
+    }
   }
   void visitRefCast(RefCast* curr) {
-    maybePrintUnreachableReplacement(curr, curr->type);
+    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
+      visitExpression(curr);
+    }
   }
   void visitStructNew(StructNew* curr) {
-    maybePrintUnreachableReplacement(curr, curr->type);
+    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
+      visitExpression(curr);
+    }
   }
   void visitStructSet(StructSet* curr) {
-    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
+    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
+      visitExpression(curr);
+    }
   }
   void visitStructGet(StructGet* curr) {
-    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
+    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
+      visitExpression(curr);
+    }
   }
   void visitArrayNew(ArrayNew* curr) {
-    maybePrintUnreachableReplacement(curr, curr->type);
+    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
+      visitExpression(curr);
+    }
   }
   void visitArrayNewData(ArrayNewData* curr) {
-    maybePrintUnreachableReplacement(curr, curr->type);
+    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
+      visitExpression(curr);
+    }
   }
   void visitArrayNewElem(ArrayNewElem* curr) {
-    maybePrintUnreachableReplacement(curr, curr->type);
+    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
+      visitExpression(curr);
+    }
   }
   void visitArrayNewFixed(ArrayNewFixed* curr) {
-    maybePrintUnreachableReplacement(curr, curr->type);
+    if (!maybePrintUnreachableReplacement(curr, curr->type)) {
+      visitExpression(curr);
+    }
   }
   void visitArraySet(ArraySet* curr) {
-    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
+    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
+      visitExpression(curr);
+    }
   }
   void visitArrayGet(ArrayGet* curr) {
-    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
+    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
+      visitExpression(curr);
+    }
   }
   void visitArrayCopy(ArrayCopy* curr) {
-    if (curr->srcRef->type == Type::unreachable ||
-        curr->destRef->type == Type::unreachable ||
-        curr->srcRef->type.isNull() || curr->destRef->type.isNull()) {
-      maybePrintUnreachableOrNullReplacement(curr, Type::unreachable);
-      return;
+    if (!maybePrintUnreachableOrNullReplacement(curr, curr->srcRef->type) &&
+        !maybePrintUnreachableOrNullReplacement(curr, curr->destRef->type)) {
+      visitExpression(curr);
     }
-    visitExpression(curr);
   }
   void visitArrayFill(ArrayFill* curr) {
-    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
+    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
+      visitExpression(curr);
+    }
   }
   void visitArrayInitData(ArrayInitData* curr) {
-    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
+    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
+      visitExpression(curr);
+    }
   }
   void visitArrayInitElem(ArrayInitElem* curr) {
-    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
+    if (!maybePrintUnreachableOrNullReplacement(curr, curr->ref->type)) {
+      visitExpression(curr);
+    }
   }
 
   // Module-level visitors
@@ -1999,33 +2024,7 @@ struct PrintExpressionContents
     printMedium(o, curr->signed_ ? "i31.get_s" : "i31.get_u");
   }
 
-  // If we cannot print a valid unreachable instruction (say, a struct.get,
-  // where if the ref is unreachable, we don't know what heap type to print),
-  // then print the children in a block, which is good enough as this
-  // instruction is never reached anyhow.
-  //
-  // This function checks if the input is in fact unreachable, and if so, begins
-  // to emit a replacement for it and returns true.
-  bool printUnreachableReplacement(Expression* curr) {
-    if (curr->type == Type::unreachable) {
-      printMedium(o, "block");
-      return true;
-    }
-    return false;
-  }
-  bool printUnreachableOrNullReplacement(Expression* curr) {
-    if (curr->type == Type::unreachable || curr->type.isNull()) {
-      printMedium(o, "block");
-      return true;
-    }
-    return false;
-  }
-
   void visitCallRef(CallRef* curr) {
-    // TODO: Workaround if target has bottom type.
-    if (printUnreachableOrNullReplacement(curr->target)) {
-      return;
-    }
     printMedium(o, curr->isReturn ? "return_call_ref " : "call_ref ");
     printHeapType(curr->target->type.getHeapType());
   }
@@ -2034,9 +2033,6 @@ struct PrintExpressionContents
     printType(curr->castType);
   }
   void visitRefCast(RefCast* curr) {
-    if (printUnreachableReplacement(curr)) {
-      return;
-    }
     printMedium(o, "ref.cast ");
     printType(curr->type);
   }
@@ -2071,9 +2067,6 @@ struct PrintExpressionContents
     WASM_UNREACHABLE("Unexpected br_on* op");
   }
   void visitStructNew(StructNew* curr) {
-    if (printUnreachableReplacement(curr)) {
-      return;
-    }
     printMedium(o, "struct.new");
     if (curr->isWithDefault()) {
       printMedium(o, "_default");
@@ -2090,9 +2083,6 @@ struct PrintExpressionContents
     }
   }
   void visitStructGet(StructGet* curr) {
-    if (printUnreachableOrNullReplacement(curr->ref)) {
-      return;
-    }
     auto heapType = curr->ref->type.getHeapType();
     const auto& field = heapType.getStruct().fields[curr->index];
     if (field.type == Type::i32 && field.packedType != Field::not_packed) {
@@ -2109,9 +2099,6 @@ struct PrintExpressionContents
     printFieldName(heapType, curr->index);
   }
   void visitStructSet(StructSet* curr) {
-    if (printUnreachableOrNullReplacement(curr->ref)) {
-      return;
-    }
     printMedium(o, "struct.set ");
     auto heapType = curr->ref->type.getHeapType();
     printHeapType(heapType);
@@ -2119,9 +2106,6 @@ struct PrintExpressionContents
     printFieldName(heapType, curr->index);
   }
   void visitArrayNew(ArrayNew* curr) {
-    if (printUnreachableReplacement(curr)) {
-      return;
-    }
     printMedium(o, "array.new");
     if (curr->isWithDefault()) {
       printMedium(o, "_default");
@@ -2130,9 +2114,6 @@ struct PrintExpressionContents
     printHeapType(curr->type.getHeapType());
   }
   void visitArrayNewData(ArrayNewData* curr) {
-    if (printUnreachableReplacement(curr)) {
-      return;
-    }
     printMedium(o, "array.new_data");
     o << ' ';
     printHeapType(curr->type.getHeapType());
@@ -2140,9 +2121,6 @@ struct PrintExpressionContents
     curr->segment.print(o);
   }
   void visitArrayNewElem(ArrayNewElem* curr) {
-    if (printUnreachableReplacement(curr)) {
-      return;
-    }
     printMedium(o, "array.new_elem");
     o << ' ';
     printHeapType(curr->type.getHeapType());
@@ -2150,9 +2128,6 @@ struct PrintExpressionContents
     curr->segment.print(o);
   }
   void visitArrayNewFixed(ArrayNewFixed* curr) {
-    if (printUnreachableReplacement(curr)) {
-      return;
-    }
     printMedium(o, "array.new_fixed");
     o << ' ';
     printHeapType(curr->type.getHeapType());
@@ -2160,9 +2135,6 @@ struct PrintExpressionContents
     o << curr->values.size();
   }
   void visitArrayGet(ArrayGet* curr) {
-    if (printUnreachableOrNullReplacement(curr->ref)) {
-      return;
-    }
     const auto& element = curr->ref->type.getHeapType().getArray().element;
     if (element.type == Type::i32 && element.packedType != Field::not_packed) {
       if (curr->signed_) {
@@ -2176,43 +2148,27 @@ struct PrintExpressionContents
     printHeapType(curr->ref->type.getHeapType());
   }
   void visitArraySet(ArraySet* curr) {
-    if (printUnreachableOrNullReplacement(curr->ref)) {
-      return;
-    }
     printMedium(o, "array.set ");
     printHeapType(curr->ref->type.getHeapType());
   }
   void visitArrayLen(ArrayLen* curr) { printMedium(o, "array.len"); }
   void visitArrayCopy(ArrayCopy* curr) {
-    if (printUnreachableOrNullReplacement(curr->srcRef) ||
-        printUnreachableOrNullReplacement(curr->destRef)) {
-      return;
-    }
     printMedium(o, "array.copy ");
     printHeapType(curr->destRef->type.getHeapType());
     o << ' ';
     printHeapType(curr->srcRef->type.getHeapType());
   }
   void visitArrayFill(ArrayFill* curr) {
-    if (printUnreachableOrNullReplacement(curr->ref)) {
-      return;
-    }
     printMedium(o, "array.fill ");
     printHeapType(curr->ref->type.getHeapType());
   }
   void visitArrayInitData(ArrayInitData* curr) {
-    if (printUnreachableOrNullReplacement(curr->ref)) {
-      return;
-    }
     printMedium(o, "array.init_data ");
     printHeapType(curr->ref->type.getHeapType());
     o << ' ';
     curr->segment.print(o);
   }
   void visitArrayInitElem(ArrayInitElem* curr) {
-    if (printUnreachableOrNullReplacement(curr->ref)) {
-      return;
-    }
     printMedium(o, "array.init_elem ");
     printHeapType(curr->ref->type.getHeapType());
     o << ' ';
@@ -2791,21 +2747,14 @@ void PrintSExpression::visitResume(Resume* curr) {
   decIndent();
 }
 
-void PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,
+bool PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,
                                                         Type type) {
-  // See the parallel function
-  // PrintExpressionContents::printUnreachableReplacement for background. That
-  // one handles the header, and this one the body. For convenience, this one
-  // also gets a parameter of the type to check for unreachability, to avoid
-  // boilerplate in the callers; if the type is not unreachable, it does the
-  // normal behavior.
-  //
-  // Note that the list of instructions using that function must match those
-  // using this one, so we print the header and body properly together.
-
+  // When we cannot print an instruction because the child from which it's
+  // supposed to get a type immediate is unreachable, then we print a
+  // semantically-equivalent block that drops each of the children and ends in
+  // an unreachable.
   if (type != Type::unreachable) {
-    visitExpression(curr);
-    return;
+    return false;
   }
 
   // Emit a block with drops of the children.
@@ -2823,16 +2772,15 @@ void PrintSExpression::maybePrintUnreachableReplacement(Expression* curr,
   Unreachable unreachable;
   printFullLine(&unreachable);
   decIndent();
+  return true;
 }
 
-// This must be used for the same Expressions that use
-// PrintExpressionContents::printUnreachableOrNullReplacement.
-void PrintSExpression::maybePrintUnreachableOrNullReplacement(Expression* curr,
+bool PrintSExpression::maybePrintUnreachableOrNullReplacement(Expression* curr,
                                                               Type type) {
   if (type.isNull()) {
     type = Type::unreachable;
   }
-  maybePrintUnreachableReplacement(curr, type);
+  return maybePrintUnreachableReplacement(curr, type);
 }
 
 void PrintSExpression::handleSignature(HeapType curr, Name name) {
