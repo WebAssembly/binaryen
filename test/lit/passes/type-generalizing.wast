@@ -1383,12 +1383,23 @@
  ;; CHECK:      (func $array-copy-impossible-dest (type $0)
  ;; CHECK-NEXT:  (local $dest nullref)
  ;; CHECK-NEXT:  (local $src anyref)
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (local.get $dest)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (local.get $src)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayCopy we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $dest)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $src)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $array-copy-impossible-dest
@@ -1408,12 +1419,23 @@
  ;; CHECK:      (func $array-copy-impossible-src (type $0)
  ;; CHECK-NEXT:  (local $dest anyref)
  ;; CHECK-NEXT:  (local $src nullref)
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (local.get $dest)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (local.get $src)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayCopy we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $dest)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $src)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $array-copy-impossible-src
@@ -1433,12 +1455,23 @@
  ;; CHECK:      (func $array-copy-impossible-both (type $0)
  ;; CHECK-NEXT:  (local $dest nullref)
  ;; CHECK-NEXT:  (local $src nullref)
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (local.get $dest)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (local.get $src)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayCopy we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $dest)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $src)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $array-copy-impossible-both
@@ -1481,11 +1514,20 @@
  ;; CHECK:      (func $array-fill-impossible (type $0)
  ;; CHECK-NEXT:  (local $ref nullref)
  ;; CHECK-NEXT:  (local $val anyref)
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (local.get $ref)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (local.get $val)
- ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayFill we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $ref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $val)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $array-fill-impossible
@@ -1522,11 +1564,20 @@
 
  ;; CHECK:      (func $array-init-data-impossible (type $0)
  ;; CHECK-NEXT:  (local $ref nullref)
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (local.get $ref)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayInitData we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $ref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $array-init-data-impossible
@@ -1562,11 +1613,20 @@
 
  ;; CHECK:      (func $array-init-elem-impossible (type $0)
  ;; CHECK-NEXT:  (local $ref nullref)
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (local.get $ref)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayInitElem we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $ref)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $array-init-elem-impossible

@@ -289,6 +289,25 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   void visitArrayGet(ArrayGet* curr) {
     maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
   }
+  void visitArrayCopy(ArrayCopy* curr) {
+    if (curr->srcRef->type == Type::unreachable ||
+        curr->destRef->type == Type::unreachable ||
+        curr->srcRef->type.isNull() || curr->destRef->type.isNull()) {
+      maybePrintUnreachableOrNullReplacement(curr, Type::unreachable);
+      return;
+    }
+    visitExpression(curr);
+  }
+  void visitArrayFill(ArrayFill* curr) {
+    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
+  }
+  void visitArrayInitData(ArrayInitData* curr) {
+    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
+  }
+  void visitArrayInitElem(ArrayInitElem* curr) {
+    maybePrintUnreachableOrNullReplacement(curr, curr->ref->type);
+  }
+
   // Module-level visitors
   void handleSignature(HeapType curr, Name name = Name());
   void visitExport(Export* curr);
