@@ -1128,7 +1128,7 @@ BinaryenExpressionRef BinaryenBreak(BinaryenModuleRef module,
   } else {
     // As a convenience for users, if type is not provided but we can infer the
     // type - which is the case for MVP types - then infer it.
-    if (condition && value && !value->type.isRef()) {
+    if (condition && value && !value->type.containsRef()) {
       optType = value->type;
     }
   }
