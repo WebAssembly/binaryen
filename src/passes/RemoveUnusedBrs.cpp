@@ -547,10 +547,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     }
 
     if (auto* block = curr->dynCast<Block>()) {
-      if (block->type.containsRef()) {
+      if (block->name.is() && block->type.containsRef()) {
+        // This block has a type that may be needed for updating br_ifs, so
+        // note it.
         self->blockTypes[block->name] = block->type;
       }
     }
+
     super::scan(self, currp);
   }
 
