@@ -1953,6 +1953,29 @@
     )
   )
 
+  ;; CHECK:      (func $br_if (type $1)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $label$1 (result (ref null $struct.A))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (br_if $label$1
+  ;; CHECK-NEXT:      (block (result nullref)
+  ;; CHECK-NEXT:       (local.set $0
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $1
+  ;; CHECK-NEXT:        (f64.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $br_if
     ;; The br_if here must change type after we optimize, as then a nullable
     ;; type will be flowing through it.
