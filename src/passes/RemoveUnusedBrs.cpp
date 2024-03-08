@@ -1759,7 +1759,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       // have changed since then.
       static void scan(FinalOptimizer* self, Expression** currp) {
         if (auto* block = (*currp)->dynCast<Block>()) {
-          if (block->type.containsRef()) {
+          if (block->name.is() && block->type.containsRef()) {
             self->blockTypes[block->name] = block->type;
           }
         }
