@@ -1952,6 +1952,22 @@
       )
     )
   )
+
+  (func $br_if
+    ;; The br_if here must change type after we optimize, as then a nullable
+    ;; type will be flowing through it.
+    (drop
+      (block $label$1 (result (ref $struct.A))
+        (drop
+          (br_if $label$1
+            (struct.new_default $struct.A)
+            (i32.const 0)
+           )
+         )
+        (unreachable)
+      )
+    )
+  )
 )
 
 (module
