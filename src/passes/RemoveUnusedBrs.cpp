@@ -140,6 +140,26 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
   return tooCostlyToRunUnconditionally(passOptions, max);
 }
 
+// Utility to update a br_if type based on its value and the type of the block
+// it branches to. Receives a map of block name to block types. The map does not
+// need to contain blocks with MVP types, as we can infer those from the value.
+// This also finalizes at the end.
+using BlockTypeMap = std::unordered_map<Name, Type>;
+void updateBrIfType(Break* br, const BlockTypeMap& blockTypeMap) {
+  assert(br->condition);
+  assert(br->condition);
+  if (br->value) {
+    if (br->value->type.containsRef()) {
+      assert(blockTypeMap.count(br->name));
+      br->type = blockTypeMap[br->name];
+    } else {
+      // A simple type we can infer from the value.
+      br->type = br->value->type;
+    }
+  }
+  br->finalize();
+}
+
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   bool isFunctionParallel() override { return true; }
 
@@ -417,12 +437,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             br->condition =
               builder.makeSelect(br->condition, curr->condition, zero);
           }
-          if (br->value && br->value->type.containsRef()) {
-            // Update the br_if's type based on the block.
-            assert(concreteBlockTypes.count(br->name));
-            br->type = concreteBlockTypes[br->name];
-          }
-          br->finalize();
+          updateBrIfType(br, blockTypes);
           replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
           anotherCycle = true;
         }
@@ -488,15 +503,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
     if (auto* block = curr->dynCast<Block>()) {
       if (block->type.containsRef()) {
-        self->concreteBlockTypes[block->name] = block->type;
+        self->blockTypes[block->name] = block->type;
       }
     }
     super::scan(self, currp);
   }
 
-  // We track the types of blocks that have concrete types, as they may have
-  // br_ifs that target them, whose type depends on the block type.
-  std::unordered_map<Name, Type> concreteBlockTypes;
+  // We track the types of blocks that have relevant types for updateBrIfType.
+  std::unordered_map<Name, Type> blockTypes;
 
   // optimizes a loop. returns true if we made changes
   bool optimizeLoop(Loop* loop) {
@@ -1081,7 +1095,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // we are an if-else where the ifTrue is a break without a
             // condition, so we can do this
             ifTrueBreak->condition = iff->condition;
-            updateBrIfType(ifTrueBreak);
+            updateBrIfType(ifTrueBreak, blockTypes);
             list[i] = Builder(*getModule()).dropIfConcretelyTyped(ifTrueBreak);
             ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifFalse);
             continue;
@@ -1095,7 +1109,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                                 *getModule())) {
             ifFalseBreak->condition =
               Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
-            updateBrIfType(ifFalseBreak);
+            updateBrIfType(ifFalseBreak, blockTypes);
             list[i] = Builder(*getModule()).dropIfConcretelyTyped(ifFalseBreak);
             ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifTrue);
             continue;
@@ -1698,7 +1712,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       static void scan(FinalOptimizer* self, Expression** currp) {
         if (auto* block = (*currp)->dynCast<Block>()) {
           if (block->type.containsRef()) {
-            self->concreteBlockTypes[block->name] = block->type;
+            self->blockTypes[block->name] = block->type;
           }
         }
 
@@ -1706,16 +1720,6 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
 
       std::unordered_map<Name, Type> concreteBlockTypes;
-
-      // Update a br_if's type based on the block.
-      void updateBrIfType(Break* br) {
-        assert(br->condition);
-        if (br->value && br->value->type.containsRef()) {
-          assert(concreteBlockTypes.count(br->name));
-          br->type = concreteBlockTypes[br->name];
-        }
-        br->finalize();
-      }
     };
     FinalOptimizer finalOptimizer(getPassOptions());
     finalOptimizer.setModule(getModule());
