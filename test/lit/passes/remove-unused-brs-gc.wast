@@ -789,14 +789,17 @@
  )
 
  ;; CHECK:      (func $never-unrefine (type $4) (result (ref null $struct))
- ;; CHECK-NEXT:  (block $block (result (ref $struct))
+ ;; CHECK-NEXT:  (block $block (result (ref $substruct))
  ;; CHECK-NEXT:   (nop)
- ;; CHECK-NEXT:   (struct.new_default $struct)
+ ;; CHECK-NEXT:   (return
+ ;; CHECK-NEXT:    (struct.new_default $struct)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $never-unrefine (result (ref null $struct))
   ;; This block is more refined than the function's result, and we should not
-  ;; unrefine it.
+  ;; unrefine it. Instead we should keep the |return| in place (other opts might
+  ;; end up optimizing such code, e.g. vacuum).
   ;;
   ;; In this trivial case the block would be removed by vacuum anyhow, but in
   ;; other situations it can be harmful to unrefine; for example, if there are
@@ -816,8 +819,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $never-unrefine-ok (result (ref null $struct))
-  ;; As above, but now we send in an equal type. Again, the block should remain
-  ;; as refined as it is (which is trivial in this case).
+  ;; As above, but now we send in an equal type. We can remove the |return|
+  ;; here.
   (block $block (result (ref $substruct))
    (nop)
    (return
@@ -834,7 +837,7 @@
  ;; CHECK-NEXT: )
  (func $never-unrefine-ok-2 (result (ref null $struct))
   ;; As above, but now we send in a strict subtype. In this case we end up
-  ;; refining the block.
+  ;; refining the block (and also removing the |return|).
   (block $block (result (ref $substruct))
    (nop)
    (return
