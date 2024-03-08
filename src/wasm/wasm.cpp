@@ -760,7 +760,14 @@ void Binary::finalize() {
   }
 }
 
-void Select::finalize(Type type_) { type = type_; }
+void Select::finalize(Type type_) {
+  assert(ifTrue && ifFalse);
+  if (ifTrue->type == Type::unreachable || ifFalse->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = type_;
+  }
+}
 
 void Select::finalize() {
   assert(ifTrue && ifFalse);
