@@ -7,13 +7,18 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct (sub (struct )))
   (type $struct (sub (struct)))
+
   ;; CHECK:       (type $struct2 (struct ))
   (type $struct2 (struct))
+
   ;; CHECK:       (type $substruct (sub $struct (struct )))
   (type $substruct (sub $struct (struct)))
+
+  ;; CHECK:       (type $subsubstruct (sub $substruct (struct )))
+  (type $subsubstruct (sub $substruct (struct)))
  )
 
- ;; CHECK:      (func $br_on-if (type $7) (param $0 (ref struct))
+ ;; CHECK:      (func $br_on-if (type $8) (param $0 (ref struct))
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (select (result (ref struct))
@@ -48,7 +53,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast (type $5) (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast (type $6) (result (ref $struct))
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
@@ -99,7 +104,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast-fallthrough (type $5) (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast-fallthrough (type $6) (result (ref $struct))
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
@@ -162,7 +167,7 @@
   )
  )
 
- ;; CHECK:      (func $nested_br_on_cast (type $8) (result i31ref)
+ ;; CHECK:      (func $nested_br_on_cast (type $9) (result i31ref)
  ;; CHECK-NEXT:  (block $label$1 (result (ref i31))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $label$1
@@ -190,7 +195,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_unrelated (type $3) (result (ref null $struct))
+ ;; CHECK:      (func $br_on_cast_unrelated (type $4) (result (ref null $struct))
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result nullref)
  ;; CHECK-NEXT:   (drop
@@ -244,7 +249,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_unrelated-fallthrough (type $3) (result (ref null $struct))
+ ;; CHECK:      (func $br_on_cast_unrelated-fallthrough (type $4) (result (ref null $struct))
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result nullref)
@@ -307,7 +312,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail (type $4) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail (type $5) (result anyref)
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref null $struct))
  ;; CHECK-NEXT:   (drop
@@ -354,7 +359,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail-fallthrough (type $4) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail-fallthrough (type $5) (result anyref)
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result anyref)
@@ -410,7 +415,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail_unrelated (type $4) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail_unrelated (type $5) (result anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result (ref null $struct2))
  ;; CHECK-NEXT:   (drop
@@ -472,7 +477,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_fail_unrelated-fallthrough (type $4) (result anyref)
+ ;; CHECK:      (func $br_on_cast_fail_unrelated-fallthrough (type $5) (result anyref)
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result anyref)
@@ -543,7 +548,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast-unreachable (type $6) (param $i31ref i31ref) (result anyref)
+ ;; CHECK:      (func $br_on_cast-unreachable (type $7) (param $i31ref i31ref) (result anyref)
  ;; CHECK-NEXT:  (block $block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block
@@ -599,7 +604,7 @@
   )
  )
 
- ;; CHECK:      (func $fallthrough-unreachable (type $6) (param $0 i31ref) (result anyref)
+ ;; CHECK:      (func $fallthrough-unreachable (type $7) (param $0 i31ref) (result anyref)
  ;; CHECK-NEXT:  (block $outer
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block ;; (replaces unreachable RefCast we can't emit)
@@ -638,7 +643,7 @@
   )
  )
 
- ;; CHECK:      (func $casts-are-costly (type $9) (param $x i32)
+ ;; CHECK:      (func $casts-are-costly (type $10) (param $x i32)
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result i32)
@@ -783,7 +788,7 @@
   )
  )
 
- ;; CHECK:      (func $never-unrefine (type $3) (result (ref null $struct))
+ ;; CHECK:      (func $never-unrefine (type $4) (result (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (nop)
  ;; CHECK-NEXT:   (struct.new_default $struct)
@@ -791,7 +796,7 @@
  ;; CHECK-NEXT: )
  (func $never-unrefine (result (ref null $struct))
   ;; This block is more refined than the function's result, and we should not
-  ;; unrefine it (which would happen if we removed the |return|).
+  ;; unrefine it.
   ;;
   ;; In this trivial case the block would be removed by vacuum anyhow, but in
   ;; other situations it can be harmful to unrefine; for example, if there are
@@ -804,15 +809,15 @@
   )
  )
 
- ;; CHECK:      (func $never-unrefine-ok (type $3) (result (ref null $struct))
+ ;; CHECK:      (func $never-unrefine-ok (type $4) (result (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $substruct))
  ;; CHECK-NEXT:   (nop)
  ;; CHECK-NEXT:   (struct.new_default $substruct)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $never-unrefine-ok (result (ref null $struct))
-  ;; As above, but now we send in a sufficiently-refined type, so we can
-  ;; optimize and remove the return.
+  ;; As above, but now we send in an equal type. Again, the block should remain
+  ;; as refined as it is (which is trivial in this case).
   (block $block (result (ref $substruct))
    (nop)
    (return
@@ -820,4 +825,20 @@
    )
   )
  )
-)
+
+ ;; CHECK:      (func $never-unrefine-ok-2 (type $4) (result (ref null $struct))
+ ;; CHECK-NEXT:  (block $block (result (ref $subsubstruct))
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:   (struct.new_default $subsubstruct)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $never-unrefine-ok-2 (result (ref null $struct))
+  ;; As above, but now we send in a strict subtype. In this case we end up
+  ;; refining the block.
+  (block $block (result (ref $substruct))
+   (nop)
+   (return
+    (struct.new_default $subsubstruct) ;; this changed
+   )
+  )
+ ))
