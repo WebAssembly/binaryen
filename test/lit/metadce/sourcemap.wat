@@ -32,4 +32,3 @@
 ;; BIN-NEXT:  (nop)
 ;; BIN-NEXT:  ;;@ a:3:1
 ;; BIN-NEXT: )
-
