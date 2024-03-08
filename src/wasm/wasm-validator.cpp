@@ -801,7 +801,7 @@ void FunctionValidator::visitLoop(Loop* curr) {
     // Validate there are no br_ifs with values targeting us.
     shouldBeTrue(!labelBrIfs.count(curr->name),
                  curr,
-                 "loops cannot have br_ifs ith values targeting them");
+                 "loops cannot have br_ifs with values targeting them");
   }
   if (curr->type == Type::none) {
     shouldBeFalse(curr->body->type.isConcrete(),
