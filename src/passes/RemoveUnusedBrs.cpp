@@ -323,7 +323,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   //    (super)
   //  )
   //
-  // It is best to avoid unrefining like that, so keep the |return|.
+  // It is best to avoid unrefining like that, so block the flow of such values
+  // here.
   void stopUnrefinedValueFlow(Type type) {
     if (!getModule()->features.hasGC()) {
       return;
