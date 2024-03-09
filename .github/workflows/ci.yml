@@ -143,7 +143,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ASAN_OPTIONS: "symbolize=1"
-      COMPILER_FLAGS: "-fsanitize=address"
+      COMPILER_FLAGS: "-fsanitize=address -D_LIBCPP_ENABLE_ASSERTIONS=1"
     steps:
     - uses: actions/setup-python@v1
       with:
@@ -213,7 +213,7 @@ jobs:
     name: ubsan
     runs-on: ubuntu-latest
     env:
-      COMPILER_FLAGS: "-fsanitize=undefined -fno-sanitize-recover=all"
+      COMPILER_FLAGS: "-fsanitize=undefined -fno-sanitize-recover=all -D_LIBCPP_ENABLE_ASSERTIONS=1"
       CC: "clang"
       CXX: "clang++"
     steps:
