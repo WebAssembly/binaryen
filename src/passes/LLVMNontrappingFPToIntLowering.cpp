@@ -13,37 +13,127 @@
 namespace wasm {
 struct LLVMNonTrappingFPToIntLowering
   : public WalkerPass<PostWalker<LLVMNonTrappingFPToIntLowering>> {
-  void visitUnary(Unary* curr) {
-    switch (curr->op) {
-      case TruncSatSFloat32ToInt32: {
-        Builder builder(*getModule());
-        replaceCurrent(builder.makeIf(
-          builder.makeBinary(
-            BinaryOp::LtFloat32,
-            builder.makeUnary(UnaryOp::AbsFloat32, curr->value),
-            builder.makeConst(
-              static_cast<float>(std::numeric_limits<int32_t>::max()))),
-          builder.makeUnary(UnaryOp::TruncSFloat32ToInt32, curr->value),
-          builder.makeConst(std::numeric_limits<int32_t>::min())));
-      } break;
-      case TruncSatUFloat32ToInt32: {
-        Builder builder(*getModule());
-        replaceCurrent(builder.makeIf(
-          builder.makeBinary(
-            BinaryOp::AndInt32,
-            builder.makeBinary(BinaryOp::LtFloat32,
-                               curr->value,
-                               builder.makeConst(static_cast<float>(
-                                 std::numeric_limits<uint32_t>::max()))),
-            builder.makeBinary(
-              BinaryOp::GeFloat32, curr->value, builder.makeConst(0.0f))),
-          builder.makeUnary(UnaryOp::TruncUFloat32ToInt32, curr->value),
-          builder.makeConst(0)));
-      } break;
-      default: {
-      }
+
+  UnaryOp getReplacementOp(UnaryOp op) {
+    switch (op) {
+      case TruncSatSFloat32ToInt32:
+        return UnaryOp::TruncSFloat32ToInt32;
+      case TruncSatUFloat32ToInt32:
+        return UnaryOp::TruncUFloat32ToInt32;
+      case TruncSatSFloat64ToInt32:
+        return UnaryOp::TruncSFloat64ToInt32;
+      case TruncSatUFloat64ToInt32:
+        return UnaryOp::TruncUFloat64ToInt32;
+      case TruncSatSFloat32ToInt64:
+        return UnaryOp::TruncSFloat32ToInt64;
+      case TruncSatUFloat32ToInt64:
+        return UnaryOp::TruncUFloat32ToInt64;
+      case TruncSatSFloat64ToInt64:
+        return UnaryOp::TruncSFloat64ToInt64;
+      case TruncSatUFloat64ToInt64:
+        return UnaryOp::TruncUFloat64ToInt64;
+      default:
+        assert(false); // throw?
     }
   }
+
+  template<typename From, typename To> void ReplaceSigned(Unary* curr) {
+    BinaryOp ltOp;
+    UnaryOp absOp;
+    switch (curr->op) {
+      case TruncSatSFloat32ToInt32:
+      case TruncSatSFloat32ToInt64:
+        ltOp = BinaryOp::LtFloat32;
+        absOp = UnaryOp::AbsFloat32;
+        break;
+      case TruncSatSFloat64ToInt32:
+      case TruncSatSFloat64ToInt64:
+        ltOp = BinaryOp::LtFloat64;
+        absOp = UnaryOp::AbsFloat64;
+        break;
+      default:
+        assert(false); // throw?
+    }
+
+    Builder builder(*getModule());
+    replaceCurrent(builder.makeIf(
+      builder.makeBinary(
+        ltOp,
+        builder.makeUnary(absOp, curr->value),
+        builder.makeConst(static_cast<From>(std::numeric_limits<To>::max()))),
+      builder.makeUnary(getReplacementOp(curr->op), curr->value),
+      builder.makeConst(std::numeric_limits<To>::min())));
+  }
+
+  template<typename From, typename To> void ReplaceUnsigned(Unary* curr) {
+    BinaryOp ltOp, geOp;
+
+    switch (curr->op) {
+      case TruncSatUFloat32ToInt32:
+        ltOp = BinaryOp::LtFloat32;
+        geOp = BinaryOp::GeFloat32;
+        break;
+      case TruncSatUFloat64ToInt32:
+        ltOp = BinaryOp::LtFloat64;
+        geOp = BinaryOp::GeFloat64;
+        break;
+      case TruncSatUFloat32ToInt64:
+        ltOp = BinaryOp::LtFloat32;
+        geOp = BinaryOp::GeFloat32;
+        break;
+      case TruncSatUFloat64ToInt64:
+        ltOp = BinaryOp::LtFloat64;
+        geOp = BinaryOp::GeFloat64;
+        break;
+      default:
+        assert(false); // throw?
+    }
+
+    Builder builder(*getModule());
+    replaceCurrent(builder.makeIf(
+      builder.makeBinary(
+        BinaryOp::AndInt32,
+        builder.makeBinary(
+          ltOp,
+          curr->value,
+          builder.makeConst(static_cast<From>(std::numeric_limits<To>::max()))),
+        builder.makeBinary(
+          geOp, curr->value, builder.makeConst(static_cast<From>(0.0)))),
+      builder.makeUnary(getReplacementOp(curr->op), curr->value),
+      builder.makeConst(static_cast<To>(0))));
+  }
+
+  void visitUnary(Unary* curr) {
+    switch (curr->op) {
+      case TruncSatSFloat32ToInt32:
+        ReplaceSigned<float, int32_t>(curr);
+        break;
+      case TruncSatSFloat64ToInt32:
+        ReplaceSigned<double, int32_t>(curr);
+        break;
+      case TruncSatSFloat32ToInt64:
+        ReplaceSigned<float, int64_t>(curr);
+        break;
+      case TruncSatSFloat64ToInt64:
+        ReplaceSigned<double, int64_t>(curr);
+        break;
+      case TruncSatUFloat32ToInt32:
+        ReplaceUnsigned<float, uint32_t>(curr);
+        break;
+      case TruncSatUFloat64ToInt32:
+        ReplaceUnsigned<double, uint32_t>(curr);
+        break;
+      case TruncSatUFloat32ToInt64:
+        ReplaceUnsigned<float, uint64_t>(curr);
+        break;
+      case TruncSatUFloat64ToInt64:
+        ReplaceUnsigned<double, uint64_t>(curr);
+        break;
+      default:
+        assert(false); // throw?
+    }
+  }
+
   void run(Module* module) override {
     if (!module->features.hasTruncSat()) {
       return;
