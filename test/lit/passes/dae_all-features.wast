@@ -749,40 +749,42 @@
 )
 
 (module
- ;; CHECK:      (type $0 (func (result i32)))
+ ;; CHECK:      (type $0 (func (param f64) (result i32)))
 
- ;; CHECK:      (func $target (type $0) (result i32)
- ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK:      (func $target (type $0) (param $0 f64) (result i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
  ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (local $4 i32)
- ;; CHECK-NEXT:  (local $5 i32)
+ ;; CHECK-NEXT:  (local.set $1
+ ;; CHECK-NEXT:   (call $target
+ ;; CHECK-NEXT:    (f64.const 1.1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.set $2
- ;; CHECK-NEXT:   (call $target)
+ ;; CHECK-NEXT:   (call $target
+ ;; CHECK-NEXT:    (f64.const 4.4)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.set $3
- ;; CHECK-NEXT:   (call $target)
+ ;; CHECK-NEXT:  (call $target
+ ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (call $target)
  ;; CHECK-NEXT: )
- (func $target (param $a i32) (param $b i32) (param $c i32) (param $d i32) (result i32)
+ (func $target (param $a i32) (param $b f64) (param $c i32) (result i32)
   ;; Test removing a parameter despite calls having interesting non-unreachable
-  ;; effects. This also tests recursion of such calls.
+  ;; effects. This also tests recursion of such calls. We can remove all the i32
+  ;; parameters here.
   (call $target
-   (local.get $b)
    (call $target
     (i32.const 0)
-    (i32.const 1)
+    (f64.const 1.1)
     (i32.const 2)
-    (i32.const 3)
    )
-   (local.get $d)
+   (local.get $b)
    (call $target
-    (i32.const 4)
+    (i32.const 3)
+    (f64.const 4.4)
     (i32.const 5)
-    (i32.const 6)
-    (i32.const 7)
    )
   )
  )
