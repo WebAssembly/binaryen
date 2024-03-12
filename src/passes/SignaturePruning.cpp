@@ -215,7 +215,7 @@ struct SignaturePruning : public Pass {
       }
 
       auto oldParams = sig.params;
-      auto removedIndexes = ParamUtils::removeParameters(funcs,
+      auto [removedIndexes, outcome] = ParamUtils::removeParameters(funcs,
                                                          unusedParams,
                                                          info.calls,
                                                          info.callRefs,
@@ -224,6 +224,8 @@ struct SignaturePruning : public Pass {
       if (removedIndexes.empty()) {
         continue;
       }
+
+      // TODO: outcome handling
 
       // Success! Update the types.
       std::vector<Type> newParams;

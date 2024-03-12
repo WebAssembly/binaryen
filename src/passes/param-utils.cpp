@@ -23,6 +23,7 @@
 #include "passes/param-utils.h"
 #include "support/sorted_vector.h"
 #include "wasm.h"
+#include "wasm-traversal.h"
 
 namespace wasm::ParamUtils {
 
@@ -262,16 +263,16 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
 }
 
 void localizeCallsTo(const std::unordered_set<Name>& callTargetsToLocalize, Module& wasm, PassRunner* runner) {
-  struct Localizer : public WalkerPass<Localizer> {
+  struct LocalizerPass : public WalkerPass<LocalizerPass> {
     bool isFunctionParallel() override { return true; }
 
     std::unique_ptr<Pass> create() override {
-      return std::make_unique<Localizer>(callTargets);
+      return std::make_unique<LocalizerPass>(callTargets);
     }
 
     const std::unordered_set<Name>& callTargets;
 
-    Localizer(const std::unordered_set<Name>& callTargets) : callTargets(callTargets) {}
+    LocalizerPass(const std::unordered_set<Name>& callTargets) : callTargets(callTargets) {}
 
     void visitCall(Call* curr) {
       if (!callTargets.count(curr->target)) {
@@ -286,7 +287,7 @@ void localizeCallsTo(const std::unordered_set<Name>& callTargetsToLocalize, Modu
     }
   };
 
-  Localizer(*this, *module).run(runner, wasm);
+  LocalizerPass(*this, *module).run(runner, wasm);
 }
 
 } // namespace wasm::ParamUtils
