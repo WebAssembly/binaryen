@@ -278,7 +278,7 @@ void localizeCallsTo(const std::unordered_set<Name>& callTargetsToLocalize, Modu
         return;
       }
 
-      ChildLocalizer localizer(curr, getFunction(), *getModule(), getPassRunner()->options);
+      ChildLocalizer localizer(curr, getFunction(), *getModule(), getPassOptions());
       auto* replacement = localizer.getReplacement();
       if (replacement != curr) {
         replaceCurrent(replacement);
