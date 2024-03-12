@@ -80,25 +80,29 @@ RemovalOutcome removeParameter(const std::vector<Function*>& funcs,
   // if DCE ran meanwhile then we could optimize.
   auto checkEffects = [&](auto* call) {
     auto& operands = call->operands;
-    bool hasUnremovable =
-      EffectAnalyzer(runner->options, *module, operands[index])
-        .hasUnremovableSideEffects();
-    if (hasUnremovable && call->type != Type::unreachable) {
-      return FailureDueToEffects;
-    }
+
     bool wouldChangeType = call->type == Type::unreachable && !call->isReturn &&
                            operands[index]->type == Type::unreachable;
     if (wouldChangeType) {
       return Failure;
     }
-    return Success;
+
+    bool hasUnremovable =
+      EffectAnalyzer(runner->options, *module, operands[index])
+        .hasUnremovableSideEffects();
+    if (!hasUnremovable) {
+      return Success;
+    }
+    return call->type != Type::unreachable ? FailureDueToEffects : Failure;
   };
+
   for (auto* call : calls) {
     auto result = checkEffects(call);
     if (result != Success) {
       return result;
     }
   }
+
   for (auto* call : callRefs) {
     auto result = checkEffects(call);
     if (result != Success) {

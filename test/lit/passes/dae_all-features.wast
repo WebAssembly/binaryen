@@ -790,3 +790,59 @@
  )
 )
 
+(module
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (type $v128 (func (result v128)))
+ (type $v128 (func (result v128)))
+
+ ;; CHECK:      (type $2 (func (result f32)))
+
+ ;; CHECK:      (table $0 10 funcref)
+ (table $0 10 funcref)
+
+ ;; CHECK:      (func $caller (type $0)
+ ;; CHECK-NEXT:  (local $0 v128)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result f32)
+ ;; CHECK-NEXT:    (local.set $0
+ ;; CHECK-NEXT:     (call_indirect $0 (type $v128)
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (call $target)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $caller
+  (drop
+   (call $target
+    (i64.const 0)
+    ;; We'd like to remove this unused parameter, but it has effects, so we'll
+    ;; move it to a local first.
+    (call_indirect $0 (type $v128)
+     (i32.const 0)
+    )
+    (i64.const 0)
+   )
+  )
+ )
+
+ ;; CHECK:      (func $target (type $2) (result f32)
+ ;; CHECK-NEXT:  (local $0 i64)
+ ;; CHECK-NEXT:  (local $1 i64)
+ ;; CHECK-NEXT:  (local $2 v128)
+ ;; CHECK-NEXT:  (local.set $0
+ ;; CHECK-NEXT:   (i64.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (local.set $1
+ ;; CHECK-NEXT:    (i64.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $target (param $0 i64) (param $1 v128) (param $2 i64) (result f32)
+  (unreachable)
+ )
+)
