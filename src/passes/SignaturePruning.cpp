@@ -279,18 +279,19 @@ struct SignaturePruning : public Pass {
       }
     }
 
-    // Rewrite the types.
-    GlobalTypeRewriter::updateSignatures(newSignatures, *module);
-
     if (!callTargetsToLocalize.empty()) {
+      // Localize before updating signatures, as the signature change would
+      // confuse us when we look for which functions to modify
+      // (|callTargetsToLocalize| contains the old types, before updating).
       ParamUtils::localizeCallsTo(callTargetsToLocalize,
                                   *module,
                                   getPassRunner());
-      // Another iteration can benefit from this.
-      return true;
     }
 
-    return false;
+    // Rewrite the types.
+    GlobalTypeRewriter::updateSignatures(newSignatures, *module);
+
+    return !callTargetsToLocalize.empty();
   }
 };
 
