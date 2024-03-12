@@ -298,13 +298,41 @@ void localizeCallsTo(const std::unordered_set<Name>& callTargets,
 void localizeCallsTo(const std::unordered_set<HeapType>& callTargets,
                      Module& wasm,
                      PassRunner* runner) {
-  std::unordered_set<Name> funcs;
-  for (auto& func : wasm.functions) {
-    if (callTargets.count(func->type)) {
-      funcs.insert(func->name);
+  struct LocalizerPass : public WalkerPass<PostWalker<LocalizerPass>> {
+    bool isFunctionParallel() override { return true; }
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<LocalizerPass>(callTargets);
     }
-  }
-  return localizeCallsTo(funcs, wasm, runner);
+
+    const std::unordered_set<HeapType>& callTargets;
+
+    LocalizerPass(const std::unordered_set<HeapType>& callTargets)
+      : callTargets(callTargets) {}
+
+    void visitCall(Call* curr) {
+      handleCall(curr, getModule()->getFunction(curr->target)->getResults());
+    }
+
+    void visitCallRef(CallRef* curr) {
+      handleCall(curr, curr->target->type);
+    }
+
+    void handleCall(Expression* call, Type type) {
+      if (!type.isRef() || !callTargets.count(type.getHeapType())) {
+        return;
+      }
+
+      ChildLocalizer localizer(
+        call, getFunction(), *getModule(), getPassOptions());
+      auto* replacement = localizer.getReplacement();
+      if (replacement != call) {
+        replaceCurrent(replacement);
+      }
+    }
+  };
+
+  LocalizerPass(callTargets).run(runner, &wasm);
 }
 
 } // namespace wasm::ParamUtils
