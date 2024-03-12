@@ -213,7 +213,7 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (sub (func (param i32 i64 f32))))
+  ;; CHECK:       (type $sig (sub (func (param i64 f32))))
   (type $sig (sub (func (param i32) (param i64) (param f32) (param f64))))
 
   (memory 1 1)
@@ -222,15 +222,16 @@
 
   ;; CHECK:      (elem declare func $foo)
 
-  ;; CHECK:      (func $foo (type $sig) (param $0 i32) (param $1 i64) (param $2 f32)
-  ;; CHECK-NEXT:  (local $3 f64)
+  ;; CHECK:      (func $foo (type $sig) (param $0 i64) (param $1 f32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (i64.store
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (f32.store
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32) (param $i64 i64) (param $f32 f32) (param $f64 f64)
@@ -247,7 +248,6 @@
   ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (call $foo
-  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i64.const 1)
   ;; CHECK-NEXT:   (f32.const 2)
   ;; CHECK-NEXT:  )
@@ -259,7 +259,6 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call_ref $sig
-  ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:    (i64.const 5)
   ;; CHECK-NEXT:    (f32.const 6)
   ;; CHECK-NEXT:    (ref.func $foo)
