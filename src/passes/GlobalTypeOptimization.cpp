@@ -367,7 +367,7 @@ struct GlobalTypeOptimization : public Pass {
           }
           auto* block = Builder(*getModule()).makeBlock();
           auto sets =
-            ChildLocalizer(curr, func, getModule(), getPassOptions()).sets;
+            ChildLocalizer(curr, func, *getModule(), getPassOptions()).sets;
           block->list.set(sets);
           block->list.push_back(curr);
           block->finalize(curr->type);

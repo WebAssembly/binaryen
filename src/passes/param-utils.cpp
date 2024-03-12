@@ -45,7 +45,7 @@ std::unordered_set<Index> getUsedParams(Function* func) {
   return usedParams;
 }
 
-bool removeParameter(const std::vector<Function*>& funcs,
+RemovalOutcome removeParameter(const std::vector<Function*>& funcs,
                      Index index,
                      const std::vector<Call*>& calls,
                      const std::vector<CallRef*>& callRefs,
@@ -74,28 +74,32 @@ bool removeParameter(const std::vector<Function*>& funcs,
   // propagating that out, or by appending an unreachable after the call, but
   // for simplicity just ignore such cases; if we are called again later then
   // if DCE ran meanwhile then we could optimize.
-  auto hasBadEffects = [&](auto* call) {
+  auto checkEffects = [&](auto* call) {
     auto& operands = call->operands;
     bool hasUnremovable =
       EffectAnalyzer(runner->options, *module, operands[index])
         .hasUnremovableSideEffects();
+    if (hasUnremovable && call->type != Type::unreachable) {
+      return FailureDueToEffects;
+    }
     bool wouldChangeType = call->type == Type::unreachable && !call->isReturn &&
                            operands[index]->type == Type::unreachable;
-    return hasUnremovable || wouldChangeType;
+    if (wouldChangeType) {
+      return Failure;
+    }
+    return Success;
   };
-  bool callParamsAreValid =
-    std::none_of(calls.begin(), calls.end(), [&](Call* call) {
-      return hasBadEffects(call);
-    });
-  if (!callParamsAreValid) {
-    return false;
+  for (auto* call : calls) {
+    auto result = checkEffects(call);
+    if (result != Success) {
+      return result;
+    }
   }
-  bool callRefParamsAreValid =
-    std::none_of(callRefs.begin(), callRefs.end(), [&](CallRef* call) {
-      return hasBadEffects(call);
-    });
-  if (!callRefParamsAreValid) {
-    return false;
+  for (auto* call : callRefs) {
+    auto result = checkEffects(call);
+    if (result != Success) {
+      return result;
+    }
   }
 
   // The type must be valid for us to handle as a local (since we
@@ -104,7 +108,7 @@ bool removeParameter(const std::vector<Function*>& funcs,
   //       local
   bool typeIsValid = TypeUpdating::canHandleAsLocal(first->getLocalType(index));
   if (!typeIsValid) {
-    return false;
+    return Failure;
   }
 
   // We can do it!
@@ -161,17 +165,17 @@ bool removeParameter(const std::vector<Function*>& funcs,
     call->operands.erase(call->operands.begin() + index);
   }
 
-  return true;
+  return Success;
 }
 
-SortedVector removeParameters(const std::vector<Function*>& funcs,
+std::pair<SortedVector, RemovalOutcome> removeParameters(const std::vector<Function*>& funcs,
                               SortedVector indexes,
                               const std::vector<Call*>& calls,
                               const std::vector<CallRef*>& callRefs,
                               Module* module,
                               PassRunner* runner) {
   if (indexes.empty()) {
-    return {};
+    return {{}, Success};
   }
 
   assert(funcs.size() > 0);
@@ -182,15 +186,19 @@ SortedVector removeParameters(const std::vector<Function*>& funcs,
   }
 #endif
 
+  auto failureDueToEffects = false;
+
   // Iterate downwards, as we may remove more than one, and going forwards would
   // alter the indexes after us.
   Index i = first->getNumParams() - 1;
   SortedVector removed;
   while (1) {
     if (indexes.has(i)) {
-      if (removeParameter(funcs, i, calls, callRefs, module, runner)) {
-        // Success!
+      auto outcome = removeParameter(funcs, i, calls, callRefs, module, runner);
+      if (outcome == Success) {
         removed.insert(i);
+      } else if (outcome == FailureDueToEffects) {
+        failureDueToEffects = true;
       }
     }
     if (i == 0) {
@@ -198,7 +206,11 @@ SortedVector removeParameters(const std::vector<Function*>& funcs,
     }
     i--;
   }
-  return removed;
+  RemovalOutcome finalOutcome = Success;
+  if (removed.size() < indexes.size()) {
+    finalOutcome = failureDueToEffects ? FailureDueToEffects : Failure;
+  }
+  return {removed, finalOutcome};
 }
 
 SortedVector applyConstantValues(const std::vector<Function*>& funcs,
