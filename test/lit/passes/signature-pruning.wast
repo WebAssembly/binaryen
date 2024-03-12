@@ -136,7 +136,7 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (sub (func (param i32 i64 f32))))
+  ;; CHECK:       (type $sig (sub (func (param i64 f32))))
   (type $sig (sub (func (param i32) (param i64) (param f32) (param f64))))
 
   (memory 1 1)
@@ -145,15 +145,16 @@
 
   ;; CHECK:      (elem declare func $foo)
 
-  ;; CHECK:      (func $foo (type $sig) (param $0 i32) (param $1 i64) (param $2 f32)
-  ;; CHECK-NEXT:  (local $3 f64)
+  ;; CHECK:      (func $foo (type $sig) (param $0 i64) (param $1 f32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (i64.store
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (f32.store
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32) (param $i64 i64) (param $f32 f32) (param $f64 f64)
@@ -169,25 +170,29 @@
   )
 
   ;; CHECK:      (func $caller (type $0)
-  ;; CHECK-NEXT:  (call $foo
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (call $caller)
-  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $0
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (call $caller)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i64.const 1)
-  ;; CHECK-NEXT:   (f32.const 2)
+  ;; CHECK-NEXT:   (call $foo
+  ;; CHECK-NEXT:    (i64.const 1)
+  ;; CHECK-NEXT:    (f32.const 2)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref $sig
-  ;; CHECK-NEXT:   (i32.const 4)
   ;; CHECK-NEXT:   (i64.const 5)
   ;; CHECK-NEXT:   (f32.const 6)
   ;; CHECK-NEXT:   (ref.func $foo)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller
-    ;; As above, but now one of the unused parameters has a side effect which
-    ;; prevents us from removing it (flattening the IR first would avoid this
-    ;; limitation). We only end up removing a single unused param, the last.
+    ;; As above, but now one of the unused parameters has a side effect. We
+    ;; move it to a local, which allows us to remove it (and also the last,
+    ;; which is trivial).
     (call $foo
       (block (result i32)
         (call $caller)
@@ -207,13 +212,13 @@
   )
 )
 
-;; As above, but with the effects on a call_ref. Once more, we can only optimize
-;; away the very last param.
+;; As above, but with the effects on a call_ref. Once more, we can optimize
+;; even with effects on a param, using locals.
 (module
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (sub (func (param i32 i64 f32))))
+  ;; CHECK:       (type $sig (sub (func (param i64 f32))))
   (type $sig (sub (func (param i32) (param i64) (param f32) (param f64))))
 
   (memory 1 1)
@@ -222,15 +227,16 @@
 
   ;; CHECK:      (elem declare func $foo)
 
-  ;; CHECK:      (func $foo (type $sig) (param $0 i32) (param $1 i64) (param $2 f32)
-  ;; CHECK-NEXT:  (local $3 f64)
+  ;; CHECK:      (func $foo (type $sig) (param $0 i64) (param $1 f32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (i64.store
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (f32.store
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32) (param $i64 i64) (param $f32 f32) (param $f64 f64)
@@ -245,19 +251,23 @@
   )
 
   ;; CHECK:      (func $caller (type $0)
+  ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (call $foo
-  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i64.const 1)
   ;; CHECK-NEXT:   (f32.const 2)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref $sig
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (call $caller)
-  ;; CHECK-NEXT:    (i32.const 4)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $0
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (call $caller)
+  ;; CHECK-NEXT:     (i32.const 4)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i64.const 5)
-  ;; CHECK-NEXT:   (f32.const 6)
-  ;; CHECK-NEXT:   (ref.func $foo)
+  ;; CHECK-NEXT:   (call_ref $sig
+  ;; CHECK-NEXT:    (i64.const 5)
+  ;; CHECK-NEXT:    (f32.const 6)
+  ;; CHECK-NEXT:    (ref.func $foo)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller

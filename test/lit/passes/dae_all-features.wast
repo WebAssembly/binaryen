@@ -109,25 +109,27 @@
   (func $b33
     (call $a3 (i32.const 4))
   )
-  ;; CHECK:      (func $a4 (type $1) (param $x i32)
+  ;; CHECK:      (func $a4 (type $0)
+  ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  (func $a4 (param $x i32) ;; diff value, but with effects
+  (func $a4 (param $x i32)
+    ;; This function is called with one constant and one unreachable. We can
+    ;; remove the param despite the unreachable's effects.
   )
   ;; CHECK:      (func $b4 (type $0)
-  ;; CHECK-NEXT:  (call $a4
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $b4
+    ;; This call will vanish entirely, because the unreachable child executes
+    ;; first.
     (call $a4 (unreachable))
   )
   ;; CHECK:      (func $b43 (type $0)
-  ;; CHECK-NEXT:  (call $a4
-  ;; CHECK-NEXT:   (i32.const 4)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $a4)
   ;; CHECK-NEXT: )
   (func $b43
+    ;; We will remove the parameter here.
     (call $a4 (i32.const 4))
   )
   ;; CHECK:      (func $a5 (type $0)
@@ -659,27 +661,30 @@
 )
 
 (module
- ;; CHECK:      (type $0 (func (param i32)))
+ ;; CHECK:      (type $0 (func))
 
- ;; CHECK:      (func $0 (type $0) (param $0 i32)
+ ;; CHECK:      (func $0 (type $0)
+ ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (call $0
+ ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     (block
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (i32.const 1)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (return)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (return)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (return)
  ;; CHECK-NEXT: )
  (func $0 (param $0 i32) (result i32)
-  ;; The result of this function can be removed, which makes us modify the
-  ;; returns (we should not return a value any more) and also the calls (the
-  ;; calls must be dropped). The returns here are nested in each other, and one
-  ;; is a recursive call to this function itself, which makes this a corner case
-  ;; we might emit invalid code for.
+  ;; The returns here are nested in each other, and one is a recursive call to
+  ;; this function itself, which makes this a corner case we might emit invalid
+  ;; code for. We end up removing the parameter, and then the call vanishes as
+  ;; it was unreachable; we also remove the return as well as it is dropped in
+  ;; the other caller, below.
   (return
    (drop
     (call $0
@@ -687,6 +692,17 @@
       (i32.const 1)
      )
     )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $other-call (type $0)
+ ;; CHECK-NEXT:  (call $0)
+ ;; CHECK-NEXT: )
+ (func $other-call
+  (drop
+   (call $0
+    (i32.const 1)
    )
   )
  )
@@ -727,3 +743,27 @@
   )
  )
 )
+
+(module
+ (func $target (param $a i32) (param $b i32) (param $c i32) (param $d i32) (result i32)
+  ;; Test removing a parameter despite calls having interesting non-unreachable
+  ;; effects. This also tests recursion of such calls.
+  (call $target
+   (local.get $b)
+   (call $target
+    (i32.const 0)
+    (i32.const 1)
+    (i32.const 2)
+    (i32.const 3)
+   )
+   (local.get $d)
+   (call $target
+    (i32.const 4)
+    (i32.const 5)
+    (i32.const 6)
+    (i32.const 7)
+   )
+  )
+ )
+)
+

@@ -36,31 +36,53 @@
 (module
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $1 (func (param i32)))
-
   ;; CHECK:      (func $caller (type $0)
-  ;; CHECK-NEXT:  (call $target
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $target)
   ;; CHECK-NEXT: )
   (func $caller
-    ;; Removing this parameter would require the type of the call to change from
-    ;; unreachable to none. We don't handle such complexity and ignore such
-    ;; cases.
+    ;; Removing this parameter makes the type of the call change from
+    ;; unreachable to none. This is only possible because we assume traps never
+    ;; happen, so that unreachable never executes anyhow.
     (call $target
       (unreachable)
     )
   )
 
-  ;; CHECK:      (func $target (type $1) (param $0 i32)
+  ;; CHECK:      (func $target (type $0)
+  ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $target (param i32)
   )
 )
 
-;; As above, but use a return_call. We can optimize that, since return_calls
-;; have type unreachable anyhow, and the optimization would not change the type.
+;; As above but the called target has a result.
+(module
+  ;; CHECK:      (type $0 (func (result i32)))
+
+  ;; CHECK:      (func $caller (type $0) (result i32)
+  ;; CHECK-NEXT:  (call $target)
+  ;; CHECK-NEXT: )
+  (func $caller (result i32)
+    ;; This call will change type from unreachable to i32, after the unreachable
+    ;; child is removed.
+    (call $target
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $target (type $0) (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: )
+  (func $target (param i32) (result i32)
+    (i32.const 42)
+  )
+)
+
+;; As above, but use a return_call. We can optimize that too (return_calls have
+;; type unreachable anyhow, and the optimization would not change the type, so
+;; it is even simpler).
 (module
   ;; CHECK:      (type $0 (func))
 
