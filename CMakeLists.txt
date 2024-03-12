@@ -366,7 +366,7 @@ if(EMSCRIPTEN)
     add_link_flag("-sMODULARIZE")
     add_link_flag("-sEXPORT_ES6")
     add_link_flag("-sFILESYSTEM")
-    add_link_flag("-sFORCE_FILESYSTEM")    
+    add_link_flag("-sFORCE_FILESYSTEM")
   else()
     # On Node.js, make the tools immediately usable.
     add_link_flag("-sNODERAWFS")
@@ -474,6 +474,8 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm "-sFILESYSTEM")
   target_link_libraries(binaryen_wasm "-sEXPORT_NAME=Binaryen")
   target_link_libraries(binaryen_wasm "-sNODERAWFS=0")
+  # Do not error on the repeated NODERAWFS argument
+  target_link_libraries(binaryen_wasm "-Wno-unused-command-line-argument")
   # Emit a single file for convenience of people using binaryen.js as a library,
   # so they only need to distribute a single file.
   target_link_libraries(binaryen_wasm "-sSINGLE_FILE")
