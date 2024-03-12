@@ -16,8 +16,11 @@
 
 #include "ir/function-utils.h"
 #include "ir/local-graph.h"
+#include "ir/localize.h"
 #include "ir/possible-constant.h"
 #include "ir/type-updating.h"
+#include "pass.h"
+#include "passes/param-utils.h"
 #include "support/sorted_vector.h"
 #include "wasm.h"
 
@@ -256,6 +259,34 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
   }
 
   return optimized;
+}
+
+void localizeCallsTo(const std::unordered_set<Name>& callTargetsToLocalize, Module& wasm, PassRunner* runner) {
+  struct Localizer : public WalkerPass<Localizer> {
+    bool isFunctionParallel() override { return true; }
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<Localizer>(callTargets);
+    }
+
+    const std::unordered_set<Name>& callTargets;
+
+    Localizer(const std::unordered_set<Name>& callTargets) : callTargets(callTargets) {}
+
+    void visitCall(Call* curr) {
+      if (!callTargets.count(curr->target)) {
+        return;
+      }
+
+      ChildLocalizer localizer(curr, getFunction(), *getModule(), getPassRunner()->options);
+      auto* replacement = localizer.getReplacement();
+      if (replacement != curr) {
+        replaceCurrent(replacement);
+      }
+    }
+  };
+
+  Localizer(*this, *module).run(runner, wasm);
 }
 
 } // namespace wasm::ParamUtils

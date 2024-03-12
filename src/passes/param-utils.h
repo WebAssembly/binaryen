@@ -51,9 +51,10 @@ enum RemovalOutcome {
   // We failed to remove.
   Failure = 1,
   // We failed, but only because of fixable nested effects. The caller can move
-  // those effects out (e.g. using ChildLocalizer) and repeat. Note that
-  // unreachable is not a fixable nested effect because it cannot be moved away
-  // (an effect like a call can be stored in a local, but unreachable cannot).
+  // those effects out (e.g. using ChildLocalizer, or the helper localizeCallsTo
+  // below) and repeat. Note that unreachable is not a fixable nested effect
+  // because it cannot be moved away (an effect like a call can be stored in a
+  // local, but unreachable cannot).
   FailureDueToEffects = 2,
 };
 
@@ -109,6 +110,11 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
                                  const std::vector<Call*>& calls,
                                  const std::vector<CallRef*>& callRefs,
                                  Module* module);
+
+// Helper that localizes all calls to a set of targets, in an entire module.
+// This basically calls ChildLocalizer in each function, on the relevant calls.
+// This is useful when we get FailureDueToEffects, see above.
+void localizeCallsTo(const std::unordered_set<Name>& callTargetsToLocalize);
 
 } // namespace wasm::ParamUtils
 
