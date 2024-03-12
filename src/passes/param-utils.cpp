@@ -14,16 +14,16 @@
  * limitations under the License.
  */
 
+#include "passes/param-utils.h"
 #include "ir/function-utils.h"
 #include "ir/local-graph.h"
 #include "ir/localize.h"
 #include "ir/possible-constant.h"
 #include "ir/type-updating.h"
 #include "pass.h"
-#include "passes/param-utils.h"
 #include "support/sorted_vector.h"
-#include "wasm.h"
 #include "wasm-traversal.h"
+#include "wasm.h"
 
 namespace wasm::ParamUtils {
 
@@ -50,11 +50,11 @@ std::unordered_set<Index> getUsedParams(Function* func) {
 }
 
 RemovalOutcome removeParameter(const std::vector<Function*>& funcs,
-                     Index index,
-                     const std::vector<Call*>& calls,
-                     const std::vector<CallRef*>& callRefs,
-                     Module* module,
-                     PassRunner* runner) {
+                               Index index,
+                               const std::vector<Call*>& calls,
+                               const std::vector<CallRef*>& callRefs,
+                               Module* module,
+                               PassRunner* runner) {
   assert(funcs.size() > 0);
   auto* first = funcs[0];
 #ifndef NDEBUG
@@ -172,12 +172,13 @@ RemovalOutcome removeParameter(const std::vector<Function*>& funcs,
   return Success;
 }
 
-std::pair<SortedVector, RemovalOutcome> removeParameters(const std::vector<Function*>& funcs,
-                              SortedVector indexes,
-                              const std::vector<Call*>& calls,
-                              const std::vector<CallRef*>& callRefs,
-                              Module* module,
-                              PassRunner* runner) {
+std::pair<SortedVector, RemovalOutcome>
+removeParameters(const std::vector<Function*>& funcs,
+                 SortedVector indexes,
+                 const std::vector<Call*>& calls,
+                 const std::vector<CallRef*>& callRefs,
+                 Module* module,
+                 PassRunner* runner) {
   if (indexes.empty()) {
     return {{}, Success};
   }
@@ -262,7 +263,9 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
   return optimized;
 }
 
-void localizeCallsTo(const std::unordered_set<Name>& callTargetsToLocalize, Module& wasm, PassRunner* runner) {
+void localizeCallsTo(const std::unordered_set<Name>& callTargetsToLocalize,
+                     Module& wasm,
+                     PassRunner* runner) {
   struct LocalizerPass : public WalkerPass<LocalizerPass> {
     bool isFunctionParallel() override { return true; }
 
@@ -272,14 +275,16 @@ void localizeCallsTo(const std::unordered_set<Name>& callTargetsToLocalize, Modu
 
     const std::unordered_set<Name>& callTargets;
 
-    LocalizerPass(const std::unordered_set<Name>& callTargets) : callTargets(callTargets) {}
+    LocalizerPass(const std::unordered_set<Name>& callTargets)
+      : callTargets(callTargets) {}
 
     void visitCall(Call* curr) {
       if (!callTargets.count(curr->target)) {
         return;
       }
 
-      ChildLocalizer localizer(curr, getFunction(), *getModule(), getPassOptions());
+      ChildLocalizer localizer(
+        curr, getFunction(), *getModule(), getPassOptions());
       auto* replacement = localizer.getReplacement();
       if (replacement != curr) {
         replaceCurrent(replacement);

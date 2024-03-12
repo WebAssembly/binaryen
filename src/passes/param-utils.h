@@ -79,11 +79,11 @@ enum RemovalOutcome {
 // can update all the types at once throughout the program after making
 // multiple calls to removeParameter().
 RemovalOutcome removeParameter(const std::vector<Function*>& funcs,
-                     Index index,
-                     const std::vector<Call*>& calls,
-                     const std::vector<CallRef*>& callRefs,
-                     Module* module,
-                     PassRunner* runner);
+                               Index index,
+                               const std::vector<Call*>& calls,
+                               const std::vector<CallRef*>& callRefs,
+                               Module* module,
+                               PassRunner* runner);
 
 // The same as removeParameter, but gets a sorted list of indexes. It tries to
 // remove them all, and returns which we removed, as well as an indication as
@@ -92,12 +92,12 @@ RemovalOutcome removeParameter(const std::vector<Function*>& funcs,
 // FailureDueToEffects if at least one index could have been removed but for
 // effects).
 std::pair<SortedVector, RemovalOutcome>
-   removeParameters(const std::vector<Function*>& funcs,
-                              SortedVector indexes,
-                              const std::vector<Call*>& calls,
-                              const std::vector<CallRef*>& callRefs,
-                              Module* module,
-                              PassRunner* runner);
+removeParameters(const std::vector<Function*>& funcs,
+                 SortedVector indexes,
+                 const std::vector<Call*>& calls,
+                 const std::vector<CallRef*>& callRefs,
+                 Module* module,
+                 PassRunner* runner);
 
 // Given a set of functions and the calls and call_refs that reach them, find
 // which parameters are passed the same constant value in all the calls. For
