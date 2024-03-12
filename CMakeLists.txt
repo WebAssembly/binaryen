@@ -511,6 +511,8 @@ if(EMSCRIPTEN)
     target_link_libraries(binaryen_js "-sFILESYSTEM=1")
   endif()
   target_link_libraries(binaryen_js "-sNODERAWFS=0")
+  # Do not error on the repeated NODERAWFS argument
+  target_link_libraries(binaryen_js "-Wno-unused-command-line-argument")
   target_link_libraries(binaryen_js "-sSINGLE_FILE")
   target_link_libraries(binaryen_js "-sEXPORT_NAME=Binaryen")
   # Currently, js_of_ocaml can only process ES5 code
