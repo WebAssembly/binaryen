@@ -326,7 +326,9 @@ struct DAE : public Pass {
       }
     }
     if (!callTargetsToLocalize.empty()) {
-      ParamUtils::localizeCallsTo(callTargetsToLocalize);
+      ParamUtils::localizeCallsTo(callTargetsToLocalize,
+                                  *module,
+                                  getPassRunner());
     }
     if (optimize && !changed.empty()) {
       OptUtils::optimizeAfterInlining(changed, module, getPassRunner());

@@ -114,7 +114,9 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
 // Helper that localizes all calls to a set of targets, in an entire module.
 // This basically calls ChildLocalizer in each function, on the relevant calls.
 // This is useful when we get FailureDueToEffects, see above.
-void localizeCallsTo(const std::unordered_set<Name>& callTargetsToLocalize);
+void localizeCallsTo(const std::unordered_set<Name>& callTargets,
+                     Module& wasm,
+                     PassRunner* runner);
 
 } // namespace wasm::ParamUtils
 

@@ -263,10 +263,10 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
   return optimized;
 }
 
-void localizeCallsTo(const std::unordered_set<Name>& callTargetsToLocalize,
+void localizeCallsTo(const std::unordered_set<Name>& callTargets,
                      Module& wasm,
                      PassRunner* runner) {
-  struct LocalizerPass : public WalkerPass<LocalizerPass> {
+  struct LocalizerPass : public WalkerPass<PostWalker<LocalizerPass>> {
     bool isFunctionParallel() override { return true; }
 
     std::unique_ptr<Pass> create() override {
@@ -292,7 +292,7 @@ void localizeCallsTo(const std::unordered_set<Name>& callTargetsToLocalize,
     }
   };
 
-  LocalizerPass(*this, *module).run(runner, wasm);
+  LocalizerPass(callTargets).run(runner, &wasm);
 }
 
 } // namespace wasm::ParamUtils
