@@ -295,4 +295,16 @@ void localizeCallsTo(const std::unordered_set<Name>& callTargets,
   LocalizerPass(callTargets).run(runner, &wasm);
 }
 
+void localizeCallsTo(const std::unordered_set<HeapType>& callTargets,
+                     Module& wasm,
+                     PassRunner* runner) {
+  std::unordered_set<Name> funcs;
+  for (auto& func : wasm.functions) {
+    if (callTargets.count(func->type)) {
+      funcs.insert(func->name);
+    }
+  }
+  return localizeCallsTo(funcs, wasm, runner);
+}
+
 } // namespace wasm::ParamUtils

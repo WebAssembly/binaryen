@@ -67,6 +67,16 @@ struct SignaturePruning : public Pass {
       return;
     }
 
+    // The first iteration may suggest additional work is possible. If so, run
+    // another cycle. (Even more cycles may help, but limit ourselves to 2 for
+    // now).
+    if (iteration(module)) {
+      iteration(module);
+    }
+  }
+
+  // Returns true if more work is possible.
+  bool iteration(Module* module) {
     // First, find all the information we need. Start by collecting inside each
     // function in parallel.
 
@@ -100,6 +110,11 @@ struct SignaturePruning : public Pass {
 
     // Map heap types to all functions with that type.
     InsertOrderedMap<HeapType, std::vector<Function*>> sigFuncs;
+
+    // Heap types of call targets that we found we should localize calls to, in
+    // order to fully handle them. (See similar code in DeadArgumentElimination
+    // for individual functions; here we handle a HeapType at a time.)
+    std::unordered_set<HeapType> callTargetsToLocalize;
 
     // Combine all the information we gathered into that map, iterating in a
     // deterministic order as we build up vectors where the order matters.
@@ -222,11 +237,12 @@ struct SignaturePruning : public Pass {
                                      info.callRefs,
                                      module,
                                      getPassRunner());
+      if (outcome == ParamUtils::RemovalOutcome::FailureDueToEffects) {
+        callTargetsToLocalize.insert(type);
+      }
       if (removedIndexes.empty()) {
         continue;
       }
-
-      // TODO: outcome handling
 
       // Success! Update the types.
       std::vector<Type> newParams;
@@ -265,6 +281,16 @@ struct SignaturePruning : public Pass {
 
     // Rewrite the types.
     GlobalTypeRewriter::updateSignatures(newSignatures, *module);
+
+    if (!callTargetsToLocalize.empty()) {
+      ParamUtils::localizeCallsTo(callTargetsToLocalize,
+                                  *module,
+                                  getPassRunner());
+      // Another iteration can benefit from this.
+      return true;
+    }
+
+    return false;
   }
 };
 
