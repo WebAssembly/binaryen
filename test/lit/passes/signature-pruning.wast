@@ -169,19 +169,13 @@
   )
 
   ;; CHECK:      (func $caller (type $0)
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (call $caller)
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (call $foo
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (call $caller)
+  ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $foo
-  ;; CHECK-NEXT:    (local.get $0)
-  ;; CHECK-NEXT:    (i64.const 1)
-  ;; CHECK-NEXT:    (f32.const 2)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i64.const 1)
+  ;; CHECK-NEXT:   (f32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (call_ref $sig
   ;; CHECK-NEXT:   (i32.const 4)
@@ -251,19 +245,25 @@
   )
 
   ;; CHECK:      (func $caller (type $0)
+  ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (call $foo
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i64.const 1)
   ;; CHECK-NEXT:   (f32.const 2)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (call_ref $sig
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (call $caller)
-  ;; CHECK-NEXT:    (i32.const 4)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $0
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (call $caller)
+  ;; CHECK-NEXT:     (i32.const 4)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i64.const 5)
-  ;; CHECK-NEXT:   (f32.const 6)
-  ;; CHECK-NEXT:   (ref.func $foo)
+  ;; CHECK-NEXT:   (call_ref $sig
+  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (i64.const 5)
+  ;; CHECK-NEXT:    (f32.const 6)
+  ;; CHECK-NEXT:    (ref.func $foo)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller
