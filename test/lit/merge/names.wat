@@ -44,10 +44,6 @@
 
    ;; CHECK:      (tag $tag$3)
 
-   ;; CHECK:      (export "m0" (memory $mem0))
-
-   ;; CHECK:      (export "m1" (memory $1))
-
    ;; CHECK:      (export "f0" (func $func0))
 
    ;; CHECK:      (export "f1" (func $1))
@@ -60,15 +56,15 @@
 
    ;; CHECK:      (export "g1" (global $global$2))
 
+   ;; CHECK:      (export "m0" (memory $mem0))
+
+   ;; CHECK:      (export "m1" (memory $1))
+
    ;; CHECK:      (export "tag0" (tag $tag0))
 
    ;; CHECK:      (export "tag1" (tag $tag$1))
 
    ;; CHECK:      (export "func" (func $2))
-
-   ;; CHECK:      (export "m2" (memory $mem2))
-
-   ;; CHECK:      (export "m3" (memory $3))
 
    ;; CHECK:      (export "f2" (func $func2))
 
@@ -77,6 +73,10 @@
    ;; CHECK:      (export "t2" (table $table2))
 
    ;; CHECK:      (export "t3" (table $3))
+
+   ;; CHECK:      (export "m2" (memory $mem2))
+
+   ;; CHECK:      (export "m3" (memory $3))
 
    ;; CHECK:      (export "g2" (global $glob2))
 
@@ -97,8 +97,8 @@
    (table $table0 (export "t0") 1 funcref)
    (table (export "t1") 1 funcref)
 
-   (global $glob0 (export g0) i32 (i32.const 0))
-   (global (export g1) i32 (i32.const 0))
+   (global $glob0 (export "g0") i32 (i32.const 0))
+   (global (export "g1") i32 (i32.const 0))
 
    (memory $mem0 (export "m0") 0)
    (memory (export "m1") 0)
@@ -109,8 +109,8 @@
    (data $data0 "")
    (data "")
 
-   (tag $tag0 (export tag0))
-   (tag (export tag1))
+   (tag $tag0 (export "tag0"))
+   (tag (export "tag1"))
 
    (type $t (struct (field $a i32) (field $b i32)))
 

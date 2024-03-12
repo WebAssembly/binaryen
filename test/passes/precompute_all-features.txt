@@ -63,7 +63,7 @@
    )
   )
   (drop
-   (block $d2 (result i32)
+   (block $d1 (result i32)
     (call $x
      (i32.const 6)
     )
@@ -72,7 +72,7 @@
    )
   )
   (drop
-   (block $d4 (result i32)
+   (block $d2 (result i32)
     (call $x
      (i32.const 7)
     )

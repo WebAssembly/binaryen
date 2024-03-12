@@ -140,7 +140,7 @@
   )
 
   ;; CHECK:      (func $uses (type $3) (param $array (ref $array))
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -150,7 +150,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (try $try0
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -290,7 +290,7 @@
 ;; CHECK-NEXT: )
 
 ;; CHECK:      (func $uses.second (type $3) (param $array (ref $array))
-;; CHECK-NEXT:  (try $try
+;; CHECK-NEXT:  (try
 ;; CHECK-NEXT:   (do
 ;; CHECK-NEXT:    (nop)
 ;; CHECK-NEXT:   )
@@ -300,7 +300,7 @@
 ;; CHECK-NEXT:    )
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
-;; CHECK-NEXT:  (try $try0
+;; CHECK-NEXT:  (try
 ;; CHECK-NEXT:   (do
 ;; CHECK-NEXT:    (nop)
 ;; CHECK-NEXT:   )

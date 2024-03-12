@@ -14,7 +14,7 @@
   (tag $tagA (param (ref $A)))
 
   ;; CHECK:      (func $foo (type $2) (result (ref null $A))
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )

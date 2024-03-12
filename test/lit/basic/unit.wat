@@ -1617,7 +1617,7 @@
   )
   ;; CHECK-TEXT:      (func $unreachable-loop (type $5) (result i32)
   ;; CHECK-TEXT-NEXT:  (f64.abs
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in
+  ;; CHECK-TEXT-NEXT:   (loop
   ;; CHECK-TEXT-NEXT:    (nop)
   ;; CHECK-TEXT-NEXT:    (return
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
@@ -1643,7 +1643,7 @@
   )
   ;; CHECK-TEXT:      (func $unreachable-loop0 (type $5) (result i32)
   ;; CHECK-TEXT-NEXT:  (f64.abs
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in
+  ;; CHECK-TEXT-NEXT:   (loop
   ;; CHECK-TEXT-NEXT:    (return
   ;; CHECK-TEXT-NEXT:     (i32.const 1)
   ;; CHECK-TEXT-NEXT:    )
@@ -1665,7 +1665,7 @@
     )
   )
   ;; CHECK-TEXT:      (func $unreachable-loop-toplevel (type $5) (result i32)
-  ;; CHECK-TEXT-NEXT:  (loop $loop-in
+  ;; CHECK-TEXT-NEXT:  (loop
   ;; CHECK-TEXT-NEXT:   (nop)
   ;; CHECK-TEXT-NEXT:   (return
   ;; CHECK-TEXT-NEXT:    (i32.const 1)
@@ -1687,7 +1687,7 @@
     )
   )
   ;; CHECK-TEXT:      (func $unreachable-loop0-toplevel (type $5) (result i32)
-  ;; CHECK-TEXT-NEXT:  (loop $loop-in
+  ;; CHECK-TEXT-NEXT:  (loop
   ;; CHECK-TEXT-NEXT:   (return
   ;; CHECK-TEXT-NEXT:    (i32.const 1)
   ;; CHECK-TEXT-NEXT:   )

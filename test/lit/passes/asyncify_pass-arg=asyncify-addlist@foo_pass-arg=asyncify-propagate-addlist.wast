@@ -4,7 +4,6 @@
 ;; RUN: foreach %s %t wasm-opt --asyncify --pass-arg=asyncify-addlist@foo -S --pass-arg=asyncify-propagate-addlist -o - | filecheck %s
 
 (module
-  (memory 1 2)
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (type $1 (func (param i32)))
@@ -13,6 +12,8 @@
 
   ;; CHECK:      (import "env" "import" (func $import))
   (import "env" "import" (func $import))
+
+  (memory 1 2)
   ;; CHECK:      (global $__asyncify_state (mut i32) (i32.const 0))
 
   ;; CHECK:      (global $__asyncify_data (mut i32) (i32.const 0))
