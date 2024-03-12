@@ -330,6 +330,10 @@ void PassRegistry::registerPasses() {
   registerPass("no-partial-inline",
                "mark functions as no-inline (for partial inlining only)",
                createNoPartialInlinePass);
+  registerPass("llvm-nontrapping-fptoint-lowering",
+               "lower nontrapping float-to-int operations to wasm mvp and"
+               "disable the nontrapping fptoint feature",
+               createLLVMNonTrappingFPToIntLoweringPass);
   registerPass("once-reduction",
                "reduces calls to code that only runs once",
                createOnceReductionPass);
