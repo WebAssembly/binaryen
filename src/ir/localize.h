@@ -77,7 +77,6 @@ struct ChildLocalizer {
     auto& children = iterator.children;
     auto num = children.size();
 
-std::cout << "localize\n";
     // Compute the effects of all children.
     std::vector<EffectAnalyzer> effects;
     for (Index i = 0; i < num; i++) {
