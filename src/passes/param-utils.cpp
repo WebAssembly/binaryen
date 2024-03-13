@@ -79,10 +79,14 @@ RemovalOutcome removeParameter(const std::vector<Function*>& funcs,
   // for simplicity just ignore such cases; if we are called again later then
   // if DCE ran meanwhile then we could optimize.
   auto checkEffects = [&](auto* call) {
-    auto& operands = call->operands;
+    auto* operand = call->operands[index];
+
+    if (operand->type == Type::unreachable) {
+      return Failure;
+    }
 
     bool hasUnremovable =
-      EffectAnalyzer(runner->options, *module, operands[index])
+      EffectAnalyzer(runner->options, *module, operand)
         .hasUnremovableSideEffects();
 
     return hasUnremovable ? Failure : Success;

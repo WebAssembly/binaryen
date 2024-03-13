@@ -48,9 +48,11 @@ struct Localizer {
 // interact with any of the others, or if they have side effects which cannot be
 // removed.
 //
-// After this, the parent has only local.gets as inputs, or other things
-// that have no interacting effects, and so those children can be reordered
-// and/or removed as needed.
+// After this, the parent has only local.gets as inputs, or unreachables, or
+// constants or other things with no interacting effects between them, and so
+// those children can be reordered and/or removed as needed. Specifically the
+// parent can be modified as needed, and getReplacement() returns an expression
+// that can replace it in the IR (with the same type).
 //
 // The sets of the locals are emitted on a |sets| property on the class. Those
 // must be emitted right before the parent.
@@ -75,6 +77,7 @@ struct ChildLocalizer {
     auto& children = iterator.children;
     auto num = children.size();
 
+std::cout << "localize\n";
     // Compute the effects of all children.
     std::vector<EffectAnalyzer> effects;
     for (Index i = 0; i < num; i++) {
