@@ -242,7 +242,7 @@ struct SignaturePruning : public Pass {
                                      info.callRefs,
                                      module,
                                      getPassRunner());
-      if (outcome == ParamUtils::RemovalOutcome::FailureDueToEffects) {
+      if (outcome == ParamUtils::RemovalOutcome::Failure) {
         // Use either a Call or a CallRef that has this type (see explanation
         // above on |callTargetsToLocalize|.
         if (!info.calls.empty()) {

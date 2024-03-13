@@ -284,7 +284,7 @@ struct DAE : public Pass {
         // Success!
         changed.insert(func);
       }
-      if (outcome == ParamUtils::RemovalOutcome::FailureDueToEffects) {
+      if (outcome == ParamUtils::RemovalOutcome::Failure) {
         callTargetsToLocalize.insert(name);
       }
     }

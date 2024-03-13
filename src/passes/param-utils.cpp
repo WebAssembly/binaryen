@@ -81,19 +81,11 @@ RemovalOutcome removeParameter(const std::vector<Function*>& funcs,
   auto checkEffects = [&](auto* call) {
     auto& operands = call->operands;
 
-    bool wouldChangeType = call->type == Type::unreachable && !call->isReturn &&
-                           operands[index]->type == Type::unreachable;
-    if (wouldChangeType) {
-      return Failure;
-    }
-
     bool hasUnremovable =
       EffectAnalyzer(runner->options, *module, operands[index])
         .hasUnremovableSideEffects();
-    if (!hasUnremovable) {
-      return Success;
-    }
-    return call->type != Type::unreachable ? FailureDueToEffects : Failure;
+
+    return hasUnremovable ? Failure : Success;
   };
 
   for (auto* call : calls) {
@@ -195,8 +187,6 @@ removeParameters(const std::vector<Function*>& funcs,
   }
 #endif
 
-  auto failureDueToEffects = false;
-
   // Iterate downwards, as we may remove more than one, and going forwards would
   // alter the indexes after us.
   Index i = first->getNumParams() - 1;
@@ -206,8 +196,6 @@ removeParameters(const std::vector<Function*>& funcs,
       auto outcome = removeParameter(funcs, i, calls, callRefs, module, runner);
       if (outcome == Success) {
         removed.insert(i);
-      } else if (outcome == FailureDueToEffects) {
-        failureDueToEffects = true;
       }
     }
     if (i == 0) {
@@ -217,7 +205,7 @@ removeParameters(const std::vector<Function*>& funcs,
   }
   RemovalOutcome finalOutcome = Success;
   if (removed.size() < indexes.size()) {
-    finalOutcome = failureDueToEffects ? FailureDueToEffects : Failure;
+    finalOutcome = Failure;
   }
   return {removed, finalOutcome};
 }

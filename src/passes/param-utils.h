@@ -48,14 +48,10 @@ std::unordered_set<Index> getUsedParams(Function* func);
 enum RemovalOutcome {
   // We removed successfully.
   Success = 0,
-  // We failed to remove.
-  Failure = 1,
   // We failed, but only because of fixable nested effects. The caller can move
   // those effects out (e.g. using ChildLocalizer, or the helper localizeCallsTo
-  // below) and repeat. Note that unreachable is not a fixable nested effect
-  // because it cannot be moved away (an effect like a call can be stored in a
-  // local, but unreachable cannot).
-  FailureDueToEffects = 2,
+  // below) and repeat.
+  Failure = 1,
 };
 
 // Try to remove a parameter from a set of functions and replace it with a local
