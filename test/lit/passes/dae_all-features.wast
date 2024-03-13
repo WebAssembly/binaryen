@@ -895,9 +895,20 @@
        )
        (i32.const 42)
      )
-     ;; We won't remove this unreachable param (we leave it for DCE, first).
+     ;; We'll move this around, but won't remove it, as explained above.
      (br $block)
     )
+   )
+  )
+  ;; Another call, to show the effect of removing the i32 parameter (also, if
+  ;; no calls remain after removing the unreachable one before us, then the pass
+  ;; would stop before removing parameters in $target - we don't remove params
+  ;; from functions that look dead).
+  (drop
+   (call $target
+    (i64.const 10)
+    (i32.const 20)
+    (i64.const 30)
    )
   )
  )
