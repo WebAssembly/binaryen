@@ -109,7 +109,11 @@
   (func $b33
     (call $a3 (i32.const 4))
   )
-  ;; CHECK:      (func $a4 (type $1) (param $x i32)
+  ;; CHECK:      (func $a4 (type $0)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.const 4)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $a4 (param $x i32)
@@ -117,9 +121,7 @@
     ;; remove the param despite the unreachable's effects.
   )
   ;; CHECK:      (func $b4 (type $0)
-  ;; CHECK-NEXT:  (call $a4
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $b4
     ;; This call will vanish entirely, because the unreachable child executes
@@ -127,9 +129,7 @@
     (call $a4 (unreachable))
   )
   ;; CHECK:      (func $b43 (type $0)
-  ;; CHECK-NEXT:  (call $a4
-  ;; CHECK-NEXT:   (i32.const 4)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $a4)
   ;; CHECK-NEXT: )
   (func $b43
     ;; We will remove the parameter here.
@@ -664,22 +664,26 @@
 )
 
 (module
- ;; CHECK:      (type $0 (func (param i32)))
+ ;; CHECK:      (type $0 (func))
 
- ;; CHECK:      (type $1 (func))
-
- ;; CHECK:      (func $0 (type $0) (param $0 i32)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (call $0
+ ;; CHECK:      (func $0 (type $0)
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (local.set $0
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     (block
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (i32.const 1)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (return)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (return)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (return)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (return)
  ;; CHECK-NEXT: )
  (func $0 (param $0 i32) (result i32)
   ;; The returns here are nested in each other, and one is a recursive call to
@@ -698,10 +702,8 @@
   )
  )
 
- ;; CHECK:      (func $other-call (type $1)
- ;; CHECK-NEXT:  (call $0
- ;; CHECK-NEXT:   (i32.const 1)
- ;; CHECK-NEXT:  )
+ ;; CHECK:      (func $other-call (type $0)
+ ;; CHECK-NEXT:  (call $0)
  ;; CHECK-NEXT: )
  (func $other-call
   (drop
@@ -844,6 +846,70 @@
  ;; CHECK-NEXT: )
  (func $target (param $0 i64) (param $1 v128) (param $2 i64) (result f32)
   ;; All parameters here should vanish.
+  (unreachable)
+ )
+)
+
+(module
+ ;; CHECK:      (type $0 (func (param i32)))
+
+ ;; CHECK:      (type $1 (func (param i32 i64) (result f32)))
+
+ ;; CHECK:      (func $caller-later-br (type $0) (param $x i32)
+ ;; CHECK-NEXT:  (local $1 i32)
+ ;; CHECK-NEXT:  (block $block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (local.set $1
+ ;; CHECK-NEXT:      (block (result i32)
+ ;; CHECK-NEXT:       (if
+ ;; CHECK-NEXT:        (local.get $x)
+ ;; CHECK-NEXT:        (then
+ ;; CHECK-NEXT:         (return)
+ ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (i32.const 42)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (br $block)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $caller-later-br (param $x i32)
+  (block $block
+   (drop
+    (call $target
+     (i64.const 0)
+     ;; We'd like to remove this unused parameter, and we can do so by moving
+     ;; it to a local, but we need to be careful: the br right after us must be
+     ;; kept around, as it is the only thing that makes the outer block have
+     ;; type none and not unreachable.
+     (block (result i32)
+       (if
+         (local.get $x)
+         (then
+           (return)
+         )
+       )
+       (i32.const 42)
+     )
+     ;; We won't remove this unreachable param (we leave it for DCE, first).
+     (br $block)
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $target (type $1) (param $0 i32) (param $1 i64) (result f32)
+ ;; CHECK-NEXT:  (local $2 i64)
+ ;; CHECK-NEXT:  (local.set $2
+ ;; CHECK-NEXT:   (i64.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT: )
+ (func $target (param $0 i64) (param $1 i32) (param $2 i64) (result f32)
+  ;; The i32 parameter should vanish.
   (unreachable)
  )
 )

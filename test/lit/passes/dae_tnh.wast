@@ -39,9 +39,7 @@
   ;; CHECK:      (type $1 (func (param i32)))
 
   ;; CHECK:      (func $caller (type $0)
-  ;; CHECK-NEXT:  (call $target
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $caller
     ;; Removing this parameter makes the type of the call change from
@@ -66,9 +64,7 @@
   ;; CHECK:      (type $1 (func (param i32) (result i32)))
 
   ;; CHECK:      (func $caller (type $0) (result i32)
-  ;; CHECK-NEXT:  (call $target
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $caller (result i32)
     ;; This call will change type from unreachable to i32, after the unreachable
@@ -92,8 +88,10 @@
 (module
   ;; CHECK:      (type $0 (func))
 
+  ;; CHECK:      (type $1 (func (param i32)))
+
   ;; CHECK:      (func $caller (type $0)
-  ;; CHECK-NEXT:  (return_call $target)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $caller
     (return_call $target
@@ -101,8 +99,7 @@
     )
   )
 
-  ;; CHECK:      (func $target (type $0)
-  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK:      (func $target (type $1) (param $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $target (param i32)
