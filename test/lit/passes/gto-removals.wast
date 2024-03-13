@@ -928,14 +928,12 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $0 (func (result (ref null $struct))))
-
-  ;; CHECK:       (type $struct (sub (struct )))
+  ;; CHECK-NEXT:  (type $struct (sub (struct )))
   (type $struct (sub (struct (field anyref) (field i32) (field f32) (field f64))))
 
-  ;; CHECK:       (type $2 (func (result (ref $struct))))
+  ;; CHECK:       (type $1 (func (result (ref $struct))))
 
-  ;; CHECK:      (func $func (type $2) (result (ref $struct))
+  ;; CHECK:      (func $func (type $1) (result (ref $struct))
   ;; CHECK-NEXT:  (local $0 (ref $struct))
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (local.set $0
