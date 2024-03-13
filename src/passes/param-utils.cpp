@@ -307,15 +307,18 @@ void localizeCallsTo(const std::unordered_set<HeapType>& callTargets,
       : callTargets(callTargets) {}
 
     void visitCall(Call* curr) {
-      handleCall(curr, getModule()->getFunction(curr->target)->getResults());
+      handleCall(curr, getModule()->getFunction(curr->target)->type);
     }
 
     void visitCallRef(CallRef* curr) {
-      handleCall(curr, curr->target->type);
+      auto type = curr->target->type;
+      if (type.isRef()) {
+        handleCall(curr, type.getHeapType());
+      }
     }
 
-    void handleCall(Expression* call, Type type) {
-      if (!type.isRef() || !callTargets.count(type.getHeapType())) {
+    void handleCall(Expression* call, HeapType type) {
+      if (!callTargets.count(type)) {
         return;
       }
 
