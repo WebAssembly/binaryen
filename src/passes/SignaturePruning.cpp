@@ -69,7 +69,7 @@ struct SignaturePruning : public Pass {
 
     // The first iteration may suggest additional work is possible. If so, run
     // another cycle. (Even more cycles may help, but limit ourselves to 2 for
-    // now).
+    // now.)
     if (iteration(module)) {
       iteration(module);
     }

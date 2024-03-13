@@ -29,12 +29,6 @@ namespace wasm {
 struct SortedVector : public std::vector<Index> {
   SortedVector() = default;
 
-  SortedVector(std::initializer_list<Index> init) {
-    for (auto item : init) {
-      push_back(item);
-    }
-  }
-
   SortedVector merge(const SortedVector& other) const {
     SortedVector ret;
     ret.resize(size() + other.size());
