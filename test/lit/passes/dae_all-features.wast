@@ -125,7 +125,8 @@
   ;; CHECK-NEXT: )
   (func $b4
     ;; This call will vanish entirely, because the unreachable child executes
-    ;; first.
+    ;; first (so we cannot see here that we removed the parameter from $a4, but
+    ;; that can be confirmed in $a4 itself).
     (call $a4 (unreachable))
   )
   ;; CHECK:      (func $b43 (type $0)
