@@ -72,7 +72,14 @@ struct Localizer {
 //
 // Typical usage is to call getReplacement() will produces the entire output
 // just shown (i.e., possible initial local.sets and other stuff that was pulled
-// out, followed by the parent, as relevant).
+// out, followed by the parent, as relevant). Note that getReplacement() may
+// omit the parent, if it had an unreachable child. That is useful behavior in
+// that it removes unneeded code (& otherwise some users of this code would need
+// to write their own removal logic). However, that does imply that it is valid
+// to remove the parent in such cases, which is not so for e.g. br when it is
+// the last thing keeping a block reachable. Calling this with something like a
+// struct.new or a call (the current intended users) is valid; if we want to
+// generalize this fully then we need to make changes here.
 //
 // TODO: use in more places
 struct ChildLocalizer {
