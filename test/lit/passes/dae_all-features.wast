@@ -852,32 +852,34 @@
 )
 
 (module
- ;; CHECK:      (type $0 (func (param i32)))
+ ;; CHECK:      (type $0 (func (param i32 i64)))
 
- ;; CHECK:      (type $1 (func (param i32 i64) (result f32)))
+ ;; CHECK:      (type $1 (func (param i64 i64)))
 
- ;; CHECK:      (func $caller-later-br (type $0) (param $x i32)
- ;; CHECK-NEXT:  (local $1 i32)
+ ;; CHECK:      (func $caller-later-br (type $0) (param $x i32) (param $y i64)
+ ;; CHECK-NEXT:  (local $2 i32)
  ;; CHECK-NEXT:  (block $block
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (local.set $1
- ;; CHECK-NEXT:      (block (result i32)
- ;; CHECK-NEXT:       (if
- ;; CHECK-NEXT:        (local.get $x)
- ;; CHECK-NEXT:        (then
- ;; CHECK-NEXT:         (return)
- ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (local.set $2
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (if
+ ;; CHECK-NEXT:       (local.get $x)
+ ;; CHECK-NEXT:       (then
+ ;; CHECK-NEXT:        (return)
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (i32.const 42)
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (i32.const 42)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (br $block)
  ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (br $block)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (call $target
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $caller-later-br (param $x i32)
+ (func $caller-later-br (param $x i32) (param $y i64)
   (block $block
    (drop
     (call $target
@@ -906,22 +908,35 @@
   ;; from functions that look dead).
   (drop
    (call $target
-    (i64.const 10)
-    (i32.const 20)
-    (i64.const 30)
+    (local.get $y)
+    (local.get $x)
+    (local.get $y)
    )
   )
  )
 
- ;; CHECK:      (func $target (type $1) (param $0 i32) (param $1 i64) (result f32)
- ;; CHECK-NEXT:  (local $2 i64)
- ;; CHECK-NEXT:  (local.set $2
- ;; CHECK-NEXT:   (i64.const 0)
+ ;; CHECK:      (func $target (type $1) (param $0 i64) (param $1 i64)
+ ;; CHECK-NEXT:  (local $2 i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block (result f32)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $target (param $0 i64) (param $1 i32) (param $2 i64) (result f32)
   ;; The i32 parameter should vanish.
+  (drop
+   (local.get $0)
+  )
+  (drop
+   (local.get $2)
+  )
   (unreachable)
  )
 )
