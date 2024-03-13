@@ -113,8 +113,13 @@ struct SignaturePruning : public Pass {
 
     // Heap types of call targets that we found we should localize calls to, in
     // order to fully handle them. (See similar code in DeadArgumentElimination
-    // for individual functions; here we handle a HeapType at a time.)
-    std::unordered_set<HeapType> callTargetsToLocalize;
+    // for individual functions; here we handle a HeapType at a time.) A slight
+    // complication is that we cannot track heap types here: heap types are
+    // rewritten using |GlobalTypeRewriter::updateSignatures| below, and even
+    // types that we do not modify end up replaced (as the entire set of types
+    // becomes one new big rec group). We therefore need something more stable
+    // to track here, which we do using either a Call or a Call Ref. 
+    std::unordered_set<Expression*> callTargetsToLocalize;
 
     // Combine all the information we gathered into that map, iterating in a
     // deterministic order as we build up vectors where the order matters.
@@ -229,7 +234,6 @@ struct SignaturePruning : public Pass {
         }
       }
 
-std::cout << "try yo " << sig << '\n';
       auto oldParams = sig.params;
       auto [removedIndexes, outcome] =
         ParamUtils::removeParameters(funcs,
@@ -239,13 +243,18 @@ std::cout << "try yo " << sig << '\n';
                                      module,
                                      getPassRunner());
       if (outcome == ParamUtils::RemovalOutcome::FailureDueToEffects) {
-std::cout << "  eagain\n";
-        callTargetsToLocalize.insert(type);
+        // Use either a Call or a CallRef that has this type (see explanation
+        // above on |callTargetsToLocalize|.
+        if (!info.calls.empty()) {
+          callTargetsToLocalize.insert(info.calls[0]);
+        } else {
+          assert(!info.callRefs.empty());
+          callTargetsToLocalize.insert(info.callRefs[0]);
+        }
       }
       if (removedIndexes.empty()) {
         continue;
       }
-std::cout << "  removed\n";
 
       // Success! Update the types.
       std::vector<Type> newParams;
@@ -282,8 +291,6 @@ std::cout << "  removed\n";
       }
     }
 
-std::cout << "rewrite\n";
-for (auto [k, v] : newSignatures) std::cout << "map " << k << " => " << v << '\n';
     // Rewrite the types.
     GlobalTypeRewriter::updateSignatures(newSignatures, *module);
 
@@ -291,24 +298,24 @@ for (auto [k, v] : newSignatures) std::cout << "map " << k << " => " << v << '\n
       return false;
     }
 
-std::cout << "  localize\n";
     // Localize after updating signatures, to not interfere with that
-    // operation. However, we do need to be aware of the changes made there:
-    // old types in callTargetsToLocalize must be mapped to new ones.
-    std::unordered_set<HeapType> updatedCallTargets;
-std::cout << "   localize types\n"; // rewriting regens even when no changes... we need an anchor. like a func.
-for (auto t : callTargetsToLocalize) std::cout << "   " << t << '\n';
-    for (auto type : callTargetsToLocalize) {
-      auto iter = newSignatures.find(type);
-      if (iter != newSignatures.end()) {
-        updatedCallTargets.insert(iter->second);
+    // operation (localization adds locals, and the indexes of locals must be
+    // taken into account in |GlobalTypeRewriter::updateSignatures| (as var
+    // indexes change when params are pruned).
+    std::unordered_set<HeapType> callTargetTypes;
+    for (auto* call : callTargetsToLocalize) {
+      HeapType type;
+      if (auto* c = call->dynCast<Call>()) {
+        type = module->getFunction(c->target)->type;
+      } else if (auto* c = call->dynCast<CallRef>()) {
+        type = c->target->type.getHeapType();
       } else {
-        updatedCallTargets.insert(type);
+        WASM_UNREACHABLE("bad call");
       }
+      callTargetTypes.insert(type);
     }
-std::cout << "   mappenedeh types\n";
-for (auto t : updatedCallTargets) std::cout << "   " << t << '\n';
-    ParamUtils::localizeCallsTo(updatedCallTargets,
+
+    ParamUtils::localizeCallsTo(callTargetTypes,
                                 *module,
                                 getPassRunner());
 
