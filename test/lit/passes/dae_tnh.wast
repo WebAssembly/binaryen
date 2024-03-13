@@ -42,9 +42,15 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $caller
-    ;; Removing this parameter makes the type of the call change from
-    ;; unreachable to none. This is only possible because we assume traps never
-    ;; happen, so that unreachable never executes anyhow.
+    ;; Removing this parameter would make the type of the call change from
+    ;; unreachable to none. But the call itself is in unreachable code, so we
+    ;; will replace it with an unreachable (and then, once the call is gone, the
+    ;; target can be better optimized; however, no other calls remain here, so
+    ;; the pass does nothing as it considers it dead at that point).
+    ;;
+    ;; This test verifies we do the proper thing even in TNH mode, as in TNH
+    ;; mode |unreachable| seems to have no effects, but for validation reasons
+    ;; we must still replace the call here.
     (call $target
       (unreachable)
     )
@@ -67,8 +73,7 @@
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $caller (result i32)
-    ;; This call will change type from unreachable to i32, after the unreachable
-    ;; child is removed.
+    ;; Again, the call is replaced by an unreachable.
     (call $target
       (unreachable)
     )
