@@ -18,7 +18,6 @@
 #define wasm_ir_localizer_h
 
 #include "ir/iteration.h"
-#include "support/sorted_vector.h"
 #include "wasm-builder.h"
 
 namespace wasm {
@@ -55,9 +54,6 @@ struct Localizer {
 //
 // The sets of the locals are emitted on a |sets| property on the class. Those
 // must be emitted right before the parent.
-//
-// This stops at the first unreachable child, as there is no code executing
-// after that point anyhow.
 //
 // TODO: use in more places
 struct ChildLocalizer {
@@ -99,7 +95,17 @@ struct ChildLocalizer {
         sets.push_back(child);
         *childp = builder.makeUnreachable();
         hasUnreachableChild = true;
-        break;
+        continue;
+      }
+
+      if (hasUnreachableChild) {
+        // Once we pass one unreachable, we only need to copy the children over.
+        // (The only reason we still need them is that they may be needed for
+        // validation, e.g. if one contains a break to a block that is the only
+        // reason the block has type none.)
+        sets.push_back(builder.makeDrop(child));
+        *childp = builder.makeUnreachable();
+        continue;
       }
 
       // Use a local if we need to. That is the case either if this has side
@@ -122,7 +128,7 @@ struct ChildLocalizer {
   }
 
   // Helper that gets a replacement for the parent with a block containing the
-  // sets + the parent.
+  // sets + the parent. This will not contain the parent if we don't need it.
   Expression* getReplacement() {
     if (sets.empty()) {
       // Nothing to add.
@@ -131,11 +137,15 @@ struct ChildLocalizer {
 
     auto* block = Builder(wasm).makeBlock();
     block->list.set(sets);
-    // If there is an unreachable child then we do not need the parent at all.
-    if (!hasUnreachableChild) {
+    if (hasUnreachableChild) {
+      // If there is an unreachable child then we do not need the parent at all,
+      // and we know the type is unreachable.
+      block->type = Type::unreachable;
+    } else {
+      // Otherwise, add the parent and finalize.
       block->list.push_back(parent);
+      block->finalize();
     }
-    block->finalize();
     return block;
   }
 };
