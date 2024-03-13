@@ -118,7 +118,7 @@ struct SignaturePruning : public Pass {
     // rewritten using |GlobalTypeRewriter::updateSignatures| below, and even
     // types that we do not modify end up replaced (as the entire set of types
     // becomes one new big rec group). We therefore need something more stable
-    // to track here, which we do using either a Call or a Call Ref. 
+    // to track here, which we do using either a Call or a Call Ref.
     std::unordered_set<Expression*> callTargetsToLocalize;
 
     // Combine all the information we gathered into that map, iterating in a
@@ -315,9 +315,7 @@ struct SignaturePruning : public Pass {
       callTargetTypes.insert(type);
     }
 
-    ParamUtils::localizeCallsTo(callTargetTypes,
-                                *module,
-                                getPassRunner());
+    ParamUtils::localizeCallsTo(callTargetTypes, *module, getPassRunner());
 
     return true;
   }

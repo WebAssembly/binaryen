@@ -85,9 +85,8 @@ RemovalOutcome removeParameter(const std::vector<Function*>& funcs,
       return Failure;
     }
 
-    bool hasUnremovable =
-      EffectAnalyzer(runner->options, *module, operand)
-        .hasUnremovableSideEffects();
+    bool hasUnremovable = EffectAnalyzer(runner->options, *module, operand)
+                            .hasUnremovableSideEffects();
 
     return hasUnremovable ? Failure : Success;
   };

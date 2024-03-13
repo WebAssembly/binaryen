@@ -66,11 +66,10 @@ struct ChildLocalizer {
   std::vector<Expression*> sets;
   bool hasUnreachableChild = false;
 
-  ChildLocalizer(
-    Expression* parent,
-    Function* func,
-    Module& wasm,
-    const PassOptions& options)
+  ChildLocalizer(Expression* parent,
+                 Function* func,
+                 Module& wasm,
+                 const PassOptions& options)
     : parent(parent), wasm(wasm), options(options) {
     Builder builder(wasm);
     ChildIterator iterator(parent);
