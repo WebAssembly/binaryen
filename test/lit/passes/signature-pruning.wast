@@ -158,7 +158,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32) (param $i64 i64) (param $f32 f32) (param $f64 f64)
-    ;; Use the middle two parameters.
+    ;; Use the middle two parameters. The other two vanish.
     (i64.store
       (i32.const 0)
       (local.get $i64)
@@ -945,6 +945,7 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (type $func) (param $0 v128)
+    ;; The parameter will be removed.
     (nop)
   )
 
@@ -965,6 +966,7 @@
   ;; CHECK-NEXT: )
   (func $caller (param $param externref)
     (local $var (ref $struct))
+    ;; The parameter of this call_ref will be removed.
     (call_ref $func
       ;; Use a struct.get, which would error if the type the nested tee were
       ;; incorrect (it asserts on it being a struct type).
