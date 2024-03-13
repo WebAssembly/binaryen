@@ -46,31 +46,41 @@ struct Localizer {
 
 // Replaces all children with gets of locals, if they have any effects that
 // interact with any of the others, or if they have side effects which cannot be
-// removed.
+// removed. Also replace unreachable things with an unreachable, leaving in
+// place only things without interacting effects. For example:
 //
-// After this, the parent has only local.gets as inputs, or unreachables, or
-// constants or other things with no interacting effects between them, and so
-// those children can be reordered and/or removed as needed. Specifically the
-// parent can be modified as needed, and getReplacement() returns an expression
-// that can replace it in the IR (with the same type).
+//  (parent
+//    (call $foo)
+//    (br $out)
+//    (i32.const)
+//  )
 //
-// The sets of the locals are emitted on a |sets| property on the class. Those
-// must be emitted right before the parent.
+// =>
+//
+//  (local.set $temp.foo
+//    (call $foo)            ;; moved out
+//  )
+//  (br $out)                ;; moved out
+//  (parent
+//    (local.get $temp.foo)  ;; value saved to a local
+//    (unreachable)          ;; complex effect replaced by unreachable
+//    (i32.const)
+//  )
+//
+// After this it is safe to reorder and remove things from the parent: all
+// interesting interactions happen before the parent.
+//
+// Typical usage is to call getReplacement() will produces the entire output
+// just shown (i.e., possible initial local.sets and other stuff that was pulled
+// out, followed by the parent, as relevant).
 //
 // TODO: use in more places
 struct ChildLocalizer {
-  Expression* parent;
-  Module& wasm;
-  const PassOptions& options;
-
-  std::vector<Expression*> sets;
-  bool hasUnreachableChild = false;
-
   ChildLocalizer(Expression* parent,
                  Function* func,
                  Module& wasm,
                  const PassOptions& options)
-    : parent(parent), wasm(wasm), options(options) {
+    : parent(parent), wasm(wasm) {
     Builder builder(wasm);
     ChildIterator iterator(parent);
     auto& children = iterator.children;
@@ -128,8 +138,9 @@ struct ChildLocalizer {
     }
   }
 
-  // Helper that gets a replacement for the parent with a block containing the
-  // sets + the parent. This will not contain the parent if we don't need it.
+  // Helper that gets a replacement for the parent: a block containing the
+  // sets + the parent. This will not contain the parent if we don't need it
+  // (if it was never reached).
   Expression* getReplacement() {
     if (sets.empty()) {
       // Nothing to add.
@@ -149,6 +160,13 @@ struct ChildLocalizer {
     }
     return block;
   }
+
+private:
+  Expression* parent;
+  Module& wasm;
+
+  std::vector<Expression*> sets;
+  bool hasUnreachableChild = false;
 };
 
 } // namespace wasm
