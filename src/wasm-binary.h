@@ -21,24 +21,6 @@
 #ifndef wasm_wasm_binary_h
 #define wasm_wasm_binary_h
 
-// Default to using the standard encodings. Override the default with
-// USE_STANDARD_GC_ENCODINGS or USE_LEGACY_GC_ENCODINGS.
-#define STANDARD_GC_ENCODINGS 1
-
-#ifdef USE_STANDARD_GC_ENCODINGS
-#ifdef USE_LEGACY_GC_ENCODINGS
-#error                                                                         \
-  "Cannot define both USE_STANDARD_GC_ENCODINGS and USE_LEGACY_GC_ENCODINGS"
-#endif
-#undef STANDARD_GC_ENCODINGS
-#define STANDARD_GC_ENCODINGS 1
-#else
-#ifdef USE_LEGACY_GC_ENCODINGS
-#undef STANDARD_GC_ENCODINGS
-#define STANDARD_GC_ENCODINGS 0
-#endif
-#endif
-
 #include <cassert>
 #include <ostream>
 #include <type_traits>
@@ -374,109 +356,53 @@ enum EncodedType {
   f32 = -0x3,  // 0x7d
   f64 = -0x4,  // 0x7c
   v128 = -0x5, // 0x7b
-// packed types
-#if STANDARD_GC_ENCODINGS
+  // packed types
   i8 = -0x8,  // 0x78
   i16 = -0x9, // 0x77
-#else
-  i8 = -0x6,  // 0x7a
-  i16 = -0x7, // 0x79
-#endif
-// reference types
-#if STANDARD_GC_ENCODINGS
+  // reference types
   nullfuncref = -0xd,   // 0x73
   nullexternref = -0xe, // 0x72
   nullref = -0xf,       // 0x71
   i31ref = -0x14,       // 0x6c
   structref = -0x15,    // 0x6b
   arrayref = -0x16,     // 0x6a
-#else
-  nullexternref = -0x17, // 0x69
-  nullfuncref = -0x18,   // 0x68
-  nullref = -0x1b,       // 0x65
-  i31ref = -0x16,        // 0x6a
-  structref = -0x19,     // 0x67
-  arrayref = -0x1a,      // 0x66
-#endif
-  funcref = -0x10,   // 0x70
-  externref = -0x11, // 0x6f
-  anyref = -0x12,    // 0x6e
-  eqref = -0x13,     // 0x6d
-#if STANDARD_GC_ENCODINGS
-#else
-#endif
-#if STANDARD_GC_ENCODINGS
-  nonnullable = -0x1c, // 0x64
-  nullable = -0x1d,    // 0x63
-#else
-  nullable = -0x14,    // 0x6c
-  nonnullable = -0x15, // 0x6b
-#endif
-#if STANDARD_GC_ENCODINGS
+  funcref = -0x10,      // 0x70
+  externref = -0x11,    // 0x6f
+  anyref = -0x12,       // 0x6e
+  eqref = -0x13,        // 0x6d
+  nonnullable = -0x1c,  // 0x64
+  nullable = -0x1d,     // 0x63
   // exception handling
-  exnref = -0x17, // 0x69
-#else
-  // Currently the legacy GC encoding's nullexternref encoding overlaps with
-  // exnref's. We assume the legacy GC encoding won't be used with the exnref
-  // for the moment and assign a random value to it to prevent the clash.
-  exnref = -0xfe,
-#endif
+  exnref = -0x17,    // 0x69
   nullexnref = -0xc, // 0x74
-// string reference types
-#if STANDARD_GC_ENCODINGS
-  stringref = -0x19,       // 0x67
-  stringview_wtf8 = -0x1a, // 0x66
-#else
-  stringref = -0x1c,       // 0x64
-  stringview_wtf8 = -0x1d, // 0x63
-#endif
+  // string reference types
+  stringref = -0x19,        // 0x67
+  stringview_wtf8 = -0x1a,  // 0x66
   stringview_wtf16 = -0x1e, // 0x62
   stringview_iter = -0x1f,  // 0x61
   // type forms
-  Func = -0x20,   // 0x60
-  Cont = -0x23,   // 0x5d
-  Struct = -0x21, // 0x5f
-  Array = -0x22,  // 0x5e
-  Sub = -0x30,    // 0x50
-#if STANDARD_GC_ENCODINGS
+  Func = -0x20,     // 0x60
+  Cont = -0x23,     // 0x5d
+  Struct = -0x21,   // 0x5f
+  Array = -0x22,    // 0x5e
+  Sub = -0x30,      // 0x50
   SubFinal = -0x31, // 0x4f
-#else
-  SubFinal = -0x32, // 0x4e
-#endif
-// isorecursive recursion groups
-#if STANDARD_GC_ENCODINGS
+  // isorecursive recursion groups
   Rec = -0x32, // 0x4e
-#else
-  Rec = -0x31, // 0x4f
-#endif
   // block_type
   Empty = -0x40, // 0x40
 };
 
 enum EncodedHeapType {
-#if STANDARD_GC_ENCODINGS
-  nofunc = -0xd, // 0x73
-  noext = -0xe,  // 0x72
-  none = -0xf,   // 0x71
-#else
-  noext = -0x17,  // 0x69
-  nofunc = -0x18, // 0x68
-  none = -0x1b,   // 0x65
-#endif
-  func = -0x10, // 0x70
-  ext = -0x11,  // 0x6f
-  any = -0x12,  // 0x6e
-  eq = -0x13,   // 0x6d
-#if STANDARD_GC_ENCODINGS
-  exn = -0x17, // 0x69
-#else
-  // Currently the legacy GC encoding's nullexternref encoding overlaps with
-  // exnref's. We assume the legacy GC encoding won't be used with the exnref
-  // for the moment and assign a random value to it to prevent the clash.
-  exn = -0xfe,
-#endif
-  noexn = -0xc, // 0x74
-#if STANDARD_GC_ENCODINGS
+  nofunc = -0xd,   // 0x73
+  noext = -0xe,    // 0x72
+  none = -0xf,     // 0x71
+  func = -0x10,    // 0x70
+  ext = -0x11,     // 0x6f
+  any = -0x12,     // 0x6e
+  eq = -0x13,      // 0x6d
+  exn = -0x17,     // 0x69
+  noexn = -0xc,    // 0x74
   i31 = -0x14,     // 0x6c
   struct_ = -0x15, // 0x6b
   array = -0x16,   // 0x6a
@@ -484,14 +410,7 @@ enum EncodedHeapType {
   // stringview/iter constants are identical to type, and cannot be duplicated
   // here as that would be a compiler error, so add _heap suffixes. See
   // https://github.com/WebAssembly/stringref/issues/12
-  stringview_wtf8_heap = -0x1a, // 0x66
-#else
-  i31 = -0x16,                  // 0x6a
-  struct_ = -0x19,              // 0x67
-  array = -0x1a,                // 0x66
-  string = -0x1c,               // 0x64
-  stringview_wtf8_heap = -0x1d, // 0x63
-#endif
+  stringview_wtf8_heap = -0x1a,  // 0x66
   stringview_wtf16_heap = -0x1e, // 0x62
   stringview_iter_heap = -0x1f,  // 0x61
 };
@@ -1155,17 +1074,10 @@ enum ASTNodes {
   RefNull = 0xd0,
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
-#if STANDARD_GC_ENCODINGS
   RefEq = 0xd3,
   RefAsNonNull = 0xd4,
   BrOnNull = 0xd5,
   BrOnNonNull = 0xd6,
-#else
-  RefAsNonNull = 0xd3,
-  BrOnNull = 0xd4,
-  RefEq = 0xd5,
-  BrOnNonNull = 0xd6,
-#endif
 
   // exception handling opcodes
 
@@ -1187,8 +1099,8 @@ enum ASTNodes {
   CallRef = 0x14,
   RetCallRef = 0x15,
 
-// gc opcodes
-#if STANDARD_GC_ENCODINGS
+  // gc opcodes
+
   StructNew = 0x00,
   StructNewDefault = 0x01,
   StructGet = 0x02,
@@ -1220,39 +1132,6 @@ enum ASTNodes {
   RefI31 = 0x1c,
   I31GetS = 0x1d,
   I31GetU = 0x1e,
-#else
-  StructGet = 0x03,
-  StructGetS = 0x04,
-  StructGetU = 0x05,
-  StructSet = 0x06,
-  StructNew = 0x07,
-  StructNewDefault = 0x08,
-  ArrayNewElem = 0x10,
-  ArrayGet = 0x13,
-  ArrayGetS = 0x14,
-  ArrayGetU = 0x15,
-  ArraySet = 0x16,
-  ArrayCopy = 0x18,
-  ArrayLen = 0x19,
-  ArrayNewFixed = 0x1a,
-  ArrayNew = 0x1b,
-  ArrayNewDefault = 0x1c,
-  ArrayNewData = 0x1d,
-  RefI31 = 0x20,
-  I31GetS = 0x21,
-  I31GetU = 0x22,
-  RefTest = 0x40,
-  RefCast = 0x41,
-  BrOnCast = 0x4e,
-  BrOnCastFail = 0x4f,
-  RefTestNull = 0x48,
-  RefCastNull = 0x49,
-  ExternInternalize = 0x70,
-  ExternExternalize = 0x71,
-  ArrayFill = 0x0f,
-  ArrayInitData = 0x54,
-  ArrayInitElem = 0x55,
-#endif
 
   // stringref opcodes
 
