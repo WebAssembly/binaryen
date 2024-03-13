@@ -229,6 +229,7 @@ struct SignaturePruning : public Pass {
         }
       }
 
+std::cout << "try yo " << sig << '\n';
       auto oldParams = sig.params;
       auto [removedIndexes, outcome] =
         ParamUtils::removeParameters(funcs,
@@ -238,11 +239,13 @@ struct SignaturePruning : public Pass {
                                      module,
                                      getPassRunner());
       if (outcome == ParamUtils::RemovalOutcome::FailureDueToEffects) {
+std::cout << "  eagain\n";
         callTargetsToLocalize.insert(type);
       }
       if (removedIndexes.empty()) {
         continue;
       }
+std::cout << "  removed\n";
 
       // Success! Update the types.
       std::vector<Type> newParams;
@@ -279,19 +282,37 @@ struct SignaturePruning : public Pass {
       }
     }
 
-    if (!callTargetsToLocalize.empty()) {
-      // Localize before updating signatures, as the signature change would
-      // confuse us when we look for which functions to modify
-      // (|callTargetsToLocalize| contains the old types, before updating).
-      ParamUtils::localizeCallsTo(callTargetsToLocalize,
-                                  *module,
-                                  getPassRunner());
-    }
-
+std::cout << "rewrite\n";
+for (auto [k, v] : newSignatures) std::cout << "map " << k << " => " << v << '\n';
     // Rewrite the types.
     GlobalTypeRewriter::updateSignatures(newSignatures, *module);
 
-    return !callTargetsToLocalize.empty();
+    if (callTargetsToLocalize.empty()) {
+      return false;
+    }
+
+std::cout << "  localize\n";
+    // Localize after updating signatures, to not interfere with that
+    // operation. However, we do need to be aware of the changes made there:
+    // old types in callTargetsToLocalize must be mapped to new ones.
+    std::unordered_set<HeapType> updatedCallTargets;
+std::cout << "   localize types\n"; // rewriting regens even when no changes... we need an anchor. like a func.
+for (auto t : callTargetsToLocalize) std::cout << "   " << t << '\n';
+    for (auto type : callTargetsToLocalize) {
+      auto iter = newSignatures.find(type);
+      if (iter != newSignatures.end()) {
+        updatedCallTargets.insert(iter->second);
+      } else {
+        updatedCallTargets.insert(type);
+      }
+    }
+std::cout << "   mappenedeh types\n";
+for (auto t : updatedCallTargets) std::cout << "   " << t << '\n';
+    ParamUtils::localizeCallsTo(updatedCallTargets,
+                                *module,
+                                getPassRunner());
+
+    return true;
   }
 };
 

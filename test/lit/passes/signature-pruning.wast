@@ -213,7 +213,7 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $0 (func))
 
-  ;; CHECK:       (type $sig (sub (func (param i64 f32))))
+  ;; CHECK:       (type $sig (sub (func (param i32 i64 f32))))
   (type $sig (sub (func (param i32) (param i64) (param f32) (param f64))))
 
   (memory 1 1)
@@ -222,16 +222,15 @@
 
   ;; CHECK:      (elem declare func $foo)
 
-  ;; CHECK:      (func $foo (type $sig) (param $0 i64) (param $1 f32)
-  ;; CHECK-NEXT:  (local $2 f64)
-  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK:      (func $foo (type $sig) (param $0 i32) (param $1 i64) (param $2 f32)
+  ;; CHECK-NEXT:  (local $3 f64)
   ;; CHECK-NEXT:  (i64.store
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (f32.store
   ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo (type $sig) (param $i32 i32) (param $i64 i64) (param $f32 f32) (param $f64 f64)
@@ -248,6 +247,7 @@
   ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (call $foo
+  ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (i64.const 1)
   ;; CHECK-NEXT:   (f32.const 2)
   ;; CHECK-NEXT:  )
@@ -259,6 +259,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call_ref $sig
+  ;; CHECK-NEXT:    (local.get $0)
   ;; CHECK-NEXT:    (i64.const 5)
   ;; CHECK-NEXT:    (f32.const 6)
   ;; CHECK-NEXT:    (ref.func $foo)
@@ -915,5 +916,61 @@
   ;; CHECK-NEXT: )
   (func $func.B (type $func.B) (param $0 (ref $array.A)) (result (ref $array.B))
     (unreachable)
+  )
+)
+
+;; Test corner cases with var updating. To remove the parameter of $func we
+;; must move the parameter to a local first. We must then adjust local types
+;; properly while adjusting the signature (when the signature loses a parameter,
+;; local indexes change, which is a delicate dance handled by
+;; GlobalTypeRewriter::updateSignatures and ParamUtils::removeParameters;
+;; moving the parameter to a local first should not get in the way there).
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $struct (sub (struct (field v128))))
+  (type $struct (sub (struct (field v128))))
+  ;; CHECK:       (type $1 (func))
+
+  ;; CHECK:       (type $func (func (param v128)))
+  (type $func (func (param v128)))
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (func $func (type $func) (param $0 v128)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (type $func) (param $0 v128)
+    (nop)
+  )
+
+  ;; CHECK:      (func $caller (type $1)
+  ;; CHECK-NEXT:  (local $0 (ref $struct))
+  ;; CHECK-NEXT:  (local $1 externref)
+  ;; CHECK-NEXT:  (local $2 v128)
+  ;; CHECK-NEXT:  (local.set $2
+  ;; CHECK-NEXT:   (struct.get $struct 0
+  ;; CHECK-NEXT:    (local.tee $0
+  ;; CHECK-NEXT:     (struct.new_default $struct)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call_ref $func
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:   (ref.func $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (param $param externref)
+    (local $var (ref $struct))
+    (call_ref $func
+      ;; Use a struct.get, which would error if the type the nested tee were
+      ;; incorrect (it asserts on it being a struct type).
+      (struct.get $struct 0
+        ;; Use a tee to test the updating of tee'd vars, as mentioned above.
+        (local.tee $var
+          (struct.new_default $struct)
+        )
+      )
+      (ref.func $func)
+    )
   )
 )
