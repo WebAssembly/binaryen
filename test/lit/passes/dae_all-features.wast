@@ -801,7 +801,7 @@
  ;; CHECK:      (table $0 10 funcref)
  (table $0 10 funcref)
 
- ;; CHECK:      (func $caller (type $0)
+ ;; CHECK:      (func $caller-effects (type $0)
  ;; CHECK-NEXT:  (local $0 v128)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result f32)
@@ -814,7 +814,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $caller
+ (func $caller-effects
   (drop
    (call $target
     (i64.const 0)
@@ -843,6 +843,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $target (param $0 i64) (param $1 v128) (param $2 i64) (result f32)
+  ;; All parameters here should vanish.
   (unreachable)
  )
 )
