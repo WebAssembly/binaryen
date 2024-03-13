@@ -1068,3 +1068,86 @@
     )
   )
 )
+
+;; As above, but remove the other parameter (the pop).
+(module
+  ;; CHECK:      (type $0 (func (param i32)))
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $1 (func (param i32)))
+
+  ;; CHECK:       (type $2 (func (result i32)))
+
+  ;; CHECK:       (type $3 (func (param i32)))
+
+  ;; CHECK:      (tag $tag (param i32))
+  (tag $tag (param i32))
+
+  ;; CHECK:      (func $catch-pop (type $2) (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (block $block (result i32)
+  ;; CHECK-NEXT:   (try $try
+  ;; CHECK-NEXT:    (do
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (catch $tag
+  ;; CHECK-NEXT:     (local.set $2
+  ;; CHECK-NEXT:      (pop i32)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:       (local.set $0
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $1
+  ;; CHECK-NEXT:        (br_if $block
+  ;; CHECK-NEXT:         (i32.const 1)
+  ;; CHECK-NEXT:         (i32.const 2)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (call $target
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $catch-pop (result i32)
+    (block $block (result i32)
+      (try $try
+        (do
+          (nop)
+        )
+        (catch $tag
+          (call $target
+            (pop i32)
+            (br_if $block
+              (i32.const 1)
+              (i32.const 2)
+            )
+          )
+          (nop)
+        )
+      )
+      (i32.const 3)
+    )
+  )
+
+  ;; CHECK:      (func $target (type $1) (param $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $target (param $x i32) (param $y i32)
+    (drop
+      (local.get $y) ;; this changed from $x to $y
+    )
+  )
+)
