@@ -2369,29 +2369,6 @@ public:
     NOTE_ENTER("Rethrow");
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitStringMeasure(StringMeasure* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringEncode(StringEncode* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStringAs(StringAs* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStringWTF8Advance(StringWTF8Advance* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringWTF16Get(StringWTF16Get* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringIterNext(StringIterNext* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringIterMove(StringIterMove* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringSliceWTF(StringSliceWTF* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringSliceIter(StringSliceIter* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
   Flow visitRefAs(RefAs* curr) {
     // TODO: Remove this once interpretation is implemented.
     if (curr->op == ExternInternalize || curr->op == ExternExternalize) {
