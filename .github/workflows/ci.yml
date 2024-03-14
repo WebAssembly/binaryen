@@ -30,8 +30,7 @@ jobs:
       run: |
         wget https://apt.llvm.org/llvm.sh
         chmod +x llvm.sh
-        sudo ./llvm.sh
-        ls
+        sudo ./llvm.sh 17
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install Python dev dependencies
