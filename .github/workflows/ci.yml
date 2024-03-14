@@ -144,6 +144,8 @@ jobs:
     env:
       ASAN_OPTIONS: "symbolize=1"
       COMPILER_FLAGS: "-fsanitize=address"
+      CC: "clang-18"
+      CXX: "clang++-18"
     steps:
     - uses: actions/setup-python@v1
       with:
@@ -151,12 +153,11 @@ jobs:
     - uses: actions/checkout@v1
       with:
         submodules: true
-    - name: install clang
-      uses: egor-tensin/setup-clang@v1
-      with:
-        # Clang 15 seems to avoid asan flakes that 14 has (#6116).
-        version: 15
-        platform: x64
+    - name: install clang 18
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh 18
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install Python dev dependencies
@@ -164,7 +165,7 @@ jobs:
     - name: cmake
       run: |
         mkdir -p out
-        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang-15 -DCMAKE_CXX_COMPILER=clang++-15 -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
+        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS"
     - name: build
       run: cmake --build out
     - name: test
@@ -243,6 +244,8 @@ jobs:
     env:
       COMPILER_FLAGS: "-fsanitize=thread"
       LINKER_FLAGS: "-fsanitize=thread"
+      CC: "clang-18"
+      CXX: "clang++-18"
     steps:
     - uses: actions/setup-python@v1
       with:
@@ -250,6 +253,11 @@ jobs:
     - uses: actions/checkout@v1
       with:
         submodules: true
+    - name: install clang 18
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh 18
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install Python dev dependencies
@@ -257,7 +265,7 @@ jobs:
     - name: cmake
       run: |
         mkdir -p out
-        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang -DCMAKE_CXX_COMPILER=clang++ -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS"
+        cmake -S . -B out -G Ninja -DCMAKE_INSTALL_PREFIX=out/install -DCMAKE_C_COMPILER=clang-18 -DCMAKE_CXX_COMPILER=clang++-18 -DCMAKE_C_FLAGS="$COMPILER_FLAGS" -DCMAKE_CXX_FLAGS="$COMPILER_FLAGS" -DCMAKE_EXE_LINKER_FLAGS="$LINKER_FLAGS"
     - name: build
       run: cmake --build out
     - name: test
