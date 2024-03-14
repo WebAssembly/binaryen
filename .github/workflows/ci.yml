@@ -18,7 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ASAN_OPTIONS: "symbolize=1"
-      COMPILER_FLAGS: "-fsanitize=address"
+      COMPILER_FLAGS: "-fsanitize=address -fno-sanitize-recover=all"
     steps:
     - uses: actions/setup-python@v1
       with:
@@ -49,8 +49,8 @@ jobs:
     name: tsan
     runs-on: ubuntu-latest
     env:
-      COMPILER_FLAGS: "-fsanitize=thread"
-      LINKER_FLAGS: "-fsanitize=thread"
+      COMPILER_FLAGS: "-fsanitize=thread -fno-sanitize-recover=all"
+      LINKER_FLAGS: "-fsanitize=thread -fno-sanitize-recover=all"
     steps:
     - uses: actions/setup-python@v1
       with:
