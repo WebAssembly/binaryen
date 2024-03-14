@@ -925,3 +925,49 @@
     (unreachable)
   )
 )
+
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $struct (sub (struct )))
+  (type $struct (sub (struct (field anyref) (field i32) (field f32) (field f64))))
+
+  ;; CHECK:       (type $1 (func (result (ref $struct))))
+
+  ;; CHECK:      (func $func (type $1) (result (ref $struct))
+  ;; CHECK-NEXT:  (local $0 (ref $struct))
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (call $func)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $1
+  ;; CHECK-NEXT:   (block (result f64)
+  ;; CHECK-NEXT:    (if
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (f64.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.new_default $struct)
+  ;; CHECK-NEXT: )
+  (func $func (result (ref $struct))
+    ;; The fields can be removed here, but the effects must be preserved before
+    ;; the struct.new. The consts in the middle can vanish entirely.
+    (struct.new $struct
+      (call $func)
+      (i32.const 10)
+      (f32.const 20)
+      (block (result f64)
+        (if
+          (i32.const 0)
+          (then
+            (unreachable)
+          )
+        )
+        (f64.const 30)
+      )
+    )
+  )
+)
