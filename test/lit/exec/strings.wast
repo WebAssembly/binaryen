@@ -189,8 +189,15 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] calling encode
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 3]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 97]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 98]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 99]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
   (func $encode (export "encode")
-    (param $array16 (ref $array16))
+    (local $array16 (ref $array16))
     (local.set $array16
       (array.new_default $array16
         (i32.const 10)
@@ -294,6 +301,14 @@
 
 ;; CHECK:      [fuzz-exec] calling get_length
 ;; CHECK-NEXT: [fuzz-exec] note result: get_length => 7
+
+;; CHECK:      [fuzz-exec] calling encode
+;; CHECK-NEXT: [LoggingExternalInterface logging 3]
+;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+;; CHECK-NEXT: [LoggingExternalInterface logging 97]
+;; CHECK-NEXT: [LoggingExternalInterface logging 98]
+;; CHECK-NEXT: [LoggingExternalInterface logging 99]
+;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.1
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.10
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.2
@@ -305,6 +320,7 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.8
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.9
 ;; CHECK-NEXT: [fuzz-exec] comparing const
+;; CHECK-NEXT: [fuzz-exec] comparing encode
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.1
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.2
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.3

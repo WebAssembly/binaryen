@@ -1929,11 +1929,11 @@ public:
     if (ref.breaking()) {
       return ref;
     }
-    Flow ptr = visit(curr->ref);
+    Flow ptr = visit(curr->ptr);
     if (ptr.breaking()) {
       return ptr;
     }
-    Flow start = visit(curr->ref);
+    Flow start = visit(curr->start);
     if (start.breaking()) {
       return start;
     }
