@@ -2039,7 +2039,44 @@ public:
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitStringSliceWTF(StringSliceWTF* curr) {
-    return Flow(NONCONSTANT_FLOW);
+    // For now we only support JS-style strings.
+    if (curr->op != StringSliceWTF16) {
+      return Flow(NONCONSTANT_FLOW);
+    }
+
+    Flow ref = visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow start = visit(curr->start);
+    if (start.breaking()) {
+      return start;
+    }
+    Flow end = visit(curr->end);
+    if (end.breaking()) {
+      return end;
+    }
+
+    auto refData = ref.getSingleValue().getGCData();
+    if (!refData) {
+      trap("null ref");
+    }
+    auto& refValues = refData->values;
+    auto startVal = start.getSingleValue().getUnsigned();
+    auto endVal = end.getSingleValue().getUnsigned();
+    if (endVal > refValues.size()) {
+      trap("array oob");
+    }
+    Literals contents;
+    if (endVal > startVal) {
+      contents.reserve(endVal - startVal);
+      for (size_t i = startVal; i < endVal; i++) {
+        if (i < refValues.size()) {
+          contents.push_back(refValues[i]);
+        }
+      }
+    }
+    return makeGCData(contents, curr->type);
   }
   Flow visitStringSliceIter(StringSliceIter* curr) {
     return Flow(NONCONSTANT_FLOW);
