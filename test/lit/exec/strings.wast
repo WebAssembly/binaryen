@@ -4,7 +4,10 @@
 
 (module
   (type $array16 (array (mut i16)))
+
   (memory 1 1)
+
+  (import "fuzzing-support" "log" (func $log (param i32)))
 
   ;; CHECK:      [fuzz-exec] calling new_wtf16_array
   ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
@@ -182,6 +185,55 @@
     (stringview_wtf16.length
       (string.as_wtf16
         (string.const "1234567")
+      )
+    )
+  )
+
+  (func $encode (export "encode")
+    (param $array16 (ref $array16))
+    (local.set $array16
+      (array.new_default $array16
+        (i32.const 10)
+      )
+    )
+    ;; Log out that we wrote 3 things.
+    (call $log
+      (string.encode_wtf16_array
+        (string.const "abc")
+        (local.get $array16)
+        (i32.const 4)
+      )
+    )
+    ;; We wrote 3 things at offset 4. Log out the values at 3,4,5,6,7 (the first
+    ;; and last should be 0, and "abc" in between).
+    (call $log
+      (array.get $array16
+        (local.get $array16)
+        (i32.const 3)
+      )
+    )
+    (call $log
+      (array.get $array16
+        (local.get $array16)
+        (i32.const 4)
+      )
+    )
+    (call $log
+      (array.get $array16
+        (local.get $array16)
+        (i32.const 5)
+      )
+    )
+    (call $log
+      (array.get $array16
+        (local.get $array16)
+        (i32.const 6)
+      )
+    )
+    (call $log
+      (array.get $array16
+        (local.get $array16)
+        (i32.const 7)
       )
     )
   )
