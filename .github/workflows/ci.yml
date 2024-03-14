@@ -27,7 +27,10 @@ jobs:
       with:
         submodules: true
     - name: install clang
-      install_packages: clang
+      uses: egor-tensin/setup-clang@v1
+      with:
+        version: latest
+        platform: x64
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install Python dev dependencies
@@ -56,7 +59,10 @@ jobs:
       with:
         submodules: true
     - name: install clang
-      install_packages: clang
+      uses: egor-tensin/setup-clang@v1
+      with:
+        version: latest
+        platform: x64
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install Python dev dependencies
