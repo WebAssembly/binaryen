@@ -19,6 +19,7 @@ jobs:
     env:
       ASAN_OPTIONS: "symbolize=1"
       COMPILER_FLAGS: "-fsanitize=address"
+      LINKER_FLAGS: "-fsanitize=address"
     steps:
     - uses: actions/setup-python@v1
       with:
