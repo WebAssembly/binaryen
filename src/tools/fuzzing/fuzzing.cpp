@@ -464,7 +464,8 @@ void TranslateToFuzzReader::finalizeMemory() {
         // unless GC is enabled. This can occur due to us adding a local
         // definition to what used to be an imported global in initial contents.
         // To fix that, replace such invalid offsets with a constant.
-        for (auto* get : FindAll<GlobalGet>(segment->offset).list) {
+        for ([[maybe_unused]] auto* get :
+             FindAll<GlobalGet>(segment->offset).list) {
           // No imported globals should remain.
           assert(!wasm.getGlobal(get->name)->imported());
           // TODO: It would be better to avoid segment overlap so that
@@ -508,7 +509,8 @@ void TranslateToFuzzReader::finalizeTable() {
         // no longer is (not ok unless GC is enabled), we may need to change
         // that.
         if (!wasm.features.hasGC()) {
-          for (auto* get : FindAll<GlobalGet>(segment->offset).list) {
+          for ([[maybe_unused]] auto* get :
+               FindAll<GlobalGet>(segment->offset).list) {
             // No imported globals should remain.
             assert(!wasm.getGlobal(get->name)->imported());
             // TODO: the segments must not overlap...
