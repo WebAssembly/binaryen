@@ -1919,7 +1919,43 @@ public:
     }
     return Literal(int32_t(data->values.size()));
   }
-  Flow visitStringEncode(StringEncode* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStringEncode(StringEncode* curr) {
+    // For now we only support JS-style strings into arrays.
+    if (curr->op != StringEncodeWTF16Array) {
+      return Flow(NONCONSTANT_FLOW);
+    }
+
+    Flow ref = visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow ptr = visit(curr->ptr);
+    if (ptr.breaking()) {
+      return ptr;
+    }
+    Flow start = visit(curr->start);
+    if (start.breaking()) {
+      return start;
+    }
+
+    auto refData = ref.getSingleValue().getGCData();
+    auto ptrData = ptr.getSingleValue().getGCData();
+    if (!refData || !ptrData) {
+      trap("null ref");
+    }
+    auto startVal = start.getSingleValue().getInteger();
+    auto& refValues = refData->values;
+    auto& ptrValues = ptrData->values;
+    if (startVal + refValues.size() > ptrValues.size()) {
+      trap("oob");
+    }
+
+    for (Index i = 0; i < refValues.size(); i++) {
+      ptrValues[startVal + i] = refValues[i];
+    }
+
+    return Literal(int32_t(refData->values.size()));
+  }
   Flow visitStringConcat(StringConcat* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStringEq(StringEq* curr) {
     NOTE_ENTER("StringEq");
