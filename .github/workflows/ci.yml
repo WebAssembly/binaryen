@@ -19,6 +19,8 @@ jobs:
     env:
       ASAN_OPTIONS: "symbolize=1"
       COMPILER_FLAGS: "-fsanitize=address"
+      CC: "clang-18"
+      CXX: "clang++-18"
     steps:
     - uses: actions/setup-python@v1
       with:
@@ -51,6 +53,8 @@ jobs:
     env:
       COMPILER_FLAGS: "-fsanitize=thread"
       LINKER_FLAGS: "-fsanitize=thread"
+      CC: "clang-18"
+      CXX: "clang++-18"
     steps:
     - uses: actions/setup-python@v1
       with:
