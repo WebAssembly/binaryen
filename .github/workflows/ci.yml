@@ -18,8 +18,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ASAN_OPTIONS: "symbolize=1"
-      COMPILER_FLAGS: "-fsanitize=address -fno-omit-frame-pointer"
-      LINKER_FLAGS: "-fsanitize=address"
+      COMPILER_FLAGS: "-fsanitize=address"
     steps:
     - uses: actions/setup-python@v1
       with:
@@ -28,7 +27,11 @@ jobs:
       with:
         submodules: true
     - name: install clang 15
-      run: sudo apt-get install clang-15 lld-15 llvm-15
+      run: |
+        wget https://apt.llvm.org/llvm.sh
+        chmod +x llvm.sh
+        sudo ./llvm.sh
+        ls
     - name: install ninja
       run: sudo apt-get install ninja-build
     - name: install Python dev dependencies
@@ -47,7 +50,7 @@ jobs:
     name: tsan
     runs-on: ubuntu-latest
     env:
-      COMPILER_FLAGS: "-fsanitize=thread -fno-omit-frame-pointer"
+      COMPILER_FLAGS: "-fsanitize=thread"
       LINKER_FLAGS: "-fsanitize=thread"
     steps:
     - uses: actions/setup-python@v1
