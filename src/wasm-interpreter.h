@@ -2007,7 +2007,7 @@ public:
     WASM_UNREACHABLE("unimp");
   }
   Flow visitStringWTF16Get(StringWTF16Get* curr) {
-    NOTE_ENTER("StringEq");
+    NOTE_ENTER("StringWTF16Get");
     Flow ref = visit(curr->ref);
     if (ref.breaking()) {
       return ref;
@@ -2373,8 +2373,6 @@ public:
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitStringEncode(StringEncode* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStringConcat(StringConcat* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStringEq(StringEq* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStringAs(StringAs* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStringWTF8Advance(StringWTF8Advance* curr) {
     return Flow(NONCONSTANT_FLOW);
