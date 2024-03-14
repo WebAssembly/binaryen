@@ -1920,7 +1920,33 @@ public:
     return Literal(int32_t(data->values.size()));
   }
   Flow visitStringEncode(StringEncode* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStringConcat(StringConcat* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStringConcat(StringConcat* curr) { 
+    NOTE_ENTER("StringConcat");
+    Flow flow = visit(curr->left);
+    if (flow.breaking()) {
+      return flow;
+    }
+    auto left = flow.getSingleValue();
+    flow = visit(curr->right);
+    if (flow.breaking()) {
+      return flow;
+    }
+    auto right = flow.getSingleValue();
+    NOTE_EVAL2(left, right);
+    auto leftData = left.getGCData();
+    auto rightData = right.getGCData();
+    char array[leftData->values.size() + rightData->values.size()+1];
+    int i =0;
+    for (Literal l : leftData->values) {
+      array[i++] = l.getInteger();
+    }
+
+    for (Literal l : rightData->values) {
+      array[i++] = l.getInteger();
+    }
+    array[i] = 0;
+    return Literal(std::string(array));
+  }
   Flow visitStringEq(StringEq* curr) {
     NOTE_ENTER("StringEq");
     Flow flow = visit(curr->left);
