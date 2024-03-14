@@ -28,13 +28,14 @@
 // have no side effects.
 //
 
-#include <ir/iteration.h>
-#include <ir/properties.h>
-#include <ir/type-updating.h>
-#include <pass.h>
-#include <vector>
-#include <wasm-builder.h>
-#include <wasm.h>
+#include "ir/eh-utils.h"
+#include "ir/iteration.h"
+#include "ir/properties.h"
+#include "ir/type-updating.h"
+#include "pass.h"
+#include "vector"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -89,7 +90,11 @@ struct DeadCodeElimination
           Builder builder(*getModule());
           std::vector<Expression*> remainingChildren;
           bool afterUnreachable = false;
+          bool hasPop = false;
           for (auto* child : ChildIterator(curr)) {
+            if (child->is<Pop>()) {
+              hasPop = true;
+            }
             if (afterUnreachable) {
               typeUpdater.noteRecursiveRemoval(child);
               continue;
@@ -105,6 +110,11 @@ struct DeadCodeElimination
             replaceCurrent(remainingChildren[0]);
           } else {
             replaceCurrent(builder.makeBlock(remainingChildren));
+            if (hasPop) {
+              // We are moving a pop into a new block we just created, which
+              // means we may need to fix things up here.
+              needEHFixups = true;
+            }
           }
         }
       }
@@ -177,6 +187,14 @@ struct DeadCodeElimination
       }
     } else {
       WASM_UNREACHABLE("unimplemented DCE control flow structure");
+    }
+  }
+
+  bool needEHFixups = false;
+
+  void visitFunction(Function* curr) {
+    if (needEHFixups) {
+      EHUtils::handleBlockNestedPops(curr, *getModule());
     }
   }
 };

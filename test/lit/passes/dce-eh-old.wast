@@ -5,13 +5,15 @@
 ;; reachable
 (module
   ;; CHECK:      (tag $e)
+  (tag $e)
+
+  ;; CHECK:      (tag $e-i32 (param i32))
+  (tag $e-i32 (param i32))
 
   ;; CHECK:      (func $foo (type $0)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
-  (tag $e)
-
 
   ;; CHECK:      (func $try_unreachable (type $0)
   ;; CHECK-NEXT:  (try $try
@@ -130,4 +132,54 @@
       )
     )
   )
+
+  ;; CHECK:      (func $call-pop-catch (type $0)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (block $label
+  ;; CHECK-NEXT:   (try $try
+  ;; CHECK-NEXT:    (do
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (catch $e-i32
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (pop i32)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (br $label)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $call-pop-catch
+    (block $label
+     (try
+       (do
+         (nop)
+       )
+       (catch $e-i32
+         ;; This call is unreachable and can be removed. The pop, however, must
+         ;; be carefully handled while we do so, to not break validation.
+         (call $helper-i32-i32
+           (pop i32)
+           (br $label)
+         )
+         (nop)
+       )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $helper-i32-i32 (type $2) (param $0 i32) (param $1 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $helper-i32-i32 (param $0 i32) (param $1 i32)
+   (nop)
+  )
 )
+
