@@ -1904,7 +1904,9 @@ public:
   }
   Flow visitStringMeasure(StringMeasure* curr) {
     // For now we only support JS-style strings.
-    assert(curr->op == StringMeasureWTF16View);
+    if (curr->op != StringMeasureWTF16View) {
+      return Flow(NONCONSTANT_FLOW);
+    }
 
     Flow flow = visit(curr->ref);
     if (flow.breaking()) {
@@ -1917,8 +1919,8 @@ public:
     }
     return Literal(int32_t(data->values.size()));
   }
-  Flow visitStringEncode(StringEncode* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitStringConcat(StringConcat* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringEncode(StringEncode* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStringConcat(StringConcat* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStringEq(StringEq* curr) {
     NOTE_ENTER("StringEq");
     Flow flow = visit(curr->left);
@@ -1987,7 +1989,9 @@ public:
   }
   Flow visitStringAs(StringAs* curr) {
     // For now we only support JS-style strings.
-    assert(curr->op == StringAsWTF16);
+    if (curr->op != StringAsWTF16) {
+      return Flow(NONCONSTANT_FLOW);
+    }
 
     Flow flow = visit(curr->ref);
     if (flow.breaking()) {
@@ -2004,10 +2008,10 @@ public:
     return Literal(data, curr->type.getHeapType());
   }
   Flow visitStringWTF8Advance(StringWTF8Advance* curr) {
-    WASM_UNREACHABLE("unimp");
+    return Flow(NONCONSTANT_FLOW);
   }
   Flow visitStringWTF16Get(StringWTF16Get* curr) {
-    NOTE_ENTER("StringEq");
+    NOTE_ENTER("StringWTF16Get");
     Flow ref = visit(curr->ref);
     if (ref.breaking()) {
       return ref;
@@ -2028,11 +2032,17 @@ public:
     }
     return Literal(values[i].geti32());
   }
-  Flow visitStringIterNext(StringIterNext* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitStringIterMove(StringIterMove* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitStringSliceWTF(StringSliceWTF* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitStringIterNext(StringIterNext* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringIterMove(StringIterMove* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringSliceWTF(StringSliceWTF* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitStringSliceIter(StringSliceIter* curr) {
-    WASM_UNREACHABLE("unimp");
+    return Flow(NONCONSTANT_FLOW);
   }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
@@ -2367,31 +2377,6 @@ public:
   }
   Flow visitRethrow(Rethrow* curr) {
     NOTE_ENTER("Rethrow");
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringMeasure(StringMeasure* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringEncode(StringEncode* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStringConcat(StringConcat* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStringEq(StringEq* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStringAs(StringAs* curr) { return Flow(NONCONSTANT_FLOW); }
-  Flow visitStringWTF8Advance(StringWTF8Advance* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringWTF16Get(StringWTF16Get* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringIterNext(StringIterNext* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringIterMove(StringIterMove* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringSliceWTF(StringSliceWTF* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringSliceIter(StringSliceIter* curr) {
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitRefAs(RefAs* curr) {
