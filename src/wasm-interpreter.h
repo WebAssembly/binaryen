@@ -1935,10 +1935,10 @@ public:
     auto leftData = left.getGCData();
     auto rightData = right.getGCData();
     if (!leftData || !rightData) {
-      trap("null ref"); 
+      trap("null ref");
     }
 
-    Litesrals contents;
+    Literals contents;
     contents.reserve(leftData->values.size() + rightData->values.size());
     for (Literal l : leftData->values) {
       contents.push_back(l);
