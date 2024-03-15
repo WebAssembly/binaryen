@@ -1917,6 +1917,15 @@ public:
     if (!data) {
       trap("null ref");
     }
+
+    // This is only correct if all the bytes stored in `values` correspond to
+    // single unicode code points. See `visitStringWTF16Get` for details.
+    for (Index i = 0; i < data->values.size(); ++i) {
+      if (uint32_t(data->values[i].geti32()) > 127) {
+        return Flow(NONCONSTANT_FLOW);
+      }
+    }
+
     return Literal(int32_t(data->values.size()));
   }
   Flow visitStringConcat(StringConcat* curr) {
@@ -2095,6 +2104,20 @@ public:
     if (i >= values.size()) {
       trap("string oob");
     }
+
+    // This naive indexing approach is only correct if the first `i` bytes
+    // stored in `values` each corresponds to a single unicode code point. To
+    // implement this correctly in general, we would have to reinterpret the
+    // bytes as WTF-8, then count up to the `i`th code point, accounting
+    // properly for code points that would be represented by surrogate pairs in
+    // WTF-16. Alternatively, we could represent string contents as WTF-16 to
+    // begin with.
+    for (Index j = 0; j <= i; ++j) {
+      if (uint32_t(values[j].geti32()) > 127) {
+        return Flow(NONCONSTANT_FLOW);
+      }
+    }
+
     return Literal(values[i].geti32());
   }
   Flow visitStringIterNext(StringIterNext* curr) {
