@@ -1938,15 +1938,16 @@ public:
       trap("null ref");
     }
 
-    char array[leftData->values.size() + rightData->values.size()];
-    int i =0;
+    Literals contents;
+    contents.reserve(leftData->values.size() + rightData->values.size());
     for (Literal l : leftData->values) {
-      array[i++] = l.getInteger();
+      contents.push_back(l);
     }
     for (Literal l : rightData->values) {
-      array[i++] = l.getInteger();
+      contents.push_back(l);
     }
-    return Literal(std::string(array));
+
+    return makeGCData(contents, curr->type);
   }
   Flow visitStringEncode(StringEncode* curr) {
     // For now we only support JS-style strings into arrays.
