@@ -1919,6 +1919,36 @@ public:
     }
     return Literal(int32_t(data->values.size()));
   }
+  Flow visitStringConcat(StringConcat* curr) {
+    NOTE_ENTER("StringConcat");
+    Flow flow = visit(curr->left);
+    if (flow.breaking()) {
+      return flow;
+    }
+    auto left = flow.getSingleValue();
+    flow = visit(curr->right);
+    if (flow.breaking()) {
+      return flow;
+    }
+    auto right = flow.getSingleValue();
+    NOTE_EVAL2(left, right);
+    auto leftData = left.getGCData();
+    auto rightData = right.getGCData();
+    if (!leftData || !rightData) {
+      trap("null ref");
+    }
+
+    Literals contents;
+    contents.reserve(leftData->values.size() + rightData->values.size());
+    for (Literal l : leftData->values) {
+      contents.push_back(l);
+    }
+    for (Literal l : rightData->values) {
+      contents.push_back(l);
+    }
+
+    return makeGCData(contents, curr->type);
+  }
   Flow visitStringEncode(StringEncode* curr) {
     // For now we only support JS-style strings into arrays.
     if (curr->op != StringEncodeWTF16Array) {
@@ -1956,7 +1986,6 @@ public:
 
     return Literal(int32_t(refData->values.size()));
   }
-  Flow visitStringConcat(StringConcat* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStringEq(StringEq* curr) {
     NOTE_ENTER("StringEq");
     Flow flow = visit(curr->left);
