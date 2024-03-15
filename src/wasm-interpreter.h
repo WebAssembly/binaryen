@@ -1989,6 +1989,13 @@ public:
       trap("oob");
     }
 
+    // We don't handle non-ascii code points correctly yet.
+    for (Index i = 0; i < refValues.size(); ++i) {
+      if (uint32_t(refValues[i].geti32()) > 127) {
+        return Flow(NONCONSTANT_FLOW);
+      }
+    }
+
     for (Index i = 0; i < refValues.size(); i++) {
       ptrValues[startVal + i] = refValues[i];
     }

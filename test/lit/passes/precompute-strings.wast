@@ -3,6 +3,9 @@
 ;; RUN: wasm-opt %s --precompute -all -S -o - | filecheck %s
 
 (module
+ ;; CHECK:      (type $array16 (array (mut i16)))
+ (type $array16 (array (mut i16)))
+
  ;; CHECK:      (func $eq-no (type $0) (result i32)
  ;; CHECK-NEXT:  (i32.const 0)
  ;; CHECK-NEXT: )
@@ -91,6 +94,39 @@
     (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
    )
    (i32.const 2)
+  )
+ )
+
+ ;; CHECK:      (func $encode (type $0) (result i32)
+ ;; CHECK-NEXT:  (i32.const 2)
+ ;; CHECK-NEXT: )
+ (func $encode (result i32)
+  (string.encode_wtf16_array
+   (string.const "$_")
+   (array.new_default $array16
+    (i32.const 20)
+   )
+   (i32.const 0)
+  )
+ )
+
+ ;; CHECK:      (func $encode-bad (type $0) (result i32)
+ ;; CHECK-NEXT:  (string.encode_wtf16_array
+ ;; CHECK-NEXT:   (string.const "$_\c2\a3_\e2\82\ac_\f0\90\8d\88")
+ ;; CHECK-NEXT:   (array.new_default $array16
+ ;; CHECK-NEXT:    (i32.const 20)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $encode-bad (result i32)
+  (string.encode_wtf16_array
+   ;; $_£_€_𐍈
+   (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
+   (array.new_default $array16
+    (i32.const 20)
+   )
+   (i32.const 0)
   )
  )
 )
