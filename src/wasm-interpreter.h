@@ -1934,16 +1934,18 @@ public:
     NOTE_EVAL2(left, right);
     auto leftData = left.getGCData();
     auto rightData = right.getGCData();
-    char array[leftData->values.size() + rightData->values.size()+1];
+    if (!leftData || !rightData) {
+      trap("null ref");
+    }
+
+    char array[leftData->values.size() + rightData->values.size()];
     int i =0;
     for (Literal l : leftData->values) {
       array[i++] = l.getInteger();
     }
-
     for (Literal l : rightData->values) {
       array[i++] = l.getInteger();
     }
-    array[i] = 0;
     return Literal(std::string(array));
   }
   Flow visitStringEncode(StringEncode* curr) {
