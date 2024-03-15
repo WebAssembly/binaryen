@@ -1919,7 +1919,7 @@ public:
     }
     return Literal(int32_t(data->values.size()));
   }
-  Flow visitStringConcat(StringConcat* curr) { 
+  Flow visitStringConcat(StringConcat* curr) {
     NOTE_ENTER("StringConcat");
     Flow flow = visit(curr->left);
     if (flow.breaking()) {
@@ -1986,7 +1986,6 @@ public:
 
     return Literal(int32_t(refData->values.size()));
   }
- 
   Flow visitStringEq(StringEq* curr) {
     NOTE_ENTER("StringEq");
     Flow flow = visit(curr->left);
