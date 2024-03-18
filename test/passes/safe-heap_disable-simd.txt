@@ -22,6 +22,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -51,6 +60,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -86,6 +104,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -115,6 +142,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -159,6 +195,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -188,6 +233,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -232,6 +286,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -261,6 +324,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -305,6 +377,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -346,6 +427,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -375,6 +465,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -410,6 +509,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -439,6 +547,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -483,6 +600,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -512,6 +638,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -556,6 +691,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -585,6 +729,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -629,6 +782,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -670,6 +832,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -699,6 +870,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -743,6 +923,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -784,6 +973,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -813,6 +1011,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -857,6 +1064,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -895,6 +1111,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -939,6 +1164,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -968,6 +1202,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -1012,6 +1255,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -1053,6 +1305,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -1082,6 +1343,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -1126,6 +1396,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -1164,6 +1443,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -2109,6 +2397,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -2138,6 +2435,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -2173,6 +2479,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -2202,6 +2517,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -2246,6 +2570,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -2275,6 +2608,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -2319,6 +2661,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -2348,6 +2699,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -2392,6 +2752,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -2433,6 +2802,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -2462,6 +2840,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -2497,6 +2884,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -2526,6 +2922,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -2570,6 +2975,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -2599,6 +3013,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -2643,6 +3066,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -2672,6 +3104,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -2716,6 +3157,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -2757,6 +3207,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -2786,6 +3245,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -2830,6 +3298,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -2871,6 +3348,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -2900,6 +3386,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -2944,6 +3439,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -2982,6 +3486,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -3026,6 +3539,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -3055,6 +3577,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -3099,6 +3630,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -3140,6 +3680,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -3169,6 +3718,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -3213,6 +3771,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -3251,6 +3818,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -4204,6 +4780,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -4233,6 +4818,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -4268,6 +4862,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -4297,6 +4900,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -4341,6 +4953,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -4370,6 +4991,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -4414,6 +5044,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -4443,6 +5082,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -4487,6 +5135,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -4528,6 +5185,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -4557,6 +5223,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -4592,6 +5267,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -4621,6 +5305,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -4665,6 +5358,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -4694,6 +5396,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -4738,6 +5449,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -4767,6 +5487,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -4811,6 +5540,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -4852,6 +5590,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -4881,6 +5628,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -4925,6 +5681,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -4966,6 +5731,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -4995,6 +5769,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -5039,6 +5822,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -5077,6 +5869,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -5121,6 +5922,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -5150,6 +5960,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -5194,6 +6013,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -5235,6 +6063,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -5264,6 +6101,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
@@ -5308,6 +6154,15 @@
    )
   )
   (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
+   )
+  )
+  (if
    (i32.or
     (i32.eq
      (local.get $2)
@@ -5346,6 +6201,15 @@
    (i32.add
     (local.get $0)
     (local.get $1)
+   )
+  )
+  (if
+   (i32.lt_u
+    (local.get $2)
+    (local.get $0)
+   )
+   (then
+    (call $segfault)
    )
   )
   (if
