@@ -3381,9 +3381,8 @@ public:
     if (loaded != expected.getSingleValue()) {
       return Literal(int32_t(1)); // not equal
     }
-    // TODO: add threads support!
-    //       for now, just assume we are woken up
-    return Literal(int32_t(0)); // woken up
+    // TODO: Add threads support! As there are no other threads, we timeout atm.
+    return Literal(int32_t(2));
   }
   Flow visitAtomicNotify(AtomicNotify* curr) {
     NOTE_ENTER("AtomicNotify");
