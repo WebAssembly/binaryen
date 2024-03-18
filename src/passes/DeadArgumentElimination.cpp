@@ -216,11 +216,26 @@ struct DAE : public Pass {
         allDroppedCalls[name] = calls;
       }
     }
+
     // Track which functions we changed, and optimize them later if necessary.
     std::unordered_set<Function*> changed;
+
     // If we refine return types then we will need to do more type updating
     // at the end.
     bool refinedReturnTypes = false;
+
+    // If we find that localizing call arguments can help (by moving their
+    // effects outside, so ParamUtils::removeParameters can handle them), then
+    // we do that at the end and perform another cycle. It is simpler to just do
+    // another cycle than to track the locations of calls, which is tricky as
+    // localization might move a call (if a call happens to be another call's
+    // param). In practice it is rare to find call arguments we want to remove,
+    // and even more rare to find effects get in the way, so this should not
+    // cause much overhead.
+    //
+    // This set tracks the functions for whom calls to it should be modified.
+    std::unordered_set<Name> callTargetsToLocalize;
+
     // We now have a mapping of all call sites for each function, and can look
     // for optimization opportunities.
     for (auto& [name, calls] : allCalls) {
@@ -263,11 +278,14 @@ struct DAE : public Pass {
       if (numParams == 0) {
         continue;
       }
-      auto removedIndexes = ParamUtils::removeParameters(
+      auto [removedIndexes, outcome] = ParamUtils::removeParameters(
         {func}, infoMap[name].unusedParams, calls, {}, module, getPassRunner());
       if (!removedIndexes.empty()) {
         // Success!
         changed.insert(func);
+      }
+      if (outcome == ParamUtils::RemovalOutcome::Failure) {
+        callTargetsToLocalize.insert(name);
       }
     }
     // We can also tell which calls have all their return values dropped. Note
@@ -307,10 +325,15 @@ struct DAE : public Pass {
         changed.insert(func.get());
       }
     }
+    if (!callTargetsToLocalize.empty()) {
+      ParamUtils::localizeCallsTo(
+        callTargetsToLocalize, *module, getPassRunner());
+    }
     if (optimize && !changed.empty()) {
       OptUtils::optimizeAfterInlining(changed, module, getPassRunner());
     }
-    return !changed.empty() || refinedReturnTypes;
+    return !changed.empty() || refinedReturnTypes ||
+           !callTargetsToLocalize.empty();
   }
 
 private:

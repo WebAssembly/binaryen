@@ -67,6 +67,16 @@ struct SignaturePruning : public Pass {
       return;
     }
 
+    // The first iteration may suggest additional work is possible. If so, run
+    // another cycle. (Even more cycles may help, but limit ourselves to 2 for
+    // now.)
+    if (iteration(module)) {
+      iteration(module);
+    }
+  }
+
+  // Returns true if more work is possible.
+  bool iteration(Module* module) {
     // First, find all the information we need. Start by collecting inside each
     // function in parallel.
 
@@ -100,6 +110,16 @@ struct SignaturePruning : public Pass {
 
     // Map heap types to all functions with that type.
     InsertOrderedMap<HeapType, std::vector<Function*>> sigFuncs;
+
+    // Heap types of call targets that we found we should localize calls to, in
+    // order to fully handle them. (See similar code in DeadArgumentElimination
+    // for individual functions; here we handle a HeapType at a time.) A slight
+    // complication is that we cannot track heap types here: heap types are
+    // rewritten using |GlobalTypeRewriter::updateSignatures| below, and even
+    // types that we do not modify end up replaced (as the entire set of types
+    // becomes one new big rec group). We therefore need something more stable
+    // to track here, which we do using either a Call or a Call Ref.
+    std::unordered_set<Expression*> callTargetsToLocalize;
 
     // Combine all the information we gathered into that map, iterating in a
     // deterministic order as we build up vectors where the order matters.
@@ -215,12 +235,23 @@ struct SignaturePruning : public Pass {
       }
 
       auto oldParams = sig.params;
-      auto removedIndexes = ParamUtils::removeParameters(funcs,
-                                                         unusedParams,
-                                                         info.calls,
-                                                         info.callRefs,
-                                                         module,
-                                                         getPassRunner());
+      auto [removedIndexes, outcome] =
+        ParamUtils::removeParameters(funcs,
+                                     unusedParams,
+                                     info.calls,
+                                     info.callRefs,
+                                     module,
+                                     getPassRunner());
+      if (outcome == ParamUtils::RemovalOutcome::Failure) {
+        // Use either a Call or a CallRef that has this type (see explanation
+        // above on |callTargetsToLocalize|.
+        if (!info.calls.empty()) {
+          callTargetsToLocalize.insert(info.calls[0]);
+        } else {
+          assert(!info.callRefs.empty());
+          callTargetsToLocalize.insert(info.callRefs[0]);
+        }
+      }
       if (removedIndexes.empty()) {
         continue;
       }
@@ -262,6 +293,31 @@ struct SignaturePruning : public Pass {
 
     // Rewrite the types.
     GlobalTypeRewriter::updateSignatures(newSignatures, *module);
+
+    if (callTargetsToLocalize.empty()) {
+      return false;
+    }
+
+    // Localize after updating signatures, to not interfere with that
+    // operation (localization adds locals, and the indexes of locals must be
+    // taken into account in |GlobalTypeRewriter::updateSignatures| (as var
+    // indexes change when params are pruned).
+    std::unordered_set<HeapType> callTargetTypes;
+    for (auto* call : callTargetsToLocalize) {
+      HeapType type;
+      if (auto* c = call->dynCast<Call>()) {
+        type = module->getFunction(c->target)->type;
+      } else if (auto* c = call->dynCast<CallRef>()) {
+        type = c->target->type.getHeapType();
+      } else {
+        WASM_UNREACHABLE("bad call");
+      }
+      callTargetTypes.insert(type);
+    }
+
+    ParamUtils::localizeCallsTo(callTargetTypes, *module, getPassRunner());
+
+    return true;
   }
 };
 
