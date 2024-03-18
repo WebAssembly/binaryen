@@ -3370,6 +3370,13 @@ public:
     if (timeout.breaking()) {
       return timeout;
     }
+    // TODO: Add threads support.
+    //       For now, as there are no other threads, if there is no timeout then
+    //       error (this would hang forever), and if there is a timeout then
+    //       just report that we timed out.
+    if (timeout.getSingleValue().getInteger() < 0) {
+      return Flow(NONCONSTANT_FLOW);
+    }
     auto bytes = curr->expectedType.getByteSize();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
@@ -3381,8 +3388,7 @@ public:
     if (loaded != expected.getSingleValue()) {
       return Literal(int32_t(1)); // not equal
     }
-    // TODO: Add threads support! As there are no other threads, we timeout atm.
-    return Literal(int32_t(2));
+    return Literal(int32_t(2)); // timeout
   }
   Flow visitAtomicNotify(AtomicNotify* curr) {
     NOTE_ENTER("AtomicNotify");
