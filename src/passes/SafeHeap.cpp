@@ -297,11 +297,11 @@ struct SafeHeap : public Pass {
     // check for an overflow when adding the pointer and the size, using the
     // rule that for any unsigned x and y,
     //    x + y < x    <=>   x + y overflows
-    block->list.push_back(builder.makeIf(
-      builder.makeBinary(memory->is64() ? LtUInt64 : LtUInt32,
-                         builder.makeLocalGet(2, indexType),
-                         builder.makeLocalGet(0, indexType)),
-      builder.makeCall(segfault, {}, Type::none)));
+    block->list.push_back(
+      builder.makeIf(builder.makeBinary(memory->is64() ? LtUInt64 : LtUInt32,
+                                        builder.makeLocalGet(2, indexType),
+                                        builder.makeLocalGet(0, indexType)),
+                     builder.makeCall(segfault, {}, Type::none)));
     // check for reading past valid memory: if pointer + offset + bytes
     block->list.push_back(makeBoundsCheck(style.type,
                                           builder,
