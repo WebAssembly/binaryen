@@ -1963,6 +1963,11 @@ public:
     Literals contents;
     contents.reserve(leftData->values.size() + rightData->values.size());
     for (Literal l : leftData->values) {
+      if (uint32_t(l.geti32()) > 127) {
+        // This is only correct if all the bytes in the left operan correspond
+        // to single unicode code points.
+        return Flow(NONCONSTANT_FLOW);
+      }
       contents.push_back(l);
     }
     for (Literal l : rightData->values) {
