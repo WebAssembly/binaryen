@@ -448,9 +448,8 @@ struct SafeHeap : public Pass {
         OrInt32,
         upperCheck,
         builder.makeBinary(OrInt32, lowerCheck, overflowCheck)),
-      builder.makeSequence(
-        builder.makeCall(segfault, {}, Type::none),
-        builder.makeUnreachable()));
+      builder.makeSequence(builder.makeCall(segfault, {}, Type::none),
+                           builder.makeUnreachable()));
   }
 };
 
