@@ -59,27 +59,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -100,27 +97,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -141,27 +135,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -182,27 +173,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -232,27 +220,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -273,27 +258,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -323,27 +305,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -364,27 +343,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -414,27 +390,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -464,27 +437,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -505,27 +475,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -546,27 +513,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -587,27 +551,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -637,27 +598,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -678,27 +636,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -728,27 +683,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -769,27 +721,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -819,27 +768,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -869,27 +815,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -910,27 +853,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -960,27 +900,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -1010,27 +947,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -1051,27 +985,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -1101,27 +1032,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -1151,27 +1079,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -1201,27 +1126,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -1242,27 +1164,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -1292,27 +1211,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -1342,27 +1258,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -1383,27 +1296,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -1433,27 +1343,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -1483,27 +1390,24 @@
    )
   )
   (if
-   (i32.lt_u
-    (local.get $2)
-    (local.get $0)
-   )
-   (then
-    (call $segfault)
-   )
-  )
-  (if
    (i32.or
     (i32.eq
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
@@ -1538,13 +1442,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -1571,13 +1481,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -1604,13 +1520,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -1646,13 +1568,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -1679,13 +1607,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -1721,13 +1655,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -1763,13 +1703,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -1796,13 +1742,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -1829,13 +1781,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -1871,13 +1829,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -1904,13 +1868,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -1946,13 +1916,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -1988,13 +1964,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -2021,13 +2003,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -2063,13 +2051,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -2105,13 +2099,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -2147,13 +2147,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -2180,13 +2186,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -2222,13 +2234,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -2264,13 +2282,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -2297,13 +2321,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -2339,13 +2369,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
@@ -2381,13 +2417,19 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )

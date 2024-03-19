@@ -294,17 +294,10 @@ struct SafeHeap : public Pass {
       builder.makeBinary(memory->is64() ? AddInt64 : AddInt32,
                          builder.makeLocalGet(0, indexType),
                          builder.makeLocalGet(1, indexType))));
-    // check for an overflow when adding the pointer and the size, using the
-    // rule that for any unsigned x and y,
-    //    x + y < x    <=>   x + y overflows
-    block->list.push_back(
-      builder.makeIf(builder.makeBinary(memory->is64() ? LtUInt64 : LtUInt32,
-                                        builder.makeLocalGet(2, indexType),
-                                        builder.makeLocalGet(0, indexType)),
-                     builder.makeCall(segfault, {}, Type::none)));
     // check for reading past valid memory: if pointer + offset + bytes
     block->list.push_back(makeBoundsCheck(style.type,
                                           builder,
+                                          0,
                                           2,
                                           style.bytes,
                                           module,
@@ -355,6 +348,7 @@ struct SafeHeap : public Pass {
     // check for reading past valid memory: if pointer + offset + bytes
     block->list.push_back(makeBoundsCheck(style.valueType,
                                           builder,
+                                          0,
                                           3,
                                           style.bytes,
                                           module,
@@ -395,9 +389,14 @@ struct SafeHeap : public Pass {
       builder.makeCall(alignfault, {}, Type::none));
   }
 
+  // Constructs a bounds check. This receives the indexes of two locals: the
+  // pointer local, which contains the pointer we are checking, and the sum
+  // local which contains the pointer added to the number of bytes being
+  // accessed.
   Expression* makeBoundsCheck(Type type,
                               Builder& builder,
-                              Index local,
+                              Index ptrLocal,
+                              Index sumLocal,
                               Index bytes,
                               Module* module,
                               Type indexType,
@@ -424,18 +423,33 @@ struct SafeHeap : public Pass {
     }
     auto gtuOp = is64 ? GtUInt64 : GtUInt32;
     auto addOp = is64 ? AddInt64 : AddInt32;
+    auto* upperCheck =           builder.makeBinary(upperOp,
+                             builder.makeLocalGet(sumLocal, indexType),
+                             builder.makeConstPtr(upperBound, indexType));
+    auto* lowerCheck =           builder.makeBinary(
+            gtuOp,
+            builder.makeBinary(addOp,
+                               builder.makeLocalGet(sumLocal, indexType),
+                               builder.makeConstPtr(bytes, indexType)),
+            brkLocation);
+    // Check for an overflow when adding the pointer and the size, using the
+    // rule that for any unsigned x and y,
+    //    x + y < x    <=>   x + y overflows
+    auto* overflowCheck = 
+        builder.makeBinary(
+          is64 ? LtUInt64 : LtUInt32,
+          builder.makeLocalGet(sumLocal, indexType),
+          builder.makeLocalGet(ptrLocal, indexType)
+        );
+
     return builder.makeIf(
       builder.makeBinary(
         OrInt32,
-        builder.makeBinary(upperOp,
-                           builder.makeLocalGet(local, indexType),
-                           builder.makeConstPtr(upperBound, indexType)),
+        upperCheck,
         builder.makeBinary(
-          gtuOp,
-          builder.makeBinary(addOp,
-                             builder.makeLocalGet(local, indexType),
-                             builder.makeConstPtr(bytes, indexType)),
-          brkLocation)),
+          OrInt32,
+          lowerCheck,
+          overflowCheck)),
       builder.makeCall(segfault, {}, Type::none));
   }
 };
