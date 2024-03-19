@@ -3461,9 +3461,15 @@ public:
     if (loaded != expected.getSingleValue()) {
       return Literal(int32_t(1)); // not equal
     }
-    // TODO: add threads support!
-    //       for now, just assume we are woken up
-    return Literal(int32_t(0)); // woken up
+    // TODO: Add threads support. For now, report a host limit here, as there
+    //       are no other threads that can wake us up. Without such threads,
+    //       we'd hang if there is no timeout, and even if there is a timeout
+    //       then we can hang for a long time if it is in a loop. The only
+    //       timeout value we allow here for now is 0.
+    if (timeout.getSingleValue().getInteger() != 0) {
+      hostLimit("threads support");
+    }
+    return Literal(int32_t(0)); // equal
   }
   Flow visitAtomicNotify(AtomicNotify* curr) {
     NOTE_ENTER("AtomicNotify");
