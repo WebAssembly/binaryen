@@ -1903,7 +1903,12 @@ public:
     return Literal(curr->string.toString());
   }
 
-  bool hasNonAsciiUpTo(const Literals& values, Index end) {
+  // Returns if there is a non-ascii character in a list of values, looking only
+  // up to an index that is provided (not inclusive). If the index is not
+  // provided we look in the entire list.
+  bool hasNonAsciiUpTo(const Literals& values,
+                       std::optional<Index> maybeEnd = std::nullopt) {
+    Index end = maybeEnd ? *maybeEnd : values.size();
     for (Index i = 0; i < end; ++i) {
       if (uint32_t(values[i].geti32()) > 127) {
         return true;
@@ -1930,7 +1935,7 @@ public:
 
     // This is only correct if all the bytes stored in `values` correspond to
     // single unicode code points. See `visitStringWTF16Get` for details.
-    if (hasNonAsciiUpTo(data->values, data->values.size())) {
+    if (hasNonAsciiUpTo(data->values)) {
       return Flow(NONCONSTANT_FLOW);
     }
 
@@ -1998,7 +2003,7 @@ public:
     }
 
     // We don't handle non-ascii code points correctly yet.
-    if (hasNonAsciiUpTo(refValues, refValues.size())) {
+    if (hasNonAsciiUpTo(refValues)) {
       return Flow(NONCONSTANT_FLOW);
     }
 
@@ -2138,7 +2143,47 @@ public:
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitStringSliceWTF(StringSliceWTF* curr) {
-    return Flow(NONCONSTANT_FLOW);
+    // For now we only support JS-style strings.
+    if (curr->op != StringSliceWTF16) {
+      return Flow(NONCONSTANT_FLOW);
+    }
+
+    Flow ref = visit(curr->ref);
+    if (ref.breaking()) {
+      return ref;
+    }
+    Flow start = visit(curr->start);
+    if (start.breaking()) {
+      return start;
+    }
+    Flow end = visit(curr->end);
+    if (end.breaking()) {
+      return end;
+    }
+
+    auto refData = ref.getSingleValue().getGCData();
+    if (!refData) {
+      trap("null ref");
+    }
+    auto& refValues = refData->values;
+    auto startVal = start.getSingleValue().getUnsigned();
+    auto endVal = end.getSingleValue().getUnsigned();
+    if (endVal > refValues.size()) {
+      trap("array oob");
+    }
+    if (hasNonAsciiUpTo(refValues, endVal)) {
+      return Flow(NONCONSTANT_FLOW);
+    }
+    Literals contents;
+    if (endVal > startVal) {
+      contents.reserve(endVal - startVal);
+      for (size_t i = startVal; i < endVal; i++) {
+        if (i < refValues.size()) {
+          contents.push_back(refValues[i]);
+        }
+      }
+    }
+    return makeGCData(contents, curr->type);
   }
   Flow visitStringSliceIter(StringSliceIter* curr) {
     return Flow(NONCONSTANT_FLOW);

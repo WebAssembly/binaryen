@@ -244,6 +244,17 @@
       )
     )
   )
+
+  ;; CHECK:      [fuzz-exec] calling slice
+  ;; CHECK-NEXT: [fuzz-exec] note result: slice => string("def")
+  (func $slice (export "slice") (result (ref string))
+    ;; Slicing [3:6] here should definitely output "def".
+    (stringview_wtf16.slice
+      (string.const "abcdefgh")
+      (i32.const 3)
+      (i32.const 6)
+    )
+  )
 )
 ;; CHECK:      [fuzz-exec] calling new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
@@ -309,6 +320,9 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 98]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 99]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+
+;; CHECK:      [fuzz-exec] calling slice
+;; CHECK-NEXT: [fuzz-exec] note result: slice => string("def")
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.1
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.10
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.2
@@ -329,3 +343,4 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing get_codeunit
 ;; CHECK-NEXT: [fuzz-exec] comparing get_length
 ;; CHECK-NEXT: [fuzz-exec] comparing new_wtf16_array
+;; CHECK-NEXT: [fuzz-exec] comparing slice
