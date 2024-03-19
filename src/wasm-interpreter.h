@@ -3370,14 +3370,6 @@ public:
     if (timeout.breaking()) {
       return timeout;
     }
-    // TODO: Add threads support. For now, report a host limit here, as there
-    //       are no other threads that can wake us up. Without such threads,
-    //       we'd hang if there is no timeout, and even if there is a timeout
-    //       then we can hang for a long time if it is in a loop. The only
-    //       timeout value we allow here for now is 0.
-    if (timeout.getSingleValue().getInteger() != 0) {
-      hostLimit("threads support");
-    }
     auto bytes = curr->expectedType.getByteSize();
     auto info = getMemoryInstanceInfo(curr->memory);
     auto memorySize = info.instance->getMemorySize(info.name);
@@ -3388,6 +3380,14 @@ public:
     NOTE_EVAL1(loaded);
     if (loaded != expected.getSingleValue()) {
       return Literal(int32_t(1)); // not equal
+    }
+    // TODO: Add threads support. For now, report a host limit here, as there
+    //       are no other threads that can wake us up. Without such threads,
+    //       we'd hang if there is no timeout, and even if there is a timeout
+    //       then we can hang for a long time if it is in a loop. The only
+    //       timeout value we allow here for now is 0.
+    if (timeout.getSingleValue().getInteger() != 0) {
+      hostLimit("threads support");
     }
     return Literal(int32_t(2)); // timeout
   }
