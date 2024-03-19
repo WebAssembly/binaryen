@@ -440,13 +440,17 @@ struct SafeHeap : public Pass {
       builder.makeBinary(is64 ? LtUInt64 : LtUInt32,
                          builder.makeLocalGet(sumLocal, indexType),
                          builder.makeLocalGet(ptrLocal, indexType));
-
+    // Add an unreachable right after the call to segfault for performance
+    // reasons: the call never returns, and this helps optimizations benefit
+    // from that.
     return builder.makeIf(
       builder.makeBinary(
         OrInt32,
         upperCheck,
         builder.makeBinary(OrInt32, lowerCheck, overflowCheck)),
-      builder.makeCall(segfault, {}, Type::none));
+      builder.makeSequence(
+        builder.makeCall(segfault, {}, Type::none),
+        builder.makeUnreachable()));
   }
 };
 

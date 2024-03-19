@@ -216,6 +216,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.shr_s
@@ -260,6 +261,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_s
@@ -298,6 +300,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.atomic.load8_u
@@ -336,6 +339,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_u
@@ -374,6 +378,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_s align=1
@@ -412,6 +417,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -467,6 +473,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -516,6 +523,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_u align=1
@@ -554,6 +562,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -603,6 +612,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -652,6 +662,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load align=1
@@ -690,6 +701,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -739,6 +751,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -788,6 +801,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -837,6 +851,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.shr_s
@@ -881,6 +896,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_s
@@ -919,6 +935,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.atomic.load8_u
@@ -957,6 +974,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_u
@@ -995,6 +1013,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_s align=1
@@ -1033,6 +1052,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1088,6 +1108,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1137,6 +1158,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_u align=1
@@ -1175,6 +1197,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1224,6 +1247,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1273,6 +1297,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_s align=1
@@ -1311,6 +1336,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1360,6 +1386,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1415,6 +1442,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1464,6 +1492,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_u align=1
@@ -1502,6 +1531,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1551,6 +1581,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1600,6 +1631,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1649,6 +1681,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load align=1
@@ -1687,6 +1720,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1736,6 +1770,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1785,6 +1820,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1834,6 +1870,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1883,6 +1920,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.load align=1
@@ -1921,6 +1959,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1970,6 +2009,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2019,6 +2059,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.load align=1
@@ -2057,6 +2098,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2106,6 +2148,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2155,6 +2198,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2204,6 +2248,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (v128.load align=1
@@ -2242,6 +2287,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2291,6 +2337,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2340,6 +2387,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2389,6 +2437,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2438,6 +2487,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.atomic.store8
@@ -2477,6 +2527,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store8
@@ -2516,6 +2567,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store16 align=1
@@ -2555,6 +2607,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2605,6 +2658,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2655,6 +2709,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store align=1
@@ -2694,6 +2749,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2744,6 +2800,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2794,6 +2851,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2844,6 +2902,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.atomic.store8
@@ -2883,6 +2942,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store8
@@ -2922,6 +2982,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store16 align=1
@@ -2961,6 +3022,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3011,6 +3073,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3061,6 +3124,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store32 align=1
@@ -3100,6 +3164,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3150,6 +3215,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3200,6 +3266,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3250,6 +3317,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store align=1
@@ -3289,6 +3357,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3339,6 +3408,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3389,6 +3459,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3439,6 +3510,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3489,6 +3561,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.store align=1
@@ -3528,6 +3601,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3578,6 +3652,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3628,6 +3703,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.store align=1
@@ -3667,6 +3743,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3717,6 +3794,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3767,6 +3845,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3817,6 +3896,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (v128.store align=1
@@ -3856,6 +3936,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3906,6 +3987,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3956,6 +4038,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4006,6 +4089,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4082,6 +4166,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_s
@@ -4120,6 +4205,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_u
@@ -4158,6 +4244,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_s align=1
@@ -4196,6 +4283,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4245,6 +4333,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_u align=1
@@ -4283,6 +4372,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4332,6 +4422,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load align=1
@@ -4370,6 +4461,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4419,6 +4511,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4468,6 +4561,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_s
@@ -4506,6 +4600,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_u
@@ -4544,6 +4639,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_s align=1
@@ -4582,6 +4678,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4631,6 +4728,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_u align=1
@@ -4669,6 +4767,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4718,6 +4817,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_s align=1
@@ -4756,6 +4856,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4805,6 +4906,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4854,6 +4956,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_u align=1
@@ -4892,6 +4995,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4941,6 +5045,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4990,6 +5095,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load align=1
@@ -5028,6 +5134,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5077,6 +5184,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5126,6 +5234,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5175,6 +5284,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.load align=1
@@ -5213,6 +5323,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5262,6 +5373,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5311,6 +5423,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.load align=1
@@ -5349,6 +5462,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5398,6 +5512,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5447,6 +5562,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5496,6 +5612,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (v128.load align=1
@@ -5534,6 +5651,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5583,6 +5701,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5632,6 +5751,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5681,6 +5801,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5730,6 +5851,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store8
@@ -5769,6 +5891,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store16 align=1
@@ -5808,6 +5931,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5858,6 +5982,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store align=1
@@ -5897,6 +6022,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5947,6 +6073,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5997,6 +6124,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store8
@@ -6036,6 +6164,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store16 align=1
@@ -6075,6 +6204,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6125,6 +6255,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store32 align=1
@@ -6164,6 +6295,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6214,6 +6346,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6264,6 +6397,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store align=1
@@ -6303,6 +6437,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6353,6 +6488,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6403,6 +6539,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6453,6 +6590,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.store align=1
@@ -6492,6 +6630,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6542,6 +6681,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6592,6 +6732,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.store align=1
@@ -6631,6 +6772,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6681,6 +6823,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6731,6 +6874,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6781,6 +6925,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (v128.store align=1
@@ -6820,6 +6965,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6870,6 +7016,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6920,6 +7067,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6970,6 +7118,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7051,6 +7200,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.shr_s
@@ -7095,6 +7245,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_s
@@ -7133,6 +7284,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.atomic.load8_u
@@ -7171,6 +7323,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_u
@@ -7209,6 +7362,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_s align=1
@@ -7247,6 +7401,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7302,6 +7457,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7351,6 +7507,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_u align=1
@@ -7389,6 +7546,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7438,6 +7596,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7487,6 +7646,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load align=1
@@ -7525,6 +7685,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7574,6 +7735,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7623,6 +7785,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7672,6 +7835,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.shr_s
@@ -7716,6 +7880,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_s
@@ -7754,6 +7919,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.atomic.load8_u
@@ -7792,6 +7958,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_u
@@ -7830,6 +7997,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_s align=1
@@ -7868,6 +8036,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7923,6 +8092,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7972,6 +8142,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_u align=1
@@ -8010,6 +8181,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8059,6 +8231,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8108,6 +8281,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_s align=1
@@ -8146,6 +8320,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8195,6 +8370,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8250,6 +8426,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8299,6 +8476,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_u align=1
@@ -8337,6 +8515,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8386,6 +8565,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8435,6 +8615,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8484,6 +8665,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load align=1
@@ -8522,6 +8704,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8571,6 +8754,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8620,6 +8804,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8669,6 +8854,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8718,6 +8904,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.load align=1
@@ -8756,6 +8943,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8805,6 +8993,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8854,6 +9043,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.load align=1
@@ -8892,6 +9082,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8941,6 +9132,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8990,6 +9182,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9039,6 +9232,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (v128.load align=1
@@ -9077,6 +9271,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9126,6 +9321,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9175,6 +9371,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9224,6 +9421,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9273,6 +9471,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.atomic.store8
@@ -9312,6 +9511,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store8
@@ -9351,6 +9551,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store16 align=1
@@ -9390,6 +9591,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9440,6 +9642,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9490,6 +9693,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store align=1
@@ -9529,6 +9733,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9579,6 +9784,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9629,6 +9835,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9679,6 +9886,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.atomic.store8
@@ -9718,6 +9926,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store8
@@ -9757,6 +9966,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store16 align=1
@@ -9796,6 +10006,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9846,6 +10057,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9896,6 +10108,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store32 align=1
@@ -9935,6 +10148,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9985,6 +10199,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -10035,6 +10250,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -10085,6 +10301,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store align=1
@@ -10124,6 +10341,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -10174,6 +10392,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -10224,6 +10443,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -10274,6 +10494,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -10324,6 +10545,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.store align=1
@@ -10363,6 +10585,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -10413,6 +10636,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -10463,6 +10687,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.store align=1
@@ -10502,6 +10727,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -10552,6 +10778,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -10602,6 +10829,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -10652,6 +10880,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (v128.store align=1
@@ -10691,6 +10920,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -10741,6 +10971,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -10791,6 +11022,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -10841,6 +11073,7 @@
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
