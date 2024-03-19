@@ -1902,6 +1902,16 @@ public:
   Flow visitStringConst(StringConst* curr) {
     return Literal(curr->string.toString());
   }
+
+  bool hasNonAsciiUpTo(const Literals& values, Index end) {
+    for (Index i = 0; i < end; ++i) {
+      if (uint32_t(values[i].geti32()) > 127) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   Flow visitStringMeasure(StringMeasure* curr) {
     // For now we only support JS-style strings.
     if (curr->op != StringMeasureWTF16View) {
@@ -1920,10 +1930,8 @@ public:
 
     // This is only correct if all the bytes stored in `values` correspond to
     // single unicode code points. See `visitStringWTF16Get` for details.
-    for (Index i = 0; i < data->values.size(); ++i) {
-      if (uint32_t(data->values[i].geti32()) > 127) {
-        return Flow(NONCONSTANT_FLOW);
-      }
+    if (hasNonAsciiUpTo(data->values, data->values.size())) {
+      return Flow(NONCONSTANT_FLOW);
     }
 
     return Literal(int32_t(data->values.size()));
@@ -1990,10 +1998,8 @@ public:
     }
 
     // We don't handle non-ascii code points correctly yet.
-    for (Index i = 0; i < refValues.size(); ++i) {
-      if (uint32_t(refValues[i].geti32()) > 127) {
-        return Flow(NONCONSTANT_FLOW);
-      }
+    if (hasNonAsciiUpTo(refValues, refValues.size())) {
+      return Flow(NONCONSTANT_FLOW);
     }
 
     for (Index i = 0; i < refValues.size(); i++) {
@@ -2119,10 +2125,8 @@ public:
     // properly for code points that would be represented by surrogate pairs in
     // WTF-16. Alternatively, we could represent string contents as WTF-16 to
     // begin with.
-    for (Index j = 0; j <= i; ++j) {
-      if (uint32_t(values[j].geti32()) > 127) {
-        return Flow(NONCONSTANT_FLOW);
-      }
+    if (hasNonAsciiUpTo(values, i + 1)) {
+      return Flow(NONCONSTANT_FLOW);
     }
 
     return Literal(values[i].geti32());
