@@ -1902,6 +1902,16 @@ public:
   Flow visitStringConst(StringConst* curr) {
     return Literal(curr->string.toString());
   }
+
+  bool hasNonAsciiUpTo(const Literals& values, Index end) {
+    for (Index i = 0; i < end; ++i) {
+      if (uint32_t(values[i].geti32()) > 127) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   Flow visitStringMeasure(StringMeasure* curr) {
     // For now we only support JS-style strings.
     if (curr->op != StringMeasureWTF16View) {
@@ -1917,6 +1927,13 @@ public:
     if (!data) {
       trap("null ref");
     }
+
+    // This is only correct if all the bytes stored in `values` correspond to
+    // single unicode code points. See `visitStringWTF16Get` for details.
+    if (hasNonAsciiUpTo(data->values, data->values.size())) {
+      return Flow(NONCONSTANT_FLOW);
+    }
+
     return Literal(int32_t(data->values.size()));
   }
   Flow visitStringConcat(StringConcat* curr) {
@@ -1978,6 +1995,11 @@ public:
     auto& ptrValues = ptrData->values;
     if (startVal + refValues.size() > ptrValues.size()) {
       trap("oob");
+    }
+
+    // We don't handle non-ascii code points correctly yet.
+    if (hasNonAsciiUpTo(refValues, refValues.size())) {
+      return Flow(NONCONSTANT_FLOW);
     }
 
     for (Index i = 0; i < refValues.size(); i++) {
@@ -2095,6 +2117,18 @@ public:
     if (i >= values.size()) {
       trap("string oob");
     }
+
+    // This naive indexing approach is only correct if the first `i` bytes
+    // stored in `values` each corresponds to a single unicode code point. To
+    // implement this correctly in general, we would have to reinterpret the
+    // bytes as WTF-8, then count up to the `i`th code point, accounting
+    // properly for code points that would be represented by surrogate pairs in
+    // WTF-16. Alternatively, we could represent string contents as WTF-16 to
+    // begin with.
+    if (hasNonAsciiUpTo(values, i + 1)) {
+      return Flow(NONCONSTANT_FLOW);
+    }
+
     return Literal(values[i].geti32());
   }
   Flow visitStringIterNext(StringIterNext* curr) {
