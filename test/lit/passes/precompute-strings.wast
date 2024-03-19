@@ -130,6 +130,9 @@
   )
  )
 
+ ;; CHECK:      (func $slice (type $1) (result (ref string))
+ ;; CHECK-NEXT:  (string.const "def")
+ ;; CHECK-NEXT: )
  (func $slice (export "slice") (result (ref string))
   ;; Slicing [3:6] here should definitely output "def".
   (stringview_wtf16.slice
@@ -139,7 +142,14 @@
   )
  )
 
- (func $slice-bad (export "slice") (result (ref string))
+ ;; CHECK:      (func $slice-bad (type $1) (result (ref string))
+ ;; CHECK-NEXT:  (stringview_wtf16.slice
+ ;; CHECK-NEXT:   (string.const "abcd\c2\a3fgh")
+ ;; CHECK-NEXT:   (i32.const 3)
+ ;; CHECK-NEXT:   (i32.const 6)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $slice-bad (export "slice-bad") (result (ref string))
   ;; This slice contains non-ascii, so we do not optimize.
   (stringview_wtf16.slice
    ;; abcd£fgh
