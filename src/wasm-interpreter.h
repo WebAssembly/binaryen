@@ -1902,6 +1902,16 @@ public:
   Flow visitStringConst(StringConst* curr) {
     return Literal(curr->string.toString());
   }
+
+  bool hasNonAsciiUpTo(const Literals& values, Index end) {
+    for (Index i = 0; i < end; ++i) {
+      if (uint32_t(values[i].geti32()) > 127) {
+        return true;
+      }
+    }
+    return false;
+  }
+
   Flow visitStringMeasure(StringMeasure* curr) {
     // For now we only support JS-style strings.
     if (curr->op != StringMeasureWTF16View) {
@@ -1917,7 +1927,44 @@ public:
     if (!data) {
       trap("null ref");
     }
+
+    // This is only correct if all the bytes stored in `values` correspond to
+    // single unicode code points. See `visitStringWTF16Get` for details.
+    if (hasNonAsciiUpTo(data->values, data->values.size())) {
+      return Flow(NONCONSTANT_FLOW);
+    }
+
     return Literal(int32_t(data->values.size()));
+  }
+  Flow visitStringConcat(StringConcat* curr) {
+    NOTE_ENTER("StringConcat");
+    Flow flow = visit(curr->left);
+    if (flow.breaking()) {
+      return flow;
+    }
+    auto left = flow.getSingleValue();
+    flow = visit(curr->right);
+    if (flow.breaking()) {
+      return flow;
+    }
+    auto right = flow.getSingleValue();
+    NOTE_EVAL2(left, right);
+    auto leftData = left.getGCData();
+    auto rightData = right.getGCData();
+    if (!leftData || !rightData) {
+      trap("null ref");
+    }
+
+    Literals contents;
+    contents.reserve(leftData->values.size() + rightData->values.size());
+    for (Literal l : leftData->values) {
+      contents.push_back(l);
+    }
+    for (Literal l : rightData->values) {
+      contents.push_back(l);
+    }
+
+    return makeGCData(contents, curr->type);
   }
   Flow visitStringEncode(StringEncode* curr) {
     // For now we only support JS-style strings into arrays.
@@ -1950,13 +1997,17 @@ public:
       trap("oob");
     }
 
+    // We don't handle non-ascii code points correctly yet.
+    if (hasNonAsciiUpTo(refValues, refValues.size())) {
+      return Flow(NONCONSTANT_FLOW);
+    }
+
     for (Index i = 0; i < refValues.size(); i++) {
       ptrValues[startVal + i] = refValues[i];
     }
 
     return Literal(int32_t(refData->values.size()));
   }
-  Flow visitStringConcat(StringConcat* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStringEq(StringEq* curr) {
     NOTE_ENTER("StringEq");
     Flow flow = visit(curr->left);
@@ -2066,6 +2117,18 @@ public:
     if (i >= values.size()) {
       trap("string oob");
     }
+
+    // This naive indexing approach is only correct if the first `i` bytes
+    // stored in `values` each corresponds to a single unicode code point. To
+    // implement this correctly in general, we would have to reinterpret the
+    // bytes as WTF-8, then count up to the `i`th code point, accounting
+    // properly for code points that would be represented by surrogate pairs in
+    // WTF-16. Alternatively, we could represent string contents as WTF-16 to
+    // begin with.
+    if (hasNonAsciiUpTo(values, i + 1)) {
+      return Flow(NONCONSTANT_FLOW);
+    }
+
     return Literal(values[i].geti32());
   }
   Flow visitStringIterNext(StringIterNext* curr) {

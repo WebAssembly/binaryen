@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ir_function_h
-#define wasm_ir_function_h
+#ifndef wasm_pass_param_utils_h
+#define wasm_pass_param_utils_h
 
 #include "pass.h"
 #include "support/sorted_vector.h"
@@ -44,6 +44,16 @@ namespace wasm::ParamUtils {
 // }
 std::unordered_set<Index> getUsedParams(Function* func);
 
+// The outcome of an attempt to remove a parameter(s).
+enum RemovalOutcome {
+  // We removed successfully.
+  Success = 0,
+  // We failed, but only because of fixable nested effects. The caller can move
+  // those effects out (e.g. using ChildLocalizer, or the helper localizeCallsTo
+  // below) and repeat.
+  Failure = 1,
+};
+
 // Try to remove a parameter from a set of functions and replace it with a local
 // instead. This may not succeed if the parameter type cannot be used in a
 // local, or if we hit another limitation, in which case this returns false and
@@ -64,21 +74,26 @@ std::unordered_set<Index> getUsedParams(Function* func);
 // need adjusting and it is easier to do it all in one place. Also, the caller
 // can update all the types at once throughout the program after making
 // multiple calls to removeParameter().
-bool removeParameter(const std::vector<Function*>& funcs,
-                     Index index,
-                     const std::vector<Call*>& calls,
-                     const std::vector<CallRef*>& callRefs,
-                     Module* module,
-                     PassRunner* runner);
+RemovalOutcome removeParameter(const std::vector<Function*>& funcs,
+                               Index index,
+                               const std::vector<Call*>& calls,
+                               const std::vector<CallRef*>& callRefs,
+                               Module* module,
+                               PassRunner* runner);
 
 // The same as removeParameter, but gets a sorted list of indexes. It tries to
-// remove them all, and returns which we removed.
-SortedVector removeParameters(const std::vector<Function*>& funcs,
-                              SortedVector indexes,
-                              const std::vector<Call*>& calls,
-                              const std::vector<CallRef*>& callRefs,
-                              Module* module,
-                              PassRunner* runner);
+// remove them all, and returns which we removed, as well as an indication as
+// to whether we might remove more if effects were not in the way (specifically,
+// we return Success if we removed any index, Failure if we removed none, and
+// FailureDueToEffects if at least one index could have been removed but for
+// effects).
+std::pair<SortedVector, RemovalOutcome>
+removeParameters(const std::vector<Function*>& funcs,
+                 SortedVector indexes,
+                 const std::vector<Call*>& calls,
+                 const std::vector<CallRef*>& callRefs,
+                 Module* module,
+                 PassRunner* runner);
 
 // Given a set of functions and the calls and call_refs that reach them, find
 // which parameters are passed the same constant value in all the calls. For
@@ -92,6 +107,20 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
                                  const std::vector<CallRef*>& callRefs,
                                  Module* module);
 
+// Helper that localizes all calls to a set of targets, in an entire module.
+// This basically calls ChildLocalizer in each function, on the relevant calls.
+// This is useful when we get FailureDueToEffects, see above.
+//
+// The set of targets can be function names (the individual functions we want to
+// handle calls towards) or heap types (which will then include all functions
+// with those types).
+void localizeCallsTo(const std::unordered_set<Name>& callTargets,
+                     Module& wasm,
+                     PassRunner* runner);
+void localizeCallsTo(const std::unordered_set<HeapType>& callTargets,
+                     Module& wasm,
+                     PassRunner* runner);
+
 } // namespace wasm::ParamUtils
 
-#endif // wasm_ir_function_h
+#endif // wasm_pass_param_utils_h

@@ -39,14 +39,18 @@
   ;; CHECK:      (type $1 (func (param i32)))
 
   ;; CHECK:      (func $caller (type $0)
-  ;; CHECK-NEXT:  (call $target
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $caller
-    ;; Removing this parameter would require the type of the call to change from
-    ;; unreachable to none. We don't handle such complexity and ignore such
-    ;; cases.
+    ;; Removing this parameter would make the type of the call change from
+    ;; unreachable to none. But the call itself is in unreachable code, so we
+    ;; will replace it with an unreachable (and then, once the call is gone, the
+    ;; target can be better optimized; however, no other calls remain here, so
+    ;; the pass does nothing as it considers it dead at that point).
+    ;;
+    ;; This test verifies we do the proper thing even in TNH mode, as in TNH
+    ;; mode |unreachable| seems to have no effects, but for validation reasons
+    ;; we must still replace the call here.
     (call $target
       (unreachable)
     )
@@ -59,13 +63,40 @@
   )
 )
 
-;; As above, but use a return_call. We can optimize that, since return_calls
-;; have type unreachable anyhow, and the optimization would not change the type.
+;; As above but the called target has a result.
+(module
+  ;; CHECK:      (type $0 (func (result i32)))
+
+  ;; CHECK:      (type $1 (func (param i32) (result i32)))
+
+  ;; CHECK:      (func $caller (type $0) (result i32)
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $caller (result i32)
+    ;; Again, the call is replaced by an unreachable.
+    (call $target
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $target (type $1) (param $0 i32) (result i32)
+  ;; CHECK-NEXT:  (i32.const 42)
+  ;; CHECK-NEXT: )
+  (func $target (param i32) (result i32)
+    (i32.const 42)
+  )
+)
+
+;; As above, but use a return_call. We can optimize that too (return_calls have
+;; type unreachable anyhow, and the optimization would not change the type, so
+;; it is even simpler).
 (module
   ;; CHECK:      (type $0 (func))
 
+  ;; CHECK:      (type $1 (func (param i32)))
+
   ;; CHECK:      (func $caller (type $0)
-  ;; CHECK-NEXT:  (return_call $target)
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $caller
     (return_call $target
@@ -73,8 +104,7 @@
     )
   )
 
-  ;; CHECK:      (func $target (type $0)
-  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK:      (func $target (type $1) (param $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $target (param i32)
