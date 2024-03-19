@@ -3370,12 +3370,13 @@ public:
     if (timeout.breaking()) {
       return timeout;
     }
-    // TODO: Add threads support.
-    //       For now, as there are no other threads, if there is no timeout then
-    //       error (this would hang forever), and if there is a timeout then
-    //       just report that we timed out.
-    if (timeout.getSingleValue().getInteger() < 0) {
-      return Flow(NONCONSTANT_FLOW);
+    // TODO: Add threads support. For now, report a host limit here, as there
+    //       are no other threads that can wake us up. Without such threads,
+    //       we'd hang if there is no timeout, and even if there is a timeout
+    //       then we can hang for a long time if it is in a loop. The only
+    //       timeout value we allow here for now is 0.
+    if (timeout.getSingleValue().getInteger() != 0) {
+      hostLimit("threads support");
     }
     auto bytes = curr->expectedType.getByteSize();
     auto info = getMemoryInstanceInfo(curr->memory);
