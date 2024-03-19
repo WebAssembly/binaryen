@@ -1959,6 +1959,11 @@ public:
     if (!leftData || !rightData) {
       trap("null ref");
     }
+    // This is only correct if all the bytes in the left operand correspond
+    // to single unicode code points.
+    if (hasNonAsciiUpTo(leftData->values)) {
+      return Flow(NONCONSTANT_FLOW);
+    }
 
     Literals contents;
     contents.reserve(leftData->values.size() + rightData->values.size());
