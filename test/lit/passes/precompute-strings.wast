@@ -129,4 +129,23 @@
    (i32.const 0)
   )
  )
+
+ (func $slice (export "slice") (result (ref string))
+  ;; Slicing [3:6] here should definitely output "def".
+  (stringview_wtf16.slice
+   (string.const "abcdefgh")
+   (i32.const 3)
+   (i32.const 6)
+  )
+ )
+
+ (func $slice-bad (export "slice") (result (ref string))
+  ;; This slice contains non-ascii, so we do not optimize.
+  (stringview_wtf16.slice
+   ;; abcd£fgh
+   (string.const "abcd\C2\A3fgh")
+   (i32.const 3)
+   (i32.const 6)
+  )
+ )
 )
