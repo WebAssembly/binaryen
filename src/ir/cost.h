@@ -742,11 +742,14 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   }
   CostType visitResume(Resume* curr) {
     // Inspired by indirect calls, but twice the cost.
-    return 12 + visit(curr->cont);
+    CostType ret = 12 + visit(curr->cont);
+    for (auto* arg : curr->operands) {
+      ret += visit(arg);
+    }
+    return ret;
   }
   CostType visitSuspend(Suspend* curr) {
-    // Cheaper than resume, since payloads cannot be partially applied.
-    CostType ret = 8;
+    CostType ret = 12;
     for (auto* arg : curr->operands) {
       ret += visit(arg);
     }
