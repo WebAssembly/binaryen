@@ -423,33 +423,29 @@ struct SafeHeap : public Pass {
     }
     auto gtuOp = is64 ? GtUInt64 : GtUInt32;
     auto addOp = is64 ? AddInt64 : AddInt32;
-    auto* upperCheck =           builder.makeBinary(upperOp,
-                             builder.makeLocalGet(sumLocal, indexType),
-                             builder.makeConstPtr(upperBound, indexType));
-    auto* lowerCheck =           builder.makeBinary(
-            gtuOp,
-            builder.makeBinary(addOp,
-                               builder.makeLocalGet(sumLocal, indexType),
-                               builder.makeConstPtr(bytes, indexType)),
-            brkLocation);
+    auto* upperCheck =
+      builder.makeBinary(upperOp,
+                         builder.makeLocalGet(sumLocal, indexType),
+                         builder.makeConstPtr(upperBound, indexType));
+    auto* lowerCheck = builder.makeBinary(
+      gtuOp,
+      builder.makeBinary(addOp,
+                         builder.makeLocalGet(sumLocal, indexType),
+                         builder.makeConstPtr(bytes, indexType)),
+      brkLocation);
     // Check for an overflow when adding the pointer and the size, using the
     // rule that for any unsigned x and y,
     //    x + y < x    <=>   x + y overflows
-    auto* overflowCheck = 
-        builder.makeBinary(
-          is64 ? LtUInt64 : LtUInt32,
-          builder.makeLocalGet(sumLocal, indexType),
-          builder.makeLocalGet(ptrLocal, indexType)
-        );
+    auto* overflowCheck =
+      builder.makeBinary(is64 ? LtUInt64 : LtUInt32,
+                         builder.makeLocalGet(sumLocal, indexType),
+                         builder.makeLocalGet(ptrLocal, indexType));
 
     return builder.makeIf(
       builder.makeBinary(
         OrInt32,
         upperCheck,
-        builder.makeBinary(
-          OrInt32,
-          lowerCheck,
-          overflowCheck)),
+        builder.makeBinary(OrInt32, lowerCheck, overflowCheck)),
       builder.makeCall(segfault, {}, Type::none));
   }
 };
