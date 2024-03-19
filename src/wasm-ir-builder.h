@@ -216,6 +216,7 @@ public:
   [[nodiscard]] Result<> makeResume(HeapType ct,
                                     const std::vector<Name>& tags,
                                     const std::vector<Index>& labels);
+  [[nodiscard]] Result<> makeSuspend(Name tag);
 
   // Private functions that must be public for technical reasons.
   [[nodiscard]] Result<> visitExpression(Expression*);
@@ -256,6 +257,7 @@ public:
   [[nodiscard]] Result<> visitStringEncode(StringEncode*);
   [[nodiscard]] Result<> visitContBind(ContBind*);
   [[nodiscard]] Result<> visitResume(Resume*);
+  [[nodiscard]] Result<> visitSuspend(Suspend*);
   [[nodiscard]] Result<> visitTupleMake(TupleMake*);
   [[nodiscard]] Result<>
   visitTupleExtract(TupleExtract*,

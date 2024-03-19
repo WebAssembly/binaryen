@@ -108,5 +108,6 @@ DELEGATE(StringSliceIter);
 DELEGATE(ContBind);
 DELEGATE(ContNew);
 DELEGATE(Resume);
+DELEGATE(Suspend);
 
 #undef DELEGATE

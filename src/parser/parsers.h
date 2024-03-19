@@ -309,6 +309,8 @@ template<typename Ctx>
 Result<> makeContNew(Ctx*, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeResume(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
+Result<> makeSuspend(Ctx&, Index, const std::vector<Annotation>&);
 
 // Modules
 template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx);
@@ -2496,6 +2498,15 @@ makeResume(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   }
 
   return ctx.makeResume(pos, annotations, *type, tagLabels);
+}
+
+template<typename Ctx>
+Result<>
+makeSuspend(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
+  auto tag = tagidx(ctx);
+  CHECK_ERR(tag);
+
+  return ctx.makeSuspend(pos, annotations, *tag);
 }
 
 // =======

@@ -2488,6 +2488,7 @@ public:
   Flow visitContBind(ContBind* curr) { WASM_UNREACHABLE("unimplemented"); }
   Flow visitContNew(ContNew* curr) { WASM_UNREACHABLE("unimplemented"); }
   Flow visitResume(Resume* curr) { WASM_UNREACHABLE("unimplemented"); }
+  Flow visitSuspend(Suspend* curr) { WASM_UNREACHABLE("unimplemented"); }
 
   void trap(const char* why) override { throw NonconstantException(); }
 
@@ -4064,6 +4065,7 @@ public:
   Flow visitContBind(ContBind* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitContNew(ContNew* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitResume(Resume* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitSuspend(Suspend* curr) { return Flow(NONCONSTANT_FLOW); }
 
   void trap(const char* why) override { externalInterface->trap(why); }
 

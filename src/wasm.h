@@ -746,6 +746,7 @@ public:
     ContBindId,
     ContNewId,
     ResumeId,
+    SuspendId,
     NumExpressionIds
   };
   Id _id;
@@ -2046,6 +2047,19 @@ public:
   // This information is cached here in order not to query the module
   // every time we query the sent types.
   ArenaVector<Type> sentTypes;
+};
+
+class Suspend : public SpecificExpression<Expression::SuspendId> {
+public:
+  Suspend(MixedArena& allocator) : operands(allocator) {}
+
+  Name tag;
+  ExpressionList operands;
+
+  // We need access to the module to obtain the signature of the tag,
+  // which determines this node's type.
+  // If no module is given, then the type must have been set already.
+  void finalize(Module* wasm = nullptr);
 };
 
 // Globals

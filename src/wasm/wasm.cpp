@@ -1360,9 +1360,21 @@ void StringSliceIter::finalize() {
   }
 }
 
-void ContBind::finalize() { type = Type(contTypeAfter, NonNullable); }
+void ContBind::finalize() {
+  if (cont->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (!handleUnreachableOperands(this)) {
+    type = Type(contTypeAfter, NonNullable);
+  }
+}
 
-void ContNew::finalize() { type = Type(contType, NonNullable); }
+void ContNew::finalize() {
+  if (func->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = Type(contType, NonNullable);
+  }
+}
 
 static void populateResumeSentTypes(Resume* curr, Module* wasm) {
   if (!wasm) {
@@ -1406,11 +1418,22 @@ static void populateResumeSentTypes(Resume* curr, Module* wasm) {
 }
 
 void Resume::finalize(Module* wasm) {
-  const Signature& contSig =
-    this->contType.getContinuation().type.getSignature();
-  type = contSig.results;
+  if (cont->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (!handleUnreachableOperands(this)) {
+    const Signature& contSig =
+      this->contType.getContinuation().type.getSignature();
+    type = contSig.results;
+  }
 
   populateResumeSentTypes(this, wasm);
+}
+
+void Suspend::finalize(Module* wasm) {
+  if (!handleUnreachableOperands(this) && wasm) {
+    auto tag = wasm->getTag(this->tag);
+    type = tag->sig.results;
+  }
 }
 
 size_t Function::getNumParams() { return getParams().size(); }

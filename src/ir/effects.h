@@ -994,6 +994,14 @@ private:
         parent.throws_ = true;
       }
     }
+    void visitSuspend(Suspend* curr) {
+      // Similar to resume/call: Suspending means that we execute arbitrary
+      // other code before we may resume here.
+      parent.calls = true;
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+        parent.throws_ = true;
+      }
+    }
   };
 
 public:

@@ -2382,6 +2382,11 @@ struct PrintExpressionContents
       o << ')';
     }
   }
+
+  void visitSuspend(Suspend* curr) {
+    printMedium(o, "suspend ");
+    curr->tag.print(o);
+  }
 };
 
 void PrintSExpression::setModule(Module* module) {

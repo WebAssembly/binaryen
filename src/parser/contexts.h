@@ -824,6 +824,9 @@ struct NullInstrParserCtx {
                       const TagLabelListT&) {
     return Ok{};
   }
+  Result<> makeSuspend(Index, const std::vector<Annotation>&, TagIdxT) {
+    return Ok{};
+  }
 };
 
 struct NullCtx : NullTypeParserCtx, NullInstrParserCtx {
@@ -2593,6 +2596,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       labels.push_back(label);
     }
     return withLoc(pos, irBuilder.makeResume(type, tags, labels));
+  }
+
+  Result<>
+  makeSuspend(Index pos, const std::vector<Annotation>& annotations, Name tag) {
+    return withLoc(pos, irBuilder.makeSuspend(tag));
   }
 };
 

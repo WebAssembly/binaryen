@@ -4060,6 +4060,10 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       visitResume((curr = allocator.alloc<Resume>())->cast<Resume>());
       break;
     }
+    case BinaryConsts::Suspend: {
+      visitSuspend((curr = allocator.alloc<Suspend>())->cast<Suspend>());
+      break;
+    }
     case BinaryConsts::AtomicPrefix: {
       code = static_cast<uint8_t>(getU32LEB());
       if (maybeVisitLoad(curr, code, /*isAtomic=*/true)) {
@@ -7861,6 +7865,26 @@ void WasmBinaryReader::visitResume(Resume* curr) {
 
   auto numArgs =
     curr->contType.getContinuation().type.getSignature().params.size();
+  curr->operands.resize(numArgs);
+  for (size_t i = 0; i < numArgs; i++) {
+    curr->operands[numArgs - i - 1] = popNonVoidExpression();
+  }
+
+  curr->finalize(&wasm);
+}
+
+void WasmBinaryReader::visitSuspend(Suspend* curr) {
+  BYN_TRACE("zz node: Suspend\n");
+
+  auto tagIndex = getU32LEB();
+  if (tagIndex >= wasm.tags.size()) {
+    throwError("bad tag index");
+  }
+  auto* tag = wasm.tags[tagIndex].get();
+  curr->tag = tag->name;
+  tagRefs[tagIndex].push_back(&curr->tag);
+
+  auto numArgs = tag->sig.params.size();
   curr->operands.resize(numArgs);
   for (size_t i = 0; i < numArgs; i++) {
     curr->operands[numArgs - i - 1] = popNonVoidExpression();
