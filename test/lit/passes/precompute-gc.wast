@@ -1019,10 +1019,10 @@
  ;; CHECK-NEXT:   (string.const "hello, world")
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $strings
- ;; CHECK-NEXT:   (string.const "hello, world")
+ ;; CHECK-NEXT:   (local.get $s)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $strings
- ;; CHECK-NEXT:   (string.const "hello, world")
+ ;; CHECK-NEXT:   (local.get $s)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $strings (param $param (ref string))
