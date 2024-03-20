@@ -195,6 +195,48 @@ public:
     }
     return Literal(canonical, curr->type.getHeapType());
   }
+
+  // Disable string operations pending investigation of the correctness of our
+  // UTF implementation. FIXME
+  Flow visitStringNew(StringNew* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringConst(StringConst* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringMeasure(StringMeasure* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringConcat(StringConcat* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringEncode(StringEncode* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringEq(StringEq* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringAs(StringAs* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringWTF8Advance(StringWTF8Advance* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringWTF16Get(StringWTF16Get* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringIterNext(StringIterNext* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringIterMove(StringIterMove* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringSliceWTF(StringSliceWTF* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitStringSliceIter(StringSliceIter* curr) {
+    return Flow(NONCONSTANT_FLOW);
+  }
 };
 
 struct Precompute
