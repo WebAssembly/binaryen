@@ -198,27 +198,15 @@ public:
 
   // Disable string operations pending investigation of the correctness of our
   // UTF implementation. FIXME
-  Flow visitStringNew(StringNew* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringConst(StringConst* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
+  Flow visitStringNew(StringNew* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStringConst(StringConst* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStringMeasure(StringMeasure* curr) {
     return Flow(NONCONSTANT_FLOW);
   }
-  Flow visitStringConcat(StringConcat* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringEncode(StringEncode* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringEq(StringEq* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringAs(StringAs* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
+  Flow visitStringConcat(StringConcat* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStringEncode(StringEncode* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStringEq(StringEq* curr) { return Flow(NONCONSTANT_FLOW); }
+  Flow visitStringAs(StringAs* curr) { return Flow(NONCONSTANT_FLOW); }
   Flow visitStringWTF8Advance(StringWTF8Advance* curr) {
     return Flow(NONCONSTANT_FLOW);
   }
