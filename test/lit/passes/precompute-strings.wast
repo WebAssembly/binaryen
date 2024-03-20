@@ -5,10 +5,10 @@
 (module
  ;; CHECK:      (type $0 (func (result i32)))
 
- ;; CHECK:      (type $1 (func (result (ref string))))
-
  ;; CHECK:      (type $array16 (array (mut i16)))
  (type $array16 (array (mut i16)))
+
+ ;; CHECK:      (type $2 (func (result (ref string))))
 
  ;; CHECK:      (export "get_codepoint-bad" (func $get_codepoint-bad))
 
@@ -17,7 +17,10 @@
  ;; CHECK:      (export "slice-bad" (func $slice-bad))
 
  ;; CHECK:      (func $eq-no (type $0) (result i32)
- ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT:  (string.eq
+ ;; CHECK-NEXT:   (string.const "ab")
+ ;; CHECK-NEXT:   (string.const "cdefg")
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $eq-no (result i32)
   (string.eq
@@ -27,7 +30,10 @@
  )
 
  ;; CHECK:      (func $eq-yes (type $0) (result i32)
- ;; CHECK-NEXT:  (i32.const 1)
+ ;; CHECK-NEXT:  (string.eq
+ ;; CHECK-NEXT:   (string.const "ab")
+ ;; CHECK-NEXT:   (string.const "ab")
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $eq-yes (result i32)
   (string.eq
@@ -37,7 +43,13 @@
  )
 
  ;; CHECK:      (func $concat (type $0) (result i32)
- ;; CHECK-NEXT:  (i32.const 1)
+ ;; CHECK-NEXT:  (string.eq
+ ;; CHECK-NEXT:   (string.concat
+ ;; CHECK-NEXT:    (string.const "a")
+ ;; CHECK-NEXT:    (string.const "b")
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (string.const "ab")
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $concat (result i32)
   (string.eq
@@ -63,7 +75,11 @@
  )
 
  ;; CHECK:      (func $length (type $0) (result i32)
- ;; CHECK-NEXT:  (i32.const 7)
+ ;; CHECK-NEXT:  (stringview_wtf16.length
+ ;; CHECK-NEXT:   (string.as_wtf16
+ ;; CHECK-NEXT:    (string.const "1234567")
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $length (result i32)
   (stringview_wtf16.length
@@ -91,7 +107,12 @@
  )
 
  ;; CHECK:      (func $get_codepoint (type $0) (result i32)
- ;; CHECK-NEXT:  (i32.const 95)
+ ;; CHECK-NEXT:  (stringview_wtf16.get_codeunit
+ ;; CHECK-NEXT:   (string.as_wtf16
+ ;; CHECK-NEXT:    (string.const "$_\c2\a3_\e2\82\ac_\f0\90\8d\88")
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 1)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $get_codepoint (result i32)
   ;; This is computable because everything up to the requested index is ascii. Returns 95 ('_').
@@ -124,7 +145,13 @@
  )
 
  ;; CHECK:      (func $encode (type $0) (result i32)
- ;; CHECK-NEXT:  (i32.const 2)
+ ;; CHECK-NEXT:  (string.encode_wtf16_array
+ ;; CHECK-NEXT:   (string.const "$_")
+ ;; CHECK-NEXT:   (array.new_default $array16
+ ;; CHECK-NEXT:    (i32.const 20)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $encode (result i32)
   (string.encode_wtf16_array
@@ -156,8 +183,12 @@
   )
  )
 
- ;; CHECK:      (func $slice (type $1) (result (ref string))
- ;; CHECK-NEXT:  (string.const "def")
+ ;; CHECK:      (func $slice (type $2) (result (ref string))
+ ;; CHECK-NEXT:  (stringview_wtf16.slice
+ ;; CHECK-NEXT:   (string.const "abcdefgh")
+ ;; CHECK-NEXT:   (i32.const 3)
+ ;; CHECK-NEXT:   (i32.const 6)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $slice (export "slice") (result (ref string))
   ;; Slicing [3:6] here should definitely output "def".
@@ -168,7 +199,7 @@
   )
  )
 
- ;; CHECK:      (func $slice-bad (type $1) (result (ref string))
+ ;; CHECK:      (func $slice-bad (type $2) (result (ref string))
  ;; CHECK-NEXT:  (stringview_wtf16.slice
  ;; CHECK-NEXT:   (string.const "abcd\c2\a3fgh")
  ;; CHECK-NEXT:   (i32.const 3)
