@@ -26,6 +26,7 @@
 #include "pass.h"
 #include "shell-interface.h"
 #include "support/colors.h"
+#include "support/string.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
@@ -1895,8 +1896,13 @@ BinaryenExpressionRef BinaryenStringNew(BinaryenModuleRef module,
 }
 BinaryenExpressionRef BinaryenStringConst(BinaryenModuleRef module,
                                           const char* name) {
+  // Re-encode from WTF-8 to WTF-16.
+  std::stringstream wtf16;
+  [[maybe_unused]] bool valid = String::convertWTF8ToWTF16(wtf16, name);
+  assert(valid);
+  // TODO: Use wtf16.view() once we have C++20.
   return static_cast<Expression*>(
-    Builder(*(Module*)module).makeStringConst(name));
+    Builder(*(Module*)module).makeStringConst(wtf16.str()));
 }
 BinaryenExpressionRef BinaryenStringMeasure(BinaryenModuleRef module,
                                             BinaryenOp op,
