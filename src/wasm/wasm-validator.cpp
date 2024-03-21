@@ -3076,7 +3076,7 @@ void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
   }
   auto srcHeapType = curr->srcRef->type.getHeapType();
   auto destHeapType = curr->destRef->type.getHeapType();
-  // Normally both types need to be references to specifc arrays, but if either
+  // Normally both types need to be references to specific arrays, but if either
   // of the types are bottom, we don't further constrain the other at all
   // because this will be emitted as an unreachable.
   if (srcHeapType.isBottom() || destHeapType.isBottom()) {
@@ -3224,6 +3224,39 @@ void FunctionValidator::visitStringNew(StringNew* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
                "string operations require reference-types [--enable-strings]");
+
+  switch (curr->op) {
+    case StringNewWTF16Array: {
+      auto ptrType = curr->ptr->type;
+      if (ptrType == Type::unreachable) {
+        return;
+      }
+      if (!shouldBeTrue(ptrType.isRef(),
+                        curr,
+                        "string.new_wtf16_array input must have string type")) {
+        return;
+      }
+      auto ptrHeapType = ptrType.getHeapType();
+      if (!shouldBeTrue(ptrHeapType.isBottom() || ptrHeapType.isArray(),
+                        curr,
+                        "string.new_wtf16_array input must be array")) {
+        return;
+      }
+      shouldBeEqualOrFirstIsUnreachable(
+        curr->start->type,
+        Type(Type::i32),
+        curr,
+        "string.new_wtf16_array start must be i32");
+      shouldBeEqualOrFirstIsUnreachable(
+        curr->end->type,
+        Type(Type::i32),
+        curr,
+        "string.new_wtf16_array end must be i32");
+      break;
+    }
+    default: {
+    }
+  }
 }
 
 void FunctionValidator::visitStringConst(StringConst* curr) {
