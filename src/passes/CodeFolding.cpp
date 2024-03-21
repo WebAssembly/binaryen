@@ -58,6 +58,7 @@
 #include <iterator>
 
 #include "ir/branch-utils.h"
+#include "ir/eh-utils.h"
 #include "ir/effects.h"
 #include "ir/find_all.h"
 #include "ir/label-utils.h"
@@ -119,7 +120,11 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
 
   // state
 
+  // Set when we optimized and believe another pass is warranted.
   bool anotherPass;
+  // Set when we optimized in a manner that requires EH fixups specifically,
+  // which is generally the case when we wrap things in a block.
+  bool needEHFixups;
 
   // pass state
 
@@ -229,6 +234,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       // we must ensure we present the same type as the if had
       ret->finalize(curr->type);
       replaceCurrent(ret);
+      needEHFixups = true;
     } else {
       // if both are blocks, look for a tail we can merge
       auto* left = curr->ifTrue->dynCast<Block>();
@@ -266,6 +272,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     anotherPass = true;
     while (anotherPass) {
       anotherPass = false;
+      needEHFixups = false;
       super::doWalkFunction(func);
       optimizeTerminatingTails(unreachableTails);
       // optimize returns at the end, so we can benefit from a fallthrough if
@@ -279,6 +286,9 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
       returnTails.clear();
       unoptimizables.clear();
       modifieds.clear();
+      if (needEHFixups) {
+        EHUtils::handleBlockNestedPops(func, *getModule());
+      }
       // if we did any work, types may need to be propagated
       if (anotherPass) {
         ReFinalize().walkFunctionInModule(func, getModule());
@@ -488,6 +498,7 @@ private:
     // ensure the replacement has the same type, so the outside is not surprised
     block->finalize(oldType);
     replaceCurrent(block);
+    needEHFixups = true;
   }
 
   // optimize tails that terminate control flow in this function, so we
@@ -745,6 +756,7 @@ private:
     // ensure the replacement has the same type, so the outside is not surprised
     outer->finalize(getFunction()->getResults());
     getFunction()->body = outer;
+    needEHFixups = true;
     return true;
   }
 

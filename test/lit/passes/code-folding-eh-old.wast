@@ -72,7 +72,7 @@
   ;; CHECK-NEXT: )
   (func $foo)
 
-  ;; CHECK:      (func $try-call-optimize-terminating-tails (type $2) (result i32)
+  ;; CHECK:      (func $try-call-optimize-terminating-tails (type $1) (result i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (call $foo)
@@ -153,6 +153,62 @@
         )
       )
       (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $if-arms-in-catch (type $1) (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $e-i32
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (pop i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (i32.eqz
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $if-arms-in-catch (result i32)
+    (try
+      (do
+        (unreachable)
+      )
+      (catch $e-i32
+        ;; These if arms can be folded, after which the if is replaced by a
+        ;; block, so we need a fixup for the pop.
+        (if
+          (pop i32)
+          (then
+            (drop
+              (i32.eqz
+                (i32.const 1)
+              )
+            )
+          )
+          (else
+            (drop
+              (i32.eqz
+                (i32.const 1)
+              )
+            )
+          )
+        )
+        (unreachable)
+      )
     )
   )
 )
