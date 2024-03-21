@@ -1986,6 +1986,7 @@ public:
     if (ref.breaking()) {
       return ref;
     }
+    // TODO: "WTF-16 position treatment", as in stringview_wtf16.slice?
     Flow ptr = visit(curr->ptr);
     if (ptr.breaking()) {
       return ptr;
@@ -2173,9 +2174,7 @@ public:
     auto& refValues = refData->values;
     auto startVal = start.getSingleValue().getUnsigned();
     auto endVal = end.getSingleValue().getUnsigned();
-    if (endVal > refValues.size()) {
-      trap("array oob");
-    }
+    endVal = std::min<size_t>(endVal, refValues.size());
     if (hasNonAsciiUpTo(refValues, endVal)) {
       return Flow(NONCONSTANT_FLOW);
     }

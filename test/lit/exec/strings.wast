@@ -255,6 +255,17 @@
       (i32.const 6)
     )
   )
+
+  ;; CHECK:      [fuzz-exec] calling slice-big
+  ;; CHECK-NEXT: [fuzz-exec] note result: slice-big => string("defgh")
+  (func $slice-big (export "slice-big") (result (ref string))
+    ;; Slicing [3:huge unsigned value] leads to slicing til the end: "defgh".
+    (stringview_wtf16.slice
+      (string.const "abcdefgh")
+      (i32.const 3)
+      (i32.const -1)
+    )
+  )
 )
 ;; CHECK:      [fuzz-exec] calling new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
@@ -323,6 +334,9 @@
 
 ;; CHECK:      [fuzz-exec] calling slice
 ;; CHECK-NEXT: [fuzz-exec] note result: slice => string("def")
+
+;; CHECK:      [fuzz-exec] calling slice-big
+;; CHECK-NEXT: [fuzz-exec] note result: slice-big => string("defgh")
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.1
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.10
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.2
@@ -344,3 +358,4 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing get_length
 ;; CHECK-NEXT: [fuzz-exec] comparing new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] comparing slice
+;; CHECK-NEXT: [fuzz-exec] comparing slice-big
