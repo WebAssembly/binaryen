@@ -57,6 +57,7 @@
  ;; CHECK-NEXT: )
  (func $concat-surrogates (result i32)
   (string.eq
+   ;; Concatenating these surrogates creates '𐍈', which has a different UTF-8 encoding.
    (string.concat (string.const "\ED\A0\80") (string.const "\ED\BD\88"))
    (string.const "\F0\90\8D\88")
   )
