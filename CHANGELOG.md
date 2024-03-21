@@ -21,6 +21,7 @@ Current Trunk
  - Add a new `BinaryenModuleReadWithFeatures` function to the C API that allows
    to configure which features to enable in the parser.
  - The build-time option to use legacy WasmGC opcodes is removed.
+ - The strings in `string.const` instructions must now be valid WTF-8.
 
 v117
 ----

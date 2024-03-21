@@ -75,9 +75,24 @@ inline bool isNumber(const std::string& str) {
   return !str.empty() && std::all_of(str.begin(), str.end(), ::isdigit);
 }
 
-std::ostream& printEscaped(std::ostream& os, const std::string_view str);
+std::ostream& printEscaped(std::ostream& os, std::string_view str);
 
-std::ostream& printEscapedJSON(std::ostream& os, const std::string_view str);
+// `str` must be a valid WTF-16 string.
+std::ostream& printEscapedJSON(std::ostream& os, std::string_view str);
+
+std::ostream& writeWTF8CodePoint(std::ostream& os, uint32_t u);
+
+std::ostream& writeWTF16CodePoint(std::ostream& os, uint32_t u);
+
+// Writes the WTF-16LE encoding of the given WTF-8 string to `os`, inserting
+// replacement characters as necessary when encountering invalid WTF-8. Returns
+// `true` iff the input was valid WTF-8.
+bool convertWTF8ToWTF16(std::ostream& os, std::string_view str);
+
+// Writes the WTF-8 encoding of the given WTF-16LE string to `os`, inserting a
+// replacement character at the end if the string is an odd number of bytes.
+// Returns `true` iff the input was valid WTF-16.
+bool convertWTF16ToWTF8(std::ostream& os, std::string_view str);
 
 } // namespace wasm::String
 

@@ -23,6 +23,7 @@
 #include <variant>
 
 #include "lexer.h"
+#include "support/string.h"
 
 using namespace std::string_view_literals;
 
@@ -308,25 +309,7 @@ public:
     if ((0xd800 <= u && u < 0xe000) || 0x110000 <= u) {
       return false;
     }
-    if (u < 0x80) {
-      // 0xxxxxxx
-      *escapeBuilder << uint8_t(u);
-    } else if (u < 0x800) {
-      // 110xxxxx 10xxxxxx
-      *escapeBuilder << uint8_t(0b11000000 | ((u >> 6) & 0b00011111));
-      *escapeBuilder << uint8_t(0b10000000 | ((u >> 0) & 0b00111111));
-    } else if (u < 0x10000) {
-      // 1110xxxx 10xxxxxx 10xxxxxx
-      *escapeBuilder << uint8_t(0b11100000 | ((u >> 12) & 0b00001111));
-      *escapeBuilder << uint8_t(0b10000000 | ((u >> 6) & 0b00111111));
-      *escapeBuilder << uint8_t(0b10000000 | ((u >> 0) & 0b00111111));
-    } else {
-      // 11110xxx 10xxxxxx 10xxxxxx 10xxxxxx
-      *escapeBuilder << uint8_t(0b11110000 | ((u >> 18) & 0b00000111));
-      *escapeBuilder << uint8_t(0b10000000 | ((u >> 12) & 0b00111111));
-      *escapeBuilder << uint8_t(0b10000000 | ((u >> 6) & 0b00111111));
-      *escapeBuilder << uint8_t(0b10000000 | ((u >> 0) & 0b00111111));
-    }
+    String::writeWTF8CodePoint(*escapeBuilder, u);
     return true;
   }
 };

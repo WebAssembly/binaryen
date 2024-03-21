@@ -1900,23 +1900,7 @@ public:
         return Flow(NONCONSTANT_FLOW);
     }
   }
-  Flow visitStringConst(StringConst* curr) {
-    return Literal(curr->string.toString());
-  }
-
-  // Returns if there is a non-ascii character in a list of values, looking only
-  // up to an index that is provided (not inclusive). If the index is not
-  // provided we look in the entire list.
-  bool hasNonAsciiUpTo(const Literals& values,
-                       std::optional<Index> maybeEnd = std::nullopt) {
-    Index end = maybeEnd ? *maybeEnd : values.size();
-    for (Index i = 0; i < end; ++i) {
-      if (uint32_t(values[i].geti32()) > 127) {
-        return true;
-      }
-    }
-    return false;
-  }
+  Flow visitStringConst(StringConst* curr) { return Literal(curr->string.str); }
 
   Flow visitStringMeasure(StringMeasure* curr) {
     // For now we only support JS-style strings.
@@ -1932,12 +1916,6 @@ public:
     auto data = value.getGCData();
     if (!data) {
       trap("null ref");
-    }
-
-    // This is only correct if all the bytes stored in `values` correspond to
-    // single unicode code points. See `visitStringWTF16Get` for details.
-    if (hasNonAsciiUpTo(data->values)) {
-      return Flow(NONCONSTANT_FLOW);
     }
 
     return Literal(int32_t(data->values.size()));
@@ -1960,18 +1938,13 @@ public:
     if (!leftData || !rightData) {
       trap("null ref");
     }
-    // This is only correct if all the bytes in the left operand correspond
-    // to single unicode code points.
-    if (hasNonAsciiUpTo(leftData->values)) {
-      return Flow(NONCONSTANT_FLOW);
-    }
 
     Literals contents;
     contents.reserve(leftData->values.size() + rightData->values.size());
-    for (Literal l : leftData->values) {
+    for (Literal& l : leftData->values) {
       contents.push_back(l);
     }
-    for (Literal l : rightData->values) {
+    for (Literal& l : rightData->values) {
       contents.push_back(l);
     }
 
@@ -2009,11 +1982,6 @@ public:
     if (std::ckd_add<size_t>(&end, startVal, refValues.size()) ||
         end > ptrValues.size()) {
       trap("oob");
-    }
-
-    // We don't handle non-ascii code points correctly yet.
-    if (hasNonAsciiUpTo(refValues)) {
-      return Flow(NONCONSTANT_FLOW);
     }
 
     for (Index i = 0; i < refValues.size(); i++) {
@@ -2132,17 +2100,6 @@ public:
       trap("string oob");
     }
 
-    // This naive indexing approach is only correct if the first `i` bytes
-    // stored in `values` each corresponds to a single unicode code point. To
-    // implement this correctly in general, we would have to reinterpret the
-    // bytes as WTF-8, then count up to the `i`th code point, accounting
-    // properly for code points that would be represented by surrogate pairs in
-    // WTF-16. Alternatively, we could represent string contents as WTF-16 to
-    // begin with.
-    if (hasNonAsciiUpTo(values, i + 1)) {
-      return Flow(NONCONSTANT_FLOW);
-    }
-
     return Literal(values[i].geti32());
   }
   Flow visitStringIterNext(StringIterNext* curr) {
@@ -2178,9 +2135,11 @@ public:
     auto startVal = start.getSingleValue().getUnsigned();
     auto endVal = end.getSingleValue().getUnsigned();
     endVal = std::min<size_t>(endVal, refValues.size());
-    if (hasNonAsciiUpTo(refValues, endVal)) {
-      return Flow(NONCONSTANT_FLOW);
+
+    if (endVal > refValues.size()) {
+      trap("array oob");
     }
+
     Literals contents;
     if (endVal > startVal) {
       contents.reserve(endVal - startVal);

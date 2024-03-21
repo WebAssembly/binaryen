@@ -2232,7 +2232,13 @@ struct PrintExpressionContents
   }
   void visitStringConst(StringConst* curr) {
     printMedium(o, "string.const ");
-    String::printEscaped(o, curr->string.str);
+    // Re-encode from WTF-16 to WTF-8.
+    std::stringstream wtf8;
+    [[maybe_unused]] bool valid =
+      String::convertWTF16ToWTF8(wtf8, curr->string.str);
+    assert(valid);
+    // TODO: Use wtf8.view() once we have C++20.
+    String::printEscaped(o, wtf8.str());
   }
   void visitStringMeasure(StringMeasure* curr) {
     switch (curr->op) {

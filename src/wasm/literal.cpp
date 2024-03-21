@@ -77,12 +77,15 @@ Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
          (type.isBottom() && !gcData));
 }
 
-Literal::Literal(std::string string)
+Literal::Literal(std::string_view string)
   : gcData(nullptr), type(Type(HeapType::string, NonNullable)) {
   // TODO: we could in theory internalize strings
+  // Extract individual WTF-16LE code units.
   Literals contents;
-  for (auto c : string) {
-    contents.push_back(Literal(int32_t(c)));
+  assert(string.size() % 2 == 0);
+  for (size_t i = 0; i < string.size(); i += 2) {
+    int32_t u = uint8_t(string[i]) | (uint8_t(string[i + 1]) << 8);
+    contents.push_back(Literal(u));
   }
   gcData = std::make_shared<GCData>(HeapType::string, contents);
 }
