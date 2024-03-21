@@ -2293,6 +2293,14 @@ void BinaryInstWriter::visitRefAs(RefAs* curr) {
 }
 
 void BinaryInstWriter::visitStringNew(StringNew* curr) {
+  if (curr->ptr->type.isNull()) {
+    // This is a bottom type, so this is an array-receiving operation that does
+    // not receive an array. The spec allows this, but V8 does not, see
+    // https://github.com/WebAssembly/stringref/issues/66
+    // For now, just emit an unreachable here as this will definitely trap.
+    emitUnreachable();
+    return;
+  }
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {
     case StringNewUTF8:
@@ -2371,6 +2379,11 @@ void BinaryInstWriter::visitStringMeasure(StringMeasure* curr) {
 }
 
 void BinaryInstWriter::visitStringEncode(StringEncode* curr) {
+  if (curr->ptr->type.isNull()) {
+    // See visitStringNew.
+    emitUnreachable();
+    return;
+  }
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {
     case StringEncodeUTF8:
