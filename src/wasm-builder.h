@@ -1265,6 +1265,8 @@ public:
       return makeRefI31(makeConst(value.geti31()));
     }
     if (type.isString()) {
+      // The string is already WTF-16, but we need to convert from `Literals` to
+      // actual string.
       std::stringstream wtf16;
       for (auto c : value.getGCData()->values) {
         auto u = c.getInteger();
