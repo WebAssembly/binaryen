@@ -933,7 +933,7 @@ FeatureSet Type::getFeatures() const {
 
           if (heapType->isStruct() || heapType->isArray() ||
               heapType->getRecGroup().size() > 1 ||
-              heapType->getDeclaredSuperType()) {
+              heapType->getDeclaredSuperType() || heapType->isOpen()) {
             feats |= FeatureSet::ReferenceTypes | FeatureSet::GC;
           } else if (heapType->isSignature()) {
             // This is a function reference, which requires reference types and
