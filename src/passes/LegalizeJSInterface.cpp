@@ -22,13 +22,6 @@
 // stub methods added in this pass, that thunk i64s into i32, i32 and
 // vice versa as necessary.
 //
-// We can also legalize in a "minimal" way, that is, only JS-specific
-// components, that only JS will care about, such as dynCall methods
-// (wasm will never call them, as it can share the tables directly). E.g.
-// is dynamic linking, where we can avoid legalizing wasm=>wasm calls
-// across modules, we still want to legalize dynCalls so JS can call into the
-// tables even to a signature that is not legal.
-//
 // Another variation also "prunes" imports and exports that we cannot yet
 // legalize, like exports and imports with SIMD or multivalue. Until we write
 // the logic to legalize them, removing those imports/exports still allows us to
@@ -65,9 +58,7 @@ struct LegalizeJSInterface : public Pass {
   // Adds calls to new imports.
   bool addsEffects() override { return true; }
 
-  bool full;
-
-  LegalizeJSInterface(bool full) : full(full) {}
+  LegalizeJSInterface() {}
 
   void run(Module* module) override {
     setTempRet0 = nullptr;
@@ -82,7 +73,7 @@ struct LegalizeJSInterface : public Pass {
       if (ex->kind == ExternalKind::Function) {
         // if it's an import, ignore it
         auto* func = module->getFunction(ex->value);
-        if (isIllegal(func) && shouldBeLegalized(ex.get(), func)) {
+        if (isIllegal(func)) {
           // Provide a legal function for the export.
           auto legalName = makeLegalStub(func, module);
           ex->value = legalName;
@@ -116,7 +107,7 @@ struct LegalizeJSInterface : public Pass {
     }
     // for each illegal import, we must call a legalized stub instead
     for (auto* im : originalFunctions) {
-      if (im->imported() && isIllegal(im) && shouldBeLegalized(im)) {
+      if (im->imported() && isIllegal(im)) {
         auto funcName = makeLegalStubForCalledImport(im, module);
         illegalImportsToLegal[im->name] = funcName;
         // we need to use the legalized version in the tables, as the import
@@ -198,24 +189,6 @@ private:
   }
 
   bool isDynCall(Name name) { return name.startsWith("dynCall_"); }
-
-  // Check if an export should be legalized.
-  bool shouldBeLegalized(Export* ex, Function* func) {
-    if (full) {
-      return true;
-    }
-    // We are doing minimal legalization - just what JS needs.
-    return isDynCall(ex->name);
-  }
-
-  // Check if an import should be legalized.
-  bool shouldBeLegalized(Function* im) {
-    if (full) {
-      return true;
-    }
-    // We are doing minimal legalization - just what JS needs.
-    return im->module == ENV && im->base.startsWith("invoke_");
-  }
 
   Function* tempSetter(Module* module) {
     if (!setTempRet0) {
@@ -367,8 +340,8 @@ private:
 };
 
 struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
-  // Legalize fully (true) and add pruning on top.
-  LegalizeAndPruneJSInterface() : LegalizeJSInterface(true) {}
+  // Legalize and add pruning on top.
+  LegalizeAndPruneJSInterface() : LegalizeJSInterface() {}
 
   void run(Module* module) override {
     LegalizeJSInterface::run(module);
@@ -440,11 +413,7 @@ struct LegalizeAndPruneJSInterface : public LegalizeJSInterface {
 
 } // anonymous namespace
 
-Pass* createLegalizeJSInterfacePass() { return new LegalizeJSInterface(true); }
-
-Pass* createLegalizeJSInterfaceMinimallyPass() {
-  return new LegalizeJSInterface(false);
-}
+Pass* createLegalizeJSInterfacePass() { return new LegalizeJSInterface(); }
 
 Pass* createLegalizeAndPruneJSInterfacePass() {
   return new LegalizeAndPruneJSInterface();

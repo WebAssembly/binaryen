@@ -69,7 +69,6 @@ Pass* createJSPIPass();
 Pass* createJ2CLOptsPass();
 Pass* createLegalizeAndPruneJSInterfacePass();
 Pass* createLegalizeJSInterfacePass();
-Pass* createLegalizeJSInterfaceMinimallyPass();
 Pass* createLimitSegmentsPass();
 Pass* createLocalCSEPass();
 Pass* createLocalSubtypingPass();
