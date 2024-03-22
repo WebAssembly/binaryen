@@ -110,7 +110,7 @@ struct ChildLocalizer {
         // Move the child out, and put an unreachable in its place (note that we
         // don't need an actual set here, as there is no value to set to a
         // local).
-        sets.push_back(child);
+        movedChildren.push_back(child);
         *childp = builder.makeUnreachable();
         hasUnreachableChild = true;
         continue;
@@ -121,7 +121,7 @@ struct ChildLocalizer {
         // (The only reason we still need them is that they may be needed for
         // validation, e.g. if one contains a break to a block that is the only
         // reason the block has type none.)
-        sets.push_back(builder.makeDrop(child));
+        movedChildren.push_back(builder.makeDrop(child));
         *childp = builder.makeUnreachable();
         continue;
       }
@@ -139,23 +139,23 @@ struct ChildLocalizer {
       }
       if (needLocal) {
         auto local = builder.addVar(func, child->type);
-        sets.push_back(builder.makeLocalSet(local, child));
+        movedChildren.push_back(builder.makeLocalSet(local, child));
         *childp = builder.makeLocalGet(local, child->type);
       }
     }
   }
 
   // Helper that gets a replacement for the parent: a block containing the
-  // sets + the parent. This will not contain the parent if we don't need it
-  // (if it was never reached).
+  // movedChildren + the parent. This will not contain the parent if we don't
+  // need it (if it was never reached).
   Expression* getReplacement() {
-    if (sets.empty()) {
+    if (movedChildren.empty()) {
       // Nothing to add.
       return parent;
     }
 
     auto* block = Builder(wasm).makeBlock();
-    block->list.set(sets);
+    block->list.set(movedChildren);
     if (hasUnreachableChild) {
       // If there is an unreachable child then we do not need the parent at all,
       // and we know the type is unreachable.
@@ -168,11 +168,14 @@ struct ChildLocalizer {
     return block;
   }
 
+  // The vector of moved children may be useful to some users directly, e.g. if
+  // all they care about are the children and not the parent.
+  std::vector<Expression*> movedChildren;
+
 private:
   Expression* parent;
   Module& wasm;
 
-  std::vector<Expression*> sets;
   bool hasUnreachableChild = false;
 };
 

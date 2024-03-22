@@ -16,6 +16,8 @@
 
 #include "tools/fuzzing.h"
 #include "ir/gc-type-utils.h"
+#include "ir/iteration.h"
+#include "ir/localize.h"
 #include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
@@ -929,7 +931,6 @@ void TranslateToFuzzReader::mutate(Function* func) {
   percentChance = std::max(percentChance, Index(3));
 
   struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
-    Module& wasm;
     TranslateToFuzzReader& parent;
     Index percentChance;
 
@@ -937,8 +938,8 @@ void TranslateToFuzzReader::mutate(Function* func) {
     // executed, so we don't want to do it all the time even in a big function.
     bool allowUnreachable;
 
-    Modder(Module& wasm, TranslateToFuzzReader& parent, Index percentChance)
-      : wasm(wasm), parent(parent), percentChance(percentChance) {
+    Modder(TranslateToFuzzReader& parent, Index percentChance)
+      : parent(parent), percentChance(percentChance) {
       // If the parent allows it then sometimes replace with an unreachable, and
       // sometimes not. Even if we allow it, only do it in certain functions
       // (half the time) and only do it rarely (see below).
@@ -948,29 +949,70 @@ void TranslateToFuzzReader::mutate(Function* func) {
     void visitExpression(Expression* curr) {
       if (parent.upTo(100) < percentChance &&
           parent.canBeArbitrarilyReplaced(curr)) {
-        if (allowUnreachable && parent.oneIn(20)) {
+        // We can replace in various modes, see below. Generate a random number
+        // up to 100 to help us there.
+        int mode = parent.upTo(100);
+
+        if (allowUnreachable && mode < 5) {
           replaceCurrent(parent.make(Type::unreachable));
           return;
         }
+
         // For constants, perform only a small tweaking in some cases.
-        if (auto* c = curr->dynCast<Const>()) {
-          if (parent.oneIn(2)) {
-            c->value = parent.tweak(c->value);
-            return;
-          }
-        }
         // TODO: more minor tweaks to immediates, like making a load atomic or
         // not, changing an offset, etc.
-        // Perform a general replacement. (This is not always valid due to
-        // nesting of labels, but we'll fix that up later.) Note that make()
-        // picks a subtype, so this has a chance to replace us with anything
-        // that is valid to put here.
-        replaceCurrent(parent.make(curr->type));
+        if (auto* c = curr->dynCast<Const>()) {
+          if (mode < 50) {
+            c->value = parent.tweak(c->value);
+          } else {
+            // Just replace the entire thing.
+            replaceCurrent(parent.make(curr->type));
+          }
+          return;
+        }
+
+        // Generate a replacement for the expression, and by default replace all
+        // of |curr|, including children, with that replacement, but in some
+        // cases we can do more subtle things.
+        //
+        // Note that such a replacement is not always valid due to nesting of
+        // labels, but we'll fix that up later. Note also that make() picks a
+        // subtype, so this has a chance to replace us with anything that is
+        // valid to put here.
+        auto* rep = parent.make(curr->type);
+        if (mode < 33 && rep->type != Type::none) {
+          // This has a non-none type. Replace the output, keeping the
+          // expression and its children before in a drop. This "interposes"
+          // between this expression and its parent.
+          // TODO: Ideally the new expression here could consume |curr| as a
+          //       child.
+          rep = parent.builder.makeSequence(parent.builder.makeDrop(curr),
+                                            rep);
+        } else if (mode > 66 &&
+                   !Properties::isControlFlowStructure(curr) &&
+                   ChildIterator(curr).getNumChildren() > 0) {
+          // This is a normal (non-control-flow) expression with at least one
+          // child. "Interpose" between the children and this expression by
+          // keeping them and appending something else.
+          // TODO: Ideally the new expression here could consume the children.
+
+          // Generate sets of the children to locals, and keep those.
+          auto sets = ChildLocalizer(curr,
+                                 getFunction(),
+                                 *getModule(),
+                                 PassOptions::getWithoutOptimization()).movedChildren;
+          auto* block = parent.builder.makeBlock(sets);
+          block->list.push_back(rep);
+          block->finalize();
+          rep = block;
+        }
+        replaceCurrent(rep);
       }
     }
   };
-  Modder modder(wasm, *this, percentChance);
-  modder.walk(func->body);
+
+  Modder modder(*this, percentChance);
+  modder.walkFunctionInModule(func, &wasm);
 }
 
 void TranslateToFuzzReader::fixAfterChanges(Function* func) {
