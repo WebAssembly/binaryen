@@ -8,21 +8,21 @@ total
  [table-data]   : 7       
  [tables]       : 1       
  [tags]         : 0       
- [total]        : 12378   
- [vars]         : 79      
- Binary         : 892     
- Block          : 1963    
+ [total]        : 12398   
+ [vars]         : 64      
+ Binary         : 893     
+ Block          : 1965    
  Break          : 478     
  Call           : 288     
  CallIndirect   : 131     
- Const          : 2052    
- Drop           : 89      
- GlobalGet      : 899     
+ Const          : 2058    
+ Drop           : 111     
+ GlobalGet      : 901     
  GlobalSet      : 714     
  If             : 657     
- Load           : 246     
+ Load           : 247     
  LocalGet       : 1115    
- LocalSet       : 841     
+ LocalSet       : 827     
  Loop           : 317     
  Nop            : 155     
  RefFunc        : 7       
