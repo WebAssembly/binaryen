@@ -245,6 +245,36 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] calling encode-unsigned
+  ;; CHECK-NEXT: [trap oob]
+  (func $encode-unsigned (export "encode-unsigned")
+    (drop
+      (string.encode_wtf16_array
+        (string.const "ab")
+        (array.new_default $array16
+          (i32.const 28)
+        )
+        ;; This is a huge unsigned offset, so we will trap on oob.
+        (i32.const -2)
+      )
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling encode-overflow
+  ;; CHECK-NEXT: [trap oob]
+  (func $encode-overflow (export "encode-overflow")
+    ;; The string's size + the offset lead to an overflow here in the array.
+    (drop
+      (string.encode_wtf16_array
+        (string.const "ab")
+        (array.new_default $array16
+          (i32.const 10)
+        )
+        (i32.const 9)
+      )
+    )
+  )
+
   ;; CHECK:      [fuzz-exec] calling slice
   ;; CHECK-NEXT: [fuzz-exec] note result: slice => string("def")
   (func $slice (export "slice") (result (ref string))
@@ -332,6 +362,12 @@
 ;; CHECK-NEXT: [LoggingExternalInterface logging 99]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
 
+;; CHECK:      [fuzz-exec] calling encode-unsigned
+;; CHECK-NEXT: [trap oob]
+
+;; CHECK:      [fuzz-exec] calling encode-overflow
+;; CHECK-NEXT: [trap oob]
+
 ;; CHECK:      [fuzz-exec] calling slice
 ;; CHECK-NEXT: [fuzz-exec] note result: slice => string("def")
 
@@ -349,6 +385,8 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.9
 ;; CHECK-NEXT: [fuzz-exec] comparing const
 ;; CHECK-NEXT: [fuzz-exec] comparing encode
+;; CHECK-NEXT: [fuzz-exec] comparing encode-overflow
+;; CHECK-NEXT: [fuzz-exec] comparing encode-unsigned
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.1
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.2
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.3

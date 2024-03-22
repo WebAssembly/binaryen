@@ -32,6 +32,7 @@
 #include "ir/module-utils.h"
 #include "support/bits.h"
 #include "support/safe_integer.h"
+#include "support/stdckdint.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -2001,10 +2002,12 @@ public:
     if (!refData || !ptrData) {
       trap("null ref");
     }
-    auto startVal = start.getSingleValue().getInteger();
+    auto startVal = start.getSingleValue().getUnsigned();
     auto& refValues = refData->values;
     auto& ptrValues = ptrData->values;
-    if (startVal + refValues.size() > ptrValues.size()) {
+    size_t end;
+    if (std::ckd_add<size_t>(&end, startVal, refValues.size()) ||
+        end > ptrValues.size()) {
       trap("oob");
     }
 
