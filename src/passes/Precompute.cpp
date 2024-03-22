@@ -27,7 +27,6 @@
 // looked at.
 //
 
-#include "ir/effects.h"
 #include "ir/iteration.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
@@ -194,6 +193,14 @@ public:
       *canonical = *newGCData;
     }
     return Literal(canonical, curr->type.getHeapType());
+  }
+
+  Flow visitStringEncode(StringEncode* curr) {
+    // string.encode_wtf16_array is effectively an Array write operation, so
+    // just like ArraySet and ArrayCopy above we must mark it as disallowed
+    // (due to side effects). (And we do not support other operations than
+    // string.encode_wtf16_array anyhow.)
+    return Flow(NONCONSTANT_FLOW);
   }
 };
 
