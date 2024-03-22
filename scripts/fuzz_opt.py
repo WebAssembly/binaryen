@@ -331,7 +331,7 @@ INITIAL_CONTENTS_IGNORE = [
     'typed_continuations_suspend.wast',
     # New EH implementation is in progress
     'exception-handling.wast',
-    'translate-eh-old-to-new.wast',
+    'translate-to-new-eh.wast',
     'rse-eh.wast',
     # Non-UTF8 strings trap in V8, and have limitations in our interpreter
     'string-lowering.wast',
