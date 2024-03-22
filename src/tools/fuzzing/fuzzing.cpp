@@ -972,7 +972,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
         }
 
         // Generate a replacement for the expression, and by default replace all
-        // of |curr|, including children, with that replacement, but in some
+        // of |curr| (including children) with that replacement, but in some
         // cases we can do more subtle things.
         //
         // Note that such a replacement is not always valid due to nesting of
@@ -982,26 +982,28 @@ void TranslateToFuzzReader::mutate(Function* func) {
         auto* rep = parent.make(curr->type);
         if (mode < 33 && rep->type != Type::none) {
           // This has a non-none type. Replace the output, keeping the
-          // expression and its children before in a drop. This "interposes"
-          // between this expression and its parent.
+          // expression and its children in a drop. This "interposes" between
+          // this expression and its parent.
           // TODO: Ideally the new expression here could consume |curr| as a
-          //       child.
+          //       child, though if so we should still keep a decent chance to
+          //       just drop this expression (as a drop enables passes to think
+          //       they can remove more code, by marking the output "unused").
           rep = parent.builder.makeSequence(parent.builder.makeDrop(curr),
                                             rep);
-        } else if (mode > 66 &&
+        } else if (mode >= 66 &&
                    !Properties::isControlFlowStructure(curr) &&
                    ChildIterator(curr).getNumChildren() > 0) {
           // This is a normal (non-control-flow) expression with at least one
           // child. "Interpose" between the children and this expression by
-          // keeping them and appending something else.
-          // TODO: Ideally the new expression here could consume the children.
-
-          // Generate sets of the children to locals, and keep those.
+          // keeping them and replacing the parent |curr|. We do this by
+          // generating sets of the children to locals, and keeping those.
           auto sets = ChildLocalizer(curr,
                                  getFunction(),
                                  *getModule(),
                                  PassOptions::getWithoutOptimization()).movedChildren;
           auto* block = parent.builder.makeBlock(sets);
+          // TODO: Ideally the new expression |rep| could consume the children:
+          //       all we need is for it to do local.get of the temp locals.
           block->list.push_back(rep);
           block->finalize();
           rep = block;
