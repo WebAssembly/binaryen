@@ -2136,10 +2136,6 @@ public:
     auto endVal = end.getSingleValue().getUnsigned();
     endVal = std::min<size_t>(endVal, refValues.size());
 
-    if (endVal > refValues.size()) {
-      trap("array oob");
-    }
-
     Literals contents;
     if (endVal > startVal) {
       contents.reserve(endVal - startVal);
