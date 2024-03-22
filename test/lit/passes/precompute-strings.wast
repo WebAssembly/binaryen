@@ -177,9 +177,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (string.encode_wtf16_array
- ;; CHECK-NEXT:    (string.as_wtf16
- ;; CHECK-NEXT:     (string.const "0123456789")
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (string.const "0123456789")
  ;; CHECK-NEXT:    (local.get $1)
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
@@ -197,9 +195,7 @@
   ;; Fill it with some string data.
   (drop
    (string.encode_wtf16_array
-    (string.as_wtf16
-     (string.const "0123456789")
-    )
+    (string.const "0123456789")
     (local.get $1)
     (i32.const 0)
    )
