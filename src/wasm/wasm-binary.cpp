@@ -23,6 +23,7 @@
 #include "ir/type-updating.h"
 #include "support/bits.h"
 #include "support/debug.h"
+#include "support/string.h"
 #include "wasm-binary.h"
 #include "wasm-debug.h"
 #include "wasm-stack.h"
@@ -527,7 +528,12 @@ void WasmBinaryWriter::writeStrings() {
   // The number of strings and then their contents.
   o << U32LEB(num);
   for (auto& string : sorted) {
-    writeInlineString(string.str);
+    // Re-encode from WTF-16 to WTF-8.
+    std::stringstream wtf8;
+    [[maybe_unused]] bool valid = String::convertWTF16ToWTF8(wtf8, string.str);
+    assert(valid);
+    // TODO: Use wtf8.view() once we have C++20.
+    writeInlineString(wtf8.str());
   }
 
   finishSection(start);
@@ -2960,7 +2966,13 @@ void WasmBinaryReader::readStrings() {
   size_t num = getU32LEB();
   for (size_t i = 0; i < num; i++) {
     auto string = getInlineString();
-    strings.push_back(string);
+    // Re-encode from WTF-8 to WTF-16.
+    std::stringstream wtf16;
+    if (!String::convertWTF8ToWTF16(wtf16, string.str)) {
+      throwError("invalid string constant");
+    }
+    // TODO: Use wtf16.view() once we have C++20.
+    strings.push_back(wtf16.str());
   }
 }
 

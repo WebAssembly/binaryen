@@ -23,6 +23,7 @@
 #include "ir/bits.h"
 #include "pretty_printing.h"
 #include "support/bits.h"
+#include "support/string.h"
 #include "support/utilities.h"
 
 namespace wasm {
@@ -77,12 +78,15 @@ Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
          (type.isBottom() && !gcData));
 }
 
-Literal::Literal(std::string string)
+Literal::Literal(std::string_view string)
   : gcData(nullptr), type(Type(HeapType::string, NonNullable)) {
   // TODO: we could in theory internalize strings
+  // Extract individual WTF-16LE code units.
   Literals contents;
-  for (auto c : string) {
-    contents.push_back(Literal(int32_t(c)));
+  assert(string.size() % 2 == 0);
+  for (size_t i = 0; i < string.size(); i += 2) {
+    int32_t u = uint8_t(string[i]) | (uint8_t(string[i + 1]) << 8);
+    contents.push_back(Literal(u));
   }
   gcData = std::make_shared<GCData>(HeapType::string, contents);
 }
@@ -636,10 +640,19 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
             o << "nullstring";
           } else {
             o << "string(\"";
+            // Convert WTF-16 literals to WTF-16 string.
+            std::stringstream wtf16;
             for (auto c : data->values) {
-              // TODO: more than ascii
-              o << char(c.getInteger());
+              auto u = c.getInteger();
+              assert(u < 0x10000);
+              wtf16 << uint8_t(u & 0xFF);
+              wtf16 << uint8_t(u >> 8);
             }
+            // Convert to WTF-8 for printing.
+            // TODO: Use wtf16.view() once we have C++20.
+            [[maybe_unused]] bool valid =
+              String::convertWTF16ToWTF8(o, wtf16.str());
+            assert(valid);
             o << "\")";
           }
           break;

@@ -85,7 +85,7 @@ public:
     assert(type.isSignature());
   }
   explicit Literal(std::shared_ptr<GCData> gcData, HeapType type);
-  explicit Literal(std::string string);
+  explicit Literal(std::string_view string);
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
   ~Literal();

@@ -147,8 +147,14 @@ struct StringGathering : public Pass {
       }
 
       auto& string = strings[i];
+      // Re-encode from WTF-16 to WTF-8 to make the name easier to read.
+      std::stringstream wtf8;
+      [[maybe_unused]] bool valid =
+        String::convertWTF16ToWTF8(wtf8, string.str);
+      assert(valid);
+      // TODO: Use wtf8.view() once we have C++20.
       auto name = Names::getValidGlobalName(
-        *module, std::string("string.const_") + std::string(string.str));
+        *module, std::string("string.const_") + std::string(wtf8.str()));
       globalName = name;
       newNames.insert(name);
       auto* stringConst = builder.makeStringConst(string);

@@ -333,9 +333,6 @@ INITIAL_CONTENTS_IGNORE = [
     'exception-handling.wast',
     'translate-to-new-eh.wast',
     'rse-eh.wast',
-    # Non-UTF8 strings trap in V8, and have limitations in our interpreter
-    'string-lowering.wast',
-    'precompute-strings.wast',
 ]
 
 

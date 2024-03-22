@@ -21,7 +21,12 @@ namespace json {
 
 void Value::stringify(std::ostream& os, bool pretty) {
   if (isString()) {
-    wasm::String::printEscapedJSON(os, getCString());
+    std::stringstream wtf16;
+    [[maybe_unused]] bool valid =
+      wasm::String::convertWTF8ToWTF16(wtf16, getIString().str);
+    assert(valid);
+    // TODO: Use wtf16.view() once we have C++20.
+    wasm::String::printEscapedJSON(os, wtf16.str());
   } else if (isArray()) {
     os << '[';
     auto first = true;

@@ -3335,7 +3335,13 @@ Expression* SExpressionWasmBuilder::makeStringConst(Element& s) {
   std::vector<char> data;
   stringToBinary(*s[1], s[1]->str().str, data);
   Name str = std::string_view(data.data(), data.size());
-  return Builder(wasm).makeStringConst(str);
+  // Re-encode from WTF-8 to WTF-16.
+  std::stringstream wtf16;
+  if (!String::convertWTF8ToWTF16(wtf16, str.str)) {
+    throw SParseException("invalid string constant", s);
+  }
+  // TODO: Use wtf16.view() once we have C++20.
+  return Builder(wasm).makeStringConst(wtf16.str());
 }
 
 Expression* SExpressionWasmBuilder::makeStringMeasure(Element& s,

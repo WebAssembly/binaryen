@@ -12,13 +12,15 @@
 
  ;; CHECK:      (type $3 (func (result (ref any))))
 
- ;; CHECK:      (export "get_codepoint-bad" (func $get_codepoint-bad))
+ ;; CHECK:      (export "get_codepoint-unicode" (func $get_codepoint-unicode))
+
+ ;; CHECK:      (export "get_codepoint-surrogate" (func $get_codepoint-surrogate))
 
  ;; CHECK:      (export "test" (func $encode-stashed))
 
  ;; CHECK:      (export "slice" (func $slice))
 
- ;; CHECK:      (export "slice-bad" (func $slice-bad))
+ ;; CHECK:      (export "slice-unicode" (func $slice-unicode))
 
  ;; CHECK:      (func $eq-no (type $0) (result i32)
  ;; CHECK-NEXT:  (i32.const 0)
@@ -50,19 +52,14 @@
   )
  )
 
- ;; CHECK:      (func $concat-bad (type $0) (result i32)
- ;; CHECK-NEXT:  (string.eq
- ;; CHECK-NEXT:   (string.concat
- ;; CHECK-NEXT:    (string.const "a\f0")
- ;; CHECK-NEXT:    (string.const "b")
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (string.const "a\f0b")
- ;; CHECK-NEXT:  )
+ ;; CHECK:      (func $concat-surrogates (type $0) (result i32)
+ ;; CHECK-NEXT:  (i32.const 1)
  ;; CHECK-NEXT: )
- (func $concat-bad (result i32)
+ (func $concat-surrogates (result i32)
   (string.eq
-   (string.concat (string.const "a\F0") (string.const "b"))
-   (string.const "a\F0b")
+   ;; Concatenating these surrogates creates '𐍈', which has a different UTF-8 encoding.
+   (string.concat (string.const "\ED\A0\80") (string.const "\ED\BD\88"))
+   (string.const "\F0\90\8D\88")
   )
  )
 
@@ -77,18 +74,13 @@
   )
  )
 
- ;; CHECK:      (func $length-bad (type $0) (result i32)
- ;; CHECK-NEXT:  (stringview_wtf16.length
- ;; CHECK-NEXT:   (string.as_wtf16
- ;; CHECK-NEXT:    (string.const "$_\c2\a3_\e2\82\ac_\f0\90\8d\88")
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
+ ;; CHECK:      (func $length-unicode (type $0) (result i32)
+ ;; CHECK-NEXT:  (i32.const 8)
  ;; CHECK-NEXT: )
- (func $length-bad (result i32)
-  ;; Not precomputable because we don't handle unicode yet.
+ (func $length-unicode (result i32)
   (stringview_wtf16.length
    (string.as_wtf16
-    ;; $_£_€_𐍈
+    ;; $_£_€_𐍈 (the last character is encoded as a surrogate pair)
     (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
    )
   )
@@ -98,7 +90,7 @@
  ;; CHECK-NEXT:  (i32.const 95)
  ;; CHECK-NEXT: )
  (func $get_codepoint (result i32)
-  ;; This is computable because everything up to the requested index is ascii. Returns 95 ('_').
+  ;; Returns 95 ('_').
   (stringview_wtf16.get_codeunit
    (string.as_wtf16
     ;; $_£_€_𐍈
@@ -108,22 +100,31 @@
   )
  )
 
- ;; CHECK:      (func $get_codepoint-bad (type $0) (result i32)
- ;; CHECK-NEXT:  (stringview_wtf16.get_codeunit
- ;; CHECK-NEXT:   (string.as_wtf16
- ;; CHECK-NEXT:    (string.const "$_\c2\a3_\e2\82\ac_\f0\90\8d\88")
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (i32.const 2)
- ;; CHECK-NEXT:  )
+ ;; CHECK:      (func $get_codepoint-unicode (type $0) (result i32)
+ ;; CHECK-NEXT:  (i32.const 8364)
  ;; CHECK-NEXT: )
- (func $get_codepoint-bad (export "get_codepoint-bad") (result i32)
-  ;; This is not computable because the requested code unit is not ascii.
+ (func $get_codepoint-unicode (export "get_codepoint-unicode") (result i32)
+  ;; Returns 8364 ('€')
   (stringview_wtf16.get_codeunit
    (string.as_wtf16
     ;; $_£_€_𐍈
     (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
    )
-   (i32.const 2)
+   (i32.const 4)
+  )
+ )
+
+ ;; CHECK:      (func $get_codepoint-surrogate (type $0) (result i32)
+ ;; CHECK-NEXT:  (i32.const 55296)
+ ;; CHECK-NEXT: )
+ (func $get_codepoint-surrogate (export "get_codepoint-surrogate") (result i32)
+  ;; Returns 0xd800 (the high surrogate in '𐍈')
+  (stringview_wtf16.get_codeunit
+   (string.as_wtf16
+    ;; $_£_€_𐍈
+    (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
+   )
+   (i32.const 6)
   )
  )
 
@@ -148,7 +149,7 @@
   )
  )
 
- ;; CHECK:      (func $encode-bad (type $0) (result i32)
+ ;; CHECK:      (func $encode-unicode (type $0) (result i32)
  ;; CHECK-NEXT:  (string.encode_wtf16_array
  ;; CHECK-NEXT:   (string.const "$_\c2\a3_\e2\82\ac_\f0\90\8d\88")
  ;; CHECK-NEXT:   (array.new_default $array16
@@ -157,7 +158,7 @@
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $encode-bad (result i32)
+ (func $encode-unicode (result i32)
   (string.encode_wtf16_array
    ;; $_£_€_𐍈
    (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
@@ -220,17 +221,10 @@
   )
  )
 
- ;; CHECK:      (func $slice-bad (type $2) (result (ref string))
- ;; CHECK-NEXT:  (stringview_wtf16.slice
- ;; CHECK-NEXT:   (string.as_wtf16
- ;; CHECK-NEXT:    (string.const "abcd\c2\a3fgh")
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (i32.const 3)
- ;; CHECK-NEXT:   (i32.const 6)
- ;; CHECK-NEXT:  )
+ ;; CHECK:      (func $slice-unicode (type $2) (result (ref string))
+ ;; CHECK-NEXT:  (string.const "d\c2\a3f")
  ;; CHECK-NEXT: )
- (func $slice-bad (export "slice-bad") (result (ref string))
-  ;; This slice contains non-ascii, so we do not optimize.
+ (func $slice-unicode (export "slice-unicode") (result (ref string))
   (stringview_wtf16.slice
    ;; abcd£fgh
    (string.as_wtf16

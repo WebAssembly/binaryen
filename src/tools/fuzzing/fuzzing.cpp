@@ -20,6 +20,7 @@
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
+#include "support/string.h"
 #include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing/parameters.h"
 
@@ -2465,8 +2466,13 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       }
       return null;
     }
-    case HeapType::string:
-      return builder.makeStringConst(std::to_string(upTo(1024)));
+    case HeapType::string: {
+      auto wtf8 = std::to_string(upTo(1024));
+      std::stringstream wtf16;
+      String::convertWTF8ToWTF16(wtf16, wtf8);
+      // TODO: Use wtf16.view() once we have C++20.
+      return builder.makeStringConst(wtf16.str());
+    }
     case HeapType::stringview_wtf8:
       return builder.makeStringAs(
         StringAsWTF8, makeBasicRef(Type(HeapType::string, NonNullable)));
