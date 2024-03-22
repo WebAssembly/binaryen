@@ -17,8 +17,8 @@
 #include "tools/fuzzing.h"
 #include "ir/gc-type-utils.h"
 #include "ir/iteration.h"
-#include "ir/localize.h"
 #include "ir/local-structural-dominance.h"
+#include "ir/localize.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
 #include "ir/type-updating.h"
@@ -988,19 +988,18 @@ void TranslateToFuzzReader::mutate(Function* func) {
           //       child, though if so we should still keep a decent chance to
           //       just drop this expression (as a drop enables passes to think
           //       they can remove more code, by marking the output "unused").
-          rep = parent.builder.makeSequence(parent.builder.makeDrop(curr),
-                                            rep);
-        } else if (mode >= 66 &&
-                   !Properties::isControlFlowStructure(curr) &&
+          rep = parent.builder.makeSequence(parent.builder.makeDrop(curr), rep);
+        } else if (mode >= 66 && !Properties::isControlFlowStructure(curr) &&
                    ChildIterator(curr).getNumChildren() > 0) {
           // This is a normal (non-control-flow) expression with at least one
           // child. "Interpose" between the children and this expression by
           // keeping them and replacing the parent |curr|. We do this by
           // generating sets of the children to locals, and keeping those.
           auto sets = ChildLocalizer(curr,
-                                 getFunction(),
-                                 *getModule(),
-                                 PassOptions::getWithoutOptimization()).movedChildren;
+                                     getFunction(),
+                                     *getModule(),
+                                     PassOptions::getWithoutOptimization())
+                        .movedChildren;
           auto* block = parent.builder.makeBlock(sets);
           // TODO: Ideally the new expression |rep| could consume the children:
           //       all we need is for it to do local.get of the temp locals.
