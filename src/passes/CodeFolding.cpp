@@ -58,8 +58,8 @@
 #include <iterator>
 
 #include "ir/branch-utils.h"
-#include "ir/eh-utils.h"
 #include "ir/effects.h"
+#include "ir/eh-utils.h"
 #include "ir/find_all.h"
 #include "ir/label-utils.h"
 #include "ir/utils.h"
