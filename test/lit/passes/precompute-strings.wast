@@ -226,7 +226,9 @@
 
  ;; CHECK:      (func $slice-bad (type $2) (result (ref string))
  ;; CHECK-NEXT:  (stringview_wtf16.slice
- ;; CHECK-NEXT:   (string.const "abcd\c2\a3fgh")
+ ;; CHECK-NEXT:   (string.as_wtf16
+ ;; CHECK-NEXT:    (string.const "abcd\c2\a3fgh")
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.const 3)
  ;; CHECK-NEXT:   (i32.const 6)
  ;; CHECK-NEXT:  )
