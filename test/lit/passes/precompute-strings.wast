@@ -14,11 +14,11 @@
 
  ;; CHECK:      (export "get_codepoint-bad" (func $get_codepoint-bad))
 
+ ;; CHECK:      (export "test" (func $encode-stashed))
+
  ;; CHECK:      (export "slice" (func $slice))
 
  ;; CHECK:      (export "slice-bad" (func $slice-bad))
-
- ;; CHECK:      (export "test" (func $test))
 
  ;; CHECK:      (func $eq-no (type $0) (result i32)
  ;; CHECK-NEXT:  (i32.const 0)
@@ -168,7 +168,7 @@
   )
  )
 
- ;; CHECK:      (func $test (type $3) (result (ref any))
+ ;; CHECK:      (func $encode-stashed (type $3) (result (ref any))
  ;; CHECK-NEXT:  (local $1 (ref $array16))
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (array.new_default $array16
