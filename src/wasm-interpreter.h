@@ -2006,7 +2006,7 @@ public:
     auto& refValues = refData->values;
     auto& ptrValues = ptrData->values;
     size_t end;
-    if (std::ckd_add(&end, startVal, refValues.size()) ||
+    if (std::ckd_add<size_t>(&end, startVal, refValues.size()) ||
         end > ptrValues.size()) {
       trap("oob");
     }
