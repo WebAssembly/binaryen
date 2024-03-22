@@ -168,6 +168,48 @@
   )
  )
 
+ ;; CHECK:      (func $test (type $3) (result (ref any))
+ ;; CHECK-NEXT:  (local $1 (ref $array16))
+ ;; CHECK-NEXT:  (local.set $1
+ ;; CHECK-NEXT:   (array.new_default $array16
+ ;; CHECK-NEXT:    (i32.const 10)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (string.encode_wtf16_array
+ ;; CHECK-NEXT:    (string.as_wtf16
+ ;; CHECK-NEXT:     (string.const "0123456789")
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $1)
+ ;; CHECK-NEXT: )
+ (func $encode-stashed (export "test") (result (ref any))
+  (local $1 (ref $array16))
+  ;; Create a zero-filled array.
+  (local.set $1
+   (array.new_default $array16
+    (i32.const 10)
+   )
+  )
+  ;; Fill it with some string data.
+  (drop
+   (string.encode_wtf16_array
+    (string.as_wtf16
+     (string.const "0123456789")
+    )
+    (local.get $1)
+    (i32.const 0)
+   )
+  )
+  ;; Return the modified array. We must not have removed the encode operation
+  ;; above us (it has the side effect of modifying the array, just like an
+  ;; array.copy does).
+  (local.get $1)
+ )
+
  ;; CHECK:      (func $slice (type $2) (result (ref string))
  ;; CHECK-NEXT:  (string.const "def")
  ;; CHECK-NEXT: )
@@ -196,47 +238,4 @@
    (i32.const 6)
   )
  )
-
- ;; CHECK:      (func $test (type $3) (result (ref any))
- ;; CHECK-NEXT:  (local $1 (ref $array16))
- ;; CHECK-NEXT:  (local.set $1
- ;; CHECK-NEXT:   (array.new_default $array16
- ;; CHECK-NEXT:    (i32.const 10)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (string.encode_wtf16_array
- ;; CHECK-NEXT:    (string.as_wtf16
- ;; CHECK-NEXT:     (string.const "0123456789")
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.get $1)
- ;; CHECK-NEXT:    (i32.const 0)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.get $1)
- ;; CHECK-NEXT: )
- (func $test (export "test") (result (ref any))
-  (local $1 (ref $array16))
-  ;; Create a zero-filled array.
-  (local.set $1
-   (array.new_default $array16
-    (i32.const 10)
-   )
-  )
-  ;; Fill it with some string data.
-  (drop
-   (string.encode_wtf16_array
-    (string.as_wtf16
-     (string.const "0123456789")
-    )
-    (local.get $1)
-    (i32.const 0)
-   )
-  )
-  ;; Return the modified array. We must not have removed the encode operation
-  ;; above us (it has the side effect of modifying the array, just like an
-  ;; array.copy does).
-  (local.get $1)
- )
 )
-
