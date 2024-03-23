@@ -2467,10 +2467,46 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return null;
     }
     case HeapType::string: {
-      auto wtf8 = std::to_string(upTo(1024));
+      // Construct an interesting WTF-8 string from parts.
+      std::stringstream wtf8;
+      bool lastWasLeadingSurrogate = false;
+      for (size_t i = 0, end = upTo(4); i < end; ++i) {
+        switch (upTo(6)) {
+          case 0:
+            // A simple ascii string.
+            wtf8 << std::to_string(upTo(1024));
+            break;
+          case 1:
+            // '£'
+            wtf8 << "\xC2\xA3";
+            break;
+          case 2:
+            // '€'
+            wtf8 << "\xE2\x82\xAC";
+            break;
+          case 3:
+            // '𐍈'
+            wtf8 << "\xF0\x90\x8D\x88";
+            break;
+          case 4:
+            // The leading surrogate in '𐍈'
+            wtf8 << "\xED\xA0\x80";
+            lastWasLeadingSurrogate = true;
+            continue;
+          case 5:
+            if (lastWasLeadingSurrogate) {
+              // Avoid invalid WTF-8.
+              continue;
+            }
+            // The trailing surrogate in '𐍈'
+            wtf8 << "\xED\xBD\x88";
+            break;
+        }
+        lastWasLeadingSurrogate = false;
+      }
       std::stringstream wtf16;
-      String::convertWTF8ToWTF16(wtf16, wtf8);
       // TODO: Use wtf16.view() once we have C++20.
+      String::convertWTF8ToWTF16(wtf16, wtf8.str());
       return builder.makeStringConst(wtf16.str());
     }
     case HeapType::stringview_wtf8:
