@@ -206,6 +206,12 @@ private:
   bool isType(IString str) { return stringToType(str, true) != Type::none; }
   HeapType getFunctionType(Name name, Element& s);
 
+  // Maps block names to their types. This is built up as we go so that things
+  // like br_if can query the type of the thing they target. Note that we don't
+  // note the types of loops because breaks to them must not send a value
+  // anyhow.
+  std::unordered_map<Name, Type> blockTypes;
+
 public:
   Expression* parseExpression(Element* s) { return parseExpression(*s); }
   Expression* parseExpression(Element& s);

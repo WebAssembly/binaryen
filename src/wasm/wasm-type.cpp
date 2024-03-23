@@ -824,6 +824,18 @@ bool Type::isDefaultable() const {
   return isConcrete() && !isNonNullable();
 }
 
+bool Type::containsRef() const {
+  if (isTuple()) {
+    for (auto t : *this) {
+      if (t.isRef()) {
+        return true;
+      }
+    }
+    return false;
+  }
+  return isRef();
+}
+
 Nullability Type::getNullability() const {
   return isNullable() ? Nullable : NonNullable;
 }

@@ -1000,10 +1000,13 @@ void test_core() {
     BinaryenIf(module, temp4, temp5, NULL),
     BinaryenLoop(module, "in", makeInt32(module, 0)),
     BinaryenLoop(module, NULL, makeInt32(module, 0)),
-    BinaryenBreak(module, "the-value", temp6, temp7),
-    BinaryenBreak(module, "the-nothing", makeInt32(module, 2), NULL),
-    BinaryenBreak(module, "the-value", NULL, makeInt32(module, 3)),
-    BinaryenBreak(module, "the-nothing", NULL, NULL),
+    BinaryenBreak(module, "the-value", temp6, temp7, &i32),
+    // We can also provide NULL as the type of the br_if, as it is an MVP type
+    // that is inferred.
+    BinaryenBreak(module, "the-value", temp6, temp7, NULL),
+    BinaryenBreak(module, "the-nothing", makeInt32(module, 2), NULL, NULL),
+    BinaryenBreak(module, "the-value", NULL, makeInt32(module, 3), NULL),
+    BinaryenBreak(module, "the-nothing", NULL, NULL, NULL),
     BinaryenSwitch(module, switchValueNames, 1, "the-value", temp8, temp9),
     BinaryenSwitch(
       module, switchBodyNames, 1, "the-nothing", makeInt32(module, 2), NULL),

@@ -129,9 +129,24 @@ struct ReFinalize
 
   ReFinalize() { name = "refinalize"; }
 
-  // block finalization is O(bad) if we do each block by itself, so do it in
+  // Block finalization is O(bad) if we do each block by itself, so do it in
   // bulk, tracking break value types so we just do a linear pass.
   std::unordered_map<Name, std::unordered_set<Type>> breakTypes;
+
+  // Track br_ifs with values as we go, as those must be updated if their block
+  // type changes. We must also track block names to blocks for this, so we
+  // track all that using the block name as the key.
+  struct BlockBrInfo {
+    // The block and its relevant breaks.
+    Block* block = nullptr;
+    std::vector<Break*> brs;
+
+    BlockBrInfo() {}
+    BlockBrInfo(Block* block) : block(block) {}
+  };
+  std::unordered_map<Name, BlockBrInfo> blockBrInfoMap;
+
+  void doWalkFunction(Function* func);
 
 #define DELEGATE(CLASS_TO_VISIT)                                               \
   void visit##CLASS_TO_VISIT(CLASS_TO_VISIT* curr);

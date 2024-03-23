@@ -343,8 +343,13 @@ struct Heap2LocalOptimizer {
       }
 
       // Breaks that our allocation flows through may change type, as we now
-      // have a nullable type there.
-      curr->finalize();
+      // have a nullable type there. This is simple to fix as we know this is a
+      // break with a value, and the only possible change there is to become
+      // nullable.
+      assert(curr->value);
+      if (curr->type.isNonNullable()) {
+        curr->type = Type(curr->type.getHeapType(), Nullable);
+      }
     }
 
     void visitStructNew(StructNew* curr) {

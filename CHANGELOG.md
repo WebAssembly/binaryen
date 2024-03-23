@@ -23,6 +23,15 @@ Current Trunk
  - The build-time option to use legacy WasmGC opcodes is removed.
  - The strings in `string.const` instructions must now be valid WTF-8.
 
+ - Fix the result type of `br_if` to match the spec. This means that `br_if` now
+   returns a less precise type than before. In the IR it means that the type of
+   `br_if` with a value depends on the block it targets, which means it must be
+   provided when creating it, and updated if altered.
+   - As a result the C API `BinaryenBreak` now has a final parameter to allow
+     setting the type, which is a `Type*`. If NULL then the type will be
+     inferred in common cases (MVP types, or anything but a `br_if` with a
+     value).
+
 v117
 ----
 

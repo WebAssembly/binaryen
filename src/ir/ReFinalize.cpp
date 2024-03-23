@@ -24,6 +24,51 @@ static Type getValueType(Expression* value) {
   return value ? value->type : Type::none;
 }
 
+void ReFinalize::doWalkFunction(Function* func) {
+  using Super =
+    WalkerPass<PostWalker<ReFinalize, OverriddenVisitor<ReFinalize>>>;
+
+  while (1) {
+    // Walk normally.
+    Super::doWalkFunction(func);
+
+    // After that walk we may have br_ifs in need of refinalization. Update them
+    // and refinalize again, as they may enable further improvements. This is in
+    // theory very slow, but in practice one or two cycles suffices and we can't
+    // try to be frugal here as must propagate all the possible improvements, or
+    // else we'd end up with a situation where ReFinalize^2 != ReFinalize. (If
+    // this ends up being slow in practice we'd want to build a custom graph IR
+    // for this operation here.)
+    //
+    // Note that this loop must surely terminate because the lattice of types is
+    // finite.
+    auto updatedBr = false;
+
+    for (auto& [_, info] : blockBrInfoMap) {
+      auto* block = info.block;
+      assert(block->type.isConcrete());
+      auto blockType = block->type;
+      for (auto* br : info.brs) {
+        // We would have ignored an unreachable or MVP br_if before; only
+        // references must be refined.
+        assert(br->type.containsRef());
+        if (br->type != blockType) {
+          br->type = blockType;
+          updatedBr = true;
+        }
+      }
+    }
+
+    if (!updatedBr) {
+      return;
+    }
+
+    // Clear all state and loop/walk again.
+    breakTypes.clear();
+    blockBrInfoMap.clear();
+  }
+}
+
 void ReFinalize::visitBlock(Block* curr) {
   if (curr->list.size() == 0) {
     curr->type = Type::none;
@@ -38,6 +83,12 @@ void ReFinalize::visitBlock(Block* curr) {
       auto& types = iter->second;
       types.insert(curr->list.back()->type);
       curr->type = Type::getLeastUpperBound(types);
+
+      // If we have br_ifs then we must note ourselves there.
+      auto iter = blockBrInfoMap.find(curr->name);
+      if (iter != blockBrInfoMap.end()) {
+        iter->second.block = curr;
+      }
       return;
     }
   }
@@ -64,6 +115,10 @@ void ReFinalize::visitBreak(Break* curr) {
     replaceUntaken(curr->value, curr->condition);
   } else {
     updateBreakValueType(curr->name, valueType);
+  }
+  // Note relevant br_ifs for type updating later.
+  if (curr->condition && curr->value && curr->type.containsRef()) {
+    blockBrInfoMap[curr->name].brs.push_back(curr);
   }
 }
 void ReFinalize::visitSwitch(Switch* curr) {

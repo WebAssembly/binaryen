@@ -140,6 +140,29 @@ static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
   return tooCostlyToRunUnconditionally(passOptions, max);
 }
 
+// Utility to update a br_if type after a change. This receives the br and a
+// mapping of block names to their types, which it uses if it needs to (in
+// particular, we do not need the mapping to figure out the type of a br_if
+// when the value has MVP type, so the mapping can only contain things relevant
+// to GC). This also calls finalize as needed, so that after calling it the
+// br_if type is fully updated.
+using BlockTypeMap = std::unordered_map<Name, Type>;
+static void updateBrIfType(Break* br, const BlockTypeMap& blockTypeMap) {
+  assert(br->condition);
+  assert(br->condition);
+  if (br->value) {
+    if (br->value->type.containsRef()) {
+      auto iter = blockTypeMap.find(br->name);
+      assert(iter != blockTypeMap.end());
+      br->type = iter->second;
+    } else {
+      // A simple type we can infer from the value.
+      br->type = br->value->type;
+    }
+  }
+  br->finalize();
+}
+
 struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   bool isFunctionParallel() override { return true; }
 
@@ -251,11 +274,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           break;
         }
       }
+      // Otherwise it is ok for properly-typed values to flow out.
+      self->stopUnrefinedValueFlow(curr->type);
     } else if (curr->is<Nop>()) {
       // ignore (could be result of a previous cycle)
       self->stopValueFlow();
     } else if (curr->is<Loop>()) {
-      // do nothing - it's ok for values to flow out
+      // As with a block, it is ok for properly-typed values to flow out.
+      self->stopUnrefinedValueFlow(curr->type);
     } else if (auto* sw = curr->dynCast<Switch>()) {
       self->stopFlow();
       self->optimizeSwitch(sw);
@@ -281,6 +307,52 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   }
 
   void stopValueFlow() { removeValueFlow(flows); }
+
+  // Stop a value from flowing that is not as refined as a given type. For
+  // example:
+  //
+  //  (block (result $sub)
+  //    ..maybe other branches to the block..
+  //    (return (super))    ;; the function returns super; the block is sub
+  //  )
+  //
+  //  If we let the value flow through, we'd be forced to unrefine the block:
+  //
+  //  (block (result $super)
+  //    ..maybe other branches to the block..
+  //    (super)
+  //  )
+  //
+  // It is best to avoid unrefining like that, so block the flow of such values
+  // here.
+  void stopUnrefinedValueFlow(Type type) {
+    if (type == Type::unreachable) {
+      // We are flowing through something currently unreachable. Us flowing
+      // through it may turn it reachable, which is fine, and there are no
+      // subtyping risks here, so nothing to check.
+      return;
+    }
+    if (!type.containsRef()) {
+      // Subtyping cannot be an issue here.
+      return;
+    }
+    flows.erase(std::remove_if(flows.begin(),
+                               flows.end(),
+                               [&](Expression** currp) {
+                                 auto* curr = *currp;
+                                 Expression* value;
+                                 if (auto* ret = curr->dynCast<Return>()) {
+                                   value = ret->value;
+                                 } else {
+                                   value = curr->cast<Break>()->value;
+                                 }
+                                 // Remove if there is a value, and it is
+                                 // unrefined.
+                                 return value &&
+                                        !Type::isSubType(value->type, type);
+                               }),
+                flows.end());
+  }
 
   static void clear(RemoveUnusedBrs* self, Expression** currp) {
     self->flows.clear();
@@ -417,7 +489,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             br->condition =
               builder.makeSelect(br->condition, curr->condition, zero);
           }
-          br->finalize();
+          updateBrIfType(br, blockTypes);
           replaceCurrent(Builder(*getModule()).dropIfConcretelyTyped(br));
           anotherCycle = true;
         }
@@ -460,9 +532,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   static void scan(RemoveUnusedBrs* self, Expression** currp) {
     self->pushTask(visitAny, currp);
 
-    auto* iff = (*currp)->dynCast<If>();
+    auto* curr = *currp;
 
-    if (iff) {
+    if (auto* iff = curr->dynCast<If>()) {
       if (iff->condition->type == Type::unreachable) {
         // avoid trying to optimize this, we never reach it anyhow
         return;
@@ -478,10 +550,22 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       self->pushTask(scan, &iff->ifTrue);
       self->pushTask(clear, currp); // clear all flow after the condition
       self->pushTask(scan, &iff->condition);
-    } else {
-      super::scan(self, currp);
+      return;
     }
+
+    if (auto* block = curr->dynCast<Block>()) {
+      if (block->name.is() && block->type.containsRef()) {
+        // This block has a type that may be needed for updating br_ifs, so
+        // note it.
+        self->blockTypes[block->name] = block->type;
+      }
+    }
+
+    super::scan(self, currp);
   }
+
+  // We track the types of blocks that have relevant types for updateBrIfType.
+  std::unordered_map<Name, Type> blockTypes;
 
   // optimizes a loop. returns true if we made changes
   bool optimizeLoop(Loop* loop) {
@@ -1066,7 +1150,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // we are an if-else where the ifTrue is a break without a
             // condition, so we can do this
             ifTrueBreak->condition = iff->condition;
-            ifTrueBreak->finalize();
+            updateBrIfType(ifTrueBreak, blockTypes);
             list[i] = Builder(*getModule()).dropIfConcretelyTyped(ifTrueBreak);
             ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifFalse);
             continue;
@@ -1080,7 +1164,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
                                 *getModule())) {
             ifFalseBreak->condition =
               Builder(*getModule()).makeUnary(EqZInt32, iff->condition);
-            ifFalseBreak->finalize();
+            updateBrIfType(ifFalseBreak, blockTypes);
             list[i] = Builder(*getModule()).dropIfConcretelyTyped(ifFalseBreak);
             ExpressionManipulator::spliceIntoBlock(curr, i + 1, iff->ifTrue);
             continue;
@@ -1676,6 +1760,21 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
           start = end;
         }
       }
+
+      // Note types of blocks. This parallels the logic in the parent class,
+      // but we do not want to just reuse the data structure there: things may
+      // have changed since then.
+      static void scan(FinalOptimizer* self, Expression** currp) {
+        if (auto* block = (*currp)->dynCast<Block>()) {
+          if (block->name.is() && block->type.containsRef()) {
+            self->blockTypes[block->name] = block->type;
+          }
+        }
+
+        PostWalker<FinalOptimizer>::scan(self, currp);
+      }
+
+      std::unordered_map<Name, Type> blockTypes;
     };
     FinalOptimizer finalOptimizer(getPassOptions());
     finalOptimizer.setModule(getModule());

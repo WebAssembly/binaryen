@@ -2007,6 +2007,12 @@ BinaryenFeatureAll: 131071
         (i32.const 0)
        )
       )
+      (drop
+       (br_if $the-value
+        (i32.const 1)
+        (i32.const 0)
+       )
+      )
       (br_if $the-nothing
        (i32.const 2)
       )

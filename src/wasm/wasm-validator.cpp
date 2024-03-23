@@ -247,6 +247,9 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
 
   void noteLabelName(Name name);
 
+  // Maps a label name (block etc.) to the br_ifs targetting it.
+  std::unordered_map<Name, std::vector<Break*>> labelBrIfs;
+
 public:
   // visitors
 
@@ -653,8 +656,8 @@ void FunctionValidator::visitBlock(Block* curr) {
       curr,
       "Multivalue block type require multivalue [--enable-multivalue]");
   }
-  // if we are break'ed to, then the value must be right for us
   if (curr->name.is()) {
+    // If we are break'ed to, then the value must be right for us
     noteLabelName(curr->name);
     auto iter = breakTypes.find(curr->name);
     assert(iter != breakTypes.end()); // we set it ourselves
@@ -670,6 +673,19 @@ void FunctionValidator::visitBlock(Block* curr) {
                       "break type must be a subtype of the target block type");
     }
     breakTypes.erase(iter);
+
+    // Validate br_if types as matching this block's type.
+    if (auto iter = labelBrIfs.find(curr->name); iter != labelBrIfs.end()) {
+      for (auto* brIf : iter->second) {
+        // This must be an actual br_if with a value.
+        assert(brIf->value && brIf->condition);
+        shouldBeEqualOrFirstIsUnreachable(
+          brIf->type,
+          curr->type,
+          brIf,
+          "br_ifs to a block must have the block's type");
+      }
+    }
   }
   switch (getFunction()->profile) {
     case IRProfile::Normal:
@@ -782,6 +798,11 @@ void FunctionValidator::visitLoop(Loop* curr) {
                     "breaks to a loop cannot pass a value");
     }
     breakTypes.erase(iter);
+
+    // Validate there are no br_ifs with values targeting us.
+    shouldBeTrue(!labelBrIfs.count(curr->name),
+                 curr,
+                 "loops cannot have br_ifs with values targeting them");
   }
   if (curr->type == Type::none) {
     shouldBeFalse(curr->body->type.isConcrete(),
@@ -890,6 +911,17 @@ void FunctionValidator::visitBreak(Break* curr) {
                    curr->condition->type == Type::i32,
                  curr,
                  "break condition must be i32");
+  }
+  if (curr->condition && curr->value) {
+    labelBrIfs[curr->name].push_back(curr);
+  }
+  // An unreachable br must have no condition, or it must have an unreachable
+  // child.
+  if (curr->type == Type::unreachable && curr->condition) {
+    shouldBeTrue(curr->condition->type == Type::unreachable ||
+                   (curr->value && curr->value->type == Type::unreachable),
+                 curr,
+                 "unreachable break with condition or no unreachable child");
   }
 }
 

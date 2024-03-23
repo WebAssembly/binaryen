@@ -1649,6 +1649,7 @@ Expression* SExpressionWasmBuilder::makeBlock(Element& s) {
     curr->name = nameMapper.pushLabelName(sName);
     // block signature
     curr->type = parseBlockType(s, i);
+    blockTypes[curr->name] = curr->type;
     if (i >= s.size()) {
       break; // empty block
     }
@@ -2598,6 +2599,19 @@ Expression* SExpressionWasmBuilder::makeBreak(Element& s, bool isConditional) {
     ret->condition = parseExpression(s[i]);
   } else {
     ret->value = parseExpression(s[i]);
+  }
+  if (isConditional && ret->value) {
+    auto iter = blockTypes.find(ret->name);
+    if (iter == blockTypes.end()) {
+      // There is no block by that name, so this must target the function scope.
+      // We could also validate that it is in fact the function scope, but the
+      // main validator does that anyhow; all we need here is to generate valid
+      // IR if it is valid.
+      ret->type = currFunction->getResults();
+    } else {
+      // Get the type from the block.
+      ret->type = iter->second;
+    }
   }
   ret->finalize();
   return ret;
