@@ -217,10 +217,6 @@ void PassRegistry::registerPasses() {
   registerPass("legalize-js-interface",
                "legalizes i64 types on the import/export boundary",
                createLegalizeJSInterfacePass);
-  registerPass("legalize-js-interface-minimally",
-               "legalizes i64 types on the import/export boundary in a minimal "
-               "manner, only on things only JS will call",
-               createLegalizeJSInterfaceMinimallyPass);
   registerPass("legalize-and-prune-js-interface",
                "legalizes the import/export boundary and prunes when needed",
                createLegalizeAndPruneJSInterfacePass);

@@ -260,10 +260,8 @@ int main(int argc, const char* argv[]) {
   }
 
   // Legalize the wasm, if BigInts don't make that moot.
-  if (!bigInt) {
-    passRunner.add(ABI::getLegalizationPass(
-      legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
-                            : ABI::LegalizationLevel::Minimal));
+  if (!bigInt && legalizeJavaScriptFFI) {
+    passRunner.add("legalize-js-interface");
   }
 
   passRunner.add("strip-target-features");

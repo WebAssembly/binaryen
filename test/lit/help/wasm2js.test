@@ -185,11 +185,6 @@
 ;; CHECK-NEXT:   --legalize-js-interface                       legalizes i64 types on the
 ;; CHECK-NEXT:                                                 import/export boundary
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --legalize-js-interface-minimally             legalizes i64 types on the
-;; CHECK-NEXT:                                                 import/export boundary in a
-;; CHECK-NEXT:                                                 minimal manner, only on things
-;; CHECK-NEXT:                                                 only JS will call
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --licm                                        loop invariant code motion
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --limit-segments                              attempt to merge segments to fit
