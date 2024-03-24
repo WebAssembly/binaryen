@@ -668,7 +668,7 @@ Abbrev table for offset: 0x00000000
 0x00000074:     NULL
 
 0x00000075:   DW_TAG_subprogram [6] *
-                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+                DW_AT_low_pc [DW_FORM_addr]	(0x00000000ffffffff)
                 DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
                 DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x000000d2] = "_Z6unusedi")
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000dd] = "unused")

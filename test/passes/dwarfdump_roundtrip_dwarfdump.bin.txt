@@ -141,7 +141,7 @@ Abbrev table for offset: 0x00000000
               DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
 
 0x00000026:   DW_TAG_subprogram [2]  
-                DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000000)
+                DW_AT_low_pc [DW_FORM_addr]	(0x00000000ffffffff)
                 DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
                 DW_AT_linkage_name [DW_FORM_strp]	( .debug_str[0x000000c8] = "_Z3foov")
                 DW_AT_name [DW_FORM_strp]	( .debug_str[0x000000d0] = "foo")

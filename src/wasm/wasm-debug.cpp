@@ -659,6 +659,19 @@ static bool isTombstone(uint32_t x) {
   return x == 0 || x == uint32_t(-1) || x == uint32_t(-2);
 }
 
+// Return a canonical tombstone value, the same as LLVM's in
+// computeTombstoneAddress().
+static BinaryLocation getTombstone() {
+  // TODO: this may differ in wasm64/DWARF64
+  return uint32_t(-1);
+}
+
+// Fixes up tombstone values to be canonical. This makes us match LLVM as much
+// as possible.
+static BinaryLocation fixTombstoneValue(BinaryLocation location) {
+  return isTombstone(location) ? getTombstone() : location;
+}
+
 // Update debug lines, and update the locationUpdater with debug line offset
 // changes so we can update offsets into the debug line section.
 static void updateDebugLines(llvm::DWARFYAML::Data& data,
@@ -815,6 +828,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
             tag == llvm::dwarf::DW_TAG_lexical_block ||
             tag == llvm::dwarf::DW_TAG_label) {
           newValue = locationUpdater.getNewStart(oldValue);
+          newValue = fixTombstoneValue(newValue);
         } else if (tag == llvm::dwarf::DW_TAG_compile_unit) {
           newValue = locationUpdater.getNewFuncStart(oldValue);
           // Per the DWARF spec, "The base address of a compile unit is
@@ -823,6 +837,7 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
             LocationUpdater::OldToNew{oldValue, newValue};
         } else if (tag == llvm::dwarf::DW_TAG_subprogram) {
           newValue = locationUpdater.getNewFuncStart(oldValue);
+          newValue = fixTombstoneValue(newValue);
         } else {
           Fatal() << "unknown tag with low_pc "
                   << llvm::dwarf::TagString(tag).str();
@@ -855,7 +870,9 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
       BinaryLocation oldValue = yamlValue.Value, newValue = 0;
       bool isRelative = attrSpec.Form == llvm::dwarf::DW_FORM_data4;
       if (isRelative) {
-        oldValue += oldLowPC;
+        if (!isTombstone(oldValue) && !isTombstone(oldLowPC)) {
+          oldValue += oldLowPC;
+        }
       }
       if (tag == llvm::dwarf::DW_TAG_GNU_call_site ||
           tag == llvm::dwarf::DW_TAG_inlined_subroutine ||
@@ -870,7 +887,9 @@ static void updateDIE(const llvm::DWARFDebugInfoEntry& DIE,
                 << llvm::dwarf::TagString(tag).str();
       }
       if (isRelative) {
-        newValue -= newLowPC;
+        if (!isTombstone(newValue) && !isTombstone(newLowPC)) {
+          newValue -= newLowPC;
+        }
       }
       yamlValue.Value = newValue;
     });
