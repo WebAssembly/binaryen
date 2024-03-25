@@ -296,6 +296,29 @@
       (i32.const -1)
     )
   )
+
+  (func $new_empty (export "new_empty") (result stringref)
+    ;; Make an empty string from an empty array.
+    (string.new_wtf16_array
+      (array.new_default $array16
+        (i32.const 0)
+      )
+      (i32.const 0)
+      (i32.const 0)
+    )
+  )
+
+  (func $new_empty_oob (export "new_empty_oob") (result stringref)
+    ;; Try to make a string from an empty array that we slice at [1:0], which is
+    ;; out of bounds due to the starting index.
+    (string.new_wtf16_array
+      (array.new_default $array16
+        (i32.const 0)
+      )
+      (i32.const 1)
+      (i32.const 0)
+    )
+  )
 )
 ;; CHECK:      [fuzz-exec] calling new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
