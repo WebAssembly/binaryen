@@ -982,7 +982,29 @@ void TranslateToFuzzReader::mutate(Function* func) {
         if (mode < 33 && rep->type != Type::none) {
           // This has a non-none type. Replace the output, keeping the
           // expression and its children in a drop. This "interposes" between
-          // this expression and its parent.
+          // this expression and its parent, something like this:
+          //
+          //    (D
+          //      (A
+          //        (B)
+          //        (C)
+          //      )
+          //    )
+          ////
+          //    => ;; keep A, replace it in the parent
+          //
+          //    (D
+          //      (block
+          //        (drop
+          //          (A
+          //            (B)
+          //            (C)
+          //          )
+          //        )
+          //        (NEW)
+          //      )
+          //    )
+          //
           // TODO: Ideally the new expression here could consume |curr| as a
           //       child, though if so we should still keep a decent chance to
           //       just drop this expression (as a drop enables passes to think
@@ -994,7 +1016,21 @@ void TranslateToFuzzReader::mutate(Function* func) {
             // This is a normal (non-control-flow) expression with at least one
             // child. "Interpose" between the children and this expression by
             // keeping them and replacing the parent |curr|. We do this by
-            // generating drops of the children.
+            // generating drops of the children, like this:
+            //
+            //  (A
+            //    (B)
+            //    (C)
+            //  )
+            //
+            //  => ;; keep children, replace A
+            //
+            //  (block
+            //    (drop (B))
+            //    (drop (C))
+            //    (NEW)
+            //  )
+            //
             auto* block = parent.builder.makeBlock();
             for (auto* child : children) {
               block->list.push_back(parent.builder.makeDrop(child));
