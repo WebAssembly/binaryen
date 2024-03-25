@@ -386,7 +386,11 @@ struct GUFAOptimizer
         if (oracleType.isRef() && oracleType != curr->type &&
             Type::isSubType(oracleType, curr->type)) {
           if (oracleType.getHeapType() == curr->type.getHeapType()) {
-            // These only differ in nullability: use RefAsNonNull.
+            // These only differ in nullability: use RefAsNonNull. (We do not
+            // rely on OptimizeInstructions to turn a RefCast into a
+            // RefAsNonNull, as there are cases where RefCast is actually not
+            // valid, e.g. on a string view, and we want this passes output to
+            // be valid.)
             assert(oracleType.getNullability() == NonNullable);
             assert(curr->type.getNullability() == Nullable);
             replaceCurrent(Builder(*getModule()).makeRefAs(RefAsNonNull, curr));
