@@ -8,27 +8,27 @@ total
  [table-data]   : 7       
  [tables]       : 1       
  [tags]         : 0       
- [total]        : 12398   
+ [total]        : 11685   
  [vars]         : 64      
- Binary         : 893     
- Block          : 1965    
- Break          : 478     
- Call           : 288     
- CallIndirect   : 131     
- Const          : 2058    
- Drop           : 111     
- GlobalGet      : 901     
- GlobalSet      : 714     
- If             : 657     
- Load           : 247     
- LocalGet       : 1115    
- LocalSet       : 827     
- Loop           : 317     
- Nop            : 155     
+ Binary         : 848     
+ Block          : 1846    
+ Break          : 456     
+ Call           : 275     
+ CallIndirect   : 117     
+ Const          : 1952    
+ Drop           : 86      
+ GlobalGet      : 844     
+ GlobalSet      : 679     
+ If             : 625     
+ Load           : 236     
+ LocalGet       : 1050    
+ LocalSet       : 764     
+ Loop           : 301     
+ Nop            : 143     
  RefFunc        : 7       
- Return         : 107     
- Select         : 85      
- Store          : 113     
+ Return         : 103     
+ Select         : 77      
+ Store          : 111     
  Switch         : 3       
- Unary          : 883     
- Unreachable    : 343     
+ Unary          : 835     
+ Unreachable    : 327     
