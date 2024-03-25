@@ -385,7 +385,15 @@ struct GUFAOptimizer
         auto oracleType = parent.getContents(curr).getType();
         if (oracleType.isRef() && oracleType != curr->type &&
             Type::isSubType(oracleType, curr->type)) {
-          replaceCurrent(Builder(*getModule()).makeRefCast(curr, oracleType));
+          if (oracleType.getHeapType() == curr->type.getHeapType()) {
+            // These only differ in nullability: use RefAsNonNull.
+            assert(oracleType.getNullability() == NonNullable);
+            assert(curr->type.getNullability() == Nullable);
+            replaceCurrent(Builder(*getModule()).makeRefAs(RefAsNonNull, curr));
+          } else {
+            // These differ in the heap type: use RefCast.
+            replaceCurrent(Builder(*getModule()).makeRefCast(curr, oracleType));
+          }
           optimized = true;
         }
       }
