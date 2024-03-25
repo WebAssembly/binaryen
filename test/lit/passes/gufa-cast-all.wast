@@ -12,11 +12,9 @@
   ;; CHECK:      (type $B (sub $A (struct )))
   (type $B (sub $A (struct)))
 
-  ;; CHECK:      (type $3 (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter)))
+  ;; CHECK:      (type $3 (func (result i32)))
 
-  ;; CHECK:      (type $4 (func (result i32)))
-
-  ;; CHECK:      (import "a" "b" (func $import (type $4) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $import (type $3) (result i32)))
   (import "a" "b" (func $import (result i32)))
 
   ;; CHECK:      (elem declare func $func $funcs)
@@ -32,8 +30,6 @@
   ;; CHECK:      (export "export4" (func $funcs))
 
   ;; CHECK:      (export "export5" (func $unreachable))
-
-  ;; CHECK:      (export "strings-caller" (func $strings-caller))
 
   ;; CHECK:      (func $ref (type $none_=>_none)
   ;; CHECK-NEXT:  (local $a (ref $A))
@@ -172,87 +168,6 @@
       ;; We can infer that the type here is unreachable, and emit that in the
       ;; IR. This checks we don't error on the inferred type not being a ref.
       (local.get $a)
-    )
-  )
-
-  ;; CHECK:      (func $strings-target (type $3) (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $a)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $b)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $c)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $d)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $strings-target
-    (param $a (ref null string))
-    (param $b (ref null stringview_wtf8))
-    (param $c (ref null stringview_wtf16))
-    (param $d (ref null stringview_iter))
-    ;; These params are only called with non-null values, so we can cast them
-    ;; to non-null. We must not use ref.cast for that, which is disallowed on
-    ;; strings and views.
-    (drop
-      (local.get $a)
-    )
-    (drop
-      (local.get $b)
-    )
-    (drop
-      (local.get $c)
-    )
-    (drop
-      (local.get $d)
-    )
-  )
-
-  ;; CHECK:      (func $strings-caller (type $3) (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter)
-  ;; CHECK-NEXT:  (call $strings-target
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $a)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $b)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $c)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (ref.as_non_null
-  ;; CHECK-NEXT:    (local.get $d)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $strings-caller (export "strings-caller")
-    (param $a (ref null string))
-    (param $b (ref null stringview_wtf8))
-    (param $c (ref null stringview_wtf16))
-    (param $d (ref null stringview_iter))
-    (call $strings-target
-      (ref.as_non_null
-        (local.get $a)
-      )
-      (ref.as_non_null
-        (local.get $b)
-      )
-      (ref.as_non_null
-        (local.get $c)
-      )
-      (ref.as_non_null
-        (local.get $d)
-      )
     )
   )
 )
