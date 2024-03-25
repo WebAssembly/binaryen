@@ -1039,8 +1039,8 @@ void TranslateToFuzzReader::mutate(Function* func) {
             // nothing more to do.
           } else {
             // Drop curr and append.
-            rep = parent.builder.makeSequence(parent.builder.makeDrop(curr),
-                                              rep);
+            rep =
+              parent.builder.makeSequence(parent.builder.makeDrop(curr), rep);
           }
         } else if (mode >= 66 && !Properties::isControlFlowStructure(curr)) {
           ChildIterator children(curr);
