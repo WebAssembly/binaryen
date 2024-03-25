@@ -3737,6 +3737,11 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       table->max = Table::kUnlimitedSize;
     }
 
+    table->type = elementToType(*inner[j++]);
+    if (!table->type.isRef()) {
+      throw SParseException("Only reference types are valid for tables", s);
+    }
+
     wasm.addTable(std::move(table));
 
     j++; // funcref
