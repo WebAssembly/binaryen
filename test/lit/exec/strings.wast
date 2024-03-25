@@ -10,7 +10,7 @@
   (import "fuzzing-support" "log" (func $log (param i32)))
 
   ;; CHECK:      [fuzz-exec] calling new_wtf16_array
-  ;; CHECK-NEXT: [trap array oob]
+  ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
   (func $new_wtf16_array (export "new_wtf16_array") (result stringref)
     (string.new_wtf16_array
       (array.new_fixed $array16 5
@@ -339,7 +339,7 @@
   )
 )
 ;; CHECK:      [fuzz-exec] calling new_wtf16_array
-;; CHECK-NEXT: [trap array oob]
+;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
 
 ;; CHECK:      [fuzz-exec] calling const
 ;; CHECK-NEXT: [fuzz-exec] note result: const => string("world")
