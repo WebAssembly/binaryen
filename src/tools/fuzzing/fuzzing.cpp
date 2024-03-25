@@ -1045,7 +1045,7 @@ void TranslateToFuzzReader::mutate(Function* func) {
         } else if (mode >= 66 && !Properties::isControlFlowStructure(curr)) {
           ChildIterator children(curr);
           auto numChildren = children.getNumChildren();
-          if (numChildren > 0 numChildren < 5) {
+          if (numChildren > 0 && numChildren < 5) {
             // This is a normal (non-control-flow) expression with at least one
             // child (and not an excessive amount of them; see the processing
             // below). "Interpose" between the children and this expression by
@@ -1068,7 +1068,8 @@ void TranslateToFuzzReader::mutate(Function* func) {
             auto* block = parent.builder.makeBlock();
             for (auto* child : children) {
               // Only drop the child if we can't replace it as one of NEW's
-              // children.
+              // children. This does a linear scan of |rep| which is the reason
+              // for the above limit on the number of children.
               if (!replaceChildWith(rep, child)) {
                 block->list.push_back(parent.builder.makeDrop(child));
               }
