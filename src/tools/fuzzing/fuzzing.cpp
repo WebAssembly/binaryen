@@ -902,6 +902,20 @@ void TranslateToFuzzReader::recombine(Function* func) {
   modder.walk(func->body);
 }
 
+// Given two expressions, try to replace one of the children of the first with
+// the second. For example, given i32.add and an i32.const, the i32.const could
+// be placed as either of the children of the i32.add. This tramples the
+// existing content there. Returns true if we found a place.
+static bool replaceChildWith(Expression* expr, Expression* with) {
+  for (auto*& child : ChildIterator(expr)) {
+    if (Type::isSubType(with->type, child->type)) {
+      child = with;
+      return true;
+    }
+  }
+  return false;
+}
+
 void TranslateToFuzzReader::mutate(Function* func) {
   // We want a 50% chance to not do this at all, and otherwise, we want to pick
   // a different frequency to do it in each function. That gives us more
@@ -1005,16 +1019,36 @@ void TranslateToFuzzReader::mutate(Function* func) {
           //      )
           //    )
           //
-          // TODO: Ideally the new expression here could consume |curr| as a
-          //       child, though if so we should still keep a decent chance to
-          //       just drop this expression (as a drop enables passes to think
-          //       they can remove more code, by marking the output "unused").
-          rep = parent.builder.makeSequence(parent.builder.makeDrop(curr), rep);
+          // We also sometimes try to insert A as a child of NEW, so we actually
+          // interpose directly:
+          //
+          //    (D
+          //      (NEW
+          //        (A
+          //          (B)
+          //          (C)
+          //        )
+          //      )
+          //    )
+          //
+          // We do not do that all the time, as inserting a drop is actually an
+          // important situation to test: the drop makes the output of A unused,
+          // which may let optimizations remove it.
+          if ((mode & 1) && replaceChildWith(rep, curr)) {
+            // We managed to replace one of the children with curr, and have
+            // nothing more to do.
+          } else {
+            // Drop curr and append.
+            rep = parent.builder.makeSequence(parent.builder.makeDrop(curr),
+                                              rep);
+          }
         } else if (mode >= 66 && !Properties::isControlFlowStructure(curr)) {
           ChildIterator children(curr);
-          if (children.getNumChildren() > 0) {
+          auto numChildren = children.getNumChildren();
+          if (numChildren > 0 numChildren < 5) {
             // This is a normal (non-control-flow) expression with at least one
-            // child. "Interpose" between the children and this expression by
+            // child (and not an excessive amount of them; see the processing
+            // below). "Interpose" between the children and this expression by
             // keeping them and replacing the parent |curr|. We do this by
             // generating drops of the children, like this:
             //
@@ -1033,12 +1067,20 @@ void TranslateToFuzzReader::mutate(Function* func) {
             //
             auto* block = parent.builder.makeBlock();
             for (auto* child : children) {
-              block->list.push_back(parent.builder.makeDrop(child));
+              // Only drop the child if we can't replace it as one of NEW's
+              // children.
+              if (!replaceChildWith(rep, child)) {
+                block->list.push_back(parent.builder.makeDrop(child));
+              }
             }
-            // TODO: Ideally the new expression |rep| can consume the children.
-            block->list.push_back(rep);
-            block->finalize();
-            rep = block;
+
+            if (!block->list.empty()) {
+              // We need the block, that is, we did not find a place for all the
+              // children.
+              block->list.push_back(rep);
+              block->finalize();
+              rep = block;
+            }
           }
         }
         replaceCurrent(rep);
