@@ -296,6 +296,47 @@
       (i32.const -1)
     )
   )
+
+  ;; CHECK:      [fuzz-exec] calling new_empty
+  ;; CHECK-NEXT: [fuzz-exec] note result: new_empty => string("")
+  (func $new_empty (export "new_empty") (result stringref)
+    ;; Make an empty string from an empty array.
+    (string.new_wtf16_array
+      (array.new_default $array16
+        (i32.const 0)
+      )
+      (i32.const 0)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling new_empty_oob
+  ;; CHECK-NEXT: [trap array oob]
+  (func $new_empty_oob (export "new_empty_oob") (result stringref)
+    ;; Try to make a string from an empty array that we slice at [1:0], which is
+    ;; out of bounds due to the starting index.
+    (string.new_wtf16_array
+      (array.new_default $array16
+        (i32.const 0)
+      )
+      (i32.const 1)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling new_empty_oob_2
+  ;; CHECK-NEXT: [trap array oob]
+  (func $new_empty_oob_2 (export "new_empty_oob_2") (result stringref)
+    ;; Try to make a string from an empty array that we slice at [:1], which is
+    ;; out of bounds due to the ending index.
+    (string.new_wtf16_array
+      (array.new_default $array16
+        (i32.const 0)
+      )
+      (i32.const 0)
+      (i32.const 1)
+    )
+  )
 )
 ;; CHECK:      [fuzz-exec] calling new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
@@ -373,6 +414,15 @@
 
 ;; CHECK:      [fuzz-exec] calling slice-big
 ;; CHECK-NEXT: [fuzz-exec] note result: slice-big => string("defgh")
+
+;; CHECK:      [fuzz-exec] calling new_empty
+;; CHECK-NEXT: [fuzz-exec] note result: new_empty => string("")
+
+;; CHECK:      [fuzz-exec] calling new_empty_oob
+;; CHECK-NEXT: [trap array oob]
+
+;; CHECK:      [fuzz-exec] calling new_empty_oob_2
+;; CHECK-NEXT: [trap array oob]
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.1
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.10
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.2
@@ -394,6 +444,9 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.5
 ;; CHECK-NEXT: [fuzz-exec] comparing get_codeunit
 ;; CHECK-NEXT: [fuzz-exec] comparing get_length
+;; CHECK-NEXT: [fuzz-exec] comparing new_empty
+;; CHECK-NEXT: [fuzz-exec] comparing new_empty_oob
+;; CHECK-NEXT: [fuzz-exec] comparing new_empty_oob_2
 ;; CHECK-NEXT: [fuzz-exec] comparing new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] comparing slice
 ;; CHECK-NEXT: [fuzz-exec] comparing slice-big
