@@ -1371,11 +1371,11 @@ class RoundtripText(TestCaseHandler):
 testcase_handlers = [
     FuzzExec(),
     CompareVMs(),
-    # CheckDeterminism(),
-    # Wasm2JS(),
-    # TrapsNeverHappen(),
-    # CtorEval(),
-    # Merge(),
+    CheckDeterminism(),
+    Wasm2JS(),
+    TrapsNeverHappen(),
+    CtorEval(),
+    Merge(),
     # FIXME: Re-enable after https://github.com/WebAssembly/binaryen/issues/3989
     # RoundtripText()
 ]
