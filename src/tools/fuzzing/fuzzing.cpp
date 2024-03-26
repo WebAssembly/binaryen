@@ -16,6 +16,7 @@
 
 #include "tools/fuzzing.h"
 #include "ir/gc-type-utils.h"
+#include "ir/iteration.h"
 #include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
 #include "ir/subtypes.h"
@@ -900,6 +901,26 @@ void TranslateToFuzzReader::recombine(Function* func) {
   };
   Modder modder(wasm, scanner, *this);
   modder.walk(func->body);
+  // TODO: A specific form of recombination we should perhaps do more often is
+  //       to recombine among an expression's children, and in particular to
+  //       reorder them.
+}
+
+// Given two expressions, try to replace one of the children of the first with
+// the second. For example, given i32.add and an i32.const, the i32.const could
+// be placed as either of the children of the i32.add. This tramples the
+// existing content there. Returns true if we found a place.
+static bool replaceChildWith(Expression* expr, Expression* with) {
+  for (auto*& child : ChildIterator(expr)) {
+    // To replace, we must have an appropriate type, and we cannot replace a
+    // Pop under any circumstances.
+    if (Type::isSubType(with->type, child->type) &&
+        FindAll<Pop>(child).list.empty()) {
+      child = with;
+      return true;
+    }
+  }
+  return false;
 }
 
 void TranslateToFuzzReader::mutate(Function* func) {
@@ -930,7 +951,6 @@ void TranslateToFuzzReader::mutate(Function* func) {
   percentChance = std::max(percentChance, Index(3));
 
   struct Modder : public PostWalker<Modder, UnifiedExpressionVisitor<Modder>> {
-    Module& wasm;
     TranslateToFuzzReader& parent;
     Index percentChance;
 
@@ -938,8 +958,8 @@ void TranslateToFuzzReader::mutate(Function* func) {
     // executed, so we don't want to do it all the time even in a big function.
     bool allowUnreachable;
 
-    Modder(Module& wasm, TranslateToFuzzReader& parent, Index percentChance)
-      : wasm(wasm), parent(parent), percentChance(percentChance) {
+    Modder(TranslateToFuzzReader& parent, Index percentChance)
+      : parent(parent), percentChance(percentChance) {
       // If the parent allows it then sometimes replace with an unreachable, and
       // sometimes not. Even if we allow it, only do it in certain functions
       // (half the time) and only do it rarely (see below).
@@ -949,29 +969,135 @@ void TranslateToFuzzReader::mutate(Function* func) {
     void visitExpression(Expression* curr) {
       if (parent.upTo(100) < percentChance &&
           parent.canBeArbitrarilyReplaced(curr)) {
-        if (allowUnreachable && parent.oneIn(20)) {
+        // We can replace in various modes, see below. Generate a random number
+        // up to 100 to help us there.
+        int mode = parent.upTo(100);
+
+        if (allowUnreachable && mode < 5) {
           replaceCurrent(parent.make(Type::unreachable));
           return;
         }
+
         // For constants, perform only a small tweaking in some cases.
-        if (auto* c = curr->dynCast<Const>()) {
-          if (parent.oneIn(2)) {
-            c->value = parent.tweak(c->value);
-            return;
-          }
-        }
         // TODO: more minor tweaks to immediates, like making a load atomic or
         // not, changing an offset, etc.
-        // Perform a general replacement. (This is not always valid due to
-        // nesting of labels, but we'll fix that up later.) Note that make()
-        // picks a subtype, so this has a chance to replace us with anything
-        // that is valid to put here.
-        replaceCurrent(parent.make(curr->type));
+        if (auto* c = curr->dynCast<Const>()) {
+          if (mode < 50) {
+            c->value = parent.tweak(c->value);
+          } else {
+            // Just replace the entire thing.
+            replaceCurrent(parent.make(curr->type));
+          }
+          return;
+        }
+
+        // Generate a replacement for the expression, and by default replace all
+        // of |curr| (including children) with that replacement, but in some
+        // cases we can do more subtle things.
+        //
+        // Note that such a replacement is not always valid due to nesting of
+        // labels, but we'll fix that up later. Note also that make() picks a
+        // subtype, so this has a chance to replace us with anything that is
+        // valid to put here.
+        auto* rep = parent.make(curr->type);
+        if (mode < 33 && rep->type != Type::none) {
+          // This has a non-none type. Replace the output, keeping the
+          // expression and its children in a drop. This "interposes" between
+          // this expression and its parent, something like this:
+          //
+          //    (D
+          //      (A
+          //        (B)
+          //        (C)
+          //      )
+          //    )
+          ////
+          //    => ;; keep A, replace it in the parent
+          //
+          //    (D
+          //      (block
+          //        (drop
+          //          (A
+          //            (B)
+          //            (C)
+          //          )
+          //        )
+          //        (NEW)
+          //      )
+          //    )
+          //
+          // We also sometimes try to insert A as a child of NEW, so we actually
+          // interpose directly:
+          //
+          //    (D
+          //      (NEW
+          //        (A
+          //          (B)
+          //          (C)
+          //        )
+          //      )
+          //    )
+          //
+          // We do not do that all the time, as inserting a drop is actually an
+          // important situation to test: the drop makes the output of A unused,
+          // which may let optimizations remove it.
+          if ((mode & 1) && replaceChildWith(rep, curr)) {
+            // We managed to replace one of the children with curr, and have
+            // nothing more to do.
+          } else {
+            // Drop curr and append.
+            rep =
+              parent.builder.makeSequence(parent.builder.makeDrop(curr), rep);
+          }
+        } else if (mode >= 66 && !Properties::isControlFlowStructure(curr)) {
+          ChildIterator children(curr);
+          auto numChildren = children.getNumChildren();
+          if (numChildren > 0 && numChildren < 5) {
+            // This is a normal (non-control-flow) expression with at least one
+            // child (and not an excessive amount of them; see the processing
+            // below). "Interpose" between the children and this expression by
+            // keeping them and replacing the parent |curr|. We do this by
+            // generating drops of the children, like this:
+            //
+            //  (A
+            //    (B)
+            //    (C)
+            //  )
+            //
+            //  => ;; keep children, replace A
+            //
+            //  (block
+            //    (drop (B))
+            //    (drop (C))
+            //    (NEW)
+            //  )
+            //
+            auto* block = parent.builder.makeBlock();
+            for (auto* child : children) {
+              // Only drop the child if we can't replace it as one of NEW's
+              // children. This does a linear scan of |rep| which is the reason
+              // for the above limit on the number of children.
+              if (!replaceChildWith(rep, child)) {
+                block->list.push_back(parent.builder.makeDrop(child));
+              }
+            }
+
+            if (!block->list.empty()) {
+              // We need the block, that is, we did not find a place for all the
+              // children.
+              block->list.push_back(rep);
+              block->finalize();
+              rep = block;
+            }
+          }
+        }
+        replaceCurrent(rep);
       }
     }
   };
-  Modder modder(wasm, *this, percentChance);
-  modder.walk(func->body);
+
+  Modder modder(*this, percentChance);
+  modder.walkFunctionInModule(func, &wasm);
 }
 
 void TranslateToFuzzReader::fixAfterChanges(Function* func) {
@@ -1078,6 +1204,10 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
       recombine(func);
       mutate(func);
       fixAfterChanges(func);
+      // TODO: This triad of functions appears in another place as well, and
+      //       could be handled by a single function. That function could also
+      //       decide to reorder recombine and mutate or even run more cycles of
+      //       them.
     }
   }
   // Remove a start function - the fuzzing harness expects code to run only
