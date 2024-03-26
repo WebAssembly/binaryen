@@ -48,8 +48,58 @@ function printed(x, y) {
     // 'object', below.
     return 'null';
   } else if (typeof x === 'string') {
-    // Emit a string in the same format as the binaryen interpreter.
-    return 'string("' + x + '")';
+    // Emit a string in the same format as the binaryen interpreter. This
+    // escaping routine must be kept in sync with String::printEscapedJSON.
+    var escaped = '';
+    for (u of x) {
+      switch (u) {
+        case '"':
+          escaped += '\\"';
+          continue;
+        case '\\':
+          escaped += '\\\\';
+          continue;
+        case '\b':
+          escaped += '\\b';
+          continue;
+        case '\f':
+          escaped += '\\f';
+          continue;
+        case '\n':
+          escaped += '\\n';
+          continue;
+        case '\r':
+          escaped += '\\r';
+          continue;
+        case '\t':
+          escaped += '\\t';
+          continue;
+        default:
+          break;
+      }
+
+      var codePoint = u.codePointAt(0);
+      if (32 <= codePoint && codePoint < 127) {
+        escaped += u;
+        continue
+      }
+
+      var printEscape = (codePoint) => {
+        escaped += '\\u'
+        escaped += ((codePoint & 0xF000) >> 12).toString(16);
+        escaped += ((codePoint & 0x0F00) >> 8).toString(16);
+        escaped += ((codePoint & 0x00F0) >> 4).toString(16);
+        escaped += (codePoint & 0x000F).toString(16);
+      };
+
+      if (codePoint < 0x10000) {
+        printEscape(codePoint);
+      } else {
+        printEscape(0xD800 + ((codePoint - 0x10000) >> 10));
+        printEscape(0xDC00 + ((codePoint - 0x10000) & 0x3FF));
+      }
+    }
+    return 'string("' + escaped + '")';
   } else if (typeof x === 'bigint') {
     // Print bigints in legalized form, which is two 32-bit numbers of the low
     // and high bits.
@@ -146,4 +196,3 @@ for (var e in exports) {
     console.log('exception thrown: ' + e);
   }
 }
-

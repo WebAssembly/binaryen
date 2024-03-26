@@ -7,7 +7,7 @@
 
   (memory 1 1)
 
-  (import "fuzzing-support" "log" (func $log (param i32)))
+  (import "fuzzing-support" "log-i32" (func $log (param i32)))
 
   ;; CHECK:      [fuzz-exec] calling new_wtf16_array
   ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
@@ -280,7 +280,9 @@
   (func $slice (export "slice") (result (ref string))
     ;; Slicing [3:6] here should definitely output "def".
     (stringview_wtf16.slice
-      (string.const "abcdefgh")
+      (string.as_wtf16
+        (string.const "abcdefgh")
+      )
       (i32.const 3)
       (i32.const 6)
     )
@@ -291,7 +293,9 @@
   (func $slice-big (export "slice-big") (result (ref string))
     ;; Slicing [3:huge unsigned value] leads to slicing til the end: "defgh".
     (stringview_wtf16.slice
-      (string.const "abcdefgh")
+      (string.as_wtf16
+        (string.const "abcdefgh")
+      )
       (i32.const 3)
       (i32.const -1)
     )
@@ -336,6 +340,26 @@
       (i32.const 0)
       (i32.const 1)
     )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling slice-unicode
+  ;; CHECK-NEXT: [fuzz-exec] note result: slice-unicode => string("d\u00a3f")
+  (func $slice-unicode (export "slice-unicode") (result (ref string))
+    (stringview_wtf16.slice
+      ;; abcd£fgh
+      (string.as_wtf16
+        (string.const "abcd\C2\A3fgh")
+      )
+      (i32.const 3)
+      (i32.const 6)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling concat-surrogates
+  ;; CHECK-NEXT: [fuzz-exec] note result: concat-surrogates => string("\ud800\udf48")
+  (func $concat-surrogates (export "concat-surrogates") (result (ref string))
+    ;; Concatenating these surrogates creates '𐍈'.
+    (string.concat (string.const "\ED\A0\80") (string.const "\ED\BD\88"))
   )
 )
 ;; CHECK:      [fuzz-exec] calling new_wtf16_array
@@ -423,6 +447,12 @@
 
 ;; CHECK:      [fuzz-exec] calling new_empty_oob_2
 ;; CHECK-NEXT: [trap array oob]
+
+;; CHECK:      [fuzz-exec] calling slice-unicode
+;; CHECK-NEXT: [fuzz-exec] note result: slice-unicode => string("d\u00a3f")
+
+;; CHECK:      [fuzz-exec] calling concat-surrogates
+;; CHECK-NEXT: [fuzz-exec] note result: concat-surrogates => string("\ud800\udf48")
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.1
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.10
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.2
@@ -433,6 +463,7 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.7
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.8
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.9
+;; CHECK-NEXT: [fuzz-exec] comparing concat-surrogates
 ;; CHECK-NEXT: [fuzz-exec] comparing const
 ;; CHECK-NEXT: [fuzz-exec] comparing encode
 ;; CHECK-NEXT: [fuzz-exec] comparing encode-overflow
@@ -450,3 +481,4 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] comparing slice
 ;; CHECK-NEXT: [fuzz-exec] comparing slice-big
+;; CHECK-NEXT: [fuzz-exec] comparing slice-unicode
