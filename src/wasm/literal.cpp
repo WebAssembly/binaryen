@@ -639,7 +639,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
           if (!data) {
             o << "nullstring";
           } else {
-            o << "string(\"";
+            o << "string(";
             // Convert WTF-16 literals to WTF-16 string.
             std::stringstream wtf16;
             for (auto c : data->values) {
@@ -648,12 +648,11 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
               wtf16 << uint8_t(u & 0xFF);
               wtf16 << uint8_t(u >> 8);
             }
-            // Convert to WTF-8 for printing.
+            // Escape to ensure we have valid unicode output and to make
+            // unprintable characters visible.
             // TODO: Use wtf16.view() once we have C++20.
-            [[maybe_unused]] bool valid =
-              String::convertWTF16ToWTF8(o, wtf16.str());
-            assert(valid);
-            o << "\")";
+            String::printEscapedJSON(o, wtf16.str());
+            o << ")";
           }
           break;
         }
