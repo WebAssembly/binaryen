@@ -900,6 +900,9 @@ void TranslateToFuzzReader::recombine(Function* func) {
   };
   Modder modder(wasm, scanner, *this);
   modder.walk(func->body);
+  // TODO: A specific form of recombination we should perhaps do more often is
+  //       to recombine among an expression's children, and in particular to
+  //       reorder them.
 }
 
 // Given two expressions, try to replace one of the children of the first with
@@ -1200,6 +1203,10 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
       recombine(func);
       mutate(func);
       fixAfterChanges(func);
+      // TODO: This triad of functions appears in another place as well, and
+      //       could be handled by a single function. That function could also
+      //       decide to reorder recombine and mutate or even run more cycles of
+      //       them.
     }
   }
   // Remove a start function - the fuzzing harness expects code to run only
