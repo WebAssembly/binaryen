@@ -545,23 +545,34 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
     if (a == b) {
       EXPECT_TRUE(HeapType::isSubType(a, b));
       EXPECT_TRUE(HeapType::isSubType(b, a));
+      EXPECT_EQ(a.getTop(), b.getTop());
       EXPECT_EQ(a.getBottom(), b.getBottom());
     } else if (lub && *lub == b) {
       EXPECT_TRUE(HeapType::isSubType(a, b));
       EXPECT_FALSE(HeapType::isSubType(b, a));
+      // This would hold except for the case of stringview types and none, where
+      // stringview types are their own top types, but we return `any` as the
+      // top type of none.
+      // EXPECT_EQ(a.getTop(), b.getTop());
       EXPECT_EQ(a.getBottom(), b.getBottom());
     } else if (lub && *lub == a) {
       EXPECT_FALSE(HeapType::isSubType(a, b));
       EXPECT_TRUE(HeapType::isSubType(b, a));
+      // EXPECT_EQ(a.getTop(), b.getTop());
       EXPECT_EQ(a.getBottom(), b.getBottom());
     } else if (lub) {
       EXPECT_FALSE(HeapType::isSubType(a, b));
       EXPECT_FALSE(HeapType::isSubType(b, a));
+      // EXPECT_EQ(a.getTop(), b.getTop());
       EXPECT_EQ(a.getBottom(), b.getBottom());
     } else {
       EXPECT_FALSE(HeapType::isSubType(a, b));
       EXPECT_FALSE(HeapType::isSubType(b, a));
-      EXPECT_NE(a.getBottom(), b.getBottom());
+      EXPECT_NE(a.getTop(), b.getTop());
+      // This would hold except for stringview types, which share a bottom with
+      // the anyref hierarchy despite having no shared upper bound with its
+      // types.
+      // EXPECT_NE(a.getBottom(), b.getBottom());
     }
   };
 
@@ -606,9 +617,9 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(any, struct_, any);
   assertLUB(any, array, any);
   assertLUB(any, string, any);
-  assertLUB(any, stringview_wtf8, any);
-  assertLUB(any, stringview_wtf16, any);
-  assertLUB(any, stringview_iter, any);
+  assertLUB(any, stringview_wtf8, {});
+  assertLUB(any, stringview_wtf16, {});
+  assertLUB(any, stringview_iter, {});
   assertLUB(any, none, any);
   assertLUB(any, noext, {});
   assertLUB(any, nofunc, {});
@@ -621,9 +632,9 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(eq, struct_, eq);
   assertLUB(eq, array, eq);
   assertLUB(eq, string, any);
-  assertLUB(eq, stringview_wtf8, any);
-  assertLUB(eq, stringview_wtf16, any);
-  assertLUB(eq, stringview_iter, any);
+  assertLUB(eq, stringview_wtf8, {});
+  assertLUB(eq, stringview_wtf16, {});
+  assertLUB(eq, stringview_iter, {});
   assertLUB(eq, none, eq);
   assertLUB(eq, noext, {});
   assertLUB(eq, nofunc, {});
@@ -635,9 +646,9 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(i31, struct_, eq);
   assertLUB(i31, array, eq);
   assertLUB(i31, string, any);
-  assertLUB(i31, stringview_wtf8, any);
-  assertLUB(i31, stringview_wtf16, any);
-  assertLUB(i31, stringview_iter, any);
+  assertLUB(i31, stringview_wtf8, {});
+  assertLUB(i31, stringview_wtf16, {});
+  assertLUB(i31, stringview_iter, {});
   assertLUB(i31, none, i31);
   assertLUB(i31, noext, {});
   assertLUB(i31, nofunc, {});
@@ -648,9 +659,9 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(struct_, struct_, struct_);
   assertLUB(struct_, array, eq);
   assertLUB(struct_, string, any);
-  assertLUB(struct_, stringview_wtf8, any);
-  assertLUB(struct_, stringview_wtf16, any);
-  assertLUB(struct_, stringview_iter, any);
+  assertLUB(struct_, stringview_wtf8, {});
+  assertLUB(struct_, stringview_wtf16, {});
+  assertLUB(struct_, stringview_iter, {});
   assertLUB(struct_, none, struct_);
   assertLUB(struct_, noext, {});
   assertLUB(struct_, nofunc, {});
@@ -660,9 +671,9 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
 
   assertLUB(array, array, array);
   assertLUB(array, string, any);
-  assertLUB(array, stringview_wtf8, any);
-  assertLUB(array, stringview_wtf16, any);
-  assertLUB(array, stringview_iter, any);
+  assertLUB(array, stringview_wtf8, {});
+  assertLUB(array, stringview_wtf16, {});
+  assertLUB(array, stringview_iter, {});
   assertLUB(array, none, array);
   assertLUB(array, noext, {});
   assertLUB(array, nofunc, {});
@@ -671,9 +682,9 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(array, defArray, array);
 
   assertLUB(string, string, string);
-  assertLUB(string, stringview_wtf8, any);
-  assertLUB(string, stringview_wtf16, any);
-  assertLUB(string, stringview_iter, any);
+  assertLUB(string, stringview_wtf8, {});
+  assertLUB(string, stringview_wtf16, {});
+  assertLUB(string, stringview_iter, {});
   assertLUB(string, none, string);
   assertLUB(string, noext, {});
   assertLUB(string, nofunc, {});
@@ -682,31 +693,31 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(string, defArray, any);
 
   assertLUB(stringview_wtf8, stringview_wtf8, stringview_wtf8);
-  assertLUB(stringview_wtf8, stringview_wtf16, any);
-  assertLUB(stringview_wtf8, stringview_iter, any);
+  assertLUB(stringview_wtf8, stringview_wtf16, {});
+  assertLUB(stringview_wtf8, stringview_iter, {});
   assertLUB(stringview_wtf8, none, stringview_wtf8);
   assertLUB(stringview_wtf8, noext, {});
   assertLUB(stringview_wtf8, nofunc, {});
   assertLUB(stringview_wtf8, defFunc, {});
-  assertLUB(stringview_wtf8, defStruct, any);
-  assertLUB(stringview_wtf8, defArray, any);
+  assertLUB(stringview_wtf8, defStruct, {});
+  assertLUB(stringview_wtf8, defArray, {});
 
   assertLUB(stringview_wtf16, stringview_wtf16, stringview_wtf16);
-  assertLUB(stringview_wtf16, stringview_iter, any);
+  assertLUB(stringview_wtf16, stringview_iter, {});
   assertLUB(stringview_wtf16, none, stringview_wtf16);
   assertLUB(stringview_wtf16, noext, {});
   assertLUB(stringview_wtf16, nofunc, {});
   assertLUB(stringview_wtf16, defFunc, {});
-  assertLUB(stringview_wtf16, defStruct, any);
-  assertLUB(stringview_wtf16, defArray, any);
+  assertLUB(stringview_wtf16, defStruct, {});
+  assertLUB(stringview_wtf16, defArray, {});
 
   assertLUB(stringview_iter, stringview_iter, stringview_iter);
   assertLUB(stringview_iter, none, stringview_iter);
   assertLUB(stringview_iter, noext, {});
   assertLUB(stringview_iter, nofunc, {});
   assertLUB(stringview_iter, defFunc, {});
-  assertLUB(stringview_iter, defStruct, any);
-  assertLUB(stringview_iter, defArray, any);
+  assertLUB(stringview_iter, defStruct, {});
+  assertLUB(stringview_iter, defArray, {});
 
   assertLUB(none, none, none);
   assertLUB(none, noext, {});
