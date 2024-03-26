@@ -454,12 +454,19 @@ struct HeapTypeGeneratorImpl {
         candidates.push_back(HeapType::any);
         break;
       case HeapType::string:
+        candidates.push_back(HeapType::any);
+        break;
       case HeapType::stringview_wtf8:
       case HeapType::stringview_wtf16:
       case HeapType::stringview_iter:
-        candidates.push_back(HeapType::any);
         break;
       case HeapType::none:
+        if (rand.oneIn(10)) {
+          candidates.push_back(HeapType::stringview_wtf8);
+          candidates.push_back(HeapType::stringview_wtf16);
+          candidates.push_back(HeapType::stringview_iter);
+          break;
+        }
         return pickSubAny();
       case HeapType::nofunc:
         return pickSubFunc();

@@ -456,7 +456,7 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
   if (a == b) {
     return a;
   }
-  if (HeapType(a).getBottom() != HeapType(b).getBottom()) {
+  if (HeapType(a).getTop() != HeapType(b).getTop()) {
     return {};
   }
   if (HeapType(a).isBottom()) {
@@ -494,10 +494,12 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
       return {HeapType::any};
     case HeapType::array:
     case HeapType::string:
+      return {HeapType::any};
     case HeapType::stringview_wtf8:
     case HeapType::stringview_wtf16:
     case HeapType::stringview_iter:
-      return {HeapType::any};
+      // Only joinable with bottom or self, both already handled.
+      return {};
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
@@ -1411,6 +1413,14 @@ HeapType::BasicHeapType HeapType::getBottom() const {
 }
 
 HeapType::BasicHeapType HeapType::getTop() const {
+  if (*this == HeapType::stringview_wtf8 ||
+      *this == HeapType::stringview_wtf16 ||
+      *this == HeapType::stringview_iter) {
+    // These types are their own top types even though they share a bottom type
+    // `none` with the anyref hierarchy. This means that technically there are
+    // multiple top types for `none`, but `any` is the canonical one.
+    return getBasic();
+  }
   switch (getBottom()) {
     case none:
       return any;
@@ -1418,7 +1428,20 @@ HeapType::BasicHeapType HeapType::getTop() const {
       return func;
     case noext:
       return ext;
-    default:
+    case noexn:
+      return exn;
+    case ext:
+    case func:
+    case any:
+    case eq:
+    case i31:
+    case struct_:
+    case array:
+    case exn:
+    case string:
+    case stringview_wtf8:
+    case stringview_wtf16:
+    case stringview_iter:
       break;
   }
   WASM_UNREACHABLE("unexpected type");
@@ -1693,13 +1716,13 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
   if (b.isBasic()) {
     switch (b.getBasic()) {
       case HeapType::ext:
-        return a.getBottom() == HeapType::noext;
+        return a.getTop() == HeapType::ext;
       case HeapType::func:
-        return a.getBottom() == HeapType::nofunc;
+        return a.getTop() == HeapType::func;
       case HeapType::exn:
-        return a.getBottom() == HeapType::noexn;
+        return a.getTop() == HeapType::exn;
       case HeapType::any:
-        return a.getBottom() == HeapType::none;
+        return a.getTop() == HeapType::any;
       case HeapType::eq:
         return a == HeapType::i31 || a == HeapType::none ||
                a == HeapType::struct_ || a == HeapType::array || a.isStruct() ||
