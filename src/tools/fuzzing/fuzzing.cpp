@@ -910,7 +910,8 @@ static bool replaceChildWith(Expression* expr, Expression* with) {
   for (auto*& child : ChildIterator(expr)) {
     // To replace, we must have an appropriate type, and we cannot replace a
     // Pop under any circumstances.
-    if (Type::isSubType(with->type, child->type) && !child->is<Pop>()) {
+    if (Type::isSubType(with->type, child->type) &&
+        FindAll<Pop>(child).list.empty()) {
       child = with;
       return true;
     }
