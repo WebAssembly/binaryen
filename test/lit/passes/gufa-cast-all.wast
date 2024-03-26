@@ -21,6 +21,8 @@
 
   ;; CHECK:      (export "export1" (func $ref))
 
+  ;; CHECK:      (export "export1.5" (func $ref.null))
+
   ;; CHECK:      (export "export2" (func $int))
 
   ;; CHECK:      (export "export3" (func $func))
@@ -47,6 +49,29 @@
     )
     (drop
       ;; We can infer that this contains B, and add a cast to that type.
+      (local.get $a)
+    )
+  )
+
+  ;; CHECK:      (func $ref.null (type $none_=>_none)
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (local.set $a
+  ;; CHECK-NEXT:   (struct.new_default $A)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.as_non_null
+  ;; CHECK-NEXT:    (local.get $a)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref.null (export "export1.5")
+    (local $a (ref null $A))
+    (local.set $a
+      (struct.new $A)
+    )
+    (drop
+      ;; We can infer that this contains a non-nullable A, and add a cast to
+      ;; non-null on it.
       (local.get $a)
     )
   )

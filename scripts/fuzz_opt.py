@@ -333,6 +333,8 @@ INITIAL_CONTENTS_IGNORE = [
     'exception-handling.wast',
     'translate-to-new-eh.wast',
     'rse-eh.wast',
+    # The fuzzer does not support non-WTF16 strings.
+    'gufa-cast-all-strings.wast',
 ]
 
 
