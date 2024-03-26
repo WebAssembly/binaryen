@@ -632,12 +632,12 @@ ignored_vm_run_reasons = dict()
 
 # Notes a VM run that we ignore, and the reason for it (for metrics purposes).
 # Extra text can also be printed that is not included in the metrics.
-def note_ignored_vm_run(reason, extra_text=''):
+def note_ignored_vm_run(reason, extra_text='', amount=1):
     global ignored_vm_runs
     print(f'(ignore VM run: {reason}{extra_text})')
-    ignored_vm_runs += 1
+    ignored_vm_runs += amount
     ignored_vm_run_reasons.setdefault(reason, 0)
-    ignored_vm_run_reasons[reason] += 1
+    ignored_vm_run_reasons[reason] += amount
 
 
 def run_vm(cmd):
@@ -784,7 +784,15 @@ class CompareVMs(TestCaseHandler):
                         # still be useful testing here (up to 50%), so we only
                         # note that this is a mostly-ignored run, but we do not
                         # ignore the parts that are useful.
-                        note_ignored_vm_run('too many errors vs calls', extra_text=f' ({calls} calls, {errors} errors)')
+                        #
+                        # Note that we set amount to 0.5 because we are run both
+                        # on the before wasm and the after wasm. Those will be
+                        # in sync (because the optimizer does not remove traps)
+                        # and so by setting 0.5 we only increment by 1 for the
+                        # entire iteration.
+                        note_ignored_vm_run('too many errors vs calls',
+                                            extra_text=f' ({calls} calls, {errors} errors)',
+                                            amount=0.5)
                 return output
 
             def can_run(self, wasm):
