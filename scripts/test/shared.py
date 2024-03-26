@@ -199,7 +199,7 @@ NATIVEXX = (os.environ.get('CXX') or which('mingw32-g++') or
 NODEJS = os.getenv('NODE', which('node') or which('nodejs'))
 MOZJS = which('mozjs') or which('spidermonkey')
 
-V8 = which('v8') or which('d8')
+V8 = '/usr/local/google/home/tlively/code/v8/v8/out/x64.release/d8' # which('v8') or which('d8')
 
 BINARYEN_INSTALL_DIR = os.path.dirname(options.binaryen_bin)
 WASM_OPT = [os.path.join(options.binaryen_bin, 'wasm-opt')]

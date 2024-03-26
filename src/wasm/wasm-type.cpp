@@ -499,7 +499,7 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
     case HeapType::stringview_wtf16:
     case HeapType::stringview_iter:
       // Only joinable with bottom or self, both already handled.
-      return {};
+      return std::nullopt;
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
