@@ -908,7 +908,9 @@ void TranslateToFuzzReader::recombine(Function* func) {
 // existing content there. Returns true if we found a place.
 static bool replaceChildWith(Expression* expr, Expression* with) {
   for (auto*& child : ChildIterator(expr)) {
-    if (Type::isSubType(with->type, child->type)) {
+    // To replace, we must have an appropriate type, and we cannot replace a
+    // Pop under any circumstances.
+    if (Type::isSubType(with->type, child->type) && !child->is<Pop>()) {
       child = with;
       return true;
     }
