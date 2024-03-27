@@ -3737,15 +3737,13 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
       table->max = Table::kUnlimitedSize;
     }
 
+    // ends with the table element type
     table->type = elementToType(*inner[j++]);
     if (!table->type.isRef()) {
       throw SParseException("Only reference types are valid for tables", s);
     }
 
     wasm.addTable(std::move(table));
-
-    j++; // funcref
-    // ends with the table element type
   } else if (kind == ExternalKind::Memory) {
     auto memory = std::make_unique<Memory>();
     memory->setName(name, hasExplicitName);
