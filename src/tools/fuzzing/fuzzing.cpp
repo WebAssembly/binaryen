@@ -2639,15 +2639,16 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       String::convertWTF8ToWTF16(wtf16, wtf8.str());
       return builder.makeStringConst(wtf16.str());
     }
-    case HeapType::stringview_wtf8:
-      return builder.makeStringAs(
-        StringAsWTF8, makeBasicRef(Type(HeapType::string, NonNullable)));
     case HeapType::stringview_wtf16:
+      // We fully support wtf16 strings.
       return builder.makeStringAs(
         StringAsWTF16, makeBasicRef(Type(HeapType::string, NonNullable)));
+    case HeapType::stringview_wtf8:
     case HeapType::stringview_iter:
-      return builder.makeStringAs(
-        StringAsIter, makeBasicRef(Type(HeapType::string, NonNullable)));
+      // We do not have interpreter support for wtf8 and iter, so emit something
+      // that does not return, with a block that casts to the type the parent
+      // expects.
+      return builder.makeBlock({ builder.makeUnreachable() }, type);
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
