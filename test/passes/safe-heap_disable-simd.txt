@@ -27,18 +27,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_s
@@ -59,18 +66,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_u
@@ -91,18 +105,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_s align=1
@@ -123,18 +144,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -164,18 +192,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_u align=1
@@ -196,18 +231,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -237,18 +279,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load align=1
@@ -269,18 +318,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -310,18 +366,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -351,18 +414,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_s
@@ -383,18 +453,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_u
@@ -415,18 +492,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_s align=1
@@ -447,18 +531,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -488,18 +579,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_u align=1
@@ -520,18 +618,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -561,18 +666,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_s align=1
@@ -593,18 +705,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -634,18 +753,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -675,18 +801,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_u align=1
@@ -707,18 +840,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -748,18 +888,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -789,18 +936,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load align=1
@@ -821,18 +975,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -862,18 +1023,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -903,18 +1071,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -944,18 +1119,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.load align=1
@@ -976,18 +1158,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1017,18 +1206,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1058,18 +1254,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.load align=1
@@ -1090,18 +1293,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1131,18 +1341,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1172,18 +1389,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1213,18 +1437,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store8
@@ -1246,18 +1477,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store16 align=1
@@ -1279,18 +1517,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1321,18 +1566,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store align=1
@@ -1354,18 +1606,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1396,18 +1655,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1438,18 +1704,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store8
@@ -1471,18 +1744,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store16 align=1
@@ -1504,18 +1784,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1546,18 +1833,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store32 align=1
@@ -1579,18 +1873,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1621,18 +1922,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1663,18 +1971,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store align=1
@@ -1696,18 +2011,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1738,18 +2060,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1780,18 +2109,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1822,18 +2158,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.store align=1
@@ -1855,18 +2198,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1897,18 +2247,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1939,18 +2296,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.store align=1
@@ -1972,18 +2336,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2014,18 +2385,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2056,18 +2434,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i32.load
-      (call $emscripten_get_sbrk_ptr)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2114,18 +2499,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_s
@@ -2146,18 +2538,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_u
@@ -2178,18 +2577,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_s align=1
@@ -2210,18 +2616,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2251,18 +2664,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_u align=1
@@ -2283,18 +2703,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2324,18 +2751,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load align=1
@@ -2356,18 +2790,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2397,18 +2838,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2438,18 +2886,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_s
@@ -2470,18 +2925,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_u
@@ -2502,18 +2964,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_s align=1
@@ -2534,18 +3003,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2575,18 +3051,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_u align=1
@@ -2607,18 +3090,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2648,18 +3138,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_s align=1
@@ -2680,18 +3177,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2721,18 +3225,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2762,18 +3273,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_u align=1
@@ -2794,18 +3312,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2835,18 +3360,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2876,18 +3408,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load align=1
@@ -2908,18 +3447,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2949,18 +3495,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2990,18 +3543,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3031,18 +3591,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.load align=1
@@ -3063,18 +3630,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3104,18 +3678,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3145,18 +3726,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.load align=1
@@ -3177,18 +3765,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3218,18 +3813,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3259,18 +3861,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3300,18 +3909,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store8
@@ -3333,18 +3949,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store16 align=1
@@ -3366,18 +3989,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3408,18 +4038,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store align=1
@@ -3441,18 +4078,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3483,18 +4127,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3525,18 +4176,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store8
@@ -3558,18 +4216,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store16 align=1
@@ -3591,18 +4256,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3633,18 +4305,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store32 align=1
@@ -3666,18 +4345,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3708,18 +4394,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3750,18 +4443,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store align=1
@@ -3783,18 +4483,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3825,18 +4532,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3867,18 +4581,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3909,18 +4630,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.store align=1
@@ -3942,18 +4670,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3984,18 +4719,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4026,18 +4768,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.store align=1
@@ -4059,18 +4808,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4101,18 +4857,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4143,18 +4906,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4209,18 +4979,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_s
@@ -4241,18 +5018,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_u
@@ -4273,18 +5057,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_s align=1
@@ -4305,18 +5096,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4346,18 +5144,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_u align=1
@@ -4378,18 +5183,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4419,18 +5231,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load align=1
@@ -4451,18 +5270,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4492,18 +5318,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4533,18 +5366,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_s
@@ -4565,18 +5405,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_u
@@ -4597,18 +5444,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_s align=1
@@ -4629,18 +5483,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4670,18 +5531,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_u align=1
@@ -4702,18 +5570,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4743,18 +5618,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_s align=1
@@ -4775,18 +5657,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4816,18 +5705,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4857,18 +5753,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_u align=1
@@ -4889,18 +5792,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4930,18 +5840,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4971,18 +5888,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load align=1
@@ -5003,18 +5927,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5044,18 +5975,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5085,18 +6023,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5126,18 +6071,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.load align=1
@@ -5158,18 +6110,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5199,18 +6158,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5240,18 +6206,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.load align=1
@@ -5272,18 +6245,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5313,18 +6293,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5354,18 +6341,25 @@
      (local.get $2)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $2)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $2)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5395,18 +6389,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store8
@@ -5428,18 +6429,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store16 align=1
@@ -5461,18 +6469,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5503,18 +6518,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store align=1
@@ -5536,18 +6558,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5578,18 +6607,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5620,18 +6656,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 1)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 1)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store8
@@ -5653,18 +6696,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store16 align=1
@@ -5686,18 +6736,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 2)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 2)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5728,18 +6785,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store32 align=1
@@ -5761,18 +6825,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5803,18 +6874,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5845,18 +6923,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store align=1
@@ -5878,18 +6963,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5920,18 +7012,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5962,18 +7061,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6004,18 +7110,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.store align=1
@@ -6037,18 +7150,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6079,18 +7199,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 4)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 4)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6121,18 +7248,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.store align=1
@@ -6154,18 +7288,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6196,18 +7337,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6238,18 +7386,25 @@
      (local.get $3)
      (i32.const 0)
     )
-    (i32.gt_u
-     (i32.add
-      (local.get $3)
-      (i32.const 8)
+    (i32.or
+     (i32.gt_u
+      (i32.add
+       (local.get $3)
+       (i32.const 8)
+      )
+      (i32.load
+       (call $foo)
+      )
      )
-     (i32.load
-      (call $foo)
+     (i32.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
