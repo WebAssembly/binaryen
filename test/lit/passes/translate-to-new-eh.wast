@@ -67,18 +67,20 @@
   ;; without rethrows
 
   ;; CHECK:      (func $try-none-tag-none (type $1)
-  ;; CHECK-NEXT:  (block $outer0
-  ;; CHECK-NEXT:   (block $catch_all2
-  ;; CHECK-NEXT:    (block $catch1
-  ;; CHECK-NEXT:     (try_table (catch $e-empty $catch1) (catch_all $catch_all2)
-  ;; CHECK-NEXT:      (call $foo)
+  ;; CHECK-NEXT:  (block $l0
+  ;; CHECK-NEXT:   (block $outer0
+  ;; CHECK-NEXT:    (block $catch_all2
+  ;; CHECK-NEXT:     (block $catch1
+  ;; CHECK-NEXT:      (try_table (catch $e-empty $catch1) (catch_all $catch_all2)
+  ;; CHECK-NEXT:       (call $foo)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (br $outer0)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $foo)
   ;; CHECK-NEXT:     (br $outer0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (call $foo)
-  ;; CHECK-NEXT:    (br $outer0)
+  ;; CHECK-NEXT:    (call $bar)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $bar)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; STACKIR-OPT:      (func $try-none-tag-none (type $1)
@@ -113,24 +115,26 @@
 
   ;; CHECK:      (func $try-none-tag-none-with-rethrow (type $1)
   ;; CHECK-NEXT:  (local $0 exnref)
-  ;; CHECK-NEXT:  (block $outer0
-  ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
-  ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (block $catch1 (result exnref)
-  ;; CHECK-NEXT:       (try_table (catch_ref $e-empty $catch1) (catch_all_ref $catch_all2)
-  ;; CHECK-NEXT:        (call $foo)
+  ;; CHECK-NEXT:  (block $l0
+  ;; CHECK-NEXT:   (block $outer0
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (block $catch1 (result exnref)
+  ;; CHECK-NEXT:        (try_table (catch_ref $e-empty $catch1) (catch_all_ref $catch_all2)
+  ;; CHECK-NEXT:         (call $foo)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (br $outer0)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (br $outer0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (throw_ref
+  ;; CHECK-NEXT:       (local.get $0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (throw_ref
-  ;; CHECK-NEXT:      (local.get $0)
-  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (throw_ref
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (throw_ref
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -166,22 +170,24 @@
 
   ;; CHECK:      (func $try-none-tag-single (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (block $outer0
-  ;; CHECK-NEXT:   (block $catch_all2
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (block $catch1 (result i32)
-  ;; CHECK-NEXT:      (try_table (catch $e-i32 $catch1) (catch_all $catch_all2)
-  ;; CHECK-NEXT:       (call $foo)
+  ;; CHECK-NEXT:  (block $l0
+  ;; CHECK-NEXT:   (block $outer0
+  ;; CHECK-NEXT:    (block $catch_all2
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (block $catch1 (result i32)
+  ;; CHECK-NEXT:       (try_table (catch $e-i32 $catch1) (catch_all $catch_all2)
+  ;; CHECK-NEXT:        (call $foo)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (br $outer0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (br $outer0)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br $outer0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (br $outer0)
+  ;; CHECK-NEXT:    (call $bar)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $bar)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; STACKIR-OPT:      (func $try-none-tag-single (type $1)
@@ -221,39 +227,41 @@
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 (tuple i32 exnref))
-  ;; CHECK-NEXT:  (block $outer0
-  ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
-  ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (block $catch1 (type $3) (result i32 exnref)
-  ;; CHECK-NEXT:       (try_table (catch_ref $e-i32 $catch1) (catch_all_ref $catch_all2)
-  ;; CHECK-NEXT:        (call $foo)
+  ;; CHECK-NEXT:  (block $l0
+  ;; CHECK-NEXT:   (block $outer0
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (block $catch1 (type $3) (result i32 exnref)
+  ;; CHECK-NEXT:        (try_table (catch_ref $e-i32 $catch1) (catch_all_ref $catch_all2)
+  ;; CHECK-NEXT:         (call $foo)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (br $outer0)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (br $outer0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (tuple.extract 2 0
-  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (tuple.extract 2 0
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (tuple.extract 2 1
-  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (tuple.extract 2 1
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.get $1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (throw_ref
-  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (throw_ref
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (throw_ref
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (throw_ref
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -302,22 +310,24 @@
 
   ;; CHECK:      (func $try-none-tag-tuple (type $1)
   ;; CHECK-NEXT:  (local $0 (tuple i32 i64))
-  ;; CHECK-NEXT:  (block $outer0
-  ;; CHECK-NEXT:   (block $catch_all2
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (block $catch1 (type $0) (result i32 i64)
-  ;; CHECK-NEXT:      (try_table (catch $e-i32-i64 $catch1) (catch_all $catch_all2)
-  ;; CHECK-NEXT:       (call $foo)
+  ;; CHECK-NEXT:  (block $l0
+  ;; CHECK-NEXT:   (block $outer0
+  ;; CHECK-NEXT:    (block $catch_all2
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (block $catch1 (type $0) (result i32 i64)
+  ;; CHECK-NEXT:       (try_table (catch $e-i32-i64 $catch1) (catch_all $catch_all2)
+  ;; CHECK-NEXT:        (call $foo)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (br $outer0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (br $outer0)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (tuple.drop 2
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br $outer0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (tuple.drop 2
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (br $outer0)
+  ;; CHECK-NEXT:    (call $bar)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (call $bar)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; STACKIR-OPT:      (func $try-none-tag-tuple (type $1)
@@ -359,44 +369,46 @@
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 (tuple i32 i64))
   ;; CHECK-NEXT:  (local $2 (tuple i32 i64 exnref))
-  ;; CHECK-NEXT:  (block $outer0
-  ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
-  ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (block $catch1 (type $4) (result i32 i64 exnref)
-  ;; CHECK-NEXT:       (try_table (catch_ref $e-i32-i64 $catch1) (catch_all_ref $catch_all2)
-  ;; CHECK-NEXT:        (call $foo)
+  ;; CHECK-NEXT:  (block $l0
+  ;; CHECK-NEXT:   (block $outer0
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (block $catch1 (type $4) (result i32 i64 exnref)
+  ;; CHECK-NEXT:        (try_table (catch_ref $e-i32-i64 $catch1) (catch_all_ref $catch_all2)
+  ;; CHECK-NEXT:         (call $foo)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (br $outer0)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (br $outer0)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (tuple.make 2
-  ;; CHECK-NEXT:       (tuple.extract 3 0
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (tuple.make 2
+  ;; CHECK-NEXT:        (tuple.extract 3 0
+  ;; CHECK-NEXT:         (local.get $2)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (tuple.extract 3 1
+  ;; CHECK-NEXT:         (local.get $2)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (tuple.extract 3 2
   ;; CHECK-NEXT:        (local.get $2)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (tuple.extract 3 1
-  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:       (tuple.drop 2
+  ;; CHECK-NEXT:        (local.get $1)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (tuple.extract 3 2
-  ;; CHECK-NEXT:       (local.get $2)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (tuple.drop 2
-  ;; CHECK-NEXT:       (local.get $1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (throw_ref
-  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:       (throw_ref
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (throw_ref
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (throw_ref
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -447,21 +459,23 @@
   )
 
   ;; CHECK:      (func $try-single-tag-none (type $2) (result i32)
-  ;; CHECK-NEXT:  (block $outer0 (result i32)
-  ;; CHECK-NEXT:   (block $catch_all2
-  ;; CHECK-NEXT:    (block $catch1
-  ;; CHECK-NEXT:     (br $outer0
-  ;; CHECK-NEXT:      (try_table (result i32) (catch $e-empty $catch1) (catch_all $catch_all2)
-  ;; CHECK-NEXT:       (call $foo)
-  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:  (block $l0 (result i32)
+  ;; CHECK-NEXT:   (block $outer0 (result i32)
+  ;; CHECK-NEXT:    (block $catch_all2
+  ;; CHECK-NEXT:     (block $catch1
+  ;; CHECK-NEXT:      (br $outer0
+  ;; CHECK-NEXT:       (try_table (result i32) (catch $e-empty $catch1) (catch_all $catch_all2)
+  ;; CHECK-NEXT:        (call $foo)
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br $outer0
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (br $outer0
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; STACKIR-OPT:      (func $try-single-tag-none (type $2) (result i32)
@@ -498,26 +512,28 @@
 
   ;; CHECK:      (func $try-single-tag-none-with-rethrow (type $2) (result i32)
   ;; CHECK-NEXT:  (local $0 exnref)
-  ;; CHECK-NEXT:  (block $outer0 (result i32)
-  ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
-  ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (block $catch1 (result exnref)
-  ;; CHECK-NEXT:       (br $outer0
-  ;; CHECK-NEXT:        (try_table (result i32) (catch_ref $e-empty $catch1) (catch_all_ref $catch_all2)
-  ;; CHECK-NEXT:         (call $foo)
-  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:  (block $l0 (result i32)
+  ;; CHECK-NEXT:   (block $outer0 (result i32)
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (block $catch1 (result exnref)
+  ;; CHECK-NEXT:        (br $outer0
+  ;; CHECK-NEXT:         (try_table (result i32) (catch_ref $e-empty $catch1) (catch_all_ref $catch_all2)
+  ;; CHECK-NEXT:          (call $foo)
+  ;; CHECK-NEXT:          (i32.const 0)
+  ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (throw_ref
-  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:      (throw_ref
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (throw_ref
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (throw_ref
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -555,23 +571,25 @@
 
   ;; CHECK:      (func $try-single-tag-single (type $2) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (block $outer0 (result i32)
-  ;; CHECK-NEXT:   (block $catch_all2
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (block $catch1 (result i32)
-  ;; CHECK-NEXT:      (br $outer0
-  ;; CHECK-NEXT:       (try_table (result i32) (catch $e-i32 $catch1) (catch_all $catch_all2)
-  ;; CHECK-NEXT:        (call $foo)
-  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:  (block $l0 (result i32)
+  ;; CHECK-NEXT:   (block $outer0 (result i32)
+  ;; CHECK-NEXT:    (block $catch_all2
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (block $catch1 (result i32)
+  ;; CHECK-NEXT:       (br $outer0
+  ;; CHECK-NEXT:        (try_table (result i32) (catch $e-i32 $catch1) (catch_all $catch_all2)
+  ;; CHECK-NEXT:         (call $foo)
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br $outer0
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (br $outer0
-  ;; CHECK-NEXT:     (local.get $0)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; STACKIR-OPT:      (func $try-single-tag-single (type $2) (result i32)
@@ -610,43 +628,45 @@
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 (tuple i32 exnref))
-  ;; CHECK-NEXT:  (block $outer0 (result i32)
-  ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
-  ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (block $catch1 (type $3) (result i32 exnref)
-  ;; CHECK-NEXT:       (br $outer0
-  ;; CHECK-NEXT:        (try_table (result i32) (catch_ref $e-i32 $catch1) (catch_all_ref $catch_all2)
-  ;; CHECK-NEXT:         (call $foo)
-  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:  (block $l0 (result i32)
+  ;; CHECK-NEXT:   (block $outer0 (result i32)
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (block $catch1 (type $3) (result i32 exnref)
+  ;; CHECK-NEXT:        (br $outer0
+  ;; CHECK-NEXT:         (try_table (result i32) (catch_ref $e-i32 $catch1) (catch_all_ref $catch_all2)
+  ;; CHECK-NEXT:          (call $foo)
+  ;; CHECK-NEXT:          (i32.const 0)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (tuple.extract 2 0
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (tuple.extract 2 1
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (br $outer0
+  ;; CHECK-NEXT:       (block (result i32)
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (local.get $1)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (throw_ref
+  ;; CHECK-NEXT:         (local.get $0)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (tuple.extract 2 0
-  ;; CHECK-NEXT:       (local.get $2)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (tuple.extract 2 1
-  ;; CHECK-NEXT:       (local.get $2)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (br $outer0
-  ;; CHECK-NEXT:      (block (result i32)
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (local.get $1)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (throw_ref
-  ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (throw_ref
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (throw_ref
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -698,28 +718,30 @@
 
   ;; CHECK:      (func $try-single-tag-tuple (type $2) (result i32)
   ;; CHECK-NEXT:  (local $0 (tuple i32 i64))
-  ;; CHECK-NEXT:  (block $outer0 (result i32)
-  ;; CHECK-NEXT:   (block $catch_all2
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (block $catch1 (type $0) (result i32 i64)
-  ;; CHECK-NEXT:      (br $outer0
-  ;; CHECK-NEXT:       (try_table (result i32) (catch $e-i32-i64 $catch1) (catch_all $catch_all2)
-  ;; CHECK-NEXT:        (call $foo)
-  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:  (block $l0 (result i32)
+  ;; CHECK-NEXT:   (block $outer0 (result i32)
+  ;; CHECK-NEXT:    (block $catch_all2
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (block $catch1 (type $0) (result i32 i64)
+  ;; CHECK-NEXT:       (br $outer0
+  ;; CHECK-NEXT:        (try_table (result i32) (catch $e-i32-i64 $catch1) (catch_all $catch_all2)
+  ;; CHECK-NEXT:         (call $foo)
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (br $outer0
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (tuple.drop 2
-  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:     (br $outer0
+  ;; CHECK-NEXT:      (block (result i32)
+  ;; CHECK-NEXT:       (tuple.drop 2
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 1)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; STACKIR-OPT:      (func $try-single-tag-tuple (type $2) (result i32)
@@ -765,48 +787,50 @@
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 (tuple i32 i64))
   ;; CHECK-NEXT:  (local $2 (tuple i32 i64 exnref))
-  ;; CHECK-NEXT:  (block $outer0 (result i32)
-  ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
-  ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (block $catch1 (type $4) (result i32 i64 exnref)
-  ;; CHECK-NEXT:       (br $outer0
-  ;; CHECK-NEXT:        (try_table (result i32) (catch_ref $e-i32-i64 $catch1) (catch_all_ref $catch_all2)
-  ;; CHECK-NEXT:         (call $foo)
-  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:  (block $l0 (result i32)
+  ;; CHECK-NEXT:   (block $outer0 (result i32)
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (block $catch1 (type $4) (result i32 i64 exnref)
+  ;; CHECK-NEXT:        (br $outer0
+  ;; CHECK-NEXT:         (try_table (result i32) (catch_ref $e-i32-i64 $catch1) (catch_all_ref $catch_all2)
+  ;; CHECK-NEXT:          (call $foo)
+  ;; CHECK-NEXT:          (i32.const 0)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (tuple.make 2
+  ;; CHECK-NEXT:        (tuple.extract 3 0
+  ;; CHECK-NEXT:         (local.get $2)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (tuple.extract 3 1
+  ;; CHECK-NEXT:         (local.get $2)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (tuple.extract 3 2
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (br $outer0
+  ;; CHECK-NEXT:       (block (result i32)
+  ;; CHECK-NEXT:        (tuple.drop 2
+  ;; CHECK-NEXT:         (local.get $1)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (throw_ref
+  ;; CHECK-NEXT:         (local.get $0)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (tuple.make 2
-  ;; CHECK-NEXT:       (tuple.extract 3 0
-  ;; CHECK-NEXT:        (local.get $2)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (tuple.extract 3 1
-  ;; CHECK-NEXT:        (local.get $2)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (tuple.extract 3 2
-  ;; CHECK-NEXT:       (local.get $2)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (br $outer0
-  ;; CHECK-NEXT:      (block (result i32)
-  ;; CHECK-NEXT:       (tuple.drop 2
-  ;; CHECK-NEXT:        (local.get $1)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (throw_ref
-  ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (throw_ref
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (throw_ref
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -860,29 +884,31 @@
   )
 
   ;; CHECK:      (func $try-tuple-tag-none (type $0) (result i32 i64)
-  ;; CHECK-NEXT:  (block $outer0 (type $0) (result i32 i64)
-  ;; CHECK-NEXT:   (block $catch_all2
-  ;; CHECK-NEXT:    (block $catch1
-  ;; CHECK-NEXT:     (br $outer0
-  ;; CHECK-NEXT:      (try_table (type $0) (result i32 i64) (catch $e-empty $catch1) (catch_all $catch_all2)
-  ;; CHECK-NEXT:       (call $foo)
-  ;; CHECK-NEXT:       (tuple.make 2
-  ;; CHECK-NEXT:        (i32.const 0)
-  ;; CHECK-NEXT:        (i64.const 0)
+  ;; CHECK-NEXT:  (block $l0 (type $0) (result i32 i64)
+  ;; CHECK-NEXT:   (block $outer0 (type $0) (result i32 i64)
+  ;; CHECK-NEXT:    (block $catch_all2
+  ;; CHECK-NEXT:     (block $catch1
+  ;; CHECK-NEXT:      (br $outer0
+  ;; CHECK-NEXT:       (try_table (type $0) (result i32 i64) (catch $e-empty $catch1) (catch_all $catch_all2)
+  ;; CHECK-NEXT:        (call $foo)
+  ;; CHECK-NEXT:        (tuple.make 2
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:         (i64.const 0)
+  ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (br $outer0
-  ;; CHECK-NEXT:     (tuple.make 2
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:      (i64.const 1)
+  ;; CHECK-NEXT:     (br $outer0
+  ;; CHECK-NEXT:      (tuple.make 2
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:       (i64.const 1)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (tuple.make 2
-  ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:    (tuple.make 2
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:     (i64.const 0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -935,29 +961,31 @@
 
   ;; CHECK:      (func $try-tuple-tag-none-with-rethrow (type $0) (result i32 i64)
   ;; CHECK-NEXT:  (local $0 exnref)
-  ;; CHECK-NEXT:  (block $outer0 (type $0) (result i32 i64)
-  ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
-  ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (block $catch1 (result exnref)
-  ;; CHECK-NEXT:       (br $outer0
-  ;; CHECK-NEXT:        (try_table (type $0) (result i32 i64) (catch_ref $e-empty $catch1) (catch_all_ref $catch_all2)
-  ;; CHECK-NEXT:         (call $foo)
-  ;; CHECK-NEXT:         (tuple.make 2
-  ;; CHECK-NEXT:          (i32.const 0)
-  ;; CHECK-NEXT:          (i64.const 0)
+  ;; CHECK-NEXT:  (block $l0 (type $0) (result i32 i64)
+  ;; CHECK-NEXT:   (block $outer0 (type $0) (result i32 i64)
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (block $catch1 (result exnref)
+  ;; CHECK-NEXT:        (br $outer0
+  ;; CHECK-NEXT:         (try_table (type $0) (result i32 i64) (catch_ref $e-empty $catch1) (catch_all_ref $catch_all2)
+  ;; CHECK-NEXT:          (call $foo)
+  ;; CHECK-NEXT:          (tuple.make 2
+  ;; CHECK-NEXT:           (i32.const 0)
+  ;; CHECK-NEXT:           (i64.const 0)
+  ;; CHECK-NEXT:          )
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (throw_ref
-  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:      (throw_ref
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (throw_ref
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (throw_ref
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1000,31 +1028,33 @@
 
   ;; CHECK:      (func $try-tuple-tag-single (type $0) (result i32 i64)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (block $outer0 (type $0) (result i32 i64)
-  ;; CHECK-NEXT:   (block $catch_all2
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (block $catch1 (result i32)
-  ;; CHECK-NEXT:      (br $outer0
-  ;; CHECK-NEXT:       (try_table (type $0) (result i32 i64) (catch $e-i32 $catch1) (catch_all $catch_all2)
-  ;; CHECK-NEXT:        (call $foo)
-  ;; CHECK-NEXT:        (tuple.make 2
-  ;; CHECK-NEXT:         (i32.const 0)
-  ;; CHECK-NEXT:         (i64.const 0)
+  ;; CHECK-NEXT:  (block $l0 (type $0) (result i32 i64)
+  ;; CHECK-NEXT:   (block $outer0 (type $0) (result i32 i64)
+  ;; CHECK-NEXT:    (block $catch_all2
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (block $catch1 (result i32)
+  ;; CHECK-NEXT:       (br $outer0
+  ;; CHECK-NEXT:        (try_table (type $0) (result i32 i64) (catch $e-i32 $catch1) (catch_all $catch_all2)
+  ;; CHECK-NEXT:         (call $foo)
+  ;; CHECK-NEXT:         (tuple.make 2
+  ;; CHECK-NEXT:          (i32.const 0)
+  ;; CHECK-NEXT:          (i64.const 0)
+  ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (br $outer0
-  ;; CHECK-NEXT:     (tuple.make 2
-  ;; CHECK-NEXT:      (local.get $0)
-  ;; CHECK-NEXT:      (i64.const 0)
+  ;; CHECK-NEXT:     (br $outer0
+  ;; CHECK-NEXT:      (tuple.make 2
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:       (i64.const 0)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (tuple.make 2
-  ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:    (i64.const 2)
+  ;; CHECK-NEXT:    (tuple.make 2
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:     (i64.const 2)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1079,46 +1109,48 @@
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 (tuple i32 exnref))
-  ;; CHECK-NEXT:  (block $outer0 (type $0) (result i32 i64)
-  ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
-  ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (block $catch1 (type $3) (result i32 exnref)
-  ;; CHECK-NEXT:       (br $outer0
-  ;; CHECK-NEXT:        (try_table (type $0) (result i32 i64) (catch_ref $e-i32 $catch1) (catch_all_ref $catch_all2)
-  ;; CHECK-NEXT:         (call $foo)
-  ;; CHECK-NEXT:         (tuple.make 2
-  ;; CHECK-NEXT:          (i32.const 0)
-  ;; CHECK-NEXT:          (i64.const 0)
+  ;; CHECK-NEXT:  (block $l0 (type $0) (result i32 i64)
+  ;; CHECK-NEXT:   (block $outer0 (type $0) (result i32 i64)
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (block $catch1 (type $3) (result i32 exnref)
+  ;; CHECK-NEXT:        (br $outer0
+  ;; CHECK-NEXT:         (try_table (type $0) (result i32 i64) (catch_ref $e-i32 $catch1) (catch_all_ref $catch_all2)
+  ;; CHECK-NEXT:          (call $foo)
+  ;; CHECK-NEXT:          (tuple.make 2
+  ;; CHECK-NEXT:           (i32.const 0)
+  ;; CHECK-NEXT:           (i64.const 0)
+  ;; CHECK-NEXT:          )
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (tuple.extract 2 0
-  ;; CHECK-NEXT:       (local.get $2)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (tuple.extract 2 1
-  ;; CHECK-NEXT:       (local.get $2)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (br $outer0
-  ;; CHECK-NEXT:      (block (type $0) (result i32 i64)
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (tuple.extract 2 0
+  ;; CHECK-NEXT:        (local.get $2)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (throw_ref
-  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (tuple.extract 2 1
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (br $outer0
+  ;; CHECK-NEXT:       (block (type $0) (result i32 i64)
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (local.get $1)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (throw_ref
+  ;; CHECK-NEXT:         (local.get $0)
+  ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (throw_ref
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (throw_ref
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1175,28 +1207,30 @@
 
   ;; CHECK:      (func $try-tuple-tag-tuple (type $0) (result i32 i64)
   ;; CHECK-NEXT:  (local $0 (tuple i32 i64))
-  ;; CHECK-NEXT:  (block $outer0 (type $0) (result i32 i64)
-  ;; CHECK-NEXT:   (block $catch_all2
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (block $catch1 (type $0) (result i32 i64)
-  ;; CHECK-NEXT:      (br $outer0
-  ;; CHECK-NEXT:       (try_table (type $0) (result i32 i64) (catch $e-i32-i64 $catch1) (catch_all $catch_all2)
-  ;; CHECK-NEXT:        (call $foo)
-  ;; CHECK-NEXT:        (tuple.make 2
-  ;; CHECK-NEXT:         (i32.const 0)
-  ;; CHECK-NEXT:         (i64.const 0)
+  ;; CHECK-NEXT:  (block $l0 (type $0) (result i32 i64)
+  ;; CHECK-NEXT:   (block $outer0 (type $0) (result i32 i64)
+  ;; CHECK-NEXT:    (block $catch_all2
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (block $catch1 (type $0) (result i32 i64)
+  ;; CHECK-NEXT:       (br $outer0
+  ;; CHECK-NEXT:        (try_table (type $0) (result i32 i64) (catch $e-i32-i64 $catch1) (catch_all $catch_all2)
+  ;; CHECK-NEXT:         (call $foo)
+  ;; CHECK-NEXT:         (tuple.make 2
+  ;; CHECK-NEXT:          (i32.const 0)
+  ;; CHECK-NEXT:          (i64.const 0)
+  ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br $outer0
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (br $outer0
-  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    (tuple.make 2
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:     (i64.const 2)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (tuple.make 2
-  ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:    (i64.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1248,51 +1282,53 @@
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 (tuple i32 i64))
   ;; CHECK-NEXT:  (local $2 (tuple i32 i64 exnref))
-  ;; CHECK-NEXT:  (block $outer0 (type $0) (result i32 i64)
-  ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
-  ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (block $catch1 (type $4) (result i32 i64 exnref)
-  ;; CHECK-NEXT:       (br $outer0
-  ;; CHECK-NEXT:        (try_table (type $0) (result i32 i64) (catch_ref $e-i32-i64 $catch1) (catch_all_ref $catch_all2)
-  ;; CHECK-NEXT:         (call $foo)
-  ;; CHECK-NEXT:         (tuple.make 2
-  ;; CHECK-NEXT:          (i32.const 0)
-  ;; CHECK-NEXT:          (i64.const 0)
+  ;; CHECK-NEXT:  (block $l0 (type $0) (result i32 i64)
+  ;; CHECK-NEXT:   (block $outer0 (type $0) (result i32 i64)
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (block $catch1 (type $4) (result i32 i64 exnref)
+  ;; CHECK-NEXT:        (br $outer0
+  ;; CHECK-NEXT:         (try_table (type $0) (result i32 i64) (catch_ref $e-i32-i64 $catch1) (catch_all_ref $catch_all2)
+  ;; CHECK-NEXT:          (call $foo)
+  ;; CHECK-NEXT:          (tuple.make 2
+  ;; CHECK-NEXT:           (i32.const 0)
+  ;; CHECK-NEXT:           (i64.const 0)
+  ;; CHECK-NEXT:          )
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.set $1
-  ;; CHECK-NEXT:      (tuple.make 2
-  ;; CHECK-NEXT:       (tuple.extract 3 0
-  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (tuple.make 2
+  ;; CHECK-NEXT:        (tuple.extract 3 0
+  ;; CHECK-NEXT:         (local.get $2)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (tuple.extract 3 1
+  ;; CHECK-NEXT:         (local.get $2)
+  ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (tuple.extract 3 1
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (tuple.extract 3 2
   ;; CHECK-NEXT:        (local.get $2)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (tuple.extract 3 2
-  ;; CHECK-NEXT:       (local.get $2)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (br $outer0
-  ;; CHECK-NEXT:      (block (type $0) (result i32 i64)
-  ;; CHECK-NEXT:       (tuple.drop 2
-  ;; CHECK-NEXT:        (local.get $1)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (throw_ref
-  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:      (br $outer0
+  ;; CHECK-NEXT:       (block (type $0) (result i32 i64)
+  ;; CHECK-NEXT:        (tuple.drop 2
+  ;; CHECK-NEXT:         (local.get $1)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (throw_ref
+  ;; CHECK-NEXT:         (local.get $0)
+  ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (throw_ref
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (throw_ref
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1377,73 +1413,75 @@
   ;; CHECK-NEXT:  (local $2 (tuple i32 i64))
   ;; CHECK-NEXT:  (local $3 (tuple i32 exnref))
   ;; CHECK-NEXT:  (local $4 (tuple i32 i64 exnref))
-  ;; CHECK-NEXT:  (block $outer0
-  ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all4 (result exnref)
-  ;; CHECK-NEXT:     (local.set $4
-  ;; CHECK-NEXT:      (block $catch3 (type $4) (result i32 i64 exnref)
-  ;; CHECK-NEXT:       (local.set $3
-  ;; CHECK-NEXT:        (block $catch2 (type $3) (result i32 exnref)
-  ;; CHECK-NEXT:         (local.set $0
-  ;; CHECK-NEXT:          (block $catch1 (result exnref)
-  ;; CHECK-NEXT:           (try_table (catch_ref $e-empty $catch1) (catch_ref $e-i32 $catch2) (catch_ref $e-i32-i64 $catch3) (catch_all_ref $catch_all4)
-  ;; CHECK-NEXT:            (call $foo)
+  ;; CHECK-NEXT:  (block $l0
+  ;; CHECK-NEXT:   (block $outer0
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (block $catch_all4 (result exnref)
+  ;; CHECK-NEXT:      (local.set $4
+  ;; CHECK-NEXT:       (block $catch3 (type $4) (result i32 i64 exnref)
+  ;; CHECK-NEXT:        (local.set $3
+  ;; CHECK-NEXT:         (block $catch2 (type $3) (result i32 exnref)
+  ;; CHECK-NEXT:          (local.set $0
+  ;; CHECK-NEXT:           (block $catch1 (result exnref)
+  ;; CHECK-NEXT:            (try_table (catch_ref $e-empty $catch1) (catch_ref $e-i32 $catch2) (catch_ref $e-i32-i64 $catch3) (catch_all_ref $catch_all4)
+  ;; CHECK-NEXT:             (call $foo)
+  ;; CHECK-NEXT:            )
+  ;; CHECK-NEXT:            (br $outer0)
   ;; CHECK-NEXT:           )
-  ;; CHECK-NEXT:           (br $outer0)
   ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:          (throw_ref
+  ;; CHECK-NEXT:           (local.get $0)
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (local.set $1
+  ;; CHECK-NEXT:         (tuple.extract 2 0
+  ;; CHECK-NEXT:          (local.get $3)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (local.set $0
+  ;; CHECK-NEXT:         (tuple.extract 2 1
+  ;; CHECK-NEXT:          (local.get $3)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (block
+  ;; CHECK-NEXT:         (drop
+  ;; CHECK-NEXT:          (local.get $1)
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:         (throw_ref
   ;; CHECK-NEXT:          (local.get $0)
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (local.set $1
-  ;; CHECK-NEXT:        (tuple.extract 2 0
-  ;; CHECK-NEXT:         (local.get $3)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (tuple.make 2
+  ;; CHECK-NEXT:        (tuple.extract 3 0
+  ;; CHECK-NEXT:         (local.get $4)
   ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (local.set $0
-  ;; CHECK-NEXT:        (tuple.extract 2 1
-  ;; CHECK-NEXT:         (local.get $3)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (block
-  ;; CHECK-NEXT:        (drop
-  ;; CHECK-NEXT:         (local.get $1)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (throw_ref
-  ;; CHECK-NEXT:         (local.get $0)
+  ;; CHECK-NEXT:        (tuple.extract 3 1
+  ;; CHECK-NEXT:         (local.get $4)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (tuple.make 2
-  ;; CHECK-NEXT:       (tuple.extract 3 0
-  ;; CHECK-NEXT:        (local.get $4)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (tuple.extract 3 1
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (tuple.extract 3 2
   ;; CHECK-NEXT:        (local.get $4)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (tuple.extract 3 2
-  ;; CHECK-NEXT:       (local.get $4)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (tuple.drop 2
-  ;; CHECK-NEXT:       (local.get $2)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (throw_ref
-  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:       (tuple.drop 2
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (throw_ref
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (throw_ref
-  ;; CHECK-NEXT:    (local.get $0)
+  ;; CHECK-NEXT:    (throw_ref
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -1520,31 +1558,35 @@
   ;; CHECK:      (func $nested-catch-rethrows (type $1)
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 exnref)
-  ;; CHECK-NEXT:  (block $outer3
-  ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all4 (result exnref)
-  ;; CHECK-NEXT:     (try_table (catch_all_ref $catch_all4)
-  ;; CHECK-NEXT:      (call $foo)
+  ;; CHECK-NEXT:  (block $l0
+  ;; CHECK-NEXT:   (block $outer3
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (block $catch_all4 (result exnref)
+  ;; CHECK-NEXT:      (try_table (catch_all_ref $catch_all4)
+  ;; CHECK-NEXT:       (call $foo)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (br $outer3)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (br $outer3)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block $outer0
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (block $catch2 (result exnref)
-  ;; CHECK-NEXT:      (block $catch1
-  ;; CHECK-NEXT:       (try_table (catch $e-empty $catch1) (catch_ref $e-empty $catch2)
-  ;; CHECK-NEXT:        (call $foo)
+  ;; CHECK-NEXT:    (block $l1
+  ;; CHECK-NEXT:     (block $outer0
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (block $catch2 (result exnref)
+  ;; CHECK-NEXT:        (block $catch1
+  ;; CHECK-NEXT:         (try_table (catch $e-empty $catch1) (catch_ref $e-empty $catch2)
+  ;; CHECK-NEXT:          (call $foo)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:         (br $outer0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (throw_ref
+  ;; CHECK-NEXT:         (local.get $0)
+  ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (br $outer0)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (throw_ref
-  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:       (local.get $1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (throw_ref
-  ;; CHECK-NEXT:     (local.get $1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -1606,31 +1648,33 @@
   ;; try-delegate tests
 
   ;; CHECK:      (func $delegate-target-outer-try-none (type $1)
-  ;; CHECK-NEXT:  (block $outer1
-  ;; CHECK-NEXT:   (block $catch_all2
-  ;; CHECK-NEXT:    (try_table (catch_all $catch_all2)
-  ;; CHECK-NEXT:     (throw_ref
-  ;; CHECK-NEXT:      (block $l00 (result exnref)
-  ;; CHECK-NEXT:       (call $foo)
-  ;; CHECK-NEXT:       (try_table (catch_all_ref $l00)
-  ;; CHECK-NEXT:        (call $bar)
+  ;; CHECK-NEXT:  (block $l0
+  ;; CHECK-NEXT:   (block $outer1
+  ;; CHECK-NEXT:    (block $catch_all2
+  ;; CHECK-NEXT:     (try_table (catch_all $catch_all2)
+  ;; CHECK-NEXT:      (throw_ref
+  ;; CHECK-NEXT:       (block $__delegate__l00 (result exnref)
+  ;; CHECK-NEXT:        (call $foo)
+  ;; CHECK-NEXT:        (try_table (catch_all_ref $__delegate__l00)
+  ;; CHECK-NEXT:         (call $bar)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (call $baz)
+  ;; CHECK-NEXT:        (br $outer1)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $baz)
-  ;; CHECK-NEXT:       (br $outer1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; STACKIR-OPT:      (func $delegate-target-outer-try-none (type $1)
   ;; STACKIR-OPT-NEXT:  block $outer1
   ;; STACKIR-OPT-NEXT:   block $catch_all2
   ;; STACKIR-OPT-NEXT:    try_table (catch_all $catch_all2)
-  ;; STACKIR-OPT-NEXT:     block $l00 (result exnref)
+  ;; STACKIR-OPT-NEXT:     block $__delegate__l00 (result exnref)
   ;; STACKIR-OPT-NEXT:      call $foo
-  ;; STACKIR-OPT-NEXT:      try_table (catch_all_ref $l00)
+  ;; STACKIR-OPT-NEXT:      try_table (catch_all_ref $__delegate__l00)
   ;; STACKIR-OPT-NEXT:       call $bar
   ;; STACKIR-OPT-NEXT:      end
   ;; STACKIR-OPT-NEXT:      call $baz
@@ -1660,37 +1704,39 @@
   )
 
   ;; CHECK:      (func $multiple-delegates-target-outer-try-none (type $1)
-  ;; CHECK-NEXT:  (block $outer1
-  ;; CHECK-NEXT:   (block $catch_all2
-  ;; CHECK-NEXT:    (try_table (catch_all $catch_all2)
-  ;; CHECK-NEXT:     (throw_ref
-  ;; CHECK-NEXT:      (block $l00 (result exnref)
-  ;; CHECK-NEXT:       (call $foo)
-  ;; CHECK-NEXT:       (try_table (catch_all_ref $l00)
-  ;; CHECK-NEXT:        (call $bar)
+  ;; CHECK-NEXT:  (block $l0
+  ;; CHECK-NEXT:   (block $outer1
+  ;; CHECK-NEXT:    (block $catch_all2
+  ;; CHECK-NEXT:     (try_table (catch_all $catch_all2)
+  ;; CHECK-NEXT:      (throw_ref
+  ;; CHECK-NEXT:       (block $__delegate__l00 (result exnref)
+  ;; CHECK-NEXT:        (call $foo)
+  ;; CHECK-NEXT:        (try_table (catch_all_ref $__delegate__l00)
+  ;; CHECK-NEXT:         (call $bar)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (try_table (catch_all_ref $__delegate__l00)
+  ;; CHECK-NEXT:         (call $bar)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (call $baz)
+  ;; CHECK-NEXT:        (br $outer1)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (try_table (catch_all_ref $l00)
-  ;; CHECK-NEXT:        (call $bar)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (call $baz)
-  ;; CHECK-NEXT:       (br $outer1)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; STACKIR-OPT:      (func $multiple-delegates-target-outer-try-none (type $1)
   ;; STACKIR-OPT-NEXT:  block $outer1
   ;; STACKIR-OPT-NEXT:   block $catch_all2
   ;; STACKIR-OPT-NEXT:    try_table (catch_all $catch_all2)
-  ;; STACKIR-OPT-NEXT:     block $l00 (result exnref)
+  ;; STACKIR-OPT-NEXT:     block $__delegate__l00 (result exnref)
   ;; STACKIR-OPT-NEXT:      call $foo
-  ;; STACKIR-OPT-NEXT:      try_table (catch_all_ref $l00)
+  ;; STACKIR-OPT-NEXT:      try_table (catch_all_ref $__delegate__l00)
   ;; STACKIR-OPT-NEXT:       call $bar
   ;; STACKIR-OPT-NEXT:      end
-  ;; STACKIR-OPT-NEXT:      try_table (catch_all_ref $l00)
+  ;; STACKIR-OPT-NEXT:      try_table (catch_all_ref $__delegate__l00)
   ;; STACKIR-OPT-NEXT:       call $bar
   ;; STACKIR-OPT-NEXT:      end
   ;; STACKIR-OPT-NEXT:      call $baz
@@ -1726,18 +1772,20 @@
   )
 
   ;; CHECK:      (func $delegate-target-outer-try-concrete (type $2) (result i32)
-  ;; CHECK-NEXT:  (block $outer1 (result i32)
-  ;; CHECK-NEXT:   (block $catch_all2
-  ;; CHECK-NEXT:    (br $outer1
-  ;; CHECK-NEXT:     (try_table (result i32) (catch_all $catch_all2)
-  ;; CHECK-NEXT:      (throw_ref
-  ;; CHECK-NEXT:       (block $l00 (result exnref)
-  ;; CHECK-NEXT:        (br $outer1
-  ;; CHECK-NEXT:         (block (result i32)
-  ;; CHECK-NEXT:          (call $foo)
-  ;; CHECK-NEXT:          (try_table (result i32) (catch_all_ref $l00)
-  ;; CHECK-NEXT:           (call $bar)
-  ;; CHECK-NEXT:           (i32.const 0)
+  ;; CHECK-NEXT:  (block $l0 (result i32)
+  ;; CHECK-NEXT:   (block $outer1 (result i32)
+  ;; CHECK-NEXT:    (block $catch_all2
+  ;; CHECK-NEXT:     (br $outer1
+  ;; CHECK-NEXT:      (try_table (result i32) (catch_all $catch_all2)
+  ;; CHECK-NEXT:       (throw_ref
+  ;; CHECK-NEXT:        (block $__delegate__l00 (result exnref)
+  ;; CHECK-NEXT:         (br $outer1
+  ;; CHECK-NEXT:          (block (result i32)
+  ;; CHECK-NEXT:           (call $foo)
+  ;; CHECK-NEXT:           (try_table (result i32) (catch_all_ref $__delegate__l00)
+  ;; CHECK-NEXT:            (call $bar)
+  ;; CHECK-NEXT:            (i32.const 0)
+  ;; CHECK-NEXT:           )
   ;; CHECK-NEXT:          )
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
@@ -1745,17 +1793,17 @@
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; STACKIR-OPT:      (func $delegate-target-outer-try-concrete (type $2) (result i32)
   ;; STACKIR-OPT-NEXT:  block $outer1 (result i32)
   ;; STACKIR-OPT-NEXT:   block $catch_all2
   ;; STACKIR-OPT-NEXT:    try_table (result i32) (catch_all $catch_all2)
-  ;; STACKIR-OPT-NEXT:     block $l00 (result exnref)
+  ;; STACKIR-OPT-NEXT:     block $__delegate__l00 (result exnref)
   ;; STACKIR-OPT-NEXT:      call $foo
-  ;; STACKIR-OPT-NEXT:      try_table (result i32) (catch_all_ref $l00)
+  ;; STACKIR-OPT-NEXT:      try_table (result i32) (catch_all_ref $__delegate__l00)
   ;; STACKIR-OPT-NEXT:       call $bar
   ;; STACKIR-OPT-NEXT:       i32.const 0
   ;; STACKIR-OPT-NEXT:      end
@@ -1788,21 +1836,23 @@
   )
 
   ;; CHECK:      (func $deletate-target-outer-try-unreachable (type $1)
-  ;; CHECK-NEXT:  (try_table
-  ;; CHECK-NEXT:   (throw_ref
-  ;; CHECK-NEXT:    (block $l00 (result exnref)
-  ;; CHECK-NEXT:     (try_table (catch_all_ref $l00)
-  ;; CHECK-NEXT:      (call $foo)
+  ;; CHECK-NEXT:  (block $l0
+  ;; CHECK-NEXT:   (try_table
+  ;; CHECK-NEXT:    (throw_ref
+  ;; CHECK-NEXT:     (block $__delegate__l00 (result exnref)
+  ;; CHECK-NEXT:      (try_table (catch_all_ref $__delegate__l00)
+  ;; CHECK-NEXT:       (call $foo)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (return)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (return)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; STACKIR-OPT:      (func $deletate-target-outer-try-unreachable (type $1)
   ;; STACKIR-OPT-NEXT:  try_table
-  ;; STACKIR-OPT-NEXT:   block $l00 (result exnref)
-  ;; STACKIR-OPT-NEXT:    try_table (catch_all_ref $l00)
+  ;; STACKIR-OPT-NEXT:   block $__delegate__l00 (result exnref)
+  ;; STACKIR-OPT-NEXT:    try_table (catch_all_ref $__delegate__l00)
   ;; STACKIR-OPT-NEXT:     call $foo
   ;; STACKIR-OPT-NEXT:    end
   ;; STACKIR-OPT-NEXT:    return
@@ -1949,39 +1999,41 @@
   )
 
   ;; CHECK:      (func $delegate-nested-more (type $1)
-  ;; CHECK-NEXT:  (block $outer3
-  ;; CHECK-NEXT:   (block $catch_all4
-  ;; CHECK-NEXT:    (try_table (catch_all $catch_all4)
-  ;; CHECK-NEXT:     (throw_ref
-  ;; CHECK-NEXT:      (block $l00 (result exnref)
-  ;; CHECK-NEXT:       (block $outer1
-  ;; CHECK-NEXT:        (block $catch_all2
-  ;; CHECK-NEXT:         (try_table (catch_all $catch_all2)
-  ;; CHECK-NEXT:          (try_table (catch_all_ref $l00)
-  ;; CHECK-NEXT:           (call $foo)
+  ;; CHECK-NEXT:  (block $l0
+  ;; CHECK-NEXT:   (block $outer3
+  ;; CHECK-NEXT:    (block $catch_all4
+  ;; CHECK-NEXT:     (try_table (catch_all $catch_all4)
+  ;; CHECK-NEXT:      (throw_ref
+  ;; CHECK-NEXT:       (block $__delegate__l00 (result exnref)
+  ;; CHECK-NEXT:        (block $outer1
+  ;; CHECK-NEXT:         (block $catch_all2
+  ;; CHECK-NEXT:          (try_table (catch_all $catch_all2)
+  ;; CHECK-NEXT:           (try_table (catch_all_ref $__delegate__l00)
+  ;; CHECK-NEXT:            (call $foo)
+  ;; CHECK-NEXT:           )
   ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:          (br $outer1)
   ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:         (br $outer1)
+  ;; CHECK-NEXT:         (nop)
   ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (nop)
+  ;; CHECK-NEXT:        (br $outer3)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (br $outer3)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; STACKIR-OPT:      (func $delegate-nested-more (type $1)
   ;; STACKIR-OPT-NEXT:  block $outer3
   ;; STACKIR-OPT-NEXT:   block $catch_all4
   ;; STACKIR-OPT-NEXT:    try_table (catch_all $catch_all4)
-  ;; STACKIR-OPT-NEXT:     block $l00 (result exnref)
+  ;; STACKIR-OPT-NEXT:     block $__delegate__l00 (result exnref)
   ;; STACKIR-OPT-NEXT:      block $outer1
   ;; STACKIR-OPT-NEXT:       block $catch_all2
   ;; STACKIR-OPT-NEXT:        try_table (catch_all $catch_all2)
-  ;; STACKIR-OPT-NEXT:         try_table (catch_all_ref $l00)
+  ;; STACKIR-OPT-NEXT:         try_table (catch_all_ref $__delegate__l00)
   ;; STACKIR-OPT-NEXT:          call $foo
   ;; STACKIR-OPT-NEXT:         end
   ;; STACKIR-OPT-NEXT:        end
@@ -2018,14 +2070,16 @@
   ;; CHECK:      (func $delegate-target-outer-try-delegate (type $1)
   ;; CHECK-NEXT:  (throw_ref
   ;; CHECK-NEXT:   (block $__binaryen_delegate_caller_target0 (result exnref)
-  ;; CHECK-NEXT:    (block $outer2
-  ;; CHECK-NEXT:     (try_table (catch_all_ref $__binaryen_delegate_caller_target0)
-  ;; CHECK-NEXT:      (throw_ref
-  ;; CHECK-NEXT:       (block $l01 (result exnref)
-  ;; CHECK-NEXT:        (try_table (catch_all_ref $l01)
-  ;; CHECK-NEXT:         (call $foo)
+  ;; CHECK-NEXT:    (block $l0
+  ;; CHECK-NEXT:     (block $outer2
+  ;; CHECK-NEXT:      (try_table (catch_all_ref $__binaryen_delegate_caller_target0)
+  ;; CHECK-NEXT:       (throw_ref
+  ;; CHECK-NEXT:        (block $__delegate__l01 (result exnref)
+  ;; CHECK-NEXT:         (try_table (catch_all_ref $__delegate__l01)
+  ;; CHECK-NEXT:          (call $foo)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:         (br $outer2)
   ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:        (br $outer2)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
@@ -2038,8 +2092,8 @@
   ;; STACKIR-OPT-NEXT:  block $__binaryen_delegate_caller_target0 (result exnref)
   ;; STACKIR-OPT-NEXT:   block $outer2
   ;; STACKIR-OPT-NEXT:    try_table (catch_all_ref $__binaryen_delegate_caller_target0)
-  ;; STACKIR-OPT-NEXT:     block $l01 (result exnref)
-  ;; STACKIR-OPT-NEXT:      try_table (catch_all_ref $l01)
+  ;; STACKIR-OPT-NEXT:     block $__delegate__l01 (result exnref)
+  ;; STACKIR-OPT-NEXT:      try_table (catch_all_ref $__delegate__l01)
   ;; STACKIR-OPT-NEXT:       call $foo
   ;; STACKIR-OPT-NEXT:      end
   ;; STACKIR-OPT-NEXT:      br $outer2
@@ -2072,14 +2126,16 @@
   ;; CHECK-NEXT:  (throw_ref
   ;; CHECK-NEXT:   (block $__binaryen_delegate_caller_target0 (result exnref)
   ;; CHECK-NEXT:    (return
-  ;; CHECK-NEXT:     (block $outer2 (result i32)
-  ;; CHECK-NEXT:      (try_table (catch_all_ref $__binaryen_delegate_caller_target0)
-  ;; CHECK-NEXT:       (throw_ref
-  ;; CHECK-NEXT:        (block $l01 (result exnref)
-  ;; CHECK-NEXT:         (br $outer2
-  ;; CHECK-NEXT:          (try_table (result i32) (catch_all_ref $l01)
-  ;; CHECK-NEXT:           (call $foo)
-  ;; CHECK-NEXT:           (i32.const 0)
+  ;; CHECK-NEXT:     (block $l0 (result i32)
+  ;; CHECK-NEXT:      (block $outer2 (result i32)
+  ;; CHECK-NEXT:       (try_table (catch_all_ref $__binaryen_delegate_caller_target0)
+  ;; CHECK-NEXT:        (throw_ref
+  ;; CHECK-NEXT:         (block $__delegate__l01 (result exnref)
+  ;; CHECK-NEXT:          (br $outer2
+  ;; CHECK-NEXT:           (try_table (result i32) (catch_all_ref $__delegate__l01)
+  ;; CHECK-NEXT:            (call $foo)
+  ;; CHECK-NEXT:            (i32.const 0)
+  ;; CHECK-NEXT:           )
   ;; CHECK-NEXT:          )
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
@@ -2094,8 +2150,8 @@
   ;; STACKIR-OPT-NEXT:  block $__binaryen_delegate_caller_target0 (result exnref)
   ;; STACKIR-OPT-NEXT:   block $outer2 (result i32)
   ;; STACKIR-OPT-NEXT:    try_table (catch_all_ref $__binaryen_delegate_caller_target0)
-  ;; STACKIR-OPT-NEXT:     block $l01 (result exnref)
-  ;; STACKIR-OPT-NEXT:      try_table (result i32) (catch_all_ref $l01)
+  ;; STACKIR-OPT-NEXT:     block $__delegate__l01 (result exnref)
+  ;; STACKIR-OPT-NEXT:      try_table (result i32) (catch_all_ref $__delegate__l01)
   ;; STACKIR-OPT-NEXT:       call $foo
   ;; STACKIR-OPT-NEXT:       i32.const 0
   ;; STACKIR-OPT-NEXT:      end

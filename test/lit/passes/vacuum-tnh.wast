@@ -621,7 +621,7 @@
   )
 
   ;; YESTNH:      (func $catch-pop (type $1)
-  ;; YESTNH-NEXT:  (try $try
+  ;; YESTNH-NEXT:  (try
   ;; YESTNH-NEXT:   (do
   ;; YESTNH-NEXT:    (call $catch-pop)
   ;; YESTNH-NEXT:   )
@@ -634,7 +634,7 @@
   ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $catch-pop (type $1)
-  ;; NO_TNH-NEXT:  (try $try
+  ;; NO_TNH-NEXT:  (try
   ;; NO_TNH-NEXT:   (do
   ;; NO_TNH-NEXT:    (call $catch-pop)
   ;; NO_TNH-NEXT:   )

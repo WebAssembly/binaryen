@@ -119,7 +119,7 @@
 
  ;; CHECK:      (func $loop (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $var eqref)
- ;; CHECK-NEXT:  (loop $loop-in (result eqref)
+ ;; CHECK-NEXT:  (loop (result eqref)
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -133,16 +133,12 @@
 
  ;; CHECK:      (func $br-sent (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $var1 anyref)
- ;; CHECK-NEXT:  (local $var2 eqref)
- ;; CHECK-NEXT:  (block $l (result eqref)
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (local.get $var1)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (br $l
- ;; CHECK-NEXT:     (local.get $var2)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:  (local $var2 anyref)
+ ;; CHECK-NEXT:  (block $l
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $var1)
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $br-sent (result eqref)
@@ -166,12 +162,10 @@
  ;; CHECK:      (func $br-no-sent (type $void)
  ;; CHECK-NEXT:  (local $var anyref)
  ;; CHECK-NEXT:  (block $l
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (local.get $var)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (br $l)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $var)
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $br-no-sent
@@ -943,9 +937,7 @@
  (type $mid (sub $top (func (result eqref))))
  (type $bot (sub $mid (func (result i31ref))))
 
- ;; CHECK:      (type $1 (func (result anyref)))
-
- ;; CHECK:      (func $call-ref-no-limit (type $1) (result anyref)
+ ;; CHECK:      (func $call-ref-no-limit (type $top) (result anyref)
  ;; CHECK-NEXT:  (local $f (ref null $top))
  ;; CHECK-NEXT:  (call_ref $top
  ;; CHECK-NEXT:   (local.get $f)

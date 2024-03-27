@@ -138,7 +138,11 @@ void propagateDebugLocations(Module& wasm) {
       return std::make_unique<Propagator>();
     }
   };
-  PassRunner runner(&wasm);
+  // The parser should not be responsible for validation.
+  PassOptions opts;
+  opts.validate = false;
+  opts.validateGlobally = false;
+  PassRunner runner(&wasm, opts);
   runner.add(std::make_unique<Propagator>());
   runner.run();
 }

@@ -5,7 +5,7 @@
   ;; CHECK:      (func $test-nn (type $0)
   ;; CHECK-NEXT:  (local $nn anyref)
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (local.set $nn
   ;; CHECK-NEXT:     (ref.as_non_null
@@ -52,7 +52,7 @@
   ;; CHECK:      (func $test-nn-tuple (type $0)
   ;; CHECK-NEXT:  (local $nn (tuple i32 anyref i64))
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (local.set $nn
   ;; CHECK-NEXT:     (tuple.make 3
@@ -112,7 +112,7 @@
   ;; CHECK:      (func $test-nullable (type $0)
   ;; CHECK-NEXT:  (local $nullable anyref)
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (local.set $nullable
   ;; CHECK-NEXT:     (ref.as_non_null

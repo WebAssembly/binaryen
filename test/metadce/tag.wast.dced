@@ -4,7 +4,7 @@
  (tag $t1)
  (export "test" (func $test))
  (func $test (type $0)
-  (try $try
+  (try
    (do
     (throw $t0)
    )

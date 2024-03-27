@@ -576,25 +576,37 @@
   ;; CHECK-NEXT:    (i32.const 2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.tee $tuple
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (tuple.extract 1 0
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (tuple.extract 1 1
-  ;; CHECK-NEXT:    (local.tee $tuple
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $tuple
-  ;; CHECK-NEXT:    (local.tee $nontuple
-  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    (tuple.make 2
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (tuple.extract 1 1
+  ;; CHECK-NEXT:       (tuple.make 2
+  ;; CHECK-NEXT:        (unreachable)
+  ;; CHECK-NEXT:        (local.tee $tuple
+  ;; CHECK-NEXT:         (tuple.make 2
+  ;; CHECK-NEXT:          (drop
+  ;; CHECK-NEXT:           (tuple.extract 1 0
+  ;; CHECK-NEXT:            (tuple.make 2
+  ;; CHECK-NEXT:             (local.tee $tuple
+  ;; CHECK-NEXT:              (tuple.make 2
+  ;; CHECK-NEXT:               (unreachable)
+  ;; CHECK-NEXT:               (unreachable)
+  ;; CHECK-NEXT:              )
+  ;; CHECK-NEXT:             )
+  ;; CHECK-NEXT:             (unreachable)
+  ;; CHECK-NEXT:            )
+  ;; CHECK-NEXT:           )
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:          (unreachable)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.tee $nontuple
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

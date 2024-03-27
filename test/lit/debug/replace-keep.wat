@@ -50,7 +50,6 @@
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  ) ;; end block
-  ;; CHECK-NEXT:  ;;@ src.cpp:200:2
   ;; CHECK-NEXT: )
   (func $test-no-trample
     (local $temp i32)

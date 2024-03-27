@@ -166,14 +166,11 @@
     (i32.const 20)
    )
   )
-  (return
-   (block
-    (drop
-     (i32.const 10)
-    )
-    (unreachable)
-   )
+  (drop
+   (i32.const 10)
   )
+  (unreachable)
+  (return)
  )
  (func $binary (type $3)
   (drop
@@ -698,10 +695,13 @@
    (i32.const 31)
   )
   (drop
+   (i32.const 41)
+  )
+  (drop
    (i32.const 51)
   )
   (call_indirect $0 (type $ii)
-   (i32.const 41)
+   (unreachable)
    (unreachable)
    (i32.const 61)
   )
@@ -709,11 +709,17 @@
    (i32.const 32)
   )
   (drop
+   (i32.const 42)
+  )
+  (drop
    (i32.const 52)
   )
-  (call_indirect $0 (type $ii)
-   (i32.const 42)
+  (drop
    (i32.const 62)
+  )
+  (call_indirect $0 (type $ii)
+   (unreachable)
+   (unreachable)
    (unreachable)
   )
  )

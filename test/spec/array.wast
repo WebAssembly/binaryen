@@ -41,7 +41,7 @@
   )
 
   (rec
-    (func (param (ref $forward)))
+    (type (func (param (ref $forward))))
     (type $forward (array i32))
   )
 )

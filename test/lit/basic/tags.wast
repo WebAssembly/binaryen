@@ -25,9 +25,9 @@
 
   ;; CHECK-TEXT:      (import "env" "im0" (tag $e-import (param i32)))
 
-  ;; CHECK-TEXT:      (import "env" "im1" (tag $eimport$1 (param i32 f32)))
+  ;; CHECK-TEXT:      (import "env" "im1" (tag $timport$0 (param i32 f32)))
 
-  ;; CHECK-TEXT:      (tag $2 (param i32))
+  ;; CHECK-TEXT:      (tag $1 (param i32))
 
   ;; CHECK-TEXT:      (tag $e (param i32 f32))
   ;; CHECK-BIN:      (type $0 (func (param i32 f32)))

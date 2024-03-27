@@ -42,9 +42,9 @@
     (elem $bar $bar $bar)
   )
 
-  ;; CHECK-TEXT:      (elem $0 (table $table-1) (i32.const 0) func $foo)
+  ;; CHECK-TEXT:      (elem $implicit-elem (table $table-1) (i32.const 0) func $foo)
 
-  ;; CHECK-TEXT:      (elem $1 (table $table-2) (i32.const 0) func $bar $bar $bar)
+  ;; CHECK-TEXT:      (elem $implicit-elem_1 (table $table-2) (i32.const 0) func $bar $bar $bar)
 
   ;; CHECK-TEXT:      (func $foo (type $0)
   ;; CHECK-TEXT-NEXT:  (nop)

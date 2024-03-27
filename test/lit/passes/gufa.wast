@@ -560,11 +560,11 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $named0 (result i32)
+  ;; CHECK-NEXT:   (block $named_0 (result i32)
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:     (then
-  ;; CHECK-NEXT:      (br $named0
+  ;; CHECK-NEXT:      (br $named_0
   ;; CHECK-NEXT:       (i32.const 2)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )

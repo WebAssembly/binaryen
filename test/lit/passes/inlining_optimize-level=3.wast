@@ -14,13 +14,6 @@
 
   ;; CHECK:      (elem $0 (i32.const 0) $no-loops-but-one-use-but-tabled)
 
-  ;; CHECK:      (export "yes" (func $yes))
-  (export "yes" (func $yes))
-  ;; CHECK:      (export "no-loops-but-one-use-but-exported" (func $no-loops-but-one-use-but-exported))
-  (export "no-loops-but-one-use-but-exported" (func $no-loops-but-one-use-but-exported))
-  (table 1 1 funcref)
-  (elem (i32.const 0) $no-loops-but-one-use-but-tabled)
-
   ;; CHECK:      (export "A" (func $recursive-inlining-1))
 
   ;; CHECK:      (export "B" (func $recursive-inlining-2))
@@ -28,6 +21,13 @@
   ;; CHECK:      (export "BA" (func $b-recursive-inlining-1))
 
   ;; CHECK:      (export "BB" (func $b-recursive-inlining-2))
+
+  ;; CHECK:      (export "yes" (func $yes))
+  (export "yes" (func $yes))
+  ;; CHECK:      (export "no-loops-but-one-use-but-exported" (func $no-loops-but-one-use-but-exported))
+  (export "no-loops-but-one-use-but-exported" (func $no-loops-but-one-use-but-exported))
+  (table 1 1 funcref)
+  (elem (i32.const 0) $no-loops-but-one-use-but-tabled)
 
   ;; CHECK:      (func $yes (result i32)
   ;; CHECK-NEXT:  (i32.const 1)
@@ -61,7 +61,7 @@
     )
   )
   ;; CHECK:      (func $no-loops-but-one-use-but-exported (result i32)
-  ;; CHECK-NEXT:  (loop $loop-in (result i32)
+  ;; CHECK-NEXT:  (loop (result i32)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -71,7 +71,7 @@
     )
   )
   ;; CHECK:      (func $no-loops-but-one-use-but-tabled (result i32)
-  ;; CHECK-NEXT:  (loop $loop-in (result i32)
+  ;; CHECK-NEXT:  (loop (result i32)
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -175,7 +175,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (block $__inlined_func$no-loops$4 (result i32)
-  ;; CHECK-NEXT:     (loop $loop-in (result i32)
+  ;; CHECK-NEXT:     (loop (result i32)
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -184,7 +184,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (block $__inlined_func$no-loops$5 (result i32)
-  ;; CHECK-NEXT:     (loop $loop-in0 (result i32)
+  ;; CHECK-NEXT:     (loop (result i32)
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -193,7 +193,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (block $__inlined_func$yes-loops-but-one-use$6 (result i32)
-  ;; CHECK-NEXT:     (loop $loop-in1 (result i32)
+  ;; CHECK-NEXT:     (loop (result i32)
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -202,7 +202,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (block $__inlined_func$no-loops-but-one-use-but-exported$7 (result i32)
-  ;; CHECK-NEXT:     (loop $loop-in2 (result i32)
+  ;; CHECK-NEXT:     (loop (result i32)
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -211,7 +211,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (block $__inlined_func$no-loops-but-one-use-but-tabled$8 (result i32)
-  ;; CHECK-NEXT:     (loop $loop-in3 (result i32)
+  ;; CHECK-NEXT:     (loop (result i32)
   ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )

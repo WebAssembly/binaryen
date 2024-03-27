@@ -20,8 +20,11 @@
  ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:   (else
  ;; CHECK-TEXT-NEXT:    (block $label$1 (result f32)
- ;; CHECK-TEXT-NEXT:     (br_if $label$1
+ ;; CHECK-TEXT-NEXT:     (drop
  ;; CHECK-TEXT-NEXT:      (f32.const 1)
+ ;; CHECK-TEXT-NEXT:     )
+ ;; CHECK-TEXT-NEXT:     (br_if $label$1
+ ;; CHECK-TEXT-NEXT:      (unreachable)
  ;; CHECK-TEXT-NEXT:      (unreachable)
  ;; CHECK-TEXT-NEXT:     )
  ;; CHECK-TEXT-NEXT:    )

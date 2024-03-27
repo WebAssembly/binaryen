@@ -54,7 +54,7 @@
   )
   (nop)
   (drop
-   (block $d0 (result i32)
+   (block $d_0 (result i32)
     (call $x
      (i32.const 5)
     )
@@ -63,7 +63,7 @@
    )
   )
   (drop
-   (block $d2 (result i32)
+   (block $d_1 (result i32)
     (call $x
      (i32.const 6)
     )
@@ -72,11 +72,19 @@
    )
   )
   (drop
-   (block $d4 (result i32)
+   (block $d_2 (result i32)
     (call $x
      (i32.const 7)
     )
-    (nop)
+    (block $e_2
+     (nop)
+     (drop
+      (block
+       (unreachable)
+       (br $e_2)
+      )
+     )
+    )
     (i32.const 2)
    )
   )

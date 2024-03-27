@@ -1084,8 +1084,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block $block0 (result nullref)
-  ;; CHECK-NEXT:      (br $block0
+  ;; CHECK-NEXT:     (block $block_0 (result nullref)
+  ;; CHECK-NEXT:      (br $block_0
   ;; CHECK-NEXT:       (ref.null none)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (unreachable)
@@ -1097,8 +1097,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block $block1 (result nullref)
-  ;; CHECK-NEXT:      (br $block1
+  ;; CHECK-NEXT:     (block $block_1 (result nullref)
+  ;; CHECK-NEXT:      (br $block_1
   ;; CHECK-NEXT:       (block (result nullref)
   ;; CHECK-NEXT:        (drop
   ;; CHECK-NEXT:         (ref.cast nullref
@@ -1915,7 +1915,7 @@
   ;; CHECK-NEXT:  (throw $nothing
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -1941,7 +1941,7 @@
   ;; CHECK-NEXT:  (throw $something
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (try $try0
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -1987,12 +1987,14 @@
   )
 
   ;; CHECK:      (func $empty-tag (type $0)
-  ;; CHECK-NEXT:  (try $label$3
-  ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (catch $empty
-  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:  (block $label$3
+  ;; CHECK-NEXT:   (try
+  ;; CHECK-NEXT:    (do
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (catch $empty
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -2012,7 +2014,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (try $try (result i32)
+  ;; CHECK-NEXT:     (try (result i32)
   ;; CHECK-NEXT:      (do
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
@@ -2028,7 +2030,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (try $try1 (result i32)
+  ;; CHECK-NEXT:   (try (result i32)
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (i32.const 42)
   ;; CHECK-NEXT:    )
@@ -2041,7 +2043,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (try $try2 (result i32)
+  ;; CHECK-NEXT:   (try (result i32)
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -2054,7 +2056,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (try $try3 (result i32)
+  ;; CHECK-NEXT:   (try (result i32)
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -2144,7 +2146,7 @@
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -2162,7 +2164,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (try $try0
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -2962,8 +2964,11 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -4172,26 +4177,28 @@
 
   ;; CHECK:      (func $rethrow (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (try $l0
-  ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (throw $e-i32
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (catch $e-i32
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (block (result i32)
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (i32.const 0)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:  (block $l0
+  ;; CHECK-NEXT:   (try $__delegate__l0
+  ;; CHECK-NEXT:    (do
+  ;; CHECK-NEXT:     (throw $e-i32
+  ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (rethrow $l0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (catch $e-i32
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (pop i32)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result i32)
+  ;; CHECK-NEXT:        (drop
+  ;; CHECK-NEXT:         (local.get $0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (rethrow $__delegate__l0)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -5243,12 +5250,12 @@
     (i32.const 42)
   ))
 
-  ;; CHECK:      (export "mut_A" (global $mut_A))
-  (export "mut_A" (global $mut_A))
-
   ;; CHECK:      (export "yes" (func $yes))
 
   ;; CHECK:      (export "no" (func $no))
+
+  ;; CHECK:      (export "mut_A" (global $mut_A))
+  (export "mut_A" (global $mut_A))
 
   ;; CHECK:      (func $yes (type $2) (param $A (ref $A))
   ;; CHECK-NEXT:  (drop
