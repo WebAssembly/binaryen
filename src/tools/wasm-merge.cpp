@@ -384,7 +384,8 @@ void copyModuleContents(Module& input, Name inputName) {
 void reportTypeMismatch(bool& valid, const char* kind, Importable* import) {
   valid = false;
   std::cerr << "Type mismatch when importing " << kind << " " << import->base
-            << " from module " << import->module << ": ";
+            << " from module " << import->module << " ($" << import->name
+            << "): ";
 }
 
 // Check that the export and import limits match.
