@@ -461,7 +461,7 @@ struct HeapTypeGeneratorImpl {
       case HeapType::stringview_iter:
         break;
       case HeapType::none:
-        if (rand.oneIn(10)) {
+        if (features.hasStrings() && rand.oneIn(10)) {
           candidates.push_back(HeapType::stringview_wtf8);
           candidates.push_back(HeapType::stringview_wtf16);
           candidates.push_back(HeapType::stringview_iter);
