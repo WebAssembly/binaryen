@@ -2648,7 +2648,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       // We do not have interpreter support for wtf8 and iter, so emit something
       // that does not return, with a block that casts to the type the parent
       // expects.
-      return builder.makeBlock({ builder.makeUnreachable() }, type);
+      return builder.makeBlock({makeUnreachable()}, type);
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
