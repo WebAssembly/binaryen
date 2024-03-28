@@ -2211,10 +2211,6 @@ public:
     // the expression if it also sets a local, which must be preserved in this
     // scenario so subsequent code keeps functioning.
     PRESERVE_SIDEEFFECTS = 1 << 0,
-    // Traverse through function calls, attempting to compute their concrete
-    // value. Must not be used in function-parallel scenarios, where the called
-    // function might be concurrently modified, leading to undefined behavior.
-    TRAVERSE_CALLS = 1 << 1
   };
 
   // Flags indicating special requirements, for example whether we are just
@@ -2322,35 +2318,6 @@ public:
   Flow visitCall(Call* curr) {
     NOTE_ENTER("Call");
     NOTE_NAME(curr->target);
-    // Traverse into functions using the same mode, which we can also do
-    // when replacing as long as the function does not have any side effects.
-    // Might yield something useful for simple functions like `clamp`, sometimes
-    // even if arguments are only partially constant or not constant at all.
-    if ((flags & FlagValues::TRAVERSE_CALLS) != 0 && this->module != nullptr) {
-      auto* func = this->module->getFunction(curr->target);
-      if (!func->imported()) {
-        if (func->getResults().isConcrete()) {
-          auto numOperands = curr->operands.size();
-          assert(numOperands == func->getNumParams());
-          auto prevLocalValues = localValues;
-          localValues.clear();
-          for (Index i = 0; i < numOperands; ++i) {
-            auto argFlow = ExpressionRunner<SubType>::visit(curr->operands[i]);
-            if (!argFlow.breaking()) {
-              assert(argFlow.values.isConcrete());
-              localValues[i] = argFlow.values;
-            }
-          }
-          auto retFlow = ExpressionRunner<SubType>::visit(func->body);
-          localValues = prevLocalValues;
-          if (retFlow.breakTo == RETURN_FLOW) {
-            return Flow(retFlow.values);
-          } else if (!retFlow.breaking()) {
-            return retFlow;
-          }
-        }
-      }
-    }
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitCallIndirect(CallIndirect* curr) {

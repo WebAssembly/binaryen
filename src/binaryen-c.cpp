@@ -6322,10 +6322,6 @@ ExpressionRunnerFlags ExpressionRunnerFlagsPreserveSideeffects() {
   return CExpressionRunner::FlagValues::PRESERVE_SIDEEFFECTS;
 }
 
-ExpressionRunnerFlags ExpressionRunnerFlagsTraverseCalls() {
-  return CExpressionRunner::FlagValues::TRAVERSE_CALLS;
-}
-
 ExpressionRunnerRef ExpressionRunnerCreate(BinaryenModuleRef module,
                                            ExpressionRunnerFlags flags,
                                            BinaryenIndex maxDepth,

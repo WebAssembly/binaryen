@@ -638,7 +638,6 @@ function initializeConstants() {
   Module['ExpressionRunner']['Flags'] = {
     'Default': Module['_ExpressionRunnerFlagsDefault'](),
     'PreserveSideeffects': Module['_ExpressionRunnerFlagsPreserveSideeffects'](),
-    'TraverseCalls': Module['_ExpressionRunnerFlagsTraverseCalls']()
   };
 }
 
