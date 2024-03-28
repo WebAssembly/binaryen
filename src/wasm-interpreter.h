@@ -3431,7 +3431,7 @@ public:
     if (timeout.getSingleValue().getInteger() != 0) {
       hostLimit("threads support");
     }
-    return Literal(int32_t(0)); // equal
+    return Literal(int32_t(2)); // Timed out
   }
   Flow visitAtomicNotify(AtomicNotify* curr) {
     NOTE_ENTER("AtomicNotify");
