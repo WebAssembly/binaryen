@@ -77,16 +77,8 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (block $__inlined_func$callee
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (block $__return_call
-  ;; CHECK-NEXT:       (block
-  ;; CHECK-NEXT:        (unreachable)
-  ;; CHECK-NEXT:        (br $__return_call)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (call $imported
-  ;; CHECK-NEXT:       (unreachable)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     (call $imported
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
