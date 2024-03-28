@@ -51,7 +51,7 @@ std::ostream& operator<<(std::ostream& o, const WasmException& exn);
 
 // Utilities
 
-extern Name WASM, RETURN_FLOW, NONCONSTANT_FLOW;
+extern Name WASM, RETURN_FLOW, RETURN_CALL_FLOW, NONCONSTANT_FLOW;
 
 // Stuff that flows around during executing expressions: a literal, or a change
 // in control flow.
@@ -63,6 +63,8 @@ public:
   Flow(Literals&& values) : values(std::move(values)) {}
   Flow(Name breakTo) : values(), breakTo(breakTo) {}
   Flow(Name breakTo, Literal value) : values{value}, breakTo(breakTo) {}
+  Flow(Name breakTo, Literals&& values)
+    : values(std::move(values)), breakTo(breakTo) {}
 
   Literals values;
   Name breakTo; // if non-null, a break is going on
@@ -2965,32 +2967,33 @@ public:
   Flow visitCall(Call* curr) {
     NOTE_ENTER("Call");
     NOTE_NAME(curr->target);
+    Name target = curr->target;
     Literals arguments;
     Flow flow = self()->generateArguments(curr->operands, arguments);
     if (flow.breaking()) {
       return flow;
     }
     auto* func = wasm.getFunction(curr->target);
-    Flow ret;
+    auto funcType = func->type;
     if (Intrinsics(*self()->getModule()).isCallWithoutEffects(func)) {
       // The call.without.effects intrinsic is a call to an import that actually
       // calls the given function reference that is the final argument.
-      auto newArguments = arguments;
-      auto target = newArguments.back();
-      newArguments.pop_back();
-      ret.values = callFunctionInternal(target.getFunc(), newArguments);
-    } else if (func->imported()) {
-      ret.values = externalInterface->callImport(func, arguments);
-    } else {
-      ret.values = callFunctionInternal(curr->target, arguments);
+      target = arguments.back().getFunc();
+      funcType = arguments.back().type.getHeapType();
+      arguments.pop_back();
     }
+
+    if (curr->isReturn) {
+      // Return calls are represented by their arguments followed by a reference
+      // to the function to be called.
+      arguments.push_back(Literal::makeFunc(target, funcType));
+      return Flow(RETURN_CALL_FLOW, std::move(arguments));
+    }
+
+    Flow ret = callFunctionInternal(target, arguments);
 #ifdef WASM_INTERPRETER_DEBUG
     std::cout << "(returned to " << scope->function->name << ")\n";
 #endif
-    // TODO: make this a proper tail call (return first)
-    if (curr->isReturn) {
-      ret.breakTo = RETURN_FLOW;
-    }
     return ret;
   }
 
@@ -3007,18 +3010,28 @@ public:
     }
 
     Index index = target.getSingleValue().geti32();
-    Type type = curr->isReturn ? scope->function->getResults() : curr->type;
 
     auto info = getTableInterfaceInfo(curr->table);
-    Flow ret = info.interface->callTable(
-      info.name, index, curr->heapType, arguments, type, *self());
 
-    // TODO: make this a proper tail call (return first)
     if (curr->isReturn) {
-      ret.breakTo = RETURN_FLOW;
+      // Return calls are represented by their arguments followed by a reference
+      // to the function to be called.
+      auto funcref = info.interface->tableLoad(info.name, index);
+      if (!Type::isSubType(funcref.type, Type(curr->heapType, NonNullable))) {
+        trap("cast failure in call_indirect");
+      }
+      arguments.push_back(funcref);
+      return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
+
+    Flow ret = info.interface->callTable(
+      info.name, index, curr->heapType, arguments, curr->type, *self());
+#ifdef WASM_INTERPRETER_DEBUG
+    std::cout << "(returned to " << scope->function->name << ")\n";
+#endif
     return ret;
   }
+
   Flow visitCallRef(CallRef* curr) {
     NOTE_ENTER("CallRef");
     Literals arguments;
@@ -3030,24 +3043,22 @@ public:
     if (target.breaking()) {
       return target;
     }
-    if (target.getSingleValue().isNull()) {
+    auto targetRef = target.getSingleValue();
+    if (targetRef.isNull()) {
       trap("null target in call_ref");
     }
-    Name funcName = target.getSingleValue().getFunc();
-    auto* func = wasm.getFunction(funcName);
-    Flow ret;
-    if (func->imported()) {
-      ret.values = externalInterface->callImport(func, arguments);
-    } else {
-      ret.values = callFunctionInternal(funcName, arguments);
+
+    if (curr->isReturn) {
+      // Return calls are represented by their arguments followed by a reference
+      // to the function to be called.
+      arguments.push_back(targetRef);
+      return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
+
+    Flow ret = callFunctionInternal(targetRef.getFunc(), arguments);
 #ifdef WASM_INTERPRETER_DEBUG
     std::cout << "(returned to " << scope->function->name << ")\n";
 #endif
-    // TODO: make this a proper tail call (return first)
-    if (curr->isReturn) {
-      ret.breakTo = RETURN_FLOW;
-    }
     return ret;
   }
 
@@ -4098,12 +4109,7 @@ public:
 
   // Call a function, starting an invocation.
   Literals callFunction(Name name, const Literals& arguments) {
-    auto* func = wasm.getFunction(name);
-    if (func->imported()) {
-      return externalInterface->callImport(func, arguments);
-    }
-
-    // if the last call ended in a jump up the stack, it might have left stuff
+    // If the last call ended in a jump up the stack, it might have left stuff
     // for us to clean up here
     callDepth = 0;
     functionStack.clear();
@@ -4112,47 +4118,79 @@ public:
 
   // Internal function call. Must be public so that callTable implementations
   // can use it (refactor?)
-  Literals callFunctionInternal(Name name, const Literals& arguments) {
+  Literals callFunctionInternal(Name name, Literals arguments) {
     if (callDepth > maxDepth) {
       externalInterface->trap("stack limit");
     }
-    auto previousCallDepth = callDepth;
-    callDepth++;
-    auto previousFunctionStackSize = functionStack.size();
-    functionStack.push_back(name);
 
-    Function* function = wasm.getFunction(name);
-    assert(function);
-    FunctionScope scope(function, arguments, *self());
+    Flow flow;
+    std::optional<Type> resultType;
+
+    // We may have to call multiple functions in the event of return calls.
+    while (true) {
+      Function* function = wasm.getFunction(name);
+      assert(function);
+
+      // Return calls can only make the result type more precise.
+      if (resultType) {
+        assert(Type::isSubType(function->getResults(), *resultType));
+      }
+      resultType = function->getResults();
+
+      if (function->imported()) {
+        // TODO: Allow imported functions to tail call as well.
+        return externalInterface->callImport(function, arguments);
+      }
+
+      auto previousCallDepth = callDepth;
+      callDepth++;
+      auto previousFunctionStackSize = functionStack.size();
+      functionStack.push_back(name);
+
+      FunctionScope scope(function, arguments, *self());
 
 #ifdef WASM_INTERPRETER_DEBUG
-    std::cout << "entering " << function->name << "\n  with arguments:\n";
-    for (unsigned i = 0; i < arguments.size(); ++i) {
-      std::cout << "    $" << i << ": " << arguments[i] << '\n';
-    }
+      std::cout << "entering " << function->name << "\n  with arguments:\n";
+      for (unsigned i = 0; i < arguments.size(); ++i) {
+        std::cout << "    $" << i << ": " << arguments[i] << '\n';
+      }
 #endif
 
-    Flow flow = self()->visit(function->body);
+      flow = self()->visit(function->body);
+
+      // may decrease more than one, if we jumped up the stack
+      callDepth = previousCallDepth;
+      // if we jumped up the stack, we also need to pop higher frames
+      // TODO can FunctionScope handle this automatically?
+      while (functionStack.size() > previousFunctionStackSize) {
+        functionStack.pop_back();
+      }
+#ifdef WASM_INTERPRETER_DEBUG
+      std::cout << "exiting " << function->name << " with " << flow.values
+                << '\n';
+#endif
+
+      if (flow.breakTo != RETURN_CALL_FLOW) {
+        break;
+      }
+
+      // There was a return call, so we need to call the next function before
+      // returning to the caller. The flow carries the function arguments and a
+      // function reference.
+      name = flow.values.back().getFunc();
+      flow.values.pop_back();
+      arguments = flow.values;
+    }
+
     // cannot still be breaking, it means we missed our stop
     assert(!flow.breaking() || flow.breakTo == RETURN_FLOW);
     auto type = flow.getType();
-    if (!Type::isSubType(type, function->getResults())) {
-      std::cerr << "calling " << function->name << " resulted in " << type
-                << " but the function type is " << function->getResults()
-                << '\n';
+    if (!Type::isSubType(type, *resultType)) {
+      std::cerr << "calling " << name << " resulted in " << type
+                << " but the function type is " << *resultType << '\n';
       WASM_UNREACHABLE("unexpected result type");
     }
-    // may decrease more than one, if we jumped up the stack
-    callDepth = previousCallDepth;
-    // if we jumped up the stack, we also need to pop higher frames
-    // TODO can FunctionScope handle this automatically?
-    while (functionStack.size() > previousFunctionStackSize) {
-      functionStack.pop_back();
-    }
-#ifdef WASM_INTERPRETER_DEBUG
-    std::cout << "exiting " << function->name << " with " << flow.values
-              << '\n';
-#endif
+
     return flow.values;
   }
 
