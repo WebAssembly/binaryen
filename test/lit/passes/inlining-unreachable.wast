@@ -74,11 +74,22 @@
   (import "env" "imported" (func $imported (param i32) (result i32)))
 
   ;; CHECK:      (func $caller (type $1)
+  ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (block $__inlined_func$callee
-  ;; CHECK-NEXT:     (call $imported
-  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (block $__inlined_func$callee (result i32)
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (block $__return_call
+  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:        (local.tee $0
+  ;; CHECK-NEXT:         (unreachable)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (br $__return_call)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (call $imported
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -114,7 +125,12 @@
   ;; CHECK-NEXT:  (block $__inlined_func$0
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (block ;; (replaces unreachable CallRef we can't emit)
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null nofunc)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
