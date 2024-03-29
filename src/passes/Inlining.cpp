@@ -37,6 +37,7 @@
 #include "ir/element-utils.h"
 #include "ir/find_all.h"
 #include "ir/literal-utils.h"
+#include "ir/localize.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/type-updating.h"
@@ -334,33 +335,16 @@ struct Updater : public PostWalker<Updater> {
       return;
     }
 
+    // Set the children to locals as necessary, then add a branch out of the
+    // inlined body. The branch label will be set later when we create branch
+    // targets for the calls.
+    Block* childBlock = ChildLocalizer(curr, getFunction(), *module, options)
+                          .getChildrenReplacement();
     Break* branch = builder->makeBreak(Name());
-    if (sig.params.size() || curr->template is<CallIndirect>() ||
-        curr->template is<CallRef>()) {
-      // Set the children to locals at the original callsite before the branch.
-      Block* branchBlock = builder->makeBlock();
-      for (Index i = 0; i < sig.params.size(); ++i) {
-        auto var = builder->addVar(getFunction(), sig.params[i]);
-        branchBlock->list.push_back(
-          builder->makeLocalSet(var, curr->operands[i]));
-        curr->operands[i] = builder->makeLocalGet(var, sig.params[i]);
-      }
-      if (auto* call = curr->template dynCast<CallIndirect>()) {
-        auto var = builder->addVar(getFunction(), Type::i32);
-        branchBlock->list.push_back(builder->makeLocalSet(var, call->target));
-        call->target = builder->makeLocalGet(var, Type::i32);
-      } else if (auto* call = curr->template dynCast<CallRef>()) {
-        assert(call->target->type.isSignature());
-        auto var = builder->addVar(getFunction(), call->target->type);
-        branchBlock->list.push_back(builder->makeLocalSet(var, call->target));
-        call->target = builder->makeLocalGet(var, call->target->type);
-      }
-      branchBlock->list.push_back(branch);
-      branchBlock->finalize(Type::unreachable);
-      replaceCurrent(branchBlock);
-    } else {
-      replaceCurrent(branch);
-    }
+    childBlock->list.push_back(branch);
+    childBlock->type = Type::unreachable;
+    replaceCurrent(childBlock);
+
     curr->isReturn = false;
     curr->type = sig.results;
     returnCallInfos.push_back({curr, branch});

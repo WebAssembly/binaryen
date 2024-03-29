@@ -775,7 +775,9 @@
  ;; CHECK-NEXT:     (block (result i32)
  ;; CHECK-NEXT:      (block $__return_call
  ;; CHECK-NEXT:       (block
- ;; CHECK-NEXT:        (br $__return_call)
+ ;; CHECK-NEXT:        (block
+ ;; CHECK-NEXT:         (br $__return_call)
+ ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (block (result i32)
@@ -800,7 +802,90 @@
   (i32.const 42)
  )
 )
+
 (module
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (func $0
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (block $__inlined_func$1
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (block $__return_call
+ ;; CHECK-NEXT:     (block
+ ;; CHECK-NEXT:      (br $__return_call)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (br $__inlined_func$1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (block
+ ;; CHECK-NEXT:     (block $__inlined_func$2$1
+ ;; CHECK-NEXT:      (local.set $0
+ ;; CHECK-NEXT:       (i32.const 42)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (local.get $0)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $0
+  (call $1)
+ )
+ (func $1
+  (return_call $2
+   (i32.const 42)
+  )
+ )
+ (func $2 (param i32)
+  (drop
+   (local.get 0)
+  )
+ )
+)
+
+(module
+ ;; Same as above, but with nontrivial effects in the children.
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (type $1 (func (param i32)))
+
+ ;; CHECK:      (func $0
+ ;; CHECK-NEXT:  (block $__inlined_func$1
+ ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:    (block $__return_call
+ ;; CHECK-NEXT:     (br $__inlined_func$1)
+ ;; CHECK-NEXT:     (br $__return_call)
+ ;; CHECK-NEXT:     (br $__inlined_func$1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (call $2
+ ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $0
+  (call $1)
+ )
+ (func $1
+  (return_call $2
+   (return)
+  )
+ )
+ ;; CHECK:      (func $2 (param $0 i32)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $2 (param i32)
+  (drop
+   (local.get 0)
+  )
+ )
+)
+
+(module
+ ;; Same as above, but this time the child is not unreachable.
  ;; CHECK:      (type $0 (func))
 
  ;; CHECK:      (func $0
@@ -810,8 +895,10 @@
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (block $__return_call
  ;; CHECK-NEXT:     (block
- ;; CHECK-NEXT:      (local.set $0
- ;; CHECK-NEXT:       (i32.const 42)
+ ;; CHECK-NEXT:      (local.tee $0
+ ;; CHECK-NEXT:       (block
+ ;; CHECK-NEXT:        (br $__inlined_func$1)
+ ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (br $__return_call)
  ;; CHECK-NEXT:     )
@@ -835,7 +922,9 @@
  )
  (func $1
   (return_call $2
-   (i32.const 42)
+   (block (result i32)
+    (return)
+   )
   )
  )
  (func $2 (param i32)
@@ -844,6 +933,7 @@
   )
  )
 )
+
 (module
  ;; CHECK:      (type $0 (func))
 
@@ -853,26 +943,18 @@
  ;; CHECK:      (table $0 10 funcref)
 
  ;; CHECK:      (func $0
- ;; CHECK-NEXT:  (local $0 i32)
- ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block (result i32)
  ;; CHECK-NEXT:    (block $__inlined_func$1 (result i32)
  ;; CHECK-NEXT:     (block (result i32)
  ;; CHECK-NEXT:      (block $__return_call
  ;; CHECK-NEXT:       (block
- ;; CHECK-NEXT:        (local.set $0
- ;; CHECK-NEXT:         (i32.const 42)
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (local.set $1
- ;; CHECK-NEXT:         (i32.const 0)
- ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:        (br $__return_call)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (call_indirect (type $T)
- ;; CHECK-NEXT:       (local.get $0)
- ;; CHECK-NEXT:       (local.get $1)
+ ;; CHECK-NEXT:       (i32.const 42)
+ ;; CHECK-NEXT:       (i32.const 0)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -900,23 +982,15 @@
  ;; CHECK:      (table $0 10 funcref)
 
  ;; CHECK:      (func $0
- ;; CHECK-NEXT:  (local $0 i32)
- ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (block $__inlined_func$1
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (block $__return_call
- ;; CHECK-NEXT:     (local.set $0
- ;; CHECK-NEXT:      (i32.const 42)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (local.set $1
- ;; CHECK-NEXT:      (i32.const 0)
- ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (br $__return_call)
  ;; CHECK-NEXT:     (br $__inlined_func$1)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (call_indirect (type $T)
- ;; CHECK-NEXT:     (local.get $0)
- ;; CHECK-NEXT:     (local.get $1)
+ ;; CHECK-NEXT:     (i32.const 42)
+ ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
