@@ -76,6 +76,9 @@ class PossibleContents {
     // The contents flowing out will be a Global, but of a non-nullable type,
     // unlike the original global.
     Type type;
+    // TODO: Consider adding a depth here, or merging this with ConeType in some
+    //       way. In principle, not having depth info can lead to loss of
+    //       precision.
     bool operator==(const GlobalInfo& other) const {
       return name == other.name && type == other.type;
     }
@@ -305,8 +308,9 @@ public:
       // Nothing to add.
     } else if (isLiteral()) {
       rehash(ret, getLiteral());
-    } else if (isGlobal()) {
-      rehash(ret, getGlobal());
+    } else if (auto* global = std::get_if<GlobalInfo>(&value)) {
+      rehash(ret, global->name);
+      rehash(ret, global->type);
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
       rehash(ret, coneType->type);
       rehash(ret, coneType->depth);
