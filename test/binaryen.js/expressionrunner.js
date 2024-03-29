@@ -1,7 +1,6 @@
 var Flags = binaryen.ExpressionRunner.Flags;
 console.log("// ExpressionRunner.Flags.Default = " + Flags.Default);
 console.log("// ExpressionRunner.Flags.PreserveSideeffects = " + Flags.PreserveSideeffects);
-console.log("// ExpressionRunner.Flags.TraverseCalls = " + Flags.TraverseCalls);
 
 function assertDeepEqual(x, y) {
   if (typeof x === "object") {
@@ -139,39 +138,7 @@ assertDeepEqual(
   }
 );
 
-// Should traverse into (simple) functions if requested
-runner = new binaryen.ExpressionRunner(module, Flags.TraverseCalls);
-module.addFunction("add", binaryen.createType([ binaryen.i32, binaryen.i32 ]), binaryen.i32, [],
-  module.block(null, [
-    module.i32.add(
-      module.local.get(0, binaryen.i32),
-      module.local.get(1, binaryen.i32)
-    )
-  ], binaryen.i32)
-);
-assert(runner.setLocalValue(0, module.i32.const(1)));
-expr = runner.runAndDispose(
-  module.i32.add(
-    module.i32.add(
-      module.local.get(0, binaryen.i32),
-      module.call("add", [
-        module.i32.const(2),
-        module.i32.const(4)
-      ], binaryen.i32)
-    ),
-    module.local.get(0, binaryen.i32)
-  )
-);
-assertDeepEqual(
-  binaryen.getExpressionInfo(expr),
-  {
-    id: binaryen.ExpressionIds.Const,
-    type: binaryen.i32,
-    value: 8
-  }
-);
-
-// Should not attempt to traverse into functions if not explicitly set
+// Should not attempt to traverse into functions
 runner = new binaryen.ExpressionRunner(module);
 expr = runner.runAndDispose(
   module.i32.add(
