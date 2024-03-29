@@ -181,4 +181,4 @@
  (drop (i32.trunc_sat_f64_u (local.get $1)))
  (drop (i64.trunc_sat_f64_u (local.get $1)))
 )
-
+)
