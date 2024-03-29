@@ -371,9 +371,9 @@ if(EMSCRIPTEN)
     # On Node.js, make the tools immediately usable.
     add_link_flag("-sNODERAWFS")
   endif()
-    # in opt builds, LTO helps so much (>20%) it's worth slow compile times
-    add_nondebug_compile_flag("-flto")
-  endif()
+  # in opt builds, LTO helps so much (>20%) it's worth slow compile times
+  #add_nondebug_compile_flag("-flto")
+endif()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
 if(UNIX AND CMAKE_GENERATOR STREQUAL "Ninja")
@@ -539,6 +539,30 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_js debug "--profiling")
   target_link_libraries(binaryen_js debug "-sASSERTIONS")
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
+
+  # binaryen.embind.js variant (WebAssembly)
+  add_executable(binaryen_embind_wasm
+                 src/binaryen_embind.cpp
+                 ${binaryen_emscripten_SOURCES})
+  target_link_libraries(binaryen_embind_wasm wasm asmjs emscripten-optimizer passes ir cfg support analysis parser wasm)
+  target_link_libraries(binaryen_embind_wasm "-sFILESYSTEM")
+  target_link_libraries(binaryen_embind_wasm "-sEXPORT_NAME=Binaryen")
+  target_link_libraries(binaryen_embind_wasm "-sNODERAWFS=0")
+  # Do not error on the repeated NODERAWFS argument
+  target_link_libraries(binaryen_embind_wasm "-Wno-unused-command-line-argument")
+  # Emit a single file for convenience of people using binaryen.js as a library,
+  # so they only need to distribute a single file.
+  target_link_libraries(binaryen_embind_wasm "-sSINGLE_FILE")
+  target_link_libraries(binaryen_embind_wasm "-sEXPORT_ES6")
+  target_link_libraries(binaryen_embind_wasm "--bind")
+  target_link_libraries(binaryen_embind_wasm "-msign-ext")
+  target_link_libraries(binaryen_embind_wasm "-mbulk-memory")
+  #target_link_libraries(binaryen_embind_wasm optimized "--closure=1")
+  # TODO: Fix closure warnings! (#5062)
+  target_link_libraries(binaryen_embind_wasm optimized "-Wno-error=closure")
+  #target_link_libraries(binaryen_embind_wasm optimized "-flto")
+  target_link_libraries(binaryen_embind_wasm debug "--profiling")
+  install(TARGETS binaryen_embind_wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 
 configure_file(scripts/binaryen-lit.in ${CMAKE_BINARY_DIR}/bin/binaryen-lit @ONLY)
