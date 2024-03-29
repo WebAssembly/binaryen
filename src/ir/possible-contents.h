@@ -65,7 +65,7 @@ class PossibleContents {
   struct None : public std::monostate {};
 
   struct GlobalInfo {
-    Global* global;
+    Name name;
     // The type of contents. Note that this may not match the type of the
     // global, if we were filtered. For example:
     //
@@ -77,7 +77,7 @@ class PossibleContents {
     // unlike the original global.
     Type type;
     bool operator==(const GlobalInfo& other) const {
-      return global == other.global && type == other.type;
+      return name == other.name && type == other.type;
     }
   };
 
@@ -119,8 +119,8 @@ public:
 
   static PossibleContents none() { return PossibleContents{None()}; }
   static PossibleContents literal(Literal c) { return PossibleContents{c}; }
-  static PossibleContents global(Global* global, Type type) {
-    return PossibleContents{GlobalInfo{global, type}};
+  static PossibleContents global(Name name, Type type) {
+    return PossibleContents{GlobalInfo{name, type}};
   }
   // Helper for a cone type with depth 0, i.e., an exact type.
   static PossibleContents exactType(Type type) {
@@ -190,9 +190,9 @@ public:
     return std::get<Literal>(value);
   }
 
-  Global* getGlobal() const {
+  Name getGlobal() const {
     assert(isGlobal());
-    return std::get<GlobalInfo>(value).global;
+    return std::get<GlobalInfo>(value).name;
   }
 
   bool isNull() const { return isLiteral() && getLiteral().isNull(); }
@@ -290,11 +290,11 @@ public:
     if (isLiteral()) {
       return builder.makeConstantExpression(getLiteral());
     } else {
-      auto* global = getGlobal();
+      auto name = getGlobal();
       // Note that we load the type from the module, rather than use the type
       // in the GlobalInfo, as that type may not match the global (see comment
       // in the GlobalInfo declaration above).
-      return builder.makeGlobalGet(global->name, global->type);
+      return builder.makeGlobalGet(name, wasm.getGlobal(name)->type);
     }
   }
 
@@ -306,7 +306,7 @@ public:
     } else if (isLiteral()) {
       rehash(ret, getLiteral());
     } else if (isGlobal()) {
-      rehash(ret, getGlobal()->name);
+      rehash(ret, getGlobal());
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
       rehash(ret, coneType->type);
       rehash(ret, coneType->depth);
@@ -328,7 +328,7 @@ public:
         o << " HT: " << h;
       }
     } else if (isGlobal()) {
-      o << "GlobalInfo $" << getGlobal()->name << " T: " << getType();
+      o << "GlobalInfo $" << getGlobal() << " T: " << getType();
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
       auto t = coneType->type;
       o << "ConeType " << t;
