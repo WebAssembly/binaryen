@@ -2122,7 +2122,10 @@ Flower::Flower(Module& wasm, const PassOptions& options)
   // The merged roots. (Note that all other forms of merged data are declared at
   // the class level, since we need them during the flow, but the roots are only
   // needed to start the flow, so we can declare them here.)
-  std::unordered_map<Location, PossibleContents> roots;
+  //
+  // This must be insert-ordered for the same reason as |workQueue| is, see
+  // above.
+  InsertOrderedMap<Location, PossibleContents> roots;
 
   for (auto& [func, info] : analysis.map) {
     for (auto& link : info.links) {
