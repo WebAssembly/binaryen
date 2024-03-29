@@ -226,9 +226,9 @@ void PossibleContents::intersect(const PossibleContents& other) {
   // Note the global's information, if we started as a global. In that case, the
   // code below will refine our type but we can remain a global, which we will
   // accomplish by restoring our global status at the end.
-  std::optional<Name> globalName;
+  std::optional<Global*> global;
   if (isGlobal()) {
-    globalName = getGlobal();
+    global = getGlobal();
   }
 
   auto newType = Type(newHeapType, nullability);
@@ -267,9 +267,9 @@ void PossibleContents::intersect(const PossibleContents& other) {
     value = ConeType{newType, newDepth};
   }
 
-  if (globalName) {
+  if (global) {
     // Restore the global but keep the new and refined type.
-    value = GlobalInfo{*globalName, getType()};
+    value = GlobalInfo{*global, getType()};
   }
 }
 
@@ -2578,7 +2578,7 @@ void Flower::filterGlobalContents(PossibleContents& contents,
     // a cone/exact type *and* that something is equal to a global, in some
     // cases. See https://github.com/WebAssembly/binaryen/pull/5083
     if (contents.isMany() || contents.isConeType()) {
-      contents = PossibleContents::global(global->name, global->type);
+      contents = PossibleContents::global(global, global->type);
 
       // TODO: We could do better here, to set global->init->type instead of
       //       global->type, or even the contents.getType() - either of those
