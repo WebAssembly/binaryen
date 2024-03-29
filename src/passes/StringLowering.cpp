@@ -298,6 +298,7 @@ struct StringLowering : public StringGathering {
   Name fromCharCodeArrayImport;
   Name intoCharCodeArrayImport;
   Name fromCodePointImport;
+  Name concatImport;
   Name equalsImport;
   Name compareImport;
   Name lengthImport;
@@ -328,6 +329,8 @@ struct StringLowering : public StringGathering {
       module, "fromCharCodeArray", {nullArray16, Type::i32, Type::i32}, nnExt);
     // string.fromCodePoint: codepoint -> ext
     fromCodePointImport = addImport(module, "fromCodePoint", Type::i32, nnExt);
+    // string.concat: string, string -> string
+    concatImport = addImport(module, "concat", {nullExt, nullExt}, nnExt);
     // string.intoCharCodeArray: string, array, start -> num written
     intoCharCodeArrayImport = addImport(module,
                                         "intoCharCodeArray",
@@ -373,6 +376,12 @@ struct StringLowering : public StringGathering {
           default:
             WASM_UNREACHABLE("TODO: all of string.new*");
         }
+      }
+
+      void visitStringConcat(StringConcat* curr) {
+        Builder builder(*getModule());
+        replaceCurrent(builder.makeCall(
+          lowering.concatImport, {curr->left, curr->right}, lowering.nnExt));
       }
 
       void visitStringAs(StringAs* curr) {
