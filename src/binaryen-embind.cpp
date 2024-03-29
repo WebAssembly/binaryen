@@ -23,4 +23,9 @@
 #include "wasm.h"
 
 using namespace wasm;
+using namespace emscripten;
 
+EMSCRIPTEN_BINDINGS(Binaryen) {
+  class_<Expression>("Expression")
+    .function("finalize", &Expression::finalize);
+}
