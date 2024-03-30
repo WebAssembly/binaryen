@@ -450,4 +450,70 @@
     (call $cycle-with-unknown-call)
     (call $import)
   )
+
+  ;; WITHOUT:      (func $throw-through-return-call (type $0)
+  ;; WITHOUT-NEXT:  (try $try
+  ;; WITHOUT-NEXT:   (do
+  ;; WITHOUT-NEXT:    (return_call $throw)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:   (catch_all
+  ;; WITHOUT-NEXT:    (nop)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $throw-through-return-call (type $0)
+  ;; INCLUDE-NEXT:  (nop)
+  ;; INCLUDE-NEXT: )
+  ;; DISCARD:      (func $throw-through-return-call (type $0)
+  ;; DISCARD-NEXT:  (try $try
+  ;; DISCARD-NEXT:   (do
+  ;; DISCARD-NEXT:    (return_call $throw)
+  ;; DISCARD-NEXT:   )
+  ;; DISCARD-NEXT:   (catch_all
+  ;; DISCARD-NEXT:    (nop)
+  ;; DISCARD-NEXT:   )
+  ;; DISCARD-NEXT:  )
+  ;; DISCARD-NEXT: )
+  (func $throw-through-return-call
+    ;; The exception is not catched, so this code cannot be simplified
+    (try
+      (do
+        (return_call $throw)
+      )
+      (catch_all)
+    )
+  )
+
+  ;; WITHOUT:      (func $catch-all-effects (type $0)
+  ;; WITHOUT-NEXT:  (try $try
+  ;; WITHOUT-NEXT:   (do
+  ;; WITHOUT-NEXT:    (call $throw-through-return-call)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:   (catch_all
+  ;; WITHOUT-NEXT:    (nop)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $catch-all-effects (type $0)
+  ;; INCLUDE-NEXT:  (nop)
+  ;; INCLUDE-NEXT: )
+  ;; DISCARD:      (func $catch-all-effects (type $0)
+  ;; DISCARD-NEXT:  (try $try
+  ;; DISCARD-NEXT:   (do
+  ;; DISCARD-NEXT:    (call $throw-through-return-call)
+  ;; DISCARD-NEXT:   )
+  ;; DISCARD-NEXT:   (catch_all
+  ;; DISCARD-NEXT:    (nop)
+  ;; DISCARD-NEXT:   )
+  ;; DISCARD-NEXT:  )
+  ;; DISCARD-NEXT: )
+  (func $catch-all-effects
+    ;; The exception is catched, so the function body can be optimized away
+    (try
+      (do
+        (call $throw-through-return-call)
+      )
+      (catch_all)
+    )
+  )
 )
