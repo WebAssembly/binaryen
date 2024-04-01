@@ -27,6 +27,9 @@ binaryenFactory().then((binaryen) => {
             `);
 
   const builder = new binaryen.Builder(module);
+
+  // Generate a function and everything we need for that.
+  const sig = new binaryen.
   const func = builder.makeFunction("foo", 
   console.log('success.');
 });

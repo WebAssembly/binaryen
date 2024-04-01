@@ -58,9 +58,9 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .function("getHeapType", &Type::getHeapType)
   ;
 
-  class_<Signature>("Signature")
-    .property("params", &Signature::params)
-    .property("results", &Signature::results)
+  value_object<Signature>("Signature")
+    .field("params", &Signature::params)
+    .field("results", &Signature::results)
   ;
 
   class_<HeapType>("HeapType")
