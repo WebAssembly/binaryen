@@ -717,7 +717,7 @@ public:
                                    !info.inRemoveList;
                           },
                           [verbose](Info& info, Function* reason) {
-                            if (verbose && !info.canChangeState) {
+                            if (verbose) {
                               std::cout << "[asyncify] " << info.name
                                         << " can change the state due to "
                                         << reason->name << "\n";
