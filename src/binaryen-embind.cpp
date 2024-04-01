@@ -54,7 +54,18 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .function("isArray", &Type::isArray)
     .function("isException", &Type::isException)
     .function("isString", &Type::isString)
-    .function("isDefaultable", &Type::isDefaultable);
+    .function("isDefaultable", &Type::isDefaultable)
+    .function("getHeapType", &Type::getHeapType)
+  ;
+
+  class_<Signature>("Signature")
+    .property("params", &Signature::params)
+    .property("results", &Signature::results)
+  ;
+
+  class_<HeapType>("HeapType")
+    .constructor<Signature>()
+  ;
 
   class_<Name>("Name")
     .constructor<const std::string&>();
@@ -72,16 +83,16 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
   class_<Importable>("Importable")
     .property("module", &Importable::module)
     .property("base", &Importable::base)
-    ;
+  ;
 
   class_<Function>("Function")
-    ;
+  ;
 
   class_<NameType>("NameType")
     .constructor<Name, Type>()
     .property("name", &NameType::name)
     .property("type", &NameType::type)
-    ;
+  ;
 
   register_vector<NameType>("NameTypeVec");
 
@@ -95,9 +106,9 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
                                                          Expression*)
                              >(&Builder::makeFunction), allow_raw_pointers())
 
-    // All Expression classes...
-    .function("makeNop", &Builder::makeNop, allow_raw_pointers()) 
-    ;
+  // All Expression classes...
+  .function("makeNop", &Builder::makeNop, allow_raw_pointers()) 
+  ;
 
   class_<Module>("Module")
     .smart_ptr_constructor("Module", &std::make_shared<Module>)
@@ -105,6 +116,6 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .function("getFunction", &Module::getFunction, allow_raw_pointers())
     .function("getFunctionOrNull", &Module::getFunctionOrNull, allow_raw_pointers())
     .function("addFunction", select_overload<Function* (Function*)>(&Module::addFunction), allow_raw_pointers())
-    ;
+  ;
 
 }
