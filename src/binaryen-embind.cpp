@@ -25,8 +25,6 @@
 using namespace wasm;
 using namespace emscripten;
 
-Function* (Module::*Module_addFunction)(Function*) = &Module::addFunction; // XXX work around overloaded name
-
 EMSCRIPTEN_BINDINGS(Binaryen) {
 
   class_<Type>("Type")
@@ -57,7 +55,7 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .property("start", &Module::start)
     .function("getFunction", &Module::getFunction, allow_raw_pointers())
     .function("getFunctionOrNull", &Module::getFunctionOrNull, allow_raw_pointers())
-    .function("addFunction", Module_addFunction, allow_raw_pointers()) // XXX
+    .function("addFunction", select_overload<Function*(Function*)>(&Module::addFunction), allow_raw_pointers())
     ;
 
 }
