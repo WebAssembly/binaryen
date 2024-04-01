@@ -26,7 +26,20 @@
 using namespace wasm;
 using namespace emscripten;
 
+// Wrappers for things that don't quite fit with embind.
+namespace {
+
+std::string stringify(Module& wasm) {
+  std::stringstream str;
+  str << wasm;
+  return str.str();
+}
+
+} // anonymous namespace
+
 EMSCRIPTEN_BINDINGS(Binaryen) {
+
+  function("stringify", &stringify);
 
   class_<Type>("Type")
     .function("isTuple", &Type::isTuple)
@@ -51,6 +64,16 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 
   // All Expression classes...
 
+  // Module-level constructs.
+
+  class_<Named>("Named")
+    .property("name", &Named::name);
+
+  class_<Importable>("Importable")
+    .property("module", &Importable::module)
+    .property("base", &Importable::base)
+    ;
+
   class_<Function>("Function")
     ;
 
@@ -63,6 +86,7 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     ;
 
   class_<Module>("Module")
+    .smart_ptr_constructor("Module", &std::make_shared<Module>)
     .property("start", &Module::start)
     .function("getFunction", &Module::getFunction, allow_raw_pointers())
     .function("getFunctionOrNull", &Module::getFunctionOrNull, allow_raw_pointers())
