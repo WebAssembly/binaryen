@@ -214,6 +214,7 @@ WASM_EMSCRIPTEN_FINALIZE = [os.path.join(options.binaryen_bin,
                                          'wasm-emscripten-finalize')]
 BINARYEN_JS = os.path.join(options.binaryen_bin, 'binaryen_js.js')
 BINARYEN_WASM = os.path.join(options.binaryen_bin, 'binaryen_wasm.js')
+BINARYEN_EMBIND = os.path.join(options.binaryen_bin, 'binaryen_embind_wasm.js')
 
 
 def wrap_with_valgrind(cmd):

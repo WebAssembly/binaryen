@@ -372,6 +372,7 @@ TEST_SUITES = OrderedDict([
     ('unit', run_unittest),
     ('binaryenjs', binaryenjs.test_binaryen_js),
     ('binaryenjs_wasm', binaryenjs.test_binaryen_wasm),
+    ('binaryenjs_embind', binaryenjs.test_binaryen_embind),
     ('lit', run_lit),
     ('gtest', run_gtest),
 ])
