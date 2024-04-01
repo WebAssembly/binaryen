@@ -543,8 +543,7 @@ if(EMSCRIPTEN)
 
   # binaryen.embind.js variant (WebAssembly)
   add_executable(binaryen_embind_wasm
-                 src/binaryen-embind.cpp
-                 ${binaryen_emscripten_SOURCES})
+                 src/binaryen-embind.cpp)
   target_link_libraries(binaryen_embind_wasm wasm asmjs emscripten-optimizer passes ir cfg support analysis parser wasm)
   target_link_libraries(binaryen_embind_wasm "-sFILESYSTEM")
   #target_link_libraries(binaryen_embind_wasm "-sEXPORT_NAME=Binaryen")
