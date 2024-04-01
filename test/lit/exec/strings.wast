@@ -342,6 +342,58 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] calling new_oob
+  ;; CHECK-NEXT: [fuzz-exec] note result: new_oob => string("")
+  (func $new_oob (export "new_oob") (result stringref)
+    ;; Try to make a string from an array of size 1 that we slice at [1:],
+    ;; which is out of bounds due to the starting index.
+    (string.new_wtf16_array
+      (array.new_default $array16
+        (i32.const 1)
+      )
+      (i32.const 1)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling new_2
+  ;; CHECK-NEXT: [fuzz-exec] note result: new_2 => string("")
+  (func $new_2 (export "new_2") (result stringref)
+    (string.new_wtf16_array
+      (array.new_default $array16
+        (i32.const 1)
+      )
+      (i32.const 1)
+      (i32.const 1) ;; this changed, which makes this an in-bounds operation
+                    ;; that emits an empty string
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling new_oob_3
+  ;; CHECK-NEXT: [trap array oob]
+  (func $new_oob_3 (export "new_oob_3") (result stringref)
+    (string.new_wtf16_array
+      (array.new_default $array16
+        (i32.const 1)
+      )
+      (i32.const 1)
+      (i32.const 2) ;; this changed, and again we are out of bounds
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling new_4
+  ;; CHECK-NEXT: [fuzz-exec] note result: new_4 => string("\u0000")
+  (func $new_4 (export "new_4") (result stringref)
+    (string.new_wtf16_array
+      (array.new_default $array16
+        (i32.const 2) ;; this changed, and now we are in bounds, and emit a
+                      ;; string of length 1 (with unicode 0)
+      )
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+
   ;; CHECK:      [fuzz-exec] calling slice-unicode
   ;; CHECK-NEXT: [fuzz-exec] note result: slice-unicode => string("d\u00a3f")
   (func $slice-unicode (export "slice-unicode") (result (ref string))
@@ -448,6 +500,18 @@
 ;; CHECK:      [fuzz-exec] calling new_empty_oob_2
 ;; CHECK-NEXT: [trap array oob]
 
+;; CHECK:      [fuzz-exec] calling new_oob
+;; CHECK-NEXT: [fuzz-exec] note result: new_oob => string("")
+
+;; CHECK:      [fuzz-exec] calling new_2
+;; CHECK-NEXT: [fuzz-exec] note result: new_2 => string("")
+
+;; CHECK:      [fuzz-exec] calling new_oob_3
+;; CHECK-NEXT: [trap array oob]
+
+;; CHECK:      [fuzz-exec] calling new_4
+;; CHECK-NEXT: [fuzz-exec] note result: new_4 => string("\u0000")
+
 ;; CHECK:      [fuzz-exec] calling slice-unicode
 ;; CHECK-NEXT: [fuzz-exec] note result: slice-unicode => string("d\u00a3f")
 
@@ -475,9 +539,13 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.5
 ;; CHECK-NEXT: [fuzz-exec] comparing get_codeunit
 ;; CHECK-NEXT: [fuzz-exec] comparing get_length
+;; CHECK-NEXT: [fuzz-exec] comparing new_2
+;; CHECK-NEXT: [fuzz-exec] comparing new_4
 ;; CHECK-NEXT: [fuzz-exec] comparing new_empty
 ;; CHECK-NEXT: [fuzz-exec] comparing new_empty_oob
 ;; CHECK-NEXT: [fuzz-exec] comparing new_empty_oob_2
+;; CHECK-NEXT: [fuzz-exec] comparing new_oob
+;; CHECK-NEXT: [fuzz-exec] comparing new_oob_3
 ;; CHECK-NEXT: [fuzz-exec] comparing new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] comparing slice
 ;; CHECK-NEXT: [fuzz-exec] comparing slice-big
