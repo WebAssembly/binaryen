@@ -21,6 +21,7 @@
 #include <emscripten/bind.h>
 
 #include "wasm.h"
+#include "wasm-builder.h"
 
 using namespace wasm;
 using namespace emscripten;
@@ -48,7 +49,13 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
   class_<Expression>("Expression")
     .property("type", &Expression::type);
 
+  // All Expression classes...
+
   class_<Function>("Function")
+    ;
+
+  class_<Builder>("Builder")
+    .constructor<Module&>()
     ;
 
   class_<Module>("Module")
