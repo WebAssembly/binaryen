@@ -548,13 +548,14 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_embind_wasm "-sFILESYSTEM")
   #target_link_libraries(binaryen_embind_wasm "-sEXPORT_NAME=Binaryen")
   target_link_libraries(binaryen_embind_wasm "-sNODERAWFS=0")
+  target_link_libraries(binaryen_embind_wasm "-sMODULARIZE")
   # Do not error on the repeated NODERAWFS argument
   target_link_libraries(binaryen_embind_wasm "-Wno-unused-command-line-argument")
   # Emit a single file for convenience of people using binaryen.js as a library,
   # so they only need to distribute a single file.
   #target_link_libraries(binaryen_embind_wasm "-sSINGLE_FILE")
   #target_link_libraries(binaryen_embind_wasm "-sEXPORT_ES6")
-  target_link_libraries(binaryen_embind_wasm "--bind")
+  target_link_libraries(binaryen_embind_wasm "-lembind")
   target_link_libraries(binaryen_embind_wasm "-msign-ext")
   target_link_libraries(binaryen_embind_wasm "-mbulk-memory")
   #target_link_libraries(binaryen_embind_wasm optimized "--closure=1")
@@ -562,6 +563,7 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_embind_wasm optimized "-Wno-error=closure")
   #target_link_libraries(binaryen_embind_wasm optimized "-flto")
   target_link_libraries(binaryen_embind_wasm optimized "--profiling") # XXX
+  target_link_libraries(binaryen_embind_wasm optimized "-O1") # XXX
   target_link_libraries(binaryen_embind_wasm debug "--profiling")
   install(TARGETS binaryen_embind_wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
