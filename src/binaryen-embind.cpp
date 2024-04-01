@@ -56,13 +56,14 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 
   class_<Builder>("Builder")
     .constructor<Module&>()
+    .function("makeFunction", select_overload<std::unique_ptr<Function> (Name, std::vector<NameType>&&, HeapType, std::vector<NameType>&& vars, Expression*)>, allow_raw_pointers())
     ;
 
   class_<Module>("Module")
     .property("start", &Module::start)
     .function("getFunction", &Module::getFunction, allow_raw_pointers())
     .function("getFunctionOrNull", &Module::getFunctionOrNull, allow_raw_pointers())
-    .function("addFunction", select_overload<Function*(Function*)>(&Module::addFunction), allow_raw_pointers())
+    .function("addFunction", select_overload<Function* (Function*)>(&Module::addFunction), allow_raw_pointers())
     ;
 
 }
