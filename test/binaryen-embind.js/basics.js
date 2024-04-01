@@ -17,7 +17,7 @@ const binaryenFactory = require(binaryen_js_path);
 
 binaryenFactory().then((binaryen) => {
   // Create a Module.
-  var module = new binaryen.Module();
+  const module = new binaryen.Module();
 
   // Check it prints out as empty.
   normEqual(binaryen.stringify(module),
@@ -26,6 +26,8 @@ binaryenFactory().then((binaryen) => {
              )
             `);
 
+  const builder = new binaryen.Builder(module);
+  const func = builder.makeFunction("foo", 
   console.log('success.');
 });
 
