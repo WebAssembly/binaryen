@@ -41,7 +41,12 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 
   function("stringify", &stringify);
 
+  enum_<Type::BasicType>("BasicType")
+      .value("i32", Type::BasicType::i32)
+  ;
+
   class_<Type>("Type")
+    .constructor<Type::BasicType>()
     .function("isTuple", &Type::isTuple)
     .function("isRef", &Type::isRef)
     .function("isFunction", &Type::isFunction)

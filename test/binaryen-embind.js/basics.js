@@ -16,6 +16,11 @@ function normEqual(x, y) {
 const binaryenFactory = require(binaryen_js_path);
 
 binaryenFactory().then((binaryen) => {
+  console.warn(binaryen.BasicType);
+  console.warn(binaryen.BasicType.i32);
+  console.warn(typeof binaryen.BasicType.i32);
+  assert.equal(binaryen.BasicType.i32, 2);
+
   // Create a Module.
   const module = new binaryen.Module();
 
@@ -30,7 +35,7 @@ binaryenFactory().then((binaryen) => {
 
   // Generate a function and everything we need for that.
   const sig = new binaryen.Signature();
-  const func = builder.makeFunction("foo", 
+  //const func = builder.makeFunction("foo", 
   console.log('success.');
 });
 
