@@ -1883,7 +1883,8 @@ public:
         const auto& ptrDataValues = ptrData->values;
         size_t startVal = start.getSingleValue().getUnsigned();
         size_t endVal = end.getSingleValue().getUnsigned();
-        if (startVal > ptrDataValues.size() || endVal > ptrDataValues.size()) {
+        if (startVal > ptrDataValues.size() || endVal > ptrDataValues.size() ||
+            endVal < startVal) {
           trap("array oob");
         }
         Literals contents;

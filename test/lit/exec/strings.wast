@@ -343,10 +343,11 @@
   )
 
   ;; CHECK:      [fuzz-exec] calling new_oob
-  ;; CHECK-NEXT: [fuzz-exec] note result: new_oob => string("")
+  ;; CHECK-NEXT: [trap array oob]
   (func $new_oob (export "new_oob") (result stringref)
     ;; Try to make a string from an array of size 1 that we slice at [1:],
-    ;; which is out of bounds due to the starting index.
+    ;; which is out of bounds due to the ending index (we must trap if the end
+    ;; is less then the start).
     (string.new_wtf16_array
       (array.new_default $array16
         (i32.const 1)
@@ -501,7 +502,7 @@
 ;; CHECK-NEXT: [trap array oob]
 
 ;; CHECK:      [fuzz-exec] calling new_oob
-;; CHECK-NEXT: [fuzz-exec] note result: new_oob => string("")
+;; CHECK-NEXT: [trap array oob]
 
 ;; CHECK:      [fuzz-exec] calling new_2
 ;; CHECK-NEXT: [fuzz-exec] note result: new_2 => string("")
