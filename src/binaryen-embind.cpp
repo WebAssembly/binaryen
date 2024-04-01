@@ -25,7 +25,39 @@
 using namespace wasm;
 using namespace emscripten;
 
+Function* (Module::*Module_addFunction)(Function*) = &Module::addFunction; // XXX work around overloaded name
+
 EMSCRIPTEN_BINDINGS(Binaryen) {
+
+  class_<Type>("Type")
+    .function("isTuple", &Type::isTuple)
+    .function("isRef", &Type::isRef)
+    .function("isFunction", &Type::isFunction)
+    .function("isData", &Type::isData)
+    .function("isNullable", &Type::isNullable)
+    .function("isNonNullable", &Type::isNonNullable)
+    .function("isNull", &Type::isNull)
+    .function("isSignature", &Type::isSignature)
+    .function("isStruct", &Type::isStruct)
+    .function("isArray", &Type::isArray)
+    .function("isException", &Type::isException)
+    .function("isString", &Type::isString)
+    .function("isDefaultable", &Type::isDefaultable);
+
+  class_<Name>("Name")
+    .constructor<const std::string&>();
+
   class_<Expression>("Expression")
-    .function("finalize", &Expression::finalize);
+    .property("type", &Expression::type);
+
+  class_<Function>("Function")
+    ;
+
+  class_<Module>("Module")
+    .property("start", &Module::start)
+    .function("getFunction", &Module::getFunction, allow_raw_pointers())
+    .function("getFunctionOrNull", &Module::getFunctionOrNull, allow_raw_pointers())
+    .function("addFunction", Module_addFunction, allow_raw_pointers()) // XXX
+    ;
+
 }
