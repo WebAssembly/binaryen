@@ -345,7 +345,7 @@
   ;; CHECK:      [fuzz-exec] calling new_oob
   ;; CHECK-NEXT: [trap array oob]
   (func $new_oob (export "new_oob") (result stringref)
-    ;; Try to make a string from an array of size 1 that we slice at [1:],
+    ;; Try to make a string from an array of size 1 that we slice at [1:0],
     ;; which is out of bounds due to the ending index (we must trap if the end
     ;; is less then the start).
     (string.new_wtf16_array
