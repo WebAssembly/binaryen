@@ -1179,8 +1179,13 @@ start_eval:
       }
     }
 
-    if ((localExprs.size() && func->getParams() != Type::none) ||
-        func->name != funcName ||
+    // If we have return-called to a different function, have precomputed values
+    // for the current return-called function (even if it is the same as the
+    // original function), or have partially computed the current function, then
+    // we can replace the export with a new function that does less work than
+    // the original.
+    if (func->name != funcName ||
+        (localExprs.size() && func->getParams() != Type::none) ||
         (successes > 0 && successes < block->list.size())) {
       auto originalFuncType = wasm.getFunction(funcName)->type;
       auto copyName = Names::getValidFunctionName(wasm, funcName);
