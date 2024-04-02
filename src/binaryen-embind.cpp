@@ -63,6 +63,8 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .function("getHeapType", &Type::getHeapType)
   ;
 
+  register_vector<Type>("TypeVec");
+
   value_object<Signature>("Signature")
     .field("params", &Signature::params)
     .field("results", &Signature::results)
@@ -79,6 +81,7 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .property("type", &Expression::type);
 
   // All Expression classes...
+  class_<Nop>("Nop");
 
   // Module-level constructs.
 

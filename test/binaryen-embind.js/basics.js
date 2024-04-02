@@ -35,7 +35,7 @@ binaryenFactory().then((binaryen) => {
     results: i32
   };
   const func_ii = new binaryen.HeapType(sig);
-  const vars = new binaryen.NameTypeVec();
+  const vars = new binaryen.TypeVec();
   const func = builder.makeFunction(
     "foo",
     func_ii,
