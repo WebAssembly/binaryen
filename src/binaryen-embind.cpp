@@ -88,37 +88,37 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
 #define DELEGATE_END(id) std::cout << '\n';
 
 #define DELEGATE_FIELD_CHILD(id, field)                                        \
-    .property(#field, &id::field);
+    .property(#field, &id::field)
 #define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
-    .property(#field, &id::field);
+    .property(#field, &id::field)
 #define DELEGATE_FIELD_TYPE(id, field)                                        \
-    .property(#field, &id::field);
+    .property(#field, &id::field)
 #define DELEGATE_FIELD_HEAPTYPE(id, field)                                        \
-    .property(#field, &id::field);
+    .property(#field, &id::field)
 #define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                                        \
-    .property(#field, &id::field);
+    .property(#field, &id::field)
 #define DELEGATE_FIELD_INT(id, field)                                        \
-    .property(#field, &id::field);
+    .property(#field, &id::field)
 #define DELEGATE_FIELD_LITERAL(id, field)                                        \
-    .property(#field, &id::field);
+    .property(#field, &id::field)
 #define DELEGATE_FIELD_NAME(id, field)                                        \
-    .property(#field, &id::field);
+    .property(#field, &id::field)
 #define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)                                        \
-    .property(#field, &id::field);
+    .property(#field, &id::field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)                                        \
-    .property(#field, &id::field);
+    .property(#field, &id::field)
 #define DELEGATE_FIELD_ADDRESS(id, field)                                        \
-    .property(#field, &id::field);
+    .property(#field, &id::field)
 #define DELEGATE_FIELD_INT_ARRAY(id, field)                                        \
-    .property(#field, &id::field);
+    .property(#field, &id::field)
 #define DELEGATE_FIELD_INT_VECTOR(id, field)                                        \
-    .property(#field, &id::field);
+    .property(#field, &id::field)
 #define DELEGATE_FIELD_NAME_VECTOR(id, field)                                        \
-    .property(#field, &id::field);
+    .property(#field, &id::field)
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                                        \
-    .property(#field, &id::field);
+    .property(#field, &id::field)
 #define DELEGATE_FIELD_TYPE_VECTOR(id, field)                                        \
-    .property(#field, &id::field);
+    .property(#field, &id::field)
 
 #define DELEGATE_FIELD_MAIN_START
 
