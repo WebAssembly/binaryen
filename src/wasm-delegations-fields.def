@@ -117,7 +117,7 @@
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
   for (int i = int((DELEGATE_GET_FIELD(id, field)).size()) - 1; i >= 0; i--) { \
-    DELEGATE_FIELD_CHILD(id, field[i]);                                        \
+    DELEGATE_FIELD_CHILD(id, field[i])                                        \
   }
 #else
 #error please define DELEGATE_FIELD_CHILD_VECTOR(id, field)
@@ -132,7 +132,7 @@
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_INT_ARRAY(id, field)                                    \
   for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
-    DELEGATE_FIELD_INT(id, field[i]);                                          \
+    DELEGATE_FIELD_INT(id, field[i])                                          \
   }
 #else
 #error please define DELEGATE_FIELD_INT_ARRAY(id, field)
@@ -143,7 +143,7 @@
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_INT_VECTOR(id, field)                                   \
   for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
-    DELEGATE_FIELD_INT(id, field[i]);                                          \
+    DELEGATE_FIELD_INT(id, field[i])                                          \
   }
 #else
 #error please define DELEGATE_FIELD_INT_VECTOR(id, field)
@@ -162,7 +162,7 @@
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_NAME_VECTOR(id, field)                                  \
   for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
-    DELEGATE_FIELD_NAME(id, field[i]);                                         \
+    DELEGATE_FIELD_NAME(id, field[i])                                        \
   }
 #else
 #error please define DELEGATE_FIELD_NAME_VECTOR(id, field)
@@ -181,7 +181,7 @@
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                        \
   for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
-    DELEGATE_FIELD_SCOPE_NAME_USE(id, field[i]);                               \
+    DELEGATE_FIELD_SCOPE_NAME_USE(id, field[i])                               \
   }
 #else
 #error please define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
@@ -190,14 +190,14 @@
 
 #ifndef DELEGATE_FIELD_NAME_KIND
 #define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
-  DELEGATE_FIELD_NAME(id, field);
+  DELEGATE_FIELD_NAME(id, field)
 #endif
 
 #ifndef DELEGATE_FIELD_NAME_KIND_VECTOR
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_NAME_KIND_VECTOR(id, field, kind)                       \
   for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
-    DELEGATE_FIELD_NAME_KIND(id, field[i], kind);                              \
+    DELEGATE_FIELD_NAME_KIND(id, field[i], kind)                              \
   }
 #else
 #define DELEGATE_FIELD_NAME_KIND_VECTOR(id, field, kind)                       \
@@ -213,7 +213,7 @@
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_TYPE_VECTOR(id, field)                                  \
   for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
-    DELEGATE_FIELD_TYPE(id, field[i]);                                         \
+    DELEGATE_FIELD_TYPE(id, field[i])                                         \
   }
 #else
 #error please define DELEGATE_FIELD_TYPE_VECTOR(id, field)
@@ -243,12 +243,12 @@ switch (DELEGATE_ID) { \
 #ifndef DELEGATE_FIELD_CASE_START
 #define DELEGATE_FIELD_CASE_START(id) \
   case Expression::Id::id##Id: { \
-    DELEGATE_START(id);
+    DELEGATE_START(id)
 #endif
 
 #ifndef DELEGATE_FIELD_CASE_END
 #define DELEGATE_FIELD_CASE_END(id) \
-    DELEGATE_END(id); \
+    DELEGATE_END(id) \
     break; \
   }
 #endif
