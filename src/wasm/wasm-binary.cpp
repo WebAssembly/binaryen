@@ -1067,7 +1067,7 @@ void WasmBinaryWriter::writeNames() {
   }
 
   // data segment names
-  if (!wasm->memories.empty()) {
+  {
     Index count = 0;
     for (auto& seg : wasm->dataSegments) {
       if (seg->hasExplicitName) {
@@ -1081,7 +1081,7 @@ void WasmBinaryWriter::writeNames() {
       o << U32LEB(count);
       for (Index i = 0; i < wasm->dataSegments.size(); i++) {
         auto& seg = wasm->dataSegments[i];
-        if (seg->name.is()) {
+        if (seg->hasExplicitName) {
           o << U32LEB(i);
           writeEscapedName(seg->name.str);
         }
