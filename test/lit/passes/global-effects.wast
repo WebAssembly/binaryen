@@ -462,7 +462,14 @@
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (func $throw-through-return-call (type $0)
-  ;; INCLUDE-NEXT:  (nop)
+  ;; INCLUDE-NEXT:  (try $try
+  ;; INCLUDE-NEXT:   (do
+  ;; INCLUDE-NEXT:    (return_call $throw)
+  ;; INCLUDE-NEXT:   )
+  ;; INCLUDE-NEXT:   (catch_all
+  ;; INCLUDE-NEXT:    (nop)
+  ;; INCLUDE-NEXT:   )
+  ;; INCLUDE-NEXT:  )
   ;; INCLUDE-NEXT: )
   ;; DISCARD:      (func $throw-through-return-call (type $0)
   ;; DISCARD-NEXT:  (try $try

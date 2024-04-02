@@ -478,7 +478,7 @@ private:
           // the target function throws and we know that will be caught anyhow,
           // the same as the code below for the general path.
           const auto& targetEffects = iter->second;
-          if (targetEffects.throws_ && parent.tryDepth > 0) {
+          if (targetEffects.throws_ && parent.tryDepth > 0 && !curr->isReturn) {
             auto filteredEffects = targetEffects;
             filteredEffects.throws_ = false;
             parent.mergeIn(filteredEffects);
@@ -492,13 +492,15 @@ private:
 
       parent.calls = true;
       // When EH is enabled, any call can throw.
-      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+      if (parent.features.hasExceptionHandling() &&
+          (parent.tryDepth == 0 || curr->isReturn)) {
         parent.throws_ = true;
       }
     }
     void visitCallIndirect(CallIndirect* curr) {
       parent.calls = true;
-      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+      if (parent.features.hasExceptionHandling() &&
+          (parent.tryDepth == 0 || curr->isReturn)) {
         parent.throws_ = true;
       }
       if (curr->isReturn) {
@@ -750,7 +752,8 @@ private:
         return;
       }
       parent.calls = true;
-      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+      if (parent.features.hasExceptionHandling() &&
+          (parent.tryDepth == 0 || curr->isReturn)) {
         parent.throws_ = true;
       }
       if (curr->isReturn) {
