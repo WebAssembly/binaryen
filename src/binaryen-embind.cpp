@@ -82,7 +82,7 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
   class_<Nop, base<Expression>>("Nop");
 
 
-
+#if 0
 
 #define DELEGATE_ID id
 
@@ -121,6 +121,7 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
   ;
 
 #include "wasm-delegations.def"
+#endif
 
 
 

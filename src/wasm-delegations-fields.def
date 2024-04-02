@@ -246,12 +246,12 @@ switch (DELEGATE_ID) { \
 
 #ifndef DELEGATE_FIELD_CASE_START
 #define DELEGATE_FIELD_CASE_START(id) \
-  case Expression::Id::id#Id: { \
+  case Expression::Id::id##Id: { \
     DELEGATE_START(id);
 #endif
 
 #ifndef DELEGATE_FIELD_CASE_END
-#define DELEGATE_FIELD_CASE_END \
+#define DELEGATE_FIELD_CASE_END(id) \
     DELEGATE_END(id); \
     break; \
   }
@@ -789,6 +789,7 @@ DELEGATE_FIELD_CASE_START(StringSliceIter)
     DELEGATE_FIELD_CHILD(StringSliceIter, ref);
 DELEGATE_FIELD_CASE_END(StringSliceIter)
 
+DELEGATE_FIELD_CASE_START(ContBind)
     DELEGATE_FIELD_CHILD(ContBind, cont);
     DELEGATE_FIELD_CHILD_VECTOR(ContBind, operands);
     DELEGATE_FIELD_HEAPTYPE(ContBind, contTypeAfter);
