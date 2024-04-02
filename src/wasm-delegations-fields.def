@@ -230,6 +230,7 @@
 
 // By default we emit a switch and cases, but that can be customized using the
 // following:
+
 #ifndef DELEGATE_FIELD_MAIN_START
 #define DELEGATE_FIELD_MAIN_START \
 switch (DELEGATE_ID) { \
@@ -237,11 +238,6 @@ switch (DELEGATE_ID) { \
   case Expression::Id::NumExpressionIds: { \
     WASM_UNREACHABLE("unexpected expression type"); \
   }
-#endif
-
-#ifndef DELEGATE_FIELD_MAIN_END
-#define DELEGATE_FIELD_MAIN_END \
-}
 #endif
 
 #ifndef DELEGATE_FIELD_CASE_START
@@ -255,6 +251,11 @@ switch (DELEGATE_ID) { \
     DELEGATE_END(id); \
     break; \
   }
+#endif
+
+#ifndef DELEGATE_FIELD_MAIN_END
+#define DELEGATE_FIELD_MAIN_END \
+}
 #endif
 
 DELEGATE_FIELD_MAIN_START
