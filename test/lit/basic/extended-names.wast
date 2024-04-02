@@ -16,6 +16,8 @@
 
   ;; CHECK-TEXT:      (data $passive_data "b")
 
+  ;; CHECK-TEXT:      (data $2 "c")
+
   ;; CHECK-TEXT:      (table $t1 1 funcref)
   ;; CHECK-BIN:      (memory $m1 1 1)
 
@@ -23,16 +25,21 @@
 
   ;; CHECK-BIN:      (data $passive_data "b")
 
+  ;; CHECK-BIN:      (data $2 "c")
+
   ;; CHECK-BIN:      (table $t1 1 funcref)
   (table $t1 1 funcref)
   (memory $m1 1 1)
   (data $mydata (i32.const 0) "a")
   (data $passive_data "b")
+  (data "c")
 )
 ;; CHECK-BIN-NODEBUG:      (memory $0 1 1)
 
 ;; CHECK-BIN-NODEBUG:      (data $0 (i32.const 0) "a")
 
 ;; CHECK-BIN-NODEBUG:      (data $1 "b")
+
+;; CHECK-BIN-NODEBUG:      (data $2 "c")
 
 ;; CHECK-BIN-NODEBUG:      (table $0 1 funcref)
