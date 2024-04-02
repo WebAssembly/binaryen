@@ -105,9 +105,8 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .constructor<Module&>()
     .function("makeFunction",
               select_overload<std::unique_ptr<Function> (Name,
-                                                         std::vector<NameType>&&,
                                                          HeapType,
-                                                         std::vector<NameType>&& vars,
+                                                         std::vector<Type>&& vars,
                                                          Expression*)
                              >(&Builder::makeFunction), allow_raw_pointers())
 

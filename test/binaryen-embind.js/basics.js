@@ -35,14 +35,12 @@ binaryenFactory().then((binaryen) => {
     results: i32
   };
   const func_ii = new binaryen.HeapType(sig);
-  const params = new binaryen.NameTypeVec();
-  params.push_back(new binaryen.NameType(new binaryen.Name("p0"), i32));
   const vars = new binaryen.NameTypeVec();
   const func = builder.makeFunction(
     "foo",
-    params,
     func_ii,
-    vars
+    vars,
+    builder.makeNop()
   );
   console.log('success.');
 });
