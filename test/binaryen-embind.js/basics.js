@@ -55,6 +55,9 @@ binaryenFactory().then((binaryen) => {
              )
             `);
 
+  // Clean up. XXX new HeapType etc. are all unneeded and also leaked!
+  module.delete();
+
   console.log('success.');
 });
 
