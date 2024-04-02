@@ -36,12 +36,25 @@ binaryenFactory().then((binaryen) => {
   };
   const func_ii = new binaryen.HeapType(sig);
   const vars = new binaryen.TypeVec();
-  const func = builder.makeFunction(
-    "foo",
+  const func = binaryen.Builder.makeFunction(
+    new binaryen.Name("foo"),
     func_ii,
     vars,
     builder.makeNop()
   );
+  module.addFunction(func);
+
+  // Check the function prints out ok.
+  normEqual(binaryen.stringify(module),
+            `
+             (module
+              (type $0 (func (param i32) (result i32)))
+              (func $foo (param $0 i32) (result i32)
+               (nop)
+              )
+             )
+            `);
+
   console.log('success.');
 });
 

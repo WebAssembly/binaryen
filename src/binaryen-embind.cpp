@@ -62,7 +62,6 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .function("isDefaultable", &Type::isDefaultable)
     .function("getHeapType", &Type::getHeapType)
   ;
-
   register_vector<Type>("TypeVec");
 
   value_object<Signature>("Signature")
@@ -81,7 +80,7 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .property("type", &Expression::type);
 
   // All Expression classes...
-  class_<Nop>("Nop");
+  class_<Nop, base<Expression>>("Nop");
 
   // Module-level constructs.
 
@@ -101,12 +100,11 @@ EMSCRIPTEN_BINDINGS(Binaryen) {
     .property("name", &NameType::name)
     .property("type", &NameType::type)
   ;
-
   register_vector<NameType>("NameTypeVec");
 
   class_<Builder>("Builder")
     .constructor<Module&>()
-    .function("makeFunction",
+    .class_function("makeFunction",
               select_overload<std::unique_ptr<Function> (Name,
                                                          HeapType,
                                                          std::vector<Type>&& vars,
