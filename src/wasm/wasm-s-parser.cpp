@@ -1181,6 +1181,7 @@ void SExpressionWasmBuilder::parseFunction(Element& s, bool preParseImport) {
   // make a new function
   currFunction = std::unique_ptr<Function>(
     Builder(wasm).makeFunction(name, std::move(params), type, std::move(vars)));
+  currFunction->hasExplicitName = hasExplicitName;
   currFunction->profile = profile;
 
   // parse body

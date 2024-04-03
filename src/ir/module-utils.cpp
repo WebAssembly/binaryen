@@ -48,6 +48,7 @@ Function* copyFunction(Function* func,
                        std::optional<std::vector<Index>> fileIndexMap) {
   auto ret = std::make_unique<Function>();
   ret->name = newName.is() ? newName : func->name;
+  ret->hasExplicitName = func->hasExplicitName && !newName.is();
   ret->type = func->type;
   ret->vars = func->vars;
   ret->localNames = func->localNames;
@@ -77,6 +78,7 @@ Function* copyFunction(Function* func,
 Global* copyGlobal(Global* global, Module& out) {
   auto* ret = new Global();
   ret->name = global->name;
+  ret->hasExplicitName = global->hasExplicitName;
   ret->type = global->type;
   ret->mutable_ = global->mutable_;
   ret->module = global->module;
@@ -93,6 +95,7 @@ Global* copyGlobal(Global* global, Module& out) {
 Tag* copyTag(Tag* tag, Module& out) {
   auto* ret = new Tag();
   ret->name = tag->name;
+  ret->hasExplicitName = tag->hasExplicitName;
   ret->sig = tag->sig;
   ret->module = tag->module;
   ret->base = tag->base;
@@ -209,6 +212,12 @@ void copyModuleItems(const Module& in, Module& out) {
   for (auto& curr : in.dataSegments) {
     copyDataSegment(curr.get(), out);
   }
+
+  for (auto& [type, names] : in.typeNames) {
+    if (!out.typeNames.count(type)) {
+      out.typeNames[type] = names;
+    }
+  }
 }
 
 void copyModule(const Module& in, Module& out) {
@@ -222,7 +231,6 @@ void copyModule(const Module& in, Module& out) {
   out.customSections = in.customSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
   out.features = in.features;
-  out.typeNames = in.typeNames;
 }
 
 void clearModule(Module& wasm) {

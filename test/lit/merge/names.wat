@@ -8,13 +8,13 @@
 
    ;; CHECK:      (type $2 (func (param (ref $t))))
 
-   ;; CHECK:      (type $3 (struct (field i64) (field i32)))
+   ;; CHECK:      (type $u (struct (field $c i64) (field $d i32)))
 
-   ;; CHECK:      (type $4 (func (param (ref $3))))
+   ;; CHECK:      (type $4 (func (param (ref $u))))
 
    ;; CHECK:      (global $global$0 i32 (i32.const 0))
 
-   ;; CHECK:      (global $global$1 i32 (i32.const 0))
+   ;; CHECK:      (global $glob2 i32 (i32.const 0))
 
    ;; CHECK:      (global $global$2 i32 (i32.const 0))
 
@@ -40,7 +40,7 @@
 
    ;; CHECK:      (tag $tag$1)
 
-   ;; CHECK:      (tag $tag$2)
+   ;; CHECK:      (tag $tag2)
 
    ;; CHECK:      (tag $tag$3)
 
@@ -72,21 +72,21 @@
 
    ;; CHECK:      (export "f2" (func $func2))
 
-   ;; CHECK:      (export "f3" (func $1_3))
+   ;; CHECK:      (export "f3" (func $4))
 
    ;; CHECK:      (export "t2" (table $table2))
 
    ;; CHECK:      (export "t3" (table $3))
 
-   ;; CHECK:      (export "g2" (global $global$1))
+   ;; CHECK:      (export "g2" (global $glob2))
 
    ;; CHECK:      (export "g3" (global $global$0))
 
-   ;; CHECK:      (export "tag2" (tag $tag$2))
+   ;; CHECK:      (export "tag2" (tag $tag2))
 
    ;; CHECK:      (export "tag3" (tag $tag$3))
 
-   ;; CHECK:      (export "func2" (func $2_3))
+   ;; CHECK:      (export "func2" (func $5))
 
    ;; CHECK:      (func $func0 (type $0)
    ;; CHECK-NEXT:  (nop)
@@ -128,10 +128,10 @@
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $1_3 (type $0)
+;; CHECK:      (func $4 (type $0)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $2_3 (type $4) (param $0 (ref $3))
+;; CHECK:      (func $5 (type $4) (param $0 (ref $u))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
