@@ -2994,11 +2994,11 @@ Expression* SExpressionWasmBuilder::makeContBind(Element& s) {
   auto ret = allocator.alloc<ContBind>();
 
   ret->contTypeBefore = parseHeapType(*s[1]);
-  if (!ret->contTypeBefore.isContinuation()) {
+  if (!ret->contTypeBefore.isCompositeContinuation()) {
     throw ParseException("expected continuation type", s[1]->line, s[1]->col);
   }
   ret->contTypeAfter = parseHeapType(*s[2]);
-  if (!ret->contTypeAfter.isContinuation()) {
+  if (!ret->contTypeAfter.isCompositeContinuation()) {
     throw ParseException("expected continuation type", s[2]->line, s[2]->col);
   }
 
@@ -3017,7 +3017,7 @@ Expression* SExpressionWasmBuilder::makeContNew(Element& s) {
   auto ret = allocator.alloc<ContNew>();
 
   ret->contType = parseHeapType(*s[1]);
-  if (!ret->contType.isContinuation()) {
+  if (!ret->contType.isCompositeContinuation()) {
     throw ParseException("expected continuation type", s[1]->line, s[1]->col);
   }
 
@@ -3031,7 +3031,7 @@ Expression* SExpressionWasmBuilder::makeResume(Element& s) {
   auto ret = allocator.alloc<Resume>();
 
   ret->contType = parseHeapType(*s[1]);
-  if (!ret->contType.isContinuation()) {
+  if (!ret->contType.isCompositeContinuation()) {
     throw ParseException("expected continuation type", s[1]->line, s[1]->col);
   }
 

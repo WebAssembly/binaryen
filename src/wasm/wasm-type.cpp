@@ -950,7 +950,7 @@ FeatureSet Type::getFeatures() const {
             if (sig.results.isTuple()) {
               feats |= FeatureSet::Multivalue;
             }
-          } else if (heapType->isContinuation()) {
+          } else if (heapType->isCompositeContinuation()) {
             feats |= FeatureSet::TypedContinuations;
           }
 
@@ -1180,7 +1180,7 @@ bool HeapType::isSignature() const {
   }
 }
 
-bool HeapType::isContinuation() const {
+bool HeapType::isCompositeContinuation() const {
   if (isBasic()) {
     return false;
   } else {
@@ -1248,7 +1248,7 @@ Signature HeapType::getSignature() const {
 }
 
 Continuation HeapType::getContinuation() const {
-  assert(isContinuation());
+  assert(isCompositeContinuation());
   return getHeapTypeInfo(*this)->continuation;
 }
 
@@ -1331,7 +1331,7 @@ size_t HeapType::getDepth() const {
   if (!isBasic()) {
     if (isFunction()) {
       depth++;
-    } else if (isContinuation()) {
+    } else if (isCompositeContinuation()) {
       // cont types <: any, thus nothing to add
     } else if (isStruct()) {
       // specific struct types <: struct <: eq <: any
@@ -1479,7 +1479,7 @@ std::vector<Type> HeapType::getTypeChildren() const {
     }
     return children;
   }
-  if (isContinuation()) {
+  if (isCompositeContinuation()) {
     return {};
   }
   WASM_UNREACHABLE("unexpected kind");
@@ -1602,7 +1602,7 @@ TypeNames DefaultTypeNameGenerator::getNames(HeapType type) {
     std::stringstream stream;
     if (type.isSignature()) {
       stream << "func." << funcCount++;
-    } else if (type.isContinuation()) {
+    } else if (type.isCompositeContinuation()) {
       stream << "cont." << contCount++;
     } else if (type.isStruct()) {
       stream << "struct." << structCount++;
@@ -1961,7 +1961,7 @@ std::ostream& TypePrinter::print(HeapType type) {
   }
   if (type.isSignature()) {
     print(type.getSignature());
-  } else if (type.isContinuation()) {
+  } else if (type.isCompositeContinuation()) {
     print(type.getContinuation());
   } else if (type.isStruct()) {
     print(type.getStruct(), names.fieldNames);

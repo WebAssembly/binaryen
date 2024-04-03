@@ -3337,12 +3337,12 @@ void FunctionValidator::visitContBind(ContBind* curr) {
     curr,
     "cont.bind requires typed-continuatons [--enable-typed-continuations]");
 
-  shouldBeTrue((curr->contTypeBefore.isContinuation() &&
+  shouldBeTrue((curr->contTypeBefore.isCompositeContinuation() &&
                 curr->contTypeBefore.getContinuation().type.isSignature()),
                curr,
                "invalid first type in ContBind expression");
 
-  shouldBeTrue((curr->contTypeAfter.isContinuation() &&
+  shouldBeTrue((curr->contTypeAfter.isCompositeContinuation() &&
                 curr->contTypeAfter.getContinuation().type.isSignature()),
                curr,
                "invalid second type in ContBind expression");
@@ -3355,7 +3355,7 @@ void FunctionValidator::visitContNew(ContNew* curr) {
     curr,
     "cont.new requires typed-continuatons [--enable-typed-continuations]");
 
-  shouldBeTrue((curr->contType.isContinuation() &&
+  shouldBeTrue((curr->contType.isCompositeContinuation() &&
                 curr->contType.getContinuation().type.isSignature()),
                curr,
                "invalid type in ContNew expression");
@@ -3373,7 +3373,7 @@ void FunctionValidator::visitResume(Resume* curr) {
     curr,
     "sentTypes cache in Resume instruction has not been initialized");
 
-  shouldBeTrue((curr->contType.isContinuation() &&
+  shouldBeTrue((curr->contType.isCompositeContinuation() &&
                 curr->contType.getContinuation().type.isSignature()),
                curr,
                "invalid type in Resume expression");

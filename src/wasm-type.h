@@ -367,7 +367,7 @@ public:
   bool isFunction() const;
   bool isData() const;
   bool isSignature() const;
-  bool isContinuation() const;
+  bool isCompositeContinuation() const;
   bool isStruct() const;
   bool isArray() const;
   bool isException() const;
