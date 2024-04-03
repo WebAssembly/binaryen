@@ -367,19 +367,13 @@ public:
 
   constexpr bool isBasic() const { return id <= _last_basic_type; }
   bool isFunction() const;
-  // Indicates whether the given type is either `cont`, the top type of the
-  // continuation type hierarchy, or a defined/composite continuation type of
-  // the form `(cont $ft)`. In other words, this is analogous to `isFunction`,
-  // but for continuation types.
-  bool isContinuation() const;
   bool isData() const;
   bool isSignature() const;
   // Indicates whether the given type was defined to be of the form
-  // `(cont $ft)`, meaning that it part of the category of composite types in
-  // the spec. Returns false for `cont`, the top type of the continuation
+  // `(cont $ft)`. Returns false for `cont`, the top type of the continuation
   // type hierarchy (and all other types). In other words, this is analogous to
   // `isSignature`, but for continuation types.
-  bool isCompositeContinuation() const;
+  bool isContinuation() const;
   bool isStruct() const;
   bool isArray() const;
   bool isException() const;

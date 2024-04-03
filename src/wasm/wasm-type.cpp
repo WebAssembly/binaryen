@@ -956,7 +956,7 @@ FeatureSet Type::getFeatures() const {
             if (sig.results.isTuple()) {
               feats |= FeatureSet::Multivalue;
             }
-          } else if (heapType->isCompositeContinuation()) {
+          } else if (heapType->isContinuation()) {
             feats |= FeatureSet::TypedContinuations;
           }
 
@@ -1169,14 +1169,6 @@ bool HeapType::isFunction() const {
   }
 }
 
-bool HeapType::isContinuation() const {
-  if (isBasic()) {
-    return id == cont;
-  } else {
-    return getHeapTypeInfo(*this)->isContinuation();
-  }
-}
-
 bool HeapType::isData() const {
   if (isBasic()) {
     return id == struct_ || id == array || id == string ||
@@ -1194,7 +1186,7 @@ bool HeapType::isSignature() const {
   }
 }
 
-bool HeapType::isCompositeContinuation() const {
+bool HeapType::isContinuation() const {
   if (isBasic()) {
     return false;
   } else {
@@ -1264,7 +1256,7 @@ Signature HeapType::getSignature() const {
 }
 
 Continuation HeapType::getContinuation() const {
-  assert(isCompositeContinuation());
+  assert(isContinuation());
   return getHeapTypeInfo(*this)->continuation;
 }
 
@@ -1347,7 +1339,7 @@ size_t HeapType::getDepth() const {
   // implicit supertyping wrt basic types. A signature type always has one more
   // super, HeapType::func, etc.
   if (!isBasic()) {
-    if (isFunction() || isCompositeContinuation()) {
+    if (isFunction() || isContinuation()) {
       depth++;
     } else if (isStruct()) {
       // specific struct types <: struct <: eq <: any
@@ -1504,7 +1496,7 @@ std::vector<Type> HeapType::getTypeChildren() const {
     }
     return children;
   }
-  if (isCompositeContinuation()) {
+  if (isContinuation()) {
     return {};
   }
   WASM_UNREACHABLE("unexpected kind");
@@ -1627,7 +1619,7 @@ TypeNames DefaultTypeNameGenerator::getNames(HeapType type) {
     std::stringstream stream;
     if (type.isSignature()) {
       stream << "func." << funcCount++;
-    } else if (type.isCompositeContinuation()) {
+    } else if (type.isContinuation()) {
       stream << "cont." << contCount++;
     } else if (type.isStruct()) {
       stream << "struct." << structCount++;
@@ -1997,7 +1989,7 @@ std::ostream& TypePrinter::print(HeapType type) {
   }
   if (type.isSignature()) {
     print(type.getSignature());
-  } else if (type.isCompositeContinuation()) {
+  } else if (type.isContinuation()) {
     print(type.getContinuation());
   } else if (type.isStruct()) {
     print(type.getStruct(), names.fieldNames);

@@ -1896,8 +1896,7 @@ Result<> IRBuilder::makeStringSliceIter() {
 
 Result<> IRBuilder::makeContBind(HeapType contTypeBefore,
                                  HeapType contTypeAfter) {
-  if (!contTypeBefore.isCompositeContinuation() ||
-      !contTypeAfter.isCompositeContinuation()) {
+  if (!contTypeBefore.isContinuation() || !contTypeAfter.isContinuation()) {
     return Err{"expected continuation types"};
   }
   ContBind curr(wasm.allocator);
@@ -1912,7 +1911,7 @@ Result<> IRBuilder::makeContBind(HeapType contTypeBefore,
 }
 
 Result<> IRBuilder::makeContNew(HeapType ct) {
-  if (!ct.isCompositeContinuation()) {
+  if (!ct.isContinuation()) {
     return Err{"expected continuation type"};
   }
   ContNew curr;
@@ -1925,7 +1924,7 @@ Result<> IRBuilder::makeContNew(HeapType ct) {
 Result<> IRBuilder::makeResume(HeapType ct,
                                const std::vector<Name>& tags,
                                const std::vector<Index>& labels) {
-  if (!ct.isCompositeContinuation()) {
+  if (!ct.isContinuation()) {
     return Err{"expected continuation type"};
   }
   Resume curr(wasm.allocator);
