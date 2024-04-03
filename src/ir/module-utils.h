@@ -388,19 +388,20 @@ template<typename T> struct CallGraphPropertyAnalysis {
 
   // Propagate a property from a function to those that call it.
   //
-  // hasProperty() - Check if the property is present. The second parameter is
-  //                 the function due to which we are adding the property, which
-  //                 may be useful for logging.
+  // hasProperty() - Check if the property is present.
   // canHaveProperty() - Check if the property could be present.
   // addProperty() - Adds the property.
-  void propagateBack(std::function<bool(const T&, Function*)> hasProperty,
+  // logVisit() - Log each visit of the propagation. This is called before
+  //                 we check if the function already has the property.
+  void propagateBack(std::function<bool(const T&)> hasProperty,
                      std::function<bool(const T&)> canHaveProperty,
                      std::function<void(T&)> addProperty,
+                     std::function<void(const T&, Function*)> logVisit,
                      NonDirectCalls nonDirectCalls) {
     // The work queue contains items we just learned can change the state.
     UniqueDeferredQueue<Function*> work;
     for (auto& func : wasm.functions) {
-      if (hasProperty(map[func.get()], NULL) ||
+      if (hasProperty(map[func.get()]) ||
           (nonDirectCalls == NonDirectCallsHaveProperty &&
            map[func.get()].hasNonDirectCall)) {
         addProperty(map[func.get()]);
@@ -410,9 +411,10 @@ template<typename T> struct CallGraphPropertyAnalysis {
     while (!work.empty()) {
       auto* func = work.pop();
       for (auto* caller : map[func].calledBy) {
+        logVisit(map[caller], func);
         // If we don't already have the property, and we are not forbidden
         // from getting it, then it propagates back to us now.
-        if (canHaveProperty(map[caller]) && !hasProperty(map[caller], func)) {
+        if (!hasProperty(map[caller]) && canHaveProperty(map[caller])) {
           addProperty(map[caller]);
           work.push(caller);
         }

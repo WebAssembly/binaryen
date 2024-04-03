@@ -711,19 +711,19 @@ public:
       handleAddList(scanner.map);
     }
 
-    scanner.propagateBack([verbose](const Info& info, Function* reason) {
-                            if (verbose && reason) {
-                              std::cout << "[asyncify] " << info.name
-                                        << " can change the state due to "
-                                        << reason->name << "\n";
-                            }
-                            return info.canChangeState;
-                          },
+    scanner.propagateBack([](const Info& info) { return info.canChangeState; },
                           [](const Info& info) {
                             return !info.isBottomMostRuntime &&
                                    !info.inRemoveList;
                           },
                           [](Info& info) { info.canChangeState = true; },
+                          [verbose](const Info& info, Function* reason) {
+                            if (verbose && !info.isBottomMostRuntime && !info.inRemoveList) {
+                              std::cout << "[asyncify] " << info.name
+                                        << " can change the state due to "
+                                        << reason->name << "\n";
+                            }
+                          },
                           scanner.IgnoreNonDirectCalls);
 
     map.swap(scanner.map);
