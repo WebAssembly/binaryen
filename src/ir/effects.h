@@ -51,6 +51,30 @@ public:
   Module& module;
   FeatureSet features;
 
+  // Return calls appear no different than normal returns to local surrounding
+  // code, but the effects of the return-called functions are visible to
+  // callers. Collect effects of return-called functions here and merge them in
+  // only when analyzing an entire function.
+  //
+  // Go through all this boilerplate to define copy constructors for this one
+  // field so we don't have to explicitly define a copy constructor for the
+  // entire EffectAnalyzer.
+  struct ReturnCallEffectPtr : std::unique_ptr<EffectAnalyzer> {
+    ReturnCallEffectPtr() = default;
+    ReturnCallEffectPtr(Module& module)
+      : std::unique_ptr<EffectAnalyzer>(
+          std::make_unique<EffectAnalyzer>(PassOptions{}, module)) {}
+    ReturnCallEffectPtr(const ReturnCallEffectPtr& other)
+      : ReturnCallEffectPtr() {}
+    ReturnCallEffectPtr(ReturnCallEffectPtr&& other) = default;
+    ReturnCallEffectPtr& operator=(const ReturnCallEffectPtr& other) {
+      *((std::unique_ptr<EffectAnalyzer>*)this) = nullptr;
+      return *this;
+    }
+    ReturnCallEffectPtr& operator=(ReturnCallEffectPtr&& other) = default;
+  };
+  ReturnCallEffectPtr returnCallEffects;
+
   // Walk an expression and all its children.
   void walk(Expression* ast) {
     InternalAnalyzer(*this).walk(ast);
@@ -69,6 +93,11 @@ public:
   // unwound.
   void walk(Function* func) {
     walk(func->body);
+
+    // Effects of return-called functions will be visible to the caller.
+    if (returnCallEffects) {
+      mergeIn(*returnCallEffects);
+    }
 
     // We can ignore branching out of the function body - this can only be
     // a return, and that is only noticeable in the function, not outside.
@@ -354,6 +383,13 @@ public:
     }
   }
 
+  EffectAnalyzer& getReturnCallEffects() {
+    if (!returnCallEffects) {
+      returnCallEffects = ReturnCallEffectPtr(module);
+    }
+    return *returnCallEffects;
+  }
+
   // the checks above happen after the node's children were processed, in the
   // order of execution we must also check for control flow that happens before
   // the children, i.e., loops
@@ -466,43 +502,54 @@ private:
         return;
       }
 
-      if (curr->isReturn) {
-        parent.branchesOut = true;
-      }
-
+      const EffectAnalyzer* targetEffects = nullptr;
       if (parent.funcEffectsMap) {
         auto iter = parent.funcEffectsMap->find(curr->target);
         if (iter != parent.funcEffectsMap->end()) {
-          // We have effect information for this call target, and can just use
-          // that. The one change we may want to make is to remove throws_, if
-          // the target function throws and we know that will be caught anyhow,
-          // the same as the code below for the general path.
-          const auto& targetEffects = iter->second;
-          if (targetEffects.throws_ && parent.tryDepth > 0) {
-            auto filteredEffects = targetEffects;
-            filteredEffects.throws_ = false;
-            parent.mergeIn(filteredEffects);
-          } else {
-            // Just merge in all the effects.
-            parent.mergeIn(targetEffects);
-          }
-          return;
+          targetEffects = &iter->second;
         }
       }
 
-      parent.calls = true;
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+      }
+
+      auto& effects = curr->isReturn ? parent.getReturnCallEffects() : parent;
+
+      if (targetEffects) {
+        // We have effect information for this call target, and can just use
+        // that. The one change we may want to make is to remove throws_, if
+        // the target function throws and we know that will be caught anyhow,
+        // the same as the code below for the general path. We can't filter
+        // out throws on return calls because they will return out of the
+        // handlers before making the call.
+        if (targetEffects->throws_ && parent.tryDepth > 0 && !curr->isReturn) {
+          auto filteredEffects = *targetEffects;
+          filteredEffects.throws_ = false;
+          effects.mergeIn(filteredEffects);
+        } else {
+          // Just merge in all the effects.
+          effects.mergeIn(*targetEffects);
+        }
+        return;
+      }
+
+      effects.calls = true;
       // When EH is enabled, any call can throw.
-      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
-        parent.throws_ = true;
+      if (parent.features.hasExceptionHandling() &&
+          (parent.tryDepth == 0 || curr->isReturn)) {
+        effects.throws_ = true;
       }
     }
     void visitCallIndirect(CallIndirect* curr) {
-      parent.calls = true;
-      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
-        parent.throws_ = true;
-      }
       if (curr->isReturn) {
         parent.branchesOut = true;
+      }
+      auto& effects = curr->isReturn ? parent.getReturnCallEffects() : parent;
+      effects.calls = true;
+      if (parent.features.hasExceptionHandling() &&
+          (parent.tryDepth == 0 || curr->isReturn)) {
+        effects.throws_ = true;
       }
     }
     void visitLocalGet(LocalGet* curr) {
@@ -745,20 +792,23 @@ private:
       }
     }
     void visitCallRef(CallRef* curr) {
+      if (curr->isReturn) {
+        parent.branchesOut = true;
+      }
       if (curr->target->type.isNull()) {
         parent.trap = true;
         return;
       }
-      parent.calls = true;
-      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
-        parent.throws_ = true;
-      }
-      if (curr->isReturn) {
-        parent.branchesOut = true;
-      }
       // traps when the call target is null
       if (curr->target->type.isNullable()) {
         parent.implicitTrap = true;
+      }
+
+      auto& effects = curr->isReturn ? parent.getReturnCallEffects() : parent;
+      effects.calls = true;
+      if (parent.features.hasExceptionHandling() &&
+          (parent.tryDepth == 0 || curr->isReturn)) {
+        effects.throws_ = true;
       }
     }
     void visitRefTest(RefTest* curr) {}
