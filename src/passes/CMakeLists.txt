@@ -49,6 +49,7 @@ set(passes_SOURCES
   Heap2Local.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
+  InstrumentAllocations.cpp
   InstrumentLocals.cpp
   InstrumentMemory.cpp
   Intrinsics.cpp
