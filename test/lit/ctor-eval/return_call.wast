@@ -2,6 +2,25 @@
 ;; RUN: foreach %s %t wasm-ctor-eval --ctors=test --kept-exports=test --ignore-external-input --quiet -all -g -S -o - | filecheck %s
 
 (module
+  ;; Simplest possible return call.
+
+  (func $test (export "test") (result i32)
+    (return_call $test2)
+  )
+
+  (func $test2 (result i32)
+    (i32.const 42)
+  )
+)
+
+;; CHECK:      (type $0 (func (result i32)))
+
+;; CHECK:      (export "test" (func $test_2))
+
+;; CHECK:      (func $test_2 (type $0) (result i32)
+;; CHECK-NEXT:  (i32.const 42)
+;; CHECK-NEXT: )
+(module
   ;; Basic return call (followed by unreachable import call, setting global as proof it was executed)
 
   (import "env" "import" (func $import))
@@ -34,9 +53,9 @@
 
 ;; CHECK:      (export "g2" (global $g2))
 
-;; CHECK:      (export "test" (func $test_3_4))
+;; CHECK:      (export "test" (func $test_3))
 
-;; CHECK:      (func $test_3_4 (type $0)
+;; CHECK:      (func $test_3 (type $0)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 (module
@@ -129,9 +148,9 @@
 
 ;; CHECK:      (export "g2" (global $g2))
 
-;; CHECK:      (export "test" (func $test_3_4))
+;; CHECK:      (export "test" (func $test_3))
 
-;; CHECK:      (func $test_3_4 (type $f)
+;; CHECK:      (func $test_3 (type $f)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 (module

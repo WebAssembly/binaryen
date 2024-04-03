@@ -1179,14 +1179,14 @@ start_eval:
       }
     }
 
-    // If we have return-called to a different function, have precomputed values
-    // for the current return-called function (even if it is the same as the
-    // original function), or have partially computed the current function, then
-    // we can replace the export with a new function that does less work than
-    // the original.
-    if (func->name != funcName ||
-        (localExprs.size() && func->getParams() != Type::none) ||
-        (successes > 0 && successes < block->list.size())) {
+    // If we have not fully evaluated the current function, but we have
+    // evaluated part of it, have return-called to a different function, or have
+    // precomputed values for the current return-called function, then we can
+    // replace the export with a new function that does less work than the
+    // original.
+    if ((func->imported() || successes < block->list.size()) &&
+        (successes > 0 || func->name != funcName ||
+         (localExprs.size() && func->getParams() != Type::none))) {
       auto originalFuncType = wasm.getFunction(funcName)->type;
       auto copyName = Names::getValidFunctionName(wasm, funcName);
       wasm.getExport(exportName)->value = copyName;
