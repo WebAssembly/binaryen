@@ -712,7 +712,7 @@ public:
     }
 
     scanner.propagateBack([verbose](const Info& info, Function* reason) {
-                            if (verbose) {
+                            if (verbose && reason) {
                               std::cout << "[asyncify] " << info.name
                                         << " can change the state due to "
                                         << reason->name << "\n";

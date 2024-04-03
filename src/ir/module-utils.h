@@ -400,7 +400,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
     // The work queue contains items we just learned can change the state.
     UniqueDeferredQueue<Function*> work;
     for (auto& func : wasm.functions) {
-      if (hasProperty(map[func.get()]) ||
+      if (hasProperty(map[func.get()], NULL) ||
           (nonDirectCalls == NonDirectCallsHaveProperty &&
            map[func.get()].hasNonDirectCall)) {
         addProperty(map[func.get()]);
