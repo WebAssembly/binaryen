@@ -388,13 +388,14 @@ template<typename T> struct CallGraphPropertyAnalysis {
 
   // Propagate a property from a function to those that call it.
   //
-  // hasProperty() - Check if the property is present.
+  // hasProperty() - Check if the property is present. The second parameter is
+  //                 the function due to which we are adding the property, which
+  //                 may be useful for logging.
   // canHaveProperty() - Check if the property could be present.
-  // addProperty() - Adds the property. This receives a second parameter which
-  //                 is the function due to which we are adding the property.
-  void propagateBack(std::function<bool(const T&)> hasProperty,
+  // addProperty() - Adds the property.
+  void propagateBack(std::function<bool(const T&, Function*)> hasProperty,
                      std::function<bool(const T&)> canHaveProperty,
-                     std::function<void(T&, Function*)> addProperty,
+                     std::function<void(T&)> addProperty,
                      NonDirectCalls nonDirectCalls) {
     // The work queue contains items we just learned can change the state.
     UniqueDeferredQueue<Function*> work;
@@ -402,7 +403,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
       if (hasProperty(map[func.get()]) ||
           (nonDirectCalls == NonDirectCallsHaveProperty &&
            map[func.get()].hasNonDirectCall)) {
-        addProperty(map[func.get()], func.get());
+        addProperty(map[func.get()]);
         work.push(func.get());
       }
     }
@@ -411,8 +412,8 @@ template<typename T> struct CallGraphPropertyAnalysis {
       for (auto* caller : map[func].calledBy) {
         // If we don't already have the property, and we are not forbidden
         // from getting it, then it propagates back to us now.
-        if (!hasProperty(map[caller]) && canHaveProperty(map[caller])) {
-          addProperty(map[caller], func);
+        if (canHaveProperty(map[caller]) && !hasProperty(map[caller], func)) {
+          addProperty(map[caller]);
           work.push(caller);
         }
       }

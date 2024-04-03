@@ -288,9 +288,9 @@ struct PostEmscripten : public Pass {
 
     // Assume a non-direct call might throw.
     analyzer.propagateBack(
-      [](const Info& info) { return info.canThrow; },
+      [](const Info& info, Function* reason) { return info.canThrow; },
       [](const Info& info) { return true; },
-      [](Info& info, Function* reason) { info.canThrow = true; },
+      [](Info& info) { info.canThrow = true; },
       analyzer.NonDirectCallsHaveProperty);
 
     // Apply the information.
