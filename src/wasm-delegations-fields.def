@@ -117,7 +117,7 @@
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_CHILD_VECTOR(id, field)                                 \
   for (int i = int((DELEGATE_GET_FIELD(id, field)).size()) - 1; i >= 0; i--) { \
-    DELEGATE_FIELD_CHILD(id, field[i]);                                        \
+    DELEGATE_FIELD_CHILD(id, field[i])                                         \
   }
 #else
 #error please define DELEGATE_FIELD_CHILD_VECTOR(id, field)
@@ -132,7 +132,7 @@
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_INT_ARRAY(id, field)                                    \
   for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
-    DELEGATE_FIELD_INT(id, field[i]);                                          \
+    DELEGATE_FIELD_INT(id, field[i])                                           \
   }
 #else
 #error please define DELEGATE_FIELD_INT_ARRAY(id, field)
@@ -143,7 +143,7 @@
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_INT_VECTOR(id, field)                                   \
   for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
-    DELEGATE_FIELD_INT(id, field[i]);                                          \
+    DELEGATE_FIELD_INT(id, field[i])                                           \
   }
 #else
 #error please define DELEGATE_FIELD_INT_VECTOR(id, field)
@@ -162,7 +162,7 @@
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_NAME_VECTOR(id, field)                                  \
   for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
-    DELEGATE_FIELD_NAME(id, field[i]);                                         \
+    DELEGATE_FIELD_NAME(id, field[i])                                          \
   }
 #else
 #error please define DELEGATE_FIELD_NAME_VECTOR(id, field)
@@ -181,7 +181,7 @@
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)                        \
   for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
-    DELEGATE_FIELD_SCOPE_NAME_USE(id, field[i]);                               \
+    DELEGATE_FIELD_SCOPE_NAME_USE(id, field[i])                                \
   }
 #else
 #error please define DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(id, field)
@@ -189,15 +189,14 @@
 #endif
 
 #ifndef DELEGATE_FIELD_NAME_KIND
-#define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
-  DELEGATE_FIELD_NAME(id, field);
+#define DELEGATE_FIELD_NAME_KIND(id, field, kind) DELEGATE_FIELD_NAME(id, field)
 #endif
 
 #ifndef DELEGATE_FIELD_NAME_KIND_VECTOR
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_NAME_KIND_VECTOR(id, field, kind)                       \
   for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
-    DELEGATE_FIELD_NAME_KIND(id, field[i], kind);                              \
+    DELEGATE_FIELD_NAME_KIND(id, field[i], kind)                               \
   }
 #else
 #define DELEGATE_FIELD_NAME_KIND_VECTOR(id, field, kind)                       \
@@ -213,7 +212,7 @@
 #ifdef DELEGATE_GET_FIELD
 #define DELEGATE_FIELD_TYPE_VECTOR(id, field)                                  \
   for (Index i = 0; i < (DELEGATE_GET_FIELD(id, field)).size(); i++) {         \
-    DELEGATE_FIELD_TYPE(id, field[i]);                                         \
+    DELEGATE_FIELD_TYPE(id, field[i])                                          \
   }
 #else
 #error please define DELEGATE_FIELD_TYPE_VECTOR(id, field)
@@ -228,759 +227,594 @@
 #error please define DELEGATE_FIELD_ADDRESS(id, field)
 #endif
 
-switch (DELEGATE_ID) {
-  case Expression::Id::InvalidId:
-  case Expression::Id::NumExpressionIds: {
-    WASM_UNREACHABLE("unexpected expression type");
-  }
-  case Expression::Id::BlockId: {
-    DELEGATE_START(Block);
-    DELEGATE_FIELD_CHILD_VECTOR(Block, list);
-    DELEGATE_FIELD_SCOPE_NAME_DEF(Block, name);
-    DELEGATE_END(Block);
-    break;
-  }
-  case Expression::Id::IfId: {
-    DELEGATE_START(If);
-    DELEGATE_FIELD_OPTIONAL_CHILD(If, ifFalse);
-    DELEGATE_FIELD_CHILD(If, ifTrue);
-    DELEGATE_FIELD_CHILD(If, condition);
-    DELEGATE_END(If);
-    break;
-  }
-  case Expression::Id::LoopId: {
-    DELEGATE_START(Loop);
-    DELEGATE_FIELD_CHILD(Loop, body);
-    DELEGATE_FIELD_SCOPE_NAME_DEF(Loop, name);
-    DELEGATE_END(Loop);
-    break;
-  }
-  case Expression::Id::BreakId: {
-    DELEGATE_START(Break);
-    DELEGATE_FIELD_OPTIONAL_CHILD(Break, condition);
-    DELEGATE_FIELD_OPTIONAL_CHILD(Break, value);
-    DELEGATE_FIELD_SCOPE_NAME_USE(Break, name);
-    DELEGATE_END(Break);
-    break;
-  }
-  case Expression::Id::SwitchId: {
-    DELEGATE_START(Switch);
-    DELEGATE_FIELD_CHILD(Switch, condition);
-    DELEGATE_FIELD_OPTIONAL_CHILD(Switch, value);
-    DELEGATE_FIELD_SCOPE_NAME_USE(Switch, default_);
-    DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(Switch, targets);
-    DELEGATE_END(Switch);
-    break;
-  }
-  case Expression::Id::CallId: {
-    DELEGATE_START(Call);
-    DELEGATE_FIELD_CHILD_VECTOR(Call, operands);
-    DELEGATE_FIELD_NAME_KIND(Call, target, ModuleItemKind::Function);
-    DELEGATE_FIELD_INT(Call, isReturn);
-    DELEGATE_END(Call);
-    break;
-  }
-  case Expression::Id::CallIndirectId: {
-    DELEGATE_START(CallIndirect);
-    DELEGATE_FIELD_CHILD(CallIndirect, target);
-    DELEGATE_FIELD_NAME_KIND(CallIndirect, table, ModuleItemKind::Table);
-    DELEGATE_FIELD_CHILD_VECTOR(CallIndirect, operands);
-    DELEGATE_FIELD_HEAPTYPE(CallIndirect, heapType);
-    DELEGATE_FIELD_INT(CallIndirect, isReturn);
-    DELEGATE_END(CallIndirect);
-    break;
-  }
-  case Expression::Id::LocalGetId: {
-    DELEGATE_START(LocalGet);
-    DELEGATE_FIELD_INT(LocalGet, index);
-    DELEGATE_END(LocalGet);
-    break;
-  }
-  case Expression::Id::LocalSetId: {
-    DELEGATE_START(LocalSet);
-    DELEGATE_FIELD_CHILD(LocalSet, value);
-    DELEGATE_FIELD_INT(LocalSet, index);
-    DELEGATE_END(LocalSet);
-    break;
-  }
-  case Expression::Id::GlobalGetId: {
-    DELEGATE_START(GlobalGet);
-    DELEGATE_FIELD_NAME_KIND(GlobalGet, name, ModuleItemKind::Global);
-    DELEGATE_END(GlobalGet);
-    break;
-  }
-  case Expression::Id::GlobalSetId: {
-    DELEGATE_START(GlobalSet);
-    DELEGATE_FIELD_CHILD(GlobalSet, value);
-    DELEGATE_FIELD_NAME_KIND(GlobalSet, name, ModuleItemKind::Global);
-    DELEGATE_END(GlobalSet);
-    break;
-  }
-  case Expression::Id::LoadId: {
-    DELEGATE_START(Load);
-    DELEGATE_FIELD_CHILD(Load, ptr);
-    DELEGATE_FIELD_INT(Load, bytes);
-    DELEGATE_FIELD_INT(Load, signed_);
-    DELEGATE_FIELD_ADDRESS(Load, offset);
-    DELEGATE_FIELD_ADDRESS(Load, align);
-    DELEGATE_FIELD_INT(Load, isAtomic);
-    DELEGATE_FIELD_NAME_KIND(Load, memory, ModuleItemKind::Memory);
-    DELEGATE_END(Load);
-    break;
-  }
-  case Expression::Id::StoreId: {
-    DELEGATE_START(Store);
-    DELEGATE_FIELD_CHILD(Store, value);
-    DELEGATE_FIELD_CHILD(Store, ptr);
-    DELEGATE_FIELD_INT(Store, bytes);
-    DELEGATE_FIELD_ADDRESS(Store, offset);
-    DELEGATE_FIELD_ADDRESS(Store, align);
-    DELEGATE_FIELD_INT(Store, isAtomic);
-    DELEGATE_FIELD_TYPE(Store, valueType);
-    DELEGATE_FIELD_NAME_KIND(Store, memory, ModuleItemKind::Memory);
-    DELEGATE_END(Store);
-    break;
-  }
-  case Expression::Id::AtomicRMWId: {
-    DELEGATE_START(AtomicRMW);
-    DELEGATE_FIELD_CHILD(AtomicRMW, value);
-    DELEGATE_FIELD_CHILD(AtomicRMW, ptr);
-    DELEGATE_FIELD_INT(AtomicRMW, op);
-    DELEGATE_FIELD_INT(AtomicRMW, bytes);
-    DELEGATE_FIELD_ADDRESS(AtomicRMW, offset);
-    DELEGATE_FIELD_NAME_KIND(AtomicRMW, memory, ModuleItemKind::Memory);
-    DELEGATE_END(AtomicRMW);
-    break;
-  }
-  case Expression::Id::AtomicCmpxchgId: {
-    DELEGATE_START(AtomicCmpxchg);
-    DELEGATE_FIELD_CHILD(AtomicCmpxchg, replacement);
-    DELEGATE_FIELD_CHILD(AtomicCmpxchg, expected);
-    DELEGATE_FIELD_CHILD(AtomicCmpxchg, ptr);
-    DELEGATE_FIELD_INT(AtomicCmpxchg, bytes);
-    DELEGATE_FIELD_ADDRESS(AtomicCmpxchg, offset);
-    DELEGATE_FIELD_NAME_KIND(AtomicCmpxchg, memory, ModuleItemKind::Memory);
-    DELEGATE_END(AtomicCmpxchg);
-    break;
-  }
-  case Expression::Id::AtomicWaitId: {
-    DELEGATE_START(AtomicWait);
-    DELEGATE_FIELD_CHILD(AtomicWait, timeout);
-    DELEGATE_FIELD_CHILD(AtomicWait, expected);
-    DELEGATE_FIELD_CHILD(AtomicWait, ptr);
-    DELEGATE_FIELD_ADDRESS(AtomicWait, offset);
-    DELEGATE_FIELD_TYPE(AtomicWait, expectedType);
-    DELEGATE_FIELD_NAME_KIND(AtomicWait, memory, ModuleItemKind::Memory);
-    DELEGATE_END(AtomicWait);
-    break;
-  }
-  case Expression::Id::AtomicNotifyId: {
-    DELEGATE_START(AtomicNotify);
-    DELEGATE_FIELD_CHILD(AtomicNotify, notifyCount);
-    DELEGATE_FIELD_CHILD(AtomicNotify, ptr);
-    DELEGATE_FIELD_ADDRESS(AtomicNotify, offset);
-    DELEGATE_FIELD_NAME_KIND(AtomicNotify, memory, ModuleItemKind::Memory);
-    DELEGATE_END(AtomicNotify);
-    break;
-  }
-  case Expression::Id::AtomicFenceId: {
-    DELEGATE_START(AtomicFence);
-    DELEGATE_FIELD_INT(AtomicFence, order);
-    DELEGATE_END(AtomicFence);
-    break;
-  }
-  case Expression::Id::SIMDExtractId: {
-    DELEGATE_START(SIMDExtract);
-    DELEGATE_FIELD_CHILD(SIMDExtract, vec);
-    DELEGATE_FIELD_INT(SIMDExtract, op);
-    DELEGATE_FIELD_INT(SIMDExtract, index);
-    DELEGATE_END(SIMDExtract);
-    break;
-  }
-  case Expression::Id::SIMDReplaceId: {
-    DELEGATE_START(SIMDReplace);
-    DELEGATE_FIELD_CHILD(SIMDReplace, value);
-    DELEGATE_FIELD_CHILD(SIMDReplace, vec);
-    DELEGATE_FIELD_INT(SIMDReplace, op);
-    DELEGATE_FIELD_INT(SIMDReplace, index);
-    DELEGATE_END(SIMDReplace);
-    break;
-  }
-  case Expression::Id::SIMDShuffleId: {
-    DELEGATE_START(SIMDShuffle);
-    DELEGATE_FIELD_CHILD(SIMDShuffle, right);
-    DELEGATE_FIELD_CHILD(SIMDShuffle, left);
-    DELEGATE_FIELD_INT_ARRAY(SIMDShuffle, mask);
-    DELEGATE_END(SIMDShuffle);
-    break;
-  }
-  case Expression::Id::SIMDTernaryId: {
-    DELEGATE_START(SIMDTernary);
-    DELEGATE_FIELD_CHILD(SIMDTernary, c);
-    DELEGATE_FIELD_CHILD(SIMDTernary, b);
-    DELEGATE_FIELD_CHILD(SIMDTernary, a);
-    DELEGATE_FIELD_INT(SIMDTernary, op);
-    DELEGATE_END(SIMDTernary);
-    break;
-  }
-  case Expression::Id::SIMDShiftId: {
-    DELEGATE_START(SIMDShift);
-    DELEGATE_FIELD_CHILD(SIMDShift, shift);
-    DELEGATE_FIELD_CHILD(SIMDShift, vec);
-    DELEGATE_FIELD_INT(SIMDShift, op);
-    DELEGATE_END(SIMDShift);
-    break;
-  }
-  case Expression::Id::SIMDLoadId: {
-    DELEGATE_START(SIMDLoad);
-    DELEGATE_FIELD_CHILD(SIMDLoad, ptr);
-    DELEGATE_FIELD_INT(SIMDLoad, op);
-    DELEGATE_FIELD_ADDRESS(SIMDLoad, offset);
-    DELEGATE_FIELD_ADDRESS(SIMDLoad, align);
-    DELEGATE_FIELD_NAME_KIND(SIMDLoad, memory, ModuleItemKind::Memory);
-    DELEGATE_END(SIMDLoad);
-    break;
-  }
-  case Expression::Id::SIMDLoadStoreLaneId: {
-    DELEGATE_START(SIMDLoadStoreLane);
-    DELEGATE_FIELD_CHILD(SIMDLoadStoreLane, vec);
-    DELEGATE_FIELD_CHILD(SIMDLoadStoreLane, ptr);
-    DELEGATE_FIELD_INT(SIMDLoadStoreLane, op);
-    DELEGATE_FIELD_ADDRESS(SIMDLoadStoreLane, offset);
-    DELEGATE_FIELD_ADDRESS(SIMDLoadStoreLane, align);
-    DELEGATE_FIELD_INT(SIMDLoadStoreLane, index);
-    DELEGATE_FIELD_NAME_KIND(SIMDLoadStoreLane, memory, ModuleItemKind::Memory);
-    DELEGATE_END(SIMDLoadStoreLane);
-    break;
-  }
-  case Expression::Id::MemoryInitId: {
-    DELEGATE_START(MemoryInit);
-    DELEGATE_FIELD_CHILD(MemoryInit, size);
-    DELEGATE_FIELD_CHILD(MemoryInit, offset);
-    DELEGATE_FIELD_CHILD(MemoryInit, dest);
-    DELEGATE_FIELD_NAME_KIND(MemoryInit, segment, ModuleItemKind::DataSegment);
-    DELEGATE_FIELD_NAME_KIND(MemoryInit, memory, ModuleItemKind::Memory);
-    DELEGATE_END(MemoryInit);
-    break;
-  }
-  case Expression::Id::DataDropId: {
-    DELEGATE_START(DataDrop);
-    DELEGATE_FIELD_NAME_KIND(DataDrop, segment, ModuleItemKind::DataSegment);
-    DELEGATE_END(DataDrop);
-    break;
-  }
-  case Expression::Id::MemoryCopyId: {
-    DELEGATE_START(MemoryCopy);
-    DELEGATE_FIELD_CHILD(MemoryCopy, size);
-    DELEGATE_FIELD_CHILD(MemoryCopy, source);
-    DELEGATE_FIELD_CHILD(MemoryCopy, dest);
-    DELEGATE_FIELD_NAME_KIND(MemoryCopy, sourceMemory, ModuleItemKind::Memory);
-    DELEGATE_FIELD_NAME_KIND(MemoryCopy, destMemory, ModuleItemKind::Memory);
-    DELEGATE_END(MemoryCopy);
-    break;
-  }
-  case Expression::Id::MemoryFillId: {
-    DELEGATE_START(MemoryFill);
-    DELEGATE_FIELD_CHILD(MemoryFill, size);
-    DELEGATE_FIELD_CHILD(MemoryFill, value);
-    DELEGATE_FIELD_CHILD(MemoryFill, dest);
-    DELEGATE_FIELD_NAME_KIND(MemoryFill, memory, ModuleItemKind::Memory);
-    DELEGATE_END(MemoryFill);
-    break;
-  }
-  case Expression::Id::ConstId: {
-    DELEGATE_START(Const);
-    DELEGATE_FIELD_LITERAL(Const, value);
-    DELEGATE_END(Const);
-    break;
-  }
-  case Expression::Id::UnaryId: {
-    DELEGATE_START(Unary);
-    DELEGATE_FIELD_CHILD(Unary, value);
-    DELEGATE_FIELD_INT(Unary, op);
-    DELEGATE_END(Unary);
-    break;
-  }
-  case Expression::Id::BinaryId: {
-    DELEGATE_START(Binary);
-    DELEGATE_FIELD_CHILD(Binary, right);
-    DELEGATE_FIELD_CHILD(Binary, left);
-    DELEGATE_FIELD_INT(Binary, op);
-    DELEGATE_END(Binary);
-    break;
-  }
-  case Expression::Id::SelectId: {
-    DELEGATE_START(Select);
-    DELEGATE_FIELD_CHILD(Select, condition);
-    DELEGATE_FIELD_CHILD(Select, ifFalse);
-    DELEGATE_FIELD_CHILD(Select, ifTrue);
-    DELEGATE_END(Select);
-    break;
-  }
-  case Expression::Id::DropId: {
-    DELEGATE_START(Drop);
-    DELEGATE_FIELD_CHILD(Drop, value);
-    DELEGATE_END(Drop);
-    break;
-  }
-  case Expression::Id::ReturnId: {
-    DELEGATE_START(Return);
-    DELEGATE_FIELD_OPTIONAL_CHILD(Return, value);
-    DELEGATE_END(Return);
-    break;
-  }
-  case Expression::Id::MemorySizeId: {
-    DELEGATE_START(MemorySize);
-    DELEGATE_FIELD_TYPE(MemorySize, ptrType);
-    DELEGATE_FIELD_NAME_KIND(MemorySize, memory, ModuleItemKind::Memory);
-    DELEGATE_END(MemorySize);
-    break;
-  }
-  case Expression::Id::MemoryGrowId: {
-    DELEGATE_START(MemoryGrow);
-    DELEGATE_FIELD_TYPE(MemoryGrow, ptrType);
-    DELEGATE_FIELD_CHILD(MemoryGrow, delta);
-    DELEGATE_FIELD_NAME_KIND(MemoryGrow, memory, ModuleItemKind::Memory);
-    DELEGATE_END(MemoryGrow);
-    break;
-  }
-  case Expression::Id::RefNullId: {
-    DELEGATE_START(RefNull);
-    DELEGATE_END(RefNull);
-    break;
-  }
-  case Expression::Id::RefIsNullId: {
-    DELEGATE_START(RefIsNull);
-    DELEGATE_FIELD_CHILD(RefIsNull, value);
-    DELEGATE_END(RefIsNull);
-    break;
-  }
-  case Expression::Id::RefFuncId: {
-    DELEGATE_START(RefFunc);
-    DELEGATE_FIELD_NAME_KIND(RefFunc, func, ModuleItemKind::Function);
-    DELEGATE_END(RefFunc);
-    break;
-  }
-  case Expression::Id::RefEqId: {
-    DELEGATE_START(RefEq);
-    DELEGATE_FIELD_CHILD(RefEq, right);
-    DELEGATE_FIELD_CHILD(RefEq, left);
-    DELEGATE_END(RefEq);
-    break;
-  }
-  case Expression::Id::TableGetId: {
-    DELEGATE_START(TableGet);
-    DELEGATE_FIELD_CHILD(TableGet, index);
-    DELEGATE_FIELD_NAME_KIND(TableGet, table, ModuleItemKind::Table);
-    DELEGATE_END(TableGet);
-    break;
-  }
-  case Expression::Id::TableSetId: {
-    DELEGATE_START(TableSet);
-    DELEGATE_FIELD_CHILD(TableSet, value);
-    DELEGATE_FIELD_CHILD(TableSet, index);
-    DELEGATE_FIELD_NAME_KIND(TableSet, table, ModuleItemKind::Table);
-    DELEGATE_END(TableSet);
-    break;
-  }
-  case Expression::Id::TableSizeId: {
-    DELEGATE_START(TableSize);
-    DELEGATE_FIELD_NAME_KIND(TableSize, table, ModuleItemKind::Table);
-    DELEGATE_END(TableSize);
-    break;
-  }
-  case Expression::Id::TableGrowId: {
-    DELEGATE_START(TableGrow);
-    DELEGATE_FIELD_CHILD(TableGrow, delta);
-    DELEGATE_FIELD_CHILD(TableGrow, value);
-    DELEGATE_FIELD_NAME_KIND(TableGrow, table, ModuleItemKind::Table);
-    DELEGATE_END(TableGrow);
-    break;
-  }
-  case Expression::Id::TableFillId: {
-    DELEGATE_START(TableFill);
-    DELEGATE_FIELD_CHILD(TableFill, size);
-    DELEGATE_FIELD_CHILD(TableFill, value);
-    DELEGATE_FIELD_CHILD(TableFill, dest);
-    DELEGATE_FIELD_NAME_KIND(TableFill, table, ModuleItemKind::Table);
-    DELEGATE_END(TableFill);
-    break;
-  }
-  case Expression::Id::TableCopyId: {
-    DELEGATE_START(TableCopy);
-    DELEGATE_FIELD_CHILD(TableCopy, size);
-    DELEGATE_FIELD_CHILD(TableCopy, source);
-    DELEGATE_FIELD_CHILD(TableCopy, dest);
-    DELEGATE_FIELD_NAME_KIND(TableCopy, sourceTable, ModuleItemKind::Table);
-    DELEGATE_FIELD_NAME_KIND(TableCopy, destTable, ModuleItemKind::Table);
-    DELEGATE_END(TableCopy);
-    break;
-  }
-  case Expression::Id::TryId: {
-    DELEGATE_START(Try);
-    DELEGATE_FIELD_SCOPE_NAME_USE(Try, delegateTarget);
-    DELEGATE_FIELD_CHILD_VECTOR(Try, catchBodies);
-    DELEGATE_FIELD_NAME_KIND_VECTOR(Try, catchTags, ModuleItemKind::Tag);
-    DELEGATE_FIELD_SCOPE_NAME_DEF(Try, name);
-    DELEGATE_FIELD_CHILD(Try, body);
-    DELEGATE_END(Try);
-    break;
-  }
-  case Expression::Id::TryTableId: {
-    DELEGATE_START(TryTable);
-    DELEGATE_FIELD_TYPE_VECTOR(TryTable, sentTypes);
-    DELEGATE_FIELD_INT_VECTOR(TryTable, catchRefs);
-    DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(TryTable, catchDests);
-    DELEGATE_FIELD_NAME_KIND_VECTOR(TryTable, catchTags, ModuleItemKind::Tag);
-    DELEGATE_FIELD_CHILD(TryTable, body);
-    DELEGATE_END(TryTable);
-    break;
-  }
-  case Expression::Id::ThrowId: {
-    DELEGATE_START(Throw);
-    DELEGATE_FIELD_CHILD_VECTOR(Throw, operands);
-    DELEGATE_FIELD_NAME_KIND(Throw, tag, ModuleItemKind::Tag);
-    DELEGATE_END(Throw);
-    break;
-  }
-  case Expression::Id::RethrowId: {
-    DELEGATE_START(Rethrow);
-    DELEGATE_FIELD_SCOPE_NAME_USE(Rethrow, target);
-    DELEGATE_END(Rethrow);
-    break;
-  }
-  case Expression::Id::ThrowRefId: {
-    DELEGATE_START(ThrowRef);
-    DELEGATE_FIELD_CHILD(ThrowRef, exnref);
-    DELEGATE_END(ThrowRef);
-    break;
-  }
-  case Expression::Id::NopId: {
-    DELEGATE_START(Nop);
-    DELEGATE_END(Nop);
-    break;
-  }
-  case Expression::Id::UnreachableId: {
-    DELEGATE_START(Unreachable);
-    DELEGATE_END(Unreachable);
-    break;
-  }
-  case Expression::Id::PopId: {
-    DELEGATE_START(Pop);
-    DELEGATE_END(Pop);
-    break;
-  }
-  case Expression::Id::TupleMakeId: {
-    DELEGATE_START(TupleMake);
-    DELEGATE_FIELD_CHILD_VECTOR(Tuple, operands);
-    DELEGATE_END(TupleMake);
-    break;
-  }
-  case Expression::Id::TupleExtractId: {
-    DELEGATE_START(TupleExtract);
-    DELEGATE_FIELD_CHILD(TupleExtract, tuple);
-    DELEGATE_FIELD_INT(TupleExtract, index);
-    DELEGATE_END(TupleExtract);
-    break;
-  }
-  case Expression::Id::RefI31Id: {
-    DELEGATE_START(RefI31);
-    DELEGATE_FIELD_CHILD(RefI31, value);
-    DELEGATE_END(RefI31);
-    break;
-  }
-  case Expression::Id::I31GetId: {
-    DELEGATE_START(I31Get);
-    DELEGATE_FIELD_CHILD(I31Get, i31);
-    DELEGATE_FIELD_INT(I31Get, signed_);
-    DELEGATE_END(I31Get);
-    break;
-  }
-  case Expression::Id::CallRefId: {
-    DELEGATE_START(CallRef);
-    DELEGATE_FIELD_CHILD(CallRef, target);
-    DELEGATE_FIELD_CHILD_VECTOR(CallRef, operands);
-    DELEGATE_FIELD_INT(CallRef, isReturn);
-    DELEGATE_END(CallRef);
-    break;
-  }
-  case Expression::Id::RefTestId: {
-    DELEGATE_START(RefTest);
-    DELEGATE_FIELD_TYPE(RefTest, castType);
-    DELEGATE_FIELD_CHILD(RefTest, ref);
-    DELEGATE_END(RefTest);
-    break;
-  }
-  case Expression::Id::RefCastId: {
-    DELEGATE_START(RefCast);
-    DELEGATE_FIELD_CHILD(RefCast, ref);
-    DELEGATE_END(RefCast);
-    break;
-  }
-  case Expression::Id::BrOnId: {
-    DELEGATE_START(BrOn);
-    DELEGATE_FIELD_INT(BrOn, op);
-    DELEGATE_FIELD_SCOPE_NAME_USE(BrOn, name);
-    DELEGATE_FIELD_TYPE(BrOn, castType);
-    DELEGATE_FIELD_CHILD(BrOn, ref);
-    DELEGATE_END(BrOn);
-    break;
-  }
-  case Expression::Id::StructNewId: {
-    DELEGATE_START(StructNew);
-    DELEGATE_FIELD_CHILD_VECTOR(StructNew, operands);
-    DELEGATE_END(StructNew);
-    break;
-  }
-  case Expression::Id::StructGetId: {
-    DELEGATE_START(StructGet);
-    DELEGATE_FIELD_INT(StructGet, index);
-    DELEGATE_FIELD_CHILD(StructGet, ref);
-    DELEGATE_FIELD_INT(StructGet, signed_);
-    DELEGATE_END(StructGet);
-    break;
-  }
-  case Expression::Id::StructSetId: {
-    DELEGATE_START(StructSet);
-    DELEGATE_FIELD_INT(StructSet, index);
-    DELEGATE_FIELD_CHILD(StructSet, value);
-    DELEGATE_FIELD_CHILD(StructSet, ref);
-    DELEGATE_END(StructSet);
-    break;
-  }
-  case Expression::Id::ArrayNewId: {
-    DELEGATE_START(ArrayNew);
-    DELEGATE_FIELD_CHILD(ArrayNew, size);
-    DELEGATE_FIELD_OPTIONAL_CHILD(ArrayNew, init);
-    DELEGATE_END(ArrayNew);
-    break;
-  }
-  case Expression::Id::ArrayNewDataId: {
-    DELEGATE_START(ArrayNewData);
-    DELEGATE_FIELD_NAME_KIND(ArrayNewData, segment, ModuleItemKind::DataSegment);
-    DELEGATE_FIELD_CHILD(ArrayNewData, size);
-    DELEGATE_FIELD_CHILD(ArrayNewData, offset);
-    DELEGATE_END(ArrayNewData);
-    break;
-  }
-  case Expression::Id::ArrayNewElemId: {
-    DELEGATE_START(ArrayNewElem);
-    DELEGATE_FIELD_NAME_KIND(ArrayNewElem, segment, ModuleItemKind::ElementSegment);
-    DELEGATE_FIELD_CHILD(ArrayNewElem, size);
-    DELEGATE_FIELD_CHILD(ArrayNewElem, offset);
-    DELEGATE_END(ArrayNewElem);
-    break;
-  }
-  case Expression::Id::ArrayNewFixedId: {
-    DELEGATE_START(ArrayNewFixed);
-    DELEGATE_FIELD_CHILD_VECTOR(ArrayNewFixed, values);
-    DELEGATE_END(ArrayNewFixed);
-    break;
-  }
-  case Expression::Id::ArrayGetId: {
-    DELEGATE_START(ArrayGet);
-    DELEGATE_FIELD_CHILD(ArrayGet, index);
-    DELEGATE_FIELD_CHILD(ArrayGet, ref);
-    DELEGATE_FIELD_INT(ArrayGet, signed_);
-    DELEGATE_END(ArrayGet);
-    break;
-  }
-  case Expression::Id::ArraySetId: {
-    DELEGATE_START(ArraySet);
-    DELEGATE_FIELD_CHILD(ArrayGet, value);
-    DELEGATE_FIELD_CHILD(ArrayGet, index);
-    DELEGATE_FIELD_CHILD(ArrayGet, ref);
-    DELEGATE_END(ArraySet);
-    break;
-  }
-  case Expression::Id::ArrayLenId: {
-    DELEGATE_START(ArrayLen);
-    DELEGATE_FIELD_CHILD(ArrayLen, ref);
-    DELEGATE_END(ArrayLen);
-    break;
-  }
-  case Expression::Id::ArrayCopyId: {
-    DELEGATE_START(ArrayCopy);
-    DELEGATE_FIELD_CHILD(ArrayCopy, length);
-    DELEGATE_FIELD_CHILD(ArrayCopy, srcIndex);
-    DELEGATE_FIELD_CHILD(ArrayCopy, srcRef);
-    DELEGATE_FIELD_CHILD(ArrayCopy, destIndex);
-    DELEGATE_FIELD_CHILD(ArrayCopy, destRef);
-    DELEGATE_END(ArrayCopy);
-    break;
-  }
-  case Expression::Id::ArrayFillId: {
-    DELEGATE_START(ArrayFill);
-    DELEGATE_FIELD_CHILD(ArrayFill, size);
-    DELEGATE_FIELD_CHILD(ArrayFill, value);
-    DELEGATE_FIELD_CHILD(ArrayFill, index);
-    DELEGATE_FIELD_CHILD(ArrayFill, ref);
-    DELEGATE_END(ArrayFill);
-    break;
-  }
-  case Expression::Id::ArrayInitDataId: {
-    DELEGATE_START(ArrayInitData);
-    DELEGATE_FIELD_NAME_KIND(ArrayInitData, segment, ModuleItemKind::DataSegment);
-    DELEGATE_FIELD_CHILD(ArrayInitData, size);
-    DELEGATE_FIELD_CHILD(ArrayInitData, offset);
-    DELEGATE_FIELD_CHILD(ArrayInitData, index);
-    DELEGATE_FIELD_CHILD(ArrayInitData, ref);
-    DELEGATE_END(ArrayInitData);
-    break;
-  }
-  case Expression::Id::ArrayInitElemId: {
-    DELEGATE_START(ArrayInitElem);
-    DELEGATE_FIELD_NAME_KIND(ArrayInitElem, segment, ModuleItemKind::ElementSegment);
-    DELEGATE_FIELD_CHILD(ArrayInitElem, size);
-    DELEGATE_FIELD_CHILD(ArrayInitElem, offset);
-    DELEGATE_FIELD_CHILD(ArrayInitElem, index);
-    DELEGATE_FIELD_CHILD(ArrayInitElem, ref);
-    DELEGATE_END(ArrayInitElem);
-    break;
-  }
-  case Expression::Id::RefAsId: {
-    DELEGATE_START(RefAs);
-    DELEGATE_FIELD_INT(RefAs, op);
-    DELEGATE_FIELD_CHILD(RefAs, value);
-    DELEGATE_END(RefAs);
-    break;
-  }
-  case Expression::Id::StringNewId: {
-    DELEGATE_START(StringNew);
-    DELEGATE_FIELD_INT(StringNew, op);
-    DELEGATE_FIELD_INT(StringNew, try_);
-    DELEGATE_FIELD_OPTIONAL_CHILD(StringNew, end);
-    DELEGATE_FIELD_OPTIONAL_CHILD(StringNew, start);
-    DELEGATE_FIELD_OPTIONAL_CHILD(StringNew, length);
-    DELEGATE_FIELD_CHILD(StringNew, ptr);
-    DELEGATE_END(StringNew);
-    break;
-  }
-  case Expression::Id::StringConstId: {
-    DELEGATE_START(StringConst);
-    DELEGATE_FIELD_NAME(StringConst, string);
-    DELEGATE_END(StringConst);
-    break;
-  }
-  case Expression::Id::StringMeasureId: {
-    DELEGATE_START(StringMeasure);
-    DELEGATE_FIELD_INT(StringMeasure, op);
-    DELEGATE_FIELD_CHILD(StringMeasure, ref);
-    DELEGATE_END(StringMeasure);
-    break;
-  }
-  case Expression::Id::StringEncodeId: {
-    DELEGATE_START(StringEncode);
-    DELEGATE_FIELD_INT(StringEncode, op);
-    DELEGATE_FIELD_OPTIONAL_CHILD(StringEncode, start);
-    DELEGATE_FIELD_CHILD(StringEncode, ptr);
-    DELEGATE_FIELD_CHILD(StringEncode, ref);
-    DELEGATE_END(StringEncode);
-    break;
-  }
-  case Expression::Id::StringConcatId: {
-    DELEGATE_START(StringConcat);
-    DELEGATE_FIELD_CHILD(StringConcat, right);
-    DELEGATE_FIELD_CHILD(StringConcat, left);
-    DELEGATE_END(StringConcat);
-    break;
-  }
-  case Expression::Id::StringEqId: {
-    DELEGATE_START(StringEq);
-    DELEGATE_FIELD_INT(StringEq, op);
-    DELEGATE_FIELD_CHILD(StringEq, right);
-    DELEGATE_FIELD_CHILD(StringEq, left);
-    DELEGATE_END(StringEq);
-    break;
-  }
-  case Expression::Id::StringAsId: {
-    DELEGATE_START(StringAs);
-    DELEGATE_FIELD_INT(StringAs, op);
-    DELEGATE_FIELD_CHILD(StringAs, ref);
-    DELEGATE_END(StringAs);
-    break;
-  }
-  case Expression::Id::StringWTF8AdvanceId: {
-    DELEGATE_START(StringWTF8Advance);
-    DELEGATE_FIELD_CHILD(StringWTF8Advance, bytes);
-    DELEGATE_FIELD_CHILD(StringWTF8Advance, pos);
-    DELEGATE_FIELD_CHILD(StringWTF8Advance, ref);
-    DELEGATE_END(StringWTF8Advance);
-    break;
-  }
-  case Expression::Id::StringWTF16GetId: {
-    DELEGATE_START(StringWTF16Get);
-    DELEGATE_FIELD_CHILD(StringWTF16Get, pos);
-    DELEGATE_FIELD_CHILD(StringWTF16Get, ref);
-    DELEGATE_END(StringWTF16Get);
-    break;
-  }
-  case Expression::Id::StringIterNextId: {
-    DELEGATE_START(StringIterNext);
-    DELEGATE_FIELD_CHILD(StringIterNext, ref);
-    DELEGATE_END(StringIterNext);
-    break;
-  }
-  case Expression::Id::StringIterMoveId: {
-    DELEGATE_START(StringIterMove);
-    DELEGATE_FIELD_INT(StringIterMove, op);
-    DELEGATE_FIELD_CHILD(StringIterMove, num);
-    DELEGATE_FIELD_CHILD(StringIterMove, ref);
-    DELEGATE_END(StringIterMove);
-    break;
-  }
-  case Expression::Id::StringSliceWTFId: {
-    DELEGATE_START(StringSliceWTF);
-    DELEGATE_FIELD_INT(StringSliceWTF, op);
-    DELEGATE_FIELD_CHILD(StringSliceWTF, end);
-    DELEGATE_FIELD_CHILD(StringSliceWTF, start);
-    DELEGATE_FIELD_CHILD(StringSliceWTF, ref);
-    DELEGATE_END(StringSliceWTF);
-    break;
-  }
-  case Expression::Id::StringSliceIterId: {
-    DELEGATE_START(StringSliceIter);
-    DELEGATE_FIELD_CHILD(StringSliceIter, num);
-    DELEGATE_FIELD_CHILD(StringSliceIter, ref);
-    DELEGATE_END(StringSliceIter);
-    break;
-  }
+// By default we emit a switch and cases, but that can be customized using the
+// following:
 
-   case Expression::Id::ContBindId: {
-    DELEGATE_START(ContBind);
-    DELEGATE_FIELD_CHILD(ContBind, cont);
-    DELEGATE_FIELD_CHILD_VECTOR(ContBind, operands);
-    DELEGATE_FIELD_HEAPTYPE(ContBind, contTypeAfter);
-    DELEGATE_FIELD_HEAPTYPE(ContBind, contTypeBefore);
-    DELEGATE_END(ContBind);
-    break;
+#ifndef DELEGATE_FIELD_MAIN_START
+#define DELEGATE_FIELD_MAIN_START                                              \
+  switch (DELEGATE_ID) {                                                       \
+    case Expression::Id::InvalidId:                                            \
+    case Expression::Id::NumExpressionIds: {                                   \
+      WASM_UNREACHABLE("unexpected expression type");                          \
+    }
+#endif
+
+#ifndef DELEGATE_FIELD_CASE_START
+#define DELEGATE_FIELD_CASE_START(id)                                          \
+  case Expression::Id::id##Id: {                                               \
+    DELEGATE_START(id)
+#endif
+
+#ifndef DELEGATE_FIELD_CASE_END
+#define DELEGATE_FIELD_CASE_END(id)                                            \
+  DELEGATE_END(id)                                                             \
+  break;                                                                       \
   }
-  case Expression::Id::ContNewId: {
-    DELEGATE_START(ContNew);
-    DELEGATE_FIELD_CHILD(ContNew, func);
-    DELEGATE_FIELD_HEAPTYPE(ContNew, contType);
-    DELEGATE_END(ContNew);
-    break;
-  }
-  case Expression::Id::ResumeId: {
-    DELEGATE_START(Resume);
-    DELEGATE_FIELD_TYPE_VECTOR(Resume, sentTypes);
-    DELEGATE_FIELD_CHILD(Resume, cont);
-    DELEGATE_FIELD_CHILD_VECTOR(Resume, operands);
-    DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(Resume, handlerBlocks);
-    DELEGATE_FIELD_NAME_KIND_VECTOR(Resume, handlerTags, ModuleItemKind::Tag);
-    DELEGATE_FIELD_HEAPTYPE(Resume, contType);
-    DELEGATE_END(Resume);
-    break;
-  }
-  case Expression::Id::SuspendId: {
-    DELEGATE_START(Suspend);
-    DELEGATE_FIELD_CHILD_VECTOR(Suspend, operands);
-    DELEGATE_FIELD_NAME_KIND(Suspend, tag, ModuleItemKind::Tag);
-    DELEGATE_END(Suspend);
-    break;
-  }
-}
+#endif
+
+#ifndef DELEGATE_FIELD_MAIN_END
+#define DELEGATE_FIELD_MAIN_END }
+#endif
+
+DELEGATE_FIELD_MAIN_START
+
+DELEGATE_FIELD_CASE_START(Block)
+DELEGATE_FIELD_CHILD_VECTOR(Block, list)
+DELEGATE_FIELD_SCOPE_NAME_DEF(Block, name)
+DELEGATE_FIELD_CASE_END(Block)
+
+DELEGATE_FIELD_CASE_START(If)
+DELEGATE_FIELD_OPTIONAL_CHILD(If, ifFalse)
+DELEGATE_FIELD_CHILD(If, ifTrue)
+DELEGATE_FIELD_CHILD(If, condition)
+DELEGATE_FIELD_CASE_END(If)
+
+DELEGATE_FIELD_CASE_START(Loop)
+DELEGATE_FIELD_CHILD(Loop, body)
+DELEGATE_FIELD_SCOPE_NAME_DEF(Loop, name)
+DELEGATE_FIELD_CASE_END(Loop)
+
+DELEGATE_FIELD_CASE_START(Break)
+DELEGATE_FIELD_OPTIONAL_CHILD(Break, condition)
+DELEGATE_FIELD_OPTIONAL_CHILD(Break, value)
+DELEGATE_FIELD_SCOPE_NAME_USE(Break, name)
+DELEGATE_FIELD_CASE_END(Break)
+
+DELEGATE_FIELD_CASE_START(Switch)
+DELEGATE_FIELD_CHILD(Switch, condition)
+DELEGATE_FIELD_OPTIONAL_CHILD(Switch, value)
+DELEGATE_FIELD_SCOPE_NAME_USE(Switch, default_)
+DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(Switch, targets)
+DELEGATE_FIELD_CASE_END(Switch)
+
+DELEGATE_FIELD_CASE_START(Call)
+DELEGATE_FIELD_CHILD_VECTOR(Call, operands)
+DELEGATE_FIELD_NAME_KIND(Call, target, ModuleItemKind::Function)
+DELEGATE_FIELD_INT(Call, isReturn)
+DELEGATE_FIELD_CASE_END(Call)
+
+DELEGATE_FIELD_CASE_START(CallIndirect)
+DELEGATE_FIELD_CHILD(CallIndirect, target)
+DELEGATE_FIELD_NAME_KIND(CallIndirect, table, ModuleItemKind::Table)
+DELEGATE_FIELD_CHILD_VECTOR(CallIndirect, operands)
+DELEGATE_FIELD_HEAPTYPE(CallIndirect, heapType)
+DELEGATE_FIELD_INT(CallIndirect, isReturn)
+DELEGATE_FIELD_CASE_END(CallIndirect)
+
+DELEGATE_FIELD_CASE_START(LocalGet)
+DELEGATE_FIELD_INT(LocalGet, index)
+DELEGATE_FIELD_CASE_END(LocalGet)
+
+DELEGATE_FIELD_CASE_START(LocalSet)
+DELEGATE_FIELD_CHILD(LocalSet, value)
+DELEGATE_FIELD_INT(LocalSet, index)
+DELEGATE_FIELD_CASE_END(LocalSet)
+
+DELEGATE_FIELD_CASE_START(GlobalGet)
+DELEGATE_FIELD_NAME_KIND(GlobalGet, name, ModuleItemKind::Global)
+DELEGATE_FIELD_CASE_END(GlobalGet)
+
+DELEGATE_FIELD_CASE_START(GlobalSet)
+DELEGATE_FIELD_CHILD(GlobalSet, value)
+DELEGATE_FIELD_NAME_KIND(GlobalSet, name, ModuleItemKind::Global)
+DELEGATE_FIELD_CASE_END(GlobalSet)
+
+DELEGATE_FIELD_CASE_START(Load)
+DELEGATE_FIELD_CHILD(Load, ptr)
+DELEGATE_FIELD_INT(Load, bytes)
+DELEGATE_FIELD_INT(Load, signed_)
+DELEGATE_FIELD_ADDRESS(Load, offset)
+DELEGATE_FIELD_ADDRESS(Load, align)
+DELEGATE_FIELD_INT(Load, isAtomic)
+DELEGATE_FIELD_NAME_KIND(Load, memory, ModuleItemKind::Memory)
+DELEGATE_FIELD_CASE_END(Load)
+
+DELEGATE_FIELD_CASE_START(Store)
+DELEGATE_FIELD_CHILD(Store, value)
+DELEGATE_FIELD_CHILD(Store, ptr)
+DELEGATE_FIELD_INT(Store, bytes)
+DELEGATE_FIELD_ADDRESS(Store, offset)
+DELEGATE_FIELD_ADDRESS(Store, align)
+DELEGATE_FIELD_INT(Store, isAtomic)
+DELEGATE_FIELD_TYPE(Store, valueType)
+DELEGATE_FIELD_NAME_KIND(Store, memory, ModuleItemKind::Memory)
+DELEGATE_FIELD_CASE_END(Store)
+
+DELEGATE_FIELD_CASE_START(AtomicRMW)
+DELEGATE_FIELD_CHILD(AtomicRMW, value)
+DELEGATE_FIELD_CHILD(AtomicRMW, ptr)
+DELEGATE_FIELD_INT(AtomicRMW, op)
+DELEGATE_FIELD_INT(AtomicRMW, bytes)
+DELEGATE_FIELD_ADDRESS(AtomicRMW, offset)
+DELEGATE_FIELD_NAME_KIND(AtomicRMW, memory, ModuleItemKind::Memory)
+DELEGATE_FIELD_CASE_END(AtomicRMW)
+
+DELEGATE_FIELD_CASE_START(AtomicCmpxchg)
+DELEGATE_FIELD_CHILD(AtomicCmpxchg, replacement)
+DELEGATE_FIELD_CHILD(AtomicCmpxchg, expected)
+DELEGATE_FIELD_CHILD(AtomicCmpxchg, ptr)
+DELEGATE_FIELD_INT(AtomicCmpxchg, bytes)
+DELEGATE_FIELD_ADDRESS(AtomicCmpxchg, offset)
+DELEGATE_FIELD_NAME_KIND(AtomicCmpxchg, memory, ModuleItemKind::Memory)
+DELEGATE_FIELD_CASE_END(AtomicCmpxchg)
+
+DELEGATE_FIELD_CASE_START(AtomicWait)
+DELEGATE_FIELD_CHILD(AtomicWait, timeout)
+DELEGATE_FIELD_CHILD(AtomicWait, expected)
+DELEGATE_FIELD_CHILD(AtomicWait, ptr)
+DELEGATE_FIELD_ADDRESS(AtomicWait, offset)
+DELEGATE_FIELD_TYPE(AtomicWait, expectedType)
+DELEGATE_FIELD_NAME_KIND(AtomicWait, memory, ModuleItemKind::Memory)
+DELEGATE_FIELD_CASE_END(AtomicWait)
+
+DELEGATE_FIELD_CASE_START(AtomicNotify)
+DELEGATE_FIELD_CHILD(AtomicNotify, notifyCount)
+DELEGATE_FIELD_CHILD(AtomicNotify, ptr)
+DELEGATE_FIELD_ADDRESS(AtomicNotify, offset)
+DELEGATE_FIELD_NAME_KIND(AtomicNotify, memory, ModuleItemKind::Memory)
+DELEGATE_FIELD_CASE_END(AtomicNotify)
+
+DELEGATE_FIELD_CASE_START(AtomicFence)
+DELEGATE_FIELD_INT(AtomicFence, order)
+DELEGATE_FIELD_CASE_END(AtomicFence)
+
+DELEGATE_FIELD_CASE_START(SIMDExtract)
+DELEGATE_FIELD_CHILD(SIMDExtract, vec)
+DELEGATE_FIELD_INT(SIMDExtract, op)
+DELEGATE_FIELD_INT(SIMDExtract, index)
+DELEGATE_FIELD_CASE_END(SIMDExtract)
+
+DELEGATE_FIELD_CASE_START(SIMDReplace)
+DELEGATE_FIELD_CHILD(SIMDReplace, value)
+DELEGATE_FIELD_CHILD(SIMDReplace, vec)
+DELEGATE_FIELD_INT(SIMDReplace, op)
+DELEGATE_FIELD_INT(SIMDReplace, index)
+DELEGATE_FIELD_CASE_END(SIMDReplace)
+
+DELEGATE_FIELD_CASE_START(SIMDShuffle)
+DELEGATE_FIELD_CHILD(SIMDShuffle, right)
+DELEGATE_FIELD_CHILD(SIMDShuffle, left)
+DELEGATE_FIELD_INT_ARRAY(SIMDShuffle, mask)
+DELEGATE_FIELD_CASE_END(SIMDShuffle)
+
+DELEGATE_FIELD_CASE_START(SIMDTernary)
+DELEGATE_FIELD_CHILD(SIMDTernary, c)
+DELEGATE_FIELD_CHILD(SIMDTernary, b)
+DELEGATE_FIELD_CHILD(SIMDTernary, a)
+DELEGATE_FIELD_INT(SIMDTernary, op)
+DELEGATE_FIELD_CASE_END(SIMDTernary)
+
+DELEGATE_FIELD_CASE_START(SIMDShift)
+DELEGATE_FIELD_CHILD(SIMDShift, shift)
+DELEGATE_FIELD_CHILD(SIMDShift, vec)
+DELEGATE_FIELD_INT(SIMDShift, op)
+DELEGATE_FIELD_CASE_END(SIMDShift)
+
+DELEGATE_FIELD_CASE_START(SIMDLoad)
+DELEGATE_FIELD_CHILD(SIMDLoad, ptr)
+DELEGATE_FIELD_INT(SIMDLoad, op)
+DELEGATE_FIELD_ADDRESS(SIMDLoad, offset)
+DELEGATE_FIELD_ADDRESS(SIMDLoad, align)
+DELEGATE_FIELD_NAME_KIND(SIMDLoad, memory, ModuleItemKind::Memory)
+DELEGATE_FIELD_CASE_END(SIMDLoad)
+
+DELEGATE_FIELD_CASE_START(SIMDLoadStoreLane)
+DELEGATE_FIELD_CHILD(SIMDLoadStoreLane, vec)
+DELEGATE_FIELD_CHILD(SIMDLoadStoreLane, ptr)
+DELEGATE_FIELD_INT(SIMDLoadStoreLane, op)
+DELEGATE_FIELD_ADDRESS(SIMDLoadStoreLane, offset)
+DELEGATE_FIELD_ADDRESS(SIMDLoadStoreLane, align)
+DELEGATE_FIELD_INT(SIMDLoadStoreLane, index)
+DELEGATE_FIELD_NAME_KIND(SIMDLoadStoreLane, memory, ModuleItemKind::Memory)
+DELEGATE_FIELD_CASE_END(SIMDLoadStoreLane)
+
+DELEGATE_FIELD_CASE_START(MemoryInit)
+DELEGATE_FIELD_CHILD(MemoryInit, size)
+DELEGATE_FIELD_CHILD(MemoryInit, offset)
+DELEGATE_FIELD_CHILD(MemoryInit, dest)
+DELEGATE_FIELD_NAME_KIND(MemoryInit, segment, ModuleItemKind::DataSegment)
+DELEGATE_FIELD_NAME_KIND(MemoryInit, memory, ModuleItemKind::Memory)
+DELEGATE_FIELD_CASE_END(MemoryInit)
+
+DELEGATE_FIELD_CASE_START(DataDrop)
+DELEGATE_FIELD_NAME_KIND(DataDrop, segment, ModuleItemKind::DataSegment)
+DELEGATE_FIELD_CASE_END(DataDrop)
+
+DELEGATE_FIELD_CASE_START(MemoryCopy)
+DELEGATE_FIELD_CHILD(MemoryCopy, size)
+DELEGATE_FIELD_CHILD(MemoryCopy, source)
+DELEGATE_FIELD_CHILD(MemoryCopy, dest)
+DELEGATE_FIELD_NAME_KIND(MemoryCopy, sourceMemory, ModuleItemKind::Memory)
+DELEGATE_FIELD_NAME_KIND(MemoryCopy, destMemory, ModuleItemKind::Memory)
+DELEGATE_FIELD_CASE_END(MemoryCopy)
+
+DELEGATE_FIELD_CASE_START(MemoryFill)
+DELEGATE_FIELD_CHILD(MemoryFill, size)
+DELEGATE_FIELD_CHILD(MemoryFill, value)
+DELEGATE_FIELD_CHILD(MemoryFill, dest)
+DELEGATE_FIELD_NAME_KIND(MemoryFill, memory, ModuleItemKind::Memory)
+DELEGATE_FIELD_CASE_END(MemoryFill)
+
+DELEGATE_FIELD_CASE_START(Const)
+DELEGATE_FIELD_LITERAL(Const, value)
+DELEGATE_FIELD_CASE_END(Const)
+
+DELEGATE_FIELD_CASE_START(Unary)
+DELEGATE_FIELD_CHILD(Unary, value)
+DELEGATE_FIELD_INT(Unary, op)
+DELEGATE_FIELD_CASE_END(Unary)
+
+DELEGATE_FIELD_CASE_START(Binary)
+DELEGATE_FIELD_CHILD(Binary, right)
+DELEGATE_FIELD_CHILD(Binary, left)
+DELEGATE_FIELD_INT(Binary, op)
+DELEGATE_FIELD_CASE_END(Binary)
+
+DELEGATE_FIELD_CASE_START(Select)
+DELEGATE_FIELD_CHILD(Select, condition)
+DELEGATE_FIELD_CHILD(Select, ifFalse)
+DELEGATE_FIELD_CHILD(Select, ifTrue)
+DELEGATE_FIELD_CASE_END(Select)
+
+DELEGATE_FIELD_CASE_START(Drop)
+DELEGATE_FIELD_CHILD(Drop, value)
+DELEGATE_FIELD_CASE_END(Drop)
+
+DELEGATE_FIELD_CASE_START(Return)
+DELEGATE_FIELD_OPTIONAL_CHILD(Return, value)
+DELEGATE_FIELD_CASE_END(Return)
+
+DELEGATE_FIELD_CASE_START(MemorySize)
+DELEGATE_FIELD_TYPE(MemorySize, ptrType)
+DELEGATE_FIELD_NAME_KIND(MemorySize, memory, ModuleItemKind::Memory)
+DELEGATE_FIELD_CASE_END(MemorySize)
+
+DELEGATE_FIELD_CASE_START(MemoryGrow)
+DELEGATE_FIELD_TYPE(MemoryGrow, ptrType)
+DELEGATE_FIELD_CHILD(MemoryGrow, delta)
+DELEGATE_FIELD_NAME_KIND(MemoryGrow, memory, ModuleItemKind::Memory)
+DELEGATE_FIELD_CASE_END(MemoryGrow)
+
+DELEGATE_FIELD_CASE_START(RefNull)
+DELEGATE_FIELD_CASE_END(RefNull)
+
+DELEGATE_FIELD_CASE_START(RefIsNull)
+DELEGATE_FIELD_CHILD(RefIsNull, value)
+DELEGATE_FIELD_CASE_END(RefIsNull)
+
+DELEGATE_FIELD_CASE_START(RefFunc)
+DELEGATE_FIELD_NAME_KIND(RefFunc, func, ModuleItemKind::Function)
+DELEGATE_FIELD_CASE_END(RefFunc)
+
+DELEGATE_FIELD_CASE_START(RefEq)
+DELEGATE_FIELD_CHILD(RefEq, right)
+DELEGATE_FIELD_CHILD(RefEq, left)
+DELEGATE_FIELD_CASE_END(RefEq)
+
+DELEGATE_FIELD_CASE_START(TableGet)
+DELEGATE_FIELD_CHILD(TableGet, index)
+DELEGATE_FIELD_NAME_KIND(TableGet, table, ModuleItemKind::Table)
+DELEGATE_FIELD_CASE_END(TableGet)
+
+DELEGATE_FIELD_CASE_START(TableSet)
+DELEGATE_FIELD_CHILD(TableSet, value)
+DELEGATE_FIELD_CHILD(TableSet, index)
+DELEGATE_FIELD_NAME_KIND(TableSet, table, ModuleItemKind::Table)
+DELEGATE_FIELD_CASE_END(TableSet)
+
+DELEGATE_FIELD_CASE_START(TableSize)
+DELEGATE_FIELD_NAME_KIND(TableSize, table, ModuleItemKind::Table)
+DELEGATE_FIELD_CASE_END(TableSize)
+
+DELEGATE_FIELD_CASE_START(TableGrow)
+DELEGATE_FIELD_CHILD(TableGrow, delta)
+DELEGATE_FIELD_CHILD(TableGrow, value)
+DELEGATE_FIELD_NAME_KIND(TableGrow, table, ModuleItemKind::Table)
+DELEGATE_FIELD_CASE_END(TableGrow)
+
+DELEGATE_FIELD_CASE_START(TableFill)
+DELEGATE_FIELD_CHILD(TableFill, size)
+DELEGATE_FIELD_CHILD(TableFill, value)
+DELEGATE_FIELD_CHILD(TableFill, dest)
+DELEGATE_FIELD_NAME_KIND(TableFill, table, ModuleItemKind::Table)
+DELEGATE_FIELD_CASE_END(TableFill)
+
+DELEGATE_FIELD_CASE_START(TableCopy)
+DELEGATE_FIELD_CHILD(TableCopy, size)
+DELEGATE_FIELD_CHILD(TableCopy, source)
+DELEGATE_FIELD_CHILD(TableCopy, dest)
+DELEGATE_FIELD_NAME_KIND(TableCopy, sourceTable, ModuleItemKind::Table)
+DELEGATE_FIELD_NAME_KIND(TableCopy, destTable, ModuleItemKind::Table)
+DELEGATE_FIELD_CASE_END(TableCopy)
+
+DELEGATE_FIELD_CASE_START(Try)
+DELEGATE_FIELD_SCOPE_NAME_USE(Try, delegateTarget)
+DELEGATE_FIELD_CHILD_VECTOR(Try, catchBodies)
+DELEGATE_FIELD_NAME_KIND_VECTOR(Try, catchTags, ModuleItemKind::Tag)
+DELEGATE_FIELD_SCOPE_NAME_DEF(Try, name)
+DELEGATE_FIELD_CHILD(Try, body)
+DELEGATE_FIELD_CASE_END(Try)
+
+DELEGATE_FIELD_CASE_START(TryTable)
+DELEGATE_FIELD_TYPE_VECTOR(TryTable, sentTypes)
+DELEGATE_FIELD_INT_VECTOR(TryTable, catchRefs)
+DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(TryTable, catchDests)
+DELEGATE_FIELD_NAME_KIND_VECTOR(TryTable, catchTags, ModuleItemKind::Tag)
+DELEGATE_FIELD_CHILD(TryTable, body)
+DELEGATE_FIELD_CASE_END(TryTable)
+
+DELEGATE_FIELD_CASE_START(Throw)
+DELEGATE_FIELD_CHILD_VECTOR(Throw, operands)
+DELEGATE_FIELD_NAME_KIND(Throw, tag, ModuleItemKind::Tag)
+DELEGATE_FIELD_CASE_END(Throw)
+
+DELEGATE_FIELD_CASE_START(Rethrow)
+DELEGATE_FIELD_SCOPE_NAME_USE(Rethrow, target)
+DELEGATE_FIELD_CASE_END(Rethrow)
+
+DELEGATE_FIELD_CASE_START(ThrowRef)
+DELEGATE_FIELD_CHILD(ThrowRef, exnref)
+DELEGATE_FIELD_CASE_END(ThrowRef)
+
+DELEGATE_FIELD_CASE_START(Nop)
+DELEGATE_FIELD_CASE_END(Nop)
+
+DELEGATE_FIELD_CASE_START(Unreachable)
+DELEGATE_FIELD_CASE_END(Unreachable)
+
+DELEGATE_FIELD_CASE_START(Pop)
+DELEGATE_FIELD_CASE_END(Pop)
+
+DELEGATE_FIELD_CASE_START(TupleMake)
+DELEGATE_FIELD_CHILD_VECTOR(Tuple, operands)
+DELEGATE_FIELD_CASE_END(TupleMake)
+
+DELEGATE_FIELD_CASE_START(TupleExtract)
+DELEGATE_FIELD_CHILD(TupleExtract, tuple)
+DELEGATE_FIELD_INT(TupleExtract, index)
+DELEGATE_FIELD_CASE_END(TupleExtract)
+
+DELEGATE_FIELD_CASE_START(RefI31)
+DELEGATE_FIELD_CHILD(RefI31, value)
+DELEGATE_FIELD_CASE_END(RefI31)
+
+DELEGATE_FIELD_CASE_START(I31Get)
+DELEGATE_FIELD_CHILD(I31Get, i31)
+DELEGATE_FIELD_INT(I31Get, signed_)
+DELEGATE_FIELD_CASE_END(I31Get)
+
+DELEGATE_FIELD_CASE_START(CallRef)
+DELEGATE_FIELD_CHILD(CallRef, target)
+DELEGATE_FIELD_CHILD_VECTOR(CallRef, operands)
+DELEGATE_FIELD_INT(CallRef, isReturn)
+DELEGATE_FIELD_CASE_END(CallRef)
+
+DELEGATE_FIELD_CASE_START(RefTest)
+DELEGATE_FIELD_TYPE(RefTest, castType)
+DELEGATE_FIELD_CHILD(RefTest, ref)
+DELEGATE_FIELD_CASE_END(RefTest)
+
+DELEGATE_FIELD_CASE_START(RefCast)
+DELEGATE_FIELD_CHILD(RefCast, ref)
+DELEGATE_FIELD_CASE_END(RefCast)
+
+DELEGATE_FIELD_CASE_START(BrOn)
+DELEGATE_FIELD_INT(BrOn, op)
+DELEGATE_FIELD_SCOPE_NAME_USE(BrOn, name)
+DELEGATE_FIELD_TYPE(BrOn, castType)
+DELEGATE_FIELD_CHILD(BrOn, ref)
+DELEGATE_FIELD_CASE_END(BrOn)
+
+DELEGATE_FIELD_CASE_START(StructNew)
+DELEGATE_FIELD_CHILD_VECTOR(StructNew, operands)
+DELEGATE_FIELD_CASE_END(StructNew)
+
+DELEGATE_FIELD_CASE_START(StructGet)
+DELEGATE_FIELD_INT(StructGet, index)
+DELEGATE_FIELD_CHILD(StructGet, ref)
+DELEGATE_FIELD_INT(StructGet, signed_)
+DELEGATE_FIELD_CASE_END(StructGet)
+
+DELEGATE_FIELD_CASE_START(StructSet)
+DELEGATE_FIELD_INT(StructSet, index)
+DELEGATE_FIELD_CHILD(StructSet, value)
+DELEGATE_FIELD_CHILD(StructSet, ref)
+DELEGATE_FIELD_CASE_END(StructSet)
+
+DELEGATE_FIELD_CASE_START(ArrayNew)
+DELEGATE_FIELD_CHILD(ArrayNew, size)
+DELEGATE_FIELD_OPTIONAL_CHILD(ArrayNew, init)
+DELEGATE_FIELD_CASE_END(ArrayNew)
+
+DELEGATE_FIELD_CASE_START(ArrayNewData)
+DELEGATE_FIELD_NAME_KIND(ArrayNewData, segment, ModuleItemKind::DataSegment)
+DELEGATE_FIELD_CHILD(ArrayNewData, size)
+DELEGATE_FIELD_CHILD(ArrayNewData, offset)
+DELEGATE_FIELD_CASE_END(ArrayNewData)
+
+DELEGATE_FIELD_CASE_START(ArrayNewElem)
+DELEGATE_FIELD_NAME_KIND(ArrayNewElem, segment, ModuleItemKind::ElementSegment)
+DELEGATE_FIELD_CHILD(ArrayNewElem, size)
+DELEGATE_FIELD_CHILD(ArrayNewElem, offset)
+DELEGATE_FIELD_CASE_END(ArrayNewElem)
+
+DELEGATE_FIELD_CASE_START(ArrayNewFixed)
+DELEGATE_FIELD_CHILD_VECTOR(ArrayNewFixed, values)
+DELEGATE_FIELD_CASE_END(ArrayNewFixed)
+
+DELEGATE_FIELD_CASE_START(ArrayGet)
+DELEGATE_FIELD_CHILD(ArrayGet, index)
+DELEGATE_FIELD_CHILD(ArrayGet, ref)
+DELEGATE_FIELD_INT(ArrayGet, signed_)
+DELEGATE_FIELD_CASE_END(ArrayGet)
+
+DELEGATE_FIELD_CASE_START(ArraySet)
+DELEGATE_FIELD_CHILD(ArraySet, value)
+DELEGATE_FIELD_CHILD(ArraySet, index)
+DELEGATE_FIELD_CHILD(ArraySet, ref)
+DELEGATE_FIELD_CASE_END(ArraySet)
+
+DELEGATE_FIELD_CASE_START(ArrayLen)
+DELEGATE_FIELD_CHILD(ArrayLen, ref)
+DELEGATE_FIELD_CASE_END(ArrayLen)
+
+DELEGATE_FIELD_CASE_START(ArrayCopy)
+DELEGATE_FIELD_CHILD(ArrayCopy, length)
+DELEGATE_FIELD_CHILD(ArrayCopy, srcIndex)
+DELEGATE_FIELD_CHILD(ArrayCopy, srcRef)
+DELEGATE_FIELD_CHILD(ArrayCopy, destIndex)
+DELEGATE_FIELD_CHILD(ArrayCopy, destRef)
+DELEGATE_FIELD_CASE_END(ArrayCopy)
+
+DELEGATE_FIELD_CASE_START(ArrayFill)
+DELEGATE_FIELD_CHILD(ArrayFill, size)
+DELEGATE_FIELD_CHILD(ArrayFill, value)
+DELEGATE_FIELD_CHILD(ArrayFill, index)
+DELEGATE_FIELD_CHILD(ArrayFill, ref)
+DELEGATE_FIELD_CASE_END(ArrayFill)
+
+DELEGATE_FIELD_CASE_START(ArrayInitData)
+DELEGATE_FIELD_NAME_KIND(ArrayInitData, segment, ModuleItemKind::DataSegment)
+DELEGATE_FIELD_CHILD(ArrayInitData, size)
+DELEGATE_FIELD_CHILD(ArrayInitData, offset)
+DELEGATE_FIELD_CHILD(ArrayInitData, index)
+DELEGATE_FIELD_CHILD(ArrayInitData, ref)
+DELEGATE_FIELD_CASE_END(ArrayInitData)
+
+DELEGATE_FIELD_CASE_START(ArrayInitElem)
+DELEGATE_FIELD_NAME_KIND(ArrayInitElem, segment, ModuleItemKind::ElementSegment)
+DELEGATE_FIELD_CHILD(ArrayInitElem, size)
+DELEGATE_FIELD_CHILD(ArrayInitElem, offset)
+DELEGATE_FIELD_CHILD(ArrayInitElem, index)
+DELEGATE_FIELD_CHILD(ArrayInitElem, ref)
+DELEGATE_FIELD_CASE_END(ArrayInitElem)
+
+DELEGATE_FIELD_CASE_START(RefAs)
+DELEGATE_FIELD_INT(RefAs, op)
+DELEGATE_FIELD_CHILD(RefAs, value)
+DELEGATE_FIELD_CASE_END(RefAs)
+
+DELEGATE_FIELD_CASE_START(StringNew)
+DELEGATE_FIELD_INT(StringNew, op)
+DELEGATE_FIELD_INT(StringNew, try_)
+DELEGATE_FIELD_OPTIONAL_CHILD(StringNew, end)
+DELEGATE_FIELD_OPTIONAL_CHILD(StringNew, start)
+DELEGATE_FIELD_OPTIONAL_CHILD(StringNew, length)
+DELEGATE_FIELD_CHILD(StringNew, ptr)
+DELEGATE_FIELD_CASE_END(StringNew)
+
+DELEGATE_FIELD_CASE_START(StringConst)
+DELEGATE_FIELD_NAME(StringConst, string)
+DELEGATE_FIELD_CASE_END(StringConst)
+
+DELEGATE_FIELD_CASE_START(StringMeasure)
+DELEGATE_FIELD_INT(StringMeasure, op)
+DELEGATE_FIELD_CHILD(StringMeasure, ref)
+DELEGATE_FIELD_CASE_END(StringMeasure)
+
+DELEGATE_FIELD_CASE_START(StringEncode)
+DELEGATE_FIELD_INT(StringEncode, op)
+DELEGATE_FIELD_OPTIONAL_CHILD(StringEncode, start)
+DELEGATE_FIELD_CHILD(StringEncode, ptr)
+DELEGATE_FIELD_CHILD(StringEncode, ref)
+DELEGATE_FIELD_CASE_END(StringEncode)
+
+DELEGATE_FIELD_CASE_START(StringConcat)
+DELEGATE_FIELD_CHILD(StringConcat, right)
+DELEGATE_FIELD_CHILD(StringConcat, left)
+DELEGATE_FIELD_CASE_END(StringConcat)
+
+DELEGATE_FIELD_CASE_START(StringEq)
+DELEGATE_FIELD_INT(StringEq, op)
+DELEGATE_FIELD_CHILD(StringEq, right)
+DELEGATE_FIELD_CHILD(StringEq, left)
+DELEGATE_FIELD_CASE_END(StringEq)
+
+DELEGATE_FIELD_CASE_START(StringAs)
+DELEGATE_FIELD_INT(StringAs, op)
+DELEGATE_FIELD_CHILD(StringAs, ref)
+DELEGATE_FIELD_CASE_END(StringAs)
+
+DELEGATE_FIELD_CASE_START(StringWTF8Advance)
+DELEGATE_FIELD_CHILD(StringWTF8Advance, bytes)
+DELEGATE_FIELD_CHILD(StringWTF8Advance, pos)
+DELEGATE_FIELD_CHILD(StringWTF8Advance, ref)
+DELEGATE_FIELD_CASE_END(StringWTF8Advance)
+
+DELEGATE_FIELD_CASE_START(StringWTF16Get)
+DELEGATE_FIELD_CHILD(StringWTF16Get, pos)
+DELEGATE_FIELD_CHILD(StringWTF16Get, ref)
+DELEGATE_FIELD_CASE_END(StringWTF16Get)
+
+DELEGATE_FIELD_CASE_START(StringIterNext)
+DELEGATE_FIELD_CHILD(StringIterNext, ref)
+DELEGATE_FIELD_CASE_END(StringIterNext)
+
+DELEGATE_FIELD_CASE_START(StringIterMove)
+DELEGATE_FIELD_INT(StringIterMove, op)
+DELEGATE_FIELD_CHILD(StringIterMove, num)
+DELEGATE_FIELD_CHILD(StringIterMove, ref)
+DELEGATE_FIELD_CASE_END(StringIterMove)
+
+DELEGATE_FIELD_CASE_START(StringSliceWTF)
+DELEGATE_FIELD_INT(StringSliceWTF, op)
+DELEGATE_FIELD_CHILD(StringSliceWTF, end)
+DELEGATE_FIELD_CHILD(StringSliceWTF, start)
+DELEGATE_FIELD_CHILD(StringSliceWTF, ref)
+DELEGATE_FIELD_CASE_END(StringSliceWTF)
+
+DELEGATE_FIELD_CASE_START(StringSliceIter)
+DELEGATE_FIELD_CHILD(StringSliceIter, num)
+DELEGATE_FIELD_CHILD(StringSliceIter, ref)
+DELEGATE_FIELD_CASE_END(StringSliceIter)
+
+DELEGATE_FIELD_CASE_START(ContBind)
+DELEGATE_FIELD_CHILD(ContBind, cont)
+DELEGATE_FIELD_CHILD_VECTOR(ContBind, operands)
+DELEGATE_FIELD_HEAPTYPE(ContBind, contTypeAfter)
+DELEGATE_FIELD_HEAPTYPE(ContBind, contTypeBefore)
+DELEGATE_FIELD_CASE_END(ContBind)
+
+DELEGATE_FIELD_CASE_START(ContNew)
+DELEGATE_FIELD_CHILD(ContNew, func)
+DELEGATE_FIELD_HEAPTYPE(ContNew, contType)
+DELEGATE_FIELD_CASE_END(ContNew)
+
+DELEGATE_FIELD_CASE_START(Resume)
+DELEGATE_FIELD_TYPE_VECTOR(Resume, sentTypes)
+DELEGATE_FIELD_CHILD(Resume, cont)
+DELEGATE_FIELD_CHILD_VECTOR(Resume, operands)
+DELEGATE_FIELD_SCOPE_NAME_USE_VECTOR(Resume, handlerBlocks)
+DELEGATE_FIELD_NAME_KIND_VECTOR(Resume, handlerTags, ModuleItemKind::Tag)
+DELEGATE_FIELD_HEAPTYPE(Resume, contType)
+DELEGATE_FIELD_CASE_END(Resume)
+
+DELEGATE_FIELD_CASE_START(Suspend)
+DELEGATE_FIELD_CHILD_VECTOR(Suspend, operands)
+DELEGATE_FIELD_NAME_KIND(Suspend, tag, ModuleItemKind::Tag)
+DELEGATE_FIELD_CASE_END(Suspend)
+
+DELEGATE_FIELD_MAIN_END
 
 #undef DELEGATE_ID
 #undef DELEGATE_START
@@ -1004,3 +838,8 @@ switch (DELEGATE_ID) {
 #undef DELEGATE_FIELD_HEAPTYPE
 #undef DELEGATE_FIELD_ADDRESS
 #undef DELEGATE_GET_FIELD
+
+#undef DELEGATE_FIELD_MAIN_START
+#undef DELEGATE_FIELD_MAIN_END
+#undef DELEGATE_FIELD_CASE_START
+#undef DELEGATE_FIELD_CASE_END
