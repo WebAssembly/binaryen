@@ -594,7 +594,7 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(ext, none, {});
   assertLUB(ext, noext, ext);
   assertLUB(ext, nofunc, {});
-  assertLUB(ext, nocont,  {});
+  assertLUB(ext, nocont, {});
   assertLUB(ext, defFunc, {});
   assertLUB(ext, defStruct, {});
   assertLUB(ext, defArray, {});
@@ -613,7 +613,7 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(func, none, {});
   assertLUB(func, noext, {});
   assertLUB(func, nofunc, func);
-  assertLUB(func, nocont,  {});
+  assertLUB(func, nocont, {});
   assertLUB(func, defFunc, func);
   assertLUB(func, defCont, {});
   assertLUB(func, defStruct, {});
@@ -652,7 +652,7 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(any, none, any);
   assertLUB(any, noext, {});
   assertLUB(any, nofunc, {});
-  assertLUB(any, nocont,  {});
+  assertLUB(any, nocont, {});
   assertLUB(any, defFunc, {});
   assertLUB(any, defCont, {});
   assertLUB(any, defStruct, any);
@@ -670,7 +670,7 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(eq, none, eq);
   assertLUB(eq, noext, {});
   assertLUB(eq, nofunc, {});
-  assertLUB(eq, nocont,  {});
+  assertLUB(eq, nocont, {});
   assertLUB(eq, defFunc, {});
   assertLUB(eq, defCont, {});
   assertLUB(eq, defStruct, eq);
@@ -687,14 +687,14 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(i31, none, i31);
   assertLUB(i31, noext, {});
   assertLUB(i31, nofunc, {});
-  assertLUB(i31, nocont,  {});
+  assertLUB(i31, nocont, {});
   assertLUB(i31, defFunc, {});
   assertLUB(i31, defCont, {});
   assertLUB(i31, defStruct, eq);
   assertLUB(i31, defArray, eq);
 
   assertLUB(struct_, struct_, struct_);
-  assertLUB(struct_, cont,  {});
+  assertLUB(struct_, cont, {});
   assertLUB(struct_, array, eq);
   assertLUB(struct_, string, any);
   assertLUB(struct_, stringview_wtf8, {});
@@ -703,14 +703,14 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(struct_, none, struct_);
   assertLUB(struct_, noext, {});
   assertLUB(struct_, nofunc, {});
-  assertLUB(struct_, nocont,  {});
+  assertLUB(struct_, nocont, {});
   assertLUB(struct_, defFunc, {});
   assertLUB(struct_, defCont, {});
   assertLUB(struct_, defStruct, struct_);
   assertLUB(struct_, defArray, eq);
 
   assertLUB(array, array, array);
-  assertLUB(array, cont,  {});
+  assertLUB(array, cont, {});
   assertLUB(array, string, any);
   assertLUB(array, stringview_wtf8, {});
   assertLUB(array, stringview_wtf16, {});
@@ -718,21 +718,21 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(array, none, array);
   assertLUB(array, noext, {});
   assertLUB(array, nofunc, {});
-  assertLUB(array, nocont,  {});
+  assertLUB(array, nocont, {});
   assertLUB(array, defFunc, {});
   assertLUB(array, defCont, {});
   assertLUB(array, defStruct, eq);
   assertLUB(array, defArray, array);
 
   assertLUB(string, string, string);
-  assertLUB(string, cont,  {});
+  assertLUB(string, cont, {});
   assertLUB(string, stringview_wtf8, {});
   assertLUB(string, stringview_wtf16, {});
   assertLUB(string, stringview_iter, {});
   assertLUB(string, none, string);
   assertLUB(string, noext, {});
   assertLUB(string, nofunc, {});
-  assertLUB(string, nocont,  {});
+  assertLUB(string, nocont, {});
   assertLUB(string, defFunc, {});
   assertLUB(string, defCont, {});
   assertLUB(string, defStruct, any);
@@ -744,7 +744,7 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(stringview_wtf8, none, stringview_wtf8);
   assertLUB(stringview_wtf8, noext, {});
   assertLUB(stringview_wtf8, nofunc, {});
-  assertLUB(stringview_wtf8, nocont,  {});
+  assertLUB(stringview_wtf8, nocont, {});
   assertLUB(stringview_wtf8, defFunc, {});
   assertLUB(stringview_wtf8, defStruct, {});
   assertLUB(stringview_wtf8, defCont, {});
@@ -755,7 +755,7 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(stringview_wtf16, none, stringview_wtf16);
   assertLUB(stringview_wtf16, noext, {});
   assertLUB(stringview_wtf16, nofunc, {});
-  assertLUB(stringview_wtf16, nocont,  {});
+  assertLUB(stringview_wtf16, nocont, {});
   assertLUB(stringview_wtf16, defFunc, {});
   assertLUB(stringview_wtf16, defStruct, {});
   assertLUB(stringview_wtf16, defCont, {});
@@ -765,7 +765,7 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(stringview_iter, none, stringview_iter);
   assertLUB(stringview_iter, noext, {});
   assertLUB(stringview_iter, nofunc, {});
-  assertLUB(stringview_iter, nocont,  {});
+  assertLUB(stringview_iter, nocont, {});
   assertLUB(stringview_iter, defFunc, {});
   assertLUB(stringview_iter, defStruct, {});
   assertLUB(stringview_iter, defCont, {});
@@ -774,7 +774,7 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(none, none, none);
   assertLUB(none, noext, {});
   assertLUB(none, nofunc, {});
-  assertLUB(none, nocont,  {});
+  assertLUB(none, nocont, {});
   assertLUB(none, defFunc, {});
   assertLUB(none, defCont, {});
   assertLUB(none, defStruct, defStruct);
@@ -782,20 +782,20 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
 
   assertLUB(noext, noext, noext);
   assertLUB(noext, nofunc, {});
-  assertLUB(noext, nocont,  {});
+  assertLUB(noext, nocont, {});
   assertLUB(noext, defFunc, {});
   assertLUB(noext, defCont, {});
   assertLUB(noext, defStruct, {});
   assertLUB(noext, defArray, {});
 
   assertLUB(nofunc, nofunc, nofunc);
-  assertLUB(nofunc, nocont,  {});
+  assertLUB(nofunc, nocont, {});
   assertLUB(nofunc, defFunc, defFunc);
   assertLUB(nofunc, defCont, {});
   assertLUB(nofunc, defStruct, {});
   assertLUB(nofunc, defArray, {});
 
-  assertLUB(nocont, nocont,  nocont);
+  assertLUB(nocont, nocont, nocont);
   assertLUB(nocont, func, {});
   assertLUB(nocont, cont, cont);
   assertLUB(nocont, nofunc, {});
