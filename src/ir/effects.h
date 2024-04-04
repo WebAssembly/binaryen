@@ -795,7 +795,7 @@ private:
 
       parent.calls = true;
       if (parent.features.hasExceptionHandling() &&
-          (parent.tryDepth == 0 || curr->isReturn)) {
+          (parent.tryDepth == 0 && !curr->isReturn)) {
         parent.throws_ = true;
       }
     }
