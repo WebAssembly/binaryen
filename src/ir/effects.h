@@ -51,30 +51,6 @@ public:
   Module& module;
   FeatureSet features;
 
-  // Return calls appear no different than normal returns to local surrounding
-  // code, but the effects of the return-called functions are visible to
-  // callers. Collect effects of return-called functions here and merge them in
-  // only when analyzing an entire function.
-  //
-  // Go through all this boilerplate to define copy constructors for this one
-  // field so we don't have to explicitly define a copy constructor for the
-  // entire EffectAnalyzer.
-  struct ReturnCallEffectPtr : std::unique_ptr<EffectAnalyzer> {
-    ReturnCallEffectPtr() = default;
-    ReturnCallEffectPtr(Module& module)
-      : std::unique_ptr<EffectAnalyzer>(
-          std::make_unique<EffectAnalyzer>(PassOptions{}, module)) {}
-    ReturnCallEffectPtr(const ReturnCallEffectPtr& other)
-      : ReturnCallEffectPtr() {}
-    ReturnCallEffectPtr(ReturnCallEffectPtr&& other) = default;
-    ReturnCallEffectPtr& operator=(const ReturnCallEffectPtr& other) {
-      *((std::unique_ptr<EffectAnalyzer>*)this) = nullptr;
-      return *this;
-    }
-    ReturnCallEffectPtr& operator=(ReturnCallEffectPtr&& other) = default;
-  };
-  ReturnCallEffectPtr returnCallEffects;
-
   // Walk an expression and all its children.
   void walk(Expression* ast) {
     InternalAnalyzer(*this).walk(ast);
@@ -95,8 +71,8 @@ public:
     walk(func->body);
 
     // Effects of return-called functions will be visible to the caller.
-    if (returnCallEffects) {
-      mergeIn(*returnCallEffects);
+    if (hasReturnCallThrow) {
+      throws_ = true;
     }
 
     // We can ignore branching out of the function body - this can only be
@@ -171,6 +147,16 @@ public:
   // Whether this code may "hang" and not eventually complete. An infinite loop,
   // or a continuation that is never continued, are examples of that.
   bool mayNotReturn = false;
+
+  // Return calls are indistinguishable from normal returns from the perspective
+  // of their surrounding code, and the return-callee's effects only become
+  // visible when considering the effects of the whole function containing the
+  // return call. To model this correctly, stash the callee's effects on the
+  // side and only merge them in after walking a full function body.
+  //
+  // We currently do this stashing only for the throw effect, but in principle
+  // we could do it for all effects if it made a difference.
+  bool hasReturnCallThrow = false;
 
   // Helper functions to check for various effect types
 
@@ -383,13 +369,6 @@ public:
     }
   }
 
-  EffectAnalyzer& getReturnCallEffects() {
-    if (!returnCallEffects) {
-      returnCallEffects = ReturnCallEffectPtr(module);
-    }
-    return *returnCallEffects;
-  }
-
   // the checks above happen after the node's children were processed, in the
   // order of execution we must also check for control flow that happens before
   // the children, i.e., loops
@@ -512,44 +491,51 @@ private:
 
       if (curr->isReturn) {
         parent.branchesOut = true;
+        // When EH is enabled, any call can throw.
+        if (parent.features.hasExceptionHandling() &&
+            (!targetEffects || targetEffects->throws())) {
+          parent.hasReturnCallThrow = true;
+        }
       }
-
-      auto& effects = curr->isReturn ? parent.getReturnCallEffects() : parent;
 
       if (targetEffects) {
         // We have effect information for this call target, and can just use
-        // that. The one change we may want to make is to remove throws_, if
-        // the target function throws and we know that will be caught anyhow,
-        // the same as the code below for the general path. We can't filter
-        // out throws on return calls because they will return out of the
-        // handlers before making the call.
-        if (targetEffects->throws_ && parent.tryDepth > 0 && !curr->isReturn) {
+        // that. The one change we may want to make is to remove throws_, if the
+        // target function throws and we know that will be caught anyhow, the
+        // same as the code below for the general path. We can always filter out
+        // throws for return calls because they are already more precisely
+        // captured by `hasReturnCallThrow`.
+        if (targetEffects->throws_ && (parent.tryDepth > 0 || curr->isReturn)) {
           auto filteredEffects = *targetEffects;
           filteredEffects.throws_ = false;
-          effects.mergeIn(filteredEffects);
+          parent.mergeIn(filteredEffects);
         } else {
           // Just merge in all the effects.
-          effects.mergeIn(*targetEffects);
+          parent.mergeIn(*targetEffects);
         }
         return;
       }
 
-      effects.calls = true;
-      // When EH is enabled, any call can throw.
-      if (parent.features.hasExceptionHandling() &&
-          (parent.tryDepth == 0 || curr->isReturn)) {
-        effects.throws_ = true;
+      parent.calls = true;
+      // When EH is enabled, any call can throw. Skip this for return calls
+      // because the throw is already more precisely captured by
+      // `hasReturnCallThrow`.
+      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0 &&
+          !curr->isReturn) {
+        parent.throws_ = true;
       }
     }
     void visitCallIndirect(CallIndirect* curr) {
+      parent.calls = true;
       if (curr->isReturn) {
         parent.branchesOut = true;
+        if (parent.features.hasExceptionHandling()) {
+          parent.hasReturnCallThrow = true;
+        }
       }
-      auto& effects = curr->isReturn ? parent.getReturnCallEffects() : parent;
-      effects.calls = true;
       if (parent.features.hasExceptionHandling() &&
-          (parent.tryDepth == 0 || curr->isReturn)) {
-        effects.throws_ = true;
+          (parent.tryDepth == 0 && !curr->isReturn)) {
+        parent.throws_ = true;
       }
     }
     void visitLocalGet(LocalGet* curr) {
@@ -794,6 +780,9 @@ private:
     void visitCallRef(CallRef* curr) {
       if (curr->isReturn) {
         parent.branchesOut = true;
+        if (parent.features.hasExceptionHandling()) {
+          parent.hasReturnCallThrow = true;
+        }
       }
       if (curr->target->type.isNull()) {
         parent.trap = true;
@@ -804,11 +793,10 @@ private:
         parent.implicitTrap = true;
       }
 
-      auto& effects = curr->isReturn ? parent.getReturnCallEffects() : parent;
-      effects.calls = true;
+      parent.calls = true;
       if (parent.features.hasExceptionHandling() &&
           (parent.tryDepth == 0 || curr->isReturn)) {
-        effects.throws_ = true;
+        parent.throws_ = true;
       }
     }
     void visitRefTest(RefTest* curr) {}
