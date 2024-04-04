@@ -219,6 +219,53 @@
     )
   )
 
+  ;; WITHOUT:      (func $return-call-throw-and-catch (type $0)
+  ;; WITHOUT-NEXT:  (return_call $throw)
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $return-call-throw-and-catch (type $0)
+  ;; INCLUDE-NEXT:  (return_call $throw)
+  ;; INCLUDE-NEXT: )
+  (func $return-call-throw-and-catch
+    (try
+      (do
+        ;; This call cannot be optimized out, as the target throws. However, the
+        ;; surrounding try-catch can be removed even without global effects
+        ;; because the throw from the return_call is never observed by this
+        ;; try-catch.
+        (return_call $throw)
+      )
+      (catch_all)
+    )
+  )
+
+  ;; WITHOUT:      (func $call-return-call-throw-and-catch (type $0)
+  ;; WITHOUT-NEXT:  (try $try
+  ;; WITHOUT-NEXT:   (do
+  ;; WITHOUT-NEXT:    (call $return-call-throw-and-catch)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:   (catch_all
+  ;; WITHOUT-NEXT:    (nop)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT:  (call $return-call-throw-and-catch)
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $call-return-call-throw-and-catch (type $0)
+  ;; INCLUDE-NEXT:  (call $return-call-throw-and-catch)
+  ;; INCLUDE-NEXT: )
+  (func $call-return-call-throw-and-catch
+    (try
+      (do
+        ;; Even though the body of the previous function is a try-catch_all, the
+        ;; function still throws because of its return_call, so this cannot be
+        ;; optimized out, but once again the entire try-catch can be.
+        (call $return-call-throw-and-catch)
+      )
+      (catch_all)
+    )
+    ;; This cannot be optimized out at all.
+    (call $return-call-throw-and-catch)
+  )
+
   ;; WITHOUT:      (func $call-unreachable-and-catch (type $0)
   ;; WITHOUT-NEXT:  (try $try
   ;; WITHOUT-NEXT:   (do
