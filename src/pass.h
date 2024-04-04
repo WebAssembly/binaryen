@@ -98,7 +98,7 @@ struct InliningOptions {
 };
 
 // Forward declaration for FuncEffectsMap.
-class EffectAnalyzer;
+struct EffectAnalyzer;
 
 using FuncEffectsMap = std::unordered_map<Name, EffectAnalyzer>;
 

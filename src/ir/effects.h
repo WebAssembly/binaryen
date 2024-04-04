@@ -23,66 +23,12 @@
 
 namespace wasm {
 
-// Analyze various possible effects.
-
-class EffectAnalyzer {
-public:
-  EffectAnalyzer(const PassOptions& passOptions, Module& module)
-    : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
-      trapsNeverHappen(passOptions.trapsNeverHappen),
-      funcEffectsMap(passOptions.funcEffectsMap), module(module),
-      features(module.features) {}
-
-  EffectAnalyzer(const PassOptions& passOptions,
-                 Module& module,
-                 Expression* ast)
-    : EffectAnalyzer(passOptions, module) {
-    walk(ast);
-  }
-
-  EffectAnalyzer(const PassOptions& passOptions, Module& module, Function* func)
-    : EffectAnalyzer(passOptions, module) {
-    walk(func);
-  }
-
-  bool ignoreImplicitTraps;
+// Track various possible effects.
+struct EffectSet {
+  // Options that affect effect tracking
   bool trapsNeverHappen;
-  std::shared_ptr<FuncEffectsMap> funcEffectsMap;
-  Module& module;
-  FeatureSet features;
 
-  // Walk an expression and all its children.
-  void walk(Expression* ast) {
-    InternalAnalyzer(*this).walk(ast);
-    post();
-  }
-
-  // Visit an expression, without any children.
-  void visit(Expression* ast) {
-    InternalAnalyzer(*this).visit(ast);
-    post();
-  }
-
-  // Walk an entire function body. This will ignore effects that are not
-  // noticeable from the perspective of the caller, that is, effects that are
-  // only noticeable during the call, but "vanish" when the call stack is
-  // unwound.
-  void walk(Function* func) {
-    walk(func->body);
-
-    // Effects of return-called functions will be visible to the caller.
-    if (hasReturnCallThrow) {
-      throws_ = true;
-    }
-
-    // We can ignore branching out of the function body - this can only be
-    // a return, and that is only noticeable in the function, not outside.
-    branchesOut = false;
-
-    // When the function exits, changes to locals cannot be noticed any more.
-    localsWritten.clear();
-    localsRead.clear();
-  }
+  EffectSet(bool trapsNeverHappen) : trapsNeverHappen(trapsNeverHappen) {}
 
   // Core effect tracking
 
@@ -148,15 +94,8 @@ public:
   // or a continuation that is never continued, are examples of that.
   bool mayNotReturn = false;
 
-  // Return calls are indistinguishable from normal returns from the perspective
-  // of their surrounding code, and the return-callee's effects only become
-  // visible when considering the effects of the whole function containing the
-  // return call. To model this correctly, stash the callee's effects on the
-  // side and only merge them in after walking a full function body.
-  //
-  // We currently do this stashing only for the throw effect, but in principle
-  // we could do it for all effects if it made a difference.
-  bool hasReturnCallThrow = false;
+  std::set<Name> breakTargets;
+  std::set<Name> delegateTargets;
 
   // Helper functions to check for various effect types
 
@@ -265,7 +204,7 @@ public:
   // example we can't reorder A and B if B traps, but in the first example we
   // can reorder them even if B traps (even if A has a global effect like a
   // global.set, since we assume B does not trap in traps-never-happen).
-  bool invalidates(const EffectAnalyzer& other) {
+  bool invalidates(const EffectSet& other) {
     if ((transfersControlFlow() && other.hasSideEffects()) ||
         (other.transfersControlFlow() && hasSideEffects()) ||
         ((writesMemory || calls) && other.accessesMemory()) ||
@@ -332,7 +271,7 @@ public:
     return false;
   }
 
-  void mergeIn(const EffectAnalyzer& other) {
+  void mergeIn(const EffectSet& other) {
     branchesOut = branchesOut || other.branchesOut;
     calls = calls || other.calls;
     readsMemory = readsMemory || other.readsMemory;
@@ -368,6 +307,70 @@ public:
       delegateTargets.insert(i);
     }
   }
+};
+
+// Analyze various possible effects.
+
+struct EffectAnalyzer : EffectSet {
+  EffectAnalyzer(const PassOptions& passOptions, Module& module)
+    : EffectSet(passOptions.trapsNeverHappen),
+      ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
+      funcEffectsMap(passOptions.funcEffectsMap), module(module),
+      features(module.features), returnCallEffects(*this) {}
+
+  EffectAnalyzer(const PassOptions& passOptions,
+                 Module& module,
+                 Expression* ast)
+    : EffectAnalyzer(passOptions, module) {
+    walk(ast);
+  }
+
+  EffectAnalyzer(const PassOptions& passOptions, Module& module, Function* func)
+    : EffectAnalyzer(passOptions, module) {
+    walk(func);
+  }
+
+  bool ignoreImplicitTraps;
+  std::shared_ptr<FuncEffectsMap> funcEffectsMap;
+  Module& module;
+  FeatureSet features;
+
+  // Return calls appear no different than normal returns to local surrounding
+  // code, but the effects of the return-called functions are visible to
+  // callers. Collect effects of return-called functions here and merge them in
+  // only when analyzing an entire function.
+  EffectSet returnCallEffects;
+
+  // Walk an expression and all its children.
+  void walk(Expression* ast) {
+    InternalAnalyzer(*this).walk(ast);
+    post();
+  }
+
+  // Visit an expression, without any children.
+  void visit(Expression* ast) {
+    InternalAnalyzer(*this).visit(ast);
+    post();
+  }
+
+  // Walk an entire function body. This will ignore effects that are not
+  // noticeable from the perspective of the caller, that is, effects that are
+  // only noticeable during the call, but "vanish" when the call stack is
+  // unwound.
+  void walk(Function* func) {
+    walk(func->body);
+
+    // Effects of return-called functions will be visible to the caller.
+    mergeIn(returnCallEffects);
+
+    // We can ignore branching out of the function body - this can only be
+    // a return, and that is only noticeable in the function, not outside.
+    branchesOut = false;
+
+    // When the function exits, changes to locals cannot be noticed any more.
+    localsWritten.clear();
+    localsRead.clear();
+  }
 
   // the checks above happen after the node's children were processed, in the
   // order of execution we must also check for control flow that happens before
@@ -387,9 +390,6 @@ public:
     }
     return hasAnything();
   }
-
-  std::set<Name> breakTargets;
-  std::set<Name> delegateTargets;
 
 private:
   struct InternalAnalyzer
@@ -491,51 +491,44 @@ private:
 
       if (curr->isReturn) {
         parent.branchesOut = true;
-        // When EH is enabled, any call can throw.
-        if (parent.features.hasExceptionHandling() &&
-            (!targetEffects || targetEffects->throws())) {
-          parent.hasReturnCallThrow = true;
-        }
       }
+
+      auto& effects = curr->isReturn ? parent.returnCallEffects : parent;
 
       if (targetEffects) {
         // We have effect information for this call target, and can just use
-        // that. The one change we may want to make is to remove throws_, if the
-        // target function throws and we know that will be caught anyhow, the
-        // same as the code below for the general path. We can always filter out
-        // throws for return calls because they are already more precisely
-        // captured by `hasReturnCallThrow`.
-        if (targetEffects->throws_ && (parent.tryDepth > 0 || curr->isReturn)) {
+        // that. The one change we may want to make is to remove throws_, if
+        // the target function throws and we know that will be caught anyhow,
+        // the same as the code below for the general path. We can't filter
+        // out throws on return calls because they will return out of the
+        // handlers before making the call.
+        if (targetEffects->throws_ && parent.tryDepth > 0 && !curr->isReturn) {
           auto filteredEffects = *targetEffects;
           filteredEffects.throws_ = false;
-          parent.mergeIn(filteredEffects);
+          effects.mergeIn(filteredEffects);
         } else {
           // Just merge in all the effects.
-          parent.mergeIn(*targetEffects);
+          effects.mergeIn(*targetEffects);
         }
         return;
       }
 
-      parent.calls = true;
-      // When EH is enabled, any call can throw. Skip this for return calls
-      // because the throw is already more precisely captured by
-      // `hasReturnCallThrow`.
-      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0 &&
-          !curr->isReturn) {
-        parent.throws_ = true;
+      effects.calls = true;
+      // When EH is enabled, any call can throw.
+      if (parent.features.hasExceptionHandling() &&
+          (parent.tryDepth == 0 || curr->isReturn)) {
+        effects.throws_ = true;
       }
     }
     void visitCallIndirect(CallIndirect* curr) {
-      parent.calls = true;
       if (curr->isReturn) {
         parent.branchesOut = true;
-        if (parent.features.hasExceptionHandling()) {
-          parent.hasReturnCallThrow = true;
-        }
       }
+      auto& effects = curr->isReturn ? parent.returnCallEffects : parent;
+      effects.calls = true;
       if (parent.features.hasExceptionHandling() &&
-          (parent.tryDepth == 0 && !curr->isReturn)) {
-        parent.throws_ = true;
+          (parent.tryDepth == 0 || curr->isReturn)) {
+        effects.throws_ = true;
       }
     }
     void visitLocalGet(LocalGet* curr) {
@@ -780,9 +773,6 @@ private:
     void visitCallRef(CallRef* curr) {
       if (curr->isReturn) {
         parent.branchesOut = true;
-        if (parent.features.hasExceptionHandling()) {
-          parent.hasReturnCallThrow = true;
-        }
       }
       if (curr->target->type.isNull()) {
         parent.trap = true;
@@ -793,10 +783,11 @@ private:
         parent.implicitTrap = true;
       }
 
-      parent.calls = true;
+      auto& effects = curr->isReturn ? parent.returnCallEffects : parent;
+      effects.calls = true;
       if (parent.features.hasExceptionHandling() &&
           (parent.tryDepth == 0 || curr->isReturn)) {
-        parent.throws_ = true;
+        effects.throws_ = true;
       }
     }
     void visitRefTest(RefTest* curr) {}
