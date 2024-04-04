@@ -442,7 +442,7 @@ HeapType::BasicHeapType getBasicHeapSupertype(HeapType type) {
     case HeapTypeInfo::SignatureKind:
       return HeapType::func;
     case HeapTypeInfo::ContinuationKind:
-      return HeapType::any;
+      return HeapType::cont;
     case HeapTypeInfo::StructKind:
       return HeapType::struct_;
     case HeapTypeInfo::ArrayKind:
