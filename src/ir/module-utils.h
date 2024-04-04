@@ -392,7 +392,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
   // canHaveProperty() - Check if the property could be present.
   // addProperty() - Adds the property.
   // logVisit() - Log each visit of the propagation. This is called before
-  //                 we check if the function already has the property.
+  //              we check if the function already has the property.
   void propagateBack(std::function<bool(const T&)> hasProperty,
                      std::function<bool(const T&)> canHaveProperty,
                      std::function<void(T&)> addProperty,
