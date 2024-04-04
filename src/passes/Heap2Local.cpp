@@ -203,7 +203,12 @@ struct Heap2LocalOptimizer {
         continue;
       }
 
-      convertToLocals(allocation);
+      // Check for escaping, noting relevant information as we go. If this does
+      // not escape, optimize it.
+      Rewriter rewriter(allocation, func, module);
+      if (!escapes(allocation, rewriter)) {
+        rewriter.applyOptimization();
+      }
     }
   }
 
@@ -518,11 +523,10 @@ struct Heap2LocalOptimizer {
     Mixes,
   };
 
-  // Analyze an allocation to see if we can convert it from a heap allocation to
-  // locals.
-  void convertToLocals(StructNew* allocation) {
-    Rewriter rewriter(allocation, func, module);
-
+  // Analyze an allocation to see if it escapes or not. We receive a Rewriter
+  // instance on which we store important information as we go, which will be
+  // necessary if we optimize later.
+  bool escapes(StructNew* allocation, Rewriter& rewriter) {
     // A queue of flows from children to parents. When something is in the queue
     // here then it assumed that it is ok for the allocation to be at the child
     // (that is, we have already checked the child before placing it in the
@@ -546,7 +550,7 @@ struct Heap2LocalOptimizer {
           interaction == ParentChildInteraction::Mixes) {
         // If the parent may let us escape, or the parent mixes other values
         // up with us, give up.
-        return;
+        return true;
       }
 
       // The parent either fully consumes us, or flows us onwards; either way,
@@ -575,7 +579,7 @@ struct Heap2LocalOptimizer {
       // added the parent to |seen| for both children, the reference would get
       // blocked from being optimized.
       if (!seen.emplace(parent).second) {
-        return;
+        return true;
       }
 
       // We can proceed, as the parent interacts with us properly, and we are
@@ -617,11 +621,11 @@ struct Heap2LocalOptimizer {
 
     // We finished the loop over the flows. Do the final checks.
     if (!getsAreExclusiveToSets(rewriter.sets)) {
-      return;
+      return true;
     }
 
-    // We can do it, hurray!
-    rewriter.applyOptimization();
+    // Nothing escapes, hurray!
+    return false;
   }
 
   ParentChildInteraction getParentChildInteraction(StructNew* allocation,
