@@ -5,6 +5,14 @@
  (func $id (param $x (ref $ct)) (result (ref $ct))
   (local.get $x)
  )
+
+ (func $cont-nocont (param $x (ref null $ct))
+  (local $l1 (ref null cont))
+  (local $l2 (ref null $ct))
+  (local.set $l1 (local.get $x))    ;; $ct <: cont
+  (local.set $l2 (ref.null nocont)) ;; nocont <: $ct
+  (local.set $l1 (ref.null nocont)) ;; nocont <: cont
+ )
 )
 
 (assert_invalid
