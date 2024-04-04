@@ -132,7 +132,7 @@ template<typename T> void operateOnScopeNameDefs(Expression* expr, T func) {
 
 #define DELEGATE_GET_FIELD(id, field) cast->field
 
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) func(cast->field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) func(cast->field);
 
 #define DELEGATE_FIELD_CHILD(id, field)
 #define DELEGATE_FIELD_INT(id, field)
