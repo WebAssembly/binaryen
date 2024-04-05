@@ -2521,4 +2521,34 @@
       (local.get $x)
     )
   )
+
+  ;; CHECK:      (func $array.nonconstant_set (type $5) (param $x i32)
+  ;; CHECK-NEXT:  (local $temp (ref $array))
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (array.new $array
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.set $array
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 100)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.nonconstant_set (param $x i32)
+    (local $temp (ref $array))
+    (local.set $temp
+      (array.new $array
+        (i32.const 42)
+        (i32.const 3)
+      )
+    )
+    (array.set $array
+      (local.get $temp)
+      ;; We cannot optimize a nonconstant set.
+      (local.get $x)
+      (i32.const 100)
+    )
+  )
 )
