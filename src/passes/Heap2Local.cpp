@@ -228,7 +228,7 @@ struct EscapeAnalyzer {
   };
 
   // Analyze an allocation to see if it escapes or not.
-  bool escapes(StructNew* allocation) {
+  bool escapes(Expression* allocation) {
     // A queue of flows from children to parents. When something is in the queue
     // here then it assumed that it is ok for the allocation to be at the child
     // (that is, we have already checked the child before placing it in the
@@ -330,7 +330,7 @@ struct EscapeAnalyzer {
     return false;
   }
 
-  ParentChildInteraction getParentChildInteraction(StructNew* allocation,
+  ParentChildInteraction getParentChildInteraction(Expression* allocation,
                                                    Expression* parent,
                                                    Expression* child) {
     // If there is no parent then we are the body of the function, and that
@@ -340,7 +340,7 @@ struct EscapeAnalyzer {
     }
 
     struct Checker : public Visitor<Checker> {
-      StructNew* allocation;
+      Expression* allocation;
       Expression* child;
 
       // Assume escaping (or some other problem we cannot analyze) unless we are
@@ -790,7 +790,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
   Builder builder;
   const FieldList& fields;
 
-  Struct2Local(Expression* allocation,
+  Array2Struct(Expression* allocation,
                const EscapeAnalyzer& analyzer,
                Function* func,
                Module& wasm)
@@ -802,7 +802,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
     auto element = allocation->type.getHeapType().getArray().element;
     Index numFields;
     if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
-      numFields = arrayNew->size->cast<Const>()->value.getUnsigned();
+      numFields = getIndex(arrayNew->size);
     } else if (auto* arrayNewFixed = allocation->dynCast<ArrayNewFixed>()) {
       numFields = arrayNewFixed->values.size();
     } else {
@@ -816,7 +816,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
 
     // Generate a proper StructNew.
     if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
-      if (arrayNew->isWithDefault) {
+      if (arrayNew->isWithDefault()) {
         structNew = builder.makeStructNew(structType, {});
       } else {
         // The ArrayNew splatting a single value onto each slot of the array. To
@@ -860,16 +860,22 @@ struct Array2Struct : PostWalker<Array2Struct> {
     }
 
     // Convert the ArraySet into a StructSet.
-    replaceCurrent(builder.makeStructGet(getIndex(curr->index), curr->ref, curr->value);
+    // TODO: the actual chak that the index is constant, after escape anlysi and before opt!
+    replaceCurrent(builder.makeStructSet(getIndex(curr->index), curr->ref, curr->value));
   }
 
-  void visitStructGet(StructGet* curr) {
+  void visitArrayGet(ArrayGet* curr) {
     if (!analyzer.reached.count(curr)) {
       return;
     }
 
     // Convert the ArrayGet into a StructGet.
-    replaceCurrent(builder.makeStructGet(getIndex(curr->index), curr->ref, curr->type, curr->signed_);
+    replaceCurrent(builder.makeStructGet(getIndex(curr->index), curr->ref, curr->type, curr->signed_));
+  }
+
+  // Get the value in an expression we know must contain a constant index.
+  Index getIndex(Expression* curr) {
+    return curr->cast<Const>()->value.getUnsigned();
   }
 };
 
@@ -899,7 +905,7 @@ struct Heap2Local {
 
     // Find all the relevant allocations in the function: StructNew, ArrayNew,
     // ArrayNewFixed.
-    struct AllocationFinder : public<PostWalker> {
+    struct AllocationFinder : public PostWalker<AllocationFinder> {
       std::vector<StructNew*> structNews;
       std::vector<Expression*> arrayNews;
 
@@ -934,7 +940,7 @@ struct Heap2Local {
       // The point of this optimization is to replace heap allocations with
       // locals, so we must be able to place the data in locals.
       auto element = allocation->type.getHeapType().getArray().element;
-      if (!canHandleAsLocals(element)) {
+      if (!canHandleAsLocal(element)) {
         continue;
       }
 
@@ -943,8 +949,8 @@ struct Heap2Local {
       if (!analyzer.escapes(allocation)) {
         // Convert the allocation and all its uses into a struct. Then convert
         // the struct into locals.
-        allocation = Array2Struct(allocation, analyzer, func, wasm).structNew;
-        Struct2Local(allocation, analyzer, func, wasm);
+        auto* structNew = Array2Struct(allocation, analyzer, func, wasm).structNew;
+        Struct2Local(structNew, analyzer, func, wasm);
       }
     }
 
@@ -987,6 +993,7 @@ struct Heap2Local {
         return false;
       }
     }
+    return true;
   }
 };
 
