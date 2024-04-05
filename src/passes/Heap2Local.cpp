@@ -172,7 +172,7 @@ namespace {
 // optimization later (|seen| and |reached|).
 struct EscapeAnalyzer {
   // All the expressions that have already been seen by the optimizer, see the
-  // comment above on exclusivity: once we have seen something whene analyzing
+  // comment above on exclusivity: once we have seen something when analyzing
   // one allocation, if we reach it again then we can exit early since seeing it
   // a second time proves we lost exclusivity. We must track this across
   // multiple instances of EscapeAnalyzer as each handles a particular
