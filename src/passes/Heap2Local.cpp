@@ -865,7 +865,14 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // technically have the new struct type, but we are going to optimize the
     // struct into locals anyhow.
     walk(func->body);
+
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, &wasm);
+    }
   }
+
+  // In rare cases we may need to refinalize, as with Struct2Local.
+  bool refinalize = false;
 
   // The number of slots in the array (which will become the number of fields in
   // the struct).
@@ -904,6 +911,8 @@ struct Array2Struct : PostWalker<Array2Struct> {
       replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
                                         builder.makeDrop(curr->value),
                                         builder.makeUnreachable()}));
+      // We added an unreachable, and must propagate that type.
+      refinalize = true;
       return;
     }
 
@@ -931,6 +940,8 @@ struct Array2Struct : PostWalker<Array2Struct> {
     if (index >= numFields) {
       replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                           builder.makeUnreachable()));
+      // We added an unreachable, and must propagate that type.
+      refinalize = true;
       return;
     }
 

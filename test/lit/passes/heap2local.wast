@@ -2222,7 +2222,7 @@
   ;; CHECK:      (type $array (array (mut i32)))
   (type $array (array (mut i32)))
 
-  ;; CHECK:      (func $array.new_default (type $3)
+  ;; CHECK:      (func $array.new_default (type $2)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -2413,7 +2413,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.new_fixed (type $2) (param $x i32) (result i32)
+  ;; CHECK:      (func $array.new_fixed (type $3) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
@@ -2458,7 +2458,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.nonconstant_size (type $2) (param $x i32) (result i32)
+  ;; CHECK:      (func $array.nonconstant_size (type $3) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (array.new $array
@@ -2486,7 +2486,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.nonconstant_get (type $2) (param $x i32) (result i32)
+  ;; CHECK:      (func $array.nonconstant_get (type $3) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (array.new $array
@@ -2625,7 +2625,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.folded.multiple (type $3)
+  ;; CHECK:      (func $array.folded.multiple (type $2)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -2875,6 +2875,48 @@
         )
         (i32.const 6)
       )
+    )
+  )
+
+  ;; CHECK:      (func $array.nested.refinalize.get (type $1) (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $array.nested.refinalize.get (result i32)
+    ;; The get here is of an index that is out of bounds, and will trap. We
+    ;; should refinalize so the unreachability is propagated and we do not
+    ;; error on validation.
+    (array.get $array
+      (array.new_default $array
+        (i32.const 0)
+      )
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $array.nested.refinalize.set (type $2)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $array.nested.refinalize.set
+    ;; As above, but with a set.
+    (array.set $array
+      (array.new_default $array
+        (i32.const 0)
+      )
+      (i32.const 0)
+      (i32.const 42)
     )
   )
 
