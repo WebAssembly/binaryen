@@ -565,7 +565,8 @@ static Expression* doInlining(Module* module,
         builder.makeLocalSet(updater.localMapping[from->getVarIndexBase() + i],
                              LiteralUtils::makeZero(type, *module)));
     }
-    if (call->isReturn /* && !action.insideATry */) {
+    if (call->isReturn) {
+      assert(!action.insideATry);
       if (retType.isConcrete()) {
         *action.callSite = builder.makeReturn(block);
       } else {
