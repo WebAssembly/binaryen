@@ -2362,7 +2362,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.new (type $1) (result i32)
+  ;; CHECK:      (func $array.new (type $2) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -2413,7 +2413,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.new_fixed (type $2) (param $x i32) (result i32)
+  ;; CHECK:      (func $array.new_fixed (type $1) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
@@ -2458,7 +2458,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-i32 (type $1) (result i32)
+  ;; CHECK:      (func $get-i32 (type $2) (result i32)
   ;; CHECK-NEXT:  (i32.const 1337)
   ;; CHECK-NEXT: )
   (func $get-i32 (result i32)
@@ -2466,7 +2466,7 @@
     (i32.const 1337)
   )
 
-  ;; CHECK:      (func $array.nonconstant_size (type $2) (param $x i32) (result i32)
+  ;; CHECK:      (func $array.nonconstant_size (type $1) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (array.new $array
@@ -2491,6 +2491,34 @@
     (array.get $array
       (local.get $temp)
       (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $array.nonconstant_get (type $1) (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local $temp (ref $array))
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (array.new $array
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 3)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.get $array
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.nonconstant_get (param $x i32) (result i32)
+    (local $temp (ref $array))
+    (local.set $temp
+      (array.new $array
+        (i32.const 42)
+        (i32.const 3)
+      )
+    )
+    (array.get $array
+      (local.get $temp)
+      ;; We cannot optimize a nonconstant get.
+      (local.get $x)
     )
   )
 )
