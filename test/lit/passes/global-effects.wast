@@ -8,27 +8,36 @@
 ;; RUN: foreach %s %t wasm-opt -all --generate-global-effects --discard-global-effects --vacuum -S -o - | filecheck %s --check-prefix WITHOUT
 
 (module
-  ;; WITHOUT:      (type $0 (func))
+
+  ;; WITHOUT:      (type $void (func))
+  ;; INCLUDE:      (type $void (func))
+  (type $void (func))
 
   ;; WITHOUT:      (type $1 (func (result i32)))
 
   ;; WITHOUT:      (type $2 (func (param i32)))
 
-  ;; WITHOUT:      (import "a" "b" (func $import (type $0)))
-  ;; INCLUDE:      (type $0 (func))
-
+  ;; WITHOUT:      (import "a" "b" (func $import (type $void)))
   ;; INCLUDE:      (type $1 (func (result i32)))
 
   ;; INCLUDE:      (type $2 (func (param i32)))
 
-  ;; INCLUDE:      (import "a" "b" (func $import (type $0)))
+  ;; INCLUDE:      (import "a" "b" (func $import (type $void)))
   (import "a" "b" (func $import))
 
+  ;; WITHOUT:      (table $t 0 funcref)
+  ;; INCLUDE:      (table $t 0 funcref)
+  (table $t funcref 0)
+
+  ;; WITHOUT:      (elem declare func $throw)
+
   ;; WITHOUT:      (tag $tag)
+  ;; INCLUDE:      (elem declare func $throw)
+
   ;; INCLUDE:      (tag $tag)
   (tag $tag)
 
-  ;; WITHOUT:      (func $main (type $0)
+  ;; WITHOUT:      (func $main (type $void)
   ;; WITHOUT-NEXT:  (call $nop)
   ;; WITHOUT-NEXT:  (call $unreachable)
   ;; WITHOUT-NEXT:  (call $call-nop)
@@ -39,7 +48,7 @@
   ;; WITHOUT-NEXT:  (call $throw)
   ;; WITHOUT-NEXT:  (call $throw-and-import)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $main (type $0)
+  ;; INCLUDE:      (func $main (type $void)
   ;; INCLUDE-NEXT:  (call $unreachable)
   ;; INCLUDE-NEXT:  (call $call-unreachable)
   ;; INCLUDE-NEXT:  (call $throw)
@@ -67,10 +76,10 @@
     (call $throw-and-import)
   )
 
-  ;; WITHOUT:      (func $cycle (type $0)
+  ;; WITHOUT:      (func $cycle (type $void)
   ;; WITHOUT-NEXT:  (call $cycle)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $cycle (type $0)
+  ;; INCLUDE:      (func $cycle (type $void)
   ;; INCLUDE-NEXT:  (call $cycle)
   ;; INCLUDE-NEXT: )
   (func $cycle
@@ -79,10 +88,10 @@
     (call $cycle)
   )
 
-  ;; WITHOUT:      (func $cycle-1 (type $0)
+  ;; WITHOUT:      (func $cycle-1 (type $void)
   ;; WITHOUT-NEXT:  (call $cycle-2)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $cycle-1 (type $0)
+  ;; INCLUDE:      (func $cycle-1 (type $void)
   ;; INCLUDE-NEXT:  (call $cycle-2)
   ;; INCLUDE-NEXT: )
   (func $cycle-1
@@ -90,40 +99,40 @@
     (call $cycle-2)
   )
 
-  ;; WITHOUT:      (func $cycle-2 (type $0)
+  ;; WITHOUT:      (func $cycle-2 (type $void)
   ;; WITHOUT-NEXT:  (call $cycle-1)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $cycle-2 (type $0)
+  ;; INCLUDE:      (func $cycle-2 (type $void)
   ;; INCLUDE-NEXT:  (call $cycle-1)
   ;; INCLUDE-NEXT: )
   (func $cycle-2
     (call $cycle-1)
   )
 
-  ;; WITHOUT:      (func $nop (type $0)
+  ;; WITHOUT:      (func $nop (type $void)
   ;; WITHOUT-NEXT:  (nop)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $nop (type $0)
+  ;; INCLUDE:      (func $nop (type $void)
   ;; INCLUDE-NEXT:  (nop)
   ;; INCLUDE-NEXT: )
   (func $nop
     (nop)
   )
 
-  ;; WITHOUT:      (func $unreachable (type $0)
+  ;; WITHOUT:      (func $unreachable (type $void)
   ;; WITHOUT-NEXT:  (unreachable)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $unreachable (type $0)
+  ;; INCLUDE:      (func $unreachable (type $void)
   ;; INCLUDE-NEXT:  (unreachable)
   ;; INCLUDE-NEXT: )
   (func $unreachable
     (unreachable)
   )
 
-  ;; WITHOUT:      (func $call-nop (type $0)
+  ;; WITHOUT:      (func $call-nop (type $void)
   ;; WITHOUT-NEXT:  (call $nop)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $call-nop (type $0)
+  ;; INCLUDE:      (func $call-nop (type $void)
   ;; INCLUDE-NEXT:  (nop)
   ;; INCLUDE-NEXT: )
   (func $call-nop
@@ -131,10 +140,10 @@
     (call $nop)
   )
 
-  ;; WITHOUT:      (func $call-unreachable (type $0)
+  ;; WITHOUT:      (func $call-unreachable (type $void)
   ;; WITHOUT-NEXT:  (call $unreachable)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $call-unreachable (type $0)
+  ;; INCLUDE:      (func $call-unreachable (type $void)
   ;; INCLUDE-NEXT:  (call $unreachable)
   ;; INCLUDE-NEXT: )
   (func $call-unreachable
@@ -172,7 +181,7 @@
     )
   )
 
-  ;; WITHOUT:      (func $call-throw-and-catch (type $0)
+  ;; WITHOUT:      (func $call-throw-and-catch (type $void)
   ;; WITHOUT-NEXT:  (try $try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $throw)
@@ -190,7 +199,7 @@
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $call-throw-and-catch (type $0)
+  ;; INCLUDE:      (func $call-throw-and-catch (type $void)
   ;; INCLUDE-NEXT:  (try $try0
   ;; INCLUDE-NEXT:   (do
   ;; INCLUDE-NEXT:    (call $throw-and-import)
@@ -219,10 +228,10 @@
     )
   )
 
-  ;; WITHOUT:      (func $return-call-throw-and-catch (type $0)
+  ;; WITHOUT:      (func $return-call-throw-and-catch (type $void)
   ;; WITHOUT-NEXT:  (return_call $throw)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $return-call-throw-and-catch (type $0)
+  ;; INCLUDE:      (func $return-call-throw-and-catch (type $void)
   ;; INCLUDE-NEXT:  (return_call $throw)
   ;; INCLUDE-NEXT: )
   (func $return-call-throw-and-catch
@@ -238,7 +247,57 @@
     )
   )
 
-  ;; WITHOUT:      (func $call-return-call-throw-and-catch (type $0)
+  ;; WITHOUT:      (func $return-call-indirect-throw-and-catch (type $void)
+  ;; WITHOUT-NEXT:  (return_call_indirect $t (type $void)
+  ;; WITHOUT-NEXT:   (i32.const 0)
+  ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $return-call-indirect-throw-and-catch (type $void)
+  ;; INCLUDE-NEXT:  (return_call_indirect $t (type $void)
+  ;; INCLUDE-NEXT:   (i32.const 0)
+  ;; INCLUDE-NEXT:  )
+  ;; INCLUDE-NEXT: )
+  (func $return-call-indirect-throw-and-catch
+    (try
+      (do
+        ;; This call cannot be optimized out, as the target may throw. However,
+        ;; the surrounding try-catch can be removed even without global effects
+        ;; because the throw from the return_call is never observed by this
+        ;; try-catch.
+        (return_call_indirect
+          (i32.const 0)
+        )
+      )
+      (catch_all)
+    )
+  )
+
+  ;; WITHOUT:      (func $return-call-ref-throw-and-catch (type $void)
+  ;; WITHOUT-NEXT:  (return_call_ref $void
+  ;; WITHOUT-NEXT:   (ref.func $throw)
+  ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT: )
+  ;; INCLUDE:      (func $return-call-ref-throw-and-catch (type $void)
+  ;; INCLUDE-NEXT:  (return_call_ref $void
+  ;; INCLUDE-NEXT:   (ref.func $throw)
+  ;; INCLUDE-NEXT:  )
+  ;; INCLUDE-NEXT: )
+  (func $return-call-ref-throw-and-catch
+    (try
+      (do
+        ;; This call cannot be optimized out, as the target may throw. However,
+        ;; the surrounding try-catch can be removed even without global effects
+        ;; because the throw from the return_call is never observed by this
+        ;; try-catch.
+        (return_call_ref $void
+          (ref.func $throw)
+        )
+      )
+      (catch_all)
+    )
+  )
+
+  ;; WITHOUT:      (func $call-return-call-throw-and-catch (type $void)
   ;; WITHOUT-NEXT:  (try $try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $return-call-throw-and-catch)
@@ -247,10 +306,46 @@
   ;; WITHOUT-NEXT:    (nop)
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT:  (try $try1
+  ;; WITHOUT-NEXT:   (do
+  ;; WITHOUT-NEXT:    (call $return-call-indirect-throw-and-catch)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:   (catch_all
+  ;; WITHOUT-NEXT:    (nop)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT:  (try $try2
+  ;; WITHOUT-NEXT:   (do
+  ;; WITHOUT-NEXT:    (call $return-call-ref-throw-and-catch)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:   (catch_all
+  ;; WITHOUT-NEXT:    (nop)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT:  (call $return-call-throw-and-catch)
+  ;; WITHOUT-NEXT:  (call $return-call-indirect-throw-and-catch)
+  ;; WITHOUT-NEXT:  (call $return-call-ref-throw-and-catch)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $call-return-call-throw-and-catch (type $0)
+  ;; INCLUDE:      (func $call-return-call-throw-and-catch (type $void)
+  ;; INCLUDE-NEXT:  (try $try1
+  ;; INCLUDE-NEXT:   (do
+  ;; INCLUDE-NEXT:    (call $return-call-indirect-throw-and-catch)
+  ;; INCLUDE-NEXT:   )
+  ;; INCLUDE-NEXT:   (catch_all
+  ;; INCLUDE-NEXT:    (nop)
+  ;; INCLUDE-NEXT:   )
+  ;; INCLUDE-NEXT:  )
+  ;; INCLUDE-NEXT:  (try $try2
+  ;; INCLUDE-NEXT:   (do
+  ;; INCLUDE-NEXT:    (call $return-call-ref-throw-and-catch)
+  ;; INCLUDE-NEXT:   )
+  ;; INCLUDE-NEXT:   (catch_all
+  ;; INCLUDE-NEXT:    (nop)
+  ;; INCLUDE-NEXT:   )
+  ;; INCLUDE-NEXT:  )
   ;; INCLUDE-NEXT:  (call $return-call-throw-and-catch)
+  ;; INCLUDE-NEXT:  (call $return-call-indirect-throw-and-catch)
+  ;; INCLUDE-NEXT:  (call $return-call-ref-throw-and-catch)
   ;; INCLUDE-NEXT: )
   (func $call-return-call-throw-and-catch
     (try
@@ -262,11 +357,29 @@
       )
       (catch_all)
     )
-    ;; This cannot be optimized out at all.
+    (try
+      (do
+        ;; This would be the same, except since it performs an indirect call, we
+        ;; conservatively assume it could have any effect, so we can't optimize.
+        (call $return-call-indirect-throw-and-catch)
+      )
+      (catch_all)
+    )
+    (try
+      (do
+        ;; Same here.
+        (call $return-call-ref-throw-and-catch)
+      )
+      (catch_all)
+    )
+
+    ;; These cannot be optimized out at all.
     (call $return-call-throw-and-catch)
+    (call $return-call-indirect-throw-and-catch)
+    (call $return-call-ref-throw-and-catch)
   )
 
-  ;; WITHOUT:      (func $call-unreachable-and-catch (type $0)
+  ;; WITHOUT:      (func $call-unreachable-and-catch (type $void)
   ;; WITHOUT-NEXT:  (try $try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $unreachable)
@@ -276,7 +389,7 @@
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $call-unreachable-and-catch (type $0)
+  ;; INCLUDE:      (func $call-unreachable-and-catch (type $void)
   ;; INCLUDE-NEXT:  (call $unreachable)
   ;; INCLUDE-NEXT: )
   (func $call-unreachable-and-catch
@@ -346,20 +459,20 @@
     )
   )
 
-  ;; WITHOUT:      (func $throw (type $0)
+  ;; WITHOUT:      (func $throw (type $void)
   ;; WITHOUT-NEXT:  (throw $tag)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $throw (type $0)
+  ;; INCLUDE:      (func $throw (type $void)
   ;; INCLUDE-NEXT:  (throw $tag)
   ;; INCLUDE-NEXT: )
   (func $throw
     (throw $tag)
   )
 
-  ;; WITHOUT:      (func $throw-and-import (type $0)
+  ;; WITHOUT:      (func $throw-and-import (type $void)
   ;; WITHOUT-NEXT:  (throw $tag)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $throw-and-import (type $0)
+  ;; INCLUDE:      (func $throw-and-import (type $void)
   ;; INCLUDE-NEXT:  (throw $tag)
   ;; INCLUDE-NEXT: )
   (func $throw-and-import
@@ -374,11 +487,11 @@
     )
   )
 
-  ;; WITHOUT:      (func $cycle-with-unknown-call (type $0)
+  ;; WITHOUT:      (func $cycle-with-unknown-call (type $void)
   ;; WITHOUT-NEXT:  (call $cycle-with-unknown-call)
   ;; WITHOUT-NEXT:  (call $import)
   ;; WITHOUT-NEXT: )
-  ;; INCLUDE:      (func $cycle-with-unknown-call (type $0)
+  ;; INCLUDE:      (func $cycle-with-unknown-call (type $void)
   ;; INCLUDE-NEXT:  (call $cycle-with-unknown-call)
   ;; INCLUDE-NEXT:  (call $import)
   ;; INCLUDE-NEXT: )
