@@ -811,8 +811,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
                EscapeAnalyzer& analyzer,
                Function* func,
                Module& wasm)
-    : allocation(allocation), analyzer(analyzer), func(func),
-      builder(wasm) {
+    : allocation(allocation), analyzer(analyzer), func(func), builder(wasm) {
 
     // Build a proper struct type: as many fields as the size of the array, all
     // of the same type as the array's element.
@@ -902,10 +901,9 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // If this is an OOB array.set then we trap.
     auto index = getIndex(curr->index);
     if (index >= numFields) {
-      replaceCurrent(builder.makeBlock(
-      { builder.makeDrop(curr->ref), builder.makeDrop(curr->value),
-        builder.makeUnreachable() }
-      ));
+      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                        builder.makeDrop(curr->value),
+                                        builder.makeUnreachable()}));
       return;
     }
 
@@ -931,15 +929,14 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // If this is an OOB array.get then we trap.
     auto index = getIndex(curr->index);
     if (index >= numFields) {
-      replaceCurrent(builder.makeSequence(
-        builder.makeDrop(curr->ref),
-        builder.makeUnreachable()
-      ));
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                          builder.makeUnreachable()));
       return;
     }
 
     // Convert the ArrayGet into a StructGet.
-    replaceCurrent(builder.makeStructGet(index, curr->ref, curr->type, curr->signed_));
+    replaceCurrent(
+      builder.makeStructGet(index, curr->ref, curr->type, curr->signed_));
     noteCurrentIsReached();
   }
 
@@ -951,13 +948,9 @@ struct Array2Struct : PostWalker<Array2Struct> {
   // Inform the analyzer that the current expression (which we just replaced)
   // has been reached in its analysis. We are replacing something it reached,
   // and want it to consider it as its equivalent.
-  void noteCurrentIsReached() {
-    noteIsReached(getCurrent());
-  }
+  void noteCurrentIsReached() { noteIsReached(getCurrent()); }
 
-  void noteIsReached(Expression* curr) {
-    analyzer.reached.insert(curr);
-  }
+  void noteIsReached(Expression* curr) { analyzer.reached.insert(curr); }
 };
 
 // Core Heap2Local optimization that operates on a function: Builds up the data
@@ -1048,7 +1041,8 @@ struct Heap2Local {
       if (!analyzer.escapes(allocation)) {
         // Convert the allocation and all its uses into a struct. Then convert
         // the struct into locals.
-        auto* structNew = Array2Struct(allocation, analyzer, func, wasm).structNew;
+        auto* structNew =
+          Array2Struct(allocation, analyzer, func, wasm).structNew;
         Struct2Local(structNew, analyzer, func, wasm);
       }
     }
