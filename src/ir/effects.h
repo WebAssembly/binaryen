@@ -518,7 +518,7 @@ private:
         // target function throws and we know that will be caught anyhow, the
         // same as the code below for the general path. We can always filter out
         // throws for return calls because they are already more precisely
-        // captured by `hasReturnCallThrow`.
+        // captured by `hasReturnCallThrow` and `branchesOut`.
         if (targetEffects->throws_ && (parent.tryDepth > 0 || curr->isReturn)) {
           auto filteredEffects = *targetEffects;
           filteredEffects.throws_ = false;
@@ -532,8 +532,8 @@ private:
 
       parent.calls = true;
       // When EH is enabled, any call can throw. Skip this for return calls
-      // because the throw is already more precisely captured by
-      // `hasReturnCallThrow`.
+      // because the throw is already more precisely captured by the combination
+      // of `hasReturnCallThrow` and `branchesOut`.
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0 &&
           !curr->isReturn) {
         parent.throws_ = true;
