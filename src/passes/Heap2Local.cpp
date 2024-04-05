@@ -828,15 +828,29 @@ struct Array2Struct : PostWalker<Array2Struct> {
     if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
       if (arrayNew->isWithDefault()) {
         structNew = builder.makeStructNew(structType, {});
+        arrayNewReplacement = structNew;
       } else {
         // The ArrayNew splatting a single value onto each slot of the array. To
         // do the same for the struct, we store that value in an local and
         // generate multiple local.gets of it.
-        abort(); // FIXME we need to replace the arrayNew with a block etc.
+        auto local = builder.addVar(func, element.type);
+        auto* set = builder.makeLocalSet(local, arrayNew->init);
+        std::vector<Expression*> gets;
+        for (Index i = 0; i < numFields; i++) {
+          gets.push_back(builder.makeLocalGet(local, element.type));
+        }
+        structNew = builder.makeStructNew(structType, gets);
+        // The ArrayNew* will be replaced with a block containing the local.set
+        // and the structNew.
+        arrayNewReplacement = builder.makeSequence(set, structNew);
+        // The data flows through the new block we just added: inform the
+        // analysis of that.
+        noteIsReached(arrayNewReplacement);
       }
     } else if (auto* arrayNewFixed = allocation->dynCast<ArrayNewFixed>()) {
       // Simply use the same values as the array.
       structNew = builder.makeStructNew(structType, arrayNewFixed->values);
+      arrayNewReplacement = structNew;
     } else {
       WASM_UNREACHABLE("bad allocation");
     }
@@ -852,16 +866,20 @@ struct Array2Struct : PostWalker<Array2Struct> {
   // optimize that StructNew using Struct2Local.
   StructNew* structNew;
 
+  // The replacement for the original ArrayNew*. Typically this is |structNew|,
+  // unless we have additional code we need alongside it.
+  Expression* arrayNewReplacement;
+
   void visitArrayNew(ArrayNew* curr) {
     if (curr == allocation) {
-      replaceCurrent(structNew);
+      replaceCurrent(arrayNewReplacement);
       noteCurrentIsReached();
     }
   }
 
   void visitArrayNewFixed(ArrayNewFixed* curr) {
     if (curr == allocation) {
-      replaceCurrent(structNew);
+      replaceCurrent(arrayNewReplacement);
       noteCurrentIsReached();
     }
   }
@@ -902,11 +920,15 @@ struct Array2Struct : PostWalker<Array2Struct> {
     return curr->cast<Const>()->value.getUnsigned();
   }
 
+  // Inform the analyzer that the current expression (which we just replaced)
+  // has been reached in its analysis. We are replacing something it reached,
+  // and want it to consider it as its equivalent.
   void noteCurrentIsReached() {
-    // Inform the analyzer that the current expression (which we just replaced)
-    // has been reached in its analysis. We are replacing something it reached,
-    // and want it to consider it as its equivalent.
-    analyzer.reached.insert(getCurrent());
+    noteIsReached(getCurrent());
+  }
+
+  void noteIsReached(Expression* curr) {
+    analyzer.reached.insert(curr);
   }
 };
 

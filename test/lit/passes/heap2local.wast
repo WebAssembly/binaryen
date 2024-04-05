@@ -2333,6 +2333,28 @@
     )
   )
 
+  (func $array.new
+    (local $temp (ref $array))
+    ;; This is also optimizable.
+    (local.set $temp
+      (array.new $array
+        (i32.const 1337)
+        (i32.const 2)
+      )
+    )
+    (array.set $array
+      (local.get $temp)
+      (i32.const 0)
+      (i32.const -1)
+    )
+    (drop
+      (array.get $array
+        (local.get $temp)
+        (i32.const 1)
+      )
+    )
+  )
+
   ;; CHECK:      (func $array.new_fixed (type $0)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local $1 i32)
