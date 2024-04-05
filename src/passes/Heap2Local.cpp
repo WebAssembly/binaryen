@@ -799,8 +799,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
 // An optimizer that handles the rewriting to turn a nonescaping array
 // allocation into a struct allocation. Struct2Local can then be run on that
 // allocation.
-// TODO: Doing a single rewrite walk at the end (for all structs) would be more
-//       efficient, but it would need to be more complex.
+// TODO: As with Struct2Local doing a single rewrite walk at the end (for all
+//       structs) would be more efficient, but more complex.
 struct Array2Struct : PostWalker<Array2Struct> {
   Expression* allocation;
   EscapeAnalyzer& analyzer;
@@ -813,8 +813,8 @@ struct Array2Struct : PostWalker<Array2Struct> {
                Module& wasm)
     : allocation(allocation), analyzer(analyzer), func(func), builder(wasm) {
 
-    // Build a proper struct type: as many fields as the size of the array, all
-    // of the same type as the array's element.
+    // Build the struct type we need: as many fields as the size of the array,
+    // all of the same type as the array's element.
     auto element = allocation->type.getHeapType().getArray().element;
     if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
       numFields = getIndex(arrayNew->size);
@@ -829,13 +829,13 @@ struct Array2Struct : PostWalker<Array2Struct> {
     }
     HeapType structType = Struct(fields);
 
-    // Generate a proper StructNew.
+    // Generate a StructNew to replace the ArrayNew*.
     if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
       if (arrayNew->isWithDefault()) {
         structNew = builder.makeStructNew(structType, {});
         arrayNewReplacement = structNew;
       } else {
-        // The ArrayNew splatting a single value onto each slot of the array. To
+        // The ArrayNew is writing the same value to each slot of the array. To
         // do the same for the struct, we store that value in an local and
         // generate multiple local.gets of it.
         auto local = builder.addVar(func, element.type);
@@ -849,7 +849,9 @@ struct Array2Struct : PostWalker<Array2Struct> {
         // and the structNew.
         arrayNewReplacement = builder.makeSequence(set, structNew);
         // The data flows through the new block we just added: inform the
-        // analysis of that.
+        // analysis of that by telling it to treat it as code that it reached
+        // (only code we reached during the tracing of the allocation through
+        // the function will be optimized in Struct2Local).
         noteIsReached(arrayNewReplacement);
       }
     } else if (auto* arrayNewFixed = allocation->dynCast<ArrayNewFixed>()) {
@@ -863,7 +865,8 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // Replace the things we need to using the visit* methods. Note that we do
     // not bother to update types: all the places with the array type should
     // technically have the new struct type, but we are going to optimize the
-    // struct into locals anyhow.
+    // struct into locals anyhow so those types are vanishing. However, during
+    // internal debugging of this pass you may see stale types.
     walk(func->body);
 
     if (refinalize) {
