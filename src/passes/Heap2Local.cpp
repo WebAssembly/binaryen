@@ -176,15 +176,24 @@ struct EscapeAnalyzer {
   const LocalGraph& localGraph;
   const Parents& parents;
   const BranchUtils::BranchTargets& branchTargets;
+  const PassOptions& passOptions;
+  Module& wasm;
 
   EscapeAnalyzer(std::unordered_set<Expression*>& seen,
                  const LocalGraph& localGraph,
                  const Parents& parents,
-                 const BranchUtils::BranchTargets& branchTargets) : seen(seen), localGraph(localGraph), parents(parents), branchTargets(branchTargets) {}
+                 const BranchUtils::BranchTargets& branchTargets,
+                 const PassOptions& passOptions,
+                 Module& wasm) : seen(seen), localGraph(localGraph), parents(parents), branchTargets(branchTargets), passOptions(passOptions), wasm(wasm) {}
 
   // We must track all the local.sets that write the allocation, to verify
   // exclusivity.
   std::unordered_set<LocalSet*> sets;
+
+  // All the expressions we reached during the flow analysis. That is exactly
+  // all the places where our allocation is used. We track these so that we
+  // can fix them up at the end, if the optimization ends up possible.
+  std::unordered_set<Expression*> reached;
 
   enum class ParentChildInteraction {
     // The parent lets the child escape. E.g. the parent is a call.
@@ -296,8 +305,8 @@ struct EscapeAnalyzer {
       // If we got to here, then we can continue to hope that we can optimize
       // this allocation. Mark the parent and child as reached by it, and
       // continue.
-      rewriter.reached.insert(parent);
-      rewriter.reached.insert(child);
+      reached.insert(parent);
+      reached.insert(child);
     }
 
     // We finished the loop over the flows. Do the final checks.
@@ -414,7 +423,7 @@ struct EscapeAnalyzer {
 
     // Finally, check for mixing. If the child is the immediate fallthrough
     // of the parent then no other values can be mixed in.
-    if (Properties::getImmediateFallthrough(parent, passOptions, *module) ==
+    if (Properties::getImmediateFallthrough(parent, passOptions, wasm) ==
         child) {
       return ParentChildInteraction::Flows;
     }
@@ -440,7 +449,7 @@ struct EscapeAnalyzer {
     return ParentChildInteraction::Mixes;
   }
 
-  LocalGraph::SetInfluences* getGetsReached(LocalSet* set) {
+  const LocalGraph::SetInfluences* getGetsReached(LocalSet* set) {
     auto iter = localGraph.setInfluences.find(set);
     if (iter != localGraph.setInfluences.end()) {
       return &iter->second;
@@ -448,7 +457,7 @@ struct EscapeAnalyzer {
     return nullptr;
   }
 
-  BranchUtils::NameSet branchesSentByParent(Expression* child,
+  const BranchUtils::NameSet branchesSentByParent(Expression* child,
                                             Expression* parent) {
     BranchUtils::NameSet names;
     BranchUtils::operateOnScopeNameUsesAndSentValues(
@@ -478,7 +487,9 @@ struct EscapeAnalyzer {
 
     // Check that the gets can only read from the specific known sets.
     for (auto* get : gets) {
-      for (auto* set : localGraph.getSetses[get]) {
+      auto iter = localGraph.getSetses.find(get);
+      assert(iter != localGraph.getSetses.end());
+      for (auto* set : iter->second) {
         if (sets.count(set) == 0) {
           return false;
         }
@@ -495,27 +506,16 @@ struct EscapeAnalyzer {
 //       efficient, but it would need to be more complex.
 struct Struct2Local : PostWalker<Struct2Local> {
   StructNew* allocation;
+  const EscapeAnalyzer& analyzer;
   Function* func;
-  Module* module;
+  Module& wasm;
   Builder builder;
   const FieldList& fields;
 
-  Struct2Local(StructNew* allocation, Function* func, Module* module)
-    : allocation(allocation), func(func), module(module), builder(*module),
-      fields(allocation->type.getHeapType().getStruct().fields) {}
+  Struct2Local(StructNew* allocation, const EscapeAnalyzer& analyzer, Function* func, Module& wasm)
+    : allocation(allocation), analyzer(analyzer), func(func), wasm(wasm), builder(wasm),
+      fields(allocation->type.getHeapType().getStruct().fields) {
 
-  // All the expressions we reached during the flow analysis. That is exactly
-  // all the places where our allocation is used. We track these so that we
-  // can fix them up at the end, if the optimization ends up possible.
-  std::unordered_set<Expression*> reached;
-
-  // Maps indexes in the struct to the local index that will replace them.
-  std::vector<Index> localIndexes;
-
-  // In rare cases we may need to refinalize, see below.
-  bool refinalize = false;
-
-  void applyOptimization(const EscapeAnalyzer& analyzer) {
     // Allocate locals to store the allocation's fields in.
     for (auto field : fields) {
       localIndexes.push_back(builder.addVar(func, field.type));
@@ -525,9 +525,15 @@ struct Struct2Local : PostWalker<Struct2Local> {
     walk(func->body);
 
     if (refinalize) {
-      ReFinalize().walkFunctionInModule(func, module);
+      ReFinalize().walkFunctionInModule(func, &wasm);
     }
   }
+
+  // Maps indexes in the struct to the local index that will replace them.
+  std::vector<Index> localIndexes;
+
+  // In rare cases we may need to refinalize, see below.
+  bool refinalize = false;
 
   // Rewrite the code in visit* methods. The general approach taken is to
   // replace the allocation with a null reference (which may require changing
@@ -541,7 +547,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   // Adjust the type that flows through an expression, updating that type as
   // necessary.
   void adjustTypeFlowingThrough(Expression* curr) {
-    if (!reached.count(curr)) {
+    if (!analyzer.reached.count(curr)) {
       return;
     }
 
@@ -561,7 +567,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   void visitLoop(Loop* curr) { adjustTypeFlowingThrough(curr); }
 
   void visitLocalSet(LocalSet* curr) {
-    if (!reached.count(curr)) {
+    if (!analyzer.reached.count(curr)) {
       return;
     }
 
@@ -575,7 +581,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitLocalGet(LocalGet* curr) {
-    if (!reached.count(curr)) {
+    if (!analyzer.reached.count(curr)) {
       return;
     }
 
@@ -597,7 +603,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitBreak(Break* curr) {
-    if (!reached.count(curr)) {
+    if (!analyzer.reached.count(curr)) {
       return;
     }
 
@@ -679,7 +685,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefAs(RefAs* curr) {
-    if (!reached.count(curr)) {
+    if (!analyzer.reached.count(curr)) {
       return;
     }
 
@@ -690,7 +696,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefCast(RefCast* curr) {
-    if (!reached.count(curr)) {
+    if (!analyzer.reached.count(curr)) {
       return;
     }
 
@@ -716,7 +722,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitStructSet(StructSet* curr) {
-    if (!reached.count(curr)) {
+    if (!analyzer.reached.count(curr)) {
       return;
     }
 
@@ -728,7 +734,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitStructGet(StructGet* curr) {
-    if (!reached.count(curr)) {
+    if (!analyzer.reached.count(curr)) {
       return;
     }
 
@@ -756,7 +762,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
 struct Heap2Local {
   Function* func;
-  Module* module;
+  Module& wasm;
   const PassOptions& passOptions;
 
   LocalGraph localGraph;
@@ -764,10 +770,10 @@ struct Heap2Local {
   BranchUtils::BranchTargets branchTargets;
 
   Heap2Local(Function* func,
-                      Module* module,
+                      Module& wasm,
                       const PassOptions& passOptions)
-    : func(func), module(module), passOptions(passOptions),
-      localGraph(func, module), parents(func->body), branchTargets(func->body) {
+    : func(func), wasm(wasm), passOptions(passOptions),
+      localGraph(func, &wasm), parents(func->body), branchTargets(func->body) {
     // We need to track what each set influences, to see where its value can
     // flow to.
     localGraph.computeSetInfluences();
@@ -791,9 +797,9 @@ struct Heap2Local {
 
       // Check for escaping, noting relevant information as we go. If this does
       // not escape, optimize it.
-      EscapeAnalyzer analyzer(localGraph, parents, branchTargets);
+      EscapeAnalyzer analyzer(seen, localGraph, parents, branchTargets, passOptions, wasm);
       if (!analyzer.escapes(allocation)) {
-        struct2Local.applyOptimization(analyzer);
+        Struct2Local optimizer(allocation, analyzer, func, wasm);
       }
     }
   }
@@ -820,7 +826,7 @@ struct Heap2LocalPass : public WalkerPass<PostWalker<Heap2LocalPass>> {
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<Heap2Local>();
+    return std::make_unique<Heap2LocalPass>();
   }
 
   void doWalkFunction(Function* func) {
@@ -833,7 +839,7 @@ struct Heap2LocalPass : public WalkerPass<PostWalker<Heap2LocalPass>> {
     // vacuum, in particular, to optimize such nested allocations.
     // TODO Consider running multiple iterations here, and running vacuum in
     //      between them.
-    Heap2Local(func, getModule(), getPassOptions());
+    Heap2Local(func, *getModule(), getPassOptions());
   }
 };
 
