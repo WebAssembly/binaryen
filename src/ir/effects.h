@@ -166,10 +166,11 @@ public:
   // body.
   //
   // We currently do this stashing only for the throw effect, but in principle
-  // we could do it for all effects if it made a difference. (Only throw is noticeable
-  // now because the only thing that can change between doing the call here
-  // and doing it outside at the function exit is the scoping of try-catch blocks.
-  // If future wasm scoping additions are added, we may need more here.)
+  // we could do it for all effects if it made a difference. (Only throw is
+  // noticeable now because the only thing that can change between doing the
+  // call here and doing it outside at the function exit is the scoping of
+  // try-catch blocks. If future wasm scoping additions are added, we may need
+  // more here.)
   bool hasReturnCallThrow = false;
 
   // Helper functions to check for various effect types
