@@ -48,7 +48,7 @@ Function* copyFunction(Function* func,
                        std::optional<std::vector<Index>> fileIndexMap) {
   auto ret = std::make_unique<Function>();
   ret->name = newName.is() ? newName : func->name;
-  ret->hasExplicitName = func->hasExplicitName && !newName.is();
+  ret->hasExplicitName = newName.is() || func->hasExplicitName;
   ret->type = func->type;
   ret->vars = func->vars;
   ret->localNames = func->localNames;
