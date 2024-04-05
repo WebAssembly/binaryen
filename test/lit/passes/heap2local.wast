@@ -2222,7 +2222,7 @@
   ;; CHECK:      (type $array (array (mut i32)))
   (type $array (array (mut i32)))
 
-  ;; CHECK:      (func $array.new_default (type $0)
+  ;; CHECK:      (func $array.new_default (type $2)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -2333,7 +2333,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.new (type $0)
+  ;; CHECK:      (func $array.new (type $1) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -2341,7 +2341,7 @@
   ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (local $5 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $2))
+  ;; CHECK-NEXT:   (block (result (ref null $3))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 1337)
   ;; CHECK-NEXT:    )
@@ -2362,24 +2362,14 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:  (block (result i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $2
-  ;; CHECK-NEXT:    (i32.const -1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $3)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $array.new
+  (func $array.new  (result i32)
     (local $temp (ref $array))
     ;; This is also optimizable.
     (local.set $temp
@@ -2388,20 +2378,13 @@
         (i32.const 2)
       )
     )
-    (array.set $array
+    (array.get $array
       (local.get $temp)
-      (i32.const 0)
-      (i32.const -1)
-    )
-    (drop
-      (array.get $array
-        (local.get $temp)
-        (i32.const 1)
-      )
+      (i32.const 1)
     )
   )
 
-  ;; CHECK:      (func $array.new_fixed (type $0)
+  ;; CHECK:      (func $array.new_fixed (type $1) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -2424,24 +2407,14 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:  (block (result i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $2
-  ;; CHECK-NEXT:    (i32.const 11)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null none)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $1)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $array.new_fixed
+  (func $array.new_fixed (result i32)
     (local $temp (ref $array))
     ;; This is also optimizable.
     (local.set $temp
@@ -2450,16 +2423,9 @@
         (i32.const 1337)
       )
     )
-    (array.set $array
+    (array.get $array
       (local.get $temp)
-      (i32.const 1)
-      (i32.const 11)
-    )
-    (drop
-      (array.get $array
-        (local.get $temp)
-        (i32.const 0)
-      )
+      (i32.const 0)
     )
   )
 )
