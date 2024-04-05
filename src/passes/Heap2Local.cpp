@@ -310,7 +310,7 @@ struct EscapeAnalyzer {
     }
 
     // We finished the loop over the flows. Do the final checks.
-    if (!getsAreExclusiveToSets(sets)) {
+    if (!getsAreExclusiveToSets()) {
       return true;
     }
 
@@ -474,7 +474,7 @@ struct EscapeAnalyzer {
   // else), we need to check whether all the gets that read that value cannot
   // read anything else (which would be the case if another set writes to that
   // local, in the right live range).
-  bool getsAreExclusiveToSets(const std::unordered_set<LocalSet*>& sets) { // TODO remove param
+  bool getsAreExclusiveToSets() {
     // Find all the relevant gets (which may overlap between the sets).
     std::unordered_set<LocalGet*> gets;
     for (auto* set : sets) {
