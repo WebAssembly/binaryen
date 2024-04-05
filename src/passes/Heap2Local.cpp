@@ -803,17 +803,15 @@ struct Struct2Local : PostWalker<Struct2Local> {
 //       efficient, but it would need to be more complex.
 struct Array2Struct : PostWalker<Array2Struct> {
   Expression* allocation;
-  // TODO which of these do we need?
   EscapeAnalyzer& analyzer;
   Function* func;
-  Module& wasm;
   Builder builder;
 
   Array2Struct(Expression* allocation,
                EscapeAnalyzer& analyzer,
                Function* func,
                Module& wasm)
-    : allocation(allocation), analyzer(analyzer), func(func), wasm(wasm),
+    : allocation(allocation), analyzer(analyzer), func(func),
       builder(wasm) {
 
     // Build a proper struct type: as many fields as the size of the array, all
@@ -1032,16 +1030,12 @@ struct Heap2Local {
       if (!analyzer.escapes(allocation)) {
         // Convert the allocation and all its uses into a struct. Then convert
         // the struct into locals.
-std::cerr << "pre: " << *func << '\n';
         auto* structNew = Array2Struct(allocation, analyzer, func, wasm).structNew;
-std::cerr << "mid: " << *func << '\n';
         Struct2Local(structNew, analyzer, func, wasm);
-std::cerr << "post: " << *func << '\n';
       }
     }
 
-    // Next, process all structNews, both original ones and ones that used to be
-    // arrays.
+    // Next, process all structNews.
     for (auto* allocation : finder.structNews) {
       // As above, we must be able to use locals for this data.
       if (!canHandleAsLocals(allocation->type)) {
