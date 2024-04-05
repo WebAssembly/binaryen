@@ -6,7 +6,7 @@
   ;; CHECK:      (tag $e-i32 (param i32))
   (tag $e-i32 (param i32))
 
-  ;; CHECK:      (func $pop-test (type $0)
+  ;; CHECK:      (func $pop-test (type $1)
   ;; CHECK-NEXT:  (block $folding-inner0
   ;; CHECK-NEXT:   (try
   ;; CHECK-NEXT:    (do
@@ -67,12 +67,55 @@
     )
   )
 
-  ;; CHECK:      (func $foo (type $0)
+  ;; CHECK:      (func $try-call-optimize-terminating-tails-success (type $0) (result i32)
+  ;; CHECK-NEXT:  (block $folding-inner0
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (try
+  ;; CHECK-NEXT:      (do
+  ;; CHECK-NEXT:       (br $folding-inner0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (catch_all
+  ;; CHECK-NEXT:       (br $folding-inner0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $try-call-optimize-terminating-tails-success (result i32)
+    (try
+      (do
+        (drop (i32.const 1))
+        (drop (i32.const 1))
+        (return (i32.const 0))
+      )
+      (catch_all
+        (drop (i32.const 1))
+        (drop (i32.const 1))
+        (return (i32.const 0))
+      )
+    )
+    (i32.const 0)
+  )
+
+
+  ;; CHECK:      (func $foo (type $1)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo)
 
-  ;; CHECK:      (func $try-call-optimize-terminating-tails (type $1) (result i32)
+  ;; CHECK:      (func $try-call-optimize-terminating-tails (type $0) (result i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (call $foo)
@@ -116,7 +159,145 @@
     (i32.const 0)
   )
 
-  ;; CHECK:      (func $try-call-optimize-expression-tails (type $0)
+  ;; CHECK:      (func $foo-i32 (type $0) (result i32)
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $foo-i32 (result i32)
+    (i32.const 0)
+  )
+
+  ;; CHECK:      (func $try-call-optimize-terminating-tails-call-return (type $0) (result i32)
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (call $foo-i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch_all
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (call $foo-i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $try-call-optimize-terminating-tails-call-return (result i32)
+    (try
+      (do
+        (drop (i32.const 1))
+        (drop (i32.const 1))
+        ;; Cannot be folded out of the try because it might throw.
+        (return (call $foo-i32))
+      )
+      (catch_all
+        (drop (i32.const 1))
+        (drop (i32.const 1))
+        (return (call $foo-i32))
+      )
+    )
+    (i32.const 0)
+  )
+
+  ;; CHECK:      (func $try-call-optimize-terminating-tails-return-call (type $0) (result i32)
+  ;; CHECK-NEXT:  (block $folding-inner0
+  ;; CHECK-NEXT:   (return
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (try
+  ;; CHECK-NEXT:      (do
+  ;; CHECK-NEXT:       (br $folding-inner0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (catch_all
+  ;; CHECK-NEXT:       (br $folding-inner0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return_call $foo-i32)
+  ;; CHECK-NEXT: )
+  (func $try-call-optimize-terminating-tails-return-call (result i32)
+    (try
+      (do
+        (drop (i32.const 1))
+        (drop (i32.const 1))
+        (drop (i32.const 1))
+        (return_call $foo-i32)
+      )
+      (catch_all
+        (drop (i32.const 1))
+        (drop (i32.const 1))
+        (drop (i32.const 1))
+        (return_call $foo-i32)
+      )
+    )
+    (i32.const 0)
+  )
+
+  ;; CHECK:      (func $try-call-optimize-expression-tails-success (type $1)
+  ;; CHECK-NEXT:  (block $x
+  ;; CHECK-NEXT:   (try
+  ;; CHECK-NEXT:    (do
+  ;; CHECK-NEXT:     (br $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (catch_all
+  ;; CHECK-NEXT:     (br $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $try-call-optimize-expression-tails-success
+    (block $x
+      (try
+        (do
+          (drop (i32.const 1))
+          (drop (i32.const 1))
+          (drop (i32.const 1))
+          (br $x)
+        )
+        (catch_all
+          (drop (i32.const 1))
+          (drop (i32.const 1))
+          (drop (i32.const 1))
+          (br $x)
+        )
+      )
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $try-call-optimize-expression-tails (type $1)
   ;; CHECK-NEXT:  (block $x
   ;; CHECK-NEXT:   (try
   ;; CHECK-NEXT:    (do
@@ -156,7 +337,7 @@
     )
   )
 
-  ;; CHECK:      (func $if-arms-in-catch (type $1) (result i32)
+  ;; CHECK:      (func $if-arms-in-catch (type $0) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
