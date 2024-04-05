@@ -892,17 +892,17 @@ struct Array2Struct : PostWalker<Array2Struct> {
       return;
     }
 
-    // Convert the ArraySet into a StructSet.
-    // TODO: the actual chak that the index is constant, after escape anlysi and before opt!
+    // If this is an OOB array.set then we trap.
     auto index = getIndex(curr->index);
     if (index >= numFields) {
-      // This is an OOB array.set, which means we trap.
       replaceCurrent(builder.makeBlock(
       { builder.makeDrop(curr->ref), builder.makeDrop(curr->value),
         builder.makeUnreachable() }
       ));
       return;
     }
+
+    // Convert the ArraySet into a StructSet.
     replaceCurrent(builder.makeStructSet(index, curr->ref, curr->value));
     noteCurrentIsReached();
   }
@@ -921,16 +921,17 @@ struct Array2Struct : PostWalker<Array2Struct> {
       curr->ref->type = structNew->type;
     }
 
-    // Convert the ArrayGet into a StructGet.
+    // If this is an OOB array.get then we trap.
     auto index = getIndex(curr->index);
     if (index >= numFields) {
-      // This is an OOB array.set, which means we trap.
       replaceCurrent(builder.makeSequence(
         builder.makeDrop(curr->ref),
         builder.makeUnreachable()
       ));
       return;
     }
+
+    // Convert the ArrayGet into a StructGet.
     replaceCurrent(builder.makeStructGet(index, curr->ref, curr->type, curr->signed_));
     noteCurrentIsReached();
   }
