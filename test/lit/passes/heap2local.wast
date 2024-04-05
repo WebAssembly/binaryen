@@ -2289,6 +2289,23 @@
   ;; CHECK-NEXT:    (local.get $3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 40)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $array.new_default
     (local $temp (ref $array))
@@ -2329,6 +2346,18 @@
       (array.get $array
         (local.get $temp)
         (i32.const 2)
+      )
+    )
+    ;; OOB operations trap at runtime.
+    (array.set $array
+      (local.get $temp)
+      (i32.const 3)
+      (i32.const 40)
+    )
+    (drop
+      (array.get $array
+        (local.get $temp)
+        (i32.const 3)
       )
     )
   )

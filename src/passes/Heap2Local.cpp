@@ -810,7 +810,6 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // Build a proper struct type: as many fields as the size of the array, all
     // of the same type as the array's element.
     auto element = allocation->type.getHeapType().getArray().element;
-    Index numFields;
     if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
       numFields = getIndex(arrayNew->size);
     } else if (auto* arrayNewFixed = allocation->dynCast<ArrayNewFixed>()) {
@@ -862,6 +861,10 @@ struct Array2Struct : PostWalker<Array2Struct> {
     walk(func->body);
   }
 
+  // The number of slots in the array (which will become the number of fields in
+  // the struct).
+  Index numFields;
+
   // The StructNew that replaces the ArrayNew*. The user of this class can then
   // optimize that StructNew using Struct2Local.
   StructNew* structNew;
@@ -891,8 +894,16 @@ struct Array2Struct : PostWalker<Array2Struct> {
 
     // Convert the ArraySet into a StructSet.
     // TODO: the actual chak that the index is constant, after escape anlysi and before opt!
-    // TODO: chaks that indexes are in bounds!
-    replaceCurrent(builder.makeStructSet(getIndex(curr->index), curr->ref, curr->value));
+    auto index = getIndex(curr->index);
+    if (index >= numFields) {
+      // This is an OOB array.set, which means we trap.
+      replaceCurrent(builder.makeBlock(
+      { builder.makeDrop(curr->ref), builder.makeDrop(curr->value),
+        builder.makeUnreachable() }
+      ));
+      return;
+    }
+    replaceCurrent(builder.makeStructSet(index, curr->ref, curr->value));
     noteCurrentIsReached();
   }
 
@@ -911,7 +922,16 @@ struct Array2Struct : PostWalker<Array2Struct> {
     }
 
     // Convert the ArrayGet into a StructGet.
-    replaceCurrent(builder.makeStructGet(getIndex(curr->index), curr->ref, curr->type, curr->signed_));
+    auto index = getIndex(curr->index);
+    if (index >= numFields) {
+      // This is an OOB array.set, which means we trap.
+      replaceCurrent(builder.makeSequence(
+        builder.makeDrop(curr->ref),
+        builder.makeUnreachable()
+      ));
+      return;
+    }
+    replaceCurrent(builder.makeStructGet(index, curr->ref, curr->type, curr->signed_));
     noteCurrentIsReached();
   }
 
@@ -1002,11 +1022,11 @@ struct Heap2Local {
       if (!analyzer.escapes(allocation)) {
         // Convert the allocation and all its uses into a struct. Then convert
         // the struct into locals.
-std::cout << "pre: " << *func << '\n';
+std::cerr << "pre: " << *func << '\n';
         auto* structNew = Array2Struct(allocation, analyzer, func, wasm).structNew;
-std::cout << "mid: " << *func << '\n';
+std::cerr << "mid: " << *func << '\n';
         Struct2Local(structNew, analyzer, func, wasm);
-std::cout << "post: " << *func << '\n';
+std::cerr << "post: " << *func << '\n';
       }
     }
 
