@@ -795,13 +795,13 @@ struct Struct2Local : PostWalker<Struct2Local> {
 struct Array2Struct : PostWalker<Array2Struct> {
   Expression* allocation;
   // TODO which of these do we need?
-  const EscapeAnalyzer& analyzer;
+  EscapeAnalyzer& analyzer;
   Function* func;
   Module& wasm;
   Builder builder;
 
   Array2Struct(Expression* allocation,
-               const EscapeAnalyzer& analyzer,
+               EscapeAnalyzer& analyzer,
                Function* func,
                Module& wasm)
     : allocation(allocation), analyzer(analyzer), func(func), wasm(wasm),
@@ -855,12 +855,14 @@ struct Array2Struct : PostWalker<Array2Struct> {
   void visitArrayNew(ArrayNew* curr) {
     if (curr == allocation) {
       replaceCurrent(structNew);
+      noteCurrentIsReached();
     }
   }
 
   void visitArrayFixed(ArrayNewFixed* curr) {
     if (curr == allocation) {
       replaceCurrent(structNew);
+      noteCurrentIsReached();
     }
   }
 
@@ -872,6 +874,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // Convert the ArraySet into a StructSet.
     // TODO: the actual chak that the index is constant, after escape anlysi and before opt!
     replaceCurrent(builder.makeStructSet(getIndex(curr->index), curr->ref, curr->value));
+    noteCurrentIsReached();
   }
 
   void visitArrayGet(ArrayGet* curr) {
@@ -890,11 +893,19 @@ struct Array2Struct : PostWalker<Array2Struct> {
 
     // Convert the ArrayGet into a StructGet.
     replaceCurrent(builder.makeStructGet(getIndex(curr->index), curr->ref, curr->type, curr->signed_));
+    noteCurrentIsReached();
   }
 
   // Get the value in an expression we know must contain a constant index.
   Index getIndex(Expression* curr) {
     return curr->cast<Const>()->value.getUnsigned();
+  }
+
+  void noteCurrentIsReached() {
+    // Inform the analyzer that the current expression (which we just replaced)
+    // has been reached in its analysis. We are replacing something it reached,
+    // and want it to consider it as its equivalent.
+    analyzer.reached.insert(getCurrent());
   }
 };
 
@@ -968,8 +979,11 @@ struct Heap2Local {
       if (!analyzer.escapes(allocation)) {
         // Convert the allocation and all its uses into a struct. Then convert
         // the struct into locals.
+std::cout << "pre: " << *func << '\n';
         auto* structNew = Array2Struct(allocation, analyzer, func, wasm).structNew;
+std::cout << "mid: " << *func << '\n';
         Struct2Local(structNew, analyzer, func, wasm);
+std::cout << "post: " << *func << '\n';
       }
     }
 
