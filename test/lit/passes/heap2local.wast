@@ -2362,7 +2362,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.new (type $2) (result i32)
+  ;; CHECK:      (func $array.new (type $1) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -2413,7 +2413,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.new_fixed (type $1) (param $x i32) (result i32)
+  ;; CHECK:      (func $array.new_fixed (type $2) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
@@ -2458,15 +2458,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-i32 (type $2) (result i32)
-  ;; CHECK-NEXT:  (i32.const 1337)
-  ;; CHECK-NEXT: )
-  (func $get-i32 (result i32)
-    ;; Helper for the above.
-    (i32.const 1337)
-  )
-
-  ;; CHECK:      (func $array.nonconstant_size (type $1) (param $x i32) (result i32)
+  ;; CHECK:      (func $array.nonconstant_size (type $2) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (array.new $array
@@ -2494,7 +2486,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.nonconstant_get (type $1) (param $x i32) (result i32)
+  ;; CHECK:      (func $array.nonconstant_get (type $2) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (array.new $array
@@ -2550,5 +2542,94 @@
       (local.get $x)
       (i32.const 100)
     )
+  )
+
+  ;; CHECK:      (func $array.folded (type $1) (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 i32)
+  ;; CHECK-NEXT:  (local $6 i32)
+  ;; CHECK-NEXT:  (local $7 i32)
+  ;; CHECK-NEXT:  (local $8 i32)
+  ;; CHECK-NEXT:  (local $9 i32)
+  ;; CHECK-NEXT:  (local $10 i32)
+  ;; CHECK-NEXT:  (local $11 i32)
+  ;; CHECK-NEXT:  (local $12 i32)
+  ;; CHECK-NEXT:  (local $13 i32)
+  ;; CHECK-NEXT:  (local $14 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $6))
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (call $get-i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result nullref)
+  ;; CHECK-NEXT:     (local.set $8
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $9
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $10
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $11
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $12
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $13
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $14
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $1
+  ;; CHECK-NEXT:      (local.get $8)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $2
+  ;; CHECK-NEXT:      (local.get $9)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $3
+  ;; CHECK-NEXT:      (local.get $10)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $4
+  ;; CHECK-NEXT:      (local.get $11)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $5
+  ;; CHECK-NEXT:      (local.get $12)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $6
+  ;; CHECK-NEXT:      (local.get $13)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $7
+  ;; CHECK-NEXT:      (local.get $14)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.get $7)
+  ;; CHECK-NEXT: )
+  (func $array.folded (result i32)
+    ;; Test a form without local.get/set operations.
+    (array.get $array
+      (array.new $array
+        (call $get-i32)
+        (i32.const 7)
+      )
+      (i32.const 6)
+    )
+  )
+
+  ;; CHECK:      (func $get-i32 (type $1) (result i32)
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: )
+  (func $get-i32 (result i32)
+    ;; Helper for the above.
+    (i32.const 1337)
   )
 )
