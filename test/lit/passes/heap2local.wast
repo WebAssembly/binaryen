@@ -2222,7 +2222,7 @@
   ;; CHECK:      (type $array (array (mut i32)))
   (type $array (array (mut i32)))
 
-  ;; CHECK:      (func $array.new_default (type $2)
+  ;; CHECK:      (func $array.new_default (type $3)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -2370,7 +2370,7 @@
   ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (local $5 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $3))
+  ;; CHECK-NEXT:   (block (result (ref null $4))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 1337)
   ;; CHECK-NEXT:    )
@@ -2413,25 +2413,25 @@
     )
   )
 
-  ;; CHECK:      (func $array.new_fixed (type $1) (result i32)
+  ;; CHECK:      (func $array.new_fixed (type $2) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array))
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
-  ;; CHECK-NEXT:    (local.set $3
-  ;; CHECK-NEXT:     (i32.const 42)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $4
-  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:     (call $get-i32)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (local.get $3)
+  ;; CHECK-NEXT:    (local.set $5
+  ;; CHECK-NEXT:     (i32.const 1337)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (local.get $4)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (local.get $5)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
@@ -2440,16 +2440,52 @@
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:   (local.get $2)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $array.new_fixed (result i32)
+  (func $array.new_fixed (param $x i32) (result i32)
     (local $temp (ref $array))
     ;; This is also optimizable.
     (local.set $temp
       (array.new_fixed $array 2
-        (i32.const 42)
+        (call $get-i32) ;; test side effects in a value
         (i32.const 1337)
+      )
+    )
+    (array.get $array
+      (local.get $temp)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $get-i32 (type $1) (result i32)
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: )
+  (func $get-i32 (result i32)
+    ;; Helper for the above.
+    (i32.const 1337)
+  )
+
+  ;; CHECK:      (func $array.nonconstant_size (type $2) (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (local $temp (ref $array))
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (array.new $array
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.get $array
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.nonconstant_size (param $x i32) (result i32)
+    (local $temp (ref $array))
+    (local.set $temp
+      (array.new $array
+        (i32.const 42)
+        ;; We cannot optimize a nonconstant size.
+        (local.get $x)
       )
     )
     (array.get $array

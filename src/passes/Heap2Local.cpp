@@ -416,6 +416,13 @@ struct EscapeAnalyzer {
         fullyConsumes = true;
       }
       void visitArraySet(ArraySet* curr) {
+        if (!curr->index->is<Const>()) {
+          // Array operations on nonconstant indexes do not escape in the normal
+          // sense, but they do escape from our being able to analyze them, so
+          // stop as soon as we see one.
+          return;
+        }
+
         // As StructGet.
         if (curr->ref == child) {
           escapes = false;
@@ -423,7 +430,9 @@ struct EscapeAnalyzer {
         }
       }
       void visitArrayGet(ArrayGet* curr) {
-        // As StructSet.
+        if (!curr->index->is<Const>()) {
+          return;
+        }
         escapes = false;
         fullyConsumes = true;
       }
