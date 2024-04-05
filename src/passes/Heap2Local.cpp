@@ -415,8 +415,19 @@ struct EscapeAnalyzer {
         escapes = false;
         fullyConsumes = true;
       }
-
-      // TODO Array and I31 operations
+      void visitArraySet(ArraySet* curr) {
+        // As StructGet.
+        if (curr->ref == child) {
+          escapes = false;
+          fullyConsumes = true;
+        }
+      }
+      void visitArrayGet(ArrayGet* curr) {
+        // As StructSet.
+        escapes = false;
+        fullyConsumes = true;
+      }
+      // TODO other GC operations
     } checker;
 
     checker.allocation = allocation;
@@ -788,14 +799,13 @@ struct Array2Struct : PostWalker<Array2Struct> {
   Function* func;
   Module& wasm;
   Builder builder;
-  const FieldList& fields;
 
   Array2Struct(Expression* allocation,
                const EscapeAnalyzer& analyzer,
                Function* func,
                Module& wasm)
     : allocation(allocation), analyzer(analyzer), func(func), wasm(wasm),
-      builder(wasm), fields(allocation->type.getHeapType().getStruct().fields) {
+      builder(wasm) {
 
     // Build a proper struct type: as many fields as the size of the array, all
     // of the same type as the array's element.
@@ -867,6 +877,15 @@ struct Array2Struct : PostWalker<Array2Struct> {
   void visitArrayGet(ArrayGet* curr) {
     if (!analyzer.reached.count(curr)) {
       return;
+    }
+
+    // As mentioned above we do not fix up types along the way from array to
+    // struct, but an exception we must make here is to fix the type of the
+    // |ref| child, which is used in |builder.makeStructGet| (if it is
+    // reachable).
+    if (curr->ref->type != Type::unreachable &&
+        curr->ref->type.getHeapType().isArray()) {
+      curr->ref->type = structNew->type;
     }
 
     // Convert the ArrayGet into a StructGet.
