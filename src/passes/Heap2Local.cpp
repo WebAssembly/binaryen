@@ -873,6 +873,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
 
     // Convert the ArraySet into a StructSet.
     // TODO: the actual chak that the index is constant, after escape anlysi and before opt!
+    // TODO: chaks that indexes are in bounds!
     replaceCurrent(builder.makeStructSet(getIndex(curr->index), curr->ref, curr->value));
     noteCurrentIsReached();
   }

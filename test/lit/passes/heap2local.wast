@@ -2227,8 +2227,6 @@
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
-  ;; CHECK-NEXT:  (local $4 i32)
-  ;; CHECK-NEXT:  (local $5 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (local.set $1
@@ -2240,12 +2238,6 @@
   ;; CHECK-NEXT:    (local.set $3
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $4
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $5
-  ;; CHECK-NEXT:     (i32.const 0)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -2253,8 +2245,40 @@
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $3
-  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -2268,15 +2292,38 @@
   ;; CHECK-NEXT: )
   (func $array.new
     (local $temp (ref $array))
+    ;; This fixed-size array can be replaced with locals.
     (local.set $temp
       (array.new_default $array
-        (i32.const 5)
+        (i32.const 3)
       )
     )
     (array.set $array
       (local.get $temp)
+      (i32.const 0)
+      (i32.const 10)
+    )
+    (array.set $array
+      (local.get $temp)
+      (i32.const 1)
+      (i32.const 20)
+    )
+    (array.set $array
+      (local.get $temp)
       (i32.const 2)
-      (i32.const 42)
+      (i32.const 30)
+    )
+    (drop
+      (array.get $array
+        (local.get $temp)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (array.get $array
+        (local.get $temp)
+        (i32.const 1)
+      )
     )
     (drop
       (array.get $array
