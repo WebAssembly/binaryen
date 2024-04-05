@@ -382,7 +382,8 @@ struct Updater : public PostWalker<Updater> {
       return;
     }
 
-    Block* body = curr->cast<Block>();
+    Block* body = builder->blockify(curr);
+    curr = body;
     auto blockNames = BranchUtils::BranchAccumulator::get(body);
 
     for (Index i = 0; i < returnCallInfos.size(); ++i) {
