@@ -411,10 +411,15 @@ template<typename T> struct CallGraphPropertyAnalysis {
     while (!work.empty()) {
       auto* func = work.pop();
       for (auto* caller : map[func].calledBy) {
+        // Skip functions forbidden from getting this property
+        if (!canHaveProperty(map[caller])) {
+          continue;
+        }
+        // Log now, even if the function already has the property
         logVisit(map[caller], func);
-        // If we don't already have the property, and we are not forbidden
-        // from getting it, then it propagates back to us now.
-        if (!hasProperty(map[caller]) && canHaveProperty(map[caller])) {
+        // If we don't already have the property, then add it now, and propagate
+        // further.
+        if (!hasProperty(map[caller])) {
           addProperty(map[caller]);
           work.push(caller);
         }
