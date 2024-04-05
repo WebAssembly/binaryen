@@ -539,6 +539,10 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
 
 // Traversal keeping track of try depth
 
+// This is used to keep track of whether we are in the scope of an
+// exception handler. This matters since return_call is not equivalent
+// to return + call within an exception handler. If another kind of
+// handler scope is added, this code will need to be updated.
 template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct TryDepthWalker : public PostWalker<SubType, VisitorType> {
   TryDepthWalker() = default;
