@@ -27,7 +27,7 @@ struct Parents {
   Expression* getParent(Expression* curr) const {
     auto iter = inner.parentMap.find(curr);
     if (iter != inner.parentMap.end()) {
-      return iter-> second;
+      return iter->second;
     }
     return nullptr;
   }

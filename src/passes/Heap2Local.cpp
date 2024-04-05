@@ -167,7 +167,8 @@ namespace wasm {
 namespace {
 
 struct EscapeAnalyzer {
-  // All the expressions that have already been seen by the optimizer. TODO refer to commentt
+  // All the expressions that have already been seen by the optimizer. TODO
+  // refer to commentt
   std::unordered_set<Expression*>& seen;
 
   // To find what escapes, we need to follow where values flow, both up to
@@ -184,7 +185,9 @@ struct EscapeAnalyzer {
                  const Parents& parents,
                  const BranchUtils::BranchTargets& branchTargets,
                  const PassOptions& passOptions,
-                 Module& wasm) : seen(seen), localGraph(localGraph), parents(parents), branchTargets(branchTargets), passOptions(passOptions), wasm(wasm) {}
+                 Module& wasm)
+    : seen(seen), localGraph(localGraph), parents(parents),
+      branchTargets(branchTargets), passOptions(passOptions), wasm(wasm) {}
 
   // We must track all the local.sets that write the allocation, to verify
   // exclusivity.
@@ -458,7 +461,7 @@ struct EscapeAnalyzer {
   }
 
   const BranchUtils::NameSet branchesSentByParent(Expression* child,
-                                            Expression* parent) {
+                                                  Expression* parent) {
     BranchUtils::NameSet names;
     BranchUtils::operateOnScopeNameUsesAndSentValues(
       parent, [&](Name name, Expression* value) {
@@ -512,9 +515,12 @@ struct Struct2Local : PostWalker<Struct2Local> {
   Builder builder;
   const FieldList& fields;
 
-  Struct2Local(StructNew* allocation, const EscapeAnalyzer& analyzer, Function* func, Module& wasm)
-    : allocation(allocation), analyzer(analyzer), func(func), wasm(wasm), builder(wasm),
-      fields(allocation->type.getHeapType().getStruct().fields) {
+  Struct2Local(StructNew* allocation,
+               const EscapeAnalyzer& analyzer,
+               Function* func,
+               Module& wasm)
+    : allocation(allocation), analyzer(analyzer), func(func), wasm(wasm),
+      builder(wasm), fields(allocation->type.getHeapType().getStruct().fields) {
 
     // Allocate locals to store the allocation's fields in.
     for (auto field : fields) {
@@ -769,11 +775,9 @@ struct Heap2Local {
   Parents parents;
   BranchUtils::BranchTargets branchTargets;
 
-  Heap2Local(Function* func,
-                      Module& wasm,
-                      const PassOptions& passOptions)
-    : func(func), wasm(wasm), passOptions(passOptions),
-      localGraph(func, &wasm), parents(func->body), branchTargets(func->body) {
+  Heap2Local(Function* func, Module& wasm, const PassOptions& passOptions)
+    : func(func), wasm(wasm), passOptions(passOptions), localGraph(func, &wasm),
+      parents(func->body), branchTargets(func->body) {
     // We need to track what each set influences, to see where its value can
     // flow to.
     localGraph.computeSetInfluences();
@@ -797,7 +801,8 @@ struct Heap2Local {
 
       // Check for escaping, noting relevant information as we go. If this does
       // not escape, optimize it.
-      EscapeAnalyzer analyzer(seen, localGraph, parents, branchTargets, passOptions, wasm);
+      EscapeAnalyzer analyzer(
+        seen, localGraph, parents, branchTargets, passOptions, wasm);
       if (!analyzer.escapes(allocation)) {
         Struct2Local optimizer(allocation, analyzer, func, wasm);
       }
