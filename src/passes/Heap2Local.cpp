@@ -859,7 +859,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
     }
   }
 
-  void visitArrayFixed(ArrayNewFixed* curr) {
+  void visitArrayNewFixed(ArrayNewFixed* curr) {
     if (curr == allocation) {
       replaceCurrent(structNew);
       noteCurrentIsReached();
