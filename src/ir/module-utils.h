@@ -415,7 +415,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
         if (!canHaveProperty(map[caller])) {
           continue;
         }
-        // Log now, even if the function already has the property
+        // Log now, even if the function already has the property.
         logVisit(map[caller], func);
         // If we don't already have the property, then add it now, and propagate
         // further.
