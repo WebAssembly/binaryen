@@ -166,342 +166,34 @@ namespace wasm {
 
 namespace {
 
-struct Heap2LocalOptimizer {
-  Function* func;
-  Module* module;
-  const PassOptions& passOptions;
+// A particular escape analysis is templated over an optimizer. We inform the
+// optimizer of relevant things as we work, to avoid repeated work later: the
+// optimizer can use the information we provided it to optimize efficiently.
+//
+// The optimizer provides the following methods:
+//
+//  * noteLocalSet(LocalSet*) that notes a local.set that the allocation is
+//    written to.
+//
+template<typename Optimizer>
+struct EscapeAnalyzer {
+  Optimizer& optimizer;
 
-  // To find allocations that do not escape, we must track locals so that we
-  // can see how allocations flow from sets to gets and so forth.
-  // TODO: only scan reference types
-  LocalGraph localGraph;
+  // All the expressions that have already been seen by the optimizer. TODO refer to commentt
+  std::unordered_set<Expression*>& seen;
 
   // To find what escapes, we need to follow where values flow, both up to
-  // parents, and via branches.
-  Parents parents;
-  BranchUtils::BranchTargets branchTargets;
+  // parents, and via branches, and through locals.
+  // TODO: only scan reference types in LocalGraph
+  const LocalGraph& localGraph;
+  const Parents& parents;
+  const BranchUtils::BranchTargets& branchTargets;
 
-  Heap2LocalOptimizer(Function* func,
-                      Module* module,
-                      const PassOptions& passOptions)
-    : func(func), module(module), passOptions(passOptions),
-      localGraph(func, module), parents(func->body), branchTargets(func->body) {
-    // We need to track what each set influences, to see where its value can
-    // flow to.
-    localGraph.computeSetInfluences();
-
-    // All the allocations in the function.
-    // TODO: Arrays (of constant size) as well, if all element accesses use
-    //       constant indexes. One option might be to first convert such
-    //       nonescaping arrays into structs.
-    FindAll<StructNew> allocations(func->body);
-
-    for (auto* allocation : allocations.list) {
-      // The point of this optimization is to replace heap allocations with
-      // locals, so we must be able to place the data in locals.
-      if (!canHandleAsLocals(allocation->type)) {
-        continue;
-      }
-
-      // Check for escaping, noting relevant information as we go. If this does
-      // not escape, optimize it.
-      Rewriter rewriter(allocation, func, module);
-      if (!escapes(allocation, rewriter)) {
-        rewriter.applyOptimization();
-      }
-    }
-  }
-
-  bool canHandleAsLocals(Type type) {
-    if (type == Type::unreachable) {
-      return false;
-    }
-    auto& fields = type.getHeapType().getStruct().fields;
-    for (auto field : fields) {
-      if (!TypeUpdating::canHandleAsLocal(field.type)) {
-        return false;
-      }
-      if (field.isPacked()) {
-        // TODO: support packed fields by adding coercions/truncations.
-        return false;
-      }
-    }
-    return true;
-  }
-
-  // Handles the rewriting that we do to perform the optimization. We store the
-  // data that rewriting will need here, while we analyze, and then if we can do
-  // the optimization, we tell it to run.
-  //
-  // TODO: Doing a single rewrite walk at the end would be more efficient, but
-  //       it would need to be more complex.
-  struct Rewriter : PostWalker<Rewriter> {
-    StructNew* allocation;
-    Function* func;
-    Module* module;
-    Builder builder;
-    const FieldList& fields;
-
-    Rewriter(StructNew* allocation, Function* func, Module* module)
-      : allocation(allocation), func(func), module(module), builder(*module),
-        fields(allocation->type.getHeapType().getStruct().fields) {}
-
-    // We must track all the local.sets that write the allocation, to verify
-    // exclusivity.
-    std::unordered_set<LocalSet*> sets;
-
-    // All the expressions we reached during the flow analysis. That is exactly
-    // all the places where our allocation is used. We track these so that we
-    // can fix them up at the end, if the optimization ends up possible.
-    std::unordered_set<Expression*> reached;
-
-    // Maps indexes in the struct to the local index that will replace them.
-    std::vector<Index> localIndexes;
-
-    // In rare cases we may need to refinalize, see below.
-    bool refinalize = false;
-
-    void applyOptimization() {
-      // Allocate locals to store the allocation's fields in.
-      for (auto field : fields) {
-        localIndexes.push_back(builder.addVar(func, field.type));
-      }
-
-      // Replace the things we need to using the visit* methods.
-      walk(func->body);
-
-      if (refinalize) {
-        ReFinalize().walkFunctionInModule(func, module);
-      }
-    }
-
-    // Rewrite the code in visit* methods. The general approach taken is to
-    // replace the allocation with a null reference (which may require changing
-    // types in some places, like making a block return value nullable), and to
-    // remove all uses of it as much as possible, using the information we have
-    // (for example, when our allocation reaches a RefAsNonNull we can simply
-    // remove that operation as we know it would not throw). Some things are
-    // left to other passes, like getting rid of dropped code without side
-    // effects.
-
-    // Adjust the type that flows through an expression, updating that type as
-    // necessary.
-    void adjustTypeFlowingThrough(Expression* curr) {
-      if (!reached.count(curr)) {
-        return;
-      }
-
-      // Our allocation passes through this expr. We must turn its type into a
-      // nullable one, because we will remove things like RefAsNonNull of it,
-      // which means we may no longer have a non-nullable value as our input,
-      // and we could fail to validate. It is safe to make this change in terms
-      // of our parent, since we know very specifically that only safe things
-      // will end up using our value, like a StructGet or a Drop, which do not
-      // care about non-nullability.
-      assert(curr->type.isRef());
-      curr->type = Type(curr->type.getHeapType(), Nullable);
-    }
-
-    void visitBlock(Block* curr) { adjustTypeFlowingThrough(curr); }
-
-    void visitLoop(Loop* curr) { adjustTypeFlowingThrough(curr); }
-
-    void visitLocalSet(LocalSet* curr) {
-      if (!reached.count(curr)) {
-        return;
-      }
-
-      // We don't need any sets of the reference to any of the locals it
-      // originally was written to.
-      if (curr->isTee()) {
-        replaceCurrent(curr->value);
-      } else {
-        replaceCurrent(builder.makeDrop(curr->value));
-      }
-    }
-
-    void visitLocalGet(LocalGet* curr) {
-      if (!reached.count(curr)) {
-        return;
-      }
-
-      // Uses of this get will drop it, so the value does not matter. Replace it
-      // with something else, which avoids issues with non-nullability (when
-      // non-nullable locals are enabled), which could happen like this:
-      //
-      //   (local $x (ref $foo))
-      //   (local.set $x ..)
-      //   (.. (local.get $x))
-      //
-      // If we remove the set but not the get then the get would appear to read
-      // the default value of a non-nullable local, which is not allowed.
-      //
-      // For simplicity, replace the get with a null. We anyhow have null types
-      // in the places where our allocation was earlier, see notes on
-      // visitBlock, and so using a null here adds no extra complexity.
-      replaceCurrent(builder.makeRefNull(curr->type.getHeapType()));
-    }
-
-    void visitBreak(Break* curr) {
-      if (!reached.count(curr)) {
-        return;
-      }
-
-      // Breaks that our allocation flows through may change type, as we now
-      // have a nullable type there.
-      curr->finalize();
-    }
-
-    void visitStructNew(StructNew* curr) {
-      if (curr != allocation) {
-        return;
-      }
-
-      // First, assign the initial values to the new locals.
-      std::vector<Expression*> contents;
-
-      if (!allocation->isWithDefault()) {
-        // We must assign the initial values to temp indexes, then copy them
-        // over all at once. If instead we did set them as we go, then we might
-        // hit a problem like this:
-        //
-        //  (local.set X (new_X))
-        //  (local.set Y (block (result ..)
-        //                 (.. (local.get X) ..) ;; returns new_X, wrongly
-        //                 (new_Y)
-        //               )
-        //
-        // Note how we assign to the local X and use it during the assignment to
-        // the local Y - but we should still see the old value of X, not new_X.
-        // Temp locals X', Y' can ensure that:
-        //
-        //  (local.set X' (new_X))
-        //  (local.set Y' (block (result ..)
-        //                  (.. (local.get X) ..) ;; returns the proper, old X
-        //                  (new_Y)
-        //                )
-        //  ..
-        //  (local.set X (local.get X'))
-        //  (local.set Y (local.get Y'))
-        std::vector<Index> tempIndexes;
-
-        for (auto field : fields) {
-          tempIndexes.push_back(builder.addVar(func, field.type));
-        }
-
-        // Store the initial values into the temp locals.
-        for (Index i = 0; i < tempIndexes.size(); i++) {
-          contents.push_back(
-            builder.makeLocalSet(tempIndexes[i], allocation->operands[i]));
-        }
-
-        // Copy them to the normal ones.
-        for (Index i = 0; i < tempIndexes.size(); i++) {
-          contents.push_back(builder.makeLocalSet(
-            localIndexes[i],
-            builder.makeLocalGet(tempIndexes[i], fields[i].type)));
-        }
-
-        // TODO Check if the nondefault case does not increase code size in some
-        //      cases. A heap allocation that implicitly sets the default values
-        //      is smaller than multiple explicit settings of locals to
-        //      defaults.
-      } else {
-        // Set the default values.
-        // Note that we must assign the defaults because we might be in a loop,
-        // that is, there might be a previous value.
-        for (Index i = 0; i < localIndexes.size(); i++) {
-          contents.push_back(builder.makeLocalSet(
-            localIndexes[i],
-            builder.makeConstantExpression(Literal::makeZero(fields[i].type))));
-        }
-      }
-
-      // Replace the allocation with a null reference. This changes the type
-      // from non-nullable to nullable, but as we optimize away the code that
-      // the allocation reaches, we will handle that.
-      contents.push_back(builder.makeRefNull(allocation->type.getHeapType()));
-      replaceCurrent(builder.makeBlock(contents));
-    }
-
-    void visitRefAs(RefAs* curr) {
-      if (!reached.count(curr)) {
-        return;
-      }
-
-      // It is safe to optimize out this RefAsNonNull, since we proved it
-      // contains our allocation, and so cannot trap.
-      assert(curr->op == RefAsNonNull);
-      replaceCurrent(curr->value);
-    }
-
-    void visitRefCast(RefCast* curr) {
-      if (!reached.count(curr)) {
-        return;
-      }
-
-      // It is safe to optimize out this RefCast, since we proved it
-      // contains our allocation and we have checked that the type of
-      // the allocation is a subtype of the type of the cast, and so
-      // cannot trap.
-      replaceCurrent(curr->ref);
-
-      // We need to refinalize after this, as while we know the cast is not
-      // logically needed - the value flowing through will not be used - we do
-      // need validation to succeed even before other optimizations remove the
-      // code. For example:
-      //
-      //  (block (result $B)
-      //   (ref.cast $B
-      //    (block (result $A)
-      //
-      // Without the cast this does not validate, so we need to refinalize
-      // (which will fix this, as we replace the unused value with a null, so
-      // that type will propagate out).
-      refinalize = true;
-    }
-
-    void visitStructSet(StructSet* curr) {
-      if (!reached.count(curr)) {
-        return;
-      }
-
-      // Drop the ref (leaving it to other opts to remove, when possible), and
-      // write the data to the local instead of the heap allocation.
-      replaceCurrent(builder.makeSequence(
-        builder.makeDrop(curr->ref),
-        builder.makeLocalSet(localIndexes[curr->index], curr->value)));
-    }
-
-    void visitStructGet(StructGet* curr) {
-      if (!reached.count(curr)) {
-        return;
-      }
-
-      auto type = fields[curr->index].type;
-      if (type != curr->type) {
-        // Normally we are just replacing a struct.get with a local.get of a
-        // local that was created to have the same type as the struct's field,
-        // but in some cases we may refine, if the struct.get's reference type
-        // is less refined than the reference that actually arrives, like here:
-        //
-        //  (struct.get $parent 0
-        //    (block (ref $parent)
-        //      (struct.new $child)))
-        //
-        // We allocated locals for the field of the child, and are replacing a
-        // get of the parent field with a local of the same type as the child's,
-        // which may be more refined.
-        refinalize = true;
-      }
-      replaceCurrent(builder.makeSequence(
-        builder.makeDrop(curr->ref),
-        builder.makeLocalGet(localIndexes[curr->index], type)));
-    }
-  };
-
-  // All the expressions we have already looked at.
-  std::unordered_set<Expression*> seen;
+  EscapeAnalyzer(Optimizer& optimizer,
+                 std::unordered_set<Expression*>& seen,
+                 const LocalGraph& localGraph,
+                 const Parents& parents,
+                 const BranchUtils::BranchTargets& branchTargets) : optimizer(optimizer), seen(seen), localGraph(localGraph), parents(parents), branchTargets(branchTargets) {}
 
   enum class ParentChildInteraction {
     // The parent lets the child escape. E.g. the parent is a call.
@@ -523,10 +215,11 @@ struct Heap2LocalOptimizer {
     Mixes,
   };
 
-  // Analyze an allocation to see if it escapes or not. We receive a Rewriter
-  // instance on which we store important information as we go, which will be
-  // necessary if we optimize later.
-  bool escapes(StructNew* allocation, Rewriter& rewriter) {
+  // Analyze an allocation to see if it escapes or not. We receive an optimizer
+  // class which we will inform of things as we go, that will allow the
+  // optimizer to avoid doing a new pass on the entire function if it decides
+  // to optimize.
+  bool escapes(StructNew* allocation) {
     // A queue of flows from children to parents. When something is in the queue
     // here then it assumed that it is ok for the allocation to be at the child
     // (that is, we have already checked the child before placing it in the
@@ -596,7 +289,7 @@ struct Heap2LocalOptimizer {
         // exclusive use of our allocation by all the gets that read the value.
         // Note the set, and we will check the gets at the end once we know all
         // of our sets.
-        rewriter.sets.insert(set);
+        optimizer.noteLocalSet(set);
 
         // We must also look at how the value flows from those gets.
         if (auto* getsReached = getGetsReached(set)) {
@@ -808,7 +501,343 @@ struct Heap2LocalOptimizer {
   }
 };
 
-struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
+// An optimizer that handles the rewriting to turn a struct into locals.
+//
+// TODO: Doing a single rewrite walk at the end (for all structs) would be more
+//       efficient, but it would need to be more complex.
+struct Struct2Local : PostWalker<Struct2Local> {
+  StructNew* allocation;
+  Function* func;
+  Module* module;
+  Builder builder;
+  const FieldList& fields;
+
+  Struct2Local(StructNew* allocation, Function* func, Module* module)
+    : allocation(allocation), func(func), module(module), builder(*module),
+      fields(allocation->type.getHeapType().getStruct().fields) {}
+
+  // We must track all the local.sets that write the allocation, to verify
+  // exclusivity.
+  std::unordered_set<LocalSet*> sets;
+
+  // All the expressions we reached during the flow analysis. That is exactly
+  // all the places where our allocation is used. We track these so that we
+  // can fix them up at the end, if the optimization ends up possible.
+  std::unordered_set<Expression*> reached;
+
+  // Maps indexes in the struct to the local index that will replace them.
+  std::vector<Index> localIndexes;
+
+  // In rare cases we may need to refinalize, see below.
+  bool refinalize = false;
+
+  void noteLocalSet(LocalSet* set) {
+    sets.insert(set);
+  }
+
+  void applyOptimization() {
+    // Allocate locals to store the allocation's fields in.
+    for (auto field : fields) {
+      localIndexes.push_back(builder.addVar(func, field.type));
+    }
+
+    // Replace the things we need to using the visit* methods.
+    walk(func->body);
+
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, module);
+    }
+  }
+
+  // Rewrite the code in visit* methods. The general approach taken is to
+  // replace the allocation with a null reference (which may require changing
+  // types in some places, like making a block return value nullable), and to
+  // remove all uses of it as much as possible, using the information we have
+  // (for example, when our allocation reaches a RefAsNonNull we can simply
+  // remove that operation as we know it would not throw). Some things are
+  // left to other passes, like getting rid of dropped code without side
+  // effects.
+
+  // Adjust the type that flows through an expression, updating that type as
+  // necessary.
+  void adjustTypeFlowingThrough(Expression* curr) {
+    if (!reached.count(curr)) {
+      return;
+    }
+
+    // Our allocation passes through this expr. We must turn its type into a
+    // nullable one, because we will remove things like RefAsNonNull of it,
+    // which means we may no longer have a non-nullable value as our input,
+    // and we could fail to validate. It is safe to make this change in terms
+    // of our parent, since we know very specifically that only safe things
+    // will end up using our value, like a StructGet or a Drop, which do not
+    // care about non-nullability.
+    assert(curr->type.isRef());
+    curr->type = Type(curr->type.getHeapType(), Nullable);
+  }
+
+  void visitBlock(Block* curr) { adjustTypeFlowingThrough(curr); }
+
+  void visitLoop(Loop* curr) { adjustTypeFlowingThrough(curr); }
+
+  void visitLocalSet(LocalSet* curr) {
+    if (!reached.count(curr)) {
+      return;
+    }
+
+    // We don't need any sets of the reference to any of the locals it
+    // originally was written to.
+    if (curr->isTee()) {
+      replaceCurrent(curr->value);
+    } else {
+      replaceCurrent(builder.makeDrop(curr->value));
+    }
+  }
+
+  void visitLocalGet(LocalGet* curr) {
+    if (!reached.count(curr)) {
+      return;
+    }
+
+    // Uses of this get will drop it, so the value does not matter. Replace it
+    // with something else, which avoids issues with non-nullability (when
+    // non-nullable locals are enabled), which could happen like this:
+    //
+    //   (local $x (ref $foo))
+    //   (local.set $x ..)
+    //   (.. (local.get $x))
+    //
+    // If we remove the set but not the get then the get would appear to read
+    // the default value of a non-nullable local, which is not allowed.
+    //
+    // For simplicity, replace the get with a null. We anyhow have null types
+    // in the places where our allocation was earlier, see notes on
+    // visitBlock, and so using a null here adds no extra complexity.
+    replaceCurrent(builder.makeRefNull(curr->type.getHeapType()));
+  }
+
+  void visitBreak(Break* curr) {
+    if (!reached.count(curr)) {
+      return;
+    }
+
+    // Breaks that our allocation flows through may change type, as we now
+    // have a nullable type there.
+    curr->finalize();
+  }
+
+  void visitStructNew(StructNew* curr) {
+    if (curr != allocation) {
+      return;
+    }
+
+    // First, assign the initial values to the new locals.
+    std::vector<Expression*> contents;
+
+    if (!allocation->isWithDefault()) {
+      // We must assign the initial values to temp indexes, then copy them
+      // over all at once. If instead we did set them as we go, then we might
+      // hit a problem like this:
+      //
+      //  (local.set X (new_X))
+      //  (local.set Y (block (result ..)
+      //                 (.. (local.get X) ..) ;; returns new_X, wrongly
+      //                 (new_Y)
+      //               )
+      //
+      // Note how we assign to the local X and use it during the assignment to
+      // the local Y - but we should still see the old value of X, not new_X.
+      // Temp locals X', Y' can ensure that:
+      //
+      //  (local.set X' (new_X))
+      //  (local.set Y' (block (result ..)
+      //                  (.. (local.get X) ..) ;; returns the proper, old X
+      //                  (new_Y)
+      //                )
+      //  ..
+      //  (local.set X (local.get X'))
+      //  (local.set Y (local.get Y'))
+      std::vector<Index> tempIndexes;
+
+      for (auto field : fields) {
+        tempIndexes.push_back(builder.addVar(func, field.type));
+      }
+
+      // Store the initial values into the temp locals.
+      for (Index i = 0; i < tempIndexes.size(); i++) {
+        contents.push_back(
+          builder.makeLocalSet(tempIndexes[i], allocation->operands[i]));
+      }
+
+      // Copy them to the normal ones.
+      for (Index i = 0; i < tempIndexes.size(); i++) {
+        contents.push_back(builder.makeLocalSet(
+          localIndexes[i],
+          builder.makeLocalGet(tempIndexes[i], fields[i].type)));
+      }
+
+      // TODO Check if the nondefault case does not increase code size in some
+      //      cases. A heap allocation that implicitly sets the default values
+      //      is smaller than multiple explicit settings of locals to
+      //      defaults.
+    } else {
+      // Set the default values.
+      // Note that we must assign the defaults because we might be in a loop,
+      // that is, there might be a previous value.
+      for (Index i = 0; i < localIndexes.size(); i++) {
+        contents.push_back(builder.makeLocalSet(
+          localIndexes[i],
+          builder.makeConstantExpression(Literal::makeZero(fields[i].type))));
+      }
+    }
+
+    // Replace the allocation with a null reference. This changes the type
+    // from non-nullable to nullable, but as we optimize away the code that
+    // the allocation reaches, we will handle that.
+    contents.push_back(builder.makeRefNull(allocation->type.getHeapType()));
+    replaceCurrent(builder.makeBlock(contents));
+  }
+
+  void visitRefAs(RefAs* curr) {
+    if (!reached.count(curr)) {
+      return;
+    }
+
+    // It is safe to optimize out this RefAsNonNull, since we proved it
+    // contains our allocation, and so cannot trap.
+    assert(curr->op == RefAsNonNull);
+    replaceCurrent(curr->value);
+  }
+
+  void visitRefCast(RefCast* curr) {
+    if (!reached.count(curr)) {
+      return;
+    }
+
+    // It is safe to optimize out this RefCast, since we proved it
+    // contains our allocation and we have checked that the type of
+    // the allocation is a subtype of the type of the cast, and so
+    // cannot trap.
+    replaceCurrent(curr->ref);
+
+    // We need to refinalize after this, as while we know the cast is not
+    // logically needed - the value flowing through will not be used - we do
+    // need validation to succeed even before other optimizations remove the
+    // code. For example:
+    //
+    //  (block (result $B)
+    //   (ref.cast $B
+    //    (block (result $A)
+    //
+    // Without the cast this does not validate, so we need to refinalize
+    // (which will fix this, as we replace the unused value with a null, so
+    // that type will propagate out).
+    refinalize = true;
+  }
+
+  void visitStructSet(StructSet* curr) {
+    if (!reached.count(curr)) {
+      return;
+    }
+
+    // Drop the ref (leaving it to other opts to remove, when possible), and
+    // write the data to the local instead of the heap allocation.
+    replaceCurrent(builder.makeSequence(
+      builder.makeDrop(curr->ref),
+      builder.makeLocalSet(localIndexes[curr->index], curr->value)));
+  }
+
+  void visitStructGet(StructGet* curr) {
+    if (!reached.count(curr)) {
+      return;
+    }
+
+    auto type = fields[curr->index].type;
+    if (type != curr->type) {
+      // Normally we are just replacing a struct.get with a local.get of a
+      // local that was created to have the same type as the struct's field,
+      // but in some cases we may refine, if the struct.get's reference type
+      // is less refined than the reference that actually arrives, like here:
+      //
+      //  (struct.get $parent 0
+      //    (block (ref $parent)
+      //      (struct.new $child)))
+      //
+      // We allocated locals for the field of the child, and are replacing a
+      // get of the parent field with a local of the same type as the child's,
+      // which may be more refined.
+      refinalize = true;
+    }
+    replaceCurrent(builder.makeSequence(
+      builder.makeDrop(curr->ref),
+      builder.makeLocalGet(localIndexes[curr->index], type)));
+  }
+};
+
+struct Heap2Local {
+  Function* func;
+  Module* module;
+  const PassOptions& passOptions;
+
+  LocalGraph localGraph;
+  Parents parents;
+  BranchUtils::BranchTargets branchTargets;
+
+  Heap2Local(Function* func,
+                      Module* module,
+                      const PassOptions& passOptions)
+    : func(func), module(module), passOptions(passOptions),
+      localGraph(func, module), parents(func->body), branchTargets(func->body) {
+    // We need to track what each set influences, to see where its value can
+    // flow to.
+    localGraph.computeSetInfluences();
+
+    // All the expressions we have already looked at. We use this to avoid
+    // repeated work, see above.
+    std::unordered_set<Expression*> seen;
+
+    // All the allocations in the function.
+    // TODO: Arrays (of constant size) as well, if all element accesses use
+    //       constant indexes. One option might be to first convert such
+    //       nonescaping arrays into structs.
+    FindAll<StructNew> allocations(func->body);
+
+    for (auto* allocation : allocations.list) {
+      // The point of this optimization is to replace heap allocations with
+      // locals, so we must be able to place the data in locals.
+      if (!canHandleAsLocals(allocation->type)) {
+        continue;
+      }
+
+      // Check for escaping, noting relevant information as we go. If this does
+      // not escape, optimize it.
+      Struct2Local struct2Local(allocation, func, module);
+      EscapeAnalyzer analyzer(struct2Local, seen, localGraph, parents, branchTargets);
+      if (!analyzer.escapes(allocation)) {
+        struct2Local.applyOptimization();
+      }
+    }
+  }
+
+  bool canHandleAsLocals(Type type) {
+    if (type == Type::unreachable) {
+      return false;
+    }
+    auto& fields = type.getHeapType().getStruct().fields;
+    for (auto field : fields) {
+      if (!TypeUpdating::canHandleAsLocal(field.type)) {
+        return false;
+      }
+      if (field.isPacked()) {
+        // TODO: support packed fields by adding coercions/truncations.
+        return false;
+      }
+    }
+    return true;
+  }
+};
+
+struct Heap2LocalPass : public WalkerPass<PostWalker<Heap2LocalPass>> {
   bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
@@ -825,12 +854,12 @@ struct Heap2Local : public WalkerPass<PostWalker<Heap2Local>> {
     // vacuum, in particular, to optimize such nested allocations.
     // TODO Consider running multiple iterations here, and running vacuum in
     //      between them.
-    Heap2LocalOptimizer(func, getModule(), getPassOptions());
+    Heap2Local(func, getModule(), getPassOptions());
   }
 };
 
 } // anonymous namespace
 
-Pass* createHeap2LocalPass() { return new Heap2Local(); }
+Pass* createHeap2LocalPass() { return new Heap2LocalPass(); }
 
 } // namespace wasm
