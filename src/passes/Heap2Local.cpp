@@ -998,15 +998,33 @@ struct Heap2Local {
       }
       void visitArrayNew(ArrayNew* curr) {
         // Only new arrays of fixed size are relevant for us.
-        if (curr->type != Type::unreachable && curr->size->is<Const>()) {
-          // TODO: Some reasonable limit on size? Also above and below.
+        if (curr->type != Type::unreachable && isValidSize(curr->size)) {
           arrayNews.push_back(curr);
         }
       }
       void visitArrayNewFixed(ArrayNewFixed* curr) {
-        if (curr->type != Type::unreachable) {
+        if (curr->type != Type::unreachable &&
+            isValidSize(curr->values.size())) {
           arrayNews.push_back(curr);
         }
+      }
+
+      bool isValidSize(Expression* size) {
+        // The size of an array is valid if it is constant, and its value is
+        // valid.
+        if (auto* c = size->dynCast<Const>()) {
+          return isValidSize(c->value.getUnsigned());
+        }
+        return false;
+      }
+
+      bool isValidSize(Index size) {
+        // Set a reasonable limit on the size here, as valid wasm can contain
+        // things like (array.new (i32.const -1)) which will likely fail at
+        // runtime on a VM limitation on array size. We also are converting a
+        // heap allocation to a stack allocation, which can be noticeable in
+        // some cases, so to be careful here use a fairly small limit.
+        return size < 20;
       }
     } finder;
     finder.walk(func->body);

@@ -2625,6 +2625,259 @@
     )
   )
 
+  ;; CHECK:      (func $array.folded.multiple (type $3)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 i32)
+  ;; CHECK-NEXT:  (local $6 i32)
+  ;; CHECK-NEXT:  (local $7 i32)
+  ;; CHECK-NEXT:  (local $8 i32)
+  ;; CHECK-NEXT:  (local $9 i32)
+  ;; CHECK-NEXT:  (local $10 i32)
+  ;; CHECK-NEXT:  (local $11 i32)
+  ;; CHECK-NEXT:  (local $12 i32)
+  ;; CHECK-NEXT:  (local $13 i32)
+  ;; CHECK-NEXT:  (local $14 i32)
+  ;; CHECK-NEXT:  (local $15 i32)
+  ;; CHECK-NEXT:  (local $16 i32)
+  ;; CHECK-NEXT:  (local $17 i32)
+  ;; CHECK-NEXT:  (local $18 i32)
+  ;; CHECK-NEXT:  (local $19 i32)
+  ;; CHECK-NEXT:  (local $20 i32)
+  ;; CHECK-NEXT:  (local $21 i32)
+  ;; CHECK-NEXT:  (local $22 i32)
+  ;; CHECK-NEXT:  (local $23 i32)
+  ;; CHECK-NEXT:  (local $24 i32)
+  ;; CHECK-NEXT:  (local $25 i32)
+  ;; CHECK-NEXT:  (local $26 i32)
+  ;; CHECK-NEXT:  (local $27 i32)
+  ;; CHECK-NEXT:  (local $28 i32)
+  ;; CHECK-NEXT:  (local $29 i32)
+  ;; CHECK-NEXT:  (local $30 i32)
+  ;; CHECK-NEXT:  (local $31 i32)
+  ;; CHECK-NEXT:  (local $32 i32)
+  ;; CHECK-NEXT:  (local $33 i32)
+  ;; CHECK-NEXT:  (local $34 i32)
+  ;; CHECK-NEXT:  (local $35 i32)
+  ;; CHECK-NEXT:  (local $36 i32)
+  ;; CHECK-NEXT:  (local $37 i32)
+  ;; CHECK-NEXT:  (local $38 i32)
+  ;; CHECK-NEXT:  (local $39 i32)
+  ;; CHECK-NEXT:  (local $40 i32)
+  ;; CHECK-NEXT:  (local $41 i32)
+  ;; CHECK-NEXT:  (local $42 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $7))
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (call $get-i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result nullref)
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref null $8))
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (call $get-i32)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (block (result nullref)
+  ;; CHECK-NEXT:       (local.set $3
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $2
+  ;; CHECK-NEXT:        (local.get $3)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref null $9))
+  ;; CHECK-NEXT:      (local.set $4
+  ;; CHECK-NEXT:       (call $get-i32)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (block (result nullref)
+  ;; CHECK-NEXT:       (local.set $24
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $25
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $26
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $27
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $28
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $29
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $30
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $31
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $32
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $33
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $34
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $35
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $36
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $37
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $38
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $39
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $40
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $41
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $42
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $5
+  ;; CHECK-NEXT:        (local.get $24)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $6
+  ;; CHECK-NEXT:        (local.get $25)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $7
+  ;; CHECK-NEXT:        (local.get $26)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $8
+  ;; CHECK-NEXT:        (local.get $27)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $9
+  ;; CHECK-NEXT:        (local.get $28)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $10
+  ;; CHECK-NEXT:        (local.get $29)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $11
+  ;; CHECK-NEXT:        (local.get $30)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $12
+  ;; CHECK-NEXT:        (local.get $31)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $13
+  ;; CHECK-NEXT:        (local.get $32)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $14
+  ;; CHECK-NEXT:        (local.get $33)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $15
+  ;; CHECK-NEXT:        (local.get $34)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $16
+  ;; CHECK-NEXT:        (local.get $35)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $17
+  ;; CHECK-NEXT:        (local.get $36)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $18
+  ;; CHECK-NEXT:        (local.get $37)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $19
+  ;; CHECK-NEXT:        (local.get $38)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $20
+  ;; CHECK-NEXT:        (local.get $39)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $21
+  ;; CHECK-NEXT:        (local.get $40)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $22
+  ;; CHECK-NEXT:        (local.get $41)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $23
+  ;; CHECK-NEXT:        (local.get $42)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $11)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.get $array
+  ;; CHECK-NEXT:    (array.new $array
+  ;; CHECK-NEXT:     (call $get-i32)
+  ;; CHECK-NEXT:     (i32.const 20)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 6)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.folded.multiple
+    ;; We allow sizes 0-19, so these will be optimized.
+    (drop
+      (array.new $array
+        (call $get-i32)
+        (i32.const 0)
+      )
+    )
+    (drop
+      (array.get $array
+        (array.new $array
+          (call $get-i32)
+          (i32.const 1)
+        )
+        (i32.const 0)
+      )
+    )
+    (drop
+      (array.get $array
+        (array.new $array
+          (call $get-i32)
+          (i32.const 19)
+        )
+        (i32.const 6)
+      )
+    )
+
+    ;; 20 is too much, however.
+    (drop
+      (array.get $array
+        (array.new $array
+          (call $get-i32)
+          (i32.const 20)
+        )
+        (i32.const 6)
+      )
+    )
+  )
+
   ;; CHECK:      (func $get-i32 (type $1) (result i32)
   ;; CHECK-NEXT:  (i32.const 1337)
   ;; CHECK-NEXT: )
