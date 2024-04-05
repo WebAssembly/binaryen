@@ -2222,7 +2222,7 @@
   ;; CHECK:      (type $array (array (mut i32)))
   (type $array (array (mut i32)))
 
-  ;; CHECK:      (func $array.new (type $0)
+  ;; CHECK:      (func $array.new_default (type $0)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -2290,7 +2290,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $array.new
+  (func $array.new_default
     (local $temp (ref $array))
     ;; This fixed-size array can be replaced with locals.
     (local.set $temp
