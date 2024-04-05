@@ -831,211 +831,36 @@ struct Array2Struct : PostWalker<Array2Struct> {
       WASM_UNREACHABLE("bad allocation");
     }
 
-    // Replace the things we need to using the visit* methods.
+    // Replace the things we need to using the visit* methods. Note that we do
+    // not bother to update types: all the places with the array type should
+    // technically have the new struct type, but we are going to optimize the
+    // struct into locals anyhow.
     walk(func->body);
   }
 
+  // The StructNew that replaces the ArrayNew*. The user of this class can then
+  // optimize that StructNew using Struct2Local.
   StructNew* structNew;
 
-  // Maps indexes in the struct to the local index that will replace them.
-  std::vector<Index> localIndexes;
+  void visitArrayNew(ArrayNew* curr) {
+    if (curr == allocation) {
+      replaceCurrent(structNew);
+    }
+  }
 
-  // Rewrite the code in visit* methods. The general approach taken is to
-  // replace the allocation with a null reference (which may require changing
-  // types in some places, like making a block return value nullable), and to
-  // remove all uses of it as much as possible, using the information we have
-  // (for example, when our allocation reaches a RefAsNonNull we can simply
-  // remove that operation as we know it would not throw). Some things are
-  // left to other passes, like getting rid of dropped code without side
-  // effects.
+  void visitArrayFixed(ArrayNewFixed* curr) {
+    if (curr == allocation) {
+      replaceCurrent(structNew);
+    }
+  }
 
-  // Adjust the type that flows through an expression, updating that type as
-  // necessary.
-  void adjustTypeFlowingThrough(Expression* curr) {
+  void visitArraySet(ArraySet* curr) {
     if (!analyzer.reached.count(curr)) {
       return;
     }
 
-    // Our allocation passes through this expr. We must turn its type into a
-    // nullable one, because we will remove things like RefAsNonNull of it,
-    // which means we may no longer have a non-nullable value as our input,
-    // and we could fail to validate. It is safe to make this change in terms
-    // of our parent, since we know very specifically that only safe things
-    // will end up using our value, like a StructGet or a Drop, which do not
-    // care about non-nullability.
-    assert(curr->type.isRef());
-    curr->type = Type(curr->type.getHeapType(), Nullable);
-  }
-
-  void visitBlock(Block* curr) { adjustTypeFlowingThrough(curr); }
-
-  void visitLoop(Loop* curr) { adjustTypeFlowingThrough(curr); }
-
-  void visitLocalSet(LocalSet* curr) {
-    if (!analyzer.reached.count(curr)) {
-      return;
-    }
-
-    // We don't need any sets of the reference to any of the locals it
-    // originally was written to.
-    if (curr->isTee()) {
-      replaceCurrent(curr->value);
-    } else {
-      replaceCurrent(builder.makeDrop(curr->value));
-    }
-  }
-
-  void visitLocalGet(LocalGet* curr) {
-    if (!analyzer.reached.count(curr)) {
-      return;
-    }
-
-    // Uses of this get will drop it, so the value does not matter. Replace it
-    // with something else, which avoids issues with non-nullability (when
-    // non-nullable locals are enabled), which could happen like this:
-    //
-    //   (local $x (ref $foo))
-    //   (local.set $x ..)
-    //   (.. (local.get $x))
-    //
-    // If we remove the set but not the get then the get would appear to read
-    // the default value of a non-nullable local, which is not allowed.
-    //
-    // For simplicity, replace the get with a null. We anyhow have null types
-    // in the places where our allocation was earlier, see notes on
-    // visitBlock, and so using a null here adds no extra complexity.
-    replaceCurrent(builder.makeRefNull(curr->type.getHeapType()));
-  }
-
-  void visitBreak(Break* curr) {
-    if (!analyzer.reached.count(curr)) {
-      return;
-    }
-
-    // Breaks that our allocation flows through may change type, as we now
-    // have a nullable type there.
-    curr->finalize();
-  }
-
-  void visitStructNew(StructNew* curr) {
-    if (curr != allocation) {
-      return;
-    }
-
-    // First, assign the initial values to the new locals.
-    std::vector<Expression*> contents;
-
-    if (!allocation->isWithDefault()) {
-      // We must assign the initial values to temp indexes, then copy them
-      // over all at once. If instead we did set them as we go, then we might
-      // hit a problem like this:
-      //
-      //  (local.set X (new_X))
-      //  (local.set Y (block (result ..)
-      //                 (.. (local.get X) ..) ;; returns new_X, wrongly
-      //                 (new_Y)
-      //               )
-      //
-      // Note how we assign to the local X and use it during the assignment to
-      // the local Y - but we should still see the old value of X, not new_X.
-      // Temp locals X', Y' can ensure that:
-      //
-      //  (local.set X' (new_X))
-      //  (local.set Y' (block (result ..)
-      //                  (.. (local.get X) ..) ;; returns the proper, old X
-      //                  (new_Y)
-      //                )
-      //  ..
-      //  (local.set X (local.get X'))
-      //  (local.set Y (local.get Y'))
-      std::vector<Index> tempIndexes;
-
-      for (auto field : fields) {
-        tempIndexes.push_back(builder.addVar(func, field.type));
-      }
-
-      // Store the initial values into the temp locals.
-      for (Index i = 0; i < tempIndexes.size(); i++) {
-        contents.push_back(
-          builder.makeLocalSet(tempIndexes[i], allocation->operands[i]));
-      }
-
-      // Copy them to the normal ones.
-      for (Index i = 0; i < tempIndexes.size(); i++) {
-        contents.push_back(builder.makeLocalSet(
-          localIndexes[i],
-          builder.makeLocalGet(tempIndexes[i], fields[i].type)));
-      }
-
-      // TODO Check if the nondefault case does not increase code size in some
-      //      cases. A heap allocation that implicitly sets the default values
-      //      is smaller than multiple explicit settings of locals to
-      //      defaults.
-    } else {
-      // Set the default values.
-      // Note that we must assign the defaults because we might be in a loop,
-      // that is, there might be a previous value.
-      for (Index i = 0; i < localIndexes.size(); i++) {
-        contents.push_back(builder.makeLocalSet(
-          localIndexes[i],
-          builder.makeConstantExpression(Literal::makeZero(fields[i].type))));
-      }
-    }
-
-    // Replace the allocation with a null reference. This changes the type
-    // from non-nullable to nullable, but as we optimize away the code that
-    // the allocation reaches, we will handle that.
-    contents.push_back(builder.makeRefNull(allocation->type.getHeapType()));
-    replaceCurrent(builder.makeBlock(contents));
-  }
-
-  void visitRefAs(RefAs* curr) {
-    if (!analyzer.reached.count(curr)) {
-      return;
-    }
-
-    // It is safe to optimize out this RefAsNonNull, since we proved it
-    // contains our allocation, and so cannot trap.
-    assert(curr->op == RefAsNonNull);
-    replaceCurrent(curr->value);
-  }
-
-  void visitRefCast(RefCast* curr) {
-    if (!analyzer.reached.count(curr)) {
-      return;
-    }
-
-    // It is safe to optimize out this RefCast, since we proved it
-    // contains our allocation and we have checked that the type of
-    // the allocation is a subtype of the type of the cast, and so
-    // cannot trap.
-    replaceCurrent(curr->ref);
-
-    // We need to refinalize after this, as while we know the cast is not
-    // logically needed - the value flowing through will not be used - we do
-    // need validation to succeed even before other optimizations remove the
-    // code. For example:
-    //
-    //  (block (result $B)
-    //   (ref.cast $B
-    //    (block (result $A)
-    //
-    // Without the cast this does not validate, so we need to refinalize
-    // (which will fix this, as we replace the unused value with a null, so
-    // that type will propagate out).
-    refinalize = true;
-  }
-
-  void visitStructSet(StructSet* curr) {
-    if (!analyzer.reached.count(curr)) {
-      return;
-    }
-
-    // Drop the ref (leaving it to other opts to remove, when possible), and
-    // write the data to the local instead of the heap allocation.
-    replaceCurrent(builder.makeSequence(
-      builder.makeDrop(curr->ref),
-      builder.makeLocalSet(localIndexes[curr->index], curr->value)));
+    // Convert the ArraySet into a StructSet.
+    replaceCurrent(builder.makeStructGet(getIndex(curr->index), curr->ref, curr->value);
   }
 
   void visitStructGet(StructGet* curr) {
@@ -1043,28 +868,10 @@ struct Array2Struct : PostWalker<Array2Struct> {
       return;
     }
 
-    auto type = fields[curr->index].type;
-    if (type != curr->type) {
-      // Normally we are just replacing a struct.get with a local.get of a
-      // local that was created to have the same type as the struct's field,
-      // but in some cases we may refine, if the struct.get's reference type
-      // is less refined than the reference that actually arrives, like here:
-      //
-      //  (struct.get $parent 0
-      //    (block (ref $parent)
-      //      (struct.new $child)))
-      //
-      // We allocated locals for the field of the child, and are replacing a
-      // get of the parent field with a local of the same type as the child's,
-      // which may be more refined.
-      refinalize = true;
-    }
-    replaceCurrent(builder.makeSequence(
-      builder.makeDrop(curr->ref),
-      builder.makeLocalGet(localIndexes[curr->index], type)));
+    // Convert the ArrayGet into a StructGet.
+    replaceCurrent(builder.makeStructGet(getIndex(curr->index), curr->ref, curr->type, curr->signed_);
   }
 };
-//waka
 
 // Core Heap2Local optimization that operates on a function: Builds up the data
 // structures we need (LocalGraph, etc.) that we will use across multiple
