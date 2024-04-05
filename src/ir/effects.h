@@ -66,7 +66,8 @@ public:
   // Walk an entire function body. This will ignore effects that are not
   // noticeable from the perspective of the caller, that is, effects that are
   // only noticeable during the call, but "vanish" when the call stack is
-  // unwound.
+  // unwound. Unlike walking just the body, walking the function will also
+  // include the effects of any return calls the function makes.
   void walk(Function* func) {
     walk(func->body);
 
@@ -148,11 +149,13 @@ public:
   // or a continuation that is never continued, are examples of that.
   bool mayNotReturn = false;
 
-  // Return calls are indistinguishable from normal returns from the perspective
-  // of their surrounding code, and the return-callee's effects only become
-  // visible when considering the effects of the whole function containing the
-  // return call. To model this correctly, stash the callee's effects on the
-  // side and only merge them in after walking a full function body.
+  // Since return calls return out of the body of the function before performing
+  // their call, they are indistinguishable from normal returns from the
+  // perspective of their surrounding code, and the return-callee's effects only
+  // become visible when considering the effects of the whole function
+  // containing the return call. To model this correctly, stash the callee's
+  // effects on the side and only merge them in after walking a full function
+  // body.
   //
   // We currently do this stashing only for the throw effect, but in principle
   // we could do it for all effects if it made a difference.
