@@ -2249,21 +2249,20 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
+  ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:   (local.set $3
   ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
+  ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:    (local.get $3)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
