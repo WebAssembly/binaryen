@@ -419,10 +419,14 @@ struct BranchTargets {
 
   // Gets the expression that defines this branch target, i.e., where we branch
   // to if we branch to that name.
-  Expression* getTarget(Name name) { return inner.targets[name]; }
+  Expression* getTarget(Name name) const {
+    auto iter = inner.targets.find(name);
+    assert(iter != inner.targets.end());
+    return iter->second;
+  }
 
   // Gets the expressions branching to a target.
-  std::unordered_set<Expression*> getBranches(Name name) {
+  std::unordered_set<Expression*> getBranches(Name name) const {
     auto iter = inner.branches.find(name);
     if (iter != inner.branches.end()) {
       return iter->second;

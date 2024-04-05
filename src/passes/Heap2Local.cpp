@@ -166,19 +166,7 @@ namespace wasm {
 
 namespace {
 
-// A particular escape analysis is templated over an optimizer. We inform the
-// optimizer of relevant things as we work, to avoid repeated work later: the
-// optimizer can use the information we provided it to optimize efficiently.
-//
-// The optimizer provides the following methods:
-//
-//  * noteLocalSet(LocalSet*) that notes a local.set that the allocation is
-//    written to.
-//
-template<typename Optimizer>
 struct EscapeAnalyzer {
-  Optimizer& optimizer;
-
   // All the expressions that have already been seen by the optimizer. TODO refer to commentt
   std::unordered_set<Expression*>& seen;
 
@@ -189,11 +177,14 @@ struct EscapeAnalyzer {
   const Parents& parents;
   const BranchUtils::BranchTargets& branchTargets;
 
-  EscapeAnalyzer(Optimizer& optimizer,
-                 std::unordered_set<Expression*>& seen,
+  EscapeAnalyzer(std::unordered_set<Expression*>& seen,
                  const LocalGraph& localGraph,
                  const Parents& parents,
-                 const BranchUtils::BranchTargets& branchTargets) : optimizer(optimizer), seen(seen), localGraph(localGraph), parents(parents), branchTargets(branchTargets) {}
+                 const BranchUtils::BranchTargets& branchTargets) : seen(seen), localGraph(localGraph), parents(parents), branchTargets(branchTargets) {}
+
+  // We must track all the local.sets that write the allocation, to verify
+  // exclusivity.
+  std::unordered_set<LocalSet*> sets;
 
   enum class ParentChildInteraction {
     // The parent lets the child escape. E.g. the parent is a call.
@@ -215,10 +206,7 @@ struct EscapeAnalyzer {
     Mixes,
   };
 
-  // Analyze an allocation to see if it escapes or not. We receive an optimizer
-  // class which we will inform of things as we go, that will allow the
-  // optimizer to avoid doing a new pass on the entire function if it decides
-  // to optimize.
+  // Analyze an allocation to see if it escapes or not.
   bool escapes(StructNew* allocation) {
     // A queue of flows from children to parents. When something is in the queue
     // here then it assumed that it is ok for the allocation to be at the child
@@ -289,7 +277,7 @@ struct EscapeAnalyzer {
         // exclusive use of our allocation by all the gets that read the value.
         // Note the set, and we will check the gets at the end once we know all
         // of our sets.
-        optimizer.noteLocalSet(set);
+        sets.insert(set);
 
         // We must also look at how the value flows from those gets.
         if (auto* getsReached = getGetsReached(set)) {
@@ -313,7 +301,7 @@ struct EscapeAnalyzer {
     }
 
     // We finished the loop over the flows. Do the final checks.
-    if (!getsAreExclusiveToSets(rewriter.sets)) {
+    if (!getsAreExclusiveToSets(sets)) {
       return true;
     }
 
@@ -477,7 +465,7 @@ struct EscapeAnalyzer {
   // else), we need to check whether all the gets that read that value cannot
   // read anything else (which would be the case if another set writes to that
   // local, in the right live range).
-  bool getsAreExclusiveToSets(const std::unordered_set<LocalSet*>& sets) {
+  bool getsAreExclusiveToSets(const std::unordered_set<LocalSet*>& sets) { // TODO remove param
     // Find all the relevant gets (which may overlap between the sets).
     std::unordered_set<LocalGet*> gets;
     for (auto* set : sets) {
@@ -516,10 +504,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
     : allocation(allocation), func(func), module(module), builder(*module),
       fields(allocation->type.getHeapType().getStruct().fields) {}
 
-  // We must track all the local.sets that write the allocation, to verify
-  // exclusivity.
-  std::unordered_set<LocalSet*> sets;
-
   // All the expressions we reached during the flow analysis. That is exactly
   // all the places where our allocation is used. We track these so that we
   // can fix them up at the end, if the optimization ends up possible.
@@ -531,11 +515,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   // In rare cases we may need to refinalize, see below.
   bool refinalize = false;
 
-  void noteLocalSet(LocalSet* set) {
-    sets.insert(set);
-  }
-
-  void applyOptimization() {
+  void applyOptimization(const EscapeAnalyzer& analyzer) {
     // Allocate locals to store the allocation's fields in.
     for (auto field : fields) {
       localIndexes.push_back(builder.addVar(func, field.type));
@@ -811,10 +791,9 @@ struct Heap2Local {
 
       // Check for escaping, noting relevant information as we go. If this does
       // not escape, optimize it.
-      Struct2Local struct2Local(allocation, func, module);
-      EscapeAnalyzer analyzer(struct2Local, seen, localGraph, parents, branchTargets);
+      EscapeAnalyzer analyzer(localGraph, parents, branchTargets);
       if (!analyzer.escapes(allocation)) {
-        struct2Local.applyOptimization();
+        struct2Local.applyOptimization(analyzer);
       }
     }
   }
