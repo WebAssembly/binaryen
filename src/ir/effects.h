@@ -66,8 +66,16 @@ public:
   // Walk an entire function body. This will ignore effects that are not
   // noticeable from the perspective of the caller, that is, effects that are
   // only noticeable during the call, but "vanish" when the call stack is
-  // unwound. Unlike walking just the body, walking the function will also
-  // include the effects of any return calls the function makes.
+  // unwound.
+  //
+  // Unlike walking just the body, walking the function will also
+  // include the effects of any return calls the function makes. For that
+  // reason, it is a bug if a user of this code calls walk(Expression*) and not
+  // walk(Function*) if their intention is to scan an entire function body.
+  // Putting it another way, a return_call is syntax sugar for a return and a
+  // call, where the call executes at the function scope, so there is a
+  // meaningful difference between scanning an expression and scanning
+  // the entire function body.
   void walk(Function* func) {
     walk(func->body);
 
@@ -158,7 +166,10 @@ public:
   // body.
   //
   // We currently do this stashing only for the throw effect, but in principle
-  // we could do it for all effects if it made a difference.
+  // we could do it for all effects if it made a difference. (Only throw is noticeable
+  // now because the only thing that can change between doing the call here
+  // and doing it outside at the function exit is the scoping of try-catch blocks.
+  // If future wasm scoping additions are added, we may need more here.)
   bool hasReturnCallThrow = false;
 
   // Helper functions to check for various effect types
