@@ -166,17 +166,26 @@ namespace wasm {
 
 namespace {
 
+// Core analysis that provides an escapes() method to check if an allocation
+// escapes in a way that prevents optimizing it away as described above. It also
+// stashes information about the relevant expressions as it goes, which helps
+// optimization later (|seen| and |reached|).
 struct EscapeAnalyzer {
-  // All the expressions that have already been seen by the optimizer. TODO
-  // refer to commentt
+  // All the expressions that have already been seen by the optimizer, see the
+  // comment above on exclusivity: once we have seen something whene analyzing
+  // one allocation, if we reach it again then we can exit early since seeing it
+  // a second time proves we lost exclusivity. We must track this across
+  // multiple instances of EscapeAnalyzer as each handles a particular
+  // allocation.
   std::unordered_set<Expression*>& seen;
 
   // To find what escapes, we need to follow where values flow, both up to
   // parents, and via branches, and through locals.
-  // TODO: only scan reference types in LocalGraph
+  // TODO: for efficiency, only scan reference types in LocalGraph
   const LocalGraph& localGraph;
   const Parents& parents;
   const BranchUtils::BranchTargets& branchTargets;
+
   const PassOptions& passOptions;
   Module& wasm;
 
@@ -503,7 +512,8 @@ struct EscapeAnalyzer {
   }
 };
 
-// An optimizer that handles the rewriting to turn a struct into locals.
+// An optimizer that handles the rewriting to turn a struct allocation into
+// locals. We run this after proving that allocation does not escape.
 //
 // TODO: Doing a single rewrite walk at the end (for all structs) would be more
 //       efficient, but it would need to be more complex.
@@ -766,6 +776,10 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 };
 
+// Core Heap2Local optimization that operates on a function: Builds up the data
+// structures we need (LocalGraph, etc.) that we will use across multiple
+// analyses of allocations, and then runs those analyses and optimizes where
+// possible.
 struct Heap2Local {
   Function* func;
   Module& wasm;
