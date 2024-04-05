@@ -411,7 +411,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
     while (!work.empty()) {
       auto* func = work.pop();
       for (auto* caller : map[func].calledBy) {
-        // Skip functions forbidden from getting this property
+        // Skip functions forbidden from getting this property.
         if (!canHaveProperty(map[caller])) {
           continue;
         }
