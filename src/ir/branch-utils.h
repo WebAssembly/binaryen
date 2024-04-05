@@ -109,11 +109,11 @@ void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
       func(name, sw->value);
     } else if (auto* br = expr->dynCast<BrOn>()) {
       func(name, br->ref);
-    } else if (auto* tt = expr->dynCast<TryTable>()) {
+    } else if (expr->is<TryTable>()) {
       // The values are supplied by throwing instructions, so we are unable to
       // know what they will be here.
       func(name, nullptr);
-    } else if (auto* res = expr->dynCast<Resume>()) {
+    } else if (expr->is<Resume>()) {
       // The values are supplied by suspend instructions executed while running
       // the continuation, so we are unable to know what they will be here.
       func(name, nullptr);
