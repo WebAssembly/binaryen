@@ -2216,3 +2216,48 @@
     (local.get $temp2)
   )
 )
+
+;; Arrays.
+(module
+  ;; CHECK:      (type $array (array (mut i32)))
+  (type $array (array (mut i32)))
+
+  ;; CHECK:      (func $array.new (type $1)
+  ;; CHECK-NEXT:  (local $temp (ref $array))
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (array.new_default $array
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (array.set $array
+  ;; CHECK-NEXT:   (local.get $temp)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.get $array
+  ;; CHECK-NEXT:    (local.get $temp)
+  ;; CHECK-NEXT:    (i32.const 2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.new
+    (local $temp (ref $array))
+    (local.set $temp
+      (array.new_default $array
+        (i32.const 5)
+      )
+    )
+    (array.set $array
+      (local.get $temp)
+      (i32.const 2)
+      (i32.const 42)
+    )
+    (drop
+      (array.get $array
+        (local.get $temp)
+        (i32.const 2)
+      )
+    )
+  )
+)
