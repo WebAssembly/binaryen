@@ -867,6 +867,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // technically have the new struct type, but we are going to optimize the
     // struct into locals anyhow so those types are vanishing. However, during
     // internal debugging of this pass you may see stale types.
+    // XXX likely we need ot walk |reached| or such
     walk(func->body);
 
     if (refinalize) {
