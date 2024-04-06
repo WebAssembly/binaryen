@@ -2045,8 +2045,8 @@
   ;; CHECK-NEXT: )
   (func $cast-failure (result anyref)
     (struct.get $B 0
-      ;; The allocated $A arrives here, but the cast will fail,
-      ;; so we do not optimize.
+      ;; The allocated $A arrives here, but the cast will fail, so we do not
+      ;; optimize.
       (ref.cast (ref $B)
         (struct.new $A
           (struct.new $A
