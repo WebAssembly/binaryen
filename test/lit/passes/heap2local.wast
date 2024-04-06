@@ -2920,6 +2920,21 @@
     )
   )
 
+  (func $array.flowing.type
+    ;; The array reference here flows through some places that need to be
+    ;; updated when we optimize. In particular the block's type will change.
+    (drop
+      (block $label (result (ref $array))
+        (br $label
+          (array.new $array
+            (i32.const 1)
+            (i32.const 1)
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $get-i32 (type $1) (result i32)
   ;; CHECK-NEXT:  (i32.const 1337)
   ;; CHECK-NEXT: )
