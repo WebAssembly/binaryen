@@ -815,7 +815,8 @@ struct Array2Struct : PostWalker<Array2Struct> {
 
     // Build the struct type we need: as many fields as the size of the array,
     // all of the same type as the array's element.
-    auto element = allocation->type.getHeapType().getArray().element;
+    auto arrayType = allocation->type.getHeapType();
+    auto element = arrayType.getArray().element;
     if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
       numFields = getIndex(arrayNew->size);
     } else if (auto* arrayNewFixed = allocation->dynCast<ArrayNewFixed>()) {
@@ -862,13 +863,22 @@ struct Array2Struct : PostWalker<Array2Struct> {
       WASM_UNREACHABLE("bad allocation");
     }
 
-    // Replace the things we need to using the visit* methods. Note that we do
-    // not bother to update types: all the places with the array type should
-    // technically have the new struct type, but we are going to optimize the
-    // struct into locals anyhow so those types are vanishing. However, during
-    // internal debugging of this pass you may see stale types.
-    // XXX likely we need ot walk |reached| or such
+    // Replace the things we need to using the visit* methods.
     walk(func->body);
+
+    // Update types along the path reached by the allocation: whenever we see
+    // the array type, it should be the struct type.
+    auto nullArray = Type(arrayType, Nullable);
+    auto nonNullArray = Type(arrayType, NonNullable);
+    auto nullStruct = Type(structType, Nullable);
+    auto nonNullStruct = Type(structType, NonNullable);
+    for (auto* reached : analyzer.reached) {
+      if (reached->type == nullArray) {
+        reached->type = nullStruct;
+      } else if (reached->type == nonNullArray) {
+        reached->type = nonNullStruct;
+      }
+    }
 
     if (refinalize) {
       ReFinalize().walkFunctionInModule(func, &wasm);
