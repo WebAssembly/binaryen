@@ -2,12 +2,19 @@
 ;; RUN: wasm-opt %s --vacuum -all -S -o - | filecheck %s
 
 (module
+  ;; CHECK:      (type $void (func))
+  (type $void (func))
+
+  ;; CHECK:      (table $t 0 funcref)
+
   ;; CHECK:      (tag $e (param i32))
   (tag $e (param i32))
   ;; CHECK:      (tag $e2 (param i32))
   (tag $e2 (param i32))
 
-  ;; CHECK:      (func $try-test (type $0)
+  (table $t funcref 0)
+
+  ;; CHECK:      (func $try-test (type $void)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $try-test
@@ -60,7 +67,7 @@
     (i32.const 2)
   )
 
-  ;; CHECK:      (func $inner-try-catch-test (type $0)
+  ;; CHECK:      (func $inner-try-catch-test (type $void)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
@@ -108,7 +115,7 @@
     )
   )
 
-  ;; CHECK:      (func $br-in-catch (type $0)
+  ;; CHECK:      (func $br-in-catch (type $void)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $br-in-catch
@@ -128,7 +135,7 @@
     )
   )
 
-  ;; CHECK:      (func $try-delegate-outer-target (type $0)
+  ;; CHECK:      (func $try-delegate-outer-target (type $void)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try $label$0
   ;; CHECK-NEXT:   (do
@@ -179,7 +186,7 @@
     )
   )
 
-  ;; CHECK:      (func $trivial-catch-all-of-throw (type $0)
+  ;; CHECK:      (func $trivial-catch-all-of-throw (type $void)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try $try3
   ;; CHECK-NEXT:   (do
@@ -220,6 +227,68 @@
           (else
             (unreachable)
           )
+        )
+      )
+      (catch_all)
+    )
+  )
+
+  ;; CHECK:      (func $throw (type $void)
+  ;; CHECK-NEXT:  (throw $e
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $throw
+    ;; Helper for the tail call tests below.
+    (throw $e
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $return-call-catch (type $void)
+  ;; CHECK-NEXT:  (return_call $throw)
+  ;; CHECK-NEXT: )
+  (func $return-call-catch
+    (try
+      (do
+        ;; This returns before it throws, so we can optimize out the surrounding
+        ;; try-catch.
+        (return_call $throw)
+      )
+      (catch_all)
+    )
+  )
+
+  ;; CHECK:      (func $return-call-indirect-catch (type $void)
+  ;; CHECK-NEXT:  (return_call_indirect $t (type $void)
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $return-call-indirect-catch
+    (try
+      (do
+        ;; This returns before it throws, so we can optimize out the surrounding
+        ;; try-catch.
+        (return_call_indirect
+          (i32.const 0)
+        )
+      )
+      (catch_all)
+    )
+  )
+
+  ;; CHECK:      (func $return-call-ref-catch (type $void)
+  ;; CHECK-NEXT:  (return_call_ref $void
+  ;; CHECK-NEXT:   (ref.func $throw)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $return-call-ref-catch
+    (try
+      (do
+        ;; This returns before it throws, so we can optimize out the surrounding
+        ;; try-catch.
+        (return_call_ref $void
+          (ref.func $throw)
         )
       )
       (catch_all)
