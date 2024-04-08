@@ -3090,7 +3090,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $nested
-    ;; Nested array.new operations, all of whom can be optimized away.
+    ;; Nested array.new operations, all of whom can be optimized away in
+    ;; principle. We do only a single iteration here for now, which optimizes
+    ;; away the outermost array.new (see TODO in the pass about iterations).
     (drop
       (array.new $array
         (array.new $array
