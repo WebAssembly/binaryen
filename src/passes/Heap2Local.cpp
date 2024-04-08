@@ -802,10 +802,10 @@ struct Struct2Local : PostWalker<Struct2Local> {
   // Add a mask for packed fields.
   Expression* addMask(Expression* value, const Field& field) {
     if (!field.isPacked()) {
-      return valuel
+      return value;
     }
 
-    auto mask = Bits::lowBitMask(field->getByteSize() * 8);
+    auto mask = Bits::lowBitMask(field.getByteSize() * 8);
     return builder.makeBinary(AndInt32, value, builder.makeConst(int32_t(mask)));
   }
 };
