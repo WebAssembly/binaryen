@@ -19,16 +19,16 @@
 
   ;; CHECK:      (type $6 (func (result anyref)))
 
-  ;; CHECK:      (type $struct.packed (struct (field (mut i8))))
-  (type $struct.packed (struct (field (mut i8))))
+  ;; CHECK:      (type $7 (func (param i32) (result f64)))
+
+  ;; CHECK:      (type $struct.packed (struct (field (mut i8)) (field (mut i32))))
+  (type $struct.packed (struct (field (mut i8)) (field (mut i32))))
 
   (type $struct.nondefaultable (struct (field (ref $struct.A))))
 
   (type $struct.recursive (struct (field (mut (ref null $struct.recursive)))))
 
   (type $struct.nonnullable (struct (field (ref $struct.A))))
-
-  ;; CHECK:      (type $8 (func (param i32) (result f64)))
 
   ;; CHECK:      (type $9 (func (param (ref null $struct.recursive))))
 
@@ -175,17 +175,88 @@
   )
 
   ;; CHECK:      (func $packed (type $1)
+  ;; CHECK-NEXT:  (local $temp (ref $struct.packed))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get_u $struct.packed 0
-  ;; CHECK-NEXT:    (struct.new_default $struct.packed)
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:     (i32.const 1338)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $4)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (i32.const 99998)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (i32.const 99999)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $packed
-    ;; We do not optimize packed structs yet.
+    (local $temp (ref $struct.packed))
+    ;; Packed fields require masking of irrelevant bits, which we apply on the
+    ;; sets.
+    (local.set $temp
+      (struct.new $struct.packed
+        (i32.const 1337)
+        (i32.const 1338)
+      )
+    )
+    (struct.set $struct.packed 0
+      (local.get $temp)
+      (i32.const 99998)
+    )
     (drop
       (struct.get $struct.packed 0
-        (struct.new_default $struct.packed)
+        (local.get $temp)
+      )
+    )
+    ;; Unpacked fields in the same struct do not need anything.
+    (struct.set $struct.packed 1
+      (local.get $temp)
+      (i32.const 99999)
+    )
+    (drop
+      (struct.get $struct.packed 1
+        (local.get $temp)
       )
     )
   )
@@ -647,7 +718,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-copies-conditional (type $8) (param $x i32) (result f64)
+  ;; CHECK:      (func $local-copies-conditional (type $7) (param $x i32) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 f64)
@@ -741,7 +812,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-exclusive-get (type $8) (param $x i32) (result f64)
+  ;; CHECK:      (func $non-exclusive-get (type $7) (param $x i32) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_default $struct.A)

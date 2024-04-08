@@ -1087,14 +1087,7 @@ struct Heap2Local {
   }
 
   bool canHandleAsLocal(const Field& field) {
-    if (!TypeUpdating::canHandleAsLocal(field.type)) {
-      return false;
-    }
-    if (field.isPacked()) {
-      // TODO: support packed fields by adding coercions/truncations.
-      return false;
-    }
-    return true;
+    return TypeUpdating::canHandleAsLocal(field.type);
   }
 
   bool canHandleAsLocals(Type type) {
