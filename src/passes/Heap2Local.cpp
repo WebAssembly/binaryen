@@ -880,9 +880,9 @@ struct Array2Struct : PostWalker<Array2Struct> {
     }
 
     // Technically we should also fix up the types of locals as well, but after
-    // Struct2Local those locals will no longer be used anyhow, so avoid that
-    // work (though it makes the IR temporarily invalid in between Array2Struct
-    // and Struct2Local).
+    // Struct2Local those locals will no longer be used anyhow (the locals hold
+    // allocations that are removed), so avoid that work (though it makes the
+    // IR temporarily invalid in between Array2Struct and Struct2Local).
 
     // Replace the things we need to using the visit* methods.
     walk(func->body);
