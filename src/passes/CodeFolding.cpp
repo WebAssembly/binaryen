@@ -172,7 +172,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     }
   }
 
-  void visitReturn(Return* curr) {
+  void handleReturn(Expression* curr) {
     if (!controlFlowStack.empty()) {
       // we can easily optimize if we are at the end of the parent block
       Block* parent = controlFlowStack.back()->dynCast<Block>();
@@ -184,6 +184,26 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     // otherwise, if we have a large value, it might be worth optimizing us as
     // well
     returnTails.push_back(Tail(curr, getCurrentPointer()));
+  }
+
+  void visitReturn(Return* curr) { handleReturn(curr); }
+
+  void visitCall(Call* curr) {
+    if (curr->isReturn) {
+      handleReturn(curr);
+    }
+  }
+
+  void visitCallIndirect(CallIndirect* curr) {
+    if (curr->isReturn) {
+      handleReturn(curr);
+    }
+  }
+
+  void visitCallRef(CallRef* curr) {
+    if (curr->isReturn) {
+      handleReturn(curr);
+    }
   }
 
   void visitBlock(Block* curr) {
