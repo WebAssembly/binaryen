@@ -191,7 +191,10 @@
   ;; CHECK-NEXT:     (i32.const 1338)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (local.get $3)
+  ;; CHECK-NEXT:     (i32.and
+  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:      (i32.const 255)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (local.get $4)
@@ -204,7 +207,10 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $1
-  ;; CHECK-NEXT:    (i32.const 99998)
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (i32.const 99998)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -3266,7 +3272,10 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $2
-  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result i32)
@@ -3318,7 +3327,10 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $2
-  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:     (i32.const 65535)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result i32)

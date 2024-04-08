@@ -766,7 +766,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
     // Drop the ref (leaving it to other opts to remove, when possible), and
     // write the data to the local instead of the heap allocation.
-    auto& fields = curr->ref->type.getHeapType().getStruct().fields;
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(curr->ref),
       builder.makeLocalSet(localIndexes[curr->index],
