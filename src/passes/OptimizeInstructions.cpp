@@ -1782,7 +1782,7 @@ struct OptimizeInstructions
     }
   }
 
-  void zvisitStructNew(StructNew* curr) {
+  void visitStructNew(StructNew* curr) {
     // If values are provided, but they are all the default, then we can remove
     // them (in reachable code).
     if (curr->type == Type::unreachable || curr->isWithDefault()) {
