@@ -519,7 +519,9 @@ private:
         // target function throws and we know that will be caught anyhow, the
         // same as the code below for the general path. We can always filter out
         // throws for return calls because they are already more precisely
-        // captured by `hasReturnCallThrow` and `branchesOut`.
+        // captured by `branchesOut`, which models the return, and
+        // `hasReturnCallThrow`, which models the throw that will happen after
+        // the return.
         if (targetEffects->throws_ && (parent.tryDepth > 0 || curr->isReturn)) {
           auto filteredEffects = *targetEffects;
           filteredEffects.throws_ = false;
