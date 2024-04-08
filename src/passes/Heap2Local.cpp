@@ -660,7 +660,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
     }
 
     auto mask = Bits::lowBitMask(field.getByteSize() * 8);
-    return builder.makeBinary(AndInt32, value, builder.makeConst(int32_t(mask)));
+    return builder.makeBinary(
+      AndInt32, value, builder.makeConst(int32_t(mask)));
   }
 
   void visitStructNew(StructNew* curr) {
@@ -710,9 +711,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
       for (Index i = 0; i < tempIndexes.size(); i++) {
         auto* value = builder.makeLocalGet(tempIndexes[i], fields[i].type);
         // Add a mask on the values we write.
-        contents.push_back(builder.makeLocalSet(
-          localIndexes[i],
-          addMask(value, fields[i])));
+        contents.push_back(
+          builder.makeLocalSet(localIndexes[i], addMask(value, fields[i])));
       }
 
       // TODO Check if the nondefault case does not increase code size in some
