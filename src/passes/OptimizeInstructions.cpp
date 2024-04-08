@@ -2015,34 +2015,54 @@ struct OptimizeInstructions
       return;
     }
 
-    // As ArrayNew, if the values are the default, we can remove them.
-    auto type = curr->type.getHeapType().getArray().element.type;
-    if (!type.isDefaultable()) {
+    if (curr->values.empty()) {
+      // ArrayNewFixed that generates an empty array could be ArrayNew with a
+      // size of zero, or vice versa. TODO: Pick which and optimize
       return;
     }
 
+    // If all the values are equal then we can optimize, either to
+    // array.new_default (if they are all equal to the default) or array.new (if
+    // they are all equal to some other value). First, see if they are all
+    // equal.
     auto& passOptions = getPassOptions();
-    auto zero = Literal::makeZero(type);
+//       // areConsecutiveInputsEqualAndFoldable
 
+    std::optional<Literal> theLiteral;
     for (auto* value : curr->values) {
-      // The values must be the the default/zero.
       value = Properties::getFallthrough(value,
                                          passOptions,
                                          *getModule());
-      if (!Properties::isSingleConstantExpression(value) ||
-          Properties::getLiteral(value) != zero) {
+      if (!Properties::isSingleConstantExpression(value)) {
+        // Not even constant.
+        return;
+      }
+
+      auto literal = Properties::getLiteral(value);
+      if (!theLiteral) {
+        theLiteral = literal;
+      } else if (literal != *theLiteral) {
+        // The values are not all equal.
         return;
       }
     }
 
-    // Success! Drop the children and return an array.new_with_default.
-    auto size = curr->values.size();
-    Builder builder(*getModule());
-    auto* withDefault = builder.makeArrayNew(curr->type.getHeapType(),
-                                             builder.makeConst(int32_t(size)));
-    replaceCurrent(getDroppedChildrenAndAppend(curr, withDefault));
+    // Great, the values are all equal!
+    auto type = curr->type.getHeapType().getArray().element.type;
+    assert(theLiteral);
+    if (type.isDefaultable() && *theLiteral == Literal::makeZero(type)) {
+      // They are all equal to the default. Drop the children and return an
+      // array.new_with_default.
+      auto size = curr->values.size();
+      Builder builder(*getModule());
+      auto* withDefault = builder.makeArrayNew(curr->type.getHeapType(),
+                                               builder.makeConst(int32_t(size)));
+      replaceCurrent(getDroppedChildrenAndAppend(curr, withDefault));
+      return;
+    }
+
+    // otherwise
   }
-      // areConsecutiveInputsEqualAndFoldable
 
   void visitArrayGet(ArrayGet* curr) {
     skipNonNullCast(curr->ref, curr);
