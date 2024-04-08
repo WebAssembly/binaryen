@@ -649,6 +649,20 @@ struct Struct2Local : PostWalker<Struct2Local> {
     curr->finalize();
   }
 
+  // Add a mask for packed fields. We add masks on sets rather than on gets
+  // because gets tend to be more numerous both in code appearances and in
+  // runtime execution. As a result of masking on sets, the value in the local
+  // is always the masked value (which is also nice for debugging,
+  // incidentally).
+  Expression* addMask(Expression* value, const Field& field) {
+    if (!field.isPacked()) {
+      return value;
+    }
+
+    auto mask = Bits::lowBitMask(field.getByteSize() * 8);
+    return builder.makeBinary(AndInt32, value, builder.makeConst(int32_t(mask)));
+  }
+
   void visitStructNew(StructNew* curr) {
     if (curr != allocation) {
       return;
@@ -695,6 +709,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
       // Copy them to the normal ones.
       for (Index i = 0; i < tempIndexes.size(); i++) {
         auto* value = builder.makeLocalGet(tempIndexes[i], fields[i].type);
+        // Add a mask on the values we write.
         contents.push_back(builder.makeLocalSet(
           localIndexes[i],
           addMask(value, fields[i])));
@@ -706,8 +721,11 @@ struct Struct2Local : PostWalker<Struct2Local> {
       //      defaults.
     } else {
       // Set the default values.
+      //
       // Note that we must assign the defaults because we might be in a loop,
       // that is, there might be a previous value.
+      //
+      // Note there is no need to mask as these are zeros anyhow.
       for (Index i = 0; i < localIndexes.size(); i++) {
         contents.push_back(builder.makeLocalSet(
           localIndexes[i],
@@ -796,16 +814,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(curr->ref),
       builder.makeLocalGet(localIndexes[curr->index], type)));
-  }
-
-  // Add a mask for packed fields.
-  Expression* addMask(Expression* value, const Field& field) {
-    if (!field.isPacked()) {
-      return value;
-    }
-
-    auto mask = Bits::lowBitMask(field.getByteSize() * 8);
-    return builder.makeBinary(AndInt32, value, builder.makeConst(int32_t(mask)));
   }
 };
 
