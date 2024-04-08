@@ -1782,6 +1782,42 @@ struct OptimizeInstructions
     }
   }
 
+  void zvisitStructNew(StructNew* curr) {
+    // If values are provided, but they are all the default, then we can remove
+    // them (in reachable code).
+    if (curr->type == Type::unreachable || curr->isWithDefault()) {
+      return;
+    }
+
+    auto& passOptions = getPassOptions();
+    const auto& fields = curr->type.getHeapType().getStruct().fields;
+    assert(fields.size() == curr->operands.size());
+
+    for (Index i = 0; i < fields.size(); i++) {
+      // The field must be defaultable.
+      auto type = fields[i].type;
+      if (!type.isDefaultable()) {
+        return;
+      }
+
+      // The field must be written the default value.
+      auto* value = Properties::getFallthrough(curr->operands[i],
+                                               passOptions,
+                                               *getModule());
+      if (!Properties::isSingleConstantExpression(value) ||
+          Properties::getLiteral(value) != Literal::makeZero(type)) {
+        return;
+      }
+    }
+
+    // Success! Drop the children and return a struct.new_with_default.
+    auto* rep = getDroppedChildrenAndAppend(curr, curr);
+        curr->operands.clear();
+    assert(curr->isWithDefault());
+    replaceCurrent(rep);
+  }
+      // areConsecutiveInputsEqualAndFoldable
+
   void visitStructGet(StructGet* curr) {
     skipNonNullCast(curr->ref, curr);
     trapOnNull(curr, curr->ref);
