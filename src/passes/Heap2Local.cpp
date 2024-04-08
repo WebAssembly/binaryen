@@ -150,6 +150,7 @@
 // This optimization focuses on such cases.
 //
 
+#include "ir/bits.h"
 #include "ir/branch-utils.h"
 #include "ir/find_all.h"
 #include "ir/local-graph.h"
@@ -765,9 +766,11 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
     // Drop the ref (leaving it to other opts to remove, when possible), and
     // write the data to the local instead of the heap allocation.
+    auto& fields = curr->ref->type.getHeapType().getStruct().fields;
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(curr->ref),
-      builder.makeLocalSet(localIndexes[curr->index], curr->value)));
+      builder.makeLocalSet(localIndexes[curr->index],
+                           addMask(curr->value, fields[curr->index]))));
   }
 
   void visitStructGet(StructGet* curr) {
@@ -794,6 +797,16 @@ struct Struct2Local : PostWalker<Struct2Local> {
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(curr->ref),
       builder.makeLocalGet(localIndexes[curr->index], type)));
+  }
+
+  // Add a mask for packed fields.
+  Expression* addMask(Expression* value, const Field& field) {
+    if (!field.isPacked()) {
+      return valuel
+    }
+
+    auto mask = Bits::lowBitMask(field->getByteSize() * 8);
+    return builder.makeBinary(AndInt32, value, builder.makeConst(int32_t(mask)));
   }
 };
 

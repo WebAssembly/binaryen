@@ -3231,3 +3231,118 @@
     )
   )
 )
+
+;; Packed arrays.
+(module
+  ;; CHECK:      (type $0 (func (result i32)))
+
+  ;; CHECK:      (type $array8 (array (mut i8)))
+  (type $array8 (array (mut i8)))
+
+  ;; CHECK:      (type $array16 (array (mut i16)))
+  (type $array16 (array (mut i16)))
+
+  ;; CHECK:      (func $array8 (type $0) (result i32)
+  ;; CHECK-NEXT:  (local $temp (ref $array8))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array8 (result i32)
+    (local $temp (ref $array8))
+    (local.set $temp
+      (array.new_default $array8
+        (i32.const 3)
+      )
+    )
+    (array.set $array8
+      (local.get $temp)
+      (i32.const 1)
+      (i32.const 1337)
+    )
+    (array.get $array8
+      (local.get $temp)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $array16 (type $0) (result i32)
+  ;; CHECK-NEXT:  (local $temp (ref $array16))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array16 (result i32)
+    (local $temp (ref $array16))
+    (local.set $temp
+      (array.new_default $array16
+        (i32.const 3)
+      )
+    )
+    (array.set $array16
+      (local.get $temp)
+      (i32.const 1)
+      (i32.const 1337)
+    )
+    (array.get $array16
+      (local.get $temp)
+      (i32.const 1)
+    )
+  )
+)
