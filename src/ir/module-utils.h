@@ -390,11 +390,13 @@ template<typename T> struct CallGraphPropertyAnalysis {
   //
   // hasProperty() - Check if the property is present.
   // canHaveProperty() - Check if the property could be present.
-  // addProperty() - Adds the property. This receives a second parameter which
-  //                 is the function due to which we are adding the property.
+  // addProperty() - Adds the property.
+  // logVisit() - Log each visit of the propagation. This is called before
+  //              we check if the function already has the property.
   void propagateBack(std::function<bool(const T&)> hasProperty,
                      std::function<bool(const T&)> canHaveProperty,
-                     std::function<void(T&, Function*)> addProperty,
+                     std::function<void(T&)> addProperty,
+                     std::function<void(const T&, Function*)> logVisit,
                      NonDirectCalls nonDirectCalls) {
     // The work queue contains items we just learned can change the state.
     UniqueDeferredQueue<Function*> work;
@@ -402,17 +404,23 @@ template<typename T> struct CallGraphPropertyAnalysis {
       if (hasProperty(map[func.get()]) ||
           (nonDirectCalls == NonDirectCallsHaveProperty &&
            map[func.get()].hasNonDirectCall)) {
-        addProperty(map[func.get()], func.get());
+        addProperty(map[func.get()]);
         work.push(func.get());
       }
     }
     while (!work.empty()) {
       auto* func = work.pop();
       for (auto* caller : map[func].calledBy) {
-        // If we don't already have the property, and we are not forbidden
-        // from getting it, then it propagates back to us now.
-        if (!hasProperty(map[caller]) && canHaveProperty(map[caller])) {
-          addProperty(map[caller], func);
+        // Skip functions forbidden from getting this property.
+        if (!canHaveProperty(map[caller])) {
+          continue;
+        }
+        // Log now, even if the function already has the property.
+        logVisit(map[caller], func);
+        // If we don't already have the property, then add it now, and propagate
+        // further.
+        if (!hasProperty(map[caller])) {
+          addProperty(map[caller]);
           work.push(caller);
         }
       }

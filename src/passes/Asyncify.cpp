@@ -716,13 +716,13 @@ public:
                             return !info.isBottomMostRuntime &&
                                    !info.inRemoveList;
                           },
-                          [verbose](Info& info, Function* reason) {
-                            if (verbose && !info.canChangeState) {
+                          [](Info& info) { info.canChangeState = true; },
+                          [verbose](const Info& info, Function* reason) {
+                            if (verbose) {
                               std::cout << "[asyncify] " << info.name
                                         << " can change the state due to "
                                         << reason->name << "\n";
                             }
-                            info.canChangeState = true;
                           },
                           scanner.IgnoreNonDirectCalls);
 
