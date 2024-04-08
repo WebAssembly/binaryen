@@ -3262,4 +3262,46 @@
       )
     )
   )
+
+  ;; CHECK:      (func $array.new (type $5)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (call $array.new)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (array.new_default $array
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new $array
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.new
+    ;; Convert array.new with the default value into array.new_default.
+    (drop
+      (array.new $array
+        (block (result i32)
+          (call $array.new)
+          (i32.const 0)
+        )
+        (i32.const 42)
+      )
+    )
+
+    ;; Ignore any non-default value.
+    (drop
+      (array.new $array
+        (i32.const 1)
+        (i32.const 42)
+      )
+    )
+  )
 )

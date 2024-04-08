@@ -1816,7 +1816,6 @@ struct OptimizeInstructions
     assert(curr->isWithDefault());
     replaceCurrent(rep);
   }
-      // areConsecutiveInputsEqualAndFoldable
 
   void visitStructGet(StructGet* curr) {
     skipNonNullCast(curr->ref, curr);
@@ -1978,6 +1977,75 @@ struct OptimizeInstructions
 
     return true;
   }
+
+  void visitArrayNew(ArrayNew* curr) {
+    // If values are provided, but they are all the default, then we can remove
+    // them (in reachable code).
+    if (curr->type == Type::unreachable || curr->isWithDefault()) {
+      return;
+    }
+
+    // The type must be defaultable.
+    auto type = curr->type.getHeapType().getArray().element.type;
+    if (!type.isDefaultable()) {
+      return;
+    }
+
+    // The value must be the the default/zero.
+    auto& passOptions = getPassOptions();
+    auto zero = Literal::makeZero(type);
+    auto* value = Properties::getFallthrough(curr->init,
+                                             passOptions,
+                                             *getModule());
+    if (!Properties::isSingleConstantExpression(value) ||
+        Properties::getLiteral(value) != zero) {
+      return;
+    }
+
+    // Success! Drop the init and return an array.new_with_default.
+    auto* init = curr->init;
+    curr->init = nullptr;
+    assert(curr->isWithDefault());
+    Builder builder(*getModule());
+    replaceCurrent(builder.makeSequence(builder.makeDrop(init), curr));
+  }
+
+#if 0
+  void visitArrayNewFixed(ArrayNewFixed* curr) {
+    // If values are provided, but they are all the default, then we can remove
+    // them (in reachable code).
+    if (curr->type == Type::unreachable || curr->isWithDefault()) {
+      return;
+    }
+
+    // The type must be defaultable.
+    auto type = curr->type.getHeapType().getArray().element.type;
+    if (!type.isDefaultable()) {
+      return;
+    }
+
+    auto& passOptions = getPassOptions();
+    auto zero = Literal::makeZero(type);
+
+    for (auto* operand : curr->operands) {
+      // The values must be the the default/zero.
+      auto* value = Properties::getFallthrough(operand,
+                                               passOptions,
+                                               *getModule());
+      if (!Properties::isSingleConstantExpression(value) ||
+          Properties::getLiteral(value) != zero) {
+        return;
+      }
+    }
+
+    // Success! Drop the children and return a struct.new_with_default.
+    auto* rep = getDroppedChildrenAndAppend(curr, curr);
+        curr->operands.clear();
+    assert(curr->isWithDefault());
+    replaceCurrent(rep);
+  }
+#endif
+      // areConsecutiveInputsEqualAndFoldable
 
   void visitArrayGet(ArrayGet* curr) {
     skipNonNullCast(curr->ref, curr);
