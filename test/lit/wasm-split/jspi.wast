@@ -18,7 +18,7 @@
 
  ;; PRIMARY:      (import "env" "__load_secondary_module" (func $import$__load_secondary_module (param externref)))
 
- ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
+ ;; PRIMARY:      (import "placeholder" "0" (func $fimport$1 (param i32) (result i32)))
 
  ;; PRIMARY:      (global $suspender (mut externref) (ref.null noextern))
 
@@ -26,7 +26,7 @@
 
  ;; PRIMARY:      (table $0 1 funcref)
 
- ;; PRIMARY:      (elem $0 (i32.const 0) $placeholder_0)
+ ;; PRIMARY:      (elem $0 (i32.const 0) $fimport$1)
 
  ;; PRIMARY:      (export "foo" (func $export$foo))
 

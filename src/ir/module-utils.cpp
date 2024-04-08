@@ -48,7 +48,7 @@ Function* copyFunction(Function* func,
                        std::optional<std::vector<Index>> fileIndexMap) {
   auto ret = std::make_unique<Function>();
   ret->name = newName.is() ? newName : func->name;
-  ret->hasExplicitName = newName.is() || func->hasExplicitName;
+  ret->hasExplicitName = func->hasExplicitName;
   ret->type = func->type;
   ret->vars = func->vars;
   ret->localNames = func->localNames;
@@ -212,12 +212,6 @@ void copyModuleItems(const Module& in, Module& out) {
   for (auto& curr : in.dataSegments) {
     copyDataSegment(curr.get(), out);
   }
-
-  for (auto& [type, names] : in.typeNames) {
-    if (!out.typeNames.count(type)) {
-      out.typeNames[type] = names;
-    }
-  }
 }
 
 void copyModule(const Module& in, Module& out) {
@@ -231,6 +225,7 @@ void copyModule(const Module& in, Module& out) {
   out.customSections = in.customSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
   out.features = in.features;
+  out.typeNames = in.typeNames;
 }
 
 void clearModule(Module& wasm) {

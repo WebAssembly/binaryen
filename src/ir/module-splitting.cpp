@@ -543,7 +543,7 @@ void ModuleSplitter::setupTablePatching() {
       placeholder->base = std::to_string(index);
       placeholder->name = Names::getValidFunctionName(
         primary, std::string("placeholder_") + placeholder->base.toString());
-      placeholder->hasExplicitName = true;
+      placeholder->hasExplicitName = false;
       placeholder->type = secondaryFunc->type;
       elem = placeholder->name;
       primary.addFunction(std::move(placeholder));
