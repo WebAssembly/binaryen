@@ -3176,7 +3176,14 @@
 
   ;; CHECK:      (func $struct.new_with_default (type $5)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new_default $struct)
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $struct.new_with_default
