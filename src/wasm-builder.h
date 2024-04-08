@@ -269,6 +269,7 @@ public:
     call->target = target;
     call->operands.set(args);
     call->isReturn = isReturn;
+    call->finalize();
     return call;
   }
   template<typename T>
