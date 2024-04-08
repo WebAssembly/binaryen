@@ -693,9 +693,10 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
       // Copy them to the normal ones.
       for (Index i = 0; i < tempIndexes.size(); i++) {
+        auto* value = builder.makeLocalGet(tempIndexes[i], fields[i].type);
         contents.push_back(builder.makeLocalSet(
           localIndexes[i],
-          builder.makeLocalGet(tempIndexes[i], fields[i].type)));
+          addMask(value, fields[i])));
       }
 
       // TODO Check if the nondefault case does not increase code size in some
