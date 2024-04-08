@@ -863,11 +863,10 @@ struct Array2Struct : PostWalker<Array2Struct> {
       WASM_UNREACHABLE("bad allocation");
     }
 
-    // Replace the things we need to using the visit* methods.
-    walk(func->body);
-
     // Update types along the path reached by the allocation: whenever we see
-    // the array type, it should be the struct type.
+    // the array type, it should be the struct type. Note that we do this before
+    // the walk that is after us, because the walk may read these types and
+    // depend on them to be valid.
     auto nullArray = Type(arrayType, Nullable);
     auto nonNullArray = Type(arrayType, NonNullable);
     auto nullStruct = Type(structType, Nullable);
@@ -879,6 +878,14 @@ struct Array2Struct : PostWalker<Array2Struct> {
         reached->type = nonNullStruct;
       }
     }
+
+    // Technically we should also fix up the types of locals as well, but after
+    // Struct2Local those locals will no longer be used anyhow, so avoid that
+    // work (though it makes the IR temporarily invalid in between Array2Struct
+    // and Struct2Local).
+
+    // Replace the things we need to using the visit* methods.
+    walk(func->body);
 
     if (refinalize) {
       ReFinalize().walkFunctionInModule(func, &wasm);
@@ -938,15 +945,6 @@ struct Array2Struct : PostWalker<Array2Struct> {
   void visitArrayGet(ArrayGet* curr) {
     if (!analyzer.reached.count(curr)) {
       return;
-    }
-
-    // As mentioned above we do not fix up types along the way from array to
-    // struct, but an exception we must make here is to fix the type of the
-    // |ref| child, which is used in |builder.makeStructGet| (if it is
-    // reachable).
-    if (curr->ref->type != Type::unreachable &&
-        curr->ref->type.getHeapType().isArray()) {
-      curr->ref->type = structNew->type;
     }
 
     // If this is an OOB array.get then we trap.
