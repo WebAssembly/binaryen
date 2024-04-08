@@ -3039,11 +3039,72 @@
 
 ;; Arrays with reference values.
 (module
+  ;; CHECK:      (type $array (sub (array (ref null $array))))
   (type $array (sub (array (ref null $array))))
 
-  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (func $nested-unreachable (type $0)
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (type $2 (struct (field (ref null $array)) (field (ref null $array)) (field (ref null $array))))
+
+  ;; CHECK:      (func $nested (type $1)
+  ;; CHECK-NEXT:  (local $0 (ref null $array))
+  ;; CHECK-NEXT:  (local $1 (ref null $array))
+  ;; CHECK-NEXT:  (local $2 (ref null $array))
+  ;; CHECK-NEXT:  (local $3 (ref null $array))
+  ;; CHECK-NEXT:  (local $4 (ref null $array))
+  ;; CHECK-NEXT:  (local $5 (ref null $array))
+  ;; CHECK-NEXT:  (local $6 (ref null $array))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $2))
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (array.new $array
+  ;; CHECK-NEXT:      (array.new_default $array
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result nullref)
+  ;; CHECK-NEXT:     (local.set $4
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $5
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $6
+  ;; CHECK-NEXT:      (local.get $0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $1
+  ;; CHECK-NEXT:      (local.get $4)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $2
+  ;; CHECK-NEXT:      (local.get $5)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $3
+  ;; CHECK-NEXT:      (local.get $6)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested
+    ;; Nested array.new operations, all of whom can be optimized away.
+    (drop
+      (array.new $array
+        (array.new $array
+          (array.new_default $array
+            (i32.const 1)
+          )
+          (i32.const 2)
+        )
+        (i32.const 3)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $nested-unreachable (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayNew we can't emit)
   ;; CHECK-NEXT:    (drop
