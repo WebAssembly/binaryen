@@ -7,7 +7,17 @@
   ;; CHECK:      (type $struct.A (struct (field (mut i32)) (field (mut f64))))
   (type $struct.A (struct (field (mut i32)) (field (mut f64))))
 
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (type $2 (func (result f64)))
+
   ;; CHECK:      (type $struct.recursive (struct (field (mut (ref null $struct.recursive)))))
+
+  ;; CHECK:      (type $4 (func (param (ref null $struct.A))))
+
+  ;; CHECK:      (type $5 (func (result i32)))
+
+  ;; CHECK:      (type $6 (func (result anyref)))
 
   ;; CHECK:      (type $struct.packed (struct (field (mut i8))))
   (type $struct.packed (struct (field (mut i8))))
@@ -17,6 +27,14 @@
   (type $struct.recursive (struct (field (mut (ref null $struct.recursive)))))
 
   (type $struct.nonnullable (struct (field (ref $struct.A))))
+
+  ;; CHECK:      (type $8 (func (param i32) (result f64)))
+
+  ;; CHECK:      (type $9 (func (param (ref null $struct.recursive))))
+
+  ;; CHECK:      (type $10 (func (param (ref $struct.A))))
+
+  ;; CHECK:      (type $11 (func (param i32)))
 
   ;; CHECK:      (func $simple (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
@@ -1957,6 +1975,8 @@
 (module
   ;; CHECK:      (type $A (sub (struct (field (ref null $A)))))
   (type $A (sub (struct (field (ref null $A)))))
+  ;; CHECK:      (type $1 (func (result anyref)))
+
   ;; CHECK:      (type $B (sub $A (struct (field (ref $A)))))
   (type $B (sub $A (struct (field (ref $A)))))
 
@@ -2062,6 +2082,8 @@
   (type $A (sub (struct (field (mut i32)))))
   (type $B (sub $A (struct (field (mut i32)))))
 
+  ;; CHECK:      (type $0 (func))
+
   ;; CHECK:      (func $func (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
@@ -2104,6 +2126,10 @@
 (module
   ;; CHECK:      (type $struct (struct (field (mut anyref))))
   (type $struct (struct (field (mut anyref))))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (type $2 (func (result anyref)))
 
   ;; CHECK:      (func $multiple-interactions (type $1)
   ;; CHECK-NEXT:  (local $temp (ref $struct))
@@ -2221,6 +2247,24 @@
 (module
   ;; CHECK:      (type $array (array (mut i32)))
   (type $array (array (mut i32)))
+
+  ;; CHECK:      (type $1 (func (result i32)))
+
+  ;; CHECK:      (type $2 (struct (field (mut i32))))
+
+  ;; CHECK:      (type $3 (func))
+
+  ;; CHECK:      (type $4 (func (param i32) (result i32)))
+
+  ;; CHECK:      (type $5 (struct (field (mut i32)) (field (mut i32))))
+
+  ;; CHECK:      (type $6 (func (param i32)))
+
+  ;; CHECK:      (type $7 (struct (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32))))
+
+  ;; CHECK:      (type $8 (struct ))
+
+  ;; CHECK:      (type $9 (struct (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32))))
 
   ;; CHECK:      (func $array.new_default (type $3)
   ;; CHECK-NEXT:  (local $temp (ref $array))
