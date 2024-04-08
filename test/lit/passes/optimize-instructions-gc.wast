@@ -12,14 +12,14 @@
     (field $i64 (mut i64))
   ))
 
+  ;; CHECK:      (type $array (array (mut i8)))
+
   ;; CHECK:      (type $A (sub (struct (field i32))))
   (type $A (sub (struct (field i32))))
 
-  ;; CHECK:      (type $B (sub $A (struct (field i32) (field i32) (field f32))))
-
-  ;; CHECK:      (type $array (array (mut i8)))
   (type $array (array (mut i8)))
 
+  ;; CHECK:      (type $B (sub $A (struct (field i32) (field i32) (field f32))))
   (type $B (sub $A (struct (field i32) (field i32) (field f32))))
 
   ;; CHECK:      (type $B-child (sub $B (struct (field i32) (field i32) (field f32) (field i64))))
@@ -3301,6 +3301,51 @@
       (array.new $array
         (i32.const 1)
         (i32.const 42)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array.new_fixed (type $5)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (call $array.new_fixed)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (array.new_default $array
+  ;; CHECK-NEXT:     (i32.const 3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_fixed $array 3
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.new_fixed
+    ;; Convert array.new_fixed with default values into array.new_default.
+    (drop
+      (array.new_fixed $array 3
+        (i32.const 0)
+        (block (result i32)
+          (call $array.new_fixed)
+          (i32.const 0)
+        )
+        (i32.const 0)
+      )
+    )
+
+    ;; Ignore any non-default value.
+    (drop
+      (array.new_fixed $array 3
+        (i32.const 0)
+        (i32.const 1)
+        (i32.const 0)
       )
     )
   )

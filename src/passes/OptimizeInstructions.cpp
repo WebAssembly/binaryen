@@ -2010,15 +2010,12 @@ struct OptimizeInstructions
     replaceCurrent(builder.makeSequence(builder.makeDrop(init), curr));
   }
 
-#if 0
   void visitArrayNewFixed(ArrayNewFixed* curr) {
-    // If values are provided, but they are all the default, then we can remove
-    // them (in reachable code).
-    if (curr->type == Type::unreachable || curr->isWithDefault()) {
+    if (curr->type == Type::unreachable) {
       return;
     }
 
-    // The type must be defaultable.
+    // As ArrayNew, if the values are the default, we can remove them.
     auto type = curr->type.getHeapType().getArray().element.type;
     if (!type.isDefaultable()) {
       return;
@@ -2027,24 +2024,24 @@ struct OptimizeInstructions
     auto& passOptions = getPassOptions();
     auto zero = Literal::makeZero(type);
 
-    for (auto* operand : curr->operands) {
+    for (auto* value : curr->values) {
       // The values must be the the default/zero.
-      auto* value = Properties::getFallthrough(operand,
-                                               passOptions,
-                                               *getModule());
+      value = Properties::getFallthrough(value,
+                                         passOptions,
+                                         *getModule());
       if (!Properties::isSingleConstantExpression(value) ||
           Properties::getLiteral(value) != zero) {
         return;
       }
     }
 
-    // Success! Drop the children and return a struct.new_with_default.
-    auto* rep = getDroppedChildrenAndAppend(curr, curr);
-        curr->operands.clear();
-    assert(curr->isWithDefault());
-    replaceCurrent(rep);
+    // Success! Drop the children and return an array.new_with_default.
+    auto size = curr->values.size();
+    Builder builder(*getModule());
+    auto* withDefault = builder.makeArrayNew(curr->type.getHeapType(),
+                                             builder.makeConst(int32_t(size)));
+    replaceCurrent(getDroppedChildrenAndAppend(curr, withDefault));
   }
-#endif
       // areConsecutiveInputsEqualAndFoldable
 
   void visitArrayGet(ArrayGet* curr) {
