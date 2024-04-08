@@ -3036,3 +3036,46 @@
     (i32.const 1337)
   )
 )
+
+;; Arrays with reference values.
+(module
+  (type $array (sub (array (ref null $array))))
+
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $nested-unreachable (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayNew we can't emit)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-unreachable
+    ;; The array.get in the middle is out of bounds, and will cause the outer
+    ;; array.new to become unreachable.
+    (drop
+      (array.new $array
+        (array.get $array
+          (array.new_default $array
+            (i32.const 0)
+          )
+          (i32.const 0)
+        )
+        (i32.const 0)
+      )
+    )
+  )
+)

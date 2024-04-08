@@ -1056,8 +1056,7 @@ struct Heap2Local {
     for (auto* allocation : finder.arrayNews) {
       // The point of this optimization is to replace heap allocations with
       // locals, so we must be able to place the data in locals.
-      auto element = allocation->type.getHeapType().getArray().element;
-      if (!canHandleAsLocal(element)) {
+      if (!canHandleAsLocals(allocation->type)) {
         continue;
       }
 
@@ -1101,16 +1100,23 @@ struct Heap2Local {
   }
 
   bool canHandleAsLocals(Type type) {
-    // We filtered out unreachables already.
-    assert(type != Type::unreachable);
-
-    auto& fields = type.getHeapType().getStruct().fields;
-    for (auto field : fields) {
-      if (!canHandleAsLocal(field)) {
-        return false;
-      }
+    if (type == Type::unreachable) {
+      return false;
     }
-    return true;
+
+    auto heapType = type.getHeapType();
+    if (heapType.isStruct()) {
+      auto& fields = heapType.getStruct().fields;
+      for (auto field : fields) {
+        if (!canHandleAsLocal(field)) {
+          return false;
+        }
+      }
+      return true;
+    }
+
+    assert(heapType.isArray());
+    return canHandleAsLocal(heapType.getArray().element);
   }
 };
 
