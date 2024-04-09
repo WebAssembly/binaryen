@@ -34,6 +34,7 @@
 #include <ir/iteration.h>
 #include <ir/literal-utils.h>
 #include <ir/load-utils.h>
+#include <ir/localize.h>
 #include <ir/manipulation.h>
 #include <ir/match.h>
 #include <ir/ordering.h>
@@ -1993,7 +1994,7 @@ struct OptimizeInstructions
       if (c->value.geti32() == 1) {
         // Optimize to ArrayNewFixed. Note that if the value is the default
         // then we may end up optimizing further in visitArrayNewFixed.
-        replaceCurrent(builder.makeArrayNewFixed(curr->type, curr->value));
+        replaceCurrent(builder.makeArrayNewFixed(curr->type.getHeapType(), {curr->init}));
         return;
       }
     }
@@ -2053,12 +2054,12 @@ struct OptimizeInstructions
     Builder builder(*getModule());
 
     // See if they are equal to a constant, and if that constant is the default.
+    auto type = curr->type.getHeapType().getArray().element.type;
     if (type.isDefaultable()) {
       auto* value = Properties::getFallthrough(curr->values[0],
                                                passOptions,
                                                *getModule());
 
-      auto type = curr->type.getHeapType().getArray().element.type;
       if (Properties::isSingleConstantExpression(value) &&
           Properties::getLiteral(value) == Literal::makeZero(type)) {
         // They are all equal to the default. Drop the children and return an
@@ -2070,38 +2071,26 @@ struct OptimizeInstructions
       }
     }
 
-    // They are all equal to each other, but not to the default value. Use
-    // array.new if we have more than 1, as when we have just 1 then
-    // ArrayNewFixed is actually more compact (and we optimize ArrayNew to it,
-    // in fact).
+    // They are all equal to each other, but not to the default value. If there
+    // are 2 or more elements here then we can save by using array.new (with 1,
+    // ArrayNewFixed is actually more compact, and we optimize ArrayNew to it,
+    // above).
     if (size == 1) {
       return;
     }
 
-    effects etc.
-//       // areConsecutiveInputsEqualAndFoldable
-
-    std::optional<Literal> theLiteral;
-    for (auto* value : curr->values) {
-      if (!Properties::isSingleConstantExpression(value)) {
-        // Not even constant.
-        return;
-      }
-
-      auto literal = Properties::getLiteral(value);
-      if (!theLiteral) {
-        theLiteral = literal;
-      } else if (literal != *theLiteral) {
-        // The values are not all equal.
-        return;
-      }
-    }
-
-    // Great, the values are all equal!
-    auto type = curr->type.getHeapType().getArray().element.type;
-    assert(theLiteral);
-
-    // otherwise
+    // Move children to locals, if we need to keep them around. We are removing
+    // them all, except from the first, when we remove the array.new_fixed's
+    // list of children and replace it with a single child + a constant for the
+    // number of children.
+    ChildLocalizer localizer(curr, getFunction(), *getModule(), getPassOptions());
+    auto* block = localizer.getChildrenReplacement();
+    auto* arrayNew = builder.makeArrayNew(curr->type.getHeapType(),
+                                          builder.makeConst(int32_t(size)),
+                                          curr->values[0]);
+    block->list.push_back(arrayNew);
+    block->finalize();
+    replaceCurrent(block);
   }
 
   void visitArrayGet(ArrayGet* curr) {

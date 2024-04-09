@@ -3303,6 +3303,22 @@
         (i32.const 42)
       )
     )
+
+    ;; array.new_fixed is preferable when the size is exactly 1.
+    (drop
+      (array.new $array
+        (i32.const 42)
+        (i32.const 1)
+      )
+    )
+
+    ;; Do nothing for size 0, for now (see TODO in code).
+    (drop
+      (array.new $array
+        (i32.const 42)
+        (i32.const 0)
+      )
+    )
   )
 
   ;; CHECK:      (func $array.new_fixed (type $5)
@@ -3340,12 +3356,34 @@
       )
     )
 
-    ;; Ignore any non-default value.
+    ;; Ignore when the values are not equal.
     (drop
       (array.new_fixed $array 3
         (i32.const 0)
         (i32.const 1)
         (i32.const 0)
+      )
+    )
+
+    ;; If they are equal but not default, we can optimize to array.new, even
+    ;; with effects.
+    (drop
+      (array.new_fixed $array 2
+        (block (result i32)
+          (call $array.new_fixed)
+          (i32.const 42)
+        )
+        (block (result i32)
+          (call $array.new_fixed)
+          (i32.const 42)
+        )
+      )
+    )
+
+    ;; Do nothing for size 1 (this is better than array.new as-is).
+    (drop
+      (array.new_fixed $array 1
+        (i32.const 42)
       )
     )
   )
