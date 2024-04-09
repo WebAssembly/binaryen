@@ -843,11 +843,6 @@ struct Array2Struct : PostWalker<Array2Struct> {
         // The ArrayNew* will be replaced with a block containing the local.set
         // and the structNew.
         arrayNewReplacement = builder.makeSequence(set, structNew);
-        // The data flows through the new block we just added: inform the
-        // analysis of that by telling it to treat it as code that it reached
-        // (only code we reached during the tracing of the allocation through
-        // the function will be optimized in Struct2Local).
-        noteIsReached(arrayNewReplacement);
       }
     } else if (auto* arrayNewFixed = allocation->dynCast<ArrayNewFixed>()) {
       // Simply use the same values as the array.
