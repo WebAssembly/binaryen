@@ -269,37 +269,27 @@
   )
  )
  (func $array.new_fixed (type $void_func) (; has Stack IR ;)
-  (local $0 (ref $bytes))
+  (local $0 i32)
+  (local $1 i32)
   (local.set $0
-   (array.new_fixed $bytes 2
-    (i32.const 42)
-    (i32.const 50)
-   )
+   (i32.const 42)
+  )
+  (local.set $1
+   (i32.const 50)
   )
   (call $log
    (i32.const 2)
   )
   (call $log
-   (array.get_u $bytes
-    (local.get $0)
-    (i32.const 0)
-   )
+   (i32.const 42)
   )
   (call $log
-   (array.get_u $bytes
-    (local.get $0)
-    (i32.const 1)
-   )
+   (i32.const 50)
   )
  )
  (func $array.new_fixed-packed (type $void_func) (; has Stack IR ;)
   (call $log
-   (array.get_u $bytes
-    (array.new_fixed $bytes 1
-     (i32.const -11512)
-    )
-    (i32.const 0)
-   )
+   (i32.const 8)
   )
  )
  (func $static-casts (type $void_func) (; has Stack IR ;)
