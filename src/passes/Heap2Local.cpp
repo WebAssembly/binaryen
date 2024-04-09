@@ -872,9 +872,18 @@ struct Array2Struct : PostWalker<Array2Struct> {
     auto nullStruct = Type(structType, Nullable);
     auto nonNullStruct = Type(structType, NonNullable);
     for (auto* reached : analyzer.reached) {
-      if (reached->type == nullArray) {
+      // We must check subtyping here because the allocation may be upcast as it
+      // flows around. If we do see such upcasting then we are refining here and
+      // must refinalize.
+      if (Type::isSubType(nullArray, reached->type)) {
+        if (nullArray != reached->type) {
+          refinalize = true;
+        }
         reached->type = nullStruct;
-      } else if (reached->type == nonNullArray) {
+      } else if (Type::isSubType(nonNullArray, reached->type)) {
+        if (nonNullArray != reached->type) {
+          refinalize = true;
+        }
         reached->type = nonNullStruct;
       }
     }
