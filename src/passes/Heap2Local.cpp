@@ -150,6 +150,7 @@
 // This optimization focuses on such cases.
 //
 
+#include "ir/bits.h"
 #include "ir/branch-utils.h"
 #include "ir/find_all.h"
 #include "ir/local-graph.h"
@@ -648,6 +649,21 @@ struct Struct2Local : PostWalker<Struct2Local> {
     curr->finalize();
   }
 
+  // Add a mask for packed fields. We add masks on sets rather than on gets
+  // because gets tend to be more numerous both in code appearances and in
+  // runtime execution. As a result of masking on sets, the value in the local
+  // is always the masked value (which is also nice for debugging,
+  // incidentally).
+  Expression* addMask(Expression* value, const Field& field) {
+    if (!field.isPacked()) {
+      return value;
+    }
+
+    auto mask = Bits::lowBitMask(field.getByteSize() * 8);
+    return builder.makeBinary(
+      AndInt32, value, builder.makeConst(int32_t(mask)));
+  }
+
   void visitStructNew(StructNew* curr) {
     if (curr != allocation) {
       return;
@@ -693,9 +709,10 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
       // Copy them to the normal ones.
       for (Index i = 0; i < tempIndexes.size(); i++) {
-        contents.push_back(builder.makeLocalSet(
-          localIndexes[i],
-          builder.makeLocalGet(tempIndexes[i], fields[i].type)));
+        auto* value = builder.makeLocalGet(tempIndexes[i], fields[i].type);
+        // Add a mask on the values we write.
+        contents.push_back(
+          builder.makeLocalSet(localIndexes[i], addMask(value, fields[i])));
       }
 
       // TODO Check if the nondefault case does not increase code size in some
@@ -704,8 +721,11 @@ struct Struct2Local : PostWalker<Struct2Local> {
       //      defaults.
     } else {
       // Set the default values.
+      //
       // Note that we must assign the defaults because we might be in a loop,
       // that is, there might be a previous value.
+      //
+      // Note there is no need to mask as these are zeros anyhow.
       for (Index i = 0; i < localIndexes.size(); i++) {
         contents.push_back(builder.makeLocalSet(
           localIndexes[i],
@@ -766,7 +786,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // write the data to the local instead of the heap allocation.
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(curr->ref),
-      builder.makeLocalSet(localIndexes[curr->index], curr->value)));
+      builder.makeLocalSet(localIndexes[curr->index],
+                           addMask(curr->value, fields[curr->index]))));
   }
 
   void visitStructGet(StructGet* curr) {
@@ -1111,14 +1132,7 @@ struct Heap2Local {
   }
 
   bool canHandleAsLocal(const Field& field) {
-    if (!TypeUpdating::canHandleAsLocal(field.type)) {
-      return false;
-    }
-    if (field.isPacked()) {
-      // TODO: support packed fields by adding coercions/truncations.
-      return false;
-    }
-    return true;
+    return TypeUpdating::canHandleAsLocal(field.type);
   }
 
   bool canHandleAsLocals(Type type) {

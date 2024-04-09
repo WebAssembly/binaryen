@@ -19,16 +19,16 @@
 
   ;; CHECK:      (type $6 (func (result anyref)))
 
-  ;; CHECK:      (type $struct.packed (struct (field (mut i8))))
-  (type $struct.packed (struct (field (mut i8))))
+  ;; CHECK:      (type $7 (func (param i32) (result f64)))
+
+  ;; CHECK:      (type $struct.packed (struct (field (mut i8)) (field (mut i32))))
+  (type $struct.packed (struct (field (mut i8)) (field (mut i32))))
 
   (type $struct.nondefaultable (struct (field (ref $struct.A))))
 
   (type $struct.recursive (struct (field (mut (ref null $struct.recursive)))))
 
   (type $struct.nonnullable (struct (field (ref $struct.A))))
-
-  ;; CHECK:      (type $8 (func (param i32) (result f64)))
 
   ;; CHECK:      (type $9 (func (param (ref null $struct.recursive))))
 
@@ -175,18 +175,113 @@
   )
 
   ;; CHECK:      (func $packed (type $1)
+  ;; CHECK-NEXT:  (local $temp (ref $struct.packed))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 i32)
+  ;; CHECK-NEXT:  (local $6 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get_u $struct.packed 0
-  ;; CHECK-NEXT:    (struct.new_default $struct.packed)
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:     (i32.const 1338)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.and
+  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:      (i32.const 255)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $4)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $1
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (i32.const 99998)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (i32.const 99999)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $5
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $6
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $packed
-    ;; We do not optimize packed structs yet.
+    (local $temp (ref $struct.packed))
+    ;; Packed fields require masking of irrelevant bits, which we apply on the
+    ;; sets.
+    (local.set $temp
+      (struct.new $struct.packed
+        (i32.const 1337)
+        (i32.const 1338)
+      )
+    )
+    (struct.set $struct.packed 0
+      (local.get $temp)
+      (i32.const 99998)
+    )
     (drop
       (struct.get $struct.packed 0
-        (struct.new_default $struct.packed)
+        (local.get $temp)
       )
+    )
+    ;; Unpacked fields in the same struct do not need anything.
+    (struct.set $struct.packed 1
+      (local.get $temp)
+      (i32.const 99999)
+    )
+    (drop
+      (struct.get $struct.packed 1
+        (local.get $temp)
+      )
+    )
+    ;; When using struct.new_default we do not need any masking, as the values
+    ;; written are 0 anyhow.
+    (local.set $temp
+      (struct.new_default $struct.packed)
     )
   )
 
@@ -647,7 +742,7 @@
     )
   )
 
-  ;; CHECK:      (func $local-copies-conditional (type $8) (param $x i32) (result f64)
+  ;; CHECK:      (func $local-copies-conditional (type $7) (param $x i32) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 f64)
@@ -741,7 +836,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-exclusive-get (type $8) (param $x i32) (result f64)
+  ;; CHECK:      (func $non-exclusive-get (type $7) (param $x i32) (result f64)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new_default $struct.A)
@@ -3308,6 +3403,127 @@
         (local.get $temp)
         (i32.const 0)
       )
+    )
+  )
+)
+
+;; Packed arrays.
+(module
+  ;; CHECK:      (type $0 (func (result i32)))
+
+  ;; CHECK:      (type $array8 (array (mut i8)))
+  (type $array8 (array (mut i8)))
+
+  ;; CHECK:      (type $array16 (array (mut i16)))
+  (type $array16 (array (mut i16)))
+
+  ;; CHECK:      (func $array8 (type $0) (result i32)
+  ;; CHECK-NEXT:  (local $temp (ref $array8))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array8 (result i32)
+    (local $temp (ref $array8))
+    (local.set $temp
+      (array.new_default $array8
+        (i32.const 3)
+      )
+    )
+    (array.set $array8
+      (local.get $temp)
+      (i32.const 1)
+      (i32.const 1337)
+    )
+    (array.get $array8
+      (local.get $temp)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      (func $array16 (type $0) (result i32)
+  ;; CHECK-NEXT:  (local $temp (ref $array16))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (i32.const 1337)
+  ;; CHECK-NEXT:     (i32.const 65535)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array16 (result i32)
+    (local $temp (ref $array16))
+    (local.set $temp
+      (array.new_default $array16
+        (i32.const 3)
+      )
+    )
+    (array.set $array16
+      (local.get $temp)
+      (i32.const 1)
+      (i32.const 1337)
+    )
+    (array.get $array16
+      (local.get $temp)
+      (i32.const 1)
     )
   )
 )
