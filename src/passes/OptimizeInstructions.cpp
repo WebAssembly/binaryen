@@ -2415,14 +2415,56 @@ private:
   // Information about our locals
   std::vector<LocalInfo> localInfo;
 
+  // Checks if the first is a local.tee and the second a local.get of that same
+  // index. This is useful in the methods right below us, as it is a common
+  // pattern where two consecutive inputs are equal despite being syntactically
+  // different.
+  bool areMatchingTeeAndGet(Expression* left, Expression* right) {
+    if (auto* set = left->dynCast<LocalSet>()) {
+      if (auto* get = right->dynCast<LocalGet>()) {
+        if (set->isTee() && get->index == set->index) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   // Check if two consecutive inputs to an instruction are equal. As they are
   // consecutive, no code can execeute in between them, which simplies the
   // problem here (and which is the case we care about in this pass, which does
   // simple peephole optimizations - all we care about is a single instruction
   // at a time, and its inputs).
-  //
-  // This also checks that the inputs are removable (but we do not assume the
-  // caller will always remove them).
+  bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
+    // When we look for a tee/get pair, we can consider the fallthrough values
+    // for both, as we are considering equality and not thinking about whether
+    // we can remove them or not. (However, we must use NoTeeBrIf as we do not
+    // want to look through the tee.)
+    auto& passOptions = getPassOptions();
+    left =
+      Properties::getFallthrough(left,
+                                 passOptions,
+                                 *getModule(),
+                                 Properties::FallthroughBehavior::NoTeeBrIf);
+    right = Properties::getFallthrough(right, passOptions, *getModule());
+    if (areMatchingTeeAndGet(left, right)) {
+      return true;
+    }
+
+    // Ignore extraneous things and compare them syntactically. We can also
+    // look at the full fallthrough for the left side now.
+    left = Properties::getFallthrough(left, passOptions, *getModule());
+    if (!ExpressionAnalyzer::equal(left, right)) {
+      return false;
+    }
+
+    // To be equal, they must also be known to return the same result
+    // deterministically.
+    return !Properties::isGenerative(left, getModule()->features);
+  }
+
+  // Similar to areConsecutiveInputsEqual() but also checks if we can remove
+  // them (but we do not assume the caller will always remove them).
   bool areConsecutiveInputsEqualAndRemovable(Expression* left,
                                              Expression* right) {
     // First, check for side effects. If there are any, then we can't even
@@ -2437,18 +2479,7 @@ private:
       return false;
     }
 
-    // Ignore extraneous things and compare them structurally.
-    left = Properties::getFallthrough(left, passOptions, *getModule());
-    right = Properties::getFallthrough(right, passOptions, *getModule());
-    if (!ExpressionAnalyzer::equal(left, right)) {
-      return false;
-    }
-    // To be equal, they must also be known to return the same result
-    // deterministically.
-    if (Properties::isGenerative(left, getModule()->features)) {
-      return false;
-    }
-    return true;
+    return areConsecutiveInputsEqual(left, right);
   }
 
   // Check if two consecutive inputs to an instruction are equal and can also be
@@ -2462,23 +2493,15 @@ private:
   // side effects at all in the middle. For example, a Const in between is ok.
   bool areConsecutiveInputsEqualAndFoldable(Expression* left,
                                             Expression* right) {
-    if (auto* set = left->dynCast<LocalSet>()) {
-      if (auto* get = right->dynCast<LocalGet>()) {
-        if (set->isTee() && get->index == set->index) {
-          return true;
-        }
-      }
+    // TODO: We could probably consider fallthrough values for left, at least
+    //       (since we fold into it).
+    if (areMatchingTeeAndGet(left, right)) {
+      return true;
     }
+
     // stronger property than we need - we can not only fold
     // them but remove them entirely.
     return areConsecutiveInputsEqualAndRemovable(left, right);
-  }
-
-  // Similar to areConsecutiveInputsEqualAndFoldable, but only checks that they
-  // are equal (and not that they are foldable).
-  bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
-    // TODO: optimize cases that must be equal but are *not* foldable.
-    return areConsecutiveInputsEqualAndFoldable(left, right);
   }
 
   // Canonicalizing the order of a symmetric binary helps us
