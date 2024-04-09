@@ -1979,13 +1979,26 @@ struct OptimizeInstructions
   }
 
   void visitArrayNew(ArrayNew* curr) {
-    // If values are provided, but they are all the default, then we can remove
-    // them (in reachable code).
+    // If a value is provided, we can optimize in some cases.
     if (curr->type == Type::unreachable || curr->isWithDefault()) {
       return;
     }
 
-    // The type must be defaultable.
+    Builder builder(*getModule());
+
+    // ArrayNew of size 1 is less efficient than ArrayNewFixed with one value
+    // (the latter avoids a Const, which ends up saving one byte).
+    // TODO: also look at the case with a fallthrough or effects on the size
+    if (auto* c = curr->size->dynCast<Const>()) {
+      if (c->value.geti32() == 1) {
+        // Optimize to ArrayNewFixed. Note that if the value is the default
+        // then we may end up optimizing further in visitArrayNewFixed.
+        replaceCurrent(builder.makeArrayNewFixed(curr->type, curr->value));
+        return;
+      }
+    }
+
+    // If the type is defaultable then perhaps the value here is the default.
     auto type = curr->type.getHeapType().getArray().element.type;
     if (!type.isDefaultable()) {
       return;
@@ -2006,7 +2019,6 @@ struct OptimizeInstructions
     auto* init = curr->init;
     curr->init = nullptr;
     assert(curr->isWithDefault());
-    Builder builder(*getModule());
     replaceCurrent(builder.makeSequence(builder.makeDrop(init), curr));
   }
 
@@ -2015,24 +2027,62 @@ struct OptimizeInstructions
       return;
     }
 
-    if (curr->values.empty()) {
-      // ArrayNewFixed that generates an empty array could be ArrayNew with a
-      // size of zero, or vice versa. TODO: Pick which and optimize
+    auto size = curr->values.size();
+    if (size == 0) {
+      // TODO: Consider what to do in the trivial case of an empty array: we can
+      //       can use ArrayNew or ArrayNewFixed there. Measure which is best.
       return;
     }
+
+    // There are at least two values, so we would like to
+
+    auto& passOptions = getPassOptions();
 
     // If all the values are equal then we can optimize, either to
     // array.new_default (if they are all equal to the default) or array.new (if
     // they are all equal to some other value). First, see if they are all
-    // equal.
-    auto& passOptions = getPassOptions();
+    // equal, which we do by comparing in pairs: 0,1 1,2 etc.
+    for (Index i = 0; i < size - 1; i++) {
+      if (!areConsecutiveInputsEqual(curr->values[i], curr->values[i + 1])) {
+        return;
+      }
+    }
+
+    // Great, they are all equal!
+
+    Builder builder(*getModule());
+
+    // See if they are equal to a constant, and if that constant is the default.
+    if (type.isDefaultable()) {
+      auto* value = Properties::getFallthrough(curr->values[0],
+                                               passOptions,
+                                               *getModule());
+
+      auto type = curr->type.getHeapType().getArray().element.type;
+      if (Properties::isSingleConstantExpression(value) &&
+          Properties::getLiteral(value) == Literal::makeZero(type)) {
+        // They are all equal to the default. Drop the children and return an
+        // array.new_with_default.
+        auto* withDefault = builder.makeArrayNew(curr->type.getHeapType(),
+                                                 builder.makeConst(int32_t(size)));
+        replaceCurrent(getDroppedChildrenAndAppend(curr, withDefault));
+        return;
+      }
+    }
+
+    // They are all equal to each other, but not to the default value. Use
+    // array.new if we have more than 1, as when we have just 1 then
+    // ArrayNewFixed is actually more compact (and we optimize ArrayNew to it,
+    // in fact).
+    if (size == 1) {
+      return;
+    }
+
+    effects etc.
 //       // areConsecutiveInputsEqualAndFoldable
 
     std::optional<Literal> theLiteral;
     for (auto* value : curr->values) {
-      value = Properties::getFallthrough(value,
-                                         passOptions,
-                                         *getModule());
       if (!Properties::isSingleConstantExpression(value)) {
         // Not even constant.
         return;
@@ -2050,16 +2100,6 @@ struct OptimizeInstructions
     // Great, the values are all equal!
     auto type = curr->type.getHeapType().getArray().element.type;
     assert(theLiteral);
-    if (type.isDefaultable() && *theLiteral == Literal::makeZero(type)) {
-      // They are all equal to the default. Drop the children and return an
-      // array.new_with_default.
-      auto size = curr->values.size();
-      Builder builder(*getModule());
-      auto* withDefault = builder.makeArrayNew(curr->type.getHeapType(),
-                                               builder.makeConst(int32_t(size)));
-      replaceCurrent(getDroppedChildrenAndAppend(curr, withDefault));
-      return;
-    }
 
     // otherwise
   }
