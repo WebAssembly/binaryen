@@ -15274,6 +15274,88 @@
       )
     )
   )
+  ;; CHECK:      (func $ternary-identical-arms-tee (param $param i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (call $send-i32
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (call $send-i32
+  ;; CHECK-NEXT:      (i32.const 1337)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (local.get $param)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-tee (param $param i32)
+    (local $x i32)
+    ;; The select's ifTrue and condition are equal (as a tee/get pair with
+    ;; only a const in between), but there is a side effect too, that prevents
+    ;; optimization atm TODO
+    (drop
+      (select
+        (local.tee $x
+          (local.get $param)
+        )
+        (i32.const 0)
+        (block (result i32)
+          (call $send-i32
+            (i32.const 42)
+          )
+          (local.get $x)
+        )
+      )
+    )
+    ;; Side effect on the ifTrue - same outcome, we cannot optimize yet.
+    (drop
+      (select
+        (block (result i32)
+          (call $send-i32
+            (i32.const 1337)
+          )
+          (local.tee $x
+            (local.get $param)
+          )
+        )
+        (i32.const 0)
+        (local.get $x)
+      )
+    )
+    ;; When there are no blocks or things and just a local.tee/get, we can
+    ;; optimize.
+    (drop
+      (select
+        (local.tee $x
+          (local.get $param)
+        )
+        (i32.const 0)
+        (local.get $x)
+      )
+    )
+  )
   ;; CHECK:      (func $ternary-identical-arms-and-type-is-none (param $x i32) (param $y i32) (param $z i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
