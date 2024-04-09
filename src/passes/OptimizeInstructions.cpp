@@ -2295,7 +2295,7 @@ private:
   std::vector<LocalInfo> localInfo;
 
   // Checks if the first is a local.tee and the second a local.get of that same
-  // index. This is useful in the methods right before us, as it is a common
+  // index. This is useful in the methods right below us, as it is a common
   // pattern where two consecutive inputs are equal despite being syntactically
   // different.
   bool areMatchingTeeAndGet(Expression* left, Expression* right) {

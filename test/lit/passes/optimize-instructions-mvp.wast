@@ -14873,7 +14873,7 @@
           (call $set-i32
             (i32.const 42)
           )
-          (local.tee $x         ;; this changes
+          (local.tee $x         ;; this changed
             (f64.const 12.34)
           )
         )
