@@ -11,7 +11,9 @@
 ;; Likewise, further up the call chain as well.
 ;;
 ;; CHECK: [asyncify] calls-calls-import can change the state due to calls-import
+;; CHECK: [asyncify] calls-calls-import-b can change the state due to calls-import
 ;; CHECK: [asyncify] calls-calls-calls-import can change the state due to calls-calls-import
+;; CHECK: [asyncify] calls-calls-calls-import can change the state due to calls-calls-import-b
 
 (module
   (import "env" "import" (func $import))
@@ -26,8 +28,13 @@
     (call $calls-import)
   )
 
+  (func $calls-calls-import-b
+    (call $calls-import)
+  )
+
   (func $calls-calls-calls-import
     (call $calls-calls-import)
+    (call $calls-calls-import-b)
   )
 
   (func $nothing

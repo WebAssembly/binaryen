@@ -25,6 +25,7 @@
 #include <memory>
 
 #include "asmjs/shared-constants.h"
+#include "ir/find_all.h"
 #include "ir/gc-type-utils.h"
 #include "ir/global-utils.h"
 #include "ir/import-utils.h"
@@ -1061,40 +1062,45 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
     params.push_back(Literal::makeZero(type));
   }
 
-  // We want to handle the form of the global constructor function in LLVM. That
-  // looks like this:
-  //
-  //    (func $__wasm_call_ctors
-  //      (call $ctor.1)
-  //      (call $ctor.2)
-  //      (call $ctor.3)
-  //    )
-  //
-  // Some of those ctors may be inlined, however, which would mean that the
-  // function could have locals, control flow, etc. However, we assume for now
-  // that it does not have parameters at least (whose values we can't tell).
-  // And for now we look for a toplevel block and process its children one at a
-  // time. This allows us to eval some of the $ctor.* functions (or their
-  // inlined contents) even if not all.
-  //
-  // TODO: Support complete partial evalling, that is, evaluate parts of an
-  //       arbitrary function, and not just a sequence in a single toplevel
-  //       block.
+  // After we successfully eval a line we will store the operations to set up
+  // the locals here. That is, we need to save the local state in the function,
+  // which we do by setting up at the entry. We update this list of expressions
+  // at the same time as applyToModule() - we must only do it after an entire
+  // atomic "chunk" has been processed succesfully, we do not want partial
+  // updates from an item in the block that we only partially evalled. When we
+  // construct the (partially) evalled function, we will create local.sets of
+  // these expressions at the beginning.
+  std::vector<Expression*> localExprs;
 
-  if (auto* block = func->body->dynCast<Block>()) {
+  // We might have to evaluate multiple functions due to return calls.
+start_eval:
+  while (true) {
+    // We want to handle the form of the global constructor function in LLVM.
+    // That looks like this:
+    //
+    //    (func $__wasm_call_ctors
+    //      (call $ctor.1)
+    //      (call $ctor.2)
+    //      (call $ctor.3)
+    //    )
+    //
+    // Some of those ctors may be inlined, however, which would mean that the
+    // function could have locals, control flow, etc. However, we assume for now
+    // that it does not have parameters at least (whose values we can't tell).
+    // And for now we look for a toplevel block and process its children one at
+    // a time. This allows us to eval some of the $ctor.* functions (or their
+    // inlined contents) even if not all.
+    //
+    // TODO: Support complete partial evalling, that is, evaluate parts of an
+    //       arbitrary function, and not just a sequence in a single toplevel
+    //       block.
+    Builder builder(wasm);
+    auto* block = builder.blockify(func->body);
+
     // Go through the items in the block and try to execute them. We do all this
     // in a single function scope for all the executions.
     EvallingModuleRunner::FunctionScope scope(func, params, instance);
 
-    // After we successfully eval a line we will store the operations to set up
-    // the locals here. That is, we need to save the local state in the
-    // function, which we do by setting up at the entry. We update this list of
-    // local.sets at the same time as applyToModule() - we must only do it after
-    // an entire atomic "chunk" has been processed succesfully, we do not want
-    // partial updates from an item in the block that we only partially evalled.
-    std::vector<Expression*> localSets;
-
-    Builder builder(wasm);
     Literals results;
     Index successes = 0;
 
@@ -1116,6 +1122,22 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
         break;
       }
 
+      if (flow.breakTo == RETURN_CALL_FLOW) {
+        // The return-called function is stored in the last value.
+        func = wasm.getFunction(flow.values.back().getFunc());
+        flow.values.pop_back();
+        params = std::move(flow.values);
+
+        // Serialize the arguments for the new function and save the module
+        // state in case we fail to eval the new function.
+        localExprs.clear();
+        for (auto& param : params) {
+          localExprs.push_back(interface.getSerialization(param));
+        }
+        interface.applyToModule();
+        goto start_eval;
+      }
+
       // So far so good! Serialize the values of locals, and apply to the
       // module. Note that we must serialize the locals now as doing so may
       // cause changes that must be applied to the module (e.g. GC data may
@@ -1128,11 +1150,9 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
       // of them, and leave it to the optimizer to remove redundant or
       // unnecessary operations. We just recompute the entire local
       // serialization sets from scratch each time here, for all locals.
-      localSets.clear();
+      localExprs.clear();
       for (Index i = 0; i < func->getNumLocals(); i++) {
-        auto value = scope.locals[i];
-        localSets.push_back(
-          builder.makeLocalSet(i, interface.getSerialization(value)));
+        localExprs.push_back(interface.getSerialization(scope.locals[i]));
       }
       interface.applyToModule();
       successes++;
@@ -1144,41 +1164,97 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
       if (flow.breaking()) {
         // We are returning out of the function (either via a return, or via a
         // break to |block|, which has the same outcome. That means we don't
-        // need to execute any more lines, and can consider them to be executed.
+        // need to execute any more lines, and can consider them to be
+        // executed.
         if (!quiet) {
           std::cout << "  ...stopping in block due to break\n";
         }
 
         // Mark us as having succeeded on the entire block, since we have: we
-        // are skipping the rest, which means there is no problem there. We must
-        // set this here so that lower down we realize that we've evalled
+        // are skipping the rest, which means there is no problem there. We
+        // must set this here so that lower down we realize that we've evalled
         // everything.
         successes = block->list.size();
         break;
       }
     }
 
-    if (successes > 0 && successes < block->list.size()) {
-      // We managed to eval some but not all. That means we can't just remove
-      // the entire function, but need to keep parts of it - the parts we have
-      // not evalled - around. To do so, we create a copy of the function with
-      // the partially-evalled contents and make the export use that (as the
-      // function may be used in other places than the export, which we do not
-      // want to affect).
+    // If we have not fully evaluated the current function, but we have
+    // evaluated part of it, have return-called to a different function, or have
+    // precomputed values for the current return-called function, then we can
+    // replace the export with a new function that does less work than the
+    // original.
+    if ((func->imported() || successes < block->list.size()) &&
+        (successes > 0 || func->name != funcName ||
+         (localExprs.size() && func->getParams() != Type::none))) {
+      auto originalFuncType = wasm.getFunction(funcName)->type;
       auto copyName = Names::getValidFunctionName(wasm, funcName);
-      auto* copyFunc = ModuleUtils::copyFunction(func, wasm, copyName);
       wasm.getExport(exportName)->value = copyName;
 
-      // Remove the items we've evalled.
-      auto* copyBlock = copyFunc->body->cast<Block>();
-      for (Index i = 0; i < successes; i++) {
-        copyBlock->list[i] = builder.makeNop();
+      if (func->imported()) {
+        // We must have return-called this imported function. Generate a new
+        // function that return-calls the import with the arguments we have
+        // evalled.
+        auto copyFunc = builder.makeFunction(
+          copyName,
+          originalFuncType,
+          {},
+          builder.makeCall(func->name, localExprs, func->getResults(), true));
+        wasm.addFunction(std::move(copyFunc));
+        return EvalCtorOutcome();
       }
 
-      // Put the local sets at the front of the block. We know there must be a
-      // nop in that position (since we've evalled at least one item in the
-      // block, and replaced it with a nop), so we can overwrite it.
-      copyBlock->list[0] = builder.makeBlock(localSets);
+      // We may have managed to eval some but not all. That means we can't just
+      // remove the entire function, but need to keep parts of it - the parts we
+      // have not evalled - around. To do so, we create a copy of the function
+      // with the partially-evalled contents and make the export use that (as
+      // the function may be used in other places than the export, which we do
+      // not want to affect).
+      auto* copyBody =
+        builder.blockify(ExpressionManipulator::copy(func->body, wasm));
+
+      // Remove the items we've evalled.
+      for (Index i = 0; i < successes; i++) {
+        copyBody->list[i] = builder.makeNop();
+      }
+
+      // Put the local sets at the front of the function body.
+      auto* setsBlock = builder.makeBlock();
+      for (Index i = 0; i < localExprs.size(); ++i) {
+        setsBlock->list.push_back(builder.makeLocalSet(i, localExprs[i]));
+      }
+      copyBody = builder.makeSequence(setsBlock, copyBody, copyBody->type);
+
+      // We may have return-called into a function with different parameter
+      // types, but we ultimately need to export a function with the original
+      // signature. If there is a mismatch, shift the local indices to make room
+      // for the unused parameters.
+      std::vector<Type> localTypes;
+      auto originalParams = originalFuncType.getSignature().params;
+      if (originalParams != func->getParams()) {
+        // Add locals for the body to use instead of using the params.
+        for (auto type : func->getParams()) {
+          localTypes.push_back(type);
+        }
+
+        // Shift indices in the body so they will refer to the new locals.
+        auto localShift = originalParams.size();
+        if (localShift != 0) {
+          for (auto* get : FindAll<LocalGet>(copyBody).list) {
+            get->index += localShift;
+          }
+          for (auto* set : FindAll<LocalSet>(copyBody).list) {
+            set->index += localShift;
+          }
+        }
+      }
+
+      // Add vars from current function.
+      localTypes.insert(localTypes.end(), func->vars.begin(), func->vars.end());
+
+      // Create and add the new function.
+      auto* copyFunc = wasm.addFunction(builder.makeFunction(
+        copyName, originalFuncType, std::move(localTypes), copyBody));
 
       // Interesting optimizations may be possible both due to removing some but
       // not all of the code, and due to the locals we just added.
@@ -1196,24 +1272,6 @@ EvalCtorOutcome evalCtor(EvallingModuleRunner& instance,
       return EvalCtorOutcome();
     }
   }
-
-  // Otherwise, we don't recognize a pattern that allows us to do partial
-  // evalling. So simply call the entire function at once and see if we can
-  // optimize that.
-
-  Literals results;
-  try {
-    results = instance.callFunction(funcName, params);
-  } catch (FailToEvalException& fail) {
-    if (!quiet) {
-      std::cout << "  ...stopping since could not eval: " << fail.why << "\n";
-    }
-    return EvalCtorOutcome();
-  }
-
-  // Success! Apply the results.
-  interface.applyToModule();
-  return EvalCtorOutcome(results);
 }
 
 // Eval all ctors in a module.
