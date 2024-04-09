@@ -10,6 +10,9 @@
   ;; CHECK:      (import "a" "b" (func $get-f64 (result f64)))
   (import "a" "b" (func $get-f64 (result f64)))
 
+  ;; CHECK:      (import "a" "c" (func $set-i32 (param i32)))
+  (import "a" "c" (func $set-i32 (param i32)))
+
   (memory 0)
 
   ;; CHECK:      (func $and-and (param $i1 i32) (result i32)
@@ -14711,7 +14714,9 @@
         (local.get $y0)
       )
     ))
-    ;; this one cannot be optimized as the runtime values may differ
+    ;; This one cannot be optimized as the runtime values may differ: the calls
+    ;; are "generative" in that identical syntactic calls may emit different
+    ;; results.
     (drop (f64.abs
       (f64.mul
         (call $get-f64)
@@ -14746,6 +14751,84 @@
       (f64.abs (f64.add (local.get $x0) (local.get $x0)))
     ))
   )
+
+  ;; CHECK:      (func $optimize-float-points-fallthrough (param $x0 f64) (param $x1 f64) (param $y0 f32) (param $y1 f32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.mul
+  ;; CHECK-NEXT:    (block (result f32)
+  ;; CHECK-NEXT:     (call $set-i32
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $y0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result f32)
+  ;; CHECK-NEXT:     (call $set-i32
+  ;; CHECK-NEXT:      (i32.const 1337)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $y0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (f64.mul
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (call $set-i32
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (call $get-f64)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (call $set-i32
+  ;; CHECK-NEXT:       (i32.const 1337)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (call $get-f64)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-float-points-fallthrough (param $x0 f64) (param $x1 f64) (param $y0 f32) (param $y1 f32)
+    ;; abs(x * x)   ==>   x * x  , as in the previous function.
+    ;;
+    ;; The fallthrough values here are identical, so we can optimize away the
+    ;; f32.abs despite the effects in both (and even different-looking effects).
+    (drop (f32.abs
+      (f32.mul
+        (block (result f32)
+          (call $set-i32
+            (i32.const 42)
+          )
+          (local.get $y0)
+        )
+        (block (result f32)
+          (call $set-i32
+            (i32.const 1337)
+          )
+          (local.get $y0)
+        )
+      )
+    ))
+
+    ;; But generative effects in the fallthrough values themselves block us.
+    (drop (f64.abs
+      (f64.mul
+        (block (result f64)
+          (call $set-i32
+            (i32.const 42)
+          )
+          (call $get-f64)
+        )
+        (block (result f64)
+          (call $set-i32
+            (i32.const 1337)
+          )
+          (call $get-f64)
+        )
+      )
+    ))
+  )
+
   ;; CHECK:      (func $ternary (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz

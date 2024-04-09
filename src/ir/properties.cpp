@@ -20,14 +20,12 @@
 namespace wasm::Properties {
 
 bool isGenerative(Expression* curr, FeatureSet features) {
-  // Practically no wasm instructions are generative. Exceptions occur only in
-  // GC atm.
-  if (!features.hasGC()) {
-    return false;
-  }
-
   struct Scanner : public PostWalker<Scanner> {
     bool generative = false;
+
+    void visitCall(Call* curr) { generative = true; }
+    void visitCallIndirect(CallIndirect* curr) { generative = true; }
+    void visitCallRef(CallRef* curr) { generative = true; }
     void visitStructNew(StructNew* curr) { generative = true; }
     void visitArrayNew(ArrayNew* curr) { generative = true; }
     void visitArrayNewFixed(ArrayNewFixed* curr) { generative = true; }

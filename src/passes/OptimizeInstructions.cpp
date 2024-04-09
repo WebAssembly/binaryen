@@ -2299,9 +2299,22 @@ private:
   // problem here (and which is the case we care about in this pass, which does
   // simple peephole optimizations - all we care about is a single instruction
   // at a time, and its inputs).
-  //
-  // This also checks that the inputs are removable (but we do not assume the
-  // caller will always remove them).
+  bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
+    // First, ignore extraneous things and compare them syntactically.
+    auto& passOptions = getPassOptions();
+    left = Properties::getFallthrough(left, passOptions, *getModule());
+    right = Properties::getFallthrough(right, passOptions, *getModule());
+    if (!ExpressionAnalyzer::equal(left, right)) {
+      return false;
+    }
+
+    // To be equal, they must also be known to return the same result
+    // deterministically.
+    return !Properties::isGenerative(left, getModule()->features);
+  }
+
+  // Similar to areConsecutiveInputsEqual() but also checks if we can remove
+  // them (but we do not assume the caller will always remove them).
   bool areConsecutiveInputsEqualAndRemovable(Expression* left,
                                              Expression* right) {
     // First, check for side effects. If there are any, then we can't even
@@ -2316,18 +2329,7 @@ private:
       return false;
     }
 
-    // Ignore extraneous things and compare them structurally.
-    left = Properties::getFallthrough(left, passOptions, *getModule());
-    right = Properties::getFallthrough(right, passOptions, *getModule());
-    if (!ExpressionAnalyzer::equal(left, right)) {
-      return false;
-    }
-    // To be equal, they must also be known to return the same result
-    // deterministically.
-    if (Properties::isGenerative(left, getModule()->features)) {
-      return false;
-    }
-    return true;
+    return areConsecutiveInputsEqual(left, right);
   }
 
   // Check if two consecutive inputs to an instruction are equal and can also be
@@ -2351,13 +2353,6 @@ private:
     // stronger property than we need - we can not only fold
     // them but remove them entirely.
     return areConsecutiveInputsEqualAndRemovable(left, right);
-  }
-
-  // Similar to areConsecutiveInputsEqualAndFoldable, but only checks that they
-  // are equal (and not that they are foldable).
-  bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
-    // TODO: optimize cases that must be equal but are *not* foldable.
-    return areConsecutiveInputsEqualAndFoldable(left, right);
   }
 
   // Canonicalizing the order of a symmetric binary helps us
