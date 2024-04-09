@@ -3110,8 +3110,8 @@
 
 ;; Arrays with reference values.
 (module
-  ;; CHECK:      (type $array (sub (array (ref null $array))))
-  (type $array (sub (array (ref null $array))))
+  ;; CHECK:      (type $array (array (ref null $array)))
+  (type $array (array (ref null $array)))
 
 
   ;; CHECK:      (type $1 (struct (field (ref null $array))))
