@@ -2294,13 +2294,36 @@ private:
   // Information about our locals
   std::vector<LocalInfo> localInfo;
 
+  // Checks if the first is a local.tee and the second a local.get of that same
+  // index. This is useful in the methods right before us, as it is a common
+  // pattern where two consecutive inputs are equal despite being syntactically
+  // different.
+  bool areMatchingTeeAndGet(Expression* left, Expression* right) {
+    auto& passOptions = getPassOptions();
+    left = Properties::getFallthrough(left, passOptions, *getModule(),
+                                      Properties::FallthroughBehavior::NoTeeBrIf);
+    if (auto* set = left->dynCast<LocalSet>()) {
+      right = Properties::getFallthrough(right, passOptions, *getModule());
+      if (auto* get = right->dynCast<LocalGet>()) {
+        if (set->isTee() && get->index == set->index) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   // Check if two consecutive inputs to an instruction are equal. As they are
   // consecutive, no code can execeute in between them, which simplies the
   // problem here (and which is the case we care about in this pass, which does
   // simple peephole optimizations - all we care about is a single instruction
   // at a time, and its inputs).
   bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
-    // First, ignore extraneous things and compare them syntactically.
+    if (areMatchingTeeAndGet(left, right)) {
+      return true;
+    }
+
+    // Ignore extraneous things and compare them syntactically.
     auto& passOptions = getPassOptions();
     left = Properties::getFallthrough(left, passOptions, *getModule());
     right = Properties::getFallthrough(right, passOptions, *getModule());
@@ -2343,13 +2366,10 @@ private:
   // side effects at all in the middle. For example, a Const in between is ok.
   bool areConsecutiveInputsEqualAndFoldable(Expression* left,
                                             Expression* right) {
-    if (auto* set = left->dynCast<LocalSet>()) {
-      if (auto* get = right->dynCast<LocalGet>()) {
-        if (set->isTee() && get->index == set->index) {
-          return true;
-        }
-      }
+    if (areMatchingTeeAndGet(left, right)) {
+      return true;
     }
+
     // stronger property than we need - we can not only fold
     // them but remove them entirely.
     return areConsecutiveInputsEqualAndRemovable(left, right);
