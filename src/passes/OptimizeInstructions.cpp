@@ -34,6 +34,7 @@
 #include <ir/iteration.h>
 #include <ir/literal-utils.h>
 #include <ir/load-utils.h>
+#include <ir/localize.h>
 #include <ir/manipulation.h>
 #include <ir/match.h>
 #include <ir/ordering.h>
@@ -1801,9 +1802,8 @@ struct OptimizeInstructions
       }
 
       // The field must be written the default value.
-      auto* value = Properties::getFallthrough(curr->operands[i],
-                                               passOptions,
-                                               *getModule());
+      auto* value = Properties::getFallthrough(
+        curr->operands[i], passOptions, *getModule());
       if (!Properties::isSingleConstantExpression(value) ||
           Properties::getLiteral(value) != Literal::makeZero(type)) {
         return;
@@ -1812,7 +1812,7 @@ struct OptimizeInstructions
 
     // Success! Drop the children and return a struct.new_with_default.
     auto* rep = getDroppedChildrenAndAppend(curr, curr);
-        curr->operands.clear();
+    curr->operands.clear();
     assert(curr->isWithDefault());
     replaceCurrent(rep);
   }
@@ -1979,13 +1979,27 @@ struct OptimizeInstructions
   }
 
   void visitArrayNew(ArrayNew* curr) {
-    // If values are provided, but they are all the default, then we can remove
-    // them (in reachable code).
+    // If a value is provided, we can optimize in some cases.
     if (curr->type == Type::unreachable || curr->isWithDefault()) {
       return;
     }
 
-    // The type must be defaultable.
+    Builder builder(*getModule());
+
+    // ArrayNew of size 1 is less efficient than ArrayNewFixed with one value
+    // (the latter avoids a Const, which ends up saving one byte).
+    // TODO: also look at the case with a fallthrough or effects on the size
+    if (auto* c = curr->size->dynCast<Const>()) {
+      if (c->value.geti32() == 1) {
+        // Optimize to ArrayNewFixed. Note that if the value is the default
+        // then we may end up optimizing further in visitArrayNewFixed.
+        replaceCurrent(
+          builder.makeArrayNewFixed(curr->type.getHeapType(), {curr->init}));
+        return;
+      }
+    }
+
+    // If the type is defaultable then perhaps the value here is the default.
     auto type = curr->type.getHeapType().getArray().element.type;
     if (!type.isDefaultable()) {
       return;
@@ -1994,9 +2008,8 @@ struct OptimizeInstructions
     // The value must be the the default/zero.
     auto& passOptions = getPassOptions();
     auto zero = Literal::makeZero(type);
-    auto* value = Properties::getFallthrough(curr->init,
-                                             passOptions,
-                                             *getModule());
+    auto* value =
+      Properties::getFallthrough(curr->init, passOptions, *getModule());
     if (!Properties::isSingleConstantExpression(value) ||
         Properties::getLiteral(value) != zero) {
       return;
@@ -2006,7 +2019,6 @@ struct OptimizeInstructions
     auto* init = curr->init;
     curr->init = nullptr;
     assert(curr->isWithDefault());
-    Builder builder(*getModule());
     replaceCurrent(builder.makeSequence(builder.makeDrop(init), curr));
   }
 
@@ -2015,53 +2027,69 @@ struct OptimizeInstructions
       return;
     }
 
-    if (curr->values.empty()) {
-      // ArrayNewFixed that generates an empty array could be ArrayNew with a
-      // size of zero, or vice versa. TODO: Pick which and optimize
+    auto size = curr->values.size();
+    if (size == 0) {
+      // TODO: Consider what to do in the trivial case of an empty array: we can
+      //       can use ArrayNew or ArrayNewFixed there. Measure which is best.
       return;
     }
+
+    // There are at least two values, so we would like to
+
+    auto& passOptions = getPassOptions();
 
     // If all the values are equal then we can optimize, either to
     // array.new_default (if they are all equal to the default) or array.new (if
     // they are all equal to some other value). First, see if they are all
-    // equal.
-    auto& passOptions = getPassOptions();
-//       // areConsecutiveInputsEqualAndFoldable
-
-    std::optional<Literal> theLiteral;
-    for (auto* value : curr->values) {
-      value = Properties::getFallthrough(value,
-                                         passOptions,
-                                         *getModule());
-      if (!Properties::isSingleConstantExpression(value)) {
-        // Not even constant.
-        return;
-      }
-
-      auto literal = Properties::getLiteral(value);
-      if (!theLiteral) {
-        theLiteral = literal;
-      } else if (literal != *theLiteral) {
-        // The values are not all equal.
+    // equal, which we do by comparing in pairs: 0,1 1,2 etc.
+    for (Index i = 0; i < size - 1; i++) {
+      if (!areConsecutiveInputsEqual(curr->values[i], curr->values[i + 1])) {
         return;
       }
     }
 
-    // Great, the values are all equal!
+    // Great, they are all equal!
+
+    Builder builder(*getModule());
+
+    // See if they are equal to a constant, and if that constant is the default.
     auto type = curr->type.getHeapType().getArray().element.type;
-    assert(theLiteral);
-    if (type.isDefaultable() && *theLiteral == Literal::makeZero(type)) {
-      // They are all equal to the default. Drop the children and return an
-      // array.new_with_default.
-      auto size = curr->values.size();
-      Builder builder(*getModule());
-      auto* withDefault = builder.makeArrayNew(curr->type.getHeapType(),
-                                               builder.makeConst(int32_t(size)));
-      replaceCurrent(getDroppedChildrenAndAppend(curr, withDefault));
+    if (type.isDefaultable()) {
+      auto* value =
+        Properties::getFallthrough(curr->values[0], passOptions, *getModule());
+
+      if (Properties::isSingleConstantExpression(value) &&
+          Properties::getLiteral(value) == Literal::makeZero(type)) {
+        // They are all equal to the default. Drop the children and return an
+        // array.new_with_default.
+        auto* withDefault = builder.makeArrayNew(
+          curr->type.getHeapType(), builder.makeConst(int32_t(size)));
+        replaceCurrent(getDroppedChildrenAndAppend(curr, withDefault));
+        return;
+      }
+    }
+
+    // They are all equal to each other, but not to the default value. If there
+    // are 2 or more elements here then we can save by using array.new (with 1,
+    // ArrayNewFixed is actually more compact, and we optimize ArrayNew to it,
+    // above).
+    if (size == 1) {
       return;
     }
 
-    // otherwise
+    // Move children to locals, if we need to keep them around. We are removing
+    // them all, except from the first, when we remove the array.new_fixed's
+    // list of children and replace it with a single child + a constant for the
+    // number of children.
+    ChildLocalizer localizer(
+      curr, getFunction(), *getModule(), getPassOptions());
+    auto* block = localizer.getChildrenReplacement();
+    auto* arrayNew = builder.makeArrayNew(curr->type.getHeapType(),
+                                          builder.makeConst(int32_t(size)),
+                                          curr->values[0]);
+    block->list.push_back(arrayNew);
+    block->finalize();
+    replaceCurrent(block);
   }
 
   void visitArrayGet(ArrayGet* curr) {

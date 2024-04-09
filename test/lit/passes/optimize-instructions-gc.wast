@@ -3283,6 +3283,17 @@
   ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_fixed $array 1
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new $array
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $array.new
     ;; Convert array.new with the default value into array.new_default.
@@ -3303,9 +3314,27 @@
         (i32.const 42)
       )
     )
+
+    ;; array.new_fixed is preferable when the size is exactly 1.
+    (drop
+      (array.new $array
+        (i32.const 42)
+        (i32.const 1)
+      )
+    )
+
+    ;; Do nothing for size 0, for now (see TODO in code).
+    (drop
+      (array.new $array
+        (i32.const 42)
+        (i32.const 0)
+      )
+    )
   )
 
   ;; CHECK:      (func $array.new_fixed (type $5)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $array))
   ;; CHECK-NEXT:    (drop
@@ -3326,6 +3355,38 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_fixed $array 3
+  ;; CHECK-NEXT:    (call $get-i32)
+  ;; CHECK-NEXT:    (call $get-i32)
+  ;; CHECK-NEXT:    (call $get-i32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (call $array.new_fixed)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (call $array.new_fixed)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (array.new $array
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_fixed $array 1
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $array.new_fixed
     ;; Convert array.new_fixed with default values into array.new_default.
@@ -3340,12 +3401,41 @@
       )
     )
 
-    ;; Ignore any non-default value.
+    ;; Ignore when the values are not equal.
     (drop
       (array.new_fixed $array 3
         (i32.const 0)
         (i32.const 1)
         (i32.const 0)
+      )
+    )
+    (drop
+      (array.new_fixed $array 3
+        (call $get-i32)
+        (call $get-i32)
+        (call $get-i32)
+      )
+    )
+
+    ;; If they are equal but not default, we can optimize to array.new, even
+    ;; with effects.
+    (drop
+      (array.new_fixed $array 2
+        (block (result i32)
+          (call $array.new_fixed)
+          (i32.const 42)
+        )
+        (block (result i32)
+          (call $array.new_fixed)
+          (i32.const 42)
+        )
+      )
+    )
+
+    ;; Do nothing for size 1 (this is better than array.new as-is).
+    (drop
+      (array.new_fixed $array 1
+        (i32.const 42)
       )
     )
   )
