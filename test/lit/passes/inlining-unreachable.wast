@@ -105,9 +105,11 @@
   ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (block $__return_call
   ;; CHECK-NEXT:       (block
-  ;; CHECK-NEXT:        (try_table
-  ;; CHECK-NEXT:         (unreachable)
-  ;; CHECK-NEXT:         (br $__return_call)
+  ;; CHECK-NEXT:        (try $try
+  ;; CHECK-NEXT:         (do
+  ;; CHECK-NEXT:          (unreachable)
+  ;; CHECK-NEXT:          (br $__return_call)
+  ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
@@ -125,12 +127,14 @@
     )
   )
 
-  ;; Same as above, but with a return_call with a try_table
+  ;; Same as above, but with a return_call with a try block
   (func $callee-2 (result i32)
-    (try_table
-     (return_call $imported
-      (unreachable)
-     )
+    (try
+      (do
+        (return_call $imported
+          (unreachable)
+        )
+      )
     )
   )
 )

@@ -488,8 +488,10 @@
  )
  ;; CHECK:      (func $caller-2
  ;; CHECK-NEXT:  (block $__original_body
- ;; CHECK-NEXT:   (try_table
- ;; CHECK-NEXT:    (br $__original_body)
+ ;; CHECK-NEXT:   (try $try
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (br $__original_body)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (return)
  ;; CHECK-NEXT:  )
@@ -500,8 +502,10 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $caller-2
-  (try_table
-   (return_call $callee)
+  (try
+   (do
+    (return_call $callee)
+   )
   )
  )
  (func $callee
@@ -528,8 +532,10 @@
  ;; CHECK:      (func $caller-2 (result i32)
  ;; CHECK-NEXT:  (block $__original_body
  ;; CHECK-NEXT:   (return
- ;; CHECK-NEXT:    (try_table
- ;; CHECK-NEXT:     (br $__original_body)
+ ;; CHECK-NEXT:    (try $try
+ ;; CHECK-NEXT:     (do
+ ;; CHECK-NEXT:      (br $__original_body)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -538,8 +544,10 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $caller-2 (result i32)
-  (try_table
-   (return_call $callee)
+  (try
+   (do
+    (return_call $callee)
+   )
   )
  )
  (func $callee (result i32)
@@ -573,12 +581,14 @@
  ;; CHECK:      (func $caller-2
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (block $__original_body
- ;; CHECK-NEXT:   (try_table
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (local.set $0
- ;; CHECK-NEXT:      (i32.const 42)
+ ;; CHECK-NEXT:   (try $try
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (block
+ ;; CHECK-NEXT:      (local.set $0
+ ;; CHECK-NEXT:       (i32.const 42)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (br $__original_body)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (br $__original_body)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (return)
@@ -590,9 +600,11 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $caller-2
-  (try_table
-   (return_call $callee
-    (i32.const 42)
+  (try
+   (do
+    (return_call $callee
+     (i32.const 42)
+    )
    )
   )
  )
@@ -627,12 +639,14 @@
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (block $__original_body
  ;; CHECK-NEXT:   (return
- ;; CHECK-NEXT:    (try_table
- ;; CHECK-NEXT:     (block
- ;; CHECK-NEXT:      (local.set $0
- ;; CHECK-NEXT:       (i32.const 42)
+ ;; CHECK-NEXT:    (try $try
+ ;; CHECK-NEXT:     (do
+ ;; CHECK-NEXT:      (block
+ ;; CHECK-NEXT:       (local.set $0
+ ;; CHECK-NEXT:        (i32.const 42)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (br $__original_body)
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (br $__original_body)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -642,9 +656,11 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $caller-2 (result i32)
-  (try_table
-   (return_call $callee
-    (i32.const 42)
+  (try
+   (do
+    (return_call $callee
+     (i32.const 42)
+    )
    )
   )
  )
@@ -700,7 +716,7 @@
  )
 )
 (module
- ;; Multiple params, no result, return_call within try_table
+ ;; Multiple params, no result, return_call within try block
  ;; CHECK:      (type $0 (func))
 
  ;; CHECK:      (func $caller
@@ -709,15 +725,17 @@
  ;; CHECK-NEXT:  (local $2 i32)
  ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (block $__original_body
- ;; CHECK-NEXT:   (try_table
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (local.set $2
- ;; CHECK-NEXT:      (local.get $x)
+ ;; CHECK-NEXT:   (try $try
+ ;; CHECK-NEXT:    (do
+ ;; CHECK-NEXT:     (block
+ ;; CHECK-NEXT:      (local.set $2
+ ;; CHECK-NEXT:       (local.get $x)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (local.set $3
+ ;; CHECK-NEXT:       (local.get $y)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (br $__original_body)
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (local.set $3
- ;; CHECK-NEXT:      (local.get $y)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (br $__original_body)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (return)
@@ -736,10 +754,12 @@
  (func $caller
   (local $x i32)
   (local $y i32)
-  (try_table
-   (return_call $callee
-    (local.get $x)
-    (local.get $y)
+  (try
+   (do
+    (return_call $callee
+     (local.get $x)
+     (local.get $y)
+    )
    )
   )
  )
@@ -783,15 +803,19 @@
  ;; CHECK-NEXT:  (block $__original_body_0
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (block $__original_body
- ;; CHECK-NEXT:     (try_table
- ;; CHECK-NEXT:      (br $__original_body)
+ ;; CHECK-NEXT:     (try $try
+ ;; CHECK-NEXT:      (do
+ ;; CHECK-NEXT:       (br $__original_body)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (return)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (block $__inlined_func$second-2$1
- ;; CHECK-NEXT:     (try_table
- ;; CHECK-NEXT:      (block
- ;; CHECK-NEXT:       (br $__original_body_0)
+ ;; CHECK-NEXT:     (try $try0
+ ;; CHECK-NEXT:      (do
+ ;; CHECK-NEXT:       (block
+ ;; CHECK-NEXT:        (br $__original_body_0)
+ ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -805,16 +829,20 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $first-2
-  (try_table
-   (return_call $second-2)
+  (try
+   (do
+    (return_call $second-2)
+   )
   )
  )
  (func $second
   (return_call $third)
  )
  (func $second-2
-  (try_table
-   (return_call $third)
+  (try
+   (do
+    (return_call $third)
+   )
   )
  )
  (func $third
@@ -895,7 +923,7 @@
 )
 
 (module
- ;; Chain of return_calls with params and results, return_calls in try_table.
+ ;; Chain of return_calls with params and results, return_calls in try block.
  ;; CHECK:      (type $0 (func (result i32)))
 
  ;; CHECK:      (func $first (result i32)
@@ -910,30 +938,34 @@
  ;; CHECK-NEXT:    (block
  ;; CHECK-NEXT:     (block $__original_body
  ;; CHECK-NEXT:      (return
- ;; CHECK-NEXT:       (try_table
- ;; CHECK-NEXT:        (block
- ;; CHECK-NEXT:         (local.set $2
- ;; CHECK-NEXT:          (local.get $x)
+ ;; CHECK-NEXT:       (try $try
+ ;; CHECK-NEXT:        (do
+ ;; CHECK-NEXT:         (block
+ ;; CHECK-NEXT:          (local.set $2
+ ;; CHECK-NEXT:           (local.get $x)
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:          (local.set $3
+ ;; CHECK-NEXT:           (local.get $y)
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:          (br $__original_body)
  ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (local.set $3
- ;; CHECK-NEXT:          (local.get $y)
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (br $__original_body)
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (block $__inlined_func$second
- ;; CHECK-NEXT:      (try_table
- ;; CHECK-NEXT:       (block
+ ;; CHECK-NEXT:      (try $try0
+ ;; CHECK-NEXT:       (do
  ;; CHECK-NEXT:        (block
- ;; CHECK-NEXT:         (local.set $4
- ;; CHECK-NEXT:          (local.get $2)
+ ;; CHECK-NEXT:         (block
+ ;; CHECK-NEXT:          (local.set $4
+ ;; CHECK-NEXT:           (local.get $2)
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:          (local.set $5
+ ;; CHECK-NEXT:           (local.get $3)
+ ;; CHECK-NEXT:          )
+ ;; CHECK-NEXT:          (br $__original_body_0)
  ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (local.set $5
- ;; CHECK-NEXT:          (local.get $3)
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:         (br $__original_body_0)
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
@@ -956,18 +988,22 @@
  (func $first (result i32)
   (local $x i32)
   (local $y i32)
-  (try_table
-   (return_call $second
-    (local.get $x)
-    (local.get $y)
+  (try
+   (do
+    (return_call $second
+     (local.get $x)
+     (local.get $y)
+    )
    )
   )
  )
  (func $second (param i32 i32) (result i32)
-  (try_table
-   (return_call $third
-    (local.get 0)
-    (local.get 1)
+  (try
+   (do
+    (return_call $third
+     (local.get 0)
+     (local.get 1)
+    )
    )
   )
  )
@@ -1014,9 +1050,11 @@
  ;; CHECK-NEXT:     (block (result i32)
  ;; CHECK-NEXT:      (block $__return_call
  ;; CHECK-NEXT:       (block
- ;; CHECK-NEXT:        (try_table
- ;; CHECK-NEXT:         (block
- ;; CHECK-NEXT:          (br $__return_call)
+ ;; CHECK-NEXT:        (try $try
+ ;; CHECK-NEXT:         (do
+ ;; CHECK-NEXT:          (block
+ ;; CHECK-NEXT:           (br $__return_call)
+ ;; CHECK-NEXT:          )
  ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
@@ -1040,8 +1078,10 @@
   (return_call $third)
  )
  (func $second-2 (result i32)
-  (try_table
-   (return_call $third)
+  (try
+   (do
+    (return_call $third)
+   )
   )
  )
  (func $third (result i32)
@@ -1080,9 +1120,11 @@
  ;; CHECK-NEXT:  (block $__inlined_func$second-2$1
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (block $__return_call
- ;; CHECK-NEXT:     (try_table
- ;; CHECK-NEXT:      (block
- ;; CHECK-NEXT:       (br $__return_call)
+ ;; CHECK-NEXT:     (try $try
+ ;; CHECK-NEXT:      (do
+ ;; CHECK-NEXT:       (block
+ ;; CHECK-NEXT:        (br $__return_call)
+ ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (br $__inlined_func$second-2$1)
@@ -1109,9 +1151,11 @@
   )
  )
  (func $second-2
-  (try_table
-   (return_call $third
-    (i32.const 42)
+  (try
+   (do
+    (return_call $third
+     (i32.const 42)
+    )
    )
   )
  )
@@ -1145,9 +1189,11 @@
  ;; CHECK-NEXT:  (block $__inlined_func$second-2$1
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (block $__return_call
- ;; CHECK-NEXT:     (try_table
- ;; CHECK-NEXT:      (br $__inlined_func$second-2$1)
- ;; CHECK-NEXT:      (br $__return_call)
+ ;; CHECK-NEXT:     (try $try
+ ;; CHECK-NEXT:      (do
+ ;; CHECK-NEXT:       (br $__inlined_func$second-2$1)
+ ;; CHECK-NEXT:       (br $__return_call)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (br $__inlined_func$second-2$1)
  ;; CHECK-NEXT:    )
@@ -1166,9 +1212,11 @@
   )
  )
  (func $second-2
-  (try_table
-   (return_call $third
-    (return)
+  (try
+   (do
+    (return_call $third
+     (return)
+    )
    )
   )
  )
@@ -1213,14 +1261,16 @@
  ;; CHECK-NEXT:  (block $__inlined_func$second-2$1
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (block $__return_call
- ;; CHECK-NEXT:     (try_table
- ;; CHECK-NEXT:      (block
- ;; CHECK-NEXT:       (local.tee $0
- ;; CHECK-NEXT:        (block
- ;; CHECK-NEXT:         (br $__inlined_func$second-2$1)
+ ;; CHECK-NEXT:     (try $try
+ ;; CHECK-NEXT:      (do
+ ;; CHECK-NEXT:       (block
+ ;; CHECK-NEXT:        (local.tee $0
+ ;; CHECK-NEXT:         (block
+ ;; CHECK-NEXT:          (br $__inlined_func$second-2$1)
+ ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
+ ;; CHECK-NEXT:        (br $__return_call)
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (br $__return_call)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (br $__inlined_func$second-2$1)
@@ -1249,10 +1299,12 @@
   )
  )
  (func $second-2
-  (try_table
-   (return_call $third
-    (block (result i32)
-     (return)
+  (try
+   (do
+    (return_call $third
+     (block (result i32)
+      (return)
+     )
     )
    )
   )
@@ -1309,8 +1361,10 @@
  ;; CHECK-NEXT:     (block (result i32)
  ;; CHECK-NEXT:      (block $__return_call
  ;; CHECK-NEXT:       (block
- ;; CHECK-NEXT:        (try_table
- ;; CHECK-NEXT:         (br $__return_call)
+ ;; CHECK-NEXT:        (try $try
+ ;; CHECK-NEXT:         (do
+ ;; CHECK-NEXT:          (br $__return_call)
+ ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
@@ -1329,10 +1383,12 @@
   )
  )
  (func $callee-2 (result i32)
-  (try_table
-   (return_call_indirect (type $T)
-    (i32.const 42)
-    (i32.const 0)
+  (try
+   (do
+    (return_call_indirect (type $T)
+     (i32.const 42)
+     (i32.const 0)
+    )
    )
   )
  )
@@ -1369,8 +1425,10 @@
  ;; CHECK-NEXT:  (block $__inlined_func$callee-2$1
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (block $__return_call
- ;; CHECK-NEXT:     (try_table
- ;; CHECK-NEXT:      (br $__return_call)
+ ;; CHECK-NEXT:     (try $try
+ ;; CHECK-NEXT:      (do
+ ;; CHECK-NEXT:       (br $__return_call)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (br $__inlined_func$callee-2$1)
  ;; CHECK-NEXT:    )
@@ -1385,10 +1443,12 @@
   (call $callee-2)
  )
  (func $callee-2
-  (try_table
-   (return_call_indirect (type $T)
-    (i32.const 42)
-    (i32.const 0)
+  (try
+   (do
+    (return_call_indirect (type $T)
+     (i32.const 42)
+     (i32.const 0)
+    )
    )
   )
  )
@@ -1491,8 +1551,10 @@
     (unreachable)
    )
   )
-  (try_table
-   (return_call $2)
+  (try
+   (do
+    (return_call $2)
+   )
   )
  )
  ;; CHECK:      (func $19
@@ -1508,8 +1570,10 @@
  ;; CHECK-NEXT:          (unreachable)
  ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (try_table
- ;; CHECK-NEXT:         (br $__original_body)
+ ;; CHECK-NEXT:        (try $try
+ ;; CHECK-NEXT:         (do
+ ;; CHECK-NEXT:          (br $__original_body)
+ ;; CHECK-NEXT:         )
  ;; CHECK-NEXT:        )
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:       (br $__inlined_func$13$1)
