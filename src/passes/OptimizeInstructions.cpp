@@ -2300,8 +2300,11 @@ private:
   // different.
   bool areMatchingTeeAndGet(Expression* left, Expression* right) {
     auto& passOptions = getPassOptions();
-    left = Properties::getFallthrough(left, passOptions, *getModule(),
-                                      Properties::FallthroughBehavior::NoTeeBrIf);
+    left =
+      Properties::getFallthrough(left,
+                                 passOptions,
+                                 *getModule(),
+                                 Properties::FallthroughBehavior::NoTeeBrIf);
     if (auto* set = left->dynCast<LocalSet>()) {
       right = Properties::getFallthrough(right, passOptions, *getModule());
       if (auto* get = right->dynCast<LocalGet>()) {
