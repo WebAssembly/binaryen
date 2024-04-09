@@ -2588,6 +2588,55 @@
     )
   )
 
+  ;; CHECK:      (func $array.local.super (type $3)
+  ;; CHECK-NEXT:  (local $temp anyref)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result nullref)
+  ;; CHECK-NEXT:     (local.set $3
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $2
+  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (i32.const 100)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.local.super
+    ;; This local is a supertype, and the allocation flows through a cast, all
+    ;; of which we handle.
+    (local $temp (ref null any))
+    (local.set $temp
+      (array.new $array
+        (i32.const 42)
+        (i32.const 1)
+      )
+    )
+    (array.set $array
+      (ref.cast (ref $array)
+        (local.get $temp)
+      )
+      (i32.const 0)
+      (i32.const 100)
+    )
+  )
+
   ;; CHECK:      (func $array.folded (type $2) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
