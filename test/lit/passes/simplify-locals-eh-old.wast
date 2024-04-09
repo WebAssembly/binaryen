@@ -152,6 +152,57 @@
     )
   )
 
+  ;; CHECK:      (func $return-call-can-be-sinked-into-try (type $3) (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (try $try (result i32)
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (if (result i32)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (return_call $return-call-can-be-sinked-into-try)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (else
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $e-i32
+  ;; CHECK-NEXT:    (pop i32)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $return-call-can-be-sinked-into-try (result i32)
+    (local $0 i32)
+    (drop
+      ;; This cannot throw either, so it can be sunk. Wrap the return_call in an
+      ;; if so the whole expression does not return unconditionally.
+      (local.tee $0
+        (if (result i32)
+          (i32.const 0)
+          (then
+            (return_call $return-call-can-be-sinked-into-try)
+          )
+          (else
+            (i32.const 1)
+          )
+        )
+      )
+    )
+    (try (result i32)
+      (do
+        (drop (local.get $0))
+        (i32.const 0)
+      )
+      (catch $e-i32
+        (pop i32)
+      )
+    )
+  )
+
   ;; CHECK:      (func $equivalent-set-removal-call (type $1) (param $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (nop)

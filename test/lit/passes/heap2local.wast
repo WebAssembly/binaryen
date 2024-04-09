@@ -2343,9 +2343,9 @@
   ;; CHECK:      (type $array (array (mut i32)))
   (type $array (array (mut i32)))
 
-  ;; CHECK:      (type $1 (func (result i32)))
+  ;; CHECK:      (type $1 (struct (field (mut i32))))
 
-  ;; CHECK:      (type $2 (struct (field (mut i32))))
+  ;; CHECK:      (type $2 (func (result i32)))
 
   ;; CHECK:      (type $3 (func))
 
@@ -2501,7 +2501,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.new (type $1) (result i32)
+  ;; CHECK:      (func $array.new (type $2) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -2683,7 +2683,56 @@
     )
   )
 
-  ;; CHECK:      (func $array.folded (type $1) (result i32)
+  ;; CHECK:      (func $array.local.super (type $3)
+  ;; CHECK-NEXT:  (local $temp anyref)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result nullref)
+  ;; CHECK-NEXT:     (local.set $3
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $2
+  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (i32.const 100)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.local.super
+    ;; This local is a supertype, and the allocation flows through a cast, all
+    ;; of which we handle.
+    (local $temp (ref null any))
+    (local.set $temp
+      (array.new $array
+        (i32.const 42)
+        (i32.const 1)
+      )
+    )
+    (array.set $array
+      (ref.cast (ref $array)
+        (local.get $temp)
+      )
+      (i32.const 0)
+      (i32.const 100)
+    )
+  )
+
+  ;; CHECK:      (func $array.folded (type $2) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -2821,7 +2870,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref null $2))
+  ;; CHECK-NEXT:     (block (result (ref null $1))
   ;; CHECK-NEXT:      (local.set $1
   ;; CHECK-NEXT:       (call $get-i32)
   ;; CHECK-NEXT:      )
@@ -3017,7 +3066,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.nested.refinalize.get (type $1) (result i32)
+  ;; CHECK:      (func $array.nested.refinalize.get (type $2) (result i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (ref.null none)
@@ -3059,13 +3108,13 @@
     )
   )
 
-  ;; CHECK:      (func $array.flowing.type (type $1) (result i32)
+  ;; CHECK:      (func $array.flowing.type (type $2) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $2))
+  ;; CHECK-NEXT:   (block (result (ref null $1))
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
@@ -3081,12 +3130,22 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $2))
+  ;; CHECK-NEXT:   (block (result (ref null $1))
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $2))
+  ;; CHECK-NEXT:   (block (result (ref null $1))
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $1))
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $1))
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -3117,13 +3176,25 @@
         (local.get $temp)
       )
     )
+    ;; Test supertypes too.
+    (drop
+      (block $non-nullable (result (ref array))
+        (local.get $temp)
+      )
+    )
+    (drop
+      (block $non-nullable (result (ref null array))
+        (local.get $temp)
+      )
+    )
+    ;; Read from the array as well.
     (array.get $array
       (local.get $temp)
       (i32.const 0)
     )
   )
 
-  ;; CHECK:      (func $get-i32 (type $1) (result i32)
+  ;; CHECK:      (func $get-i32 (type $2) (result i32)
   ;; CHECK-NEXT:  (i32.const 1337)
   ;; CHECK-NEXT: )
   (func $get-i32 (result i32)
@@ -3134,15 +3205,19 @@
 
 ;; Arrays with reference values.
 (module
-  ;; CHECK:      (type $array (sub (array (ref null $array))))
-  (type $array (sub (array (ref null $array))))
+  ;; CHECK:      (type $array (array (ref null $array)))
+  (type $array (array (ref null $array)))
 
 
-  ;; CHECK:      (type $1 (func))
+  ;; CHECK:      (type $1 (struct (field (ref null $array))))
 
-  ;; CHECK:      (type $2 (struct (field (ref null $array)) (field (ref null $array)) (field (ref null $array))))
+  ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (func $nested (type $1)
+  ;; CHECK:      (type $3 (struct (field (ref null $array)) (field (ref null $array)) (field (ref null $array))))
+
+  ;; CHECK:      (type $4 (func (result anyref)))
+
+  ;; CHECK:      (func $nested (type $2)
   ;; CHECK-NEXT:  (local $0 (ref null $array))
   ;; CHECK-NEXT:  (local $1 (ref null $array))
   ;; CHECK-NEXT:  (local $2 (ref null $array))
@@ -3151,7 +3226,7 @@
   ;; CHECK-NEXT:  (local $5 (ref null $array))
   ;; CHECK-NEXT:  (local $6 (ref null $array))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref null $2))
+  ;; CHECK-NEXT:   (block (result (ref null $3))
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (array.new $array
   ;; CHECK-NEXT:      (array.new_default $array
@@ -3201,7 +3276,7 @@
     )
   )
 
-  ;; CHECK:      (func $nested-unreachable (type $1)
+  ;; CHECK:      (func $nested-unreachable (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayNew we can't emit)
   ;; CHECK-NEXT:    (drop
@@ -3232,6 +3307,100 @@
           )
           (i32.const 0)
         )
+        (i32.const 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array.flowing.type (type $4) (result anyref)
+  ;; CHECK-NEXT:  (local $temp (ref $array))
+  ;; CHECK-NEXT:  (local $1 (ref null $array))
+  ;; CHECK-NEXT:  (local $2 (ref null $array))
+  ;; CHECK-NEXT:  (local $3 (ref null $array))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $1))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result nullref)
+  ;; CHECK-NEXT:     (local.set $3
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.set $2
+  ;; CHECK-NEXT:      (local.get $3)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $1))
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $1))
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $1))
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref null $1))
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result (ref null $array))
+  ;; CHECK-NEXT:   (block (result (ref null $array))
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.flowing.type (result anyref)
+    (local $temp (ref $array))
+    ;; This is similar to $array.flowing.type from above, but now the array's
+    ;; values are references.
+    (local.set $temp
+      (array.new $array
+        (ref.null $array)
+        (i32.const 1)
+      )
+    )
+    (drop
+      (block $nullable (result (ref null $array))
+        (local.get $temp)
+      )
+    )
+    (drop
+      (block $non-nullable (result (ref $array))
+        (local.get $temp)
+      )
+    )
+    ;; Test supertypes too.
+    (drop
+      (block $non-nullable (result (ref array))
+        (local.get $temp)
+      )
+    )
+    (drop
+      (block $non-nullable (result (ref null array))
+        (local.get $temp)
+      )
+    )
+    ;; This block's type should end up valid. In particular this test checks
+    ;; that we do not get confused by the array's type, which we rewrite to the
+    ;; struct type in Array2Struct - this array.get's type is the array type,
+    ;; but only because the value we read is the array type, and not because the
+    ;; allocation reaches here.
+    (block (result anyref)
+      (array.get $array
+        (local.get $temp)
         (i32.const 0)
       )
     )

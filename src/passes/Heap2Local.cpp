@@ -836,15 +836,9 @@ struct Array2Struct : PostWalker<Array2Struct> {
 
     // Build the struct type we need: as many fields as the size of the array,
     // all of the same type as the array's element.
+    numFields = getArrayNewSize(allocation);
     auto arrayType = allocation->type.getHeapType();
     auto element = arrayType.getArray().element;
-    if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
-      numFields = getIndex(arrayNew->size);
-    } else if (auto* arrayNewFixed = allocation->dynCast<ArrayNewFixed>()) {
-      numFields = arrayNewFixed->values.size();
-    } else {
-      WASM_UNREACHABLE("bad allocation");
-    }
     FieldList fields;
     for (Index i = 0; i < numFields; i++) {
       fields.push_back(element);
@@ -870,11 +864,6 @@ struct Array2Struct : PostWalker<Array2Struct> {
         // The ArrayNew* will be replaced with a block containing the local.set
         // and the structNew.
         arrayNewReplacement = builder.makeSequence(set, structNew);
-        // The data flows through the new block we just added: inform the
-        // analysis of that by telling it to treat it as code that it reached
-        // (only code we reached during the tracing of the allocation through
-        // the function will be optimized in Struct2Local).
-        noteIsReached(arrayNewReplacement);
       }
     } else if (auto* arrayNewFixed = allocation->dynCast<ArrayNewFixed>()) {
       // Simply use the same values as the array.
@@ -884,18 +873,41 @@ struct Array2Struct : PostWalker<Array2Struct> {
       WASM_UNREACHABLE("bad allocation");
     }
 
+    // Mark the new expressions we created as reached by the analysis. We need
+    // to inform the analysis of this because Struct2Local will only process
+    // such code (it depends on the analysis to tell it what the allocation is
+    // and where it flowed). Note that the two values here may be identical but
+    // there is no harm to calling it twice in that case.
+    noteIsReached(structNew);
+    noteIsReached(arrayNewReplacement);
+
     // Update types along the path reached by the allocation: whenever we see
     // the array type, it should be the struct type. Note that we do this before
     // the walk that is after us, because the walk may read these types and
     // depend on them to be valid.
+    //
+    // Note that |reached| contains array.get operations, which are reached in
+    // the analysis, and so we will update their types if they happen to have
+    // the array type (which can be the case of an array of arrays). But that is
+    // fine to do as the array.get is rewritten to a struct.get which is then
+    // lowered away to locals anyhow.
     auto nullArray = Type(arrayType, Nullable);
     auto nonNullArray = Type(arrayType, NonNullable);
     auto nullStruct = Type(structType, Nullable);
     auto nonNullStruct = Type(structType, NonNullable);
     for (auto* reached : analyzer.reached) {
-      if (reached->type == nullArray) {
+      // We must check subtyping here because the allocation may be upcast as it
+      // flows around. If we do see such upcasting then we are refining here and
+      // must refinalize.
+      if (Type::isSubType(nullArray, reached->type)) {
+        if (nullArray != reached->type) {
+          refinalize = true;
+        }
         reached->type = nullStruct;
-      } else if (reached->type == nonNullArray) {
+      } else if (Type::isSubType(nonNullArray, reached->type)) {
+        if (nonNullArray != reached->type) {
+          refinalize = true;
+        }
         reached->type = nonNullStruct;
       }
     }
@@ -995,6 +1007,18 @@ struct Array2Struct : PostWalker<Array2Struct> {
   void noteCurrentIsReached() { noteIsReached(getCurrent()); }
 
   void noteIsReached(Expression* curr) { analyzer.reached.insert(curr); }
+
+  // Given an ArrayNew or ArrayNewFixed, return the size of the array that is
+  // being allocated.
+  Index getArrayNewSize(Expression* allocation) {
+    if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
+      return getIndex(arrayNew->size);
+    } else if (auto* arrayNewFixed = allocation->dynCast<ArrayNewFixed>()) {
+      return arrayNewFixed->values.size();
+    } else {
+      WASM_UNREACHABLE("bad allocation");
+    }
+  }
 };
 
 // Core Heap2Local optimization that operates on a function: Builds up the data
