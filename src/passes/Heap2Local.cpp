@@ -867,6 +867,12 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // the array type, it should be the struct type. Note that we do this before
     // the walk that is after us, because the walk may read these types and
     // depend on them to be valid.
+    //
+    // Note that |reached| contains array.get operations, which are reached in
+    // the analysis, and so we will update their types if they happen to have
+    // the array type (which can be the case of an array of arrays). But that is
+    // fine to do as the array.get is rewritten to a struct.get which is then
+    // lowered away to locals anyhow.
     auto nullArray = Type(arrayType, Nullable);
     auto nonNullArray = Type(arrayType, NonNullable);
     auto nullStruct = Type(structType, Nullable);

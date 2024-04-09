@@ -3249,8 +3249,11 @@
         (local.get $temp)
       )
     )
-    ;; This block should *not* change type: it is affected by the value in the
-    ;; array, not the reference to the array itself.
+    ;; This block's type should end up valid. In particular this test checks
+    ;; that we do not get confused by the array's type, which we rewrite to the
+    ;; struct type in Array2Struct - this array.get's type is the array type,
+    ;; but only because the value we read is the array type, and not because the
+    ;; allocation reaches here.
     (block (result anyref)
       (array.get $array
         (local.get $temp)
