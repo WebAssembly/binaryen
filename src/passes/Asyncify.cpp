@@ -721,7 +721,7 @@ public:
                                    !info.inRemoveList;
                           },
                           [](Info& info) { info.canChangeState = true; },
-                          [verbose](const Info& info, Function* reason) {
+                          [&](const Info& info, Function* reason) {
                             if (verbose) {
                               std::stringstream str;
                               str << "[asyncify] " << info.name
