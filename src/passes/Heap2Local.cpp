@@ -852,6 +852,14 @@ struct Array2Struct : PostWalker<Array2Struct> {
       WASM_UNREACHABLE("bad allocation");
     }
 
+    // Mark the new expressions we created as reached by the analysis. We need
+    // to inform the analysis of this because Struct2Local will only process
+    // such code (it depends on the analysis to tell it what the allocation is
+    // and where it flowed). Note that the two values here may be identical but
+    // there is no harm to calling it twice in that case.
+    noteIsReached(structNew);
+    noteIsReached(arrayNewReplacement);
+
     // Update types along the path reached by the allocation: whenever we see
     // the array type, it should be the struct type. Note that we do this before
     // the walk that is after us, because the walk may read these types and
