@@ -815,15 +815,9 @@ struct Array2Struct : PostWalker<Array2Struct> {
 
     // Build the struct type we need: as many fields as the size of the array,
     // all of the same type as the array's element.
+    numFields = getArrayNewSize(allocation);
     auto arrayType = allocation->type.getHeapType();
     auto element = arrayType.getArray().element;
-    if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
-      numFields = getIndex(arrayNew->size);
-    } else if (auto* arrayNewFixed = allocation->dynCast<ArrayNewFixed>()) {
-      numFields = arrayNewFixed->values.size();
-    } else {
-      WASM_UNREACHABLE("bad allocation");
-    }
     FieldList fields;
     for (Index i = 0; i < numFields; i++) {
       fields.push_back(element);
@@ -989,6 +983,18 @@ struct Array2Struct : PostWalker<Array2Struct> {
   void noteCurrentIsReached() { noteIsReached(getCurrent()); }
 
   void noteIsReached(Expression* curr) { analyzer.reached.insert(curr); }
+
+  // Given an ArrayNew or ArrayNewFixed, return the size of the array that is
+  // being allocated.
+  Index getArrayNewSize(Expression* allocation) {
+    if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
+      return getIndex(arrayNew->size);
+    } else if (auto* arrayNewFixed = allocation->dynCast<ArrayNewFixed>()) {
+      return arrayNewFixed->values.size();
+    } else {
+      WASM_UNREACHABLE("bad allocation");
+    }
+  }
 };
 
 // Core Heap2Local optimization that operates on a function: Builds up the data
