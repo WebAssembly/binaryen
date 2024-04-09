@@ -150,6 +150,7 @@
 // This optimization focuses on such cases.
 //
 
+#include "ir/bits.h"
 #include "ir/branch-utils.h"
 #include "ir/find_all.h"
 #include "ir/local-graph.h"
@@ -228,7 +229,7 @@ struct EscapeAnalyzer {
   };
 
   // Analyze an allocation to see if it escapes or not.
-  bool escapes(StructNew* allocation) {
+  bool escapes(Expression* allocation) {
     // A queue of flows from children to parents. When something is in the queue
     // here then it assumed that it is ok for the allocation to be at the child
     // (that is, we have already checked the child before placing it in the
@@ -330,7 +331,7 @@ struct EscapeAnalyzer {
     return false;
   }
 
-  ParentChildInteraction getParentChildInteraction(StructNew* allocation,
+  ParentChildInteraction getParentChildInteraction(Expression* allocation,
                                                    Expression* parent,
                                                    Expression* child) {
     // If there is no parent then we are the body of the function, and that
@@ -340,7 +341,7 @@ struct EscapeAnalyzer {
     }
 
     struct Checker : public Visitor<Checker> {
-      StructNew* allocation;
+      Expression* allocation;
       Expression* child;
 
       // Assume escaping (or some other problem we cannot analyze) unless we are
@@ -415,8 +416,28 @@ struct EscapeAnalyzer {
         escapes = false;
         fullyConsumes = true;
       }
+      void visitArraySet(ArraySet* curr) {
+        if (!curr->index->is<Const>()) {
+          // Array operations on nonconstant indexes do not escape in the normal
+          // sense, but they do escape from our being able to analyze them, so
+          // stop as soon as we see one.
+          return;
+        }
 
-      // TODO Array and I31 operations
+        // As StructGet.
+        if (curr->ref == child) {
+          escapes = false;
+          fullyConsumes = true;
+        }
+      }
+      void visitArrayGet(ArrayGet* curr) {
+        if (!curr->index->is<Const>()) {
+          return;
+        }
+        escapes = false;
+        fullyConsumes = true;
+      }
+      // TODO other GC operations
     } checker;
 
     checker.allocation = allocation;
@@ -628,6 +649,21 @@ struct Struct2Local : PostWalker<Struct2Local> {
     curr->finalize();
   }
 
+  // Add a mask for packed fields. We add masks on sets rather than on gets
+  // because gets tend to be more numerous both in code appearances and in
+  // runtime execution. As a result of masking on sets, the value in the local
+  // is always the masked value (which is also nice for debugging,
+  // incidentally).
+  Expression* addMask(Expression* value, const Field& field) {
+    if (!field.isPacked()) {
+      return value;
+    }
+
+    auto mask = Bits::lowBitMask(field.getByteSize() * 8);
+    return builder.makeBinary(
+      AndInt32, value, builder.makeConst(int32_t(mask)));
+  }
+
   void visitStructNew(StructNew* curr) {
     if (curr != allocation) {
       return;
@@ -673,9 +709,10 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
       // Copy them to the normal ones.
       for (Index i = 0; i < tempIndexes.size(); i++) {
-        contents.push_back(builder.makeLocalSet(
-          localIndexes[i],
-          builder.makeLocalGet(tempIndexes[i], fields[i].type)));
+        auto* value = builder.makeLocalGet(tempIndexes[i], fields[i].type);
+        // Add a mask on the values we write.
+        contents.push_back(
+          builder.makeLocalSet(localIndexes[i], addMask(value, fields[i])));
       }
 
       // TODO Check if the nondefault case does not increase code size in some
@@ -684,8 +721,11 @@ struct Struct2Local : PostWalker<Struct2Local> {
       //      defaults.
     } else {
       // Set the default values.
+      //
       // Note that we must assign the defaults because we might be in a loop,
       // that is, there might be a previous value.
+      //
+      // Note there is no need to mask as these are zeros anyhow.
       for (Index i = 0; i < localIndexes.size(); i++) {
         contents.push_back(builder.makeLocalSet(
           localIndexes[i],
@@ -746,7 +786,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // write the data to the local instead of the heap allocation.
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(curr->ref),
-      builder.makeLocalSet(localIndexes[curr->index], curr->value)));
+      builder.makeLocalSet(localIndexes[curr->index],
+                           addMask(curr->value, fields[curr->index]))));
   }
 
   void visitStructGet(StructGet* curr) {
@@ -776,6 +817,210 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 };
 
+// An optimizer that handles the rewriting to turn a nonescaping array
+// allocation into a struct allocation. Struct2Local can then be run on that
+// allocation.
+// TODO: As with Struct2Local doing a single rewrite walk at the end (for all
+//       structs) would be more efficient, but more complex.
+struct Array2Struct : PostWalker<Array2Struct> {
+  Expression* allocation;
+  EscapeAnalyzer& analyzer;
+  Function* func;
+  Builder builder;
+
+  Array2Struct(Expression* allocation,
+               EscapeAnalyzer& analyzer,
+               Function* func,
+               Module& wasm)
+    : allocation(allocation), analyzer(analyzer), func(func), builder(wasm) {
+
+    // Build the struct type we need: as many fields as the size of the array,
+    // all of the same type as the array's element.
+    numFields = getArrayNewSize(allocation);
+    auto arrayType = allocation->type.getHeapType();
+    auto element = arrayType.getArray().element;
+    FieldList fields;
+    for (Index i = 0; i < numFields; i++) {
+      fields.push_back(element);
+    }
+    HeapType structType = Struct(fields);
+
+    // Generate a StructNew to replace the ArrayNew*.
+    if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
+      if (arrayNew->isWithDefault()) {
+        structNew = builder.makeStructNew(structType, {});
+        arrayNewReplacement = structNew;
+      } else {
+        // The ArrayNew is writing the same value to each slot of the array. To
+        // do the same for the struct, we store that value in an local and
+        // generate multiple local.gets of it.
+        auto local = builder.addVar(func, element.type);
+        auto* set = builder.makeLocalSet(local, arrayNew->init);
+        std::vector<Expression*> gets;
+        for (Index i = 0; i < numFields; i++) {
+          gets.push_back(builder.makeLocalGet(local, element.type));
+        }
+        structNew = builder.makeStructNew(structType, gets);
+        // The ArrayNew* will be replaced with a block containing the local.set
+        // and the structNew.
+        arrayNewReplacement = builder.makeSequence(set, structNew);
+      }
+    } else if (auto* arrayNewFixed = allocation->dynCast<ArrayNewFixed>()) {
+      // Simply use the same values as the array.
+      structNew = builder.makeStructNew(structType, arrayNewFixed->values);
+      arrayNewReplacement = structNew;
+    } else {
+      WASM_UNREACHABLE("bad allocation");
+    }
+
+    // Mark the new expressions we created as reached by the analysis. We need
+    // to inform the analysis of this because Struct2Local will only process
+    // such code (it depends on the analysis to tell it what the allocation is
+    // and where it flowed). Note that the two values here may be identical but
+    // there is no harm to calling it twice in that case.
+    noteIsReached(structNew);
+    noteIsReached(arrayNewReplacement);
+
+    // Update types along the path reached by the allocation: whenever we see
+    // the array type, it should be the struct type. Note that we do this before
+    // the walk that is after us, because the walk may read these types and
+    // depend on them to be valid.
+    //
+    // Note that |reached| contains array.get operations, which are reached in
+    // the analysis, and so we will update their types if they happen to have
+    // the array type (which can be the case of an array of arrays). But that is
+    // fine to do as the array.get is rewritten to a struct.get which is then
+    // lowered away to locals anyhow.
+    auto nullArray = Type(arrayType, Nullable);
+    auto nonNullArray = Type(arrayType, NonNullable);
+    auto nullStruct = Type(structType, Nullable);
+    auto nonNullStruct = Type(structType, NonNullable);
+    for (auto* reached : analyzer.reached) {
+      // We must check subtyping here because the allocation may be upcast as it
+      // flows around. If we do see such upcasting then we are refining here and
+      // must refinalize.
+      if (Type::isSubType(nullArray, reached->type)) {
+        if (nullArray != reached->type) {
+          refinalize = true;
+        }
+        reached->type = nullStruct;
+      } else if (Type::isSubType(nonNullArray, reached->type)) {
+        if (nonNullArray != reached->type) {
+          refinalize = true;
+        }
+        reached->type = nonNullStruct;
+      }
+    }
+
+    // Technically we should also fix up the types of locals as well, but after
+    // Struct2Local those locals will no longer be used anyhow (the locals hold
+    // allocations that are removed), so avoid that work (though it makes the
+    // IR temporarily invalid in between Array2Struct and Struct2Local).
+
+    // Replace the things we need to using the visit* methods.
+    walk(func->body);
+
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(func, &wasm);
+    }
+  }
+
+  // In rare cases we may need to refinalize, as with Struct2Local.
+  bool refinalize = false;
+
+  // The number of slots in the array (which will become the number of fields in
+  // the struct).
+  Index numFields;
+
+  // The StructNew that replaces the ArrayNew*. The user of this class can then
+  // optimize that StructNew using Struct2Local.
+  StructNew* structNew;
+
+  // The replacement for the original ArrayNew*. Typically this is |structNew|,
+  // unless we have additional code we need alongside it.
+  Expression* arrayNewReplacement;
+
+  void visitArrayNew(ArrayNew* curr) {
+    if (curr == allocation) {
+      replaceCurrent(arrayNewReplacement);
+      noteCurrentIsReached();
+    }
+  }
+
+  void visitArrayNewFixed(ArrayNewFixed* curr) {
+    if (curr == allocation) {
+      replaceCurrent(arrayNewReplacement);
+      noteCurrentIsReached();
+    }
+  }
+
+  void visitArraySet(ArraySet* curr) {
+    if (!analyzer.reached.count(curr)) {
+      return;
+    }
+
+    // If this is an OOB array.set then we trap.
+    auto index = getIndex(curr->index);
+    if (index >= numFields) {
+      replaceCurrent(builder.makeBlock({builder.makeDrop(curr->ref),
+                                        builder.makeDrop(curr->value),
+                                        builder.makeUnreachable()}));
+      // We added an unreachable, and must propagate that type.
+      refinalize = true;
+      return;
+    }
+
+    // Convert the ArraySet into a StructSet.
+    replaceCurrent(builder.makeStructSet(index, curr->ref, curr->value));
+    noteCurrentIsReached();
+  }
+
+  void visitArrayGet(ArrayGet* curr) {
+    if (!analyzer.reached.count(curr)) {
+      return;
+    }
+
+    // If this is an OOB array.get then we trap.
+    auto index = getIndex(curr->index);
+    if (index >= numFields) {
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                          builder.makeUnreachable()));
+      // We added an unreachable, and must propagate that type.
+      refinalize = true;
+      return;
+    }
+
+    // Convert the ArrayGet into a StructGet.
+    replaceCurrent(
+      builder.makeStructGet(index, curr->ref, curr->type, curr->signed_));
+    noteCurrentIsReached();
+  }
+
+  // Get the value in an expression we know must contain a constant index.
+  Index getIndex(Expression* curr) {
+    return curr->cast<Const>()->value.getUnsigned();
+  }
+
+  // Inform the analyzer that the current expression (which we just replaced)
+  // has been reached in its analysis. We are replacing something it reached,
+  // and want it to consider it as its equivalent.
+  void noteCurrentIsReached() { noteIsReached(getCurrent()); }
+
+  void noteIsReached(Expression* curr) { analyzer.reached.insert(curr); }
+
+  // Given an ArrayNew or ArrayNewFixed, return the size of the array that is
+  // being allocated.
+  Index getArrayNewSize(Expression* allocation) {
+    if (auto* arrayNew = allocation->dynCast<ArrayNew>()) {
+      return getIndex(arrayNew->size);
+    } else if (auto* arrayNewFixed = allocation->dynCast<ArrayNewFixed>()) {
+      return arrayNewFixed->values.size();
+    } else {
+      WASM_UNREACHABLE("bad allocation");
+    }
+  }
+};
+
 // Core Heap2Local optimization that operates on a function: Builds up the data
 // structures we need (LocalGraph, etc.) that we will use across multiple
 // analyses of allocations, and then runs those analyses and optimizes where
@@ -800,44 +1045,114 @@ struct Heap2Local {
     // repeated work, see above.
     std::unordered_set<Expression*> seen;
 
-    // All the allocations in the function.
-    // TODO: Arrays (of constant size) as well, if all element accesses use
-    //       constant indexes. One option might be to first convert such
-    //       nonescaping arrays into structs.
-    FindAll<StructNew> allocations(func->body);
+    // Find all the relevant allocations in the function: StructNew, ArrayNew,
+    // ArrayNewFixed.
+    struct AllocationFinder : public PostWalker<AllocationFinder> {
+      std::vector<StructNew*> structNews;
+      std::vector<Expression*> arrayNews;
 
-    for (auto* allocation : allocations.list) {
+      void visitStructNew(StructNew* curr) {
+        // Ignore unreachable allocations that DCE will remove anyhow.
+        if (curr->type != Type::unreachable) {
+          structNews.push_back(curr);
+        }
+      }
+      void visitArrayNew(ArrayNew* curr) {
+        // Only new arrays of fixed size are relevant for us.
+        if (curr->type != Type::unreachable && isValidSize(curr->size)) {
+          arrayNews.push_back(curr);
+        }
+      }
+      void visitArrayNewFixed(ArrayNewFixed* curr) {
+        if (curr->type != Type::unreachable &&
+            isValidSize(curr->values.size())) {
+          arrayNews.push_back(curr);
+        }
+      }
+
+      bool isValidSize(Expression* size) {
+        // The size of an array is valid if it is constant, and its value is
+        // valid.
+        if (auto* c = size->dynCast<Const>()) {
+          return isValidSize(c->value.getUnsigned());
+        }
+        return false;
+      }
+
+      bool isValidSize(Index size) {
+        // Set a reasonable limit on the size here, as valid wasm can contain
+        // things like (array.new (i32.const -1)) which will likely fail at
+        // runtime on a VM limitation on array size. We also are converting a
+        // heap allocation to a stack allocation, which can be noticeable in
+        // some cases, so to be careful here use a fairly small limit.
+        return size < 20;
+      }
+    } finder;
+    finder.walk(func->body);
+
+    // First, lower non-escaping arrays into structs. That allows us to handle
+    // arrays in a single place, and let all the rest of this pass assume we are
+    // working on structs. We are in fact only optimizing struct-like arrays
+    // here, that is, arrays of a fixed size and whose items are accessed using
+    // constant indexes, so they are effectively structs, and turning them into
+    // such allows uniform handling later.
+    for (auto* allocation : finder.arrayNews) {
       // The point of this optimization is to replace heap allocations with
       // locals, so we must be able to place the data in locals.
       if (!canHandleAsLocals(allocation->type)) {
         continue;
       }
 
-      // Check for escaping, noting relevant information as we go. If this does
-      // not escape, optimize it.
       EscapeAnalyzer analyzer(
         seen, localGraph, parents, branchTargets, passOptions, wasm);
       if (!analyzer.escapes(allocation)) {
-        Struct2Local optimizer(allocation, analyzer, func, wasm);
+        // Convert the allocation and all its uses into a struct. Then convert
+        // the struct into locals.
+        auto* structNew =
+          Array2Struct(allocation, analyzer, func, wasm).structNew;
+        Struct2Local(structNew, analyzer, func, wasm);
       }
     }
+
+    // Next, process all structNews.
+    for (auto* allocation : finder.structNews) {
+      // As above, we must be able to use locals for this data.
+      if (!canHandleAsLocals(allocation->type)) {
+        continue;
+      }
+
+      // Check for escaping, noting relevant information as we go. If this does
+      // not escape, optimize it into locals.
+      EscapeAnalyzer analyzer(
+        seen, localGraph, parents, branchTargets, passOptions, wasm);
+      if (!analyzer.escapes(allocation)) {
+        Struct2Local(allocation, analyzer, func, wasm);
+      }
+    }
+  }
+
+  bool canHandleAsLocal(const Field& field) {
+    return TypeUpdating::canHandleAsLocal(field.type);
   }
 
   bool canHandleAsLocals(Type type) {
     if (type == Type::unreachable) {
       return false;
     }
-    auto& fields = type.getHeapType().getStruct().fields;
-    for (auto field : fields) {
-      if (!TypeUpdating::canHandleAsLocal(field.type)) {
-        return false;
+
+    auto heapType = type.getHeapType();
+    if (heapType.isStruct()) {
+      auto& fields = heapType.getStruct().fields;
+      for (auto field : fields) {
+        if (!canHandleAsLocal(field)) {
+          return false;
+        }
       }
-      if (field.isPacked()) {
-        // TODO: support packed fields by adding coercions/truncations.
-        return false;
-      }
+      return true;
     }
-    return true;
+
+    assert(heapType.isArray());
+    return canHandleAsLocal(heapType.getArray().element);
   }
 };
 

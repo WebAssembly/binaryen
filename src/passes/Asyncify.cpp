@@ -711,20 +711,33 @@ public:
       handleAddList(scanner.map);
     }
 
+    // The order of propagation in |propagateBack| is non-deterministic, so sort
+    // the loggings we intend to do.
+    std::vector<std::string> loggings;
+
     scanner.propagateBack([](const Info& info) { return info.canChangeState; },
                           [](const Info& info) {
                             return !info.isBottomMostRuntime &&
                                    !info.inRemoveList;
                           },
                           [](Info& info) { info.canChangeState = true; },
-                          [verbose](const Info& info, Function* reason) {
+                          [&](const Info& info, Function* reason) {
                             if (verbose) {
-                              std::cout << "[asyncify] " << info.name
-                                        << " can change the state due to "
-                                        << reason->name << "\n";
+                              std::stringstream str;
+                              str << "[asyncify] " << info.name
+                                  << " can change the state due to "
+                                  << reason->name << "\n";
+                              loggings.push_back(str.str());
                             }
                           },
                           scanner.IgnoreNonDirectCalls);
+
+    if (!loggings.empty()) {
+      std::sort(loggings.begin(), loggings.end());
+      for (auto& logging : loggings) {
+        std::cout << logging;
+      }
+    }
 
     map.swap(scanner.map);
 
