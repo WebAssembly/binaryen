@@ -1802,9 +1802,8 @@ struct OptimizeInstructions
       }
 
       // The field must be written the default value.
-      auto* value = Properties::getFallthrough(curr->operands[i],
-                                               passOptions,
-                                               *getModule());
+      auto* value = Properties::getFallthrough(
+        curr->operands[i], passOptions, *getModule());
       if (!Properties::isSingleConstantExpression(value) ||
           Properties::getLiteral(value) != Literal::makeZero(type)) {
         return;
@@ -1813,7 +1812,7 @@ struct OptimizeInstructions
 
     // Success! Drop the children and return a struct.new_with_default.
     auto* rep = getDroppedChildrenAndAppend(curr, curr);
-        curr->operands.clear();
+    curr->operands.clear();
     assert(curr->isWithDefault());
     replaceCurrent(rep);
   }
@@ -1994,7 +1993,8 @@ struct OptimizeInstructions
       if (c->value.geti32() == 1) {
         // Optimize to ArrayNewFixed. Note that if the value is the default
         // then we may end up optimizing further in visitArrayNewFixed.
-        replaceCurrent(builder.makeArrayNewFixed(curr->type.getHeapType(), {curr->init}));
+        replaceCurrent(
+          builder.makeArrayNewFixed(curr->type.getHeapType(), {curr->init}));
         return;
       }
     }
@@ -2008,9 +2008,8 @@ struct OptimizeInstructions
     // The value must be the the default/zero.
     auto& passOptions = getPassOptions();
     auto zero = Literal::makeZero(type);
-    auto* value = Properties::getFallthrough(curr->init,
-                                             passOptions,
-                                             *getModule());
+    auto* value =
+      Properties::getFallthrough(curr->init, passOptions, *getModule());
     if (!Properties::isSingleConstantExpression(value) ||
         Properties::getLiteral(value) != zero) {
       return;
@@ -2056,16 +2055,15 @@ struct OptimizeInstructions
     // See if they are equal to a constant, and if that constant is the default.
     auto type = curr->type.getHeapType().getArray().element.type;
     if (type.isDefaultable()) {
-      auto* value = Properties::getFallthrough(curr->values[0],
-                                               passOptions,
-                                               *getModule());
+      auto* value =
+        Properties::getFallthrough(curr->values[0], passOptions, *getModule());
 
       if (Properties::isSingleConstantExpression(value) &&
           Properties::getLiteral(value) == Literal::makeZero(type)) {
         // They are all equal to the default. Drop the children and return an
         // array.new_with_default.
-        auto* withDefault = builder.makeArrayNew(curr->type.getHeapType(),
-                                                 builder.makeConst(int32_t(size)));
+        auto* withDefault = builder.makeArrayNew(
+          curr->type.getHeapType(), builder.makeConst(int32_t(size)));
         replaceCurrent(getDroppedChildrenAndAppend(curr, withDefault));
         return;
       }
@@ -2083,7 +2081,8 @@ struct OptimizeInstructions
     // them all, except from the first, when we remove the array.new_fixed's
     // list of children and replace it with a single child + a constant for the
     // number of children.
-    ChildLocalizer localizer(curr, getFunction(), *getModule(), getPassOptions());
+    ChildLocalizer localizer(
+      curr, getFunction(), *getModule(), getPassOptions());
     auto* block = localizer.getChildrenReplacement();
     auto* arrayNew = builder.makeArrayNew(curr->type.getHeapType(),
                                           builder.makeConst(int32_t(size)),
