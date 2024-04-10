@@ -3681,8 +3681,7 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
   return builder.makeRefCast(make(refType), type);
 }
 
-// Decide to emit a signed Struct/ArrayGet sometimes, when the field is packed.
-bool maybeSignedGet(const Field& field) {
+bool TranslateToFuzzReader::maybeSignedGet(const Field& field) {
   if (field.isPacked()) {
     return oneIn(2);
   }
