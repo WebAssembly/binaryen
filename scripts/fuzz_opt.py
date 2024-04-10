@@ -947,7 +947,6 @@ class CompareVMs(TestCaseHandler):
 
     def handle_pair(self, input, before_wasm, after_wasm, opts):
         global ignored_vm_runs
-        ignored_before = ignored_vm_runs
 
         before = self.run_vms(before_wasm)
 
@@ -955,6 +954,8 @@ class CompareVMs(TestCaseHandler):
         self.compare_before_and_after(before, after)
 
     def run_vms(self, wasm):
+        ignored_before = ignored_vm_runs
+
         # vm_results will map vms to their results
         vm_results = {}
         for vm in self.vms:
