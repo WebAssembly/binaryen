@@ -963,10 +963,14 @@ class CompareVMs(TestCaseHandler):
                 print(f'[CompareVMs] running {vm.name}')
                 vm_results[vm] = fix_output(vm.run(wasm))
 
-                # if the binaryen interpreter hit a host limitation on the original
-                # testcase, or for some other reason we need to ignore this, then stop
-                # (otherwise, a host limitation on say allocations may be hit in the
-                # 'before' but not in the 'after' as optimizations may remove it).
+                # If the binaryen interpreter hit a host limitation then do not
+                # run other VMs, as that is risky: the host limitation may be an
+                # an OOM which could be very costly (lots of swapping), or it
+                # might be an atomic wait which other VMs implement fully (and
+                # the wait might be very long). In general host limitations
+                # should be rare (which can be verified by looking at the
+                # details of how many things we ended up ignoring), and when we
+                # see one we are in a situation that we can't fuzz properly.
                 if vm == self.bynterpreter and vm_results[vm] == IGNORE:
                     print('(ignored, so not running other VMs)')
 
