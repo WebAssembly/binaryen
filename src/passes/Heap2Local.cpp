@@ -652,7 +652,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   // Add a mask for packed fields. We add masks on sets rather than on gets
   // because gets tend to be more numerous both in code appearances and in
   // runtime execution. As a result of masking on sets, the value in the local
-  // is always the masked value (which is also nice for debugging,
+  // is always the masked unsigned value (which is also nice for debugging,
   // incidentally).
   Expression* addMask(Expression* value, const Field& field) {
     if (!field.isPacked()) {
@@ -795,7 +795,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return;
     }
 
-    auto type = fields[curr->index].type;
+    auto& field = fields[curr->index];
+    auto type = field.type;
     if (type != curr->type) {
       // Normally we are just replacing a struct.get with a local.get of a
       // local that was created to have the same type as the struct's field,
@@ -811,9 +812,13 @@ struct Struct2Local : PostWalker<Struct2Local> {
       // which may be more refined.
       refinalize = true;
     }
-    replaceCurrent(builder.makeSequence(
-      builder.makeDrop(curr->ref),
-      builder.makeLocalGet(localIndexes[curr->index], type)));
+    Expression* value = builder.makeLocalGet(localIndexes[curr->index], type);
+    if (field.isPacked() && curr->signed_) {
+      // The value in the local is the masked unsigned value, which we must
+      // sign-extend.
+      value = Bits::makeSignExt(value, field.getByteSize(), wasm);
+    }
+    replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref), value));
   }
 };
 
