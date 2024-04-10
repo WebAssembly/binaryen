@@ -14769,62 +14769,6 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.abs
-  ;; CHECK-NEXT:    (f64.mul
-  ;; CHECK-NEXT:     (block (result f64)
-  ;; CHECK-NEXT:      (call $set-i32
-  ;; CHECK-NEXT:       (i32.const 42)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (call $get-f64)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block (result f64)
-  ;; CHECK-NEXT:      (call $set-i32
-  ;; CHECK-NEXT:       (i32.const 1337)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (call $get-f64)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.mul
-  ;; CHECK-NEXT:    (block (result f64)
-  ;; CHECK-NEXT:     (call $set-i32
-  ;; CHECK-NEXT:      (i32.const 42)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.tee $x
-  ;; CHECK-NEXT:      (f64.const 12.34)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block (result f64)
-  ;; CHECK-NEXT:     (call $set-i32
-  ;; CHECK-NEXT:      (i32.const 1337)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.abs
-  ;; CHECK-NEXT:    (f64.mul
-  ;; CHECK-NEXT:     (block (result f64)
-  ;; CHECK-NEXT:      (call $set-i32
-  ;; CHECK-NEXT:       (i32.const 42)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.tee $x
-  ;; CHECK-NEXT:       (f64.const 12.34)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block (result f64)
-  ;; CHECK-NEXT:      (call $set-i32
-  ;; CHECK-NEXT:       (i32.const 1337)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $xb)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $optimize-float-points-fallthrough (param $x f64) (param $xb f64) (param $y f32)
     ;; abs(x * x)   ==>   x * x  , as in the previous function.
@@ -14847,7 +14791,28 @@
         )
       )
     ))
-
+  )
+  ;; CHECK:      (func $optimize-float-points-fallthrough-b (param $x f64) (param $xb f64) (param $y f32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (f64.mul
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (call $set-i32
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (call $get-f64)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (call $set-i32
+  ;; CHECK-NEXT:       (i32.const 1337)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (call $get-f64)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-float-points-fallthrough-b (param $x f64) (param $xb f64) (param $y f32)
     ;; But generative effects in the fallthrough values themselves block us.
     (drop (f64.abs
       (f64.mul
@@ -14865,7 +14830,28 @@
         )
       )
     ))
-
+  )
+  ;; CHECK:      (func $optimize-float-points-fallthrough-c (param $x f64) (param $xb f64) (param $y f32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.mul
+  ;; CHECK-NEXT:    (block (result f64)
+  ;; CHECK-NEXT:     (call $set-i32
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (f64.const 12.34)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result f64)
+  ;; CHECK-NEXT:     (call $set-i32
+  ;; CHECK-NEXT:      (i32.const 1337)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-float-points-fallthrough-c (param $x f64) (param $xb f64) (param $y f32)
     ;; local.tee/get pairs are ok, though.
     (drop (f64.abs
       (f64.mul
@@ -14885,7 +14871,30 @@
         )
       )
     ))
-
+  )
+  ;; CHECK:      (func $optimize-float-points-fallthrough-d (param $x f64) (param $xb f64) (param $y f32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (f64.mul
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (call $set-i32
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.tee $x
+  ;; CHECK-NEXT:       (f64.const 12.34)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (call $set-i32
+  ;; CHECK-NEXT:       (i32.const 1337)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $xb)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-float-points-fallthrough-d (param $x f64) (param $xb f64) (param $y f32)
     ;; The wrong local index means we fail again.
     (drop (f64.abs
       (f64.mul
@@ -14906,7 +14915,6 @@
       )
     ))
   )
-
   ;; CHECK:      (func $ternary (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.eqz
