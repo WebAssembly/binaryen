@@ -425,6 +425,9 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
   if (ctx.in.takeKeyword("stringview_iter"sv)) {
     return ctx.makeStringViewIterType();
   }
+  if (ctx.in.takeKeyword("cont"sv)) {
+    return ctx.makeContType();
+  }
   if (ctx.in.takeKeyword("none"sv)) {
     return ctx.makeNoneType();
   }
@@ -436,6 +439,9 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
   }
   if (ctx.in.takeKeyword("noexn"sv)) {
     return ctx.makeNoexnType();
+  }
+  if (ctx.in.takeKeyword("nocont"sv)) {
+    return ctx.makeNocontType();
   }
   auto type = typeidx(ctx);
   CHECK_ERR(type);
@@ -487,6 +493,9 @@ template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
   if (ctx.in.takeKeyword("stringview_iter"sv)) {
     return ctx.makeRefType(ctx.makeStringViewIterType(), Nullable);
   }
+  if (ctx.in.takeKeyword("contref"sv)) {
+    return ctx.makeRefType(ctx.makeContType(), Nullable);
+  }
   if (ctx.in.takeKeyword("nullref"sv)) {
     return ctx.makeRefType(ctx.makeNoneType(), Nullable);
   }
@@ -498,6 +507,9 @@ template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
   }
   if (ctx.in.takeKeyword("nullexnref"sv)) {
     return ctx.makeRefType(ctx.makeNoexnType(), Nullable);
+  }
+  if (ctx.in.takeKeyword("nullcontref"sv)) {
+    return ctx.makeRefType(ctx.makeNocontType(), Nullable);
   }
 
   if (!ctx.in.takeSExprStart("ref"sv)) {

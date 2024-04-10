@@ -250,7 +250,7 @@
  (type $cont-bind-before-func (func (param i32) (param i64) (param i32) (param i64) (result f32)))
  (type $cont-bind-before (cont $cont-bind-before-func))
 
- ;; CHECK:      (type $all-types (struct (field externref) (field (ref extern)) (field funcref) (field (ref func)) (field anyref) (field (ref any)) (field eqref) (field (ref eq)) (field i31ref) (field (ref i31)) (field structref) (field (ref struct)) (field arrayref) (field (ref array)) (field exnref) (field (ref exn)) (field stringref) (field (ref string)) (field stringview_wtf8) (field (ref stringview_wtf8)) (field stringview_wtf16) (field (ref stringview_wtf16)) (field stringview_iter) (field (ref stringview_iter)) (field nullref) (field (ref none)) (field nullexternref) (field (ref noextern)) (field nullfuncref) (field (ref nofunc)) (field nullexnref) (field (ref noexn))))
+ ;; CHECK:      (type $all-types (struct (field externref) (field (ref extern)) (field funcref) (field (ref func)) (field anyref) (field (ref any)) (field eqref) (field (ref eq)) (field i31ref) (field (ref i31)) (field structref) (field (ref struct)) (field arrayref) (field (ref array)) (field exnref) (field (ref exn)) (field stringref) (field (ref string)) (field stringview_wtf8) (field (ref stringview_wtf8)) (field stringview_wtf16) (field (ref stringview_wtf16)) (field stringview_iter) (field (ref stringview_iter)) (field contref) (field (ref cont)) (field nullref) (field (ref none)) (field nullexternref) (field (ref noextern)) (field nullfuncref) (field (ref nofunc)) (field nullexnref) (field (ref noexn)) (field nullcontref) (field (ref nocont))))
  (type $all-types (struct externref (ref extern)
                           funcref (ref func)
                           anyref (ref any)
@@ -263,10 +263,12 @@
                           stringview_wtf8 (ref stringview_wtf8)
                           stringview_wtf16 (ref stringview_wtf16)
                           stringview_iter (ref stringview_iter)
+                          contref (ref cont)
                           nullref (ref none)
                           nullexternref (ref noextern)
                           nullfuncref (ref nofunc)
-                          nullexnref (ref noexn)))
+                          nullexnref (ref noexn)
+                          nullcontref (ref nocont)))
 
  ;; imported memories
  (memory (export "mem") (export "mem2") (import "" "mem") 0)
