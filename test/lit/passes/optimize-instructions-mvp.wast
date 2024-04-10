@@ -14833,26 +14833,29 @@
   )
   ;; CHECK:      (func $optimize-float-points-fallthrough-c (param $x f64) (param $xb f64) (param $y f32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (f64.mul
-  ;; CHECK-NEXT:    (block (result f64)
-  ;; CHECK-NEXT:     (call $set-i32
-  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (f64.mul
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (call $set-i32
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.tee $x
+  ;; CHECK-NEXT:       (f64.const 12.34)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.tee $x
-  ;; CHECK-NEXT:      (f64.const 12.34)
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (call $set-i32
+  ;; CHECK-NEXT:       (i32.const 1337)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block (result f64)
-  ;; CHECK-NEXT:     (call $set-i32
-  ;; CHECK-NEXT:      (i32.const 1337)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $optimize-float-points-fallthrough-c (param $x f64) (param $xb f64) (param $y f32)
-    ;; local.tee/get pairs are ok, though.
+    ;; local.tee/get pairs are ok, but atm we don't look at the fallthrough of
+    ;; the right side (we'd need to consider effects). TODO
     (drop (f64.abs
       (f64.mul
         (block (result f64)
@@ -14868,6 +14871,49 @@
             (i32.const 1337)
           )
           (local.get $x)        ;; this changed
+        )
+      )
+    ))
+  )
+  ;; CHECK:      (func $optimize-float-points-fallthrough-cb (param $x f64) (param $xb f64) (param $y f32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (f64.mul
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (call $set-i32
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.tee $x
+  ;; CHECK-NEXT:       (f64.const 12.34)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (local.set $x
+  ;; CHECK-NEXT:       (f64.const 13.37)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-float-points-fallthrough-cb (param $x f64) (param $xb f64) (param $y f32)
+    ;; A conflicting set in the middle is a problem: here we cannot optimize.
+    (drop (f64.abs
+      (f64.mul
+        (block (result f64)
+          (call $set-i32
+            (i32.const 42)
+          )
+          (local.tee $x
+            (f64.const 12.34)
+          )
+        )
+        (block (result f64)
+          (local.set $x         ;; this changed
+            (f64.const 13.37)
+          )
+          (local.get $x)
         )
       )
     ))
