@@ -965,7 +965,8 @@ class CompareVMs(TestCaseHandler):
 
                 # If the binaryen interpreter hit a host limitation then do not
                 # run other VMs, as that is risky: the host limitation may be an
-                # an OOM which could be very costly (lots of swapping), or it
+                # an OOM which could be very costly (lots of swapping, and the
+                # OOM may change after opts that remove allocations etc.), or it
                 # might be an atomic wait which other VMs implement fully (and
                 # the wait might be very long). In general host limitations
                 # should be rare (which can be verified by looking at the
