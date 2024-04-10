@@ -14918,6 +14918,38 @@
       )
     ))
   )
+  ;; CHECK:      (func $optimize-float-points-fallthrough-cc (param $x f64) (param $xb f64) (param $y f32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.mul
+  ;; CHECK-NEXT:    (block (result f64)
+  ;; CHECK-NEXT:     (call $set-i32
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (f64.const 12.34)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-float-points-fallthrough-cc (param $x f64) (param $xb f64) (param $y f32)
+    ;; Removing the local.set and the block on the right lets us optimize using
+    ;; the tee/get pair.
+    (drop (f64.abs
+      (f64.mul
+        (block (result f64)
+          (call $set-i32
+            (i32.const 42)
+          )
+          (local.tee $x
+            (f64.const 12.34)
+          )
+        )
+        (local.get $x)         ;; this moved out
+      )
+    ))
+  )
   ;; CHECK:      (func $optimize-float-points-fallthrough-d (param $x f64) (param $xb f64) (param $y f32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (f64.abs
