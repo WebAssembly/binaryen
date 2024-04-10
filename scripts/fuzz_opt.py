@@ -970,7 +970,7 @@ class CompareVMs(TestCaseHandler):
                 if vm == self.bynterpreter and vm_results[vm] == IGNORE:
                     # the ignoring should have been noted during run_vms()
                     assert(ignored_vm_runs > ignored_before)
-                    return
+                    return vm_results
 
         # compare between the vms on this specific input
         first_vm = None
