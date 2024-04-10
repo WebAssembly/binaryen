@@ -378,14 +378,7 @@ void copyModuleContents(Module& input, Name inputName) {
     }
   }
 
-  // Copy type names.
-  for (auto& [type, names] : input.typeNames) {
-    if (!merged.typeNames.count(type)) {
-      merged.typeNames[type] = names;
-    }
-  }
-
-  // TODO: features, debug info, custom sections, dylink info, etc.
+  // TODO: type names, features, debug info, custom sections, dylink info, etc.
 }
 
 void reportTypeMismatch(bool& valid, const char* kind, Importable* import) {

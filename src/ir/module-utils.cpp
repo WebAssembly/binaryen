@@ -212,8 +212,17 @@ void copyModuleItems(const Module& in, Module& out) {
   for (auto& curr : in.dataSegments) {
     copyDataSegment(curr.get(), out);
   }
+
+  for (auto& [type, names] : in.typeNames) {
+    if (!out.typeNames.count(type)) {
+      out.typeNames[type] = names;
+    }
+  }
 }
 
+// TODO: merge this with copyModuleItems, and add options for copying
+// exports and other things that are currently different between them,
+// if we still need those differences.
 void copyModule(const Module& in, Module& out) {
   // we use names throughout, not raw pointers, so simple copying is fine
   // for everything *but* expressions
@@ -225,7 +234,6 @@ void copyModule(const Module& in, Module& out) {
   out.customSections = in.customSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
   out.features = in.features;
-  out.typeNames = in.typeNames;
 }
 
 void clearModule(Module& wasm) {
