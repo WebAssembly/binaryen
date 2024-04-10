@@ -951,15 +951,6 @@ class CompareVMs(TestCaseHandler):
 
         before = self.run_vms(before_wasm)
 
-        # if the binaryen interpreter hit a host limitation on the original
-        # testcase, or for some other reason we need to ignore this, then stop
-        # (otherwise, a host limitation on say allocations may be hit in the
-        # 'before' but not in the 'after' as optimizations may remove it).
-        if before[self.bynterpreter] == IGNORE:
-            # the ignoring should have been noted during run_vms()
-            assert(ignored_vm_runs > ignored_before)
-            return
-
         after = self.run_vms(after_wasm)
         self.compare_before_and_after(before, after)
 
@@ -970,6 +961,15 @@ class CompareVMs(TestCaseHandler):
             if vm.can_run(wasm):
                 print(f'[CompareVMs] running {vm.name}')
                 vm_results[vm] = fix_output(vm.run(wasm))
+
+                # if the binaryen interpreter hit a host limitation on the original
+                # testcase, or for some other reason we need to ignore this, then stop
+                # (otherwise, a host limitation on say allocations may be hit in the
+                # 'before' but not in the 'after' as optimizations may remove it).
+                if vm == self.bynterpreter and vm_results[vm] == IGNORE:
+                    # the ignoring should have been noted during run_vms()
+                    assert(ignored_vm_runs > ignored_before)
+                    return
 
         # compare between the vms on this specific input
         first_vm = None
