@@ -968,8 +968,11 @@ class CompareVMs(TestCaseHandler):
                 # (otherwise, a host limitation on say allocations may be hit in the
                 # 'before' but not in the 'after' as optimizations may remove it).
                 if vm == self.bynterpreter and vm_results[vm] == IGNORE:
+                    print('(ignored, so not running other VMs)')
+
                     # the ignoring should have been noted during run_vms()
                     assert(ignored_vm_runs > ignored_before)
+
                     return vm_results
 
         # compare between the vms on this specific input
