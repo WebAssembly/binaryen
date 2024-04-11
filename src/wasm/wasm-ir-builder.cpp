@@ -1474,6 +1474,7 @@ Result<> IRBuilder::makeTableSize(Name table) {
 
 Result<> IRBuilder::makeTableGrow(Name table) {
   TableGrow curr;
+  curr.table = table;
   CHECK_ERR(visitTableGrow(&curr));
   push(builder.makeTableGrow(table, curr.value, curr.delta));
   return Ok{};

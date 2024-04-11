@@ -227,15 +227,17 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitDataDrop(DataDrop* curr) {}
 
   void visitMemoryCopy(MemoryCopy* curr) {
+    assert(wasm.getMemory(curr->destMemory)->indexType ==
+           wasm.getMemory(curr->sourceMemory)->indexType);
     notePointer(&curr->dest, curr->destMemory);
     notePointer(&curr->source, curr->sourceMemory);
-    note(&curr->size, Type::i32);
+    notePointer(&curr->size, curr->destMemory);
   }
 
   void visitMemoryFill(MemoryFill* curr) {
     notePointer(&curr->dest, curr->memory);
     note(&curr->value, Type::i32);
-    note(&curr->size, Type::i32);
+    notePointer(&curr->size, curr->memory);
   }
 
   void visitConst(Const* curr) {}
@@ -666,15 +668,14 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitTableGet(TableGet* curr) { note(&curr->index, Type::i32); }
 
   void visitTableSet(TableSet* curr) {
-    auto type = wasm.getTable(curr->table)->type;
     note(&curr->index, Type::i32);
-    note(&curr->value, type);
+    note(&curr->value, wasm.getTable(curr->table)->type);
   }
 
   void visitTableSize(TableSize* curr) {}
 
   void visitTableGrow(TableGrow* curr) {
-    note(&curr->value, Type::i32);
+    note(&curr->value, wasm.getTable(curr->table)->type);
     note(&curr->delta, Type::i32);
   }
 
