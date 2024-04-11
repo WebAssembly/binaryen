@@ -71,8 +71,9 @@ void BinaryInstWriter::visitBreak(Break* curr) {
   // the wasm spec atm, see
   // https://github.com/WebAssembly/binaryen/pull/6390
   // The binary reader code skips such extra casts where possible, which avoids
-  // roundtrips increasing code size continuously.
-  // The wasm spec will hopefully ..
+  // roundtrips increasing code size continuously. The wasm spec will hopefully
+  // improve to use the more refined type as well, which would remove the need
+  // for this hack.
   if (curr->type.isConcrete() && curr->type != breakType) {
     RefCast cast;
     cast.type = curr->type;
