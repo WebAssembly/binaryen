@@ -7247,7 +7247,11 @@ bool WasmBinaryReader::maybeVisitRefCast(Expression*& out, uint32_t code) {
       // increasing binary size continuously). The extra casts are due to br_if
       // working differently than the wasm spec atm, see
       // https://github.com/WebAssembly/binaryen/pull/6390
-      // The wasm spec will hopefully ..
+      // In other words, if we see a trivial cast here then it may be due to a
+      // case where Binaryen IR allows more refined types, as it does for br_if,
+      // compared to the wasm spec, and so we can ignore such unnecessary casts
+      // here. The wasm spec will hopefully improve to use the more refined type
+      // as well, which would remove the need for this hack.
       out = ref;
       return true;
     }
