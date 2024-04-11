@@ -66,27 +66,19 @@
 )
 
 (module
-  ;; CHECK:      (type $0 (func (param i32) (result i32)))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $1 (func))
+  ;; CHECK:      (type $1 (func (param i32) (result i32)))
 
-  ;; CHECK:      (import "env" "imported" (func $imported (type $0) (param i32) (result i32)))
+  ;; CHECK:      (import "env" "imported" (func $imported (type $1) (param i32) (result i32)))
   (import "env" "imported" (func $imported (param i32) (result i32)))
 
-  ;; CHECK:      (func $caller (type $1)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
   ;; CHECK-NEXT:    (block $__inlined_func$callee
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (block $__return_call
-  ;; CHECK-NEXT:       (block
-  ;; CHECK-NEXT:        (unreachable)
-  ;; CHECK-NEXT:        (br $__return_call)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (call $imported
-  ;; CHECK-NEXT:       (unreachable)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     (call $imported
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -103,6 +95,46 @@
   (func $callee (result i32)
     (return_call $imported
       (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $caller-2 (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (block $__inlined_func$callee-2$1
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (block $__return_call
+  ;; CHECK-NEXT:       (block
+  ;; CHECK-NEXT:        (try $try
+  ;; CHECK-NEXT:         (do
+  ;; CHECK-NEXT:          (unreachable)
+  ;; CHECK-NEXT:          (br $__return_call)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (call $imported
+  ;; CHECK-NEXT:       (unreachable)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller-2
+    (drop
+      (call $callee-2)
+    )
+  )
+
+  ;; Same as above, but with a return_call with a try block
+  (func $callee-2 (result i32)
+    (try
+      (do
+        (return_call $imported
+          (unreachable)
+        )
+      )
     )
   )
 )

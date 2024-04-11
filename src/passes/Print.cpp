@@ -18,6 +18,8 @@
 // Print out text in s-expression format
 //
 
+#include <algorithm>
+
 #include <ir/iteration.h>
 #include <ir/module-utils.h>
 #include <ir/table-utils.h>
@@ -2016,7 +2018,10 @@ struct PrintExpressionContents
   }
   void visitTupleExtract(TupleExtract* curr) {
     printMedium(o, "tuple.extract ");
-    o << curr->tuple->type.size() << " ";
+    // If the tuple is unreachable, its size will be reported as 1, but that's
+    // not a valid tuple size. The size we print mostly doesn't matter if the
+    // tuple is unreachable, but it does have to be valid.
+    o << std::max(curr->tuple->type.size(), size_t(2)) << " ";
     o << curr->index;
   }
   void visitRefI31(RefI31* curr) { printMedium(o, "ref.i31"); }

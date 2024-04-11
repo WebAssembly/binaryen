@@ -221,6 +221,20 @@
   ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (i32.shl
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:      (i32.const 24)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 24)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.null none)
@@ -265,6 +279,12 @@
     )
     (drop
       (struct.get $struct.packed 0
+        (local.get $temp)
+      )
+    )
+    ;; Signed gets require us to sign-extend them.
+    (drop
+      (struct.get_s $struct.packed 0
         (local.get $temp)
       )
     )
@@ -3409,15 +3429,17 @@
 
 ;; Packed arrays.
 (module
-  ;; CHECK:      (type $0 (func (result i32)))
+  ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (type $array8 (array (mut i8)))
   (type $array8 (array (mut i8)))
 
+  ;; CHECK:      (type $2 (func (result i32)))
+
   ;; CHECK:      (type $array16 (array (mut i16)))
   (type $array16 (array (mut i16)))
 
-  ;; CHECK:      (func $array8 (type $0) (result i32)
+  ;; CHECK:      (func $array8 (type $0)
   ;; CHECK-NEXT:  (local $temp (ref $array8))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -3447,14 +3469,30 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block (result i32)
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $2)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (i32.shl
+  ;; CHECK-NEXT:      (local.get $2)
+  ;; CHECK-NEXT:      (i32.const 24)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 24)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $array8 (result i32)
+  (func $array8
     (local $temp (ref $array8))
     (local.set $temp
       (array.new_default $array8
@@ -3466,13 +3504,22 @@
       (i32.const 1)
       (i32.const 1337)
     )
-    (array.get $array8
-      (local.get $temp)
-      (i32.const 1)
+    (drop
+      (array.get $array8
+        (local.get $temp)
+        (i32.const 1)
+      )
+    )
+    ;; As with structs, a signed get causes us to emit a sign extend.
+    (drop
+      (array.get_s $array8
+        (local.get $temp)
+        (i32.const 1)
+      )
     )
   )
 
-  ;; CHECK:      (func $array16 (type $0) (result i32)
+  ;; CHECK:      (func $array16 (type $2) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array16))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
