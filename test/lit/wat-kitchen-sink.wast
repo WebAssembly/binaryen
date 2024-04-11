@@ -2122,8 +2122,8 @@
  ;; CHECK-NEXT:  (block $l
  ;; CHECK-NEXT:   (try $__delegate__l
  ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (block $l_0
- ;; CHECK-NEXT:      (block $l_1
+ ;; CHECK-NEXT:     (block $l0
+ ;; CHECK-NEXT:      (block $l1
  ;; CHECK-NEXT:       (try
  ;; CHECK-NEXT:        (do
  ;; CHECK-NEXT:         (nop)
@@ -2149,13 +2149,13 @@
  ;; CHECK-NEXT:  (block $l
  ;; CHECK-NEXT:   (try $__delegate__l
  ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (block $l_0
+ ;; CHECK-NEXT:     (block $l0
  ;; CHECK-NEXT:      (try
  ;; CHECK-NEXT:       (do
  ;; CHECK-NEXT:        (nop)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:       (catch $empty
- ;; CHECK-NEXT:        (block $l_1
+ ;; CHECK-NEXT:        (block $l1
  ;; CHECK-NEXT:         (try
  ;; CHECK-NEXT:          (do
  ;; CHECK-NEXT:           (nop)
@@ -2185,13 +2185,13 @@
  ;; CHECK-NEXT:  (block $l
  ;; CHECK-NEXT:   (try $__delegate__l
  ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (block $l_0
+ ;; CHECK-NEXT:     (block $l0
  ;; CHECK-NEXT:      (try
  ;; CHECK-NEXT:       (do
  ;; CHECK-NEXT:        (nop)
  ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:       (catch_all
- ;; CHECK-NEXT:        (block $l_1
+ ;; CHECK-NEXT:        (block $l1
  ;; CHECK-NEXT:         (try
  ;; CHECK-NEXT:          (do
  ;; CHECK-NEXT:           (nop)
@@ -2617,14 +2617,14 @@
  ;; CHECK-NEXT:  (block $l
  ;; CHECK-NEXT:   (br $l)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (loop $l_0
- ;; CHECK-NEXT:   (br $l_0)
+ ;; CHECK-NEXT:  (loop $l0
+ ;; CHECK-NEXT:   (br $l0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block $l_1
+ ;; CHECK-NEXT:  (block $l1
  ;; CHECK-NEXT:   (if
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:    (then
- ;; CHECK-NEXT:     (br $l_1)
+ ;; CHECK-NEXT:     (br $l1)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -2645,17 +2645,17 @@
  ;; CHECK:      (func $label-shadowed (type $void)
  ;; CHECK-NEXT:  (block $l
  ;; CHECK-NEXT:   (br $l)
- ;; CHECK-NEXT:   (loop $l_0
- ;; CHECK-NEXT:    (br $l_0)
- ;; CHECK-NEXT:    (block $l_1
+ ;; CHECK-NEXT:   (loop $l0
+ ;; CHECK-NEXT:    (br $l0)
+ ;; CHECK-NEXT:    (block $l1
  ;; CHECK-NEXT:     (if
  ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:      (then
- ;; CHECK-NEXT:       (br $l_1)
+ ;; CHECK-NEXT:       (br $l1)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (br $l_0)
+ ;; CHECK-NEXT:    (br $l0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (br $l)
  ;; CHECK-NEXT:  )
@@ -2676,14 +2676,14 @@
  )
 
  ;; CHECK:      (func $label-index (type $void)
- ;; CHECK-NEXT:  (block $label_1
- ;; CHECK-NEXT:   (block $label
- ;; CHECK-NEXT:    (block $label_0
+ ;; CHECK-NEXT:  (block $block1
+ ;; CHECK-NEXT:   (block $block
+ ;; CHECK-NEXT:    (block $block0
  ;; CHECK-NEXT:     (block $l
- ;; CHECK-NEXT:      (br $label)
- ;; CHECK-NEXT:      (br $label_0)
+ ;; CHECK-NEXT:      (br $block)
+ ;; CHECK-NEXT:      (br $block0)
  ;; CHECK-NEXT:      (br $l)
- ;; CHECK-NEXT:      (br $label_1)
+ ;; CHECK-NEXT:      (br $block1)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -2810,8 +2810,8 @@
  )
 
  ;; CHECK:      (func $br_if-index (type $void)
- ;; CHECK-NEXT:  (block $label
- ;; CHECK-NEXT:   (br_if $label
+ ;; CHECK-NEXT:  (block $block
+ ;; CHECK-NEXT:   (br_if $block
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -2918,11 +2918,11 @@
  )
 
  ;; CHECK:      (func $br-table-index (type $void)
- ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:  (block $block
  ;; CHECK-NEXT:   (block $l
- ;; CHECK-NEXT:    (block $label_1
- ;; CHECK-NEXT:     (block $label_0
- ;; CHECK-NEXT:      (br_table $label $l $label_0 $label_1
+ ;; CHECK-NEXT:    (block $block1
+ ;; CHECK-NEXT:     (block $block0
+ ;; CHECK-NEXT:      (br_table $block $l $block0 $block1
  ;; CHECK-NEXT:       (i32.const 0)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
@@ -4098,8 +4098,8 @@
 
  ;; CHECK:      (func $br-on-non-null (type $8) (param $0 anyref)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $label (result (ref any))
- ;; CHECK-NEXT:    (br_on_non_null $label
+ ;; CHECK-NEXT:   (block $block (result (ref any))
+ ;; CHECK-NEXT:    (br_on_non_null $block
  ;; CHECK-NEXT:     (local.get $0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (unreachable)
@@ -4117,10 +4117,10 @@
 
  ;; CHECK:      (func $br-on-cast (type $8) (param $0 anyref)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $label (result i31ref)
+ ;; CHECK-NEXT:   (block $block (result i31ref)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (block (result (ref any))
- ;; CHECK-NEXT:      (br_on_cast $label anyref i31ref
+ ;; CHECK-NEXT:      (br_on_cast $block anyref i31ref
  ;; CHECK-NEXT:       (local.get $0)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
@@ -4142,10 +4142,10 @@
 
  ;; CHECK:      (func $br-on-cast-fail (type $8) (param $0 anyref)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $label (result (ref any))
+ ;; CHECK-NEXT:   (block $block (result (ref any))
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (block (result i31ref)
- ;; CHECK-NEXT:      (br_on_cast_fail $label anyref i31ref
+ ;; CHECK-NEXT:      (br_on_cast_fail $block anyref i31ref
  ;; CHECK-NEXT:       (local.get $0)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
@@ -5121,14 +5121,14 @@
 
  ;; CHECK:      (func $resume (type $91) (param $ct (ref $simple-cont))
  ;; CHECK-NEXT:  (local $f f32)
- ;; CHECK-NEXT:  (block $label_1
+ ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (block
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (block $label (result (ref $to-f32-cont))
+ ;; CHECK-NEXT:     (block $block (result (ref $to-f32-cont))
  ;; CHECK-NEXT:      (tuple.drop 3
- ;; CHECK-NEXT:       (block $label_0 (type $36) (result i32 i64 (ref null $simple-cont))
+ ;; CHECK-NEXT:       (block $block0 (type $36) (result i32 i64 (ref null $simple-cont))
  ;; CHECK-NEXT:        (local.set $f
- ;; CHECK-NEXT:         (resume $simple-cont (tag $empty $label) (tag $tag-pair-to-pair $label_0)
+ ;; CHECK-NEXT:         (resume $simple-cont (tag $empty $block) (tag $tag-pair-to-pair $block0)
  ;; CHECK-NEXT:          (i32.const 0)
  ;; CHECK-NEXT:          (i64.const 1)
  ;; CHECK-NEXT:          (local.get $ct)
@@ -5140,7 +5140,7 @@
  ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (br $label_1)
+ ;; CHECK-NEXT:    (br $label)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
