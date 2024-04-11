@@ -128,7 +128,6 @@ private:
                         size_t bytes,
                         uint64_t offset,
                         Name memory);
-  int32_t getBreakIndex(Name name);
 
   WasmBinaryWriter& parent;
   BufferWithRandomAccess& o;
@@ -136,7 +135,20 @@ private:
   bool sourceMap;
   bool DWARF;
 
-  std::vector<Name> breakStack;
+  // For each label that we can break to we track the name and type. We can
+  // then query for either the index by itself or both the index and type.
+  struct BreakInfo {
+    Name name;
+    Type type;
+  };
+  std::vector<BreakInfo> breakStack;
+
+  struct BreakResult {
+    int32_t index;
+    Type type;
+  };
+  BreakResult getBreakResult(Name name);
+  int32_t getBreakIndex(Name name);
 
   // The types of locals in the compact form, in order.
   std::vector<Type> localTypes;

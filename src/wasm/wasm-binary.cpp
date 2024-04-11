@@ -7241,6 +7241,16 @@ bool WasmBinaryReader::maybeVisitRefCast(Expression*& out, uint32_t code) {
     auto nullability = code == BinaryConsts::RefCast ? NonNullable : Nullable;
     auto type = Type(heapType, nullability);
     auto* ref = popNonVoidExpression();
+    if (ref->type == type) {
+      // This cast is a no-op. We remove such casts eagerly here, as we can emit
+      // extra such casts during binary writing (and we want to avoid roundtrips
+      // increasing binary size continuously). The extra casts are due to br_if
+      // working differently than the wasm spec atm, see
+      // https://github.com/WebAssembly/binaryen/pull/6390
+      // The wasm spec will hopefully ..
+      out = ref;
+      return true;
+    }
     out = Builder(wasm).makeRefCast(ref, type);
     return true;
   }

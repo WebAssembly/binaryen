@@ -35,7 +35,7 @@ void BinaryInstWriter::emitResultType(Type type) {
 }
 
 void BinaryInstWriter::visitBlock(Block* curr) {
-  breakStack.push_back(curr->name);
+  breakStack.push_back({curr->name, curr->type});
   o << int8_t(BinaryConsts::Block);
   emitResultType(curr->type);
 }
@@ -44,7 +44,7 @@ void BinaryInstWriter::visitIf(If* curr) {
   // the binary format requires this; we have a block if we need one
   // TODO: optimize this in Stack IR (if child is a block, we may break to this
   // instead)
-  breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
+  breakStack.emplace_back(BreakInfo{IMPOSSIBLE_CONTINUE, Type::unreachable});
   o << int8_t(BinaryConsts::If);
   emitResultType(curr->type);
 }
@@ -57,14 +57,27 @@ void BinaryInstWriter::emitIfElse(If* curr) {
 }
 
 void BinaryInstWriter::visitLoop(Loop* curr) {
-  breakStack.push_back(curr->name);
+  breakStack.push_back({curr->name, Type::none});
   o << int8_t(BinaryConsts::Loop);
   emitResultType(curr->type);
 }
 
 void BinaryInstWriter::visitBreak(Break* curr) {
+  auto [breakIndex, breakType] = getBreakResult(curr->name);
   o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
-    << U32LEB(getBreakIndex(curr->name));
+    << U32LEB(breakIndex);
+  // We also emit an extra cast after us if this is has a concrete type that
+  // differs from the branch target. The typing there works differently than in
+  // the wasm spec atm, see
+  // https://github.com/WebAssembly/binaryen/pull/6390
+  // The binary reader code skips such extra casts where possible, which avoids
+  // roundtrips increasing code size continuously.
+  // The wasm spec will hopefully ..
+  if (curr->type.isConcrete() && curr->type != breakType) {
+    RefCast cast;
+    cast.type = curr->type;
+    visitRefCast(&cast);
+  }
 }
 
 void BinaryInstWriter::visitSwitch(Switch* curr) {
@@ -1950,7 +1963,7 @@ void BinaryInstWriter::visitTableCopy(TableCopy* curr) {
 }
 
 void BinaryInstWriter::visitTry(Try* curr) {
-  breakStack.push_back(curr->name);
+  breakStack.push_back({curr->name, curr->type});
   o << int8_t(BinaryConsts::Try);
   emitResultType(curr->type);
 }
@@ -1973,7 +1986,7 @@ void BinaryInstWriter::visitTryTable(TryTable* curr) {
   // the binary format requires this; we have a block if we need one
   // catch_*** clauses should refer to block labels without entering the try
   // scope. So we do this at the end.
-  breakStack.emplace_back(IMPOSSIBLE_CONTINUE);
+  breakStack.emplace_back(BreakInfo{IMPOSSIBLE_CONTINUE, Type::unreachable});
 }
 
 void BinaryInstWriter::emitCatch(Try* curr, Index i) {
@@ -2687,16 +2700,20 @@ void BinaryInstWriter::emitMemoryAccess(size_t alignment,
   }
 }
 
-int32_t BinaryInstWriter::getBreakIndex(Name name) { // -1 if not found
+BinaryInstWriter::BreakResult BinaryInstWriter::getBreakResult(Name name) {
   if (name == DELEGATE_CALLER_TARGET) {
-    return breakStack.size();
+    return { breakStack.size(), func->getResults() };
   }
   for (int i = breakStack.size() - 1; i >= 0; i--) {
-    if (breakStack[i] == name) {
-      return breakStack.size() - 1 - i;
+    if (breakStack[i].name == name) {
+      return { breakStack.size() - 1 - i, breakStack[i].type };
     }
   }
   WASM_UNREACHABLE("break index not found");
+}
+
+int32_t BinaryInstWriter::getBreakIndex(Name name) {
+  return getBreakResult(name).index;
 }
 
 void StackIRGenerator::emit(Expression* curr) {
