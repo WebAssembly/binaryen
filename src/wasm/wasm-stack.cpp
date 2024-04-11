@@ -74,7 +74,7 @@ void BinaryInstWriter::visitBreak(Break* curr) {
   // roundtrips increasing code size continuously. The wasm spec will hopefully
   // improve to use the more refined type as well, which would remove the need
   // for this hack.
-  if (curr->type.isConcrete() && curr->type != breakType) {
+  if (curr->type.isRef() && curr->type != breakType) {
     RefCast cast;
     cast.type = curr->type;
     visitRefCast(&cast);
