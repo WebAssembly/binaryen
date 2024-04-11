@@ -2702,11 +2702,11 @@ void BinaryInstWriter::emitMemoryAccess(size_t alignment,
 
 BinaryInstWriter::BreakResult BinaryInstWriter::getBreakResult(Name name) {
   if (name == DELEGATE_CALLER_TARGET) {
-    return { breakStack.size(), func->getResults() };
+    return { int32_t(breakStack.size()), func->getResults() };
   }
   for (int i = breakStack.size() - 1; i >= 0; i--) {
     if (breakStack[i].name == name) {
-      return { breakStack.size() - 1 - i, breakStack[i].type };
+      return { int32_t(breakStack.size() - 1 - i), breakStack[i].type };
     }
   }
   WASM_UNREACHABLE("break index not found");
