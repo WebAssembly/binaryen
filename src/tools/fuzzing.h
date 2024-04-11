@@ -345,6 +345,11 @@ private:
   Expression* makeRefEq(Type type);
   Expression* makeRefTest(Type type);
   Expression* makeRefCast(Type type);
+
+  // Decide to emit a signed Struct/ArrayGet sometimes, when the field is
+  // packed.
+  bool maybeSignedGet(const Field& field);
+
   Expression* makeStructGet(Type type);
   Expression* makeStructSet(Type type);
   Expression* makeArrayGet(Type type);

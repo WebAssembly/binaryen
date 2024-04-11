@@ -395,8 +395,9 @@ void ModuleSplitter::exportImportFunction(Name funcName) {
   // Import the function if it is not already imported into the secondary
   // module.
   if (secondary.getFunctionOrNull(funcName) == nullptr) {
-    auto func =
-      Builder::makeFunction(funcName, primary.getFunction(funcName)->type, {});
+    auto primaryFunc = primary.getFunction(funcName);
+    auto func = Builder::makeFunction(funcName, primaryFunc->type, {});
+    func->hasExplicitName = primaryFunc->hasExplicitName;
     func->module = config.importNamespace;
     func->base = exportName;
     secondary.addFunction(std::move(func));
@@ -542,7 +543,7 @@ void ModuleSplitter::setupTablePatching() {
       placeholder->base = std::to_string(index);
       placeholder->name = Names::getValidFunctionName(
         primary, std::string("placeholder_") + placeholder->base.toString());
-      placeholder->hasExplicitName = false;
+      placeholder->hasExplicitName = true;
       placeholder->type = secondaryFunc->type;
       elem = placeholder->name;
       primary.addFunction(std::move(placeholder));

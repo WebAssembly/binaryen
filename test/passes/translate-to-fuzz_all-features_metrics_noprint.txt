@@ -1,6 +1,6 @@
 total
- [exports]      : 3       
- [funcs]        : 5       
+ [exports]      : 4       
+ [funcs]        : 7       
  [globals]      : 1       
  [imports]      : 5       
  [memories]     : 1       
@@ -8,49 +8,50 @@ total
  [table-data]   : 1       
  [tables]       : 1       
  [tags]         : 2       
- [total]        : 661     
- [vars]         : 21      
- ArrayGet       : 1       
- ArrayLen       : 1       
+ [total]        : 674     
+ [vars]         : 37      
+ ArrayCopy      : 1       
+ ArrayGet       : 3       
+ ArrayLen       : 3       
  ArrayNew       : 4       
- ArrayNewFixed  : 6       
- AtomicFence    : 1       
+ ArraySet       : 1       
+ AtomicCmpxchg  : 1       
+ AtomicNotify   : 3       
  AtomicRMW      : 1       
- Binary         : 87      
- Block          : 78      
- Break          : 17      
- Call           : 11      
- Const          : 125     
- DataDrop       : 1       
- Drop           : 7       
- GlobalGet      : 26      
- GlobalSet      : 26      
- I31Get         : 1       
- If             : 24      
- Load           : 22      
- LocalGet       : 65      
- LocalSet       : 38      
- Loop           : 9       
- MemoryCopy     : 1       
- Nop            : 9       
- RefAs          : 8       
- RefCast        : 1       
+ Binary         : 81      
+ Block          : 75      
+ Break          : 12      
+ Call           : 25      
+ CallRef        : 1       
+ Const          : 121     
+ Drop           : 5       
+ GlobalGet      : 24      
+ GlobalSet      : 24      
+ I31Get         : 2       
+ If             : 23      
+ Load           : 19      
+ LocalGet       : 75      
+ LocalSet       : 50      
+ Loop           : 7       
+ MemoryFill     : 1       
+ Nop            : 4       
+ Pop            : 6       
+ RefAs          : 9       
+ RefCast        : 5       
  RefEq          : 2       
- RefFunc        : 1       
- RefI31         : 3       
+ RefFunc        : 3       
+ RefI31         : 6       
  RefIsNull      : 2       
- RefNull        : 13      
- RefTest        : 1       
- Return         : 4       
- SIMDExtract    : 3       
- SIMDLoad       : 1       
- Select         : 2       
- Store          : 4       
- StructGet      : 2       
- StructNew      : 3       
- Throw          : 1       
- Try            : 1       
- TupleExtract   : 2       
- TupleMake      : 5       
- Unary          : 28      
+ RefNull        : 12      
+ RefTest        : 3       
+ Return         : 6       
+ SIMDExtract    : 2       
+ Select         : 4       
+ StructGet      : 1       
+ StructNew      : 1       
+ StructSet      : 1       
+ Try            : 5       
+ TupleExtract   : 3       
+ TupleMake      : 4       
+ Unary          : 20      
  Unreachable    : 13      

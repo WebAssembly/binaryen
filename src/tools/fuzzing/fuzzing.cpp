@@ -3681,13 +3681,20 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
   return builder.makeRefCast(make(refType), type);
 }
 
+bool TranslateToFuzzReader::maybeSignedGet(const Field& field) {
+  if (field.isPacked()) {
+    return oneIn(2);
+  }
+  return false;
+}
+
 Expression* TranslateToFuzzReader::makeStructGet(Type type) {
   auto& structFields = typeStructFields[type];
   assert(!structFields.empty());
   auto [structType, fieldIndex] = pick(structFields);
   auto* ref = makeTrappingRefUse(structType);
-  // TODO: fuzz signed and unsigned
-  return builder.makeStructGet(fieldIndex, ref, type);
+  auto signed_ = maybeSignedGet(structType.getStruct().fields[fieldIndex]);
+  return builder.makeStructGet(fieldIndex, ref, type, signed_);
 }
 
 Expression* TranslateToFuzzReader::makeStructSet(Type type) {
@@ -3752,18 +3759,18 @@ Expression* TranslateToFuzzReader::makeArrayGet(Type type) {
   auto arrayType = pick(arrays);
   auto* ref = makeTrappingRefUse(arrayType);
   auto* index = make(Type::i32);
+  auto signed_ = maybeSignedGet(arrayType.getArray().element);
   // Only rarely emit a plain get which might trap. See related logic in
   // ::makePointer().
   if (allowOOB && oneIn(10)) {
-    // TODO: fuzz signed and unsigned, and also below
-    return builder.makeArrayGet(ref, index, type);
+    return builder.makeArrayGet(ref, index, type, signed_);
   }
   // To avoid a trap, check the length dynamically using this pattern:
   //
   //   index < array.len ? array[index] : ..some fallback value..
   //
   auto check = makeArrayBoundsCheck(ref, index, funcContext->func, builder);
-  auto* get = builder.makeArrayGet(check.getRef, check.getIndex, type);
+  auto* get = builder.makeArrayGet(check.getRef, check.getIndex, type, signed_);
   auto* fallback = makeTrivial(type);
   return builder.makeIf(check.condition, get, fallback);
 }

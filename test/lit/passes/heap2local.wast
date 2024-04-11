@@ -191,10 +191,7 @@
   ;; CHECK-NEXT:     (i32.const 1338)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (i32.and
-  ;; CHECK-NEXT:      (local.get $3)
-  ;; CHECK-NEXT:      (i32.const 255)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (local.get $4)
@@ -207,10 +204,7 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $1
-  ;; CHECK-NEXT:    (i32.and
-  ;; CHECK-NEXT:     (i32.const 99998)
-  ;; CHECK-NEXT:     (i32.const 255)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 99998)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -218,7 +212,10 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -265,8 +262,6 @@
   ;; CHECK-NEXT: )
   (func $packed
     (local $temp (ref $struct.packed))
-    ;; Packed fields require masking of irrelevant bits, which we apply on the
-    ;; sets.
     (local.set $temp
       (struct.new $struct.packed
         (i32.const 1337)
@@ -277,12 +272,13 @@
       (local.get $temp)
       (i32.const 99998)
     )
+    ;; Packed fields require masking of irrelevant bits on unsigned gets and
+    ;; sign-extending on signed ones.
     (drop
       (struct.get $struct.packed 0
         (local.get $temp)
       )
     )
-    ;; Signed gets require us to sign-extend them.
     (drop
       (struct.get_s $struct.packed 0
         (local.get $temp)
@@ -298,8 +294,7 @@
         (local.get $temp)
       )
     )
-    ;; When using struct.new_default we do not need any masking, as the values
-    ;; written are 0 anyhow.
+    ;; Check we do not add any masking in new_default either.
     (local.set $temp
       (struct.new_default $struct.packed)
     )
@@ -3463,10 +3458,7 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $2
-  ;; CHECK-NEXT:    (i32.and
-  ;; CHECK-NEXT:     (i32.const 1337)
-  ;; CHECK-NEXT:     (i32.const 255)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1337)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -3474,7 +3466,10 @@
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:    (i32.and
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:     (i32.const 255)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -3504,13 +3499,13 @@
       (i32.const 1)
       (i32.const 1337)
     )
+    ;; As with structs, we truncate/sign-extend gets of packed fields.
     (drop
       (array.get $array8
         (local.get $temp)
         (i32.const 1)
       )
     )
-    ;; As with structs, a signed get causes us to emit a sign extend.
     (drop
       (array.get_s $array8
         (local.get $temp)
@@ -3543,17 +3538,17 @@
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $2
-  ;; CHECK-NEXT:    (i32.and
-  ;; CHECK-NEXT:     (i32.const 1337)
-  ;; CHECK-NEXT:     (i32.const 65535)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1337)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block (result i32)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (local.get $2)
+  ;; CHECK-NEXT:    (i32.const 65535)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $array16 (result i32)
