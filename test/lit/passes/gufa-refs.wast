@@ -5722,6 +5722,81 @@
   )
 )
 
+;; Packed fields with conflicting signed gets.
+(module
+
+  ;; CHECK:      (type $struct (struct (field i16)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (import "a" "b" (global $import i32))
+  (import "a" "b" (global $import i32))
+
+  (type $struct (struct (field i16)))
+
+  ;; CHECK:      (func $test-struct (type $1)
+  ;; CHECK-NEXT:  (local $x (ref null $struct))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $import)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const -1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get_s $struct 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get_u $struct 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-struct
+    (local $x (ref null $struct))
+    (if
+      (global.get $import)
+      (then
+        (local.set $x
+          (struct.new $struct
+            (i32.const -1)
+          )
+        )
+      )
+      (else
+        (local.set $x
+          (struct.new $struct
+            (i32.const 42)
+          )
+        )
+      )
+    )
+    ;; We cannot infer anything for these reads.
+    (drop
+      (struct.get_s $struct 0
+        (local.get $x)
+      )
+    )
+    (drop
+      (struct.get_u $struct 0
+        (local.get $x)
+      )
+    )
+  )
+)
+
 ;; Test that we do not error on array.init of a bottom type.
 (module
   (type $"[mut:i32]" (array (mut i32)))
