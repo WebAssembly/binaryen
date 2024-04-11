@@ -8,37 +8,45 @@
 ;; RUN: foreach %s %t wasm-opt -all --roundtrip -S -o - | filecheck %s
 
 (module
-  (type $struct.A (struct i32))
-  (type $struct.B (struct i32))
-  ;; CHECK:      (func $test (type $0)
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct.A (sub (struct (field i32))))
+    (type $struct.A (sub (struct i32)))
+    ;; CHECK:       (type $struct.B (sub $struct.A (struct (field i32))))
+    (type $struct.B (sub $struct.A (struct i32)))
+  )
+  ;; CHECK:      (func $test (type $2) (param $A (ref null $struct.A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.test (ref none)
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   (ref.test (ref $struct.B)
+  ;; CHECK-NEXT:    (local.get $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test
+  (func $test (param $A (ref null $struct.A))
     (drop
-      (ref.test (ref $struct.B) (ref.null $struct.A))
+      (ref.test (ref $struct.B) (local.get $A))
     )
   )
 )
 
 (module
-  (type $struct.A (struct i32))
-  (type $struct.B (struct i32))
-  ;; CHECK:      (func $test (type $0)
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $struct.A (sub (struct (field i32))))
+    (type $struct.A (sub (struct i32)))
+    ;; CHECK:       (type $struct.B (sub $struct.A (struct (field i32))))
+    (type $struct.B (sub $struct.A (struct i32)))
+  )
+  ;; CHECK:      (func $test (type $2) (param $A (ref null $struct.A))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.cast nullref
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   (ref.test (ref null $struct.B)
+  ;; CHECK-NEXT:    (local.get $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test
-    ;; Note that this will not round-trip precisely because Binaryen IR will
-    ;; apply the more refined type to the cast automatically (in finalize).
+  (func $test (param $A (ref null $struct.A))
     (drop
-      (ref.cast (ref null $struct.B) (ref.null $struct.A))
+      (ref.test (ref null $struct.B) (local.get $A))
     )
   )
 )
