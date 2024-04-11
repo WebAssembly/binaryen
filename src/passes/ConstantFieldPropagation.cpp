@@ -125,13 +125,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     Expression* value = info.makeExpression(*getModule());
     auto field = GCTypeUtils::getField(type, curr->index);
     assert(field);
-    if (field->isPacked()) {
-      // We cannot just pass through a value that is packed, as the input gets
-      // truncated.
-      auto mask = Bits::lowBitMask(field->getByteSize() * 8);
-      value =
-        builder.makeBinary(AndInt32, value, builder.makeConst(int32_t(mask)));
-    }
+    value =
+      Bits::makePackedFieldGet(value, *field, curr->signed_, *getModule());
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)), value));
     changed = true;
