@@ -74,7 +74,16 @@ void BinaryInstWriter::visitBreak(Break* curr) {
   // roundtrips increasing code size continuously. The wasm spec will hopefully
   // improve to use the more refined type as well, which would remove the need
   // for this hack.
-  if (curr->type.isRef() && curr->type != breakType) {
+  //
+  // Note that we must check for GC explicitly here: if only reference types are
+  // enabled then we still may seem to need a fixup here, e.g. if a ref.func
+  // is br_if'd to a block of type funcref. But that only appears that way
+  // because in Binaryen IR we allow non-nullable types, and if GC is not
+  // enabled then we always emit nullable ones. Or, looking at it another way,
+  // if GC is not enabled then we do not have non-nullable types, nor subtyping,
+  // anyhow, so there is nothing to fix up.
+  if (curr->type.isRef() && curr->type != breakType &&
+      parent.getModule()->features.hasGC()) {
     RefCast cast;
     cast.type = curr->type;
     visitRefCast(&cast);
