@@ -2034,14 +2034,12 @@ struct OptimizeInstructions
       return;
     }
 
-    // There are at least two values, so we would like to
-
     auto& passOptions = getPassOptions();
 
     // If all the values are equal then we can optimize, either to
     // array.new_default (if they are all equal to the default) or array.new (if
     // they are all equal to some other value). First, see if they are all
-    // equal, which we do by comparing in pairs: 0,1 1,2 etc.
+    // equal, which we do by comparing in pairs: [0,1], then [1,2], etc.
     for (Index i = 0; i < size - 1; i++) {
       if (!areConsecutiveInputsEqual(curr->values[i], curr->values[i + 1])) {
         return;
