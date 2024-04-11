@@ -152,7 +152,12 @@ There are a few differences between Binaryen IR and the WebAssembly language:
     branch target, which may be less refined. Using the more refined type here
     ensures that we optimize in the best way possible, using all the type
     information, but it does mean that some roundtripping operations may look a
-    little different. In particular, when we emit a br_if
+    little different. In particular, when we emit a `br_if` whose type is more
+    refined in Binaryen IR then we emit a cast right after it, so that the
+    output has the right type in the wasm spec. That may cause a few bytes of
+    extra size in rare cases. Binaryen will skip such trivial casts when it
+    loads such code, which means that repeated roundtripping will at least not
+    keep adding to the size.
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR
 => wasm) change code a little in some corner cases.
