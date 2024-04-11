@@ -3652,10 +3652,7 @@
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (return
- ;; CHECK-NEXT:   (tuple.make 2
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:    (unreachable)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $return-two-second-unreachable (param i32) (result i32 i64)

@@ -175,7 +175,7 @@ Result<Expression*> IRBuilder::pop(size_t size) {
   CHECK_ERR(packageHoistedValue(*hoisted, size));
 
   auto* ret = scope.exprStack.back();
-  if (ret->type.size() == size) {
+  if (ret->type.size() == size || ret->type == Type::unreachable) {
     scope.exprStack.pop_back();
     return ret;
   }
