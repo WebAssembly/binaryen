@@ -147,7 +147,12 @@ There are a few differences between Binaryen IR and the WebAssembly language:
       much about this when writing Binaryen passes. For more details see the
       `requiresNonNullableLocalFixups()` hook in `pass.h` and the
       `LocalStructuralDominance` class.
-  * `br_if` stuffs
+  * `br_if` output types are more refined in Binaryen IR: they have the type of
+    the value, when a value flows in. In the wasm spec the type is that of the
+    branch target, which may be less refined. Using the more refined type here
+    ensures that we optimize in the best way possible, using all the type
+    information, but it does mean that some roundtripping operations may look a
+    little different. In particular, when we emit a br_if
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR
 => wasm) change code a little in some corner cases.

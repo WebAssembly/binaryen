@@ -59,4 +59,26 @@
       (unreachable)
     )
   )
+
+  ;; CHECK:      (func $test-same (type $3) (param $A (ref $A)) (param $x i32) (result anyref)
+  ;; CHECK-NEXT:  (block $label$1 (result (ref $A))
+  ;; CHECK-NEXT:   (br_if $label$1
+  ;; CHECK-NEXT:    (local.get $A)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-same (param $A (ref $A)) (param $x i32) (result anyref)
+    ;; As above, but now we use $A everywhere, which means there is no
+    ;; difference between the type in Binaryen IR and wasm, so we do not need
+    ;; to emit any extra cast here. That cannot be observed in this test (as if
+    ;; a cast were added, the binary reader would remove it), but keep it here
+    ;; for completeness.
+    (block $out (result (ref $A))
+      (br_if $out
+        (local.get $A)
+        (local.get $x)
+      )
+    )
+  )
 )
