@@ -2228,6 +2228,31 @@
       )
     )
   )
+
+  (func $test
+    ;; As above, but with signed gets.
+    (drop
+      (struct.get_s $A_8 0
+        (struct.new $A_8
+          (i32.const 0x12345678)
+        )
+      )
+    )
+    (drop
+      (struct.get_s $A_16 0
+        (struct.new $A_16
+          (i32.const 0x12345678)
+        )
+      )
+    )
+    (drop
+      (struct.get_s $B_16 0
+        (struct.new $B_16
+          (global.get $g)
+        )
+      )
+    )
+  )
 )
 
 (module

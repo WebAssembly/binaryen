@@ -649,21 +649,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
     curr->finalize();
   }
 
-  // Add a mask for packed fields. We add masks on sets rather than on gets
-  // because gets tend to be more numerous both in code appearances and in
-  // runtime execution. As a result of masking on sets, the value in the local
-  // is always the masked unsigned value (which is also nice for debugging,
-  // incidentally).
-  Expression* addMask(Expression* value, const Field& field) {
-    if (!field.isPacked()) {
-      return value;
-    }
-
-    auto mask = Bits::lowBitMask(field.getByteSize() * 8);
-    return builder.makeBinary(
-      AndInt32, value, builder.makeConst(int32_t(mask)));
-  }
-
   void visitStructNew(StructNew* curr) {
     if (curr != allocation) {
       return;
@@ -710,9 +695,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
       // Copy them to the normal ones.
       for (Index i = 0; i < tempIndexes.size(); i++) {
         auto* value = builder.makeLocalGet(tempIndexes[i], fields[i].type);
-        // Add a mask on the values we write.
         contents.push_back(
-          builder.makeLocalSet(localIndexes[i], addMask(value, fields[i])));
+          builder.makeLocalSet(localIndexes[i], value));
       }
 
       // TODO Check if the nondefault case does not increase code size in some
@@ -724,8 +708,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
       //
       // Note that we must assign the defaults because we might be in a loop,
       // that is, there might be a previous value.
-      //
-      // Note there is no need to mask as these are zeros anyhow.
       for (Index i = 0; i < localIndexes.size(); i++) {
         contents.push_back(builder.makeLocalSet(
           localIndexes[i],
@@ -787,7 +769,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(curr->ref),
       builder.makeLocalSet(localIndexes[curr->index],
-                           addMask(curr->value, fields[curr->index]))));
+                           curr->value)));
   }
 
   void visitStructGet(StructGet* curr) {
@@ -813,11 +795,12 @@ struct Struct2Local : PostWalker<Struct2Local> {
       refinalize = true;
     }
     Expression* value = builder.makeLocalGet(localIndexes[curr->index], type);
-    if (field.isPacked() && curr->signed_) {
-      // The value in the local is the masked unsigned value, which we must
-      // sign-extend.
-      value = Bits::makeSignExt(value, field.getByteSize(), wasm);
-    }
+    // Note that in theory we could try to do better here than to fix up the
+    // packing and signedness on gets: we could truncate on sets. That would be
+    // more efficient if all gets are unsigned, as gets outnumber sets in
+    // general. However, signed gets make that more complicated, so leave this
+    // for other opts to handle.
+    value = Bits::makePackedFieldGet(value, field, curr->signed_, wasm);
     replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref), value));
   }
 };
