@@ -5,6 +5,9 @@
 ;; refined enough (Binaryen IR uses the value's type; wasm uses the target's)
 ;; then we add a cast. We then remove trivial casts like it during load, when we
 ;; see they are unneeded.
+;;
+;; This is also used as the input in test/lit/binary/cast-and-recast.test, which
+;; verifies the binary format itself.
 
 ;; RUN: wasm-opt %s -all --roundtrip --roundtrip --roundtrip -S -o - | filecheck %s
 
@@ -73,7 +76,8 @@
     ;; difference between the type in Binaryen IR and wasm, so we do not need
     ;; to emit any extra cast here. That cannot be observed in this test (as if
     ;; a cast were added, the binary reader would remove it), but keep it here
-    ;; for completeness.
+    ;; for completeness, and because this file serves as the input to
+    ;; test/lit/binary/cast-and-recast.test.
     (block $out (result (ref $A))
       (br_if $out
         (local.get $A)
