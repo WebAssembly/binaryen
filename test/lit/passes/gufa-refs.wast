@@ -5624,10 +5624,14 @@
 
 ;; Packed fields with signed gets.
 (module
+  ;; CHECK:      (type $array (array (mut i8)))
+
+  ;; CHECK:      (type $1 (func))
+
   ;; CHECK:      (type $struct (struct (field i16)))
   (type $struct (struct (field i16)))
 
-  ;; CHECK:      (type $1 (func))
+  (type $array (array (mut i8)))
 
   ;; CHECK:      (func $test-struct (type $1)
   ;; CHECK-NEXT:  (local $x (ref $struct))
@@ -5660,6 +5664,59 @@
     (drop
       (struct.get_u $struct 0
         (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $test-array (type $1)
+  ;; CHECK-NEXT:  (local $x (ref $array))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (array.new_fixed $array 1
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (array.get_s $array
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (array.get_u $array
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-array
+    (local $x (ref $array))
+    (local.set $x
+      (array.new_fixed $array 1
+        (i32.const -1)
+      )
+    )
+    ;; This reads -1.
+    (drop
+      (array.get_s $array
+        (local.get $x)
+        (i32.const 0)
+      )
+    )
+    ;; This reads 255, as the other bits were truncated.
+    (drop
+      (array.get_u $array
+        (local.get $x)
+        (i32.const 0)
       )
     )
   )
