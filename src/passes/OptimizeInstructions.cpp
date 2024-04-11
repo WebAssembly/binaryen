@@ -2005,7 +2005,7 @@ struct OptimizeInstructions
       return;
     }
 
-    // The value must be the the default/zero.
+    // The value must be the default/zero.
     auto& passOptions = getPassOptions();
     auto zero = Literal::makeZero(type);
     auto* value =
