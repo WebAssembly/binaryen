@@ -18,6 +18,8 @@
 // Print out text in s-expression format
 //
 
+#include <algorithm>
+
 #include <ir/iteration.h>
 #include <ir/module-utils.h>
 #include <ir/table-utils.h>
@@ -2019,9 +2021,7 @@ struct PrintExpressionContents
     // If the tuple is unreachable, its size will be reported as 1, but that's
     // not a valid tuple size. The size we print mostly doesn't matter if the
     // tuple is unreachable, but it does have to be valid.
-    auto arity = curr->tuple->type.size();
-    arity = arity < 2 ? 2 : arity;
-    o << arity << " ";
+    o << std::max(curr->tuple->type.size(), size_t(2)) << " ";
     o << curr->index;
   }
   void visitRefI31(RefI31* curr) { printMedium(o, "ref.i31"); }
