@@ -2229,7 +2229,63 @@
     )
   )
 
-  (func $test
+  ;; CHECK:      (func $test_signed (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.new $A_8
+  ;; CHECK-NEXT:       (i32.const 305419896)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (i32.shl
+  ;; CHECK-NEXT:      (i32.const 305419896)
+  ;; CHECK-NEXT:      (i32.const 24)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 24)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.new $A_16
+  ;; CHECK-NEXT:       (i32.const 305419896)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (i32.shl
+  ;; CHECK-NEXT:      (i32.const 305419896)
+  ;; CHECK-NEXT:      (i32.const 16)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 16)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.new $B_16
+  ;; CHECK-NEXT:       (global.get $g)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (i32.shl
+  ;; CHECK-NEXT:      (global.get $g)
+  ;; CHECK-NEXT:      (i32.const 16)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 16)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_signed
     ;; As above, but with signed gets.
     (drop
       (struct.get_s $A_8 0
