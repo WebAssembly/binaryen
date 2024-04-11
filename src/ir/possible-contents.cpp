@@ -2311,7 +2311,7 @@ bool Flower::updateContents(LocationIndex locationIndex,
     if (exprLoc->expr->is<StructGet>() || exprLoc->expr->is<ArrayGet>()) {
       // Packed data reads must be filtered before the combine() operation, as
       // we must only combine the filtered contents (e.g. if 0xff arrives which
-      // as a signed read is truly 0xffffffff then cannot first combine the
+      // as a signed read is truly 0xffffffff then we cannot first combine the
       // existing 0xffffffff with the new 0xff, as they are different, and the
       // result will no longer be a constant).
       filterPackedDataReads(newContents, *exprLoc);
