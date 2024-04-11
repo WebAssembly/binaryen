@@ -1999,6 +1999,8 @@ private:
                             const GlobalLocation& globalLoc);
   void filterDataContents(PossibleContents& contents,
                           const DataLocation& dataLoc);
+  void filterPackedDataReads(PossibleContents& contents,
+                             const ExpressionLocation& exprLoc);
 
   // Reads from GC data: a struct.get or array.get. This is given the type of
   // the read operation, the field that is read on that type, the known contents
@@ -2301,10 +2303,24 @@ bool Flower::updateContents(LocationIndex locationIndex,
   if (auto* dataLoc = std::get_if<DataLocation>(&location)) {
     filterDataContents(newContents, *dataLoc);
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
-    std::cout << "  pre-filtered contents:\n";
+    std::cout << "  pre-filtered data contents:\n";
     newContents.dump(std::cout, &wasm);
     std::cout << '\n';
 #endif
+  } else if (auto* exprLoc = std::get_if<ExpressionLocation>(&location)) {
+    if (exprLoc->expr->is<StructGet>() || exprLoc->expr->is<ArrayGet>()) {
+      // Packed data reads must be filtered before the combine() operation, as
+      // we must only combine the filtered contents (e.g. if 0xff arrives which
+      // as a signed read is truly 0xffffffff then cannot first combine the
+      // existing 0xffffffff with the new 0xff, as they are different, and the
+      // result will no longer be a constant).
+      filterPackedDataReads(newContents, *exprLoc);
+#if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
+      std::cout << "  pre-filtered packed read contents:\n";
+      newContents.dump(std::cout, &wasm);
+      std::cout << '\n';
+#endif
+    }
   }
 
   contents.combine(newContents);
@@ -2630,6 +2646,57 @@ void Flower::filterDataContents(PossibleContents& contents,
     //  (c) and if both are not constants then likewise we always end up as an
     //      unknown i32
     //
+  }
+}
+
+void Flower::filterPackedDataReads(PossibleContents& contents,
+                                   const ExpressionLocation& exprLoc) {
+  auto* expr = exprLoc.expr;
+
+  // Packed fields are stored as the truncated bits (see comment on
+  // DataLocation; the actual truncation is done in filterDataContents), which
+  // means that unsigned gets just work but signed ones need fixing (and we only
+  // know how to do that here, when we reach the get and see if it is signed).
+  auto signed_ = false;
+  Expression* ref;
+  Index index;
+  if (auto* get = expr->dynCast<StructGet>()) {
+    signed_ = get->signed_;
+    ref = get->ref;
+    index = get->index;
+  } else if (auto* get = expr->dynCast<ArrayGet>()) {
+    signed_ = get->signed_;
+    ref = get->ref;
+    // Arrays are treated as having a single field.
+    index = 0;
+  } else {
+    WASM_UNREACHABLE("bad packed read");
+  }
+  if (!signed_) {
+    return;
+  }
+
+  // We are reading data here, so the reference must be a valid struct or
+  // array, otherwise we would never have gotten here.
+  assert(ref->type.isRef());
+  auto field = GCTypeUtils::getField(ref->type.getHeapType(), index);
+  assert(field);
+  if (!field->isPacked()) {
+    return;
+  }
+
+  if (contents.isLiteral()) {
+    // This is a constant. We can sign-extend it and use that value.
+    auto shifts = Literal(int32_t(32 - field->getByteSize() * 8));
+    auto lit = contents.getLiteral();
+    lit = lit.shl(shifts);
+    lit = lit.shrS(shifts);
+    contents = PossibleContents::literal(lit);
+  } else {
+    // This is not a constant. As in filterDataContents, give up and leave
+    // only the type, since we have no way to track the sign-extension on
+    // top of whatever this is.
+    contents = PossibleContents::fromType(contents.getType());
   }
 }
 

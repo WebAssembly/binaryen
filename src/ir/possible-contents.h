@@ -446,6 +446,11 @@ struct SignatureResultLocation {
 // The location of contents in a struct or array (i.e., things that can fit in a
 // dataref). Note that this is specific to this type - it does not include data
 // about subtypes or supertypes.
+//
+// We store the truncated bits here when the field is packed. That is, if -1 is
+// written to an i8 then the value here will be 0xff. StructGet/ArrayGet
+// operations that read a signed value must then perform a sign-extend
+// operation.
 struct DataLocation {
   HeapType type;
   // The index of the field in a struct, or 0 for an array (where we do not

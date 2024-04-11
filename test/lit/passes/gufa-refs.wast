@@ -5622,6 +5622,49 @@
   )
 )
 
+;; Packed fields with signed gets.
+(module
+  ;; CHECK:      (type $struct (struct (field i16)))
+  (type $struct (struct (field i16)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (func $test-struct (type $1)
+  ;; CHECK-NEXT:  (local $x (ref $struct))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const -1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 65535)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-struct
+    (local $x (ref $struct))
+    (local.set $x
+      (struct.new $struct
+        (i32.const -1)
+      )
+    )
+    ;; This reads -1.
+    (drop
+      (struct.get_s $struct 0
+        (local.get $x)
+      )
+    )
+    ;; This reads 65535, as the other bits were truncated.
+    (drop
+      (struct.get_u $struct 0
+        (local.get $x)
+      )
+    )
+  )
+)
+
 ;; Test that we do not error on array.init of a bottom type.
 (module
   (type $"[mut:i32]" (array (mut i32)))
