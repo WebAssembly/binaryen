@@ -2068,9 +2068,21 @@ struct OptimizeInstructions
     }
 
     // They are all equal to each other, but not to the default value. If there
-    // are 2 or more elements here then we can save by using array.new (with 1,
-    // ArrayNewFixed is actually more compact, and we optimize ArrayNew to it,
-    // above).
+    // are 2 or more elements here then we can save by using array.new. For
+    // example, with 2 elements we are doing this:
+    //
+    //  (array.new_fixed
+    //    (A)
+    //    (A)
+    //  )
+    // =>
+    //  (array.new
+    //    (A)
+    //    (i32.const 2) ;; get two copies of (A)
+    //  )
+    //
+    // However, with 1, ArrayNewFixed is actually more compact, and we optimize
+    // ArrayNew to it, above.
     if (size == 1) {
       return;
     }
