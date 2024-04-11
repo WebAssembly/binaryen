@@ -695,8 +695,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
       // Copy them to the normal ones.
       for (Index i = 0; i < tempIndexes.size(); i++) {
         auto* value = builder.makeLocalGet(tempIndexes[i], fields[i].type);
-        contents.push_back(
-          builder.makeLocalSet(localIndexes[i], value));
+        contents.push_back(builder.makeLocalSet(localIndexes[i], value));
       }
 
       // TODO Check if the nondefault case does not increase code size in some
@@ -768,8 +767,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // write the data to the local instead of the heap allocation.
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(curr->ref),
-      builder.makeLocalSet(localIndexes[curr->index],
-                           curr->value)));
+      builder.makeLocalSet(localIndexes[curr->index], curr->value)));
   }
 
   void visitStructGet(StructGet* curr) {

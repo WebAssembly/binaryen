@@ -128,8 +128,7 @@ inline Expression* makePackedFieldGet(Expression* value,
 
   Builder builder(wasm);
   auto mask = Bits::lowBitMask(field.getByteSize() * 8);
-  return builder.makeBinary(
-    AndInt32, value, builder.makeConst(int32_t(mask)));
+  return builder.makeBinary(AndInt32, value, builder.makeConst(int32_t(mask)));
 }
 
 // getMaxBits() helper that has pessimistic results for the bits used in locals.

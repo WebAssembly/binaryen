@@ -125,7 +125,8 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     Expression* value = info.makeExpression(*getModule());
     auto field = GCTypeUtils::getField(type, curr->index);
     assert(field);
-    value = Bits::makePackedFieldGet(value, *field, curr->signed_, *getModule());
+    value =
+      Bits::makePackedFieldGet(value, *field, curr->signed_, *getModule());
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)), value));
     changed = true;
