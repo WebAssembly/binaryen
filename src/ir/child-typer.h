@@ -22,8 +22,7 @@
 namespace wasm {
 
 // For each child, call `noteSubtype` with a pointer to the child and the most
-// specific type that the child must have. Subtypings are based only on
-// information that would have been parsed out of a binary.
+// specific type that the child must have.
 template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   Module& wasm;
   Function* func;
