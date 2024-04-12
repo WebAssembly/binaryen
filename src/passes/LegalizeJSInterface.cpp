@@ -229,6 +229,7 @@ private:
     Builder builder(*module);
     auto* legal = new Function();
     legal->name = legalName;
+    legal->hasExplicitName = true;
 
     auto* call = module->allocator.alloc<Call>();
     call->target = func->name;
