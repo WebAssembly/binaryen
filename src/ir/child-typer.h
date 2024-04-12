@@ -693,6 +693,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   }
 
   void visitTry(Try* curr) {
+    note(&curr->body, curr->type);
     for (auto& expr : curr->catchBodies) {
       note(&expr, curr->type);
     }
