@@ -55,12 +55,13 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
 
   void visitBlock(Block* curr) {
     size_t n = curr->list.size();
+    if (n == 0) {
+      return;
+    }
     for (size_t i = 0; i < n - 1; ++i) {
       note(&curr->list[i], Type::none);
     }
-    if (n > 0) {
-      note(&curr->list.back(), curr->type);
-    }
+    note(&curr->list.back(), curr->type);
   }
 
   void visitIf(If* curr) {
