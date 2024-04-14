@@ -2838,8 +2838,9 @@ void PrintSExpression::handleSignature(HeapType curr, Name name) {
 void PrintSExpression::visitExport(Export* curr) {
   o << '(';
   printMedium(o, "export ");
-  // TODO: Escape the string properly.
-  printText(o, curr->name.str.data()) << " (";
+  std::stringstream escaped;
+  String::printEscaped(escaped, curr->name.str);
+  printText(o, escaped.str(), false) << " (";
   switch (curr->kind) {
     case ExternalKind::Function:
       o << "func";
@@ -2865,9 +2866,11 @@ void PrintSExpression::visitExport(Export* curr) {
 
 void PrintSExpression::emitImportHeader(Importable* curr) {
   printMedium(o, "import ");
-  // TODO: Escape the strings properly and use std::string_view.
-  printText(o, curr->module.str.data()) << ' ';
-  printText(o, curr->base.str.data()) << ' ';
+  std::stringstream escapedModule, escapedBase;
+  String::printEscaped(escapedModule, curr->module.str);
+  String::printEscaped(escapedBase, curr->base.str);
+  printText(o, escapedModule.str(), false) << ' ';
+  printText(o, escapedBase.str(), false) << ' ';
 }
 
 void PrintSExpression::visitGlobal(Global* curr) {

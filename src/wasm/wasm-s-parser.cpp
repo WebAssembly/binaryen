@@ -3622,7 +3622,9 @@ void SExpressionWasmBuilder::parseInnerData(Element& s,
 
 void SExpressionWasmBuilder::parseExport(Element& s) {
   std::unique_ptr<Export> ex = std::make_unique<Export>();
-  ex->name = s[1]->str();
+  std::vector<char> nameBytes;
+  stringToBinary(*s[1], s[1]->str().str, nameBytes);
+  ex->name = std::string(nameBytes.data(), nameBytes.size());
   if (s[2]->isList()) {
     auto& inner = *s[2];
     if (elementStartsWith(inner, FUNC)) {
@@ -3703,15 +3705,20 @@ void SExpressionWasmBuilder::parseImport(Element& s) {
   if (!newStyle) {
     kind = ExternalKind::Function;
   }
-  auto module = s[i++]->str();
+  std::vector<char> moduleBytes;
+  stringToBinary(*s[i], s[i]->str().str, moduleBytes);
+  Name module = std::string(moduleBytes.data(), moduleBytes.size());
+  i++;
+
   if (!s[i]->isStr()) {
     throw SParseException("no name for import", s, *s[i]);
   }
-  auto base = s[i]->str();
-  if (!module.size() || !base.size()) {
-    throw SParseException("imports must have module and base", s, *s[i]);
-  }
+
+  std::vector<char> baseBytes;
+  stringToBinary(*s[i], s[i]->str().str, baseBytes);
+  Name base = std::string(baseBytes.data(), baseBytes.size());
   i++;
+
   // parse internals
   Element& inner = newStyle ? *s[3] : s;
   Index j = newStyle ? newStyleInner : i;
