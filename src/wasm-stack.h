@@ -163,7 +163,7 @@ private:
   void countScratchLocals();
   void setScratchLocals();
 
-  // local.get, local.tee, and glboal.get expressions that will be followed by
+  // local.get, local.tee, and global.get expressions that will be followed by
   // tuple.extracts. We can optimize these by getting only the local for the
   // extracted index.
   std::unordered_map<Expression*, Index> extractedGets;
