@@ -30,7 +30,6 @@
 #include <unordered_set>
 
 #include "cfg/liveness-traversal.h"
-#include "ir/eh-utils.h"
 #include "ir/numbering.h"
 #include "ir/utils.h"
 #include "pass.h"
