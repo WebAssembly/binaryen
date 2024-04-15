@@ -152,19 +152,45 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   // user-provided names and the fallback indexed names.
   struct TypePrinter : TypeNameGeneratorBase<TypePrinter> {
     PrintSExpression& parent;
-    IndexedTypeNameGenerator<> fallback;
+    DefaultTypeNameGenerator fallback;
+    std::unordered_map<HeapType, TypeNames> fallbackNames;
 
     TypePrinter(PrintSExpression& parent, const std::vector<HeapType>& types)
-      : parent(parent), fallback(types) {}
+      : parent(parent) {
+      if (!parent.currModule) {
+        return;
+      }
+      std::unordered_set<Name> usedNames;
+      for (auto& [_, names] : parent.currModule->typeNames) {
+        usedNames.insert(names.name);
+      }
+      size_t i = 0;
+      // Use indices for any remaining type names, skipping any that are already
+      // used.
+      for (auto type : types) {
+        if (parent.currModule->typeNames.count(type)) {
+          ++i;
+          continue;
+        }
+        Name name;
+        do {
+          name = std::to_string(i++);
+        } while (usedNames.count(name));
+        fallbackNames[type] = {name, {}};
+      }
+    }
 
     TypeNames getNames(HeapType type) {
-      if (parent.currModule) {
-        if (auto it = parent.currModule->typeNames.find(type);
-            it != parent.currModule->typeNames.end()) {
-          return it->second;
-        }
+      if (!parent.currModule) {
+        return fallback.getNames(type);
       }
-      return fallback.getNames(type);
+      if (auto it = parent.currModule->typeNames.find(type);
+          it != parent.currModule->typeNames.end()) {
+        return it->second;
+      }
+      auto it = fallbackNames.find(type);
+      assert(it != fallbackNames.end());
+      return it->second;
     }
 
     Name getName(HeapType type) { return getNames(type).name; }
