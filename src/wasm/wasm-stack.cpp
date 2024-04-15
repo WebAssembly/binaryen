@@ -2687,22 +2687,30 @@ void BinaryInstWriter::countScratchLocals() { // TODO rename
 
     void visitBreak(Break* curr) {
       if (curr->type.isRef()) {
-        hasBrIfReturningRef++;
+        numBrIfReturningRef++;
       }
     }
 
     void visitDrop(Drop* curr) {
-      if (curr->value->type.isRef() && curr->value->is<Break>()) {
-        // The value is exactly a br_if of a ref. We just ++'d for it, and --
-        // now to offset that so it is ignored.
-        hasBrIfReturningRef--;
+      if (curr->value->is<Break>() && curr->value->type.isRef()) {
+        // The value is exactly a br_if of a ref, that we just visited before
+        // us. Undo the ++ from there as it can be ignored.
+        assert(numBrIfReturningRef > 0);
+        numBrIfReturningRef--;
       }
     }
-
   } scanner;
   scanner.walk(func->body);
 
-  // 1. Handle tuple.extracts and their scratch locals.
+  // 1. Handle br_if value subtyping issues.
+  if (scanner.numBrIfReturningRef) {
+    // Solve it from orbit by rewriting the function to not have such br_ifs:
+    // drop them all after teeing the value and getting it after the drop. We
+    // make a copy of the function here, which is rather extreme, but it allows
+    // us to make a change in only one place.
+  }
+
+  // 2. Handle tuple.extracts and their scratch locals.
   for (auto* extract : scanner.tupleExtracts) {
     scratchLocals[extract->type] = 0;
   }
@@ -2717,13 +2725,6 @@ void BinaryInstWriter::countScratchLocals() { // TODO rename
         tuple->is<GlobalGet>()) {
       extractedGets.insert({tuple, extract->index});
     }
-  }
-
-  // 2. Handle br_if value subtyping issues.
-  if (scanner.hasBrIfReturningRef) {
-    // It looks grim, we found br_ifs that return reference types, and they are
-    // not dropped. But all may
-    // not be lost, for
   }
 }
 
