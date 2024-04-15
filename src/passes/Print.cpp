@@ -181,16 +181,23 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     }
 
     TypeNames getNames(HeapType type) {
-      if (!parent.currModule) {
-        return fallback.getNames(type);
+      if (parent.currModule) {
+        if (auto it = parent.currModule->typeNames.find(type);
+            it != parent.currModule->typeNames.end()) {
+          return it->second;
+        }
+        // In principle we should always have at least a fallback name for every
+        // type in the module, so this lookup should never fail. In practice,
+        // though, the `printExpression` variants deliberately avoid walking the
+        // module to find unnamed types so they can be safely used in a
+        // function-parallel context. That means we can have a module but not
+        // have generated the fallback names, so this lookup can fail, in which
+        // case we generate a name on demand.
+        if (auto it = fallbackNames.find(type); it != fallbackNames.end()) {
+          return it->second;
+        }
       }
-      if (auto it = parent.currModule->typeNames.find(type);
-          it != parent.currModule->typeNames.end()) {
-        return it->second;
-      }
-      auto it = fallbackNames.find(type);
-      assert(it != fallbackNames.end());
-      return it->second;
+      return fallback.getNames(type);
     }
 
     Name getName(HeapType type) { return getNames(type).name; }
