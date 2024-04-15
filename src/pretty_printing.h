@@ -51,29 +51,35 @@ inline std::ostream& restoreNormalColor(std::ostream& o) {
   return o;
 }
 
-inline std::ostream& printText(std::ostream& o, const char* str) {
-  o << '"';
+inline std::ostream&
+printText(std::ostream& o, std::string_view str, bool needQuotes = true) {
+  if (needQuotes) {
+    o << '"';
+  }
   Colors::green(o);
   o << str;
   Colors::normal(o);
-  return o << '"';
+  if (needQuotes) {
+    o << '"';
+  }
+  return o;
 }
 
-inline std::ostream& printMajor(std::ostream& o, const char* str) {
+inline std::ostream& printMajor(std::ostream& o, std::string_view str) {
   prepareMajorColor(o);
   o << str;
   restoreNormalColor(o);
   return o;
 }
 
-inline std::ostream& printMedium(std::ostream& o, const char* str) {
+inline std::ostream& printMedium(std::ostream& o, std::string_view str) {
   prepareColor(o);
   o << str;
   restoreNormalColor(o);
   return o;
 }
 
-inline std::ostream& printMinor(std::ostream& o, const char* str) {
+inline std::ostream& printMinor(std::ostream& o, std::string_view str) {
   prepareMinorColor(o);
   o << str;
   restoreNormalColor(o);

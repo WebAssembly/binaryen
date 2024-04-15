@@ -484,6 +484,10 @@ void PassRegistry::registerPasses() {
                "lowers wasm strings and operations to imports",
                createStringLoweringPass);
   registerPass(
+    "string-lowering-magic-imports",
+    "same as string-lowering, but encodes well-formed strings as magic imports",
+    createStringLoweringMagicImportPass);
+  registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
   registerPass("stack-check",
                "enforce limits on llvm's __stack_pointer global",
