@@ -82,11 +82,18 @@ void BinaryInstWriter::visitBreak(Break* curr) {
   // enabled then we always emit nullable ones. Or, looking at it another way,
   // if GC is not enabled then we do not have non-nullable types, nor subtyping,
   // anyhow, so there is nothing to fix up.
-  if (curr->type.isRef() && curr->type != breakType &&
+  if (curr->type.hasRef() && curr->type != breakType &&
       parent.getModule()->features.hasGC()) {
-    RefCast cast;
-    cast.type = curr->type;
-    visitRefCast(&cast);
+    if (!curr->type.isTuple()) {
+      // Simple: Just emit a cast.
+      RefCast cast;
+      cast.type = curr->type;
+      visitRefCast(&cast);
+    } else {
+      // The tuple case has already been handled explicitly in
+      // countScratchLocals() TODO rename
+      // We can assume that the output is dropped, and therefore we do not need to cast anything.
+    }
   }
 }
 
@@ -2653,26 +2660,70 @@ void BinaryInstWriter::noteLocalType(Type type) {
   numLocalsByType[type]++;
 }
 
-void BinaryInstWriter::countScratchLocals() {
-  // Add a scratch register in `numLocalsByType` for each type of
-  // tuple.extract with nonzero index present.
-  FindAll<TupleExtract> extracts(func->body);
-  for (auto* extract : extracts.list) {
-    if (extract->type != Type::unreachable && extract->index != 0) {
-      scratchLocals[extract->type] = 0;
+void BinaryInstWriter::countScratchLocals() { // TODO rename
+  // Do a single scan of the function to handle some special things.
+  struct Scanner : public PostWalker<Scanner> {
+    // We'll add a scratch register in `numLocalsByType` for each type of
+    // tuple.extract with nonzero index present.
+    std::vector<TupleExtract*> tupleExtracts;
+
+    void visitTupleExtract(TupleExtract* curr) {
+      if (curr->type != Type::unreachable && curr->index != 0) {
+        tupleExtracts.push_back(curr);
+      }
     }
+
+    // As mentioned in BinaryInstWriter::visitBreak, the type of br_if with a
+    // value may be more refined in Binaryen IR compared to the wasm spec, as we
+    // give it the type of the value, while the spec gives it the type of the
+    // block it targets. To avoid problems we must handle the case where a br_if
+    // has a value, the value is more refined then the target, and the value is
+    // not dropped (the last condition is very rare in real-world wasm, making
+    // all of this a quite unusual situation). First, detect such situations by
+    // seeing if we have br_ifs that return reference types at all. We do so by
+    // counting them, and as we go we ignore ones that are dropped, since a
+    // dropped value is not a problem for us.
+    Index numBrIfReturningRef = 0;
+
+    void visitBreak(Break* curr) {
+      if (curr->type.isRef()) {
+        hasBrIfReturningRef++;
+      }
+    }
+
+    void visitDrop(Drop* curr) {
+      if (curr->value->type.isRef() && curr->value->is<Break>()) {
+        // The value is exactly a br_if of a ref. We just ++'d for it, and --
+        // now to offset that so it is ignored.
+        hasBrIfReturningRef--;
+      }
+    }
+
+  } scanner;
+  scanner.walk(func->body);
+
+  // 1. Handle tuple.extracts and their scratch locals.
+  for (auto* extract : scanner.tupleExtracts) {
+    scratchLocals[extract->type] = 0;
   }
   for (auto& [type, _] : scratchLocals) {
     noteLocalType(type);
   }
-  // While we have all the tuple.extracts, also find extracts of local.gets,
+  // Also, while we have all the tuple.extracts, find extracts of local.gets,
   // local.tees, and global.gets that we can optimize.
-  for (auto* extract : extracts.list) {
+  for (auto* extract : scanner.tupleExtracts) {
     auto* tuple = extract->tuple;
     if (tuple->is<LocalGet>() || tuple->is<LocalSet>() ||
         tuple->is<GlobalGet>()) {
       extractedGets.insert({tuple, extract->index});
     }
+  }
+
+  // 2. Handle br_if value subtyping issues.
+  if (scanner.hasBrIfReturningRef) {
+    // It looks grim, we found br_ifs that return reference types, and they are
+    // not dropped. But all may
+    // not be lost, for
   }
 }
 
