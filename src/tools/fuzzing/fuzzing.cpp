@@ -2450,18 +2450,20 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
   }
   // Look for a proper function starting from a random location, and loop from
   // there, wrapping around to 0.
-  Index start = upTo(wasm.functions.size());
-  Index i = start;
-  do {
-    auto& func = wasm.functions[i];
-    if (Type::isSubType(Type(func->type, NonNullable), type)) {
-      return builder.makeRefFunc(func->name, func->type);
-    }
-    i++;
-    if (i == wasm.functions.size()) {
-      i == 0;
-    }
-  } while (i != start);
+  if (!wasm.functions.empty()) {
+    Index start = upTo(wasm.functions.size());
+    Index i = start;
+    do {
+      auto& func = wasm.functions[i];
+      if (Type::isSubType(Type(func->type, NonNullable), type)) {
+        return builder.makeRefFunc(func->name, func->type);
+      }
+      i++;
+      if (i == wasm.functions.size()) {
+        i = 0;
+      }
+    } while (i != start);
+  }
   // We don't have a matching function. Create a null some of the time here,
   // but only rarely if the type is non-nullable (because in that case we'd need
   // to add a ref.as_non_null to validate, and the code will trap when we get
