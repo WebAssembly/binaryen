@@ -2458,10 +2458,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
       if (Type::isSubType(Type(func->type, NonNullable), type)) {
         return builder.makeRefFunc(func->name, func->type);
       }
-      i++;
-      if (i == wasm.functions.size()) {
-        i = 0;
-      }
+      i = (i + 1) % wasm.functions.size();
     } while (i != start);
   }
   // We don't have a matching function. Create a null some of the time here,
