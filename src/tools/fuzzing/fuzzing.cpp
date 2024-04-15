@@ -1195,7 +1195,6 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
     if (upTo(RESOLUTION) >= chance) {
       dropToLog(func);
       // TODO add some locals? and the rest of addFunction's operations?
-      // TODO: interposition, replace initial a(b) with a(RANDOM_THING(b))
       // TODO: if we add OOB checks after creation, then we can do it on
       //       initial contents too, and it may be nice to *not* run these
       //       passes, like we don't run them on new functions. But, we may
@@ -1383,7 +1382,6 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                   &Self::makeArrayGet);
     }
   }
-  // TODO: struct.get and other GC things
   return (this->*pick(options))(type);
 }
 
@@ -2450,11 +2448,18 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
     // had generic 'func' here.
     heapType = Signature(Type::none, Type::none);
   }
-  // TODO: randomize the order
-  for (auto& func : wasm.functions) {
-    if (Type::isSubType(Type(func->type, NonNullable), type)) {
-      return builder.makeRefFunc(func->name, func->type);
-    }
+  // Look for a proper function starting from a random location, and loop from
+  // there, wrapping around to 0.
+  if (!wasm.functions.empty()) {
+    Index start = upTo(wasm.functions.size());
+    Index i = start;
+    do {
+      auto& func = wasm.functions[i];
+      if (Type::isSubType(Type(func->type, NonNullable), type)) {
+        return builder.makeRefFunc(func->name, func->type);
+      }
+      i = (i + 1) % wasm.functions.size();
+    } while (i != start);
   }
   // We don't have a matching function. Create a null some of the time here,
   // but only rarely if the type is non-nullable (because in that case we'd need
@@ -3788,7 +3793,6 @@ Expression* TranslateToFuzzReader::makeArraySet(Type type) {
   // Only rarely emit a plain get which might trap. See related logic in
   // ::makePointer().
   if (allowOOB && oneIn(10)) {
-    // TODO: fuzz signed and unsigned, and also below
     return builder.makeArraySet(ref, index, value);
   }
   // To avoid a trap, check the length dynamically using this pattern:
@@ -3816,7 +3820,6 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
     // Only rarely emit a plain get which might trap. See related logic in
     // ::makePointer().
     if (allowOOB && oneIn(10)) {
-      // TODO: fuzz signed and unsigned, and also below
       return builder.makeArrayFill(ref, index, value, length);
     }
     auto check =
@@ -3841,7 +3844,6 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
     auto* srcRef = makeTrappingRefUse(srcArrayType);
     auto* length = make(Type::i32);
     if (allowOOB && oneIn(10)) {
-      // TODO: fuzz signed and unsigned, and also below
       return builder.makeArrayCopy(ref, index, srcRef, srcIndex, length);
     }
     auto check =
