@@ -159,7 +159,9 @@ private:
 
   // Keeps track of the binary index of the scratch locals used to lower
   // tuple.extract.
+  std::vector<TupleExtract*> tupleExtracts;
   InsertOrderedMap<Type, Index> scratchLocals;
+  void scanFunction();
   void countScratchLocals();
   void setScratchLocals();
 
@@ -167,6 +169,10 @@ private:
   // tuple.extracts. We can optimize these by getting only the local for the
   // extracted index.
   std::unordered_map<Expression*, Index> extractedGets;
+
+  // In some cases we will allocate Expressions, which we do on a temp module
+  // that is cleaned up with us.
+  std::unique_ptr<Module> tempModule;
 };
 
 // Takes binaryen IR and converts it to something else (binary or stack IR)

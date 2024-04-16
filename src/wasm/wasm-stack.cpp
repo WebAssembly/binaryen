@@ -16,6 +16,7 @@
 
 #include "wasm-stack.h"
 #include "ir/find_all.h"
+#include "ir/module-utils.h"
 #include "ir/properties.h"
 #include "wasm-binary.h"
 #include "wasm-debug.h"
@@ -91,7 +92,7 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       visitRefCast(&cast);
     } else {
       // The tuple case has already been handled explicitly in
-      // countScratchLocals() TODO rename
+      // scanFunction()
       // We can assume that the output is dropped, and therefore we do not need to cast anything.
     }
   }
@@ -2576,6 +2577,10 @@ void BinaryInstWriter::emitUnreachable() {
 
 void BinaryInstWriter::mapLocalsAndEmitHeader() {
   assert(func && "BinaryInstWriter: function is not set");
+
+  // Scan and potentially modify XXX the function in preparation for writing.
+  scanFunction();
+
   // Map params
   for (Index i = 0; i < func->getNumParams(); i++) {
     mappedLocals[std::make_pair(i, 0)] = i;
@@ -2660,7 +2665,7 @@ void BinaryInstWriter::noteLocalType(Type type) {
   numLocalsByType[type]++;
 }
 
-void BinaryInstWriter::countScratchLocals() { // TODO rename
+void BinaryInstWriter::scanFunction() {
   // Do a single scan of the function to handle some special things.
   struct Scanner : public PostWalker<Scanner> {
     // We'll add a scratch register in `numLocalsByType` for each type of
@@ -2683,11 +2688,17 @@ void BinaryInstWriter::countScratchLocals() { // TODO rename
     // seeing if we have br_ifs that return reference types at all. We do so by
     // counting them, and as we go we ignore ones that are dropped, since a
     // dropped value is not a problem for us.
-    Index numBrIfReturningRef = 0;
+    //
+    // Note that we do not check if the type matches the break target, which
+    // takes more effort, and the other conditions are quite rare anyhow. We do
+    // check that below, if we found something suspicious. As a result, in rare
+    // cases we may enter the expensive path below and end up not doing
+    // anything, but such is life.
+    Index numDangerousBrIfs = 0;
 
     void visitBreak(Break* curr) {
       if (curr->type.isRef()) {
-        numBrIfReturningRef++;
+        numDangerousBrIfs++;
       }
     }
 
@@ -2695,23 +2706,92 @@ void BinaryInstWriter::countScratchLocals() { // TODO rename
       if (curr->value->is<Break>() && curr->value->type.isRef()) {
         // The value is exactly a br_if of a ref, that we just visited before
         // us. Undo the ++ from there as it can be ignored.
-        assert(numBrIfReturningRef > 0);
-        numBrIfReturningRef--;
+        assert(numDangerousBrIfs > 0);
+        numDangerousBrIfs--;
       }
     }
   } scanner;
   scanner.walk(func->body);
 
-  // 1. Handle br_if value subtyping issues.
-  if (scanner.numBrIfReturningRef) {
-    // Solve it from orbit by rewriting the function to not have such br_ifs:
-    // drop them all after teeing the value and getting it after the drop. We
-    // make a copy of the function here, which is rather extreme, but it allows
-    // us to make a change in only one place.
+  if (!scanner.numDangerousBrIfs) {
+    // Nothing more to do.
+    // Move the tuple.extracts so they can be used in countScratchLocals().
+    tupleExtracts.swap(scanner.tupleExtracts);
+    return;
   }
+  // Solve it from orbit by rewriting the function to not have such br_ifs:
+  // drop them all after teeing the value and getting it after the drop. We
+  // make a copy of the function here, which is rather extreme, but it allows
+  // us to make a change in only one place. It also lets us use the
+  // tuple optimizations here like |extractedGets|, automatically. XXX
 
-  // 2. Handle tuple.extracts and their scratch locals.
-  for (auto* extract : scanner.tupleExtracts) {
+  tempModule = std::make_unique<Module>();
+
+  func = ModuleUtils::copyFunction(func,
+           **tempModule,
+           "copy");
+
+  struct Fixer : public ExpressionStackWalker<Fixer> {
+    void visitBreak(Break* curr) {
+      // See if this is one of the dangerous br_ifs we must handle.
+      if (!curr->type.isRef()) {
+        // Not even a reference.
+        return;
+      }
+      auto* parent = getParent()l
+      if (parent && parent->is<Drop>()) {
+        // It is dropped anyhow.
+        return;
+      }
+      auto* breakTarget = findBreakTarget();
+      if (breakTarget->type == curr->type) {
+        // It has the proper type anyhow.
+        return;
+      }
+
+      // This must be fixed up. Replace
+      //
+      //   (br_if
+      //     (value)
+      //     (condition)
+      //   )
+      // =>
+      //   (block
+      //     (drop
+      //       (br_if
+      //         (local.tee $temp
+      //           (value)
+      //         )
+      //         (condition)
+      //       )
+      //     )
+      //     (local.get $temp)
+      //   )
+      //
+      auto type = curr->value->type;
+      Builder builder(*getModule());
+      auto local = builder.addVar(getFunction(), type);
+      curr->value = builder.makeLocalTee(local, curr->value, type);
+      auto* block = builder.makeSequence(builder.makeDrop(curr),
+                                         builder.makeLocalGet(local, type));
+      replaceCurrent(block);
+    }
+  } fixer;
+  fixer.walkFunctionInModule(func, *tempModule);
+
+  // Re-scan the copied function, which updates tupleExtracts to point to the
+  // copied expressions. This also lets us assert that we have handled all the
+  // dangerous br_if situations: none should remain.
+  scanner = Scanner();
+  scanner.walk(func->body);
+  assert(scanner.numDangerousBrIfs == 0);
+
+  // Move the tuple.extracts so they can be used in countScratchLocals().
+  tupleExtracts.swap(scanner.tupleExtracts);
+}
+
+void BinaryInstWriter::countScratchLocals() {
+  for (auto* extract : tupleExtracts) {
     scratchLocals[extract->type] = 0;
   }
   for (auto& [type, _] : scratchLocals) {
@@ -2719,7 +2799,7 @@ void BinaryInstWriter::countScratchLocals() { // TODO rename
   }
   // Also, while we have all the tuple.extracts, find extracts of local.gets,
   // local.tees, and global.gets that we can optimize.
-  for (auto* extract : scanner.tupleExtracts) {
+  for (auto* extract : tupleExtracts) {
     auto* tuple = extract->tuple;
     if (tuple->is<LocalGet>() || tuple->is<LocalSet>() ||
         tuple->is<GlobalGet>()) {
