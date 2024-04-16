@@ -91,201 +91,6 @@
     )
   )
 
-  ;; CHECK:      (func $test-local-tuple (type $5) (param $B (ref $B)) (param $x i32) (result anyref i32)
-  ;; CHECK-NEXT:  (local $temp (ref $B))
-  ;; CHECK-NEXT:  (local $3 (ref $B))
-  ;; CHECK-NEXT:  (local $4 (ref $B))
-  ;; CHECK-NEXT:  (local $5 (ref $B))
-  ;; CHECK-NEXT:  (local $6 (ref $B))
-  ;; CHECK-NEXT:  (local $7 (ref $B))
-  ;; CHECK-NEXT:  (local $8 (ref $B))
-  ;; CHECK-NEXT:  (local $9 (ref $B))
-  ;; CHECK-NEXT:  (local $10 (ref $B))
-  ;; CHECK-NEXT:  (local $11 (ref $B))
-  ;; CHECK-NEXT:  (local $12 (ref $A))
-  ;; CHECK-NEXT:  (local $13 (ref $A))
-  ;; CHECK-NEXT:  (local $14 (ref $A))
-  ;; CHECK-NEXT:  (local $15 (ref $A))
-  ;; CHECK-NEXT:  (local $16 (ref $A))
-  ;; CHECK-NEXT:  (local $17 i32)
-  ;; CHECK-NEXT:  (local $18 i32)
-  ;; CHECK-NEXT:  (local $19 i32)
-  ;; CHECK-NEXT:  (local $20 i32)
-  ;; CHECK-NEXT:  (local $21 i32)
-  ;; CHECK-NEXT:  (local $22 i32)
-  ;; CHECK-NEXT:  (local $23 i32)
-  ;; CHECK-NEXT:  (local $24 i32)
-  ;; CHECK-NEXT:  (local $25 i32)
-  ;; CHECK-NEXT:  (local $26 i32)
-  ;; CHECK-NEXT:  (local $27 (tuple (ref $B) i32))
-  ;; CHECK-NEXT:  (local $28 (ref $B))
-  ;; CHECK-NEXT:  (local $29 (ref $B))
-  ;; CHECK-NEXT:  (local $30 (ref $B))
-  ;; CHECK-NEXT:  (local $31 (tuple (ref $A) i32))
-  ;; CHECK-NEXT:  (local $32 (ref $A))
-  ;; CHECK-NEXT:  (local $33 (ref $A))
-  ;; CHECK-NEXT:  (local $34 (ref $A))
-  ;; CHECK-NEXT:  (local.set $31
-  ;; CHECK-NEXT:   (block $label$1 (type $3) (result (ref $A) i32)
-  ;; CHECK-NEXT:    (local.set $27
-  ;; CHECK-NEXT:     (br_if $label$1
-  ;; CHECK-NEXT:      (tuple.make 2
-  ;; CHECK-NEXT:       (local.get $B)
-  ;; CHECK-NEXT:       (i32.const 3)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $x)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $7
-  ;; CHECK-NEXT:     (block (result (ref $B))
-  ;; CHECK-NEXT:      (local.set $28
-  ;; CHECK-NEXT:       (tuple.extract 2 0
-  ;; CHECK-NEXT:        (local.get $27)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.set $23
-  ;; CHECK-NEXT:       (tuple.extract 2 1
-  ;; CHECK-NEXT:        (local.get $27)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $28)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $8
-  ;; CHECK-NEXT:     (block (result (ref $B))
-  ;; CHECK-NEXT:      (local.set $29
-  ;; CHECK-NEXT:       (local.get $7)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.get $23)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $29)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block (result (ref $B))
-  ;; CHECK-NEXT:      (local.set $30
-  ;; CHECK-NEXT:       (local.get $7)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.set $26
-  ;; CHECK-NEXT:       (local.get $23)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $30)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $19
-  ;; CHECK-NEXT:     (local.get $26)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $4
-  ;; CHECK-NEXT:     (local.get $8)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $9
-  ;; CHECK-NEXT:     (local.get $4)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $19)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $5
-  ;; CHECK-NEXT:     (local.get $9)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $10
-  ;; CHECK-NEXT:     (local.get $4)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $22
-  ;; CHECK-NEXT:     (local.get $19)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $10)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $17
-  ;; CHECK-NEXT:     (local.get $22)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $temp
-  ;; CHECK-NEXT:     (local.get $5)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $13
-  ;; CHECK-NEXT:   (block (result (ref $A))
-  ;; CHECK-NEXT:    (local.set $32
-  ;; CHECK-NEXT:     (tuple.extract 2 0
-  ;; CHECK-NEXT:      (local.get $31)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $24
-  ;; CHECK-NEXT:     (tuple.extract 2 1
-  ;; CHECK-NEXT:      (local.get $31)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $32)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $14
-  ;; CHECK-NEXT:   (block (result (ref $A))
-  ;; CHECK-NEXT:    (local.set $33
-  ;; CHECK-NEXT:     (local.get $13)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $24)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $33)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $A))
-  ;; CHECK-NEXT:    (local.set $34
-  ;; CHECK-NEXT:     (local.get $13)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $26
-  ;; CHECK-NEXT:     (local.get $24)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $34)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $20
-  ;; CHECK-NEXT:   (local.get $26)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $12
-  ;; CHECK-NEXT:   (local.get $14)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $16
-  ;; CHECK-NEXT:   (local.get $12)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $20)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $15
-  ;; CHECK-NEXT:   (local.get $12)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $22
-  ;; CHECK-NEXT:   (local.get $20)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $15)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (tuple.make 2
-  ;; CHECK-NEXT:   (local.get $16)
-  ;; CHECK-NEXT:   (local.get $22)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $test-local-tuple (param $B (ref $B)) (param $x i32) (result anyref i32)
-    (local $temp (tuple (ref $B) i32))
-    ;; As above, but with a tuple containing a ref.
-    (block $out (result (ref $A) i32)
-      (local.set $temp
-        (br_if $out
-          (tuple.make 2
-            (local.get $B)
-            (i32.const 3)
-          )
-          (local.get $x)
-        )
-      )
-      (unreachable)
-    )
-  )
-
   ;; CHECK:      (func $test-same (type $6) (param $A (ref $A)) (param $x i32) (result anyref)
   ;; CHECK-NEXT:  (block $label$1 (result (ref $A))
   ;; CHECK-NEXT:   (br_if $label$1
@@ -306,6 +111,23 @@
         (local.get $A)
         (local.get $x)
       )
+    )
+  )
+
+  (func $test-local-tuple (param $B (ref $B)) (param $x i32) (result anyref i32)
+    (local $temp (tuple (ref $B) i32))
+    ;; As above, but with a tuple containing a ref.
+    (block $out (result (ref $A) i32)
+      (local.set $temp
+        (br_if $out
+          (tuple.make 2
+            (local.get $B)
+            (i32.const 3)
+          )
+          (local.get $x)
+        )
+      )
+      (unreachable)
     )
   )
 )
