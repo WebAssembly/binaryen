@@ -2670,7 +2670,9 @@ void BinaryInstWriter::scanFunction() {
   struct Scanner : public PostWalker<Scanner> {
     // We'll add a scratch register in `numLocalsByType` for each type of
     // tuple.extract with nonzero index present.
-    std::vector<TupleExtract*> tupleExtracts;
+    std::vector<TupleExtract*>& tupleExtracts;
+
+    Scanner(std::vector<TupleExtract*>& tupleExtracts) : tupleExtracts(tupleExtracts) {}
 
     void visitTupleExtract(TupleExtract* curr) {
       if (curr->type != Type::unreachable && curr->index != 0) {
@@ -2710,15 +2712,14 @@ void BinaryInstWriter::scanFunction() {
         numDangerousBrIfs--;
       }
     }
-  } scanner;
+  } scanner(tupleExtracts);
   scanner.walk(func->body);
 
   if (!scanner.numDangerousBrIfs) {
     // Nothing more to do.
-    // Move the tuple.extracts so they can be used in countScratchLocals().
-    tupleExtracts.swap(scanner.tupleExtracts);
     return;
   }
+
   // Solve it from orbit by rewriting the function to not have such br_ifs:
   // drop them all after teeing the value and getting it after the drop. We
   // make a copy of the function here, which is rather extreme, but it allows
@@ -2728,7 +2729,7 @@ void BinaryInstWriter::scanFunction() {
   tempModule = std::make_unique<Module>();
 
   func = ModuleUtils::copyFunction(func,
-           **tempModule,
+           *tempModule,
            "copy");
 
   struct Fixer : public ExpressionStackWalker<Fixer> {
@@ -2738,12 +2739,12 @@ void BinaryInstWriter::scanFunction() {
         // Not even a reference.
         return;
       }
-      auto* parent = getParent()l
+      auto* parent = getParent();
       if (parent && parent->is<Drop>()) {
         // It is dropped anyhow.
         return;
       }
-      auto* breakTarget = findBreakTarget();
+      auto* breakTarget = findBreakTarget(curr->name);
       if (breakTarget->type == curr->type) {
         // It has the proper type anyhow.
         return;
@@ -2777,17 +2778,14 @@ void BinaryInstWriter::scanFunction() {
       replaceCurrent(block);
     }
   } fixer;
-  fixer.walkFunctionInModule(func, *tempModule);
+  fixer.walkFunctionInModule(func, &*tempModule);
 
   // Re-scan the copied function, which updates tupleExtracts to point to the
   // copied expressions. This also lets us assert that we have handled all the
   // dangerous br_if situations: none should remain.
-  scanner = Scanner();
-  scanner.walk(func->body);
-  assert(scanner.numDangerousBrIfs == 0);
-
-  // Move the tuple.extracts so they can be used in countScratchLocals().
-  tupleExtracts.swap(scanner.tupleExtracts);
+  Scanner secondScanner(tupleExtracts);
+  secondScanner.walk(func->body);
+  assert(secondScanner.numDangerousBrIfs == 0);
 }
 
 void BinaryInstWriter::countScratchLocals() {

@@ -1,7 +1,8 @@
 # Verify that we emit extra casts for br_if values that are more refined than
 # in wasm.
 #
-# `cast-and-recast.test.wasm` was generated from cast-and-recast.wast, which
+# `cast-and-recast.test.wasm` was generated from cast-and-recast.wast with
+# wasm-as. That testcase
 # contains two cases that need such casts and one that does not, and the binary
 # was manually inspected to see that it contains exactly the right two casts.
 RUN: wasm-opt %s.wasm -o %t.o -all
