@@ -461,9 +461,13 @@ private:
   std::unordered_map<Name, std::vector<Index>> labelDepths;
 
   Name makeFresh(Name label) {
-    return Names::getValidName(label, [&](Name candidate) {
-      return labelDepths.insert({candidate, {}}).second;
-    });
+    return Names::getValidName(
+      label,
+      [&](Name candidate) {
+        return labelDepths.insert({candidate, {}}).second;
+      },
+      0,
+      "");
   }
 
   void pushScope(ScopeCtx scope) {

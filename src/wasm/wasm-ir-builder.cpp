@@ -1035,7 +1035,11 @@ Result<Name> IRBuilder::getLabelName(Index label) {
   auto& scopeLabel = (*scope)->label;
   if (!scopeLabel) {
     // The scope does not already have a name, so we need to create one.
-    scopeLabel = makeFresh("label");
+    if ((*scope)->getBlock()) {
+      scopeLabel = makeFresh("block");
+    } else {
+      scopeLabel = makeFresh("label");
+    }
   }
   (*scope)->labelUsed = true;
   return scopeLabel;
