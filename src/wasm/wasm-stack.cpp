@@ -2675,9 +2675,7 @@ void BinaryInstWriter::scanFunction() {
     Scanner(std::vector<TupleExtract*>& tupleExtracts) : tupleExtracts(tupleExtracts) {}
 
     void visitTupleExtract(TupleExtract* curr) {
-      if (curr->type != Type::unreachable && curr->index != 0) {
-        tupleExtracts.push_back(curr);
-      }
+      tupleExtracts.push_back(curr);
     }
 
     // As mentioned in BinaryInstWriter::visitBreak, the type of br_if with a
@@ -2796,7 +2794,9 @@ void BinaryInstWriter::scanFunction() {
 
 void BinaryInstWriter::countScratchLocals() {
   for (auto* extract : tupleExtracts) {
-    scratchLocals[extract->type] = 0;
+    if (extract->type != Type::unreachable && extract->index != 0) {
+      scratchLocals[extract->type] = 0;
+    }
   }
   for (auto& [type, _] : scratchLocals) {
     noteLocalType(type);
