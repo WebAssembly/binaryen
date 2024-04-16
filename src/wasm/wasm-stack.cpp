@@ -2734,6 +2734,10 @@ void BinaryInstWriter::scanFunction() {
            *tempModule,
            "copy");
 
+  // Erase any StackIR that was present, as we are about to modify BinaryenIR.
+  // That is, we lose StackIR optimizations when we must handle this br_if case.
+  func->stackIR.reset();
+
   struct Fixer : public ExpressionStackWalker<Fixer> {
     void visitBreak(Break* curr) {
       // See if this is one of the dangerous br_ifs we must handle.
