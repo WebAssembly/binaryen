@@ -825,7 +825,8 @@
     ;; As above, but none of the mitigating circumstances happens: we have a
     ;; tuple with a reference that is refined compared to the break target. As a
     ;; result we must fix this up, which we do by adding a local. Each roundtrip
-    ;; adds more overhead, unfortunately.
+    ;; adds more overhead, unfortunately. Comparing to $test-local-tuple-4, we
+    ;; end up with 6 more locals.
     (block $out (result (ref $A) i32)
       (local.set $temp
         (br_if $out
