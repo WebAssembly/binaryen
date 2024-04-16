@@ -4,7 +4,9 @@
 (module
   ;; CHECK:      (tag $e)
 
-  ;; CHECK:      (func $bar (type $1) (result i32)
+  ;; CHECK:      (tag $any (param (ref any)))
+
+  ;; CHECK:      (func $bar (type $2) (result i32)
   ;; CHECK-NEXT:  (i32.const 1984)
   ;; CHECK-NEXT: )
   (func $bar (result i32)
@@ -12,7 +14,10 @@
   )
 
  (tag $e)
-  ;; CHECK:      (func $bug-cfg-traversal (type $2) (param $0 i32) (result i32)
+
+ (tag $any (param (ref any)))
+
+  ;; CHECK:      (func $bug-cfg-traversal (type $3) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (try $try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (local.set $0
@@ -41,5 +46,36 @@
       )
     )
     (local.get $x)
+  )
+
+  ;; CHECK:      (func $0 (type $0)
+  ;; CHECK-NEXT:  (local $0 anyref)
+  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $any
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (pop (ref any))
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $0
+    (local $0 (ref null any))
+    (try
+      (do)
+      (catch $any
+        (drop
+          ;; There is a difference between the type of the value here and the
+          ;; type of the local, due to the local being nullable. We should not
+          ;; error on that as we replace the tee with a drop (as it has no
+          ;; gets).
+          (local.tee $0
+            (pop (ref any))
+          )
+        )
+      )
+    )
   )
 )
