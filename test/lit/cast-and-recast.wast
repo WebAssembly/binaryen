@@ -306,7 +306,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-local-tuple-3 (type $9) (param $B (ref $B)) (param $x i32) (result i32 i32)
+  ;; CHECK:      (func $test-local-tuple-2 (type $9) (param $B (ref $B)) (param $x i32) (result i32 i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
@@ -434,7 +434,7 @@
   ;; CHECK-NEXT:   (local.get $8)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test-local-tuple-3 (param $B (ref $B)) (param $x i32) (result i32 i32)
+  (func $test-local-tuple-2 (param $B (ref $B)) (param $x i32) (result i32 i32)
     (local $temp (tuple i32 i32))
     ;; As above, but the tuple contains no references, so we do not need to do
     ;; anything for the br_if.
@@ -452,7 +452,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-local-tuple-2 (type $6) (param $B (ref $B)) (param $x i32) (result anyref i32)
+  ;; CHECK:      (func $test-local-tuple-3 (type $6) (param $B (ref $B)) (param $x i32) (result anyref i32)
   ;; CHECK-NEXT:  (local $temp (ref $B))
   ;; CHECK-NEXT:  (local $3 (ref $B))
   ;; CHECK-NEXT:  (local $4 (ref $B))
@@ -624,7 +624,7 @@
   ;; CHECK-NEXT:   (local.get $17)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test-local-tuple-2 (param $B (ref $B)) (param $x i32) (result anyref i32)
+  (func $test-local-tuple-3 (param $B (ref $B)) (param $x i32) (result anyref i32)
     (local $temp (tuple (ref $B) i32))
     ;; As above, but it is not dropped. However, it has the right type, there is
     ;; no refining, so we do not need to do anything for the br_if.
