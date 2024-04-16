@@ -1081,6 +1081,19 @@ Type Type::getGreatestLowerBound(Type a, Type b) {
   if (a == b) {
     return a;
   }
+  if (a.isTuple() && b.isTuple() && a.size() == b.size()) {
+    std::vector<Type> elems;
+    size_t size = a.size();
+    elems.reserve(size);
+    for (size_t i = 0; i < size; ++i) {
+      auto glb = Type::getGreatestLowerBound(a[i], b[i]);
+      if (glb == Type::unreachable) {
+        return Type::unreachable;
+      }
+      elems.push_back(glb);
+    }
+    return Tuple(elems);
+  }
   if (!a.isRef() || !b.isRef()) {
     return Type::unreachable;
   }
