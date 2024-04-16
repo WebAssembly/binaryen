@@ -322,17 +322,13 @@
   ;; CHECK-NEXT:  (local $14 i32)
   ;; CHECK-NEXT:  (local $15 i32)
   ;; CHECK-NEXT:  (local $16 i32)
-  ;; CHECK-NEXT:  (local $17 i32)
+  ;; CHECK-NEXT:  (local $17 (tuple i32 i32))
   ;; CHECK-NEXT:  (local $18 i32)
   ;; CHECK-NEXT:  (local $19 (tuple i32 i32))
   ;; CHECK-NEXT:  (local $20 i32)
-  ;; CHECK-NEXT:  (local $21 i32)
-  ;; CHECK-NEXT:  (local $22 (tuple i32 i32))
-  ;; CHECK-NEXT:  (local $23 i32)
-  ;; CHECK-NEXT:  (local $24 i32)
-  ;; CHECK-NEXT:  (local.set $22
+  ;; CHECK-NEXT:  (local.set $19
   ;; CHECK-NEXT:   (block $label$1 (type $4) (result i32 i32)
-  ;; CHECK-NEXT:    (local.set $19
+  ;; CHECK-NEXT:    (local.set $17
   ;; CHECK-NEXT:     (br_if $label$1
   ;; CHECK-NEXT:      (tuple.make 2
   ;; CHECK-NEXT:       (i32.const -1)
@@ -343,29 +339,21 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $10
   ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (local.set $20
+  ;; CHECK-NEXT:      (local.set $18
   ;; CHECK-NEXT:       (tuple.extract 2 0
-  ;; CHECK-NEXT:        (local.get $19)
+  ;; CHECK-NEXT:        (local.get $17)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $11
   ;; CHECK-NEXT:       (tuple.extract 2 1
-  ;; CHECK-NEXT:        (local.get $19)
+  ;; CHECK-NEXT:        (local.get $17)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $20)
+  ;; CHECK-NEXT:      (local.get $18)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $12
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (local.set $21
-  ;; CHECK-NEXT:       (local.get $10)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (local.get $11)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $21)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $10)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $5
   ;; CHECK-NEXT:     (local.get $11)
@@ -373,14 +361,8 @@
   ;; CHECK-NEXT:    (local.set $4
   ;; CHECK-NEXT:     (local.get $12)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $13
-  ;; CHECK-NEXT:     (local.get $4)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $5)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $6
-  ;; CHECK-NEXT:     (local.get $13)
+  ;; CHECK-NEXT:     (local.get $4)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $3
   ;; CHECK-NEXT:     (local.get $5)
@@ -391,46 +373,32 @@
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $14
+  ;; CHECK-NEXT:  (local.set $13
   ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.set $23
+  ;; CHECK-NEXT:    (local.set $20
   ;; CHECK-NEXT:     (tuple.extract 2 0
-  ;; CHECK-NEXT:      (local.get $22)
+  ;; CHECK-NEXT:      (local.get $19)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $15
+  ;; CHECK-NEXT:    (local.set $14
   ;; CHECK-NEXT:     (tuple.extract 2 1
-  ;; CHECK-NEXT:      (local.get $22)
+  ;; CHECK-NEXT:      (local.get $19)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $23)
+  ;; CHECK-NEXT:    (local.get $20)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $16
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (local.set $24
-  ;; CHECK-NEXT:     (local.get $14)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (local.get $15)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.get $24)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (local.set $15
+  ;; CHECK-NEXT:   (local.get $13)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $8
-  ;; CHECK-NEXT:   (local.get $15)
+  ;; CHECK-NEXT:   (local.get $14)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (local.set $7
-  ;; CHECK-NEXT:   (local.get $16)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.set $17
-  ;; CHECK-NEXT:   (local.get $7)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $8)
+  ;; CHECK-NEXT:   (local.get $15)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (tuple.make 2
-  ;; CHECK-NEXT:   (local.get $17)
+  ;; CHECK-NEXT:   (local.get $7)
   ;; CHECK-NEXT:   (local.get $8)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
