@@ -21,8 +21,50 @@
 
 namespace wasm {
 
-// For each child, call `noteSubtype` with a pointer to the child and the most
-// specific type that the child must have.
+// CRTP visitor for determining constraints on the types of expression children.
+// For each child of the visited expression, calls a callback with a pointer to
+// the child and information on how the child is constrained. The possible
+// callbacks are:
+//
+//   noteSubtype(Expression** childp, Type type) - The child must be a subtype
+//   of `type`, which may be a tuple type. For children that must not produce
+//   values, this may be `Type::none`. This accounts for most type constraints.
+//
+//   noteAnyType(Expression** childp) - The child may have any non-tuple type.
+//   Used for the children of polymorphic instructions like `drop` and `select`.
+//
+//   noteAnyReference(Expression** childp) - The child may have any reference
+//   type. Used for the children of polymorphic reference instructions like
+//   `ref.is_null`.
+//
+//   noteAnyTupleType(Expression** childp, size_t arity) - The child may have
+//   any tuple type with the given arity. Used for the children of polymorphic
+//   tuple instructions like `tuple.drop` and `tuple.extract`.
+//
+// Subclasses must additionally implement a callback for getting the type of a
+// branch target. This callback will only be used when the label type is not
+// passed directly as an argument to the branch visitor method (see below).
+//
+//   Type getLabelType(Name label)
+//
+// Children with type `unreachable` satisfy all constraints.
+//
+// Constraints are determined using information that would be present in the
+// binary, e.g. type annotation immediates. Many of the visitor methods take
+// optional additional parameter for passing this information directly, and if
+// those parameters are not used, it is an error to use this utility in cases
+// where that information cannot be recovered from the IR.
+//
+// For example, it is an error to visit a `StructSet` expression whose `ref`
+// field is unreachable or null without directly passing the heap type to the
+// visitor because it is not possible for the utility to determine what type the
+// value child should be in that case.
+//
+// Conversely, this utility does not use any information that would not be
+// present in the binary, and in particular it generally does not introspect on
+// the types of children. For example, it does not report the constraint that
+// two non-reference children of `select` must have the same type because that
+// would require inspecting the types of those children.
 template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   Module& wasm;
   Function* func;
