@@ -21,7 +21,7 @@
     (type $B (sub $A (struct)))
   )
 
-  ;; CHECK:      (func $test (type $5) (param $B (ref $B)) (param $x i32) (result anyref)
+  ;; CHECK:      (func $test (type $2) (param $B (ref $B)) (param $x i32) (result anyref)
   ;; CHECK-NEXT:  (block $label$1 (result (ref $A))
   ;; CHECK-NEXT:   (br_if $label$1
   ;; CHECK-NEXT:    (local.get $B)
@@ -40,7 +40,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-drop (type $5) (param $B (ref $B)) (param $x i32) (result anyref)
+  ;; CHECK:      (func $test-drop (type $2) (param $B (ref $B)) (param $x i32) (result anyref)
   ;; CHECK-NEXT:  (block $label$1 (result (ref $A))
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_if $label$1
@@ -64,7 +64,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-local (type $5) (param $B (ref $B)) (param $x i32) (result anyref)
+  ;; CHECK:      (func $test-local (type $2) (param $B (ref $B)) (param $x i32) (result anyref)
   ;; CHECK-NEXT:  (local $temp (ref $B))
   ;; CHECK-NEXT:  (block $label$1 (result (ref $A))
   ;; CHECK-NEXT:   (local.set $temp
@@ -91,7 +91,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-same (type $8) (param $A (ref $A)) (param $x i32) (result anyref)
+  ;; CHECK:      (func $test-same (type $3) (param $A (ref $A)) (param $x i32) (result anyref)
   ;; CHECK-NEXT:  (block $label$1 (result (ref $A))
   ;; CHECK-NEXT:   (br_if $label$1
   ;; CHECK-NEXT:    (local.get $A)

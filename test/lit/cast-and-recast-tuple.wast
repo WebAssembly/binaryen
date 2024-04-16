@@ -14,7 +14,7 @@
     (type $B (sub $A (struct)))
   )
 
-  ;; CHECK:      (func $test-local-tuple-1 (type $6) (param $B (ref $B)) (param $x i32) (result anyref i32)
+  ;; CHECK:      (func $test-local-tuple-1 (type $5) (param $B (ref $B)) (param $x i32) (result anyref i32)
   ;; CHECK-NEXT:  (local $2 (ref $B))
   ;; CHECK-NEXT:  (local $3 (ref $B))
   ;; CHECK-NEXT:  (local $4 (ref $B))
@@ -206,7 +206,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-local-tuple-2 (type $9) (param $B (ref $B)) (param $x i32) (result i32 i32)
+  ;; CHECK:      (func $test-local-tuple-2 (type $7) (param $B (ref $B)) (param $x i32) (result i32 i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
@@ -320,7 +320,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-local-tuple-3 (type $6) (param $B (ref $B)) (param $x i32) (result anyref i32)
+  ;; CHECK:      (func $test-local-tuple-3 (type $5) (param $B (ref $B)) (param $x i32) (result anyref i32)
   ;; CHECK-NEXT:  (local $temp (ref $B))
   ;; CHECK-NEXT:  (local $3 (ref $B))
   ;; CHECK-NEXT:  (local $4 (ref $B))
@@ -349,7 +349,7 @@
   ;; CHECK-NEXT:  (local $27 (ref $B))
   ;; CHECK-NEXT:  (local $28 (ref $B))
   ;; CHECK-NEXT:  (local.set $25
-  ;; CHECK-NEXT:   (block $label$1 (type $7) (result (ref $B) i32)
+  ;; CHECK-NEXT:   (block $label$1 (type $6) (result (ref $B) i32)
   ;; CHECK-NEXT:    (local.set $21
   ;; CHECK-NEXT:     (br_if $label$1
   ;; CHECK-NEXT:      (tuple.make 2
@@ -510,7 +510,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-local-tuple-4-bad (type $6) (param $B (ref $B)) (param $x i32) (result anyref i32)
+  ;; CHECK:      (func $test-local-tuple-4-bad (type $5) (param $B (ref $B)) (param $x i32) (result anyref i32)
   ;; CHECK-NEXT:  (local $temp (ref $B))
   ;; CHECK-NEXT:  (local $3 (ref $B))
   ;; CHECK-NEXT:  (local $4 (ref $B))
@@ -708,4 +708,4 @@
       (unreachable)
     )
   )
-
+)
