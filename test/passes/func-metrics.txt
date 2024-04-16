@@ -35,7 +35,7 @@ func: ifs
  Drop           : 6       
  If             : 4       
 (module
- (type $0 (func))
+ (type $1 (func))
  (type $0 (func (param i32)))
  (global $glob i32 (i32.const 1337))
  (memory $0 256 256)

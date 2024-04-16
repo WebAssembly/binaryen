@@ -12,7 +12,7 @@
 
   ;; CHECK:      (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
 
-  ;; CHECK:      (type $4 (func (param f64 i32) (result i64)))
+  ;; CHECK:      (type $5 (func (param f64 i32) (result i64)))
 
   ;; CHECK:      (type $3 (func (param i32 f32)))
 
@@ -22,11 +22,11 @@
   (type $2 (func))
   (type $3 (func (param i32 f32)))
   (type $4 (func (param i32)))
-  ;; CHECK:      (type $7 (func (param i32) (result i32)))
+  ;; CHECK:      (type $8 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $8 (func (param i32 i32)))
+  ;; CHECK:      (type $9 (func (param i32 i32)))
 
-  ;; CHECK:      (type $9 (func (result f64)))
+  ;; CHECK:      (type $10 (func (result f64)))
 
   ;; CHECK:      (import "env" "_emscripten_autodebug_i32" (func $_emscripten_autodebug_i32 (param i32 i32) (result i32)))
   (import "env" "_emscripten_autodebug_i32" (func $_emscripten_autodebug_i32 (param i32 i32) (result i32)))

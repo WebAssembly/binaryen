@@ -152,15 +152,48 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   // user-provided names and the fallback indexed names.
   struct TypePrinter : TypeNameGeneratorBase<TypePrinter> {
     PrintSExpression& parent;
-    IndexedTypeNameGenerator<> fallback;
+    DefaultTypeNameGenerator fallback;
+    std::unordered_map<HeapType, TypeNames> fallbackNames;
 
     TypePrinter(PrintSExpression& parent, const std::vector<HeapType>& types)
-      : parent(parent), fallback(types) {}
+      : parent(parent) {
+      if (!parent.currModule) {
+        return;
+      }
+      std::unordered_set<Name> usedNames;
+      for (auto& [_, names] : parent.currModule->typeNames) {
+        usedNames.insert(names.name);
+      }
+      size_t i = 0;
+      // Use indices for any remaining type names, skipping any that are already
+      // used.
+      for (auto type : types) {
+        if (parent.currModule->typeNames.count(type)) {
+          ++i;
+          continue;
+        }
+        Name name;
+        do {
+          name = std::to_string(i++);
+        } while (usedNames.count(name));
+        fallbackNames[type] = {name, {}};
+      }
+    }
 
     TypeNames getNames(HeapType type) {
       if (parent.currModule) {
         if (auto it = parent.currModule->typeNames.find(type);
             it != parent.currModule->typeNames.end()) {
+          return it->second;
+        }
+        // In principle we should always have at least a fallback name for every
+        // type in the module, so this lookup should never fail. In practice,
+        // though, the `printExpression` variants deliberately avoid walking the
+        // module to find unnamed types so they can be safely used in a
+        // function-parallel context. That means we can have a module but not
+        // have generated the fallback names, so this lookup can fail, in which
+        // case we generate a name on demand.
+        if (auto it = fallbackNames.find(type); it != fallbackNames.end()) {
           return it->second;
         }
       }

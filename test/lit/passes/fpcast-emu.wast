@@ -297,7 +297,7 @@
  (type $0 (func (param i64)))
  ;; CHECK:      (type $1 (func (param f32) (result i64)))
  (type $1 (func (param f32) (result i64)))
- ;; CHECK:      (type $1 (func (param i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64) (result i64)))
+ ;; CHECK:      (type $2 (func (param i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64 i64) (result i64)))
 
  ;; CHECK:      (global $global$0 (mut i32) (i32.const 10))
  (global $global$0 (mut i32) (i32.const 10))
@@ -312,7 +312,7 @@
  ;; CHECK-NEXT:    (global.set $global$0
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (call_indirect (type $1)
+ ;; CHECK-NEXT:    (call_indirect (type $2)
  ;; CHECK-NEXT:     (br $label$1
  ;; CHECK-NEXT:      (i64.const 4294967295)
  ;; CHECK-NEXT:     )
