@@ -2698,14 +2698,18 @@ void BinaryInstWriter::scanFunction() {
     // anything, but such is life.
     Index numDangerousBrIfs = 0;
 
+    static bool isTupleWithRef(Type type) {
+      return type.isTuple() && type.hasRef();
+    }
+
     void visitBreak(Break* curr) {
-      if (curr->type.isRef()) {
+      if (isTupleWithRef(curr->type)) {
         numDangerousBrIfs++;
       }
     }
 
     void visitDrop(Drop* curr) {
-      if (curr->value->is<Break>() && curr->value->type.isRef()) {
+      if (curr->value->is<Break>() && isTupleWithRef(curr->value->type)) {
         // The value is exactly a br_if of a ref, that we just visited before
         // us. Undo the ++ from there as it can be ignored.
         assert(numDangerousBrIfs > 0);
@@ -2735,7 +2739,7 @@ void BinaryInstWriter::scanFunction() {
   struct Fixer : public ExpressionStackWalker<Fixer> {
     void visitBreak(Break* curr) {
       // See if this is one of the dangerous br_ifs we must handle.
-      if (!curr->type.isRef()) {
+      if (!Scanner::isTupleWithRef(curr->type)) {
         // Not even a reference.
         return;
       }
@@ -2781,11 +2785,13 @@ void BinaryInstWriter::scanFunction() {
   fixer.walkFunctionInModule(func, &*tempModule);
 
   // Re-scan the copied function, which updates tupleExtracts to point to the
-  // copied expressions. This also lets us assert that we have handled all the
-  // dangerous br_if situations: none should remain.
+  // copied expressions. Note we cannot assert that we have handled all the
+  // dangerous br_if situations, because the scanner does not work carefully
+  // enough to check for a type difference between the br_if value and the
+  // branch target.
+  tupleExtracts.clear();
   Scanner secondScanner(tupleExtracts);
   secondScanner.walk(func->body);
-  assert(secondScanner.numDangerousBrIfs == 0);
 }
 
 void BinaryInstWriter::countScratchLocals() {
