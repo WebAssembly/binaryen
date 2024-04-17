@@ -149,7 +149,10 @@ private:
   // tuple.extract.
   std::vector<TupleExtract*> tupleExtracts;
   InsertOrderedMap<Type, Index> scratchLocals;
-  void countScratchLocals();
+
+  // Scan for scratch locals and br_ifs (see below).
+  void scanFunction();
+
   void setScratchLocals();
 
   // local.get, local.tee, and glboal.get expressions that will be followed by

@@ -2588,17 +2588,20 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
       noteLocalType(t);
     }
   }
-  countScratchLocals();
+  scanFunction();
 
   // Normally we map all locals of the same type into a range of adjacent
   // addresses, which is more compact. However, if we need to keep DWARF valid,
   // do not do any reordering at all - instead, do a trivial mapping that
   // keeps everything unmoved.
   if (DWARF) {
-    FindAll<TupleExtract> extracts(func->body);
-    if (!extracts.list.empty()) {
+    if (!tupleExtracts.empty()) {
       Fatal() << "DWARF + multivalue is not yet complete";
     }
+    if (!brIfsNeedingHandling.empty()) {
+      Fatal() << "DWARF + GC is not yet complete";
+    }
+
     Index varStart = func->getVarIndexBase();
     Index varEnd = varStart + func->getNumVars();
     o << U32LEB(func->getNumVars());
@@ -2664,7 +2667,7 @@ void BinaryInstWriter::noteLocalType(Type type) {
   numLocalsByType[type]++;
 }
 
-void BinaryInstWriter::countScratchLocals() { // XXX rename?
+void BinaryInstWriter::scanFunction() {
   struct Scanner : public PostWalker<Scanner> {
     BinaryInstWriter& writer;
 
