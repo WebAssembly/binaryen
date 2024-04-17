@@ -235,6 +235,10 @@ void IRBuilder::dump() {
       std::cerr << " (label: " << scope.label << ")";
     }
 
+    if (scope.branchLabel) {
+      std::cerr << " (branch label: " << scope.branchLabel << ")";
+    }
+
     if (scope.unreachable) {
       std::cerr << " (unreachable)";
     }
@@ -703,9 +707,6 @@ Result<> IRBuilder::visitLoopStart(Loop* loop) {
 
 Result<> IRBuilder::visitTryStart(Try* tryy, Name label) {
   applyDebugLoc(tryy);
-  // The delegate label will be regenerated if we need it. See
-  // `getDelegateLabelName` for details.
-  tryy->name = Name();
   pushScope(ScopeCtx::makeTry(tryy, label));
   return Ok{};
 }
@@ -829,6 +830,7 @@ Result<> IRBuilder::visitCatch(Name tag) {
   }
   auto originalLabel = scope.getOriginalLabel();
   auto label = scope.label;
+  auto branchLabel = scope.branchLabel;
   auto expr = finishScope();
   CHECK_ERR(expr);
   if (wasTry) {
@@ -837,7 +839,7 @@ Result<> IRBuilder::visitCatch(Name tag) {
     tryy->catchBodies.push_back(*expr);
   }
   tryy->catchTags.push_back(tag);
-  pushScope(ScopeCtx::makeCatch(tryy, originalLabel, label));
+  pushScope(ScopeCtx::makeCatch(tryy, originalLabel, label, branchLabel));
   // Push a pop for the exception payload.
   auto params = wasm.getTag(tag)->sig.params;
   if (params != Type::none) {
@@ -859,6 +861,7 @@ Result<> IRBuilder::visitCatchAll() {
   }
   auto originalLabel = scope.getOriginalLabel();
   auto label = scope.label;
+  auto branchLabel = scope.branchLabel;
   auto expr = finishScope();
   CHECK_ERR(expr);
   if (wasTry) {
@@ -866,35 +869,8 @@ Result<> IRBuilder::visitCatchAll() {
   } else {
     tryy->catchBodies.push_back(*expr);
   }
-  pushScope(ScopeCtx::makeCatchAll(tryy, originalLabel, label));
+  pushScope(ScopeCtx::makeCatchAll(tryy, originalLabel, label, branchLabel));
   return Ok{};
-}
-
-Result<Name> IRBuilder::getDelegateLabelName(Index label) {
-  if (label >= scopeStack.size()) {
-    return Err{"invalid label: " + std::to_string(label)};
-  }
-  auto& scope = scopeStack[scopeStack.size() - label - 1];
-  auto* delegateTry = scope.getTry();
-  if (!delegateTry) {
-    delegateTry = scope.getCatch();
-  }
-  if (!delegateTry) {
-    delegateTry = scope.getCatchAll();
-  }
-  if (!delegateTry) {
-    return Err{"expected try scope at label " + std::to_string(label)};
-  }
-  // Only delegate and rethrow can reference the try name in Binaryen IR, so
-  // trys might need two labels: one for delegate/rethrow and one for all
-  // other control flow. These labels must be different to satisfy the
-  // Binaryen validator. To keep this complexity contained within the
-  // handling of trys and delegates, pretend there is just the single normal
-  // label and add a prefix to it to generate the delegate label.
-  auto delegateName =
-    Name(std::string("__delegate__") + getLabelName(label)->toString());
-  delegateTry->name = delegateName;
-  return delegateName;
 }
 
 Result<> IRBuilder::visitDelegate(Index label) {
@@ -946,8 +922,10 @@ Result<> IRBuilder::visitEnd() {
   // type of the scope expression.
   auto originalScopeType = scope.getResultType();
   auto maybeWrapForLabel = [&](Expression* curr) -> Expression* {
-    if (scope.label) {
-      return builder.makeBlock(scope.label,
+    bool isTry = scope.getTry() || scope.getCatch() || scope.getCatchAll();
+    auto& label = isTry ? scope.branchLabel : scope.label;
+    if (label) {
+      return builder.makeBlock(label,
                                {curr},
                                scope.labelUsed ? originalScopeType
                                                : scope.getResultType());
@@ -981,11 +959,13 @@ Result<> IRBuilder::visitEnd() {
     push(maybeWrapForLabel(iff));
   } else if (auto* tryy = scope.getTry()) {
     tryy->body = *expr;
+    tryy->name = scope.label;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
   } else if (Try * tryy;
              (tryy = scope.getCatch()) || (tryy = scope.getCatchAll())) {
     tryy->catchBodies.push_back(*expr);
+    tryy->name = scope.label;
     tryy->finalize(tryy->type);
     push(maybeWrapForLabel(tryy));
   } else if (auto* trytable = scope.getTryTable()) {
@@ -1029,10 +1009,17 @@ Result<Index> IRBuilder::getLabelIndex(Name label, bool inDelegate) {
   return index;
 }
 
-Result<Name> IRBuilder::getLabelName(Index label) {
+Result<Name> IRBuilder::getLabelName(Index label, bool forDelegate) {
   auto scope = getScope(label);
   CHECK_ERR(scope);
-  auto& scopeLabel = (*scope)->label;
+
+  // For normal branches to try blocks, we need to use the secondary label.
+  bool useTryBranchLabel =
+    !forDelegate &&
+    ((*scope)->getTry() || (*scope)->getCatch() || (*scope)->getCatchAll());
+  auto& scopeLabel =
+    useTryBranchLabel ? (*scope)->branchLabel : (*scope)->label;
+
   if (!scopeLabel) {
     // The scope does not already have a name, so we need to create one.
     if ((*scope)->getBlock()) {
@@ -1041,7 +1028,9 @@ Result<Name> IRBuilder::getLabelName(Index label) {
       scopeLabel = makeFresh("label");
     }
   }
-  (*scope)->labelUsed = true;
+  if (!forDelegate) {
+    (*scope)->labelUsed = true;
+  }
   return scopeLabel;
 }
 

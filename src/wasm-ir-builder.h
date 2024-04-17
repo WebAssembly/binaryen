@@ -298,6 +298,10 @@ private:
 
     // The branch label name for this scope. Always fresh, never shadowed.
     Name label;
+    // For Try/Catch/CatchAll scopes, we need to separately track a label used
+    // for branches, since the normal label is only used for delegates.
+    Name branchLabel;
+
     bool labelUsed = false;
 
     std::vector<Expression*> exprStack;
@@ -308,6 +312,8 @@ private:
     ScopeCtx() : scope(NoScope{}) {}
     ScopeCtx(Scope scope) : scope(scope) {}
     ScopeCtx(Scope scope, Name label) : scope(scope), label(label) {}
+    ScopeCtx(Scope scope, Name label, Name branchLabel)
+      : scope(scope), label(label), branchLabel(branchLabel) {}
 
     static ScopeCtx makeFunc(Function* func) {
       return ScopeCtx(FuncScope{func});
@@ -325,11 +331,13 @@ private:
     static ScopeCtx makeTry(Try* tryy, Name originalLabel = {}) {
       return ScopeCtx(TryScope{tryy, originalLabel});
     }
-    static ScopeCtx makeCatch(Try* tryy, Name originalLabel, Name label) {
-      return ScopeCtx(CatchScope{tryy, originalLabel}, label);
+    static ScopeCtx
+    makeCatch(Try* tryy, Name originalLabel, Name label, Name branchLabel) {
+      return ScopeCtx(CatchScope{tryy, originalLabel}, label, branchLabel);
     }
-    static ScopeCtx makeCatchAll(Try* tryy, Name originalLabel, Name label) {
-      return ScopeCtx(CatchAllScope{tryy, originalLabel}, label);
+    static ScopeCtx
+    makeCatchAll(Try* tryy, Name originalLabel, Name label, Name branchLabel) {
+      return ScopeCtx(CatchAllScope{tryy, originalLabel}, label, branchLabel);
     }
     static ScopeCtx makeTryTable(TryTable* trytable, Name originalLabel = {}) {
       return ScopeCtx(TryTableScope{trytable, originalLabel});
@@ -507,8 +515,11 @@ private:
   // `block`, but otherwise we will have to allocate a new block.
   Result<Expression*> finishScope(Block* block = nullptr);
 
-  [[nodiscard]] Result<Name> getLabelName(Index label);
-  [[nodiscard]] Result<Name> getDelegateLabelName(Index label);
+  [[nodiscard]] Result<Name> getLabelName(Index label,
+                                          bool forDelegate = false);
+  [[nodiscard]] Result<Name> getDelegateLabelName(Index label) {
+    return getLabelName(label, true);
+  }
   [[nodiscard]] Result<Index> addScratchLocal(Type);
 
   struct HoistedVal {

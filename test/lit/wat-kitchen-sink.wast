@@ -2025,15 +2025,13 @@
  )
 
  ;; CHECK:      (func $try-delegate-nested-try-direct-index (type $void)
- ;; CHECK-NEXT:  (block $label
- ;; CHECK-NEXT:   (try $__delegate__label
- ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (try
- ;; CHECK-NEXT:      (do
- ;; CHECK-NEXT:       (nop)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (delegate $__delegate__label)
+ ;; CHECK-NEXT:  (try $label
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (try
+ ;; CHECK-NEXT:     (do
+ ;; CHECK-NEXT:      (nop)
  ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (delegate $label)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -2048,15 +2046,13 @@
  )
 
  ;; CHECK:      (func $try-delegate-nested-try-direct-name (type $void)
- ;; CHECK-NEXT:  (block $l
- ;; CHECK-NEXT:   (try $__delegate__l
- ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (try
- ;; CHECK-NEXT:      (do
- ;; CHECK-NEXT:       (nop)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (delegate $__delegate__l)
+ ;; CHECK-NEXT:  (try $l
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (try
+ ;; CHECK-NEXT:     (do
+ ;; CHECK-NEXT:      (nop)
  ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (delegate $l)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -2071,15 +2067,13 @@
  )
 
  ;; CHECK:      (func $try-delegate-nested-try-indirect-index (type $void)
- ;; CHECK-NEXT:  (block $label
- ;; CHECK-NEXT:   (try $__delegate__label
- ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (try
- ;; CHECK-NEXT:      (do
- ;; CHECK-NEXT:       (nop)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (delegate $__delegate__label)
+ ;; CHECK-NEXT:  (try $label
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (try
+ ;; CHECK-NEXT:     (do
+ ;; CHECK-NEXT:      (nop)
  ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (delegate $label)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -2094,16 +2088,14 @@
  )
 
  ;; CHECK:      (func $try-delegate-nested-try-indirect-name (type $void)
- ;; CHECK-NEXT:  (block $label
- ;; CHECK-NEXT:   (try $__delegate__label
- ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (block $l
- ;; CHECK-NEXT:      (try
- ;; CHECK-NEXT:       (do
- ;; CHECK-NEXT:        (nop)
- ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (delegate $__delegate__label)
+ ;; CHECK-NEXT:  (try $label
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (block $l
+ ;; CHECK-NEXT:     (try
+ ;; CHECK-NEXT:      (do
+ ;; CHECK-NEXT:       (nop)
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (delegate $label)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -2119,18 +2111,14 @@
  )
 
  ;; CHECK:      (func $try-delegate-nested-try-shadowing (type $void)
- ;; CHECK-NEXT:  (block $l
- ;; CHECK-NEXT:   (try $__delegate__l
- ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (block $l0
- ;; CHECK-NEXT:      (block $l1
- ;; CHECK-NEXT:       (try
- ;; CHECK-NEXT:        (do
- ;; CHECK-NEXT:         (nop)
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (delegate $__delegate__l)
- ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:  (try $l
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (block $l0
+ ;; CHECK-NEXT:     (try $l1
+ ;; CHECK-NEXT:      (do
+ ;; CHECK-NEXT:       (nop)
  ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (delegate $l)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -2146,24 +2134,18 @@
  )
 
  ;; CHECK:      (func $try-delegate-nested-catch-shadowing (type $void)
- ;; CHECK-NEXT:  (block $l
- ;; CHECK-NEXT:   (try $__delegate__l
- ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (block $l0
- ;; CHECK-NEXT:      (try
+ ;; CHECK-NEXT:  (try $l
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (try $l0
+ ;; CHECK-NEXT:     (do
+ ;; CHECK-NEXT:      (nop)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (catch $empty
+ ;; CHECK-NEXT:      (try $l1
  ;; CHECK-NEXT:       (do
  ;; CHECK-NEXT:        (nop)
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (catch $empty
- ;; CHECK-NEXT:        (block $l1
- ;; CHECK-NEXT:         (try
- ;; CHECK-NEXT:          (do
- ;; CHECK-NEXT:           (nop)
- ;; CHECK-NEXT:          )
- ;; CHECK-NEXT:          (delegate $__delegate__l)
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (delegate $l)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -2182,24 +2164,18 @@
  )
 
  ;; CHECK:      (func $try-delegate-nested-catch_all-shadowing (type $void)
- ;; CHECK-NEXT:  (block $l
- ;; CHECK-NEXT:   (try $__delegate__l
- ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (block $l0
- ;; CHECK-NEXT:      (try
+ ;; CHECK-NEXT:  (try $l
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (try $l0
+ ;; CHECK-NEXT:     (do
+ ;; CHECK-NEXT:      (nop)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (catch_all
+ ;; CHECK-NEXT:      (try $l1
  ;; CHECK-NEXT:       (do
  ;; CHECK-NEXT:        (nop)
  ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (catch_all
- ;; CHECK-NEXT:        (block $l1
- ;; CHECK-NEXT:         (try
- ;; CHECK-NEXT:          (do
- ;; CHECK-NEXT:           (nop)
- ;; CHECK-NEXT:          )
- ;; CHECK-NEXT:          (delegate $__delegate__l)
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (delegate $l)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
@@ -2243,16 +2219,16 @@
  )
 
  ;; CHECK:      (func $try-br-name (type $void)
- ;; CHECK-NEXT:  (block $l
- ;; CHECK-NEXT:   (try
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (try $l
  ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (br $l)
+ ;; CHECK-NEXT:     (br $label)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (catch $empty
- ;; CHECK-NEXT:     (br $l)
+ ;; CHECK-NEXT:     (br $label)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (catch_all
- ;; CHECK-NEXT:     (br $l)
+ ;; CHECK-NEXT:     (br $label)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -2324,14 +2300,12 @@
  )
 
  ;; CHECK:      (func $rethrow (type $void)
- ;; CHECK-NEXT:  (block $label
- ;; CHECK-NEXT:   (try $__delegate__label
- ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (nop)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (catch $empty
- ;; CHECK-NEXT:     (rethrow $__delegate__label)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:  (try $label
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $empty
+ ;; CHECK-NEXT:    (rethrow $label)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -2343,14 +2317,12 @@
  )
 
  ;; CHECK:      (func $rethrow-named (type $void)
- ;; CHECK-NEXT:  (block $l
- ;; CHECK-NEXT:   (try $__delegate__l
- ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (nop)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (catch $empty
- ;; CHECK-NEXT:     (rethrow $__delegate__l)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:  (try $l
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $empty
+ ;; CHECK-NEXT:    (rethrow $l)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -2362,19 +2334,17 @@
  )
 
  ;; CHECK:      (func $rethrow-nested (type $void)
- ;; CHECK-NEXT:  (block $label
- ;; CHECK-NEXT:   (try $__delegate__label
- ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (nop)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (catch $empty
- ;; CHECK-NEXT:     (try
- ;; CHECK-NEXT:      (do
- ;; CHECK-NEXT:       (nop)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (catch $empty
- ;; CHECK-NEXT:       (rethrow $__delegate__label)
- ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:  (try $label
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $empty
+ ;; CHECK-NEXT:    (try
+ ;; CHECK-NEXT:     (do
+ ;; CHECK-NEXT:      (nop)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (catch $empty
+ ;; CHECK-NEXT:      (rethrow $label)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -2393,19 +2363,17 @@
  )
 
  ;; CHECK:      (func $rethrow-nested-named (type $void)
- ;; CHECK-NEXT:  (block $l
- ;; CHECK-NEXT:   (try $__delegate__l
- ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (nop)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (catch $empty
- ;; CHECK-NEXT:     (try
- ;; CHECK-NEXT:      (do
- ;; CHECK-NEXT:       (nop)
- ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (catch $empty
- ;; CHECK-NEXT:       (rethrow $__delegate__l)
- ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:  (try $l
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $empty
+ ;; CHECK-NEXT:    (try
+ ;; CHECK-NEXT:     (do
+ ;; CHECK-NEXT:      (nop)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (catch $empty
+ ;; CHECK-NEXT:      (rethrow $l)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -2424,16 +2392,14 @@
  )
 
  ;; CHECK:      (func $rethrow-try-nested (type $void)
- ;; CHECK-NEXT:  (block $label
- ;; CHECK-NEXT:   (try $__delegate__label
- ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (nop)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (catch $empty
- ;; CHECK-NEXT:     (try
- ;; CHECK-NEXT:      (do
- ;; CHECK-NEXT:       (rethrow $__delegate__label)
- ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:  (try $label
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $empty
+ ;; CHECK-NEXT:    (try
+ ;; CHECK-NEXT:     (do
+ ;; CHECK-NEXT:      (rethrow $label)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
@@ -2453,16 +2419,14 @@
  )
 
  ;; CHECK:      (func $rethrow-try-nested-named (type $void)
- ;; CHECK-NEXT:  (block $l
- ;; CHECK-NEXT:   (try $__delegate__l
- ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (nop)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (catch $empty
- ;; CHECK-NEXT:     (try
- ;; CHECK-NEXT:      (do
- ;; CHECK-NEXT:       (rethrow $__delegate__l)
- ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:  (try $l
+ ;; CHECK-NEXT:   (do
+ ;; CHECK-NEXT:    (nop)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (catch $empty
+ ;; CHECK-NEXT:    (try
+ ;; CHECK-NEXT:     (do
+ ;; CHECK-NEXT:      (rethrow $l)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
