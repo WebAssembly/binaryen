@@ -15,9 +15,9 @@
  */
 
 //
-// DebugLocationPropagation aim to pass debug location from a parent node
-// to child nodes which has no debug location. This is useful for compilers
-// that use Binaryen API to generate WebAssembly modules.
+// DebugLocationPropagation aim to pass debug location from parents or
+// previous siblings to expression which has no debug location. This is
+// useful for compilers that use Binaryen API to generate WebAssembly modules.
 //
 
 #include "pass.h"
@@ -28,80 +28,62 @@
 
 namespace wasm {
 
-template<typename SubType, typename VisitorType = Visitor<SubType>>
-struct PreWalker : public Walker<SubType, VisitorType> {
-  static void scan(SubType* self, Expression** currp) {
-    Expression* curr = *currp;
-
-#define DELEGATE_ID curr->_id
-
-#define DELEGATE_START(id) [[maybe_unused]] auto* cast = curr->cast<id>();
-
-#define DELEGATE_GET_FIELD(id, field) cast->field
-
-#define DELEGATE_FIELD_CHILD(id, field)                                        \
-  self->pushTask(SubType::scan, &cast->field);
-
-#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)                               \
-  self->maybePushTask(SubType::scan, &cast->field);
-
-#define DELEGATE_FIELD_INT(id, field)
-#define DELEGATE_FIELD_LITERAL(id, field)
-#define DELEGATE_FIELD_NAME(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
-#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
-#define DELEGATE_FIELD_TYPE(id, field)
-#define DELEGATE_FIELD_HEAPTYPE(id, field)
-#define DELEGATE_FIELD_ADDRESS(id, field)
-
-#define DELEGATE_END(id) self->pushTask(SubType::doVisit##id, currp);
-
-#include "wasm-delegations-fields.def"
-  }
-};
-
-using DebugLocationStack = SmallVector<Function::DebugLocation*, 10>;
-
 struct DebugLocationPropagation
-  : public WalkerPass<
-      PreWalker<DebugLocationPropagation,
-                UnifiedExpressionVisitor<DebugLocationPropagation>>> {
-  DebugLocationStack debugLocationStack;
+  : WalkerPass<PostWalker<DebugLocationPropagation>> {
+  ExpressionStack expressionStack;
 
+  using Super = WalkerPass<PostWalker<DebugLocationPropagation>>;
   bool isFunctionParallel() override { return false; }
+  bool modifiesBinaryenIR() override { return false; }
+  bool requiresNonNullableLocalFixups() override { return false; }
+  void runOnFunction(Module* module, Function* func) override {
+    if (!func->debugLocations.empty()) {
+      Super::runOnFunction(module, func);
+    }
+  }
+
+  Expression* getPrevious() {
+    if (expressionStack.empty()) {
+      return nullptr;
+    }
+    assert(expressionStack.size() >= 1);
+    return expressionStack[expressionStack.size() - 1];
+  }
+
+  static void doPreVisit(DebugLocationPropagation* self, Expression** currp) {
+    auto* curr = *currp;
+    auto& locs = self->getFunction()->debugLocations;
+    auto& expressionStack = self->expressionStack;
+    if (locs.find(curr) == locs.end()) {
+      // No debug location, see if we should inherit one.
+      if (auto* previous = self->getPrevious()) {
+        if (auto it = locs.find(previous); it != locs.end()) {
+          locs[curr] = it->second;
+        }
+      }
+    }
+    expressionStack.push_back(curr);
+  }
 
   static void doPostVisit(DebugLocationPropagation* self, Expression** currp) {
-    self->debugLocationStack.pop_back();
+    auto& exprStack = self->expressionStack;
+    while (exprStack.back() != *currp && !exprStack.empty()) {
+      exprStack.pop_back();
+    }
+    assert(!exprStack.empty());
   }
 
   static void scan(DebugLocationPropagation* self, Expression** currp) {
     self->pushTask(DebugLocationPropagation::doPostVisit, currp);
 
-    PreWalker<DebugLocationPropagation,
-              UnifiedExpressionVisitor<DebugLocationPropagation>>::scan(self,
-                                                                        currp);
+    PostWalker<DebugLocationPropagation,
+               Visitor<DebugLocationPropagation>>::scan(self, currp);
+
+    self->pushTask(DebugLocationPropagation::doPreVisit, currp);
   }
 
-  void visitExpression(Expression* curr) {
-    auto& currFuncDebugLocations = getFunction()->debugLocations;
-    const auto currDebugLocation = currFuncDebugLocations.find(curr);
-    if (currDebugLocation != currFuncDebugLocations.end()) {
-      debugLocationStack.push_back(&currDebugLocation->second);
-      return;
-    }
-    Function::DebugLocation* parentDebugLocation = getParentDebugLocation();
-    if (parentDebugLocation != nullptr) {
-      currFuncDebugLocations[curr] = *parentDebugLocation;
-    }
-    debugLocationStack.push_back(parentDebugLocation);
-  }
-
-  Function::DebugLocation* getParentDebugLocation() {
-    if (debugLocationStack.empty()) {
-      return nullptr;
-    }
-    assert(debugLocationStack.size() >= 1);
-    return debugLocationStack.back();
+  std::unique_ptr<Pass> create() override {
+    return std::make_unique<DebugLocationPropagation>();
   }
 };
 

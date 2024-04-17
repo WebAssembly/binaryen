@@ -94,52 +94,8 @@ Result<> parseDefs(Ctx& ctx,
 void propagateDebugLocations(Module& wasm) {
   // Copy debug locations from parents or previous siblings to expressions that
   // do not already have their own debug locations.
-  struct Propagator : WalkerPass<ExpressionStackWalker<Propagator>> {
-    using Super = WalkerPass<ExpressionStackWalker<Propagator>>;
-    bool isFunctionParallel() override { return true; }
-    bool modifiesBinaryenIR() override { return false; }
-    bool requiresNonNullableLocalFixups() override { return false; }
-    void runOnFunction(Module* module, Function* func) override {
-      if (!func->debugLocations.empty()) {
-        Super::runOnFunction(module, func);
-      }
-    }
-
-    // Unannotated instructions inherit either their previous sibling's location
-    // or their parent's location. Look up whichever is current for a given
-    // parent.
-    std::unordered_map<Expression*, Function::DebugLocation> parentDefaults;
-
-    static void doPreVisit(Propagator* self, Expression** currp) {
-      Super::doPreVisit(self, currp);
-      auto* curr = *currp;
-      auto& locs = self->getFunction()->debugLocations;
-      auto& parentDefaults = self->parentDefaults;
-      if (auto it = locs.find(curr); it != locs.end()) {
-        // Children will inherit this location.
-        parentDefaults[curr] = it->second;
-        if (auto* parent = self->getParent()) {
-          // Subsequent siblings will inherit this location.
-          parentDefaults[parent] = it->second;
-        }
-      } else {
-        // No annotation, see if we should inherit one.
-        if (auto* parent = self->getParent()) {
-          if (auto defaultIt = parentDefaults.find(parent);
-              defaultIt != parentDefaults.end()) {
-            // We have a default to inherit. Our children will inherit it, too.
-            locs[curr] = parentDefaults[curr] = defaultIt->second;
-          }
-        }
-      }
-    }
-
-    std::unique_ptr<Pass> create() override {
-      return std::make_unique<Propagator>();
-    }
-  };
   PassRunner runner(&wasm);
-  runner.add(std::make_unique<Propagator>());
+  runner.add("dlp");
   runner.run();
 }
 

@@ -34,7 +34,7 @@ int main() {
   auto& debugLocations = module->getFunction("adder")->debugLocations;
   assert(debugLocations.size() == 4);
   assert(debugLocations[x].columnNumber == 13);
-  assert(debugLocations[y].columnNumber == 2);
+  assert(debugLocations[y].columnNumber == 13);
   assert(debugLocations[add].columnNumber == 2);
   assert(debugLocations[drop].columnNumber == 2);
 

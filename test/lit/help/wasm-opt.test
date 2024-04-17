@@ -139,8 +139,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --discard-global-effects                      discards global effect info
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --dlp                                         propagate debug location from 
-;; CHECK-NEXT:                                                 parent to child nodes 
+;; CHECK-NEXT:   --dlp                                         propagate debug location from
+;; CHECK-NEXT:                                                 parents or previous siblings to
+;; CHECK-NEXT:                                                 child nodes
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --duplicate-function-elimination              removes duplicate functions
 ;; CHECK-NEXT:
