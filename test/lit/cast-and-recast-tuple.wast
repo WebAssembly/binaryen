@@ -61,7 +61,8 @@
   (func $test-local-tuple-1 (param $B (ref $B)) (param $x i32) (result anyref i32)
     ;; A dropped tuple that contains a ref. As it is dropped, we do not need to
     ;; do anything for this br_if. However, due to our general handling of
-    ;; tuples the code here will grow quite a bit due the roundtrip.
+    ;; tuples the code here will grow quite a bit due the roundtrip, but we can
+    ;; at least verify that there is no ref.cast added anywhere here.
     (block $out (result (ref $A) i32)
       (tuple.drop 2
         (br_if $out
