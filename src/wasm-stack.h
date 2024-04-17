@@ -164,7 +164,12 @@ private:
   // when they have a value that is more refined than the wasm type system
   // allows atm. We mark such br_ifs here, and ignore ones that are dropped for
   // example.
-  std::unordered_set<Break*> brIfsNeedingHandling;
+  //
+  // Each br_if present as a key here is mapped to the unrefined type for it.
+  // That is, the br_if has a type in Binaryen IR that is too refined, and the
+  // map contains the unrefined one (which we need, to know the local types, as
+  // we'll stash the unrefined values and then cast them).
+  std::unordered_map<Break*, Type> brIfsNeedingHandling;
 
   // We also need locals for entire tuples at a time, for br_if values (unlike
   // tuple.extract which only needs a single local each time, for the extracted

@@ -81,7 +81,12 @@ void BinaryInstWriter::visitBreak(Break* curr) {
   // enabled then we always emit nullable ones. Or, looking at it another way,
   // if GC is not enabled then we do not have non-nullable types, nor subtyping,
   // anyhow, so there is nothing to fix up.
-  if (brIfsNeedingHandling.count(curr)) {
+  auto iter = brIfsNeedingHandling.find(curr);
+  if (iter != brIfsNeedingHandling.end()) {
+    auto unrefinedType = iter->second;
+    auto type = curr->type;
+    assert(type.size() == unrefinedType.size());
+
     assert(curr->type.hasRef());
 
     auto emitCast = [&](Type to) {
@@ -90,7 +95,6 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       visitRefCast(&cast);
     };
 
-    auto type = curr->type;
     if (!type.isTuple()) {
       // Simple: Just emit a cast.
       emitCast(type);
@@ -98,8 +102,8 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       // Tuples are tricky to handle, and we need to use scratch locals. Stash
       // all the values on the stack to those locals, then reload them, casting
       // as we go.
-      assert(scratchTupleLocals.count(type));
-      auto base = scratchTupleLocals[type];
+      assert(scratchTupleLocals.count(unrefinedType));
+      auto base = scratchTupleLocals[unrefinedType];
       for (Index i = 0; i < type.size(); i++) {
         o << int8_t(BinaryConsts::LocalSet) << U32LEB(base + i);
       }
@@ -2790,12 +2794,11 @@ void BinaryInstWriter::scanFunction() {
 
       // Mark the br_if as needing handling, and add the type to the set of
       // types we need scratch tuple locals for (if relevant).
-      writer.brIfsNeedingHandling.insert(curr);
+      writer.brIfsNeedingHandling[curr] = breakTarget->type;
       if (curr->type.isTuple()) {
         // We set an index of -1 there as
         // a placeholder, and later will compute the index for those temp locals.
-        writer.scratchTupleLocals[curr->type] = -1;
-        // XXX we need the unrefined type here?
+        writer.scratchTupleLocals[breakTarget->type] = -1;
       }
     }
   } refinementScanner(*this);
