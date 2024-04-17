@@ -32,35 +32,12 @@
   (func $test (param $B (ref $B)) (param $x i32) (result anyref)
     (block $out (result (ref $A))
       ;; The br_if's value is of type $B which is more precise than the block's
-      ;; type, $A.
+      ;; type, $A, so we emit a cast here, but we remove it when we read the
+      ;; binary.
       (br_if $out
         (local.get $B)
         (local.get $x)
       )
-    )
-  )
-
-  ;; CHECK:      (func $test-drop (type $2) (param $B (ref $B)) (param $x i32) (result anyref)
-  ;; CHECK-NEXT:  (block $label$1 (result (ref $A))
-  ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_if $label$1
-  ;; CHECK-NEXT:     (local.get $B)
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $test-drop (param $B (ref $B)) (param $x i32) (result anyref)
-    ;; As above, but with a drop of the br_if value.
-    (block $out (result (ref $A))
-      (drop
-        (br_if $out
-          (local.get $B)
-          (local.get $x)
-        )
-      )
-      (unreachable)
     )
   )
 
@@ -79,9 +56,37 @@
   (func $test-local (param $B (ref $B)) (param $x i32) (result anyref)
     (local $temp (ref $B))
     ;; As above, but with local.set that receives the br_if's value, verifying
-    ;; it is refined.
+    ;; it is refined. We do emit a cast here.
     (block $out (result (ref $A))
       (local.set $temp
+        (br_if $out
+          (local.get $B)
+          (local.get $x)
+        )
+      )
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $test-drop (type $2) (param $B (ref $B)) (param $x i32) (result anyref)
+  ;; CHECK-NEXT:  (block $label$1 (result (ref $A))
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_if $label$1
+  ;; CHECK-NEXT:     (local.get $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-drop (param $B (ref $B)) (param $x i32) (result anyref)
+    ;; As above, but with a drop of the br_if value. We do not emit a cast here.
+    ;; That cannot be observed in this test (as if
+    ;; a cast were added, the binary reader would remove it), but keep it here
+    ;; for completeness, and because this file serves as the input to
+    ;; test/lit/binary/cast-and-recast.test.
+    (block $out (result (ref $A))
+      (drop
         (br_if $out
           (local.get $B)
           (local.get $x)
@@ -102,10 +107,7 @@
   (func $test-same (param $A (ref $A)) (param $x i32) (result anyref)
     ;; As above, but now we use $A everywhere, which means there is no
     ;; difference between the type in Binaryen IR and wasm, so we do not need
-    ;; to emit any extra cast here. That cannot be observed in this test (as if
-    ;; a cast were added, the binary reader would remove it), but keep it here
-    ;; for completeness, and because this file serves as the input to
-    ;; test/lit/binary/cast-and-recast.test.
+    ;; to emit any extra cast here.
     (block $out (result (ref $A))
       (br_if $out
         (local.get $A)
