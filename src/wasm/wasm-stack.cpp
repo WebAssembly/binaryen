@@ -82,7 +82,6 @@ void BinaryInstWriter::visitBreak(Break* curr) {
   // if GC is not enabled then we do not have non-nullable types, nor subtyping,
   // anyhow, so there is nothing to fix up.
   if (brIfsNeedingHandling.count(curr)) {
-#if 0
     if (!curr->type.isTuple()) {
       // Simple: Just emit a cast.
       RefCast cast;
@@ -96,7 +95,6 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       // scanFunction()
       // We can assume that the output is dropped, and therefore we do not need to cast anything.
     }
-#endif
   }
 }
 
