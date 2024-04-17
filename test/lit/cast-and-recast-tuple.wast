@@ -5,7 +5,7 @@
 ;; one roundtrip because of the accumulation of tuple logic, which would
 ;; otherwise make the output here very hard to read.
 
-;; RUN: wasm-opt %s -all --roundtrip -S -o - | filecheck %s
+;; RUN: wasm-opt %s -all --generate-stack-ir --optimize-stack-ir --roundtrip -S -o - | filecheck %s
 
 (module
   (rec

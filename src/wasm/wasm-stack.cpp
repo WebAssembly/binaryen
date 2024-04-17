@@ -83,7 +83,7 @@ void BinaryInstWriter::visitBreak(Break* curr) {
   // enabled then we always emit nullable ones. Or, looking at it another way,
   // if GC is not enabled then we do not have non-nullable types, nor subtyping,
   // anyhow, so there is nothing to fix up.
-  if (curr->type.hasRef() && curr->type != breakType &&
+  if (curr->type.hasRef() && brIfsNeedingHandling curr->type != breakType &&
       parent.getModule()->features.hasGC()) {
     if (!curr->type.isTuple()) {
       // Simple: Just emit a cast.
@@ -91,6 +91,9 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       cast.type = curr->type;
       visitRefCast(&cast);
     } else {
+      // Tuples are tricky to handle
+scratchTupleLocals
+    
       // The tuple case has already been handled explicitly in
       // scanFunction()
       // We can assume that the output is dropped, and therefore we do not need to cast anything.
@@ -2730,13 +2733,16 @@ void BinaryInstWriter::scanFunction() {
 
   tempModule = std::make_unique<Module>();
 
+  // Erase any StackIR that was present, as we are about to modify BinaryenIR.
+  // That is, we lose StackIR optimizations when we must handle this br_if case.
+  // (Note that we do this before the copy, which removes it from the original
+  // function. We must do that as copyFunction does not support copying StackIR
+  // atm. In any case, what we want here is to remove it.)
+  func->stackIR.reset();
+
   func = ModuleUtils::copyFunction(func,
            *tempModule,
            "copy");
-
-  // Erase any StackIR that was present, as we are about to modify BinaryenIR.
-  // That is, we lose StackIR optimizations when we must handle this br_if case.
-  func->stackIR.reset();
 
   struct Fixer : public ExpressionStackWalker<Fixer> {
     void visitBreak(Break* curr) {
@@ -2929,6 +2935,7 @@ StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
 
 void StackIRToBinaryWriter::write() {
   writer.mapLocalsAndEmitHeader();
+
   // Stack to track indices of catches within a try
   SmallVector<Index, 4> catchIndexStack;
   for (auto* inst : *func->stackIR) {
