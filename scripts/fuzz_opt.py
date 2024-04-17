@@ -308,6 +308,7 @@ INITIAL_CONTENTS_IGNORE = [
     'fannkuch3_manyopts_dwarf.wasm',
     'fib2_emptylocspan_dwarf.wasm',
     'fannkuch3_dwarf.wasm',
+    'dwarf-local-order.wasm',
     'multi_unit_abbrev_noprint.wasm',
     # TODO fuzzer support for multimemory
     'multi-memories-atomics64.wast',
