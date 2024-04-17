@@ -61,7 +61,7 @@
   (func $test-local-tuple-1 (param $B (ref $B)) (param $x i32) (result anyref i32)
     ;; A dropped tuple that contains a ref. As it is dropped, we do not need to
     ;; do anything for this br_if. However, due to our general handling of
-    ;; tuples the code here will grow quite a bit due to 3 roundtrips.
+    ;; tuples the code here will grow quite a bit due the roundtrip.
     (block $out (result (ref $A) i32)
       (tuple.drop 2
         (br_if $out
@@ -264,9 +264,11 @@
     (local $temp (tuple (ref $B) i32))
     ;; As above, but none of the mitigating circumstances happens: we have a
     ;; tuple with a reference that is refined compared to the break target. As a
-    ;; result we must fix this up, which we do by adding a local.
+    ;; result we must fix this up, which we do by adding locals, saving the
+    ;; br_if's output to them, and then loading from those locals and casting.
     ;;
-    ;; Comparing to $test-local-tuple-4, we end up with 2 more locals.
+    ;; Comparing to $test-local-tuple-4, we end up with 3 more locals, and also
+    ;; there is now a ref.cast.
     (block $out (result (ref $A) i32)
       (local.set $temp
         (br_if $out
