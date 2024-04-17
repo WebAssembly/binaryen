@@ -2715,9 +2715,7 @@ void BinaryInstWriter::scanFunction() {
     //
     // Note that we do not check if the type matches the break target, which
     // takes more effort, and the other conditions are quite rare anyhow. We do
-    // check that below, if we found something suspicious. As a result, in rare
-    // cases we may enter the expensive path below and end up not doing
-    // anything, but such is life.
+    // check that below, later, if we found something suspicious here.
     Index numDangerousBrIfs = 0;
 
     void visitBreak(Break* curr) {
@@ -2773,8 +2771,6 @@ void BinaryInstWriter::scanFunction() {
   // actually investigate them. The previous quick test in the scanner only
   // looked for references flowing out of br_ifs, and now we also see if those
   // references are actually refined (which requires us to track block types).
-  // We update |brIfsNeedingHandling| with those we find are in need of
-  // handling.
   struct RefinementScanner : public ExpressionStackWalker<RefinementScanner> {
     BinaryInstWriter& writer;
 
