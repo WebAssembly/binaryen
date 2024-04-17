@@ -128,6 +128,7 @@ private:
                         size_t bytes,
                         uint64_t offset,
                         Name memory);
+  int32_t getBreakIndex(Name name);
 
   WasmBinaryWriter& parent;
   BufferWithRandomAccess& o;
@@ -135,20 +136,7 @@ private:
   bool sourceMap;
   bool DWARF;
 
-  // For each label that we can break to we track the name and type. We can
-  // then query for either the index by itself or both the index and type.
-  struct BreakInfo {
-    Name name;
-    Type type;
-  };
-  std::vector<BreakInfo> breakStack;
-
-  struct BreakResult {
-    int32_t index;
-    Type type;
-  };
-  BreakResult getBreakResult(Name name);
-  int32_t getBreakIndex(Name name);
+  std::vector<Name> breakStack;
 
   // The types of locals in the compact form, in order.
   std::vector<Type> localTypes;
@@ -159,33 +147,14 @@ private:
 
   // Keeps track of the binary index of the scratch locals used to lower
   // tuple.extract.
-  std::vector<TupleExtract*> tupleExtracts;
   InsertOrderedMap<Type, Index> scratchLocals;
-
-  // Track which br_ifs need handling of their output values, which is the case
-  // when they have a value that is more refined than the wasm type system
-  // allows atm. We mark such br_ifs here, and ignore ones that are dropped for
-  // example.
-  std::unorderd_set<Break*> brIfsNeedingHandling;
-
-  // We also need locals for entire tuples at a time, for br_if values (unlike
-  // tuple.extract which only needs a single local each time, for the extracted
-  // lane). Each index in this map indicates the initial index of a series of locals,
-  // one for each lane in the tuple.
-  InsertOrderedMap<Type, Index> scratchTupleLocals;
-
-  void scanFunction();
   void countScratchLocals();
   void setScratchLocals();
 
-  // local.get, local.tee, and global.get expressions that will be followed by
+  // local.get, local.tee, and glboal.get expressions that will be followed by
   // tuple.extracts. We can optimize these by getting only the local for the
   // extracted index.
   std::unordered_map<Expression*, Index> extractedGets;
-
-  // In some cases we will allocate Expressions, which we do on a temp module
-  // that is cleaned up with us.
-  std::unique_ptr<Module> tempModule;
 };
 
 // Takes binaryen IR and converts it to something else (binary or stack IR)
