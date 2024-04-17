@@ -160,7 +160,7 @@ private:
   // when they have a value that is more refined than the wasm type system
   // allows atm. We mark such br_ifs here, and ignore ones that are dropped for
   // example.
-  std::unorderd_set<Break*> brIfsNeedingHandling;
+  std::unordered_set<Break*> brIfsNeedingHandling;
 
   // We also need locals for entire tuples at a time, for br_if values (unlike
   // tuple.extract which only needs a single local each time, for the extracted

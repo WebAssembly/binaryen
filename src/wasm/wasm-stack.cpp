@@ -81,8 +81,8 @@ void BinaryInstWriter::visitBreak(Break* curr) {
   // enabled then we always emit nullable ones. Or, looking at it another way,
   // if GC is not enabled then we do not have non-nullable types, nor subtyping,
   // anyhow, so there is nothing to fix up.
-  if (curr->type.hasRef() && brIfsNeedingHandling curr->type != breakType &&
-      parent.getModule()->features.hasGC()) {
+  if (brIfsNeedingHandling.count(curr)) {
+#if 0
     if (!curr->type.isTuple()) {
       // Simple: Just emit a cast.
       RefCast cast;
@@ -90,12 +90,13 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       visitRefCast(&cast);
     } else {
       // Tuples are tricky to handle
-scratchTupleLocals
+//scratchTupleLocals
     
       // The tuple case has already been handled explicitly in
       // scanFunction()
       // We can assume that the output is dropped, and therefore we do not need to cast anything.
     }
+#endif
   }
 }
 
@@ -2582,6 +2583,11 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   for (Index i = 0; i < func->getNumParams(); i++) {
     mappedLocals[std::make_pair(i, 0)] = i;
   }
+
+  // Before we handle vars, scan the function for additional locals and other
+  // issues.
+  countScratchLocals();
+
   // Normally we map all locals of the same type into a range of adjacent
   // addresses, which is more compact. However, if we need to keep DWARF valid,
   // do not do any reordering at all - instead, do a trivial mapping that
@@ -2606,7 +2612,6 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
       noteLocalType(t);
     }
   }
-  countScratchLocals();
 
   if (parent.getModule()->features.hasReferenceTypes()) {
     // Sort local types in a way that keeps all MVP types together and all
@@ -2704,10 +2709,10 @@ void BinaryInstWriter::countScratchLocals() { // XXX rename?
         numDangerousBrIfs--;
       }
     }
-  } scanner();
+  } scanner;
   scanner.walk(func->body);
 
-  for (auto* extract : scanner.tupleExtracts.list) {
+  for (auto* extract : scanner.tupleExtracts) {
     if (extract->type != Type::unreachable && extract->index != 0) {
       scratchLocals[extract->type] = 0;
     }
@@ -2717,7 +2722,7 @@ void BinaryInstWriter::countScratchLocals() { // XXX rename?
   }
   // While we have all the tuple.extracts, also find extracts of local.gets,
   // local.tees, and global.gets that we can optimize.
-  for (auto* extract : scanner.tupleExtracts.list) {
+  for (auto* extract : scanner.tupleExtracts) {
     auto* tuple = extract->tuple;
     if (tuple->is<LocalGet>() || tuple->is<LocalSet>() ||
         tuple->is<GlobalGet>()) {
@@ -2731,11 +2736,18 @@ void BinaryInstWriter::countScratchLocals() { // XXX rename?
   }
 
   // There are dangerous-looking br_ifs, so we must do the harder work to
-  // actually investigate them.
-  struct Fixer : public ExpressionStackWalker<Fixer> {
+  // actually investigate them. The previous quick test in the scanner only
+  // looked for references flowing out of br_ifs, and now we also see if those
+  // references are actually refined. We update |brIfsNeedingHandling| with
+  // those we find are in need of handling. 
+  struct RefinementScanner : public ExpressionStackWalker<RefinementScanner> {
+    std::unordered_set<Break*>& brIfsNeedingHandling;
+
+    RefinementScanner(std::unordered_set<Break*>& brIfsNeedingHandling) : brIfsNeedingHandling(brIfsNeedingHandling) {}
+
     void visitBreak(Break* curr) {
       // See if this is one of the dangerous br_ifs we must handle.
-      if (!Scanner::isTupleWithRef(curr->type)) {
+      if (!curr->type.hasRef()) {
         // Not even a reference.
         return;
       }
@@ -2750,35 +2762,10 @@ void BinaryInstWriter::countScratchLocals() { // XXX rename?
         return;
       }
 
-      // This must be fixed up. Replace
-      //
-      //   (br_if
-      //     (value)
-      //     (condition)
-      //   )
-      // =>
-      //   (block
-      //     (drop
-      //       (br_if
-      //         (local.tee $temp
-      //           (value)
-      //         )
-      //         (condition)
-      //       )
-      //     )
-      //     (local.get $temp)
-      //   )
-      //
-      auto type = curr->value->type;
-      Builder builder(*getModule());
-      auto local = builder.addVar(getFunction(), type);
-      curr->value = builder.makeLocalTee(local, curr->value, type);
-      auto* block = builder.makeSequence(builder.makeDrop(curr),
-                                         builder.makeLocalGet(local, type));
-      replaceCurrent(block);
+      brIfsNeedingHandling.insert(curr);
     }
-  } fixer;
-  fixer.walkFunctionInModule(func, &*tempModule);
+  } refinementScanner(brIfsNeedingHandling);
+  refinementScanner.walk(func->body);
 }
 
 void BinaryInstWriter::setScratchLocals() {
