@@ -162,19 +162,24 @@ private:
 
   // Track which br_ifs need handling of their output values, which is the case
   // when they have a value that is more refined than the wasm type system
-  // allows atm. We mark such br_ifs here, and ignore ones that are dropped for
-  // example.
+  // allows atm (and they are not dropped, in which case the type would not
+  // matter). See https://github.com/WebAssembly/binaryen/pull/6390 for more on
+  // the difference. As a result of the difference, we will insert extra casts
+  // to ensure validation in the wasm spec. Note that the binary reader code
+  // skips such extra casts where possible, which avoids roundtrips increasing
+  // code size continuously. The wasm spec will hopefully improve to use the
+  // more refined type as well, which would remove the need for this hack.
   //
   // Each br_if present as a key here is mapped to the unrefined type for it.
   // That is, the br_if has a type in Binaryen IR that is too refined, and the
-  // map contains the unrefined one (which we need, to know the local types, as
+  // map contains the unrefined one (which we need to know the local types, as
   // we'll stash the unrefined values and then cast them).
   std::unordered_map<Break*, Type> brIfsNeedingHandling;
 
-  // We also need locals for entire tuples at a time, for br_if values (unlike
+  // We also need locals for entire tuples at a time, for br_if tuples (unlike
   // tuple.extract which only needs a single local each time, for the extracted
-  // lane). Each index in this map indicates the initial index of a series of locals,
-  // one for each lane in the tuple.
+  // lane). Each index in this map indicates the initial index of a series of
+  // locals, one for each lane in the tuple.
   InsertOrderedMap<Type, Index> scratchTupleLocals;
 };
 

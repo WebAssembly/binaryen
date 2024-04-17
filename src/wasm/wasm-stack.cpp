@@ -65,22 +65,9 @@ void BinaryInstWriter::visitLoop(Loop* curr) {
 void BinaryInstWriter::visitBreak(Break* curr) {
   o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
     << U32LEB(getBreakIndex(curr->name));
-  // We also emit an extra cast after us if this is has a concrete type that
-  // differs from the branch target. The typing there works differently than in
-  // the wasm spec atm, see
-  // https://github.com/WebAssembly/binaryen/pull/6390
-  // The binary reader code skips such extra casts where possible, which avoids
-  // roundtrips increasing code size continuously. The wasm spec will hopefully
-  // improve to use the more refined type as well, which would remove the need
-  // for this hack.
-  //
-  // Note that we must check for GC explicitly here: if only reference types are
-  // enabled then we still may seem to need a fixup here, e.g. if a ref.func
-  // is br_if'd to a block of type funcref. But that only appears that way
-  // because in Binaryen IR we allow non-nullable types, and if GC is not
-  // enabled then we always emit nullable ones. Or, looking at it another way,
-  // if GC is not enabled then we do not have non-nullable types, nor subtyping,
-  // anyhow, so there is nothing to fix up.
+
+  // See comment on |brIfsNeedingHandling| for the extra casts we need to emit
+  // here for certain br_ifs.
   auto iter = brIfsNeedingHandling.find(curr);
   if (iter != brIfsNeedingHandling.end()) {
     auto unrefinedType = iter->second;
@@ -96,10 +83,10 @@ void BinaryInstWriter::visitBreak(Break* curr) {
     };
 
     if (!type.isTuple()) {
-      // Simple: Just emit a cast.
+      // Simple: Just emit a cast, and then the type matches Binaryen IR's.
       emitCast(type);
     } else {
-      // Tuples are tricky to handle, and we need to use scratch locals. Stash
+      // Tuples are trickier to handle, and we need to use scratch locals. Stash
       // all the values on the stack to those locals, then reload them, casting
       // as we go.
       assert(scratchTupleLocals.count(unrefinedType));
@@ -2769,10 +2756,16 @@ void BinaryInstWriter::scanFunction() {
   }
 
   if (!scanner.numDangerousBrIfs || !parent.getModule()->features.hasGC()) {
-    // Nothing more to do: either no such br_ifs, or GC is not enabled (in the
-    // latter case we may have reference types, so some br_ifs may seem to need
-    // handling, but without GC we can never be in a situation where we need to
-    // cast something).
+    // Nothing more to do: either no such br_ifs, or GC is not enabled.
+    //
+    // The explicit check for GC is here because if only reference types are
+    // enabled then we still may seem to need a fixup here, e.g. if a ref.func
+    // is br_if'd to a block of type funcref. But that only appears that way
+    // because in Binaryen IR we allow non-nullable types even without GC (and
+    // if GC is not enabled then we always emit nullable types in the binary).
+    // That is, even if we see a type difference without GC, it will vanish in
+    // the binary format; there is never a need to add any ref.casts without GC
+    // being enabled.
     return;
   }
 
@@ -2780,8 +2773,9 @@ void BinaryInstWriter::scanFunction() {
   // There are dangerous-looking br_ifs, so we must do the harder work to
   // actually investigate them. The previous quick test in the scanner only
   // looked for references flowing out of br_ifs, and now we also see if those
-  // references are actually refined. We update |brIfsNeedingHandling| with
-  // those we find are in need of handling. 
+  // references are actually refined (which requires us to track block types).
+  // We update |brIfsNeedingHandling| with those we find are in need of
+  // handling.
   struct RefinementScanner : public ExpressionStackWalker<RefinementScanner> {
     BinaryInstWriter& writer;
 

@@ -157,7 +157,9 @@ There are a few differences between Binaryen IR and the WebAssembly language:
     output has the right type in the wasm spec. That may cause a few bytes of
     extra size in rare cases. Binaryen will skip such trivial casts when it
     loads such code, which means that repeated roundtripping will at least not
-    keep adding to the size.
+    keep adding to the size. (Interactions between this and tuples can lead to
+    larger code size increases, that is, `br_if`s that send multiple values are
+    best avoided.)
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR
 => wasm) change code a little in some corner cases.
