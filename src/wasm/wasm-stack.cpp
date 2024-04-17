@@ -82,6 +82,8 @@ void BinaryInstWriter::visitBreak(Break* curr) {
   // if GC is not enabled then we do not have non-nullable types, nor subtyping,
   // anyhow, so there is nothing to fix up.
   if (brIfsNeedingHandling.count(curr)) {
+    assert(curr->type.hasRef());
+
     auto emitCast = [&](Type to) {
       RefCast cast;
       cast.type = to;
@@ -95,7 +97,7 @@ void BinaryInstWriter::visitBreak(Break* curr) {
     } else {
       // Tuples are tricky to handle, and we need to use scratch locals. Stash
       // all the values on the stack to those locals, then reload them, casting
-      // as we go as necessary.
+      // as we go.
       assert(scratchTupleLocals.count(type));
       auto base = scratchTupleLocals[type];
       for (Index i = 0; i < type.size(); i++) {
@@ -2793,6 +2795,7 @@ void BinaryInstWriter::scanFunction() {
         // We set an index of -1 there as
         // a placeholder, and later will compute the index for those temp locals.
         writer.scratchTupleLocals[curr->type] = -1;
+        // XXX we need the unrefined type here?
       }
     }
   } refinementScanner(*this);
