@@ -2,9 +2,9 @@
 
 ;; Test that we roundtrip br_if with a reference value properly if GC is not
 ;; enabled. We emit a ref.cast in such cases when GC is used, but if only
-;; reference types are enabled then we can only use a ref.as_non_null (to fix up
-;; the type difference between Binaryen IR and the wasm spec, on the typing of
-;; br_if).
+;; reference types are enabled (and not GC) then we do not need to emit a cast
+;; at all (without GC, there are no situations that require a cast anyhow). If
+;; we did emit a cast we would error here on GC not being enabled.
 
 ;; RUN: wasm-opt %s --enable-reference-types --roundtrip -S -o - | filecheck %s
 
