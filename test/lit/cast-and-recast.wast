@@ -56,7 +56,7 @@
   (func $test-local (param $B (ref $B)) (param $x i32) (result anyref)
     (local $temp (ref $B))
     ;; As above, but with local.set that receives the br_if's value, verifying
-    ;; it is refined. We do emit a cast here.
+    ;; it is refined. We emit a cast here.
     (block $out (result (ref $A))
       (local.set $temp
         (br_if $out
@@ -81,10 +81,9 @@
   ;; CHECK-NEXT: )
   (func $test-drop (param $B (ref $B)) (param $x i32) (result anyref)
     ;; As above, but with a drop of the br_if value. We do not emit a cast here.
-    ;; That cannot be observed in this test (as if
-    ;; a cast were added, the binary reader would remove it), but keep it here
-    ;; for completeness, and because this file serves as the input to
-    ;; test/lit/binary/cast-and-recast.test.
+    ;; That cannot be observed in this test (as if a cast were added, the binary
+    ;; reader would remove it), but keep it here for completeness, and because
+    ;; this file serves as the input to test/lit/binary/cast-and-recast.test.
     (block $out (result (ref $A))
       (drop
         (br_if $out

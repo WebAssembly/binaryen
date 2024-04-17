@@ -2,8 +2,8 @@
 # in wasm.
 #
 # `cast-and-recast.test.wasm` was generated from cast-and-recast.wast with
-# wasm-as. That testcase
-# contains two cases that need such casts and one that does not, and the binary
-# was manually inspected to see that it contains exactly the right two casts.
+# wasm-as. That testcase contains two cases that need such casts and two that do
+# not. The binary was manually inspected to see that it contains exactly the
+# right two casts.
 RUN: wasm-opt %s.wasm -o %t.o -all
 RUN: cmp %s.wasm %t.o
