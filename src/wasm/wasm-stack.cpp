@@ -2760,10 +2760,14 @@ void BinaryInstWriter::scanFunction() {
     }
   }
 
-  if (!scanner.numDangerousBrIfs) {
-    // Nothing more to do.
+  if (!scanner.numDangerousBrIfs || !parent.getModule()->features.hasGC()) {
+    // Nothing more to do: either no such br_ifs, or GC is not enabled (in the
+    // latter case we may have reference types, so some br_ifs may seem to need
+    // handling, but without GC we can never be in a situation where we need to
+    // cast something).
     return;
   }
+
 
   // There are dangerous-looking br_ifs, so we must do the harder work to
   // actually investigate them. The previous quick test in the scanner only
