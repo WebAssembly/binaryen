@@ -2666,12 +2666,12 @@ void BinaryInstWriter::noteLocalType(Type type) {
 
 void BinaryInstWriter::countScratchLocals() { // XXX rename?
   struct Scanner : public PostWalker<Scanner> {
-    // We'll add a scratch register in `numLocalsByType` for each type of
-    // tuple.extract with nonzero index present.
-    std::vector<TupleExtract*> tupleExtracts;
+    BinaryInstWriter& writer;
+
+    Scanner(BinaryInstWriter& writer) : writer(writer) {}
 
     void visitTupleExtract(TupleExtract* curr) {
-      tupleExtracts.push_back(curr);
+      writer.tupleExtracts.push_back(curr);
     }
 
     // As mentioned in BinaryInstWriter::visitBreak, the type of br_if with a
@@ -2706,10 +2706,10 @@ void BinaryInstWriter::countScratchLocals() { // XXX rename?
         numDangerousBrIfs--;
       }
     }
-  } scanner;
+  } scanner(*this);
   scanner.walk(func->body);
 
-  for (auto* extract : scanner.tupleExtracts) {
+  for (auto* extract : tupleExtracts) {
     if (extract->type != Type::unreachable && extract->index != 0) {
       scratchLocals[extract->type] = 0;
     }
@@ -2719,7 +2719,7 @@ void BinaryInstWriter::countScratchLocals() { // XXX rename?
   }
   // While we have all the tuple.extracts, also find extracts of local.gets,
   // local.tees, and global.gets that we can optimize.
-  for (auto* extract : scanner.tupleExtracts) {
+  for (auto* extract : tupleExtracts) {
     auto* tuple = extract->tuple;
     if (tuple->is<LocalGet>() || tuple->is<LocalSet>() ||
         tuple->is<GlobalGet>()) {
@@ -2738,9 +2738,9 @@ void BinaryInstWriter::countScratchLocals() { // XXX rename?
   // references are actually refined. We update |brIfsNeedingHandling| with
   // those we find are in need of handling. 
   struct RefinementScanner : public ExpressionStackWalker<RefinementScanner> {
-    std::unordered_set<Break*>& brIfsNeedingHandling;
+    BinaryInstWriter& writer;
 
-    RefinementScanner(std::unordered_set<Break*>& brIfsNeedingHandling) : brIfsNeedingHandling(brIfsNeedingHandling) {}
+    RefinementScanner(BinaryInstWriter& writer) : writer(writer) {}
 
     void visitBreak(Break* curr) {
       // See if this is one of the dangerous br_ifs we must handle.
@@ -2759,9 +2759,9 @@ void BinaryInstWriter::countScratchLocals() { // XXX rename?
         return;
       }
 
-      brIfsNeedingHandling.insert(curr);
+      writer.brIfsNeedingHandling.insert(curr);
     }
-  } refinementScanner(brIfsNeedingHandling);
+  } refinementScanner(*this);
   refinementScanner.walk(func->body);
 }
 
