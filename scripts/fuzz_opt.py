@@ -298,7 +298,7 @@ INITIAL_CONTENTS_IGNORE = [
     'string-lowering-instructions.wast',
     # TODO: fuzzer and interpreter support for extern conversions
     'extern-conversions.wast',
-    # ignore DWARF because it is incompatible with multivalue atm
+    # ignore DWARF because it is incompatible with multivalue and GC atm
     'zlib.wasm',
     'cubescript.wasm',
     'class_with_dwarf_noprint.wasm',

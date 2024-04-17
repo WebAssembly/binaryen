@@ -145,13 +145,14 @@ private:
 
   void noteLocalType(Type type);
 
+  // Scan for scratch locals and br_ifs. This fills the data structures defined
+  // below, and calls noteLocalType as appropriate.
+  void scanFunction();
+
   // Keeps track of the binary index of the scratch locals used to lower
   // tuple.extract.
   std::vector<TupleExtract*> tupleExtracts;
   InsertOrderedMap<Type, Index> scratchLocals;
-
-  // Scan for scratch locals and br_ifs (see below).
-  void scanFunction();
 
   void setScratchLocals();
 

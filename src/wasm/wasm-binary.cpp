@@ -7253,8 +7253,9 @@ bool WasmBinaryReader::maybeVisitRefCast(Expression*& out, uint32_t code) {
       // This cast is a no-op. We remove such casts eagerly here, as we can emit
       // extra such casts during binary writing (and we want to avoid roundtrips
       // increasing binary size continuously). The extra casts are due to br_if
-      // working differently than the wasm spec atm, see
-      // https://github.com/WebAssembly/binaryen/pull/6390
+      // working differently than the wasm spec atm, see the comment on
+      // |brIfsNeedingHandling| in wasm-stack.h.
+      //
       // In other words, if we see a trivial cast here then it may be due to a
       // case where Binaryen IR allows more refined types, as it does for br_if,
       // compared to the wasm spec, and so we can ignore such unnecessary casts
