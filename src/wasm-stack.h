@@ -155,6 +155,18 @@ private:
   // tuple.extracts. We can optimize these by getting only the local for the
   // extracted index.
   std::unordered_map<Expression*, Index> extractedGets;
+
+  // Track which br_ifs need handling of their output values, which is the case
+  // when they have a value that is more refined than the wasm type system
+  // allows atm. We mark such br_ifs here, and ignore ones that are dropped for
+  // example.
+  std::unorderd_set<Break*> brIfsNeedingHandling;
+
+  // We also need locals for entire tuples at a time, for br_if values (unlike
+  // tuple.extract which only needs a single local each time, for the extracted
+  // lane). Each index in this map indicates the initial index of a series of locals,
+  // one for each lane in the tuple.
+  InsertOrderedMap<Type, Index> scratchTupleLocals;
 };
 
 // Takes binaryen IR and converts it to something else (binary or stack IR)

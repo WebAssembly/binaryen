@@ -65,6 +65,38 @@ void BinaryInstWriter::visitLoop(Loop* curr) {
 void BinaryInstWriter::visitBreak(Break* curr) {
   o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
     << U32LEB(getBreakIndex(curr->name));
+  // We also emit an extra cast after us if this is has a concrete type that
+  // differs from the branch target. The typing there works differently than in
+  // the wasm spec atm, see
+  // https://github.com/WebAssembly/binaryen/pull/6390
+  // The binary reader code skips such extra casts where possible, which avoids
+  // roundtrips increasing code size continuously. The wasm spec will hopefully
+  // improve to use the more refined type as well, which would remove the need
+  // for this hack.
+  //
+  // Note that we must check for GC explicitly here: if only reference types are
+  // enabled then we still may seem to need a fixup here, e.g. if a ref.func
+  // is br_if'd to a block of type funcref. But that only appears that way
+  // because in Binaryen IR we allow non-nullable types, and if GC is not
+  // enabled then we always emit nullable ones. Or, looking at it another way,
+  // if GC is not enabled then we do not have non-nullable types, nor subtyping,
+  // anyhow, so there is nothing to fix up.
+  if (curr->type.hasRef() && brIfsNeedingHandling curr->type != breakType &&
+      parent.getModule()->features.hasGC()) {
+    if (!curr->type.isTuple()) {
+      // Simple: Just emit a cast.
+      RefCast cast;
+      cast.type = curr->type;
+      visitRefCast(&cast);
+    } else {
+      // Tuples are tricky to handle
+scratchTupleLocals
+    
+      // The tuple case has already been handled explicitly in
+      // scanFunction()
+      // We can assume that the output is dropped, and therefore we do not need to cast anything.
+    }
+  }
 }
 
 void BinaryInstWriter::visitSwitch(Switch* curr) {
@@ -2630,11 +2662,52 @@ void BinaryInstWriter::noteLocalType(Type type) {
   numLocalsByType[type]++;
 }
 
-void BinaryInstWriter::countScratchLocals() {
-  // Add a scratch register in `numLocalsByType` for each type of
-  // tuple.extract with nonzero index present.
-  FindAll<TupleExtract> extracts(func->body);
-  for (auto* extract : extracts.list) {
+void BinaryInstWriter::countScratchLocals() { // XXX rename?
+  struct Scanner : public PostWalker<Scanner> {
+    // We'll add a scratch register in `numLocalsByType` for each type of
+    // tuple.extract with nonzero index present.
+    std::vector<TupleExtract*> tupleExtracts;
+
+    void visitTupleExtract(TupleExtract* curr) {
+      tupleExtracts.push_back(curr);
+    }
+
+    // As mentioned in BinaryInstWriter::visitBreak, the type of br_if with a
+    // value may be more refined in Binaryen IR compared to the wasm spec, as we
+    // give it the type of the value, while the spec gives it the type of the
+    // block it targets. To avoid problems we must handle the case where a br_if
+    // has a value, the value is more refined then the target, and the value is
+    // not dropped (the last condition is very rare in real-world wasm, making
+    // all of this a quite unusual situation). First, detect such situations by
+    // seeing if we have br_ifs that return reference types at all. We do so by
+    // counting them, and as we go we ignore ones that are dropped, since a
+    // dropped value is not a problem for us.
+    //
+    // Note that we do not check if the type matches the break target, which
+    // takes more effort, and the other conditions are quite rare anyhow. We do
+    // check that below, if we found something suspicious. As a result, in rare
+    // cases we may enter the expensive path below and end up not doing
+    // anything, but such is life.
+    Index numDangerousBrIfs = 0;
+
+    void visitBreak(Break* curr) {
+      if (curr->type.hasRef()) {
+        numDangerousBrIfs++;
+      }
+    }
+
+    void visitDrop(Drop* curr) {
+      if (curr->value->is<Break>() && curr->value->type.hasRef()) {
+        // The value is exactly a br_if of a ref, that we just visited before
+        // us. Undo the ++ from there as it can be ignored.
+        assert(numDangerousBrIfs > 0);
+        numDangerousBrIfs--;
+      }
+    }
+  } scanner();
+  scanner.walk(func->body);
+
+  for (auto* extract : scanner.tupleExtracts.list) {
     if (extract->type != Type::unreachable && extract->index != 0) {
       scratchLocals[extract->type] = 0;
     }
@@ -2644,13 +2717,68 @@ void BinaryInstWriter::countScratchLocals() {
   }
   // While we have all the tuple.extracts, also find extracts of local.gets,
   // local.tees, and global.gets that we can optimize.
-  for (auto* extract : extracts.list) {
+  for (auto* extract : scanner.tupleExtracts.list) {
     auto* tuple = extract->tuple;
     if (tuple->is<LocalGet>() || tuple->is<LocalSet>() ||
         tuple->is<GlobalGet>()) {
       extractedGets.insert({tuple, extract->index});
     }
   }
+
+  if (!scanner.numDangerousBrIfs) {
+    // Nothing more to do.
+    return;
+  }
+
+  // There are dangerous-looking br_ifs, so we must do the harder work to
+  // actually investigate them.
+  struct Fixer : public ExpressionStackWalker<Fixer> {
+    void visitBreak(Break* curr) {
+      // See if this is one of the dangerous br_ifs we must handle.
+      if (!Scanner::isTupleWithRef(curr->type)) {
+        // Not even a reference.
+        return;
+      }
+      auto* parent = getParent();
+      if (parent && parent->is<Drop>()) {
+        // It is dropped anyhow.
+        return;
+      }
+      auto* breakTarget = findBreakTarget(curr->name);
+      if (breakTarget->type == curr->type) {
+        // It has the proper type anyhow.
+        return;
+      }
+
+      // This must be fixed up. Replace
+      //
+      //   (br_if
+      //     (value)
+      //     (condition)
+      //   )
+      // =>
+      //   (block
+      //     (drop
+      //       (br_if
+      //         (local.tee $temp
+      //           (value)
+      //         )
+      //         (condition)
+      //       )
+      //     )
+      //     (local.get $temp)
+      //   )
+      //
+      auto type = curr->value->type;
+      Builder builder(*getModule());
+      auto local = builder.addVar(getFunction(), type);
+      curr->value = builder.makeLocalTee(local, curr->value, type);
+      auto* block = builder.makeSequence(builder.makeDrop(curr),
+                                         builder.makeLocalGet(local, type));
+      replaceCurrent(block);
+    }
+  } fixer;
+  fixer.walkFunctionInModule(func, &*tempModule);
 }
 
 void BinaryInstWriter::setScratchLocals() {
