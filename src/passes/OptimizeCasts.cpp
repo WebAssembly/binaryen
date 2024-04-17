@@ -92,22 +92,6 @@
 // Note that right now, we only consider RefAs with op RefAsNonNull as a cast.
 // RefAs with ExternInternalize and ExternExternalize are not considered casts
 // when obtaining fallthroughs, and so are ignored.
-//
-// TODO: 1. Look past individual basic blocks? This may be worth considering
-//          given the pattern of a cast appearing in an if condition that is
-//          then used in an if arm, for example, where simple dominance shows
-//          the cast can be reused.
-// TODO: 2. Look at LocalSet as well and not just Get. That would add some
-//          overlap with the other passes mentioned above (SimplifyLocals and
-//          RedundantSetElimination also track sets and can switch a get to use
-//          a better set's index when that refines the type). But once we do the
-//          first two TODOs above then we'd be adding some novel things here,
-//          as we could optimize "backwards" as well (TODO 1) and past basic
-//          blocks (TODO 2, though RedundantSetElimination does that as well).
-//          However, we should consider whether improving those other passes
-//          might make more sense (as it would help more than casts, if we could
-//          make them operate "backwards" and/or past basic blocks).
-//
 
 #include "ir/effects.h"
 #include "ir/linear-execution.h"
@@ -453,20 +437,32 @@ struct BestCastFinder : public LinearExecutionWalker<BestCastFinder> {
   void visitRefCast(RefCast* curr) { handleRefinement(curr); }
 
   void handleRefinement(Expression* curr) {
+    auto* teeFallthrough = Properties::getFallthrough(
+      curr, options, *getModule(), Properties::FallthroughBehavior::NoTeeBrIf);
+    if (auto* set = teeFallthrough->dynCast<LocalSet>()) {
+      if (set->isTee()) {
+        updateBestCast(curr, set->index);
+      }
+    }
     auto* fallthrough = Properties::getFallthrough(curr, options, *getModule());
     if (auto* get = fallthrough->dynCast<LocalGet>()) {
-      auto*& bestCast = mostCastedGets[get->index];
-      if (!bestCast) {
-        // This is the first.
-        bestCast = curr;
-        return;
-      }
+      updateBestCast(curr, get->index);
+      return;
+    }
+  }
 
-      // See if we are better than the current best.
-      if (curr->type != bestCast->type &&
-          Type::isSubType(curr->type, bestCast->type)) {
-        bestCast = curr;
-      }
+  void updateBestCast(Expression* curr, Index index) {
+    auto*& bestCast = mostCastedGets[index];
+    if (!bestCast) {
+      // This is the first.
+      bestCast = curr;
+      return;
+    }
+
+    // See if we are better than the current best.
+    if (curr->type != bestCast->type &&
+        Type::isSubType(curr->type, bestCast->type)) {
+      bestCast = curr;
     }
   }
 };
