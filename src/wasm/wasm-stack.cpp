@@ -2797,9 +2797,8 @@ void BinaryInstWriter::scanFunction() {
       // types we need scratch tuple locals for (if relevant).
       writer.brIfsNeedingHandling[curr] = breakTarget->type;
       if (curr->type.isTuple()) {
-        // We set an index of -1 there as
-        // a placeholder, and later will compute the index for those temp
-        // locals.
+        // We set an index of -1 here as a placeholder, and later will compute
+        // the index for those temp locals.
         writer.scratchTupleLocals[breakTarget->type] = -1;
       }
     }
