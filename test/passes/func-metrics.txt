@@ -35,7 +35,7 @@ func: ifs
  Drop           : 6       
  If             : 4       
 (module
- (type $0 (func))
+ (type $1 (func))
  (type $0 (func (param i32)))
  (global $glob i32 (i32.const 1337))
  (memory $0 256 256)
@@ -244,7 +244,7 @@ func: func_a
  Block          : 1       
  Call           : 5       
 start: func_a
- [removable-bytes-without-it]: 57      
+ [removable-bytes-without-it]: 60      
  [total]        : 0       
 (module
  (type $0 (func))
@@ -274,7 +274,7 @@ func: 0
  [vars]         : 0       
  GlobalGet      : 1       
 export: stackSave (0)
- [removable-bytes-without-it]: 62      
+ [removable-bytes-without-it]: 79      
  [total]        : 0       
 (module
  (type $0 (func (result i32)))

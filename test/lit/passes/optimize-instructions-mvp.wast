@@ -2,13 +2,14 @@
 ;; RUN: wasm-opt %s --optimize-instructions --mvp-features -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $0 (func (result i32)))
-  (type $0 (func (param i32 i64)))
-
   ;; CHECK:      (type $0 (func (param i32 i64)))
+  (type $0 (func (param i32 i64)))
 
   ;; CHECK:      (import "a" "b" (func $get-f64 (result f64)))
   (import "a" "b" (func $get-f64 (result f64)))
+
+  ;; CHECK:      (import "a" "c" (func $set-i32 (param i32)))
+  (import "a" "c" (func $set-i32 (param i32)))
 
   (memory 0)
 
@@ -14711,7 +14712,9 @@
         (local.get $y0)
       )
     ))
-    ;; this one cannot be optimized as the runtime values may differ
+    ;; This one cannot be optimized as the runtime values may differ: the calls
+    ;; are "generative" in that identical syntactic calls may emit different
+    ;; results.
     (drop (f64.abs
       (f64.mul
         (call $get-f64)
@@ -14744,6 +14747,248 @@
     (drop (f64.div
       (f64.abs (f64.add (local.get $x0) (local.get $x1)))
       (f64.abs (f64.add (local.get $x0) (local.get $x0)))
+    ))
+  )
+
+  ;; CHECK:      (func $optimize-float-points-fallthrough (param $x f64) (param $xb f64) (param $y f32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.mul
+  ;; CHECK-NEXT:    (block (result f32)
+  ;; CHECK-NEXT:     (call $set-i32
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result f32)
+  ;; CHECK-NEXT:     (call $set-i32
+  ;; CHECK-NEXT:      (i32.const 1337)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $y)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-float-points-fallthrough (param $x f64) (param $xb f64) (param $y f32)
+    ;; abs(x * x)   ==>   x * x  , as in the previous function.
+    ;;
+    ;; The fallthrough values here are identical, so we can optimize away the
+    ;; f32.abs despite the effects in both (and even different-looking effects).
+    (drop (f32.abs
+      (f32.mul
+        (block (result f32)
+          (call $set-i32
+            (i32.const 42)
+          )
+          (local.get $y)
+        )
+        (block (result f32)
+          (call $set-i32
+            (i32.const 1337)
+          )
+          (local.get $y)
+        )
+      )
+    ))
+  )
+  ;; CHECK:      (func $optimize-float-points-fallthrough-b (param $x f64) (param $xb f64) (param $y f32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (f64.mul
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (call $set-i32
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (call $get-f64)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (call $set-i32
+  ;; CHECK-NEXT:       (i32.const 1337)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (call $get-f64)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-float-points-fallthrough-b (param $x f64) (param $xb f64) (param $y f32)
+    ;; But generative effects in the fallthrough values themselves block us.
+    (drop (f64.abs
+      (f64.mul
+        (block (result f64)
+          (call $set-i32
+            (i32.const 42)
+          )
+          (call $get-f64) ;; this changed
+        )
+        (block (result f64)
+          (call $set-i32
+            (i32.const 1337)
+          )
+          (call $get-f64) ;; this changed
+        )
+      )
+    ))
+  )
+  ;; CHECK:      (func $optimize-float-points-fallthrough-c (param $x f64) (param $xb f64) (param $y f32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (f64.mul
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (call $set-i32
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.tee $x
+  ;; CHECK-NEXT:       (f64.const 12.34)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (call $set-i32
+  ;; CHECK-NEXT:       (i32.const 1337)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-float-points-fallthrough-c (param $x f64) (param $xb f64) (param $y f32)
+    ;; local.tee/get pairs are ok, but atm we don't look at the fallthrough of
+    ;; the right side (we'd need to consider effects). TODO
+    (drop (f64.abs
+      (f64.mul
+        (block (result f64)
+          (call $set-i32
+            (i32.const 42)
+          )
+          (local.tee $x         ;; this changed
+            (f64.const 12.34)
+          )
+        )
+        (block (result f64)
+          (call $set-i32
+            (i32.const 1337)
+          )
+          (local.get $x)        ;; this changed
+        )
+      )
+    ))
+  )
+  ;; CHECK:      (func $optimize-float-points-fallthrough-cb (param $x f64) (param $xb f64) (param $y f32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (f64.mul
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (call $set-i32
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.tee $x
+  ;; CHECK-NEXT:       (f64.const 12.34)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (local.set $x
+  ;; CHECK-NEXT:       (f64.const 13.37)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-float-points-fallthrough-cb (param $x f64) (param $xb f64) (param $y f32)
+    ;; A conflicting set in the middle is a problem: here we cannot optimize.
+    (drop (f64.abs
+      (f64.mul
+        (block (result f64)
+          (call $set-i32
+            (i32.const 42)
+          )
+          (local.tee $x
+            (f64.const 12.34)
+          )
+        )
+        (block (result f64)
+          (local.set $x         ;; this changed
+            (f64.const 13.37)
+          )
+          (local.get $x)
+        )
+      )
+    ))
+  )
+  ;; CHECK:      (func $optimize-float-points-fallthrough-cc (param $x f64) (param $xb f64) (param $y f32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.mul
+  ;; CHECK-NEXT:    (block (result f64)
+  ;; CHECK-NEXT:     (call $set-i32
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (f64.const 12.34)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-float-points-fallthrough-cc (param $x f64) (param $xb f64) (param $y f32)
+    ;; Removing the local.set and the block on the right lets us optimize using
+    ;; the tee/get pair.
+    (drop (f64.abs
+      (f64.mul
+        (block (result f64)
+          (call $set-i32
+            (i32.const 42)
+          )
+          (local.tee $x
+            (f64.const 12.34)
+          )
+        )
+        (local.get $x)         ;; this moved out
+      )
+    ))
+  )
+  ;; CHECK:      (func $optimize-float-points-fallthrough-d (param $x f64) (param $xb f64) (param $y f32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.abs
+  ;; CHECK-NEXT:    (f64.mul
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (call $set-i32
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.tee $x
+  ;; CHECK-NEXT:       (f64.const 12.34)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (block (result f64)
+  ;; CHECK-NEXT:      (call $set-i32
+  ;; CHECK-NEXT:       (i32.const 1337)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $xb)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $optimize-float-points-fallthrough-d (param $x f64) (param $xb f64) (param $y f32)
+    ;; The wrong local index means we fail again.
+    (drop (f64.abs
+      (f64.mul
+        (block (result f64)
+          (call $set-i32
+            (i32.const 42)
+          )
+          (local.tee $x
+            (f64.const 12.34)
+          )
+        )
+        (block (result f64)
+          (call $set-i32
+            (i32.const 1337)
+          )
+          (local.get $xb) ;; this changed
+        )
+      )
     ))
   )
   ;; CHECK:      (func $ternary (param $x i32) (param $y i32)
@@ -15110,6 +15355,88 @@
         (f32.abs (f32.floor (f32.neg (local.get $x))))
         (f32.abs (f32.floor (f32.neg (local.get $y))))
         (local.get $z)
+      )
+    )
+  )
+  ;; CHECK:      (func $ternary-identical-arms-tee (param $param i32)
+  ;; CHECK-NEXT:  (local $x i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (local.tee $x
+  ;; CHECK-NEXT:     (local.get $param)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (call $send-i32
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (call $send-i32
+  ;; CHECK-NEXT:      (i32.const 1337)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (local.tee $x
+  ;; CHECK-NEXT:      (local.get $param)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $x
+  ;; CHECK-NEXT:    (local.get $param)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ternary-identical-arms-tee (param $param i32)
+    (local $x i32)
+    ;; The select's ifTrue and condition are equal (as a tee/get pair with
+    ;; only a const in between), but there is a side effect too, that prevents
+    ;; optimization atm TODO
+    (drop
+      (select
+        (local.tee $x
+          (local.get $param)
+        )
+        (i32.const 0)
+        (block (result i32)
+          (call $send-i32
+            (i32.const 42)
+          )
+          (local.get $x)
+        )
+      )
+    )
+    ;; Side effect on the ifTrue - same outcome, we cannot optimize yet.
+    (drop
+      (select
+        (block (result i32)
+          (call $send-i32
+            (i32.const 1337)
+          )
+          (local.tee $x
+            (local.get $param)
+          )
+        )
+        (i32.const 0)
+        (local.get $x)
+      )
+    )
+    ;; When there are no blocks or things and just a local.tee/get, we can
+    ;; optimize.
+    (drop
+      (select
+        (local.tee $x
+          (local.get $param)
+        )
+        (i32.const 0)
+        (local.get $x)
       )
     )
   )

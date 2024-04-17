@@ -34,6 +34,7 @@
 #include <ir/iteration.h>
 #include <ir/literal-utils.h>
 #include <ir/load-utils.h>
+#include <ir/localize.h>
 #include <ir/manipulation.h>
 #include <ir/match.h>
 #include <ir/ordering.h>
@@ -1782,6 +1783,40 @@ struct OptimizeInstructions
     }
   }
 
+  void visitStructNew(StructNew* curr) {
+    // If values are provided, but they are all the default, then we can remove
+    // them (in reachable code).
+    if (curr->type == Type::unreachable || curr->isWithDefault()) {
+      return;
+    }
+
+    auto& passOptions = getPassOptions();
+    const auto& fields = curr->type.getHeapType().getStruct().fields;
+    assert(fields.size() == curr->operands.size());
+
+    for (Index i = 0; i < fields.size(); i++) {
+      // The field must be defaultable.
+      auto type = fields[i].type;
+      if (!type.isDefaultable()) {
+        return;
+      }
+
+      // The field must be written the default value.
+      auto* value = Properties::getFallthrough(
+        curr->operands[i], passOptions, *getModule());
+      if (!Properties::isSingleConstantExpression(value) ||
+          Properties::getLiteral(value) != Literal::makeZero(type)) {
+        return;
+      }
+    }
+
+    // Success! Drop the children and return a struct.new_with_default.
+    auto* rep = getDroppedChildrenAndAppend(curr, curr);
+    curr->operands.clear();
+    assert(curr->isWithDefault());
+    replaceCurrent(rep);
+  }
+
   void visitStructGet(StructGet* curr) {
     skipNonNullCast(curr->ref, curr);
     trapOnNull(curr, curr->ref);
@@ -1941,6 +1976,130 @@ struct OptimizeInstructions
     }
 
     return true;
+  }
+
+  void visitArrayNew(ArrayNew* curr) {
+    // If a value is provided, we can optimize in some cases.
+    if (curr->type == Type::unreachable || curr->isWithDefault()) {
+      return;
+    }
+
+    Builder builder(*getModule());
+
+    // ArrayNew of size 1 is less efficient than ArrayNewFixed with one value
+    // (the latter avoids a Const, which ends up saving one byte).
+    // TODO: also look at the case with a fallthrough or effects on the size
+    if (auto* c = curr->size->dynCast<Const>()) {
+      if (c->value.geti32() == 1) {
+        // Optimize to ArrayNewFixed. Note that if the value is the default
+        // then we may end up optimizing further in visitArrayNewFixed.
+        replaceCurrent(
+          builder.makeArrayNewFixed(curr->type.getHeapType(), {curr->init}));
+        return;
+      }
+    }
+
+    // If the type is defaultable then perhaps the value here is the default.
+    auto type = curr->type.getHeapType().getArray().element.type;
+    if (!type.isDefaultable()) {
+      return;
+    }
+
+    // The value must be the default/zero.
+    auto& passOptions = getPassOptions();
+    auto zero = Literal::makeZero(type);
+    auto* value =
+      Properties::getFallthrough(curr->init, passOptions, *getModule());
+    if (!Properties::isSingleConstantExpression(value) ||
+        Properties::getLiteral(value) != zero) {
+      return;
+    }
+
+    // Success! Drop the init and return an array.new_with_default.
+    auto* init = curr->init;
+    curr->init = nullptr;
+    assert(curr->isWithDefault());
+    replaceCurrent(builder.makeSequence(builder.makeDrop(init), curr));
+  }
+
+  void visitArrayNewFixed(ArrayNewFixed* curr) {
+    if (curr->type == Type::unreachable) {
+      return;
+    }
+
+    auto size = curr->values.size();
+    if (size == 0) {
+      // TODO: Consider what to do in the trivial case of an empty array: we can
+      //       can use ArrayNew or ArrayNewFixed there. Measure which is best.
+      return;
+    }
+
+    auto& passOptions = getPassOptions();
+
+    // If all the values are equal then we can optimize, either to
+    // array.new_default (if they are all equal to the default) or array.new (if
+    // they are all equal to some other value). First, see if they are all
+    // equal, which we do by comparing in pairs: [0,1], then [1,2], etc.
+    for (Index i = 0; i < size - 1; i++) {
+      if (!areConsecutiveInputsEqual(curr->values[i], curr->values[i + 1])) {
+        return;
+      }
+    }
+
+    // Great, they are all equal!
+
+    Builder builder(*getModule());
+
+    // See if they are equal to a constant, and if that constant is the default.
+    auto type = curr->type.getHeapType().getArray().element.type;
+    if (type.isDefaultable()) {
+      auto* value =
+        Properties::getFallthrough(curr->values[0], passOptions, *getModule());
+
+      if (Properties::isSingleConstantExpression(value) &&
+          Properties::getLiteral(value) == Literal::makeZero(type)) {
+        // They are all equal to the default. Drop the children and return an
+        // array.new_with_default.
+        auto* withDefault = builder.makeArrayNew(
+          curr->type.getHeapType(), builder.makeConst(int32_t(size)));
+        replaceCurrent(getDroppedChildrenAndAppend(curr, withDefault));
+        return;
+      }
+    }
+
+    // They are all equal to each other, but not to the default value. If there
+    // are 2 or more elements here then we can save by using array.new. For
+    // example, with 2 elements we are doing this:
+    //
+    //  (array.new_fixed
+    //    (A)
+    //    (A)
+    //  )
+    // =>
+    //  (array.new
+    //    (A)
+    //    (i32.const 2) ;; get two copies of (A)
+    //  )
+    //
+    // However, with 1, ArrayNewFixed is actually more compact, and we optimize
+    // ArrayNew to it, above.
+    if (size == 1) {
+      return;
+    }
+
+    // Move children to locals, if we need to keep them around. We are removing
+    // them all, except from the first, when we remove the array.new_fixed's
+    // list of children and replace it with a single child + a constant for the
+    // number of children.
+    ChildLocalizer localizer(
+      curr, getFunction(), *getModule(), getPassOptions());
+    auto* block = localizer.getChildrenReplacement();
+    auto* arrayNew = builder.makeArrayNew(curr->type.getHeapType(),
+                                          builder.makeConst(int32_t(size)),
+                                          curr->values[0]);
+    block->list.push_back(arrayNew);
+    block->finalize();
+    replaceCurrent(block);
   }
 
   void visitArrayGet(ArrayGet* curr) {
@@ -2294,14 +2453,57 @@ private:
   // Information about our locals
   std::vector<LocalInfo> localInfo;
 
+  // Checks if the first is a local.tee and the second a local.get of that same
+  // index. This is useful in the methods right below us, as it is a common
+  // pattern where two consecutive inputs are equal despite being syntactically
+  // different.
+  bool areMatchingTeeAndGet(Expression* left, Expression* right) {
+    if (auto* set = left->dynCast<LocalSet>()) {
+      if (auto* get = right->dynCast<LocalGet>()) {
+        if (set->isTee() && get->index == set->index) {
+          return true;
+        }
+      }
+    }
+    return false;
+  }
+
   // Check if two consecutive inputs to an instruction are equal. As they are
   // consecutive, no code can execeute in between them, which simplies the
   // problem here (and which is the case we care about in this pass, which does
   // simple peephole optimizations - all we care about is a single instruction
   // at a time, and its inputs).
-  //
-  // This also checks that the inputs are removable (but we do not assume the
-  // caller will always remove them).
+  bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
+    // When we look for a tee/get pair, we can consider the fallthrough values
+    // for the first, as the fallthrough happens last (however, we must use
+    // NoTeeBrIf as we do not want to look through the tee). We cannot do this
+    // on the second, however, as there could be effects in the middle.
+    // TODO: Use effects here perhaps.
+    auto& passOptions = getPassOptions();
+    left =
+      Properties::getFallthrough(left,
+                                 passOptions,
+                                 *getModule(),
+                                 Properties::FallthroughBehavior::NoTeeBrIf);
+    if (areMatchingTeeAndGet(left, right)) {
+      return true;
+    }
+
+    // Ignore extraneous things and compare them syntactically. We can also
+    // look at the full fallthrough for both sides now.
+    left = Properties::getFallthrough(left, passOptions, *getModule());
+    right = Properties::getFallthrough(right, passOptions, *getModule());
+    if (!ExpressionAnalyzer::equal(left, right)) {
+      return false;
+    }
+
+    // To be equal, they must also be known to return the same result
+    // deterministically.
+    return !Properties::isGenerative(left, getModule()->features);
+  }
+
+  // Similar to areConsecutiveInputsEqual() but also checks if we can remove
+  // them (but we do not assume the caller will always remove them).
   bool areConsecutiveInputsEqualAndRemovable(Expression* left,
                                              Expression* right) {
     // First, check for side effects. If there are any, then we can't even
@@ -2316,18 +2518,7 @@ private:
       return false;
     }
 
-    // Ignore extraneous things and compare them structurally.
-    left = Properties::getFallthrough(left, passOptions, *getModule());
-    right = Properties::getFallthrough(right, passOptions, *getModule());
-    if (!ExpressionAnalyzer::equal(left, right)) {
-      return false;
-    }
-    // To be equal, they must also be known to return the same result
-    // deterministically.
-    if (Properties::isGenerative(left, getModule()->features)) {
-      return false;
-    }
-    return true;
+    return areConsecutiveInputsEqual(left, right);
   }
 
   // Check if two consecutive inputs to an instruction are equal and can also be
@@ -2341,23 +2532,15 @@ private:
   // side effects at all in the middle. For example, a Const in between is ok.
   bool areConsecutiveInputsEqualAndFoldable(Expression* left,
                                             Expression* right) {
-    if (auto* set = left->dynCast<LocalSet>()) {
-      if (auto* get = right->dynCast<LocalGet>()) {
-        if (set->isTee() && get->index == set->index) {
-          return true;
-        }
-      }
+    // TODO: We could probably consider fallthrough values for left, at least
+    //       (since we fold into it).
+    if (areMatchingTeeAndGet(left, right)) {
+      return true;
     }
+
     // stronger property than we need - we can not only fold
     // them but remove them entirely.
     return areConsecutiveInputsEqualAndRemovable(left, right);
-  }
-
-  // Similar to areConsecutiveInputsEqualAndFoldable, but only checks that they
-  // are equal (and not that they are foldable).
-  bool areConsecutiveInputsEqual(Expression* left, Expression* right) {
-    // TODO: optimize cases that must be equal but are *not* foldable.
-    return areConsecutiveInputsEqualAndFoldable(left, right);
   }
 
   // Canonicalizing the order of a symmetric binary helps us

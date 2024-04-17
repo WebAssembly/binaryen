@@ -1,0 +1,27 @@
+(module
+
+   (func $func2 (export "f2"))
+   (func (export "f3"))
+
+   (table $table2 (export "t2") 1 funcref)
+   (table (export "t3") 1 funcref)
+
+   (memory $mem2 (export "m2") 0)
+   (memory (export "m3") 0)
+
+   (global $glob2 (export g2) i32 (i32.const 0))
+   (global (export g3) i32 (i32.const 0))
+
+   (elem $elem2 func)
+   (elem func)
+
+   (data $data2 "")
+   (data "")
+
+   (tag $tag2 (export tag2))
+   (tag  (export tag3))
+
+   (type $u (struct (field $c i64) (field $d i32)))
+
+   (func (export "func2") (param (ref $u)))
+)

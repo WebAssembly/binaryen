@@ -864,19 +864,27 @@ void WasmBinaryWriter::writeNames() {
 
   // function names
   {
-    auto substart =
-      startSubsection(BinaryConsts::CustomSections::Subsection::NameFunction);
-    o << U32LEB(indexes.functionIndexes.size());
-    Index emitted = 0;
-    auto add = [&](Function* curr) {
-      o << U32LEB(emitted);
-      writeEscapedName(curr->name.str);
-      emitted++;
+    std::vector<std::pair<Index, Function*>> functionsWithNames;
+    Index checked = 0;
+    auto check = [&](Function* curr) {
+      if (curr->hasExplicitName) {
+        functionsWithNames.push_back({checked, curr});
+      }
+      checked++;
     };
-    ModuleUtils::iterImportedFunctions(*wasm, add);
-    ModuleUtils::iterDefinedFunctions(*wasm, add);
-    assert(emitted == indexes.functionIndexes.size());
-    finishSubsection(substart);
+    ModuleUtils::iterImportedFunctions(*wasm, check);
+    ModuleUtils::iterDefinedFunctions(*wasm, check);
+    assert(checked == indexes.functionIndexes.size());
+    if (functionsWithNames.size() > 0) {
+      auto substart =
+        startSubsection(BinaryConsts::CustomSections::Subsection::NameFunction);
+      o << U32LEB(functionsWithNames.size());
+      for (auto& [index, global] : functionsWithNames) {
+        o << U32LEB(index);
+        writeEscapedName(global->name.str);
+      }
+      finishSubsection(substart);
+    }
   }
 
   // local names
