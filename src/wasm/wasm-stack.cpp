@@ -2582,8 +2582,12 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     mappedLocals[std::make_pair(i, 0)] = i;
   }
 
-  // Before we handle vars, scan the function for additional locals and other
-  // issues.
+  // Note vars, including scratch vars.
+  for (auto type : func->vars) {
+    for (const auto& t : type) {
+      noteLocalType(t);
+    }
+  }
   countScratchLocals();
 
   // Normally we map all locals of the same type into a range of adjacent
@@ -2604,11 +2608,6 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
       parent.writeType(func->getLocalType(i));
     }
     return;
-  }
-  for (auto type : func->vars) {
-    for (const auto& t : type) {
-      noteLocalType(t);
-    }
   }
 
   if (parent.getModule()->features.hasReferenceTypes()) {
