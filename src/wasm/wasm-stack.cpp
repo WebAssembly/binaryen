@@ -82,18 +82,33 @@ void BinaryInstWriter::visitBreak(Break* curr) {
   // if GC is not enabled then we do not have non-nullable types, nor subtyping,
   // anyhow, so there is nothing to fix up.
   if (brIfsNeedingHandling.count(curr)) {
-    if (!curr->type.isTuple()) {
-      // Simple: Just emit a cast.
+    auto emitCast = [&](Type to) {
       RefCast cast;
-      cast.type = curr->type;
+      cast.type = to;
       visitRefCast(&cast);
+    };
+
+    auto type = curr->type;
+    if (!type.isTuple()) {
+      // Simple: Just emit a cast.
+      emitCast(type);
     } else {
-      // Tuples are tricky to handle
-//scratchTupleLocals
-    
-      // The tuple case has already been handled explicitly in
-      // scanFunction()
-      // We can assume that the output is dropped, and therefore we do not need to cast anything.
+      // Tuples are tricky to handle, and we need to use scratch locals. Stash
+      // all the values on the stack to those locals, then reload them, casting
+      // as we go as necessary.
+      assert(scratchTupleLocals.count(type));
+      auto base = scratchTupleLocals[type];
+      for (Index i = 0; i < type.size(); i++) {
+        o << int8_t(BinaryConsts::LocalSet) << U32LEB(base + i);
+      }
+      for (Index i = 0; i < type.size(); i++) {
+        o << int8_t(BinaryConsts::LocalGet) << U32LEB(base + i);
+        if (type[i].isRef()) {
+          // Note that we cast all types here, when perhaps only some of the
+          // tuple's lanes need that. This is simpler.
+          emitCast(type[i]);
+        }
+      }
     }
   }
 }
@@ -2658,6 +2673,15 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     o << U32LEB(numLocalsByType.at(localType));
     parent.writeType(localType);
   }
+
+  // Scratch tuple locals are emitted in bundles at the end, and we make no
+  // effort to compress this representation atm.
+  for (auto& [scratchType, scratchIndex] : scratchTupleLocals) {
+    for (auto t : scratchType) {
+      o << U32LEB(1);
+      parent.writeType(t);
+    }
+  }
 }
 
 void BinaryInstWriter::noteLocalType(Type type) {
@@ -2762,7 +2786,14 @@ void BinaryInstWriter::scanFunction() {
         return;
       }
 
+      // Mark the br_if as needing handling, and add the type to the set of
+      // types we need scratch tuple locals for (if relevant).
       writer.brIfsNeedingHandling.insert(curr);
+      if (curr->type.isTuple()) {
+        // We set an index of -1 there as
+        // a placeholder, and later will compute the index for those temp locals.
+        writer.scratchTupleLocals[curr->type] = -1;
+      }
     }
   } refinementScanner(*this);
   refinementScanner.walk(func->body);
@@ -2775,6 +2806,12 @@ void BinaryInstWriter::setScratchLocals() {
     if (scratchLocals.find(localType) != scratchLocals.end()) {
       scratchLocals[localType] = index - 1;
     }
+  }
+
+  // Scratch tuple locals are emitted in bundles at the end.
+  for (auto& [scratchType, scratchIndex] : scratchTupleLocals) {
+    scratchIndex = index;
+    index += scratchType.size();
   }
 }
 
