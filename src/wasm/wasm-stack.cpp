@@ -2769,7 +2769,6 @@ void BinaryInstWriter::scanFunction() {
     return;
   }
 
-
   // There are dangerous-looking br_ifs, so we must do the harder work to
   // actually investigate them. The previous quick test in the scanner only
   // looked for references flowing out of br_ifs, and now we also see if those
@@ -2803,7 +2802,8 @@ void BinaryInstWriter::scanFunction() {
       writer.brIfsNeedingHandling[curr] = breakTarget->type;
       if (curr->type.isTuple()) {
         // We set an index of -1 there as
-        // a placeholder, and later will compute the index for those temp locals.
+        // a placeholder, and later will compute the index for those temp
+        // locals.
         writer.scratchTupleLocals[breakTarget->type] = -1;
       }
     }
