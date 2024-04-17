@@ -1196,7 +1196,7 @@ def filter_exports(wasm, output, keep):
         f.write(json.dumps(graph))
 
     # prune the exports
-    run([in_bin('wasm-metadce'), wasm, '-o', output, '--graph-file', 'graph.json', '-all'])
+    run([in_bin('wasm-metadce'), wasm, '-o', output, '--graph-file', 'graph.json'] + FEATURE_OPTS)
 
 
 # Fuzz the interpreter with --fuzz-exec -tnh. The tricky thing with traps-never-
