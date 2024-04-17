@@ -105,7 +105,8 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       assert(scratchTupleLocals.count(unrefinedType));
       auto base = scratchTupleLocals[unrefinedType];
       for (Index i = 0; i < type.size(); i++) {
-        o << int8_t(BinaryConsts::LocalSet) << U32LEB(base + i);
+        auto localIndex = base + type.size() - 1 - i;
+        o << int8_t(BinaryConsts::LocalSet) << U32LEB(localIndex);
       }
       for (Index i = 0; i < type.size(); i++) {
         o << int8_t(BinaryConsts::LocalGet) << U32LEB(base + i);
@@ -2674,14 +2675,21 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   }
   setScratchLocals();
 
-  o << U32LEB(numLocalsByType.size());
+  Index totalLocals = numLocalsByType.size();
+
+  // Scratch tuple locals are emitted in bundles at the end, and we make no
+  // effort to compress this representation atm.
+  for (auto& [scratchType, _] : scratchTupleLocals) {
+    totalLocals += scratchType.size();
+  }
+
+  o << U32LEB(totalLocals);
+
   for (auto& localType : localTypes) {
     o << U32LEB(numLocalsByType.at(localType));
     parent.writeType(localType);
   }
 
-  // Scratch tuple locals are emitted in bundles at the end, and we make no
-  // effort to compress this representation atm.
   for (auto& [scratchType, scratchIndex] : scratchTupleLocals) {
     for (auto t : scratchType) {
       o << U32LEB(1);

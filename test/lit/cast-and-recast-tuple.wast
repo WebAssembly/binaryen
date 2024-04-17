@@ -5,7 +5,7 @@
 ;; one roundtrip because of the accumulation of tuple logic, which would
 ;; otherwise make the output here very hard to read.
 
-;; RUN: wasm-opt %s -all --generate-stack-ir --optimize-stack-ir --roundtrip -S -o - | filecheck %s
+;; RUN: wasm-opt %s -all --roundtrip -S -o - | filecheck %s
 
 (module
   (rec
@@ -202,13 +202,14 @@
 
   ;; CHECK:      (func $test-local-tuple-4-bad (type $5) (param $B (ref $B)) (param $x i32) (result anyref i32)
   ;; CHECK-NEXT:  (local $temp (ref $B))
-  ;; CHECK-NEXT:  (local $3 (ref $B))
-  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 (ref $A))
   ;; CHECK-NEXT:  (local $5 i32)
   ;; CHECK-NEXT:  (local $6 (tuple (ref $B) i32))
   ;; CHECK-NEXT:  (local $7 (ref $B))
-  ;; CHECK-NEXT:  (local $8 (tuple (ref $A) i32))
-  ;; CHECK-NEXT:  (local.set $8
+  ;; CHECK-NEXT:  (local $8 (ref $B))
+  ;; CHECK-NEXT:  (local $9 (tuple (ref $A) i32))
+  ;; CHECK-NEXT:  (local.set $9
   ;; CHECK-NEXT:   (block $label$1 (type $3) (result (ref $A) i32)
   ;; CHECK-NEXT:    (local.set $6
   ;; CHECK-NEXT:     (br_if $label$1
@@ -219,14 +220,14 @@
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $temp
+  ;; CHECK-NEXT:    (local.set $4
   ;; CHECK-NEXT:     (block (result (ref $B))
   ;; CHECK-NEXT:      (local.set $7
   ;; CHECK-NEXT:       (tuple.extract 2 0
   ;; CHECK-NEXT:        (local.get $6)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.set $4
+  ;; CHECK-NEXT:      (local.set $5
   ;; CHECK-NEXT:       (tuple.extract 2 1
   ;; CHECK-NEXT:        (local.get $6)
   ;; CHECK-NEXT:       )
@@ -234,15 +235,28 @@
   ;; CHECK-NEXT:      (local.get $7)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $temp
+  ;; CHECK-NEXT:     (block (result (ref $B))
+  ;; CHECK-NEXT:      (local.set $8
+  ;; CHECK-NEXT:       (ref.cast (ref $B)
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $3
+  ;; CHECK-NEXT:       (local.get $5)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $8)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (tuple.make 2
   ;; CHECK-NEXT:   (tuple.extract 2 0
-  ;; CHECK-NEXT:    (local.get $8)
+  ;; CHECK-NEXT:    (local.get $9)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (tuple.extract 2 1
-  ;; CHECK-NEXT:    (local.get $8)
+  ;; CHECK-NEXT:    (local.get $9)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )

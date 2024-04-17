@@ -10,7 +10,7 @@
 ;; This is also used as the input in test/lit/binary/cast-and-recast.test, which
 ;; verifies the binary format itself.
 
-;; RUN: wasm-opt %s -all --generate-stack-ir --optimize-stack-ir --roundtrip --roundtrip --roundtrip -S -o - | filecheck %s
+;; RUN: wasm-opt %s -all --roundtrip --roundtrip --roundtrip -S -o - | filecheck %s
 
 (module
   (rec
