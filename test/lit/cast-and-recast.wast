@@ -3,12 +3,7 @@
 ;; Test that our hack for br_if output types does not cause the binary to grow
 ;; linearly with each roundtrip. When we emit a br_if whose output type is not
 ;; refined enough (Binaryen IR uses the value's type; wasm uses the target's)
-;; then we add a cast. We then remove trivial casts like it during load, when we
-;; see they are unneeded, and as a result we should see no ref.cast anywhere in
-;; the CHECKs.
-;;
-;; This is also used as the input in test/lit/binary/cast-and-recast.test, which
-;; verifies the binary format itself.
+;; then we add a cast.
 
 ;; RUN: wasm-opt %s -all --roundtrip --roundtrip --roundtrip -S -o - | filecheck %s
 
@@ -19,6 +14,7 @@
     (type $A (sub (struct)))
     ;; CHECK:       (type $B (sub $A (struct )))
     (type $B (sub $A (struct)))
+    (type $C (sub $B (struct)))
   )
 
   ;; CHECK:      (func $test (type $2) (param $B (ref $B)) (param $x i32) (result anyref)
@@ -32,11 +28,51 @@
   (func $test (param $B (ref $B)) (param $x i32) (result anyref)
     (block $out (result (ref $A))
       ;; The br_if's value is of type $B which is more precise than the block's
-      ;; type, $A, so we emit a cast here, but we remove it when we read the
-      ;; binary.
+      ;; type, $A, so we emit a cast here, but only one despite the three
+      ;; roundtrips.
       (br_if $out
         (local.get $B)
         (local.get $x)
+      )
+    )
+  )
+
+  (func $test-cast (param $B (ref $B)) (param $x i32) (result anyref)
+    ;; This is the result of a single roundtrip: there is a cast. We should not
+    ;; modify this function at all in additional roundtrips.
+    (block $out (result (ref $A))
+      (ref.cast $B
+        (br_if $out
+          (local.get $B)
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  (func $test-cast-more (param $B (ref $B)) (param $x i32) (result anyref)
+    ;; As above but the cast is more refined. Again, we do not need an
+    ;; additional cast.
+    (block $out (result (ref $A))
+      (ref.cast $C                ;; this changed
+        (br_if $out
+          (local.get $B)
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  (func $test-cast-more (param $B (ref $B)) (param $x i32) (result anyref)
+    ;; As above but the cast is less refined: the br_if value is $C, and we cast
+    ;; to $B but not to $C. As a result we'll add a cast to $C (even though it
+    ;; is not needed in practice, which a deeper analysis could find).
+    (block $out (result (ref $A))
+      (ref.cast $B                ;; this changed
+        (br_if $out
+          (local.get $C)          ;; this changed
+          (local.get $x)
+        )
       )
     )
   )
