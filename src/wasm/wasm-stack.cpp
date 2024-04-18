@@ -2790,11 +2790,11 @@ void BinaryInstWriter::scanFunction() {
           return;
         }
         if (auto* cast = parent->dynCast<RefCast>()) {
-          // It is cast to the same type or a better one. In particular this
-          // handles the case of repeated roundtripping: After the first
-          // roundtrip we emit a cast that we'll identify here, and not emit an
-          // additional one.
           if (Type::isSubType(cast->type, curr->type)) {
+            // It is cast to the same type or a better one. In particular this
+            // handles the case of repeated roundtripping: After the first
+            // roundtrip we emit a cast that we'll identify here, and not emit
+            // an additional one.
             return;
           }
         }
