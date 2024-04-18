@@ -29,11 +29,11 @@
 namespace wasm {
 
 struct DebugLocationPropagation
-  : WalkerPass<PostWalker<DebugLocationPropagation>> {
+  : WalkerPass<ExpressionStackWalker<DebugLocationPropagation>> {
   ExpressionStack expressionStack;
 
-  using Super = WalkerPass<PostWalker<DebugLocationPropagation>>;
-  bool isFunctionParallel() override { return false; }
+  using Super = WalkerPass<ExpressionStackWalker<DebugLocationPropagation>>;
+  bool isFunctionParallel() override { return true; }
   bool modifiesBinaryenIR() override { return false; }
   bool requiresNonNullableLocalFixups() override { return false; }
   void runOnFunction(Module* module, Function* func) override {
@@ -71,15 +71,6 @@ struct DebugLocationPropagation
       exprStack.pop_back();
     }
     assert(!exprStack.empty());
-  }
-
-  static void scan(DebugLocationPropagation* self, Expression** currp) {
-    self->pushTask(DebugLocationPropagation::doPostVisit, currp);
-
-    PostWalker<DebugLocationPropagation,
-               Visitor<DebugLocationPropagation>>::scan(self, currp);
-
-    self->pushTask(DebugLocationPropagation::doPreVisit, currp);
   }
 
   std::unique_ptr<Pass> create() override {

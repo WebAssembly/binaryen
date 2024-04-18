@@ -95,7 +95,7 @@ void propagateDebugLocations(Module& wasm) {
   // Copy debug locations from parents or previous siblings to expressions that
   // do not already have their own debug locations.
   PassRunner runner(&wasm);
-  runner.add("dlp");
+  runner.add("propagate-debug-locs");
   runner.run();
 }
 

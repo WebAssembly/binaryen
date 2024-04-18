@@ -127,7 +127,7 @@ void PassRegistry::registerPasses() {
                "forces all loads and stores to have alignment 1",
                createDeAlignPass);
   registerPass(
-    "dlp",
+    "propagate-debug-locs",
     "propagate debug location from parents or previous siblings to child nodes",
     createDebugLocationPropagationPass);
   registerPass("denan",

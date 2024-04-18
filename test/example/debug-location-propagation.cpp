@@ -28,7 +28,7 @@ int main() {
 
   BinaryenModuleValidate(module);
   BinaryenSetDebugInfo(true);
-  const char* runPasses[] = {"dlp"};
+  const char* runPasses[] = {"propagate-debug-locs"};
   BinaryenModuleRunPasses(module, runPasses, 1);
 
   auto& debugLocations = module->getFunction("adder")->debugLocations;
