@@ -14,14 +14,17 @@
     (type $A (sub (struct)))
     ;; CHECK:       (type $B (sub $A (struct )))
     (type $B (sub $A (struct)))
+    ;; CHECK:       (type $C (sub $B (struct )))
     (type $C (sub $B (struct)))
   )
 
-  ;; CHECK:      (func $test (type $2) (param $B (ref $B)) (param $x i32) (result anyref)
+  ;; CHECK:      (func $test (type $3) (param $B (ref $B)) (param $x i32) (result anyref)
   ;; CHECK-NEXT:  (block $label$1 (result (ref $A))
-  ;; CHECK-NEXT:   (br_if $label$1
-  ;; CHECK-NEXT:    (local.get $B)
-  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
+  ;; CHECK-NEXT:    (br_if $label$1
+  ;; CHECK-NEXT:     (local.get $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -37,11 +40,21 @@
     )
   )
 
+  ;; CHECK:      (func $test-cast (type $3) (param $B (ref $B)) (param $x i32) (result anyref)
+  ;; CHECK-NEXT:  (block $label$1 (result (ref $A))
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
+  ;; CHECK-NEXT:    (br_if $label$1
+  ;; CHECK-NEXT:     (local.get $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $test-cast (param $B (ref $B)) (param $x i32) (result anyref)
     ;; This is the result of a single roundtrip: there is a cast. We should not
     ;; modify this function at all in additional roundtrips.
     (block $out (result (ref $A))
-      (ref.cast $B
+      (ref.cast (ref $B)
         (br_if $out
           (local.get $B)
           (local.get $x)
@@ -50,11 +63,21 @@
     )
   )
 
+  ;; CHECK:      (func $test-cast-more (type $3) (param $B (ref $B)) (param $x i32) (result anyref)
+  ;; CHECK-NEXT:  (block $label$1 (result (ref $A))
+  ;; CHECK-NEXT:   (ref.cast (ref $C)
+  ;; CHECK-NEXT:    (br_if $label$1
+  ;; CHECK-NEXT:     (local.get $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $test-cast-more (param $B (ref $B)) (param $x i32) (result anyref)
     ;; As above but the cast is more refined. Again, we do not need an
     ;; additional cast.
     (block $out (result (ref $A))
-      (ref.cast $C                ;; this changed
+      (ref.cast (ref $C)          ;; this changed
         (br_if $out
           (local.get $B)
           (local.get $x)
@@ -63,27 +86,39 @@
     )
   )
 
-  (func $test-cast-more (param $B (ref $B)) (param $x i32) (result anyref)
-    ;; As above but the cast is less refined: the br_if value is $C, and we cast
-    ;; to $B but not to $C. As a result we'll add a cast to $C (even though it
-    ;; is not needed in practice, which a deeper analysis could find).
+  ;; CHECK:      (func $test-cast-less (type $3) (param $B (ref $B)) (param $x i32) (result anyref)
+  ;; CHECK-NEXT:  (block $label$1 (result (ref $A))
+  ;; CHECK-NEXT:   (ref.cast (ref $B)
+  ;; CHECK-NEXT:    (br_if $label$1
+  ;; CHECK-NEXT:     (local.get $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-cast-less (param $B (ref $B)) (param $x i32) (result anyref)
+    ;; As above but the cast is less refined. As a result we'd add a cast to $B
+    ;; (but we refine casts automatically in finalize(), so this cast becomes a
+    ;; cast to $B anyhow, and as a result we have only one cast here).
     (block $out (result (ref $A))
-      (ref.cast $B                ;; this changed
+      (ref.cast (ref $A)          ;; this changed
         (br_if $out
-          (local.get $C)          ;; this changed
+          (local.get $B)
           (local.get $x)
         )
       )
     )
   )
 
-  ;; CHECK:      (func $test-local (type $2) (param $B (ref $B)) (param $x i32) (result anyref)
+  ;; CHECK:      (func $test-local (type $3) (param $B (ref $B)) (param $x i32) (result anyref)
   ;; CHECK-NEXT:  (local $temp (ref $B))
   ;; CHECK-NEXT:  (block $label$1 (result (ref $A))
   ;; CHECK-NEXT:   (local.set $temp
-  ;; CHECK-NEXT:    (br_if $label$1
-  ;; CHECK-NEXT:     (local.get $B)
-  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
+  ;; CHECK-NEXT:     (br_if $label$1
+  ;; CHECK-NEXT:      (local.get $B)
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
@@ -104,7 +139,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-drop (type $2) (param $B (ref $B)) (param $x i32) (result anyref)
+  ;; CHECK:      (func $test-drop (type $3) (param $B (ref $B)) (param $x i32) (result anyref)
   ;; CHECK-NEXT:  (block $label$1 (result (ref $A))
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (br_if $label$1
@@ -131,7 +166,7 @@
     )
   )
 
-  ;; CHECK:      (func $test-same (type $3) (param $A (ref $A)) (param $x i32) (result anyref)
+  ;; CHECK:      (func $test-same (type $4) (param $A (ref $A)) (param $x i32) (result anyref)
   ;; CHECK-NEXT:  (block $label$1 (result (ref $A))
   ;; CHECK-NEXT:   (br_if $label$1
   ;; CHECK-NEXT:    (local.get $A)
