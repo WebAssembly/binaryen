@@ -155,9 +155,7 @@ There are a few differences between Binaryen IR and the WebAssembly language:
     little different. In particular, when we emit a `br_if` whose type is more
     refined in Binaryen IR then we emit a cast right after it, so that the
     output has the right type in the wasm spec. That may cause a few bytes of
-    extra size in rare cases. Binaryen will skip such trivial casts when it
-    loads such code, which means that repeated roundtripping will at least not
-    keep adding to the size. (Interactions between this and tuples can lead to
+    extra size in rare cases. (Interactions between this and tuples can lead to
     larger code size increases, that is, `br_if`s that send multiple values are
     best avoided.)
 

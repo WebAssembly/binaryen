@@ -2783,9 +2783,17 @@ void BinaryInstWriter::scanFunction() {
         return;
       }
       auto* parent = getParent();
-      if (parent && parent->is<Drop>()) {
-        // It is dropped anyhow.
-        return;
+      if (parent) {
+        if (parent->is<Drop>()) {
+          // It is dropped anyhow.
+          return;
+        }
+        if (auto* cast = parent->dynCast<RefCast>()) {
+          // It is cast to the same type or a better one.
+          if (Type::isSubType(cast->type, curr->type)) {
+            return;
+          }
+        }
       }
       auto* breakTarget = findBreakTarget(curr->name);
       if (breakTarget->type == curr->type) {
