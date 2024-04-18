@@ -29,15 +29,14 @@
   (type $struct.B (struct i32))
   ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:   (ref.cast nullref
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
     ;; Note that this will not round-trip precisely because Binaryen IR will
-    ;; apply the more refined type to the cast automatically (in finalize),
-    ;; resulting in (ref.cast nullref) being emitted. After that, during the
-    ;; loading of the wasm we skip trivial casts, because that is casting a
-    ;; nullref to nullref.
+    ;; apply the more refined type to the cast automatically (in finalize).
     (drop
       (ref.cast (ref null $struct.B) (ref.null $struct.A))
     )
