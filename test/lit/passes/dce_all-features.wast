@@ -1678,3 +1678,57 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (func $string.new-start (type $0)
+  ;; CHECK-NEXT:  (local $nn (ref any))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $string.new-start
+    (local $nn (ref any))
+    (drop
+      ;; This should have unreachable type because a child is unreachable. If we
+      ;; do not detect that then we will end up removing the tee but not the
+      ;; code after it, which means we'd fail to validate due to a non-nullable
+      ;; local used without a set.
+      (string.new_wtf16_array
+        (ref.null any)
+        (local.tee $nn
+          (unreachable)
+        )
+        (block (result i32)
+          (drop
+            (local.get $nn)
+          )
+          (i32.const 10)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $string.new-end (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $string.new-end
+    (drop
+      ;; Now the unreachable is at the end. We should still remove the
+      ;; string.new.
+      (string.new_wtf16_array
+        (ref.null any)
+        (i32.const 10)
+        (unreachable)
+      )
+    )
+  )
+)
