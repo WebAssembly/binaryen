@@ -330,6 +330,9 @@ template<typename Ctx> Result<typename Ctx::ElemIdxT> elemidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::DataIdxT> dataidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::LocalIdxT> localidx(Ctx&);
 template<typename Ctx>
+MaybeResult<typename Ctx::LabelIdxT> maybeLabelidx(Ctx&,
+                                                   bool inDelegate = false);
+template<typename Ctx>
 Result<typename Ctx::LabelIdxT> labelidx(Ctx&, bool inDelegate = false);
 template<typename Ctx> Result<typename Ctx::TagIdxT> tagidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx&);
@@ -1969,15 +1972,17 @@ Result<> makeBreakTable(Ctx& ctx,
                         Index pos,
                         const std::vector<Annotation>& annotations) {
   std::vector<typename Ctx::LabelIdxT> labels;
+  // Parse at least one label; return an error only if we parse none.
   while (true) {
-    // Parse at least one label; return an error only if we parse none.
-    auto label = labelidx(ctx);
-    if (labels.empty()) {
-      CHECK_ERR(label);
-    } else if (label.getErr()) {
+    auto label = maybeLabelidx(ctx);
+    if (!label) {
       break;
     }
+    CHECK_ERR(label);
     labels.push_back(*label);
+  }
+  if (labels.empty()) {
+    return ctx.in.err("expected label");
   }
   auto defaultLabel = labels.back();
   labels.pop_back();
@@ -2701,17 +2706,26 @@ template<typename Ctx> Result<typename Ctx::LocalIdxT> localidx(Ctx& ctx) {
   return ctx.in.err("expected local index or identifier");
 }
 
+template<typename Ctx>
+Result<typename Ctx::LabelIdxT> labelidx(Ctx& ctx, bool inDelegate) {
+  if (auto idx = maybeLabelidx(ctx, inDelegate)) {
+    CHECK_ERR(idx);
+    return *idx;
+  }
+  return ctx.in.err("expected label index or identifier");
+}
+
 // labelidx ::= x:u32 => x
 //            | v:id => x (if labels[x] = v)
 template<typename Ctx>
-Result<typename Ctx::LabelIdxT> labelidx(Ctx& ctx, bool inDelegate) {
+MaybeResult<typename Ctx::LabelIdxT> maybeLabelidx(Ctx& ctx, bool inDelegate) {
   if (auto x = ctx.in.takeU32()) {
     return ctx.getLabelFromIdx(*x, inDelegate);
   }
   if (auto id = ctx.in.takeID()) {
     return ctx.getLabelFromName(*id, inDelegate);
   }
-  return ctx.in.err("expected label index or identifier");
+  return {};
 }
 
 // tagidx ::= x:u32 => x
