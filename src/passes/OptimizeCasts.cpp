@@ -92,6 +92,11 @@
 // Note that right now, we only consider RefAs with op RefAsNonNull as a cast.
 // RefAs with ExternInternalize and ExternExternalize are not considered casts
 // when obtaining fallthroughs, and so are ignored.
+//
+// TODO: Look past individual basic blocks? This may be worth considering
+//       given the pattern of a cast appearing in an if condition that is
+//       then used in an if arm, for example, where simple dominance shows
+//       the cast can be reused.
 
 #include "ir/effects.h"
 #include "ir/linear-execution.h"
@@ -439,15 +444,13 @@ struct BestCastFinder : public LinearExecutionWalker<BestCastFinder> {
   void handleRefinement(Expression* curr) {
     auto* teeFallthrough = Properties::getFallthrough(
       curr, options, *getModule(), Properties::FallthroughBehavior::NoTeeBrIf);
-    if (auto* set = teeFallthrough->dynCast<LocalSet>()) {
-      if (set->isTee()) {
-        updateBestCast(curr, set->index);
-      }
+    if (auto* tee = teeFallthrough->dynCast<LocalSet>()) {
+      updateBestCast(curr, tee->index);
     }
-    auto* fallthrough = Properties::getFallthrough(curr, options, *getModule());
+    auto* fallthrough =
+      Properties::getFallthrough(teeFallthrough, options, *getModule());
     if (auto* get = fallthrough->dynCast<LocalGet>()) {
       updateBestCast(curr, get->index);
-      return;
     }
   }
 
