@@ -16,14 +16,14 @@
     )
   )
 
-  ;; CHECK:      (func $cast (type $0) (param $x anyref)
+  ;; CHECK:      (func $cast (type $2) (param $x structref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast structref
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cast (param $x (ref null any))
+  (func $cast (param $x (ref null struct))
     (drop
       (ref.cast structref
         (local.get $x)
