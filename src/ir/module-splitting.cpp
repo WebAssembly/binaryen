@@ -74,6 +74,7 @@
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "pass.h"
+#include "support/insert_ordered.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -291,6 +292,7 @@ struct ModuleSplitter {
 
   // Main splitting steps
   void setupJSPI();
+  void handleRefFuncs();
   void moveSecondaryFunctions();
   void thunkExportedSecondaryFunctions();
   void indirectCallsToSecondaryFunctions();
@@ -308,6 +310,7 @@ struct ModuleSplitter {
     if (config.jspi) {
       setupJSPI();
     }
+    handleRefFuncs();
     moveSecondaryFunctions();
     thunkExportedSecondaryFunctions();
     indirectCallsToSecondaryFunctions();
@@ -340,6 +343,80 @@ std::unique_ptr<Module> ModuleSplitter::initSecondary(const Module& primary) {
   secondary->features = primary.features;
   secondary->hasFeaturesSection = primary.hasFeaturesSection;
   return secondary;
+}
+
+void ModuleSplitter::handleRefFuncs() {
+  // Turn function references to functions in the other module to refer instead
+  // to functions in the same one, that perform a direct call to the actual
+  // target in the other one. After splitting, the result is that RefFuncs refer
+  // only to functions in the same module, and the direct calls in them are
+  // handled like all other cross-module calls later.
+  struct Gatherer : public PostWalker<Gatherer> {
+    ModuleSplitter& parent;
+
+    Gatherer(ModuleSplitter& parent) : parent(parent) {}
+
+    // Collect RefFuncs in a map from the function name to all RefFuncs that
+    // refer to it. We have one such map for the primary and secondary modules
+    // (that is, the primary map contains RefFuncs that are present in the
+    // primary module, and that refer to the secondary module, hence they are in
+    // need of fixing).
+    using Map = InsertOrderedMap<Name, std::vector<RefFunc*>>;
+    Map primaryMap, secondaryMap;
+
+    void visitRefFunc(RefFunc* curr) {
+      // If we are not in a function then we consider this the primary module,
+      // as globals and other things remain there.
+      auto* func = getFunction();
+      if (!func || parent.primaryFuncs.count(func->name)) {
+        if (!parent.primaryFuncs.count(curr->func)) {
+          primaryMap[curr->func].push_back(curr);
+        }
+      } else {
+        if (!parent.secondaryFuncs.count(curr->func)) {
+          secondaryMap[curr->func].push_back(curr);
+        }
+      }
+    }
+  } gatherer(*this);
+  gatherer.walkModule(&primary);
+
+  // Fix up what we found: Generate trampolines as described earlier, and apply
+  // them.
+  auto handleModule = [&](Module* module, const Gatherer::Map& map) {
+    Builder builder(*module);
+    // Generate the new trampoline function and add it to the module.
+    for (auto& [name, refFuncs] : map) {
+      // Note that we hardcode |primary| here as functions have not yet moved
+      // over to the secondary module.
+      auto* oldFunc = primary.getFunctionOrNull(name);
+      auto newName = Names::getValidFunctionName(
+        primary, std::string("trampoline_") + name.toString());
+      // The name must also be valid in the secondary module (if we are
+      // processing that one, then we are adding functions to it as we go).
+      newName = Names::getValidFunctionName(secondary, newName);
+
+      // Generate the call and the function.
+      std::vector<Expression*> args;
+      for (Index i = 0; i < oldFunc->getNumParams(); i++) {
+        args.push_back(builder.makeLocalGet(i, oldFunc->getLocalType(i)));
+      }
+      auto* call = builder.makeCall(name, args, oldFunc->getResults());
+
+      module->addFunction(builder.makeFunction(newName,
+                                               oldFunc->type,
+                                               {},
+                                               call));
+
+      // Update RefFuncs to refer to it.
+      for (auto* refFunc : refFuncs) {
+        assert(refFunc->func == name);
+        refFunc->func = newName;
+      }
+    }
+  };
+  handleModule(&primary, gatherer.primaryMap);
+  handleModule(&secondary, gatherer.secondaryMap);
 }
 
 std::pair<std::set<Name>, std::set<Name>>
@@ -460,7 +537,7 @@ Expression* ModuleSplitter::maybeLoadSecondary(Builder& builder,
 void ModuleSplitter::indirectCallsToSecondaryFunctions() {
   // Update direct calls of secondary functions to be indirect calls of their
   // corresponding table indices instead.
-  struct CallIndirector : public WalkerPass<PostWalker<CallIndirector>> {
+  struct CallIndirector : public PostWalker<CallIndirector> {
     ModuleSplitter& parent;
     Builder builder;
     CallIndirector(ModuleSplitter& parent)
@@ -482,12 +559,8 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
                                  func->type,
                                  curr->isReturn)));
     }
-    void visitRefFunc(RefFunc* curr) {
-      assert(false && "TODO: handle ref.func as well");
-    }
   };
-  PassRunner runner(&primary);
-  CallIndirector(*this).run(&runner, &primary);
+  CallIndirector(*this).walkModule(&primary);
 }
 
 void ModuleSplitter::exportImportCalledPrimaryFunctions() {
@@ -505,9 +578,6 @@ void ModuleSplitter::exportImportCalledPrimaryFunctions() {
           if (primaryFuncs.count(curr->target)) {
             calledPrimaryFuncs.push_back(curr->target);
           }
-        }
-        void visitRefFunc(RefFunc* curr) {
-          assert(false && "TODO: handle ref.func as well");
         }
       };
       CallCollector(primaryFuncs, calledPrimaryFuncs).walkFunction(func);
