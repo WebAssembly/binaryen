@@ -2713,9 +2713,10 @@ void BinaryInstWriter::scanFunction() {
     // counting them, and as we go we ignore ones that are dropped, since a
     // dropped value is not a problem for us.
     //
-    // Note that we do not check if the type matches the break target, which
-    // takes more effort, and the other conditions are quite rare anyhow. We do
-    // check that below, later, if we found something suspicious here.
+    // Note that we do not check all the conditions here, such as if the type
+    // matches the break target, or if the parent is a cast, which we leave for
+    // a more expensive analysis later, which we only run if we see something
+    // suspicious here.
     Index numDangerousBrIfs = 0;
 
     void visitBreak(Break* curr) {
@@ -2768,9 +2769,9 @@ void BinaryInstWriter::scanFunction() {
   }
 
   // There are dangerous-looking br_ifs, so we must do the harder work to
-  // actually investigate them. The previous quick test in the scanner only
-  // looked for references flowing out of br_ifs, and now we also see if those
-  // references are actually refined (which requires us to track block types).
+  // actually investigate them in detail, including tracking block types. By
+  // being fully precise here, we'll only emit casts when absolutely necessary,
+  // which avoids repeated roundtrips adding more and more code.
   struct RefinementScanner : public ExpressionStackWalker<RefinementScanner> {
     BinaryInstWriter& writer;
 
@@ -2789,7 +2790,10 @@ void BinaryInstWriter::scanFunction() {
           return;
         }
         if (auto* cast = parent->dynCast<RefCast>()) {
-          // It is cast to the same type or a better one.
+          // It is cast to the same type or a better one. In particular this
+          // handles the case of repeated roundtripping: After the first
+          // roundtrip we emit a cast that we'll identify here, and not emit an
+          // additional one.
           if (Type::isSubType(cast->type, curr->type)) {
             return;
           }
