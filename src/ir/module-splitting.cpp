@@ -403,10 +403,8 @@ void ModuleSplitter::handleRefFuncs() {
       }
       auto* call = builder.makeCall(name, args, oldFunc->getResults());
 
-      module->addFunction(builder.makeFunction(newName,
-                                               oldFunc->type,
-                                               {},
-                                               call));
+      module->addFunction(
+        builder.makeFunction(newName, oldFunc->type, {}, call));
 
       // Update RefFuncs to refer to it.
       for (auto* refFunc : refFuncs) {
