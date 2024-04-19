@@ -31,9 +31,9 @@ namespace wasm {
 struct DebugLocationPropagation
   : WalkerPass<PostWalker<DebugLocationPropagation>> {
 
-  // managing an expression stack that ensures , the top element of the stack
-  // must be the previous sibling or parent of current expression in
-  // `doPrevisit`.
+  // The top element of this stack is the previous sibling or parent of the
+  // current expression in `doPrevisit`. To maintain this invariant, expressions
+  // are only popped once we are done visiting their parents.
   ExpressionStack expressionStack;
 
   using Super = WalkerPass<PostWalker<DebugLocationPropagation>>;
