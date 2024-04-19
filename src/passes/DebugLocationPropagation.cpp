@@ -29,10 +29,14 @@
 namespace wasm {
 
 struct DebugLocationPropagation
-  : WalkerPass<ExpressionStackWalker<DebugLocationPropagation>> {
+  : WalkerPass<PostWalker<DebugLocationPropagation>> {
+
+  // managing an expression stack that ensures , the top element of the stack
+  // must be the previous sibling or parent of current expression in
+  // `doPrevisit`.
   ExpressionStack expressionStack;
 
-  using Super = WalkerPass<ExpressionStackWalker<DebugLocationPropagation>>;
+  using Super = WalkerPass<PostWalker<DebugLocationPropagation>>;
   bool isFunctionParallel() override { return true; }
   bool modifiesBinaryenIR() override { return false; }
   bool requiresNonNullableLocalFixups() override { return false; }
@@ -67,10 +71,20 @@ struct DebugLocationPropagation
 
   static void doPostVisit(DebugLocationPropagation* self, Expression** currp) {
     auto& exprStack = self->expressionStack;
-    while (exprStack.back() != *currp && !exprStack.empty()) {
+    while (exprStack.back() != *currp) {
+      // pop all the child expressions and keep current expression in stack.
       exprStack.pop_back();
     }
+    // the stack should never be empty
     assert(!exprStack.empty());
+  }
+
+  static void scan(DebugLocationPropagation* self, Expression** currp) {
+    self->pushTask(DebugLocationPropagation::doPostVisit, currp);
+
+    PostWalker<DebugLocationPropagation>::scan(self, currp);
+
+    self->pushTask(DebugLocationPropagation::doPreVisit, currp);
   }
 
   std::unique_ptr<Pass> create() override {
