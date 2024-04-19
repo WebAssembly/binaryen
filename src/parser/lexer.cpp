@@ -753,37 +753,25 @@ std::optional<LexResult> idchar(std::string_view in) {
     return {};
   }
   uint8_t c = ctx.peek();
-  if (('0' <= c && c <= '9') || ('A' <= c && c <= 'Z') ||
-      ('a' <= c && c <= 'z')) {
-    ctx.take(1);
-  } else {
-    switch (c) {
-      case '!':
-      case '#':
-      case '$':
-      case '%':
-      case '&':
-      case '\'':
-      case '*':
-      case '+':
-      case '-':
-      case '.':
-      case '/':
-      case ':':
-      case '<':
-      case '=':
-      case '>':
-      case '?':
-      case '@':
-      case '\\':
-      case '^':
-      case '_':
-      case '`':
-      case '|':
-      case '~':
-        ctx.take(1);
-    }
+  // All the allowed characters lie in the range '!' to '~', and within that
+  // range the vast majority of characters are allowed, so it is significantly
+  // faster to check for the disallowed characters instead.
+  if (c < '!' || c > '~') {
+    return ctx.lexed();
   }
+  switch (c) {
+    case '"':
+    case '(':
+    case ')':
+    case ',':
+    case ';':
+    case '[':
+    case ']':
+    case '{':
+    case '}':
+      return ctx.lexed();
+  }
+  ctx.take(1);
   return ctx.lexed();
 }
 
