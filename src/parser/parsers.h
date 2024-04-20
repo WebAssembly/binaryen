@@ -3028,11 +3028,13 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
       CHECK_ERR(l);
       localVars = *l;
     }
-    CHECK_ERR(instrs(ctx));
-    ctx.setSrcLoc(ctx.in.takeAnnotations());
+    if (!ctx.skipFunctionBody()) {
+      CHECK_ERR(instrs(ctx));
+      ctx.setSrcLoc(ctx.in.takeAnnotations());
+    }
   }
 
-  if (!ctx.in.takeRParen()) {
+  if (!ctx.skipFunctionBody() && !ctx.in.takeRParen()) {
     return ctx.in.err("expected end of function");
   }
 
