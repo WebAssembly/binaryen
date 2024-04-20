@@ -99,17 +99,11 @@ void propagateDebugLocations(Module& wasm) {
   runner.run();
 }
 
-// ================
-// Parser Functions
-// ================
-
-} // anonymous namespace
-
-Result<> parseModule(Module& wasm, std::string_view input) {
+Result<> doParseModule(Module& wasm, Lexer& input, bool allowExtra) {
   // Parse module-level declarations.
   ParseDeclsCtx decls(input, wasm);
   CHECK_ERR(module(decls));
-  if (!decls.in.empty()) {
+  if (!allowExtra && !decls.in.empty()) {
     return decls.in.err("Unexpected tokens after module");
   }
 
@@ -222,8 +216,27 @@ Result<> parseModule(Module& wasm, std::string_view input) {
   }
 
   propagateDebugLocations(wasm);
+  input = decls.in;
 
   return Ok{};
+}
+
+} // anonymous namespace
+
+Result<> parseModule(Module& wasm, std::string_view in) {
+  Lexer lexer(in);
+  return doParseModule(wasm, lexer, false);
+}
+
+Result<> parseModule(Module& wasm, Lexer& lexer) {
+  return doParseModule(wasm, lexer, true);
+}
+
+Result<Expression*> parseExpression(Module& wasm, Lexer& lexer) {
+  ParseDefsCtx ctx(lexer, wasm, {}, {}, {}, {}, {});
+  auto e = expr(ctx);
+  CHECK_ERR(e);
+  return *e;
 }
 
 } // namespace wasm::WATParser
