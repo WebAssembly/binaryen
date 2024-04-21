@@ -385,7 +385,15 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
 
     // If we don't have any catches, we don't need to do more.
     if (curr->catchBodies.empty()) { // catch-less try
-      replaceCurrent(tryTable);
+      // If we need an outer block for other reasons (if this is a target of a
+      // delegate), we insert the new try_table into it. If not we just replace
+      // the current try with the new try_table.
+      if (outerBlock) {
+        outerBlock->list.push_back(tryTable);
+        replaceCurrent(outerBlock);
+      } else {
+        replaceCurrent(tryTable);
+      }
       return;
     }
 
