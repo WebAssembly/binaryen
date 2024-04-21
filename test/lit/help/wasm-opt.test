@@ -368,6 +368,10 @@
 ;; CHECK-NEXT:   --print-stack-ir                              print out Stack IR (useful for
 ;; CHECK-NEXT:                                                 internal debugging)
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --propagate-debug-locs                        propagate debug location from
+;; CHECK-NEXT:                                                 parents or previous siblings to
+;; CHECK-NEXT:                                                 child nodes
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --propagate-globals-globally                  propagate global values to other
 ;; CHECK-NEXT:                                                 globals (useful for tests)
 ;; CHECK-NEXT:

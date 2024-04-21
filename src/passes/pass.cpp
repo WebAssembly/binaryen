@@ -126,6 +126,10 @@ void PassRegistry::registerPasses() {
   registerPass("dealign",
                "forces all loads and stores to have alignment 1",
                createDeAlignPass);
+  registerPass(
+    "propagate-debug-locs",
+    "propagate debug location from parents or previous siblings to child nodes",
+    createDebugLocationPropagationPass);
   registerPass("denan",
                "instrument the wasm to convert NaNs into 0 at runtime",
                createDeNaNPass);

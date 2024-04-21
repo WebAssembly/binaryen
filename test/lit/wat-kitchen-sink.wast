@@ -5235,6 +5235,13 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 2)
  ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  ;;@ src.cpp:30:1
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (i32.add
+ ;; CHECK-NEXT:    (i32.const 100)
+ ;; CHECK-NEXT:    (i32.const 200)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $source-map-propagation
   ;;@ src.cpp:10:1
@@ -5244,6 +5251,11 @@
   ;;@ src.cpp:20:1
   drop
   i32.const 2
+  drop
+  i32.const 100
+  i32.const 200
+  i32.add
+  ;;@ src.cpp:30:1
   drop
  )
 
