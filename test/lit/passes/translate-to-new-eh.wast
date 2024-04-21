@@ -2211,4 +2211,79 @@
       )
     )
   )
+
+  ;; CHECK:      (func $try-catch-rethrow-with-inner-delegate (type $1)
+  ;; CHECK-NEXT:  (local $0 exnref)
+  ;; CHECK-NEXT:  (block $outer2
+  ;; CHECK-NEXT:   (local.set $0
+  ;; CHECK-NEXT:    (block $catch3 (result exnref)
+  ;; CHECK-NEXT:     (try_table (catch_ref $e-empty $catch3)
+  ;; CHECK-NEXT:      (call $foo)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br $outer2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (block $outer1
+  ;; CHECK-NEXT:     (try_table
+  ;; CHECK-NEXT:      (throw_ref
+  ;; CHECK-NEXT:       (block $l10 (result exnref)
+  ;; CHECK-NEXT:        (try_table (catch_all_ref $l10)
+  ;; CHECK-NEXT:         (call $foo)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (br $outer1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (throw_ref
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; STACKIR-OPT:      (func $try-catch-rethrow-with-inner-delegate (type $1)
+  ;; STACKIR-OPT-NEXT:  (local $0 exnref)
+  ;; STACKIR-OPT-NEXT:  block $outer2
+  ;; STACKIR-OPT-NEXT:   block $catch3 (result exnref)
+  ;; STACKIR-OPT-NEXT:    try_table (catch_ref $e-empty $catch3)
+  ;; STACKIR-OPT-NEXT:     call $foo
+  ;; STACKIR-OPT-NEXT:    end
+  ;; STACKIR-OPT-NEXT:    br $outer2
+  ;; STACKIR-OPT-NEXT:   end
+  ;; STACKIR-OPT-NEXT:   block $outer1
+  ;; STACKIR-OPT-NEXT:    try_table
+  ;; STACKIR-OPT-NEXT:     block $l10 (result exnref)
+  ;; STACKIR-OPT-NEXT:      try_table (catch_all_ref $l10)
+  ;; STACKIR-OPT-NEXT:       call $foo
+  ;; STACKIR-OPT-NEXT:      end
+  ;; STACKIR-OPT-NEXT:      br $outer1
+  ;; STACKIR-OPT-NEXT:     end
+  ;; STACKIR-OPT-NEXT:     throw_ref
+  ;; STACKIR-OPT-NEXT:    end
+  ;; STACKIR-OPT-NEXT:    unreachable
+  ;; STACKIR-OPT-NEXT:   end
+  ;; STACKIR-OPT-NEXT:   throw_ref
+  ;; STACKIR-OPT-NEXT:  end
+  ;; STACKIR-OPT-NEXT: )
+  (func $try-catch-rethrow-with-inner-delegate
+    (try $l0
+      (do
+        (call $foo)
+      )
+      (catch $e-empty
+        (try $l1
+          (do
+            (try
+              (do
+                (call $foo)
+              )
+              (delegate $l1)
+            )
+          )
+        )
+        (rethrow $l0)
+      )
+    )
+  )
 )
