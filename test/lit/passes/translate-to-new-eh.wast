@@ -2125,4 +2125,49 @@
       (delegate 0)
     )
   )
+
+  ;; CHECK:      (func $throw_ref-in-resultless-block (type $2) (result i32)
+  ;; CHECK-NEXT:  (throw_ref
+  ;; CHECK-NEXT:   (block $__binaryen_delegate_caller_target0 (result exnref)
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (try_table (catch_all_ref $__binaryen_delegate_caller_target0)
+  ;; CHECK-NEXT:       (call $foo)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; STACKIR-OPT:      (func $throw_ref-in-resultless-block (type $2) (result i32)
+  ;; STACKIR-OPT-NEXT:  block $__binaryen_delegate_caller_target0 (result exnref)
+  ;; STACKIR-OPT-NEXT:   try_table (catch_all_ref $__binaryen_delegate_caller_target0)
+  ;; STACKIR-OPT-NEXT:    call $foo
+  ;; STACKIR-OPT-NEXT:   end
+  ;; STACKIR-OPT-NEXT:   unreachable
+  ;; STACKIR-OPT-NEXT:  end
+  ;; STACKIR-OPT-NEXT:  throw_ref
+  ;; STACKIR-OPT-NEXT: )
+  (func $throw_ref-in-resultless-block (result i32)
+    ;; When the function return type is concrete, try-delegate that targets the
+    ;; caller is translated to
+    ;; (throw_ref
+    ;;   (block $__binaryen_delegate_caller_target (result exnref)
+    ;;     (return
+    ;;       function body
+    ;;     )
+    ;;   )
+    ;; )
+    ;; We should do that even if the function body's type is not concrete.
+    (block ;; This block doesn't have concrete result type
+      (try
+        (do
+          (call $foo)
+        )
+        (delegate 1)
+      )
+      (unreachable)
+    )
+  )
 )
