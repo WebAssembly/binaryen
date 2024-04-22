@@ -1931,12 +1931,6 @@ struct OptimizeInstructions
       return false;
     }
 
-    if (new_->isWithDefault()) {
-      // Ignore a new_default for now. If the fields are defaultable then we
-      // could add them, in principle, but that might increase code size.
-      return false;
-    }
-
     auto index = set->index;
     auto& operands = new_->operands;
 
@@ -1953,19 +1947,34 @@ struct OptimizeInstructions
     }
 
     // We must move the set's value past indexes greater than it (Y and Z in
-    // the example in the comment on this function).
+    // the example in the comment on this function). If this is not with_default
+    // then we must check for effects.
     // TODO When this function is called repeatedly in a sequence this can
     //      become quadratic - perhaps we should memoize (though, struct sizes
     //      tend to not be ridiculously large).
-    for (Index i = index + 1; i < operands.size(); i++) {
-      auto operandEffects = effects(operands[i]);
-      if (operandEffects.invalidates(setValueEffects)) {
-        // TODO: we could use locals to reorder everything
-        return false;
+    if (!new_->isWithDefault()) {
+      for (Index i = index + 1; i < operands.size(); i++) {
+        auto operandEffects = effects(operands[i]);
+        if (operandEffects.invalidates(setValueEffects)) {
+          // TODO: we could use locals to reorder everything
+          return false;
+        }
       }
     }
 
+    // We can optimize here!
     Builder builder(*getModule());
+
+    // If this was with_default then we add default values now. That does
+    // increase code size in some cases (if there are many values, and few sets
+    // that get removed), but in general this optimization is worth it.
+    if (new_->isWithDefault()) {
+      auto& fields = new_->type.getHeapType().getStruct().fields;
+      for (auto& field : fields) {
+        auto zero = Literal::makeZero(field.type);
+        operands.push_back(builder.makeConstantExpression(zero));
+      }
+    }
 
     // See if we need to keep the old value.
     if (effects(operands[index]).hasUnremovableSideEffects()) {
