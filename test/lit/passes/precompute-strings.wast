@@ -8,9 +8,13 @@
  ;; CHECK:      (type $array16 (array (mut i16)))
  (type $array16 (array (mut i16)))
 
+ (type $array16-imm (array i16))
+
  ;; CHECK:      (type $2 (func (result (ref string))))
 
- ;; CHECK:      (type $3 (func (result (ref any))))
+ ;; CHECK:      (type $3 (func (result anyref)))
+
+ ;; CHECK:      (type $4 (func (result (ref any))))
 
  ;; CHECK:      (export "get_codepoint-unicode" (func $get_codepoint-unicode))
 
@@ -169,7 +173,7 @@
   )
  )
 
- ;; CHECK:      (func $encode-stashed (type $3) (result (ref any))
+ ;; CHECK:      (func $encode-stashed (type $4) (result (ref any))
  ;; CHECK-NEXT:  (local $1 (ref $array16))
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (array.new_default $array16
@@ -232,6 +236,47 @@
    )
    (i32.const 3)
    (i32.const 6)
+  )
+ )
+
+ ;; CHECK:      (func $string.new-mutable (type $3) (result anyref)
+ ;; CHECK-NEXT:  (string.new_wtf16_array
+ ;; CHECK-NEXT:   (array.new_fixed $array16 4
+ ;; CHECK-NEXT:    (i32.const 65)
+ ;; CHECK-NEXT:    (i32.const 66)
+ ;; CHECK-NEXT:    (i32.const 67)
+ ;; CHECK-NEXT:    (i32.const 68)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 4)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $string.new-mutable (result anyref)
+  (string.new_wtf16_array
+   (array.new_fixed $array16 4
+    (i32.const 65)
+    (i32.const 66)
+    (i32.const 67)
+    (i32.const 68)
+   )
+   (i32.const 0)
+   (i32.const 4)
+  )
+ )
+
+ ;; CHECK:      (func $string.new-immutable (type $3) (result anyref)
+ ;; CHECK-NEXT:  (string.const "ABCD")
+ ;; CHECK-NEXT: )
+ (func $string.new-immutable (result anyref)
+  (string.new_wtf16_array
+   (array.new_fixed $array16-imm 4
+    (i32.const 65)
+    (i32.const 66)
+    (i32.const 67)
+    (i32.const 68)
+   )
+   (i32.const 0)
+   (i32.const 4)
   )
  )
 )

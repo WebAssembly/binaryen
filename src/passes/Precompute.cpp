@@ -196,7 +196,7 @@ public:
   }
 
   Flow visitStringNew(StringNew* curr) {
-    if (curr->op != StringNewWTF16Array)
+    if (curr->op != StringNewWTF16Array) {
       // TODO: handle other string ops. For now we focus on JS-like strings.
       return Flow(NONCONSTANT_FLOW);
     }
