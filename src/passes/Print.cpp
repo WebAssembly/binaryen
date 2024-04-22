@@ -2481,9 +2481,14 @@ void PrintSExpression::printDebugLocation(
   }
   lastPrintedLocation = location;
   lastPrintIndent = indent;
-  auto fileName = currModule->debugInfoFileNames[location.fileIndex];
-  o << ";;@ " << fileName << ":" << location.lineNumber << ":"
-    << location.columnNumber << '\n';
+  Function::DebugLocation noLocation = {0, 0, 0};
+  if (location == noLocation) {
+    o << ";;@\n";
+  } else {
+    auto fileName = currModule->debugInfoFileNames[location.fileIndex];
+    o << ";;@ " << fileName << ":" << location.lineNumber << ":"
+      << location.columnNumber << '\n';
+  }
   doIndent(o, indent);
 }
 
@@ -2494,6 +2499,8 @@ void PrintSExpression::printDebugLocation(Expression* curr) {
     auto iter = debugLocations.find(curr);
     if (iter != debugLocations.end()) {
       printDebugLocation(iter->second);
+    } else {
+      printDebugLocation({0, 0, 0});
     }
     // show a binary position, if there is one
     if (debugInfo) {
@@ -2968,6 +2975,7 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
   doIndent(o, indent);
   currFunction = curr;
   lastPrintedLocation = {0, 0, 0};
+  lastPrintIndent = 0;
   if (currFunction->prologLocation.size()) {
     printDebugLocation(*currFunction->prologLocation.begin());
   }

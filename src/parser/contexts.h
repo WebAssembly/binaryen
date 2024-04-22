@@ -1722,6 +1722,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       return;
     }
     Lexer lexer(annotation->contents);
+    if (lexer.empty()) {
+      irBuilder.setDebugLocation({0, 0, 0});
+      return;
+    }
+
     auto contents = lexer.takeKeyword();
     if (!contents || !lexer.empty()) {
       return;

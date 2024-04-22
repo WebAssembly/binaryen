@@ -219,6 +219,10 @@ void SExpressionParser::parseDebugLocation() {
   while (debugLocEnd[0] && debugLocEnd[0] != '\n') {
     debugLocEnd++;
   }
+  if (debugLocEnd == debugLoc) {
+    loc = nullptr;
+    return;
+  }
   char const* pos = debugLoc;
   while (pos < debugLocEnd && pos[0] != ':') {
     pos++;
@@ -1986,11 +1990,8 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
   return ret;
 }
 
-static size_t parseMemAttributes(size_t i,
-                                 Element& s,
-                                 Address& offset,
-                                 Address& align,
-                                 bool memory64) {
+static size_t parseMemAttributes(
+  size_t i, Element& s, Address& offset, Address& align, bool memory64) {
   // Parse "align=X" and "offset=X" arguments, bailing out on anything else.
   while (!s[i]->isList()) {
     const char* str = s[i]->str().str.data();
