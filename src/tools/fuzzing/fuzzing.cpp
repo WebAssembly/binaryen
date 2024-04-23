@@ -2723,7 +2723,8 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
 Expression* TranslateToFuzzReader::makeString() {
   // Fuzz with JS-style strings.
   auto mutability = getMutability();
-  auto arrayHeapType = HeapType(Array(Field(Field::PackedType::i16, mutability)));
+  auto arrayHeapType =
+    HeapType(Array(Field(Field::PackedType::i16, mutability)));
   auto nullability = getNullability();
   auto arrayType = Type(arrayHeapType, nullability);
   switch (upTo(3)) {
@@ -2732,12 +2733,14 @@ Expression* TranslateToFuzzReader::makeString() {
       auto array = make(arrayType);
       auto* start = make(Type::i32);
       auto* end = make(Type::i32);
-      return builder.makeStringNew(StringNewWTF16Array, array, start, end, false);
+      return builder.makeStringNew(
+        StringNewWTF16Array, array, start, end, false);
     }
     case 1: {
       // Make a string from a code point.
       auto codePoint = make(Type::i32);
-      return builder.makeStringNew(StringNewFromCodePoint, codePoint, nullptr, false);
+      return builder.makeStringNew(
+        StringNewFromCodePoint, codePoint, nullptr, false);
     }
     case 2: {
       // Construct an interesting WTF-8 string from parts and use string.const.
