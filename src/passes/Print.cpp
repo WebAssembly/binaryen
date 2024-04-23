@@ -2475,6 +2475,9 @@ std::ostream& PrintSExpression::printPrefixedTypes(const char* prefix,
 
 void PrintSExpression::printDebugLocation(
   const std::optional<Function::DebugLocation>& location) {
+  if (minify) {
+    return;
+  }
   // Do not skip repeated debug info in full mode, for less-confusing debugging:
   // full mode prints out everything in the most verbose manner.
   if (lastPrintedLocation == location && indent > lastPrintIndent && !full) {
