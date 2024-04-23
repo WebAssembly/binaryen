@@ -347,6 +347,10 @@ ModuleSplitter::classifyFunctions(Module& primary, const Config& config) {
   // Find functions that refer to data or element segments. These functions must
   // remain in the primary module because segments cannot be exported to be
   // accessed from the secondary module.
+  //
+  // TODO: Investigate other options, such as moving the segments to the
+  // secondary module or replacing the segment-using instructions in the
+  // secondary module with calls to imports.
   ModuleUtils::ParallelFunctionAnalysis<std::vector<Name>>
     segmentReferrerCollector(
       primary, [&](Function* func, std::vector<Name>& segmentReferrers) {
