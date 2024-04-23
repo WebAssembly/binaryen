@@ -1898,6 +1898,12 @@ public:
         }
         return makeGCData(contents, curr->type);
       }
+      case StringNewFromCodePoint: {
+        auto codePoint = ptr.getSingleValue().geti32();
+        Literals contents;
+        contents.push_back(Literal(int32_t(codePoint)));
+        return makeGCData(contents, curr->type);
+      }
       default:
         // TODO: others
         return Flow(NONCONSTANT_FLOW);

@@ -414,6 +414,14 @@
     ;; Concatenating these surrogates creates '𐍈'.
     (string.concat (string.const "\ED\A0\80") (string.const "\ED\BD\88"))
   )
+
+  ;; CHECK:      [fuzz-exec] calling string.from_code_point
+  ;; CHECK-NEXT: [fuzz-exec] note result: string.from_code_point => string("A")
+  (func $string.from_code_point (export "string.from_code_point") (result stringref)
+    (string.from_code_point
+      (i32.const 65)
+    )
+  )
 )
 ;; CHECK:      [fuzz-exec] calling new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
@@ -518,6 +526,9 @@
 
 ;; CHECK:      [fuzz-exec] calling concat-surrogates
 ;; CHECK-NEXT: [fuzz-exec] note result: concat-surrogates => string("\ud800\udf48")
+
+;; CHECK:      [fuzz-exec] calling string.from_code_point
+;; CHECK-NEXT: [fuzz-exec] note result: string.from_code_point => string("A")
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.1
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.10
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.2
@@ -551,3 +562,4 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing slice
 ;; CHECK-NEXT: [fuzz-exec] comparing slice-big
 ;; CHECK-NEXT: [fuzz-exec] comparing slice-unicode
+;; CHECK-NEXT: [fuzz-exec] comparing string.from_code_point
