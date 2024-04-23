@@ -33,6 +33,7 @@
 #include "support/bits.h"
 #include "support/safe_integer.h"
 #include "support/stdckdint.h"
+#include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -1899,7 +1900,18 @@ public:
         return makeGCData(contents, curr->type);
       }
       case StringNewFromCodePoint: {
-        auto codePoint = ptr.getSingleValue().geti32();
+        uint32_t codePoint = ptr.getSingleValue().geti32();
+        std::string str;
+        str += char(codePoint & 0xff);
+        str += char((codePoint >> 8) & 0xff);
+        if (codePoint > 0xffff) {
+          str += char((codePoint >> 16) & 0xff);
+          str += char((codePoint >> 24) & 0xff);
+        }
+        std::stringstream null;
+        if (!String::convertUTF16ToUTF8(null, str)) {
+          trap("invalid code point");
+        }
         Literals contents;
         contents.push_back(Literal(int32_t(codePoint)));
         return makeGCData(contents, curr->type);

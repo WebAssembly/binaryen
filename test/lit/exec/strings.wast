@@ -422,6 +422,22 @@
       (i32.const 65)
     )
   )
+
+  ;; CHECK:      [fuzz-exec] calling weird_code_point
+  ;; CHECK-NEXT: [fuzz-exec] note result: weird_code_point => string("\u03e8")
+  (func $weird_code_point (export "weird_code_point") (result stringref)
+    (string.from_code_point
+      (i32.const 1000)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling invalid_code_point
+  ;; CHECK-NEXT: [fuzz-exec] note result: invalid_code_point => string("\uffad")
+  (func $invalid_code_point (export "invalid_code_point") (result stringref)
+    (string.from_code_point
+      (i32.const -83)
+    )
+  )
 )
 ;; CHECK:      [fuzz-exec] calling new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
@@ -529,6 +545,12 @@
 
 ;; CHECK:      [fuzz-exec] calling string.from_code_point
 ;; CHECK-NEXT: [fuzz-exec] note result: string.from_code_point => string("A")
+
+;; CHECK:      [fuzz-exec] calling weird_code_point
+;; CHECK-NEXT: [fuzz-exec] note result: weird_code_point => string("\u03e8")
+
+;; CHECK:      [fuzz-exec] calling invalid_code_point
+;; CHECK-NEXT: [fuzz-exec] note result: invalid_code_point => string("\uffad")
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.1
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.10
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.2
@@ -551,6 +573,7 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.5
 ;; CHECK-NEXT: [fuzz-exec] comparing get_codeunit
 ;; CHECK-NEXT: [fuzz-exec] comparing get_length
+;; CHECK-NEXT: [fuzz-exec] comparing invalid_code_point
 ;; CHECK-NEXT: [fuzz-exec] comparing new_2
 ;; CHECK-NEXT: [fuzz-exec] comparing new_4
 ;; CHECK-NEXT: [fuzz-exec] comparing new_empty
@@ -563,3 +586,4 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing slice-big
 ;; CHECK-NEXT: [fuzz-exec] comparing slice-unicode
 ;; CHECK-NEXT: [fuzz-exec] comparing string.from_code_point
+;; CHECK-NEXT: [fuzz-exec] comparing weird_code_point
