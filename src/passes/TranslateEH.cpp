@@ -215,8 +215,9 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
   // current 'try' into 'try_table' yet; it only adds block, br, and throw_ref
   // instructions to complete the conversions of inner try~delegates that target
   // the current try.
-  void
-  processDelegateTarget(Try* curr, Block* outerBlock, bool& outerBlockUsedSoFar) {
+  void processDelegateTarget(Try* curr,
+                             Block* outerBlock,
+                             bool& outerBlockUsedSoFar) {
     Builder builder(*getModule());
 
     // Convert
