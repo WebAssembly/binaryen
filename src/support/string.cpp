@@ -213,7 +213,8 @@ std::optional<uint16_t> takeWTF16CodeUnit(std::string_view& str) {
   return u;
 }
 
-std::optional<uint32_t> takeWTF16CodePoint(std::string_view& str) {
+std::optional<uint32_t> takeWTF16CodePoint(std::string_view& str,
+                                           bool allowWTF = true) {
   auto u = takeWTF16CodeUnit(str);
   if (!u) {
     return std::nullopt;
@@ -228,7 +229,13 @@ std::optional<uint32_t> takeWTF16CodePoint(std::string_view& str) {
       uint16_t highBits = *u - 0xD800;
       uint16_t lowBits = *low - 0xDC00;
       return 0x10000 + ((highBits << 10) | lowBits);
+    } else if (!allowWTF) {
+      // Unpaired high surrogate.
+      return std::nullopt;
     }
+  } else if (!allowWTF && 0xDC00 <= *u && *u < 0xE000) {
+    // Unpaired low surrogate.
+    return std::nullopt;
   }
 
   return *u;
@@ -241,6 +248,23 @@ void writeWTF16CodeUnit(std::ostream& os, uint16_t u) {
 }
 
 constexpr uint32_t replacementCharacter = 0xFFFD;
+
+bool doConvertWTF16ToWTF8(std::ostream& os,
+                          std::string_view str,
+                          bool allowWTF) {
+  bool valid = true;
+
+  while (str.size()) {
+    auto u = takeWTF16CodePoint(str, allowWTF);
+    if (!u) {
+      valid = false;
+      u = replacementCharacter;
+    }
+    writeWTF8CodePoint(os, *u);
+  }
+
+  return valid;
+}
 
 } // anonymous namespace
 
@@ -308,18 +332,11 @@ bool convertWTF8ToWTF16(std::ostream& os, std::string_view str) {
 }
 
 bool convertWTF16ToWTF8(std::ostream& os, std::string_view str) {
-  bool valid = true;
+  return doConvertWTF16ToWTF8(os, str, true);
+}
 
-  while (str.size()) {
-    auto u = takeWTF16CodePoint(str);
-    if (!u) {
-      valid = false;
-      u = replacementCharacter;
-    }
-    writeWTF8CodePoint(os, *u);
-  }
-
-  return valid;
+bool convertUTF16ToUTF8(std::ostream& os, std::string_view str) {
+  return doConvertWTF16ToWTF8(os, str, false);
 }
 
 std::ostream& printEscapedJSON(std::ostream& os, std::string_view str) {

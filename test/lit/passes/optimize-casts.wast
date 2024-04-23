@@ -1352,6 +1352,43 @@
     )
   )
 
+  ;; CHECK:      (func $local-tee (type $2) (param $x (ref struct))
+  ;; CHECK-NEXT:  (local $y (ref struct))
+  ;; CHECK-NEXT:  (local $2 (ref $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $2
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
+  ;; CHECK-NEXT:     (local.tee $y
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $local-tee (param $x (ref struct))
+    (local $y (ref struct))
+    ;; We should use the cast value after it has been computed, in both gets.
+    (drop
+      (ref.cast (ref $A)
+        (local.tee $y
+          (local.get $x)
+        )
+      )
+    )
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $y)
+    )
+  )
+
   ;; CHECK:      (func $get (type $11) (result (ref struct))
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )

@@ -775,7 +775,7 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
     //   )
     // )
     Expression* innerBody = nullptr;
-    if (func->body->type.isConcrete()) {
+    if (func->getResults().isConcrete()) {
       auto* ret = builder.makeReturn(func->body);
       innerBody = builder.blockifyWithName(
         ret, callerDelegateBrTarget, nullptr, Type(HeapType::exn, Nullable));

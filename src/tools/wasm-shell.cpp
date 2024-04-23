@@ -43,46 +43,6 @@ Name INVOKE("invoke");
 Name REGISTER("register");
 Name GET("get");
 
-struct ShellOptions : public Options {
-  Name entry;
-  std::set<size_t> skipped;
-
-  const std::string WasmShellOption = "wasm-shell options";
-
-  ShellOptions(const std::string& command, const std::string& description)
-    : Options(command, description) {
-    (*this)
-      .add("--entry",
-           "-e",
-           "Call the entry point after parsing the module",
-           WasmShellOption,
-           Options::Arguments::One,
-           [this](Options*, const std::string& argument) { entry = argument; })
-      .add("--skip",
-           "-s",
-           "Skip input on certain lines (comma-separated-list)",
-           WasmShellOption,
-           Options::Arguments::One,
-           [this](Options*, const std::string& argument) {
-             size_t i = 0;
-             while (i < argument.size()) {
-               auto ending = argument.find(',', i);
-               if (ending == std::string::npos) {
-                 ending = argument.size();
-               }
-               auto sub = argument.substr(i, ending - i);
-               skipped.insert(atoi(sub.c_str()));
-               i = ending + 1;
-             }
-           })
-      .add_positional("INFILE",
-                      Options::Arguments::One,
-                      [](Options* o, const std::string& argument) {
-                        o->extra["infile"] = argument;
-                      });
-  }
-};
-
 class Shell {
 protected:
   std::map<Name, std::shared_ptr<Module>> modules;
@@ -320,7 +280,7 @@ protected:
   }
 
 protected:
-  ShellOptions& options;
+  Options& options;
 
   // spectest module is a default host-provided module defined by the spec's
   // reference interpreter. It's been replaced by the `(register ...)`
@@ -376,20 +336,12 @@ protected:
   }
 
 public:
-  Shell(ShellOptions& options) : options(options) { buildSpectestModule(); }
+  Shell(Options& options) : options(options) { buildSpectestModule(); }
 
   bool parseAndRun(Element& root) {
     size_t i = 0;
     while (i < root.size()) {
       Element& curr = *root[i];
-
-      if (options.skipped.count(curr.line) > 0) {
-        Colors::green(std::cerr);
-        std::cerr << "SKIPPING [line: " << curr.line << "]\n";
-        Colors::normal(std::cerr);
-        i++;
-        continue;
-      }
 
       if (curr[0]->str() != MODULE) {
         Colors::red(std::cerr);
@@ -416,11 +368,16 @@ int main(int argc, const char* argv[]) {
   Name entry;
   std::set<size_t> skipped;
 
-  ShellOptions options("wasm-shell", "Execute .wast files");
+  // Read stdin by default.
+  std::string infile = "-";
+  Options options("wasm-shell", "Execute .wast files");
+  options.add_positional(
+    "INFILE",
+    Options::Arguments::One,
+    [&](Options* o, const std::string& argument) { infile = argument; });
   options.parse(argc, argv);
 
-  auto input(
-    read_file<std::vector<char>>(options.extra["infile"], Flags::Text));
+  auto input = read_file<std::string>(infile, Flags::Text);
 
   bool checked = false;
   try {

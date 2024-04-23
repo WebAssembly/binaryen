@@ -76,6 +76,15 @@ public:
                                             Name label = {});
   [[nodiscard]] Result<> visitEnd();
 
+  // Used to visit break nodes when traversing a single block without its
+  // context. The type indicates how many values the break carries to its
+  // destination.
+  [[nodiscard]] Result<> visitBreakWithType(Break*, Type);
+  // Used to visit switch nodes when traversing a single block without its
+  // context. The type indicates how many values the switch carries to its
+  // destination.
+  [[nodiscard]] Result<> visitSwitchWithType(Switch*, Type);
+
   // Binaryen IR uses names to refer to branch targets, but in general there may
   // be branches to constructs that do not yet have names, so in IRBuilder we
   // use indices to refer to branch targets instead, just as the binary format
@@ -220,55 +229,18 @@ public:
 
   // Private functions that must be public for technical reasons.
   [[nodiscard]] Result<> visitExpression(Expression*);
-  [[nodiscard]] Result<>
-  visitDrop(Drop*, std::optional<uint32_t> arity = std::nullopt);
-  [[nodiscard]] Result<> visitIf(If*);
-  [[nodiscard]] Result<> visitReturn(Return*);
-  [[nodiscard]] Result<> visitStructNew(StructNew*);
-  [[nodiscard]] Result<> visitArrayNew(ArrayNew*);
-  [[nodiscard]] Result<> visitArrayNewFixed(ArrayNewFixed*);
-  // Used to visit break exprs when traversing the module in the fully nested
-  // format. Break label destinations are assumed to have already been visited,
-  // with a corresponding push onto the scope stack. As a result, an error will
-  // return if a corresponding scope is not found for the break.
-  [[nodiscard]] Result<> visitBreak(Break*,
-                                    std::optional<Index> label = std::nullopt);
-  // Used to visit break nodes when traversing a single block without its
-  // context. The type indicates how many values the break carries to its
-  // destination.
-  [[nodiscard]] Result<> visitBreakWithType(Break*, Type);
-  [[nodiscard]] Result<>
-  // Used to visit switch exprs when traversing the module in the fully nested
-  // format. Switch label destinations are assumed to have already been visited,
-  // with a corresponding push onto the scope stack. As a result, an error will
-  // return if a corresponding scope is not found for the switch.
-  visitSwitch(Switch*, std::optional<Index> defaultLabel = std::nullopt);
-  // Used to visit switch nodes when traversing a single block without its
-  // context. The type indicates how many values the switch carries to its
-  // destination.
-  [[nodiscard]] Result<> visitSwitchWithType(Switch*, Type);
-  [[nodiscard]] Result<> visitCall(Call*);
-  [[nodiscard]] Result<> visitCallIndirect(CallIndirect*);
-  [[nodiscard]] Result<> visitCallRef(CallRef*);
-  [[nodiscard]] Result<> visitLocalSet(LocalSet*);
-  [[nodiscard]] Result<> visitGlobalSet(GlobalSet*);
-  [[nodiscard]] Result<> visitThrow(Throw*);
-  [[nodiscard]] Result<> visitStringNew(StringNew*);
-  [[nodiscard]] Result<> visitStringEncode(StringEncode*);
-  [[nodiscard]] Result<> visitContBind(ContBind*);
-  [[nodiscard]] Result<> visitResume(Resume*);
-  [[nodiscard]] Result<> visitSuspend(Suspend*);
-  [[nodiscard]] Result<> visitTupleMake(TupleMake*);
-  [[nodiscard]] Result<>
-  visitTupleExtract(TupleExtract*,
-                    std::optional<uint32_t> arity = std::nullopt);
-  [[nodiscard]] Result<> visitPop(Pop*);
+
+  // Do not push pops onto the stack since we generate our own pops as necessary
+  // when visiting the beginnings of try blocks.
+  [[nodiscard]] Result<> visitPop(Pop*) { return Ok{}; }
 
 private:
   Module& wasm;
   Function* func;
   Builder builder;
   std::optional<Function::DebugLocation> debugLoc;
+
+  struct ChildPopper;
 
   void applyDebugLoc(Expression* expr);
 
@@ -326,6 +298,10 @@ private:
 
     // The branch label name for this scope. Always fresh, never shadowed.
     Name label;
+    // For Try/Catch/CatchAll scopes, we need to separately track a label used
+    // for branches, since the normal label is only used for delegates.
+    Name branchLabel;
+
     bool labelUsed = false;
 
     std::vector<Expression*> exprStack;
@@ -336,6 +312,8 @@ private:
     ScopeCtx() : scope(NoScope{}) {}
     ScopeCtx(Scope scope) : scope(scope) {}
     ScopeCtx(Scope scope, Name label) : scope(scope), label(label) {}
+    ScopeCtx(Scope scope, Name label, Name branchLabel)
+      : scope(scope), label(label), branchLabel(branchLabel) {}
 
     static ScopeCtx makeFunc(Function* func) {
       return ScopeCtx(FuncScope{func});
@@ -353,11 +331,13 @@ private:
     static ScopeCtx makeTry(Try* tryy, Name originalLabel = {}) {
       return ScopeCtx(TryScope{tryy, originalLabel});
     }
-    static ScopeCtx makeCatch(Try* tryy, Name originalLabel, Name label) {
-      return ScopeCtx(CatchScope{tryy, originalLabel}, label);
+    static ScopeCtx
+    makeCatch(Try* tryy, Name originalLabel, Name label, Name branchLabel) {
+      return ScopeCtx(CatchScope{tryy, originalLabel}, label, branchLabel);
     }
-    static ScopeCtx makeCatchAll(Try* tryy, Name originalLabel, Name label) {
-      return ScopeCtx(CatchAllScope{tryy, originalLabel}, label);
+    static ScopeCtx
+    makeCatchAll(Try* tryy, Name originalLabel, Name label, Name branchLabel) {
+      return ScopeCtx(CatchAllScope{tryy, originalLabel}, label, branchLabel);
     }
     static ScopeCtx makeTryTable(TryTable* trytable, Name originalLabel = {}) {
       return ScopeCtx(TryTableScope{trytable, originalLabel});
@@ -489,9 +469,13 @@ private:
   std::unordered_map<Name, std::vector<Index>> labelDepths;
 
   Name makeFresh(Name label) {
-    return Names::getValidName(label, [&](Name candidate) {
-      return labelDepths.insert({candidate, {}}).second;
-    });
+    return Names::getValidName(
+      label,
+      [&](Name candidate) {
+        return labelDepths.insert({candidate, {}}).second;
+      },
+      0,
+      "");
   }
 
   void pushScope(ScopeCtx scope) {
@@ -531,10 +515,12 @@ private:
   // `block`, but otherwise we will have to allocate a new block.
   Result<Expression*> finishScope(Block* block = nullptr);
 
-  [[nodiscard]] Result<Name> getLabelName(Index label);
-  [[nodiscard]] Result<Name> getDelegateLabelName(Index label);
+  [[nodiscard]] Result<Name> getLabelName(Index label,
+                                          bool forDelegate = false);
+  [[nodiscard]] Result<Name> getDelegateLabelName(Index label) {
+    return getLabelName(label, true);
+  }
   [[nodiscard]] Result<Index> addScratchLocal(Type);
-  [[nodiscard]] Result<Expression*> pop(size_t size = 1);
 
   struct HoistedVal {
     // The index in the stack of the original value-producing expression.
@@ -556,8 +542,8 @@ private:
   [[nodiscard]] Result<> packageHoistedValue(const HoistedVal&,
                                              size_t sizeHint = 1);
 
-  [[nodiscard]] Result<Expression*>
-  getBranchValue(Expression* curr, Name labelName, std::optional<Index> label);
+  [[nodiscard]] Result<Type> getLabelType(Index label);
+  [[nodiscard]] Result<Type> getLabelType(Name labelName);
 
   void dump();
 };

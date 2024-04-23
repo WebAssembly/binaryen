@@ -126,6 +126,10 @@ void PassRegistry::registerPasses() {
   registerPass("dealign",
                "forces all loads and stores to have alignment 1",
                createDeAlignPass);
+  registerPass(
+    "propagate-debug-locs",
+    "propagate debug location from parents or previous siblings to child nodes",
+    createDebugLocationPropagationPass);
   registerPass("denan",
                "instrument the wasm to convert NaNs into 0 at runtime",
                createDeNaNPass);
@@ -483,6 +487,10 @@ void PassRegistry::registerPasses() {
   registerPass("string-lowering",
                "lowers wasm strings and operations to imports",
                createStringLoweringPass);
+  registerPass(
+    "string-lowering-magic-imports",
+    "same as string-lowering, but encodes well-formed strings as magic imports",
+    createStringLoweringMagicImportPass);
   registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
   registerPass("stack-check",

@@ -173,6 +173,8 @@ struct NullTypeParserCtx {
   BlockTypeT getBlockTypeFromResult(size_t results) { return Ok{}; }
 
   Result<> getBlockTypeFromTypeUse(Index, TypeUseT) { return Ok{}; }
+
+  bool skipFunctionBody() { return false; }
 };
 
 template<typename Ctx> struct TypeParserCtx {
@@ -310,6 +312,8 @@ template<typename Ctx> struct TypeParserCtx {
     assert(results.size() == 1);
     return HeapType(Signature(Type::none, results[0]));
   }
+
+  bool skipFunctionBody() { return false; }
 };
 
 struct NullInstrParserCtx {
@@ -1197,6 +1201,8 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     : TypeParserCtx<ParseModuleTypesCtx>(typeIndices), in(in), wasm(wasm),
       types(types), implicitTypes(implicitTypes),
       implicitElemIndices(implicitElemIndices) {}
+
+  bool skipFunctionBody() { return true; }
 
   Result<HeapTypeT> getHeapTypeFromIdx(Index idx) {
     if (idx >= types.size()) {
