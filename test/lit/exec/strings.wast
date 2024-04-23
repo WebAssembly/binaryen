@@ -424,7 +424,7 @@
   )
 
   ;; CHECK:      [fuzz-exec] calling weird_code_point
-  ;; CHECK-NEXT: [fuzz-exec] note result: weird_code_point => string("\u03e8")
+  ;; CHECK-NEXT: [fuzz-exec] note result: weird_code_point => string("\uffe8")
   (func $weird_code_point (export "weird_code_point") (result stringref)
     (string.from_code_point
       (i32.const 1000)
@@ -432,7 +432,7 @@
   )
 
   ;; CHECK:      [fuzz-exec] calling invalid_code_point
-  ;; CHECK-NEXT: [fuzz-exec] note result: invalid_code_point => string("\uffad")
+  ;; CHECK-NEXT: [trap invalid code point]
   (func $invalid_code_point (export "invalid_code_point") (result stringref)
     (string.from_code_point
       (i32.const -83)
@@ -547,10 +547,10 @@
 ;; CHECK-NEXT: [fuzz-exec] note result: string.from_code_point => string("A")
 
 ;; CHECK:      [fuzz-exec] calling weird_code_point
-;; CHECK-NEXT: [fuzz-exec] note result: weird_code_point => string("\u03e8")
+;; CHECK-NEXT: [fuzz-exec] note result: weird_code_point => string("\uffe8")
 
 ;; CHECK:      [fuzz-exec] calling invalid_code_point
-;; CHECK-NEXT: [fuzz-exec] note result: invalid_code_point => string("\uffad")
+;; CHECK-NEXT: [trap invalid code point]
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.1
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.10
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.2
