@@ -2721,9 +2721,11 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeString() {
-  auto arrayHeapType = HeapType(Array(Field(Type::i32, Field::PackedType::i16)));
+  // Fuzz with JS-style strings.
+  auto mutability = getMutability();
+  auto arrayHeapType = HeapType(Array(Field(Field::PackedType::i16, mutability)));
   auto nullability = getNullability();
-  auto arrayType = Type(arrayType, nullability);
+  auto arrayType = Type(arrayHeapType, nullability);
   switch (upTo(3)) {
     case 0: {
       // Make a string from an array.
@@ -2734,7 +2736,7 @@ Expression* TranslateToFuzzReader::makeString() {
     }
     case 1: {
       // Make a string from a code point.
-      autoCodePoint = make(Type::i32);
+      auto codePoint = make(Type::i32);
       return builder.makeStringNew(StringNewFromCodePoint, codePoint, nullptr, false);
     }
     case 2: {
@@ -4092,6 +4094,10 @@ Nullability TranslateToFuzzReader::getNullability() {
     return NonNullable;
   }
   return Nullable;
+}
+
+Mutability TranslateToFuzzReader::getMutability() {
+  return oneIn(2) ? Mutable : Immutable;
 }
 
 Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {

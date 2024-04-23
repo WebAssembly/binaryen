@@ -12,6 +12,3 @@ BinPackParameters: false
 Language: JavaScript
 DisableFormat: true
 ---
-Language: Json
-BasedOnStyle: LLVM
----
