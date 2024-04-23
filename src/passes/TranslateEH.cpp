@@ -359,11 +359,13 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
       std::optional<Index> local = localAssigner->getExnrefLocal(curr->name);
       if (local) {
         for (auto* throwRef : FindAll<ThrowRef>(catchBody).list) {
-          // All throw_refs generated in this pass has a local.get as its child.
-          // See visitRethrow().
-          auto* localGet = throwRef->exnref->cast<LocalGet>();
-          if (localGet->index == *local) {
-            return true;
+          // All rethrows within this catch body have already been converted to
+          // throw_refs, which contains a local.get as its child.(See
+          // visitRethrow() for details).
+          if (auto* localGet = throwRef->exnref->dynCast<LocalGet>()) {
+            if (localGet->index == *local) {
+              return true;
+            }
           }
         }
       }
