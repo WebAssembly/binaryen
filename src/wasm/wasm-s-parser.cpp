@@ -1990,8 +1990,11 @@ Expression* SExpressionWasmBuilder::makeConst(Element& s, Type type) {
   return ret;
 }
 
-static size_t parseMemAttributes(
-  size_t i, Element& s, Address& offset, Address& align, bool memory64) {
+static size_t parseMemAttributes(size_t i,
+                                 Element& s,
+                                 Address& offset,
+                                 Address& align,
+                                 bool memory64) {
   // Parse "align=X" and "offset=X" arguments, bailing out on anything else.
   while (!s[i]->isList()) {
     const char* str = s[i]->str().str.data();

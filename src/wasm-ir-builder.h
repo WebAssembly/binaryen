@@ -58,7 +58,7 @@ public:
 
   // Set the debug location to be attached to the next visited, created, or
   // pushed instruction.
-  void setDebugLocation(const Function::DebugLocation&);
+  void setDebugLocation(const std::optional<Function::DebugLocation>&);
 
   // Handle the boundaries of control flow structures. Users may choose to use
   // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
@@ -238,7 +238,7 @@ private:
   Module& wasm;
   Function* func;
   Builder builder;
-  std::optional<Function::DebugLocation> debugLoc;
+  std::optional<std::optional<Function::DebugLocation>> debugLoc;
 
   struct ChildPopper;
 
