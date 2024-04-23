@@ -2537,18 +2537,10 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       // Choose a subtype we can materialize a constant for. We cannot
       // materialize non-nullable refs to func or i31 in global contexts.
       Nullability nullability = getSubType(type.getNullability());
-      HeapType subtype;
-      switch (upTo(3)) {
-        case 0:
-          subtype = HeapType::i31;
-          break;
-        case 1:
-          subtype = HeapType::struct_;
-          break;
-        case 2:
-          subtype = HeapType::array;
-          break;
-      }
+      auto subtype = pick(HeapType::i31,
+                          HeapType::struct_,
+                          HeapType::array,
+                          HeapType::string);
       return makeConst(Type(subtype, nullability));
     }
     case HeapType::eq: {
@@ -2605,47 +2597,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return null;
     }
     case HeapType::string: {
-      // Construct an interesting WTF-8 string from parts.
-      std::stringstream wtf8;
-      bool lastWasLeadingSurrogate = false;
-      for (size_t i = 0, end = upTo(4); i < end; ++i) {
-        switch (upTo(6)) {
-          case 0:
-            // A simple ascii string.
-            wtf8 << std::to_string(upTo(1024));
-            break;
-          case 1:
-            // '£'
-            wtf8 << "\xC2\xA3";
-            break;
-          case 2:
-            // '€'
-            wtf8 << "\xE2\x82\xAC";
-            break;
-          case 3:
-            // '𐍈'
-            wtf8 << "\xF0\x90\x8D\x88";
-            break;
-          case 4:
-            // The leading surrogate in '𐍈'
-            wtf8 << "\xED\xA0\x80";
-            lastWasLeadingSurrogate = true;
-            continue;
-          case 5:
-            if (lastWasLeadingSurrogate) {
-              // Avoid invalid WTF-8.
-              continue;
-            }
-            // The trailing surrogate in '𐍈'
-            wtf8 << "\xED\xBD\x88";
-            break;
-        }
-        lastWasLeadingSurrogate = false;
-      }
-      std::stringstream wtf16;
-      // TODO: Use wtf16.view() once we have C++20.
-      String::convertWTF8ToWTF16(wtf16, wtf8.str());
-      return builder.makeStringConst(wtf16.str());
+      return makeString();
     }
     case HeapType::stringview_wtf16:
       // We fully support wtf16 strings.
@@ -2758,6 +2710,83 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   } else {
     WASM_UNREACHABLE("bad user-defined ref type");
   }
+}
+
+Expression* TranslateToFuzzReader::makeString() {
+  // Fuzz with JS-style strings.
+  auto mutability = getMutability();
+  auto arrayHeapType =
+    HeapType(Array(Field(Field::PackedType::i16, mutability)));
+  auto nullability = getNullability();
+  auto arrayType = Type(arrayHeapType, nullability);
+  switch (upTo(3)) {
+    case 0: {
+      // Make a string from an array. We can only do this in functions.
+      if (funcContext) {
+        auto array = make(arrayType);
+        auto* start = make(Type::i32);
+        auto* end = make(Type::i32);
+        abort();
+        return builder.makeStringNew(
+          StringNewWTF16Array, array, start, end, false);
+      }
+      [[fallthrough]];
+    }
+    case 1: {
+      // Make a string from a code point. We can only do this in functions.
+      if (funcContext) {
+        auto codePoint = make(Type::i32);
+        abort();
+        return builder.makeStringNew(
+          StringNewFromCodePoint, codePoint, nullptr, false);
+      }
+      [[fallthrough]];
+    }
+    case 2: {
+      // Construct an interesting WTF-8 string from parts and use string.const.
+      std::stringstream wtf8;
+      bool lastWasLeadingSurrogate = false;
+      for (size_t i = 0, end = upTo(4); i < end; ++i) {
+        switch (upTo(6)) {
+          case 0:
+            // A simple ascii string.
+            wtf8 << std::to_string(upTo(1024));
+            break;
+          case 1:
+            // '£'
+            wtf8 << "\xC2\xA3";
+            break;
+          case 2:
+            // '€'
+            wtf8 << "\xE2\x82\xAC";
+            break;
+          case 3:
+            // '𐍈'
+            wtf8 << "\xF0\x90\x8D\x88";
+            break;
+          case 4:
+            // The leading surrogate in '𐍈'
+            wtf8 << "\xED\xA0\x80";
+            lastWasLeadingSurrogate = true;
+            continue;
+          case 5:
+            if (lastWasLeadingSurrogate) {
+              // Avoid invalid WTF-8.
+              continue;
+            }
+            // The trailing surrogate in '𐍈'
+            wtf8 << "\xED\xBD\x88";
+            break;
+        }
+        lastWasLeadingSurrogate = false;
+      }
+      std::stringstream wtf16;
+      // TODO: Use wtf16.view() once we have C++20.
+      String::convertWTF8ToWTF16(wtf16, wtf8.str());
+      return builder.makeStringConst(wtf16.str());
+    }
+  }
+  WASM_UNREACHABLE("bad switch");
 }
 
 Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
@@ -3959,7 +3988,10 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                      Type(HeapType::struct_, Nullable),
                      Type(HeapType::struct_, NonNullable),
                      Type(HeapType::array, Nullable),
-                     Type(HeapType::array, NonNullable)));
+                     Type(HeapType::array, NonNullable))
+                .add(FeatureSet::Strings,
+                     Type(HeapType::string, Nullable),
+                     Type(HeapType::string, NonNullable)));
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
@@ -3982,7 +4014,10 @@ Type TranslateToFuzzReader::getReferenceType() {
                      Type(HeapType::struct_, Nullable),
                      Type(HeapType::struct_, NonNullable),
                      Type(HeapType::array, Nullable),
-                     Type(HeapType::array, NonNullable)));
+                     Type(HeapType::array, NonNullable))
+                .add(FeatureSet::Strings,
+                     Type(HeapType::string, Nullable),
+                     Type(HeapType::string, NonNullable)));
 }
 
 Type TranslateToFuzzReader::getEqReferenceType() {
@@ -4071,6 +4106,10 @@ Nullability TranslateToFuzzReader::getNullability() {
   return Nullable;
 }
 
+Mutability TranslateToFuzzReader::getMutability() {
+  return oneIn(2) ? Mutable : Immutable;
+}
+
 Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
   if (nullability == NonNullable) {
     return NonNullable;
@@ -4103,6 +4142,7 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
                     HeapType::i31,
                     HeapType::struct_,
                     HeapType::array,
+                    HeapType::string,
                     HeapType::none);
       case HeapType::eq:
         assert(wasm.features.hasReferenceTypes());
