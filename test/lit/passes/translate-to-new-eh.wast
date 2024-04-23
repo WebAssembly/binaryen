@@ -1788,15 +1788,13 @@
   )
 
   ;; CHECK:      (func $deletate-target-outer-try-unreachable (type $1)
-  ;; CHECK-NEXT:  (block $outer1
-  ;; CHECK-NEXT:   (try_table
-  ;; CHECK-NEXT:    (throw_ref
-  ;; CHECK-NEXT:     (block $l00 (result exnref)
-  ;; CHECK-NEXT:      (try_table (catch_all_ref $l00)
-  ;; CHECK-NEXT:       (call $foo)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (return)
+  ;; CHECK-NEXT:  (try_table
+  ;; CHECK-NEXT:   (throw_ref
+  ;; CHECK-NEXT:    (block $l00 (result exnref)
+  ;; CHECK-NEXT:     (try_table (catch_all_ref $l00)
+  ;; CHECK-NEXT:      (call $foo)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (return)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

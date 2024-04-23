@@ -215,7 +215,8 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
   // current 'try' into 'try_table' yet; it only adds block, br, and throw_ref
   // instructions to complete the conversions of inner try~delegates that target
   // the current try.
-  void processDelegateTarget(Try* curr, Block* outerBlock) {
+  void
+  processDelegateTarget(Try* curr, Block* outerBlock, bool& outerBlockUsedSoFar) {
     Builder builder(*getModule());
 
     // Convert
@@ -291,10 +292,12 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
     Name delegateBrTarget = delegateTargetToBrTarget[curr->name];
     Expression* innerBody = nullptr;
     if (curr->type.isConcrete()) {
+      outerBlockUsedSoFar = true;
       auto* brToOuter = builder.makeBreak(outerBlock->name, curr->body);
       innerBody = builder.blockifyWithName(
         brToOuter, delegateBrTarget, nullptr, Type(HeapType::exn, Nullable));
     } else {
+      outerBlockUsedSoFar = curr->body->type != Type::unreachable;
       auto* brToOuter = curr->body->type == Type::unreachable
                           ? nullptr
                           : builder.makeBreak(outerBlock->name);
@@ -304,7 +307,7 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
     curr->body = builder.makeThrowRef(innerBody);
   }
 
-  void processDelegate(Try* curr, Block* outerBlock) {
+  void processDelegate(Try* curr, Block* outerBlock, bool outerBlockUsedSoFar) {
     Builder builder(*getModule());
     // Convert
     // (try
@@ -332,7 +335,7 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
     // If we need an outer block for other reasons (if this is a target of a
     // delegate), we insert the new try_table into it. If not we just replace
     // the current try with the new try_table.
-    if (outerBlock) {
+    if (outerBlock && outerBlockUsedSoFar) {
       outerBlock->list.push_back(tryTable);
       replaceCurrent(outerBlock);
     } else {
@@ -340,7 +343,7 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
     }
   }
 
-  void processCatches(Try* curr, Block* outerBlock) {
+  void processCatches(Try* curr, Block* outerBlock, bool outerBlockUsedSoFar) {
     Module* wasm = getModule();
     Builder builder(*wasm);
 
@@ -388,7 +391,7 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
       // If we need an outer block for other reasons (if this is a target of a
       // delegate), we insert the new try_table into it. If not we just replace
       // the current try with the new try_table.
-      if (outerBlock) {
+      if (outerBlock && outerBlockUsedSoFar) {
         outerBlock->list.push_back(tryTable);
         replaceCurrent(outerBlock);
       } else {
@@ -687,13 +690,14 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
         builder.makeBlock(labels->getUnique("outer"), {}, curr->type);
     }
 
+    bool outerBlockUsedSoFar = false;
     if (it != delegateTargetToBrTarget.end()) {
-      processDelegateTarget(curr, outerBlock);
+      processDelegateTarget(curr, outerBlock, outerBlockUsedSoFar);
     }
     if (curr->isDelegate()) {
-      processDelegate(curr, outerBlock);
+      processDelegate(curr, outerBlock, outerBlockUsedSoFar);
     } else { // try-catch or catch-less try
-      processCatches(curr, outerBlock);
+      processCatches(curr, outerBlock, outerBlockUsedSoFar);
     }
   }
 
