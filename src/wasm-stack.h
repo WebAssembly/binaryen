@@ -328,6 +328,7 @@ void BinaryenIRWriter<SubType>::visitBlock(Block* curr) {
       parents.push_back(curr);
       emit(curr);
       curr = child;
+      emitDebugLocation(curr);
     }
     // Emit the current block, which does not have a block as a child in the
     // first position.
