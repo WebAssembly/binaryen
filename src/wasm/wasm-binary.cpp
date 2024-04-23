@@ -2687,12 +2687,11 @@ void WasmBinaryReader::readFunctions() {
 
     readVars();
 
-    std::swap(func->prologLocation, debugLocation);
+    func->prologLocation = debugLocation;
     {
       // process the function body
       BYN_TRACE("processing function: " << i << std::endl);
       nextLabel = 0;
-      debugLocation.clear();
       willBeIgnored = false;
       // process body
       assert(breakStack.empty());
