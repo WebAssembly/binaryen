@@ -2783,6 +2783,7 @@ Expression* TranslateToFuzzReader::makeString() {
       return builder.makeStringConst(wtf16.str());
     }
   }
+  WASM_UNREACHABLE("bad switch");
 }
 
 Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
