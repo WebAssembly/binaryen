@@ -2605,47 +2605,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return null;
     }
     case HeapType::string: {
-      // Construct an interesting WTF-8 string from parts.
-      std::stringstream wtf8;
-      bool lastWasLeadingSurrogate = false;
-      for (size_t i = 0, end = upTo(4); i < end; ++i) {
-        switch (upTo(6)) {
-          case 0:
-            // A simple ascii string.
-            wtf8 << std::to_string(upTo(1024));
-            break;
-          case 1:
-            // '£'
-            wtf8 << "\xC2\xA3";
-            break;
-          case 2:
-            // '€'
-            wtf8 << "\xE2\x82\xAC";
-            break;
-          case 3:
-            // '𐍈'
-            wtf8 << "\xF0\x90\x8D\x88";
-            break;
-          case 4:
-            // The leading surrogate in '𐍈'
-            wtf8 << "\xED\xA0\x80";
-            lastWasLeadingSurrogate = true;
-            continue;
-          case 5:
-            if (lastWasLeadingSurrogate) {
-              // Avoid invalid WTF-8.
-              continue;
-            }
-            // The trailing surrogate in '𐍈'
-            wtf8 << "\xED\xBD\x88";
-            break;
-        }
-        lastWasLeadingSurrogate = false;
-      }
-      std::stringstream wtf16;
-      // TODO: Use wtf16.view() once we have C++20.
-      String::convertWTF8ToWTF16(wtf16, wtf8.str());
-      return builder.makeStringConst(wtf16.str());
+      return makeString();
     }
     case HeapType::stringview_wtf16:
       // We fully support wtf16 strings.
@@ -2757,6 +2717,69 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
     return builder.makeArrayNew(type.getHeapType(), count, init);
   } else {
     WASM_UNREACHABLE("bad user-defined ref type");
+  }
+}
+
+Expression* TranslateToFuzzReader::makeString() {
+  auto arrayHeapType = HeapType(Array(Field(Type::i32, Field::PackedType::i16)));
+  auto nullability = getNullability();
+  auto arrayType = Type(arrayType, nullability);
+  switch (upTo(3)) {
+    case 0: {
+      // Make a string from an array.
+      auto array = make(arrayType);
+      auto* start = make(Type::i32);
+      auto* end = make(Type::i32);
+      return builder.makeStringNew(StringNewWTF16Array, array, start, end, false);
+    }
+    case 1: {
+      // Make a string from a code point.
+      autoCodePoint = make(Type::i32);
+      return builder.makeStringNew(StringNewFromCodePoint, codePoint, nullptr, false);
+    }
+    case 2: {
+      // Construct an interesting WTF-8 string from parts and use string.const.
+      std::stringstream wtf8;
+      bool lastWasLeadingSurrogate = false;
+      for (size_t i = 0, end = upTo(4); i < end; ++i) {
+        switch (upTo(6)) {
+          case 0:
+            // A simple ascii string.
+            wtf8 << std::to_string(upTo(1024));
+            break;
+          case 1:
+            // '£'
+            wtf8 << "\xC2\xA3";
+            break;
+          case 2:
+            // '€'
+            wtf8 << "\xE2\x82\xAC";
+            break;
+          case 3:
+            // '𐍈'
+            wtf8 << "\xF0\x90\x8D\x88";
+            break;
+          case 4:
+            // The leading surrogate in '𐍈'
+            wtf8 << "\xED\xA0\x80";
+            lastWasLeadingSurrogate = true;
+            continue;
+          case 5:
+            if (lastWasLeadingSurrogate) {
+              // Avoid invalid WTF-8.
+              continue;
+            }
+            // The trailing surrogate in '𐍈'
+            wtf8 << "\xED\xBD\x88";
+            break;
+        }
+        lastWasLeadingSurrogate = false;
+      }
+      std::stringstream wtf16;
+      // TODO: Use wtf16.view() once we have C++20.
+      String::convertWTF8ToWTF16(wtf16, wtf8.str());
+      return builder.makeStringConst(wtf16.str());
+    }
   }
 }
 

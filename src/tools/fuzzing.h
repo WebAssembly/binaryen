@@ -315,6 +315,8 @@ private:
   Expression* makeBasicRef(Type type);
   Expression* makeCompoundRef(Type type);
 
+  Expression* makeString();
+
   // Similar to makeBasic/CompoundRef, but indicates that this value will be
   // used in a place that will trap on null. For example, the reference of a
   // struct.get or array.set would use this.
