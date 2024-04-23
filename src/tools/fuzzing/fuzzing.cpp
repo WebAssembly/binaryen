@@ -2737,7 +2737,7 @@ Expression* TranslateToFuzzReader::makeString() {
         return builder.makeStringNew(
           StringNewWTF16Array, array, start, end, false);
       }
-      [[fallthrough]]
+      [[fallthrough]];
     }
     case 1: {
       // Make a string from a code point. We can only do this in functions.
@@ -2746,7 +2746,7 @@ Expression* TranslateToFuzzReader::makeString() {
         return builder.makeStringNew(
           StringNewFromCodePoint, codePoint, nullptr, false);
       }
-      [[fallthrough]]
+      [[fallthrough]];
     }
     case 2: {
       // Construct an interesting WTF-8 string from parts and use string.const.
