@@ -2538,11 +2538,11 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       // materialize non-nullable refs to func or i31 in global contexts.
       Nullability nullability = getSubType(type.getNullability());
       auto subtype = pick(FeatureOptions<HeapType>()
-                        .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                             HeapType::i31,
-                             HeapType::struct_,
-                             HeapType::array)
-                        .add(FeatureSet::Strings, HeapType::string));
+                            .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                                 HeapType::i31,
+                                 HeapType::struct_,
+                                 HeapType::array)
+                            .add(FeatureSet::Strings, HeapType::string));
       return makeConst(Type(subtype, nullability));
     }
     case HeapType::eq: {
