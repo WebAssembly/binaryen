@@ -2726,7 +2726,6 @@ Expression* TranslateToFuzzReader::makeString() {
         auto array = make(arrayType);
         auto* start = make(Type::i32);
         auto* end = make(Type::i32);
-        abort();
         return builder.makeStringNew(
           StringNewWTF16Array, array, start, end, false);
       }
@@ -2736,7 +2735,6 @@ Expression* TranslateToFuzzReader::makeString() {
       // Make a string from a code point. We can only do this in functions.
       if (funcContext) {
         auto codePoint = make(Type::i32);
-        abort();
         return builder.makeStringNew(
           StringNewFromCodePoint, codePoint, nullptr, false);
       }
