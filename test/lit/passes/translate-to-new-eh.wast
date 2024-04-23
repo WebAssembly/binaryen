@@ -2170,4 +2170,45 @@
       (unreachable)
     )
   )
+
+  ;; CHECK:      (func $try-delegate-within-catchless-try (type $1)
+  ;; CHECK-NEXT:  (block $outer1
+  ;; CHECK-NEXT:   (try_table
+  ;; CHECK-NEXT:    (throw_ref
+  ;; CHECK-NEXT:     (block $l00 (result exnref)
+  ;; CHECK-NEXT:      (try_table (catch_all_ref $l00)
+  ;; CHECK-NEXT:       (call $foo)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (br $outer1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; STACKIR-OPT:      (func $try-delegate-within-catchless-try (type $1)
+  ;; STACKIR-OPT-NEXT:  block $outer1
+  ;; STACKIR-OPT-NEXT:   try_table
+  ;; STACKIR-OPT-NEXT:    block $l00 (result exnref)
+  ;; STACKIR-OPT-NEXT:     try_table (catch_all_ref $l00)
+  ;; STACKIR-OPT-NEXT:      call $foo
+  ;; STACKIR-OPT-NEXT:     end
+  ;; STACKIR-OPT-NEXT:     br $outer1
+  ;; STACKIR-OPT-NEXT:    end
+  ;; STACKIR-OPT-NEXT:    throw_ref
+  ;; STACKIR-OPT-NEXT:   end
+  ;; STACKIR-OPT-NEXT:   unreachable
+  ;; STACKIR-OPT-NEXT:  end
+  ;; STACKIR-OPT-NEXT: )
+  (func $try-delegate-within-catchless-try
+    (try $l0
+      (do
+        (try
+          (do
+            (call $foo)
+          )
+          (delegate $l0)
+        )
+      )
+    )
+  )
 )
