@@ -2729,18 +2729,24 @@ Expression* TranslateToFuzzReader::makeString() {
   auto arrayType = Type(arrayHeapType, nullability);
   switch (upTo(3)) {
     case 0: {
-      // Make a string from an array.
-      auto array = make(arrayType);
-      auto* start = make(Type::i32);
-      auto* end = make(Type::i32);
-      return builder.makeStringNew(
-        StringNewWTF16Array, array, start, end, false);
+      // Make a string from an array. We can only do this in functions.
+      if (funcContext) {
+        auto array = make(arrayType);
+        auto* start = make(Type::i32);
+        auto* end = make(Type::i32);
+        return builder.makeStringNew(
+          StringNewWTF16Array, array, start, end, false);
+      }
+      [[fallthrough]]
     }
     case 1: {
-      // Make a string from a code point.
-      auto codePoint = make(Type::i32);
-      return builder.makeStringNew(
-        StringNewFromCodePoint, codePoint, nullptr, false);
+      // Make a string from a code point. We can only do this in functions.
+      if (funcContext) {
+        auto codePoint = make(Type::i32);
+        return builder.makeStringNew(
+          StringNewFromCodePoint, codePoint, nullptr, false);
+      }
+      [[fallthrough]]
     }
     case 2: {
       // Construct an interesting WTF-8 string from parts and use string.const.
