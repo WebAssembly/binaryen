@@ -315,6 +315,8 @@ private:
   Expression* makeBasicRef(Type type);
   Expression* makeCompoundRef(Type type);
 
+  Expression* makeString();
+
   // Similar to makeBasic/CompoundRef, but indicates that this value will be
   // used in a place that will trap on null. For example, the reference of a
   // struct.get or array.set would use this.
@@ -378,6 +380,7 @@ private:
   Type getLoggableType();
   bool isLoggableType(Type type);
   Nullability getNullability();
+  Mutability getMutability();
   Nullability getSubType(Nullability nullability);
   HeapType getSubType(HeapType type);
   Type getSubType(Type type);

@@ -33,6 +33,7 @@
 #include "support/bits.h"
 #include "support/safe_integer.h"
 #include "support/stdckdint.h"
+#include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -1895,6 +1896,23 @@ public:
           for (size_t i = startVal; i < endVal; i++) {
             contents.push_back(ptrDataValues[i]);
           }
+        }
+        return makeGCData(contents, curr->type);
+      }
+      case StringNewFromCodePoint: {
+        uint32_t codePoint = ptr.getSingleValue().geti32();
+        if (codePoint > 0x10FFFF) {
+          trap("invalid code point");
+        }
+        std::stringstream wtf16;
+        String::writeWTF16CodePoint(wtf16, codePoint);
+        std::string str = wtf16.str();
+        Literals contents;
+        // The output contains a code point and a null terminator, so it is not
+        // empty. Write it all out but the null terminator.
+        assert(!str.empty());
+        for (size_t i = 0; i < str.size() - 1; i++) {
+          contents.push_back(Literal(int32_t(str[i])));
         }
         return makeGCData(contents, curr->type);
       }
