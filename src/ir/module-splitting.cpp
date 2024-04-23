@@ -350,6 +350,10 @@ ModuleSplitter::classifyFunctions(Module& primary, const Config& config) {
   ModuleUtils::ParallelFunctionAnalysis<std::vector<Name>>
     segmentReferrerCollector(
       primary, [&](Function* func, std::vector<Name>& segmentReferrers) {
+        if (func->imported()) {
+          return;
+        }
+
         struct SegmentReferrerCollector
           : PostWalker<SegmentReferrerCollector,
                        UnifiedExpressionVisitor<SegmentReferrerCollector>> {
