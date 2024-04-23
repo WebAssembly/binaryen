@@ -4137,13 +4137,15 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::any:
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
-        return pick(HeapType::any,
-                    HeapType::eq,
-                    HeapType::i31,
-                    HeapType::struct_,
-                    HeapType::array,
-                    HeapType::string,
-                    HeapType::none);
+        return pick(FeatureOptions<HeapType>()
+                      .add(FeatureSet::GC,
+                           HeapType::any,
+                           HeapType::eq,
+                           HeapType::i31,
+                           HeapType::struct_,
+                           HeapType::array,
+                           HeapType::none)
+                      .add(FeatureSet::Strings, HeapType::string));
       case HeapType::eq:
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
