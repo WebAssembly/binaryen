@@ -1900,21 +1900,14 @@ public:
         return makeGCData(contents, curr->type);
       }
       case StringNewFromCodePoint: {
-        uint32_t codePoint = ptr.getSingleValue().geti32();
+        uint32_t codePoint = ptr.getSingleValue().getUnsigned();
         if (codePoint > 0x10FFFF) {
           trap("invalid code point");
         }
         std::stringstream wtf16;
         String::writeWTF16CodePoint(wtf16, codePoint);
         std::string str = wtf16.str();
-        Literals contents;
-        // The output contains a code point and a null terminator, so it is not
-        // empty. Write it all out but the null terminator.
-        assert(!str.empty());
-        for (size_t i = 0; i < str.size() - 1; i++) {
-          contents.push_back(Literal(int32_t(str[i])));
-        }
-        return makeGCData(contents, curr->type);
+        return Literal(str);
       }
       default:
         // TODO: others
