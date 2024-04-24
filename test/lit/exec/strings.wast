@@ -472,6 +472,14 @@
       (i32.const -83)
     )
   )
+
+  ;; CHECK:      [fuzz-exec] calling string.measure
+  ;; CHECK-NEXT: [fuzz-exec] note result: string.measure => 5
+  (func $string.measure (export "string.measure") (result i32)
+    (string.measure_wtf16
+      (string.const "five!")
+    )
+  )
 )
 ;; CHECK:      [fuzz-exec] calling new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
@@ -597,6 +605,9 @@
 
 ;; CHECK:      [fuzz-exec] calling invalid_code_point
 ;; CHECK-NEXT: [trap invalid code point]
+
+;; CHECK:      [fuzz-exec] calling string.measure
+;; CHECK-NEXT: [fuzz-exec] note result: string.measure => 5
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.1
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.10
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.2
@@ -634,6 +645,7 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing slice-big
 ;; CHECK-NEXT: [fuzz-exec] comparing slice-unicode
 ;; CHECK-NEXT: [fuzz-exec] comparing string.from_code_point
+;; CHECK-NEXT: [fuzz-exec] comparing string.measure
 ;; CHECK-NEXT: [fuzz-exec] comparing surrogate_pair_code_point
 ;; CHECK-NEXT: [fuzz-exec] comparing unsigned_code_point
 ;; CHECK-NEXT: [fuzz-exec] comparing weird_code_point
