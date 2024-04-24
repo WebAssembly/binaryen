@@ -2537,18 +2537,12 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       // Choose a subtype we can materialize a constant for. We cannot
       // materialize non-nullable refs to func or i31 in global contexts.
       Nullability nullability = getSubType(type.getNullability());
-      HeapType subtype;
-      switch (upTo(3)) {
-        case 0:
-          subtype = HeapType::i31;
-          break;
-        case 1:
-          subtype = HeapType::struct_;
-          break;
-        case 2:
-          subtype = HeapType::array;
-          break;
-      }
+      auto subtype = pick(FeatureOptions<HeapType>()
+                            .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                                 HeapType::i31,
+                                 HeapType::struct_,
+                                 HeapType::array)
+                            .add(FeatureSet::Strings, HeapType::string));
       return makeConst(Type(subtype, nullability));
     }
     case HeapType::eq: {
@@ -3994,7 +3988,10 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                      Type(HeapType::struct_, Nullable),
                      Type(HeapType::struct_, NonNullable),
                      Type(HeapType::array, Nullable),
-                     Type(HeapType::array, NonNullable)));
+                     Type(HeapType::array, NonNullable))
+                .add(FeatureSet::Strings,
+                     Type(HeapType::string, Nullable),
+                     Type(HeapType::string, NonNullable)));
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
@@ -4017,7 +4014,10 @@ Type TranslateToFuzzReader::getReferenceType() {
                      Type(HeapType::struct_, Nullable),
                      Type(HeapType::struct_, NonNullable),
                      Type(HeapType::array, Nullable),
-                     Type(HeapType::array, NonNullable)));
+                     Type(HeapType::array, NonNullable))
+                .add(FeatureSet::Strings,
+                     Type(HeapType::string, Nullable),
+                     Type(HeapType::string, NonNullable)));
 }
 
 Type TranslateToFuzzReader::getEqReferenceType() {
@@ -4137,12 +4137,15 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::any:
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
-        return pick(HeapType::any,
-                    HeapType::eq,
-                    HeapType::i31,
-                    HeapType::struct_,
-                    HeapType::array,
-                    HeapType::none);
+        return pick(FeatureOptions<HeapType>()
+                      .add(FeatureSet::GC,
+                           HeapType::any,
+                           HeapType::eq,
+                           HeapType::i31,
+                           HeapType::struct_,
+                           HeapType::array,
+                           HeapType::none)
+                      .add(FeatureSet::Strings, HeapType::string));
       case HeapType::eq:
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
