@@ -315,7 +315,10 @@ private:
   Expression* makeBasicRef(Type type);
   Expression* makeCompoundRef(Type type);
 
-  Expression* makeString();
+  Expression* makeStringConst();
+  Expression* makeStringNewArray();
+  Expression* makeStringNewCodePoint();
+  Expression* makeStringConcat();
 
   // Similar to makeBasic/CompoundRef, but indicates that this value will be
   // used in a place that will trap on null. For example, the reference of a

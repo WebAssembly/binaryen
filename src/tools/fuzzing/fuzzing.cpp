@@ -2605,7 +2605,21 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return null;
     }
     case HeapType::string: {
-      return makeString();
+      switch (upTo(8)) {
+        case 0:
+        case 1:
+        case 2:
+          return makeStringConst();
+        case 3:
+        case 4:
+          return makeStringNewArray();
+        case 5:
+        case 6:
+          return makeStringNewCodePoint();
+        case 7:
+          return makeStringConcat();
+      }
+      WASM_UNREACHABLE("bad switch");
     }
     case HeapType::stringview_wtf16:
       // We fully support wtf16 strings.
@@ -2720,79 +2734,88 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   }
 }
 
-Expression* TranslateToFuzzReader::makeString() {
-  // Fuzz with JS-style strings.
+Expression* TranslateToFuzzReader::makeStringConst() {
+  // Construct an interesting WTF-8 string from parts and use string.const.
+  std::stringstream wtf8;
+  bool lastWasLeadingSurrogate = false;
+  for (size_t i = 0, end = upTo(4); i < end; ++i) {
+    switch (upTo(6)) {
+      case 0:
+        // A simple ascii string.
+        wtf8 << std::to_string(upTo(1024));
+        break;
+      case 1:
+        // '£'
+        wtf8 << "\xC2\xA3";
+        break;
+      case 2:
+        // '€'
+        wtf8 << "\xE2\x82\xAC";
+        break;
+      case 3:
+        // '𐍈'
+        wtf8 << "\xF0\x90\x8D\x88";
+        break;
+      case 4:
+        // The leading surrogate in '𐍈'
+        wtf8 << "\xED\xA0\x80";
+        lastWasLeadingSurrogate = true;
+        continue;
+      case 5:
+        if (lastWasLeadingSurrogate) {
+          // Avoid invalid WTF-8.
+          continue;
+        }
+        // The trailing surrogate in '𐍈'
+        wtf8 << "\xED\xBD\x88";
+        break;
+    }
+    lastWasLeadingSurrogate = false;
+  }
+  std::stringstream wtf16;
+  // TODO: Use wtf16.view() once we have C++20.
+  String::convertWTF8ToWTF16(wtf16, wtf8.str());
+  return builder.makeStringConst(wtf16.str());
+}
+
+Expression* TranslateToFuzzReader::makeStringNewArray() {
+  // Make a string from an array. We can only do this in functions.
+  if (!funcContext) {
+    return makeStringConst();
+  }
+
   auto mutability = getMutability();
   auto arrayHeapType =
     HeapType(Array(Field(Field::PackedType::i16, mutability)));
   auto nullability = getNullability();
   auto arrayType = Type(arrayHeapType, nullability);
-  switch (upTo(3)) {
-    case 0: {
-      // Make a string from an array. We can only do this in functions.
-      if (funcContext) {
-        auto array = make(arrayType);
-        auto* start = make(Type::i32);
-        auto* end = make(Type::i32);
-        return builder.makeStringNew(
-          StringNewWTF16Array, array, start, end, false);
-      }
-      [[fallthrough]];
-    }
-    case 1: {
-      // Make a string from a code point. We can only do this in functions.
-      if (funcContext) {
-        auto codePoint = make(Type::i32);
-        return builder.makeStringNew(
-          StringNewFromCodePoint, codePoint, nullptr, false);
-      }
-      [[fallthrough]];
-    }
-    case 2: {
-      // Construct an interesting WTF-8 string from parts and use string.const.
-      std::stringstream wtf8;
-      bool lastWasLeadingSurrogate = false;
-      for (size_t i = 0, end = upTo(4); i < end; ++i) {
-        switch (upTo(6)) {
-          case 0:
-            // A simple ascii string.
-            wtf8 << std::to_string(upTo(1024));
-            break;
-          case 1:
-            // '£'
-            wtf8 << "\xC2\xA3";
-            break;
-          case 2:
-            // '€'
-            wtf8 << "\xE2\x82\xAC";
-            break;
-          case 3:
-            // '𐍈'
-            wtf8 << "\xF0\x90\x8D\x88";
-            break;
-          case 4:
-            // The leading surrogate in '𐍈'
-            wtf8 << "\xED\xA0\x80";
-            lastWasLeadingSurrogate = true;
-            continue;
-          case 5:
-            if (lastWasLeadingSurrogate) {
-              // Avoid invalid WTF-8.
-              continue;
-            }
-            // The trailing surrogate in '𐍈'
-            wtf8 << "\xED\xBD\x88";
-            break;
-        }
-        lastWasLeadingSurrogate = false;
-      }
-      std::stringstream wtf16;
-      // TODO: Use wtf16.view() once we have C++20.
-      String::convertWTF8ToWTF16(wtf16, wtf8.str());
-      return builder.makeStringConst(wtf16.str());
-    }
+  auto array = make(arrayType);
+  auto* start = make(Type::i32);
+  auto* end = make(Type::i32);
+  return builder.makeStringNew(
+    StringNewWTF16Array, array, start, end, false);
+}
+
+Expression* TranslateToFuzzReader::makeStringNewCodePoint() {
+  // Make a string from a code point. We can only do this in functions.
+  if (!funcContext) {
+    return makeStringConst();
   }
-  WASM_UNREACHABLE("bad switch");
+
+  auto codePoint = make(Type::i32);
+  return builder.makeStringNew(
+    StringNewFromCodePoint, codePoint, nullptr, false);
+}
+
+Expression* TranslateToFuzzReader::makeStringConcat() {
+  // Make a string from two strings. We can only do this in functions.
+  if (!funcContext) {
+    return makeStringConst();
+  }
+
+  auto left = make(Type(HeapType::string, getNullability()));
+  auto right = make(Type(HeapType::string, getNullability()));
+  return builder.makeStringConcat(left, right);
 }
 
 Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
