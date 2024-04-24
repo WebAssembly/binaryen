@@ -39,8 +39,7 @@ bool useNewWATParser = false;
 
 static void readTextData(std::string& input, Module& wasm, IRProfile profile) {
   if (useNewWATParser) {
-    std::string_view in(input.c_str());
-    if (auto parsed = WATParser::parseModule(wasm, in);
+    if (auto parsed = WATParser::parseModule(wasm, input);
         auto err = parsed.getErr()) {
       Fatal() << err->msg;
     }

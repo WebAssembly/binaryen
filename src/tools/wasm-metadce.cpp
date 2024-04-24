@@ -485,8 +485,6 @@ int main(int argc, const char* argv[]) {
     Fatal() << "no graph file provided.";
   }
 
-  auto input(read_file<std::string>(options.extra["infile"], Flags::Text));
-
   Module wasm;
   options.applyFeatures(wasm);
 
