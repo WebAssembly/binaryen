@@ -157,12 +157,13 @@ extern Name srcAnnotationKind;
 
 struct Lexer {
 private:
-  std::string_view buffer;
   size_t index = 0;
   std::optional<Token> curr;
   std::vector<Annotation> annotations;
 
 public:
+  std::string_view buffer;
+
   Lexer(std::string_view buffer) : buffer(buffer) { setIndex(0); }
 
   size_t getIndex() const { return index; }

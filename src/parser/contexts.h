@@ -912,7 +912,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     return Ok{};
   }
 
-  ParseDeclsCtx(std::string_view in, Module& wasm) : in(in), wasm(wasm) {}
+  ParseDeclsCtx(Lexer& in, Module& wasm) : in(in), wasm(wasm) {}
 
   void addFuncType(SignatureT) {}
   void addContType(ContinuationT) {}
@@ -1049,9 +1049,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
   // The index of the subtype definition we are parsing.
   Index index = 0;
 
-  ParseTypeDefsCtx(std::string_view in,
-                   TypeBuilder& builder,
-                   const IndexMap& typeIndices)
+  ParseTypeDefsCtx(Lexer& in, TypeBuilder& builder, const IndexMap& typeIndices)
     : TypeParserCtx<ParseTypeDefsCtx>(typeIndices), in(in), builder(builder),
       names(builder.size()) {}
 
@@ -1121,7 +1119,7 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
   // Map signatures to the first defined heap type they match.
   std::unordered_map<Signature, HeapType> sigTypes;
 
-  ParseImplicitTypeDefsCtx(std::string_view in,
+  ParseImplicitTypeDefsCtx(Lexer& in,
                            std::vector<HeapType>& types,
                            std::unordered_map<Index, HeapType>& implicitTypes,
                            const IndexMap& typeIndices)
@@ -1192,7 +1190,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
   Index index = 0;
 
   ParseModuleTypesCtx(
-    std::string_view in,
+    Lexer& in,
     Module& wasm,
     const std::vector<HeapType>& types,
     const std::unordered_map<Index, HeapType>& implicitTypes,
@@ -1397,7 +1395,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   }
 
   ParseDefsCtx(
-    std::string_view in,
+    Lexer& in,
     Module& wasm,
     const std::vector<HeapType>& types,
     const std::unordered_map<Index, HeapType>& implicitTypes,
