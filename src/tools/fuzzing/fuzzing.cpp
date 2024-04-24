@@ -3797,7 +3797,7 @@ static auto makeArrayBoundsCheck(Expression* ref,
     Expression* getRef;
     // An additional use of the index (as with the ref, it reads from a local).
     Expression* getIndex;
-    // An addition use of the length, if it was provided.
+    // An additional use of the length, if it was provided.
     Expression* getLength = nullptr;
   } result = {builder.makeBinary(LtUInt32, effectiveIndex, getSize),
               builder.makeLocalGet(tempRef, ref->type),
