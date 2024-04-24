@@ -3795,7 +3795,7 @@ static auto makeArrayBoundsCheck(Expression* ref,
     // An additional use of the reference (we stored the reference in a local,
     // so this reads from that local).
     Expression* getRef;
-    // An addition use of the index (as with the ref, it reads from a local).
+    // An additional use of the index (as with the ref, it reads from a local).
     Expression* getIndex;
     // An addition use of the length, if it was provided.
     Expression* getLength = nullptr;
@@ -3915,17 +3915,16 @@ Expression* TranslateToFuzzReader::makeStringEncode() {
 
   // Only rarely emit a plain get which might trap. See related logic in
   // ::makePointer().
-  if (allowOOB && oneIn(10)) {
-  // To avoid a trap, check the length dynamically using this pattern:
-    //
-    //   start = (start < array.len ? start : 0)
-    //
-    auto check = makeArrayBoundsCheck(array, start, funcContext->func, builder);
-    auto* zero = builder.makeConst(Literal::makeFromInt32(0, Type::i32));
-    start = builder.makeIf(check.condition, start, zero);
+  if (allowOOB || oneIn(10)) {
+    return builder.makeStringEncode(StringEncodeWTF16Array, ref, array, start);
   }
 
-  return builder.makeStringEncode(StringEncodeWTF16Array, ref, array, start);
+  // To avoid a trap, check the length and execute something else if oob.
+  auto check = makeArrayBoundsCheck(array, start, funcContext->func, builder);
+  array = check.getRef;
+  start = check.getIndex;
+  auto* encode = builder.makeStringEncode(StringEncodeWTF16Array, ref, array, start);
+  return builder.makeIf(check.condition, encode, make(Type::i32));
 }
 
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
