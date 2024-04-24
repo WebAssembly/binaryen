@@ -695,7 +695,6 @@ Function* TranslateToFuzzReader::addFunction() {
   params.reserve(numParams);
   for (Index i = 0; i < numParams; i++) {
     auto type = getSingleConcreteType();
-    funcContext->typeLocals[type].push_back(params.size());
     params.push_back(type);
   }
   auto paramType = Type(params);
@@ -704,9 +703,9 @@ Function* TranslateToFuzzReader::addFunction() {
   Index numVars = upToSquared(MAX_VARS);
   for (Index i = 0; i < numVars; i++) {
     auto type = getConcreteType();
-    funcContext->typeLocals[type].push_back(params.size() + func->vars.size());
     func->vars.push_back(type);
   }
+  context.computeTypeLocals();
   // with small chance, make the body unreachable
   auto bodyType = func->getResults();
   if (oneIn(10)) {
@@ -722,6 +721,14 @@ Function* TranslateToFuzzReader::addFunction() {
   // may end up breaking them. TODO: do them after the fact, like with the
   // hang limit checks.
   if (allowOOB) {
+    // Notice the locals and their types again, as more may have been added
+    // during generation of the body. We want to be able to local.get from those
+    // as well.
+    // TODO: We could also add a "localize" phase here to stash even more things
+    //       in locals, so that they can be reused. But we would need to be
+    //       careful with non-nullable locals (which error if used before being
+    //       set, or trap if we make them nullable, both of which are bad).
+    context.computeTypeLocals();
     // Recombinations create duplicate code patterns.
     recombine(func);
     // Mutations add random small changes, which can subtly break duplicate
@@ -733,6 +740,7 @@ Function* TranslateToFuzzReader::addFunction() {
     // after.
     fixAfterChanges(func);
   }
+
   // Add hang limit checks after all other operations on the function body.
   wasm.addFunction(func);
   // Export some functions, but not all (to allow inlining etc.). Try to export
@@ -1194,7 +1202,9 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
     // Optionally, fuzz the function contents.
     if (upTo(RESOLUTION) >= chance) {
       dropToLog(func);
+      // Notice params as well as any locals generated above.
       // TODO add some locals? and the rest of addFunction's operations?
+      context.computeTypeLocals();
       // TODO: if we add OOB checks after creation, then we can do it on
       //       initial contents too, and it may be nice to *not* run these
       //       passes, like we don't run them on new functions. But, we may
