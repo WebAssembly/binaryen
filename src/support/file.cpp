@@ -71,6 +71,7 @@ T wasm::read_file(const std::string& filename, Flags::BinaryOption binary) {
             << "': Input file too large: " << insize
             << " bytes. Try rebuilding in 64-bit mode.";
   }
+  // Zero-initialize the string or vector with the expected size.
   T input(size_t(insize), '\0');
   if (size_t(insize) == 0) {
     return input;
