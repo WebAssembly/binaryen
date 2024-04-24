@@ -2602,6 +2602,10 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return null;
     }
     case HeapType::string: {
+      // In non-function contexts all we can do is string.const.
+      if (!funcContext) {
+        return makeStringConst();
+      }
       switch (upTo(9)) {
         case 0:
         case 1:
@@ -2738,11 +2742,6 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeStringNewArray() {
-  // Make a string from an array. We can only do this in functions.
-  if (!funcContext) {
-    return makeStringConst();
-  }
-
   auto mutability = getMutability();
   auto arrayHeapType =
     HeapType(Array(Field(Field::PackedType::i16, mutability)));
@@ -2755,11 +2754,6 @@ Expression* TranslateToFuzzReader::makeStringNewArray() {
 }
 
 Expression* TranslateToFuzzReader::makeStringNewCodePoint() {
-  // Make a string from a code point. We can only do this in functions.
-  if (!funcContext) {
-    return makeStringConst();
-  }
-
   auto codePoint = make(Type::i32);
   return builder.makeStringNew(
     StringNewFromCodePoint, codePoint, nullptr, false);
