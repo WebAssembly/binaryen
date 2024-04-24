@@ -2758,26 +2758,6 @@ Expression* TranslateToFuzzReader::makeStringNewCodePoint() {
     StringNewFromCodePoint, codePoint, nullptr, false);
 }
 
-Expression* TranslateToFuzzReader::makeStringEncode() {
-  auto* ref = make(Type(HeapType::string, getNullability()));
-  auto* array = make(getArrayTypeForString());
-  auto* start = make(Type::i32);
-
-  // Only rarely emit a plain get which might trap. See related logic in
-  // ::makePointer().
-  if (allowOOB && oneIn(10)) {
-  // To avoid a trap, check the length dynamically using this pattern:
-    //
-    //   start = (start < array.len ? start : 0)
-    //
-    auto check = makeArrayBoundsCheck(array, start, funcContext->func, builder);
-    auto* zero = builder.makeConst(Literal::makeFromInt32(0, Type::i32));
-    start = builder.makeIf(check.condition, start, zero);
-  }
-
-  return builder.makeStringEncode(StringEncodeWTF16Array, ref, array, start);
-}
-
 Expression* TranslateToFuzzReader::makeStringConst() {
   // Construct an interesting WTF-8 string from parts and use string.const.
   std::stringstream wtf8;
@@ -3926,6 +3906,26 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
     return builder.makeIf(check.condition,
                           builder.makeIf(srcCheck.condition, copy));
   }
+}
+
+Expression* TranslateToFuzzReader::makeStringEncode() {
+  auto* ref = make(Type(HeapType::string, getNullability()));
+  auto* array = make(getArrayTypeForString());
+  auto* start = make(Type::i32);
+
+  // Only rarely emit a plain get which might trap. See related logic in
+  // ::makePointer().
+  if (allowOOB && oneIn(10)) {
+  // To avoid a trap, check the length dynamically using this pattern:
+    //
+    //   start = (start < array.len ? start : 0)
+    //
+    auto check = makeArrayBoundsCheck(array, start, funcContext->func, builder);
+    auto* zero = builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+    start = builder.makeIf(check.condition, start, zero);
+  }
+
+  return builder.makeStringEncode(StringEncodeWTF16Array, ref, array, start);
 }
 
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
