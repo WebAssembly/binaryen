@@ -319,7 +319,7 @@ private:
   Expression* makeStringNewArray();
   Expression* makeStringNewCodePoint();
   Expression* makeStringConcat();
-  Expression* makeStringEncode();
+  Expression* makeStringEncode(Type type);
 
   // Similar to makeBasic/CompoundRef, but indicates that this value will be
   // used in a place that will trap on null. For example, the reference of a

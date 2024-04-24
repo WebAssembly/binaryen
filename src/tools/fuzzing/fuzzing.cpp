@@ -1356,6 +1356,9 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeRefEq,
                 &Self::makeRefTest,
                 &Self::makeI31Get);
+    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
+                FeatureSet::Strings,
+                &Self::makeStringEncode);
   }
   if (type.isTuple()) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
@@ -2606,7 +2609,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       if (!funcContext) {
         return makeStringConst();
       }
-      switch (upTo(11)) {
+      switch (upTo(9)) {
         case 0:
         case 1:
         case 2:
@@ -2621,9 +2624,6 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
           // of code for the array in some cases.
           return makeStringNewArray();
         case 8:
-        case 9:
-          return makeStringEncode();
-        case 10:
           // We much less frequently make string.concat as it will recursively
           // generate two string children, i.e., it can lead to exponential
           // growth.
@@ -3908,7 +3908,9 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
   }
 }
 
-Expression* TranslateToFuzzReader::makeStringEncode() {
+Expression* TranslateToFuzzReader::makeStringEncode(Type type) {
+  assert(type == Type::i32);
+
   auto* ref = make(Type(HeapType::string, getNullability()));
   auto* array = make(getArrayTypeForString());
   auto* start = make(Type::i32);
@@ -3919,12 +3921,23 @@ Expression* TranslateToFuzzReader::makeStringEncode() {
     return builder.makeStringEncode(StringEncodeWTF16Array, ref, array, start);
   }
 
-  // To avoid a trap, check the length and execute something else if oob.
-  auto check = makeArrayBoundsCheck(array, start, funcContext->func, builder);
+  // Stash the string reference while computing its length for a bounds check.
+  auto refLocal = builder.addVar(funcContext->func, ref->type);
+  auto* setRef = builder.makeLocalSet(refLocal, ref);
+  auto* strLen = builder.makeStringMeasure(
+                               StringMeasureWTF16,
+                               builder.makeLocalGet(refLocal, ref->type));
+
+  // Do a bounds check on the array.
+  auto check = makeArrayBoundsCheck(array, start, funcContext->func, builder,
+                                    strLen);
   array = check.getRef;
   start = check.getIndex;
-  auto* encode = builder.makeStringEncode(StringEncodeWTF16Array, ref, array, start);
-  return builder.makeIf(check.condition, encode, make(Type::i32));
+  auto* getRef = builder.makeLocalGet(refLocal, ref->type);
+  auto* encode = builder.makeStringEncode(StringEncodeWTF16Array, getRef, array, start);
+  auto* iff = builder.makeIf(check.condition, encode, make(Type::i32));
+  auto* ret = builder.makeSequence(setRef, iff);
+  return ret;
 }
 
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
