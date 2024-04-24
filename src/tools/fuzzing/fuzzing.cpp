@@ -2638,7 +2638,6 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
           // generate two string children, i.e., it can lead to exponential
           // growth.
           return makeStringConcat();
-
       }
       WASM_UNREACHABLE("bad switch");
     }
@@ -3925,8 +3924,8 @@ Expression* TranslateToFuzzReader::makeStringEncode(Type type) {
   auto* array = make(getArrayTypeForString());
   auto* start = make(Type::i32);
 
-  // Only rarely emit a plain get which might trap. See related logic in
-  // ::makePointer().
+  // Only rarely emit without a bounds check, which might trap. See related
+  // logic in other array operations.
   if (allowOOB || oneIn(10)) {
     return builder.makeStringEncode(StringEncodeWTF16Array, ref, array, start);
   }
