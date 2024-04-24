@@ -1918,7 +1918,7 @@ public:
 
   Flow visitStringMeasure(StringMeasure* curr) {
     // For now we only support JS-style strings.
-    if (curr->op != StringMeasureWTF16View) {
+    if (curr->op != StringMeasureWTF16View && curr->op != StringMeasureWTF16) {
       return Flow(NONCONSTANT_FLOW);
     }
 
