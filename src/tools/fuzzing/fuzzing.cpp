@@ -3935,9 +3935,11 @@ Expression* TranslateToFuzzReader::makeStringEncode(Type type) {
   start = check.getIndex;
   auto* getRef = builder.makeLocalGet(refLocal, ref->type);
   auto* encode = builder.makeStringEncode(StringEncodeWTF16Array, getRef, array, start);
+
+  // Emit the set of the string reference and then an if that picks which code
+  // path to visit, depending on the outcome of the bounds check.
   auto* iff = builder.makeIf(check.condition, encode, make(Type::i32));
-  auto* ret = builder.makeSequence(setRef, iff);
-  return ret;
+  return builder.makeSequence(setRef, iff);
 }
 
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
