@@ -4304,10 +4304,9 @@ Type TranslateToFuzzReader::getSuperType(Type type) {
 
 Type TranslateToFuzzReader::getArrayTypeForString() {
   // Emit an array that can be used with JS-style strings, containing 16-bit
-  // elements.
-  auto mutability = getMutability();
+  // elements. For now, this must be a mutable type as that is all V8 accepts.
   auto arrayHeapType =
-    HeapType(Array(Field(Field::PackedType::i16, mutability)));
+    HeapType(Array(Field(Field::PackedType::i16, Mutable)));
   auto nullability = getNullability();
   return Type(arrayHeapType, nullability);
 }
