@@ -2807,6 +2807,7 @@ Expression* TranslateToFuzzReader::makeStringConcat() {
     return makeStringConst();
   }
 
+nesting?? limit! as this is exponential
   auto left = make(Type(HeapType::string, getNullability()));
   auto right = make(Type(HeapType::string, getNullability()));
   return builder.makeStringConcat(left, right);
