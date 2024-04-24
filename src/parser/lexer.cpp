@@ -374,18 +374,6 @@ struct LexAnnotationCtx : LexCtx {
   }
 };
 
-std::optional<LexResult> lparen(std::string_view in) {
-  LexCtx ctx(in);
-  ctx.takePrefix("("sv);
-  return ctx.lexed();
-}
-
-std::optional<LexResult> rparen(std::string_view in) {
-  LexCtx ctx(in);
-  ctx.takePrefix(")"sv);
-  return ctx.lexed();
-}
-
 std::optional<LexResult> idchar(std::string_view);
 std::optional<LexResult> space(std::string_view);
 std::optional<LexResult> keyword(std::string_view);
@@ -554,8 +542,8 @@ bool LexCtx::canFinish() const {
   // Logically we want to check for eof, parens, and space. But we don't
   // actually want to parse more than a couple characters of space, so check for
   // individual space chars or comment starts instead.
-  return empty() || lparen(next()) || rparen(next()) || spacechar(next()) ||
-         startsWith(";;"sv);
+  return empty() || startsWith("("sv) || startsWith(")"sv) ||
+         spacechar(next()) || startsWith(";;"sv);
 }
 
 // num   ::= d:digit => d
@@ -1057,14 +1045,34 @@ void Lexer::skipSpace() {
   }
 }
 
+bool Lexer::takeLParen() {
+  if (curr) {
+    return false;
+  }
+  if (LexCtx(next()).startsWith("("sv)) {
+    ++index;
+    advance();
+    return true;
+  }
+  return false;
+}
+
+bool Lexer::takeRParen() {
+  if (curr) {
+    return false;
+  }
+  if (LexCtx(next()).startsWith(")"sv)) {
+    ++index;
+    advance();
+    return true;
+  }
+  return false;
+}
+
 void Lexer::lexToken() {
   // TODO: Ensure we're getting the longest possible match.
   Token tok;
-  if (auto t = lparen(next())) {
-    tok = Token{t->span, LParenTok{}};
-  } else if (auto t = rparen(next())) {
-    tok = Token{t->span, RParenTok{}};
-  } else if (auto t = ident(next())) {
+  if (auto t = ident(next())) {
     tok = Token{t->span, IdTok{t->isStr, t->str}};
   } else if (auto t = integer(next())) {
     tok = Token{t->span, IntTok{t->n, t->sign}};
@@ -1127,14 +1135,6 @@ bool Token::operator==(const Token& other) const {
 
 std::ostream& operator<<(std::ostream& os, const TextPos& pos) {
   return os << pos.line << ":" << pos.col;
-}
-
-std::ostream& operator<<(std::ostream& os, const LParenTok&) {
-  return os << "'('";
-}
-
-std::ostream& operator<<(std::ostream& os, const RParenTok&) {
-  return os << "')'";
 }
 
 std::ostream& operator<<(std::ostream& os, const IdTok&) { return os << "id"; }
