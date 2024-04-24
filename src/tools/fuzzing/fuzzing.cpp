@@ -2494,6 +2494,9 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
     if (type.isNullable() && oneIn(8)) {
       return builder.makeRefNull(type.getHeapType());
     }
+    if (type.getHeapType().isString()) {
+      return makeStringConst();
+    }
     if (type.getHeapType().isBasic()) {
       return makeBasicRef(type);
     } else {
