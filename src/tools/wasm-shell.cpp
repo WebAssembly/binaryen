@@ -79,6 +79,8 @@ protected:
       parseAssertException(s);
     } else if ((id == ASSERT_INVALID) || (id == ASSERT_MALFORMED)) {
       parseModuleAssertion(s);
+    } else {
+      Fatal() << s.line << ": unknown command\n";
     }
   }
 
