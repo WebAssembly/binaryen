@@ -189,7 +189,7 @@ struct ExecutionResults {
     // TODO: Once we support optimizing under some form of open-world
     // assumption, we should be able to check that the types and/or structure of
     // GC data passed out of the module does not change.
-    if (a.type.isRef() && !a.type.isString())
+    if (a.type.isRef() && !a.type.isString()) {
       return true;
     }
     if (a != b) {
