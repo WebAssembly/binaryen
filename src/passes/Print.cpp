@@ -117,6 +117,11 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   Module* currModule = nullptr;
   Function* currFunction = nullptr;
+  // Keep track of the last printed debug location to avoid printing
+  // repeated debug locations for children. nullopt means that we have
+  // not yet printed any debug location, or that we last printed an
+  // annotation indicating that the expression had not associated
+  // debug location.
   std::optional<Function::DebugLocation> lastPrintedLocation;
   bool debugInfo;
 

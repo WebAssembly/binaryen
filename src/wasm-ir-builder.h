@@ -238,6 +238,12 @@ private:
   Module& wasm;
   Function* func;
   Builder builder;
+  // We distinguish three cases:
+  // - no debug location has been specified for the next instruction;
+  //   then this instruction may inherit a debug location from its
+  //   parent or a previous sibling;
+  // - we explicitly specified that this instruction has no debug location;
+  // - we provided a debug location for this instruction.
   std::optional<std::optional<Function::DebugLocation>> debugLoc;
 
   struct ChildPopper;
