@@ -2602,18 +2602,24 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return null;
     }
     case HeapType::string: {
-      switch (upTo(8)) {
+      switch (upTo(9)) {
         case 0:
         case 1:
         case 2:
           return makeStringConst();
         case 3:
         case 4:
-          return makeStringNewArray();
         case 5:
-        case 6:
           return makeStringNewCodePoint();
+        case 6:
         case 7:
+          // We less frequently make string.new_array as it may generate a lot
+          // of code for the array in some cases.
+          return makeStringNewArray();
+        case 8:
+          // We much less frequently make string.concat as it will recursively
+          // generate two string children, i.e., it can lead to exponential
+          // growth.
           return makeStringConcat();
       }
       WASM_UNREACHABLE("bad switch");
@@ -2810,7 +2816,6 @@ Expression* TranslateToFuzzReader::makeStringConcat() {
     return makeStringConst();
   }
 
-nesting?? limit! as this is exponential
   auto left = make(Type(HeapType::string, getNullability()));
   auto right = make(Type(HeapType::string, getNullability()));
   return builder.makeStringConcat(left, right);
