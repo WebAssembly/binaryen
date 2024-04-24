@@ -1367,7 +1367,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeRefTest,
                 &Self::makeI31Get);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
-                FeatureSet::Strings,
+                  FeatureSet::Strings,
                 &Self::makeStringEncode);
   }
   if (type.isTuple()) {
@@ -3934,16 +3934,16 @@ Expression* TranslateToFuzzReader::makeStringEncode(Type type) {
   auto refLocal = builder.addVar(funcContext->func, ref->type);
   auto* setRef = builder.makeLocalSet(refLocal, ref);
   auto* strLen = builder.makeStringMeasure(
-                               StringMeasureWTF16,
-                               builder.makeLocalGet(refLocal, ref->type));
+    StringMeasureWTF16, builder.makeLocalGet(refLocal, ref->type));
 
   // Do a bounds check on the array.
-  auto check = makeArrayBoundsCheck(array, start, funcContext->func, builder,
-                                    strLen);
+  auto check =
+    makeArrayBoundsCheck(array, start, funcContext->func, builder, strLen);
   array = check.getRef;
   start = check.getIndex;
   auto* getRef = builder.makeLocalGet(refLocal, ref->type);
-  auto* encode = builder.makeStringEncode(StringEncodeWTF16Array, getRef, array, start);
+  auto* encode =
+    builder.makeStringEncode(StringEncodeWTF16Array, getRef, array, start);
 
   // Emit the set of the string reference and then an if that picks which code
   // path to visit, depending on the outcome of the bounds check.
@@ -4314,8 +4314,7 @@ Type TranslateToFuzzReader::getSuperType(Type type) {
 Type TranslateToFuzzReader::getArrayTypeForString() {
   // Emit an array that can be used with JS-style strings, containing 16-bit
   // elements. For now, this must be a mutable type as that is all V8 accepts.
-  auto arrayHeapType =
-    HeapType(Array(Field(Field::PackedType::i16, Mutable)));
+  auto arrayHeapType = HeapType(Array(Field(Field::PackedType::i16, Mutable)));
   auto nullability = getNullability();
   return Type(arrayHeapType, nullability);
 }
