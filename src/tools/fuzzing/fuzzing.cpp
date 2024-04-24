@@ -2804,11 +2804,6 @@ Expression* TranslateToFuzzReader::makeStringConst() {
 }
 
 Expression* TranslateToFuzzReader::makeStringConcat() {
-  // Make a string from two strings. We can only do this in functions.
-  if (!funcContext) {
-    return makeStringConst();
-  }
-
   auto left = make(Type(HeapType::string, getNullability()));
   auto right = make(Type(HeapType::string, getNullability()));
   return builder.makeStringConcat(left, right);
