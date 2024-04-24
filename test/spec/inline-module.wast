@@ -1,1 +1,1 @@
-(func) (memory 0) (func (export "f"))
+;; (func) (memory 0) (func (export "f"))
