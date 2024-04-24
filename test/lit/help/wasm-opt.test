@@ -72,6 +72,10 @@
 ;; CHECK-NEXT:   --output-source-map-url,-osu                  Emit specified string as source
 ;; CHECK-NEXT:                                                 map URL
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --deprecated-wat-parser                       Use the old, deprecated WAT
+;; CHECK-NEXT:                                                 parser. This option will be
+;; CHECK-NEXT:                                                 removed soon!
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --new-wat-parser                              Use the experimental new WAT
 ;; CHECK-NEXT:                                                 parser
 ;; CHECK-NEXT:
