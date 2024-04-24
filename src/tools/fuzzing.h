@@ -319,6 +319,7 @@ private:
   Expression* makeStringNewArray();
   Expression* makeStringNewCodePoint();
   Expression* makeStringConcat();
+  Expression* makeStringEncode();
 
   // Similar to makeBasic/CompoundRef, but indicates that this value will be
   // used in a place that will trap on null. For example, the reference of a
@@ -390,6 +391,7 @@ private:
   Nullability getSuperType(Nullability nullability);
   HeapType getSuperType(HeapType type);
   Type getSuperType(Type type);
+  Type getArrayTypeForString();
 
   // Utilities
   Name getTargetName(Expression* target);

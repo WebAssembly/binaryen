@@ -2606,7 +2606,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       if (!funcContext) {
         return makeStringConst();
       }
-      switch (upTo(9)) {
+      switch (upTo(11)) {
         case 0:
         case 1:
         case 2:
@@ -2621,10 +2621,14 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
           // of code for the array in some cases.
           return makeStringNewArray();
         case 8:
+        case 9:
+          return makeStringEncode();
+        case 10:
           // We much less frequently make string.concat as it will recursively
           // generate two string children, i.e., it can lead to exponential
           // growth.
           return makeStringConcat();
+
       }
       WASM_UNREACHABLE("bad switch");
     }
@@ -2742,12 +2746,7 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeStringNewArray() {
-  auto mutability = getMutability();
-  auto arrayHeapType =
-    HeapType(Array(Field(Field::PackedType::i16, mutability)));
-  auto nullability = getNullability();
-  auto arrayType = Type(arrayHeapType, nullability);
-  auto array = make(arrayType);
+  auto* array = make(getArrayTypeForString());
   auto* start = make(Type::i32);
   auto* end = make(Type::i32);
   return builder.makeStringNew(StringNewWTF16Array, array, start, end, false);
@@ -2757,6 +2756,26 @@ Expression* TranslateToFuzzReader::makeStringNewCodePoint() {
   auto codePoint = make(Type::i32);
   return builder.makeStringNew(
     StringNewFromCodePoint, codePoint, nullptr, false);
+}
+
+Expression* TranslateToFuzzReader::makeStringEncode() {
+  auto* ref = make(Type(HeapType::string, getNullability()));
+  auto* array = make(getArrayTypeForString());
+  auto* start = make(Type::i32);
+
+  // Only rarely emit a plain get which might trap. See related logic in
+  // ::makePointer().
+  if (allowOOB && oneIn(10)) {
+  // To avoid a trap, check the length dynamically using this pattern:
+    //
+    //   start = (start < array.len ? start : 0)
+    //
+    auto check = makeArrayBoundsCheck(array, start, funcContext->func, builder);
+    auto* zero = builder.makeConst(Literal::makeFromInt32(0, Type::i32));
+    start = builder.makeIf(check.condition, start, zero);
+  }
+
+  return builder.makeStringEncode(StringEncodeWTF16Array, ref, array, start);
 }
 
 Expression* TranslateToFuzzReader::makeStringConst() {
@@ -2804,8 +2823,8 @@ Expression* TranslateToFuzzReader::makeStringConst() {
 }
 
 Expression* TranslateToFuzzReader::makeStringConcat() {
-  auto left = make(Type(HeapType::string, getNullability()));
-  auto right = make(Type(HeapType::string, getNullability()));
+  auto* left = make(Type(HeapType::string, getNullability()));
+  auto* right = make(Type(HeapType::string, getNullability()));
   return builder.makeStringConcat(left, right);
 }
 
@@ -4267,6 +4286,16 @@ Type TranslateToFuzzReader::getSuperType(Type type) {
     superType = Type(heapType, Nullable);
   }
   return superType;
+}
+
+Type TranslateToFuzzReader::getArrayTypeForString() {
+  // Emit an array that can be used with JS-style strings, containing 16-bit
+  // elements.
+  auto mutability = getMutability();
+  auto arrayHeapType =
+    HeapType(Array(Field(Field::PackedType::i16, mutability)));
+  auto nullability = getNullability();
+  return Type(arrayHeapType, nullability);
 }
 
 Name TranslateToFuzzReader::getTargetName(Expression* target) {
