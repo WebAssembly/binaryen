@@ -392,7 +392,6 @@ private:
   Type getLoggableType();
   bool isLoggableType(Type type);
   Nullability getNullability();
-  Mutability getMutability();
   Nullability getSubType(Nullability nullability);
   HeapType getSubType(HeapType type);
   Type getSubType(Type type);

@@ -4168,10 +4168,6 @@ Nullability TranslateToFuzzReader::getNullability() {
   return Nullable;
 }
 
-Mutability TranslateToFuzzReader::getMutability() {
-  return oneIn(2) ? Mutable : Immutable;
-}
-
 Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
   if (nullability == NonNullable) {
     return NonNullable;
