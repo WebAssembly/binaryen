@@ -2731,6 +2731,35 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   }
 }
 
+Expression* TranslateToFuzzReader::makeStringNewArray() {
+  // Make a string from an array. We can only do this in functions.
+  if (!funcContext) {
+    return makeStringConst();
+  }
+
+  auto mutability = getMutability();
+  auto arrayHeapType =
+    HeapType(Array(Field(Field::PackedType::i16, mutability)));
+  auto nullability = getNullability();
+  auto arrayType = Type(arrayHeapType, nullability);
+  auto array = make(arrayType);
+  auto* start = make(Type::i32);
+  auto* end = make(Type::i32);
+  return builder.makeStringNew(
+    StringNewWTF16Array, array, start, end, false);
+}
+
+Expression* TranslateToFuzzReader::makeStringNewCodePoint() {
+  // Make a string from a code point. We can only do this in functions.
+  if (!funcContext) {
+    return makeStringConst();
+  }
+
+  auto codePoint = make(Type::i32);
+  return builder.makeStringNew(
+    StringNewFromCodePoint, codePoint, nullptr, false);
+}
+
 Expression* TranslateToFuzzReader::makeStringConst() {
   // Construct an interesting WTF-8 string from parts and use string.const.
   std::stringstream wtf8;
@@ -2773,35 +2802,6 @@ Expression* TranslateToFuzzReader::makeStringConst() {
   // TODO: Use wtf16.view() once we have C++20.
   String::convertWTF8ToWTF16(wtf16, wtf8.str());
   return builder.makeStringConst(wtf16.str());
-}
-
-Expression* TranslateToFuzzReader::makeStringNewArray() {
-  // Make a string from an array. We can only do this in functions.
-  if (!funcContext) {
-    return makeStringConst();
-  }
-
-  auto mutability = getMutability();
-  auto arrayHeapType =
-    HeapType(Array(Field(Field::PackedType::i16, mutability)));
-  auto nullability = getNullability();
-  auto arrayType = Type(arrayHeapType, nullability);
-  auto array = make(arrayType);
-  auto* start = make(Type::i32);
-  auto* end = make(Type::i32);
-  return builder.makeStringNew(
-    StringNewWTF16Array, array, start, end, false);
-}
-
-Expression* TranslateToFuzzReader::makeStringNewCodePoint() {
-  // Make a string from a code point. We can only do this in functions.
-  if (!funcContext) {
-    return makeStringConst();
-  }
-
-  auto codePoint = make(Type::i32);
-  return builder.makeStringNew(
-    StringNewFromCodePoint, codePoint, nullptr, false);
 }
 
 Expression* TranslateToFuzzReader::makeStringConcat() {
