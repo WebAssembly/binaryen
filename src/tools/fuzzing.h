@@ -150,6 +150,14 @@ private:
     }
 
     ~FunctionCreationContext();
+
+    // Fill in the typeLocals data structure.
+    void computeTypeLocals() {
+      typeLocals.clear();
+      for (Index i = 0; i < func->getNumLocals(); i++) {
+        typeLocals[func->getLocalType(i)].push_back(i);
+      }
+    }
   };
 
   FunctionCreationContext* funcContext = nullptr;
