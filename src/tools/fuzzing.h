@@ -399,7 +399,7 @@ private:
   Nullability getSuperType(Nullability nullability);
   HeapType getSuperType(HeapType type);
   Type getSuperType(Type type);
-  Type getArrayTypeForString();
+  HeapType getArrayTypeForString();
 
   // Utilities
   Name getTargetName(Expression* target);
