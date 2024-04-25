@@ -1366,6 +1366,9 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeRefEq,
                 &Self::makeRefTest,
                 &Self::makeI31Get);
+    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
+                  FeatureSet::Strings,
+                &Self::makeStringEncode);
   }
   if (type.isTuple()) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
@@ -2752,12 +2755,7 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeStringNewArray() {
-  auto mutability = getMutability();
-  auto arrayHeapType =
-    HeapType(Array(Field(Field::PackedType::i16, mutability)));
-  auto nullability = getNullability();
-  auto arrayType = Type(arrayHeapType, nullability);
-  auto array = make(arrayType);
+  auto* array = make(getArrayTypeForString());
   auto* start = make(Type::i32);
   auto* end = make(Type::i32);
   return builder.makeStringNew(StringNewWTF16Array, array, start, end, false);
@@ -2814,8 +2812,8 @@ Expression* TranslateToFuzzReader::makeStringConst() {
 }
 
 Expression* TranslateToFuzzReader::makeStringConcat() {
-  auto left = make(Type(HeapType::string, getNullability()));
-  auto right = make(Type(HeapType::string, getNullability()));
+  auto* left = make(Type(HeapType::string, getNullability()));
+  auto* right = make(Type(HeapType::string, getNullability()));
   return builder.makeStringConcat(left, right);
 }
 
@@ -3806,9 +3804,9 @@ static auto makeArrayBoundsCheck(Expression* ref,
     // An additional use of the reference (we stored the reference in a local,
     // so this reads from that local).
     Expression* getRef;
-    // An addition use of the index (as with the ref, it reads from a local).
+    // An additional use of the index (as with the ref, it reads from a local).
     Expression* getIndex;
-    // An addition use of the length, if it was provided.
+    // An additional use of the length, if it was provided.
     Expression* getLength = nullptr;
   } result = {builder.makeBinary(LtUInt32, effectiveIndex, getSize),
               builder.makeLocalGet(tempRef, ref->type),
@@ -3917,6 +3915,40 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
     return builder.makeIf(check.condition,
                           builder.makeIf(srcCheck.condition, copy));
   }
+}
+
+Expression* TranslateToFuzzReader::makeStringEncode(Type type) {
+  assert(type == Type::i32);
+
+  auto* ref = make(Type(HeapType::string, getNullability()));
+  auto* array = make(getArrayTypeForString());
+  auto* start = make(Type::i32);
+
+  // Only rarely emit without a bounds check, which might trap. See related
+  // logic in other array operations.
+  if (allowOOB || oneIn(10)) {
+    return builder.makeStringEncode(StringEncodeWTF16Array, ref, array, start);
+  }
+
+  // Stash the string reference while computing its length for a bounds check.
+  auto refLocal = builder.addVar(funcContext->func, ref->type);
+  auto* setRef = builder.makeLocalSet(refLocal, ref);
+  auto* strLen = builder.makeStringMeasure(
+    StringMeasureWTF16, builder.makeLocalGet(refLocal, ref->type));
+
+  // Do a bounds check on the array.
+  auto check =
+    makeArrayBoundsCheck(array, start, funcContext->func, builder, strLen);
+  array = check.getRef;
+  start = check.getIndex;
+  auto* getRef = builder.makeLocalGet(refLocal, ref->type);
+  auto* encode =
+    builder.makeStringEncode(StringEncodeWTF16Array, getRef, array, start);
+
+  // Emit the set of the string reference and then an if that picks which code
+  // path to visit, depending on the outcome of the bounds check.
+  auto* iff = builder.makeIf(check.condition, encode, make(Type::i32));
+  return builder.makeSequence(setRef, iff);
 }
 
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
@@ -4136,10 +4168,6 @@ Nullability TranslateToFuzzReader::getNullability() {
   return Nullable;
 }
 
-Mutability TranslateToFuzzReader::getMutability() {
-  return oneIn(2) ? Mutable : Immutable;
-}
-
 Nullability TranslateToFuzzReader::getSubType(Nullability nullability) {
   if (nullability == NonNullable) {
     return NonNullable;
@@ -4277,6 +4305,14 @@ Type TranslateToFuzzReader::getSuperType(Type type) {
     superType = Type(heapType, Nullable);
   }
   return superType;
+}
+
+Type TranslateToFuzzReader::getArrayTypeForString() {
+  // Emit an array that can be used with JS-style strings, containing 16-bit
+  // elements. For now, this must be a mutable type as that is all V8 accepts.
+  auto arrayHeapType = HeapType(Array(Field(Field::PackedType::i16, Mutable)));
+  auto nullability = getNullability();
+  return Type(arrayHeapType, nullability);
 }
 
 Name TranslateToFuzzReader::getTargetName(Expression* target) {
