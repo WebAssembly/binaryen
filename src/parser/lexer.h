@@ -68,16 +68,8 @@ struct FloatTok {
   friend std::ostream& operator<<(std::ostream&, const FloatTok&);
 };
 
-struct StringTok {
-  // If the string contains escapes, this is its contents.
-  std::optional<std::string> str;
-
-  bool operator==(const StringTok& other) const { return str == other.str; }
-  friend std::ostream& operator<<(std::ostream&, const StringTok&);
-};
-
 struct Token {
-  using Data = std::variant<IntTok, FloatTok, StringTok>;
+  using Data = std::variant<IntTok, FloatTok>;
   std::string_view span;
   Data data;
 
@@ -90,7 +82,6 @@ struct Token {
   template<typename T> std::optional<T> getI() const;
   std::optional<double> getF64() const;
   std::optional<float> getF32() const;
-  std::optional<std::string_view> getString() const;
 
   bool operator==(const Token&) const;
   friend std::ostream& operator<<(std::ostream& os, const Token&);
@@ -218,27 +209,14 @@ public:
     return std::nullopt;
   }
 
-  std::optional<std::string> takeString() {
-    if (curr) {
-      if (auto s = curr->getString()) {
-        std::string ret(*s);
-        advance();
-        return ret;
-      }
-    }
-    return {};
-  }
+  std::optional<std::string> takeString();
 
   std::optional<Name> takeName() {
-    // TODO: Move this to lexer and validate UTF.
+    // TODO: Validate UTF.
     if (auto str = takeString()) {
-      // Copy to a std::string to make sure we have a null terminator, otherwise
-      // the `Name` constructor won't work correctly.
-      // TODO: Update `Name` to use string_view instead of char* and/or to take
-      // rvalue strings to avoid this extra copy.
-      return Name(std::string(*str));
+      return Name(*str);
     }
-    return {};
+    return std::nullopt;
   }
 
   bool takeSExprStart(std::string_view expected) {

@@ -1004,17 +1004,6 @@ std::optional<float> Token::getF32() const {
   return {};
 }
 
-std::optional<std::string_view> Token::getString() const {
-  if (auto* tok = std::get_if<StringTok>(&data)) {
-    if (tok->str) {
-      return std::string_view(*tok->str);
-    }
-    // Remove quotes.
-    return span.substr(1, span.size() - 2);
-  }
-  return {};
-}
-
 void Lexer::skipSpace() {
   while (true) {
     if (auto ctx = annotation(next())) {
@@ -1052,6 +1041,22 @@ bool Lexer::takeRParen() {
     return true;
   }
   return false;
+}
+
+std::optional<std::string> Lexer::takeString() {
+  if (curr) {
+    return std::nullopt;
+  }
+  if (auto result = str(next())) {
+    index += result->span.size();
+    advance();
+    if (result->str) {
+      return result->str;
+    }
+    // Remove quotes.
+    return std::string(result->span.substr(1, result->span.size() - 2));
+  }
+  return std::nullopt;
 }
 
 std::optional<Name> Lexer::takeID() {
@@ -1132,8 +1137,6 @@ void Lexer::lexToken() {
     tok = Token{t->span, IntTok{t->n, t->sign}};
   } else if (auto t = float_(next())) {
     tok = Token{t->span, FloatTok{t->nanPayload, t->d}};
-  } else if (auto t = str(next())) {
-    tok = Token{t->span, StringTok{t->str}};
   } else {
     // TODO: Do something about lexing errors.
     curr = std::nullopt;
@@ -1202,15 +1205,6 @@ std::ostream& operator<<(std::ostream& os, const FloatTok& tok) {
     return os << "nan";
   }
   return os << tok.d;
-}
-
-std::ostream& operator<<(std::ostream& os, const StringTok& tok) {
-  if (tok.str) {
-    os << '"' << *tok.str << '"';
-  } else {
-    os << "(raw string)";
-  }
-  return os;
 }
 
 std::ostream& operator<<(std::ostream& os, const Token& tok) {
