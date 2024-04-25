@@ -238,13 +238,17 @@ private:
   Module& wasm;
   Function* func;
   Builder builder;
-  // We distinguish three cases:
-  // - no debug location has been specified for the next instruction;
-  //   then this instruction may inherit a debug location from its
-  //   parent or a previous sibling;
-  // - we explicitly specified that this instruction has no debug location;
-  // - we provided a debug location for this instruction.
-  std::optional<std::optional<Function::DebugLocation>> debugLoc;
+
+  // The location lacks debug info as it was marked as not having it.
+  struct NoDebug : public std::monostate {};
+  // The location lacks debug info, but was not marked as not having
+  // it, and it can receive it from the parent or its previous sibling
+  // (if it has one).
+  struct CanReceiveDebug : public std::monostate {};
+  using DebugVariant =
+    std::variant<NoDebug, CanReceiveDebug, Function::DebugLocation>;
+
+  DebugVariant debugLoc;
 
   struct ChildPopper;
 
