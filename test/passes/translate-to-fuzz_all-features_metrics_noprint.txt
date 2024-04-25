@@ -1,40 +1,47 @@
 total
  [exports]      : 5       
- [funcs]        : 8       
+ [funcs]        : 7       
  [globals]      : 14      
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
- [table-data]   : 0       
+ [table-data]   : 2       
  [tables]       : 1       
  [tags]         : 1       
- [total]        : 330     
- [vars]         : 36      
- ArrayNew       : 1       
+ [total]        : 467     
+ [vars]         : 40      
+ ArrayGet       : 1       
+ ArrayLen       : 1       
+ ArrayNew       : 6       
  ArrayNewFixed  : 1       
- ArraySet       : 1       
- AtomicFence    : 1       
- Binary         : 55      
- Block          : 33      
- Call           : 5       
- Const          : 78      
- Drop           : 4       
- GlobalGet      : 16      
- GlobalSet      : 14      
- If             : 8       
- Load           : 16      
- LocalGet       : 38      
- LocalSet       : 18      
- Loop           : 1       
- Nop            : 4       
- RefAs          : 2       
- RefFunc        : 1       
- RefI31         : 2       
- RefNull        : 2       
- Return         : 1       
- StringConst    : 2       
+ Binary         : 67      
+ Block          : 44      
+ Break          : 5       
+ Call           : 21      
+ Const          : 106     
+ Drop           : 7       
+ GlobalGet      : 20      
+ GlobalSet      : 18      
+ If             : 14      
+ Load           : 17      
+ LocalGet       : 45      
+ LocalSet       : 28      
+ Loop           : 3       
+ MemoryFill     : 1       
+ Nop            : 5       
+ RefAs          : 1       
+ RefCast        : 1       
+ RefEq          : 1       
+ RefFunc        : 3       
+ RefI31         : 4       
+ RefNull        : 3       
+ Return         : 3       
+ Select         : 2       
+ Store          : 1       
+ StringConst    : 3       
+ StringEncode   : 1       
+ StringEq       : 1       
  StructNew      : 5       
- Switch         : 1       
  TupleMake      : 5       
- Unary          : 7       
- Unreachable    : 8       
+ Unary          : 13      
+ Unreachable    : 10      
