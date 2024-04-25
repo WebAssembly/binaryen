@@ -1368,7 +1368,8 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeI31Get);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
                   FeatureSet::Strings,
-                &Self::makeStringEncode);
+                &Self::makeStringEncode,
+                &Self::makeStringEq);
   }
   if (type.isTuple()) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
@@ -2815,6 +2816,15 @@ Expression* TranslateToFuzzReader::makeStringConcat() {
   auto* left = make(Type(HeapType::string, getNullability()));
   auto* right = make(Type(HeapType::string, getNullability()));
   return builder.makeStringConcat(left, right);
+}
+
+Expression* TranslateToFuzzReader::makeStringEq(Type type) {
+  assert(type == Type::i32);
+
+  auto* left = make(Type(HeapType::string, getNullability()));
+  auto* right = make(Type(HeapType::string, getNullability()));
+  auto op = pick(StringEqEqual, StringEqCompare);
+  return builder.makeStringEq(op, left, right);
 }
 
 Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
