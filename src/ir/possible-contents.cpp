@@ -2616,7 +2616,13 @@ void Flower::filterGlobalContents(PossibleContents& contents,
 void Flower::filterDataContents(PossibleContents& contents,
                                 const DataLocation& dataLoc) {
   auto field = GCTypeUtils::getField(dataLoc.type, dataLoc.index);
-  assert(field);
+  if (!field) {
+    // This is a bottom type; nothing will be written here.
+    assert(dataLoc.type.isBottom());
+    contents = PossibleContents::none();
+    return;
+  }
+
   if (field->isPacked()) {
     // We must handle packed fields carefully.
     if (contents.isLiteral()) {
