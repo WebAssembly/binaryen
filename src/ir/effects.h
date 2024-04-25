@@ -989,7 +989,15 @@ private:
       // traps when an input is null.
       parent.implicitTrap = true;
     }
-    void visitStringEq(StringEq* curr) {}
+    void visitStringEq(StringEq* curr) {
+      if (curr->op == StringEqCompare) {
+        // traps when either input is null.
+        if (curr->left->type.isNullable() ||
+            curr->right->type.isNullable()) {
+          parent.implicitTrap = true;
+        }
+      }
+    }
     void visitStringAs(StringAs* curr) {
       // traps when ref is null.
       parent.implicitTrap = true;
