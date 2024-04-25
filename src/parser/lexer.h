@@ -41,52 +41,6 @@ struct TextPos {
   friend std::ostream& operator<<(std::ostream& os, const TextPos& pos);
 };
 
-// ======
-// Tokens
-// ======
-
-enum Sign { NoSign, Pos, Neg };
-
-struct IntTok {
-  uint64_t n;
-  Sign sign;
-
-  bool operator==(const IntTok&) const;
-  friend std::ostream& operator<<(std::ostream&, const IntTok&);
-};
-
-struct FloatTok {
-  // The payload if we lexed a nan with payload. We cannot store the payload
-  // directly in `d` because we do not know at this point whether we are parsing
-  // an f32 or f64 and therefore we do not know what the allowable payloads are.
-  // No payload with NaN means to use the default payload for the expected float
-  // width.
-  std::optional<uint64_t> nanPayload;
-  double d;
-
-  bool operator==(const FloatTok&) const;
-  friend std::ostream& operator<<(std::ostream&, const FloatTok&);
-};
-
-struct Token {
-  using Data = std::variant<IntTok, FloatTok>;
-  std::string_view span;
-  Data data;
-
-  // ====================
-  // Token classification
-  // ====================
-
-  template<typename T> std::optional<T> getU() const;
-  template<typename T> std::optional<T> getS() const;
-  template<typename T> std::optional<T> getI() const;
-  std::optional<double> getF64() const;
-  std::optional<float> getF32() const;
-
-  bool operator==(const Token&) const;
-  friend std::ostream& operator<<(std::ostream& os, const Token&);
-};
-
 // ===========
 // Annotations
 // ===========
@@ -105,7 +59,6 @@ extern Name srcAnnotationKind;
 struct Lexer {
 private:
   size_t index = 0;
-  std::optional<Token> curr;
   std::vector<Annotation> annotations;
 
 public:
@@ -140,9 +93,7 @@ public:
       if (takeString()) {
         continue;
       }
-      if (!curr) {
-        ++index;
-      }
+      ++index;
       advance();
     }
   }
@@ -159,59 +110,16 @@ public:
   std::optional<uint64_t> takeOffset();
   std::optional<uint32_t> takeAlign();
 
-  template<typename T> std::optional<T> takeU() {
-    if (curr) {
-      if (auto n = curr->getU<T>()) {
-        advance();
-        return n;
-      }
-    }
-    return std::nullopt;
-  }
-
-  template<typename T> std::optional<T> takeI() {
-    if (curr) {
-      if (auto n = curr->getI<T>()) {
-        advance();
-        return n;
-      }
-    }
-    return std::nullopt;
-  }
-
   std::optional<uint64_t> takeU64() { return takeU<uint64_t>(); }
-
   std::optional<uint64_t> takeI64() { return takeI<uint64_t>(); }
-
   std::optional<uint32_t> takeU32() { return takeU<uint32_t>(); }
-
   std::optional<uint32_t> takeI32() { return takeI<uint32_t>(); }
-
   std::optional<uint16_t> takeI16() { return takeI<uint16_t>(); }
-
   std::optional<uint8_t> takeU8() { return takeU<uint8_t>(); }
-
   std::optional<uint8_t> takeI8() { return takeI<uint8_t>(); }
 
-  std::optional<double> takeF64() {
-    if (curr) {
-      if (auto d = curr->getF64()) {
-        advance();
-        return d;
-      }
-    }
-    return std::nullopt;
-  }
-
-  std::optional<float> takeF32() {
-    if (curr) {
-      if (auto f = curr->getF32()) {
-        advance();
-        return f;
-      }
-    }
-    return std::nullopt;
-  }
+  std::optional<double> takeF64();
+  std::optional<float> takeF32();
 
   std::optional<std::string> takeString();
 
@@ -247,10 +155,9 @@ public:
   void advance() {
     annotations.clear();
     skipSpace();
-    lexToken();
   }
 
-  bool empty() const { return !curr && index == buffer.size(); }
+  bool empty() const { return index == buffer.size(); }
 
   TextPos position(const char* c) const;
   TextPos position(size_t i) const { return position(buffer.data() + i); }
@@ -259,12 +166,7 @@ public:
   }
   TextPos position() const { return position(getPos()); }
 
-  size_t getPos() const {
-    if (curr) {
-      return getIndex() - curr->span.size();
-    }
-    return getIndex();
-  }
+  size_t getPos() const { return index; }
 
   [[nodiscard]] Err err(size_t pos, std::string reason) {
     std::stringstream msg;
@@ -282,8 +184,11 @@ public:
   }
 
 private:
+  template<typename T> std::optional<T> takeU();
+  template<typename T> std::optional<T> takeS();
+  template<typename T> std::optional<T> takeI();
+
   void skipSpace();
-  void lexToken();
 };
 
 } // namespace wasm::WATParser
