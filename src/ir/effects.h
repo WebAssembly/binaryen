@@ -992,8 +992,7 @@ private:
     void visitStringEq(StringEq* curr) {
       if (curr->op == StringEqCompare) {
         // traps when either input is null.
-        if (curr->left->type.isNullable() ||
-            curr->right->type.isNullable()) {
+        if (curr->left->type.isNullable() || curr->right->type.isNullable()) {
           parent.implicitTrap = true;
         }
       }
