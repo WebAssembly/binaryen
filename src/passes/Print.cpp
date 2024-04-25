@@ -120,7 +120,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   // Keep track of the last printed debug location to avoid printing
   // repeated debug locations for children. nullopt means that we have
   // not yet printed any debug location, or that we last printed an
-  // annotation indicating that the expression had not associated
+  // annotation indicating that the expression had no associated
   // debug location.
   std::optional<Function::DebugLocation> lastPrintedLocation;
   bool debugInfo;
