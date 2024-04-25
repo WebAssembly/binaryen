@@ -1368,7 +1368,8 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeI31Get);
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
                   FeatureSet::Strings,
-                &Self::makeStringEncode);
+                &Self::makeStringEncode,
+                &Self::makeStringEq);
   }
   if (type.isTuple()) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
@@ -2755,7 +2756,7 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeStringNewArray() {
-  auto* array = make(getArrayTypeForString());
+  auto* array = makeTrappingRefUse(getArrayTypeForString());
   auto* start = make(Type::i32);
   auto* end = make(Type::i32);
   return builder.makeStringNew(StringNewWTF16Array, array, start, end, false);
@@ -2812,9 +2813,24 @@ Expression* TranslateToFuzzReader::makeStringConst() {
 }
 
 Expression* TranslateToFuzzReader::makeStringConcat() {
-  auto* left = make(Type(HeapType::string, getNullability()));
-  auto* right = make(Type(HeapType::string, getNullability()));
+  auto* left = makeTrappingRefUse(HeapType::string);
+  auto* right = makeTrappingRefUse(HeapType::string);
   return builder.makeStringConcat(left, right);
+}
+
+Expression* TranslateToFuzzReader::makeStringEq(Type type) {
+  assert(type == Type::i32);
+
+  if (oneIn(2)) {
+    auto* left = make(Type(HeapType::string, getNullability()));
+    auto* right = make(Type(HeapType::string, getNullability()));
+    return builder.makeStringEq(StringEqEqual, left, right);
+  }
+
+  // string.compare may trap if the either input is null.
+  auto* left = makeTrappingRefUse(HeapType::string);
+  auto* right = makeTrappingRefUse(HeapType::string);
+  return builder.makeStringEq(StringEqCompare, left, right);
 }
 
 Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
@@ -3920,8 +3936,8 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
 Expression* TranslateToFuzzReader::makeStringEncode(Type type) {
   assert(type == Type::i32);
 
-  auto* ref = make(Type(HeapType::string, getNullability()));
-  auto* array = make(getArrayTypeForString());
+  auto* ref = makeTrappingRefUse(HeapType::string);
+  auto* array = makeTrappingRefUse(getArrayTypeForString());
   auto* start = make(Type::i32);
 
   // Only rarely emit without a bounds check, which might trap. See related
@@ -4307,12 +4323,10 @@ Type TranslateToFuzzReader::getSuperType(Type type) {
   return superType;
 }
 
-Type TranslateToFuzzReader::getArrayTypeForString() {
+HeapType TranslateToFuzzReader::getArrayTypeForString() {
   // Emit an array that can be used with JS-style strings, containing 16-bit
   // elements. For now, this must be a mutable type as that is all V8 accepts.
-  auto arrayHeapType = HeapType(Array(Field(Field::PackedType::i16, Mutable)));
-  auto nullability = getNullability();
-  return Type(arrayHeapType, nullability);
+  return HeapType(Array(Field(Field::PackedType::i16, Mutable)));
 }
 
 Name TranslateToFuzzReader::getTargetName(Expression* target) {

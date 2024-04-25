@@ -327,6 +327,7 @@ private:
   Expression* makeStringNewArray();
   Expression* makeStringNewCodePoint();
   Expression* makeStringConcat();
+  Expression* makeStringEq(Type type);
   Expression* makeStringEncode(Type type);
 
   // Similar to makeBasic/CompoundRef, but indicates that this value will be
@@ -398,7 +399,7 @@ private:
   Nullability getSuperType(Nullability nullability);
   HeapType getSuperType(HeapType type);
   Type getSuperType(Type type);
-  Type getArrayTypeForString();
+  HeapType getArrayTypeForString();
 
   // Utilities
   Name getTargetName(Expression* target);
