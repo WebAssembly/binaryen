@@ -68,6 +68,7 @@
 //      not yet support passive table segments anyway).
 
 #include "ir/module-splitting.h"
+#include "asmjs/shared-constants.h"
 #include "ir/element-utils.h"
 #include "ir/export-utils.h"
 #include "ir/manipulation.h"
@@ -318,12 +319,25 @@ struct ModuleSplitter {
 };
 
 void ModuleSplitter::setupJSPI() {
-  assert(primary.getExportOrNull(LOAD_SECONDARY_MODULE) &&
-         "The load secondary module function must exist");
-  // Remove the exported LOAD_SECONDARY_MODULE function since it's only needed
-  // internally.
-  internalLoadSecondaryModule = primary.getExport(LOAD_SECONDARY_MODULE)->value;
-  primary.removeExport(LOAD_SECONDARY_MODULE);
+  // Support the first version of JSPI, where the JSPI pass added the load
+  // secondary module export.
+  // TODO: remove this when the new JSPI API is only supported.
+  if (primary.getExportOrNull(LOAD_SECONDARY_MODULE)) {
+    internalLoadSecondaryModule =
+      primary.getExport(LOAD_SECONDARY_MODULE)->value;
+    // Remove the exported LOAD_SECONDARY_MODULE function since it's only needed
+    // internally.
+    primary.removeExport(LOAD_SECONDARY_MODULE);
+  } else {
+    // Add an imported function to load the secondary module.
+    auto import = Builder::makeFunction(ModuleSplitting::LOAD_SECONDARY_MODULE,
+                                        Signature(Type::none, Type::none),
+                                        {});
+    import->module = ENV;
+    import->base = ModuleSplitting::LOAD_SECONDARY_MODULE;
+    primary.addFunction(std::move(import));
+    internalLoadSecondaryModule = ModuleSplitting::LOAD_SECONDARY_MODULE;
+  }
   Builder builder(primary);
   // Add a global to track whether the secondary module has been loaded yet.
   primary.addGlobal(builder.makeGlobal(LOAD_SECONDARY_STATUS,
