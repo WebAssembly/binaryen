@@ -2930,7 +2930,6 @@ void WasmBinaryReader::readNextDebugLocation() {
 
   if (nextDebugPos == 0) {
     // We reached the end of the source map; nothing left to read.
-    debugLocation.clear();
     return;
   }
 
