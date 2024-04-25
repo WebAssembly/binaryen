@@ -327,7 +327,10 @@ private:
   Expression* makeStringNewArray();
   Expression* makeStringNewCodePoint();
   Expression* makeStringConcat();
+  Expression* makeStringSlice();
   Expression* makeStringEq(Type type);
+  Expression* makeStringMeasure(Type type);
+  Expression* makeStringGet(Type type);
   Expression* makeStringEncode(Type type);
 
   // Similar to makeBasic/CompoundRef, but indicates that this value will be
