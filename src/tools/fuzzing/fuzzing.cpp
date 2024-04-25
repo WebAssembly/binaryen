@@ -2649,8 +2649,8 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     }
     case HeapType::stringview_wtf16:
       // We fully support wtf16 strings.
-      return builder.makeStringAs(
-        StringAsWTF16, makeTrappingRefUse(HeapType::string));
+      return builder.makeStringAs(StringAsWTF16,
+                                  makeTrappingRefUse(HeapType::string));
     case HeapType::stringview_wtf8:
     case HeapType::stringview_iter:
       // We do not have interpreter support for wtf8 and iter, so emit something
