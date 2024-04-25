@@ -6056,3 +6056,41 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $array (sub (array (mut i8))))
+  (type $array (sub (array (mut i8))))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (global $global (ref null $array) (array.new_fixed $array 0))
+  (global $global (ref null $array) (array.new_fixed $array 0))
+
+  ;; CHECK:      (func $test (type $1)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.cast nullref
+  ;; CHECK-NEXT:     (global.get $global)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; We should not error on sets to bottom types, even if they are cast from
+    ;; valid values.
+    (array.set $array
+     (ref.cast nullref
+       (global.get $global)
+     )
+     (i32.const 0)
+     (i32.const 0)
+   )
+  )
+)
