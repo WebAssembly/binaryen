@@ -8,37 +8,38 @@ total
  [table-data]   : 1       
  [tables]       : 1       
  [tags]         : 1       
- [total]        : 514     
+ [total]        : 533     
  [vars]         : 24      
  ArrayNew       : 11      
  ArrayNewFixed  : 2       
  AtomicFence    : 1       
  Binary         : 79      
- Block          : 52      
- Break          : 4       
+ Block          : 57      
+ Break          : 6       
  Call           : 8       
  Const          : 137     
- Drop           : 5       
- GlobalGet      : 22      
- GlobalSet      : 22      
- If             : 13      
- Load           : 21      
- LocalGet       : 42      
- LocalSet       : 24      
- Loop           : 6       
+ Drop           : 1       
+ GlobalGet      : 28      
+ GlobalSet      : 28      
+ If             : 15      
+ Load           : 17      
+ LocalGet       : 40      
+ LocalSet       : 23      
+ Loop           : 9       
  Nop            : 4       
- RefAs          : 3       
+ RefAs          : 1       
  RefFunc        : 2       
  RefI31         : 2       
  RefIsNull      : 1       
  RefNull        : 5       
- Return         : 3       
- SIMDExtract    : 1       
- Store          : 1       
- StringConst    : 2       
- StructGet      : 2       
+ Return         : 2       
+ SIMDExtract    : 2       
+ Select         : 1       
+ Store          : 2       
+ StringConst    : 4       
+ StringEq       : 1       
+ StructGet      : 1       
  StructNew      : 9       
- Switch         : 1       
- TupleMake      : 6       
- Unary          : 11      
- Unreachable    : 12      
+ TupleMake      : 4       
+ Unary          : 15      
+ Unreachable    : 15      
