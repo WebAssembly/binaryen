@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s --vacuum -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (func $0 (type $0)
+  ;; CHECK:      (func $compare (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.compare
   ;; CHECK-NEXT:    (string.const "hello")
@@ -22,7 +22,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $0
+  (func $compare
     ;; We cannot vacuum away compares that might trap.
     (drop
       (string.compare
@@ -44,6 +44,37 @@
     )
     (drop
       (string.compare
+        (ref.null none)
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $eq (type $0)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $eq
+    ;; Equals, however, never traps so all these can be removed.
+    (drop
+      (string.eq
+        (string.const "hello")
+        (string.const "world")
+      )
+    )
+    (drop
+      (string.eq
+        (string.const "hello")
+        (ref.null none)
+      )
+    )
+    (drop
+      (string.eq
+        (ref.null none)
+        (string.const "world")
+      )
+    )
+    (drop
+      (string.eq
         (ref.null none)
         (ref.null none)
       )
