@@ -105,7 +105,7 @@
   ;; CHECK-NEXT:     (block
   ;; CHECK-NEXT:      (block $__return_call
   ;; CHECK-NEXT:       (block
-  ;; CHECK-NEXT:        (try $try
+  ;; CHECK-NEXT:        (try
   ;; CHECK-NEXT:         (do
   ;; CHECK-NEXT:          (unreachable)
   ;; CHECK-NEXT:          (br $__return_call)

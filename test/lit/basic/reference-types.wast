@@ -69,7 +69,7 @@
 
   ;; CHECK-TEXT:      (table $0 3 3 funcref)
 
-  ;; CHECK-TEXT:      (elem $0 (i32.const 0) $take_eqref $take_funcref $take_anyref)
+  ;; CHECK-TEXT:      (elem $implicit-elem (i32.const 0) $take_eqref $take_funcref $take_anyref)
 
   ;; CHECK-TEXT:      (elem declare func $foo $ref-taken-but-not-in-table)
 
@@ -457,67 +457,67 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in (result eqref)
+  ;; CHECK-TEXT-NEXT:   (loop (result eqref)
   ;; CHECK-TEXT-NEXT:    (local.get $local_eqref)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in11 (result eqref)
+  ;; CHECK-TEXT-NEXT:   (loop (result eqref)
   ;; CHECK-TEXT-NEXT:    (global.get $global_eqref)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in12 (result eqref)
+  ;; CHECK-TEXT-NEXT:   (loop (result eqref)
   ;; CHECK-TEXT-NEXT:    (ref.null none)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in13 (result funcref)
+  ;; CHECK-TEXT-NEXT:   (loop (result funcref)
   ;; CHECK-TEXT-NEXT:    (local.get $local_funcref)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in14 (result funcref)
+  ;; CHECK-TEXT-NEXT:   (loop (result funcref)
   ;; CHECK-TEXT-NEXT:    (global.get $global_funcref)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in15 (result funcref)
+  ;; CHECK-TEXT-NEXT:   (loop (result funcref)
   ;; CHECK-TEXT-NEXT:    (ref.null nofunc)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in16 (result funcref)
+  ;; CHECK-TEXT-NEXT:   (loop (result funcref)
   ;; CHECK-TEXT-NEXT:    (ref.func $foo)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in17 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (loop (result anyref)
   ;; CHECK-TEXT-NEXT:    (local.get $local_anyref)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in18 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (loop (result anyref)
   ;; CHECK-TEXT-NEXT:    (global.get $global_anyref)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in19 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (loop (result anyref)
   ;; CHECK-TEXT-NEXT:    (ref.null none)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in20 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (loop (result anyref)
   ;; CHECK-TEXT-NEXT:    (local.get $local_eqref)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in21 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (loop (result anyref)
   ;; CHECK-TEXT-NEXT:    (global.get $global_eqref)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in22 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (loop (result anyref)
   ;; CHECK-TEXT-NEXT:    (ref.null none)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
@@ -590,7 +590,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (try $try (result eqref)
+  ;; CHECK-TEXT-NEXT:   (try (result eqref)
   ;; CHECK-TEXT-NEXT:    (do
   ;; CHECK-TEXT-NEXT:     (local.get $local_eqref)
   ;; CHECK-TEXT-NEXT:    )
@@ -603,7 +603,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (try $try28 (result funcref)
+  ;; CHECK-TEXT-NEXT:   (try (result funcref)
   ;; CHECK-TEXT-NEXT:    (do
   ;; CHECK-TEXT-NEXT:     (ref.func $foo)
   ;; CHECK-TEXT-NEXT:    )
@@ -616,7 +616,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (try $try29 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (try (result anyref)
   ;; CHECK-TEXT-NEXT:    (do
   ;; CHECK-TEXT-NEXT:     (local.get $local_eqref)
   ;; CHECK-TEXT-NEXT:    )
@@ -629,7 +629,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (try $try30 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (try (result anyref)
   ;; CHECK-TEXT-NEXT:    (do
   ;; CHECK-TEXT-NEXT:     (ref.null none)
   ;; CHECK-TEXT-NEXT:    )

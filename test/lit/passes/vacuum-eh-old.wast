@@ -12,7 +12,7 @@
   ;; CHECK:      (tag $e2 (param i32))
   (tag $e2 (param i32))
 
-  (table $t funcref 0)
+  (table $t 0 funcref)
 
   ;; CHECK:      (func $try-test (type $void)
   ;; CHECK-NEXT:  (nop)
@@ -31,7 +31,7 @@
 
   ;; CHECK:      (func $inner-try-catch_all-test (type $2) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (try $try0
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (throw $e
   ;; CHECK-NEXT:     (i32.const 0)
@@ -69,9 +69,9 @@
 
   ;; CHECK:      (func $inner-try-catch-test (type $void)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (try $try1
+  ;; CHECK-NEXT:    (try
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (throw $e2
   ;; CHECK-NEXT:       (i32.const 0)
@@ -139,9 +139,9 @@
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (try $label$0
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (try $try
+  ;; CHECK-NEXT:    (try
   ;; CHECK-NEXT:     (do
-  ;; CHECK-NEXT:      (try $try2
+  ;; CHECK-NEXT:      (try
   ;; CHECK-NEXT:       (do
   ;; CHECK-NEXT:        (throw $e
   ;; CHECK-NEXT:         (i32.const 0)
@@ -188,7 +188,7 @@
 
   ;; CHECK:      (func $trivial-catch-all-of-throw (type $void)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (try $try3
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (local.get $0)

@@ -18,7 +18,7 @@
  (data $passive_data "b")
  (data "c")
 )
-;; CHECK-TEXT:      (data $1 "c")
+;; CHECK-TEXT:      (data $0 "c")
 
 ;; CHECK-BIN:      (data $1 "c")
 

@@ -223,7 +223,7 @@
   )
 
   ;; CHECK:      (func $try-catch (type $0) (result i32)
-  ;; CHECK-NEXT:  (try $try (result i32)
+  ;; CHECK-NEXT:  (try (result i32)
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:    (throw $e
@@ -256,7 +256,7 @@
   ;; CHECK:      (func $try-delegate (type $0) (result i32)
   ;; CHECK-NEXT:  (try $l0 (result i32)
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (try $try
+  ;; CHECK-NEXT:    (try
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:      (throw $e

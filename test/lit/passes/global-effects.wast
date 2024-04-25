@@ -27,7 +27,7 @@
 
   ;; WITHOUT:      (table $t 0 funcref)
   ;; INCLUDE:      (table $t 0 funcref)
-  (table $t funcref 0)
+  (table $t 0 funcref)
 
   ;; WITHOUT:      (elem declare func $throw)
 
@@ -182,7 +182,7 @@
   )
 
   ;; WITHOUT:      (func $call-throw-and-catch (type $void)
-  ;; WITHOUT-NEXT:  (try $try
+  ;; WITHOUT-NEXT:  (try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $throw)
   ;; WITHOUT-NEXT:   )
@@ -190,7 +190,7 @@
   ;; WITHOUT-NEXT:    (nop)
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
-  ;; WITHOUT-NEXT:  (try $try0
+  ;; WITHOUT-NEXT:  (try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $throw-and-import)
   ;; WITHOUT-NEXT:   )
@@ -200,7 +200,7 @@
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (func $call-throw-and-catch (type $void)
-  ;; INCLUDE-NEXT:  (try $try0
+  ;; INCLUDE-NEXT:  (try
   ;; INCLUDE-NEXT:   (do
   ;; INCLUDE-NEXT:    (call $throw-and-import)
   ;; INCLUDE-NEXT:   )
@@ -298,7 +298,7 @@
   )
 
   ;; WITHOUT:      (func $call-return-call-throw-and-catch (type $void)
-  ;; WITHOUT-NEXT:  (try $try
+  ;; WITHOUT-NEXT:  (try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $return-call-throw-and-catch)
   ;; WITHOUT-NEXT:   )
@@ -306,7 +306,7 @@
   ;; WITHOUT-NEXT:    (nop)
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
-  ;; WITHOUT-NEXT:  (try $try1
+  ;; WITHOUT-NEXT:  (try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $return-call-indirect-throw-and-catch)
   ;; WITHOUT-NEXT:   )
@@ -314,7 +314,7 @@
   ;; WITHOUT-NEXT:    (nop)
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
-  ;; WITHOUT-NEXT:  (try $try2
+  ;; WITHOUT-NEXT:  (try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $return-call-ref-throw-and-catch)
   ;; WITHOUT-NEXT:   )
@@ -327,7 +327,7 @@
   ;; WITHOUT-NEXT:  (call $return-call-ref-throw-and-catch)
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (func $call-return-call-throw-and-catch (type $void)
-  ;; INCLUDE-NEXT:  (try $try1
+  ;; INCLUDE-NEXT:  (try
   ;; INCLUDE-NEXT:   (do
   ;; INCLUDE-NEXT:    (call $return-call-indirect-throw-and-catch)
   ;; INCLUDE-NEXT:   )
@@ -335,7 +335,7 @@
   ;; INCLUDE-NEXT:    (nop)
   ;; INCLUDE-NEXT:   )
   ;; INCLUDE-NEXT:  )
-  ;; INCLUDE-NEXT:  (try $try2
+  ;; INCLUDE-NEXT:  (try
   ;; INCLUDE-NEXT:   (do
   ;; INCLUDE-NEXT:    (call $return-call-ref-throw-and-catch)
   ;; INCLUDE-NEXT:   )
@@ -380,7 +380,7 @@
   )
 
   ;; WITHOUT:      (func $call-unreachable-and-catch (type $void)
-  ;; WITHOUT-NEXT:  (try $try
+  ;; WITHOUT-NEXT:  (try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $unreachable)
   ;; WITHOUT-NEXT:   )
@@ -405,7 +405,7 @@
   )
 
   ;; WITHOUT:      (func $call-throw-or-unreachable-and-catch (type $2) (param $x i32)
-  ;; WITHOUT-NEXT:  (try $try
+  ;; WITHOUT-NEXT:  (try
   ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (if
   ;; WITHOUT-NEXT:     (local.get $x)
@@ -423,7 +423,7 @@
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (func $call-throw-or-unreachable-and-catch (type $2) (param $x i32)
-  ;; INCLUDE-NEXT:  (try $try
+  ;; INCLUDE-NEXT:  (try
   ;; INCLUDE-NEXT:   (do
   ;; INCLUDE-NEXT:    (if
   ;; INCLUDE-NEXT:     (local.get $x)

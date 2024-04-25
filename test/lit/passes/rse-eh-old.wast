@@ -9,7 +9,7 @@
 
   ;; CHECK:      (func $try1 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -37,7 +37,7 @@
 
   ;; CHECK:      (func $try2 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (throw $e
   ;; CHECK-NEXT:     (i32.const 0)
@@ -70,7 +70,7 @@
 
   ;; CHECK:      (func $try3 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (throw $e
   ;; CHECK-NEXT:     (i32.const 0)
@@ -108,7 +108,7 @@
 
   ;; CHECK:      (func $try4 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (call $foo)
   ;; CHECK-NEXT:    (local.set $x
@@ -139,7 +139,7 @@
 
   ;; CHECK:      (func $try5 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (local.set $x
   ;; CHECK-NEXT:     (i32.const 1)
@@ -170,7 +170,7 @@
 
   ;; CHECK:      (func $nested-try1 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (try $l0
   ;; CHECK-NEXT:     (do
@@ -218,7 +218,7 @@
 
   ;; CHECK:      (func $nested-try2 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (try $l0
   ;; CHECK-NEXT:     (do
@@ -265,7 +265,7 @@
 
   ;; CHECK:      (func $nested-try3 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (try $l0
   ;; CHECK-NEXT:     (do
@@ -316,7 +316,7 @@
 
   ;; CHECK:      (func $nested-catch1 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (throw $e
   ;; CHECK-NEXT:     (i32.const 0)
@@ -328,7 +328,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $e2
-  ;; CHECK-NEXT:    (try $try0
+  ;; CHECK-NEXT:    (try
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (throw $e
   ;; CHECK-NEXT:       (i32.const 0)
@@ -382,7 +382,7 @@
 
   ;; CHECK:      (func $nested-catch2 (type $0)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (throw $e
   ;; CHECK-NEXT:     (i32.const 0)
@@ -397,7 +397,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch_all
-  ;; CHECK-NEXT:    (try $try1
+  ;; CHECK-NEXT:    (try
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (throw $e
   ;; CHECK-NEXT:       (i32.const 0)
@@ -455,7 +455,7 @@
 
   ;; CHECK:      (func $catchless-try (type $0)
   ;; CHECK-NEXT:  (local $x i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (call $foo)
   ;; CHECK-NEXT:    (local.set $x
@@ -486,9 +486,9 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $l0
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (try $try
+  ;; CHECK-NEXT:    (try
   ;; CHECK-NEXT:     (do
-  ;; CHECK-NEXT:      (try $try2
+  ;; CHECK-NEXT:      (try
   ;; CHECK-NEXT:       (do
   ;; CHECK-NEXT:        (throw $e
   ;; CHECK-NEXT:         (i32.const 0)
@@ -541,9 +541,9 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $l0
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (try $try
+  ;; CHECK-NEXT:    (try
   ;; CHECK-NEXT:     (do
-  ;; CHECK-NEXT:      (try $try3
+  ;; CHECK-NEXT:      (try
   ;; CHECK-NEXT:       (do
   ;; CHECK-NEXT:        (throw $e
   ;; CHECK-NEXT:         (i32.const 0)
@@ -597,9 +597,9 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $l0
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (try $try
+  ;; CHECK-NEXT:    (try
   ;; CHECK-NEXT:     (do
-  ;; CHECK-NEXT:      (try $try4
+  ;; CHECK-NEXT:      (try
   ;; CHECK-NEXT:       (do
   ;; CHECK-NEXT:        (throw $e
   ;; CHECK-NEXT:         (i32.const 0)
@@ -657,13 +657,13 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $l0
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (try $try
+  ;; CHECK-NEXT:    (try
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (try $l1
   ;; CHECK-NEXT:       (do
-  ;; CHECK-NEXT:        (try $try5
+  ;; CHECK-NEXT:        (try
   ;; CHECK-NEXT:         (do
-  ;; CHECK-NEXT:          (try $try6
+  ;; CHECK-NEXT:          (try
   ;; CHECK-NEXT:           (do
   ;; CHECK-NEXT:            (throw $e
   ;; CHECK-NEXT:             (i32.const 0)
@@ -738,13 +738,13 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (try $l0
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (try $try
+  ;; CHECK-NEXT:    (try
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (try $l1
   ;; CHECK-NEXT:       (do
-  ;; CHECK-NEXT:        (try $try7
+  ;; CHECK-NEXT:        (try
   ;; CHECK-NEXT:         (do
-  ;; CHECK-NEXT:          (try $try8
+  ;; CHECK-NEXT:          (try
   ;; CHECK-NEXT:           (do
   ;; CHECK-NEXT:            (throw $e
   ;; CHECK-NEXT:             (i32.const 0)

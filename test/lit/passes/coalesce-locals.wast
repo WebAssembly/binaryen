@@ -2099,8 +2099,8 @@
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block $z14
-  ;; CHECK-NEXT:   (br_table $z14 $z14
+  ;; CHECK-NEXT:  (block $z0
+  ;; CHECK-NEXT:   (br_table $z0 $z0
   ;; CHECK-NEXT:    (i32.const 100)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (drop

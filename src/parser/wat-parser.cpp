@@ -96,6 +96,8 @@ void propagateDebugLocations(Module& wasm) {
   // do not already have their own debug locations.
   PassRunner runner(&wasm);
   runner.add("propagate-debug-locs");
+  // The parser should not be responsible for validation.
+  runner.setIsNested(true);
   runner.run();
 }
 
