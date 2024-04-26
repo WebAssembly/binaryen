@@ -445,6 +445,8 @@ public:
   void emitFunctionEnd() {
     if (func->epilogLocation.size()) {
       parent.writeDebugLocation(*func->epilogLocation.begin());
+    } else {
+      parent.writeNoDebugLocation();
     }
     writer.emitFunctionEnd();
   }
