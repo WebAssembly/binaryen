@@ -1015,21 +1015,6 @@ std::optional<std::string_view> Token::getString() const {
   return {};
 }
 
-std::optional<std::string_view> Token::getID() const {
-  if (auto* tok = std::get_if<IdTok>(&data)) {
-    if (tok->str) {
-      return std::string_view(*tok->str);
-    }
-    if (tok->isStr) {
-      // Remove '$' and quotes.
-      return span.substr(2, span.size() - 3);
-    }
-    // Remove '$'.
-    return span.substr(1);
-  }
-  return {};
-}
-
 void Lexer::skipSpace() {
   while (true) {
     if (auto ctx = annotation(next())) {
@@ -1067,6 +1052,26 @@ bool Lexer::takeRParen() {
     return true;
   }
   return false;
+}
+
+std::optional<Name> Lexer::takeID() {
+  if (curr) {
+    return std::nullopt;
+  }
+  if (auto result = ident(next())) {
+    index += result->span.size();
+    advance();
+    if (result->str) {
+      return Name(*result->str);
+    }
+    if (result->isStr) {
+      // Remove '$' and quotes.
+      return Name(result->span.substr(2, result->span.size() - 3));
+    }
+    // Remove '$'.
+    return Name(result->span.substr(1));
+  }
+  return std::nullopt;
 }
 
 std::optional<std::string_view> Lexer::takeKeyword() {
@@ -1123,9 +1128,7 @@ std::optional<uint32_t> Lexer::takeAlign() {
 void Lexer::lexToken() {
   // TODO: Ensure we're getting the longest possible match.
   Token tok;
-  if (auto t = ident(next())) {
-    tok = Token{t->span, IdTok{t->isStr, t->str}};
-  } else if (auto t = integer(next())) {
+  if (auto t = integer(next())) {
     tok = Token{t->span, IntTok{t->n, t->sign}};
   } else if (auto t = float_(next())) {
     tok = Token{t->span, FloatTok{t->nanPayload, t->d}};
@@ -1185,8 +1188,6 @@ bool Token::operator==(const Token& other) const {
 std::ostream& operator<<(std::ostream& os, const TextPos& pos) {
   return os << pos.line << ":" << pos.col;
 }
-
-std::ostream& operator<<(std::ostream& os, const IdTok&) { return os << "id"; }
 
 std::ostream& operator<<(std::ostream& os, const IntTok& tok) {
   return os << (tok.sign == Pos ? "+" : tok.sign == Neg ? "-" : "") << tok.n;

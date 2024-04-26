@@ -45,17 +45,6 @@ struct TextPos {
 // Tokens
 // ======
 
-struct IdTok {
-  // Whether this ID has `$"..."` format
-  bool isStr;
-
-  // If the ID is a string ID and contains escapes, this is its contents.
-  std::optional<std::string> str;
-
-  bool operator==(const IdTok&) const { return true; }
-  friend std::ostream& operator<<(std::ostream&, const IdTok&);
-};
-
 enum Sign { NoSign, Pos, Neg };
 
 struct IntTok {
@@ -88,7 +77,7 @@ struct StringTok {
 };
 
 struct Token {
-  using Data = std::variant<IdTok, IntTok, FloatTok, StringTok>;
+  using Data = std::variant<IntTok, FloatTok, StringTok>;
   std::string_view span;
   Data data;
 
@@ -102,7 +91,6 @@ struct Token {
   std::optional<double> getF64() const;
   std::optional<float> getF32() const;
   std::optional<std::string_view> getString() const;
-  std::optional<std::string_view> getID() const;
 
   bool operator==(const Token&) const;
   friend std::ostream& operator<<(std::ostream& os, const Token&);
@@ -164,16 +152,7 @@ public:
     }
   }
 
-  std::optional<Name> takeID() {
-    if (curr) {
-      if (auto id = curr->getID()) {
-        advance();
-        // See comment on takeName.
-        return Name(std::string(*id));
-      }
-    }
-    return {};
-  }
+  std::optional<Name> takeID();
 
   std::optional<std::string_view> takeKeyword();
   bool takeKeyword(std::string_view expected);
