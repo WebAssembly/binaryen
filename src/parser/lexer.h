@@ -87,26 +87,14 @@ struct StringTok {
   friend std::ostream& operator<<(std::ostream&, const StringTok&);
 };
 
-struct KeywordTok {
-  bool operator==(const KeywordTok&) const { return true; }
-  friend std::ostream& operator<<(std::ostream&, const KeywordTok&);
-};
-
 struct Token {
-  using Data = std::variant<IdTok, IntTok, FloatTok, StringTok, KeywordTok>;
+  using Data = std::variant<IdTok, IntTok, FloatTok, StringTok>;
   std::string_view span;
   Data data;
 
   // ====================
   // Token classification
   // ====================
-
-  std::optional<std::string_view> getKeyword() const {
-    if (std::get_if<KeywordTok>(&data)) {
-      return span;
-    }
-    return {};
-  }
 
   template<typename T> std::optional<T> getU() const;
   template<typename T> std::optional<T> getS() const;
@@ -187,77 +175,15 @@ public:
     return {};
   }
 
-  std::optional<std::string_view> takeKeyword() {
-    if (curr) {
-      if (auto keyword = curr->getKeyword()) {
-        advance();
-        return *keyword;
-      }
-    }
-    return {};
-  }
+  std::optional<std::string_view> takeKeyword();
+  bool takeKeyword(std::string_view expected);
 
   std::optional<std::string_view> peekKeyword() {
     return Lexer(*this).takeKeyword();
   }
 
-  bool takeKeyword(std::string_view expected) {
-    if (curr) {
-      if (auto keyword = curr->getKeyword()) {
-        if (*keyword == expected) {
-          advance();
-          return true;
-        }
-      }
-    }
-    return false;
-  }
-
-  std::optional<uint64_t> takeOffset() {
-    using namespace std::string_view_literals;
-    if (curr) {
-      if (auto keyword = curr->getKeyword()) {
-        if (keyword->substr(0, 7) != "offset="sv) {
-          return {};
-        }
-        Lexer subLexer(keyword->substr(7));
-        if (subLexer.empty()) {
-          return {};
-        }
-        if (auto o = subLexer.curr->getU<uint64_t>()) {
-          subLexer.advance();
-          if (subLexer.empty()) {
-            advance();
-            return o;
-          }
-        }
-      }
-    }
-    return std::nullopt;
-  }
-
-  std::optional<uint32_t> takeAlign() {
-    using namespace std::string_view_literals;
-    if (curr) {
-      if (auto keyword = curr->getKeyword()) {
-        if (keyword->substr(0, 6) != "align="sv) {
-          return {};
-        }
-        Lexer subLexer(keyword->substr(6));
-        if (subLexer.empty()) {
-          return {};
-        }
-        if (auto a = subLexer.curr->getU<uint32_t>()) {
-          subLexer.advance();
-          if (subLexer.empty()) {
-            advance();
-            return a;
-          }
-        }
-      }
-    }
-    return {};
-  }
+  std::optional<uint64_t> takeOffset();
+  std::optional<uint32_t> takeAlign();
 
   template<typename T> std::optional<T> takeU() {
     if (curr) {

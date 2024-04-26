@@ -1069,6 +1069,57 @@ bool Lexer::takeRParen() {
   return false;
 }
 
+std::optional<std::string_view> Lexer::takeKeyword() {
+  if (curr) {
+    return std::nullopt;
+  }
+  if (auto result = keyword(next())) {
+    index += result->span.size();
+    advance();
+    return result->span;
+  }
+  return std::nullopt;
+}
+
+bool Lexer::takeKeyword(std::string_view expected) {
+  if (auto result = keyword(next()); result && result->span == expected) {
+    index += expected.size();
+    advance();
+    return true;
+  }
+  return false;
+}
+
+std::optional<uint64_t> Lexer::takeOffset() {
+  if (auto result = keyword(next())) {
+    if (result->span.substr(0, 7) != "offset="sv) {
+      return std::nullopt;
+    }
+    Lexer subLexer(result->span.substr(7));
+    if (auto o = subLexer.takeU64()) {
+      index += result->span.size();
+      advance();
+      return o;
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<uint32_t> Lexer::takeAlign() {
+  if (auto result = keyword(next())) {
+    if (result->span.substr(0, 6) != "align="sv) {
+      return std::nullopt;
+    }
+    Lexer subLexer(result->span.substr(6));
+    if (auto o = subLexer.takeU32()) {
+      index += result->span.size();
+      advance();
+      return o;
+    }
+  }
+  return std::nullopt;
+}
+
 void Lexer::lexToken() {
   // TODO: Ensure we're getting the longest possible match.
   Token tok;
@@ -1080,8 +1131,6 @@ void Lexer::lexToken() {
     tok = Token{t->span, FloatTok{t->nanPayload, t->d}};
   } else if (auto t = str(next())) {
     tok = Token{t->span, StringTok{t->str}};
-  } else if (auto t = keyword(next())) {
-    tok = Token{t->span, KeywordTok{}};
   } else {
     // TODO: Do something about lexing errors.
     curr = std::nullopt;
@@ -1161,10 +1210,6 @@ std::ostream& operator<<(std::ostream& os, const StringTok& tok) {
     os << "(raw string)";
   }
   return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const KeywordTok&) {
-  return os << "keyword";
 }
 
 std::ostream& operator<<(std::ostream& os, const Token& tok) {
