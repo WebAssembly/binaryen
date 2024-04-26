@@ -905,12 +905,12 @@ std::optional<LexResult> keyword(std::string_view in) {
 void Lexer::skipSpace() {
   while (true) {
     if (auto ctx = annotation(next())) {
-      index += ctx->span.size();
+      pos += ctx->span.size();
       annotations.push_back(ctx->annotation);
       continue;
     }
     if (auto ctx = space(next())) {
-      index += ctx->span.size();
+      pos += ctx->span.size();
       continue;
     }
     break;
@@ -919,7 +919,7 @@ void Lexer::skipSpace() {
 
 bool Lexer::takeLParen() {
   if (LexCtx(next()).startsWith("("sv)) {
-    ++index;
+    ++pos;
     advance();
     return true;
   }
@@ -928,7 +928,7 @@ bool Lexer::takeLParen() {
 
 bool Lexer::takeRParen() {
   if (LexCtx(next()).startsWith(")"sv)) {
-    ++index;
+    ++pos;
     advance();
     return true;
   }
@@ -937,7 +937,7 @@ bool Lexer::takeRParen() {
 
 std::optional<std::string> Lexer::takeString() {
   if (auto result = str(next())) {
-    index += result->span.size();
+    pos += result->span.size();
     advance();
     if (result->str) {
       return result->str;
@@ -950,7 +950,7 @@ std::optional<std::string> Lexer::takeString() {
 
 std::optional<Name> Lexer::takeID() {
   if (auto result = ident(next())) {
-    index += result->span.size();
+    pos += result->span.size();
     advance();
     if (result->str) {
       return Name(*result->str);
@@ -967,7 +967,7 @@ std::optional<Name> Lexer::takeID() {
 
 std::optional<std::string_view> Lexer::takeKeyword() {
   if (auto result = keyword(next())) {
-    index += result->span.size();
+    pos += result->span.size();
     advance();
     return result->span;
   }
@@ -976,7 +976,7 @@ std::optional<std::string_view> Lexer::takeKeyword() {
 
 bool Lexer::takeKeyword(std::string_view expected) {
   if (auto result = keyword(next()); result && result->span == expected) {
-    index += expected.size();
+    pos += expected.size();
     advance();
     return true;
   }
@@ -990,7 +990,7 @@ std::optional<uint64_t> Lexer::takeOffset() {
     }
     Lexer subLexer(result->span.substr(7));
     if (auto o = subLexer.takeU64()) {
-      index += result->span.size();
+      pos += result->span.size();
       advance();
       return o;
     }
@@ -1005,7 +1005,7 @@ std::optional<uint32_t> Lexer::takeAlign() {
     }
     Lexer subLexer(result->span.substr(6));
     if (auto o = subLexer.takeU32()) {
-      index += result->span.size();
+      pos += result->span.size();
       advance();
       return o;
     }
@@ -1016,7 +1016,7 @@ std::optional<uint32_t> Lexer::takeAlign() {
 template<typename T> std::optional<T> Lexer::takeU() {
   static_assert(std::is_integral_v<T> && std::is_unsigned_v<T>);
   if (auto result = integer(next()); result && result->isUnsigned<T>()) {
-    index += result->span.size();
+    pos += result->span.size();
     advance();
     return T(result->n);
   }
@@ -1027,7 +1027,7 @@ template<typename T> std::optional<T> Lexer::takeU() {
 template<typename T> std::optional<T> Lexer::takeS() {
   static_assert(std::is_integral_v<T> && std::is_signed_v<T>);
   if (auto result = integer(next()); result && result->isSigned<T>()) {
-    index += result->span.size();
+    pos += result->span.size();
     advance();
     return T(result->n);
   }
@@ -1038,7 +1038,7 @@ template<typename T> std::optional<T> Lexer::takeI() {
   static_assert(std::is_integral_v<T> && std::is_unsigned_v<T>);
   if (auto result = integer(next())) {
     if (result->isUnsigned<T>() || result->isSigned<std::make_signed_t<T>>()) {
-      index += result->span.size();
+      pos += result->span.size();
       advance();
       return T(result->n);
     }
@@ -1078,12 +1078,12 @@ std::optional<double> Lexer::takeF64() {
       bits = (bits & ~payloadMask) | payload;
       memcpy(&d, &bits, sizeof(bits));
     }
-    index += result->span.size();
+    pos += result->span.size();
     advance();
     return d;
   }
   if (auto result = integer(next())) {
-    index += result->span.size();
+    pos += result->span.size();
     advance();
     if (result->sign == Neg) {
       if (result->n == 0) {
@@ -1115,12 +1115,12 @@ std::optional<float> Lexer::takeF32() {
       bits = (bits & ~payloadMask) | payload;
       memcpy(&f, &bits, sizeof(bits));
     }
-    index += result->span.size();
+    pos += result->span.size();
     advance();
     return f;
   }
   if (auto result = integer(next())) {
-    index += result->span.size();
+    pos += result->span.size();
     advance();
     if (result->sign == Neg) {
       if (result->n == 0) {

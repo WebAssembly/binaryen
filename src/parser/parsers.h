@@ -372,11 +372,11 @@ template<typename Ctx> struct WithPosition {
   WithPosition(Ctx& ctx, Index pos)
     : ctx(ctx), original(ctx.in.getPos()),
       annotations(ctx.in.takeAnnotations()) {
-    ctx.in.setIndex(pos);
+    ctx.in.setPos(pos);
   }
 
   ~WithPosition() {
-    ctx.in.setIndex(original);
+    ctx.in.setPos(original);
     ctx.in.setAnnotations(std::move(annotations));
   }
 };
@@ -1325,7 +1325,7 @@ trycatch(Ctx& ctx, const std::vector<Annotation>& annotations, bool folded) {
         if (id && id != label) {
           // Instead of returning an error, retry without the ID.
           parseID = false;
-          ctx.in.setIndex(afterCatchPos);
+          ctx.in.setPos(afterCatchPos);
           continue;
         }
       }
@@ -1334,7 +1334,7 @@ trycatch(Ctx& ctx, const std::vector<Annotation>& annotations, bool folded) {
       if (parseID && tag.getErr()) {
         // Instead of returning an error, retry without the ID.
         parseID = false;
-        ctx.in.setIndex(afterCatchPos);
+        ctx.in.setPos(afterCatchPos);
         continue;
       }
       CHECK_ERR(tag);
@@ -3375,7 +3375,7 @@ template<typename Ctx> MaybeResult<> elem(Ctx& ctx) {
           offset = *off;
         } else {
           // This must be the beginning of the elemlist instead.
-          ctx.in.setIndex(beforeLParen);
+          ctx.in.setPos(beforeLParen);
         }
       }
     }
