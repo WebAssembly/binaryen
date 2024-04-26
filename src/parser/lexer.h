@@ -169,6 +169,9 @@ public:
       if (peekLParen() || peekRParen()) {
         return true;
       }
+      if (!curr) {
+        ++index;
+      }
       advance();
     }
   }
