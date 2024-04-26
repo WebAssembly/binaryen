@@ -64,6 +64,10 @@ struct DebugLocationPropagation
         if (auto it = locs.find(previous); it != locs.end()) {
           locs[curr] = it->second;
         }
+      } else if (self->getFunction()->prologLocation.size()) {
+        // The first instruction may inherit its location from the
+        // function prolog
+        locs[curr] = *self->getFunction()->prologLocation.begin();
       }
     }
     expressionStack.push_back(curr);
