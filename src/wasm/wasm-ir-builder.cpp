@@ -929,13 +929,18 @@ Result<> IRBuilder::visitEnd() {
   auto maybeWrapForLabel = [&](Expression* curr) -> Expression* {
     bool isTry = scope.getTry() || scope.getCatch() || scope.getCatchAll();
     auto& label = isTry ? scope.branchLabel : scope.label;
-    if (label) {
-      return builder.makeBlock(label,
-                               {curr},
-                               scope.labelUsed ? originalScopeType
-                                               : scope.getResultType());
+    if (!label) {
+      return curr;
     }
-    return curr;
+    // We can re-use unnamed blocks instead of wrapping them.
+    if (auto* block = curr->dynCast<Block>(); block && !block->name) {
+      block->name = label;
+      return block;
+    }
+    return builder.makeBlock(label,
+                             {curr},
+                             scope.labelUsed ? originalScopeType
+                                             : scope.getResultType());
   };
 
   if (auto* func = scope.getFunction()) {
