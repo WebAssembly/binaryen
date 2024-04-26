@@ -214,6 +214,7 @@
     (local.get $4)
    )
   )
+  ;;@ fib.c:8:0
  )
  (func $runPostSets
   (local $0 i32)
