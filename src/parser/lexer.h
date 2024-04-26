@@ -45,16 +45,6 @@ struct TextPos {
 // Tokens
 // ======
 
-struct LParenTok {
-  bool operator==(const LParenTok&) const { return true; }
-  friend std::ostream& operator<<(std::ostream&, const LParenTok&);
-};
-
-struct RParenTok {
-  bool operator==(const RParenTok&) const { return true; }
-  friend std::ostream& operator<<(std::ostream&, const RParenTok&);
-};
-
 struct IdTok {
   // Whether this ID has `$"..."` format
   bool isStr;
@@ -103,23 +93,13 @@ struct KeywordTok {
 };
 
 struct Token {
-  using Data = std::variant<LParenTok,
-                            RParenTok,
-                            IdTok,
-                            IntTok,
-                            FloatTok,
-                            StringTok,
-                            KeywordTok>;
+  using Data = std::variant<IdTok, IntTok, FloatTok, StringTok, KeywordTok>;
   std::string_view span;
   Data data;
 
   // ====================
   // Token classification
   // ====================
-
-  bool isLParen() const { return std::get_if<LParenTok>(&data); }
-
-  bool isRParen() const { return std::get_if<RParenTok>(&data); }
 
   std::optional<std::string_view> getKeyword() const {
     if (std::get_if<KeywordTok>(&data)) {
@@ -173,33 +153,24 @@ public:
     advance();
   }
 
-  bool takeLParen() {
-    if (!curr || !curr->isLParen()) {
-      return false;
-    }
-    advance();
-    return true;
-  }
+  bool takeLParen();
 
   bool peekLParen() { return Lexer(*this).takeLParen(); }
 
-  bool takeRParen() {
-    if (!curr || !curr->isRParen()) {
-      return false;
-    }
-    advance();
-    return true;
-  }
+  bool takeRParen();
 
   bool peekRParen() { return Lexer(*this).takeRParen(); }
 
   bool takeUntilParen() {
     while (true) {
-      if (!curr) {
+      if (empty()) {
         return false;
       }
-      if (curr->isLParen() || curr->isRParen()) {
+      if (peekLParen() || peekRParen()) {
         return true;
+      }
+      if (!curr) {
+        ++index;
       }
       advance();
     }
@@ -392,7 +363,7 @@ public:
     lexToken();
   }
 
-  bool empty() const { return !curr; }
+  bool empty() const { return !curr && index == buffer.size(); }
 
   TextPos position(const char* c) const;
   TextPos position(size_t i) const { return position(buffer.data() + i); }
