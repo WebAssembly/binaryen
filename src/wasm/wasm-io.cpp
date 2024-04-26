@@ -129,7 +129,6 @@ void ModuleReader::readStdin(Module& wasm, std::string sourceMapFilename) {
   } else {
     std::ostringstream s;
     s.write(input.data(), input.size());
-    s << '\0';
     std::string input_str = s.str();
     readTextData(input_str, wasm, profile);
   }
