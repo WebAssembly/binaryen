@@ -136,6 +136,10 @@ public:
       if (peekLParen() || peekRParen()) {
         return true;
       }
+      // Do not count the parentheses in strings.
+      if (takeString()) {
+        continue;
+      }
       if (!curr) {
         ++index;
       }
