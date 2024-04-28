@@ -336,7 +336,7 @@ Abbrev table for offset: 0x00000000
 
 0x0000011f:     DW_TAG_lexical_block [22] *
                   DW_AT_low_pc [DW_FORM_addr]	(0x0000000000000030)
-                  DW_AT_high_pc [DW_FORM_data4]	(0xffffffd0)
+                  DW_AT_high_pc [DW_FORM_data4]	(0x00000000)
 
 0x00000128:       DW_TAG_variable [21]  
                     DW_AT_location [DW_FORM_sec_offset]	(0x00000046: 
