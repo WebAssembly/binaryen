@@ -58,18 +58,18 @@ extern Name srcAnnotationKind;
 
 struct Lexer {
 private:
-  size_t index = 0;
+  size_t pos = 0;
   std::vector<Annotation> annotations;
 
 public:
   std::string_view buffer;
 
-  Lexer(std::string_view buffer) : buffer(buffer) { setIndex(0); }
+  Lexer(std::string_view buffer) : buffer(buffer) { setPos(0); }
 
-  size_t getIndex() const { return index; }
+  size_t getPos() const { return pos; }
 
-  void setIndex(size_t i) {
-    index = i;
+  void setPos(size_t i) {
+    pos = i;
     advance();
   }
 
@@ -93,7 +93,7 @@ public:
       if (takeString()) {
         continue;
       }
-      ++index;
+      ++pos;
       advance();
     }
   }
@@ -150,14 +150,14 @@ public:
     return ret;
   }
 
-  std::string_view next() const { return buffer.substr(index); }
+  std::string_view next() const { return buffer.substr(pos); }
 
   void advance() {
     annotations.clear();
     skipSpace();
   }
 
-  bool empty() const { return index == buffer.size(); }
+  bool empty() const { return pos == buffer.size(); }
 
   TextPos position(const char* c) const;
   TextPos position(size_t i) const { return position(buffer.data() + i); }
@@ -165,8 +165,6 @@ public:
     return position(span.data());
   }
   TextPos position() const { return position(getPos()); }
-
-  size_t getPos() const { return index; }
 
   [[nodiscard]] Err err(size_t pos, std::string reason) {
     std::stringstream msg;

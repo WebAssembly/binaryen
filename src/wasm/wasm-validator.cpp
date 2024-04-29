@@ -239,8 +239,6 @@ struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   std::unordered_set<Name> delegateTargetNames;
   std::unordered_set<Name> rethrowTargetNames;
 
-  std::unordered_set<Type> returnTypes; // types used in returns
-
   // Binaryen IR requires that label names must be unique - IR generators must
   // ensure that
   std::unordered_set<Name> labelNames;
@@ -2135,7 +2133,24 @@ void FunctionValidator::visitDrop(Drop* curr) {
 }
 
 void FunctionValidator::visitReturn(Return* curr) {
-  returnTypes.insert(curr->value ? curr->value->type : Type::none);
+  auto* func = getFunction();
+  if (!shouldBeTrue(!!func, curr, "return must be within a function")) {
+    return;
+  }
+  auto results = func->getResults();
+  if (results.isConcrete()) {
+    if (!shouldBeTrue(
+          curr->value, curr, "concrete return should have a value")) {
+      return;
+    }
+    shouldBeSubType(
+      curr->value->type,
+      results,
+      curr,
+      "return value should be a subtype of the function result type");
+  } else {
+    shouldBeTrue(!curr->value, curr, "return should not have a value");
+  }
 }
 
 void FunctionValidator::visitMemorySize(MemorySize* curr) {
@@ -3432,12 +3447,6 @@ void FunctionValidator::visitFunction(Function* curr) {
                     curr->getResults(),
                     curr->body,
                     "function body type must match, if function returns");
-    for (Type returnType : returnTypes) {
-      shouldBeSubType(returnType,
-                      curr->getResults(),
-                      curr->body,
-                      "function result must match, if function has returns");
-    }
 
     if (getModule()->features.hasGC()) {
       // If we have non-nullable locals, verify that local.get are valid.
@@ -3458,7 +3467,6 @@ void FunctionValidator::visitFunction(Function* curr) {
     assert(breakTypes.empty());
     assert(delegateTargetNames.empty());
     assert(rethrowTargetNames.empty());
-    returnTypes.clear();
     labelNames.clear();
   }
 }
