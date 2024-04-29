@@ -1369,7 +1369,9 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
     options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
                   FeatureSet::Strings,
                 &Self::makeStringEncode,
-                &Self::makeStringEq);
+                &Self::makeStringEq,
+                &Self::makeStringMeasure,
+                &Self::makeStringGet);
   }
   if (type.isTuple()) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
@@ -2620,7 +2622,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       if (!funcContext) {
         return makeStringConst();
       }
-      switch (upTo(9)) {
+      switch (upTo(11)) {
         case 0:
         case 1:
         case 2:
@@ -2639,13 +2641,16 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
           // generate two string children, i.e., it can lead to exponential
           // growth.
           return makeStringConcat();
+        case 9:
+        case 10:
+          return makeStringSlice();
       }
       WASM_UNREACHABLE("bad switch");
     }
     case HeapType::stringview_wtf16:
       // We fully support wtf16 strings.
-      return builder.makeStringAs(
-        StringAsWTF16, makeBasicRef(Type(HeapType::string, NonNullable)));
+      return builder.makeStringAs(StringAsWTF16,
+                                  makeTrappingRefUse(HeapType::string));
     case HeapType::stringview_wtf8:
     case HeapType::stringview_iter:
       // We do not have interpreter support for wtf8 and iter, so emit something
@@ -2818,6 +2823,13 @@ Expression* TranslateToFuzzReader::makeStringConcat() {
   return builder.makeStringConcat(left, right);
 }
 
+Expression* TranslateToFuzzReader::makeStringSlice() {
+  auto* ref = makeTrappingRefUse(HeapType::stringview_wtf16);
+  auto* start = make(Type::i32);
+  auto* end = make(Type::i32);
+  return builder.makeStringSliceWTF(StringSliceWTF16, ref, start, end);
+}
+
 Expression* TranslateToFuzzReader::makeStringEq(Type type) {
   assert(type == Type::i32);
 
@@ -2831,6 +2843,21 @@ Expression* TranslateToFuzzReader::makeStringEq(Type type) {
   auto* left = makeTrappingRefUse(HeapType::string);
   auto* right = makeTrappingRefUse(HeapType::string);
   return builder.makeStringEq(StringEqCompare, left, right);
+}
+
+Expression* TranslateToFuzzReader::makeStringMeasure(Type type) {
+  assert(type == Type::i32);
+
+  auto* ref = makeTrappingRefUse(HeapType::string);
+  return builder.makeStringMeasure(StringMeasureWTF16, ref);
+}
+
+Expression* TranslateToFuzzReader::makeStringGet(Type type) {
+  assert(type == Type::i32);
+
+  auto* ref = makeTrappingRefUse(HeapType::stringview_wtf16);
+  auto* pos = make(Type::i32);
+  return builder.makeStringWTF16Get(ref, pos);
 }
 
 Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {

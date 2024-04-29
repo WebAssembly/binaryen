@@ -2129,6 +2129,24 @@ void BinaryInstWriter::visitRefTest(RefTest* curr) {
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
+  // We allow ref.cast of string views, but V8 does not. Work around that by
+  // emitting a ref.as_non_null (or nothing).
+  auto type = curr->type;
+  if (type.isRef()) {
+    auto heapType = type.getHeapType();
+    if (heapType == HeapType::stringview_wtf8 ||
+        heapType == HeapType::stringview_wtf16 ||
+        heapType == HeapType::stringview_iter) {
+      // We cannot cast string views to/from anything, so the input must also
+      // be a view.
+      assert(curr->ref->type.getHeapType() == heapType);
+      if (type.isNonNullable() && curr->ref->type.isNullable()) {
+        o << int8_t(BinaryConsts::RefAsNonNull);
+      }
+      return;
+    }
+  }
+
   o << int8_t(BinaryConsts::GCPrefix);
   if (curr->type.isNullable()) {
     o << U32LEB(BinaryConsts::RefCastNull);
