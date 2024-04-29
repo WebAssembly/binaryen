@@ -511,9 +511,7 @@ public:
                         Function* func,
                         bool sourceMap = false,
                         bool DWARF = false)
-    : parent(parent),
-      writer(parent, o, func, sourceMap, DWARF),
-      func(func),
+    : parent(parent), writer(parent, o, func, sourceMap, DWARF), func(func),
       sourceMap(sourceMap) {}
 
   void write();
