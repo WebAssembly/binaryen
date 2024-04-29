@@ -106,8 +106,8 @@ public:
       // removing instead.
       PassRunner runner(getModule());
       runner.add("precompute");
-      runner.add("vacuum");
       runner.add("remove-unused-brs");
+      runner.add("vacuum");
       runner.setIsNested(true);
       runner.runOnFunction(curr);
     }
