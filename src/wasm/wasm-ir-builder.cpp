@@ -932,15 +932,15 @@ Result<> IRBuilder::visitEnd() {
     if (!label) {
       return curr;
     }
+    auto blockType =
+      scope.labelUsed ? originalScopeType : scope.getResultType();
     // We can re-use unnamed blocks instead of wrapping them.
     if (auto* block = curr->dynCast<Block>(); block && !block->name) {
       block->name = label;
+      block->type = blockType;
       return block;
     }
-    return builder.makeBlock(label,
-                             {curr},
-                             scope.labelUsed ? originalScopeType
-                                             : scope.getResultType());
+    return builder.makeBlock(label, {curr}, blockType);
   };
 
   if (auto* func = scope.getFunction()) {
