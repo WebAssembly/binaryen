@@ -166,7 +166,6 @@ public:
   }
   TextPos position() const { return position(getPos()); }
 
-
   [[nodiscard]] Err err(size_t pos, std::string reason) {
     std::stringstream msg;
     msg << position(pos) << ": error: " << reason;
