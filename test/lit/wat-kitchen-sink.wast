@@ -13,9 +13,9 @@
  (type $ret2 (func (result i32 i32)))
 
  (rec
-  ;; CHECK:      (type $3 (func (result i32 i64)))
-
   ;; CHECK:      (type $pair (struct (field $first (mut i32)) (field $second (mut i64))))
+
+  ;; CHECK:      (type $4 (func (result i32 i64)))
 
   ;; CHECK:      (type $5 (func (param i32 i64)))
 
@@ -323,7 +323,7 @@
 
  ;; CHECK:      (import "mod" "f5" (func $fimport$0 (type $void)))
 
- ;; CHECK:      (import "mod" "imported-f" (func $fimport$1 (type $3) (result i32 i64)))
+ ;; CHECK:      (import "mod" "imported-f" (func $fimport$1 (type $4) (result i32 i64)))
 
  ;; CHECK:      (import "mod" "t0" (tag $imported (param i32 i64)))
 
@@ -1877,8 +1877,8 @@
   end
  )
 
- ;; CHECK:      (func $try-catch-params (type $3) (result i32 i64)
- ;; CHECK-NEXT:  (try (type $3) (result i32 i64)
+ ;; CHECK:      (func $try-catch-params (type $4) (result i32 i64)
+ ;; CHECK-NEXT:  (try (type $4) (result i32 i64)
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:    (tuple.make 2
  ;; CHECK-NEXT:     (i32.const 0)
@@ -1898,8 +1898,8 @@
   end
  )
 
- ;; CHECK:      (func $try-catch-pop (type $3) (result i32 i64)
- ;; CHECK-NEXT:  (try (type $3) (result i32 i64)
+ ;; CHECK:      (func $try-catch-pop (type $4) (result i32 i64)
+ ;; CHECK-NEXT:  (try (type $4) (result i32 i64)
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:    (tuple.make 2
  ;; CHECK-NEXT:     (i32.const 0)
@@ -2670,13 +2670,11 @@
 
  ;; CHECK:      (func $label-func (type $void)
  ;; CHECK-NEXT:  (block $label
- ;; CHECK-NEXT:   (block
+ ;; CHECK-NEXT:   (br $label)
+ ;; CHECK-NEXT:   (block $a
  ;; CHECK-NEXT:    (br $label)
- ;; CHECK-NEXT:    (block $a
+ ;; CHECK-NEXT:    (block $b
  ;; CHECK-NEXT:     (br $label)
- ;; CHECK-NEXT:     (block $b
- ;; CHECK-NEXT:      (br $label)
- ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -2705,13 +2703,11 @@
 
  ;; CHECK:      (func $br-value-drop (type $1) (result i32)
  ;; CHECK-NEXT:  (block $label (result i32)
- ;; CHECK-NEXT:   (block (result i32)
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (f32.const 0)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (br $label
- ;; CHECK-NEXT:     (i32.const 1)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (f32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br $label
+ ;; CHECK-NEXT:    (i32.const 1)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -2721,8 +2717,8 @@
   br 0
  )
 
- ;; CHECK:      (func $br-multivalue (type $3) (result i32 i64)
- ;; CHECK-NEXT:  (block $label (type $3) (result i32 i64)
+ ;; CHECK:      (func $br-multivalue (type $4) (result i32 i64)
+ ;; CHECK-NEXT:  (block $label (type $4) (result i32 i64)
  ;; CHECK-NEXT:   (br $label
  ;; CHECK-NEXT:    (tuple.make 2
  ;; CHECK-NEXT:     (i32.const 0)
@@ -2737,17 +2733,15 @@
   br 0
  )
 
- ;; CHECK:      (func $br-multivalue-drop (type $3) (result i32 i64)
- ;; CHECK-NEXT:  (block $label (type $3) (result i32 i64)
- ;; CHECK-NEXT:   (block (type $3) (result i32 i64)
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (f32.const 0)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (br $label
- ;; CHECK-NEXT:     (tuple.make 2
- ;; CHECK-NEXT:      (i32.const 1)
- ;; CHECK-NEXT:      (i64.const 2)
- ;; CHECK-NEXT:     )
+ ;; CHECK:      (func $br-multivalue-drop (type $4) (result i32 i64)
+ ;; CHECK-NEXT:  (block $label (type $4) (result i32 i64)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (f32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br $label
+ ;; CHECK-NEXT:    (tuple.make 2
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:     (i64.const 2)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -2939,9 +2933,9 @@
   end
  )
 
- ;; CHECK:      (func $br-table-multivalue (type $3) (result i32 i64)
- ;; CHECK-NEXT:  (block $a (type $3) (result i32 i64)
- ;; CHECK-NEXT:   (block $b (type $3) (result i32 i64)
+ ;; CHECK:      (func $br-table-multivalue (type $4) (result i32 i64)
+ ;; CHECK-NEXT:  (block $a (type $4) (result i32 i64)
+ ;; CHECK-NEXT:   (block $b (type $4) (result i32 i64)
  ;; CHECK-NEXT:    (br_table $a $b
  ;; CHECK-NEXT:     (tuple.make 2
  ;; CHECK-NEXT:      (i32.const 42)
@@ -3669,7 +3663,7 @@
   return
  )
 
- ;; CHECK:      (func $return-multivalue (type $3) (result i32 i64)
+ ;; CHECK:      (func $return-multivalue (type $4) (result i32 i64)
  ;; CHECK-NEXT:  (return
  ;; CHECK-NEXT:   (call $return-multivalue)
  ;; CHECK-NEXT:  )
@@ -5086,26 +5080,24 @@
  ;; CHECK:      (func $resume (type $91) (param $ct (ref $simple-cont))
  ;; CHECK-NEXT:  (local $f f32)
  ;; CHECK-NEXT:  (block $label
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (block $block (result (ref $to-f32-cont))
- ;; CHECK-NEXT:      (tuple.drop 3
- ;; CHECK-NEXT:       (block $block0 (type $37) (result i32 i64 (ref null $simple-cont))
- ;; CHECK-NEXT:        (local.set $f
- ;; CHECK-NEXT:         (resume $simple-cont (tag $empty $block) (tag $tag-pair-to-pair $block0)
- ;; CHECK-NEXT:          (i32.const 0)
- ;; CHECK-NEXT:          (i64.const 1)
- ;; CHECK-NEXT:          (local.get $ct)
- ;; CHECK-NEXT:         )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block $block (result (ref $to-f32-cont))
+ ;; CHECK-NEXT:     (tuple.drop 3
+ ;; CHECK-NEXT:      (block $block0 (type $37) (result i32 i64 (ref null $simple-cont))
+ ;; CHECK-NEXT:       (local.set $f
+ ;; CHECK-NEXT:        (resume $simple-cont (tag $empty $block) (tag $tag-pair-to-pair $block0)
+ ;; CHECK-NEXT:         (i32.const 0)
+ ;; CHECK-NEXT:         (i64.const 1)
+ ;; CHECK-NEXT:         (local.get $ct)
  ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (unreachable)
  ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (unreachable)
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (br $label)
  ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br $label)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $resume (param $ct (ref $simple-cont))
@@ -5148,7 +5140,7 @@
    cont.bind $cont-bind-before $simple-cont
  )
 
- ;; CHECK:      (func $suspend (type $3) (result i32 i64)
+ ;; CHECK:      (func $suspend (type $4) (result i32 i64)
  ;; CHECK-NEXT:  (suspend $tag-pair-to-pair
  ;; CHECK-NEXT:   (i32.const 123)
  ;; CHECK-NEXT:   (i64.const 456)
