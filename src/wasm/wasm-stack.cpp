@@ -2791,6 +2791,10 @@ void StackIRToBinaryWriter::write() {
         catchIndexStack.push_back(0);
         [[fallthrough]];
       case StackInst::Basic:
+        if (sourceMap) {
+          parent.writeDebugLocation(inst->origin, func);
+        }
+        [[fallthrough]];
       case StackInst::BlockBegin:
       case StackInst::IfBegin:
       case StackInst::LoopBegin:

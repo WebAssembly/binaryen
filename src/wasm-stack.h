@@ -508,17 +508,23 @@ class StackIRToBinaryWriter {
 public:
   StackIRToBinaryWriter(WasmBinaryWriter& parent,
                         BufferWithRandomAccess& o,
-                        Function* func)
-    : writer(parent, o, func, false /* sourceMap */, false /* DWARF */),
-      func(func) {}
+                        Function* func,
+                        bool sourceMap = false,
+                        bool DWARF = false)
+    : parent(parent),
+      writer(parent, o, func, sourceMap, DWARF),
+      func(func),
+      sourceMap(sourceMap) {}
 
   void write();
 
   MappedLocals& getMappedLocals() { return writer.mappedLocals; }
 
 private:
+  WasmBinaryWriter& parent;
   BinaryInstWriter writer;
   Function* func;
+  bool sourceMap;
 };
 
 std::ostream& printStackIR(std::ostream& o, Module* module, bool optimize);
