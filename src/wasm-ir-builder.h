@@ -311,9 +311,11 @@ private:
 
     ScopeCtx() : scope(NoScope{}) {}
     ScopeCtx(Scope scope) : scope(scope) {}
-    ScopeCtx(Scope scope, Name label) : scope(scope), label(label) {}
-    ScopeCtx(Scope scope, Name label, Name branchLabel)
-      : scope(scope), label(label), branchLabel(branchLabel) {}
+    ScopeCtx(Scope scope, Name label, bool labelUsed)
+      : scope(scope), label(label), labelUsed(labelUsed) {}
+    ScopeCtx(Scope scope, Name label, bool labelUsed, Name branchLabel)
+      : scope(scope), label(label), branchLabel(branchLabel),
+        labelUsed(labelUsed) {}
 
     static ScopeCtx makeFunc(Function* func) {
       return ScopeCtx(FuncScope{func});
@@ -324,20 +326,29 @@ private:
     static ScopeCtx makeIf(If* iff, Name originalLabel = {}) {
       return ScopeCtx(IfScope{iff, originalLabel});
     }
-    static ScopeCtx makeElse(If* iff, Name originalLabel, Name label) {
-      return ScopeCtx(ElseScope{iff, originalLabel}, label);
+    static ScopeCtx
+    makeElse(If* iff, Name originalLabel, Name label, bool labelUsed) {
+      return ScopeCtx(ElseScope{iff, originalLabel}, label, labelUsed);
     }
     static ScopeCtx makeLoop(Loop* loop) { return ScopeCtx(LoopScope{loop}); }
     static ScopeCtx makeTry(Try* tryy, Name originalLabel = {}) {
       return ScopeCtx(TryScope{tryy, originalLabel});
     }
-    static ScopeCtx
-    makeCatch(Try* tryy, Name originalLabel, Name label, Name branchLabel) {
-      return ScopeCtx(CatchScope{tryy, originalLabel}, label, branchLabel);
+    static ScopeCtx makeCatch(Try* tryy,
+                              Name originalLabel,
+                              Name label,
+                              bool labelUsed,
+                              Name branchLabel) {
+      return ScopeCtx(
+        CatchScope{tryy, originalLabel}, label, labelUsed, branchLabel);
     }
-    static ScopeCtx
-    makeCatchAll(Try* tryy, Name originalLabel, Name label, Name branchLabel) {
-      return ScopeCtx(CatchAllScope{tryy, originalLabel}, label, branchLabel);
+    static ScopeCtx makeCatchAll(Try* tryy,
+                                 Name originalLabel,
+                                 Name label,
+                                 bool labelUsed,
+                                 Name branchLabel) {
+      return ScopeCtx(
+        CatchAllScope{tryy, originalLabel}, label, labelUsed, branchLabel);
     }
     static ScopeCtx makeTryTable(TryTable* trytable, Name originalLabel = {}) {
       return ScopeCtx(TryTableScope{trytable, originalLabel});

@@ -810,10 +810,11 @@ Result<> IRBuilder::visitElse() {
   }
   auto originalLabel = scope.getOriginalLabel();
   auto label = scope.label;
+  auto labelUsed = scope.labelUsed;
   auto expr = finishScope();
   CHECK_ERR(expr);
   iff->ifTrue = *expr;
-  pushScope(ScopeCtx::makeElse(iff, originalLabel, label));
+  pushScope(ScopeCtx::makeElse(iff, originalLabel, label, labelUsed));
   return Ok{};
 }
 
@@ -830,6 +831,7 @@ Result<> IRBuilder::visitCatch(Name tag) {
   }
   auto originalLabel = scope.getOriginalLabel();
   auto label = scope.label;
+  auto labelUsed = scope.labelUsed;
   auto branchLabel = scope.branchLabel;
   auto expr = finishScope();
   CHECK_ERR(expr);
@@ -839,7 +841,8 @@ Result<> IRBuilder::visitCatch(Name tag) {
     tryy->catchBodies.push_back(*expr);
   }
   tryy->catchTags.push_back(tag);
-  pushScope(ScopeCtx::makeCatch(tryy, originalLabel, label, branchLabel));
+  pushScope(
+    ScopeCtx::makeCatch(tryy, originalLabel, label, labelUsed, branchLabel));
   // Push a pop for the exception payload.
   auto params = wasm.getTag(tag)->sig.params;
   if (params != Type::none) {
@@ -861,6 +864,7 @@ Result<> IRBuilder::visitCatchAll() {
   }
   auto originalLabel = scope.getOriginalLabel();
   auto label = scope.label;
+  auto labelUsed = scope.labelUsed;
   auto branchLabel = scope.branchLabel;
   auto expr = finishScope();
   CHECK_ERR(expr);
@@ -869,7 +873,8 @@ Result<> IRBuilder::visitCatchAll() {
   } else {
     tryy->catchBodies.push_back(*expr);
   }
-  pushScope(ScopeCtx::makeCatchAll(tryy, originalLabel, label, branchLabel));
+  pushScope(
+    ScopeCtx::makeCatchAll(tryy, originalLabel, label, labelUsed, branchLabel));
   return Ok{};
 }
 
