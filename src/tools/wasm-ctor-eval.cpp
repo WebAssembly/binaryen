@@ -93,6 +93,14 @@ public:
     //       serialize them.)
     throw FailToEvalException("table.set: TODO");
   }
+
+  Flow visitStringAs(StringAs* curr) {
+    // TODO: It is not clear how we can handle string.as, since it can lead to
+    //       us needing string_views in globals, but string.as is not a constant
+    //       instruction, so we cannot generate such globals atm. Perhaps we
+    //       could generate them in the start function?
+    throw FailToEvalException("string.as: TODO");
+  }
 };
 
 // Build an artificial `env` module based on a module's imports, so that the
