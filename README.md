@@ -147,6 +147,14 @@ There are a few differences between Binaryen IR and the WebAssembly language:
       much about this when writing Binaryen passes. For more details see the
       `requiresNonNullableLocalFixups()` hook in `pass.h` and the
       `LocalStructuralDominance` class.
+ * Strings
+   * Binaryen allows string views (`stringview_wtf16` etc.) to be cast using
+     `ref.cast`. This simplifies the IR, as it allows `ref.cast` to always be
+     used in all places (and it is lowered to `ref.as_non_null` where possible
+     in the optimizer). The stringref spec does not seem to allow this though,
+     and to fix that the binary writer will replace `ref.cast` that casts a
+     string view to a non-nullable type to `ref.as_non_null`. A `ref.cast` of a
+     string view that is a no-op is skipped entirely.
 
 As a result, you might notice that round-trip conversions (wasm => Binaryen IR
 => wasm) change code a little in some corner cases.

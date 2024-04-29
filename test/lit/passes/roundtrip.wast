@@ -42,4 +42,70 @@
    )
   )
  )
+
+ ;; CHECK:      (func $string_view_casts (type $2) (param $x stringview_wtf8) (param $y stringview_wtf16) (param $z stringview_iter)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.as_non_null
+ ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.as_non_null
+ ;; CHECK-NEXT:    (local.get $y)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.as_non_null
+ ;; CHECK-NEXT:    (local.get $z)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $y)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $z)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $string_view_casts
+  ;; ref.cast of string views is not allowed in binaries: replace with
+  ;; ref.as_non_null, or remove if it is a no-op.
+  (param $x (ref null stringview_wtf8))
+  (param $y (ref null stringview_wtf16))
+  (param $z (ref null stringview_iter))
+  ;; Here we still need a cast to non-null.
+  (drop
+   (ref.cast (ref stringview_wtf8)
+    (local.get $x)
+   )
+  )
+  (drop
+   (ref.cast (ref stringview_wtf16)
+    (local.get $y)
+   )
+  )
+  (drop
+   (ref.cast (ref stringview_iter)
+    (local.get $z)
+   )
+  )
+  ;; Here we do not need the cast.
+  (drop
+   (ref.cast (ref null stringview_wtf8)
+    (local.get $x)
+   )
+  )
+  (drop
+   (ref.cast (ref null stringview_wtf16)
+    (local.get $y)
+   )
+  )
+  (drop
+   (ref.cast (ref null stringview_iter)
+    (local.get $z)
+   )
+  )
+ )
 )
