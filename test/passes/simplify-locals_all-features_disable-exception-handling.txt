@@ -799,10 +799,10 @@
     )
    )
   )
-  (block $moar18
+  (block $moar0
    (local.set $y
     (block (result i32)
-     (br_if $moar18
+     (br_if $moar0
       (local.get $y)
      )
      (i32.const 0)
@@ -1491,7 +1491,7 @@
    (unreachable)
   )
   (nop)
-  (loop $loopy9 (result i32)
+  (loop $loopy0 (result i32)
    (nop)
    (i32.const 1)
   )

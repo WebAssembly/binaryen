@@ -68,6 +68,7 @@
 //      not yet support passive table segments anyway).
 
 #include "ir/module-splitting.h"
+#include "asmjs/shared-constants.h"
 #include "ir/element-utils.h"
 #include "ir/export-utils.h"
 #include "ir/manipulation.h"
@@ -282,7 +283,7 @@ struct ModuleSplitter {
   // Initialization helpers
   static std::unique_ptr<Module> initSecondary(const Module& primary);
   static std::pair<std::set<Name>, std::set<Name>>
-  classifyFunctions(const Module& primary, const Config& config);
+  classifyFunctions(Module& primary, const Config& config);
   static std::map<Name, Name> initExportedPrimaryFuncs(const Module& primary);
 
   // Other helpers
@@ -318,12 +319,25 @@ struct ModuleSplitter {
 };
 
 void ModuleSplitter::setupJSPI() {
-  assert(primary.getExportOrNull(LOAD_SECONDARY_MODULE) &&
-         "The load secondary module function must exist");
-  // Remove the exported LOAD_SECONDARY_MODULE function since it's only needed
-  // internally.
-  internalLoadSecondaryModule = primary.getExport(LOAD_SECONDARY_MODULE)->value;
-  primary.removeExport(LOAD_SECONDARY_MODULE);
+  // Support the first version of JSPI, where the JSPI pass added the load
+  // secondary module export.
+  // TODO: remove this when the new JSPI API is only supported.
+  if (primary.getExportOrNull(LOAD_SECONDARY_MODULE)) {
+    internalLoadSecondaryModule =
+      primary.getExport(LOAD_SECONDARY_MODULE)->value;
+    // Remove the exported LOAD_SECONDARY_MODULE function since it's only needed
+    // internally.
+    primary.removeExport(LOAD_SECONDARY_MODULE);
+  } else {
+    // Add an imported function to load the secondary module.
+    auto import = Builder::makeFunction(ModuleSplitting::LOAD_SECONDARY_MODULE,
+                                        Signature(Type::none, Type::none),
+                                        {});
+    import->module = ENV;
+    import->base = ModuleSplitting::LOAD_SECONDARY_MODULE;
+    primary.addFunction(std::move(import));
+    internalLoadSecondaryModule = ModuleSplitting::LOAD_SECONDARY_MODULE;
+  }
   Builder builder(primary);
   // Add a global to track whether the secondary module has been loaded yet.
   primary.addGlobal(builder.makeGlobal(LOAD_SECONDARY_STATUS,
@@ -343,7 +357,64 @@ std::unique_ptr<Module> ModuleSplitter::initSecondary(const Module& primary) {
 }
 
 std::pair<std::set<Name>, std::set<Name>>
-ModuleSplitter::classifyFunctions(const Module& primary, const Config& config) {
+ModuleSplitter::classifyFunctions(Module& primary, const Config& config) {
+  // Find functions that refer to data or element segments. These functions must
+  // remain in the primary module because segments cannot be exported to be
+  // accessed from the secondary module.
+  //
+  // TODO: Investigate other options, such as moving the segments to the
+  // secondary module or replacing the segment-using instructions in the
+  // secondary module with calls to imports.
+  ModuleUtils::ParallelFunctionAnalysis<std::vector<Name>>
+    segmentReferrerCollector(
+      primary, [&](Function* func, std::vector<Name>& segmentReferrers) {
+        if (func->imported()) {
+          return;
+        }
+
+        struct SegmentReferrerCollector
+          : PostWalker<SegmentReferrerCollector,
+                       UnifiedExpressionVisitor<SegmentReferrerCollector>> {
+          bool hasSegmentReference = false;
+
+          void visitExpression(Expression* curr) {
+
+#define DELEGATE_ID curr->_id
+
+#define DELEGATE_START(id) [[maybe_unused]] auto* cast = curr->cast<id>();
+#define DELEGATE_GET_FIELD(id, field) cast->field
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_CHILD(id, field)
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+
+#define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
+  if (kind == ModuleItemKind::DataSegment ||                                   \
+      kind == ModuleItemKind::ElementSegment) {                                \
+    hasSegmentReference = true;                                                \
+  }
+
+#include "wasm-delegations-fields.def"
+          }
+        };
+        SegmentReferrerCollector collector;
+        collector.walkFunction(func);
+        if (collector.hasSegmentReference) {
+          segmentReferrers.push_back(func->name);
+        }
+      });
+
+  std::unordered_set<Name> segmentReferrers;
+  for (auto& [_, referrers] : segmentReferrerCollector.map) {
+    segmentReferrers.insert(referrers.begin(), referrers.end());
+  }
+
   std::set<Name> primaryFuncs, secondaryFuncs;
   for (auto& func : primary.functions) {
     // In JSPI mode exported functions cannot be moved to the secondary
@@ -351,14 +422,15 @@ ModuleSplitter::classifyFunctions(const Module& primary, const Config& config) {
     // wrapper. Exported JSPI functions can still benefit from splitting though
     // since only the JSPI wrapper stub will remain in the primary module.
     if (func->imported() || config.primaryFuncs.count(func->name) ||
-        (config.jspi && ExportUtils::isExported(primary, *func))) {
+        (config.jspi && ExportUtils::isExported(primary, *func)) ||
+        segmentReferrers.count(func->name)) {
       primaryFuncs.insert(func->name);
     } else {
       assert(func->name != primary.start && "The start function must be kept");
       secondaryFuncs.insert(func->name);
     }
   }
-  return std::make_pair(primaryFuncs, secondaryFuncs);
+  return std::make_pair(std::move(primaryFuncs), std::move(secondaryFuncs));
 }
 
 std::map<Name, Name>

@@ -2125,4 +2125,165 @@
       (delegate 0)
     )
   )
+
+  ;; CHECK:      (func $throw_ref-in-resultless-block (type $2) (result i32)
+  ;; CHECK-NEXT:  (throw_ref
+  ;; CHECK-NEXT:   (block $__binaryen_delegate_caller_target0 (result exnref)
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (try_table (catch_all_ref $__binaryen_delegate_caller_target0)
+  ;; CHECK-NEXT:       (call $foo)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; STACKIR-OPT:      (func $throw_ref-in-resultless-block (type $2) (result i32)
+  ;; STACKIR-OPT-NEXT:  block $__binaryen_delegate_caller_target0 (result exnref)
+  ;; STACKIR-OPT-NEXT:   try_table (catch_all_ref $__binaryen_delegate_caller_target0)
+  ;; STACKIR-OPT-NEXT:    call $foo
+  ;; STACKIR-OPT-NEXT:   end
+  ;; STACKIR-OPT-NEXT:   unreachable
+  ;; STACKIR-OPT-NEXT:  end
+  ;; STACKIR-OPT-NEXT:  throw_ref
+  ;; STACKIR-OPT-NEXT: )
+  (func $throw_ref-in-resultless-block (result i32)
+    ;; When the function return type is concrete, try-delegate that targets the
+    ;; caller is translated to
+    ;; (throw_ref
+    ;;   (block $__binaryen_delegate_caller_target (result exnref)
+    ;;     (return
+    ;;       function body
+    ;;     )
+    ;;   )
+    ;; )
+    ;; We should do that even if the function body's type is not concrete.
+    (block ;; This block doesn't have concrete result type
+      (try
+        (do
+          (call $foo)
+        )
+        (delegate 1)
+      )
+      (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $try-delegate-within-catchless-try (type $1)
+  ;; CHECK-NEXT:  (block $outer1
+  ;; CHECK-NEXT:   (try_table
+  ;; CHECK-NEXT:    (throw_ref
+  ;; CHECK-NEXT:     (block $l00 (result exnref)
+  ;; CHECK-NEXT:      (try_table (catch_all_ref $l00)
+  ;; CHECK-NEXT:       (call $foo)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (br $outer1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; STACKIR-OPT:      (func $try-delegate-within-catchless-try (type $1)
+  ;; STACKIR-OPT-NEXT:  block $outer1
+  ;; STACKIR-OPT-NEXT:   try_table
+  ;; STACKIR-OPT-NEXT:    block $l00 (result exnref)
+  ;; STACKIR-OPT-NEXT:     try_table (catch_all_ref $l00)
+  ;; STACKIR-OPT-NEXT:      call $foo
+  ;; STACKIR-OPT-NEXT:     end
+  ;; STACKIR-OPT-NEXT:     br $outer1
+  ;; STACKIR-OPT-NEXT:    end
+  ;; STACKIR-OPT-NEXT:    throw_ref
+  ;; STACKIR-OPT-NEXT:   end
+  ;; STACKIR-OPT-NEXT:   unreachable
+  ;; STACKIR-OPT-NEXT:  end
+  ;; STACKIR-OPT-NEXT: )
+  (func $try-delegate-within-catchless-try
+    (try $l0
+      (do
+        (try
+          (do
+            (call $foo)
+          )
+          (delegate $l0)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $try-catch-rethrow-with-inner-delegate (type $1)
+  ;; CHECK-NEXT:  (local $0 exnref)
+  ;; CHECK-NEXT:  (block $outer2
+  ;; CHECK-NEXT:   (local.set $0
+  ;; CHECK-NEXT:    (block $catch3 (result exnref)
+  ;; CHECK-NEXT:     (try_table (catch_ref $e-empty $catch3)
+  ;; CHECK-NEXT:      (call $foo)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br $outer2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (block $outer1
+  ;; CHECK-NEXT:     (try_table
+  ;; CHECK-NEXT:      (throw_ref
+  ;; CHECK-NEXT:       (block $l10 (result exnref)
+  ;; CHECK-NEXT:        (try_table (catch_all_ref $l10)
+  ;; CHECK-NEXT:         (call $foo)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (br $outer1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (throw_ref
+  ;; CHECK-NEXT:     (local.get $0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; STACKIR-OPT:      (func $try-catch-rethrow-with-inner-delegate (type $1)
+  ;; STACKIR-OPT-NEXT:  (local $0 exnref)
+  ;; STACKIR-OPT-NEXT:  block $outer2
+  ;; STACKIR-OPT-NEXT:   block $catch3 (result exnref)
+  ;; STACKIR-OPT-NEXT:    try_table (catch_ref $e-empty $catch3)
+  ;; STACKIR-OPT-NEXT:     call $foo
+  ;; STACKIR-OPT-NEXT:    end
+  ;; STACKIR-OPT-NEXT:    br $outer2
+  ;; STACKIR-OPT-NEXT:   end
+  ;; STACKIR-OPT-NEXT:   block $outer1
+  ;; STACKIR-OPT-NEXT:    try_table
+  ;; STACKIR-OPT-NEXT:     block $l10 (result exnref)
+  ;; STACKIR-OPT-NEXT:      try_table (catch_all_ref $l10)
+  ;; STACKIR-OPT-NEXT:       call $foo
+  ;; STACKIR-OPT-NEXT:      end
+  ;; STACKIR-OPT-NEXT:      br $outer1
+  ;; STACKIR-OPT-NEXT:     end
+  ;; STACKIR-OPT-NEXT:     throw_ref
+  ;; STACKIR-OPT-NEXT:    end
+  ;; STACKIR-OPT-NEXT:    unreachable
+  ;; STACKIR-OPT-NEXT:   end
+  ;; STACKIR-OPT-NEXT:   throw_ref
+  ;; STACKIR-OPT-NEXT:  end
+  ;; STACKIR-OPT-NEXT: )
+  (func $try-catch-rethrow-with-inner-delegate
+    (try $l0
+      (do
+        (call $foo)
+      )
+      (catch $e-empty
+        (try $l1
+          (do
+            (try
+              (do
+                (call $foo)
+              )
+              (delegate $l1)
+            )
+          )
+        )
+        (rethrow $l0)
+      )
+    )
+  )
 )

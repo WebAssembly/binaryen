@@ -17,7 +17,7 @@
   ;; CHECK-NEXT:   rethrow $l0
   ;; CHECK-NEXT:  end
   ;; CHECK-NEXT:  try $l00
-  ;; CHECK-NEXT:   try $try
+  ;; CHECK-NEXT:   try
   ;; CHECK-NEXT:    i32.const 0
   ;; CHECK-NEXT:    throw $e0
   ;; CHECK-NEXT:   delegate $l00

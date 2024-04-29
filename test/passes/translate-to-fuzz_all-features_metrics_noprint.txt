@@ -1,54 +1,45 @@
 total
- [exports]      : 5       
- [funcs]        : 8       
- [globals]      : 1       
+ [exports]      : 4       
+ [funcs]        : 6       
+ [globals]      : 14      
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
  [table-data]   : 1       
  [tables]       : 1       
- [tags]         : 2       
- [total]        : 674     
- [vars]         : 41      
- ArrayCopy      : 1       
- ArrayGet       : 3       
- ArrayLen       : 4       
- ArrayNew       : 5       
- ArrayNewFixed  : 1       
- ArraySet       : 1       
+ [tags]         : 1       
+ [total]        : 533     
+ [vars]         : 24      
+ ArrayNew       : 11      
+ ArrayNewFixed  : 2       
  AtomicFence    : 1       
- AtomicNotify   : 3       
- AtomicRMW      : 1       
- Binary         : 84      
- Block          : 75      
- Break          : 12      
- Call           : 21      
- Const          : 133     
- Drop           : 6       
- GlobalGet      : 24      
- GlobalSet      : 24      
- I31Get         : 3       
- If             : 21      
- Load           : 22      
- LocalGet       : 65      
- LocalSet       : 50      
- Loop           : 6       
+ Binary         : 79      
+ Block          : 57      
+ Break          : 6       
+ Call           : 8       
+ Const          : 137     
+ Drop           : 1       
+ GlobalGet      : 28      
+ GlobalSet      : 28      
+ If             : 15      
+ Load           : 17      
+ LocalGet       : 40      
+ LocalSet       : 23      
+ Loop           : 9       
  Nop            : 4       
- Pop            : 7       
- RefAs          : 7       
- RefCast        : 3       
+ RefAs          : 1       
  RefFunc        : 2       
- RefI31         : 7       
- RefIsNull      : 2       
- RefNull        : 11      
- RefTest        : 2       
- Return         : 8       
- Select         : 3       
+ RefI31         : 2       
+ RefIsNull      : 1       
+ RefNull        : 5       
+ Return         : 2       
+ SIMDExtract    : 2       
+ Select         : 1       
+ Store          : 2       
+ StringConst    : 4       
+ StringEq       : 1       
  StructGet      : 1       
- StructNew      : 3       
- StructSet      : 2       
- Try            : 5       
- TupleExtract   : 3       
+ StructNew      : 9       
  TupleMake      : 4       
- Unary          : 21      
- Unreachable    : 13      
+ Unary          : 15      
+ Unreachable    : 15      

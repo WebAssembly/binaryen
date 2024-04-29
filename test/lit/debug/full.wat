@@ -25,7 +25,6 @@
   ;; NRML-NEXT:    (i32.const 2)
   ;; NRML-NEXT:   )
   ;; NRML-NEXT:  )
-  ;; NRML-NEXT:  ;;@ src.cpp:1:2
   ;; NRML-NEXT: )
   ;; FULL:      (func $a
   ;; FULL-NEXT:  [none] ;;@ src.cpp:1:2
@@ -46,7 +45,6 @@
   ;; FULL-NEXT:    (i32.const 2)
   ;; FULL-NEXT:   )
   ;; FULL-NEXT:  ) ;; end block block
-  ;; FULL-NEXT:  ;;@ src.cpp:1:2
   ;; FULL-NEXT: )
   (func $a
     ;;@ src.cpp:1:2

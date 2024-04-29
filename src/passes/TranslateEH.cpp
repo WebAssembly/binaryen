@@ -215,7 +215,9 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
   // current 'try' into 'try_table' yet; it only adds block, br, and throw_ref
   // instructions to complete the conversions of inner try~delegates that target
   // the current try.
-  void processDelegateTarget(Try* curr, Block* outerBlock) {
+  void processDelegateTarget(Try* curr,
+                             Block* outerBlock,
+                             bool& outerBlockUsedSoFar) {
     Builder builder(*getModule());
 
     // Convert
@@ -291,10 +293,12 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
     Name delegateBrTarget = delegateTargetToBrTarget[curr->name];
     Expression* innerBody = nullptr;
     if (curr->type.isConcrete()) {
+      outerBlockUsedSoFar = true;
       auto* brToOuter = builder.makeBreak(outerBlock->name, curr->body);
       innerBody = builder.blockifyWithName(
         brToOuter, delegateBrTarget, nullptr, Type(HeapType::exn, Nullable));
     } else {
+      outerBlockUsedSoFar = curr->body->type != Type::unreachable;
       auto* brToOuter = curr->body->type == Type::unreachable
                           ? nullptr
                           : builder.makeBreak(outerBlock->name);
@@ -304,7 +308,7 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
     curr->body = builder.makeThrowRef(innerBody);
   }
 
-  void processDelegate(Try* curr, Block* outerBlock) {
+  void processDelegate(Try* curr, Block* outerBlock, bool outerBlockUsedSoFar) {
     Builder builder(*getModule());
     // Convert
     // (try
@@ -332,7 +336,7 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
     // If we need an outer block for other reasons (if this is a target of a
     // delegate), we insert the new try_table into it. If not we just replace
     // the current try with the new try_table.
-    if (outerBlock) {
+    if (outerBlock && outerBlockUsedSoFar) {
       outerBlock->list.push_back(tryTable);
       replaceCurrent(outerBlock);
     } else {
@@ -340,7 +344,7 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
     }
   }
 
-  void processCatches(Try* curr, Block* outerBlock) {
+  void processCatches(Try* curr, Block* outerBlock, bool outerBlockUsedSoFar) {
     Module* wasm = getModule();
     Builder builder(*wasm);
 
@@ -355,11 +359,13 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
       std::optional<Index> local = localAssigner->getExnrefLocal(curr->name);
       if (local) {
         for (auto* throwRef : FindAll<ThrowRef>(catchBody).list) {
-          // All throw_refs generated in this pass has a local.get as its child.
-          // See visitRethrow().
-          auto* localGet = throwRef->exnref->cast<LocalGet>();
-          if (localGet->index == *local) {
-            return true;
+          // All rethrows within this catch body have already been converted to
+          // throw_refs, which contains a local.get as its child.(See
+          // visitRethrow() for details).
+          if (auto* localGet = throwRef->exnref->dynCast<LocalGet>()) {
+            if (localGet->index == *local) {
+              return true;
+            }
           }
         }
       }
@@ -385,7 +391,15 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
 
     // If we don't have any catches, we don't need to do more.
     if (curr->catchBodies.empty()) { // catch-less try
-      replaceCurrent(tryTable);
+      // If we need an outer block for other reasons (if this is a target of a
+      // delegate), we insert the new try_table into it. If not we just replace
+      // the current try with the new try_table.
+      if (outerBlock && outerBlockUsedSoFar) {
+        outerBlock->list.push_back(tryTable);
+        replaceCurrent(outerBlock);
+      } else {
+        replaceCurrent(tryTable);
+      }
       return;
     }
 
@@ -679,13 +693,14 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
         builder.makeBlock(labels->getUnique("outer"), {}, curr->type);
     }
 
+    bool outerBlockUsedSoFar = false;
     if (it != delegateTargetToBrTarget.end()) {
-      processDelegateTarget(curr, outerBlock);
+      processDelegateTarget(curr, outerBlock, outerBlockUsedSoFar);
     }
     if (curr->isDelegate()) {
-      processDelegate(curr, outerBlock);
+      processDelegate(curr, outerBlock, outerBlockUsedSoFar);
     } else { // try-catch or catch-less try
-      processCatches(curr, outerBlock);
+      processCatches(curr, outerBlock, outerBlockUsedSoFar);
     }
   }
 
@@ -762,7 +777,7 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
     //   )
     // )
     Expression* innerBody = nullptr;
-    if (func->body->type.isConcrete()) {
+    if (func->getResults().isConcrete()) {
       auto* ret = builder.makeReturn(func->body);
       innerBody = builder.blockifyWithName(
         ret, callerDelegateBrTarget, nullptr, Type(HeapType::exn, Nullable));

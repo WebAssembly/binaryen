@@ -11,7 +11,7 @@
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (throw $e-i32
   ;; CHECK-NEXT:     (i32.const 0)
@@ -59,7 +59,7 @@
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (block $l0
-  ;; CHECK-NEXT:   (try $try
+  ;; CHECK-NEXT:   (try
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
@@ -105,7 +105,7 @@
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (local.set $1
   ;; CHECK-NEXT:     (i32.const 0)
@@ -142,7 +142,7 @@
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:    (unreachable)
@@ -181,7 +181,7 @@
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (local $5 i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (local.set $3
   ;; CHECK-NEXT:     (i32.const 3)

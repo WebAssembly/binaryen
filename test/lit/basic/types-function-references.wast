@@ -16,7 +16,6 @@
   ;; CHECK-BIN:      (type $void (func))
   (type $void (func))
   ;; inline ref type in result
-  (type $_=>_eqref (func (result eqref)))
   ;; CHECK-TEXT:      (type $i32-i32 (func (param i32) (result i32)))
 
   ;; CHECK-TEXT:      (type $mixed_results (func (result anyref f32 anyref f32)))
@@ -29,9 +28,7 @@
 
   ;; CHECK-TEXT:      (type $6 (func (result i32)))
 
-  ;; CHECK-TEXT:      (type $=>eqref (func (result eqref)))
-
-  ;; CHECK-TEXT:      (type $f64_=>_ref_null<_->_eqref> (func (param f64) (result (ref null $=>eqref))))
+  ;; CHECK-TEXT:      (type $_=>_eqref (func (result eqref)))
   ;; CHECK-BIN:      (type $i32-i32 (func (param i32) (result i32)))
 
   ;; CHECK-BIN:      (type $3 (func (result i32 (ref null $mixed_results) f64)))
@@ -42,9 +39,11 @@
 
   ;; CHECK-BIN:      (type $6 (func (result i32)))
 
-  ;; CHECK-BIN:      (type $=>eqref (func (result eqref)))
+  ;; CHECK-BIN:      (type $_=>_eqref (func (result eqref)))
+  (type $_=>_eqref (func (result eqref)))
 
-  ;; CHECK-BIN:      (type $f64_=>_ref_null<_->_eqref> (func (param f64) (result (ref null $=>eqref))))
+  ;; CHECK-TEXT:      (type $f64_=>_ref_null<_->_eqref> (func (param f64) (result (ref null $_=>_eqref))))
+  ;; CHECK-BIN:      (type $f64_=>_ref_null<_->_eqref> (func (param f64) (result (ref null $_=>_eqref))))
   (type $f64_=>_ref_null<_->_eqref> (func (param f64) (result (ref null $_=>_eqref))))
   (type $=>eqref (func (result eqref)))
   ;; CHECK-TEXT:      (type $=>anyref (func (result anyref)))
@@ -163,10 +162,10 @@
     (call_ref $i32-i32 (i32.const 42) (local.get $f))
   )
 
-  ;; CHECK-TEXT:      (func $ref-in-sig (type $f64_=>_ref_null<_->_eqref>) (param $0 f64) (result (ref null $=>eqref))
+  ;; CHECK-TEXT:      (func $ref-in-sig (type $f64_=>_ref_null<_->_eqref>) (param $0 f64) (result (ref null $_=>_eqref))
   ;; CHECK-TEXT-NEXT:  (ref.null nofunc)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $ref-in-sig (type $f64_=>_ref_null<_->_eqref>) (param $0 f64) (result (ref null $=>eqref))
+  ;; CHECK-BIN:      (func $ref-in-sig (type $f64_=>_ref_null<_->_eqref>) (param $0 f64) (result (ref null $_=>_eqref))
   ;; CHECK-BIN-NEXT:  (ref.null nofunc)
   ;; CHECK-BIN-NEXT: )
   (func $ref-in-sig (param $0 f64) (result (ref null $=>eqref))

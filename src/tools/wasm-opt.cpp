@@ -220,6 +220,13 @@ int main(int argc, const char* argv[]) {
          [&outputSourceMapUrl](Options* o, const std::string& argument) {
            outputSourceMapUrl = argument;
          })
+    .add(
+      "--deprecated-wat-parser",
+      "",
+      "Use the old, deprecated WAT parser. This option will be removed soon!",
+      WasmOptOption,
+      Options::Arguments::Zero,
+      [](Options*, const std::string&) { useNewWATParser = false; })
     .add("--new-wat-parser",
          "",
          "Use the experimental new WAT parser",

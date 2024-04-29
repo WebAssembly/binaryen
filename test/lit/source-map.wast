@@ -32,6 +32,18 @@
     )
     ;;@ src.cpp:90:1
   )
+
+  (func $nested-blocks
+    ;;@ src.cpp:2:1
+    (block $label$1
+      ;;@ src.cpp:2:2
+      (block $label$2
+        (br $label$2)
+      )
+    )
+    ;;@ src.cpp:3:1
+    (return)
+  )
 )
 
 ;; CHECK:       ;;@ src.cpp:0:1
@@ -59,3 +71,15 @@
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:   ;;@ src.cpp:90:1
 ;; CHECK-NEXT:  )
+
+;; CHECK:      (func $nested-blocks
+;; CHECK-NEXT:  ;;@ src.cpp:2:1
+;; CHECK-NEXT:  (block $label$1
+;; CHECK-NEXT:   ;;@ src.cpp:2:2
+;; CHECK-NEXT:   (block $label$2
+;; CHECK-NEXT:    (br $label$2)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  ;;@ src.cpp:3:1
+;; CHECK-NEXT:  (return)
+;; CHECK-NEXT: )

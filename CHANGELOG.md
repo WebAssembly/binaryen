@@ -15,9 +15,13 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
- - (If new wat parser is enabled) Source map comments on `else` branches must
-   now be placed above the instruction inside the `else` branch rather than on
-   the `else` branch itself.
+ - The new, standards-compliant text parser is now the default. `wasm-opt` has a
+   `--deprecated-wat-parser` flag that will switch back to using the old text
+   parser, but that option will go away soon.
+ - Source map comments on `else` branches must now be placed above the
+   instruction inside the `else` branch rather than on the `else` branch itself.
+ - Source map locations from instructions are no longer automatically propagated
+   to function epilogues.
  - Add a new `BinaryenModuleReadWithFeatures` function to the C API that allows
    to configure which features to enable in the parser.
  - The build-time option to use legacy WasmGC opcodes is removed.

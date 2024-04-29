@@ -86,7 +86,7 @@
     (call $import)
   )
 
-  ;; CHECK:      (elem $0 (i32.const 0) $test2)
+  ;; CHECK:      (elem $implicit-elem (i32.const 0) $test2)
 
   ;; CHECK:      (export "g1" (global $g1))
 

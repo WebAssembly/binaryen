@@ -16,7 +16,7 @@
   (func $foo)
 
   ;; CHECK:      (func $try_unreachable (type $0)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -37,7 +37,7 @@
   )
 
   ;; CHECK:      (func $catch_unreachable (type $0)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -58,7 +58,7 @@
   )
 
   ;; CHECK:      (func $both_unreachable (type $0)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -136,7 +136,7 @@
   ;; CHECK:      (func $call-pop-catch (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (block $label
-  ;; CHECK-NEXT:   (try $try
+  ;; CHECK-NEXT:   (try
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )

@@ -29,6 +29,7 @@ set(passes_SOURCES
   DeadArgumentElimination.cpp
   DeadCodeElimination.cpp
   DeAlign.cpp
+  DebugLocationPropagation.cpp
   DeNaN.cpp
   Directize.cpp
   DuplicateImportElimination.cpp

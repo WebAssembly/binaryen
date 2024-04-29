@@ -72,6 +72,10 @@
 ;; CHECK-NEXT:   --output-source-map-url,-osu                  Emit specified string as source
 ;; CHECK-NEXT:                                                 map URL
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --deprecated-wat-parser                       Use the old, deprecated WAT
+;; CHECK-NEXT:                                                 parser. This option will be
+;; CHECK-NEXT:                                                 removed soon!
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --new-wat-parser                              Use the experimental new WAT
 ;; CHECK-NEXT:                                                 parser
 ;; CHECK-NEXT:
@@ -367,6 +371,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --print-stack-ir                              print out Stack IR (useful for
 ;; CHECK-NEXT:                                                 internal debugging)
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --propagate-debug-locs                        propagate debug location from
+;; CHECK-NEXT:                                                 parents or previous siblings to
+;; CHECK-NEXT:                                                 child nodes
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --propagate-globals-globally                  propagate global values to other
 ;; CHECK-NEXT:                                                 globals (useful for tests)

@@ -175,17 +175,21 @@ struct ExecutionResults {
   }
 
   bool areEqual(Literal a, Literal b) {
-    if (a.type.isRef()) {
-      // Don't compare references. There are several issues here that we can't
-      // fully handle, see https://github.com/WebAssembly/binaryen/issues/3378,
-      // but the core issue is that since we optimize assuming a closed world,
-      // the types and structure of GC data can arbitrarily change after
-      // optimizations, even in ways that are externally visible from outside
-      // the module.
-      //
-      // TODO: Once we support optimizing under some form of open-world
-      // assumption, we should be able to check that the types and/or structure
-      // of GC data passed out of the module does not change.
+    // Don't compare references. There are several issues here that we can't
+    // fully handle, see https://github.com/WebAssembly/binaryen/issues/3378,
+    // but the core issue is that since we optimize assuming a closed world, the
+    // types and structure of GC data can arbitrarily change after
+    // optimizations, even in ways that are externally visible from outside
+    // the module.
+    //
+    // We can, however, compare strings as they refer to simple data that has a
+    // consistent representation (the same reasons as why we can print them in
+    // printValue(), above).
+    //
+    // TODO: Once we support optimizing under some form of open-world
+    // assumption, we should be able to check that the types and/or structure of
+    // GC data passed out of the module does not change.
+    if (a.type.isRef() && !a.type.isString()) {
       return true;
     }
     if (a != b) {

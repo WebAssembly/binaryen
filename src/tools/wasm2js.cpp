@@ -976,8 +976,7 @@ int main(int argc, const char* argv[]) {
       ModuleReader reader;
       reader.read(input, wasm, "");
     } else {
-      auto input(
-        read_file<std::vector<char>>(options.extra["infile"], Flags::Text));
+      auto input(read_file<std::string>(options.extra["infile"], Flags::Text));
       if (options.debug) {
         std::cerr << "s-parsing..." << std::endl;
       }

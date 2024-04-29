@@ -33,6 +33,7 @@
 #include "support/bits.h"
 #include "support/safe_integer.h"
 #include "support/stdckdint.h"
+#include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -1898,6 +1899,16 @@ public:
         }
         return makeGCData(contents, curr->type);
       }
+      case StringNewFromCodePoint: {
+        uint32_t codePoint = ptr.getSingleValue().getUnsigned();
+        if (codePoint > 0x10FFFF) {
+          trap("invalid code point");
+        }
+        std::stringstream wtf16;
+        String::writeWTF16CodePoint(wtf16, codePoint);
+        std::string str = wtf16.str();
+        return Literal(str);
+      }
       default:
         // TODO: others
         return Flow(NONCONSTANT_FLOW);
@@ -1907,7 +1918,7 @@ public:
 
   Flow visitStringMeasure(StringMeasure* curr) {
     // For now we only support JS-style strings.
-    if (curr->op != StringMeasureWTF16View) {
+    if (curr->op != StringMeasureWTF16View && curr->op != StringMeasureWTF16) {
       return Flow(NONCONSTANT_FLOW);
     }
 

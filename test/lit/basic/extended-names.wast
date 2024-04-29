@@ -16,7 +16,7 @@
 
   ;; CHECK-TEXT:      (data $passive_data "b")
 
-  ;; CHECK-TEXT:      (data $2 "c")
+  ;; CHECK-TEXT:      (data $0 "c")
 
   ;; CHECK-TEXT:      (table $t1 1 funcref)
   ;; CHECK-BIN:      (memory $m1 1 1)

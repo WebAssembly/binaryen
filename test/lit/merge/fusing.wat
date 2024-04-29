@@ -40,19 +40,19 @@
 
   ;; CHECK:      (export "keepalive" (func $keepalive))
 
-  ;; CHECK:      (export "mem" (memory $first.mem))
-
   ;; CHECK:      (export "exn" (tag $exn))
 
-  ;; CHECK:      (export "mem_5" (memory $second.mem))
+  ;; CHECK:      (export "mem" (memory $first.mem))
 
-  ;; CHECK:      (export "foo_6" (func $second.foo))
+  ;; CHECK:      (export "foo_5" (func $second.foo))
 
-  ;; CHECK:      (export "bar_7" (func $bar_6))
+  ;; CHECK:      (export "bar_6" (func $bar_6))
 
   ;; CHECK:      (export "keepalive2" (func $keepalive2))
 
   ;; CHECK:      (export "keepalive3" (func $keepalive3))
+
+  ;; CHECK:      (export "mem_9" (memory $second.mem))
 
   ;; CHECK:      (func $first.foo (type $0)
   ;; CHECK-NEXT:  (drop

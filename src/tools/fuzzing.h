@@ -150,6 +150,14 @@ private:
     }
 
     ~FunctionCreationContext();
+
+    // Fill in the typeLocals data structure.
+    void computeTypeLocals() {
+      typeLocals.clear();
+      for (Index i = 0; i < func->getNumLocals(); i++) {
+        typeLocals[func->getLocalType(i)].push_back(i);
+      }
+    }
   };
 
   FunctionCreationContext* funcContext = nullptr;
@@ -315,6 +323,13 @@ private:
   Expression* makeBasicRef(Type type);
   Expression* makeCompoundRef(Type type);
 
+  Expression* makeStringConst();
+  Expression* makeStringNewArray();
+  Expression* makeStringNewCodePoint();
+  Expression* makeStringConcat();
+  Expression* makeStringEq(Type type);
+  Expression* makeStringEncode(Type type);
+
   // Similar to makeBasic/CompoundRef, but indicates that this value will be
   // used in a place that will trap on null. For example, the reference of a
   // struct.get or array.set would use this.
@@ -384,6 +399,7 @@ private:
   Nullability getSuperType(Nullability nullability);
   HeapType getSuperType(HeapType type);
   Type getSuperType(Type type);
+  HeapType getArrayTypeForString();
 
   // Utilities
   Name getTargetName(Expression* target);

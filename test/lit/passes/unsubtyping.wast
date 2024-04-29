@@ -311,7 +311,7 @@
 
  ;; CHECK:      (func $loop (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (loop $loop-in (result (ref $sub))
+ ;; CHECK-NEXT:   (loop (result (ref $sub))
  ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -829,7 +829,7 @@
 
  ;; CHECK:      (func $try (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (try $try (result (ref $super))
+ ;; CHECK-NEXT:   (try (result (ref $super))
  ;; CHECK-NEXT:    (do
  ;; CHECK-NEXT:     (struct.new_default $sub)
  ;; CHECK-NEXT:    )
@@ -865,7 +865,7 @@
 
  ;; CHECK:      (func $try-catch (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (try $try (result (ref $super))
+ ;; CHECK-NEXT:   (try (result (ref $super))
  ;; CHECK-NEXT:    (do
  ;; CHECK-NEXT:     (struct.new_default $super)
  ;; CHECK-NEXT:    )

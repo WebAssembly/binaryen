@@ -123,10 +123,25 @@ std::optional<int> getHexDigit(char c) {
   return {};
 }
 
+enum Sign { NoSign, Pos, Neg };
+
 // The result of lexing an integer token fragment.
 struct LexIntResult : LexResult {
   uint64_t n;
   Sign sign;
+
+  template<typename T> bool isUnsigned() {
+    static_assert(std::is_integral_v<T> && std::is_unsigned_v<T>);
+    return sign == NoSign && n <= std::numeric_limits<T>::max();
+  }
+
+  template<typename T> bool isSigned() {
+    static_assert(std::is_integral_v<T> && std::is_signed_v<T>);
+    if (sign == Neg) {
+      return uint64_t(std::numeric_limits<T>::min()) <= n || n == 0;
+    }
+    return n <= uint64_t(std::numeric_limits<T>::max());
+  }
 };
 
 // Lexing context that accumulates lexed input to produce an integer token
@@ -374,18 +389,6 @@ struct LexAnnotationCtx : LexCtx {
   }
 };
 
-std::optional<LexResult> lparen(std::string_view in) {
-  LexCtx ctx(in);
-  ctx.takePrefix("("sv);
-  return ctx.lexed();
-}
-
-std::optional<LexResult> rparen(std::string_view in) {
-  LexCtx ctx(in);
-  ctx.takePrefix(")"sv);
-  return ctx.lexed();
-}
-
 std::optional<LexResult> idchar(std::string_view);
 std::optional<LexResult> space(std::string_view);
 std::optional<LexResult> keyword(std::string_view);
@@ -554,8 +557,8 @@ bool LexCtx::canFinish() const {
   // Logically we want to check for eof, parens, and space. But we don't
   // actually want to parse more than a couple characters of space, so check for
   // individual space chars or comment starts instead.
-  return empty() || lparen(next()) || rparen(next()) || spacechar(next()) ||
-         startsWith(";;"sv);
+  return empty() || startsWith("("sv) || startsWith(")"sv) ||
+         spacechar(next()) || startsWith(";;"sv);
 }
 
 // num   ::= d:digit => d
@@ -753,37 +756,25 @@ std::optional<LexResult> idchar(std::string_view in) {
     return {};
   }
   uint8_t c = ctx.peek();
-  if (('0' <= c && c <= '9') || ('A' <= c && c <= 'Z') ||
-      ('a' <= c && c <= 'z')) {
-    ctx.take(1);
-  } else {
-    switch (c) {
-      case '!':
-      case '#':
-      case '$':
-      case '%':
-      case '&':
-      case '\'':
-      case '*':
-      case '+':
-      case '-':
-      case '.':
-      case '/':
-      case ':':
-      case '<':
-      case '=':
-      case '>':
-      case '?':
-      case '@':
-      case '\\':
-      case '^':
-      case '_':
-      case '`':
-      case '|':
-      case '~':
-        ctx.take(1);
-    }
+  // All the allowed characters lie in the range '!' to '~', and within that
+  // range the vast majority of characters are allowed, so it is significantly
+  // faster to check for the disallowed characters instead.
+  if (c < '!' || c > '~') {
+    return ctx.lexed();
   }
+  switch (c) {
+    case '"':
+    case '(':
+    case ')':
+    case ',':
+    case ';':
+    case '[':
+    case ']':
+    case '{':
+    case '}':
+      return ctx.lexed();
+  }
+  ctx.take(1);
   return ctx.lexed();
 }
 
@@ -911,149 +902,6 @@ std::optional<LexResult> keyword(std::string_view in) {
 
 } // anonymous namespace
 
-template<typename T> std::optional<T> Token::getU() const {
-  static_assert(std::is_integral_v<T> && std::is_unsigned_v<T>);
-  if (auto* tok = std::get_if<IntTok>(&data)) {
-    if (tok->sign == NoSign && tok->n <= std::numeric_limits<T>::max()) {
-      return T(tok->n);
-    }
-    // TODO: Add error production for unsigned overflow.
-  }
-  return {};
-}
-
-template<typename T> std::optional<T> Token::getS() const {
-  static_assert(std::is_integral_v<T> && std::is_signed_v<T>);
-  if (auto* tok = std::get_if<IntTok>(&data)) {
-    if (tok->sign == Neg) {
-      if (uint64_t(std::numeric_limits<T>::min()) <= tok->n || tok->n == 0) {
-        return T(tok->n);
-      }
-    } else {
-      if (tok->n <= uint64_t(std::numeric_limits<T>::max())) {
-        return T(tok->n);
-      }
-    }
-  }
-  return {};
-}
-
-template<typename T> std::optional<T> Token::getI() const {
-  static_assert(std::is_integral_v<T> && std::is_unsigned_v<T>);
-  if (auto n = getU<T>()) {
-    return *n;
-  }
-  if (auto n = getS<std::make_signed_t<T>>()) {
-    return T(*n);
-  }
-  return {};
-}
-
-template std::optional<uint64_t> Token::getU<uint64_t>() const;
-template std::optional<int64_t> Token::getS<int64_t>() const;
-template std::optional<uint64_t> Token::getI<uint64_t>() const;
-template std::optional<uint32_t> Token::getU<uint32_t>() const;
-template std::optional<int32_t> Token::getS<int32_t>() const;
-template std::optional<uint32_t> Token::getI<uint32_t>() const;
-template std::optional<uint16_t> Token::getU<uint16_t>() const;
-template std::optional<int16_t> Token::getS<int16_t>() const;
-template std::optional<uint16_t> Token::getI<uint16_t>() const;
-template std::optional<uint8_t> Token::getU<uint8_t>() const;
-template std::optional<int8_t> Token::getS<int8_t>() const;
-template std::optional<uint8_t> Token::getI<uint8_t>() const;
-
-std::optional<double> Token::getF64() const {
-  constexpr int signif = 52;
-  constexpr uint64_t payloadMask = (1ull << signif) - 1;
-  constexpr uint64_t nanDefault = 1ull << (signif - 1);
-  if (auto* tok = std::get_if<FloatTok>(&data)) {
-    double d = tok->d;
-    if (std::isnan(d)) {
-      // Inject payload.
-      uint64_t payload = tok->nanPayload ? *tok->nanPayload : nanDefault;
-      if (payload == 0 || payload > payloadMask) {
-        // TODO: Add error production for out-of-bounds payload.
-        return {};
-      }
-      uint64_t bits;
-      static_assert(sizeof(bits) == sizeof(d));
-      memcpy(&bits, &d, sizeof(bits));
-      bits = (bits & ~payloadMask) | payload;
-      memcpy(&d, &bits, sizeof(bits));
-    }
-    return d;
-  }
-  if (auto* tok = std::get_if<IntTok>(&data)) {
-    if (tok->sign == Neg) {
-      if (tok->n == 0) {
-        return -0.0;
-      }
-      return double(int64_t(tok->n));
-    }
-    return double(tok->n);
-  }
-  return {};
-}
-
-std::optional<float> Token::getF32() const {
-  constexpr int signif = 23;
-  constexpr uint32_t payloadMask = (1u << signif) - 1;
-  constexpr uint64_t nanDefault = 1ull << (signif - 1);
-  if (auto* tok = std::get_if<FloatTok>(&data)) {
-    float f = tok->d;
-    if (std::isnan(f)) {
-      // Validate and inject payload.
-      uint64_t payload = tok->nanPayload ? *tok->nanPayload : nanDefault;
-      if (payload == 0 || payload > payloadMask) {
-        // TODO: Add error production for out-of-bounds payload.
-        return {};
-      }
-      uint32_t bits;
-      static_assert(sizeof(bits) == sizeof(f));
-      memcpy(&bits, &f, sizeof(bits));
-      bits = (bits & ~payloadMask) | payload;
-      memcpy(&f, &bits, sizeof(bits));
-    }
-    return f;
-  }
-  if (auto* tok = std::get_if<IntTok>(&data)) {
-    if (tok->sign == Neg) {
-      if (tok->n == 0) {
-        return -0.0f;
-      }
-      return float(int64_t(tok->n));
-    }
-    return float(tok->n);
-  }
-  return {};
-}
-
-std::optional<std::string_view> Token::getString() const {
-  if (auto* tok = std::get_if<StringTok>(&data)) {
-    if (tok->str) {
-      return std::string_view(*tok->str);
-    }
-    // Remove quotes.
-    return span.substr(1, span.size() - 2);
-  }
-  return {};
-}
-
-std::optional<std::string_view> Token::getID() const {
-  if (auto* tok = std::get_if<IdTok>(&data)) {
-    if (tok->str) {
-      return std::string_view(*tok->str);
-    }
-    if (tok->isStr) {
-      // Remove '$' and quotes.
-      return span.substr(2, span.size() - 3);
-    }
-    // Remove '$'.
-    return span.substr(1);
-  }
-  return {};
-}
-
 void Lexer::skipSpace() {
   while (true) {
     if (auto ctx = annotation(next())) {
@@ -1069,30 +917,220 @@ void Lexer::skipSpace() {
   }
 }
 
-void Lexer::lexToken() {
-  // TODO: Ensure we're getting the longest possible match.
-  Token tok;
-  if (auto t = lparen(next())) {
-    tok = Token{t->span, LParenTok{}};
-  } else if (auto t = rparen(next())) {
-    tok = Token{t->span, RParenTok{}};
-  } else if (auto t = ident(next())) {
-    tok = Token{t->span, IdTok{t->isStr, t->str}};
-  } else if (auto t = integer(next())) {
-    tok = Token{t->span, IntTok{t->n, t->sign}};
-  } else if (auto t = float_(next())) {
-    tok = Token{t->span, FloatTok{t->nanPayload, t->d}};
-  } else if (auto t = str(next())) {
-    tok = Token{t->span, StringTok{t->str}};
-  } else if (auto t = keyword(next())) {
-    tok = Token{t->span, KeywordTok{}};
-  } else {
-    // TODO: Do something about lexing errors.
-    curr = std::nullopt;
-    return;
+bool Lexer::takeLParen() {
+  if (LexCtx(next()).startsWith("("sv)) {
+    ++index;
+    advance();
+    return true;
   }
-  index += tok.span.size();
-  curr = {tok};
+  return false;
+}
+
+bool Lexer::takeRParen() {
+  if (LexCtx(next()).startsWith(")"sv)) {
+    ++index;
+    advance();
+    return true;
+  }
+  return false;
+}
+
+std::optional<std::string> Lexer::takeString() {
+  if (auto result = str(next())) {
+    index += result->span.size();
+    advance();
+    if (result->str) {
+      return result->str;
+    }
+    // Remove quotes.
+    return std::string(result->span.substr(1, result->span.size() - 2));
+  }
+  return std::nullopt;
+}
+
+std::optional<Name> Lexer::takeID() {
+  if (auto result = ident(next())) {
+    index += result->span.size();
+    advance();
+    if (result->str) {
+      return Name(*result->str);
+    }
+    if (result->isStr) {
+      // Remove '$' and quotes.
+      return Name(result->span.substr(2, result->span.size() - 3));
+    }
+    // Remove '$'.
+    return Name(result->span.substr(1));
+  }
+  return std::nullopt;
+}
+
+std::optional<std::string_view> Lexer::takeKeyword() {
+  if (auto result = keyword(next())) {
+    index += result->span.size();
+    advance();
+    return result->span;
+  }
+  return std::nullopt;
+}
+
+bool Lexer::takeKeyword(std::string_view expected) {
+  if (auto result = keyword(next()); result && result->span == expected) {
+    index += expected.size();
+    advance();
+    return true;
+  }
+  return false;
+}
+
+std::optional<uint64_t> Lexer::takeOffset() {
+  if (auto result = keyword(next())) {
+    if (result->span.substr(0, 7) != "offset="sv) {
+      return std::nullopt;
+    }
+    Lexer subLexer(result->span.substr(7));
+    if (auto o = subLexer.takeU64()) {
+      index += result->span.size();
+      advance();
+      return o;
+    }
+  }
+  return std::nullopt;
+}
+
+std::optional<uint32_t> Lexer::takeAlign() {
+  if (auto result = keyword(next())) {
+    if (result->span.substr(0, 6) != "align="sv) {
+      return std::nullopt;
+    }
+    Lexer subLexer(result->span.substr(6));
+    if (auto o = subLexer.takeU32()) {
+      index += result->span.size();
+      advance();
+      return o;
+    }
+  }
+  return std::nullopt;
+}
+
+template<typename T> std::optional<T> Lexer::takeU() {
+  static_assert(std::is_integral_v<T> && std::is_unsigned_v<T>);
+  if (auto result = integer(next()); result && result->isUnsigned<T>()) {
+    index += result->span.size();
+    advance();
+    return T(result->n);
+  }
+  // TODO: Add error production for unsigned overflow.
+  return std::nullopt;
+}
+
+template<typename T> std::optional<T> Lexer::takeS() {
+  static_assert(std::is_integral_v<T> && std::is_signed_v<T>);
+  if (auto result = integer(next()); result && result->isSigned<T>()) {
+    index += result->span.size();
+    advance();
+    return T(result->n);
+  }
+  return std::nullopt;
+}
+
+template<typename T> std::optional<T> Lexer::takeI() {
+  static_assert(std::is_integral_v<T> && std::is_unsigned_v<T>);
+  if (auto result = integer(next())) {
+    if (result->isUnsigned<T>() || result->isSigned<std::make_signed_t<T>>()) {
+      index += result->span.size();
+      advance();
+      return T(result->n);
+    }
+  }
+  return std::nullopt;
+}
+
+template std::optional<uint64_t> Lexer::takeU<uint64_t>();
+template std::optional<int64_t> Lexer::takeS<int64_t>();
+template std::optional<uint64_t> Lexer::takeI<uint64_t>();
+template std::optional<uint32_t> Lexer::takeU<uint32_t>();
+template std::optional<int32_t> Lexer::takeS<int32_t>();
+template std::optional<uint32_t> Lexer::takeI<uint32_t>();
+template std::optional<uint16_t> Lexer::takeU<uint16_t>();
+template std::optional<int16_t> Lexer::takeS<int16_t>();
+template std::optional<uint16_t> Lexer::takeI<uint16_t>();
+template std::optional<uint8_t> Lexer::takeU<uint8_t>();
+template std::optional<int8_t> Lexer::takeS<int8_t>();
+template std::optional<uint8_t> Lexer::takeI<uint8_t>();
+
+std::optional<double> Lexer::takeF64() {
+  constexpr int signif = 52;
+  constexpr uint64_t payloadMask = (1ull << signif) - 1;
+  constexpr uint64_t nanDefault = 1ull << (signif - 1);
+  if (auto result = float_(next())) {
+    double d = result->d;
+    if (std::isnan(d)) {
+      // Inject payload.
+      uint64_t payload = result->nanPayload ? *result->nanPayload : nanDefault;
+      if (payload == 0 || payload > payloadMask) {
+        // TODO: Add error production for out-of-bounds payload.
+        return std::nullopt;
+      }
+      uint64_t bits;
+      static_assert(sizeof(bits) == sizeof(d));
+      memcpy(&bits, &d, sizeof(bits));
+      bits = (bits & ~payloadMask) | payload;
+      memcpy(&d, &bits, sizeof(bits));
+    }
+    index += result->span.size();
+    advance();
+    return d;
+  }
+  if (auto result = integer(next())) {
+    index += result->span.size();
+    advance();
+    if (result->sign == Neg) {
+      if (result->n == 0) {
+        return -0.0;
+      }
+      return double(int64_t(result->n));
+    }
+    return double(result->n);
+  }
+  return std::nullopt;
+}
+
+std::optional<float> Lexer::takeF32() {
+  constexpr int signif = 23;
+  constexpr uint32_t payloadMask = (1u << signif) - 1;
+  constexpr uint64_t nanDefault = 1ull << (signif - 1);
+  if (auto result = float_(next())) {
+    float f = result->d;
+    if (std::isnan(f)) {
+      // Validate and inject payload.
+      uint64_t payload = result->nanPayload ? *result->nanPayload : nanDefault;
+      if (payload == 0 || payload > payloadMask) {
+        // TODO: Add error production for out-of-bounds payload.
+        return std::nullopt;
+      }
+      uint32_t bits;
+      static_assert(sizeof(bits) == sizeof(f));
+      memcpy(&bits, &f, sizeof(bits));
+      bits = (bits & ~payloadMask) | payload;
+      memcpy(&f, &bits, sizeof(bits));
+    }
+    index += result->span.size();
+    advance();
+    return f;
+  }
+  if (auto result = integer(next())) {
+    index += result->span.size();
+    advance();
+    if (result->sign == Neg) {
+      if (result->n == 0) {
+        return -0.0f;
+      }
+      return float(int64_t(result->n));
+    }
+    return float(result->n);
+  }
+  return std::nullopt;
 }
 
 TextPos Lexer::position(const char* c) const {
@@ -1113,75 +1151,8 @@ bool TextPos::operator==(const TextPos& other) const {
   return line == other.line && col == other.col;
 }
 
-bool IntTok::operator==(const IntTok& other) const {
-  return n == other.n && sign == other.sign;
-}
-
-bool FloatTok::operator==(const FloatTok& other) const {
-  return std::signbit(d) == std::signbit(other.d) &&
-         (d == other.d || (std::isnan(d) && std::isnan(other.d) &&
-                           nanPayload == other.nanPayload));
-}
-
-bool Token::operator==(const Token& other) const {
-  return span == other.span &&
-         std::visit(
-           [](auto& t1, auto& t2) {
-             if constexpr (std::is_same_v<decltype(t1), decltype(t2)>) {
-               return t1 == t2;
-             } else {
-               return false;
-             }
-           },
-           data,
-           other.data);
-}
-
 std::ostream& operator<<(std::ostream& os, const TextPos& pos) {
   return os << pos.line << ":" << pos.col;
-}
-
-std::ostream& operator<<(std::ostream& os, const LParenTok&) {
-  return os << "'('";
-}
-
-std::ostream& operator<<(std::ostream& os, const RParenTok&) {
-  return os << "')'";
-}
-
-std::ostream& operator<<(std::ostream& os, const IdTok&) { return os << "id"; }
-
-std::ostream& operator<<(std::ostream& os, const IntTok& tok) {
-  return os << (tok.sign == Pos ? "+" : tok.sign == Neg ? "-" : "") << tok.n;
-}
-
-std::ostream& operator<<(std::ostream& os, const FloatTok& tok) {
-  if (std::isnan(tok.d)) {
-    os << (std::signbit(tok.d) ? "+" : "-");
-    if (tok.nanPayload) {
-      return os << "nan:0x" << std::hex << *tok.nanPayload << std::dec;
-    }
-    return os << "nan";
-  }
-  return os << tok.d;
-}
-
-std::ostream& operator<<(std::ostream& os, const StringTok& tok) {
-  if (tok.str) {
-    os << '"' << *tok.str << '"';
-  } else {
-    os << "(raw string)";
-  }
-  return os;
-}
-
-std::ostream& operator<<(std::ostream& os, const KeywordTok&) {
-  return os << "keyword";
-}
-
-std::ostream& operator<<(std::ostream& os, const Token& tok) {
-  std::visit([&](const auto& t) { os << t; }, tok.data);
-  return os << " \"" << tok.span << "\"";
 }
 
 } // namespace wasm::WATParser

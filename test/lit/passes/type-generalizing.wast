@@ -119,7 +119,7 @@
 
  ;; CHECK:      (func $loop (type $1) (result eqref)
  ;; CHECK-NEXT:  (local $var eqref)
- ;; CHECK-NEXT:  (loop $loop-in (result eqref)
+ ;; CHECK-NEXT:  (loop (result eqref)
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -943,9 +943,7 @@
  (type $mid (sub $top (func (result eqref))))
  (type $bot (sub $mid (func (result i31ref))))
 
- ;; CHECK:      (type $1 (func (result anyref)))
-
- ;; CHECK:      (func $call-ref-no-limit (type $1) (result anyref)
+ ;; CHECK:      (func $call-ref-no-limit (type $top) (result anyref)
  ;; CHECK-NEXT:  (local $f (ref null $top))
  ;; CHECK-NEXT:  (call_ref $top
  ;; CHECK-NEXT:   (local.get $f)

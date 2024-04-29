@@ -1436,8 +1436,6 @@ int main(int argc, const char* argv[]) {
                     });
   options.parse(argc, argv);
 
-  auto input(read_file<std::string>(options.extra["infile"], Flags::Text));
-
   Module wasm;
   options.applyFeatures(wasm);
 
