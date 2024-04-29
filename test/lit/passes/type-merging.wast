@@ -1053,22 +1053,20 @@
 
   ;; CHECK:      (func $test (type $2) (param $a (ref $A)) (result (ref $B))
   ;; CHECK-NEXT:  (block $label (result (ref $B))
-  ;; CHECK-NEXT:   (block (result (ref $B))
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast $label (ref $A) (ref $B)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (br_on_cast $label (ref $A) (ref $B)
+  ;; CHECK-NEXT:     (local.get $a)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block $l (result (ref $A))
+  ;; CHECK-NEXT:     (br_on_non_null $l
   ;; CHECK-NEXT:      (local.get $a)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block $l (result (ref $A))
-  ;; CHECK-NEXT:      (br_on_non_null $l
-  ;; CHECK-NEXT:       (local.get $a)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test (param $a (ref $A)) (result (ref $B))
