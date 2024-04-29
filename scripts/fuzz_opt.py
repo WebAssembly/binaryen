@@ -1393,8 +1393,7 @@ testcase_handlers = [
     TrapsNeverHappen(),
     CtorEval(),
     Merge(),
-    # FIXME: Re-enable after https://github.com/WebAssembly/binaryen/issues/3989
-    # RoundtripText()
+    RoundtripText()
 ]
 
 
