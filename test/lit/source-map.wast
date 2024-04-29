@@ -1,7 +1,9 @@
 ;; RUN: wasm-opt %s -o %t.wasm -osm %t.map -g -q
 ;; RUN: wasm-opt %t.wasm -ism %t.map -q -o - -S | filecheck %s
 
-;; RUN: wasm-opt %s --new-wat-parser -S -o - | filecheck %s
+;; Also test with StackIR.
+;; RUN: wasm-opt %s --generate-stack-ir -o %t.wasm -osm %t.map -g -q
+;; RUN: wasm-opt %t.wasm -ism %t.map -q -o - -S | filecheck %s
 
 (module
   ;;@ src.cpp:0:1
