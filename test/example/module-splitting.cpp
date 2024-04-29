@@ -3,6 +3,7 @@
 
 #include "ir/module-splitting.h"
 #include "ir/stack-utils.h"
+#include "parser/wat-parser.h"
 #include "wasm-features.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
@@ -13,13 +14,9 @@ using namespace wasm;
 std::unique_ptr<Module> parse(char* module) {
   auto wasm = std::make_unique<Module>();
   wasm->features = FeatureSet::All;
-  try {
-    SExpressionParser parser(module);
-    Element& root = *parser.root;
-    SExpressionWasmBuilder builder(*wasm, *root[0], IRProfile::Normal);
-  } catch (ParseException& p) {
-    p.dump(std::cerr);
-    Fatal() << "error in parsing wasm text";
+  auto parsed = WATParser::parseModule(*wasm, module);
+  if (auto* err = parsed.getErr()) {
+    Fatal() << err->msg << "\n";
   }
   return wasm;
 }
