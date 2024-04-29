@@ -42,7 +42,7 @@
  ;; PRIMARY-NEXT:  )
  ;; PRIMARY-NEXT: )
  (func $foo (param i32) (result i32)
-  (call $bar (local.get $0))
+  (call $bar (local.get 0))
  )
  ;; SECONDARY:      (type $0 (func (param i32) (result i32)))
 
