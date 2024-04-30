@@ -399,7 +399,7 @@ void WasmBinaryWriter::writeFunctions() {
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     assert(binaryLocationTrackedExpressionsForFunc.empty());
     BYN_TRACE("write one at" << o.size() << std::endl);
-    // Do not smear any debug location from the previous function
+    // Do not smear any debug location from the previous function.
     writeNoDebugLocation();
     size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
     size_t sizePos = writeU32LEBPlaceholder();
