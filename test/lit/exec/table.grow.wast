@@ -3,15 +3,25 @@
 ;; RUN: wasm-opt %s -all --fuzz-exec-before -q -o /dev/null 2>&1 | filecheck %s
 
 (module
- (table $0 1 funcref)
+ (table $0 0 funcref)
 
- ;; CHECK:      [fuzz-exec] calling test
- ;; CHECK-NEXT: [fuzz-exec] note result: test => -1
- (func $test (export "test") (result i32)
-  ;; Growing beyond the limit of 10*1000*1000 will error and return -1.
+ ;; CHECK:      [fuzz-exec] calling just-right
+ ;; CHECK-NEXT: [fuzz-exec] note result: just-right => 0
+ (func $just-right (export "just-right") (result i32)
+  ;; Growing up to the limit of 10*1000*1000 will succeed.
   (table.grow $0
    (ref.null nofunc)
    (i32.const 10000000)
+  )
+ )
+
+ ;; CHECK:      [fuzz-exec] calling too-much
+ ;; CHECK-NEXT: [fuzz-exec] note result: too-much => -1
+ (func $too-much (export "too-much") (result i32)
+  ;; Growing beyond the limit will error and return -1.
+  (table.grow $0
+   (ref.null nofunc)
+   (i32.const 10000001)
   )
  )
 )
