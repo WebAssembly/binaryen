@@ -17,6 +17,8 @@
 #ifndef wasm_wasm_limits_h
 #define wasm_wasm_limits_h
 
+#include <stdint.h>
+
 namespace wasm {
 
 // wasm VMs on the web have decided to impose some limits on what they
