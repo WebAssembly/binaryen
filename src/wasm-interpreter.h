@@ -35,6 +35,7 @@
 #include "support/stdckdint.h"
 #include "support/string.h"
 #include "wasm-builder.h"
+#include "wasm-limits.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -3138,6 +3139,9 @@ public:
       return fail;
     }
     Index newSize = tableSize + delta;
+    if (newSize > WebLimitations::MaxTableSize) {
+      return fail;
+    }
     if (!info.interface->growTable(
           tableName, valueFlow.getSingleValue(), tableSize, newSize)) {
       // We failed to grow the table in practice, even though it was valid

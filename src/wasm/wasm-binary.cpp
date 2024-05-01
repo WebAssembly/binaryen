@@ -26,6 +26,7 @@
 #include "support/string.h"
 #include "wasm-binary.h"
 #include "wasm-debug.h"
+#include "wasm-limits.h"
 #include "wasm-stack.h"
 
 #define DEBUG_TYPE "binary"
