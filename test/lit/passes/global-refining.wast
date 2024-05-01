@@ -193,3 +193,9 @@
     (nop)
   )
 )
+
+;; We can refine globals that are used in other global initializers as well.
+(module
+  (global $refine-me (anyref) (ref.i31 (i32.const 0)))
+  (global $get (anyref) (global.get $refine-me))
+)
