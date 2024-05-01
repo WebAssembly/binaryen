@@ -37,6 +37,7 @@
 #include "support/stdckdint.h"
 #include "wasm-binary.h"
 #include "wasm-builder.h"
+#include "wasm-limits.h"
 #include "wasm.h"
 
 namespace wasm {
