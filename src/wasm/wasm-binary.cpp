@@ -403,9 +403,9 @@ void WasmBinaryWriter::writeFunctions() {
     size_t start = o.size();
     BYN_TRACE("writing" << func->name << std::endl);
     // Emit Stack IR if present, and if we can
-    if (func->stackIR && !sourceMap && !DWARF) {
+    if (func->stackIR) {
       BYN_TRACE("write Stack IR\n");
-      StackIRToBinaryWriter writer(*this, o, func);
+      StackIRToBinaryWriter writer(*this, o, func, sourceMap, DWARF);
       writer.write();
       if (debugInfo) {
         funcMappedLocals[func->name] = std::move(writer.getMappedLocals());

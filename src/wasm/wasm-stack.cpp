@@ -2779,6 +2779,9 @@ StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
 }
 
 void StackIRToBinaryWriter::write() {
+  if (func->prologLocation.size()) {
+    parent.writeDebugLocation(*func->prologLocation.begin());
+  }
   writer.mapLocalsAndEmitHeader();
   // Stack to track indices of catches within a try
   SmallVector<Index, 4> catchIndexStack;
@@ -2795,7 +2798,13 @@ void StackIRToBinaryWriter::write() {
       case StackInst::IfBegin:
       case StackInst::LoopBegin:
       case StackInst::TryTableBegin: {
+        if (sourceMap) {
+          parent.writeDebugLocation(inst->origin, func);
+        }
         writer.visit(inst->origin);
+        if (sourceMap) {
+          parent.writeDebugLocationEnd(inst->origin, func);
+        }
         break;
       }
       case StackInst::TryEnd:
@@ -2829,6 +2838,9 @@ void StackIRToBinaryWriter::write() {
       default:
         WASM_UNREACHABLE("unexpected op");
     }
+  }
+  if (func->epilogLocation.size()) {
+    parent.writeDebugLocation(*func->epilogLocation.begin());
   }
   writer.emitFunctionEnd();
 }
