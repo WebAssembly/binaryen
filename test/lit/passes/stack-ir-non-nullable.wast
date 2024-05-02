@@ -61,20 +61,32 @@
 
  ;; CHECK:      (func $if-no-last-get (type $1) (param $param (ref eq)) (result (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  ref.i31
- ;; CHECK-NEXT:  ref.eq
- ;; CHECK-NEXT:  if
- ;; CHECK-NEXT:   i32.const 1
- ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  else
- ;; CHECK-NEXT:   i32.const 2
- ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  end
- ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $temp)
+ ;; CHECK-NEXT:    (ref.i31
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (ref.i31
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (ref.i31
+ ;; CHECK-NEXT:      (i32.const 2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $param)
  ;; CHECK-NEXT: )
  (func $if-no-last-get (param $param (ref eq)) (result (ref eq))
   ;; As the original, but now there is no final get, so we can remove the set-
@@ -110,20 +122,35 @@
 
  ;; CHECK:      (func $if-extra-set (type $1) (param $param (ref eq)) (result (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  ref.i31
- ;; CHECK-NEXT:  ref.eq
- ;; CHECK-NEXT:  if
- ;; CHECK-NEXT:   i32.const 1
- ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  else
- ;; CHECK-NEXT:   i32.const 2
- ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  end
- ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $temp)
+ ;; CHECK-NEXT:    (ref.i31
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (ref.i31
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (ref.i31
+ ;; CHECK-NEXT:      (i32.const 2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $temp)
  ;; CHECK-NEXT: )
  (func $if-extra-set (param $param (ref eq)) (result (ref eq))
   ;; As the original, but now there is an extra set before the final get, so
@@ -162,24 +189,35 @@
 
  ;; CHECK:      (func $if-wrong-extra-set (type $1) (param $param (ref eq)) (result (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  local.set $temp
- ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  ref.i31
- ;; CHECK-NEXT:  ref.eq
- ;; CHECK-NEXT:  if
- ;; CHECK-NEXT:   i32.const 1
- ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  else
- ;; CHECK-NEXT:   i32.const 2
- ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  end
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  local.set $param
- ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $temp)
+ ;; CHECK-NEXT:    (ref.i31
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (ref.i31
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (ref.i31
+ ;; CHECK-NEXT:      (i32.const 2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $param
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $temp)
  ;; CHECK-NEXT: )
  (func $if-wrong-extra-set (param $param (ref eq)) (result (ref eq))
   ;; As the last testcase, but the extra set's index is wrong, so we cannot
@@ -218,22 +256,35 @@
 
  ;; CHECK:      (func $if-wrong-extra-get (type $1) (param $param (ref eq)) (result (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  ref.i31
- ;; CHECK-NEXT:  ref.eq
- ;; CHECK-NEXT:  if
- ;; CHECK-NEXT:   i32.const 1
- ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  else
- ;; CHECK-NEXT:   i32.const 2
- ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  end
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  local.set $temp
- ;; CHECK-NEXT:  local.get $param
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $temp)
+ ;; CHECK-NEXT:    (ref.i31
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (ref.i31
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (ref.i31
+ ;; CHECK-NEXT:      (i32.const 2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $param)
  ;; CHECK-NEXT: )
  (func $if-wrong-extra-get (param $param (ref eq)) (result (ref eq))
   ;; As the last testcase, but now it is the get that has the wrong index to
@@ -272,20 +323,32 @@
  )
 
  ;; CHECK:      (func $if-param (type $2) (param $param (ref eq)) (param $temp (ref eq)) (result (ref eq))
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  ref.i31
- ;; CHECK-NEXT:  ref.eq
- ;; CHECK-NEXT:  if
- ;; CHECK-NEXT:   i32.const 1
- ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  else
- ;; CHECK-NEXT:   i32.const 2
- ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  end
- ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $temp)
+ ;; CHECK-NEXT:    (ref.i31
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (ref.i31
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (ref.i31
+ ;; CHECK-NEXT:      (i32.const 2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $temp)
  ;; CHECK-NEXT: )
  (func $if-param (param $param (ref eq)) (param $temp (ref eq)) (result (ref eq))
   ;; As the original testcase, but now $temp is a param. Validation is no
@@ -320,20 +383,32 @@
 
  ;; CHECK:      (func $if-nullable (type $3) (param $param (ref eq)) (result eqref)
  ;; CHECK-NEXT:  (local $temp eqref)
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  ref.i31
- ;; CHECK-NEXT:  ref.eq
- ;; CHECK-NEXT:  if
- ;; CHECK-NEXT:   i32.const 1
- ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  else
- ;; CHECK-NEXT:   i32.const 2
- ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  end
- ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $temp)
+ ;; CHECK-NEXT:    (ref.i31
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (ref.i31
+ ;; CHECK-NEXT:      (i32.const 1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (ref.i31
+ ;; CHECK-NEXT:      (i32.const 2)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $temp)
  ;; CHECK-NEXT: )
  (func $if-nullable (param $param (ref eq)) (result (ref null eq))
   (local $temp (ref null eq)) ;; this changed
@@ -369,30 +444,45 @@
 
  ;; CHECK:      (func $if-nondefaultable (type $1) (param $param (ref eq)) (result (ref eq))
  ;; CHECK-NEXT:  (local $temp (tuple i32 (ref eq)))
- ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  tuple.make 2
- ;; CHECK-NEXT:  local.set $temp
- ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  tuple.extract 2 1
- ;; CHECK-NEXT:  i32.const 1
- ;; CHECK-NEXT:  ref.i31
- ;; CHECK-NEXT:  ref.eq
- ;; CHECK-NEXT:  if
- ;; CHECK-NEXT:   i32.const 2
- ;; CHECK-NEXT:   i32.const 3
- ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   tuple.make 2
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  else
- ;; CHECK-NEXT:   i32.const 4
- ;; CHECK-NEXT:   i32.const 5
- ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   tuple.make 2
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  end
- ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  tuple.extract 2 1
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (tuple.make 2
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (local.get $param)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (tuple.extract 2 1
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (ref.i31
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (tuple.make 2
+ ;; CHECK-NEXT:      (i32.const 2)
+ ;; CHECK-NEXT:      (ref.i31
+ ;; CHECK-NEXT:       (i32.const 3)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (tuple.make 2
+ ;; CHECK-NEXT:      (i32.const 4)
+ ;; CHECK-NEXT:      (ref.i31
+ ;; CHECK-NEXT:       (i32.const 5)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (tuple.extract 2 1
+ ;; CHECK-NEXT:   (local.get $temp)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $if-nondefaultable (param $param (ref eq)) (result (ref eq))
   (local $temp (tuple i32 (ref eq)))
@@ -442,30 +532,45 @@
 
  ;; CHECK:      (func $if-defaultable (type $4) (param $param eqref) (result eqref)
  ;; CHECK-NEXT:  (local $temp (tuple i32 eqref))
- ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  tuple.make 2
- ;; CHECK-NEXT:  local.set $temp
- ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  tuple.extract 2 1
- ;; CHECK-NEXT:  i32.const 1
- ;; CHECK-NEXT:  ref.i31
- ;; CHECK-NEXT:  ref.eq
- ;; CHECK-NEXT:  if
- ;; CHECK-NEXT:   i32.const 2
- ;; CHECK-NEXT:   i32.const 3
- ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   tuple.make 2
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  else
- ;; CHECK-NEXT:   i32.const 4
- ;; CHECK-NEXT:   i32.const 5
- ;; CHECK-NEXT:   ref.i31
- ;; CHECK-NEXT:   tuple.make 2
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  end
- ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  tuple.extract 2 1
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (tuple.make 2
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:    (local.get $param)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (tuple.extract 2 1
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (ref.i31
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (tuple.make 2
+ ;; CHECK-NEXT:      (i32.const 2)
+ ;; CHECK-NEXT:      (ref.i31
+ ;; CHECK-NEXT:       (i32.const 3)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (tuple.make 2
+ ;; CHECK-NEXT:      (i32.const 4)
+ ;; CHECK-NEXT:      (ref.i31
+ ;; CHECK-NEXT:       (i32.const 5)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (tuple.extract 2 1
+ ;; CHECK-NEXT:   (local.get $temp)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $if-defaultable (param $param (ref null eq)) (result (ref null eq))
   (local $temp (tuple i32 (ref null eq)))
@@ -514,16 +619,25 @@
 
  ;; CHECK:      (func $if-non-ref (type $5) (param $param i32) (result i32)
  ;; CHECK-NEXT:  (local $temp i32)
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  i32.eqz
- ;; CHECK-NEXT:  if
- ;; CHECK-NEXT:   i32.const 1
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  else
- ;; CHECK-NEXT:   i32.const 2
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  end
- ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.eqz
+ ;; CHECK-NEXT:    (local.get $temp)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (i32.const 2)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $temp)
  ;; CHECK-NEXT: )
  (func $if-non-ref (param $param i32) (result i32)
   (local $temp i32)
@@ -552,26 +666,37 @@
 
  ;; CHECK:      (func $nesting (type $0) (param $param (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  local.set $temp
- ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  if
- ;; CHECK-NEXT:   local.get $param
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:   local.get $temp
- ;; CHECK-NEXT:   drop
- ;; CHECK-NEXT:   local.get $temp
- ;; CHECK-NEXT:   drop
- ;; CHECK-NEXT:  else
- ;; CHECK-NEXT:   local.get $param
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:   local.get $temp
- ;; CHECK-NEXT:   drop
- ;; CHECK-NEXT:   local.get $temp
- ;; CHECK-NEXT:   drop
- ;; CHECK-NEXT:  end
- ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (local.get $param)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (local.get $param)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $temp)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $nesting (param $param (ref eq))
   (local $temp (ref eq))
@@ -617,20 +742,31 @@
 
  ;; CHECK:      (func $nesting-left (type $0) (param $param (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  local.set $temp
- ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  if
- ;; CHECK-NEXT:   local.get $param
- ;; CHECK-NEXT:   drop
- ;; CHECK-NEXT:  else
- ;; CHECK-NEXT:   local.get $param
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:   local.get $temp
- ;; CHECK-NEXT:   drop
- ;; CHECK-NEXT:   local.get $temp
- ;; CHECK-NEXT:   drop
- ;; CHECK-NEXT:  end
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (local.get $param)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (local.get $param)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $nesting-left (param $param (ref eq))
   (local $temp (ref eq))
@@ -669,20 +805,31 @@
 
  ;; CHECK:      (func $nesting-right (type $0) (param $param (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  local.set $temp
- ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  if
- ;; CHECK-NEXT:   local.get $param
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:   local.get $temp
- ;; CHECK-NEXT:   drop
- ;; CHECK-NEXT:   local.get $temp
- ;; CHECK-NEXT:   drop
- ;; CHECK-NEXT:  else
- ;; CHECK-NEXT:   local.get $param
- ;; CHECK-NEXT:   drop
- ;; CHECK-NEXT:  end
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (local.get $param)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (local.get $param)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $nesting-right (param $param (ref eq))
   (local $temp (ref eq))
@@ -721,16 +868,28 @@
 
  ;; CHECK:      (func $nesting-both (type $0) (param $param (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  local.set $temp
- ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  if
- ;; CHECK-NEXT:   local.get $param
- ;; CHECK-NEXT:   drop
- ;; CHECK-NEXT:  else
- ;; CHECK-NEXT:   local.get $param
- ;; CHECK-NEXT:   drop
- ;; CHECK-NEXT:  end
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (local.get $param)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (local.get $param)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $nesting-both (param $param (ref eq))
   (local $temp (ref eq))
@@ -767,14 +926,25 @@
 
  ;; CHECK:      (func $nesting-both-less (type $0) (param $param (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
- ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  if
- ;; CHECK-NEXT:   local.get $param
- ;; CHECK-NEXT:   drop
- ;; CHECK-NEXT:  else
- ;; CHECK-NEXT:   local.get $param
- ;; CHECK-NEXT:   drop
- ;; CHECK-NEXT:  end
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (local.get $param)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (local.get $param)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $nesting-both-less (param $param (ref eq))
   (local $temp (ref eq))
@@ -807,16 +977,31 @@
 
  ;; CHECK:      (func $nesting-both-after (type $0) (param $param (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
- ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  if
- ;; CHECK-NEXT:   local.get $param
- ;; CHECK-NEXT:   drop
- ;; CHECK-NEXT:  else
- ;; CHECK-NEXT:   local.get $param
- ;; CHECK-NEXT:   drop
- ;; CHECK-NEXT:  end
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (local.get $param)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (local.get $param)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (local.get $temp)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $temp)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $nesting-both-after (param $param (ref eq))
   (local $temp (ref eq))
@@ -856,8 +1041,14 @@
 
  ;; CHECK:      (func $nesting-irrelevant (type $0) (param $param (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block $block
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $temp)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $nesting-irrelevant (param $param (ref eq))
   (local $temp (ref eq))
@@ -875,12 +1066,17 @@
 
  ;; CHECK:      (func $nesting-relevant (type $0) (param $param (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  local.set $temp
- ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  drop
- ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block $block
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $temp)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $temp)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $nesting-relevant (param $param (ref eq))
   (local $temp (ref eq))
@@ -900,10 +1096,20 @@
 
  ;; CHECK:      (func $nesting-after (type $0) (param $param (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  drop
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $temp)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block $block
+ ;; CHECK-NEXT:   (local.set $temp
+ ;; CHECK-NEXT:    (local.get $param)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $temp)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $nesting-after (param $param (ref eq))
   (local $temp (ref eq))
@@ -926,10 +1132,20 @@
 
  ;; CHECK:      (func $nesting-reverse (type $0) (param $param (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  drop
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT:  (block $block
+ ;; CHECK-NEXT:   (local.set $temp
+ ;; CHECK-NEXT:    (local.get $param)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $temp)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $temp)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $nesting-reverse (param $param (ref eq))
   (local $temp (ref eq))
@@ -953,16 +1169,23 @@
 
  ;; CHECK:      (func $nesting-covered-but-ended (type $0) (param $param (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  local.set $temp
- ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  drop
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  local.set $temp
- ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  drop
- ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  drop
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $temp)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block $block
+ ;; CHECK-NEXT:   (local.set $temp
+ ;; CHECK-NEXT:    (local.get $param)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (local.get $temp)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $temp)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $nesting-covered-but-ended (param $param (ref eq))
   (local $temp (ref eq))
@@ -991,21 +1214,30 @@
 
  ;; CHECK:      (func $two-covers (type $1) (param $param (ref eq)) (result (ref eq))
  ;; CHECK-NEXT:  (local $temp (ref eq))
- ;; CHECK-NEXT:  local.get $param
- ;; CHECK-NEXT:  local.set $temp
- ;; CHECK-NEXT:  local.get $temp
- ;; CHECK-NEXT:  i32.const 0
- ;; CHECK-NEXT:  ref.i31
- ;; CHECK-NEXT:  ref.eq
- ;; CHECK-NEXT:  if
- ;; CHECK-NEXT:   local.get $param
- ;; CHECK-NEXT:   local.tee $temp
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  else
- ;; CHECK-NEXT:   local.get $param
- ;; CHECK-NEXT:   local.set $temp
- ;; CHECK-NEXT:  end
- ;; CHECK-NEXT:  local.get $temp
+ ;; CHECK-NEXT:  (local.set $temp
+ ;; CHECK-NEXT:   (local.get $param)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (ref.eq
+ ;; CHECK-NEXT:    (local.get $temp)
+ ;; CHECK-NEXT:    (ref.i31
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (local.tee $temp
+ ;; CHECK-NEXT:      (local.get $param)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (local.set $temp
+ ;; CHECK-NEXT:     (local.get $param)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (local.get $temp)
  ;; CHECK-NEXT: )
  (func $two-covers (param $param (ref eq)) (result (ref eq))
   (local $temp (ref eq))

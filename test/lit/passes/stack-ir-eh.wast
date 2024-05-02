@@ -11,25 +11,28 @@
   (func $foo)
 
   ;; CHECK:      (func $test (type $0)
-  ;; CHECK-NEXT:  block $outer
-  ;; CHECK-NEXT:   block $l-catch (result i32)
-  ;; CHECK-NEXT:    block $l-catch-ref (type $1) (result i32 exnref)
-  ;; CHECK-NEXT:     block $l-catch-all
-  ;; CHECK-NEXT:      block $l-catch-all-ref (result exnref)
-  ;; CHECK-NEXT:       try_table (catch $e-i32 $l-catch) (catch_ref $e-i32 $l-catch-ref) (catch_all $l-catch-all) (catch_all_ref $l-catch-all-ref)
-  ;; CHECK-NEXT:        call $foo
-  ;; CHECK-NEXT:       end
-  ;; CHECK-NEXT:       br $outer
-  ;; CHECK-NEXT:      end
-  ;; CHECK-NEXT:      throw_ref
-  ;; CHECK-NEXT:     end
-  ;; CHECK-NEXT:     br $outer
-  ;; CHECK-NEXT:    end
-  ;; CHECK-NEXT:    tuple.drop 2
-  ;; CHECK-NEXT:    br $outer
-  ;; CHECK-NEXT:   end
-  ;; CHECK-NEXT:   drop
-  ;; CHECK-NEXT:  end
+  ;; CHECK-NEXT:  (block $outer
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block $l-catch (result i32)
+  ;; CHECK-NEXT:     (tuple.drop 2
+  ;; CHECK-NEXT:      (block $l-catch-ref (type $1) (result i32 exnref)
+  ;; CHECK-NEXT:       (block $l-catch-all
+  ;; CHECK-NEXT:        (throw_ref
+  ;; CHECK-NEXT:         (block $l-catch-all-ref (result exnref)
+  ;; CHECK-NEXT:          (try_table (catch $e-i32 $l-catch) (catch_ref $e-i32 $l-catch-ref) (catch_all $l-catch-all) (catch_all_ref $l-catch-all-ref)
+  ;; CHECK-NEXT:           (call $foo)
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:          (br $outer)
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (br $outer)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (br $outer)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
     (block $outer
