@@ -53,10 +53,6 @@
 ;; CHECK-NEXT:                                                 loads/stores/indirect calls when
 ;; CHECK-NEXT:                                                 fuzzing
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --no-fuzz-oob                                 don't emit out-of-bounds
-;; CHECK-NEXT:                                                 loads/stores/indirect calls when
-;; CHECK-NEXT:                                                 fuzzing
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-spec-wrapper,-esw                      Emit a wasm spec interpreter
 ;; CHECK-NEXT:                                                 wrapper file that can run the
 ;; CHECK-NEXT:                                                 wasm with some test values,
