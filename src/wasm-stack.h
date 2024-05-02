@@ -443,8 +443,13 @@ public:
   void emitDelegate(Try* curr) { writer.emitDelegate(curr); }
   void emitScopeEnd(Expression* curr) { writer.emitScopeEnd(curr); }
   void emitFunctionEnd() {
+    // Indicate the debug location corresponding to the end opcode
+    // that terminates the function code.
     if (func->epilogLocation.size()) {
       parent.writeDebugLocation(*func->epilogLocation.begin());
+    } else {
+      // The end opcode has no debug location.
+      parent.writeNoDebugLocation();
     }
     writer.emitFunctionEnd();
   }
