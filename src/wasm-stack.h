@@ -549,7 +549,7 @@ private:
   bool isControlFlow(StackInst* inst);
   void removeAt(Index i);
   Index getNumConsumedValues(StackInst* inst);
-  bool canRemoveSetGetPair(Index setIndex, Index getIndex) {
+  bool canRemoveSetGetPair(Index setIndex, Index getIndex);
 };
 
 std::ostream& printStackIR(std::ostream& o, Module* module);
