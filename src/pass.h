@@ -219,10 +219,12 @@ struct PassOptions {
   bool closedWorld = false;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
-  // Whether to generate StackIR during binary writing.
+  // Whether to generate StackIR during binary writing. This is on by default
+  // in -O2 and above.
   bool generateStackIR = false;
   // Whether to optimize StackIR during binary writing. How we optimize depends
-  // on other optimization flags like optimizeLevel.
+  // on other optimization flags like optimizeLevel. This is on by default in
+  // -O2 and above.
   bool optimizeStackIR = false;
   // Whether to print StackIR during binary writing. This is mainly useful for
   // debugging.
