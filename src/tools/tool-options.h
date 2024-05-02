@@ -207,7 +207,7 @@ struct ToolOptions : public Options {
     return *this;
   }
 
-  void applyFeatures(Module& module) {
+  void applyFeatures(Module& module) const {
     module.features.enable(enabledFeatures);
     module.features.disable(disabledFeatures);
   }
