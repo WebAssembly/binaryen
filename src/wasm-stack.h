@@ -525,6 +525,33 @@ private:
   bool sourceMap;
 };
 
+// Stack IR optimizer
+class StackIROptimizer {
+  Function* func;
+  PassOptions& passOptions;
+  StackIR& insts;
+  FeatureSet features;
+
+public:
+  StackIROptimizer(Function* func,
+                   PassOptions& passOptions,
+                   FeatureSet features);
+
+  void run();
+
+private:
+  void dce();
+  void vacuum();
+  void local2Stack();
+  void removeUnneededBlocks();
+  bool isControlFlowBarrier(StackInst* inst);bool isControlFlowBegin(StackInst* inst);
+  bool isControlFlowEnd(StackInst* inst);
+  bool isControlFlow(StackInst* inst);
+  void removeAt(Index i);
+  Index getNumConsumedValues(StackInst* inst);
+  bool canRemoveSetGetPair(Index setIndex, Index getIndex) {
+};
+
 std::ostream& printStackIR(std::ostream& o, Module* module, bool optimize);
 
 } // namespace wasm

@@ -403,6 +403,19 @@ void WasmBinaryWriter::writeFunctions() {
     size_t sizePos = writeU32LEBPlaceholder();
     size_t start = o.size();
     BYN_TRACE("writing" << func->name << std::endl);
+
+
+    StackIRGenerator stackIRGen(*getModule(), func);
+    stackIRGen.write();
+    func->stackIR = std::make_unique<StackIR>();
+    func->stackIR->swap(stackIRGen.getStackIR());
+    if (optimizeStackIR) {
+      ..
+    }
+    if (printStackIR) { // from a wasm-opt commandline flag
+      ..
+    }
+
     // Emit Stack IR if present, and if we can
     if (func->stackIR) {
       BYN_TRACE("write Stack IR\n");
