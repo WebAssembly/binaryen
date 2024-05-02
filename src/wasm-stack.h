@@ -552,7 +552,7 @@ private:
   bool canRemoveSetGetPair(Index setIndex, Index getIndex) {
 };
 
-std::ostream& printStackIR(std::ostream& o, Module* module, bool optimize);
+std::ostream& printStackIR(std::ostream& o, Module* module);
 
 } // namespace wasm
 

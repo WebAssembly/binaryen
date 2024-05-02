@@ -3603,12 +3603,8 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
   return o;
 }
 
-std::ostream& printStackIR(std::ostream& o, Module* module, bool optimize) {
+std::ostream& printStackIR(std::ostream& o, Module* module) {
   wasm::PassRunner runner(module);
-  runner.add("generate-stack-ir");
-  if (optimize) {
-    runner.add("optimize-stack-ir");
-  }
   runner.add(std::make_unique<PrintStackIR>(&o));
   runner.run();
   return o;

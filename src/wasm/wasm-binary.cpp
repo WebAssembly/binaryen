@@ -416,7 +416,7 @@ void WasmBinaryWriter::writeFunctions() {
       }
 
       if (options.printStackIR) { // from a wasm-opt commandline flag
-        ..
+        printStackIR(std::cout, *wasm);
       }
     }
 
