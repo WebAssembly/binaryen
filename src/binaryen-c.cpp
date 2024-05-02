@@ -5590,8 +5590,8 @@ void BinaryenModulePrint(BinaryenModuleRef module) {
   std::cout << *(Module*)module;
 }
 
-void BinaryenModulePrintStackIR(BinaryenModuleRef module, bool optimize) {
-  wasm::printStackIR(std::cout, (Module*)module, optimize);
+void BinaryenModulePrintStackIR(BinaryenModuleRef module) {
+  wasm::printStackIR(std::cout, (Module*)module);
 }
 
 void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
@@ -5737,7 +5737,7 @@ static BinaryenBufferSizes writeModule(BinaryenModuleRef module,
                                        char* sourceMap,
                                        size_t sourceMapSize) {
   BufferWithRandomAccess buffer;
-  WasmBinaryWriter writer((Module*)module, buffer);
+  WasmBinaryWriter writer((Module*)module, buffer, globalPassOptions);
   writer.setNamesSection(globalPassOptions.debugInfo);
   std::ostringstream os;
   if (sourceMapUrl) {

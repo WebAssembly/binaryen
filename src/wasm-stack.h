@@ -528,13 +528,13 @@ private:
 // Stack IR optimizer
 class StackIROptimizer {
   Function* func;
-  PassOptions& passOptions;
+  const PassOptions& passOptions;
   StackIR& insts;
   FeatureSet features;
 
 public:
   StackIROptimizer(Function* func,
-                   PassOptions& passOptions,
+                   const PassOptions& passOptions,
                    FeatureSet features);
 
   void run();
@@ -544,7 +544,8 @@ private:
   void vacuum();
   void local2Stack();
   void removeUnneededBlocks();
-  bool isControlFlowBarrier(StackInst* inst);bool isControlFlowBegin(StackInst* inst);
+  bool isControlFlowBarrier(StackInst* inst);
+  bool isControlFlowBegin(StackInst* inst);
   bool isControlFlowEnd(StackInst* inst);
   bool isControlFlow(StackInst* inst);
   void removeAt(Index i);

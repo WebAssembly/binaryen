@@ -27,7 +27,7 @@
 namespace wasm {
 
 StackIROptimizer::StackIROptimizer(Function* func,
-                 PassOptions& passOptions,
+                 const PassOptions& passOptions,
                  FeatureSet features)
   : func(func), passOptions(passOptions), insts(*func->stackIR.get()),
     features(features) {
