@@ -19,9 +19,11 @@ Current Trunk
    noticeable, except that:
    - Text output no longer notes `(; has Stack IR ;)` (as Stack IR only exists
      during binary writing).
-   - `--print-stack-ir` is now a flag, not a pass, which means the order of
-     operations may seem different, as it applies during binary writing (or, if
-     no binary is written, `wasm-opt` prints StackIR at the very end).
+   - `--generate-stack-ir`, `--optimize-stack-ir`, and `--print-stack-ir` are
+     now flags and not passes. That means the order of operations may seem
+     different, as they apply during binary writing (or, if no binary is written
+     but we were still asked to print StackIR, `wasm-opt` does it at the very
+     end).
    - Whether to generate, optimize, and print StackIR is now noted as part of
      the PassOptions. As a result `BinaryenModulePrintStackIR` and similar APIs
      do not receive an `optimize` flag, as they read the PassOption
