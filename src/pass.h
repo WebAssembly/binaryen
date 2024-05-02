@@ -219,6 +219,10 @@ struct PassOptions {
   bool closedWorld = false;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
+  // TODO comment
+  bool generateStackIR = false;
+  bool optimizeStackIR = false;
+  bool printStackIR = false;
   // Whether we are targeting JS. In that case we want to avoid emitting things
   // in the optimizer that do not translate well to JS, or that could cause us
   // to need extra lowering work or even a loop (where we optimize to something

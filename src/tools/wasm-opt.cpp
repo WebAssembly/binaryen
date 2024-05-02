@@ -178,6 +178,13 @@ int main(int argc, const char* argv[]) {
          WasmOptOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { fuzzOOB = false; })
+    .add("--no-fuzz-oob",
+         "",
+         "don't emit out-of-bounds loads/stores/indirect calls when fuzzing",
+         WasmOptOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) { fuzzOOB = false; })
+
     .add("--emit-spec-wrapper",
          "-esw",
          "Emit a wasm spec interpreter wrapper file that can run the wasm with "
@@ -402,11 +409,6 @@ int main(int argc, const char* argv[]) {
     runner.add("translate-to-new-eh");
     // Perform Stack IR optimizations here, at the very end of the
     // optimization pipeline.
-    if (options.passOptions.optimizeLevel >= 2 ||
-        options.passOptions.shrinkLevel >= 1) {
-      runner.addIfNoDWARFIssues("generate-stack-ir");
-      runner.addIfNoDWARFIssues("optimize-stack-ir");
-    }
     runner.run();
     if (options.passOptions.validate) {
       bool valid = WasmValidator().validate(wasm, options.passOptions);

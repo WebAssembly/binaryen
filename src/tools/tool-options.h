@@ -151,7 +151,26 @@ struct ToolOptions : public Options {
         Options::Arguments::Zero,
         [this](Options*, const std::string&) {
           passOptions.closedWorld = true;
-        });
+        })
+      .add("--generate-stack-ir",
+           "",
+           "generate StackIR during writing",
+           WasmOptOption,
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& arguments) { passOptions.generateStackIR = false; })
+      .add("--optimize-stack-ir",
+           "",
+           "optimize StackIR during writing",
+           WasmOptOption,
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& arguments) { passOptions.optimizeStackIR = false; })
+      .add("--print-stack-ir",
+           "",
+           "print StackIR during writing",
+           WasmOptOption,
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& arguments) { passOptions.printStackIR = false; })
+        ;
   }
 
   ToolOptions& addFeature(FeatureSet::Feature feature,
@@ -179,9 +198,15 @@ struct ToolOptions : public Options {
     return *this;
   }
 
-  void applyFeatures(Module& module) const {
+  void applyFeatures(Module& module) { // TODO rename?
     module.features.enable(enabledFeatures);
     module.features.disable(disabledFeatures);
+
+    if (passOptions.optimizeLevel >= 2 ||
+        passOptions.shrinkLevel >= 1) {
+      passOptions.generateStackIR = true;
+      passOptions.optimizeStackIR = true;
+    }
   }
 
 private:

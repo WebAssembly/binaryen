@@ -85,6 +85,8 @@ private:
 };
 
 class ModuleWriter : public ModuleIOBase {
+  const PassOptions& options;
+
   bool binary = true;
 
   // TODO: Remove `emitModuleName`. See the comment in wasm-binary.h
@@ -97,7 +99,7 @@ class ModuleWriter : public ModuleIOBase {
 public:
   // Writing defaults to not storing the names section. Storing it is a user-
   // observable fact that must be opted into.
-  ModuleWriter() { setDebugInfo(false); }
+  ModuleWriter(const PassOptions& options) : options(options) { setDebugInfo(false); }
 
   void setBinary(bool binary_) { binary = binary_; }
   void setSymbolMap(std::string symbolMap_) { symbolMap = symbolMap_; }

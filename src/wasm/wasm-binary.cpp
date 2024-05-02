@@ -404,17 +404,20 @@ void WasmBinaryWriter::writeFunctions() {
     size_t start = o.size();
     BYN_TRACE("writing" << func->name << std::endl);
 
+    if (options.generateStackIR) {
+      StackIRGenerator stackIRGen(*getModule(), func);
+      stackIRGen.write();
+      func->stackIR = std::make_unique<StackIR>();
+      func->stackIR->swap(stackIRGen.getStackIR());
 
-    StackIRGenerator stackIRGen(*getModule(), func);
-    stackIRGen.write();
-    func->stackIR = std::make_unique<StackIR>();
-    func->stackIR->swap(stackIRGen.getStackIR());
-    if (optimizeStackIR) {
-      StackIROptimizer optimizer(func, passOptions, wasm.features);
-      optimizer.run();
-    }
-    if (printStackIR) { // from a wasm-opt commandline flag
-      ..
+      if (options.optimizeStackIR) {
+        StackIROptimizer optimizer(func, passOptions, wasm.features);
+        optimizer.run();
+      }
+
+      if (options.printStackIR) { // from a wasm-opt commandline flag
+        ..
+      }
     }
 
     // Emit Stack IR if present, and if we can
