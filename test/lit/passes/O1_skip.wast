@@ -46,7 +46,7 @@
 )
 ;; CHECK:      (export "foo" (func $foo))
 
-;; CHECK:      (func $foo (; has Stack IR ;) (param $p i32)
+;; CHECK:      (func $foo (param $p i32)
 ;; CHECK-NEXT:  (local $x i32)
 ;; CHECK-NEXT:  (local $y i32)
 ;; CHECK-NEXT:  (call $log
