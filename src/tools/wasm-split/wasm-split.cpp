@@ -37,7 +37,7 @@ using namespace wasm;
 
 namespace {
 
-void parseInput(Module& wasm, WasmSplitOptions& options) {
+void parseInput(Module& wasm, const WasmSplitOptions& options) {
   options.applyFeatures(wasm);
   ModuleReader reader;
   reader.setProfile(options.profile);
@@ -100,7 +100,7 @@ void writeModule(Module& wasm,
   writer.write(wasm, filename);
 }
 
-void instrumentModule(WasmSplitOptions& options) {
+void instrumentModule(const WasmSplitOptions& options) {
   Module wasm;
   parseInput(wasm, options);
 
@@ -207,7 +207,7 @@ void writePlaceholderMap(const std::map<size_t, Name> placeholderMap,
   }
 }
 
-void splitModule(WasmSplitOptions& options) {
+void splitModule(const WasmSplitOptions& options) {
   Module wasm;
   parseInput(wasm, options);
 
@@ -430,7 +430,7 @@ void checkExists(const std::string& path) {
   }
 }
 
-void printReadableProfile(WasmSplitOptions& options) {
+void printReadableProfile(const WasmSplitOptions& options) {
   const std::string wasmFile(options.inputFiles[0]);
   checkExists(options.profileFile);
   checkExists(wasmFile);
