@@ -401,7 +401,7 @@ struct Reducer
 
   bool writeAndTestReduction(ProgramResult& out) {
     // write the module out
-    ModuleWriter writer(options.passOptions);
+    ModuleWriter writer(toolOptions.passOptions);
     writer.setBinary(binary);
     writer.setDebugInfo(debugInfo);
     writer.write(*getModule(), test);

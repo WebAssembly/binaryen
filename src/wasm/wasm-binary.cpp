@@ -411,7 +411,7 @@ void WasmBinaryWriter::writeFunctions() {
       func->stackIR->swap(stackIRGen.getStackIR());
 
       if (options.optimizeStackIR) {
-        StackIROptimizer optimizer(func, options, wasm.features);
+        StackIROptimizer optimizer(func, options, wasm->features);
         optimizer.run();
       }
 
