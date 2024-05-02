@@ -69,6 +69,7 @@ void WasmBinaryWriter::write() {
   writeStart();
   writeElementSegments();
   writeDataCount();
+  prepareFunctions();
   writeFunctions();
   writeDataSegments();
   if (debugInfo || emitModuleName) {
@@ -370,6 +371,42 @@ void WasmBinaryWriter::writeImports() {
   finishSection(start);
 }
 
+void WasmBinaryWriter::prepareFunctions() {
+  if (!options.generateStackIR) {
+    return;
+  }
+
+  // Generate StackIR for functions in parallel, and optimize if requested.
+  struct StackIRPass
+    : public WalkerPass<PostWalker<StackIRPass>> {
+    bool isFunctionParallel() override { return true; }
+
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<StackIRPass>();
+    }
+
+    void doWalkFunction(Function* func) {
+      StackIRGenerator stackIRGen(*getModule(), func);
+      stackIRGen.write();
+      func->stackIR = std::make_unique<StackIR>();
+      func->stackIR->swap(stackIRGen.getStackIR());
+
+      auto& options = getPassOptions();
+      if (options.optimizeStackIR) {
+        StackIROptimizer optimizer(func, options, getModule()->features);
+        optimizer.run();
+      }
+    }
+  };
+
+  PassRunner runner(wasm, options);
+  StackIRPass().run(&runner, wasm);
+
+  if (options.printStackIR) {
+    printStackIR(std::cout, wasm);
+  }
+}
+
 void WasmBinaryWriter::writeFunctionSignatures() {
   if (importInfo->getNumDefinedFunctions() == 0) {
     return;
@@ -403,24 +440,7 @@ void WasmBinaryWriter::writeFunctions() {
     size_t sizePos = writeU32LEBPlaceholder();
     size_t start = o.size();
     BYN_TRACE("writing" << func->name << std::endl);
-
-    if (options.generateStackIR) {
-      StackIRGenerator stackIRGen(*getModule(), func);
-      stackIRGen.write();
-      func->stackIR = std::make_unique<StackIR>();
-      func->stackIR->swap(stackIRGen.getStackIR());
-
-      if (options.optimizeStackIR) {
-        StackIROptimizer optimizer(func, options, wasm->features);
-        optimizer.run();
-      }
-
-      if (options.printStackIR) { // from a wasm-opt commandline flag
-        printStackIR(std::cout, wasm);
-      }
-    }
-
-    // Emit Stack IR if present, and if we can
+    // Emit Stack IR if present.
     if (func->stackIR) {
       BYN_TRACE("write Stack IR\n");
       StackIRToBinaryWriter writer(*this, o, func, sourceMap, DWARF);
