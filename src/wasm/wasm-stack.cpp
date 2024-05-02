@@ -2839,8 +2839,13 @@ void StackIRToBinaryWriter::write() {
         WASM_UNREACHABLE("unexpected op");
     }
   }
+  // Indicate the debug location corresponding to the end opcode that
+  // terminates the function code.
   if (func->epilogLocation.size()) {
     parent.writeDebugLocation(*func->epilogLocation.begin());
+  } else {
+    // The end opcode has no debug location.
+    parent.writeNoDebugLocation();
   }
   writer.emitFunctionEnd();
 }
