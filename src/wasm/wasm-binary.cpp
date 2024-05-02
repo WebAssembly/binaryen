@@ -400,7 +400,8 @@ void WasmBinaryWriter::prepareFunctions() {
   };
 
   PassRunner runner(wasm, options);
-  StackIRPass().run(&runner, wasm);
+  runner.add(std::make_unique<StackIRPass>()  );
+  runner.run();
 
   if (options.printStackIR) {
     printStackIR(std::cout, wasm);
