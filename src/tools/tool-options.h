@@ -166,6 +166,7 @@ struct ToolOptions : public Options {
            ToolOptionsCategory,
            Options::Arguments::Zero,
            [&](Options* o, const std::string& arguments) {
+             // Also generate StackIR, to have something to optimize.
              passOptions.generateStackIR = true;
              passOptions.optimizeStackIR = true;
            })
@@ -175,6 +176,7 @@ struct ToolOptions : public Options {
            ToolOptionsCategory,
            Options::Arguments::Zero,
            [&](Options* o, const std::string& arguments) {
+             // Also generate StackIR, to have something to print.
              passOptions.generateStackIR = true;
              passOptions.printStackIR = true;
            });
