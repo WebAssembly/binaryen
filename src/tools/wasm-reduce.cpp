@@ -401,7 +401,7 @@ struct Reducer
 
   bool writeAndTestReduction(ProgramResult& out) {
     // write the module out
-    ModuleWriter writer;
+    ModuleWriter writer(options.passOptions);
     writer.setBinary(binary);
     writer.setDebugInfo(debugInfo);
     writer.write(*getModule(), test);
@@ -1368,7 +1368,7 @@ int main(int argc, const char* argv[]) {
     if (resultOnInvalid == expected) {
       // Try it on a valid input.
       Module emptyModule;
-      ModuleWriter writer;
+      ModuleWriter writer(options.passOptions);
       writer.setBinary(true);
       writer.write(emptyModule, test);
       ProgramResult resultOnValid(command);

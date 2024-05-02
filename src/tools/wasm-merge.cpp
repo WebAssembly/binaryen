@@ -752,7 +752,7 @@ Input source maps can be specified by adding an -ism option right after the modu
 
   // Output.
   if (options.extra.count("output") > 0) {
-    ModuleWriter writer;
+    ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
     if (outputSourceMapFilename.size()) {

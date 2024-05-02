@@ -129,7 +129,7 @@ int main(int argc, const char* argv[]) {
   if (options.debug) {
     std::cerr << "writing..." << std::endl;
   }
-  ModuleWriter writer;
+  ModuleWriter writer(options.passOptions);
   writer.setBinary(true);
   writer.setDebugInfo(debugInfo);
   if (sourceMapFilename.size()) {

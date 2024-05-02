@@ -1491,7 +1491,7 @@ int main(int argc, const char* argv[]) {
     if (options.debug) {
       std::cout << "writing..." << std::endl;
     }
-    ModuleWriter writer;
+    ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
     writer.write(wasm, options.extra["output"]);

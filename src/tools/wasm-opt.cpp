@@ -354,7 +354,7 @@ int main(int argc, const char* argv[]) {
 
   if (extraFuzzCommand.size() > 0 && options.extra.count("output") > 0) {
     BYN_TRACE("writing binary before opts, for extra fuzz command...\n");
-    ModuleWriter writer;
+    ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(options.passOptions.debugInfo);
     writer.write(wasm, options.extra["output"]);
@@ -386,7 +386,7 @@ int main(int argc, const char* argv[]) {
       // size no longer decreasing.
       auto getSize = [&]() {
         BufferWithRandomAccess buffer;
-        WasmBinaryWriter writer(&wasm, buffer);
+        WasmBinaryWriter writer(&wasm, buffer, options.passOptions);
         writer.write();
         return buffer.size();
       };
@@ -430,7 +430,7 @@ int main(int argc, const char* argv[]) {
   }
 
   BYN_TRACE("writing...\n");
-  ModuleWriter writer;
+  ModuleWriter writer(options.passOptions);
   writer.setBinary(emitBinary);
   writer.setDebugInfo(options.passOptions.debugInfo);
   if (outputSourceMapFilename.size()) {
