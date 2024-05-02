@@ -377,8 +377,7 @@ void WasmBinaryWriter::prepareFunctions() {
   }
 
   // Generate StackIR for functions in parallel, and optimize if requested.
-  struct StackIRPass
-    : public WalkerPass<PostWalker<StackIRPass>> {
+  struct StackIRPass : public WalkerPass<PostWalker<StackIRPass>> {
     bool isFunctionParallel() override { return true; }
 
     std::unique_ptr<Pass> create() override {
@@ -400,7 +399,7 @@ void WasmBinaryWriter::prepareFunctions() {
   };
 
   PassRunner runner(wasm, options);
-  runner.add(std::make_unique<StackIRPass>()  );
+  runner.add(std::make_unique<StackIRPass>());
   runner.run();
 
   if (options.printStackIR) {

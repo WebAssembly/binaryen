@@ -1270,7 +1270,9 @@ class WasmBinaryWriter {
   };
 
 public:
-  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o, const PassOptions& options)
+  WasmBinaryWriter(Module* input,
+                   BufferWithRandomAccess& o,
+                   const PassOptions& options)
     : wasm(input), o(o), options(options), indexes(*input) {
     prepare();
   }

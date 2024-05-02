@@ -157,20 +157,27 @@ struct ToolOptions : public Options {
            "generate StackIR during writing",
            ToolOptionsCategory,
            Options::Arguments::Zero,
-           [&](Options* o, const std::string& arguments) { passOptions.generateStackIR = true; })
+           [&](Options* o, const std::string& arguments) {
+             passOptions.generateStackIR = true;
+           })
       .add("--optimize-stack-ir",
            "",
            "optimize StackIR during writing",
            ToolOptionsCategory,
            Options::Arguments::Zero,
-           [&](Options* o, const std::string& arguments) { passOptions.generateStackIR = true; passOptions.optimizeStackIR = true; })
+           [&](Options* o, const std::string& arguments) {
+             passOptions.generateStackIR = true;
+             passOptions.optimizeStackIR = true;
+           })
       .add("--print-stack-ir",
            "",
            "print StackIR during writing",
            ToolOptionsCategory,
            Options::Arguments::Zero,
-           [&](Options* o, const std::string& arguments) { passOptions.generateStackIR = true; passOptions.printStackIR = true; })
-        ;
+           [&](Options* o, const std::string& arguments) {
+             passOptions.generateStackIR = true;
+             passOptions.printStackIR = true;
+           });
   }
 
   ToolOptions& addFeature(FeatureSet::Feature feature,
@@ -202,8 +209,7 @@ struct ToolOptions : public Options {
     module.features.enable(enabledFeatures);
     module.features.disable(disabledFeatures);
 
-    if (passOptions.optimizeLevel >= 2 ||
-        passOptions.shrinkLevel >= 1) {
+    if (passOptions.optimizeLevel >= 2 || passOptions.shrinkLevel >= 1) {
       passOptions.generateStackIR = true;
       passOptions.optimizeStackIR = true;
     }

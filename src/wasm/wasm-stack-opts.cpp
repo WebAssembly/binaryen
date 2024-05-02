@@ -27,8 +27,8 @@
 namespace wasm {
 
 StackIROptimizer::StackIROptimizer(Function* func,
-                 const PassOptions& passOptions,
-                 FeatureSet features)
+                                   const PassOptions& passOptions,
+                                   FeatureSet features)
   : func(func), passOptions(passOptions), insts(*func->stackIR.get()),
     features(features) {
   assert(func->stackIR); // TODO move out of func
@@ -261,7 +261,9 @@ bool StackIROptimizer::isControlFlowBarrier(StackInst* inst) {
     case StackInst::TryTableEnd: {
       return true;
     }
-    default: { return false; }
+    default: {
+      return false;
+    }
   }
 }
 
@@ -275,7 +277,9 @@ bool StackIROptimizer::isControlFlowBegin(StackInst* inst) {
     case StackInst::TryTableBegin: {
       return true;
     }
-    default: { return false; }
+    default: {
+      return false;
+    }
   }
 }
 
@@ -290,11 +294,15 @@ bool StackIROptimizer::isControlFlowEnd(StackInst* inst) {
     case StackInst::TryTableEnd: {
       return true;
     }
-    default: { return false; }
+    default: {
+      return false;
+    }
   }
 }
 
-bool StackIROptimizer::isControlFlow(StackInst* inst) { return inst->op != StackInst::Basic; }
+bool StackIROptimizer::isControlFlow(StackInst* inst) {
+  return inst->op != StackInst::Basic;
+}
 
 // Remove the instruction at index i. If the instruction
 // is control flow, and so has been expanded to multiple
