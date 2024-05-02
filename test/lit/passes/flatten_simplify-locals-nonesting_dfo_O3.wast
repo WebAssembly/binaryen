@@ -25,7 +25,7 @@
 
  ;; CHECK:      (export "only-dfo" (func $only-dfo))
 
- ;; CHECK:      (func $if-select (; has Stack IR ;)
+ ;; CHECK:      (func $if-select
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $if-select (export "if-select")
@@ -47,7 +47,7 @@
    )
   )
  )
- ;; CHECK:      (func $unreachable-body-update-zext (; has Stack IR ;) (result f64)
+ ;; CHECK:      (func $unreachable-body-update-zext (result f64)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $unreachable-body-update-zext (export "unreachable-body-update-zext") (result f64)
@@ -61,7 +61,7 @@
   )
   (f64.const -9223372036854775808)
  )
- ;; CHECK:      (func $ssa-const (; has Stack IR ;) (param $0 i32) (param $1 f64) (param $2 f64) (result i32)
+ ;; CHECK:      (func $ssa-const (param $0 i32) (param $1 f64) (param $2 f64) (result i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $ssa-const (export "ssa-const") (param $var$0 i32) (param $var$1 f64) (param $var$2 f64) (result i32)
@@ -99,7 +99,7 @@
    )
   )
  )
- ;; CHECK:      (func $if-nothing (; has Stack IR ;) (param $0 i64)
+ ;; CHECK:      (func $if-nothing (param $0 i64)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $if-nothing (export "if-nothing") (param $var$0 i64)
@@ -130,7 +130,7 @@
    (unreachable)
   )
  )
- ;; CHECK:      (func $only-dfo (; has Stack IR ;) (param $0 f64) (result i32)
+ ;; CHECK:      (func $only-dfo (param $0 f64) (result i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (loop $label$1
  ;; CHECK-NEXT:   (if
