@@ -219,9 +219,13 @@ struct PassOptions {
   bool closedWorld = false;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
-  // TODO comment
+  // Whether to generate StackIR during binary writing.
   bool generateStackIR = false;
+  // Whether to optimize StackIR during binary writing. How we optimize depends
+  // on other optimization flags like optimizeLevel.
   bool optimizeStackIR = false;
+  // Whether to print StackIR during binary writing. This is mainly useful for
+  // debugging.
   bool printStackIR = false;
   // Whether we are targeting JS. In that case we want to avoid emitting things
   // in the optimizer that do not translate well to JS, or that could cause us
