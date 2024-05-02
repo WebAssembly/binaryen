@@ -178,13 +178,6 @@ int main(int argc, const char* argv[]) {
          WasmOptOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { fuzzOOB = false; })
-    .add("--no-fuzz-oob",
-         "",
-         "don't emit out-of-bounds loads/stores/indirect calls when fuzzing",
-         WasmOptOption,
-         Options::Arguments::Zero,
-         [&](Options* o, const std::string& arguments) { fuzzOOB = false; })
-
     .add("--emit-spec-wrapper",
          "-esw",
          "Emit a wasm spec interpreter wrapper file that can run the wasm with "

@@ -205,14 +205,9 @@ struct ToolOptions : public Options {
     return *this;
   }
 
-  void applyFeatures(Module& module) { // TODO rename?
+  void applyFeatures(Module& module) {
     module.features.enable(enabledFeatures);
     module.features.disable(disabledFeatures);
-
-    if (passOptions.optimizeLevel >= 2 || passOptions.shrinkLevel >= 1) {
-      passOptions.generateStackIR = true;
-      passOptions.optimizeStackIR = true;
-    }
   }
 
 private:

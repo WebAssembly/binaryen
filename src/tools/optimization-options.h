@@ -56,9 +56,17 @@ struct OptimizationOptions : public ToolOptions {
   // level, so that the last of -O3 -Os will override the previous default, but
   // also we note the current opt level for when we run the pass, so that the
   // sequence -O3 -Os will run -O3 and then -Os, and not -Os twice.
+  //
+  // This also applies the consequences of the current optimize and shrink
+  // levels.
   void addDefaultOptPasses() {
     passes.push_back(PassInfo{
       DEFAULT_OPT_PASSES, passOptions.optimizeLevel, passOptions.shrinkLevel});
+
+    if (passOptions.optimizeLevel >= 2 || passOptions.shrinkLevel >= 1) {
+      passOptions.generateStackIR = true;
+      passOptions.optimizeStackIR = true;
+    }
   }
 
   constexpr static const char* OptimizationOptionsCategory =
