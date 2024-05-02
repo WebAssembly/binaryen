@@ -53,6 +53,10 @@
 ;; CHECK-NEXT:                                                 loads/stores/indirect calls when
 ;; CHECK-NEXT:                                                 fuzzing
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-fuzz-oob                                 don't emit out-of-bounds
+;; CHECK-NEXT:                                                 loads/stores/indirect calls when
+;; CHECK-NEXT:                                                 fuzzing
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-spec-wrapper,-esw                      Emit a wasm spec interpreter
 ;; CHECK-NEXT:                                                 wrapper file that can run the
 ;; CHECK-NEXT:                                                 wasm with some test values,
@@ -181,8 +185,6 @@
 ;; CHECK-NEXT:                                                 invoked via the wasm table
 ;; CHECK-NEXT:                                                 without JavaScript BigInt
 ;; CHECK-NEXT:                                                 support).
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --generate-stack-ir                           generate Stack IR
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --global-refining                             refine the types of globals
 ;; CHECK-NEXT:
@@ -333,8 +335,6 @@
 ;; CHECK-NEXT:   --optimize-j2cl                               optimizes J2CL specific
 ;; CHECK-NEXT:                                                 constructs.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --optimize-stack-ir                           optimize Stack IR
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --outlining                                   outline instructions
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --pick-load-signs                             pick load signs based on their
@@ -368,9 +368,6 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --print-minified                              print in minified s-expression
 ;; CHECK-NEXT:                                                 format
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --print-stack-ir                              print out Stack IR (useful for
-;; CHECK-NEXT:                                                 internal debugging)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --propagate-debug-locs                        propagate debug location from
 ;; CHECK-NEXT:                                                 parents or previous siblings to
@@ -745,6 +742,12 @@
 ;; CHECK-NEXT:                                                 on to them and pass them back
 ;; CHECK-NEXT:                                                 in, but not inspect their
 ;; CHECK-NEXT:                                                 contents or call them.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --generate-stack-ir                           generate StackIR during writing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --optimize-stack-ir                           optimize StackIR during writing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --print-stack-ir                              print StackIR during writing
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:
