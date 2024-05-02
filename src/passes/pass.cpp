@@ -907,6 +907,7 @@ void PassRunner::runPass(Pass* pass) {
   assert(!pass->getPassRunner());
   pass->setPassRunner(this);
   pass->run(wasm);
+  handleAfterEffects(pass);
 }
 
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
