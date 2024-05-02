@@ -2,6 +2,21 @@
  (type $0 (func (param i32) (result i32)))
  (export "stacky-help" (func $stacky-help))
  (func $stacky-help (param $0 i32) (result i32)
+  i32.const 0
+  call $stacky-help
+  i32.const 1
+  call $stacky-help
+  i32.const 2
+  call $stacky-help
+  drop
+  i32.eqz
+  i32.add
+ )
+)
+(module
+ (type $0 (func (param i32) (result i32)))
+ (export "stacky-help" (func $stacky-help))
+ (func $stacky-help (; has Stack IR ;) (param $0 i32) (result i32)
   (i32.add
    (call $stacky-help
     (i32.const 0)
@@ -22,20 +37,5 @@
     )
    )
   )
- )
-)
-(module
- (type $0 (func (param i32) (result i32)))
- (export "stacky-help" (func $stacky-help))
- (func $stacky-help (param $0 i32) (result i32)
-  i32.const 0
-  call $stacky-help
-  i32.const 1
-  call $stacky-help
-  i32.const 2
-  call $stacky-help
-  drop
-  i32.eqz
-  i32.add
  )
 )
