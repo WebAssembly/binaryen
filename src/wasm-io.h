@@ -22,6 +22,7 @@
 #define wasm_wasm_io_h
 
 #include "parsing.h"
+#include "pass.h"
 #include "support/file.h"
 #include "wasm.h"
 

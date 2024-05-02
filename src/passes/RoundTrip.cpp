@@ -41,7 +41,7 @@ struct RoundTrip : public Pass {
     // to tell the builder which features to build with.
     auto features = module->features;
     // Write, clear, and read the module
-    WasmBinaryWriter(module, buffer).write();
+    WasmBinaryWriter(module, buffer, getPassOptions()).write();
     ModuleUtils::clearModule(*module);
     auto input = buffer.getAsChars();
     WasmBinaryReader parser(*module, features, input);
