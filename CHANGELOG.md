@@ -15,6 +15,11 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - StackIR is now handled entirely during binary writing. This is mostly not
+   noticeable, except that:
+   - Whether to generate, optimize, and print StackIR is now noted as part of
+     the PassOptions. As a result `BinaryenModulePrintStackIR` and similar APIs
+     do not receive an `optimize` flag, as they read the options.
  - The new, standards-compliant text parser is now the default. `wasm-opt` has a
    `--deprecated-wat-parser` flag that will switch back to using the old text
    parser, but that option will go away soon.

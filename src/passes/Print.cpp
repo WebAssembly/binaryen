@@ -2978,9 +2978,6 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
     o << " (type ";
     printHeapType(curr->type) << ')';
   }
-  if (!stackIR && curr->stackIR && !minify) {
-    o << " (; has Stack IR ;)";
-  }
   if (curr->getParams().size() > 0) {
     Index i = 0;
     for (const auto& param : curr->getParams()) {
