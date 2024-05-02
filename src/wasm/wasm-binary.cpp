@@ -410,7 +410,8 @@ void WasmBinaryWriter::writeFunctions() {
     func->stackIR = std::make_unique<StackIR>();
     func->stackIR->swap(stackIRGen.getStackIR());
     if (optimizeStackIR) {
-      ..
+      StackIROptimizer optimizer(func, passOptions, wasm.features);
+      optimizer.run();
     }
     if (printStackIR) { // from a wasm-opt commandline flag
       ..
