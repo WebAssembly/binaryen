@@ -424,7 +424,6 @@ int main(int argc, const char* argv[]) {
       // writing process just to get StackIR to be printed. We can do that by
       // computing the binary size.
       computeBinarySize();
-      return 0;
     }
     if (!options.quiet) {
       std::cerr << "warning: no output file specified, not emitting output\n";
