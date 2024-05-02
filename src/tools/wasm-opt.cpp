@@ -365,6 +365,14 @@ int main(int argc, const char* argv[]) {
   bool translateToNewEH =
     wasm.features.hasExceptionHandling() && experimentalNewEH;
 
+  // Write the binary to an unused buffer and return the size.
+  auto computeBinarySize = [&]() {
+    BufferWithRandomAccess buffer;
+    WasmBinaryWriter writer(&wasm, buffer, options.passOptions);
+    writer.write();
+    return buffer.size();
+  };
+
   if (!options.runningPasses()) {
     if (!options.quiet && !translateToNewEH) {
       std::cerr << "warning: no passes specified, not doing any work\n";
@@ -384,17 +392,11 @@ int main(int argc, const char* argv[]) {
     if (converge) {
       // Keep on running passes to convergence, defined as binary
       // size no longer decreasing.
-      auto getSize = [&]() {
-        BufferWithRandomAccess buffer;
-        WasmBinaryWriter writer(&wasm, buffer, options.passOptions);
-        writer.write();
-        return buffer.size();
-      };
-      auto lastSize = getSize();
+      auto lastSize = computeBinarySize();
       while (1) {
         BYN_TRACE("running iteration for convergence (" << lastSize << ")..\n");
         runPasses();
-        auto currSize = getSize();
+        auto currSize = computeBinarySize();
         if (currSize >= lastSize) {
           break;
         }
@@ -423,6 +425,14 @@ int main(int argc, const char* argv[]) {
   }
 
   if (options.extra.count("output") == 0) {
+    if (options.passOptions.printStackIR) {
+      // The user asked to print StackIR without setting an output file, so we
+      // are not emitting a binary, but we do want to go through the binary
+      // writing process just to get StackIR to emit here. We can do that by
+      // computing the binary size.
+      computeBinarySize();
+      return 0;
+    }
     if (!options.quiet) {
       std::cerr << "warning: no output file specified, not emitting output\n";
     }

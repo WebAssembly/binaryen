@@ -157,19 +157,19 @@ struct ToolOptions : public Options {
            "generate StackIR during writing",
            ToolOptionsCategory,
            Options::Arguments::Zero,
-           [&](Options* o, const std::string& arguments) { passOptions.generateStackIR = false; })
+           [&](Options* o, const std::string& arguments) { passOptions.generateStackIR = true; })
       .add("--optimize-stack-ir",
            "",
            "optimize StackIR during writing",
            ToolOptionsCategory,
            Options::Arguments::Zero,
-           [&](Options* o, const std::string& arguments) { passOptions.optimizeStackIR = false; })
+           [&](Options* o, const std::string& arguments) { passOptions.generateStackIR = true; passOptions.optimizeStackIR = true; })
       .add("--print-stack-ir",
            "",
            "print StackIR during writing",
            ToolOptionsCategory,
            Options::Arguments::Zero,
-           [&](Options* o, const std::string& arguments) { passOptions.printStackIR = false; })
+           [&](Options* o, const std::string& arguments) { passOptions.generateStackIR = true; passOptions.printStackIR = true; })
         ;
   }
 
