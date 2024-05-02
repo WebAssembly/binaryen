@@ -737,7 +737,7 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   }
 }
 
-static void dumpWasm(Name name, Module* wasm) {
+static void dumpWasm(Name name, Module* wasm, const PassOptions& options) {
   static int counter = 0;
   std::string numstr = std::to_string(counter++);
   while (numstr.size() < 3) {
@@ -750,7 +750,7 @@ static void dumpWasm(Name name, Module* wasm) {
 #endif
   fullName += numstr + "-" + name.toString();
   Colors::setEnabled(false);
-  ModuleWriter writer;
+  ModuleWriter writer(options);
   writer.setDebugInfo(true);
   writer.writeBinary(*wasm, fullName + ".wasm");
 }
@@ -773,7 +773,7 @@ void PassRunner::run() {
       padding = std::max(padding, pass->name.size());
     }
     if (passDebug >= 3 && !isNested) {
-      dumpWasm("before", wasm);
+      dumpWasm("before", wasm, options);
     }
     for (auto& pass : passes) {
       // ignoring the time, save a printout of the module before, in case this
@@ -817,7 +817,7 @@ void PassRunner::run() {
         }
       }
       if (passDebug >= 3) {
-        dumpWasm(pass->name, wasm);
+        dumpWasm(pass->name, wasm, options);
       }
     }
     std::cerr << "[PassRunner] " << what << " took " << totalTime.count()
