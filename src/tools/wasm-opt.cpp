@@ -421,7 +421,7 @@ int main(int argc, const char* argv[]) {
     if (options.passOptions.printStackIR) {
       // The user asked to print StackIR without setting an output file, so we
       // are not emitting a binary, but we do want to go through the binary
-      // writing process just to get StackIR to emit here. We can do that by
+      // writing process just to get StackIR to be printed. We can do that by
       // computing the binary size.
       computeBinarySize();
       return 0;
