@@ -37,7 +37,7 @@
 
  ;; CHECK:      (export "abs_sub_zero2" (func $abs_sub_zero2))
 
- ;; CHECK:      (func $div (; has Stack IR ;) (result f32)
+ ;; CHECK:      (func $div (result f32)
  ;; CHECK-NEXT:  (f32.const -nan:0x23017a)
  ;; CHECK-NEXT: )
  (func $div (export "div") (result f32)
@@ -46,7 +46,7 @@
    (f32.const 1)
   )
  )
- ;; CHECK:      (func $mul1 (; has Stack IR ;) (result f32)
+ ;; CHECK:      (func $mul1 (result f32)
  ;; CHECK-NEXT:  (f32.const -nan:0x34546d)
  ;; CHECK-NEXT: )
  (func $mul1 (export "mul1") (result f32)
@@ -55,7 +55,7 @@
    (f32.const 1)
   )
  )
- ;; CHECK:      (func $mul2 (; has Stack IR ;) (result f32)
+ ;; CHECK:      (func $mul2 (result f32)
  ;; CHECK-NEXT:  (f32.const nan:0x400000)
  ;; CHECK-NEXT: )
  (func $mul2 (export "mul2") (result f32)
@@ -100,7 +100,7 @@
    (f32.const -0)
   )
  )
- ;; CHECK:      (func $mul_neg_one1 (; has Stack IR ;) (param $0 f32) (result f32)
+ ;; CHECK:      (func $mul_neg_one1 (param $0 f32) (result f32)
  ;; CHECK-NEXT:  (f32.neg
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -111,7 +111,7 @@
    (f32.const -1)
   )
  )
- ;; CHECK:      (func $mul_neg_one2 (; has Stack IR ;) (param $0 f64) (result f64)
+ ;; CHECK:      (func $mul_neg_one2 (param $0 f64) (result f64)
  ;; CHECK-NEXT:  (f64.neg
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -122,7 +122,7 @@
    (f64.const -1)
   )
  )
- ;; CHECK:      (func $abs_sub_zero1 (; has Stack IR ;) (param $0 f32) (result f32)
+ ;; CHECK:      (func $abs_sub_zero1 (param $0 f32) (result f32)
  ;; CHECK-NEXT:  (f32.abs
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -136,7 +136,7 @@
    )
   )
  )
- ;; CHECK:      (func $abs_sub_zero2 (; has Stack IR ;) (param $0 f64) (result f64)
+ ;; CHECK:      (func $abs_sub_zero2 (param $0 f64) (result f64)
  ;; CHECK-NEXT:  (f64.abs
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
