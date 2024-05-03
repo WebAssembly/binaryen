@@ -399,6 +399,7 @@ void WasmBinaryWriter::prepareFunctions() {
   };
 
   PassRunner runner(wasm, options);
+  runner.setIsNested(true);
   runner.add(std::make_unique<StackIRPass>());
   runner.run();
 
