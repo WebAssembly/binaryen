@@ -2008,10 +2008,15 @@ void test_binaries() {
   BinaryenModuleWriteText(module, buffer, 1024);
   printf("module s-expr printed (in memory):\n%s\n", buffer);
 
-  // writ the s-expr representation to a pointer which is managed by the
+  // write the s-expr representation to a pointer which is managed by the
   // caller
   char* text = BinaryenModuleAllocateAndWriteText(module);
   printf("module s-expr printed (in memory, caller-owned):\n%s\n", text);
+  free(text);
+
+  // write StackIR
+  text = BinaryenModuleAllocateAndWriteStackIR(module);
+  printf("module s-expr printed (StackIR):\n%s\n", text);
   free(text);
 
   BinaryenModuleDispose(module);

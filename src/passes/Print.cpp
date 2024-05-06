@@ -3600,10 +3600,24 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
   return o;
 }
 
-std::ostream& printStackIR(std::ostream& o, Module* module) {
+std::ostream& printStackIRInternal(std::ostream& o, Module* module) {
   wasm::PassRunner runner(module);
   runner.add(std::make_unique<PrintStackIR>(&o));
   runner.run();
+  return o;
+}
+
+std::ostream& printStackIR(std::ostream& o, Module* module) {
+  // Go through binary writing in order to print StackIR. The code will end up
+  // caling |printStackIRInternal|, above, at the right time.
+  // FIXME: This prints to stdout atm; wasm-binary.cpp needs to get the stream
+  //        somehow.
+  PassOptions options;
+  options.generateStackIR = true;
+  options.printStackIR = true;
+  BufferWithRandomAccess buffer;
+  WasmBinaryWriter writer(module, buffer, options);
+  writer.write();
   return o;
 }
 
