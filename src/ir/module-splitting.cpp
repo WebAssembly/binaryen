@@ -571,12 +571,13 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
     Gatherer(ModuleSplitter& parent) : parent(parent) {}
 
     // Collect RefFuncs in a map from the function name to all RefFuncs that
-    // refer to it.
-    using Map = InsertOrderedMap<Name, std::vector<RefFunc*>>;
-    Map map;
+    // refer to it. We only collect this for secondary funcs.
+    InsertOrderedMap<Name, std::vector<RefFunc*>> map;
 
     void visitRefFunc(RefFunc* curr) {
-      map[curr->func].push_back(curr);
+      if (parent.secondaryFuncs.count(curr->func)) {
+        map[curr->func].push_back(curr);
+      }
     }
   } gatherer(*this);
   gatherer.walkModule(&primary);
@@ -586,14 +587,9 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
   Builder builder(primary);
   // Generate the new trampoline function and add it to the module.
   for (auto& [name, refFuncs] : gatherer.map) {
-    // Note that we hardcode |primary| here as functions have not yet moved
-    // over to the secondary module.
-    auto* oldFunc = primary.getFunctionOrNull(name);
+    auto* oldFunc = secondary.getFunction(name);
     auto newName = Names::getValidFunctionName(
       primary, std::string("trampoline_") + name.toString());
-    // The name must also be valid in the secondary module (if we are
-    // processing that one, then we are adding functions to it as we go).
-    newName = Names::getValidFunctionName(secondary, newName);
 
     // Generate the call and the function.
     std::vector<Expression*> args;
