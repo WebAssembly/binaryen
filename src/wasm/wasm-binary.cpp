@@ -404,7 +404,7 @@ void WasmBinaryWriter::prepareFunctions() {
   runner.run();
 
   if (options.printStackIR) {
-    printStackIRInternal(std::cout, wasm);
+    printStackIRInternal(**options.printStackIR, wasm);
   }
 }
 

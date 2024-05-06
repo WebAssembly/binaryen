@@ -226,9 +226,9 @@ struct PassOptions {
   // on other optimization flags like optimizeLevel. This is on by default in
   // -O2 and above.
   bool optimizeStackIR = false;
-  // Whether to print StackIR during binary writing. This is mainly useful for
-  // debugging.
-  bool printStackIR = false;
+  // Whether to print StackIR during binary writing, and if so to what stream.
+  // This is mainly useful for debugging.
+  std::optional<std::ostream*> printStackIR;
   // Whether we are targeting JS. In that case we want to avoid emitting things
   // in the optimizer that do not translate well to JS, or that could cause us
   // to need extra lowering work or even a loop (where we optimize to something

@@ -3140,6 +3140,7 @@ module s-expr printed (in memory, caller-owned):
  )
 )
 
+module s-expr printed (StackIR):
 (module
  (type $0 (func (param i32 i32) (result i32)))
  (func $adder (param $0 i32) (param $1 i32) (result i32)
@@ -3148,7 +3149,6 @@ module s-expr printed (in memory, caller-owned):
   i32.add
  )
 )
-module s-expr printed (StackIR):
 
 (module
  (type $0 (func (param i32)))

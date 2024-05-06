@@ -359,7 +359,7 @@ int main(int argc, const char* argv[]) {
     wasm.features.hasExceptionHandling() && experimentalNewEH;
 
   // Write the binary to an unused buffer and return the size.
-  auto computeBinarySize = [&]() { // TODO share code with Print.cpp, use printStackIR
+  auto computeBinarySize = [&]() {
     BufferWithRandomAccess buffer;
     WasmBinaryWriter writer(&wasm, buffer, options.passOptions);
     writer.write();

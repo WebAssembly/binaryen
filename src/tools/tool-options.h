@@ -1,4 +1,4 @@
-/*
+  /*
  * Copyright 2018 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
@@ -178,7 +178,7 @@ struct ToolOptions : public Options {
            [&](Options* o, const std::string& arguments) {
              // Also generate StackIR, to have something to print.
              passOptions.generateStackIR = true;
-             passOptions.printStackIR = true;
+             passOptions.printStackIR = &std::cout;
            });
   }
 
