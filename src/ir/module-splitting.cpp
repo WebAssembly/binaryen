@@ -554,6 +554,17 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
   } gatherer(*this);
   gatherer.walkModule(&primary);
 
+  // Find all RefFuncs in elems, which we can ignore: tables are the means by
+  // which we connect the modules, and are handled directly.
+  std::unordered_set<RefFunc*> ignore;
+  for (auto& seg : primary.elementSegments) {
+    for (auto* curr : seg->data) {
+      if (auto* refFunc = curr->dynCast<RefFunc>()) {
+        ignore.insert(refFunc);
+      }
+    }
+  }
+
   // Fix up what we found: Generate trampolines as described earlier, and apply
   // them.
   Builder builder(primary);
@@ -576,6 +587,9 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
     // Update RefFuncs to refer to it.
     for (auto* refFunc : refFuncs) {
       assert(refFunc->func == name);
+      if (ignore.count(refFunc)) {
+        continue;
+      }
       refFunc->func = newName;
     }
   }
