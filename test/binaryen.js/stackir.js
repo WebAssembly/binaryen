@@ -26,5 +26,5 @@ console.log("=== default ===");
 console.log(module.emitStackIR());
 
 console.log("=== optimize ==="); // should omit the second block
-module.setOptimizeLevel(2);
+binaryen.setOptimizeLevel(2);
 console.log(module.emitStackIR());
