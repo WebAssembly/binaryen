@@ -346,11 +346,9 @@ std::unique_ptr<Module> ModuleSplitter::initSecondary(const Module& primary) {
 }
 
 void ModuleSplitter::handleRefFuncs() {
-  // Turn function references to functions in the other module to refer instead
-  // to functions in the same one, that perform a direct call to the actual
-  // target in the other one. After splitting, the result is that RefFuncs refer
-  // only to functions in the same module, and the direct calls in them are
-  // handled like all other cross-module calls later.
+  // Turn references to secondary functions into references to thunks that
+  // perform a direct call to the original referent. The direct calls in the
+  // thunks will be handled like all other cross-module calls later.
   struct Gatherer : public PostWalker<Gatherer> {
     ModuleSplitter& parent;
 
