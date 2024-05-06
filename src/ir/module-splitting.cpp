@@ -632,7 +632,7 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
 }
 
 void ModuleSplitter::exportImportCalledPrimaryFunctions() {
-  // Find primary functions called in the secondary module.
+  // Find primary functions called/referred in the secondary module.
   ModuleUtils::ParallelFunctionAnalysis<std::vector<Name>> callCollector(
     secondary, [&](Function* func, std::vector<Name>& calledPrimaryFuncs) {
       struct CallCollector : PostWalker<CallCollector> {
@@ -645,6 +645,11 @@ void ModuleSplitter::exportImportCalledPrimaryFunctions() {
         void visitCall(Call* curr) {
           if (primaryFuncs.count(curr->target)) {
             calledPrimaryFuncs.push_back(curr->target);
+          }
+        }
+        void visitRefFunc(RefFunc* curr) {
+          if (primaryFuncs.count(curr->func)) {
+            calledPrimaryFuncs.push_back(curr->func);
           }
         }
       };
