@@ -151,3 +151,55 @@
     (global.set $field@Foo (i32.const 1))
   )
 )
+
+
+(module
+  ;; CHECK:      (type $0 (func (result i32)))
+
+  ;; CHECK:      (global $$var2@Zoo (mut i32) (i32.const 0))
+
+  ;; CHECK:      (global $$var1@Zoo i32 (i32.const 2))
+  (global $$var1@Zoo (mut i32) (i32.const 0))
+  (global $$var2@Zoo (mut i32) (i32.const 0))
+
+  ;; CHECK:      (export "getVar1_<once>_@Zoo" (func $getVar1_<once>_@Zoo))
+
+  ;; CHECK:      (func $getVar1_<once>_@Zoo (type $0) (result i32)
+  ;; CHECK-NEXT:  (i32.const 2)
+  ;; CHECK-NEXT: )
+  (func $getVar1_<once>_@Zoo (export "getVar1_<once>_@Zoo") (result i32)
+    (if (global.get $$var1@Zoo)
+      (then
+        (return (global.get $$var1@Zoo))
+      )
+    )
+    (global.set $$var1@Zoo (i32.const 2))
+    (return (global.get $$var1@Zoo))
+  )
+
+  ;; CHECK:      (func $getVar2_<once>_@Zoo (type $0) (result i32)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $$var2@Zoo)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (return
+  ;; CHECK-NEXT:     (global.get $$var2@Zoo)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.set $$var2@Zoo
+  ;; CHECK-NEXT:   (call $getVar1_<once>_@Zoo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (global.get $$var2@Zoo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $getVar2_<once>_@Zoo (result i32)
+    (if (global.get $$var2@Zoo)
+      (then
+        (return (global.get $$var2@Zoo))
+      )
+    )
+    (global.set $$var2@Zoo (call $getVar1_<once>_@Zoo))
+    (return (global.get $$var2@Zoo))
+  )
+)

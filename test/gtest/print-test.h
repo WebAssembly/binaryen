@@ -1,5 +1,6 @@
 #include <iostream>
 
+#include "parser/wat-parser.h"
 #include "support/colors.h"
 #include "wasm-s-parser.h"
 #include "wasm.h"
@@ -19,9 +20,10 @@ protected:
   void TearDown() override { Colors::setEnabled(colors); }
 
   void parseWast(wasm::Module& wasm, const std::string& wast) {
-    wasm::SExpressionParser parser(wast.c_str());
-    wasm::SExpressionWasmBuilder builder(
-      wasm, *(*parser.root)[0], wasm::IRProfile::Normal);
+    auto parsed = wasm::WATParser::parseModule(wasm, wast);
+    if (auto* err = parsed.getErr()) {
+      wasm::Fatal() << err->msg << "\n";
+    }
   }
 };
 

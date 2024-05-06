@@ -2614,6 +2614,44 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     mappedLocals[std::make_pair(i, 0)] = i;
   }
 
+  // Normally we map all locals of the same type into a range of adjacent
+  // addresses, which is more compact. However, if we need to keep DWARF valid,
+  // do not do any reordering at all - instead, do a trivial mapping that
+  // keeps everything unmoved.
+  //
+  // Unless we have run DWARF-invalidating passes, all locals added during the
+  // process that are not in DWARF info (tuple locals, tuple scratch locals,
+  // locals to resolve stacky format, ..) have been all tacked on to the
+  // existing locals and happen at the end, so as long as we print the local
+  // types in order, we don't invalidate original local DWARF info here.
+  if (DWARF) {
+    Index mappedIndex = func->getVarIndexBase();
+    for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
+      size_t size = func->getLocalType(i).size();
+      for (Index j = 0; j < size; j++) {
+        mappedLocals[std::make_pair(i, j)] = mappedIndex + j;
+      }
+      mappedIndex += size;
+    }
+    scanFunction();
+
+    size_t numBinaryLocals =
+      mappedIndex - func->getVarIndexBase() + scratchLocals.size();
+    o << U32LEB(numBinaryLocals);
+    for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
+      for (const auto& type : func->getLocalType(i)) {
+        o << U32LEB(1);
+        parent.writeType(type);
+      }
+    }
+    for (auto& [type, _] : scratchLocals) {
+      o << U32LEB(1);
+      parent.writeType(type);
+      scratchLocals[type] = mappedIndex++;
+    }
+    return;
+  }
+
   // Note vars, including scratch vars.
   for (auto type : func->vars) {
     for (const auto& t : type) {
@@ -2621,29 +2659,6 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     }
   }
   scanFunction();
-
-  // Normally we map all locals of the same type into a range of adjacent
-  // addresses, which is more compact. However, if we need to keep DWARF valid,
-  // do not do any reordering at all - instead, do a trivial mapping that
-  // keeps everything unmoved.
-  if (DWARF) {
-    if (!tupleExtracts.empty()) {
-      Fatal() << "DWARF + multivalue is not yet complete";
-    }
-    if (!brIfsNeedingHandling.empty()) {
-      Fatal() << "DWARF + GC is not yet complete";
-    }
-
-    Index varStart = func->getVarIndexBase();
-    Index varEnd = varStart + func->getNumVars();
-    o << U32LEB(func->getNumVars());
-    for (Index i = varStart; i < varEnd; i++) {
-      mappedLocals[std::make_pair(i, 0)] = i;
-      o << U32LEB(1);
-      parent.writeType(func->getLocalType(i));
-    }
-    return;
-  }
 
   if (parent.getModule()->features.hasReferenceTypes()) {
     // Sort local types in a way that keeps all MVP types together and all
@@ -2955,6 +2970,9 @@ StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
 }
 
 void StackIRToBinaryWriter::write() {
+  if (func->prologLocation.size()) {
+    parent.writeDebugLocation(*func->prologLocation.begin());
+  }
   writer.mapLocalsAndEmitHeader();
   // Stack to track indices of catches within a try
   SmallVector<Index, 4> catchIndexStack;
@@ -2971,7 +2989,13 @@ void StackIRToBinaryWriter::write() {
       case StackInst::IfBegin:
       case StackInst::LoopBegin:
       case StackInst::TryTableBegin: {
+        if (sourceMap) {
+          parent.writeDebugLocation(inst->origin, func);
+        }
         writer.visit(inst->origin);
+        if (sourceMap) {
+          parent.writeDebugLocationEnd(inst->origin, func);
+        }
         break;
       }
       case StackInst::TryEnd:
@@ -3005,6 +3029,14 @@ void StackIRToBinaryWriter::write() {
       default:
         WASM_UNREACHABLE("unexpected op");
     }
+  }
+  // Indicate the debug location corresponding to the end opcode that
+  // terminates the function code.
+  if (func->epilogLocation.size()) {
+    parent.writeDebugLocation(*func->epilogLocation.begin());
+  } else {
+    // The end opcode has no debug location.
+    parent.writeNoDebugLocation();
   }
   writer.emitFunctionEnd();
 }

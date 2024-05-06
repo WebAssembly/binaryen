@@ -35,6 +35,7 @@
 #include "support/stdckdint.h"
 #include "support/string.h"
 #include "wasm-builder.h"
+#include "wasm-limits.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -1620,7 +1621,7 @@ public:
   // vector that takes around 1-2GB of memory then we are likely to hit memory
   // limits on 32-bit machines, and in particular on wasm32 VMs that do not
   // have 4GB support, so give up there.
-  static const Index ArrayLimit = (1 << 30) / sizeof(Literal);
+  static const Index DataLimit = (1 << 30) / sizeof(Literal);
 
   Flow visitArrayNew(ArrayNew* curr) {
     NOTE_ENTER("ArrayNew");
@@ -1645,7 +1646,7 @@ public:
     auto heapType = curr->type.getHeapType();
     const auto& element = heapType.getArray().element;
     Index num = size.getSingleValue().geti32();
-    if (num >= ArrayLimit) {
+    if (num >= DataLimit) {
       hostLimit("allocation failure");
     }
     Literals data(num);
@@ -1668,7 +1669,7 @@ public:
   Flow visitArrayNewFixed(ArrayNewFixed* curr) {
     NOTE_ENTER("ArrayNewFixed");
     Index num = curr->values.size();
-    if (num >= ArrayLimit) {
+    if (num >= DataLimit) {
       hostLimit("allocation failure");
     }
     if (curr->type == Type::unreachable) {
@@ -1951,6 +1952,11 @@ public:
     auto rightData = right.getGCData();
     if (!leftData || !rightData) {
       trap("null ref");
+    }
+
+    auto totalSize = leftData->values.size() + rightData->values.size();
+    if (totalSize >= DataLimit) {
+      hostLimit("allocation failure");
     }
 
     Literals contents;
@@ -3133,6 +3139,9 @@ public:
       return fail;
     }
     Index newSize = tableSize + delta;
+    if (newSize > WebLimitations::MaxTableSize) {
+      return fail;
+    }
     if (!info.interface->growTable(
           tableName, valueFlow.getSingleValue(), tableSize, newSize)) {
       // We failed to grow the table in practice, even though it was valid
