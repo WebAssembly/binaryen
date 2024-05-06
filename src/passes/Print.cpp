@@ -3022,8 +3022,7 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
     // Print the stack IR.
     printStackIR(curr->stackIR.get(), *this);
   }
-  if (currFunction->epilogLocation.size() &&
-      lastPrintedLocation != *currFunction->epilogLocation.begin()) {
+  if (currFunction->epilogLocation.size()) {
     // Print last debug location: mix of decIndent and printDebugLocation
     // logic.
     doIndent(o, indent);
