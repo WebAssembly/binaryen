@@ -2582,10 +2582,11 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   if (DWARF) {
     Index mappedIndex = func->getVarIndexBase();
     for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
-      for (Index j = 0; j < func->getLocalType(i).size(); j++) {
+      size_t size = func->getLocalType(i).size();
+      for (Index j = 0; j < size; j++) {
         mappedLocals[std::make_pair(i, j)] = mappedIndex + j;
       }
-      mappedIndex += func->getLocalType(i).size();
+      mappedIndex += size;
     }
     countScratchLocals();
 
