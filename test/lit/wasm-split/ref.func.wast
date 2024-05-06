@@ -64,13 +64,9 @@
 
  ;; SECONDARY:      (elem $0 (i32.const 1) $second)
 
- ;; SECONDARY:      (func $0
- ;; SECONDARY-NEXT:  (call $prime)
- ;; SECONDARY-NEXT: )
-
  ;; SECONDARY:      (func $second
  ;; SECONDARY-NEXT:  (drop
- ;; SECONDARY-NEXT:   (ref.func $0)
+ ;; SECONDARY-NEXT:   (ref.func $prime)
  ;; SECONDARY-NEXT:  )
  ;; SECONDARY-NEXT:  (drop
  ;; SECONDARY-NEXT:   (ref.func $second)

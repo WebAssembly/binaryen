@@ -313,8 +313,8 @@ struct ModuleSplitter {
     }
     moveSecondaryFunctions();
     thunkExportedSecondaryFunctions();
-    indirectCallsToSecondaryFunctions();
     indirectReferencesToSecondaryFunctions();
+    indirectCallsToSecondaryFunctions();
     exportImportCalledPrimaryFunctions();
     setupTablePatching();
     shareImportableItems();
@@ -532,39 +532,11 @@ Expression* ModuleSplitter::maybeLoadSecondary(Builder& builder,
   return builder.makeSequence(loadSecondary, callIndirect);
 }
 
-void ModuleSplitter::indirectCallsToSecondaryFunctions() {
-  // Update direct calls of secondary functions to be indirect calls of their
-  // corresponding table indices instead.
-  struct CallIndirector : public PostWalker<CallIndirector> {
-    ModuleSplitter& parent;
-    Builder builder;
-    CallIndirector(ModuleSplitter& parent)
-      : parent(parent), builder(parent.primary) {}
-    // Avoid visitRefFunc on element segment data
-    void walkElementSegment(ElementSegment* segment) {}
-    void visitCall(Call* curr) {
-      if (!parent.secondaryFuncs.count(curr->target)) {
-        return;
-      }
-      auto* func = parent.secondary.getFunction(curr->target);
-      auto tableSlot = parent.tableManager.getSlot(curr->target, func->type);
-
-      replaceCurrent(parent.maybeLoadSecondary(
-        builder,
-        builder.makeCallIndirect(tableSlot.tableName,
-                                 tableSlot.makeExpr(parent.primary),
-                                 curr->operands,
-                                 func->type,
-                                 curr->isReturn)));
-    }
-  };
-  CallIndirector(*this).walkModule(&primary);
-}
-
 void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
   // Turn references to secondary functions into references to thunks that
   // perform a direct call to the original referent. The direct calls in the
-  // thunks will be handled like all other cross-module calls later.
+  // thunks will be handled like all other cross-module calls later, in
+  // |indirectCallsToSecondaryFunctions|.
   struct Gatherer : public PostWalker<Gatherer> {
     ModuleSplitter& parent;
 
@@ -607,6 +579,35 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
       refFunc->func = newName;
     }
   }
+}
+
+void ModuleSplitter::indirectCallsToSecondaryFunctions() {
+  // Update direct calls of secondary functions to be indirect calls of their
+  // corresponding table indices instead.
+  struct CallIndirector : public PostWalker<CallIndirector> {
+    ModuleSplitter& parent;
+    Builder builder;
+    CallIndirector(ModuleSplitter& parent)
+      : parent(parent), builder(parent.primary) {}
+    // Avoid visitRefFunc on element segment data
+    void walkElementSegment(ElementSegment* segment) {}
+    void visitCall(Call* curr) {
+      if (!parent.secondaryFuncs.count(curr->target)) {
+        return;
+      }
+      auto* func = parent.secondary.getFunction(curr->target);
+      auto tableSlot = parent.tableManager.getSlot(curr->target, func->type);
+
+      replaceCurrent(parent.maybeLoadSecondary(
+        builder,
+        builder.makeCallIndirect(tableSlot.tableName,
+                                 tableSlot.makeExpr(parent.primary),
+                                 curr->operands,
+                                 func->type,
+                                 curr->isReturn)));
+    }
+  };
+  CallIndirector(*this).walkModule(&primary);
 }
 
 void ModuleSplitter::exportImportCalledPrimaryFunctions() {
