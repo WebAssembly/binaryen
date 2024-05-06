@@ -570,6 +570,19 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
   Builder builder(primary);
   // Generate the new trampoline function and add it to the module.
   for (auto& [name, refFuncs] : gatherer.map) {
+    // Find the relevant (non-ignored) RefFuncs. If there are none, we can skip
+    // creating a thunk entirely.
+    std::vector<RefFunc*> relevantRefFuncs;
+    for (auto* refFunc : refFuncs) {
+      assert(refFunc->func == name);
+      if (!ignore.count(refFunc)) {
+        relevantRefFuncs.push_back(refFunc);
+      }
+    }
+    if (relevantRefFuncs.empty()) {
+      continue;
+    }
+
     auto* oldFunc = secondary.getFunction(name);
     auto newName = Names::getValidFunctionName(
       primary, std::string("trampoline_") + name.toString());
@@ -585,11 +598,7 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
       builder.makeFunction(newName, oldFunc->type, {}, call));
 
     // Update RefFuncs to refer to it.
-    for (auto* refFunc : refFuncs) {
-      assert(refFunc->func == name);
-      if (ignore.count(refFunc)) {
-        continue;
-      }
+    for (auto* refFunc : relevantRefFuncs) {
       refFunc->func = newName;
     }
   }
