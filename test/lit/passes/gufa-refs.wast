@@ -1915,7 +1915,7 @@
   ;; CHECK-NEXT:  (throw $nothing
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -1941,7 +1941,7 @@
   ;; CHECK-NEXT:  (throw $something
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (try $try0
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -2012,7 +2012,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (try $try (result i32)
+  ;; CHECK-NEXT:     (try (result i32)
   ;; CHECK-NEXT:      (do
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
@@ -2028,7 +2028,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (try $try1 (result i32)
+  ;; CHECK-NEXT:   (try (result i32)
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (i32.const 42)
   ;; CHECK-NEXT:    )
@@ -2041,7 +2041,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (try $try2 (result i32)
+  ;; CHECK-NEXT:   (try (result i32)
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -2054,7 +2054,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (try $try3 (result i32)
+  ;; CHECK-NEXT:   (try (result i32)
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -2144,7 +2144,7 @@
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -2162,7 +2162,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (try $try0
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -5243,12 +5243,12 @@
     (i32.const 42)
   ))
 
-  ;; CHECK:      (export "mut_A" (global $mut_A))
-  (export "mut_A" (global $mut_A))
-
   ;; CHECK:      (export "yes" (func $yes))
 
   ;; CHECK:      (export "no" (func $no))
+
+  ;; CHECK:      (export "mut_A" (global $mut_A))
+  (export "mut_A" (global $mut_A))
 
   ;; CHECK:      (func $yes (type $2) (param $A (ref $A))
   ;; CHECK-NEXT:  (drop
@@ -6054,5 +6054,43 @@
         (ref.null none)
       )
     )
+  )
+)
+
+(module
+  ;; CHECK:      (type $array (sub (array (mut i8))))
+  (type $array (sub (array (mut i8))))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (global $global (ref null $array) (array.new_fixed $array 0))
+  (global $global (ref null $array) (array.new_fixed $array 0))
+
+  ;; CHECK:      (func $test (type $1)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.cast nullref
+  ;; CHECK-NEXT:     (global.get $global)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; We should not error on sets to bottom types, even if they are cast from
+    ;; valid values.
+    (array.set $array
+     (ref.cast nullref
+       (global.get $global)
+     )
+     (i32.const 0)
+     (i32.const 0)
+   )
   )
 )

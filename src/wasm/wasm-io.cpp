@@ -33,14 +33,13 @@
 
 namespace wasm {
 
-bool useNewWATParser = false;
+bool useNewWATParser = true;
 
 #define DEBUG_TYPE "writer"
 
 static void readTextData(std::string& input, Module& wasm, IRProfile profile) {
   if (useNewWATParser) {
-    std::string_view in(input.c_str());
-    if (auto parsed = WATParser::parseModule(wasm, in);
+    if (auto parsed = WATParser::parseModule(wasm, input);
         auto err = parsed.getErr()) {
       Fatal() << err->msg;
     }
@@ -130,7 +129,6 @@ void ModuleReader::readStdin(Module& wasm, std::string sourceMapFilename) {
   } else {
     std::ostringstream s;
     s.write(input.data(), input.size());
-    s << '\0';
     std::string input_str = s.str();
     readTextData(input_str, wasm, profile);
   }

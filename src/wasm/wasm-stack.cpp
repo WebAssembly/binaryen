@@ -2089,6 +2089,24 @@ void BinaryInstWriter::visitRefTest(RefTest* curr) {
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
+  // We allow ref.cast of string views, but V8 does not. Work around that by
+  // emitting a ref.as_non_null (or nothing).
+  auto type = curr->type;
+  if (type.isRef()) {
+    auto heapType = type.getHeapType();
+    if (heapType == HeapType::stringview_wtf8 ||
+        heapType == HeapType::stringview_wtf16 ||
+        heapType == HeapType::stringview_iter) {
+      // We cannot cast string views to/from anything, so the input must also
+      // be a view.
+      assert(curr->ref->type.getHeapType() == heapType);
+      if (type.isNonNullable() && curr->ref->type.isNullable()) {
+        o << int8_t(BinaryConsts::RefAsNonNull);
+      }
+      return;
+    }
+  }
+
   o << int8_t(BinaryConsts::GCPrefix);
   if (curr->type.isNullable()) {
     o << U32LEB(BinaryConsts::RefCastNull);
@@ -2761,6 +2779,9 @@ StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
 }
 
 void StackIRToBinaryWriter::write() {
+  if (func->prologLocation.size()) {
+    parent.writeDebugLocation(*func->prologLocation.begin());
+  }
   writer.mapLocalsAndEmitHeader();
   // Stack to track indices of catches within a try
   SmallVector<Index, 4> catchIndexStack;
@@ -2777,7 +2798,13 @@ void StackIRToBinaryWriter::write() {
       case StackInst::IfBegin:
       case StackInst::LoopBegin:
       case StackInst::TryTableBegin: {
+        if (sourceMap) {
+          parent.writeDebugLocation(inst->origin, func);
+        }
         writer.visit(inst->origin);
+        if (sourceMap) {
+          parent.writeDebugLocationEnd(inst->origin, func);
+        }
         break;
       }
       case StackInst::TryEnd:
@@ -2811,6 +2838,14 @@ void StackIRToBinaryWriter::write() {
       default:
         WASM_UNREACHABLE("unexpected op");
     }
+  }
+  // Indicate the debug location corresponding to the end opcode that
+  // terminates the function code.
+  if (func->epilogLocation.size()) {
+    parent.writeDebugLocation(*func->epilogLocation.begin());
+  } else {
+    // The end opcode has no debug location.
+    parent.writeNoDebugLocation();
   }
   writer.emitFunctionEnd();
 }

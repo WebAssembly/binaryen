@@ -38,6 +38,7 @@ Pass* createDataFlowOptsPass();
 Pass* createDeadCodeEliminationPass();
 Pass* createDeNaNPass();
 Pass* createDeAlignPass();
+Pass* createDebugLocationPropagationPass();
 Pass* createDirectizePass();
 Pass* createDiscardGlobalEffectsPass();
 Pass* createDWARFDumpPass();

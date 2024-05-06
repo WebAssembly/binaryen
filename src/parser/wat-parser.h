@@ -19,6 +19,7 @@
 
 #include <string_view>
 
+#include "parser/lexer.h"
 #include "support/result.h"
 #include "wasm.h"
 
@@ -26,6 +27,12 @@ namespace wasm::WATParser {
 
 // Parse a single WAT module.
 Result<> parseModule(Module& wasm, std::string_view in);
+
+// Parse a single WAT module that may have other things after it, as in a wast
+// file.
+Result<> parseModule(Module& wasm, Lexer& lexer);
+
+Result<Expression*> parseExpression(Module& wasm, Lexer& lexer);
 
 } // namespace wasm::WATParser
 

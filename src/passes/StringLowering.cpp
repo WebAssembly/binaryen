@@ -126,7 +126,8 @@ struct StringGathering : public Pass {
 
     // Find globals to reuse (see comment on stringPtrsToPreserve for context).
     for (auto& global : module->globals) {
-      if (global->type == nnstringref && !global->imported()) {
+      if (global->type == nnstringref && !global->imported() &&
+          !global->mutable_) {
         if (auto* stringConst = global->init->dynCast<StringConst>()) {
           auto& globalName = stringToGlobalName[stringConst->string];
           if (!globalName.is()) {

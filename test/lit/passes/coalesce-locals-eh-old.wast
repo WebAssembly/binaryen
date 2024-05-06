@@ -18,7 +18,7 @@
  (tag $any (param (ref any)))
 
   ;; CHECK:      (func $bug-cfg-traversal (type $3) (param $0 i32) (result i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (local.set $0
   ;; CHECK-NEXT:     (call $bar)
@@ -50,7 +50,7 @@
 
   ;; CHECK:      (func $0 (type $0)
   ;; CHECK-NEXT:  (local $0 anyref)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )

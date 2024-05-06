@@ -73,7 +73,7 @@
   ;; CHECK:      (func $can-push-past-try (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
-  ;; CHECK-NEXT:   (try $try
+  ;; CHECK-NEXT:   (try
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (throw $e
   ;; CHECK-NEXT:      (i32.const 0)
@@ -126,7 +126,7 @@
   ;; CHECK-NEXT:   (local.set $x
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (try $try
+  ;; CHECK-NEXT:   (try
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (call $foo)
   ;; CHECK-NEXT:    )
@@ -219,7 +219,7 @@
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (try $l
   ;; CHECK-NEXT:    (do
-  ;; CHECK-NEXT:     (try $try
+  ;; CHECK-NEXT:     (try
   ;; CHECK-NEXT:      (do
   ;; CHECK-NEXT:       (throw $e
   ;; CHECK-NEXT:        (i32.const 0)
@@ -277,7 +277,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (try $l
   ;; CHECK-NEXT:    (do
-  ;; CHECK-NEXT:     (try $try
+  ;; CHECK-NEXT:     (try
   ;; CHECK-NEXT:      (do
   ;; CHECK-NEXT:       (throw $e
   ;; CHECK-NEXT:        (i32.const 0)

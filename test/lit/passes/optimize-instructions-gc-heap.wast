@@ -9,10 +9,11 @@
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
 
+  ;; CHECK:      (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
+
   ;; CHECK:      (type $struct2 (struct (field (mut i32)) (field (mut i32))))
   (type $struct2 (struct (field (mut i32)) (field (mut i32))))
 
-  ;; CHECK:      (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
   (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
 
   ;; CHECK:      (func $tee (type $1)
@@ -575,22 +576,35 @@
 
   ;; CHECK:      (func $default (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
-  ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.tee $ref
-  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:  (local $ref3 (ref null $struct3))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $ref3
+  ;; CHECK-NEXT:   (struct.new $struct3
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 33)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $default
     (local $ref (ref null $struct))
+    (local $ref3 (ref null $struct3))
+    ;; We optimize new_default as well, adding default values as needed.
     (struct.set $struct 0
       (local.tee $ref
-        ;; Ignore a new_default for now. If the fields are defaultable then we
-        ;; could add them, in principle, but that might increase code size.
         (struct.new_default $struct)
       )
-      (i32.const 20)
+      (i32.const 10)
+    )
+    (struct.set $struct3 1
+      (local.tee $ref3
+        (struct.new_default $struct3)
+      )
+      (i32.const 33)
     )
   )
 

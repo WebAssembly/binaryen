@@ -23,6 +23,7 @@
 #include "binaryen-c.h"
 #include "cfg/Relooper.h"
 #include "ir/utils.h"
+#include "parser/wat-parser.h"
 #include "pass.h"
 #include "shell-interface.h"
 #include "support/colors.h"
@@ -5578,13 +5579,9 @@ void BinaryenModuleSetFeatures(BinaryenModuleRef module,
 
 BinaryenModuleRef BinaryenModuleParse(const char* text) {
   auto* wasm = new Module;
-  try {
-    SExpressionParser parser(text);
-    Element& root = *parser.root;
-    SExpressionWasmBuilder builder(*wasm, *root[0], IRProfile::Normal);
-  } catch (ParseException& p) {
-    p.dump(std::cerr);
-    Fatal() << "error in parsing wasm text";
+  auto parsed = WATParser::parseModule(*wasm, text);
+  if (auto* err = parsed.getErr()) {
+    Fatal() << err->msg << "\n";
   }
   return wasm;
 }

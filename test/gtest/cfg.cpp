@@ -35,9 +35,7 @@ TEST_F(CFGTest, Print) {
               (i32.const 3)
             )
             (else
-              (return
-               (i32.const 4)
-              )
+              (return)
             )
           )
         )
@@ -71,13 +69,12 @@ TEST_F(CFGTest, Print) {
 
 ;; preds: [0], succs: [7]
 5:
-  8: i32.const 4
-  9: return
+  8: return
 
 ;; preds: [4], succs: [7]
 6:
-  10: drop
-  11: block
+  9: drop
+  10: block
 
 ;; preds: [5, 6], succs: []
 ;; exit

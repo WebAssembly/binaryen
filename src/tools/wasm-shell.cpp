@@ -23,15 +23,20 @@
 
 #include "execution-results.h"
 #include "ir/element-utils.h"
+#include "parser/lexer.h"
+#include "parser/wat-parser.h"
 #include "pass.h"
 #include "shell-interface.h"
 #include "support/command-line.h"
 #include "support/file.h"
+#include "support/result.h"
 #include "wasm-interpreter.h"
 #include "wasm-s-parser.h"
 #include "wasm-validator.h"
 
 using namespace wasm;
+
+using Lexer = WATParser::Lexer;
 
 Name ASSERT_RETURN("assert_return");
 Name ASSERT_TRAP("assert_trap");
@@ -46,7 +51,6 @@ Name GET("get");
 class Shell {
 protected:
   std::map<Name, std::shared_ptr<Module>> modules;
-  std::map<Name, std::shared_ptr<SExpressionWasmBuilder>> builders;
   std::map<Name, std::shared_ptr<ShellExternalInterface>> interfaces;
   std::map<Name, std::shared_ptr<ModuleRunner>> instances;
   // used for imports
@@ -63,11 +67,57 @@ protected:
     instances[wasm->name].swap(tempInstance);
   }
 
-  void parse(Element& s) {
+  Result<std::string> parseSExpr(Lexer& lexer) {
+    auto begin = lexer.getPos();
+
+    if (!lexer.takeLParen()) {
+      return lexer.err("expected s-expression");
+    }
+
+    size_t count = 1;
+    while (count != 0 && lexer.takeUntilParen()) {
+      if (lexer.takeLParen()) {
+        ++count;
+      } else if (lexer.takeRParen()) {
+        --count;
+      } else {
+        WASM_UNREACHABLE("unexpected token");
+      }
+    }
+
+    if (count != 0) {
+      return lexer.err("unexpected unterminated s-expression");
+    }
+
+    return std::string(lexer.buffer.substr(begin, lexer.getPos() - begin));
+  }
+
+  Expression* parseExpression(Module& wasm, Element& s) {
+    std::stringstream ss;
+    ss << s;
+    auto str = ss.str();
+    Lexer lexer(str);
+    auto arg = WATParser::parseExpression(wasm, lexer);
+    if (auto* err = arg.getErr()) {
+      Fatal() << err->msg << '\n';
+    }
+    return *arg;
+  }
+
+  Result<> parse(Lexer& lexer) {
+    if (auto res = parseModule(lexer)) {
+      CHECK_ERR(res);
+      return Ok{};
+    }
+
+    auto pos = lexer.getPos();
+    auto sexpr = parseSExpr(lexer);
+    CHECK_ERR(sexpr);
+
+    SExpressionParser parser(sexpr->data());
+    Element& s = *parser.root[0][0];
     IString id = s[0]->str();
-    if (id == MODULE) {
-      parseModule(s);
-    } else if (id == REGISTER) {
+    if (id == REGISTER) {
       parseRegister(s);
     } else if (id == INVOKE) {
       parseOperation(s);
@@ -77,24 +127,28 @@ protected:
       parseAssertTrap(s);
     } else if (id == ASSERT_EXCEPTION) {
       parseAssertException(s);
-    } else if ((id == ASSERT_INVALID) || (id == ASSERT_MALFORMED)) {
+    } else if ((id == ASSERT_INVALID) || (id == ASSERT_MALFORMED) ||
+               (id == ASSERT_UNLINKABLE)) {
       parseModuleAssertion(s);
+    } else {
+      return lexer.err(pos, "unrecognized command");
     }
+    return Ok{};
   }
 
-  Module* parseModule(Element& s) {
-    if (options.debug) {
-      std::cerr << "parsing s-expressions to wasm...\n";
+  MaybeResult<> parseModule(Lexer& lexer) {
+    if (!lexer.peekSExprStart("module")) {
+      return {};
     }
     Colors::green(std::cerr);
-    std::cerr << "BUILDING MODULE [line: " << s.line << "]\n";
+    std::cerr << "BUILDING MODULE [line: " << lexer.position().line << "]\n";
     Colors::normal(std::cerr);
     auto module = std::make_shared<Module>();
-    auto builder =
-      std::make_shared<SExpressionWasmBuilder>(*module, s, IRProfile::Normal);
+
+    CHECK_ERR(WATParser::parseModule(*module, lexer));
+
     auto moduleName = module->name;
     lastModule = module->name;
-    builders[moduleName] = builder;
     modules[moduleName].swap(module);
     modules[moduleName]->features = FeatureSet::All;
     bool valid = WasmValidator().validate(*modules[moduleName]);
@@ -104,8 +158,7 @@ protected:
     }
 
     instantiate(modules[moduleName].get());
-
-    return modules[moduleName].get();
+    return Ok{};
   }
 
   void parseRegister(Element& s) {
@@ -119,7 +172,6 @@ protected:
     // we copy pointers as a registered module's name might still be used
     // in an assertion or invoke command.
     modules[name] = modules[lastModule];
-    builders[name] = builders[lastModule];
     interfaces[name] = interfaces[lastModule];
     instances[name] = instances[lastModule];
 
@@ -138,18 +190,21 @@ protected:
     ModuleRunner* instance = instances[moduleName].get();
     assert(instance);
 
-    Name base = s[i++]->str();
+    std::string baseStr = std::string("\"") + s[i++]->str().toString() + "\"";
+    auto base = Lexer(baseStr).takeString();
+    if (!base) {
+      Fatal() << "expected string\n";
+    }
 
     if (s[0]->str() == INVOKE) {
       Literals args;
       while (i < s.size()) {
-        Expression* argument = builders[moduleName]->parseExpression(*s[i++]);
-        args.push_back(getLiteralFromConstExpression(argument));
+        auto* arg = parseExpression(*modules[moduleName], *s[i++]);
+        args.push_back(getLiteralFromConstExpression(arg));
       }
-
-      return instance->callExport(base, args);
+      return instance->callExport(*base, args);
     } else if (s[0]->str() == GET) {
-      return instance->getExport(base);
+      return instance->getExport(*base);
     }
 
     Fatal() << "Invalid operation " << s[0]->toString();
@@ -191,7 +246,7 @@ protected:
     Literals expected;
     if (s.size() >= 3) {
       expected = getLiteralsFromConstExpression(
-        builders[lastModule]->parseExpression(*s[2]));
+        parseExpression(*modules[lastModule], *s[2]));
     }
     [[maybe_unused]] bool trapped = false;
     try {
@@ -338,29 +393,35 @@ protected:
 public:
   Shell(Options& options) : options(options) { buildSpectestModule(); }
 
-  bool parseAndRun(Element& root) {
+  MaybeResult<> parseAndRun(Lexer& lexer) {
     size_t i = 0;
-    while (i < root.size()) {
-      Element& curr = *root[i];
+    while (!lexer.empty()) {
+      auto next = lexer.next();
+      auto size = next.find('\n');
+      if (size != std::string_view::npos) {
+        next = next.substr(0, size);
+      } else {
+        next = "";
+      }
 
-      if (curr[0]->str() != MODULE) {
+      if (!lexer.peekSExprStart("module")) {
         Colors::red(std::cerr);
-        std::cerr << i << '/' << (root.size() - 1);
+        std::cerr << i;
         Colors::green(std::cerr);
         std::cerr << " CHECKING: ";
         Colors::normal(std::cerr);
-        std::cerr << curr;
+        std::cerr << next;
         Colors::green(std::cerr);
-        std::cerr << " [line: " << curr.line << "]\n";
+        std::cerr << " [line: " << lexer.position().line << "]\n";
         Colors::normal(std::cerr);
       }
 
-      parse(curr);
+      CHECK_ERR(parse(lexer));
 
       i += 1;
     }
 
-    return false;
+    return Ok{};
   }
 };
 
@@ -378,21 +439,15 @@ int main(int argc, const char* argv[]) {
   options.parse(argc, argv);
 
   auto input = read_file<std::string>(infile, Flags::Text);
+  Lexer lexer(input);
 
-  bool checked = false;
-  try {
-    if (options.debug) {
-      std::cerr << "parsing text to s-expressions...\n";
-    }
-    SExpressionParser parser(input.data());
-    Element& root = *parser.root;
-    checked = Shell(options).parseAndRun(root);
-  } catch (ParseException& p) {
-    p.dump(std::cerr);
+  auto result = Shell(options).parseAndRun(lexer);
+  if (auto* err = result.getErr()) {
+    std::cerr << err->msg;
     exit(1);
   }
 
-  if (checked) {
+  if (result) {
     Colors::green(std::cerr);
     Colors::bold(std::cerr);
     std::cerr << "all checks passed.\n";

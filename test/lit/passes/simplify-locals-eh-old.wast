@@ -10,7 +10,7 @@
   (func $foo (param i32 i32))
   ;; CHECK:      (func $pop-cannot-be-sinked (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -42,7 +42,7 @@
 
   ;; CHECK:      (func $pop-within-catch-can-be-sinked (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -50,7 +50,7 @@
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:    (call $foo
   ;; CHECK-NEXT:     (i32.const 3)
-  ;; CHECK-NEXT:     (try $try0 (result i32)
+  ;; CHECK-NEXT:     (try (result i32)
   ;; CHECK-NEXT:      (do
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
@@ -92,7 +92,7 @@
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (call $bar)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (local.get $0)
@@ -124,7 +124,7 @@
   ;; CHECK:      (func $non-call-can-be-sinked-into-try (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (i32.const 3)
@@ -155,7 +155,7 @@
   ;; CHECK:      (func $return-call-can-be-sinked-into-try (type $3) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (try $try (result i32)
+  ;; CHECK-NEXT:  (try (result i32)
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (if (result i32)

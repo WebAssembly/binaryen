@@ -195,7 +195,7 @@ def run_spec_tests():
 
         def run_opt_test(wast):
             # check optimization validation
-            cmd = shared.WASM_OPT + [wast, '-O', '-all', '-q']
+            cmd = shared.WASM_OPT + [wast, '-O', '-all', '-q', '--new-wat-parser']
             support.run_command(cmd)
 
         def check_expected(actual, expected):
@@ -213,7 +213,7 @@ def run_spec_tests():
         try:
             actual = run_spec_test(wast)
         except Exception as e:
-            if ('wasm-validator error' in str(e) or 'parse exception' in str(e)) and '.fail.' in base:
+            if ('wasm-validator error' in str(e) or 'error: ' in str(e)) and '.fail.' in base:
                 print('<< test failed as expected >>')
                 continue  # don't try all the binary format stuff TODO
             else:

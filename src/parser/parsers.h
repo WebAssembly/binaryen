@@ -330,6 +330,9 @@ template<typename Ctx> Result<typename Ctx::ElemIdxT> elemidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::DataIdxT> dataidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::LocalIdxT> localidx(Ctx&);
 template<typename Ctx>
+MaybeResult<typename Ctx::LabelIdxT> maybeLabelidx(Ctx&,
+                                                   bool inDelegate = false);
+template<typename Ctx>
 Result<typename Ctx::LabelIdxT> labelidx(Ctx&, bool inDelegate = false);
 template<typename Ctx> Result<typename Ctx::TagIdxT> tagidx(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx&);
@@ -369,11 +372,11 @@ template<typename Ctx> struct WithPosition {
   WithPosition(Ctx& ctx, Index pos)
     : ctx(ctx), original(ctx.in.getPos()),
       annotations(ctx.in.takeAnnotations()) {
-    ctx.in.setIndex(pos);
+    ctx.in.setPos(pos);
   }
 
   ~WithPosition() {
-    ctx.in.setIndex(original);
+    ctx.in.setPos(original);
     ctx.in.setAnnotations(std::move(annotations));
   }
 };
@@ -1322,7 +1325,7 @@ trycatch(Ctx& ctx, const std::vector<Annotation>& annotations, bool folded) {
         if (id && id != label) {
           // Instead of returning an error, retry without the ID.
           parseID = false;
-          ctx.in.setIndex(afterCatchPos);
+          ctx.in.setPos(afterCatchPos);
           continue;
         }
       }
@@ -1331,7 +1334,7 @@ trycatch(Ctx& ctx, const std::vector<Annotation>& annotations, bool folded) {
       if (parseID && tag.getErr()) {
         // Instead of returning an error, retry without the ID.
         parseID = false;
-        ctx.in.setIndex(afterCatchPos);
+        ctx.in.setPos(afterCatchPos);
         continue;
       }
       CHECK_ERR(tag);
@@ -1969,15 +1972,17 @@ Result<> makeBreakTable(Ctx& ctx,
                         Index pos,
                         const std::vector<Annotation>& annotations) {
   std::vector<typename Ctx::LabelIdxT> labels;
+  // Parse at least one label; return an error only if we parse none.
   while (true) {
-    // Parse at least one label; return an error only if we parse none.
-    auto label = labelidx(ctx);
-    if (labels.empty()) {
-      CHECK_ERR(label);
-    } else if (label.getErr()) {
+    auto label = maybeLabelidx(ctx);
+    if (!label) {
       break;
     }
+    CHECK_ERR(label);
     labels.push_back(*label);
+  }
+  if (labels.empty()) {
+    return ctx.in.err("expected label");
   }
   auto defaultLabel = labels.back();
   labels.pop_back();
@@ -2701,17 +2706,26 @@ template<typename Ctx> Result<typename Ctx::LocalIdxT> localidx(Ctx& ctx) {
   return ctx.in.err("expected local index or identifier");
 }
 
+template<typename Ctx>
+Result<typename Ctx::LabelIdxT> labelidx(Ctx& ctx, bool inDelegate) {
+  if (auto idx = maybeLabelidx(ctx, inDelegate)) {
+    CHECK_ERR(idx);
+    return *idx;
+  }
+  return ctx.in.err("expected label index or identifier");
+}
+
 // labelidx ::= x:u32 => x
 //            | v:id => x (if labels[x] = v)
 template<typename Ctx>
-Result<typename Ctx::LabelIdxT> labelidx(Ctx& ctx, bool inDelegate) {
+MaybeResult<typename Ctx::LabelIdxT> maybeLabelidx(Ctx& ctx, bool inDelegate) {
   if (auto x = ctx.in.takeU32()) {
     return ctx.getLabelFromIdx(*x, inDelegate);
   }
   if (auto id = ctx.in.takeID()) {
     return ctx.getLabelFromName(*id, inDelegate);
   }
-  return ctx.in.err("expected label index or identifier");
+  return {};
 }
 
 // tagidx ::= x:u32 => x
@@ -3014,11 +3028,13 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
       CHECK_ERR(l);
       localVars = *l;
     }
-    CHECK_ERR(instrs(ctx));
-    ctx.setSrcLoc(ctx.in.takeAnnotations());
+    if (!ctx.skipFunctionBody()) {
+      CHECK_ERR(instrs(ctx));
+      ctx.setSrcLoc(ctx.in.takeAnnotations());
+    }
   }
 
-  if (!ctx.in.takeRParen()) {
+  if (!ctx.skipFunctionBody() && !ctx.in.takeRParen()) {
     return ctx.in.err("expected end of function");
   }
 
@@ -3359,7 +3375,7 @@ template<typename Ctx> MaybeResult<> elem(Ctx& ctx) {
           offset = *off;
         } else {
           // This must be the beginning of the elemlist instead.
-          ctx.in.setIndex(beforeLParen);
+          ctx.in.setPos(beforeLParen);
         }
       }
     }

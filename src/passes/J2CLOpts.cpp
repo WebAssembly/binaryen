@@ -105,6 +105,8 @@ public:
       // TODO: maybe we should not introduce "nop" in the first place and try
       // removing instead.
       PassRunner runner(getModule());
+      runner.add("precompute");
+      runner.add("remove-unused-brs");
       runner.add("vacuum");
       runner.setIsNested(true);
       runner.runOnFunction(curr);

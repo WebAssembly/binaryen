@@ -195,6 +195,28 @@ public:
     return Literal(canonical, curr->type.getHeapType());
   }
 
+  Flow visitStringNew(StringNew* curr) {
+    if (curr->op != StringNewWTF16Array) {
+      // TODO: handle other string ops. For now we focus on JS-like strings.
+      return Flow(NONCONSTANT_FLOW);
+    }
+
+    // string.encode_wtf16_array is effectively an Array read operation, so
+    // just like ArrayGet above we must check for immutability.
+    auto ptrType = curr->ptr->type;
+    if (ptrType.isRef()) {
+      auto heapType = ptrType.getHeapType();
+      if (heapType.isArray()) {
+        if (heapType.getArray().element.mutable_ == Immutable) {
+          return Super::visitStringNew(curr);
+        }
+      }
+    }
+
+    // Otherwise, this is mutable or unreachable or otherwise uninteresting.
+    return Flow(NONCONSTANT_FLOW);
+  }
+
   Flow visitStringEncode(StringEncode* curr) {
     // string.encode_wtf16_array is effectively an Array write operation, so
     // just like ArraySet and ArrayCopy above we must mark it as disallowed

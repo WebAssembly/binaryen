@@ -1218,9 +1218,8 @@
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:     (unreachable)
- ;; CHECK-NEXT:     (return
- ;; CHECK-NEXT:      (unreachable)
- ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:     (return)
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:     (unreachable)
@@ -2641,7 +2640,7 @@
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (local.get $9)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (loop $loop-in
+  ;; CHECK-NEXT:   (loop
   ;; CHECK-NEXT:    (local.set $10
   ;; CHECK-NEXT:     (i32.const 5)
   ;; CHECK-NEXT:    )

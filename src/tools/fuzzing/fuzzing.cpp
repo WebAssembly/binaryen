@@ -695,7 +695,6 @@ Function* TranslateToFuzzReader::addFunction() {
   params.reserve(numParams);
   for (Index i = 0; i < numParams; i++) {
     auto type = getSingleConcreteType();
-    funcContext->typeLocals[type].push_back(params.size());
     params.push_back(type);
   }
   auto paramType = Type(params);
@@ -704,9 +703,9 @@ Function* TranslateToFuzzReader::addFunction() {
   Index numVars = upToSquared(MAX_VARS);
   for (Index i = 0; i < numVars; i++) {
     auto type = getConcreteType();
-    funcContext->typeLocals[type].push_back(params.size() + func->vars.size());
     func->vars.push_back(type);
   }
+  context.computeTypeLocals();
   // with small chance, make the body unreachable
   auto bodyType = func->getResults();
   if (oneIn(10)) {
@@ -722,6 +721,14 @@ Function* TranslateToFuzzReader::addFunction() {
   // may end up breaking them. TODO: do them after the fact, like with the
   // hang limit checks.
   if (allowOOB) {
+    // Notice the locals and their types again, as more may have been added
+    // during generation of the body. We want to be able to local.get from those
+    // as well.
+    // TODO: We could also add a "localize" phase here to stash even more things
+    //       in locals, so that they can be reused. But we would need to be
+    //       careful with non-nullable locals (which error if used before being
+    //       set, or trap if we make them nullable, both of which are bad).
+    context.computeTypeLocals();
     // Recombinations create duplicate code patterns.
     recombine(func);
     // Mutations add random small changes, which can subtly break duplicate
@@ -733,6 +740,7 @@ Function* TranslateToFuzzReader::addFunction() {
     // after.
     fixAfterChanges(func);
   }
+
   // Add hang limit checks after all other operations on the function body.
   wasm.addFunction(func);
   // Export some functions, but not all (to allow inlining etc.). Try to export
@@ -1194,7 +1202,9 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
     // Optionally, fuzz the function contents.
     if (upTo(RESOLUTION) >= chance) {
       dropToLog(func);
+      // Notice params as well as any locals generated above.
       // TODO add some locals? and the rest of addFunction's operations?
+      context.computeTypeLocals();
       // TODO: if we add OOB checks after creation, then we can do it on
       //       initial contents too, and it may be nice to *not* run these
       //       passes, like we don't run them on new functions. But, we may
@@ -1356,6 +1366,12 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeRefEq,
                 &Self::makeRefTest,
                 &Self::makeI31Get);
+    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC |
+                  FeatureSet::Strings,
+                &Self::makeStringEncode,
+                &Self::makeStringEq,
+                &Self::makeStringMeasure,
+                &Self::makeStringGet);
   }
   if (type.isTuple()) {
     options.add(FeatureSet::Multivalue, &Self::makeTupleMake);
@@ -2494,6 +2510,9 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
     if (type.isNullable() && oneIn(8)) {
       return builder.makeRefNull(type.getHeapType());
     }
+    if (type.getHeapType().isString()) {
+      return makeStringConst();
+    }
     if (type.getHeapType().isBasic()) {
       return makeBasicRef(type);
     } else {
@@ -2537,18 +2556,12 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       // Choose a subtype we can materialize a constant for. We cannot
       // materialize non-nullable refs to func or i31 in global contexts.
       Nullability nullability = getSubType(type.getNullability());
-      HeapType subtype;
-      switch (upTo(3)) {
-        case 0:
-          subtype = HeapType::i31;
-          break;
-        case 1:
-          subtype = HeapType::struct_;
-          break;
-        case 2:
-          subtype = HeapType::array;
-          break;
-      }
+      auto subtype = pick(FeatureOptions<HeapType>()
+                            .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                                 HeapType::i31,
+                                 HeapType::struct_,
+                                 HeapType::array)
+                            .add(FeatureSet::Strings, HeapType::string));
       return makeConst(Type(subtype, nullability));
     }
     case HeapType::eq: {
@@ -2605,52 +2618,39 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       return null;
     }
     case HeapType::string: {
-      // Construct an interesting WTF-8 string from parts.
-      std::stringstream wtf8;
-      bool lastWasLeadingSurrogate = false;
-      for (size_t i = 0, end = upTo(4); i < end; ++i) {
-        switch (upTo(6)) {
-          case 0:
-            // A simple ascii string.
-            wtf8 << std::to_string(upTo(1024));
-            break;
-          case 1:
-            // '£'
-            wtf8 << "\xC2\xA3";
-            break;
-          case 2:
-            // '€'
-            wtf8 << "\xE2\x82\xAC";
-            break;
-          case 3:
-            // '𐍈'
-            wtf8 << "\xF0\x90\x8D\x88";
-            break;
-          case 4:
-            // The leading surrogate in '𐍈'
-            wtf8 << "\xED\xA0\x80";
-            lastWasLeadingSurrogate = true;
-            continue;
-          case 5:
-            if (lastWasLeadingSurrogate) {
-              // Avoid invalid WTF-8.
-              continue;
-            }
-            // The trailing surrogate in '𐍈'
-            wtf8 << "\xED\xBD\x88";
-            break;
-        }
-        lastWasLeadingSurrogate = false;
+      // In non-function contexts all we can do is string.const.
+      if (!funcContext) {
+        return makeStringConst();
       }
-      std::stringstream wtf16;
-      // TODO: Use wtf16.view() once we have C++20.
-      String::convertWTF8ToWTF16(wtf16, wtf8.str());
-      return builder.makeStringConst(wtf16.str());
+      switch (upTo(11)) {
+        case 0:
+        case 1:
+        case 2:
+          return makeStringConst();
+        case 3:
+        case 4:
+        case 5:
+          return makeStringNewCodePoint();
+        case 6:
+        case 7:
+          // We less frequently make string.new_array as it may generate a lot
+          // of code for the array in some cases.
+          return makeStringNewArray();
+        case 8:
+          // We much less frequently make string.concat as it will recursively
+          // generate two string children, i.e., it can lead to exponential
+          // growth.
+          return makeStringConcat();
+        case 9:
+        case 10:
+          return makeStringSlice();
+      }
+      WASM_UNREACHABLE("bad switch");
     }
     case HeapType::stringview_wtf16:
       // We fully support wtf16 strings.
-      return builder.makeStringAs(
-        StringAsWTF16, makeBasicRef(Type(HeapType::string, NonNullable)));
+      return builder.makeStringAs(StringAsWTF16,
+                                  makeTrappingRefUse(HeapType::string));
     case HeapType::stringview_wtf8:
     case HeapType::stringview_iter:
       // We do not have interpreter support for wtf8 and iter, so emit something
@@ -2758,6 +2758,106 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
   } else {
     WASM_UNREACHABLE("bad user-defined ref type");
   }
+}
+
+Expression* TranslateToFuzzReader::makeStringNewArray() {
+  auto* array = makeTrappingRefUse(getArrayTypeForString());
+  auto* start = make(Type::i32);
+  auto* end = make(Type::i32);
+  return builder.makeStringNew(StringNewWTF16Array, array, start, end, false);
+}
+
+Expression* TranslateToFuzzReader::makeStringNewCodePoint() {
+  auto codePoint = make(Type::i32);
+  return builder.makeStringNew(
+    StringNewFromCodePoint, codePoint, nullptr, false);
+}
+
+Expression* TranslateToFuzzReader::makeStringConst() {
+  // Construct an interesting WTF-8 string from parts and use string.const.
+  std::stringstream wtf8;
+  bool lastWasLeadingSurrogate = false;
+  for (size_t i = 0, end = upTo(4); i < end; ++i) {
+    switch (upTo(6)) {
+      case 0:
+        // A simple ascii string.
+        wtf8 << std::to_string(upTo(1024));
+        break;
+      case 1:
+        // '£'
+        wtf8 << "\xC2\xA3";
+        break;
+      case 2:
+        // '€'
+        wtf8 << "\xE2\x82\xAC";
+        break;
+      case 3:
+        // '𐍈'
+        wtf8 << "\xF0\x90\x8D\x88";
+        break;
+      case 4:
+        // The leading surrogate in '𐍈'
+        wtf8 << "\xED\xA0\x80";
+        lastWasLeadingSurrogate = true;
+        continue;
+      case 5:
+        if (lastWasLeadingSurrogate) {
+          // Avoid invalid WTF-8.
+          continue;
+        }
+        // The trailing surrogate in '𐍈'
+        wtf8 << "\xED\xBD\x88";
+        break;
+    }
+    lastWasLeadingSurrogate = false;
+  }
+  std::stringstream wtf16;
+  // TODO: Use wtf16.view() once we have C++20.
+  String::convertWTF8ToWTF16(wtf16, wtf8.str());
+  return builder.makeStringConst(wtf16.str());
+}
+
+Expression* TranslateToFuzzReader::makeStringConcat() {
+  auto* left = makeTrappingRefUse(HeapType::string);
+  auto* right = makeTrappingRefUse(HeapType::string);
+  return builder.makeStringConcat(left, right);
+}
+
+Expression* TranslateToFuzzReader::makeStringSlice() {
+  auto* ref = makeTrappingRefUse(HeapType::stringview_wtf16);
+  auto* start = make(Type::i32);
+  auto* end = make(Type::i32);
+  return builder.makeStringSliceWTF(StringSliceWTF16, ref, start, end);
+}
+
+Expression* TranslateToFuzzReader::makeStringEq(Type type) {
+  assert(type == Type::i32);
+
+  if (oneIn(2)) {
+    auto* left = make(Type(HeapType::string, getNullability()));
+    auto* right = make(Type(HeapType::string, getNullability()));
+    return builder.makeStringEq(StringEqEqual, left, right);
+  }
+
+  // string.compare may trap if the either input is null.
+  auto* left = makeTrappingRefUse(HeapType::string);
+  auto* right = makeTrappingRefUse(HeapType::string);
+  return builder.makeStringEq(StringEqCompare, left, right);
+}
+
+Expression* TranslateToFuzzReader::makeStringMeasure(Type type) {
+  assert(type == Type::i32);
+
+  auto* ref = makeTrappingRefUse(HeapType::string);
+  return builder.makeStringMeasure(StringMeasureWTF16, ref);
+}
+
+Expression* TranslateToFuzzReader::makeStringGet(Type type) {
+  assert(type == Type::i32);
+
+  auto* ref = makeTrappingRefUse(HeapType::stringview_wtf16);
+  auto* pos = make(Type::i32);
+  return builder.makeStringWTF16Get(ref, pos);
 }
 
 Expression* TranslateToFuzzReader::makeTrappingRefUse(HeapType type) {
@@ -3747,9 +3847,9 @@ static auto makeArrayBoundsCheck(Expression* ref,
     // An additional use of the reference (we stored the reference in a local,
     // so this reads from that local).
     Expression* getRef;
-    // An addition use of the index (as with the ref, it reads from a local).
+    // An additional use of the index (as with the ref, it reads from a local).
     Expression* getIndex;
-    // An addition use of the length, if it was provided.
+    // An additional use of the length, if it was provided.
     Expression* getLength = nullptr;
   } result = {builder.makeBinary(LtUInt32, effectiveIndex, getSize),
               builder.makeLocalGet(tempRef, ref->type),
@@ -3860,6 +3960,40 @@ Expression* TranslateToFuzzReader::makeArrayBulkMemoryOp(Type type) {
   }
 }
 
+Expression* TranslateToFuzzReader::makeStringEncode(Type type) {
+  assert(type == Type::i32);
+
+  auto* ref = makeTrappingRefUse(HeapType::string);
+  auto* array = makeTrappingRefUse(getArrayTypeForString());
+  auto* start = make(Type::i32);
+
+  // Only rarely emit without a bounds check, which might trap. See related
+  // logic in other array operations.
+  if (allowOOB || oneIn(10)) {
+    return builder.makeStringEncode(StringEncodeWTF16Array, ref, array, start);
+  }
+
+  // Stash the string reference while computing its length for a bounds check.
+  auto refLocal = builder.addVar(funcContext->func, ref->type);
+  auto* setRef = builder.makeLocalSet(refLocal, ref);
+  auto* strLen = builder.makeStringMeasure(
+    StringMeasureWTF16, builder.makeLocalGet(refLocal, ref->type));
+
+  // Do a bounds check on the array.
+  auto check =
+    makeArrayBoundsCheck(array, start, funcContext->func, builder, strLen);
+  array = check.getRef;
+  start = check.getIndex;
+  auto* getRef = builder.makeLocalGet(refLocal, ref->type);
+  auto* encode =
+    builder.makeStringEncode(StringEncodeWTF16Array, getRef, array, start);
+
+  // Emit the set of the string reference and then an if that picks which code
+  // path to visit, depending on the outcome of the bounds check.
+  auto* iff = builder.makeIf(check.condition, encode, make(Type::i32));
+  return builder.makeSequence(setRef, iff);
+}
+
 Expression* TranslateToFuzzReader::makeI31Get(Type type) {
   assert(type == Type::i32);
   assert(wasm.features.hasReferenceTypes() && wasm.features.hasGC());
@@ -3959,7 +4093,10 @@ Type TranslateToFuzzReader::getSingleConcreteType() {
                      Type(HeapType::struct_, Nullable),
                      Type(HeapType::struct_, NonNullable),
                      Type(HeapType::array, Nullable),
-                     Type(HeapType::array, NonNullable)));
+                     Type(HeapType::array, NonNullable))
+                .add(FeatureSet::Strings,
+                     Type(HeapType::string, Nullable),
+                     Type(HeapType::string, NonNullable)));
 }
 
 Type TranslateToFuzzReader::getReferenceType() {
@@ -3982,7 +4119,10 @@ Type TranslateToFuzzReader::getReferenceType() {
                      Type(HeapType::struct_, Nullable),
                      Type(HeapType::struct_, NonNullable),
                      Type(HeapType::array, Nullable),
-                     Type(HeapType::array, NonNullable)));
+                     Type(HeapType::array, NonNullable))
+                .add(FeatureSet::Strings,
+                     Type(HeapType::string, Nullable),
+                     Type(HeapType::string, NonNullable)));
 }
 
 Type TranslateToFuzzReader::getEqReferenceType() {
@@ -4098,12 +4238,15 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
       case HeapType::any:
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
-        return pick(HeapType::any,
-                    HeapType::eq,
-                    HeapType::i31,
-                    HeapType::struct_,
-                    HeapType::array,
-                    HeapType::none);
+        return pick(FeatureOptions<HeapType>()
+                      .add(FeatureSet::GC,
+                           HeapType::any,
+                           HeapType::eq,
+                           HeapType::i31,
+                           HeapType::struct_,
+                           HeapType::array,
+                           HeapType::none)
+                      .add(FeatureSet::Strings, HeapType::string));
       case HeapType::eq:
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
@@ -4205,6 +4348,12 @@ Type TranslateToFuzzReader::getSuperType(Type type) {
     superType = Type(heapType, Nullable);
   }
   return superType;
+}
+
+HeapType TranslateToFuzzReader::getArrayTypeForString() {
+  // Emit an array that can be used with JS-style strings, containing 16-bit
+  // elements. For now, this must be a mutable type as that is all V8 accepts.
+  return HeapType(Array(Field(Field::PackedType::i16, Mutable)));
 }
 
 Name TranslateToFuzzReader::getTargetName(Expression* target) {
