@@ -30,9 +30,56 @@ namespace wasm {
 
 namespace {
 
+using AssignmentCountMap = std::unordered_map<Name, Index>;
+using TrivialFunctionMap = std::unordered_map<Name, Expression*>;
+
 bool isOnceFunction(Function* f) { return f->name.hasSubstring("_<once>_"); }
 
-using AssignmentCountMap = std::unordered_map<Name, Index>;
+// Returns the function body if it is a trivial function, null otherwise.
+Expression* getTrivialFunctionBody(Module* m, Function* f) {
+  auto* body = f->body;
+  if (body->is<Return>()) {
+    body = body->dynCast<Return>()->value;
+  }
+  if (body == nullptr) {
+    // Empty body is trivial, use nop as the replacement for inlinling.
+    Builder builder(*m);
+    body = builder.makeNop();
+  }
+
+  // Only consider trivial the following instructions which can be safely
+  // inlined and whose size is it most 2.
+  if (body->is<Nop>() || body->is<GlobalGet>() || body->is<Const>() ||
+      (body->is<Call>() && body->dynCast<Call>()->operands.size() == 0) ||
+      (body->is<GlobalSet>() &&
+       body->dynCast<GlobalSet>()->value->is<Const>())) {
+    return body;
+  }
+  return nullptr;
+}
+
+// Adds the function to the map if it is trivial.
+void maybeCollectTrivialFunction(Module* m,
+                                 Function* f,
+                                 TrivialFunctionMap& trivialFunctionMap) {
+  auto* body = getTrivialFunctionBody(m, f);
+  if (body == nullptr) {
+    return;
+  }
+
+  trivialFunctionMap[f->name] = body;
+}
+
+// Cleans up a once function that has been modified in the hopes it
+// becomes trivial.
+void cleanupFunction(Module* m, Function* f) {
+  PassRunner runner(m);
+  runner.add("precompute-propagate");
+  runner.add("remove-unused-brs");
+  runner.add("vacuum");
+  runner.setIsNested(true);
+  runner.runOnFunction(f);
+}
 
 // A visitor to count the number of GlobalSets of each global so we can later
 // identify the number of assignments of the global.
@@ -81,8 +128,10 @@ private:
 // TODO: parallelize
 class ConstantHoister : public WalkerPass<PostWalker<ConstantHoister>> {
 public:
-  ConstantHoister(AssignmentCountMap& assignmentCounts)
-    : assignmentCounts(assignmentCounts) {}
+  ConstantHoister(AssignmentCountMap& assignmentCounts,
+                  TrivialFunctionMap& trivialFunctionMap)
+    : assignmentCounts(assignmentCounts),
+      trivialFunctionMap(trivialFunctionMap) {}
 
   int optimized = 0;
 
@@ -101,15 +150,8 @@ public:
     }
 
     if (optimized != optimizedBefore) {
-      // We introduced "nop" instruction. Run the vacuum to cleanup.
-      // TODO: maybe we should not introduce "nop" in the first place and try
-      // removing instead.
-      PassRunner runner(getModule());
-      runner.add("precompute");
-      runner.add("remove-unused-brs");
-      runner.add("vacuum");
-      runner.setIsNested(true);
-      runner.runOnFunction(curr);
+      cleanupFunction(getModule(), curr);
+      maybeCollectTrivialFunction(getModule(), curr, trivialFunctionMap);
     }
   }
 
@@ -154,54 +196,96 @@ private:
   }
 
   AssignmentCountMap& assignmentCounts;
+  TrivialFunctionMap& trivialFunctionMap;
 };
 
-// A visitor that marks trivial once functions for removal.
-// TODO: parallelize
-class EnableInline : public WalkerPass<PostWalker<EnableInline>> {
+class TrivialOnceFunctionCollector
+  : public WalkerPass<PostWalker<TrivialOnceFunctionCollector>> {
 public:
+  TrivialOnceFunctionCollector(TrivialFunctionMap& trivialFunctionMap)
+    : trivialFunctionMap(trivialFunctionMap) {}
+
   void visitFunction(Function* curr) {
     if (!isOnceFunction(curr)) {
       return;
     }
-    auto* body = curr->body;
-    if (Measurer::measure(body) <= 2) {
-      // Once function has become trivial: enable inlining so it could be
-      // removed.
-      //
-      // Note that the size of a trivial function is set to 2 to cover things
-      // like
-      //  - nop (e.g. a clinit that is emptied)
-      //  - call (e.g. a clinit just calling another one; note that clinits take
-      //  no parameters)
-      //  - return global.get abc (e.g. a string literal moved to global)
-      //  - global.set abc 1 (e.g. partially inlined clinit that is empty)
-      // while rejecting more complex scenario like condition checks. Optimizing
-      // complex functions could change the shape of "once" functions and make
-      // the ConstantHoister in this pass and OnceReducer ineffective.
-      curr->noFullInline = false;
-      curr->noPartialInline = false;
-    }
+    maybeCollectTrivialFunction(getModule(), curr, trivialFunctionMap);
   }
+
+private:
+  TrivialFunctionMap& trivialFunctionMap;
+};
+
+// A visitor that inlines trivial once functions.
+// TODO: parallelize
+class InlineTrivialOnceFunctions
+  : public WalkerPass<PostWalker<InlineTrivialOnceFunctions>> {
+public:
+  InlineTrivialOnceFunctions(TrivialFunctionMap& trivialFunctionMap)
+    : trivialFunctionMap(trivialFunctionMap) {}
+
+  void visitCall(Call* curr) {
+    if (curr->operands.size() != 0) {
+      return;
+    }
+
+    auto* expr = trivialFunctionMap[curr->target];
+    if (expr == nullptr) {
+      return;
+    }
+
+    // The call was to a trivial once function which consists of the expression
+    // in <expr>; replace the call with it.
+    Builder builder(*getModule());
+    auto* replacement = ExpressionManipulator::copy(expr, *getModule());
+    replaceCurrent(replacement);
+
+    lastModifiedFunction = getFunction();
+    inlined++;
+  }
+
+  void visitFunction(Function* curr) {
+    // Since the traversal is in post-order, we only need to check if the
+    // current function is the function that was last inlined into.
+    if (lastModifiedFunction != curr || !isOnceFunction(curr)) {
+      return;
+    }
+
+    cleanupFunction(getModule(), curr);
+    maybeCollectTrivialFunction(getModule(), curr, trivialFunctionMap);
+  }
+
+  int inlined = 0;
+
+private:
+  TrivialFunctionMap& trivialFunctionMap;
+  Function* lastModifiedFunction = nullptr;
 };
 
 struct J2CLOpts : public Pass {
   void hoistConstants(Module* module) {
     AssignmentCountMap assignmentCounts;
+    TrivialFunctionMap trivialFunctionMap;
 
     GlobalAssignmentCollector collector(assignmentCounts);
     collector.run(getPassRunner(), module);
 
-    // TODO surprisingly looping help some but not a lot. Maybe we are missing
-    // something that helps globals to be considered immutable.
+    TrivialOnceFunctionCollector trivialFunctionCollector(trivialFunctionMap);
+    trivialFunctionCollector.run(getPassRunner(), module);
+
     while (1) {
-      ConstantHoister hoister(assignmentCounts);
+      ConstantHoister hoister(assignmentCounts, trivialFunctionMap);
       hoister.run(getPassRunner(), module);
       int optimized = hoister.optimized;
+
+      InlineTrivialOnceFunctions inliner(trivialFunctionMap);
+      inliner.run(getPassRunner(), module);
+      int inlined = inliner.inlined;
+
 #ifdef J2CL_OPT_DEBUG
       std::cout << "Optimized " << optimized << " global fields\n";
 #endif
-      if (optimized == 0) {
+      if (optimized == 0 && inlined == 0) {
         break;
       }
     }
@@ -214,9 +298,6 @@ struct J2CLOpts : public Pass {
     // Move constant like properties set by the once functions to global
     // initialization.
     hoistConstants(module);
-
-    EnableInline enableInline;
-    enableInline.run(getPassRunner(), module);
 
     // We might have introduced new globals depending on other globals. Reorder
     // order them so they follow initialization order.

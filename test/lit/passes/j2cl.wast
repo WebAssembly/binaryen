@@ -152,22 +152,23 @@
   )
 )
 
-
+;; Getters are transitively inlined and their constants hoisted.
 (module
   ;; CHECK:      (type $0 (func (result i32)))
 
-  ;; CHECK:      (global $$var2@Zoo (mut i32) (i32.const 0))
+  ;; CHECK:      (global $$var3@Zoo i32 (i32.const 2))
+
+  ;; CHECK:      (global $$var2@Zoo i32 (i32.const 2))
 
   ;; CHECK:      (global $$var1@Zoo i32 (i32.const 2))
   (global $$var1@Zoo (mut i32) (i32.const 0))
   (global $$var2@Zoo (mut i32) (i32.const 0))
-
-  ;; CHECK:      (export "getVar1_<once>_@Zoo" (func $getVar1_<once>_@Zoo))
+  (global $$var3@Zoo (mut i32) (i32.const 0))
 
   ;; CHECK:      (func $getVar1_<once>_@Zoo (type $0) (result i32)
   ;; CHECK-NEXT:  (i32.const 2)
   ;; CHECK-NEXT: )
-  (func $getVar1_<once>_@Zoo (export "getVar1_<once>_@Zoo") (result i32)
+  (func $getVar1_<once>_@Zoo (result i32)
     (if (global.get $$var1@Zoo)
       (then
         (return (global.get $$var1@Zoo))
@@ -178,20 +179,7 @@
   )
 
   ;; CHECK:      (func $getVar2_<once>_@Zoo (type $0) (result i32)
-  ;; CHECK-NEXT:  (if
-  ;; CHECK-NEXT:   (global.get $$var2@Zoo)
-  ;; CHECK-NEXT:   (then
-  ;; CHECK-NEXT:    (return
-  ;; CHECK-NEXT:     (global.get $$var2@Zoo)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (global.set $$var2@Zoo
-  ;; CHECK-NEXT:   (call $getVar1_<once>_@Zoo)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (return
-  ;; CHECK-NEXT:   (global.get $$var2@Zoo)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 2)
   ;; CHECK-NEXT: )
   (func $getVar2_<once>_@Zoo (result i32)
     (if (global.get $$var2@Zoo)
@@ -202,4 +190,97 @@
     (global.set $$var2@Zoo (call $getVar1_<once>_@Zoo))
     (return (global.get $$var2@Zoo))
   )
+
+  ;; CHECK:      (func $getVar3_<once>_@Zoo (type $0) (result i32)
+  ;; CHECK-NEXT:  (i32.const 2)
+  ;; CHECK-NEXT: )
+  (func $getVar3_<once>_@Zoo (result i32)
+    (if (global.get $$var3@Zoo)
+      (then
+        (return (global.get $$var3@Zoo))
+      )
+    )
+    (global.set $$var3@Zoo (call $getVar2_<once>_@Zoo))
+    (return (global.get $$var3@Zoo))
+  )
 )
+
+;; Simple once functions are inlined
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (result i32)))
+
+  ;; CHECK:      (global $$var2@Zoo (mut i32) (i32.const 3))
+
+  ;; CHECK:      (global $$var1@Zoo (mut i32) (i32.const 2))
+  (global $$var1@Zoo (mut i32) (i32.const 2))
+  (global $$var2@Zoo (mut i32) (i32.const 3))
+
+
+  ;; CHECK:      (func $notOnceFunction@Zoo (type $0)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $notOnceFunction@Zoo
+  )
+
+  ;; CHECK:      (func $nop_<once>_@Zoo (type $0)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $nop_<once>_@Zoo
+    (nop)
+  )
+
+  ;; CHECK:      (func $empty_<once>_@Zoo (type $0)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $empty_<once>_@Zoo
+  )
+
+  ;; CHECK:      (func $justReturn_<once>_@Zoo (type $0)
+  ;; CHECK-NEXT:  (return)
+  ;; CHECK-NEXT: )
+  (func $justReturn_<once>_@Zoo
+    (return)
+  )
+
+  ;; CHECK:      (func $simpleCall_<once>_@Zoo (type $0)
+  ;; CHECK-NEXT:  (call $notOnceFunction@Zoo)
+  ;; CHECK-NEXT: )
+  (func $simpleCall_<once>_@Zoo
+    (call $notOnceFunction@Zoo)
+  )
+
+  ;; CHECK:      (func $globalGet_<once>_@Zoo (type $1) (result i32)
+  ;; CHECK-NEXT:  (global.get $$var1@Zoo)
+  ;; CHECK-NEXT: )
+  (func $globalGet_<once>_@Zoo (result i32)
+    (global.get $$var1@Zoo)
+  )
+
+  ;; CHECK:      (func $globalSet_<once>_@Zoo (type $0)
+  ;; CHECK-NEXT:  (global.set $$var2@Zoo
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $globalSet_<once>_@Zoo
+    (global.set $$var2@Zoo (i32.const 3))
+  )
+
+  ;; CHECK:      (func $caller_<once>_@Zoo (type $1) (result i32)
+  ;; CHECK-NEXT:  (call $notOnceFunction@Zoo)
+  ;; CHECK-NEXT:  (global.set $$var2@Zoo
+  ;; CHECK-NEXT:   (i32.const 3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.get $$var1@Zoo)
+  ;; CHECK-NEXT: )
+  (func $caller_<once>_@Zoo (result i32)
+    (call $nop_<once>_@Zoo)
+    (call $empty_<once>_@Zoo)
+    (call $justReturn_<once>_@Zoo)
+    (call $simpleCall_<once>_@Zoo)
+    (call $globalSet_<once>_@Zoo)
+    (call $globalGet_<once>_@Zoo)
+  )
+)
+
