@@ -33,7 +33,8 @@ namespace {
 using AssignmentCountMap = std::unordered_map<Name, Index>;
 using TrivialFunctionMap = std::unordered_map<Name, Expression*>;
 
-bool isOnceFunction(Function* f) { return f->name.hasSubstring("_<once>_"); }
+bool isOnceFunction(Name name) { return name.hasSubstring("_<once>_"); }
+bool isOnceFunction(Function* func) { return isOnceFunction(func->name); }
 
 // Returns the function body if it is a trivial function, null otherwise.
 Expression* getTrivialFunctionBody(Function* func) {
@@ -42,7 +43,9 @@ Expression* getTrivialFunctionBody(Function* func) {
   // Only consider trivial the following instructions which can be safely
   // inlined and note that their size is at most 2.
   if (body->is<Nop>() || body->is<GlobalGet>() || body->is<Const>() ||
+      // Call with no arguments.
       (body->is<Call>() && body->dynCast<Call>()->operands.size() == 0) ||
+      // Simple global.set with a constant.
       (body->is<GlobalSet>() &&
        body->dynCast<GlobalSet>()->value->is<Const>())) {
     return body;
@@ -193,6 +196,13 @@ private:
   TrivialFunctionMap& trivialFunctionMap;
 };
 
+// Class to collect functions that are already trivial before the pass is run.
+// When this pass is run, other optimizations that preceded it might have left
+// the body of some of these functions trivial.
+// Since the loop in this pass while only inline the functions that are made
+// trivial by this pass, the functions that were already trivial might never
+// be inlined.
+// To avoid this situation we collect them with this pass.
 class TrivialOnceFunctionCollector
   : public WalkerPass<PostWalker<TrivialOnceFunctionCollector>> {
 public:
@@ -203,7 +213,6 @@ public:
     if (!isOnceFunction(curr)) {
       return;
     }
-    cleanupFunction(getModule(), curr);
     maybeCollectTrivialFunction(getModule(), curr, trivialFunctionMap);
   }
 
@@ -220,14 +229,15 @@ public:
     : trivialFunctionMap(trivialFunctionMap) {}
 
   void visitCall(Call* curr) {
-    if (curr->operands.size() != 0) {
+    if (curr->operands.size() != 0 || !isOnceFunction(curr->target)) {
       return;
     }
 
-    auto* expr = trivialFunctionMap[curr->target];
-    if (expr == nullptr) {
+    auto iter = trivialFunctionMap.find(curr->target);
+    if (iter == trivialFunctionMap.end()) {
       return;
     }
+    auto* expr = iter->second;
 
     // The call was to a trivial once function which consists of the expression
     // in <expr>; replace the call with it.
@@ -242,6 +252,8 @@ public:
   void visitFunction(Function* curr) {
     // Since the traversal is in post-order, we only need to check if the
     // current function is the function that was last inlined into.
+    // We also do not want to do any cleanup for a non-once function (we leave
+    // that for other passes, as it will not end up helping further work here).
     if (lastModifiedFunction != curr || !isOnceFunction(curr)) {
       return;
     }

@@ -31,23 +31,21 @@
 
   ;; CHECK:      (global $field2@Foo (mut anyref) (ref.null none))
 
-  ;; CHECK:      (global $field1@Foo anyref (struct.new $A
-  ;; CHECK-NEXT:  (i32.const 42)
-  ;; CHECK-NEXT: ))
-
-  ;; CHECK:      (global $referredFieldMut@Foo (mut i32) (i32.const 42))
-
-  ;; CHECK:      (global $field3@Foo anyref (global.get $field1@Foo))
-
   ;; CHECK:      (global $referredField@Foo i32 (i32.const 42))
   (global $referredField@Foo i32 (i32.const 42))
 
+  ;; CHECK:      (global $field1@Foo anyref (struct.new $A
+  ;; CHECK-NEXT:  (global.get $referredField@Foo)
+  ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (global $referredFieldMut@Foo (mut i32) (i32.const 42))
   (global $referredFieldMut@Foo (mut i32) (i32.const 42))
 
   (global $field1@Foo (mut anyref) (ref.null none))
 
   (global $field2@Foo (mut anyref) (ref.null none))
 
+  ;; CHECK:      (global $field3@Foo anyref (global.get $field1@Foo))
   (global $field3@Foo (mut anyref) (ref.null none))
 
   ;; CHECK:      (func $clinit_<once>_@Foo (type $1)
@@ -213,9 +211,10 @@
 
   ;; CHECK:      (type $1 (func (result i32)))
 
+  ;; CHECK:      (global $$var2@Zoo (mut i32) (i32.const 3))
+
   ;; CHECK:      (global $$var1@Zoo (mut i32) (i32.const 2))
   (global $$var1@Zoo (mut i32) (i32.const 2))
-  ;; CHECK:      (global $$var2@Zoo (mut i32) (i32.const 3))
   (global $$var2@Zoo (mut i32) (i32.const 3))
 
 
@@ -236,13 +235,6 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $empty_<once>_@Zoo
-  )
-
-  ;; CHECK:      (func $justReturn_<once>_@Zoo (type $0)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
-  (func $justReturn_<once>_@Zoo
-    (return)
   )
 
   ;; CHECK:      (func $simpleCall_<once>_@Zoo (type $0)
@@ -268,66 +260,102 @@
     (global.set $$var2@Zoo (i32.const 3))
   )
 
-  ;; CHECK:      (func $returnGlobalGet_<once>_@Zoo (type $1) (result i32)
-  ;; CHECK-NEXT:  (global.get $$var1@Zoo)
-  ;; CHECK-NEXT: )
-  (func $returnGlobalGet_<once>_@Zoo (result i32)
-    (return (global.get $$var1@Zoo))
-  )
-
   ;; CHECK:      (func $caller_@Zoo (type $1) (result i32)
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (call $notOnceFunction@Zoo)
   ;; CHECK-NEXT:  (global.set $$var2@Zoo
   ;; CHECK-NEXT:   (i32.const 3)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $$var1@Zoo)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.get $$var1@Zoo)
   ;; CHECK-NEXT: )
   (func $caller_@Zoo (result i32)
     (call $nop_<once>_@Zoo)
     (call $empty_<once>_@Zoo)
-    (call $justReturn_<once>_@Zoo)
     (call $simpleCall_<once>_@Zoo)
     (call $globalSet_<once>_@Zoo)
-    (drop (call $globalGet_<once>_@Zoo))
+    (call $globalGet_<once>_@Zoo)
+  )
+)
+
+;; Simple once functions that would be inlined if cleaned up.
+(module
+  ;; CHECK:      (type $0 (func (result i32)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (global $$var1@Zoo (mut i32) (i32.const 2))
+  (global $$var1@Zoo (mut i32) (i32.const 2))
+
+
+  ;; CHECK:      (func $justReturn_<once>_@Zoo (type $1)
+  ;; CHECK-NEXT:  (return)
+  ;; CHECK-NEXT: )
+  (func $justReturn_<once>_@Zoo
+    (return)
+  )
+
+  ;; CHECK:      (func $returnGlobalGet_<once>_@Zoo (type $0) (result i32)
+  ;; CHECK-NEXT:  (return
+  ;; CHECK-NEXT:   (global.get $$var1@Zoo)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $returnGlobalGet_<once>_@Zoo (result i32)
+    (return (global.get $$var1@Zoo))
+  )
+
+  ;; CHECK:      (func $caller_@Zoo (type $0) (result i32)
+  ;; CHECK-NEXT:  (call $justReturn_<once>_@Zoo)
+  ;; CHECK-NEXT:  (call $returnGlobalGet_<once>_@Zoo)
+  ;; CHECK-NEXT: )
+  (func $caller_@Zoo (result i32)
+    (call $justReturn_<once>_@Zoo)
     (call $returnGlobalGet_<once>_@Zoo)
   )
 )
 
+;; Hoist constants for getters that have transitive dependencies.
 (module
-  ;; CHECK:      (type $A (struct (field (mut i32))))
-  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $A (struct (field i32)))
+  (type $A (struct (field i32)))
+
   ;; CHECK:      (type $1 (func (result (ref null $A))))
 
-  ;; CHECK:      (global $$class@com.google.re2j.Regexp.Op (ref null $A) (struct.new $A
+  ;; CHECK:      (global $$class@X (ref null $A) (struct.new $A
   ;; CHECK-NEXT:  (i32.const 2)
   ;; CHECK-NEXT: ))
-  (global $$class@com.google.re2j.Regexp.Op (ref null $A)  (struct.new $A (i32.const 2)))
+  (global $$class@X (mut (ref null $A)) (ref.null $A))
+  ;; CHECK:      (global $$class@Y (ref null $A) (global.get $$class@X))
+  (global $$class@Y (mut (ref null $A)) (ref.null $A))
 
   ;; CHECK:      (func $f_<once>_@X (type $1) (result (ref null $A))
-  ;; CHECK-NEXT:  (global.get $$class@com.google.re2j.Regexp.Op)
+  ;; CHECK-NEXT:  (global.get $$class@X)
   ;; CHECK-NEXT: )
   (func $f_<once>_@X (result (ref null $A))
     (block (result (ref null $A))
-    (if
-      (i32.eqz
-      (ref.is_null
-        (global.get $$class@com.google.re2j.Regexp.Op)
+      (if (i32.eqz (ref.is_null (global.get $$class@X)))
+        (then
+          (return (global.get $$class@X))
+        )
       )
-      )
-      (then
-      (return
-        (global.get $$class@com.google.re2j.Regexp.Op)
-      )
-      )
+      (global.set $$class@X (struct.new $A (i32.const 2)))
+      (global.get $$class@X)
     )
-    (nop)
-    (global.get $$class@com.google.re2j.Regexp.Op)
+  )
+
+  ;; CHECK:      (func $f_<once>_@Y (type $1) (result (ref null $A))
+  ;; CHECK-NEXT:  (global.get $$class@Y)
+  ;; CHECK-NEXT: )
+  (func $f_<once>_@Y (result (ref null $A))
+    (block (result (ref null $A))
+      (if
+        (i32.eqz (ref.is_null (global.get $$class@Y)))
+        (then
+          (return (global.get $$class@Y))
+        )
+      )
+      (global.set $$class@Y (call $f_<once>_@X))
+      (global.get $$class@Y)
     )
   )
 )
