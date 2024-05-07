@@ -31,21 +31,23 @@
 
   ;; CHECK:      (global $field2@Foo (mut anyref) (ref.null none))
 
-  ;; CHECK:      (global $referredField@Foo i32 (i32.const 42))
-  (global $referredField@Foo i32 (i32.const 42))
-
   ;; CHECK:      (global $field1@Foo anyref (struct.new $A
-  ;; CHECK-NEXT:  (global.get $referredField@Foo)
+  ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: ))
 
   ;; CHECK:      (global $referredFieldMut@Foo (mut i32) (i32.const 42))
+
+  ;; CHECK:      (global $field3@Foo anyref (global.get $field1@Foo))
+
+  ;; CHECK:      (global $referredField@Foo i32 (i32.const 42))
+  (global $referredField@Foo i32 (i32.const 42))
+
   (global $referredFieldMut@Foo (mut i32) (i32.const 42))
 
   (global $field1@Foo (mut anyref) (ref.null none))
 
   (global $field2@Foo (mut anyref) (ref.null none))
 
-  ;; CHECK:      (global $field3@Foo anyref (global.get $field1@Foo))
   (global $field3@Foo (mut anyref) (ref.null none))
 
   ;; CHECK:      (func $clinit_<once>_@Foo (type $1)
@@ -238,7 +240,7 @@
   )
 
   ;; CHECK:      (func $justReturn_<once>_@Zoo (type $0)
-  ;; CHECK-NEXT:  (return)
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $justReturn_<once>_@Zoo
     (return)

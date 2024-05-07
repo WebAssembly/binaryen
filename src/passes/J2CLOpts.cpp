@@ -36,19 +36,11 @@ using TrivialFunctionMap = std::unordered_map<Name, Expression*>;
 bool isOnceFunction(Function* f) { return f->name.hasSubstring("_<once>_"); }
 
 // Returns the function body if it is a trivial function, null otherwise.
-Expression* getTrivialFunctionBody(Module* m, Function* f) {
-  auto* body = f->body;
-  if (body->is<Return>()) {
-    body = body->dynCast<Return>()->value;
-  }
-  if (body == nullptr) {
-    // Empty body is trivial, use nop as the replacement for inlinling.
-    Builder builder(*m);
-    body = builder.makeNop();
-  }
+Expression* getTrivialFunctionBody(Function* func) {
+  auto* body = func->body;
 
   // Only consider trivial the following instructions which can be safely
-  // inlined and whose size is it most 2.
+  // inlined and note that their size is at most 2.
   if (body->is<Nop>() || body->is<GlobalGet>() || body->is<Const>() ||
       (body->is<Call>() && body->dynCast<Call>()->operands.size() == 0) ||
       (body->is<GlobalSet>() &&
@@ -59,26 +51,26 @@ Expression* getTrivialFunctionBody(Module* m, Function* f) {
 }
 
 // Adds the function to the map if it is trivial.
-void maybeCollectTrivialFunction(Module* m,
-                                 Function* f,
+void maybeCollectTrivialFunction(Module* module,
+                                 Function* func,
                                  TrivialFunctionMap& trivialFunctionMap) {
-  auto* body = getTrivialFunctionBody(m, f);
+  auto* body = getTrivialFunctionBody(func);
   if (body == nullptr) {
     return;
   }
 
-  trivialFunctionMap[f->name] = body;
+  trivialFunctionMap[func->name] = body;
 }
 
 // Cleans up a once function that has been modified in the hopes it
 // becomes trivial.
-void cleanupFunction(Module* m, Function* f) {
-  PassRunner runner(m);
+void cleanupFunction(Module* module, Function* func) {
+  PassRunner runner(module);
   runner.add("precompute-propagate");
   runner.add("remove-unused-brs");
   runner.add("vacuum");
   runner.setIsNested(true);
-  runner.runOnFunction(f);
+  runner.runOnFunction(func);
 }
 
 // A visitor to count the number of GlobalSets of each global so we can later
@@ -209,6 +201,7 @@ public:
     if (!isOnceFunction(curr)) {
       return;
     }
+    cleanupFunction(getModule(), curr);
     maybeCollectTrivialFunction(getModule(), curr, trivialFunctionMap);
   }
 
