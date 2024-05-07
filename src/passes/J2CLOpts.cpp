@@ -66,9 +66,11 @@ void maybeCollectTrivialFunction(Module* module,
 // becomes trivial.
 void cleanupFunction(Module* module, Function* func) {
   PassRunner runner(module);
-  runner.add("precompute-propagate");
-  runner.add("remove-unused-brs");
+  runner.add("precompute");
   runner.add("vacuum");
+  // Run after vacuum to remove the extra returns that vacuum might
+  // leave when reducing a block that ends up with just one instruction.
+  runner.add("remove-unused-brs");
   runner.setIsNested(true);
   runner.runOnFunction(func);
 }

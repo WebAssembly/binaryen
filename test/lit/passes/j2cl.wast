@@ -213,10 +213,9 @@
 
   ;; CHECK:      (type $1 (func (result i32)))
 
-  ;; CHECK:      (global $$var2@Zoo (mut i32) (i32.const 3))
-
   ;; CHECK:      (global $$var1@Zoo (mut i32) (i32.const 2))
   (global $$var1@Zoo (mut i32) (i32.const 2))
+  ;; CHECK:      (global $$var2@Zoo (mut i32) (i32.const 3))
   (global $$var2@Zoo (mut i32) (i32.const 3))
 
 
@@ -269,20 +268,66 @@
     (global.set $$var2@Zoo (i32.const 3))
   )
 
-  ;; CHECK:      (func $caller_<once>_@Zoo (type $1) (result i32)
+  ;; CHECK:      (func $returnGlobalGet_<once>_@Zoo (type $1) (result i32)
+  ;; CHECK-NEXT:  (global.get $$var1@Zoo)
+  ;; CHECK-NEXT: )
+  (func $returnGlobalGet_<once>_@Zoo (result i32)
+    (return (global.get $$var1@Zoo))
+  )
+
+  ;; CHECK:      (func $caller_@Zoo (type $1) (result i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (call $notOnceFunction@Zoo)
   ;; CHECK-NEXT:  (global.set $$var2@Zoo
   ;; CHECK-NEXT:   (i32.const 3)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $$var1@Zoo)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (global.get $$var1@Zoo)
   ;; CHECK-NEXT: )
-  (func $caller_<once>_@Zoo (result i32)
+  (func $caller_@Zoo (result i32)
     (call $nop_<once>_@Zoo)
     (call $empty_<once>_@Zoo)
     (call $justReturn_<once>_@Zoo)
     (call $simpleCall_<once>_@Zoo)
     (call $globalSet_<once>_@Zoo)
-    (call $globalGet_<once>_@Zoo)
+    (drop (call $globalGet_<once>_@Zoo))
+    (call $returnGlobalGet_<once>_@Zoo)
   )
 )
 
+(module
+  ;; CHECK:      (type $A (struct (field (mut i32))))
+  (type $A (struct (field (mut i32))))
+  ;; CHECK:      (type $1 (func (result (ref null $A))))
+
+  ;; CHECK:      (global $$class@com.google.re2j.Regexp.Op (ref null $A) (struct.new $A
+  ;; CHECK-NEXT:  (i32.const 2)
+  ;; CHECK-NEXT: ))
+  (global $$class@com.google.re2j.Regexp.Op (ref null $A)  (struct.new $A (i32.const 2)))
+
+  ;; CHECK:      (func $f_<once>_@X (type $1) (result (ref null $A))
+  ;; CHECK-NEXT:  (global.get $$class@com.google.re2j.Regexp.Op)
+  ;; CHECK-NEXT: )
+  (func $f_<once>_@X (result (ref null $A))
+    (block (result (ref null $A))
+    (if
+      (i32.eqz
+      (ref.is_null
+        (global.get $$class@com.google.re2j.Regexp.Op)
+      )
+      )
+      (then
+      (return
+        (global.get $$class@com.google.re2j.Regexp.Op)
+      )
+      )
+    )
+    (nop)
+    (global.get $$class@com.google.re2j.Regexp.Op)
+    )
+  )
+)
