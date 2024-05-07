@@ -2568,25 +2568,45 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   for (Index i = 0; i < func->getNumParams(); i++) {
     mappedLocals[std::make_pair(i, 0)] = i;
   }
+
   // Normally we map all locals of the same type into a range of adjacent
   // addresses, which is more compact. However, if we need to keep DWARF valid,
   // do not do any reordering at all - instead, do a trivial mapping that
   // keeps everything unmoved.
+  //
+  // Unless we have run DWARF-invalidating passes, all locals added during the
+  // process that are not in DWARF info (tuple locals, tuple scratch locals,
+  // locals to resolve stacky format, ..) have been all tacked on to the
+  // existing locals and happen at the end, so as long as we print the local
+  // types in order, we don't invalidate original local DWARF info here.
   if (DWARF) {
-    FindAll<TupleExtract> extracts(func->body);
-    if (!extracts.list.empty()) {
-      Fatal() << "DWARF + multivalue is not yet complete";
+    Index mappedIndex = func->getVarIndexBase();
+    for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
+      size_t size = func->getLocalType(i).size();
+      for (Index j = 0; j < size; j++) {
+        mappedLocals[std::make_pair(i, j)] = mappedIndex + j;
+      }
+      mappedIndex += size;
     }
-    Index varStart = func->getVarIndexBase();
-    Index varEnd = varStart + func->getNumVars();
-    o << U32LEB(func->getNumVars());
-    for (Index i = varStart; i < varEnd; i++) {
-      mappedLocals[std::make_pair(i, 0)] = i;
+    countScratchLocals();
+
+    size_t numBinaryLocals =
+      mappedIndex - func->getVarIndexBase() + scratchLocals.size();
+    o << U32LEB(numBinaryLocals);
+    for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
+      for (const auto& type : func->getLocalType(i)) {
+        o << U32LEB(1);
+        parent.writeType(type);
+      }
+    }
+    for (auto& [type, _] : scratchLocals) {
       o << U32LEB(1);
-      parent.writeType(func->getLocalType(i));
+      parent.writeType(type);
+      scratchLocals[type] = mappedIndex++;
     }
     return;
   }
+
   for (auto type : func->vars) {
     for (const auto& t : type) {
       noteLocalType(t);
