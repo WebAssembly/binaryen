@@ -599,8 +599,7 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
     }
     auto* call = builder.makeCall(name, args, oldFunc->getResults());
 
-    primary.addFunction(
-      builder.makeFunction(newName, oldFunc->type, {}, call));
+    primary.addFunction(builder.makeFunction(newName, oldFunc->type, {}, call));
 
     // Update RefFuncs to refer to it.
     for (auto* refFunc : relevantRefFuncs) {
