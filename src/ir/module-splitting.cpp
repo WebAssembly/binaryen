@@ -554,10 +554,15 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
   } gatherer(*this);
   gatherer.walkModule(&primary);
 
-  // Find all RefFuncs in elems, which we can ignore: tables are the means by
-  // which we connect the modules, and are handled directly.
+  // Find all RefFuncs in active elementSegments, which we can ignore: tables
+  // are the means by which we connect the modules, and are handled directly.
+  // Passive segments, however, are like RefFuncs in code, and we need to not
+  // ignore them here.
   std::unordered_set<RefFunc*> ignore;
   for (auto& seg : primary.elementSegments) {
+    if (!seg->table.is()) {
+      continue;
+    }
     for (auto* curr : seg->data) {
       if (auto* refFunc = curr->dynCast<RefFunc>()) {
         ignore.insert(refFunc);
