@@ -29,8 +29,14 @@ namespace wasm {
 
 namespace {
 
-// Weighting for the core make* methods. Some nodes are important enough that
-// we should do them quite often.
+bool canBeNullable(HeapType type) {
+  // V8 does not accept nullable string views, and so we must avoid putting
+  // them in locals (as even a non-nullable one may end up nullable if we see
+  // situations that require fixing in handleNonDefaultableLocals.
+  return type != HeapType::stringview_wtf8 &&
+         type != HeapType::stringview_wtf16 &&
+         type != HeapType::stringview_iter;
+}
 
 } // anonymous namespace
 
@@ -2714,6 +2720,9 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
     // TODO: we could also look for locals containing subtypes
     if (funcContext && !funcContext->typeLocals[type].empty()) {
       return makeLocalGet(type);
+    }
+    if (!canBeNullable(heapType)) {
+      return makeConst(type);
     }
     return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
   }
