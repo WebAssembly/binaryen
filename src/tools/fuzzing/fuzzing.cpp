@@ -30,9 +30,7 @@ namespace wasm {
 namespace {
 
 bool canBeNullable(HeapType type) {
-  // V8 does not accept nullable string views, and so we must avoid putting
-  // them in locals (as even a non-nullable one may end up nullable if we see
-  // situations that require fixing in handleNonDefaultableLocals.
+  // V8 does not accept nullable string views.
   return type != HeapType::stringview_wtf8 &&
          type != HeapType::stringview_wtf16 &&
          type != HeapType::stringview_iter;
