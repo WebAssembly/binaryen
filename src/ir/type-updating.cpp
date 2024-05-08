@@ -312,7 +312,6 @@ bool canHandleAsLocal(Type type) {
     return heapType != HeapType::stringview_wtf8 &&
            heapType != HeapType::stringview_wtf16 &&
            heapType != HeapType::stringview_iter;
-
   }
   return type.isConcrete();
 }
