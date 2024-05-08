@@ -2827,7 +2827,8 @@ Expression* TranslateToFuzzReader::makeStringConcat() {
 }
 
 Expression* TranslateToFuzzReader::makeStringSlice() {
-  auto* ref = makeTrappingRefUse(HeapType::stringview_wtf16);
+  // StringViews cannot be non-nullable.
+  auto* ref = make(Type(HeapType::stringview_wtf16, NonNullable));
   auto* start = make(Type::i32);
   auto* end = make(Type::i32);
   return builder.makeStringSliceWTF(StringSliceWTF16, ref, start, end);
@@ -2858,7 +2859,8 @@ Expression* TranslateToFuzzReader::makeStringMeasure(Type type) {
 Expression* TranslateToFuzzReader::makeStringGet(Type type) {
   assert(type == Type::i32);
 
-  auto* ref = makeTrappingRefUse(HeapType::stringview_wtf16);
+  // StringViews cannot be non-nullable.
+  auto* ref = make(Type(HeapType::stringview_wtf16, NonNullable));
   auto* pos = make(Type::i32);
   return builder.makeStringWTF16Get(ref, pos);
 }
