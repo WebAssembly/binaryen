@@ -54,8 +54,7 @@ Expression* getTrivialFunctionBody(Function* func) {
 }
 
 // Adds the function to the map if it is trivial.
-void maybeCollectTrivialFunction(Module* module,
-                                 Function* func,
+void maybeCollectTrivialFunction(Function* func,
                                  TrivialFunctionMap& trivialFunctionMap) {
   auto* body = getTrivialFunctionBody(func);
   if (body == nullptr) {
@@ -91,9 +90,9 @@ public:
     if (isInitialValue(curr->init)) {
       return;
     }
-    // J2CL normally doesn't set non-default initial value however just in
-    // case if other passes in bineryen does something we should back off
-    // by recording this as an assignment.
+    // J2CL normally doesn't set non-default initial values, however, just in
+    // case other passes in binaryen do something and set a value to the global
+    // we should back off by recording this as an assignment.
     recordGlobalAssignment(curr->name);
   }
   void visitGlobalSet(GlobalSet* curr) { recordGlobalAssignment(curr->name); }
@@ -148,7 +147,7 @@ public:
 
     if (optimized != optimizedBefore) {
       cleanupFunction(getModule(), curr);
-      maybeCollectTrivialFunction(getModule(), curr, trivialFunctionMap);
+      maybeCollectTrivialFunction(curr, trivialFunctionMap);
     }
   }
 
@@ -200,9 +199,8 @@ private:
 // When this pass is run, other optimizations that preceded it might have left
 // the body of some of these functions trivial.
 // Since the loop in this pass while only inline the functions that are made
-// trivial by this pass, the functions that were already trivial might never
-// be inlined.
-// To avoid this situation we collect them with this pass.
+// trivial by this pass, the functions that were already trivial before would
+// not be inlined if they were not collected by this visitor.
 class TrivialOnceFunctionCollector
   : public WalkerPass<PostWalker<TrivialOnceFunctionCollector>> {
 public:
@@ -213,7 +211,7 @@ public:
     if (!isOnceFunction(curr)) {
       return;
     }
-    maybeCollectTrivialFunction(getModule(), curr, trivialFunctionMap);
+    maybeCollectTrivialFunction(curr, trivialFunctionMap);
   }
 
 private:
@@ -259,7 +257,7 @@ public:
     }
 
     cleanupFunction(getModule(), curr);
-    maybeCollectTrivialFunction(getModule(), curr, trivialFunctionMap);
+    maybeCollectTrivialFunction(curr, trivialFunctionMap);
   }
 
   int inlined = 0;
