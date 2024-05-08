@@ -703,6 +703,9 @@ Function* TranslateToFuzzReader::addFunction() {
   Index numVars = upToSquared(MAX_VARS);
   for (Index i = 0; i < numVars; i++) {
     auto type = getConcreteType();
+    if (!TypeUpdating::canHandleAsLocal(type)) {
+      type = Type::i32;
+    }
     func->vars.push_back(type);
   }
   context.computeTypeLocals();
@@ -1858,7 +1861,7 @@ Expression* TranslateToFuzzReader::makeLocalGet(Type type) {
   // the time), or emit a local.get of a new local, or emit a local.tee of a new
   // local.
   auto choice = upTo(3);
-  if (choice == 0) {
+  if (choice == 0 || !TypeUpdating::canHandleAsLocal(type)) {
     return makeConst(type);
   }
   // Otherwise, add a new local. If the type is not non-nullable then we may
