@@ -2,29 +2,22 @@
 
 ;; NOTE: In real world example  no-inline would use _<once>_ but there is escaping problem in a multi-platform
 ;; way in lit so we are working around it by using no-inline with a different pattern that matches same method.
-;; RUN: foreach %s %t wasm-opt --no-inline=*clinit* --optimize-j2cl --inlining --vacuum --optimize-level=3 -all -S -o - | filecheck %s
+;; RUN: foreach %s %t wasm-opt --no-inline="*_<once>_*" --optimize-j2cl --inlining --vacuum --optimize-level=3 -all -S -o - | filecheck %s
 
 ;; Only trivial once functions are inlined
 (module
 
   ;; A once function that has become empty
-  ;; CHECK:      (type $0 (func))
-
-  ;; CHECK:      (global $$class-initialized@Zoo (mut i32) (i32.const 0))
-
-  ;; CHECK:      (func $clinit-trivial-1_<once>_@Foo (type $0)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
   (func $clinit-trivial-1_<once>_@Foo  )
 
   ;; A once function that just calls another
-  ;; CHECK:      (func $clinit-trivial-2_<once>_@Bar (type $0)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT: )
   (func $clinit-trivial-2_<once>_@Bar
     (call $clinit-trivial-1_<once>_@Foo)
   )
 
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (global $$class-initialized@Zoo (mut i32) (i32.const 0))
   (global $$class-initialized@Zoo (mut i32) (i32.const 0))
 
   ;; Not hoisted but trivial.
