@@ -29,8 +29,12 @@ namespace wasm {
 
 namespace {
 
-// Weighting for the core make* methods. Some nodes are important enough that
-// we should do them quite often.
+bool canBeNullable(HeapType type) {
+  // V8 does not accept nullable string views.
+  return type != HeapType::stringview_wtf8 &&
+         type != HeapType::stringview_wtf16 &&
+         type != HeapType::stringview_iter;
+}
 
 } // anonymous namespace
 
@@ -703,6 +707,9 @@ Function* TranslateToFuzzReader::addFunction() {
   Index numVars = upToSquared(MAX_VARS);
   for (Index i = 0; i < numVars; i++) {
     auto type = getConcreteType();
+    if (!TypeUpdating::canHandleAsLocal(type)) {
+      type = Type::i32;
+    }
     func->vars.push_back(type);
   }
   context.computeTypeLocals();
@@ -1858,7 +1865,7 @@ Expression* TranslateToFuzzReader::makeLocalGet(Type type) {
   // the time), or emit a local.get of a new local, or emit a local.tee of a new
   // local.
   auto choice = upTo(3);
-  if (choice == 0) {
+  if (choice == 0 || !TypeUpdating::canHandleAsLocal(type)) {
     return makeConst(type);
   }
   // Otherwise, add a new local. If the type is not non-nullable then we may
@@ -2712,6 +2719,9 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
     if (funcContext && !funcContext->typeLocals[type].empty()) {
       return makeLocalGet(type);
     }
+    if (!canBeNullable(heapType)) {
+      return makeConst(type);
+    }
     return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
   }
 
@@ -2824,7 +2834,8 @@ Expression* TranslateToFuzzReader::makeStringConcat() {
 }
 
 Expression* TranslateToFuzzReader::makeStringSlice() {
-  auto* ref = makeTrappingRefUse(HeapType::stringview_wtf16);
+  // StringViews cannot be non-nullable.
+  auto* ref = make(Type(HeapType::stringview_wtf16, NonNullable));
   auto* start = make(Type::i32);
   auto* end = make(Type::i32);
   return builder.makeStringSliceWTF(StringSliceWTF16, ref, start, end);
@@ -2855,7 +2866,8 @@ Expression* TranslateToFuzzReader::makeStringMeasure(Type type) {
 Expression* TranslateToFuzzReader::makeStringGet(Type type) {
   assert(type == Type::i32);
 
-  auto* ref = makeTrappingRefUse(HeapType::stringview_wtf16);
+  // StringViews cannot be non-nullable.
+  auto* ref = make(Type(HeapType::stringview_wtf16, NonNullable));
   auto* pos = make(Type::i32);
   return builder.makeStringWTF16Get(ref, pos);
 }
