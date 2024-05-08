@@ -75,6 +75,7 @@
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "pass.h"
+#include "support/insert_ordered.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -295,6 +296,7 @@ struct ModuleSplitter {
   void moveSecondaryFunctions();
   void thunkExportedSecondaryFunctions();
   void indirectCallsToSecondaryFunctions();
+  void indirectReferencesToSecondaryFunctions();
   void exportImportCalledPrimaryFunctions();
   void setupTablePatching();
   void shareImportableItems();
@@ -311,6 +313,7 @@ struct ModuleSplitter {
     }
     moveSecondaryFunctions();
     thunkExportedSecondaryFunctions();
+    indirectReferencesToSecondaryFunctions();
     indirectCallsToSecondaryFunctions();
     exportImportCalledPrimaryFunctions();
     setupTablePatching();
@@ -529,10 +532,86 @@ Expression* ModuleSplitter::maybeLoadSecondary(Builder& builder,
   return builder.makeSequence(loadSecondary, callIndirect);
 }
 
+void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
+  // Turn references to secondary functions into references to thunks that
+  // perform a direct call to the original referent. The direct calls in the
+  // thunks will be handled like all other cross-module calls later, in
+  // |indirectCallsToSecondaryFunctions|.
+  struct Gatherer : public PostWalker<Gatherer> {
+    ModuleSplitter& parent;
+
+    Gatherer(ModuleSplitter& parent) : parent(parent) {}
+
+    // Collect RefFuncs in a map from the function name to all RefFuncs that
+    // refer to it. We only collect this for secondary funcs.
+    InsertOrderedMap<Name, std::vector<RefFunc*>> map;
+
+    void visitRefFunc(RefFunc* curr) {
+      if (parent.secondaryFuncs.count(curr->func)) {
+        map[curr->func].push_back(curr);
+      }
+    }
+  } gatherer(*this);
+  gatherer.walkModule(&primary);
+
+  // Find all RefFuncs in active elementSegments, which we can ignore: tables
+  // are the means by which we connect the modules, and are handled directly.
+  // Passive segments, however, are like RefFuncs in code, and we need to not
+  // ignore them here.
+  std::unordered_set<RefFunc*> ignore;
+  for (auto& seg : primary.elementSegments) {
+    if (!seg->table.is()) {
+      continue;
+    }
+    for (auto* curr : seg->data) {
+      if (auto* refFunc = curr->dynCast<RefFunc>()) {
+        ignore.insert(refFunc);
+      }
+    }
+  }
+
+  // Fix up what we found: Generate trampolines as described earlier, and apply
+  // them.
+  Builder builder(primary);
+  // Generate the new trampoline function and add it to the module.
+  for (auto& [name, refFuncs] : gatherer.map) {
+    // Find the relevant (non-ignored) RefFuncs. If there are none, we can skip
+    // creating a thunk entirely.
+    std::vector<RefFunc*> relevantRefFuncs;
+    for (auto* refFunc : refFuncs) {
+      assert(refFunc->func == name);
+      if (!ignore.count(refFunc)) {
+        relevantRefFuncs.push_back(refFunc);
+      }
+    }
+    if (relevantRefFuncs.empty()) {
+      continue;
+    }
+
+    auto* oldFunc = secondary.getFunction(name);
+    auto newName = Names::getValidFunctionName(
+      primary, std::string("trampoline_") + name.toString());
+
+    // Generate the call and the function.
+    std::vector<Expression*> args;
+    for (Index i = 0; i < oldFunc->getNumParams(); i++) {
+      args.push_back(builder.makeLocalGet(i, oldFunc->getLocalType(i)));
+    }
+    auto* call = builder.makeCall(name, args, oldFunc->getResults());
+
+    primary.addFunction(builder.makeFunction(newName, oldFunc->type, {}, call));
+
+    // Update RefFuncs to refer to it.
+    for (auto* refFunc : relevantRefFuncs) {
+      refFunc->func = newName;
+    }
+  }
+}
+
 void ModuleSplitter::indirectCallsToSecondaryFunctions() {
   // Update direct calls of secondary functions to be indirect calls of their
   // corresponding table indices instead.
-  struct CallIndirector : public WalkerPass<PostWalker<CallIndirector>> {
+  struct CallIndirector : public PostWalker<CallIndirector> {
     ModuleSplitter& parent;
     Builder builder;
     CallIndirector(ModuleSplitter& parent)
@@ -554,16 +633,12 @@ void ModuleSplitter::indirectCallsToSecondaryFunctions() {
                                  func->type,
                                  curr->isReturn)));
     }
-    void visitRefFunc(RefFunc* curr) {
-      assert(false && "TODO: handle ref.func as well");
-    }
   };
-  PassRunner runner(&primary);
-  CallIndirector(*this).run(&runner, &primary);
+  CallIndirector(*this).walkModule(&primary);
 }
 
 void ModuleSplitter::exportImportCalledPrimaryFunctions() {
-  // Find primary functions called in the secondary module.
+  // Find primary functions called/referred in the secondary module.
   ModuleUtils::ParallelFunctionAnalysis<std::vector<Name>> callCollector(
     secondary, [&](Function* func, std::vector<Name>& calledPrimaryFuncs) {
       struct CallCollector : PostWalker<CallCollector> {
@@ -579,7 +654,9 @@ void ModuleSplitter::exportImportCalledPrimaryFunctions() {
           }
         }
         void visitRefFunc(RefFunc* curr) {
-          assert(false && "TODO: handle ref.func as well");
+          if (primaryFuncs.count(curr->func)) {
+            calledPrimaryFuncs.push_back(curr->func);
+          }
         }
       };
       CallCollector(primaryFuncs, calledPrimaryFuncs).walkFunction(func);
