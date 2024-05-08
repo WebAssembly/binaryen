@@ -198,7 +198,7 @@ private:
 // Class to collect functions that are already trivial before the pass is run.
 // When this pass is run, other optimizations that preceded it might have left
 // the body of some of these functions trivial.
-// Since the loop in this pass while only inline the functions that are made
+// Since the loop in this pass will only inline the functions that are made
 // trivial by this pass, the functions that were already trivial before would
 // not be inlined if they were not collected by this visitor.
 class TrivialOnceFunctionCollector
