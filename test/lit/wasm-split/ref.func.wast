@@ -25,9 +25,8 @@
 
  (global $glob2 (ref func) (ref.func $second))
 
- (elem (i32.const 0) $in-table $second-in-table)
-
- ;; PRIMARY:      (elem $0 (i32.const 0) $in-table $placeholder_1 $placeholder_2)
+ ;; PRIMARY:      (elem $elem (i32.const 0) $in-table $placeholder_1 $placeholder_2)
+ (elem $elem (i32.const 0) $in-table $second-in-table)
 
  ;; PRIMARY:      (export "prime" (func $prime))
 
