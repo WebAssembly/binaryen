@@ -475,24 +475,10 @@ private:
 // StackIR in parallel, and then allows querying for the StackIR of individual
 // functions.
 class ModuleStackIRGenerator {
-  ModuleUtils::ParallelFunctionAnalysis<TablesWithSet> analysis;
+  ModuleUtils::ParallelFunctionAnalysis<StackIR> analysis;
 
 public:
-  ModuleStackIRGenerator(Module& wasm, const PassOptions& options) : analysis(
-      wasm, [&](Function* func, StackIR& stackIR) {
-        if (func->imported()) {
-          return;
-        }
-
-        StackIRGenerator stackIRGen(*getModule(), func);
-        stackIRGen.write();
-        func->stackIR = std::make_unique<StackIR>(std::move(stackIRGen.getStackIR()));
-
-        if (options.optimizeStackIR) {
-          StackIROptimizer optimizer(func, options, getModule()->features);
-          optimizer.run();
-        }
-      }) {}
+  ModuleStackIRGenerator(Module& wasm, const PassOptions& options);
 
   // Get StackIR for a function, if it exists. (This allows some functions to
   // have it and others not, if we add such capability in the future.)
@@ -503,8 +489,7 @@ public:
     }
     return &iter->second;
   }
-}
-
+};
 
 // Stack IR to binary writer
 class StackIRToBinaryWriter {

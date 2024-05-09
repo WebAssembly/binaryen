@@ -2800,6 +2800,22 @@ StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
   return ret;
 }
 
+ModuleStackIRGenerator::ModuleStackIRGenerator(Module& wasm, const PassOptions& options) : analysis(
+    wasm, [&](Function* func, StackIR& stackIR) {
+      if (func->imported()) {
+        return;
+      }
+
+      StackIRGenerator stackIRGen(*getModule(), func);
+      stackIRGen.write();
+      stackIR = std::make_unique<StackIR>(std::move(stackIRGen.getStackIR()));
+
+      if (options.optimizeStackIR) {
+        StackIROptimizer optimizer(func, options, getModule()->features);
+        optimizer.run();
+      }
+    }) {}
+
 void StackIRToBinaryWriter::write() {
   if (func->prologLocation.size()) {
     parent.writeDebugLocation(*func->prologLocation.begin());
