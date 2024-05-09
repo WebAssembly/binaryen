@@ -1316,7 +1316,6 @@ public:
 
   void writeFunctionSignatures();
   void writeExpression(Expression* curr);
-  void prepareFunctions();
   void writeFunctions();
   void writeStrings();
   void writeGlobals();

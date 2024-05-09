@@ -69,7 +69,6 @@ void WasmBinaryWriter::write() {
   writeStart();
   writeElementSegments();
   writeDataCount();
-  prepareFunctions();
   writeFunctions();
   writeDataSegments();
   if (debugInfo || emitModuleName) {
@@ -371,42 +370,6 @@ void WasmBinaryWriter::writeImports() {
   finishSection(start);
 }
 
-void WasmBinaryWriter::prepareFunctions() {
-  if (!options.generateStackIR) {
-    return;
-  }
-
-  // Generate StackIR for functions in parallel, and optimize if requested.
-  struct StackIRPass : public WalkerPass<PostWalker<StackIRPass>> {
-    bool isFunctionParallel() override { return true; }
-
-    std::unique_ptr<Pass> create() override {
-      return std::make_unique<StackIRPass>();
-    }
-
-    void doWalkFunction(Function* func) {
-      StackIRGenerator stackIRGen(*getModule(), func);
-      stackIRGen.write();
-      func->stackIR = std::make_unique<StackIR>(std::move(stackIRGen.getStackIR()));
-
-      auto& options = getPassOptions();
-      if (options.optimizeStackIR) {
-        StackIROptimizer optimizer(func, options, getModule()->features);
-        optimizer.run();
-      }
-    }
-  };
-
-  PassRunner runner(wasm, options);
-  runner.setIsNested(true);
-  runner.add(std::make_unique<StackIRPass>());
-  runner.run();
-
-  if (options.printStackIR) {
-    printStackIRInternal(**options.printStackIR, wasm);
-  }
-}
-
 void WasmBinaryWriter::writeFunctionSignatures() {
   if (importInfo->getNumDefinedFunctions() == 0) {
     return;
@@ -429,6 +392,12 @@ void WasmBinaryWriter::writeFunctions() {
   if (importInfo->getNumDefinedFunctions() == 0) {
     return;
   }
+
+  std::optional<ModuleStackIRGenerator> moduleStackIR;
+  if (options.generateStackIR) {
+    moduleStackIR.emplace(wasm, options);
+  }
+
   BYN_TRACE("== writeFunctions\n");
   auto sectionStart = startSection(BinaryConsts::Section::Code);
   o << U32LEB(importInfo->getNumDefinedFunctions());
@@ -443,9 +412,9 @@ void WasmBinaryWriter::writeFunctions() {
     size_t start = o.size();
     BYN_TRACE("writing" << func->name << std::endl);
     // Emit Stack IR if present.
-    if (func->stackIR) {
+    if (moduleStackIR; auto* stackIR = moduleStackIR->getStackIROrNull(func)) {
       BYN_TRACE("write Stack IR\n");
-      StackIRToBinaryWriter writer(*this, o, func, sourceMap, DWARF);
+      StackIRToBinaryWriter writer(*this, o, func, *stackIR, sourceMap, DWARF);
       writer.write();
       if (debugInfo) {
         funcMappedLocals[func->name] = std::move(writer.getMappedLocals());

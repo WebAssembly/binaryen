@@ -22,6 +22,8 @@
 
 namespace wasm {
 
+namespace {
+
 static Name IMPOSSIBLE_CONTINUE("impossible-continue");
 
 void BinaryInstWriter::emitResultType(Type type) {
@@ -2805,7 +2807,7 @@ void StackIRToBinaryWriter::write() {
   writer.mapLocalsAndEmitHeader();
   // Stack to track indices of catches within a try
   SmallVector<Index, 4> catchIndexStack;
-  for (auto* inst : *func->stackIR) {
+  for (auto* inst : stackIR) {
     if (!inst) {
       continue; // a nullptr is just something we can skip
     }
@@ -2869,5 +2871,46 @@ void StackIRToBinaryWriter::write() {
   }
   writer.emitFunctionEnd();
 }
+
+// Queues the expressions linearly in Stack IR (SIR)
+class StackIRGenerator : public BinaryenIRWriter<StackIRGenerator> {
+public:
+  StackIRGenerator(Module& module, Function* func)
+    : BinaryenIRWriter<StackIRGenerator>(func), module(module) {}
+
+  void emit(Expression* curr);
+  void emitScopeEnd(Expression* curr);
+  void emitHeader() {}
+  void emitIfElse(If* curr) {
+    stackIR.push_back(makeStackInst(StackInst::IfElse, curr));
+  }
+  void emitCatch(Try* curr, Index i) {
+    stackIR.push_back(makeStackInst(StackInst::Catch, curr));
+  }
+  void emitCatchAll(Try* curr) {
+    stackIR.push_back(makeStackInst(StackInst::CatchAll, curr));
+  }
+  void emitDelegate(Try* curr) {
+    stackIR.push_back(makeStackInst(StackInst::Delegate, curr));
+  }
+  void emitFunctionEnd() {}
+  void emitUnreachable() {
+    stackIR.push_back(makeStackInst(Builder(module).makeUnreachable()));
+  }
+  void emitDebugLocation(Expression* curr) {}
+
+  StackIR& getStackIR() { return stackIR; }
+
+private:
+  StackInst* makeStackInst(StackInst::Op op, Expression* origin);
+  StackInst* makeStackInst(Expression* origin) {
+    return makeStackInst(StackInst::Basic, origin);
+  }
+
+  Module& module;
+  StackIR stackIR; // filled in write()
+};
+
+} // anonymous namespace
 
 } // namespace wasm
