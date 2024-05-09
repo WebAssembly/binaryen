@@ -304,6 +304,15 @@ namespace TypeUpdating {
 
 bool canHandleAsLocal(Type type) {
   // TODO: Inline this into its callers.
+  if (type.isRef()) {
+    // V8 does not accept nullable string views, and so we must avoid putting
+    // them in locals (as even a non-nullable one may end up nullable if we see
+    // situations that require fixing in handleNonDefaultableLocals).
+    auto heapType = type.getHeapType();
+    return heapType != HeapType::stringview_wtf8 &&
+           heapType != HeapType::stringview_wtf16 &&
+           heapType != HeapType::stringview_iter;
+  }
   return type.isConcrete();
 }
 

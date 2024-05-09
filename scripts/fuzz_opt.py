@@ -668,6 +668,9 @@ def run_vm(cmd):
             HOST_LIMIT_PREFIX,
             # see comment above on this constant
             V8_UNINITIALIZED_NONDEF_LOCAL,
+            # V8 does not accept nullable stringviews
+            # (https://github.com/WebAssembly/binaryen/pull/6574)
+            'expected (ref stringview_wtf16), got nullref',
         ]
         for issue in known_issues:
             if issue in output:
