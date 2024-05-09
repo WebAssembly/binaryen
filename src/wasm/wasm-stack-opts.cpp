@@ -30,8 +30,7 @@ StackIROptimizer::StackIROptimizer(Function* func,
                                    StackIR& insts,
                                    const PassOptions& passOptions,
                                    FeatureSet features)
-  : func(func), insts(insts), passOptions(passOptions),
-    features(features) {}
+  : func(func), insts(insts), passOptions(passOptions), features(features) {}
 
 void StackIROptimizer::run() {
   dce();

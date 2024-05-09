@@ -109,11 +109,11 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
   const char* maybeSpace;
   const char* maybeNewLine;
 
-  bool full = false;    // whether to not elide nodes in output when possible
-                        // (like implicit blocks) and to emit types
-  std::optional<ModuleStackIR> moduleStackIR; // whether to print stack IR if it is present
-                        // (if false, and Stack IR is there, we just
-                        // note it exists)
+  // Whether to not elide nodes in output when possible (like implicit blocks)
+  // and to emit types.
+  bool full = false;
+  // If present, it contains StackIR that we will print.
+  std::optional<ModuleStackIR> moduleStackIR;
 
   Module* currModule = nullptr;
   Function* currFunction = nullptr;
@@ -3602,7 +3602,8 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
   return o;
 }
 
-std::ostream& printStackIR(std::ostream& o, Module* module, const PassOptions& options) {
+std::ostream&
+printStackIR(std::ostream& o, Module* module, const PassOptions& options) {
   wasm::PassRunner runner(module, options);
   runner.add(std::make_unique<PrintStackIR>(&o));
   runner.run();
