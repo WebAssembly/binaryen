@@ -746,7 +746,7 @@ void WasmBinaryWriter::writeTableDeclarations() {
                          table->max,
                          table->hasMax(),
                          /*shared=*/false,
-                         /*is64*/ false);
+                         table->is64());
   });
   finishSection(start);
 }
@@ -2462,6 +2462,13 @@ Name WasmBinaryReader::getGlobalName(Index index) {
   return wasm.globals[index]->name;
 }
 
+Table* WasmBinaryReader::getTable(Index index) {
+  if (index < wasm.tables.size()) {
+    return wasm.tables[index].get();
+  }
+  throwError("Table index out of range.");
+}
+
 Name WasmBinaryReader::getTagName(Index index) {
   if (index >= wasm.tags.size()) {
     throwError("invalid tag index");
@@ -2555,17 +2562,13 @@ void WasmBinaryReader::readImports() {
         table->type = getType();
 
         bool is_shared;
-        Type indexType;
         getResizableLimits(table->initial,
                            table->max,
                            is_shared,
-                           indexType,
+                           table->indexType,
                            Table::kUnlimitedSize);
         if (is_shared) {
           throwError("Tables may not be shared");
-        }
-        if (indexType == Type::i64) {
-          throwError("Tables may not be 64-bit");
         }
 
         wasm.addTable(std::move(table));
@@ -3355,16 +3358,14 @@ void WasmBinaryReader::readTableDeclarations() {
     }
     auto table = Builder::makeTable(Name::fromInt(i), elemType);
     bool is_shared;
-    Type indexType;
-    getResizableLimits(
-      table->initial, table->max, is_shared, indexType, Table::kUnlimitedSize);
+    getResizableLimits(table->initial,
+                       table->max,
+                       is_shared,
+                       table->indexType,
+                       Table::kUnlimitedSize);
     if (is_shared) {
       throwError("Tables may not be shared");
     }
-    if (indexType == Type::i64) {
-      throwError("Tables may not be 64-bit");
-    }
-
     wasm.addTable(std::move(table));
   }
 }
@@ -5511,6 +5512,9 @@ bool WasmBinaryReader::maybeVisitTableSize(Expression*& out, uint32_t code) {
     throwError("bad table index");
   }
   auto* curr = allocator.alloc<TableSize>();
+  if (getTable(tableIdx)->is64()) {
+    curr->type = Type::i64;
+  }
   curr->finalize();
   // Defer setting the table name for later, when we know it.
   tableRefs[tableIdx].push_back(&curr->table);
@@ -5529,6 +5533,9 @@ bool WasmBinaryReader::maybeVisitTableGrow(Expression*& out, uint32_t code) {
   auto* curr = allocator.alloc<TableGrow>();
   curr->delta = popNonVoidExpression();
   curr->value = popNonVoidExpression();
+  if (getTable(tableIdx)->is64()) {
+    curr->type = Type::i64;
+  }
   curr->finalize();
   // Defer setting the table name for later, when we know it.
   tableRefs[tableIdx].push_back(&curr->table);
