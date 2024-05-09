@@ -238,6 +238,7 @@ Result<Expression*> parseExpression(Module& wasm, Lexer& lexer) {
   ParseDefsCtx ctx(lexer, wasm, {}, {}, {}, {}, {});
   auto e = expr(ctx);
   CHECK_ERR(e);
+  lexer = ctx.in;
   return *e;
 }
 

@@ -3,6 +3,7 @@ set(parser_SOURCES
  context-decls.cpp
  context-defs.cpp
  lexer.cpp
+ wast-parser.cpp
  wat-parser.cpp
  ${parser_HEADERS}
 )

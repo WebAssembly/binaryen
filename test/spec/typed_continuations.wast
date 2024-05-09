@@ -21,6 +21,7 @@
   (type $ct1 (cont $ft))
   (type $ct2 (cont $ct1))
  )
+ "invalid"
 )
 
 (assert_invalid
@@ -32,6 +33,7 @@
    (i32.const 123)
   )
  )
+ "invalid"
 )
 
 (assert_invalid
@@ -43,4 +45,5 @@
    (i32.const 123)
   )
  )
+ "invalid"
 )
