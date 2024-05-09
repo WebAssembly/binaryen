@@ -27,12 +27,11 @@
 namespace wasm {
 
 StackIROptimizer::StackIROptimizer(Function* func,
+                                   StackIR& insts,
                                    const PassOptions& passOptions,
                                    FeatureSet features)
-  : func(func), passOptions(passOptions), insts(*func->stackIR.get()),
-    features(features) {
-  assert(func->stackIR); // TODO move out of func
-}
+  : func(func), insts(insts), passOptions(passOptions),
+    features(features) {}
 
 void StackIROptimizer::run() {
   dce();

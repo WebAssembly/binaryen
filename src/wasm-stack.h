@@ -518,12 +518,13 @@ private:
 // Stack IR optimizer
 class StackIROptimizer {
   Function* func;
-  const PassOptions& passOptions;
   StackIR& insts;
+  const PassOptions& passOptions;
   FeatureSet features;
 
 public:
   StackIROptimizer(Function* func,
+                   StackIR& insts,
                    const PassOptions& passOptions,
                    FeatureSet features);
 
