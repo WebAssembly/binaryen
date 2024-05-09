@@ -35,6 +35,7 @@
 #include "wasm-interpreter.h"
 #include "wasm-io.h"
 #include "wasm-s-parser.h"
+#include "wasm-stack.h"
 #include "wasm-validator.h"
 #include "wasm2c-wrapper.h"
 
@@ -423,7 +424,7 @@ int main(int argc, const char* argv[]) {
       // are not emitting a binary, but we do want to go through the binary
       // writing process just to get StackIR to be printed. We can do that by
       // computing the binary size.
-      computeBinarySize();
+      printStackIR(std::cout, &wasm);
     }
     if (!options.quiet) {
       std::cerr << "warning: no output file specified, not emitting output\n";

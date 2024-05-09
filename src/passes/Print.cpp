@@ -3438,8 +3438,6 @@ public:
   }
 };
 
-Pass* createPrintStackIRPass() { return new PrintStackIR(); }
-
 static std::ostream& printExpression(Expression* expression,
                                      std::ostream& o,
                                      bool minify,
@@ -3604,22 +3602,10 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
   return o;
 }
 
-std::ostream& printStackIRInternal(std::ostream& o, Module* module) {
+std::ostream& printStackIR(std::ostream& o, Module* module) {
   wasm::PassRunner runner(module);
   runner.add(std::make_unique<PrintStackIR>(&o));
   runner.run();
-  return o;
-}
-
-std::ostream& printStackIR(std::ostream& o, Module* module) {
-  // Go through binary writing in order to print StackIR. The code will end up
-  // calling |printStackIRInternal|, above, at the right time.
-  PassOptions options;
-  options.generateStackIR = true;
-  options.printStackIR = &o;
-  BufferWithRandomAccess buffer;
-  WasmBinaryWriter writer(module, buffer, options);
-  writer.write();
   return o;
 }
 

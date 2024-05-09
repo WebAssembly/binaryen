@@ -544,9 +544,6 @@ private:
   bool canRemoveSetGetPair(Index setIndex, Index getIndex);
 };
 
-// Emit StackIR when it already exists. This is only used internally.
-std::ostream& printStackIRInternal(std::ostream& o, Module* module);
-
 // Generate and emit StackIR.
 std::ostream& printStackIR(std::ostream& o, Module* module);
 
