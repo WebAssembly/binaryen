@@ -3006,7 +3006,11 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
     o << maybeNewLine;
   }
   // Print the body.
-  if (moduleStackIR; auto* stackIR = moduleStackIR->getStackIROrNull(curr)) {
+  StackIR* stackIR = nullptr;
+  if (moduleStackIR) {
+    stackIR = moduleStackIR->getStackIROrNull(curr);
+  }
+  if (stackIR {
     printStackIR(stackIR, *this);
   } else {
     // It is ok to emit a block here, as a function can directly contain a

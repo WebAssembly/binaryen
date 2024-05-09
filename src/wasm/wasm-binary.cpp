@@ -395,7 +395,7 @@ void WasmBinaryWriter::writeFunctions() {
 
   std::optional<ModuleStackIR> moduleStackIR;
   if (options.generateStackIR) {
-    moduleStackIR.emplace(wasm, options);
+    moduleStackIR.emplace(*wasm, options);
   }
 
   BYN_TRACE("== writeFunctions\n");
@@ -412,7 +412,11 @@ void WasmBinaryWriter::writeFunctions() {
     size_t start = o.size();
     BYN_TRACE("writing" << func->name << std::endl);
     // Emit Stack IR if present.
-    if (moduleStackIR; auto* stackIR = moduleStackIR->getStackIROrNull(func)) {
+    StackIR* stackIR = nullptr;
+    if (moduleStackIR) {
+      stackIR = moduleStackIR->getStackIROrNull(func);
+    }
+    if (stackIR {
       BYN_TRACE("write Stack IR\n");
       StackIRToBinaryWriter writer(*this, o, func, *stackIR, sourceMap, DWARF);
       writer.write();
