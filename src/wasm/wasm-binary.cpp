@@ -387,8 +387,7 @@ void WasmBinaryWriter::prepareFunctions() {
     void doWalkFunction(Function* func) {
       StackIRGenerator stackIRGen(*getModule(), func);
       stackIRGen.write();
-      func->stackIR = std::make_unique<StackIR>();
-      func->stackIR->swap(stackIRGen.getStackIR());
+      func->stackIR = std::make_unique<StackIR>(std::move(stackIRGen.getStackIR()));
 
       auto& options = getPassOptions();
       if (options.optimizeStackIR) {
