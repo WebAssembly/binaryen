@@ -293,7 +293,7 @@
  (memory $0 1 1)
  (export "mem" (memory $0))
  (start $main)
- (func $check (; has Stack IR ;) (result i32)
+ (func $check (result i32)
   (if
    (i32.eq
     (i32.load
@@ -330,7 +330,7 @@
    )
   )
  )
- (func $main (; has Stack IR ;)
+ (func $main
   (local $0 i32)
   (i32.store
    (i32.const 8)

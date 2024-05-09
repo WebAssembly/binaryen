@@ -149,7 +149,7 @@ void ModuleWriter::writeText(Module& wasm, std::string filename) {
 
 void ModuleWriter::writeBinary(Module& wasm, Output& output) {
   BufferWithRandomAccess buffer;
-  WasmBinaryWriter writer(&wasm, buffer);
+  WasmBinaryWriter writer(&wasm, buffer, options);
   // if debug info is used, then we want to emit the names section
   writer.setNamesSection(debugInfo);
   if (emitModuleName) {

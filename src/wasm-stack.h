@@ -18,6 +18,7 @@
 #define wasm_stack_h
 
 #include "ir/branch-utils.h"
+#include "ir/module-utils.h"
 #include "ir/properties.h"
 #include "pass.h"
 #include "support/insert_ordered.h"
@@ -84,6 +85,8 @@ public:
   // unreachable blocks, they must be none
   Type type;
 };
+
+using StackIR = std::vector<StackInst*>;
 
 class BinaryInstWriter : public OverriddenVisitor<BinaryInstWriter> {
 public:
@@ -468,44 +471,24 @@ private:
   bool sourceMap;
 };
 
-// Binaryen IR to stack IR converter
-// Queues the expressions linearly in Stack IR (SIR)
-class StackIRGenerator : public BinaryenIRWriter<StackIRGenerator> {
+// Binaryen IR to stack IR converter for an entire module. Generates all the
+// StackIR in parallel, and then allows querying for the StackIR of individual
+// functions.
+class ModuleStackIR {
+  ModuleUtils::ParallelFunctionAnalysis<StackIR> analysis;
+
 public:
-  StackIRGenerator(Module& module, Function* func)
-    : BinaryenIRWriter<StackIRGenerator>(func), module(module) {}
+  ModuleStackIR(Module& wasm, const PassOptions& options);
 
-  void emit(Expression* curr);
-  void emitScopeEnd(Expression* curr);
-  void emitHeader() {}
-  void emitIfElse(If* curr) {
-    stackIR.push_back(makeStackInst(StackInst::IfElse, curr));
+  // Get StackIR for a function, if it exists. (This allows some functions to
+  // have it and others not, if we add such capability in the future.)
+  StackIR* getStackIROrNull(Function* func) {
+    auto iter = analysis.map.find(func);
+    if (iter == analysis.map.end()) {
+      return nullptr;
+    }
+    return &iter->second;
   }
-  void emitCatch(Try* curr, Index i) {
-    stackIR.push_back(makeStackInst(StackInst::Catch, curr));
-  }
-  void emitCatchAll(Try* curr) {
-    stackIR.push_back(makeStackInst(StackInst::CatchAll, curr));
-  }
-  void emitDelegate(Try* curr) {
-    stackIR.push_back(makeStackInst(StackInst::Delegate, curr));
-  }
-  void emitFunctionEnd() {}
-  void emitUnreachable() {
-    stackIR.push_back(makeStackInst(Builder(module).makeUnreachable()));
-  }
-  void emitDebugLocation(Expression* curr) {}
-
-  StackIR& getStackIR() { return stackIR; }
-
-private:
-  StackInst* makeStackInst(StackInst::Op op, Expression* origin);
-  StackInst* makeStackInst(Expression* origin) {
-    return makeStackInst(StackInst::Basic, origin);
-  }
-
-  Module& module;
-  StackIR stackIR; // filled in write()
 };
 
 // Stack IR to binary writer
@@ -514,10 +497,11 @@ public:
   StackIRToBinaryWriter(WasmBinaryWriter& parent,
                         BufferWithRandomAccess& o,
                         Function* func,
+                        StackIR& stackIR,
                         bool sourceMap = false,
                         bool DWARF = false)
     : parent(parent), writer(parent, o, func, sourceMap, DWARF), func(func),
-      sourceMap(sourceMap) {}
+      stackIR(stackIR), sourceMap(sourceMap) {}
 
   void write();
 
@@ -527,11 +511,47 @@ private:
   WasmBinaryWriter& parent;
   BinaryInstWriter writer;
   Function* func;
+  StackIR& stackIR;
   bool sourceMap;
 };
 
-std::ostream& printStackIR(std::ostream& o, Module* module, bool optimize);
+// Stack IR optimizer
+class StackIROptimizer {
+  Function* func;
+  StackIR& insts;
+  const PassOptions& passOptions;
+  FeatureSet features;
+
+public:
+  StackIROptimizer(Function* func,
+                   StackIR& insts,
+                   const PassOptions& passOptions,
+                   FeatureSet features);
+
+  void run();
+
+private:
+  void dce();
+  void vacuum();
+  void local2Stack();
+  void removeUnneededBlocks();
+  bool isControlFlowBarrier(StackInst* inst);
+  bool isControlFlowBegin(StackInst* inst);
+  bool isControlFlowEnd(StackInst* inst);
+  bool isControlFlow(StackInst* inst);
+  void removeAt(Index i);
+  Index getNumConsumedValues(StackInst* inst);
+  bool canRemoveSetGetPair(Index setIndex, Index getIndex);
+};
+
+// Generate and emit StackIR.
+std::ostream&
+printStackIR(std::ostream& o, Module* module, const PassOptions& options);
 
 } // namespace wasm
+
+namespace std {
+std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst);
+} // namespace std
 
 #endif // wasm_stack_h

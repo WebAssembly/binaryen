@@ -41,7 +41,7 @@
 
   ;; CHECK:      (export "asyncify_get_state" (func $asyncify_get_state))
 
-  ;; CHECK:      (func $calls-import (; has Stack IR ;)
+  ;; CHECK:      (func $calls-import
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.or
   ;; CHECK-NEXT:    (i32.eqz
@@ -95,7 +95,7 @@
     (drop (i32.eqz (i32.const 17)))
   )
 )
-;; CHECK:      (func $asyncify_start_unwind (; has Stack IR ;) (param $0 i32)
+;; CHECK:      (func $asyncify_start_unwind (param $0 i32)
 ;; CHECK-NEXT:  (global.set $__asyncify_state
 ;; CHECK-NEXT:   (i32.const 1)
 ;; CHECK-NEXT:  )
@@ -117,7 +117,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $asyncify_stop_unwind (; has Stack IR ;)
+;; CHECK:      (func $asyncify_stop_unwind
 ;; CHECK-NEXT:  (global.set $__asyncify_state
 ;; CHECK-NEXT:   (i32.const 0)
 ;; CHECK-NEXT:  )
@@ -136,7 +136,7 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $asyncify_start_rewind (; has Stack IR ;) (param $0 i32)
+;; CHECK:      (func $asyncify_start_rewind (param $0 i32)
 ;; CHECK-NEXT:  (global.set $__asyncify_state
 ;; CHECK-NEXT:   (i32.const 2)
 ;; CHECK-NEXT:  )
@@ -158,6 +158,6 @@
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $asyncify_get_state (; has Stack IR ;) (result i32)
+;; CHECK:      (func $asyncify_get_state (result i32)
 ;; CHECK-NEXT:  (global.get $__asyncify_state)
 ;; CHECK-NEXT: )

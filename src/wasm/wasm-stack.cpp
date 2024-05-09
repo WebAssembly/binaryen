@@ -2737,6 +2737,45 @@ int32_t BinaryInstWriter::getBreakIndex(Name name) { // -1 if not found
   WASM_UNREACHABLE("break index not found");
 }
 
+// Queues the expressions linearly in Stack IR (SIR)
+class StackIRGenerator : public BinaryenIRWriter<StackIRGenerator> {
+public:
+  StackIRGenerator(Module& module, Function* func)
+    : BinaryenIRWriter<StackIRGenerator>(func), module(module) {}
+
+  void emit(Expression* curr);
+  void emitScopeEnd(Expression* curr);
+  void emitHeader() {}
+  void emitIfElse(If* curr) {
+    stackIR.push_back(makeStackInst(StackInst::IfElse, curr));
+  }
+  void emitCatch(Try* curr, Index i) {
+    stackIR.push_back(makeStackInst(StackInst::Catch, curr));
+  }
+  void emitCatchAll(Try* curr) {
+    stackIR.push_back(makeStackInst(StackInst::CatchAll, curr));
+  }
+  void emitDelegate(Try* curr) {
+    stackIR.push_back(makeStackInst(StackInst::Delegate, curr));
+  }
+  void emitFunctionEnd() {}
+  void emitUnreachable() {
+    stackIR.push_back(makeStackInst(Builder(module).makeUnreachable()));
+  }
+  void emitDebugLocation(Expression* curr) {}
+
+  StackIR& getStackIR() { return stackIR; }
+
+private:
+  StackInst* makeStackInst(StackInst::Op op, Expression* origin);
+  StackInst* makeStackInst(Expression* origin) {
+    return makeStackInst(StackInst::Basic, origin);
+  }
+
+  Module& module;
+  StackIR stackIR; // filled in write()
+};
+
 void StackIRGenerator::emit(Expression* curr) {
   StackInst* stackInst = nullptr;
   if (curr->is<Block>()) {
@@ -2798,6 +2837,22 @@ StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
   return ret;
 }
 
+ModuleStackIR::ModuleStackIR(Module& wasm, const PassOptions& options)
+  : analysis(wasm, [&](Function* func, StackIR& stackIR) {
+      if (func->imported()) {
+        return;
+      }
+
+      StackIRGenerator stackIRGen(wasm, func);
+      stackIRGen.write();
+      stackIR = std::move(stackIRGen.getStackIR());
+
+      if (options.optimizeStackIR) {
+        StackIROptimizer optimizer(func, stackIR, options, wasm.features);
+        optimizer.run();
+      }
+    }) {}
+
 void StackIRToBinaryWriter::write() {
   if (func->prologLocation.size()) {
     parent.writeDebugLocation(*func->prologLocation.begin());
@@ -2805,7 +2860,7 @@ void StackIRToBinaryWriter::write() {
   writer.mapLocalsAndEmitHeader();
   // Stack to track indices of catches within a try
   SmallVector<Index, 4> catchIndexStack;
-  for (auto* inst : *func->stackIR) {
+  for (auto* inst : stackIR) {
     if (!inst) {
       continue; // a nullptr is just something we can skip
     }

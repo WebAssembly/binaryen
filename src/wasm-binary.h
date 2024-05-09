@@ -1270,8 +1270,10 @@ class WasmBinaryWriter {
   };
 
 public:
-  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o)
-    : wasm(input), o(o), indexes(*input) {
+  WasmBinaryWriter(Module* input,
+                   BufferWithRandomAccess& o,
+                   const PassOptions& options)
+    : wasm(input), o(o), options(options), indexes(*input) {
     prepare();
   }
 
@@ -1384,6 +1386,8 @@ public:
 private:
   Module* wasm;
   BufferWithRandomAccess& o;
+  const PassOptions& options;
+
   BinaryIndexes indexes;
   ModuleUtils::IndexedHeapTypes indexedTypes;
   std::unordered_map<Signature, uint32_t> signatureIndexes;

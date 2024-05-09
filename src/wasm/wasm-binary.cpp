@@ -392,6 +392,12 @@ void WasmBinaryWriter::writeFunctions() {
   if (importInfo->getNumDefinedFunctions() == 0) {
     return;
   }
+
+  std::optional<ModuleStackIR> moduleStackIR;
+  if (options.generateStackIR) {
+    moduleStackIR.emplace(*wasm, options);
+  }
+
   BYN_TRACE("== writeFunctions\n");
   auto sectionStart = startSection(BinaryConsts::Section::Code);
   o << U32LEB(importInfo->getNumDefinedFunctions());
@@ -405,10 +411,14 @@ void WasmBinaryWriter::writeFunctions() {
     size_t sizePos = writeU32LEBPlaceholder();
     size_t start = o.size();
     BYN_TRACE("writing" << func->name << std::endl);
-    // Emit Stack IR if present, and if we can
-    if (func->stackIR) {
+    // Emit Stack IR if present.
+    StackIR* stackIR = nullptr;
+    if (moduleStackIR) {
+      stackIR = moduleStackIR->getStackIROrNull(func);
+    }
+    if (stackIR) {
       BYN_TRACE("write Stack IR\n");
-      StackIRToBinaryWriter writer(*this, o, func, sourceMap, DWARF);
+      StackIRToBinaryWriter writer(*this, o, func, *stackIR, sourceMap, DWARF);
       writer.write();
       if (debugInfo) {
         funcMappedLocals[func->name] = std::move(writer.getMappedLocals());

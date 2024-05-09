@@ -2688,8 +2688,8 @@ function wrapModule(module, self = {}) {
     if (textPtr) _free(textPtr);
     return text;
   };
-  self['emitStackIR'] = function(optimize) {
-    let textPtr = Module['_BinaryenModuleAllocateAndWriteStackIR'](module, optimize);
+  self['emitStackIR'] = function() {
+    let textPtr = Module['_BinaryenModuleAllocateAndWriteStackIR'](module);
     let text = UTF8ToString(textPtr);
     if (textPtr) _free(textPtr);
     return text;

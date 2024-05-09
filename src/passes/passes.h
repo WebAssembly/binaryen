@@ -54,7 +54,6 @@ Pass* createFunctionMetricsPass();
 Pass* createGenerateDynCallsPass();
 Pass* createGenerateI64DynCallsPass();
 Pass* createGenerateGlobalEffectsPass();
-Pass* createGenerateStackIRPass();
 Pass* createGlobalRefiningPass();
 Pass* createGlobalStructInferencePass();
 Pass* createGlobalTypeOptimizationPass();
@@ -103,7 +102,6 @@ Pass* createOptimizeAddedConstantsPropagatePass();
 Pass* createOptimizeInstructionsPass();
 Pass* createOptimizeCastsPass();
 Pass* createOptimizeForJSPass();
-Pass* createOptimizeStackIRPass();
 // Outlining currently relies on LLVM's SuffixTree, which we can't rely upon
 // when building Binaryen for Emscripten.
 #ifdef __EMSCRIPTEN__
@@ -123,7 +121,6 @@ Pass* createPrinterPass();
 Pass* createPrintCallGraphPass();
 Pass* createPrintFeaturesPass();
 Pass* createPrintFunctionMapPass();
-Pass* createPrintStackIRPass();
 Pass* createPropagateGlobalsGloballyPass();
 Pass* createRemoveNonJSOpsPass();
 Pass* createRemoveImportsPass();

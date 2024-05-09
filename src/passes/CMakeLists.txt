@@ -87,7 +87,6 @@ set(passes_SOURCES
   PrintFunctionMap.cpp
   RoundTrip.cpp
   SetGlobals.cpp
-  StackIR.cpp
   SignaturePruning.cpp
   SignatureRefining.cpp
   SignExtLowering.cpp

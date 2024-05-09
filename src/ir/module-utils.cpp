@@ -69,9 +69,6 @@ Function* copyFunction(Function* func,
   ret->base = func->base;
   ret->noFullInline = func->noFullInline;
   ret->noPartialInline = func->noPartialInline;
-
-  // TODO: copy Stack IR
-  assert(!func->stackIR);
   return out.addFunction(std::move(ret));
 }
 
