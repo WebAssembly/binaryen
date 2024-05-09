@@ -416,7 +416,7 @@ void WasmBinaryWriter::writeFunctions() {
     if (moduleStackIR) {
       stackIR = moduleStackIR->getStackIROrNull(func);
     }
-    if (stackIR {
+    if (stackIR) {
       BYN_TRACE("write Stack IR\n");
       StackIRToBinaryWriter writer(*this, o, func, *stackIR, sourceMap, DWARF);
       writer.write();
