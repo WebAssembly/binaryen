@@ -393,7 +393,7 @@ void WasmBinaryWriter::writeFunctions() {
     return;
   }
 
-  std::optional<ModuleStackIRGenerator> moduleStackIR;
+  std::optional<ModuleStackIR> moduleStackIR;
   if (options.generateStackIR) {
     moduleStackIR.emplace(wasm, options);
   }

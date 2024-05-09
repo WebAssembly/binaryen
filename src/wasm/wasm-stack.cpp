@@ -2800,7 +2800,7 @@ StackInst* StackIRGenerator::makeStackInst(StackInst::Op op,
   return ret;
 }
 
-ModuleStackIRGenerator::ModuleStackIRGenerator(Module& wasm, const PassOptions& options) : analysis(
+ModuleStackIR::ModuleStackIR(Module& wasm, const PassOptions& options) : analysis(
     wasm, [&](Function* func, StackIR& stackIR) {
       if (func->imported()) {
         return;

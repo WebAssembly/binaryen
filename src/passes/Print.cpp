@@ -111,7 +111,7 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   bool full = false;    // whether to not elide nodes in output when possible
                         // (like implicit blocks) and to emit types
-  bool stackIR = false; // whether to print stack IR if it is present
+  std::optional<ModuleStackIR> moduleStackIR; // whether to print stack IR if it is present
                         // (if false, and Stack IR is there, we just
                         // note it exists)
 
@@ -268,7 +268,9 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   void setFull(bool full_) { full = full_; }
 
-  void setStackIR(bool stackIR_) { stackIR = stackIR_; }
+  void generateStackIR(const PassOptions& options) {
+    moduleStackIR.emplace(*currModule, options);
+  }
 
   void setDebugInfo(bool debugInfo_) { debugInfo = debugInfo_; }
 
@@ -3004,7 +3006,9 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
     o << maybeNewLine;
   }
   // Print the body.
-  if (!stackIR || !curr->stackIR) {
+  if (moduleStackIR; auto* stackIR = moduleStackIR->getStackIROrNull(curr)) {
+    printStackIR(stackIR, *this);
+  } else {
     // It is ok to emit a block here, as a function can directly contain a
     // list, even if our ast avoids that for simplicity. We can just do that
     // optimization here..
@@ -3018,9 +3022,6 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
       printFullLine(curr->body);
     }
     assert(controlFlowDepth == 0);
-  } else {
-    // Print the stack IR.
-    printStackIR(curr->stackIR.get(), *this);
   }
   if (currFunction->epilogLocation.size()) {
     // Print last debug location: mix of decIndent and printDebugLocation
@@ -3427,8 +3428,8 @@ public:
   void run(Module* module) override {
     PrintSExpression print(o);
     print.setDebugInfo(getPassOptions().debugInfo);
-    print.setStackIR(true);
     print.currModule = module;
+    print.generateStackIR(getPassOptions());
     print.visitModule(module);
   }
 };
@@ -3662,11 +3663,6 @@ std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression) {
 
 std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {
   return wasm::printStackInst(&inst, o);
-}
-
-std::ostream& operator<<(std::ostream& o, wasm::StackIR& ir) {
-  wasm::PrintSExpression printer(o);
-  return wasm::printStackIR(&ir, printer);
 }
 
 } // namespace std

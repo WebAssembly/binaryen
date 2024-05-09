@@ -151,11 +151,6 @@ struct Monomorphize : public Pass {
     // monomorphizing.
 
     // Create a new function with refined parameters as a copy of the original.
-    // (Note we must clear stack IR on the original: atm we do not have the
-    // ability to copy stack IR, so we'd hit an internal error. But as we will
-    // be optimizing the function anyhow, we'd be throwing away stack IR later
-    // so this isn't a problem.)
-    func->stackIR.reset();
     auto refinedTarget = Names::getValidFunctionName(*module, target);
     auto* refinedFunc = ModuleUtils::copyFunction(func, *module, refinedTarget);
     TypeUpdating::updateParamTypes(refinedFunc, refinedTypes, *module);

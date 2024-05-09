@@ -474,11 +474,11 @@ private:
 // Binaryen IR to stack IR converter for an entire module. Generates all the
 // StackIR in parallel, and then allows querying for the StackIR of individual
 // functions.
-class ModuleStackIRGenerator {
+class ModuleStackIR {
   ModuleUtils::ParallelFunctionAnalysis<StackIR> analysis;
 
 public:
-  ModuleStackIRGenerator(Module& wasm, const PassOptions& options);
+  ModuleStackIR(Module& wasm, const PassOptions& options);
 
   // Get StackIR for a function, if it exists. (This allows some functions to
   // have it and others not, if we add such capability in the future.)
@@ -553,7 +553,6 @@ std::ostream& printStackIR(std::ostream& o, Module* module);
 
 namespace std {
 std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst);
-std::ostream& operator<<(std::ostream& o, wasm::StackIR& ir);
 } // namespace std
 
 #endif // wasm_stack_h
