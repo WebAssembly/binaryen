@@ -424,7 +424,7 @@ int main(int argc, const char* argv[]) {
       // are not emitting a binary, but we do want to go through the binary
       // writing process just to get StackIR to be printed. We can do that by
       // computing the binary size.
-      printStackIR(std::cout, &wasm);
+      printStackIR(std::cout, &wasm, options.passOptions);
     }
     if (!options.quiet) {
       std::cerr << "warning: no output file specified, not emitting output\n";

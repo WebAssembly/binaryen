@@ -5591,7 +5591,7 @@ void BinaryenModulePrint(BinaryenModuleRef module) {
 }
 
 void BinaryenModulePrintStackIR(BinaryenModuleRef module) {
-  wasm::printStackIR(std::cout, (Module*)module);
+  wasm::printStackIR(std::cout, (Module*)module, globalPassOptions);
 }
 
 void BinaryenModulePrintAsmjs(BinaryenModuleRef module) {
@@ -5782,7 +5782,7 @@ size_t BinaryenModuleWriteStackIR(BinaryenModuleRef module,
   // use a stringstream as an std::ostream. Extract the std::string
   // representation, and then store in the output.
   std::stringstream ss;
-  wasm::printStackIR(ss, (Module*)module);
+  wasm::printStackIR(ss, (Module*)module, globalPassOptions);
 
   const auto temp = ss.str();
   const auto ctemp = temp.c_str();
@@ -5846,7 +5846,7 @@ char* BinaryenModuleAllocateAndWriteStackIR(BinaryenModuleRef module) {
   bool colors = Colors::isEnabled();
 
   Colors::setEnabled(false); // do not use colors for writing
-  wasm::printStackIR(os, (Module*)module);
+  wasm::printStackIR(os, (Module*)module, globalPassOptions);
   Colors::setEnabled(colors); // restore colors state
 
   auto str = os.str();

@@ -545,7 +545,7 @@ private:
 };
 
 // Generate and emit StackIR.
-std::ostream& printStackIR(std::ostream& o, Module* module);
+std::ostream& printStackIR(std::ostream& o, Module* module, const PassOptions& options);
 
 } // namespace wasm
 

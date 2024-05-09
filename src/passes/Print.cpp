@@ -3602,8 +3602,8 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression& printer) {
   return o;
 }
 
-std::ostream& printStackIR(std::ostream& o, Module* module) {
-  wasm::PassRunner runner(module);
+std::ostream& printStackIR(std::ostream& o, Module* module, const PassOptions& options) {
+  wasm::PassRunner runner(module, options);
   runner.add(std::make_unique<PrintStackIR>(&o));
   runner.run();
   return o;
