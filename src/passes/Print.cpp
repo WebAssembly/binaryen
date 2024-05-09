@@ -3608,7 +3608,7 @@ std::ostream& printStackIRInternal(std::ostream& o, Module* module) {
 
 std::ostream& printStackIR(std::ostream& o, Module* module) {
   // Go through binary writing in order to print StackIR. The code will end up
-  // caling |printStackIRInternal|, above, at the right time.
+  // calling |printStackIRInternal|, above, at the right time.
   PassOptions options;
   options.generateStackIR = true;
   options.printStackIR = &o;
