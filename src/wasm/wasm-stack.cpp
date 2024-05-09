@@ -2846,10 +2846,8 @@ ModuleStackIR::ModuleStackIR(Module& wasm, const PassOptions& options) : analysi
       StackIRGenerator stackIRGen(wasm, func);
       stackIRGen.write();
       stackIR = std::move(stackIRGen.getStackIR());
-std::cout << "gen\n";
 
       if (options.optimizeStackIR) {
-std::cout << "opt\n";
         StackIROptimizer optimizer(func, stackIR, options, wasm.features);
         optimizer.run();
       }
