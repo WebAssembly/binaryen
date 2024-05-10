@@ -42,9 +42,9 @@
 
   ;; CHECK:       (type $13 (func (param externref) (result externref)))
 
-  ;; CHECK:       (type $14 (func (param externref) (result externref)))
+  ;; CHECK:       (type $14 (func (param (ref extern)) (result externref)))
 
-  ;; CHECK:       (type $15 (func (param externref) (result i32)))
+  ;; CHECK:       (type $15 (func (param (ref extern)) (result i32)))
 
   ;; CHECK:       (type $16 (func (param externref externref) (result i32)))
 
@@ -54,7 +54,7 @@
 
   ;; CHECK:       (type $19 (func (param (ref $0))))
 
-  ;; CHECK:       (type $20 (func (param externref (ref extern) externref externref externref (ref extern))))
+  ;; CHECK:       (type $20 (func (param externref (ref extern) (ref extern) (ref extern) (ref extern) (ref extern))))
 
   ;; CHECK:      (type $21 (func (param (ref null $0) i32 i32) (result (ref extern))))
 
@@ -103,7 +103,7 @@
 
   ;; CHECK:      (export "export.2" (func $exported-string-receiver))
 
-  ;; CHECK:      (func $string.as (type $20) (param $a externref) (param $a_nn (ref extern)) (param $b externref) (param $c externref) (param $d externref) (param $nn_view (ref extern))
+  ;; CHECK:      (func $string.as (type $20) (param $a externref) (param $a_nn (ref extern)) (param $b (ref extern)) (param $c (ref extern)) (param $d (ref extern)) (param $nn_view (ref extern))
   ;; CHECK-NEXT:  (local.set $b
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.get $a)
@@ -253,7 +253,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.length (type $15) (param $ref externref) (result i32)
+  ;; CHECK:      (func $string.length (type $15) (param $ref (ref extern)) (result i32)
   ;; CHECK-NEXT:  (call $length
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:  )
@@ -264,7 +264,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.get_codeunit (type $15) (param $ref externref) (result i32)
+  ;; CHECK:      (func $string.get_codeunit (type $15) (param $ref (ref extern)) (result i32)
   ;; CHECK-NEXT:  (call $charCodeAt
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (i32.const 2)
@@ -277,7 +277,7 @@
     )
   )
 
-  ;; CHECK:      (func $string.slice (type $14) (param $ref externref) (result externref)
+  ;; CHECK:      (func $string.slice (type $14) (param $ref (ref extern)) (result externref)
   ;; CHECK-NEXT:  (call $substring
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (i32.const 2)

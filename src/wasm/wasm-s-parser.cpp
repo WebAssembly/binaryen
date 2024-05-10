@@ -1286,13 +1286,13 @@ Type SExpressionWasmBuilder::stringToType(std::string_view str,
     return Type(HeapType::string, Nullable);
   }
   if (str.substr(0, 15) == "stringview_wtf8" && (prefix || str.size() == 15)) {
-    return Type(HeapType::stringview_wtf8, Nullable);
+    return Type(HeapType::stringview_wtf8, NonNullable);
   }
   if (str.substr(0, 16) == "stringview_wtf16" && (prefix || str.size() == 16)) {
-    return Type(HeapType::stringview_wtf16, Nullable);
+    return Type(HeapType::stringview_wtf16, NonNullable);
   }
   if (str.substr(0, 15) == "stringview_iter" && (prefix || str.size() == 15)) {
-    return Type(HeapType::stringview_iter, Nullable);
+    return Type(HeapType::stringview_iter, NonNullable);
   }
   if (str.substr(0, 7) == "nullref" && (prefix || str.size() == 7)) {
     return Type(HeapType::none, Nullable);

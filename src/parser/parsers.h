@@ -488,13 +488,13 @@ template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
     return ctx.makeRefType(ctx.makeStringType(), Nullable);
   }
   if (ctx.in.takeKeyword("stringview_wtf8"sv)) {
-    return ctx.makeRefType(ctx.makeStringViewWTF8Type(), Nullable);
+    return ctx.makeRefType(ctx.makeStringViewWTF8Type(), NonNullable);
   }
   if (ctx.in.takeKeyword("stringview_wtf16"sv)) {
-    return ctx.makeRefType(ctx.makeStringViewWTF16Type(), Nullable);
+    return ctx.makeRefType(ctx.makeStringViewWTF16Type(), NonNullable);
   }
   if (ctx.in.takeKeyword("stringview_iter"sv)) {
-    return ctx.makeRefType(ctx.makeStringViewIterType(), Nullable);
+    return ctx.makeRefType(ctx.makeStringViewIterType(), NonNullable);
   }
   if (ctx.in.takeKeyword("contref"sv)) {
     return ctx.makeRefType(ctx.makeContType(), Nullable);
