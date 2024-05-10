@@ -2294,9 +2294,6 @@ struct PrintExpressionContents
       case StringMeasureIsUSV:
         printMedium(o, "string.is_usv_sequence");
         break;
-      case StringMeasureWTF16View:
-        printMedium(o, "stringview_wtf16.length");
-        break;
       case StringMeasureHash:
         printMedium(o, "string.hash");
         break;
@@ -2349,56 +2346,11 @@ struct PrintExpressionContents
         WASM_UNREACHABLE("invalid string.eq*");
     }
   }
-  void visitStringAs(StringAs* curr) {
-    switch (curr->op) {
-      case StringAsWTF8:
-        printMedium(o, "string.as_wtf8");
-        break;
-      case StringAsWTF16:
-        printMedium(o, "string.as_wtf16");
-        break;
-      case StringAsIter:
-        printMedium(o, "string.as_iter");
-        break;
-      default:
-        WASM_UNREACHABLE("invalid string.as*");
-    }
-  }
-  void visitStringWTF8Advance(StringWTF8Advance* curr) {
-    printMedium(o, "stringview_wtf8.advance");
-  }
   void visitStringWTF16Get(StringWTF16Get* curr) {
     printMedium(o, "stringview_wtf16.get_codeunit");
   }
-  void visitStringIterNext(StringIterNext* curr) {
-    printMedium(o, "stringview_iter.next");
-  }
-  void visitStringIterMove(StringIterMove* curr) {
-    switch (curr->op) {
-      case StringIterMoveAdvance:
-        printMedium(o, "stringview_iter.advance");
-        break;
-      case StringIterMoveRewind:
-        printMedium(o, "stringview_iter.rewind");
-        break;
-      default:
-        WASM_UNREACHABLE("invalid string.move*");
-    }
-  }
   void visitStringSliceWTF(StringSliceWTF* curr) {
-    switch (curr->op) {
-      case StringSliceWTF8:
-        printMedium(o, "stringview_wtf8.slice");
-        break;
-      case StringSliceWTF16:
-        printMedium(o, "stringview_wtf16.slice");
-        break;
-      default:
-        WASM_UNREACHABLE("invalid string.slice*");
-    }
-  }
-  void visitStringSliceIter(StringSliceIter* curr) {
-    printMedium(o, "stringview_iter.slice");
+    printMedium(o, "stringview_wtf16.slice");
   }
   void visitContBind(ContBind* curr) {
     printMedium(o, "cont.bind ");

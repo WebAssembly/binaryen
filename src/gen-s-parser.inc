@@ -3072,25 +3072,9 @@ switch (buf[0]) {
             switch (buf[6]) {
               case '.': {
                 switch (buf[7]) {
-                  case 'a': {
-                    switch (buf[10]) {
-                      case 'i':
-                        if (op == "string.as_iter"sv) { return makeStringAs(s, StringAsIter); }
-                        goto parse_error;
-                      case 'w': {
-                        switch (buf[13]) {
-                          case '1':
-                            if (op == "string.as_wtf16"sv) { return makeStringAs(s, StringAsWTF16); }
-                            goto parse_error;
-                          case '8':
-                            if (op == "string.as_wtf8"sv) { return makeStringAs(s, StringAsWTF8); }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
-                      default: goto parse_error;
-                    }
-                  }
+                  case 'a':
+                    if (op == "string.as_wtf16"sv) { return ignore(s); }
+                    goto parse_error;
                   case 'c': {
                     switch (buf[9]) {
                       case 'm':
@@ -3274,54 +3258,16 @@ switch (buf[0]) {
                 }
               }
               case 'v': {
-                switch (buf[11]) {
-                  case 'i': {
-                    switch (buf[16]) {
-                      case 'a':
-                        if (op == "stringview_iter.advance"sv) { return makeStringIterMove(s, StringIterMoveAdvance); }
-                        goto parse_error;
-                      case 'n':
-                        if (op == "stringview_iter.next"sv) { return makeStringIterNext(s); }
-                        goto parse_error;
-                      case 'r':
-                        if (op == "stringview_iter.rewind"sv) { return makeStringIterMove(s, StringIterMoveRewind); }
-                        goto parse_error;
-                      case 's':
-                        if (op == "stringview_iter.slice"sv) { return makeStringSliceIter(s); }
-                        goto parse_error;
-                      default: goto parse_error;
-                    }
-                  }
-                  case 'w': {
-                    switch (buf[14]) {
-                      case '1': {
-                        switch (buf[17]) {
-                          case 'g':
-                            if (op == "stringview_wtf16.get_codeunit"sv) { return makeStringWTF16Get(s); }
-                            goto parse_error;
-                          case 'l':
-                            if (op == "stringview_wtf16.length"sv) { return makeStringMeasure(s, StringMeasureWTF16View); }
-                            goto parse_error;
-                          case 's':
-                            if (op == "stringview_wtf16.slice"sv) { return makeStringSliceWTF(s, StringSliceWTF16); }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
-                      case '8': {
-                        switch (buf[16]) {
-                          case 'a':
-                            if (op == "stringview_wtf8.advance"sv) { return makeStringWTF8Advance(s); }
-                            goto parse_error;
-                          case 's':
-                            if (op == "stringview_wtf8.slice"sv) { return makeStringSliceWTF(s, StringSliceWTF8); }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
-                      default: goto parse_error;
-                    }
-                  }
+                switch (buf[17]) {
+                  case 'g':
+                    if (op == "stringview_wtf16.get_codeunit"sv) { return makeStringWTF16Get(s); }
+                    goto parse_error;
+                  case 'l':
+                    if (op == "stringview_wtf16.length"sv) { return makeStringMeasure(s, StringMeasureWTF16); }
+                    goto parse_error;
+                  case 's':
+                    if (op == "stringview_wtf16.slice"sv) { return makeStringSliceWTF(s); }
+                    goto parse_error;
                   default: goto parse_error;
                 }
               }
@@ -8221,34 +8167,12 @@ switch (buf[0]) {
             switch (buf[6]) {
               case '.': {
                 switch (buf[7]) {
-                  case 'a': {
-                    switch (buf[10]) {
-                      case 'i':
-                        if (op == "string.as_iter"sv) {
-                          CHECK_ERR(makeStringAs(ctx, pos, annotations, StringAsIter));
-                          return Ok{};
-                        }
-                        goto parse_error;
-                      case 'w': {
-                        switch (buf[13]) {
-                          case '1':
-                            if (op == "string.as_wtf16"sv) {
-                              CHECK_ERR(makeStringAs(ctx, pos, annotations, StringAsWTF16));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          case '8':
-                            if (op == "string.as_wtf8"sv) {
-                              CHECK_ERR(makeStringAs(ctx, pos, annotations, StringAsWTF8));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
-                      default: goto parse_error;
+                  case 'a':
+                    if (op == "string.as_wtf16"sv) {
+                      CHECK_ERR(ignore(ctx, pos, annotations));
+                      return Ok{};
                     }
-                  }
+                    goto parse_error;
                   case 'c': {
                     switch (buf[9]) {
                       case 'm':
@@ -8516,81 +8440,25 @@ switch (buf[0]) {
                 }
               }
               case 'v': {
-                switch (buf[11]) {
-                  case 'i': {
-                    switch (buf[16]) {
-                      case 'a':
-                        if (op == "stringview_iter.advance"sv) {
-                          CHECK_ERR(makeStringIterMove(ctx, pos, annotations, StringIterMoveAdvance));
-                          return Ok{};
-                        }
-                        goto parse_error;
-                      case 'n':
-                        if (op == "stringview_iter.next"sv) {
-                          CHECK_ERR(makeStringIterNext(ctx, pos, annotations));
-                          return Ok{};
-                        }
-                        goto parse_error;
-                      case 'r':
-                        if (op == "stringview_iter.rewind"sv) {
-                          CHECK_ERR(makeStringIterMove(ctx, pos, annotations, StringIterMoveRewind));
-                          return Ok{};
-                        }
-                        goto parse_error;
-                      case 's':
-                        if (op == "stringview_iter.slice"sv) {
-                          CHECK_ERR(makeStringSliceIter(ctx, pos, annotations));
-                          return Ok{};
-                        }
-                        goto parse_error;
-                      default: goto parse_error;
+                switch (buf[17]) {
+                  case 'g':
+                    if (op == "stringview_wtf16.get_codeunit"sv) {
+                      CHECK_ERR(makeStringWTF16Get(ctx, pos, annotations));
+                      return Ok{};
                     }
-                  }
-                  case 'w': {
-                    switch (buf[14]) {
-                      case '1': {
-                        switch (buf[17]) {
-                          case 'g':
-                            if (op == "stringview_wtf16.get_codeunit"sv) {
-                              CHECK_ERR(makeStringWTF16Get(ctx, pos, annotations));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          case 'l':
-                            if (op == "stringview_wtf16.length"sv) {
-                              CHECK_ERR(makeStringMeasure(ctx, pos, annotations, StringMeasureWTF16View));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          case 's':
-                            if (op == "stringview_wtf16.slice"sv) {
-                              CHECK_ERR(makeStringSliceWTF(ctx, pos, annotations, StringSliceWTF16));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
-                      case '8': {
-                        switch (buf[16]) {
-                          case 'a':
-                            if (op == "stringview_wtf8.advance"sv) {
-                              CHECK_ERR(makeStringWTF8Advance(ctx, pos, annotations));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          case 's':
-                            if (op == "stringview_wtf8.slice"sv) {
-                              CHECK_ERR(makeStringSliceWTF(ctx, pos, annotations, StringSliceWTF8));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
-                      default: goto parse_error;
+                    goto parse_error;
+                  case 'l':
+                    if (op == "stringview_wtf16.length"sv) {
+                      CHECK_ERR(makeStringMeasure(ctx, pos, annotations, StringMeasureWTF16));
+                      return Ok{};
                     }
-                  }
+                    goto parse_error;
+                  case 's':
+                    if (op == "stringview_wtf16.slice"sv) {
+                      CHECK_ERR(makeStringSliceWTF(ctx, pos, annotations));
+                      return Ok{};
+                    }
+                    goto parse_error;
                   default: goto parse_error;
                 }
               }

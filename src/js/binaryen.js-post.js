@@ -40,9 +40,6 @@ function initializeConstants() {
     ['i31ref', 'I31ref'],
     ['structref', 'Structref'],
     ['stringref', 'Stringref'],
-    ['stringview_wtf8', 'StringviewWTF8'],
-    ['stringview_wtf16', 'StringviewWTF16'],
-    ['stringview_iter', 'StringviewIter'],
     ['unreachable', 'Unreachable'],
     ['auto', 'Auto']
   ].forEach(entry => {
@@ -127,13 +124,8 @@ function initializeConstants() {
     'StringEncode',
     'StringConcat',
     'StringEq',
-    'StringAs',
-    'StringWTF8Advance',
     'StringWTF16Get',
-    'StringIterNext',
-    'StringIterMove',
     'StringSliceWTF',
-    'StringSliceIter'
   ].forEach(name => {
     Module['ExpressionIds'][name] = Module[name + 'Id'] = Module['_Binaryen' + name + 'Id']();
   });
@@ -589,7 +581,6 @@ function initializeConstants() {
     'StringMeasureWTF8',
     'StringMeasureWTF16',
     'StringMeasureIsUSV',
-    'StringMeasureWTF16View',
     'StringEncodeUTF8',
     'StringEncodeLossyUTF8',
     'StringEncodeWTF8',
@@ -598,13 +589,6 @@ function initializeConstants() {
     'StringEncodeLossyUTF8Array',
     'StringEncodeWTF8Array',
     'StringEncodeWTF16Array',
-    'StringAsWTF8',
-    'StringAsWTF16',
-    'StringAsIter',
-    'StringIterMoveAdvance',
-    'StringIterMoveRewind',
-    'StringSliceWTF8',
-    'StringSliceWTF16',
     'StringEqEqual',
     'StringEqCompare'
   ].forEach(name => {
@@ -2338,24 +2322,6 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  self['stringview_wtf8'] = {
-    'pop'() {
-      return Module['_BinaryenPop'](module, Module['stringview_wtf8']);
-    }
-  };
-
-  self['stringview_wtf16'] = {
-    'pop'() {
-      return Module['_BinaryenPop'](module, Module['stringview_wtf16']);
-    }
-  };
-
-  self['stringview_iter'] = {
-    'pop'() {
-      return Module['_BinaryenPop'](module, Module['stringview_iter']);
-    }
-  };
-
   self['ref'] = {
     'null'(type) {
       return Module['_BinaryenRefNull'](module, type);
@@ -2436,9 +2402,6 @@ function wrapModule(module, self = {}) {
   // TODO: struct.*
   // TODO: array.*
   // TODO: string.*
-  // TODO: stringview_wtf8.*
-  // TODO: stringview_wtf16.*
-  // TODO: stringview_iter.*
 
   // 'Module' operations
   self['addFunction'] = function(name, params, results, varTypes, body) {

@@ -109,13 +109,13 @@ StringMeasure: 81
 StringEncode: 82
 StringConcat: 83
 StringEq: 84
-StringAs: 85
-StringWTF8Advance: 86
-StringWTF16Get: 87
-StringIterNext: 88
-StringIterMove: 89
-StringSliceWTF: 90
-StringSliceIter: 91
+StringAs: undefined
+StringWTF8Advance: undefined
+StringWTF16Get: 85
+StringIterNext: undefined
+StringIterMove: undefined
+StringSliceWTF: 86
+StringSliceIter: undefined
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
@@ -2189,15 +2189,6 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (pop stringref)
-      )
-      (drop
-       (pop stringview_wtf8)
-      )
-      (drop
-       (pop stringview_wtf16)
-      )
-      (drop
-       (pop stringview_iter)
       )
       (drop
        (memory.size)
@@ -4299,15 +4290,6 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (pop stringref)
-      )
-      (drop
-       (pop stringview_wtf8)
-      )
-      (drop
-       (pop stringview_wtf16)
-      )
-      (drop
-       (pop stringview_iter)
       )
       (drop
        (memory.size)

@@ -1872,20 +1872,6 @@ Result<> IRBuilder::makeStringEq(StringEqOp op) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeStringAs(StringAsOp op) {
-  StringAs curr;
-  CHECK_ERR(visitStringAs(&curr));
-  push(builder.makeStringAs(op, curr.ref));
-  return Ok{};
-}
-
-Result<> IRBuilder::makeStringWTF8Advance() {
-  StringWTF8Advance curr;
-  CHECK_ERR(visitStringWTF8Advance(&curr));
-  push(builder.makeStringWTF8Advance(curr.ref, curr.pos, curr.bytes));
-  return Ok{};
-}
-
 Result<> IRBuilder::makeStringWTF16Get() {
   StringWTF16Get curr;
   CHECK_ERR(visitStringWTF16Get(&curr));
@@ -1893,32 +1879,10 @@ Result<> IRBuilder::makeStringWTF16Get() {
   return Ok{};
 }
 
-Result<> IRBuilder::makeStringIterNext() {
-  StringIterNext curr;
-  CHECK_ERR(visitStringIterNext(&curr));
-  push(builder.makeStringIterNext(curr.ref));
-  return Ok{};
-}
-
-Result<> IRBuilder::makeStringIterMove(StringIterMoveOp op) {
-  StringIterMove curr;
-  CHECK_ERR(visitStringIterMove(&curr));
-  push(builder.makeStringIterMove(op, curr.ref, curr.num));
-  return Ok{};
-}
-
-Result<> IRBuilder::makeStringSliceWTF(StringSliceWTFOp op) {
+Result<> IRBuilder::makeStringSliceWTF() {
   StringSliceWTF curr;
-  curr.op = op;
   CHECK_ERR(visitStringSliceWTF(&curr));
-  push(builder.makeStringSliceWTF(op, curr.ref, curr.start, curr.end));
-  return Ok{};
-}
-
-Result<> IRBuilder::makeStringSliceIter() {
-  StringSliceIter curr;
-  CHECK_ERR(visitStringSliceIter(&curr));
-  push(builder.makeStringSliceIter(curr.ref, curr.num));
+  push(builder.makeStringSliceWTF(curr.ref, curr.start, curr.end));
   return Ok{};
 }
 

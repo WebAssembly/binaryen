@@ -1151,22 +1151,6 @@ public:
     ret->finalize();
     return ret;
   }
-  StringAs* makeStringAs(StringAsOp op, Expression* ref) {
-    auto* ret = wasm.allocator.alloc<StringAs>();
-    ret->op = op;
-    ret->ref = ref;
-    ret->finalize();
-    return ret;
-  }
-  StringWTF8Advance*
-  makeStringWTF8Advance(Expression* ref, Expression* pos, Expression* bytes) {
-    auto* ret = wasm.allocator.alloc<StringWTF8Advance>();
-    ret->ref = ref;
-    ret->pos = pos;
-    ret->bytes = bytes;
-    ret->finalize();
-    return ret;
-  }
   StringWTF16Get* makeStringWTF16Get(Expression* ref, Expression* pos) {
     auto* ret = wasm.allocator.alloc<StringWTF16Get>();
     ret->ref = ref;
@@ -1174,41 +1158,15 @@ public:
     ret->finalize();
     return ret;
   }
-  StringIterNext* makeStringIterNext(Expression* ref) {
-    auto* ret = wasm.allocator.alloc<StringIterNext>();
-    ret->ref = ref;
-    ret->finalize();
-    return ret;
-  }
-  StringIterMove*
-  makeStringIterMove(StringIterMoveOp op, Expression* ref, Expression* num) {
-    auto* ret = wasm.allocator.alloc<StringIterMove>();
-    ret->op = op;
-    ret->ref = ref;
-    ret->num = num;
-    ret->finalize();
-    return ret;
-  }
-  StringSliceWTF* makeStringSliceWTF(StringSliceWTFOp op,
-                                     Expression* ref,
-                                     Expression* start,
-                                     Expression* end) {
+  StringSliceWTF*
+  makeStringSliceWTF(Expression* ref, Expression* start, Expression* end) {
     auto* ret = wasm.allocator.alloc<StringSliceWTF>();
-    ret->op = op;
     ret->ref = ref;
     ret->start = start;
     ret->end = end;
     ret->finalize();
     return ret;
   }
-  StringSliceIter* makeStringSliceIter(Expression* ref, Expression* num) {
-    auto* ret = wasm.allocator.alloc<StringSliceIter>();
-    ret->ref = ref;
-    ret->num = num;
-    ret->finalize();
-    return ret;
-  }
-
   ContBind* makeContBind(HeapType contTypeBefore,
                          HeapType contTypeAfter,
                          const std::vector<Expression*>& operands,

@@ -107,9 +107,6 @@ BINARYEN_API BinaryenType BinaryenTypeI31ref(void);
 BINARYEN_API BinaryenType BinaryenTypeStructref(void);
 BINARYEN_API BinaryenType BinaryenTypeArrayref(void);
 BINARYEN_API BinaryenType BinaryenTypeStringref(void);
-BINARYEN_API BinaryenType BinaryenTypeStringviewWTF8(void);
-BINARYEN_API BinaryenType BinaryenTypeStringviewWTF16(void);
-BINARYEN_API BinaryenType BinaryenTypeStringviewIter(void);
 BINARYEN_API BinaryenType BinaryenTypeNullref(void);
 BINARYEN_API BinaryenType BinaryenTypeNullExternref(void);
 BINARYEN_API BinaryenType BinaryenTypeNullFuncref(void);
@@ -149,9 +146,6 @@ BINARYEN_API BinaryenHeapType BinaryenHeapTypeI31(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeStruct(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeArray(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeString(void);
-BINARYEN_API BinaryenHeapType BinaryenHeapTypeStringviewWTF8(void);
-BINARYEN_API BinaryenHeapType BinaryenHeapTypeStringviewWTF16(void);
-BINARYEN_API BinaryenHeapType BinaryenHeapTypeStringviewIter(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeNone(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeNoext(void);
 BINARYEN_API BinaryenHeapType BinaryenHeapTypeNofunc(void);
@@ -701,7 +695,6 @@ BINARYEN_API BinaryenOp BinaryenStringMeasureUTF8(void);
 BINARYEN_API BinaryenOp BinaryenStringMeasureWTF8(void);
 BINARYEN_API BinaryenOp BinaryenStringMeasureWTF16(void);
 BINARYEN_API BinaryenOp BinaryenStringMeasureIsUSV(void);
-BINARYEN_API BinaryenOp BinaryenStringMeasureWTF16View(void);
 BINARYEN_API BinaryenOp BinaryenStringEncodeUTF8(void);
 BINARYEN_API BinaryenOp BinaryenStringEncodeLossyUTF8(void);
 BINARYEN_API BinaryenOp BinaryenStringEncodeWTF8(void);
@@ -710,13 +703,6 @@ BINARYEN_API BinaryenOp BinaryenStringEncodeUTF8Array(void);
 BINARYEN_API BinaryenOp BinaryenStringEncodeLossyUTF8Array(void);
 BINARYEN_API BinaryenOp BinaryenStringEncodeWTF8Array(void);
 BINARYEN_API BinaryenOp BinaryenStringEncodeWTF16Array(void);
-BINARYEN_API BinaryenOp BinaryenStringAsWTF8(void);
-BINARYEN_API BinaryenOp BinaryenStringAsWTF16(void);
-BINARYEN_API BinaryenOp BinaryenStringAsIter(void);
-BINARYEN_API BinaryenOp BinaryenStringIterMoveAdvance(void);
-BINARYEN_API BinaryenOp BinaryenStringIterMoveRewind(void);
-BINARYEN_API BinaryenOp BinaryenStringSliceWTF8(void);
-BINARYEN_API BinaryenOp BinaryenStringSliceWTF16(void);
 BINARYEN_API BinaryenOp BinaryenStringEqEqual(void);
 BINARYEN_API BinaryenOp BinaryenStringEqCompare(void);
 
@@ -1130,9 +1116,6 @@ BinaryenStringEq(BinaryenModuleRef module,
                  BinaryenOp op,
                  BinaryenExpressionRef left,
                  BinaryenExpressionRef right);
-BINARYEN_API BinaryenExpressionRef BinaryenStringAs(BinaryenModuleRef module,
-                                                    BinaryenOp op,
-                                                    BinaryenExpressionRef ref);
 BINARYEN_API BinaryenExpressionRef
 BinaryenStringWTF8Advance(BinaryenModuleRef module,
                           BinaryenExpressionRef ref,
@@ -1151,7 +1134,6 @@ BinaryenStringIterMove(BinaryenModuleRef module,
                        BinaryenExpressionRef num);
 BINARYEN_API BinaryenExpressionRef
 BinaryenStringSliceWTF(BinaryenModuleRef module,
-                       BinaryenOp op,
                        BinaryenExpressionRef ref,
                        BinaryenExpressionRef start,
                        BinaryenExpressionRef end);
@@ -2619,34 +2601,6 @@ BinaryenStringEqGetRight(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenStringEqSetRight(BinaryenExpressionRef expr,
                                            BinaryenExpressionRef rightExpr);
 
-// StringAs
-
-BINARYEN_API BinaryenOp BinaryenStringAsGetOp(BinaryenExpressionRef expr);
-BINARYEN_API void BinaryenStringAsSetOp(BinaryenExpressionRef expr,
-                                        BinaryenOp op);
-BINARYEN_API BinaryenExpressionRef
-BinaryenStringAsGetRef(BinaryenExpressionRef expr);
-BINARYEN_API void BinaryenStringAsSetRef(BinaryenExpressionRef expr,
-                                         BinaryenExpressionRef refExpr);
-
-// StringWTF8Advance
-
-BINARYEN_API BinaryenExpressionRef
-BinaryenStringWTF8AdvanceGetRef(BinaryenExpressionRef expr);
-BINARYEN_API void
-BinaryenStringWTF8AdvanceSetRef(BinaryenExpressionRef expr,
-                                BinaryenExpressionRef refExpr);
-BINARYEN_API BinaryenExpressionRef
-BinaryenStringWTF8AdvanceGetPos(BinaryenExpressionRef expr);
-BINARYEN_API void
-BinaryenStringWTF8AdvanceSetPos(BinaryenExpressionRef expr,
-                                BinaryenExpressionRef posExpr);
-BINARYEN_API BinaryenExpressionRef
-BinaryenStringWTF8AdvanceGetBytes(BinaryenExpressionRef expr);
-BINARYEN_API void
-BinaryenStringWTF8AdvanceSetBytes(BinaryenExpressionRef expr,
-                                  BinaryenExpressionRef bytesExpr);
-
 // StringWTF16Get
 
 BINARYEN_API BinaryenExpressionRef
@@ -2658,32 +2612,8 @@ BinaryenStringWTF16GetGetPos(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenStringWTF16GetSetPos(BinaryenExpressionRef expr,
                                                BinaryenExpressionRef posExpr);
 
-// StringIterNext
-
-BINARYEN_API BinaryenExpressionRef
-BinaryenStringIterNextGetRef(BinaryenExpressionRef expr);
-BINARYEN_API void BinaryenStringIterNextSetRef(BinaryenExpressionRef expr,
-                                               BinaryenExpressionRef refExpr);
-
-// StringIterMove
-
-BINARYEN_API BinaryenOp BinaryenStringIterMoveGetOp(BinaryenExpressionRef expr);
-BINARYEN_API void BinaryenStringIterMoveSetOp(BinaryenExpressionRef expr,
-                                              BinaryenOp op);
-BINARYEN_API BinaryenExpressionRef
-BinaryenStringIterMoveGetRef(BinaryenExpressionRef expr);
-BINARYEN_API void BinaryenStringIterMoveSetRef(BinaryenExpressionRef expr,
-                                               BinaryenExpressionRef refExpr);
-BINARYEN_API BinaryenExpressionRef
-BinaryenStringIterMoveGetNum(BinaryenExpressionRef expr);
-BINARYEN_API void BinaryenStringIterMoveSetNum(BinaryenExpressionRef expr,
-                                               BinaryenExpressionRef numExpr);
-
 // StringSliceWTF
 
-BINARYEN_API BinaryenOp BinaryenStringSliceWTFGetOp(BinaryenExpressionRef expr);
-BINARYEN_API void BinaryenStringSliceWTFSetOp(BinaryenExpressionRef expr,
-                                              BinaryenOp op);
 BINARYEN_API BinaryenExpressionRef
 BinaryenStringSliceWTFGetRef(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenStringSliceWTFSetRef(BinaryenExpressionRef expr,
@@ -2697,17 +2627,6 @@ BINARYEN_API BinaryenExpressionRef
 BinaryenStringSliceWTFGetEnd(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenStringSliceWTFSetEnd(BinaryenExpressionRef expr,
                                                BinaryenExpressionRef endExpr);
-
-// StringSliceIter
-
-BINARYEN_API BinaryenExpressionRef
-BinaryenStringSliceIterGetRef(BinaryenExpressionRef expr);
-BINARYEN_API void BinaryenStringSliceIterSetRef(BinaryenExpressionRef expr,
-                                                BinaryenExpressionRef refExpr);
-BINARYEN_API BinaryenExpressionRef
-BinaryenStringSliceIterGetNum(BinaryenExpressionRef expr);
-BINARYEN_API void BinaryenStringSliceIterSetNum(BinaryenExpressionRef expr,
-                                                BinaryenExpressionRef numExpr);
 
 // Functions
 

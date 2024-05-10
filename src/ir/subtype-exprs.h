@@ -383,13 +383,8 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
   void visitStringEncode(StringEncode* curr) {}
   void visitStringConcat(StringConcat* curr) {}
   void visitStringEq(StringEq* curr) {}
-  void visitStringAs(StringAs* curr) {}
-  void visitStringWTF8Advance(StringWTF8Advance* curr) {}
   void visitStringWTF16Get(StringWTF16Get* curr) {}
-  void visitStringIterNext(StringIterNext* curr) {}
-  void visitStringIterMove(StringIterMove* curr) {}
   void visitStringSliceWTF(StringSliceWTF* curr) {}
-  void visitStringSliceIter(StringSliceIter* curr) {}
 
   void visitContBind(ContBind* curr) { WASM_UNREACHABLE("not implemented"); }
   void visitContNew(ContNew* curr) { WASM_UNREACHABLE("not implemented"); }

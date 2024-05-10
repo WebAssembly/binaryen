@@ -168,41 +168,23 @@
 
  ;; CHECK:      (type $77 (func (param stringref) (result i32)))
 
- ;; CHECK:      (type $78 (func (param stringview_wtf16) (result i32)))
+ ;; CHECK:      (type $78 (func (param stringref (ref $packed-i8) i32) (result i32)))
 
- ;; CHECK:      (type $79 (func (param stringref (ref $packed-i8) i32) (result i32)))
+ ;; CHECK:      (type $79 (func (param stringref stringref) (result (ref string))))
 
- ;; CHECK:      (type $80 (func (param stringref stringref) (result (ref string))))
+ ;; CHECK:      (type $80 (func (param stringref i32) (result i32)))
 
- ;; CHECK:      (type $81 (func (param stringref) (result stringview_wtf8)))
+ ;; CHECK:      (type $81 (func (param stringref i32 i32) (result (ref string))))
 
- ;; CHECK:      (type $82 (func (param stringref) (result (ref stringview_wtf16))))
-
- ;; CHECK:      (type $83 (func (param stringref) (result stringview_iter)))
-
- ;; CHECK:      (type $84 (func (param (ref stringview_wtf8) i32 i32) (result i32)))
-
- ;; CHECK:      (type $85 (func (param stringview_wtf16 i32) (result i32)))
-
- ;; CHECK:      (type $86 (func (param stringview_iter) (result i32)))
-
- ;; CHECK:      (type $87 (func (param stringview_iter i32) (result i32)))
-
- ;; CHECK:      (type $88 (func (param (ref stringview_iter) i32) (result i32)))
-
- ;; CHECK:      (type $89 (func (param stringview_wtf8 stringview_wtf16 i32 i32)))
-
- ;; CHECK:      (type $90 (func (param stringview_iter i32) (result (ref string))))
-
- ;; CHECK:      (type $91 (func (param (ref $simple-cont))))
+ ;; CHECK:      (type $82 (func (param (ref $simple-cont))))
 
  ;; CHECK:      (type $to-f32 (func (result f32)))
 
  ;; CHECK:      (type $to-f32-cont (cont $to-f32))
 
- ;; CHECK:      (type $94 (func (param (ref $simple)) (result (ref $simple-cont))))
+ ;; CHECK:      (type $85 (func (param (ref $simple)) (result (ref $simple-cont))))
 
- ;; CHECK:      (type $95 (func (param (ref $cont-bind-before)) (result (ref $simple-cont))))
+ ;; CHECK:      (type $86 (func (param (ref $cont-bind-before)) (result (ref $simple-cont))))
 
  ;; CHECK:      (type $s2 (struct (field i32)))
  (type $s2 (struct i32))
@@ -256,7 +238,7 @@
  (type $cont-bind-before-func (func (param i32) (param i64) (param i32) (param i64) (result f32)))
  (type $cont-bind-before (cont $cont-bind-before-func))
 
- ;; CHECK:      (type $all-types (struct (field externref) (field (ref extern)) (field funcref) (field (ref func)) (field anyref) (field (ref any)) (field eqref) (field (ref eq)) (field i31ref) (field (ref i31)) (field structref) (field (ref struct)) (field arrayref) (field (ref array)) (field exnref) (field (ref exn)) (field stringref) (field (ref string)) (field stringview_wtf8) (field (ref stringview_wtf8)) (field stringview_wtf16) (field (ref stringview_wtf16)) (field stringview_iter) (field (ref stringview_iter)) (field contref) (field (ref cont)) (field nullref) (field (ref none)) (field nullexternref) (field (ref noextern)) (field nullfuncref) (field (ref nofunc)) (field nullexnref) (field (ref noexn)) (field nullcontref) (field (ref nocont))))
+ ;; CHECK:      (type $all-types (struct (field externref) (field (ref extern)) (field funcref) (field (ref func)) (field anyref) (field (ref any)) (field eqref) (field (ref eq)) (field i31ref) (field (ref i31)) (field structref) (field (ref struct)) (field arrayref) (field (ref array)) (field exnref) (field (ref exn)) (field stringref) (field (ref string)) (field contref) (field (ref cont)) (field nullref) (field (ref none)) (field nullexternref) (field (ref noextern)) (field nullfuncref) (field (ref nofunc)) (field nullexnref) (field (ref noexn)) (field nullcontref) (field (ref nocont))))
  (type $all-types (struct externref (ref extern)
                           funcref (ref func)
                           anyref (ref any)
@@ -266,9 +248,6 @@
                           arrayref (ref array)
                           exnref (ref exn)
                           stringref (ref string)
-                          stringview_wtf8 (ref stringview_wtf8)
-                          stringview_wtf16 (ref stringview_wtf16)
-                          stringview_iter (ref stringview_iter)
                           contref (ref cont)
                           nullref (ref none)
                           nullexternref (ref noextern)
@@ -278,7 +257,7 @@
 
  ;; imported memories
  (memory (export "mem") (export "mem2") (import "" "mem") 0)
- ;; CHECK:      (type $107 (func (param (ref $s0) (ref $s1) (ref $s2) (ref $s3) (ref $s4) (ref $s5) (ref $s6) (ref $s7) (ref $s8) (ref $a0) (ref $a1) (ref $a2) (ref $a3) (ref $subvoid) (ref $submany) (ref $all-types))))
+ ;; CHECK:      (type $98 (func (param (ref $s0) (ref $s1) (ref $s2) (ref $s3) (ref $s4) (ref $s5) (ref $s6) (ref $s7) (ref $s8) (ref $a0) (ref $a1) (ref $a2) (ref $a3) (ref $subvoid) (ref $submany) (ref $all-types))))
 
  ;; CHECK:      (import "" "mem" (memory $mimport$0 0))
 
@@ -4554,16 +4533,6 @@
   string.hash
  )
 
- ;; CHECK:      (func $stringview-length (type $78) (param $0 stringview_wtf16) (result i32)
- ;; CHECK-NEXT:  (stringview_wtf16.length
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $stringview-length (param stringview_wtf16) (result i32)
-  local.get 0
-  stringview_wtf16.length
- )
-
  ;; CHECK:      (func $string-encode (type $29) (param $0 stringref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (string.encode_wtf8
@@ -4609,7 +4578,7 @@
   drop
  )
 
- ;; CHECK:      (func $string-encode-gc (type $79) (param $0 stringref) (param $1 (ref $packed-i8)) (param $2 i32) (result i32)
+ ;; CHECK:      (func $string-encode-gc (type $78) (param $0 stringref) (param $1 (ref $packed-i8)) (param $2 i32) (result i32)
  ;; CHECK-NEXT:  (string.encode_wtf8_array
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4623,7 +4592,7 @@
   string.encode_wtf8_array
  )
 
- ;; CHECK:      (func $string-concat (type $80) (param $0 stringref) (param $1 stringref) (result (ref string))
+ ;; CHECK:      (func $string-concat (type $79) (param $0 stringref) (param $1 stringref) (result (ref string))
  ;; CHECK-NEXT:  (string.concat
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4659,135 +4628,30 @@
   string.compare
  )
 
- ;; CHECK:      (func $string-as-wtf8 (type $81) (param $0 stringref) (result stringview_wtf8)
- ;; CHECK-NEXT:  (string.as_wtf8
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $string-as-wtf8 (param stringref) (result stringview_wtf8)
-  local.get 0
-  string.as_wtf8
- )
-
- ;; CHECK:      (func $string-as-wtf16 (type $82) (param $0 stringref) (result (ref stringview_wtf16))
- ;; CHECK-NEXT:  (string.as_wtf16
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $string-as-wtf16 (param stringref) (result (ref stringview_wtf16))
-  local.get 0
-  string.as_wtf16
- )
-
- ;; CHECK:      (func $string-as-iter (type $83) (param $0 stringref) (result stringview_iter)
- ;; CHECK-NEXT:  (string.as_iter
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $string-as-iter (param stringref) (result stringview_iter)
-  local.get 0
-  string.as_iter
- )
-
- ;; CHECK:      (func $string-advance (type $84) (param $0 (ref stringview_wtf8)) (param $1 i32) (param $2 i32) (result i32)
- ;; CHECK-NEXT:  (stringview_wtf8.advance
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:   (local.get $1)
- ;; CHECK-NEXT:   (local.get $2)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $string-advance (param (ref stringview_wtf8) i32 i32) (result i32)
-  local.get 0
-  local.get 1
-  local.get 2
-  stringview_wtf8.advance
- )
-
- ;; CHECK:      (func $string-get (type $85) (param $0 stringview_wtf16) (param $1 i32) (result i32)
+ ;; CHECK:      (func $string-get (type $80) (param $0 stringref) (param $1 i32) (result i32)
  ;; CHECK-NEXT:  (stringview_wtf16.get_codeunit
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $string-get (param stringview_wtf16 i32) (result i32)
+ (func $string-get (param stringref i32) (result i32)
   local.get 0
   local.get 1
   stringview_wtf16.get_codeunit
  )
 
- ;; CHECK:      (func $string-iter-next (type $86) (param $0 stringview_iter) (result i32)
- ;; CHECK-NEXT:  (stringview_iter.next
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $string-iter-next (param stringview_iter) (result i32)
-  local.get 0
-  stringview_iter.next
- )
-
- ;; CHECK:      (func $string-iter-advance (type $87) (param $0 stringview_iter) (param $1 i32) (result i32)
- ;; CHECK-NEXT:  (stringview_iter.advance
+ ;; CHECK:      (func $string-slice (type $81) (param $0 stringref) (param $1 i32) (param $2 i32) (result (ref string))
+ ;; CHECK-NEXT:  (stringview_wtf16.slice
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
+ ;; CHECK-NEXT:   (local.get $2)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $string-iter-advance (param (ref null stringview_iter) i32) (result i32)
+ (func $string-slice (param stringref i32 i32) (result (ref string))
   local.get 0
-  local.get 1
-  stringview_iter.advance
- )
-
- ;; CHECK:      (func $string-iter-rewind (type $88) (param $0 (ref stringview_iter)) (param $1 i32) (result i32)
- ;; CHECK-NEXT:  (stringview_iter.rewind
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:   (local.get $1)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $string-iter-rewind (param (ref stringview_iter) i32) (result i32)
-  local.get 0
-  local.get 1
-  stringview_iter.rewind
- )
-
- ;; CHECK:      (func $string-slice (type $89) (param $0 stringview_wtf8) (param $1 stringview_wtf16) (param $2 i32) (param $3 i32)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (stringview_wtf8.slice
- ;; CHECK-NEXT:    (local.get $0)
- ;; CHECK-NEXT:    (local.get $2)
- ;; CHECK-NEXT:    (local.get $3)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (stringview_wtf16.slice
- ;; CHECK-NEXT:    (local.get $1)
- ;; CHECK-NEXT:    (local.get $2)
- ;; CHECK-NEXT:    (local.get $3)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $string-slice (param stringview_wtf8 stringview_wtf16 i32 i32)
-  local.get 0
-  local.get 2
-  local.get 3
-  stringview_wtf8.slice
-  drop
   local.get 1
   local.get 2
-  local.get 3
   stringview_wtf16.slice
-  drop
- )
-
- ;; CHECK:      (func $string-iter-slice (type $90) (param $0 stringview_iter) (param $1 i32) (result (ref string))
- ;; CHECK-NEXT:  (stringview_iter.slice
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:   (local.get $1)
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
- (func $string-iter-slice (param stringview_iter i32) (result (ref string))
-  local.get 0
-  local.get 1
-  stringview_iter.slice
  )
 
  ;; CHECK:      (func $call (type $simple) (param $0 i32) (param $1 i64) (result f32)
@@ -5077,7 +4941,7 @@
   )
  )
 
- ;; CHECK:      (func $resume (type $91) (param $ct (ref $simple-cont))
+ ;; CHECK:      (func $resume (type $82) (param $ct (ref $simple-cont))
  ;; CHECK-NEXT:  (local $f f32)
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (drop
@@ -5116,7 +4980,7 @@
   br 0
  )
 
- ;; CHECK:      (func $contnew (type $94) (param $f (ref $simple)) (result (ref $simple-cont))
+ ;; CHECK:      (func $contnew (type $85) (param $f (ref $simple)) (result (ref $simple-cont))
  ;; CHECK-NEXT:  (cont.new $simple-cont
  ;; CHECK-NEXT:   (local.get $f)
  ;; CHECK-NEXT:  )
@@ -5126,7 +4990,7 @@
    cont.new $simple-cont
  )
 
- ;; CHECK:      (func $contbind (type $95) (param $c (ref $cont-bind-before)) (result (ref $simple-cont))
+ ;; CHECK:      (func $contbind (type $86) (param $c (ref $cont-bind-before)) (result (ref $simple-cont))
  ;; CHECK-NEXT:  (cont.bind $cont-bind-before $simple-cont
  ;; CHECK-NEXT:   (i32.const 123)
  ;; CHECK-NEXT:   (i64.const 123)
@@ -5251,7 +5115,7 @@
   drop
  )
 
- ;; CHECK:      (func $use-types (type $107) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany)) (param $15 (ref $all-types))
+ ;; CHECK:      (func $use-types (type $98) (param $0 (ref $s0)) (param $1 (ref $s1)) (param $2 (ref $s2)) (param $3 (ref $s3)) (param $4 (ref $s4)) (param $5 (ref $s5)) (param $6 (ref $s6)) (param $7 (ref $s7)) (param $8 (ref $s8)) (param $9 (ref $a0)) (param $10 (ref $a1)) (param $11 (ref $a2)) (param $12 (ref $a3)) (param $13 (ref $subvoid)) (param $14 (ref $submany)) (param $15 (ref $all-types))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $use-types

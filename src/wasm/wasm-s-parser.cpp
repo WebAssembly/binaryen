@@ -1285,15 +1285,6 @@ Type SExpressionWasmBuilder::stringToType(std::string_view str,
   if (str.substr(0, 9) == "stringref" && (prefix || str.size() == 9)) {
     return Type(HeapType::string, Nullable);
   }
-  if (str.substr(0, 15) == "stringview_wtf8" && (prefix || str.size() == 15)) {
-    return Type(HeapType::stringview_wtf8, Nullable);
-  }
-  if (str.substr(0, 16) == "stringview_wtf16" && (prefix || str.size() == 16)) {
-    return Type(HeapType::stringview_wtf16, Nullable);
-  }
-  if (str.substr(0, 15) == "stringview_iter" && (prefix || str.size() == 15)) {
-    return Type(HeapType::stringview_iter, Nullable);
-  }
   if (str.substr(0, 7) == "nullref" && (prefix || str.size() == 7)) {
     return Type(HeapType::none, Nullable);
   }
@@ -1347,15 +1338,6 @@ HeapType SExpressionWasmBuilder::stringToHeapType(std::string_view str,
   }
   if (str.substr(0, 6) == "string" && (prefix || str.size() == 6)) {
     return HeapType::string;
-  }
-  if (str.substr(0, 15) == "stringview_wtf8" && (prefix || str.size() == 15)) {
-    return HeapType::stringview_wtf8;
-  }
-  if (str.substr(0, 16) == "stringview_wtf16" && (prefix || str.size() == 16)) {
-    return HeapType::stringview_wtf16;
-  }
-  if (str.substr(0, 15) == "stringview_iter" && (prefix || str.size() == 15)) {
-    return HeapType::stringview_iter;
   }
   if (str.substr(0, 4) == "none" && (prefix || str.size() == 4)) {
     return HeapType::none;
@@ -3383,39 +3365,14 @@ Expression* SExpressionWasmBuilder::makeStringEq(Element& s, StringEqOp op) {
     op, parseExpression(s[1]), parseExpression(s[2]));
 }
 
-Expression* SExpressionWasmBuilder::makeStringAs(Element& s, StringAsOp op) {
-  return Builder(wasm).makeStringAs(op, parseExpression(s[1]));
-}
-
-Expression* SExpressionWasmBuilder::makeStringWTF8Advance(Element& s) {
-  return Builder(wasm).makeStringWTF8Advance(
-    parseExpression(s[1]), parseExpression(s[2]), parseExpression(s[3]));
-}
-
 Expression* SExpressionWasmBuilder::makeStringWTF16Get(Element& s) {
   return Builder(wasm).makeStringWTF16Get(parseExpression(s[1]),
                                           parseExpression(s[2]));
 }
 
-Expression* SExpressionWasmBuilder::makeStringIterNext(Element& s) {
-  return Builder(wasm).makeStringIterNext(parseExpression(s[1]));
-}
-
-Expression* SExpressionWasmBuilder::makeStringIterMove(Element& s,
-                                                       StringIterMoveOp op) {
-  return Builder(wasm).makeStringIterMove(
-    op, parseExpression(s[1]), parseExpression(s[2]));
-}
-
-Expression* SExpressionWasmBuilder::makeStringSliceWTF(Element& s,
-                                                       StringSliceWTFOp op) {
+Expression* SExpressionWasmBuilder::makeStringSliceWTF(Element& s) {
   return Builder(wasm).makeStringSliceWTF(
-    op, parseExpression(s[1]), parseExpression(s[2]), parseExpression(s[3]));
-}
-
-Expression* SExpressionWasmBuilder::makeStringSliceIter(Element& s) {
-  return Builder(wasm).makeStringSliceIter(parseExpression(s[1]),
-                                           parseExpression(s[2]));
+    parseExpression(s[1]), parseExpression(s[2]), parseExpression(s[3]));
 }
 
 // converts an s-expression string representing binary data into an output

@@ -997,45 +997,14 @@ private:
         }
       }
     }
-    void visitStringAs(StringAs* curr) {
-      // traps when ref is null.
-      parent.implicitTrap = true;
-    }
-    void visitStringWTF8Advance(StringWTF8Advance* curr) {
-      // traps when ref is null.
-      parent.implicitTrap = true;
-    }
     void visitStringWTF16Get(StringWTF16Get* curr) {
       // traps when ref is null.
       parent.implicitTrap = true;
-    }
-    void visitStringIterNext(StringIterNext* curr) {
-      // traps when ref is null.
-      parent.implicitTrap = true;
-      // modifies state in the iterator. we model that as accessing heap memory
-      // in an array atm TODO consider adding a new effect type for this (we
-      // added one for arrays because struct/array operations often interleave,
-      // say with vtable accesses, but it's not clear adding overhead to this
-      // class is worth it for string iters)
-      parent.readsArray = true;
-      parent.writesArray = true;
-    }
-    void visitStringIterMove(StringIterMove* curr) {
-      // traps when ref is null.
-      parent.implicitTrap = true;
-      // see StringIterNext.
-      parent.readsArray = true;
-      parent.writesArray = true;
     }
     void visitStringSliceWTF(StringSliceWTF* curr) {
       // traps when ref is null.
       parent.implicitTrap = true;
     }
-    void visitStringSliceIter(StringSliceIter* curr) {
-      // traps when ref is null.
-      parent.implicitTrap = true;
-    }
-
     void visitContBind(ContBind* curr) {
       // traps when curr->cont is null ref.
       parent.implicitTrap = true;
