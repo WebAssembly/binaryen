@@ -86,10 +86,12 @@ public:
                                           Type type = Type(HeapType::func,
                                                            Nullable),
                                           Address initial = 0,
-                                          Address max = Table::kMaxSize) {
+                                          Address max = Table::kMaxSize,
+                                          Type indexType = Type::i32) {
     auto table = std::make_unique<Table>();
     table->name = name;
     table->type = type;
+    table->indexType = indexType;
     table->initial = initial;
     table->max = max;
     return table;
@@ -658,6 +660,8 @@ public:
                                             wasm.getMemory(memoryName)->is64());
   }
 
+  bool isTable64(Name tableName) { return wasm.getTable(tableName)->is64(); }
+
   MemorySize* makeMemorySize(Name memoryName,
                              MemoryInfo info = MemoryInfo::Unspecified) {
     auto* ret = wasm.allocator.alloc<MemorySize>();
@@ -729,6 +733,9 @@ public:
   TableSize* makeTableSize(Name table) {
     auto* ret = wasm.allocator.alloc<TableSize>();
     ret->table = table;
+    if (isTable64(table)) {
+      ret->type = Type::i64;
+    }
     ret->finalize();
     return ret;
   }
@@ -737,6 +744,9 @@ public:
     ret->table = table;
     ret->value = value;
     ret->delta = delta;
+    if (isTable64(table)) {
+      ret->type = Type::i64;
+    }
     ret->finalize();
     return ret;
   }

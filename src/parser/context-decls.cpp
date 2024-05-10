@@ -82,10 +82,11 @@ Result<> ParseDeclsCtx::addFunc(Name name,
 Result<Table*> ParseDeclsCtx::addTableDecl(Index pos,
                                            Name name,
                                            ImportNames* importNames,
-                                           Limits limits) {
+                                           TableType type) {
   auto t = std::make_unique<Table>();
-  t->initial = limits.initial;
-  t->max = limits.max ? *limits.max : Table::kUnlimitedSize;
+  t->indexType = type.indexType;
+  t->initial = type.limits.initial;
+  t->max = type.limits.max ? *type.limits.max : Table::kUnlimitedSize;
   if (name.is()) {
     if (wasm.getTableOrNull(name)) {
       // TODO: if the existing table is not explicitly named, fix its name and
@@ -105,10 +106,10 @@ Result<Table*> ParseDeclsCtx::addTableDecl(Index pos,
 Result<> ParseDeclsCtx::addTable(Name name,
                                  const std::vector<Name>& exports,
                                  ImportNames* import,
-                                 Limits limits,
+                                 TableType type,
                                  Index pos) {
   CHECK_ERR(checkImport(pos, import));
-  auto t = addTableDecl(pos, name, import, limits);
+  auto t = addTableDecl(pos, name, import, type);
   CHECK_ERR(t);
   CHECK_ERR(addExports(in, wasm, *t, exports, ExternalKind::Table));
   // TODO: table annotations
@@ -138,7 +139,7 @@ Result<Memory*> ParseDeclsCtx::addMemoryDecl(Index pos,
                                              ImportNames* importNames,
                                              MemType type) {
   auto m = std::make_unique<Memory>();
-  m->indexType = type.type;
+  m->indexType = type.indexType;
   m->initial = type.limits.initial;
   m->max = type.limits.max ? *type.limits.max : Memory::kUnlimitedSize;
   m->shared = type.shared;

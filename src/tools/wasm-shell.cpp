@@ -378,6 +378,11 @@ protected:
     spectest->addExport(
       builder.makeExport("table", Name::fromInt(0), ExternalKind::Table));
 
+    spectest->addTable(builder.makeTable(
+      Name::fromInt(1), Type(HeapType::func, Nullable), 10, 20, Type::i64));
+    spectest->addExport(
+      builder.makeExport("table64", Name::fromInt(1), ExternalKind::Table));
+
     Memory* memory =
       spectest->addMemory(builder.makeMemory(Name::fromInt(0), 1, 2));
     spectest->addExport(

@@ -44,6 +44,8 @@ template<typename Ctx> Result<typename Ctx::MemTypeT> memtype(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::MemTypeT> memtypeContinued(Ctx&, Type indexType);
 template<typename Ctx> Result<typename Ctx::TableTypeT> tabletype(Ctx&);
+template<typename Ctx>
+Result<typename Ctx::TableTypeT> tabletypeContinued(Ctx&, Type indexType);
 template<typename Ctx> Result<typename Ctx::GlobalTypeT> globaltype(Ctx&);
 template<typename Ctx> Result<uint32_t> tupleArity(Ctx&);
 
@@ -815,16 +817,28 @@ Result<typename Ctx::MemTypeT> memtypeContinued(Ctx& ctx, Type indexType) {
   return ctx.makeMemType(indexType, *limits, shared);
 }
 
-// tabletype ::= limits32 reftype
+// tabletype ::= (limits32 | 'i32' limits32 | 'i64' limit64) reftype
 template<typename Ctx> Result<typename Ctx::TableTypeT> tabletype(Ctx& ctx) {
-  auto limits = limits32(ctx);
+  Type indexType = Type::i32;
+  if (ctx.in.takeKeyword("i64"sv)) {
+    indexType = Type::i64;
+  } else {
+    ctx.in.takeKeyword("i32"sv);
+  }
+  return tabletypeContinued(ctx, indexType);
+}
+
+template<typename Ctx>
+Result<typename Ctx::TableTypeT> tabletypeContinued(Ctx& ctx, Type indexType) {
+  auto limits = indexType == Type::i32 ? limits32(ctx) : limits64(ctx);
   CHECK_ERR(limits);
   auto type = reftype(ctx);
   CHECK_ERR(type);
+
   if (!type) {
     return ctx.in.err("expected reftype");
   }
-  return ctx.makeTableType(*limits, *type);
+  return ctx.makeTableType(indexType, *limits, *type);
 }
 
 // globaltype ::= t:valtype               => const t
@@ -3049,8 +3063,8 @@ template<typename Ctx> MaybeResult<> func(Ctx& ctx) {
 }
 
 // table ::= '(' 'table' id? ('(' 'export' name ')')*
-//               '(' 'import' mod:name nm:name ')'? tabletype ')'
-//         | '(' 'table' id? ('(' 'export' name ')')*
+//               '(' 'import' mod:name nm:name ')'? index_type? tabletype ')'
+//         | '(' 'table' id? ('(' 'export' name ')')* index_type?
 //               reftype '(' 'elem' (elemexpr* | funcidx*) ')' ')'
 template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
   auto pos = ctx.in.getPos();
@@ -3068,6 +3082,13 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
 
   auto import = inlineImport(ctx.in);
   CHECK_ERR(import);
+
+  auto indexType = Type::i32;
+  if (ctx.in.takeKeyword("i64"sv)) {
+    indexType = Type::i64;
+  } else {
+    ctx.in.takeKeyword("i32"sv);
+  }
 
   // Reftype if we have inline elements.
   auto type = reftype(ctx);
@@ -3103,10 +3124,10 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
     if (!ctx.in.takeRParen()) {
       return ctx.in.err("expected end of inline elems");
     }
-    ttype = ctx.makeTableType(ctx.getLimitsFromElems(list), *type);
+    ttype = ctx.makeTableType(indexType, ctx.getLimitsFromElems(list), *type);
     elems = std::move(list);
   } else {
-    auto tabtype = tabletype(ctx);
+    auto tabtype = tabletypeContinued(ctx, indexType);
     CHECK_ERR(tabtype);
     ttype = *tabtype;
   }
@@ -3124,10 +3145,10 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
   return Ok{};
 }
 
-// mem ::= '(' 'memory' id? ('(' 'export' name ')')* index_type?
-//             ('(' 'data' b:datastring ')' | memtype) ')'
-//       | '(' 'memory' id? ('(' 'export' name ')')*
-//             '(' 'import' mod:name nm:name ')' memtype ')'
+// memory ::= '(' 'memory' id? ('(' 'export' name ')')* index_type?
+//                ('(' 'data' b:datastring ')' | memtype) ')'
+//          | '(' 'memory' id? ('(' 'export' name ')')*
+//                '(' 'import' mod:name nm:name ')' index_type? memtype ')'
 template<typename Ctx> MaybeResult<> memory(Ctx& ctx) {
   auto pos = ctx.in.getPos();
   if (!ctx.in.takeSExprStart("memory"sv)) {

@@ -947,15 +947,16 @@ void FunctionValidator::visitCall(Call* curr) {
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
   validateReturnCall(curr);
-  shouldBeEqualOrFirstIsUnreachable(curr->target->type,
-                                    Type(Type::i32),
-                                    curr,
-                                    "indirect call target must be an i32");
 
   if (curr->target->type != Type::unreachable) {
     auto* table = getModule()->getTableOrNull(curr->table);
-    shouldBeTrue(!!table, curr, "call-indirect table must exist");
-    if (table) {
+    if (shouldBeTrue(!!table, curr, "call-indirect table must exist")) {
+      shouldBeEqualOrFirstIsUnreachable(
+        curr->target->type,
+        table->indexType,
+        curr,
+        "call-indirect call target must match the table index type");
+      shouldBeTrue(!!table, curr, "call-indirect table must exist");
       shouldBeTrue(table->type.isFunction(),
                    curr,
                    "call-indirect table must be of function type.");
@@ -2267,13 +2268,19 @@ void FunctionValidator::visitTableGet(TableGet* curr) {
   shouldBeTrue(getModule()->features.hasReferenceTypes(),
                curr,
                "table.get requires reference types [--enable-reference-types]");
-  shouldBeEqualOrFirstIsUnreachable(
-    curr->index->type, Type(Type::i32), curr, "table.get index must be an i32");
   auto* table = getModule()->getTableOrNull(curr->table);
-  if (shouldBeTrue(!!table, curr, "table.get table must exist") &&
-      curr->type != Type::unreachable) {
-    shouldBeEqual(
-      curr->type, table->type, curr, "table.get must have same type as table.");
+  if (shouldBeTrue(!!table, curr, "table.get table must exist")) {
+    if (curr->type != Type::unreachable) {
+      shouldBeEqual(curr->type,
+                    table->type,
+                    curr,
+                    "table.get must have same type as table.");
+    }
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->index->type,
+      table->indexType,
+      curr,
+      "table.get index must match the table index type.");
   }
 }
 
@@ -2281,15 +2288,19 @@ void FunctionValidator::visitTableSet(TableSet* curr) {
   shouldBeTrue(getModule()->features.hasReferenceTypes(),
                curr,
                "table.set requires reference types [--enable-reference-types]");
-  shouldBeEqualOrFirstIsUnreachable(
-    curr->index->type, Type(Type::i32), curr, "table.set index must be an i32");
   auto* table = getModule()->getTableOrNull(curr->table);
-  if (shouldBeTrue(!!table, curr, "table.set table must exist") &&
-      curr->type != Type::unreachable) {
-    shouldBeSubType(curr->value->type,
-                    table->type,
-                    curr,
-                    "table.set value must have right type");
+  if (shouldBeTrue(!!table, curr, "table.set table must exist")) {
+    if (curr->type != Type::unreachable) {
+      shouldBeSubType(curr->value->type,
+                      table->type,
+                      curr,
+                      "table.set value must have right type");
+    }
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->index->type,
+      table->indexType,
+      curr,
+      "table.set index must match the table index type.");
   }
 }
 
@@ -2315,7 +2326,7 @@ void FunctionValidator::visitTableGrow(TableGrow* curr) {
                     curr,
                     "table.grow value must have right type");
     shouldBeEqual(curr->delta->type,
-                  Type(Type::i32),
+                  table->indexType,
                   curr,
                   "table.grow must match table index type");
   }
@@ -2331,11 +2342,17 @@ void FunctionValidator::visitTableFill(TableFill* curr) {
                     table->type,
                     curr,
                     "table.fill value must have right type");
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->dest->type,
+      table->indexType,
+      curr,
+      "table.fill dest must match table index type");
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->size->type,
+      table->indexType,
+      curr,
+      "table.fill size must match table index type");
   }
-  shouldBeEqualOrFirstIsUnreachable(
-    curr->dest->type, Type(Type::i32), curr, "table.fill dest must be i32");
-  shouldBeEqualOrFirstIsUnreachable(
-    curr->size->type, Type(Type::i32), curr, "table.fill size must be i32");
 }
 
 void FunctionValidator::visitTableCopy(TableCopy* curr) {
@@ -3840,6 +3857,11 @@ static void validateTables(Module& module, ValidationInfo& info) {
                         "table",
                         "Only funcref and externref are valid for table type "
                         "(when gc is disabled)");
+    }
+    if (table->is64()) {
+      info.shouldBeTrue(module.features.hasMemory64(),
+                        "memory",
+                        "64-bit tables require memory64 [--enable-memory64]");
     }
   }
 

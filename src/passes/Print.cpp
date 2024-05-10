@@ -3088,6 +3088,9 @@ void PrintSExpression::printTableHeader(Table* curr) {
   o << '(';
   printMedium(o, "table") << ' ';
   curr->name.print(o) << ' ';
+  if (curr->is64()) {
+    o << "i64 ";
+  }
   o << curr->initial;
   if (curr->hasMax()) {
     o << ' ' << curr->max;

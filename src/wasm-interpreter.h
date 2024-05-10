@@ -3086,8 +3086,11 @@ public:
       return index;
     }
     auto info = getTableInterfaceInfo(curr->table);
-    return info.interface->tableLoad(info.name,
-                                     index.getSingleValue().geti32());
+    auto* table = wasm.getTable(info.name);
+    auto address = table->indexType == Type::i64
+                     ? index.getSingleValue().geti64()
+                     : index.getSingleValue().geti32();
+    return info.interface->tableLoad(info.name, address);
   }
   Flow visitTableSet(TableSet* curr) {
     NOTE_ENTER("TableSet");
@@ -3100,17 +3103,20 @@ public:
       return valueFlow;
     }
     auto info = getTableInterfaceInfo(curr->table);
-    info.interface->tableStore(info.name,
-                               indexFlow.getSingleValue().geti32(),
-                               valueFlow.getSingleValue());
+    auto* table = wasm.getTable(info.name);
+    auto address = table->indexType == Type::i64
+                     ? indexFlow.getSingleValue().geti64()
+                     : indexFlow.getSingleValue().geti32();
+    info.interface->tableStore(info.name, address, valueFlow.getSingleValue());
     return Flow();
   }
 
   Flow visitTableSize(TableSize* curr) {
     NOTE_ENTER("TableSize");
     auto info = getTableInterfaceInfo(curr->table);
+    auto* table = wasm.getTable(info.name);
     Index tableSize = info.interface->tableSize(curr->table);
-    return Literal::makeFromInt32(tableSize, Type::i32);
+    return Literal::makeFromInt64(tableSize, table->indexType);
   }
 
   Flow visitTableGrow(TableGrow* curr) {
@@ -3126,16 +3132,16 @@ public:
     Name tableName = curr->table;
     auto info = getTableInterfaceInfo(tableName);
 
-    Index tableSize = info.interface->tableSize(tableName);
-    Flow ret = Literal::makeFromInt32(tableSize, Type::i32);
-    Flow fail = Literal::makeFromInt32(-1, Type::i32);
+    Index tableSize = info.interface->tableSize(info.name);
+    auto* table = self()->wasm.getTable(info.name);
+    Flow ret = Literal::makeFromInt64(tableSize, table->indexType);
+    Flow fail = Literal::makeFromInt64(-1, table->indexType);
     Index delta = deltaFlow.getSingleValue().geti32();
 
     if (tableSize >= uint32_t(-1) - delta) {
       return fail;
     }
-    auto maxTableSize = self()->wasm.getTable(tableName)->max;
-    if (uint64_t(tableSize) + uint64_t(delta) > uint64_t(maxTableSize)) {
+    if (uint64_t(tableSize) + uint64_t(delta) > uint64_t(table->max)) {
       return fail;
     }
     Index newSize = tableSize + delta;
@@ -3168,9 +3174,14 @@ public:
     Name tableName = curr->table;
     auto info = getTableInterfaceInfo(tableName);
 
-    Index dest = destFlow.getSingleValue().geti32();
+    auto* table = self()->wasm.getTable(info.name);
+    Index dest = table->indexType == Type::i64
+                   ? destFlow.getSingleValue().geti64()
+                   : destFlow.getSingleValue().geti32();
     Literal value = valueFlow.getSingleValue();
-    Index size = sizeFlow.getSingleValue().geti32();
+    Index size = table->indexType == Type::i64
+                   ? sizeFlow.getSingleValue().geti64()
+                   : sizeFlow.getSingleValue().geti32();
 
     Index tableSize = info.interface->tableSize(tableName);
     if (dest + size > tableSize) {

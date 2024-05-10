@@ -1552,6 +1552,8 @@ public:
 
   // gets a memory in the combined import+defined space
   Memory* getMemory(Index index);
+  // gets a table in the combined import+defined space
+  Table* getTable(Index index);
 
   void getResizableLimits(Address& initial,
                           Address& max,
