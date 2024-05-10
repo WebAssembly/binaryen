@@ -2779,33 +2779,34 @@ private:
   std::unordered_set<Name> droppedDataSegments;
   std::unordered_set<Name> droppedElementSegments;
 
-  struct TableInterfaceInfo {
-    // The external interface in which the table is defined.
-    ExternalInterface* interface;
+  struct TableInstanceInfo {
+    // The ModuleRunner instance in which the memory is defined.
+    SubType* instance;
+    // The external interface in which the table is defined
+    ExternalInterface* interface() { return instance->externalInterface; }
     // The name the table has in that interface.
     Name name;
   };
 
-  TableInterfaceInfo getTableInterfaceInfo(Name name) {
+  TableInstanceInfo getTableInstanceInfo(Name name) {
     auto* table = wasm.getTable(name);
     if (table->imported()) {
       auto& importedInstance = linkedInstances.at(table->module);
       auto* tableExport = importedInstance->wasm.getExport(table->base);
-      return TableInterfaceInfo{importedInstance->externalInterface,
-                                tableExport->value};
-    } else {
-      return TableInterfaceInfo{externalInterface, name};
+      return importedInstance->getTableInstanceInfo(tableExport->value);
     }
+
+    return TableInstanceInfo{self(), name};
   }
 
   void initializeTableContents() {
     for (auto& table : wasm.tables) {
       if (table->type.isNullable()) {
         // Initial with nulls in a nullable table.
-        auto info = getTableInterfaceInfo(table->name);
+        auto info = getTableInstanceInfo(table->name);
         auto null = Literal::makeNull(table->type.getHeapType());
         for (Address i = 0; i < table->initial; i++) {
-          info.interface->tableStore(info.name, i, null);
+          info.interface()->tableStore(info.name, i, null);
         }
       }
     }
@@ -2835,20 +2836,21 @@ private:
   struct MemoryInstanceInfo {
     // The ModuleRunner instance in which the memory is defined.
     SubType* instance;
+    // The external interface in which the memory is defined
+    ExternalInterface* interface() { return instance->externalInterface; }
     // The name the memory has in that interface.
     Name name;
   };
 
   MemoryInstanceInfo getMemoryInstanceInfo(Name name) {
     auto* memory = wasm.getMemory(name);
-    MemoryInstanceInfo memoryInterfaceInfo;
-    if (!memory->imported()) {
-      return MemoryInstanceInfo{self(), name};
+    if (memory->imported()) {
+      auto& importedInstance = linkedInstances.at(memory->module);
+      auto* memoryExport = importedInstance->wasm.getExport(memory->base);
+      return importedInstance->getMemoryInstanceInfo(memoryExport->value);
     }
 
-    auto& importedInstance = linkedInstances.at(memory->module);
-    auto* memoryExport = importedInstance->wasm.getExport(memory->base);
-    return importedInstance->getMemoryInstanceInfo(memoryExport->value);
+    return MemoryInstanceInfo{self(), name};
   }
 
   void initializeMemoryContents() {
@@ -3028,12 +3030,12 @@ public:
 
     Index index = target.getSingleValue().geti32();
 
-    auto info = getTableInterfaceInfo(curr->table);
+    auto info = getTableInstanceInfo(curr->table);
 
     if (curr->isReturn) {
       // Return calls are represented by their arguments followed by a reference
       // to the function to be called.
-      auto funcref = info.interface->tableLoad(info.name, index);
+      auto funcref = info.interface()->tableLoad(info.name, index);
       if (!Type::isSubType(funcref.type, Type(curr->heapType, NonNullable))) {
         trap("cast failure in call_indirect");
       }
@@ -3041,7 +3043,7 @@ public:
       return Flow(RETURN_CALL_FLOW, std::move(arguments));
     }
 
-    Flow ret = info.interface->callTable(
+    Flow ret = info.interface()->callTable(
       info.name, index, curr->heapType, arguments, curr->type, *self());
 #ifdef WASM_INTERPRETER_DEBUG
     std::cout << "(returned to " << scope->function->name << ")\n";
@@ -3085,12 +3087,12 @@ public:
     if (index.breaking()) {
       return index;
     }
-    auto info = getTableInterfaceInfo(curr->table);
-    auto* table = wasm.getTable(info.name);
+    auto info = getTableInstanceInfo(curr->table);
+    auto* table = info.instance->wasm.getTable(info.name);
     auto address = table->indexType == Type::i64
                      ? index.getSingleValue().geti64()
                      : index.getSingleValue().geti32();
-    return info.interface->tableLoad(info.name, address);
+    return info.interface()->tableLoad(info.name, address);
   }
   Flow visitTableSet(TableSet* curr) {
     NOTE_ENTER("TableSet");
@@ -3102,20 +3104,21 @@ public:
     if (valueFlow.breaking()) {
       return valueFlow;
     }
-    auto info = getTableInterfaceInfo(curr->table);
-    auto* table = wasm.getTable(info.name);
+    auto info = getTableInstanceInfo(curr->table);
+    auto* table = info.instance->wasm.getTable(info.name);
     auto address = table->indexType == Type::i64
                      ? indexFlow.getSingleValue().geti64()
                      : indexFlow.getSingleValue().geti32();
-    info.interface->tableStore(info.name, address, valueFlow.getSingleValue());
+    info.interface()->tableStore(
+      info.name, address, valueFlow.getSingleValue());
     return Flow();
   }
 
   Flow visitTableSize(TableSize* curr) {
     NOTE_ENTER("TableSize");
-    auto info = getTableInterfaceInfo(curr->table);
-    auto* table = wasm.getTable(info.name);
-    Index tableSize = info.interface->tableSize(curr->table);
+    auto info = getTableInstanceInfo(curr->table);
+    auto* table = info.instance->wasm.getTable(info.name);
+    Index tableSize = info.interface()->tableSize(curr->table);
     return Literal::makeFromInt64(tableSize, table->indexType);
   }
 
@@ -3129,11 +3132,10 @@ public:
     if (deltaFlow.breaking()) {
       return deltaFlow;
     }
-    Name tableName = curr->table;
-    auto info = getTableInterfaceInfo(tableName);
+    auto info = getTableInstanceInfo(curr->table);
 
-    Index tableSize = info.interface->tableSize(info.name);
-    auto* table = self()->wasm.getTable(info.name);
+    Index tableSize = info.interface()->tableSize(info.name);
+    auto* table = info.instance->wasm.getTable(info.name);
     Flow ret = Literal::makeFromInt64(tableSize, table->indexType);
     Flow fail = Literal::makeFromInt64(-1, table->indexType);
     Index delta = deltaFlow.getSingleValue().geti32();
@@ -3148,8 +3150,8 @@ public:
     if (newSize > WebLimitations::MaxTableSize) {
       return fail;
     }
-    if (!info.interface->growTable(
-          tableName, valueFlow.getSingleValue(), tableSize, newSize)) {
+    if (!info.interface()->growTable(
+          info.name, valueFlow.getSingleValue(), tableSize, newSize)) {
       // We failed to grow the table in practice, even though it was valid
       // to try to do so.
       return fail;
@@ -3171,8 +3173,7 @@ public:
     if (sizeFlow.breaking()) {
       return sizeFlow;
     }
-    Name tableName = curr->table;
-    auto info = getTableInterfaceInfo(tableName);
+    auto info = getTableInstanceInfo(curr->table);
 
     auto* table = self()->wasm.getTable(info.name);
     Index dest = table->indexType == Type::i64
@@ -3183,13 +3184,13 @@ public:
                    ? sizeFlow.getSingleValue().geti64()
                    : sizeFlow.getSingleValue().geti32();
 
-    Index tableSize = info.interface->tableSize(tableName);
+    Index tableSize = info.interface()->tableSize(info.name);
     if (dest + size > tableSize) {
       trap("out of bounds table access");
     }
 
     for (Index i = 0; i < size; ++i) {
-      info.interface->tableStore(info.name, dest + i, value);
+      info.interface()->tableStore(info.name, dest + i, value);
     }
     return Flow();
   }
@@ -3215,10 +3216,10 @@ public:
     Address sourceVal(source.getSingleValue().getUnsigned());
     Address sizeVal(size.getSingleValue().getUnsigned());
 
-    auto destInfo = getTableInterfaceInfo(curr->destTable);
-    auto sourceInfo = getTableInterfaceInfo(curr->sourceTable);
-    auto destTableSize = destInfo.interface->tableSize(destInfo.name);
-    auto sourceTableSize = sourceInfo.interface->tableSize(sourceInfo.name);
+    auto destInfo = getTableInstanceInfo(curr->destTable);
+    auto sourceInfo = getTableInstanceInfo(curr->sourceTable);
+    auto destTableSize = destInfo.interface()->tableSize(destInfo.name);
+    auto sourceTableSize = sourceInfo.interface()->tableSize(sourceInfo.name);
     if (sourceVal + sizeVal > sourceTableSize ||
         destVal + sizeVal > destTableSize ||
         // FIXME: better/cheaper way to detect wrapping?
@@ -3237,10 +3238,10 @@ public:
       step = -1;
     }
     for (int64_t i = start; i != end; i += step) {
-      destInfo.interface->tableStore(
+      destInfo.interface()->tableStore(
         destInfo.name,
         destVal + i,
-        sourceInfo.interface->tableLoad(sourceInfo.name, sourceVal + i));
+        sourceInfo.interface()->tableLoad(sourceInfo.name, sourceVal + i));
     }
     return {};
   }
@@ -3300,7 +3301,7 @@ public:
     if (curr->isAtomic) {
       info.instance->checkAtomicAddress(addr, curr->bytes, memorySize);
     }
-    auto ret = info.instance->externalInterface->load(curr, addr, info.name);
+    auto ret = info.interface()->load(curr, addr, info.name);
     NOTE_EVAL1(addr);
     NOTE_EVAL1(ret);
     return ret;
@@ -3324,8 +3325,7 @@ public:
     }
     NOTE_EVAL1(addr);
     NOTE_EVAL1(value);
-    info.instance->externalInterface->store(
-      curr, addr, value.getSingleValue(), info.name);
+    info.interface()->store(curr, addr, value.getSingleValue(), info.name);
     return Flow();
   }
 
@@ -3530,23 +3530,17 @@ public:
     auto loadLane = [&](Address addr) {
       switch (curr->op) {
         case Load8x8SVec128:
-          return Literal(
-            int32_t(info.instance->externalInterface->load8s(addr, info.name)));
+          return Literal(int32_t(info.interface()->load8s(addr, info.name)));
         case Load8x8UVec128:
-          return Literal(
-            int32_t(info.instance->externalInterface->load8u(addr, info.name)));
+          return Literal(int32_t(info.interface()->load8u(addr, info.name)));
         case Load16x4SVec128:
-          return Literal(int32_t(
-            info.instance->externalInterface->load16s(addr, info.name)));
+          return Literal(int32_t(info.interface()->load16s(addr, info.name)));
         case Load16x4UVec128:
-          return Literal(int32_t(
-            info.instance->externalInterface->load16u(addr, info.name)));
+          return Literal(int32_t(info.interface()->load16u(addr, info.name)));
         case Load32x2SVec128:
-          return Literal(int64_t(
-            info.instance->externalInterface->load32s(addr, info.name)));
+          return Literal(int64_t(info.interface()->load32s(addr, info.name)));
         case Load32x2UVec128:
-          return Literal(int64_t(
-            info.instance->externalInterface->load32u(addr, info.name)));
+          return Literal(int64_t(info.interface()->load32u(addr, info.name)));
         default:
           WASM_UNREACHABLE("unexpected op");
       }
@@ -3595,12 +3589,10 @@ public:
     auto zero =
       Literal::makeZero(curr->op == Load32ZeroVec128 ? Type::i32 : Type::i64);
     if (curr->op == Load32ZeroVec128) {
-      auto val =
-        Literal(info.instance->externalInterface->load32u(src, info.name));
+      auto val = Literal(info.interface()->load32u(src, info.name));
       return Literal(std::array<Literal, 4>{{val, zero, zero, zero}});
     } else {
-      auto val =
-        Literal(info.instance->externalInterface->load64u(src, info.name));
+      auto val = Literal(info.interface()->load64u(src, info.name));
       return Literal(std::array<Literal, 2>{{val, zero}});
     }
   }
@@ -3626,10 +3618,10 @@ public:
         std::array<Literal, 16> lanes = vec.getLanesUI8x16();
         if (curr->isLoad()) {
           lanes[curr->index] =
-            Literal(info.instance->externalInterface->load8u(addr, info.name));
+            Literal(info.interface()->load8u(addr, info.name));
           return Literal(lanes);
         } else {
-          info.instance->externalInterface->store8(
+          info.interface()->store8(
             addr, lanes[curr->index].geti32(), info.name);
           return {};
         }
@@ -3639,10 +3631,10 @@ public:
         std::array<Literal, 8> lanes = vec.getLanesUI16x8();
         if (curr->isLoad()) {
           lanes[curr->index] =
-            Literal(info.instance->externalInterface->load16u(addr, info.name));
+            Literal(info.interface()->load16u(addr, info.name));
           return Literal(lanes);
         } else {
-          info.instance->externalInterface->store16(
+          info.interface()->store16(
             addr, lanes[curr->index].geti32(), info.name);
           return {};
         }
@@ -3652,10 +3644,10 @@ public:
         std::array<Literal, 4> lanes = vec.getLanesI32x4();
         if (curr->isLoad()) {
           lanes[curr->index] =
-            Literal(info.instance->externalInterface->load32u(addr, info.name));
+            Literal(info.interface()->load32u(addr, info.name));
           return Literal(lanes);
         } else {
-          info.instance->externalInterface->store32(
+          info.interface()->store32(
             addr, lanes[curr->index].geti32(), info.name);
           return {};
         }
@@ -3665,10 +3657,10 @@ public:
         std::array<Literal, 2> lanes = vec.getLanesI64x2();
         if (curr->isLoad()) {
           lanes[curr->index] =
-            Literal(info.instance->externalInterface->load64u(addr, info.name));
+            Literal(info.interface()->load64u(addr, info.name));
           return Literal(lanes);
         } else {
-          info.instance->externalInterface->store64(
+          info.interface()->store64(
             addr, lanes[curr->index].geti64(), info.name);
           return {};
         }
@@ -3706,10 +3698,9 @@ public:
     if (newSize > memory->max) {
       return fail;
     }
-    if (!info.instance->externalInterface->growMemory(
-          info.name,
-          memorySize * Memory::kPageSize,
-          newSize * Memory::kPageSize)) {
+    if (!info.interface()->growMemory(info.name,
+                                      memorySize * Memory::kPageSize,
+                                      newSize * Memory::kPageSize)) {
       // We failed to grow the memory in practice, even though it was valid
       // to try to do so.
       return fail;
@@ -3755,7 +3746,7 @@ public:
     }
     for (size_t i = 0; i < sizeVal; ++i) {
       Literal addr(destVal + i);
-      info.instance->externalInterface->store8(
+      info.interface()->store8(
         info.instance->getFinalAddressWithoutOffset(addr, 1, memorySize),
         segment->data[offsetVal + i],
         info.name);
@@ -3810,10 +3801,10 @@ public:
       step = -1;
     }
     for (int64_t i = start; i != end; i += step) {
-      destInfo.instance->externalInterface->store8(
+      destInfo.interface()->store8(
         destInfo.instance->getFinalAddressWithoutOffset(
           Literal(destVal + i), 1, destMemorySize),
-        sourceInfo.instance->externalInterface->load8s(
+        sourceInfo.interface()->load8s(
           sourceInfo.instance->getFinalAddressWithoutOffset(
             Literal(sourceVal + i), 1, sourceMemorySize),
           sourceInfo.name),
@@ -3851,11 +3842,10 @@ public:
     }
     uint8_t val(value.getSingleValue().geti32());
     for (size_t i = 0; i < sizeVal; ++i) {
-      info.instance->externalInterface->store8(
-        info.instance->getFinalAddressWithoutOffset(
-          Literal(destVal + i), 1, memorySize),
-        val,
-        info.name);
+      info.interface()->store8(info.instance->getFinalAddressWithoutOffset(
+                                 Literal(destVal + i), 1, memorySize),
+                               val,
+                               info.name);
     }
     return {};
   }
