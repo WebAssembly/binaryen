@@ -9,11 +9,10 @@
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
 
-  ;; CHECK:      (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
-
   ;; CHECK:      (type $struct2 (struct (field (mut i32)) (field (mut i32))))
   (type $struct2 (struct (field (mut i32)) (field (mut i32))))
 
+  ;; CHECK:      (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
   (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
 
   ;; CHECK:      (func $tee (type $1)
@@ -628,17 +627,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (local.set $ref2
-  ;; CHECK-NEXT:    (struct.new $struct3
-  ;; CHECK-NEXT:     (i32.const 400)
-  ;; CHECK-NEXT:     (i32.const 200)
-  ;; CHECK-NEXT:     (i32.const 300)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (struct.set $struct3 2
-  ;; CHECK-NEXT:    (local.get $ref2)
-  ;; CHECK-NEXT:    (i32.const 500)
-  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $ref
   ;; CHECK-NEXT:    (struct.new $struct3
   ;; CHECK-NEXT:     (i32.const 40)
@@ -646,10 +634,15 @@
   ;; CHECK-NEXT:     (i32.const 30)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (struct.set $struct3 1
-  ;; CHECK-NEXT:    (local.get $ref2)
-  ;; CHECK-NEXT:    (i32.const 600)
+  ;; CHECK-NEXT:   (local.set $ref2
+  ;; CHECK-NEXT:    (struct.new $struct3
+  ;; CHECK-NEXT:     (i32.const 400)
+  ;; CHECK-NEXT:     (i32.const 600)
+  ;; CHECK-NEXT:     (i32.const 500)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (nop)
+  ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $many-news

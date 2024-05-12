@@ -1929,6 +1929,11 @@ struct OptimizeInstructions
       return false;
     }
 
+    if (list[j]->is<LocalSet>() &&
+        list[j]->dynCast<LocalSet>()->value->is<StructNew>()) {
+      // Don't swap two struct.new instructions to avoid going back and forth.
+      return false;
+    }
     // Check if the local is referencenced by the instruction we want to
     // swap it with,
     auto* localSet = list[i]->dynCast<LocalSet>();
