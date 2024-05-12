@@ -1882,17 +1882,33 @@ struct OptimizeInstructions
 
       // This local.set of a struct.new looks good. Find struct.sets after it
       // to optimize.
-      for (Index j = i + 1; j < list.size(); j++) {
+      Index localSetIndex = i;
+      for (Index j = localSetIndex + 1; j < list.size(); j++) {
         auto* structSet = list[j]->dynCast<StructSet>();
+        // Any time the pattern no longer matches, we try to push the
+        // struct.new further down but if it is not possible we stop
+        // optimizing possible struct.sets for this struct.new.
+
         if (!structSet) {
-          // Any time the pattern no longer matches, stop optimizing possible
-          // struct.sets for this struct.new.
+          if (trySwap(list, localSetIndex, j)) {
+            // Update the index an continue to try again.
+            localSetIndex = j;
+            continue;
+          }
           break;
         }
+
         auto* localGet = structSet->ref->dynCast<LocalGet>();
         if (!localGet || localGet->index != localSet->index) {
+          if (trySwap(list, localSetIndex, j)) {
+            // Update the index an continue to try again.
+            localSetIndex = j;
+            continue;
+          }
           break;
         }
+
+        // The pattern matches, try to optimize.
         if (!optimizeSubsequentStructSet(new_, structSet, localGet->index)) {
           break;
         } else {
@@ -1902,6 +1918,34 @@ struct OptimizeInstructions
         }
       }
     }
+  }
+
+  // Tries pushing the struct.new down so that it is closer
+  // to a potential struct.set.
+  bool trySwap(ExpressionList& list, Index i, Index j) {
+    if (j == list.size() - 1) {
+      // There is no reason to swap with the last element
+      // of the list as it won't match the pattern.
+      return false;
+    }
+
+    // Check if the local is referencenced by the instruction we want to
+    // swap it with,
+    auto* localSet = list[i]->dynCast<LocalSet>();
+    auto otherEffects = effects(list[j]);
+    if (otherEffects.localsRead.count(localSet->index) ||
+        otherEffects.localsWritten.count(localSet->index)) {
+      return false;
+    }
+    // or if the effects don't permit moving one past the other.
+    auto structNewEffects = effects(localSet->value);
+    if (otherEffects.invalidates(structNewEffects)) {
+      return false;
+    }
+
+    list[i] = list[j];
+    list[j] = localSet;
+    return true;
   }
 
   // Given a struct.new and a struct.set that occurs right after it, and that
