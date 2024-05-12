@@ -4,11 +4,15 @@
 ;; into any IR.
 
 ;; RUN: wasm-opt %s -all -S -o - | filecheck %s
+;; RUN: wasm-opt %s -all --roundtrip -S -o - | filecheck %s --check-prefix=RTRIP
 
 (module
   ;; CHECK:      (func $empty (type $1)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $empty (type $1)
+  ;; RTRIP-NEXT:  (nop)
+  ;; RTRIP-NEXT: )
   (func $empty
     (string.as_wtf16)
   )
@@ -19,7 +23,26 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $codeunit (type $0) (result i32)
+  ;; RTRIP-NEXT:  (local $0 i32)
+  ;; RTRIP-NEXT:  (local $1 (ref string))
+  ;; RTRIP-NEXT:  (stringview_wtf16.get_codeunit
+  ;; RTRIP-NEXT:   (block (result (ref string))
+  ;; RTRIP-NEXT:    (local.set $1
+  ;; RTRIP-NEXT:     (string.const "abc")
+  ;; RTRIP-NEXT:    )
+  ;; RTRIP-NEXT:    (local.set $0
+  ;; RTRIP-NEXT:     (i32.const 0)
+  ;; RTRIP-NEXT:    )
+  ;; RTRIP-NEXT:    (nop)
+  ;; RTRIP-NEXT:    (local.get $1)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:   (local.get $0)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT: )
   (func $codeunit (result i32)
+    ;; This should parse ok with the conversion skipped. The roundtrip will
+    ;; include scratch locals.
     (stringview_wtf16.get_codeunit
       (string.as_wtf16
         (string.const "abc")
@@ -28,12 +51,65 @@
     )
   )
 
+  ;; CHECK:      (func $slice (type $2) (result stringref)
+  ;; CHECK-NEXT:  (stringview_wtf16.slice
+  ;; CHECK-NEXT:   (string.const "abc")
+  ;; CHECK-NEXT:   (i32.const 1)
+  ;; CHECK-NEXT:   (i32.const 2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $slice (type $2) (result stringref)
+  ;; RTRIP-NEXT:  (local $0 i32)
+  ;; RTRIP-NEXT:  (local $1 i32)
+  ;; RTRIP-NEXT:  (local $2 i32)
+  ;; RTRIP-NEXT:  (local $3 (ref string))
+  ;; RTRIP-NEXT:  (stringview_wtf16.slice
+  ;; RTRIP-NEXT:   (block (result (ref string))
+  ;; RTRIP-NEXT:    (local.set $3
+  ;; RTRIP-NEXT:     (string.const "abc")
+  ;; RTRIP-NEXT:    )
+  ;; RTRIP-NEXT:    (local.set $0
+  ;; RTRIP-NEXT:     (block (result i32)
+  ;; RTRIP-NEXT:      (local.set $2
+  ;; RTRIP-NEXT:       (i32.const 1)
+  ;; RTRIP-NEXT:      )
+  ;; RTRIP-NEXT:      (local.set $1
+  ;; RTRIP-NEXT:       (i32.const 2)
+  ;; RTRIP-NEXT:      )
+  ;; RTRIP-NEXT:      (local.get $2)
+  ;; RTRIP-NEXT:     )
+  ;; RTRIP-NEXT:    )
+  ;; RTRIP-NEXT:    (nop)
+  ;; RTRIP-NEXT:    (local.get $3)
+  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:   (local.get $0)
+  ;; RTRIP-NEXT:   (local.get $1)
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT: )
+  (func $slice (result stringref)
+    ;; This should parse ok with the conversion skipped. The roundtrip will
+    ;; include scratch locals.
+    (stringview_wtf16.slice
+      (string.as_wtf16
+        (string.const "abc")
+      )
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+
   ;; CHECK:      (func $length (type $0) (result i32)
   ;; CHECK-NEXT:  (string.measure_wtf16
   ;; CHECK-NEXT:   (string.const "abc")
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
+  ;; RTRIP:      (func $length (type $0) (result i32)
+  ;; RTRIP-NEXT:  (string.measure_wtf16
+  ;; RTRIP-NEXT:   (string.const "abc")
+  ;; RTRIP-NEXT:  )
+  ;; RTRIP-NEXT: )
   (func $length (result i32)
+    ;; This should be parsed as string.measure_wtf16 instead.
     (stringview_wtf16.length
       (string.as_wtf16
         (string.const "abc")

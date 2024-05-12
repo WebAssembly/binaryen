@@ -202,7 +202,10 @@ Result<> doParseModule(Module& wasm, Lexer& input, bool allowExtra) {
         CHECK_ERR(im);
       }
       if (!f->imported()) {
-        CHECK_ERR(ctx.irBuilder.visitEnd());
+        auto end = ctx.irBuilder.visitEnd();
+        if (auto* err = end.getErr()) {
+          return ctx.in.err(decls.funcDefs[i].pos, err->msg);
+        }
       }
     }
 

@@ -4241,6 +4241,9 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       if (maybeVisitStringNew(curr, opcode)) {
         break;
       }
+      if (maybeVisitStringAsWTF16(curr, opcode)) {
+        break;
+      }
       if (maybeVisitStringConst(curr, opcode)) {
         break;
       }
@@ -7569,6 +7572,21 @@ bool WasmBinaryReader::maybeVisitStringNew(Expression*& out, uint32_t code) {
   } else {
     out = Builder(wasm).makeStringNew(op, ptr, start, end, try_);
   }
+  return true;
+}
+
+bool WasmBinaryReader::maybeVisitStringAsWTF16(Expression*& out,
+                                               uint32_t code) {
+  if (code != BinaryConsts::StringAsWTF16) {
+    return false;
+  }
+  // Parse `string.as_wtf16` as a nop. We do not support this instruction in the
+  // IR, but parsing it as a nop will ensure that the subsequent
+  // `stringview_wtf16.get_codeunit` or `stringview_wtf16.slice` will still
+  // receive the string value. We need to at least accept this in the binary
+  // parser because we emit `string.as_wtf16` as part of the binary encoding of
+  // those other two instructions.
+  out = Builder(wasm).makeNop();
   return true;
 }
 

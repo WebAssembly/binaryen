@@ -300,45 +300,6 @@
     )
   )
 
-  ;; CHECK:      (func $stringview-access (type $0) (param $a stringref)
-  ;; CHECK-NEXT:  (local $i32 i32)
-  ;; CHECK-NEXT:  (local.set $i32
-  ;; CHECK-NEXT:   (stringview_wtf16.get_codeunit
-  ;; CHECK-NEXT:    (local.get $a)
-  ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $stringview-access
-    (param $a stringref)
-    (local $i32 i32)
-    (local.set $i32 ;; validate the output type
-      (stringview_wtf16.get_codeunit
-        (local.get $a)
-        (i32.const 2)
-      )
-    )
-  )
-  ;; CHECK:      (func $stringview-slice (type $0) (param $a stringref)
-  ;; CHECK-NEXT:  (local.set $a
-  ;; CHECK-NEXT:   (stringview_wtf16.slice
-  ;; CHECK-NEXT:    (local.get $a)
-  ;; CHECK-NEXT:    (i32.const 2)
-  ;; CHECK-NEXT:    (i32.const 3)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $stringview-slice
-    (param $a stringref)
-    (local.set $a ;; validate the output type
-      (stringview_wtf16.slice
-        (local.get $a)
-        (i32.const 2)
-        (i32.const 3)
-      )
-    )
-  )
-
   ;; CHECK:      (func $string.new.gc (type $6) (param $array (ref $array)) (param $array16 (ref $array16))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.new_wtf16_array

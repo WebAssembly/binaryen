@@ -2435,13 +2435,30 @@ void BinaryInstWriter::visitStringEq(StringEq* curr) {
 }
 
 void BinaryInstWriter::visitStringWTF16Get(StringWTF16Get* curr) {
+  // We need to convert the ref operand to a stringview, but it is under the pos
+  // operand. Put the i32 in a scratch local, emit the conversion, then get the
+  // i32 back onto the stack.
+  Index scratchPos = scratchLocals[Type::i32];
+  o << int8_t(BinaryConsts::LocalSet) << U32LEB(scratchPos);
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringAsWTF16);
+  o << int8_t(BinaryConsts::LocalGet) << U32LEB(scratchPos);
   o << int8_t(BinaryConsts::GCPrefix)
     << U32LEB(BinaryConsts::StringViewWTF16GetCodePoint);
 }
 
 void BinaryInstWriter::visitStringSliceWTF(StringSliceWTF* curr) {
-  o << int8_t(BinaryConsts::GCPrefix);
-  o << U32LEB(BinaryConsts::StringViewWTF16Slice);
+  // We need to convert the ref operand to a stringview, but it is buried under
+  // the start and end operands. Put the i32s in scratch locals, emit the
+  // conversion, then get the i32s back onto the stack.
+  Index scratchStart = scratchLocals[Type::i32];
+  Index scratchEnd = scratchStart + 1;
+  o << int8_t(BinaryConsts::LocalSet) << U32LEB(scratchEnd);
+  o << int8_t(BinaryConsts::LocalSet) << U32LEB(scratchStart);
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringAsWTF16);
+  o << int8_t(BinaryConsts::LocalGet) << U32LEB(scratchStart);
+  o << int8_t(BinaryConsts::LocalGet) << U32LEB(scratchEnd);
+  o << int8_t(BinaryConsts::GCPrefix)
+    << U32LEB(BinaryConsts::StringViewWTF16Slice);
 }
 
 void BinaryInstWriter::visitContBind(ContBind* curr) {
@@ -2630,6 +2647,22 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
         auto& count = scratches[curr->type];
         count = std::max(count, 1u);
       }
+    }
+
+    void visitStringWTF16Get(StringWTF16Get* curr) {
+      if (curr->type == Type::unreachable) {
+        return;
+      }
+      auto& count = scratches[Type::i32];
+      count = std::max(count, 1u);
+    }
+
+    void visitStringSliceWTF(StringSliceWTF* curr) {
+      if (curr->type == Type::unreachable) {
+        return;
+      }
+      auto& count = scratches[Type::i32];
+      count = std::max(count, 2u);
     }
   };
 

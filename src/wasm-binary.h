@@ -1137,6 +1137,7 @@ enum ASTNodes {
   StringEncodeLossyUTF8 = 0x8d,
   StringEncodeWTF8 = 0x8e,
   StringNewUTF8Try = 0x8f,
+  StringAsWTF16 = 0x98,
   StringViewWTF16GetCodePoint = 0x9a,
   StringViewWTF16Slice = 0x9c,
   StringCompare = 0xa8,
@@ -1758,6 +1759,7 @@ public:
   bool maybeVisitArrayFill(Expression*& out, uint32_t code);
   bool maybeVisitArrayInit(Expression*& out, uint32_t code);
   bool maybeVisitStringNew(Expression*& out, uint32_t code);
+  bool maybeVisitStringAsWTF16(Expression*& out, uint32_t code);
   bool maybeVisitStringConst(Expression*& out, uint32_t code);
   bool maybeVisitStringMeasure(Expression*& out, uint32_t code);
   bool maybeVisitStringEncode(Expression*& out, uint32_t code);
