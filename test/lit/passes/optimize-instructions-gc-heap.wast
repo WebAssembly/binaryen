@@ -271,23 +271,31 @@
 
   ;; CHECK:      (func $pattern-breaker (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (local $ref2 (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (local.set $ref2
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $pattern-breaker
     (local $ref (ref null $struct))
+    (local $ref2 (ref null $struct))
     (local.set $ref
       (struct.new $struct
         (i32.const 10)
       )
     )
-    ;; Anything that we don't recognize breaks the pattern.
-    (nop)
+    ;; Any instruction that can not be swapped and is not
+    ;; the expected struct.set breaks the pattern.
+    (local.set $ref2 (local.get $ref))
     (struct.set $struct 0
       (local.get $ref)
       (i32.const 20)
