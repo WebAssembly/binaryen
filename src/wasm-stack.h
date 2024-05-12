@@ -146,13 +146,14 @@ private:
   // type => number of locals of that type in the compact form
   std::unordered_map<Type, size_t> numLocalsByType;
 
-  void noteLocalType(Type type);
+  void noteLocalType(Type type, Index count = 1);
 
   // Keeps track of the binary index of the scratch locals used to lower
-  // tuple.extract.
+  // tuple.extract. If there are multiple scratch locals of the same type, they
+  // are contiguous and this map holds the index of the first.
   InsertOrderedMap<Type, Index> scratchLocals;
-  void countScratchLocals();
-  void setScratchLocals();
+  // Return the type and number of required scratch locals.
+  InsertOrderedMap<Type, Index> countScratchLocals();
 
   // local.get, local.tee, and glboal.get expressions that will be followed by
   // tuple.extracts. We can optimize these by getting only the local for the

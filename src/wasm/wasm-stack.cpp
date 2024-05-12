@@ -2569,6 +2569,8 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     mappedLocals[std::make_pair(i, 0)] = i;
   }
 
+  auto scratches = countScratchLocals();
+
   // Normally we map all locals of the same type into a range of adjacent
   // addresses, which is more compact. However, if we need to keep DWARF valid,
   // do not do any reordering at all - instead, do a trivial mapping that
@@ -2584,25 +2586,26 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
       size_t size = func->getLocalType(i).size();
       for (Index j = 0; j < size; j++) {
-        mappedLocals[std::make_pair(i, j)] = mappedIndex + j;
+        mappedLocals[std::make_pair(i, j)] = mappedIndex++;
       }
-      mappedIndex += size;
     }
-    countScratchLocals();
 
     size_t numBinaryLocals =
-      mappedIndex - func->getVarIndexBase() + scratchLocals.size();
+      mappedIndex - func->getVarIndexBase() + scratches.size();
+
     o << U32LEB(numBinaryLocals);
+
     for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
       for (const auto& type : func->getLocalType(i)) {
         o << U32LEB(1);
         parent.writeType(type);
       }
     }
-    for (auto& [type, _] : scratchLocals) {
-      o << U32LEB(1);
+    for (auto& [type, count] : scratches) {
+      o << U32LEB(count);
       parent.writeType(type);
-      scratchLocals[type] = mappedIndex++;
+      scratchLocals[type] = mappedIndex;
+      mappedIndex += count;
     }
     return;
   }
@@ -2612,7 +2615,10 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
       noteLocalType(t);
     }
   }
-  countScratchLocals();
+
+  for (auto& [type, count] : scratches) {
+    noteLocalType(type, count);
+  }
 
   if (parent.getModule()->features.hasReferenceTypes()) {
     // Sort local types in a way that keeps all MVP types together and all
@@ -2636,23 +2642,28 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     });
   }
 
-  std::unordered_map<Type, size_t> currLocalsByType;
+  // Map IR (local index, tuple index) pairs to binary local indices. Since
+  // locals are grouped by type, start by calculating the base indices for each
+  // type.
+  std::unordered_map<Type, Index> nextFreeIndex;
+  Index baseIndex = func->getVarIndexBase();
+  for (auto& type : localTypes) {
+    nextFreeIndex[type] = baseIndex;
+    baseIndex += numLocalsByType[type];
+  }
+
+  // Map the IR index pairs to indices.
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     Index j = 0;
     for (const auto& type : func->getLocalType(i)) {
-      auto fullIndex = std::make_pair(i, j++);
-      Index index = func->getVarIndexBase();
-      for (auto& localType : localTypes) {
-        if (type == localType) {
-          mappedLocals[fullIndex] = index + currLocalsByType[localType];
-          currLocalsByType[type]++;
-          break;
-        }
-        index += numLocalsByType.at(localType);
-      }
+      mappedLocals[{i, j++}] = nextFreeIndex[type]++;
     }
   }
-  setScratchLocals();
+
+  // Map scratch locals to the remaining indices.
+  for (auto& [type, _] : scratches) {
+    scratchLocals[type] = nextFreeIndex[type];
+  }
 
   o << U32LEB(numLocalsByType.size());
   for (auto& localType : localTypes) {
@@ -2661,44 +2672,51 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   }
 }
 
-void BinaryInstWriter::noteLocalType(Type type) {
-  if (!numLocalsByType.count(type)) {
+void BinaryInstWriter::noteLocalType(Type type, Index count) {
+  auto& num = numLocalsByType[type];
+  if (num == 0) {
     localTypes.push_back(type);
   }
-  numLocalsByType[type]++;
+  num += count;
 }
 
-void BinaryInstWriter::countScratchLocals() {
-  // Add a scratch register in `numLocalsByType` for each type of
-  // tuple.extract with nonzero index present.
-  FindAll<TupleExtract> extracts(func->body);
-  for (auto* extract : extracts.list) {
-    if (extract->type != Type::unreachable && extract->index != 0) {
-      scratchLocals[extract->type] = 0;
-    }
-  }
-  for (auto& [type, _] : scratchLocals) {
-    noteLocalType(type);
-  }
-  // While we have all the tuple.extracts, also find extracts of local.gets,
-  // local.tees, and global.gets that we can optimize.
-  for (auto* extract : extracts.list) {
-    auto* tuple = extract->tuple;
-    if (tuple->is<LocalGet>() || tuple->is<LocalSet>() ||
-        tuple->is<GlobalGet>()) {
-      extractedGets.insert({tuple, extract->index});
-    }
-  }
-}
+InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
+  struct ScratchLocalFinder : PostWalker<ScratchLocalFinder> {
+    BinaryInstWriter& parent;
+    InsertOrderedMap<Type, Index> scratches;
 
-void BinaryInstWriter::setScratchLocals() {
-  Index index = func->getVarIndexBase();
-  for (auto& localType : localTypes) {
-    index += numLocalsByType[localType];
-    if (scratchLocals.find(localType) != scratchLocals.end()) {
-      scratchLocals[localType] = index - 1;
+    ScratchLocalFinder(BinaryInstWriter& parent) : parent(parent) {}
+
+    // We need two i32 scratch locals for reach string slice, but they can be
+    // reused.
+    bool hasStringSlice = false;
+
+    void visitTupleExtract(TupleExtract* curr) {
+      if (curr->type == Type::unreachable) {
+        // We will not emit this instruction anyway.
+        return;
+      }
+      // Extracts from locals or globals are optimizable and do not require
+      // scratch locals. Record them.
+      auto* tuple = curr->tuple;
+      if (tuple->is<LocalGet>() || tuple->is<LocalSet>() ||
+          tuple->is<GlobalGet>()) {
+        parent.extractedGets.insert({tuple, curr->index});
+        return;
+      }
+      // Include a scratch register for each type of tuple.extract with nonzero
+      // index present.
+      if (curr->index != 0) {
+        auto& count = scratches[curr->type];
+        count = std::max(count, 1u);
+      }
     }
-  }
+  };
+
+  ScratchLocalFinder finder(*this);
+  finder.walk(func->body);
+
+  return std::move(finder.scratches);
 }
 
 void BinaryInstWriter::emitMemoryAccess(size_t alignment,
