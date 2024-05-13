@@ -352,7 +352,8 @@ struct Scanner
     //
     // (We don't stash these effects because we may compute many of them here,
     // and only need the few for those patterns that repeat.)
-    if (ShallowEffectAnalyzer(options, *getModule(), curr).hasNonTrapSideEffects()) {
+    if (ShallowEffectAnalyzer(options, *getModule(), curr)
+          .hasNonTrapSideEffects()) {
       return false;
     }
 
