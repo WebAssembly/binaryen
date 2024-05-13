@@ -247,15 +247,6 @@ struct OptimizationOptions : public ToolOptions {
              passOptions.inlining.partialInliningIfs =
                static_cast<Index>(std::stoi(argument));
            })
-      .add("--ignore-implicit-traps",
-           "-iit",
-           "Optimize under the helpful assumption that no surprising traps "
-           "occur (from load, div/mod, etc.)",
-           OptimizationOptionsCategory,
-           Options::Arguments::Zero,
-           [this](Options*, const std::string&) {
-             passOptions.ignoreImplicitTraps = true;
-           })
       .add("--traps-never-happen",
            "-tnh",
            "Optimize under the helpful assumption that no trap is reached at "
