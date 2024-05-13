@@ -2687,10 +2687,6 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
 
     ScratchLocalFinder(BinaryInstWriter& parent) : parent(parent) {}
 
-    // We need two i32 scratch locals for reach string slice, but they can be
-    // reused.
-    bool hasStringSlice = false;
-
     void visitTupleExtract(TupleExtract* curr) {
       if (curr->type == Type::unreachable) {
         // We will not emit this instruction anyway.
