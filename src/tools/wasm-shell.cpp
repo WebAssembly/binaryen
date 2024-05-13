@@ -444,11 +444,18 @@ int main(int argc, const char* argv[]) {
   options.parse(argc, argv);
 
   auto input = read_file<std::string>(infile, Flags::Text);
-  Lexer lexer(input);
 
+  // Check that we can parse the script correctly with the new parser.
+  auto script = WATParser::parseScript(input);
+  if (auto* err = script.getErr()) {
+    std::cerr << err->msg << '\n';
+    exit(1);
+  }
+
+  Lexer lexer(input);
   auto result = Shell(options).parseAndRun(lexer);
   if (auto* err = result.getErr()) {
-    std::cerr << err->msg;
+    std::cerr << err->msg << '\n';
     exit(1);
   }
 

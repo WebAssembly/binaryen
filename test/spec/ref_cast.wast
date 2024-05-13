@@ -158,7 +158,7 @@
 (assert_return (invoke "test-br-on-cast-null-struct") (i32.const 1))
 (assert_return (invoke "test-br-on-cast-fail-struct") (i32.const 0))
 (assert_return (invoke "test-br-on-cast-fail-null-struct") (i32.const 0))
-(assert_trap (invoke "test-trap-null"))
+(assert_trap (invoke "test-trap-null") "null")
 
 (assert_invalid
   (module

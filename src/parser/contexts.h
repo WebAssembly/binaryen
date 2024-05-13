@@ -1696,7 +1696,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return Builder::addVar(func, name, type);
   }
 
-  Result<Expression*> makeExpr() { return irBuilder.build(); }
+  Result<Expression*> makeExpr() { return withLoc(irBuilder.build()); }
 
   Memarg getMemarg(uint64_t offset, uint32_t align) { return {offset, align}; }
 
