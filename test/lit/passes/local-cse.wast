@@ -9,7 +9,9 @@
 
   ;; CHECK:      (type $1 (func (param i32) (result i32)))
 
-  ;; CHECK:      (type $2 (func (result i64)))
+  ;; CHECK:      (type $2 (func (param i32)))
+
+  ;; CHECK:      (type $3 (func (result i64)))
 
   ;; CHECK:      (memory $0 100 100)
 
@@ -313,6 +315,45 @@
       (call $calls (i32.const 10))
     )
     (i32.const 10)
+  )
+
+  ;; CHECK:      (func $in-calls (param $x i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $calls
+  ;; CHECK-NEXT:    (local.tee $1
+  ;; CHECK-NEXT:     (i32.add
+  ;; CHECK-NEXT:      (i32.const 10)
+  ;; CHECK-NEXT:      (i32.const 20)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (call $calls
+  ;; CHECK-NEXT:    (local.get $1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $in-calls (param $x i32)
+    ;; The side effects of calls prevent optimization, but expressions nested in
+    ;; calls can be optimized.
+    (drop
+      (call $calls
+        (i32.add
+          (i32.const 10)
+          (i32.const 20)
+        )
+      )
+    )
+    (drop
+      (call $calls
+        (i32.add
+          (i32.const 10)
+          (i32.const 20)
+        )
+      )
+    )
   )
 
   ;; CHECK:      (func $many-sets (result i64)
