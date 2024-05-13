@@ -346,7 +346,7 @@ struct Scanner
     // checking effects here we could perhaps add backtracking, but that sounds
     // more complex.)
     //
-    // We can ignore traps here because if a trap occurs the optimization
+    // We use |hasNonTrapSideEffects| because if a trap occurs the optimization
     // remains valid: both this and the copy of it would trap, which means the
     // first traps and the second isn't reached anyhow.
     //
@@ -447,10 +447,6 @@ struct Checker
           requestInfos.erase(original);
         }
 
-        // Note that we've already checked above that this has no side effects
-        // or generativity: if we got here, then it is good to go from the
-        // perspective of this expression itself (but may be invalidated by
-        // other code in between, see above).
         activeOriginals.erase(original);
       }
     }
@@ -476,6 +472,10 @@ struct Checker
       // none of them.)
       effects.trap = false;
 
+      // Note that we've already checked above that this has no side effects or
+      // generativity: if we got here, then it is good to go from the
+      // perspective of this expression itself (but may be invalidated by other
+      // code in between, see above).
       activeOriginals.emplace(
         curr, ActiveOriginalInfo{info.requests, std::move(effects)});
     } else if (info.original) {
