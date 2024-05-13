@@ -350,3 +350,26 @@
     )
   )
 )
+
+(module
+  (type $func (func (param i32)))
+
+  (type $struct (struct (field $x i32)))
+
+  (func $caller (param $x anyref)
+    (call_ref $func
+      (struct.get $struct 0
+        (ref.cast (ref $struct)
+          (local.get $x)
+        )
+      )
+    )
+    (call_ref $func
+      (struct.get $struct 0
+        (ref.cast (ref $struct)
+          (local.get $x)
+        )
+      )
+    )
+  )
+)
