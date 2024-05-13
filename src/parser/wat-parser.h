@@ -32,6 +32,8 @@ Result<> parseModule(Module& wasm, std::string_view in);
 // file.
 Result<> parseModule(Module& wasm, Lexer& lexer);
 
+Result<Literal> parseConst(Lexer& lexer);
+
 Result<Expression*> parseExpression(Module& wasm, Lexer& lexer);
 
 struct InvokeAction {
