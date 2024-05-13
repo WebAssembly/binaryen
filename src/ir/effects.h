@@ -28,8 +28,7 @@ namespace wasm {
 class EffectAnalyzer {
 public:
   EffectAnalyzer(const PassOptions& passOptions, Module& module)
-    : ignoreImplicitTraps(passOptions.ignoreImplicitTraps),
-      trapsNeverHappen(passOptions.trapsNeverHappen),
+    : trapsNeverHappen(passOptions.trapsNeverHappen),
       funcEffectsMap(passOptions.funcEffectsMap), module(module),
       features(module.features) {}
 
@@ -45,7 +44,6 @@ public:
     walk(func);
   }
 
-  bool ignoreImplicitTraps;
   bool trapsNeverHappen;
   std::shared_ptr<FuncEffectsMap> funcEffectsMap;
   Module& module;
@@ -135,9 +133,6 @@ public:
   // VMs would trap eventually, and the same for potentially infinite recursion,
   // etc.
   bool trap = false;
-  // A trap from an instruction like a load or div/rem, which may trap on corner
-  // cases. If we do not ignore implicit traps then these are counted as a trap.
-  bool implicitTrap = false;
   // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
   // wrt atomics (e.g. memory.grow)
   bool isAtomic = false;
@@ -359,7 +354,6 @@ public:
     readsArray = readsArray || other.readsArray;
     writesArray = writesArray || other.writesArray;
     trap = trap || other.trap;
-    implicitTrap = implicitTrap || other.implicitTrap;
     trapsNeverHappen = trapsNeverHappen || other.trapsNeverHappen;
     isAtomic = isAtomic || other.isAtomic;
     throws_ = throws_ || other.throws_;
@@ -572,24 +566,24 @@ private:
     void visitLoad(Load* curr) {
       parent.readsMemory = true;
       parent.isAtomic |= curr->isAtomic;
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitStore(Store* curr) {
       parent.writesMemory = true;
       parent.isAtomic |= curr->isAtomic;
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitAtomicRMW(AtomicRMW* curr) {
       parent.readsMemory = true;
       parent.writesMemory = true;
       parent.isAtomic = true;
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitAtomicCmpxchg(AtomicCmpxchg* curr) {
       parent.readsMemory = true;
       parent.writesMemory = true;
       parent.isAtomic = true;
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitAtomicWait(AtomicWait* curr) {
       parent.readsMemory = true;
@@ -598,7 +592,7 @@ private:
       // of as a write.
       parent.writesMemory = true;
       parent.isAtomic = true;
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitAtomicNotify(AtomicNotify* curr) {
       // AtomicNotify doesn't strictly write memory, but it does modify the
@@ -607,7 +601,7 @@ private:
       parent.readsMemory = true;
       parent.writesMemory = true;
       parent.isAtomic = true;
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitAtomicFence(AtomicFence* curr) {
       // AtomicFence should not be reordered with any memory operations, so we
@@ -623,7 +617,7 @@ private:
     void visitSIMDShift(SIMDShift* curr) {}
     void visitSIMDLoad(SIMDLoad* curr) {
       parent.readsMemory = true;
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
       if (curr->isLoad()) {
@@ -631,27 +625,27 @@ private:
       } else {
         parent.writesMemory = true;
       }
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitMemoryInit(MemoryInit* curr) {
       parent.writesMemory = true;
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitDataDrop(DataDrop* curr) {
       // data.drop does not actually write memory, but it does alter the size of
       // a segment, which can be noticeable later by memory.init, so we need to
       // mark it as having a global side effect of some kind.
       parent.writesMemory = true;
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitMemoryCopy(MemoryCopy* curr) {
       parent.readsMemory = true;
       parent.writesMemory = true;
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitMemoryFill(MemoryFill* curr) {
       parent.writesMemory = true;
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitConst(Const* curr) {}
     void visitUnary(Unary* curr) {
@@ -664,7 +658,7 @@ private:
         case TruncSFloat64ToInt64:
         case TruncUFloat64ToInt32:
         case TruncUFloat64ToInt64: {
-          parent.implicitTrap = true;
+          parent.trap = true;
           break;
         }
         default: {
@@ -687,13 +681,13 @@ private:
           // divider.
           if (auto* c = curr->right->dynCast<Const>()) {
             if (c->value.isZero()) {
-              parent.implicitTrap = true;
+              parent.trap = true;
             } else if ((curr->op == DivSInt32 || curr->op == DivSInt64) &&
                        c->value.getInteger() == -1LL) {
-              parent.implicitTrap = true;
+              parent.trap = true;
             }
           } else {
-            parent.implicitTrap = true;
+            parent.trap = true;
           }
           break;
         }
@@ -728,11 +722,11 @@ private:
     void visitRefEq(RefEq* curr) {}
     void visitTableGet(TableGet* curr) {
       parent.readsTable = true;
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitTableSet(TableSet* curr) {
       parent.writesTable = true;
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitTableSize(TableSize* curr) { parent.readsTable = true; }
     void visitTableGrow(TableGrow* curr) {
@@ -744,12 +738,12 @@ private:
     }
     void visitTableFill(TableFill* curr) {
       parent.writesTable = true;
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitTableCopy(TableCopy* curr) {
       parent.readsTable = true;
       parent.writesTable = true;
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitTry(Try* curr) {
       if (curr->delegateTarget.is()) {
@@ -776,7 +770,7 @@ private:
         parent.throws_ = true;
       }
       // traps when the arg is null
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitNop(Nop* curr) {}
     void visitUnreachable(Unreachable* curr) { parent.trap = true; }
@@ -791,7 +785,7 @@ private:
     void visitI31Get(I31Get* curr) {
       // traps when the ref is null
       if (curr->i31->type.isNullable()) {
-        parent.implicitTrap = true;
+        parent.trap = true;
       }
     }
     void visitCallRef(CallRef* curr) {
@@ -807,7 +801,7 @@ private:
       }
       // traps when the call target is null
       if (curr->target->type.isNullable()) {
-        parent.implicitTrap = true;
+        parent.trap = true;
       }
 
       parent.calls = true;
@@ -819,7 +813,7 @@ private:
     void visitRefTest(RefTest* curr) {}
     void visitRefCast(RefCast* curr) {
       // Traps if the ref is not null and the cast fails.
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitBrOn(BrOn* curr) { parent.breakTargets.insert(curr->name); }
     void visitStructNew(StructNew* curr) {}
@@ -839,7 +833,7 @@ private:
       }
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
+        parent.trap = true;
       }
     }
     void visitStructSet(StructSet* curr) {
@@ -850,19 +844,19 @@ private:
       parent.writesStruct = true;
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
+        parent.trap = true;
       }
     }
     void visitArrayNew(ArrayNew* curr) {}
     void visitArrayNewData(ArrayNewData* curr) {
       // Traps on out of bounds access to segments or access to dropped
       // segments.
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitArrayNewElem(ArrayNewElem* curr) {
       // Traps on out of bounds access to segments or access to dropped
       // segments.
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitArrayNewFixed(ArrayNewFixed* curr) {}
     void visitArrayGet(ArrayGet* curr) {
@@ -872,7 +866,7 @@ private:
       }
       parent.readsArray = true;
       // traps when the arg is null or the index out of bounds
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitArraySet(ArraySet* curr) {
       if (curr->ref->type.isNull()) {
@@ -881,7 +875,7 @@ private:
       }
       parent.writesArray = true;
       // traps when the arg is null or the index out of bounds
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitArrayLen(ArrayLen* curr) {
       if (curr->ref->type.isNull()) {
@@ -890,7 +884,7 @@ private:
       }
       // traps when the arg is null
       if (curr->ref->type.isNullable()) {
-        parent.implicitTrap = true;
+        parent.trap = true;
       }
     }
     void visitArrayCopy(ArrayCopy* curr) {
@@ -901,7 +895,7 @@ private:
       parent.readsArray = true;
       parent.writesArray = true;
       // traps when a ref is null, or when out of bounds.
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitArrayFill(ArrayFill* curr) {
       if (curr->ref->type.isNull()) {
@@ -910,7 +904,7 @@ private:
       }
       parent.writesArray = true;
       // Traps when the destination is null or when out of bounds.
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     template<typename ArrayInit> void visitArrayInit(ArrayInit* curr) {
       if (curr->ref->type.isNull()) {
@@ -920,7 +914,7 @@ private:
       parent.writesArray = true;
       // Traps when the destination is null, when out of bounds in source or
       // destination, or when the source segment has been dropped.
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
     void visitArrayInitElem(ArrayInitElem* curr) { visitArrayInit(curr); }
@@ -930,7 +924,7 @@ private:
         return;
       }
       // traps when the arg is not valid
-      parent.implicitTrap = true;
+      parent.trap = true;
       // Note: We could be more precise here and report the lack of a possible
       // trap if the input is non-nullable (and also of the right kind for
       // RefAsFunc etc.). However, we have optimization passes that will
@@ -942,7 +936,7 @@ private:
     }
     void visitStringNew(StringNew* curr) {
       // traps when out of bounds in linear memory or ref is null
-      parent.implicitTrap = true;
+      parent.trap = true;
       switch (curr->op) {
         case StringNewUTF8:
         case StringNewWTF8:
@@ -963,11 +957,11 @@ private:
     void visitStringConst(StringConst* curr) {}
     void visitStringMeasure(StringMeasure* curr) {
       // traps when ref is null.
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitStringEncode(StringEncode* curr) {
       // traps when ref is null or we write out of bounds.
-      parent.implicitTrap = true;
+      parent.trap = true;
       switch (curr->op) {
         case StringEncodeUTF8:
         case StringEncodeLossyUTF8:
@@ -987,31 +981,31 @@ private:
     }
     void visitStringConcat(StringConcat* curr) {
       // traps when an input is null.
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitStringEq(StringEq* curr) {
       if (curr->op == StringEqCompare) {
         // traps when either input is null.
         if (curr->left->type.isNullable() || curr->right->type.isNullable()) {
-          parent.implicitTrap = true;
+          parent.trap = true;
         }
       }
     }
     void visitStringAs(StringAs* curr) {
       // traps when ref is null.
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitStringWTF8Advance(StringWTF8Advance* curr) {
       // traps when ref is null.
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitStringWTF16Get(StringWTF16Get* curr) {
       // traps when ref is null.
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitStringIterNext(StringIterNext* curr) {
       // traps when ref is null.
-      parent.implicitTrap = true;
+      parent.trap = true;
       // modifies state in the iterator. we model that as accessing heap memory
       // in an array atm TODO consider adding a new effect type for this (we
       // added one for arrays because struct/array operations often interleave,
@@ -1022,27 +1016,27 @@ private:
     }
     void visitStringIterMove(StringIterMove* curr) {
       // traps when ref is null.
-      parent.implicitTrap = true;
+      parent.trap = true;
       // see StringIterNext.
       parent.readsArray = true;
       parent.writesArray = true;
     }
     void visitStringSliceWTF(StringSliceWTF* curr) {
       // traps when ref is null.
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitStringSliceIter(StringSliceIter* curr) {
       // traps when ref is null.
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
 
     void visitContBind(ContBind* curr) {
       // traps when curr->cont is null ref.
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitContNew(ContNew* curr) {
       // traps when curr->func is null ref.
-      parent.implicitTrap = true;
+      parent.trap = true;
     }
     void visitResume(Resume* curr) {
       // This acts as a kitchen sink effect.
@@ -1050,7 +1044,7 @@ private:
 
       // resume instructions accept nullable continuation references and trap
       // on null.
-      parent.implicitTrap = true;
+      parent.trap = true;
 
       if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
         parent.throws_ = true;
@@ -1093,7 +1087,6 @@ public:
     WritesMemory = 1 << 7,
     ReadsTable = 1 << 8,
     WritesTable = 1 << 9,
-    ImplicitTrap = 1 << 10,
     IsAtomic = 1 << 11,
     Throws = 1 << 12,
     DanglingPop = 1 << 13,
@@ -1132,9 +1125,6 @@ public:
     if (writesTable) {
       effects |= SideEffects::WritesTable;
     }
-    if (implicitTrap) {
-      effects |= SideEffects::ImplicitTrap;
-    }
     if (trapsNeverHappen) {
       effects |= SideEffects::TrapsNeverHappen;
     }
@@ -1168,12 +1158,6 @@ public:
 private:
   void post() {
     assert(tryDepth == 0);
-
-    if (ignoreImplicitTraps) {
-      implicitTrap = false;
-    } else if (implicitTrap) {
-      trap = true;
-    }
   }
 };
 

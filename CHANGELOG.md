@@ -40,6 +40,8 @@ Current Trunk
  - The build-time option to use legacy WasmGC opcodes is removed.
  - The strings in `string.const` instructions must now be valid WTF-8.
  - The `TraverseCalls` flag for `ExpressionRunner` is removed.
+ - Remove the "ignore implicit effects" options. That is replaced by the
+   "traps never happen" option which has proven far more useful.
 
 v117
 ----
