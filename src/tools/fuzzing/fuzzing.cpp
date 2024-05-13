@@ -2814,7 +2814,7 @@ Expression* TranslateToFuzzReader::makeStringConcat() {
 }
 
 Expression* TranslateToFuzzReader::makeStringSlice() {
-  auto* ref = make(Type(HeapType::string, getNullability()));
+  auto* ref = makeTrappingRefUse(HeapType::string);
   auto* start = make(Type::i32);
   auto* end = make(Type::i32);
   return builder.makeStringSliceWTF(ref, start, end);
@@ -2845,7 +2845,7 @@ Expression* TranslateToFuzzReader::makeStringMeasure(Type type) {
 Expression* TranslateToFuzzReader::makeStringGet(Type type) {
   assert(type == Type::i32);
 
-  auto* ref = make(Type(HeapType::string, getNullability()));
+  auto* ref = makeTrappingRefUse(HeapType::string);
   auto* pos = make(Type::i32);
   return builder.makeStringWTF16Get(ref, pos);
 }

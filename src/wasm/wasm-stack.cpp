@@ -2653,6 +2653,8 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
       if (curr->type == Type::unreachable) {
         return;
       }
+      // Scratch local to hold the `pos` value while we emit a stringview
+      // conversion for the `ref` value.
       auto& count = scratches[Type::i32];
       count = std::max(count, 1u);
     }
@@ -2661,6 +2663,8 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
       if (curr->type == Type::unreachable) {
         return;
       }
+      // Scratch locals to hold the `start` and `end` values while we emit a
+      // stringview conversion for the `ref` value.
       auto& count = scratches[Type::i32];
       count = std::max(count, 2u);
     }

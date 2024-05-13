@@ -179,13 +179,8 @@ function test_ids() {
   console.log("StringEncode: " + binaryen.StringEncodeId);
   console.log("StringConcat: " + binaryen.StringConcatId);
   console.log("StringEq: " + binaryen.StringEqId);
-  console.log("StringAs: " + binaryen.StringAsId);
-  console.log("StringWTF8Advance: " + binaryen.StringWTF8AdvanceId);
   console.log("StringWTF16Get: " + binaryen.StringWTF16GetId);
-  console.log("StringIterNext: " + binaryen.StringIterNextId);
-  console.log("StringIterMove: " + binaryen.StringIterMoveId);
   console.log("StringSliceWTF: " + binaryen.StringSliceWTFId);
-  console.log("StringSliceIter: " + binaryen.StringSliceIterId);
 }
 
 function test_core() {

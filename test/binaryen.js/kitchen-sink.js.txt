@@ -109,13 +109,8 @@ StringMeasure: 81
 StringEncode: 82
 StringConcat: 83
 StringEq: 84
-StringAs: undefined
-StringWTF8Advance: undefined
 StringWTF16Get: 85
-StringIterNext: undefined
-StringIterMove: undefined
 StringSliceWTF: 86
-StringSliceIter: undefined
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
