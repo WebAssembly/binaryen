@@ -2763,10 +2763,117 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
         count = std::max(count, 1u);
       }
     }
+
+    // As mentioned in BinaryInstWriter::visitBreak, the type of br_if with a
+    // value may be more refined in Binaryen IR compared to the wasm spec, as we
+    // give it the type of the value, while the spec gives it the type of the
+    // block it targets. To avoid problems we must handle the case where a br_if
+    // has a value, the value is more refined then the target, and the value is
+    // not dropped (the last condition is very rare in real-world wasm, making
+    // all of this a quite unusual situation). First, detect such situations by
+    // seeing if we have br_ifs that return reference types at all. We do so by
+    // counting them, and as we go we ignore ones that are dropped, since a
+    // dropped value is not a problem for us.
+    //
+    // Note that we do not check all the conditions here, such as if the type
+    // matches the break target, or if the parent is a cast, which we leave for
+    // a more expensive analysis later, which we only run if we see something
+    // suspicious here.
+    Index numDangerousBrIfs = 0;
+
+    void visitBreak(Break* curr) {
+      if (curr->type.hasRef()) {
+        numDangerousBrIfs++;
+      }
+    }
+
+    void visitDrop(Drop* curr) {
+      if (curr->value->is<Break>() && curr->value->type.hasRef()) {
+        // The value is exactly a br_if of a ref, that we just visited before
+        // us. Undo the ++ from there as it can be ignored.
+        assert(numDangerousBrIfs > 0);
+        numDangerousBrIfs--;
+      }
+    }
   };
 
   ScratchLocalFinder finder(*this);
   finder.walk(func->body);
+
+  if (!scanner.numDangerousBrIfs || !parent.getModule()->features.hasGC()) {
+    // Nothing more to do: either no such br_ifs, or GC is not enabled.
+    //
+    // The explicit check for GC is here because if only reference types are
+    // enabled then we still may seem to need a fixup here, e.g. if a ref.func
+    // is br_if'd to a block of type funcref. But that only appears that way
+    // because in Binaryen IR we allow non-nullable types even without GC (and
+    // if GC is not enabled then we always emit nullable types in the binary).
+    // That is, even if we see a type difference without GC, it will vanish in
+    // the binary format; there is never a need to add any ref.casts without GC
+    // being enabled.
+    return std::move(finder.scratches);
+  }
+
+  // There are dangerous-looking br_ifs, so we must do the harder work to
+  // actually investigate them in detail, including tracking block types. By
+  // being fully precise here, we'll only emit casts when absolutely necessary,
+  // which avoids repeated roundtrips adding more and more code.
+  struct RefinementScanner : public ExpressionStackWalker<RefinementScanner> {
+    BinaryInstWriter& writer;
+    ScratchLocalFinder& scratchLocalFinder;
+
+    RefinementScanner(BinaryInstWriter& writer,
+                      ScratchLocalFinder& scratchLocalFinder) : writer(writer),
+                                                                finder(finder) {}
+
+    void visitBreak(Break* curr) {
+      // See if this is one of the dangerous br_ifs we must handle.
+      if (!curr->type.hasRef()) {
+        // Not even a reference.
+        return;
+      }
+      auto* parent = getParent();
+      if (parent) {
+        if (parent->is<Drop>()) {
+          // It is dropped anyhow.
+          return;
+        }
+        if (auto* cast = parent->dynCast<RefCast>()) {
+          if (Type::isSubType(cast->type, curr->type)) {
+            // It is cast to the same type or a better one. In particular this
+            // handles the case of repeated roundtripping: After the first
+            // roundtrip we emit a cast that we'll identify here, and not emit
+            // an additional one.
+            return;
+          }
+        }
+      }
+      auto* breakTarget = findBreakTarget(curr->name);
+      if (breakTarget->type == curr->type) {
+        // It has the proper type anyhow.
+        return;
+      }
+
+      // Mark the br_if as needing handling, and add the type to the set of
+      // types we need scratch tuple locals for (if relevant).
+      writer.brIfsNeedingHandling[curr] = breakTarget->type;
+
+      if (curr->type.isTuple()) {
+        // We must allocate enough scratch locals for this tuple. Note that we
+        // may need more than one per type in the tuple, if a type appears more
+        // than once, so we count their appearances.
+        InsertOrderedMap<Type, Index> scratchTypeUses;
+        for (auto t : curr->type) {
+          scratchTypeUses[t]++;
+        }
+        for (auto& [type, uses] : scratchTypeUses) {
+          auto& count = finder.scratches[type];
+          count = std::max(count, uses);
+        }
+      }
+    }
+  } refinementScanner(*this);
+  refinementScanner.walk(func->body);
 
   return std::move(finder.scratches);
 }
