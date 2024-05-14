@@ -1193,4 +1193,8 @@ public:
 
 } // namespace wasm
 
+namespace std {
+std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects);
+} // namespace std
+
 #endif // wasm_ir_effects_h
