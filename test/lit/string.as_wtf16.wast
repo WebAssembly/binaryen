@@ -36,7 +36,6 @@
   ;; RTRIP-NEXT:    (local.set $0
   ;; RTRIP-NEXT:     (i32.const 0)
   ;; RTRIP-NEXT:    )
-  ;; RTRIP-NEXT:    (nop)
   ;; RTRIP-NEXT:    (local.get $1)
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:   (local.get $0)
@@ -45,7 +44,6 @@
   ;; 2TRIP:      (func $codeunit (type $1) (result i32)
   ;; 2TRIP-NEXT:  (local $0 i32)
   ;; 2TRIP-NEXT:  (local $1 (ref string))
-  ;; 2TRIP-NEXT:  (local $2 (ref string))
   ;; 2TRIP-NEXT:  (local.set $1
   ;; 2TRIP-NEXT:   (string.const "abc")
   ;; 2TRIP-NEXT:  )
@@ -53,13 +51,7 @@
   ;; 2TRIP-NEXT:   (i32.const 0)
   ;; 2TRIP-NEXT:  )
   ;; 2TRIP-NEXT:  (stringview_wtf16.get_codeunit
-  ;; 2TRIP-NEXT:   (block (result (ref string))
-  ;; 2TRIP-NEXT:    (local.set $2
-  ;; 2TRIP-NEXT:     (local.get $1)
-  ;; 2TRIP-NEXT:    )
-  ;; 2TRIP-NEXT:    (nop)
-  ;; 2TRIP-NEXT:    (local.get $2)
-  ;; 2TRIP-NEXT:   )
+  ;; 2TRIP-NEXT:   (local.get $1)
   ;; 2TRIP-NEXT:   (local.get $0)
   ;; 2TRIP-NEXT:  )
   ;; 2TRIP-NEXT: )
@@ -83,33 +75,15 @@
   ;; CHECK-NEXT: )
   ;; RTRIP:      (func $codeunit-get (type $1) (result i32)
   ;; RTRIP-NEXT:  (local $pos i32)
-  ;; RTRIP-NEXT:  (local $1 (ref string))
   ;; RTRIP-NEXT:  (stringview_wtf16.get_codeunit
-  ;; RTRIP-NEXT:   (block (result (ref string))
-  ;; RTRIP-NEXT:    (local.set $1
-  ;; RTRIP-NEXT:     (string.const "abc")
-  ;; RTRIP-NEXT:    )
-  ;; RTRIP-NEXT:    (nop)
-  ;; RTRIP-NEXT:    (local.get $1)
-  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:   (string.const "abc")
   ;; RTRIP-NEXT:   (local.get $pos)
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
   ;; 2TRIP:      (func $codeunit-get (type $1) (result i32)
   ;; 2TRIP-NEXT:  (local $pos i32)
-  ;; 2TRIP-NEXT:  (local $1 (ref string))
-  ;; 2TRIP-NEXT:  (local $2 (ref string))
-  ;; 2TRIP-NEXT:  (local.set $1
-  ;; 2TRIP-NEXT:   (string.const "abc")
-  ;; 2TRIP-NEXT:  )
   ;; 2TRIP-NEXT:  (stringview_wtf16.get_codeunit
-  ;; 2TRIP-NEXT:   (block (result (ref string))
-  ;; 2TRIP-NEXT:    (local.set $2
-  ;; 2TRIP-NEXT:     (local.get $1)
-  ;; 2TRIP-NEXT:    )
-  ;; 2TRIP-NEXT:    (nop)
-  ;; 2TRIP-NEXT:    (local.get $2)
-  ;; 2TRIP-NEXT:   )
+  ;; 2TRIP-NEXT:   (string.const "abc")
   ;; 2TRIP-NEXT:   (local.get $pos)
   ;; 2TRIP-NEXT:  )
   ;; 2TRIP-NEXT: )
@@ -150,7 +124,6 @@
   ;; RTRIP-NEXT:      (local.get $2)
   ;; RTRIP-NEXT:     )
   ;; RTRIP-NEXT:    )
-  ;; RTRIP-NEXT:    (nop)
   ;; RTRIP-NEXT:    (local.get $3)
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:   (local.get $0)
@@ -162,7 +135,6 @@
   ;; 2TRIP-NEXT:  (local $1 i32)
   ;; 2TRIP-NEXT:  (local $2 i32)
   ;; 2TRIP-NEXT:  (local $3 (ref string))
-  ;; 2TRIP-NEXT:  (local $4 (ref string))
   ;; 2TRIP-NEXT:  (local.set $3
   ;; 2TRIP-NEXT:   (string.const "abc")
   ;; 2TRIP-NEXT:  )
@@ -176,13 +148,7 @@
   ;; 2TRIP-NEXT:   (local.get $2)
   ;; 2TRIP-NEXT:  )
   ;; 2TRIP-NEXT:  (stringview_wtf16.slice
-  ;; 2TRIP-NEXT:   (block (result (ref string))
-  ;; 2TRIP-NEXT:    (local.set $4
-  ;; 2TRIP-NEXT:     (local.get $3)
-  ;; 2TRIP-NEXT:    )
-  ;; 2TRIP-NEXT:    (nop)
-  ;; 2TRIP-NEXT:    (local.get $4)
-  ;; 2TRIP-NEXT:   )
+  ;; 2TRIP-NEXT:   (local.get $3)
   ;; 2TRIP-NEXT:   (local.get $0)
   ;; 2TRIP-NEXT:   (local.get $1)
   ;; 2TRIP-NEXT:  )
@@ -219,7 +185,6 @@
   ;; RTRIP-NEXT:    (local.set $1
   ;; RTRIP-NEXT:     (i32.const 2)
   ;; RTRIP-NEXT:    )
-  ;; RTRIP-NEXT:    (nop)
   ;; RTRIP-NEXT:    (local.get $2)
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:   (local.get $start)
@@ -230,7 +195,6 @@
   ;; 2TRIP-NEXT:  (local $start i32)
   ;; 2TRIP-NEXT:  (local $1 i32)
   ;; 2TRIP-NEXT:  (local $2 (ref string))
-  ;; 2TRIP-NEXT:  (local $3 (ref string))
   ;; 2TRIP-NEXT:  (local.set $2
   ;; 2TRIP-NEXT:   (string.const "abc")
   ;; 2TRIP-NEXT:  )
@@ -238,13 +202,7 @@
   ;; 2TRIP-NEXT:   (i32.const 2)
   ;; 2TRIP-NEXT:  )
   ;; 2TRIP-NEXT:  (stringview_wtf16.slice
-  ;; 2TRIP-NEXT:   (block (result (ref string))
-  ;; 2TRIP-NEXT:    (local.set $3
-  ;; 2TRIP-NEXT:     (local.get $2)
-  ;; 2TRIP-NEXT:    )
-  ;; 2TRIP-NEXT:    (nop)
-  ;; 2TRIP-NEXT:    (local.get $3)
-  ;; 2TRIP-NEXT:   )
+  ;; 2TRIP-NEXT:   (local.get $2)
   ;; 2TRIP-NEXT:   (local.get $start)
   ;; 2TRIP-NEXT:   (local.get $1)
   ;; 2TRIP-NEXT:  )
@@ -279,7 +237,6 @@
   ;; RTRIP-NEXT:    (local.set $1
   ;; RTRIP-NEXT:     (i32.const 1)
   ;; RTRIP-NEXT:    )
-  ;; RTRIP-NEXT:    (nop)
   ;; RTRIP-NEXT:    (local.get $2)
   ;; RTRIP-NEXT:   )
   ;; RTRIP-NEXT:   (local.get $1)
@@ -290,7 +247,6 @@
   ;; 2TRIP-NEXT:  (local $end i32)
   ;; 2TRIP-NEXT:  (local $1 i32)
   ;; 2TRIP-NEXT:  (local $2 (ref string))
-  ;; 2TRIP-NEXT:  (local $3 (ref string))
   ;; 2TRIP-NEXT:  (local.set $2
   ;; 2TRIP-NEXT:   (string.const "abc")
   ;; 2TRIP-NEXT:  )
@@ -298,13 +254,7 @@
   ;; 2TRIP-NEXT:   (i32.const 1)
   ;; 2TRIP-NEXT:  )
   ;; 2TRIP-NEXT:  (stringview_wtf16.slice
-  ;; 2TRIP-NEXT:   (block (result (ref string))
-  ;; 2TRIP-NEXT:    (local.set $3
-  ;; 2TRIP-NEXT:     (local.get $2)
-  ;; 2TRIP-NEXT:    )
-  ;; 2TRIP-NEXT:    (nop)
-  ;; 2TRIP-NEXT:    (local.get $3)
-  ;; 2TRIP-NEXT:   )
+  ;; 2TRIP-NEXT:   (local.get $2)
   ;; 2TRIP-NEXT:   (local.get $1)
   ;; 2TRIP-NEXT:   (local.get $end)
   ;; 2TRIP-NEXT:  )
@@ -330,15 +280,8 @@
   ;; RTRIP:      (func $slice-both-get (type $0) (result stringref)
   ;; RTRIP-NEXT:  (local $start i32)
   ;; RTRIP-NEXT:  (local $end i32)
-  ;; RTRIP-NEXT:  (local $2 (ref string))
   ;; RTRIP-NEXT:  (stringview_wtf16.slice
-  ;; RTRIP-NEXT:   (block (result (ref string))
-  ;; RTRIP-NEXT:    (local.set $2
-  ;; RTRIP-NEXT:     (string.const "abc")
-  ;; RTRIP-NEXT:    )
-  ;; RTRIP-NEXT:    (nop)
-  ;; RTRIP-NEXT:    (local.get $2)
-  ;; RTRIP-NEXT:   )
+  ;; RTRIP-NEXT:   (string.const "abc")
   ;; RTRIP-NEXT:   (local.get $start)
   ;; RTRIP-NEXT:   (local.get $end)
   ;; RTRIP-NEXT:  )
@@ -346,19 +289,8 @@
   ;; 2TRIP:      (func $slice-both-get (type $0) (result stringref)
   ;; 2TRIP-NEXT:  (local $start i32)
   ;; 2TRIP-NEXT:  (local $end i32)
-  ;; 2TRIP-NEXT:  (local $2 (ref string))
-  ;; 2TRIP-NEXT:  (local $3 (ref string))
-  ;; 2TRIP-NEXT:  (local.set $2
-  ;; 2TRIP-NEXT:   (string.const "abc")
-  ;; 2TRIP-NEXT:  )
   ;; 2TRIP-NEXT:  (stringview_wtf16.slice
-  ;; 2TRIP-NEXT:   (block (result (ref string))
-  ;; 2TRIP-NEXT:    (local.set $3
-  ;; 2TRIP-NEXT:     (local.get $2)
-  ;; 2TRIP-NEXT:    )
-  ;; 2TRIP-NEXT:    (nop)
-  ;; 2TRIP-NEXT:    (local.get $3)
-  ;; 2TRIP-NEXT:   )
+  ;; 2TRIP-NEXT:   (string.const "abc")
   ;; 2TRIP-NEXT:   (local.get $start)
   ;; 2TRIP-NEXT:   (local.get $end)
   ;; 2TRIP-NEXT:  )
