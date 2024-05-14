@@ -1533,7 +1533,7 @@ Expression* SExpressionWasmBuilder::makeMemorySize(Element& s) {
   }
   ret->memory = memory;
   if (isMemory64(memory)) {
-    ret->make64();
+    ret->type = Type::i64;
   }
   ret->finalize();
   return ret;
@@ -1550,7 +1550,7 @@ Expression* SExpressionWasmBuilder::makeMemoryGrow(Element& s) {
   }
   ret->memory = memory;
   if (isMemory64(memory)) {
-    ret->make64();
+    ret->type = Type::i64;
   }
   ret->delta = parseExpression(s[i]);
   ret->finalize();

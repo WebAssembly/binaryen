@@ -1305,10 +1305,8 @@ public:
   MemorySize() { type = Type::i32; }
   MemorySize(MixedArena& allocator) : MemorySize() {}
 
-  Type ptrType = Type::i32;
   Name memory;
 
-  void make64();
   void finalize();
 };
 
@@ -1318,10 +1316,8 @@ public:
   MemoryGrow(MixedArena& allocator) : MemoryGrow() {}
 
   Expression* delta = nullptr;
-  Type ptrType = Type::i32;
   Name memory;
 
-  void make64();
   void finalize();
 };
 

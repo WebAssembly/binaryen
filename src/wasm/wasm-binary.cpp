@@ -6882,7 +6882,7 @@ void WasmBinaryReader::visitMemorySize(MemorySize* curr) {
   BYN_TRACE("zz node: MemorySize\n");
   Index index = getU32LEB();
   if (getMemory(index)->is64()) {
-    curr->make64();
+    curr->type = Type::i64;
   }
   curr->finalize();
   memoryRefs[index].push_back(&curr->memory);
@@ -6893,7 +6893,7 @@ void WasmBinaryReader::visitMemoryGrow(MemoryGrow* curr) {
   curr->delta = popNonVoidExpression();
   Index index = getU32LEB();
   if (getMemory(index)->is64()) {
-    curr->make64();
+    curr->type = Type::i64;
   }
   memoryRefs[index].push_back(&curr->memory);
 }
