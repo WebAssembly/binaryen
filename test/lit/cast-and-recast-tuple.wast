@@ -391,6 +391,42 @@
     ;; As above, but now the tuple has multiple appearances of the same type in
     ;; it, each of which needs its own scratch local. We can see in the output
     ;; that the tuple.extracts use different locals for the first and last i32.
+    ;; For easier reading, here is the wami output of the binary:
+    ;;
+    ;;   (func $func4 (param $var0 (ref $type1)) (param $var1 i32) (result i32) (result anyref) (result i32)
+    ;;     (local $var2 (ref $type1))
+    ;;     (local $var3 (ref $type1))
+    ;;     (local $var4 (ref $type0))
+    ;;     (local $var5 i32)
+    ;;     (local $var6 i32)
+    ;;     (local $var7 i32)
+    ;;     (local $var8 i32)
+    ;;     (local $var9 i32)
+    ;;     block $label0 (result i32) (result (ref $type0)) (result i32)
+    ;;       i32.const -3
+    ;;       local.get $var0
+    ;;       i32.const 3
+    ;;       local.get $var1
+    ;;       br_if $label0
+    ;;       local.set $var8 ;; saves 3
+    ;;       local.set $var4 ;; saves the ref
+    ;;       local.set $var9 ;; saves -3
+    ;;       local.get $var9 ;; gets -3
+    ;;       local.get $var4 ;; gets the ref
+    ;;       ref.cast $type1 ;; casts the ref
+    ;;       local.get $var8 ;; gets 3
+    ;;       local.set $var7
+    ;;       local.set $var3
+    ;;       local.tee $var6
+    ;;       drop
+    ;;       local.get $var3
+    ;;       local.get $var7
+    ;;       local.set $var5
+    ;;       local.set $var2
+    ;;       unreachable
+    ;;     end $label0
+    ;;   )
+    ;;
     (block $out (result i32 (ref $A) i32)
       (local.set $temp
         (br_if $out
