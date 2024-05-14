@@ -1804,35 +1804,21 @@ Result<> IRBuilder::makeRefAs(RefAsOp op) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeStringNew(StringNewOp op, bool try_, Name mem) {
+Result<> IRBuilder::makeStringNew(StringNewOp op) {
   StringNew curr;
   curr.op = op;
-  // TODO: Store the memory in the IR.
-  switch (op) {
-    case StringNewUTF8:
-    case StringNewWTF8:
-    case StringNewLossyUTF8:
-    case StringNewWTF16:
-      CHECK_ERR(visitStringNew(&curr));
-      push(builder.makeStringNew(op, curr.ptr, curr.length, try_));
-      return Ok{};
-    case StringNewUTF8Array:
-    case StringNewWTF8Array:
-    case StringNewLossyUTF8Array:
-    case StringNewWTF16Array:
-      // There's no type annotation on these instructions due to a bug in the
-      // stringref proposal, so we just fudge it and pass `array` instead of a
-      // defined heap type. This will allow us to pop a child with an invalid
-      // array type, but that's just too bad.
-      CHECK_ERR(ChildPopper{*this}.visitStringNew(&curr, HeapType::array));
-      push(builder.makeStringNew(op, curr.ptr, curr.start, curr.end, try_));
-      return Ok{};
-    case StringNewFromCodePoint:
-      CHECK_ERR(visitStringNew(&curr));
-      push(builder.makeStringNew(op, curr.ptr, nullptr, try_));
-      return Ok{};
+  if (op == StringNewFromCodePoint) {
+    CHECK_ERR(visitStringNew(&curr));
+    push(builder.makeStringNew(op, curr.ref));
+    return Ok{};
   }
-  WASM_UNREACHABLE("unexpected op");
+  // There's no type annotation on these instructions due to a bug in the
+  // stringref proposal, so we just fudge it and pass `array` instead of a
+  // defined heap type. This will allow us to pop a child with an invalid
+  // array type, but that's just too bad.
+  CHECK_ERR(ChildPopper{*this}.visitStringNew(&curr, HeapType::array));
+  push(builder.makeStringNew(op, curr.ref, curr.start, curr.end));
+  return Ok{};
 }
 
 Result<> IRBuilder::makeStringConst(Name string) {
@@ -1848,33 +1834,16 @@ Result<> IRBuilder::makeStringMeasure(StringMeasureOp op) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeStringEncode(StringEncodeOp op, Name mem) {
+Result<> IRBuilder::makeStringEncode(StringEncodeOp op) {
   StringEncode curr;
   curr.op = op;
-  // TODO: Store the memory in the IR.
-  switch (op) {
-    case StringEncodeUTF8:
-    case StringEncodeLossyUTF8:
-    case StringEncodeWTF8:
-    case StringEncodeWTF16: {
-      CHECK_ERR(visitStringEncode(&curr));
-      push(builder.makeStringEncode(op, curr.ref, curr.ptr, curr.start));
-      return Ok{};
-    }
-    case StringEncodeUTF8Array:
-    case StringEncodeLossyUTF8Array:
-    case StringEncodeWTF8Array:
-    case StringEncodeWTF16Array: {
-      // There's no type annotation on these instructions due to a bug in the
-      // stringref proposal, so we just fudge it and pass `array` instead of a
-      // defined heap type. This will allow us to pop a child with an invalid
-      // array type, but that's just too bad.
-      CHECK_ERR(ChildPopper{*this}.visitStringEncode(&curr, HeapType::array));
-      push(builder.makeStringEncode(op, curr.ref, curr.ptr, curr.start));
-      return Ok{};
-    }
-  }
-  WASM_UNREACHABLE("unexpected op");
+  // There's no type annotation on these instructions due to a bug in the
+  // stringref proposal, so we just fudge it and pass `array` instead of a
+  // defined heap type. This will allow us to pop a child with an invalid
+  // array type, but that's just too bad.
+  CHECK_ERR(ChildPopper{*this}.visitStringEncode(&curr, HeapType::array));
+  push(builder.makeStringEncode(op, curr.str, curr.array, curr.start));
+  return Ok{};
 }
 
 Result<> IRBuilder::makeStringConcat() {

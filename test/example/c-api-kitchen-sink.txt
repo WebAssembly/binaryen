@@ -2337,57 +2337,6 @@ BinaryenFeatureAll: 131071
        (i32.const 2)
       )
       (drop
-       (string.new_utf8
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_utf8_try
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_wtf8
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_lossy_utf8
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_wtf16
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_utf8_array
-        (global.get $i8Array-global)
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_utf8_array_try
-        (global.get $i8Array-global)
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_wtf8_array
-        (global.get $i8Array-global)
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
        (string.new_lossy_utf8_array
         (global.get $i8Array-global)
         (i32.const 0)
@@ -2415,60 +2364,12 @@ BinaryenFeatureAll: 131071
        )
       )
       (drop
-       (string.measure_wtf8
-        (global.get $string-global)
-       )
-      )
-      (drop
        (string.measure_wtf16
         (global.get $string-global)
        )
       )
       (drop
-       (string.is_usv_sequence
-        (global.get $string-global)
-       )
-      )
-      (drop
-       (string.encode_utf8
-        (global.get $string-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_lossy_utf8
-        (global.get $string-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_wtf8
-        (global.get $string-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_wtf16
-        (global.get $string-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_utf8_array
-        (global.get $string-global)
-        (global.get $i8Array-global)
-        (i32.const 0)
-       )
-      )
-      (drop
        (string.encode_lossy_utf8_array
-        (global.get $string-global)
-        (global.get $i8Array-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_wtf8_array
         (global.get $string-global)
         (global.get $i8Array-global)
         (i32.const 0)

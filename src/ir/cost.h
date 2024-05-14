@@ -689,15 +689,15 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   }
   CostType visitRefAs(RefAs* curr) { return 1 + visit(curr->value); }
   CostType visitStringNew(StringNew* curr) {
-    return 8 + visit(curr->ptr) + maybeVisit(curr->length) +
-           maybeVisit(curr->start) + maybeVisit(curr->end);
+    return 8 + visit(curr->ref) + maybeVisit(curr->start) +
+           maybeVisit(curr->end);
   }
   CostType visitStringConst(StringConst* curr) { return 4; }
   CostType visitStringMeasure(StringMeasure* curr) {
     return 6 + visit(curr->ref);
   }
   CostType visitStringEncode(StringEncode* curr) {
-    return 6 + visit(curr->ref) + visit(curr->ptr);
+    return 6 + visit(curr->str) + visit(curr->array) + visit(curr->start);
   }
   CostType visitStringConcat(StringConcat* curr) {
     return 10 + visit(curr->left) + visit(curr->right);

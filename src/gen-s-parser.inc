@@ -3098,55 +3098,12 @@ switch (buf[0]) {
                     switch (buf[8]) {
                       case 'n': {
                         switch (buf[14]) {
-                          case 'l': {
-                            switch (buf[24]) {
-                              case '\0':
-                                if (op == "string.encode_lossy_utf8"sv) { return makeStringEncode(s, StringEncodeLossyUTF8); }
-                                goto parse_error;
-                              case '_':
-                                if (op == "string.encode_lossy_utf8_array"sv) { return makeStringEncode(s, StringEncodeLossyUTF8Array); }
-                                goto parse_error;
-                              default: goto parse_error;
-                            }
-                          }
-                          case 'u': {
-                            switch (buf[18]) {
-                              case '\0':
-                                if (op == "string.encode_utf8"sv) { return makeStringEncode(s, StringEncodeUTF8); }
-                                goto parse_error;
-                              case '_':
-                                if (op == "string.encode_utf8_array"sv) { return makeStringEncode(s, StringEncodeUTF8Array); }
-                                goto parse_error;
-                              default: goto parse_error;
-                            }
-                          }
-                          case 'w': {
-                            switch (buf[17]) {
-                              case '1': {
-                                switch (buf[19]) {
-                                  case '\0':
-                                    if (op == "string.encode_wtf16"sv) { return makeStringEncode(s, StringEncodeWTF16); }
-                                    goto parse_error;
-                                  case '_':
-                                    if (op == "string.encode_wtf16_array"sv) { return makeStringEncode(s, StringEncodeWTF16Array); }
-                                    goto parse_error;
-                                  default: goto parse_error;
-                                }
-                              }
-                              case '8': {
-                                switch (buf[18]) {
-                                  case '\0':
-                                    if (op == "string.encode_wtf8"sv) { return makeStringEncode(s, StringEncodeWTF8); }
-                                    goto parse_error;
-                                  case '_':
-                                    if (op == "string.encode_wtf8_array"sv) { return makeStringEncode(s, StringEncodeWTF8Array); }
-                                    goto parse_error;
-                                  default: goto parse_error;
-                                }
-                              }
-                              default: goto parse_error;
-                            }
-                          }
+                          case 'l':
+                            if (op == "string.encode_lossy_utf8_array"sv) { return makeStringEncode(s, StringEncodeLossyUTF8Array); }
+                            goto parse_error;
+                          case 'w':
+                            if (op == "string.encode_wtf16_array"sv) { return makeStringEncode(s, StringEncodeWTF16Array); }
+                            goto parse_error;
                           default: goto parse_error;
                         }
                       }
@@ -3157,100 +3114,27 @@ switch (buf[0]) {
                     }
                   }
                   case 'f':
-                    if (op == "string.from_code_point"sv) { return makeStringNew(s, StringNewFromCodePoint, false); }
-                    goto parse_error;
-                  case 'h':
-                    if (op == "string.hash"sv) { return makeStringMeasure(s, StringMeasureHash); }
-                    goto parse_error;
-                  case 'i':
-                    if (op == "string.is_usv_sequence"sv) { return makeStringMeasure(s, StringMeasureIsUSV); }
+                    if (op == "string.from_code_point"sv) { return makeStringNew(s, StringNewFromCodePoint); }
                     goto parse_error;
                   case 'm': {
                     switch (buf[15]) {
                       case 'u':
                         if (op == "string.measure_utf8"sv) { return makeStringMeasure(s, StringMeasureUTF8); }
                         goto parse_error;
-                      case 'w': {
-                        switch (buf[18]) {
-                          case '1':
-                            if (op == "string.measure_wtf16"sv) { return makeStringMeasure(s, StringMeasureWTF16); }
-                            goto parse_error;
-                          case '8':
-                            if (op == "string.measure_wtf8"sv) { return makeStringMeasure(s, StringMeasureWTF8); }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
+                      case 'w':
+                        if (op == "string.measure_wtf16"sv) { return makeStringMeasure(s, StringMeasureWTF16); }
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
                   case 'n': {
                     switch (buf[11]) {
-                      case 'l': {
-                        switch (buf[21]) {
-                          case '\0':
-                            if (op == "string.new_lossy_utf8"sv) { return makeStringNew(s, StringNewLossyUTF8, false); }
-                            goto parse_error;
-                          case '_':
-                            if (op == "string.new_lossy_utf8_array"sv) { return makeStringNew(s, StringNewLossyUTF8Array, false); }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
-                      case 'u': {
-                        switch (buf[15]) {
-                          case '\0':
-                            if (op == "string.new_utf8"sv) { return makeStringNew(s, StringNewUTF8, false); }
-                            goto parse_error;
-                          case '_': {
-                            switch (buf[16]) {
-                              case 'a': {
-                                switch (buf[21]) {
-                                  case '\0':
-                                    if (op == "string.new_utf8_array"sv) { return makeStringNew(s, StringNewUTF8Array, false); }
-                                    goto parse_error;
-                                  case '_':
-                                    if (op == "string.new_utf8_array_try"sv) { return makeStringNew(s, StringNewUTF8Array, true); }
-                                    goto parse_error;
-                                  default: goto parse_error;
-                                }
-                              }
-                              case 't':
-                                if (op == "string.new_utf8_try"sv) { return makeStringNew(s, StringNewUTF8, true); }
-                                goto parse_error;
-                              default: goto parse_error;
-                            }
-                          }
-                          default: goto parse_error;
-                        }
-                      }
-                      case 'w': {
-                        switch (buf[14]) {
-                          case '1': {
-                            switch (buf[16]) {
-                              case '\0':
-                                if (op == "string.new_wtf16"sv) { return makeStringNew(s, StringNewWTF16, false); }
-                                goto parse_error;
-                              case '_':
-                                if (op == "string.new_wtf16_array"sv) { return makeStringNew(s, StringNewWTF16Array, false); }
-                                goto parse_error;
-                              default: goto parse_error;
-                            }
-                          }
-                          case '8': {
-                            switch (buf[15]) {
-                              case '\0':
-                                if (op == "string.new_wtf8"sv) { return makeStringNew(s, StringNewWTF8, false); }
-                                goto parse_error;
-                              case '_':
-                                if (op == "string.new_wtf8_array"sv) { return makeStringNew(s, StringNewWTF8Array, false); }
-                                goto parse_error;
-                              default: goto parse_error;
-                            }
-                          }
-                          default: goto parse_error;
-                        }
-                      }
+                      case 'l':
+                        if (op == "string.new_lossy_utf8_array"sv) { return makeStringNew(s, StringNewLossyUTF8Array); }
+                        goto parse_error;
+                      case 'w':
+                        if (op == "string.new_wtf16_array"sv) { return makeStringNew(s, StringNewWTF16Array); }
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
@@ -8205,79 +8089,18 @@ switch (buf[0]) {
                     switch (buf[8]) {
                       case 'n': {
                         switch (buf[14]) {
-                          case 'l': {
-                            switch (buf[24]) {
-                              case '\0':
-                                if (op == "string.encode_lossy_utf8"sv) {
-                                  CHECK_ERR(makeStringEncode(ctx, pos, annotations, StringEncodeLossyUTF8));
-                                  return Ok{};
-                                }
-                                goto parse_error;
-                              case '_':
-                                if (op == "string.encode_lossy_utf8_array"sv) {
-                                  CHECK_ERR(makeStringEncode(ctx, pos, annotations, StringEncodeLossyUTF8Array));
-                                  return Ok{};
-                                }
-                                goto parse_error;
-                              default: goto parse_error;
+                          case 'l':
+                            if (op == "string.encode_lossy_utf8_array"sv) {
+                              CHECK_ERR(makeStringEncode(ctx, pos, annotations, StringEncodeLossyUTF8Array));
+                              return Ok{};
                             }
-                          }
-                          case 'u': {
-                            switch (buf[18]) {
-                              case '\0':
-                                if (op == "string.encode_utf8"sv) {
-                                  CHECK_ERR(makeStringEncode(ctx, pos, annotations, StringEncodeUTF8));
-                                  return Ok{};
-                                }
-                                goto parse_error;
-                              case '_':
-                                if (op == "string.encode_utf8_array"sv) {
-                                  CHECK_ERR(makeStringEncode(ctx, pos, annotations, StringEncodeUTF8Array));
-                                  return Ok{};
-                                }
-                                goto parse_error;
-                              default: goto parse_error;
+                            goto parse_error;
+                          case 'w':
+                            if (op == "string.encode_wtf16_array"sv) {
+                              CHECK_ERR(makeStringEncode(ctx, pos, annotations, StringEncodeWTF16Array));
+                              return Ok{};
                             }
-                          }
-                          case 'w': {
-                            switch (buf[17]) {
-                              case '1': {
-                                switch (buf[19]) {
-                                  case '\0':
-                                    if (op == "string.encode_wtf16"sv) {
-                                      CHECK_ERR(makeStringEncode(ctx, pos, annotations, StringEncodeWTF16));
-                                      return Ok{};
-                                    }
-                                    goto parse_error;
-                                  case '_':
-                                    if (op == "string.encode_wtf16_array"sv) {
-                                      CHECK_ERR(makeStringEncode(ctx, pos, annotations, StringEncodeWTF16Array));
-                                      return Ok{};
-                                    }
-                                    goto parse_error;
-                                  default: goto parse_error;
-                                }
-                              }
-                              case '8': {
-                                switch (buf[18]) {
-                                  case '\0':
-                                    if (op == "string.encode_wtf8"sv) {
-                                      CHECK_ERR(makeStringEncode(ctx, pos, annotations, StringEncodeWTF8));
-                                      return Ok{};
-                                    }
-                                    goto parse_error;
-                                  case '_':
-                                    if (op == "string.encode_wtf8_array"sv) {
-                                      CHECK_ERR(makeStringEncode(ctx, pos, annotations, StringEncodeWTF8Array));
-                                      return Ok{};
-                                    }
-                                    goto parse_error;
-                                  default: goto parse_error;
-                                }
-                              }
-                              default: goto parse_error;
-                            }
-                          }
+                            goto parse_error;
                           default: goto parse_error;
                         }
                       }
@@ -8292,19 +8115,7 @@ switch (buf[0]) {
                   }
                   case 'f':
                     if (op == "string.from_code_point"sv) {
-                      CHECK_ERR(makeStringNew(ctx, pos, annotations, StringNewFromCodePoint, false));
-                      return Ok{};
-                    }
-                    goto parse_error;
-                  case 'h':
-                    if (op == "string.hash"sv) {
-                      CHECK_ERR(makeStringMeasure(ctx, pos, annotations, StringMeasureHash));
-                      return Ok{};
-                    }
-                    goto parse_error;
-                  case 'i':
-                    if (op == "string.is_usv_sequence"sv) {
-                      CHECK_ERR(makeStringMeasure(ctx, pos, annotations, StringMeasureIsUSV));
+                      CHECK_ERR(makeStringNew(ctx, pos, annotations, StringNewFromCodePoint));
                       return Ok{};
                     }
                     goto parse_error;
@@ -8316,123 +8127,29 @@ switch (buf[0]) {
                           return Ok{};
                         }
                         goto parse_error;
-                      case 'w': {
-                        switch (buf[18]) {
-                          case '1':
-                            if (op == "string.measure_wtf16"sv) {
-                              CHECK_ERR(makeStringMeasure(ctx, pos, annotations, StringMeasureWTF16));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          case '8':
-                            if (op == "string.measure_wtf8"sv) {
-                              CHECK_ERR(makeStringMeasure(ctx, pos, annotations, StringMeasureWTF8));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          default: goto parse_error;
+                      case 'w':
+                        if (op == "string.measure_wtf16"sv) {
+                          CHECK_ERR(makeStringMeasure(ctx, pos, annotations, StringMeasureWTF16));
+                          return Ok{};
                         }
-                      }
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
                   case 'n': {
                     switch (buf[11]) {
-                      case 'l': {
-                        switch (buf[21]) {
-                          case '\0':
-                            if (op == "string.new_lossy_utf8"sv) {
-                              CHECK_ERR(makeStringNew(ctx, pos, annotations, StringNewLossyUTF8, false));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          case '_':
-                            if (op == "string.new_lossy_utf8_array"sv) {
-                              CHECK_ERR(makeStringNew(ctx, pos, annotations, StringNewLossyUTF8Array, false));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          default: goto parse_error;
+                      case 'l':
+                        if (op == "string.new_lossy_utf8_array"sv) {
+                          CHECK_ERR(makeStringNew(ctx, pos, annotations, StringNewLossyUTF8Array));
+                          return Ok{};
                         }
-                      }
-                      case 'u': {
-                        switch (buf[15]) {
-                          case '\0':
-                            if (op == "string.new_utf8"sv) {
-                              CHECK_ERR(makeStringNew(ctx, pos, annotations, StringNewUTF8, false));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          case '_': {
-                            switch (buf[16]) {
-                              case 'a': {
-                                switch (buf[21]) {
-                                  case '\0':
-                                    if (op == "string.new_utf8_array"sv) {
-                                      CHECK_ERR(makeStringNew(ctx, pos, annotations, StringNewUTF8Array, false));
-                                      return Ok{};
-                                    }
-                                    goto parse_error;
-                                  case '_':
-                                    if (op == "string.new_utf8_array_try"sv) {
-                                      CHECK_ERR(makeStringNew(ctx, pos, annotations, StringNewUTF8Array, true));
-                                      return Ok{};
-                                    }
-                                    goto parse_error;
-                                  default: goto parse_error;
-                                }
-                              }
-                              case 't':
-                                if (op == "string.new_utf8_try"sv) {
-                                  CHECK_ERR(makeStringNew(ctx, pos, annotations, StringNewUTF8, true));
-                                  return Ok{};
-                                }
-                                goto parse_error;
-                              default: goto parse_error;
-                            }
-                          }
-                          default: goto parse_error;
+                        goto parse_error;
+                      case 'w':
+                        if (op == "string.new_wtf16_array"sv) {
+                          CHECK_ERR(makeStringNew(ctx, pos, annotations, StringNewWTF16Array));
+                          return Ok{};
                         }
-                      }
-                      case 'w': {
-                        switch (buf[14]) {
-                          case '1': {
-                            switch (buf[16]) {
-                              case '\0':
-                                if (op == "string.new_wtf16"sv) {
-                                  CHECK_ERR(makeStringNew(ctx, pos, annotations, StringNewWTF16, false));
-                                  return Ok{};
-                                }
-                                goto parse_error;
-                              case '_':
-                                if (op == "string.new_wtf16_array"sv) {
-                                  CHECK_ERR(makeStringNew(ctx, pos, annotations, StringNewWTF16Array, false));
-                                  return Ok{};
-                                }
-                                goto parse_error;
-                              default: goto parse_error;
-                            }
-                          }
-                          case '8': {
-                            switch (buf[15]) {
-                              case '\0':
-                                if (op == "string.new_wtf8"sv) {
-                                  CHECK_ERR(makeStringNew(ctx, pos, annotations, StringNewWTF8, false));
-                                  return Ok{};
-                                }
-                                goto parse_error;
-                              case '_':
-                                if (op == "string.new_wtf8_array"sv) {
-                                  CHECK_ERR(makeStringNew(ctx, pos, annotations, StringNewWTF8Array, false));
-                                  return Ok{};
-                                }
-                                goto parse_error;
-                              default: goto parse_error;
-                            }
-                          }
-                          default: goto parse_error;
-                        }
-                      }
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }

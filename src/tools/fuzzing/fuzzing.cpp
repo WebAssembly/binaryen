@@ -2754,13 +2754,12 @@ Expression* TranslateToFuzzReader::makeStringNewArray() {
   auto* array = makeTrappingRefUse(getArrayTypeForString());
   auto* start = make(Type::i32);
   auto* end = make(Type::i32);
-  return builder.makeStringNew(StringNewWTF16Array, array, start, end, false);
+  return builder.makeStringNew(StringNewWTF16Array, array, start, end);
 }
 
 Expression* TranslateToFuzzReader::makeStringNewCodePoint() {
   auto codePoint = make(Type::i32);
-  return builder.makeStringNew(
-    StringNewFromCodePoint, codePoint, nullptr, false);
+  return builder.makeStringNew(StringNewFromCodePoint, codePoint);
 }
 
 Expression* TranslateToFuzzReader::makeStringConst() {

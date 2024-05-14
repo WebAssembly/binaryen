@@ -266,8 +266,8 @@ Result<> makeArrayInitElem(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeRefAs(Ctx&, Index, const std::vector<Annotation>&, RefAsOp op);
 template<typename Ctx>
-Result<> makeStringNew(
-  Ctx&, Index, const std::vector<Annotation>&, StringNewOp op, bool try_);
+Result<>
+makeStringNew(Ctx&, Index, const std::vector<Annotation>&, StringNewOp op);
 template<typename Ctx>
 Result<> makeStringConst(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
@@ -2336,20 +2336,8 @@ template<typename Ctx>
 Result<> makeStringNew(Ctx& ctx,
                        Index pos,
                        const std::vector<Annotation>& annotations,
-                       StringNewOp op,
-                       bool try_) {
-  switch (op) {
-    case StringNewUTF8:
-    case StringNewWTF8:
-    case StringNewLossyUTF8:
-    case StringNewWTF16: {
-      auto mem = maybeMemidx(ctx);
-      CHECK_ERR(mem);
-      return ctx.makeStringNew(pos, annotations, op, try_, mem.getPtr());
-    }
-    default:
-      return ctx.makeStringNew(pos, annotations, op, try_, nullptr);
-  }
+                       StringNewOp op) {
+  return ctx.makeStringNew(pos, annotations, op);
 }
 
 template<typename Ctx>
@@ -2376,18 +2364,7 @@ Result<> makeStringEncode(Ctx& ctx,
                           Index pos,
                           const std::vector<Annotation>& annotations,
                           StringEncodeOp op) {
-  switch (op) {
-    case StringEncodeUTF8:
-    case StringEncodeLossyUTF8:
-    case StringEncodeWTF8:
-    case StringEncodeWTF16: {
-      auto mem = maybeMemidx(ctx);
-      CHECK_ERR(mem);
-      return ctx.makeStringEncode(pos, annotations, op, mem.getPtr());
-    }
-    default:
-      return ctx.makeStringEncode(pos, annotations, op, nullptr);
-  }
+  return ctx.makeStringEncode(pos, annotations, op);
 }
 
 template<typename Ctx>

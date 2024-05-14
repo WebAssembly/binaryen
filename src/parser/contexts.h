@@ -772,8 +772,7 @@ struct NullInstrParserCtx {
   Result<> makeRefAs(Index, const std::vector<Annotation>&, RefAsOp) {
     return Ok{};
   }
-  Result<> makeStringNew(
-    Index, const std::vector<Annotation>&, StringNewOp, bool, MemoryIdxT*) {
+  Result<> makeStringNew(Index, const std::vector<Annotation>&, StringNewOp) {
     return Ok{};
   }
   Result<>
@@ -784,10 +783,8 @@ struct NullInstrParserCtx {
   makeStringMeasure(Index, const std::vector<Annotation>&, StringMeasureOp) {
     return Ok{};
   }
-  Result<> makeStringEncode(Index,
-                            const std::vector<Annotation>&,
-                            StringEncodeOp,
-                            MemoryIdxT*) {
+  Result<>
+  makeStringEncode(Index, const std::vector<Annotation>&, StringEncodeOp) {
     return Ok{};
   }
   Result<> makeStringConcat(Index, const std::vector<Annotation>&) {
@@ -2478,24 +2475,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeStringNew(Index pos,
                          const std::vector<Annotation>& annotations,
-                         StringNewOp op,
-                         bool try_,
-                         Name* mem) {
-    Name memName;
-    switch (op) {
-      case StringNewUTF8:
-      case StringNewWTF8:
-      case StringNewLossyUTF8:
-      case StringNewWTF16: {
-        auto m = getMemory(pos, mem);
-        CHECK_ERR(m);
-        memName = *m;
-        break;
-      }
-      default:
-        break;
-    }
-    return withLoc(pos, irBuilder.makeStringNew(op, try_, memName));
+                         StringNewOp op) {
+    return withLoc(pos, irBuilder.makeStringNew(op));
   }
 
   Result<> makeStringConst(Index pos,
@@ -2518,23 +2499,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeStringEncode(Index pos,
                             const std::vector<Annotation>& annotations,
-                            StringEncodeOp op,
-                            Name* mem) {
-    Name memName;
-    switch (op) {
-      case StringEncodeUTF8:
-      case StringEncodeLossyUTF8:
-      case StringEncodeWTF8:
-      case StringEncodeWTF16: {
-        auto m = getMemory(pos, mem);
-        CHECK_ERR(m);
-        memName = *m;
-        break;
-      }
-      default:
-        break;
-    }
-    return withLoc(pos, irBuilder.makeStringEncode(op, memName));
+                            StringEncodeOp op) {
+    return withLoc(pos, irBuilder.makeStringEncode(op));
   }
 
   Result<> makeStringConcat(Index pos,

@@ -375,12 +375,12 @@ struct StringLowering : public StringGathering {
         switch (curr->op) {
           case StringNewWTF16Array:
             replaceCurrent(builder.makeCall(lowering.fromCharCodeArrayImport,
-                                            {curr->ptr, curr->start, curr->end},
+                                            {curr->ref, curr->start, curr->end},
                                             lowering.nnExt));
             return;
           case StringNewFromCodePoint:
             replaceCurrent(builder.makeCall(
-              lowering.fromCodePointImport, {curr->ptr}, lowering.nnExt));
+              lowering.fromCodePointImport, {curr->ref}, lowering.nnExt));
             return;
           default:
             WASM_UNREACHABLE("TODO: all of string.new*");
@@ -397,9 +397,10 @@ struct StringLowering : public StringGathering {
         Builder builder(*getModule());
         switch (curr->op) {
           case StringEncodeWTF16Array:
-            replaceCurrent(builder.makeCall(lowering.intoCharCodeArrayImport,
-                                            {curr->ref, curr->ptr, curr->start},
-                                            Type::i32));
+            replaceCurrent(
+              builder.makeCall(lowering.intoCharCodeArrayImport,
+                               {curr->str, curr->array, curr->start},
+                               Type::i32));
             return;
           default:
             WASM_UNREACHABLE("TODO: all of string.encode*");

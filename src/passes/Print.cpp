@@ -2237,32 +2237,6 @@ struct PrintExpressionContents
   }
   void visitStringNew(StringNew* curr) {
     switch (curr->op) {
-      case StringNewUTF8:
-        if (!curr->try_) {
-          printMedium(o, "string.new_utf8");
-        } else {
-          printMedium(o, "string.new_utf8_try");
-        }
-        break;
-      case StringNewWTF8:
-        printMedium(o, "string.new_wtf8");
-        break;
-      case StringNewLossyUTF8:
-        printMedium(o, "string.new_lossy_utf8");
-        break;
-      case StringNewWTF16:
-        printMedium(o, "string.new_wtf16");
-        break;
-      case StringNewUTF8Array:
-        if (!curr->try_) {
-          printMedium(o, "string.new_utf8_array");
-        } else {
-          printMedium(o, "string.new_utf8_array_try");
-        }
-        break;
-      case StringNewWTF8Array:
-        printMedium(o, "string.new_wtf8_array");
-        break;
       case StringNewLossyUTF8Array:
         printMedium(o, "string.new_lossy_utf8_array");
         break;
@@ -2291,17 +2265,8 @@ struct PrintExpressionContents
       case StringMeasureUTF8:
         printMedium(o, "string.measure_utf8");
         break;
-      case StringMeasureWTF8:
-        printMedium(o, "string.measure_wtf8");
-        break;
       case StringMeasureWTF16:
         printMedium(o, "string.measure_wtf16");
-        break;
-      case StringMeasureIsUSV:
-        printMedium(o, "string.is_usv_sequence");
-        break;
-      case StringMeasureHash:
-        printMedium(o, "string.hash");
         break;
       default:
         WASM_UNREACHABLE("invalid string.measure*");
@@ -2309,26 +2274,8 @@ struct PrintExpressionContents
   }
   void visitStringEncode(StringEncode* curr) {
     switch (curr->op) {
-      case StringEncodeUTF8:
-        printMedium(o, "string.encode_utf8");
-        break;
-      case StringEncodeLossyUTF8:
-        printMedium(o, "string.encode_lossy_utf8");
-        break;
-      case StringEncodeWTF8:
-        printMedium(o, "string.encode_wtf8");
-        break;
-      case StringEncodeWTF16:
-        printMedium(o, "string.encode_wtf16");
-        break;
-      case StringEncodeUTF8Array:
-        printMedium(o, "string.encode_utf8_array");
-        break;
       case StringEncodeLossyUTF8Array:
         printMedium(o, "string.encode_lossy_utf8_array");
-        break;
-      case StringEncodeWTF8Array:
-        printMedium(o, "string.encode_wtf8_array");
         break;
       case StringEncodeWTF16Array:
         printMedium(o, "string.encode_wtf16_array");

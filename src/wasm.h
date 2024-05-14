@@ -573,36 +573,18 @@ enum BrOnOp {
 };
 
 enum StringNewOp {
-  // Linear memory
-  StringNewUTF8,
-  StringNewWTF8,
-  StringNewLossyUTF8,
-  StringNewWTF16,
-  // GC
-  StringNewUTF8Array,
-  StringNewWTF8Array,
   StringNewLossyUTF8Array,
   StringNewWTF16Array,
-  // Other
   StringNewFromCodePoint,
 };
 
 enum StringMeasureOp {
   StringMeasureUTF8,
-  StringMeasureWTF8,
   StringMeasureWTF16,
-  StringMeasureIsUSV,
-  StringMeasureHash,
 };
 
 enum StringEncodeOp {
-  StringEncodeUTF8,
-  StringEncodeLossyUTF8,
-  StringEncodeWTF8,
-  StringEncodeWTF16,
-  StringEncodeUTF8Array,
   StringEncodeLossyUTF8Array,
-  StringEncodeWTF8Array,
   StringEncodeWTF16Array,
 };
 
@@ -1799,20 +1781,13 @@ public:
 
   StringNewOp op;
 
-  // In linear memory variations this is the pointer in linear memory. In the
-  // GC variations this is an Array. In from_codepoint this is the code point.
-  Expression* ptr;
-
-  // Used only in linear memory variations.
-  Expression* length = nullptr;
+  // In the GC variations this is an Array. In from_codepoint this is the code
+  // point.
+  Expression* ref;
 
   // Used only in GC variations.
   Expression* start = nullptr;
   Expression* end = nullptr;
-
-  // The "try" variants will return null if an encoding error happens, rather
-  // than trap.
-  bool try_ = false;
 
   void finalize();
 };
@@ -1848,16 +1823,9 @@ public:
   StringEncode(MixedArena& allocator) {}
 
   StringEncodeOp op;
-
-  Expression* ref;
-
-  // In linear memory variations this is the pointer in linear memory. In the
-  // GC variations this is an Array.
-  Expression* ptr;
-
-  // Used only in GC variations, where it is the index in |ptr| to start
-  // encoding from.
-  Expression* start = nullptr;
+  Expression* str;
+  Expression* array;
+  Expression* start;
 
   void finalize();
 };
