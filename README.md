@@ -155,9 +155,8 @@ There are a few differences between Binaryen IR and the WebAssembly language:
     little different. In particular, when we emit a `br_if` whose type is more
     refined in Binaryen IR then we emit a cast right after it, so that the
     output has the right type in the wasm spec. That may cause a few bytes of
-    extra size in rare cases. (Interactions between this and tuples can lead to
-    larger code size increases, that is, `br_if`s that send multiple values are
-    best avoided.)
+    extra size in rare cases (we avoid this overhead in the common case where
+    the `br_if` value is unused).
  * Strings
    * Binaryen allows string views (`stringview_wtf16` etc.) to be cast using
      `ref.cast`. This simplifies the IR, as it allows `ref.cast` to always be
