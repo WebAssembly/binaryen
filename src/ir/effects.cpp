@@ -20,7 +20,7 @@
 namespace std {
 
 std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects) {
-  o << "EffectAnalyzer{\n";
+  o << "EffectAnalyzer {\n";
   if (effects.branchesOut) {
     o << "branchesOut\n";
   }
