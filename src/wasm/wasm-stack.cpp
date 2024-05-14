@@ -2869,7 +2869,7 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
         }
       }
     }
-  } refinementScanner(*this);
+  } refinementScanner(*this, finder);
   refinementScanner.walk(func->body);
 
   return std::move(finder.scratches);
