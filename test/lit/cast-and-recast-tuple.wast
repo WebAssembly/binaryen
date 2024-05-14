@@ -203,7 +203,7 @@
 
   ;; CHECK:      (func $test-local-tuple-4-bad (type $5) (param $B (ref $B)) (param $x i32) (result anyref i32)
   ;; CHECK-NEXT:  (local $temp (ref $B))
-  ;; CHECK-NEXT:  (local $3 (ref $B))
+  ;; CHECK-NEXT:  (local $3 (ref $A))
   ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (local $5 i32)
   ;; CHECK-NEXT:  (local $6 (tuple (ref $B) i32))

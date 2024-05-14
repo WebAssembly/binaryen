@@ -99,23 +99,23 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       // go, as a type might appear multiple times in the tuple. We allocated
       // enough for each, in a contiguous range, so we just increment as we go.
       std::unordered_map<Type, Index> scratchTypeUses;
-      for (Index i = 0; i < type.size(); i++) {
-        auto t = type[type.size() - i - 1];
+      for (Index i = 0; i < unrefinedType.size(); i++) {
+        auto t = unrefinedType[unrefinedType.size() - i - 1];
         assert(scratchLocals.find(t) != scratchLocals.end());
         auto localIndex = scratchLocals[t] + scratchTypeUses[t];
         scratchTypeUses[t]++;
         o << int8_t(BinaryConsts::LocalSet) << U32LEB(localIndex);
       }
       scratchTypeUses.clear();
-      for (Index i = 0; i < type.size(); i++) {
-        auto t = type[i];
+      for (Index i = 0; i < unrefinedType.size(); i++) {
+        auto t = unrefinedType[i];
         auto localIndex = scratchLocals[t] + scratchTypeUses[t];
         scratchTypeUses[t]++;
         o << int8_t(BinaryConsts::LocalGet) << U32LEB(localIndex);
         if (t.isRef()) {
           // Note that we cast all types here, when perhaps only some of the
           // tuple's lanes need that. This is simpler.
-          emitCast(t, unrefinedType[i]);
+          emitCast(type[i], t);
         }
       }
     }
@@ -2845,21 +2845,22 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
         }
       }
       auto* breakTarget = findBreakTarget(curr->name);
-      if (breakTarget->type == curr->type) {
+      auto unrefinedType = breakTarget->type;
+      if (unrefinedType == curr->type) {
         // It has the proper type anyhow.
         return;
       }
 
       // Mark the br_if as needing handling, and add the type to the set of
       // types we need scratch tuple locals for (if relevant).
-      writer.brIfsNeedingHandling[curr] = breakTarget->type;
+      writer.brIfsNeedingHandling[curr] = unrefinedType;
 
-      if (curr->type.isTuple()) {
+      if (unrefinedType.isTuple()) {
         // We must allocate enough scratch locals for this tuple. Note that we
         // may need more than one per type in the tuple, if a type appears more
         // than once, so we count their appearances.
         InsertOrderedMap<Type, Index> scratchTypeUses;
-        for (auto t : curr->type) {
+        for (auto t : unrefinedType) {
           scratchTypeUses[t]++;
         }
         for (auto& [type, uses] : scratchTypeUses) {
