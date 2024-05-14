@@ -421,6 +421,16 @@ struct Checker
     // hashed expressions, if there are any.
     if (!activeOriginals.empty()) {
       EffectAnalyzer effects(options, *getModule());
+      // We can ignore traps here:
+      //
+      //  (ORIGINAL)
+      //  (curr)
+      //  (COPY)
+      //
+      // We are some code in between an original and a copy of it, and we are
+      // trying to turn COPY into a local.get of a value that we stash at the
+      // original. If |curr| traps then we simply don't reach the copy anyhow.
+      effects.trap = false;
       // We only need to visit this node itself, as we have already visited its
       // children by the time we get here.
       effects.visit(curr);
@@ -460,7 +470,7 @@ struct Checker
 
     if (info.requests > 0) {
       // This is an original. Compute its side effects, as we cannot optimize
-      // away repeated apperances if it has any.
+      // away repeated appearances if it has any.
       EffectAnalyzer effects(options, *getModule(), curr);
 
       // We can ignore traps here, as we replace a repeating expression with a

@@ -350,3 +350,55 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct (field i32)))
+
+  ;; CHECK:      (type $1 (func (param anyref)))
+
+  ;; CHECK:      (type $2 (func (param i32)))
+
+  ;; CHECK:      (func $caller (type $1) (param $x anyref)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (call $callee
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (struct.get $struct 0
+  ;; CHECK-NEXT:     (ref.cast (ref $struct)
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $callee
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (param $x anyref)
+    (call $callee
+      (struct.get $struct 0
+        (ref.cast (ref $struct)
+          (local.get $x)
+        )
+      )
+    )
+    ;; The call in between the struct.get has effects, but they do not
+    ;; interfere: the struct.get reads locals and immutable data only, and we
+    ;; can ignore possible traps in both the call and the struct.get (as if
+    ;; anything traps we just don't reach the local.get that the optimization
+    ;; emits).
+    (call $callee
+      (struct.get $struct 0
+        (ref.cast (ref $struct)
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $callee (type $2) (param $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $callee (param $x i32)
+  )
+)
