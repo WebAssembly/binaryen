@@ -1864,11 +1864,9 @@ struct OptimizeInstructions
   // =>
   //  (local.set $x (struct.new X' Y Z))
   //
-  // We also handle other struct.sets immediately after this one, but we only
-  // handle the case where they are all in sequence and right after the
-  // local.set (anything in the middle of this pattern will stop us from
-  // optimizing later struct.sets, which might be improved later but would
-  // require an analysis of effects TODO).
+  // We also handle other struct.sets immediately after this one. If the
+  // instruction following the new is not a struct.set we push the new down if
+  // possible.
   void optimizeHeapStores(ExpressionList& list) {
     for (Index i = 0; i < list.size(); i++) {
       auto* localSet = list[i]->dynCast<LocalSet>();
@@ -1880,26 +1878,20 @@ struct OptimizeInstructions
         continue;
       }
 
-      // This local.set of a struct.new looks good. Find struct.sets after it
-      // to optimize.
+      // This local.set of a struct.new looks good. Find struct.sets after it to
+      // optimize.
       Index localSetIndex = i;
       for (Index j = localSetIndex + 1; j < list.size(); j++) {
+
+        // Check that the next instruction is a struct.set on the same local as
+        // the struct.new.
         auto* structSet = list[j]->dynCast<StructSet>();
-        // Any time the pattern no longer matches, we try to push the
-        // struct.new further down but if it is not possible we stop
-        // optimizing possible struct.sets for this struct.new.
-
-        if (!structSet) {
-          if (trySwap(list, localSetIndex, j)) {
-            // Update the index an continue to try again.
-            localSetIndex = j;
-            continue;
-          }
-          break;
-        }
-
-        auto* localGet = structSet->ref->dynCast<LocalGet>();
-        if (!localGet || localGet->index != localSet->index) {
+        auto* localGet =
+          structSet ? structSet->ref->dynCast<LocalGet>() : nullptr;
+        if (!structSet || !localGet || localGet->index != localSet->index) {
+          // Any time the pattern no longer matches, we try to push the
+          // struct.new further down but if it is not possible we stop
+          // optimizing possible struct.sets for this struct.new.
           if (trySwap(list, localSetIndex, j)) {
             // Update the index an continue to try again.
             localSetIndex = j;
@@ -1912,20 +1904,23 @@ struct OptimizeInstructions
         if (!optimizeSubsequentStructSet(new_, structSet, localGet->index)) {
           break;
         } else {
-          // Success. Replace the set with a nop, and continue to
-          // perhaps optimize more.
+          // Success. Replace the set with a nop, and continue to perhaps
+          // optimize more.
           ExpressionManipulator::nop(structSet);
         }
       }
     }
   }
 
-  // Tries pushing the struct.new down so that it is closer
-  // to a potential struct.set.
+  // Tries pushing the struct.new down so that it is closer to a potential
+  // struct.set.
   bool trySwap(ExpressionList& list, Index i, Index j) {
     if (j == list.size() - 1) {
-      // There is no reason to swap with the last element
-      // of the list as it won't match the pattern.
+      // There is no reason to swap with the last element of the list as it
+      // won't match the pattern because there wont be anything after. This also
+      // avoids swapping an instruction that does not leave anything in the
+      // stack by one that could leave something, and that which would be
+      // incorrect.
       return false;
     }
 
@@ -1934,8 +1929,8 @@ struct OptimizeInstructions
       // Don't swap two struct.new instructions to avoid going back and forth.
       return false;
     }
-    // Check if the local is referencenced by the instruction we want to
-    // swap it with,
+    // Check if the local is referenced by the instruction we want to swap it
+    // with.
     auto* localSet = list[i]->dynCast<LocalSet>();
     auto otherEffects = effects(list[j]);
     if (otherEffects.localsRead.count(localSet->index) ||
