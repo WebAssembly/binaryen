@@ -203,8 +203,8 @@
 
   ;; CHECK:      (func $test-local-tuple-4-bad (type $5) (param $B (ref $B)) (param $x i32) (result anyref i32)
   ;; CHECK-NEXT:  (local $temp (ref $B))
-  ;; CHECK-NEXT:  (local $3 i32)
-  ;; CHECK-NEXT:  (local $4 (ref $A))
+  ;; CHECK-NEXT:  (local $3 (ref $B))
+  ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (local $5 i32)
   ;; CHECK-NEXT:  (local $6 (tuple (ref $B) i32))
   ;; CHECK-NEXT:  (local $7 (ref $B))
@@ -221,7 +221,7 @@
   ;; CHECK-NEXT:      (local.get $x)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:    (local.set $3
   ;; CHECK-NEXT:     (block (result (ref $B))
   ;; CHECK-NEXT:      (local.set $7
   ;; CHECK-NEXT:       (tuple.extract 2 0
@@ -240,10 +240,10 @@
   ;; CHECK-NEXT:     (block (result (ref $B))
   ;; CHECK-NEXT:      (local.set $8
   ;; CHECK-NEXT:       (ref.cast (ref $B)
-  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:        (local.get $3)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.set $3
+  ;; CHECK-NEXT:      (local.set $4
   ;; CHECK-NEXT:       (local.get $5)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.get $8)

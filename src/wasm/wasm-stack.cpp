@@ -99,18 +99,17 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       // go, as a type might appear multiple times in the tuple. We allocated
       // enough for each, in a contiguous range, so we just increment as we go.
       std::unordered_map<Type, Index> scratchTypeUses;
-      for (auto t : type) {
+      for (Index i = 0; i < type.size(); i++) {
+        auto t = type[type.size() - i - 1];
         assert(scratchLocals.find(t) != scratchLocals.end());
-        auto scratchBase = scratchLocals[t];
-        auto localIndex = scratchBase + scratchTypeUses[t];
+        auto localIndex = scratchLocals[t] + scratchTypeUses[t];
         scratchTypeUses[t]++;
         o << int8_t(BinaryConsts::LocalSet) << U32LEB(localIndex);
       }
       scratchTypeUses.clear();
       for (Index i = 0; i < type.size(); i++) {
         auto t = type[i];
-        auto scratchBase = scratchLocals[t];
-        auto localIndex = scratchBase + scratchTypeUses[t];
+        auto localIndex = scratchLocals[t] + scratchTypeUses[t];
         scratchTypeUses[t]++;
         o << int8_t(BinaryConsts::LocalGet) << U32LEB(localIndex);
         if (t.isRef()) {
