@@ -1411,9 +1411,9 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
   if (sourceMap) {
     auto& debugLocations = func->debugLocations;
     auto iter = debugLocations.find(curr);
-    if (iter != debugLocations.end()) {
+    if (iter != debugLocations.end() && iter->second) {
       // There is debug information here, write it out.
-      writeDebugLocation(iter->second);
+      writeDebugLocation(*(iter->second));
     } else {
       // This expression has no debug location.
       writeNoDebugLocation();

@@ -2167,7 +2167,9 @@ public:
                    : columnNumber < other.columnNumber;
     }
   };
-  std::unordered_map<Expression*, DebugLocation> debugLocations;
+  // One can explicitly set the debug location of an expression to
+  // nullopt to stop the propagation of debug locations.
+  std::unordered_map<Expression*, std::optional<DebugLocation>> debugLocations;
   std::set<DebugLocation> prologLocation;
   std::set<DebugLocation> epilogLocation;
 

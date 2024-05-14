@@ -219,6 +219,10 @@ void SExpressionParser::parseDebugLocation() {
   while (debugLocEnd[0] && debugLocEnd[0] != '\n') {
     debugLocEnd++;
   }
+  if (debugLocEnd == debugLoc) {
+    loc = nullptr;
+    return;
+  }
   char const* pos = debugLoc;
   while (pos < debugLocEnd && pos[0] != ':') {
     pos++;

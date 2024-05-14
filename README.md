@@ -924,6 +924,35 @@ environment. That will print this for the above `add`:
 (full print mode also adds a `[type]` for each expression, right before the
 debug location).
 
+The debug information is also propagated from an expression to its
+next sibling:
+```wat
+;;@ src.cpp:100:33
+(local.set $x
+ (i32.const 0)
+)
+(local.set $y ;; This receives an annotation of src.cpp:100:33
+ (i32.const 0)
+)
+```
+
+You can prevent the propagation of debug info by explicitly mentioning
+that an expression has not debug info using the annotation `;;@` with
+nothing else:
+```wat
+;;@ src.cpp:100:33
+(local.set $x
+ ;;@
+ (i32.const 0) ;; This does not receive any annotation
+)
+;;@
+(local.set $y ;; This does not receive any annotation
+ (i32.const 7)
+)
+```
+This stops the propagatation to children and siblings as well. So,
+expression `(i32.const 7)` does not have any debug info either.
+
 There is no shorthand in the binary format. That is, roundtripping (writing and
 reading) through a binary + source map should not change which expressions have
 debug info on them or the contents of that info.

@@ -117,7 +117,12 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   Module* currModule = nullptr;
   Function* currFunction = nullptr;
-  Function::DebugLocation lastPrintedLocation;
+  // Keep track of the last printed debug location to avoid printing
+  // repeated debug locations for children. nullopt means that we have
+  // not yet printed any debug location, or that we last printed an
+  // annotation indicating that the expression had no associated
+  // debug location.
+  std::optional<Function::DebugLocation> lastPrintedLocation;
   bool debugInfo;
 
   // Used to print delegate's depth argument when it throws to the caller
@@ -247,7 +252,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     return o;
   }
 
-  void printDebugLocation(const Function::DebugLocation& location);
+  void
+  printDebugLocation(const std::optional<Function::DebugLocation>& location);
   void printDebugLocation(Expression* curr);
 
   // Prints debug info for a delimiter in an expression.
@@ -2475,7 +2481,10 @@ std::ostream& PrintSExpression::printPrefixedTypes(const char* prefix,
 }
 
 void PrintSExpression::printDebugLocation(
-  const Function::DebugLocation& location) {
+  const std::optional<Function::DebugLocation>& location) {
+  if (minify) {
+    return;
+  }
   // Do not skip repeated debug info in full mode, for less-confusing debugging:
   // full mode prints out everything in the most verbose manner.
   if (lastPrintedLocation == location && indent > lastPrintIndent && !full) {
@@ -2483,9 +2492,13 @@ void PrintSExpression::printDebugLocation(
   }
   lastPrintedLocation = location;
   lastPrintIndent = indent;
-  auto fileName = currModule->debugInfoFileNames[location.fileIndex];
-  o << ";;@ " << fileName << ":" << location.lineNumber << ":"
-    << location.columnNumber << '\n';
+  if (!location) {
+    o << ";;@\n";
+  } else {
+    auto fileName = currModule->debugInfoFileNames[location->fileIndex];
+    o << ";;@ " << fileName << ":" << location->lineNumber << ":"
+      << location->columnNumber << '\n';
+  }
   doIndent(o, indent);
 }
 
@@ -2496,6 +2509,8 @@ void PrintSExpression::printDebugLocation(Expression* curr) {
     auto iter = debugLocations.find(curr);
     if (iter != debugLocations.end()) {
       printDebugLocation(iter->second);
+    } else {
+      printDebugLocation(std::nullopt);
     }
     // show a binary position, if there is one
     if (debugInfo) {
@@ -2958,7 +2973,7 @@ void PrintSExpression::visitFunction(Function* curr) {
 void PrintSExpression::visitImportedFunction(Function* curr) {
   doIndent(o, indent);
   currFunction = curr;
-  lastPrintedLocation = {0, 0, 0};
+  lastPrintedLocation = std::nullopt;
   o << '(';
   emitImportHeader(curr);
   handleSignature(curr->type, curr->name);
@@ -2969,7 +2984,8 @@ void PrintSExpression::visitImportedFunction(Function* curr) {
 void PrintSExpression::visitDefinedFunction(Function* curr) {
   doIndent(o, indent);
   currFunction = curr;
-  lastPrintedLocation = {0, 0, 0};
+  lastPrintedLocation = std::nullopt;
+  lastPrintIndent = 0;
   if (currFunction->prologLocation.size()) {
     printDebugLocation(*currFunction->prologLocation.begin());
   }

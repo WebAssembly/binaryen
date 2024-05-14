@@ -58,7 +58,7 @@ public:
 
   // Set the debug location to be attached to the next visited, created, or
   // pushed instruction.
-  void setDebugLocation(const Function::DebugLocation&);
+  void setDebugLocation(const std::optional<Function::DebugLocation>&);
 
   // Handle the boundaries of control flow structures. Users may choose to use
   // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
@@ -238,7 +238,17 @@ private:
   Module& wasm;
   Function* func;
   Builder builder;
-  std::optional<Function::DebugLocation> debugLoc;
+
+  // The location lacks debug info as it was marked as not having it.
+  struct NoDebug : public std::monostate {};
+  // The location lacks debug info, but was not marked as not having
+  // it, and it can receive it from the parent or its previous sibling
+  // (if it has one).
+  struct CanReceiveDebug : public std::monostate {};
+  using DebugVariant =
+    std::variant<NoDebug, CanReceiveDebug, Function::DebugLocation>;
+
+  DebugVariant debugLoc;
 
   struct ChildPopper;
 

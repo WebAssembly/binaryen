@@ -124,4 +124,41 @@
     ;;@ waka:200:2
     (i32.const 2)
   )
+
+  ;; CHECK:      (func $foo (param $x i32) (param $y i32)
+  ;; CHECK-NEXT:  ;;@ src.cpp:90:1
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   ;;@
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    ;;@ src.cpp:100:1
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    ;;@
+  ;; CHECK-NEXT:    (return)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $foo (param $x i32) (param $y i32)
+    ;;@ src.cpp:90:1
+    (if
+      ;;@
+      (i32.add
+        (local.get $x)
+        (local.get $y)
+      )
+      (then
+        ;;@ src.cpp:100:1
+        (return)
+      )
+      (else
+        ;;@
+        (return)
+      )
+    )
+  )
 )
