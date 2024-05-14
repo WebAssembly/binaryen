@@ -109,7 +109,6 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       for (Index i = 0; i < unrefinedType.size(); i++) {
         auto t = unrefinedType[i];
         scratchTypeUses[t]--;
-        assert(scratchTypeUses[t] >= 0);
         auto localIndex = scratchLocals[t] + scratchTypeUses[t];
         o << int8_t(BinaryConsts::LocalGet) << U32LEB(localIndex);
         if (t.isRef()) {

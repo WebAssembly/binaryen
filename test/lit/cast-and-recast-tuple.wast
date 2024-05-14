@@ -341,7 +341,7 @@
   ;; CHECK-NEXT:     (local.tee $scratch
   ;; CHECK-NEXT:      (block (result i32)
   ;; CHECK-NEXT:       (local.set $14
-  ;; CHECK-NEXT:        (local.get $8)
+  ;; CHECK-NEXT:        (local.get $9)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:       (local.set $3
   ;; CHECK-NEXT:        (block (result (ref $B))
@@ -351,7 +351,7 @@
   ;; CHECK-NEXT:          )
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:         (local.set $7
-  ;; CHECK-NEXT:          (local.get $9)
+  ;; CHECK-NEXT:          (local.get $8)
   ;; CHECK-NEXT:         )
   ;; CHECK-NEXT:         (local.get $13)
   ;; CHECK-NEXT:        )
