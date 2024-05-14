@@ -2823,8 +2823,8 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
     ScratchLocalFinder& scratchLocalFinder;
 
     RefinementScanner(BinaryInstWriter& writer,
-                      ScratchLocalFinder& scratchLocalFinder)
-      : writer(writer), finder(finder) {}
+                      ScratchLocalFinder& scratchLocalFinder) : writer(writer),
+                                                                finder(finder) {}
 
     void visitBreak(Break* curr) {
       // See if this is one of the dangerous br_ifs we must handle.
