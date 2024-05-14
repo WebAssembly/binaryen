@@ -123,8 +123,8 @@
   ;; CHECK-NEXT: )
   (func $test-local-tuple-2 (param $B (ref $B)) (param $x i32) (result i32 i32)
     (local $temp (tuple i32 i32))
-    ;; As above, but the tuple contains no references, so we do not need to do
-    ;; anything for the br_if.
+    ;; This tuple is not dropped, but it contains no references, so we do not
+    ;; need to do anything for the br_if, and we add no casts.
     (block $out (result i32 i32)
       (local.set $temp
         (br_if $out
@@ -185,8 +185,8 @@
   ;; CHECK-NEXT: )
   (func $test-local-tuple-3 (param $B (ref $B)) (param $x i32) (result anyref i32)
     (local $temp (tuple (ref $B) i32))
-    ;; As above, but it is not dropped. However, it has the right type, there is
-    ;; no refining, so we do not need to do anything for the br_if.
+    ;; This is not dropped and has a reference, but it has the right type, so no
+    ;; cast is needed.
     (block $out (result (ref $B) i32)
       (local.set $temp
         (br_if $out
