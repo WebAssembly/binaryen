@@ -600,7 +600,7 @@ int main(int argc, const char* argv[]) {
   graph.apply();
 
   if (options.extra.count("output") > 0) {
-    ModuleWriter writer;
+    ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
     if (outputSourceMapFilename.size()) {

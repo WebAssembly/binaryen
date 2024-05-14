@@ -179,8 +179,6 @@ void PassRegistry::registerPasses() {
                "generate global effect info (helps later passes)",
                createGenerateGlobalEffectsPass);
   registerPass(
-    "generate-stack-ir", "generate Stack IR", createGenerateStackIRPass);
-  registerPass(
     "global-refining", "refine the types of globals", createGlobalRefiningPass);
   registerPass(
     "gsi", "globally optimize struct values", createGlobalStructInferencePass);
@@ -321,8 +319,6 @@ void PassRegistry::registerPasses() {
   registerPass("optimize-instructions",
                "optimizes instruction combinations",
                createOptimizeInstructionsPass);
-  registerPass(
-    "optimize-stack-ir", "optimize Stack IR", createOptimizeStackIRPass);
 // Outlining currently relies on LLVM's SuffixTree, which we can't rely upon
 // when building Binaryen for Emscripten.
 #ifndef SKIP_OUTLINING
@@ -369,9 +365,6 @@ void PassRegistry::registerPasses() {
   registerPass(
     "symbolmap", "(alias for print-function-map)", createPrintFunctionMapPass);
 
-  registerPass("print-stack-ir",
-               "print out Stack IR (useful for internal debugging)",
-               createPrintStackIRPass);
   registerPass("propagate-globals-globally",
                "propagate global values to other globals (useful for tests)",
                createPropagateGlobalsGloballyPass);
@@ -736,15 +729,9 @@ void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   }
   // may allow more inlining/dae/etc., need --converge for that
   addIfNoDWARFIssues("directize");
-  // perform Stack IR optimizations here, at the very end of the
-  // optimization pipeline
-  if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
-    addIfNoDWARFIssues("generate-stack-ir");
-    addIfNoDWARFIssues("optimize-stack-ir");
-  }
 }
 
-static void dumpWasm(Name name, Module* wasm) {
+static void dumpWasm(Name name, Module* wasm, const PassOptions& options) {
   static int counter = 0;
   std::string numstr = std::to_string(counter++);
   while (numstr.size() < 3) {
@@ -757,7 +744,7 @@ static void dumpWasm(Name name, Module* wasm) {
 #endif
   fullName += numstr + "-" + name.toString();
   Colors::setEnabled(false);
-  ModuleWriter writer;
+  ModuleWriter writer(options);
   writer.setDebugInfo(true);
   writer.writeBinary(*wasm, fullName + ".wasm");
 }
@@ -780,7 +767,7 @@ void PassRunner::run() {
       padding = std::max(padding, pass->name.size());
     }
     if (passDebug >= 3 && !isNested) {
-      dumpWasm("before", wasm);
+      dumpWasm("before", wasm, options);
     }
     for (auto& pass : passes) {
       // ignoring the time, save a printout of the module before, in case this
@@ -824,7 +811,7 @@ void PassRunner::run() {
         }
       }
       if (passDebug >= 3) {
-        dumpWasm(pass->name, wasm);
+        dumpWasm(pass->name, wasm, options);
       }
     }
     std::cerr << "[PassRunner] " << what << " took " << totalTime.count()
@@ -908,100 +895,6 @@ void PassRunner::doAdd(std::unique_ptr<Pass> pass) {
 
 void PassRunner::clear() { passes.clear(); }
 
-// Checks that the state is valid before and after a
-// pass runs on a function. We run these extra checks when
-// pass-debug mode is enabled.
-struct AfterEffectFunctionChecker {
-  Function* func;
-  Name name;
-
-  // Check Stack IR state: if the main IR changes, there should be no
-  // stack IR, as the stack IR would be wrong.
-  bool beganWithStackIR;
-  size_t originalFunctionHash;
-
-  // In the creator we can scan the state of the module and function before the
-  // pass runs.
-  AfterEffectFunctionChecker(Function* func) : func(func), name(func->name) {
-    beganWithStackIR = func->stackIR != nullptr;
-    if (beganWithStackIR) {
-      originalFunctionHash = FunctionHasher::hashFunction(func);
-    }
-  }
-
-  // This is called after the pass is run, at which time we can check things.
-  void check() {
-    assert(func->name == name); // no global module changes should have occurred
-    if (beganWithStackIR && func->stackIR) {
-      auto after = FunctionHasher::hashFunction(func);
-      if (after != originalFunctionHash) {
-        Fatal() << "[PassRunner] PASS_DEBUG check failed: had Stack IR before "
-                   "and after the pass ran, and the pass modified the main IR, "
-                   "which invalidates Stack IR - pass should have been marked "
-                   "'modifiesBinaryenIR'";
-      }
-    }
-  }
-};
-
-// Runs checks on the entire module, in a non-function-parallel pass.
-// In particular, in such a pass functions may be removed or renamed, track
-// that.
-struct AfterEffectModuleChecker {
-  Module* module;
-
-  std::vector<AfterEffectFunctionChecker> checkers;
-
-  bool beganWithAnyStackIR;
-
-  AfterEffectModuleChecker(Module* module) : module(module) {
-    for (auto& func : module->functions) {
-      checkers.emplace_back(func.get());
-    }
-    beganWithAnyStackIR = hasAnyStackIR();
-  }
-
-  void check() {
-    if (beganWithAnyStackIR && hasAnyStackIR()) {
-      // If anything changed to the functions, that's not good.
-      if (checkers.size() != module->functions.size()) {
-        error();
-      }
-      for (Index i = 0; i < checkers.size(); i++) {
-        // Did a pointer change? (a deallocated function could cause that)
-        if (module->functions[i].get() != checkers[i].func ||
-            module->functions[i]->body != checkers[i].func->body) {
-          error();
-        }
-        // Did a name change?
-        if (module->functions[i]->name != checkers[i].name) {
-          error();
-        }
-      }
-      // Global function state appears to not have been changed: the same
-      // functions are there. Look into their contents.
-      for (auto& checker : checkers) {
-        checker.check();
-      }
-    }
-  }
-
-  void error() {
-    Fatal() << "[PassRunner] PASS_DEBUG check failed: had Stack IR before and "
-               "after the pass ran, and the pass modified global function "
-               "state - pass should have been marked 'modifiesBinaryenIR'";
-  }
-
-  bool hasAnyStackIR() {
-    for (auto& func : module->functions) {
-      if (func->stackIR) {
-        return true;
-      }
-    }
-    return false;
-  }
-};
-
 void PassRunner::runPass(Pass* pass) {
   assert(!pass->isFunctionParallel());
 
@@ -1009,20 +902,12 @@ void PassRunner::runPass(Pass* pass) {
     return;
   }
 
-  std::unique_ptr<AfterEffectModuleChecker> checker;
-  if (getPassDebug()) {
-    checker = std::unique_ptr<AfterEffectModuleChecker>(
-      new AfterEffectModuleChecker(wasm));
-  }
   // Passes can only be run once and we deliberately do not clear the pass
   // runner after running the pass, so there must not already be a runner here.
   assert(!pass->getPassRunner());
   pass->setPassRunner(this);
   pass->run(wasm);
   handleAfterEffects(pass);
-  if (getPassDebug()) {
-    checker->check();
-  }
 }
 
 void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
@@ -1051,20 +936,11 @@ void PassRunner::runPassOnFunction(Pass* pass, Function* func) {
     bodyBefore << *func->body << '\n';
   }
 
-  std::unique_ptr<AfterEffectFunctionChecker> checker;
-  if (passDebug) {
-    checker = std::make_unique<AfterEffectFunctionChecker>(func);
-  }
-
   // Function-parallel passes get a new instance per function
   auto instance = pass->create();
   instance->setPassRunner(this);
   instance->runOnFunction(wasm, func);
   handleAfterEffects(pass, func);
-
-  if (passDebug) {
-    checker->check();
-  }
 
   if (extraFunctionValidation) {
     if (!WasmValidator().validate(func, *wasm, WasmValidator::Minimal)) {
@@ -1094,10 +970,6 @@ void PassRunner::handleAfterEffects(Pass* pass, Function* func) {
     }
     return;
   }
-
-  // If Binaryen IR is modified, Stack IR must be cleared - it would
-  // be out of sync in a potentially dangerous way.
-  func->stackIR.reset(nullptr);
 
   if (pass->requiresNonNullableLocalFixups()) {
     TypeUpdating::handleNonDefaultableLocals(func, *wasm);

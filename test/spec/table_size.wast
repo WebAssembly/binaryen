@@ -3,11 +3,13 @@
   (table $t1 1 externref)
   (table $t2 0 2 externref)
   (table $t3 3 8 externref)
+  (table $t64 i64 42 42 externref)
 
-  (func (export "size-t0") (result i32) (table.size $t0))
+  (func (export "size-t0") (result i32) table.size)
   (func (export "size-t1") (result i32) (table.size $t1))
   (func (export "size-t2") (result i32) (table.size $t2))
   (func (export "size-t3") (result i32) (table.size $t3))
+  (func (export "size-t64") (result i64) (table.size $t64))
 
   (func (export "grow-t0") (param $sz i32)
     (drop (table.grow $t0 (ref.null extern) (local.get $sz)))
@@ -63,6 +65,7 @@
 (assert_return (invoke "grow-t3" (i32.const 1)))
 (assert_return (invoke "size-t3") (i32.const 8))
 
+(assert_return (invoke "size-t64") (i64.const 42))
 
 ;; Type errors
 

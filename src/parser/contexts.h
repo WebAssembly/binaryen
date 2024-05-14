@@ -46,7 +46,7 @@ struct Limits {
 };
 
 struct MemType {
-  Type type;
+  Type indexType;
   Limits limits;
   bool shared;
 };
@@ -54,6 +54,11 @@ struct MemType {
 struct Memarg {
   uint64_t offset;
   uint32_t align;
+};
+
+struct TableType {
+  Type indexType;
+  Limits limits;
 };
 
 // The location, possible name, and index in the respective module index space
@@ -853,7 +858,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   using LimitsT = Limits;
   using ElemListT = Index;
   using DataStringT = std::vector<char>;
-  using TableTypeT = Limits;
+  using TableTypeT = TableType;
   using MemTypeT = MemType;
 
   Lexer in;
@@ -942,7 +947,9 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
 
   Limits getLimitsFromElems(Index elems) { return {elems, elems}; }
 
-  Limits makeTableType(Limits limits, TypeT) { return limits; }
+  TableType makeTableType(Type indexType, Limits limits, TypeT) {
+    return {indexType, limits};
+  }
 
   std::vector<char> makeDataString() { return {}; }
   void appendDataString(std::vector<char>& data, std::string_view str) {
@@ -954,8 +961,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     return {size, size};
   }
 
-  MemType makeMemType(Type type, Limits limits, bool shared) {
-    return {type, limits, shared};
+  MemType makeMemType(Type indexType, Limits limits, bool shared) {
+    return {indexType, limits, shared};
   }
 
   Result<TypeUseT>
@@ -975,10 +982,12 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                    std::vector<Annotation>&&,
                    Index pos);
 
-  Result<Table*>
-  addTableDecl(Index pos, Name name, ImportNames* importNames, Limits limits);
+  Result<Table*> addTableDecl(Index pos,
+                              Name name,
+                              ImportNames* importNames,
+                              TableType limits);
   Result<>
-  addTable(Name, const std::vector<Name>&, ImportNames*, Limits, Index);
+  addTable(Name, const std::vector<Name>&, ImportNames*, TableType, Index);
 
   // TODO: Record index of implicit elem for use when parsing types and instrs.
   Result<> addImplicitElems(TypeT, ElemListT&& elems);
@@ -1252,7 +1261,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
 
   LimitsT getLimitsFromElems(ElemListT) { return Ok{}; }
 
-  Type makeTableType(LimitsT, Type type) { return type; }
+  Type makeTableType(Type indexType, LimitsT, Type type) { return type; }
 
   LimitsT getLimitsFromData(DataStringT) { return Ok{}; }
   MemTypeT makeMemType(Type, LimitsT, bool) { return Ok{}; }
@@ -1441,7 +1450,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   LimitsT getLimitsFromElems(std::vector<Expression*>& elems) { return Ok{}; }
 
-  TableTypeT makeTableType(LimitsT, Type) { return Ok{}; }
+  TableTypeT makeTableType(Type, LimitsT, Type) { return Ok{}; }
 
   struct CatchInfo {
     Name tag;
@@ -1687,7 +1696,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return Builder::addVar(func, name, type);
   }
 
-  Result<Expression*> makeExpr() { return irBuilder.build(); }
+  Result<Expression*> makeExpr() { return withLoc(irBuilder.build()); }
 
   Memarg getMemarg(uint64_t offset, uint32_t align) { return {offset, align}; }
 

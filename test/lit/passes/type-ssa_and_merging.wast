@@ -33,7 +33,7 @@
 
   ;; NOP:      (export "main2" (func $main2))
 
-  ;; NOP:      (func $main1 (type $2) (; has Stack IR ;) (result i32)
+  ;; NOP:      (func $main1 (type $2) (result i32)
   ;; NOP-NEXT:  (call $get-a-1
   ;; NOP-NEXT:   (struct.new $A
   ;; NOP-NEXT:    (i32.const 42)
@@ -57,7 +57,7 @@
     )
   )
 
-  ;; NOP:      (func $main2 (type $2) (; has Stack IR ;) (result i32)
+  ;; NOP:      (func $main2 (type $2) (result i32)
   ;; NOP-NEXT:  (call $get-a-2
   ;; NOP-NEXT:   (struct.new $A
   ;; NOP-NEXT:    (i32.const 1337)
@@ -77,7 +77,7 @@
     )
   )
 
-  ;; NOP:      (func $get-a-1 (type $0) (; has Stack IR ;) (param $0 (ref $A)) (result i32)
+  ;; NOP:      (func $get-a-1 (type $0) (param $0 (ref $A)) (result i32)
   ;; NOP-NEXT:  (if
   ;; NOP-NEXT:   (call $import)
   ;; NOP-NEXT:   (then
@@ -119,7 +119,7 @@
     (struct.get $A 0 (local.get 0))
   )
 
-  ;; NOP:      (func $get-a-2 (type $0) (; has Stack IR ;) (param $0 (ref $A)) (result i32)
+  ;; NOP:      (func $get-a-2 (type $0) (param $0 (ref $A)) (result i32)
   ;; NOP-NEXT:  (if
   ;; NOP-NEXT:   (call $import)
   ;; NOP-NEXT:   (then

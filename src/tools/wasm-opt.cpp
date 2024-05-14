@@ -35,6 +35,7 @@
 #include "wasm-interpreter.h"
 #include "wasm-io.h"
 #include "wasm-s-parser.h"
+#include "wasm-stack.h"
 #include "wasm-validator.h"
 #include "wasm2c-wrapper.h"
 
@@ -347,7 +348,7 @@ int main(int argc, const char* argv[]) {
 
   if (extraFuzzCommand.size() > 0 && options.extra.count("output") > 0) {
     BYN_TRACE("writing binary before opts, for extra fuzz command...\n");
-    ModuleWriter writer;
+    ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(options.passOptions.debugInfo);
     writer.write(wasm, options.extra["output"]);
@@ -379,7 +380,7 @@ int main(int argc, const char* argv[]) {
       // size no longer decreasing.
       auto getSize = [&]() {
         BufferWithRandomAccess buffer;
-        WasmBinaryWriter writer(&wasm, buffer);
+        WasmBinaryWriter writer(&wasm, buffer, options.passOptions);
         writer.write();
         return buffer.size();
       };
@@ -402,11 +403,6 @@ int main(int argc, const char* argv[]) {
     runner.add("translate-to-new-eh");
     // Perform Stack IR optimizations here, at the very end of the
     // optimization pipeline.
-    if (options.passOptions.optimizeLevel >= 2 ||
-        options.passOptions.shrinkLevel >= 1) {
-      runner.addIfNoDWARFIssues("generate-stack-ir");
-      runner.addIfNoDWARFIssues("optimize-stack-ir");
-    }
     runner.run();
     if (options.passOptions.validate) {
       bool valid = WasmValidator().validate(wasm, options.passOptions);
@@ -420,6 +416,10 @@ int main(int argc, const char* argv[]) {
     results.check(wasm);
   }
 
+  if (options.passOptions.printStackIR) {
+    printStackIR(std::cout, &wasm, options.passOptions);
+  }
+
   if (options.extra.count("output") == 0) {
     if (!options.quiet) {
       std::cerr << "warning: no output file specified, not emitting output\n";
@@ -428,7 +428,7 @@ int main(int argc, const char* argv[]) {
   }
 
   BYN_TRACE("writing...\n");
-  ModuleWriter writer;
+  ModuleWriter writer(options.passOptions);
   writer.setBinary(emitBinary);
   writer.setDebugInfo(options.passOptions.debugInfo);
   if (outputSourceMapFilename.size()) {

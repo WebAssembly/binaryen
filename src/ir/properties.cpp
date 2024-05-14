@@ -19,24 +19,37 @@
 
 namespace wasm::Properties {
 
-bool isGenerative(Expression* curr, FeatureSet features) {
-  struct Scanner : public PostWalker<Scanner> {
-    bool generative = false;
+namespace {
 
-    void visitCall(Call* curr) {
-      // TODO: We could in principle look at the called function to see if it is
-      //       generative. To do that we'd need to compute generativity like we
-      //       compute global effects (we can't just peek from here, as the
-      //       other function might be modified in parallel).
-      generative = true;
-    }
-    void visitCallIndirect(CallIndirect* curr) { generative = true; }
-    void visitCallRef(CallRef* curr) { generative = true; }
-    void visitStructNew(StructNew* curr) { generative = true; }
-    void visitArrayNew(ArrayNew* curr) { generative = true; }
-    void visitArrayNewFixed(ArrayNewFixed* curr) { generative = true; }
-  } scanner;
+struct GenerativityScanner : public PostWalker<GenerativityScanner> {
+  bool generative = false;
+
+  void visitCall(Call* curr) {
+    // TODO: We could in principle look at the called function to see if it is
+    //       generative. To do that we'd need to compute generativity like we
+    //       compute global effects (we can't just peek from here, as the
+    //       other function might be modified in parallel).
+    generative = true;
+  }
+  void visitCallIndirect(CallIndirect* curr) { generative = true; }
+  void visitCallRef(CallRef* curr) { generative = true; }
+  void visitStructNew(StructNew* curr) { generative = true; }
+  void visitArrayNew(ArrayNew* curr) { generative = true; }
+  void visitArrayNewFixed(ArrayNewFixed* curr) { generative = true; }
+};
+
+} // anonymous namespace
+
+bool isGenerative(Expression* curr) {
+  GenerativityScanner scanner;
   scanner.walk(curr);
+  return scanner.generative;
+}
+
+// As above, but only checks |curr| and not children.
+bool isShallowlyGenerative(Expression* curr) {
+  GenerativityScanner scanner;
+  scanner.visit(curr);
   return scanner.generative;
 }
 

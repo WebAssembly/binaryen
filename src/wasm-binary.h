@@ -43,15 +43,6 @@ enum {
   MaxLEB32Bytes = 5,
 };
 
-// wasm VMs on the web have decided to impose some limits on what they
-// accept
-enum WebLimitations : uint32_t {
-  MaxDataSegments = 100 * 1000,
-  MaxFunctionBodySize = 128 * 1024,
-  MaxFunctionLocals = 50 * 1000,
-  MaxFunctionParams = 1000
-};
-
 template<typename T, typename MiniT> struct LEB {
   static_assert(sizeof(MiniT) == 1, "MiniT must be a byte");
 
@@ -1279,8 +1270,10 @@ class WasmBinaryWriter {
   };
 
 public:
-  WasmBinaryWriter(Module* input, BufferWithRandomAccess& o)
-    : wasm(input), o(o), indexes(*input) {
+  WasmBinaryWriter(Module* input,
+                   BufferWithRandomAccess& o,
+                   const PassOptions& options)
+    : wasm(input), o(o), options(options), indexes(*input) {
     prepare();
   }
 
@@ -1357,6 +1350,7 @@ public:
   void writeSourceMapProlog();
   void writeSourceMapEpilog();
   void writeDebugLocation(const Function::DebugLocation& loc);
+  void writeNoDebugLocation();
   void writeDebugLocation(Expression* curr, Function* func);
   void writeDebugLocationEnd(Expression* curr, Function* func);
   void writeExtraDebugLocation(Expression* curr, Function* func, size_t id);
@@ -1392,6 +1386,8 @@ public:
 private:
   Module* wasm;
   BufferWithRandomAccess& o;
+  const PassOptions& options;
+
   BinaryIndexes indexes;
   ModuleUtils::IndexedHeapTypes indexedTypes;
   std::unordered_map<Signature, uint32_t> signatureIndexes;
@@ -1556,6 +1552,8 @@ public:
 
   // gets a memory in the combined import+defined space
   Memory* getMemory(Index index);
+  // gets a table in the combined import+defined space
+  Table* getTable(Index index);
 
   void getResizableLimits(Address& initial,
                           Address& max,

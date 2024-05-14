@@ -238,7 +238,25 @@ Result<Expression*> parseExpression(Module& wasm, Lexer& lexer) {
   ParseDefsCtx ctx(lexer, wasm, {}, {}, {}, {}, {});
   auto e = expr(ctx);
   CHECK_ERR(e);
+  lexer = ctx.in;
   return *e;
+}
+
+Result<Literal> parseConst(Lexer& lexer) {
+  Module wasm;
+  ParseDefsCtx ctx(lexer, wasm, {}, {}, {}, {}, {});
+  auto inst = foldedinstr(ctx);
+  CHECK_ERR(inst);
+  auto expr = ctx.irBuilder.build();
+  if (auto* err = expr.getErr()) {
+    return lexer.err(err->msg);
+  }
+  auto* e = *expr;
+  if (!e->is<Const>() && !e->is<RefNull>() && !e->is<RefI31>()) {
+    return lexer.err("expected constant");
+  }
+  lexer = ctx.in;
+  return getLiteralFromConstExpression(e);
 }
 
 } // namespace wasm::WATParser

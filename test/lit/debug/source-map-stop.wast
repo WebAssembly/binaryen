@@ -3,6 +3,11 @@
 ;; RUN: wasm-opt %s -g -o %t.wasm -osm %t.wasm.map
 ;; RUN: wasm-opt %t.wasm -ism %t.wasm.map -S -o - | filecheck %s
 
+;; Also test with StackIR, which should have identical results.
+;;
+;; RUN: wasm-opt %s --generate-stack-ir -o %t.wasm -osm %t.map -g -q
+;; RUN: wasm-opt %t.wasm -ism %t.map -q -o - -S | filecheck %s
+
 ;; Verify that writing to a source map and reading it back does not "smear"
 ;; debug info across adjacent instructions. The debug info in the output should
 ;; be identical to the input.

@@ -56,13 +56,13 @@
   ;; CHECK_1:      (func $main (type $0)
   ;; CHECK_1-NEXT:  (nop)
   ;; CHECK_1-NEXT: )
-  ;; CHECK_3:      (func $main (type $0) (; has Stack IR ;)
+  ;; CHECK_3:      (func $main (type $0)
   ;; CHECK_3-NEXT:  (nop)
   ;; CHECK_3-NEXT: )
-  ;; CHECK_s:      (func $main (type $0) (; has Stack IR ;)
+  ;; CHECK_s:      (func $main (type $0)
   ;; CHECK_s-NEXT:  (nop)
   ;; CHECK_s-NEXT: )
-  ;; CHECK_O:      (func $main (type $0) (; has Stack IR ;)
+  ;; CHECK_O:      (func $main (type $0)
   ;; CHECK_O-NEXT:  (nop)
   ;; CHECK_O-NEXT: )
   (func $main
@@ -119,7 +119,7 @@
   ;; CHECK_1-NEXT:   (local.get $0)
   ;; CHECK_1-NEXT:  )
   ;; CHECK_1-NEXT: )
-  ;; CHECK_3:      (func $pointless-work (type $1) (; has Stack IR ;) (result i32)
+  ;; CHECK_3:      (func $pointless-work (type $1) (result i32)
   ;; CHECK_3-NEXT:  (local $0 i32)
   ;; CHECK_3-NEXT:  (loop $loop (result i32)
   ;; CHECK_3-NEXT:   (br_if $loop
@@ -136,7 +136,7 @@
   ;; CHECK_3-NEXT:   (local.get $0)
   ;; CHECK_3-NEXT:  )
   ;; CHECK_3-NEXT: )
-  ;; CHECK_s:      (func $pointless-work (type $1) (; has Stack IR ;) (result i32)
+  ;; CHECK_s:      (func $pointless-work (type $1) (result i32)
   ;; CHECK_s-NEXT:  (local $0 i32)
   ;; CHECK_s-NEXT:  (loop $loop (result i32)
   ;; CHECK_s-NEXT:   (br_if $loop
@@ -153,7 +153,7 @@
   ;; CHECK_s-NEXT:   (local.get $0)
   ;; CHECK_s-NEXT:  )
   ;; CHECK_s-NEXT: )
-  ;; CHECK_O:      (func $pointless-work (type $1) (; has Stack IR ;) (result i32)
+  ;; CHECK_O:      (func $pointless-work (type $1) (result i32)
   ;; CHECK_O-NEXT:  (local $0 i32)
   ;; CHECK_O-NEXT:  (loop $loop (result i32)
   ;; CHECK_O-NEXT:   (br_if $loop

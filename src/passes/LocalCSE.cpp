@@ -330,6 +330,40 @@ struct Scanner
       return false;
     }
 
+    // We will fully compute effects later, but consider shallow effects at this
+    // early time to ignore things that cannot be optimized later, because we
+    // use a greedy algorithm. Specifically, imagine we see this:
+    //
+    //  (call
+    //    (i32.add
+    //      ..
+    //    )
+    //  )
+    //
+    // If we considered the call relevant then we'd start to look for that
+    // larger pattern that contains the add, but then when we find that it
+    // cannot be optimized later it is too late for the add. (Instead of
+    // checking effects here we could perhaps add backtracking, but that sounds
+    // more complex.)
+    //
+    // We use |hasNonTrapSideEffects| because if a trap occurs the optimization
+    // remains valid: both this and the copy of it would trap, which means the
+    // first traps and the second isn't reached anyhow.
+    //
+    // (We don't stash these effects because we may compute many of them here,
+    // and only need the few for those patterns that repeat.)
+    if (ShallowEffectAnalyzer(options, *getModule(), curr)
+          .hasNonTrapSideEffects()) {
+      return false;
+    }
+
+    // We also cannot optimize away something that is intrinsically
+    // nondeterministic: even if it has no side effects, if it may return a
+    // different result each time, and then we cannot optimize away repeats.
+    if (Properties::isShallowlyGenerative(curr)) {
+      return false;
+    }
+
     // If the size is at least 3, then if we have two of them we have 6,
     // and so adding one set+one get and removing one of the items itself
     // is not detrimental, and may be beneficial.
@@ -387,6 +421,16 @@ struct Checker
     // hashed expressions, if there are any.
     if (!activeOriginals.empty()) {
       EffectAnalyzer effects(options, *getModule());
+      // We can ignore traps here:
+      //
+      //  (ORIGINAL)
+      //  (curr)
+      //  (COPY)
+      //
+      // We are some code in between an original and a copy of it, and we are
+      // trying to turn COPY into a local.get of a value that we stash at the
+      // original. If |curr| traps then we simply don't reach the copy anyhow.
+      effects.trap = false;
       // We only need to visit this node itself, as we have already visited its
       // children by the time we get here.
       effects.visit(curr);
@@ -426,7 +470,7 @@ struct Checker
 
     if (info.requests > 0) {
       // This is an original. Compute its side effects, as we cannot optimize
-      // away repeated apperances if it has any.
+      // away repeated appearances if it has any.
       EffectAnalyzer effects(options, *getModule(), curr);
 
       // We can ignore traps here, as we replace a repeating expression with a
@@ -438,16 +482,12 @@ struct Checker
       // none of them.)
       effects.trap = false;
 
-      // We also cannot optimize away something that is intrinsically
-      // nondeterministic: even if it has no side effects, if it may return a
-      // different result each time, then we cannot optimize away repeats.
-      if (effects.hasSideEffects() ||
-          Properties::isGenerative(curr, getModule()->features)) {
-        requestInfos.erase(curr);
-      } else {
-        activeOriginals.emplace(
-          curr, ActiveOriginalInfo{info.requests, std::move(effects)});
-      }
+      // Note that we've already checked above that this has no side effects or
+      // generativity: if we got here, then it is good to go from the
+      // perspective of this expression itself (but may be invalidated by other
+      // code in between, see above).
+      activeOriginals.emplace(
+        curr, ActiveOriginalInfo{info.requests, std::move(effects)});
     } else if (info.original) {
       // The original may have already been invalidated. If so, remove our info
       // as well.

@@ -28,7 +28,7 @@
 
  ;; CHECK:      (export "dfo-tee-get" (func $dfo-tee-get))
 
- ;; CHECK:      (func $one (; has Stack IR ;)
+ ;; CHECK:      (func $one
  ;; CHECK-NEXT:  (block $label$3
  ;; CHECK-NEXT:   (br_if $label$3
  ;; CHECK-NEXT:    (i32.load
@@ -56,7 +56,7 @@
   )
   (unreachable)
  )
- ;; CHECK:      (func $two (; has Stack IR ;) (param $0 i32) (param $1 i32) (result i32)
+ ;; CHECK:      (func $two (param $0 i32) (param $1 i32) (result i32)
  ;; CHECK-NEXT:  (i32.const 0)
  ;; CHECK-NEXT: )
  (func $two (export "two") (param $var$0 i32) (param $var$1 i32) (result i32)
@@ -110,7 +110,7 @@
   (nop)
   (i32.const 0)
  )
- ;; CHECK:      (func $use-var (; has Stack IR ;) (param $0 i64) (param $1 i32) (result f64)
+ ;; CHECK:      (func $use-var (param $0 i64) (param $1 i32) (result f64)
  ;; CHECK-NEXT:  (loop $label$8
  ;; CHECK-NEXT:   (br_if $label$8
  ;; CHECK-NEXT:    (local.get $1)
@@ -184,7 +184,7 @@
   )
   (unreachable)
  )
- ;; CHECK:      (func $bad1 (; has Stack IR ;)
+ ;; CHECK:      (func $bad1
  ;; CHECK-NEXT:  (i32.store
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:   (i32.const -16384)
@@ -236,7 +236,7 @@
    )
   )
  )
- ;; CHECK:      (func $only-dfo (; has Stack IR ;) (param $0 f64) (result f64)
+ ;; CHECK:      (func $only-dfo (param $0 f64) (result f64)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (loop $label$1
  ;; CHECK-NEXT:   (br $label$1)
@@ -270,7 +270,7 @@
    (br $label$1)
   )
  )
- ;; CHECK:      (func $dfo-tee-get (; has Stack IR ;) (result i32)
+ ;; CHECK:      (func $dfo-tee-get (result i32)
  ;; CHECK-NEXT:  (i32.const 1)
  ;; CHECK-NEXT: )
  (func $dfo-tee-get (export "dfo-tee-get") (result i32)

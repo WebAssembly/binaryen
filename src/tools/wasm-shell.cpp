@@ -378,6 +378,11 @@ protected:
     spectest->addExport(
       builder.makeExport("table", Name::fromInt(0), ExternalKind::Table));
 
+    spectest->addTable(builder.makeTable(
+      Name::fromInt(1), Type(HeapType::func, Nullable), 10, 20, Type::i64));
+    spectest->addExport(
+      builder.makeExport("table64", Name::fromInt(1), ExternalKind::Table));
+
     Memory* memory =
       spectest->addMemory(builder.makeMemory(Name::fromInt(0), 1, 2));
     spectest->addExport(
@@ -439,11 +444,18 @@ int main(int argc, const char* argv[]) {
   options.parse(argc, argv);
 
   auto input = read_file<std::string>(infile, Flags::Text);
-  Lexer lexer(input);
 
+  // Check that we can parse the script correctly with the new parser.
+  auto script = WATParser::parseScript(input);
+  if (auto* err = script.getErr()) {
+    std::cerr << err->msg << '\n';
+    exit(1);
+  }
+
+  Lexer lexer(input);
   auto result = Shell(options).parseAndRun(lexer);
   if (auto* err = result.getErr()) {
-    std::cerr << err->msg;
+    std::cerr << err->msg << '\n';
     exit(1);
   }
 

@@ -26,6 +26,7 @@
 #include "support/string.h"
 #include "wasm-binary.h"
 #include "wasm-debug.h"
+#include "wasm-limits.h"
 #include "wasm-stack.h"
 
 #define DEBUG_TYPE "binary"
@@ -391,21 +392,33 @@ void WasmBinaryWriter::writeFunctions() {
   if (importInfo->getNumDefinedFunctions() == 0) {
     return;
   }
+
+  std::optional<ModuleStackIR> moduleStackIR;
+  if (options.generateStackIR) {
+    moduleStackIR.emplace(*wasm, options);
+  }
+
   BYN_TRACE("== writeFunctions\n");
   auto sectionStart = startSection(BinaryConsts::Section::Code);
   o << U32LEB(importInfo->getNumDefinedFunctions());
   bool DWARF = Debug::hasDWARFSections(*getModule());
   ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
     assert(binaryLocationTrackedExpressionsForFunc.empty());
-    size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
     BYN_TRACE("write one at" << o.size() << std::endl);
+    // Do not smear any debug location from the previous function.
+    writeNoDebugLocation();
+    size_t sourceMapLocationsSizeAtFunctionStart = sourceMapLocations.size();
     size_t sizePos = writeU32LEBPlaceholder();
     size_t start = o.size();
     BYN_TRACE("writing" << func->name << std::endl);
-    // Emit Stack IR if present, and if we can
-    if (func->stackIR && !sourceMap && !DWARF) {
+    // Emit Stack IR if present.
+    StackIR* stackIR = nullptr;
+    if (moduleStackIR) {
+      stackIR = moduleStackIR->getStackIROrNull(func);
+    }
+    if (stackIR) {
       BYN_TRACE("write Stack IR\n");
-      StackIRToBinaryWriter writer(*this, o, func);
+      StackIRToBinaryWriter writer(*this, o, func, *stackIR, sourceMap, DWARF);
       writer.write();
       if (debugInfo) {
         funcMappedLocals[func->name] = std::move(writer.getMappedLocals());
@@ -733,7 +746,7 @@ void WasmBinaryWriter::writeTableDeclarations() {
                          table->max,
                          table->hasMax(),
                          /*shared=*/false,
-                         /*is64*/ false);
+                         table->is64());
   });
   finishSection(start);
 }
@@ -1372,6 +1385,28 @@ void WasmBinaryWriter::writeDebugLocation(const Function::DebugLocation& loc) {
   lastDebugLocation = loc;
 }
 
+void WasmBinaryWriter::writeNoDebugLocation() {
+  // Emit an indication that there is no debug location there (so that
+  // we do not get "smeared" with debug info from anything before or
+  // after us).
+  //
+  // We don't need to write repeated "no debug info" indications, as a
+  // single one is enough to make it clear that the debug information
+  // before us is valid no longer. We also don't need to write one if
+  // there is nothing before us.
+  if (!sourceMapLocations.empty() &&
+      sourceMapLocations.back().second != nullptr) {
+    sourceMapLocations.emplace_back(o.size(), nullptr);
+
+    // Initialize the state of debug info to indicate there is no current
+    // debug info relevant. This sets |lastDebugLocation| to a dummy value,
+    // so that later places with debug info can see that they differ from
+    // it (without this, if we had some debug info, then a nullptr for none,
+    // and then the same debug info, we could get confused).
+    initializeDebugInfo();
+  }
+}
+
 void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
   if (sourceMap) {
     auto& debugLocations = func->debugLocations;
@@ -1380,25 +1415,8 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
       // There is debug information here, write it out.
       writeDebugLocation(iter->second);
     } else {
-      // This expression has no debug location. We need to emit an indication
-      // of that (so that we do not get "smeared" with debug info from anything
-      // before or after us).
-      //
-      // We don't need to write repeated "no debug info" indications, as a
-      // single one is enough to make it clear that the debug information before
-      // us is valid no longer. We also don't need to write one if there is
-      // nothing before us.
-      if (!sourceMapLocations.empty() &&
-          sourceMapLocations.back().second != nullptr) {
-        sourceMapLocations.emplace_back(o.size(), nullptr);
-
-        // Initialize the state of debug info to indicate there is no current
-        // debug info relevant. This sets |lastDebugLocation| to a dummy value,
-        // so that later places with debug info can see that they differ from
-        // it (without this, if we had some debug info, then a nullptr for none,
-        // and then the same debug info, we could get confused).
-        initializeDebugInfo();
-      }
+      // This expression has no debug location.
+      writeNoDebugLocation();
     }
   }
   // If this is an instruction in a function, and if the original wasm had
@@ -2444,6 +2462,13 @@ Name WasmBinaryReader::getGlobalName(Index index) {
   return wasm.globals[index]->name;
 }
 
+Table* WasmBinaryReader::getTable(Index index) {
+  if (index < wasm.tables.size()) {
+    return wasm.tables[index].get();
+  }
+  throwError("Table index out of range.");
+}
+
 Name WasmBinaryReader::getTagName(Index index) {
   if (index >= wasm.tags.size()) {
     throwError("invalid tag index");
@@ -2537,17 +2562,13 @@ void WasmBinaryReader::readImports() {
         table->type = getType();
 
         bool is_shared;
-        Type indexType;
         getResizableLimits(table->initial,
                            table->max,
                            is_shared,
-                           indexType,
+                           table->indexType,
                            Table::kUnlimitedSize);
         if (is_shared) {
           throwError("Tables may not be shared");
-        }
-        if (indexType == Type::i64) {
-          throwError("Tables may not be 64-bit");
         }
 
         wasm.addTable(std::move(table));
@@ -2686,12 +2707,11 @@ void WasmBinaryReader::readFunctions() {
 
     readVars();
 
-    std::swap(func->prologLocation, debugLocation);
+    func->prologLocation = debugLocation;
     {
       // process the function body
       BYN_TRACE("processing function: " << i << std::endl);
       nextLabel = 0;
-      debugLocation.clear();
       willBeIgnored = false;
       // process body
       assert(breakStack.empty());
@@ -2930,7 +2950,6 @@ void WasmBinaryReader::readNextDebugLocation() {
 
   if (nextDebugPos == 0) {
     // We reached the end of the source map; nothing left to read.
-    debugLocation.clear();
     return;
   }
 
@@ -3339,16 +3358,14 @@ void WasmBinaryReader::readTableDeclarations() {
     }
     auto table = Builder::makeTable(Name::fromInt(i), elemType);
     bool is_shared;
-    Type indexType;
-    getResizableLimits(
-      table->initial, table->max, is_shared, indexType, Table::kUnlimitedSize);
+    getResizableLimits(table->initial,
+                       table->max,
+                       is_shared,
+                       table->indexType,
+                       Table::kUnlimitedSize);
     if (is_shared) {
       throwError("Tables may not be shared");
     }
-    if (indexType == Type::i64) {
-      throwError("Tables may not be 64-bit");
-    }
-
     wasm.addTable(std::move(table));
   }
 }
@@ -5495,6 +5512,9 @@ bool WasmBinaryReader::maybeVisitTableSize(Expression*& out, uint32_t code) {
     throwError("bad table index");
   }
   auto* curr = allocator.alloc<TableSize>();
+  if (getTable(tableIdx)->is64()) {
+    curr->type = Type::i64;
+  }
   curr->finalize();
   // Defer setting the table name for later, when we know it.
   tableRefs[tableIdx].push_back(&curr->table);
@@ -5513,6 +5533,9 @@ bool WasmBinaryReader::maybeVisitTableGrow(Expression*& out, uint32_t code) {
   auto* curr = allocator.alloc<TableGrow>();
   curr->delta = popNonVoidExpression();
   curr->value = popNonVoidExpression();
+  if (getTable(tableIdx)->is64()) {
+    curr->type = Type::i64;
+  }
   curr->finalize();
   // Defer setting the table name for later, when we know it.
   tableRefs[tableIdx].push_back(&curr->table);

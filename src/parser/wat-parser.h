@@ -32,7 +32,86 @@ Result<> parseModule(Module& wasm, std::string_view in);
 // file.
 Result<> parseModule(Module& wasm, Lexer& lexer);
 
+Result<Literal> parseConst(Lexer& lexer);
+
 Result<Expression*> parseExpression(Module& wasm, Lexer& lexer);
+
+struct InvokeAction {
+  Name name;
+  Literals args;
+};
+
+struct GetAction {
+  Name name;
+};
+
+using Action = std::variant<InvokeAction, GetAction>;
+
+struct RefResult {
+  HeapType type;
+};
+
+enum class NaNKind { Canonical, Arithmetic };
+
+struct NaNResult {
+  NaNKind kind;
+  Type type;
+};
+
+using LaneResult = std::variant<Literal, NaNResult>;
+
+using LaneResults = std::vector<LaneResult>;
+
+using ExpectedResult = std::variant<Literal, RefResult, NaNResult, LaneResults>;
+
+using ExpectedResults = std::vector<ExpectedResult>;
+
+struct AssertReturn {
+  Action action;
+  ExpectedResults results;
+};
+
+struct AssertException {
+  Action action;
+};
+
+enum class ActionAssertionType { Trap, Exhaustion };
+
+struct AssertAction {
+  ActionAssertionType type;
+  Action action;
+  std::string msg;
+};
+
+enum class QuotedModuleType { Text, Binary };
+
+struct QuotedModule {
+  QuotedModuleType type;
+  std::string module;
+};
+
+using WASTModule = std::variant<QuotedModule, std::shared_ptr<Module>>;
+
+enum class ModuleAssertionType { Trap, Malformed, Invalid, Unlinkable };
+
+struct AssertModule {
+  ModuleAssertionType type;
+  WASTModule wasm;
+  std::string msg;
+};
+
+using Assertion =
+  std::variant<AssertReturn, AssertException, AssertAction, AssertModule>;
+
+struct Register {
+  Name name;
+};
+
+using WASTCommand = std::variant<WASTModule, Register, Action, Assertion>;
+
+using WASTScript = std::vector<WASTCommand>;
+
+Result<WASTScript> parseScript(std::string_view in);
 
 } // namespace wasm::WATParser
 

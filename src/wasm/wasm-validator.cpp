@@ -593,11 +593,6 @@ private:
   void validateCallParamsAndResult(T* curr, HeapType sigType) {
     validateCallParamsAndResult(curr, sigType, curr);
   }
-
-  Type indexType(Name memoryName) {
-    auto memory = getModule()->getMemory(memoryName);
-    return memory->indexType;
-  }
 };
 
 void FunctionValidator::noteLabelName(Name name) {
@@ -952,15 +947,16 @@ void FunctionValidator::visitCall(Call* curr) {
 
 void FunctionValidator::visitCallIndirect(CallIndirect* curr) {
   validateReturnCall(curr);
-  shouldBeEqualOrFirstIsUnreachable(curr->target->type,
-                                    Type(Type::i32),
-                                    curr,
-                                    "indirect call target must be an i32");
 
   if (curr->target->type != Type::unreachable) {
     auto* table = getModule()->getTableOrNull(curr->table);
-    shouldBeTrue(!!table, curr, "call-indirect table must exist");
-    if (table) {
+    if (shouldBeTrue(!!table, curr, "call-indirect table must exist")) {
+      shouldBeEqualOrFirstIsUnreachable(
+        curr->target->type,
+        table->indexType,
+        curr,
+        "call-indirect call target must match the table index type");
+      shouldBeTrue(!!table, curr, "call-indirect table must exist");
       shouldBeTrue(table->type.isFunction(),
                    curr,
                    "call-indirect table must be of function type.");
@@ -1056,7 +1052,7 @@ void FunctionValidator::visitLoad(Load* curr) {
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    indexType(curr->memory),
+    memory->indexType,
     curr,
     "load pointer type must match memory index type");
   if (curr->isAtomic) {
@@ -1088,7 +1084,7 @@ void FunctionValidator::visitStore(Store* curr) {
     curr->align, curr->valueType, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    indexType(curr->memory),
+    memory->indexType,
     curr,
     "store pointer must match memory index type");
   shouldBeUnequal(curr->value->type,
@@ -1112,7 +1108,7 @@ void FunctionValidator::visitAtomicRMW(AtomicRMW* curr) {
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    indexType(curr->memory),
+    memory->indexType,
     curr,
     "AtomicRMW pointer type must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(curr->type,
@@ -1132,7 +1128,7 @@ void FunctionValidator::visitAtomicCmpxchg(AtomicCmpxchg* curr) {
   validateMemBytes(curr->bytes, curr->type, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    indexType(curr->memory),
+    memory->indexType,
     curr,
     "cmpxchg pointer must match memory index type");
   if (curr->expected->type != Type::unreachable &&
@@ -1166,7 +1162,7 @@ void FunctionValidator::visitAtomicWait(AtomicWait* curr) {
     curr->type, Type(Type::i32), curr, "AtomicWait must have type i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    indexType(curr->memory),
+    memory->indexType,
     curr,
     "AtomicWait pointer must match memory index type");
   shouldBeIntOrUnreachable(
@@ -1192,7 +1188,7 @@ void FunctionValidator::visitAtomicNotify(AtomicNotify* curr) {
     curr->type, Type(Type::i32), curr, "AtomicNotify must have type i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    indexType(curr->memory),
+    memory->indexType,
     curr,
     "AtomicNotify pointer must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1354,7 +1350,7 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
     curr->type, Type(Type::v128), curr, "load_splat must have type v128");
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    indexType(curr->memory),
+    memory->indexType,
     curr,
     "load_splat address must match memory index type");
   Type memAlignType = Type::none;
@@ -1395,7 +1391,7 @@ void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
   }
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
-    indexType(curr->memory),
+    memory->indexType,
     curr,
     "loadX_lane or storeX_lane address must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(
@@ -1435,6 +1431,7 @@ void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
 }
 
 void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
+  auto* memory = getModule()->getMemoryOrNull(curr->memory);
   shouldBeTrue(
     getModule()->features.hasBulkMemory(),
     curr,
@@ -1443,7 +1440,7 @@ void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
     curr->type, Type(Type::none), curr, "memory.init must have type none");
   shouldBeEqualOrFirstIsUnreachable(
     curr->dest->type,
-    indexType(curr->memory),
+    memory->indexType,
     curr,
     "memory.init dest must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(curr->offset->type,
@@ -1452,7 +1449,6 @@ void FunctionValidator::visitMemoryInit(MemoryInit* curr) {
                                     "memory.init offset must be an i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type, Type(Type::i32), curr, "memory.init size must be an i32");
-  auto* memory = getModule()->getMemoryOrNull(curr->memory);
   if (!shouldBeTrue(!!memory, curr, "memory.init memory must exist")) {
     return;
   }
@@ -1486,27 +1482,28 @@ void FunctionValidator::visitMemoryCopy(MemoryCopy* curr) {
   shouldBeTrue(!!sourceMemory, curr, "memory.copy sourceMemory must exist");
   shouldBeEqualOrFirstIsUnreachable(
     curr->dest->type,
-    indexType(curr->destMemory),
+    destMemory->indexType,
     curr,
     "memory.copy dest must match destMemory index type");
   shouldBeEqualOrFirstIsUnreachable(
     curr->source->type,
-    indexType(curr->sourceMemory),
+    sourceMemory->indexType,
     curr,
     "memory.copy source must match sourceMemory index type");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type,
-    indexType(curr->destMemory),
+    destMemory->indexType,
     curr,
     "memory.copy size must match destMemory index type");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type,
-    indexType(curr->sourceMemory),
+    sourceMemory->indexType,
     curr,
     "memory.copy size must match destMemory index type");
 }
 
 void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
+  auto* memory = getModule()->getMemoryOrNull(curr->memory);
   shouldBeTrue(
     getModule()->features.hasBulkMemory(),
     curr,
@@ -1515,7 +1512,7 @@ void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
     curr->type, Type(Type::none), curr, "memory.fill must have type none");
   shouldBeEqualOrFirstIsUnreachable(
     curr->dest->type,
-    indexType(curr->memory),
+    memory->indexType,
     curr,
     "memory.fill dest must match memory index type");
   shouldBeEqualOrFirstIsUnreachable(curr->value->type,
@@ -1524,10 +1521,9 @@ void FunctionValidator::visitMemoryFill(MemoryFill* curr) {
                                     "memory.fill value must be an i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type,
-    indexType(curr->memory),
+    memory->indexType,
     curr,
     "memory.fill size must match memory index type");
-  auto* memory = getModule()->getMemoryOrNull(curr->memory);
   shouldBeTrue(!!memory, curr, "memory.fill memory must exist");
 }
 
@@ -2162,7 +2158,7 @@ void FunctionValidator::visitMemoryGrow(MemoryGrow* curr) {
   auto* memory = getModule()->getMemoryOrNull(curr->memory);
   shouldBeTrue(!!memory, curr, "memory.grow memory must exist");
   shouldBeEqualOrFirstIsUnreachable(curr->delta->type,
-                                    indexType(curr->memory),
+                                    memory->indexType,
                                     curr,
                                     "memory.grow must match memory index type");
 }
@@ -2272,13 +2268,19 @@ void FunctionValidator::visitTableGet(TableGet* curr) {
   shouldBeTrue(getModule()->features.hasReferenceTypes(),
                curr,
                "table.get requires reference types [--enable-reference-types]");
-  shouldBeEqualOrFirstIsUnreachable(
-    curr->index->type, Type(Type::i32), curr, "table.get index must be an i32");
   auto* table = getModule()->getTableOrNull(curr->table);
-  if (shouldBeTrue(!!table, curr, "table.get table must exist") &&
-      curr->type != Type::unreachable) {
-    shouldBeEqual(
-      curr->type, table->type, curr, "table.get must have same type as table.");
+  if (shouldBeTrue(!!table, curr, "table.get table must exist")) {
+    if (curr->type != Type::unreachable) {
+      shouldBeEqual(curr->type,
+                    table->type,
+                    curr,
+                    "table.get must have same type as table.");
+    }
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->index->type,
+      table->indexType,
+      curr,
+      "table.get index must match the table index type.");
   }
 }
 
@@ -2286,15 +2288,19 @@ void FunctionValidator::visitTableSet(TableSet* curr) {
   shouldBeTrue(getModule()->features.hasReferenceTypes(),
                curr,
                "table.set requires reference types [--enable-reference-types]");
-  shouldBeEqualOrFirstIsUnreachable(
-    curr->index->type, Type(Type::i32), curr, "table.set index must be an i32");
   auto* table = getModule()->getTableOrNull(curr->table);
-  if (shouldBeTrue(!!table, curr, "table.set table must exist") &&
-      curr->type != Type::unreachable) {
-    shouldBeSubType(curr->value->type,
-                    table->type,
-                    curr,
-                    "table.set value must have right type");
+  if (shouldBeTrue(!!table, curr, "table.set table must exist")) {
+    if (curr->type != Type::unreachable) {
+      shouldBeSubType(curr->value->type,
+                      table->type,
+                      curr,
+                      "table.set value must have right type");
+    }
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->index->type,
+      table->indexType,
+      curr,
+      "table.set index must match the table index type.");
   }
 }
 
@@ -2320,7 +2326,7 @@ void FunctionValidator::visitTableGrow(TableGrow* curr) {
                     curr,
                     "table.grow value must have right type");
     shouldBeEqual(curr->delta->type,
-                  Type(Type::i32),
+                  table->indexType,
                   curr,
                   "table.grow must match table index type");
   }
@@ -2336,11 +2342,17 @@ void FunctionValidator::visitTableFill(TableFill* curr) {
                     table->type,
                     curr,
                     "table.fill value must have right type");
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->dest->type,
+      table->indexType,
+      curr,
+      "table.fill dest must match table index type");
+    shouldBeEqualOrFirstIsUnreachable(
+      curr->size->type,
+      table->indexType,
+      curr,
+      "table.fill size must match table index type");
   }
-  shouldBeEqualOrFirstIsUnreachable(
-    curr->dest->type, Type(Type::i32), curr, "table.fill dest must be i32");
-  shouldBeEqualOrFirstIsUnreachable(
-    curr->size->type, Type(Type::i32), curr, "table.fill size must be i32");
 }
 
 void FunctionValidator::visitTableCopy(TableCopy* curr) {
@@ -3845,6 +3857,11 @@ static void validateTables(Module& module, ValidationInfo& info) {
                         "table",
                         "Only funcref and externref are valid for table type "
                         "(when gc is disabled)");
+    }
+    if (table->is64()) {
+      info.shouldBeTrue(module.features.hasMemory64(),
+                        "memory",
+                        "64-bit tables require memory64 [--enable-memory64]");
     }
   }
 

@@ -20,7 +20,7 @@
 
   ;; CHECK:      (export "end-if-else-call" (func $end-if-else-call))
 
-  ;; CHECK:      (func $ret (; has Stack IR ;) (result i32)
+  ;; CHECK:      (func $ret (result i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (call $ret)
   ;; CHECK-NEXT:  )
@@ -50,7 +50,7 @@
       (unreachable)
     )
   )
-  ;; CHECK:      (func $if-0-unreachable-to-none (; has Stack IR ;) (param $0 i64)
+  ;; CHECK:      (func $if-0-unreachable-to-none (param $0 i64)
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $if-0-unreachable-to-none (export "waka") (param $var$0 i64)
@@ -68,7 +68,7 @@
     )
    )
   )
-  ;; CHECK:      (func $many-selects (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK:      (func $many-selects (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.const -1073741824)
   ;; CHECK-NEXT:   (select
@@ -112,7 +112,7 @@
    )
    (local.get $0)
   )
-  ;; CHECK:      (func $end-if-else (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK:      (func $end-if-else (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:   (local.get $0)
@@ -130,7 +130,7 @@
     )
     (local.get $x)
   )
-  ;; CHECK:      (func $end-if-else-call (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK:      (func $end-if-else-call (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (if (result i32)
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:   (then

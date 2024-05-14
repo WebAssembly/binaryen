@@ -9,7 +9,7 @@
  (global $global$0 (mut i32) (i32.const 10))
  ;; CHECK:      (export "func_59_invoker" (func $0))
  (export "func_59_invoker" (func $0))
- ;; CHECK:      (func $0 (; has Stack IR ;)
+ ;; CHECK:      (func $0
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $0 (; 0 ;) (type $0)
@@ -226,7 +226,7 @@
   )
   (local.get $0)
  )
- ;; CHECK:      (func $~lib/allocator/arena/__memory_allocate (; has Stack IR ;) (param $0 i32) (result i32)
+ ;; CHECK:      (func $~lib/allocator/arena/__memory_allocate (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
  ;; CHECK-NEXT:  (local $3 i32)
@@ -569,7 +569,7 @@
   )
   (local.get $0)
  )
- ;; CHECK:      (func $assembly/index/Body#constructor (; has Stack IR ;) (param $0 f64) (param $1 f64) (param $2 f64) (param $3 f64) (param $4 f64) (param $5 f64) (param $6 f64) (result i32)
+ ;; CHECK:      (func $assembly/index/Body#constructor (param $0 f64) (param $1 f64) (param $2 f64) (param $3 f64) (param $4 f64) (param $5 f64) (param $6 f64) (result i32)
  ;; CHECK-NEXT:  (local $7 i32)
  ;; CHECK-NEXT:  (f64.store
  ;; CHECK-NEXT:   (local.tee $7
@@ -1299,7 +1299,7 @@
    (local.get $5)
   )
  )
- ;; CHECK:      (func $assembly/index/init (; has Stack IR ;)
+ ;; CHECK:      (func $assembly/index/init
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
@@ -1873,7 +1873,7 @@
    )
   )
  )
- ;; CHECK:      (func $assembly/index/NBodySystem#advance (; has Stack IR ;) (param $0 i32)
+ ;; CHECK:      (func $assembly/index/NBodySystem#advance (param $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 f64)
  ;; CHECK-NEXT:  (local $3 i32)
@@ -2723,7 +2723,7 @@
   )
   (local.get $7)
  )
- ;; CHECK:      (func $assembly/index/step (; has Stack IR ;) (result f64)
+ ;; CHECK:      (func $assembly/index/step (result f64)
  ;; CHECK-NEXT:  (local $0 f64)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (local $2 i32)
@@ -2933,7 +2933,7 @@
    (global.get $global$5)
   )
  )
- ;; CHECK:      (func $assembly/index/bench (; has Stack IR ;) (param $0 i32)
+ ;; CHECK:      (func $assembly/index/bench (param $0 i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (block $label$1
  ;; CHECK-NEXT:   (loop $label$2
@@ -2985,7 +2985,7 @@
    )
   )
  )
- ;; CHECK:      (func $assembly/index/getBody (; has Stack IR ;) (param $0 i32) (result i32)
+ ;; CHECK:      (func $assembly/index/getBody (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (local $1 i32)
  ;; CHECK-NEXT:  (if (result i32)
  ;; CHECK-NEXT:   (i32.lt_u
@@ -3065,7 +3065,7 @@
    )
   )
  )
- ;; CHECK:      (func $start (; has Stack IR ;)
+ ;; CHECK:      (func $start
  ;; CHECK-NEXT:  (global.set $global$0
  ;; CHECK-NEXT:   (i32.const 104)
  ;; CHECK-NEXT:  )
@@ -3076,7 +3076,7 @@
  (func $start (; 26 ;) (type $0)
   (call $start:assembly/index)
  )
- ;; CHECK:      (func $null (; has Stack IR ;)
+ ;; CHECK:      (func $null
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $null (; 27 ;) (type $0)
