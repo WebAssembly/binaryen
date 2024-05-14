@@ -152,9 +152,6 @@
   ;; CHECK-NEXT: )
   (func $test-drop (param $B (ref $B)) (param $x i32) (result anyref)
     ;; As above, but with a drop of the br_if value. We do not emit a cast here.
-    ;; That cannot be observed in this test (as if a cast were added, the binary
-    ;; reader would remove it), but keep it here for completeness, and because
-    ;; this file serves as the input to test/lit/binary/cast-and-recast.test.
     (block $out (result (ref $A))
       (drop
         (br_if $out
