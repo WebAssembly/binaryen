@@ -75,12 +75,10 @@
 ;;  (local $11 i32) ;; Previous (local $11 (tuple i32 f32))'s first element
 ;;  (local $12 f32) ;; Previous (local $11 (tuple i32 f32))'s second element
 ;;  (local $13 i32) ;; Previous (local $12 i32)
-;;  (local $14 f32) ;; scratch local for f32
 
 ;; We parse this binary again into Binaryen IR, roundtripping the original
-;; binary. Here until (local $14) is the same with the previous list, and $15 is
-;; is added for tuple parsing and $16 is added for stacky IR resolving during
-;; binary reading process.
+;; binary. Locals $14 and $15 are added for stacky IR resolving during binary
+;; reading process.
 ;; RUN: wasm-opt -all -g --roundtrip %s.wasm -S -o - | filecheck %s --check-prefix=ROUNDTRIP
 ;; ROUNDTRIP:      (func $test
 ;; ROUNDTRIP-NEXT:  (local $0 i32)
@@ -97,9 +95,8 @@
 ;; ROUNDTRIP-NEXT:  (local $11 i32)
 ;; ROUNDTRIP-NEXT:  (local $12 f32)
 ;; ROUNDTRIP-NEXT:  (local $13 i32)
-;; ROUNDTRIP-NEXT:  (local $14 f32)
-;; ROUNDTRIP-NEXT:  (local $15 (tuple i32 f32))
-;; ROUNDTRIP-NEXT:  (local $16 i32)
+;; ROUNDTRIP-NEXT:  (local $14 (tuple i32 f32))
+;; ROUNDTRIP-NEXT:  (local $15 i32)
 
 ;; We can see that we don't reorder the locals during the process and the
 ;; original list of locals, local $0~$10, is untouched, to NOT invalidate DWARF
