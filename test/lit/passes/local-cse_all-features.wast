@@ -234,17 +234,17 @@
   )
 
   ;; CHECK:      (func $nested-generativity (type $3)
-  ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.tee $0
-  ;; CHECK-NEXT:    (ref.eq
-  ;; CHECK-NEXT:     (struct.new_default $A)
-  ;; CHECK-NEXT:     (struct.new_default $A)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:    (struct.new_default $A)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $nested-generativity

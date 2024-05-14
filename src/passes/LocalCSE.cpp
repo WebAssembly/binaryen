@@ -217,16 +217,18 @@ struct Scanner
   // original expression that we request from.
   HashedExprs activeExprs;
 
-  // Stack of hash values of all active expressions. We store these so that we
-  // do not end up recomputing hashes of children in an N^2 manner.
-  SmallVector<size_t, 10> activeHashes;
+  // Stack of information of all active expressions. We store hash values and
+  // possibility (as computed by isPossible), which we compute incrementally so
+  // as to avoid N^2 work (which could happen if we recomputed children).
+  using HashPossibility = std::pair<size_t, bool>;
+  SmallVector<HashPossibility, 10> activeIncrementalInfo;
 
   static void doNoteNonLinear(Scanner* self, Expression** currp) {
     // We are starting a new basic block. Forget all the currently-hashed
     // expressions, as we no longer want to make connections to anything from
     // another block.
     self->activeExprs.clear();
-    self->activeHashes.clear();
+    self->activeIncrementalInfo.clear();
     // Note that we do not clear requestInfos - that is information we will use
     // later in the Applier class. That is, we've cleared all the active
     // information, leaving the things we need later.
@@ -245,19 +247,24 @@ struct Scanner
     // that are not isRelevant() (if they are the children of a relevant thing).
     auto numChildren = Properties::getNumChildren(curr);
     auto hash = ExpressionAnalyzer::shallowHash(curr);
+    auto possible = isPossible(curr);
     for (Index i = 0; i < numChildren; i++) {
-      if (activeHashes.empty()) {
+      if (activeIncrementalInfo.empty()) {
         // The child was in another block, so this expression cannot be
         // optimized.
         return;
       }
-      hash_combine(hash, activeHashes.back());
-      activeHashes.pop_back();
+      auto [currHash, currPossible] = activeIncrementalInfo.back();
+      activeIncrementalInfo.pop_back();
+      hash_combine(hash, currHash);
+      if (!currPossible) {
+        possible = false;
+      }
     }
-    activeHashes.push_back(hash);
+    activeIncrementalInfo.emplace_back(hash, possible);
 
-    // Check if this is something relevant for optimization.
-    if (!isRelevant(curr)) {
+    // Check if this is something possible and also relevant for optimization.
+    if (!possible || !isRelevant(curr)) {
       return;
     }
 
@@ -330,6 +337,32 @@ struct Scanner
       return false;
     }
 
+    // If the size is at least 3, then if we have two of them we have 6,
+    // and so adding one set+one get and removing one of the items itself
+    // is not detrimental, and may be beneficial.
+    // TODO: investigate size 2
+    auto size = Measurer::measure(curr);
+    if (options.shrinkLevel > 0 && size >= 3) {
+      return true;
+    }
+
+    // If we focus on speed, any reduction in cost is beneficial, as the
+    // cost of a get is essentially free. However, we need to balance that with
+    // the fact that the VM will also do CSE/GVN itself, so minor improvements
+    // are not worthwhile, so skip things of size 1 (like a global.get).
+    if (options.shrinkLevel == 0 && CostAnalyzer(curr).cost > 0 && size >= 2) {
+      return true;
+    }
+
+    return false;
+  }
+
+  // Some things are not possible, and also prevent their parents from being
+  // possible as well. This is different from isRelevant in that relevance is
+  // considered for the entire expression, including children - e.g., is the
+  // total size big enough - while isPossible checks conditions that prevent
+  // using an expression at all.
+  bool isPossible(Expression* curr) {
     // We will fully compute effects later, but consider shallow effects at this
     // early time to ignore things that cannot be optimized later, because we
     // use a greedy algorithm. Specifically, imagine we see this:
@@ -364,24 +397,7 @@ struct Scanner
       return false;
     }
 
-    // If the size is at least 3, then if we have two of them we have 6,
-    // and so adding one set+one get and removing one of the items itself
-    // is not detrimental, and may be beneficial.
-    // TODO: investigate size 2
-    auto size = Measurer::measure(curr);
-    if (options.shrinkLevel > 0 && size >= 3) {
-      return true;
-    }
-
-    // If we focus on speed, any reduction in cost is beneficial, as the
-    // cost of a get is essentially free. However, we need to balance that with
-    // the fact that the VM will also do CSE/GVN itself, so minor improvements
-    // are not worthwhile, so skip things of size 1 (like a global.get).
-    if (options.shrinkLevel == 0 && CostAnalyzer(curr).cost > 0 && size >= 2) {
-      return true;
-    }
-
-    return false;
+    return true;
   }
 };
 
