@@ -1893,7 +1893,7 @@ struct OptimizeInstructions
           // struct.new further down but if it is not possible we stop
           // optimizing possible struct.sets for this struct.new.
           if (trySwap(list, localSetIndex, j)) {
-            // Update the index an continue to try again.
+            // Update the index and continue to try again.
             localSetIndex = j;
             continue;
           }
@@ -1912,8 +1912,9 @@ struct OptimizeInstructions
     }
   }
 
-  // Tries pushing the struct.new down so that it is closer to a potential
-  // struct.set.
+  // Helper function for optimizeHeapStores. Tries pushing the struct.new at
+  // index i down to index j, swapping it with the instruction already at j, so
+  // that it is closer to (potential) later struct.sets.
   bool trySwap(ExpressionList& list, Index i, Index j) {
     if (j == list.size() - 1) {
       // There is no reason to swap with the last element of the list as it
@@ -1929,22 +1930,18 @@ struct OptimizeInstructions
       // Don't swap two struct.new instructions to avoid going back and forth.
       return false;
     }
-    // Check if the local is referenced by the instruction we want to swap it
-    // with.
-    auto* localSet = list[i]->dynCast<LocalSet>();
-    auto otherEffects = effects(list[j]);
-    if (otherEffects.localsRead.count(localSet->index) ||
-        otherEffects.localsWritten.count(localSet->index)) {
-      return false;
-    }
-    // or if the effects don't permit moving one past the other.
-    auto structNewEffects = effects(localSet->value);
-    if (otherEffects.invalidates(structNewEffects)) {
+    // Check if the two expressions can be swapped safely considering their
+    // effects.
+    auto firstEffects = effects(list[i]);
+    auto secondEffects = effects(list[j]);
+    if (secondEffects.invalidates(firstEffects)) {
       return false;
     }
 
+    // Swap the expressions.
+    auto* tmp = list[i];
     list[i] = list[j];
-    list[j] = localSet;
+    list[j] = tmp;
     return true;
   }
 
