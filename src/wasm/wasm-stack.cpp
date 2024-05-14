@@ -65,6 +65,62 @@ void BinaryInstWriter::visitLoop(Loop* curr) {
 void BinaryInstWriter::visitBreak(Break* curr) {
   o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
     << U32LEB(getBreakIndex(curr->name));
+
+  // See comment on |brIfsNeedingHandling| for the extra casts we need to emit
+  // here for certain br_ifs.
+  auto iter = brIfsNeedingHandling.find(curr);
+  if (iter != brIfsNeedingHandling.end()) {
+    auto unrefinedType = iter->second;
+    auto type = curr->type;
+    assert(type.size() == unrefinedType.size());
+
+    assert(curr->type.hasRef());
+
+    auto emitCast = [&](Type to, Type from) {
+      // Shim a tiny bit of IR, just enough to get visitRefCast to see what we
+      // are casting, and to emit the proper thing.
+      LocalGet get;
+      get.type = from;
+      RefCast cast;
+      cast.type = to;
+      cast.ref = &get;
+      visitRefCast(&cast);
+    };
+
+    if (!type.isTuple()) {
+      // Simple: Just emit a cast, and then the type matches Binaryen IR's.
+      emitCast(type, unrefinedType);
+    } else {
+      // Tuples are trickier to handle, and we need to use scratch locals. Stash
+      // all the values on the stack to those locals, then reload them, casting
+      // as we go.
+      //
+      // We must track how many scratch locals we've used from each type as we
+      // go, as a type might appear multiple times in the tuple. We allocated
+      // enough for each, in a contiguous range, so we just increment as we go.
+      std::unordered_map<Type, Index> scratchTypeUses;
+      for (auto t : type) {
+        assert(scratchLocals.find(t) != scratchLocals.end());
+        auto scratchBase = scratchLocals[t];
+        auto localIndex = scratchBase + scratchTypeUses[t];
+        scratchTypeUses[t]++;
+        o << int8_t(BinaryConsts::LocalSet) << U32LEB(localIndex);
+      }
+      scratchTypeUses.clear();
+      for (Index i = 0; i < type.size(); i++) {
+        auto t = type[i];
+        auto scratchBase = scratchLocals[t];
+        auto localIndex = scratchBase + scratchTypeUses[t];
+        scratchTypeUses[t]++;
+        o << int8_t(BinaryConsts::LocalGet) << U32LEB(localIndex);
+        if (t.isRef()) {
+          // Note that we cast all types here, when perhaps only some of the
+          // tuple's lanes need that. This is simpler.
+          emitCast(t, unrefinedType[i]);
+        }
+      }
+    }
+  }
 }
 
 void BinaryInstWriter::visitSwitch(Switch* curr) {
