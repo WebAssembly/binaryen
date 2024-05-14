@@ -947,9 +947,11 @@ nothing else:
 )
 ;;@
 (local.set $y ;; This does not receive any annotation
- (i32.const 0)
+ (i32.const 7)
 )
 ```
+This stops the propagatation to children and siblings as well. So,
+expression `(i32.const 7)` does not have any debug info either.
 
 There is no shorthand in the binary format. That is, roundtripping (writing and
 reading) through a binary + source map should not change which expressions have
