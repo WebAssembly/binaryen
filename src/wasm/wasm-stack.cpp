@@ -89,6 +89,11 @@ void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {
+  if (deferredGets.count(curr)) {
+    // This local.get will be emitted as part of the instruction that consumes
+    // it.
+    return;
+  }
   if (auto it = extractedGets.find(curr); it != extractedGets.end()) {
     // We have a tuple of locals to get, but we will only end up using one of
     // them, so we can just emit that one.
@@ -2437,11 +2442,23 @@ void BinaryInstWriter::visitStringEq(StringEq* curr) {
 void BinaryInstWriter::visitStringWTF16Get(StringWTF16Get* curr) {
   // We need to convert the ref operand to a stringview, but it is under the pos
   // operand. Put the i32 in a scratch local, emit the conversion, then get the
-  // i32 back onto the stack.
-  Index scratchPos = scratchLocals[Type::i32];
-  o << int8_t(BinaryConsts::LocalSet) << U32LEB(scratchPos);
+  // i32 back onto the stack. If `pos` is a local.get anyway, then we can skip
+  // the scratch local.
+  bool posDeferred = false;
+  Index posIndex;
+  if (auto* get = curr->pos->dynCast<LocalGet>()) {
+    assert(deferredGets.count(get));
+    posDeferred = true;
+    posIndex = mappedLocals[{get->index, 0}];
+  } else {
+    posIndex = scratchLocals[Type::i32];
+  }
+
+  if (!posDeferred) {
+    o << int8_t(BinaryConsts::LocalSet) << U32LEB(posIndex);
+  }
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringAsWTF16);
-  o << int8_t(BinaryConsts::LocalGet) << U32LEB(scratchPos);
+  o << int8_t(BinaryConsts::LocalGet) << U32LEB(posIndex);
   o << int8_t(BinaryConsts::GCPrefix)
     << U32LEB(BinaryConsts::StringViewWTF16GetCodePoint);
 }
@@ -2449,14 +2466,37 @@ void BinaryInstWriter::visitStringWTF16Get(StringWTF16Get* curr) {
 void BinaryInstWriter::visitStringSliceWTF(StringSliceWTF* curr) {
   // We need to convert the ref operand to a stringview, but it is buried under
   // the start and end operands. Put the i32s in scratch locals, emit the
-  // conversion, then get the i32s back onto the stack.
-  Index scratchStart = scratchLocals[Type::i32];
-  Index scratchEnd = scratchStart + 1;
-  o << int8_t(BinaryConsts::LocalSet) << U32LEB(scratchEnd);
-  o << int8_t(BinaryConsts::LocalSet) << U32LEB(scratchStart);
+  // conversion, then get the i32s back onto the stack. If either `start` or
+  // `end` is already a local.get, then we can skip its scratch local.
+  bool startDeferred = false, endDeferred = false;
+  Index startIndex, endIndex;
+  if (auto* get = curr->start->dynCast<LocalGet>()) {
+    assert(deferredGets.count(get));
+    startDeferred = true;
+    startIndex = mappedLocals[{get->index, 0}];
+  } else {
+    startIndex = scratchLocals[Type::i32];
+  }
+  if (auto* get = curr->end->dynCast<LocalGet>()) {
+    assert(deferredGets.count(get));
+    endDeferred = true;
+    endIndex = mappedLocals[{get->index, 0}];
+  } else {
+    endIndex = scratchLocals[Type::i32];
+    if (!startDeferred) {
+      ++endIndex;
+    }
+  }
+
+  if (!endDeferred) {
+    o << int8_t(BinaryConsts::LocalSet) << U32LEB(endIndex);
+  }
+  if (!startDeferred) {
+    o << int8_t(BinaryConsts::LocalSet) << U32LEB(startIndex);
+  }
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringAsWTF16);
-  o << int8_t(BinaryConsts::LocalGet) << U32LEB(scratchStart);
-  o << int8_t(BinaryConsts::LocalGet) << U32LEB(scratchEnd);
+  o << int8_t(BinaryConsts::LocalGet) << U32LEB(startIndex);
+  o << int8_t(BinaryConsts::LocalGet) << U32LEB(endIndex);
   o << int8_t(BinaryConsts::GCPrefix)
     << U32LEB(BinaryConsts::StringViewWTF16Slice);
 }
@@ -2653,6 +2693,12 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
       if (curr->type == Type::unreachable) {
         return;
       }
+      // If `pos` already a local.get, we can defer emitting that local.get
+      // instead of using a scratch local.
+      if (auto* get = curr->pos->dynCast<LocalGet>()) {
+        parent.deferredGets.insert(get);
+        return;
+      }
       // Scratch local to hold the `pos` value while we emit a stringview
       // conversion for the `ref` value.
       auto& count = scratches[Type::i32];
@@ -2663,10 +2709,21 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
       if (curr->type == Type::unreachable) {
         return;
       }
+      // If `start` or `end` are already local.gets, we can defer emitting those
+      // gets instead of using scratch locals.
+      Index numScratches = 2;
+      if (auto* get = curr->start->dynCast<LocalGet>()) {
+        parent.deferredGets.insert(get);
+        --numScratches;
+      }
+      if (auto* get = curr->end->dynCast<LocalGet>()) {
+        parent.deferredGets.insert(get);
+        --numScratches;
+      }
       // Scratch locals to hold the `start` and `end` values while we emit a
       // stringview conversion for the `ref` value.
       auto& count = scratches[Type::i32];
-      count = std::max(count, 2u);
+      count = std::max(count, numScratches);
     }
   };
 
