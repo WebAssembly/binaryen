@@ -67,13 +67,13 @@
 
   ;; CHECK:      (type $2 (func (param (ref $A))))
 
-  ;; CHECK:      (type $3 (func (param (ref null $A))))
+  ;; CHECK:      (type $3 (func))
 
-  ;; CHECK:      (type $4 (func))
+  ;; CHECK:      (type $4 (func (param (ref null $A))))
 
   ;; CHECK:      (type $5 (func (param (ref null $B) (ref $A))))
 
-  ;; CHECK:      (func $struct-gets-nullable (type $3) (param $ref (ref null $A))
+  ;; CHECK:      (func $struct-gets-nullable (type $4) (param $ref (ref null $A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -182,7 +182,7 @@
     )
   )
 
-  ;; CHECK:      (func $creations (type $4)
+  ;; CHECK:      (func $creations (type $3)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $A
   ;; CHECK-NEXT:    (i32.const 1)
@@ -229,6 +229,36 @@
       (array.new $B
         (i32.const 1)
         (i32.const 1)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $nested-generativity (type $3)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.tee $0
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (struct.new_default $A)
+  ;; CHECK-NEXT:     (struct.new_default $A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-generativity
+    ;; Operations that include nested generativity are ignored.
+    (drop
+      (ref.eq
+        (struct.new_default $A)
+        (struct.new_default $A)
+      )
+    )
+    (drop
+      (ref.eq
+        (struct.new_default $A)
+        (struct.new_default $A)
       )
     )
   )
