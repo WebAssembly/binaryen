@@ -2795,12 +2795,10 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
         numDangerousBrIfs--;
       }
     }
-  };
-
-  ScratchLocalFinder finder(*this);
+  } finder(*this);
   finder.walk(func->body);
 
-  if (!scanner.numDangerousBrIfs || !parent.getModule()->features.hasGC()) {
+  if (!finder.numDangerousBrIfs || !parent.getModule()->features.hasGC()) {
     // Nothing more to do: either no such br_ifs, or GC is not enabled.
     //
     // The explicit check for GC is here because if only reference types are
@@ -2820,10 +2818,9 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
   // which avoids repeated roundtrips adding more and more code.
   struct RefinementScanner : public ExpressionStackWalker<RefinementScanner> {
     BinaryInstWriter& writer;
-    ScratchLocalFinder& scratchLocalFinder;
+    ScratchLocalFinder& finder;
 
-    RefinementScanner(BinaryInstWriter& writer,
-                      ScratchLocalFinder& scratchLocalFinder)
+    RefinementScanner(BinaryInstWriter& writer, ScratchLocalFinder& finder)
       : writer(writer), finder(finder) {}
 
     void visitBreak(Break* curr) {
