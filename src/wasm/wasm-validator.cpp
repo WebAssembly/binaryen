@@ -3754,25 +3754,14 @@ static void validateDataSegments(Module& module, ValidationInfo& info) {
                              "active segment must have a valid memory name")) {
         continue;
       }
-      if (memory->is64()) {
-        if (!info.shouldBeEqual(segment->offset->type,
-                                Type(Type::i64),
-                                segment->offset,
-                                "segment offset should be i64")) {
-          continue;
-        }
-      } else {
-        if (!info.shouldBeEqual(segment->offset->type,
-                                Type(Type::i32),
-                                segment->offset,
-                                "segment offset should be i32")) {
-          continue;
-        }
-      }
+      info.shouldBeEqual(segment->offset->type,
+                         memory->indexType,
+                         segment->offset,
+                         "segment offset must match memory index type");
       info.shouldBeTrue(
         Properties::isValidConstantExpression(module, segment->offset),
         segment->offset,
-        "memory segment offset should be constant");
+        "memory segment offset must be constant");
       FunctionValidator(module, &info).validate(segment->offset);
     }
   }
@@ -3846,31 +3835,30 @@ static void validateTables(Module& module, ValidationInfo& info) {
       "elem",
       "Non-nullable reference types are not yet supported for tables");
 
-    if (segment->table.is()) {
+    bool isPassive = !segment->table.is();
+    if (isPassive) {
+      info.shouldBeTrue(
+        !segment->offset, "elem", "passive segment should not have an offset");
+    } else {
       auto table = module.getTableOrNull(segment->table);
       info.shouldBeTrue(table != nullptr,
                         "elem",
                         "element segment must have a valid table name");
-      info.shouldBeTrue(!!segment->offset,
-                        "elem",
-                        "table segment offset should have an offset");
+      info.shouldBeTrue(
+        !!segment->offset, "elem", "table segment offset must have an offset");
       info.shouldBeEqual(segment->offset->type,
-                         Type(Type::i32),
+                         table->indexType,
                          segment->offset,
-                         "element segment offset should be i32");
+                         "element segment offset must match table index type");
       info.shouldBeTrue(
         Properties::isValidConstantExpression(module, segment->offset),
         segment->offset,
-        "table segment offset should be constant");
+        "table segment offset must be constant");
       info.shouldBeTrue(
         Type::isSubType(segment->type, table->type),
         "elem",
         "element segment type must be a subtype of the table type");
       validator.validate(segment->offset);
-    } else {
-      info.shouldBeTrue(!segment->offset,
-                        "elem",
-                        "non-table segment offset should have no offset");
     }
     for (auto* expr : segment->data) {
       info.shouldBeTrue(Properties::isValidConstantExpression(module, expr),

@@ -129,34 +129,39 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
   }
 
   void visitDataSegment(DataSegment* segment) {
-    if (!segment->isPassive) {
-      if (auto* c = segment->offset->dynCast<Const>()) {
-        c->value = Literal(static_cast<uint32_t>(c->value.geti64()));
-        c->type = Type::i32;
-      } else if (auto* get = segment->offset->dynCast<GlobalGet>()) {
-        auto& module = *getModule();
-        auto* g = module.getGlobal(get->name);
-        if (g->imported() && g->base == MEMORY_BASE) {
-          ImportInfo info(module);
-          auto* memoryBase32 = info.getImportedGlobal(g->module, MEMORY_BASE32);
-          if (!memoryBase32) {
-            Builder builder(module);
-            memoryBase32 = builder
-                             .makeGlobal(MEMORY_BASE32,
-                                         Type::i32,
-                                         builder.makeConst(int32_t(0)),
-                                         Builder::Immutable)
-                             .release();
-            memoryBase32->module = g->module;
-            memoryBase32->base = MEMORY_BASE32;
-            module.addGlobal(memoryBase32);
-          }
-          // Use this alternative import when initializing the segment.
-          assert(memoryBase32);
-          get->type = Type::i32;
-          get->name = memoryBase32->name;
+    if (segment->isPassive) {
+      // passive segments don't have any offset to adjust
+      return;
+    }
+
+    if (auto* c = segment->offset->dynCast<Const>()) {
+      c->value = Literal(static_cast<uint32_t>(c->value.geti64()));
+      c->type = Type::i32;
+    } else if (auto* get = segment->offset->dynCast<GlobalGet>()) {
+      auto& module = *getModule();
+      auto* g = module.getGlobal(get->name);
+      if (g->imported() && g->base == MEMORY_BASE) {
+        ImportInfo info(module);
+        auto* memoryBase32 = info.getImportedGlobal(g->module, MEMORY_BASE32);
+        if (!memoryBase32) {
+          Builder builder(module);
+          memoryBase32 = builder
+                           .makeGlobal(MEMORY_BASE32,
+                                       Type::i32,
+                                       builder.makeConst(int32_t(0)),
+                                       Builder::Immutable)
+                           .release();
+          memoryBase32->module = g->module;
+          memoryBase32->base = MEMORY_BASE32;
+          module.addGlobal(memoryBase32);
         }
+        // Use this alternative import when initializing the segment.
+        assert(memoryBase32);
+        get->type = Type::i32;
+        get->name = memoryBase32->name;
       }
+    } else {
+      WASM_UNREACHABLE("unexpected elem offset");
     }
   }
 

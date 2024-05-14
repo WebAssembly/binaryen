@@ -166,6 +166,7 @@ Pass* createStripEHPass();
 Pass* createStubUnsupportedJSOpsPass();
 Pass* createSSAifyPass();
 Pass* createSSAifyNoMergePass();
+Pass* createTable64LoweringPass();
 Pass* createTranslateToExnrefPass();
 Pass* createTrapModeClamp();
 Pass* createTrapModeJS();
