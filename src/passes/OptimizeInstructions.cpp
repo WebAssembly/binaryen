@@ -2501,9 +2501,31 @@ private:
     // Ignore extraneous things and compare them syntactically. We can also
     // look at the full fallthrough for both sides now.
     left = Properties::getFallthrough(left, passOptions, *getModule());
+    auto* originalRight = right;
     right = Properties::getFallthrough(right, passOptions, *getModule());
     if (!ExpressionAnalyzer::equal(left, right)) {
       return false;
+    }
+
+    // We must also not have non-fallthrough effects that invalidate us, such as
+    // this situation:
+    //
+    //  (local.get $x)
+    //  (block
+    //    (local.set $x ..)
+    //    (local.get $x)
+    //  )
+    //
+    // The fallthroughs are identical, but the set may cause us to read a
+    // different value.
+    if (originalRight != right) {
+      // TODO: We could be more precise here and ignore right itself in
+      //       originalRightEffects.
+      auto originalRightEffects = effects(originalRight);
+      auto rightEffects = effects(right);
+      if (originalRightEffects.invalidates(rightEffects)) {
+        return false;
+      }
     }
 
     // To be equal, they must also be known to return the same result

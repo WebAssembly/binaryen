@@ -3561,8 +3561,6 @@
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
-  ;; CHECK-NEXT:  (local $5 i32)
-  ;; CHECK-NEXT:  (local $6 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $array))
   ;; CHECK-NEXT:    (local.set $1
@@ -3611,21 +3609,13 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result (ref $array))
-  ;; CHECK-NEXT:    (local.set $5
-  ;; CHECK-NEXT:     (local.get $x)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (local.set $6
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (local.set $x
-  ;; CHECK-NEXT:       (i32.const 1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:   (array.new_fixed $array 2
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (local.set $x
+  ;; CHECK-NEXT:      (i32.const 1)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (array.new $array
-  ;; CHECK-NEXT:     (local.get $5)
-  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
