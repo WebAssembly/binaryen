@@ -90,10 +90,13 @@
   )
 
   ;; CHECK:      (func $paths
+  ;; CHECK-NEXT:  ;;@ /tmp/src.cpp:1:1
   ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  ;;@ ../src.cpp:2:2
   ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  ;;@ café.cpp:2:2
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  ;;@ src.cpp:3:3
+  ;; CHECK-NEXT:  ;;@ café.cpp:2:2
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $paths
