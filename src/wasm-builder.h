@@ -666,7 +666,7 @@ public:
                              MemoryInfo info = MemoryInfo::Unspecified) {
     auto* ret = wasm.allocator.alloc<MemorySize>();
     if (isMemory64(memoryName, info)) {
-      ret->make64();
+      ret->type = Type::i64;
     }
     ret->memory = memoryName;
     ret->finalize();
@@ -677,7 +677,7 @@ public:
                              MemoryInfo info = MemoryInfo::Unspecified) {
     auto* ret = wasm.allocator.alloc<MemoryGrow>();
     if (isMemory64(memoryName, info)) {
-      ret->make64();
+      ret->type = Type::i64;
     }
     ret->delta = delta;
     ret->memory = memoryName;
