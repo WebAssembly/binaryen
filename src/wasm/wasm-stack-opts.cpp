@@ -467,6 +467,9 @@ std::unordered_set<LocalGet*> StackIROptimizer::findStringViewDeferredGets() {
     }
   };
   for (auto* inst : insts) {
+    if (!inst) {
+      continue;
+    }
     if (auto* curr = inst->origin->dynCast<StringWTF16Get>()) {
       note(curr->pos);
     } else if (auto* curr = inst->origin->dynCast<StringSliceWTF>()) {

@@ -5,7 +5,7 @@
 
 ;; RUN: wasm-opt %s -all -S -o - | filecheck %s
 ;; RUN: wasm-opt %s -all --generate-stack-ir --optimize-stack-ir --roundtrip -S -o - | filecheck %s --check-prefix=RTRIP
-;; RUN: wasm-opt %s -all --generate-stack-ir --optimize-stack-ir --roundtrip --roundtrip -S -o - | filecheck %s --check-prefix=2TRIP
+;; RUN: wasm-opt %s -all --generate-stack-ir --optimize-stack-ir --roundtrip --roundtrip -S -o - | filecheck %s --check-prefix=RRTRP
 
 (module
   ;; CHECK:      (func $empty (type $2)
@@ -13,8 +13,8 @@
   ;; CHECK-NEXT: )
   ;; RTRIP:      (func $empty (type $2)
   ;; RTRIP-NEXT: )
-  ;; 2TRIP:      (func $empty (type $2)
-  ;; 2TRIP-NEXT: )
+  ;; RRTRP:      (func $empty (type $2)
+  ;; RRTRP-NEXT: )
   (func $empty
     (string.as_wtf16)
   )
@@ -41,20 +41,20 @@
   ;; RTRIP-NEXT:   (local.get $0)
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
-  ;; 2TRIP:      (func $codeunit (type $1) (result i32)
-  ;; 2TRIP-NEXT:  (local $0 i32)
-  ;; 2TRIP-NEXT:  (local $1 (ref string))
-  ;; 2TRIP-NEXT:  (local.set $1
-  ;; 2TRIP-NEXT:   (string.const "abc")
-  ;; 2TRIP-NEXT:  )
-  ;; 2TRIP-NEXT:  (local.set $0
-  ;; 2TRIP-NEXT:   (i32.const 0)
-  ;; 2TRIP-NEXT:  )
-  ;; 2TRIP-NEXT:  (stringview_wtf16.get_codeunit
-  ;; 2TRIP-NEXT:   (local.get $1)
-  ;; 2TRIP-NEXT:   (local.get $0)
-  ;; 2TRIP-NEXT:  )
-  ;; 2TRIP-NEXT: )
+  ;; RRTRP:      (func $codeunit (type $1) (result i32)
+  ;; RRTRP-NEXT:  (local $0 i32)
+  ;; RRTRP-NEXT:  (local $1 (ref string))
+  ;; RRTRP-NEXT:  (local.set $1
+  ;; RRTRP-NEXT:   (string.const "abc")
+  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT:  (local.set $0
+  ;; RRTRP-NEXT:   (i32.const 0)
+  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT:  (stringview_wtf16.get_codeunit
+  ;; RRTRP-NEXT:   (local.get $1)
+  ;; RRTRP-NEXT:   (local.get $0)
+  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT: )
   (func $codeunit (result i32)
     ;; This should parse ok with the conversion skipped. The roundtrip will
     ;; include scratch locals.
@@ -80,13 +80,13 @@
   ;; RTRIP-NEXT:   (local.get $pos)
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
-  ;; 2TRIP:      (func $codeunit-get (type $1) (result i32)
-  ;; 2TRIP-NEXT:  (local $pos i32)
-  ;; 2TRIP-NEXT:  (stringview_wtf16.get_codeunit
-  ;; 2TRIP-NEXT:   (string.const "abc")
-  ;; 2TRIP-NEXT:   (local.get $pos)
-  ;; 2TRIP-NEXT:  )
-  ;; 2TRIP-NEXT: )
+  ;; RRTRP:      (func $codeunit-get (type $1) (result i32)
+  ;; RRTRP-NEXT:  (local $pos i32)
+  ;; RRTRP-NEXT:  (stringview_wtf16.get_codeunit
+  ;; RRTRP-NEXT:   (string.const "abc")
+  ;; RRTRP-NEXT:   (local.get $pos)
+  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT: )
   (func $codeunit-get (result i32)
     (local $pos i32)
     ;; This will not use a scratch local for pos.
@@ -130,29 +130,29 @@
   ;; RTRIP-NEXT:   (local.get $1)
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
-  ;; 2TRIP:      (func $slice (type $0) (result stringref)
-  ;; 2TRIP-NEXT:  (local $0 i32)
-  ;; 2TRIP-NEXT:  (local $1 i32)
-  ;; 2TRIP-NEXT:  (local $2 i32)
-  ;; 2TRIP-NEXT:  (local $3 (ref string))
-  ;; 2TRIP-NEXT:  (local.set $3
-  ;; 2TRIP-NEXT:   (string.const "abc")
-  ;; 2TRIP-NEXT:  )
-  ;; 2TRIP-NEXT:  (local.set $2
-  ;; 2TRIP-NEXT:   (i32.const 1)
-  ;; 2TRIP-NEXT:  )
-  ;; 2TRIP-NEXT:  (local.set $1
-  ;; 2TRIP-NEXT:   (i32.const 2)
-  ;; 2TRIP-NEXT:  )
-  ;; 2TRIP-NEXT:  (local.set $0
-  ;; 2TRIP-NEXT:   (local.get $2)
-  ;; 2TRIP-NEXT:  )
-  ;; 2TRIP-NEXT:  (stringview_wtf16.slice
-  ;; 2TRIP-NEXT:   (local.get $3)
-  ;; 2TRIP-NEXT:   (local.get $0)
-  ;; 2TRIP-NEXT:   (local.get $1)
-  ;; 2TRIP-NEXT:  )
-  ;; 2TRIP-NEXT: )
+  ;; RRTRP:      (func $slice (type $0) (result stringref)
+  ;; RRTRP-NEXT:  (local $0 i32)
+  ;; RRTRP-NEXT:  (local $1 i32)
+  ;; RRTRP-NEXT:  (local $2 i32)
+  ;; RRTRP-NEXT:  (local $3 (ref string))
+  ;; RRTRP-NEXT:  (local.set $3
+  ;; RRTRP-NEXT:   (string.const "abc")
+  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT:  (local.set $2
+  ;; RRTRP-NEXT:   (i32.const 1)
+  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT:  (local.set $1
+  ;; RRTRP-NEXT:   (i32.const 2)
+  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT:  (local.set $0
+  ;; RRTRP-NEXT:   (local.get $2)
+  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT:  (stringview_wtf16.slice
+  ;; RRTRP-NEXT:   (local.get $3)
+  ;; RRTRP-NEXT:   (local.get $0)
+  ;; RRTRP-NEXT:   (local.get $1)
+  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT: )
   (func $slice (result stringref)
     ;; This should parse ok with the conversion skipped. The roundtrip will
     ;; include scratch locals.
@@ -191,22 +191,22 @@
   ;; RTRIP-NEXT:   (local.get $1)
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
-  ;; 2TRIP:      (func $slice-start-get (type $0) (result stringref)
-  ;; 2TRIP-NEXT:  (local $start i32)
-  ;; 2TRIP-NEXT:  (local $1 i32)
-  ;; 2TRIP-NEXT:  (local $2 (ref string))
-  ;; 2TRIP-NEXT:  (local.set $2
-  ;; 2TRIP-NEXT:   (string.const "abc")
-  ;; 2TRIP-NEXT:  )
-  ;; 2TRIP-NEXT:  (local.set $1
-  ;; 2TRIP-NEXT:   (i32.const 2)
-  ;; 2TRIP-NEXT:  )
-  ;; 2TRIP-NEXT:  (stringview_wtf16.slice
-  ;; 2TRIP-NEXT:   (local.get $2)
-  ;; 2TRIP-NEXT:   (local.get $start)
-  ;; 2TRIP-NEXT:   (local.get $1)
-  ;; 2TRIP-NEXT:  )
-  ;; 2TRIP-NEXT: )
+  ;; RRTRP:      (func $slice-start-get (type $0) (result stringref)
+  ;; RRTRP-NEXT:  (local $start i32)
+  ;; RRTRP-NEXT:  (local $1 i32)
+  ;; RRTRP-NEXT:  (local $2 (ref string))
+  ;; RRTRP-NEXT:  (local.set $2
+  ;; RRTRP-NEXT:   (string.const "abc")
+  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT:  (local.set $1
+  ;; RRTRP-NEXT:   (i32.const 2)
+  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT:  (stringview_wtf16.slice
+  ;; RRTRP-NEXT:   (local.get $2)
+  ;; RRTRP-NEXT:   (local.get $start)
+  ;; RRTRP-NEXT:   (local.get $1)
+  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT: )
   (func $slice-start-get (result stringref)
     (local $start i32)
     (stringview_wtf16.slice
@@ -243,22 +243,22 @@
   ;; RTRIP-NEXT:   (local.get $end)
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
-  ;; 2TRIP:      (func $slice-end-get (type $0) (result stringref)
-  ;; 2TRIP-NEXT:  (local $end i32)
-  ;; 2TRIP-NEXT:  (local $1 i32)
-  ;; 2TRIP-NEXT:  (local $2 (ref string))
-  ;; 2TRIP-NEXT:  (local.set $2
-  ;; 2TRIP-NEXT:   (string.const "abc")
-  ;; 2TRIP-NEXT:  )
-  ;; 2TRIP-NEXT:  (local.set $1
-  ;; 2TRIP-NEXT:   (i32.const 1)
-  ;; 2TRIP-NEXT:  )
-  ;; 2TRIP-NEXT:  (stringview_wtf16.slice
-  ;; 2TRIP-NEXT:   (local.get $2)
-  ;; 2TRIP-NEXT:   (local.get $1)
-  ;; 2TRIP-NEXT:   (local.get $end)
-  ;; 2TRIP-NEXT:  )
-  ;; 2TRIP-NEXT: )
+  ;; RRTRP:      (func $slice-end-get (type $0) (result stringref)
+  ;; RRTRP-NEXT:  (local $end i32)
+  ;; RRTRP-NEXT:  (local $1 i32)
+  ;; RRTRP-NEXT:  (local $2 (ref string))
+  ;; RRTRP-NEXT:  (local.set $2
+  ;; RRTRP-NEXT:   (string.const "abc")
+  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT:  (local.set $1
+  ;; RRTRP-NEXT:   (i32.const 1)
+  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT:  (stringview_wtf16.slice
+  ;; RRTRP-NEXT:   (local.get $2)
+  ;; RRTRP-NEXT:   (local.get $1)
+  ;; RRTRP-NEXT:   (local.get $end)
+  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT: )
   (func $slice-end-get (result stringref)
     (local $end i32)
     (stringview_wtf16.slice
@@ -286,15 +286,15 @@
   ;; RTRIP-NEXT:   (local.get $end)
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
-  ;; 2TRIP:      (func $slice-both-get (type $0) (result stringref)
-  ;; 2TRIP-NEXT:  (local $start i32)
-  ;; 2TRIP-NEXT:  (local $end i32)
-  ;; 2TRIP-NEXT:  (stringview_wtf16.slice
-  ;; 2TRIP-NEXT:   (string.const "abc")
-  ;; 2TRIP-NEXT:   (local.get $start)
-  ;; 2TRIP-NEXT:   (local.get $end)
-  ;; 2TRIP-NEXT:  )
-  ;; 2TRIP-NEXT: )
+  ;; RRTRP:      (func $slice-both-get (type $0) (result stringref)
+  ;; RRTRP-NEXT:  (local $start i32)
+  ;; RRTRP-NEXT:  (local $end i32)
+  ;; RRTRP-NEXT:  (stringview_wtf16.slice
+  ;; RRTRP-NEXT:   (string.const "abc")
+  ;; RRTRP-NEXT:   (local.get $start)
+  ;; RRTRP-NEXT:   (local.get $end)
+  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT: )
   (func $slice-both-get (result stringref)
     (local $start i32)
     (local $end i32)
@@ -315,11 +315,11 @@
   ;; RTRIP-NEXT:   (string.const "abc")
   ;; RTRIP-NEXT:  )
   ;; RTRIP-NEXT: )
-  ;; 2TRIP:      (func $length (type $1) (result i32)
-  ;; 2TRIP-NEXT:  (string.measure_wtf16
-  ;; 2TRIP-NEXT:   (string.const "abc")
-  ;; 2TRIP-NEXT:  )
-  ;; 2TRIP-NEXT: )
+  ;; RRTRP:      (func $length (type $1) (result i32)
+  ;; RRTRP-NEXT:  (string.measure_wtf16
+  ;; RRTRP-NEXT:   (string.const "abc")
+  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT: )
   (func $length (result i32)
     ;; This should be parsed as string.measure_wtf16 instead.
     (stringview_wtf16.length
