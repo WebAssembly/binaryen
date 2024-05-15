@@ -3439,4 +3439,35 @@
       )
     )
   )
+
+  ;; CHECK:      (func $array.new_fixed_fallthrough (type $void)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (call $array.new_fixed_fallthrough)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (array.new $array
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.new_fixed_fallthrough
+    ;; The fallthroughs are identical. The call in the middle must only happen
+    ;; once, which we achieve by storing it to a local.
+    (drop
+      (array.new_fixed $array 2
+        (i32.const 42)
+        (block (result i32)
+          (call $array.new_fixed_fallthrough)
+          (i32.const 42)
+        )
+      )
+    )
+  )
 )
