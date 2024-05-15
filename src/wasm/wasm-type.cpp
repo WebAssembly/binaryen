@@ -1906,11 +1906,9 @@ std::ostream& TypePrinter::print(Type type) {
           case HeapType::string:
             return os << "stringref";
           case HeapType::stringview_wtf8:
-            return os << "stringview_wtf8";
           case HeapType::stringview_wtf16:
-            return os << "stringview_wtf16";
           case HeapType::stringview_iter:
-            return os << "stringview_iter";
+            break;
           case HeapType::none:
             return os << "nullref";
           case HeapType::noext:
@@ -1921,6 +1919,17 @@ std::ostream& TypePrinter::print(Type type) {
             return os << "nullcontref";
           case HeapType::noexn:
             return os << "nullexnref";
+        }
+      } else {
+        switch (heapType.getBasic()) {
+          case HeapType::stringview_wtf8:
+            return os << "stringview_wtf8";
+          case HeapType::stringview_wtf16:
+            return os << "stringview_wtf16";
+          case HeapType::stringview_iter:
+            return os << "stringview_iter";
+          default:
+            break;
         }
       }
     }

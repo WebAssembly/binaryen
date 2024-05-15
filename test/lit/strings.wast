@@ -25,7 +25,7 @@
   ;; CHECK:      (type $array16 (sub (array (mut i16))))
   (type $array16 (sub (array (mut i16))))
 
-  ;; CHECK:      (type $5 (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter stringref stringview_wtf8 stringview_wtf16 stringview_iter (ref string) (ref stringview_wtf8) (ref stringview_wtf16) (ref stringview_iter))))
+  ;; CHECK:      (type $5 (func (param stringref stringview_wtf8 stringview_wtf16 stringview_iter stringref (ref null stringview_wtf8) (ref null stringview_wtf16) (ref null stringview_iter) (ref string) stringview_wtf8 stringview_wtf16 stringview_iter)))
 
   ;; CHECK:      (type $6 (func (param (ref string))))
 
@@ -46,7 +46,7 @@
 
   ;; CHECK:      (memory $0 10 10)
 
-  ;; CHECK:      (func $string.new (type $5) (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter) (param $e stringref) (param $f stringview_wtf8) (param $g stringview_wtf16) (param $h stringview_iter) (param $i (ref string)) (param $j (ref stringview_wtf8)) (param $k (ref stringview_wtf16)) (param $l (ref stringview_iter))
+  ;; CHECK:      (func $string.new (type $5) (param $a stringref) (param $b stringview_wtf8) (param $c stringview_wtf16) (param $d stringview_iter) (param $e stringref) (param $f (ref null stringview_wtf8)) (param $g (ref null stringview_wtf16)) (param $h (ref null stringview_iter)) (param $i (ref string)) (param $j stringview_wtf8) (param $k stringview_wtf16) (param $l stringview_iter)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (string.new_wtf16
   ;; CHECK-NEXT:    (i32.const 7)

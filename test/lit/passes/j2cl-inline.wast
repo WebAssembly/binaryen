@@ -6,16 +6,23 @@
 (module
 
   ;; A once function that has become empty
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (global $$class-initialized@Zoo (mut i32) (i32.const 0))
+
+  ;; CHECK:      (func $clinit-trivial-1_<once>_@Foo (type $0)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $clinit-trivial-1_<once>_@Foo  )
 
   ;; A once function that just calls another
+  ;; CHECK:      (func $clinit-trivial-2_<once>_@Bar (type $0)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
   (func $clinit-trivial-2_<once>_@Bar
     (call $clinit-trivial-1_<once>_@Foo)
   )
 
-  ;; CHECK:      (type $0 (func))
-
-  ;; CHECK:      (global $$class-initialized@Zoo (mut i32) (i32.const 0))
   (global $$class-initialized@Zoo (mut i32) (i32.const 0))
 
   ;; Not hoisted but trivial.

@@ -43,7 +43,7 @@
   )
  )
 
- ;; CHECK:      (func $string_view_casts (type $2) (param $x stringview_wtf8) (param $y stringview_wtf16) (param $z stringview_iter)
+ ;; CHECK:      (func $string_view_casts (type $2) (param $x (ref null stringview_wtf8)) (param $y (ref null stringview_wtf16)) (param $z (ref null stringview_iter))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.as_non_null
  ;; CHECK-NEXT:    (local.get $x)

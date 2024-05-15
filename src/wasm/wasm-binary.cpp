@@ -1515,62 +1515,73 @@ void WasmBinaryWriter::writeType(Type type) {
       WASM_UNREACHABLE("bad type without GC");
     }
     auto heapType = type.getHeapType();
-    if (heapType.isBasic() && type.isNullable()) {
-      switch (heapType.getBasic()) {
-        case HeapType::ext:
-          o << S32LEB(BinaryConsts::EncodedType::externref);
-          return;
-        case HeapType::any:
-          o << S32LEB(BinaryConsts::EncodedType::anyref);
-          return;
-        case HeapType::func:
-          o << S32LEB(BinaryConsts::EncodedType::funcref);
-          return;
-        case HeapType::cont:
-          o << S32LEB(BinaryConsts::EncodedType::contref);
-          return;
-        case HeapType::eq:
-          o << S32LEB(BinaryConsts::EncodedType::eqref);
-          return;
-        case HeapType::i31:
-          o << S32LEB(BinaryConsts::EncodedType::i31ref);
-          return;
-        case HeapType::struct_:
-          o << S32LEB(BinaryConsts::EncodedType::structref);
-          return;
-        case HeapType::array:
-          o << S32LEB(BinaryConsts::EncodedType::arrayref);
-          return;
-        case HeapType::exn:
-          o << S32LEB(BinaryConsts::EncodedType::exnref);
-          return;
-        case HeapType::string:
-          o << S32LEB(BinaryConsts::EncodedType::stringref);
-          return;
-        case HeapType::stringview_wtf8:
-          o << S32LEB(BinaryConsts::EncodedType::stringview_wtf8);
-          return;
-        case HeapType::stringview_wtf16:
-          o << S32LEB(BinaryConsts::EncodedType::stringview_wtf16);
-          return;
-        case HeapType::stringview_iter:
-          o << S32LEB(BinaryConsts::EncodedType::stringview_iter);
-          return;
-        case HeapType::none:
-          o << S32LEB(BinaryConsts::EncodedType::nullref);
-          return;
-        case HeapType::noext:
-          o << S32LEB(BinaryConsts::EncodedType::nullexternref);
-          return;
-        case HeapType::nofunc:
-          o << S32LEB(BinaryConsts::EncodedType::nullfuncref);
-          return;
-        case HeapType::noexn:
-          o << S32LEB(BinaryConsts::EncodedType::nullexnref);
-          return;
-        case HeapType::nocont:
-          o << S32LEB(BinaryConsts::EncodedType::nullcontref);
-          return;
+    if (heapType.isBasic()) {
+      if (type.isNullable()) {
+        switch (heapType.getBasic()) {
+          case HeapType::ext:
+            o << S32LEB(BinaryConsts::EncodedType::externref);
+            return;
+          case HeapType::any:
+            o << S32LEB(BinaryConsts::EncodedType::anyref);
+            return;
+          case HeapType::func:
+            o << S32LEB(BinaryConsts::EncodedType::funcref);
+            return;
+          case HeapType::cont:
+            o << S32LEB(BinaryConsts::EncodedType::contref);
+            return;
+          case HeapType::eq:
+            o << S32LEB(BinaryConsts::EncodedType::eqref);
+            return;
+          case HeapType::i31:
+            o << S32LEB(BinaryConsts::EncodedType::i31ref);
+            return;
+          case HeapType::struct_:
+            o << S32LEB(BinaryConsts::EncodedType::structref);
+            return;
+          case HeapType::array:
+            o << S32LEB(BinaryConsts::EncodedType::arrayref);
+            return;
+          case HeapType::exn:
+            o << S32LEB(BinaryConsts::EncodedType::exnref);
+            return;
+          case HeapType::string:
+            o << S32LEB(BinaryConsts::EncodedType::stringref);
+            return;
+          case HeapType::stringview_wtf8:
+          case HeapType::stringview_wtf16:
+          case HeapType::stringview_iter:
+            break;
+          case HeapType::none:
+            o << S32LEB(BinaryConsts::EncodedType::nullref);
+            return;
+          case HeapType::noext:
+            o << S32LEB(BinaryConsts::EncodedType::nullexternref);
+            return;
+          case HeapType::nofunc:
+            o << S32LEB(BinaryConsts::EncodedType::nullfuncref);
+            return;
+          case HeapType::noexn:
+            o << S32LEB(BinaryConsts::EncodedType::nullexnref);
+            return;
+          case HeapType::nocont:
+            o << S32LEB(BinaryConsts::EncodedType::nullcontref);
+            return;
+        }
+      } else {
+        switch (heapType.getBasic()) {
+          case HeapType::stringview_wtf8:
+            o << S32LEB(BinaryConsts::EncodedType::stringview_wtf8);
+            return;
+          case HeapType::stringview_wtf16:
+            o << S32LEB(BinaryConsts::EncodedType::stringview_wtf16);
+            return;
+          case HeapType::stringview_iter:
+            o << S32LEB(BinaryConsts::EncodedType::stringview_iter);
+            return;
+          default:
+            break;
+        }
       }
     }
     if (type.isNullable()) {
@@ -2052,13 +2063,13 @@ bool WasmBinaryReader::getBasicType(int32_t code, Type& out) {
       out = Type(HeapType::string, Nullable);
       return true;
     case BinaryConsts::EncodedType::stringview_wtf8:
-      out = Type(HeapType::stringview_wtf8, Nullable);
+      out = Type(HeapType::stringview_wtf8, NonNullable);
       return true;
     case BinaryConsts::EncodedType::stringview_wtf16:
-      out = Type(HeapType::stringview_wtf16, Nullable);
+      out = Type(HeapType::stringview_wtf16, NonNullable);
       return true;
     case BinaryConsts::EncodedType::stringview_iter:
-      out = Type(HeapType::stringview_iter, Nullable);
+      out = Type(HeapType::stringview_iter, NonNullable);
       return true;
     case BinaryConsts::EncodedType::nullref:
       out = Type(HeapType::none, Nullable);

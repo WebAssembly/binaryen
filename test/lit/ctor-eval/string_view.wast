@@ -10,7 +10,7 @@
  (export "test" (func $test))
 
  ;; CHECK:      (func $test (type $0)
- ;; CHECK-NEXT:  (local $temp-view (ref stringview_wtf16))
+ ;; CHECK-NEXT:  (local $temp-view stringview_wtf16)
  ;; CHECK-NEXT:  (local.set $temp-view
  ;; CHECK-NEXT:   (string.as_wtf16
  ;; CHECK-NEXT:    (string.const "test")
