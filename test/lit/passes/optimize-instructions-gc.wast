@@ -3559,6 +3559,10 @@
   ;; CHECK:      (func $array.new_fixed_fallthrough_local (type $25) (param $x i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 i32)
+  ;; CHECK-NEXT:  (local $6 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $array))
   ;; CHECK-NEXT:    (local.set $1
@@ -3587,6 +3591,44 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (local.set $x
+  ;; CHECK-NEXT:       (i32.const 2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (array.new $array
+  ;; CHECK-NEXT:     (local.get $3)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:    (local.set $5
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $6
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (local.set $x
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (array.new $array
+  ;; CHECK-NEXT:     (local.get $5)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $array.new_fixed_fallthrough_local (param $x i32)
     ;; The fallthroughs are identical local.gets.
@@ -3607,6 +3649,31 @@
           (local.get $x)
         )
         (local.get $x)
+      )
+    )
+    ;; The effect is now a set. We can still optimize.
+    (drop
+      (array.new_fixed $array 2
+        (block (result i32)
+          (local.set $x
+            (i32.const 2)
+          )
+          (local.get $x)
+        )
+        (local.get $x)
+      )
+    )
+    ;; Flipped order, and now the set invalidates the get after it, preventing
+    ;; optimization.
+    (drop
+      (array.new_fixed $array 2
+        (local.get $x)
+        (block (result i32)
+          (local.set $x
+            (i32.const 1)
+          )
+          (local.get $x)
+        )
       )
     )
   )
