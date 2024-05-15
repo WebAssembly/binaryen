@@ -251,6 +251,9 @@ void PassRegistry::registerPasses() {
                "lower loads and stores to a 64-bit memory to instead use a "
                "32-bit one",
                createMemory64LoweringPass);
+  registerPass("table64-lowering",
+               "lower 64-bit tables 32-bit ones",
+               createTable64LoweringPass);
   registerPass("memory-packing",
                "packs memory into separate segments, skipping zeros",
                createMemoryPackingPass);
