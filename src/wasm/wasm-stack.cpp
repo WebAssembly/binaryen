@@ -76,20 +76,18 @@ void BinaryInstWriter::visitBreak(Break* curr) {
 
     assert(curr->type.hasRef());
 
-    auto emitCast = [&](Type to, Type from) {
+    auto emitCast = [&](Type to) {
       // Shim a tiny bit of IR, just enough to get visitRefCast to see what we
       // are casting, and to emit the proper thing.
-      LocalGet get;
-      get.type = from;
       RefCast cast;
       cast.type = to;
-      cast.ref = &get;
+      cast.ref = nullptr;
       visitRefCast(&cast);
     };
 
     if (!type.isTuple()) {
       // Simple: Just emit a cast, and then the type matches Binaryen IR's.
-      emitCast(type, unrefinedType);
+      emitCast(type);
     } else {
       // Tuples are trickier to handle, and we need to use scratch locals. Stash
       // all the values on the stack to those locals, then reload them, casting
@@ -112,7 +110,7 @@ void BinaryInstWriter::visitBreak(Break* curr) {
         if (t.isRef()) {
           // Note that we cast all types here, when perhaps only some of the
           // tuple's lanes need that. This is simpler.
-          emitCast(type[i], t);
+          emitCast(type[i]);
         }
       }
     }
