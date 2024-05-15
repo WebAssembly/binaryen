@@ -144,7 +144,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ASAN_OPTIONS: "symbolize=1"
-      COMPILER_FLAGS: "-fsanitize=address"
+      COMPILER_FLAGS: "-fsanitize=address -Wno-deprecated-declarations"
       CC: "clang-18"
       CXX: "clang++-18"
     steps:
@@ -243,7 +243,7 @@ jobs:
     name: tsan
     runs-on: ubuntu-latest
     env:
-      COMPILER_FLAGS: "-fsanitize=thread"
+      COMPILER_FLAGS: "-fsanitize=thread -Wno-deprecated-declarations"
       LINKER_FLAGS: "-fsanitize=thread"
       CC: "clang-18"
       CXX: "clang++-18"
