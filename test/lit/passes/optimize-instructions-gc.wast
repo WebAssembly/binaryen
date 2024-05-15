@@ -3442,6 +3442,7 @@
 
   ;; CHECK:      (func $array.new_fixed_fallthrough (type $void)
   ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result (ref $array))
   ;; CHECK-NEXT:    (local.set $0
@@ -3452,6 +3453,20 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (array.new $array
   ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result (ref $array))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (call $array.new_fixed_fallthrough)
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (array.new $array
+  ;; CHECK-NEXT:     (local.get $1)
   ;; CHECK-NEXT:     (i32.const 2)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -3467,6 +3482,16 @@
           (call $array.new_fixed_fallthrough)
           (i32.const 42)
         )
+      )
+    )
+    ;; As above with order flipped.
+    (drop
+      (array.new_fixed $array 2
+        (block (result i32)
+          (call $array.new_fixed_fallthrough)
+          (i32.const 42)
+        )
+        (i32.const 42)
       )
     )
   )
