@@ -3493,6 +3493,18 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_fixed $array 2
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (call $array.new_fixed)
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (call $array.new_fixed_fallthrough)
+  ;; CHECK-NEXT:     (i32.const 43)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $array.new_fixed_fallthrough
     ;; The fallthroughs are identical. The call in the middle must only happen
@@ -3526,6 +3538,19 @@
         (block (result i32)
           (call $array.new_fixed_fallthrough)
           (i32.const 42)
+        )
+      )
+    )
+    ;; Different fallthrough, so we cannot optimize.
+    (drop
+      (array.new_fixed $array 2
+        (block (result i32)
+          (call $array.new_fixed)
+          (i32.const 42)
+        )
+        (block (result i32)
+          (call $array.new_fixed_fallthrough)
+          (i32.const 43) ;; this changed
         )
       )
     )
