@@ -2714,7 +2714,6 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
       auto& count = scratches[Type::i32];
       count = std::max(count, numScratches);
     }
-  };
 
     // As mentioned in BinaryInstWriter::visitBreak, the type of br_if with a
     // value may be more refined in Binaryen IR compared to the wasm spec, as we
