@@ -79,7 +79,10 @@
 ;; CHECK-NEXT:   --new-wat-parser                              Use the experimental new WAT
 ;; CHECK-NEXT:                                                 parser
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --experimental-new-eh                         After running all requested
+;; CHECK-NEXT:   --experimental-new-eh                         Deprecated; same as
+;; CHECK-NEXT:                                                 --emit-exnref
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --emit-exnref                                 After running all requested
 ;; CHECK-NEXT:                                                 transformations / optimizations,
 ;; CHECK-NEXT:                                                 translate the instruction to use
 ;; CHECK-NEXT:                                                 the new EH instructions at the
@@ -502,8 +505,12 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --symbolmap                                   (alias for print-function-map)
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --translate-to-new-eh                         translate old EH instructions to
-;; CHECK-NEXT:                                                 new ones
+;; CHECK-NEXT:   --translate-to-exnref                         translate old Phase 3 EH
+;; CHECK-NEXT:                                                 instructions to new ones with
+;; CHECK-NEXT:                                                 exnref
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --translate-to-new-eh                         deprecated; same as
+;; CHECK-NEXT:                                                 translate-to-exnref
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --trap-mode-clamp                             replace trapping operations with
 ;; CHECK-NEXT:                                                 clamping semantics
