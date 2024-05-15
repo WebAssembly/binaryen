@@ -144,9 +144,7 @@ jobs:
     runs-on: ubuntu-latest
     env:
       ASAN_OPTIONS: "symbolize=1"
-      # Disable a warning that happens on system headers in the CI machines,
-      # https://github.com/WebAssembly/binaryen/pull/6597
-      COMPILER_FLAGS: "-fsanitize=address -Wno-deprecated-declarations"
+      COMPILER_FLAGS: "-fsanitize=address"
       CC: "clang-18"
       CXX: "clang++-18"
     steps:
@@ -245,9 +243,7 @@ jobs:
     name: tsan
     runs-on: ubuntu-latest
     env:
-      # Disable a warning that happens on system headers in the CI machines,
-      # https://github.com/WebAssembly/binaryen/pull/6597
-      COMPILER_FLAGS: "-fsanitize=thread -Wno-deprecated-declarations"
+      COMPILER_FLAGS: "-fsanitize=thread"
       LINKER_FLAGS: "-fsanitize=thread"
       CC: "clang-18"
       CXX: "clang++-18"
