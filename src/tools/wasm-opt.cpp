@@ -404,8 +404,6 @@ int main(int argc, const char* argv[]) {
     BYN_TRACE("translating to new EH instructions...\n");
     PassRunner runner(&wasm, options.passOptions);
     runner.add("translate-to-exnref");
-    // Perform Stack IR optimizations here, at the very end of the
-    // optimization pipeline.
     runner.run();
     if (options.passOptions.validate) {
       bool valid = WasmValidator().validate(wasm, options.passOptions);
