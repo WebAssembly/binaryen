@@ -10,9 +10,8 @@
   ;; CHECK:      (table $t 10 100 funcref)
   (table $t i64 10 100 funcref)
 
-  (elem (table $t) (i64.const 0) funcref (ref.null func))
-
-  ;; CHECK:      (elem $0 (table $t) (i32.const 0) funcref (ref.null nofunc))
+  ;; CHECK:      (elem $elem (table $t) (i32.const 0) funcref (ref.null nofunc))
+  (elem $elem (table $t) (i64.const 0) funcref (ref.null func))
 
   ;; CHECK:      (func $test_call_indirect
   ;; CHECK-NEXT:  (call_indirect $t (type $0)

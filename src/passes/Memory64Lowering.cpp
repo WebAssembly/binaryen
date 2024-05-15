@@ -38,11 +38,10 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
       return;
     }
     auto& module = *getModule();
-    auto memory = module.getMemory(memoryName);
+    auto* memory = module.getMemory(memoryName);
     if (memory->is64()) {
       assert(ptr->type == Type::i64);
-      Builder builder(module);
-      ptr = builder.makeUnary(UnaryOp::WrapInt64, ptr);
+      ptr = Builder(module).makeUnary(UnaryOp::WrapInt64, ptr);
     }
   }
 
@@ -51,12 +50,11 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
       return;
     }
     auto& module = *getModule();
-    auto memory = module.getMemory(memoryName);
+    auto* memory = module.getMemory(memoryName);
     if (memory->is64()) {
       assert(ptr->type == Type::i64);
       ptr->type = Type::i32;
-      Builder builder(module);
-      ptr = builder.makeUnary(UnaryOp::ExtendUInt32, ptr);
+      ptr = Builder(module).makeUnary(UnaryOp::ExtendUInt32, ptr);
     }
   }
 
@@ -66,9 +64,9 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
 
   void visitMemorySize(MemorySize* curr) {
     auto& module = *getModule();
-    auto memory = module.getMemory(curr->memory);
+    auto* memory = module.getMemory(curr->memory);
     if (memory->is64()) {
-      auto size = static_cast<Expression*>(curr);
+      auto* size = static_cast<Expression*>(curr);
       extendAddress64(size, curr->memory);
       curr->type = Type::i32;
       replaceCurrent(size);
@@ -77,10 +75,10 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
 
   void visitMemoryGrow(MemoryGrow* curr) {
     auto& module = *getModule();
-    auto memory = module.getMemory(curr->memory);
+    auto* memory = module.getMemory(curr->memory);
     if (memory->is64()) {
       wrapAddress64(curr->delta, curr->memory);
-      auto size = static_cast<Expression*>(curr);
+      auto* size = static_cast<Expression*>(curr);
       extendAddress64(size, curr->memory);
       curr->type = Type::i32;
       replaceCurrent(size);

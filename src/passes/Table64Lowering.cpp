@@ -17,7 +17,7 @@
 //
 // Lowers a module with a 64-bit table to one with a 32-bit table.
 //
-// This pass can be delete once table64 is implemented in the Wasm engines:
+// This pass can be deleted once table64 is implemented in Wasm engines:
 // https://github.com/WebAssembly/memory64/issues/51
 //
 
@@ -39,11 +39,10 @@ struct Table64Lowering : public WalkerPass<PostWalker<Table64Lowering>> {
       return;
     }
     auto& module = *getModule();
-    auto table = module.getTable(tableName);
+    auto* table = module.getTable(tableName);
     if (table->is64()) {
       assert(ptr->type == Type::i64);
-      Builder builder(module);
-      ptr = builder.makeUnary(UnaryOp::WrapInt64, ptr);
+      ptr = Builder(module).makeUnary(UnaryOp::WrapInt64, ptr);
     }
   }
 
@@ -52,20 +51,19 @@ struct Table64Lowering : public WalkerPass<PostWalker<Table64Lowering>> {
       return;
     }
     auto& module = *getModule();
-    auto table = module.getTable(tableName);
+    auto* table = module.getTable(tableName);
     if (table->is64()) {
       assert(ptr->type == Type::i64);
       ptr->type = Type::i32;
-      Builder builder(module);
-      ptr = builder.makeUnary(UnaryOp::ExtendUInt32, ptr);
+      ptr = Builder(module).makeUnary(UnaryOp::ExtendUInt32, ptr);
     }
   }
 
   void visitTableSize(TableSize* curr) {
     auto& module = *getModule();
-    auto table = module.getTable(curr->table);
+    auto* table = module.getTable(curr->table);
     if (table->is64()) {
-      auto size = static_cast<Expression*>(curr);
+      auto* size = static_cast<Expression*>(curr);
       extendAddress64(size, curr->table);
       replaceCurrent(size);
     }
@@ -73,10 +71,10 @@ struct Table64Lowering : public WalkerPass<PostWalker<Table64Lowering>> {
 
   void visitTableGrow(TableGrow* curr) {
     auto& module = *getModule();
-    auto table = module.getTable(curr->table);
+    auto* table = module.getTable(curr->table);
     if (table->is64()) {
       wrapAddress64(curr->delta, curr->table);
-      auto size = static_cast<Expression*>(curr);
+      auto* size = static_cast<Expression*>(curr);
       extendAddress64(size, curr->table);
       replaceCurrent(size);
     }
