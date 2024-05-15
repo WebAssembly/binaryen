@@ -1719,30 +1719,29 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       return;
     }
 
-    auto contents = lexer.takeKeyword();
-    if (!contents || !lexer.empty()) {
-      return;
-    }
+    auto contents = lexer.next();
 
-    auto fileSize = contents->find(':');
-    if (fileSize == contents->npos) {
+    auto fileSize = contents.find(':');
+    if (fileSize == 0 || fileSize == contents.npos) {
       return;
     }
-    auto file = contents->substr(0, fileSize);
-    contents = contents->substr(fileSize + 1);
+    auto file = contents.substr(0, fileSize);
+    contents = contents.substr(fileSize + 1);
 
-    auto lineSize = contents->find(':');
-    if (fileSize == contents->npos) {
+    auto lineSize = contents.find(':');
+    if (lineSize == contents.npos) {
       return;
     }
-    auto line = Lexer(contents->substr(0, lineSize)).takeU32();
-    if (!line) {
+    lexer = Lexer(contents.substr(0, lineSize));
+    auto line = lexer.takeU32();
+    if (!line || !lexer.empty()) {
       return;
     }
-    contents = contents->substr(lineSize + 1);
+    contents = contents.substr(lineSize + 1);
 
-    auto col = Lexer(*contents).takeU32();
-    if (!col) {
+    lexer = Lexer(contents);
+    auto col = lexer.takeU32();
+    if (!col || !lexer.empty()) {
       return;
     }
 

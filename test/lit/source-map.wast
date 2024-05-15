@@ -10,9 +10,9 @@
 
 (module
   ;;@ src.cpp:0:1
-  ;; CHECK:      (type $0 (func (param i32 i32)))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $1 (func))
+  ;; CHECK:      (type $1 (func (param i32 i32)))
 
   ;; CHECK:      (func $foo (param $x i32) (param $y i32)
   ;; CHECK-NEXT:  ;;@ src.cpp:10:1
@@ -87,5 +87,27 @@
     )
     ;;@ src.cpp:3:1
     (return)
+  )
+
+  ;; CHECK:      (func $paths
+  ;; CHECK-NEXT:  ;;@ /tmp/src.cpp:1:1
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  ;;@ ../src.cpp:2:2
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  ;;@ café.cpp:2:2
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  ;;@ café.cpp:2:2
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $paths
+    ;;@ /tmp/src.cpp:1:1
+    (nop)
+    ;;@ ../src.cpp:2:2
+    (nop)
+    ;;@ café.cpp:2:2
+    (nop)
+    ;; This annotation is invalid (missing column)
+    ;;@ src.cpp:3
+    (nop)
   )
 )
