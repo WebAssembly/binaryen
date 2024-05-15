@@ -102,14 +102,12 @@ void BinaryInstWriter::visitBreak(Break* curr) {
       for (Index i = 0; i < unrefinedType.size(); i++) {
         auto t = unrefinedType[unrefinedType.size() - i - 1];
         assert(scratchLocals.find(t) != scratchLocals.end());
-        auto localIndex = scratchLocals[t] + scratchTypeUses[t];
-        scratchTypeUses[t]++;
+        auto localIndex = scratchLocals[t] + scratchTypeUses[t]++;
         o << int8_t(BinaryConsts::LocalSet) << U32LEB(localIndex);
       }
       for (Index i = 0; i < unrefinedType.size(); i++) {
         auto t = unrefinedType[i];
-        scratchTypeUses[t]--;
-        auto localIndex = scratchLocals[t] + scratchTypeUses[t];
+        auto localIndex = scratchLocals[t] + --scratchTypeUses[t];
         o << int8_t(BinaryConsts::LocalGet) << U32LEB(localIndex);
         if (t.isRef()) {
           // Note that we cast all types here, when perhaps only some of the
