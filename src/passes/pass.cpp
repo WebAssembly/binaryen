@@ -501,8 +501,11 @@ void PassRegistry::registerPasses() {
                "strip the wasm target features section",
                createStripTargetFeaturesPass);
   registerPass("translate-to-new-eh",
-               "translate old EH instructions to new ones",
-               createTranslateToNewEHPass);
+               "deprecated; same as translate-to-exnref",
+               createTranslateToExnrefPass);
+  registerPass("translate-to-exnref",
+               "translate old Phase 3 EH instructions to new ones with exnref",
+               createTranslateToExnrefPass);
   registerPass("trap-mode-clamp",
                "replace trapping operations with clamping semantics",
                createTrapModeClamp);
