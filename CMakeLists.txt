@@ -289,6 +289,10 @@ else()
   if(CMAKE_CXX_COMPILER_ID STREQUAL "Clang")
     # Google style requires this, so make sure we compile cleanly with it.
     add_compile_flag("-Wctad-maybe-unsupported")
+    # Disable a warning that started to happen on system headers (so we can't
+    # fix it in our codebase) on github CI:
+    # https://github.com/WebAssembly/binaryen/pull/6597
+    add_compile_flag("-Wno-deprecated-declarations")
   endif()
 
   if(WIN32)
