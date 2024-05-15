@@ -30,8 +30,6 @@
 // https://github.com/WebAssembly/js-string-builtins/blob/main/proposals/js-string-builtins/Overview.md
 //
 
-#include <algorithm>
-
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/subtype-exprs.h"
