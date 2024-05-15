@@ -285,26 +285,9 @@ Result<> makeStringConcat(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeStringEq(Ctx&, Index, const std::vector<Annotation>&, StringEqOp);
 template<typename Ctx>
-Result<>
-makeStringAs(Ctx&, Index, const std::vector<Annotation>&, StringAsOp op);
-template<typename Ctx>
-Result<> makeStringWTF8Advance(Ctx&, Index, const std::vector<Annotation>&);
-template<typename Ctx>
 Result<> makeStringWTF16Get(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
-Result<> makeStringIterNext(Ctx&, Index, const std::vector<Annotation>&);
-template<typename Ctx>
-Result<> makeStringIterMove(Ctx&,
-                            Index,
-                            const std::vector<Annotation>&,
-                            StringIterMoveOp op);
-template<typename Ctx>
-Result<> makeStringSliceWTF(Ctx&,
-                            Index,
-                            const std::vector<Annotation>&,
-                            StringSliceWTFOp op);
-template<typename Ctx>
-Result<> makeStringSliceIter(Ctx&, Index, const std::vector<Annotation>&);
+Result<> makeStringSliceWTF(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeContBind(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
@@ -313,6 +296,11 @@ template<typename Ctx>
 Result<> makeResume(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeSuspend(Ctx&, Index, const std::vector<Annotation>&);
+
+template<typename Ctx>
+Result<> ignore(Ctx&, Index, const std::vector<Annotation>&) {
+  return Ok{};
+}
 
 // Modules
 template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx);
@@ -421,15 +409,6 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
   if (ctx.in.takeKeyword("string"sv)) {
     return ctx.makeStringType();
   }
-  if (ctx.in.takeKeyword("stringview_wtf8"sv)) {
-    return ctx.makeStringViewWTF8Type();
-  }
-  if (ctx.in.takeKeyword("stringview_wtf16"sv)) {
-    return ctx.makeStringViewWTF16Type();
-  }
-  if (ctx.in.takeKeyword("stringview_iter"sv)) {
-    return ctx.makeStringViewIterType();
-  }
   if (ctx.in.takeKeyword("cont"sv)) {
     return ctx.makeContType();
   }
@@ -488,15 +467,6 @@ template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
   }
   if (ctx.in.takeKeyword("stringref"sv)) {
     return ctx.makeRefType(ctx.makeStringType(), Nullable);
-  }
-  if (ctx.in.takeKeyword("stringview_wtf8"sv)) {
-    return ctx.makeRefType(ctx.makeStringViewWTF8Type(), Nullable);
-  }
-  if (ctx.in.takeKeyword("stringview_wtf16"sv)) {
-    return ctx.makeRefType(ctx.makeStringViewWTF16Type(), Nullable);
-  }
-  if (ctx.in.takeKeyword("stringview_iter"sv)) {
-    return ctx.makeRefType(ctx.makeStringViewIterType(), Nullable);
   }
   if (ctx.in.takeKeyword("contref"sv)) {
     return ctx.makeRefType(ctx.makeContType(), Nullable);
@@ -2436,21 +2406,6 @@ Result<> makeStringEq(Ctx& ctx,
 }
 
 template<typename Ctx>
-Result<> makeStringAs(Ctx& ctx,
-                      Index pos,
-                      const std::vector<Annotation>& annotations,
-                      StringAsOp op) {
-  return ctx.makeStringAs(pos, annotations, op);
-}
-
-template<typename Ctx>
-Result<> makeStringWTF8Advance(Ctx& ctx,
-                               Index pos,
-                               const std::vector<Annotation>& annotations) {
-  return ctx.makeStringWTF8Advance(pos, annotations);
-}
-
-template<typename Ctx>
 Result<> makeStringWTF16Get(Ctx& ctx,
                             Index pos,
                             const std::vector<Annotation>& annotations) {
@@ -2458,33 +2413,10 @@ Result<> makeStringWTF16Get(Ctx& ctx,
 }
 
 template<typename Ctx>
-Result<> makeStringIterNext(Ctx& ctx,
-                            Index pos,
-                            const std::vector<Annotation>& annotations) {
-  return ctx.makeStringIterNext(pos, annotations);
-}
-
-template<typename Ctx>
-Result<> makeStringIterMove(Ctx& ctx,
-                            Index pos,
-                            const std::vector<Annotation>& annotations,
-                            StringIterMoveOp op) {
-  return ctx.makeStringIterMove(pos, annotations, op);
-}
-
-template<typename Ctx>
 Result<> makeStringSliceWTF(Ctx& ctx,
                             Index pos,
-                            const std::vector<Annotation>& annotations,
-                            StringSliceWTFOp op) {
-  return ctx.makeStringSliceWTF(pos, annotations, op);
-}
-
-template<typename Ctx>
-Result<> makeStringSliceIter(Ctx& ctx,
-                             Index pos,
-                             const std::vector<Annotation>& annotations) {
-  return ctx.makeStringSliceIter(pos, annotations);
+                            const std::vector<Annotation>& annotations) {
+  return ctx.makeStringSliceWTF(pos, annotations);
 }
 
 // contbind ::= 'cont.bind' typeidx typeidx

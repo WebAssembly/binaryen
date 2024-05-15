@@ -212,13 +212,10 @@ public:
   [[nodiscard]] Result<> makeStringEncode(StringEncodeOp op, Name mem);
   [[nodiscard]] Result<> makeStringConcat();
   [[nodiscard]] Result<> makeStringEq(StringEqOp op);
-  [[nodiscard]] Result<> makeStringAs(StringAsOp op);
   [[nodiscard]] Result<> makeStringWTF8Advance();
   [[nodiscard]] Result<> makeStringWTF16Get();
   [[nodiscard]] Result<> makeStringIterNext();
-  [[nodiscard]] Result<> makeStringIterMove(StringIterMoveOp op);
-  [[nodiscard]] Result<> makeStringSliceWTF(StringSliceWTFOp op);
-  [[nodiscard]] Result<> makeStringSliceIter();
+  [[nodiscard]] Result<> makeStringSliceWTF();
   [[nodiscard]] Result<> makeContBind(HeapType contTypeBefore,
                                       HeapType contTypeAfter);
   [[nodiscard]] Result<> makeContNew(HeapType ct);

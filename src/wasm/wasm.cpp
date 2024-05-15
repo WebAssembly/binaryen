@@ -1289,53 +1289,8 @@ void StringEq::finalize() {
   }
 }
 
-void StringAs::finalize() {
-  if (ref->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    switch (op) {
-      case StringAsWTF8:
-        type = Type(HeapType::stringview_wtf8, NonNullable);
-        break;
-      case StringAsWTF16:
-        type = Type(HeapType::stringview_wtf16, NonNullable);
-        break;
-      case StringAsIter:
-        type = Type(HeapType::stringview_iter, NonNullable);
-        break;
-      default:
-        WASM_UNREACHABLE("bad string.as");
-    }
-  }
-}
-
-void StringWTF8Advance::finalize() {
-  if (ref->type == Type::unreachable || pos->type == Type::unreachable ||
-      bytes->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type::i32;
-  }
-}
-
 void StringWTF16Get::finalize() {
   if (ref->type == Type::unreachable || pos->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type::i32;
-  }
-}
-
-void StringIterNext::finalize() {
-  if (ref->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type::i32;
-  }
-}
-
-void StringIterMove::finalize() {
-  if (ref->type == Type::unreachable || num->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
     type = Type::i32;
@@ -1345,14 +1300,6 @@ void StringIterMove::finalize() {
 void StringSliceWTF::finalize() {
   if (ref->type == Type::unreachable || start->type == Type::unreachable ||
       end->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type(HeapType::string, NonNullable);
-  }
-}
-
-void StringSliceIter::finalize() {
-  if (ref->type == Type::unreachable || num->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
     type = Type(HeapType::string, NonNullable);

@@ -1919,7 +1919,7 @@ public:
 
   Flow visitStringMeasure(StringMeasure* curr) {
     // For now we only support JS-style strings.
-    if (curr->op != StringMeasureWTF16View && curr->op != StringMeasureWTF16) {
+    if (curr->op != StringMeasureWTF16) {
       return Flow(NONCONSTANT_FLOW);
     }
 
@@ -2076,29 +2076,6 @@ public:
     }
     return Literal(result);
   }
-  Flow visitStringAs(StringAs* curr) {
-    // For now we only support JS-style strings.
-    if (curr->op != StringAsWTF16) {
-      return Flow(NONCONSTANT_FLOW);
-    }
-
-    Flow flow = visit(curr->ref);
-    if (flow.breaking()) {
-      return flow;
-    }
-    auto value = flow.getSingleValue();
-    auto data = value.getGCData();
-    if (!data) {
-      trap("null ref");
-    }
-
-    // A JS-style string can be viewed simply as the underlying data. All we
-    // need to do is fix up the type.
-    return Literal(data, curr->type.getHeapType());
-  }
-  Flow visitStringWTF8Advance(StringWTF8Advance* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
   Flow visitStringWTF16Get(StringWTF16Get* curr) {
     NOTE_ENTER("StringWTF16Get");
     Flow ref = visit(curr->ref);
@@ -2122,18 +2099,7 @@ public:
 
     return Literal(values[i].geti32());
   }
-  Flow visitStringIterNext(StringIterNext* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
-  Flow visitStringIterMove(StringIterMove* curr) {
-    return Flow(NONCONSTANT_FLOW);
-  }
   Flow visitStringSliceWTF(StringSliceWTF* curr) {
-    // For now we only support JS-style strings.
-    if (curr->op != StringSliceWTF16) {
-      return Flow(NONCONSTANT_FLOW);
-    }
-
     Flow ref = visit(curr->ref);
     if (ref.breaking()) {
       return ref;
@@ -2166,9 +2132,6 @@ public:
       }
     }
     return makeGCData(contents, curr->type);
-  }
-  Flow visitStringSliceIter(StringSliceIter* curr) {
-    return Flow(NONCONSTANT_FLOW);
   }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }

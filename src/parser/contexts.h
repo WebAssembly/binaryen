@@ -217,9 +217,6 @@ template<typename Ctx> struct TypeParserCtx {
   HeapTypeT makeArrayType() { return HeapType::array; }
   HeapTypeT makeExnType() { return HeapType::exn; }
   HeapTypeT makeStringType() { return HeapType::string; }
-  HeapTypeT makeStringViewWTF8Type() { return HeapType::stringview_wtf8; }
-  HeapTypeT makeStringViewWTF16Type() { return HeapType::stringview_wtf16; }
-  HeapTypeT makeStringViewIterType() { return HeapType::stringview_iter; }
   HeapTypeT makeContType() { return HeapType::cont; }
   HeapTypeT makeNoneType() { return HeapType::none; }
   HeapTypeT makeNoextType() { return HeapType::noext; }
@@ -799,9 +796,6 @@ struct NullInstrParserCtx {
   Result<> makeStringEq(Index, const std::vector<Annotation>&, StringEqOp) {
     return Ok{};
   }
-  Result<> makeStringAs(Index, const std::vector<Annotation>&, StringAsOp) {
-    return Ok{};
-  }
   Result<> makeStringWTF8Advance(Index, const std::vector<Annotation>&) {
     return Ok{};
   }
@@ -811,15 +805,7 @@ struct NullInstrParserCtx {
   Result<> makeStringIterNext(Index, const std::vector<Annotation>&) {
     return Ok{};
   }
-  Result<>
-  makeStringIterMove(Index, const std::vector<Annotation>&, StringIterMoveOp) {
-    return Ok{};
-  }
-  Result<>
-  makeStringSliceWTF(Index, const std::vector<Annotation>&, StringSliceWTFOp) {
-    return Ok{};
-  }
-  Result<> makeStringSliceIter(Index, const std::vector<Annotation>&) {
+  Result<> makeStringSliceWTF(Index, const std::vector<Annotation>&) {
     return Ok{};
   }
   template<typename HeapTypeT>
@@ -2562,42 +2548,14 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeStringEq(op));
   }
 
-  Result<> makeStringAs(Index pos,
-                        const std::vector<Annotation>& annotations,
-                        StringAsOp op) {
-    return withLoc(pos, irBuilder.makeStringAs(op));
-  }
-
-  Result<> makeStringWTF8Advance(Index pos,
-                                 const std::vector<Annotation>& annotations) {
-    return withLoc(pos, irBuilder.makeStringWTF8Advance());
-  }
-
   Result<> makeStringWTF16Get(Index pos,
                               const std::vector<Annotation>& annotations) {
     return withLoc(pos, irBuilder.makeStringWTF16Get());
   }
 
-  Result<> makeStringIterNext(Index pos,
-                              const std::vector<Annotation>& annotations) {
-    return withLoc(pos, irBuilder.makeStringIterNext());
-  }
-
-  Result<> makeStringIterMove(Index pos,
-                              const std::vector<Annotation>& annotations,
-                              StringIterMoveOp op) {
-    return withLoc(pos, irBuilder.makeStringIterMove(op));
-  }
-
   Result<> makeStringSliceWTF(Index pos,
-                              const std::vector<Annotation>& annotations,
-                              StringSliceWTFOp op) {
-    return withLoc(pos, irBuilder.makeStringSliceWTF(op));
-  }
-
-  Result<> makeStringSliceIter(Index pos,
-                               const std::vector<Annotation>& annotations) {
-    return withLoc(pos, irBuilder.makeStringSliceIter());
+                              const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makeStringSliceWTF());
   }
 
   Result<> makeContBind(Index pos,

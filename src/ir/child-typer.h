@@ -991,11 +991,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitStringConst(StringConst* curr) {}
 
   void visitStringMeasure(StringMeasure* curr) {
-    if (curr->op == StringMeasureWTF16View) {
-      note(&curr->ref, Type(HeapType::stringview_wtf16, Nullable));
-    } else {
-      note(&curr->ref, Type(HeapType::string, Nullable));
-    }
+    note(&curr->ref, Type(HeapType::string, Nullable));
   }
 
   void visitStringEncode(StringEncode* curr,
@@ -1035,46 +1031,15 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->right, stringref);
   }
 
-  void visitStringAs(StringAs* curr) {
-    note(&curr->ref, Type(HeapType::string, Nullable));
-  }
-
-  void visitStringWTF8Advance(StringWTF8Advance* curr) {
-    note(&curr->ref, Type(HeapType::stringview_wtf8, Nullable));
-    note(&curr->pos, Type::i32);
-    note(&curr->bytes, Type::i32);
-  }
-
   void visitStringWTF16Get(StringWTF16Get* curr) {
-    note(&curr->ref, Type(HeapType::stringview_wtf16, Nullable));
+    note(&curr->ref, Type(HeapType::string, Nullable));
     note(&curr->pos, Type::i32);
-  }
-
-  void visitStringIterNext(StringIterNext* curr) {
-    note(&curr->ref, Type(HeapType::stringview_iter, Nullable));
-  }
-
-  void visitStringIterMove(StringIterMove* curr) {
-    note(&curr->ref, Type(HeapType::stringview_iter, Nullable));
-    note(&curr->num, Type::i32);
   }
 
   void visitStringSliceWTF(StringSliceWTF* curr) {
-    switch (curr->op) {
-      case StringSliceWTF8:
-        note(&curr->ref, Type(HeapType::stringview_wtf8, Nullable));
-        break;
-      case StringSliceWTF16:
-        note(&curr->ref, Type(HeapType::stringview_wtf16, Nullable));
-        break;
-    }
+    note(&curr->ref, Type(HeapType::string, Nullable));
     note(&curr->start, Type::i32);
     note(&curr->end, Type::i32);
-  }
-
-  void visitStringSliceIter(StringSliceIter* curr) {
-    note(&curr->ref, Type(HeapType::stringview_iter, Nullable));
-    note(&curr->num, Type::i32);
   }
 
   void visitContBind(ContBind* curr) {

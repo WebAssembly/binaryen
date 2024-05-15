@@ -321,17 +321,15 @@ private:
   Expression* makeStringEncode(Element& s, StringEncodeOp op);
   Expression* makeStringConcat(Element& s);
   Expression* makeStringEq(Element& s, StringEqOp op);
-  Expression* makeStringAs(Element& s, StringAsOp op);
   Expression* makeStringWTF8Advance(Element& s);
   Expression* makeStringWTF16Get(Element& s);
-  Expression* makeStringIterNext(Element& s);
-  Expression* makeStringIterMove(Element& s, StringIterMoveOp op);
-  Expression* makeStringSliceWTF(Element& s, StringSliceWTFOp op);
-  Expression* makeStringSliceIter(Element& s);
+  Expression* makeStringSliceWTF(Element& s);
   Expression* makeContBind(Element& s);
   Expression* makeContNew(Element& s);
   Expression* makeResume(Element& s);
   Expression* makeSuspend(Element& s);
+
+  Expression* ignore(Element& s) { WASM_UNREACHABLE("unsupported"); }
 
   // Helper functions
   Type parseBlockType(Element& s, Index& i);

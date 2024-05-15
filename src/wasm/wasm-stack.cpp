@@ -89,6 +89,11 @@ void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {
+  if (deferredGets.count(curr)) {
+    // This local.get will be emitted as part of the instruction that consumes
+    // it.
+    return;
+  }
   if (auto it = extractedGets.find(curr); it != extractedGets.end()) {
     // We have a tuple of locals to get, but we will only end up using one of
     // them, so we can just emit that one.
@@ -2089,24 +2094,6 @@ void BinaryInstWriter::visitRefTest(RefTest* curr) {
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
-  // We allow ref.cast of string views, but V8 does not. Work around that by
-  // emitting a ref.as_non_null (or nothing).
-  auto type = curr->type;
-  if (type.isRef()) {
-    auto heapType = type.getHeapType();
-    if (heapType == HeapType::stringview_wtf8 ||
-        heapType == HeapType::stringview_wtf16 ||
-        heapType == HeapType::stringview_iter) {
-      // We cannot cast string views to/from anything, so the input must also
-      // be a view.
-      assert(curr->ref->type.getHeapType() == heapType);
-      if (type.isNonNullable() && curr->ref->type.isNullable()) {
-        o << int8_t(BinaryConsts::RefAsNonNull);
-      }
-      return;
-    }
-  }
-
   o << int8_t(BinaryConsts::GCPrefix);
   if (curr->type.isNullable()) {
     o << U32LEB(BinaryConsts::RefCastNull);
@@ -2385,9 +2372,6 @@ void BinaryInstWriter::visitStringMeasure(StringMeasure* curr) {
     case StringMeasureIsUSV:
       o << U32LEB(BinaryConsts::StringIsUSV);
       break;
-    case StringMeasureWTF16View:
-      o << U32LEB(BinaryConsts::StringViewWTF16Length);
-      break;
     case StringMeasureHash:
       o << U32LEB(BinaryConsts::StringHash);
       break;
@@ -2455,69 +2439,66 @@ void BinaryInstWriter::visitStringEq(StringEq* curr) {
   }
 }
 
-void BinaryInstWriter::visitStringAs(StringAs* curr) {
-  o << int8_t(BinaryConsts::GCPrefix);
-  switch (curr->op) {
-    case StringAsWTF8:
-      o << U32LEB(BinaryConsts::StringAsWTF8);
-      break;
-    case StringAsWTF16:
-      o << U32LEB(BinaryConsts::StringAsWTF16);
-      break;
-    case StringAsIter:
-      o << U32LEB(BinaryConsts::StringAsIter);
-      break;
-    default:
-      WASM_UNREACHABLE("invalid string.as*");
-  }
-}
-
-void BinaryInstWriter::visitStringWTF8Advance(StringWTF8Advance* curr) {
-  o << int8_t(BinaryConsts::GCPrefix)
-    << U32LEB(BinaryConsts::StringViewWTF8Advance);
-}
-
 void BinaryInstWriter::visitStringWTF16Get(StringWTF16Get* curr) {
+  // We need to convert the ref operand to a stringview, but it is under the pos
+  // operand. Put the i32 in a scratch local, emit the conversion, then get the
+  // i32 back onto the stack. If `pos` is a local.get anyway, then we can skip
+  // the scratch local.
+  bool posDeferred = false;
+  Index posIndex;
+  if (auto* get = curr->pos->dynCast<LocalGet>()) {
+    assert(deferredGets.count(get));
+    posDeferred = true;
+    posIndex = mappedLocals[{get->index, 0}];
+  } else {
+    posIndex = scratchLocals[Type::i32];
+  }
+
+  if (!posDeferred) {
+    o << int8_t(BinaryConsts::LocalSet) << U32LEB(posIndex);
+  }
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringAsWTF16);
+  o << int8_t(BinaryConsts::LocalGet) << U32LEB(posIndex);
   o << int8_t(BinaryConsts::GCPrefix)
     << U32LEB(BinaryConsts::StringViewWTF16GetCodePoint);
 }
 
-void BinaryInstWriter::visitStringIterNext(StringIterNext* curr) {
-  o << int8_t(BinaryConsts::GCPrefix)
-    << U32LEB(BinaryConsts::StringViewIterNext);
-}
-
-void BinaryInstWriter::visitStringIterMove(StringIterMove* curr) {
-  o << int8_t(BinaryConsts::GCPrefix);
-  switch (curr->op) {
-    case StringIterMoveAdvance:
-      o << U32LEB(BinaryConsts::StringViewIterAdvance);
-      break;
-    case StringIterMoveRewind:
-      o << U32LEB(BinaryConsts::StringViewIterRewind);
-      break;
-    default:
-      WASM_UNREACHABLE("invalid string.move*");
-  }
-}
-
 void BinaryInstWriter::visitStringSliceWTF(StringSliceWTF* curr) {
-  o << int8_t(BinaryConsts::GCPrefix);
-  switch (curr->op) {
-    case StringSliceWTF8:
-      o << U32LEB(BinaryConsts::StringViewWTF8Slice);
-      break;
-    case StringSliceWTF16:
-      o << U32LEB(BinaryConsts::StringViewWTF16Slice);
-      break;
-    default:
-      WASM_UNREACHABLE("invalid string.move*");
+  // We need to convert the ref operand to a stringview, but it is buried under
+  // the start and end operands. Put the i32s in scratch locals, emit the
+  // conversion, then get the i32s back onto the stack. If either `start` or
+  // `end` is already a local.get, then we can skip its scratch local.
+  bool startDeferred = false, endDeferred = false;
+  Index startIndex, endIndex;
+  if (auto* get = curr->start->dynCast<LocalGet>()) {
+    assert(deferredGets.count(get));
+    startDeferred = true;
+    startIndex = mappedLocals[{get->index, 0}];
+  } else {
+    startIndex = scratchLocals[Type::i32];
   }
-}
+  if (auto* get = curr->end->dynCast<LocalGet>()) {
+    assert(deferredGets.count(get));
+    endDeferred = true;
+    endIndex = mappedLocals[{get->index, 0}];
+  } else {
+    endIndex = scratchLocals[Type::i32];
+    if (!startDeferred) {
+      ++endIndex;
+    }
+  }
 
-void BinaryInstWriter::visitStringSliceIter(StringSliceIter* curr) {
+  if (!endDeferred) {
+    o << int8_t(BinaryConsts::LocalSet) << U32LEB(endIndex);
+  }
+  if (!startDeferred) {
+    o << int8_t(BinaryConsts::LocalSet) << U32LEB(startIndex);
+  }
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringAsWTF16);
+  o << int8_t(BinaryConsts::LocalGet) << U32LEB(startIndex);
+  o << int8_t(BinaryConsts::LocalGet) << U32LEB(endIndex);
   o << int8_t(BinaryConsts::GCPrefix)
-    << U32LEB(BinaryConsts::StringViewIterSlice);
+    << U32LEB(BinaryConsts::StringViewWTF16Slice);
 }
 
 void BinaryInstWriter::visitContBind(ContBind* curr) {
@@ -2706,6 +2687,43 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
         auto& count = scratches[curr->type];
         count = std::max(count, 1u);
       }
+    }
+
+    void visitStringWTF16Get(StringWTF16Get* curr) {
+      if (curr->type == Type::unreachable) {
+        return;
+      }
+      // If `pos` already a local.get, we can defer emitting that local.get
+      // instead of using a scratch local.
+      if (auto* get = curr->pos->dynCast<LocalGet>()) {
+        parent.deferredGets.insert(get);
+        return;
+      }
+      // Scratch local to hold the `pos` value while we emit a stringview
+      // conversion for the `ref` value.
+      auto& count = scratches[Type::i32];
+      count = std::max(count, 1u);
+    }
+
+    void visitStringSliceWTF(StringSliceWTF* curr) {
+      if (curr->type == Type::unreachable) {
+        return;
+      }
+      // If `start` or `end` are already local.gets, we can defer emitting those
+      // gets instead of using scratch locals.
+      Index numScratches = 2;
+      if (auto* get = curr->start->dynCast<LocalGet>()) {
+        parent.deferredGets.insert(get);
+        --numScratches;
+      }
+      if (auto* get = curr->end->dynCast<LocalGet>()) {
+        parent.deferredGets.insert(get);
+        --numScratches;
+      }
+      // Scratch locals to hold the `start` and `end` values while we emit a
+      // stringview conversion for the `ref` value.
+      auto& count = scratches[Type::i32];
+      count = std::max(count, numScratches);
     }
   };
 

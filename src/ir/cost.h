@@ -706,24 +706,11 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
     // "3" is chosen since strings might or might not be interned in the engine.
     return 3 + visit(curr->left) + visit(curr->right);
   }
-  CostType visitStringAs(StringAs* curr) { return 4 + visit(curr->ref); }
-  CostType visitStringWTF8Advance(StringWTF8Advance* curr) {
-    return 4 + visit(curr->ref) + visit(curr->pos) + visit(curr->bytes);
-  }
   CostType visitStringWTF16Get(StringWTF16Get* curr) {
     return 1 + visit(curr->ref) + visit(curr->pos);
   }
-  CostType visitStringIterNext(StringIterNext* curr) {
-    return 2 + visit(curr->ref);
-  }
-  CostType visitStringIterMove(StringIterMove* curr) {
-    return 4 + visit(curr->ref) + visit(curr->num);
-  }
   CostType visitStringSliceWTF(StringSliceWTF* curr) {
     return 8 + visit(curr->ref) + visit(curr->start) + visit(curr->end);
-  }
-  CostType visitStringSliceIter(StringSliceIter* curr) {
-    return 8 + visit(curr->ref) + visit(curr->num);
   }
 
   CostType visitContBind(ContBind* curr) {

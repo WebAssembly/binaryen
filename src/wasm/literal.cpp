@@ -149,9 +149,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
         case HeapType::exn:
           WASM_UNREACHABLE("invalid type");
         case HeapType::string:
-        case HeapType::stringview_wtf8:
-        case HeapType::stringview_wtf16:
-        case HeapType::stringview_iter:
           WASM_UNREACHABLE("TODO: string literals");
       }
     }
@@ -662,10 +659,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
           }
           break;
         }
-        case HeapType::stringview_wtf8:
-        case HeapType::stringview_wtf16:
-        case HeapType::stringview_iter:
-          WASM_UNREACHABLE("TODO: string literals");
       }
     } else if (heapType.isSignature()) {
       o << "funcref(" << literal.getFunc() << ")";
@@ -2684,9 +2677,6 @@ Literal Literal::externalize() const {
                        HeapType::ext);
       }
       case HeapType::string:
-      case HeapType::stringview_wtf8:
-      case HeapType::stringview_wtf16:
-      case HeapType::stringview_iter:
         WASM_UNREACHABLE("TODO: string literals");
       default:
         WASM_UNREACHABLE("unexpected type");

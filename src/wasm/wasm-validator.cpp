@@ -478,13 +478,8 @@ public:
   void visitStringEncode(StringEncode* curr);
   void visitStringConcat(StringConcat* curr);
   void visitStringEq(StringEq* curr);
-  void visitStringAs(StringAs* curr);
-  void visitStringWTF8Advance(StringWTF8Advance* curr);
   void visitStringWTF16Get(StringWTF16Get* curr);
-  void visitStringIterNext(StringIterNext* curr);
-  void visitStringIterMove(StringIterMove* curr);
   void visitStringSliceWTF(StringSliceWTF* curr);
-  void visitStringSliceIter(StringSliceIter* curr);
   void visitContBind(ContBind* curr);
   void visitContNew(ContNew* curr);
   void visitResume(Resume* curr);
@@ -3316,42 +3311,13 @@ void FunctionValidator::visitStringEq(StringEq* curr) {
                "string operations require reference-types [--enable-strings]");
 }
 
-void FunctionValidator::visitStringAs(StringAs* curr) {
-  shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
-               curr,
-               "string operations require reference-types [--enable-strings]");
-}
-
-void FunctionValidator::visitStringWTF8Advance(StringWTF8Advance* curr) {
-  shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
-               curr,
-               "string operations require reference-types [--enable-strings]");
-}
-
 void FunctionValidator::visitStringWTF16Get(StringWTF16Get* curr) {
-  shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
-               curr,
-               "string operations require reference-types [--enable-strings]");
-}
-void FunctionValidator::visitStringIterNext(StringIterNext* curr) {
-  shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
-               curr,
-               "string operations require reference-types [--enable-strings]");
-}
-
-void FunctionValidator::visitStringIterMove(StringIterMove* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
                "string operations require reference-types [--enable-strings]");
 }
 
 void FunctionValidator::visitStringSliceWTF(StringSliceWTF* curr) {
-  shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
-               curr,
-               "string operations require reference-types [--enable-strings]");
-}
-
-void FunctionValidator::visitStringSliceIter(StringSliceIter* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
                "string operations require reference-types [--enable-strings]");

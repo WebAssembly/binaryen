@@ -1547,15 +1547,6 @@ void WasmBinaryWriter::writeType(Type type) {
         case HeapType::string:
           o << S32LEB(BinaryConsts::EncodedType::stringref);
           return;
-        case HeapType::stringview_wtf8:
-          o << S32LEB(BinaryConsts::EncodedType::stringview_wtf8);
-          return;
-        case HeapType::stringview_wtf16:
-          o << S32LEB(BinaryConsts::EncodedType::stringview_wtf16);
-          return;
-        case HeapType::stringview_iter:
-          o << S32LEB(BinaryConsts::EncodedType::stringview_iter);
-          return;
         case HeapType::none:
           o << S32LEB(BinaryConsts::EncodedType::nullref);
           return;
@@ -1667,15 +1658,6 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
       break;
     case HeapType::string:
       ret = BinaryConsts::EncodedHeapType::string;
-      break;
-    case HeapType::stringview_wtf8:
-      ret = BinaryConsts::EncodedHeapType::stringview_wtf8_heap;
-      break;
-    case HeapType::stringview_wtf16:
-      ret = BinaryConsts::EncodedHeapType::stringview_wtf16_heap;
-      break;
-    case HeapType::stringview_iter:
-      ret = BinaryConsts::EncodedHeapType::stringview_iter_heap;
       break;
     case HeapType::none:
       ret = BinaryConsts::EncodedHeapType::none;
@@ -2051,15 +2033,6 @@ bool WasmBinaryReader::getBasicType(int32_t code, Type& out) {
     case BinaryConsts::EncodedType::stringref:
       out = Type(HeapType::string, Nullable);
       return true;
-    case BinaryConsts::EncodedType::stringview_wtf8:
-      out = Type(HeapType::stringview_wtf8, Nullable);
-      return true;
-    case BinaryConsts::EncodedType::stringview_wtf16:
-      out = Type(HeapType::stringview_wtf16, Nullable);
-      return true;
-    case BinaryConsts::EncodedType::stringview_iter:
-      out = Type(HeapType::stringview_iter, Nullable);
-      return true;
     case BinaryConsts::EncodedType::nullref:
       out = Type(HeapType::none, Nullable);
       return true;
@@ -2111,15 +2084,6 @@ bool WasmBinaryReader::getBasicHeapType(int64_t code, HeapType& out) {
       return true;
     case BinaryConsts::EncodedHeapType::string:
       out = HeapType::string;
-      return true;
-    case BinaryConsts::EncodedHeapType::stringview_wtf8_heap:
-      out = HeapType::stringview_wtf8;
-      return true;
-    case BinaryConsts::EncodedHeapType::stringview_wtf16_heap:
-      out = HeapType::stringview_wtf16;
-      return true;
-    case BinaryConsts::EncodedHeapType::stringview_iter_heap:
-      out = HeapType::stringview_iter;
       return true;
     case BinaryConsts::EncodedHeapType::none:
       out = HeapType::none;
@@ -4277,6 +4241,9 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       if (maybeVisitStringNew(curr, opcode)) {
         break;
       }
+      if (maybeVisitStringAsWTF16(curr, opcode)) {
+        break;
+      }
       if (maybeVisitStringConst(curr, opcode)) {
         break;
       }
@@ -4292,25 +4259,10 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       if (maybeVisitStringEq(curr, opcode)) {
         break;
       }
-      if (maybeVisitStringAs(curr, opcode)) {
-        break;
-      }
-      if (maybeVisitStringWTF8Advance(curr, opcode)) {
-        break;
-      }
       if (maybeVisitStringWTF16Get(curr, opcode)) {
         break;
       }
-      if (maybeVisitStringIterNext(curr, opcode)) {
-        break;
-      }
-      if (maybeVisitStringIterMove(curr, opcode)) {
-        break;
-      }
       if (maybeVisitStringSliceWTF(curr, opcode)) {
-        break;
-      }
-      if (maybeVisitStringSliceIter(curr, opcode)) {
         break;
       }
       if (opcode == BinaryConsts::ExternInternalize ||
@@ -7623,6 +7575,19 @@ bool WasmBinaryReader::maybeVisitStringNew(Expression*& out, uint32_t code) {
   return true;
 }
 
+bool WasmBinaryReader::maybeVisitStringAsWTF16(Expression*& out,
+                                               uint32_t code) {
+  if (code != BinaryConsts::StringAsWTF16) {
+    return false;
+  }
+  // Accept but ignore `string.as_wtf16`, parsing the next expression in its
+  // place. We do not support this instruction in the IR, but we need to accept
+  // it in the parser because it is emitted as part of the instruction sequence
+  // for `stringview_wtf16.get_codeunit` and `stringview_wtf16.slice`.
+  readExpression(out);
+  return true;
+}
+
 bool WasmBinaryReader::maybeVisitStringConst(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::StringConst) {
     return false;
@@ -7646,8 +7611,6 @@ bool WasmBinaryReader::maybeVisitStringMeasure(Expression*& out,
     op = StringMeasureWTF16;
   } else if (code == BinaryConsts::StringIsUSV) {
     op = StringMeasureIsUSV;
-  } else if (code == BinaryConsts::StringViewWTF16Length) {
-    op = StringMeasureWTF16View;
   } else if (code == BinaryConsts::StringHash) {
     op = StringMeasureHash;
   } else {
@@ -7728,34 +7691,6 @@ bool WasmBinaryReader::maybeVisitStringEq(Expression*& out, uint32_t code) {
   return true;
 }
 
-bool WasmBinaryReader::maybeVisitStringAs(Expression*& out, uint32_t code) {
-  StringAsOp op;
-  if (code == BinaryConsts::StringAsWTF8) {
-    op = StringAsWTF8;
-  } else if (code == BinaryConsts::StringAsWTF16) {
-    op = StringAsWTF16;
-  } else if (code == BinaryConsts::StringAsIter) {
-    op = StringAsIter;
-  } else {
-    return false;
-  }
-  auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringAs(op, ref);
-  return true;
-}
-
-bool WasmBinaryReader::maybeVisitStringWTF8Advance(Expression*& out,
-                                                   uint32_t code) {
-  if (code != BinaryConsts::StringViewWTF8Advance) {
-    return false;
-  }
-  auto* bytes = popNonVoidExpression();
-  auto* pos = popNonVoidExpression();
-  auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringWTF8Advance(ref, pos, bytes);
-  return true;
-}
-
 bool WasmBinaryReader::maybeVisitStringWTF16Get(Expression*& out,
                                                 uint32_t code) {
   if (code != BinaryConsts::StringViewWTF16GetCodePoint) {
@@ -7767,57 +7702,15 @@ bool WasmBinaryReader::maybeVisitStringWTF16Get(Expression*& out,
   return true;
 }
 
-bool WasmBinaryReader::maybeVisitStringIterNext(Expression*& out,
-                                                uint32_t code) {
-  if (code != BinaryConsts::StringViewIterNext) {
-    return false;
-  }
-  auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringIterNext(ref);
-  return true;
-}
-
-bool WasmBinaryReader::maybeVisitStringIterMove(Expression*& out,
-                                                uint32_t code) {
-  StringIterMoveOp op;
-  if (code == BinaryConsts::StringViewIterAdvance) {
-    op = StringIterMoveAdvance;
-  } else if (code == BinaryConsts::StringViewIterRewind) {
-    op = StringIterMoveRewind;
-  } else {
-    return false;
-  }
-  auto* num = popNonVoidExpression();
-  auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringIterMove(op, ref, num);
-  return true;
-}
-
 bool WasmBinaryReader::maybeVisitStringSliceWTF(Expression*& out,
                                                 uint32_t code) {
-  StringSliceWTFOp op;
-  if (code == BinaryConsts::StringViewWTF8Slice) {
-    op = StringSliceWTF8;
-  } else if (code == BinaryConsts::StringViewWTF16Slice) {
-    op = StringSliceWTF16;
-  } else {
+  if (code != BinaryConsts::StringViewWTF16Slice) {
     return false;
   }
   auto* end = popNonVoidExpression();
   auto* start = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringSliceWTF(op, ref, start, end);
-  return true;
-}
-
-bool WasmBinaryReader::maybeVisitStringSliceIter(Expression*& out,
-                                                 uint32_t code) {
-  if (code != BinaryConsts::StringViewIterSlice) {
-    return false;
-  }
-  auto* num = popNonVoidExpression();
-  auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringSliceIter(ref, num);
+  out = Builder(wasm).makeStringSliceWTF(ref, start, end);
   return true;
 }
 

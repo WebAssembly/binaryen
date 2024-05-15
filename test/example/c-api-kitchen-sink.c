@@ -283,24 +283,6 @@ void test_types() {
   BinaryenTypeExpand(stringref, &valueType);
   assert(valueType == stringref);
 
-  BinaryenType stringview_wtf8_ = BinaryenTypeStringviewWTF8();
-  printf("BinaryenTypeStringviewWTF8: (ptr)\n");
-  assert(BinaryenTypeArity(stringview_wtf8_) == 1);
-  BinaryenTypeExpand(stringview_wtf8_, &valueType);
-  assert(valueType == stringview_wtf8_);
-
-  BinaryenType stringview_wtf16_ = BinaryenTypeStringviewWTF16();
-  printf("BinaryenTypeStringviewWTF16: (ptr)\n");
-  assert(BinaryenTypeArity(stringview_wtf16_) == 1);
-  BinaryenTypeExpand(stringview_wtf16_, &valueType);
-  assert(valueType == stringview_wtf16_);
-
-  BinaryenType stringview_iter_ = BinaryenTypeStringviewIter();
-  printf("BinaryenTypeStringviewIter: (ptr)\n");
-  assert(BinaryenTypeArity(stringview_iter_) == 1);
-  BinaryenTypeExpand(stringview_iter_, &valueType);
-  assert(valueType == stringview_iter_);
-
   BinaryenType nullref = BinaryenTypeNullref();
   printf("BinaryenTypeNullref: (ptr)\n");
   assert(BinaryenTypeArity(nullref) == 1);
@@ -351,12 +333,6 @@ void test_types() {
   printf("BinaryenHeapTypeStruct: %zd\n", BinaryenHeapTypeStruct());
   printf("BinaryenHeapTypeArray: %zd\n", BinaryenHeapTypeArray());
   printf("BinaryenHeapTypeString: %zd\n", BinaryenHeapTypeString());
-  printf("BinaryenHeapTypeStringviewWTF8: %zd\n",
-         BinaryenHeapTypeStringviewWTF8());
-  printf("BinaryenHeapTypeStringviewWTF16: %zd\n",
-         BinaryenHeapTypeStringviewWTF16());
-  printf("BinaryenHeapTypeStringviewIter: %zd\n",
-         BinaryenHeapTypeStringviewIter());
   printf("BinaryenHeapTypeNone: %zd\n", BinaryenHeapTypeNone());
   printf("BinaryenHeapTypeNoext: %zd\n", BinaryenHeapTypeNoext());
   printf("BinaryenHeapTypeNofunc: %zd\n", BinaryenHeapTypeNofunc());
@@ -1287,13 +1263,6 @@ void test_core() {
       module,
       BinaryenStringMeasureIsUSV(),
       BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-    BinaryenStringMeasure(
-      module,
-      BinaryenStringMeasureWTF16View(),
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsWTF16(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()))),
     BinaryenStringEncode(
       module,
       BinaryenStringEncodeUTF8(),
@@ -1356,79 +1325,14 @@ void test_core() {
       BinaryenStringEqCompare(),
       BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
       BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-    BinaryenStringAs(
-      module,
-      BinaryenStringAsWTF8(),
-      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-    BinaryenStringAs(
-      module,
-      BinaryenStringAsWTF16(),
-      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-    BinaryenStringAs(
-      module,
-      BinaryenStringAsIter(),
-      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-    BinaryenStringWTF8Advance(
-      module,
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsWTF8(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-      makeInt32(module, 0),
-      makeInt32(module, 0)),
     BinaryenStringWTF16Get(
       module,
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsWTF16(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-      makeInt32(module, 0)),
-    BinaryenStringIterNext(
-      module,
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsIter(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()))),
-    BinaryenStringIterMove(
-      module,
-      BinaryenStringIterMoveAdvance(),
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsIter(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-      makeInt32(module, 1)),
-    BinaryenStringIterMove(
-      module,
-      BinaryenStringIterMoveRewind(),
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsIter(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-      makeInt32(module, 1)),
-    BinaryenStringSliceWTF(
-      module,
-      BinaryenStringSliceWTF8(),
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsWTF8(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-      makeInt32(module, 0),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
       makeInt32(module, 0)),
     BinaryenStringSliceWTF(
       module,
-      BinaryenStringSliceWTF16(),
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsWTF16(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
       makeInt32(module, 0),
-      makeInt32(module, 0)),
-    BinaryenStringSliceIter(
-      module,
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsIter(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
       makeInt32(module, 0)),
     // Other
     BinaryenNop(module),

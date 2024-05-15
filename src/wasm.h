@@ -592,7 +592,6 @@ enum StringMeasureOp {
   StringMeasureWTF8,
   StringMeasureWTF16,
   StringMeasureIsUSV,
-  StringMeasureWTF16View,
   StringMeasureHash,
 };
 
@@ -610,22 +609,6 @@ enum StringEncodeOp {
 enum StringEqOp {
   StringEqEqual,
   StringEqCompare,
-};
-
-enum StringAsOp {
-  StringAsWTF8,
-  StringAsWTF16,
-  StringAsIter,
-};
-
-enum StringIterMoveOp {
-  StringIterMoveAdvance,
-  StringIterMoveRewind,
-};
-
-enum StringSliceWTFOp {
-  StringSliceWTF8,
-  StringSliceWTF16,
 };
 
 //
@@ -736,13 +719,8 @@ public:
     StringEncodeId,
     StringConcatId,
     StringEqId,
-    StringAsId,
-    StringWTF8AdvanceId,
     StringWTF16GetId,
-    StringIterNextId,
-    StringIterMoveId,
     StringSliceWTFId,
-    StringSliceIterId,
     ContBindId,
     ContNewId,
     ResumeId,
@@ -1908,31 +1886,6 @@ public:
   void finalize();
 };
 
-class StringAs : public SpecificExpression<Expression::StringAsId> {
-public:
-  StringAs() = default;
-  StringAs(MixedArena& allocator) {}
-
-  StringAsOp op;
-
-  Expression* ref;
-
-  void finalize();
-};
-
-class StringWTF8Advance
-  : public SpecificExpression<Expression::StringWTF8AdvanceId> {
-public:
-  StringWTF8Advance() = default;
-  StringWTF8Advance(MixedArena& allocator) {}
-
-  Expression* ref;
-  Expression* pos;
-  Expression* bytes;
-
-  void finalize();
-};
-
 class StringWTF16Get : public SpecificExpression<Expression::StringWTF16GetId> {
 public:
   StringWTF16Get() = default;
@@ -1944,54 +1897,14 @@ public:
   void finalize();
 };
 
-class StringIterNext : public SpecificExpression<Expression::StringIterNextId> {
-public:
-  StringIterNext() = default;
-  StringIterNext(MixedArena& allocator) {}
-
-  Expression* ref;
-
-  void finalize();
-};
-
-class StringIterMove : public SpecificExpression<Expression::StringIterMoveId> {
-public:
-  StringIterMove() = default;
-  StringIterMove(MixedArena& allocator) {}
-
-  // Whether the movement is to advance or reverse.
-  StringIterMoveOp op;
-
-  Expression* ref;
-
-  // How many codepoints to advance or reverse.
-  Expression* num;
-
-  void finalize();
-};
-
 class StringSliceWTF : public SpecificExpression<Expression::StringSliceWTFId> {
 public:
   StringSliceWTF() = default;
   StringSliceWTF(MixedArena& allocator) {}
 
-  StringSliceWTFOp op;
-
   Expression* ref;
   Expression* start;
   Expression* end;
-
-  void finalize();
-};
-
-class StringSliceIter
-  : public SpecificExpression<Expression::StringSliceIterId> {
-public:
-  StringSliceIter() = default;
-  StringSliceIter(MixedArena& allocator) {}
-
-  Expression* ref;
-  Expression* num;
 
   void finalize();
 };

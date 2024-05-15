@@ -71,10 +71,8 @@
  ;; CHECK-NEXT:  (i32.const 7)
  ;; CHECK-NEXT: )
  (func $length (result i32)
-  (stringview_wtf16.length
-   (string.as_wtf16
-    (string.const "1234567")
-   )
+  (string.measure_wtf16
+   (string.const "1234567")
   )
  )
 
@@ -82,11 +80,9 @@
  ;; CHECK-NEXT:  (i32.const 8)
  ;; CHECK-NEXT: )
  (func $length-unicode (result i32)
-  (stringview_wtf16.length
-   (string.as_wtf16
-    ;; $_£_€_𐍈 (the last character is encoded as a surrogate pair)
-    (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
-   )
+  (string.measure_wtf16
+   ;; $_£_€_𐍈 (the last character is encoded as a surrogate pair)
+   (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
   )
  )
 
@@ -96,10 +92,8 @@
  (func $get_codepoint (result i32)
   ;; Returns 95 ('_').
   (stringview_wtf16.get_codeunit
-   (string.as_wtf16
-    ;; $_£_€_𐍈
-    (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
-   )
+   ;; $_£_€_𐍈
+   (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
    (i32.const 1)
   )
  )
@@ -110,10 +104,8 @@
  (func $get_codepoint-unicode (export "get_codepoint-unicode") (result i32)
   ;; Returns 8364 ('€')
   (stringview_wtf16.get_codeunit
-   (string.as_wtf16
-    ;; $_£_€_𐍈
-    (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
-   )
+   ;; $_£_€_𐍈
+   (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
    (i32.const 4)
   )
  )
@@ -124,10 +116,8 @@
  (func $get_codepoint-surrogate (export "get_codepoint-surrogate") (result i32)
   ;; Returns 0xd800 (the high surrogate in '𐍈')
   (stringview_wtf16.get_codeunit
-   (string.as_wtf16
-    ;; $_£_€_𐍈
-    (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
-   )
+   ;; $_£_€_𐍈
+   (string.const "$_\C2\A3_\E2\82\AC_\F0\90\8D\88")
    (i32.const 6)
   )
  )
@@ -217,9 +207,7 @@
  (func $slice (export "slice") (result (ref string))
   ;; Slicing [3:6] here should definitely output "def".
   (stringview_wtf16.slice
-   (string.as_wtf16
-    (string.const "abcdefgh")
-   )
+   (string.const "abcdefgh")
    (i32.const 3)
    (i32.const 6)
   )
@@ -231,9 +219,7 @@
  (func $slice-unicode (export "slice-unicode") (result (ref string))
   (stringview_wtf16.slice
    ;; abcd£fgh
-   (string.as_wtf16
-    (string.const "abcd\C2\A3fgh")
-   )
+   (string.const "abcd\C2\A3fgh")
    (i32.const 3)
    (i32.const 6)
   )
