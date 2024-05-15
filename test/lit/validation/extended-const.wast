@@ -4,8 +4,8 @@
 ;; RUN: wasm-opt %s -all -o - -S | filecheck %s --check-prefix EXTENDED
 
 ;; NO-EXTENDED: unexpected false: global init must be constant
-;; NO-EXTENDED: unexpected false: memory segment offset should be constant
-;; NO-EXTENDED: unexpected false: table segment offset should be constant
+;; NO-EXTENDED: unexpected false: memory segment offset must be constant
+;; NO-EXTENDED: unexpected false: table segment offset must be constant
 
 ;; EXTENDED: (import "env" "global" (global $gimport$0 i32))
 ;; EXTENDED: (global $1 i32 (i32.add

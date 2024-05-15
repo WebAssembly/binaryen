@@ -851,8 +851,6 @@ void TableSize::finalize() {
 void TableGrow::finalize() {
   if (delta->type == Type::unreachable || value->type == Type::unreachable) {
     type = Type::unreachable;
-  } else {
-    type = Type::i32;
   }
 }
 
