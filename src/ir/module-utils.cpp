@@ -60,7 +60,9 @@ Function* copyFunction(Function* func,
   // Update file indices if needed
   if (fileIndexMap) {
     for (auto& iter : ret->debugLocations) {
-      iter.second.fileIndex = (*fileIndexMap)[iter.second.fileIndex];
+      if (iter.second) {
+        iter.second->fileIndex = (*fileIndexMap)[iter.second->fileIndex];
+      }
     }
     updateLocationSet(ret->prologLocation, *fileIndexMap);
     updateLocationSet(ret->epilogLocation, *fileIndexMap);

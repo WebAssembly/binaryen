@@ -58,7 +58,7 @@ public:
 
   // Set the debug location to be attached to the next visited, created, or
   // pushed instruction.
-  void setDebugLocation(const Function::DebugLocation&);
+  void setDebugLocation(const std::optional<Function::DebugLocation>&);
 
   // Handle the boundaries of control flow structures. Users may choose to use
   // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
@@ -206,19 +206,16 @@ public:
   [[nodiscard]] Result<> makeArrayInitData(HeapType type, Name data);
   [[nodiscard]] Result<> makeArrayInitElem(HeapType type, Name elem);
   [[nodiscard]] Result<> makeRefAs(RefAsOp op);
-  [[nodiscard]] Result<> makeStringNew(StringNewOp op, bool try_, Name mem);
+  [[nodiscard]] Result<> makeStringNew(StringNewOp op);
   [[nodiscard]] Result<> makeStringConst(Name string);
   [[nodiscard]] Result<> makeStringMeasure(StringMeasureOp op);
-  [[nodiscard]] Result<> makeStringEncode(StringEncodeOp op, Name mem);
+  [[nodiscard]] Result<> makeStringEncode(StringEncodeOp op);
   [[nodiscard]] Result<> makeStringConcat();
   [[nodiscard]] Result<> makeStringEq(StringEqOp op);
-  [[nodiscard]] Result<> makeStringAs(StringAsOp op);
   [[nodiscard]] Result<> makeStringWTF8Advance();
   [[nodiscard]] Result<> makeStringWTF16Get();
   [[nodiscard]] Result<> makeStringIterNext();
-  [[nodiscard]] Result<> makeStringIterMove(StringIterMoveOp op);
-  [[nodiscard]] Result<> makeStringSliceWTF(StringSliceWTFOp op);
-  [[nodiscard]] Result<> makeStringSliceIter();
+  [[nodiscard]] Result<> makeStringSliceWTF();
   [[nodiscard]] Result<> makeContBind(HeapType contTypeBefore,
                                       HeapType contTypeAfter);
   [[nodiscard]] Result<> makeContNew(HeapType ct);
@@ -238,7 +235,17 @@ private:
   Module& wasm;
   Function* func;
   Builder builder;
-  std::optional<Function::DebugLocation> debugLoc;
+
+  // The location lacks debug info as it was marked as not having it.
+  struct NoDebug : public std::monostate {};
+  // The location lacks debug info, but was not marked as not having
+  // it, and it can receive it from the parent or its previous sibling
+  // (if it has one).
+  struct CanReceiveDebug : public std::monostate {};
+  using DebugVariant =
+    std::variant<NoDebug, CanReceiveDebug, Function::DebugLocation>;
+
+  DebugVariant debugLoc;
 
   struct ChildPopper;
 

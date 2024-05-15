@@ -369,10 +369,7 @@ enum EncodedType {
   exnref = -0x17,    // 0x69
   nullexnref = -0xc, // 0x74
   // string reference types
-  stringref = -0x19,        // 0x67
-  stringview_wtf8 = -0x1a,  // 0x66
-  stringview_wtf16 = -0x1e, // 0x62
-  stringview_iter = -0x1f,  // 0x61
+  stringref = -0x19, // 0x67
   // type forms
   Func = -0x20,     // 0x60
   Cont = -0x23,     // 0x5d
@@ -402,12 +399,6 @@ enum EncodedHeapType {
   struct_ = -0x15, // 0x6b
   array = -0x16,   // 0x6a
   string = -0x19,  // 0x67
-  // stringview/iter constants are identical to type, and cannot be duplicated
-  // here as that would be a compiler error, so add _heap suffixes. See
-  // https://github.com/WebAssembly/stringref/issues/12
-  stringview_wtf8_heap = -0x1a,  // 0x66
-  stringview_wtf16_heap = -0x1e, // 0x62
-  stringview_iter_heap = -0x1f,  // 0x61
 };
 
 namespace CustomSections {
@@ -1130,46 +1121,22 @@ enum ASTNodes {
 
   // stringref opcodes
 
-  StringNewUTF8 = 0x80,
-  StringNewWTF16 = 0x81,
   StringConst = 0x82,
   StringMeasureUTF8 = 0x83,
-  StringMeasureWTF8 = 0x84,
   StringMeasureWTF16 = 0x85,
-  StringEncodeUTF8 = 0x86,
-  StringEncodeWTF16 = 0x87,
   StringConcat = 0x88,
   StringEq = 0x89,
   StringIsUSV = 0x8a,
-  StringNewLossyUTF8 = 0x8b,
-  StringNewWTF8 = 0x8c,
-  StringEncodeLossyUTF8 = 0x8d,
-  StringEncodeWTF8 = 0x8e,
-  StringNewUTF8Try = 0x8f,
-  StringAsWTF8 = 0x90,
-  StringViewWTF8Advance = 0x91,
-  StringViewWTF8Slice = 0x93,
   StringAsWTF16 = 0x98,
-  StringViewWTF16Length = 0x99,
   StringViewWTF16GetCodePoint = 0x9a,
   StringViewWTF16Slice = 0x9c,
-  StringAsIter = 0xa0,
-  StringViewIterNext = 0xa1,
-  StringViewIterAdvance = 0xa2,
-  StringViewIterRewind = 0xa3,
-  StringViewIterSlice = 0xa4,
   StringCompare = 0xa8,
   StringFromCodePoint = 0xa9,
   StringHash = 0xaa,
-  StringNewUTF8Array = 0xb0,
   StringNewWTF16Array = 0xb1,
-  StringEncodeUTF8Array = 0xb2,
   StringEncodeWTF16Array = 0xb3,
   StringNewLossyUTF8Array = 0xb4,
-  StringNewWTF8Array = 0xb5,
   StringEncodeLossyUTF8Array = 0xb6,
-  StringEncodeWTF8Array = 0xb7,
-  StringNewUTF8ArrayTry = 0xb8,
 
   // typed continuation opcodes
   ContNew = 0xe0,
@@ -1777,18 +1744,14 @@ public:
   bool maybeVisitArrayFill(Expression*& out, uint32_t code);
   bool maybeVisitArrayInit(Expression*& out, uint32_t code);
   bool maybeVisitStringNew(Expression*& out, uint32_t code);
+  bool maybeVisitStringAsWTF16(Expression*& out, uint32_t code);
   bool maybeVisitStringConst(Expression*& out, uint32_t code);
   bool maybeVisitStringMeasure(Expression*& out, uint32_t code);
   bool maybeVisitStringEncode(Expression*& out, uint32_t code);
   bool maybeVisitStringConcat(Expression*& out, uint32_t code);
   bool maybeVisitStringEq(Expression*& out, uint32_t code);
-  bool maybeVisitStringAs(Expression*& out, uint32_t code);
-  bool maybeVisitStringWTF8Advance(Expression*& out, uint32_t code);
   bool maybeVisitStringWTF16Get(Expression*& out, uint32_t code);
-  bool maybeVisitStringIterNext(Expression*& out, uint32_t code);
-  bool maybeVisitStringIterMove(Expression*& out, uint32_t code);
   bool maybeVisitStringSliceWTF(Expression*& out, uint32_t code);
-  bool maybeVisitStringSliceIter(Expression*& out, uint32_t code);
   void visitSelect(Select* curr, uint8_t code);
   void visitReturn(Return* curr);
   void visitMemorySize(MemorySize* curr);

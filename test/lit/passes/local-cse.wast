@@ -11,7 +11,9 @@
 
   ;; CHECK:      (type $2 (func (param i32)))
 
-  ;; CHECK:      (type $3 (func (result i64)))
+  ;; CHECK:      (type $3 (func (result i32)))
+
+  ;; CHECK:      (type $4 (func (result i64)))
 
   ;; CHECK:      (memory $0 100 100)
 
@@ -354,6 +356,38 @@
         )
       )
     )
+  )
+
+  ;; CHECK:      (func $nested-calls (result i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (call $nested-calls)
+  ;; CHECK-NEXT:    (call $nested-calls)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.add
+  ;; CHECK-NEXT:    (call $nested-calls)
+  ;; CHECK-NEXT:    (call $nested-calls)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $nested-calls (result i32)
+    ;; Operations that include nested effects are ignored.
+    (drop
+      (i32.add
+        (call $nested-calls)
+        (call $nested-calls)
+      )
+    )
+    (drop
+      (i32.add
+        (call $nested-calls)
+        (call $nested-calls)
+      )
+    )
+    (unreachable)
   )
 
   ;; CHECK:      (func $many-sets (result i64)

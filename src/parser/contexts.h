@@ -217,9 +217,6 @@ template<typename Ctx> struct TypeParserCtx {
   HeapTypeT makeArrayType() { return HeapType::array; }
   HeapTypeT makeExnType() { return HeapType::exn; }
   HeapTypeT makeStringType() { return HeapType::string; }
-  HeapTypeT makeStringViewWTF8Type() { return HeapType::stringview_wtf8; }
-  HeapTypeT makeStringViewWTF16Type() { return HeapType::stringview_wtf16; }
-  HeapTypeT makeStringViewIterType() { return HeapType::stringview_iter; }
   HeapTypeT makeContType() { return HeapType::cont; }
   HeapTypeT makeNoneType() { return HeapType::none; }
   HeapTypeT makeNoextType() { return HeapType::noext; }
@@ -775,8 +772,7 @@ struct NullInstrParserCtx {
   Result<> makeRefAs(Index, const std::vector<Annotation>&, RefAsOp) {
     return Ok{};
   }
-  Result<> makeStringNew(
-    Index, const std::vector<Annotation>&, StringNewOp, bool, MemoryIdxT*) {
+  Result<> makeStringNew(Index, const std::vector<Annotation>&, StringNewOp) {
     return Ok{};
   }
   Result<>
@@ -787,19 +783,14 @@ struct NullInstrParserCtx {
   makeStringMeasure(Index, const std::vector<Annotation>&, StringMeasureOp) {
     return Ok{};
   }
-  Result<> makeStringEncode(Index,
-                            const std::vector<Annotation>&,
-                            StringEncodeOp,
-                            MemoryIdxT*) {
+  Result<>
+  makeStringEncode(Index, const std::vector<Annotation>&, StringEncodeOp) {
     return Ok{};
   }
   Result<> makeStringConcat(Index, const std::vector<Annotation>&) {
     return Ok{};
   }
   Result<> makeStringEq(Index, const std::vector<Annotation>&, StringEqOp) {
-    return Ok{};
-  }
-  Result<> makeStringAs(Index, const std::vector<Annotation>&, StringAsOp) {
     return Ok{};
   }
   Result<> makeStringWTF8Advance(Index, const std::vector<Annotation>&) {
@@ -811,15 +802,7 @@ struct NullInstrParserCtx {
   Result<> makeStringIterNext(Index, const std::vector<Annotation>&) {
     return Ok{};
   }
-  Result<>
-  makeStringIterMove(Index, const std::vector<Annotation>&, StringIterMoveOp) {
-    return Ok{};
-  }
-  Result<>
-  makeStringSliceWTF(Index, const std::vector<Annotation>&, StringSliceWTFOp) {
-    return Ok{};
-  }
-  Result<> makeStringSliceIter(Index, const std::vector<Annotation>&) {
+  Result<> makeStringSliceWTF(Index, const std::vector<Annotation>&) {
     return Ok{};
   }
   template<typename HeapTypeT>
@@ -1731,30 +1714,34 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       return;
     }
     Lexer lexer(annotation->contents);
-    auto contents = lexer.takeKeyword();
-    if (!contents || !lexer.empty()) {
+    if (lexer.empty()) {
+      irBuilder.setDebugLocation(std::nullopt);
       return;
     }
 
-    auto fileSize = contents->find(':');
-    if (fileSize == contents->npos) {
-      return;
-    }
-    auto file = contents->substr(0, fileSize);
-    contents = contents->substr(fileSize + 1);
+    auto contents = lexer.next();
 
-    auto lineSize = contents->find(':');
-    if (fileSize == contents->npos) {
+    auto fileSize = contents.find(':');
+    if (fileSize == 0 || fileSize == contents.npos) {
       return;
     }
-    auto line = Lexer(contents->substr(0, lineSize)).takeU32();
-    if (!line) {
-      return;
-    }
-    contents = contents->substr(lineSize + 1);
+    auto file = contents.substr(0, fileSize);
+    contents = contents.substr(fileSize + 1);
 
-    auto col = Lexer(*contents).takeU32();
-    if (!col) {
+    auto lineSize = contents.find(':');
+    if (lineSize == contents.npos) {
+      return;
+    }
+    lexer = Lexer(contents.substr(0, lineSize));
+    auto line = lexer.takeU32();
+    if (!line || !lexer.empty()) {
+      return;
+    }
+    contents = contents.substr(lineSize + 1);
+
+    lexer = Lexer(contents);
+    auto col = lexer.takeU32();
+    if (!col || !lexer.empty()) {
       return;
     }
 
@@ -1766,7 +1753,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       assert(wasm.debugInfoFileNames.size() == it->second);
       wasm.debugInfoFileNames.push_back(std::string(file));
     }
-    irBuilder.setDebugLocation({it->second, *line, *col});
+    irBuilder.setDebugLocation(
+      Function::DebugLocation({it->second, *line, *col}));
   }
 
   Result<> makeBlock(Index pos,
@@ -2486,24 +2474,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeStringNew(Index pos,
                          const std::vector<Annotation>& annotations,
-                         StringNewOp op,
-                         bool try_,
-                         Name* mem) {
-    Name memName;
-    switch (op) {
-      case StringNewUTF8:
-      case StringNewWTF8:
-      case StringNewLossyUTF8:
-      case StringNewWTF16: {
-        auto m = getMemory(pos, mem);
-        CHECK_ERR(m);
-        memName = *m;
-        break;
-      }
-      default:
-        break;
-    }
-    return withLoc(pos, irBuilder.makeStringNew(op, try_, memName));
+                         StringNewOp op) {
+    return withLoc(pos, irBuilder.makeStringNew(op));
   }
 
   Result<> makeStringConst(Index pos,
@@ -2526,23 +2498,8 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> makeStringEncode(Index pos,
                             const std::vector<Annotation>& annotations,
-                            StringEncodeOp op,
-                            Name* mem) {
-    Name memName;
-    switch (op) {
-      case StringEncodeUTF8:
-      case StringEncodeLossyUTF8:
-      case StringEncodeWTF8:
-      case StringEncodeWTF16: {
-        auto m = getMemory(pos, mem);
-        CHECK_ERR(m);
-        memName = *m;
-        break;
-      }
-      default:
-        break;
-    }
-    return withLoc(pos, irBuilder.makeStringEncode(op, memName));
+                            StringEncodeOp op) {
+    return withLoc(pos, irBuilder.makeStringEncode(op));
   }
 
   Result<> makeStringConcat(Index pos,
@@ -2556,42 +2513,14 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeStringEq(op));
   }
 
-  Result<> makeStringAs(Index pos,
-                        const std::vector<Annotation>& annotations,
-                        StringAsOp op) {
-    return withLoc(pos, irBuilder.makeStringAs(op));
-  }
-
-  Result<> makeStringWTF8Advance(Index pos,
-                                 const std::vector<Annotation>& annotations) {
-    return withLoc(pos, irBuilder.makeStringWTF8Advance());
-  }
-
   Result<> makeStringWTF16Get(Index pos,
                               const std::vector<Annotation>& annotations) {
     return withLoc(pos, irBuilder.makeStringWTF16Get());
   }
 
-  Result<> makeStringIterNext(Index pos,
-                              const std::vector<Annotation>& annotations) {
-    return withLoc(pos, irBuilder.makeStringIterNext());
-  }
-
-  Result<> makeStringIterMove(Index pos,
-                              const std::vector<Annotation>& annotations,
-                              StringIterMoveOp op) {
-    return withLoc(pos, irBuilder.makeStringIterMove(op));
-  }
-
   Result<> makeStringSliceWTF(Index pos,
-                              const std::vector<Annotation>& annotations,
-                              StringSliceWTFOp op) {
-    return withLoc(pos, irBuilder.makeStringSliceWTF(op));
-  }
-
-  Result<> makeStringSliceIter(Index pos,
-                               const std::vector<Annotation>& annotations) {
-    return withLoc(pos, irBuilder.makeStringSliceIter());
+                              const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makeStringSliceWTF());
   }
 
   Result<> makeContBind(Index pos,

@@ -171,21 +171,8 @@
   (func $get_codeunit (export "get_codeunit") (result i32)
     ;; Reads 'c' which is code 99.
     (stringview_wtf16.get_codeunit
-      (string.as_wtf16
-        (string.const "abcdefg")
-      )
+      (string.const "abcdefg")
       (i32.const 2)
-    )
-  )
-
-  ;; CHECK:      [fuzz-exec] calling get_length
-  ;; CHECK-NEXT: [fuzz-exec] note result: get_length => 7
-  (func $get_length (export "get_length") (result i32)
-    ;; This should return 7.
-    (stringview_wtf16.length
-      (string.as_wtf16
-        (string.const "1234567")
-      )
     )
   )
 
@@ -280,9 +267,7 @@
   (func $slice (export "slice") (result (ref string))
     ;; Slicing [3:6] here should definitely output "def".
     (stringview_wtf16.slice
-      (string.as_wtf16
-        (string.const "abcdefgh")
-      )
+      (string.const "abcdefgh")
       (i32.const 3)
       (i32.const 6)
     )
@@ -293,9 +278,7 @@
   (func $slice-big (export "slice-big") (result (ref string))
     ;; Slicing [3:huge unsigned value] leads to slicing til the end: "defgh".
     (stringview_wtf16.slice
-      (string.as_wtf16
-        (string.const "abcdefgh")
-      )
+      (string.const "abcdefgh")
       (i32.const 3)
       (i32.const -1)
     )
@@ -400,9 +383,7 @@
   (func $slice-unicode (export "slice-unicode") (result (ref string))
     (stringview_wtf16.slice
       ;; abcd£fgh
-      (string.as_wtf16
-        (string.const "abcd\C2\A3fgh")
-      )
+      (string.const "abcd\C2\A3fgh")
       (i32.const 3)
       (i32.const 6)
     )
@@ -535,9 +516,6 @@
 ;; CHECK:      [fuzz-exec] calling get_codeunit
 ;; CHECK-NEXT: [fuzz-exec] note result: get_codeunit => 99
 
-;; CHECK:      [fuzz-exec] calling get_length
-;; CHECK-NEXT: [fuzz-exec] note result: get_length => 7
-
 ;; CHECK:      [fuzz-exec] calling encode
 ;; CHECK-NEXT: [LoggingExternalInterface logging 3]
 ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
@@ -629,7 +607,6 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.4
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.5
 ;; CHECK-NEXT: [fuzz-exec] comparing get_codeunit
-;; CHECK-NEXT: [fuzz-exec] comparing get_length
 ;; CHECK-NEXT: [fuzz-exec] comparing invalid_code_point
 ;; CHECK-NEXT: [fuzz-exec] comparing isolated_high_code_point
 ;; CHECK-NEXT: [fuzz-exec] comparing isolated_low_code_point

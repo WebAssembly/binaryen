@@ -168,21 +168,37 @@ Result<Expression*> IRBuilder::build() {
   return expr;
 }
 
-void IRBuilder::setDebugLocation(const Function::DebugLocation& loc) {
-  DBG(std::cerr << "setting debugloc " << loc.fileIndex << ":" << loc.lineNumber
-                << ":" << loc.columnNumber << "\n";);
-  debugLoc = loc;
+void IRBuilder::setDebugLocation(
+  const std::optional<Function::DebugLocation>& loc) {
+  if (loc) {
+    DBG(std::cerr << "setting debugloc " << loc->fileIndex << ":"
+                  << loc->lineNumber << ":" << loc->columnNumber << "\n";);
+  } else {
+    DBG(std::cerr << "setting debugloc to none\n";);
+  }
+  if (loc) {
+    debugLoc = *loc;
+  } else {
+    debugLoc = NoDebug();
+  }
 }
 
 void IRBuilder::applyDebugLoc(Expression* expr) {
-  if (debugLoc) {
+  if (!std::get_if<CanReceiveDebug>(&debugLoc)) {
     if (func) {
-      DBG(std::cerr << "applying debugloc " << debugLoc->fileIndex << ":"
-                    << debugLoc->lineNumber << ":" << debugLoc->columnNumber
-                    << " to expression " << ShallowExpression{expr} << "\n");
-      func->debugLocations[expr] = *debugLoc;
+      if (auto* loc = std::get_if<Function::DebugLocation>(&debugLoc)) {
+        DBG(std::cerr << "applying debugloc " << loc->fileIndex << ":"
+                      << loc->lineNumber << ":" << loc->columnNumber
+                      << " to expression " << ShallowExpression{expr} << "\n");
+        func->debugLocations[expr] = *loc;
+      } else {
+        assert(std::get_if<NoDebug>(&debugLoc));
+        DBG(std::cerr << "applying debugloc to expression "
+                      << ShallowExpression{expr} << "\n");
+        func->debugLocations[expr] = std::nullopt;
+      }
     }
-    debugLoc.reset();
+    debugLoc = CanReceiveDebug();
   }
 }
 
@@ -677,10 +693,10 @@ Result<> IRBuilder::visitFunctionStart(Function* func) {
   if (!scopeStack.empty()) {
     return Err{"unexpected start of function"};
   }
-  if (debugLoc) {
-    func->prologLocation.insert(*debugLoc);
-    debugLoc.reset();
+  if (auto* loc = std::get_if<Function::DebugLocation>(&debugLoc)) {
+    func->prologLocation.insert(*loc);
   }
+  debugLoc = CanReceiveDebug();
   scopeStack.push_back(ScopeCtx::makeFunc(func));
   this->func = func;
   return Ok{};
@@ -718,12 +734,13 @@ Result<> IRBuilder::visitTryTableStart(TryTable* trytable, Name label) {
 }
 
 Result<Expression*> IRBuilder::finishScope(Block* block) {
-  if (debugLoc) {
-    DBG(std::cerr << "discarding debugloc " << debugLoc->fileIndex << ":"
-                  << debugLoc->lineNumber << ":" << debugLoc->columnNumber
-                  << "\n");
+#if IR_BUILDER_DEBUG
+  if (auto* loc = std::get_if<Function::DebugLocation>(&debugLoc)) {
+    std::cerr << "discarding debugloc " << loc->fileIndex << ":"
+              << loc->lineNumber << ":" << loc->columnNumber << "\n";
   }
-  debugLoc.reset();
+#endif
+  debugLoc = CanReceiveDebug();
 
   if (scopeStack.empty() || scopeStack.back().isNone()) {
     return Err{"unexpected end of scope"};
@@ -913,10 +930,12 @@ Result<> IRBuilder::visitEnd() {
   if (scope.isNone()) {
     return Err{"unexpected end"};
   }
-  if (auto* func = scope.getFunction(); func && debugLoc) {
-    func->epilogLocation.insert(*debugLoc);
-    debugLoc.reset();
+  if (auto* func = scope.getFunction(); func) {
+    if (auto* loc = std::get_if<Function::DebugLocation>(&debugLoc)) {
+      func->epilogLocation.insert(*loc);
+    }
   }
+  debugLoc = CanReceiveDebug();
   auto expr = finishScope(scope.getBlock());
   CHECK_ERR(expr);
 
@@ -1785,35 +1804,21 @@ Result<> IRBuilder::makeRefAs(RefAsOp op) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeStringNew(StringNewOp op, bool try_, Name mem) {
+Result<> IRBuilder::makeStringNew(StringNewOp op) {
   StringNew curr;
   curr.op = op;
-  // TODO: Store the memory in the IR.
-  switch (op) {
-    case StringNewUTF8:
-    case StringNewWTF8:
-    case StringNewLossyUTF8:
-    case StringNewWTF16:
-      CHECK_ERR(visitStringNew(&curr));
-      push(builder.makeStringNew(op, curr.ptr, curr.length, try_));
-      return Ok{};
-    case StringNewUTF8Array:
-    case StringNewWTF8Array:
-    case StringNewLossyUTF8Array:
-    case StringNewWTF16Array:
-      // There's no type annotation on these instructions due to a bug in the
-      // stringref proposal, so we just fudge it and pass `array` instead of a
-      // defined heap type. This will allow us to pop a child with an invalid
-      // array type, but that's just too bad.
-      CHECK_ERR(ChildPopper{*this}.visitStringNew(&curr, HeapType::array));
-      push(builder.makeStringNew(op, curr.ptr, curr.start, curr.end, try_));
-      return Ok{};
-    case StringNewFromCodePoint:
-      CHECK_ERR(visitStringNew(&curr));
-      push(builder.makeStringNew(op, curr.ptr, nullptr, try_));
-      return Ok{};
+  if (op == StringNewFromCodePoint) {
+    CHECK_ERR(visitStringNew(&curr));
+    push(builder.makeStringNew(op, curr.ref));
+    return Ok{};
   }
-  WASM_UNREACHABLE("unexpected op");
+  // There's no type annotation on these instructions due to a bug in the
+  // stringref proposal, so we just fudge it and pass `array` instead of a
+  // defined heap type. This will allow us to pop a child with an invalid
+  // array type, but that's just too bad.
+  CHECK_ERR(ChildPopper{*this}.visitStringNew(&curr, HeapType::array));
+  push(builder.makeStringNew(op, curr.ref, curr.start, curr.end));
+  return Ok{};
 }
 
 Result<> IRBuilder::makeStringConst(Name string) {
@@ -1829,33 +1834,16 @@ Result<> IRBuilder::makeStringMeasure(StringMeasureOp op) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeStringEncode(StringEncodeOp op, Name mem) {
+Result<> IRBuilder::makeStringEncode(StringEncodeOp op) {
   StringEncode curr;
   curr.op = op;
-  // TODO: Store the memory in the IR.
-  switch (op) {
-    case StringEncodeUTF8:
-    case StringEncodeLossyUTF8:
-    case StringEncodeWTF8:
-    case StringEncodeWTF16: {
-      CHECK_ERR(visitStringEncode(&curr));
-      push(builder.makeStringEncode(op, curr.ref, curr.ptr, curr.start));
-      return Ok{};
-    }
-    case StringEncodeUTF8Array:
-    case StringEncodeLossyUTF8Array:
-    case StringEncodeWTF8Array:
-    case StringEncodeWTF16Array: {
-      // There's no type annotation on these instructions due to a bug in the
-      // stringref proposal, so we just fudge it and pass `array` instead of a
-      // defined heap type. This will allow us to pop a child with an invalid
-      // array type, but that's just too bad.
-      CHECK_ERR(ChildPopper{*this}.visitStringEncode(&curr, HeapType::array));
-      push(builder.makeStringEncode(op, curr.ref, curr.ptr, curr.start));
-      return Ok{};
-    }
-  }
-  WASM_UNREACHABLE("unexpected op");
+  // There's no type annotation on these instructions due to a bug in the
+  // stringref proposal, so we just fudge it and pass `array` instead of a
+  // defined heap type. This will allow us to pop a child with an invalid
+  // array type, but that's just too bad.
+  CHECK_ERR(ChildPopper{*this}.visitStringEncode(&curr, HeapType::array));
+  push(builder.makeStringEncode(op, curr.str, curr.array, curr.start));
+  return Ok{};
 }
 
 Result<> IRBuilder::makeStringConcat() {
@@ -1872,20 +1860,6 @@ Result<> IRBuilder::makeStringEq(StringEqOp op) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeStringAs(StringAsOp op) {
-  StringAs curr;
-  CHECK_ERR(visitStringAs(&curr));
-  push(builder.makeStringAs(op, curr.ref));
-  return Ok{};
-}
-
-Result<> IRBuilder::makeStringWTF8Advance() {
-  StringWTF8Advance curr;
-  CHECK_ERR(visitStringWTF8Advance(&curr));
-  push(builder.makeStringWTF8Advance(curr.ref, curr.pos, curr.bytes));
-  return Ok{};
-}
-
 Result<> IRBuilder::makeStringWTF16Get() {
   StringWTF16Get curr;
   CHECK_ERR(visitStringWTF16Get(&curr));
@@ -1893,32 +1867,10 @@ Result<> IRBuilder::makeStringWTF16Get() {
   return Ok{};
 }
 
-Result<> IRBuilder::makeStringIterNext() {
-  StringIterNext curr;
-  CHECK_ERR(visitStringIterNext(&curr));
-  push(builder.makeStringIterNext(curr.ref));
-  return Ok{};
-}
-
-Result<> IRBuilder::makeStringIterMove(StringIterMoveOp op) {
-  StringIterMove curr;
-  CHECK_ERR(visitStringIterMove(&curr));
-  push(builder.makeStringIterMove(op, curr.ref, curr.num));
-  return Ok{};
-}
-
-Result<> IRBuilder::makeStringSliceWTF(StringSliceWTFOp op) {
+Result<> IRBuilder::makeStringSliceWTF() {
   StringSliceWTF curr;
-  curr.op = op;
   CHECK_ERR(visitStringSliceWTF(&curr));
-  push(builder.makeStringSliceWTF(op, curr.ref, curr.start, curr.end));
-  return Ok{};
-}
-
-Result<> IRBuilder::makeStringSliceIter() {
-  StringSliceIter curr;
-  CHECK_ERR(visitStringSliceIter(&curr));
-  push(builder.makeStringSliceIter(curr.ref, curr.num));
+  push(builder.makeStringSliceWTF(curr.ref, curr.start, curr.end));
   return Ok{};
 }
 

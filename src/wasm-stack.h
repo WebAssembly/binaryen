@@ -155,10 +155,15 @@ private:
   // Return the type and number of required scratch locals.
   InsertOrderedMap<Type, Index> countScratchLocals();
 
-  // local.get, local.tee, and glboal.get expressions that will be followed by
+  // local.get, local.tee, and global.get expressions that will be followed by
   // tuple.extracts. We can optimize these by getting only the local for the
   // extracted index.
   std::unordered_map<Expression*, Index> extractedGets;
+
+  // As an optimization, we do not need to use scratch locals for StringWTF16Get
+  // and StringSliceWTF if their non-string operands are already LocalGets.
+  // Record those LocalGets here.
+  std::unordered_set<LocalGet*> deferredGets;
 
   // Track which br_ifs need handling of their output values, which is the case
   // when they have a value that is more refined than the wasm type system
@@ -558,6 +563,7 @@ private:
   void removeAt(Index i);
   Index getNumConsumedValues(StackInst* inst);
   bool canRemoveSetGetPair(Index setIndex, Index getIndex);
+  std::unordered_set<LocalGet*> findStringViewDeferredGets();
 };
 
 // Generate and emit StackIR.

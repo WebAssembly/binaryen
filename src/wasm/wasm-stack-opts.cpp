@@ -101,6 +101,12 @@ void StackIROptimizer::local2Stack() {
   //       control flow.
   LocalGraph localGraph(func);
   localGraph.computeSetInfluences();
+  // The binary writing of StringWTF16Get and StringSliceWTF is optimized to use
+  // fewer scratch locals when their operands are already LocalGets. To avoid
+  // interfering with that optimization, we have to avoid removing such
+  // LocalGets.
+  auto deferredGets = findStringViewDeferredGets();
+
   // We maintain a stack of relevant values. This contains:
   //  * a null for each actual value that the value stack would have
   //  * an index of each LocalSet that *could* be on the value
@@ -163,7 +169,7 @@ void StackIROptimizer::local2Stack() {
       // optimized when they are visited in the binary writer and this
       // optimization would intefere with that one.
       if (auto* get = inst->origin->dynCast<LocalGet>();
-          get && inst->type.isSingle()) {
+          get && inst->type.isSingle() && !deferredGets.count(get)) {
         // Use another local to clarify what instIndex means in this scope.
         auto getIndex = instIndex;
 
@@ -451,6 +457,27 @@ bool StackIROptimizer::canRemoveSetGetPair(Index setIndex, Index getIndex) {
 
   // No problem.
   return true;
+}
+
+std::unordered_set<LocalGet*> StackIROptimizer::findStringViewDeferredGets() {
+  std::unordered_set<LocalGet*> deferred;
+  auto note = [&](Expression* e) {
+    if (auto* get = e->dynCast<LocalGet>()) {
+      deferred.insert(get);
+    }
+  };
+  for (auto* inst : insts) {
+    if (!inst) {
+      continue;
+    }
+    if (auto* curr = inst->origin->dynCast<StringWTF16Get>()) {
+      note(curr->pos);
+    } else if (auto* curr = inst->origin->dynCast<StringSliceWTF>()) {
+      note(curr->start);
+      note(curr->end);
+    }
+  }
+  return deferred;
 }
 
 } // namespace wasm

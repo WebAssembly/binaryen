@@ -13,9 +13,6 @@ BinaryenTypeI31ref: (ptr)
 BinaryenTypeStructref: (ptr)
 BinaryenTypeArrayref: (ptr)
 BinaryenTypeStringref: (ptr)
-BinaryenTypeStringviewWTF8: (ptr)
-BinaryenTypeStringviewWTF16: (ptr)
-BinaryenTypeStringviewIter: (ptr)
 BinaryenTypeNullref: (ptr)
 BinaryenTypeNullExternref: (ptr)
 BinaryenTypeNullFuncref: (ptr)
@@ -31,12 +28,9 @@ BinaryenHeapTypeI31: 5
 BinaryenHeapTypeStruct: 6
 BinaryenHeapTypeArray: 7
 BinaryenHeapTypeString: 9
-BinaryenHeapTypeStringviewWTF8: 10
-BinaryenHeapTypeStringviewWTF16: 11
-BinaryenHeapTypeStringviewIter: 12
-BinaryenHeapTypeNone: 13
-BinaryenHeapTypeNoext: 14
-BinaryenHeapTypeNofunc: 15
+BinaryenHeapTypeNone: 10
+BinaryenHeapTypeNoext: 11
+BinaryenHeapTypeNofunc: 12
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
 BinaryenFeatureBulkMemory: 16
@@ -2343,57 +2337,6 @@ BinaryenFeatureAll: 131071
        (i32.const 2)
       )
       (drop
-       (string.new_utf8
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_utf8_try
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_wtf8
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_lossy_utf8
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_wtf16
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_utf8_array
-        (global.get $i8Array-global)
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_utf8_array_try
-        (global.get $i8Array-global)
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_wtf8_array
-        (global.get $i8Array-global)
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
        (string.new_lossy_utf8_array
         (global.get $i8Array-global)
         (i32.const 0)
@@ -2421,67 +2364,12 @@ BinaryenFeatureAll: 131071
        )
       )
       (drop
-       (string.measure_wtf8
-        (global.get $string-global)
-       )
-      )
-      (drop
        (string.measure_wtf16
         (global.get $string-global)
        )
       )
       (drop
-       (string.is_usv_sequence
-        (global.get $string-global)
-       )
-      )
-      (drop
-       (stringview_wtf16.length
-        (string.as_wtf16
-         (global.get $string-global)
-        )
-       )
-      )
-      (drop
-       (string.encode_utf8
-        (global.get $string-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_lossy_utf8
-        (global.get $string-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_wtf8
-        (global.get $string-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_wtf16
-        (global.get $string-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_utf8_array
-        (global.get $string-global)
-        (global.get $i8Array-global)
-        (i32.const 0)
-       )
-      )
-      (drop
        (string.encode_lossy_utf8_array
-        (global.get $string-global)
-        (global.get $i8Array-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_wtf8_array
         (global.get $string-global)
         (global.get $i8Array-global)
         (i32.const 0)
@@ -2513,83 +2401,15 @@ BinaryenFeatureAll: 131071
        )
       )
       (drop
-       (string.as_wtf8
-        (global.get $string-global)
-       )
-      )
-      (drop
-       (string.as_wtf16
-        (global.get $string-global)
-       )
-      )
-      (drop
-       (string.as_iter
-        (global.get $string-global)
-       )
-      )
-      (drop
-       (stringview_wtf8.advance
-        (string.as_wtf8
-         (global.get $string-global)
-        )
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
        (stringview_wtf16.get_codeunit
-        (string.as_wtf16
-         (global.get $string-global)
-        )
-        (i32.const 0)
-       )
-      )
-      (drop
-       (stringview_iter.next
-        (string.as_iter
-         (global.get $string-global)
-        )
-       )
-      )
-      (drop
-       (stringview_iter.advance
-        (string.as_iter
-         (global.get $string-global)
-        )
-        (i32.const 1)
-       )
-      )
-      (drop
-       (stringview_iter.rewind
-        (string.as_iter
-         (global.get $string-global)
-        )
-        (i32.const 1)
-       )
-      )
-      (drop
-       (stringview_wtf8.slice
-        (string.as_wtf8
-         (global.get $string-global)
-        )
-        (i32.const 0)
+        (global.get $string-global)
         (i32.const 0)
        )
       )
       (drop
        (stringview_wtf16.slice
-        (string.as_wtf16
-         (global.get $string-global)
-        )
+        (global.get $string-global)
         (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (stringview_iter.slice
-        (string.as_iter
-         (global.get $string-global)
-        )
         (i32.const 0)
        )
       )

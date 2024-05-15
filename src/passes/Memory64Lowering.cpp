@@ -70,7 +70,7 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     if (memory->is64()) {
       auto size = static_cast<Expression*>(curr);
       extendAddress64(size, curr->memory);
-      curr->ptrType = Type::i32;
+      curr->type = Type::i32;
       replaceCurrent(size);
     }
   }
@@ -82,7 +82,7 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
       wrapAddress64(curr->delta, curr->memory);
       auto size = static_cast<Expression*>(curr);
       extendAddress64(size, curr->memory);
-      curr->ptrType = Type::i32;
+      curr->type = Type::i32;
       replaceCurrent(size);
     }
   }

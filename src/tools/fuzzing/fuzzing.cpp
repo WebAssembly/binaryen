@@ -29,13 +29,6 @@ namespace wasm {
 
 namespace {
 
-bool canBeNullable(HeapType type) {
-  // V8 does not accept nullable string views.
-  return type != HeapType::stringview_wtf8 &&
-         type != HeapType::stringview_wtf16 &&
-         type != HeapType::stringview_iter;
-}
-
 } // anonymous namespace
 
 TranslateToFuzzReader::TranslateToFuzzReader(Module& wasm,
@@ -2654,16 +2647,6 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       }
       WASM_UNREACHABLE("bad switch");
     }
-    case HeapType::stringview_wtf16:
-      // We fully support wtf16 strings.
-      return builder.makeStringAs(StringAsWTF16,
-                                  makeTrappingRefUse(HeapType::string));
-    case HeapType::stringview_wtf8:
-    case HeapType::stringview_iter:
-      // We do not have interpreter support for wtf8 and iter, so emit something
-      // that does not return, with a block that casts to the type the parent
-      // expects.
-      return builder.makeBlock({_makeunreachable()}, type);
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
@@ -2719,9 +2702,6 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
     if (funcContext && !funcContext->typeLocals[type].empty()) {
       return makeLocalGet(type);
     }
-    if (!canBeNullable(heapType)) {
-      return makeConst(type);
-    }
     return builder.makeRefAs(RefAsNonNull, builder.makeRefNull(heapType));
   }
 
@@ -2774,13 +2754,12 @@ Expression* TranslateToFuzzReader::makeStringNewArray() {
   auto* array = makeTrappingRefUse(getArrayTypeForString());
   auto* start = make(Type::i32);
   auto* end = make(Type::i32);
-  return builder.makeStringNew(StringNewWTF16Array, array, start, end, false);
+  return builder.makeStringNew(StringNewWTF16Array, array, start, end);
 }
 
 Expression* TranslateToFuzzReader::makeStringNewCodePoint() {
   auto codePoint = make(Type::i32);
-  return builder.makeStringNew(
-    StringNewFromCodePoint, codePoint, nullptr, false);
+  return builder.makeStringNew(StringNewFromCodePoint, codePoint);
 }
 
 Expression* TranslateToFuzzReader::makeStringConst() {
@@ -2834,11 +2813,10 @@ Expression* TranslateToFuzzReader::makeStringConcat() {
 }
 
 Expression* TranslateToFuzzReader::makeStringSlice() {
-  // StringViews cannot be non-nullable.
-  auto* ref = make(Type(HeapType::stringview_wtf16, NonNullable));
+  auto* ref = makeTrappingRefUse(HeapType::string);
   auto* start = make(Type::i32);
   auto* end = make(Type::i32);
-  return builder.makeStringSliceWTF(StringSliceWTF16, ref, start, end);
+  return builder.makeStringSliceWTF(ref, start, end);
 }
 
 Expression* TranslateToFuzzReader::makeStringEq(Type type) {
@@ -2866,8 +2844,7 @@ Expression* TranslateToFuzzReader::makeStringMeasure(Type type) {
 Expression* TranslateToFuzzReader::makeStringGet(Type type) {
   assert(type == Type::i32);
 
-  // StringViews cannot be non-nullable.
-  auto* ref = make(Type(HeapType::stringview_wtf16, NonNullable));
+  auto* ref = makeTrappingRefUse(HeapType::string);
   auto* pos = make(Type::i32);
   return builder.makeStringWTF16Get(ref, pos);
 }
@@ -4277,12 +4254,6 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
         return HeapType::exn;
       case HeapType::string:
         return HeapType::string;
-      case HeapType::stringview_wtf8:
-        return HeapType::stringview_wtf8;
-      case HeapType::stringview_wtf16:
-        return HeapType::stringview_wtf16;
-      case HeapType::stringview_iter:
-        return HeapType::stringview_iter;
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:

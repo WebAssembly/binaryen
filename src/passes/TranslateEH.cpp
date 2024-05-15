@@ -15,7 +15,7 @@
  */
 
 //
-// TranslateToNewEH translates the old Phase 3 EH instructions, which include
+// TranslateToExnref translates the old Phase 3 EH instructions, which include
 // try, catch, catch_all, delegate, and rethrow, into the new EH instructions,
 // which include try_table (with catch / catch_ref / catch_all / catch_all_ref)
 // and throw_ref, passed at the Oct 2023 CG meeting. This translator can be used
@@ -39,7 +39,7 @@ namespace {
 // Translates the old EH instructions (try / catch / catch_all / delegate /
 // rethrow) into the new ones (try_table (+ catch / catch_ref / catch_all /
 // catch_all_ref) / throw_ref).
-struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
+struct TranslateToExnref : public WalkerPass<PostWalker<TranslateToExnref>> {
   bool isFunctionParallel() override { return true; }
 
   // Scans and records which try labels are targeted by delegates and rethrows.
@@ -195,7 +195,7 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
   std::unordered_map<Type, Index> typeToScratchLocal;
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<TranslateToNewEH>();
+    return std::make_unique<TranslateToExnref>();
   }
 
   // Get a scratch local for a given type. These locals are used to contain
@@ -814,6 +814,6 @@ struct TranslateToNewEH : public WalkerPass<PostWalker<TranslateToNewEH>> {
 
 } // namespace
 
-Pass* createTranslateToNewEHPass() { return new TranslateToNewEH(); }
+Pass* createTranslateToExnrefPass() { return new TranslateToExnref(); }
 
 } // namespace wasm

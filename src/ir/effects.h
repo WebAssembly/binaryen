@@ -941,23 +941,10 @@ private:
       // cycle may be needed in some cases.
     }
     void visitStringNew(StringNew* curr) {
-      // traps when out of bounds in linear memory or ref is null
+      // traps when ref is null
       parent.implicitTrap = true;
-      switch (curr->op) {
-        case StringNewUTF8:
-        case StringNewWTF8:
-        case StringNewLossyUTF8:
-        case StringNewWTF16:
-          parent.readsMemory = true;
-          break;
-        case StringNewUTF8Array:
-        case StringNewWTF8Array:
-        case StringNewLossyUTF8Array:
-        case StringNewWTF16Array:
-          parent.readsArray = true;
-          break;
-        default: {
-        }
+      if (curr->op != StringNewFromCodePoint) {
+        parent.readsArray = true;
       }
     }
     void visitStringConst(StringConst* curr) {}
@@ -968,22 +955,7 @@ private:
     void visitStringEncode(StringEncode* curr) {
       // traps when ref is null or we write out of bounds.
       parent.implicitTrap = true;
-      switch (curr->op) {
-        case StringEncodeUTF8:
-        case StringEncodeLossyUTF8:
-        case StringEncodeWTF8:
-        case StringEncodeWTF16:
-          parent.writesMemory = true;
-          break;
-        case StringEncodeUTF8Array:
-        case StringEncodeLossyUTF8Array:
-        case StringEncodeWTF8Array:
-        case StringEncodeWTF16Array:
-          parent.writesArray = true;
-          break;
-        default: {
-        }
-      }
+      parent.writesArray = true;
     }
     void visitStringConcat(StringConcat* curr) {
       // traps when an input is null.
@@ -997,45 +969,14 @@ private:
         }
       }
     }
-    void visitStringAs(StringAs* curr) {
-      // traps when ref is null.
-      parent.implicitTrap = true;
-    }
-    void visitStringWTF8Advance(StringWTF8Advance* curr) {
-      // traps when ref is null.
-      parent.implicitTrap = true;
-    }
     void visitStringWTF16Get(StringWTF16Get* curr) {
       // traps when ref is null.
       parent.implicitTrap = true;
-    }
-    void visitStringIterNext(StringIterNext* curr) {
-      // traps when ref is null.
-      parent.implicitTrap = true;
-      // modifies state in the iterator. we model that as accessing heap memory
-      // in an array atm TODO consider adding a new effect type for this (we
-      // added one for arrays because struct/array operations often interleave,
-      // say with vtable accesses, but it's not clear adding overhead to this
-      // class is worth it for string iters)
-      parent.readsArray = true;
-      parent.writesArray = true;
-    }
-    void visitStringIterMove(StringIterMove* curr) {
-      // traps when ref is null.
-      parent.implicitTrap = true;
-      // see StringIterNext.
-      parent.readsArray = true;
-      parent.writesArray = true;
     }
     void visitStringSliceWTF(StringSliceWTF* curr) {
       // traps when ref is null.
       parent.implicitTrap = true;
     }
-    void visitStringSliceIter(StringSliceIter* curr) {
-      // traps when ref is null.
-      parent.implicitTrap = true;
-    }
-
     void visitContBind(ContBind* curr) {
       // traps when curr->cont is null ref.
       parent.implicitTrap = true;
