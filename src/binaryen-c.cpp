@@ -1019,12 +1019,6 @@ BinaryenOp BinaryenBrOnNull(void) { return BrOnNull; }
 BinaryenOp BinaryenBrOnNonNull(void) { return BrOnNonNull; }
 BinaryenOp BinaryenBrOnCast(void) { return BrOnCast; }
 BinaryenOp BinaryenBrOnCastFail(void) { return BrOnCastFail; };
-BinaryenOp BinaryenStringNewUTF8(void) { return StringNewUTF8; }
-BinaryenOp BinaryenStringNewWTF8(void) { return StringNewWTF8; }
-BinaryenOp BinaryenStringNewLossyUTF8(void) { return StringNewLossyUTF8; }
-BinaryenOp BinaryenStringNewWTF16(void) { return StringNewWTF16; }
-BinaryenOp BinaryenStringNewUTF8Array(void) { return StringNewUTF8Array; }
-BinaryenOp BinaryenStringNewWTF8Array(void) { return StringNewWTF8Array; }
 BinaryenOp BinaryenStringNewLossyUTF8Array(void) {
   return StringNewLossyUTF8Array;
 }
@@ -1033,18 +1027,10 @@ BinaryenOp BinaryenStringNewFromCodePoint(void) {
   return StringNewFromCodePoint;
 }
 BinaryenOp BinaryenStringMeasureUTF8(void) { return StringMeasureUTF8; }
-BinaryenOp BinaryenStringMeasureWTF8(void) { return StringMeasureWTF8; }
 BinaryenOp BinaryenStringMeasureWTF16(void) { return StringMeasureWTF16; }
-BinaryenOp BinaryenStringMeasureIsUSV(void) { return StringMeasureIsUSV; }
-BinaryenOp BinaryenStringEncodeUTF8(void) { return StringEncodeUTF8; }
-BinaryenOp BinaryenStringEncodeLossyUTF8(void) { return StringEncodeLossyUTF8; }
-BinaryenOp BinaryenStringEncodeWTF8(void) { return StringEncodeWTF8; }
-BinaryenOp BinaryenStringEncodeWTF16(void) { return StringEncodeWTF16; }
-BinaryenOp BinaryenStringEncodeUTF8Array(void) { return StringEncodeUTF8Array; }
 BinaryenOp BinaryenStringEncodeLossyUTF8Array(void) {
   return StringEncodeLossyUTF8Array;
 }
-BinaryenOp BinaryenStringEncodeWTF8Array(void) { return StringEncodeWTF8Array; }
 BinaryenOp BinaryenStringEncodeWTF16Array(void) {
   return StringEncodeWTF16Array;
 }
@@ -1848,19 +1834,11 @@ BinaryenExpressionRef BinaryenArrayCopy(BinaryenModuleRef module,
 BinaryenExpressionRef BinaryenStringNew(BinaryenModuleRef module,
                                         BinaryenOp op,
                                         BinaryenExpressionRef ptr,
-                                        BinaryenExpressionRef length,
                                         BinaryenExpressionRef start,
-                                        BinaryenExpressionRef end,
-                                        bool try_) {
+                                        BinaryenExpressionRef end) {
   Builder builder(*(Module*)module);
-  return static_cast<Expression*>(
-    length ? builder.makeStringNew(
-               StringNewOp(op), (Expression*)ptr, (Expression*)length, try_)
-           : builder.makeStringNew(StringNewOp(op),
-                                   (Expression*)ptr,
-                                   (Expression*)start,
-                                   (Expression*)end,
-                                   try_));
+  return static_cast<Expression*>(builder.makeStringNew(
+    StringNewOp(op), (Expression*)ptr, (Expression*)start, (Expression*)end));
 }
 BinaryenExpressionRef BinaryenStringConst(BinaryenModuleRef module,
                                           const char* name) {
@@ -4444,29 +4422,17 @@ void BinaryenStringNewSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
   assert(expression->is<StringNew>());
   static_cast<StringNew*>(expression)->op = StringNewOp(op);
 }
-BinaryenExpressionRef BinaryenStringNewGetPtr(BinaryenExpressionRef expr) {
+BinaryenExpressionRef BinaryenStringNewGetRef(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringNew>());
-  return static_cast<StringNew*>(expression)->ptr;
+  return static_cast<StringNew*>(expression)->ref;
 }
-void BinaryenStringNewSetPtr(BinaryenExpressionRef expr,
-                             BinaryenExpressionRef ptrExpr) {
+void BinaryenStringNewSetRef(BinaryenExpressionRef expr,
+                             BinaryenExpressionRef refExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringNew>());
-  assert(ptrExpr);
-  static_cast<StringNew*>(expression)->ptr = (Expression*)ptrExpr;
-}
-BinaryenExpressionRef BinaryenStringNewGetLength(BinaryenExpressionRef expr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<StringNew>());
-  return static_cast<StringNew*>(expression)->length;
-}
-void BinaryenStringNewSetLength(BinaryenExpressionRef expr,
-                                BinaryenExpressionRef lengthExpr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<StringNew>());
-  // may be null (linear memory only)
-  static_cast<StringNew*>(expression)->length = (Expression*)lengthExpr;
+  assert(refExpr);
+  static_cast<StringNew*>(expression)->ref = (Expression*)refExpr;
 }
 BinaryenExpressionRef BinaryenStringNewGetStart(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
@@ -4491,16 +4457,6 @@ void BinaryenStringNewSetEnd(BinaryenExpressionRef expr,
   assert(expression->is<StringNew>());
   // may be null (GC only)
   static_cast<StringNew*>(expression)->end = (Expression*)endExpr;
-}
-void BinaryenStringNewSetTry(BinaryenExpressionRef expr, bool try_) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<StringNew>());
-  static_cast<StringNew*>(expression)->try_ = try_;
-}
-bool BinaryenStringNewIsTry(BinaryenExpressionRef expr) {
-  auto* expression = (Expression*)expr;
-  assert(expression->is<StringNew>());
-  return static_cast<StringNew*>(expression)->try_;
 }
 // StringConst
 const char* BinaryenStringConstGetString(BinaryenExpressionRef expr) {
@@ -4549,29 +4505,29 @@ void BinaryenStringEncodeSetOp(BinaryenExpressionRef expr, BinaryenOp op) {
   assert(expression->is<StringEncode>());
   static_cast<StringEncode*>(expression)->op = StringEncodeOp(op);
 }
-BinaryenExpressionRef BinaryenStringEncodeGetRef(BinaryenExpressionRef expr) {
+BinaryenExpressionRef BinaryenStringEncodeGetStr(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringEncode>());
-  return static_cast<StringEncode*>(expression)->ref;
+  return static_cast<StringEncode*>(expression)->str;
 }
-void BinaryenStringEncodeSetRef(BinaryenExpressionRef expr,
-                                BinaryenExpressionRef refExpr) {
+void BinaryenStringEncodeSetStr(BinaryenExpressionRef expr,
+                                BinaryenExpressionRef strExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringEncode>());
-  assert(refExpr);
-  static_cast<StringEncode*>(expression)->ref = (Expression*)refExpr;
+  assert(strExpr);
+  static_cast<StringEncode*>(expression)->str = (Expression*)strExpr;
 }
-BinaryenExpressionRef BinaryenStringEncodeGetPtr(BinaryenExpressionRef expr) {
+BinaryenExpressionRef BinaryenStringEncodeGetArray(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringEncode>());
-  return static_cast<StringEncode*>(expression)->ptr;
+  return static_cast<StringEncode*>(expression)->array;
 }
-void BinaryenStringEncodeSetPtr(BinaryenExpressionRef expr,
-                                BinaryenExpressionRef ptrExpr) {
+void BinaryenStringEncodeSetArray(BinaryenExpressionRef expr,
+                                  BinaryenExpressionRef arrayExpr) {
   auto* expression = (Expression*)expr;
   assert(expression->is<StringEncode>());
-  assert(ptrExpr);
-  static_cast<StringEncode*>(expression)->ptr = (Expression*)ptrExpr;
+  assert(arrayExpr);
+  static_cast<StringEncode*>(expression)->array = (Expression*)arrayExpr;
 }
 BinaryenExpressionRef BinaryenStringEncodeGetStart(BinaryenExpressionRef expr) {
   auto* expression = (Expression*)expr;

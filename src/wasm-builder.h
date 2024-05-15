@@ -1086,28 +1086,15 @@ public:
     return ret;
   }
   StringNew* makeStringNew(StringNewOp op,
-                           Expression* ptr,
-                           Expression* length,
-                           bool try_) {
+                           Expression* ref,
+                           Expression* start = nullptr,
+                           Expression* end = nullptr) {
+    assert((start && end) != (op == StringNewFromCodePoint));
     auto* ret = wasm.allocator.alloc<StringNew>();
     ret->op = op;
-    ret->ptr = ptr;
-    ret->length = length;
-    ret->try_ = try_;
-    ret->finalize();
-    return ret;
-  }
-  StringNew* makeStringNew(StringNewOp op,
-                           Expression* ptr,
-                           Expression* start,
-                           Expression* end,
-                           bool try_) {
-    auto* ret = wasm.allocator.alloc<StringNew>();
-    ret->op = op;
-    ret->ptr = ptr;
+    ret->ref = ref;
     ret->start = start;
     ret->end = end;
-    ret->try_ = try_;
     ret->finalize();
     return ret;
   }
@@ -1125,13 +1112,13 @@ public:
     return ret;
   }
   StringEncode* makeStringEncode(StringEncodeOp op,
-                                 Expression* ref,
-                                 Expression* ptr,
+                                 Expression* str,
+                                 Expression* array,
                                  Expression* start = nullptr) {
     auto* ret = wasm.allocator.alloc<StringEncode>();
     ret->op = op;
-    ret->ref = ref;
-    ret->ptr = ptr;
+    ret->str = str;
+    ret->array = array;
     ret->start = start;
     ret->finalize();
     return ret;

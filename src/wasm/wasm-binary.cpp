@@ -7501,77 +7501,21 @@ bool WasmBinaryReader::maybeVisitArrayInit(Expression*& out, uint32_t code) {
 
 bool WasmBinaryReader::maybeVisitStringNew(Expression*& out, uint32_t code) {
   StringNewOp op;
-  Expression* length = nullptr;
-  Expression* start = nullptr;
-  Expression* end = nullptr;
-  bool try_ = false;
-  if (code == BinaryConsts::StringNewUTF8) {
-    // FIXME: the memory index should be an LEB like all other places
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringNewUTF8;
-    length = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewLossyUTF8) {
-    // FIXME: the memory index should be an LEB like all other places
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringNewLossyUTF8;
-    length = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewWTF8) {
-    // FIXME: the memory index should be an LEB like all other places
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringNewWTF8;
-    length = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewUTF8Try) {
-    // FIXME: the memory index should be an LEB like all other places
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringNewUTF8;
-    try_ = true;
-    length = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewWTF16) {
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringNewWTF16;
-    length = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewUTF8Array) {
-    op = StringNewUTF8Array;
-    end = popNonVoidExpression();
-    start = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewLossyUTF8Array) {
+  if (code == BinaryConsts::StringNewLossyUTF8Array) {
     op = StringNewLossyUTF8Array;
-    end = popNonVoidExpression();
-    start = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewWTF8Array) {
-    op = StringNewWTF8Array;
-    end = popNonVoidExpression();
-    start = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewUTF8ArrayTry) {
-    op = StringNewUTF8Array;
-    try_ = true;
-    end = popNonVoidExpression();
-    start = popNonVoidExpression();
   } else if (code == BinaryConsts::StringNewWTF16Array) {
     op = StringNewWTF16Array;
-    end = popNonVoidExpression();
-    start = popNonVoidExpression();
   } else if (code == BinaryConsts::StringFromCodePoint) {
-    op = StringNewFromCodePoint;
+    out = Builder(wasm).makeStringNew(StringNewFromCodePoint,
+                                      popNonVoidExpression());
+    return true;
   } else {
     return false;
   }
-  auto* ptr = popNonVoidExpression();
-  if (length) {
-    out = Builder(wasm).makeStringNew(op, ptr, length, try_);
-  } else {
-    out = Builder(wasm).makeStringNew(op, ptr, start, end, try_);
-  }
+  Expression* end = popNonVoidExpression();
+  Expression* start = popNonVoidExpression();
+  auto* ref = popNonVoidExpression();
+  out = Builder(wasm).makeStringNew(op, ref, start, end);
   return true;
 }
 
@@ -7605,14 +7549,8 @@ bool WasmBinaryReader::maybeVisitStringMeasure(Expression*& out,
   StringMeasureOp op;
   if (code == BinaryConsts::StringMeasureUTF8) {
     op = StringMeasureUTF8;
-  } else if (code == BinaryConsts::StringMeasureWTF8) {
-    op = StringMeasureWTF8;
   } else if (code == BinaryConsts::StringMeasureWTF16) {
     op = StringMeasureWTF16;
-  } else if (code == BinaryConsts::StringIsUSV) {
-    op = StringMeasureIsUSV;
-  } else if (code == BinaryConsts::StringHash) {
-    op = StringMeasureHash;
   } else {
     return false;
   }
@@ -7623,43 +7561,14 @@ bool WasmBinaryReader::maybeVisitStringMeasure(Expression*& out,
 
 bool WasmBinaryReader::maybeVisitStringEncode(Expression*& out, uint32_t code) {
   StringEncodeOp op;
-  Expression* start = nullptr;
-  // TODO: share this code with string.measure?
-  if (code == BinaryConsts::StringEncodeUTF8) {
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringEncodeUTF8;
-  } else if (code == BinaryConsts::StringEncodeLossyUTF8) {
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringEncodeLossyUTF8;
-  } else if (code == BinaryConsts::StringEncodeWTF8) {
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringEncodeWTF8;
-  } else if (code == BinaryConsts::StringEncodeWTF16) {
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringEncodeWTF16;
-  } else if (code == BinaryConsts::StringEncodeUTF8Array) {
-    op = StringEncodeUTF8Array;
-    start = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringEncodeLossyUTF8Array) {
+  if (code == BinaryConsts::StringEncodeLossyUTF8Array) {
     op = StringEncodeLossyUTF8Array;
-    start = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringEncodeWTF8Array) {
-    op = StringEncodeWTF8Array;
-    start = popNonVoidExpression();
   } else if (code == BinaryConsts::StringEncodeWTF16Array) {
     op = StringEncodeWTF16Array;
-    start = popNonVoidExpression();
   } else {
     return false;
   }
+  auto* start = popNonVoidExpression();
   auto* ptr = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
   out = Builder(wasm).makeStringEncode(op, ref, ptr, start);

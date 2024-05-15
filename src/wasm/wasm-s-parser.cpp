@@ -3301,30 +3301,13 @@ Expression* SExpressionWasmBuilder::makeRefAs(Element& s, RefAsOp op) {
   return Builder(wasm).makeRefAs(op, value);
 }
 
-Expression*
-SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op, bool try_) {
-  Expression* length = nullptr;
-  if (op == StringNewWTF8) {
-    length = parseExpression(s[2]);
-    return Builder(wasm).makeStringNew(op, parseExpression(s[1]), length, try_);
-  } else if (op == StringNewUTF8 || op == StringNewLossyUTF8 ||
-             op == StringNewWTF16) {
-    length = parseExpression(s[2]);
-    return Builder(wasm).makeStringNew(op, parseExpression(s[1]), length, try_);
-  } else if (op == StringNewWTF8Array) {
+Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
+  if (op == StringNewLossyUTF8Array || op == StringNewWTF16Array) {
     auto* start = parseExpression(s[2]);
     auto* end = parseExpression(s[3]);
-    return Builder(wasm).makeStringNew(
-      op, parseExpression(s[1]), start, end, try_);
-  } else if (op == StringNewUTF8Array || op == StringNewLossyUTF8Array ||
-             op == StringNewWTF16Array) {
-    auto* start = parseExpression(s[2]);
-    auto* end = parseExpression(s[3]);
-    return Builder(wasm).makeStringNew(
-      op, parseExpression(s[1]), start, end, try_);
+    return Builder(wasm).makeStringNew(op, parseExpression(s[1]), start, end);
   } else if (op == StringNewFromCodePoint) {
-    return Builder(wasm).makeStringNew(
-      op, parseExpression(s[1]), nullptr, try_);
+    return Builder(wasm).makeStringNew(op, parseExpression(s[1]));
   } else {
     throw SParseException("bad string.new op", s);
   }
@@ -3350,13 +3333,9 @@ Expression* SExpressionWasmBuilder::makeStringMeasure(Element& s,
 
 Expression* SExpressionWasmBuilder::makeStringEncode(Element& s,
                                                      StringEncodeOp op) {
-  Expression* start = nullptr;
-  if (op == StringEncodeWTF8Array || op == StringEncodeUTF8Array ||
-      op == StringEncodeLossyUTF8Array || op == StringEncodeWTF16Array) {
-    start = parseExpression(s[3]);
-  }
+
   return Builder(wasm).makeStringEncode(
-    op, parseExpression(s[1]), parseExpression(s[2]), start);
+    op, parseExpression(s[1]), parseExpression(s[2]), parseExpression(s[3]));
 }
 
 Expression* SExpressionWasmBuilder::makeStringConcat(Element& s) {

@@ -1244,13 +1244,12 @@ void RefAs::finalize() {
 }
 
 void StringNew::finalize() {
-  if (ptr->type == Type::unreachable ||
-      (length && length->type == Type::unreachable) ||
+  if (ref->type == Type::unreachable ||
       (start && start->type == Type::unreachable) ||
       (end && end->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
-    type = Type(HeapType::string, try_ ? Nullable : NonNullable);
+    type = Type(HeapType::string, NonNullable);
   }
 }
 
@@ -1265,8 +1264,8 @@ void StringMeasure::finalize() {
 }
 
 void StringEncode::finalize() {
-  if (ref->type == Type::unreachable || ptr->type == Type::unreachable ||
-      (start && start->type == Type::unreachable)) {
+  if (str->type == Type::unreachable || array->type == Type::unreachable ||
+      start->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
     type = Type::i32;

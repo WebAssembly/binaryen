@@ -3248,37 +3248,43 @@ void FunctionValidator::visitStringNew(StringNew* curr) {
                "string operations require reference-types [--enable-strings]");
 
   switch (curr->op) {
+    case StringNewLossyUTF8Array:
     case StringNewWTF16Array: {
-      auto ptrType = curr->ptr->type;
-      if (ptrType == Type::unreachable) {
+      auto refType = curr->ref->type;
+      if (refType == Type::unreachable) {
         return;
       }
-      if (!shouldBeTrue(ptrType.isRef(),
+      if (!shouldBeTrue(
+            refType.isRef(), curr, "string.new input must have array type")) {
+        return;
+      }
+      auto heapType = refType.getHeapType();
+      if (!shouldBeTrue(heapType.isBottom() || heapType.isArray(),
                         curr,
-                        "string.new_wtf16_array input must have string type")) {
+                        "string.new input must have array type")) {
         return;
       }
-      auto ptrHeapType = ptrType.getHeapType();
-      if (!shouldBeTrue(ptrHeapType.isBottom() || ptrHeapType.isArray(),
-                        curr,
-                        "string.new_wtf16_array input must be array")) {
-        return;
-      }
+      shouldBeEqualOrFirstIsUnreachable(curr->start->type,
+                                        Type(Type::i32),
+                                        curr,
+                                        "string.new start must be i32");
       shouldBeEqualOrFirstIsUnreachable(
-        curr->start->type,
+        curr->end->type, Type(Type::i32), curr, "string.new end must be i32");
+      return;
+    }
+    case StringNewFromCodePoint:
+      shouldBeEqualOrFirstIsUnreachable(
+        curr->ref->type,
         Type(Type::i32),
         curr,
-        "string.new_wtf16_array start must be i32");
-      shouldBeEqualOrFirstIsUnreachable(
-        curr->end->type,
-        Type(Type::i32),
-        curr,
-        "string.new_wtf16_array end must be i32");
-      break;
-    }
-    default: {
-    }
+        "string.from_code_point code point must be i32");
+      shouldBeTrue(
+        !curr->start, curr, "string.from_code_point should not have start");
+      shouldBeTrue(
+        !curr->end, curr, "string.from_code_point should not have end");
+      return;
   }
+  WASM_UNREACHABLE("unexpected op");
 }
 
 void FunctionValidator::visitStringConst(StringConst* curr) {

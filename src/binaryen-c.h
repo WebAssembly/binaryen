@@ -682,26 +682,12 @@ BINARYEN_API BinaryenOp BinaryenBrOnNull(void);
 BINARYEN_API BinaryenOp BinaryenBrOnNonNull(void);
 BINARYEN_API BinaryenOp BinaryenBrOnCast(void);
 BINARYEN_API BinaryenOp BinaryenBrOnCastFail(void);
-BINARYEN_API BinaryenOp BinaryenStringNewUTF8(void);
-BINARYEN_API BinaryenOp BinaryenStringNewWTF8(void);
-BINARYEN_API BinaryenOp BinaryenStringNewLossyUTF8(void);
-BINARYEN_API BinaryenOp BinaryenStringNewWTF16(void);
-BINARYEN_API BinaryenOp BinaryenStringNewUTF8Array(void);
-BINARYEN_API BinaryenOp BinaryenStringNewWTF8Array(void);
 BINARYEN_API BinaryenOp BinaryenStringNewLossyUTF8Array(void);
 BINARYEN_API BinaryenOp BinaryenStringNewWTF16Array(void);
 BINARYEN_API BinaryenOp BinaryenStringNewFromCodePoint(void);
 BINARYEN_API BinaryenOp BinaryenStringMeasureUTF8(void);
-BINARYEN_API BinaryenOp BinaryenStringMeasureWTF8(void);
 BINARYEN_API BinaryenOp BinaryenStringMeasureWTF16(void);
-BINARYEN_API BinaryenOp BinaryenStringMeasureIsUSV(void);
-BINARYEN_API BinaryenOp BinaryenStringEncodeUTF8(void);
-BINARYEN_API BinaryenOp BinaryenStringEncodeLossyUTF8(void);
-BINARYEN_API BinaryenOp BinaryenStringEncodeWTF8(void);
-BINARYEN_API BinaryenOp BinaryenStringEncodeWTF16(void);
-BINARYEN_API BinaryenOp BinaryenStringEncodeUTF8Array(void);
 BINARYEN_API BinaryenOp BinaryenStringEncodeLossyUTF8Array(void);
-BINARYEN_API BinaryenOp BinaryenStringEncodeWTF8Array(void);
 BINARYEN_API BinaryenOp BinaryenStringEncodeWTF16Array(void);
 BINARYEN_API BinaryenOp BinaryenStringEqEqual(void);
 BINARYEN_API BinaryenOp BinaryenStringEqCompare(void);
@@ -1092,11 +1078,9 @@ BinaryenArrayCopy(BinaryenModuleRef module,
 BINARYEN_API BinaryenExpressionRef
 BinaryenStringNew(BinaryenModuleRef module,
                   BinaryenOp op,
-                  BinaryenExpressionRef ptr,
-                  BinaryenExpressionRef length,
+                  BinaryenExpressionRef ref,
                   BinaryenExpressionRef start,
-                  BinaryenExpressionRef end,
-                  bool try_);
+                  BinaryenExpressionRef end);
 BINARYEN_API BinaryenExpressionRef BinaryenStringConst(BinaryenModuleRef module,
                                                        const char* name);
 BINARYEN_API BinaryenExpressionRef BinaryenStringMeasure(
@@ -2522,13 +2506,9 @@ BINARYEN_API BinaryenOp BinaryenStringNewGetOp(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenStringNewSetOp(BinaryenExpressionRef expr,
                                          BinaryenOp op);
 BINARYEN_API BinaryenExpressionRef
-BinaryenStringNewGetPtr(BinaryenExpressionRef expr);
-BINARYEN_API void BinaryenStringNewSetPtr(BinaryenExpressionRef expr,
+BinaryenStringNewGetRef(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenStringNewSetRef(BinaryenExpressionRef expr,
                                           BinaryenExpressionRef ptrExpr);
-BINARYEN_API BinaryenExpressionRef
-BinaryenStringNewGetLength(BinaryenExpressionRef expr);
-BINARYEN_API void BinaryenStringNewSetLength(BinaryenExpressionRef expr,
-                                             BinaryenExpressionRef lengthExpr);
 BINARYEN_API BinaryenExpressionRef
 BinaryenStringNewGetStart(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenStringNewSetStart(BinaryenExpressionRef expr,
@@ -2539,7 +2519,6 @@ BINARYEN_API void BinaryenStringNewSetEnd(BinaryenExpressionRef expr,
                                           BinaryenExpressionRef endExpr);
 BINARYEN_API void BinaryenStringNewSetTry(BinaryenExpressionRef expr,
                                           bool try_);
-BINARYEN_API bool BinaryenStringNewIsTry(BinaryenExpressionRef expr);
 
 // StringConst
 
@@ -2564,13 +2543,13 @@ BINARYEN_API BinaryenOp BinaryenStringEncodeGetOp(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenStringEncodeSetOp(BinaryenExpressionRef expr,
                                             BinaryenOp op);
 BINARYEN_API BinaryenExpressionRef
-BinaryenStringEncodeGetRef(BinaryenExpressionRef expr);
-BINARYEN_API void BinaryenStringEncodeSetRef(BinaryenExpressionRef expr,
+BinaryenStringEncodeGetStr(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenStringEncodeSetStr(BinaryenExpressionRef expr,
                                              BinaryenExpressionRef refExpr);
 BINARYEN_API BinaryenExpressionRef
-BinaryenStringEncodeGetPtr(BinaryenExpressionRef expr);
-BINARYEN_API void BinaryenStringEncodeSetPtr(BinaryenExpressionRef expr,
-                                             BinaryenExpressionRef ptrExpr);
+BinaryenStringEncodeGetArray(BinaryenExpressionRef expr);
+BINARYEN_API void BinaryenStringEncodeSetArray(BinaryenExpressionRef expr,
+                                               BinaryenExpressionRef ptrExpr);
 BINARYEN_API BinaryenExpressionRef
 BinaryenStringEncodeGetStart(BinaryenExpressionRef expr);
 BINARYEN_API void BinaryenStringEncodeSetStart(BinaryenExpressionRef expr,

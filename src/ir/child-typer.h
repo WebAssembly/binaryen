@@ -962,27 +962,17 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitStringNew(StringNew* curr,
                       std::optional<HeapType> ht = std::nullopt) {
     switch (curr->op) {
-      case StringNewUTF8:
-      case StringNewWTF8:
-      case StringNewLossyUTF8:
-      case StringNewWTF16:
-        // TODO: This should be notePointer, but we don't have a memory.
-        note(&curr->ptr, Type::i32);
-        note(&curr->length, Type::i32);
-        return;
-      case StringNewUTF8Array:
-      case StringNewWTF8Array:
       case StringNewLossyUTF8Array:
       case StringNewWTF16Array:
         if (!ht) {
-          ht = curr->ptr->type.getHeapType();
+          ht = curr->ref->type.getHeapType();
         }
-        note(&curr->ptr, Type(*ht, Nullable));
+        note(&curr->ref, Type(*ht, Nullable));
         note(&curr->start, Type::i32);
         note(&curr->end, Type::i32);
         return;
       case StringNewFromCodePoint:
-        note(&curr->ptr, Type::i32);
+        note(&curr->ref, Type::i32);
         return;
     }
     WASM_UNREACHABLE("unexpected op");
@@ -996,27 +986,12 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
 
   void visitStringEncode(StringEncode* curr,
                          std::optional<HeapType> ht = std::nullopt) {
-    note(&curr->ref, Type(HeapType::string, Nullable));
-    switch (curr->op) {
-      case StringEncodeUTF8:
-      case StringEncodeLossyUTF8:
-      case StringEncodeWTF8:
-      case StringEncodeWTF16:
-        // TODO: This should be notePointer, but we don't have a memory.
-        note(&curr->ptr, Type::i32);
-        return;
-      case StringEncodeUTF8Array:
-      case StringEncodeLossyUTF8Array:
-      case StringEncodeWTF8Array:
-      case StringEncodeWTF16Array:
-        if (!ht) {
-          ht = curr->ptr->type.getHeapType();
-        }
-        note(&curr->ptr, Type(*ht, Nullable));
-        note(&curr->start, Type::i32);
-        return;
+    if (!ht) {
+      ht = curr->array->type.getHeapType();
     }
-    WASM_UNREACHABLE("unexpected op");
+    note(&curr->str, Type(HeapType::string, Nullable));
+    note(&curr->array, Type(*ht, Nullable));
+    note(&curr->start, Type::i32);
   }
 
   void visitStringConcat(StringConcat* curr) {

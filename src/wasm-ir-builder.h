@@ -206,10 +206,10 @@ public:
   [[nodiscard]] Result<> makeArrayInitData(HeapType type, Name data);
   [[nodiscard]] Result<> makeArrayInitElem(HeapType type, Name elem);
   [[nodiscard]] Result<> makeRefAs(RefAsOp op);
-  [[nodiscard]] Result<> makeStringNew(StringNewOp op, bool try_, Name mem);
+  [[nodiscard]] Result<> makeStringNew(StringNewOp op);
   [[nodiscard]] Result<> makeStringConst(Name string);
   [[nodiscard]] Result<> makeStringMeasure(StringMeasureOp op);
-  [[nodiscard]] Result<> makeStringEncode(StringEncodeOp op, Name mem);
+  [[nodiscard]] Result<> makeStringEncode(StringEncodeOp op);
   [[nodiscard]] Result<> makeStringConcat();
   [[nodiscard]] Result<> makeStringEq(StringEqOp op);
   [[nodiscard]] Result<> makeStringWTF8Advance();

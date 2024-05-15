@@ -1866,7 +1866,7 @@ public:
     WASM_UNREACHABLE("unimplemented ref.as_*");
   }
   Flow visitStringNew(StringNew* curr) {
-    Flow ptr = visit(curr->ptr);
+    Flow ptr = visit(curr->ref);
     if (ptr.breaking()) {
       return ptr;
     }
@@ -1976,39 +1976,38 @@ public:
       return Flow(NONCONSTANT_FLOW);
     }
 
-    Flow ref = visit(curr->ref);
-    if (ref.breaking()) {
-      return ref;
+    Flow str = visit(curr->str);
+    if (str.breaking()) {
+      return str;
     }
-    // TODO: "WTF-16 position treatment", as in stringview_wtf16.slice?
-    Flow ptr = visit(curr->ptr);
-    if (ptr.breaking()) {
-      return ptr;
+    Flow array = visit(curr->array);
+    if (array.breaking()) {
+      return array;
     }
     Flow start = visit(curr->start);
     if (start.breaking()) {
       return start;
     }
 
-    auto refData = ref.getSingleValue().getGCData();
-    auto ptrData = ptr.getSingleValue().getGCData();
-    if (!refData || !ptrData) {
+    auto strData = str.getSingleValue().getGCData();
+    auto arrayData = array.getSingleValue().getGCData();
+    if (!strData || !arrayData) {
       trap("null ref");
     }
     auto startVal = start.getSingleValue().getUnsigned();
-    auto& refValues = refData->values;
-    auto& ptrValues = ptrData->values;
+    auto& strValues = strData->values;
+    auto& arrayValues = arrayData->values;
     size_t end;
-    if (std::ckd_add<size_t>(&end, startVal, refValues.size()) ||
-        end > ptrValues.size()) {
+    if (std::ckd_add<size_t>(&end, startVal, strValues.size()) ||
+        end > arrayValues.size()) {
       trap("oob");
     }
 
-    for (Index i = 0; i < refValues.size(); i++) {
-      ptrValues[startVal + i] = refValues[i];
+    for (Index i = 0; i < strValues.size(); i++) {
+      arrayValues[startVal + i] = strValues[i];
     }
 
-    return Literal(int32_t(refData->values.size()));
+    return Literal(int32_t(strData->values.size()));
   }
   Flow visitStringEq(StringEq* curr) {
     NOTE_ENTER("StringEq");
