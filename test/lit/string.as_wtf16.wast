@@ -4,8 +4,8 @@
 ;; into any IR.
 
 ;; RUN: wasm-opt %s -all -S -o - | filecheck %s
-;; RUN: wasm-opt %s -all --generate-stack-ir --optimize-stack-ir --roundtrip -S -o - | filecheck %s --check-prefix=RTRIP
-;; RUN: wasm-opt %s -all --generate-stack-ir --optimize-stack-ir --roundtrip --roundtrip -S -o - | filecheck %s --check-prefix=RRTRP
+;; RUN: wasm-opt %s -all --shrink-level=3 --roundtrip -S -o - | filecheck %s --check-prefix=RTRIP
+;; RUN: wasm-opt %s -all --shrink-level=3 --roundtrip --roundtrip -S -o - | filecheck %s --check-prefix=RRTRP
 
 (module
   ;; CHECK:      (func $empty (type $2)
@@ -44,14 +44,17 @@
   ;; RRTRP:      (func $codeunit (type $1) (result i32)
   ;; RRTRP-NEXT:  (local $0 i32)
   ;; RRTRP-NEXT:  (local $1 (ref string))
-  ;; RRTRP-NEXT:  (local.set $1
-  ;; RRTRP-NEXT:   (string.const "abc")
-  ;; RRTRP-NEXT:  )
-  ;; RRTRP-NEXT:  (local.set $0
-  ;; RRTRP-NEXT:   (i32.const 0)
-  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT:  (local $2 (ref string))
   ;; RRTRP-NEXT:  (stringview_wtf16.get_codeunit
-  ;; RRTRP-NEXT:   (local.get $1)
+  ;; RRTRP-NEXT:   (block (result (ref string))
+  ;; RRTRP-NEXT:    (local.set $2
+  ;; RRTRP-NEXT:     (string.const "abc")
+  ;; RRTRP-NEXT:    )
+  ;; RRTRP-NEXT:    (local.set $0
+  ;; RRTRP-NEXT:     (i32.const 0)
+  ;; RRTRP-NEXT:    )
+  ;; RRTRP-NEXT:    (local.get $2)
+  ;; RRTRP-NEXT:   )
   ;; RRTRP-NEXT:   (local.get $0)
   ;; RRTRP-NEXT:  )
   ;; RRTRP-NEXT: )
@@ -135,20 +138,26 @@
   ;; RRTRP-NEXT:  (local $1 i32)
   ;; RRTRP-NEXT:  (local $2 i32)
   ;; RRTRP-NEXT:  (local $3 (ref string))
-  ;; RRTRP-NEXT:  (local.set $3
-  ;; RRTRP-NEXT:   (string.const "abc")
-  ;; RRTRP-NEXT:  )
-  ;; RRTRP-NEXT:  (local.set $2
-  ;; RRTRP-NEXT:   (i32.const 1)
-  ;; RRTRP-NEXT:  )
-  ;; RRTRP-NEXT:  (local.set $1
-  ;; RRTRP-NEXT:   (i32.const 2)
-  ;; RRTRP-NEXT:  )
-  ;; RRTRP-NEXT:  (local.set $0
-  ;; RRTRP-NEXT:   (local.get $2)
-  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT:  (local $4 i32)
+  ;; RRTRP-NEXT:  (local $5 (ref string))
   ;; RRTRP-NEXT:  (stringview_wtf16.slice
-  ;; RRTRP-NEXT:   (local.get $3)
+  ;; RRTRP-NEXT:   (block (result (ref string))
+  ;; RRTRP-NEXT:    (local.set $5
+  ;; RRTRP-NEXT:     (string.const "abc")
+  ;; RRTRP-NEXT:    )
+  ;; RRTRP-NEXT:    (local.set $0
+  ;; RRTRP-NEXT:     (block (result i32)
+  ;; RRTRP-NEXT:      (local.set $4
+  ;; RRTRP-NEXT:       (i32.const 1)
+  ;; RRTRP-NEXT:      )
+  ;; RRTRP-NEXT:      (local.set $1
+  ;; RRTRP-NEXT:       (i32.const 2)
+  ;; RRTRP-NEXT:      )
+  ;; RRTRP-NEXT:      (local.get $4)
+  ;; RRTRP-NEXT:     )
+  ;; RRTRP-NEXT:    )
+  ;; RRTRP-NEXT:    (local.get $5)
+  ;; RRTRP-NEXT:   )
   ;; RRTRP-NEXT:   (local.get $0)
   ;; RRTRP-NEXT:   (local.get $1)
   ;; RRTRP-NEXT:  )
@@ -195,14 +204,17 @@
   ;; RRTRP-NEXT:  (local $start i32)
   ;; RRTRP-NEXT:  (local $1 i32)
   ;; RRTRP-NEXT:  (local $2 (ref string))
-  ;; RRTRP-NEXT:  (local.set $2
-  ;; RRTRP-NEXT:   (string.const "abc")
-  ;; RRTRP-NEXT:  )
-  ;; RRTRP-NEXT:  (local.set $1
-  ;; RRTRP-NEXT:   (i32.const 2)
-  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT:  (local $3 (ref string))
   ;; RRTRP-NEXT:  (stringview_wtf16.slice
-  ;; RRTRP-NEXT:   (local.get $2)
+  ;; RRTRP-NEXT:   (block (result (ref string))
+  ;; RRTRP-NEXT:    (local.set $3
+  ;; RRTRP-NEXT:     (string.const "abc")
+  ;; RRTRP-NEXT:    )
+  ;; RRTRP-NEXT:    (local.set $1
+  ;; RRTRP-NEXT:     (i32.const 2)
+  ;; RRTRP-NEXT:    )
+  ;; RRTRP-NEXT:    (local.get $3)
+  ;; RRTRP-NEXT:   )
   ;; RRTRP-NEXT:   (local.get $start)
   ;; RRTRP-NEXT:   (local.get $1)
   ;; RRTRP-NEXT:  )
@@ -247,14 +259,17 @@
   ;; RRTRP-NEXT:  (local $end i32)
   ;; RRTRP-NEXT:  (local $1 i32)
   ;; RRTRP-NEXT:  (local $2 (ref string))
-  ;; RRTRP-NEXT:  (local.set $2
-  ;; RRTRP-NEXT:   (string.const "abc")
-  ;; RRTRP-NEXT:  )
-  ;; RRTRP-NEXT:  (local.set $1
-  ;; RRTRP-NEXT:   (i32.const 1)
-  ;; RRTRP-NEXT:  )
+  ;; RRTRP-NEXT:  (local $3 (ref string))
   ;; RRTRP-NEXT:  (stringview_wtf16.slice
-  ;; RRTRP-NEXT:   (local.get $2)
+  ;; RRTRP-NEXT:   (block (result (ref string))
+  ;; RRTRP-NEXT:    (local.set $3
+  ;; RRTRP-NEXT:     (string.const "abc")
+  ;; RRTRP-NEXT:    )
+  ;; RRTRP-NEXT:    (local.set $1
+  ;; RRTRP-NEXT:     (i32.const 1)
+  ;; RRTRP-NEXT:    )
+  ;; RRTRP-NEXT:    (local.get $3)
+  ;; RRTRP-NEXT:   )
   ;; RRTRP-NEXT:   (local.get $1)
   ;; RRTRP-NEXT:   (local.get $end)
   ;; RRTRP-NEXT:  )
