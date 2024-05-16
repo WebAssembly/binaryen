@@ -97,14 +97,19 @@ struct Table64Lowering : public WalkerPass<PostWalker<Table64Lowering>> {
 
   void visitTable(Table* table) {
     // This is visited last.
+    seenTable = true;
     if (table->is64()) {
       table->indexType = Type::i32;
     }
   }
 
   void visitElementSegment(ElementSegment* segment) {
-    if (segment->table.isNull()) {
-      // Passive segments don't have any offset to update.
+    // We assume that tables are visited after segments, so assert that here.
+    assert(!seenTable);
+    auto& module = *getModule();
+
+    // Passive segments don't have any offset to update.
+    if (segment->table.isNull() || !module.getTable(segment->table)->is64()) {
       return;
     }
 
@@ -112,7 +117,6 @@ struct Table64Lowering : public WalkerPass<PostWalker<Table64Lowering>> {
       c->value = Literal(static_cast<uint32_t>(c->value.geti64()));
       c->type = Type::i32;
     } else if (auto* get = segment->offset->dynCast<GlobalGet>()) {
-      auto& module = *getModule();
       auto* g = module.getGlobal(get->name);
       if (g->imported() && g->base == TABLE_BASE) {
         ImportInfo info(module);
@@ -138,6 +142,8 @@ struct Table64Lowering : public WalkerPass<PostWalker<Table64Lowering>> {
       WASM_UNREACHABLE("unexpected elem offset");
     }
   }
+
+  bool seenTable = false;
 };
 
 Pass* createTable64LoweringPass() { return new Table64Lowering(); }

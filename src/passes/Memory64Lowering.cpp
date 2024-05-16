@@ -118,6 +118,7 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
 
   void visitMemory(Memory* memory) {
     // This is visited last.
+    seenMemory = true;
     if (memory->is64()) {
       memory->indexType = Type::i32;
       if (memory->hasMax() && memory->max > Memory::kMaxSize32) {
@@ -127,8 +128,12 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
   }
 
   void visitDataSegment(DataSegment* segment) {
-    if (segment->isPassive) {
-      // passive segments don't have any offset to adjust
+    // We assume that memories are visited after segments, so assert that here.
+    assert(!seenMemory);
+    auto& module = *getModule();
+
+    // passive segments don't have any offset to adjust
+    if (segment->isPassive || !module.getMemory(segment->memory)->is64()) {
       return;
     }
 
@@ -136,7 +141,6 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
       c->value = Literal(static_cast<uint32_t>(c->value.geti64()));
       c->type = Type::i32;
     } else if (auto* get = segment->offset->dynCast<GlobalGet>()) {
-      auto& module = *getModule();
       auto* g = module.getGlobal(get->name);
       if (g->imported() && g->base == MEMORY_BASE) {
         ImportInfo info(module);
@@ -170,6 +174,8 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     super::run(module);
     module->features.disable(FeatureSet::Memory64);
   }
+
+  bool seenMemory = false;
 };
 
 Pass* createMemory64LoweringPass() { return new Memory64Lowering(); }
