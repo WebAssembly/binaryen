@@ -24,7 +24,7 @@
 
 #include "ir/find_all.h"
 #include "pass.h"
-#include "support/topological_sort.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -74,7 +74,7 @@ struct ReorderGlobals : public Pass {
       // that this is the common case with wasm MVP modules where the only
       // globals are typically the stack pointer and perhaps a handful of others
       // (however, features like wasm GC there may be a great many globals).
-      //return;
+      return;
     }
 
     NameCountMap counts;
@@ -88,87 +88,69 @@ struct ReorderGlobals : public Pass {
     scanner.run(getPassRunner(), module);
     scanner.runOnModuleCode(getPassRunner(), module);
 
-    // Do a toplogical sort to ensure we keep dependencies before the things
-    // that need them. For example, if $b's definition depends on $a then $b
-    // must appear later:
+    // We must take into account dependencies, so that globals appear before
+    // their users in other globals:
     //
     //   (global $a i32 (i32.const 10))
-    //   (global $b i32 (global.get $a)) ;; $b depends on $a
+    //   (global $b i32 (global.get $a)) ;; $b depends on $a; $a must be first
     //
-    struct DependencySort : TopologicalSort<Name, DependencySort> {
-      Module& wasm;
-      const NameCountMap& counts;
+    // To do so we construct a map from each global to the set of all other
+    // globals it transitively depends on. We also build a reverse map for the
+    // later processing.
+    std::unordered_map<Name, std::unordered_set<Name>> deps;
+    std::unordered_map<Name, std::unordered_set<Name>> reverseDeps;
 
-      std::unordered_map<Name, std::vector<Name>> deps;
-
-      DependencySort(Module& wasm, const NameCountMap& counts)
-        : wasm(wasm), counts(counts) {
-        // Sort a list of global names by their counts. Imports always take
-        // precedence regardless, as in the binary they are always emitted
-        // first. If we did not sort them separately here as well then we could
-        // end up with an unoptimal result like this:
-        //
-        //  $defined-C , 100 uses
-        //  $imported-A,  10 uses
-        //  $defined-B,    1 uses, depends on $A
-        //
-        // Here we sorted A and B before C since A 
-        auto sort = [&](std::vector<Name>& globals) {
-          std::stable_sort(
-            globals.begin(), globals.end(), [&](const Name& a, const Name& b) {
-              if (!wasm.getGlobal(a)->imported() &&
-                  wasm.getGlobal(b)->imported()) {
-                return true;
-              }
-
-              return counts.at(a) < counts.at(b);
-            });
-        };
-
-        // Sort the globals.
-        std::vector<Name> sortedNames;
-        for (auto& global : wasm.globals) {
-          sortedNames.push_back(global->name);
-        }
-        sort(sortedNames);
-
-        // Everything is a root (we need to emit all globals).
-        for (auto global : sortedNames) {
-          push(global);
-        }
-
-        // The dependencies are the globals referred to.
-        for (auto& global : wasm.globals) {
-          if (global->imported()) {
-            continue;
-          }
-          std::vector<Name> vec;
-          for (auto* get : FindAll<GlobalGet>(global->init).list) {
-            vec.push_back(get->name);
-          }
-          sort(vec);
-          deps[global->name] = std::move(vec);
-        }
-      }
-
-      void pushPredecessors(Name global) {
-        for (auto pred : deps[global]) {
-          push(pred);
-        }
+    // Find the direct dependencies, then compute the transitive closure. Our
+    // work items are a global and a new dependency we recently added for it.
+    UniqueDeferredQueue<std::pair<Name, Name>> work;
+    auto addDep = [&](Name global, Name dep) {
+      auto [_, inserted] = deps[global].insert(dep);
+      if (inserted) {
+        reverseDeps[dep].insert(global);
+        work.push({global, dep});
       }
     };
-
-    std::unordered_map<Name, Index> sortedIndexes;
-    for (auto global : DependencySort(*module, counts)) {
-      auto index = sortedIndexes.size();
-      sortedIndexes[global] = index;
+    for (auto& global : module->globals) {
+      if (!global->imported()) {
+        for (auto* get : FindAll<GlobalGet>(global->init).list) {
+          addDep(global->name, get->name);
+        }
+      }
     }
 
-    std::sort(
-      module->globals.begin(),
-      module->globals.end(),
+    while (!work.empty()) {
+      auto [global, dep] = work.pop();
+      // Wasm (and Binaryen IR) do not allow self-dependencies.
+      assert(global != dep);
+
+      // We are notified of a dep we've already added. We only need to consider
+      // consequences downstream.
+      assert(deps[global].count(dep));
+
+      // If we recently added global->dep, and we also have rev->global, then
+      // we may need to add rev->dep. Note that we may modify reverseDeps as we
+      // iterate here, so we operate on a copy.
+      auto copy = reverseDeps[global];
+      for (auto rev : copy) {
+        addDep(rev, dep);
+      }
+    }
+
+    // We are now aware of all dependencies, and can sort.
+    std::stable_sort(module->globals.begin(), module->globals.end(),
       [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
-        return sortedIndexes[a->name] < sortedIndexes[b->name];
+        // If b depends on a then a must appear first.
+        if (deps[b->name].count(a->name)) {
+          return true;
+        }
+
+        // If a depends on b then b must appear first.
+        if (deps[a->name].count(b->name)) {
+          return false;
+        }
+
+        // Otherwise, use the counts.
+        return counts[a->name] > counts[b->name];
       });
 
     module->updateMaps();
