@@ -118,6 +118,10 @@ struct ReorderGlobals : public Pass {
       }
     }
 
+    // The immediate dependencies are the ones we just computed, before the
+    // transitive closure we are about to do.
+    auto immediateDeps = deps;
+
     while (!work.empty()) {
       auto [global, dep] = work.pop();
       // Wasm (and Binaryen IR) do not allow self-dependencies.
@@ -136,16 +140,50 @@ struct ReorderGlobals : public Pass {
       }
     }
 
-    // We are now aware of all dependencies, and can sort.
+    // We are now aware of all dependencies. Before we sort, we must define a
+    // total ordering, for which we compute the topological depth from the deps:
+    // things that nothing depends on have depth 0, depth 1 are the things they
+    // depend on immediately, and so forth. We build up a map of global names to
+    // their depth, using a work queue of globals to process.
+    std::unordered_map<Name, Index> depths;
+    UniqueDeferredQueue<Name> work2;
+    for (auto& global : module->globals) {
+      work2.push(global->name);
+    }
+    while (!work2.empty()) {
+      auto global = work2.pop();
+      auto& depth = depths[global];
+      auto old = depth;
+      for (auto rev : reverseDeps[global]) {
+        // Each global's depth is at least 1 more than things that depend on it.
+        depth = std::max(depth, depths[rev] + 1);
+      }
+      if (depth != old) {
+        // We added, which means things that we depend on may need updating.
+        for (auto dep : deps[global]) {
+          work2.push(dep);
+        }
+      }
+    }
+
+
+
+
+
+
+//    std::unordered_map<Index, std::vector<Name>> depthGlobals;
+
+
+
+    // Sort!
     std::stable_sort(module->globals.begin(), module->globals.end(),
       [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
-        // If b depends on a then a must appear first.
-        if (deps[b->name].count(a->name)) {
+        // The topological sort takes highest precedence: higher depths appear
+        // first.
+        if (depths[a->name] > depths[b->name]) {
           return true;
         }
-
-        // If a depends on b then b must appear first.
-        if (deps[a->name].count(b->name)) {
+        if (depths[a->name] < depths[b->name]) {
           return false;
         }
 
