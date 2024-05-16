@@ -380,11 +380,16 @@ void TranslateToFuzzReader::setupGlobals() {
   }
 
   auto useGlobalLater = [&](Global* global) {
-    globalsByType[global->type].push_back(global->name);
+    auto type = global->type;
+    auto name = global->name;
+    globalsByType[type].push_back(name);
     if (global->mutable_) {
-      mutableGlobalsByType[global->type].push_back(global->name);
+      mutableGlobalsByType[type].push_back(name);
     } else {
-      immutableGlobalsByType[global->type].push_back(global->name);
+      immutableGlobalsByType[type].push_back(name);
+      if (global->imported()) {
+        importedImmutableGlobalsByType[type].push_back(name);
+      }
     }
   };
 
@@ -1902,8 +1907,9 @@ Expression* TranslateToFuzzReader::makeLocalSet(Type type) {
 
 Expression* TranslateToFuzzReader::makeGlobalGet(Type type) {
   // In a non-function context, like in another global, we can only get from an
-  // immutable global.
-  auto& relevantGlobals = funcContext ? globalsByType : immutableGlobalsByType;
+  // immutable global, and whether GC is enabled (which allows getting non-
+  // imported globals).
+  auto& relevantGlobals = funcContext ? globalsByType : (wasm.features.hasGC() ? immutableGlobalsByType : importedImmutableGlobalsByType);
   auto it = relevantGlobals.find(type);
   if (it == relevantGlobals.end() || it->second.empty()) {
     return makeTrivial(type);
