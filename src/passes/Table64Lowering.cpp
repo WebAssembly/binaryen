@@ -104,7 +104,7 @@ struct Table64Lowering : public WalkerPass<PostWalker<Table64Lowering>> {
   }
 
   void visitElementSegment(ElementSegment* segment) {
-    // We assume that memories are visitied after segments, so assert that here.
+    // We assume that tables are visited after segments, so assert that here.
     assert(!seenTable);
     auto& module = *getModule();
 

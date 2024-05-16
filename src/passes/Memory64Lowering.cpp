@@ -128,7 +128,7 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
   }
 
   void visitDataSegment(DataSegment* segment) {
-    // We assume that memories are visitied after segments, so assert that here.
+    // We assume that memories are visited after segments, so assert that here.
     assert(!seenMemory);
     auto& module = *getModule();
 
