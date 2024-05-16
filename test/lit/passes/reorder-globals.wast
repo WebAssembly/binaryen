@@ -292,3 +292,110 @@
     )
   )
 )
+
+(module
+  ;; CHECK:      (global $a i32 (i32.const 10))
+  (global $a i32 (i32.const 10))
+
+  ;; CHECK:      (global $c i32 (global.get $a))
+
+  ;; CHECK:      (global $b i32 (i32.const 20))
+  (global $b i32 (i32.const 20))
+
+  (global $c i32 (global.get $a))
+
+  ;; CHECK:      (global $d i32 (global.get $b))
+  (global $d i32 (global.get $b))
+
+  ;; CHECK:      (global $e i32 (i32.add
+  ;; CHECK-NEXT:  (global.get $c)
+  ;; CHECK-NEXT:  (global.get $d)
+  ;; CHECK-NEXT: ))
+  (global $e i32 (i32.add
+    (global.get $c)
+    (global.get $d)
+  ))
+
+  ;; CHECK:      (func $uses (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $d)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $d)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $d)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $a)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $uses
+    ;; Dependency graph (left depends on right):
+    ;;
+    ;;    $c - $a
+    ;;   /
+    ;; $e
+    ;;   \
+    ;;    $d - $b
+    ;;
+    ;; $e has the most uses, followed by $c and $d. $a and $b have a reverse
+    ;; ordering from their dependers, so a naive topological sort will fail to
+    ;; be optimal. The optimal order is:
+    ;;
+    ;;   $b, $a, $c, $d, $e
+    ;;
+    (drop (global.get $e))
+    (drop (global.get $e))
+    (drop (global.get $e))
+    (drop (global.get $e))
+    (drop (global.get $e))
+
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+
+    (drop (global.get $d))
+    (drop (global.get $d))
+    (drop (global.get $d))
+
+    (drop (global.get $b))
+    (drop (global.get $b))
+
+    (drop (global.get $a))
+  )
+)
