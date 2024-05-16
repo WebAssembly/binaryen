@@ -256,17 +256,17 @@ struct Walker : public VisitorType {
         self->walkTag(curr.get());
       }
     }
-    for (auto& curr : module->tables) {
-      self->walkTable(curr.get());
-    }
     for (auto& curr : module->elementSegments) {
       self->walkElementSegment(curr.get());
     }
-    for (auto& curr : module->memories) {
-      self->walkMemory(curr.get());
+    for (auto& curr : module->tables) {
+      self->walkTable(curr.get());
     }
     for (auto& curr : module->dataSegments) {
       self->walkDataSegment(curr.get());
+    }
+    for (auto& curr : module->memories) {
+      self->walkMemory(curr.get());
     }
   }
 
