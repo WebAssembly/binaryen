@@ -116,20 +116,7 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     wrapAddress64(curr->ptr, curr->memory);
   }
 
-  void visitMemory(Memory* memory) {
-    // This is visited last.
-    seenMemory = true;
-    if (memory->is64()) {
-      memory->indexType = Type::i32;
-      if (memory->hasMax() && memory->max > Memory::kMaxSize32) {
-        memory->max = Memory::kMaxSize32;
-      }
-    }
-  }
-
   void visitDataSegment(DataSegment* segment) {
-    // We assume that memories are visited after segments, so assert that here.
-    assert(!seenMemory);
     auto& module = *getModule();
 
     // passive segments don't have any offset to adjust
@@ -172,10 +159,19 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
       return;
     }
     super::run(module);
+    // Don't modify the memories themselves until after the traversal since we
+    // that would require memories to be the last thing that get visited, and
+    // we don't want to depend on that specific ordering.
+    for (auto& memory : module->memories) {
+      if (memory->is64()) {
+        memory->indexType = Type::i32;
+        if (memory->hasMax() && memory->max > Memory::kMaxSize32) {
+          memory->max = Memory::kMaxSize32;
+        }
+      }
+    }
     module->features.disable(FeatureSet::Memory64);
   }
-
-  bool seenMemory = false;
 };
 
 Pass* createMemory64LoweringPass() { return new Memory64Lowering(); }
