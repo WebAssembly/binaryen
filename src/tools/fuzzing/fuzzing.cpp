@@ -411,6 +411,10 @@ void TranslateToFuzzReader::setupGlobals() {
   // Create new random globals.
   for (size_t index = upTo(MAX_GLOBALS); index > 0; --index) {
     auto type = getConcreteType();
+    if (type.isTuple()) {
+      // We disallow tuples in globals.
+      type = Type::i32;
+    }
     auto mutability = oneIn(2) ? Builder::Mutable : Builder::Immutable;
 
     // Usually make a const, but sometimes make a global.get (which may fail to
