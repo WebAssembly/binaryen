@@ -308,7 +308,24 @@ INITIAL_CONTENTS_IGNORE = [
     'fannkuch3_manyopts_dwarf.wasm',
     'fib2_emptylocspan_dwarf.wasm',
     'fannkuch3_dwarf.wasm',
+    'dwarf-local-order.wasm',
+    'strip-producers.wasm',
     'multi_unit_abbrev_noprint.wasm',
+    'reverse_dwarf_abbrevs.wasm',
+    'print_g.wasm',
+    'print_g_strip-dwarf.wasm',
+    'fannkuch0_dwarf.wasm',
+    'dwarfdump_roundtrip_dwarfdump.wasm',
+    'dwarfdump.wasm',
+    'fannkuch3_dwarf.wasm',
+    'dwarf-local-order.wasm',
+    'dwarf_unit_with_no_abbrevs_noprint.wasm',
+    'strip-debug.wasm',
+    'multi_line_table_dwarf.wasm',
+    'dwarf_with_exceptions.wasm',
+    'strip-dwarf.wasm',
+    'ignore_missing_func_dwarf.wasm',
+    'print.wasm',
     # TODO fuzzer support for multimemory
     'multi-memories-atomics64.wast',
     'multi-memories-basics.wast',
@@ -1183,7 +1200,7 @@ def filter_exports(wasm, output, keep):
         f.write(json.dumps(graph))
 
     # prune the exports
-    run([in_bin('wasm-metadce'), wasm, '-o', output, '--graph-file', 'graph.json', '-all'])
+    run([in_bin('wasm-metadce'), wasm, '-o', output, '--graph-file', 'graph.json'] + FEATURE_OPTS)
 
 
 # Fuzz the interpreter with --fuzz-exec -tnh. The tricky thing with traps-never-
