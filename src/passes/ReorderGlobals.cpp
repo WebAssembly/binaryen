@@ -74,7 +74,7 @@ struct ReorderGlobals : public Pass {
       // that this is the common case with wasm MVP modules where the only
       // globals are typically the stack pointer and perhaps a handful of others
       // (however, features like wasm GC there may be a great many globals).
-      return;
+      //return;
     }
 
     NameCountMap counts;
@@ -103,10 +103,24 @@ struct ReorderGlobals : public Pass {
 
       DependencySort(Module& wasm, const NameCountMap& counts)
         : wasm(wasm), counts(counts) {
-        // Sort a list of global names by their counts.
+        // Sort a list of global names by their counts. Imports always take
+        // precedence regardless, as in the binary they are always emitted
+        // first. If we did not sort them separately here as well then we could
+        // end up with an unoptimal result like this:
+        //
+        //  $defined-C , 100 uses
+        //  $imported-A,  10 uses
+        //  $defined-B,    1 uses, depends on $A
+        //
+        // Here we sorted A and B before C since A 
         auto sort = [&](std::vector<Name>& globals) {
           std::stable_sort(
             globals.begin(), globals.end(), [&](const Name& a, const Name& b) {
+              if (!wasm.getGlobal(a)->imported() &&
+                  wasm.getGlobal(b)->imported()) {
+                return true;
+              }
+
               return counts.at(a) < counts.at(b);
             });
         };
