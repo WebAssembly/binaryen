@@ -95,17 +95,7 @@ struct Table64Lowering : public WalkerPass<PostWalker<Table64Lowering>> {
     wrapAddress64(curr->target, curr->table);
   }
 
-  void visitTable(Table* table) {
-    // This is visited last.
-    seenTable = true;
-    if (table->is64()) {
-      table->indexType = Type::i32;
-    }
-  }
-
   void visitElementSegment(ElementSegment* segment) {
-    // We assume that tables are visited after segments, so assert that here.
-    assert(!seenTable);
     auto& module = *getModule();
 
     // Passive segments don't have any offset to update.
@@ -143,7 +133,17 @@ struct Table64Lowering : public WalkerPass<PostWalker<Table64Lowering>> {
     }
   }
 
-  bool seenTable = false;
+  void run(Module* module) override {
+    super::run(module);
+    // Don't modify the tables themselves until after the traversal since we
+    // that would require tables to be the last thing that get visited, and
+    // we don't want to depend on that specific ordering.
+    for (auto& table : module->tables) {
+      if (table->is64()) {
+        table->indexType = Type::i32;
+      }
+    }
+  }
 };
 
 Pass* createTable64LoweringPass() { return new Table64Lowering(); }
