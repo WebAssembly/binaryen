@@ -145,8 +145,6 @@
 
 ;; As above, but without dependencies, so now $c is first and then $b.
 (module
-
-
   ;; CHECK:      (global $c i32 (i32.const 30))
 
   ;; CHECK:      (global $b i32 (i32.const 20))
@@ -184,10 +182,10 @@
 ;; can be first.
 (module
 
-  ;; CHECK:      (global $c i32 (i32.const 30))
-
   ;; CHECK:      (global $a i32 (i32.const 10))
   (global $a i32 (i32.const 10))
+  ;; CHECK:      (global $c i32 (i32.const 30))
+
   ;; CHECK:      (global $b i32 (global.get $a))
   (global $b i32 (global.get $a))
   (global $c i32 (i32.const 30))
@@ -294,14 +292,14 @@
 )
 
 (module
+  ;; CHECK:      (global $b i32 (i32.const 20))
+
   ;; CHECK:      (global $a i32 (i32.const 10))
   (global $a i32 (i32.const 10))
 
-  ;; CHECK:      (global $c i32 (global.get $a))
-
-  ;; CHECK:      (global $b i32 (i32.const 20))
   (global $b i32 (i32.const 20))
 
+  ;; CHECK:      (global $c i32 (global.get $a))
   (global $c i32 (global.get $a))
 
   ;; CHECK:      (global $d i32 (global.get $b))
@@ -399,3 +397,9 @@
     (drop (global.get $a))
   )
 )
+
+;; As above, but add a direct dep from $e to $a. $a must still appear before
+;; $c which depends on it.
+
+;; Remove $b, and make the counts suggest to sort $a in between $c and $d, that
+;; is, in between others of a different rank.
