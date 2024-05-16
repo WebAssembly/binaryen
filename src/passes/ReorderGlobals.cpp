@@ -99,44 +99,12 @@ struct ReorderGlobals : public Pass {
     // later processing.
     std::unordered_map<Name, std::unordered_set<Name>> deps;
     std::unordered_map<Name, std::unordered_set<Name>> reverseDeps;
-
-    // Find the direct dependencies, then compute the transitive closure. Our
-    // work items are a global and a new dependency we recently added for it.
-    UniqueDeferredQueue<std::pair<Name, Name>> work;
-    auto addDep = [&](Name global, Name dep) {
-      auto [_, inserted] = deps[global].insert(dep);
-      if (inserted) {
-        reverseDeps[dep].insert(global);
-        work.push({global, dep});
-      }
-    };
     for (auto& global : module->globals) {
       if (!global->imported()) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
-          addDep(global->name, get->name);
+          deps[global->name].insert(get->name);
+          reverseDeps[get->name].insert(global->name);
         }
-      }
-    }
-
-    // The immediate dependencies are the ones we just computed, before the
-    // transitive closure we are about to do.
-    auto immediateDeps = deps;
-
-    while (!work.empty()) {
-      auto [global, dep] = work.pop();
-      // Wasm (and Binaryen IR) do not allow self-dependencies.
-      assert(global != dep);
-
-      // We are notified of a dep we've already added. We only need to consider
-      // consequences downstream.
-      assert(deps[global].count(dep));
-
-      // If we recently added global->dep, and we also have rev->global, then
-      // we may need to add rev->dep. Note that we may modify reverseDeps as we
-      // iterate here, so we operate on a copy.
-      auto copy = reverseDeps[global];
-      for (auto rev : copy) {
-        addDep(rev, dep);
       }
     }
 
@@ -165,15 +133,6 @@ struct ReorderGlobals : public Pass {
         }
       }
     }
-
-
-
-
-
-
-//    std::unordered_map<Index, std::vector<Name>> depthGlobals;
-
-
 
     // Sort!
     std::stable_sort(module->globals.begin(), module->globals.end(),
