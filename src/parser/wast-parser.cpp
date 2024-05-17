@@ -397,11 +397,15 @@ Result<WASTScript> wast(Lexer& in) {
   while (!in.empty()) {
     size_t line = in.position().line;
     auto cmd = command(in);
-    if (cmd.getErr() && cmds.empty()) {
+    if (auto* err = cmd.getErr(); err && cmds.empty()) {
       // The entire script might be a single module comprising a sequence of
       // module fields with a top-level `(module ...)`.
       auto wasm = std::make_shared<Module>();
-      CHECK_ERR(parseModule(*wasm, in.buffer));
+      auto parsed = parseModule(*wasm, in.buffer);
+      if (parsed.getErr()) {
+        // No, that wasn't the problem. Return the original error.
+        return Err{err->msg};
+      }
       cmds.push_back({WASTModule{std::move(wasm)}, line});
       return cmds;
     }

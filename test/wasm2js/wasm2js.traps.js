@@ -68,12 +68,12 @@ function check1() {
  return 1 | 0;
 }
 
-if (!check1()) throw 'assertion failed: ( assert_return ( invoke empty ) )';
+if (!check1()) throw 'assertion failed on line 9';
 function check2() {
  return (retasmFunc0.add(1 | 0, 1 | 0) | 0 | 0) == (2 | 0) | 0;
 }
 
-if (!check2()) throw 'assertion failed: ( assert_return ( invoke add ( i32.const 1 ) ( i32.const 1 ) ) ( i32.const 2 ) )';
+if (!check2()) throw 'assertion failed on line 10';
 function check3() {
  function f() {
   return retasmFunc0.div_s(0 | 0, 0 | 0) | 0 | 0;
@@ -82,12 +82,12 @@ function check3() {
  try {
   f();
  } catch (e) {
-  return e.message.includes("integer divide by zero");
+  return 1;
  };
  return 0;
 }
 
-if (!check3()) throw 'assertion failed: ( assert_trap ( invoke div_s ( i32.const 0 ) ( i32.const 0 ) ) integer divide by zero )';
+if (!check3()) throw 'assertion failed on line 11';
 function check4() {
  function f() {
   return retasmFunc0.div_s(-2147483648 | 0, -1 | 0) | 0 | 0;
@@ -96,9 +96,9 @@ function check4() {
  try {
   f();
  } catch (e) {
-  return e.message.includes("integer overflow");
+  return 1;
  };
  return 0;
 }
 
-if (!check4()) throw 'assertion failed: ( assert_trap ( invoke div_s ( i32.const 0x80000000 ) ( i32.const -1 ) ) integer overflow )';
+if (!check4()) throw 'assertion failed on line 12';

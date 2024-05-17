@@ -86,7 +86,11 @@ memorySegments[1] = base64DecodeToExistingUint8Array(new Uint8Array(6), 0, "d29y
   }
       
   function wasm2js_memory_init(segment, dest, offset, size) {
-    // TODO: traps on invalid things
+    dest = dest >>> 0;
+    offset = offset >>> 0;
+    size = size >>> 0;
+    // if (dest + size > bufferView.length) throw "trap: invalid memory.init";
+    // if (offset + size > memorySegments[segment].length) throw "trap: invalid memory.init";
     bufferView.set(memorySegments[segment].subarray(offset, offset + size), dest);
   }
       

@@ -23,7 +23,7 @@ var retasmFunc = asmFunc({
   function wasm2js_memory_fill(dest, value, size) {
     dest = dest >>> 0;
     size = size >>> 0;
-    if (dest + size > bufferView.length) throw "trap: invalid memory.fill";
+    // if (dest + size > bufferView.length) throw "trap: invalid memory.fill";
     bufferView.fill(value, dest, dest + size);
   }
       
@@ -123,7 +123,11 @@ function initActiveSegments(imports) {
 }
 
   function wasm2js_memory_copy(dest, source, size) {
-    // TODO: traps on invalid things
+    dest = dest >>> 0;
+    source = source >>> 0;
+    size = size >>> 0;
+    // if (dest + size > bufferView.length) throw "trap: invalid memory.copy";
+    // if (source + size > bufferView.length) throw "trap: invalid memory.copy";
     bufferView.copyWithin(dest, source, source + size);
   }
       
@@ -201,7 +205,11 @@ export var load8_u = retasmFunc.load8_u;
 memorySegments[0] = base64DecodeToExistingUint8Array(new Uint8Array(4), 0, "qrvM3Q==");
 
   function wasm2js_memory_init(segment, dest, offset, size) {
-    // TODO: traps on invalid things
+    dest = dest >>> 0;
+    offset = offset >>> 0;
+    size = size >>> 0;
+    // if (dest + size > bufferView.length) throw "trap: invalid memory.init";
+    // if (offset + size > memorySegments[segment].length) throw "trap: invalid memory.init";
     bufferView.set(memorySegments[segment].subarray(offset, offset + size), dest);
   }
       
@@ -308,7 +316,11 @@ function initActiveSegments(imports) {
   }
       
   function wasm2js_memory_init(segment, dest, offset, size) {
-    // TODO: traps on invalid things
+    dest = dest >>> 0;
+    offset = offset >>> 0;
+    size = size >>> 0;
+    // if (dest + size > bufferView.length) throw "trap: invalid memory.init";
+    // if (offset + size > memorySegments[segment].length) throw "trap: invalid memory.init";
     bufferView.set(memorySegments[segment].subarray(offset, offset + size), dest);
   }
       
