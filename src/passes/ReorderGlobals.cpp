@@ -175,7 +175,9 @@ struct ReorderGlobals : public Pass {
     assert(sortedIndexes.size() == globals.size());
 
     // Use the total ordering of the topological sort + counts.
-    std::sort(globals.begin(), globals.end(),
+    std::sort(
+      globals.begin(),
+      globals.end(),
       [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
         return sortedIndexes[a->name] < sortedIndexes[b->name];
       });
