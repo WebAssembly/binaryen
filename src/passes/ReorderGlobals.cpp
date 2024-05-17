@@ -120,13 +120,13 @@ struct ReorderGlobals : public Pass {
     // Other approaches here could be to do a topological sort, but we do need
     // this fully general algorithm, because the optimal order may not require
     // strict ordering by topological depth, e.g.:
-    //
+    /*
     //     $c - $a
     //    /
     //  $e
     //    \
     //     $d - $b
-    //
+    */
     // Here $e depends on $c and $d, $c depends on $a, and $d on $b. This is a
     // partial order, as $d can be before or after $a, for example. As a result,
     // if we sorted topologically by sub-trees here then we'd keep $c and $a
@@ -148,6 +148,16 @@ struct ReorderGlobals : public Pass {
     }
 
     auto cmp = [&](Name a, Name b) {
+      // Imports always go first.
+      auto aImported = module->getGlobal(a)->imported();
+      auto bImported = module->getGlobal(b)->imported();
+      if (!aImported && bImported) {
+        return true;
+      }
+      if (aImported && !bImported) {
+        return false;
+      }
+
       // Sort by the counts.
       if (counts[a] < counts[b]) {
         return true;
