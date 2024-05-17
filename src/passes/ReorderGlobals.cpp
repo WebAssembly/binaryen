@@ -148,7 +148,9 @@ struct ReorderGlobals : public Pass {
     }
 
     auto cmp = [&](Name a, Name b) {
-      // Imports always go first.
+      // Imports always go first. The binary writer takes care of this itself
+      // anyhow, but it is better to do it here in the IR so we can actually
+      // see what the final layout will be.
       auto aImported = module->getGlobal(a)->imported();
       auto bImported = module->getGlobal(b)->imported();
       if (!aImported && bImported) {
