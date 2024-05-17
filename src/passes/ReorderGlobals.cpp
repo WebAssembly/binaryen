@@ -109,7 +109,7 @@ struct ReorderGlobals : public Pass {
       }
     }
 
-    // To sort the globals we use the simple approach of always picking the
+    // To sort the globals we do a simple greedy approach of always picking the
     // global with the highest count at every point in time, subject to the
     // constraint that we can only emit globals that have all of their
     // dependencies already emitted. To do so we keep a list of the "available"
@@ -119,12 +119,26 @@ struct ReorderGlobals : public Pass {
     //
     // Other approaches here could be to do a topological sort, but we do need
     // this fully general algorithm, because the optimal order may not require
-    // strict ordering by topological depth. That is, the dependencies imply a
-    // partial order, not a total one. By doing the optimal thing at each step -
-    // picking the available global with the highest count - we ensure we are
-    // doing the best thing in the greedy sense, at least, which is better than
-    // a naive topological sort. Note that this algorithm remains linear in the
-    // size of the input.
+    // strict ordering by topological depth, e.g.:
+    //
+    //     $c - $a
+    //    /
+    //  $e
+    //    \
+    //     $d - $b
+    //
+    // Here $e depends on $c and $d, $c depends on $a, and $d on $b. This is a
+    // partial order, as $d can be before or after $a, for example. As a result,
+    // if we sorted topologically by sub-trees here then we'd keep $c and $a
+    // together, and $d and $b, but a better order might interleave them. A good
+    // order also may not keep topological depths separated, e.g. we may want to
+    // put $a in between $c and $d despite it having a greater depth.
+    //
+    // The greedy approach here may also be unoptimal, however. Consider that we
+    // might see that the best available global is $a, but if we popped $b
+    // instead that could unlock $c which depends on $b and $c might have a much
+    // higher use count than $a. This algorithm often does well, however, and it
+    // runs in linear time in the size of the input.
     std::vector<Name> availableHeap;
 
     // To break ties we use the original order, to avoid churn.
