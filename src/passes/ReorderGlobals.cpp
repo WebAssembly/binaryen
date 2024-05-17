@@ -167,27 +167,20 @@ struct ReorderGlobals : public Pass {
       }
     }
 
-    // Sort!
+    // Use the total ordering of the topological sort + counts.
     std::stable_sort(module->globals.begin(), module->globals.end(),
       [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
-        // If one depends on the other, the dependency must appear first.
-        if (deps[b->name].count(a->name)) {
+        // The topological sort takes highest precedence: higher depths appear
+        // first.
+        if (depths[a->name] > depths[b->name]) {
           return true;
         }
-        if (deps[a->name].count(b->name)) {
+        if (depths[a->name] < depths[b->name]) {
           return false;
         }
 
-        // There is no dependence between them, so use the counts.
-        if (counts[a->name] > counts[b->name]) {
-          return true;
-        }
-        if (counts[b->name] > counts[a->name]) {
-          return false;
-        }
-
-        // Finally, use the topological sort to break ties.
-        return depths[a->name] > depths[b->name];
+        // Otherwise, use the counts.
+        return counts[a->name] > counts[b->name];
       });
 
     module->updateMaps();
