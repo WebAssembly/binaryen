@@ -1176,7 +1176,7 @@ void test_core() {
                       makeInt32(module, 0)),
     BinaryenStringNew(module,
                       BinaryenStringNewWTF16Array(),
-                      BinaryenGlobalGet(module, "i16Array-global", i8Array),
+                      BinaryenGlobalGet(module, "i16Array-global", i16Array),
                       makeInt32(module, 0),
                       makeInt32(module, 0)),
     BinaryenStringNew(
