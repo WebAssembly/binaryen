@@ -178,10 +178,10 @@
   )
 )
 
-;; As above, but a mixed case: $b depends on $a but $c has no dependencies. $c
-;; can be first.
+;; As above, but a mixed case: $b depends on $a but $c has no dependencies, and
+;; the counts are $c with the most, followed by $b, and then $a. $c can be
+;; first here, but $b must follow $a.
 (module
-
   ;; CHECK:      (global $c i32 (i32.const 30))
 
   ;; CHECK:      (global $a i32 (i32.const 10))
@@ -214,25 +214,24 @@
   )
 )
 
-;; Another mixed case, now with $c depending on $b. $b can be before $a.
+;; As above, but with the counts adjusted: before we had $c, $b, $a from most to
+;; least uses, and now $b, $c, $a. We cannot put $b first, however, due to its
+;; dependency on $a.
 (module
-
-
-  ;; CHECK:      (global $b i32 (i32.const 20))
-
-  ;; CHECK:      (global $c i32 (global.get $b))
+  ;; CHECK:      (global $c i32 (i32.const 30))
 
   ;; CHECK:      (global $a i32 (i32.const 10))
   (global $a i32 (i32.const 10))
-  (global $b i32 (i32.const 20))
-  (global $c i32 (global.get $b))
+  ;; CHECK:      (global $b i32 (global.get $a))
+  (global $b i32 (global.get $a))
+  (global $c i32 (i32.const 30))
 
   ;; CHECK:      (func $uses (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $b)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:   (global.get $b)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $c)
@@ -243,7 +242,7 @@
       (global.get $b)
     )
     (drop
-      (global.get $c)
+      (global.get $b) ;; this changed
     )
     (drop
       (global.get $c)
@@ -373,10 +372,15 @@
     ;;
     ;; $e has the most uses, followed by $c and $d. $a and $b have a reverse
     ;; ordering from their dependers, so a naive topological sort will fail to
-    ;; be optimal. The optimal order is:
+    ;; be optimal. There are multiple optimal orders however, including:
     ;;
     ;;   $b, $a, $c, $d, $e
+    ;;   $b, $d, $a, $c, $e
     ;;
+    ;; $b and $e must be at the edges, but there is no single way to sort the
+    ;; others: the first sorting here puts $a before both $d (though $a has
+    ;; lower count) while the second puts $d before $c. Our greedy algorithm
+    ;; picks the second order here.
     (drop (global.get $e))
     (drop (global.get $e))
     (drop (global.get $e))

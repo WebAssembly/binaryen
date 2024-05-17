@@ -122,8 +122,9 @@ struct ReorderGlobals : public Pass {
     // strict ordering by topological depth. That is, the dependencies imply a
     // partial order, not a total one. By doing the optimal thing at each step -
     // picking the available global with the highest count - we ensure we are
-    // doing the best thing. Note that this algorithm remains linear in the size
-    // of the input.
+    // doing the best thing in the greedy sense, at least, which is better than
+    // a naive topological sort. Note that this algorithm remains linear in the
+    // size of the input.
     std::vector<Name> availableHeap;
 
     // To break ties we use the original order, to avoid churn.
