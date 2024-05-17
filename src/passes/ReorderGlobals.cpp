@@ -104,7 +104,6 @@ struct ReorderGlobals : public Pass {
     for (auto& global : globals) {
       if (!global->imported()) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
-std::cout << global->name << " depends on " << get->name << '\n';
           dependsOn[global->name].insert(get->name);
           dependedOn[get->name].insert(global->name);
         }
@@ -133,30 +132,10 @@ std::cout << global->name << " depends on " << get->name << '\n';
       return a > b;
     };
 
-    // Likely not needed on an empty vector, but just to be safe.
-    std::make_heap(availableHeap.begin(), availableHeap.end(), cmp);
-
-    // Each time we add to the heap, we may make more things available.
+    // Push an item that just became available to the available heap.
     auto push = [&](Name global) {
-      // Pushing an item can make more available, and so on recursively, but
-      // avoid recursion here because the chains may be deep.
-      std::vector<Name> toPush;
-      toPush.push_back(global);
-      while (!toPush.empty()) {
-        auto curr = toPush.back();
-        toPush.pop_back();
-
-        availableHeap.push_back(curr);
-        std::push_heap(availableHeap.begin(), availableHeap.end(), cmp);
-
-        for (auto other : dependedOn[curr]) {
-          assert(dependsOn[other].count(curr));
-          dependsOn[other].erase(curr);
-          if (dependsOn[other].empty()) {
-            toPush.push_back(other);
-          }
-        }
-      }
+      availableHeap.push_back(global);
+      std::push_heap(availableHeap.begin(), availableHeap.end(), cmp);
     };
 
     // The initially available globals are those with no dependencies.
@@ -166,14 +145,28 @@ std::cout << global->name << " depends on " << get->name << '\n';
       }
     }
 
-    // Pop off the heap until we finish processing all the globals.
+    // Pop off the heap: Emit the global and it its final, sorted index. Keep
+    // doing that until we finish processing all the globals.
     std::unordered_map<Name, Index> sortedIndexes;
     while (!availableHeap.empty()) {
       std::pop_heap(availableHeap.begin(), availableHeap.end(), cmp);
-      sortedIndexes[availableHeap.back()] = sortedIndexes.size();
+      auto global = availableHeap.back();
+      sortedIndexes[global] = sortedIndexes.size();
       availableHeap.pop_back();
+
+      // Each time we pop we emit the global, which means anything that only
+      // depended on it becomes available to be popped as well.
+      for (auto other : dependedOn[global]) {
+        assert(dependsOn[other].count(global));
+        dependsOn[other].erase(global);
+        if (dependsOn[other].empty()) {
+          push(other);
+        }
+      }
     }
 
+    // All globals must have been handled. Cycles would prevent this, but they
+    // cannot exist in valid IR.
     assert(sortedIndexes.size() == globals.size());
 
     // Use the total ordering of the topological sort + counts.

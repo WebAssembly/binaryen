@@ -294,6 +294,8 @@
 (module
   ;; CHECK:      (global $b i32 (i32.const 20))
 
+  ;; CHECK:      (global $d i32 (global.get $b))
+
   ;; CHECK:      (global $a i32 (i32.const 10))
   (global $a i32 (i32.const 10))
 
@@ -302,7 +304,6 @@
   ;; CHECK:      (global $c i32 (global.get $a))
   (global $c i32 (global.get $a))
 
-  ;; CHECK:      (global $d i32 (global.get $b))
   (global $d i32 (global.get $b))
 
   ;; CHECK:      (global $e i32 (i32.add
