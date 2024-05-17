@@ -99,12 +99,45 @@ struct ReorderGlobals : public Pass {
     // later processing.
     std::unordered_map<Name, std::unordered_set<Name>> deps;
     std::unordered_map<Name, std::unordered_set<Name>> reverseDeps;
+
+    // Find the direct dependencies, then compute the transitive closure. Our
+    // work items are a global and a new dependency we recently added for it.
+    UniqueDeferredQueue<std::pair<Name, Name>> work;
+    auto addDep = [&](Name global, Name dep) {
+      auto [_, inserted] = deps[global].insert(dep);
+      if (inserted) {
+        reverseDeps[dep].insert(global);
+        work.push({global, dep});
+      }
+    };
     for (auto& global : module->globals) {
       if (!global->imported()) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
-          deps[global->name].insert(get->name);
-          reverseDeps[get->name].insert(global->name);
+          addDep(global->name, get->name);
         }
+      }
+    }
+
+    // The immediate dependencies are the ones we just computed, before the
+    // transitive closure we are about to do.
+    auto immediateDeps = deps;
+    auto immediateReverseDeps = reverseDeps;
+
+    while (!work.empty()) {
+      auto [global, dep] = work.pop();
+      // Wasm (and Binaryen IR) do not allow self-dependencies.
+      assert(global != dep);
+
+      // We are notified of a dep we've already added. We only need to consider
+      // consequences downstream.
+      assert(deps[global].count(dep));
+
+      // If we recently added global->dep, and we also have rev->global, then
+      // we may need to add rev->dep. Note that we may modify reverseDeps as we
+      // iterate here, so we operate on a copy.
+      auto copy = reverseDeps[global];
+      for (auto rev : copy) {
+        addDep(rev, dep);
       }
     }
 
@@ -122,13 +155,13 @@ struct ReorderGlobals : public Pass {
       auto global = work2.pop();
       auto& depth = depths[global];
       auto old = depth;
-      for (auto rev : reverseDeps[global]) {
+      for (auto rev : immediateReverseDeps[global]) {
         // Each global's depth is at least 1 more than things that depend on it.
         depth = std::max(depth, depths[rev] + 1);
       }
       if (depth != old) {
         // We added, which means things that we depend on may need updating.
-        for (auto dep : deps[global]) {
+        for (auto dep : immediateDeps[global]) {
           work2.push(dep);
         }
       }
