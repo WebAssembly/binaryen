@@ -411,7 +411,9 @@ void TranslateToFuzzReader::setupGlobals() {
   // Create new random globals.
   for (size_t index = upTo(MAX_GLOBALS); index > 0; --index) {
     auto type = getConcreteType();
-    auto mutability = oneIn(2) ? Builder::Mutable : Builder::Immutable;
+    // Prefer immutable ones as they can be used in global.gets in other
+    // globals, for more interesting patterns.
+    auto mutability = oneIn(3) ? Builder::Mutable : Builder::Immutable;
 
     // We can only make something trivial (like a constant) in a global
     // initializer.
