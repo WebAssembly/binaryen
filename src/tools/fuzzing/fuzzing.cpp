@@ -411,16 +411,12 @@ void TranslateToFuzzReader::setupGlobals() {
   // Create new random globals.
   for (size_t index = upTo(MAX_GLOBALS); index > 0; --index) {
     auto type = getConcreteType();
-    if (type.isTuple()) {
-      // We disallow tuples in globals.
-      type = Type::i32;
-    }
     auto mutability = oneIn(2) ? Builder::Mutable : Builder::Immutable;
 
     // Usually make a const, but sometimes make a global.get (which may fail to
     // find a suitable global, and if so it will make a constant instead).
     Expression* init;
-    if (oneIn(3)) {
+    if (!oneIn(3)) {
       init = makeConst(type);
     } else {
       init = makeGlobalGet(type);
@@ -1911,8 +1907,8 @@ Expression* TranslateToFuzzReader::makeLocalSet(Type type) {
 
 Expression* TranslateToFuzzReader::makeGlobalGet(Type type) {
   // In a non-function context, like in another global, we can only get from an
-  // immutable global, and whether GC is enabled (which allows getting non-
-  // imported globals).
+  // immutable global. Whether GC is enabled also matters, as it allows getting
+  // from a non-import.
   auto& relevantGlobals =
     funcContext ? globalsByType
                 : (wasm.features.hasGC() ? immutableGlobalsByType
