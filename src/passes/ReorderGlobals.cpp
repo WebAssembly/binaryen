@@ -68,7 +68,9 @@ struct ReorderGlobals : public Pass {
   ReorderGlobals(bool always) : always(always) {}
 
   void run(Module* module) override {
-    if (module->globals.size() < 128 && !always) {
+    auto& globals = module->globals;
+
+    if (globals.size() < 128 && !always) {
       // The module has so few globals that they all fit in a single-byte U32LEB
       // value, so no reordering we can do can actually decrease code size. Note
       // that this is the common case with wasm MVP modules where the only
@@ -79,7 +81,7 @@ struct ReorderGlobals : public Pass {
 
     NameCountMap counts;
     // Fill in info, as we'll operate on it in parallel.
-    for (auto& global : module->globals) {
+    for (auto& global : globals) {
       counts[global->name];
     }
 
@@ -110,7 +112,7 @@ struct ReorderGlobals : public Pass {
         work.push({global, dep});
       }
     };
-    for (auto& global : module->globals) {
+    for (auto& global : globals) {
       if (!global->imported()) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
           addDep(global->name, get->name);
@@ -148,7 +150,7 @@ struct ReorderGlobals : public Pass {
     // their depth, using a work queue of globals to process.
     std::unordered_map<Name, Index> depths;
     UniqueDeferredQueue<Name> work2;
-    for (auto& global : module->globals) {
+    for (auto& global : globals) {
       work2.push(global->name);
     }
     while (!work2.empty()) {
@@ -168,7 +170,7 @@ struct ReorderGlobals : public Pass {
     }
 
     // Use the total ordering of the topological sort + counts.
-    std::stable_sort(module->globals.begin(), module->globals.end(),
+    std::stable_sort(globals.begin(), globals.end(),
       [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
         // The topological sort takes highest precedence: higher depths appear
         // first.
@@ -182,6 +184,30 @@ struct ReorderGlobals : public Pass {
         // Otherwise, use the counts.
         return counts[a->name] > counts[b->name];
       });
+
+    // Refine that ordering. Things of different topological
+    // depths are not necessarily ordered, and we can move them around so long
+    // as we do not break dependencies.
+    // XXX do we need the prevoius sortt?
+    // XXX only in optimize 3?
+    for (Index i = 1; i < globals.size(); i++) {
+      auto curr = globals[i]->name;
+      // Push downwards so long as we have a higher count and we do not break
+      // dependencies.
+      Index j = i - 1;
+      while (1) {
+        auto prev = globals[j]->name;
+        if (counts[curr] > counts[prev] && !deps[curr].count(prev)) {
+          std::swap(globals[j], globals[j + 1]);
+          if (j == 0) {
+            break;
+          }
+          j--;
+        } else {
+          break;
+        }
+      }
+    }
 
     module->updateMaps();
   }

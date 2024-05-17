@@ -182,10 +182,10 @@
 ;; can be first.
 (module
 
-  ;; CHECK:      (global $a i32 (i32.const 10))
-  (global $a i32 (i32.const 10))
   ;; CHECK:      (global $c i32 (i32.const 30))
 
+  ;; CHECK:      (global $a i32 (i32.const 10))
+  (global $a i32 (i32.const 10))
   ;; CHECK:      (global $b i32 (global.get $a))
   (global $b i32 (global.get $a))
   (global $c i32 (i32.const 30))
