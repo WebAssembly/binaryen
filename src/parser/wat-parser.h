@@ -34,14 +34,14 @@ Result<> parseModule(Module& wasm, Lexer& lexer);
 
 Result<Literal> parseConst(Lexer& lexer);
 
-Result<Expression*> parseExpression(Module& wasm, Lexer& lexer);
-
 struct InvokeAction {
+  std::optional<Name> base;
   Name name;
   Literals args;
 };
 
 struct GetAction {
+  std::optional<Name> base;
   Name name;
 };
 
@@ -68,19 +68,14 @@ using ExpectedResults = std::vector<ExpectedResult>;
 
 struct AssertReturn {
   Action action;
-  ExpectedResults results;
+  ExpectedResults expected;
 };
 
-struct AssertException {
-  Action action;
-};
-
-enum class ActionAssertionType { Trap, Exhaustion };
+enum class ActionAssertionType { Trap, Exhaustion, Exception };
 
 struct AssertAction {
   ActionAssertionType type;
   Action action;
-  std::string msg;
 };
 
 enum class QuotedModuleType { Text, Binary };
@@ -97,11 +92,9 @@ enum class ModuleAssertionType { Trap, Malformed, Invalid, Unlinkable };
 struct AssertModule {
   ModuleAssertionType type;
   WASTModule wasm;
-  std::string msg;
 };
 
-using Assertion =
-  std::variant<AssertReturn, AssertException, AssertAction, AssertModule>;
+using Assertion = std::variant<AssertReturn, AssertAction, AssertModule>;
 
 struct Register {
   Name name;
@@ -109,7 +102,12 @@ struct Register {
 
 using WASTCommand = std::variant<WASTModule, Register, Action, Assertion>;
 
-using WASTScript = std::vector<WASTCommand>;
+struct ScriptEntry {
+  WASTCommand cmd;
+  size_t line;
+};
+
+using WASTScript = std::vector<ScriptEntry>;
 
 Result<WASTScript> parseScript(std::string_view in);
 

@@ -23,6 +23,7 @@
 #include <variant>
 
 #include "lexer.h"
+#include "support/bits.h"
 #include "support/string.h"
 
 using namespace std::string_view_literals;
@@ -983,13 +984,13 @@ bool Lexer::takeKeyword(std::string_view expected) {
   return false;
 }
 
-std::optional<uint64_t> Lexer::takeOffset() {
+std::optional<uint32_t> Lexer::takeOffset() {
   if (auto result = keyword(next())) {
     if (result->span.substr(0, 7) != "offset="sv) {
       return std::nullopt;
     }
     Lexer subLexer(result->span.substr(7));
-    if (auto o = subLexer.takeU64()) {
+    if (auto o = subLexer.takeU32()) {
       pos += result->span.size();
       advance();
       return o;
@@ -1005,6 +1006,9 @@ std::optional<uint32_t> Lexer::takeAlign() {
     }
     Lexer subLexer(result->span.substr(6));
     if (auto o = subLexer.takeU32()) {
+      if (Bits::popCount(*o) != 1) {
+        return std::nullopt;
+      }
       pos += result->span.size();
       advance();
       return o;

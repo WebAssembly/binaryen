@@ -364,7 +364,7 @@ struct NullInstrParserCtx {
   TagIdxT getTagFromIdx(uint32_t) { return Ok{}; }
   TagIdxT getTagFromName(Name) { return Ok{}; }
 
-  MemargT getMemarg(uint64_t, uint32_t) { return Ok{}; }
+  MemargT getMemarg(uint32_t, uint32_t) { return Ok{}; }
 
   template<typename BlockTypeT>
   Result<> makeBlock(Index,
@@ -1665,7 +1665,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return Ok{};
   }
 
-  Result<> addExport(Index, Name value, Name name, ExternalKind kind) {
+  Result<> addExport(Index pos, Name value, Name name, ExternalKind kind) {
+    if (wasm.getExportOrNull(name)) {
+      return in.err(pos, "duplicate export");
+    }
     wasm.addExport(builder.makeExport(name, value, kind));
     return Ok{};
   }
@@ -1681,7 +1684,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<Expression*> makeExpr() { return withLoc(irBuilder.build()); }
 
-  Memarg getMemarg(uint64_t offset, uint32_t align) { return {offset, align}; }
+  Memarg getMemarg(uint32_t offset, uint32_t align) { return {offset, align}; }
 
   Result<Name> getTable(Index pos, Name* table) {
     if (table) {

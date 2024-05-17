@@ -30,7 +30,8 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::RefTypeT> reftype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::TypeT> tupletype(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx&);
-template<typename Ctx> MaybeResult<typename Ctx::ParamsT> params(Ctx&);
+template<typename Ctx>
+MaybeResult<typename Ctx::ParamsT> params(Ctx&, bool allowNames = true);
 template<typename Ctx> MaybeResult<typename Ctx::ResultsT> results(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::SignatureT> functype(Ctx&);
 template<typename Ctx> Result<typename Ctx::FieldT> storagetype(Ctx&);
@@ -325,7 +326,8 @@ MaybeResult<typename Ctx::LabelIdxT> maybeLabelidx(Ctx&,
 template<typename Ctx>
 Result<typename Ctx::LabelIdxT> labelidx(Ctx&, bool inDelegate = false);
 template<typename Ctx> Result<typename Ctx::TagIdxT> tagidx(Ctx&);
-template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx&);
+template<typename Ctx>
+Result<typename Ctx::TypeUseT> typeuse(Ctx&, bool allowNames = true);
 MaybeResult<ImportNames> inlineImport(Lexer&);
 Result<std::vector<Name>> inlineExports(Lexer&);
 template<typename Ctx> Result<> strtype(Ctx&);
@@ -561,13 +563,18 @@ template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx& ctx) {
 // param  ::= '(' 'param id? t:valtype ')' => [t]
 //          | '(' 'param t*:valtype* ')' => [t*]
 // params ::= param*
-template<typename Ctx> MaybeResult<typename Ctx::ParamsT> params(Ctx& ctx) {
+template<typename Ctx>
+MaybeResult<typename Ctx::ParamsT> params(Ctx& ctx, bool allowNames) {
   bool hasAny = false;
   auto res = ctx.makeParams();
   while (ctx.in.takeSExprStart("param"sv)) {
     hasAny = true;
+    auto pos = ctx.in.getPos();
     if (auto id = ctx.in.takeID()) {
       // Single named param
+      if (!allowNames) {
+        return ctx.in.err(pos, "unexpected named parameter");
+      }
       auto type = valtype(ctx);
       CHECK_ERR(type);
       if (!ctx.in.takeRParen()) {
@@ -1039,7 +1046,7 @@ template<typename Ctx> Result<typename Ctx::ExprT> expr(Ctx& ctx) {
 // align_n  ::= 'align='a:u32 => a | _ => n
 template<typename Ctx>
 Result<typename Ctx::MemargT> memarg(Ctx& ctx, uint32_t n) {
-  uint64_t offset = 0;
+  uint32_t offset = 0;
   uint32_t align = n;
   if (auto o = ctx.in.takeOffset()) {
     offset = *o;
@@ -1065,7 +1072,7 @@ template<typename Ctx> Result<typename Ctx::BlockTypeT> blocktype(Ctx& ctx) {
   // We either had no results or multiple results. Reset and parse again as a
   // type use.
   ctx.in = initialLexer;
-  auto use = typeuse(ctx);
+  auto use = typeuse(ctx, false);
   CHECK_ERR(use);
 
   auto type = ctx.getBlockTypeFromTypeUse(pos, *use);
@@ -1935,7 +1942,7 @@ Result<> makeCallIndirect(Ctx& ctx,
                           bool isReturn) {
   auto table = maybeTableidx(ctx);
   CHECK_ERR(table);
-  auto type = typeuse(ctx);
+  auto type = typeuse(ctx, false);
   CHECK_ERR(type);
   return ctx.makeCallIndirect(
     pos, annotations, table.getPtr(), *type, isReturn);
@@ -2669,7 +2676,8 @@ template<typename Ctx> Result<typename Ctx::TagIdxT> tagidx(Ctx& ctx) {
 //                 (if typedefs[x] = [t1*] -> [t2*])
 //           | ((t1,IDs):param)* (t2:result)*                          => x, IDs
 //                 (if x is minimum s.t. typedefs[x] = [t1*] -> [t2*])
-template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx& ctx) {
+template<typename Ctx>
+Result<typename Ctx::TypeUseT> typeuse(Ctx& ctx, bool allowNames) {
   auto pos = ctx.in.getPos();
   std::optional<typename Ctx::HeapTypeT> type;
   if (ctx.in.takeSExprStart("type"sv)) {
@@ -2683,7 +2691,7 @@ template<typename Ctx> Result<typename Ctx::TypeUseT> typeuse(Ctx& ctx) {
     type = *x;
   }
 
-  auto namedParams = params(ctx);
+  auto namedParams = params(ctx, allowNames);
   CHECK_ERR(namedParams);
 
   auto resultTypes = results(ctx);
