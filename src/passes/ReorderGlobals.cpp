@@ -97,117 +97,77 @@ struct ReorderGlobals : public Pass {
     //   (global $b i32 (global.get $a)) ;; $b depends on $a; $a must be first
     //
     // To do so we construct a map from each global to the set of all other
-    // globals it transitively depends on. We also build a reverse map for the
-    // later processing.
+    // globals it transitively depends on. We also build a reverse map.
     std::unordered_map<Name, std::unordered_set<Name>> deps;
     std::unordered_map<Name, std::unordered_set<Name>> reverseDeps;
 
-    // Find the direct dependencies, then compute the transitive closure. Our
-    // work items are a global and a new dependency we recently added for it.
-    UniqueDeferredQueue<std::pair<Name, Name>> work;
-    auto addDep = [&](Name global, Name dep) {
-      auto [_, inserted] = deps[global].insert(dep);
-      if (inserted) {
-        reverseDeps[dep].insert(global);
-        work.push({global, dep});
-      }
-    };
     for (auto& global : globals) {
       if (!global->imported()) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
-          addDep(global->name, get->name);
+          deps[global->name].insert(get->name);
+          reverseDeps[get->name].insert(global->name);
         }
       }
     }
 
-    // The immediate dependencies are the ones we just computed, before the
-    // transitive closure we are about to do.
-    auto immediateDeps = deps;
-    auto immediateReverseDeps = reverseDeps;
+    // To sort the globals we use the simple approach of always picking the
+    // global with the highest count at every point in time, subject to the
+    // constraint that we can only emit globals that have all of their
+    // dependencies already emitted. To do so we keep a list of the "available"
+    // globals, which are those with no remaining dependencies. Then by keeping
+    // the list of available globals in heap form we can simply pop the largest
+    // from the heap each time.
+    std::vector<Name> availableHeap;
 
-    while (!work.empty()) {
-      auto [global, dep] = work.pop();
-      // Wasm (and Binaryen IR) do not allow self-dependencies.
-      assert(global != dep);
-
-      // We are notified of a dep we've already added. We only need to consider
-      // consequences downstream.
-      assert(deps[global].count(dep));
-
-      // If we recently added global->dep, and we also have rev->global, then
-      // we may need to add rev->dep. Note that we may modify reverseDeps as we
-      // iterate here, so we operate on a copy.
-      auto copy = reverseDeps[global];
-      for (auto rev : copy) {
-        addDep(rev, dep);
+    auto cmp = [&](Name a, Name b) {
+      // Sort by the counts.
+      if (counts[a] > counts[b]) {
+        return true;
       }
-    }
-
-    // We are now aware of all dependencies. Before we sort, we must define a
-    // total ordering, for which we compute the topological depth from the deps:
-    // things that nothing depends on have depth 0, depth 1 are the things they
-    // depend on immediately, and so forth. We build up a map of global names to
-    // their depth, using a work queue of globals to process.
-    std::unordered_map<Name, Index> depths;
-    UniqueDeferredQueue<Name> work2;
-    for (auto& global : globals) {
-      work2.push(global->name);
-    }
-    while (!work2.empty()) {
-      auto global = work2.pop();
-      auto& depth = depths[global];
-      auto old = depth;
-      for (auto rev : immediateReverseDeps[global]) {
-        // Each global's depth is at least 1 more than things that depend on it.
-        depth = std::max(depth, depths[rev] + 1);
+      if (counts[a] < counts[b]) {
+        return false;
       }
-      if (depth != old) {
-        // We added, which means things that we depend on may need updating.
-        for (auto dep : immediateDeps[global]) {
-          work2.push(dep);
+
+      // Break ties using the name. TODO: Perhaps the original order?
+      return a < b;
+    };
+
+    // Likely not needed, but just to be safe.
+    std::make_heap(availableHeap.begin(), availableHeap.end(), cmp);
+
+    // Each time we add to the heap, we may make more things available.
+    std::function<void (Name)> push = [&](Name global) {
+      availableHeap.push_back(global);
+      std::push_heap(availableHeap.begin(), availableHeap.end(), cmp);
+
+      for (auto dep : reverseDeps[global]) {
+        deps[dep].erase(global);
+        if (deps[dep].empty()) {
+          push(dep);
         }
       }
+    };
+
+    // The initially available globals are those with no dependencies.
+    for (auto& global : wasm.globals) {
+      if (deps[global->name].empty()) {
+        push(global->name):
+      }
+    }
+
+    // Pop off the heap until we finish processing all the globals.
+    std::unordered_map<Name, Index> sortedIndexes;
+    while (!availableHeap.empty()) {
+      std::pop_heap(availableHeap.begin(), availableHeap.end(), cmp);
+      sortedIndexes[availableHeap.back()] = sortedIndexes.size();
+      availableHeap.pop_back();
     }
 
     // Use the total ordering of the topological sort + counts.
-    std::stable_sort(globals.begin(), globals.end(),
+    std::sort(globals.begin(), globals.end(),
       [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
-        // The topological sort takes highest precedence: higher depths appear
-        // first.
-        if (depths[a->name] > depths[b->name]) {
-          return true;
-        }
-        if (depths[a->name] < depths[b->name]) {
-          return false;
-        }
-
-        // Otherwise, use the counts.
-        return counts[a->name] > counts[b->name];
+        return sortedIndexes[a->name] < sortedIndexes[b->name];
       });
-
-    // Refine that ordering. Things of different topological
-    // depths are not necessarily ordered, and we can move them around so long
-    // as we do not break dependencies.
-    // XXX do we need the prevoius sortt?
-    // XXX only in optimize 3?
-    for (Index i = 1; i < globals.size(); i++) {
-      auto curr = globals[i]->name;
-      // Push downwards so long as we have a higher count and we do not break
-      // dependencies.
-      Index j = i - 1;
-      while (1) {
-        auto prev = globals[j]->name;
-        if (counts[curr] > counts[prev] && !deps[curr].count(prev)) {
-          std::swap(globals[j], globals[j + 1]);
-          if (j == 0) {
-            break;
-          }
-          j--;
-        } else {
-          break;
-        }
-      }
-    }
 
     module->updateMaps();
   }
