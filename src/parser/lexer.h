@@ -107,7 +107,7 @@ public:
     return Lexer(*this).takeKeyword();
   }
 
-  std::optional<uint32_t> takeOffset();
+  std::optional<uint64_t> takeOffset();
   std::optional<uint32_t> takeAlign();
 
   std::optional<uint64_t> takeU64() { return takeU<uint64_t>(); }

@@ -984,13 +984,13 @@ bool Lexer::takeKeyword(std::string_view expected) {
   return false;
 }
 
-std::optional<uint32_t> Lexer::takeOffset() {
+std::optional<uint64_t> Lexer::takeOffset() {
   if (auto result = keyword(next())) {
     if (result->span.substr(0, 7) != "offset="sv) {
       return std::nullopt;
     }
     Lexer subLexer(result->span.substr(7));
-    if (auto o = subLexer.takeU32()) {
+    if (auto o = subLexer.takeU64()) {
       pos += result->span.size();
       advance();
       return o;

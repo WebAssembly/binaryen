@@ -1046,7 +1046,7 @@ template<typename Ctx> Result<typename Ctx::ExprT> expr(Ctx& ctx) {
 // align_n  ::= 'align='a:u32 => a | _ => n
 template<typename Ctx>
 Result<typename Ctx::MemargT> memarg(Ctx& ctx, uint32_t n) {
-  uint32_t offset = 0;
+  uint64_t offset = 0;
   uint32_t align = n;
   if (auto o = ctx.in.takeOffset()) {
     offset = *o;

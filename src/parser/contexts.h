@@ -364,7 +364,7 @@ struct NullInstrParserCtx {
   TagIdxT getTagFromIdx(uint32_t) { return Ok{}; }
   TagIdxT getTagFromName(Name) { return Ok{}; }
 
-  MemargT getMemarg(uint32_t, uint32_t) { return Ok{}; }
+  MemargT getMemarg(uint64_t, uint32_t) { return Ok{}; }
 
   template<typename BlockTypeT>
   Result<> makeBlock(Index,
@@ -1684,7 +1684,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<Expression*> makeExpr() { return withLoc(irBuilder.build()); }
 
-  Memarg getMemarg(uint32_t offset, uint32_t align) { return {offset, align}; }
+  Memarg getMemarg(uint64_t offset, uint32_t align) { return {offset, align}; }
 
   Result<Name> getTable(Index pos, Name* table) {
     if (table) {
