@@ -486,18 +486,6 @@
   ;; CHECK-NEXT:   (global.get $e)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $c)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $c)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $c)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $c)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $d)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -505,37 +493,34 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $d)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $b)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $b)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $a)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $uses
+    ;; $a, $b, $c, $d each have one already from the globals. Add more so that
+    ;; $a has the least, and $e has the most
     (drop (global.get $e))
     (drop (global.get $e))
     (drop (global.get $e))
     (drop (global.get $e))
     (drop (global.get $e))
 
-    (drop (global.get $c))
-    (drop (global.get $c))
-    (drop (global.get $c))
-    (drop (global.get $c))
+    (drop (global.get $d))
+    (drop (global.get $d))
+    (drop (global.get $d))
 
-    (drop (global.get $d))
-    (drop (global.get $d))
-    (drop (global.get $d))
+    (drop (global.get $c))
+    (drop (global.get $c))
 
     (drop (global.get $b))
-    (drop (global.get $b))
-
-    (drop (global.get $a))
   )
 )
 
@@ -550,7 +535,7 @@
 ;; This forces $a to appear before $d: the order goes from before, which was
 ;;   $b, $d, $a, $c, $e
 ;; to
-;;   $b, $a, $c, $d, $e
+;;   $b, $a, $d, $c, $e
 (module
   ;; CHECK:      (global $b i32 (i32.const 20))
 
@@ -559,13 +544,14 @@
 
   (global $b i32 (i32.const 20))
 
-  ;; CHECK:      (global $c i32 (global.get $a))
-  (global $c i32 (global.get $a))
-
   ;; CHECK:      (global $d i32 (i32.add
   ;; CHECK-NEXT:  (global.get $b)
   ;; CHECK-NEXT:  (global.get $a)
   ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (global $c i32 (global.get $a))
+  (global $c i32 (global.get $a))
+
   (global $d i32 (i32.add
     (global.get $b)
     (global.get $a) ;; this was added
@@ -597,16 +583,7 @@
   ;; CHECK-NEXT:   (global.get $e)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $c)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $c)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $c)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:   (global.get $e)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $d)
@@ -616,37 +593,46 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $d)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $d)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $b)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $b)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $a)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $uses
+    ;; $b, $c, $d each have one already from the globals, and $a has two. Add
+    ;; more so that $a has the least, and $e has the most.
+    (drop (global.get $e))
     (drop (global.get $e))
     (drop (global.get $e))
     (drop (global.get $e))
     (drop (global.get $e))
     (drop (global.get $e))
 
-    (drop (global.get $c))
-    (drop (global.get $c))
-    (drop (global.get $c))
-    (drop (global.get $c))
+    (drop (global.get $d))
+    (drop (global.get $d))
+    (drop (global.get $d))
+    (drop (global.get $d))
 
-    (drop (global.get $d))
-    (drop (global.get $d))
-    (drop (global.get $d))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
 
     (drop (global.get $b))
     (drop (global.get $b))
-
-    (drop (global.get $a))
   )
 )
-
