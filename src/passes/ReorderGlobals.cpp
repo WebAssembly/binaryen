@@ -115,10 +115,18 @@ struct ReorderGlobals : public Pass {
     // dependencies already emitted. To do so we keep a list of the "available"
     // globals, which are those with no remaining dependencies. Then by keeping
     // the list of available globals in heap form we can simply pop the largest
-    // from the heap each time.
+    // from the heap each time, and add new available ones as they become so.
+    //
+    // Other approaches here could be to do a topological sort, but we do need
+    // this fully general algorithm, because the optimal order may not require
+    // strict ordering by topological depth. That is, the dependencies imply a
+    // partial order, not a total one. By doing the optimal thing at each step -
+    // picking the available global with the highest count - we ensure we are
+    // doing the best thing. Note that this algorithm remains linear in the size
+    // of the input.
     std::vector<Name> availableHeap;
 
-    // To break ties we use the original order.
+    // To break ties we use the original order, to avoid churn.
     std::unordered_map<Name, Index> originalIndexes;
     for (Index i = 0; i < globals.size(); i++) {
       originalIndexes[globals[i]->name] = i;
@@ -174,7 +182,7 @@ struct ReorderGlobals : public Pass {
     // cannot exist in valid IR.
     assert(sortedIndexes.size() == globals.size());
 
-    // Use the total ordering of the topological sort + counts.
+    // Apply the indexes we computed.
     std::sort(
       globals.begin(),
       globals.end(),
