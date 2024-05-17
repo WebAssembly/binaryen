@@ -1004,9 +1004,15 @@ void FunctionValidator::visitGlobalGet(GlobalGet* curr) {
   if (!info.validateGlobally) {
     return;
   }
-  shouldBeTrue(getModule()->getGlobalOrNull(curr->name),
-               curr,
-               "global.get name must be valid");
+  auto* global = getModule()->getGlobalOrNull(curr->name);
+  if (shouldBeTrue(global,
+                   curr,
+                   "global.get name must be valid")) {
+    shouldBeEqual(curr->type,
+                  global->type,
+                  curr,
+                  "global.get must have right type");
+  }
 }
 
 void FunctionValidator::visitGlobalSet(GlobalSet* curr) {

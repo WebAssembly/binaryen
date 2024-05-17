@@ -193,3 +193,30 @@
     (nop)
   )
 )
+
+;; We can refine $a, after which we should update the global.get in the other
+;; global, or else we'd error on validation.
+(module
+  ;; CHECK:      (type $super (sub (func)))
+  ;; CLOSD:      (type $super (sub (func)))
+  (type $super (sub (func)))
+  ;; CHECK:      (type $sub (sub $super (func)))
+  ;; CLOSD:      (type $sub (sub $super (func)))
+  (type $sub (sub $super (func)))
+
+  ;; CHECK:      (global $a (ref $sub) (ref.func $func))
+  ;; CLOSD:      (global $a (ref $sub) (ref.func $func))
+  (global $a (ref $super) (ref.func $func))
+  ;; CHECK:      (global $b (ref $super) (global.get $a))
+  ;; CLOSD:      (global $b (ref $super) (global.get $a))
+  (global $b (ref $super) (global.get $a))
+
+  ;; CHECK:      (func $func (type $sub)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  ;; CLOSD:      (func $func (type $sub)
+  ;; CLOSD-NEXT:  (nop)
+  ;; CLOSD-NEXT: )
+  (func $func (type $sub)
+  )
+)
