@@ -413,14 +413,9 @@ void TranslateToFuzzReader::setupGlobals() {
     auto type = getConcreteType();
     auto mutability = oneIn(2) ? Builder::Mutable : Builder::Immutable;
 
-    // Usually make a const, but sometimes make a global.get (which may fail to
-    // find a suitable global, and if so it will make a constant instead).
-    Expression* init;
-    if (!oneIn(3)) {
-      init = makeConst(type);
-    } else {
-      init = makeGlobalGet(type);
-    }
+    // We can only make something trivial (like a constant) in a global
+    // initializer.
+    auto* init = makeTrivial(type);
 
     if (!FindAll<RefAs>(init).list.empty()) {
       // When creating this initial value we ended up emitting a RefAs, which
@@ -1483,9 +1478,12 @@ Expression* TranslateToFuzzReader::makeTrivial(Type type) {
     // using it before it was set, which would trap.
     if (funcContext && oneIn(type.isNonNullable() ? 10 : 2)) {
       return makeLocalGet(type);
-    } else {
-      return makeConst(type);
     }
+
+    // Either make a const, or a global.get (which may fail to find a suitable
+    // global, especially in a non-function context, and if so it will make a
+    // constant instead).
+    return oneIn(2) ? makeConst(type) : makeGlobalGet(type);
   } else if (type == Type::none) {
     return makeNop(type);
   }
@@ -1915,7 +1913,7 @@ Expression* TranslateToFuzzReader::makeGlobalGet(Type type) {
                                          : importedImmutableGlobalsByType);
   auto it = relevantGlobals.find(type);
   if (it == relevantGlobals.end() || it->second.empty()) {
-    return makeTrivial(type);
+    return makeConst(type);
   }
 
   auto name = pick(it->second);

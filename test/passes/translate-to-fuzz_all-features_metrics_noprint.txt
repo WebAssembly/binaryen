@@ -1,50 +1,51 @@
 total
- [exports]      : 2       
- [funcs]        : 2       
+ [exports]      : 6       
+ [funcs]        : 16      
  [globals]      : 24      
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
- [table-data]   : 0       
+ [table-data]   : 2       
  [tables]       : 1       
  [tags]         : 1       
- [total]        : 524     
- [vars]         : 36      
- ArrayCopy      : 1       
- ArrayFill      : 1       
- ArrayGet       : 2       
- ArrayLen       : 4       
- ArrayNew       : 19      
- AtomicNotify   : 1       
- Binary         : 71      
- Block          : 30      
- Break          : 2       
- Call           : 5       
- Const          : 135     
- Drop           : 2       
- GlobalGet      : 12      
- GlobalSet      : 6       
- If             : 16      
+ [total]        : 653     
+ [vars]         : 75      
+ ArrayGet       : 1       
+ ArrayLen       : 1       
+ ArrayNew       : 8       
+ ArrayNewFixed  : 4       
+ Binary         : 75      
+ Block          : 83      
+ Break          : 4       
+ Call           : 15      
+ Const          : 125     
+ Drop           : 4       
+ GlobalGet      : 52      
+ GlobalSet      : 40      
+ If             : 26      
  Load           : 18      
- LocalGet       : 66      
- LocalSet       : 41      
- Loop           : 2       
- Nop            : 5       
+ LocalGet       : 46      
+ LocalSet       : 32      
+ Loop           : 5       
+ Nop            : 3       
  Pop            : 3       
- RefAs          : 14      
+ RefAs          : 6       
  RefCast        : 1       
- RefNull        : 12      
- RefTest        : 2       
- Return         : 1       
- Select         : 1       
- Store          : 2       
- StringConst    : 4       
- StringEncode   : 1       
+ RefEq          : 1       
+ RefFunc        : 5       
+ RefI31         : 1       
+ RefIsNull      : 1       
+ RefNull        : 7       
+ RefTest        : 1       
+ Return         : 5       
+ Select         : 3       
+ StringConst    : 6       
  StringEq       : 1       
- StringMeasure  : 1       
- StructNew      : 13      
- Try            : 4       
- TupleExtract   : 3       
+ StringWTF16Get : 1       
+ StructGet      : 1       
+ StructNew      : 8       
+ Try            : 3       
+ TupleExtract   : 2       
  TupleMake      : 11      
- Unary          : 8       
- Unreachable    : 3       
+ Unary          : 23      
+ Unreachable    : 21      
