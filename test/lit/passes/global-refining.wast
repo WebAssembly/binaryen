@@ -196,6 +196,7 @@
 
 ;; We can refine $a, after which we should update the global.get in the other
 ;; global, or else we'd error on validation.
+;; TODO: we could optimize further here and refine the type of the global $b.
 (module
   ;; CHECK:      (type $super (sub (func)))
   ;; CLOSD:      (type $super (sub (func)))
