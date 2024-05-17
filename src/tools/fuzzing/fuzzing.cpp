@@ -1913,7 +1913,10 @@ Expression* TranslateToFuzzReader::makeGlobalGet(Type type) {
   // In a non-function context, like in another global, we can only get from an
   // immutable global, and whether GC is enabled (which allows getting non-
   // imported globals).
-  auto& relevantGlobals = funcContext ? globalsByType : (wasm.features.hasGC() ? immutableGlobalsByType : importedImmutableGlobalsByType);
+  auto& relevantGlobals =
+    funcContext ? globalsByType
+                : (wasm.features.hasGC() ? immutableGlobalsByType
+                                         : importedImmutableGlobalsByType);
   auto it = relevantGlobals.find(type);
   if (it == relevantGlobals.end() || it->second.empty()) {
     return makeTrivial(type);
