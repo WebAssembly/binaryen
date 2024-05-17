@@ -98,14 +98,15 @@ struct ReorderGlobals : public Pass {
     //
     // To do so we construct a map from each global to the set of all other
     // globals it transitively depends on. We also build a reverse map.
-    std::unordered_map<Name, std::unordered_set<Name>> deps;
-    std::unordered_map<Name, std::unordered_set<Name>> reverseDeps;
+    std::unordered_map<Name, std::unordered_set<Name>> dependsOn;
+    std::unordered_map<Name, std::unordered_set<Name>> dependedOn;
 
     for (auto& global : globals) {
       if (!global->imported()) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
-          deps[global->name].insert(get->name);
-          reverseDeps[get->name].insert(global->name);
+std::cout << global->name << " depends on " << get->name << '\n';
+          dependsOn[global->name].insert(get->name);
+          dependedOn[get->name].insert(global->name);
         }
       }
     }
@@ -121,37 +122,47 @@ struct ReorderGlobals : public Pass {
 
     auto cmp = [&](Name a, Name b) {
       // Sort by the counts.
-      if (counts[a] > counts[b]) {
+      if (counts[a] < counts[b]) {
         return true;
       }
-      if (counts[a] < counts[b]) {
+      if (counts[a] > counts[b]) {
         return false;
       }
 
       // Break ties using the name. TODO: Perhaps the original order?
-      return a < b;
+      return a > b;
     };
 
-    // Likely not needed, but just to be safe.
+    // Likely not needed on an empty vector, but just to be safe.
     std::make_heap(availableHeap.begin(), availableHeap.end(), cmp);
 
     // Each time we add to the heap, we may make more things available.
-    std::function<void (Name)> push = [&](Name global) {
-      availableHeap.push_back(global);
-      std::push_heap(availableHeap.begin(), availableHeap.end(), cmp);
+    auto push = [&](Name global) {
+      // Pushing an item can make more available, and so on recursively, but
+      // avoid recursion here because the chains may be deep.
+      std::vector<Name> toPush;
+      toPush.push_back(global);
+      while (!toPush.empty()) {
+        auto curr = toPush.back();
+        toPush.pop_back();
 
-      for (auto dep : reverseDeps[global]) {
-        deps[dep].erase(global);
-        if (deps[dep].empty()) {
-          push(dep);
+        availableHeap.push_back(curr);
+        std::push_heap(availableHeap.begin(), availableHeap.end(), cmp);
+
+        for (auto other : dependedOn[curr]) {
+          assert(dependsOn[other].count(curr));
+          dependsOn[other].erase(curr);
+          if (dependsOn[other].empty()) {
+            toPush.push_back(other);
+          }
         }
       }
     };
 
     // The initially available globals are those with no dependencies.
-    for (auto& global : wasm.globals) {
-      if (deps[global->name].empty()) {
-        push(global->name):
+    for (auto& global : globals) {
+      if (dependsOn[global->name].empty()) {
+        push(global->name);
       }
     }
 
@@ -162,6 +173,8 @@ struct ReorderGlobals : public Pass {
       sortedIndexes[availableHeap.back()] = sortedIndexes.size();
       availableHeap.pop_back();
     }
+
+    assert(sortedIndexes.size() == globals.size());
 
     // Use the total ordering of the topological sort + counts.
     std::sort(globals.begin(), globals.end(),
