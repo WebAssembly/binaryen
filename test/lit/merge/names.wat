@@ -12,13 +12,13 @@
 
    ;; CHECK:      (type $4 (func (param (ref $u))))
 
-   ;; CHECK:      (global $glob0 i32 (i32.const 0))
-
-   ;; CHECK:      (global $global$1 i32 (i32.const 0))
+   ;; CHECK:      (global $global$0 i32 (i32.const 0))
 
    ;; CHECK:      (global $glob2 i32 (i32.const 0))
 
-   ;; CHECK:      (global $global$3 i32 (i32.const 0))
+   ;; CHECK:      (global $global$2 i32 (i32.const 0))
+
+   ;; CHECK:      (global $glob0 i32 (i32.const 0))
 
    ;; CHECK:      (memory $mem0 0)
 
@@ -54,7 +54,7 @@
 
    ;; CHECK:      (export "g0" (global $glob0))
 
-   ;; CHECK:      (export "g1" (global $global$1))
+   ;; CHECK:      (export "g1" (global $global$2))
 
    ;; CHECK:      (export "m0" (memory $mem0))
 
@@ -80,7 +80,7 @@
 
    ;; CHECK:      (export "g2" (global $glob2))
 
-   ;; CHECK:      (export "g3" (global $global$3))
+   ;; CHECK:      (export "g3" (global $global$0))
 
    ;; CHECK:      (export "tag2" (tag $tag2))
 

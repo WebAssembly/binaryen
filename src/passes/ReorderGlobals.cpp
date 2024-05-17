@@ -135,7 +135,7 @@ struct ReorderGlobals : public Pass {
       }
 
       // Break ties using the original order.
-      return originalIndexes[a] > originalIndexes[b];
+      return originalIndexes[a] < originalIndexes[b];
     };
 
     // Push an item that just became available to the available heap.
