@@ -1,30 +1,50 @@
 total
  [exports]      : 2       
  [funcs]        : 2       
- [globals]      : 250     
+ [globals]      : 24      
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
  [table-data]   : 0       
  [tables]       : 1       
- [tags]         : 0       
- [total]        : 531     
- [vars]         : 1       
- ArrayNew       : 29      
- ArrayNewFixed  : 9       
- Binary         : 49      
- Block          : 4       
- Const          : 186     
- GlobalGet      : 117     
- GlobalSet      : 2       
- If             : 1       
- Load           : 16      
- LocalGet       : 33      
- LocalSet       : 17      
- RefFunc        : 3       
- RefI31         : 4       
- RefNull        : 28      
- StringConst    : 7       
- StructNew      : 23      
- Unary          : 1       
- Unreachable    : 2       
+ [tags]         : 1       
+ [total]        : 524     
+ [vars]         : 36      
+ ArrayCopy      : 1       
+ ArrayFill      : 1       
+ ArrayGet       : 2       
+ ArrayLen       : 4       
+ ArrayNew       : 19      
+ AtomicNotify   : 1       
+ Binary         : 71      
+ Block          : 30      
+ Break          : 2       
+ Call           : 5       
+ Const          : 135     
+ Drop           : 2       
+ GlobalGet      : 12      
+ GlobalSet      : 6       
+ If             : 16      
+ Load           : 18      
+ LocalGet       : 66      
+ LocalSet       : 41      
+ Loop           : 2       
+ Nop            : 5       
+ Pop            : 3       
+ RefAs          : 14      
+ RefCast        : 1       
+ RefNull        : 12      
+ RefTest        : 2       
+ Return         : 1       
+ Select         : 1       
+ Store          : 2       
+ StringConst    : 4       
+ StringEncode   : 1       
+ StringEq       : 1       
+ StringMeasure  : 1       
+ StructNew      : 13      
+ Try            : 4       
+ TupleExtract   : 3       
+ TupleMake      : 11      
+ Unary          : 8       
+ Unreachable    : 3       
