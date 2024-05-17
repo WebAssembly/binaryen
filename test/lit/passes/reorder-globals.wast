@@ -317,6 +317,38 @@
   )
 )
 
+;; As above, but with the counts adjusted to $a, $b, $c.
+(module
+  ;; CHECK:      (global $a i32 (i32.const 10))
+  (global $a i32 (i32.const 10))
+  ;; CHECK:      (global $b i32 (global.get $a))
+  (global $b i32 (global.get $a))
+  ;; CHECK:      (global $c i32 (i32.const 30))
+  (global $c i32 (i32.const 30))
+
+  ;; CHECK:      (func $uses (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $a)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $a)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $uses
+    (drop
+      (global.get $a) ;; this changed
+    )
+    (drop
+      (global.get $a) ;; this changed
+    )
+    (drop
+      (global.get $b) ;; this changed
+    )
+  )
+)
 
 ;; $b has more uses, but $a is an import and must remain first.
 (module
