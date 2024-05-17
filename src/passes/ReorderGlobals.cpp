@@ -95,16 +95,16 @@ struct ReorderGlobals : public Pass {
     //   (global $a i32 (i32.const 10))
     //   (global $b i32 (global.get $a)) ;; $b depends on $a; $a must be first
     //
-    // To do so we construct a map from each global to the set of all other
-    // globals it transitively depends on. We also build a reverse map.
+    // To do so we construct a map from each global to those it depends on. We
+    // also build the reverse map, of those that it is depended on from.
     std::unordered_map<Name, std::unordered_set<Name>> dependsOn;
-    std::unordered_map<Name, std::unordered_set<Name>> dependedOn;
+    std::unordered_map<Name, std::unordered_set<Name>> dependedUpon;
 
     for (auto& global : globals) {
       if (!global->imported()) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
           dependsOn[global->name].insert(get->name);
-          dependedOn[get->name].insert(global->name);
+          dependedUpon[get->name].insert(global->name);
         }
       }
     }
@@ -161,7 +161,7 @@ struct ReorderGlobals : public Pass {
 
       // Each time we pop we emit the global, which means anything that only
       // depended on it becomes available to be popped as well.
-      for (auto other : dependedOn[global]) {
+      for (auto other : dependedUpon[global]) {
         assert(dependsOn[other].count(global));
         dependsOn[other].erase(global);
         if (dependsOn[other].empty()) {
