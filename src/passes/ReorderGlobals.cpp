@@ -119,6 +119,12 @@ struct ReorderGlobals : public Pass {
     // from the heap each time.
     std::vector<Name> availableHeap;
 
+    // To break ties we use the original order.
+    std::unordered_map<Name, Index> originalIndexes;
+    for (Index i = 0; i < globals.size(); i++) {
+      originalIndexes[globals[i]->name] = i;
+    }
+
     auto cmp = [&](Name a, Name b) {
       // Sort by the counts.
       if (counts[a] < counts[b]) {
@@ -128,8 +134,8 @@ struct ReorderGlobals : public Pass {
         return false;
       }
 
-      // Break ties using the name. TODO: Perhaps the original order?
-      return a > b;
+      // Break ties using the original order.
+      return originalIndexes[a] > originalIndexes[b];
     };
 
     // Push an item that just became available to the available heap.
