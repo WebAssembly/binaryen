@@ -136,7 +136,7 @@ struct ReorderGlobals : public Pass {
     //
     // The greedy approach here may also be unoptimal, however. Consider that we
     // might see that the best available global is $a, but if we popped $b
-    // instead that could unlock $c which depends on $b and $c might have a much
+    // instead that could unlock $c which depends on $b, and $c may have a much
     // higher use count than $a. This algorithm often does well, however, and it
     // runs in linear time in the size of the input.
     std::vector<Name> availableHeap;
