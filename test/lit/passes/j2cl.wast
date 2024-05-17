@@ -6,10 +6,9 @@
 (module
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (global $field-f64@Foo f64 (f64.const 1))
-
   ;; CHECK:      (global $field-i32@Foo i32 (i32.const 1))
   (global $field-i32@Foo (mut i32) (i32.const 0))
+  ;; CHECK:      (global $field-f64@Foo f64 (f64.const 1))
   (global $field-f64@Foo (mut f64) (f64.const 0))
 
   ;; CHECK:      (func $clinit_<once>_@Foo (type $0)
@@ -29,20 +28,18 @@
 
   ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (global $field2@Foo (mut anyref) (ref.null none))
-
   ;; CHECK:      (global $referredField@Foo i32 (i32.const 42))
   (global $referredField@Foo i32 (i32.const 42))
-
-  ;; CHECK:      (global $field1@Foo anyref (struct.new $A
-  ;; CHECK-NEXT:  (global.get $referredField@Foo)
-  ;; CHECK-NEXT: ))
 
   ;; CHECK:      (global $referredFieldMut@Foo (mut i32) (i32.const 42))
   (global $referredFieldMut@Foo (mut i32) (i32.const 42))
 
+  ;; CHECK:      (global $field1@Foo anyref (struct.new $A
+  ;; CHECK-NEXT:  (global.get $referredField@Foo)
+  ;; CHECK-NEXT: ))
   (global $field1@Foo (mut anyref) (ref.null none))
 
+  ;; CHECK:      (global $field2@Foo (mut anyref) (ref.null none))
   (global $field2@Foo (mut anyref) (ref.null none))
 
   ;; CHECK:      (global $field3@Foo anyref (global.get $field1@Foo))
@@ -78,11 +75,10 @@
   (type $A (struct))
   ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (global $field-any@Foo (mut anyref) (struct.new_default $A))
-
   ;; CHECK:      (global $field-i32@Foo (mut i32) (i32.const 2))
   (global $field-i32@Foo (mut i32) (i32.const 2))
 
+  ;; CHECK:      (global $field-any@Foo (mut anyref) (struct.new_default $A))
   (global $field-any@Foo (mut anyref) (struct.new $A))
 
   ;; CHECK:      (func $clinit_<once>_@Foo (type $1)
