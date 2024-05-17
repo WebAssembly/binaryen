@@ -379,53 +379,26 @@ void TranslateToFuzzReader::setupGlobals() {
     }
   }
 
-  auto useGlobalLater = [&](Global* global) {
-    auto type = global->type;
-    auto name = global->name;
-    globalsByType[type].push_back(name);
-    if (global->mutable_) {
-      mutableGlobalsByType[type].push_back(name);
-    } else {
-      immutableGlobalsByType[type].push_back(name);
-      if (global->imported()) {
-        importedImmutableGlobalsByType[type].push_back(name);
-      }
-    }
-  };
-
   // Randomly assign some globals from initial content to be ignored for the
   // fuzzer to use. Such globals will only be used from initial content. This is
   // important to preserve some real-world patterns, like the "once" pattern in
   // which a global is used in one function only. (If we randomly emitted gets
   // and sets of such globals, we'd with very high probability end up breaking
   // that pattern, and not fuzzing it at all.)
-  if (!wasm.globals.empty()) {
-    unsigned percentUsedInitialGlobals = upTo(100);
-    for (auto& global : wasm.globals) {
-      if (upTo(100) < percentUsedInitialGlobals) {
-        useGlobalLater(global.get());
-      }
-    }
+  //
+  // Pick a percentage of initial globals to ignore later down when we decide
+  // which to allow uses from.
+  auto numInitialGlobals = wasm.globals.size();
+  unsigned percentIgnoredInitialGlobals = 0;
+  if (numInitialGlobals) {
+    // Only generate this random number if it will be used.
+    percentIgnoredInitialGlobals = upTo(100);
   }
 
   // Create new random globals.
   for (size_t index = upTo(MAX_GLOBALS); index > 0; --index) {
     auto type = getConcreteType();
-    if (type.isTuple()) {
-      // We disallow tuples in globals.
-      type = Type::i32;
-    }
-    auto mutability = oneIn(2) ? Builder::Mutable : Builder::Immutable;
-
-    // Usually make a const, but sometimes make a global.get (which may fail to
-    // find a suitable global, and if so it will make a constant instead).
-    Expression* init;
-    if (oneIn(3)) {
-      init = makeConst(type);
-    } else {
-      init = makeGlobalGet(type);
-    }
-
+    auto* init = makeConst(type);
     if (!FindAll<RefAs>(init).list.empty()) {
       // When creating this initial value we ended up emitting a RefAs, which
       // means we had to stop in the middle of an overly-nested struct or array,
@@ -435,9 +408,26 @@ void TranslateToFuzzReader::setupGlobals() {
       type = getMVPType();
       init = makeConst(type);
     }
+    auto mutability = oneIn(2) ? Builder::Mutable : Builder::Immutable;
     auto global = builder.makeGlobal(
       Names::getValidGlobalName(wasm, "global$"), type, init, mutability);
-    useGlobalLater(wasm.addGlobal(std::move(global)));
+    wasm.addGlobal(std::move(global));
+  }
+
+  // Set up data structures for picking globals later for get/set operations.
+  for (Index i = 0; i < wasm.globals.size(); i++) {
+    auto& global = wasm.globals[i];
+
+    // Apply the chance for initial globals to be ignored, see above.
+    if (i < numInitialGlobals && upTo(100) < percentIgnoredInitialGlobals) {
+      continue;
+    }
+
+    // This is a global we can use later, note it.
+    globalsByType[global->type].push_back(global->name);
+    if (global->mutable_) {
+      mutableGlobalsByType[global->type].push_back(global->name);
+    }
   }
 }
 
@@ -1910,12 +1900,8 @@ Expression* TranslateToFuzzReader::makeLocalSet(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeGlobalGet(Type type) {
-  // In a non-function context, like in another global, we can only get from an
-  // immutable global, and whether GC is enabled (which allows getting non-
-  // imported globals).
-  auto& relevantGlobals = funcContext ? globalsByType : (wasm.features.hasGC() ? immutableGlobalsByType : importedImmutableGlobalsByType);
-  auto it = relevantGlobals.find(type);
-  if (it == relevantGlobals.end() || it->second.empty()) {
+  auto it = globalsByType.find(type);
+  if (it == globalsByType.end() || it->second.empty()) {
     return makeTrivial(type);
   }
 
