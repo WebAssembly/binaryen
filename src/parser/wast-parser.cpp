@@ -41,8 +41,7 @@ Result<Literals> consts(Lexer& in) {
 
 MaybeResult<Action> action(Lexer& in) {
   if (in.takeSExprStart("invoke"sv)) {
-    // TODO: Do we need to use this optional id?
-    in.takeID();
+    auto id = in.takeID();
     auto name = in.takeName();
     if (!name) {
       return in.err("expected export name");
@@ -52,12 +51,11 @@ MaybeResult<Action> action(Lexer& in) {
     if (!in.takeRParen()) {
       return in.err("expected end of invoke action");
     }
-    return InvokeAction{*name, *args};
+    return InvokeAction{id, *name, *args};
   }
 
   if (in.takeSExprStart("get"sv)) {
-    // TODO: Do we need to use this optional id?
-    in.takeID();
+    auto id = in.takeID();
     auto name = in.takeName();
     if (!name) {
       return in.err("expected export name");
@@ -65,7 +63,7 @@ MaybeResult<Action> action(Lexer& in) {
     if (!in.takeRParen()) {
       return in.err("expected end of get action");
     }
-    return GetAction{*name};
+    return GetAction{id, *name};
   }
 
   return {};
@@ -236,7 +234,7 @@ MaybeResult<AssertReturn> assertReturn(Lexer& in) {
 }
 
 // (assert_exception action)
-MaybeResult<AssertException> assertException(Lexer& in) {
+MaybeResult<AssertAction> assertException(Lexer& in) {
   if (!in.takeSExprStart("assert_exception"sv)) {
     return {};
   }
@@ -245,7 +243,7 @@ MaybeResult<AssertException> assertException(Lexer& in) {
   if (!in.takeRParen()) {
     return in.err("expected end of assert_exception");
   }
-  return AssertException{*a};
+  return AssertAction{ActionAssertionType::Exception, *a};
 }
 
 // (assert_exhaustion action msg)
@@ -266,7 +264,7 @@ MaybeResult<AssertAction> assertAction(Lexer& in) {
   if (!in.takeRParen()) {
     return in.err("expected end of assertion");
   }
-  return AssertAction{type, *a, *msg};
+  return AssertAction{type, *a};
 }
 
 // (assert_malformed module msg)
@@ -293,7 +291,7 @@ MaybeResult<AssertModule> assertModule(Lexer& in) {
   if (!in.takeRParen()) {
     return in.err("expected end of assertion");
   }
-  return AssertModule{type, *mod, *msg};
+  return AssertModule{type, *mod};
 }
 
 // (assert_trap action msg)
@@ -312,7 +310,7 @@ MaybeResult<Assertion> assertTrap(Lexer& in) {
     if (!in.takeRParen()) {
       return in.err("expected end of assertion");
     }
-    return Assertion{AssertAction{ActionAssertionType::Trap, *a, *msg}};
+    return Assertion{AssertAction{ActionAssertionType::Trap, *a}};
   }
   auto mod = wastModule(in);
   if (mod.getErr()) {
@@ -325,7 +323,7 @@ MaybeResult<Assertion> assertTrap(Lexer& in) {
   if (!in.takeRParen()) {
     return in.err("expected end of assertion");
   }
-  return Assertion{AssertModule{ModuleAssertionType::Trap, *mod, *msg}};
+  return Assertion{AssertModule{ModuleAssertionType::Trap, *mod}};
 }
 
 MaybeResult<Assertion> assertion(Lexer& in) {
@@ -391,23 +389,29 @@ Result<WASTCommand> command(Lexer& in) {
   return *mod;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
 Result<WASTScript> wast(Lexer& in) {
   WASTScript cmds;
   while (!in.empty()) {
+    size_t line = in.position().line;
     auto cmd = command(in);
     if (cmd.getErr() && cmds.empty()) {
       // The entire script might be a single module comprising a sequence of
       // module fields with a top-level `(module ...)`.
       auto wasm = std::make_shared<Module>();
       CHECK_ERR(parseModule(*wasm, in.buffer));
-      cmds.emplace_back(std::move(wasm));
+      cmds.push_back({WASTModule{std::move(wasm)}, line});
       return cmds;
     }
     CHECK_ERR(cmd);
-    cmds.emplace_back(std::move(*cmd));
+    cmds.push_back(ScriptEntry{std::move(*cmd), line});
   }
   return cmds;
 }
+
+#pragma GCC diagnostic pop
 
 } // anonymous namespace
 

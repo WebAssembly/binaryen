@@ -4103,7 +4103,7 @@ public:
   // can use it (refactor?)
   Literals callFunctionInternal(Name name, Literals arguments) {
     if (callDepth > maxDepth) {
-      externalInterface->trap("stack limit");
+      hostLimit("stack limit");
     }
 
     Flow flow;

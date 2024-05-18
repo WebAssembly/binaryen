@@ -352,40 +352,34 @@
   "tag's param numbers must match"
 )
 
-(assert_invalid
-  (module
-    (func $f0
-      (block $l0
-        (try
-          (do
-            (try
-              (do)
-              (delegate $l0) ;; target is a block
-            )
-          )
-          (catch_all)
-        )
-      )
-    )
-  )
-  "all delegate targets must be valid"
-)
-
-(assert_invalid
-  (module
-    (func $f0
-      (try $l0
-        (do)
-        (catch_all
+(module
+  (func $f0
+    (block $l0
+      (try
+        (do
           (try
             (do)
-            (delegate $l0) ;; the target catch is above the delegate
+            (delegate $l0) ;; target is a block
           )
+        )
+        (catch_all)
+      )
+    )
+  )
+)
+
+(module
+  (func $f0
+    (try $l0
+      (do)
+      (catch_all
+        (try
+          (do)
+          (delegate $l0) ;; the target catch is above the delegate
         )
       )
     )
   )
-  "all delegate targets must be valid"
 )
 
 (assert_invalid
