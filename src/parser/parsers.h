@@ -918,8 +918,6 @@ MaybeResult<> plaininstr(Ctx& ctx, const std::vector<Annotation>& annotations) {
     return {};
   }
 
-#define NEW_INSTRUCTION_PARSER
-#define NEW_WAT_PARSER
 #include <gen-s-parser.inc>
 }
 

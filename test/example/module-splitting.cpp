@@ -5,7 +5,6 @@
 #include "ir/stack-utils.h"
 #include "parser/wat-parser.h"
 #include "wasm-features.h"
-#include "wasm-s-parser.h"
 #include "wasm-validator.h"
 #include "wasm.h"
 
