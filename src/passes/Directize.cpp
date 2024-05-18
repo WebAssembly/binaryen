@@ -130,7 +130,7 @@ private:
       return CallUtils::Unknown{};
     }
 
-    Index index = c->value.geti32();
+    Index index = c->value.getInteger();
 
     // Check if index is invalid, or the type is wrong.
     auto& flatTable = *table.flatTable;
