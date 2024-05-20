@@ -150,7 +150,10 @@ struct ReorderGlobals : public Pass {
     }
     auto original = doSort(zeroes, deps, module);
 
-    auto& best = computeSize(pureGreedy, counts) <= computeSize(original, counts) ? pureGreedy : original;
+    auto pureGreedySize = computeSize(pureGreedy, counts);
+    auto originalSize = computeSize(original, counts);
+std::cout << "pure " << pureGreedySize << " , orig: " << originalSize << '\n';
+    auto& best = pureGreedySize <= originalSize ? pureGreedy : original;
 
     // Apply the indexes we computed.
     std::sort(
@@ -284,19 +287,25 @@ struct ReorderGlobals : public Pass {
 
     // The total size we are computing.
     size_t total = 0;
-    // At index 0 the size is bits is 1 byte. We will update this as we go.
-    // Each LEB byte has 7 bits of payload, so the ordering only matters modulo
-    // clumps of 7 bits, that is, the first increase happens at 128, and so
+    // Track the size in bits and the next index at which the size increases. At
+    // the first iteration we'll compute the size of the LEB for index 0, and so
     // forth.
-    size_t sizeInBits = 1;
-    size_t nextSizeIncrease = 128;
+    size_t sizeInBits = 0;
+    size_t nextSizeIncrease = 0;
     for (Index i = 0; i < globals.size(); i++) {
       if (i == nextSizeIncrease) {
+std::cout << "size BUMP\n";
         sizeInBits++;
-        nextSizeIncrease <<= 7;
+        // At the current size we have 7 * sizeInBits bits to use.  For example,
+        // at index 0 the size is 1 and we'll compute 128 here, and indeed after
+        // emitting 128 globals (0,..,127) the 129th (at index 128) requires a
+        // larger LEB.
+        nextSizeIncrease = 1 << (7 * sizeInBits);
       }
+std::cout << "add " << (counts[globals[i]] * sizeInBits) << " for " << globals[i] << '\n';
       total += counts[globals[i]] * sizeInBits;
     }
+std::cout << "total " << total << "\n";
     return total;
   }
 };

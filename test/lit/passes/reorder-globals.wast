@@ -637,17 +637,17 @@
   )
 )
 
-;; A situation where the simple greedy sort fails to be optimal. We have 128
-;; globals, enough for the LEB size to grow by 1 for the last. 127 globals are
+;; A situation where the simple greedy sort fails to be optimal. We have 129
+;; globals, enough for the LEB size to grow by 1 for the last. 128 globals are
 ;; in a chain:
 ;;
-;;  global0 <- global1 <- global2 <- .. <- global126
+;;  global0 <- global1 <- global2 <- .. <- global127
 ;;
-;; and global127 is independent of all of them. Because of the counts it will
-;; appear that global127 is worth putting first, as it has a higher count than
+;; and global128 is independent of all of them. Because of the counts it will
+;; appear that global128 is worth putting first, as it has a higher count than
 ;; global0 (the only other global that can appear first). However, their counts
-;; are actually low, as all counts are minimal except for global126 which has a
-;; huge count. As a result, it is best to emit global0,..,global126,global127
+;; are actually low, as all counts are minimal except for global127 which has a
+;; huge count. As a result, it is best to emit global0,..,global127,global128
 ;; because that lets us get the "heavy" global126 in just before the LEB size
 ;; grows.
 (module
@@ -907,8 +907,9 @@
   (global $global125 i32 (global.get $global124))
   ;; CHECK:      (global $global126 i32 (global.get $global125))
   (global $global126 i32 (global.get $global125))
+  (global $global127 i32 (global.get $global126))
 
-  (global $global127 i32 (i32.const 127))
+  (global $global128 i32 (i32.const 128))
 
   ;; CHECK:      (func $uses (type $0)
   ;; CHECK-NEXT:  (drop
@@ -950,21 +951,21 @@
   ;; CHECK-NEXT: )
   (func $uses
     ;; Aside from the uses in the globals themselves (which means one use for
-    ;; each of global0..global125), we add two uses of global127, to make it
-    ;; have a higher count than global0, and 10 uses of global126, to make it
+    ;; each of global0..global126), we add two uses of global128, to make it
+    ;; have a higher count than global0, and 10 uses of global127, to make it
     ;; have the highest count by far.
-    (drop (global.get $global127))
-    (drop (global.get $global127))
+    (drop (global.get $global128))
+    (drop (global.get $global128))
 
-    (drop (global.get $global126))
-    (drop (global.get $global126))
-    (drop (global.get $global126))
-    (drop (global.get $global126))
-    (drop (global.get $global126))
-    (drop (global.get $global126))
-    (drop (global.get $global126))
-    (drop (global.get $global126))
-    (drop (global.get $global126))
-    (drop (global.get $global126))
+    (drop (global.get $global127))
+    (drop (global.get $global127))
+    (drop (global.get $global127))
+    (drop (global.get $global127))
+    (drop (global.get $global127))
+    (drop (global.get $global127))
+    (drop (global.get $global127))
+    (drop (global.get $global127))
+    (drop (global.get $global127))
+    (drop (global.get $global127))
   )
 )
