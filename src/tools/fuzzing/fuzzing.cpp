@@ -1914,7 +1914,13 @@ Expression* TranslateToFuzzReader::makeGlobalGet(Type type) {
                 : (wasm.features.hasGC() ? immutableGlobalsByType
                                          : importedImmutableGlobalsByType);
   auto it = relevantGlobals.find(type);
-  if (it == relevantGlobals.end() || it->second.empty()) {
+  // If we have no such relevant globals give up and emit a constant instead.
+  // We also do so if this is a tuple type and we are not in a function, because
+  // atm tuple globals have only limited support, and in particular we do not
+  // support a global.get from one such global to another (a tuple global must
+  // contain a tuple.make instruction).
+  if (it == relevantGlobals.end() || it->second.empty() ||
+      (type.isTuple() && !funcContext)) {
     return makeConst(type);
   }
 
