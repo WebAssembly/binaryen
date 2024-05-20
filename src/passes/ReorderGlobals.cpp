@@ -156,6 +156,8 @@ std::cout << "XZERO NOW\n";
 std::cout << "pure " << pureGreedySize << " , orig: " << originalSize << '\n';
     auto& best = pureGreedySize <= originalSize ? pureGreedy : original;
 
+    // TODO: less greedy: add counts of things unlocked by it? maybe with exponential backoff?
+
     // Apply the indexes we computed.
     std::sort(
       globals.begin(),
