@@ -32,14 +32,14 @@
 
 namespace wasm {
 
-using NameCountMap = std::unordered_map<Name, std::atomic<Index>>;
+using AtomicNameCountMap = std::unordered_map<Name, std::atomic<Index>>;
 
 struct UseCountScanner : public WalkerPass<PostWalker<UseCountScanner>> {
   bool isFunctionParallel() override { return true; }
 
   bool modifiesBinaryenIR() override { return false; }
 
-  UseCountScanner(NameCountMap& counts) : counts(counts) {}
+  UseCountScanner(AtomicNameCountMap& counts) : counts(counts) {}
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<UseCountScanner>(counts);
@@ -56,7 +56,7 @@ struct UseCountScanner : public WalkerPass<PostWalker<UseCountScanner>> {
   }
 
 private:
-  NameCountMap& counts;
+  AtomicNameCountMap& counts;
 };
 
 struct ReorderGlobals : public Pass {
@@ -70,17 +70,12 @@ struct ReorderGlobals : public Pass {
 
   ReorderGlobals(bool always) : always(always) {}
 
-  // We will consider more than one possible sorting result.
-  struct SortResult {
-    // For each global, its index in this sorting.
-    std::unordered_map<Name, Index> sortedIndexes;
-    // The total size of relevant parts of the wasm, given this sorting. Less is
-    // better.
-    size_t size;
-  };
+  // We'll use maps of names to counts and indexes.
+  using NameCountMap = std::unordered_map<Name, Index>;
+  using NameIndexMap = std::unordered_map<Name, Index>;
 
   // To break ties we use the original order, to avoid churn.
-  std::unordered_map<Name, Index> originalIndexes;
+  NameIndexMap originalIndexes;
 
   // We must take into account dependencies, so that globals appear before
   // their users in other globals:
@@ -92,7 +87,6 @@ struct ReorderGlobals : public Pass {
   // also build the reverse map, of those that it is depended on from.
   std::unordered_map<Name, std::unordered_set<Name>> dependsOn;
   std::unordered_map<Name, std::unordered_set<Name>> dependedUpon;
-
 
   void run(Module* module) override {
     auto& globals = module->globals;
@@ -106,16 +100,22 @@ struct ReorderGlobals : public Pass {
       return;
     }
 
-    NameCountMap counts;
+    AtomicNameCountMap atomicCounts;
     // Fill in info, as we'll operate on it in parallel.
     for (auto& global : globals) {
-      counts[global->name];
+      atomicCounts[global->name];
     }
 
     // Count uses.
-    UseCountScanner scanner(counts);
+    UseCountScanner scanner(atomicCounts);
     scanner.run(getPassRunner(), module);
     scanner.runOnModuleCode(getPassRunner(), module);
+
+    // Switch to non-atomic for all further processing.
+    NameCountMap counts;
+    for (auto& [name, count] : atomicCounts) {
+      counts[name] = count;
+    }
 
     // Compute dependencies.
     for (auto& global : globals) {
@@ -136,31 +136,33 @@ struct ReorderGlobals : public Pass {
 
     // A pure greedy sort uses the counts as we generated them, that is, at each
     // point it time it picks the global with the highest count that it can.
-    auto pureGreedy = doSort(counts);
+    auto pureGreedy = doSort(counts, module);
 
     // Compute the closest thing we can to the original, unoptimized sort, by
     // setting all counts to 0 there, so it only takes into account dependencies
     // and the original ordering.
     NameCountMap zeroes;
     for (auto& global : globals) {
-      zeroes[global] = 0;
+      zeroes[global->name] = 0;
     }
-    auto original = doSort(zeroes);
+    auto original = doSort(zeroes, module);
 
-    auto& best = pureGreedy.size <= original.size ? pureGreedy : original;
+    auto& best = computeSize(pureGreedy, counts) <= computeSize(original, counts) ? pureGreedy : original;
 
     // Apply the indexes we computed.
     std::sort(
       globals.begin(),
       globals.end(),
       [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
-        return best.sortedIndexes[a->name] < best.sortedIndexes[b->name];
+        return best[a->name] < best[b->name];
       });
 
     module->updateMaps();
   }
 
-  SortResult doSort(const NameCountMap& counts) {
+  NameIndexMap doSort(const NameCountMap& counts, Module* module) {
+    auto& globals = module->globals;
+
     // To sort the globals we do a simple greedy approach of always picking the
     // global with the highest count at every point in time, subject to the
     // constraint that we can only emit globals that have all of their
@@ -207,10 +209,10 @@ struct ReorderGlobals : public Pass {
       }
 
       // Sort by the counts.
-      if (counts[a] < counts[b]) {
+      if (counts.at(a) < counts.at(b)) {
         return true;
       }
-      if (counts[a] > counts[b]) {
+      if (counts.at(a) > counts.at(b)) {
         return false;
       }
 
@@ -233,7 +235,7 @@ struct ReorderGlobals : public Pass {
 
     // Pop off the heap: Emit the global and it its final, sorted index. Keep
     // doing that until we finish processing all the globals.
-    std::unordered_map<Name, Index> sortedIndexes;
+    NameIndexMap sortedIndexes;
     while (!availableHeap.empty()) {
       std::pop_heap(availableHeap.begin(), availableHeap.end(), cmp);
       auto global = availableHeap.back();
@@ -255,17 +257,16 @@ struct ReorderGlobals : public Pass {
     // cannot exist in valid IR.
     assert(sortedIndexes.size() == globals.size());
 
-    return SortResult{sortedIndexes, computeSize(sortedIndexes)};
+    return sortedIndexes;
   }
 
   // Given an indexing of the globals (a map from their names to the index of
   // each one, and the counts of how many times each appears, estimate the size
   // of relevant parts of the wasm binary (that is, of LEBs in global.gets).
-  size_t computeSize(std::unordered_map<Name, Index>& indexes,
-                     NameCountMap& counts) {
+  size_t computeSize(NameIndexMap& indexes, NameCountMap& counts) {
     // Go from |indexes| to a vector of the names in order.
     std::vector<Name> globals;
-    inOrder.resize(indexes.size());
+    globals.resize(indexes.size());
     for (auto& [global, index] : indexes) {
       // Each global has a unique index, and all are in bounds [0, N).
       assert(index < globals.size());
