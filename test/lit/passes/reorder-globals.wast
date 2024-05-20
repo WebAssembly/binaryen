@@ -639,7 +639,7 @@
 
 ;; A situation where the simple greedy sort fails to be optimal. We have 129
 ;; globals, enough for the LEB size to grow by 1 for the last. 128 globals are
-;; in a chain:
+;; in a chain: XXX fix comment
 ;;
 ;;  global0 <- global1 <- global2 <- .. <- global127
 ;;
@@ -655,8 +655,7 @@
 
   ;; CHECK:      (global $global0 i32 (i32.const 0))
   (global $global0 i32 (i32.const 0))
-  ;; CHECK:      (global $global1 i32 (global.get $global0))
-  (global $global1 i32 (global.get $global0))
+  (global $global1 i32 (i32.const 1))
   ;; CHECK:      (global $global2 i32 (global.get $global1))
   (global $global2 i32 (global.get $global1))
   ;; CHECK:      (global $global3 i32 (global.get $global2))
@@ -908,8 +907,7 @@
   ;; CHECK:      (global $global126 i32 (global.get $global125))
   (global $global126 i32 (global.get $global125))
   (global $global127 i32 (global.get $global126))
-
-  (global $global128 i32 (i32.const 128))
+  (global $global128 i32 (global.get $global127))
 
   ;; CHECK:      (func $uses (type $0)
   ;; CHECK-NEXT:  (drop
@@ -954,18 +952,18 @@
     ;; each of global0..global126), we add two uses of global128, to make it
     ;; have a higher count than global0, and 10 uses of global127, to make it
     ;; have the highest count by far.
-    (drop (global.get $global128))
-    (drop (global.get $global128))
+    (drop (global.get $global0))
+    (drop (global.get $global0))
 
-    (drop (global.get $global127))
-    (drop (global.get $global127))
-    (drop (global.get $global127))
-    (drop (global.get $global127))
-    (drop (global.get $global127))
-    (drop (global.get $global127))
-    (drop (global.get $global127))
-    (drop (global.get $global127))
-    (drop (global.get $global127))
-    (drop (global.get $global127))
+    (drop (global.get $global128))
+    (drop (global.get $global128))
+    (drop (global.get $global128))
+    (drop (global.get $global128))
+    (drop (global.get $global128))
+    (drop (global.get $global128))
+    (drop (global.get $global128))
+    (drop (global.get $global128))
+    (drop (global.get $global128))
+    (drop (global.get $global128))
   )
 )

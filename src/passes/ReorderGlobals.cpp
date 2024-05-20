@@ -148,6 +148,7 @@ struct ReorderGlobals : public Pass {
     for (auto& global : globals) {
       zeroes[global->name] = 0;
     }
+std::cout << "XZERO NOW\n";
     auto original = doSort(zeroes, deps, module);
 
     auto pureGreedySize = computeSize(pureGreedy, counts);
@@ -206,7 +207,13 @@ std::cout << "pure " << pureGreedySize << " , orig: " << originalSize << '\n';
     // runs in linear time in the size of the input.
     std::vector<Name> availableHeap;
 
+    // Comparison function. This is used in a heap, where "highest" means
+    // "popped first", so if we compare the counts 10 and 20 we will return 1,
+    // which means 10 appears first in a simple sort, as 20 is higher. Later, 20
+    // will be popped earlier as it is higher and then it will appear earlier in
+    // the actual final sort.
     auto cmp = [&](Name a, Name b) {
+std::cout << "compare " << a << " vs " << b << "\n";
       // Imports always go first. The binary writer takes care of this itself
       // anyhow, but it is better to do it here in the IR so we can actually
       // see what the final layout will be.
@@ -218,14 +225,21 @@ std::cout << "pure " << pureGreedySize << " , orig: " << originalSize << '\n';
       if (aImported && !bImported) {
         return false;
       }
+std::cout << "  next\n";
 
       // Sort by the counts.
-      if (counts.at(a) < counts.at(b)) {
+      auto aCount = counts.at(a);
+      auto bCount = counts.at(b);
+      if (aCount < bCount) {
+std::cout << "  first has smaller count, so 1\n";
         return true;
       }
-      if (counts.at(a) > counts.at(b)) {
+      if (aCount > bCount) {
+std::cout << "  last has smaller count, so 0\n";
         return false;
       }
+
+std::cout << "  returning " << originalIndexes[a] << " < " << originalIndexes[b] << '\n';
 
       // Break ties using the original order.
       return originalIndexes[a] < originalIndexes[b];
