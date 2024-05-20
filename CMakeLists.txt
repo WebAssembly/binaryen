@@ -466,14 +466,9 @@ endif()
 # Note that SHELL: is needed as otherwise cmake will coalesce -s link flags
 # in an incorrect way for emscripten.
 if(EMSCRIPTEN)
-  set(binaryen_emscripten_SOURCES
-    src/binaryen-c.cpp
-    ${binaryen_HEADERS}
-  )
-
   # binaryen.js WebAssembly variant
   add_executable(binaryen_wasm
-                 ${binaryen_emscripten_SOURCES})
+                 ${binaryen_SOURCES})
   target_link_libraries(binaryen_wasm wasm asmjs emscripten-optimizer passes ir cfg support analysis parser wasm)
   target_link_libraries(binaryen_wasm "-sFILESYSTEM")
   target_link_libraries(binaryen_wasm "-sEXPORT_NAME=Binaryen")
@@ -498,7 +493,7 @@ if(EMSCRIPTEN)
 
   # binaryen.js JavaScript variant
   add_executable(binaryen_js
-                 ${binaryen_emscripten_SOURCES})
+                 ${binaryen_SOURCES})
   target_link_libraries(binaryen_js wasm asmjs emscripten-optimizer passes ir cfg support analysis parser wasm)
   target_link_libraries(binaryen_js "-sWASM=0")
   target_link_libraries(binaryen_js "-sWASM_ASYNC_COMPILATION=0")

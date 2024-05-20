@@ -317,7 +317,14 @@ struct GlobalUseModifier : public WalkerPass<PostWalker<GlobalUseModifier>> {
   void visitGlobalGet(GlobalGet* curr) {
     auto iter = copiedParentMap->find(curr->name);
     if (iter != copiedParentMap->end()) {
-      curr->name = iter->second;
+      auto original = iter->second;
+      // Only apply this optimization if the global we are switching to has the
+      // right type for us.
+      // TODO: We could also allow it to be more refined, but would then need to
+      //       refinalize.
+      if (getModule()->getGlobal(original)->type == curr->type) {
+        curr->name = original;
+      }
     }
   }
 

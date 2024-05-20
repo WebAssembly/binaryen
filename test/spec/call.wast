@@ -279,8 +279,8 @@
 (assert_return (invoke "odd" (i64.const 200)) (i32.const 99))
 (assert_return (invoke "odd" (i64.const 77)) (i32.const 44))
 
-;; (assert_exhaustion (invoke "runaway") "call stack exhausted")
-;; (assert_exhaustion (invoke "mutual-runaway") "call stack exhausted")
+(assert_exhaustion (invoke "runaway") "call stack exhausted")
+(assert_exhaustion (invoke "mutual-runaway") "call stack exhausted")
 
 (assert_return (invoke "as-select-first") (i32.const 0x132))
 (assert_return (invoke "as-select-mid") (i32.const 2))

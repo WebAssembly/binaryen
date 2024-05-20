@@ -1666,6 +1666,8 @@ std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
       return os << "Heap type has an undeclared supertype";
     case TypeBuilder::ErrorReason::ForwardChildReference:
       return os << "Heap type has an undeclared child";
+    case TypeBuilder::ErrorReason::InvalidFuncType:
+      return os << "Continuation has invalid function type";
   }
   WASM_UNREACHABLE("Unexpected error reason");
 }
@@ -2616,7 +2618,7 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
     updateReferencedHeapTypes(info, canonicalized);
   }
 
-  // Collect the types and check supertype validity.
+  // Collect the types and check validity.
   std::unordered_set<HeapType> seenTypes;
   for (size_t i = 0; i < typeInfos.size(); ++i) {
     auto& info = typeInfos[i];
@@ -2631,6 +2633,12 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
       if (!isValidSupertype(*info, *super)) {
         return {
           TypeBuilder::Error{i, TypeBuilder::ErrorReason::InvalidSupertype}};
+      }
+    }
+    if (info->isContinuation()) {
+      if (!info->continuation.type.isSignature()) {
+        return {
+          TypeBuilder::Error{i, TypeBuilder::ErrorReason::InvalidFuncType}};
       }
     }
     seenTypes.insert(asHeapType(info));
