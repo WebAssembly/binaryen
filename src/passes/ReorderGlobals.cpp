@@ -19,6 +19,10 @@
 // binaries because fewer bytes are needed to encode references to frequently
 // used globals.
 //
+// This pass also sorts by dependencies, as each global can only appear after
+// those it refers to. Other passes can use this internally to fix the ordering
+// after they add new globals.
+//
 
 #include "memory"
 
@@ -66,6 +70,30 @@ struct ReorderGlobals : public Pass {
 
   ReorderGlobals(bool always) : always(always) {}
 
+  // We will consider more than one possible sorting result.
+  struct SortResult {
+    // For each global, its index in this sorting.
+    std::unordered_map<Name, Index> sortedIndexes;
+    // The total size of relevant parts of the wasm, given this sorting. Less is
+    // better.
+    size_t size;
+  };
+
+  // To break ties we use the original order, to avoid churn.
+  std::unordered_map<Name, Index> originalIndexes;
+
+  // We must take into account dependencies, so that globals appear before
+  // their users in other globals:
+  //
+  //   (global $a i32 (i32.const 10))
+  //   (global $b i32 (global.get $a)) ;; $b depends on $a; $a must be first
+  //
+  // To do so we construct a map from each global to those it depends on. We
+  // also build the reverse map, of those that it is depended on from.
+  std::unordered_map<Name, std::unordered_set<Name>> dependsOn;
+  std::unordered_map<Name, std::unordered_set<Name>> dependedUpon;
+
+
   void run(Module* module) override {
     auto& globals = module->globals;
 
@@ -89,17 +117,7 @@ struct ReorderGlobals : public Pass {
     scanner.run(getPassRunner(), module);
     scanner.runOnModuleCode(getPassRunner(), module);
 
-    // We must take into account dependencies, so that globals appear before
-    // their users in other globals:
-    //
-    //   (global $a i32 (i32.const 10))
-    //   (global $b i32 (global.get $a)) ;; $b depends on $a; $a must be first
-    //
-    // To do so we construct a map from each global to those it depends on. We
-    // also build the reverse map, of those that it is depended on from.
-    std::unordered_map<Name, std::unordered_set<Name>> dependsOn;
-    std::unordered_map<Name, std::unordered_set<Name>> dependedUpon;
-
+    // Compute dependencies.
     for (auto& global : globals) {
       if (!global->imported()) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
@@ -109,6 +127,40 @@ struct ReorderGlobals : public Pass {
       }
     }
 
+    // Compute original indexes.
+    for (Index i = 0; i < globals.size(); i++) {
+      originalIndexes[globals[i]->name] = i;
+    }
+
+    // Compute some sorts, and pick the best.
+
+    // A pure greedy sort uses the counts as we generated them, that is, at each
+    // point it time it picks the global with the highest count that it can.
+    auto pureGreedy = doSort(counts);
+
+    // Compute the closest thing we can to the original, unoptimized sort, by
+    // setting all counts to 0 there, so it only takes into account dependencies
+    // and the original ordering.
+    NameCountMap zeroes;
+    for (auto& global : globals) {
+      zeroes[global] = 0;
+    }
+    auto original = doSort(zeroes);
+
+    auto& best = pureGreedy.size <= original.size ? pureGreedy : original;
+
+    // Apply the indexes we computed.
+    std::sort(
+      globals.begin(),
+      globals.end(),
+      [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
+        return best.sortedIndexes[a->name] < best.sortedIndexes[b->name];
+      });
+
+    module->updateMaps();
+  }
+
+  SortResult doSort(const NameCountMap& counts) {
     // To sort the globals we do a simple greedy approach of always picking the
     // global with the highest count at every point in time, subject to the
     // constraint that we can only emit globals that have all of their
@@ -140,12 +192,6 @@ struct ReorderGlobals : public Pass {
     // higher use count than $a. This algorithm often does well, however, and it
     // runs in linear time in the size of the input.
     std::vector<Name> availableHeap;
-
-    // To break ties we use the original order, to avoid churn.
-    std::unordered_map<Name, Index> originalIndexes;
-    for (Index i = 0; i < globals.size(); i++) {
-      originalIndexes[globals[i]->name] = i;
-    }
 
     auto cmp = [&](Name a, Name b) {
       // Imports always go first. The binary writer takes care of this itself
@@ -209,15 +255,7 @@ struct ReorderGlobals : public Pass {
     // cannot exist in valid IR.
     assert(sortedIndexes.size() == globals.size());
 
-    // Apply the indexes we computed.
-    std::sort(
-      globals.begin(),
-      globals.end(),
-      [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
-        return sortedIndexes[a->name] < sortedIndexes[b->name];
-      });
-
-    module->updateMaps();
+    return SortResult{sortedIndexes, computeSize(sortedIndexes)};
   }
 
   // Given an indexing of the globals (a map from their names to the index of
