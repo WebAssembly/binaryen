@@ -219,6 +219,39 @@ struct ReorderGlobals : public Pass {
 
     module->updateMaps();
   }
+
+  // Given an indexing of the globals (a map from their names to the index of
+  // each one, and the counts of how many times each appears, estimate the size
+  // of relevant parts of the wasm binary (that is, of LEBs in global.gets).
+  size_t computeSize(std::unordered_map<Name, Index>& indexes,
+                     NameCountMap& counts) {
+    // Go from |indexes| to a vector of the names in order.
+    std::vector<Name> globals;
+    inOrder.resize(indexes.size());
+    for (auto& [global, index] : indexes) {
+      // Each global has a unique index, and all are in bounds [0, N).
+      assert(index < globals.size());
+      assert(globals[index].isNull());
+      globals[index] = global;
+    }
+
+    // The total size we are computing.
+    size_t total = 0;
+    // At index 0 the size is bits is 1 byte. We will update this as we go.
+    // Each LEB byte has 7 bits of payload, so the ordering only matters modulo
+    // clumps of 7 bits, that is, the first increase happens at 128, and so
+    // forth.
+    size_t sizeInBits = 1;
+    size_t nextSizeIncrease = 128;
+    for (Index i = 0; i < globals.size(); i++) {
+      if (i == nextSizeIncrease) {
+        sizeInBits++;
+        nextSizeIncrease <<= 7;
+      }
+      total += counts[globals[i]] * sizeInBits;
+    }
+    return total;
+  }
 };
 
 Pass* createReorderGlobalsPass() { return new ReorderGlobals(false); }
