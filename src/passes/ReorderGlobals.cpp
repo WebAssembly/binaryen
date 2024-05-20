@@ -85,8 +85,10 @@ struct ReorderGlobals : public Pass {
   //
   // To do so we construct a map from each global to those it depends on. We
   // also build the reverse map, of those that it is depended on from.
-  std::unordered_map<Name, std::unordered_set<Name>> dependsOn;
-  std::unordered_map<Name, std::unordered_set<Name>> dependedUpon;
+  struct Dependencies {
+    std::unordered_map<Name, std::unordered_set<Name>> dependsOn;
+    std::unordered_map<Name, std::unordered_set<Name>> dependedUpon;
+  };
 
   void run(Module* module) override {
     auto& globals = module->globals;
@@ -118,11 +120,12 @@ struct ReorderGlobals : public Pass {
     }
 
     // Compute dependencies.
+    Dependencies deps;
     for (auto& global : globals) {
       if (!global->imported()) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
-          dependsOn[global->name].insert(get->name);
-          dependedUpon[get->name].insert(global->name);
+          deps.dependsOn[global->name].insert(get->name);
+          deps.dependedUpon[get->name].insert(global->name);
         }
       }
     }
@@ -136,7 +139,7 @@ struct ReorderGlobals : public Pass {
 
     // A pure greedy sort uses the counts as we generated them, that is, at each
     // point it time it picks the global with the highest count that it can.
-    auto pureGreedy = doSort(counts, module);
+    auto pureGreedy = doSort(counts, deps, module);
 
     // Compute the closest thing we can to the original, unoptimized sort, by
     // setting all counts to 0 there, so it only takes into account dependencies
@@ -145,7 +148,7 @@ struct ReorderGlobals : public Pass {
     for (auto& global : globals) {
       zeroes[global->name] = 0;
     }
-    auto original = doSort(zeroes, module);
+    auto original = doSort(zeroes, deps, module);
 
     auto& best = computeSize(pureGreedy, counts) <= computeSize(original, counts) ? pureGreedy : original;
 
@@ -160,8 +163,13 @@ struct ReorderGlobals : public Pass {
     module->updateMaps();
   }
 
-  NameIndexMap doSort(const NameCountMap& counts, Module* module) {
+  NameIndexMap doSort(const NameCountMap& counts,
+                      const Dependencies& originalDeps,
+                      Module* module) {
     auto& globals = module->globals;
+
+    // Copy the deps as we will operate on them as we go.
+    auto deps = originalDeps;
 
     // To sort the globals we do a simple greedy approach of always picking the
     // global with the highest count at every point in time, subject to the
@@ -228,7 +236,7 @@ struct ReorderGlobals : public Pass {
 
     // The initially available globals are those with no dependencies.
     for (auto& global : globals) {
-      if (dependsOn[global->name].empty()) {
+      if (deps.dependsOn[global->name].empty()) {
         push(global->name);
       }
     }
@@ -244,10 +252,10 @@ struct ReorderGlobals : public Pass {
 
       // Each time we pop we emit the global, which means anything that only
       // depended on it becomes available to be popped as well.
-      for (auto other : dependedUpon[global]) {
-        assert(dependsOn[other].count(global));
-        dependsOn[other].erase(global);
-        if (dependsOn[other].empty()) {
+      for (auto other : deps.dependedUpon[global]) {
+        assert(deps.dependsOn[other].count(global));
+        deps.dependsOn[other].erase(global);
+        if (deps.dependsOn[other].empty()) {
           push(other);
         }
       }
