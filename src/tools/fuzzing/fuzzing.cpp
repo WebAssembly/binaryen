@@ -427,6 +427,12 @@ void TranslateToFuzzReader::setupGlobals() {
       // validate in a global. Switch to something safe instead.
       type = getMVPType();
       init = makeConst(type);
+    } else if (type.isTuple() && !init->is<TupleMake>()) {
+      // For now we disallow anything but tuple.make at the top level of tuple
+      // globals (see details in wasm-binary.cpp). In the future we may allow
+      // global.get or other things here.
+      init = makeConst(type);
+      assert(init->is<TupleMake>());
     }
     auto global = builder.makeGlobal(
       Names::getValidGlobalName(wasm, "global$"), type, init, mutability);
@@ -1915,12 +1921,7 @@ Expression* TranslateToFuzzReader::makeGlobalGet(Type type) {
                                          : importedImmutableGlobalsByType);
   auto it = relevantGlobals.find(type);
   // If we have no such relevant globals give up and emit a constant instead.
-  // We also do so if this is a tuple type and we are not in a function, because
-  // atm tuple globals have only limited support, and in particular we do not
-  // support a global.get from one such global to another (a tuple global must
-  // contain a tuple.make instruction).
-  if (it == relevantGlobals.end() || it->second.empty() ||
-      (type.isTuple() && !funcContext)) {
+  if (it == relevantGlobals.end() || it->second.empty()) {
     return makeConst(type);
   }
 
