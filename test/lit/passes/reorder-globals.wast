@@ -195,6 +195,12 @@
   ;; CHECK-NEXT:   (global.get $b)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $c)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -202,8 +208,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $uses
+    ;; ($a already has one use in the global $b)
     (drop
       (global.get $b)
+    )
+    (drop
+      (global.get $b)
+    )
+    (drop
+      (global.get $c)
     )
     (drop
       (global.get $c)
@@ -234,6 +247,12 @@
   ;; CHECK-NEXT:   (global.get $b)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $c)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -242,7 +261,13 @@
       (global.get $b)
     )
     (drop
-      (global.get $b) ;; this changed
+      (global.get $b)
+    )
+    (drop
+      (global.get $b)
+    )
+    (drop
+      (global.get $c)
     )
     (drop
       (global.get $c)
@@ -266,9 +291,6 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $b)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $a)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $uses
     (drop
@@ -276,9 +298,6 @@
     )
     (drop
       (global.get $b)
-    )
-    (drop
-      (global.get $a) ;; this changed
     )
   )
 )
@@ -300,19 +319,13 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $c)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $a)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $uses
     (drop
-      (global.get $c) ;; this changed
+      (global.get $c)
     )
     (drop
-      (global.get $c) ;; this changed
-    )
-    (drop
-      (global.get $a)
+      (global.get $c)
     )
   )
 )
@@ -331,21 +344,15 @@
   ;; CHECK-NEXT:   (global.get $a)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $a)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $b)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $uses
     (drop
-      (global.get $a) ;; this changed
+      (global.get $a)
     )
     (drop
-      (global.get $a) ;; this changed
-    )
-    (drop
-      (global.get $b) ;; this changed
+      (global.get $b)
     )
   )
 )
@@ -365,9 +372,6 @@
   ;; CHECK-NEXT:   (global.get $a)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $a)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $c)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -376,10 +380,7 @@
       (global.get $a)
     )
     (drop
-      (global.get $a)
-    )
-    (drop
-      (global.get $c) ;; this changed
+      (global.get $c)
     )
   )
 )
@@ -637,17 +638,82 @@
   )
 )
 
-;; A situation where the simple greedy sort fails to be optimal. We have 129
-;; globals, enough for the LEB size to grow by 1 for the last. 128 globals are
-;; in a chain: XXX fix comment
+;; A situation where the simple greedy sort fails to be optimal. We have a
+;; chain and one more independent global
 ;;
-;;  global0 <- global1 <- global2 <- .. <- global127
+;;  a <- b <- c
 ;;
-;; and global128 is independent of all of them. Because of the counts it will
-;; appear that global128 is worth putting first, as it has a higher count than
-;; global0 (the only other global that can appear first). However, their counts
-;; are actually low, as all counts are minimal except for global127 which has a
-;; huge count. As a result, it is best to emit global0,..,global127,global128
-;; because that lets us get the "heavy" global126 in just before the LEB size
-;; grows.
+;;  other
+;;
+;; The candidates for the first global emitted are a and other, as they have no
+;; dependencies, and other has a higher count so greedy sorting would pick it.
+;; however, c has the highest count by far, so it is worth being less greedy and
+;; doing a just in order to be able to do b and then c, and to emit other last.
+;; In other words, the original order is better here.
+(module
+  ;; CHECK:      (global $a i32 (i32.const 0))
+  (global $a i32 (i32.const 0))
+  ;; CHECK:      (global $b i32 (global.get $a))
+  (global $b i32 (global.get $a))
+  ;; CHECK:      (global $c i32 (global.get $b))
+  (global $c i32 (global.get $b))
 
+  ;; CHECK:      (global $other i32 (i32.const 1))
+  (global $other i32 (i32.const 1))
+
+  ;; CHECK:      (func $uses (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $other)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $other)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $uses
+    ;; Ten uses for $c, far more than all the rest combined.
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+
+    ;; Two uses for other, which is more than $a's single use.
+    (drop (global.get $other))
+    (drop (global.get $other))
+  )
+)
