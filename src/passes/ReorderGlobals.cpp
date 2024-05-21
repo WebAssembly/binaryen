@@ -155,12 +155,14 @@ struct ReorderGlobals : public Pass {
     for (auto& global : globals) {
       zeroes[global->name] = 0;
     }
-//std::cout << "XZERO NOW\n";
+std::cout << "XZERO NOW\n";
     auto original = doSort(zeroes, deps, module);
 
+std::cout << "Measure greedy NOW\n";
     auto pureGreedySize = computeSize(pureGreedy, counts);
+std::cout << "Measure original NOW\n";
     auto originalSize = computeSize(original, counts);
-//std::cout << "pure " << pureGreedySize << " , orig: " << originalSize << '\n';
+std::cout << "pure " << pureGreedySize << " , orig: " << originalSize << '\n';
     auto& best = pureGreedySize <= originalSize ? pureGreedy : original;
 
     // TODO: less greedy: add counts of things unlocked by it? maybe with exponential backoff?
@@ -222,7 +224,7 @@ struct ReorderGlobals : public Pass {
     // will be popped earlier as it is higher and then it will appear earlier in
     // the actual final sort.
     auto cmp = [&](Name a, Name b) {
-//std::cout << "compare " << a << " vs " << b << "\n";
+std::cout << "compare " << a << " vs " << b << "\n";
       // Imports always go first. The binary writer takes care of this itself
       // anyhow, but it is better to do it here in the IR so we can actually
       // see what the final layout will be.
@@ -234,24 +236,24 @@ struct ReorderGlobals : public Pass {
       if (aImported && !bImported) {
         return false;
       }
-//std::cout << "  next\n";
+std::cout << "  next\n";
 
       // Sort by the counts.
       auto aCount = counts.at(a);
       auto bCount = counts.at(b);
       if (aCount < bCount) {
-//std::cout << "  first has smaller count, so 1\n";
+std::cout << "  first has smaller count, so 1\n";
         return true;
       }
       if (aCount > bCount) {
-//std::cout << "  last has smaller count, so 0\n";
+std::cout << "  last has smaller count, so 0\n";
         return false;
       }
 
-//std::cout << "  returning " << originalIndexes[a] << " < " << originalIndexes[b] << '\n';
+std::cout << "  returning " << originalIndexes[a] << " < " << originalIndexes[b] << '\n';
 
       // Break ties using the original order.
-      return originalIndexes[a] < originalIndexes[b];
+      return originalIndexes[a] > originalIndexes[b];
     };
 
     // Push an item that just became available to the available heap.
@@ -297,7 +299,7 @@ struct ReorderGlobals : public Pass {
   // Given an indexing of the globals (a map from their names to the index of
   // each one, and the counts of how many times each appears, estimate the size
   // of relevant parts of the wasm binary (that is, of LEBs in global.gets).
-  size_t computeSize(NameIndexMap& indexes, NameCountMap& counts) {
+  double computeSize(NameIndexMap& indexes, NameCountMap& counts) {
     // Go from |indexes| to a vector of the names in order.
     std::vector<Name> globals;
     globals.resize(indexes.size());
@@ -318,7 +320,9 @@ struct ReorderGlobals : public Pass {
         // so that after 128 globals we reach 2 (which is the true index at
         // which the LEB size normally jumps from 1 to 2), and so forth.
         total += counts[globals[i]] * (1.0 + (i / 128.0));
+std::cout << "add size " << globals[i] << " of count " << counts[globals[i]] << " times " << (1.0 + (i / 128.0)) << " which is " << (counts[globals[i]] * (1.0 + (i / 128.0))) << "\n";
       }
+std::cout << "totale " << total << '\n';
       return total;
     }
 
@@ -331,7 +335,7 @@ struct ReorderGlobals : public Pass {
     size_t nextSizeIncrease = 0;
     for (Index i = 0; i < globals.size(); i++) {
       if (i == nextSizeIncrease) {
-//std::cout << "size BUMP\n";
+std::cout << "size BUMP\n";
         sizeInBits++;
         // At the current size we have 7 * sizeInBits bits to use.  For example,
         // at index 0 the size is 1 and we'll compute 128 here, and indeed after
@@ -339,10 +343,10 @@ struct ReorderGlobals : public Pass {
         // larger LEB.
         nextSizeIncrease = 1 << (7 * sizeInBits);
       }
-//std::cout << "add " << (counts[globals[i]] * sizeInBits) << " for " << globals[i] << '\n';
+std::cout << "add " << (counts[globals[i]] * sizeInBits) << " for " << globals[i] << '\n';
       total += counts[globals[i]] * sizeInBits;
     }
-//std::cout << "total " << total << "\n";
+std::cout << "total " << total << "\n";
     return total;
   }
 };
