@@ -572,8 +572,23 @@ void WasmBinaryWriter::writeGlobals() {
       o << U32LEB(global->mutable_);
       if (global->type.size() == 1) {
         writeExpression(global->init);
+      } else if (auto* make = global->init->dynCast<TupleMake>()) {
+        // Emit the proper lane for this global.
+        writeExpression(make->operands[i]);
       } else {
-        writeExpression(global->init->cast<TupleMake>()->operands[i]);
+        // For now tuple globals must contain tuple.make. We could perhaps
+        // support more operations, like global.get, but the code would need to
+        // look something like this:
+        //
+        //   auto parentIndex = getGlobalIndex(get->name);
+        //   o << int8_t(BinaryConsts::GlobalGet) << U32LEB(parentIndex + i);
+        //
+        // That is, we must emit the instruction here, and not defer to
+        // writeExpression, as writeExpression writes an entire expression at a
+        // time (and not just one of the lanes). As emitting an instruction here
+        // is less clean, and there is no important use case for global.get of
+        // one tuple global to another, we disallow this.
+        WASM_UNREACHABLE("unsupported tuple global operation");
       }
       o << int8_t(BinaryConsts::End);
       ++i;
