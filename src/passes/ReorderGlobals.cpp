@@ -23,6 +23,13 @@
 // those it refers to. Other passes can use this internally to fix the ordering
 // after they add new globals.
 //
+// The "always" variant of this pass will always sort globals, even if there are
+// so few they all fit in a single LEB. In "always" mode we sort regardless and
+// we measure size by considering each subsequent index to have a higher cost,
+// unlike the more realistic way non-always works, which is that the size only
+// increases when we actually increase the LEB size. "Always" is mainly useful
+// for testing.
+//
 
 #include "memory"
 
@@ -148,12 +155,12 @@ struct ReorderGlobals : public Pass {
     for (auto& global : globals) {
       zeroes[global->name] = 0;
     }
-std::cout << "XZERO NOW\n";
+//std::cout << "XZERO NOW\n";
     auto original = doSort(zeroes, deps, module);
 
     auto pureGreedySize = computeSize(pureGreedy, counts);
     auto originalSize = computeSize(original, counts);
-std::cout << "pure " << pureGreedySize << " , orig: " << originalSize << '\n';
+//std::cout << "pure " << pureGreedySize << " , orig: " << originalSize << '\n';
     auto& best = pureGreedySize <= originalSize ? pureGreedy : original;
 
     // TODO: less greedy: add counts of things unlocked by it? maybe with exponential backoff?
@@ -215,7 +222,7 @@ std::cout << "pure " << pureGreedySize << " , orig: " << originalSize << '\n';
     // will be popped earlier as it is higher and then it will appear earlier in
     // the actual final sort.
     auto cmp = [&](Name a, Name b) {
-std::cout << "compare " << a << " vs " << b << "\n";
+//std::cout << "compare " << a << " vs " << b << "\n";
       // Imports always go first. The binary writer takes care of this itself
       // anyhow, but it is better to do it here in the IR so we can actually
       // see what the final layout will be.
@@ -227,21 +234,21 @@ std::cout << "compare " << a << " vs " << b << "\n";
       if (aImported && !bImported) {
         return false;
       }
-std::cout << "  next\n";
+//std::cout << "  next\n";
 
       // Sort by the counts.
       auto aCount = counts.at(a);
       auto bCount = counts.at(b);
       if (aCount < bCount) {
-std::cout << "  first has smaller count, so 1\n";
+//std::cout << "  first has smaller count, so 1\n";
         return true;
       }
       if (aCount > bCount) {
-std::cout << "  last has smaller count, so 0\n";
+//std::cout << "  last has smaller count, so 0\n";
         return false;
       }
 
-std::cout << "  returning " << originalIndexes[a] << " < " << originalIndexes[b] << '\n';
+//std::cout << "  returning " << originalIndexes[a] << " < " << originalIndexes[b] << '\n';
 
       // Break ties using the original order.
       return originalIndexes[a] < originalIndexes[b];
@@ -301,6 +308,20 @@ std::cout << "  returning " << originalIndexes[a] << " < " << originalIndexes[b]
       globals[index] = global;
     }
 
+    if (always) {
+      // In this mode we gradually increase the cost of later globals, in an
+      // unrealistic manner.
+      double total = 0;
+      for (Index i = 0; i < globals.size(); i++) {
+        // Multiple the count for this global by a smoothed LEB factor, which
+        // starts at 1, for 1 byte, at 0, and then increases linearly with i,
+        // so that after 128 globals we reach 2 (which is the true index at
+        // which the LEB size normally jumps from 1 to 2), and so forth.
+        total += counts[globals[i]] * (1.0 + (i / 128.0));
+      }
+      return total;
+    }
+
     // The total size we are computing.
     size_t total = 0;
     // Track the size in bits and the next index at which the size increases. At
@@ -310,7 +331,7 @@ std::cout << "  returning " << originalIndexes[a] << " < " << originalIndexes[b]
     size_t nextSizeIncrease = 0;
     for (Index i = 0; i < globals.size(); i++) {
       if (i == nextSizeIncrease) {
-std::cout << "size BUMP\n";
+//std::cout << "size BUMP\n";
         sizeInBits++;
         // At the current size we have 7 * sizeInBits bits to use.  For example,
         // at index 0 the size is 1 and we'll compute 128 here, and indeed after
@@ -318,10 +339,10 @@ std::cout << "size BUMP\n";
         // larger LEB.
         nextSizeIncrease = 1 << (7 * sizeInBits);
       }
-std::cout << "add " << (counts[globals[i]] * sizeInBits) << " for " << globals[i] << '\n';
+//std::cout << "add " << (counts[globals[i]] * sizeInBits) << " for " << globals[i] << '\n';
       total += counts[globals[i]] * sizeInBits;
     }
-std::cout << "total " << total << "\n";
+//std::cout << "total " << total << "\n";
     return total;
   }
 };
