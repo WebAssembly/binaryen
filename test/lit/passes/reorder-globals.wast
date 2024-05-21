@@ -729,3 +729,87 @@
     (drop (global.get $other))
   )
 )
+
+;; As above, but with the original order a little different. This is again a
+;; case where the greedy sort is unoptimal (see above), but now also the
+;; original sort is unoptimal as well, and instead we use the "sum" sort, which
+;; counts the sum of the uses of a global and all the things it depends on and
+;; uses that as the count for that global (which in effect means that we take
+;; into consideration not only its own size but the entire size that it may
+;; unlock, which happens to work well here).
+;;
+;; The only change in the input compared to the previous test is that $other
+;; was moved up to between $b and $c. Sum sort works well here because the
+;; first comparison is $a and $other, and sum takes into account $b and $c in
+;; $a's favor, so it wins. Likewise $b and $c win against $other as well, so
+;; the other is $a, $b, $c, $other which is optimal here.
+(module
+  ;; CHECK:      (global $a i32 (i32.const 0))
+  (global $a i32 (i32.const 0))
+  ;; CHECK:      (global $b i32 (global.get $a))
+  (global $b i32 (global.get $a))
+
+  ;; CHECK:      (global $c i32 (global.get $b))
+
+  ;; CHECK:      (global $other i32 (i32.const 1))
+  (global $other i32 (i32.const 1))
+
+  (global $c i32 (global.get $b))
+
+  ;; CHECK:      (func $uses (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $other)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $other)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $uses
+    ;; Ten uses for $c, far more than all the rest combined.
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+
+    ;; Two uses for other, which is more than $a's single use.
+    (drop (global.get $other))
+    (drop (global.get $other))
+  )
+)
+
