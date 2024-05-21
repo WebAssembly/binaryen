@@ -35,7 +35,6 @@
 
 #include "ir/find_all.h"
 #include "pass.h"
-#include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -168,42 +167,40 @@ std::cout << "XZERO NOW\n";
     // we focus less on the children's counts, which may depend on more than the
     // current global).
     NameCountMap sumCounts, exponentialCounts;
+    // We add items to |sumCounts, exponentialCounts| after they are computed,
+    // so anything not there must be pushed to a stack before we can handle it.
+    std::vector<Name> stack;
     // Do a simple recursion to compute children before parents.
-    UniqueDeferredQueue<Name> work;
     for (auto& global : globals) {
-      work.push(global->name);
+      stack.push_back(global->name);
     }
-    while (!work.empty()) {
-      // We add items to |sumCounts, exponentialCounts| after they are
-      // computed, so anything not there must be pushed to a stack before we can
-      // handle it.
-      std::vector<Name> stack;
-      stack.push_back(work.pop());
-      while (!stack.empty()) {
-        auto global = stack.back();
-        // Testing |sumCounts| is enough to know it has not been computed in
-        // |exponentialCounts| either, as we compute them in tandem.
-        if (sumCounts.count(global)) {
-          // We've already computed this.
-          stack.pop_back();
-          continue;
+    while (!stack.empty()) {
+      auto global = stack.back();
+      // Testing |sumCounts| is enough to know it has not been computed in
+      // |exponentialCounts| either, as we compute them in tandem.
+      if (sumCounts.count(global)) {
+        // We've already computed this.
+        stack.pop_back();
+        continue;
+      }
+      // Leave ourselves on the stack and push any unresolved deps.
+      auto pushed = false;
+      for (auto dep : deps.dependedUpon[global]) {
+        if (!sumCounts.count(dep)) {
+          stack.push_back(dep);
+          pushed = true;
         }
-        // Leave ourselves on the stack and push any unresolved deps.
-        auto pushed = false;
-        for (auto dep : deps.dependedUpon[global]) {
-          if (!sumCounts.count(global)) {
-            stack.push_back(dep);
-            pushed = true;
-          }
-        }
-        if (!pushed) {
-          // We can handle this now, as all deps are resolved. Start with the
-          // self-count, then add the deps.
-          sumCounts[global] = exponentialCounts[global] = counts[global];
-          for (auto dep : deps.dependedUpon[global]) {
-            sumCounts[global] += sumCounts[dep];
-          }
-        }
+      }
+      if (pushed) {
+        continue;
+      }
+      // We can handle this now, as all deps are resolved.
+      stack.pop_back();
+      // Start with the self-count, then add the deps.
+      sumCounts[global] = exponentialCounts[global] = counts[global];
+      for (auto dep : deps.dependedUpon[global]) {
+        sumCounts[global] += sumCounts[dep];
+        exponentialCounts[global] += 0.5 * exponentialCounts[dep];
       }
     }
     auto sum = doSort(sumCounts, deps, module);
