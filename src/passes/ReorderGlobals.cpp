@@ -35,6 +35,7 @@
 
 #include "ir/find_all.h"
 #include "pass.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -144,10 +145,6 @@ struct ReorderGlobals : public Pass {
 
     // Compute some sorts, and pick the best.
 
-    // A pure greedy sort uses the counts as we generated them, that is, at each
-    // point it time it picks the global with the highest count that it can.
-    auto pureGreedy = doSort(counts, deps, module);
-
     // Compute the closest thing we can to the original, unoptimized sort, by
     // setting all counts to 0 there, so it only takes into account dependencies
     // and the original ordering.
@@ -157,6 +154,60 @@ struct ReorderGlobals : public Pass {
     }
 std::cout << "XZERO NOW\n";
     auto original = doSort(zeroes, deps, module);
+
+    // A pure greedy sort uses the counts as we generated them, that is, at each
+    // point it time it picks the global with the highest count that it can.
+    auto pureGreedy = doSort(counts, deps, module);
+
+    // Less greedy sorts that add the counts of children to each global. That
+    // is, we are picking in a greedy manner but our decision depends on the
+    // potential later benefits - each global's count is influenced by the total
+    // count of what it can unlock. We try two approaches here: a simple sum,
+    // where we add the children, and an exponential dropoff where we add only
+    // half the children's counts recursively (which approximates the fact that
+    // we focus less on the children's counts, which may depend on more than the
+    // current global).
+    NameCountMap sumCounts, exponentialCounts;
+    // Do a simple recursion to compute children before parents.
+    UniqueDeferredQueue<Name> work;
+    for (auto& global : globals) {
+      work.push(global->name);
+    }
+    while (!work.empty()) {
+      // We add items to |sumCounts, exponentialCounts| after they are
+      // computed, so anything not there must be pushed to a stack before we can
+      // handle it.
+      std::vector<Name> stack;
+      stack.push_back(work.pop());
+      while (!stack.empty()) {
+        auto global = stack.back();
+        // Testing |sumCounts| is enough to know it has not been computed in
+        // |exponentialCounts| either, as we compute them in tandem.
+        if (sumCounts.count(global)) {
+          // We've already computed this.
+          stack.pop_back();
+          continue;
+        }
+        // Leave ourselves on the stack and push any unresolved deps.
+        auto pushed = false;
+        for (auto dep : deps.dependedUpon[global]) {
+          if (!sumCounts.count(global)) {
+            stack.push_back(dep);
+            pushed = true;
+          }
+        }
+        if (!pushed) {
+          // We can handle this now, as all deps are resolved. Start with the
+          // self-count, then add the deps.
+          sumCounts[global] = exponentialCounts[global] = counts[global];
+          for (auto dep : deps.dependedUpon[global]) {
+            sumCounts[global] += sumCounts[dep];
+          }
+        }
+      }
+    }
+    auto sum = doSort(sumCounts, deps, module);
+    auto exponential = doSort(exponentialCounts, deps, module);
 
 std::cout << "Measure greedy NOW\n";
     auto pureGreedySize = computeSize(pureGreedy, counts);
