@@ -228,15 +228,27 @@
 )
 
 ;; As above, but with the counts adjusted: before we had $c, $b, $a from most to
-;; least uses, and now $b, $c, $a. We cannot put $b first, however, due to its
-;; dependency on $a.
+;; least uses, and now $b, $c, $a.
+;;
+;; A greedy sort would do $c, $a, $b (as the first choice is between $c and $a,
+;; and $c wins), but that leaves $b, the highest count, for the end. The
+;; smoothed-out LEB costs (1 byte at the start, +1/128 each index later) are:
+;;
+;;  $c           $a               $b
+;; 1 * 2  +  129/128 * 1  +  130/128 * 3  =  775/128
+;;
+;; The original sort is
+;;
+;;  $a           $b               $c
+;; 1 * 1  +  129/128 * 3  +  130/128 * 2  =  775/128
+;;
+;; As they are equal we prefer the original order.
 (module
-  ;; CHECK:      (global $c i32 (i32.const 30))
-
   ;; CHECK:      (global $a i32 (i32.const 10))
   (global $a i32 (i32.const 10))
   ;; CHECK:      (global $b i32 (global.get $a))
   (global $b i32 (global.get $a))
+  ;; CHECK:      (global $c i32 (i32.const 30))
   (global $c i32 (i32.const 30))
 
   ;; CHECK:      (func $uses (type $0)
