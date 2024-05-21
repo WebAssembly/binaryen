@@ -302,6 +302,47 @@
     )
   )
 
+  ;; CHECK:      (func $dont-swap-subsequent-struct-new (type $1)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local $ref2 (ref null $struct))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $ref2
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $dont-swap-subsequent-struct-new
+    (local $ref (ref null $struct))
+    (local $ref2 (ref null $struct))
+    (local.set $ref
+      (struct.new $struct
+        (i32.const 10)
+      )
+    )
+    (nop)
+    ;;
+    (local.set $ref2
+      (struct.new $struct
+        (i32.const 20)
+      )
+    )
+    ;; last instruction in the block won't be swapped.
+    (struct.set $struct 0
+      (local.get $ref)
+      (i32.const 20)
+    )
+  )
+
   ;; CHECK:      (func $ref-local-write (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref

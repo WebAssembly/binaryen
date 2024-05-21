@@ -1938,10 +1938,7 @@ struct OptimizeInstructions
       return false;
     }
 
-    // Swap the expressions.
-    auto* tmp = list[i];
-    list[i] = list[j];
-    list[j] = tmp;
+    std::swap(list[i], list[j]);
     return true;
   }
 
