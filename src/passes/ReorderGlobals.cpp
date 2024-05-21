@@ -77,8 +77,9 @@ struct ReorderGlobals : public Pass {
 
   ReorderGlobals(bool always) : always(always) {}
 
-  // We'll use maps of names to counts and indexes.
-  using NameCountMap = std::unordered_map<Name, Index>;
+  // We'll use maps of names to counts and indexes. For counts we use doubles as
+  // we will be doing math on them, see below.
+  using NameCountMap = std::unordered_map<Name, double>;
   using NameIndexMap = std::unordered_map<Name, Index>;
 
   // To break ties we use the original order, to avoid churn.
@@ -222,7 +223,7 @@ struct ReorderGlobals : public Pass {
     addOption(exponentialCounts);
 
     // Pick the best.
-    NameCountMap* best = nullptr;
+    NameIndexMap* best = nullptr;
     double bestSize;
     for (auto& [sort, size] : options) {
       if (!best || size < bestSize) {
@@ -391,7 +392,7 @@ std::cout << "totale " << total << '\n';
     }
 
     // The total size we are computing.
-    size_t total = 0;
+    double total = 0;
     // Track the size in bits and the next index at which the size increases. At
     // the first iteration we'll compute the size of the LEB for index 0, and so
     // forth.
