@@ -649,7 +649,7 @@
 ;; dependencies, and other has a higher count so greedy sorting would pick it.
 ;; however, c has the highest count by far, so it is worth being less greedy and
 ;; doing a just in order to be able to do b and then c, and to emit other last.
-;; In other words, the original order is better here.
+;; In other words, the original order is best.
 (module
   ;; CHECK:      (global $a i32 (i32.const 0))
   (global $a i32 (i32.const 0))
