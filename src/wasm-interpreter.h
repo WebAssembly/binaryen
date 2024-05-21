@@ -3137,21 +3137,16 @@ public:
     }
     auto info = getTableInstanceInfo(curr->table);
 
-    auto* table = self()->wasm.getTable(info.name);
-    Index dest = table->indexType == Type::i64
-                   ? destFlow.getSingleValue().geti64()
-                   : destFlow.getSingleValue().geti32();
+    auto dest = destFlow.getSingleValue().getUnsigned();
     Literal value = valueFlow.getSingleValue();
-    Index size = table->indexType == Type::i64
-                   ? sizeFlow.getSingleValue().geti64()
-                   : sizeFlow.getSingleValue().geti32();
+    auto size = sizeFlow.getSingleValue().getUnsigned();
 
-    Index tableSize = info.interface()->tableSize(info.name);
+    auto tableSize = info.interface()->tableSize(info.name);
     if (dest + size > tableSize) {
       trap("out of bounds table access");
     }
 
-    for (Index i = 0; i < size; ++i) {
+    for (uint64_t i = 0; i < size; i++) {
       info.interface()->tableStore(info.name, dest + i, value);
     }
     return Flow();
