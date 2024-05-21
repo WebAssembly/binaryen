@@ -142,21 +142,36 @@ struct ReorderGlobals : public Pass {
       originalIndexes[globals[i]->name] = i;
     }
 
-    // Compute some sorts, and pick the best.
+    // Compute some sorting options.
+    struct SortAndSize {
+      NameIndexMap sort;
+      double size;
+      SortAndSize(NameIndexMap&& sort, double size) : sort(sort), size(size) {}
+    };
+    std::vector<SortAndSize> options;
+    auto addOption = [&](const NameCountMap& customCounts) {
+      // Compute the sort using custom counts that guide us how to order.
+      auto sort = doSort(customCounts, deps, module);
+      // Compute the size using the true counts.
+      auto size = computeSize(sort, counts);
+      options.emplace_back(std::move(sort), size);
+    };
 
     // Compute the closest thing we can to the original, unoptimized sort, by
     // setting all counts to 0 there, so it only takes into account dependencies
     // and the original ordering.
+    //
+    // We put this sort first because if they all end up with equal size we
+    // prefer it (as it avoids pointless changes).
     NameCountMap zeroes;
     for (auto& global : globals) {
       zeroes[global->name] = 0;
     }
-std::cout << "XZERO NOW\n";
-    auto original = doSort(zeroes, deps, module);
+    addOption(zeroes);
 
     // A pure greedy sort uses the counts as we generated them, that is, at each
     // point it time it picks the global with the highest count that it can.
-    auto pureGreedy = doSort(counts, deps, module);
+    addOption(counts);
 
     // Less greedy sorts that add the counts of children to each global. That
     // is, we are picking in a greedy manner but our decision depends on the
@@ -203,24 +218,25 @@ std::cout << "XZERO NOW\n";
         exponentialCounts[global] += 0.5 * exponentialCounts[dep];
       }
     }
-    auto sum = doSort(sumCounts, deps, module);
-    auto exponential = doSort(exponentialCounts, deps, module);
+    addOption(sumCounts);
+    addOption(exponentialCounts);
 
-std::cout << "Measure greedy NOW\n";
-    auto pureGreedySize = computeSize(pureGreedy, counts);
-std::cout << "Measure original NOW\n";
-    auto originalSize = computeSize(original, counts);
-std::cout << "pure " << pureGreedySize << " , orig: " << originalSize << '\n';
-    auto& best = pureGreedySize <= originalSize ? pureGreedy : original;
-
-    // TODO: less greedy: add counts of things unlocked by it? maybe with exponential backoff?
+    // Pick the best.
+    NameCountMap* best = nullptr;
+    double bestSize;
+    for (auto& [sort, size] : options) {
+      if (!best || size < bestSize) {
+        best = &sort;
+        bestSize = size;
+      }
+    }
 
     // Apply the indexes we computed.
     std::sort(
       globals.begin(),
       globals.end(),
       [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
-        return best[a->name] < best[b->name];
+        return (*best)[a->name] < (*best)[b->name];
       });
 
     module->updateMaps();
