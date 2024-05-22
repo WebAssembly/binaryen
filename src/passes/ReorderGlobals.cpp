@@ -137,7 +137,7 @@ struct ReorderGlobals : public Pass {
     Dependencies deps;
     for (Index i = 0; i < globals.size(); i++) {
       auto& global = globals[i];
-      if (!globals->imported()) {
+      if (!global->imported()) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
           auto getIndex = originalIndices[get->name];
           deps.dependsOn[i].insert(getIndex);
@@ -185,6 +185,8 @@ struct ReorderGlobals : public Pass {
     // on J2CL output.
     double const EXPONENTIAL_FACTOR = 0.095;
     IndexCountMap sumCounts(globals.size()), exponentialCounts(globals.size());
+    // Track which globals have been computed.
+    std::vector<bool> computed(globals.size());
     // We add items to |sumCounts, exponentialCounts| after they are computed,
     // so anything not there must be pushed to a stack before we can handle it.
     std::vector<Index> stack;
@@ -194,9 +196,7 @@ struct ReorderGlobals : public Pass {
     }
     while (!stack.empty()) {
       auto global = stack.back();
-      // Testing |sumCounts| is enough to know it has not been computed in
-      // |exponentialCounts| either, as we compute them in tandem.
-      if (sumCounts.count(global)) {
+      if (computed[global]) {
         // We've already computed this.
         stack.pop_back();
         continue;
@@ -204,7 +204,7 @@ struct ReorderGlobals : public Pass {
       // Leave ourselves on the stack and push any unresolved deps.
       auto pushed = false;
       for (auto dep : deps.dependedUpon[global]) {
-        if (!sumCounts.count(dep)) {
+        if (!computed[dep]) {
           stack.push_back(dep);
           pushed = true;
         }
@@ -220,6 +220,7 @@ struct ReorderGlobals : public Pass {
         sumCounts[global] += sumCounts[dep];
         exponentialCounts[global] += EXPONENTIAL_FACTOR * exponentialCounts[dep];
       }
+      computed[global] = true;
     }
     addOption(sumCounts);
     addOption(exponentialCounts); // this seems the best. should we only run it, for speed? disable others and see if any test fails. Also use indices and not maps for speeed
@@ -371,8 +372,8 @@ struct ReorderGlobals : public Pass {
     for (Index i = 0; i < indices.size(); i++) {
       // Each global has a unique index, so we only replace 0's here, and they
       // must be in bounds.
-      assert(actualOrder[index] == 0);
       assert(indices[i] < indices.size());
+      assert(actualOrder[indices[i]] == 0);
 
       actualOrder[indices[i]] = i;
     }
