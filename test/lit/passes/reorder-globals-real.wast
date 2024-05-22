@@ -318,8 +318,8 @@
   ;; CHECK-NEXT: )
   (func $uses
     ;; Aside from the uses in the globals themselves (which means one use for
-    ;; each of global1..global126), we add two uses of global128, to make it
-    ;; have a higher count than other, and 10 uses of global127, to make it
+    ;; each of global1..global127), we add two uses of other, to make it
+    ;; have a higher count than global1, and 10 uses of global128, to make it
     ;; have the highest count by far.
     (drop (global.get $other))
     (drop (global.get $other))
