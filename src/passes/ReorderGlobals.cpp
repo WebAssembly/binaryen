@@ -218,7 +218,8 @@ struct ReorderGlobals : public Pass {
       sumCounts[global] = exponentialCounts[global] = counts[global];
       for (auto dep : deps.dependedUpon[global]) {
         sumCounts[global] += sumCounts[dep];
-        exponentialCounts[global] += EXPONENTIAL_FACTOR * exponentialCounts[dep];
+        exponentialCounts[global] +=
+          EXPONENTIAL_FACTOR * exponentialCounts[dep];
       }
       computed[global] = true;
     }
@@ -248,8 +249,8 @@ struct ReorderGlobals : public Pass {
   }
 
   IndexIndexMap doSort(const IndexCountMap& counts,
-                      const Dependencies& originalDeps,
-                      Module* module) {
+                       const Dependencies& originalDeps,
+                       Module* module) {
     auto& globals = module->globals;
 
     // Copy the deps as we will operate on them as we go.
