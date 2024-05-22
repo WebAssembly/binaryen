@@ -124,13 +124,13 @@ struct ReorderGlobals : public Pass {
 
     // Switch to non-atomic for all further processing, and convert names to
     // indices.
-    std::unordered_map<Name, Index> originalindices;
+    std::unordered_map<Name, Index> originalIndices;
     for (Index i = 0; i < globals.size(); i++) {
-      originalindices[globals[i]->name] = i;
+      originalIndices[globals[i]->name] = i;
     }
     IndexCountMap counts(globals.size());
     for (auto& [name, count] : atomicCounts) {
-      counts[originalIndex[name]] = count;
+      counts[originalIndices[name]] = count;
     }
 
     // Compute dependencies.
@@ -139,7 +139,7 @@ struct ReorderGlobals : public Pass {
       auto& global = globals[i];
       if (!globals->imported()) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
-          auto getIndex = originalindices[get->name];
+          auto getIndex = originalIndices[get->name];
           deps.dependsOn[i].insert(getIndex);
           deps.dependedUpon[getIndex].insert(i);
         }
@@ -239,8 +239,8 @@ struct ReorderGlobals : public Pass {
       globals.begin(),
       globals.end(),
       [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
-        return (*best)[originalindices[a->name]] <
-               (*best)[originalindices[b->name]];
+        return (*best)[originalIndices[a->name]] <
+               (*best)[originalIndices[b->name]];
       });
 
     module->updateMaps();
