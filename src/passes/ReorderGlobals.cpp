@@ -77,13 +77,14 @@ struct ReorderGlobals : public Pass {
 
   ReorderGlobals(bool always) : always(always) {}
 
-  // We'll use maps of names to counts and indexes. For counts we use doubles as
-  // we will be doing math on them, see below.
-  using NameCountMap = std::unordered_map<Name, double>;
-  using NameIndexMap = std::unordered_map<Name, Index>;
+  // For efficiency we will use global indices rather than names. That is, we
+  // use the index of the global in the original ordering to identify each
+  // global. A different ordering is then a vector of new indices, saying where
+  // each one moves, which is logically a mapping between indices.
+  using IndexIndexMap = std::vector<Index>;
 
-  // To break ties we use the original order, to avoid churn.
-  NameIndexMap originalIndexes;
+  // We will also track counts of uses for each global.
+  using IndexCountMap = std::vector<double>;
 
   // We must take into account dependencies, so that globals appear before
   // their users in other globals:
@@ -94,8 +95,8 @@ struct ReorderGlobals : public Pass {
   // To do so we construct a map from each global to those it depends on. We
   // also build the reverse map, of those that it is depended on from.
   struct Dependencies {
-    std::unordered_map<Name, std::unordered_set<Name>> dependsOn;
-    std::unordered_map<Name, std::unordered_set<Name>> dependedUpon;
+    std::unordered_map<Index, std::unordered_set<Index>> dependsOn;
+    std::unordered_map<Index, std::unordered_set<Index>> dependedUpon;
   };
 
   void run(Module* module) override {
@@ -121,36 +122,38 @@ struct ReorderGlobals : public Pass {
     scanner.run(getPassRunner(), module);
     scanner.runOnModuleCode(getPassRunner(), module);
 
-    // Switch to non-atomic for all further processing.
-    NameCountMap counts;
+    // Switch to non-atomic for all further processing, and convert names to
+    // indices.
+    std::unordered_map<Name, Index> originalindices;
+    for (Index i = 0; i < globals.size(); i++) {
+      originalindices[globals[i]->name] = i;
+    }
+    IndexCountMap counts(globals.size());
     for (auto& [name, count] : atomicCounts) {
-      counts[name] = count;
+      counts[originalIndex[name]] = count;
     }
 
     // Compute dependencies.
     Dependencies deps;
-    for (auto& global : globals) {
-      if (!global->imported()) {
+    for (Index i = 0; i < globals.size(); i++) {
+      auto& global = globals[i];
+      if (!globals->imported()) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
-          deps.dependsOn[global->name].insert(get->name);
-          deps.dependedUpon[get->name].insert(global->name);
+          auto getIndex = originalindices[get->name];
+          deps.dependsOn[i].insert(getIndex);
+          deps.dependedUpon[getIndex].insert(i);
         }
       }
     }
 
-    // Compute original indexes.
-    for (Index i = 0; i < globals.size(); i++) {
-      originalIndexes[globals[i]->name] = i;
-    }
-
     // Compute some sorting options.
     struct SortAndSize {
-      NameIndexMap sort;
+      IndexIndexMap sort;
       double size;
-      SortAndSize(NameIndexMap&& sort, double size) : sort(sort), size(size) {}
+      SortAndSize(IndexIndexMap&& sort, double size) : sort(sort), size(size) {}
     };
     std::vector<SortAndSize> options;
-    auto addOption = [&](const NameCountMap& customCounts) {
+    auto addOption = [&](const IndexCountMap& customCounts) {
       // Compute the sort using custom counts that guide us how to order.
       auto sort = doSort(customCounts, deps, module);
       // Compute the size using the true counts.
@@ -164,10 +167,7 @@ struct ReorderGlobals : public Pass {
     //
     // We put this sort first because if they all end up with equal size we
     // prefer it (as it avoids pointless changes).
-    NameCountMap zeroes;
-    for (auto& global : globals) {
-      zeroes[global->name] = 0;
-    }
+    IndexCountMap zeroes(globals.size());
     addOption(zeroes);
 
     // A pure greedy sort uses the counts as we generated them, that is, at each
@@ -184,13 +184,13 @@ struct ReorderGlobals : public Pass {
     // current global). The specific exponential factor used here was found best
     // on J2CL output.
     double const EXPONENTIAL_FACTOR = 0.095;
-    NameCountMap sumCounts, exponentialCounts;
+    IndexCountMap sumCounts(globals.size()), exponentialCounts(globals.size());
     // We add items to |sumCounts, exponentialCounts| after they are computed,
     // so anything not there must be pushed to a stack before we can handle it.
-    std::vector<Name> stack;
+    std::vector<Index> stack;
     // Do a simple recursion to compute children before parents.
-    for (auto& global : globals) {
-      stack.push_back(global->name);
+    for (Index i = 0; i < globals.size(); i++) {
+      stack.push_back(i);
     }
     while (!stack.empty()) {
       auto global = stack.back();
@@ -222,10 +222,10 @@ struct ReorderGlobals : public Pass {
       }
     }
     addOption(sumCounts);
-    addOption(exponentialCounts); // this seems the best. should we only run it, for speed? disable others and see if any test fails. Also use indexes and not maps for speeed
+    addOption(exponentialCounts); // this seems the best. should we only run it, for speed? disable others and see if any test fails. Also use indices and not maps for speeed
 
     // Pick the best.
-    NameIndexMap* best = nullptr;
+    IndexIndexMap* best = nullptr;
     double bestSize;
     for (auto& [sort, size] : options) {
       if (!best || size < bestSize) {
@@ -234,18 +234,19 @@ struct ReorderGlobals : public Pass {
       }
     }
 
-    // Apply the indexes we computed.
+    // Apply the indices we computed.
     std::sort(
       globals.begin(),
       globals.end(),
       [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
-        return (*best)[a->name] < (*best)[b->name];
+        return (*best)[originalindices[a->name]] <
+               (*best)[originalindices[b->name]];
       });
 
     module->updateMaps();
   }
 
-  NameIndexMap doSort(const NameCountMap& counts,
+  IndexIndexMap doSort(const IndexCountMap& counts,
                       const Dependencies& originalDeps,
                       Module* module) {
     auto& globals = module->globals;
@@ -283,19 +284,19 @@ struct ReorderGlobals : public Pass {
     // instead that could unlock $c which depends on $b, and $c may have a much
     // higher use count than $a. This algorithm often does well, however, and it
     // runs in linear time in the size of the input.
-    std::vector<Name> availableHeap;
+    std::vector<Index> availableHeap;
 
     // Comparison function. This is used in a heap, where "highest" means
     // "popped first", so if we compare the counts 10 and 20 we will return 1,
     // which means 10 appears first in a simple sort, as 20 is higher. Later, 20
     // will be popped earlier as it is higher and then it will appear earlier in
     // the actual final sort.
-    auto cmp = [&](Name a, Name b) {
+    auto cmp = [&](Index a, Index b) {
       // Imports always go first. The binary writer takes care of this itself
       // anyhow, but it is better to do it here in the IR so we can actually
       // see what the final layout will be.
-      auto aImported = module->getGlobal(a)->imported();
-      auto bImported = module->getGlobal(b)->imported();
+      auto aImported = globals[a]->imported();
+      auto bImported = globals[b]->imported();
       if (!aImported && bImported) {
         return true;
       }
@@ -304,8 +305,8 @@ struct ReorderGlobals : public Pass {
       }
 
       // Sort by the counts.
-      auto aCount = counts.at(a);
-      auto bCount = counts.at(b);
+      auto aCount = counts[a];
+      auto bCount = counts[b];
       if (aCount < bCount) {
         return true;
       }
@@ -313,30 +314,32 @@ struct ReorderGlobals : public Pass {
         return false;
       }
 
-      // Break ties using the original order.
-      return originalIndexes[a] > originalIndexes[b];
+      // Break ties using the original order, which means just using the
+      // indices we have.
+      return a > b;
     };
 
     // Push an item that just became available to the available heap.
-    auto push = [&](Name global) {
+    auto push = [&](Index global) {
       availableHeap.push_back(global);
       std::push_heap(availableHeap.begin(), availableHeap.end(), cmp);
     };
 
     // The initially available globals are those with no dependencies.
-    for (auto& global : globals) {
-      if (deps.dependsOn[global->name].empty()) {
-        push(global->name);
+    for (Index i = 0; i < globals.size(); i++) {
+      if (deps.dependsOn[i].empty()) {
+        push(i);
       }
     }
 
     // Pop off the heap: Emit the global and it its final, sorted index. Keep
     // doing that until we finish processing all the globals.
-    NameIndexMap sortedIndexes;
+    IndexIndexMap sortedindices(globals.size());
+    Index numSortedindices = 0;
     while (!availableHeap.empty()) {
       std::pop_heap(availableHeap.begin(), availableHeap.end(), cmp);
       auto global = availableHeap.back();
-      sortedIndexes[global] = sortedIndexes.size();
+      sortedindices[global] = numSortedindices++;
       availableHeap.pop_back();
 
       // Each time we pop we emit the global, which means anything that only
@@ -352,35 +355,38 @@ struct ReorderGlobals : public Pass {
 
     // All globals must have been handled. Cycles would prevent this, but they
     // cannot exist in valid IR.
-    assert(sortedIndexes.size() == globals.size());
+    assert(numSortedindices == globals.size());
 
-    return sortedIndexes;
+    return sortedindices;
   }
 
   // Given an indexing of the globals (a map from their names to the index of
   // each one, and the counts of how many times each appears, estimate the size
   // of relevant parts of the wasm binary (that is, of LEBs in global.gets).
-  double computeSize(NameIndexMap& indexes, NameCountMap& counts) {
-    // Go from |indexes| to a vector of the names in order.
-    std::vector<Name> globals;
-    globals.resize(indexes.size());
-    for (auto& [global, index] : indexes) {
-      // Each global has a unique index, and all are in bounds [0, N).
-      assert(index < globals.size());
-      assert(globals[index].isNull());
-      globals[index] = global;
+  double computeSize(IndexIndexMap& indices, IndexCountMap& counts) {
+    // |indices| maps each old index to its new position in the sort. We need
+    // the reverse map here, which at index 0 has the old index of the global
+    // that will be first, and so forth.
+    IndexIndexMap actualOrder(indices.size());
+    for (Index i = 0; i < indices.size(); i++) {
+      // Each global has a unique index, so we only replace 0's here, and they
+      // must be in bounds.
+      assert(actualOrder[index] == 0);
+      assert(indices[i] < indices.size());
+
+      actualOrder[indices[i]] = i;
     }
 
     if (always) {
       // In this mode we gradually increase the cost of later globals, in an
       // unrealistic manner.
       double total = 0;
-      for (Index i = 0; i < globals.size(); i++) {
+      for (Index i = 0; i < actualOrder.size(); i++) {
         // Multiple the count for this global by a smoothed LEB factor, which
         // starts at 1, for 1 byte, at 0, and then increases linearly with i,
         // so that after 128 globals we reach 2 (which is the true index at
         // which the LEB size normally jumps from 1 to 2), and so forth.
-        total += counts[globals[i]] * (1.0 + (i / 128.0));
+        total += counts[actualOrder[i]] * (1.0 + (i / 128.0));
       }
       return total;
     }
@@ -392,7 +398,7 @@ struct ReorderGlobals : public Pass {
     // forth.
     size_t sizeInBits = 0;
     size_t nextSizeIncrease = 0;
-    for (Index i = 0; i < globals.size(); i++) {
+    for (Index i = 0; i < actualOrder.size(); i++) {
       if (i == nextSizeIncrease) {
         sizeInBits++;
         // At the current size we have 7 * sizeInBits bits to use.  For example,
@@ -401,7 +407,7 @@ struct ReorderGlobals : public Pass {
         // larger LEB.
         nextSizeIncrease = 1 << (7 * sizeInBits);
       }
-      total += counts[globals[i]] * sizeInBits;
+      total += counts[actualOrder[i]] * sizeInBits;
     }
     return total;
   }
