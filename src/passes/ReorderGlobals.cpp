@@ -181,7 +181,9 @@ struct ReorderGlobals : public Pass {
     // where we add the children, and an exponential dropoff where we add only
     // half the children's counts recursively (which approximates the fact that
     // we focus less on the children's counts, which may depend on more than the
-    // current global).
+    // current global). The specific exponential factor used here was found best
+    // on J2CL output.
+    double const EXPONENTIAL_FACTOR = 0.095;
     NameCountMap sumCounts, exponentialCounts;
     // We add items to |sumCounts, exponentialCounts| after they are computed,
     // so anything not there must be pushed to a stack before we can handle it.
@@ -216,11 +218,11 @@ struct ReorderGlobals : public Pass {
       sumCounts[global] = exponentialCounts[global] = counts[global];
       for (auto dep : deps.dependedUpon[global]) {
         sumCounts[global] += sumCounts[dep];
-        exponentialCounts[global] += 0.5 * exponentialCounts[dep];
+        exponentialCounts[global] += EXPONENTIAL_FACTOR * exponentialCounts[dep];
       }
     }
     addOption(sumCounts);
-    addOption(exponentialCounts);
+    addOption(exponentialCounts); // this seems the best. should we only run it, for speed? disable others and see if any test fails. Also use indexes and not maps for speeed
 
     // Pick the best.
     NameIndexMap* best = nullptr;
