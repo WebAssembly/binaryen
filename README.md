@@ -147,6 +147,16 @@ There are a few differences between Binaryen IR and the WebAssembly language:
       much about this when writing Binaryen passes. For more details see the
       `requiresNonNullableLocalFixups()` hook in `pass.h` and the
       `LocalStructuralDominance` class.
+  * `br_if` output types are more refined in Binaryen IR: they have the type of
+    the value, when a value flows in. In the wasm spec the type is that of the
+    branch target, which may be less refined. Using the more refined type here
+    ensures that we optimize in the best way possible, using all the type
+    information, but it does mean that some roundtripping operations may look a
+    little different. In particular, when we emit a `br_if` whose type is more
+    refined in Binaryen IR then we emit a cast right after it, so that the
+    output has the right type in the wasm spec. That may cause a few bytes of
+    extra size in rare cases (we avoid this overhead in the common case where
+    the `br_if` value is unused).
  * Strings
    * Binaryen allows string views (`stringview_wtf16` etc.) to be cast using
      `ref.cast`. This simplifies the IR, as it allows `ref.cast` to always be
@@ -246,7 +256,7 @@ This repository contains code that builds the following tools in `bin/` (see the
    corresponding imports to exports as it does so. Like a bundler for JS, but
    for wasm.
  * **`wasm-metadce`**: A tool to remove parts of Wasm files in a flexible way
- * that depends on how the module is used.
+   that depends on how the module is used.
  * **`binaryen.js`**: A standalone JavaScript library that exposes Binaryen methods for [creating and optimizing Wasm modules](https://github.com/WebAssembly/binaryen/blob/main/test/binaryen.js/hello-world.js). For builds, see [binaryen.js on npm](https://www.npmjs.com/package/binaryen) (or download it directly from [GitHub](https://raw.githubusercontent.com/AssemblyScript/binaryen.js/master/index.js) or [unpkg](https://unpkg.com/binaryen@latest/index.js)). Minimal requirements: Node.js v15.8 or Chrome v75 or Firefox v78.
 
 All of the Binaryen tools are deterministic, that is, given the same inputs you should always get the same outputs. (If you see a case that behaves otherwise, please file an issue.)
@@ -923,6 +933,35 @@ environment. That will print this for the above `add`:
 
 (full print mode also adds a `[type]` for each expression, right before the
 debug location).
+
+The debug information is also propagated from an expression to its
+next sibling:
+```wat
+;;@ src.cpp:100:33
+(local.set $x
+ (i32.const 0)
+)
+(local.set $y ;; This receives an annotation of src.cpp:100:33
+ (i32.const 0)
+)
+```
+
+You can prevent the propagation of debug info by explicitly mentioning
+that an expression has not debug info using the annotation `;;@` with
+nothing else:
+```wat
+;;@ src.cpp:100:33
+(local.set $x
+ ;;@
+ (i32.const 0) ;; This does not receive any annotation
+)
+;;@
+(local.set $y ;; This does not receive any annotation
+ (i32.const 7)
+)
+```
+This stops the propagatation to children and siblings as well. So,
+expression `(i32.const 7)` does not have any debug info either.
 
 There is no shorthand in the binary format. That is, roundtripping (writing and
 reading) through a binary + source map should not change which expressions have

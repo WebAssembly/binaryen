@@ -329,9 +329,6 @@ public:
     array,
     exn,
     string,
-    stringview_wtf8,
-    stringview_wtf16,
-    stringview_iter,
     none,
     noext,
     nofunc,
@@ -637,6 +634,8 @@ struct TypeBuilder {
     ForwardSupertypeReference,
     // A child of the type is an invalid forward reference.
     ForwardChildReference,
+    // A continuation reference that does not refer to a function type.
+    InvalidFuncType,
   };
 
   struct Error {

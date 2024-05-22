@@ -106,6 +106,8 @@ private:
 
   std::unordered_map<Type, std::vector<Name>> globalsByType;
   std::unordered_map<Type, std::vector<Name>> mutableGlobalsByType;
+  std::unordered_map<Type, std::vector<Name>> immutableGlobalsByType;
+  std::unordered_map<Type, std::vector<Name>> importedImmutableGlobalsByType;
 
   std::vector<Type> loggableTypes;
 

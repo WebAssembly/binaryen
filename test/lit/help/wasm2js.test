@@ -452,8 +452,14 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --symbolmap                                   (alias for print-function-map)
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --translate-to-new-eh                         translate old EH instructions to
-;; CHECK-NEXT:                                                 new ones
+;; CHECK-NEXT:   --table64-lowering                            lower 64-bit tables 32-bit ones
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --translate-to-exnref                         translate old Phase 3 EH
+;; CHECK-NEXT:                                                 instructions to new ones with
+;; CHECK-NEXT:                                                 exnref
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --translate-to-new-eh                         deprecated; same as
+;; CHECK-NEXT:                                                 translate-to-exnref
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --trap-mode-clamp                             replace trapping operations with
 ;; CHECK-NEXT:                                                 clamping semantics

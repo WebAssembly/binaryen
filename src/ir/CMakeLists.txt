@@ -3,6 +3,7 @@ set(ir_SOURCES
   ExpressionAnalyzer.cpp
   ExpressionManipulator.cpp
   drop.cpp
+  effects.cpp
   eh-utils.cpp
   export-utils.cpp
   intrinsics.cpp

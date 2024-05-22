@@ -149,9 +149,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
         case HeapType::exn:
           WASM_UNREACHABLE("invalid type");
         case HeapType::string:
-        case HeapType::stringview_wtf8:
-        case HeapType::stringview_wtf16:
-        case HeapType::stringview_iter:
           WASM_UNREACHABLE("TODO: string literals");
       }
     }
@@ -470,6 +467,22 @@ bool Literal::isNaN() {
   return false;
 }
 
+bool Literal::isCanonicalNaN() {
+  if (!isNaN()) {
+    return false;
+  }
+  return (type == Type::f32 && NaNPayload(getf32()) == (1u << 23) - 1) ||
+         (type == Type::f64 && NaNPayload(getf64()) == (1ull << 52) - 1);
+}
+
+bool Literal::isArithmeticNaN() {
+  if (!isNaN()) {
+    return false;
+  }
+  return (type == Type::f32 && NaNPayload(getf32()) > (1u << 23) - 1) ||
+         (type == Type::f64 && NaNPayload(getf64()) > (1ull << 52) - 1);
+}
+
 uint32_t Literal::NaNPayload(float f) {
   assert(std::isnan(f) && "expected a NaN");
   // SEEEEEEE EFFFFFFF FFFFFFFF FFFFFFFF
@@ -662,10 +675,6 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
           }
           break;
         }
-        case HeapType::stringview_wtf8:
-        case HeapType::stringview_wtf16:
-        case HeapType::stringview_iter:
-          WASM_UNREACHABLE("TODO: string literals");
       }
     } else if (heapType.isSignature()) {
       o << "funcref(" << literal.getFunc() << ")";
@@ -2684,9 +2693,6 @@ Literal Literal::externalize() const {
                        HeapType::ext);
       }
       case HeapType::string:
-      case HeapType::stringview_wtf8:
-      case HeapType::stringview_wtf16:
-      case HeapType::stringview_iter:
         WASM_UNREACHABLE("TODO: string literals");
       default:
         WASM_UNREACHABLE("unexpected type");

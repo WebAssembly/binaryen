@@ -789,15 +789,11 @@ void Drop::finalize() {
   }
 }
 
-void MemorySize::make64() { type = ptrType = Type::i64; }
-void MemorySize::finalize() { type = ptrType; }
+void MemorySize::finalize() {}
 
-void MemoryGrow::make64() { type = ptrType = Type::i64; }
 void MemoryGrow::finalize() {
   if (delta->type == Type::unreachable) {
     type = Type::unreachable;
-  } else {
-    type = ptrType;
   }
 }
 
@@ -855,8 +851,6 @@ void TableSize::finalize() {
 void TableGrow::finalize() {
   if (delta->type == Type::unreachable || value->type == Type::unreachable) {
     type = Type::unreachable;
-  } else {
-    type = Type::i32;
   }
 }
 
@@ -1248,13 +1242,12 @@ void RefAs::finalize() {
 }
 
 void StringNew::finalize() {
-  if (ptr->type == Type::unreachable ||
-      (length && length->type == Type::unreachable) ||
+  if (ref->type == Type::unreachable ||
       (start && start->type == Type::unreachable) ||
       (end && end->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
-    type = Type(HeapType::string, try_ ? Nullable : NonNullable);
+    type = Type(HeapType::string, NonNullable);
   }
 }
 
@@ -1269,8 +1262,8 @@ void StringMeasure::finalize() {
 }
 
 void StringEncode::finalize() {
-  if (ref->type == Type::unreachable || ptr->type == Type::unreachable ||
-      (start && start->type == Type::unreachable)) {
+  if (str->type == Type::unreachable || array->type == Type::unreachable ||
+      start->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
     type = Type::i32;
@@ -1293,53 +1286,8 @@ void StringEq::finalize() {
   }
 }
 
-void StringAs::finalize() {
-  if (ref->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    switch (op) {
-      case StringAsWTF8:
-        type = Type(HeapType::stringview_wtf8, NonNullable);
-        break;
-      case StringAsWTF16:
-        type = Type(HeapType::stringview_wtf16, NonNullable);
-        break;
-      case StringAsIter:
-        type = Type(HeapType::stringview_iter, NonNullable);
-        break;
-      default:
-        WASM_UNREACHABLE("bad string.as");
-    }
-  }
-}
-
-void StringWTF8Advance::finalize() {
-  if (ref->type == Type::unreachable || pos->type == Type::unreachable ||
-      bytes->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type::i32;
-  }
-}
-
 void StringWTF16Get::finalize() {
   if (ref->type == Type::unreachable || pos->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type::i32;
-  }
-}
-
-void StringIterNext::finalize() {
-  if (ref->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type::i32;
-  }
-}
-
-void StringIterMove::finalize() {
-  if (ref->type == Type::unreachable || num->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
     type = Type::i32;
@@ -1349,14 +1297,6 @@ void StringIterMove::finalize() {
 void StringSliceWTF::finalize() {
   if (ref->type == Type::unreachable || start->type == Type::unreachable ||
       end->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type(HeapType::string, NonNullable);
-  }
-}
-
-void StringSliceIter::finalize() {
-  if (ref->type == Type::unreachable || num->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
     type = Type(HeapType::string, NonNullable);

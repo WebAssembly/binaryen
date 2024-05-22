@@ -269,12 +269,8 @@ struct StringLowering : public StringGathering {
   void updateTypes(Module* module) {
     TypeMapper::TypeUpdates updates;
 
-    // There is no difference between strings and views with imported strings:
-    // they are all just JS strings, so they all turn into externref.
+    // Strings turn into externref.
     updates[HeapType::string] = HeapType::ext;
-    updates[HeapType::stringview_wtf8] = HeapType::ext;
-    updates[HeapType::stringview_wtf16] = HeapType::ext;
-    updates[HeapType::stringview_iter] = HeapType::ext;
 
     // The module may have its own array16 type inside a big rec group, but
     // imported strings expects that type in its own rec group as part of the
@@ -379,12 +375,12 @@ struct StringLowering : public StringGathering {
         switch (curr->op) {
           case StringNewWTF16Array:
             replaceCurrent(builder.makeCall(lowering.fromCharCodeArrayImport,
-                                            {curr->ptr, curr->start, curr->end},
+                                            {curr->ref, curr->start, curr->end},
                                             lowering.nnExt));
             return;
           case StringNewFromCodePoint:
             replaceCurrent(builder.makeCall(
-              lowering.fromCodePointImport, {curr->ptr}, lowering.nnExt));
+              lowering.fromCodePointImport, {curr->ref}, lowering.nnExt));
             return;
           default:
             WASM_UNREACHABLE("TODO: all of string.new*");
@@ -397,25 +393,14 @@ struct StringLowering : public StringGathering {
           lowering.concatImport, {curr->left, curr->right}, lowering.nnExt));
       }
 
-      void visitStringAs(StringAs* curr) {
-        // There is no difference between strings and views with imported
-        // strings: they are all just JS strings, so no conversion is needed.
-        // However, we must keep the same nullability: the output of StringAs
-        // must be non-nullable.
-        auto* ref = curr->ref;
-        if (ref->type.isNullable()) {
-          ref = Builder(*getModule()).makeRefAs(RefAsNonNull, ref);
-        }
-        replaceCurrent(ref);
-      }
-
       void visitStringEncode(StringEncode* curr) {
         Builder builder(*getModule());
         switch (curr->op) {
           case StringEncodeWTF16Array:
-            replaceCurrent(builder.makeCall(lowering.intoCharCodeArrayImport,
-                                            {curr->ref, curr->ptr, curr->start},
-                                            Type::i32));
+            replaceCurrent(
+              builder.makeCall(lowering.intoCharCodeArrayImport,
+                               {curr->str, curr->array, curr->start},
+                               Type::i32));
             return;
           default:
             WASM_UNREACHABLE("TODO: all of string.encode*");
@@ -440,14 +425,8 @@ struct StringLowering : public StringGathering {
 
       void visitStringMeasure(StringMeasure* curr) {
         Builder builder(*getModule());
-        switch (curr->op) {
-          case StringMeasureWTF16View:
-            replaceCurrent(
-              builder.makeCall(lowering.lengthImport, {curr->ref}, Type::i32));
-            return;
-          default:
-            WASM_UNREACHABLE("invalid string.measure*");
-        }
+        replaceCurrent(
+          builder.makeCall(lowering.lengthImport, {curr->ref}, Type::i32));
       }
 
       void visitStringWTF16Get(StringWTF16Get* curr) {
@@ -458,15 +437,9 @@ struct StringLowering : public StringGathering {
 
       void visitStringSliceWTF(StringSliceWTF* curr) {
         Builder builder(*getModule());
-        switch (curr->op) {
-          case StringSliceWTF16:
-            replaceCurrent(builder.makeCall(lowering.substringImport,
-                                            {curr->ref, curr->start, curr->end},
-                                            lowering.nnExt));
-            return;
-          default:
-            WASM_UNREACHABLE("TODO: all string.slice*");
-        }
+        replaceCurrent(builder.makeCall(lowering.substringImport,
+                                        {curr->ref, curr->start, curr->end},
+                                        lowering.nnExt));
       }
     };
 

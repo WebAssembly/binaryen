@@ -365,7 +365,7 @@ void WasmBinaryWriter::writeImports() {
                          table->max,
                          table->hasMax(),
                          /*shared=*/false,
-                         /*is64*/ false);
+                         table->is64());
   });
   finishSection(start);
 }
@@ -572,8 +572,23 @@ void WasmBinaryWriter::writeGlobals() {
       o << U32LEB(global->mutable_);
       if (global->type.size() == 1) {
         writeExpression(global->init);
+      } else if (auto* make = global->init->dynCast<TupleMake>()) {
+        // Emit the proper lane for this global.
+        writeExpression(make->operands[i]);
       } else {
-        writeExpression(global->init->cast<TupleMake>()->operands[i]);
+        // For now tuple globals must contain tuple.make. We could perhaps
+        // support more operations, like global.get, but the code would need to
+        // look something like this:
+        //
+        //   auto parentIndex = getGlobalIndex(get->name);
+        //   o << int8_t(BinaryConsts::GlobalGet) << U32LEB(parentIndex + i);
+        //
+        // That is, we must emit the instruction here, and not defer to
+        // writeExpression, as writeExpression writes an entire expression at a
+        // time (and not just one of the lanes). As emitting an instruction here
+        // is less clean, and there is no important use case for global.get of
+        // one tuple global to another, we disallow this.
+        WASM_UNREACHABLE("unsupported tuple global operation");
       }
       o << int8_t(BinaryConsts::End);
       ++i;
@@ -1411,9 +1426,9 @@ void WasmBinaryWriter::writeDebugLocation(Expression* curr, Function* func) {
   if (sourceMap) {
     auto& debugLocations = func->debugLocations;
     auto iter = debugLocations.find(curr);
-    if (iter != debugLocations.end()) {
+    if (iter != debugLocations.end() && iter->second) {
       // There is debug information here, write it out.
-      writeDebugLocation(iter->second);
+      writeDebugLocation(*(iter->second));
     } else {
       // This expression has no debug location.
       writeNoDebugLocation();
@@ -1547,15 +1562,6 @@ void WasmBinaryWriter::writeType(Type type) {
         case HeapType::string:
           o << S32LEB(BinaryConsts::EncodedType::stringref);
           return;
-        case HeapType::stringview_wtf8:
-          o << S32LEB(BinaryConsts::EncodedType::stringview_wtf8);
-          return;
-        case HeapType::stringview_wtf16:
-          o << S32LEB(BinaryConsts::EncodedType::stringview_wtf16);
-          return;
-        case HeapType::stringview_iter:
-          o << S32LEB(BinaryConsts::EncodedType::stringview_iter);
-          return;
         case HeapType::none:
           o << S32LEB(BinaryConsts::EncodedType::nullref);
           return;
@@ -1667,15 +1673,6 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
       break;
     case HeapType::string:
       ret = BinaryConsts::EncodedHeapType::string;
-      break;
-    case HeapType::stringview_wtf8:
-      ret = BinaryConsts::EncodedHeapType::stringview_wtf8_heap;
-      break;
-    case HeapType::stringview_wtf16:
-      ret = BinaryConsts::EncodedHeapType::stringview_wtf16_heap;
-      break;
-    case HeapType::stringview_iter:
-      ret = BinaryConsts::EncodedHeapType::stringview_iter_heap;
       break;
     case HeapType::none:
       ret = BinaryConsts::EncodedHeapType::none;
@@ -2051,15 +2048,6 @@ bool WasmBinaryReader::getBasicType(int32_t code, Type& out) {
     case BinaryConsts::EncodedType::stringref:
       out = Type(HeapType::string, Nullable);
       return true;
-    case BinaryConsts::EncodedType::stringview_wtf8:
-      out = Type(HeapType::stringview_wtf8, Nullable);
-      return true;
-    case BinaryConsts::EncodedType::stringview_wtf16:
-      out = Type(HeapType::stringview_wtf16, Nullable);
-      return true;
-    case BinaryConsts::EncodedType::stringview_iter:
-      out = Type(HeapType::stringview_iter, Nullable);
-      return true;
     case BinaryConsts::EncodedType::nullref:
       out = Type(HeapType::none, Nullable);
       return true;
@@ -2111,15 +2099,6 @@ bool WasmBinaryReader::getBasicHeapType(int64_t code, HeapType& out) {
       return true;
     case BinaryConsts::EncodedHeapType::string:
       out = HeapType::string;
-      return true;
-    case BinaryConsts::EncodedHeapType::stringview_wtf8_heap:
-      out = HeapType::stringview_wtf8;
-      return true;
-    case BinaryConsts::EncodedHeapType::stringview_wtf16_heap:
-      out = HeapType::stringview_wtf16;
-      return true;
-    case BinaryConsts::EncodedHeapType::stringview_iter_heap:
-      out = HeapType::stringview_iter;
       return true;
     case BinaryConsts::EncodedHeapType::none:
       out = HeapType::none;
@@ -4277,6 +4256,9 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       if (maybeVisitStringNew(curr, opcode)) {
         break;
       }
+      if (maybeVisitStringAsWTF16(curr, opcode)) {
+        break;
+      }
       if (maybeVisitStringConst(curr, opcode)) {
         break;
       }
@@ -4292,25 +4274,10 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       if (maybeVisitStringEq(curr, opcode)) {
         break;
       }
-      if (maybeVisitStringAs(curr, opcode)) {
-        break;
-      }
-      if (maybeVisitStringWTF8Advance(curr, opcode)) {
-        break;
-      }
       if (maybeVisitStringWTF16Get(curr, opcode)) {
         break;
       }
-      if (maybeVisitStringIterNext(curr, opcode)) {
-        break;
-      }
-      if (maybeVisitStringIterMove(curr, opcode)) {
-        break;
-      }
       if (maybeVisitStringSliceWTF(curr, opcode)) {
-        break;
-      }
-      if (maybeVisitStringSliceIter(curr, opcode)) {
         break;
       }
       if (opcode == BinaryConsts::ExternInternalize ||
@@ -6882,7 +6849,7 @@ void WasmBinaryReader::visitMemorySize(MemorySize* curr) {
   BYN_TRACE("zz node: MemorySize\n");
   Index index = getU32LEB();
   if (getMemory(index)->is64()) {
-    curr->make64();
+    curr->type = Type::i64;
   }
   curr->finalize();
   memoryRefs[index].push_back(&curr->memory);
@@ -6893,7 +6860,7 @@ void WasmBinaryReader::visitMemoryGrow(MemoryGrow* curr) {
   curr->delta = popNonVoidExpression();
   Index index = getU32LEB();
   if (getMemory(index)->is64()) {
-    curr->make64();
+    curr->type = Type::i64;
   }
   memoryRefs[index].push_back(&curr->memory);
 }
@@ -7549,77 +7516,34 @@ bool WasmBinaryReader::maybeVisitArrayInit(Expression*& out, uint32_t code) {
 
 bool WasmBinaryReader::maybeVisitStringNew(Expression*& out, uint32_t code) {
   StringNewOp op;
-  Expression* length = nullptr;
-  Expression* start = nullptr;
-  Expression* end = nullptr;
-  bool try_ = false;
-  if (code == BinaryConsts::StringNewUTF8) {
-    // FIXME: the memory index should be an LEB like all other places
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringNewUTF8;
-    length = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewLossyUTF8) {
-    // FIXME: the memory index should be an LEB like all other places
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringNewLossyUTF8;
-    length = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewWTF8) {
-    // FIXME: the memory index should be an LEB like all other places
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringNewWTF8;
-    length = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewUTF8Try) {
-    // FIXME: the memory index should be an LEB like all other places
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringNewUTF8;
-    try_ = true;
-    length = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewWTF16) {
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringNewWTF16;
-    length = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewUTF8Array) {
-    op = StringNewUTF8Array;
-    end = popNonVoidExpression();
-    start = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewLossyUTF8Array) {
+  if (code == BinaryConsts::StringNewLossyUTF8Array) {
     op = StringNewLossyUTF8Array;
-    end = popNonVoidExpression();
-    start = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewWTF8Array) {
-    op = StringNewWTF8Array;
-    end = popNonVoidExpression();
-    start = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringNewUTF8ArrayTry) {
-    op = StringNewUTF8Array;
-    try_ = true;
-    end = popNonVoidExpression();
-    start = popNonVoidExpression();
   } else if (code == BinaryConsts::StringNewWTF16Array) {
     op = StringNewWTF16Array;
-    end = popNonVoidExpression();
-    start = popNonVoidExpression();
   } else if (code == BinaryConsts::StringFromCodePoint) {
-    op = StringNewFromCodePoint;
+    out = Builder(wasm).makeStringNew(StringNewFromCodePoint,
+                                      popNonVoidExpression());
+    return true;
   } else {
     return false;
   }
-  auto* ptr = popNonVoidExpression();
-  if (length) {
-    out = Builder(wasm).makeStringNew(op, ptr, length, try_);
-  } else {
-    out = Builder(wasm).makeStringNew(op, ptr, start, end, try_);
+  Expression* end = popNonVoidExpression();
+  Expression* start = popNonVoidExpression();
+  auto* ref = popNonVoidExpression();
+  out = Builder(wasm).makeStringNew(op, ref, start, end);
+  return true;
+}
+
+bool WasmBinaryReader::maybeVisitStringAsWTF16(Expression*& out,
+                                               uint32_t code) {
+  if (code != BinaryConsts::StringAsWTF16) {
+    return false;
   }
+  // Accept but ignore `string.as_wtf16`, parsing the next expression in its
+  // place. We do not support this instruction in the IR, but we need to accept
+  // it in the parser because it is emitted as part of the instruction sequence
+  // for `stringview_wtf16.get_codeunit` and `stringview_wtf16.slice`.
+  readExpression(out);
   return true;
 }
 
@@ -7640,16 +7564,8 @@ bool WasmBinaryReader::maybeVisitStringMeasure(Expression*& out,
   StringMeasureOp op;
   if (code == BinaryConsts::StringMeasureUTF8) {
     op = StringMeasureUTF8;
-  } else if (code == BinaryConsts::StringMeasureWTF8) {
-    op = StringMeasureWTF8;
   } else if (code == BinaryConsts::StringMeasureWTF16) {
     op = StringMeasureWTF16;
-  } else if (code == BinaryConsts::StringIsUSV) {
-    op = StringMeasureIsUSV;
-  } else if (code == BinaryConsts::StringViewWTF16Length) {
-    op = StringMeasureWTF16View;
-  } else if (code == BinaryConsts::StringHash) {
-    op = StringMeasureHash;
   } else {
     return false;
   }
@@ -7660,43 +7576,14 @@ bool WasmBinaryReader::maybeVisitStringMeasure(Expression*& out,
 
 bool WasmBinaryReader::maybeVisitStringEncode(Expression*& out, uint32_t code) {
   StringEncodeOp op;
-  Expression* start = nullptr;
-  // TODO: share this code with string.measure?
-  if (code == BinaryConsts::StringEncodeUTF8) {
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringEncodeUTF8;
-  } else if (code == BinaryConsts::StringEncodeLossyUTF8) {
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringEncodeLossyUTF8;
-  } else if (code == BinaryConsts::StringEncodeWTF8) {
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringEncodeWTF8;
-  } else if (code == BinaryConsts::StringEncodeWTF16) {
-    if (getInt8() != 0) {
-      throwError("Unexpected nonzero memory index");
-    }
-    op = StringEncodeWTF16;
-  } else if (code == BinaryConsts::StringEncodeUTF8Array) {
-    op = StringEncodeUTF8Array;
-    start = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringEncodeLossyUTF8Array) {
+  if (code == BinaryConsts::StringEncodeLossyUTF8Array) {
     op = StringEncodeLossyUTF8Array;
-    start = popNonVoidExpression();
-  } else if (code == BinaryConsts::StringEncodeWTF8Array) {
-    op = StringEncodeWTF8Array;
-    start = popNonVoidExpression();
   } else if (code == BinaryConsts::StringEncodeWTF16Array) {
     op = StringEncodeWTF16Array;
-    start = popNonVoidExpression();
   } else {
     return false;
   }
+  auto* start = popNonVoidExpression();
   auto* ptr = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
   out = Builder(wasm).makeStringEncode(op, ref, ptr, start);
@@ -7728,34 +7615,6 @@ bool WasmBinaryReader::maybeVisitStringEq(Expression*& out, uint32_t code) {
   return true;
 }
 
-bool WasmBinaryReader::maybeVisitStringAs(Expression*& out, uint32_t code) {
-  StringAsOp op;
-  if (code == BinaryConsts::StringAsWTF8) {
-    op = StringAsWTF8;
-  } else if (code == BinaryConsts::StringAsWTF16) {
-    op = StringAsWTF16;
-  } else if (code == BinaryConsts::StringAsIter) {
-    op = StringAsIter;
-  } else {
-    return false;
-  }
-  auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringAs(op, ref);
-  return true;
-}
-
-bool WasmBinaryReader::maybeVisitStringWTF8Advance(Expression*& out,
-                                                   uint32_t code) {
-  if (code != BinaryConsts::StringViewWTF8Advance) {
-    return false;
-  }
-  auto* bytes = popNonVoidExpression();
-  auto* pos = popNonVoidExpression();
-  auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringWTF8Advance(ref, pos, bytes);
-  return true;
-}
-
 bool WasmBinaryReader::maybeVisitStringWTF16Get(Expression*& out,
                                                 uint32_t code) {
   if (code != BinaryConsts::StringViewWTF16GetCodePoint) {
@@ -7767,57 +7626,15 @@ bool WasmBinaryReader::maybeVisitStringWTF16Get(Expression*& out,
   return true;
 }
 
-bool WasmBinaryReader::maybeVisitStringIterNext(Expression*& out,
-                                                uint32_t code) {
-  if (code != BinaryConsts::StringViewIterNext) {
-    return false;
-  }
-  auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringIterNext(ref);
-  return true;
-}
-
-bool WasmBinaryReader::maybeVisitStringIterMove(Expression*& out,
-                                                uint32_t code) {
-  StringIterMoveOp op;
-  if (code == BinaryConsts::StringViewIterAdvance) {
-    op = StringIterMoveAdvance;
-  } else if (code == BinaryConsts::StringViewIterRewind) {
-    op = StringIterMoveRewind;
-  } else {
-    return false;
-  }
-  auto* num = popNonVoidExpression();
-  auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringIterMove(op, ref, num);
-  return true;
-}
-
 bool WasmBinaryReader::maybeVisitStringSliceWTF(Expression*& out,
                                                 uint32_t code) {
-  StringSliceWTFOp op;
-  if (code == BinaryConsts::StringViewWTF8Slice) {
-    op = StringSliceWTF8;
-  } else if (code == BinaryConsts::StringViewWTF16Slice) {
-    op = StringSliceWTF16;
-  } else {
+  if (code != BinaryConsts::StringViewWTF16Slice) {
     return false;
   }
   auto* end = popNonVoidExpression();
   auto* start = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringSliceWTF(op, ref, start, end);
-  return true;
-}
-
-bool WasmBinaryReader::maybeVisitStringSliceIter(Expression*& out,
-                                                 uint32_t code) {
-  if (code != BinaryConsts::StringViewIterSlice) {
-    return false;
-  }
-  auto* num = popNonVoidExpression();
-  auto* ref = popNonVoidExpression();
-  out = Builder(wasm).makeStringSliceIter(ref, num);
+  out = Builder(wasm).makeStringSliceWTF(ref, start, end);
   return true;
 }
 

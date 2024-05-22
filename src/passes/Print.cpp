@@ -117,7 +117,12 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
 
   Module* currModule = nullptr;
   Function* currFunction = nullptr;
-  Function::DebugLocation lastPrintedLocation;
+  // Keep track of the last printed debug location to avoid printing
+  // repeated debug locations for children. nullopt means that we have
+  // not yet printed any debug location, or that we last printed an
+  // annotation indicating that the expression had no associated
+  // debug location.
+  std::optional<Function::DebugLocation> lastPrintedLocation;
   bool debugInfo;
 
   // Used to print delegate's depth argument when it throws to the caller
@@ -247,7 +252,8 @@ struct PrintSExpression : public UnifiedExpressionVisitor<PrintSExpression> {
     return o;
   }
 
-  void printDebugLocation(const Function::DebugLocation& location);
+  void
+  printDebugLocation(const std::optional<Function::DebugLocation>& location);
   void printDebugLocation(Expression* curr);
 
   // Prints debug info for a delimiter in an expression.
@@ -2231,32 +2237,6 @@ struct PrintExpressionContents
   }
   void visitStringNew(StringNew* curr) {
     switch (curr->op) {
-      case StringNewUTF8:
-        if (!curr->try_) {
-          printMedium(o, "string.new_utf8");
-        } else {
-          printMedium(o, "string.new_utf8_try");
-        }
-        break;
-      case StringNewWTF8:
-        printMedium(o, "string.new_wtf8");
-        break;
-      case StringNewLossyUTF8:
-        printMedium(o, "string.new_lossy_utf8");
-        break;
-      case StringNewWTF16:
-        printMedium(o, "string.new_wtf16");
-        break;
-      case StringNewUTF8Array:
-        if (!curr->try_) {
-          printMedium(o, "string.new_utf8_array");
-        } else {
-          printMedium(o, "string.new_utf8_array_try");
-        }
-        break;
-      case StringNewWTF8Array:
-        printMedium(o, "string.new_wtf8_array");
-        break;
       case StringNewLossyUTF8Array:
         printMedium(o, "string.new_lossy_utf8_array");
         break;
@@ -2285,20 +2265,8 @@ struct PrintExpressionContents
       case StringMeasureUTF8:
         printMedium(o, "string.measure_utf8");
         break;
-      case StringMeasureWTF8:
-        printMedium(o, "string.measure_wtf8");
-        break;
       case StringMeasureWTF16:
         printMedium(o, "string.measure_wtf16");
-        break;
-      case StringMeasureIsUSV:
-        printMedium(o, "string.is_usv_sequence");
-        break;
-      case StringMeasureWTF16View:
-        printMedium(o, "stringview_wtf16.length");
-        break;
-      case StringMeasureHash:
-        printMedium(o, "string.hash");
         break;
       default:
         WASM_UNREACHABLE("invalid string.measure*");
@@ -2306,26 +2274,8 @@ struct PrintExpressionContents
   }
   void visitStringEncode(StringEncode* curr) {
     switch (curr->op) {
-      case StringEncodeUTF8:
-        printMedium(o, "string.encode_utf8");
-        break;
-      case StringEncodeLossyUTF8:
-        printMedium(o, "string.encode_lossy_utf8");
-        break;
-      case StringEncodeWTF8:
-        printMedium(o, "string.encode_wtf8");
-        break;
-      case StringEncodeWTF16:
-        printMedium(o, "string.encode_wtf16");
-        break;
-      case StringEncodeUTF8Array:
-        printMedium(o, "string.encode_utf8_array");
-        break;
       case StringEncodeLossyUTF8Array:
         printMedium(o, "string.encode_lossy_utf8_array");
-        break;
-      case StringEncodeWTF8Array:
-        printMedium(o, "string.encode_wtf8_array");
         break;
       case StringEncodeWTF16Array:
         printMedium(o, "string.encode_wtf16_array");
@@ -2349,56 +2299,11 @@ struct PrintExpressionContents
         WASM_UNREACHABLE("invalid string.eq*");
     }
   }
-  void visitStringAs(StringAs* curr) {
-    switch (curr->op) {
-      case StringAsWTF8:
-        printMedium(o, "string.as_wtf8");
-        break;
-      case StringAsWTF16:
-        printMedium(o, "string.as_wtf16");
-        break;
-      case StringAsIter:
-        printMedium(o, "string.as_iter");
-        break;
-      default:
-        WASM_UNREACHABLE("invalid string.as*");
-    }
-  }
-  void visitStringWTF8Advance(StringWTF8Advance* curr) {
-    printMedium(o, "stringview_wtf8.advance");
-  }
   void visitStringWTF16Get(StringWTF16Get* curr) {
     printMedium(o, "stringview_wtf16.get_codeunit");
   }
-  void visitStringIterNext(StringIterNext* curr) {
-    printMedium(o, "stringview_iter.next");
-  }
-  void visitStringIterMove(StringIterMove* curr) {
-    switch (curr->op) {
-      case StringIterMoveAdvance:
-        printMedium(o, "stringview_iter.advance");
-        break;
-      case StringIterMoveRewind:
-        printMedium(o, "stringview_iter.rewind");
-        break;
-      default:
-        WASM_UNREACHABLE("invalid string.move*");
-    }
-  }
   void visitStringSliceWTF(StringSliceWTF* curr) {
-    switch (curr->op) {
-      case StringSliceWTF8:
-        printMedium(o, "stringview_wtf8.slice");
-        break;
-      case StringSliceWTF16:
-        printMedium(o, "stringview_wtf16.slice");
-        break;
-      default:
-        WASM_UNREACHABLE("invalid string.slice*");
-    }
-  }
-  void visitStringSliceIter(StringSliceIter* curr) {
-    printMedium(o, "stringview_iter.slice");
+    printMedium(o, "stringview_wtf16.slice");
   }
   void visitContBind(ContBind* curr) {
     printMedium(o, "cont.bind ");
@@ -2475,7 +2380,10 @@ std::ostream& PrintSExpression::printPrefixedTypes(const char* prefix,
 }
 
 void PrintSExpression::printDebugLocation(
-  const Function::DebugLocation& location) {
+  const std::optional<Function::DebugLocation>& location) {
+  if (minify) {
+    return;
+  }
   // Do not skip repeated debug info in full mode, for less-confusing debugging:
   // full mode prints out everything in the most verbose manner.
   if (lastPrintedLocation == location && indent > lastPrintIndent && !full) {
@@ -2483,9 +2391,13 @@ void PrintSExpression::printDebugLocation(
   }
   lastPrintedLocation = location;
   lastPrintIndent = indent;
-  auto fileName = currModule->debugInfoFileNames[location.fileIndex];
-  o << ";;@ " << fileName << ":" << location.lineNumber << ":"
-    << location.columnNumber << '\n';
+  if (!location) {
+    o << ";;@\n";
+  } else {
+    auto fileName = currModule->debugInfoFileNames[location->fileIndex];
+    o << ";;@ " << fileName << ":" << location->lineNumber << ":"
+      << location->columnNumber << '\n';
+  }
   doIndent(o, indent);
 }
 
@@ -2496,6 +2408,8 @@ void PrintSExpression::printDebugLocation(Expression* curr) {
     auto iter = debugLocations.find(curr);
     if (iter != debugLocations.end()) {
       printDebugLocation(iter->second);
+    } else {
+      printDebugLocation(std::nullopt);
     }
     // show a binary position, if there is one
     if (debugInfo) {
@@ -2958,7 +2872,7 @@ void PrintSExpression::visitFunction(Function* curr) {
 void PrintSExpression::visitImportedFunction(Function* curr) {
   doIndent(o, indent);
   currFunction = curr;
-  lastPrintedLocation = {0, 0, 0};
+  lastPrintedLocation = std::nullopt;
   o << '(';
   emitImportHeader(curr);
   handleSignature(curr->type, curr->name);
@@ -2969,7 +2883,8 @@ void PrintSExpression::visitImportedFunction(Function* curr) {
 void PrintSExpression::visitDefinedFunction(Function* curr) {
   doIndent(o, indent);
   currFunction = curr;
-  lastPrintedLocation = {0, 0, 0};
+  lastPrintedLocation = std::nullopt;
+  lastPrintIndent = 0;
   if (currFunction->prologLocation.size()) {
     printDebugLocation(*currFunction->prologLocation.begin());
   }

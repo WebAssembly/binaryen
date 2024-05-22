@@ -219,6 +219,10 @@ void SExpressionParser::parseDebugLocation() {
   while (debugLocEnd[0] && debugLocEnd[0] != '\n') {
     debugLocEnd++;
   }
+  if (debugLocEnd == debugLoc) {
+    loc = nullptr;
+    return;
+  }
   char const* pos = debugLoc;
   while (pos < debugLocEnd && pos[0] != ':') {
     pos++;
@@ -1285,15 +1289,6 @@ Type SExpressionWasmBuilder::stringToType(std::string_view str,
   if (str.substr(0, 9) == "stringref" && (prefix || str.size() == 9)) {
     return Type(HeapType::string, Nullable);
   }
-  if (str.substr(0, 15) == "stringview_wtf8" && (prefix || str.size() == 15)) {
-    return Type(HeapType::stringview_wtf8, Nullable);
-  }
-  if (str.substr(0, 16) == "stringview_wtf16" && (prefix || str.size() == 16)) {
-    return Type(HeapType::stringview_wtf16, Nullable);
-  }
-  if (str.substr(0, 15) == "stringview_iter" && (prefix || str.size() == 15)) {
-    return Type(HeapType::stringview_iter, Nullable);
-  }
   if (str.substr(0, 7) == "nullref" && (prefix || str.size() == 7)) {
     return Type(HeapType::none, Nullable);
   }
@@ -1347,15 +1342,6 @@ HeapType SExpressionWasmBuilder::stringToHeapType(std::string_view str,
   }
   if (str.substr(0, 6) == "string" && (prefix || str.size() == 6)) {
     return HeapType::string;
-  }
-  if (str.substr(0, 15) == "stringview_wtf8" && (prefix || str.size() == 15)) {
-    return HeapType::stringview_wtf8;
-  }
-  if (str.substr(0, 16) == "stringview_wtf16" && (prefix || str.size() == 16)) {
-    return HeapType::stringview_wtf16;
-  }
-  if (str.substr(0, 15) == "stringview_iter" && (prefix || str.size() == 15)) {
-    return HeapType::stringview_iter;
   }
   if (str.substr(0, 4) == "none" && (prefix || str.size() == 4)) {
     return HeapType::none;
@@ -1533,7 +1519,7 @@ Expression* SExpressionWasmBuilder::makeMemorySize(Element& s) {
   }
   ret->memory = memory;
   if (isMemory64(memory)) {
-    ret->make64();
+    ret->type = Type::i64;
   }
   ret->finalize();
   return ret;
@@ -1550,7 +1536,7 @@ Expression* SExpressionWasmBuilder::makeMemoryGrow(Element& s) {
   }
   ret->memory = memory;
   if (isMemory64(memory)) {
-    ret->make64();
+    ret->type = Type::i64;
   }
   ret->delta = parseExpression(s[i]);
   ret->finalize();
@@ -3315,30 +3301,13 @@ Expression* SExpressionWasmBuilder::makeRefAs(Element& s, RefAsOp op) {
   return Builder(wasm).makeRefAs(op, value);
 }
 
-Expression*
-SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op, bool try_) {
-  Expression* length = nullptr;
-  if (op == StringNewWTF8) {
-    length = parseExpression(s[2]);
-    return Builder(wasm).makeStringNew(op, parseExpression(s[1]), length, try_);
-  } else if (op == StringNewUTF8 || op == StringNewLossyUTF8 ||
-             op == StringNewWTF16) {
-    length = parseExpression(s[2]);
-    return Builder(wasm).makeStringNew(op, parseExpression(s[1]), length, try_);
-  } else if (op == StringNewWTF8Array) {
+Expression* SExpressionWasmBuilder::makeStringNew(Element& s, StringNewOp op) {
+  if (op == StringNewLossyUTF8Array || op == StringNewWTF16Array) {
     auto* start = parseExpression(s[2]);
     auto* end = parseExpression(s[3]);
-    return Builder(wasm).makeStringNew(
-      op, parseExpression(s[1]), start, end, try_);
-  } else if (op == StringNewUTF8Array || op == StringNewLossyUTF8Array ||
-             op == StringNewWTF16Array) {
-    auto* start = parseExpression(s[2]);
-    auto* end = parseExpression(s[3]);
-    return Builder(wasm).makeStringNew(
-      op, parseExpression(s[1]), start, end, try_);
+    return Builder(wasm).makeStringNew(op, parseExpression(s[1]), start, end);
   } else if (op == StringNewFromCodePoint) {
-    return Builder(wasm).makeStringNew(
-      op, parseExpression(s[1]), nullptr, try_);
+    return Builder(wasm).makeStringNew(op, parseExpression(s[1]));
   } else {
     throw SParseException("bad string.new op", s);
   }
@@ -3364,13 +3333,9 @@ Expression* SExpressionWasmBuilder::makeStringMeasure(Element& s,
 
 Expression* SExpressionWasmBuilder::makeStringEncode(Element& s,
                                                      StringEncodeOp op) {
-  Expression* start = nullptr;
-  if (op == StringEncodeWTF8Array || op == StringEncodeUTF8Array ||
-      op == StringEncodeLossyUTF8Array || op == StringEncodeWTF16Array) {
-    start = parseExpression(s[3]);
-  }
+
   return Builder(wasm).makeStringEncode(
-    op, parseExpression(s[1]), parseExpression(s[2]), start);
+    op, parseExpression(s[1]), parseExpression(s[2]), parseExpression(s[3]));
 }
 
 Expression* SExpressionWasmBuilder::makeStringConcat(Element& s) {
@@ -3383,39 +3348,14 @@ Expression* SExpressionWasmBuilder::makeStringEq(Element& s, StringEqOp op) {
     op, parseExpression(s[1]), parseExpression(s[2]));
 }
 
-Expression* SExpressionWasmBuilder::makeStringAs(Element& s, StringAsOp op) {
-  return Builder(wasm).makeStringAs(op, parseExpression(s[1]));
-}
-
-Expression* SExpressionWasmBuilder::makeStringWTF8Advance(Element& s) {
-  return Builder(wasm).makeStringWTF8Advance(
-    parseExpression(s[1]), parseExpression(s[2]), parseExpression(s[3]));
-}
-
 Expression* SExpressionWasmBuilder::makeStringWTF16Get(Element& s) {
   return Builder(wasm).makeStringWTF16Get(parseExpression(s[1]),
                                           parseExpression(s[2]));
 }
 
-Expression* SExpressionWasmBuilder::makeStringIterNext(Element& s) {
-  return Builder(wasm).makeStringIterNext(parseExpression(s[1]));
-}
-
-Expression* SExpressionWasmBuilder::makeStringIterMove(Element& s,
-                                                       StringIterMoveOp op) {
-  return Builder(wasm).makeStringIterMove(
-    op, parseExpression(s[1]), parseExpression(s[2]));
-}
-
-Expression* SExpressionWasmBuilder::makeStringSliceWTF(Element& s,
-                                                       StringSliceWTFOp op) {
+Expression* SExpressionWasmBuilder::makeStringSliceWTF(Element& s) {
   return Builder(wasm).makeStringSliceWTF(
-    op, parseExpression(s[1]), parseExpression(s[2]), parseExpression(s[3]));
-}
-
-Expression* SExpressionWasmBuilder::makeStringSliceIter(Element& s) {
-  return Builder(wasm).makeStringSliceIter(parseExpression(s[1]),
-                                           parseExpression(s[2]));
+    parseExpression(s[1]), parseExpression(s[2]), parseExpression(s[3]));
 }
 
 // converts an s-expression string representing binary data into an output

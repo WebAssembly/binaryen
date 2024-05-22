@@ -143,8 +143,9 @@ struct GlobalRefining : public Pass {
           ReFinalize().walkFunctionInModule(curr, &wasm);
         }
       }
-    };
-    GetUpdater(*this, *module).run(getPassRunner(), module);
+    } updater(*this, *module);
+    updater.run(getPassRunner(), module);
+    updater.runOnModuleCode(getPassRunner(), module);
   }
 };
 

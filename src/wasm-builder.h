@@ -420,7 +420,6 @@ public:
     ret->valueType = type;
     ret->memory = memory;
     ret->finalize();
-    assert(ret->value->type.isConcrete() ? ret->value->type == type : true);
     return ret;
   }
   Store* makeAtomicStore(unsigned bytes,
@@ -666,7 +665,7 @@ public:
                              MemoryInfo info = MemoryInfo::Unspecified) {
     auto* ret = wasm.allocator.alloc<MemorySize>();
     if (isMemory64(memoryName, info)) {
-      ret->make64();
+      ret->type = Type::i64;
     }
     ret->memory = memoryName;
     ret->finalize();
@@ -677,7 +676,7 @@ public:
                              MemoryInfo info = MemoryInfo::Unspecified) {
     auto* ret = wasm.allocator.alloc<MemoryGrow>();
     if (isMemory64(memoryName, info)) {
-      ret->make64();
+      ret->type = Type::i64;
     }
     ret->delta = delta;
     ret->memory = memoryName;
@@ -1086,28 +1085,15 @@ public:
     return ret;
   }
   StringNew* makeStringNew(StringNewOp op,
-                           Expression* ptr,
-                           Expression* length,
-                           bool try_) {
+                           Expression* ref,
+                           Expression* start = nullptr,
+                           Expression* end = nullptr) {
+    assert((start && end) != (op == StringNewFromCodePoint));
     auto* ret = wasm.allocator.alloc<StringNew>();
     ret->op = op;
-    ret->ptr = ptr;
-    ret->length = length;
-    ret->try_ = try_;
-    ret->finalize();
-    return ret;
-  }
-  StringNew* makeStringNew(StringNewOp op,
-                           Expression* ptr,
-                           Expression* start,
-                           Expression* end,
-                           bool try_) {
-    auto* ret = wasm.allocator.alloc<StringNew>();
-    ret->op = op;
-    ret->ptr = ptr;
+    ret->ref = ref;
     ret->start = start;
     ret->end = end;
-    ret->try_ = try_;
     ret->finalize();
     return ret;
   }
@@ -1125,13 +1111,13 @@ public:
     return ret;
   }
   StringEncode* makeStringEncode(StringEncodeOp op,
-                                 Expression* ref,
-                                 Expression* ptr,
+                                 Expression* str,
+                                 Expression* array,
                                  Expression* start = nullptr) {
     auto* ret = wasm.allocator.alloc<StringEncode>();
     ret->op = op;
-    ret->ref = ref;
-    ret->ptr = ptr;
+    ret->str = str;
+    ret->array = array;
     ret->start = start;
     ret->finalize();
     return ret;
@@ -1151,22 +1137,6 @@ public:
     ret->finalize();
     return ret;
   }
-  StringAs* makeStringAs(StringAsOp op, Expression* ref) {
-    auto* ret = wasm.allocator.alloc<StringAs>();
-    ret->op = op;
-    ret->ref = ref;
-    ret->finalize();
-    return ret;
-  }
-  StringWTF8Advance*
-  makeStringWTF8Advance(Expression* ref, Expression* pos, Expression* bytes) {
-    auto* ret = wasm.allocator.alloc<StringWTF8Advance>();
-    ret->ref = ref;
-    ret->pos = pos;
-    ret->bytes = bytes;
-    ret->finalize();
-    return ret;
-  }
   StringWTF16Get* makeStringWTF16Get(Expression* ref, Expression* pos) {
     auto* ret = wasm.allocator.alloc<StringWTF16Get>();
     ret->ref = ref;
@@ -1174,41 +1144,15 @@ public:
     ret->finalize();
     return ret;
   }
-  StringIterNext* makeStringIterNext(Expression* ref) {
-    auto* ret = wasm.allocator.alloc<StringIterNext>();
-    ret->ref = ref;
-    ret->finalize();
-    return ret;
-  }
-  StringIterMove*
-  makeStringIterMove(StringIterMoveOp op, Expression* ref, Expression* num) {
-    auto* ret = wasm.allocator.alloc<StringIterMove>();
-    ret->op = op;
-    ret->ref = ref;
-    ret->num = num;
-    ret->finalize();
-    return ret;
-  }
-  StringSliceWTF* makeStringSliceWTF(StringSliceWTFOp op,
-                                     Expression* ref,
-                                     Expression* start,
-                                     Expression* end) {
+  StringSliceWTF*
+  makeStringSliceWTF(Expression* ref, Expression* start, Expression* end) {
     auto* ret = wasm.allocator.alloc<StringSliceWTF>();
-    ret->op = op;
     ret->ref = ref;
     ret->start = start;
     ret->end = end;
     ret->finalize();
     return ret;
   }
-  StringSliceIter* makeStringSliceIter(Expression* ref, Expression* num) {
-    auto* ret = wasm.allocator.alloc<StringSliceIter>();
-    ret->ref = ref;
-    ret->num = num;
-    ret->finalize();
-    return ret;
-  }
-
   ContBind* makeContBind(HeapType contTypeBefore,
                          HeapType contTypeAfter,
                          const std::vector<Expression*>& operands,

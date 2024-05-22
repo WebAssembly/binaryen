@@ -203,9 +203,9 @@ public:
 
     // string.encode_wtf16_array is effectively an Array read operation, so
     // just like ArrayGet above we must check for immutability.
-    auto ptrType = curr->ptr->type;
-    if (ptrType.isRef()) {
-      auto heapType = ptrType.getHeapType();
+    auto refType = curr->ref->type;
+    if (refType.isRef()) {
+      auto heapType = refType.getHeapType();
       if (heapType.isArray()) {
         if (heapType.getArray().element.mutable_ == Immutable) {
           return Super::visitStringNew(curr);

@@ -251,6 +251,9 @@ void PassRegistry::registerPasses() {
                "lower loads and stores to a 64-bit memory to instead use a "
                "32-bit one",
                createMemory64LoweringPass);
+  registerPass("table64-lowering",
+               "lower 64-bit tables 32-bit ones",
+               createTable64LoweringPass);
   registerPass("memory-packing",
                "packs memory into separate segments, skipping zeros",
                createMemoryPackingPass);
@@ -501,8 +504,11 @@ void PassRegistry::registerPasses() {
                "strip the wasm target features section",
                createStripTargetFeaturesPass);
   registerPass("translate-to-new-eh",
-               "translate old EH instructions to new ones",
-               createTranslateToNewEHPass);
+               "deprecated; same as translate-to-exnref",
+               createTranslateToExnrefPass);
+  registerPass("translate-to-exnref",
+               "translate old Phase 3 EH instructions to new ones with exnref",
+               createTranslateToExnrefPass);
   registerPass("trap-mode-clamp",
                "replace trapping operations with clamping semantics",
                createTrapModeClamp);

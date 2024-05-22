@@ -395,9 +395,6 @@ struct HeapTypeGeneratorImpl {
         case HeapType::ext:
         case HeapType::exn:
         case HeapType::string:
-        case HeapType::stringview_wtf8:
-        case HeapType::stringview_wtf16:
-        case HeapType::stringview_iter:
         case HeapType::none:
         case HeapType::noext:
         case HeapType::nofunc:
@@ -460,17 +457,7 @@ struct HeapTypeGeneratorImpl {
       case HeapType::string:
         candidates.push_back(HeapType::any);
         break;
-      case HeapType::stringview_wtf8:
-      case HeapType::stringview_wtf16:
-      case HeapType::stringview_iter:
-        break;
       case HeapType::none:
-        if (features.hasStrings() && rand.oneIn(10)) {
-          candidates.push_back(HeapType::stringview_wtf8);
-          candidates.push_back(HeapType::stringview_wtf16);
-          candidates.push_back(HeapType::stringview_iter);
-          break;
-        }
         return pickSubAny();
       case HeapType::nofunc:
         return pickSubFunc();

@@ -202,7 +202,10 @@ Result<> doParseModule(Module& wasm, Lexer& input, bool allowExtra) {
         CHECK_ERR(im);
       }
       if (!f->imported()) {
-        CHECK_ERR(ctx.irBuilder.visitEnd());
+        auto end = ctx.irBuilder.visitEnd();
+        if (auto* err = end.getErr()) {
+          return ctx.in.err(decls.funcDefs[i].pos, err->msg);
+        }
       }
     }
 
@@ -232,14 +235,6 @@ Result<> parseModule(Module& wasm, std::string_view in) {
 
 Result<> parseModule(Module& wasm, Lexer& lexer) {
   return doParseModule(wasm, lexer, true);
-}
-
-Result<Expression*> parseExpression(Module& wasm, Lexer& lexer) {
-  ParseDefsCtx ctx(lexer, wasm, {}, {}, {}, {}, {});
-  auto e = expr(ctx);
-  CHECK_ERR(e);
-  lexer = ctx.in;
-  return *e;
 }
 
 Result<Literal> parseConst(Lexer& lexer) {

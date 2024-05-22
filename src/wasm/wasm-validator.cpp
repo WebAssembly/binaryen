@@ -478,13 +478,8 @@ public:
   void visitStringEncode(StringEncode* curr);
   void visitStringConcat(StringConcat* curr);
   void visitStringEq(StringEq* curr);
-  void visitStringAs(StringAs* curr);
-  void visitStringWTF8Advance(StringWTF8Advance* curr);
   void visitStringWTF16Get(StringWTF16Get* curr);
-  void visitStringIterNext(StringIterNext* curr);
-  void visitStringIterMove(StringIterMove* curr);
   void visitStringSliceWTF(StringSliceWTF* curr);
-  void visitStringSliceIter(StringSliceIter* curr);
   void visitContBind(ContBind* curr);
   void visitContNew(ContNew* curr);
   void visitResume(Resume* curr);
@@ -1009,9 +1004,11 @@ void FunctionValidator::visitGlobalGet(GlobalGet* curr) {
   if (!info.validateGlobally) {
     return;
   }
-  shouldBeTrue(getModule()->getGlobalOrNull(curr->name),
-               curr,
-               "global.get name must be valid");
+  auto* global = getModule()->getGlobalOrNull(curr->name);
+  if (shouldBeTrue(global, curr, "global.get name must be valid")) {
+    shouldBeEqual(
+      curr->type, global->type, curr, "global.get must have right type");
+  }
 }
 
 void FunctionValidator::visitGlobalSet(GlobalSet* curr) {
@@ -3253,37 +3250,43 @@ void FunctionValidator::visitStringNew(StringNew* curr) {
                "string operations require reference-types [--enable-strings]");
 
   switch (curr->op) {
+    case StringNewLossyUTF8Array:
     case StringNewWTF16Array: {
-      auto ptrType = curr->ptr->type;
-      if (ptrType == Type::unreachable) {
+      auto refType = curr->ref->type;
+      if (refType == Type::unreachable) {
         return;
       }
-      if (!shouldBeTrue(ptrType.isRef(),
+      if (!shouldBeTrue(
+            refType.isRef(), curr, "string.new input must have array type")) {
+        return;
+      }
+      auto heapType = refType.getHeapType();
+      if (!shouldBeTrue(heapType.isBottom() || heapType.isArray(),
                         curr,
-                        "string.new_wtf16_array input must have string type")) {
+                        "string.new input must have array type")) {
         return;
       }
-      auto ptrHeapType = ptrType.getHeapType();
-      if (!shouldBeTrue(ptrHeapType.isBottom() || ptrHeapType.isArray(),
-                        curr,
-                        "string.new_wtf16_array input must be array")) {
-        return;
-      }
+      shouldBeEqualOrFirstIsUnreachable(curr->start->type,
+                                        Type(Type::i32),
+                                        curr,
+                                        "string.new start must be i32");
       shouldBeEqualOrFirstIsUnreachable(
-        curr->start->type,
+        curr->end->type, Type(Type::i32), curr, "string.new end must be i32");
+      return;
+    }
+    case StringNewFromCodePoint:
+      shouldBeEqualOrFirstIsUnreachable(
+        curr->ref->type,
         Type(Type::i32),
         curr,
-        "string.new_wtf16_array start must be i32");
-      shouldBeEqualOrFirstIsUnreachable(
-        curr->end->type,
-        Type(Type::i32),
-        curr,
-        "string.new_wtf16_array end must be i32");
-      break;
-    }
-    default: {
-    }
+        "string.from_code_point code point must be i32");
+      shouldBeTrue(
+        !curr->start, curr, "string.from_code_point should not have start");
+      shouldBeTrue(
+        !curr->end, curr, "string.from_code_point should not have end");
+      return;
   }
+  WASM_UNREACHABLE("unexpected op");
 }
 
 void FunctionValidator::visitStringConst(StringConst* curr) {
@@ -3316,42 +3319,13 @@ void FunctionValidator::visitStringEq(StringEq* curr) {
                "string operations require reference-types [--enable-strings]");
 }
 
-void FunctionValidator::visitStringAs(StringAs* curr) {
-  shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
-               curr,
-               "string operations require reference-types [--enable-strings]");
-}
-
-void FunctionValidator::visitStringWTF8Advance(StringWTF8Advance* curr) {
-  shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
-               curr,
-               "string operations require reference-types [--enable-strings]");
-}
-
 void FunctionValidator::visitStringWTF16Get(StringWTF16Get* curr) {
-  shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
-               curr,
-               "string operations require reference-types [--enable-strings]");
-}
-void FunctionValidator::visitStringIterNext(StringIterNext* curr) {
-  shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
-               curr,
-               "string operations require reference-types [--enable-strings]");
-}
-
-void FunctionValidator::visitStringIterMove(StringIterMove* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
                "string operations require reference-types [--enable-strings]");
 }
 
 void FunctionValidator::visitStringSliceWTF(StringSliceWTF* curr) {
-  shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
-               curr,
-               "string operations require reference-types [--enable-strings]");
-}
-
-void FunctionValidator::visitStringSliceIter(StringSliceIter* curr) {
   shouldBeTrue(!getModule() || getModule()->features.hasStrings(),
                curr,
                "string operations require reference-types [--enable-strings]");
@@ -3782,25 +3756,14 @@ static void validateDataSegments(Module& module, ValidationInfo& info) {
                              "active segment must have a valid memory name")) {
         continue;
       }
-      if (memory->is64()) {
-        if (!info.shouldBeEqual(segment->offset->type,
-                                Type(Type::i64),
-                                segment->offset,
-                                "segment offset should be i64")) {
-          continue;
-        }
-      } else {
-        if (!info.shouldBeEqual(segment->offset->type,
-                                Type(Type::i32),
-                                segment->offset,
-                                "segment offset should be i32")) {
-          continue;
-        }
-      }
+      info.shouldBeEqual(segment->offset->type,
+                         memory->indexType,
+                         segment->offset,
+                         "segment offset must match memory index type");
       info.shouldBeTrue(
         Properties::isValidConstantExpression(module, segment->offset),
         segment->offset,
-        "memory segment offset should be constant");
+        "memory segment offset must be constant");
       FunctionValidator(module, &info).validate(segment->offset);
     }
   }
@@ -3874,31 +3837,30 @@ static void validateTables(Module& module, ValidationInfo& info) {
       "elem",
       "Non-nullable reference types are not yet supported for tables");
 
-    if (segment->table.is()) {
+    bool isPassive = !segment->table.is();
+    if (isPassive) {
+      info.shouldBeTrue(
+        !segment->offset, "elem", "passive segment should not have an offset");
+    } else {
       auto table = module.getTableOrNull(segment->table);
       info.shouldBeTrue(table != nullptr,
                         "elem",
                         "element segment must have a valid table name");
-      info.shouldBeTrue(!!segment->offset,
-                        "elem",
-                        "table segment offset should have an offset");
+      info.shouldBeTrue(
+        !!segment->offset, "elem", "table segment offset must have an offset");
       info.shouldBeEqual(segment->offset->type,
-                         Type(Type::i32),
+                         table->indexType,
                          segment->offset,
-                         "element segment offset should be i32");
+                         "element segment offset must match table index type");
       info.shouldBeTrue(
         Properties::isValidConstantExpression(module, segment->offset),
         segment->offset,
-        "table segment offset should be constant");
+        "table segment offset must be constant");
       info.shouldBeTrue(
         Type::isSubType(segment->type, table->type),
         "elem",
         "element segment type must be a subtype of the table type");
       validator.validate(segment->offset);
-    } else {
-      info.shouldBeTrue(!segment->offset,
-                        "elem",
-                        "non-table segment offset should have no offset");
     }
     for (auto* expr : segment->data) {
       info.shouldBeTrue(Properties::isValidConstantExpression(module, expr),

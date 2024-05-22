@@ -170,18 +170,8 @@ void ReFinalize::visitStringMeasure(StringMeasure* curr) { curr->finalize(); }
 void ReFinalize::visitStringEncode(StringEncode* curr) { curr->finalize(); }
 void ReFinalize::visitStringConcat(StringConcat* curr) { curr->finalize(); }
 void ReFinalize::visitStringEq(StringEq* curr) { curr->finalize(); }
-void ReFinalize::visitStringAs(StringAs* curr) { curr->finalize(); }
-void ReFinalize::visitStringWTF8Advance(StringWTF8Advance* curr) {
-  curr->finalize();
-}
 void ReFinalize::visitStringWTF16Get(StringWTF16Get* curr) { curr->finalize(); }
-void ReFinalize::visitStringIterNext(StringIterNext* curr) { curr->finalize(); }
-void ReFinalize::visitStringIterMove(StringIterMove* curr) { curr->finalize(); }
 void ReFinalize::visitStringSliceWTF(StringSliceWTF* curr) { curr->finalize(); }
-void ReFinalize::visitStringSliceIter(StringSliceIter* curr) {
-  curr->finalize();
-}
-
 void ReFinalize::visitContNew(ContNew* curr) { curr->finalize(); }
 void ReFinalize::visitContBind(ContBind* curr) { curr->finalize(); }
 void ReFinalize::visitResume(Resume* curr) { curr->finalize(); }

@@ -65,6 +65,56 @@ void BinaryInstWriter::visitLoop(Loop* curr) {
 void BinaryInstWriter::visitBreak(Break* curr) {
   o << int8_t(curr->condition ? BinaryConsts::BrIf : BinaryConsts::Br)
     << U32LEB(getBreakIndex(curr->name));
+
+  // See comment on |brIfsNeedingHandling| for the extra casts we need to emit
+  // here for certain br_ifs.
+  auto iter = brIfsNeedingHandling.find(curr);
+  if (iter != brIfsNeedingHandling.end()) {
+    auto unrefinedType = iter->second;
+    auto type = curr->type;
+    assert(type.size() == unrefinedType.size());
+
+    assert(curr->type.hasRef());
+
+    auto emitCast = [&](Type to) {
+      // Shim a tiny bit of IR, just enough to get visitRefCast to see what we
+      // are casting, and to emit the proper thing.
+      RefCast cast;
+      cast.type = to;
+      cast.ref = nullptr;
+      visitRefCast(&cast);
+    };
+
+    if (!type.isTuple()) {
+      // Simple: Just emit a cast, and then the type matches Binaryen IR's.
+      emitCast(type);
+    } else {
+      // Tuples are trickier to handle, and we need to use scratch locals. Stash
+      // all the values on the stack to those locals, then reload them, casting
+      // as we go.
+      //
+      // We must track how many scratch locals we've used from each type as we
+      // go, as a type might appear multiple times in the tuple. We allocated
+      // enough for each, in a contiguous range, so we just increment as we go.
+      std::unordered_map<Type, Index> scratchTypeUses;
+      for (Index i = 0; i < unrefinedType.size(); i++) {
+        auto t = unrefinedType[unrefinedType.size() - i - 1];
+        assert(scratchLocals.find(t) != scratchLocals.end());
+        auto localIndex = scratchLocals[t] + scratchTypeUses[t]++;
+        o << int8_t(BinaryConsts::LocalSet) << U32LEB(localIndex);
+      }
+      for (Index i = 0; i < unrefinedType.size(); i++) {
+        auto t = unrefinedType[i];
+        auto localIndex = scratchLocals[t] + --scratchTypeUses[t];
+        o << int8_t(BinaryConsts::LocalGet) << U32LEB(localIndex);
+        if (t.isRef()) {
+          // Note that we cast all types here, when perhaps only some of the
+          // tuple's lanes need that. This is simpler.
+          emitCast(type[i]);
+        }
+      }
+    }
+  }
 }
 
 void BinaryInstWriter::visitSwitch(Switch* curr) {
@@ -89,6 +139,11 @@ void BinaryInstWriter::visitCallIndirect(CallIndirect* curr) {
 }
 
 void BinaryInstWriter::visitLocalGet(LocalGet* curr) {
+  if (deferredGets.count(curr)) {
+    // This local.get will be emitted as part of the instruction that consumes
+    // it.
+    return;
+  }
   if (auto it = extractedGets.find(curr); it != extractedGets.end()) {
     // We have a tuple of locals to get, but we will only end up using one of
     // them, so we can just emit that one.
@@ -2089,24 +2144,6 @@ void BinaryInstWriter::visitRefTest(RefTest* curr) {
 }
 
 void BinaryInstWriter::visitRefCast(RefCast* curr) {
-  // We allow ref.cast of string views, but V8 does not. Work around that by
-  // emitting a ref.as_non_null (or nothing).
-  auto type = curr->type;
-  if (type.isRef()) {
-    auto heapType = type.getHeapType();
-    if (heapType == HeapType::stringview_wtf8 ||
-        heapType == HeapType::stringview_wtf16 ||
-        heapType == HeapType::stringview_iter) {
-      // We cannot cast string views to/from anything, so the input must also
-      // be a view.
-      assert(curr->ref->type.getHeapType() == heapType);
-      if (type.isNonNullable() && curr->ref->type.isNullable()) {
-        o << int8_t(BinaryConsts::RefAsNonNull);
-      }
-      return;
-    }
-  }
-
   o << int8_t(BinaryConsts::GCPrefix);
   if (curr->type.isNullable()) {
     o << U32LEB(BinaryConsts::RefCastNull);
@@ -2311,7 +2348,7 @@ void BinaryInstWriter::visitRefAs(RefAs* curr) {
 }
 
 void BinaryInstWriter::visitStringNew(StringNew* curr) {
-  if (curr->ptr->type.isNull()) {
+  if (curr->ref->type.isNull()) {
     // This is a bottom type, so this is an array-receiving operation that does
     // not receive an array. The spec allows this, but V8 does not, see
     // https://github.com/WebAssembly/stringref/issues/66
@@ -2321,36 +2358,6 @@ void BinaryInstWriter::visitStringNew(StringNew* curr) {
   }
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {
-    case StringNewUTF8:
-      if (!curr->try_) {
-        o << U32LEB(BinaryConsts::StringNewUTF8);
-      } else {
-        o << U32LEB(BinaryConsts::StringNewUTF8Try);
-      }
-      o << int8_t(0); // Memory index.
-      break;
-    case StringNewWTF8:
-      o << U32LEB(BinaryConsts::StringNewWTF8);
-      o << int8_t(0); // Memory index.
-      break;
-    case StringNewLossyUTF8:
-      o << U32LEB(BinaryConsts::StringNewLossyUTF8);
-      o << int8_t(0); // Memory index.
-      break;
-    case StringNewWTF16:
-      o << U32LEB(BinaryConsts::StringNewWTF16);
-      o << int8_t(0); // Memory index.
-      break;
-    case StringNewUTF8Array:
-      if (!curr->try_) {
-        o << U32LEB(BinaryConsts::StringNewUTF8Array);
-      } else {
-        o << U32LEB(BinaryConsts::StringNewUTF8ArrayTry);
-      }
-      break;
-    case StringNewWTF8Array:
-      o << U32LEB(BinaryConsts::StringNewWTF8Array);
-      break;
     case StringNewLossyUTF8Array:
       o << U32LEB(BinaryConsts::StringNewLossyUTF8Array);
       break;
@@ -2376,20 +2383,8 @@ void BinaryInstWriter::visitStringMeasure(StringMeasure* curr) {
     case StringMeasureUTF8:
       o << U32LEB(BinaryConsts::StringMeasureUTF8);
       break;
-    case StringMeasureWTF8:
-      o << U32LEB(BinaryConsts::StringMeasureWTF8);
-      break;
     case StringMeasureWTF16:
       o << U32LEB(BinaryConsts::StringMeasureWTF16);
-      break;
-    case StringMeasureIsUSV:
-      o << U32LEB(BinaryConsts::StringIsUSV);
-      break;
-    case StringMeasureWTF16View:
-      o << U32LEB(BinaryConsts::StringViewWTF16Length);
-      break;
-    case StringMeasureHash:
-      o << U32LEB(BinaryConsts::StringHash);
       break;
     default:
       WASM_UNREACHABLE("invalid string.new*");
@@ -2397,37 +2392,15 @@ void BinaryInstWriter::visitStringMeasure(StringMeasure* curr) {
 }
 
 void BinaryInstWriter::visitStringEncode(StringEncode* curr) {
-  if (curr->ptr->type.isNull()) {
+  if (curr->str->type.isNull()) {
     // See visitStringNew.
     emitUnreachable();
     return;
   }
   o << int8_t(BinaryConsts::GCPrefix);
   switch (curr->op) {
-    case StringEncodeUTF8:
-      o << U32LEB(BinaryConsts::StringEncodeUTF8);
-      o << int8_t(0); // Memory index.
-      break;
-    case StringEncodeLossyUTF8:
-      o << U32LEB(BinaryConsts::StringEncodeLossyUTF8);
-      o << int8_t(0); // Memory index.
-      break;
-    case StringEncodeWTF8:
-      o << U32LEB(BinaryConsts::StringEncodeWTF8);
-      o << int8_t(0); // Memory index.
-      break;
-    case StringEncodeWTF16:
-      o << U32LEB(BinaryConsts::StringEncodeWTF16);
-      o << int8_t(0); // Memory index.
-      break;
-    case StringEncodeUTF8Array:
-      o << U32LEB(BinaryConsts::StringEncodeUTF8Array);
-      break;
     case StringEncodeLossyUTF8Array:
       o << U32LEB(BinaryConsts::StringEncodeLossyUTF8Array);
-      break;
-    case StringEncodeWTF8Array:
-      o << U32LEB(BinaryConsts::StringEncodeWTF8Array);
       break;
     case StringEncodeWTF16Array:
       o << U32LEB(BinaryConsts::StringEncodeWTF16Array);
@@ -2455,69 +2428,66 @@ void BinaryInstWriter::visitStringEq(StringEq* curr) {
   }
 }
 
-void BinaryInstWriter::visitStringAs(StringAs* curr) {
-  o << int8_t(BinaryConsts::GCPrefix);
-  switch (curr->op) {
-    case StringAsWTF8:
-      o << U32LEB(BinaryConsts::StringAsWTF8);
-      break;
-    case StringAsWTF16:
-      o << U32LEB(BinaryConsts::StringAsWTF16);
-      break;
-    case StringAsIter:
-      o << U32LEB(BinaryConsts::StringAsIter);
-      break;
-    default:
-      WASM_UNREACHABLE("invalid string.as*");
-  }
-}
-
-void BinaryInstWriter::visitStringWTF8Advance(StringWTF8Advance* curr) {
-  o << int8_t(BinaryConsts::GCPrefix)
-    << U32LEB(BinaryConsts::StringViewWTF8Advance);
-}
-
 void BinaryInstWriter::visitStringWTF16Get(StringWTF16Get* curr) {
+  // We need to convert the ref operand to a stringview, but it is under the pos
+  // operand. Put the i32 in a scratch local, emit the conversion, then get the
+  // i32 back onto the stack. If `pos` is a local.get anyway, then we can skip
+  // the scratch local.
+  bool posDeferred = false;
+  Index posIndex;
+  if (auto* get = curr->pos->dynCast<LocalGet>()) {
+    assert(deferredGets.count(get));
+    posDeferred = true;
+    posIndex = mappedLocals[{get->index, 0}];
+  } else {
+    posIndex = scratchLocals[Type::i32];
+  }
+
+  if (!posDeferred) {
+    o << int8_t(BinaryConsts::LocalSet) << U32LEB(posIndex);
+  }
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringAsWTF16);
+  o << int8_t(BinaryConsts::LocalGet) << U32LEB(posIndex);
   o << int8_t(BinaryConsts::GCPrefix)
     << U32LEB(BinaryConsts::StringViewWTF16GetCodePoint);
 }
 
-void BinaryInstWriter::visitStringIterNext(StringIterNext* curr) {
-  o << int8_t(BinaryConsts::GCPrefix)
-    << U32LEB(BinaryConsts::StringViewIterNext);
-}
-
-void BinaryInstWriter::visitStringIterMove(StringIterMove* curr) {
-  o << int8_t(BinaryConsts::GCPrefix);
-  switch (curr->op) {
-    case StringIterMoveAdvance:
-      o << U32LEB(BinaryConsts::StringViewIterAdvance);
-      break;
-    case StringIterMoveRewind:
-      o << U32LEB(BinaryConsts::StringViewIterRewind);
-      break;
-    default:
-      WASM_UNREACHABLE("invalid string.move*");
-  }
-}
-
 void BinaryInstWriter::visitStringSliceWTF(StringSliceWTF* curr) {
-  o << int8_t(BinaryConsts::GCPrefix);
-  switch (curr->op) {
-    case StringSliceWTF8:
-      o << U32LEB(BinaryConsts::StringViewWTF8Slice);
-      break;
-    case StringSliceWTF16:
-      o << U32LEB(BinaryConsts::StringViewWTF16Slice);
-      break;
-    default:
-      WASM_UNREACHABLE("invalid string.move*");
+  // We need to convert the ref operand to a stringview, but it is buried under
+  // the start and end operands. Put the i32s in scratch locals, emit the
+  // conversion, then get the i32s back onto the stack. If either `start` or
+  // `end` is already a local.get, then we can skip its scratch local.
+  bool startDeferred = false, endDeferred = false;
+  Index startIndex, endIndex;
+  if (auto* get = curr->start->dynCast<LocalGet>()) {
+    assert(deferredGets.count(get));
+    startDeferred = true;
+    startIndex = mappedLocals[{get->index, 0}];
+  } else {
+    startIndex = scratchLocals[Type::i32];
   }
-}
+  if (auto* get = curr->end->dynCast<LocalGet>()) {
+    assert(deferredGets.count(get));
+    endDeferred = true;
+    endIndex = mappedLocals[{get->index, 0}];
+  } else {
+    endIndex = scratchLocals[Type::i32];
+    if (!startDeferred) {
+      ++endIndex;
+    }
+  }
 
-void BinaryInstWriter::visitStringSliceIter(StringSliceIter* curr) {
+  if (!endDeferred) {
+    o << int8_t(BinaryConsts::LocalSet) << U32LEB(endIndex);
+  }
+  if (!startDeferred) {
+    o << int8_t(BinaryConsts::LocalSet) << U32LEB(startIndex);
+  }
+  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringAsWTF16);
+  o << int8_t(BinaryConsts::LocalGet) << U32LEB(startIndex);
+  o << int8_t(BinaryConsts::LocalGet) << U32LEB(endIndex);
   o << int8_t(BinaryConsts::GCPrefix)
-    << U32LEB(BinaryConsts::StringViewIterSlice);
+    << U32LEB(BinaryConsts::StringViewWTF16Slice);
 }
 
 void BinaryInstWriter::visitContBind(ContBind* curr) {
@@ -2569,6 +2539,8 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     mappedLocals[std::make_pair(i, 0)] = i;
   }
 
+  auto scratches = countScratchLocals();
+
   // Normally we map all locals of the same type into a range of adjacent
   // addresses, which is more compact. However, if we need to keep DWARF valid,
   // do not do any reordering at all - instead, do a trivial mapping that
@@ -2584,25 +2556,26 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
       size_t size = func->getLocalType(i).size();
       for (Index j = 0; j < size; j++) {
-        mappedLocals[std::make_pair(i, j)] = mappedIndex + j;
+        mappedLocals[std::make_pair(i, j)] = mappedIndex++;
       }
-      mappedIndex += size;
     }
-    countScratchLocals();
 
     size_t numBinaryLocals =
-      mappedIndex - func->getVarIndexBase() + scratchLocals.size();
+      mappedIndex - func->getVarIndexBase() + scratches.size();
+
     o << U32LEB(numBinaryLocals);
+
     for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
       for (const auto& type : func->getLocalType(i)) {
         o << U32LEB(1);
         parent.writeType(type);
       }
     }
-    for (auto& [type, _] : scratchLocals) {
-      o << U32LEB(1);
+    for (auto& [type, count] : scratches) {
+      o << U32LEB(count);
       parent.writeType(type);
-      scratchLocals[type] = mappedIndex++;
+      scratchLocals[type] = mappedIndex;
+      mappedIndex += count;
     }
     return;
   }
@@ -2612,7 +2585,10 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
       noteLocalType(t);
     }
   }
-  countScratchLocals();
+
+  for (auto& [type, count] : scratches) {
+    noteLocalType(type, count);
+  }
 
   if (parent.getModule()->features.hasReferenceTypes()) {
     // Sort local types in a way that keeps all MVP types together and all
@@ -2636,23 +2612,28 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
     });
   }
 
-  std::unordered_map<Type, size_t> currLocalsByType;
+  // Map IR (local index, tuple index) pairs to binary local indices. Since
+  // locals are grouped by type, start by calculating the base indices for each
+  // type.
+  std::unordered_map<Type, Index> nextFreeIndex;
+  Index baseIndex = func->getVarIndexBase();
+  for (auto& type : localTypes) {
+    nextFreeIndex[type] = baseIndex;
+    baseIndex += numLocalsByType[type];
+  }
+
+  // Map the IR index pairs to indices.
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     Index j = 0;
     for (const auto& type : func->getLocalType(i)) {
-      auto fullIndex = std::make_pair(i, j++);
-      Index index = func->getVarIndexBase();
-      for (auto& localType : localTypes) {
-        if (type == localType) {
-          mappedLocals[fullIndex] = index + currLocalsByType[localType];
-          currLocalsByType[type]++;
-          break;
-        }
-        index += numLocalsByType.at(localType);
-      }
+      mappedLocals[{i, j++}] = nextFreeIndex[type]++;
     }
   }
-  setScratchLocals();
+
+  // Map scratch locals to the remaining indices.
+  for (auto& [type, _] : scratches) {
+    scratchLocals[type] = nextFreeIndex[type];
+  }
 
   o << U32LEB(numLocalsByType.size());
   for (auto& localType : localTypes) {
@@ -2661,44 +2642,189 @@ void BinaryInstWriter::mapLocalsAndEmitHeader() {
   }
 }
 
-void BinaryInstWriter::noteLocalType(Type type) {
-  if (!numLocalsByType.count(type)) {
+void BinaryInstWriter::noteLocalType(Type type, Index count) {
+  auto& num = numLocalsByType[type];
+  if (num == 0) {
     localTypes.push_back(type);
   }
-  numLocalsByType[type]++;
+  num += count;
 }
 
-void BinaryInstWriter::countScratchLocals() {
-  // Add a scratch register in `numLocalsByType` for each type of
-  // tuple.extract with nonzero index present.
-  FindAll<TupleExtract> extracts(func->body);
-  for (auto* extract : extracts.list) {
-    if (extract->type != Type::unreachable && extract->index != 0) {
-      scratchLocals[extract->type] = 0;
-    }
-  }
-  for (auto& [type, _] : scratchLocals) {
-    noteLocalType(type);
-  }
-  // While we have all the tuple.extracts, also find extracts of local.gets,
-  // local.tees, and global.gets that we can optimize.
-  for (auto* extract : extracts.list) {
-    auto* tuple = extract->tuple;
-    if (tuple->is<LocalGet>() || tuple->is<LocalSet>() ||
-        tuple->is<GlobalGet>()) {
-      extractedGets.insert({tuple, extract->index});
-    }
-  }
-}
+InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
+  struct ScratchLocalFinder : PostWalker<ScratchLocalFinder> {
+    BinaryInstWriter& parent;
+    InsertOrderedMap<Type, Index> scratches;
 
-void BinaryInstWriter::setScratchLocals() {
-  Index index = func->getVarIndexBase();
-  for (auto& localType : localTypes) {
-    index += numLocalsByType[localType];
-    if (scratchLocals.find(localType) != scratchLocals.end()) {
-      scratchLocals[localType] = index - 1;
+    ScratchLocalFinder(BinaryInstWriter& parent) : parent(parent) {}
+
+    void visitTupleExtract(TupleExtract* curr) {
+      if (curr->type == Type::unreachable) {
+        // We will not emit this instruction anyway.
+        return;
+      }
+      // Extracts from locals or globals are optimizable and do not require
+      // scratch locals. Record them.
+      auto* tuple = curr->tuple;
+      if (tuple->is<LocalGet>() || tuple->is<LocalSet>() ||
+          tuple->is<GlobalGet>()) {
+        parent.extractedGets.insert({tuple, curr->index});
+        return;
+      }
+      // Include a scratch register for each type of tuple.extract with nonzero
+      // index present.
+      if (curr->index != 0) {
+        auto& count = scratches[curr->type];
+        count = std::max(count, 1u);
+      }
     }
+
+    void visitStringWTF16Get(StringWTF16Get* curr) {
+      if (curr->type == Type::unreachable) {
+        return;
+      }
+      // If `pos` already a local.get, we can defer emitting that local.get
+      // instead of using a scratch local.
+      if (auto* get = curr->pos->dynCast<LocalGet>()) {
+        parent.deferredGets.insert(get);
+        return;
+      }
+      // Scratch local to hold the `pos` value while we emit a stringview
+      // conversion for the `ref` value.
+      auto& count = scratches[Type::i32];
+      count = std::max(count, 1u);
+    }
+
+    void visitStringSliceWTF(StringSliceWTF* curr) {
+      if (curr->type == Type::unreachable) {
+        return;
+      }
+      // If `start` or `end` are already local.gets, we can defer emitting those
+      // gets instead of using scratch locals.
+      Index numScratches = 2;
+      if (auto* get = curr->start->dynCast<LocalGet>()) {
+        parent.deferredGets.insert(get);
+        --numScratches;
+      }
+      if (auto* get = curr->end->dynCast<LocalGet>()) {
+        parent.deferredGets.insert(get);
+        --numScratches;
+      }
+      // Scratch locals to hold the `start` and `end` values while we emit a
+      // stringview conversion for the `ref` value.
+      auto& count = scratches[Type::i32];
+      count = std::max(count, numScratches);
+    }
+
+    // As mentioned in BinaryInstWriter::visitBreak, the type of br_if with a
+    // value may be more refined in Binaryen IR compared to the wasm spec, as we
+    // give it the type of the value, while the spec gives it the type of the
+    // block it targets. To avoid problems we must handle the case where a br_if
+    // has a value, the value is more refined then the target, and the value is
+    // not dropped (the last condition is very rare in real-world wasm, making
+    // all of this a quite unusual situation). First, detect such situations by
+    // seeing if we have br_ifs that return reference types at all. We do so by
+    // counting them, and as we go we ignore ones that are dropped, since a
+    // dropped value is not a problem for us.
+    //
+    // Note that we do not check all the conditions here, such as if the type
+    // matches the break target, or if the parent is a cast, which we leave for
+    // a more expensive analysis later, which we only run if we see something
+    // suspicious here.
+    Index numDangerousBrIfs = 0;
+
+    void visitBreak(Break* curr) {
+      if (curr->type.hasRef()) {
+        numDangerousBrIfs++;
+      }
+    }
+
+    void visitDrop(Drop* curr) {
+      if (curr->value->is<Break>() && curr->value->type.hasRef()) {
+        // The value is exactly a br_if of a ref, that we just visited before
+        // us. Undo the ++ from there as it can be ignored.
+        assert(numDangerousBrIfs > 0);
+        numDangerousBrIfs--;
+      }
+    }
+  } finder(*this);
+  finder.walk(func->body);
+
+  if (!finder.numDangerousBrIfs || !parent.getModule()->features.hasGC()) {
+    // Nothing more to do: either no such br_ifs, or GC is not enabled.
+    //
+    // The explicit check for GC is here because if only reference types are
+    // enabled then we still may seem to need a fixup here, e.g. if a ref.func
+    // is br_if'd to a block of type funcref. But that only appears that way
+    // because in Binaryen IR we allow non-nullable types even without GC (and
+    // if GC is not enabled then we always emit nullable types in the binary).
+    // That is, even if we see a type difference without GC, it will vanish in
+    // the binary format; there is never a need to add any ref.casts without GC
+    // being enabled.
+    return std::move(finder.scratches);
   }
+
+  // There are dangerous-looking br_ifs, so we must do the harder work to
+  // actually investigate them in detail, including tracking block types. By
+  // being fully precise here, we'll only emit casts when absolutely necessary,
+  // which avoids repeated roundtrips adding more and more code.
+  struct RefinementScanner : public ExpressionStackWalker<RefinementScanner> {
+    BinaryInstWriter& writer;
+    ScratchLocalFinder& finder;
+
+    RefinementScanner(BinaryInstWriter& writer, ScratchLocalFinder& finder)
+      : writer(writer), finder(finder) {}
+
+    void visitBreak(Break* curr) {
+      // See if this is one of the dangerous br_ifs we must handle.
+      if (!curr->type.hasRef()) {
+        // Not even a reference.
+        return;
+      }
+      auto* parent = getParent();
+      if (parent) {
+        if (parent->is<Drop>()) {
+          // It is dropped anyhow.
+          return;
+        }
+        if (auto* cast = parent->dynCast<RefCast>()) {
+          if (Type::isSubType(cast->type, curr->type)) {
+            // It is cast to the same type or a better one. In particular this
+            // handles the case of repeated roundtripping: After the first
+            // roundtrip we emit a cast that we'll identify here, and not emit
+            // an additional one.
+            return;
+          }
+        }
+      }
+      auto* breakTarget = findBreakTarget(curr->name);
+      auto unrefinedType = breakTarget->type;
+      if (unrefinedType == curr->type) {
+        // It has the proper type anyhow.
+        return;
+      }
+
+      // Mark the br_if as needing handling, and add the type to the set of
+      // types we need scratch tuple locals for (if relevant).
+      writer.brIfsNeedingHandling[curr] = unrefinedType;
+
+      if (unrefinedType.isTuple()) {
+        // We must allocate enough scratch locals for this tuple. Note that we
+        // may need more than one per type in the tuple, if a type appears more
+        // than once, so we count their appearances.
+        InsertOrderedMap<Type, Index> scratchTypeUses;
+        for (auto t : unrefinedType) {
+          scratchTypeUses[t]++;
+        }
+        for (auto& [type, uses] : scratchTypeUses) {
+          auto& count = finder.scratches[type];
+          count = std::max(count, uses);
+        }
+      }
+    }
+  } refinementScanner(*this, finder);
+  refinementScanner.walk(func->body);
+
+  return std::move(finder.scratches);
 }
 
 void BinaryInstWriter::emitMemoryAccess(size_t alignment,

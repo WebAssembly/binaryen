@@ -91,7 +91,7 @@ int main(int argc, const char* argv[]) {
   std::string inputSourceMapFilename;
   std::string outputSourceMapFilename;
   std::string outputSourceMapUrl;
-  bool experimentalNewEH = false;
+  bool emitExnref = false;
 
   const std::string WasmOptOption = "wasm-opt options";
 
@@ -241,15 +241,19 @@ int main(int argc, const char* argv[]) {
                     })
     .add("--experimental-new-eh",
          "",
+         "Deprecated; same as --emit-exnref",
+         WasmOptOption,
+         Options::Arguments::Zero,
+         [&emitExnref](Options*, const std::string&) { emitExnref = true; })
+    .add("--emit-exnref",
+         "",
          "After running all requested transformations / optimizations, "
          "translate the instruction to use the new EH instructions at the end. "
          "Depending on the optimization level specified, this may do some more "
          "post-translation optimizations.",
          WasmOptOption,
          Options::Arguments::Zero,
-         [&experimentalNewEH](Options*, const std::string&) {
-           experimentalNewEH = true;
-         });
+         [&emitExnref](Options*, const std::string&) { emitExnref = true; });
   options.parse(argc, argv);
 
   Module wasm;
@@ -356,11 +360,10 @@ int main(int argc, const char* argv[]) {
     std::cout << "[extra-fuzz-command first output:]\n" << firstOutput << '\n';
   }
 
-  bool translateToNewEH =
-    wasm.features.hasExceptionHandling() && experimentalNewEH;
+  bool translateToExnref = wasm.features.hasExceptionHandling() && emitExnref;
 
   if (!options.runningPasses()) {
-    if (!options.quiet && !translateToNewEH) {
+    if (!options.quiet && !translateToExnref) {
       std::cerr << "warning: no passes specified, not doing any work\n";
     }
   } else {
@@ -397,12 +400,10 @@ int main(int argc, const char* argv[]) {
     }
   }
 
-  if (translateToNewEH) {
+  if (translateToExnref) {
     BYN_TRACE("translating to new EH instructions...\n");
     PassRunner runner(&wasm, options.passOptions);
-    runner.add("translate-to-new-eh");
-    // Perform Stack IR optimizations here, at the very end of the
-    // optimization pipeline.
+    runner.add("translate-to-exnref");
     runner.run();
     if (options.passOptions.validate) {
       bool valid = WasmValidator().validate(wasm, options.passOptions);

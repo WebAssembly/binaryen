@@ -146,18 +146,39 @@ private:
   // type => number of locals of that type in the compact form
   std::unordered_map<Type, size_t> numLocalsByType;
 
-  void noteLocalType(Type type);
+  void noteLocalType(Type type, Index count = 1);
 
   // Keeps track of the binary index of the scratch locals used to lower
-  // tuple.extract.
+  // tuple.extract. If there are multiple scratch locals of the same type, they
+  // are contiguous and this map holds the index of the first.
   InsertOrderedMap<Type, Index> scratchLocals;
-  void countScratchLocals();
-  void setScratchLocals();
+  // Return the type and number of required scratch locals.
+  InsertOrderedMap<Type, Index> countScratchLocals();
 
-  // local.get, local.tee, and glboal.get expressions that will be followed by
+  // local.get, local.tee, and global.get expressions that will be followed by
   // tuple.extracts. We can optimize these by getting only the local for the
   // extracted index.
   std::unordered_map<Expression*, Index> extractedGets;
+
+  // As an optimization, we do not need to use scratch locals for StringWTF16Get
+  // and StringSliceWTF if their non-string operands are already LocalGets.
+  // Record those LocalGets here.
+  std::unordered_set<LocalGet*> deferredGets;
+
+  // Track which br_ifs need handling of their output values, which is the case
+  // when they have a value that is more refined than the wasm type system
+  // allows atm (and they are not dropped, in which case the type would not
+  // matter). See https://github.com/WebAssembly/binaryen/pull/6390 for more on
+  // the difference. As a result of the difference, we will insert extra casts
+  // to ensure validation in the wasm spec. The wasm spec will hopefully improve
+  // to use the more refined type as well, which would remove the need for this
+  // hack.
+  //
+  // Each br_if present as a key here is mapped to the unrefined type for it.
+  // That is, the br_if has a type in Binaryen IR that is too refined, and the
+  // map contains the unrefined one (which we need to know the local types, as
+  // we'll stash the unrefined values and then cast them).
+  std::unordered_map<Break*, Type> brIfsNeedingHandling;
 };
 
 // Takes binaryen IR and converts it to something else (binary or stack IR)
@@ -542,6 +563,7 @@ private:
   void removeAt(Index i);
   Index getNumConsumedValues(StackInst* inst);
   bool canRemoveSetGetPair(Index setIndex, Index getIndex);
+  std::unordered_set<LocalGet*> findStringViewDeferredGets();
 };
 
 // Generate and emit StackIR.

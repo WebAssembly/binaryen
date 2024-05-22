@@ -573,59 +573,24 @@ enum BrOnOp {
 };
 
 enum StringNewOp {
-  // Linear memory
-  StringNewUTF8,
-  StringNewWTF8,
-  StringNewLossyUTF8,
-  StringNewWTF16,
-  // GC
-  StringNewUTF8Array,
-  StringNewWTF8Array,
   StringNewLossyUTF8Array,
   StringNewWTF16Array,
-  // Other
   StringNewFromCodePoint,
 };
 
 enum StringMeasureOp {
   StringMeasureUTF8,
-  StringMeasureWTF8,
   StringMeasureWTF16,
-  StringMeasureIsUSV,
-  StringMeasureWTF16View,
-  StringMeasureHash,
 };
 
 enum StringEncodeOp {
-  StringEncodeUTF8,
-  StringEncodeLossyUTF8,
-  StringEncodeWTF8,
-  StringEncodeWTF16,
-  StringEncodeUTF8Array,
   StringEncodeLossyUTF8Array,
-  StringEncodeWTF8Array,
   StringEncodeWTF16Array,
 };
 
 enum StringEqOp {
   StringEqEqual,
   StringEqCompare,
-};
-
-enum StringAsOp {
-  StringAsWTF8,
-  StringAsWTF16,
-  StringAsIter,
-};
-
-enum StringIterMoveOp {
-  StringIterMoveAdvance,
-  StringIterMoveRewind,
-};
-
-enum StringSliceWTFOp {
-  StringSliceWTF8,
-  StringSliceWTF16,
 };
 
 //
@@ -736,13 +701,8 @@ public:
     StringEncodeId,
     StringConcatId,
     StringEqId,
-    StringAsId,
-    StringWTF8AdvanceId,
     StringWTF16GetId,
-    StringIterNextId,
-    StringIterMoveId,
     StringSliceWTFId,
-    StringSliceIterId,
     ContBindId,
     ContNewId,
     ResumeId,
@@ -1305,10 +1265,8 @@ public:
   MemorySize() { type = Type::i32; }
   MemorySize(MixedArena& allocator) : MemorySize() {}
 
-  Type ptrType = Type::i32;
   Name memory;
 
-  void make64();
   void finalize();
 };
 
@@ -1318,10 +1276,8 @@ public:
   MemoryGrow(MixedArena& allocator) : MemoryGrow() {}
 
   Expression* delta = nullptr;
-  Type ptrType = Type::i32;
   Name memory;
 
-  void make64();
   void finalize();
 };
 
@@ -1825,20 +1781,13 @@ public:
 
   StringNewOp op;
 
-  // In linear memory variations this is the pointer in linear memory. In the
-  // GC variations this is an Array. In from_codepoint this is the code point.
-  Expression* ptr;
-
-  // Used only in linear memory variations.
-  Expression* length = nullptr;
+  // In the GC variations this is an Array. In from_codepoint this is the code
+  // point.
+  Expression* ref;
 
   // Used only in GC variations.
   Expression* start = nullptr;
   Expression* end = nullptr;
-
-  // The "try" variants will return null if an encoding error happens, rather
-  // than trap.
-  bool try_ = false;
 
   void finalize();
 };
@@ -1874,16 +1823,9 @@ public:
   StringEncode(MixedArena& allocator) {}
 
   StringEncodeOp op;
-
-  Expression* ref;
-
-  // In linear memory variations this is the pointer in linear memory. In the
-  // GC variations this is an Array.
-  Expression* ptr;
-
-  // Used only in GC variations, where it is the index in |ptr| to start
-  // encoding from.
-  Expression* start = nullptr;
+  Expression* str;
+  Expression* array;
+  Expression* start;
 
   void finalize();
 };
@@ -1912,31 +1854,6 @@ public:
   void finalize();
 };
 
-class StringAs : public SpecificExpression<Expression::StringAsId> {
-public:
-  StringAs() = default;
-  StringAs(MixedArena& allocator) {}
-
-  StringAsOp op;
-
-  Expression* ref;
-
-  void finalize();
-};
-
-class StringWTF8Advance
-  : public SpecificExpression<Expression::StringWTF8AdvanceId> {
-public:
-  StringWTF8Advance() = default;
-  StringWTF8Advance(MixedArena& allocator) {}
-
-  Expression* ref;
-  Expression* pos;
-  Expression* bytes;
-
-  void finalize();
-};
-
 class StringWTF16Get : public SpecificExpression<Expression::StringWTF16GetId> {
 public:
   StringWTF16Get() = default;
@@ -1948,54 +1865,14 @@ public:
   void finalize();
 };
 
-class StringIterNext : public SpecificExpression<Expression::StringIterNextId> {
-public:
-  StringIterNext() = default;
-  StringIterNext(MixedArena& allocator) {}
-
-  Expression* ref;
-
-  void finalize();
-};
-
-class StringIterMove : public SpecificExpression<Expression::StringIterMoveId> {
-public:
-  StringIterMove() = default;
-  StringIterMove(MixedArena& allocator) {}
-
-  // Whether the movement is to advance or reverse.
-  StringIterMoveOp op;
-
-  Expression* ref;
-
-  // How many codepoints to advance or reverse.
-  Expression* num;
-
-  void finalize();
-};
-
 class StringSliceWTF : public SpecificExpression<Expression::StringSliceWTFId> {
 public:
   StringSliceWTF() = default;
   StringSliceWTF(MixedArena& allocator) {}
 
-  StringSliceWTFOp op;
-
   Expression* ref;
   Expression* start;
   Expression* end;
-
-  void finalize();
-};
-
-class StringSliceIter
-  : public SpecificExpression<Expression::StringSliceIterId> {
-public:
-  StringSliceIter() = default;
-  StringSliceIter(MixedArena& allocator) {}
-
-  Expression* ref;
-  Expression* num;
 
   void finalize();
 };
@@ -2167,7 +2044,9 @@ public:
                    : columnNumber < other.columnNumber;
     }
   };
-  std::unordered_map<Expression*, DebugLocation> debugLocations;
+  // One can explicitly set the debug location of an expression to
+  // nullopt to stop the propagation of debug locations.
+  std::unordered_map<Expression*, std::optional<DebugLocation>> debugLocations;
   std::set<DebugLocation> prologLocation;
   std::set<DebugLocation> epilogLocation;
 

@@ -962,27 +962,17 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitStringNew(StringNew* curr,
                       std::optional<HeapType> ht = std::nullopt) {
     switch (curr->op) {
-      case StringNewUTF8:
-      case StringNewWTF8:
-      case StringNewLossyUTF8:
-      case StringNewWTF16:
-        // TODO: This should be notePointer, but we don't have a memory.
-        note(&curr->ptr, Type::i32);
-        note(&curr->length, Type::i32);
-        return;
-      case StringNewUTF8Array:
-      case StringNewWTF8Array:
       case StringNewLossyUTF8Array:
       case StringNewWTF16Array:
         if (!ht) {
-          ht = curr->ptr->type.getHeapType();
+          ht = curr->ref->type.getHeapType();
         }
-        note(&curr->ptr, Type(*ht, Nullable));
+        note(&curr->ref, Type(*ht, Nullable));
         note(&curr->start, Type::i32);
         note(&curr->end, Type::i32);
         return;
       case StringNewFromCodePoint:
-        note(&curr->ptr, Type::i32);
+        note(&curr->ref, Type::i32);
         return;
     }
     WASM_UNREACHABLE("unexpected op");
@@ -991,36 +981,17 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitStringConst(StringConst* curr) {}
 
   void visitStringMeasure(StringMeasure* curr) {
-    if (curr->op == StringMeasureWTF16View) {
-      note(&curr->ref, Type(HeapType::stringview_wtf16, Nullable));
-    } else {
-      note(&curr->ref, Type(HeapType::string, Nullable));
-    }
+    note(&curr->ref, Type(HeapType::string, Nullable));
   }
 
   void visitStringEncode(StringEncode* curr,
                          std::optional<HeapType> ht = std::nullopt) {
-    note(&curr->ref, Type(HeapType::string, Nullable));
-    switch (curr->op) {
-      case StringEncodeUTF8:
-      case StringEncodeLossyUTF8:
-      case StringEncodeWTF8:
-      case StringEncodeWTF16:
-        // TODO: This should be notePointer, but we don't have a memory.
-        note(&curr->ptr, Type::i32);
-        return;
-      case StringEncodeUTF8Array:
-      case StringEncodeLossyUTF8Array:
-      case StringEncodeWTF8Array:
-      case StringEncodeWTF16Array:
-        if (!ht) {
-          ht = curr->ptr->type.getHeapType();
-        }
-        note(&curr->ptr, Type(*ht, Nullable));
-        note(&curr->start, Type::i32);
-        return;
+    if (!ht) {
+      ht = curr->array->type.getHeapType();
     }
-    WASM_UNREACHABLE("unexpected op");
+    note(&curr->str, Type(HeapType::string, Nullable));
+    note(&curr->array, Type(*ht, Nullable));
+    note(&curr->start, Type::i32);
   }
 
   void visitStringConcat(StringConcat* curr) {
@@ -1035,46 +1006,15 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->right, stringref);
   }
 
-  void visitStringAs(StringAs* curr) {
-    note(&curr->ref, Type(HeapType::string, Nullable));
-  }
-
-  void visitStringWTF8Advance(StringWTF8Advance* curr) {
-    note(&curr->ref, Type(HeapType::stringview_wtf8, Nullable));
-    note(&curr->pos, Type::i32);
-    note(&curr->bytes, Type::i32);
-  }
-
   void visitStringWTF16Get(StringWTF16Get* curr) {
-    note(&curr->ref, Type(HeapType::stringview_wtf16, Nullable));
+    note(&curr->ref, Type(HeapType::string, Nullable));
     note(&curr->pos, Type::i32);
-  }
-
-  void visitStringIterNext(StringIterNext* curr) {
-    note(&curr->ref, Type(HeapType::stringview_iter, Nullable));
-  }
-
-  void visitStringIterMove(StringIterMove* curr) {
-    note(&curr->ref, Type(HeapType::stringview_iter, Nullable));
-    note(&curr->num, Type::i32);
   }
 
   void visitStringSliceWTF(StringSliceWTF* curr) {
-    switch (curr->op) {
-      case StringSliceWTF8:
-        note(&curr->ref, Type(HeapType::stringview_wtf8, Nullable));
-        break;
-      case StringSliceWTF16:
-        note(&curr->ref, Type(HeapType::stringview_wtf16, Nullable));
-        break;
-    }
+    note(&curr->ref, Type(HeapType::string, Nullable));
     note(&curr->start, Type::i32);
     note(&curr->end, Type::i32);
-  }
-
-  void visitStringSliceIter(StringSliceIter* curr) {
-    note(&curr->ref, Type(HeapType::stringview_iter, Nullable));
-    note(&curr->num, Type::i32);
   }
 
   void visitContBind(ContBind* curr) {
