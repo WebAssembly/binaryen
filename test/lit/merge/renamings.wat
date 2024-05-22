@@ -23,21 +23,20 @@
 
   ;; CHECK:      (import "elsewhere" "some.tag" (tag $imported (param f64)))
 
-  ;; CHECK:      (global $bar_2 i32 (i32.const 4))
-
-  ;; CHECK:      (global $other i32 (i32.const 3))
-
-  ;; CHECK:      (global $bar i32 (i32.const 2))
-
   ;; CHECK:      (global $foo i32 (i32.const 1))
   (global $foo i32 (i32.const 1))
 
   ;; This global has a conflict in second.wat, and so second.wat's $bar
   ;; will be renamed.
+  ;; CHECK:      (global $bar i32 (i32.const 2))
   (global $bar i32 (i32.const 2))
 
   ;; This memory has a conflict in second.wat, and so second.wat's $foo
   ;; will be renamed.
+  ;; CHECK:      (global $other i32 (i32.const 3))
+
+  ;; CHECK:      (global $bar_2 i32 (i32.const 4))
+
   ;; CHECK:      (memory $foo 10 20)
   (memory $foo 10 20)
 
