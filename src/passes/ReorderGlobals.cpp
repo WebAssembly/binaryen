@@ -25,10 +25,10 @@
 //
 // The "always" variant of this pass will always sort globals, even if there are
 // so few they all fit in a single LEB. In "always" mode we sort regardless and
-// we measure size by considering each subsequent index to have a higher cost,
-// unlike the more realistic way non-always works, which is that the size only
-// increases when we actually increase the LEB size. "Always" is mainly useful
-// for testing.
+// we measure size by considering each subsequent index to have a higher cost.
+// That is, in reality the size of all globals up to 128 is a single byte, and
+// then the LEB grows to 2, while in "always" mode we increase the size by 1/128
+// for each global in a smooth manner. "Always" is mainly useful for testing.
 //
 
 #include "memory"
@@ -39,6 +39,7 @@
 
 namespace wasm {
 
+// We'll count uses in parallel.
 using AtomicNameCountMap = std::unordered_map<Name, std::atomic<Index>>;
 
 struct UseCountScanner : public WalkerPass<PostWalker<UseCountScanner>> {
@@ -67,12 +68,6 @@ private:
 };
 
 struct ReorderGlobals : public Pass {
-  // Whether to always reorder globals, even if there are very few and the
-  // benefit is minor. That is useful for testing, and also internally in passes
-  // that use us to reorder them so dependencies appear first (that is, if a
-  // pass ends up with an earlier global reading a later one, the sorting in
-  // this pass will reorder them properly; we need to take those dependencies
-  // into account anyhow here).
   bool always;
 
   ReorderGlobals(bool always) : always(always) {}
@@ -93,7 +88,7 @@ struct ReorderGlobals : public Pass {
   //   (global $b i32 (global.get $a)) ;; $b depends on $a; $a must be first
   //
   // To do so we construct a map from each global to those it depends on. We
-  // also build the reverse map, of those that it is depended on from.
+  // also build the reverse map, of those that it is depended upon by.
   struct Dependencies {
     std::unordered_map<Index, std::unordered_set<Index>> dependsOn;
     std::unordered_map<Index, std::unordered_set<Index>> dependedUpon;
@@ -108,6 +103,7 @@ struct ReorderGlobals : public Pass {
       // that this is the common case with wasm MVP modules where the only
       // globals are typically the stack pointer and perhaps a handful of others
       // (however, features like wasm GC there may be a great many globals).
+      // TODO: we still need to sort here to fix dependencies sometimes
       return;
     }
 
@@ -146,7 +142,9 @@ struct ReorderGlobals : public Pass {
       }
     }
 
-    // Compute some sorting options.
+    // Compute various sorting options. All the options use a variation of the
+    // algorithm in doSort() below, see there for more details; the only
+    // difference between the sorts is in the use counts we provide it.
     struct SortAndSize {
       IndexIndexMap sort;
       double size;
@@ -163,34 +161,36 @@ struct ReorderGlobals : public Pass {
 
     // Compute the closest thing we can to the original, unoptimized sort, by
     // setting all counts to 0 there, so it only takes into account dependencies
-    // and the original ordering.
+    // and the original ordering and nothing else.
     //
     // We put this sort first because if they all end up with equal size we
     // prefer it (as it avoids pointless changes).
     IndexCountMap zeroes(globals.size());
     addOption(zeroes);
 
-    // A pure greedy sort uses the counts as we generated them, that is, at each
-    // point it time it picks the global with the highest count that it can.
+    // A simple sort that uses the counts. As the algorithm in doSort() is
+    // greedy (see below), this is a pure greedy sort (at each point it time it
+    // picks the global with the highest count that it can).
     addOption(counts);
 
-    // Less greedy sorts that add the counts of children to each global. That
-    // is, we are picking in a greedy manner but our decision depends on the
-    // potential later benefits - each global's count is influenced by the total
-    // count of what it can unlock. We try two approaches here: a simple sum,
-    // where we add the children, and an exponential dropoff where we add only
-    // half the children's counts recursively (which approximates the fact that
-    // we focus less on the children's counts, which may depend on more than the
-    // current global). The specific exponential factor used here was found best
-    // on J2CL output.
+    // We can make the sort less greedy by adding to each global's count some of
+    // the count of its children. Then we'd still be picking in a greedy manner
+    // but our choices would be influenced by the bigger picture of what can be
+    // unlocked by emitting a particular global (it may have a low count itself,
+    // but allow emitting something that depends on it that has a high count).
+    // We try two variations of this, one which is a simple sum (add the
+    // dependent's counts to the global's) and one which exponentially decreases
+    // them (that is, we add a small multiple of the dependent's counts, which
+    // may help as the dependents also depend on other things potentially, so a
+    // simple sum may be too naive).
     double const EXPONENTIAL_FACTOR = 0.095;
     IndexCountMap sumCounts(globals.size()), exponentialCounts(globals.size());
-    // Track which globals have been computed.
-    std::vector<bool> computed(globals.size());
     // We add items to |sumCounts, exponentialCounts| after they are computed,
     // so anything not there must be pushed to a stack before we can handle it.
     std::vector<Index> stack;
-    // Do a simple recursion to compute children before parents.
+    // Do a simple recursion to compute children before parents, while tracking
+    // which have been computed.
+    std::vector<bool> computed(globals.size());
     for (Index i = 0; i < globals.size(); i++) {
       stack.push_back(i);
     }
@@ -226,7 +226,7 @@ struct ReorderGlobals : public Pass {
     addOption(sumCounts);
     addOption(exponentialCounts);
 
-    // Pick the best.
+    // Pick the best out of all the options we computed.
     IndexIndexMap* best = nullptr;
     double bestSize;
     for (auto& [sort, size] : options) {
@@ -264,9 +264,8 @@ struct ReorderGlobals : public Pass {
     // the list of available globals in heap form we can simply pop the largest
     // from the heap each time, and add new available ones as they become so.
     //
-    // Other approaches here could be to do a topological sort, but we do need
-    // this fully general algorithm, because the optimal order may not require
-    // strict ordering by topological depth, e.g.:
+    // Other approaches here could be to do a topological sort, but the optimal
+    // order may not require strict ordering by topological depth, e.g.:
     /*
     //     $c - $a
     //    /
@@ -284,8 +283,8 @@ struct ReorderGlobals : public Pass {
     // The greedy approach here may also be unoptimal, however. Consider that we
     // might see that the best available global is $a, but if we popped $b
     // instead that could unlock $c which depends on $b, and $c may have a much
-    // higher use count than $a. This algorithm often does well, however, and it
-    // runs in linear time in the size of the input.
+    // higher use count than $a. For that reason we try several variations of
+    // this with different counts, see earlier.
     std::vector<Index> availableHeap;
 
     // Comparison function. This is used in a heap, where "highest" means
@@ -362,9 +361,9 @@ struct ReorderGlobals : public Pass {
     return sortedindices;
   }
 
-  // Given an indexing of the globals (a map from their names to the index of
-  // each one, and the counts of how many times each appears, estimate the size
-  // of relevant parts of the wasm binary (that is, of LEBs in global.gets).
+  // Given an indexing of the globals and the counts of how many times each is
+  // used, estimate the size of relevant parts of the wasm binary (that is, of
+  // LEBs in global.gets).
   double computeSize(IndexIndexMap& indices, IndexCountMap& counts) {
     // |indices| maps each old index to its new position in the sort. We need
     // the reverse map here, which at index 0 has the old index of the global
@@ -381,12 +380,12 @@ struct ReorderGlobals : public Pass {
 
     if (always) {
       // In this mode we gradually increase the cost of later globals, in an
-      // unrealistic manner.
+      // unrealistic but manner.
       double total = 0;
       for (Index i = 0; i < actualOrder.size(); i++) {
-        // Multiple the count for this global by a smoothed LEB factor, which
-        // starts at 1, for 1 byte, at 0, and then increases linearly with i,
-        // so that after 128 globals we reach 2 (which is the true index at
+        // Multiply the count for this global by a smoothed LEB factor, which
+        // starts at 1 (for 1 byte) at index 0, and then increases linearly with
+        // i, so that after 128 globals we reach 2 (which is the true index at
         // which the LEB size normally jumps from 1 to 2), and so forth.
         total += counts[actualOrder[i]] * (1.0 + (i / 128.0));
       }
