@@ -223,7 +223,7 @@ struct ReorderGlobals : public Pass {
       computed[global] = true;
     }
     addOption(sumCounts);
-    addOption(exponentialCounts); // this seems the best. should we only run it, for speed? disable others and see if any test fails. Also use indices and not maps for speeed
+    addOption(exponentialCounts);
 
     // Pick the best.
     IndexIndexMap* best = nullptr;
