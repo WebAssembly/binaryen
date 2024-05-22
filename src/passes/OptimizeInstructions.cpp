@@ -4925,8 +4925,7 @@ private:
     auto* csize = memFill->size->cast<Const>();
     auto bytes = csize->value.getInteger();
 
-    if (bytes == 0LL &&
-        options.trapsNeverHappen) {
+    if (bytes == 0LL && options.trapsNeverHappen) {
       // memory.fill(d, v, 0)  ==>  { drop(d), drop(v) }
       return builder.makeBlock(
         {builder.makeDrop(memFill->dest), builder.makeDrop(memFill->value)});
