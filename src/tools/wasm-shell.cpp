@@ -204,8 +204,7 @@ struct Shell {
   }
 
   ActionResult doAction(Action& act) {
-    [[maybe_unused]] ModuleRunner* instance = instances[lastModule].get();
-    assert(instance);
+    assert(instances[lastModule].get());
     if (auto* invoke = std::get_if<InvokeAction>(&act)) {
       auto it = instances.find(invoke->base ? *invoke->base : lastModule);
       if (it == instances.end()) {
