@@ -558,11 +558,6 @@
 ;; CHECK-NEXT:                                                 inlining is disabled) (default:
 ;; CHECK-NEXT:                                                 0)
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --ignore-implicit-traps,-iit                  Optimize under the helpful
-;; CHECK-NEXT:                                                 assumption that no surprising
-;; CHECK-NEXT:                                                 traps occur (from load, div/mod,
-;; CHECK-NEXT:                                                 etc.)
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --traps-never-happen,-tnh                     Optimize under the helpful
 ;; CHECK-NEXT:                                                 assumption that no trap is
 ;; CHECK-NEXT:                                                 reached at runtime (from load,
