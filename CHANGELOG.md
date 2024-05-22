@@ -42,6 +42,7 @@ Current Trunk
  - The `TraverseCalls` flag for `ExpressionRunner` is removed.
  - Remove the "ignore implicit effects" options. That is replaced by the
    now-mature "traps never happen" option which has proven far more useful.
+   - The C API `BinaryenSideEffectImplicitTrap` is removed.
 
 v117
 ----
