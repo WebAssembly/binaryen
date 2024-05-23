@@ -3926,14 +3926,16 @@ static void validateStart(Module& module, ValidationInfo& info) {
 
 namespace {
 template<typename T, typename U>
-void validateModuleMap(Module& module, ValidationInfo& info, T& list, U method, const std::string& kind) {
+void validateModuleMap(Module& module,
+                       ValidationInfo& info,
+                       T& list,
+                       U method,
+                       const std::string& kind) {
   // The things in the list should be accessible using the get* APIs, which uses
   // the lookup maps.
   for (auto& item : list) {
     if (!((module.*method)(item->name))) {
-      info.fail(kind + " must be found (use updateMaps)",
-                item->name,
-                nullptr);
+      info.fail(kind + " must be found (use updateMaps)", item->name, nullptr);
     }
   }
 
@@ -3944,14 +3946,27 @@ void validateModuleMap(Module& module, ValidationInfo& info, T& list, U method, 
 
 static void validateModuleMaps(Module& module, ValidationInfo& info) {
   // Module maps should be up to date.
-  validateModuleMap(module, info, module.exports, &Module::getExportOrNull, "Export");
-  validateModuleMap(module, info, module.functions, &Module::getFunctionOrNull, "Function");
-  validateModuleMap(module, info, module.globals, &Module::getGlobalOrNull, "Global");
+  validateModuleMap(
+    module, info, module.exports, &Module::getExportOrNull, "Export");
+  validateModuleMap(
+    module, info, module.functions, &Module::getFunctionOrNull, "Function");
+  validateModuleMap(
+    module, info, module.globals, &Module::getGlobalOrNull, "Global");
   validateModuleMap(module, info, module.tags, &Module::getTagOrNull, "tag");
-  validateModuleMap(module, info, module.elementSegments, &Module::getElementSegmentOrNull, "elementSegment");
-  validateModuleMap(module, info, module.memories, &Module::getMemoryOrNull, "Memory");
-  validateModuleMap(module, info, module.dataSegments, &Module::getDataSegmentOrNull, "DataSegment");
-  validateModuleMap(module, info, module.tables, &Module::getTableOrNull, "Table");
+  validateModuleMap(module,
+                    info,
+                    module.elementSegments,
+                    &Module::getElementSegmentOrNull,
+                    "elementSegment");
+  validateModuleMap(
+    module, info, module.memories, &Module::getMemoryOrNull, "Memory");
+  validateModuleMap(module,
+                    info,
+                    module.dataSegments,
+                    &Module::getDataSegmentOrNull,
+                    "DataSegment");
+  validateModuleMap(
+    module, info, module.tables, &Module::getTableOrNull, "Table");
 }
 
 static void validateFeatures(Module& module, ValidationInfo& info) {
