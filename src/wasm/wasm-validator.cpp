@@ -3965,7 +3965,7 @@ static void validateModuleMaps(Module& module, ValidationInfo& info) {
                     info,
                     module.elementSegments,
                     &Module::getElementSegmentOrNull,
-                    "elementSegment");
+                    "ElementSegment");
   validateModuleMap(
     module, info, module.memories, &Module::getMemoryOrNull, "Memory");
   validateModuleMap(module,
