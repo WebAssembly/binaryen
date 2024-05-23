@@ -225,12 +225,12 @@ void TranslateToFuzzReader::setupMemory() {
     segment->memory = memory->name;
     segment->offset = builder.makeConst(int32_t(0));
     segment->setName(Name::fromInt(0), false);
-    wasm.dataSegments.push_back(std::move(segment));
     auto num = upTo(USABLE_MEMORY * 2);
     for (size_t i = 0; i < num; i++) {
       auto value = upTo(512);
-      wasm.dataSegments[0]->data.push_back(value >= 256 ? 0 : (value & 0xff));
+      segment->data.push_back(value >= 256 ? 0 : (value & 0xff));
     }
+    wasm.addDataSegment(std::move(segment));
   }
 }
 
