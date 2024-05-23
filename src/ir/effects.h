@@ -358,6 +358,7 @@ public:
     isAtomic = isAtomic || other.isAtomic;
     throws_ = throws_ || other.throws_;
     danglingPop = danglingPop || other.danglingPop;
+    mayNotReturn = mayNotReturn || other.mayNotReturn;
     for (auto i : other.localsRead) {
       localsRead.insert(i);
     }
