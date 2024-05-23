@@ -3942,7 +3942,7 @@ void validateModuleMap(Module& module,
     } else {
       info.shouldBeEqual(item->name,
                          ptr->name,
-                         item,
+                         item->name,
                          "getter must return the correct item");
     }
   }
