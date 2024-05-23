@@ -3929,13 +3929,21 @@ template<typename T, typename U>
 void validateModuleMap(Module& module,
                        ValidationInfo& info,
                        T& list,
-                       U method,
+                       U getter,
                        const std::string& kind) {
-  // The things in the list should be accessible using the get* APIs, which uses
-  // the lookup maps.
+  // Given a list of module elements (like exports or globals), see that we can
+  // get the items using the getter (getExportorNull, etc.). The getter uses the
+  // lookup map internally, so this validates that they contain all items in
+  // the list.
   for (auto& item : list) {
-    if (!((module.*method)(item->name))) {
+    auto* ptr = (module.*getter)(item->name);
+    if (!ptr) {
       info.fail(kind + " must be found (use updateMaps)", item->name, nullptr);
+    } else {
+      info.shouldBeEqual(item->name,
+                         ptr->name,
+                         item,
+                         "getter must return the correct item");
     }
   }
 
