@@ -224,7 +224,8 @@ void TranslateToFuzzReader::setupMemory() {
     auto segment = builder.makeDataSegment();
     segment->memory = memory->name;
     segment->offset = builder.makeConst(int32_t(0));
-    segment->setName(Name::fromInt(0), false);
+    segment->setName(Names::getValidDataSegmentName(wasm, Name::fromInt(0)),
+                     false);
     auto num = upTo(USABLE_MEMORY * 2);
     for (size_t i = 0; i < num; i++) {
       auto value = upTo(512);
