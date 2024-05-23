@@ -3960,7 +3960,7 @@ static void validateModuleMaps(Module& module, ValidationInfo& info) {
     module, info, module.functions, &Module::getFunctionOrNull, "Function");
   validateModuleMap(
     module, info, module.globals, &Module::getGlobalOrNull, "Global");
-  validateModuleMap(module, info, module.tags, &Module::getTagOrNull, "tag");
+  validateModuleMap(module, info, module.tags, &Module::getTagOrNull, "Tag");
   validateModuleMap(module,
                     info,
                     module.elementSegments,
