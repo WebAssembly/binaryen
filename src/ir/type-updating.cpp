@@ -28,7 +28,7 @@ namespace wasm {
 
 GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm) : wasm(wasm) {}
 
-void GlobalTypeRewriter::update() { mapTypes(rebuildTypes()); }
+void GlobalTypeRewriter::update(const std::vector<HeapType>& additionalPrivateTypes) { mapTypes(rebuildTypes(additionalPrivateTypes)); }
 
 GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   const std::vector<HeapType>& additionalPrivateTypes) {

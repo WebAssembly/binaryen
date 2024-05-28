@@ -291,8 +291,15 @@ struct SignaturePruning : public Pass {
       }
     }
 
-    // Rewrite the types.
-    GlobalTypeRewriter::updateSignatures(newSignatures, *module);
+    // Rewrite the types. We pass in all the types we intend to modify as being
+    // "additional private types" because we have proven above that they are
+    // safe to modify, even if they are technically public (e.g. they may be in
+    // a singleton big rec group that is public because one member is public).
+    std::vector<HeapType> additionalPrivateTypes;
+    for (auto& [type, sig] : newSignatures) {
+      additionalPrivateTypes.push_back(type);
+    }
+    GlobalTypeRewriter::updateSignatures(newSignatures, *module, additionalPrivateTypes);
 
     if (callTargetsToLocalize.empty()) {
       return false;
