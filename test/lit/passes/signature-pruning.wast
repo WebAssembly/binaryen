@@ -1155,7 +1155,9 @@
 ;; $exported is exported. The entire rec group becomes exported as well, which
 ;; causes $unused-param's type to be public, which means we cannot normally
 ;; modify it. However, in closed world we allow such changes, and we can remove
-;; the unused param there.
+;; the unused param there. What happens is that we keep the original public rec
+;; group as-is, and add a new rec group for private types, put the pruned type
+;; there, and use that pruned type on $unused-param.
 (module
   (rec
    ;; CHECK:      (rec
