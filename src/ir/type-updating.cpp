@@ -41,17 +41,9 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   auto privateTypes = ModuleUtils::getPrivateHeapTypes(wasm);
   std::unordered_set<HeapType> privateTypesSet(privateTypes.begin(), privateTypes.end());
 
-for (auto t : privateTypes) {
-std::cout << "P: " << t << " and " << privateTypesSet.count(t) << '\n';
-}
-for (auto t : additionalPrivateTypes) {
-std::cout << "ADDp: " << t << " and " << privateTypesSet.count(t) << '\n';
-}
-
   for (auto t : additionalPrivateTypes) {
     // Only add additional private types that are not already in the list.
     if (!privateTypesSet.count(t)) {
-std::cout << "actually add " << t << " and " << privateTypesSet.count(t) << '\n';
       privateTypes.push_back(t);
       privateTypesSet.insert(t);
     }
@@ -158,7 +150,10 @@ std::cout << "actually add " << t << " and " << privateTypesSet.count(t) << '\n'
   for (auto& [old, new_] : oldToNewTypes) {
     if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
       wasm.typeNames[new_] = it->second;
-      wasm.typeNames[old].name = "old"; // XXX not quite right yet
+      // Erase the old name. This avoids the same name appearing twice if for
+      // some reason the old type is still in use somehow, which can be
+      // confusing during debugging.
+      wasm.typeNames.erase(old);
     }
   }
 
