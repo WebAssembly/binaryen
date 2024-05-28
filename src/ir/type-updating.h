@@ -403,7 +403,10 @@ public:
 
   // Helper for the repeating pattern of just updating Signature types using a
   // map of old heap type => new Signature.
-  static void updateSignatures(const SignatureUpdates& updates, Module& wasm, const std::vector<HeapType>& additionalPrivateTypes = {}) {
+  static void
+  updateSignatures(const SignatureUpdates& updates,
+                   Module& wasm,
+                   const std::vector<HeapType>& additionalPrivateTypes = {}) {
     if (updates.empty()) {
       return;
     }
@@ -412,7 +415,9 @@ public:
       const SignatureUpdates& updates;
 
     public:
-      SignatureRewriter(Module& wasm, const SignatureUpdates& updates, const std::vector<HeapType>& additionalPrivateTypes)
+      SignatureRewriter(Module& wasm,
+                        const SignatureUpdates& updates,
+                        const std::vector<HeapType>& additionalPrivateTypes)
         : GlobalTypeRewriter(wasm), updates(updates) {
         update(additionalPrivateTypes);
       }

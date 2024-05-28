@@ -299,7 +299,8 @@ struct SignaturePruning : public Pass {
     for (auto& [type, sig] : newSignatures) {
       additionalPrivateTypes.push_back(type);
     }
-    GlobalTypeRewriter::updateSignatures(newSignatures, *module, additionalPrivateTypes);
+    GlobalTypeRewriter::updateSignatures(
+      newSignatures, *module, additionalPrivateTypes);
 
     if (callTargetsToLocalize.empty()) {
       return false;
