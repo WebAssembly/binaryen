@@ -43,10 +43,10 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
 
   for (auto t : additionalPrivateTypes) {
     // Only add additional private types that are not already in the list.
-    if (!privateTypesSet.count(t)) {
+//    if (!privateTypesSet.count(t)) {
       privateTypes.push_back(t);
-      privateTypesSet.insert(t);
-    }
+//      privateTypesSet.insert(t);
+//    }
   }
 
   // Topological sort to have supertypes first, but we have to account for the
@@ -150,10 +150,6 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   for (auto& [old, new_] : oldToNewTypes) {
     if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
       wasm.typeNames[new_] = it->second;
-      // Erase the old name. This avoids the same name appearing twice if for
-      // some reason the old type is still in use somehow, which can be
-      // confusing during debugging.
-      wasm.typeNames.erase(old);
     }
   }
 
