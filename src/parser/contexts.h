@@ -1665,7 +1665,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return Ok{};
   }
 
-  Result<> addExport(Index, Name value, Name name, ExternalKind kind) {
+  Result<> addExport(Index pos, Name value, Name name, ExternalKind kind) {
+    if (wasm.getExportOrNull(name)) {
+      return in.err(pos, "duplicate export");
+    }
     wasm.addExport(builder.makeExport(name, value, kind));
     return Ok{};
   }

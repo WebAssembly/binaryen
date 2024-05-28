@@ -420,7 +420,6 @@ public:
     ret->valueType = type;
     ret->memory = memory;
     ret->finalize();
-    assert(ret->value->type.isConcrete() ? ret->value->type == type : true);
     return ret;
   }
   Store* makeAtomicStore(unsigned bytes,

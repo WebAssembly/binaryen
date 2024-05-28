@@ -23,6 +23,7 @@
 #include <variant>
 
 #include "lexer.h"
+#include "support/bits.h"
 #include "support/string.h"
 
 using namespace std::string_view_literals;
@@ -1005,6 +1006,9 @@ std::optional<uint32_t> Lexer::takeAlign() {
     }
     Lexer subLexer(result->span.substr(6));
     if (auto o = subLexer.takeU32()) {
+      if (Bits::popCount(*o) != 1) {
+        return std::nullopt;
+      }
       pos += result->span.size();
       advance();
       return o;

@@ -27,7 +27,7 @@ namespace wasm {
 // CRTP utility that provides an iterator through arbitrary directed acyclic
 // graphs of data that will visit the data in a topologically sorted order
 // (https://en.wikipedia.org/wiki/Topological_sorting). In other words, the
-// iterator will produce each item only after all that items predecessors have
+// iterator will produce each item only after all that item's predecessors have
 // been produced.
 //
 // Subclasses should call `push` on all the root items in their constructors and

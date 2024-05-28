@@ -634,6 +634,8 @@ struct TypeBuilder {
     ForwardSupertypeReference,
     // A child of the type is an invalid forward reference.
     ForwardChildReference,
+    // A continuation reference that does not refer to a function type.
+    InvalidFuncType,
   };
 
   struct Error {

@@ -856,12 +856,6 @@ class CompareVMs(TestCaseHandler):
             def run(self, wasm):
                 return super(D8Turboshaft, self).run(wasm, extra_d8_flags=['--no-liftoff', '--turboshaft-wasm', '--turboshaft-wasm-instruction-selection-staged'])
 
-        class D8TurboFan(D8):
-            name = 'd8_turbofan'
-
-            def run(self, wasm):
-                return super(D8TurboFan, self).run(wasm, extra_d8_flags=['--no-liftoff'])
-
         class Wasm2C:
             name = 'wasm2c'
 
@@ -960,7 +954,6 @@ class CompareVMs(TestCaseHandler):
                     D8(),
                     D8Liftoff(),
                     D8Turboshaft(),
-                    D8TurboFan(),
                     # FIXME: Temprorary disable. See issue #4741 for more details
                     # Wasm2C(),
                     # Wasm2C2Wasm()
