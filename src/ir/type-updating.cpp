@@ -39,9 +39,22 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   // come before their subtypes.
   Index i = 0;
   auto privateTypes = ModuleUtils::getPrivateHeapTypes(wasm);
+  std::unordered_set<HeapType> privateTypesSet(privateTypes.begin(), privateTypes.end());
+
+for (auto t : privateTypes) {
+std::cout << "P: " << t << " and " << privateTypesSet.count(t) << '\n';
+}
+for (auto t : additionalPrivateTypes) {
+std::cout << "ADDp: " << t << " and " << privateTypesSet.count(t) << '\n';
+}
 
   for (auto t : additionalPrivateTypes) {
-    privateTypes.push_back(t);
+    // Only add additional private types that are not already in the list.
+    if (!privateTypesSet.count(t)) {
+std::cout << "actually add " << t << " and " << privateTypesSet.count(t) << '\n';
+      privateTypes.push_back(t);
+      privateTypesSet.insert(t);
+    }
   }
 
   // Topological sort to have supertypes first, but we have to account for the
@@ -145,6 +158,7 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   for (auto& [old, new_] : oldToNewTypes) {
     if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
       wasm.typeNames[new_] = it->second;
+      wasm.typeNames[old].name = "old"; // XXX not quite right yet
     }
   }
 
