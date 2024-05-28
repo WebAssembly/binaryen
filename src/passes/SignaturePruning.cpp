@@ -45,11 +45,6 @@ namespace wasm {
 namespace {
 
 struct SignaturePruning : public Pass {
-  // Maps each heap type to the possible pruned heap type. We will fill this
-  // during analysis and then use it while doing an update of the types. If a
-  // type has no improvement that we can find, it will not appear in this map.
-  std::unordered_map<HeapType, Signature> newSignatures;
-
   void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
@@ -181,6 +176,11 @@ struct SignaturePruning : public Pass {
     // TODO We could handle "cycles" where we remove fields from a group of
     //      types with subtyping relations at once.
     SubTypes subTypes(*module);
+
+    // Maps each heap type to the possible pruned heap type. We will fill this
+    // during analysis and then use it while doing an update of the types. If a
+    // type has no improvement that we can find, it will not appear in this map.
+    std::unordered_map<HeapType, Signature> newSignatures;
 
     // Find parameters to prune.
     //
