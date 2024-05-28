@@ -43,10 +43,10 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
 
   for (auto t : additionalPrivateTypes) {
     // Only add additional private types that are not already in the list.
-//    if (!privateTypesSet.count(t)) {
+    if (!privateTypesSet.count(t)) {
       privateTypes.push_back(t);
-//      privateTypesSet.insert(t);
-//    }
+      privateTypesSet.insert(t);
+    }
   }
 
   // Topological sort to have supertypes first, but we have to account for the
