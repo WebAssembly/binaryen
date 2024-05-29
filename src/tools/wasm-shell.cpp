@@ -55,7 +55,7 @@ struct Shell {
     size_t i = 0;
     for (auto& entry : script) {
       Colors::red(std::cerr);
-      std::cerr << i << ' ';
+      std::cerr << i++ << ' ';
       Colors::normal(std::cerr);
       if (std::get_if<WASTModule>(&entry.cmd)) {
         Colors::green(std::cerr);
@@ -71,7 +71,6 @@ struct Shell {
         std::cerr << "CHECKING [line: " << entry.line << "]\n";
         Colors::normal(std::cerr);
       }
-      ++i;
       CHECK_ERR(runCommand(entry.cmd));
     }
     return Ok{};
