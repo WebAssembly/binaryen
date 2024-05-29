@@ -1,4 +1,3 @@
-
 #!/usr/bin/env python3
 #
 # Copyright 2018 WebAssembly Community Group participants
@@ -722,7 +721,6 @@ def instruction_parser():
             printer.print_line("return Ok{};")
         printer.print_line("}")
         printer.print_line("goto parse_error;")
-
 
     def emit(node, idx=0):
         assert node.children
