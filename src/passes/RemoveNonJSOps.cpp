@@ -46,7 +46,6 @@
 #include "passes/intrinsics-module.h"
 #include "support/insert_ordered.h"
 #include "wasm-builder.h"
-#include "wasm-s-parser.h"
 
 namespace wasm {
 
