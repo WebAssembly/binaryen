@@ -177,7 +177,7 @@ struct SignaturePruning : public Pass {
     //      types with subtyping relations at once.
     SubTypes subTypes(*module);
 
-    // Maps each heap type to the possible pruned heap type. We will fill this
+    // Maps each heap type to the possible pruned signature. We will fill this
     // during analysis and then use it while doing an update of the types. If a
     // type has no improvement that we can find, it will not appear in this map.
     std::unordered_map<HeapType, Signature> newSignatures;
