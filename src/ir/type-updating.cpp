@@ -18,6 +18,7 @@
 #include "find_all.h"
 #include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/utils.h"
 #include "support/topological_sort.h"
 #include "wasm-type-ordering.h"
@@ -141,10 +142,23 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   }
 
   // Update type names (doing it before mapTypes can help debugging there, but
-  // has no other effect; mapTypes does not look at type names).
+  // has no other effect; mapTypes does not look at type names). While doing so
+  // avoid creating duplicate names.
+  std::unordered_set<Name> typeNames;
+  for (auto& [type, info] : wasm.typeNames) {
+    typeNames.insert(info.name);
+  }
   for (auto& [old, new_] : oldToNewTypes) {
     if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
-      wasm.typeNames[new_] = it->second;
+      // Use the existing name in the new type, as usually it completely
+      // replaces the old. Rename the old name in a unique way to avoid
+      // confusion in the case that it remains used.
+      wasm.typeNames[new_] = wasm.typeNames[old];
+      auto deduped = Names::getValidName(wasm.typeNames[old].name, [&](Name test) {
+        return !typeNames.count(test);
+      });
+      wasm.typeNames[old].name = deduped;
+      typeNames.insert(deduped);
     }
   }
 
