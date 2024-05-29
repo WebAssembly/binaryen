@@ -158,7 +158,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
           continue;
         }
 
-        // Check if we may no longer be heading to a trap. Two situations count
+        // Check if we may no longer be heading to a trap. We can only optimize
+        // if the trap will actually be reached. Two situations can prevent that
         // here: Control flow might branch away, or we might hang (which can
         // happen in a call or a loop).
         //
