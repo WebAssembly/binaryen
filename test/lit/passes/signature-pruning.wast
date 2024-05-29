@@ -1151,3 +1151,52 @@
     )
   )
 )
+
+;; $exported is exported. The entire rec group becomes exported as well, which
+;; causes $unused-param's type to be public, which means we cannot normally
+;; modify it. However, in closed world we allow such changes, and we can remove
+;; the unused param there. What happens is that we keep the original public rec
+;; group as-is, and add a new rec group for private types, put the pruned type
+;; there, and use that pruned type on $unused-param.
+(module
+  (rec
+   ;; CHECK:      (rec
+   ;; CHECK-NEXT:  (type $much (func))
+
+   ;; CHECK:       (type $1 (func))
+
+   ;; CHECK:      (rec
+   ;; CHECK-NEXT:  (type $none (func))
+   (type $none (func))
+   ;; CHECK:       (type $much (func (param i32)))
+   (type $much (func (param i32)))
+  )
+
+  ;; CHECK:      (export "exported" (func $exported))
+
+  ;; CHECK:      (func $exported (type $none)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $exported (export "exported") (type $none)
+  )
+
+  ;; CHECK:      (func $unused-param (type $much)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local.set $0
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $unused-param (type $much) (param $param i32)
+  )
+
+  ;; CHECK:      (func $caller (type $1)
+  ;; CHECK-NEXT:  (call $unused-param)
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $unused-param
+      (i32.const 0)
+    )
+  )
+)
+
