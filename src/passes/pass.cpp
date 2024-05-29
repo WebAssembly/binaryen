@@ -669,7 +669,13 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
 }
 
 void PassRunner::addDefaultGlobalOptimizationPrePasses() {
+  // Removing duplicate functions is fast and saves work later.
   addIfNoDWARFIssues("duplicate-function-elimination");
+  // Do a global cleanup before anything heavy, as it is fairly fast and can
+  // save a lot of work if there is a significant amount of dead code.
+  if (options.optimizeLevel >= 2) {
+    addIfNoDWARFIssues("remove-unused-module-elements");
+  }
   addIfNoDWARFIssues("memory-packing");
   if (options.optimizeLevel >= 2) {
     addIfNoDWARFIssues("once-reduction");
