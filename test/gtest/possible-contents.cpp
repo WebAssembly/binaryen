@@ -1,7 +1,6 @@
 #include "ir/possible-contents.h"
 #include "ir/subtypes.h"
 #include "parser/wat-parser.h"
-#include "wasm-s-parser.h"
 #include "wasm.h"
 #include "gtest/gtest.h"
 

@@ -25,7 +25,6 @@
 #include "support/colors.h"
 #include "support/command-line.h"
 #include "support/file.h"
-#include "wasm-s-parser.h"
 
 using namespace cashew;
 using namespace wasm;
