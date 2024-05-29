@@ -42,14 +42,17 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   // come before their subtypes.
   Index i = 0;
   auto privateTypes = ModuleUtils::getPrivateHeapTypes(wasm);
-  std::unordered_set<HeapType> privateTypesSet(privateTypes.begin(),
-                                               privateTypes.end());
 
-  for (auto t : additionalPrivateTypes) {
+  if (!additionalPrivateTypes.empty()) {
     // Only add additional private types that are not already in the list.
-    if (!privateTypesSet.count(t)) {
-      privateTypes.push_back(t);
-      privateTypesSet.insert(t);
+    std::unordered_set<HeapType> privateTypesSet(privateTypes.begin(),
+                                                 privateTypes.end());
+
+    for (auto t : additionalPrivateTypes) {
+      if (!privateTypesSet.count(t)) {
+        privateTypes.push_back(t);
+        privateTypesSet.insert(t);
+      }
     }
   }
 
