@@ -150,10 +150,10 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   }
   for (auto& [old, new_] : oldToNewTypes) {
     if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
+      wasm.typeNames[new_] = wasm.typeNames[old];
       // Use the existing name in the new type, as usually it completely
       // replaces the old. Rename the old name in a unique way to avoid
       // confusion in the case that it remains used.
-      wasm.typeNames[new_] = wasm.typeNames[old];
       auto deduped = Names::getValidName(wasm.typeNames[old].name, [&](Name test) {
         return !typeNames.count(test);
       });
