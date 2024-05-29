@@ -28,9 +28,7 @@ Current Trunk
      the PassOptions. As a result `BinaryenModulePrintStackIR` and similar APIs
      do not receive an `optimize` flag, as they read the PassOption
      `optimizeStackIR` instead.
- - The new, standards-compliant text parser is now the default. `wasm-opt` has a
-   `--deprecated-wat-parser` flag that will switch back to using the old text
-   parser, but that option will go away soon.
+ - The new, standards-compliant text parser is now the default.
  - Source map comments on `else` branches must now be placed above the
    instruction inside the `else` branch rather than on the `else` branch itself.
  - Source map locations from instructions are no longer automatically propagated

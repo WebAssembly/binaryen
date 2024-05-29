@@ -2,7 +2,6 @@
 
 #include "parser/wat-parser.h"
 #include "support/colors.h"
-#include "wasm-s-parser.h"
 #include "wasm.h"
 #include "gtest/gtest.h"
 

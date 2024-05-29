@@ -32,7 +32,6 @@
 #include "support/result.h"
 #include "wasm-binary.h"
 #include "wasm-interpreter.h"
-#include "wasm-s-parser.h"
 #include "wasm-validator.h"
 
 using namespace wasm;
