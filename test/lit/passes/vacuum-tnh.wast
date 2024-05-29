@@ -730,7 +730,9 @@
   )
 
   ;; YESTNH:      (func $unreached-infinite-loop (type $0)
-  ;; YESTNH-NEXT:  (nop)
+  ;; YESTNH-NEXT:  (loop $label$1
+  ;; YESTNH-NEXT:   (br $label$1)
+  ;; YESTNH-NEXT:  )
   ;; YESTNH-NEXT: )
   ;; NO_TNH:      (func $unreached-infinite-loop (type $0)
   ;; NO_TNH-NEXT:  (loop $label$1

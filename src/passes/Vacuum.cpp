@@ -159,14 +159,14 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         }
 
         // Check if we may no longer be heading to a trap. Two situations count
-        // here: Control flow might branch, or we might call (since a call might
-        // reach an import; see notes on that in pass.h:trapsNeverHappen).
+        // here: Control flow might branch away, or we might hang (which can
+        // happen in a call or a loop).
         //
         // We also cannot remove a pop as it is necessary for structural
         // reasons.
         EffectAnalyzer effects(getPassOptions(), *getModule(), list[i]);
         if (effects.transfersControlFlow() || effects.calls ||
-            effects.danglingPop) {
+            effects.mayNotReturn || effects.danglingPop) {
           headingToTrap = false;
           continue;
         }
