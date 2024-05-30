@@ -173,9 +173,9 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
       // Use the existing name in the new type, as usually it completely
       // replaces the old. Rename the old name in a unique way to avoid
       // confusion in the case that it remains used.
-      auto deduped = Names::getValidName(wasm.typeNames[old].name, [&](Name test) {
-        return !typeNames.count(test);
-      });
+      auto deduped =
+        Names::getValidName(wasm.typeNames[old].name,
+                            [&](Name test) { return !typeNames.count(test); });
       wasm.typeNames[old].name = deduped;
       typeNames.insert(deduped);
     }
