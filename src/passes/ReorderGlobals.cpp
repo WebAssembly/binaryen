@@ -326,7 +326,7 @@ struct ReorderGlobals : public Pass {
       }
     }
 
-    // Pop off the heap: Emit the global and it its final, sorted index. Keep
+    // Pop off the heap: Emit the global and its final, sorted index. Keep
     // doing that until we finish processing all the globals.
     IndexIndexMap sortedindices(globals.size());
     Index numSortedindices = 0;
