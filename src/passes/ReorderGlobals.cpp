@@ -78,7 +78,9 @@ struct ReorderGlobals : public Pass {
   // each one moves, which is logically a mapping between indices.
   using IndexIndexMap = std::vector<Index>;
 
-  // We will also track counts of uses for each global.
+  // We will also track counts of uses for each global. We use floating-point
+  // values here since while the initial counts are integers, we will be
+  // considering fractional sums of them later.
   using IndexCountMap = std::vector<double>;
 
   // We must take into account dependencies, so that globals appear before
