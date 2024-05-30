@@ -742,7 +742,7 @@
 ;; was moved up to between $b and $c. Sum sort works well here because the
 ;; first comparison is $a and $other, and sum takes into account $b and $c in
 ;; $a's favor, so it wins. Likewise $b and $c win against $other as well, so
-;; the other is $a, $b, $c, $other which is optimal here.
+;; the order is $a, $b, $c, $other which is optimal here.
 (module
   ;; CHECK:      (global $a i32 (i32.const 0))
   (global $a i32 (i32.const 0))
