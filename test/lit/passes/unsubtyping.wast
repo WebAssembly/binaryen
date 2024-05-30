@@ -60,19 +60,17 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
  ;; A function body requires subtyping
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
+ ;; CHECK:       (type $2 (func (result (ref $super))))
 
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
-
- ;; CHECK:       (type $2 (func (result (ref $super_1))))
-
- ;; CHECK:      (func $foo (type $2) (result (ref $super_1))
- ;; CHECK-NEXT:  (struct.new_default $sub_1)
+ ;; CHECK:      (func $foo (type $2) (result (ref $super))
+ ;; CHECK-NEXT:  (struct.new_default $sub)
  ;; CHECK-NEXT: )
  (func $foo (result (ref $super))
   (struct.new $sub)
@@ -80,79 +78,66 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
  ;; A global initializer requires subtyping
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
-
- ;; CHECK:      (global $g1 (ref $super_1) (struct.new_default $sub_1))
+ ;; CHECK:      (global $g1 (ref $super) (struct.new_default $sub))
  (global $g1 (ref $super) (struct.new $sub))
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
+ ;; CHECK:       (type $subsub (sub $sub (struct )))
  (type $subsub (sub $sub (struct)))
 
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
-
- ;; CHECK:       (type $subsub_1 (sub $sub_1 (struct )))
-
- ;; CHECK:      (table $t 1 1 (ref null $super_1))
+ ;; CHECK:      (table $t 1 1 (ref null $super))
  (table $t 1 1 (ref null $super))
 
  ;; An active element segment requires subtyping. So does an element segment
  ;; element.
- ;; CHECK:      (elem $e (table $t) (i32.const 0) (ref null $sub_1) (struct.new_default $subsub_1))
+ ;; CHECK:      (elem $e (table $t) (i32.const 0) (ref null $sub) (struct.new_default $subsub))
  (elem $e (table $t) (offset (i32.const 0)) (ref null $sub) (struct.new $subsub))
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $X (sub (struct )))
  (type $X (sub (struct)))
+ ;; CHECK:       (type $Y (sub $X (struct )))
  (type $Y (sub $X (struct)))
 
+ ;; CHECK:       (type $A (sub (struct (field (ref null $X)))))
  (type $A (sub (struct (ref null $X))))
+ ;; CHECK:       (type $B (sub $A (struct (field (ref null $Y)))))
  (type $B (sub $A (struct (ref null $Y))))
 
  ;; Requiring B <: A also requires X <: Y
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $X_1 (sub (struct )))
-
- ;; CHECK:       (type $Y_1 (sub $X_1 (struct )))
-
- ;; CHECK:       (type $A_1 (sub (struct (field (ref null $X_1)))))
-
- ;; CHECK:       (type $B_1 (sub $A_1 (struct (field (ref null $Y_1)))))
-
- ;; CHECK:      (global $g (ref $A_1) (struct.new_default $B_1))
+ ;; CHECK:      (global $g (ref $A) (struct.new_default $B))
  (global $g (ref $A) (struct.new_default $B))
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $X (sub (struct )))
  (type $X (sub (struct)))
+ ;; CHECK:       (type $Y (sub $X (struct )))
  (type $Y (sub $X (struct)))
 
+ ;; CHECK:       (type $A (sub (array (ref null $X))))
  (type $A (sub (array (field (ref null $X)))))
+ ;; CHECK:       (type $B (sub $A (array (ref null $Y))))
  (type $B (sub $A (array (field (ref null $Y)))))
 
  ;; Transitive dependencies through an array.
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $X_1 (sub (struct )))
-
- ;; CHECK:       (type $Y_1 (sub $X_1 (struct )))
-
- ;; CHECK:       (type $A_1 (sub (array (ref null $X_1))))
-
- ;; CHECK:       (type $B_1 (sub $A_1 (array (ref null $Y_1))))
-
- ;; CHECK:      (global $g (ref $A_1) (array.new_default $B_1
+ ;; CHECK:      (global $g (ref $A) (array.new_default $B
  ;; CHECK-NEXT:  (i32.const 0)
  ;; CHECK-NEXT: ))
  (global $g (ref $A) (array.new_default $B (i32.const 0)))
@@ -160,34 +145,28 @@
 
 (module
  (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $X (sub (struct )))
   (type $X (sub (struct)))
+  ;; CHECK:       (type $Y (sub $X (struct )))
   (type $Y (sub $X (struct)))
 
+  ;; CHECK:       (type $X' (sub (struct )))
   (type $X' (sub (struct)))
+  ;; CHECK:       (type $Y' (sub $X' (struct )))
   (type $Y' (sub $X' (struct)))
 
+  ;; CHECK:       (type $A (sub (func (param (ref $Y')) (result (ref $X)))))
   (type $A (sub (func (param (ref $Y')) (result (ref $X)))))
+  ;; CHECK:       (type $B (sub $A (func (param (ref $X')) (result (ref $Y)))))
   (type $B (sub $A (func (param (ref $X')) (result (ref $Y)))))
  )
 
  ;; Transitive dependencies through a function type.
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $X_0_0 (sub (struct )))
-
- ;; CHECK:       (type $Y_0_0 (sub $X_0_0 (struct )))
-
- ;; CHECK:       (type $X'_0_0 (sub (struct )))
-
- ;; CHECK:       (type $Y'_0_0 (sub $X'_0_0 (struct )))
-
- ;; CHECK:       (type $A_0_0 (sub (func (param (ref $Y'_0_0)) (result (ref $X_0_0)))))
-
- ;; CHECK:       (type $B_0_0 (sub $A_0_0 (func (param (ref $X'_0_0)) (result (ref $Y_0_0)))))
-
- ;; CHECK:      (global $g (ref null $A_0_0) (ref.func $foo))
+ ;; CHECK:      (global $g (ref null $A) (ref.func $foo))
  (global $g (ref null $A) (ref.func $foo))
 
- ;; CHECK:      (func $foo (type $B_0_0) (param $0 (ref $X'_0_0)) (result (ref $Y_0_0))
+ ;; CHECK:      (func $foo (type $B) (param $0 (ref $X')) (result (ref $Y))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $foo (type $B)
@@ -196,26 +175,24 @@
 )
 
 (module
- (type $super (sub (struct)))
- (type $sub (sub $super (struct)))
-
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
 
  ;; CHECK:      (func $block-fallthrough (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $l (result (ref $super_1))
+ ;; CHECK-NEXT:   (block $l (result (ref $super))
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (br_if $l
- ;; CHECK-NEXT:      (struct.new_default $super_1)
+ ;; CHECK-NEXT:      (struct.new_default $super)
  ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (struct.new_default $sub_1)
+ ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -236,33 +213,31 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $opt (sub (struct (field i32))))
+
+ ;; CHECK:       (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
  (type $opt (sub $super (struct i32)))
-
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $opt_1 (sub (struct (field i32))))
-
- ;; CHECK:       (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
 
  ;; CHECK:       (type $3 (func))
 
  ;; CHECK:      (func $block-br (type $3)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $l (result (ref $super_1))
+ ;; CHECK-NEXT:   (block $l (result (ref $super))
  ;; CHECK-NEXT:    (br $l
- ;; CHECK-NEXT:     (struct.new_default $sub_1)
+ ;; CHECK-NEXT:     (struct.new_default $sub)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (block $other (result (ref $opt_1))
+ ;; CHECK-NEXT:     (block $other (result (ref $opt))
  ;; CHECK-NEXT:      (br $other
- ;; CHECK-NEXT:       (struct.new_default $opt_1)
+ ;; CHECK-NEXT:       (struct.new_default $opt)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (struct.new_default $super_1)
+ ;; CHECK-NEXT:    (struct.new_default $super)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -288,25 +263,23 @@
 )
 
 (module
- (type $super (sub (struct)))
- (type $sub (sub $super (struct)))
-
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
 
  ;; CHECK:      (func $if (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (if (result (ref $sub_1))
+ ;; CHECK-NEXT:   (if (result (ref $sub))
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:    (then
- ;; CHECK-NEXT:     (struct.new_default $sub_1)
+ ;; CHECK-NEXT:     (struct.new_default $sub)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (else
- ;; CHECK-NEXT:     (struct.new_default $sub_1)
+ ;; CHECK-NEXT:     (struct.new_default $sub)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -328,20 +301,18 @@
 )
 
 (module
- (type $super (sub (struct)))
- (type $sub (sub $super (struct)))
-
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
 
  ;; CHECK:      (func $loop (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (loop (result (ref $sub_1))
- ;; CHECK-NEXT:    (struct.new_default $sub_1)
+ ;; CHECK-NEXT:   (loop (result (ref $sub))
+ ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -356,23 +327,21 @@
 )
 
 (module
- (type $super (sub (struct)))
- (type $sub (sub $super (struct)))
-
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
 
  ;; CHECK:      (func $loop (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $super (result (ref $sub_1))
+ ;; CHECK-NEXT:   (block $super (result (ref $sub))
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (block $sub (result (ref $sub_1))
+ ;; CHECK-NEXT:     (block $sub (result (ref $sub))
  ;; CHECK-NEXT:      (br_table $super $sub
- ;; CHECK-NEXT:       (struct.new_default $sub_1)
+ ;; CHECK-NEXT:       (struct.new_default $sub)
  ;; CHECK-NEXT:       (i32.const 0)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
@@ -400,23 +369,21 @@
 )
 
 (module
- (type $super (sub (struct)))
- (type $sub (sub $super (struct)))
-
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
 
  ;; CHECK:      (func $br-table (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $super (result (ref $sub_1))
+ ;; CHECK-NEXT:   (block $super (result (ref $sub))
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (block $sub (result (ref $sub_1))
+ ;; CHECK-NEXT:     (block $sub (result (ref $sub))
  ;; CHECK-NEXT:      (br_table $sub $super
- ;; CHECK-NEXT:       (struct.new_default $sub_1)
+ ;; CHECK-NEXT:       (struct.new_default $sub)
  ;; CHECK-NEXT:       (i32.const 0)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
@@ -444,19 +411,17 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
+ ;; CHECK:       (type $2 (func (param (ref $super))))
 
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
-
- ;; CHECK:       (type $2 (func (param (ref $super_1))))
-
- ;; CHECK:      (func $call (type $2) (param $0 (ref $super_1))
+ ;; CHECK:      (func $call (type $2) (param $0 (ref $super))
  ;; CHECK-NEXT:  (call $call
- ;; CHECK-NEXT:   (struct.new_default $sub_1)
+ ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $call (param (ref $super))
@@ -468,19 +433,17 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
+ ;; CHECK:       (type $2 (func (result (ref $sub))))
 
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
+ ;; CHECK:       (type $3 (func (result (ref $super))))
 
- ;; CHECK:       (type $2 (func (result (ref $sub_1))))
-
- ;; CHECK:       (type $3 (func (result (ref $super_1))))
-
- ;; CHECK:      (func $return-call (type $3) (result (ref $super_1))
+ ;; CHECK:      (func $return-call (type $3) (result (ref $super))
  ;; CHECK-NEXT:  (return_call $callee)
  ;; CHECK-NEXT: )
  (func $return-call (result (ref $super))
@@ -488,7 +451,7 @@
   (return_call $callee)
  )
 
- ;; CHECK:      (func $callee (type $2) (result (ref $sub_1))
+ ;; CHECK:      (func $callee (type $2) (result (ref $sub))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $callee (result (ref $sub))
@@ -497,22 +460,20 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
-
- ;; CHECK:       (type $2 (func (param (ref $super_1))))
+ ;; CHECK:       (type $2 (func (param (ref $super))))
 
  ;; CHECK:      (table $t 1 1 funcref)
  (table $t 1 1 funcref)
 
- ;; CHECK:      (func $call-indirect (type $2) (param $0 (ref $super_1))
+ ;; CHECK:      (func $call-indirect (type $2) (param $0 (ref $super))
  ;; CHECK-NEXT:  (call_indirect $t (type $2)
- ;; CHECK-NEXT:   (struct.new_default $sub_1)
+ ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -526,22 +487,20 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
+ ;; CHECK:       (type $2 (func (result (ref $sub))))
 
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
-
- ;; CHECK:       (type $2 (func (result (ref $sub_1))))
-
- ;; CHECK:       (type $3 (func (result (ref $super_1))))
+ ;; CHECK:       (type $3 (func (result (ref $super))))
 
  ;; CHECK:      (table $t 1 1 funcref)
  (table $t 1 1 funcref)
 
- ;; CHECK:      (func $return-call-indirect (type $3) (result (ref $super_1))
+ ;; CHECK:      (func $return-call-indirect (type $3) (result (ref $super))
  ;; CHECK-NEXT:  (return_call_indirect $t (type $2)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
@@ -555,19 +514,18 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $sub (sub (func)))
+
+ ;; CHECK:       (type $super (sub (func)))
  (type $super (sub (func)))
  (type $sub (sub $super (func)))
 
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $sub_1 (sub (func)))
-
- ;; CHECK:       (type $super_1 (sub (func)))
-
- ;; CHECK:      (table $t 1 1 (ref null $super_1))
+ ;; CHECK:      (table $t 1 1 (ref null $super))
  (table $t 1 1 (ref null $super))
 
- ;; CHECK:      (func $call-indirect-table (type $sub_1)
- ;; CHECK-NEXT:  (call_indirect $t (type $sub_1)
+ ;; CHECK:      (func $call-indirect-table (type $sub)
+ ;; CHECK-NEXT:  (call_indirect $t (type $sub)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -582,20 +540,18 @@
 )
 
 (module
- (type $super (sub (struct)))
- (type $sub (sub $super (struct)))
-
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
 
  ;; CHECK:      (func $local-set (type $2)
- ;; CHECK-NEXT:  (local $l (ref null $super_1))
+ ;; CHECK-NEXT:  (local $l (ref null $super))
  ;; CHECK-NEXT:  (local.set $l
- ;; CHECK-NEXT:   (struct.new_default $sub_1)
+ ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $local-set
@@ -608,21 +564,19 @@
 )
 
 (module
- (type $super (sub (struct)))
- (type $sub (sub $super (struct)))
-
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
 
  ;; CHECK:      (func $local-tee (type $2)
- ;; CHECK-NEXT:  (local $l (ref null $super_1))
+ ;; CHECK-NEXT:  (local $l (ref null $super))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.tee $l
- ;; CHECK-NEXT:    (struct.new_default $sub_1)
+ ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -638,22 +592,20 @@
 )
 
 (module
- (type $super (sub (struct)))
- (type $sub (sub $super (struct)))
-
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
 
- ;; CHECK:      (global $g (mut (ref null $super_1)) (ref.null none))
+ ;; CHECK:      (global $g (mut (ref null $super)) (ref.null none))
  (global $g (mut (ref null $super)) (ref.null none))
 
  ;; CHECK:      (func $global-set (type $2)
  ;; CHECK-NEXT:  (global.set $g
- ;; CHECK-NEXT:   (struct.new_default $sub_1)
+ ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $global-set
@@ -665,24 +617,22 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub2 (sub $super (struct (field i32))))
+
+ ;; CHECK:       (type $sub1 (sub $super (struct )))
  (type $sub1 (sub $super (struct)))
  (type $sub2 (sub $super (struct i32)))
-
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub2_1 (sub $super_1 (struct (field i32))))
-
- ;; CHECK:       (type $sub1_1 (sub $super_1 (struct )))
 
  ;; CHECK:       (type $3 (func))
 
  ;; CHECK:      (func $select (type $3)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (select (result (ref $super_1))
- ;; CHECK-NEXT:    (struct.new_default $sub1_1)
- ;; CHECK-NEXT:    (struct.new_default $sub2_1)
+ ;; CHECK-NEXT:   (select (result (ref $super))
+ ;; CHECK-NEXT:    (struct.new_default $sub1)
+ ;; CHECK-NEXT:    (struct.new_default $sub2)
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -700,19 +650,17 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
+ ;; CHECK:       (type $2 (func (result (ref $super))))
 
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
-
- ;; CHECK:       (type $2 (func (result (ref $super_1))))
-
- ;; CHECK:      (func $return (type $2) (result (ref $super_1))
+ ;; CHECK:      (func $return (type $2) (result (ref $super))
  ;; CHECK-NEXT:  (return
- ;; CHECK-NEXT:   (struct.new_default $sub_1)
+ ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $return (result (ref $super))
@@ -724,19 +672,18 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $sub (sub (struct )))
+
+ ;; CHECK:       (type $super (sub (struct )))
  (type $super (sub (struct)))
  (type $sub (sub $super (struct)))
-
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $sub_1 (sub (struct )))
-
- ;; CHECK:       (type $super_1 (sub (struct )))
 
  ;; CHECK:       (type $2 (func))
 
  ;; CHECK:      (func $return-none (type $2)
- ;; CHECK-NEXT:  (local $super (ref null $super_1))
- ;; CHECK-NEXT:  (local $sub (ref null $sub_1))
+ ;; CHECK-NEXT:  (local $super (ref null $super))
+ ;; CHECK-NEXT:  (local $sub (ref null $sub))
  ;; CHECK-NEXT:  (return)
  ;; CHECK-NEXT: )
  (func $return-none
@@ -749,28 +696,26 @@
 
 (module
  (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super2 (sub (struct )))
+
+  ;; CHECK:       (type $sub2 (sub $super2 (struct )))
+
+  ;; CHECK:       (type $super1 (sub (struct )))
   (type $super1 (sub (struct)))
   (type $super2 (sub (struct)))
+  ;; CHECK:       (type $sub1 (sub $super1 (struct )))
   (type $sub1 (sub $super1 (struct)))
   (type $sub2 (sub $super2 (struct)))
  )
 
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super2_1 (sub (struct )))
+ ;; CHECK:       (type $4 (func (result (ref $super1) (ref $super2))))
 
- ;; CHECK:       (type $sub2_1 (sub $super2_1 (struct )))
-
- ;; CHECK:       (type $super1_1 (sub (struct )))
-
- ;; CHECK:       (type $sub1_1 (sub $super1_1 (struct )))
-
- ;; CHECK:       (type $4 (func (result (ref $super1_1) (ref $super2_1))))
-
- ;; CHECK:      (func $return-many (type $4) (result (ref $super1_1) (ref $super2_1))
+ ;; CHECK:      (func $return-many (type $4) (result (ref $super1) (ref $super2))
  ;; CHECK-NEXT:  (return
  ;; CHECK-NEXT:   (tuple.make 2
- ;; CHECK-NEXT:    (struct.new_default $sub1_1)
- ;; CHECK-NEXT:    (struct.new_default $sub2_1)
+ ;; CHECK-NEXT:    (struct.new_default $sub1)
+ ;; CHECK-NEXT:    (struct.new_default $sub2)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -786,23 +731,21 @@
 )
 
 (module
- (type $super (sub (struct)))
- (type $sub (sub $super (struct)))
-
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
 
- ;; CHECK:      (table $t 1 1 (ref null $super_1))
+ ;; CHECK:      (table $t 1 1 (ref null $super))
  (table $t 1 1 (ref null $super))
 
  ;; CHECK:      (func $table-set (type $2)
  ;; CHECK-NEXT:  (table.set $t
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (struct.new_default $sub_1)
+ ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $table-set
@@ -815,23 +758,21 @@
 )
 
 (module
- (type $super (sub (struct)))
- (type $sub (sub $super (struct)))
-
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
 
- ;; CHECK:      (table $t 1 1 (ref null $super_1))
+ ;; CHECK:      (table $t 1 1 (ref null $super))
  (table $t 1 1 (ref null $super))
 
  ;; CHECK:      (func $table-fill (type $2)
  ;; CHECK-NEXT:  (table.fill $t
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (struct.new_default $sub_1)
+ ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -846,20 +787,18 @@
 )
 
 (module
- (type $super (sub (struct)))
- (type $sub (sub $super (struct)))
-
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $0 (func))
 
- ;; CHECK:       (type $super_1 (sub (struct )))
+ ;; CHECK:       (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
 
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
-
- ;; CHECK:      (table $super 1 1 (ref null $super_1))
+ ;; CHECK:      (table $super 1 1 (ref null $super))
  (table $super 1 1 (ref null $super))
 
- ;; CHECK:      (table $sub 1 1 (ref null $sub_1))
+ ;; CHECK:      (table $sub 1 1 (ref null $sub))
  (table $sub 1 1 (ref null $sub))
 
  ;; CHECK:      (func $table-copy (type $0)
@@ -880,24 +819,22 @@
 )
 
 (module
- (type $super (sub (struct)))
- (type $sub (sub $super (struct)))
-
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
 
  ;; CHECK:      (func $try (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (try (result (ref $super_1))
+ ;; CHECK-NEXT:   (try (result (ref $super))
  ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (struct.new_default $sub_1)
+ ;; CHECK-NEXT:     (struct.new_default $sub)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (catch_all
- ;; CHECK-NEXT:     (struct.new_default $super_1)
+ ;; CHECK-NEXT:     (struct.new_default $super)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -918,24 +855,22 @@
 )
 
 (module
- (type $super (sub (struct)))
- (type $sub (sub $super (struct)))
-
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
 
  ;; CHECK:      (func $try-catch (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (try (result (ref $super_1))
+ ;; CHECK-NEXT:   (try (result (ref $super))
  ;; CHECK-NEXT:    (do
- ;; CHECK-NEXT:     (struct.new_default $super_1)
+ ;; CHECK-NEXT:     (struct.new_default $super)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (catch_all
- ;; CHECK-NEXT:     (struct.new_default $sub_1)
+ ;; CHECK-NEXT:     (struct.new_default $sub)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -987,28 +922,25 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
+ ;; CHECK:       (type $f (func (param (ref $super))))
  (type $f (func (param (ref $super))))
-
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
-
- ;; CHECK:       (type $f_1 (func (param (ref $super_1))))
 
  ;; CHECK:      (elem declare func $call-ref)
 
- ;; CHECK:      (func $call-ref (type $f_1) (param $0 (ref $super_1))
- ;; CHECK-NEXT:  (call_ref $f_1
- ;; CHECK-NEXT:   (struct.new_default $sub_1)
+ ;; CHECK:      (func $call-ref (type $f) (param $0 (ref $super))
+ ;; CHECK-NEXT:  (call_ref $f
+ ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:   (ref.func $call-ref)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (struct.new_default $sub_1)
+ ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)
@@ -1017,7 +949,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (struct.new_default $sub_1)
+ ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (ref.null nofunc)
@@ -1045,24 +977,21 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
+ ;; CHECK:       (type $f (func (result (ref $sub))))
  (type $f (func (result (ref $sub))))
 
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
-
- ;; CHECK:       (type $f_1 (func (result (ref $sub_1))))
-
- ;; CHECK:       (type $3 (func (result (ref $super_1))))
+ ;; CHECK:       (type $3 (func (result (ref $super))))
 
  ;; CHECK:      (elem declare func $callee)
 
- ;; CHECK:      (func $return-call-ref (type $3) (result (ref $super_1))
- ;; CHECK-NEXT:  (return_call_ref $f_1
+ ;; CHECK:      (func $return-call-ref (type $3) (result (ref $super))
+ ;; CHECK-NEXT:  (return_call_ref $f
  ;; CHECK-NEXT:   (ref.func $callee)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1073,7 +1002,7 @@
   )
  )
 
- ;; CHECK:      (func $callee (type $f_1) (result (ref $sub_1))
+ ;; CHECK:      (func $callee (type $f) (result (ref $sub))
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $callee (result (ref $sub))
@@ -1082,23 +1011,21 @@
 )
 
 (module
- (type $super (sub (struct)))
- (type $sub (sub $super (struct)))
-
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
 
  ;; CHECK:      (func $br-on-non-null (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $l (result (ref $super_1))
+ ;; CHECK-NEXT:   (block $l (result (ref $super))
  ;; CHECK-NEXT:    (br_on_non_null $l
- ;; CHECK-NEXT:     (struct.new_default $sub_1)
+ ;; CHECK-NEXT:     (struct.new_default $sub)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (struct.new_default $super_1)
+ ;; CHECK-NEXT:    (struct.new_default $super)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -1116,21 +1043,19 @@
 )
 
 (module
- (type $super (sub (struct)))
- (type $sub (sub $super (struct)))
-
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
 
  ;; CHECK:      (func $br-on-cast (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $l (result (ref $super_1))
- ;; CHECK-NEXT:    (br_on_cast $l (ref $super_1) (ref $sub_1)
- ;; CHECK-NEXT:     (struct.new_default $super_1)
+ ;; CHECK-NEXT:   (block $l (result (ref $super))
+ ;; CHECK-NEXT:    (br_on_cast $l (ref $super) (ref $sub)
+ ;; CHECK-NEXT:     (struct.new_default $super)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -1148,21 +1073,19 @@
 )
 
 (module
- (type $super (sub (struct)))
- (type $sub (sub $super (struct)))
-
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
 
  ;; CHECK:      (func $br-on-cast-fail (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block $l (result (ref $sub_1))
- ;; CHECK-NEXT:    (br_on_cast_fail $l (ref $sub_1) (ref none)
- ;; CHECK-NEXT:     (struct.new_default $sub_1)
+ ;; CHECK-NEXT:   (block $l (result (ref $sub))
+ ;; CHECK-NEXT:    (br_on_cast_fail $l (ref $sub) (ref none)
+ ;; CHECK-NEXT:     (struct.new_default $sub)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -1180,28 +1103,26 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $struct (sub (struct (field (ref null $super)))))
+
+ ;; CHECK:       (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
  (type $struct (sub (struct (ref null $super))))
-
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $struct_1 (sub (struct (field (ref null $super_1)))))
-
- ;; CHECK:       (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
 
  ;; CHECK:       (type $3 (func))
 
  ;; CHECK:      (func $struct-new (type $3)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (struct.new $struct_1
- ;; CHECK-NEXT:    (struct.new_default $sub_1)
+ ;; CHECK-NEXT:   (struct.new $struct
+ ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (struct.new_default $struct_1)
+ ;; CHECK-NEXT:   (struct.new_default $struct)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructNew we can't emit)
  ;; CHECK-NEXT:   (drop
@@ -1229,31 +1150,29 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $struct (sub (struct (field (mut (ref null $super))))))
+
+ ;; CHECK:       (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
  (type $struct (sub (struct (mut (ref null $super)))))
 
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $struct_1 (sub (struct (field (mut (ref null $super_1))))))
+ ;; CHECK:       (type $3 (func (param (ref null $struct))))
 
- ;; CHECK:       (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
-
- ;; CHECK:       (type $3 (func (param (ref null $struct_1))))
-
- ;; CHECK:      (func $struct-set (type $3) (param $struct (ref null $struct_1))
- ;; CHECK-NEXT:  (struct.set $struct_1 0
+ ;; CHECK:      (func $struct-set (type $3) (param $struct (ref null $struct))
+ ;; CHECK-NEXT:  (struct.set $struct 0
  ;; CHECK-NEXT:   (local.get $struct)
- ;; CHECK-NEXT:   (struct.new_default $sub_1)
+ ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (struct.new_default $sub_1)
+ ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
@@ -1262,7 +1181,7 @@
  ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (struct.new_default $sub_1)
+ ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
@@ -1287,29 +1206,27 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $array (sub (array (ref null $super))))
+
+ ;; CHECK:       (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
  (type $array (sub (array (ref null $super))))
-
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $array_1 (sub (array (ref null $super_1))))
-
- ;; CHECK:       (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
 
  ;; CHECK:       (type $3 (func))
 
  ;; CHECK:      (func $array-new (type $3)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (array.new $array_1
- ;; CHECK-NEXT:    (struct.new_default $sub_1)
+ ;; CHECK-NEXT:   (array.new $array
+ ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (array.new_default $array_1
+ ;; CHECK-NEXT:   (array.new_default $array
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -1350,26 +1267,24 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $array (sub (array (ref null $super))))
+
+ ;; CHECK:       (type $1 (func))
+
+ ;; CHECK:       (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
  (type $array (sub (array (ref null $super))))
 
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $array_1 (sub (array (ref null $super_1))))
-
- ;; CHECK:       (type $1 (func))
-
- ;; CHECK:       (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
-
- ;; CHECK:      (elem $e (ref null $sub_1))
+ ;; CHECK:      (elem $e (ref null $sub))
  (elem $e (ref null $sub))
 
  ;; CHECK:      (func $array-new-elem (type $1)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (array.new_elem $array_1 $e
+ ;; CHECK-NEXT:   (array.new_elem $array $e
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
@@ -1401,24 +1316,22 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $array (sub (array (ref null $super))))
+
+ ;; CHECK:       (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
  (type $array (sub (array (ref null $super))))
-
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $array_1 (sub (array (ref null $super_1))))
-
- ;; CHECK:       (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
 
  ;; CHECK:       (type $3 (func))
 
  ;; CHECK:      (func $array-new-fixed (type $3)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (array.new_fixed $array_1 1
- ;; CHECK-NEXT:    (struct.new_default $sub_1)
+ ;; CHECK-NEXT:   (array.new_fixed $array 1
+ ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayNewFixed we can't emit)
@@ -1443,25 +1356,22 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
+ ;; CHECK:       (type $array (sub (array (mut (ref null $super)))))
  (type $array (sub (array (mut (ref null $super)))))
-
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
-
- ;; CHECK:       (type $array_1 (sub (array (mut (ref null $super_1)))))
 
  ;; CHECK:       (type $3 (func))
 
  ;; CHECK:      (func $array-set (type $3)
- ;; CHECK-NEXT:  (array.set $array_1
- ;; CHECK-NEXT:   (array.new_fixed $array_1 0)
+ ;; CHECK-NEXT:  (array.set $array
+ ;; CHECK-NEXT:   (array.new_fixed $array 0)
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (struct.new_default $sub_1)
+ ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
  ;; CHECK-NEXT:   (drop
@@ -1471,7 +1381,7 @@
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (struct.new_default $sub_1)
+ ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
@@ -1483,7 +1393,7 @@
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (struct.new_default $sub_1)
+ ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
@@ -1511,28 +1421,25 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
+ ;; CHECK:       (type $sub-array (sub (array (mut (ref null $sub)))))
+
+ ;; CHECK:       (type $super-array (sub (array (mut (ref null $super)))))
  (type $super-array (sub (array (mut (ref null $super)))))
  (type $sub-array (sub (array (mut (ref null $sub)))))
-
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
-
- ;; CHECK:       (type $sub-array_1 (sub (array (mut (ref null $sub_1)))))
-
- ;; CHECK:       (type $super-array_1 (sub (array (mut (ref null $super_1)))))
 
  ;; CHECK:       (type $4 (func))
 
  ;; CHECK:      (func $array-copy (type $4)
- ;; CHECK-NEXT:  (array.copy $super-array_1 $sub-array_1
- ;; CHECK-NEXT:   (array.new_fixed $super-array_1 0)
+ ;; CHECK-NEXT:  (array.copy $super-array $sub-array
+ ;; CHECK-NEXT:   (array.new_fixed $super-array 0)
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (array.new_fixed $sub-array_1 0)
+ ;; CHECK-NEXT:   (array.new_fixed $sub-array 0)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
@@ -1544,7 +1451,7 @@
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (array.new_fixed $sub-array_1 0)
+ ;; CHECK-NEXT:    (array.new_fixed $sub-array 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (i32.const 0)
@@ -1556,7 +1463,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayCopy we can't emit)
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (array.new_fixed $super-array_1 0)
+ ;; CHECK-NEXT:    (array.new_fixed $super-array 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (i32.const 0)
@@ -1602,25 +1509,22 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
+ ;; CHECK:       (type $array (sub (array (mut (ref null $super)))))
  (type $array (sub (array (mut (ref null $super)))))
-
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
-
- ;; CHECK:       (type $array_1 (sub (array (mut (ref null $super_1)))))
 
  ;; CHECK:       (type $3 (func))
 
  ;; CHECK:      (func $array-fill (type $3)
- ;; CHECK-NEXT:  (array.fill $array_1
- ;; CHECK-NEXT:   (array.new_fixed $array_1 0)
+ ;; CHECK-NEXT:  (array.fill $array
+ ;; CHECK-NEXT:   (array.new_fixed $array 0)
  ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (struct.new_default $sub_1)
+ ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayFill we can't emit)
@@ -1631,7 +1535,7 @@
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (struct.new_default $sub_1)
+ ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (i32.const 0)
@@ -1646,7 +1550,7 @@
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (struct.new_default $sub_1)
+ ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (i32.const 0)
@@ -1680,26 +1584,24 @@
 )
 
 (module
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $array (sub (array (mut (ref null $super)))))
+
+ ;; CHECK:       (type $1 (func))
+
+ ;; CHECK:       (type $super (sub (struct )))
  (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
  (type $sub (sub $super (struct)))
 
  (type $array (sub (array (mut (ref null $super)))))
 
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $array_1 (sub (array (mut (ref null $super_1)))))
-
- ;; CHECK:       (type $1 (func))
-
- ;; CHECK:       (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
-
- ;; CHECK:      (elem $e (ref null $sub_1))
+ ;; CHECK:      (elem $e (ref null $sub))
  (elem $e (ref null $sub))
 
  ;; CHECK:      (func $array-init-elem (type $1)
- ;; CHECK-NEXT:  (array.init_elem $array_1 $e
- ;; CHECK-NEXT:   (array.new_fixed $array_1 0)
+ ;; CHECK-NEXT:  (array.init_elem $array $e
+ ;; CHECK-NEXT:   (array.new_fixed $array 0)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 0)
@@ -1775,68 +1677,57 @@
 
 (module
  (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct (field (ref null $mid)))))
   (type $super (sub (struct (ref null $mid))))
+  ;; CHECK:       (type $mid (sub $super (struct (field (ref null $mid)) (field i32))))
   (type $mid (sub $super (struct (ref null $mid) i32)))
+  ;; CHECK:       (type $sub (sub $mid (struct (field (ref null $sub)) (field i32) (field i32))))
   (type $sub (sub $mid (struct (ref null $sub) i32 i32)))
  )
 
  ;; Same as above, but now that transitively requires $sub <: $mid, so we don't
  ;; end up changing anything.
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_0_0 (sub (struct (field (ref null $mid_0_0)))))
-
- ;; CHECK:       (type $mid_0_0 (sub $super_0_0 (struct (field (ref null $mid_0_0)) (field i32))))
-
- ;; CHECK:       (type $sub_0_0 (sub $mid_0_0 (struct (field (ref null $sub_0_0)) (field i32) (field i32))))
-
- ;; CHECK:      (global $g (ref $super_0_0) (struct.new_default $sub_0_0))
+ ;; CHECK:      (global $g (ref $super) (struct.new_default $sub))
  (global $g (ref $super) (struct.new_default $sub))
 )
 
 (module
  (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $super (sub (struct (field (ref null $super)))))
   (type $super (sub (struct (ref null $super))))
+  ;; CHECK:       (type $mid (sub $super (struct (field (ref null $super)) (field i32))))
   (type $mid (sub $super (struct (ref null $super) i32)))
+  ;; CHECK:       (type $sub (sub $mid (struct (field (ref null $sub)) (field i32) (field i32))))
   (type $sub (sub $mid (struct (ref null $sub) i32 i32)))
  )
 
  ;; Similar, but now we directly require that $sub <: $mid and transitively
  ;; require that $sub <: $super, so again we cannot change anything.
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_0_0 (sub (struct (field (ref null $super_0_0)))))
-
- ;; CHECK:       (type $mid_0_0 (sub $super_0_0 (struct (field (ref null $super_0_0)) (field i32))))
-
- ;; CHECK:       (type $sub_0_0 (sub $mid_0_0 (struct (field (ref null $sub_0_0)) (field i32) (field i32))))
-
- ;; CHECK:      (global $g (ref $mid_0_0) (struct.new_default $sub_0_0))
+ ;; CHECK:      (global $g (ref $mid) (struct.new_default $sub))
  (global $g (ref $mid) (struct.new_default $sub))
 )
 
 (module
  (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $X (sub (struct )))
   (type $X (sub (struct)))
+  ;; CHECK:       (type $Y (sub $X (struct )))
   (type $Y (sub $X (struct)))
 
+  ;; CHECK:       (type $super (sub (struct (field (ref null $mid)))))
   (type $super (sub (struct (ref null $mid))))
+  ;; CHECK:       (type $mid (sub $super (struct (field (ref null $sub)) (field (ref null $X)))))
   (type $mid (sub $super (struct (ref null $sub) (ref null $X))))
+  ;; CHECK:       (type $sub (sub $mid (struct (field (ref null $sub)) (field (ref null $Y)))))
   (type $sub (sub $mid (struct (ref null $sub) (ref null $Y))))
  )
 
  ;; Require $sub <: $super, which transitively requires $sub <: $mid, which then
  ;; requires $Y <: $X. This only works because we put $sub back in the work list
  ;; when we find a more refined supertype for it.
- ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $X_0_0 (sub (struct )))
-
- ;; CHECK:       (type $Y_0_0 (sub $X_0_0 (struct )))
-
- ;; CHECK:       (type $super_0_0 (sub (struct (field (ref null $mid_0_0)))))
-
- ;; CHECK:       (type $mid_0_0 (sub $super_0_0 (struct (field (ref null $sub_0_0)) (field (ref null $X_0_0)))))
-
- ;; CHECK:       (type $sub_0_0 (sub $mid_0_0 (struct (field (ref null $sub_0_0)) (field (ref null $Y_0_0)))))
-
- ;; CHECK:      (global $g (ref $super_0_0) (struct.new_default $sub_0_0))
+ ;; CHECK:      (global $g (ref $super) (struct.new_default $sub))
  (global $g (ref $super) (struct.new_default $sub))
 )
