@@ -92,6 +92,10 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
           }
         }
       }
+
+      if (!import->module) {
+        import->module = ENV;
+      }
     }
 
     import->base = LOGGER;
