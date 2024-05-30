@@ -7,24 +7,26 @@
 ;; can.
 
 (module
-  ;; NOP:      (rec
-  ;; NOP-NEXT:  (type $0 (func (param (ref $A)) (result i32)))
-
-  ;; NOP:       (type $A (sub (struct (field i32))))
-  ;; YES:      (type $0 (func (result i32)))
-
-  ;; YES:      (rec
-  ;; YES-NEXT:  (type $1 (func (param (ref $A))))
-
-  ;; YES:       (type $A (sub (struct )))
   (type $A (sub (struct (field (mut i32)))))
+
+  ;; NOP:      (rec
+  ;; NOP-NEXT:  (type $0 (func (param (ref $A_1)) (result i32)))
+
+  ;; NOP:       (type $A_1 (sub (struct (field i32))))
 
   ;; NOP:      (type $2 (func (result i32)))
 
   ;; NOP:      (import "a" "b" (func $import (type $2) (result i32)))
-  ;; YES:       (type $A_2 (sub $A (struct )))
+  ;; YES:      (type $0 (func (result i32)))
 
-  ;; YES:       (type $A_1 (sub $A (struct )))
+  ;; YES:      (rec
+  ;; YES-NEXT:  (type $1 (func (param (ref $A_3))))
+
+  ;; YES:       (type $A_3 (sub (struct )))
+
+  ;; YES:       (type $A_2_1 (sub $A_3 (struct )))
+
+  ;; YES:       (type $A_1_1 (sub $A_3 (struct )))
 
   ;; YES:      (import "a" "b" (func $import (type $0) (result i32)))
   (import "a" "b" (func $import (result i32)))
@@ -35,7 +37,7 @@
 
   ;; NOP:      (func $main1 (type $2) (result i32)
   ;; NOP-NEXT:  (call $get-a-1
-  ;; NOP-NEXT:   (struct.new $A
+  ;; NOP-NEXT:   (struct.new $A_1
   ;; NOP-NEXT:    (i32.const 42)
   ;; NOP-NEXT:   )
   ;; NOP-NEXT:  )
@@ -46,7 +48,7 @@
 
   ;; YES:      (func $main1 (type $0) (result i32)
   ;; YES-NEXT:  (call $get-a-1
-  ;; YES-NEXT:   (struct.new_default $A)
+  ;; YES-NEXT:   (struct.new_default $A_3)
   ;; YES-NEXT:  )
   ;; YES-NEXT:  (i32.const 42)
   ;; YES-NEXT: )
@@ -59,14 +61,14 @@
 
   ;; NOP:      (func $main2 (type $2) (result i32)
   ;; NOP-NEXT:  (call $get-a-2
-  ;; NOP-NEXT:   (struct.new $A
+  ;; NOP-NEXT:   (struct.new $A_1
   ;; NOP-NEXT:    (i32.const 1337)
   ;; NOP-NEXT:   )
   ;; NOP-NEXT:  )
   ;; NOP-NEXT: )
   ;; YES:      (func $main2 (type $0) (result i32)
   ;; YES-NEXT:  (call $get-a-2
-  ;; YES-NEXT:   (struct.new_default $A)
+  ;; YES-NEXT:   (struct.new_default $A_3)
   ;; YES-NEXT:  )
   ;; YES-NEXT:  (i32.const 1337)
   ;; YES-NEXT: )
@@ -77,7 +79,7 @@
     )
   )
 
-  ;; NOP:      (func $get-a-1 (type $0) (param $0 (ref $A)) (result i32)
+  ;; NOP:      (func $get-a-1 (type $0) (param $0 (ref $A_1)) (result i32)
   ;; NOP-NEXT:  (if
   ;; NOP-NEXT:   (call $import)
   ;; NOP-NEXT:   (then
@@ -88,11 +90,11 @@
   ;; NOP-NEXT:    )
   ;; NOP-NEXT:   )
   ;; NOP-NEXT:  )
-  ;; NOP-NEXT:  (struct.get $A 0
+  ;; NOP-NEXT:  (struct.get $A_1 0
   ;; NOP-NEXT:   (local.get $0)
   ;; NOP-NEXT:  )
   ;; NOP-NEXT: )
-  ;; YES:      (func $get-a-1 (type $1) (param $0 (ref $A))
+  ;; YES:      (func $get-a-1 (type $1) (param $0 (ref $A_3))
   ;; YES-NEXT:  (if
   ;; YES-NEXT:   (call $import)
   ;; YES-NEXT:   (then
@@ -119,7 +121,7 @@
     (struct.get $A 0 (local.get 0))
   )
 
-  ;; NOP:      (func $get-a-2 (type $0) (param $0 (ref $A)) (result i32)
+  ;; NOP:      (func $get-a-2 (type $0) (param $0 (ref $A_1)) (result i32)
   ;; NOP-NEXT:  (if
   ;; NOP-NEXT:   (call $import)
   ;; NOP-NEXT:   (then
@@ -130,11 +132,11 @@
   ;; NOP-NEXT:    )
   ;; NOP-NEXT:   )
   ;; NOP-NEXT:  )
-  ;; NOP-NEXT:  (struct.get $A 0
+  ;; NOP-NEXT:  (struct.get $A_1 0
   ;; NOP-NEXT:   (local.get $0)
   ;; NOP-NEXT:  )
   ;; NOP-NEXT: )
-  ;; YES:      (func $get-a-2 (type $1) (param $0 (ref $A))
+  ;; YES:      (func $get-a-2 (type $1) (param $0 (ref $A_3))
   ;; YES-NEXT:  (if
   ;; YES-NEXT:   (call $import)
   ;; YES-NEXT:   (then
