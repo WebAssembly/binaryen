@@ -151,7 +151,8 @@ struct ReorderGlobals : public Pass {
     struct SortAndSize {
       IndexIndexMap sort;
       double size;
-      SortAndSize(IndexIndexMap&& sort, double size) : sort(std::move(sort)), size(size) {}
+      SortAndSize(IndexIndexMap&& sort, double size)
+        : sort(std::move(sort)), size(size) {}
     };
     std::vector<SortAndSize> options;
     auto addOption = [&](const IndexCountMap& customCounts) {
