@@ -39,8 +39,16 @@ namespace wasm {
 Name LOGGER("log_execution");
 
 struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
+  IString logger_module;
+
   // Adds calls to new imports.
   bool addsEffects() override { return true; }
+
+  void run(Module* module) override {
+    auto& options = getPassOptions();
+    logger_module = options.getArgumentOrDefault("log-execution", "");
+    super::run(module);
+  }
 
   void visitLoop(Loop* curr) { curr->body = makeLogCall(curr->body); }
 
@@ -63,21 +71,25 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
     auto import =
       Builder::makeFunction(LOGGER, Signature(Type::i32, Type::none), {});
 
-    // Import the log function from import "env" if the module
-    // imports other functions from that name.
-    for (auto& func : curr->functions) {
-      if (func->imported() && func->module == ENV) {
-        import->module = func->module;
-        break;
-      }
-    }
-
-    // If not, then pick the import name of the first function we find.
-    if (!import->module) {
+    if (logger_module != "") {
+      import->module = logger_module;
+    } else {
+      // Import the log function from import "env" if the module
+      // imports other functions from that name.
       for (auto& func : curr->functions) {
-        if (func->imported()) {
+        if (func->imported() && func->module == ENV) {
           import->module = func->module;
           break;
+        }
+      }
+
+      // If not, then pick the import name of the first function we find.
+      if (!import->module) {
+        for (auto& func : curr->functions) {
+          if (func->imported()) {
+            import->module = func->module;
+            break;
+          }
         }
       }
     }
