@@ -304,11 +304,8 @@ struct ReorderGlobals : public Pass {
       // Sort by the counts.
       auto aCount = counts[a];
       auto bCount = counts[b];
-      if (aCount < bCount) {
-        return true;
-      }
-      if (aCount > bCount) {
-        return false;
+      if (aCount != bCount) {
+        return aCount < bCount;
       }
 
       // Break ties using the original order, which means just using the
