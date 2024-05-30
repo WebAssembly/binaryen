@@ -891,26 +891,24 @@
 )
 
 (module
- (type $super (sub (struct)))
- (type $sub (sub $super (struct)))
-
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super_1 (sub (struct )))
-
- ;; CHECK:       (type $sub_1 (sub $super_1 (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct )))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct )))
+ (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
 
- ;; CHECK:       (type $3 (func (param (ref $super_1))))
+ ;; CHECK:       (type $3 (func (param (ref $super))))
 
- ;; CHECK:      (type $4 (func (param (ref $super_1))))
+ ;; CHECK:      (type $4 (func (param (ref $super))))
 
- ;; CHECK:      (tag $t (param (ref $super_1)))
+ ;; CHECK:      (tag $t (param (ref $super)))
  (tag $t (param (ref $super)))
 
  ;; CHECK:      (func $throw (type $2)
  ;; CHECK-NEXT:  (throw $t
- ;; CHECK-NEXT:   (struct.new_default $sub_1)
+ ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $throw

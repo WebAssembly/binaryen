@@ -147,20 +147,10 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
 #endif
   auto& newTypes = *buildResults;
 
-  // Map the old types to the new ones, and check if anything changed.
-  bool changed = false;
+  // Map the old types to the new ones.
   TypeMap oldToNewTypes;
   for (auto [type, index] : typeIndices) {
-    auto newType = newTypes[index];
-    oldToNewTypes[type] = newType;
-    if (newType != type) {
-      changed = true;
-    }
-  }
-
-  // If no types changed then we do not need to fix up type names.
-  if (!changed) {
-    return oldToNewTypes;
+    oldToNewTypes[type] = newTypes[index];
   }
 
   // Update type names to avoid duplicates.
@@ -169,6 +159,11 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
     typeNames.insert(info.name);
   }
   for (auto& [old, new_] : oldToNewTypes) {
+    if (old == new_) {
+      // The type is being mapped to itself; no need to rename anything.
+      continue;
+    }
+
     if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
       wasm.typeNames[new_] = wasm.typeNames[old];
       // Use the existing name in the new type, as usually it completely
