@@ -235,14 +235,12 @@ struct ReorderGlobals : public Pass {
     }
 
     // Apply the indices we computed.
-    std::sort(
-      globals.begin(),
-      globals.end(),
-      [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
-        return (*best)[originalIndices[a->name]] <
-               (*best)[originalIndices[b->name]];
-      });
-
+    std::vector<std::unique_ptr<Global>> old;
+    old.swap(globals);
+    globals.resize(old.size());
+    for (Index i = 0; i < old.size(); i++) {
+      globals[(*best)[i]] = std::move(old[i]);
+    }
     module->updateMaps();
   }
 
