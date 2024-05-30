@@ -147,15 +147,22 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
 #endif
   auto& newTypes = *buildResults;
 
-  // Map the old types to the new ones.
+  // Map the old types to the new ones, and check if anything changed.
+  bool changed = false;
   TypeMap oldToNewTypes;
   for (auto [type, index] : typeIndices) {
     oldToNewTypes[type] = newTypes[index];
+    if (newTypes[index] != type) {
+      changed = true;
+    }
   }
 
-  // Update type names (doing it before mapTypes can help debugging there, but
-  // has no other effect; mapTypes does not look at type names). While doing so
-  // avoid creating duplicate names.
+  // If no types changed then we do not need to fix up type names.
+  if (!changed) {
+    return oldToNewTypes;
+  }
+
+  // Update type names to avoid duplicates.
   std::unordered_set<Name> typeNames;
   for (auto& [type, info] : wasm.typeNames) {
     typeNames.insert(info.name);
