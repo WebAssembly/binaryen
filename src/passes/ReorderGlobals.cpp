@@ -211,7 +211,7 @@ struct ReorderGlobals : public Pass {
 
     for (auto global : sort) {
       // We can compute this global's count as in the sorted order all the
-      // values it cares about are resolved. Start with the self- count, then
+      // values it cares about are resolved. Start with the self-count, then
       // add the deps.
       sumCounts[global] = exponentialCounts[global] = counts[global];
       for (auto dep : deps.dependedUpon[global]) {
