@@ -35,6 +35,7 @@
 
 #include "ir/find_all.h"
 #include "pass.h"
+#include "support/topological_sort.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -187,44 +188,39 @@ struct ReorderGlobals : public Pass {
     // simple sum may be too naive).
     double const EXPONENTIAL_FACTOR = 0.095;
     IndexCountMap sumCounts(globals.size()), exponentialCounts(globals.size());
-    // We add items to |sumCounts, exponentialCounts| after they are computed,
-    // so anything not there must be pushed to a stack before we can handle it.
-    std::vector<Index> stack;
-    // Do a simple recursion to compute children before parents, while tracking
-    // which have been computed.
-    std::vector<bool> computed(globals.size());
-    for (Index i = 0; i < globals.size(); i++) {
-      stack.push_back(i);
-    }
-    while (!stack.empty()) {
-      auto global = stack.back();
-      if (computed[global]) {
-        // We've already computed this.
-        stack.pop_back();
-        continue;
-      }
-      // Leave ourselves on the stack and push any unresolved deps.
-      auto pushed = false;
-      for (auto dep : deps.dependedUpon[global]) {
-        if (!computed[dep]) {
-          stack.push_back(dep);
-          pushed = true;
+
+    struct Sort : public TopologicalSort<Index, Sort> {
+      const Dependencies& deps;
+
+      Sort(Index numGlobals, const Dependencies& deps) : deps(deps) {
+        for (Index i = 0; i < numGlobals; i++) {
+          push(i);
         }
       }
-      if (pushed) {
-        continue;
+
+      void pushPredecessors(Index global) {
+        auto iter = deps.dependedUpon.find(global);
+        if (iter == deps.dependedUpon.end()) {
+          return;
+        }
+        for (auto dep : iter->second) {
+          push(dep);
+        }
       }
-      // We can handle this now, as all deps are resolved.
-      stack.pop_back();
-      // Start with the self-count, then add the deps.
+    } sort(globals.size(), deps);
+
+    for (auto global : sort) {
+      // We can compute this global's count as in the sorted order all the
+      // values it cares about are resolved. Start with the self- count, then
+      // add the deps.
       sumCounts[global] = exponentialCounts[global] = counts[global];
       for (auto dep : deps.dependedUpon[global]) {
         sumCounts[global] += sumCounts[dep];
         exponentialCounts[global] +=
           EXPONENTIAL_FACTOR * exponentialCounts[dep];
       }
-      computed[global] = true;
     }
+
     addOption(sumCounts);
     addOption(exponentialCounts);
 
