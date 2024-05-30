@@ -151,8 +151,9 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   bool changed = false;
   TypeMap oldToNewTypes;
   for (auto [type, index] : typeIndices) {
-    oldToNewTypes[type] = newTypes[index];
-    if (newTypes[index] != type) {
+    auto newType = newTypes[index];
+    oldToNewTypes[type] = newType;
+    if (newType != type) {
       changed = true;
     }
   }
