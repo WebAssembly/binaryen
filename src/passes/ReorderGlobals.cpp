@@ -304,11 +304,8 @@ struct ReorderGlobals : public Pass {
       // Sort by the counts.
       auto aCount = counts[a];
       auto bCount = counts[b];
-      if (aCount < bCount) {
-        return true;
-      }
-      if (aCount > bCount) {
-        return false;
+      if (aCount != bCount) {
+        return aCount < bCount;
       }
 
       // Break ties using the original order, which means just using the
@@ -329,7 +326,7 @@ struct ReorderGlobals : public Pass {
       }
     }
 
-    // Pop off the heap: Emit the global and it its final, sorted index. Keep
+    // Pop off the heap: Emit the global and its final, sorted index. Keep
     // doing that until we finish processing all the globals.
     IndexIndexMap sortedindices(globals.size());
     Index numSortedindices = 0;
