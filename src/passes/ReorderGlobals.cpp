@@ -376,7 +376,7 @@ struct ReorderGlobals : public Pass {
 
     if (always) {
       // In this mode we gradually increase the cost of later globals, in an
-      // unrealistic but manner.
+      // unrealistic but smooth manner.
       double total = 0;
       for (Index i = 0; i < actualOrder.size(); i++) {
         // Multiply the count for this global by a smoothed LEB factor, which
