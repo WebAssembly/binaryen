@@ -100,12 +100,12 @@ function asmFunc(imports) {
  
  function $6() {
   var $2_1 = 0;
-  loop_in : while (1) {
+  label : while (1) {
    if (0) {
-    continue loop_in
+    continue label
    }
    $2_1 = 3;
-   break loop_in;
+   break label;
   };
   return $2_1 | 0;
  }
@@ -115,6 +115,10 @@ function asmFunc(imports) {
   i = 0;
   l : {
    break l;
+  }
+  i = i + 1 | 0;
+  l0 : {
+   break l0;
   }
   i = i + 1 | 0;
   l1 : {
@@ -129,34 +133,30 @@ function asmFunc(imports) {
    break l3;
   }
   i = i + 1 | 0;
-  l4 : {
-   break l4;
-  }
-  i = i + 1 | 0;
   return i | 0;
  }
  
  function $8() {
   var i = 0;
   i = 0;
-  if_ : {
-   break if_;
+  label : {
+   break label;
   }
   i = i + 1 | 0;
-  if5 : {
-   break if5;
+  label0 : {
+   break label0;
   }
   i = i + 1 | 0;
-  if6 : {
-   break if6;
+  label1 : {
+   break label1;
   }
   i = i + 1 | 0;
-  if7 : {
-   break if7;
+  label2 : {
+   break label2;
   }
   i = i + 1 | 0;
-  if8 : {
-   break if8;
+  label3 : {
+   break label3;
   }
   i = i + 1 | 0;
   return i | 0;
@@ -305,9 +305,9 @@ function asmFunc(imports) {
   var $1_1 = 0, $2_1 = 0;
   l1 : {
    $1_1 = 2;
-   l113 : {
+   l11 : {
     $2_1 = 3;
-    break l113;
+    break l11;
    }
   }
   return $1_1 + $2_1 | 0 | 0;

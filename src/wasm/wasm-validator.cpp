@@ -3908,7 +3908,7 @@ static void validateTags(Module& module, ValidationInfo& info) {
   }
 }
 
-static void validateModule(Module& module, ValidationInfo& info) {
+static void validateStart(Module& module, ValidationInfo& info) {
   // start
   if (module.start.is()) {
     auto func = module.getFunctionOrNull(module.start);
@@ -3922,6 +3922,59 @@ static void validateModule(Module& module, ValidationInfo& info) {
                         "start must not return a value");
     }
   }
+}
+
+namespace {
+template<typename T, typename U>
+void validateModuleMap(Module& module,
+                       ValidationInfo& info,
+                       T& list,
+                       U getter,
+                       const std::string& kind) {
+  // Given a list of module elements (like exports or globals), see that we can
+  // get the items using the getter (getExportorNull, etc.). The getter uses the
+  // lookup map internally, so this validates that they contain all items in
+  // the list.
+  for (auto& item : list) {
+    auto* ptr = (module.*getter)(item->name);
+    if (!ptr) {
+      info.fail(kind + " must be found (use updateMaps)", item->name, nullptr);
+    } else {
+      info.shouldBeEqual(item->name,
+                         ptr->name,
+                         item->name,
+                         "getter must return the correct item");
+    }
+  }
+
+  // TODO: Also check there is nothing extraneous in the map, but that would
+  //       require inspecting private fields of Module.
+}
+} // anonymous namespace
+
+static void validateModuleMaps(Module& module, ValidationInfo& info) {
+  // Module maps should be up to date.
+  validateModuleMap(
+    module, info, module.exports, &Module::getExportOrNull, "Export");
+  validateModuleMap(
+    module, info, module.functions, &Module::getFunctionOrNull, "Function");
+  validateModuleMap(
+    module, info, module.globals, &Module::getGlobalOrNull, "Global");
+  validateModuleMap(module, info, module.tags, &Module::getTagOrNull, "Tag");
+  validateModuleMap(module,
+                    info,
+                    module.elementSegments,
+                    &Module::getElementSegmentOrNull,
+                    "ElementSegment");
+  validateModuleMap(
+    module, info, module.memories, &Module::getMemoryOrNull, "Memory");
+  validateModuleMap(module,
+                    info,
+                    module.dataSegments,
+                    &Module::getDataSegmentOrNull,
+                    "DataSegment");
+  validateModuleMap(
+    module, info, module.tables, &Module::getTableOrNull, "Table");
 }
 
 static void validateFeatures(Module& module, ValidationInfo& info) {
@@ -4004,7 +4057,8 @@ bool WasmValidator::validate(Module& module, Flags flags) {
     validateDataSegments(module, info);
     validateTables(module, info);
     validateTags(module, info);
-    validateModule(module, info);
+    validateStart(module, info);
+    validateModuleMaps(module, info);
     validateFeatures(module, info);
     if (info.closedWorld) {
       validateClosedWorldInterface(module, info);

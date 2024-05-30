@@ -45,11 +45,6 @@ namespace wasm {
 namespace {
 
 struct SignaturePruning : public Pass {
-  // Maps each heap type to the possible pruned heap type. We will fill this
-  // during analysis and then use it while doing an update of the types. If a
-  // type has no improvement that we can find, it will not appear in this map.
-  std::unordered_map<HeapType, Signature> newSignatures;
-
   void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
@@ -182,6 +177,11 @@ struct SignaturePruning : public Pass {
     //      types with subtyping relations at once.
     SubTypes subTypes(*module);
 
+    // Maps each heap type to the possible pruned signature. We will fill this
+    // during analysis and then use it while doing an update of the types. If a
+    // type has no improvement that we can find, it will not appear in this map.
+    std::unordered_map<HeapType, Signature> newSignatures;
+
     // Find parameters to prune.
     //
     // TODO: The order matters here, and more than one cycle can find more work
@@ -291,8 +291,16 @@ struct SignaturePruning : public Pass {
       }
     }
 
-    // Rewrite the types.
-    GlobalTypeRewriter::updateSignatures(newSignatures, *module);
+    // Rewrite the types. We pass in all the types we intend to modify as being
+    // "additional private types" because we have proven above that they are
+    // safe to modify, even if they are technically public (e.g. they may be in
+    // a singleton big rec group that is public because one member is public).
+    std::vector<HeapType> additionalPrivateTypes;
+    for (auto& [type, sig] : newSignatures) {
+      additionalPrivateTypes.push_back(type);
+    }
+    GlobalTypeRewriter::updateSignatures(
+      newSignatures, *module, additionalPrivateTypes);
 
     if (callTargetsToLocalize.empty()) {
       return false;

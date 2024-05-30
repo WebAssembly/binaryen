@@ -32,7 +32,6 @@
 #include "support/result.h"
 #include "wasm-binary.h"
 #include "wasm-interpreter.h"
-#include "wasm-s-parser.h"
 #include "wasm-validator.h"
 
 using namespace wasm;
@@ -56,7 +55,7 @@ struct Shell {
     size_t i = 0;
     for (auto& entry : script) {
       Colors::red(std::cerr);
-      std::cerr << i << ' ';
+      std::cerr << i++ << ' ';
       Colors::normal(std::cerr);
       if (std::get_if<WASTModule>(&entry.cmd)) {
         Colors::green(std::cerr);
@@ -72,7 +71,6 @@ struct Shell {
         std::cerr << "CHECKING [line: " << entry.line << "]\n";
         Colors::normal(std::cerr);
       }
-      ++i;
       CHECK_ERR(runCommand(entry.cmd));
     }
     return Ok{};

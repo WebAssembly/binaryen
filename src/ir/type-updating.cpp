@@ -28,7 +28,10 @@ namespace wasm {
 
 GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm) : wasm(wasm) {}
 
-void GlobalTypeRewriter::update() { mapTypes(rebuildTypes()); }
+void GlobalTypeRewriter::update(
+  const std::vector<HeapType>& additionalPrivateTypes) {
+  mapTypes(rebuildTypes(additionalPrivateTypes));
+}
 
 GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   const std::vector<HeapType>& additionalPrivateTypes) {
@@ -40,8 +43,17 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   Index i = 0;
   auto privateTypes = ModuleUtils::getPrivateHeapTypes(wasm);
 
-  for (auto t : additionalPrivateTypes) {
-    privateTypes.push_back(t);
+  if (!additionalPrivateTypes.empty()) {
+    // Only add additional private types that are not already in the list.
+    std::unordered_set<HeapType> privateTypesSet(privateTypes.begin(),
+                                                 privateTypes.end());
+
+    for (auto t : additionalPrivateTypes) {
+      if (!privateTypesSet.count(t)) {
+        privateTypes.push_back(t);
+        privateTypesSet.insert(t);
+      }
+    }
   }
 
   // Topological sort to have supertypes first, but we have to account for the
