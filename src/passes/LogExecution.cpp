@@ -39,6 +39,7 @@ namespace wasm {
 Name LOGGER("log_execution");
 
 struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
+  // The module name the logger function is imported from.
   IString logger_module;
 
   // Adds calls to new imports.
@@ -93,6 +94,7 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
         }
       }
 
+      // If no function was found, use ENV.
       if (!import->module) {
         import->module = ENV;
       }
