@@ -1168,9 +1168,10 @@
    ;; CHECK:      (rec
    ;; CHECK-NEXT:  (type $none (func))
    (type $none (func))
-   ;; CHECK:       (type $much (func (param i32)))
    (type $much (func (param i32)))
   )
+
+  ;; CHECK:       (type $much_0 (func (param i32)))
 
   ;; CHECK:      (export "exported" (func $exported))
 
