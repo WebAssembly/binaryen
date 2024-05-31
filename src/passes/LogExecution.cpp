@@ -40,14 +40,14 @@ Name LOGGER("log_execution");
 
 struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
   // The module name the logger function is imported from.
-  IString logger_module;
+  IString loggerModule;
 
   // Adds calls to new imports.
   bool addsEffects() override { return true; }
 
   void run(Module* module) override {
     auto& options = getPassOptions();
-    logger_module = options.getArgumentOrDefault("log-execution", "");
+    loggerModule = options.getArgumentOrDefault("log-execution", "");
     super::run(module);
   }
 
@@ -72,8 +72,8 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
     auto import =
       Builder::makeFunction(LOGGER, Signature(Type::i32, Type::none), {});
 
-    if (logger_module != "") {
-      import->module = logger_module;
+    if (loggerModule != "") {
+      import->module = loggerModule;
     } else {
       // Import the log function from import "env" if the module
       // imports other functions from that name.
