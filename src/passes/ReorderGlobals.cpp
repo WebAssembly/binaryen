@@ -284,25 +284,30 @@ struct ReorderGlobals : public Pass {
     // this with different counts, see earlier.
     std::vector<Index> availableHeap;
 
-    // Comparison function. This is used in a heap, where "highest" means
-    // "popped first", so if we compare the counts 10 and 20 we will return 1,
-    // which means 10 appears first in a simple sort, as 20 is higher. Later, 20
-    // will be popped earlier as it is higher and then it will appear earlier in
-    // the actual final sort.
+    // Comparison function. Given a and b, returns if a should be before b. This
+    // is used in a heap, where "highest" means "popped first", so see the notes
+    // below on how we order.
     auto cmp = [&](Index a, Index b) {
       // Imports always go first. The binary writer takes care of this itself
       // anyhow, but it is better to do it here in the IR so we can actually
       // see what the final layout will be.
       auto aImported = globals[a]->imported();
       auto bImported = globals[b]->imported();
-      if (!aImported && bImported) {
-        return true;
-      }
-      if (aImported && !bImported) {
-        return false;
+      // The highest items will be popped first off the heap, so we want imports
+      // to be at higher indexes, that is,
+      //
+      //  unimported, unimported, imported, imported.
+      //
+      // Then the imports are popped first.
+      if (aImported != bImported) {
+        return bImported;
       }
 
-      // Sort by the counts.
+      // Sort by the counts. We want higher counts at higher indexes so they are
+      // popped first, that is,
+      //
+      //  10, 20, 30, 40
+      //
       auto aCount = counts[a];
       auto bCount = counts[b];
       if (aCount != bCount) {
@@ -310,7 +315,11 @@ struct ReorderGlobals : public Pass {
       }
 
       // Break ties using the original order, which means just using the
-      // indices we have.
+      // indices we have. We need lower indexes at the top so they are popped
+      // first, that is,
+      //
+      //  3, 2, 1, 0
+      //
       return a > b;
     };
 
