@@ -1,3 +1,6 @@
+if(MSVC)
+	add_compile_options(/bigobj)
+endif()
 FILE(GLOB parser_HEADERS *.h)
 set(parser_SOURCES
  context-decls.cpp
@@ -8,3 +11,4 @@ set(parser_SOURCES
  ${parser_HEADERS}
 )
 add_library(parser OBJECT ${parser_SOURCES})
+
