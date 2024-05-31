@@ -236,8 +236,7 @@ struct ReorderGlobals : public Pass {
     }
 
     // Apply the indices we computed.
-    std::vector<std::unique_ptr<Global>> old;
-    old.swap(globals);
+    std::vector<std::unique_ptr<Global>> old(std::move(globals));
     globals.resize(old.size());
     for (Index i = 0; i < old.size(); i++) {
       globals[(*best)[i]] = std::move(old[i]);
