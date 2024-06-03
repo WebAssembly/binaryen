@@ -28,6 +28,7 @@
 #include <memory>
 
 #include "ir/branch-utils.h"
+#include "ir/global-utils.h"
 #include "ir/iteration.h"
 #include "ir/literal-utils.h"
 #include "ir/properties.h"
@@ -872,6 +873,36 @@ struct Reducer
     }
   }
 
+  bool reduceGlobals() {
+    GlobalUtils::UseCounter globalUses(*module);
+
+    // If a global has no uses then we can try to remove it. (We could also use
+    // dependencies to do more work in a single cycle, but more cycles will make
+    // further progress anyhow.)
+    auto& globals = module->globals;
+    for (size_t i = 0; i < globals.size(); i++) {
+      // Ignore used globals and respect a reasonable frequency of attempts.
+      if (globalUses.globalUses[globals[i]->name] > 0 ||
+          !shouldTryToReduce(factor)) {
+        continue;
+      }
+
+      // Copy the global to the side, remove it, and see if that works. If not,
+      // return it.
+      auto global = **globals[i];
+      module->removeGlobal(global.name);
+      ProgramResult result;
+      if (!writeAndTestReduction(result)) {
+        module->addGlobal(std::make_unique<Global>(global));
+        // This global is now at the end; swap it back into place?
+        // XXX
+      } else {
+        std::cerr << "|      removed a global\n";
+        noteReduction(1);
+      }
+    }
+  }
+
   // Reduces entire functions at a time. Returns whether we did a significant
   // amount of reduction that justifies doing even more.
   bool reduceFunctions() {
@@ -952,6 +983,8 @@ struct Reducer
     }
 
     shrinkElementSegments();
+
+    reduceGlobals();
 
     // try to remove exports
     std::cerr << "|    try to remove exports (with factor " << factor << ")\n";
