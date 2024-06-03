@@ -130,7 +130,8 @@ struct ReorderGlobals : public Pass {
     struct Sort : public TopologicalSort<Index, Sort> {
       const GlobalUtils::Dependencies& deps;
 
-      Sort(Index numGlobals, const GlobalUtils::Dependencies& deps) : deps(deps) {
+      Sort(Index numGlobals, const GlobalUtils::Dependencies& deps)
+        : deps(deps) {
         for (Index i = 0; i < numGlobals; i++) {
           push(i);
         }

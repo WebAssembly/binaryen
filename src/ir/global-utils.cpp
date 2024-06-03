@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "ir/find_all.h"
 #include "ir/global-utils.h"
+#include "ir/find_all.h"
 #include "wasm.h"
 
 namespace wasm::GlobalUtils {
@@ -71,7 +71,7 @@ private:
   AtomicNameCountMap& counts;
 };
 
-} // anomymous namespace
+} // namespace
 
 UseCounter::UseCounter(Module& wasm) {
   auto& globals = wasm.globals;
@@ -95,4 +95,3 @@ UseCounter::UseCounter(Module& wasm) {
 }
 
 } // namespace wasm::GlobalUtils
-
