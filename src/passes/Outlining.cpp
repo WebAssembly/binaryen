@@ -132,7 +132,19 @@ struct ReconstructStringifyWalker
                          : state == NotInSeq ? &existingBuilder
                                              : nullptr;
     if (builder) {
-      ASSERT_OK(builder->visit(curr));
+      if (auto* expr = curr->dynCast<Break>()) {
+        Type type = expr->value ? expr->value->type : Type::none;
+        ASSERT_OK(builder->visitBreakWithType(expr, type));
+      } else if (auto* expr = curr->dynCast<Switch>()) {
+        Type type = expr->value ? expr->value->type : Type::none;
+        ASSERT_OK(builder->visitSwitchWithType(expr, type));
+      } else {
+        // Assert ensures new unhandled branch instructions
+        // will quickly cause an error. Serves as a reminder to
+        // implement a new special-case visit*WithType.
+        assert(curr->is<BrOn>() || !Properties::isBranch(curr));
+        ASSERT_OK(builder->visit(curr));
+      }
     }
     DBG(printVisitExpression(curr));
 

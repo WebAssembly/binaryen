@@ -368,7 +368,7 @@
  )
 
  ;; CHECK:      (func $if-nondefaultable (type $1) (param $param (ref eq)) (result (ref eq))
- ;; CHECK-NEXT:  (local $temp (i32 (ref eq)))
+ ;; CHECK-NEXT:  (local $temp (tuple i32 (ref eq)))
  ;; CHECK-NEXT:  i32.const 0
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  tuple.make 2
@@ -395,7 +395,7 @@
  ;; CHECK-NEXT:  tuple.extract 2 1
  ;; CHECK-NEXT: )
  (func $if-nondefaultable (param $param (ref eq)) (result (ref eq))
-  (local $temp (i32 (ref eq)))
+  (local $temp (tuple i32 (ref eq)))
   ;; As the original testcase, but now $temp is a nondefaultable tuple rather
   ;; than a non-nullable reference by itself. We cannot remove the first set
   ;; here.
@@ -441,7 +441,7 @@
  )
 
  ;; CHECK:      (func $if-defaultable (type $4) (param $param eqref) (result eqref)
- ;; CHECK-NEXT:  (local $temp (i32 eqref))
+ ;; CHECK-NEXT:  (local $temp (tuple i32 eqref))
  ;; CHECK-NEXT:  i32.const 0
  ;; CHECK-NEXT:  local.get $param
  ;; CHECK-NEXT:  tuple.make 2
@@ -468,7 +468,7 @@
  ;; CHECK-NEXT:  tuple.extract 2 1
  ;; CHECK-NEXT: )
  (func $if-defaultable (param $param (ref null eq)) (result (ref null eq))
-  (local $temp (i32 (ref null eq)))
+  (local $temp (tuple i32 (ref null eq)))
   ;; As the last testcase, but now $temp is a defaultable tuple. We still do not
   ;; optimize away the set here, as we ignore tuples in local2stack.
   (local.set $temp

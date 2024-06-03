@@ -109,13 +109,8 @@ StringMeasure: 81
 StringEncode: 82
 StringConcat: 83
 StringEq: 84
-StringAs: 85
-StringWTF8Advance: 86
-StringWTF16Get: 87
-StringIterNext: 88
-StringIterMove: 89
-StringSliceWTF: 90
-StringSliceIter: 91
+StringWTF16Get: 85
+StringSliceWTF: 86
 getExpressionInfo={"id":15,"type":4,"op":6}
 (f32.neg
  (f32.const -33.61199951171875)
@@ -140,8 +135,8 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
  (import "module" "base" (tag $a-tag-imp (param i32)))
  (global $a-global i32 (i32.const 1))
  (memory $0 1 256 shared)
- (data $0 (i32.const 10) "hello, world")
- (data $1 "I am passive")
+ (data $x0 (i32.const 10) "hello, world")
+ (data $y1 "I am passive")
  (table $t0 1 funcref)
  (elem $e0 (i32.const 0) $"kitchen()sinker")
  (tag $a-tag (param i32))
@@ -1914,12 +1909,12 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
-      (memory.init $0
+      (memory.init $x0
        (i32.const 1024)
        (i32.const 0)
        (i32.const 12)
       )
-      (data.drop $0)
+      (data.drop $x0)
       (memory.copy
        (i32.const 2048)
        (i32.const 1024)
@@ -2189,15 +2184,6 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (pop stringref)
-      )
-      (drop
-       (pop stringview_wtf8)
-      )
-      (drop
-       (pop stringview_wtf16)
-      )
-      (drop
-       (pop stringview_iter)
       )
       (drop
        (memory.size)
@@ -2250,8 +2236,8 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
  (import "module" "base" (tag $a-tag-imp (param i32)))
  (global $a-global i32 (i32.const 1))
  (memory $0 1 256 shared)
- (data $0 (i32.const 10) "hello, world")
- (data $1 "I am passive")
+ (data $x0 (i32.const 10) "hello, world")
+ (data $y1 "I am passive")
  (table $t0 1 funcref)
  (elem $e0 (i32.const 0) $"kitchen()sinker")
  (tag $a-tag (param i32))
@@ -4024,12 +4010,12 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
-      (memory.init $0
+      (memory.init $x0
        (i32.const 1024)
        (i32.const 0)
        (i32.const 12)
       )
-      (data.drop $0)
+      (data.drop $x0)
       (memory.copy
        (i32.const 2048)
        (i32.const 1024)
@@ -4299,15 +4285,6 @@ getExpressionInfo(tuple[3])={"id":14,"type":5,"value":3.7}
       )
       (drop
        (pop stringref)
-      )
-      (drop
-       (pop stringview_wtf8)
-      )
-      (drop
-       (pop stringview_wtf16)
-      )
-      (drop
-       (pop stringview_iter)
       )
       (drop
        (memory.size)
@@ -4922,9 +4899,9 @@ sizeof Literal: 24
  (global $a-global2 i32 (i32.const 2))
  (global $a-global3 i32 (i32.const 3))
  (memory $0 1 256)
- (data $0 (i32.const 10) "hello, world")
- (data $1 (global.get $a-global) "segment data 2")
- (data $2 "hello, passive")
+ (data $x0 (i32.const 10) "hello, world")
+ (data $y1 (global.get $a-global) "segment data 2")
+ (data $z2 "hello, passive")
  (table $t0 1 funcref)
  (elem $e0 (i32.const 0) $fn0 $fn1 $fn2)
  (export "export0" (func $fn0))

@@ -283,24 +283,6 @@ void test_types() {
   BinaryenTypeExpand(stringref, &valueType);
   assert(valueType == stringref);
 
-  BinaryenType stringview_wtf8_ = BinaryenTypeStringviewWTF8();
-  printf("BinaryenTypeStringviewWTF8: (ptr)\n");
-  assert(BinaryenTypeArity(stringview_wtf8_) == 1);
-  BinaryenTypeExpand(stringview_wtf8_, &valueType);
-  assert(valueType == stringview_wtf8_);
-
-  BinaryenType stringview_wtf16_ = BinaryenTypeStringviewWTF16();
-  printf("BinaryenTypeStringviewWTF16: (ptr)\n");
-  assert(BinaryenTypeArity(stringview_wtf16_) == 1);
-  BinaryenTypeExpand(stringview_wtf16_, &valueType);
-  assert(valueType == stringview_wtf16_);
-
-  BinaryenType stringview_iter_ = BinaryenTypeStringviewIter();
-  printf("BinaryenTypeStringviewIter: (ptr)\n");
-  assert(BinaryenTypeArity(stringview_iter_) == 1);
-  BinaryenTypeExpand(stringview_iter_, &valueType);
-  assert(valueType == stringview_iter_);
-
   BinaryenType nullref = BinaryenTypeNullref();
   printf("BinaryenTypeNullref: (ptr)\n");
   assert(BinaryenTypeArity(nullref) == 1);
@@ -351,12 +333,6 @@ void test_types() {
   printf("BinaryenHeapTypeStruct: %zd\n", BinaryenHeapTypeStruct());
   printf("BinaryenHeapTypeArray: %zd\n", BinaryenHeapTypeArray());
   printf("BinaryenHeapTypeString: %zd\n", BinaryenHeapTypeString());
-  printf("BinaryenHeapTypeStringviewWTF8: %zd\n",
-         BinaryenHeapTypeStringviewWTF8());
-  printf("BinaryenHeapTypeStringviewWTF16: %zd\n",
-         BinaryenHeapTypeStringviewWTF16());
-  printf("BinaryenHeapTypeStringviewIter: %zd\n",
-         BinaryenHeapTypeStringviewIter());
   printf("BinaryenHeapTypeNone: %zd\n", BinaryenHeapTypeNone());
   printf("BinaryenHeapTypeNoext: %zd\n", BinaryenHeapTypeNoext());
   printf("BinaryenHeapTypeNofunc: %zd\n", BinaryenHeapTypeNofunc());
@@ -399,6 +375,32 @@ void test_features() {
   printf("BinaryenFeatureExtendedConst: %d\n", BinaryenFeatureExtendedConst());
   printf("BinaryenFeatureStrings: %d\n", BinaryenFeatureStrings());
   printf("BinaryenFeatureAll: %d\n", BinaryenFeatureAll());
+}
+
+void test_read_with_feature() {
+  BinaryenModuleRef module = BinaryenModuleCreate();
+  // Having multiple tables makes this module inherently not MVP compatible
+  // and requires the externref feature enabled to parse successfully.
+  BinaryenAddTable(module, "tab", 0, 100, BinaryenTypeFuncref());
+  BinaryenAddTable(module, "tab2", 0, 100, BinaryenTypeFuncref());
+
+  BinaryenFeatures features =
+    BinaryenFeatureMVP() | BinaryenFeatureReferenceTypes();
+  BinaryenModuleSetFeatures(module, features);
+
+  size_t bufferSize = 1024;
+  char* buffer = malloc(bufferSize);
+  size_t written = BinaryenModuleWrite(module, buffer, bufferSize);
+  BinaryenModuleDispose(module);
+
+  // See we can read the bytes and get a valid module from there.
+  BinaryenModuleRef readModule =
+    BinaryenModuleReadWithFeatures(buffer, written, features);
+  int valid = BinaryenModuleValidate(readModule);
+  assert(valid);
+  BinaryenModuleDispose(readModule);
+
+  free(buffer);
 }
 
 void test_core() {
@@ -530,8 +532,9 @@ void test_core() {
 
   // Memory. Add it before creating any memory-using instructions.
 
-  const char* segments[] = {"hello, world", "I am passive"};
-  bool segmentPassive[] = {false, true};
+  const char* segmentNames[] = {"0", "1"};
+  const char* segmentDatas[] = {"hello, world", "I am passive"};
+  bool segmentPassives[] = {false, true};
   BinaryenExpressionRef segmentOffsets[] = {
     BinaryenConst(module, BinaryenLiteralInt32(10)), NULL};
   BinaryenIndex segmentSizes[] = {12, 12};
@@ -539,14 +542,23 @@ void test_core() {
                     1,
                     256,
                     "mem",
-                    segments,
-                    segmentPassive,
+                    segmentNames,
+                    segmentDatas,
+                    segmentPassives,
                     segmentOffsets,
                     segmentSizes,
                     2,
                     1,
                     0,
                     "0");
+  BinaryenAddDataSegment(module, NULL, NULL, true, NULL, "data segment 2", 14);
+  BinaryenAddDataSegment(module,
+                         "seg",
+                         "0",
+                         false,
+                         BinaryenConst(module, BinaryenLiteralInt32(0)),
+                         "data segment 3",
+                         14);
 
   BinaryenExpressionRef valueList[] = {
     // Unary
@@ -1128,6 +1140,11 @@ void test_core() {
                      BinaryenTypeGetHeapType(i8Array),
                      makeInt32(module, 3),
                      makeInt32(module, 42)),
+    BinaryenArrayNewData(module,
+                         BinaryenTypeGetHeapType(i8Array),
+                         "0",
+                         makeInt32(module, 0),
+                         makeInt32(module, 2)),
     BinaryenArrayNewFixed(module,
                           BinaryenTypeGetHeapType(i8Array),
                           (BinaryenExpressionRef[]){makeInt32(module, 1),
@@ -1153,82 +1170,17 @@ void test_core() {
                       makeInt32(module, 2)),
     // Strings
     BinaryenStringNew(module,
-                      BinaryenStringNewUTF8(),
-                      makeInt32(module, 0),
-                      makeInt32(module, 0),
-                      0,
-                      0,
-                      false),
-    BinaryenStringNew(module,
-                      BinaryenStringNewUTF8(),
-                      makeInt32(module, 0),
-                      makeInt32(module, 0),
-                      0,
-                      0,
-                      true),
-    BinaryenStringNew(module,
-                      BinaryenStringNewWTF8(),
-                      makeInt32(module, 0),
-                      makeInt32(module, 0),
-                      0,
-                      0,
-                      false),
-    BinaryenStringNew(module,
-                      BinaryenStringNewLossyUTF8(),
-                      makeInt32(module, 0),
-                      makeInt32(module, 0),
-                      0,
-                      0,
-                      false),
-    BinaryenStringNew(module,
-                      BinaryenStringNewWTF16(),
-                      makeInt32(module, 0),
-                      makeInt32(module, 0),
-                      0,
-                      0,
-                      false),
-    BinaryenStringNew(module,
-                      BinaryenStringNewUTF8Array(),
-                      BinaryenGlobalGet(module, "i8Array-global", i8Array),
-                      0,
-                      makeInt32(module, 0),
-                      makeInt32(module, 0),
-                      false),
-    BinaryenStringNew(module,
-                      BinaryenStringNewUTF8Array(),
-                      BinaryenGlobalGet(module, "i8Array-global", i8Array),
-                      0,
-                      makeInt32(module, 0),
-                      makeInt32(module, 0),
-                      true),
-    BinaryenStringNew(module,
-                      BinaryenStringNewWTF8Array(),
-                      BinaryenGlobalGet(module, "i8Array-global", i8Array),
-                      0,
-                      makeInt32(module, 0),
-                      makeInt32(module, 0),
-                      false),
-    BinaryenStringNew(module,
                       BinaryenStringNewLossyUTF8Array(),
                       BinaryenGlobalGet(module, "i8Array-global", i8Array),
-                      0,
                       makeInt32(module, 0),
-                      makeInt32(module, 0),
-                      false),
+                      makeInt32(module, 0)),
     BinaryenStringNew(module,
                       BinaryenStringNewWTF16Array(),
-                      BinaryenGlobalGet(module, "i16Array-global", i8Array),
-                      0,
+                      BinaryenGlobalGet(module, "i16Array-global", i16Array),
                       makeInt32(module, 0),
-                      makeInt32(module, 0),
-                      false),
-    BinaryenStringNew(module,
-                      BinaryenStringNewFromCodePoint(),
-                      makeInt32(module, 1),
-                      0,
-                      0,
-                      0,
-                      false),
+                      makeInt32(module, 0)),
+    BinaryenStringNew(
+      module, BinaryenStringNewFromCodePoint(), makeInt32(module, 1), 0, 0),
     BinaryenStringConst(module, "hello world"),
     BinaryenStringMeasure(
       module,
@@ -1236,62 +1188,11 @@ void test_core() {
       BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
     BinaryenStringMeasure(
       module,
-      BinaryenStringMeasureWTF8(),
-      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-    BinaryenStringMeasure(
-      module,
       BinaryenStringMeasureWTF16(),
       BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-    BinaryenStringMeasure(
-      module,
-      BinaryenStringMeasureIsUSV(),
-      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-    BinaryenStringMeasure(
-      module,
-      BinaryenStringMeasureWTF16View(),
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsWTF16(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()))),
-    BinaryenStringEncode(
-      module,
-      BinaryenStringEncodeUTF8(),
-      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
-      makeInt32(module, 0),
-      0),
-    BinaryenStringEncode(
-      module,
-      BinaryenStringEncodeLossyUTF8(),
-      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
-      makeInt32(module, 0),
-      0),
-    BinaryenStringEncode(
-      module,
-      BinaryenStringEncodeWTF8(),
-      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
-      makeInt32(module, 0),
-      0),
-    BinaryenStringEncode(
-      module,
-      BinaryenStringEncodeWTF16(),
-      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
-      makeInt32(module, 0),
-      0),
-    BinaryenStringEncode(
-      module,
-      BinaryenStringEncodeUTF8Array(),
-      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
-      BinaryenGlobalGet(module, "i8Array-global", i8Array),
-      makeInt32(module, 0)),
     BinaryenStringEncode(
       module,
       BinaryenStringEncodeLossyUTF8Array(),
-      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
-      BinaryenGlobalGet(module, "i8Array-global", i8Array),
-      makeInt32(module, 0)),
-    BinaryenStringEncode(
-      module,
-      BinaryenStringEncodeWTF8Array(),
       BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
       BinaryenGlobalGet(module, "i8Array-global", i8Array),
       makeInt32(module, 0)),
@@ -1315,79 +1216,14 @@ void test_core() {
       BinaryenStringEqCompare(),
       BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
       BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-    BinaryenStringAs(
-      module,
-      BinaryenStringAsWTF8(),
-      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-    BinaryenStringAs(
-      module,
-      BinaryenStringAsWTF16(),
-      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-    BinaryenStringAs(
-      module,
-      BinaryenStringAsIter(),
-      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-    BinaryenStringWTF8Advance(
-      module,
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsWTF8(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-      makeInt32(module, 0),
-      makeInt32(module, 0)),
     BinaryenStringWTF16Get(
       module,
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsWTF16(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-      makeInt32(module, 0)),
-    BinaryenStringIterNext(
-      module,
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsIter(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()))),
-    BinaryenStringIterMove(
-      module,
-      BinaryenStringIterMoveAdvance(),
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsIter(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-      makeInt32(module, 1)),
-    BinaryenStringIterMove(
-      module,
-      BinaryenStringIterMoveRewind(),
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsIter(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-      makeInt32(module, 1)),
-    BinaryenStringSliceWTF(
-      module,
-      BinaryenStringSliceWTF8(),
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsWTF8(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
-      makeInt32(module, 0),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
       makeInt32(module, 0)),
     BinaryenStringSliceWTF(
       module,
-      BinaryenStringSliceWTF16(),
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsWTF16(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
+      BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref()),
       makeInt32(module, 0),
-      makeInt32(module, 0)),
-    BinaryenStringSliceIter(
-      module,
-      BinaryenStringAs(
-        module,
-        BinaryenStringAsIter(),
-        BinaryenGlobalGet(module, "string-global", BinaryenTypeStringref())),
       makeInt32(module, 0)),
     // Other
     BinaryenNop(module),
@@ -1416,6 +1252,16 @@ void test_core() {
   BinaryenType localTypes[] = {BinaryenTypeInt32(), BinaryenTypeExternref()};
   BinaryenFunctionRef sinker = BinaryenAddFunction(
     module, "kitchen()sinker", iIfF, BinaryenTypeInt32(), localTypes, 2, body);
+
+  BinaryenIndex numLocals = BinaryenFunctionGetNumLocals(sinker);
+  BinaryenIndex numParams =
+    BinaryenTypeArity(BinaryenFunctionGetParams(sinker));
+  BinaryenIndex newLocalIdx =
+    BinaryenFunctionAddVar(sinker, BinaryenTypeFloat32());
+  assert(newLocalIdx == numLocals);
+  assert(BinaryenFunctionGetNumLocals(sinker) == numLocals + 1);
+  assert(BinaryenFunctionGetVar(sinker, newLocalIdx - numParams) ==
+         BinaryenTypeFloat32());
 
   // Globals
 
@@ -1957,10 +1803,15 @@ void test_binaries() {
   BinaryenModuleWriteText(module, buffer, 1024);
   printf("module s-expr printed (in memory):\n%s\n", buffer);
 
-  // writ the s-expr representation to a pointer which is managed by the
+  // write the s-expr representation to a pointer which is managed by the
   // caller
   char* text = BinaryenModuleAllocateAndWriteText(module);
   printf("module s-expr printed (in memory, caller-owned):\n%s\n", text);
+  free(text);
+
+  // write StackIR
+  text = BinaryenModuleAllocateAndWriteStackIR(module);
+  printf("module s-expr printed (StackIR):\n%s\n", text);
   free(text);
 
   BinaryenModuleDispose(module);
@@ -2070,9 +1921,10 @@ void test_for_each() {
       assert(BinaryenGetExportByIndex(module, i) == exps[i]);
     }
 
-    const char* segments[] = {"hello, world", "segment data 2"};
+    const char* segmentNames[] = {"0", "1"};
+    const char* segmentDatas[] = {"hello, world", "segment data 2"};
     const uint32_t expected_offsets[] = {10, 125};
-    bool segmentPassive[] = {false, false};
+    bool segmentPassives[] = {false, false};
     BinaryenIndex segmentSizes[] = {12, 14};
 
     BinaryenExpressionRef segmentOffsets[] = {
@@ -2082,8 +1934,9 @@ void test_for_each() {
                       1,
                       256,
                       "mem",
-                      segments,
-                      segmentPassive,
+                      segmentNames,
+                      segmentDatas,
+                      segmentPassives,
                       segmentOffsets,
                       segmentSizes,
                       2,
@@ -2098,11 +1951,12 @@ void test_for_each() {
 
     for (i = 0; i < BinaryenGetNumMemorySegments(module); i++) {
       char out[15] = {};
-      assert(BinaryenGetMemorySegmentByteOffset(module, i) ==
+      assert(BinaryenGetMemorySegmentByteOffset(module, segmentNames[i]) ==
              expected_offsets[i]);
-      assert(BinaryenGetMemorySegmentByteLength(module, i) == segmentSizes[i]);
-      BinaryenCopyMemorySegmentData(module, i, out);
-      assert(0 == strcmp(segments[i], out));
+      assert(BinaryenGetMemorySegmentByteLength(module, segmentNames[i]) ==
+             segmentSizes[i]);
+      BinaryenCopyMemorySegmentData(module, segmentNames[i], out);
+      assert(0 == strcmp(segmentDatas[i], out));
     }
   }
   {

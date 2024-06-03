@@ -20,8 +20,6 @@
 
  (type $struct_i8 (struct (field i8)))
 
- (type $array16 (array (mut i16)))
-
  (type $func-return-i32 (func (result i32)))
 
  ;; CHECK:      (import "fuzzing-support" "log-i32" (func $log (type $4) (param i32)))
@@ -45,7 +43,7 @@
    ;; the fallthrough value should be used. for that to be possible with a block
    ;; we need for it not to have a name, which is why --remove-unused-names is
    ;; run
-   (block (result (funcref))
+   (block (result funcref)
     ;; make a call so the block is not trivially removable
     (drop
      (call $test-fallthrough)
@@ -752,7 +750,7 @@
  ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
@@ -781,7 +779,7 @@
  )
 
  ;; CHECK:      (func $odd-cast-and-get-tuple (type $3)
- ;; CHECK-NEXT:  (local $temp ((ref null $B) i32))
+ ;; CHECK-NEXT:  (local $temp (tuple (ref null $B) i32))
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (ref.null none)
@@ -789,7 +787,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
@@ -798,7 +796,7 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $odd-cast-and-get-tuple
-  (local $temp ((ref null $B) i32))
+  (local $temp (tuple (ref null $B) i32))
   ;; As above, but with a tuple.
   (local.set $temp
    (tuple.make 2
@@ -853,7 +851,7 @@
  )
 
  ;; CHECK:      (func $new_block_unreachable (type $8) (result anyref)
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable StructNew we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block
  ;; CHECK-NEXT:     (unreachable)
@@ -1171,7 +1169,7 @@
  )
 
  ;; CHECK:      (func $get-nonnullable-in-unreachable-tuple (type $19) (result anyref i32)
- ;; CHECK-NEXT:  (local $x ((ref any) i32))
+ ;; CHECK-NEXT:  (local $x (tuple (ref any) i32))
  ;; CHECK-NEXT:  (local.tee $x
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
@@ -1186,7 +1184,7 @@
  (func $get-nonnullable-in-unreachable-tuple (result anyref i32)
   ;; As $get-nonnullable-in-unreachable but the local is a tuple (so we need to
   ;; check isDefaultable, and not just isNullable).
-  (local $x ((ref any) i32))
+  (local $x (tuple (ref any) i32))
   (local.set $x
    (unreachable)
   )

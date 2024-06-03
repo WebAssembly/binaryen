@@ -25,7 +25,9 @@
 
   ;; CHECK-BIN:      (type $sig_funcref (func (param funcref)))
 
-  ;; CHECK-BIN:      (type $3 (func (result funcref)))
+  ;; CHECK-BIN:      (type $3 (func))
+
+  ;; CHECK-BIN:      (type $4 (func (result funcref)))
 
   ;; CHECK-BIN:      (type $sig_eqref (func (param eqref)))
   (type $sig_eqref (func (param eqref)))
@@ -43,6 +45,17 @@
   ;; CHECK-TEXT:      (import "env" "import_global" (global $import_global eqref))
 
   ;; CHECK-TEXT:      (import "env" "import_func" (func $import_func (type $8) (param eqref) (result funcref)))
+  ;; CHECK-BIN:      (type $6 (func (result eqref)))
+
+  ;; CHECK-BIN:      (type $7 (func (param i32)))
+
+  ;; CHECK-BIN:      (type $8 (func (param eqref) (result funcref)))
+
+  ;; CHECK-BIN:      (import "env" "import_global" (global $import_global eqref))
+
+  ;; CHECK-BIN:      (import "env" "import_func" (func $import_func (type $8) (param eqref) (result funcref)))
+  (import "env" "import_func" (func $import_func (param eqref) (result funcref)))
+  (import "env" "import_global" (global $import_global eqref))
 
   ;; CHECK-TEXT:      (global $global_eqref (mut eqref) (ref.null none))
 
@@ -56,7 +69,7 @@
 
   ;; CHECK-TEXT:      (table $0 3 3 funcref)
 
-  ;; CHECK-TEXT:      (elem $0 (i32.const 0) $take_eqref $take_funcref $take_anyref)
+  ;; CHECK-TEXT:      (elem $implicit-elem (i32.const 0) $take_eqref $take_funcref $take_anyref)
 
   ;; CHECK-TEXT:      (elem declare func $foo $ref-taken-but-not-in-table)
 
@@ -69,18 +82,6 @@
   ;; CHECK-TEXT:      (func $take_eqref (type $sig_eqref) (param $0 eqref)
   ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (type $5 (func))
-
-  ;; CHECK-BIN:      (type $6 (func (result eqref)))
-
-  ;; CHECK-BIN:      (type $7 (func (param i32)))
-
-  ;; CHECK-BIN:      (type $8 (func (param eqref) (result funcref)))
-
-  ;; CHECK-BIN:      (import "env" "import_global" (global $import_global eqref))
-
-  ;; CHECK-BIN:      (import "env" "import_func" (func $import_func (type $8) (param eqref) (result funcref)))
-
   ;; CHECK-BIN:      (global $global_eqref (mut eqref) (ref.null none))
 
   ;; CHECK-BIN:      (global $global_funcref (mut funcref) (ref.null nofunc))
@@ -127,7 +128,7 @@
   ;; CHECK-TEXT:      (func $foo (type $5)
   ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $foo (type $5)
+  ;; CHECK-BIN:      (func $foo (type $3)
   ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $foo)
@@ -139,11 +140,11 @@
 
   ;; CHECK-BIN-NODEBUG:      (type $2 (func (param funcref)))
 
-  ;; CHECK-BIN-NODEBUG:      (type $3 (func (result funcref)))
+  ;; CHECK-BIN-NODEBUG:      (type $3 (func))
 
-  ;; CHECK-BIN-NODEBUG:      (type $4 (func (param eqref)))
+  ;; CHECK-BIN-NODEBUG:      (type $4 (func (result funcref)))
 
-  ;; CHECK-BIN-NODEBUG:      (type $5 (func))
+  ;; CHECK-BIN-NODEBUG:      (type $5 (func (param eqref)))
 
   ;; CHECK-BIN-NODEBUG:      (type $6 (func (result eqref)))
 
@@ -172,8 +173,6 @@
   ;; CHECK-BIN-NODEBUG:      (elem declare func $23 $3)
   (elem declare func $ref-taken-but-not-in-table)
 
-  (import "env" "import_func" (func $import_func (param eqref) (result funcref)))
-  (import "env" "import_global" (global $import_global eqref))
   (export "export_func" (func $import_func))
   (export "export_global" (global $import_global))
 
@@ -458,67 +457,67 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in (result eqref)
+  ;; CHECK-TEXT-NEXT:   (loop (result eqref)
   ;; CHECK-TEXT-NEXT:    (local.get $local_eqref)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in11 (result eqref)
+  ;; CHECK-TEXT-NEXT:   (loop (result eqref)
   ;; CHECK-TEXT-NEXT:    (global.get $global_eqref)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in12 (result eqref)
+  ;; CHECK-TEXT-NEXT:   (loop (result eqref)
   ;; CHECK-TEXT-NEXT:    (ref.null none)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in13 (result funcref)
+  ;; CHECK-TEXT-NEXT:   (loop (result funcref)
   ;; CHECK-TEXT-NEXT:    (local.get $local_funcref)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in14 (result funcref)
+  ;; CHECK-TEXT-NEXT:   (loop (result funcref)
   ;; CHECK-TEXT-NEXT:    (global.get $global_funcref)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in15 (result funcref)
+  ;; CHECK-TEXT-NEXT:   (loop (result funcref)
   ;; CHECK-TEXT-NEXT:    (ref.null nofunc)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in16 (result funcref)
+  ;; CHECK-TEXT-NEXT:   (loop (result funcref)
   ;; CHECK-TEXT-NEXT:    (ref.func $foo)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in17 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (loop (result anyref)
   ;; CHECK-TEXT-NEXT:    (local.get $local_anyref)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in18 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (loop (result anyref)
   ;; CHECK-TEXT-NEXT:    (global.get $global_anyref)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in19 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (loop (result anyref)
   ;; CHECK-TEXT-NEXT:    (ref.null none)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in20 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (loop (result anyref)
   ;; CHECK-TEXT-NEXT:    (local.get $local_eqref)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in21 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (loop (result anyref)
   ;; CHECK-TEXT-NEXT:    (global.get $global_eqref)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (loop $loop-in22 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (loop (result anyref)
   ;; CHECK-TEXT-NEXT:    (ref.null none)
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
@@ -591,7 +590,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (try $try (result eqref)
+  ;; CHECK-TEXT-NEXT:   (try (result eqref)
   ;; CHECK-TEXT-NEXT:    (do
   ;; CHECK-TEXT-NEXT:     (local.get $local_eqref)
   ;; CHECK-TEXT-NEXT:    )
@@ -604,7 +603,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (try $try28 (result funcref)
+  ;; CHECK-TEXT-NEXT:   (try (result funcref)
   ;; CHECK-TEXT-NEXT:    (do
   ;; CHECK-TEXT-NEXT:     (ref.func $foo)
   ;; CHECK-TEXT-NEXT:    )
@@ -617,7 +616,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (try $try29 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (try (result anyref)
   ;; CHECK-TEXT-NEXT:    (do
   ;; CHECK-TEXT-NEXT:     (local.get $local_eqref)
   ;; CHECK-TEXT-NEXT:    )
@@ -630,7 +629,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT:  (drop
-  ;; CHECK-TEXT-NEXT:   (try $try30 (result anyref)
+  ;; CHECK-TEXT-NEXT:   (try (result anyref)
   ;; CHECK-TEXT-NEXT:    (do
   ;; CHECK-TEXT-NEXT:     (ref.null none)
   ;; CHECK-TEXT-NEXT:    )
@@ -723,7 +722,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $test (type $5)
+  ;; CHECK-BIN:      (func $test (type $3)
   ;; CHECK-BIN-NEXT:  (local $local_eqref eqref)
   ;; CHECK-BIN-NEXT:  (local $local_funcref funcref)
   ;; CHECK-BIN-NEXT:  (local $local_anyref anyref)
@@ -914,9 +913,11 @@
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block $label$3 (result eqref)
-  ;; CHECK-BIN-NEXT:    (br_if $label$3
-  ;; CHECK-BIN-NEXT:     (ref.null none)
-  ;; CHECK-BIN-NEXT:     (i32.const 1)
+  ;; CHECK-BIN-NEXT:    (ref.cast nullref
+  ;; CHECK-BIN-NEXT:     (br_if $label$3
+  ;; CHECK-BIN-NEXT:      (ref.null none)
+  ;; CHECK-BIN-NEXT:      (i32.const 1)
+  ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
@@ -938,17 +939,21 @@
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block $label$6 (result funcref)
-  ;; CHECK-BIN-NEXT:    (br_if $label$6
-  ;; CHECK-BIN-NEXT:     (ref.null nofunc)
-  ;; CHECK-BIN-NEXT:     (i32.const 1)
+  ;; CHECK-BIN-NEXT:    (ref.cast nullfuncref
+  ;; CHECK-BIN-NEXT:     (br_if $label$6
+  ;; CHECK-BIN-NEXT:      (ref.null nofunc)
+  ;; CHECK-BIN-NEXT:      (i32.const 1)
+  ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block $label$7 (result funcref)
-  ;; CHECK-BIN-NEXT:    (br_if $label$7
-  ;; CHECK-BIN-NEXT:     (ref.func $foo)
-  ;; CHECK-BIN-NEXT:     (i32.const 1)
+  ;; CHECK-BIN-NEXT:    (ref.cast (ref $3)
+  ;; CHECK-BIN-NEXT:     (br_if $label$7
+  ;; CHECK-BIN-NEXT:      (ref.func $foo)
+  ;; CHECK-BIN-NEXT:      (i32.const 1)
+  ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
@@ -970,25 +975,31 @@
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block $label$10 (result anyref)
-  ;; CHECK-BIN-NEXT:    (br_if $label$10
-  ;; CHECK-BIN-NEXT:     (ref.null none)
-  ;; CHECK-BIN-NEXT:     (i32.const 1)
+  ;; CHECK-BIN-NEXT:    (ref.cast nullref
+  ;; CHECK-BIN-NEXT:     (br_if $label$10
+  ;; CHECK-BIN-NEXT:      (ref.null none)
+  ;; CHECK-BIN-NEXT:      (i32.const 1)
+  ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block $label$11 (result anyref)
-  ;; CHECK-BIN-NEXT:    (br_if $label$11
-  ;; CHECK-BIN-NEXT:     (local.get $local_eqref)
-  ;; CHECK-BIN-NEXT:     (i32.const 1)
+  ;; CHECK-BIN-NEXT:    (ref.cast eqref
+  ;; CHECK-BIN-NEXT:     (br_if $label$11
+  ;; CHECK-BIN-NEXT:      (local.get $local_eqref)
+  ;; CHECK-BIN-NEXT:      (i32.const 1)
+  ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block $label$12 (result anyref)
-  ;; CHECK-BIN-NEXT:    (br_if $label$12
-  ;; CHECK-BIN-NEXT:     (ref.null none)
-  ;; CHECK-BIN-NEXT:     (i32.const 1)
+  ;; CHECK-BIN-NEXT:    (ref.cast nullref
+  ;; CHECK-BIN-NEXT:     (br_if $label$12
+  ;; CHECK-BIN-NEXT:      (ref.null none)
+  ;; CHECK-BIN-NEXT:      (i32.const 1)
+  ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
@@ -1344,6 +1355,8 @@
     )
     (drop
       (block (result eqref)
+        ;; Note that we will end up emitting a cast here, and in several cases
+        ;; below, because the br_if value is more refined than the target block.
         (br_if 0 (ref.null eq) (i32.const 1))
       )
     )
@@ -1670,7 +1683,7 @@
   ;; CHECK-TEXT-NEXT:  (local $local_funcref funcref)
   ;; CHECK-TEXT-NEXT:  (local.get $local_funcref)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $return_funcref_local (type $3) (result funcref)
+  ;; CHECK-BIN:      (func $return_funcref_local (type $4) (result funcref)
   ;; CHECK-BIN-NEXT:  (local $local_funcref funcref)
   ;; CHECK-BIN-NEXT:  (local.get $local_funcref)
   ;; CHECK-BIN-NEXT: )
@@ -1682,7 +1695,7 @@
   ;; CHECK-TEXT:      (func $return_funcref_global (type $3) (result funcref)
   ;; CHECK-TEXT-NEXT:  (global.get $global_funcref)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $return_funcref_global (type $3) (result funcref)
+  ;; CHECK-BIN:      (func $return_funcref_global (type $4) (result funcref)
   ;; CHECK-BIN-NEXT:  (global.get $global_funcref)
   ;; CHECK-BIN-NEXT: )
   (func $return_funcref_global (result funcref)
@@ -1692,7 +1705,7 @@
   ;; CHECK-TEXT:      (func $return_funcref_null (type $3) (result funcref)
   ;; CHECK-TEXT-NEXT:  (ref.null nofunc)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $return_funcref_null (type $3) (result funcref)
+  ;; CHECK-BIN:      (func $return_funcref_null (type $4) (result funcref)
   ;; CHECK-BIN-NEXT:  (ref.null nofunc)
   ;; CHECK-BIN-NEXT: )
   (func $return_funcref_null (result funcref)
@@ -1702,7 +1715,7 @@
   ;; CHECK-TEXT:      (func $return_funcref_func (type $3) (result funcref)
   ;; CHECK-TEXT-NEXT:  (ref.func $foo)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $return_funcref_func (type $3) (result funcref)
+  ;; CHECK-BIN:      (func $return_funcref_func (type $4) (result funcref)
   ;; CHECK-BIN-NEXT:  (ref.func $foo)
   ;; CHECK-BIN-NEXT: )
   (func $return_funcref_func (result funcref)
@@ -1819,7 +1832,7 @@
   ;; CHECK-TEXT-NEXT:   (ref.null nofunc)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $returns_funcref (type $3) (result funcref)
+  ;; CHECK-BIN:      (func $returns_funcref (type $4) (result funcref)
   ;; CHECK-BIN-NEXT:  (local $local_funcref funcref)
   ;; CHECK-BIN-NEXT:  (return
   ;; CHECK-BIN-NEXT:   (local.get $local_funcref)
@@ -1893,7 +1906,7 @@
   ;; CHECK-TEXT-NEXT:   (ref.func $ref-taken-but-not-in-table)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $ref-user (type $5)
+  ;; CHECK-BIN:      (func $ref-user (type $3)
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (ref.func $ref-taken-but-not-in-table)
   ;; CHECK-BIN-NEXT:  )
@@ -1909,7 +1922,7 @@
   ;; CHECK-TEXT:      (func $ref-taken-but-not-in-table (type $5)
   ;; CHECK-TEXT-NEXT:  (nop)
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $ref-taken-but-not-in-table (type $5)
+  ;; CHECK-BIN:      (func $ref-taken-but-not-in-table (type $3)
   ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
   (func $ref-taken-but-not-in-table)
@@ -1920,7 +1933,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (export "export_global" (global $gimport$0))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $4) (param $0 eqref)
+;; CHECK-BIN-NODEBUG:      (func $0 (type $5) (param $0 eqref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
@@ -1932,11 +1945,11 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $5)
+;; CHECK-BIN-NODEBUG:      (func $3 (type $3)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (type $5)
+;; CHECK-BIN-NODEBUG:      (func $4 (type $3)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 eqref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 anyref)
@@ -2057,15 +2070,15 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (call $2
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $4)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $5)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $4)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $5)
 ;; CHECK-BIN-NODEBUG-NEXT:   (global.get $global$0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $4)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $5)
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
@@ -2127,9 +2140,11 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$3 (result eqref)
-;; CHECK-BIN-NODEBUG-NEXT:    (br_if $label$3
-;; CHECK-BIN-NODEBUG-NEXT:     (ref.null none)
-;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 1)
+;; CHECK-BIN-NODEBUG-NEXT:    (ref.cast nullref
+;; CHECK-BIN-NODEBUG-NEXT:     (br_if $label$3
+;; CHECK-BIN-NODEBUG-NEXT:      (ref.null none)
+;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 1)
+;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
@@ -2151,17 +2166,21 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$6 (result funcref)
-;; CHECK-BIN-NODEBUG-NEXT:    (br_if $label$6
-;; CHECK-BIN-NODEBUG-NEXT:     (ref.null nofunc)
-;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 1)
+;; CHECK-BIN-NODEBUG-NEXT:    (ref.cast nullfuncref
+;; CHECK-BIN-NODEBUG-NEXT:     (br_if $label$6
+;; CHECK-BIN-NODEBUG-NEXT:      (ref.null nofunc)
+;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 1)
+;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$7 (result funcref)
-;; CHECK-BIN-NODEBUG-NEXT:    (br_if $label$7
-;; CHECK-BIN-NODEBUG-NEXT:     (ref.func $3)
-;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 1)
+;; CHECK-BIN-NODEBUG-NEXT:    (ref.cast (ref $3)
+;; CHECK-BIN-NODEBUG-NEXT:     (br_if $label$7
+;; CHECK-BIN-NODEBUG-NEXT:      (ref.func $3)
+;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 1)
+;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
@@ -2183,25 +2202,31 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$10 (result anyref)
-;; CHECK-BIN-NODEBUG-NEXT:    (br_if $label$10
-;; CHECK-BIN-NODEBUG-NEXT:     (ref.null none)
-;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 1)
+;; CHECK-BIN-NODEBUG-NEXT:    (ref.cast nullref
+;; CHECK-BIN-NODEBUG-NEXT:     (br_if $label$10
+;; CHECK-BIN-NODEBUG-NEXT:      (ref.null none)
+;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 1)
+;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$11 (result anyref)
-;; CHECK-BIN-NODEBUG-NEXT:    (br_if $label$11
-;; CHECK-BIN-NODEBUG-NEXT:     (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 1)
+;; CHECK-BIN-NODEBUG-NEXT:    (ref.cast eqref
+;; CHECK-BIN-NODEBUG-NEXT:     (br_if $label$11
+;; CHECK-BIN-NODEBUG-NEXT:      (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 1)
+;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$12 (result anyref)
-;; CHECK-BIN-NODEBUG-NEXT:    (br_if $label$12
-;; CHECK-BIN-NODEBUG-NEXT:     (ref.null none)
-;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 1)
+;; CHECK-BIN-NODEBUG-NEXT:    (ref.cast nullref
+;; CHECK-BIN-NODEBUG-NEXT:     (br_if $label$12
+;; CHECK-BIN-NODEBUG-NEXT:      (ref.null none)
+;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 1)
+;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
@@ -2485,20 +2510,20 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $8 (type $3) (result funcref)
+;; CHECK-BIN-NODEBUG:      (func $8 (type $4) (result funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $9 (type $3) (result funcref)
+;; CHECK-BIN-NODEBUG:      (func $9 (type $4) (result funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (global.get $global$1)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $10 (type $3) (result funcref)
+;; CHECK-BIN-NODEBUG:      (func $10 (type $4) (result funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (ref.null nofunc)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $11 (type $3) (result funcref)
+;; CHECK-BIN-NODEBUG:      (func $11 (type $4) (result funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (ref.func $3)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
@@ -2535,7 +2560,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $19 (type $3) (result funcref)
+;; CHECK-BIN-NODEBUG:      (func $19 (type $4) (result funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (return
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
@@ -2557,12 +2582,12 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $22 (type $5)
+;; CHECK-BIN-NODEBUG:      (func $22 (type $3)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $23)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $23 (type $5)
+;; CHECK-BIN-NODEBUG:      (func $23 (type $3)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )

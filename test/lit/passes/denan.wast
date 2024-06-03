@@ -12,6 +12,8 @@
 
   ;; CHECK:      (type $3 (func (param f32 f64)))
 
+  ;; CHECK:      (type $4 (func))
+
   ;; CHECK:      (global $global$1 (mut f32) (f32.const 0))
   (global $global$1 (mut f32) (f32.const nan))
   ;; CHECK:      (global $global$2 (mut f32) (f32.const 12.34000015258789))
@@ -139,6 +141,38 @@
     (drop (local.get $f))
     (drop (local.get $d))
   )
+
+  ;; CHECK:      (func $constants
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const 12.34000015258789)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const 12.34)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (f64.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $constants
+    ;; Constants can be fixed up or left alone - we never need to add a call on
+    ;; them.
+    (drop
+      (f32.const 12.34)
+    )
+    (drop
+      (f32.const nan)
+    )
+    (drop
+      (f64.const 12.34)
+    )
+    (drop
+      (f64.const nan)
+    )
+  )
+
   ;; CHECK:      (func $tees (param $x f32) (result f32)
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (call $deNan32

@@ -29,6 +29,22 @@
 
 namespace wasm {
 
+// We don't understand this warning, only here and only on aarch64 and riscv64,
+// we suspect it's spurious so disabling for now.
+//
+// For context: https://github.com/WebAssembly/binaryen/issues/6311
+
+#if defined(__aarch64__)
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+#endif
+
+// https://github.com/WebAssembly/binaryen/issues/6410
+#if defined(__riscv) && __riscv_xlen == 64
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wuninitialized"
+#endif
+
 template<typename T, size_t N> class SmallVector {
   // fixed-space storage
   size_t usedFixed = 0;
@@ -36,6 +52,14 @@ template<typename T, size_t N> class SmallVector {
 
   // flexible additional storage
   std::vector<T> flexible;
+
+#if defined(__aarch64__)
+#pragma GCC diagnostic pop
+#endif
+
+#if defined(__riscv) && __riscv_xlen == 64
+#pragma GCC diagnostic pop
+#endif
 
 public:
   using value_type = T;

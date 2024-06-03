@@ -18,10 +18,11 @@
 #define parser_context_h
 
 #include "common.h"
-#include "input.h"
 #include "ir/names.h"
+#include "lexer.h"
 #include "support/name.h"
 #include "support/result.h"
+#include "support/string.h"
 #include "wasm-builder.h"
 #include "wasm-ir-builder.h"
 #include "wasm.h"
@@ -45,7 +46,7 @@ struct Limits {
 };
 
 struct MemType {
-  Type type;
+  Type indexType;
   Limits limits;
   bool shared;
 };
@@ -55,12 +56,18 @@ struct Memarg {
   uint32_t align;
 };
 
+struct TableType {
+  Type indexType;
+  Limits limits;
+};
+
 // The location, possible name, and index in the respective module index space
 // of a module-level definition in the input.
 struct DefPos {
   Name name;
   Index pos;
   Index index;
+  std::vector<Annotation> annotations;
 };
 
 struct GlobalType {
@@ -78,6 +85,7 @@ struct TypeUse {
 struct NullTypeParserCtx {
   using IndexT = Ok;
   using HeapTypeT = Ok;
+  using TupleElemListT = Ok;
   using TypeT = Ok;
   using ParamsT = Ok;
   using ResultsT = size_t;
@@ -109,10 +117,12 @@ struct NullTypeParserCtx {
   HeapTypeT makeStringViewWTF8Type() { return Ok{}; }
   HeapTypeT makeStringViewWTF16Type() { return Ok{}; }
   HeapTypeT makeStringViewIterType() { return Ok{}; }
+  HeapTypeT makeContType() { return Ok{}; }
   HeapTypeT makeNoneType() { return Ok{}; }
   HeapTypeT makeNoextType() { return Ok{}; }
   HeapTypeT makeNofuncType() { return Ok{}; }
   HeapTypeT makeNoexnType() { return Ok{}; }
+  HeapTypeT makeNocontType() { return Ok{}; }
 
   TypeT makeI32() { return Ok{}; }
   TypeT makeI64() { return Ok{}; }
@@ -121,6 +131,10 @@ struct NullTypeParserCtx {
   TypeT makeV128() { return Ok{}; }
 
   TypeT makeRefType(HeapTypeT, Nullability) { return Ok{}; }
+
+  TupleElemListT makeTupleElemList() { return Ok{}; }
+  void appendTupleElem(TupleElemListT&, TypeT) {}
+  TypeT makeTupleType(TupleElemListT) { return Ok{}; }
 
   ParamsT makeParams() { return Ok{}; }
   void appendParam(ParamsT&, Name, TypeT) {}
@@ -164,6 +178,8 @@ struct NullTypeParserCtx {
   BlockTypeT getBlockTypeFromResult(size_t results) { return Ok{}; }
 
   Result<> getBlockTypeFromTypeUse(Index, TypeUseT) { return Ok{}; }
+
+  bool skipFunctionBody() { return false; }
 };
 
 template<typename Ctx> struct TypeParserCtx {
@@ -201,13 +217,12 @@ template<typename Ctx> struct TypeParserCtx {
   HeapTypeT makeArrayType() { return HeapType::array; }
   HeapTypeT makeExnType() { return HeapType::exn; }
   HeapTypeT makeStringType() { return HeapType::string; }
-  HeapTypeT makeStringViewWTF8Type() { return HeapType::stringview_wtf8; }
-  HeapTypeT makeStringViewWTF16Type() { return HeapType::stringview_wtf16; }
-  HeapTypeT makeStringViewIterType() { return HeapType::stringview_iter; }
+  HeapTypeT makeContType() { return HeapType::cont; }
   HeapTypeT makeNoneType() { return HeapType::none; }
   HeapTypeT makeNoextType() { return HeapType::noext; }
   HeapTypeT makeNofuncType() { return HeapType::nofunc; }
   HeapTypeT makeNoexnType() { return HeapType::noexn; }
+  HeapTypeT makeNocontType() { return HeapType::nocont; }
 
   TypeT makeI32() { return Type::i32; }
   TypeT makeI64() { return Type::i64; }
@@ -219,7 +234,13 @@ template<typename Ctx> struct TypeParserCtx {
     return Type(ht, nullability);
   }
 
-  TypeT makeTupleType(const std::vector<Type> types) { return Tuple(types); }
+  std::vector<Type> makeTupleElemList() { return {}; }
+  void appendTupleElem(std::vector<Type>& elems, Type elem) {
+    elems.push_back(elem);
+  }
+  Result<TypeT> makeTupleType(const std::vector<Type>& types) {
+    return Tuple(types);
+  }
 
   ParamsT makeParams() { return {}; }
   void appendParam(ParamsT& params, Name id, TypeT type) {
@@ -293,10 +314,15 @@ template<typename Ctx> struct TypeParserCtx {
     assert(results.size() == 1);
     return HeapType(Signature(Type::none, results[0]));
   }
+
+  bool skipFunctionBody() { return false; }
 };
 
 struct NullInstrParserCtx {
   using ExprT = Ok;
+  using CatchT = Ok;
+  using CatchListT = Ok;
+  using TagLabelListT = Ok;
 
   using FieldIdxT = Ok;
   using FuncIdxT = Ok;
@@ -341,20 +367,32 @@ struct NullInstrParserCtx {
   MemargT getMemarg(uint64_t, uint32_t) { return Ok{}; }
 
   template<typename BlockTypeT>
-  Result<> makeBlock(Index, std::optional<Name>, BlockTypeT) {
+  Result<> makeBlock(Index,
+                     const std::vector<Annotation>&,
+                     std::optional<Name>,
+                     BlockTypeT) {
     return Ok{};
   }
   template<typename BlockTypeT>
-  Result<> makeIf(Index, std::optional<Name>, BlockTypeT) {
+  Result<> makeIf(Index,
+                  const std::vector<Annotation>&,
+                  std::optional<Name>,
+                  BlockTypeT) {
     return Ok{};
   }
   Result<> visitElse() { return Ok{}; }
   template<typename BlockTypeT>
-  Result<> makeLoop(Index, std::optional<Name>, BlockTypeT) {
+  Result<> makeLoop(Index,
+                    const std::vector<Annotation>&,
+                    std::optional<Name>,
+                    BlockTypeT) {
     return Ok{};
   }
   template<typename BlockTypeT>
-  Result<> makeTry(Index, std::optional<Name>, BlockTypeT) {
+  Result<> makeTry(Index,
+                   const std::vector<Annotation>&,
+                   std::optional<Name>,
+                   BlockTypeT) {
     return Ok{};
   }
   Result<> visitCatch(Index, TagIdxT) { return Ok{}; }
@@ -362,175 +400,435 @@ struct NullInstrParserCtx {
   Result<> visitDelegate(Index, LabelIdxT) { return Ok{}; }
   Result<> visitEnd() { return Ok{}; }
 
-  Result<> makeUnreachable(Index) { return Ok{}; }
-  Result<> makeNop(Index) { return Ok{}; }
-  Result<> makeBinary(Index, BinaryOp) { return Ok{}; }
-  Result<> makeUnary(Index, UnaryOp) { return Ok{}; }
-  template<typename ResultsT> Result<> makeSelect(Index, ResultsT*) {
+  CatchListT makeCatchList() { return Ok{}; }
+  void appendCatch(CatchListT&, CatchT) {}
+  CatchT makeCatch(TagIdxT, LabelIdxT) { return Ok{}; }
+  CatchT makeCatchRef(TagIdxT, LabelIdxT) { return Ok{}; }
+  CatchT makeCatchAll(LabelIdxT) { return Ok{}; }
+  CatchT makeCatchAllRef(LabelIdxT) { return Ok{}; }
+  template<typename BlockTypeT>
+  Result<> makeTryTable(Index,
+                        const std::vector<Annotation>&,
+                        std::optional<Name>,
+                        BlockTypeT,
+                        CatchListT) {
     return Ok{};
   }
-  Result<> makeDrop(Index) { return Ok{}; }
-  Result<> makeMemorySize(Index, MemoryIdxT*) { return Ok{}; }
-  Result<> makeMemoryGrow(Index, MemoryIdxT*) { return Ok{}; }
-  Result<> makeLocalGet(Index, LocalIdxT) { return Ok{}; }
-  Result<> makeLocalTee(Index, LocalIdxT) { return Ok{}; }
-  Result<> makeLocalSet(Index, LocalIdxT) { return Ok{}; }
-  Result<> makeGlobalGet(Index, GlobalIdxT) { return Ok{}; }
-  Result<> makeGlobalSet(Index, GlobalIdxT) { return Ok{}; }
 
-  Result<> makeI32Const(Index, uint32_t) { return Ok{}; }
-  Result<> makeI64Const(Index, uint64_t) { return Ok{}; }
-  Result<> makeF32Const(Index, float) { return Ok{}; }
-  Result<> makeF64Const(Index, double) { return Ok{}; }
-  Result<> makeLoad(Index, Type, bool, int, bool, MemoryIdxT*, MemargT) {
-    return Ok{};
-  }
-  Result<> makeStore(Index, Type, int, bool, MemoryIdxT*, MemargT) {
-    return Ok{};
-  }
-  Result<> makeAtomicRMW(Index, AtomicRMWOp, Type, int, MemoryIdxT*, MemargT) {
-    return Ok{};
-  }
-  Result<> makeAtomicCmpxchg(Index, Type, int, MemoryIdxT*, MemargT) {
-    return Ok{};
-  }
-  Result<> makeAtomicWait(Index, Type, MemoryIdxT*, MemargT) { return Ok{}; }
-  Result<> makeAtomicNotify(Index, MemoryIdxT*, MemargT) { return Ok{}; }
-  Result<> makeAtomicFence(Index) { return Ok{}; }
-  Result<> makeSIMDExtract(Index, SIMDExtractOp, uint8_t) { return Ok{}; }
-  Result<> makeSIMDReplace(Index, SIMDReplaceOp, uint8_t) { return Ok{}; }
-  Result<> makeSIMDShuffle(Index, const std::array<uint8_t, 16>&) {
-    return Ok{};
-  }
-  Result<> makeSIMDTernary(Index, SIMDTernaryOp) { return Ok{}; }
-  Result<> makeSIMDShift(Index, SIMDShiftOp) { return Ok{}; }
-  Result<> makeSIMDLoad(Index, SIMDLoadOp, MemoryIdxT*, MemargT) {
-    return Ok{};
-  }
-  Result<> makeSIMDLoadStoreLane(
-    Index, SIMDLoadStoreLaneOp, MemoryIdxT*, MemargT, uint8_t) {
-    return Ok{};
-  }
-  Result<> makeMemoryInit(Index, MemoryIdxT*, DataIdxT) { return Ok{}; }
-  Result<> makeDataDrop(Index, DataIdxT) { return Ok{}; }
+  TagLabelListT makeTagLabelList() { return Ok{}; }
+  void appendTagLabel(TagLabelListT&, TagIdxT, LabelIdxT) {}
 
-  Result<> makeMemoryCopy(Index, MemoryIdxT*, MemoryIdxT*) { return Ok{}; }
-  Result<> makeMemoryFill(Index, MemoryIdxT*) { return Ok{}; }
-  Result<> makeCall(Index, FuncIdxT, bool) { return Ok{}; }
+  void setSrcLoc(const std::vector<Annotation>&) {}
+
+  Result<> makeUnreachable(Index, const std::vector<Annotation>&) {
+    return Ok{};
+  }
+  Result<> makeNop(Index, const std::vector<Annotation>&) { return Ok{}; }
+  Result<> makeBinary(Index, const std::vector<Annotation>&, BinaryOp) {
+    return Ok{};
+  }
+  Result<> makeUnary(Index, const std::vector<Annotation>&, UnaryOp) {
+    return Ok{};
+  }
+  template<typename ResultsT>
+  Result<> makeSelect(Index, const std::vector<Annotation>&, ResultsT*) {
+    return Ok{};
+  }
+  Result<> makeDrop(Index, const std::vector<Annotation>&) { return Ok{}; }
+  Result<> makeMemorySize(Index, const std::vector<Annotation>&, MemoryIdxT*) {
+    return Ok{};
+  }
+  Result<> makeMemoryGrow(Index, const std::vector<Annotation>&, MemoryIdxT*) {
+    return Ok{};
+  }
+  Result<> makeLocalGet(Index, const std::vector<Annotation>&, LocalIdxT) {
+    return Ok{};
+  }
+  Result<> makeLocalTee(Index, const std::vector<Annotation>&, LocalIdxT) {
+    return Ok{};
+  }
+  Result<> makeLocalSet(Index, const std::vector<Annotation>&, LocalIdxT) {
+    return Ok{};
+  }
+  Result<> makeGlobalGet(Index, const std::vector<Annotation>&, GlobalIdxT) {
+    return Ok{};
+  }
+  Result<> makeGlobalSet(Index, const std::vector<Annotation>&, GlobalIdxT) {
+    return Ok{};
+  }
+
+  Result<> makeI32Const(Index, const std::vector<Annotation>&, uint32_t) {
+    return Ok{};
+  }
+  Result<> makeI64Const(Index, const std::vector<Annotation>&, uint64_t) {
+    return Ok{};
+  }
+  Result<> makeF32Const(Index, const std::vector<Annotation>&, float) {
+    return Ok{};
+  }
+  Result<> makeF64Const(Index, const std::vector<Annotation>&, double) {
+    return Ok{};
+  }
+  Result<> makeI8x16Const(Index,
+                          const std::vector<Annotation>&,
+                          const std::array<uint8_t, 16>&) {
+    return Ok{};
+  }
+  Result<> makeI16x8Const(Index,
+                          const std::vector<Annotation>&,
+                          const std::array<uint16_t, 8>&) {
+    return Ok{};
+  }
+  Result<> makeI32x4Const(Index,
+                          const std::vector<Annotation>&,
+                          const std::array<uint32_t, 4>&) {
+    return Ok{};
+  }
+  Result<> makeI64x2Const(Index,
+                          const std::vector<Annotation>&,
+                          const std::array<uint64_t, 2>&) {
+    return Ok{};
+  }
+  Result<> makeF32x4Const(Index,
+                          const std::vector<Annotation>&,
+                          const std::array<float, 4>&) {
+    return Ok{};
+  }
+  Result<> makeF64x2Const(Index,
+                          const std::vector<Annotation>&,
+                          const std::array<double, 2>&) {
+    return Ok{};
+  }
+  Result<> makeLoad(Index,
+                    const std::vector<Annotation>&,
+                    Type,
+                    bool,
+                    int,
+                    bool,
+                    MemoryIdxT*,
+                    MemargT) {
+    return Ok{};
+  }
+  Result<> makeStore(Index,
+                     const std::vector<Annotation>&,
+                     Type,
+                     int,
+                     bool,
+                     MemoryIdxT*,
+                     MemargT) {
+    return Ok{};
+  }
+  Result<> makeAtomicRMW(Index,
+                         const std::vector<Annotation>&,
+                         AtomicRMWOp,
+                         Type,
+                         int,
+                         MemoryIdxT*,
+                         MemargT) {
+    return Ok{};
+  }
+  Result<> makeAtomicCmpxchg(
+    Index, const std::vector<Annotation>&, Type, int, MemoryIdxT*, MemargT) {
+    return Ok{};
+  }
+  Result<> makeAtomicWait(
+    Index, const std::vector<Annotation>&, Type, MemoryIdxT*, MemargT) {
+    return Ok{};
+  }
+  Result<> makeAtomicNotify(Index,
+                            const std::vector<Annotation>&,
+                            MemoryIdxT*,
+                            MemargT) {
+    return Ok{};
+  }
+  Result<> makeAtomicFence(Index, const std::vector<Annotation>&) {
+    return Ok{};
+  }
+  Result<> makeSIMDExtract(Index,
+                           const std::vector<Annotation>&,
+                           SIMDExtractOp,
+                           uint8_t) {
+    return Ok{};
+  }
+  Result<> makeSIMDReplace(Index,
+                           const std::vector<Annotation>&,
+                           SIMDReplaceOp,
+                           uint8_t) {
+    return Ok{};
+  }
+  Result<> makeSIMDShuffle(Index,
+                           const std::vector<Annotation>&,
+                           const std::array<uint8_t, 16>&) {
+    return Ok{};
+  }
+  Result<>
+  makeSIMDTernary(Index, const std::vector<Annotation>&, SIMDTernaryOp) {
+    return Ok{};
+  }
+  Result<> makeSIMDShift(Index, const std::vector<Annotation>&, SIMDShiftOp) {
+    return Ok{};
+  }
+  Result<> makeSIMDLoad(
+    Index, const std::vector<Annotation>&, SIMDLoadOp, MemoryIdxT*, MemargT) {
+    return Ok{};
+  }
+  Result<> makeSIMDLoadStoreLane(Index,
+                                 const std::vector<Annotation>&,
+                                 SIMDLoadStoreLaneOp,
+                                 MemoryIdxT*,
+                                 MemargT,
+                                 uint8_t) {
+    return Ok{};
+  }
+  Result<>
+  makeMemoryInit(Index, const std::vector<Annotation>&, MemoryIdxT*, DataIdxT) {
+    return Ok{};
+  }
+  Result<> makeDataDrop(Index, const std::vector<Annotation>&, DataIdxT) {
+    return Ok{};
+  }
+
+  Result<> makeMemoryCopy(Index,
+                          const std::vector<Annotation>&,
+                          MemoryIdxT*,
+                          MemoryIdxT*) {
+    return Ok{};
+  }
+  Result<> makeMemoryFill(Index, const std::vector<Annotation>&, MemoryIdxT*) {
+    return Ok{};
+  }
+  template<typename TypeT>
+  Result<> makePop(Index, const std::vector<Annotation>&, TypeT) {
+    return Ok{};
+  }
+  Result<> makeCall(Index, const std::vector<Annotation>&, FuncIdxT, bool) {
+    return Ok{};
+  }
   template<typename TypeUseT>
-  Result<> makeCallIndirect(Index, TableIdxT*, TypeUseT, bool) {
+  Result<> makeCallIndirect(
+    Index, const std::vector<Annotation>&, TableIdxT*, TypeUseT, bool) {
     return Ok{};
   }
-  Result<> makeBreak(Index, LabelIdxT, bool) { return Ok{}; }
-  Result<> makeSwitch(Index, const std::vector<LabelIdxT>&, LabelIdxT) {
+  Result<> makeBreak(Index, const std::vector<Annotation>&, LabelIdxT, bool) {
     return Ok{};
   }
-  Result<> makeReturn(Index) { return Ok{}; }
-  template<typename HeapTypeT> Result<> makeRefNull(Index, HeapTypeT) {
+  Result<> makeSwitch(Index,
+                      const std::vector<Annotation>&,
+                      const std::vector<LabelIdxT>&,
+                      LabelIdxT) {
     return Ok{};
   }
-  Result<> makeRefIsNull(Index) { return Ok{}; }
-  Result<> makeRefFunc(Index, FuncIdxT) { return Ok{}; }
-  Result<> makeRefEq(Index) { return Ok{}; }
-  Result<> makeTableGet(Index, TableIdxT*) { return Ok{}; }
-  Result<> makeTableSet(Index, TableIdxT*) { return Ok{}; }
-  Result<> makeTableSize(Index, TableIdxT*) { return Ok{}; }
-  Result<> makeTableGrow(Index, TableIdxT*) { return Ok{}; }
-  Result<> makeTableFill(Index, TableIdxT*) { return Ok{}; }
-  Result<> makeTableCopy(Index, TableIdxT*, TableIdxT*) { return Ok{}; }
-  Result<> makeThrow(Index, TagIdxT) { return Ok{}; }
-  Result<> makeRethrow(Index, LabelIdxT) { return Ok{}; }
-  Result<> makeTupleMake(Index, uint32_t) { return Ok{}; }
-  Result<> makeTupleExtract(Index, uint32_t, uint32_t) { return Ok{}; }
-  Result<> makeTupleDrop(Index, uint32_t) { return Ok{}; }
-  template<typename HeapTypeT> Result<> makeCallRef(Index, HeapTypeT, bool) {
+  Result<> makeReturn(Index, const std::vector<Annotation>&) { return Ok{}; }
+  template<typename HeapTypeT>
+  Result<> makeRefNull(Index, const std::vector<Annotation>&, HeapTypeT) {
     return Ok{};
   }
-  Result<> makeRefI31(Index) { return Ok{}; }
-  Result<> makeI31Get(Index, bool) { return Ok{}; }
-  template<typename TypeT> Result<> makeRefTest(Index, TypeT) { return Ok{}; }
-  template<typename TypeT> Result<> makeRefCast(Index, TypeT) { return Ok{}; }
+  Result<> makeRefIsNull(Index, const std::vector<Annotation>&) { return Ok{}; }
+  Result<> makeRefFunc(Index, const std::vector<Annotation>&, FuncIdxT) {
+    return Ok{};
+  }
+  Result<> makeRefEq(Index, const std::vector<Annotation>&) { return Ok{}; }
+  Result<> makeTableGet(Index, const std::vector<Annotation>&, TableIdxT*) {
+    return Ok{};
+  }
+  Result<> makeTableSet(Index, const std::vector<Annotation>&, TableIdxT*) {
+    return Ok{};
+  }
+  Result<> makeTableSize(Index, const std::vector<Annotation>&, TableIdxT*) {
+    return Ok{};
+  }
+  Result<> makeTableGrow(Index, const std::vector<Annotation>&, TableIdxT*) {
+    return Ok{};
+  }
+  Result<> makeTableFill(Index, const std::vector<Annotation>&, TableIdxT*) {
+    return Ok{};
+  }
+  Result<>
+  makeTableCopy(Index, const std::vector<Annotation>&, TableIdxT*, TableIdxT*) {
+    return Ok{};
+  }
+  Result<> makeThrow(Index, const std::vector<Annotation>&, TagIdxT) {
+    return Ok{};
+  }
+  Result<> makeRethrow(Index, const std::vector<Annotation>&, LabelIdxT) {
+    return Ok{};
+  }
+  Result<> makeThrowRef(Index, const std::vector<Annotation>&) { return Ok{}; }
+  Result<> makeTupleMake(Index, const std::vector<Annotation>&, uint32_t) {
+    return Ok{};
+  }
+  Result<>
+  makeTupleExtract(Index, const std::vector<Annotation>&, uint32_t, uint32_t) {
+    return Ok{};
+  }
+  Result<> makeTupleDrop(Index, const std::vector<Annotation>&, uint32_t) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeCallRef(Index, const std::vector<Annotation>&, HeapTypeT, bool) {
+    return Ok{};
+  }
+  Result<> makeRefI31(Index, const std::vector<Annotation>&) { return Ok{}; }
+  Result<> makeI31Get(Index, const std::vector<Annotation>&, bool) {
+    return Ok{};
+  }
+  template<typename TypeT>
+  Result<> makeRefTest(Index, const std::vector<Annotation>&, TypeT) {
+    return Ok{};
+  }
+  template<typename TypeT>
+  Result<> makeRefCast(Index, const std::vector<Annotation>&, TypeT) {
+    return Ok{};
+  }
 
-  Result<> makeBrOn(Index, LabelIdxT, BrOnOp) { return Ok{}; }
+  Result<> makeBrOn(Index, const std::vector<Annotation>&, LabelIdxT, BrOnOp) {
+    return Ok{};
+  }
 
   template<typename TypeT>
-  Result<> makeBrOn(Index, LabelIdxT, BrOnOp, TypeT, TypeT) {
+  Result<> makeBrOn(
+    Index, const std::vector<Annotation>&, LabelIdxT, BrOnOp, TypeT, TypeT) {
     return Ok{};
   }
 
-  template<typename HeapTypeT> Result<> makeStructNew(Index, HeapTypeT) {
-    return Ok{};
-  }
-  template<typename HeapTypeT> Result<> makeStructNewDefault(Index, HeapTypeT) {
+  template<typename HeapTypeT>
+  Result<> makeStructNew(Index, const std::vector<Annotation>&, HeapTypeT) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<> makeStructGet(Index, HeapTypeT, FieldIdxT, bool) {
+  Result<>
+  makeStructNewDefault(Index, const std::vector<Annotation>&, HeapTypeT) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<> makeStructSet(Index, HeapTypeT, FieldIdxT) {
-    return Ok{};
-  }
-  template<typename HeapTypeT> Result<> makeArrayNew(Index, HeapTypeT) {
-    return Ok{};
-  }
-  template<typename HeapTypeT> Result<> makeArrayNewDefault(Index, HeapTypeT) {
+  Result<> makeStructGet(
+    Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT, bool) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<> makeArrayNewData(Index, HeapTypeT, DataIdxT) {
+  Result<>
+  makeStructSet(Index, const std::vector<Annotation>&, HeapTypeT, FieldIdxT) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<> makeArrayNewElem(Index, HeapTypeT, ElemIdxT) {
+  Result<> makeArrayNew(Index, const std::vector<Annotation>&, HeapTypeT) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<> makeArrayNewFixed(Index, HeapTypeT, uint32_t) {
-    return Ok{};
-  }
-  template<typename HeapTypeT> Result<> makeArrayGet(Index, HeapTypeT, bool) {
-    return Ok{};
-  }
-  template<typename HeapTypeT> Result<> makeArraySet(Index, HeapTypeT) {
-    return Ok{};
-  }
-  Result<> makeArrayLen(Index) { return Ok{}; }
-  template<typename HeapTypeT>
-  Result<> makeArrayCopy(Index, HeapTypeT, HeapTypeT) {
-    return Ok{};
-  }
-  template<typename HeapTypeT> Result<> makeArrayFill(Index, HeapTypeT) {
+  Result<>
+  makeArrayNewDefault(Index, const std::vector<Annotation>&, HeapTypeT) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<> makeArrayInitData(Index, HeapTypeT, DataIdxT) {
+  Result<>
+  makeArrayNewData(Index, const std::vector<Annotation>&, HeapTypeT, DataIdxT) {
     return Ok{};
   }
   template<typename HeapTypeT>
-  Result<> makeArrayInitElem(Index, HeapTypeT, ElemIdxT) {
+  Result<>
+  makeArrayNewElem(Index, const std::vector<Annotation>&, HeapTypeT, ElemIdxT) {
     return Ok{};
   }
-  Result<> makeRefAs(Index, RefAsOp) { return Ok{}; }
-  Result<> makeStringNew(Index, StringNewOp, bool, MemoryIdxT*) { return Ok{}; }
-  Result<> makeStringConst(Index, std::string_view) { return Ok{}; }
-  Result<> makeStringMeasure(Index, StringMeasureOp) { return Ok{}; }
-  Result<> makeStringEncode(Index, StringEncodeOp, MemoryIdxT*) { return Ok{}; }
-  Result<> makeStringConcat(Index) { return Ok{}; }
-  Result<> makeStringEq(Index, StringEqOp) { return Ok{}; }
-  Result<> makeStringAs(Index, StringAsOp) { return Ok{}; }
-  Result<> makeStringWTF8Advance(Index) { return Ok{}; }
-  Result<> makeStringWTF16Get(Index) { return Ok{}; }
-  Result<> makeStringIterNext(Index) { return Ok{}; }
-  Result<> makeStringIterMove(Index, StringIterMoveOp) { return Ok{}; }
-  Result<> makeStringSliceWTF(Index, StringSliceWTFOp) { return Ok{}; }
-  Result<> makeStringSliceIter(Index) { return Ok{}; }
+  template<typename HeapTypeT>
+  Result<> makeArrayNewFixed(Index,
+                             const std::vector<Annotation>&,
+                             HeapTypeT,
+                             uint32_t) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<>
+  makeArrayGet(Index, const std::vector<Annotation>&, HeapTypeT, bool) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeArraySet(Index, const std::vector<Annotation>&, HeapTypeT) {
+    return Ok{};
+  }
+  Result<> makeArrayLen(Index, const std::vector<Annotation>&) { return Ok{}; }
+  template<typename HeapTypeT>
+  Result<>
+  makeArrayCopy(Index, const std::vector<Annotation>&, HeapTypeT, HeapTypeT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeArrayFill(Index, const std::vector<Annotation>&, HeapTypeT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeArrayInitData(Index,
+                             const std::vector<Annotation>&,
+                             HeapTypeT,
+                             DataIdxT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeArrayInitElem(Index,
+                             const std::vector<Annotation>&,
+                             HeapTypeT,
+                             ElemIdxT) {
+    return Ok{};
+  }
+  Result<> makeRefAs(Index, const std::vector<Annotation>&, RefAsOp) {
+    return Ok{};
+  }
+  Result<> makeStringNew(Index, const std::vector<Annotation>&, StringNewOp) {
+    return Ok{};
+  }
+  Result<>
+  makeStringConst(Index, const std::vector<Annotation>&, std::string_view) {
+    return Ok{};
+  }
+  Result<>
+  makeStringMeasure(Index, const std::vector<Annotation>&, StringMeasureOp) {
+    return Ok{};
+  }
+  Result<>
+  makeStringEncode(Index, const std::vector<Annotation>&, StringEncodeOp) {
+    return Ok{};
+  }
+  Result<> makeStringConcat(Index, const std::vector<Annotation>&) {
+    return Ok{};
+  }
+  Result<> makeStringEq(Index, const std::vector<Annotation>&, StringEqOp) {
+    return Ok{};
+  }
+  Result<> makeStringWTF8Advance(Index, const std::vector<Annotation>&) {
+    return Ok{};
+  }
+  Result<> makeStringWTF16Get(Index, const std::vector<Annotation>&) {
+    return Ok{};
+  }
+  Result<> makeStringIterNext(Index, const std::vector<Annotation>&) {
+    return Ok{};
+  }
+  Result<> makeStringSliceWTF(Index, const std::vector<Annotation>&) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<>
+  makeContBind(Index, const std::vector<Annotation>&, HeapTypeT, HeapTypeT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeContNew(Index, const std::vector<Annotation>&, HeapTypeT) {
+    return Ok{};
+  }
+  template<typename HeapTypeT>
+  Result<> makeResume(Index,
+                      const std::vector<Annotation>&,
+                      HeapTypeT,
+                      const TagLabelListT&) {
+    return Ok{};
+  }
+  Result<> makeSuspend(Index, const std::vector<Annotation>&, TagIdxT) {
+    return Ok{};
+  }
 };
 
 struct NullCtx : NullTypeParserCtx, NullInstrParserCtx {
-  ParseInput in;
-  NullCtx(const ParseInput& in) : in(in) {}
+  Lexer in;
+  NullCtx(const Lexer& in) : in(in) {}
   Result<> makeTypeUse(Index, std::optional<HeapTypeT>, ParamsT*, ResultsT*) {
     return Ok{};
   }
@@ -543,10 +841,10 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   using LimitsT = Limits;
   using ElemListT = Index;
   using DataStringT = std::vector<char>;
-  using TableTypeT = Limits;
+  using TableTypeT = TableType;
   using MemTypeT = MemType;
 
-  ParseInput in;
+  Lexer in;
 
   // At this stage we only look at types to find implicit type definitions,
   // which are inserted directly into the context. We cannot materialize or
@@ -563,6 +861,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   std::vector<DefPos> tableDefs;
   std::vector<DefPos> memoryDefs;
   std::vector<DefPos> globalDefs;
+  std::vector<DefPos> startDefs;
   std::vector<DefPos> elemDefs;
   std::vector<DefPos> dataDefs;
   std::vector<DefPos> tagDefs;
@@ -601,7 +900,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     return Ok{};
   }
 
-  ParseDeclsCtx(std::string_view in, Module& wasm) : in(in), wasm(wasm) {}
+  ParseDeclsCtx(Lexer& in, Module& wasm) : in(in), wasm(wasm) {}
 
   void addFuncType(SignatureT) {}
   void addContType(ContinuationT) {}
@@ -610,12 +909,14 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   void setOpen() {}
   Result<> addSubtype(Index) { return Ok{}; }
   void finishSubtype(Name name, Index pos) {
-    subtypeDefs.push_back({name, pos, Index(subtypeDefs.size())});
+    // TODO: type annotations
+    subtypeDefs.push_back({name, pos, Index(subtypeDefs.size()), {}});
   }
   size_t getRecGroupStartIndex() { return 0; }
   void addRecGroup(Index, size_t) {}
   void finishDeftype(Index pos) {
-    typeDefs.push_back({{}, pos, Index(typeDefs.size())});
+    // TODO: type annotations
+    typeDefs.push_back({{}, pos, Index(typeDefs.size()), {}});
   }
 
   Limits makeLimits(uint64_t n, std::optional<uint64_t> m) {
@@ -629,7 +930,9 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
 
   Limits getLimitsFromElems(Index elems) { return {elems, elems}; }
 
-  Limits makeTableType(Limits limits, TypeT) { return limits; }
+  TableType makeTableType(Type indexType, Limits limits, TypeT) {
+    return {indexType, limits};
+  }
 
   std::vector<char> makeDataString() { return {}; }
   void appendDataString(std::vector<char>& data, std::string_view str) {
@@ -641,8 +944,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
     return {size, size};
   }
 
-  MemType makeMemType(Type type, Limits limits, bool shared) {
-    return {type, limits, shared};
+  MemType makeMemType(Type indexType, Limits limits, bool shared) {
+    return {indexType, limits, shared};
   }
 
   Result<TypeUseT>
@@ -659,12 +962,15 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                    ImportNames* import,
                    TypeUseT type,
                    std::optional<LocalsT>,
+                   std::vector<Annotation>&&,
                    Index pos);
 
-  Result<Table*>
-  addTableDecl(Index pos, Name name, ImportNames* importNames, Limits limits);
+  Result<Table*> addTableDecl(Index pos,
+                              Name name,
+                              ImportNames* importNames,
+                              TableType limits);
   Result<>
-  addTable(Name, const std::vector<Name>&, ImportNames*, Limits, Index);
+  addTable(Name, const std::vector<Name>&, ImportNames*, TableType, Index);
 
   // TODO: Record index of implicit elem for use when parsing types and instrs.
   Result<> addImplicitElems(TypeT, ElemListT&& elems);
@@ -688,6 +994,15 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
                      GlobalTypeT,
                      std::optional<ExprT>,
                      Index pos);
+
+  Result<> addStart(FuncIdxT, Index pos) {
+    if (!startDefs.empty()) {
+      return Err{"unexpected extra 'start' function"};
+    }
+    // TODO: start function annotations.
+    startDefs.push_back({{}, pos, 0, {}});
+    return Ok{};
+  }
 
   Result<> addElem(Name, TableIdxT*, std::optional<ExprT>, ElemListT&&, Index);
 
@@ -715,7 +1030,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
 
 // Phase 2: Parse type definitions into a TypeBuilder.
 struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
-  ParseInput in;
+  Lexer in;
 
   // We update slots in this builder as we parse type definitions.
   TypeBuilder& builder;
@@ -726,9 +1041,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
   // The index of the subtype definition we are parsing.
   Index index = 0;
 
-  ParseTypeDefsCtx(std::string_view in,
-                   TypeBuilder& builder,
-                   const IndexMap& typeIndices)
+  ParseTypeDefsCtx(Lexer& in, TypeBuilder& builder, const IndexMap& typeIndices)
     : TypeParserCtx<ParseTypeDefsCtx>(typeIndices), in(in), builder(builder),
       names(builder.size()) {}
 
@@ -787,7 +1100,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
 struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
   using TypeUseT = Ok;
 
-  ParseInput in;
+  Lexer in;
 
   // Types parsed so far.
   std::vector<HeapType>& types;
@@ -798,7 +1111,7 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
   // Map signatures to the first defined heap type they match.
   std::unordered_map<Signature, HeapType> sigTypes;
 
-  ParseImplicitTypeDefsCtx(std::string_view in,
+  ParseImplicitTypeDefsCtx(Lexer& in,
                            std::vector<HeapType>& types,
                            std::unordered_map<Index, HeapType>& implicitTypes,
                            const IndexMap& typeIndices)
@@ -857,7 +1170,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
 
   using ElemListT = Type;
 
-  ParseInput in;
+  Lexer in;
 
   Module& wasm;
 
@@ -869,7 +1182,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
   Index index = 0;
 
   ParseModuleTypesCtx(
-    std::string_view in,
+    Lexer& in,
     Module& wasm,
     const std::vector<HeapType>& types,
     const std::unordered_map<Index, HeapType>& implicitTypes,
@@ -878,6 +1191,8 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
     : TypeParserCtx<ParseModuleTypesCtx>(typeIndices), in(in), wasm(wasm),
       types(types), implicitTypes(implicitTypes),
       implicitElemIndices(implicitElemIndices) {}
+
+  bool skipFunctionBody() { return true; }
 
   Result<HeapTypeT> getHeapTypeFromIdx(Index idx) {
     if (idx >= types.size()) {
@@ -929,7 +1244,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
 
   LimitsT getLimitsFromElems(ElemListT) { return Ok{}; }
 
-  Type makeTableType(LimitsT, Type type) { return type; }
+  Type makeTableType(Type indexType, LimitsT, Type type) { return type; }
 
   LimitsT getLimitsFromData(DataStringT) { return Ok{}; }
   MemTypeT makeMemType(Type, LimitsT, bool) { return Ok{}; }
@@ -939,6 +1254,7 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
                    ImportNames*,
                    TypeUse type,
                    std::optional<LocalsT> locals,
+                   std::vector<Annotation>&&,
                    Index pos) {
     auto& f = wasm.functions[index];
     if (!type.type.isSignature()) {
@@ -1020,9 +1336,6 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   using TableTypeT = Ok;
   using TypeUseT = HeapType;
 
-  using ExprT = Expression*;
-  using ElemListT = std::vector<Expression*>;
-
   using FieldIdxT = Index;
   using FuncIdxT = Name;
   using LocalIdxT = Index;
@@ -1036,14 +1349,27 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   using MemargT = Memarg;
 
-  ParseInput in;
+  using ExprT = Expression*;
+  using ElemListT = std::vector<Expression*>;
+
+  struct CatchInfo;
+  using CatchT = CatchInfo;
+  using CatchListT = std::vector<CatchInfo>;
+
+  using TagLabelListT = std::vector<std::pair<TagIdxT, LabelIdxT>>;
+
+  Lexer in;
 
   Module& wasm;
   Builder builder;
 
   const std::vector<HeapType>& types;
   const std::unordered_map<Index, HeapType>& implicitTypes;
+  const std::unordered_map<HeapType, std::unordered_map<Name, Index>>&
+    typeNames;
   const std::unordered_map<Index, Index>& implicitElemIndices;
+
+  std::unordered_map<std::string_view, Index> debugFileIndices;
 
   // The index of the current module element.
   Index index = 0;
@@ -1060,14 +1386,17 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return Ok{};
   }
 
-  ParseDefsCtx(std::string_view in,
-               Module& wasm,
-               const std::vector<HeapType>& types,
-               const std::unordered_map<Index, HeapType>& implicitTypes,
-               const std::unordered_map<Index, Index>& implicitElemIndices,
-               const IndexMap& typeIndices)
+  ParseDefsCtx(
+    Lexer& in,
+    Module& wasm,
+    const std::vector<HeapType>& types,
+    const std::unordered_map<Index, HeapType>& implicitTypes,
+    const std::unordered_map<HeapType, std::unordered_map<Name, Index>>&
+      typeNames,
+    const std::unordered_map<Index, Index>& implicitElemIndices,
+    const IndexMap& typeIndices)
     : TypeParserCtx(typeIndices), in(in), wasm(wasm), builder(wasm),
-      types(types), implicitTypes(implicitTypes),
+      types(types), implicitTypes(implicitTypes), typeNames(typeNames),
       implicitElemIndices(implicitElemIndices), irBuilder(wasm) {}
 
   template<typename T> Result<T> withLoc(Index pos, Result<T> res) {
@@ -1104,7 +1433,27 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   LimitsT getLimitsFromElems(std::vector<Expression*>& elems) { return Ok{}; }
 
-  TableTypeT makeTableType(LimitsT, Type) { return Ok{}; }
+  TableTypeT makeTableType(Type, LimitsT, Type) { return Ok{}; }
+
+  struct CatchInfo {
+    Name tag;
+    Index label;
+    bool isRef;
+  };
+
+  std::vector<CatchInfo> makeCatchList() { return {}; }
+  void appendCatch(std::vector<CatchInfo>& list, CatchInfo info) {
+    list.push_back(info);
+  }
+  CatchInfo makeCatch(Name tag, Index label) { return {tag, label, false}; }
+  CatchInfo makeCatchRef(Name tag, Index label) { return {tag, label, true}; }
+  CatchInfo makeCatchAll(Index label) { return {{}, label, false}; }
+  CatchInfo makeCatchAllRef(Index label) { return {{}, label, true}; }
+
+  TagLabelListT makeTagLabelList() { return {}; }
+  void appendTagLabel(TagLabelListT& tagLabels, Name tag, Index label) {
+    tagLabels.push_back({tag, label});
+  }
 
   Result<HeapTypeT> getHeapTypeFromIdx(Index idx) {
     if (idx >= types.size()) {
@@ -1124,8 +1473,13 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   }
 
   Result<Index> getFieldFromName(HeapType type, Name name) {
-    // TODO: Field names
-    return in.err("symbolic field names note yet supported");
+    if (auto typeIt = typeNames.find(type); typeIt != typeNames.end()) {
+      const auto& fieldIdxs = typeIt->second;
+      if (auto fieldIt = fieldIdxs.find(name); fieldIt != fieldIdxs.end()) {
+        return fieldIt->second;
+      }
+    }
+    return in.err("unrecognized field name");
   }
 
   Result<Index> getLocalFromIdx(uint32_t idx) {
@@ -1256,12 +1610,16 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                                std::optional<HeapTypeT> type,
                                ParamsT* params,
                                ResultsT* results);
+
   Result<> addFunc(Name,
                    const std::vector<Name>&,
                    ImportNames*,
                    TypeUseT,
                    std::optional<LocalsT>,
-                   Index pos);
+                   std::vector<Annotation>&&,
+                   Index) {
+    return Ok{};
+  }
 
   Result<>
   addTable(Name, const std::vector<Name>&, ImportNames*, TableTypeT, Index) {
@@ -1279,6 +1637,11 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                      GlobalTypeT,
                      std::optional<ExprT> exp,
                      Index);
+
+  Result<> addStart(Name name, Index pos) {
+    wasm.start = name;
+    return Ok{};
+  }
 
   Result<> addImplicitElems(Type type, std::vector<Expression*>&& elems);
 
@@ -1302,7 +1665,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return Ok{};
   }
 
-  Result<> addExport(Index, Name value, Name name, ExternalKind kind) {
+  Result<> addExport(Index pos, Name value, Name name, ExternalKind kind) {
+    if (wasm.getExportOrNull(name)) {
+      return in.err(pos, "duplicate export");
+    }
     wasm.addExport(builder.makeExport(name, value, kind));
     return Ok{};
   }
@@ -1316,7 +1682,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return Builder::addVar(func, name, type);
   }
 
-  Result<Expression*> makeExpr() { return irBuilder.build(); }
+  Result<Expression*> makeExpr() { return withLoc(irBuilder.build()); }
 
   Memarg getMemarg(uint64_t offset, uint32_t align) { return {offset, align}; }
 
@@ -1340,7 +1706,64 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return wasm.memories[0]->name;
   }
 
-  Result<> makeBlock(Index pos, std::optional<Name> label, HeapType type) {
+  void setSrcLoc(const std::vector<Annotation>& annotations) {
+    const Annotation* annotation = nullptr;
+    for (auto& a : annotations) {
+      if (a.kind == srcAnnotationKind) {
+        annotation = &a;
+      }
+    }
+    if (!annotation) {
+      return;
+    }
+    Lexer lexer(annotation->contents);
+    if (lexer.empty()) {
+      irBuilder.setDebugLocation(std::nullopt);
+      return;
+    }
+
+    auto contents = lexer.next();
+
+    auto fileSize = contents.find(':');
+    if (fileSize == 0 || fileSize == contents.npos) {
+      return;
+    }
+    auto file = contents.substr(0, fileSize);
+    contents = contents.substr(fileSize + 1);
+
+    auto lineSize = contents.find(':');
+    if (lineSize == contents.npos) {
+      return;
+    }
+    lexer = Lexer(contents.substr(0, lineSize));
+    auto line = lexer.takeU32();
+    if (!line || !lexer.empty()) {
+      return;
+    }
+    contents = contents.substr(lineSize + 1);
+
+    lexer = Lexer(contents);
+    auto col = lexer.takeU32();
+    if (!col || !lexer.empty()) {
+      return;
+    }
+
+    // TODO: If we ever parallelize the parse, access to
+    // `wasm.debugInfoFileNames` will have to be protected by a lock.
+    auto [it, inserted] =
+      debugFileIndices.insert({file, debugFileIndices.size()});
+    if (inserted) {
+      assert(wasm.debugInfoFileNames.size() == it->second);
+      wasm.debugInfoFileNames.push_back(std::string(file));
+    }
+    irBuilder.setDebugLocation(
+      Function::DebugLocation({it->second, *line, *col}));
+  }
+
+  Result<> makeBlock(Index pos,
+                     const std::vector<Annotation>& annotations,
+                     std::optional<Name> label,
+                     HeapType type) {
     // TODO: validate labels?
     // TODO: Move error on input types to here?
     return withLoc(pos,
@@ -1348,7 +1771,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                                        type.getSignature().results));
   }
 
-  Result<> makeIf(Index pos, std::optional<Name> label, HeapType type) {
+  Result<> makeIf(Index pos,
+                  const std::vector<Annotation>& annotations,
+                  std::optional<Name> label,
+                  HeapType type) {
     // TODO: validate labels?
     // TODO: Move error on input types to here?
     return withLoc(
@@ -1358,7 +1784,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> visitElse() { return withLoc(irBuilder.visitElse()); }
 
-  Result<> makeLoop(Index pos, std::optional<Name> label, HeapType type) {
+  Result<> makeLoop(Index pos,
+                    const std::vector<Annotation>& annotations,
+                    std::optional<Name> label,
+                    HeapType type) {
     // TODO: validate labels?
     // TODO: Move error on input types to here?
     return withLoc(
@@ -1366,12 +1795,36 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       irBuilder.makeLoop(label ? *label : Name{}, type.getSignature().results));
   }
 
-  Result<> makeTry(Index pos, std::optional<Name> label, HeapType type) {
+  Result<> makeTry(Index pos,
+                   const std::vector<Annotation>& annotations,
+                   std::optional<Name> label,
+                   HeapType type) {
     // TODO: validate labels?
     // TODO: Move error on input types to here?
     return withLoc(
       pos,
       irBuilder.makeTry(label ? *label : Name{}, type.getSignature().results));
+  }
+
+  Result<> makeTryTable(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        std::optional<Name> label,
+                        HeapType type,
+                        const std::vector<CatchInfo>& info) {
+    std::vector<Name> tags;
+    std::vector<Index> labels;
+    std::vector<bool> isRefs;
+    for (auto& info : info) {
+      tags.push_back(info.tag);
+      labels.push_back(info.label);
+      isRefs.push_back(info.isRef);
+    }
+    return withLoc(pos,
+                   irBuilder.makeTryTable(label ? *label : Name{},
+                                          type.getSignature().results,
+                                          tags,
+                                          labels,
+                                          isRefs));
   }
 
   Result<> visitCatch(Index pos, Name tag) {
@@ -1388,21 +1841,29 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
   Result<> visitEnd() { return withLoc(irBuilder.visitEnd()); }
 
-  Result<> makeUnreachable(Index pos) {
+  Result<> makeUnreachable(Index pos,
+                           const std::vector<Annotation>& annotations) {
     return withLoc(pos, irBuilder.makeUnreachable());
   }
 
-  Result<> makeNop(Index pos) { return withLoc(pos, irBuilder.makeNop()); }
+  Result<> makeNop(Index pos, const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makeNop());
+  }
 
-  Result<> makeBinary(Index pos, BinaryOp op) {
+  Result<> makeBinary(Index pos,
+                      const std::vector<Annotation>& annotations,
+                      BinaryOp op) {
     return withLoc(pos, irBuilder.makeBinary(op));
   }
 
-  Result<> makeUnary(Index pos, UnaryOp op) {
+  Result<>
+  makeUnary(Index pos, const std::vector<Annotation>& annotations, UnaryOp op) {
     return withLoc(pos, irBuilder.makeUnary(op));
   }
 
-  Result<> makeSelect(Index pos, std::vector<Type>* res) {
+  Result<> makeSelect(Index pos,
+                      const std::vector<Annotation>& annotations,
+                      std::vector<Type>* res) {
     if (res && res->size()) {
       if (res->size() > 1) {
         return in.err(pos, "select may not have more than one result type");
@@ -1412,58 +1873,142 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeSelect());
   }
 
-  Result<> makeDrop(Index pos) { return withLoc(pos, irBuilder.makeDrop()); }
+  Result<> makeDrop(Index pos, const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makeDrop());
+  }
 
-  Result<> makeMemorySize(Index pos, Name* mem) {
+  Result<> makeMemorySize(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          Name* mem) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     return withLoc(pos, irBuilder.makeMemorySize(*m));
   }
 
-  Result<> makeMemoryGrow(Index pos, Name* mem) {
+  Result<> makeMemoryGrow(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          Name* mem) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     return withLoc(pos, irBuilder.makeMemoryGrow(*m));
   }
 
-  Result<> makeLocalGet(Index pos, Index local) {
+  Result<> makeLocalGet(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        Index local) {
     return withLoc(pos, irBuilder.makeLocalGet(local));
   }
 
-  Result<> makeLocalTee(Index pos, Index local) {
+  Result<> makeLocalTee(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        Index local) {
     return withLoc(pos, irBuilder.makeLocalTee(local));
   }
 
-  Result<> makeLocalSet(Index pos, Index local) {
+  Result<> makeLocalSet(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        Index local) {
     return withLoc(pos, irBuilder.makeLocalSet(local));
   }
 
-  Result<> makeGlobalGet(Index pos, Name global) {
+  Result<> makeGlobalGet(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         Name global) {
     return withLoc(pos, irBuilder.makeGlobalGet(global));
   }
 
-  Result<> makeGlobalSet(Index pos, Name global) {
+  Result<> makeGlobalSet(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         Name global) {
     assert(wasm.getGlobalOrNull(global));
     return withLoc(pos, irBuilder.makeGlobalSet(global));
   }
 
-  Result<> makeI32Const(Index pos, uint32_t c) {
+  Result<> makeI32Const(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        uint32_t c) {
     return withLoc(pos, irBuilder.makeConst(Literal(c)));
   }
 
-  Result<> makeI64Const(Index pos, uint64_t c) {
+  Result<> makeI64Const(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        uint64_t c) {
     return withLoc(pos, irBuilder.makeConst(Literal(c)));
   }
 
-  Result<> makeF32Const(Index pos, float c) {
+  Result<>
+  makeF32Const(Index pos, const std::vector<Annotation>& annotations, float c) {
     return withLoc(pos, irBuilder.makeConst(Literal(c)));
   }
 
-  Result<> makeF64Const(Index pos, double c) {
+  Result<> makeF64Const(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        double c) {
     return withLoc(pos, irBuilder.makeConst(Literal(c)));
+  }
+
+  Result<> makeI8x16Const(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          const std::array<uint8_t, 16>& vals) {
+    std::array<Literal, 16> lanes;
+    for (size_t i = 0; i < 16; ++i) {
+      lanes[i] = Literal(uint32_t(vals[i]));
+    }
+    return withLoc(pos, irBuilder.makeConst(Literal(lanes)));
+  }
+
+  Result<> makeI16x8Const(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          const std::array<uint16_t, 8>& vals) {
+    std::array<Literal, 8> lanes;
+    for (size_t i = 0; i < 8; ++i) {
+      lanes[i] = Literal(uint32_t(vals[i]));
+    }
+    return withLoc(pos, irBuilder.makeConst(Literal(lanes)));
+  }
+
+  Result<> makeI32x4Const(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          const std::array<uint32_t, 4>& vals) {
+    std::array<Literal, 4> lanes;
+    for (size_t i = 0; i < 4; ++i) {
+      lanes[i] = Literal(vals[i]);
+    }
+    return withLoc(pos, irBuilder.makeConst(Literal(lanes)));
+  }
+
+  Result<> makeI64x2Const(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          const std::array<uint64_t, 2>& vals) {
+    std::array<Literal, 2> lanes;
+    for (size_t i = 0; i < 2; ++i) {
+      lanes[i] = Literal(vals[i]);
+    }
+    return withLoc(pos, irBuilder.makeConst(Literal(lanes)));
+  }
+
+  Result<> makeF32x4Const(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          const std::array<float, 4>& vals) {
+    std::array<Literal, 4> lanes;
+    for (size_t i = 0; i < 4; ++i) {
+      lanes[i] = Literal(vals[i]);
+    }
+    return withLoc(pos, irBuilder.makeConst(Literal(lanes)));
+  }
+
+  Result<> makeF64x2Const(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          const std::array<double, 2>& vals) {
+    std::array<Literal, 2> lanes;
+    for (size_t i = 0; i < 2; ++i) {
+      lanes[i] = Literal(vals[i]);
+    }
+    return withLoc(pos, irBuilder.makeConst(Literal(lanes)));
   }
 
   Result<> makeLoad(Index pos,
+                    const std::vector<Annotation>& annotations,
                     Type type,
                     bool signed_,
                     int bytes,
@@ -1481,8 +2026,13 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                      bytes, signed_, memarg.offset, memarg.align, type, *m));
   }
 
-  Result<> makeStore(
-    Index pos, Type type, int bytes, bool isAtomic, Name* mem, Memarg memarg) {
+  Result<> makeStore(Index pos,
+                     const std::vector<Annotation>& annotations,
+                     Type type,
+                     int bytes,
+                     bool isAtomic,
+                     Name* mem,
+                     Memarg memarg) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     if (isAtomic) {
@@ -1493,67 +2043,104 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       pos, irBuilder.makeStore(bytes, memarg.offset, memarg.align, type, *m));
   }
 
-  Result<> makeAtomicRMW(
-    Index pos, AtomicRMWOp op, Type type, int bytes, Name* mem, Memarg memarg) {
+  Result<> makeAtomicRMW(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         AtomicRMWOp op,
+                         Type type,
+                         int bytes,
+                         Name* mem,
+                         Memarg memarg) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     return withLoc(pos,
                    irBuilder.makeAtomicRMW(op, bytes, memarg.offset, type, *m));
   }
 
-  Result<>
-  makeAtomicCmpxchg(Index pos, Type type, int bytes, Name* mem, Memarg memarg) {
+  Result<> makeAtomicCmpxchg(Index pos,
+                             const std::vector<Annotation>& annotations,
+                             Type type,
+                             int bytes,
+                             Name* mem,
+                             Memarg memarg) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     return withLoc(pos,
                    irBuilder.makeAtomicCmpxchg(bytes, memarg.offset, type, *m));
   }
 
-  Result<> makeAtomicWait(Index pos, Type type, Name* mem, Memarg memarg) {
+  Result<> makeAtomicWait(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          Type type,
+                          Name* mem,
+                          Memarg memarg) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     return withLoc(pos, irBuilder.makeAtomicWait(type, memarg.offset, *m));
   }
 
-  Result<> makeAtomicNotify(Index pos, Name* mem, Memarg memarg) {
+  Result<> makeAtomicNotify(Index pos,
+                            const std::vector<Annotation>& annotations,
+                            Name* mem,
+                            Memarg memarg) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     return withLoc(pos, irBuilder.makeAtomicNotify(memarg.offset, *m));
   }
 
-  Result<> makeAtomicFence(Index pos) {
+  Result<> makeAtomicFence(Index pos,
+                           const std::vector<Annotation>& annotations) {
     return withLoc(pos, irBuilder.makeAtomicFence());
   }
 
-  Result<> makeSIMDExtract(Index pos, SIMDExtractOp op, uint8_t lane) {
+  Result<> makeSIMDExtract(Index pos,
+                           const std::vector<Annotation>& annotations,
+                           SIMDExtractOp op,
+                           uint8_t lane) {
     return withLoc(pos, irBuilder.makeSIMDExtract(op, lane));
   }
 
-  Result<> makeSIMDReplace(Index pos, SIMDReplaceOp op, uint8_t lane) {
+  Result<> makeSIMDReplace(Index pos,
+                           const std::vector<Annotation>& annotations,
+                           SIMDReplaceOp op,
+                           uint8_t lane) {
     return withLoc(pos, irBuilder.makeSIMDReplace(op, lane));
   }
 
-  Result<> makeSIMDShuffle(Index pos, const std::array<uint8_t, 16>& lanes) {
+  Result<> makeSIMDShuffle(Index pos,
+                           const std::vector<Annotation>& annotations,
+                           const std::array<uint8_t, 16>& lanes) {
     return withLoc(pos, irBuilder.makeSIMDShuffle(lanes));
   }
 
-  Result<> makeSIMDTernary(Index pos, SIMDTernaryOp op) {
+  Result<> makeSIMDTernary(Index pos,
+                           const std::vector<Annotation>& annotations,
+                           SIMDTernaryOp op) {
     return withLoc(pos, irBuilder.makeSIMDTernary(op));
   }
 
-  Result<> makeSIMDShift(Index pos, SIMDShiftOp op) {
+  Result<> makeSIMDShift(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         SIMDShiftOp op) {
     return withLoc(pos, irBuilder.makeSIMDShift(op));
   }
 
-  Result<> makeSIMDLoad(Index pos, SIMDLoadOp op, Name* mem, Memarg memarg) {
+  Result<> makeSIMDLoad(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        SIMDLoadOp op,
+                        Name* mem,
+                        Memarg memarg) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     return withLoc(pos,
                    irBuilder.makeSIMDLoad(op, memarg.offset, memarg.align, *m));
   }
 
-  Result<> makeSIMDLoadStoreLane(
-    Index pos, SIMDLoadStoreLaneOp op, Name* mem, Memarg memarg, uint8_t lane) {
+  Result<> makeSIMDLoadStoreLane(Index pos,
+                                 const std::vector<Annotation>& annotations,
+                                 SIMDLoadStoreLaneOp op,
+                                 Name* mem,
+                                 Memarg memarg,
+                                 uint8_t lane) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     return withLoc(pos,
@@ -1561,17 +2148,25 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
                      op, memarg.offset, memarg.align, lane, *m));
   }
 
-  Result<> makeMemoryInit(Index pos, Name* mem, Name data) {
+  Result<> makeMemoryInit(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          Name* mem,
+                          Name data) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     return withLoc(pos, irBuilder.makeMemoryInit(data, *m));
   }
 
-  Result<> makeDataDrop(Index pos, Name data) {
+  Result<> makeDataDrop(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        Name data) {
     return withLoc(pos, irBuilder.makeDataDrop(data));
   }
 
-  Result<> makeMemoryCopy(Index pos, Name* destMem, Name* srcMem) {
+  Result<> makeMemoryCopy(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          Name* destMem,
+                          Name* srcMem) {
     auto destMemory = getMemory(pos, destMem);
     CHECK_ERR(destMemory);
     auto srcMemory = getMemory(pos, srcMem);
@@ -1579,81 +2174,119 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeMemoryCopy(*destMemory, *srcMemory));
   }
 
-  Result<> makeMemoryFill(Index pos, Name* mem) {
+  Result<> makeMemoryFill(Index pos,
+                          const std::vector<Annotation>& annotations,
+                          Name* mem) {
     auto m = getMemory(pos, mem);
     CHECK_ERR(m);
     return withLoc(pos, irBuilder.makeMemoryFill(*m));
   }
 
-  Result<> makeCall(Index pos, Name func, bool isReturn) {
+  Result<>
+  makePop(Index pos, const std::vector<Annotation>& annotations, Type type) {
+    return withLoc(pos, irBuilder.makePop(type));
+  }
+
+  Result<> makeCall(Index pos,
+                    const std::vector<Annotation>& annotations,
+                    Name func,
+                    bool isReturn) {
     return withLoc(pos, irBuilder.makeCall(func, isReturn));
   }
 
-  Result<>
-  makeCallIndirect(Index pos, Name* table, HeapType type, bool isReturn) {
+  Result<> makeCallIndirect(Index pos,
+                            const std::vector<Annotation>& annotations,
+                            Name* table,
+                            HeapType type,
+                            bool isReturn) {
     auto t = getTable(pos, table);
     CHECK_ERR(t);
     return withLoc(pos, irBuilder.makeCallIndirect(*t, type, isReturn));
   }
 
-  Result<> makeBreak(Index pos, Index label, bool isConditional) {
+  Result<> makeBreak(Index pos,
+                     const std::vector<Annotation>& annotations,
+                     Index label,
+                     bool isConditional) {
     return withLoc(pos, irBuilder.makeBreak(label, isConditional));
   }
 
-  Result<>
-  makeSwitch(Index pos, const std::vector<Index> labels, Index defaultLabel) {
+  Result<> makeSwitch(Index pos,
+                      const std::vector<Annotation>& annotations,
+                      const std::vector<Index> labels,
+                      Index defaultLabel) {
     return withLoc(pos, irBuilder.makeSwitch(labels, defaultLabel));
   }
 
-  Result<> makeReturn(Index pos) {
+  Result<> makeReturn(Index pos, const std::vector<Annotation>& annotations) {
     return withLoc(pos, irBuilder.makeReturn());
   }
 
-  Result<> makeRefNull(Index pos, HeapType type) {
+  Result<> makeRefNull(Index pos,
+                       const std::vector<Annotation>& annotations,
+                       HeapType type) {
     return withLoc(pos, irBuilder.makeRefNull(type));
   }
 
-  Result<> makeRefIsNull(Index pos) {
+  Result<> makeRefIsNull(Index pos,
+                         const std::vector<Annotation>& annotations) {
     return withLoc(pos, irBuilder.makeRefIsNull());
   }
 
-  Result<> makeRefFunc(Index pos, Name func) {
+  Result<> makeRefFunc(Index pos,
+                       const std::vector<Annotation>& annotations,
+                       Name func) {
     return withLoc(pos, irBuilder.makeRefFunc(func));
   }
 
-  Result<> makeRefEq(Index pos) { return withLoc(pos, irBuilder.makeRefEq()); }
+  Result<> makeRefEq(Index pos, const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makeRefEq());
+  }
 
-  Result<> makeTableGet(Index pos, Name* table) {
+  Result<> makeTableGet(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        Name* table) {
     auto t = getTable(pos, table);
     CHECK_ERR(t);
     return withLoc(pos, irBuilder.makeTableGet(*t));
   }
 
-  Result<> makeTableSet(Index pos, Name* table) {
+  Result<> makeTableSet(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        Name* table) {
     auto t = getTable(pos, table);
     CHECK_ERR(t);
     return withLoc(pos, irBuilder.makeTableSet(*t));
   }
 
-  Result<> makeTableSize(Index pos, Name* table) {
+  Result<> makeTableSize(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         Name* table) {
     auto t = getTable(pos, table);
     CHECK_ERR(t);
     return withLoc(pos, irBuilder.makeTableSize(*t));
   }
 
-  Result<> makeTableGrow(Index pos, Name* table) {
+  Result<> makeTableGrow(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         Name* table) {
     auto t = getTable(pos, table);
     CHECK_ERR(t);
     return withLoc(pos, irBuilder.makeTableGrow(*t));
   }
 
-  Result<> makeTableFill(Index pos, Name* table) {
+  Result<> makeTableFill(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         Name* table) {
     auto t = getTable(pos, table);
     CHECK_ERR(t);
     return withLoc(pos, irBuilder.makeTableFill(*t));
   }
 
-  Result<> makeTableCopy(Index pos, Name* destTable, Name* srcTable) {
+  Result<> makeTableCopy(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         Name* destTable,
+                         Name* srcTable) {
     auto dest = getTable(pos, destTable);
     CHECK_ERR(dest);
     auto src = getTable(pos, srcTable);
@@ -1661,47 +2294,71 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeTableCopy(*dest, *src));
   }
 
-  Result<> makeThrow(Index pos, Name tag) {
+  Result<>
+  makeThrow(Index pos, const std::vector<Annotation>& annotations, Name tag) {
     return withLoc(pos, irBuilder.makeThrow(tag));
   }
 
-  Result<> makeRethrow(Index pos, Index label) {
+  Result<> makeRethrow(Index pos,
+                       const std::vector<Annotation>& annotations,
+                       Index label) {
     return withLoc(pos, irBuilder.makeRethrow(label));
   }
 
-  Result<> makeTupleMake(Index pos, uint32_t arity) {
+  Result<> makeThrowRef(Index pos, const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makeThrowRef());
+  }
+
+  Result<> makeTupleMake(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         uint32_t arity) {
     return withLoc(pos, irBuilder.makeTupleMake(arity));
   }
 
-  Result<> makeTupleExtract(Index pos, uint32_t arity, uint32_t index) {
+  Result<> makeTupleExtract(Index pos,
+                            const std::vector<Annotation>& annotations,
+                            uint32_t arity,
+                            uint32_t index) {
     return withLoc(pos, irBuilder.makeTupleExtract(arity, index));
   }
 
-  Result<> makeTupleDrop(Index pos, uint32_t arity) {
+  Result<> makeTupleDrop(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         uint32_t arity) {
     return withLoc(pos, irBuilder.makeTupleDrop(arity));
   }
 
-  Result<> makeCallRef(Index pos, HeapType type, bool isReturn) {
+  Result<> makeCallRef(Index pos,
+                       const std::vector<Annotation>& annotations,
+                       HeapType type,
+                       bool isReturn) {
     return withLoc(pos, irBuilder.makeCallRef(type, isReturn));
   }
 
-  Result<> makeRefI31(Index pos) {
+  Result<> makeRefI31(Index pos, const std::vector<Annotation>& annotations) {
     return withLoc(pos, irBuilder.makeRefI31());
   }
 
-  Result<> makeI31Get(Index pos, bool signed_) {
+  Result<> makeI31Get(Index pos,
+                      const std::vector<Annotation>& annotations,
+                      bool signed_) {
     return withLoc(pos, irBuilder.makeI31Get(signed_));
   }
 
-  Result<> makeRefTest(Index pos, Type type) {
+  Result<> makeRefTest(Index pos,
+                       const std::vector<Annotation>& annotations,
+                       Type type) {
     return withLoc(pos, irBuilder.makeRefTest(type));
   }
 
-  Result<> makeRefCast(Index pos, Type type) {
+  Result<> makeRefCast(Index pos,
+                       const std::vector<Annotation>& annotations,
+                       Type type) {
     return withLoc(pos, irBuilder.makeRefCast(type));
   }
 
   Result<> makeBrOn(Index pos,
+                    const std::vector<Annotation>& annotations,
                     Index label,
                     BrOnOp op,
                     Type in = Type::none,
@@ -1709,128 +2366,197 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeBrOn(label, op, in, out));
   }
 
-  Result<> makeStructNew(Index pos, HeapType type) {
+  Result<> makeStructNew(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         HeapType type) {
     return withLoc(pos, irBuilder.makeStructNew(type));
   }
 
-  Result<> makeStructNewDefault(Index pos, HeapType type) {
+  Result<> makeStructNewDefault(Index pos,
+                                const std::vector<Annotation>& annotations,
+                                HeapType type) {
     return withLoc(pos, irBuilder.makeStructNewDefault(type));
   }
 
-  Result<> makeStructGet(Index pos, HeapType type, Index field, bool signed_) {
+  Result<> makeStructGet(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         HeapType type,
+                         Index field,
+                         bool signed_) {
     return withLoc(pos, irBuilder.makeStructGet(type, field, signed_));
   }
 
-  Result<> makeStructSet(Index pos, HeapType type, Index field) {
+  Result<> makeStructSet(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         HeapType type,
+                         Index field) {
     return withLoc(pos, irBuilder.makeStructSet(type, field));
   }
 
-  Result<> makeArrayNew(Index pos, HeapType type) {
+  Result<> makeArrayNew(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        HeapType type) {
     return withLoc(pos, irBuilder.makeArrayNew(type));
   }
 
-  Result<> makeArrayNewDefault(Index pos, HeapType type) {
+  Result<> makeArrayNewDefault(Index pos,
+                               const std::vector<Annotation>& annotations,
+                               HeapType type) {
     return withLoc(pos, irBuilder.makeArrayNewDefault(type));
   }
 
-  Result<> makeArrayNewData(Index pos, HeapType type, Name data) {
+  Result<> makeArrayNewData(Index pos,
+                            const std::vector<Annotation>& annotations,
+                            HeapType type,
+                            Name data) {
     return withLoc(pos, irBuilder.makeArrayNewData(type, data));
   }
 
-  Result<> makeArrayNewElem(Index pos, HeapType type, Name elem) {
+  Result<> makeArrayNewElem(Index pos,
+                            const std::vector<Annotation>& annotations,
+                            HeapType type,
+                            Name elem) {
     return withLoc(pos, irBuilder.makeArrayNewElem(type, elem));
   }
 
-  Result<> makeArrayNewFixed(Index pos, HeapType type, uint32_t arity) {
+  Result<> makeArrayNewFixed(Index pos,
+                             const std::vector<Annotation>& annotations,
+                             HeapType type,
+                             uint32_t arity) {
     return withLoc(pos, irBuilder.makeArrayNewFixed(type, arity));
   }
 
-  Result<> makeArrayGet(Index pos, HeapType type, bool signed_) {
+  Result<> makeArrayGet(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        HeapType type,
+                        bool signed_) {
     return withLoc(pos, irBuilder.makeArrayGet(type, signed_));
   }
 
-  Result<> makeArraySet(Index pos, HeapType type) {
+  Result<> makeArraySet(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        HeapType type) {
     return withLoc(pos, irBuilder.makeArraySet(type));
   }
 
-  Result<> makeArrayLen(Index pos) {
+  Result<> makeArrayLen(Index pos, const std::vector<Annotation>& annotations) {
     return withLoc(pos, irBuilder.makeArrayLen());
   }
 
-  Result<> makeArrayCopy(Index pos, HeapType destType, HeapType srcType) {
+  Result<> makeArrayCopy(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         HeapType destType,
+                         HeapType srcType) {
     return withLoc(pos, irBuilder.makeArrayCopy(destType, srcType));
   }
 
-  Result<> makeArrayFill(Index pos, HeapType type) {
+  Result<> makeArrayFill(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         HeapType type) {
     return withLoc(pos, irBuilder.makeArrayFill(type));
   }
 
-  Result<> makeArrayInitData(Index pos, HeapType type, Name data) {
+  Result<> makeArrayInitData(Index pos,
+                             const std::vector<Annotation>& annotations,
+                             HeapType type,
+                             Name data) {
     return withLoc(pos, irBuilder.makeArrayInitData(type, data));
   }
 
-  Result<> makeArrayInitElem(Index pos, HeapType type, Name elem) {
+  Result<> makeArrayInitElem(Index pos,
+                             const std::vector<Annotation>& annotations,
+                             HeapType type,
+                             Name elem) {
     return withLoc(pos, irBuilder.makeArrayInitElem(type, elem));
   }
 
-  Result<> makeRefAs(Index pos, RefAsOp op) {
+  Result<>
+  makeRefAs(Index pos, const std::vector<Annotation>& annotations, RefAsOp op) {
     return withLoc(pos, irBuilder.makeRefAs(op));
   }
 
-  Result<> makeStringNew(Index pos, StringNewOp op, bool try_, Name* mem) {
-    auto m = getMemory(pos, mem);
-    CHECK_ERR(m);
-    return withLoc(pos, irBuilder.makeStringNew(op, try_, *m));
+  Result<> makeStringNew(Index pos,
+                         const std::vector<Annotation>& annotations,
+                         StringNewOp op) {
+    return withLoc(pos, irBuilder.makeStringNew(op));
   }
 
-  Result<> makeStringConst(Index pos, std::string_view str) {
-    return withLoc(pos, irBuilder.makeStringConst(Name(str)));
+  Result<> makeStringConst(Index pos,
+                           const std::vector<Annotation>& annotations,
+                           std::string_view str) {
+    // Re-encode from WTF-8 to WTF-16.
+    std::stringstream wtf16;
+    if (!String::convertWTF8ToWTF16(wtf16, str)) {
+      return in.err(pos, "invalid string constant");
+    }
+    // TODO: Use wtf16.view() once we have C++20.
+    return withLoc(pos, irBuilder.makeStringConst(wtf16.str()));
   }
 
-  Result<> makeStringMeasure(Index pos, StringMeasureOp op) {
+  Result<> makeStringMeasure(Index pos,
+                             const std::vector<Annotation>& annotations,
+                             StringMeasureOp op) {
     return withLoc(pos, irBuilder.makeStringMeasure(op));
   }
 
-  Result<> makeStringEncode(Index pos, StringEncodeOp op, Name* mem) {
-    auto m = getMemory(pos, mem);
-    CHECK_ERR(m);
-    return withLoc(pos, irBuilder.makeStringEncode(op, *m));
+  Result<> makeStringEncode(Index pos,
+                            const std::vector<Annotation>& annotations,
+                            StringEncodeOp op) {
+    return withLoc(pos, irBuilder.makeStringEncode(op));
   }
 
-  Result<> makeStringConcat(Index pos) {
+  Result<> makeStringConcat(Index pos,
+                            const std::vector<Annotation>& annotations) {
     return withLoc(pos, irBuilder.makeStringConcat());
   }
 
-  Result<> makeStringEq(Index pos, StringEqOp op) {
+  Result<> makeStringEq(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        StringEqOp op) {
     return withLoc(pos, irBuilder.makeStringEq(op));
   }
 
-  Result<> makeStringAs(Index pos, StringAsOp op) {
-    return withLoc(pos, irBuilder.makeStringAs(op));
-  }
-
-  Result<> makeStringWTF8Advance(Index pos) {
-    return withLoc(pos, irBuilder.makeStringWTF8Advance());
-  }
-
-  Result<> makeStringWTF16Get(Index pos) {
+  Result<> makeStringWTF16Get(Index pos,
+                              const std::vector<Annotation>& annotations) {
     return withLoc(pos, irBuilder.makeStringWTF16Get());
   }
 
-  Result<> makeStringIterNext(Index pos) {
-    return withLoc(pos, irBuilder.makeStringIterNext());
+  Result<> makeStringSliceWTF(Index pos,
+                              const std::vector<Annotation>& annotations) {
+    return withLoc(pos, irBuilder.makeStringSliceWTF());
   }
 
-  Result<> makeStringIterMove(Index pos, StringIterMoveOp op) {
-    return withLoc(pos, irBuilder.makeStringIterMove(op));
+  Result<> makeContBind(Index pos,
+                        const std::vector<Annotation>& annotations,
+                        HeapType contTypeBefore,
+                        HeapType contTypeAfter) {
+    return withLoc(pos, irBuilder.makeContBind(contTypeBefore, contTypeAfter));
   }
 
-  Result<> makeStringSliceWTF(Index pos, StringSliceWTFOp op) {
-    return withLoc(pos, irBuilder.makeStringSliceWTF(op));
+  Result<> makeContNew(Index pos,
+                       const std::vector<Annotation>& annotations,
+                       HeapType type) {
+    return withLoc(pos, irBuilder.makeContNew(type));
   }
 
-  Result<> makeStringSliceIter(Index pos) {
-    return withLoc(pos, irBuilder.makeStringSliceIter());
+  Result<> makeResume(Index pos,
+                      const std::vector<Annotation>& annotations,
+                      HeapType type,
+                      const TagLabelListT& tagLabels) {
+    std::vector<Name> tags;
+    std::vector<Index> labels;
+    tags.reserve(tagLabels.size());
+    labels.reserve(tagLabels.size());
+    for (auto& [tag, label] : tagLabels) {
+      tags.push_back(tag);
+      labels.push_back(label);
+    }
+    return withLoc(pos, irBuilder.makeResume(type, tags, labels));
+  }
+
+  Result<>
+  makeSuspend(Index pos, const std::vector<Annotation>& annotations, Name tag) {
+    return withLoc(pos, irBuilder.makeSuspend(tag));
   }
 };
 

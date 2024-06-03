@@ -109,11 +109,11 @@ void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
       func(name, sw->value);
     } else if (auto* br = expr->dynCast<BrOn>()) {
       func(name, br->ref);
-    } else if (auto* tt = expr->dynCast<TryTable>()) {
+    } else if (expr->is<TryTable>()) {
       // The values are supplied by throwing instructions, so we are unable to
       // know what they will be here.
       func(name, nullptr);
-    } else if (auto* res = expr->dynCast<Resume>()) {
+    } else if (expr->is<Resume>()) {
       // The values are supplied by suspend instructions executed while running
       // the continuation, so we are unable to know what they will be here.
       func(name, nullptr);
@@ -132,7 +132,7 @@ template<typename T> void operateOnScopeNameDefs(Expression* expr, T func) {
 
 #define DELEGATE_GET_FIELD(id, field) cast->field
 
-#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) func(cast->field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field) func(cast->field);
 
 #define DELEGATE_FIELD_CHILD(id, field)
 #define DELEGATE_FIELD_INT(id, field)
@@ -419,10 +419,14 @@ struct BranchTargets {
 
   // Gets the expression that defines this branch target, i.e., where we branch
   // to if we branch to that name.
-  Expression* getTarget(Name name) { return inner.targets[name]; }
+  Expression* getTarget(Name name) const {
+    auto iter = inner.targets.find(name);
+    assert(iter != inner.targets.end());
+    return iter->second;
+  }
 
   // Gets the expressions branching to a target.
-  std::unordered_set<Expression*> getBranches(Name name) {
+  std::unordered_set<Expression*> getBranches(Name name) const {
     auto iter = inner.branches.find(name);
     if (iter != inner.branches.end()) {
       return iter->second;

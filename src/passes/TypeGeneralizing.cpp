@@ -865,17 +865,13 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitStringEncode(StringEncode* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStringConcat(StringConcat* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStringEq(StringEq* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringAs(StringAs* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringWTF8Advance(StringWTF8Advance* curr) {
-    WASM_UNREACHABLE("TODO");
-  }
   void visitStringWTF16Get(StringWTF16Get* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringIterNext(StringIterNext* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringIterMove(StringIterMove* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStringSliceWTF(StringSliceWTF* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringSliceIter(StringSliceIter* curr) { WASM_UNREACHABLE("TODO"); }
 
+  void visitContBind(ContBind* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitContNew(ContNew* curr) { WASM_UNREACHABLE("TODO"); }
   void visitResume(Resume* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitSuspend(Suspend* curr) { WASM_UNREACHABLE("TODO"); }
 };
 
 struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {

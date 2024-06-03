@@ -256,17 +256,17 @@ struct Walker : public VisitorType {
         self->walkTag(curr.get());
       }
     }
-    for (auto& curr : module->tables) {
-      self->walkTable(curr.get());
-    }
     for (auto& curr : module->elementSegments) {
       self->walkElementSegment(curr.get());
     }
-    for (auto& curr : module->memories) {
-      self->walkMemory(curr.get());
+    for (auto& curr : module->tables) {
+      self->walkTable(curr.get());
     }
     for (auto& curr : module->dataSegments) {
       self->walkDataSegment(curr.get());
+    }
+    for (auto& curr : module->memories) {
+      self->walkMemory(curr.get());
     }
   }
 
@@ -534,6 +534,53 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
     // also update the stack
     expressionStack.back() = expression;
     return expression;
+  }
+};
+
+// Traversal keeping track of try depth
+
+// This is used to keep track of whether we are in the scope of an
+// exception handler. This matters since return_call is not equivalent
+// to return + call within an exception handler. If another kind of
+// handler scope is added, this code will need to be updated.
+template<typename SubType, typename VisitorType = Visitor<SubType>>
+struct TryDepthWalker : public PostWalker<SubType, VisitorType> {
+  TryDepthWalker() = default;
+
+  size_t tryDepth = 0;
+
+  static void doEnterTry(SubType* self, Expression** currp) {
+    self->tryDepth++;
+  }
+
+  static void doLeaveTry(SubType* self, Expression** currp) {
+    self->tryDepth--;
+  }
+
+  static void scan(SubType* self, Expression** currp) {
+    auto* curr = *currp;
+
+    if (curr->is<Try>()) {
+      self->pushTask(SubType::doVisitTry, currp);
+      auto& catchBodies = curr->cast<Try>()->catchBodies;
+      for (int i = int(catchBodies.size()) - 1; i >= 0; i--) {
+        self->pushTask(SubType::scan, &catchBodies[i]);
+      }
+      self->pushTask(SubType::doLeaveTry, currp);
+      self->pushTask(SubType::scan, &curr->cast<Try>()->body);
+      self->pushTask(SubType::doEnterTry, currp);
+      return;
+    }
+
+    if (curr->is<TryTable>()) {
+      self->pushTask(SubType::doLeaveTry, currp);
+    }
+
+    PostWalker<SubType, VisitorType>::scan(self, currp);
+
+    if (curr->is<TryTable>()) {
+      self->pushTask(SubType::doEnterTry, currp);
+    }
   }
 };
 

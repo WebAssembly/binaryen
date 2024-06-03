@@ -1,6 +1,6 @@
 ;; RUN: wasm-as %s -o %t-❤.wasm --source-map %t-🗺️.map
 ;; RUN: cat %t-🗺️.map | filecheck %s --check-prefix SOURCEMAP
-;; RUN: wasm-opt %t-❤.wasm -o %t-🤬.wasm --emit-js-wrapper %t-❤.js --input-source-map %t-🗺️.map --output-source-map %t-🗺️.out.map
+;; RUN: wasm-opt %t-❤.wasm -o %t-🤬.wasm --emit-spec-wrapper %t-❤.js --input-source-map %t-🗺️.map --output-source-map %t-🗺️.out.map
 ;; RUN: cat %t-🗺️.out.map | filecheck %s --check-prefix SOURCEMAP
 ;; RUN: wasm-dis %t-🤬.wasm | filecheck %s --check-prefix MODULE
 

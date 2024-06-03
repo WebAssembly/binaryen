@@ -79,7 +79,7 @@ def parse_args(args):
         help=('If specified, all unfreed (but still referenced) pointers at the'
               ' end of execution are considered memory leaks. Default: disabled.'))
     parser.add_argument(
-        '--spec-test', action='append', nargs='*', default=[], dest='spec_tests',
+        '--spec-test', action='append', default=[], dest='spec_tests',
         help='Names specific spec tests to run.')
     parser.add_argument(
         'positional_args', metavar='TEST_SUITE', nargs='*',
@@ -159,7 +159,6 @@ if not options.out_dir:
 
 if not os.path.exists(options.out_dir):
     os.makedirs(options.out_dir)
-os.chdir(options.out_dir)
 
 
 # Finds the given executable 'program' in PATH.
@@ -256,11 +255,8 @@ def has_shell_timeout():
 V8_OPTS = [
     '--wasm-staging',
     '--experimental-wasm-compilation-hints',
-    '--experimental-wasm-gc',
-    '--experimental-wasm-typed-funcref',
     '--experimental-wasm-memory64',
-    '--experimental-wasm-extended-const',
-    '--wasm-final-types',
+    '--experimental-wasm-stringref',
 ]
 
 # external tools
@@ -387,10 +383,12 @@ def get_tests(test_dir, extensions=[], recursive=False):
     return sorted(tests)
 
 
-if not options.spec_tests:
-    options.spec_tests = get_tests(get_test_dir('spec'), ['.wast'])
+if options.spec_tests:
+    options.spec_tests = [os.path.abspath(t) for t in options.spec_tests]
 else:
-    options.spec_tests = options.spec_tests[:]
+    options.spec_tests = get_tests(get_test_dir('spec'), ['.wast'])
+
+os.chdir(options.out_dir)
 
 # 11/27/2019: We updated the spec test suite to upstream spec repo. For some
 # files that started failing after this update, we added the new files to this
@@ -460,7 +458,7 @@ options.spec_tests = [t for t in options.spec_tests if os.path.basename(t) not
 # check utilities
 
 def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
-                        binary_suffix='.fromBinary', original_wast=None):
+                        binary_suffix='.fromBinary'):
     # checks we can convert the wast to binary and back
 
     print('         (binary format check)')

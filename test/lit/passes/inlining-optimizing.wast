@@ -13,7 +13,7 @@
  )
  ;; CHECK:      (func $1 (type $none_=>_none)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (block ;; (replaces unreachable CallRef we can't emit)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )

@@ -15,6 +15,7 @@
  */
 
 #include "module-utils.h"
+#include "ir/debug.h"
 #include "ir/intrinsics.h"
 #include "ir/manipulation.h"
 #include "ir/properties.h"
@@ -23,30 +24,60 @@
 
 namespace wasm::ModuleUtils {
 
+// Update the file name indices when moving a set of debug locations from one
+// module to another.
+static void updateLocationSet(std::set<Function::DebugLocation>& locations,
+                              std::vector<Index>& fileIndexMap) {
+  std::set<Function::DebugLocation> updatedLocations;
+
+  for (auto iter : locations) {
+    iter.fileIndex = fileIndexMap[iter.fileIndex];
+    updatedLocations.insert(iter);
+  }
+  locations.clear();
+  std::swap(locations, updatedLocations);
+}
+
 // Copies a function into a module. If newName is provided it is used as the
-// name of the function (otherwise the original name is copied).
-Function* copyFunction(Function* func, Module& out, Name newName) {
+// name of the function (otherwise the original name is copied). If fileIndexMap
+// is specified, it is used to rename source map filename indices when copying
+// the function from one module to another one.
+Function* copyFunction(Function* func,
+                       Module& out,
+                       Name newName,
+                       std::optional<std::vector<Index>> fileIndexMap) {
   auto ret = std::make_unique<Function>();
   ret->name = newName.is() ? newName : func->name;
+  ret->hasExplicitName = func->hasExplicitName;
   ret->type = func->type;
   ret->vars = func->vars;
   ret->localNames = func->localNames;
   ret->localIndices = func->localIndices;
-  ret->debugLocations = func->debugLocations;
   ret->body = ExpressionManipulator::copy(func->body, out);
+  debug::copyDebugInfo(func->body, ret->body, func, ret.get());
+  ret->prologLocation = func->prologLocation;
+  ret->epilogLocation = func->epilogLocation;
+  // Update file indices if needed
+  if (fileIndexMap) {
+    for (auto& iter : ret->debugLocations) {
+      if (iter.second) {
+        iter.second->fileIndex = (*fileIndexMap)[iter.second->fileIndex];
+      }
+    }
+    updateLocationSet(ret->prologLocation, *fileIndexMap);
+    updateLocationSet(ret->epilogLocation, *fileIndexMap);
+  }
   ret->module = func->module;
   ret->base = func->base;
   ret->noFullInline = func->noFullInline;
   ret->noPartialInline = func->noPartialInline;
-
-  // TODO: copy Stack IR
-  assert(!func->stackIR);
   return out.addFunction(std::move(ret));
 }
 
 Global* copyGlobal(Global* global, Module& out) {
   auto* ret = new Global();
   ret->name = global->name;
+  ret->hasExplicitName = global->hasExplicitName;
   ret->type = global->type;
   ret->mutable_ = global->mutable_;
   ret->module = global->module;
@@ -63,6 +94,7 @@ Global* copyGlobal(Global* global, Module& out) {
 Tag* copyTag(Tag* tag, Module& out) {
   auto* ret = new Tag();
   ret->name = tag->name;
+  ret->hasExplicitName = tag->hasExplicitName;
   ret->sig = tag->sig;
   ret->module = tag->module;
   ret->base = tag->base;
@@ -136,8 +168,30 @@ DataSegment* copyDataSegment(const DataSegment* segment, Module& out) {
 // Copies named toplevel module items (things of kind ModuleItemKind). See
 // copyModule() for something that also copies exports, the start function, etc.
 void copyModuleItems(const Module& in, Module& out) {
+  // If the source module has some debug information, we first compute how
+  // to map file name indices from this modules to file name indices in
+  // the target module.
+  std::optional<std::vector<Index>> fileIndexMap;
+  if (!in.debugInfoFileNames.empty()) {
+    std::unordered_map<std::string, Index> debugInfoFileIndices;
+    for (Index i = 0; i < out.debugInfoFileNames.size(); i++) {
+      debugInfoFileIndices[out.debugInfoFileNames[i]] = i;
+    }
+    fileIndexMap.emplace();
+    for (Index i = 0; i < in.debugInfoFileNames.size(); i++) {
+      std::string file = in.debugInfoFileNames[i];
+      auto iter = debugInfoFileIndices.find(file);
+      if (iter == debugInfoFileIndices.end()) {
+        Index index = out.debugInfoFileNames.size();
+        out.debugInfoFileNames.push_back(file);
+        debugInfoFileIndices[file] = index;
+      }
+      fileIndexMap->push_back(debugInfoFileIndices[file]);
+    }
+  }
+
   for (auto& curr : in.functions) {
-    copyFunction(curr.get(), out);
+    copyFunction(curr.get(), out, Name(), fileIndexMap);
   }
   for (auto& curr : in.globals) {
     copyGlobal(curr.get(), out);
@@ -157,8 +211,17 @@ void copyModuleItems(const Module& in, Module& out) {
   for (auto& curr : in.dataSegments) {
     copyDataSegment(curr.get(), out);
   }
+
+  for (auto& [type, names] : in.typeNames) {
+    if (!out.typeNames.count(type)) {
+      out.typeNames[type] = names;
+    }
+  }
 }
 
+// TODO: merge this with copyModuleItems, and add options for copying
+// exports and other things that are currently different between them,
+// if we still need those differences.
 void copyModule(const Module& in, Module& out) {
   // we use names throughout, not raw pointers, so simple copying is fine
   // for everything *but* expressions
@@ -170,7 +233,6 @@ void copyModule(const Module& in, Module& out) {
   out.customSections = in.customSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
   out.features = in.features;
-  out.typeNames = in.typeNames;
 }
 
 void clearModule(Module& wasm) {
@@ -341,6 +403,11 @@ struct CodeScanner
       counts.include(get->type);
     } else if (auto* set = curr->dynCast<ArraySet>()) {
       counts.note(set->ref->type);
+    } else if (auto* contBind = curr->dynCast<ContBind>()) {
+      counts.note(contBind->contTypeBefore);
+      counts.note(contBind->contTypeAfter);
+    } else if (auto* contNew = curr->dynCast<ContNew>()) {
+      counts.note(contNew->contType);
     } else if (auto* resume = curr->dynCast<Resume>()) {
       counts.note(resume->contType);
     } else if (Properties::isControlFlowStructure(curr)) {

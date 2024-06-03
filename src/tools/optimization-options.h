@@ -26,6 +26,17 @@
 namespace wasm {
 
 struct OptimizationOptions : public ToolOptions {
+  void parse(int argc, const char* argv[]) {
+    ToolOptions::parse(argc, argv);
+
+    // After parsing the arguments, update defaults based on the optimize/shrink
+    // levels.
+    if (passOptions.optimizeLevel >= 2 || passOptions.shrinkLevel >= 1) {
+      passOptions.generateStackIR = true;
+      passOptions.optimizeStackIR = true;
+    }
+  }
+
   static constexpr const char* DEFAULT_OPT_PASSES = "O";
   static constexpr const int OS_OPTIMIZE_LEVEL = 2;
   static constexpr const int OS_SHRINK_LEVEL = 1;

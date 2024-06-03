@@ -24,7 +24,13 @@ namespace wasm {
 struct Parents {
   Parents(Expression* expr) { inner.walk(expr); }
 
-  Expression* getParent(Expression* curr) { return inner.parentMap[curr]; }
+  Expression* getParent(Expression* curr) const {
+    auto iter = inner.parentMap.find(curr);
+    if (iter != inner.parentMap.end()) {
+      return iter->second;
+    }
+    return nullptr;
+  }
 
 private:
   struct Inner

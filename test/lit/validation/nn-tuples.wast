@@ -7,10 +7,10 @@
 
 (module
   ;; CHECK:      (func $foo (type $0)
-  ;; CHECK-NEXT:  (local $tuple ((ref any) (ref any)))
+  ;; CHECK-NEXT:  (local $tuple (tuple (ref any) (ref any)))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
-    (local $tuple ((ref any) (ref any)))
+    (local $tuple (tuple (ref any) (ref any)))
   )
 )

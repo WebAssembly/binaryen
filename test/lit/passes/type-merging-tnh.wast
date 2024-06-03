@@ -55,9 +55,9 @@
   ;; CHECK:       (type $2 (func (param (ref $A)) (result (ref $B))))
 
   ;; CHECK:      (func $test (type $2) (param $a (ref $A)) (result (ref $B))
-  ;; CHECK-NEXT:  (block $__binaryen_fake_return (result (ref $B))
+  ;; CHECK-NEXT:  (block $label (result (ref $B))
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (br_on_cast $__binaryen_fake_return (ref $A) (ref $B)
+  ;; CHECK-NEXT:    (br_on_cast $label (ref $A) (ref $B)
   ;; CHECK-NEXT:     (local.get $a)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )

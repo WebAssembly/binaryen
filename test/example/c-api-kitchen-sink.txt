@@ -13,9 +13,6 @@ BinaryenTypeI31ref: (ptr)
 BinaryenTypeStructref: (ptr)
 BinaryenTypeArrayref: (ptr)
 BinaryenTypeStringref: (ptr)
-BinaryenTypeStringviewWTF8: (ptr)
-BinaryenTypeStringviewWTF16: (ptr)
-BinaryenTypeStringviewIter: (ptr)
 BinaryenTypeNullref: (ptr)
 BinaryenTypeNullExternref: (ptr)
 BinaryenTypeNullFuncref: (ptr)
@@ -25,18 +22,15 @@ BinaryenPackedTypeInt8: 1
 BinaryenPackedTypeInt16: 2
 BinaryenHeapTypeExt: 0
 BinaryenHeapTypeFunc: 1
-BinaryenHeapTypeAny: 2
-BinaryenHeapTypeEq: 3
-BinaryenHeapTypeI31: 4
-BinaryenHeapTypeStruct: 5
-BinaryenHeapTypeArray: 6
-BinaryenHeapTypeString: 8
-BinaryenHeapTypeStringviewWTF8: 9
-BinaryenHeapTypeStringviewWTF16: 10
-BinaryenHeapTypeStringviewIter: 11
-BinaryenHeapTypeNone: 12
-BinaryenHeapTypeNoext: 13
-BinaryenHeapTypeNofunc: 14
+BinaryenHeapTypeAny: 3
+BinaryenHeapTypeEq: 4
+BinaryenHeapTypeI31: 5
+BinaryenHeapTypeStruct: 6
+BinaryenHeapTypeArray: 7
+BinaryenHeapTypeString: 9
+BinaryenHeapTypeNone: 10
+BinaryenHeapTypeNoext: 11
+BinaryenHeapTypeNofunc: 12
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
 BinaryenFeatureBulkMemory: 16
@@ -91,6 +85,8 @@ BinaryenFeatureAll: 131071
  (memory $0 1 256 shared)
  (data $0 (i32.const 10) "hello, world")
  (data $1 "I am passive")
+ (data $2 "data segment 2")
+ (data $seg (i32.const 0) "data segment 3")
  (table $tab 0 100 funcref)
  (table $0 1 1 funcref)
  (elem $0 (table $0) (i32.const 0) func $"kitchen()sinker")
@@ -102,6 +98,7 @@ BinaryenFeatureAll: 131071
  (func $"kitchen()sinker" (type $2) (param $0 i32) (param $1 i64) (param $2 f32) (param $3 f64) (result i32)
   (local $4 i32)
   (local $5 externref)
+  (local $6 f32)
   (block $the-body (result i32)
    (block $the-nothing
     (drop
@@ -2236,7 +2233,7 @@ BinaryenFeatureAll: 131071
        (pop externref)
       )
       (tuple.drop 4
-       (pop i32 i64 f32 f64)
+       (pop (tuple i32 i64 f32 f64))
       )
       (drop
        (memory.size)
@@ -2304,6 +2301,12 @@ BinaryenFeatureAll: 131071
        )
       )
       (drop
+       (array.new_data $0 $0
+        (i32.const 0)
+        (i32.const 2)
+       )
+      )
+      (drop
        (array.new_fixed $0 3
         (i32.const 1)
         (i32.const 2)
@@ -2334,57 +2337,6 @@ BinaryenFeatureAll: 131071
        (i32.const 2)
       )
       (drop
-       (string.new_utf8
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_utf8_try
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_wtf8
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_lossy_utf8
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_wtf16
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_utf8_array
-        (global.get $i8Array-global)
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_utf8_array_try
-        (global.get $i8Array-global)
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.new_wtf8_array
-        (global.get $i8Array-global)
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
        (string.new_lossy_utf8_array
         (global.get $i8Array-global)
         (i32.const 0)
@@ -2412,67 +2364,12 @@ BinaryenFeatureAll: 131071
        )
       )
       (drop
-       (string.measure_wtf8
-        (global.get $string-global)
-       )
-      )
-      (drop
        (string.measure_wtf16
         (global.get $string-global)
        )
       )
       (drop
-       (string.is_usv_sequence
-        (global.get $string-global)
-       )
-      )
-      (drop
-       (stringview_wtf16.length
-        (string.as_wtf16
-         (global.get $string-global)
-        )
-       )
-      )
-      (drop
-       (string.encode_utf8
-        (global.get $string-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_lossy_utf8
-        (global.get $string-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_wtf8
-        (global.get $string-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_wtf16
-        (global.get $string-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_utf8_array
-        (global.get $string-global)
-        (global.get $i8Array-global)
-        (i32.const 0)
-       )
-      )
-      (drop
        (string.encode_lossy_utf8_array
-        (global.get $string-global)
-        (global.get $i8Array-global)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (string.encode_wtf8_array
         (global.get $string-global)
         (global.get $i8Array-global)
         (i32.const 0)
@@ -2504,83 +2401,15 @@ BinaryenFeatureAll: 131071
        )
       )
       (drop
-       (string.as_wtf8
-        (global.get $string-global)
-       )
-      )
-      (drop
-       (string.as_wtf16
-        (global.get $string-global)
-       )
-      )
-      (drop
-       (string.as_iter
-        (global.get $string-global)
-       )
-      )
-      (drop
-       (stringview_wtf8.advance
-        (string.as_wtf8
-         (global.get $string-global)
-        )
-        (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
        (stringview_wtf16.get_codeunit
-        (string.as_wtf16
-         (global.get $string-global)
-        )
-        (i32.const 0)
-       )
-      )
-      (drop
-       (stringview_iter.next
-        (string.as_iter
-         (global.get $string-global)
-        )
-       )
-      )
-      (drop
-       (stringview_iter.advance
-        (string.as_iter
-         (global.get $string-global)
-        )
-        (i32.const 1)
-       )
-      )
-      (drop
-       (stringview_iter.rewind
-        (string.as_iter
-         (global.get $string-global)
-        )
-        (i32.const 1)
-       )
-      )
-      (drop
-       (stringview_wtf8.slice
-        (string.as_wtf8
-         (global.get $string-global)
-        )
-        (i32.const 0)
+        (global.get $string-global)
         (i32.const 0)
        )
       )
       (drop
        (stringview_wtf16.slice
-        (string.as_wtf16
-         (global.get $string-global)
-        )
+        (global.get $string-global)
         (i32.const 0)
-        (i32.const 0)
-       )
-      )
-      (drop
-       (stringview_iter.slice
-        (string.as_iter
-         (global.get $string-global)
-        )
         (i32.const 0)
        )
       )
@@ -3128,6 +2957,16 @@ module s-expr printed (in memory, caller-owned):
    (local.get $0)
    (local.get $1)
   )
+ )
+)
+
+module s-expr printed (StackIR):
+(module
+ (type $0 (func (param i32 i32) (result i32)))
+ (func $adder (param $0 i32) (param $1 i32) (result i32)
+  local.get $0
+  local.get $1
+  i32.add
  )
 )
 

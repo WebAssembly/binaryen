@@ -23,6 +23,7 @@
 #include "ir/bits.h"
 #include "pretty_printing.h"
 #include "support/bits.h"
+#include "support/string.h"
 #include "support/utilities.h"
 
 namespace wasm {
@@ -77,12 +78,15 @@ Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
          (type.isBottom() && !gcData));
 }
 
-Literal::Literal(std::string string)
+Literal::Literal(std::string_view string)
   : gcData(nullptr), type(Type(HeapType::string, NonNullable)) {
   // TODO: we could in theory internalize strings
+  // Extract individual WTF-16LE code units.
   Literals contents;
-  for (auto c : string) {
-    contents.push_back(Literal(int32_t(c)));
+  assert(string.size() % 2 == 0);
+  for (size_t i = 0; i < string.size(); i += 2) {
+    int32_t u = uint8_t(string[i]) | (uint8_t(string[i + 1]) << 8);
+    contents.push_back(Literal(u));
   }
   gcData = std::make_shared<GCData>(HeapType::string, contents);
 }
@@ -134,18 +138,17 @@ Literal::Literal(const Literal& other) : type(other.type) {
         case HeapType::noext:
         case HeapType::nofunc:
         case HeapType::noexn:
+        case HeapType::nocont:
           WASM_UNREACHABLE("null literals should already have been handled");
         case HeapType::any:
         case HeapType::eq:
         case HeapType::func:
+        case HeapType::cont:
         case HeapType::struct_:
         case HeapType::array:
         case HeapType::exn:
           WASM_UNREACHABLE("invalid type");
         case HeapType::string:
-        case HeapType::stringview_wtf8:
-        case HeapType::stringview_wtf16:
-        case HeapType::stringview_iter:
           WASM_UNREACHABLE("TODO: string literals");
       }
     }
@@ -464,6 +467,22 @@ bool Literal::isNaN() {
   return false;
 }
 
+bool Literal::isCanonicalNaN() {
+  if (!isNaN()) {
+    return false;
+  }
+  return (type == Type::f32 && NaNPayload(getf32()) == (1u << 23) - 1) ||
+         (type == Type::f64 && NaNPayload(getf64()) == (1ull << 52) - 1);
+}
+
+bool Literal::isArithmeticNaN() {
+  if (!isNaN()) {
+    return false;
+  }
+  return (type == Type::f32 && NaNPayload(getf32()) > (1u << 23) - 1) ||
+         (type == Type::f64 && NaNPayload(getf64()) > (1ull << 52) - 1);
+}
+
 uint32_t Literal::NaNPayload(float f) {
   assert(std::isnan(f) && "expected a NaN");
   // SEEEEEEE EFFFFFFF FFFFFFFF FFFFFFFF
@@ -618,6 +637,9 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         case HeapType::noexn:
           o << "nullexnref";
           break;
+        case HeapType::nocont:
+          o << "nullcontref";
+          break;
         case HeapType::ext:
           o << "externref";
           break;
@@ -627,6 +649,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
         case HeapType::any:
         case HeapType::eq:
         case HeapType::func:
+        case HeapType::cont:
         case HeapType::struct_:
         case HeapType::array:
           WASM_UNREACHABLE("invalid type");
@@ -635,19 +658,23 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
           if (!data) {
             o << "nullstring";
           } else {
-            o << "string(\"";
+            o << "string(";
+            // Convert WTF-16 literals to WTF-16 string.
+            std::stringstream wtf16;
             for (auto c : data->values) {
-              // TODO: more than ascii
-              o << char(c.getInteger());
+              auto u = c.getInteger();
+              assert(u < 0x10000);
+              wtf16 << uint8_t(u & 0xFF);
+              wtf16 << uint8_t(u >> 8);
             }
-            o << "\")";
+            // Escape to ensure we have valid unicode output and to make
+            // unprintable characters visible.
+            // TODO: Use wtf16.view() once we have C++20.
+            String::printEscapedJSON(o, wtf16.str());
+            o << ")";
           }
           break;
         }
-        case HeapType::stringview_wtf8:
-        case HeapType::stringview_wtf16:
-        case HeapType::stringview_iter:
-          WASM_UNREACHABLE("TODO: string literals");
       }
     } else if (heapType.isSignature()) {
       o << "funcref(" << literal.getFunc() << ")";
@@ -2666,9 +2693,6 @@ Literal Literal::externalize() const {
                        HeapType::ext);
       }
       case HeapType::string:
-      case HeapType::stringview_wtf8:
-      case HeapType::stringview_wtf16:
-      case HeapType::stringview_iter:
         WASM_UNREACHABLE("TODO: string literals");
       default:
         WASM_UNREACHABLE("unexpected type");

@@ -380,6 +380,8 @@ struct HeapTypeGeneratorImpl {
       switch (type.getBasic()) {
         case HeapType::func:
           return pickSubFunc();
+        case HeapType::cont:
+          WASM_UNREACHABLE("not implemented");
         case HeapType::any:
           return pickSubAny();
         case HeapType::eq:
@@ -393,12 +395,10 @@ struct HeapTypeGeneratorImpl {
         case HeapType::ext:
         case HeapType::exn:
         case HeapType::string:
-        case HeapType::stringview_wtf8:
-        case HeapType::stringview_wtf16:
-        case HeapType::stringview_iter:
         case HeapType::none:
         case HeapType::noext:
         case HeapType::nofunc:
+        case HeapType::nocont:
         case HeapType::noexn:
           return type;
       }
@@ -442,6 +442,7 @@ struct HeapTypeGeneratorImpl {
       case HeapType::ext:
       case HeapType::func:
       case HeapType::exn:
+      case HeapType::cont:
       case HeapType::any:
         break;
       case HeapType::eq:
@@ -454,15 +455,14 @@ struct HeapTypeGeneratorImpl {
         candidates.push_back(HeapType::any);
         break;
       case HeapType::string:
-      case HeapType::stringview_wtf8:
-      case HeapType::stringview_wtf16:
-      case HeapType::stringview_iter:
         candidates.push_back(HeapType::any);
         break;
       case HeapType::none:
         return pickSubAny();
       case HeapType::nofunc:
         return pickSubFunc();
+      case HeapType::nocont:
+        WASM_UNREACHABLE("not implemented");
       case HeapType::noext:
         candidates.push_back(HeapType::ext);
         break;

@@ -53,6 +53,13 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --output,-o                          Output file (stdout if not specified)
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --input-source-map,-ism              Consume source map from the specified
+;; CHECK-NEXT:                                        file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --output-source-map,-osm             Emit source map to the specified file
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --output-source-map-url,-osu         Emit specified string as source map URL
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --emit-text,-S                       Emit text instead of binary for the
 ;; CHECK-NEXT:                                        output file
 ;; CHECK-NEXT:
@@ -166,6 +173,12 @@
 ;; CHECK-NEXT:                                        passed out. The outside may hold on to
 ;; CHECK-NEXT:                                        them and pass them back in, but not
 ;; CHECK-NEXT:                                        inspect their contents or call them.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --generate-stack-ir                  generate StackIR during writing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --optimize-stack-ir                  optimize StackIR during writing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --print-stack-ir                     print StackIR during writing
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:

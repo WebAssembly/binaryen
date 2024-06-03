@@ -365,6 +365,9 @@ int main(int argc, const char* argv[]) {
   bool debugInfo = false;
   std::string graphFile;
   bool dump = false;
+  std::string inputSourceMapFilename;
+  std::string outputSourceMapFilename;
+  std::string outputSourceMapUrl;
 
   const std::string WasmMetaDCEOption = "wasm-opt options";
 
@@ -423,6 +426,30 @@ int main(int argc, const char* argv[]) {
            o->extra["output"] = argument;
            Colors::setEnabled(false);
          })
+    .add("--input-source-map",
+         "-ism",
+         "Consume source map from the specified file",
+         WasmMetaDCEOption,
+         Options::Arguments::One,
+         [&inputSourceMapFilename](Options* o, const std::string& argument) {
+           inputSourceMapFilename = argument;
+         })
+    .add("--output-source-map",
+         "-osm",
+         "Emit source map to the specified file",
+         WasmMetaDCEOption,
+         Options::Arguments::One,
+         [&outputSourceMapFilename](Options* o, const std::string& argument) {
+           outputSourceMapFilename = argument;
+         })
+    .add("--output-source-map-url",
+         "-osu",
+         "Emit specified string as source map URL",
+         WasmMetaDCEOption,
+         Options::Arguments::One,
+         [&outputSourceMapUrl](Options* o, const std::string& argument) {
+           outputSourceMapUrl = argument;
+         })
     .add("--emit-text",
          "-S",
          "Emit text instead of binary for the output file",
@@ -458,8 +485,6 @@ int main(int argc, const char* argv[]) {
     Fatal() << "no graph file provided.";
   }
 
-  auto input(read_file<std::string>(options.extra["infile"], Flags::Text));
-
   Module wasm;
   options.applyFeatures(wasm);
 
@@ -470,7 +495,7 @@ int main(int argc, const char* argv[]) {
     ModuleReader reader;
     reader.setDWARF(debugInfo);
     try {
-      reader.read(options.extra["infile"], wasm);
+      reader.read(options.extra["infile"], wasm, inputSourceMapFilename);
     } catch (ParseException& p) {
       p.dump(std::cerr);
       Fatal() << "error in parsing wasm input";
@@ -575,9 +600,13 @@ int main(int argc, const char* argv[]) {
   graph.apply();
 
   if (options.extra.count("output") > 0) {
-    ModuleWriter writer;
+    ModuleWriter writer(options.passOptions);
     writer.setBinary(emitBinary);
     writer.setDebugInfo(debugInfo);
+    if (outputSourceMapFilename.size()) {
+      writer.setSourceMapFilename(outputSourceMapFilename);
+      writer.setSourceMapUrl(outputSourceMapUrl);
+    }
     writer.write(wasm, options.extra["output"]);
   }
 

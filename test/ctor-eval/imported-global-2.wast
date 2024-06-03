@@ -1,8 +1,8 @@
 (module
-  (memory 256 256)
-
   ;; imports must not be used
   (import "env" "imported" (global $imported i32))
+
+  (memory 256 256)
 
   (func $test1 (export "test1") (result i32)
     (local $temp i32)

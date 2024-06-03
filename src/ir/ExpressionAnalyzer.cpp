@@ -319,7 +319,7 @@ struct Hasher {
 #define DELEGATE_FIELD_INT(id, field) HASH_FIELD(field)
 #define DELEGATE_FIELD_LITERAL(id, field) HASH_FIELD(field)
 
-#define DELEGATE_FIELD_NAME(id, field) visitNonScopeName(cast->field)
+#define DELEGATE_FIELD_NAME(id, field) visitNonScopeName(cast->field);
 #define DELEGATE_FIELD_TYPE(id, field) visitType(cast->field);
 #define DELEGATE_FIELD_HEAPTYPE(id, field) visitHeapType(cast->field);
 #define DELEGATE_FIELD_ADDRESS(id, field) visitAddress(cast->field);

@@ -151,7 +151,35 @@ struct ToolOptions : public Options {
         Options::Arguments::Zero,
         [this](Options*, const std::string&) {
           passOptions.closedWorld = true;
-        });
+        })
+      .add("--generate-stack-ir",
+           "",
+           "generate StackIR during writing",
+           ToolOptionsCategory,
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& arguments) {
+             passOptions.generateStackIR = true;
+           })
+      .add("--optimize-stack-ir",
+           "",
+           "optimize StackIR during writing",
+           ToolOptionsCategory,
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& arguments) {
+             // Also generate StackIR, to have something to optimize.
+             passOptions.generateStackIR = true;
+             passOptions.optimizeStackIR = true;
+           })
+      .add("--print-stack-ir",
+           "",
+           "print StackIR during writing",
+           ToolOptionsCategory,
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& arguments) {
+             // Also generate StackIR, to have something to print.
+             passOptions.generateStackIR = true;
+             passOptions.printStackIR = &std::cout;
+           });
   }
 
   ToolOptions& addFeature(FeatureSet::Feature feature,

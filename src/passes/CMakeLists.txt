@@ -29,6 +29,7 @@ set(passes_SOURCES
   DeadArgumentElimination.cpp
   DeadCodeElimination.cpp
   DeAlign.cpp
+  DebugLocationPropagation.cpp
   DeNaN.cpp
   Directize.cpp
   DuplicateImportElimination.cpp
@@ -86,10 +87,10 @@ set(passes_SOURCES
   PrintFunctionMap.cpp
   RoundTrip.cpp
   SetGlobals.cpp
-  StackIR.cpp
   SignaturePruning.cpp
   SignatureRefining.cpp
   SignExtLowering.cpp
+  StringLowering.cpp
   Strip.cpp
   StripTargetFeatures.cpp
   RedundantSetElimination.cpp
@@ -104,6 +105,7 @@ set(passes_SOURCES
   ReorderGlobals.cpp
   ReorderLocals.cpp
   ReReloop.cpp
+  Table64Lowering.cpp
   TrapMode.cpp
   TypeGeneralizing.cpp
   TypeRefining.cpp
@@ -119,6 +121,7 @@ set(passes_SOURCES
   StripEH.cpp
   SSAify.cpp
   TupleOptimization.cpp
+  TranslateEH.cpp
   TypeFinalizing.cpp
   Unsubtyping.cpp
   Untee.cpp

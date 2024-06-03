@@ -94,7 +94,7 @@ struct Metrics
       printCounts("global");
       // compute binary info, so we know function sizes
       BufferWithRandomAccess buffer;
-      WasmBinaryWriter writer(module, buffer);
+      WasmBinaryWriter writer(module, buffer, getPassOptions());
       writer.write();
       // print for each function
       Index binaryIndex = 0;
@@ -108,14 +108,14 @@ struct Metrics
       });
       // print for each export how much code size is due to it, i.e.,
       // how much the module could shrink without it.
-      auto sizeAfterGlobalCleanup = [](Module* module) {
+      auto sizeAfterGlobalCleanup = [&](Module* module) {
         PassRunner runner(module,
                           PassOptions::getWithDefaultOptimizationOptions());
         runner.setIsNested(true);
         runner.addDefaultGlobalOptimizationPostPasses(); // remove stuff
         runner.run();
         BufferWithRandomAccess buffer;
-        WasmBinaryWriter writer(module, buffer);
+        WasmBinaryWriter writer(module, buffer, getPassOptions());
         writer.write();
         return buffer.size();
       };

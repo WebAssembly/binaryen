@@ -213,7 +213,7 @@ def run_spec_tests():
         try:
             actual = run_spec_test(wast)
         except Exception as e:
-            if ('wasm-validator error' in str(e) or 'parse exception' in str(e)) and '.fail.' in base:
+            if ('wasm-validator error' in str(e) or 'error: ' in str(e)) and '.fail.' in base:
                 print('<< test failed as expected >>')
                 continue  # don't try all the binary format stuff TODO
             else:
@@ -242,9 +242,9 @@ def run_spec_tests():
                 for module, asserts in support.split_wast(wast):
                     print('        testing split module', split_num)
                     split_num += 1
-                    support.write_wast('split.wast', module, asserts)
+                    support.write_wast('split.wast', module)
                     run_opt_test('split.wast')    # also that our optimizer doesn't break on it
-                    result_wast_file = shared.binary_format_check('split.wast', verify_final_result=False, original_wast=wast)
+                    result_wast_file = shared.binary_format_check('split.wast', verify_final_result=False)
                     with open(result_wast_file) as f:
                         result_wast = f.read()
                         # add the asserts, and verify that the test still passes

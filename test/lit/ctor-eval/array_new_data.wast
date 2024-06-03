@@ -4,8 +4,8 @@
 (module
  ;; CHECK:      (type $0 (func))
 
- ;; CHECK:      (type $[i8] (array i8))
- (type $[i8] (array i8))
+ ;; CHECK:      (type $"[i8]" (array i8))
+ (type $"[i8]" (array i8))
 
  ;; CHECK:      (memory $0 16 17 shared)
  (memory $0 16 17 shared)
@@ -18,7 +18,7 @@
 
  ;; CHECK:      (func $test (type $0)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (array.new_data $[i8] $1
+ ;; CHECK-NEXT:   (array.new_data $"[i8]" $1
  ;; CHECK-NEXT:    (i32.const 16)
  ;; CHECK-NEXT:    (i32.const 8)
  ;; CHECK-NEXT:   )
@@ -29,7 +29,7 @@
   ;; atm. In fact the module would not validate as we refer to segment 1 here
   ;; but after flattening only segment 0 exists.
   (drop
-   (array.new_data $[i8] $1
+   (array.new_data $"[i8]" $1
     (i32.const 16)
     (i32.const 8)
    )

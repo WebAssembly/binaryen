@@ -19,6 +19,7 @@
 #include "ir/names.h"
 #include "lexer.h"
 #include "parsers.h"
+#include "pass.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -60,8 +61,7 @@ namespace wasm::WATParser {
 
 namespace {
 
-Result<IndexMap> createIndexMap(ParseInput& in,
-                                const std::vector<DefPos>& defs) {
+Result<IndexMap> createIndexMap(Lexer& in, const std::vector<DefPos>& defs) {
   IndexMap indices;
   for (auto& def : defs) {
     if (def.name.is()) {
@@ -91,17 +91,21 @@ Result<> parseDefs(Ctx& ctx,
   return Ok{};
 }
 
-// ================
-// Parser Functions
-// ================
+void propagateDebugLocations(Module& wasm) {
+  // Copy debug locations from parents or previous siblings to expressions that
+  // do not already have their own debug locations.
+  PassRunner runner(&wasm);
+  runner.add("propagate-debug-locs");
+  // The parser should not be responsible for validation.
+  runner.setIsNested(true);
+  runner.run();
+}
 
-} // anonymous namespace
-
-Result<> parseModule(Module& wasm, std::string_view input) {
+Result<> doParseModule(Module& wasm, Lexer& input, bool allowExtra) {
   // Parse module-level declarations.
   ParseDeclsCtx decls(input, wasm);
   CHECK_ERR(module(decls));
-  if (!decls.in.empty()) {
+  if (!allowExtra && !decls.in.empty()) {
     return decls.in.err("Unexpected tokens after module");
   }
 
@@ -110,6 +114,7 @@ Result<> parseModule(Module& wasm, std::string_view input) {
 
   // Parse type definitions.
   std::vector<HeapType> types;
+  std::unordered_map<HeapType, std::unordered_map<Name, Index>> typeNames;
   {
     TypeBuilder builder(decls.subtypeDefs.size());
     ParseTypeDefsCtx ctx(input, builder, *typeIndices);
@@ -124,11 +129,16 @@ Result<> parseModule(Module& wasm, std::string_view input) {
       return ctx.in.err(decls.typeDefs[err->index].pos, msg.str());
     }
     types = *built;
-    // Record type names on the module.
+    // Record type names on the module and in typeNames.
     for (size_t i = 0; i < types.size(); ++i) {
       auto& names = ctx.names[i];
-      if (names.name.is() || names.fieldNames.size()) {
+      auto& fieldNames = names.fieldNames;
+      if (names.name.is() || fieldNames.size()) {
         wasm.typeNames.insert({types[i], names});
+        auto& fieldIdxMap = typeNames[types[i]];
+        for (auto [idx, name] : fieldNames) {
+          fieldIdxMap.insert({name, idx});
+        }
       }
     }
   }
@@ -167,23 +177,35 @@ Result<> parseModule(Module& wasm, std::string_view input) {
                      wasm,
                      types,
                      implicitTypes,
+                     typeNames,
                      decls.implicitElemIndices,
                      *typeIndices);
     CHECK_ERR(parseDefs(ctx, decls.tableDefs, table));
     CHECK_ERR(parseDefs(ctx, decls.globalDefs, global));
+    CHECK_ERR(parseDefs(ctx, decls.startDefs, start));
     CHECK_ERR(parseDefs(ctx, decls.elemDefs, elem));
     CHECK_ERR(parseDefs(ctx, decls.dataDefs, data));
 
     for (Index i = 0; i < decls.funcDefs.size(); ++i) {
       ctx.index = i;
-      CHECK_ERR(ctx.visitFunctionStart(wasm.functions[i].get()));
+      auto* f = wasm.functions[i].get();
       WithPosition with(ctx, decls.funcDefs[i].pos);
+      ctx.setSrcLoc(decls.funcDefs[i].annotations);
+      if (!f->imported()) {
+        CHECK_ERR(ctx.visitFunctionStart(f));
+      }
       if (auto parsed = func(ctx)) {
         CHECK_ERR(parsed);
       } else {
         auto im = import_(ctx);
         assert(im);
         CHECK_ERR(im);
+      }
+      if (!f->imported()) {
+        auto end = ctx.irBuilder.visitEnd();
+        if (auto* err = end.getErr()) {
+          return ctx.in.err(decls.funcDefs[i].pos, err->msg);
+        }
       }
     }
 
@@ -198,7 +220,38 @@ Result<> parseModule(Module& wasm, std::string_view input) {
     }
   }
 
+  propagateDebugLocations(wasm);
+  input = decls.in;
+
   return Ok{};
+}
+
+} // anonymous namespace
+
+Result<> parseModule(Module& wasm, std::string_view in) {
+  Lexer lexer(in);
+  return doParseModule(wasm, lexer, false);
+}
+
+Result<> parseModule(Module& wasm, Lexer& lexer) {
+  return doParseModule(wasm, lexer, true);
+}
+
+Result<Literal> parseConst(Lexer& lexer) {
+  Module wasm;
+  ParseDefsCtx ctx(lexer, wasm, {}, {}, {}, {}, {});
+  auto inst = foldedinstr(ctx);
+  CHECK_ERR(inst);
+  auto expr = ctx.irBuilder.build();
+  if (auto* err = expr.getErr()) {
+    return lexer.err(err->msg);
+  }
+  auto* e = *expr;
+  if (!e->is<Const>() && !e->is<RefNull>() && !e->is<RefI31>()) {
+    return lexer.err("expected constant");
+  }
+  lexer = ctx.in;
+  return getLiteralFromConstExpression(e);
 }
 
 } // namespace wasm::WATParser

@@ -145,8 +145,6 @@
 
 ;; As above, but without dependencies, so now $c is first and then $b.
 (module
-
-
   ;; CHECK:      (global $c i32 (i32.const 30))
 
   ;; CHECK:      (global $b i32 (i32.const 20))
@@ -180,10 +178,10 @@
   )
 )
 
-;; As above, but a mixed case: $b depends on $a but $c has no dependencies. $c
-;; can be first.
+;; As above, but a mixed case: $b depends on $a but $c has no dependencies, and
+;; the counts are $c with the most, followed by $b, and then $a. $c can be
+;; first here, but $b must follow $a.
 (module
-
   ;; CHECK:      (global $c i32 (i32.const 30))
 
   ;; CHECK:      (global $a i32 (i32.const 10))
@@ -197,6 +195,12 @@
   ;; CHECK-NEXT:   (global.get $b)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $c)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
@@ -204,8 +208,15 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $uses
+    ;; ($a already has one use in the global $b)
     (drop
       (global.get $b)
+    )
+    (drop
+      (global.get $b)
+    )
+    (drop
+      (global.get $c)
     )
     (drop
       (global.get $c)
@@ -216,20 +227,37 @@
   )
 )
 
-;; Another mixed case, now with $c depending on $b. $b can be before $a.
+;; As above, but with the counts adjusted: before we had $c, $b, $a from most to
+;; least uses, and now $b, $c, $a.
+;;
+;; A greedy sort would do $c, $a, $b (as the first choice is between $c and $a,
+;; and $c wins), but that leaves $b, the highest count, for the end. The
+;; smoothed-out LEB costs (1 byte at the start, +1/128 each index later) are:
+;;
+;;  $c           $a               $b
+;; 1 * 2  +  129/128 * 1  +  130/128 * 3  =  775/128
+;;
+;; The original sort is
+;;
+;;  $a           $b               $c
+;; 1 * 1  +  129/128 * 3  +  130/128 * 2  =  775/128
+;;
+;; As they are equal we prefer the original order.
 (module
-
-
-  ;; CHECK:      (global $b i32 (i32.const 20))
-
-  ;; CHECK:      (global $c i32 (global.get $b))
-
   ;; CHECK:      (global $a i32 (i32.const 10))
   (global $a i32 (i32.const 10))
-  (global $b i32 (i32.const 20))
-  (global $c i32 (global.get $b))
+  ;; CHECK:      (global $b i32 (global.get $a))
+  (global $b i32 (global.get $a))
+  ;; CHECK:      (global $c i32 (i32.const 30))
+  (global $c i32 (i32.const 30))
 
   ;; CHECK:      (func $uses (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $b)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $b)
   ;; CHECK-NEXT:  )
@@ -245,7 +273,123 @@
       (global.get $b)
     )
     (drop
+      (global.get $b)
+    )
+    (drop
+      (global.get $b)
+    )
+    (drop
       (global.get $c)
+    )
+    (drop
+      (global.get $c)
+    )
+  )
+)
+
+;; As above, but with the counts adjusted to $b, $a, $c.
+(module
+  ;; CHECK:      (global $a i32 (i32.const 10))
+  (global $a i32 (i32.const 10))
+  ;; CHECK:      (global $b i32 (global.get $a))
+  (global $b i32 (global.get $a))
+  ;; CHECK:      (global $c i32 (i32.const 30))
+  (global $c i32 (i32.const 30))
+
+  ;; CHECK:      (func $uses (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $uses
+    (drop
+      (global.get $b)
+    )
+    (drop
+      (global.get $b)
+    )
+  )
+)
+
+;; As above, but with the counts adjusted to $c, $a, $b.
+(module
+  ;; CHECK:      (global $c i32 (i32.const 30))
+
+  ;; CHECK:      (global $a i32 (i32.const 10))
+  (global $a i32 (i32.const 10))
+  ;; CHECK:      (global $b i32 (global.get $a))
+  (global $b i32 (global.get $a))
+  (global $c i32 (i32.const 30))
+
+  ;; CHECK:      (func $uses (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $uses
+    (drop
+      (global.get $c)
+    )
+    (drop
+      (global.get $c)
+    )
+  )
+)
+
+;; As above, but with the counts adjusted to $a, $b, $c.
+(module
+  ;; CHECK:      (global $a i32 (i32.const 10))
+  (global $a i32 (i32.const 10))
+  ;; CHECK:      (global $b i32 (global.get $a))
+  (global $b i32 (global.get $a))
+  ;; CHECK:      (global $c i32 (i32.const 30))
+  (global $c i32 (i32.const 30))
+
+  ;; CHECK:      (func $uses (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $a)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $uses
+    (drop
+      (global.get $a)
+    )
+    (drop
+      (global.get $b)
+    )
+  )
+)
+
+;; As above, but with the counts adjusted to $a, $c, $b.
+(module
+  ;; CHECK:      (global $a i32 (i32.const 10))
+  (global $a i32 (i32.const 10))
+  ;; CHECK:      (global $c i32 (i32.const 30))
+
+  ;; CHECK:      (global $b i32 (global.get $a))
+  (global $b i32 (global.get $a))
+  (global $c i32 (i32.const 30))
+
+  ;; CHECK:      (func $uses (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $a)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $uses
+    (drop
+      (global.get $a)
     )
     (drop
       (global.get $c)
@@ -292,3 +436,380 @@
     )
   )
 )
+
+;; Lower letters have lower counts: $a has the least, and $e has the most.
+;;
+;; Dependency graph (left depends on right):
+;;
+;;    $c - $a
+;;   /
+;; $e
+;;   \
+;;    $d - $b
+;;
+;; $e has the most uses, followed by $c and $d. $a and $b have a reverse
+;; ordering from their dependers, so a naive topological sort will fail to
+;; be optimal. There are multiple optimal orders however, including:
+;;
+;;   $b, $a, $c, $d, $e
+;;   $b, $d, $a, $c, $e
+;;
+;; $b and $e must be at the edges, but there is no single way to sort the
+;; others: the first sorting here puts $a before both $d (though $a has
+;; lower count) while the second puts $d before $c. Our greedy algorithm
+;; picks the second order here.
+(module
+  ;; CHECK:      (global $b i32 (i32.const 20))
+
+  ;; CHECK:      (global $d i32 (global.get $b))
+
+  ;; CHECK:      (global $a i32 (i32.const 10))
+  (global $a i32 (i32.const 10))
+
+  (global $b i32 (i32.const 20))
+
+  ;; CHECK:      (global $c i32 (global.get $a))
+  (global $c i32 (global.get $a))
+
+  (global $d i32 (global.get $b))
+
+  ;; CHECK:      (global $e i32 (i32.add
+  ;; CHECK-NEXT:  (global.get $c)
+  ;; CHECK-NEXT:  (global.get $d)
+  ;; CHECK-NEXT: ))
+  (global $e i32 (i32.add
+    (global.get $c)
+    (global.get $d)
+  ))
+
+  ;; CHECK:      (func $uses (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $d)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $d)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $d)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $uses
+    ;; $a, $b, $c, $d each have one already from the globals. Add more so that
+    ;; $a has the least, and $e has the most
+    (drop (global.get $e))
+    (drop (global.get $e))
+    (drop (global.get $e))
+    (drop (global.get $e))
+    (drop (global.get $e))
+
+    (drop (global.get $d))
+    (drop (global.get $d))
+    (drop (global.get $d))
+
+    (drop (global.get $c))
+    (drop (global.get $c))
+
+    (drop (global.get $b))
+  )
+)
+
+;; As above, but add a direct dep from $d to $a:
+;;
+;;    $c - $a
+;;   /    /
+;; $e    / <-- this was added
+;;   \  /
+;;    $d - $b
+;;
+;; This forces $a to appear before $d: the order goes from before, which was
+;;   $b, $d, $a, $c, $e
+;; to
+;;   $b, $a, $d, $c, $e
+(module
+  ;; CHECK:      (global $b i32 (i32.const 20))
+
+  ;; CHECK:      (global $a i32 (i32.const 10))
+  (global $a i32 (i32.const 10))
+
+  (global $b i32 (i32.const 20))
+
+  ;; CHECK:      (global $d i32 (i32.add
+  ;; CHECK-NEXT:  (global.get $b)
+  ;; CHECK-NEXT:  (global.get $a)
+  ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (global $c i32 (global.get $a))
+  (global $c i32 (global.get $a))
+
+  (global $d i32 (i32.add
+    (global.get $b)
+    (global.get $a) ;; this was added
+  ))
+
+  ;; CHECK:      (global $e i32 (i32.add
+  ;; CHECK-NEXT:  (global.get $c)
+  ;; CHECK-NEXT:  (global.get $d)
+  ;; CHECK-NEXT: ))
+  (global $e i32 (i32.add
+    (global.get $c)
+    (global.get $d)
+  ))
+
+  ;; CHECK:      (func $uses (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $e)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $d)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $d)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $d)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $d)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $b)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $uses
+    ;; $b, $c, $d each have one already from the globals, and $a has two. Add
+    ;; more so that $a has the least, and $e has the most.
+    (drop (global.get $e))
+    (drop (global.get $e))
+    (drop (global.get $e))
+    (drop (global.get $e))
+    (drop (global.get $e))
+    (drop (global.get $e))
+
+    (drop (global.get $d))
+    (drop (global.get $d))
+    (drop (global.get $d))
+    (drop (global.get $d))
+
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+
+    (drop (global.get $b))
+    (drop (global.get $b))
+  )
+)
+
+;; A situation where the simple greedy sort fails to be optimal. We have a
+;; chain and one more independent global
+;;
+;;  a <- b <- c
+;;
+;;  other
+;;
+;; The candidates for the first global emitted are a and other, as they have no
+;; dependencies, and other has a higher count so greedy sorting would pick it.
+;; however, c has the highest count by far, so it is worth being less greedy and
+;; doing a just in order to be able to do b and then c, and to emit other last.
+;; In other words, the original order is best.
+(module
+  ;; CHECK:      (global $a i32 (i32.const 0))
+  (global $a i32 (i32.const 0))
+  ;; CHECK:      (global $b i32 (global.get $a))
+  (global $b i32 (global.get $a))
+  ;; CHECK:      (global $c i32 (global.get $b))
+  (global $c i32 (global.get $b))
+
+  ;; CHECK:      (global $other i32 (i32.const 1))
+  (global $other i32 (i32.const 1))
+
+  ;; CHECK:      (func $uses (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $other)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $other)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $uses
+    ;; Ten uses for $c, far more than all the rest combined.
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+
+    ;; Two uses for other, which is more than $a's single use.
+    (drop (global.get $other))
+    (drop (global.get $other))
+  )
+)
+
+;; As above, but with the original order a little different. This is again a
+;; case where the greedy sort is unoptimal (see above), but now also the
+;; original sort is unoptimal as well, and instead we use the "sum" sort, which
+;; counts the sum of the uses of a global and all the things it depends on and
+;; uses that as the count for that global (which in effect means that we take
+;; into consideration not only its own size but the entire size that it may
+;; unlock, which happens to work well here).
+;;
+;; The only change in the input compared to the previous test is that $other
+;; was moved up to between $b and $c. Sum sort works well here because the
+;; first comparison is $a and $other, and sum takes into account $b and $c in
+;; $a's favor, so it wins. Likewise $b and $c win against $other as well, so
+;; the order is $a, $b, $c, $other which is optimal here.
+(module
+  ;; CHECK:      (global $a i32 (i32.const 0))
+  (global $a i32 (i32.const 0))
+  ;; CHECK:      (global $b i32 (global.get $a))
+  (global $b i32 (global.get $a))
+
+  ;; CHECK:      (global $c i32 (global.get $b))
+
+  ;; CHECK:      (global $other i32 (i32.const 1))
+  (global $other i32 (i32.const 1))
+
+  (global $c i32 (global.get $b))
+
+  ;; CHECK:      (func $uses (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $c)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $other)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (global.get $other)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $uses
+    ;; Ten uses for $c, far more than all the rest combined.
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+    (drop (global.get $c))
+
+    ;; Two uses for other, which is more than $a's single use.
+    (drop (global.get $other))
+    (drop (global.get $other))
+  )
+)
+

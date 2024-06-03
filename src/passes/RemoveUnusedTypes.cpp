@@ -45,7 +45,7 @@ struct RemoveUnusedTypes : Pass {
     }
 
     // We're not changing the contents of any of the types, so we just round
-    // trip them throgh GlobalTypeRewriter, which will put all the private types
+    // trip them through GlobalTypeRewriter which will put all the private types
     // in a single new rec group and leave out all the unused types.
     GlobalTypeRewriter(*module).update();
   }

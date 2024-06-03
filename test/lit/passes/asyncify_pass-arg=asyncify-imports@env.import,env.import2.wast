@@ -5,10 +5,12 @@
 
 ;; Pre-existing imports that the pass turns into the implementations.
 (module
-  (memory 1 2)
   (import "asyncify" "start_unwind" (func $asyncify_start_unwind (param i32)))
   (import "asyncify" "start_rewind" (func $asyncify_start_rewind (param i32)))
   (import "asyncify" "stop_rewind" (func $asyncify_stop_rewind))
+
+  (memory 1 2)
+
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (type $1 (func (param i32)))
@@ -400,7 +402,6 @@
 ;; CHECK-NEXT:  (global.get $__asyncify_state)
 ;; CHECK-NEXT: )
 (module
-  (memory 1 2)
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (type $1 (func (param i32)))
@@ -415,6 +416,9 @@
   (import "env" "import2" (func $import2 (result i32)))
   ;; CHECK:      (import "env" "import3" (func $import3 (param i32)))
   (import "env" "import3" (func $import3 (param i32)))
+
+  (memory 1 2)
+
   ;; CHECK:      (global $__asyncify_state (mut i32) (i32.const 0))
 
   ;; CHECK:      (global $__asyncify_data (mut i32) (i32.const 0))

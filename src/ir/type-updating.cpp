@@ -18,6 +18,7 @@
 #include "find_all.h"
 #include "ir/local-structural-dominance.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/utils.h"
 #include "support/topological_sort.h"
 #include "wasm-type-ordering.h"
@@ -28,9 +29,13 @@ namespace wasm {
 
 GlobalTypeRewriter::GlobalTypeRewriter(Module& wasm) : wasm(wasm) {}
 
-void GlobalTypeRewriter::update() { mapTypes(rebuildTypes()); }
+void GlobalTypeRewriter::update(
+  const std::vector<HeapType>& additionalPrivateTypes) {
+  mapTypes(rebuildTypes(additionalPrivateTypes));
+}
 
-GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes() {
+GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
+  const std::vector<HeapType>& additionalPrivateTypes) {
   // Find the heap types that are not publicly observable. Even in a closed
   // world scenario, don't modify public types because we assume that they may
   // be reflected on or used for linking. Figure out where each private type
@@ -38,6 +43,19 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes() {
   // come before their subtypes.
   Index i = 0;
   auto privateTypes = ModuleUtils::getPrivateHeapTypes(wasm);
+
+  if (!additionalPrivateTypes.empty()) {
+    // Only add additional private types that are not already in the list.
+    std::unordered_set<HeapType> privateTypesSet(privateTypes.begin(),
+                                                 privateTypes.end());
+
+    for (auto t : additionalPrivateTypes) {
+      if (!privateTypesSet.count(t)) {
+        privateTypes.push_back(t);
+        privateTypesSet.insert(t);
+      }
+    }
+  }
 
   // Topological sort to have supertypes first, but we have to account for the
   // fact that we may be replacing the supertypes to get the order correct.
@@ -135,11 +153,27 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes() {
     oldToNewTypes[type] = newTypes[index];
   }
 
-  // Update type names (doing it before mapTypes can help debugging there, but
-  // has no other effect; mapTypes does not look at type names).
+  // Update type names to avoid duplicates.
+  std::unordered_set<Name> typeNames;
+  for (auto& [type, info] : wasm.typeNames) {
+    typeNames.insert(info.name);
+  }
   for (auto& [old, new_] : oldToNewTypes) {
+    if (old == new_) {
+      // The type is being mapped to itself; no need to rename anything.
+      continue;
+    }
+
     if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
-      wasm.typeNames[new_] = it->second;
+      wasm.typeNames[new_] = wasm.typeNames[old];
+      // Use the existing name in the new type, as usually it completely
+      // replaces the old. Rename the old name in a unique way to avoid
+      // confusion in the case that it remains used.
+      auto deduped =
+        Names::getValidName(wasm.typeNames[old].name,
+                            [&](Name test) { return !typeNames.count(test); });
+      wasm.typeNames[old].name = deduped;
+      typeNames.insert(deduped);
     }
   }
 
@@ -176,9 +210,6 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
     }
 
     HeapType getNew(HeapType type) {
-      if (type.isBasic()) {
-        return type;
-      }
       auto iter = oldToNewTypes.find(type);
       if (iter != oldToNewTypes.end()) {
         return iter->second;

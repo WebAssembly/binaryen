@@ -7,7 +7,6 @@
 
   ;; CHECK:      (type $f (func (param i32)))
   (type $f (func (param i32)))
-  (memory i64 1 2)
   ;; CHECK:      (type $2 (func))
 
   ;; CHECK:      (type $3 (func (param i64)))
@@ -18,6 +17,9 @@
   (import "env" "import" (func $import))
   ;; CHECK:      (import "env" "import2" (func $import2 (param i32)))
   (import "env" "import2" (func $import2 (param i32)))
+
+  (memory i64 1 2)
+
   (table funcref (elem $liveness2 $liveness2))
   ;; CHECK:      (global $__asyncify_state (mut i32) (i32.const 0))
 
@@ -27,7 +29,7 @@
 
   ;; CHECK:      (table $0 2 2 funcref)
 
-  ;; CHECK:      (elem $0 (i32.const 0) $liveness2 $liveness2)
+  ;; CHECK:      (elem $implicit-elem (i32.const 0) $liveness2 $liveness2)
 
   ;; CHECK:      (export "asyncify_start_unwind" (func $asyncify_start_unwind))
 

@@ -100,7 +100,12 @@
  )
  ;; CHECK:      (func $1 (type $none_=>_none)
  ;; CHECK-NEXT:  (block $__inlined_func$0
- ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:   (block ;; (replaces unreachable CallRef we can't emit)
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (ref.null nofunc)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $1

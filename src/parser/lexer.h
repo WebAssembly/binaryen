@@ -23,6 +23,9 @@
 #include <string_view>
 #include <variant>
 
+#include "support/name.h"
+#include "support/result.h"
+
 #ifndef parser_lexer_h
 #define parser_lexer_h
 
@@ -38,188 +41,152 @@ struct TextPos {
   friend std::ostream& operator<<(std::ostream& os, const TextPos& pos);
 };
 
-// ======
-// Tokens
-// ======
+// ===========
+// Annotations
+// ===========
 
-struct LParenTok {
-  bool operator==(const LParenTok&) const { return true; }
-  friend std::ostream& operator<<(std::ostream&, const LParenTok&);
+struct Annotation {
+  Name kind;
+  std::string_view contents;
 };
 
-struct RParenTok {
-  bool operator==(const RParenTok&) const { return true; }
-  friend std::ostream& operator<<(std::ostream&, const RParenTok&);
-};
-
-struct IdTok {
-  bool operator==(const IdTok&) const { return true; }
-  friend std::ostream& operator<<(std::ostream&, const IdTok&);
-};
-
-enum Sign { NoSign, Pos, Neg };
-
-struct IntTok {
-  uint64_t n;
-  Sign sign;
-
-  bool operator==(const IntTok&) const;
-  friend std::ostream& operator<<(std::ostream&, const IntTok&);
-};
-
-struct FloatTok {
-  // The payload if we lexed a nan with payload. We cannot store the payload
-  // directly in `d` because we do not know at this point whether we are parsing
-  // an f32 or f64 and therefore we do not know what the allowable payloads are.
-  // No payload with NaN means to use the default payload for the expected float
-  // width.
-  std::optional<uint64_t> nanPayload;
-  double d;
-
-  bool operator==(const FloatTok&) const;
-  friend std::ostream& operator<<(std::ostream&, const FloatTok&);
-};
-
-struct StringTok {
-  std::optional<std::string> str;
-
-  bool operator==(const StringTok& other) const { return str == other.str; }
-  friend std::ostream& operator<<(std::ostream&, const StringTok&);
-};
-
-struct KeywordTok {
-  bool operator==(const KeywordTok&) const { return true; }
-  friend std::ostream& operator<<(std::ostream&, const KeywordTok&);
-};
-
-struct Token {
-  using Data = std::variant<LParenTok,
-                            RParenTok,
-                            IdTok,
-                            IntTok,
-                            FloatTok,
-                            StringTok,
-                            KeywordTok>;
-  std::string_view span;
-  Data data;
-
-  // ====================
-  // Token classification
-  // ====================
-
-  bool isLParen() const { return std::get_if<LParenTok>(&data); }
-
-  bool isRParen() const { return std::get_if<RParenTok>(&data); }
-
-  std::optional<std::string_view> getID() const {
-    if (std::get_if<IdTok>(&data)) {
-      // Drop leading '$'.
-      return span.substr(1);
-    }
-    return {};
-  }
-
-  std::optional<std::string_view> getKeyword() const {
-    if (std::get_if<KeywordTok>(&data)) {
-      return span;
-    }
-    return {};
-  }
-  std::optional<uint64_t> getU64() const;
-  std::optional<int64_t> getS64() const;
-  std::optional<uint64_t> getI64() const;
-  std::optional<uint32_t> getU32() const;
-  std::optional<int32_t> getS32() const;
-  std::optional<uint32_t> getI32() const;
-  std::optional<double> getF64() const;
-  std::optional<float> getF32() const;
-  std::optional<std::string_view> getString() const;
-
-  bool operator==(const Token&) const;
-  friend std::ostream& operator<<(std::ostream& os, const Token&);
-};
+extern Name srcAnnotationKind;
 
 // =====
 // Lexer
 // =====
 
-// Lexer's purpose is twofold. First, it wraps a buffer to provide a tokenizing
-// iterator over it. Second, it implements that iterator itself. Also provides
-// utilities for locating the text position of tokens within the buffer. Text
-// positions are computed on demand rather than eagerly because they are
-// typically only needed when there is an error to report.
 struct Lexer {
-  using iterator = Lexer;
-  using difference_type = std::ptrdiff_t;
-  using value_type = Token;
-  using pointer = const Token*;
-  using reference = const Token&;
-  using iterator_category = std::forward_iterator_tag;
-
 private:
-  std::string_view buffer;
-  size_t index = 0;
-  std::optional<Token> curr;
+  size_t pos = 0;
+  std::vector<Annotation> annotations;
 
 public:
-  // The end sentinel.
-  Lexer() = default;
+  std::string_view buffer;
 
-  Lexer(std::string_view buffer) : buffer(buffer) { setIndex(0); }
+  Lexer(std::string_view buffer) : buffer(buffer) { setPos(0); }
 
-  size_t getIndex() const { return index; }
+  size_t getPos() const { return pos; }
 
-  void setIndex(size_t i) {
-    index = i;
-    skipSpace();
-    lexToken();
+  void setPos(size_t i) {
+    pos = i;
+    advance();
   }
 
-  std::string_view next() const { return buffer.substr(index); }
-  Lexer& operator++() {
-    // Preincrement
-    skipSpace();
-    lexToken();
-    return *this;
+  bool takeLParen();
+
+  bool peekLParen() { return Lexer(*this).takeLParen(); }
+
+  bool takeRParen();
+
+  bool peekRParen() { return Lexer(*this).takeRParen(); }
+
+  bool takeUntilParen() {
+    while (true) {
+      if (empty()) {
+        return false;
+      }
+      if (peekLParen() || peekRParen()) {
+        return true;
+      }
+      // Do not count the parentheses in strings.
+      if (takeString()) {
+        continue;
+      }
+      ++pos;
+      advance();
+    }
   }
 
-  Lexer operator++(int) {
-    // Postincrement
-    Lexer ret = *this;
-    ++(*this);
+  std::optional<Name> takeID();
+
+  std::optional<std::string_view> takeKeyword();
+  bool takeKeyword(std::string_view expected);
+
+  std::optional<std::string_view> peekKeyword() {
+    return Lexer(*this).takeKeyword();
+  }
+
+  std::optional<uint64_t> takeOffset();
+  std::optional<uint32_t> takeAlign();
+
+  std::optional<uint64_t> takeU64() { return takeU<uint64_t>(); }
+  std::optional<uint64_t> takeI64() { return takeI<uint64_t>(); }
+  std::optional<uint32_t> takeU32() { return takeU<uint32_t>(); }
+  std::optional<uint32_t> takeI32() { return takeI<uint32_t>(); }
+  std::optional<uint16_t> takeI16() { return takeI<uint16_t>(); }
+  std::optional<uint8_t> takeU8() { return takeU<uint8_t>(); }
+  std::optional<uint8_t> takeI8() { return takeI<uint8_t>(); }
+
+  std::optional<double> takeF64();
+  std::optional<float> takeF32();
+
+  std::optional<std::string> takeString();
+
+  std::optional<Name> takeName() {
+    // TODO: Validate UTF.
+    if (auto str = takeString()) {
+      return Name(*str);
+    }
+    return std::nullopt;
+  }
+
+  bool takeSExprStart(std::string_view expected) {
+    auto original = *this;
+    if (takeLParen() && takeKeyword(expected)) {
+      return true;
+    }
+    *this = original;
+    return false;
+  }
+
+  bool peekSExprStart(std::string_view expected) {
+    auto original = *this;
+    if (!takeLParen()) {
+      return false;
+    }
+    bool ret = takeKeyword(expected);
+    *this = original;
     return ret;
   }
 
-  const Token& operator*() { return *curr; }
-  const Token* operator->() { return &*curr; }
+  std::string_view next() const { return buffer.substr(pos); }
 
-  bool operator==(const Lexer& other) const {
-    // The iterator is equal to the end sentinel when there is no current token.
-    if (!curr && !other.curr) {
-      return true;
-    }
-    // Otherwise they are equivalent when they are at the same position.
-    return index == other.index;
+  void advance() {
+    annotations.clear();
+    skipSpace();
   }
 
-  bool operator!=(const Lexer& other) const { return !(*this == other); }
-
-  Lexer begin() { return *this; }
-
-  Lexer end() const { return Lexer(); }
-
-  bool empty() const { return *this == end(); }
+  bool empty() const { return pos == buffer.size(); }
 
   TextPos position(const char* c) const;
   TextPos position(size_t i) const { return position(buffer.data() + i); }
   TextPos position(std::string_view span) const {
     return position(span.data());
   }
-  TextPos position(Token tok) const { return position(tok.span); }
+  TextPos position() const { return position(getPos()); }
+
+  [[nodiscard]] Err err(size_t pos, std::string reason) {
+    std::stringstream msg;
+    msg << position(pos) << ": error: " << reason;
+    return Err{msg.str()};
+  }
+
+  [[nodiscard]] Err err(std::string reason) { return err(getPos(), reason); }
+
+  const std::vector<Annotation> getAnnotations() { return annotations; }
+  std::vector<Annotation> takeAnnotations() { return std::move(annotations); }
+
+  void setAnnotations(std::vector<Annotation>&& annotations) {
+    this->annotations = std::move(annotations);
+  }
 
 private:
+  template<typename T> std::optional<T> takeU();
+  template<typename T> std::optional<T> takeS();
+  template<typename T> std::optional<T> takeI();
+
   void skipSpace();
-  void lexToken();
 };
 
 } // namespace wasm::WATParser

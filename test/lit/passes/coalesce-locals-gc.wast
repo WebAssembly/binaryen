@@ -16,13 +16,13 @@
  ;; CHECK:      (global $global (ref null $array) (ref.null none))
  (global $global (ref null $array) (ref.null $array))
 
- ;; CHECK:      (global $nn-tuple-global (mut ((ref any) i32)) (tuple.make 2
+ ;; CHECK:      (global $nn-tuple-global (mut (tuple (ref any) i32)) (tuple.make 2
  ;; CHECK-NEXT:  (ref.i31
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (i32.const 1)
  ;; CHECK-NEXT: ))
- (global $nn-tuple-global (mut ((ref any) i32)) (tuple.make 2 (ref.i31 (i32.const 0)) (i32.const 1)))
+ (global $nn-tuple-global (mut (tuple (ref any) i32)) (tuple.make 2 (ref.i31 (i32.const 0)) (i32.const 1)))
 
 
  ;; CHECK:      (func $test-dead-get-non-nullable (type $6) (param $0 (ref struct))
@@ -181,19 +181,16 @@
  )
 
  ;; CHECK:      (func $remove-tee-refinalize (type $5) (param $0 (ref null $A)) (param $1 (ref null $B)) (result structref)
- ;; CHECK-NEXT:  (struct.get $A 0
- ;; CHECK-NEXT:   (block (result (ref null $A))
- ;; CHECK-NEXT:    (local.get $1)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  (struct.get $B 0
+ ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $remove-tee-refinalize
   (param $a (ref null $A))
   (param $b (ref null $B))
   (result (ref null struct))
-  ;; The local.tee receives a $B and flows out an $A. We want to avoid changing
-  ;; types here, so we'll wrap it in a block, and leave further improvements
-  ;; for other passes.
+  ;; The local.tee receives a $B and flows out an $A. We will ReFinalize here as
+  ;; we remove the tee, making the struct.get operate on $B.
   (struct.get $A 0
    (local.tee $a
     (local.get $b)
@@ -202,10 +199,8 @@
  )
 
  ;; CHECK:      (func $remove-tee-refinalize-2 (type $5) (param $0 (ref null $A)) (param $1 (ref null $B)) (result structref)
- ;; CHECK-NEXT:  (struct.get $A 0
- ;; CHECK-NEXT:   (block (result (ref null $A))
- ;; CHECK-NEXT:    (local.get $1)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  (struct.get $B 0
+ ;; CHECK-NEXT:   (local.get $1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $remove-tee-refinalize-2
@@ -284,7 +279,7 @@
  )
 
  ;; CHECK:      (func $test (type $10) (param $0 (ref any)) (result (ref any) i32)
- ;; CHECK-NEXT:  (local $1 (anyref i32))
+ ;; CHECK-NEXT:  (local $1 (tuple anyref i32))
  ;; CHECK-NEXT:  (tuple.drop 2
  ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (local.get $0)
@@ -311,9 +306,9 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (global.set $nn-tuple-global
- ;; CHECK-NEXT:   (block (type $1) (result (ref any) i32)
+ ;; CHECK-NEXT:   (block (type $0) (result (ref any) i32)
  ;; CHECK-NEXT:    (local.set $1
- ;; CHECK-NEXT:     (if (type $1) (result (ref any) i32)
+ ;; CHECK-NEXT:     (if (type $0) (result (ref any) i32)
  ;; CHECK-NEXT:      (i32.const 0)
  ;; CHECK-NEXT:      (then
  ;; CHECK-NEXT:       (tuple.make 2
@@ -365,8 +360,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $test (param $any (ref any)) (result (ref any) i32)
-  (local $x ((ref any) i32))
-  (local $y ((ref any) i32))
+  (local $x (tuple (ref any) i32))
+  (local $y (tuple (ref any) i32))
   ;; This store is dead and will be removed.
   (local.set $x
    (tuple.make 2

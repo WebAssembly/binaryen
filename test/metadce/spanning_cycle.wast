@@ -1,8 +1,9 @@
 (module
- (memory 1 1)
- (data "Hello, datacount section!")
-
  (import "env" "js_func" (func $a_js_func))
+
+ (memory 1 1)
+
+ (data "Hello, datacount section!")
 
  (export "wasm_func_a" (func $a_wasm_func))
 

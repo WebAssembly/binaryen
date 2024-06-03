@@ -482,11 +482,7 @@ console.log("# MemorySize");
   assert(theMemorySize instanceof binaryen.MemorySize);
   assert(theMemorySize instanceof binaryen.Expression);
   assert(theMemorySize.type === type);
-
-  theMemorySize.type = type = binaryen.f64;
-  assert(theMemorySize.type === type);
   theMemorySize.finalize();
-  assert(theMemorySize.type === binaryen.i32);
 
   console.log(theMemorySize.toText());
   assert(
@@ -513,10 +509,7 @@ console.log("# MemoryGrow");
 
   theMemoryGrow.delta = delta = module.i32.const(2);
   assert(theMemoryGrow.delta === delta);
-  theMemoryGrow.type = type = binaryen.f64;
-  assert(theMemoryGrow.type === type);
   theMemoryGrow.finalize();
-  assert(theMemoryGrow.type === binaryen.i32);
 
   console.log(theMemoryGrow.toText());
   assert(

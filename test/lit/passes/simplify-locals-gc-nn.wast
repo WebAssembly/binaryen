@@ -5,7 +5,7 @@
   ;; CHECK:      (func $test-nn (type $0)
   ;; CHECK-NEXT:  (local $nn anyref)
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (local.set $nn
   ;; CHECK-NEXT:     (ref.as_non_null
@@ -50,9 +50,9 @@
   )
 
   ;; CHECK:      (func $test-nn-tuple (type $0)
-  ;; CHECK-NEXT:  (local $nn (i32 anyref i64))
+  ;; CHECK-NEXT:  (local $nn (tuple i32 anyref i64))
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (local.set $nn
   ;; CHECK-NEXT:     (tuple.make 3
@@ -85,7 +85,7 @@
   ;; CHECK-NEXT: )
   (func $test-nn-tuple
     ;; Same as above, but now the local is a tuple containing a non-nullable element
-    (local $nn (i32 (ref any) i64))
+    (local $nn (tuple i32 (ref any) i64))
     (local.set $nn
       (tuple.make 3
         (i32.const 0)
@@ -112,7 +112,7 @@
   ;; CHECK:      (func $test-nullable (type $0)
   ;; CHECK-NEXT:  (local $nullable anyref)
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (local.set $nullable
   ;; CHECK-NEXT:     (ref.as_non_null
@@ -151,7 +151,7 @@
   )
 
   ;; CHECK:      (func $if-return-tuple-nn (type $0)
-  ;; CHECK-NEXT:  (local $temp ((ref func) nullref))
+  ;; CHECK-NEXT:  (local $temp (tuple (ref func) nullref))
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:   (then
@@ -160,7 +160,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $if-return-tuple-nn
-    (local $temp ((ref func) (ref null none)))
+    (local $temp (tuple (ref func) (ref null none)))
     ;; We should not emit a return value for this if, as the tuple has a non-
     ;; nullable element, so it is nondefaultable.
     ;;

@@ -4,7 +4,6 @@
 ;; RUN: foreach %s %t wasm-opt --coalesce-locals-learning -S -o - | filecheck %s
 
 (module
-  (memory 10)
   ;; CHECK:      (type $2 (func))
 
   ;; CHECK:      (type $FUNCSIG$iii (func (param i32 i32) (result i32)))
@@ -18,8 +17,12 @@
   (type $3 (func (param i32 f32)))
   ;; CHECK:      (type $4 (func (param i32)))
   (type $4 (func (param i32)))
+
   ;; CHECK:      (import "env" "_emscripten_autodebug_i32" (func $_emscripten_autodebug_i32 (param i32 i32) (result i32)))
   (import "env" "_emscripten_autodebug_i32" (func $_emscripten_autodebug_i32 (param i32 i32) (result i32)))
+
+  (memory 10)
+
   ;; CHECK:      (memory $0 10)
 
   ;; CHECK:      (func $nothing-to-do

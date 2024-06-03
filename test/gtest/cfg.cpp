@@ -35,9 +35,7 @@ TEST_F(CFGTest, Print) {
               (i32.const 3)
             )
             (else
-              (return
-               (i32.const 4)
-              )
+              (return)
             )
           )
         )
@@ -71,13 +69,12 @@ TEST_F(CFGTest, Print) {
 
 ;; preds: [0], succs: [7]
 5:
-  8: i32.const 4
-  9: return
+  8: return
 
 ;; preds: [4], succs: [7]
 6:
-  10: drop
-  11: block
+  9: drop
+  10: block
 
 ;; preds: [5, 6], succs: []
 ;; exit
@@ -270,9 +267,9 @@ TEST_F(CFGTest, LinearReachingDefinitions) {
   auto moduleText = R"wasm(
     (module
       (func $bar
-        (local $a (i32))
-        (local $b (i32))
-        (local $c (i32))
+        (local $a i32)
+        (local $b i32)
+        (local $c i32)
         (local.set $a
           (i32.const 1)
         )
@@ -335,8 +332,8 @@ TEST_F(CFGTest, ReachingDefinitionsIf) {
   auto moduleText = R"wasm(
     (module
       (func $bar
-        (local $a (i32))
-        (local $b (i32))
+        (local $a i32)
+        (local $b i32)
         (local.set $a
           (i32.const 1)
         )
@@ -406,7 +403,7 @@ TEST_F(CFGTest, ReachingDefinitionsIf) {
 TEST_F(CFGTest, ReachingDefinitionsLoop) {
   auto moduleText = R"wasm(
     (module
-      (func $bar (param $a (i32)) (param $b (i32))
+      (func $bar (param $a i32) (param $b i32)
         (loop $loop
           (drop
             (local.get $a)

@@ -5,6 +5,10 @@
 (module
   (type $array16 (array (mut i16)))
 
+  (import "fuzzing-support" "log-i32" (func $log (param i32)))
+
+  (memory 1 1)
+
   ;; CHECK:      [fuzz-exec] calling new_wtf16_array
   ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
   (func $new_wtf16_array (export "new_wtf16_array") (result stringref)
@@ -161,6 +165,302 @@
       (string.const "hf")
     )
   )
+
+  ;; CHECK:      [fuzz-exec] calling get_codeunit
+  ;; CHECK-NEXT: [fuzz-exec] note result: get_codeunit => 99
+  (func $get_codeunit (export "get_codeunit") (result i32)
+    ;; Reads 'c' which is code 99.
+    (stringview_wtf16.get_codeunit
+      (string.const "abcdefg")
+      (i32.const 2)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling encode
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 3]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 97]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 98]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 99]
+  ;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+  (func $encode (export "encode")
+    (local $array16 (ref $array16))
+    (local.set $array16
+      (array.new_default $array16
+        (i32.const 10)
+      )
+    )
+    ;; Log out that we wrote 3 things.
+    (call $log
+      (string.encode_wtf16_array
+        (string.const "abc")
+        (local.get $array16)
+        (i32.const 4)
+      )
+    )
+    ;; We wrote 3 things at offset 4. Log out the values at 3,4,5,6,7 (the first
+    ;; and last should be 0, and "abc" in between).
+    (call $log
+      (array.get $array16
+        (local.get $array16)
+        (i32.const 3)
+      )
+    )
+    (call $log
+      (array.get $array16
+        (local.get $array16)
+        (i32.const 4)
+      )
+    )
+    (call $log
+      (array.get $array16
+        (local.get $array16)
+        (i32.const 5)
+      )
+    )
+    (call $log
+      (array.get $array16
+        (local.get $array16)
+        (i32.const 6)
+      )
+    )
+    (call $log
+      (array.get $array16
+        (local.get $array16)
+        (i32.const 7)
+      )
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling encode-unsigned
+  ;; CHECK-NEXT: [trap oob]
+  (func $encode-unsigned (export "encode-unsigned")
+    (drop
+      (string.encode_wtf16_array
+        (string.const "ab")
+        (array.new_default $array16
+          (i32.const 28)
+        )
+        ;; This is a huge unsigned offset, so we will trap on oob.
+        (i32.const -2)
+      )
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling encode-overflow
+  ;; CHECK-NEXT: [trap oob]
+  (func $encode-overflow (export "encode-overflow")
+    ;; The string's size + the offset lead to an overflow here in the array.
+    (drop
+      (string.encode_wtf16_array
+        (string.const "ab")
+        (array.new_default $array16
+          (i32.const 10)
+        )
+        (i32.const 9)
+      )
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling slice
+  ;; CHECK-NEXT: [fuzz-exec] note result: slice => string("def")
+  (func $slice (export "slice") (result (ref string))
+    ;; Slicing [3:6] here should definitely output "def".
+    (stringview_wtf16.slice
+      (string.const "abcdefgh")
+      (i32.const 3)
+      (i32.const 6)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling slice-big
+  ;; CHECK-NEXT: [fuzz-exec] note result: slice-big => string("defgh")
+  (func $slice-big (export "slice-big") (result (ref string))
+    ;; Slicing [3:huge unsigned value] leads to slicing til the end: "defgh".
+    (stringview_wtf16.slice
+      (string.const "abcdefgh")
+      (i32.const 3)
+      (i32.const -1)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling new_empty
+  ;; CHECK-NEXT: [fuzz-exec] note result: new_empty => string("")
+  (func $new_empty (export "new_empty") (result stringref)
+    ;; Make an empty string from an empty array.
+    (string.new_wtf16_array
+      (array.new_default $array16
+        (i32.const 0)
+      )
+      (i32.const 0)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling new_empty_oob
+  ;; CHECK-NEXT: [trap array oob]
+  (func $new_empty_oob (export "new_empty_oob") (result stringref)
+    ;; Try to make a string from an empty array that we slice at [1:0], which is
+    ;; out of bounds due to the starting index.
+    (string.new_wtf16_array
+      (array.new_default $array16
+        (i32.const 0)
+      )
+      (i32.const 1)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling new_empty_oob_2
+  ;; CHECK-NEXT: [trap array oob]
+  (func $new_empty_oob_2 (export "new_empty_oob_2") (result stringref)
+    ;; Try to make a string from an empty array that we slice at [:1], which is
+    ;; out of bounds due to the ending index.
+    (string.new_wtf16_array
+      (array.new_default $array16
+        (i32.const 0)
+      )
+      (i32.const 0)
+      (i32.const 1)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling new_oob
+  ;; CHECK-NEXT: [trap array oob]
+  (func $new_oob (export "new_oob") (result stringref)
+    ;; Try to make a string from an array of size 1 that we slice at [1:0],
+    ;; which is out of bounds due to the ending index (we must trap if the end
+    ;; is less then the start).
+    (string.new_wtf16_array
+      (array.new_default $array16
+        (i32.const 1)
+      )
+      (i32.const 1)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling new_2
+  ;; CHECK-NEXT: [fuzz-exec] note result: new_2 => string("")
+  (func $new_2 (export "new_2") (result stringref)
+    (string.new_wtf16_array
+      (array.new_default $array16
+        (i32.const 1)
+      )
+      (i32.const 1)
+      (i32.const 1) ;; this changed, which makes this an in-bounds operation
+                    ;; that emits an empty string
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling new_oob_3
+  ;; CHECK-NEXT: [trap array oob]
+  (func $new_oob_3 (export "new_oob_3") (result stringref)
+    (string.new_wtf16_array
+      (array.new_default $array16
+        (i32.const 1)
+      )
+      (i32.const 1)
+      (i32.const 2) ;; this changed, and again we are out of bounds
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling new_4
+  ;; CHECK-NEXT: [fuzz-exec] note result: new_4 => string("\u0000")
+  (func $new_4 (export "new_4") (result stringref)
+    (string.new_wtf16_array
+      (array.new_default $array16
+        (i32.const 2) ;; this changed, and now we are in bounds, and emit a
+                      ;; string of length 1 (with unicode 0)
+      )
+      (i32.const 1)
+      (i32.const 2)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling slice-unicode
+  ;; CHECK-NEXT: [fuzz-exec] note result: slice-unicode => string("d\u00a3f")
+  (func $slice-unicode (export "slice-unicode") (result (ref string))
+    (stringview_wtf16.slice
+      ;; abcd£fgh
+      (string.const "abcd\C2\A3fgh")
+      (i32.const 3)
+      (i32.const 6)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling concat-surrogates
+  ;; CHECK-NEXT: [fuzz-exec] note result: concat-surrogates => string("\ud800\udf48")
+  (func $concat-surrogates (export "concat-surrogates") (result (ref string))
+    ;; Concatenating these surrogates creates '𐍈'.
+    (string.concat (string.const "\ED\A0\80") (string.const "\ED\BD\88"))
+  )
+
+  ;; CHECK:      [fuzz-exec] calling string.from_code_point
+  ;; CHECK-NEXT: [fuzz-exec] note result: string.from_code_point => string("A")
+  (func $string.from_code_point (export "string.from_code_point") (result stringref)
+    (string.from_code_point
+      (i32.const 65)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling unsigned_code_point
+  ;; CHECK-NEXT: [fuzz-exec] note result: unsigned_code_point => string("\u0093")
+  (func $unsigned_code_point (export "unsigned_code_point") (result stringref)
+    (string.from_code_point
+      ;; This must be interpreted as unsigned, that is, in the escaped output
+      ;; the top byte is 0.
+      (i32.const 147)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling weird_code_point
+  ;; CHECK-NEXT: [fuzz-exec] note result: weird_code_point => string("\u03e8")
+  (func $weird_code_point (export "weird_code_point") (result stringref)
+    (string.from_code_point
+      (i32.const 0x3e8)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling isolated_high_code_point
+  ;; CHECK-NEXT: [fuzz-exec] note result: isolated_high_code_point => string("\ud800")
+  (func $isolated_high_code_point (export "isolated_high_code_point") (result stringref)
+    (string.from_code_point
+      (i32.const 0xD800)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling isolated_low_code_point
+  ;; CHECK-NEXT: [fuzz-exec] note result: isolated_low_code_point => string("\udc00")
+  (func $isolated_low_code_point (export "isolated_low_code_point") (result stringref)
+    (string.from_code_point
+      (i32.const 0xDC00)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling surrogate_pair_code_point
+  ;; CHECK-NEXT: [fuzz-exec] note result: surrogate_pair_code_point => string("\u286c")
+  (func $surrogate_pair_code_point (export "surrogate_pair_code_point") (result stringref)
+    (string.from_code_point
+      (i32.const 0x286c) ;; 𐍈
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling invalid_code_point
+  ;; CHECK-NEXT: [trap invalid code point]
+  (func $invalid_code_point (export "invalid_code_point") (result stringref)
+    (string.from_code_point
+      (i32.const -83)
+    )
+  )
+
+  ;; CHECK:      [fuzz-exec] calling string.measure
+  ;; CHECK-NEXT: [fuzz-exec] note result: string.measure => 5
+  (func $string.measure (export "string.measure") (result i32)
+    (string.measure_wtf16
+      (string.const "five!")
+    )
+  )
 )
 ;; CHECK:      [fuzz-exec] calling new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
@@ -212,6 +512,80 @@
 
 ;; CHECK:      [fuzz-exec] calling compare.10
 ;; CHECK-NEXT: [fuzz-exec] note result: compare.10 => -1
+
+;; CHECK:      [fuzz-exec] calling get_codeunit
+;; CHECK-NEXT: [fuzz-exec] note result: get_codeunit => 99
+
+;; CHECK:      [fuzz-exec] calling encode
+;; CHECK-NEXT: [LoggingExternalInterface logging 3]
+;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+;; CHECK-NEXT: [LoggingExternalInterface logging 97]
+;; CHECK-NEXT: [LoggingExternalInterface logging 98]
+;; CHECK-NEXT: [LoggingExternalInterface logging 99]
+;; CHECK-NEXT: [LoggingExternalInterface logging 0]
+
+;; CHECK:      [fuzz-exec] calling encode-unsigned
+;; CHECK-NEXT: [trap oob]
+
+;; CHECK:      [fuzz-exec] calling encode-overflow
+;; CHECK-NEXT: [trap oob]
+
+;; CHECK:      [fuzz-exec] calling slice
+;; CHECK-NEXT: [fuzz-exec] note result: slice => string("def")
+
+;; CHECK:      [fuzz-exec] calling slice-big
+;; CHECK-NEXT: [fuzz-exec] note result: slice-big => string("defgh")
+
+;; CHECK:      [fuzz-exec] calling new_empty
+;; CHECK-NEXT: [fuzz-exec] note result: new_empty => string("")
+
+;; CHECK:      [fuzz-exec] calling new_empty_oob
+;; CHECK-NEXT: [trap array oob]
+
+;; CHECK:      [fuzz-exec] calling new_empty_oob_2
+;; CHECK-NEXT: [trap array oob]
+
+;; CHECK:      [fuzz-exec] calling new_oob
+;; CHECK-NEXT: [trap array oob]
+
+;; CHECK:      [fuzz-exec] calling new_2
+;; CHECK-NEXT: [fuzz-exec] note result: new_2 => string("")
+
+;; CHECK:      [fuzz-exec] calling new_oob_3
+;; CHECK-NEXT: [trap array oob]
+
+;; CHECK:      [fuzz-exec] calling new_4
+;; CHECK-NEXT: [fuzz-exec] note result: new_4 => string("\u0000")
+
+;; CHECK:      [fuzz-exec] calling slice-unicode
+;; CHECK-NEXT: [fuzz-exec] note result: slice-unicode => string("d\u00a3f")
+
+;; CHECK:      [fuzz-exec] calling concat-surrogates
+;; CHECK-NEXT: [fuzz-exec] note result: concat-surrogates => string("\ud800\udf48")
+
+;; CHECK:      [fuzz-exec] calling string.from_code_point
+;; CHECK-NEXT: [fuzz-exec] note result: string.from_code_point => string("A")
+
+;; CHECK:      [fuzz-exec] calling unsigned_code_point
+;; CHECK-NEXT: [fuzz-exec] note result: unsigned_code_point => string("\u0093")
+
+;; CHECK:      [fuzz-exec] calling weird_code_point
+;; CHECK-NEXT: [fuzz-exec] note result: weird_code_point => string("\u03e8")
+
+;; CHECK:      [fuzz-exec] calling isolated_high_code_point
+;; CHECK-NEXT: [fuzz-exec] note result: isolated_high_code_point => string("\ud800")
+
+;; CHECK:      [fuzz-exec] calling isolated_low_code_point
+;; CHECK-NEXT: [fuzz-exec] note result: isolated_low_code_point => string("\udc00")
+
+;; CHECK:      [fuzz-exec] calling surrogate_pair_code_point
+;; CHECK-NEXT: [fuzz-exec] note result: surrogate_pair_code_point => string("\u286c")
+
+;; CHECK:      [fuzz-exec] calling invalid_code_point
+;; CHECK-NEXT: [trap invalid code point]
+
+;; CHECK:      [fuzz-exec] calling string.measure
+;; CHECK-NEXT: [fuzz-exec] note result: string.measure => 5
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.1
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.10
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.2
@@ -222,10 +596,33 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.7
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.8
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.9
+;; CHECK-NEXT: [fuzz-exec] comparing concat-surrogates
 ;; CHECK-NEXT: [fuzz-exec] comparing const
+;; CHECK-NEXT: [fuzz-exec] comparing encode
+;; CHECK-NEXT: [fuzz-exec] comparing encode-overflow
+;; CHECK-NEXT: [fuzz-exec] comparing encode-unsigned
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.1
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.2
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.3
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.4
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.5
+;; CHECK-NEXT: [fuzz-exec] comparing get_codeunit
+;; CHECK-NEXT: [fuzz-exec] comparing invalid_code_point
+;; CHECK-NEXT: [fuzz-exec] comparing isolated_high_code_point
+;; CHECK-NEXT: [fuzz-exec] comparing isolated_low_code_point
+;; CHECK-NEXT: [fuzz-exec] comparing new_2
+;; CHECK-NEXT: [fuzz-exec] comparing new_4
+;; CHECK-NEXT: [fuzz-exec] comparing new_empty
+;; CHECK-NEXT: [fuzz-exec] comparing new_empty_oob
+;; CHECK-NEXT: [fuzz-exec] comparing new_empty_oob_2
+;; CHECK-NEXT: [fuzz-exec] comparing new_oob
+;; CHECK-NEXT: [fuzz-exec] comparing new_oob_3
 ;; CHECK-NEXT: [fuzz-exec] comparing new_wtf16_array
+;; CHECK-NEXT: [fuzz-exec] comparing slice
+;; CHECK-NEXT: [fuzz-exec] comparing slice-big
+;; CHECK-NEXT: [fuzz-exec] comparing slice-unicode
+;; CHECK-NEXT: [fuzz-exec] comparing string.from_code_point
+;; CHECK-NEXT: [fuzz-exec] comparing string.measure
+;; CHECK-NEXT: [fuzz-exec] comparing surrogate_pair_code_point
+;; CHECK-NEXT: [fuzz-exec] comparing unsigned_code_point
+;; CHECK-NEXT: [fuzz-exec] comparing weird_code_point

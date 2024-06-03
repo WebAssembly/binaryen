@@ -25,8 +25,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; RTRIP:      (func $f1 (type $f1) (result (ref $f1) (ref $f2))
- ;; RTRIP-NEXT:  (local $0 ((ref $f1) (ref $f2)))
- ;; RTRIP-NEXT:  (local $1 ((ref $f1) (ref $f2)))
+ ;; RTRIP-NEXT:  (local $0 (tuple (ref $f1) (ref $f2)))
+ ;; RTRIP-NEXT:  (local $1 (tuple (ref $f1) (ref $f2)))
  ;; RTRIP-NEXT:  (local.set $1
  ;; RTRIP-NEXT:   (loop $label$1 (type $f1) (result (ref $f1) (ref $f2))
  ;; RTRIP-NEXT:    (local.set $0
@@ -64,8 +64,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; RTRIP:      (func $f2 (type $f2) (result (ref $f2) (ref $f1))
- ;; RTRIP-NEXT:  (local $0 ((ref $f2) (ref $f1)))
- ;; RTRIP-NEXT:  (local $1 ((ref $f2) (ref $f1)))
+ ;; RTRIP-NEXT:  (local $0 (tuple (ref $f2) (ref $f1)))
+ ;; RTRIP-NEXT:  (local $1 (tuple (ref $f2) (ref $f1)))
  ;; RTRIP-NEXT:  (local.set $1
  ;; RTRIP-NEXT:   (loop $label$1 (type $f2) (result (ref $f2) (ref $f1))
  ;; RTRIP-NEXT:    (local.set $0

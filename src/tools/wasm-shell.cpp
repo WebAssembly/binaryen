@@ -23,70 +23,23 @@
 
 #include "execution-results.h"
 #include "ir/element-utils.h"
+#include "parser/lexer.h"
+#include "parser/wat-parser.h"
 #include "pass.h"
 #include "shell-interface.h"
 #include "support/command-line.h"
 #include "support/file.h"
+#include "support/result.h"
+#include "wasm-binary.h"
 #include "wasm-interpreter.h"
-#include "wasm-s-parser.h"
 #include "wasm-validator.h"
 
 using namespace wasm;
 
-Name ASSERT_RETURN("assert_return");
-Name ASSERT_TRAP("assert_trap");
-Name ASSERT_EXCEPTION("assert_exception");
-Name ASSERT_INVALID("assert_invalid");
-Name ASSERT_MALFORMED("assert_malformed");
-Name ASSERT_UNLINKABLE("assert_unlinkable");
-Name INVOKE("invoke");
-Name REGISTER("register");
-Name GET("get");
+using namespace wasm::WATParser;
 
-struct ShellOptions : public Options {
-  Name entry;
-  std::set<size_t> skipped;
-
-  const std::string WasmShellOption = "wasm-shell options";
-
-  ShellOptions(const std::string& command, const std::string& description)
-    : Options(command, description) {
-    (*this)
-      .add("--entry",
-           "-e",
-           "Call the entry point after parsing the module",
-           WasmShellOption,
-           Options::Arguments::One,
-           [this](Options*, const std::string& argument) { entry = argument; })
-      .add("--skip",
-           "-s",
-           "Skip input on certain lines (comma-separated-list)",
-           WasmShellOption,
-           Options::Arguments::One,
-           [this](Options*, const std::string& argument) {
-             size_t i = 0;
-             while (i < argument.size()) {
-               auto ending = argument.find(',', i);
-               if (ending == std::string::npos) {
-                 ending = argument.size();
-               }
-               auto sub = argument.substr(i, ending - i);
-               skipped.insert(atoi(sub.c_str()));
-               i = ending + 1;
-             }
-           })
-      .add_positional("INFILE",
-                      Options::Arguments::One,
-                      [](Options* o, const std::string& argument) {
-                        o->extra["infile"] = argument;
-                      });
-  }
-};
-
-class Shell {
-protected:
+struct Shell {
   std::map<Name, std::shared_ptr<Module>> modules;
-  std::map<Name, std::shared_ptr<SExpressionWasmBuilder>> builders;
   std::map<Name, std::shared_ptr<ShellExternalInterface>> interfaces;
   std::map<Name, std::shared_ptr<ModuleRunner>> instances;
   // used for imports
@@ -94,233 +47,393 @@ protected:
 
   Name lastModule;
 
-  void instantiate(Module* wasm) {
-    auto tempInterface =
-      std::make_shared<ShellExternalInterface>(linkedInstances);
-    auto tempInstance = std::make_shared<ModuleRunner>(
-      *wasm, tempInterface.get(), linkedInstances);
-    interfaces[wasm->name].swap(tempInterface);
-    instances[wasm->name].swap(tempInstance);
+  Options& options;
+
+  Shell(Options& options) : options(options) { buildSpectestModule(); }
+
+  Result<> run(WASTScript& script) {
+    size_t i = 0;
+    for (auto& entry : script) {
+      Colors::red(std::cerr);
+      std::cerr << i++ << ' ';
+      Colors::normal(std::cerr);
+      if (std::get_if<WASTModule>(&entry.cmd)) {
+        Colors::green(std::cerr);
+        std::cerr << "BUILDING MODULE [line: " << entry.line << "]\n";
+        Colors::normal(std::cerr);
+      } else if (auto* reg = std::get_if<Register>(&entry.cmd)) {
+        Colors::green(std::cerr);
+        std::cerr << "REGISTER MODULE INSTANCE AS \"" << reg->name
+                  << "\"  [line: " << entry.line << "]\n";
+        Colors::normal(std::cerr);
+      } else {
+        Colors::green(std::cerr);
+        std::cerr << "CHECKING [line: " << entry.line << "]\n";
+        Colors::normal(std::cerr);
+      }
+      CHECK_ERR(runCommand(entry.cmd));
+    }
+    return Ok{};
   }
 
-  void parse(Element& s) {
-    IString id = s[0]->str();
-    if (id == MODULE) {
-      parseModule(s);
-    } else if (id == REGISTER) {
-      parseRegister(s);
-    } else if (id == INVOKE) {
-      parseOperation(s);
-    } else if (id == ASSERT_RETURN) {
-      parseAssertReturn(s);
-    } else if (id == ASSERT_TRAP) {
-      parseAssertTrap(s);
-    } else if (id == ASSERT_EXCEPTION) {
-      parseAssertException(s);
-    } else if ((id == ASSERT_INVALID) || (id == ASSERT_MALFORMED)) {
-      parseModuleAssertion(s);
+  Result<> runCommand(WASTCommand& cmd) {
+    if (auto* mod = std::get_if<WASTModule>(&cmd)) {
+      return addModule(*mod);
+    } else if (auto* reg = std::get_if<Register>(&cmd)) {
+      return addRegistration(*reg);
+    } else if (auto* act = std::get_if<Action>(&cmd)) {
+      doAction(*act);
+      return Ok{};
+    } else if (auto* assn = std::get_if<Assertion>(&cmd)) {
+      return doAssertion(*assn);
+    } else {
+      WASM_UNREACHABLE("unexpected command");
     }
   }
 
-  Module* parseModule(Element& s) {
-    if (options.debug) {
-      std::cerr << "parsing s-expressions to wasm...\n";
+  Result<std::shared_ptr<Module>> makeModule(WASTModule& mod) {
+    std::shared_ptr<Module> wasm;
+    if (auto* quoted = std::get_if<QuotedModule>(&mod)) {
+      wasm = std::make_shared<Module>();
+      switch (quoted->type) {
+        case QuotedModuleType::Text: {
+          CHECK_ERR(parseModule(*wasm, quoted->module));
+          break;
+        }
+        case QuotedModuleType::Binary: {
+          std::vector<char> buffer(quoted->module.begin(),
+                                   quoted->module.end());
+          WasmBinaryReader reader(*wasm, FeatureSet::All, buffer);
+          try {
+            reader.read();
+          } catch (ParseException& p) {
+            std::stringstream ss;
+            p.dump(ss);
+            return Err{ss.str()};
+          }
+          break;
+        }
+      }
+    } else if (auto* ptr = std::get_if<std::shared_ptr<Module>>(&mod)) {
+      wasm = *ptr;
+    } else {
+      WASM_UNREACHABLE("unexpected module kind");
     }
-    Colors::green(std::cerr);
-    std::cerr << "BUILDING MODULE [line: " << s.line << "]\n";
-    Colors::normal(std::cerr);
-    auto module = std::make_shared<Module>();
-    auto builder =
-      std::make_shared<SExpressionWasmBuilder>(*module, s, IRProfile::Normal);
-    auto moduleName = module->name;
-    lastModule = module->name;
-    builders[moduleName] = builder;
-    modules[moduleName].swap(module);
-    modules[moduleName]->features = FeatureSet::All;
-    bool valid = WasmValidator().validate(*modules[moduleName]);
-    if (!valid) {
-      std::cout << *modules[moduleName] << '\n';
-      Fatal() << "module failed to validate, see above";
-    }
-
-    instantiate(modules[moduleName].get());
-
-    return modules[moduleName].get();
+    wasm->features = FeatureSet::All;
+    return wasm;
   }
 
-  void parseRegister(Element& s) {
+  Result<> validateModule(Module& wasm) {
+    if (!WasmValidator().validate(wasm)) {
+      return Err{"failed validation"};
+    }
+    return Ok{};
+  }
+
+  using InstanceInfo = std::pair<std::shared_ptr<ShellExternalInterface>,
+                                 std::shared_ptr<ModuleRunner>>;
+
+  Result<InstanceInfo> instantiate(Module& wasm) {
+    try {
+      auto interface =
+        std::make_shared<ShellExternalInterface>(linkedInstances);
+      auto instance =
+        std::make_shared<ModuleRunner>(wasm, interface.get(), linkedInstances);
+      return {{std::move(interface), std::move(instance)}};
+    } catch (...) {
+      return Err{"failed to instantiate module"};
+    }
+  }
+
+  Result<> addModule(WASTModule& mod) {
+    auto module = makeModule(mod);
+    CHECK_ERR(module);
+
+    auto wasm = *module;
+    CHECK_ERR(validateModule(*wasm));
+
+    auto instanceInfo = instantiate(*wasm);
+    CHECK_ERR(instanceInfo);
+
+    auto& [interface, instance] = *instanceInfo;
+    lastModule = wasm->name;
+    modules[lastModule] = std::move(wasm);
+    interfaces[lastModule] = std::move(interface);
+    instances[lastModule] = std::move(instance);
+
+    return Ok{};
+  }
+
+  Result<> addRegistration(Register& reg) {
     auto instance = instances[lastModule];
     if (!instance) {
-      Fatal() << "register called without a module";
+      return Err{"register called without a module"};
     }
-    auto name = s[1]->str();
-    linkedInstances[name] = instance;
+    linkedInstances[reg.name] = instance;
 
-    // we copy pointers as a registered module's name might still be used
+    // We copy pointers as a registered module's name might still be used
     // in an assertion or invoke command.
-    modules[name] = modules[lastModule];
-    builders[name] = builders[lastModule];
-    interfaces[name] = interfaces[lastModule];
-    instances[name] = instances[lastModule];
-
-    Colors::green(std::cerr);
-    std::cerr << "REGISTER MODULE INSTANCE AS \"" << name.str
-              << "\"  [line: " << s.line << "]\n";
-    Colors::normal(std::cerr);
+    modules[reg.name] = modules[lastModule];
+    interfaces[reg.name] = interfaces[lastModule];
+    instances[reg.name] = instances[lastModule];
+    return Ok{};
   }
 
-  Literals parseOperation(Element& s) {
-    Index i = 1;
-    Name moduleName = lastModule;
-    if (s[i]->dollared()) {
-      moduleName = s[i++]->str();
+  struct TrapResult {};
+  struct HostLimitResult {};
+  struct ExceptionResult {};
+  using ActionResult =
+    std::variant<Literals, TrapResult, HostLimitResult, ExceptionResult>;
+
+  std::string resultToString(ActionResult& result) {
+    if (std::get_if<TrapResult>(&result)) {
+      return "trap";
+    } else if (std::get_if<HostLimitResult>(&result)) {
+      return "exceeded host limit";
+    } else if (std::get_if<ExceptionResult>(&result)) {
+      return "exception";
+    } else if (auto* vals = std::get_if<Literals>(&result)) {
+      std::stringstream ss;
+      ss << *vals;
+      return ss.str();
+    } else {
+      WASM_UNREACHABLE("unexpected result");
     }
-    ModuleRunner* instance = instances[moduleName].get();
-    assert(instance);
+  }
 
-    Name base = s[i++]->str();
-
-    if (s[0]->str() == INVOKE) {
-      Literals args;
-      while (i < s.size()) {
-        Expression* argument = builders[moduleName]->parseExpression(*s[i++]);
-        args.push_back(getLiteralFromConstExpression(argument));
+  ActionResult doAction(Action& act) {
+    assert(instances[lastModule].get());
+    if (auto* invoke = std::get_if<InvokeAction>(&act)) {
+      auto it = instances.find(invoke->base ? *invoke->base : lastModule);
+      if (it == instances.end()) {
+        return TrapResult{};
       }
-
-      return instance->callExport(base, args);
-    } else if (s[0]->str() == GET) {
-      return instance->getExport(base);
-    }
-
-    Fatal() << "Invalid operation " << s[0]->toString();
-  }
-
-  void parseAssertTrap(Element& s) {
-    [[maybe_unused]] bool trapped = false;
-    auto& inner = *s[1];
-    if (inner[0]->str() == MODULE) {
-      return parseModuleAssertion(s);
-    }
-
-    try {
-      parseOperation(inner);
-    } catch (const TrapException&) {
-      trapped = true;
-    }
-    assert(trapped);
-  }
-
-  void parseAssertException(Element& s) {
-    [[maybe_unused]] bool thrown = false;
-    auto& inner = *s[1];
-    if (inner[0]->str() == MODULE) {
-      return parseModuleAssertion(s);
-    }
-
-    try {
-      parseOperation(inner);
-    } catch (const WasmException& e) {
-      std::cout << "[exception thrown: " << e << "]" << std::endl;
-      thrown = true;
-    }
-    assert(thrown);
-  }
-
-  void parseAssertReturn(Element& s) {
-    Literals actual;
-    Literals expected;
-    if (s.size() >= 3) {
-      expected = getLiteralsFromConstExpression(
-        builders[lastModule]->parseExpression(*s[2]));
-    }
-    [[maybe_unused]] bool trapped = false;
-    try {
-      actual = parseOperation(*s[1]);
-    } catch (const TrapException&) {
-      trapped = true;
-    } catch (const WasmException& e) {
-      std::cout << "[exception thrown: " << e << "]" << std::endl;
-      trapped = true;
-    }
-    assert(!trapped);
-    std::cerr << "seen " << actual << ", expected " << expected << '\n';
-    if (expected != actual) {
-      Fatal() << "unexpected, should be identical\n";
-    }
-  }
-
-  void parseModuleAssertion(Element& s) {
-    Module wasm;
-    wasm.features = FeatureSet::All;
-    std::unique_ptr<SExpressionWasmBuilder> builder;
-    auto id = s[0]->str();
-
-    bool invalid = false;
-    try {
-      SExpressionWasmBuilder(wasm, *s[1], IRProfile::Normal);
-    } catch (const ParseException&) {
-      invalid = true;
-    }
-
-    if (!invalid) {
-      // maybe parsed ok, but otherwise incorrect
-      invalid = !WasmValidator().validate(wasm);
-    }
-
-    if (!invalid && id == ASSERT_UNLINKABLE) {
-      // validate "instantiating" the mdoule
-      auto reportUnknownImport = [&](Importable* import) {
-        auto it = linkedInstances.find(import->module);
-        if (it == linkedInstances.end() ||
-            it->second->wasm.getExportOrNull(import->base) == nullptr) {
-          std::cerr << "unknown import: " << import->module << '.'
-                    << import->base << '\n';
-          invalid = true;
-        }
-      };
-      ModuleUtils::iterImportedGlobals(wasm, reportUnknownImport);
-      ModuleUtils::iterImportedTables(wasm, reportUnknownImport);
-      ModuleUtils::iterImportedFunctions(wasm, [&](Importable* import) {
-        if (import->module == SPECTEST && import->base.startsWith(PRINT)) {
-          // We can handle it.
-        } else {
-          reportUnknownImport(import);
-        }
-      });
-      ElementUtils::iterAllElementFunctionNames(&wasm, [&](Name name) {
-        // spec tests consider it illegal to use spectest.print in a table
-        if (auto* import = wasm.getFunction(name)) {
-          if (import->imported() && import->module == SPECTEST &&
-              import->base.startsWith(PRINT)) {
-            std::cerr << "cannot put spectest.print in table\n";
-            invalid = true;
-          }
-        }
-      });
-      ModuleUtils::iterImportedMemories(wasm, reportUnknownImport);
-    }
-
-    if (!invalid && (id == ASSERT_TRAP || id == ASSERT_EXCEPTION)) {
+      auto& instance = it->second;
       try {
-        instantiate(&wasm);
-      } catch (const TrapException&) {
-        invalid = true;
-      } catch (const WasmException& e) {
-        std::cout << "[exception thrown: " << e << "]" << std::endl;
-        invalid = true;
+        return instance->callExport(invoke->name, invoke->args);
+      } catch (TrapException&) {
+        return TrapResult{};
+      } catch (HostLimitException&) {
+        return HostLimitResult{};
+      } catch (WasmException&) {
+        return ExceptionResult{};
+      } catch (...) {
+        WASM_UNREACHABLE("unexpected error");
       }
-    }
-
-    if (!invalid) {
-      Colors::red(std::cerr);
-      std::cerr << "[should have been invalid]\n";
-      Colors::normal(std::cerr);
-      Fatal() << &wasm << '\n';
+    } else if (auto* get = std::get_if<GetAction>(&act)) {
+      auto it = instances.find(get->base ? *get->base : lastModule);
+      if (it == instances.end()) {
+        return TrapResult{};
+      }
+      auto& instance = it->second;
+      try {
+        return instance->getExport(get->name);
+      } catch (TrapException&) {
+        return TrapResult{};
+      } catch (...) {
+        WASM_UNREACHABLE("unexpected error");
+      }
+    } else {
+      WASM_UNREACHABLE("unexpected action");
     }
   }
 
-protected:
-  ShellOptions& options;
+  Result<> doAssertion(Assertion& assn) {
+    if (auto* ret = std::get_if<AssertReturn>(&assn)) {
+      return assertReturn(*ret);
+    } else if (auto* act = std::get_if<AssertAction>(&assn)) {
+      return assertAction(*act);
+    } else if (auto* mod = std::get_if<AssertModule>(&assn)) {
+      return assertModule(*mod);
+    } else {
+      WASM_UNREACHABLE("unexpected assertion");
+    }
+  }
+
+  Result<> checkNaN(Literal val, NaNResult nan) {
+    std::stringstream err;
+    switch (nan.kind) {
+      case NaNKind::Canonical:
+        if (val.type != nan.type || !val.isCanonicalNaN()) {
+          err << "expected canonical " << nan.type << " NaN, got " << val;
+          return Err{err.str()};
+        }
+        break;
+      case NaNKind::Arithmetic:
+        if (val.type != nan.type || !val.isArithmeticNaN()) {
+          err << "expected arithmetic " << nan.type << " NaN, got " << val;
+          return Err{err.str()};
+        }
+        break;
+    }
+    return Ok{};
+  }
+
+  Result<> checkLane(Literal val, LaneResult expected, Index index) {
+    std::stringstream err;
+    if (auto* e = std::get_if<Literal>(&expected)) {
+      if (*e != val) {
+        err << "expected " << *e << ", got " << val << " at lane " << index;
+        return Err{err.str()};
+      }
+    } else if (auto* nan = std::get_if<NaNResult>(&expected)) {
+      auto check = checkNaN(val, *nan);
+      if (auto* e = check.getErr()) {
+        err << e->msg << " at lane " << index;
+        return Err{err.str()};
+      }
+    } else {
+      WASM_UNREACHABLE("unexpected lane expectation");
+    }
+    return Ok{};
+  }
+
+  Result<> assertReturn(AssertReturn& assn) {
+    std::stringstream err;
+    auto result = doAction(assn.action);
+    auto* values = std::get_if<Literals>(&result);
+    if (!values) {
+      return Err{std::string("expected return, got ") + resultToString(result)};
+    }
+    if (values->size() != assn.expected.size()) {
+      err << "expected " << assn.expected.size() << " values, got "
+          << resultToString(result);
+      return Err{err.str()};
+    }
+    for (Index i = 0; i < values->size(); ++i) {
+      auto atIndex = [&]() {
+        if (values->size() <= 1) {
+          return std::string{};
+        }
+        std::stringstream ss;
+        ss << " at index " << i;
+        return ss.str();
+      };
+
+      Literal val = (*values)[i];
+      auto& expected = assn.expected[i];
+      if (auto* v = std::get_if<Literal>(&expected)) {
+        if (val != *v) {
+          err << "expected " << *v << ", got " << val << atIndex();
+          return Err{err.str()};
+        }
+      } else if (auto* ref = std::get_if<RefResult>(&expected)) {
+        if (!val.type.isRef() || val.type.getHeapType() != ref->type) {
+          err << "expected " << ref->type << " reference, got " << val
+              << atIndex();
+          return Err{err.str()};
+        }
+      } else if (auto* nan = std::get_if<NaNResult>(&expected)) {
+        auto check = checkNaN(val, *nan);
+        if (auto* e = check.getErr()) {
+          err << e->msg << atIndex();
+          return Err{err.str()};
+        }
+      } else if (auto* lanes = std::get_if<LaneResults>(&expected)) {
+        switch (lanes->size()) {
+          case 4: {
+            auto vals = val.getLanesF32x4();
+            for (Index i = 0; i < 4; ++i) {
+              auto check = checkLane(vals[i], (*lanes)[i], i);
+              if (auto* e = check.getErr()) {
+                err << e->msg << atIndex();
+                return Err{err.str()};
+              }
+            }
+            break;
+          }
+          case 2: {
+            auto vals = val.getLanesF64x2();
+            for (Index i = 0; i < 2; ++i) {
+              auto check = checkLane(vals[i], (*lanes)[i], i);
+              if (auto* e = check.getErr()) {
+                err << e->msg << atIndex();
+                return Err{err.str()};
+              }
+            }
+            break;
+          }
+          default:
+            WASM_UNREACHABLE("unexpected number of lanes");
+        }
+      } else {
+        WASM_UNREACHABLE("unexpected expectation");
+      }
+    }
+    return Ok{};
+  }
+
+  Result<> assertAction(AssertAction& assn) {
+    std::stringstream err;
+    auto result = doAction(assn.action);
+    switch (assn.type) {
+      case ActionAssertionType::Trap:
+        if (std::get_if<TrapResult>(&result)) {
+          return Ok{};
+        }
+        err << "expected trap";
+        break;
+      case ActionAssertionType::Exhaustion:
+        if (std::get_if<HostLimitResult>(&result)) {
+          return Ok{};
+        }
+        err << "expected exhaustion";
+        break;
+      case ActionAssertionType::Exception:
+        if (std::get_if<ExceptionResult>(&result)) {
+          return Ok{};
+        }
+        err << "expected exception";
+        break;
+    }
+    err << ", got " << resultToString(result);
+    return Err{err.str()};
+  }
+
+  Result<> assertModule(AssertModule& assn) {
+    auto wasm = makeModule(assn.wasm);
+    if (const auto* err = wasm.getErr()) {
+      if (assn.type == ModuleAssertionType::Malformed ||
+          assn.type == ModuleAssertionType::Invalid) {
+        return Ok{};
+      }
+      return Err{err->msg};
+    }
+
+    if (assn.type == ModuleAssertionType::Malformed) {
+      return Err{"expected malformed module"};
+    }
+
+    auto valid = validateModule(**wasm);
+    if (auto* err = valid.getErr()) {
+      if (assn.type == ModuleAssertionType::Invalid) {
+        return Ok{};
+      }
+      return Err{err->msg};
+    }
+
+    if (assn.type == ModuleAssertionType::Invalid) {
+      return Err{"expected invalid module"};
+    }
+
+    auto instance = instantiate(**wasm);
+    if (auto* err = instance.getErr()) {
+      if (assn.type == ModuleAssertionType::Unlinkable ||
+          assn.type == ModuleAssertionType::Trap) {
+        return Ok{};
+      }
+      return Err{err->msg};
+    }
+
+    if (assn.type == ModuleAssertionType::Unlinkable) {
+      return Err{"expected unlinkable module"};
+    }
+    if (assn.type == ModuleAssertionType::Trap) {
+      return Err{"expected instantiation to trap"};
+    }
+
+    WASM_UNREACHABLE("unexpected module assertion");
+  }
 
   // spectest module is a default host-provided module defined by the spec's
   // reference interpreter. It's been replaced by the `(register ...)`
@@ -330,7 +443,7 @@ protected:
   // is actually removed from the spec test.
   void buildSpectestModule() {
     auto spectest = std::make_shared<Module>();
-    spectest->name = "spectest";
+    spectest->features = FeatureSet::All;
     Builder builder(*spectest);
 
     spectest->addGlobal(builder.makeGlobal(Name::fromInt(0),
@@ -363,52 +476,28 @@ protected:
     spectest->addExport(
       builder.makeExport("table", Name::fromInt(0), ExternalKind::Table));
 
+    spectest->addTable(builder.makeTable(
+      Name::fromInt(1), Type(HeapType::func, Nullable), 10, 20, Type::i64));
+    spectest->addExport(
+      builder.makeExport("table64", Name::fromInt(1), ExternalKind::Table));
+
     Memory* memory =
       spectest->addMemory(builder.makeMemory(Name::fromInt(0), 1, 2));
     spectest->addExport(
       builder.makeExport("memory", memory->name, ExternalKind::Memory));
 
-    modules["spectest"].swap(spectest);
-    modules["spectest"]->features = FeatureSet::All;
-    instantiate(modules["spectest"].get());
-    linkedInstances["spectest"] = instances["spectest"];
     // print_* functions are handled separately, no need to define here.
-  }
 
-public:
-  Shell(ShellOptions& options) : options(options) { buildSpectestModule(); }
-
-  bool parseAndRun(Element& root) {
-    size_t i = 0;
-    while (i < root.size()) {
-      Element& curr = *root[i];
-
-      if (options.skipped.count(curr.line) > 0) {
-        Colors::green(std::cerr);
-        std::cerr << "SKIPPING [line: " << curr.line << "]\n";
-        Colors::normal(std::cerr);
-        i++;
-        continue;
-      }
-
-      if (curr[0]->str() != MODULE) {
-        Colors::red(std::cerr);
-        std::cerr << i << '/' << (root.size() - 1);
-        Colors::green(std::cerr);
-        std::cerr << " CHECKING: ";
-        Colors::normal(std::cerr);
-        std::cerr << curr;
-        Colors::green(std::cerr);
-        std::cerr << " [line: " << curr.line << "]\n";
-        Colors::normal(std::cerr);
-      }
-
-      parse(curr);
-
-      i += 1;
+    WASTModule mod = std::move(spectest);
+    auto added = addModule(mod);
+    if (added.getErr()) {
+      WASM_UNREACHABLE("error building spectest module");
     }
-
-    return false;
+    Register registration{"spectest"};
+    auto registered = addRegistration(registration);
+    if (registered.getErr()) {
+      WASM_UNREACHABLE("error registering spectest module");
+    }
   }
 };
 
@@ -416,29 +505,33 @@ int main(int argc, const char* argv[]) {
   Name entry;
   std::set<size_t> skipped;
 
-  ShellOptions options("wasm-shell", "Execute .wast files");
+  // Read stdin by default.
+  std::string infile = "-";
+  Options options("wasm-shell", "Execute .wast files");
+  options.add_positional(
+    "INFILE",
+    Options::Arguments::One,
+    [&](Options* o, const std::string& argument) { infile = argument; });
   options.parse(argc, argv);
 
-  auto input(
-    read_file<std::vector<char>>(options.extra["infile"], Flags::Text));
+  auto input = read_file<std::string>(infile, Flags::Text);
 
-  bool checked = false;
-  try {
-    if (options.debug) {
-      std::cerr << "parsing text to s-expressions...\n";
-    }
-    SExpressionParser parser(input.data());
-    Element& root = *parser.root;
-    checked = Shell(options).parseAndRun(root);
-  } catch (ParseException& p) {
-    p.dump(std::cerr);
+  // Check that we can parse the script correctly with the new parser.
+  auto script = WATParser::parseScript(input);
+  if (auto* err = script.getErr()) {
+    std::cerr << err->msg << '\n';
     exit(1);
   }
 
-  if (checked) {
-    Colors::green(std::cerr);
-    Colors::bold(std::cerr);
-    std::cerr << "all checks passed.\n";
-    Colors::normal(std::cerr);
+  Lexer lexer(input);
+  auto result = Shell(options).run(*script);
+  if (auto* err = result.getErr()) {
+    std::cerr << err->msg << '\n';
+    exit(1);
   }
+
+  Colors::green(std::cerr);
+  Colors::bold(std::cerr);
+  std::cerr << "all checks passed.\n";
+  Colors::normal(std::cerr);
 }

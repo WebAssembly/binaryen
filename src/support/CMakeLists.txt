@@ -8,8 +8,11 @@ set(support_SOURCES
   dfa_minimization.cpp
   file.cpp
   istring.cpp
+  json.cpp
+  name.cpp
   path.cpp
   safe_integer.cpp
+  string.cpp
   threads.cpp
   utilities.cpp
   ${support_HEADERS}

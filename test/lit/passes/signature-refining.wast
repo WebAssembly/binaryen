@@ -728,12 +728,12 @@
 )
 
 (module
-  ;; CHECK:      (type ${} (struct ))
-  (type ${} (struct))
+  ;; CHECK:      (type $"{}" (struct ))
+  (type $"{}" (struct))
 
-  ;; CHECK:      (type $1 (func (param (ref ${}) i32)))
+  ;; CHECK:      (type $1 (func (param (ref $"{}") i32)))
 
-  ;; CHECK:      (func $foo (type $1) (param $ref (ref ${})) (param $i32 i32)
+  ;; CHECK:      (func $foo (type $1) (param $ref (ref $"{}")) (param $i32 i32)
   ;; CHECK-NEXT:  (local $2 eqref)
   ;; CHECK-NEXT:  (local.set $2
   ;; CHECK-NEXT:   (local.get $ref)
@@ -752,19 +752,19 @@
   ;; CHECK-NEXT: )
   (func $foo (param $ref eqref) (param $i32 i32)
     (call $foo
-      ;; The only reference to the ${} type is in this block signature. Even
+      ;; The only reference to the $"{}" type is in this block signature. Even
       ;; this will go away in the internal ReFinalize (which makes the block
       ;; type unreachable).
-      (block (result (ref ${}))
+      (block (result (ref $"{}"))
         (unreachable)
       )
       (i32.const 0)
     )
     ;; Write something of type eqref into $ref. When we refine the type of the
-    ;; parameter from eqref to ${} we must do something here, as we can no
+    ;; parameter from eqref to $"{}" we must do something here, as we can no
     ;; longer just write this (ref.null eq) into a parameter of the more
     ;; refined type. While doing so, we must not be confused by the fact that
-    ;; the only mention of ${} in the original module gets removed during our
+    ;; the only mention of $"{}" in the original module gets removed during our
     ;; processing, as mentioned in the earlier comment. This is a regression
     ;; test for a crash because of that.
     (local.set $ref
@@ -856,7 +856,7 @@
   (type $F (func))
 
   ;; CHECK:      (func $func (type $F)
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.null nofunc)
   ;; CHECK-NEXT:   )
@@ -873,25 +873,25 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $0 (func (param (ref $[i8]))))
+ ;; CHECK-NEXT:  (type $0 (func (param (ref $"[i8]"))))
 
- ;; CHECK:       (type $[i8] (array i8))
- (type $[i8] (array i8))
+ ;; CHECK:       (type $"[i8]" (array i8))
+ (type $"[i8]" (array i8))
 
  ;; CHECK:       (type $2 (func))
 
  ;; CHECK:      (func $0 (type $2)
  ;; CHECK-NEXT:  (call $1
- ;; CHECK-NEXT:   (array.new_fixed $[i8] 0)
+ ;; CHECK-NEXT:   (array.new_fixed $"[i8]" 0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $0
   (call $1
-   (array.new_fixed $[i8] 0)
+   (array.new_fixed $"[i8]" 0)
   )
  )
 
- ;; CHECK:      (func $1 (type $0) (param $2 (ref $[i8]))
+ ;; CHECK:      (func $1 (type $0) (param $2 (ref $"[i8]"))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.cast (ref none)
  ;; CHECK-NEXT:    (local.get $2)

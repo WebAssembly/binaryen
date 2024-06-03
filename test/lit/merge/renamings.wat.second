@@ -1,12 +1,12 @@
 (module
   (type $array (array (mut (ref null func))))
 
+  ;; Test that the import remains
+  (import "elsewhere" "some.tag" (tag $imported (param f64)))
+
   (tag $foo (param f32))
 
   (tag $other (param f64))
-
-  ;; Test that the import remains
-  (import "elsewhere" "some.tag" (tag $imported (param f64)))
 
   (memory $foo 50 60)
 

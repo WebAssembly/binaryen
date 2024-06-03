@@ -3,8 +3,8 @@
 
 (module
  ;; CHECK:      (func $nn-locals (type $0) (param $0 (ref any))
- ;; CHECK-NEXT:  (local $1 ((ref any) (ref any)))
- ;; CHECK-NEXT:  (local $2 ((ref any) (ref any)))
+ ;; CHECK-NEXT:  (local $1 (tuple (ref any) (ref any)))
+ ;; CHECK-NEXT:  (local $2 (tuple (ref any) (ref any)))
  ;; CHECK-NEXT:  (local.set $1
  ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (local.get $0)
@@ -41,8 +41,8 @@
  (func $nn-locals (param $any (ref any))
   ;; When computing interferences, coalesce locals should not error on tuples
   ;; that contain non-nullable locals.
-  (local $x ((ref any) (ref any)))
-  (local $y ((ref any) (ref any)))
+  (local $x (tuple (ref any) (ref any)))
+  (local $y (tuple (ref any) (ref any)))
   ;; Set values into the tuple locals and use them.
   ;; Note that while the values are the same, we do not optimize them because
   ;; of current limitations on tuple handling in this pass, so we are mainly

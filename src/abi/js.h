@@ -25,16 +25,6 @@ namespace wasm {
 
 namespace ABI {
 
-enum class LegalizationLevel { Full = 0, Minimal = 1 };
-
-inline std::string getLegalizationPass(LegalizationLevel level) {
-  if (level == LegalizationLevel::Full) {
-    return "legalize-js-interface";
-  } else {
-    return "legalize-js-interface-minimally";
-  }
-}
-
 namespace wasm2js {
 
 extern IString SCRATCH_LOAD_I32;

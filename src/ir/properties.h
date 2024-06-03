@@ -527,7 +527,10 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 //    the latter because calls are already handled best in other manners (using
 //    EffectAnalyzer).
 //
-bool isGenerative(Expression* curr, FeatureSet features);
+bool isGenerative(Expression* curr);
+
+// As above, but only checks |curr| and not children.
+bool isShallowlyGenerative(Expression* curr);
 
 // Whether this expression is valid in a context where WebAssembly requires a
 // constant expression, such as a global initializer.

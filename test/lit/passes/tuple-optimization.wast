@@ -3,7 +3,7 @@
 
 (module
   ;; CHECK:      (func $just-set (type $0)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local.set $1
@@ -14,7 +14,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $just-set
-    (local $tuple (i32 i32))
+    (local $tuple (tuple i32 i32))
     ;; This tuple local can be optimized into separate locals per lane. The
     ;; tuple local itself then has no uses and other passes will remove it.
     (local.set $tuple
@@ -26,7 +26,7 @@
   )
 
   ;; CHECK:      (func $just-get (type $0)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (drop
@@ -37,7 +37,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $just-get
-    (local $tuple (i32 i32))
+    (local $tuple (tuple i32 i32))
     ;; The default value of the tuple lanes is used here in the new locals we
     ;; add.
     (drop
@@ -53,7 +53,7 @@
   )
 
   ;; CHECK:      (func $just-get-bad (type $1) (result i32 i32)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (tuple.extract 2 0
   ;; CHECK-NEXT:    (local.get $tuple)
@@ -67,7 +67,7 @@
   ;; CHECK-NEXT:  (local.get $tuple)
   ;; CHECK-NEXT: )
   (func $just-get-bad (result i32 i32)
-    (local $tuple (i32 i32))
+    (local $tuple (tuple i32 i32))
     (drop
       (tuple.extract 2 0
         (local.get $tuple)
@@ -84,7 +84,7 @@
   )
 
   ;; CHECK:      (func $set-and-gets (type $0)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (block
@@ -106,7 +106,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $set-and-gets
-    (local $tuple (i32 i32))
+    (local $tuple (tuple i32 i32))
     (local.set $tuple
       (tuple.make 2
         (i32.const 1)
@@ -132,8 +132,8 @@
   )
 
   ;; CHECK:      (func $tee (type $0)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
-  ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $tuple2 (tuple i32 i32))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
@@ -168,8 +168,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $tee
-    (local $tuple (i32 i32))
-    (local $tuple2 (i32 i32))
+    (local $tuple (tuple i32 i32))
+    (local $tuple2 (tuple i32 i32))
     (local.set $tuple
       (local.tee $tuple2
         (tuple.make 2
@@ -203,7 +203,7 @@
   )
 
   ;; CHECK:      (func $just-tee (type $0)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (drop
@@ -221,7 +221,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $just-tee
-    (local $tuple (i32 i32))
+    (local $tuple (tuple i32 i32))
     (drop
       (tuple.extract 2 0
         (local.tee $tuple
@@ -235,7 +235,7 @@
   )
 
   ;; CHECK:      (func $just-tee-bad (type $1) (result i32 i32)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
   ;; CHECK-NEXT:  (local.tee $tuple
   ;; CHECK-NEXT:   (tuple.make 2
   ;; CHECK-NEXT:    (i32.const 1)
@@ -244,7 +244,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $just-tee-bad (result i32 i32)
-    (local $tuple (i32 i32))
+    (local $tuple (tuple i32 i32))
     ;; This tee goes somewhere we cannot handle, so we do not optimize here.
     (local.tee $tuple
       (tuple.make 2
@@ -255,8 +255,8 @@
   )
 
   ;; CHECK:      (func $no-uses (type $0)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
-  ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $tuple2 (tuple i32 i32))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
@@ -277,8 +277,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $no-uses
-    (local $tuple (i32 i32))
-    (local $tuple2 (i32 i32))
+    (local $tuple (tuple i32 i32))
+    (local $tuple2 (tuple i32 i32))
     ;; The set has no uses, and the tee only has an immediate use. We can
     ;; still optimize both.
     (local.set $tuple
@@ -292,8 +292,8 @@
   )
 
   ;; CHECK:      (func $corruption-tee (type $1) (result i32 i32)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
-  ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $tuple2 (tuple i32 i32))
   ;; CHECK-NEXT:  (local.set $tuple
   ;; CHECK-NEXT:   (local.tee $tuple2
   ;; CHECK-NEXT:    (tuple.make 2
@@ -305,8 +305,8 @@
   ;; CHECK-NEXT:  (local.get $tuple2)
   ;; CHECK-NEXT: )
   (func $corruption-tee (result i32 i32)
-    (local $tuple (i32 i32))
-    (local $tuple2 (i32 i32))
+    (local $tuple (tuple i32 i32))
+    (local $tuple2 (tuple i32 i32))
     ;; As above, but the tee's tuple is bad and it prevents the other from
     ;; being optimized too, due to the copy between them.
     (local.set $tuple
@@ -321,8 +321,8 @@
   )
 
   ;; CHECK:      (func $corruption-set (type $1) (result i32 i32)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
-  ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $tuple2 (tuple i32 i32))
   ;; CHECK-NEXT:  (local.set $tuple
   ;; CHECK-NEXT:   (local.tee $tuple2
   ;; CHECK-NEXT:    (tuple.make 2
@@ -334,8 +334,8 @@
   ;; CHECK-NEXT:  (local.get $tuple)
   ;; CHECK-NEXT: )
   (func $corruption-set (result i32 i32)
-    (local $tuple (i32 i32))
-    (local $tuple2 (i32 i32))
+    (local $tuple (tuple i32 i32))
+    (local $tuple2 (tuple i32 i32))
     ;; As above, but now the set is bad.
     (local.set $tuple
       (local.tee $tuple2
@@ -349,8 +349,8 @@
   )
 
   ;; CHECK:      (func $set-after-set (type $0)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
-  ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $tuple2 (tuple i32 i32))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
@@ -381,8 +381,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $set-after-set
-    (local $tuple (i32 i32))
-    (local $tuple2 (i32 i32))
+    (local $tuple (tuple i32 i32))
+    (local $tuple2 (tuple i32 i32))
     ;; We can optimize both these tuples.
     (local.set $tuple
       (tuple.make 2
@@ -400,8 +400,8 @@
   )
 
   ;; CHECK:      (func $corruption-first-set (type $1) (result i32 i32)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
-  ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $tuple2 (tuple i32 i32))
   ;; CHECK-NEXT:  (local.set $tuple
   ;; CHECK-NEXT:   (tuple.make 2
   ;; CHECK-NEXT:    (i32.const 1)
@@ -414,8 +414,8 @@
   ;; CHECK-NEXT:  (local.get $tuple)
   ;; CHECK-NEXT: )
   (func $corruption-first-set (result i32 i32)
-    (local $tuple (i32 i32))
-    (local $tuple2 (i32 i32))
+    (local $tuple (tuple i32 i32))
+    (local $tuple2 (tuple i32 i32))
     (local.set $tuple
       (tuple.make 2
         (i32.const 1)
@@ -430,8 +430,8 @@
   )
 
   ;; CHECK:      (func $corruption-second-set (type $1) (result i32 i32)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
-  ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $tuple2 (tuple i32 i32))
   ;; CHECK-NEXT:  (local.set $tuple
   ;; CHECK-NEXT:   (tuple.make 2
   ;; CHECK-NEXT:    (i32.const 1)
@@ -444,8 +444,8 @@
   ;; CHECK-NEXT:  (local.get $tuple2)
   ;; CHECK-NEXT: )
   (func $corruption-second-set (result i32 i32)
-    (local $tuple (i32 i32))
-    (local $tuple2 (i32 i32))
+    (local $tuple (tuple i32 i32))
+    (local $tuple2 (tuple i32 i32))
     (local.set $tuple
       (tuple.make 2
         (i32.const 1)
@@ -460,7 +460,7 @@
 
   ;; CHECK:      (func $other (type $0)
   ;; CHECK-NEXT:  (local $other f64)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
   ;; CHECK-NEXT:  (local.set $other
   ;; CHECK-NEXT:   (local.tee $other
   ;; CHECK-NEXT:    (local.get $other)
@@ -471,7 +471,7 @@
     ;; A non-tuple local and all operations on it should be ignored.
     (local $other f64)
     ;; A tuple local with no uses at all should be ignored.
-    (local $tuple (i32 i32))
+    (local $tuple (tuple i32 i32))
     (local.set $other
       (local.tee $other
         (local.get $other)
@@ -503,7 +503,7 @@
   )
 
   ;; CHECK:      (func $make-extract-no-local-but-other (type $0)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (block
@@ -524,7 +524,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $make-extract-no-local-but-other
-    (local $tuple (i32 i32))
+    (local $tuple (tuple i32 i32))
     (local.set $tuple
       (tuple.make 2
         (i32.const 1)
@@ -544,7 +544,7 @@
   )
 
   ;; CHECK:      (func $set-of-block (type $0)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
   ;; CHECK-NEXT:  (local.set $tuple
   ;; CHECK-NEXT:   (block (type $1) (result i32 i32)
   ;; CHECK-NEXT:    (tuple.make 2
@@ -555,7 +555,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $set-of-block
-    (local $tuple (i32 i32))
+    (local $tuple (tuple i32 i32))
     ;; We do not handle blocks yet, so this is not optimized.
     (local.set $tuple
       (block (result i32 i32)
@@ -568,7 +568,7 @@
   )
 
   ;; CHECK:      (func $unreachability (type $0)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
   ;; CHECK-NEXT:  (local $nontuple f64)
   ;; CHECK-NEXT:  (local.set $tuple
   ;; CHECK-NEXT:   (tuple.make 2
@@ -580,12 +580,12 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (tuple.extract 1 0
+  ;; CHECK-NEXT:   (tuple.extract 2 0
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (tuple.extract 1 1
+  ;; CHECK-NEXT:   (tuple.extract 2 1
   ;; CHECK-NEXT:    (local.tee $tuple
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
@@ -600,7 +600,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $unreachability
-    (local $tuple (i32 i32))
+    (local $tuple (tuple i32 i32))
     (local $nontuple f64)
     (local.set $tuple
       (tuple.make 2
@@ -638,9 +638,9 @@
   )
 
   ;; CHECK:      (func $tee-chain (type $0)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
-  ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
-  ;; CHECK-NEXT:  (local $tuple3 (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $tuple2 (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $tuple3 (tuple i32 i32))
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (local $5 i32)
@@ -678,9 +678,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $tee-chain
-    (local $tuple (i32 i32))
-    (local $tuple2 (i32 i32))
-    (local $tuple3 (i32 i32))
+    (local $tuple (tuple i32 i32))
+    (local $tuple2 (tuple i32 i32))
+    (local $tuple3 (tuple i32 i32))
     (drop
       (tuple.extract 2 0
         (local.tee $tuple
@@ -698,9 +698,9 @@
   )
 
   ;; CHECK:      (func $chain-3 (type $0)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32 i32))
-  ;; CHECK-NEXT:  (local $tuple2 (i32 i32 i32))
-  ;; CHECK-NEXT:  (local $tuple3 (i32 i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32 i32))
+  ;; CHECK-NEXT:  (local $tuple2 (tuple i32 i32 i32))
+  ;; CHECK-NEXT:  (local $tuple3 (tuple i32 i32 i32))
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (local $5 i32)
@@ -754,9 +754,9 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $chain-3
-    (local $tuple (i32 i32 i32))
-    (local $tuple2 (i32 i32 i32))
-    (local $tuple3 (i32 i32 i32))
+    (local $tuple (tuple i32 i32 i32))
+    (local $tuple2 (tuple i32 i32 i32))
+    (local $tuple3 (tuple i32 i32 i32))
     ;; A chain of 3 copied tuples.
     (local.set $tuple
       (tuple.make 3
@@ -790,9 +790,9 @@
   )
 
   ;; CHECK:      (func $chain-3-corruption (type $2) (result i32 i32 i32)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32 i32))
-  ;; CHECK-NEXT:  (local $tuple2 (i32 i32 i32))
-  ;; CHECK-NEXT:  (local $tuple3 (i32 i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32 i32))
+  ;; CHECK-NEXT:  (local $tuple2 (tuple i32 i32 i32))
+  ;; CHECK-NEXT:  (local $tuple3 (tuple i32 i32 i32))
   ;; CHECK-NEXT:  (local.set $tuple
   ;; CHECK-NEXT:   (tuple.make 3
   ;; CHECK-NEXT:    (i32.const 1)
@@ -824,9 +824,9 @@
   ;; CHECK-NEXT:  (local.get $tuple)
   ;; CHECK-NEXT: )
   (func $chain-3-corruption (result i32 i32 i32)
-    (local $tuple (i32 i32 i32))
-    (local $tuple2 (i32 i32 i32))
-    (local $tuple3 (i32 i32 i32))
+    (local $tuple (tuple i32 i32 i32))
+    (local $tuple2 (tuple i32 i32 i32))
+    (local $tuple3 (tuple i32 i32 i32))
     ;; As above, but a get at the very end prevents the entire chain from being
     ;; optimized.
     (local.set $tuple
@@ -862,7 +862,7 @@
   )
 
   ;; CHECK:      (func $set-call (type $1) (result i32 i32)
-  ;; CHECK-NEXT:  (local $tuple (i32 i32))
+  ;; CHECK-NEXT:  (local $tuple (tuple i32 i32))
   ;; CHECK-NEXT:  (local.set $tuple
   ;; CHECK-NEXT:   (call $set-call)
   ;; CHECK-NEXT:  )
@@ -877,7 +877,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $set-call (result i32 i32)
-    (local $tuple (i32 i32))
+    (local $tuple (tuple i32 i32))
     ;; Setting from a call prevents optimization.
     (local.set $tuple
       (call $set-call)
@@ -894,8 +894,8 @@
   )
 
   ;; CHECK:      (func $two-2-three (type $0)
-  ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
-  ;; CHECK-NEXT:  (local $tuple3 (i32 i32 i32))
+  ;; CHECK-NEXT:  (local $tuple2 (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $tuple3 (tuple i32 i32 i32))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
@@ -928,8 +928,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $two-2-three
-    (local $tuple2 (i32 i32))
-    (local $tuple3 (i32 i32 i32))
+    (local $tuple2 (tuple i32 i32))
+    (local $tuple3 (tuple i32 i32 i32))
     (local.set $tuple2
       (tuple.make 2
         (i32.const 1)
@@ -961,8 +961,8 @@
   )
 
   ;; CHECK:      (func $three-2-two (type $0)
-  ;; CHECK-NEXT:  (local $tuple2 (i32 i32))
-  ;; CHECK-NEXT:  (local $tuple3 (i32 i32 i32))
+  ;; CHECK-NEXT:  (local $tuple2 (tuple i32 i32))
+  ;; CHECK-NEXT:  (local $tuple3 (tuple i32 i32 i32))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
@@ -995,8 +995,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $three-2-two
-    (local $tuple2 (i32 i32))
-    (local $tuple3 (i32 i32 i32))
+    (local $tuple2 (tuple i32 i32))
+    (local $tuple3 (tuple i32 i32 i32))
     (local.set $tuple3
       (tuple.make 3
         (i32.const 1)

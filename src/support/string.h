@@ -24,6 +24,7 @@
 #include "support/utilities.h"
 #include <algorithm>
 #include <cctype>
+#include <ostream>
 #include <string>
 #include <vector>
 
@@ -38,19 +39,8 @@ private:
   // "bar".
   bool needToHandleBracketingOperations = true;
 
-  void split(const std::string& input, const std::string& delim) {
-    size_t lastEnd = 0;
-    while (lastEnd < input.size()) {
-      auto nextDelim = input.find(delim, lastEnd);
-      if (nextDelim == std::string::npos) {
-        nextDelim = input.size();
-      }
-      (*this).push_back(input.substr(lastEnd, nextDelim - lastEnd));
-      lastEnd = nextDelim + delim.size();
-    }
-    needToHandleBracketingOperations = delim != "\n";
-  }
-  friend String::Split handleBracketingOperators(String::Split split);
+  void split(const std::string& input, const std::string& delim);
+  friend Split handleBracketingOperators(Split split);
 
 public:
   // This can be used when we want to split on newlines if there are any, and if
@@ -62,15 +52,7 @@ public:
 
   Split() = default;
 
-  Split(const std::string& input, const NewLineOr& newLineOrDelim) {
-    auto first = input.find("\n", 0);
-    if (first != std::string::npos && first != input.length() - 1) {
-      split(input, "\n");
-    } else {
-      split(input, newLineOrDelim.delim);
-    }
-  }
-
+  Split(const std::string& input, const NewLineOr& newLineOrDelim);
   Split(const std::string& input, const std::string& delim) {
     split(input, delim);
   }
@@ -81,76 +63,41 @@ public:
 //   void foo(int, double)
 // must be kept together because of the "(". Likewise, "{", "<", "[" are
 // handled.
-inline String::Split handleBracketingOperators(String::Split split) {
-  if (!split.needToHandleBracketingOperations) {
-    return split;
-  }
-
-  String::Split ret;
-  std::string last;
-  int nesting = 0;
-  auto handlePart = [&](std::string part) {
-    if (part.empty()) {
-      return;
-    }
-    for (const char c : part) {
-      if (c == '(' || c == '<' || c == '[' || c == '{') {
-        nesting++;
-      } else if (c == ')' || c == '>' || c == ']' || c == '}') {
-        nesting--;
-      }
-    }
-    if (last.empty()) {
-      last = part;
-    } else {
-      last += ',' + part;
-    }
-    if (nesting == 0) {
-      ret.push_back(last);
-      last.clear();
-    }
-  };
-  for (auto& part : split) {
-    handlePart(part);
-  }
-  handlePart("");
-  if (nesting != 0) {
-    Fatal() << "Asyncify: failed to parse lists";
-  }
-  return ret;
-}
+Split handleBracketingOperators(Split split);
 
 // Does a simple '*' wildcard match between a pattern and a value.
-inline bool wildcardMatch(const std::string& pattern,
-                          const std::string& value) {
-  for (size_t i = 0; i < pattern.size(); i++) {
-    if (pattern[i] == '*') {
-      return wildcardMatch(pattern.substr(i + 1), value.substr(i)) ||
-             (value.size() > 0 &&
-              wildcardMatch(pattern.substr(i), value.substr(i + 1)));
-    }
-    if (i >= value.size()) {
-      return false;
-    }
-    if (pattern[i] != value[i]) {
-      return false;
-    }
-  }
-  return value.size() == pattern.size();
-}
+bool wildcardMatch(const std::string& pattern, const std::string& value);
 
 // Removes any extra whitespace or \0.
-inline std::string trim(const std::string& input) {
-  size_t size = input.size();
-  while (size > 0 && (isspace(input[size - 1]) || input[size - 1] == '\0')) {
-    size--;
-  }
-  return input.substr(0, size);
-}
+std::string trim(const std::string& input);
 
 inline bool isNumber(const std::string& str) {
   return !str.empty() && std::all_of(str.begin(), str.end(), ::isdigit);
 }
+
+std::ostream& printEscaped(std::ostream& os, std::string_view str);
+
+// `str` must be a valid WTF-16 string.
+std::ostream& printEscapedJSON(std::ostream& os, std::string_view str);
+
+std::ostream& writeWTF8CodePoint(std::ostream& os, uint32_t u);
+
+std::ostream& writeWTF16CodePoint(std::ostream& os, uint32_t u);
+
+// Writes the WTF-16LE encoding of the given WTF-8 string to `os`, inserting
+// replacement characters as necessary when encountering invalid WTF-8. Returns
+// `true` iff the input was valid WTF-8.
+bool convertWTF8ToWTF16(std::ostream& os, std::string_view str);
+
+// Writes the WTF-8 encoding of the given WTF-16LE string to `os`, inserting a
+// replacement character at the end if the string is an odd number of bytes.
+// Returns `true` iff the input was valid WTF-16.
+bool convertWTF16ToWTF8(std::ostream& os, std::string_view str);
+
+// Writes the UTF-8 encoding of the given UTF-16LE string to `os`, inserting a
+// replacement character in place of any unpaired surrogate or incomplete code
+// unit. Returns `true` if the input was valid UTF-16.
+bool convertUTF16ToUTF8(std::ostream& os, std::string_view str);
 
 } // namespace wasm::String
 

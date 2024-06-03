@@ -18,6 +18,7 @@
 #define wasm_stack_h
 
 #include "ir/branch-utils.h"
+#include "ir/module-utils.h"
 #include "ir/properties.h"
 #include "pass.h"
 #include "support/insert_ordered.h"
@@ -60,20 +61,22 @@ public:
   StackInst(MixedArena&) {}
 
   enum Op {
-    Basic,      // an instruction directly corresponding to a non-control-flow
-                // Binaryen IR node
-    BlockBegin, // the beginning of a block
-    BlockEnd,   // the ending of a block
-    IfBegin,    // the beginning of a if
-    IfElse,     // the else of a if
-    IfEnd,      // the ending of a if
-    LoopBegin,  // the beginning of a loop
-    LoopEnd,    // the ending of a loop
-    TryBegin,   // the beginning of a try
-    Catch,      // the catch within a try
-    CatchAll,   // the catch_all within a try
-    Delegate,   // the delegate within a try
-    TryEnd      // the ending of a try
+    Basic,         // an instruction directly corresponding to a
+                   // non-control-flow Binaryen IR node
+    BlockBegin,    // the beginning of a block
+    BlockEnd,      // the ending of a block
+    IfBegin,       // the beginning of a if
+    IfElse,        // the else of a if
+    IfEnd,         // the ending of a if
+    LoopBegin,     // the beginning of a loop
+    LoopEnd,       // the ending of a loop
+    TryBegin,      // the beginning of a try
+    Catch,         // the catch within a try
+    CatchAll,      // the catch_all within a try
+    Delegate,      // the delegate within a try
+    TryEnd,        // the ending of a try
+    TryTableBegin, // the beginning of a try_table
+    TryTableEnd    // the ending of a try_table
   } op;
 
   Expression* origin; // the expression this originates from
@@ -82,6 +85,8 @@ public:
   // unreachable blocks, they must be none
   Type type;
 };
+
+using StackIR = std::vector<StackInst*>;
 
 class BinaryInstWriter : public OverriddenVisitor<BinaryInstWriter> {
 public:
@@ -141,18 +146,39 @@ private:
   // type => number of locals of that type in the compact form
   std::unordered_map<Type, size_t> numLocalsByType;
 
-  void noteLocalType(Type type);
+  void noteLocalType(Type type, Index count = 1);
 
   // Keeps track of the binary index of the scratch locals used to lower
-  // tuple.extract.
+  // tuple.extract. If there are multiple scratch locals of the same type, they
+  // are contiguous and this map holds the index of the first.
   InsertOrderedMap<Type, Index> scratchLocals;
-  void countScratchLocals();
-  void setScratchLocals();
+  // Return the type and number of required scratch locals.
+  InsertOrderedMap<Type, Index> countScratchLocals();
 
-  // local.get, local.tee, and glboal.get expressions that will be followed by
+  // local.get, local.tee, and global.get expressions that will be followed by
   // tuple.extracts. We can optimize these by getting only the local for the
   // extracted index.
   std::unordered_map<Expression*, Index> extractedGets;
+
+  // As an optimization, we do not need to use scratch locals for StringWTF16Get
+  // and StringSliceWTF if their non-string operands are already LocalGets.
+  // Record those LocalGets here.
+  std::unordered_set<LocalGet*> deferredGets;
+
+  // Track which br_ifs need handling of their output values, which is the case
+  // when they have a value that is more refined than the wasm type system
+  // allows atm (and they are not dropped, in which case the type would not
+  // matter). See https://github.com/WebAssembly/binaryen/pull/6390 for more on
+  // the difference. As a result of the difference, we will insert extra casts
+  // to ensure validation in the wasm spec. The wasm spec will hopefully improve
+  // to use the more refined type as well, which would remove the need for this
+  // hack.
+  //
+  // Each br_if present as a key here is mapped to the unrefined type for it.
+  // That is, the br_if has a type in Binaryen IR that is too refined, and the
+  // map contains the unrefined one (which we need to know the local types, as
+  // we'll stash the unrefined values and then cast them).
+  std::unordered_map<Break*, Type> brIfsNeedingHandling;
 };
 
 // Takes binaryen IR and converts it to something else (binary or stack IR)
@@ -326,6 +352,7 @@ void BinaryenIRWriter<SubType>::visitBlock(Block* curr) {
       parents.push_back(curr);
       emit(curr);
       curr = child;
+      emitDebugLocation(curr);
     }
     // Emit the current block, which does not have a block as a child in the
     // first position.
@@ -440,8 +467,13 @@ public:
   void emitDelegate(Try* curr) { writer.emitDelegate(curr); }
   void emitScopeEnd(Expression* curr) { writer.emitScopeEnd(curr); }
   void emitFunctionEnd() {
+    // Indicate the debug location corresponding to the end opcode
+    // that terminates the function code.
     if (func->epilogLocation.size()) {
       parent.writeDebugLocation(*func->epilogLocation.begin());
+    } else {
+      // The end opcode has no debug location.
+      parent.writeNoDebugLocation();
     }
     writer.emitFunctionEnd();
   }
@@ -460,44 +492,24 @@ private:
   bool sourceMap;
 };
 
-// Binaryen IR to stack IR converter
-// Queues the expressions linearly in Stack IR (SIR)
-class StackIRGenerator : public BinaryenIRWriter<StackIRGenerator> {
+// Binaryen IR to stack IR converter for an entire module. Generates all the
+// StackIR in parallel, and then allows querying for the StackIR of individual
+// functions.
+class ModuleStackIR {
+  ModuleUtils::ParallelFunctionAnalysis<StackIR> analysis;
+
 public:
-  StackIRGenerator(Module& module, Function* func)
-    : BinaryenIRWriter<StackIRGenerator>(func), module(module) {}
+  ModuleStackIR(Module& wasm, const PassOptions& options);
 
-  void emit(Expression* curr);
-  void emitScopeEnd(Expression* curr);
-  void emitHeader() {}
-  void emitIfElse(If* curr) {
-    stackIR.push_back(makeStackInst(StackInst::IfElse, curr));
+  // Get StackIR for a function, if it exists. (This allows some functions to
+  // have it and others not, if we add such capability in the future.)
+  StackIR* getStackIROrNull(Function* func) {
+    auto iter = analysis.map.find(func);
+    if (iter == analysis.map.end()) {
+      return nullptr;
+    }
+    return &iter->second;
   }
-  void emitCatch(Try* curr, Index i) {
-    stackIR.push_back(makeStackInst(StackInst::Catch, curr));
-  }
-  void emitCatchAll(Try* curr) {
-    stackIR.push_back(makeStackInst(StackInst::CatchAll, curr));
-  }
-  void emitDelegate(Try* curr) {
-    stackIR.push_back(makeStackInst(StackInst::Delegate, curr));
-  }
-  void emitFunctionEnd() {}
-  void emitUnreachable() {
-    stackIR.push_back(makeStackInst(Builder(module).makeUnreachable()));
-  }
-  void emitDebugLocation(Expression* curr) {}
-
-  StackIR& getStackIR() { return stackIR; }
-
-private:
-  StackInst* makeStackInst(StackInst::Op op, Expression* origin);
-  StackInst* makeStackInst(Expression* origin) {
-    return makeStackInst(StackInst::Basic, origin);
-  }
-
-  Module& module;
-  StackIR stackIR; // filled in write()
 };
 
 // Stack IR to binary writer
@@ -505,21 +517,63 @@ class StackIRToBinaryWriter {
 public:
   StackIRToBinaryWriter(WasmBinaryWriter& parent,
                         BufferWithRandomAccess& o,
-                        Function* func)
-    : writer(parent, o, func, false /* sourceMap */, false /* DWARF */),
-      func(func) {}
+                        Function* func,
+                        StackIR& stackIR,
+                        bool sourceMap = false,
+                        bool DWARF = false)
+    : parent(parent), writer(parent, o, func, sourceMap, DWARF), func(func),
+      stackIR(stackIR), sourceMap(sourceMap) {}
 
   void write();
 
   MappedLocals& getMappedLocals() { return writer.mappedLocals; }
 
 private:
+  WasmBinaryWriter& parent;
   BinaryInstWriter writer;
   Function* func;
+  StackIR& stackIR;
+  bool sourceMap;
 };
 
-std::ostream& printStackIR(std::ostream& o, Module* module, bool optimize);
+// Stack IR optimizer
+class StackIROptimizer {
+  Function* func;
+  StackIR& insts;
+  const PassOptions& passOptions;
+  FeatureSet features;
+
+public:
+  StackIROptimizer(Function* func,
+                   StackIR& insts,
+                   const PassOptions& passOptions,
+                   FeatureSet features);
+
+  void run();
+
+private:
+  void dce();
+  void vacuum();
+  void local2Stack();
+  void removeUnneededBlocks();
+  bool isControlFlowBarrier(StackInst* inst);
+  bool isControlFlowBegin(StackInst* inst);
+  bool isControlFlowEnd(StackInst* inst);
+  bool isControlFlow(StackInst* inst);
+  void removeAt(Index i);
+  Index getNumConsumedValues(StackInst* inst);
+  bool canRemoveSetGetPair(Index setIndex, Index getIndex);
+  std::unordered_set<LocalGet*> findStringViewDeferredGets();
+};
+
+// Generate and emit StackIR.
+std::ostream&
+printStackIR(std::ostream& o, Module* module, const PassOptions& options);
 
 } // namespace wasm
+
+namespace std {
+std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst);
+} // namespace std
 
 #endif // wasm_stack_h

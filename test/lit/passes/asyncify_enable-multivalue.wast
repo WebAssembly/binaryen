@@ -5,11 +5,12 @@
 
 ;; Pre-existing imports that the pass turns into the implementations.
 (module
-  (memory 1 2)
   (import "asyncify" "start_unwind" (func $asyncify_start_unwind (param i32)))
   (import "asyncify" "stop_unwind" (func $asyncify_stop_unwind))
   (import "asyncify" "start_rewind" (func $asyncify_start_rewind (param i32)))
   (import "asyncify" "stop_rewind" (func $asyncify_stop_rewind))
+
+  (memory 1 2)
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (type $1 (func (param i32)))
@@ -404,7 +405,6 @@
 ;; CHECK-NEXT:  (global.get $__asyncify_state)
 ;; CHECK-NEXT: )
 (module
-  (memory 1 2)
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (type $1 (func (param i32)))
@@ -423,6 +423,8 @@
   (import "env" "import3" (func $import3 (param i32)))
   ;; CHECK:      (import "env" "import-mv" (func $import-mv (result i32 i64)))
   (import "env" "import-mv" (func $import-mv (result i32 i64)))
+
+  (memory 1 2)
   ;; CHECK:      (global $__asyncify_state (mut i32) (i32.const 0))
 
   ;; CHECK:      (global $__asyncify_data (mut i32) (i32.const 0))
@@ -870,7 +872,7 @@
   )
   ;; CHECK:      (func $many-locals (param $x i32) (result i32)
   ;; CHECK-NEXT:  (local $y i32)
-  ;; CHECK-NEXT:  (local $z (f32 i64))
+  ;; CHECK-NEXT:  (local $z (tuple f32 i64))
   ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (local $5 i32)
@@ -1070,7 +1072,7 @@
   ;; CHECK-NEXT: )
   (func $many-locals (param $x i32) (result i32)
     (local $y i32)
-    (local $z (f32 i64))
+    (local $z (tuple f32 i64))
     (loop $l
       (local.set $x
         (i32.add (local.get $y) (i32.const 1))
@@ -1836,11 +1838,11 @@
     (return (i32.const 3))
   )
   ;; CHECK:      (func $calls-mv
-  ;; CHECK-NEXT:  (local $x (i32 i64))
-  ;; CHECK-NEXT:  (local $1 (i32 i64))
+  ;; CHECK-NEXT:  (local $x (tuple i32 i64))
+  ;; CHECK-NEXT:  (local $1 (tuple i32 i64))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (local $3 i32)
-  ;; CHECK-NEXT:  (local $4 (i32 i64))
+  ;; CHECK-NEXT:  (local $4 (tuple i32 i64))
   ;; CHECK-NEXT:  (local $5 i32)
   ;; CHECK-NEXT:  (local $6 i32)
   ;; CHECK-NEXT:  (if
@@ -2001,7 +2003,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $calls-mv
-    (local $x (i32 i64))
+    (local $x (tuple i32 i64))
     (local.set $x (call $import-mv))
   )
   ;; CHECK:      (func $calls-loop (param $x i32)

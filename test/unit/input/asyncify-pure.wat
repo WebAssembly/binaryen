@@ -1,10 +1,10 @@
 (module
-  (memory 1 1)
   (import "spectest" "print" (func $print (param i32)))
   (import "asyncify" "start_unwind" (func $asyncify_start_unwind (param i32)))
   (import "asyncify" "stop_unwind" (func $asyncify_stop_unwind))
   (import "asyncify" "start_rewind" (func $asyncify_start_rewind (param i32)))
   (import "asyncify" "stop_rewind" (func $asyncify_stop_rewind))
+  (memory 1 1)
   (global $sleeping (mut i32) (i32.const 0))
   (start $runtime)
   (func $main
@@ -63,4 +63,3 @@
   (func $DOS_ReadFile\28unsigned\20short\2c\20unsigned\20char*\2c\20unsigned\20short*\2c\20bool\29 (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32)
   )
 )
-

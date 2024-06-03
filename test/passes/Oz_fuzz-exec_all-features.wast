@@ -393,13 +393,13 @@
  )
 )
 (module
- (type $[mut:i8] (array (mut i8)))
+ (type $"[mut:i8]" (array (mut i8)))
  (func $foo (export "foo") (result i32)
   ;; before opts this will trap on failing to allocate -1 >>> 0 bytes. after
   ;; opts the unused value is removed so there is no trap, and a value is
   ;; returned, which should not confuse the fuzzer.
   (drop
-   (array.new_default $[mut:i8]
+   (array.new_default $"[mut:i8]"
     (i32.const -1)
    )
   )

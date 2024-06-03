@@ -58,6 +58,11 @@ struct Name : public IString {
     // TODO: Use C++23 `contains`.
     return str.find(substring.str) != std::string_view::npos;
   }
+
+  std::ostream& print(std::ostream& o) const;
+
+private:
+  static bool isIDChar(char c);
 };
 
 } // namespace wasm

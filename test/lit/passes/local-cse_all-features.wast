@@ -67,13 +67,13 @@
 
   ;; CHECK:      (type $2 (func (param (ref $A))))
 
-  ;; CHECK:      (type $3 (func (param (ref null $A))))
+  ;; CHECK:      (type $3 (func))
 
-  ;; CHECK:      (type $4 (func))
+  ;; CHECK:      (type $4 (func (param (ref null $A))))
 
   ;; CHECK:      (type $5 (func (param (ref null $B) (ref $A))))
 
-  ;; CHECK:      (func $struct-gets-nullable (type $3) (param $ref (ref null $A))
+  ;; CHECK:      (func $struct-gets-nullable (type $4) (param $ref (ref null $A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -182,7 +182,7 @@
     )
   )
 
-  ;; CHECK:      (func $creations (type $4)
+  ;; CHECK:      (func $creations (type $3)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $A
   ;; CHECK-NEXT:    (i32.const 1)
@@ -229,6 +229,36 @@
       (array.new $B
         (i32.const 1)
         (i32.const 1)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $nested-generativity (type $3)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-generativity
+    ;; Operations that include nested generativity are ignored.
+    (drop
+      (ref.eq
+        (struct.new_default $A)
+        (struct.new_default $A)
+      )
+    )
+    (drop
+      (ref.eq
+        (struct.new_default $A)
+        (struct.new_default $A)
       )
     )
   )
@@ -348,5 +378,57 @@
         )
       )
     )
+  )
+)
+
+(module
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct (field i32)))
+
+  ;; CHECK:      (type $1 (func (param anyref)))
+
+  ;; CHECK:      (type $2 (func (param i32)))
+
+  ;; CHECK:      (func $caller (type $1) (param $x anyref)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (call $callee
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (struct.get $struct 0
+  ;; CHECK-NEXT:     (ref.cast (ref $struct)
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $callee
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (param $x anyref)
+    (call $callee
+      (struct.get $struct 0
+        (ref.cast (ref $struct)
+          (local.get $x)
+        )
+      )
+    )
+    ;; The call in between the struct.get has effects, but they do not
+    ;; interfere: the struct.get reads locals and immutable data only, and we
+    ;; can ignore possible traps in both the call and the struct.get (as if
+    ;; anything traps we just don't reach the local.get that the optimization
+    ;; emits).
+    (call $callee
+      (struct.get $struct 0
+        (ref.cast (ref $struct)
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $callee (type $2) (param $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $callee (param $x i32)
   )
 )

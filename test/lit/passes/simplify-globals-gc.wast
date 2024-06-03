@@ -31,3 +31,27 @@
  )
 )
 
+(module
+ ;; CHECK:      (type $struct (struct ))
+ (type $struct (struct ))
+
+ ;; CHECK:      (type $1 (func (result anyref)))
+
+ ;; CHECK:      (global $a (ref $struct) (struct.new_default $struct))
+ (global $a (ref $struct) (struct.new_default $struct))
+ ;; CHECK:      (global $b (ref $struct) (global.get $a))
+ (global $b (ref $struct) (global.get $a))
+ ;; CHECK:      (global $c (ref null $struct) (global.get $a))
+ (global $c (ref null $struct) (global.get $a))
+
+ ;; CHECK:      (func $get-c (type $1) (result anyref)
+ ;; CHECK-NEXT:  (global.get $c)
+ ;; CHECK-NEXT: )
+ (func $get-c (result anyref)
+  ;; $c has a less-refined type than the other two. We do not switch this to
+  ;; get from either $a or $b because of that, but we could if we also
+  ;; refinalized TODO
+  (global.get $c)
+ )
+)
+

@@ -81,7 +81,7 @@
  (export "static-casts" (func $static-casts))
  (export "static-br_on_cast" (func $br_on_cast))
  (export "static-br_on_cast_fail" (func $static-br_on_cast_fail))
- (func $structs (type $void_func) (; has Stack IR ;)
+ (func $structs (type $void_func)
   (local $0 i32)
   (call $log
    (i32.const 0)
@@ -98,17 +98,16 @@
    (i32.const 100)
   )
  )
- (func $arrays (type $void_func) (; has Stack IR ;)
+ (func $arrays (type $void_func)
   (local $0 (ref $bytes))
-  (call $log
-   (array.len
-    (local.tee $0
-     (array.new $bytes
-      (i32.const 42)
-      (i32.const 50)
-     )
-    )
+  (local.set $0
+   (array.new $bytes
+    (i32.const 42)
+    (i32.const 50)
    )
+  )
+  (call $log
+   (i32.const 50)
   )
   (call $log
    (array.get_u $bytes
@@ -140,12 +139,12 @@
    )
   )
  )
- (func $br_on_cast (type $void_func) (; has Stack IR ;)
+ (func $br_on_cast (type $void_func)
   (call $log
    (i32.const 3)
   )
  )
- (func $br_on_failed_cast-1 (type $void_func) (; has Stack IR ;)
+ (func $br_on_failed_cast-1 (type $void_func)
   (local $0 (ref $struct))
   (local.set $0
    (struct.new_default $struct)
@@ -167,7 +166,7 @@
    )
   )
  )
- (func $br_on_failed_cast-2 (type $void_func) (; has Stack IR ;)
+ (func $br_on_failed_cast-2 (type $void_func)
   (call $log
    (i32.const 1)
   )
@@ -175,15 +174,15 @@
    (i32.const 999)
   )
  )
- (func $cast-null-anyref-to-gc (type $void_func) (; has Stack IR ;)
+ (func $cast-null-anyref-to-gc (type $void_func)
   (call $log
    (i32.const 0)
   )
  )
- (func $br-on_non_null (type $void_func) (; has Stack IR ;)
+ (func $br-on_non_null (type $void_func)
   (nop)
  )
- (func $br-on_non_null-2 (type $void_func) (; has Stack IR ;)
+ (func $br-on_non_null-2 (type $void_func)
   (drop
    (block
     (call $log
@@ -193,7 +192,7 @@
    )
   )
  )
- (func $cast-on-func (type $void_func) (; has Stack IR ;)
+ (func $cast-on-func (type $void_func)
   (call $log
    (i32.const 0)
   )
@@ -205,7 +204,7 @@
   )
   (unreachable)
  )
- (func $init-array-packed (type $int_func) (; has Stack IR ;) (result i32)
+ (func $init-array-packed (type $int_func) (result i32)
   (array.get_u $bytes
    (array.new $bytes
     (i32.const -43)
@@ -214,7 +213,7 @@
    (i32.const 10)
   )
  )
- (func $array-copy (type $void_func) (; has Stack IR ;)
+ (func $array-copy (type $void_func)
   (local $0 (ref $bytes))
   (local $1 (ref $bytes))
   (array.set $bytes
@@ -269,42 +268,31 @@
    )
   )
  )
- (func $array.new_fixed (type $void_func) (; has Stack IR ;)
-  (local $0 (ref $bytes))
-  (call $log
-   (array.len
-    (local.tee $0
-     (array.new_fixed $bytes 2
-      (i32.const 42)
-      (i32.const 50)
-     )
-    )
-   )
+ (func $array.new_fixed (type $void_func)
+  (local $0 i32)
+  (local $1 i32)
+  (local.set $0
+   (i32.const 42)
+  )
+  (local.set $1
+   (i32.const 50)
   )
   (call $log
-   (array.get_u $bytes
-    (local.get $0)
-    (i32.const 0)
-   )
+   (i32.const 2)
   )
   (call $log
-   (array.get_u $bytes
-    (local.get $0)
-    (i32.const 1)
-   )
+   (i32.const 42)
+  )
+  (call $log
+   (i32.const 50)
   )
  )
- (func $array.new_fixed-packed (type $void_func) (; has Stack IR ;)
+ (func $array.new_fixed-packed (type $void_func)
   (call $log
-   (array.get_u $bytes
-    (array.new_fixed $bytes 1
-     (i32.const -11512)
-    )
-    (i32.const 0)
-   )
+   (i32.const 8)
   )
  )
- (func $static-casts (type $void_func) (; has Stack IR ;)
+ (func $static-casts (type $void_func)
   (call $log
    (i32.const 1)
   )
@@ -324,7 +312,7 @@
    (i32.const 1)
   )
  )
- (func $static-br_on_cast_fail (type $void_func) (; has Stack IR ;)
+ (func $static-br_on_cast_fail (type $void_func)
   (call $log
    (i32.const -2)
   )
@@ -392,7 +380,7 @@ ignoring comparison of ExecutionResults!
 (module
  (type $0 (func (result i32)))
  (export "foo" (func $foo))
- (func $foo (type $0) (; has Stack IR ;) (result i32)
+ (func $foo (type $0) (result i32)
   (i32.const 0)
  )
 )

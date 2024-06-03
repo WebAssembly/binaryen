@@ -5,28 +5,29 @@
 
 (module
   ;; CHECK:      (import "env" "memoryBase" (global $memoryBase i32))
-
+  (import "env" "memoryBase" (global $memoryBase i32))
   ;; CHECK:      (memory $0 2048 2048)
   (memory $0 2048 2048)
-  (import "env" "memoryBase" (global $memoryBase i32))
   ;; nothing
 )
 
 (module
   ;; CHECK:      (import "env" "memoryBase" (global $memoryBase i32))
-
+  (import "env" "memoryBase" (global $memoryBase i32))
   ;; CHECK:      (memory $0 2048 2048)
   (memory $0 2048 2048)
-  (import "env" "memoryBase" (global $memoryBase i32))
-  (data (i32.const 4066) "") ;; empty
+  (data (i32.const 4066) "") ;; empty; leave it as is
+                             ;; (remove-unused-module-elements handles such
+                             ;; things, taking into account possible traps etc.)
 )
 
+;; CHECK:      (data $0 (i32.const 4066) "")
 (module
   ;; CHECK:      (import "env" "memoryBase" (global $memoryBase i32))
+  (import "env" "memoryBase" (global $memoryBase i32))
 
   ;; CHECK:      (memory $0 2048 2048)
   (memory $0 2048 2048)
-  (import "env" "memoryBase" (global $memoryBase i32))
 
   (data (global.get $memoryBase) "waka this cannot be optimized\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00we don't know where it will go")
 )
@@ -678,6 +679,7 @@
   ;; CHECK:      (type $0 (func))
 
   ;; CHECK:      (import "env" "param" (global $param i32))
+  (import "env" "param" (global $param i32))
 
   ;; CHECK:      (global $__mem_segment_drop_state (mut i32) (i32.const 0))
 
@@ -697,7 +699,6 @@
 
   ;; CHECK:      (memory $0 2048 2048)
   (memory $0 2048 2048)
-  (import "env" "param" (global $param i32))
 
   (data "\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00even\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00more\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00zeroes\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00\00") ;; 0
 
@@ -2229,10 +2230,11 @@
 ;; CHECK:      (data $2 (i32.const 4096) "\00")
 (module
  ;; CHECK:      (import "env" "memoryBase" (global $memoryBase i32))
+ (import "env" "memoryBase" (global $memoryBase i32))
 
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)
- (import "env" "memoryBase" (global $memoryBase i32))
+
  (data (i32.const 1024) "x")
  (data (global.get $memoryBase) "\00") ;; this could trample, or not
 )
@@ -2241,10 +2243,11 @@
 ;; CHECK:      (data $1 (global.get $memoryBase) "\00")
 (module
  ;; CHECK:      (import "env" "memoryBase" (global $memoryBase i32))
+ (import "env" "memoryBase" (global $memoryBase i32))
 
  ;; CHECK:      (memory $0 1 1)
  (memory $0 1 1)
- (import "env" "memoryBase" (global $memoryBase i32))
+
  (data (i32.const 1024) "\00") ;; this could trample, or not
  (data (global.get $memoryBase) "x")
 )
@@ -2319,6 +2322,8 @@
  (memory $0 1 1 shared)
  (data (i32.const 0) "")
  (data "foo")
+ ;; CHECK:      (data $0 (i32.const 0) "")
+
  ;; CHECK:      (data $1 "foo")
 
  ;; CHECK:      (func $0 (type $0)

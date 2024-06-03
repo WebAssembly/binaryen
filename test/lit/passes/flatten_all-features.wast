@@ -14,11 +14,11 @@
  (type $2 (func (result i32)))
  ;; CHECK:      (type $3 (func (param i32) (result i32)))
  (type $3 (func (param i32) (result i32)))
- ;; CHECK:      (type $4 (func (result f32)))
- (type $4 (func (param i64 i64) (result i64)))
- ;; CHECK:      (type $4 (func (param i64 i64) (result i64)))
+ ;; CHECK:      (type $5 (func (result f32)))
 
- ;; CHECK:      (type $6 (func (result anyref)))
+ ;; CHECK:      (type $4 (func (param i64 i64) (result i64)))
+ (type $4 (func (param i64 i64) (result i64)))
+ ;; CHECK:      (type $7 (func (result anyref)))
 
  ;; CHECK:      (global $x (mut i32) (i32.const 0))
  (global $x (mut i32) (i32.const 0))
@@ -833,7 +833,7 @@
    (i32.const 0)
   )
  )
- ;; CHECK:      (func $a17 (type $4) (result f32)
+ ;; CHECK:      (func $a17 (type $5) (result f32)
  ;; CHECK-NEXT:  (local $var$0 f32)
  ;; CHECK-NEXT:  (local $1 f32)
  ;; CHECK-NEXT:  (local $2 f32)
@@ -921,7 +921,7 @@
    )
   )
  )
- ;; CHECK:      (func $a19 (type $4) (result f32)
+ ;; CHECK:      (func $a19 (type $5) (result f32)
  ;; CHECK-NEXT:  (block $label$0
  ;; CHECK-NEXT:   (block $label$1
  ;; CHECK-NEXT:    (unreachable)
@@ -1218,9 +1218,8 @@
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:     (unreachable)
- ;; CHECK-NEXT:     (return
- ;; CHECK-NEXT:      (unreachable)
- ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:     (return)
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:     (unreachable)
@@ -2641,7 +2640,7 @@
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (local.get $9)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (loop $loop-in
+  ;; CHECK-NEXT:   (loop
   ;; CHECK-NEXT:    (local.set $10
   ;; CHECK-NEXT:     (i32.const 5)
   ;; CHECK-NEXT:    )
@@ -3585,7 +3584,7 @@
   ;; targets an outer branch whose return type is a supertype of the br_if's
   ;; value type, we need the value to be set into two locals: one with the outer
   ;; block's type, and one with its value type.
-  ;; CHECK:      (func $subtype (type $6) (result anyref)
+  ;; CHECK:      (func $subtype (type $7) (result anyref)
   ;; CHECK-NEXT:  (local $0 eqref)
   ;; CHECK-NEXT:  (local $1 anyref)
   ;; CHECK-NEXT:  (local $2 nullref)

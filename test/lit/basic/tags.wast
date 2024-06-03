@@ -12,7 +12,11 @@
 ;; Test tags
 
 (module
+  (tag $e-import (import "env" "im0") (param i32))
+  (import "env" "im1" (tag (param i32 f32)))
+
   (tag (param i32))
+
   ;; CHECK-TEXT:      (type $0 (func (param i32 f32)))
 
   ;; CHECK-TEXT:      (type $1 (func (param i32)))
@@ -21,9 +25,9 @@
 
   ;; CHECK-TEXT:      (import "env" "im0" (tag $e-import (param i32)))
 
-  ;; CHECK-TEXT:      (import "env" "im1" (tag $eimport$1 (param i32 f32)))
+  ;; CHECK-TEXT:      (import "env" "im1" (tag $timport$0 (param i32 f32)))
 
-  ;; CHECK-TEXT:      (tag $2 (param i32))
+  ;; CHECK-TEXT:      (tag $1 (param i32))
 
   ;; CHECK-TEXT:      (tag $e (param i32 f32))
   ;; CHECK-BIN:      (type $0 (func (param i32 f32)))
@@ -54,9 +58,7 @@
   ;; CHECK-TEXT:      (tag $e-export (param i32))
   ;; CHECK-BIN:      (tag $e-export (param i32))
   (tag $e-export (export "ex0") (param i32))
-  (tag $e-import (import "env" "im0") (param i32))
 
-  (import "env" "im1" (tag (param i32 f32)))
   ;; CHECK-TEXT:      (export "ex0" (tag $e-export))
 
   ;; CHECK-TEXT:      (export "ex1" (tag $e))

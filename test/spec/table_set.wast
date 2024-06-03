@@ -1,6 +1,7 @@
 (module
   (table $t2 1 externref)
   (table $t3 2 funcref)
+  (table $t64 i64 2 funcref)
   (elem (table $t3) (i32.const 1) func $dummy)
   (func $dummy)
 
@@ -10,15 +11,21 @@
   (func $f3 (export "get-funcref") (param $i i32) (result funcref)
     (table.get $t3 (local.get $i))
   )
+  (func $f4 (export "get-funcref-t64") (param $i i64) (result funcref)
+    (table.get $t64 (local.get $i))
+  )
 
   (func (export "set-externref") (param $i i32) (param $r externref)
-    (table.set $t2 (local.get $i) (local.get $r))
+    (table.set (local.get $i) (local.get $r))
   )
   (func (export "set-funcref") (param $i i32) (param $r funcref)
     (table.set $t3 (local.get $i) (local.get $r))
   )
   (func (export "set-funcref-from") (param $i i32) (param $j i32)
     (table.set $t3 (local.get $i) (table.get $t3 (local.get $j)))
+  )
+  (func (export "set-funcref-t64") (param $i i64) (param $r funcref)
+    (table.set $t64 (local.get $i) (local.get $r))
   )
 
   (func (export "is_null-funcref") (param $i i32) (result i32)
@@ -31,6 +38,9 @@
 ;; (assert_return (invoke "get-externref" (i32.const 0)) (ref.extern 1))
 (assert_return (invoke "set-externref" (i32.const 0) (ref.null extern)))
 (assert_return (invoke "get-externref" (i32.const 0)) (ref.null extern))
+
+(assert_return (invoke "set-funcref-t64" (i64.const 0) (ref.null func)))
+(assert_return (invoke "get-funcref-t64" (i64.const 0)) (ref.null func))
 
 (assert_return (invoke "get-funcref" (i32.const 0)) (ref.null func))
 (assert_return (invoke "set-funcref-from" (i32.const 0) (i32.const 1)))

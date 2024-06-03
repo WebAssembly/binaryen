@@ -95,12 +95,11 @@ static void calcSegmentOffsets(Module& wasm,
             return;
           }
         }
-        auto it = offsets.find(curr->segment);
-        if (it != offsets.end()) {
+        if (offsets.find(curr->segment) != offsets.end()) {
           Fatal() << "Cannot get offset of passive segment initialized "
                      "multiple times";
         }
-        offsets[curr->segment] = dest->value.getInteger();
+        offsets[curr->segment] = dest->value.getUnsigned();
       }
     } searcher(passiveOffsets);
     searcher.walkModule(&wasm);
@@ -288,11 +287,11 @@ struct PostEmscripten : public Pass {
       });
 
     // Assume a non-direct call might throw.
-    analyzer.propagateBack(
-      [](const Info& info) { return info.canThrow; },
-      [](const Info& info) { return true; },
-      [](Info& info, Function* reason) { info.canThrow = true; },
-      analyzer.NonDirectCallsHaveProperty);
+    analyzer.propagateBack([](const Info& info) { return info.canThrow; },
+                           [](const Info& info) { return true; },
+                           [](Info& info) { info.canThrow = true; },
+                           [](const Info& info, Function* reason) {},
+                           analyzer.NonDirectCallsHaveProperty);
 
     // Apply the information.
     struct OptimizeInvokes : public WalkerPass<PostWalker<OptimizeInvokes>> {
@@ -317,7 +316,7 @@ struct PostEmscripten : public Pass {
         // The first operand is the function pointer index, which must be
         // constant if we are to optimize it statically.
         if (auto* index = curr->operands[0]->dynCast<Const>()) {
-          size_t indexValue = index->value.getInteger();
+          size_t indexValue = index->value.getUnsigned();
           if (indexValue >= flatTable.names.size()) {
             // UB can lead to indirect calls to invalid pointers.
             return;

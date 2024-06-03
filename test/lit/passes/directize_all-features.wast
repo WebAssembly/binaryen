@@ -12,15 +12,23 @@
  ;; CHECK:      (table $0 5 5 funcref)
  ;; IMMUT:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
- (elem (i32.const 1) $foo)
+ ;; CHECK:      (table $t64 i64 5 5 funcref)
 
- ;; CHECK:      (elem $0 (i32.const 1) $foo)
+ ;; CHECK:      (elem $elem (table $0) (i32.const 1) func $foo)
+ ;; IMMUT:      (table $t64 i64 5 5 funcref)
+
+ ;; IMMUT:      (elem $elem (table $0) (i32.const 1) func $foo)
+ (elem $elem (i32.const 1) $foo)
+
+ (table $t64 i64 5 5 funcref)
+
+ ;; CHECK:      (elem $elem64 (table $t64) (i64.const 1) func $foo)
+ ;; IMMUT:      (elem $elem64 (table $t64) (i64.const 1) func $foo)
+ (elem $elem64 (table $t64) (i64.const 1) funcref (ref.func $foo))
 
  ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (i32.const 1) $foo)
-
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )
@@ -372,6 +380,8 @@
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
+ (global $g (import "env" "g") i32)
+
  ;; CHECK:      (import "env" "g" (global $g i32))
 
  ;; CHECK:      (table $0 5 5 funcref)
@@ -379,7 +389,7 @@
 
  ;; IMMUT:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
- (global $g (import "env" "g") i32)
+
  (elem (global.get $g) $foo)
  ;; CHECK:      (elem $0 (global.get $g) $foo)
 
@@ -421,6 +431,8 @@
  ;; CHECK:      (type $ii (func (param i32 i32)))
  ;; IMMUT:      (type $ii (func (param i32 i32)))
  (type $ii (func (param i32 i32)))
+ (global $g (import "env" "g") i32)
+
  ;; CHECK:      (import "env" "g" (global $g i32))
 
  ;; CHECK:      (table $0 5 5 funcref)
@@ -431,7 +443,7 @@
  ;; CHECK:      (table $1 5 5 funcref)
  ;; IMMUT:      (table $1 5 5 funcref)
  (table $1 5 5 funcref)
- (global $g (import "env" "g") i32)
+
  (elem (table $1) (global.get $g) func $foo)
  ;; CHECK:      (elem $0 (table $1) (global.get $g) func $foo)
 
@@ -1583,6 +1595,180 @@
    (call_indirect (type $i32)
     (i32.const 0)
    )
+  )
+ )
+)
+
+;; The elem's offset is way out of bounds, which we should not error on, and do
+;; nothing otherwise.
+(module
+ ;; CHECK:      (type $v (func))
+ ;; IMMUT:      (type $v (func))
+ (type $v (func))
+
+ (table 10 10 funcref)
+
+ (elem (i32.const -1) $0)
+
+ ;; CHECK:      (table $0 10 10 funcref)
+
+ ;; CHECK:      (elem $0 (i32.const -1) $0)
+
+ ;; CHECK:      (func $0 (type $v)
+ ;; CHECK-NEXT:  (call_indirect $0 (type $v)
+ ;; CHECK-NEXT:   (i32.const -1)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (table $0 10 10 funcref)
+
+ ;; IMMUT:      (elem $0 (i32.const -1) $0)
+
+ ;; IMMUT:      (func $0 (type $v)
+ ;; IMMUT-NEXT:  (call_indirect $0 (type $v)
+ ;; IMMUT-NEXT:   (i32.const -1)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT: )
+ (func $0
+  (call_indirect (type $v)
+   (i32.const -1)
+  )
+ )
+)
+
+;; Another elem offset that is way out of bounds.
+(module
+ ;; CHECK:      (type $v (func))
+ ;; IMMUT:      (type $v (func))
+ (type $v (func))
+
+ (table 10 10 funcref)
+
+ (elem (i32.const -2) $0)
+
+ ;; CHECK:      (table $0 10 10 funcref)
+
+ ;; CHECK:      (elem $0 (i32.const -2) $0)
+
+ ;; CHECK:      (func $0 (type $v)
+ ;; CHECK-NEXT:  (call_indirect $0 (type $v)
+ ;; CHECK-NEXT:   (i32.const -2)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (table $0 10 10 funcref)
+
+ ;; IMMUT:      (elem $0 (i32.const -2) $0)
+
+ ;; IMMUT:      (func $0 (type $v)
+ ;; IMMUT-NEXT:  (call_indirect $0 (type $v)
+ ;; IMMUT-NEXT:   (i32.const -2)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT: )
+ (func $0
+  (call_indirect (type $v)
+   (i32.const -2)
+  )
+ )
+)
+
+;; The elem is just out of bounds due to its offset.
+(module
+ ;; CHECK:      (type $v (func))
+ ;; IMMUT:      (type $v (func))
+ (type $v (func))
+
+ (table 10 10 funcref)
+
+ (elem (i32.const 10) $0)
+
+ ;; CHECK:      (table $0 10 10 funcref)
+
+ ;; CHECK:      (elem $0 (i32.const 10) $0)
+
+ ;; CHECK:      (func $0 (type $v)
+ ;; CHECK-NEXT:  (call_indirect $0 (type $v)
+ ;; CHECK-NEXT:   (i32.const 10)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (table $0 10 10 funcref)
+
+ ;; IMMUT:      (elem $0 (i32.const 10) $0)
+
+ ;; IMMUT:      (func $0 (type $v)
+ ;; IMMUT-NEXT:  (call_indirect $0 (type $v)
+ ;; IMMUT-NEXT:   (i32.const 10)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT: )
+ (func $0
+  (call_indirect (type $v)
+   (i32.const 10)
+  )
+ )
+)
+
+;; The elem is just out of bounds due to its length.
+(module
+ ;; CHECK:      (type $v (func))
+ ;; IMMUT:      (type $v (func))
+ (type $v (func))
+
+ (table 10 10 funcref)
+
+ (elem (i32.const 9) $0 $0)
+
+ ;; CHECK:      (table $0 10 10 funcref)
+
+ ;; CHECK:      (elem $0 (i32.const 9) $0 $0)
+
+ ;; CHECK:      (func $0 (type $v)
+ ;; CHECK-NEXT:  (call_indirect $0 (type $v)
+ ;; CHECK-NEXT:   (i32.const 9)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (table $0 10 10 funcref)
+
+ ;; IMMUT:      (elem $0 (i32.const 9) $0 $0)
+
+ ;; IMMUT:      (func $0 (type $v)
+ ;; IMMUT-NEXT:  (call_indirect $0 (type $v)
+ ;; IMMUT-NEXT:   (i32.const 9)
+ ;; IMMUT-NEXT:  )
+ ;; IMMUT-NEXT: )
+ (func $0
+  (call_indirect (type $v)
+   ;; We could in theory optimize this, as the out of bounds part is after us,
+   ;; but the wasm traps anyhow, so leave it alone.
+   (i32.const 9)
+  )
+ )
+)
+
+;; The elem is ok, and we can optimize.
+(module
+ ;; CHECK:      (type $v (func))
+ ;; IMMUT:      (type $v (func))
+ (type $v (func))
+
+ (table 10 10 funcref)
+
+ (elem (i32.const 9) $0)
+
+ ;; CHECK:      (table $0 10 10 funcref)
+
+ ;; CHECK:      (elem $0 (i32.const 9) $0)
+
+ ;; CHECK:      (func $0 (type $v)
+ ;; CHECK-NEXT:  (call $0)
+ ;; CHECK-NEXT: )
+ ;; IMMUT:      (table $0 10 10 funcref)
+
+ ;; IMMUT:      (elem $0 (i32.const 9) $0)
+
+ ;; IMMUT:      (func $0 (type $v)
+ ;; IMMUT-NEXT:  (call $0)
+ ;; IMMUT-NEXT: )
+ (func $0
+  (call_indirect (type $v)
+   (i32.const 9)
   )
  )
 )

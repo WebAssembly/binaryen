@@ -521,19 +521,19 @@ TEST_F(TypeTest, CanonicalizeTypesBeforeSubtyping) {
 TEST_F(TypeTest, TestHeapTypeRelations) {
   HeapType ext = HeapType::ext;
   HeapType func = HeapType::func;
+  HeapType cont = HeapType::cont;
   HeapType any = HeapType::any;
   HeapType eq = HeapType::eq;
   HeapType i31 = HeapType::i31;
   HeapType struct_ = HeapType::struct_;
   HeapType array = HeapType::array;
   HeapType string = HeapType::string;
-  HeapType stringview_wtf8 = HeapType::stringview_wtf8;
-  HeapType stringview_wtf16 = HeapType::stringview_wtf16;
-  HeapType stringview_iter = HeapType::stringview_iter;
   HeapType none = HeapType::none;
   HeapType noext = HeapType::noext;
   HeapType nofunc = HeapType::nofunc;
+  HeapType nocont = HeapType::nocont;
   HeapType defFunc = Signature();
+  HeapType defCont = Continuation(defFunc);
   HeapType defStruct = Struct();
   HeapType defArray = Array(Field(Type::i32, Immutable));
 
@@ -545,190 +545,205 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
     if (a == b) {
       EXPECT_TRUE(HeapType::isSubType(a, b));
       EXPECT_TRUE(HeapType::isSubType(b, a));
+      EXPECT_EQ(a.getTop(), b.getTop());
       EXPECT_EQ(a.getBottom(), b.getBottom());
     } else if (lub && *lub == b) {
       EXPECT_TRUE(HeapType::isSubType(a, b));
       EXPECT_FALSE(HeapType::isSubType(b, a));
+      EXPECT_EQ(a.getTop(), b.getTop());
       EXPECT_EQ(a.getBottom(), b.getBottom());
     } else if (lub && *lub == a) {
       EXPECT_FALSE(HeapType::isSubType(a, b));
       EXPECT_TRUE(HeapType::isSubType(b, a));
+      EXPECT_EQ(a.getTop(), b.getTop());
       EXPECT_EQ(a.getBottom(), b.getBottom());
     } else if (lub) {
       EXPECT_FALSE(HeapType::isSubType(a, b));
       EXPECT_FALSE(HeapType::isSubType(b, a));
+      EXPECT_EQ(a.getTop(), b.getTop());
       EXPECT_EQ(a.getBottom(), b.getBottom());
     } else {
       EXPECT_FALSE(HeapType::isSubType(a, b));
       EXPECT_FALSE(HeapType::isSubType(b, a));
+      EXPECT_NE(a.getTop(), b.getTop());
       EXPECT_NE(a.getBottom(), b.getBottom());
     }
   };
 
   assertLUB(ext, ext, ext);
   assertLUB(ext, func, {});
+  assertLUB(ext, cont, {});
   assertLUB(ext, any, {});
   assertLUB(ext, eq, {});
   assertLUB(ext, i31, {});
   assertLUB(ext, struct_, {});
   assertLUB(ext, array, {});
   assertLUB(ext, string, {});
-  assertLUB(ext, stringview_wtf8, {});
-  assertLUB(ext, stringview_wtf16, {});
-  assertLUB(ext, stringview_iter, {});
   assertLUB(ext, none, {});
   assertLUB(ext, noext, ext);
   assertLUB(ext, nofunc, {});
+  assertLUB(ext, nocont, {});
   assertLUB(ext, defFunc, {});
   assertLUB(ext, defStruct, {});
   assertLUB(ext, defArray, {});
 
   assertLUB(func, func, func);
+  assertLUB(func, cont, {});
   assertLUB(func, any, {});
   assertLUB(func, eq, {});
   assertLUB(func, i31, {});
   assertLUB(func, struct_, {});
   assertLUB(func, array, {});
   assertLUB(func, string, {});
-  assertLUB(func, stringview_wtf8, {});
-  assertLUB(func, stringview_wtf16, {});
-  assertLUB(func, stringview_iter, {});
   assertLUB(func, none, {});
   assertLUB(func, noext, {});
   assertLUB(func, nofunc, func);
+  assertLUB(func, nocont, {});
   assertLUB(func, defFunc, func);
+  assertLUB(func, defCont, {});
   assertLUB(func, defStruct, {});
   assertLUB(func, defArray, {});
 
+  assertLUB(cont, cont, cont);
+  assertLUB(cont, func, {});
+  assertLUB(cont, any, {});
+  assertLUB(cont, eq, {});
+  assertLUB(cont, i31, {});
+  assertLUB(cont, struct_, {});
+  assertLUB(cont, array, {});
+  assertLUB(cont, string, {});
+  assertLUB(cont, none, {});
+  assertLUB(cont, noext, {});
+  assertLUB(cont, nofunc, {});
+  assertLUB(cont, nocont, cont);
+  assertLUB(cont, defFunc, {});
+  assertLUB(cont, defCont, cont);
+  assertLUB(cont, defStruct, {});
+  assertLUB(cont, defArray, {});
+
   assertLUB(any, any, any);
+  assertLUB(any, cont, {});
   assertLUB(any, eq, any);
   assertLUB(any, i31, any);
   assertLUB(any, struct_, any);
   assertLUB(any, array, any);
   assertLUB(any, string, any);
-  assertLUB(any, stringview_wtf8, any);
-  assertLUB(any, stringview_wtf16, any);
-  assertLUB(any, stringview_iter, any);
   assertLUB(any, none, any);
   assertLUB(any, noext, {});
   assertLUB(any, nofunc, {});
+  assertLUB(any, nocont, {});
   assertLUB(any, defFunc, {});
+  assertLUB(any, defCont, {});
   assertLUB(any, defStruct, any);
   assertLUB(any, defArray, any);
 
   assertLUB(eq, eq, eq);
+  assertLUB(eq, cont, {});
   assertLUB(eq, i31, eq);
   assertLUB(eq, struct_, eq);
   assertLUB(eq, array, eq);
   assertLUB(eq, string, any);
-  assertLUB(eq, stringview_wtf8, any);
-  assertLUB(eq, stringview_wtf16, any);
-  assertLUB(eq, stringview_iter, any);
   assertLUB(eq, none, eq);
   assertLUB(eq, noext, {});
   assertLUB(eq, nofunc, {});
+  assertLUB(eq, nocont, {});
   assertLUB(eq, defFunc, {});
+  assertLUB(eq, defCont, {});
   assertLUB(eq, defStruct, eq);
   assertLUB(eq, defArray, eq);
 
   assertLUB(i31, i31, i31);
+  assertLUB(i31, cont, {});
   assertLUB(i31, struct_, eq);
   assertLUB(i31, array, eq);
   assertLUB(i31, string, any);
-  assertLUB(i31, stringview_wtf8, any);
-  assertLUB(i31, stringview_wtf16, any);
-  assertLUB(i31, stringview_iter, any);
   assertLUB(i31, none, i31);
   assertLUB(i31, noext, {});
   assertLUB(i31, nofunc, {});
+  assertLUB(i31, nocont, {});
   assertLUB(i31, defFunc, {});
+  assertLUB(i31, defCont, {});
   assertLUB(i31, defStruct, eq);
   assertLUB(i31, defArray, eq);
 
   assertLUB(struct_, struct_, struct_);
+  assertLUB(struct_, cont, {});
   assertLUB(struct_, array, eq);
   assertLUB(struct_, string, any);
-  assertLUB(struct_, stringview_wtf8, any);
-  assertLUB(struct_, stringview_wtf16, any);
-  assertLUB(struct_, stringview_iter, any);
   assertLUB(struct_, none, struct_);
   assertLUB(struct_, noext, {});
   assertLUB(struct_, nofunc, {});
+  assertLUB(struct_, nocont, {});
   assertLUB(struct_, defFunc, {});
+  assertLUB(struct_, defCont, {});
   assertLUB(struct_, defStruct, struct_);
   assertLUB(struct_, defArray, eq);
 
   assertLUB(array, array, array);
+  assertLUB(array, cont, {});
   assertLUB(array, string, any);
-  assertLUB(array, stringview_wtf8, any);
-  assertLUB(array, stringview_wtf16, any);
-  assertLUB(array, stringview_iter, any);
   assertLUB(array, none, array);
   assertLUB(array, noext, {});
   assertLUB(array, nofunc, {});
+  assertLUB(array, nocont, {});
   assertLUB(array, defFunc, {});
+  assertLUB(array, defCont, {});
   assertLUB(array, defStruct, eq);
   assertLUB(array, defArray, array);
 
   assertLUB(string, string, string);
-  assertLUB(string, stringview_wtf8, any);
-  assertLUB(string, stringview_wtf16, any);
-  assertLUB(string, stringview_iter, any);
+  assertLUB(string, cont, {});
   assertLUB(string, none, string);
   assertLUB(string, noext, {});
   assertLUB(string, nofunc, {});
+  assertLUB(string, nocont, {});
   assertLUB(string, defFunc, {});
+  assertLUB(string, defCont, {});
   assertLUB(string, defStruct, any);
   assertLUB(string, defArray, any);
-
-  assertLUB(stringview_wtf8, stringview_wtf8, stringview_wtf8);
-  assertLUB(stringview_wtf8, stringview_wtf16, any);
-  assertLUB(stringview_wtf8, stringview_iter, any);
-  assertLUB(stringview_wtf8, none, stringview_wtf8);
-  assertLUB(stringview_wtf8, noext, {});
-  assertLUB(stringview_wtf8, nofunc, {});
-  assertLUB(stringview_wtf8, defFunc, {});
-  assertLUB(stringview_wtf8, defStruct, any);
-  assertLUB(stringview_wtf8, defArray, any);
-
-  assertLUB(stringview_wtf16, stringview_wtf16, stringview_wtf16);
-  assertLUB(stringview_wtf16, stringview_iter, any);
-  assertLUB(stringview_wtf16, none, stringview_wtf16);
-  assertLUB(stringview_wtf16, noext, {});
-  assertLUB(stringview_wtf16, nofunc, {});
-  assertLUB(stringview_wtf16, defFunc, {});
-  assertLUB(stringview_wtf16, defStruct, any);
-  assertLUB(stringview_wtf16, defArray, any);
-
-  assertLUB(stringview_iter, stringview_iter, stringview_iter);
-  assertLUB(stringview_iter, none, stringview_iter);
-  assertLUB(stringview_iter, noext, {});
-  assertLUB(stringview_iter, nofunc, {});
-  assertLUB(stringview_iter, defFunc, {});
-  assertLUB(stringview_iter, defStruct, any);
-  assertLUB(stringview_iter, defArray, any);
 
   assertLUB(none, none, none);
   assertLUB(none, noext, {});
   assertLUB(none, nofunc, {});
+  assertLUB(none, nocont, {});
   assertLUB(none, defFunc, {});
+  assertLUB(none, defCont, {});
   assertLUB(none, defStruct, defStruct);
   assertLUB(none, defArray, defArray);
 
   assertLUB(noext, noext, noext);
   assertLUB(noext, nofunc, {});
+  assertLUB(noext, nocont, {});
   assertLUB(noext, defFunc, {});
+  assertLUB(noext, defCont, {});
   assertLUB(noext, defStruct, {});
   assertLUB(noext, defArray, {});
 
   assertLUB(nofunc, nofunc, nofunc);
+  assertLUB(nofunc, nocont, {});
   assertLUB(nofunc, defFunc, defFunc);
+  assertLUB(nofunc, defCont, {});
   assertLUB(nofunc, defStruct, {});
   assertLUB(nofunc, defArray, {});
 
+  assertLUB(nocont, nocont, nocont);
+  assertLUB(nocont, func, {});
+  assertLUB(nocont, cont, cont);
+  assertLUB(nocont, nofunc, {});
+  assertLUB(nocont, defFunc, {});
+  assertLUB(nocont, defCont, defCont);
+  assertLUB(nocont, defStruct, {});
+  assertLUB(nocont, defArray, {});
+
   assertLUB(defFunc, defFunc, defFunc);
+  assertLUB(defFunc, defCont, {});
   assertLUB(defFunc, defStruct, {});
   assertLUB(defFunc, defArray, {});
+
+  assertLUB(defCont, defCont, defCont);
+  assertLUB(defCont, defFunc, {});
+  assertLUB(defCont, defStruct, {});
+  assertLUB(defCont, defArray, {});
 
   assertLUB(defStruct, defStruct, defStruct);
   assertLUB(defStruct, defArray, eq);
@@ -994,6 +1009,7 @@ TEST_F(TypeTest, TestMaxArrayDepths) {
 // Test .depth() helper.
 TEST_F(TypeTest, TestDepth) {
   HeapType A, B, C;
+  HeapType sig = HeapType(Signature(Type::none, Type::none));
   {
     TypeBuilder builder(3);
     builder[0].setOpen() = Struct();
@@ -1018,15 +1034,16 @@ TEST_F(TypeTest, TestDepth) {
 
   // Signature types are subtypes of func.
   EXPECT_EQ(HeapType(HeapType::func).getDepth(), 0U);
-  EXPECT_EQ(HeapType(Signature(Type::none, Type::none)).getDepth(), 1U);
+  EXPECT_EQ(sig.getDepth(), 1U);
+
+  // Continuation types are subtypes of cont.
+  EXPECT_EQ(HeapType(HeapType::cont).getDepth(), 0U);
+  EXPECT_EQ(HeapType(Continuation(sig)).getDepth(), 1U);
 
   EXPECT_EQ(HeapType(HeapType::ext).getDepth(), 0U);
 
   EXPECT_EQ(HeapType(HeapType::i31).getDepth(), 2U);
   EXPECT_EQ(HeapType(HeapType::string).getDepth(), 2U);
-  EXPECT_EQ(HeapType(HeapType::stringview_wtf8).getDepth(), 2U);
-  EXPECT_EQ(HeapType(HeapType::stringview_wtf16).getDepth(), 2U);
-  EXPECT_EQ(HeapType(HeapType::stringview_iter).getDepth(), 2U);
 
   EXPECT_EQ(HeapType(HeapType::none).getDepth(), size_t(-1));
   EXPECT_EQ(HeapType(HeapType::nofunc).getDepth(), size_t(-1));
@@ -1086,34 +1103,32 @@ TEST_F(TypeTest, TestSupertypes) {
   // Basic types: getDeclaredSuperType always returns nothing.
   ASSERT_FALSE(HeapType(HeapType::ext).getDeclaredSuperType());
   ASSERT_FALSE(HeapType(HeapType::func).getDeclaredSuperType());
+  ASSERT_FALSE(HeapType(HeapType::cont).getDeclaredSuperType());
   ASSERT_FALSE(HeapType(HeapType::any).getDeclaredSuperType());
   ASSERT_FALSE(HeapType(HeapType::eq).getDeclaredSuperType());
   ASSERT_FALSE(HeapType(HeapType::i31).getDeclaredSuperType());
   ASSERT_FALSE(HeapType(HeapType::struct_).getDeclaredSuperType());
   ASSERT_FALSE(HeapType(HeapType::array).getDeclaredSuperType());
   ASSERT_FALSE(HeapType(HeapType::string).getDeclaredSuperType());
-  ASSERT_FALSE(HeapType(HeapType::stringview_wtf8).getDeclaredSuperType());
-  ASSERT_FALSE(HeapType(HeapType::stringview_wtf16).getDeclaredSuperType());
-  ASSERT_FALSE(HeapType(HeapType::stringview_iter).getDeclaredSuperType());
   ASSERT_FALSE(HeapType(HeapType::none).getDeclaredSuperType());
   ASSERT_FALSE(HeapType(HeapType::noext).getDeclaredSuperType());
   ASSERT_FALSE(HeapType(HeapType::nofunc).getDeclaredSuperType());
+  ASSERT_FALSE(HeapType(HeapType::nocont).getDeclaredSuperType());
 
   // Basic types: getSuperType does return a super, when there is one.
   ASSERT_FALSE(HeapType(HeapType::ext).getSuperType());
   ASSERT_FALSE(HeapType(HeapType::func).getSuperType());
+  ASSERT_FALSE(HeapType(HeapType::cont).getSuperType());
   ASSERT_FALSE(HeapType(HeapType::any).getSuperType());
   ASSERT_EQ(HeapType(HeapType::eq).getSuperType(), HeapType::any);
   ASSERT_EQ(HeapType(HeapType::i31).getSuperType(), HeapType::eq);
   ASSERT_EQ(HeapType(HeapType::struct_).getSuperType(), HeapType::eq);
   ASSERT_EQ(HeapType(HeapType::array).getSuperType(), HeapType::eq);
   ASSERT_FALSE(HeapType(HeapType::string).getSuperType());
-  ASSERT_FALSE(HeapType(HeapType::stringview_wtf8).getSuperType());
-  ASSERT_FALSE(HeapType(HeapType::stringview_wtf16).getSuperType());
-  ASSERT_FALSE(HeapType(HeapType::stringview_iter).getSuperType());
   ASSERT_FALSE(HeapType(HeapType::none).getSuperType());
   ASSERT_FALSE(HeapType(HeapType::noext).getSuperType());
   ASSERT_FALSE(HeapType(HeapType::nofunc).getSuperType());
+  ASSERT_FALSE(HeapType(HeapType::nocont).getSuperType());
 
   // Non-basic types.
   HeapType struct1, struct2, array1, array2, sig1, sig2;

@@ -271,12 +271,15 @@
 
   ;; CHECK:      (func $pattern-breaker (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local $ref2 (ref null $struct))
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (local.set $ref2
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (struct.set $struct 0
   ;; CHECK-NEXT:   (local.get $ref)
   ;; CHECK-NEXT:   (i32.const 20)
@@ -284,13 +287,56 @@
   ;; CHECK-NEXT: )
   (func $pattern-breaker
     (local $ref (ref null $struct))
+    (local $ref2 (ref null $struct))
     (local.set $ref
       (struct.new $struct
         (i32.const 10)
       )
     )
-    ;; Anything that we don't recognize breaks the pattern.
+    ;; Any instruction that can not be swapped and is not
+    ;; the expected struct.set breaks the pattern.
+    (local.set $ref2 (local.get $ref))
+    (struct.set $struct 0
+      (local.get $ref)
+      (i32.const 20)
+    )
+  )
+
+  ;; CHECK:      (func $dont-swap-subsequent-struct-new (type $1)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local $ref2 (ref null $struct))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $ref2
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $dont-swap-subsequent-struct-new
+    (local $ref (ref null $struct))
+    (local $ref2 (ref null $struct))
+    (local.set $ref
+      (struct.new $struct
+        (i32.const 10)
+      )
+    )
     (nop)
+    ;; We do not swap with another local.set of struct.new.
+    (local.set $ref2
+      (struct.new $struct
+        (i32.const 20)
+      )
+    )
+    ;; last instruction in the block won't be swapped.
     (struct.set $struct 0
       (local.get $ref)
       (i32.const 20)
@@ -575,42 +621,52 @@
 
   ;; CHECK:      (func $default (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
-  ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.tee $ref
-  ;; CHECK-NEXT:    (struct.new_default $struct)
+  ;; CHECK-NEXT:  (local $ref3 (ref null $struct3))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $ref3
+  ;; CHECK-NEXT:   (struct.new $struct3
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:    (i32.const 33)
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $default
     (local $ref (ref null $struct))
+    (local $ref3 (ref null $struct3))
+    ;; We optimize new_default as well, adding default values as needed.
     (struct.set $struct 0
       (local.tee $ref
-        ;; Ignore a new_default for now. If the fields are defaultable then we
-        ;; could add them, in principle, but that might increase code size.
         (struct.new_default $struct)
       )
-      (i32.const 20)
+      (i32.const 10)
+    )
+    (struct.set $struct3 1
+      (local.tee $ref3
+        (struct.new_default $struct3)
+      )
+      (i32.const 33)
     )
   )
 
   ;; CHECK:      (func $many-news (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct3))
   ;; CHECK-NEXT:  (local $ref2 (ref null $struct3))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct3
   ;; CHECK-NEXT:    (i32.const 40)
   ;; CHECK-NEXT:    (i32.const 50)
-  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:    (i32.const 60)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  (struct.set $struct3 2
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (i32.const 60)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (local.set $ref
   ;; CHECK-NEXT:   (struct.new $struct3
   ;; CHECK-NEXT:    (i32.const 400)
@@ -713,7 +769,7 @@
   ;; CHECK:      (func $unreachable (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (local.tee $ref
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
