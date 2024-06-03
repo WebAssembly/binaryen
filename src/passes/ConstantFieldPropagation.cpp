@@ -136,24 +136,22 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // ref.as_non_null (we need to trap as the get would have done so), plus the
     // constant value. (Leave it to further optimizations to get rid of the
     // ref.)
-    auto* value = makeExpression(info, heapType, curr->index);
+    auto* value = makeExpression(info, heapType, curr);
     replaceCurrent(builder.makeSequence(
       builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)), value));
     changed = true;
   }
 
-  // Given information about a constant value, and the struct type and index it
-  // is read from, create an expression for that value.
+  // Given information about a constant value, and the struct type and StructGet
+  // that reads it, create an expression for that value.
   Expression* makeExpression(const PossibleConstantValues& info,
                              HeapType type,
-                             Index index) {
+                             StructGet* curr) {
     auto* value = info.makeExpression(*getModule());
-    auto field = GCTypeUtils::getField(type, index);
+    auto field = GCTypeUtils::getField(type, curr->index);
     assert(field);
     value =
       Bits::makePackedFieldGet(value, *field, curr->signed_, *getModule());
-    replaceCurrent(builder.makeSequence(
-      builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)), value));
     return value;
   }
 
@@ -297,11 +295,12 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     auto* nnRef = builder.makeRefAs(RefAsNonNull, curr->ref);
     replaceCurrent(builder.makeSelect(
       builder.makeRefTest(nnRef, Type(testType, NonNullable)),
-      makeExpression(values[testIndex], refHeapType, curr->index),
-      makeExpression(values[1 - testIndex], refHeapType, curr->index)));
+      makeExpression(values[testIndex], refHeapType, curr),
+      makeExpression(values[1 - testIndex], refHeapType, curr)));
     changed = true;
   }
 
+#if 0
   void visitRefTest(RefTest* curr) {
     // When we see
     //
@@ -415,6 +414,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       replaceCurrent(builder.makeUnary(EqZInt32, curr));
     }
   }
+#endif
 
   void doWalkFunction(Function* func) {
     WalkerPass<PostWalker<FunctionOptimizer>>::doWalkFunction(func);
