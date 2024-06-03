@@ -33,40 +33,12 @@
 
 #include "memory"
 
-#include "ir/find_all.h"
+#include "ir/global-utils.h"
 #include "pass.h"
 #include "support/topological_sort.h"
 #include "wasm.h"
 
 namespace wasm {
-
-// We'll count uses in parallel.
-using AtomicNameCountMap = std::unordered_map<Name, std::atomic<Index>>;
-
-struct UseCountScanner : public WalkerPass<PostWalker<UseCountScanner>> {
-  bool isFunctionParallel() override { return true; }
-
-  bool modifiesBinaryenIR() override { return false; }
-
-  UseCountScanner(AtomicNameCountMap& counts) : counts(counts) {}
-
-  std::unique_ptr<Pass> create() override {
-    return std::make_unique<UseCountScanner>(counts);
-  }
-
-  void visitGlobalGet(GlobalGet* curr) {
-    // We can't add a new element to the map in parallel.
-    assert(counts.count(curr->name) > 0);
-    counts[curr->name]++;
-  }
-  void visitGlobalSet(GlobalSet* curr) {
-    assert(counts.count(curr->name) > 0);
-    counts[curr->name]++;
-  }
-
-private:
-  AtomicNameCountMap& counts;
-};
 
 struct ReorderGlobals : public Pass {
   bool always;
@@ -84,19 +56,6 @@ struct ReorderGlobals : public Pass {
   // considering fractional sums of them later.
   using IndexCountMap = std::vector<double>;
 
-  // We must take into account dependencies, so that globals appear before
-  // their users in other globals:
-  //
-  //   (global $a i32 (i32.const 10))
-  //   (global $b i32 (global.get $a)) ;; $b depends on $a; $a must be first
-  //
-  // To do so we construct a map from each global to those it depends on. We
-  // also build the reverse map, of those that it is depended upon by.
-  struct Dependencies {
-    std::unordered_map<Index, std::unordered_set<Index>> dependsOn;
-    std::unordered_map<Index, std::unordered_set<Index>> dependedUpon;
-  };
-
   void run(Module* module) override {
     auto& globals = module->globals;
 
@@ -110,16 +69,7 @@ struct ReorderGlobals : public Pass {
       return;
     }
 
-    AtomicNameCountMap atomicCounts;
-    // Fill in info, as we'll operate on it in parallel.
-    for (auto& global : globals) {
-      atomicCounts[global->name];
-    }
-
-    // Count uses.
-    UseCountScanner scanner(atomicCounts);
-    scanner.run(getPassRunner(), module);
-    scanner.runOnModuleCode(getPassRunner(), module);
+    GlobalUtils::UseCounter(*module);
 
     // Switch to non-atomic for all further processing, and convert names to
     // indices.
@@ -133,17 +83,7 @@ struct ReorderGlobals : public Pass {
     }
 
     // Compute dependencies.
-    Dependencies deps;
-    for (Index i = 0; i < globals.size(); i++) {
-      auto& global = globals[i];
-      if (!global->imported()) {
-        for (auto* get : FindAll<GlobalGet>(global->init).list) {
-          auto getIndex = originalIndices[get->name];
-          deps.dependsOn[i].insert(getIndex);
-          deps.dependedUpon[getIndex].insert(i);
-        }
-      }
-    }
+    GlobalUtils::Dependencies deps(*module);
 
     // Compute various sorting options. All the options use a variation of the
     // algorithm in doSort() below, see there for more details; the only
