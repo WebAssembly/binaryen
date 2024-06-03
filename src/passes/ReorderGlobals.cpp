@@ -69,21 +69,18 @@ struct ReorderGlobals : public Pass {
       return;
     }
 
-    GlobalUtils::UseCounter(*module);
+    GlobalUtils::UseCounter globalUses(*module);
 
     // Switch to non-atomic for all further processing, and convert names to
     // indices.
-    std::unordered_map<Name, Index> originalIndices;
-    for (Index i = 0; i < globals.size(); i++) {
-      originalIndices[globals[i]->name] = i;
-    }
+    GlobalUtils::Indices originalIndices(*module);
     IndexCountMap counts(globals.size());
-    for (auto& [name, count] : atomicCounts) {
+    for (auto& [name, count] : globalUses.globalUses) {
       counts[originalIndices[name]] = count;
     }
 
     // Compute dependencies.
-    GlobalUtils::Dependencies deps(*module);
+    GlobalUtils::Dependencies deps(*module, originalIndices);
 
     // Compute various sorting options. All the options use a variation of the
     // algorithm in doSort() below, see there for more details; the only
@@ -131,9 +128,9 @@ struct ReorderGlobals : public Pass {
     IndexCountMap sumCounts(globals.size()), exponentialCounts(globals.size());
 
     struct Sort : public TopologicalSort<Index, Sort> {
-      const Dependencies& deps;
+      const GlobalUtils::Dependencies& deps;
 
-      Sort(Index numGlobals, const Dependencies& deps) : deps(deps) {
+      Sort(Index numGlobals, const GlobalUtils::Dependencies& deps) : deps(deps) {
         for (Index i = 0; i < numGlobals; i++) {
           push(i);
         }
@@ -185,7 +182,7 @@ struct ReorderGlobals : public Pass {
   }
 
   IndexIndexMap doSort(const IndexCountMap& counts,
-                       const Dependencies& originalDeps,
+                       const GlobalUtils::Dependencies& originalDeps,
                        Module* module) {
     auto& globals = module->globals;
 

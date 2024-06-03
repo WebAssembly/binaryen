@@ -18,17 +18,24 @@
 #include "ir/global-utils.h"
 #include "wasm.h"
 
-namespace wasm {
+namespace wasm::GlobalUtils {
 
-Dependencies::Dependencies(Module& wasm) {
+Indices::Indices(Module& wasm) {
+  auto& globals = wasm.globals;
+  for (Index i = 0; i < globals.size(); i++) {
+    (*this)[globals[i]->name] = i;
+  }
+}
+
+Dependencies::Dependencies(Module& wasm, const Indices& indices) {
   auto& globals = wasm.globals;
   for (Index i = 0; i < globals.size(); i++) {
     auto& global = globals[i];
     if (!global->imported()) {
       for (auto* get : FindAll<GlobalGet>(global->init).list) {
-        auto getIndex = originalIndices[get->name];
-        deps.dependsOn[i].insert(getIndex);
-        deps.dependedUpon[getIndex].insert(i);
+        auto getIndex = indices.at(get->name);
+        dependsOn[i].insert(getIndex);
+        dependedUpon[getIndex].insert(i);
       }
     }
   }
@@ -67,6 +74,8 @@ private:
 } // anomymous namespace
 
 UseCounter::UseCounter(Module& wasm) {
+  auto& globals = wasm.globals;
+
   AtomicNameCountMap atomicCounts;
   // Fill in info, as we'll operate on it in parallel.
   for (auto& global : globals) {
@@ -85,5 +94,5 @@ UseCounter::UseCounter(Module& wasm) {
   }
 }
 
-} // namespace wasm
+} // namespace wasm::GlobalUtils
 
