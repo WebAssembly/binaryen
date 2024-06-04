@@ -65,26 +65,6 @@ inline bool canInitializeGlobal(Module& wasm, Expression* curr) {
   return Properties::isValidConstantExpression(wasm, curr);
 }
 
-struct Indices : public std::unordered_map<Name, Index> {
-  Indices(Module& wasm);
-};
-
-// We must take into account dependencies, so that globals appear before
-// their users in other globals:
-//
-//   (global $a i32 (i32.const 10))
-//   (global $b i32 (global.get $a)) ;; $b depends on $a; $a must be first
-//
-// To do so we construct a map from each global to those it depends on. We
-// also build the reverse map, of those that it is depended upon by.
-struct Dependencies {
-  // Indexed for speed.
-  std::unordered_map<Index, std::unordered_set<Index>> dependsOn;
-  std::unordered_map<Index, std::unordered_set<Index>> dependedUpon;
-
-  Dependencies(Module& wasm, const Indices& indices);
-};
-
 // Counts the uses (global.gets) of globals in the entire module.
 struct UseCounter {
   // The amount of uses for each global name.

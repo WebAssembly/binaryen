@@ -33,6 +33,7 @@
 
 #include "memory"
 
+#include "ir/find_all.h"
 #include "ir/global-utils.h"
 #include "pass.h"
 #include "support/topological_sort.h"
@@ -56,6 +57,19 @@ struct ReorderGlobals : public Pass {
   // considering fractional sums of them later.
   using IndexCountMap = std::vector<double>;
 
+  // We must take into account dependencies, so that globals appear before
+  // their users in other globals:
+  //
+  //   (global $a i32 (i32.const 10))
+  //   (global $b i32 (global.get $a)) ;; $b depends on $a; $a must be first
+  //
+  // To do so we construct a map from each global to those it depends on. We
+  // also build the reverse map, of those that it is depended upon by.
+  struct Dependencies {
+    std::unordered_map<Index, std::unordered_set<Index>> dependsOn;
+    std::unordered_map<Index, std::unordered_set<Index>> dependedUpon;
+  };
+
   void run(Module* module) override {
     auto& globals = module->globals;
 
@@ -69,18 +83,30 @@ struct ReorderGlobals : public Pass {
       return;
     }
 
-    GlobalUtils::UseCounter globalUses(*module);
+    GlobalUtils::UseCounter uses(*module);
 
-    // Switch to non-atomic for all further processing, and convert names to
-    // indices.
-    GlobalUtils::Indices originalIndices(*module);
+    // Convert names to indices.
+    std::unordered_map<Name, Index> originalIndices;
+    for (Index i = 0; i < globals.size(); i++) {
+      originalIndices[globals[i]->name] = i;
+    }
     IndexCountMap counts(globals.size());
-    for (auto& [name, count] : globalUses.globalUses) {
+    for (auto& [name, count] : uses.globalUses) {
       counts[originalIndices[name]] = count;
     }
 
     // Compute dependencies.
-    GlobalUtils::Dependencies deps(*module, originalIndices);
+    Dependencies deps;
+    for (Index i = 0; i < globals.size(); i++) {
+      auto& global = globals[i];
+      if (!global->imported()) {
+        for (auto* get : FindAll<GlobalGet>(global->init).list) {
+          auto getIndex = originalIndices[get->name];
+          deps.dependsOn[i].insert(getIndex);
+          deps.dependedUpon[getIndex].insert(i);
+        }
+      }
+    }
 
     // Compute various sorting options. All the options use a variation of the
     // algorithm in doSort() below, see there for more details; the only
@@ -128,10 +154,9 @@ struct ReorderGlobals : public Pass {
     IndexCountMap sumCounts(globals.size()), exponentialCounts(globals.size());
 
     struct Sort : public TopologicalSort<Index, Sort> {
-      const GlobalUtils::Dependencies& deps;
+      const Dependencies& deps;
 
-      Sort(Index numGlobals, const GlobalUtils::Dependencies& deps)
-        : deps(deps) {
+      Sort(Index numGlobals, const Dependencies& deps) : deps(deps) {
         for (Index i = 0; i < numGlobals; i++) {
           push(i);
         }
@@ -183,7 +208,7 @@ struct ReorderGlobals : public Pass {
   }
 
   IndexIndexMap doSort(const IndexCountMap& counts,
-                       const GlobalUtils::Dependencies& originalDeps,
+                       const Dependencies& originalDeps,
                        Module* module) {
     auto& globals = module->globals;
 

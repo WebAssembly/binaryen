@@ -20,27 +20,6 @@
 
 namespace wasm::GlobalUtils {
 
-Indices::Indices(Module& wasm) {
-  auto& globals = wasm.globals;
-  for (Index i = 0; i < globals.size(); i++) {
-    (*this)[globals[i]->name] = i;
-  }
-}
-
-Dependencies::Dependencies(Module& wasm, const Indices& indices) {
-  auto& globals = wasm.globals;
-  for (Index i = 0; i < globals.size(); i++) {
-    auto& global = globals[i];
-    if (!global->imported()) {
-      for (auto* get : FindAll<GlobalGet>(global->init).list) {
-        auto getIndex = indices.at(get->name);
-        dependsOn[i].insert(getIndex);
-        dependedUpon[getIndex].insert(i);
-      }
-    }
-  }
-}
-
 namespace {
 
 // We'll count uses in parallel.
