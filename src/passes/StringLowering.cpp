@@ -267,29 +267,6 @@ struct StringLowering : public StringGathering {
   Type nnExt = Type(HeapType::ext, NonNullable);
 
   void updateTypes(Module* module) {
-    TypeMapper::TypeUpdates updates;
-
-    // Strings turn into externref.
-    updates[HeapType::string] = HeapType::ext;
-
-    // The module may have its own array16 type inside a big rec group, but
-    // imported strings expects that type in its own rec group as part of the
-    // ABI. Fix that up here. (This is valid to do as this type has no sub- or
-    // super-types anyhow; it is "plain old data" for communicating with the
-    // outside.)
-    auto allTypes = ModuleUtils::collectHeapTypes(*module);
-    auto array16 = nullArray16.getHeapType();
-    auto array16Element = array16.getArray().element;
-    for (auto type : allTypes) {
-      // Match an array type with no super and that is closed.
-      if (type.isArray() && !type.getDeclaredSuperType() && !type.isOpen() &&
-          type.getArray().element == array16Element) {
-        updates[type] = array16;
-      }
-    }
-
-    TypeMapper(*module, updates).map();
-
     // TypeMapper will not handle public types, but we do want to modify them as
     // well: we are modifying the public ABI here. We can't simply tell
     // TypeMapper to consider them private, as then they'd end up in the new big
@@ -322,6 +299,29 @@ struct StringLowering : public StringGathering {
       }
       func->type = Signature(params, results);
     }
+
+    TypeMapper::TypeUpdates updates;
+
+    // Strings turn into externref.
+    updates[HeapType::string] = HeapType::ext;
+
+    // The module may have its own array16 type inside a big rec group, but
+    // imported strings expects that type in its own rec group as part of the
+    // ABI. Fix that up here. (This is valid to do as this type has no sub- or
+    // super-types anyhow; it is "plain old data" for communicating with the
+    // outside.)
+    auto allTypes = ModuleUtils::collectHeapTypes(*module);
+    auto array16 = nullArray16.getHeapType();
+    auto array16Element = array16.getArray().element;
+    for (auto type : allTypes) {
+      // Match an array type with no super and that is closed.
+      if (type.isArray() && !type.getDeclaredSuperType() && !type.isOpen() &&
+          type.getArray().element == array16Element) {
+        updates[type] = array16;
+      }
+    }
+
+    TypeMapper(*module, updates).map();
   }
 
   // Imported string functions.
