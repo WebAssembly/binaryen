@@ -858,7 +858,8 @@ private:
     }
 
     auto* child = stack[index];
-    for (auto** currChild : ChildIterator(stack[index - 1]).children) {
+    auto childIterator = ChildIterator(stack[index - 1]);
+    for (auto** currChild : childIterator.children) {
       if (*currChild == child) {
         return currChild;
       }
