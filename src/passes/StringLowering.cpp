@@ -275,12 +275,12 @@ struct StringLowering : public StringGathering {
     // Instead, manually handle singleton-rec groups of function types. This
     // keeps them at size 1, as expected, and handles the cases of function
     // imports and exports. If we need more (non-function types, non-singleton
-    // rec groups then more work will be necessary TODO
+    // rec groups, etc.) then more work will be necessary TODO
     //
-    // Note that we do this before TypeMapper, which allows it to them modify
+    // Note that we do this before TypeMapper, which allows it to then fix up
     // things like the types of parameters (which depend on the type of the
     // function, which must be modified either in TypeMapper - but as just
-    // explained we cannot do that - or inside it).
+    // explained we cannot do that - or before it, which is what we do here).
     for (auto& func : module->functions) {
       if (func->type.getRecGroup().size() != 1 ||
           !Type(func->type, Nullable).getFeatures().hasStrings()) {
