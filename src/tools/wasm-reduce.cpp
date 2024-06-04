@@ -874,13 +874,19 @@ struct Reducer
   }
 
   bool reduceGlobals() {
+    auto& globals = module->globals;
+    if (globals.empty()) {
+      return false;
+    }
+
     GlobalUtils::UseCounter globalUses(*module);
 
     // If a global has no uses then we can try to remove it. (We could also use
     // dependencies to do more work in a single cycle, but more cycles will make
     // further progress anyhow.)
-    auto& globals = module->globals;
-    for (size_t i = 0; i < globals.size(); i++) {
+    auto removed = false;
+    std::cerr << "|    trying globals...\n";
+    for (int64_t i = globals.size() - 1; i >= 0; i++) {
       // Ignore used globals and respect a reasonable frequency of attempts.
       if (globalUses.globalUses[globals[i]->name] > 0 ||
           !shouldTryToReduce(factor)) {
@@ -889,18 +895,23 @@ struct Reducer
 
       // Copy the global to the side, remove it, and see if that works. If not,
       // return it.
-      auto global = **globals[i];
+      Global global = *globals[i];
       module->removeGlobal(global.name);
       ProgramResult result;
       if (!writeAndTestReduction(result)) {
+        // Re-add the global. Note that this puts it at the very end, which may
+        // be a different position. This is valid as it has no dependencies, but
+        // it may affect binary size, so it might be worth the work to reinsert
+        // it properly? TODO
         module->addGlobal(std::make_unique<Global>(global));
-        // This global is now at the end; swap it back into place?
-        // XXX
       } else {
         std::cerr << "|      removed a global\n";
         noteReduction(1);
+        removed = true;
       }
     }
+    // If we removed a significant amount, suggest that we keep going.
+    return removed >= factor;
   }
 
   // Reduces entire functions at a time. Returns whether we did a significant
@@ -984,7 +995,8 @@ struct Reducer
 
     shrinkElementSegments();
 
-    reduceGlobals();
+    while (reduceGlobals()) {
+    }
 
     // try to remove exports
     std::cerr << "|    try to remove exports (with factor " << factor << ")\n";
