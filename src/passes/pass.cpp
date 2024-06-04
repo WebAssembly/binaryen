@@ -234,10 +234,10 @@ void PassRegistry::registerPasses() {
   registerPass("i64-to-i32-lowering",
                "lower all uses of i64s to use i32s instead",
                createI64ToI32LoweringPass);
-  registerPass("instrument-allocations",
-               "instrument the build with code to intercept all allocation "
-               "(malloc/realloc/calloc/free) calls",
-               createInstrumentAllocationsPass);
+  registerPass(
+    "trace-calls",
+    "instrument the build with code to intercept specific function calls",
+    createTraceCallsPass);
   registerPass(
     "instrument-locals",
     "instrument the build with code to intercept all loads and stores",

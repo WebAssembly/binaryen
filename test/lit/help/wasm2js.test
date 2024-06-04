@@ -454,6 +454,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --table64-lowering                            lower 64-bit tables 32-bit ones
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --trace-calls                                 instrument the build with code
+;; CHECK-NEXT:                                                 to intercept specific function
+;; CHECK-NEXT:                                                 calls
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --translate-to-exnref                         translate old Phase 3 EH
 ;; CHECK-NEXT:                                                 instructions to new ones with
 ;; CHECK-NEXT:                                                 exnref

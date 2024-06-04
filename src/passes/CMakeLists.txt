@@ -49,7 +49,6 @@ set(passes_SOURCES
   Heap2Local.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
-  InstrumentAllocations.cpp
   InstrumentLocals.cpp
   InstrumentMemory.cpp
   Intrinsics.cpp
@@ -94,6 +93,7 @@ set(passes_SOURCES
   StringLowering.cpp
   Strip.cpp
   StripTargetFeatures.cpp
+  TraceCalls.cpp
   RedundantSetElimination.cpp
   RemoveImports.cpp
   RemoveMemory.cpp
