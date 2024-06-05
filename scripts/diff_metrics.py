@@ -21,12 +21,19 @@ longest_name = max([len(item) for item in items])
 
 for item in sorted(list(items)):
   prefix = item + (' ' * (longest_name - len(item))) + ': '
+
   if item in a and item not in b:
-    print(f'{prefix} -{a[item]}')
+    value = f'-{a[item]}'
   elif item not in a and item in b:
-    print(f'{prefix} +{b[item]}')
+    value = f'+{a[item]}'
   else:
-    # print the diff and ensure a + or - prefix
     diff = b[item] - a[item]
-    print(f'{prefix} {"+" if diff > 0 else ""}{diff}')
+    # ensure a + or - prefix
+    value = str(diff)
+    if diff > 0:
+      value = '+' + value
+
+  # left-justify
+  value = '{:>8}'.format(value)
+  print(f'{prefix} {value}')
 
