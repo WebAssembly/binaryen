@@ -15,17 +15,28 @@
  */
 
 //
-// When we see a call foo(arg1, arg2) and at least one of the arguments has a
-// more refined type than is declared in the function being called, create a
-// copy of the function with the refined type. That copy can then potentially be
-// optimized in useful ways later.
+// When we see a call, see if the information at the callsite can allow us to
+// optimize. This is related to inlining, as when we inline the calling function
+// then optimizes the inlined code together with the code around the callsite;
+// in monomorphization we handle cases that inlining cannot do, by creating a
+// specialized version of the called function tuned for the particular call. In
+// particular, we may benefit from monomorphizing in the following cases:
 //
-// Inlining also monomorphizes in effect. What this pass does is handle the
-// cases where inlining cannot be done.
+//  * If a call provides a more refined type than the function declares for a
+//    parameter.
+//  * If a call provides a constant as a parameter. TODO
+//  * If a call provides a GC allocation as a parameter. TODO
+//  * If a call is dropped. TODO
+//
+// For example, if a call provides a constant then the call + called function
+// may optimize well together if constant propagation leads to removal of code.
+// GC allocations may also be useful as Heap2Local may operate (if the
+// allocation does not escape). And for a dropped call, if we optimize with the
+// drop inside the function then all the computation of that result may be
+// removed.
 //
 // To see when monomorphizing makes sense, this optimizes the target function
-// both with and without the more refined types. If the refined types help then
-// the version with might remove a cast, for example. Note that while doing so
+// both with and without the callsite info. Note that while doing so
 // we keep the optimization results of the version without - there is no reason
 // to forget them since we've gone to the trouble anyhow. So this pass may have
 // the side effect of performing minor optimizations on functions. There is also
@@ -54,9 +65,6 @@
 //       compute the LUB of a bunch of calls to a target and then investigate
 //       that one case and use it in all those callers.
 // TODO: Not just direct calls? But updating vtables is complex.
-// TODO: Not just types? We could monomorphize using Literal values. E.g. for
-//       function references, if we monomorphized we'd end up specializing qsort
-//       for the particular functions it is given.
 //
 
 #include "ir/cost.h"
@@ -72,6 +80,65 @@
 namespace wasm {
 
 namespace {
+
+// Relevant information about a call for purposes of monomorphization.
+struct CallInfo {
+  // The operands the call sends as parameters, in a general form. Each
+  // local.get here is of a parameter, and these operands appear in the called
+  // function. For example, consider this call, and the function it calls:
+  //
+  //  (call $foo
+  //    (i32.const 10)
+  //    (struct.new $struct
+  //      (..something complicated..)
+  //    )
+  //  )
+  //
+  //  (func $foo (param $int i32) (param $ref (ref $struct))
+  //    ..
+  //
+  // The generalized operands are
+  //
+  //  [
+  //    (i32.const 10)       ;; unchanged
+  //    (struct.new $struct  ;; the struct.new can be handled
+  //      (local.get $0)     ;; the complicated child cannot; make it a param
+  //    )
+  //  ]
+  //
+  // We can then optimize a version of $foo that looks like this:
+  //
+  //  (func $foo-monomorphized (param $0 ..)
+  //    (..local defs..)
+  //    (local.set $int
+  //      (i32.const 10)
+  //    )
+  //    (local.set $ref
+  //      (struct.new $struct
+  //        (local.get $0)
+  //      )
+  //    )
+  //    ..
+  //
+  // The $int param is no longer a parameter, and it is set in a local at the
+  // top. The $ref parameter is likewise removed. We have a new parameter for
+  // the internal part of the struct.new that we could not handle, and the call
+  // would send only that:
+  //
+  //  (call $foo-monomorphized
+  //    (..something complicated..)
+  //  )
+  //
+  // $foo-monomorphized is now a version of $monomorphized that has "pulled in"
+  // parts of the call, which may allow it to get optimized better.
+  //
+  // Note how local.gets in this list correspond to gets of the *new*
+  // parameters.  
+  const ExpressionList& operands;
+
+  // Whether the call is dropped.
+  bool dropped;
+};
 
 struct Monomorphize : public Pass {
   // If set, we run some opts to see if monomorphization helps, and skip it if
