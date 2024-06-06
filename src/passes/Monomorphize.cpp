@@ -26,7 +26,7 @@
 //    parameter.
 //  * If a call provides a constant as a parameter. TODO
 //  * If a call provides a GC allocation as a parameter. TODO
-//  * If a call is dropped. TODO
+//  * If a call is dropped. TODO also other stuff on the outside?
 //
 // For example, if a call provides a constant then the call + called function
 // may optimize well together if constant propagation leads to removal of code.
@@ -298,6 +298,7 @@ struct Monomorphize : public Pass {
   // a function name to itself. That indicates we found no benefit from
   // refining with those particular types, and saves us from computing it again
   // later on.
+  // TODO: this should map CallInfo and not type
   std::unordered_map<std::pair<Name, Type>, Name> funcParamMap;
 };
 
