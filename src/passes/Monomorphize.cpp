@@ -134,11 +134,32 @@ struct CallInfo {
   //
   // Note how local.gets in this list correspond to gets of the *new*
   // parameters.  
-  const ExpressionList& operands;
+  std::vector<Expression*> operands;
 
   // Whether the call is dropped.
   bool dropped;
+
+  CallInfo(std::vector<Expression*> operands, bool dropped) : operands(operands), dropped(dropped) {}
 };
+
+} // anonymous namespace
+
+} // namespace wasm
+
+namespace std {
+
+template<> struct hash<wasm::CallInfo> {
+  size_t operator()(const wasm::CallInfo& info) const {
+    return std::hash<std::pair<wasm::CallInfo, bool>>{}(
+      {info.operands, info.dropped});
+  }
+};
+
+}
+
+namespace wasm {
+
+namespace {
 
 struct Monomorphize : public Pass {
   // If set, we run some opts to see if monomorphization helps, and skip it if
@@ -183,7 +204,9 @@ struct Monomorphize : public Pass {
   }
 
   // Given a call, make a copy of the function it is calling that has more
-  // refined arguments that fit the arguments being passed perfectly.
+  // refined arguments that fit the arguments being passed perfectly. Returns
+  // the new call target (which may be the old call target, if we found no way
+  // to improve).
   Name getRefinedTarget(Call* call, Module* module) {
     auto target = call->target;
     auto* func = module->getFunction(target);
@@ -286,20 +309,20 @@ struct Monomorphize : public Pass {
     // the entire point is that parameters now have more refined types, which
     // can lead to locals reading them being refinable as well.
     runner.add("local-subtyping");
+    // TODO Heap2Local if there is a struct.new in the new operands
     runner.addDefaultFunctionOptimizationPasses();
     runner.setIsNested(true);
     runner.runOnFunction(func);
   }
 
-  // Maps [func name, param types] to the name of a new function whose params
-  // have those types.
+  // Maps [func name, call info] to the name of a new function which is
+  // specialized to that call info.
   //
-  // Note that this can contain funcParamMap{A, types} = A, that is, that maps
+  // Note that this can contain funcParamMap{A, ...} = A, that is, that maps
   // a function name to itself. That indicates we found no benefit from
   // refining with those particular types, and saves us from computing it again
   // later on.
-  // TODO: this should map CallInfo and not type
-  std::unordered_map<std::pair<Name, Type>, Name> funcParamMap;
+  std::unordered_map<std::pair<Name, CallInfo>, Name> funcParamMap;
 };
 
 } // anonymous namespace
