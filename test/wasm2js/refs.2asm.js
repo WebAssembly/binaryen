@@ -20,6 +20,8 @@ function asmFunc(imports) {
  }
  
  function ref_func() {
+  var ref_func_1 = 0;
+  ref_func_1 = ref_func_1 + 1 | 0;
   return ref_func;
  }
  

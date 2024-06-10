@@ -10,7 +10,17 @@
   )
 
   (func $ref.func (export "ref.func") (result funcref)
-    (local $ref.func i32) ;; test for scope confusion
+    ;; Test that we are aware that "$ref.func" below refers to the function and
+    ;; not the local. This code will keep the local around (at least in an
+    ;; unoptimized build), and it should use a different name than the function.
+    (local $ref.func i32)
+    (local.set $ref.func
+      (i32.add
+        (local.get $ref.func)
+        (i32.const 1)
+      )
+    )
+
     (ref.func $ref.func)
   )
 
