@@ -921,11 +921,13 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
     IString name = fromName(func->getLocalNameOrGeneric(i), NameScope::Local);
     ValueBuilder::appendArgumentToFunction(ret, name);
     if (needCoercions) {
-      ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeBinary(
-        ValueBuilder::makeName(name),
-        SET,
-        makeJsCoercion(ValueBuilder::makeName(name),
-                       wasmToJsType(func->getLocalType(i))))));
+      auto jsType = wasmToJsType(func->getLocalType(i));
+      if (needsJsCoercion(jsType)) {
+        ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeBinary(
+          ValueBuilder::makeName(name),
+          SET,
+          makeJsCoercion(ValueBuilder::makeName(name), jsType))));
+      }
     }
   }
   Ref theVar = ValueBuilder::makeVar();
@@ -2219,21 +2221,19 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                     visit(curr->value, EXPRESSION_RESULT),
                                     visit(curr->size, EXPRESSION_RESULT));
     }
-    Ref visitRefNull(RefNull* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
+    Ref visitRefNull(RefNull* curr) { return ValueBuilder::makeName("null"); }
     Ref visitRefIsNull(RefIsNull* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeBinary(visit(curr->value, EXPRESSION_RESULT),
+                                      EQ,
+                                      ValueBuilder::makeName("null"));
     }
     Ref visitRefFunc(RefFunc* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeName(fromName(curr->func, NameScope::Top));
     }
     Ref visitRefEq(RefEq* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeBinary(visit(curr->left, EXPRESSION_RESULT),
+                                      EQ,
+                                      visit(curr->right, EXPRESSION_RESULT));
     }
     Ref visitTableGet(TableGet* curr) {
       unimplemented(curr);
