@@ -29,6 +29,7 @@ class EffectAnalyzer {
 public:
   EffectAnalyzer(const PassOptions& passOptions, Module& module)
     : trapsNeverHappen(passOptions.trapsNeverHappen),
+      targetJS(passOptions.targetJS),
       funcEffectsMap(passOptions.funcEffectsMap), module(module),
       features(module.features) {}
 
@@ -45,6 +46,7 @@ public:
   }
 
   bool trapsNeverHappen;
+  bool targetJS;
   std::shared_ptr<FuncEffectsMap> funcEffectsMap;
   Module& module;
   FeatureSet features;
@@ -115,7 +117,7 @@ public:
   bool writesStruct = false;
   bool readsArray = false;
   bool writesArray = false;
-  // A trap, either from an unreachable instruction, or from an implicit trap
+  // A trap, either from an unreachable instruction, or from an XXX trap
   // that we do not ignore (see below).
   //
   // Note that we ignore trap differences, so it is ok to reorder traps with
@@ -567,12 +569,16 @@ private:
     void visitLoad(Load* curr) {
       parent.readsMemory = true;
       parent.isAtomic |= curr->isAtomic;
-      parent.trap = true;
+      if (!parent.targetJS) {
+        parent.trap = true;
+      }
     }
     void visitStore(Store* curr) {
       parent.writesMemory = true;
       parent.isAtomic |= curr->isAtomic;
-      parent.trap = true;
+      if (!parent.targetJS) {
+        parent.trap = true;
+      }
     }
     void visitAtomicRMW(AtomicRMW* curr) {
       parent.readsMemory = true;
@@ -659,7 +665,9 @@ private:
         case TruncSFloat64ToInt64:
         case TruncUFloat64ToInt32:
         case TruncUFloat64ToInt64: {
-          parent.trap = true;
+          if (!parent.targetJS) {
+            parent.trap = true;
+          }
           break;
         }
         default: {
@@ -676,19 +684,21 @@ private:
         case DivUInt64:
         case RemSInt64:
         case RemUInt64: {
-          // div and rem may contain implicit trap only if RHS is
-          // non-constant or constant which equal zero or -1 for
-          // signed divisions. Reminder traps only with zero
-          // divider.
-          if (auto* c = curr->right->dynCast<Const>()) {
-            if (c->value.isZero()) {
-              parent.trap = true;
-            } else if ((curr->op == DivSInt32 || curr->op == DivSInt64) &&
-                       c->value.getInteger() == -1LL) {
+          if (!parent.targetJS) {
+            // div and rem may contain implicit trap only if RHS is
+            // non-constant or constant which equal zero or -1 for
+            // signed divisions. Reminder traps only with zero
+            // divider.
+            if (auto* c = curr->right->dynCast<Const>()) {
+              if (c->value.isZero()) {
+                parent.trap = true;
+              } else if ((curr->op == DivSInt32 || curr->op == DivSInt64) &&
+                         c->value.getInteger() == -1LL) {
+                parent.trap = true;
+              }
+            } else {
               parent.trap = true;
             }
-          } else {
-            parent.trap = true;
           }
           break;
         }

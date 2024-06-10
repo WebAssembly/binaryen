@@ -173,13 +173,10 @@ public:
 
   Wasm2JSBuilder(Flags f, PassOptions options_) : flags(f), options(options_) {
     if (options.optimizeLevel > 0) {
-      // We don't try to model wasm's trapping precisely - if we did, each load
-      // and store would need to do a check. Given that we can just ignore traps
-      // when optimizing. (When not optimizing, it's nice to see codegen that
-      // matches wasm more precisely.)
-      options.trapsNeverHappen = true;
-      // It is also important to prevent the optimizer from adding new things
-      // that require additional lowering, as we could hit a cycle.
+      // Notify the optimizer that we are targeting JS, which adjust what can
+      // trap and what can not. This also prevents cycles in the optimizer as it
+      // prevents the optimizer from adding new things that require additional
+      // lowering for JS.
       options.targetJS = true;
     }
   }
