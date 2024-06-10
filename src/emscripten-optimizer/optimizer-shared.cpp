@@ -104,6 +104,11 @@ Ref makeJsCoercedZero(JsType type) {
   abort();
 }
 
+bool needsJsCoercion(JsType type) {
+  // References need no coercion, but everything else does.
+  return type != JS_REF;
+}
+
 Ref makeJsCoercion(Ref node, JsType type) {
   switch (type) {
     case JS_INT:
@@ -122,10 +127,11 @@ Ref makeJsCoercion(Ref node, JsType type) {
       return ValueBuilder::makeCall(SIMD_INT16X8_CHECK, node);
     case JS_INT32X4:
       return ValueBuilder::makeCall(SIMD_INT32X4_CHECK, node);
+    case JS_REF:
     case JS_NONE:
     default:
-      // non-validating code, emit nothing XXX this is dangerous, we should only
-      // allow this when we know we are not validating
+      // No coercion is needed.
+      // TODO see if JS_NONE is actually used here.
       return node;
   }
 }

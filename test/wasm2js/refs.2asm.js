@@ -15,7 +15,6 @@ function asmFunc(imports) {
  }
  
  function is_null(ref) {
-  ref = ref;
   return ref == null | 0;
  }
  
@@ -26,8 +25,6 @@ function asmFunc(imports) {
  }
  
  function ref_eq(x, y) {
-  x = x;
-  y = y;
   return x == y | 0;
  }
  
