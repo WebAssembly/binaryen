@@ -10,6 +10,7 @@
   )
 
   (func $ref.func (export "ref.func") (result funcref)
+    (local $ref.func i32) ;; test for scope confusion
     (ref.func $ref.func)
   )
 

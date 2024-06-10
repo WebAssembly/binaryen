@@ -2220,12 +2220,12 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                     visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitRefNull(RefNull* curr) {
-      return ValueBuilder::makeNull();
+      return ValueBuilder::makeName("null");
     }
     Ref visitRefIsNull(RefIsNull* curr) {
       return ValueBuilder::makeBinary(visit(curr->value, EXPRESSION_RESULT),
                                       EQ,
-                                      ValueBuilder::makeNull());
+                                      ValueBuilder::makeName("null"));
     }
     Ref visitRefFunc(RefFunc* curr) {
       return ValueBuilder::makeName(fromName(curr->func, NameScope::Top));

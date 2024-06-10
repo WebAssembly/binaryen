@@ -1521,9 +1521,9 @@ class ValueBuilder {
     return &arena.alloc<Value>()->setString(s);
   }
 
-public:
   static Ref makeNull() { return &arena.alloc<Value>()->setNull(); }
 
+public:
   static Ref makeRawArray(int size_hint = 0) {
     return &arena.alloc<Value>()->setArray(size_hint);
   }
