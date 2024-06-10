@@ -39,6 +39,7 @@ enum JsType {
   JS_INT16X8,
   JS_INT32X4,
   JS_INT64,
+  JS_REF,
   JS_NONE // number of types
 };
 
