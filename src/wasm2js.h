@@ -2220,20 +2220,20 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                     visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitRefNull(RefNull* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeNull();
     }
     Ref visitRefIsNull(RefIsNull* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeBinary(visit(curr->value, EXPRESSION_RESULT),
+                                      EQ,
+                                      ValueBuilder::makeNull());
     }
     Ref visitRefFunc(RefFunc* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeName(fromName(curr->func, NameScope::Top));
     }
     Ref visitRefEq(RefEq* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeBinary(visit(curr->left, EXPRESSION_RESULT),
+                                      EQ,
+                                      visit(curr->right, EXPRESSION_RESULT));
     }
     Ref visitTableGet(TableGet* curr) {
       unimplemented(curr);
