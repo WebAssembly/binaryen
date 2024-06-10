@@ -236,34 +236,24 @@ function asmFunc(imports) {
  
  function $44($0_1) {
   $0_1 = Math_fround($0_1);
-  var $1_1 = Math_fround(0), $2_1 = 0;
+  var $1_1 = 0;
   if (Math_fround(Math_abs($0_1)) >= Math_fround(1.0)) {
-   if ($0_1 > Math_fround(0.0)) {
-    $1_1 = Math_fround(Math_min(Math_fround(Math_floor(Math_fround($0_1 * Math_fround(2.3283064365386963e-10)))), Math_fround(4294967296.0)))
-   } else {
-    $1_1 = Math_fround(Math_ceil(Math_fround(Math_fround($0_1 - Math_fround(~~$0_1 >>> 0 >>> 0)) * Math_fround(2.3283064365386963e-10))))
-   }
-   $2_1 = ~~$1_1 >>> 0;
+   $1_1 = ~~($0_1 > Math_fround(0.0) ? Math_fround(Math_min(Math_fround(Math_floor(Math_fround($0_1 * Math_fround(2.3283064365386963e-10)))), Math_fround(4294967296.0))) : Math_fround(Math_ceil(Math_fround(Math_fround($0_1 - Math_fround(~~$0_1 >>> 0 >>> 0)) * Math_fround(2.3283064365386963e-10))))) >>> 0
   } else {
-   $2_1 = 0
+   $1_1 = 0
   }
-  return !($2_1 | ~~$0_1 >>> 0) | 0;
+  return !($1_1 | ~~$0_1 >>> 0) | 0;
  }
  
  function $45($0_1) {
   $0_1 = +$0_1;
-  var $1_1 = 0.0, $2_1 = 0;
+  var $1_1 = 0;
   if (Math_abs($0_1) >= 1.0) {
-   if ($0_1 > 0.0) {
-    $1_1 = Math_min(Math_floor($0_1 * 2.3283064365386963e-10), 4294967295.0)
-   } else {
-    $1_1 = Math_ceil(($0_1 - +(~~$0_1 >>> 0 >>> 0)) * 2.3283064365386963e-10)
-   }
-   $2_1 = ~~$1_1 >>> 0;
+   $1_1 = ~~($0_1 > 0.0 ? Math_min(Math_floor($0_1 * 2.3283064365386963e-10), 4294967295.0) : Math_ceil(($0_1 - +(~~$0_1 >>> 0 >>> 0)) * 2.3283064365386963e-10)) >>> 0
   } else {
-   $2_1 = 0
+   $1_1 = 0
   }
-  return !($2_1 | ~~$0_1 >>> 0) | 0;
+  return !($1_1 | ~~$0_1 >>> 0) | 0;
  }
  
  function legalstub$40($0_1, $1_1) {

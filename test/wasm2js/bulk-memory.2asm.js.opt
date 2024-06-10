@@ -275,6 +275,9 @@ var retasmFunc = asmFunc({
 export var init = retasmFunc.init;
 export var load8_u = retasmFunc.load8_u;
 
+  var bufferView;
+function wasm2js_trap() { throw new Error('abort'); }
+
 function asmFunc(imports) {
  var buffer = new ArrayBuffer(65536);
  var HEAP8 = new Int8Array(buffer);
@@ -300,9 +303,12 @@ function asmFunc(imports) {
  }
  
  function $1() {
-  __wasm_memory_size();
+  if (__wasm_memory_size() << 16 >>> 0 < 0) {
+   wasm2js_trap()
+  }
  }
  
+ bufferView = HEAPU8;
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
@@ -324,6 +330,7 @@ function asmFunc(imports) {
    HEAPF32 = new Float32Array(newBuffer);
    HEAPF64 = new Float64Array(newBuffer);
    buffer = newBuffer;
+   bufferView = HEAPU8;
   }
   return oldPages;
  }
