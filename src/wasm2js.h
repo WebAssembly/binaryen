@@ -2236,16 +2236,18 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                       visit(curr->right, EXPRESSION_RESULT));
     }
     Ref visitTableGet(TableGet* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
+                                   visit(curr->index, EXPRESSION_RESULT));
     }
     Ref visitTableSet(TableSet* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      auto sub = ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
+                                       visit(curr->index, EXPRESSION_RESULT));
+      auto value = visit(curr->value, EXPRESSION_RESULT);
+      return ValueBuilder::makeBinary(sub, SET, value);
     }
     Ref visitTableSize(TableSize* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeDot(ValueBuilder::makeName(FUNCTION_TABLE),
+                                   ValueBuilder::makeName("length"));
     }
     Ref visitTableGrow(TableGrow* curr) {
       unimplemented(curr);
