@@ -3369,7 +3369,11 @@ void WasmBinaryReader::readElementSegments() {
       [[maybe_unused]] auto type = getU32LEB();
       auto num = getU32LEB();
       for (Index i = 0; i < num; i++) {
-        getU32LEB();
+        if (usesExpressions) {
+          readExpression();
+        } else {
+          getU32LEB();
+        }
       }
       continue;
     }

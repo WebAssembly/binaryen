@@ -52,8 +52,14 @@ option(BUILD_FOR_BROWSER "Build binaryen toolchain utilities for the browser" OF
 # Turn this on to use the Wasm EH feature instead of emscripten EH in the wasm/BinaryenJS builds
 option(EMSCRIPTEN_ENABLE_WASM_EH "Enable Wasm EH feature in emscripten build" OFF)
 
+option(EMSCRIPTEN_ENABLE_WASM64 "Enable memory64 in emscripten build" OFF)
+
 # Turn this on to use pthreads feature in the wasm/BinaryenJS builds
 option(EMSCRIPTEN_ENABLE_PTHREADS "Enable pthreads in emscripten build" OFF)
+
+# Turn this off to generate a separate .wasm file instead of packaging it into the JS.
+# This is useful for debugging, performance analysis, and other testing.
+option(EMSCRIPTEN_ENABLE_SINGLE_FILE "Enable SINGLE_FILE mode in emscripten build" ON)
 
 # For git users, attempt to generate a more useful version string
 if(EXISTS ${CMAKE_CURRENT_SOURCE_DIR}/.git)
@@ -329,7 +335,6 @@ if(EMSCRIPTEN)
   # does when run on wasm files.
   option(ENABLE_BIGINT "Enable wasm BigInt support" OFF)
   if(ENABLE_BIGINT)
-    add_link_flag("-sERROR_ON_WASM_CHANGES_AFTER_LINK")
     add_link_flag("-sWASM_BIGINT")
   endif()
 
@@ -377,6 +382,10 @@ if(EMSCRIPTEN)
   endif()
     # in opt builds, LTO helps so much (>20%) it's worth slow compile times
     add_nondebug_compile_flag("-flto")
+    if(EMSCRIPTEN_ENABLE_WASM64)
+      add_compile_flag("-sMEMORY64 -Wno-experimental")
+      add_link_flag("-sMEMORY64")
+    endif()
   endif()
 
 # clang doesn't print colored diagnostics when invoked from Ninja
@@ -477,7 +486,9 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm "-Wno-unused-command-line-argument")
   # Emit a single file for convenience of people using binaryen.js as a library,
   # so they only need to distribute a single file.
-  target_link_libraries(binaryen_wasm "-sSINGLE_FILE")
+  if(EMSCRIPTEN_ENABLE_SINGLE_FILE)
+    target_link_libraries(binaryen_wasm "-sSINGLE_FILE")
+  endif()
   target_link_libraries(binaryen_wasm "-sEXPORT_ES6")
   target_link_libraries(binaryen_wasm "-sEXPORTED_RUNTIME_METHODS=stringToUTF8OnStack,stringToAscii")
   target_link_libraries(binaryen_wasm "-sEXPORTED_FUNCTIONS=_malloc,_free")
@@ -512,7 +523,9 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_js "-sNODERAWFS=0")
   # Do not error on the repeated NODERAWFS argument
   target_link_libraries(binaryen_js "-Wno-unused-command-line-argument")
-  target_link_libraries(binaryen_js "-sSINGLE_FILE")
+  if(EMSCRIPTEN_ENABLE_SINGLE_FILE)
+    target_link_libraries(binaryen_js "-sSINGLE_FILE")
+  endif()
   target_link_libraries(binaryen_js "-sEXPORT_NAME=Binaryen")
   # Currently, js_of_ocaml can only process ES5 code
   if(JS_OF_OCAML)
