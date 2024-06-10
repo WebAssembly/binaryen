@@ -2221,9 +2221,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                     visit(curr->value, EXPRESSION_RESULT),
                                     visit(curr->size, EXPRESSION_RESULT));
     }
-    Ref visitRefNull(RefNull* curr) {
-      return ValueBuilder::makeName("null");
-    }
+    Ref visitRefNull(RefNull* curr) { return ValueBuilder::makeName("null"); }
     Ref visitRefIsNull(RefIsNull* curr) {
       return ValueBuilder::makeBinary(visit(curr->value, EXPRESSION_RESULT),
                                       EQ,
