@@ -19,4 +19,11 @@
   (func $table.size (export "table.size") (result i32)
     (table.size $table)
   )
+
+  (func $table.grow (export "table.grow") (result i32)
+    (table.grow $table
+      (ref.func $table.grow)
+      (i32.const 42)
+    )
+  )
 )
