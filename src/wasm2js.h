@@ -860,6 +860,60 @@ void Wasm2JSBuilder::addTableFillFunc(Ref ast, Module* wasm, Table* table) {
 }
 
 void Wasm2JSBuilder::addTableCopyFunc(Ref ast, Module* wasm, Table* table) {
+  Ref tableCopyFunc = ValueBuilder::makeFunction(WASM_TABLE_COPY);
+  ValueBuilder::appendArgumentToFunction(tableCopyFunc, IString("dest"));
+  ValueBuilder::appendArgumentToFunction(tableCopyFunc, IString("source"));
+  ValueBuilder::appendArgumentToFunction(tableCopyFunc, IString("size"));
+
+  // Set up a variable to loop over.
+  Ref i = ValueBuilder::makeVar();
+  tableCopyFunc[3]->push_back(i);
+  ValueBuilder::appendToVar(
+    i,
+    IString("i"),
+    ValueBuilder::makeInt(0));
+
+  // Compute the table indexes to use for the current loop iteration.
+  Ref destIndex = ValueBuilder::makeBinary(
+    ValueBuilder::makeName(IString("dest")),
+    PLUS,
+    ValueBuilder::makeName(IString("i"))
+  );
+  Ref sourceIndex = ValueBuilder::makeBinary(
+    ValueBuilder::makeName(IString("source")),
+    PLUS,
+    ValueBuilder::makeName(IString("i"))
+  );
+
+  // Set the value for the current loop iteration.
+  Ref set = ValueBuilder::makeBinary(
+    ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), destIndex),
+    SET,
+    ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), sourceIndex));
+
+  // Increment the variable.
+  Ref increment = ValueBuilder::makeBinary(
+        ValueBuilder::makeName(IString("i")),
+        SET,
+        ValueBuilder::makeBinary(
+          ValueBuilder::makeName(IString("i")),
+          PLUS,
+          ValueBuilder::makeInt(1)));
+
+  // Loop body: set the value, and increment.
+  Ref body = ValueBuilder::makeBlock();
+  body[1]->push_back(set);
+  body[1]->push_back(increment);
+
+  // Loop until we reach the size.
+  Ref loopCondition = 
+    ValueBuilder::makeBinary(ValueBuilder::makeName(IString("i")),
+                             LT,
+                             ValueBuilder::makeName(IString("size")));
+  Ref loop = ValueBuilder::makeWhile(loopCondition, body);
+  tableCopyFunc[3]->push_back(loop);
+
+  ast->push_back(tableCopyFunc);
 }
 
 void Wasm2JSBuilder::addStart(Ref ast, Module* wasm) {
