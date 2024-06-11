@@ -1,4 +1,6 @@
 
+function wasm2js_trap() { throw new Error('abort'); }
+
 function asmFunc(imports) {
  var Math_imul = Math.imul;
  var Math_fround = Math.fround;
@@ -28,11 +30,16 @@ function asmFunc(imports) {
   return x == y | 0;
  }
  
+ function ref_as(x) {
+  return x || wasm2js_trap();
+ }
+ 
  return {
   "null_": null_, 
   "is_null": is_null, 
   "ref_func": ref_func, 
-  "ref_eq": ref_eq
+  "ref_eq": ref_eq, 
+  "ref_as": ref_as
  };
 }
 
@@ -42,3 +49,4 @@ export var null_ = retasmFunc.null_;
 export var is_null = retasmFunc.is_null;
 export var ref_func = retasmFunc.ref_func;
 export var ref_eq = retasmFunc.ref_eq;
+export var ref_as = retasmFunc.ref_as;

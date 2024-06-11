@@ -30,4 +30,10 @@
       (local.get $y)
     )
   )
+
+  (func $ref.as (export "ref.as") (param $x anyref) (result anyref)
+    (ref.as_non_null
+      (local.get $x)
+    )
+  )
 )

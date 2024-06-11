@@ -2415,8 +2415,15 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitRefAs(RefAs* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      // TODO: support others
+      assert(curr->op == RefAsNonNull);
+
+      // value || trap()
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TRAP);
+      return ValueBuilder::makeBinary(
+        visit(curr->value, EXPRESSION_RESULT),
+        IString("||"),
+        ValueBuilder::makeCall(ABI::wasm2js::TRAP));
     }
 
     Ref visitContBind(ContBind* curr) {
