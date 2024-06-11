@@ -752,6 +752,7 @@ void Wasm2JSBuilder::addTableGrowFunc(Ref ast, Module* wasm, Table* table) {
   // TODO: check for attempts to grow beyond the declared max
 
   Ref tableGrowFunc = ValueBuilder::makeFunction(WASM_TABLE_GROW);
+  ValueBuilder::appendArgumentToFunction(tableGrowFunc, IString("value"));
   ValueBuilder::appendArgumentToFunction(tableGrowFunc, IString("delta"));
 
   auto getTableDotLength = [&]() {
@@ -779,6 +780,8 @@ void Wasm2JSBuilder::addTableGrowFunc(Ref ast, Module* wasm, Table* table) {
         SET,
         newSize);
   tableGrowFunc[3]->push_back(grow);
+
+  // Fill with the new value. TODO
 
   // Return the old size.
   tableGrowFunc[3]->push_back(
@@ -2296,6 +2299,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     Ref visitTableGrow(TableGrow* curr) {
       return ValueBuilder::makeCall(
         WASM_TABLE_GROW,
+        visit(curr->value, EXPRESSION_RESULT),
         makeJsCoercion(visit(curr->delta, EXPRESSION_RESULT),
                        wasmToJsType(curr->delta->type)));
     }
