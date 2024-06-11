@@ -321,9 +321,6 @@ private:
   void addFunctionImport(Ref ast, Function* import);
   void addGlobalImport(Ref ast, Global* import);
   void addTable(Ref ast, Module* wasm);
-  void addTableGrowFunc(Ref ast, Module* wasm, Table* table);
-  void addTableFillFunc(Ref ast, Module* wasm, Table* table);
-  void addTableCopyFunc(Ref ast, Module* wasm, Table* table);
   void addStart(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addGlobal(Ref ast, Global* global);
@@ -742,178 +739,7 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
             });
         });
     }
-
-    if (table->max > table->initial) {
-      addTableGrowFunc(ast, wasm, table.get());
-    }
-    addTableFillFunc(ast, wasm, table.get());
-    addTableCopyFunc(ast, wasm, table.get());
   }
-}
-
-void Wasm2JSBuilder::addTableGrowFunc(Ref ast, Module* wasm, Table* table) {
-  // TODO: support multiple tables
-  // TODO: check for attempts to grow beyond the declared max
-
-  Ref tableGrowFunc = ValueBuilder::makeFunction(WASM_TABLE_GROW);
-  ValueBuilder::appendArgumentToFunction(tableGrowFunc, IString("value"));
-  ValueBuilder::appendArgumentToFunction(tableGrowFunc, IString("delta"));
-
-  auto getTableDotLength = [&]() {
-    return ValueBuilder::makeDot(ValueBuilder::makeName(FUNCTION_TABLE),
-                          ValueBuilder::makeName(LENGTH));
-  };
-
-  // Save the old size.
-  Ref oldSize = ValueBuilder::makeVar();
-  tableGrowFunc[3]->push_back(oldSize);
-  ValueBuilder::appendToVar(
-    oldSize,
-    IString("oldSize"),
-    getTableDotLength());
-
-  // Compute the new size.
-  Ref newSize = ValueBuilder::makeBinary(
-    ValueBuilder::makeName(IString("oldSize")),
-    PLUS,
-    ValueBuilder::makeName(IString("delta")));
-
-  // Grow/shrink.
-  Ref grow = ValueBuilder::makeBinary(
-        getTableDotLength(),
-        SET,
-        newSize);
-  tableGrowFunc[3]->push_back(grow);
-
-  // Fill with the new value, if we grew.
-  Ref fill = ValueBuilder::makeCall(
-    WASM_TABLE_FILL,
-    ValueBuilder::makeName(IString("oldSize")),
-    ValueBuilder::makeName(IString("value")),
-    ValueBuilder::makeName(IString("delta"))
-  );
-  Ref maybeFill = ValueBuilder::makeIf(
-    ValueBuilder::makeBinary(ValueBuilder::makeName(IString("newSize")),
-                             GT,
-                             ValueBuilder::makeName(IString("oldSize"))),
-    fill,
-    NULL);
-  tableGrowFunc[3]->push_back(maybeFill);
-
-  // Return the old size.
-  tableGrowFunc[3]->push_back(
-    ValueBuilder::makeReturn(ValueBuilder::makeName(IString("oldSize"))));
-
-  ast->push_back(tableGrowFunc);
-}
-
-void Wasm2JSBuilder::addTableFillFunc(Ref ast, Module* wasm, Table* table) {
-  Ref tableFillFunc = ValueBuilder::makeFunction(WASM_TABLE_FILL);
-  ValueBuilder::appendArgumentToFunction(tableFillFunc, IString("dest"));
-  ValueBuilder::appendArgumentToFunction(tableFillFunc, IString("value"));
-  ValueBuilder::appendArgumentToFunction(tableFillFunc, IString("size"));
-
-  // Set up a variable to loop over.
-  Ref i = ValueBuilder::makeVar();
-  tableFillFunc[3]->push_back(i);
-  ValueBuilder::appendToVar(
-    i,
-    IString("i"),
-    ValueBuilder::makeInt(0));
-
-  // Compute the index to write to in the table for the current loop iteration.
-  Ref index = ValueBuilder::makeBinary(
-    ValueBuilder::makeName(IString("dest")),
-    PLUS,
-    ValueBuilder::makeName(IString("i"))
-  );
-
-  // Set the value for the current loop iteration.
-  Ref set = ValueBuilder::makeBinary(
-    ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), index),
-    SET,
-    ValueBuilder::makeName(IString("value")));
-
-  // Increment the variable.
-  Ref increment = ValueBuilder::makeBinary(
-        ValueBuilder::makeName(IString("i")),
-        SET,
-        ValueBuilder::makeBinary(
-          ValueBuilder::makeName(IString("i")),
-          PLUS,
-          ValueBuilder::makeInt(1)));
-
-  // Loop body: set the value, and increment.
-  Ref body = ValueBuilder::makeBlock();
-  body[1]->push_back(set);
-  body[1]->push_back(increment);
-
-  // Loop until we reach the size.
-  Ref loopCondition = 
-    ValueBuilder::makeBinary(ValueBuilder::makeName(IString("i")),
-                             LT,
-                             ValueBuilder::makeName(IString("size")));
-  Ref loop = ValueBuilder::makeWhile(loopCondition, body);
-  tableFillFunc[3]->push_back(loop);
-
-  ast->push_back(tableFillFunc);
-}
-
-void Wasm2JSBuilder::addTableCopyFunc(Ref ast, Module* wasm, Table* table) {
-  Ref tableCopyFunc = ValueBuilder::makeFunction(WASM_TABLE_COPY);
-  ValueBuilder::appendArgumentToFunction(tableCopyFunc, IString("dest"));
-  ValueBuilder::appendArgumentToFunction(tableCopyFunc, IString("source"));
-  ValueBuilder::appendArgumentToFunction(tableCopyFunc, IString("size"));
-
-  // Set up a variable to loop over.
-  Ref i = ValueBuilder::makeVar();
-  tableCopyFunc[3]->push_back(i);
-  ValueBuilder::appendToVar(
-    i,
-    IString("i"),
-    ValueBuilder::makeInt(0));
-
-  // Compute the table indexes to use for the current loop iteration.
-  Ref destIndex = ValueBuilder::makeBinary(
-    ValueBuilder::makeName(IString("dest")),
-    PLUS,
-    ValueBuilder::makeName(IString("i"))
-  );
-  Ref sourceIndex = ValueBuilder::makeBinary(
-    ValueBuilder::makeName(IString("source")),
-    PLUS,
-    ValueBuilder::makeName(IString("i"))
-  );
-
-  // Set the value for the current loop iteration.
-  Ref set = ValueBuilder::makeBinary(
-    ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), destIndex),
-    SET,
-    ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), sourceIndex));
-
-  // Increment the variable.
-  Ref increment = ValueBuilder::makeBinary(
-        ValueBuilder::makeName(IString("i")),
-        SET,
-        ValueBuilder::makeBinary(
-          ValueBuilder::makeName(IString("i")),
-          PLUS,
-          ValueBuilder::makeInt(1)));
-
-  // Loop body: set the value, and increment.
-  Ref body = ValueBuilder::makeBlock();
-  body[1]->push_back(set);
-  body[1]->push_back(increment);
-
-  // Loop until we reach the size.
-  Ref loopCondition = 
-    ValueBuilder::makeBinary(ValueBuilder::makeName(IString("i")),
-                             LT,
-                             ValueBuilder::makeName(IString("size")));
-  Ref loop = ValueBuilder::makeWhile(loopCondition, body);
-  tableCopyFunc[3]->push_back(loop);
-
-  ast->push_back(tableCopyFunc);
 }
 
 void Wasm2JSBuilder::addStart(Ref ast, Module* wasm) {
@@ -2423,34 +2249,26 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                    ValueBuilder::makeName(LENGTH));
     }
     Ref visitTableGrow(TableGrow* curr) {
-      return ValueBuilder::makeCall(
-        WASM_TABLE_GROW,
-        makeJsCoercion(visit(curr->value, EXPRESSION_RESULT),
-                       wasmToJsType(curr->value->type)),
-        makeJsCoercion(visit(curr->delta, EXPRESSION_RESULT),
-                       wasmToJsType(curr->delta->type)));
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TABLE_GROW);
+      // Also ensure fill, as grow calls fill internally.
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TABLE_FILL);
+      return ValueBuilder::makeCall(ABI::wasm2js::TABLE_GROW,
+                                    visit(curr->value, EXPRESSION_RESULT),
+                                    visit(curr->delta, EXPRESSION_RESULT));
     }
     Ref visitTableFill(TableFill* curr) {
-      return ValueBuilder::makeCall(
-        WASM_TABLE_FILL,
-        makeJsCoercion(visit(curr->dest, EXPRESSION_RESULT),
-                       wasmToJsType(curr->dest->type)),
-        makeJsCoercion(visit(curr->value, EXPRESSION_RESULT),
-                       wasmToJsType(curr->value->type)),
-        makeJsCoercion(visit(curr->size, EXPRESSION_RESULT),
-                       wasmToJsType(curr->size->type))
-      );
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TABLE_FILL);
+      return ValueBuilder::makeCall(ABI::wasm2js::TABLE_FILL,
+                                    visit(curr->dest, EXPRESSION_RESULT),
+                                    visit(curr->value, EXPRESSION_RESULT),
+                                    visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitTableCopy(TableCopy* curr) {
-      return ValueBuilder::makeCall(
-        WASM_TABLE_COPY,
-        makeJsCoercion(visit(curr->dest, EXPRESSION_RESULT),
-                       wasmToJsType(curr->dest->type)),
-        makeJsCoercion(visit(curr->source, EXPRESSION_RESULT),
-                       wasmToJsType(curr->source->type)),
-        makeJsCoercion(visit(curr->size, EXPRESSION_RESULT),
-                       wasmToJsType(curr->size->type))
-      );
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TABLE_COPY);
+      return ValueBuilder::makeCall(ABI::wasm2js::TABLE_COPY,
+                                    visit(curr->dest, EXPRESSION_RESULT),
+                                    visit(curr->source, EXPRESSION_RESULT),
+                                    visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitTry(Try* curr) {
       unimplemented(curr);
@@ -3217,6 +3035,36 @@ void Wasm2JSGlue::emitSpecialSupport() {
   function wasm2js_memory_copy(dest, source, size) {
     // TODO: traps on invalid things
     bufferView.copyWithin(dest, source, source + size);
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::TABLE_GROW) {
+      out << R"(
+  function wasm2js_table_grow(value, delta) {
+    // TODO: traps on invalid things
+    var oldSize = FUNCTION_TABLE.length;
+    FUNCTION_TABLE.length = oldSize + delta;
+    if (newSize > oldSize) {
+      __wasm_table_fill(oldSize, value, delta)
+    }
+    return oldSize;
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::TABLE_FILL) {
+      out << R"(
+  function __wasm_table_fill(dest, value, size) {
+    // TODO: traps on invalid things
+    for (var i = 0; i < size; i++) {
+      FUNCTION_TABLE[dest + i] = value;
+    }
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::TABLE_COPY) {
+      out << R"(
+  function __wasm_table_copy(dest, source, size) {
+    // TODO: traps on invalid things
+    for (var i = 0; i < size; i++) {
+      FUNCTION_TABLE[dest + i] = FUNCTION_TABLE[source + i];
+    }
   }
       )";
     } else if (import->base == ABI::wasm2js::DATA_DROP) {
