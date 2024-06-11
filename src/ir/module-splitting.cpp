@@ -148,6 +148,8 @@ void TableSlotManager::addSlot(Name func, Slot slot) {
 
 TableSlotManager::TableSlotManager(Module& module) : module(module) {
   // TODO: Reject or handle passive element segments
+  // TODO: If reference types are enabled, just create a fresh table to make bad
+  // interactions with user code impossible.
   auto funcref = Type(HeapType::func, Nullable);
   auto it = std::find_if(
     module.tables.begin(),
@@ -163,13 +165,17 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
       activeTableSegments.push_back(segment);
     });
 
-  // If there is exactly one table segment and that segment has a non-constant
-  // offset, append new items to the end of that segment. In all other cases,
-  // append new items at constant offsets after all existing items at constant
-  // offsets.
-  if (activeTableSegments.size() == 1 &&
-      activeTableSegments[0]->type == funcref &&
-      !activeTableSegments[0]->offset->is<Const>()) {
+  if (activeTableSegments.empty()) {
+    // There are no active segments, so we will lazily create one and start
+    // filling it at index 0.
+    activeBase = {activeTable->name, "", 0};
+  } else if (activeTableSegments.size() == 1 &&
+             activeTableSegments[0]->type == funcref &&
+             !activeTableSegments[0]->offset->is<Const>()) {
+    // If there is exactly one table segment and that segment has a non-constant
+    // offset, append new items to the end of that segment. In all other cases,
+    // append new items at constant offsets after all existing items at constant
+    // offsets.
     assert(activeTableSegments[0]->offset->is<GlobalGet>() &&
            "Unexpected initializer instruction");
     activeSegment = activeTableSegments[0];
