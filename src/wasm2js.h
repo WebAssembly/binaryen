@@ -845,8 +845,8 @@ void Wasm2JSBuilder::addTableFillFunc(Ref ast, Module* wasm, Table* table) {
 
   // Loop body: set the value, and increment.
   Ref body = ValueBuilder::makeBlock();
-  block[1]->push_back(set);
-  block[1]->push_back(increment);
+  body[1]->push_back(set);
+  body[1]->push_back(increment);
 
   // Loop until we reach the size.
   Ref loopCondition = 
