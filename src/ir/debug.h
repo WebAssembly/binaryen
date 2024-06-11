@@ -17,43 +17,56 @@
 #ifndef wasm_ir_debug_h
 #define wasm_ir_debug_h
 
-#include <wasm-traversal.h>
+#include "wasm.h"
 
 namespace wasm::debug {
 
+// Given an expression and another that it replaces, copy the debug info from
+// the latter to the former. Note that the expression may not be an exclusive
+// replacement of the other (the other may be replaced by several expressions,
+// all of whom may end up with the same debug info).
+inline void copyDebugInfoToReplacement(Expression* replacement,
+                                       Expression* original,
+                                       Function* func) {
+  auto& debugLocations = func->debugLocations;
+  // Early exit if there is no debug info at all. Also, leave if we already
+  // have debug info on the new replacement, which we don't want to trample:
+  // if there is no debug info we do want to copy, as a replacement operation
+  // suggests the new code plays the same role (it is an optimized version of
+  // the old), but if the code is already annotated, trust that.
+  if (debugLocations.empty() || debugLocations.count(replacement)) {
+    return;
+  }
+
+  auto iter = debugLocations.find(original);
+  if (iter != debugLocations.end()) {
+    debugLocations[replacement] = iter->second;
+    // Note that we do *not* erase the debug info of the expression being
+    // replaced, because it may still exist: we might replace
+    //
+    //  (call
+    //    (block ..
+    //
+    // with
+    //
+    //  (block
+    //    (call ..
+    //
+    // We still want the call here to have its old debug info.
+    //
+    // (In most cases, of course, we do remove the replaced expression,
+    // which means we accumulate unused garbage in debugLocations, but
+    // that's not that bad; we use arena allocation for Expressions, after
+    // all.)
+  }
+}
+
 // Given an expression and a copy of it in another function, copy the debug
 // info into the second function.
-inline void copyDebugInfo(Expression* origin,
-                          Expression* copy,
-                          Function* originFunc,
-                          Function* copyFunc) {
-  if (originFunc->debugLocations.empty()) {
-    return; // No debug info to copy
-  }
-
-  struct Lister : public PostWalker<Lister, UnifiedExpressionVisitor<Lister>> {
-    std::vector<Expression*> list;
-    void visitExpression(Expression* curr) { list.push_back(curr); }
-  };
-
-  Lister originList;
-  originList.walk(origin);
-  Lister copyList;
-  copyList.walk(copy);
-
-  auto& originDebug = originFunc->debugLocations;
-  auto& copyDebug = copyFunc->debugLocations;
-
-  assert(originList.list.size() == copyList.list.size());
-  for (Index i = 0; i < originList.list.size(); i++) {
-    auto iter = originDebug.find(originList.list[i]);
-    if (iter != originDebug.end()) {
-      auto location = iter->second;
-      copyDebug[copyList.list[i]] = location;
-    }
-  }
-};
-
+void copyDebugInfoBetweenFunctions(Expression* origin,
+                                   Expression* copy,
+                                   Function* originFunc,
+                                   Function* copyFunc);
 } // namespace wasm::debug
 
 #endif // wasm_ir_debug_h

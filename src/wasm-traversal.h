@@ -27,6 +27,7 @@
 #ifndef wasm_wasm_traversal_h
 #define wasm_wasm_traversal_h
 
+#include "ir/debug.h"
 #include "support/small_vector.h"
 #include "support/threads.h"
 #include "wasm.h"
@@ -123,36 +124,7 @@ struct Walker : public VisitorType {
   Expression* replaceCurrent(Expression* expression) {
     // Copy debug info, if present.
     if (currFunction) {
-      auto& debugLocations = currFunction->debugLocations;
-      // Early exit if there is no debug info at all. Also, leave if we already
-      // have debug info on the new expression, which we don't want to trample:
-      // if there is no debug info we do want to copy, as a replacement
-      // operation suggests the new code plays the same role (it is an optimized
-      // version of the old), but if the code is already annotated, trust that.
-      if (!debugLocations.empty() && !debugLocations.count(expression)) {
-        auto* curr = getCurrent();
-        auto iter = debugLocations.find(curr);
-        if (iter != debugLocations.end()) {
-          debugLocations[expression] = iter->second;
-          // Note that we do *not* erase the debug info of the expression being
-          // replaced, because it may still exist: we might replace
-          //
-          //  (call
-          //    (block ..
-          //
-          // with
-          //
-          //  (block
-          //    (call ..
-          //
-          // We still want the call here to have its old debug info.
-          //
-          // (In most cases, of course, we do remove the replaced expression,
-          // which means we accumulate unused garbage in debugLocations, but
-          // that's not that bad; we use arena allocation for Expressions, after
-          // all.)
-        }
-      }
+      debug::copyDebugInfoToReplacement(expression, getCurrent(), currFunction);
     }
     return *replacep = expression;
   }

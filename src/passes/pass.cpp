@@ -758,7 +758,7 @@ static void dumpWasm(Name name, Module* wasm, const PassOptions& options) {
   Colors::setEnabled(false);
   ModuleWriter writer(options);
   writer.setDebugInfo(true);
-  writer.writeBinary(*wasm, fullName + ".wasm");
+  writer.writeText(*wasm, fullName + ".wasm");
 }
 
 void PassRunner::run() {
