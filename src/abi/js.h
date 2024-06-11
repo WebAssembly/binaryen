@@ -74,10 +74,6 @@ inline void ensureHelpers(Module* wasm, IString specific = IString()) {
     MEMORY_INIT, {Type::i32, Type::i32, Type::i32, Type::i32}, Type::none);
   ensureImport(MEMORY_FILL, {Type::i32, Type::i32, Type::i32}, Type::none);
   ensureImport(MEMORY_COPY, {Type::i32, Type::i32, Type::i32}, Type::none);
-  auto funcref = Type(HeapType::func, Nullable);
-  ensureImport(TABLE_GROW, {funcref, Type::i32}, Type::none);
-  ensureImport(TABLE_FILL, {Type::i32, funcref, Type::i32}, Type::none);
-  ensureImport(TABLE_COPY, {Type::i32, Type::i32, Type::i32}, Type::none);
   ensureImport(DATA_DROP, {Type::i32}, Type::none);
   ensureImport(ATOMIC_WAIT_I32,
                {Type::i32, Type::i32, Type::i32, Type::i32, Type::i32},
@@ -88,6 +84,13 @@ inline void ensureHelpers(Module* wasm, IString specific = IString()) {
     Type::i32);
   ensureImport(GET_STASHED_BITS, {}, Type::i32);
   ensureImport(TRAP, {}, Type::none);
+
+  if (wasm->features.hasReferenceTypes()) {
+    auto funcref = Type(HeapType::func, Nullable);
+    ensureImport(TABLE_GROW, {funcref, Type::i32}, Type::none);
+    ensureImport(TABLE_FILL, {Type::i32, funcref, Type::i32}, Type::none);
+    ensureImport(TABLE_COPY, {Type::i32, Type::i32, Type::i32}, Type::none);
+  }
 }
 
 inline bool isHelper(IString name) {
