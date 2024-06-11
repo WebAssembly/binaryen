@@ -92,7 +92,7 @@ Ref makeJsCoercedZero(JsType type) {
                                     ValueBuilder::makeNum(0));
     }
     case JS_REF: {
-      return ValueBuilder::makeName(NULL_);
+      return ValueBuilder::makeName(wasm::NULL_);
     }
     default:
       assert(0);
