@@ -748,6 +748,43 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
 }
 
 void Wasm2JSBuilder::addTableGrowFunc(Ref ast, Module* wasm, Table* table) {
+  // TODO: support multiple tables
+  // TODO: check for attempts to grow beyond the declared max
+
+  Ref tableGrowFunc = ValueBuilder::makeFunction(WASM_TABLE_GROW);
+  ValueBuilder::appendArgumentToFunction(tableGrowFunc, IString("delta"));
+
+  auto getTableDotLength = [&]() {
+    return ValueBuilder::makeDot(ValueBuilder::makeName(FUNCTION_TABLE),
+                          ValueBuilder::makeName(LENGTH));
+  };
+
+  // Save the old size.
+  Ref oldSize = ValueBuilder::makeVar();
+  tableGrowFunc[3]->push_back(oldSize);
+  ValueBuilder::appendToVar(
+    oldSize,
+    IString("oldSize"),
+    getTableDotLength()));
+
+  // Compute the new size.
+  Ref newSize = ValueBuilder::makeBinary(
+    ValueBuilder::makeName(IString("oldSize")),
+    PLUS,
+    ValueBuilder::makeName(IString("delta")));
+
+  // Grow/shrink.
+  Ref grow = ValueBuilder::makeBinary(
+        getTableDotLength(),
+        SET,
+        newSize);
+  tableGrowFunc[3]->push_back(grow);
+
+  // Return the old size.
+  tableGrowFunc[3]->push_back(
+    ValueBuilder::makeReturn(ValueBuilder::makeName(IString("oldSize"))));
+
+  ast->push_back(tableGrowFunc);
 }
 
 void Wasm2JSBuilder::addStart(Ref ast, Module* wasm) {
