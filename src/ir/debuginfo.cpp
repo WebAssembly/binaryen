@@ -14,11 +14,11 @@
  * limitations under the License.
  */
 
-#include "ir/debug.h"
+#include "ir/debuginfo.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
-namespace wasm::debug {
+namespace wasm::debuginfo {
 
 void copyDebugInfoBetweenFunctions(Expression* origin,
                                    Expression* copy,
@@ -51,5 +51,5 @@ void copyDebugInfoBetweenFunctions(Expression* origin,
   }
 }
 
-} // namespace wasm::debug
+} // namespace wasm::debuginfo
 

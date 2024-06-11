@@ -14,12 +14,12 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ir_debug_h
-#define wasm_ir_debug_h
+#ifndef wasm_ir_debuginfo_h
+#define wasm_ir_debuginfo_h
 
 #include "wasm.h"
 
-namespace wasm::debug {
+namespace wasm::debuginfo {
 
 // Given an expression and another that it replaces, copy the debug info from
 // the latter to the former. Note that the expression may not be an exclusive
@@ -67,6 +67,6 @@ void copyDebugInfoBetweenFunctions(Expression* origin,
                                    Expression* copy,
                                    Function* originFunc,
                                    Function* copyFunc);
-} // namespace wasm::debug
+} // namespace wasm::debuginfo
 
-#endif // wasm_ir_debug_h
+#endif // wasm_ir_debuginfo_h
