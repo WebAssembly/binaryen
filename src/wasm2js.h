@@ -672,12 +672,11 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
     if (!table->imported()) {
       TableUtils::FlatTable flat(*wasm, *table);
       if (flat.valid) {
-        Name null("null");
         for (auto& name : flat.names) {
           if (name.is()) {
             name = fromName(name, NameScope::Top);
           } else {
-            name = null;
+            name = NULL_;
           }
           ValueBuilder::appendToArray(theArray, ValueBuilder::makeName(name));
         }
@@ -921,11 +920,13 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
     IString name = fromName(func->getLocalNameOrGeneric(i), NameScope::Local);
     ValueBuilder::appendArgumentToFunction(ret, name);
     if (needCoercions) {
-      ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeBinary(
-        ValueBuilder::makeName(name),
-        SET,
-        makeJsCoercion(ValueBuilder::makeName(name),
-                       wasmToJsType(func->getLocalType(i))))));
+      auto jsType = wasmToJsType(func->getLocalType(i));
+      if (needsJsCoercion(jsType)) {
+        ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeBinary(
+          ValueBuilder::makeName(name),
+          SET,
+          makeJsCoercion(ValueBuilder::makeName(name), jsType))));
+      }
     }
   }
   Ref theVar = ValueBuilder::makeVar();
@@ -2219,45 +2220,55 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                     visit(curr->value, EXPRESSION_RESULT),
                                     visit(curr->size, EXPRESSION_RESULT));
     }
-    Ref visitRefNull(RefNull* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
+    Ref visitRefNull(RefNull* curr) { return ValueBuilder::makeName(NULL_); }
     Ref visitRefIsNull(RefIsNull* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeBinary(visit(curr->value, EXPRESSION_RESULT),
+                                      EQ,
+                                      ValueBuilder::makeName(NULL_));
     }
     Ref visitRefFunc(RefFunc* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeName(fromName(curr->func, NameScope::Top));
     }
     Ref visitRefEq(RefEq* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeBinary(visit(curr->left, EXPRESSION_RESULT),
+                                      EQ,
+                                      visit(curr->right, EXPRESSION_RESULT));
     }
     Ref visitTableGet(TableGet* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
+                                   visit(curr->index, EXPRESSION_RESULT));
     }
     Ref visitTableSet(TableSet* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      auto sub = ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
+                                       visit(curr->index, EXPRESSION_RESULT));
+      auto value = visit(curr->value, EXPRESSION_RESULT);
+      return ValueBuilder::makeBinary(sub, SET, value);
     }
     Ref visitTableSize(TableSize* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeDot(ValueBuilder::makeName(FUNCTION_TABLE),
+                                   ValueBuilder::makeName(LENGTH));
     }
     Ref visitTableGrow(TableGrow* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TABLE_GROW);
+      // Also ensure fill, as grow calls fill internally.
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TABLE_FILL);
+      return ValueBuilder::makeCall(ABI::wasm2js::TABLE_GROW,
+                                    visit(curr->value, EXPRESSION_RESULT),
+                                    visit(curr->delta, EXPRESSION_RESULT));
     }
     Ref visitTableFill(TableFill* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TABLE_FILL);
+      return ValueBuilder::makeCall(ABI::wasm2js::TABLE_FILL,
+                                    visit(curr->dest, EXPRESSION_RESULT),
+                                    visit(curr->value, EXPRESSION_RESULT),
+                                    visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitTableCopy(TableCopy* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TABLE_COPY);
+      return ValueBuilder::makeCall(ABI::wasm2js::TABLE_COPY,
+                                    visit(curr->dest, EXPRESSION_RESULT),
+                                    visit(curr->source, EXPRESSION_RESULT),
+                                    visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitTry(Try* curr) {
       unimplemented(curr);
@@ -3024,6 +3035,36 @@ void Wasm2JSGlue::emitSpecialSupport() {
   function wasm2js_memory_copy(dest, source, size) {
     // TODO: traps on invalid things
     bufferView.copyWithin(dest, source, source + size);
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::TABLE_GROW) {
+      out << R"(
+  function wasm2js_table_grow(value, delta) {
+    // TODO: traps on invalid things
+    var oldSize = FUNCTION_TABLE.length;
+    FUNCTION_TABLE.length = oldSize + delta;
+    if (newSize > oldSize) {
+      __wasm_table_fill(oldSize, value, delta)
+    }
+    return oldSize;
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::TABLE_FILL) {
+      out << R"(
+  function __wasm_table_fill(dest, value, size) {
+    // TODO: traps on invalid things
+    for (var i = 0; i < size; i++) {
+      FUNCTION_TABLE[dest + i] = value;
+    }
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::TABLE_COPY) {
+      out << R"(
+  function __wasm_table_copy(dest, source, size) {
+    // TODO: traps on invalid things
+    for (var i = 0; i < size; i++) {
+      FUNCTION_TABLE[dest + i] = FUNCTION_TABLE[source + i];
+    }
   }
       )";
     } else if (import->base == ABI::wasm2js::DATA_DROP) {

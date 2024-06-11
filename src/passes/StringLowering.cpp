@@ -267,6 +267,44 @@ struct StringLowering : public StringGathering {
   Type nnExt = Type(HeapType::ext, NonNullable);
 
   void updateTypes(Module* module) {
+    // TypeMapper will not handle public types, but we do want to modify them as
+    // well: we are modifying the public ABI here. We can't simply tell
+    // TypeMapper to consider them private, as then they'd end up in the new big
+    // rec group with the private types (and as they are public, that would make
+    // the entire rec group public, and all types in the module with it).
+    // Instead, manually handle singleton-rec groups of function types. This
+    // keeps them at size 1, as expected, and handles the cases of function
+    // imports and exports. If we need more (non-function types, non-singleton
+    // rec groups, etc.) then more work will be necessary TODO
+    //
+    // Note that we do this before TypeMapper, which allows it to then fix up
+    // things like the types of parameters (which depend on the type of the
+    // function, which must be modified either in TypeMapper - but as just
+    // explained we cannot do that - or before it, which is what we do here).
+    for (auto& func : module->functions) {
+      if (func->type.getRecGroup().size() != 1 ||
+          !Type(func->type, Nullable).getFeatures().hasStrings()) {
+        continue;
+      }
+
+      // Fix up the stringrefs in this type that uses strings and is in a
+      // singleton rec group.
+      std::vector<Type> params, results;
+      auto fix = [](Type t) {
+        if (t.isRef() && t.getHeapType() == HeapType::string) {
+          t = Type(HeapType::ext, t.getNullability());
+        }
+        return t;
+      };
+      for (auto param : func->type.getSignature().params) {
+        params.push_back(fix(param));
+      }
+      for (auto result : func->type.getSignature().results) {
+        results.push_back(fix(result));
+      }
+      func->type = Signature(params, results);
+    }
+
     TypeMapper::TypeUpdates updates;
 
     // Strings turn into externref.
@@ -288,19 +326,7 @@ struct StringLowering : public StringGathering {
       }
     }
 
-    // We consider all types that use strings as modifiable, which means we
-    // mark them as non-public. That is, we are doing something TypeMapper
-    // normally does not, as we are changing the external interface/ABI of the
-    // module: we are changing that ABI from using strings to externs.
-    auto publicTypes = ModuleUtils::getPublicHeapTypes(*module);
-    std::vector<HeapType> stringUsers;
-    for (auto t : publicTypes) {
-      if (Type(t, Nullable).getFeatures().hasStrings()) {
-        stringUsers.push_back(t);
-      }
-    }
-
-    TypeMapper(*module, updates).map(stringUsers);
+    TypeMapper(*module, updates).map();
   }
 
   // Imported string functions.
