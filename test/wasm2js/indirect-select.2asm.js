@@ -23,31 +23,6 @@ function asmFunc(imports) {
   return FUNCTION_TABLE[(x ? 0 : 1) | 0]() | 0 | 0;
  }
  
- function __wasm_table_grow(value, delta) {
-  var oldSize = FUNCTION_TABLE.length;
-  FUNCTION_TABLE.length = oldSize + delta;
-  if (newSize > oldSize) {
-   __wasm_table_fill(oldSize, value, delta)
-  }
-  return oldSize;
- }
- 
- function __wasm_table_fill(dest, value, size) {
-  var i = 0;
-  while (i < size) {
-   FUNCTION_TABLE[dest + i] = value;
-   i = i + 1;
-  };
- }
- 
- function __wasm_table_copy(dest, source, size) {
-  var i = 0;
-  while (i < size) {
-   FUNCTION_TABLE[dest + i] = FUNCTION_TABLE[source + i];
-   i = i + 1;
-  };
- }
- 
  return {
   "foo_true": foo_true, 
   "foo_false": foo_false

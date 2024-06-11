@@ -2082,22 +2082,6 @@ function asmFunc(imports) {
  
  bufferView = HEAPU8;
  var FUNCTION_TABLE = [i32_t0, i32_t1, i64_t0, i64_t1, f32_t0, f32_t1, f64_t0, f64_t1];
- function __wasm_table_fill(dest, value, size) {
-  var i = 0;
-  while (i < size) {
-   FUNCTION_TABLE[dest + i] = value;
-   i = i + 1;
-  };
- }
- 
- function __wasm_table_copy(dest, source, size) {
-  var i = 0;
-  while (i < size) {
-   FUNCTION_TABLE[dest + i] = FUNCTION_TABLE[source + i];
-   i = i + 1;
-  };
- }
- 
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
