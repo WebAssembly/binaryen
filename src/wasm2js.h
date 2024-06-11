@@ -321,6 +321,7 @@ private:
   void addFunctionImport(Ref ast, Function* import);
   void addGlobalImport(Ref ast, Global* import);
   void addTable(Ref ast, Module* wasm);
+  void addTableGrowFunc(Ref ast, Module* wasm, Table* table);
   void addStart(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addGlobal(Ref ast, Global* global);
@@ -672,12 +673,11 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
     if (!table->imported()) {
       TableUtils::FlatTable flat(*wasm, *table);
       if (flat.valid) {
-        Name null("null");
         for (auto& name : flat.names) {
           if (name.is()) {
             name = fromName(name, NameScope::Top);
           } else {
-            name = null;
+            name = NULL_;
           }
           ValueBuilder::appendToArray(theArray, ValueBuilder::makeName(name));
         }
@@ -740,7 +740,14 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
             });
         });
     }
+
+    if (table->max > table->initial) {
+      addTableGrowFunc(ast, wasm, table.get());
+    }
   }
+}
+
+void Wasm2JSBuilder::addTableGrowFunc(Ref ast, Module* wasm, Table* table) {
 }
 
 void Wasm2JSBuilder::addStart(Ref ast, Module* wasm) {
@@ -2221,11 +2228,11 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                     visit(curr->value, EXPRESSION_RESULT),
                                     visit(curr->size, EXPRESSION_RESULT));
     }
-    Ref visitRefNull(RefNull* curr) { return ValueBuilder::makeName("null"); }
+    Ref visitRefNull(RefNull* curr) { return ValueBuilder::makeName(NULL_); }
     Ref visitRefIsNull(RefIsNull* curr) {
       return ValueBuilder::makeBinary(visit(curr->value, EXPRESSION_RESULT),
                                       EQ,
-                                      ValueBuilder::makeName("null"));
+                                      ValueBuilder::makeName(NULL_));
     }
     Ref visitRefFunc(RefFunc* curr) {
       return ValueBuilder::makeName(fromName(curr->func, NameScope::Top));
@@ -2247,11 +2254,13 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
     Ref visitTableSize(TableSize* curr) {
       return ValueBuilder::makeDot(ValueBuilder::makeName(FUNCTION_TABLE),
-                                   ValueBuilder::makeName("length"));
+                                   ValueBuilder::makeName(LENGTH));
     }
     Ref visitTableGrow(TableGrow* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeCall(
+        WASM_TABLE_GROW,
+        makeJsCoercion(visit(curr->delta, EXPRESSION_RESULT),
+                       wasmToJsType(curr->delta->type)));
     }
     Ref visitTableFill(TableFill* curr) {
       unimplemented(curr);
