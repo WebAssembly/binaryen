@@ -74,6 +74,10 @@ inline void ensureHelpers(Module* wasm, IString specific = IString()) {
     MEMORY_INIT, {Type::i32, Type::i32, Type::i32, Type::i32}, Type::none);
   ensureImport(MEMORY_FILL, {Type::i32, Type::i32, Type::i32}, Type::none);
   ensureImport(MEMORY_COPY, {Type::i32, Type::i32, Type::i32}, Type::none);
+  auto funcref = Type(HeapType::func, Nullable);
+  ensureImport(TABLE_GROW, {funcref, Type::i32}, Type::none);
+  ensureImport(TABLE_FILL, {Type::i32, funcref, Type::i32}, Type::none);
+  ensureImport(TABLE_COPY, {Type::i32, Type::i32, Type::i32}, Type::none);
   ensureImport(DATA_DROP, {Type::i32}, Type::none);
   ensureImport(ATOMIC_WAIT_I32,
                {Type::i32, Type::i32, Type::i32, Type::i32, Type::i32},
@@ -91,7 +95,8 @@ inline bool isHelper(IString name) {
          name == SCRATCH_LOAD_F32 || name == SCRATCH_STORE_F32 ||
          name == SCRATCH_LOAD_F64 || name == SCRATCH_STORE_F64 ||
          name == ATOMIC_WAIT_I32 || name == MEMORY_INIT ||
-         name == MEMORY_FILL || name == MEMORY_COPY || name == DATA_DROP ||
+         name == MEMORY_FILL || name == MEMORY_COPY || name == TABLE_GROW ||
+         name == TABLE_FILL || name == TABLE_COPY || name == DATA_DROP ||
          name == ATOMIC_RMW_I64 || name == GET_STASHED_BITS || name == TRAP;
 }
 
