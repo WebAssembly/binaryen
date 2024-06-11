@@ -790,14 +790,14 @@ void Wasm2JSBuilder::addTableGrowFunc(Ref ast, Module* wasm, Table* table) {
     WASM_TABLE_FILL,
     ValueBuilder::makeName(IString("oldSize")),
     ValueBuilder::makeName(IString("value")),
-    ValueBuilder::makeName(IString("delta")),
+    ValueBuilder::makeName(IString("delta"))
   );
   Ref maybeFill = ValueBuilder::makeIf(
     ValueBuilder::makeBinary(ValueBuilder::makeName(IString("newSize")),
                              GT,
                              ValueBuilder::makeName(IString("oldSize"))),
     fill,
-    NULL));
+    NULL);
   tableGrowFunc[3]->push_back(maybeFill);
 
   // Return the old size.
@@ -805,6 +805,14 @@ void Wasm2JSBuilder::addTableGrowFunc(Ref ast, Module* wasm, Table* table) {
     ValueBuilder::makeReturn(ValueBuilder::makeName(IString("oldSize"))));
 
   ast->push_back(tableGrowFunc);
+}
+
+void Wasm2JSBuilder::addTableFillFunc(Ref ast, Module* wasm, Table* table) {
+
+//      Ref ret = ValueBuilder::makeWhile(ValueBuilder::makeInt(1), body);
+}
+
+void Wasm2JSBuilder::addTableCopyFunc(Ref ast, Module* wasm, Table* table) {
 }
 
 void Wasm2JSBuilder::addStart(Ref ast, Module* wasm) {
