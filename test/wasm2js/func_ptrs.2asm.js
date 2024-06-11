@@ -90,6 +90,22 @@ function asmFunc(imports) {
  }
  
  var FUNCTION_TABLE = [t1, t2, t3, u1, u2, t1, t3];
+ function __wasm_table_fill(dest, value, size) {
+  var i = 0;
+  while (i < size) {
+   FUNCTION_TABLE[dest + i] = value;
+   i = i + 1;
+  };
+ }
+ 
+ function __wasm_table_copy(dest, source, size) {
+  var i = 0;
+  while (i < size) {
+   FUNCTION_TABLE[dest + i] = FUNCTION_TABLE[source + i];
+   i = i + 1;
+  };
+ }
+ 
  return {
   "callt": $0, 
   "callu": $1
@@ -126,6 +142,22 @@ function asmFunc(imports) {
  }
  
  var FUNCTION_TABLE = [t1, t2];
+ function __wasm_table_fill(dest, value, size) {
+  var i = 0;
+  while (i < size) {
+   FUNCTION_TABLE[dest + i] = value;
+   i = i + 1;
+  };
+ }
+ 
+ function __wasm_table_copy(dest, source, size) {
+  var i = 0;
+  while (i < size) {
+   FUNCTION_TABLE[dest + i] = FUNCTION_TABLE[source + i];
+   i = i + 1;
+  };
+ }
+ 
  return {
   "callt": $0
  };

@@ -13,31 +13,36 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function main() {
-  FUNCTION_TABLE[1](1) | 0;
-  FUNCTION_TABLE[4](1) | 0;
-  FUNCTION_TABLE[2](1) | 0;
-  FUNCTION_TABLE[8](7) | 0;
+ function table_get() {
+  return FUNCTION_TABLE[1];
  }
  
- function foo($0) {
+ function table_set() {
+  FUNCTION_TABLE[1] = table_set;
+ }
+ 
+ function table_size() {
+  return FUNCTION_TABLE.length | 0;
+ }
+ 
+ function table_grow() {
+  return __wasm_table_grow(table_grow, 42) | 0;
+ }
+ 
+ function table_fill($0, $1, $2) {
   $0 = $0 | 0;
-  return 1;
+  $2 = $2 | 0;
+  __wasm_table_fill($0 | 0, $1, $2 | 0);
  }
  
- function bar($0) {
+ function table_copy($0, $1, $2) {
   $0 = $0 | 0;
-  return 2;
+  $1 = $1 | 0;
+  $2 = $2 | 0;
+  __wasm_table_copy($0 | 0, $1 | 0, $2 | 0);
  }
  
- function baz($0) {
-  $0 = $0 | 0;
-  return 3;
- }
- 
- FUNCTION_TABLE[1] = foo;
- FUNCTION_TABLE[2] = bar;
- FUNCTION_TABLE[3] = baz;
+ FUNCTION_TABLE[1] = table_get;
  function __wasm_table_grow(value, delta) {
   var oldSize = FUNCTION_TABLE.length;
   FUNCTION_TABLE.length = oldSize + delta;
@@ -64,11 +69,21 @@ function asmFunc(imports) {
  }
  
  return {
-  "main": main
+  "table_get": table_get, 
+  "table_set": table_set, 
+  "table_size": table_size, 
+  "table_grow": table_grow, 
+  "table_fill": table_fill, 
+  "table_copy": table_copy
  };
 }
 
 var retasmFunc = asmFunc({
   "env": env,
 });
-export var main = retasmFunc.main;
+export var table_get = retasmFunc.table_get;
+export var table_set = retasmFunc.table_set;
+export var table_size = retasmFunc.table_size;
+export var table_grow = retasmFunc.table_grow;
+export var table_fill = retasmFunc.table_fill;
+export var table_copy = retasmFunc.table_copy;

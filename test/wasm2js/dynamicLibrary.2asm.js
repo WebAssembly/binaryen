@@ -76,6 +76,22 @@ function asmFunc(imports) {
  var FUNCTION_TABLE = Table(new Array(10));
  FUNCTION_TABLE[import$tableBase + 0] = foo;
  FUNCTION_TABLE[import$tableBase + 1] = bar;
+ function __wasm_table_fill(dest, value, size) {
+  var i = 0;
+  while (i < size) {
+   FUNCTION_TABLE[dest + i] = value;
+   i = i + 1;
+  };
+ }
+ 
+ function __wasm_table_copy(dest, source, size) {
+  var i = 0;
+  while (i < size) {
+   FUNCTION_TABLE[dest + i] = FUNCTION_TABLE[source + i];
+   i = i + 1;
+  };
+ }
+ 
  function __wasm_memory_size() {
   return buffer.byteLength / 65536 | 0;
  }
