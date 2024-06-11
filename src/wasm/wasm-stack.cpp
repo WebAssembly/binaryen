@@ -2455,32 +2455,25 @@ void BinaryInstWriter::visitStringWTF16Get(StringWTF16Get* curr) {
 void BinaryInstWriter::visitStringSliceWTF(StringSliceWTF* curr) {
   // We need to convert the ref operand to a stringview, but it is buried under
   // the start and end operands. Put the i32s in scratch locals, emit the
-  // conversion, then get the i32s back onto the stack. If either `start` or
-  // `end` is already a local.get, then we can skip its scratch local.
-  bool startDeferred = false, endDeferred = false;
+  // conversion, then get the i32s back onto the stack. If both `start` and
+  // `end` are already local.gets, then we can skip the scratch locals.
+  bool deferred = false;
   Index startIndex, endIndex;
-  if (auto* get = curr->start->dynCast<LocalGet>()) {
-    assert(deferredGets.count(get));
-    startDeferred = true;
-    startIndex = mappedLocals[{get->index, 0}];
+  auto* startGet = curr->start->dynCast<LocalGet>();
+  auto* endGet = curr->end->dynCast<LocalGet>();
+  if (startGet && endGet) {
+    assert(deferredGets.count(startGet));
+    assert(deferredGets.count(endGet));
+    deferred = true;
+    startIndex = mappedLocals[{startGet->index, 0}];
+    endIndex = mappedLocals[{endGet->index, 0}];
   } else {
     startIndex = scratchLocals[Type::i32];
-  }
-  if (auto* get = curr->end->dynCast<LocalGet>()) {
-    assert(deferredGets.count(get));
-    endDeferred = true;
-    endIndex = mappedLocals[{get->index, 0}];
-  } else {
-    endIndex = scratchLocals[Type::i32];
-    if (!startDeferred) {
-      ++endIndex;
-    }
+    endIndex = startIndex + 1;
   }
 
-  if (!endDeferred) {
+  if (!deferred) {
     o << int8_t(BinaryConsts::LocalSet) << U32LEB(endIndex);
-  }
-  if (!startDeferred) {
     o << int8_t(BinaryConsts::LocalSet) << U32LEB(startIndex);
   }
   o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::StringAsWTF16);
@@ -2698,21 +2691,19 @@ InsertOrderedMap<Type, Index> BinaryInstWriter::countScratchLocals() {
       if (curr->type == Type::unreachable) {
         return;
       }
-      // If `start` or `end` are already local.gets, we can defer emitting those
-      // gets instead of using scratch locals.
-      Index numScratches = 2;
-      if (auto* get = curr->start->dynCast<LocalGet>()) {
-        parent.deferredGets.insert(get);
-        --numScratches;
-      }
-      if (auto* get = curr->end->dynCast<LocalGet>()) {
-        parent.deferredGets.insert(get);
-        --numScratches;
+      // If `start` and `end` are already local.gets, we can defer emitting
+      // those gets instead of using scratch locals.
+      auto* startGet = curr->start->dynCast<LocalGet>();
+      auto* endGet = curr->end->dynCast<LocalGet>();
+      if (startGet && endGet) {
+        parent.deferredGets.insert(startGet);
+        parent.deferredGets.insert(endGet);
+        return;
       }
       // Scratch locals to hold the `start` and `end` values while we emit a
       // stringview conversion for the `ref` value.
       auto& count = scratches[Type::i32];
-      count = std::max(count, numScratches);
+      count = std::max(count, 2u);
     }
 
     // As mentioned in BinaryInstWriter::visitBreak, the type of br_if with a
