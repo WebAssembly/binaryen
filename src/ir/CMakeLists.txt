@@ -2,7 +2,7 @@ FILE(GLOB ir_HEADERS *.h)
 set(ir_SOURCES
   ExpressionAnalyzer.cpp
   ExpressionManipulator.cpp
-  debug.cpp
+  debuginfo.cpp
   drop.cpp
   effects.cpp
   eh-utils.cpp

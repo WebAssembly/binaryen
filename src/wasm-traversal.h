@@ -27,7 +27,7 @@
 #ifndef wasm_wasm_traversal_h
 #define wasm_wasm_traversal_h
 
-#include "ir/debug.h"
+#include "ir/debuginfo.h"
 #include "support/small_vector.h"
 #include "support/threads.h"
 #include "wasm.h"
@@ -124,7 +124,7 @@ struct Walker : public VisitorType {
   Expression* replaceCurrent(Expression* expression) {
     // Copy debug info, if present.
     if (currFunction) {
-      debug::copyDebugInfoToReplacement(expression, getCurrent(), currFunction);
+      debuginfo::copyDebugInfoToReplacement(expression, getCurrent(), currFunction);
     }
     return *replacep = expression;
   }

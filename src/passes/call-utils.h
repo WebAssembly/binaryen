@@ -19,7 +19,7 @@
 
 #include <variant>
 
-#include "ir/debug.h"
+#include "ir/debuginfo.h"
 #include "ir/type-updating.h"
 #include "wasm.h"
 
@@ -140,7 +140,7 @@ convertToDirectCalls(T* curr,
                              curr->type,
                              curr->isReturn);
     }
-    debug::copyDebugInfoToReplacement(ret, curr, &func);
+    debuginfo::copyDebugInfoToReplacement(ret, curr, &func);
     return ret;
   };
   auto* ifTrueCall = makeCall(ifTrueCallInfo);

@@ -31,7 +31,7 @@
 #include <atomic>
 
 #include "ir/branch-utils.h"
-#include "ir/debug.h"
+#include "ir/debuginfo.h"
 #include "ir/drop.h"
 #include "ir/eh-utils.h"
 #include "ir/element-utils.h"
@@ -579,7 +579,7 @@ static Expression* doInlining(Module* module,
 
   // Generate and update the inlined contents
   auto* contents = ExpressionManipulator::copy(from->body, *module);
-  debug::copyDebugInfoBetweenFunctions(from->body, contents, from, into);
+  debuginfo::copyDebugInfoBetweenFunctions(from->body, contents, from, into);
   updater.walk(contents);
   block->list.push_back(contents);
   block->type = retType;
