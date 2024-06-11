@@ -808,8 +808,55 @@ void Wasm2JSBuilder::addTableGrowFunc(Ref ast, Module* wasm, Table* table) {
 }
 
 void Wasm2JSBuilder::addTableFillFunc(Ref ast, Module* wasm, Table* table) {
+  Ref tableFillFunc = ValueBuilder::makeFunction(WASM_TABLE_FILL);
+  ValueBuilder::appendArgumentToFunction(tableFillFunc, IString("dest"));
+  ValueBuilder::appendArgumentToFunction(tableFillFunc, IString("value"));
+  ValueBuilder::appendArgumentToFunction(tableFillFunc, IString("size"));
 
-//      Ref ret = ValueBuilder::makeWhile(ValueBuilder::makeInt(1), body);
+  // Set up a variable to loop over.
+  Ref i = ValueBuilder::makeVar();
+  tableFillFunc[3]->push_back(i);
+  ValueBuilder::appendToVar(
+    i,
+    IString("i"),
+    ValueBuilder::makeInt(0));
+
+  // Compute the index to write to in the table for the current loop iteration.
+  Ref index = ValueBuilder::makeBinary(
+    ValueBuilder::makeName(IString("dest")),
+    PLUS,
+    ValueBuilder::makeName(IString("i"))
+  );
+
+  // Set the value for the current loop iteration.
+  Ref set = ValueBuilder::makeBinary(
+    ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE), index),
+    SET,
+    ValueBuilder::makeName(IString("value")));
+
+  // Increment the variable.
+  Ref increment = ValueBuilder::makeBinary(
+        ValueBuilder::makeName(IString("i")),
+        SET,
+        ValueBuilder::makeBinary(
+          ValueBuilder::makeName(IString("i")),
+          PLUS,
+          ValueBuilder::makeInt(1)));
+
+  // Loop body: set the value, and increment.
+  Ref body = ValueBuilder::makeBlock();
+  block[1]->push_back(set);
+  block[1]->push_back(increment);
+
+  // Loop until we reach the size.
+  Ref loopCondition = 
+    ValueBuilder::makeBinary(ValueBuilder::makeName(IString("i")),
+                             LT,
+                             ValueBuilder::makeName(IString("size")));
+  Ref loop = ValueBuilder::makeWhile(loopCondition, body);
+  tableFillFunc[3]->push_back(loop);
+
+  ast->push_back(tableFillFunc);
 }
 
 void Wasm2JSBuilder::addTableCopyFunc(Ref ast, Module* wasm, Table* table) {
