@@ -1,5 +1,30 @@
 import * as env from 'env';
 
+
+  function wasm2js_table_grow(value, delta) {
+    // TODO: traps on invalid things
+    var oldSize = FUNCTION_TABLE.length;
+    FUNCTION_TABLE.length = oldSize + delta;
+    if (newSize > oldSize) {
+      __wasm_table_fill(oldSize, value, delta)
+    }
+    return oldSize;
+  }
+      
+  function __wasm_table_fill(dest, value, size) {
+    // TODO: traps on invalid things
+    for (var i = 0; i < size; i++) {
+      FUNCTION_TABLE[dest + i] = value;
+    }
+  }
+      
+  function __wasm_table_copy(dest, source, size) {
+    // TODO: traps on invalid things
+    for (var i = 0; i < size; i++) {
+      FUNCTION_TABLE[dest + i] = FUNCTION_TABLE[source + i];
+    }
+  }
+      
 function asmFunc(imports) {
  var env = imports.env;
  var FUNCTION_TABLE = env.table;
