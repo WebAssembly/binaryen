@@ -124,7 +124,8 @@ struct Walker : public VisitorType {
   Expression* replaceCurrent(Expression* expression) {
     // Copy debug info, if present.
     if (currFunction) {
-      debuginfo::copyDebugInfoToReplacement(expression, getCurrent(), currFunction);
+      debuginfo::copyDebugInfoToReplacement(
+        expression, getCurrent(), currFunction);
     }
     return *replacep = expression;
   }

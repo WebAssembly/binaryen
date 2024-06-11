@@ -52,4 +52,3 @@ void copyDebugInfoBetweenFunctions(Expression* origin,
 }
 
 } // namespace wasm::debuginfo
-
