@@ -17,6 +17,7 @@
 #include <limits>
 
 #include "optimizer.h"
+#include "shared-constants.h"
 #include "support/safe_integer.h"
 
 using namespace cashew;
