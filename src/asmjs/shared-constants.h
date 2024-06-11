@@ -65,7 +65,6 @@ extern IString ENV;
 extern IString STACKTOP;
 extern IString STACK_MAX;
 extern IString INSTRUMENT;
-extern IString NULL_;
 extern IString LENGTH;
 extern IString MATH_IMUL;
 extern IString MATH_ABS;

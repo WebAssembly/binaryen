@@ -62,7 +62,6 @@ IString ENV("env");
 IString STACKTOP("STACKTOP");
 IString STACK_MAX("STACK_MAX");
 IString INSTRUMENT("instrument");
-IString NULL_("null");
 IString LENGTH("length");
 IString MATH_IMUL("Math_imul");
 IString MATH_ABS("Math_abs");

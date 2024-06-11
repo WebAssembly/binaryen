@@ -765,7 +765,7 @@ void Wasm2JSBuilder::addTableGrowFunc(Ref ast, Module* wasm, Table* table) {
   ValueBuilder::appendToVar(
     oldSize,
     IString("oldSize"),
-    getTableDotLength()));
+    getTableDotLength());
 
   // Compute the new size.
   Ref newSize = ValueBuilder::makeBinary(
