@@ -322,6 +322,8 @@ private:
   void addGlobalImport(Ref ast, Global* import);
   void addTable(Ref ast, Module* wasm);
   void addTableGrowFunc(Ref ast, Module* wasm, Table* table);
+  void addTableFillFunc(Ref ast, Module* wasm, Table* table);
+  void addTableCopyFunc(Ref ast, Module* wasm, Table* table);
   void addStart(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
   void addGlobal(Ref ast, Global* global);
@@ -744,6 +746,8 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
     if (table->max > table->initial) {
       addTableGrowFunc(ast, wasm, table.get());
     }
+    addTableFillFunc(ast, wasm, table.get());
+    addTableCopyFunc(ast, wasm, table.get());
   }
 }
 
@@ -781,7 +785,20 @@ void Wasm2JSBuilder::addTableGrowFunc(Ref ast, Module* wasm, Table* table) {
         newSize);
   tableGrowFunc[3]->push_back(grow);
 
-  // Fill with the new value. TODO
+  // Fill with the new value, if we grew.
+  Ref fill = ValueBuilder::makeCall(
+    WASM_TABLE_FILL,
+    ValueBuilder::makeName(IString("oldSize")),
+    ValueBuilder::makeName(IString("value")),
+    ValueBuilder::makeName(IString("delta")),
+  );
+  Ref maybeFill = ValueBuilder::makeIf(
+    ValueBuilder::makeBinary(ValueBuilder::makeName(IString("newSize")),
+                             GT,
+                             ValueBuilder::makeName(IString("oldSize"))),
+    fill,
+    NULL));
+  tableGrowFunc[3]->push_back(maybeFill);
 
   // Return the old size.
   tableGrowFunc[3]->push_back(
@@ -2299,17 +2316,32 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     Ref visitTableGrow(TableGrow* curr) {
       return ValueBuilder::makeCall(
         WASM_TABLE_GROW,
-        visit(curr->value, EXPRESSION_RESULT),
+        makeJsCoercion(visit(curr->value, EXPRESSION_RESULT),
+                       wasmToJsType(curr->value->type)),
         makeJsCoercion(visit(curr->delta, EXPRESSION_RESULT),
                        wasmToJsType(curr->delta->type)));
     }
     Ref visitTableFill(TableFill* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeCall(
+        WASM_TABLE_FILL,
+        makeJsCoercion(visit(curr->dest, EXPRESSION_RESULT),
+                       wasmToJsType(curr->dest->type)),
+        makeJsCoercion(visit(curr->value, EXPRESSION_RESULT),
+                       wasmToJsType(curr->value->type)),
+        makeJsCoercion(visit(curr->size, EXPRESSION_RESULT),
+                       wasmToJsType(curr->size->type))
+      );
     }
     Ref visitTableCopy(TableCopy* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeCall(
+        WASM_TABLE_COPY,
+        makeJsCoercion(visit(curr->dest, EXPRESSION_RESULT),
+                       wasmToJsType(curr->dest->type)),
+        makeJsCoercion(visit(curr->source, EXPRESSION_RESULT),
+                       wasmToJsType(curr->source->type)),
+        makeJsCoercion(visit(curr->size, EXPRESSION_RESULT),
+                       wasmToJsType(curr->size->type))
+      );
     }
     Ref visitTry(Try* curr) {
       unimplemented(curr);

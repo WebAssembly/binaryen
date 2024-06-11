@@ -88,6 +88,8 @@ extern IString WASM_ROTR64;
 extern IString WASM_MEMORY_GROW;
 extern IString WASM_MEMORY_SIZE;
 extern IString WASM_TABLE_GROW;
+extern IString WASM_TABLE_FILL;
+extern IString WASM_TABLE_COPY;
 extern IString WASM_FETCH_HIGH_BITS;
 extern IString INT64_TO_32_HIGH_BITS;
 extern IString WASM_NEAREST_F32;

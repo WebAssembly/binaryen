@@ -85,6 +85,8 @@ IString WASM_ROTR64("__wasm_rotr_i64");
 IString WASM_MEMORY_GROW("__wasm_memory_grow");
 IString WASM_MEMORY_SIZE("__wasm_memory_size");
 IString WASM_TABLE_GROW("__wasm_table_grow");
+IString WASM_TABLE_FILL("__wasm_table_fill");
+IString WASM_TABLE_COPY("__wasm_table_copy");
 IString WASM_FETCH_HIGH_BITS("__wasm_fetch_high_bits");
 IString INT64_TO_32_HIGH_BITS("i64toi32_i32$HIGH_BITS");
 IString WASM_NEAREST_F32("__wasm_nearest_f32");

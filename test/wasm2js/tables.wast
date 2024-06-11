@@ -26,4 +26,21 @@
       (i32.const 42)
     )
   )
+
+  (func $table.fill (export "table.fill") (param $dest i32) (param $value funcref) (param $size i32)
+    (table.fill $table
+      (local.get $dest)
+      (local.get $value)
+      (local.get $size)
+    )
+  )
+
+  (func $table.copy (export "table.copy") (param $dest i32) (param $source i32) (param $size i32)
+    (table.copy $table $table
+      (local.get $dest)
+      (local.get $source)
+      (local.get $size)
+    )
+  )
 )
+
