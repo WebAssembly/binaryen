@@ -33,17 +33,14 @@ Ref makeJsCoercedZero(JsType type) {
   switch (type) {
     case JS_INT:
       return ValueBuilder::makeNum(0);
-      break;
     case JS_DOUBLE:
       return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeNum(0));
-      break;
     case JS_FLOAT: {
       if (!JS_FLOAT_ZERO.isNull()) {
         return ValueBuilder::makeName(JS_FLOAT_ZERO);
       } else {
         return ValueBuilder::makeCall(MATH_FROUND, ValueBuilder::makeNum(0));
       }
-      break;
     }
     case JS_FLOAT32X4: {
       return ValueBuilder::makeCall(SIMD_FLOAT32X4,
@@ -51,12 +48,10 @@ Ref makeJsCoercedZero(JsType type) {
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0));
-      break;
     }
     case JS_FLOAT64X2: {
       return ValueBuilder::makeCall(
         SIMD_FLOAT64X2, ValueBuilder::makeNum(0), ValueBuilder::makeNum(0));
-      break;
     }
     case JS_INT8X16: {
       return ValueBuilder::makeCall(SIMD_INT8X16,
@@ -76,7 +71,6 @@ Ref makeJsCoercedZero(JsType type) {
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0));
-      break;
     }
     case JS_INT16X8: {
       return ValueBuilder::makeCall(SIMD_INT16X8,
@@ -88,7 +82,6 @@ Ref makeJsCoercedZero(JsType type) {
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0));
-      break;
     }
     case JS_INT32X4: {
       return ValueBuilder::makeCall(SIMD_INT32X4,
@@ -96,7 +89,9 @@ Ref makeJsCoercedZero(JsType type) {
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0));
-      break;
+    }
+    case JS_REF: {
+      return ValueBuilder::makeName(NULL_);
     }
     default:
       assert(0);
