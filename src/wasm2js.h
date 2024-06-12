@@ -867,8 +867,8 @@ void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
         break;
       }
       case Type::f64: {
-        value = makeJsCoercion(
-          ValueBuilder::makeDouble(const_->value.getf64()), JS_DOUBLE);
+        value = makeJsCoercion(ValueBuilder::makeDouble(const_->value.getf64()),
+                               JS_DOUBLE);
         break;
       }
       default: {
