@@ -27,21 +27,21 @@
   ;; NRML-NEXT:  )
   ;; NRML-NEXT: )
   ;; FULL:      (func $a
-  ;; FULL-NEXT:  [none] ;;@ src.cpp:1:2
-  ;; FULL-NEXT:  [none](block $block
-  ;; FULL-NEXT:   [none] ;;@ src.cpp:1:2
+  ;; FULL-NEXT:  (; none ;) ;;@ src.cpp:1:2
+  ;; FULL-NEXT:   (;none ;)(block $block
+  ;; FULL-NEXT:   (; none ;) ;;@ src.cpp:1:2
   ;; FULL-NEXT:   (drop
-  ;; FULL-NEXT:    [i32] ;;@ src.cpp:1:2
+  ;; FULL-NEXT:    (; i32 ;) ;;@ src.cpp:1:2
   ;; FULL-NEXT:    (i32.const 0)
   ;; FULL-NEXT:   )
-  ;; FULL-NEXT:   [none] ;;@ src.cpp:3:4
+  ;; FULL-NEXT:   (; none ;) ;;@ src.cpp:3:4
   ;; FULL-NEXT:   (drop
-  ;; FULL-NEXT:    [i32] ;;@ src.cpp:3:4
+  ;; FULL-NEXT:    (; i32 ;) ;;@ src.cpp:3:4
   ;; FULL-NEXT:    (i32.const 1)
   ;; FULL-NEXT:   )
-  ;; FULL-NEXT:   [none] ;;@ src.cpp:3:4
+  ;; FULL-NEXT:   (; none ;) ;;@ src.cpp:3:4
   ;; FULL-NEXT:   (drop
-  ;; FULL-NEXT:    [i32] ;;@ src.cpp:3:4
+  ;; FULL-NEXT:    (; i32 ;) ;;@ src.cpp:3:4
   ;; FULL-NEXT:    (i32.const 2)
   ;; FULL-NEXT:   )
   ;; FULL-NEXT:  ) ;; end block block

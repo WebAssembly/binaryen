@@ -9,13 +9,13 @@
 (module
   ;; CHECK:      (func $test
   ;; CHECK-NEXT:  (local $temp i32)
-  ;; CHECK-NEXT:  [none] ;;@ src.cpp:200:2
-  ;; CHECK-NEXT:  [none](block
-  ;; CHECK-NEXT:   [none] ;;@ src.cpp:200:2
+  ;; CHECK-NEXT:  (; none ;) ;;@ src.cpp:200:2
+  ;; CHECK-NEXT:   (;none ;)(block
+  ;; CHECK-NEXT:   (; none ;) ;;@ src.cpp:200:2
   ;; CHECK-NEXT:   (call $test)
-  ;; CHECK-NEXT:   [none] ;;@ src.cpp:200:2
-  ;; CHECK-NEXT:   (local.set $temp
-  ;; CHECK-NEXT:    [i32] ;;@ src.cpp:200:2
+  ;; CHECK-NEXT:   (; none ;) ;;@ src.cpp:200:2
+  ;; CHECK-NEXT:   (local.set $temp(; local type: i32 ;)
+  ;; CHECK-NEXT:    (; i32 ;) ;;@ src.cpp:200:2
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  ) ;; end block
@@ -40,13 +40,13 @@
 
   ;; CHECK:      (func $test-no-trample
   ;; CHECK-NEXT:  (local $temp i32)
-  ;; CHECK-NEXT:  [none] ;;@ src.cpp:300:3
-  ;; CHECK-NEXT:  [none](block
-  ;; CHECK-NEXT:   [none] ;;@ src.cpp:400:4
+  ;; CHECK-NEXT:  (; none ;) ;;@ src.cpp:300:3
+  ;; CHECK-NEXT:   (;none ;)(block
+  ;; CHECK-NEXT:   (; none ;) ;;@ src.cpp:400:4
   ;; CHECK-NEXT:   (call $test)
-  ;; CHECK-NEXT:   [none] ;;@ src.cpp:200:2
-  ;; CHECK-NEXT:   (local.set $temp
-  ;; CHECK-NEXT:    [i32] ;;@ src.cpp:500:5
+  ;; CHECK-NEXT:   (; none ;) ;;@ src.cpp:200:2
+  ;; CHECK-NEXT:   (local.set $temp(; local type: i32 ;)
+  ;; CHECK-NEXT:    (; i32 ;) ;;@ src.cpp:500:5
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  ) ;; end block

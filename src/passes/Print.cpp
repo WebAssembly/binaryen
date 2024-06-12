@@ -48,11 +48,16 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression&);
 
 namespace {
 
-bool isFullForced() {
+bool checkIsFullForced() {
   if (getenv("BINARYEN_PRINT_FULL")) {
     return std::stoi(getenv("BINARYEN_PRINT_FULL")) != 0;
   }
   return false;
+}
+
+bool isFullForced() {
+  static bool full = checkIsFullForced();
+  return full;
 }
 
 std::ostream& printMemoryName(Name name, std::ostream& o, Module* wasm) {
@@ -409,11 +414,12 @@ struct PrintExpressionContents
   Function* currFunction = nullptr;
   std::ostream& o;
   FeatureSet features;
+  bool full;
 
   PrintExpressionContents(PrintSExpression& parent)
     : parent(parent), wasm(parent.currModule),
       currFunction(parent.currFunction), o(parent.o),
-      features(wasm ? wasm->features : FeatureSet::All) {}
+      features(wasm ? wasm->features : FeatureSet::All), full(isFullForced()) {}
 
   std::ostream& printType(Type type) { return parent.printType(type); }
 
@@ -517,6 +523,11 @@ struct PrintExpressionContents
       printMedium(o, "local.set ");
     }
     printLocal(curr->index, currFunction, o);
+    if (full && currFunction) {
+      o << "(; local type: ";
+      printType(currFunction->getLocalType(curr->index));
+      o << " ;)";
+    }
   }
   void visitGlobalGet(GlobalGet* curr) {
     printMedium(o, "global.get ");
@@ -2464,9 +2475,9 @@ void PrintSExpression::printFullLine(Expression* expression) {
     doIndent(o, indent);
   }
   if (full) {
-    o << "[";
+    o << "(; ";
     printTypeOrName(expression->type, o, currModule);
-    o << "] ";
+    o << " ;) ";
   }
   visit(expression);
   o << maybeNewLine;
@@ -2509,9 +2520,9 @@ void PrintSExpression::visitBlock(Block* curr) {
     }
     stack.push_back(curr);
     if (full) {
-      o << "[";
+      o << " (;";
       printTypeOrName(curr->type, o, currModule);
-      o << "]";
+      o << " ;)";
     }
     o << '(';
     printExpressionContents(curr);
@@ -3370,9 +3381,9 @@ static std::ostream& printExpression(Expression* expression,
   print.currModule = wasm;
   if (full || isFullForced()) {
     print.setFull(true);
-    o << "[";
+    o << "(; ";
     printTypeOrName(expression->type, o, wasm);
-    o << "] ";
+    o << " ;) ";
   }
   print.visit(expression);
   return o;
