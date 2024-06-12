@@ -541,6 +541,9 @@ bool shapeEq(HeapType a, HeapType b) {
   if (a.isOpen() != b.isOpen()) {
     return false;
   }
+  if (a.isShared() != b.isShared()) {
+    return false;
+  }
   if (a.isStruct() && b.isStruct()) {
     return shapeEq(a.getStruct(), b.getStruct());
   }
@@ -555,6 +558,7 @@ bool shapeEq(HeapType a, HeapType b) {
 
 size_t shapeHash(HeapType a) {
   size_t digest = hash(a.isOpen());
+  rehash(digest, a.isShared());
   if (a.isStruct()) {
     rehash(digest, 0);
     hash_combine(digest, shapeHash(a.getStruct()));

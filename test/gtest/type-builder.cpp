@@ -273,6 +273,40 @@ TEST_F(TypeTest, InvalidFinalSupertype) {
   EXPECT_EQ(error->index, 1u);
 }
 
+TEST_F(TypeTest, InvalidSharedSupertype) {
+  TypeBuilder builder(2);
+  builder[0] = Struct{};
+  builder[1] = Struct{};
+  builder[0].setShared(true);
+  builder[1].setShared(false);
+  builder[1].subTypeOf(builder[0]);
+
+  auto result = builder.build();
+  EXPECT_FALSE(result);
+
+  const auto* error = result.getError();
+  ASSERT_TRUE(error);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::InvalidSupertype);
+  EXPECT_EQ(error->index, 1u);
+}
+
+TEST_F(TypeTest, InvalidUnsharedSupertype) {
+  TypeBuilder builder(2);
+  builder[0] = Struct{};
+  builder[1] = Struct{};
+  builder[0].setShared(false);
+  builder[1].setShared(true);
+  builder[1].subTypeOf(builder[0]);
+
+  auto result = builder.build();
+  EXPECT_FALSE(result);
+
+  const auto* error = result.getError();
+  ASSERT_TRUE(error);
+  EXPECT_EQ(error->reason, TypeBuilder::ErrorReason::InvalidSupertype);
+  EXPECT_EQ(error->index, 1u);
+}
+
 TEST_F(TypeTest, ForwardReferencedChild) {
   TypeBuilder builder(3);
   builder.createRecGroup(0, 2);
