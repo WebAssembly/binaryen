@@ -846,23 +846,28 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
 }
 
 void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
-  if (auto* const_ = global->init->dynCast<Const>()) {
-    Ref theValue;
+  Ref theVar = ValueBuilder::makeVar();
+  ast->push_back(theVar);
+
+  auto* init = global->init;
+  Ref value;
+
+  if (auto* const_ = init->dynCast<Const>()) {
     TODO_SINGLE_COMPOUND(const_->type);
     switch (const_->type.getBasic()) {
       case Type::i32: {
-        theValue = ValueBuilder::makeInt(const_->value.geti32());
+        value = ValueBuilder::makeInt(const_->value.geti32());
         break;
       }
       case Type::f32: {
-        theValue = ValueBuilder::makeCall(
+        value = ValueBuilder::makeCall(
           MATH_FROUND,
           makeJsCoercion(ValueBuilder::makeDouble(const_->value.getf32()),
                          JS_DOUBLE));
         break;
       }
       case Type::f64: {
-        theValue = makeJsCoercion(
+        value = makeJsCoercion(
           ValueBuilder::makeDouble(const_->value.getf64()), JS_DOUBLE);
         break;
       }
@@ -870,20 +875,16 @@ void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
         assert(false && "Top const type not supported");
       }
     }
-    Ref theVar = ValueBuilder::makeVar();
-    ast->push_back(theVar);
-    ValueBuilder::appendToVar(
-      theVar, fromName(global->name, NameScope::Top), theValue);
-  } else if (auto* get = global->init->dynCast<GlobalGet>()) {
-    Ref theVar = ValueBuilder::makeVar();
-    ast->push_back(theVar);
-    ValueBuilder::appendToVar(
-      theVar,
-      fromName(global->name, NameScope::Top),
-      ValueBuilder::makeName(fromName(get->name, NameScope::Top)));
+  } else if (auto* get = init->dynCast<GlobalGet>()) {
+    value = ValueBuilder::makeName(fromName(get->name, NameScope::Top));
+  } else if (init->is<RefNull>()) {
+    value = ValueBuilder::makeName("null");
   } else {
     assert(false && "Top init type not supported");
   }
+
+  ValueBuilder::appendToVar(
+    theVar, fromName(global->name, NameScope::Top), value);
 }
 
 Ref Wasm2JSBuilder::processFunction(Module* m,

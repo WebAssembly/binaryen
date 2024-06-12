@@ -1,4 +1,6 @@
 (module
+  (global $global (mut anyref) (ref.null any))
+
   (func $null (export "null") (result anyref)
     (ref.null any)
   )
@@ -35,5 +37,16 @@
     (ref.as_non_null
       (local.get $x)
     )
+  )
+
+  (func $use-global (export "use-global") (param $x anyref) (result anyref)
+    (local $temp anyref)
+    (local.set $temp
+      (global.get $global)
+    )
+    (global.set $global
+      (local.get $x)
+    )
+    (local.get $temp)
   )
 )

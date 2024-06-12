@@ -12,6 +12,7 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
+ var global = null;
  function null_() {
   return null;
  }
@@ -34,12 +35,20 @@ function asmFunc(imports) {
   return x || wasm2js_trap();
  }
  
+ function use_global(x) {
+  var temp = null;
+  temp = global;
+  global = x;
+  return temp;
+ }
+ 
  return {
   "null_": null_, 
   "is_null": is_null, 
   "ref_func": ref_func, 
   "ref_eq": ref_eq, 
-  "ref_as": ref_as
+  "ref_as": ref_as, 
+  "use_global": use_global
  };
 }
 
@@ -50,3 +59,4 @@ export var is_null = retasmFunc.is_null;
 export var ref_func = retasmFunc.ref_func;
 export var ref_eq = retasmFunc.ref_eq;
 export var ref_as = retasmFunc.ref_as;
+export var use_global = retasmFunc.use_global;
