@@ -21,13 +21,13 @@
 
 namespace wasm::debuginfo {
 
-// Given an expression and another that it replaces, copy the debug info from
-// the latter to the former. Note that the expression may not be an exclusive
+// Given an original expression and another that replaces it, copy the debuginfo
+// from the former to the latter. Note the expression may not be an exclusive
 // replacement of the other (the other may be replaced by several expressions,
 // all of whom may end up with the same debug info).
-inline void copyDebugInfoToReplacement(Expression* replacement,
-                                       Expression* original,
-                                       Function* func) {
+inline void copyOriginalToReplacement(Expression* original,
+                                      Expression* replacement,
+                                      Function* func) {
   auto& debugLocations = func->debugLocations;
   // Early exit if there is no debug info at all. Also, leave if we already
   // have debug info on the new replacement, which we don't want to trample:
@@ -63,10 +63,10 @@ inline void copyDebugInfoToReplacement(Expression* replacement,
 
 // Given an expression and a copy of it in another function, copy the debug
 // info into the second function.
-void copyDebugInfoBetweenFunctions(Expression* origin,
-                                   Expression* copy,
-                                   Function* originFunc,
-                                   Function* copyFunc);
+void copyBetweenFunctions(Expression* origin,
+                          Expression* copy,
+                          Function* originFunc,
+                          Function* copyFunc);
 } // namespace wasm::debuginfo
 
 #endif // wasm_ir_debuginfo_h

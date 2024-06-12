@@ -140,7 +140,7 @@ convertToDirectCalls(T* curr,
                              curr->type,
                              curr->isReturn);
     }
-    debuginfo::copyDebugInfoToReplacement(ret, curr, &func);
+    debuginfo::copyOriginalToReplacement(curr, ret, &func);
     return ret;
   };
   auto* ifTrueCall = makeCall(ifTrueCallInfo);

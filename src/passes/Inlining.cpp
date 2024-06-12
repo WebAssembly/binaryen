@@ -579,7 +579,7 @@ static Expression* doInlining(Module* module,
 
   // Generate and update the inlined contents
   auto* contents = ExpressionManipulator::copy(from->body, *module);
-  debuginfo::copyDebugInfoBetweenFunctions(from->body, contents, from, into);
+  debuginfo::copyBetweenFunctions(from->body, contents, from, into);
   updater.walk(contents);
   block->list.push_back(contents);
   block->type = retType;

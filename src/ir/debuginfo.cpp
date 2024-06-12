@@ -20,10 +20,10 @@
 
 namespace wasm::debuginfo {
 
-void copyDebugInfoBetweenFunctions(Expression* origin,
-                                   Expression* copy,
-                                   Function* originFunc,
-                                   Function* copyFunc) {
+void copyBetweenFunctions(Expression* origin,
+                          Expression* copy,
+                          Function* originFunc,
+                          Function* copyFunc) {
   if (originFunc->debugLocations.empty()) {
     return; // No debug info to copy
   }
