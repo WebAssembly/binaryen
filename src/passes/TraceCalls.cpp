@@ -21,33 +21,24 @@
 // The pass supports SIMD but the multi-value feature is not supported yet.
 //
 // Instrumenting void free(void*):
-//  Before:
-//   (call $free (i32.const 64))
+
+// Instrumenting function `void* malloc(int32_t)` with a user-defined
+// name of the tracer `trace_alloc` and function `void free(void*)`
+// with the default name of the tracer `trace_free` (`trace_` prefix
+// is added by default):
+// wasm-opt --trace-calls=malloc:trace_alloc,free -o test-opt.wasm test.wasm
 //
-//  After:
-//   (local $1 i32)
-//   (block
-//     (call $free
-//       (local.tee $1
-//         (i32.const 64)
-//       )
-//     )
-//     (call $trace_free
-//       (local.get $1)
-//     )
-//   )
-//
-// Instrumenting void* malloc(int32_t) with a user-defined tracer
-// (trace_allocation):
 //  Before:
 //   (call $malloc
 //     (local.const 32))
+//   (call $free (i32.const 64))
 //
 //  After:
 //   (local $0 i32)
 //   (local $1 i32)
+//   (local $2 i32)
 //   (block (result i32)
-//     (call $trace_allocation
+//     (call $trace_alloc
 //       (local.get $0)
 //       (local.tee $1
 //         (call $malloc
@@ -56,9 +47,18 @@
 //       )
 //     )
 //   )
-//
+//   (block
+//     (call $free
+//       (local.tee $3
+//         (i32.const 64)
+//       )
+//     )
+//     (call $trace_free
+//       (local.get $3)
+//     )
+//   )
 
-#include <set>
+#include <map>
 
 #include "asmjs/shared-constants.h"
 #include "ir/import-utils.h"
@@ -68,45 +68,17 @@
 
 namespace wasm {
 
-struct TracedFunction {
-  Name originName;
-  Name tracerName;
-  Type params;
-  Type results;
-};
-bool operator<(const TracedFunction& lhs, const TracedFunction& rhs) {
-  return lhs.originName < rhs.originName;
-}
-
-static Type strToType(const std::string& strType) {
-  if (strType == "i32") {
-    return Type::i32;
-  } else if (strType == "i64") {
-    return Type::i64;
-  } else if (strType == "f32") {
-    return Type::f32;
-  } else if (strType == "f64") {
-    return Type::f64;
-  } else if (strType == "v128") {
-    return Type::v128;
-  } else {
-    Fatal() << "Failed to parse type '" << strType << "'";
-  }
-}
+using TracedFunctions = std::map<Name /* originName */, Name /* tracerName */>;
 
 struct AddTraceWrappers : public WalkerPass<PostWalker<AddTraceWrappers>> {
-  AddTraceWrappers(std::set<TracedFunction> tracedFunctions)
+  AddTraceWrappers(TracedFunctions tracedFunctions)
     : tracedFunctions(std::move(tracedFunctions)) {}
   void visitCall(Call* curr) {
     auto* target = getModule()->getFunction(curr->target);
 
-    auto iter = std::find_if(tracedFunctions.begin(),
-                             tracedFunctions.end(),
-                             [target](const TracedFunction& f) {
-                               return f.originName == target->name;
-                             });
+    auto iter = tracedFunctions.find(target->name);
     if (iter != tracedFunctions.end()) {
-      addInstrumentation(curr, target, iter->tracerName);
+      addInstrumentation(curr, target, iter->second);
     }
   }
 
@@ -136,14 +108,15 @@ private:
         {builder.makeCall(
            wrapperName, trackerCallParams, Type::BasicType::none),
          builder.makeLocalGet(resultLocal, resultType)}));
-    } else
+    } else {
       replaceCurrent(builder.makeBlock(
         {realCall,
          builder.makeCall(
            wrapperName, trackerCallParams, Type::BasicType::none)}));
+    }
   }
 
-  std::set<TracedFunction> tracedFunctions;
+  TracedFunctions tracedFunctions;
 };
 
 struct TraceCalls : public Pass {
@@ -154,39 +127,55 @@ struct TraceCalls : public Pass {
     auto functionsDefinitions = getPassOptions().getArgument(
       "trace-calls",
       "TraceCalls usage: wasm-opt "
-      "--trace-calls=FUNCTION_TO_TRACE[:TRACER_NAME][,RESULT1_TYPE]"
-      "[,PARAM1_TYPE[,PARAM2_TYPE[,...]]][;...]");
+      "--trace-calls=FUNCTION_TO_TRACE[:TRACER_NAME][,...]");
 
     auto tracedFunctions = parseArgument(functionsDefinitions);
 
     for (const auto& tracedFunction : tracedFunctions) {
-      addImport(module, tracedFunction);
+      auto func = module->getFunctionOrNull(tracedFunction.first);
+      if (!func) {
+        std::cerr << "[TraceCalls] Function '" << tracedFunction.first
+                  << "' not found" << std::endl;
+      } else {
+        addImport(module, *func, tracedFunction.second);
+      }
     }
 
     AddTraceWrappers(std::move(tracedFunctions)).run(getPassRunner(), module);
   }
 
 private:
-  std::set<TracedFunction> parseArgument(const std::string& arg) {
-    std::set<TracedFunction> tracedFunctions;
+  Type getTracerParamsType(ImportInfo& info, const Function& func) {
+    auto resultsType = func.type.getSignature().results;
+    if (resultsType.isTuple()) {
+      Fatal() << "Failed to instrument function '" << func.name
+              << "': Multi-value result type is not supported";
+    }
 
-    for (const auto& definition : String::Split(arg, ";")) {
-      auto parts = String::Split(definition, ",");
-      if (parts.size() == 0) {
+    std::vector<Type> tracerParamTypes;
+    if (resultsType.isConcrete()) {
+      tracerParamTypes.push_back(resultsType);
+    }
+    for (auto& op : func.type.getSignature().params) {
+      tracerParamTypes.push_back(op);
+    }
+
+    return Type(tracerParamTypes);
+  }
+
+  TracedFunctions parseArgument(const std::string& arg) {
+    TracedFunctions tracedFunctions;
+
+    for (const auto& definition : String::Split(arg, ",")) {
+      if (definition.empty()) {
         // Empty definition, ignore.
         continue;
       }
 
       std::string originName, traceName;
-      parseFunctionName(parts[0], originName, traceName);
+      parseFunctionName(definition, originName, traceName);
 
-      std::vector<Type> paramsAndResults;
-      for (size_t i = 1; i < parts.size(); i++) {
-        paramsAndResults.push_back(strToType(parts[i]));
-      }
-
-      tracedFunctions.emplace(TracedFunction{
-        Name(originName), Name(traceName), paramsAndResults, Type::none});
+      tracedFunctions[Name(originName)] = Name(traceName);
     }
 
     return tracedFunctions;
@@ -211,14 +200,14 @@ private:
     }
   }
 
-  void addImport(Module* wasm, const TracedFunction& f) {
+  void addImport(Module* wasm, const Function& f, const Name& tracerName) {
     ImportInfo info(*wasm);
 
-    if (!info.getImportedFunction(ENV, f.tracerName)) {
-      auto import =
-        Builder::makeFunction(f.tracerName, Signature(f.params, f.results), {});
+    if (!info.getImportedFunction(ENV, tracerName)) {
+      auto import = Builder::makeFunction(
+        tracerName, Signature(getTracerParamsType(info, f), Type::none), {});
       import->module = ENV;
-      import->base = f.tracerName;
+      import->base = tracerName;
       wasm->addFunction(std::move(import));
     }
   }
