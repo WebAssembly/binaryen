@@ -907,6 +907,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   void addStructType(StructT) {}
   void addArrayType(ArrayT) {}
   void setOpen() {}
+  void setShared() {}
   Result<> addSubtype(Index) { return Ok{}; }
   void finishSubtype(Name name, Index pos) {
     // TODO: type annotations
@@ -1076,6 +1077,8 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
   void addArrayType(ArrayT& type) { builder[index] = type; }
 
   void setOpen() { builder[index].setOpen(); }
+
+  void setShared() { builder[index].setShared(); }
 
   Result<> addSubtype(Index super) {
     if (super >= builder.size()) {

@@ -377,6 +377,7 @@ public:
   bool isString() const;
   bool isBottom() const;
   bool isOpen() const;
+  bool isShared() const;
 
   Signature getSignature() const;
   Continuation getContinuation() const;
@@ -614,9 +615,8 @@ struct TypeBuilder {
   Type getTempTupleType(const Tuple&);
   Type getTempRefType(HeapType heapType, Nullability nullable);
 
-  // In nominal mode, or for nominal types, declare the HeapType being built at
-  // index `i` to be an immediate subtype of the given HeapType. Does nothing
-  // for equirecursive types.
+  // Declare the HeapType being built at index `i` to be an immediate subtype of
+  // the given HeapType.
   void setSubType(size_t i, HeapType super);
 
   // Create a new recursion group covering slots [i, i + length). Groups must
@@ -624,6 +624,7 @@ struct TypeBuilder {
   void createRecGroup(size_t i, size_t length);
 
   void setOpen(size_t i, bool open = true);
+  void setShared(size_t i, bool shared = true);
 
   enum class ErrorReason {
     // There is a cycle in the supertype relation.
@@ -694,6 +695,10 @@ struct TypeBuilder {
     }
     Entry& setOpen(bool open = true) {
       builder.setOpen(index, open);
+      return *this;
+    }
+    Entry& setShared(bool shared = true) {
+      builder.setShared(index, shared);
       return *this;
     }
   };

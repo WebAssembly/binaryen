@@ -86,6 +86,7 @@ struct HeapTypeInfo {
   // global store.
   bool isTemp = false;
   bool isOpen = false;
+  bool isShared = false;
   // The supertype of this HeapType, if it exists.
   HeapTypeInfo* supertype = nullptr;
   // The recursion group of this type or null if the recursion group is trivial
@@ -1251,6 +1252,15 @@ bool HeapType::isOpen() const {
   }
 }
 
+bool HeapType::isShared() const {
+  if (isBasic()) {
+    // TODO: shared basic heap types
+    return false;
+  } else {
+    return getHeapTypeInfo(*this)->isShared;
+  }
+}
+
 Signature HeapType::getSignature() const {
   assert(isSignature());
   return getHeapTypeInfo(*this)->signature;
@@ -1953,6 +1963,9 @@ std::ostream& TypePrinter::print(HeapType type) {
       os << ' ';
     }
   }
+  if (type.isShared()) {
+    os << "(shared ";
+  }
   if (type.isSignature()) {
     print(type.getSignature());
   } else if (type.isContinuation()) {
@@ -1963,6 +1976,9 @@ std::ostream& TypePrinter::print(HeapType type) {
     print(type.getArray());
   } else {
     WASM_UNREACHABLE("unexpected type");
+  }
+  if (type.isShared()) {
+    os << ')';
   }
   if (useSub) {
     os << ')';
@@ -2121,6 +2137,7 @@ size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
     hash_combine(digest, hash(HeapType(uintptr_t(info.supertype))));
   }
   wasm::rehash(digest, info.isOpen);
+  wasm::rehash(digest, info.isShared);
   wasm::rehash(digest, info.kind);
   switch (info.kind) {
     case HeapTypeInfo::SignatureKind:
@@ -2255,6 +2272,9 @@ bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
     }
   }
   if (a.isOpen != b.isOpen) {
+    return false;
+  }
+  if (a.isShared != b.isShared) {
     return false;
   }
   if (a.kind != b.kind) {
@@ -2532,10 +2552,18 @@ void TypeBuilder::setOpen(size_t i, bool open) {
   impl->entries[i].info->isOpen = open;
 }
 
+void TypeBuilder::setShared(size_t i, bool shared) {
+  assert(i < size() && "index out of bounds");
+  impl->entries[i].info->isShared = shared;
+}
+
 namespace {
 
 bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
   if (!super.isOpen) {
+    return false;
+  }
+  if (sub.isShared != super.isShared) {
     return false;
   }
   if (sub.kind != super.kind) {

@@ -331,7 +331,8 @@ template<typename Ctx>
 Result<typename Ctx::TypeUseT> typeuse(Ctx&, bool allowNames = true);
 MaybeResult<ImportNames> inlineImport(Lexer&);
 Result<std::vector<Name>> inlineExports(Lexer&);
-template<typename Ctx> Result<> strtype(Ctx&);
+template<typename Ctx> Result<> comptype(Ctx&);
+template<typename Ctx> Result<> sharecomptype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::ModuleNameT> subtype(Ctx&);
 template<typename Ctx> MaybeResult<> deftype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx&);
@@ -2709,11 +2710,11 @@ inline Result<std::vector<Name>> inlineExports(Lexer& in) {
   return exports;
 }
 
-// strtype ::= ft:functype   => ft
-//           | ct:conttype   => ct
-//           | st:structtype => st
-//           | at:arraytype  => at
-template<typename Ctx> Result<> strtype(Ctx& ctx) {
+// comptype ::= ft:functype   => ft
+//            | ct:conttype   => ct
+//            | st:structtype => st
+//            | at:arraytype  => at
+template<typename Ctx> Result<> comptype(Ctx& ctx) {
   if (auto type = functype(ctx)) {
     CHECK_ERR(type);
     ctx.addFuncType(*type);
@@ -2737,8 +2738,23 @@ template<typename Ctx> Result<> strtype(Ctx& ctx) {
   return ctx.in.err("expected type description");
 }
 
-// subtype ::= '(' 'type' id? '(' 'sub' typeidx? strtype ')' ')'
-//           | '(' 'type' id? strtype ')'
+// sharecomptype ::= '(' 'shared' t:comptype ')' => shared t
+//                 | t:comptype => unshared t
+template<typename Ctx> Result<> sharecomptype(Ctx& ctx) {
+  if (ctx.in.takeSExprStart("shared"sv)) {
+    ctx.setShared();
+    CHECK_ERR(comptype(ctx));
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of shared comptype");
+    }
+  } else {
+    CHECK_ERR(comptype(ctx));
+  }
+  return Ok{};
+}
+
+// subtype ::= '(' 'type' id? '(' 'sub' typeidx? sharecomptype ')' ')'
+//           | '(' 'type' id? sharecomptype ')'
 template<typename Ctx> MaybeResult<> subtype(Ctx& ctx) {
   auto pos = ctx.in.getPos();
 
@@ -2760,13 +2776,13 @@ template<typename Ctx> MaybeResult<> subtype(Ctx& ctx) {
       CHECK_ERR(ctx.addSubtype(*super));
     }
 
-    CHECK_ERR(strtype(ctx));
+    CHECK_ERR(sharecomptype(ctx));
 
     if (!ctx.in.takeRParen()) {
       return ctx.in.err("expected end of subtype definition");
     }
   } else {
-    CHECK_ERR(strtype(ctx));
+    CHECK_ERR(sharecomptype(ctx));
   }
 
   if (!ctx.in.takeRParen()) {
