@@ -846,44 +846,45 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
 }
 
 void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
-  if (auto* const_ = global->init->dynCast<Const>()) {
-    Ref theValue;
+  Ref theVar = ValueBuilder::makeVar();
+  ast->push_back(theVar);
+
+  auto* init = global->init;
+  Ref value;
+
+  if (auto* const_ = init->dynCast<Const>()) {
     TODO_SINGLE_COMPOUND(const_->type);
     switch (const_->type.getBasic()) {
       case Type::i32: {
-        theValue = ValueBuilder::makeInt(const_->value.geti32());
+        value = ValueBuilder::makeInt(const_->value.geti32());
         break;
       }
       case Type::f32: {
-        theValue = ValueBuilder::makeCall(
+        value = ValueBuilder::makeCall(
           MATH_FROUND,
           makeJsCoercion(ValueBuilder::makeDouble(const_->value.getf32()),
                          JS_DOUBLE));
         break;
       }
       case Type::f64: {
-        theValue = makeJsCoercion(
-          ValueBuilder::makeDouble(const_->value.getf64()), JS_DOUBLE);
+        value = makeJsCoercion(ValueBuilder::makeDouble(const_->value.getf64()),
+                               JS_DOUBLE);
         break;
       }
       default: {
         assert(false && "Top const type not supported");
       }
     }
-    Ref theVar = ValueBuilder::makeVar();
-    ast->push_back(theVar);
-    ValueBuilder::appendToVar(
-      theVar, fromName(global->name, NameScope::Top), theValue);
-  } else if (auto* get = global->init->dynCast<GlobalGet>()) {
-    Ref theVar = ValueBuilder::makeVar();
-    ast->push_back(theVar);
-    ValueBuilder::appendToVar(
-      theVar,
-      fromName(global->name, NameScope::Top),
-      ValueBuilder::makeName(fromName(get->name, NameScope::Top)));
+  } else if (auto* get = init->dynCast<GlobalGet>()) {
+    value = ValueBuilder::makeName(fromName(get->name, NameScope::Top));
+  } else if (init->is<RefNull>()) {
+    value = ValueBuilder::makeName(NULL_);
   } else {
     assert(false && "Top init type not supported");
   }
+
+  ValueBuilder::appendToVar(
+    theVar, fromName(global->name, NameScope::Top), value);
 }
 
 Ref Wasm2JSBuilder::processFunction(Module* m,
@@ -2415,8 +2416,15 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       WASM_UNREACHABLE("unimp");
     }
     Ref visitRefAs(RefAs* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      // TODO: support others
+      assert(curr->op == RefAsNonNull);
+
+      // value || trap()
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TRAP);
+      return ValueBuilder::makeBinary(
+        visit(curr->value, EXPRESSION_RESULT),
+        IString("||"),
+        ValueBuilder::makeCall(ABI::wasm2js::TRAP));
     }
 
     Ref visitContBind(ContBind* curr) {
