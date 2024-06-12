@@ -524,7 +524,7 @@ struct PrintExpressionContents
     }
     printLocal(curr->index, currFunction, o);
     if (full && currFunction) {
-      o << "(; local type: ";
+      o << " (; local type: ";
       printType(currFunction->getLocalType(curr->index));
       o << " ;)";
     }
