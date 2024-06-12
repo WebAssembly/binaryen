@@ -18,10 +18,10 @@
 #include "contexts.h"
 #include "ir/names.h"
 #include "lexer.h"
-#include "parsers.h"
 #include "pass.h"
 #include "wasm-type.h"
 #include "wasm.h"
+#include "wat-parser-internal.h"
 
 // The WebAssembly text format is recursive in the sense that elements may be
 // referred to before they are declared. Furthermore, elements may be referred
@@ -73,24 +73,6 @@ Result<IndexMap> createIndexMap(Lexer& in, const std::vector<DefPos>& defs) {
   return indices;
 }
 
-template<typename Ctx>
-Result<> parseDefs(Ctx& ctx,
-                   const std::vector<DefPos>& defs,
-                   MaybeResult<> (*parser)(Ctx&)) {
-  for (auto& def : defs) {
-    ctx.index = def.index;
-    WithPosition with(ctx, def.pos);
-    if (auto parsed = parser(ctx)) {
-      CHECK_ERR(parsed);
-    } else {
-      auto im = import_(ctx);
-      assert(im);
-      CHECK_ERR(im);
-    }
-  }
-  return Ok{};
-}
-
 void propagateDebugLocations(Module& wasm) {
   // Copy debug locations from parents or previous siblings to expressions that
   // do not already have their own debug locations.
@@ -101,10 +83,16 @@ void propagateDebugLocations(Module& wasm) {
   runner.run();
 }
 
+// Parse module-level declarations.
+
+// Parse type definitions.
+
+// Parse implicit type definitions and map typeuses without explicit types to
+// the correct types.
+
 Result<> doParseModule(Module& wasm, Lexer& input, bool allowExtra) {
-  // Parse module-level declarations.
   ParseDeclsCtx decls(input, wasm);
-  CHECK_ERR(module(decls));
+  CHECK_ERR(parseDecls(decls));
   if (!allowExtra && !decls.in.empty()) {
     return decls.in.err("Unexpected tokens after module");
   }
@@ -112,113 +100,18 @@ Result<> doParseModule(Module& wasm, Lexer& input, bool allowExtra) {
   auto typeIndices = createIndexMap(decls.in, decls.subtypeDefs);
   CHECK_ERR(typeIndices);
 
-  // Parse type definitions.
   std::vector<HeapType> types;
   std::unordered_map<HeapType, std::unordered_map<Name, Index>> typeNames;
-  {
-    TypeBuilder builder(decls.subtypeDefs.size());
-    ParseTypeDefsCtx ctx(input, builder, *typeIndices);
-    for (auto& typeDef : decls.typeDefs) {
-      WithPosition with(ctx, typeDef.pos);
-      CHECK_ERR(deftype(ctx));
-    }
-    auto built = builder.build();
-    if (auto* err = built.getError()) {
-      std::stringstream msg;
-      msg << "invalid type: " << err->reason;
-      return ctx.in.err(decls.typeDefs[err->index].pos, msg.str());
-    }
-    types = *built;
-    // Record type names on the module and in typeNames.
-    for (size_t i = 0; i < types.size(); ++i) {
-      auto& names = ctx.names[i];
-      auto& fieldNames = names.fieldNames;
-      if (names.name.is() || fieldNames.size()) {
-        wasm.typeNames.insert({types[i], names});
-        auto& fieldIdxMap = typeNames[types[i]];
-        for (auto [idx, name] : fieldNames) {
-          fieldIdxMap.insert({name, idx});
-        }
-      }
-    }
-  }
+  CHECK_ERR(parseTypeDefs(decls, input, *typeIndices, types, typeNames));
 
-  // Parse implicit type definitions and map typeuses without explicit types to
-  // the correct types.
   std::unordered_map<Index, HeapType> implicitTypes;
+  CHECK_ERR(
+    parseImplicitTypeDefs(decls, input, *typeIndices, types, implicitTypes));
 
-  {
-    ParseImplicitTypeDefsCtx ctx(input, types, implicitTypes, *typeIndices);
-    for (Index pos : decls.implicitTypeDefs) {
-      WithPosition with(ctx, pos);
-      CHECK_ERR(typeuse(ctx));
-    }
-  }
+  CHECK_ERR(parseModuleTypes(decls, input, *typeIndices, types, implicitTypes));
 
-  {
-    // Parse module-level types.
-    ParseModuleTypesCtx ctx(input,
-                            wasm,
-                            types,
-                            implicitTypes,
-                            decls.implicitElemIndices,
-                            *typeIndices);
-    CHECK_ERR(parseDefs(ctx, decls.funcDefs, func));
-    CHECK_ERR(parseDefs(ctx, decls.tableDefs, table));
-    CHECK_ERR(parseDefs(ctx, decls.memoryDefs, memory));
-    CHECK_ERR(parseDefs(ctx, decls.globalDefs, global));
-    CHECK_ERR(parseDefs(ctx, decls.elemDefs, elem));
-    CHECK_ERR(parseDefs(ctx, decls.tagDefs, tag));
-  }
-  {
-    // Parse definitions.
-    // TODO: Parallelize this.
-    ParseDefsCtx ctx(input,
-                     wasm,
-                     types,
-                     implicitTypes,
-                     typeNames,
-                     decls.implicitElemIndices,
-                     *typeIndices);
-    CHECK_ERR(parseDefs(ctx, decls.tableDefs, table));
-    CHECK_ERR(parseDefs(ctx, decls.globalDefs, global));
-    CHECK_ERR(parseDefs(ctx, decls.startDefs, start));
-    CHECK_ERR(parseDefs(ctx, decls.elemDefs, elem));
-    CHECK_ERR(parseDefs(ctx, decls.dataDefs, data));
-
-    for (Index i = 0; i < decls.funcDefs.size(); ++i) {
-      ctx.index = i;
-      auto* f = wasm.functions[i].get();
-      WithPosition with(ctx, decls.funcDefs[i].pos);
-      ctx.setSrcLoc(decls.funcDefs[i].annotations);
-      if (!f->imported()) {
-        CHECK_ERR(ctx.visitFunctionStart(f));
-      }
-      if (auto parsed = func(ctx)) {
-        CHECK_ERR(parsed);
-      } else {
-        auto im = import_(ctx);
-        assert(im);
-        CHECK_ERR(im);
-      }
-      if (!f->imported()) {
-        auto end = ctx.irBuilder.visitEnd();
-        if (auto* err = end.getErr()) {
-          return ctx.in.err(decls.funcDefs[i].pos, err->msg);
-        }
-      }
-    }
-
-    // Parse exports.
-    // TODO: It would be more technically correct to interleave these properly
-    // with the implicit inline exports in other module field definitions.
-    for (auto pos : decls.exportDefs) {
-      WithPosition with(ctx, pos);
-      auto parsed = export_(ctx);
-      CHECK_ERR(parsed);
-      assert(parsed);
-    }
-  }
+  CHECK_ERR(parseDefinitions(
+    decls, input, *typeIndices, types, implicitTypes, typeNames));
 
   propagateDebugLocations(wasm);
   input = decls.in;
@@ -235,23 +128,6 @@ Result<> parseModule(Module& wasm, std::string_view in) {
 
 Result<> parseModule(Module& wasm, Lexer& lexer) {
   return doParseModule(wasm, lexer, true);
-}
-
-Result<Literal> parseConst(Lexer& lexer) {
-  Module wasm;
-  ParseDefsCtx ctx(lexer, wasm, {}, {}, {}, {}, {});
-  auto inst = foldedinstr(ctx);
-  CHECK_ERR(inst);
-  auto expr = ctx.irBuilder.build();
-  if (auto* err = expr.getErr()) {
-    return lexer.err(err->msg);
-  }
-  auto* e = *expr;
-  if (!e->is<Const>() && !e->is<RefNull>() && !e->is<RefI31>()) {
-    return lexer.err("expected constant");
-  }
-  lexer = ctx.in;
-  return getLiteralFromConstExpression(e);
 }
 
 } // namespace wasm::WATParser

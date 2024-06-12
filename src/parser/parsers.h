@@ -20,6 +20,7 @@
 #include "common.h"
 #include "contexts.h"
 #include "lexer.h"
+#include "wat-parser-internal.h"
 
 namespace wasm::WATParser {
 
@@ -349,32 +350,6 @@ template<typename Ctx> MaybeResult<> data(Ctx&);
 template<typename Ctx> MaybeResult<> tag(Ctx&);
 template<typename Ctx> MaybeResult<> modulefield(Ctx&);
 template<typename Ctx> Result<> module(Ctx&);
-
-// =========
-// Utilities
-// =========
-
-// RAII utility for temporarily changing the parsing position of a parsing
-// context.
-template<typename Ctx> struct WithPosition {
-  Ctx& ctx;
-  Index original;
-  std::vector<Annotation> annotations;
-
-  WithPosition(Ctx& ctx, Index pos)
-    : ctx(ctx), original(ctx.in.getPos()),
-      annotations(ctx.in.takeAnnotations()) {
-    ctx.in.setPos(pos);
-  }
-
-  ~WithPosition() {
-    ctx.in.setPos(original);
-    ctx.in.setAnnotations(std::move(annotations));
-  }
-};
-
-// Deduction guide to satisfy -Wctad-maybe-unsupported.
-template<typename Ctx> WithPosition(Ctx& ctx, Index) -> WithPosition<Ctx>;
 
 // =====
 // Types
@@ -2699,7 +2674,7 @@ Result<typename Ctx::TypeUseT> typeuse(Ctx& ctx, bool allowNames) {
 }
 
 // ('(' 'import' mod:name nm:name ')')?
-MaybeResult<ImportNames> inlineImport(Lexer& in) {
+inline MaybeResult<ImportNames> inlineImport(Lexer& in) {
   if (!in.takeSExprStart("import"sv)) {
     return {};
   }
@@ -2719,7 +2694,7 @@ MaybeResult<ImportNames> inlineImport(Lexer& in) {
 }
 
 // ('(' 'export' name ')')*
-Result<std::vector<Name>> inlineExports(Lexer& in) {
+inline Result<std::vector<Name>> inlineExports(Lexer& in) {
   std::vector<Name> exports;
   while (in.takeSExprStart("export"sv)) {
     auto name = in.takeName();
