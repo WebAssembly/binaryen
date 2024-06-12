@@ -192,7 +192,7 @@ public:
 
   // The second pass on an expression: process it fully, generating
   // JS
-  Ref processFunctionBody(Module* m, Function* func, bool standalone);
+  Ref processExpression(Expression* curr, Module* m, Function* func = nullptr, bool standalone = false);
 
   Index getDataIndex(Name segment) {
     auto it = dataIndices.find(segment);
@@ -848,43 +848,9 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
 void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
   Ref theVar = ValueBuilder::makeVar();
   ast->push_back(theVar);
-
-  auto* init = global->init;
-  Ref value;
-
-  if (auto* const_ = init->dynCast<Const>()) {
-    TODO_SINGLE_COMPOUND(const_->type);
-    switch (const_->type.getBasic()) {
-      case Type::i32: {
-        value = ValueBuilder::makeInt(const_->value.geti32());
-        break;
-      }
-      case Type::f32: {
-        value = ValueBuilder::makeCall(
-          MATH_FROUND,
-          makeJsCoercion(ValueBuilder::makeDouble(const_->value.getf32()),
-                         JS_DOUBLE));
-        break;
-      }
-      case Type::f64: {
-        value = makeJsCoercion(ValueBuilder::makeDouble(const_->value.getf64()),
-                               JS_DOUBLE);
-        break;
-      }
-      default: {
-        assert(false && "Top const type not supported");
-      }
-    }
-  } else if (auto* get = init->dynCast<GlobalGet>()) {
-    value = ValueBuilder::makeName(fromName(get->name, NameScope::Top));
-  } else if (init->is<RefNull>()) {
-    value = ValueBuilder::makeName(NULL_);
-  } else {
-    assert(false && "Top init type not supported");
-  }
-
+  Ref init = processExpression(global->init, module);
   ValueBuilder::appendToVar(
-    theVar, fromName(global->name, NameScope::Top), value);
+    theVar, fromName(global->name, NameScope::Top), init);
 }
 
 Ref Wasm2JSBuilder::processFunction(Module* m,
@@ -934,7 +900,7 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
   size_t theVarIndex = ret[3]->size();
   ret[3]->push_back(theVar);
   // body
-  flattenAppend(ret, processFunctionBody(m, func, standaloneFunction));
+  flattenAppend(ret, processExpression(func->body, m, func, standaloneFunction));
   // vars, including new temp vars
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     ValueBuilder::appendToVar(
@@ -952,7 +918,8 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
   return ret;
 }
 
-Ref Wasm2JSBuilder::processFunctionBody(Module* m,
+Ref Wasm2JSBuilder::processExpression(Expression* curr,
+                                        Module* m,
                                         Function* func,
                                         bool standaloneFunction) {
   // Switches are tricky to handle - in wasm they often come with
@@ -2460,7 +2427,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
   };
 
-  return ExpressionProcessor(this, m, func, standaloneFunction).process();
+  return ExpressionProcessor(this, m, func, standaloneFunction).process(curr);
 }
 
 void Wasm2JSBuilder::addMemoryFuncs(Ref ast, Module* wasm) {
