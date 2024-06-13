@@ -323,7 +323,7 @@ private:
   void addTable(Ref ast, Module* wasm);
   void addStart(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
-  void addGlobal(Ref ast, Global* global);
+  void addGlobal(Ref ast, Global* global, Module* module);
   void addMemoryFuncs(Ref ast, Module* wasm);
   void addMemoryGrowFunc(Ref ast, Module* wasm);
 
@@ -503,7 +503,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   // globals
   bool generateFetchHighBits = false;
   ModuleUtils::iterDefinedGlobals(*wasm, [&](Global* global) {
-    addGlobal(asmFunc[3], global);
+    addGlobal(asmFunc[3], global, wasm);
     if (flags.allowAsserts && global->name == INT64_TO_32_HIGH_BITS) {
       generateFetchHighBits = true;
     }
@@ -845,7 +845,7 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
     ValueBuilder::makeStatement(ValueBuilder::makeReturn(exports)));
 }
 
-void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
+void Wasm2JSBuilder::addGlobal(Ref ast, Global* global, Module* module) {
   Ref theVar = ValueBuilder::makeVar();
   ast->push_back(theVar);
   Ref init = processExpression(global->init, module);
@@ -1059,9 +1059,9 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
       : parent(parent), func(func), module(m),
         standaloneFunction(standaloneFunction) {}
 
-    Ref process() {
-      switchProcessor.walk(func->body);
-      return visit(func->body, NO_RESULT);
+    Ref process(Expression* curr) {
+      switchProcessor.walk(curr);
+      return visit(curr, NO_RESULT);
     }
 
     // A scoped temporary variable.
