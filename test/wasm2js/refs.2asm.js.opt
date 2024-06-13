@@ -13,6 +13,7 @@ function asmFunc(imports) {
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  var global = null;
+ var global_ref = use_global_ref;
  function null_() {
   return null;
  }
@@ -40,13 +41,21 @@ function asmFunc(imports) {
   return $1;
  }
  
+ function use_global_ref($0) {
+  var $1 = null;
+  $1 = global_ref;
+  global_ref = $0;
+  return $1;
+ }
+ 
  return {
   "null_": null_, 
   "is_null": is_null, 
   "ref_func": ref_func, 
   "ref_eq": ref_eq, 
   "ref_as": ref_as, 
-  "use_global": use_global
+  "use_global": use_global, 
+  "use_global_ref": use_global_ref
  };
 }
 
@@ -58,3 +67,4 @@ export var ref_func = retasmFunc.ref_func;
 export var ref_eq = retasmFunc.ref_eq;
 export var ref_as = retasmFunc.ref_as;
 export var use_global = retasmFunc.use_global;
+export var use_global_ref = retasmFunc.use_global_ref;
