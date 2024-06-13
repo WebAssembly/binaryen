@@ -574,9 +574,9 @@ InsertOrderedSet<HeapType> getPublicTypeSet(Module& wasm) {
 
   // TODO: Consider Tags as well, but they should store HeapTypes instead of
   // Signatures first.
+  std::unordered_set<Table*> publicTables;
   ModuleUtils::iterImportedTables(wasm, [&](Table* table) {
-    assert(table->type.isRef());
-    notePublic(table->type.getHeapType());
+    publicTables.insert(table);
   });
   ModuleUtils::iterImportedGlobals(wasm, [&](Global* global) {
     if (global->type.isRef()) {
@@ -599,8 +599,7 @@ InsertOrderedSet<HeapType> getPublicTypeSet(Module& wasm) {
       }
       case ExternalKind::Table: {
         auto* table = wasm.getTable(ex->value);
-        assert(table->type.isRef());
-        notePublic(table->type.getHeapType());
+        publicTables.insert(table);
         continue;
       }
       case ExternalKind::Memory:
@@ -620,6 +619,19 @@ InsertOrderedSet<HeapType> getPublicTypeSet(Module& wasm) {
         break;
     }
     WASM_UNREACHABLE("unexpected export kind");
+  }
+
+  for (auto* table : publicTables) {
+    assert(table->type.isRef());
+    notePublic(table->type.getHeapType());
+
+    // All functions added to the table are public as well.
+    // TODO: we should also scan for table.set
+    iterTableSegments(wasm, table->name, [&](ElementSegment* segment) {
+      for (auto* data : segment->data) {
+        notePublic(data->type.getHeapType());
+      }
+    });
   }
 
   // Ignorable public types are public.
