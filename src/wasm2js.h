@@ -192,7 +192,10 @@ public:
 
   // The second pass on an expression: process it fully, generating
   // JS
-  Ref processExpression(Expression* curr, Module* m, Function* func = nullptr, bool standalone = false);
+  Ref processExpression(Expression* curr,
+                        Module* m,
+                        Function* func = nullptr,
+                        bool standalone = false);
 
   Index getDataIndex(Name segment) {
     auto it = dataIndices.find(segment);
@@ -900,7 +903,8 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
   size_t theVarIndex = ret[3]->size();
   ret[3]->push_back(theVar);
   // body
-  flattenAppend(ret, processExpression(func->body, m, func, standaloneFunction));
+  flattenAppend(ret,
+                processExpression(func->body, m, func, standaloneFunction));
   // vars, including new temp vars
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     ValueBuilder::appendToVar(
@@ -919,9 +923,9 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
 }
 
 Ref Wasm2JSBuilder::processExpression(Expression* curr,
-                                        Module* m,
-                                        Function* func,
-                                        bool standaloneFunction) {
+                                      Module* m,
+                                      Function* func,
+                                      bool standaloneFunction) {
   // Switches are tricky to handle - in wasm they often come with
   // massively-nested "towers" of blocks, which if naively translated
   // to JS may exceed parse recursion limits of VMs. Therefore even when
