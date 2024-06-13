@@ -575,9 +575,8 @@ InsertOrderedSet<HeapType> getPublicTypeSet(Module& wasm) {
   // TODO: Consider Tags as well, but they should store HeapTypes instead of
   // Signatures first.
   std::unordered_set<Table*> publicTables;
-  ModuleUtils::iterImportedTables(wasm, [&](Table* table) {
-    publicTables.insert(table);
-  });
+  ModuleUtils::iterImportedTables(
+    wasm, [&](Table* table) { publicTables.insert(table); });
   ModuleUtils::iterImportedGlobals(wasm, [&](Global* global) {
     if (global->type.isRef()) {
       notePublic(global->type.getHeapType());
