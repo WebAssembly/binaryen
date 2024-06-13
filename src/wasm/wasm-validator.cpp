@@ -3701,6 +3701,25 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
       seen.insert(curr);
     }
   });
+
+  // Check that globals have allowed types.
+  for (auto& g : module.globals) {
+    auto globalFeats = g->type.getFeatures();
+    if (!info.shouldBeTrue(globalFeats <= module.features, g->name, "")) {
+      auto& stream = info.getStream(nullptr);
+      stream << "global type requires additional features [";
+      bool first = true;
+      (globalFeats - module.features).iterFeatures([&](FeatureSet feat) {
+        if (first) {
+          first = false;
+        } else {
+          stream << " ";
+        }
+        stream << "--enable-" << feat.toString();
+      });
+      stream << "]\n";
+    }
+  }
 }
 
 static void validateMemories(Module& module, ValidationInfo& info) {

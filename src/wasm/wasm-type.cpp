@@ -936,7 +936,13 @@ FeatureSet Type::getFeatures() const {
               heapType->getRecGroup().size() > 1 ||
               heapType->getDeclaredSuperType() || heapType->isOpen()) {
             feats |= FeatureSet::ReferenceTypes | FeatureSet::GC;
-          } else if (heapType->isSignature()) {
+          }
+
+          if (heapType->isShared()) {
+            feats |= FeatureSet::SharedEverything;
+          }
+
+          if (heapType->isSignature()) {
             // This is a function reference, which requires reference types and
             // possibly also multivalue (if it has multiple returns). Note that
             // technically typed function references also require GC, however,
@@ -949,7 +955,9 @@ FeatureSet Type::getFeatures() const {
             if (sig.results.isTuple()) {
               feats |= FeatureSet::Multivalue;
             }
-          } else if (heapType->isContinuation()) {
+          }
+
+          if (heapType->isContinuation()) {
             feats |= FeatureSet::TypedContinuations;
           }
 
@@ -969,7 +977,7 @@ FeatureSet Type::getFeatures() const {
       collector.noteChild(&heapType);
       return collector.feats;
     }
-    TODO_SINGLE_COMPOUND(t);
+
     switch (t.getBasic()) {
       case Type::v128:
         return FeatureSet::SIMD;
