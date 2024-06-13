@@ -2474,12 +2474,12 @@ void PrintSExpression::printFullLine(Expression* expression) {
   if (!minify) {
     doIndent(o, indent);
   }
-  if (full) {
-    o << "(; ";
-    printTypeOrName(expression->type, o, currModule);
-    o << " ;) ";
-  }
   visit(expression);
+  if (full) {
+    o << " (; ";
+    printTypeOrName(expression->type, o, currModule);
+    o << " ;)";
+  }
   o << maybeNewLine;
 }
 
@@ -2519,13 +2519,13 @@ void PrintSExpression::visitBlock(Block* curr) {
       printDebugLocation(curr);
     }
     stack.push_back(curr);
+    o << '(';
+    printExpressionContents(curr);
     if (full) {
-      o << " (;";
+      o << " (; ";
       printTypeOrName(curr->type, o, currModule);
       o << " ;)";
     }
-    o << '(';
-    printExpressionContents(curr);
     incIndent();
     if (curr->list.size() > 0 && curr->list[0]->is<Block>()) {
       // recurse into the first element
@@ -3381,11 +3381,13 @@ static std::ostream& printExpression(Expression* expression,
   print.currModule = wasm;
   if (full || isFullForced()) {
     print.setFull(true);
-    o << "(; ";
-    printTypeOrName(expression->type, o, wasm);
-    o << " ;) ";
   }
   print.visit(expression);
+  if (full || isFullForced()) {
+    o << " (; ";
+    printTypeOrName(expression->type, o, wasm);
+    o << " ;)";
+  }
   return o;
 }
 

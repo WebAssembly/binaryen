@@ -27,24 +27,24 @@
   ;; NRML-NEXT:  )
   ;; NRML-NEXT: )
   ;; FULL:      (func $a
-  ;; FULL-NEXT:  (; none ;) ;;@ src.cpp:1:2
-  ;; FULL-NEXT:   (;none ;)(block $block
-  ;; FULL-NEXT:   (; none ;) ;;@ src.cpp:1:2
+  ;; FULL-NEXT:  ;;@ src.cpp:1:2
+  ;; FULL-NEXT:  (block $block (; none ;)
+  ;; FULL-NEXT:   ;;@ src.cpp:1:2
   ;; FULL-NEXT:   (drop
-  ;; FULL-NEXT:    (; i32 ;) ;;@ src.cpp:1:2
-  ;; FULL-NEXT:    (i32.const 0)
-  ;; FULL-NEXT:   )
-  ;; FULL-NEXT:   (; none ;) ;;@ src.cpp:3:4
+  ;; FULL-NEXT:    ;;@ src.cpp:1:2
+  ;; FULL-NEXT:    (i32.const 0) (; i32 ;)
+  ;; FULL-NEXT:   ) (; none ;)
+  ;; FULL-NEXT:   ;;@ src.cpp:3:4
   ;; FULL-NEXT:   (drop
-  ;; FULL-NEXT:    (; i32 ;) ;;@ src.cpp:3:4
-  ;; FULL-NEXT:    (i32.const 1)
-  ;; FULL-NEXT:   )
-  ;; FULL-NEXT:   (; none ;) ;;@ src.cpp:3:4
+  ;; FULL-NEXT:    ;;@ src.cpp:3:4
+  ;; FULL-NEXT:    (i32.const 1) (; i32 ;)
+  ;; FULL-NEXT:   ) (; none ;)
+  ;; FULL-NEXT:   ;;@ src.cpp:3:4
   ;; FULL-NEXT:   (drop
-  ;; FULL-NEXT:    (; i32 ;) ;;@ src.cpp:3:4
-  ;; FULL-NEXT:    (i32.const 2)
-  ;; FULL-NEXT:   )
-  ;; FULL-NEXT:  ) ;; end block block
+  ;; FULL-NEXT:    ;;@ src.cpp:3:4
+  ;; FULL-NEXT:    (i32.const 2) (; i32 ;)
+  ;; FULL-NEXT:   ) (; none ;)
+  ;; FULL-NEXT:  ) ;; end block block (; none ;)
   ;; FULL-NEXT: )
   (func $a
     ;;@ src.cpp:1:2
