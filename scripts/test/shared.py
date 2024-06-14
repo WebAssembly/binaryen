@@ -386,7 +386,7 @@ def get_tests(test_dir, extensions=[], recursive=False):
 if options.spec_tests:
     options.spec_tests = [os.path.abspath(t) for t in options.spec_tests]
 else:
-    options.spec_tests = get_tests(get_test_dir('spec'), ['.wast'])
+    options.spec_tests = get_tests(get_test_dir('spec'), ['.wast'], recursive=True)
 
 os.chdir(options.out_dir)
 
@@ -411,11 +411,98 @@ SPEC_TESTS_TO_SKIP = [
     # Test invalid
     'elem.wast',
 ]
+SPEC_TESTSUITE_TESTS_TO_SKIP = [
+    'address.wast',
+    'align.wast',
+    'binary-leb128.wast',
+    'binary.wast',
+    'block.wast',
+    'br_table.wast',
+    'bulk.wast',
+    'comments.wast',
+    'const.wast',
+    'conversions.wast',
+    'data.wast',
+    'elem.wast',
+    'f32.wast',
+    'f64.wast',
+    'fac.wast',
+    'float_exprs.wast',
+    'float_misc.wast',
+    'func.wast',
+    'global.wast',
+    'if.wast',
+    'imports.wast',
+    'linking.wast',
+    'loop.wast',
+    'memory.wast',
+    'annotations.wast',
+    'id.wast',
+    'throw.wast',
+    'try_catch.wast',
+    'tag.wast',
+    'throw_ref.wast',
+    'try_table.wast',
+    'br_on_non_null.wast',
+    'br_on_null.wast',
+    'local_init.wast',
+    'ref_func.wast',
+    'ref_is_null.wast',
+    'ref_null.wast',
+    'return_call_indirect.wast',
+    'select.wast',
+    'table.wast',
+    'type-equivalence.wast',
+    'unreached-invalid.wast',
+    'array.wast',
+    'array_init_elem.wast',
+    'br_if.wast',
+    'br_on_cast.wast',
+    'br_on_cast_fail.wast',
+    'extern.wast',
+    'i31.wast',
+    'ref_cast.wast',
+    'ref_test.wast',
+    'struct.wast',
+    'type-rec.wast',
+    'type-subtyping.wast',
+    'call_indirect.wast',
+    'memory64.wast',
+    'table_fill.wast',
+    'table_get.wast',
+    'table_grow.wast',
+    'table_init.wast',
+    'table_set.wast',
+    'imports0.wast',
+    'imports2.wast',
+    'imports3.wast',
+    'linking0.wast',
+    'linking3.wast',
+    'i16x8_relaxed_q15mulr_s.wast',
+    'i32x4_relaxed_trunc.wast',
+    'i8x16_relaxed_swizzle.wast',
+    'relaxed_dot_product.wast',
+    'relaxed_laneselect.wast',
+    'relaxed_madd_nmadd.wast',
+    'relaxed_min_max.wast',
+    'simd_address.wast',
+    'simd_boolean.wast',
+    'simd_const.wast',
+    'simd_conversions.wast',
+    'simd_f32x4.wast',
+    'simd_f32x4_arith.wast',
+    'simd_f32x4_rounding.wast',
+    'simd_f64x2.wast',
+    'simd_f64x2_arith.wast',
+    'simd_f64x2_rounding.wast',
+    'token.wast',
+]
 options.spec_tests = [t for t in options.spec_tests if os.path.basename(t) not
-                      in SPEC_TESTS_TO_SKIP]
-
+                      in (SPEC_TESTSUITE_TESTS_TO_SKIP if 'testsuite' in t
+                          else SPEC_TESTS_TO_SKIP)]
 
 # check utilities
+
 
 def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
                         binary_suffix='.fromBinary'):
