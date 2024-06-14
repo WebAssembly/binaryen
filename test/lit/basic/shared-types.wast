@@ -4,26 +4,28 @@
 ;; RUN: wasm-opt %s -all --roundtrip -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $func (shared (func)))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $final (shared (struct )))
+    (type $final (shared (struct)))
+    ;; CHECK:       (type $top (sub (shared (struct ))))
+    (type $top (sub (shared (struct))))
+    ;; CHECK:       (type $mid (sub $top (shared (struct (field i32)))))
+    (type $mid (sub $top (shared (struct i32))))
+    ;; CHECK:       (type $bot (sub final $mid (shared (struct (field i32) (field i32)))))
+    (type $bot (sub final $mid (shared (struct i32 i32))))
 
-  ;; CHECK:      (type $1 (func))
+    ;; CHECK:       (type $func (shared (func)))
+    (type $func (shared (func)))
+    ;; CHECK:       (type $array (shared (array i8)))
+    (type $array (shared (array i8)))
+    ;; CHECK:       (type $cont (shared (cont $func)))
+    (type $cont (shared (cont $func)))
+  )
 
-  ;; CHECK:      (type $final (shared (struct )))
-  (type $final (shared (struct)))
-  ;; CHECK:      (type $top (sub (shared (struct ))))
-  (type $top (sub (shared (struct))))
-  ;; CHECK:      (type $mid (sub $top (shared (struct (field i32)))))
-  (type $mid (sub $top (shared (struct i32))))
-  ;; CHECK:      (type $bot (sub final $mid (shared (struct (field i32) (field i32)))))
-  (type $bot (sub final $mid (shared (struct i32 i32))))
+  ;; CHECK:      (type $7 (func))
 
-  (type $func (shared (func)))
-  ;; CHECK:      (type $array (shared (array i8)))
-  (type $array (shared (array i8)))
-  ;; CHECK:      (type $cont (shared (cont $func)))
-  (type $cont (shared (cont $func)))
-
-  ;; CHECK:      (func $use-types (type $1)
+  ;; CHECK:      (func $use-types (type $7)
   ;; CHECK-NEXT:  (local $0 (ref $final))
   ;; CHECK-NEXT:  (local $1 (ref $top))
   ;; CHECK-NEXT:  (local $2 (ref $mid))
