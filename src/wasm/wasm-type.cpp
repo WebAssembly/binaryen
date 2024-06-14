@@ -436,18 +436,19 @@ bool isTemp(HeapType type) {
 
 HeapType::BasicHeapType getBasicHeapSupertype(HeapType type) {
   if (type.isBasic()) {
-    return type.getBasic();
+    return HeapType::BasicHeapType(type.getID());
   }
   auto* info = getHeapTypeInfo(type);
+  bool shared = info->isShared;
   switch (info->kind) {
     case HeapTypeInfo::SignatureKind:
-      return HeapType::func;
+      return HeapTypes::func.getSharedBasic(shared);
     case HeapTypeInfo::ContinuationKind:
-      return HeapType::cont;
+      return HeapTypes::cont.getSharedBasic(shared);
     case HeapTypeInfo::StructKind:
-      return HeapType::struct_;
+      return HeapTypes::struct_.getSharedBasic(shared);
     case HeapTypeInfo::ArrayKind:
-      return HeapType::array;
+      return HeapTypes::array.getSharedBasic(shared);
   }
   WASM_UNREACHABLE("unexpected kind");
 };
@@ -470,42 +471,53 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
   if (unsigned(a) > unsigned(b)) {
     std::swap(a, b);
   }
-  switch (a) {
+  auto bUnshared = HeapType(b).getUnsharedBasic();
+  HeapType lubUnshared;
+  switch (HeapType(a).getUnsharedBasic()) {
     case HeapType::ext:
     case HeapType::func:
     case HeapType::cont:
     case HeapType::exn:
       return std::nullopt;
     case HeapType::any:
-      return {HeapType::any};
+      lubUnshared = HeapType::any;
+      break;
     case HeapType::eq:
-      if (b == HeapType::i31 || b == HeapType::struct_ ||
-          b == HeapType::array) {
-        return {HeapType::eq};
+      if (bUnshared == HeapType::i31 || bUnshared == HeapType::struct_ ||
+          bUnshared == HeapType::array) {
+        lubUnshared = HeapType::eq;
+      } else {
+        lubUnshared = HeapType::any;
       }
-      return {HeapType::any};
+      break;
     case HeapType::i31:
-      if (b == HeapType::struct_ || b == HeapType::array) {
-        return {HeapType::eq};
+      if (bUnshared == HeapType::struct_ || bUnshared == HeapType::array) {
+        lubUnshared = HeapType::eq;
+      } else {
+        lubUnshared = HeapType::any;
       }
-      return {HeapType::any};
+      break;
     case HeapType::struct_:
-      if (b == HeapType::array) {
-        return {HeapType::eq};
+      if (bUnshared == HeapType::array) {
+        lubUnshared = HeapType::eq;
+      } else {
+        lubUnshared = HeapType::any;
       }
-      return {HeapType::any};
+      break;
     case HeapType::array:
     case HeapType::string:
-      return {HeapType::any};
+      lubUnshared = HeapType::any;
+      break;
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
     case HeapType::nocont:
     case HeapType::noexn:
       // Bottom types already handled.
-      break;
+      WASM_UNREACHABLE("unexpected basic type");
   }
-  WASM_UNREACHABLE("unexpected basic type");
+  bool shared = HeapType(a).isShared();
+  return {lubUnshared.getSharedBasic(shared)};
 }
 
 TypeInfo::TypeInfo(const TypeInfo& other) {
@@ -898,7 +910,7 @@ FeatureSet Type::getFeatures() const {
 
         void noteChild(HeapType* heapType) {
           if (heapType->isBasic()) {
-            switch (heapType->getBasic()) {
+            switch (heapType->getUnsharedBasic()) {
               case HeapType::ext:
               case HeapType::func:
                 feats |= FeatureSet::ReferenceTypes;
@@ -1228,7 +1240,7 @@ bool HeapType::isString() const { return *this == HeapType::string; }
 
 bool HeapType::isBottom() const {
   if (isBasic()) {
-    switch (getBasic()) {
+    switch (getUnsharedBasic()) {
       case ext:
       case func:
       case cont:
@@ -1261,8 +1273,7 @@ bool HeapType::isOpen() const {
 
 bool HeapType::isShared() const {
   if (isBasic()) {
-    // TODO: shared basic heap types
-    return false;
+    return (id & 1) != 0;
   } else {
     return getHeapTypeInfo(*this)->isShared;
   }
@@ -1305,9 +1316,11 @@ std::optional<HeapType> HeapType::getSuperType() const {
     return ret;
   }
 
+  bool shared = isShared();
+
   // There may be a basic supertype.
   if (isBasic()) {
-    switch (getBasic()) {
+    switch (getUnsharedBasic()) {
       case ext:
       case noext:
       case func:
@@ -1321,24 +1334,24 @@ std::optional<HeapType> HeapType::getSuperType() const {
       case string:
         return {};
       case eq:
-        return any;
+        return HeapType(any).getSharedBasic(shared);
       case i31:
       case struct_:
       case array:
-        return eq;
+        return HeapType(eq).getSharedBasic(shared);
     }
   }
 
   auto* info = getHeapTypeInfo(*this);
   switch (info->kind) {
     case HeapTypeInfo::SignatureKind:
-      return func;
+      return HeapType(func).getSharedBasic(shared);
     case HeapTypeInfo::ContinuationKind:
-      return cont;
+      return HeapType(cont).getSharedBasic(shared);
     case HeapTypeInfo::StructKind:
-      return struct_;
+      return HeapType(struct_).getSharedBasic(shared);
     case HeapTypeInfo::ArrayKind:
-      return array;
+      return HeapType(array).getSharedBasic(shared);
   }
   WASM_UNREACHABLE("unexpected kind");
 }
@@ -1365,7 +1378,7 @@ size_t HeapType::getDepth() const {
     }
   } else {
     // Some basic types have supers.
-    switch (getBasic()) {
+    switch (getUnsharedBasic()) {
       case HeapType::ext:
       case HeapType::func:
       case HeapType::cont:
@@ -1393,9 +1406,9 @@ size_t HeapType::getDepth() const {
   return depth;
 }
 
-HeapType::BasicHeapType HeapType::getBottom() const {
+HeapType::BasicHeapType HeapType::getUnsharedBottom() const {
   if (isBasic()) {
-    switch (getBasic()) {
+    switch (getUnsharedBasic()) {
       case ext:
         return noext;
       case func:
@@ -1435,8 +1448,8 @@ HeapType::BasicHeapType HeapType::getBottom() const {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-HeapType::BasicHeapType HeapType::getTop() const {
-  switch (getBottom()) {
+HeapType::BasicHeapType HeapType::getUnsharedTop() const {
+  switch (getUnsharedBottom()) {
     case none:
       return any;
     case nofunc:
@@ -1730,30 +1743,34 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
   if (a == b) {
     return true;
   }
+  if (a.isShared() != b.isShared()) {
+    return false;
+  }
   if (b.isBasic()) {
-    switch (b.getBasic()) {
+    auto aTop = a.getUnsharedTop();
+    auto aUnshared = a.isBasic() ? a.getUnsharedBasic() : a;
+    switch (b.getUnsharedBasic()) {
       case HeapType::ext:
-        return a.getTop() == HeapType::ext;
+        return aTop == HeapType::ext;
       case HeapType::func:
-        return a.getTop() == HeapType::func;
+        return aTop == HeapType::func;
       case HeapType::cont:
-        return a.getTop() == HeapType::cont;
+        return aTop == HeapType::cont;
       case HeapType::exn:
-        return a.getTop() == HeapType::exn;
+        return aTop == HeapType::exn;
       case HeapType::any:
-        return a.getTop() == HeapType::any;
+        return aTop == HeapType::any;
       case HeapType::eq:
-        return a == HeapType::i31 || a == HeapType::none ||
-               a == HeapType::struct_ || a == HeapType::array || a.isStruct() ||
-               a.isArray();
+        return aUnshared == HeapType::i31 || aUnshared == HeapType::none ||
+               aUnshared == HeapType::struct_ || aUnshared == HeapType::array ||
+               a.isStruct() || a.isArray();
       case HeapType::i31:
-        return a == HeapType::none;
-      case HeapType::struct_:
-        return a == HeapType::none || a.isStruct();
-      case HeapType::array:
-        return a == HeapType::none || a.isArray();
       case HeapType::string:
-        return a == HeapType::none;
+        return aUnshared == HeapType::none;
+      case HeapType::struct_:
+        return aUnshared == HeapType::none || a.isStruct();
+      case HeapType::array:
+        return aUnshared == HeapType::none || a.isArray();
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:
@@ -1865,9 +1882,9 @@ std::ostream& TypePrinter::print(Type type) {
     print(type.getTuple());
   } else if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (heapType.isBasic() && type.isNullable()) {
+    if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
       // Print shorthands for certain basic heap types.
-      switch (heapType.getBasic()) {
+      switch (heapType.getUnsharedBasic()) {
         case HeapType::ext:
           return os << "externref";
         case HeapType::func:
@@ -1914,38 +1931,60 @@ std::ostream& TypePrinter::print(Type type) {
 
 std::ostream& TypePrinter::print(HeapType type) {
   if (type.isBasic()) {
-    switch (type.getBasic()) {
-      case HeapType::ext:
-        return os << "extern";
-      case HeapType::func:
-        return os << "func";
-      case HeapType::cont:
-        return os << "cont";
-      case HeapType::any:
-        return os << "any";
-      case HeapType::eq:
-        return os << "eq";
-      case HeapType::i31:
-        return os << "i31";
-      case HeapType::struct_:
-        return os << "struct";
-      case HeapType::array:
-        return os << "array";
-      case HeapType::exn:
-        return os << "exn";
-      case HeapType::string:
-        return os << "string";
-      case HeapType::none:
-        return os << "none";
-      case HeapType::noext:
-        return os << "noextern";
-      case HeapType::nofunc:
-        return os << "nofunc";
-      case HeapType::nocont:
-        return os << "nocont";
-      case HeapType::noexn:
-        return os << "noexn";
+    if (type.isShared()) {
+      os << "(shared ";
     }
+    switch (type.getUnsharedBasic()) {
+      case HeapType::ext:
+        os << "extern";
+        break;
+      case HeapType::func:
+        os << "func";
+        break;
+      case HeapType::cont:
+        os << "cont";
+        break;
+      case HeapType::any:
+        os << "any";
+        break;
+      case HeapType::eq:
+        os << "eq";
+        break;
+      case HeapType::i31:
+        os << "i31";
+        break;
+      case HeapType::struct_:
+        os << "struct";
+        break;
+      case HeapType::array:
+        os << "array";
+        break;
+      case HeapType::exn:
+        os << "exn";
+        break;
+      case HeapType::string:
+        os << "string";
+        break;
+      case HeapType::none:
+        os << "none";
+        break;
+      case HeapType::noext:
+        os << "noextern";
+        break;
+      case HeapType::nofunc:
+        os << "nofunc";
+        break;
+      case HeapType::nocont:
+        os << "nocont";
+        break;
+      case HeapType::noexn:
+        os << "noexn";
+        break;
+    }
+    if (type.isShared()) {
+      os << ')';
+    }
+    return os;
   }
 
   auto names = generator(type);

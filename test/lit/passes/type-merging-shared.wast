@@ -75,3 +75,25 @@
   (local $c' (ref null $C'))
  )
 )
+
+(module
+ ;; Shared and unshared basic heap types similarly cannot be merged.
+ ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $A' (shared (struct (field anyref))))
+
+ ;; CHECK:       (type $A (shared (struct (field (ref null (shared any))))))
+ (type $A (shared (struct (ref null (shared any)))))
+ (type $A' (shared (struct (ref null any))))
+
+ ;; CHECK:       (type $2 (func))
+
+ ;; CHECK:      (func $foo (type $2)
+ ;; CHECK-NEXT:  (local $a (ref null $A))
+ ;; CHECK-NEXT:  (local $a' (ref null $A'))
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $foo
+  (local $a (ref null $A))
+  (local $a' (ref null $A'))
+ )
+)

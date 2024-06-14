@@ -5,6 +5,8 @@
 
 (module
   (rec
+    ;; CHECK:      (type $0 (func))
+
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $final (shared (struct )))
     (type $final (shared (struct)))
@@ -23,9 +25,7 @@
     (type $cont (shared (cont $func)))
   )
 
-  ;; CHECK:      (type $7 (func))
-
-  ;; CHECK:      (func $use-types (type $7)
+  ;; CHECK:      (func $use-types (type $0)
   ;; CHECK-NEXT:  (local $0 (ref $final))
   ;; CHECK-NEXT:  (local $1 (ref $top))
   ;; CHECK-NEXT:  (local $2 (ref $mid))
@@ -43,5 +43,41 @@
     (local (ref $func))
     (local (ref $array))
     (local (ref $cont))
+  )
+
+  ;; CHECK:      (func $use-basic-types (type $0)
+  ;; CHECK-NEXT:  (local $0 (ref (shared extern)))
+  ;; CHECK-NEXT:  (local $1 (ref (shared func)))
+  ;; CHECK-NEXT:  (local $2 (ref (shared cont)))
+  ;; CHECK-NEXT:  (local $3 (ref (shared any)))
+  ;; CHECK-NEXT:  (local $4 (ref (shared eq)))
+  ;; CHECK-NEXT:  (local $5 (ref (shared i31)))
+  ;; CHECK-NEXT:  (local $6 (ref (shared struct)))
+  ;; CHECK-NEXT:  (local $7 (ref (shared array)))
+  ;; CHECK-NEXT:  (local $8 (ref (shared exn)))
+  ;; CHECK-NEXT:  (local $9 (ref (shared string)))
+  ;; CHECK-NEXT:  (local $10 (ref (shared none)))
+  ;; CHECK-NEXT:  (local $11 (ref (shared noextern)))
+  ;; CHECK-NEXT:  (local $12 (ref (shared nofunc)))
+  ;; CHECK-NEXT:  (local $13 (ref (shared nocont)))
+  ;; CHECK-NEXT:  (local $14 (ref (shared noexn)))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $use-basic-types
+    (local (ref (shared extern)))
+    (local (ref (shared func)))
+    (local (ref (shared cont)))
+    (local (ref (shared any)))
+    (local (ref (shared eq)))
+    (local (ref (shared i31)))
+    (local (ref (shared struct)))
+    (local (ref (shared array)))
+    (local (ref (shared exn)))
+    (local (ref (shared string)))
+    (local (ref (shared none)))
+    (local (ref (shared noextern)))
+    (local (ref (shared nofunc)))
+    (local (ref (shared nocont)))
+    (local (ref (shared noexn)))
   )
 )

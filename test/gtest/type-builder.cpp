@@ -570,6 +570,27 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   HeapType defCont = Continuation(defFunc);
   HeapType defStruct = Struct();
   HeapType defArray = Array(Field(Type::i32, Immutable));
+  HeapType sharedAny = any.getSharedBasic();
+  HeapType sharedEq = eq.getSharedBasic();
+  HeapType sharedI31 = i31.getSharedBasic();
+  HeapType sharedStruct = struct_.getSharedBasic();
+  HeapType sharedNone = none.getSharedBasic();
+  HeapType sharedFunc = func.getSharedBasic();
+
+  HeapType sharedDefStruct;
+  HeapType sharedDefFunc;
+  {
+    TypeBuilder builder(2);
+    builder[0] = Struct{};
+    builder[1] = Signature();
+    builder[0].setShared();
+    builder[1].setShared();
+    auto results = builder.build();
+    ASSERT_TRUE(results);
+    auto built = *results;
+    sharedDefStruct = built[0];
+    sharedDefFunc = built[1];
+  }
 
   auto assertLUB = [](HeapType a, HeapType b, std::optional<HeapType> lub) {
     auto lub1 = HeapType::getLeastUpperBound(a, b);
@@ -620,6 +641,14 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(ext, defFunc, {});
   assertLUB(ext, defStruct, {});
   assertLUB(ext, defArray, {});
+  assertLUB(ext, sharedAny, {});
+  assertLUB(ext, sharedEq, {});
+  assertLUB(ext, sharedI31, {});
+  assertLUB(ext, sharedStruct, {});
+  assertLUB(ext, sharedNone, {});
+  assertLUB(ext, sharedFunc, {});
+  assertLUB(ext, sharedDefStruct, {});
+  assertLUB(ext, sharedDefFunc, {});
 
   assertLUB(func, func, func);
   assertLUB(func, cont, {});
@@ -637,6 +666,14 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(func, defCont, {});
   assertLUB(func, defStruct, {});
   assertLUB(func, defArray, {});
+  assertLUB(func, sharedAny, {});
+  assertLUB(func, sharedEq, {});
+  assertLUB(func, sharedI31, {});
+  assertLUB(func, sharedStruct, {});
+  assertLUB(func, sharedNone, {});
+  assertLUB(func, sharedFunc, {});
+  assertLUB(func, sharedDefStruct, {});
+  assertLUB(func, sharedDefFunc, {});
 
   assertLUB(cont, cont, cont);
   assertLUB(cont, func, {});
@@ -654,6 +691,14 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(cont, defCont, cont);
   assertLUB(cont, defStruct, {});
   assertLUB(cont, defArray, {});
+  assertLUB(cont, sharedAny, {});
+  assertLUB(cont, sharedEq, {});
+  assertLUB(cont, sharedI31, {});
+  assertLUB(cont, sharedStruct, {});
+  assertLUB(cont, sharedNone, {});
+  assertLUB(cont, sharedFunc, {});
+  assertLUB(cont, sharedDefStruct, {});
+  assertLUB(cont, sharedDefFunc, {});
 
   assertLUB(any, any, any);
   assertLUB(any, cont, {});
@@ -670,6 +715,14 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(any, defCont, {});
   assertLUB(any, defStruct, any);
   assertLUB(any, defArray, any);
+  assertLUB(any, sharedAny, {});
+  assertLUB(any, sharedEq, {});
+  assertLUB(any, sharedI31, {});
+  assertLUB(any, sharedStruct, {});
+  assertLUB(any, sharedNone, {});
+  assertLUB(any, sharedFunc, {});
+  assertLUB(any, sharedDefStruct, {});
+  assertLUB(any, sharedDefFunc, {});
 
   assertLUB(eq, eq, eq);
   assertLUB(eq, cont, {});
@@ -685,6 +738,14 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(eq, defCont, {});
   assertLUB(eq, defStruct, eq);
   assertLUB(eq, defArray, eq);
+  assertLUB(eq, sharedAny, {});
+  assertLUB(eq, sharedEq, {});
+  assertLUB(eq, sharedI31, {});
+  assertLUB(eq, sharedStruct, {});
+  assertLUB(eq, sharedNone, {});
+  assertLUB(eq, sharedFunc, {});
+  assertLUB(eq, sharedDefStruct, {});
+  assertLUB(eq, sharedDefFunc, {});
 
   assertLUB(i31, i31, i31);
   assertLUB(i31, cont, {});
@@ -699,6 +760,14 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(i31, defCont, {});
   assertLUB(i31, defStruct, eq);
   assertLUB(i31, defArray, eq);
+  assertLUB(i31, sharedAny, {});
+  assertLUB(i31, sharedEq, {});
+  assertLUB(i31, sharedI31, {});
+  assertLUB(i31, sharedStruct, {});
+  assertLUB(i31, sharedNone, {});
+  assertLUB(i31, sharedFunc, {});
+  assertLUB(i31, sharedDefStruct, {});
+  assertLUB(i31, sharedDefFunc, {});
 
   assertLUB(struct_, struct_, struct_);
   assertLUB(struct_, cont, {});
@@ -712,6 +781,14 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(struct_, defCont, {});
   assertLUB(struct_, defStruct, struct_);
   assertLUB(struct_, defArray, eq);
+  assertLUB(struct_, sharedAny, {});
+  assertLUB(struct_, sharedEq, {});
+  assertLUB(struct_, sharedI31, {});
+  assertLUB(struct_, sharedStruct, {});
+  assertLUB(struct_, sharedNone, {});
+  assertLUB(struct_, sharedFunc, {});
+  assertLUB(struct_, sharedDefStruct, {});
+  assertLUB(struct_, sharedDefFunc, {});
 
   assertLUB(array, array, array);
   assertLUB(array, cont, {});
@@ -724,6 +801,14 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(array, defCont, {});
   assertLUB(array, defStruct, eq);
   assertLUB(array, defArray, array);
+  assertLUB(array, sharedAny, {});
+  assertLUB(array, sharedEq, {});
+  assertLUB(array, sharedI31, {});
+  assertLUB(array, sharedStruct, {});
+  assertLUB(array, sharedNone, {});
+  assertLUB(array, sharedFunc, {});
+  assertLUB(array, sharedDefStruct, {});
+  assertLUB(array, sharedDefFunc, {});
 
   assertLUB(string, string, string);
   assertLUB(string, cont, {});
@@ -735,6 +820,14 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(string, defCont, {});
   assertLUB(string, defStruct, any);
   assertLUB(string, defArray, any);
+  assertLUB(string, sharedAny, {});
+  assertLUB(string, sharedEq, {});
+  assertLUB(string, sharedI31, {});
+  assertLUB(string, sharedStruct, {});
+  assertLUB(string, sharedNone, {});
+  assertLUB(string, sharedFunc, {});
+  assertLUB(string, sharedDefStruct, {});
+  assertLUB(string, sharedDefFunc, {});
 
   assertLUB(none, none, none);
   assertLUB(none, noext, {});
@@ -744,6 +837,14 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(none, defCont, {});
   assertLUB(none, defStruct, defStruct);
   assertLUB(none, defArray, defArray);
+  assertLUB(none, sharedAny, {});
+  assertLUB(none, sharedEq, {});
+  assertLUB(none, sharedI31, {});
+  assertLUB(none, sharedStruct, {});
+  assertLUB(none, sharedNone, {});
+  assertLUB(none, sharedFunc, {});
+  assertLUB(none, sharedDefStruct, {});
+  assertLUB(none, sharedDefFunc, {});
 
   assertLUB(noext, noext, noext);
   assertLUB(noext, nofunc, {});
@@ -752,6 +853,14 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(noext, defCont, {});
   assertLUB(noext, defStruct, {});
   assertLUB(noext, defArray, {});
+  assertLUB(noext, sharedAny, {});
+  assertLUB(noext, sharedEq, {});
+  assertLUB(noext, sharedI31, {});
+  assertLUB(noext, sharedStruct, {});
+  assertLUB(noext, sharedNone, {});
+  assertLUB(noext, sharedFunc, {});
+  assertLUB(noext, sharedDefStruct, {});
+  assertLUB(noext, sharedDefFunc, {});
 
   assertLUB(nofunc, nofunc, nofunc);
   assertLUB(nofunc, nocont, {});
@@ -759,6 +868,14 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(nofunc, defCont, {});
   assertLUB(nofunc, defStruct, {});
   assertLUB(nofunc, defArray, {});
+  assertLUB(nofunc, sharedAny, {});
+  assertLUB(nofunc, sharedEq, {});
+  assertLUB(nofunc, sharedI31, {});
+  assertLUB(nofunc, sharedStruct, {});
+  assertLUB(nofunc, sharedNone, {});
+  assertLUB(nofunc, sharedFunc, {});
+  assertLUB(nofunc, sharedDefStruct, {});
+  assertLUB(nofunc, sharedDefFunc, {});
 
   assertLUB(nocont, nocont, nocont);
   assertLUB(nocont, func, {});
@@ -768,21 +885,105 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   assertLUB(nocont, defCont, defCont);
   assertLUB(nocont, defStruct, {});
   assertLUB(nocont, defArray, {});
+  assertLUB(nocont, sharedAny, {});
+  assertLUB(nocont, sharedEq, {});
+  assertLUB(nocont, sharedI31, {});
+  assertLUB(nocont, sharedStruct, {});
+  assertLUB(nocont, sharedNone, {});
+  assertLUB(nocont, sharedFunc, {});
+  assertLUB(nocont, sharedDefStruct, {});
+  assertLUB(nocont, sharedDefFunc, {});
 
   assertLUB(defFunc, defFunc, defFunc);
   assertLUB(defFunc, defCont, {});
   assertLUB(defFunc, defStruct, {});
   assertLUB(defFunc, defArray, {});
+  assertLUB(defFunc, sharedAny, {});
+  assertLUB(defFunc, sharedEq, {});
+  assertLUB(defFunc, sharedI31, {});
+  assertLUB(defFunc, sharedStruct, {});
+  assertLUB(defFunc, sharedNone, {});
+  assertLUB(defFunc, sharedFunc, {});
+  assertLUB(defFunc, sharedDefStruct, {});
+  assertLUB(defFunc, sharedDefFunc, {});
 
   assertLUB(defCont, defCont, defCont);
   assertLUB(defCont, defFunc, {});
   assertLUB(defCont, defStruct, {});
   assertLUB(defCont, defArray, {});
+  assertLUB(defCont, sharedAny, {});
+  assertLUB(defCont, sharedEq, {});
+  assertLUB(defCont, sharedI31, {});
+  assertLUB(defCont, sharedStruct, {});
+  assertLUB(defCont, sharedNone, {});
+  assertLUB(defCont, sharedFunc, {});
+  assertLUB(defCont, sharedDefStruct, {});
+  assertLUB(defCont, sharedDefFunc, {});
 
   assertLUB(defStruct, defStruct, defStruct);
   assertLUB(defStruct, defArray, eq);
+  assertLUB(defStruct, sharedAny, {});
+  assertLUB(defStruct, sharedEq, {});
+  assertLUB(defStruct, sharedI31, {});
+  assertLUB(defStruct, sharedStruct, {});
+  assertLUB(defStruct, sharedNone, {});
+  assertLUB(defStruct, sharedFunc, {});
+  assertLUB(defStruct, sharedDefStruct, {});
+  assertLUB(defStruct, sharedDefFunc, {});
 
   assertLUB(defArray, defArray, defArray);
+  assertLUB(defArray, sharedAny, {});
+  assertLUB(defArray, sharedEq, {});
+  assertLUB(defArray, sharedI31, {});
+  assertLUB(defArray, sharedStruct, {});
+  assertLUB(defArray, sharedNone, {});
+  assertLUB(defArray, sharedFunc, {});
+  assertLUB(defArray, sharedDefStruct, {});
+  assertLUB(defArray, sharedDefFunc, {});
+
+  assertLUB(sharedAny, sharedAny, sharedAny);
+  assertLUB(sharedAny, sharedEq, sharedAny);
+  assertLUB(sharedAny, sharedI31, sharedAny);
+  assertLUB(sharedAny, sharedStruct, sharedAny);
+  assertLUB(sharedAny, sharedNone, sharedAny);
+  assertLUB(sharedAny, sharedFunc, {});
+  assertLUB(sharedAny, sharedDefStruct, sharedAny);
+  assertLUB(sharedAny, sharedDefFunc, {});
+
+  assertLUB(sharedEq, sharedEq, sharedEq);
+  assertLUB(sharedEq, sharedI31, sharedEq);
+  assertLUB(sharedEq, sharedStruct, sharedEq);
+  assertLUB(sharedEq, sharedNone, sharedEq);
+  assertLUB(sharedEq, sharedFunc, {});
+  assertLUB(sharedEq, sharedDefStruct, sharedEq);
+  assertLUB(sharedEq, sharedDefFunc, {});
+
+  assertLUB(sharedI31, sharedI31, sharedI31);
+  assertLUB(sharedI31, sharedStruct, sharedEq);
+  assertLUB(sharedI31, sharedNone, sharedI31);
+  assertLUB(sharedI31, sharedFunc, {});
+  assertLUB(sharedI31, sharedDefStruct, sharedEq);
+  assertLUB(sharedI31, sharedDefFunc, {});
+
+  assertLUB(sharedStruct, sharedStruct, sharedStruct);
+  assertLUB(sharedStruct, sharedNone, sharedStruct);
+  assertLUB(sharedStruct, sharedFunc, {});
+  assertLUB(sharedStruct, sharedDefStruct, sharedStruct);
+  assertLUB(sharedStruct, sharedDefFunc, {});
+
+  assertLUB(sharedNone, sharedNone, sharedNone);
+  assertLUB(sharedNone, sharedFunc, {});
+  assertLUB(sharedNone, sharedDefStruct, sharedDefStruct);
+  assertLUB(sharedNone, sharedDefFunc, {});
+
+  assertLUB(sharedFunc, sharedFunc, sharedFunc);
+  assertLUB(sharedFunc, sharedDefStruct, {});
+  assertLUB(sharedFunc, sharedDefFunc, sharedFunc);
+
+  assertLUB(sharedDefStruct, sharedDefStruct, sharedDefStruct);
+  assertLUB(sharedDefStruct, sharedDefFunc, {});
+
+  assertLUB(sharedDefFunc, sharedDefFunc, sharedDefFunc);
 
   Type anyref = Type(any, Nullable);
   Type eqref = Type(eq, Nullable);

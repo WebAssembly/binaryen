@@ -105,24 +105,21 @@ struct NullTypeParserCtx {
   using ElemListT = Ok;
   using DataStringT = Ok;
 
-  HeapTypeT makeFuncType() { return Ok{}; }
-  HeapTypeT makeAnyType() { return Ok{}; }
-  HeapTypeT makeExternType() { return Ok{}; }
-  HeapTypeT makeEqType() { return Ok{}; }
-  HeapTypeT makeI31Type() { return Ok{}; }
-  HeapTypeT makeStructType() { return Ok{}; }
-  HeapTypeT makeArrayType() { return Ok{}; }
-  HeapTypeT makeExnType() { return Ok{}; }
-  HeapTypeT makeStringType() { return Ok{}; }
-  HeapTypeT makeStringViewWTF8Type() { return Ok{}; }
-  HeapTypeT makeStringViewWTF16Type() { return Ok{}; }
-  HeapTypeT makeStringViewIterType() { return Ok{}; }
-  HeapTypeT makeContType() { return Ok{}; }
-  HeapTypeT makeNoneType() { return Ok{}; }
-  HeapTypeT makeNoextType() { return Ok{}; }
-  HeapTypeT makeNofuncType() { return Ok{}; }
-  HeapTypeT makeNoexnType() { return Ok{}; }
-  HeapTypeT makeNocontType() { return Ok{}; }
+  HeapTypeT makeFuncType(bool) { return Ok{}; }
+  HeapTypeT makeAnyType(bool) { return Ok{}; }
+  HeapTypeT makeExternType(bool) { return Ok{}; }
+  HeapTypeT makeEqType(bool) { return Ok{}; }
+  HeapTypeT makeI31Type(bool) { return Ok{}; }
+  HeapTypeT makeStructType(bool) { return Ok{}; }
+  HeapTypeT makeArrayType(bool) { return Ok{}; }
+  HeapTypeT makeExnType(bool) { return Ok{}; }
+  HeapTypeT makeStringType(bool) { return Ok{}; }
+  HeapTypeT makeContType(bool) { return Ok{}; }
+  HeapTypeT makeNoneType(bool) { return Ok{}; }
+  HeapTypeT makeNoextType(bool) { return Ok{}; }
+  HeapTypeT makeNofuncType(bool) { return Ok{}; }
+  HeapTypeT makeNoexnType(bool) { return Ok{}; }
+  HeapTypeT makeNocontType(bool) { return Ok{}; }
 
   TypeT makeI32() { return Ok{}; }
   TypeT makeI64() { return Ok{}; }
@@ -208,21 +205,51 @@ template<typename Ctx> struct TypeParserCtx {
 
   Ctx& self() { return *static_cast<Ctx*>(this); }
 
-  HeapTypeT makeFuncType() { return HeapType::func; }
-  HeapTypeT makeAnyType() { return HeapType::any; }
-  HeapTypeT makeExternType() { return HeapType::ext; }
-  HeapTypeT makeEqType() { return HeapType::eq; }
-  HeapTypeT makeI31Type() { return HeapType::i31; }
-  HeapTypeT makeStructType() { return HeapType::struct_; }
-  HeapTypeT makeArrayType() { return HeapType::array; }
-  HeapTypeT makeExnType() { return HeapType::exn; }
-  HeapTypeT makeStringType() { return HeapType::string; }
-  HeapTypeT makeContType() { return HeapType::cont; }
-  HeapTypeT makeNoneType() { return HeapType::none; }
-  HeapTypeT makeNoextType() { return HeapType::noext; }
-  HeapTypeT makeNofuncType() { return HeapType::nofunc; }
-  HeapTypeT makeNoexnType() { return HeapType::noexn; }
-  HeapTypeT makeNocontType() { return HeapType::nocont; }
+  HeapTypeT makeFuncType(bool shared) {
+    return HeapTypes::func.getSharedBasic(shared);
+  }
+  HeapTypeT makeAnyType(bool shared) {
+    return HeapTypes::any.getSharedBasic(shared);
+  }
+  HeapTypeT makeExternType(bool shared) {
+    return HeapTypes::ext.getSharedBasic(shared);
+  }
+  HeapTypeT makeEqType(bool shared) {
+    return HeapTypes::eq.getSharedBasic(shared);
+  }
+  HeapTypeT makeI31Type(bool shared) {
+    return HeapTypes::i31.getSharedBasic(shared);
+  }
+  HeapTypeT makeStructType(bool shared) {
+    return HeapTypes::struct_.getSharedBasic(shared);
+  }
+  HeapTypeT makeArrayType(bool shared) {
+    return HeapTypes::array.getSharedBasic(shared);
+  }
+  HeapTypeT makeExnType(bool shared) {
+    return HeapTypes::exn.getSharedBasic(shared);
+  }
+  HeapTypeT makeStringType(bool shared) {
+    return HeapTypes::string.getSharedBasic(shared);
+  }
+  HeapTypeT makeContType(bool shared) {
+    return HeapTypes::cont.getSharedBasic(shared);
+  }
+  HeapTypeT makeNoneType(bool shared) {
+    return HeapTypes::none.getSharedBasic(shared);
+  }
+  HeapTypeT makeNoextType(bool shared) {
+    return HeapTypes::noext.getSharedBasic(shared);
+  }
+  HeapTypeT makeNofuncType(bool shared) {
+    return HeapTypes::nofunc.getSharedBasic(shared);
+  }
+  HeapTypeT makeNoexnType(bool shared) {
+    return HeapTypes::noexn.getSharedBasic(shared);
+  }
+  HeapTypeT makeNocontType(bool shared) {
+    return HeapTypes::nocont.getSharedBasic(shared);
+  }
 
   TypeT makeI32() { return Type::i32; }
   TypeT makeI64() { return Type::i64; }

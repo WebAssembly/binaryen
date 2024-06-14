@@ -27,6 +27,7 @@ namespace wasm::WATParser {
 using namespace std::string_view_literals;
 
 // Types
+template<typename Ctx> Result<typename Ctx::HeapTypeT> absheaptype(Ctx&, bool);
 template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::RefTypeT> maybeRefType(Ctx&);
 template<typename Ctx> Result<typename Ctx::RefTypeT> reftype(Ctx&);
@@ -358,58 +359,73 @@ template<typename Ctx> Result<> module(Ctx&);
 // Types
 // =====
 
-// heaptype ::= x:typeidx => types[x]
-//            | 'func'    => func
-//            | 'extern'  => extern
-template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
+// absheaptype ::= 'func' | 'extern' | ...
+template<typename Ctx>
+Result<typename Ctx::HeapTypeT> absheaptype(Ctx& ctx, bool shared) {
   if (ctx.in.takeKeyword("func"sv)) {
-    return ctx.makeFuncType();
+    return ctx.makeFuncType(shared);
   }
   if (ctx.in.takeKeyword("any"sv)) {
-    return ctx.makeAnyType();
+    return ctx.makeAnyType(shared);
   }
   if (ctx.in.takeKeyword("extern"sv)) {
-    return ctx.makeExternType();
+    return ctx.makeExternType(shared);
   }
   if (ctx.in.takeKeyword("eq"sv)) {
-    return ctx.makeEqType();
+    return ctx.makeEqType(shared);
   }
   if (ctx.in.takeKeyword("i31"sv)) {
-    return ctx.makeI31Type();
+    return ctx.makeI31Type(shared);
   }
   if (ctx.in.takeKeyword("struct"sv)) {
-    return ctx.makeStructType();
+    return ctx.makeStructType(shared);
   }
   if (ctx.in.takeKeyword("array"sv)) {
-    return ctx.makeArrayType();
+    return ctx.makeArrayType(shared);
   }
   if (ctx.in.takeKeyword("exn"sv)) {
-    return ctx.makeExnType();
+    return ctx.makeExnType(shared);
   }
   if (ctx.in.takeKeyword("string"sv)) {
-    return ctx.makeStringType();
+    return ctx.makeStringType(shared);
   }
   if (ctx.in.takeKeyword("cont"sv)) {
-    return ctx.makeContType();
+    return ctx.makeContType(shared);
   }
   if (ctx.in.takeKeyword("none"sv)) {
-    return ctx.makeNoneType();
+    return ctx.makeNoneType(shared);
   }
   if (ctx.in.takeKeyword("noextern"sv)) {
-    return ctx.makeNoextType();
+    return ctx.makeNoextType(shared);
   }
   if (ctx.in.takeKeyword("nofunc"sv)) {
-    return ctx.makeNofuncType();
+    return ctx.makeNofuncType(shared);
   }
   if (ctx.in.takeKeyword("noexn"sv)) {
-    return ctx.makeNoexnType();
+    return ctx.makeNoexnType(shared);
   }
   if (ctx.in.takeKeyword("nocont"sv)) {
-    return ctx.makeNocontType();
+    return ctx.makeNocontType(shared);
   }
-  auto type = typeidx(ctx);
-  CHECK_ERR(type);
-  return *type;
+  return ctx.in.err("expected abstract heap type");
+}
+
+// heaptype ::= x:typeidx                      => types[x]
+//            | t:absheaptype                  => unshared t
+//            | '(' 'shared' t:absheaptype ')' => shared t
+template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
+  if (auto t = maybeTypeidx(ctx)) {
+    CHECK_ERR(t);
+    return *t;
+  }
+
+  bool shared = ctx.in.takeSExprStart("shared"sv);
+  auto t = absheaptype(ctx, shared);
+  CHECK_ERR(t);
+  if (shared && !ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of shared abstract heap type");
+  }
+  return *t;
 }
 
 // reftype ::= 'funcref'   => funcref
@@ -422,49 +438,49 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
 //           | '(' ref null? t:heaptype ')' => ref null? t
 template<typename Ctx> MaybeResult<typename Ctx::TypeT> maybeReftype(Ctx& ctx) {
   if (ctx.in.takeKeyword("funcref"sv)) {
-    return ctx.makeRefType(ctx.makeFuncType(), Nullable);
+    return ctx.makeRefType(ctx.makeFuncType(false), Nullable);
   }
   if (ctx.in.takeKeyword("externref"sv)) {
-    return ctx.makeRefType(ctx.makeExternType(), Nullable);
+    return ctx.makeRefType(ctx.makeExternType(false), Nullable);
   }
   if (ctx.in.takeKeyword("anyref"sv)) {
-    return ctx.makeRefType(ctx.makeAnyType(), Nullable);
+    return ctx.makeRefType(ctx.makeAnyType(false), Nullable);
   }
   if (ctx.in.takeKeyword("eqref"sv)) {
-    return ctx.makeRefType(ctx.makeEqType(), Nullable);
+    return ctx.makeRefType(ctx.makeEqType(false), Nullable);
   }
   if (ctx.in.takeKeyword("i31ref"sv)) {
-    return ctx.makeRefType(ctx.makeI31Type(), Nullable);
+    return ctx.makeRefType(ctx.makeI31Type(false), Nullable);
   }
   if (ctx.in.takeKeyword("structref"sv)) {
-    return ctx.makeRefType(ctx.makeStructType(), Nullable);
+    return ctx.makeRefType(ctx.makeStructType(false), Nullable);
   }
   if (ctx.in.takeKeyword("arrayref"sv)) {
-    return ctx.makeRefType(ctx.makeArrayType(), Nullable);
+    return ctx.makeRefType(ctx.makeArrayType(false), Nullable);
   }
   if (ctx.in.takeKeyword("exnref"sv)) {
-    return ctx.makeRefType(ctx.makeExnType(), Nullable);
+    return ctx.makeRefType(ctx.makeExnType(false), Nullable);
   }
   if (ctx.in.takeKeyword("stringref"sv)) {
-    return ctx.makeRefType(ctx.makeStringType(), Nullable);
+    return ctx.makeRefType(ctx.makeStringType(false), Nullable);
   }
   if (ctx.in.takeKeyword("contref"sv)) {
-    return ctx.makeRefType(ctx.makeContType(), Nullable);
+    return ctx.makeRefType(ctx.makeContType(false), Nullable);
   }
   if (ctx.in.takeKeyword("nullref"sv)) {
-    return ctx.makeRefType(ctx.makeNoneType(), Nullable);
+    return ctx.makeRefType(ctx.makeNoneType(false), Nullable);
   }
   if (ctx.in.takeKeyword("nullexternref"sv)) {
-    return ctx.makeRefType(ctx.makeNoextType(), Nullable);
+    return ctx.makeRefType(ctx.makeNoextType(false), Nullable);
   }
   if (ctx.in.takeKeyword("nullfuncref"sv)) {
-    return ctx.makeRefType(ctx.makeNofuncType(), Nullable);
+    return ctx.makeRefType(ctx.makeNofuncType(false), Nullable);
   }
   if (ctx.in.takeKeyword("nullexnref"sv)) {
-    return ctx.makeRefType(ctx.makeNoexnType(), Nullable);
+    return ctx.makeRefType(ctx.makeNoexnType(false), Nullable);
   }
   if (ctx.in.takeKeyword("nullcontref"sv)) {
-    return ctx.makeRefType(ctx.makeNocontType(), Nullable);
+    return ctx.makeRefType(ctx.makeNocontType(false), Nullable);
   }
 
   if (!ctx.in.takeSExprStart("ref"sv)) {

@@ -2556,7 +2556,8 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
   auto heapType = type.getHeapType();
   assert(heapType.isBasic());
   assert(wasm.features.hasReferenceTypes());
-  switch (heapType.getBasic()) {
+  assert(!heapType.isShared() && "TODO: handle shared types");
+  switch (heapType.getUnsharedBasic()) {
     case HeapType::ext: {
       auto null = builder.makeRefNull(HeapType::ext);
       // TODO: support actual non-nullable externrefs via imported globals or
@@ -4233,7 +4234,8 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
     return type;
   }
   if (type.isBasic() && oneIn(2)) {
-    switch (type.getBasic()) {
+    assert(!type.isShared() && "TODO: handle shared types");
+    switch (type.getUnsharedBasic()) {
       case HeapType::func:
         // TODO: Typed function references.
         return pick(FeatureOptions<HeapType>()

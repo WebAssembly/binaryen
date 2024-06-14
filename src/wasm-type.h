@@ -318,24 +318,26 @@ class HeapType {
   uintptr_t id;
 
 public:
+  // Bit zero indicates whether the type is `shared`, so we need to leave it
+  // free.
   enum BasicHeapType : uint32_t {
-    ext,
-    func,
-    cont,
-    any,
-    eq,
-    i31,
-    struct_,
-    array,
-    exn,
-    string,
-    none,
-    noext,
-    nofunc,
-    nocont,
-    noexn,
+    ext = 0 << 1,
+    func = 1 << 1,
+    cont = 2 << 1,
+    any = 3 << 1,
+    eq = 4 << 1,
+    i31 = 5 << 1,
+    struct_ = 6 << 1,
+    array = 7 << 1,
+    exn = 8 << 1,
+    string = 9 << 1,
+    none = 10 << 1,
+    noext = 11 << 1,
+    nofunc = 12 << 1,
+    nocont = 13 << 1,
+    noexn = 14 << 1,
   };
-  static constexpr BasicHeapType _last_basic_type = noexn;
+  static constexpr BasicHeapType _last_basic_type = BasicHeapType(noexn + 1);
 
   // BasicHeapType can be implicitly upgraded to HeapType
   constexpr HeapType(BasicHeapType id) : id(id) {}
@@ -399,19 +401,31 @@ public:
   size_t getDepth() const;
 
   // Get the bottom heap type for this heap type's hierarchy.
-  BasicHeapType getBottom() const;
+  BasicHeapType getUnsharedBottom() const;
+  BasicHeapType getBottom() const {
+    return HeapType(getUnsharedBottom()).getSharedBasic(isShared());
+  }
 
   // Get the top heap type for this heap type's hierarchy.
-  BasicHeapType getTop() const;
+  BasicHeapType getUnsharedTop() const;
+  BasicHeapType getTop() const {
+    return HeapType(getUnsharedTop()).getSharedBasic(isShared());
+  }
 
   // Get the recursion group for this non-basic type.
   RecGroup getRecGroup() const;
   size_t getRecGroupIndex() const;
 
   constexpr TypeID getID() const { return id; }
-  constexpr BasicHeapType getBasic() const {
-    assert(isBasic() && "Basic heap type expected");
-    return static_cast<BasicHeapType>(id);
+
+  // Get the shared or unshared version of this basic heap type.
+  constexpr BasicHeapType getSharedBasic(bool shared = true) const {
+    assert(isBasic());
+    return BasicHeapType(shared ? (id | 1) : (id & ~1));
+  }
+
+  constexpr BasicHeapType getUnsharedBasic() const {
+    return getSharedBasic(false);
   }
 
   // (In)equality must be defined for both HeapType and BasicHeapType because it
