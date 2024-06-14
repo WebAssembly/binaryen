@@ -1058,30 +1058,30 @@ TEST_F(TypeTest, TestDepth) {
   }
 
   // any :> eq :> array :> specific array types
-  EXPECT_EQ(HeapType(HeapType::any).getDepth(), 0U);
-  EXPECT_EQ(HeapType(HeapType::eq).getDepth(), 1U);
-  EXPECT_EQ(HeapType(HeapType::array).getDepth(), 2U);
-  EXPECT_EQ(HeapType(HeapType::struct_).getDepth(), 2U);
+  EXPECT_EQ(HeapTypes::any.getDepth(), 0U);
+  EXPECT_EQ(HeapTypes::eq.getDepth(), 1U);
+  EXPECT_EQ(HeapTypes::array.getDepth(), 2U);
+  EXPECT_EQ(HeapTypes::struct_.getDepth(), 2U);
   EXPECT_EQ(A.getDepth(), 3U);
   EXPECT_EQ(B.getDepth(), 4U);
   EXPECT_EQ(C.getDepth(), 3U);
 
   // Signature types are subtypes of func.
-  EXPECT_EQ(HeapType(HeapType::func).getDepth(), 0U);
+  EXPECT_EQ(HeapTypes::func.getDepth(), 0U);
   EXPECT_EQ(sig.getDepth(), 1U);
 
   // Continuation types are subtypes of cont.
-  EXPECT_EQ(HeapType(HeapType::cont).getDepth(), 0U);
+  EXPECT_EQ(HeapTypes::cont.getDepth(), 0U);
   EXPECT_EQ(HeapType(Continuation(sig)).getDepth(), 1U);
 
-  EXPECT_EQ(HeapType(HeapType::ext).getDepth(), 0U);
+  EXPECT_EQ(HeapTypes::ext.getDepth(), 0U);
 
-  EXPECT_EQ(HeapType(HeapType::i31).getDepth(), 2U);
-  EXPECT_EQ(HeapType(HeapType::string).getDepth(), 2U);
+  EXPECT_EQ(HeapTypes::i31.getDepth(), 2U);
+  EXPECT_EQ(HeapTypes::string.getDepth(), 2U);
 
-  EXPECT_EQ(HeapType(HeapType::none).getDepth(), size_t(-1));
-  EXPECT_EQ(HeapType(HeapType::nofunc).getDepth(), size_t(-1));
-  EXPECT_EQ(HeapType(HeapType::noext).getDepth(), size_t(-1));
+  EXPECT_EQ(HeapTypes::none.getDepth(), size_t(-1));
+  EXPECT_EQ(HeapTypes::nofunc.getDepth(), size_t(-1));
+  EXPECT_EQ(HeapTypes::noext.getDepth(), size_t(-1));
 }
 
 // Test .iterSubTypes() helper.
@@ -1135,34 +1135,34 @@ TEST_F(TypeTest, TestIterSubTypes) {
 // Test supertypes
 TEST_F(TypeTest, TestSupertypes) {
   // Basic types: getDeclaredSuperType always returns nothing.
-  ASSERT_FALSE(HeapType(HeapType::ext).getDeclaredSuperType());
-  ASSERT_FALSE(HeapType(HeapType::func).getDeclaredSuperType());
-  ASSERT_FALSE(HeapType(HeapType::cont).getDeclaredSuperType());
-  ASSERT_FALSE(HeapType(HeapType::any).getDeclaredSuperType());
-  ASSERT_FALSE(HeapType(HeapType::eq).getDeclaredSuperType());
-  ASSERT_FALSE(HeapType(HeapType::i31).getDeclaredSuperType());
-  ASSERT_FALSE(HeapType(HeapType::struct_).getDeclaredSuperType());
-  ASSERT_FALSE(HeapType(HeapType::array).getDeclaredSuperType());
-  ASSERT_FALSE(HeapType(HeapType::string).getDeclaredSuperType());
-  ASSERT_FALSE(HeapType(HeapType::none).getDeclaredSuperType());
-  ASSERT_FALSE(HeapType(HeapType::noext).getDeclaredSuperType());
-  ASSERT_FALSE(HeapType(HeapType::nofunc).getDeclaredSuperType());
-  ASSERT_FALSE(HeapType(HeapType::nocont).getDeclaredSuperType());
+  ASSERT_FALSE(HeapTypes::ext.getDeclaredSuperType());
+  ASSERT_FALSE(HeapTypes::func.getDeclaredSuperType());
+  ASSERT_FALSE(HeapTypes::cont.getDeclaredSuperType());
+  ASSERT_FALSE(HeapTypes::any.getDeclaredSuperType());
+  ASSERT_FALSE(HeapTypes::eq.getDeclaredSuperType());
+  ASSERT_FALSE(HeapTypes::i31.getDeclaredSuperType());
+  ASSERT_FALSE(HeapTypes::struct_.getDeclaredSuperType());
+  ASSERT_FALSE(HeapTypes::array.getDeclaredSuperType());
+  ASSERT_FALSE(HeapTypes::string.getDeclaredSuperType());
+  ASSERT_FALSE(HeapTypes::none.getDeclaredSuperType());
+  ASSERT_FALSE(HeapTypes::noext.getDeclaredSuperType());
+  ASSERT_FALSE(HeapTypes::nofunc.getDeclaredSuperType());
+  ASSERT_FALSE(HeapTypes::nocont.getDeclaredSuperType());
 
   // Basic types: getSuperType does return a super, when there is one.
-  ASSERT_FALSE(HeapType(HeapType::ext).getSuperType());
-  ASSERT_FALSE(HeapType(HeapType::func).getSuperType());
-  ASSERT_FALSE(HeapType(HeapType::cont).getSuperType());
-  ASSERT_FALSE(HeapType(HeapType::any).getSuperType());
-  ASSERT_EQ(HeapType(HeapType::eq).getSuperType(), HeapType::any);
-  ASSERT_EQ(HeapType(HeapType::i31).getSuperType(), HeapType::eq);
-  ASSERT_EQ(HeapType(HeapType::struct_).getSuperType(), HeapType::eq);
-  ASSERT_EQ(HeapType(HeapType::array).getSuperType(), HeapType::eq);
-  ASSERT_FALSE(HeapType(HeapType::string).getSuperType());
-  ASSERT_FALSE(HeapType(HeapType::none).getSuperType());
-  ASSERT_FALSE(HeapType(HeapType::noext).getSuperType());
-  ASSERT_FALSE(HeapType(HeapType::nofunc).getSuperType());
-  ASSERT_FALSE(HeapType(HeapType::nocont).getSuperType());
+  ASSERT_FALSE(HeapTypes::ext.getSuperType());
+  ASSERT_FALSE(HeapTypes::func.getSuperType());
+  ASSERT_FALSE(HeapTypes::cont.getSuperType());
+  ASSERT_FALSE(HeapTypes::any.getSuperType());
+  ASSERT_EQ(HeapTypes::eq.getSuperType(), HeapType::any);
+  ASSERT_EQ(HeapTypes::i31.getSuperType(), HeapType::eq);
+  ASSERT_EQ(HeapTypes::struct_.getSuperType(), HeapType::eq);
+  ASSERT_EQ(HeapTypes::array.getSuperType(), HeapType::eq);
+  ASSERT_FALSE(HeapTypes::string.getSuperType());
+  ASSERT_FALSE(HeapTypes::none.getSuperType());
+  ASSERT_FALSE(HeapTypes::noext.getSuperType());
+  ASSERT_FALSE(HeapTypes::nofunc.getSuperType());
+  ASSERT_FALSE(HeapTypes::nocont.getSuperType());
 
   // Non-basic types.
   HeapType struct1, struct2, array1, array2, sig1, sig2;
