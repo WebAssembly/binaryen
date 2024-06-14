@@ -1,6 +1,4 @@
 (module
-  (import "fuzzing-support" "log-f64" (func $log (param f64)))
-
   (global $global (mut anyref) (ref.null any))
 
   (global $global-ref (mut funcref) (ref.func $use-global-ref))
@@ -65,10 +63,11 @@
     (local.get $temp)
   )
 
-  (func $funcref_temps (export "funcref_temps") (param $0 funcref)
+  (func $funcref_temps (export "funcref_temps") (param $0 funcref) (param $1 f64)
     ;; A deeply-nested expression that ends up requiring multiple function type
     ;; temp variables.
-    (call $log
+    (call $funcref_temps
+      (ref.func $funcref_temps)
       (f64.convert_i32_s
         (ref.is_null
           (select (result funcref)

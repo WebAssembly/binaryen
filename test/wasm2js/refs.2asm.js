@@ -1,4 +1,3 @@
-import * as fuzzing_support from 'fuzzing-support';
 
 function wasm2js_trap() { throw new Error('abort'); }
 
@@ -13,8 +12,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var fuzzing_support = imports["fuzzing-support"];
- var log = fuzzing_support["log-f64"];
  var global = null;
  var global_ref = use_global_ref;
  function null_() {
@@ -53,14 +50,15 @@ function asmFunc(imports) {
   return temp;
  }
  
- function funcref_temps($0) {
-  var $1 = null, $2 = null, wasm2js_funcref$0 = null, wasm2js_funcref$1 = null, wasm2js_i32$0 = 0;
-  $1 = $0;
+ function funcref_temps($0, $1) {
+  $1 = +$1;
+  var $2 = null, $3 = null, wasm2js_funcref$0 = null, wasm2js_funcref$1 = null, wasm2js_i32$0 = 0;
+  $2 = $0;
   loop : while (1) {
-   $2 = funcref_temps;
+   $3 = funcref_temps;
    break loop;
   };
-  log(+(+((wasm2js_funcref$0 = $1, wasm2js_funcref$1 = $2 || wasm2js_trap(), wasm2js_i32$0 = 0, wasm2js_i32$0 ? wasm2js_funcref$0 : wasm2js_funcref$1) == null | 0)));
+  funcref_temps(funcref_temps, +(+((wasm2js_funcref$0 = $2, wasm2js_funcref$1 = $3 || wasm2js_trap(), wasm2js_i32$0 = 0, wasm2js_i32$0 ? wasm2js_funcref$0 : wasm2js_funcref$1) == null | 0)));
  }
  
  return {
@@ -76,7 +74,6 @@ function asmFunc(imports) {
 }
 
 var retasmFunc = asmFunc({
-  "fuzzing-support": fuzzing_support,
 });
 export var null_ = retasmFunc.null_;
 export var is_null = retasmFunc.is_null;

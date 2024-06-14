@@ -1,4 +1,3 @@
-import * as fuzzing_support from 'fuzzing-support';
 
 function wasm2js_trap() { throw new Error('abort'); }
 
@@ -13,8 +12,6 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- var fuzzing_support = imports["fuzzing-support"];
- var log = fuzzing_support["log-f64"];
  var global = null;
  var global_ref = use_global_ref;
  function null_() {
@@ -51,8 +48,9 @@ function asmFunc(imports) {
   return $1;
  }
  
- function funcref_temps($0) {
-  log(0.0);
+ function funcref_temps($0, $1) {
+  $1 = +$1;
+  funcref_temps(funcref_temps, 0.0);
  }
  
  return {
@@ -68,7 +66,6 @@ function asmFunc(imports) {
 }
 
 var retasmFunc = asmFunc({
-  "fuzzing-support": fuzzing_support,
 });
 export var null_ = retasmFunc.null_;
 export var is_null = retasmFunc.is_null;
