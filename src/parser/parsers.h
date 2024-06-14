@@ -305,7 +305,8 @@ Result<> ignore(Ctx&, Index, const std::vector<Annotation>&) {
 }
 
 // Modules
-template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx);
+template<typename Ctx>
+MaybeResult<typename Ctx::HeapTypeT> maybeTypeidx(Ctx& ctx);
 template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::FieldIdxT> fieldidx(Ctx&, typename Ctx::HeapTypeT);
@@ -2436,23 +2437,24 @@ makeSuspend(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
 
 // typeidx ::= x:u32 => x
 //           | v:id  => x (if types[x] = v)
-template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx) {
+template<typename Ctx>
+MaybeResult<typename Ctx::HeapTypeT> maybeTypeidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
-    return *x;
+    return ctx.getHeapTypeFromIdx(*x);
   }
   if (auto id = ctx.in.takeID()) {
     // TODO: Fix position to point to start of id, not next element.
     auto idx = ctx.getTypeIndex(*id);
     CHECK_ERR(idx);
-    return *idx;
+    return ctx.getHeapTypeFromIdx(*idx);
   }
   return {};
 }
 
 template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx& ctx) {
-  if (auto idx = maybeTypeidx(ctx)) {
-    CHECK_ERR(idx);
-    return ctx.getHeapTypeFromIdx(*idx);
+  if (auto t = maybeTypeidx(ctx)) {
+    CHECK_ERR(t);
+    return *t;
   }
   return ctx.in.err("expected type index or identifier");
 }
