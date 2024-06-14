@@ -908,7 +908,7 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   void addArrayType(ArrayT) {}
   void setOpen() {}
   void setShared() {}
-  Result<> addSubtype(Index) { return Ok{}; }
+  Result<> addSubtype(HeapTypeT) { return Ok{}; }
   void finishSubtype(Name name, Index pos) {
     // TODO: type annotations
     subtypeDefs.push_back({name, pos, Index(subtypeDefs.size()), {}});
@@ -1080,11 +1080,8 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
 
   void setShared() { builder[index].setShared(); }
 
-  Result<> addSubtype(Index super) {
-    if (super >= builder.size()) {
-      return in.err("supertype index out of bounds");
-    }
-    builder[index].subTypeOf(builder[super]);
+  Result<> addSubtype(HeapTypeT super) {
+    builder[index].subTypeOf(super);
     return Ok{};
   }
 
