@@ -305,7 +305,7 @@ private:
   // How many temp vars we need for each type (type => num).
   std::unordered_map<Type, Index> temps;
   // Which temp vars are currently free to use for each type (type => freelist).
-  std::unordered_map<Type, std::vector<IString>>;
+  std::unordered_map<Type, std::vector<IString>> frees;
 
   // Mangled names cache by interned names.
   // Utilizes the usually reused underlying cstring's pointer as the key.
