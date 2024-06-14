@@ -43,18 +43,21 @@
 (module
  ;; But two shared types can be merged.
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $B (shared (array i8)))
+ ;; CHECK-NEXT:  (type $C (shared (func)))
+
+ ;; CHECK:       (type $B (shared (array i8)))
 
  ;; CHECK:       (type $A (shared (struct )))
  (type $A (shared (struct)))
  (type $A' (shared (struct)))
  (type $B (shared (array i8)))
  (type $B' (shared (array i8)))
- ;; CHECK:       (type $C (shared (func)))
  (type $C (shared (func)))
  (type $C' (shared (func)))
 
- ;; CHECK:      (func $foo (type $C)
+ ;; CHECK:       (type $3 (func))
+
+ ;; CHECK:      (func $foo (type $3)
  ;; CHECK-NEXT:  (local $a (ref null $A))
  ;; CHECK-NEXT:  (local $a' (ref null $A))
  ;; CHECK-NEXT:  (local $b (ref null $B))
