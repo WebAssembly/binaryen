@@ -207,7 +207,7 @@ public:
   IString getTemp(Type type, Function* func) {
     IString ret;
     // TODO: handle tuples
-    assert(!type.isTuple() && "Unexpected tuple type");                          \
+    assert(!type.isTuple() && "Unexpected tuple type");
     if (frees[type].size() > 0) {
       ret = frees[type].back();
       frees[type].pop_back();
@@ -227,7 +227,7 @@ public:
   // Free a temp var.
   void freeTemp(Type type, IString temp) {
     // TODO: handle tuples
-    assert(!type.isTuple() && "Unexpected tuple type");                          \
+    assert(!type.isTuple() && "Unexpected tuple type");
     frees[type].push_back(temp);
   }
 
@@ -305,7 +305,8 @@ private:
   // How many temp vars we need
   std::unordered_map<Type, Index> temps; // type => num temps
   // Which are currently free to use
-  std::unordered_map<Type, std::vector<IString>> frees; // type => list of free names
+  std::unordered_map<Type, std::vector<IString>>
+    frees; // type => list of free names
 
   // Mangled names cache by interned names.
   // Utilizes the usually reused underlying cstring's pointer as the key.
