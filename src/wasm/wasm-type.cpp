@@ -932,9 +932,16 @@ FeatureSet Type::getFeatures() const {
             }
           }
 
-          if (heapType->isStruct() || heapType->isArray() ||
-              heapType->getRecGroup().size() > 1 ||
+          if (heapType->getRecGroup().size() > 1 ||
               heapType->getDeclaredSuperType() || heapType->isOpen()) {
+            feats |= FeatureSet::ReferenceTypes | FeatureSet::GC;
+          }
+
+          if (heapType->isShared()) {
+            feats |= FeatureSet::SharedEverything;
+          }
+
+          if (heapType->isStruct() || heapType->isArray()) {
             feats |= FeatureSet::ReferenceTypes | FeatureSet::GC;
           } else if (heapType->isSignature()) {
             // This is a function reference, which requires reference types and
@@ -969,7 +976,7 @@ FeatureSet Type::getFeatures() const {
       collector.noteChild(&heapType);
       return collector.feats;
     }
-    TODO_SINGLE_COMPOUND(t);
+
     switch (t.getBasic()) {
       case Type::v128:
         return FeatureSet::SIMD;

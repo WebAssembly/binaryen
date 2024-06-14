@@ -1319,9 +1319,14 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::MultiMemoryFeature;
       case FeatureSet::TypedContinuations:
         return BinaryConsts::CustomSections::TypedContinuationsFeature;
-      default:
-        WASM_UNREACHABLE("unexpected feature flag");
+      case FeatureSet::SharedEverything:
+        return BinaryConsts::CustomSections::SharedEverythingFeature;
+      case FeatureSet::None:
+      case FeatureSet::Default:
+      case FeatureSet::All:
+        break;
     }
+    WASM_UNREACHABLE("unexpected feature flag");
   };
 
   std::vector<const char*> features;
@@ -3825,6 +3830,8 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
     } else if (name ==
                BinaryConsts::CustomSections::TypedContinuationsFeature) {
       feature = FeatureSet::TypedContinuations;
+    } else if (name == BinaryConsts::CustomSections::SharedEverythingFeature) {
+      feature = FeatureSet::SharedEverything;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).
