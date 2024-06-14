@@ -28,7 +28,8 @@ using namespace std::string_view_literals;
 
 // Types
 template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx&);
-template<typename Ctx> MaybeResult<typename Ctx::RefTypeT> reftype(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::RefTypeT> maybeRefType(Ctx&);
+template<typename Ctx> Result<typename Ctx::RefTypeT> reftype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::TypeT> tupletype(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx&);
 template<typename Ctx>
@@ -419,7 +420,7 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
 //           | 'structref' => structref
 //           | 'arrayref'  => arrayref
 //           | '(' ref null? t:heaptype ')' => ref null? t
-template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
+template<typename Ctx> MaybeResult<typename Ctx::TypeT> maybeReftype(Ctx& ctx) {
   if (ctx.in.takeKeyword("funcref"sv)) {
     return ctx.makeRefType(ctx.makeFuncType(), Nullable);
   }
@@ -482,6 +483,14 @@ template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
   return ctx.makeRefType(*type, nullability);
 }
 
+template<typename Ctx> Result<typename Ctx::TypeT> reftype(Ctx& ctx) {
+  if (auto t = maybeReftype(ctx)) {
+    CHECK_ERR(t);
+    return *t;
+  }
+  return ctx.in.err("expected reftype");
+}
+
 // tupletype ::= '(' 'tuple' valtype* ')'
 template<typename Ctx> MaybeResult<typename Ctx::TypeT> tupletype(Ctx& ctx) {
   if (!ctx.in.takeSExprStart("tuple"sv)) {
@@ -520,7 +529,7 @@ template<typename Ctx> Result<typename Ctx::TypeT> singlevaltype(Ctx& ctx) {
     return ctx.makeF64();
   } else if (ctx.in.takeKeyword("v128"sv)) {
     return ctx.makeV128();
-  } else if (auto type = reftype(ctx)) {
+  } else if (auto type = maybeReftype(ctx)) {
     CHECK_ERR(type);
     return *type;
   } else {
@@ -788,10 +797,6 @@ Result<typename Ctx::TableTypeT> tabletypeContinued(Ctx& ctx, Type indexType) {
   CHECK_ERR(limits);
   auto type = reftype(ctx);
   CHECK_ERR(type);
-
-  if (!type) {
-    return ctx.in.err("expected reftype");
-  }
   return ctx.makeTableType(indexType, *limits, *type);
 }
 
@@ -2999,7 +3004,7 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
   }
 
   // Reftype if we have inline elements.
-  auto type = reftype(ctx);
+  auto type = maybeReftype(ctx);
   CHECK_ERR(type);
 
   std::optional<typename Ctx::TableTypeT> ttype;
@@ -3246,7 +3251,8 @@ MaybeResult<typename Ctx::ExprT> maybeElemexpr(Ctx& ctx) {
 //            | funcidx* (iff the tableuse is omitted)
 template<typename Ctx>
 Result<typename Ctx::ElemListT> elemlist(Ctx& ctx, bool legacy) {
-  if (auto type = reftype(ctx)) {
+  if (auto type = maybeReftype(ctx)) {
+    CHECK_ERR(type);
     auto res = ctx.makeElemList(*type);
     while (auto elem = maybeElemexpr(ctx)) {
       CHECK_ERR(elem);
