@@ -1118,7 +1118,8 @@ struct ParseImplicitTypeDefsCtx : TypeParserCtx<ParseImplicitTypeDefsCtx> {
     : TypeParserCtx<ParseImplicitTypeDefsCtx>(typeIndices), in(in),
       types(types), implicitTypes(implicitTypes) {
     for (auto type : types) {
-      if (type.isSignature() && type.getRecGroup().size() == 1) {
+      if (type.isSignature() && type.getRecGroup().size() == 1 &&
+          !type.isShared()) {
         sigTypes.insert({type.getSignature(), type});
       }
     }

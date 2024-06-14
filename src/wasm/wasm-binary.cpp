@@ -285,6 +285,9 @@ void WasmBinaryWriter::writeTypes() {
         o << U32LEB(0);
       }
     }
+    if (type.isShared()) {
+      o << S32LEB(BinaryConsts::EncodedType::Shared);
+    }
     if (type.isSignature()) {
       o << S32LEB(BinaryConsts::EncodedType::Func);
       auto sig = type.getSignature();
@@ -2389,6 +2392,10 @@ void WasmBinaryReader::readTypes() {
         }
         superIndex = getU32LEB();
       }
+      form = getS32LEB();
+    }
+    if (form == BinaryConsts::Shared) {
+      builder[i].setShared();
       form = getS32LEB();
     }
     if (form == BinaryConsts::EncodedType::Func) {
