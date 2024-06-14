@@ -876,6 +876,11 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
     runner.runOnFunction(func);
   }
 
+  // We process multiple functions from a single Wasm2JSBuilder instance, so
+  // clean up the function-specific local state before each function.
+  frees.clear();
+  temps.clear();
+
   // We will be symbolically referring to all variables in the function, so make
   // sure that everything has a name and it's unique.
   Names::ensureNames(func);
