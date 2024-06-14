@@ -302,11 +302,10 @@ private:
   Flags flags;
   PassOptions options;
 
-  // How many temp vars we need
-  std::unordered_map<Type, Index> temps; // type => num temps
-  // Which are currently free to use
-  std::unordered_map<Type, std::vector<IString>>
-    frees; // type => list of free names
+  // How many temp vars we need for each type (type => num).
+  std::unordered_map<Type, Index> temps;
+  // Which temp vars are currently free to use for each type (type => freelist).
+  std::unordered_map<Type, std::vector<IString>>;
 
   // Mangled names cache by interned names.
   // Utilizes the usually reused underlying cstring's pointer as the key.
