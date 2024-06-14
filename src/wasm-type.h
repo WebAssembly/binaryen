@@ -458,6 +458,26 @@ public:
 
 inline bool Type::isNull() const { return isRef() && getHeapType().isBottom(); }
 
+namespace HeapTypes {
+
+constexpr HeapType ext = HeapType::ext;
+constexpr HeapType func = HeapType::func;
+constexpr HeapType cont = HeapType::cont;
+constexpr HeapType any = HeapType::any;
+constexpr HeapType eq = HeapType::eq;
+constexpr HeapType i31 = HeapType::i31;
+constexpr HeapType struct_ = HeapType::struct_;
+constexpr HeapType array = HeapType::array;
+constexpr HeapType exn = HeapType::exn;
+constexpr HeapType string = HeapType::string;
+constexpr HeapType none = HeapType::none;
+constexpr HeapType noext = HeapType::noext;
+constexpr HeapType nofunc = HeapType::nofunc;
+constexpr HeapType nocont = HeapType::nocont;
+constexpr HeapType noexn = HeapType::noexn;
+
+} // namespace HeapTypes
+
 // A recursion group consisting of one or more HeapTypes. HeapTypes with single
 // members are encoded without using any additional memory, which is why
 // `getHeapTypes` has to return a vector by value; it might have to create one
