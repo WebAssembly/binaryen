@@ -234,6 +234,9 @@ void PassRegistry::registerPasses() {
   registerPass("i64-to-i32-lowering",
                "lower all uses of i64s to use i32s instead",
                createI64ToI32LoweringPass);
+  registerPass("instrument-cooperative-gc",
+               "instrument the build with cooperative synchronization points for multithreaded garbage collection",
+               createInstrumentCooperativeGCPass);
   registerPass(
     "instrument-locals",
     "instrument the build with code to intercept all loads and stores",
