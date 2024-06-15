@@ -221,38 +221,30 @@ def run_spec_tests():
 
         check_expected(actual, expected)
 
-        # skip binary checks for tests that reuse previous modules by name, as that's a wast-only feature
-        if 'exports.wast' in base:  # FIXME
-            continue
-
         run_spec_test(wast)
 
         # check binary format. here we can verify execution of the final
         # result, no need for an output verification
-        # some wast files cannot be split:
-        #     * comments.wast: contains characters that are not valid utf-8,
-        #       so our string splitting code fails there
+        split_num = 0
+        actual = ''
+        with open('spec.wast', 'w') as transformed_spec_file:
+            for module, asserts in support.split_wast(wast):
+                if not module:
+                    # Skip any initial assertions that don't have a module
+                    continue
+                print('        testing split module', split_num)
+                split_num += 1
+                support.write_wast('split.wast', module)
+                run_opt_test('split.wast')    # also that our optimizer doesn't break on it
+                result_wast_file = shared.binary_format_check('split.wast', verify_final_result=False)
+                with open(result_wast_file) as f:
+                    result_wast = f.read()
+                    # add the asserts, and verify that the test still passes
+                    transformed_spec_file.write(result_wast + '\n' + '\n'.join(asserts))
 
-        # FIXME Remove reference type tests from this list after nullref is
-        # implemented in V8
-        if base not in ['comments.wast', 'ref_null.wast', 'ref_is_null.wast', 'ref_func.wast', 'old_select.wast']:
-            split_num = 0
-            actual = ''
-            with open('spec.wast', 'w') as transformed_spec_file:
-                for module, asserts in support.split_wast(wast):
-                    print('        testing split module', split_num)
-                    split_num += 1
-                    support.write_wast('split.wast', module)
-                    run_opt_test('split.wast')    # also that our optimizer doesn't break on it
-                    result_wast_file = shared.binary_format_check('split.wast', verify_final_result=False)
-                    with open(result_wast_file) as f:
-                        result_wast = f.read()
-                        # add the asserts, and verify that the test still passes
-                        transformed_spec_file.write(result_wast + '\n' + '\n'.join(asserts))
-
-            # compare all the outputs to the expected output
-            actual = run_spec_test('spec.wast')
-            check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', base + '.log'))
+        # compare all the outputs to the expected output
+        actual = run_spec_test('spec.wast')
+        check_expected(actual, os.path.join(shared.get_test_dir('spec'), 'expected-output', base + '.log'))
 
 
 def run_validator_tests():

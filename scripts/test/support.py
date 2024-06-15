@@ -14,6 +14,7 @@
 
 import filecmp
 import os
+import re
 import shutil
 import subprocess
 import sys
@@ -87,6 +88,9 @@ def untar(tarfile, outdir):
             shutil.rmtree(tmpdir)
 
 
+QUOTED = re.compile(r'\(module\s*(\$\S*)?\s+(quote|binary)')
+
+
 def split_wast(wastFile):
     # if it's a binary, leave it as is, we can't split it
     wast = None
@@ -124,6 +128,7 @@ def split_wast(wastFile):
         return j
 
     i = 0
+    ignoring_quoted = False
     while i >= 0:
         start = wast.find('(', i)
         if start >= 0 and wast[start + 1] == ';':
@@ -141,11 +146,17 @@ def split_wast(wastFile):
             break
         i = to_end(start + 1)
         chunk = wast[start:i]
+        if QUOTED.match(chunk):
+            # There may be assertions after this quoted module, but we aren't
+            # returning the module, so we need to skip the assertions as well.
+            ignoring_quoted = True
+            continue
         if chunk.startswith('(module'):
+            ignoring_quoted = False
             ret += [(chunk, [])]
         elif chunk.startswith('(assert_invalid'):
             continue
-        elif chunk.startswith(('(assert', '(invoke', '(register')):
+        elif chunk.startswith(('(assert', '(invoke', '(register')) and not ignoring_quoted:
             # ret may be empty if there are some asserts before the first
             # module. in that case these are asserts *without* a module, which
             # are valid (they may check something that doesn't refer to a module
