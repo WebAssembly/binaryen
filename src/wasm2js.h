@@ -206,12 +206,13 @@ public:
   // Get a temp var.
   IString getTemp(Type type, Function* func) {
     IString ret;
-    TODO_SINGLE_COMPOUND(type);
-    if (frees[type.getBasic()].size() > 0) {
-      ret = frees[type.getBasic()].back();
-      frees[type.getBasic()].pop_back();
+    // TODO: handle tuples
+    assert(!type.isTuple() && "Unexpected tuple type");
+    if (frees[type].size() > 0) {
+      ret = frees[type].back();
+      frees[type].pop_back();
     } else {
-      size_t index = temps[type.getBasic()]++;
+      auto index = temps[type]++;
       ret = IString((std::string("wasm2js_") + type.toString() + "$" +
                      std::to_string(index))
                       .c_str(),
@@ -225,8 +226,9 @@ public:
 
   // Free a temp var.
   void freeTemp(Type type, IString temp) {
-    TODO_SINGLE_COMPOUND(type);
-    frees[type.getBasic()].push_back(temp);
+    // TODO: handle tuples
+    assert(!type.isTuple() && "Unexpected tuple type");
+    frees[type].push_back(temp);
   }
 
   // Generates a mangled name from `name` within the specified scope.
@@ -300,10 +302,10 @@ private:
   Flags flags;
   PassOptions options;
 
-  // How many temp vars we need
-  std::vector<size_t> temps; // type => num temps
-  // Which are currently free to use
-  std::vector<std::vector<IString>> frees; // type => list of free names
+  // How many temp vars we need for each type (type => num).
+  std::unordered_map<Type, Index> temps;
+  // Which temp vars are currently free to use for each type (type => freelist).
+  std::unordered_map<Type, std::vector<IString>> frees;
 
   // Mangled names cache by interned names.
   // Utilizes the usually reused underlying cstring's pointer as the key.
@@ -874,15 +876,15 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
     runner.runOnFunction(func);
   }
 
+  // We process multiple functions from a single Wasm2JSBuilder instance, so
+  // clean up the function-specific local state before each function.
+  frees.clear();
+  temps.clear();
+
   // We will be symbolically referring to all variables in the function, so make
   // sure that everything has a name and it's unique.
   Names::ensureNames(func);
   Ref ret = ValueBuilder::makeFunction(fromName(func->name, NameScope::Top));
-  frees.clear();
-  frees.resize(std::max(Type::i32, std::max(Type::f32, Type::f64)) + 1);
-  temps.clear();
-  temps.resize(std::max(Type::i32, std::max(Type::f32, Type::f64)) + 1);
-  temps[Type::i32] = temps[Type::f32] = temps[Type::f64] = 0;
   // arguments
   bool needCoercions = options.optimizeLevel == 0 || standaloneFunction ||
                        functionsCallableFromOutside.count(func->name);
@@ -915,10 +917,6 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
   if (theVar[1]->size() == 0) {
     ret[3]->splice(theVarIndex, 1);
   }
-  // checks: all temp vars should be free at the end
-  assert(frees[Type::i32].size() == temps[Type::i32]);
-  assert(frees[Type::f32].size() == temps[Type::f32]);
-  assert(frees[Type::f64].size() == temps[Type::f64]);
   return ret;
 }
 

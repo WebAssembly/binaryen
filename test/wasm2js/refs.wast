@@ -62,4 +62,23 @@
     )
     (local.get $temp)
   )
+
+  (func $funcref_temps (export "funcref_temps") (param $0 funcref) (param $1 f64)
+    ;; A deeply-nested expression that ends up requiring multiple function type
+    ;; temp variables.
+    (call $funcref_temps
+      (ref.func $funcref_temps)
+      (f64.convert_i32_s
+        (ref.is_null
+          (select (result funcref)
+            (local.get $0)
+            (loop $loop (result funcref)
+              (ref.func $funcref_temps)
+            )
+            (i32.const 0)
+          )
+        )
+      )
+    )
+  )
 )

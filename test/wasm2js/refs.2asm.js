@@ -50,6 +50,17 @@ function asmFunc(imports) {
   return temp;
  }
  
+ function funcref_temps($0, $1) {
+  $1 = +$1;
+  var $2 = null, $3 = null, wasm2js_funcref$0 = null, wasm2js_funcref$1 = null, wasm2js_i32$0 = 0;
+  $2 = $0;
+  loop : while (1) {
+   $3 = funcref_temps;
+   break loop;
+  };
+  funcref_temps(funcref_temps, +(+((wasm2js_funcref$0 = $2, wasm2js_funcref$1 = $3 || wasm2js_trap(), wasm2js_i32$0 = 0, wasm2js_i32$0 ? wasm2js_funcref$0 : wasm2js_funcref$1) == null | 0)));
+ }
+ 
  return {
   "null_": null_, 
   "is_null": is_null, 
@@ -57,7 +68,8 @@ function asmFunc(imports) {
   "ref_eq": ref_eq, 
   "ref_as": ref_as, 
   "use_global": use_global, 
-  "use_global_ref": use_global_ref
+  "use_global_ref": use_global_ref, 
+  "funcref_temps": funcref_temps
  };
 }
 
@@ -70,3 +82,4 @@ export var ref_eq = retasmFunc.ref_eq;
 export var ref_as = retasmFunc.ref_as;
 export var use_global = retasmFunc.use_global;
 export var use_global_ref = retasmFunc.use_global_ref;
+export var funcref_temps = retasmFunc.funcref_temps;
