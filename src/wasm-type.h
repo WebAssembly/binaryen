@@ -310,6 +310,8 @@ public:
   const Type& operator[](size_t i) const { return *Iterator{{this, i}}; }
 };
 
+enum Shareability { Shared, Unshared };
+
 class HeapType {
   // Unlike `Type`, which represents the types of values on the WebAssembly
   // stack, `HeapType` is used to describe the structures that reference types
@@ -379,7 +381,9 @@ public:
   bool isString() const;
   bool isBottom() const;
   bool isOpen() const;
-  bool isShared() const;
+  bool isShared() const { return getShareability() == Shared; }
+
+  Shareability getShareability() const;
 
   Signature getSignature() const;
   Continuation getContinuation() const;
@@ -403,13 +407,13 @@ public:
   // Get the bottom heap type for this heap type's hierarchy.
   BasicHeapType getUnsharedBottom() const;
   BasicHeapType getBottom() const {
-    return HeapType(getUnsharedBottom()).getSharedBasic(isShared());
+    return HeapType(getUnsharedBottom()).getBasic(getShareability());
   }
 
   // Get the top heap type for this heap type's hierarchy.
   BasicHeapType getUnsharedTop() const;
   BasicHeapType getTop() const {
-    return HeapType(getUnsharedTop()).getSharedBasic(isShared());
+    return HeapType(getUnsharedTop()).getBasic(getShareability());
   }
 
   // Get the recursion group for this non-basic type.
@@ -419,13 +423,9 @@ public:
   constexpr TypeID getID() const { return id; }
 
   // Get the shared or unshared version of this basic heap type.
-  constexpr BasicHeapType getSharedBasic(bool shared = true) const {
+  constexpr BasicHeapType getBasic(Shareability share) const {
     assert(isBasic());
-    return BasicHeapType(shared ? (id | 1) : (id & ~1));
-  }
-
-  constexpr BasicHeapType getUnsharedBasic() const {
-    return getSharedBasic(false);
+    return BasicHeapType(share == Shared ? (id | 1) : (id & ~1));
   }
 
   // (In)equality must be defined for both HeapType and BasicHeapType because it
@@ -658,7 +658,7 @@ struct TypeBuilder {
   void createRecGroup(size_t i, size_t length);
 
   void setOpen(size_t i, bool open = true);
-  void setShared(size_t i, bool shared = true);
+  void setShareability(size_t i, Shareability share);
 
   enum class ErrorReason {
     // There is a cycle in the supertype relation.
@@ -731,8 +731,8 @@ struct TypeBuilder {
       builder.setOpen(index, open);
       return *this;
     }
-    Entry& setShared(bool shared = true) {
-      builder.setShared(index, shared);
+    Entry& setShareability(Shareability share) {
+      builder.setShareability(index, share);
       return *this;
     }
   };

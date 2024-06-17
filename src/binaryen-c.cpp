@@ -78,7 +78,7 @@ BinaryenLiteral toBinaryenLiteral(Literal x) {
   assert(x.type.isRef());
   auto heapType = x.type.getHeapType();
   if (heapType.isBasic()) {
-    switch (heapType.getUnsharedBasic()) {
+    switch (heapType.getBasic(Unshared)) {
       case HeapType::i31:
         WASM_UNREACHABLE("TODO: i31");
       case HeapType::ext:
@@ -132,7 +132,7 @@ Literal fromBinaryenLiteral(BinaryenLiteral x) {
   assert(type.isRef());
   auto heapType = type.getHeapType();
   if (heapType.isBasic()) {
-    switch (heapType.getUnsharedBasic()) {
+    switch (heapType.getBasic(Unshared)) {
       case HeapType::i31:
         WASM_UNREACHABLE("TODO: i31");
       case HeapType::ext:

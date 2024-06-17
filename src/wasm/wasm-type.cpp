@@ -86,7 +86,7 @@ struct HeapTypeInfo {
   // global store.
   bool isTemp = false;
   bool isOpen = false;
-  bool isShared = false;
+  Shareability share = Unshared;
   // The supertype of this HeapType, if it exists.
   HeapTypeInfo* supertype = nullptr;
   // The recursion group of this type or null if the recursion group is trivial
@@ -439,16 +439,15 @@ HeapType::BasicHeapType getBasicHeapSupertype(HeapType type) {
     return HeapType::BasicHeapType(type.getID());
   }
   auto* info = getHeapTypeInfo(type);
-  bool shared = info->isShared;
   switch (info->kind) {
     case HeapTypeInfo::SignatureKind:
-      return HeapTypes::func.getSharedBasic(shared);
+      return HeapTypes::func.getBasic(info->share);
     case HeapTypeInfo::ContinuationKind:
-      return HeapTypes::cont.getSharedBasic(shared);
+      return HeapTypes::cont.getBasic(info->share);
     case HeapTypeInfo::StructKind:
-      return HeapTypes::struct_.getSharedBasic(shared);
+      return HeapTypes::struct_.getBasic(info->share);
     case HeapTypeInfo::ArrayKind:
-      return HeapTypes::array.getSharedBasic(shared);
+      return HeapTypes::array.getBasic(info->share);
   }
   WASM_UNREACHABLE("unexpected kind");
 };
@@ -471,9 +470,9 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
   if (unsigned(a) > unsigned(b)) {
     std::swap(a, b);
   }
-  auto bUnshared = HeapType(b).getUnsharedBasic();
+  auto bUnshared = HeapType(b).getBasic(Unshared);
   HeapType lubUnshared;
-  switch (HeapType(a).getUnsharedBasic()) {
+  switch (HeapType(a).getBasic(Unshared)) {
     case HeapType::ext:
     case HeapType::func:
     case HeapType::cont:
@@ -516,8 +515,8 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
       // Bottom types already handled.
       WASM_UNREACHABLE("unexpected basic type");
   }
-  bool shared = HeapType(a).isShared();
-  return {lubUnshared.getSharedBasic(shared)};
+  auto share = HeapType(a).getShareability();
+  return {lubUnshared.getBasic(share)};
 }
 
 TypeInfo::TypeInfo(const TypeInfo& other) {
@@ -910,7 +909,7 @@ FeatureSet Type::getFeatures() const {
 
         void noteChild(HeapType* heapType) {
           if (heapType->isBasic()) {
-            switch (heapType->getUnsharedBasic()) {
+            switch (heapType->getBasic(Unshared)) {
               case HeapType::ext:
               case HeapType::func:
                 feats |= FeatureSet::ReferenceTypes;
@@ -1240,7 +1239,7 @@ bool HeapType::isString() const { return *this == HeapType::string; }
 
 bool HeapType::isBottom() const {
   if (isBasic()) {
-    switch (getUnsharedBasic()) {
+    switch (getBasic(Unshared)) {
       case ext:
       case func:
       case cont:
@@ -1271,11 +1270,11 @@ bool HeapType::isOpen() const {
   }
 }
 
-bool HeapType::isShared() const {
+Shareability HeapType::getShareability() const {
   if (isBasic()) {
-    return (id & 1) != 0;
+    return (id & 1) != 0 ? Shared : Unshared;
   } else {
-    return getHeapTypeInfo(*this)->isShared;
+    return getHeapTypeInfo(*this)->share;
   }
 }
 
@@ -1316,11 +1315,11 @@ std::optional<HeapType> HeapType::getSuperType() const {
     return ret;
   }
 
-  bool shared = isShared();
+  auto share = getShareability();
 
   // There may be a basic supertype.
   if (isBasic()) {
-    switch (getUnsharedBasic()) {
+    switch (getBasic(Unshared)) {
       case ext:
       case noext:
       case func:
@@ -1334,24 +1333,24 @@ std::optional<HeapType> HeapType::getSuperType() const {
       case string:
         return {};
       case eq:
-        return HeapType(any).getSharedBasic(shared);
+        return HeapType(any).getBasic(share);
       case i31:
       case struct_:
       case array:
-        return HeapType(eq).getSharedBasic(shared);
+        return HeapType(eq).getBasic(share);
     }
   }
 
   auto* info = getHeapTypeInfo(*this);
   switch (info->kind) {
     case HeapTypeInfo::SignatureKind:
-      return HeapType(func).getSharedBasic(shared);
+      return HeapType(func).getBasic(share);
     case HeapTypeInfo::ContinuationKind:
-      return HeapType(cont).getSharedBasic(shared);
+      return HeapType(cont).getBasic(share);
     case HeapTypeInfo::StructKind:
-      return HeapType(struct_).getSharedBasic(shared);
+      return HeapType(struct_).getBasic(share);
     case HeapTypeInfo::ArrayKind:
-      return HeapType(array).getSharedBasic(shared);
+      return HeapType(array).getBasic(share);
   }
   WASM_UNREACHABLE("unexpected kind");
 }
@@ -1378,7 +1377,7 @@ size_t HeapType::getDepth() const {
     }
   } else {
     // Some basic types have supers.
-    switch (getUnsharedBasic()) {
+    switch (getBasic(Unshared)) {
       case HeapType::ext:
       case HeapType::func:
       case HeapType::cont:
@@ -1408,7 +1407,7 @@ size_t HeapType::getDepth() const {
 
 HeapType::BasicHeapType HeapType::getUnsharedBottom() const {
   if (isBasic()) {
-    switch (getUnsharedBasic()) {
+    switch (getBasic(Unshared)) {
       case ext:
         return noext;
       case func:
@@ -1748,8 +1747,8 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
   }
   if (b.isBasic()) {
     auto aTop = a.getUnsharedTop();
-    auto aUnshared = a.isBasic() ? a.getUnsharedBasic() : a;
-    switch (b.getUnsharedBasic()) {
+    auto aUnshared = a.isBasic() ? a.getBasic(Unshared) : a;
+    switch (b.getBasic(Unshared)) {
       case HeapType::ext:
         return aTop == HeapType::ext;
       case HeapType::func:
@@ -1884,7 +1883,7 @@ std::ostream& TypePrinter::print(Type type) {
     auto heapType = type.getHeapType();
     if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
       // Print shorthands for certain basic heap types.
-      switch (heapType.getUnsharedBasic()) {
+      switch (heapType.getBasic(Unshared)) {
         case HeapType::ext:
           return os << "externref";
         case HeapType::func:
@@ -1934,7 +1933,7 @@ std::ostream& TypePrinter::print(HeapType type) {
     if (type.isShared()) {
       os << "(shared ";
     }
-    switch (type.getUnsharedBasic()) {
+    switch (type.getBasic(Unshared)) {
       case HeapType::ext:
         os << "extern";
         break;
@@ -2183,7 +2182,7 @@ size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
     hash_combine(digest, hash(HeapType(uintptr_t(info.supertype))));
   }
   wasm::rehash(digest, info.isOpen);
-  wasm::rehash(digest, info.isShared);
+  wasm::rehash(digest, info.share);
   wasm::rehash(digest, info.kind);
   switch (info.kind) {
     case HeapTypeInfo::SignatureKind:
@@ -2320,7 +2319,7 @@ bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
   if (a.isOpen != b.isOpen) {
     return false;
   }
-  if (a.isShared != b.isShared) {
+  if (a.share != b.share) {
     return false;
   }
   if (a.kind != b.kind) {
@@ -2598,9 +2597,9 @@ void TypeBuilder::setOpen(size_t i, bool open) {
   impl->entries[i].info->isOpen = open;
 }
 
-void TypeBuilder::setShared(size_t i, bool shared) {
+void TypeBuilder::setShareability(size_t i, Shareability share) {
   assert(i < size() && "index out of bounds");
-  impl->entries[i].info->isShared = shared;
+  impl->entries[i].info->share = share;
 }
 
 namespace {
@@ -2609,7 +2608,7 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
   if (!super.isOpen) {
     return false;
   }
-  if (sub.isShared != super.isShared) {
+  if (sub.share != super.share) {
     return false;
   }
   if (sub.kind != super.kind) {

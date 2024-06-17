@@ -378,7 +378,7 @@ struct HeapTypeGeneratorImpl {
         return type.getBottom();
       }
       assert(!type.isShared() && "TODO: handle shared types");
-      switch (type.getUnsharedBasic()) {
+      switch (type.getBasic(Unshared)) {
         case HeapType::func:
           return pickSubFunc();
         case HeapType::cont:
@@ -440,7 +440,7 @@ struct HeapTypeGeneratorImpl {
     assert(type.isBasic());
     candidates.push_back(type);
     assert(!type.isShared() && "TODO: handle shared types");
-    switch (type.getUnsharedBasic()) {
+    switch (type.getBasic(Unshared)) {
       case HeapType::ext:
       case HeapType::func:
       case HeapType::exn:

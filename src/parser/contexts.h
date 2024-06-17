@@ -105,21 +105,21 @@ struct NullTypeParserCtx {
   using ElemListT = Ok;
   using DataStringT = Ok;
 
-  HeapTypeT makeFuncType(bool) { return Ok{}; }
-  HeapTypeT makeAnyType(bool) { return Ok{}; }
-  HeapTypeT makeExternType(bool) { return Ok{}; }
-  HeapTypeT makeEqType(bool) { return Ok{}; }
-  HeapTypeT makeI31Type(bool) { return Ok{}; }
-  HeapTypeT makeStructType(bool) { return Ok{}; }
-  HeapTypeT makeArrayType(bool) { return Ok{}; }
-  HeapTypeT makeExnType(bool) { return Ok{}; }
-  HeapTypeT makeStringType(bool) { return Ok{}; }
-  HeapTypeT makeContType(bool) { return Ok{}; }
-  HeapTypeT makeNoneType(bool) { return Ok{}; }
-  HeapTypeT makeNoextType(bool) { return Ok{}; }
-  HeapTypeT makeNofuncType(bool) { return Ok{}; }
-  HeapTypeT makeNoexnType(bool) { return Ok{}; }
-  HeapTypeT makeNocontType(bool) { return Ok{}; }
+  HeapTypeT makeFuncType(Shareability) { return Ok{}; }
+  HeapTypeT makeAnyType(Shareability) { return Ok{}; }
+  HeapTypeT makeExternType(Shareability) { return Ok{}; }
+  HeapTypeT makeEqType(Shareability) { return Ok{}; }
+  HeapTypeT makeI31Type(Shareability) { return Ok{}; }
+  HeapTypeT makeStructType(Shareability) { return Ok{}; }
+  HeapTypeT makeArrayType(Shareability) { return Ok{}; }
+  HeapTypeT makeExnType(Shareability) { return Ok{}; }
+  HeapTypeT makeStringType(Shareability) { return Ok{}; }
+  HeapTypeT makeContType(Shareability) { return Ok{}; }
+  HeapTypeT makeNoneType(Shareability) { return Ok{}; }
+  HeapTypeT makeNoextType(Shareability) { return Ok{}; }
+  HeapTypeT makeNofuncType(Shareability) { return Ok{}; }
+  HeapTypeT makeNoexnType(Shareability) { return Ok{}; }
+  HeapTypeT makeNocontType(Shareability) { return Ok{}; }
 
   TypeT makeI32() { return Ok{}; }
   TypeT makeI64() { return Ok{}; }
@@ -205,50 +205,50 @@ template<typename Ctx> struct TypeParserCtx {
 
   Ctx& self() { return *static_cast<Ctx*>(this); }
 
-  HeapTypeT makeFuncType(bool shared) {
-    return HeapTypes::func.getSharedBasic(shared);
+  HeapTypeT makeFuncType(Shareability share) {
+    return HeapTypes::func.getBasic(share);
   }
-  HeapTypeT makeAnyType(bool shared) {
-    return HeapTypes::any.getSharedBasic(shared);
+  HeapTypeT makeAnyType(Shareability share) {
+    return HeapTypes::any.getBasic(share);
   }
-  HeapTypeT makeExternType(bool shared) {
-    return HeapTypes::ext.getSharedBasic(shared);
+  HeapTypeT makeExternType(Shareability share) {
+    return HeapTypes::ext.getBasic(share);
   }
-  HeapTypeT makeEqType(bool shared) {
-    return HeapTypes::eq.getSharedBasic(shared);
+  HeapTypeT makeEqType(Shareability share) {
+    return HeapTypes::eq.getBasic(share);
   }
-  HeapTypeT makeI31Type(bool shared) {
-    return HeapTypes::i31.getSharedBasic(shared);
+  HeapTypeT makeI31Type(Shareability share) {
+    return HeapTypes::i31.getBasic(share);
   }
-  HeapTypeT makeStructType(bool shared) {
-    return HeapTypes::struct_.getSharedBasic(shared);
+  HeapTypeT makeStructType(Shareability share) {
+    return HeapTypes::struct_.getBasic(share);
   }
-  HeapTypeT makeArrayType(bool shared) {
-    return HeapTypes::array.getSharedBasic(shared);
+  HeapTypeT makeArrayType(Shareability share) {
+    return HeapTypes::array.getBasic(share);
   }
-  HeapTypeT makeExnType(bool shared) {
-    return HeapTypes::exn.getSharedBasic(shared);
+  HeapTypeT makeExnType(Shareability share) {
+    return HeapTypes::exn.getBasic(share);
   }
-  HeapTypeT makeStringType(bool shared) {
-    return HeapTypes::string.getSharedBasic(shared);
+  HeapTypeT makeStringType(Shareability share) {
+    return HeapTypes::string.getBasic(share);
   }
-  HeapTypeT makeContType(bool shared) {
-    return HeapTypes::cont.getSharedBasic(shared);
+  HeapTypeT makeContType(Shareability share) {
+    return HeapTypes::cont.getBasic(share);
   }
-  HeapTypeT makeNoneType(bool shared) {
-    return HeapTypes::none.getSharedBasic(shared);
+  HeapTypeT makeNoneType(Shareability share) {
+    return HeapTypes::none.getBasic(share);
   }
-  HeapTypeT makeNoextType(bool shared) {
-    return HeapTypes::noext.getSharedBasic(shared);
+  HeapTypeT makeNoextType(Shareability share) {
+    return HeapTypes::noext.getBasic(share);
   }
-  HeapTypeT makeNofuncType(bool shared) {
-    return HeapTypes::nofunc.getSharedBasic(shared);
+  HeapTypeT makeNofuncType(Shareability share) {
+    return HeapTypes::nofunc.getBasic(share);
   }
-  HeapTypeT makeNoexnType(bool shared) {
-    return HeapTypes::noexn.getSharedBasic(shared);
+  HeapTypeT makeNoexnType(Shareability share) {
+    return HeapTypes::noexn.getBasic(share);
   }
-  HeapTypeT makeNocontType(bool shared) {
-    return HeapTypes::nocont.getSharedBasic(shared);
+  HeapTypeT makeNocontType(Shareability share) {
+    return HeapTypes::nocont.getBasic(share);
   }
 
   TypeT makeI32() { return Type::i32; }
@@ -1105,7 +1105,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
 
   void setOpen() { builder[index].setOpen(); }
 
-  void setShared() { builder[index].setShared(); }
+  void setShared() { builder[index].setShareability(Shared); }
 
   Result<> addSubtype(HeapTypeT super) {
     builder[index].subTypeOf(super);

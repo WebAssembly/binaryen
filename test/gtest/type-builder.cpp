@@ -277,8 +277,8 @@ TEST_F(TypeTest, InvalidSharedSupertype) {
   TypeBuilder builder(2);
   builder[0] = Struct{};
   builder[1] = Struct{};
-  builder[0].setShared(true);
-  builder[1].setShared(false);
+  builder[0].setShareability(Shared);
+  builder[1].setShareability(Shared);
   builder[1].subTypeOf(builder[0]);
 
   auto result = builder.build();
@@ -294,8 +294,8 @@ TEST_F(TypeTest, InvalidUnsharedSupertype) {
   TypeBuilder builder(2);
   builder[0] = Struct{};
   builder[1] = Struct{};
-  builder[0].setShared(false);
-  builder[1].setShared(true);
+  builder[0].setShareability(Unshared);
+  builder[1].setShareability(Shared);
   builder[1].subTypeOf(builder[0]);
 
   auto result = builder.build();
@@ -570,12 +570,12 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
   HeapType defCont = Continuation(defFunc);
   HeapType defStruct = Struct();
   HeapType defArray = Array(Field(Type::i32, Immutable));
-  HeapType sharedAny = any.getSharedBasic();
-  HeapType sharedEq = eq.getSharedBasic();
-  HeapType sharedI31 = i31.getSharedBasic();
-  HeapType sharedStruct = struct_.getSharedBasic();
-  HeapType sharedNone = none.getSharedBasic();
-  HeapType sharedFunc = func.getSharedBasic();
+  HeapType sharedAny = any.getBasic(Shared);
+  HeapType sharedEq = eq.getBasic(Shared);
+  HeapType sharedI31 = i31.getBasic(Shared);
+  HeapType sharedStruct = struct_.getBasic(Shared);
+  HeapType sharedNone = none.getBasic(Shared);
+  HeapType sharedFunc = func.getBasic(Shared);
 
   HeapType sharedDefStruct;
   HeapType sharedDefFunc;
@@ -583,8 +583,8 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
     TypeBuilder builder(2);
     builder[0] = Struct{};
     builder[1] = Signature();
-    builder[0].setShared();
-    builder[1].setShared();
+    builder[0].setShareability(Shared);
+    builder[1].setShareability(Shared);
     auto results = builder.build();
     ASSERT_TRUE(results);
     auto built = *results;

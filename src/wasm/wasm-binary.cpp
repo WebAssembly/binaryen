@@ -1539,7 +1539,7 @@ void WasmBinaryWriter::writeType(Type type) {
     }
     auto heapType = type.getHeapType();
     if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
-      switch (heapType.getUnsharedBasic()) {
+      switch (heapType.getBasic(Unshared)) {
         case HeapType::ext:
           o << S32LEB(BinaryConsts::EncodedType::externref);
           return;
@@ -1653,7 +1653,7 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
   if (type.isShared()) {
     o << S32LEB(BinaryConsts::EncodedType::Shared);
   }
-  switch (type.getUnsharedBasic()) {
+  switch (type.getBasic(Unshared)) {
     case HeapType::ext:
       ret = BinaryConsts::EncodedHeapType::ext;
       break;
@@ -2170,14 +2170,14 @@ HeapType WasmBinaryReader::getHeapType() {
     }
     return types[type];
   }
-  bool shared = false;
+  auto share = Unshared;
   if (type == BinaryConsts::EncodedType::Shared) {
-    shared = true;
+    share = Shared;
     type = getS64LEB(); // TODO: Actually s33
   }
   HeapType ht;
   if (getBasicHeapType(type, ht)) {
-    return ht.getSharedBasic(shared);
+    return ht.getBasic(share);
   } else {
     throwError("invalid wasm heap type: " + std::to_string(type));
   }
@@ -2403,7 +2403,7 @@ void WasmBinaryReader::readTypes() {
       form = getS32LEB();
     }
     if (form == BinaryConsts::Shared) {
-      builder[i].setShared();
+      builder[i].setShareability(Shared);
       form = getS32LEB();
     }
     if (form == BinaryConsts::EncodedType::Func) {

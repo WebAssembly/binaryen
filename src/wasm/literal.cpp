@@ -127,7 +127,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     assert(!type.isNullable());
     auto heapType = type.getHeapType();
     if (heapType.isBasic()) {
-      switch (heapType.getUnsharedBasic()) {
+      switch (heapType.getBasic(Unshared)) {
         case HeapType::i31:
           i32 = other.i32;
           return;
@@ -624,7 +624,7 @@ std::ostream& operator<<(std::ostream& o, Literal literal) {
       o << "shared ";
     }
     if (heapType.isBasic()) {
-      switch (heapType.getUnsharedBasic()) {
+      switch (heapType.getBasic(Unshared)) {
         case HeapType::i31:
           o << "i31ref(" << literal.geti31() << ")";
           break;
@@ -2689,9 +2689,9 @@ Literal Literal::externalize() const {
     return Literal(std::shared_ptr<GCData>{}, HeapType::noext);
   }
   auto heapType = type.getHeapType();
-  auto extType = HeapTypes::ext.getSharedBasic(heapType.isShared());
+  auto extType = HeapTypes::ext.getBasic(heapType.getShareability());
   if (heapType.isBasic()) {
-    switch (heapType.getUnsharedBasic()) {
+    switch (heapType.getBasic(Unshared)) {
       case HeapType::i31: {
         return Literal(std::make_shared<GCData>(HeapType::i31, Literals{*this}),
                        extType);
