@@ -1437,3 +1437,29 @@
     )
   )
 )
+
+;; Test that we can optimize global.get operations on immutable globals.
+(module
+  (type $struct (struct i32))
+
+  (global $zero i32 (i32.const 0))
+
+  (global $one i32 (i32.const 1))
+
+  (global $global1 (ref $struct) (struct.new $struct
+    (global.get $zero)
+  ))
+
+  (global $global2 (ref $struct) (struct.new $struct
+    (global.get $one)
+  ))
+
+  (func $test (param $struct (ref null $struct))
+    ;; The get here will read one of the two globals, so we can use a select.
+    (drop
+      (struct.get $struct 0
+        (local.get $struct)
+      )
+    )
+  )
+)
