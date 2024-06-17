@@ -408,6 +408,7 @@ SPEC_TESTS_TO_SKIP = [
     'utf8-invalid-encoding.wast',
     'const.wast',
     'address.wast',
+    'custom.wast', # invalid section ID accepted as Custom, triggering UBSan
 
     # Unlinkable module accepted
     'linking.wast',
