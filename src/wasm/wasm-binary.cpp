@@ -3700,7 +3700,7 @@ void WasmBinaryReader::readNames(size_t payloadLen) {
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
         if (index < wasm.dataSegments.size()) {
-          wasm.dataSegments[i]->setExplicitName(name);
+          wasm.dataSegments[index]->setExplicitName(name);
         } else {
           std::cerr << "warning: data index out of bounds in name section, "
                        "data subsection: "
