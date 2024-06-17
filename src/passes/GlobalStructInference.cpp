@@ -50,7 +50,7 @@
 
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
-#include "ir/properties.h"
+#include "ir/possible-constant.h"
 #include "ir/subtypes.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -300,7 +300,7 @@ struct GlobalStructInference : public Pass {
 
         // Find the constant values and which globals correspond to them.
         // TODO: SmallVectors?
-        std::vector<Literal> values;
+        std::vector<PossibleConstantValues> values;
         std::vector<std::vector<Name>> globalsForValue;
 
         // Check if the relevant fields contain constants.
@@ -308,16 +308,15 @@ struct GlobalStructInference : public Pass {
         for (Index i = 0; i < globals.size(); i++) {
           Name global = globals[i];
           auto* structNew = wasm.getGlobal(global)->init->cast<StructNew>();
-          Literal value;
+          PossibleConstantValues value;
           if (structNew->isWithDefault()) {
-            value = Literal::makeZero(fieldType);
+            value.note(Literal::makeZero(fieldType));
           } else {
-            auto* init = structNew->operands[fieldIndex];
-            if (!Properties::isConstantExpression(init)) {
-              // Non-constant; give up entirely.
+            value.note(structNew->operands[fieldIndex], wasm);
+            if (!value.isConstant()) {
+              // Give up entirely.
               return;
             }
-            value = Properties::getLiteral(init);
           }
 
           // Process the current value, comparing it against the previous.
@@ -346,7 +345,7 @@ struct GlobalStructInference : public Pass {
           // otherwise return the value.
           replaceCurrent(builder.makeSequence(
             builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
-            builder.makeConstantExpression(values[0])));
+            values[0].makeExpression(wasm)));
           return;
         }
         assert(values.size() == 2);
@@ -373,8 +372,8 @@ struct GlobalStructInference : public Pass {
           builder.makeRefEq(builder.makeRefAs(RefAsNonNull, curr->ref),
                             builder.makeGlobalGet(
                               checkGlobal, wasm.getGlobal(checkGlobal)->type)),
-          builder.makeConstantExpression(values[0]),
-          builder.makeConstantExpression(values[1])));
+          values[0].makeExpression(wasm),
+          values[1].makeExpression(wasm)));
       }
 
       void visitFunction(Function* func) {

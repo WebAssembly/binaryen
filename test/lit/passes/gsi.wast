@@ -1437,3 +1437,54 @@
     )
   )
 )
+
+;; Test that we can optimize global.get operations on immutable globals.
+(module
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct i32))
+
+  ;; CHECK:      (type $1 (func (param (ref null $struct))))
+
+  ;; CHECK:      (global $one i32 (i32.const 1))
+  (global $one i32 (i32.const 1))
+
+  ;; CHECK:      (global $two i32 (i32.const 2))
+  (global $two i32 (i32.const 2))
+
+  ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (global.get $one)
+  ;; CHECK-NEXT: ))
+  (global $global1 (ref $struct) (struct.new $struct
+    (global.get $one)
+  ))
+
+  ;; CHECK:      (global $global2 (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (global.get $two)
+  ;; CHECK-NEXT: ))
+  (global $global2 (ref $struct) (struct.new $struct
+    (global.get $two)
+  ))
+
+  ;; CHECK:      (func $test (type $1) (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (global.get $one)
+  ;; CHECK-NEXT:    (global.get $two)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $struct (ref null $struct))
+    ;; The get here will read one of the two globals, so we can use a select.
+    (drop
+      (struct.get $struct 0
+        (local.get $struct)
+      )
+    )
+  )
+)
