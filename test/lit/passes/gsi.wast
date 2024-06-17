@@ -1445,31 +1445,31 @@
 
   ;; CHECK:      (type $1 (func (param (ref null $struct))))
 
-  ;; CHECK:      (global $zero i32 (i32.const 0))
-  (global $zero i32 (i32.const 0))
-
   ;; CHECK:      (global $one i32 (i32.const 1))
   (global $one i32 (i32.const 1))
 
+  ;; CHECK:      (global $two i32 (i32.const 2))
+  (global $two i32 (i32.const 2))
+
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
-  ;; CHECK-NEXT:  (global.get $zero)
+  ;; CHECK-NEXT:  (global.get $one)
   ;; CHECK-NEXT: ))
   (global $global1 (ref $struct) (struct.new $struct
-    (global.get $zero)
+    (global.get $one)
   ))
 
   ;; CHECK:      (global $global2 (ref $struct) (struct.new $struct
-  ;; CHECK-NEXT:  (global.get $one)
+  ;; CHECK-NEXT:  (global.get $two)
   ;; CHECK-NEXT: ))
   (global $global2 (ref $struct) (struct.new $struct
-    (global.get $one)
+    (global.get $two)
   ))
 
   ;; CHECK:      (func $test (type $1) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    (global.get $zero)
   ;; CHECK-NEXT:    (global.get $one)
+  ;; CHECK-NEXT:    (global.get $two)
   ;; CHECK-NEXT:    (ref.eq
   ;; CHECK-NEXT:     (ref.as_non_null
   ;; CHECK-NEXT:      (local.get $struct)
