@@ -368,7 +368,7 @@ struct GlobalStructInference : public Pass {
             value.constant.note(*value.ptr, wasm);
           }
           if (!value.constant.isConstant()) {
-            continue; // XXX
+            return; // XXX
           }
 
           // If the value is constant, it may be grouped as mentioned before.
