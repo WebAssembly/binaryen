@@ -2403,7 +2403,7 @@ void WasmBinaryReader::readTypes() {
       form = getS32LEB();
     }
     if (form == BinaryConsts::Shared) {
-      builder[i].setShareability(Shared);
+      builder[i].setShared();
       form = getS32LEB();
     }
     if (form == BinaryConsts::EncodedType::Func) {

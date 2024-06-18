@@ -90,7 +90,7 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   i = 0;
   for (auto [type, _] : typeIndices) {
     typeBuilder[i].setOpen(type.isOpen());
-    typeBuilder[i].setShareability(type.getShareability());
+    typeBuilder[i].setShared(type.getShared());
     if (type.isSignature()) {
       auto sig = type.getSignature();
       TypeList newParams, newResults;

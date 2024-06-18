@@ -515,7 +515,7 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
       // Bottom types already handled.
       WASM_UNREACHABLE("unexpected basic type");
   }
-  auto share = HeapType(a).getShareability();
+  auto share = HeapType(a).getShared();
   return {lubUnshared.getBasic(share)};
 }
 
@@ -1270,7 +1270,7 @@ bool HeapType::isOpen() const {
   }
 }
 
-Shareability HeapType::getShareability() const {
+Shareability HeapType::getShared() const {
   if (isBasic()) {
     return (id & 1) != 0 ? Shared : Unshared;
   } else {
@@ -1315,7 +1315,7 @@ std::optional<HeapType> HeapType::getSuperType() const {
     return ret;
   }
 
-  auto share = getShareability();
+  auto share = getShared();
 
   // There may be a basic supertype.
   if (isBasic()) {
@@ -2597,7 +2597,7 @@ void TypeBuilder::setOpen(size_t i, bool open) {
   impl->entries[i].info->isOpen = open;
 }
 
-void TypeBuilder::setShareability(size_t i, Shareability share) {
+void TypeBuilder::setShared(size_t i, Shareability share) {
   assert(i < size() && "index out of bounds");
   impl->entries[i].info->share = share;
 }

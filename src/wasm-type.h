@@ -381,9 +381,9 @@ public:
   bool isString() const;
   bool isBottom() const;
   bool isOpen() const;
-  bool isShared() const { return getShareability() == Shared; }
+  bool isShared() const { return getShared() == Shared; }
 
-  Shareability getShareability() const;
+  Shareability getShared() const;
 
   Signature getSignature() const;
   Continuation getContinuation() const;
@@ -407,13 +407,13 @@ public:
   // Get the bottom heap type for this heap type's hierarchy.
   BasicHeapType getUnsharedBottom() const;
   BasicHeapType getBottom() const {
-    return HeapType(getUnsharedBottom()).getBasic(getShareability());
+    return HeapType(getUnsharedBottom()).getBasic(getShared());
   }
 
   // Get the top heap type for this heap type's hierarchy.
   BasicHeapType getUnsharedTop() const;
   BasicHeapType getTop() const {
-    return HeapType(getUnsharedTop()).getBasic(getShareability());
+    return HeapType(getUnsharedTop()).getBasic(getShared());
   }
 
   // Get the recursion group for this non-basic type.
@@ -658,7 +658,7 @@ struct TypeBuilder {
   void createRecGroup(size_t i, size_t length);
 
   void setOpen(size_t i, bool open = true);
-  void setShareability(size_t i, Shareability share);
+  void setShared(size_t i, Shareability share = Shared);
 
   enum class ErrorReason {
     // There is a cycle in the supertype relation.
@@ -731,8 +731,8 @@ struct TypeBuilder {
       builder.setOpen(index, open);
       return *this;
     }
-    Entry& setShareability(Shareability share) {
-      builder.setShareability(index, share);
+    Entry& setShared(Shareability share = Unshared) {
+      builder.setShared(index, share);
       return *this;
     }
   };

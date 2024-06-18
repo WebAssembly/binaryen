@@ -2689,7 +2689,7 @@ Literal Literal::externalize() const {
     return Literal(std::shared_ptr<GCData>{}, HeapType::noext);
   }
   auto heapType = type.getHeapType();
-  auto extType = HeapTypes::ext.getBasic(heapType.getShareability());
+  auto extType = HeapTypes::ext.getBasic(heapType.getShared());
   if (heapType.isBasic()) {
     switch (heapType.getBasic(Unshared)) {
       case HeapType::i31: {

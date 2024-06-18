@@ -277,8 +277,8 @@ TEST_F(TypeTest, InvalidSharedSupertype) {
   TypeBuilder builder(2);
   builder[0] = Struct{};
   builder[1] = Struct{};
-  builder[0].setShareability(Shared);
-  builder[1].setShareability(Shared);
+  builder[0].setShared();
+  builder[1].setShared();
   builder[1].subTypeOf(builder[0]);
 
   auto result = builder.build();
@@ -294,8 +294,8 @@ TEST_F(TypeTest, InvalidUnsharedSupertype) {
   TypeBuilder builder(2);
   builder[0] = Struct{};
   builder[1] = Struct{};
-  builder[0].setShareability(Unshared);
-  builder[1].setShareability(Shared);
+  builder[0].setShared(Unshared);
+  builder[1].setShared(Shared);
   builder[1].subTypeOf(builder[0]);
 
   auto result = builder.build();
@@ -583,8 +583,8 @@ TEST_F(TypeTest, TestHeapTypeRelations) {
     TypeBuilder builder(2);
     builder[0] = Struct{};
     builder[1] = Signature();
-    builder[0].setShareability(Shared);
-    builder[1].setShareability(Shared);
+    builder[0].setShared();
+    builder[1].setShared();
     auto results = builder.build();
     ASSERT_TRUE(results);
     auto built = *results;

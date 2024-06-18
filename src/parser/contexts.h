@@ -1105,7 +1105,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
 
   void setOpen() { builder[index].setOpen(); }
 
-  void setShared() { builder[index].setShareability(Shared); }
+  void setShared() { builder[index].setShared(); }
 
   Result<> addSubtype(HeapTypeT super) {
     builder[index].subTypeOf(super);
