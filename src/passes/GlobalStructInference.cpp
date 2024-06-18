@@ -298,45 +298,90 @@ struct GlobalStructInference : public Pass {
         //   (i32.const 42)
         //   (ref.eq (ref) $global2))
 
-        // Find the constant values and which globals correspond to them.
-        // TODO: SmallVectors?
-        std::vector<PossibleConstantValues> values;
-        std::vector<std::vector<Name>> globalsForValue;
+        // First, find the values that would be read, and the globals
+        // corresponding to them. If the values are constant then we can "group"
+        // them together: imagine we have 3 globals, but two would read the
+        // constant 42, then we just need a single check against the other
+        // global in order to know which value is read (either 42, or the value
+        // of the other global).
+        struct Value {
+          // The pointer to the expression. This is nullptr for
+          // struct.new_default (in which case |constant| below would be a zero
+          // literal for the proper type). We must track Expression** here as we
+          // may need to modify it later: consider if the global we read from is
+          //
+          //  (global $g (struct.new $S
+          //    (struct.new $T ..)
+          //
+          // We have a nested struct.new here. That is not a constant value, but
+          // we can turn it into a global.get:
+          //
+          //  (global $g.nested (struct.new $T ..)
+          //  (global $g (struct.new $S
+          //    (global.get $g.nested)
+          //
+          // This un-nesting adds globals and may increase code size slightly,
+          // but if it lets us infer constant values that may lead to
+          // devirtualization and other large benefits. Later passes can also
+          // re-nest.
+          //
+          // As mentioned before we can group constants, but if we un-nest like
+          // this then there is no constant value, and each such Value ends up
+          // in its own group.
+          Expression** ptr;
+          // The possible constant value represented there.
+          PossibleConstantValues constant;
+          // The globals that have this Value.
+          // TODO: SmallVector?
+          std::vector<Name> globals;
+        };
+        // TODO: SmallVector?
+        std::vector<Value> values;
 
-        // Check if the relevant fields contain constants.
+        // Scan the relevant struct.new operands.
         auto fieldType = field.type;
         for (Index i = 0; i < globals.size(); i++) {
           Name global = globals[i];
           auto* structNew = wasm.getGlobal(global)->init->cast<StructNew>();
-          PossibleConstantValues value;
+          // The value that is read from this struct.new.
+          Value value;
+
+          // Find the value read from the struct and represent it as a Value.
+          PossibleConstantValues constant;
           if (structNew->isWithDefault()) {
-            value.note(Literal::makeZero(fieldType));
+            value.ptr = nullptr;
+            value.constant.note(Literal::makeZero(fieldType));
           } else {
-            value.note(structNew->operands[fieldIndex], wasm);
-            if (!value.isConstant()) {
-              // Give up entirely.
-              return;
-            }
+            value.ptr = &structNew->operands[fieldIndex];
+            value.constant.note(*value);
           }
 
-          // Process the current value, comparing it against the previous.
-          auto found = std::find(values.begin(), values.end(), value);
-          if (found == values.end()) {
-            // This is a new value.
-            assert(values.size() <= 2);
+          // If the value is constant, it may be grouped as mentioned before.
+          // See if it matches anything we've seen before.
+          bool grouped = false;
+          if (value.constant.isConstant()) {
+            for (auto& oldValue : values) {
+              if (value.constant == oldValue.constant) {
+                // Add us to this group.
+                oldValue.globals.push_back(global);
+                grouped = true;
+                break;
+              }
+            }
+          }
+          if (!grouped) {
+            // This is a new value, so create a new group, unless we've seen too
+            // many unique values.
             if (values.size() == 2) {
               // Adding this value would mean we have too many, so give up.
               return;
             }
+            value.globals.push_back(global);
             values.push_back(value);
-            globalsForValue.push_back({global});
-          } else {
-            // This is an existing value.
-            Index index = found - values.begin();
-            globalsForValue[index].push_back(global);
           }
         }
 
+        XXX utility to add a global, or do makeExpression... but multithreadingg
         // We have some globals (at least 2), and so must have at least one
         // value. And we have already exited if we have more than 2 values (see
         // the early return above) so that only leaves 1 and 2.
