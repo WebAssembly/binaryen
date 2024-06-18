@@ -2764,8 +2764,11 @@ void WasmBinaryReader::readVars() {
   size_t numLocalTypes = getU32LEB();
   for (size_t t = 0; t < numLocalTypes; t++) {
     auto num = getU32LEB();
-    if (std::ckd_add(&totalVars, totalVars, num)) {
-      throwError("unaddressable number of locals");
+    // The core spec allows up to 2^32 locals, but to avoid allocation failures,
+    // we additionally impose a much smaller limit, matching the JS embedding.
+    if (std::ckd_add(&totalVars, totalVars, num) ||
+        totalVars > WebLimitations::MaxFunctionLocals) {
+      throwError("too many locals");
     }
     auto type = getConcreteType();
 
