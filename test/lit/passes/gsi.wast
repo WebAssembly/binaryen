@@ -895,6 +895,59 @@
   )
 )
 
+;; As above, but with the globals flipped. Now the second global has a non-
+;; constant field.
+(module
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct i32))
+
+  ;; CHECK:      (type $1 (func (param (ref null $struct))))
+
+  ;; CHECK:      (global $global2.unnested.0 i32 (i32.add
+  ;; CHECK-NEXT:  (i32.const 41)
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 1337)
+  ;; CHECK-NEXT: ))
+  (global $global1 (ref $struct) (struct.new $struct
+    (i32.const 1337)
+  ))
+
+  ;; CHECK:      (global $global2 (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (global.get $global2.unnested.0)
+  ;; CHECK-NEXT: ))
+  (global $global2 (ref $struct) (struct.new $struct
+    (i32.add
+      (i32.const 41)
+      (i32.const 1)
+    )
+  ))
+
+  ;; CHECK:      (func $test (type $1) (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:    (global.get $global2.unnested.0)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $struct (ref null $struct))
+    (drop
+      (struct.get $struct 0
+        (local.get $struct)
+      )
+    )
+  )
+)
+
 ;; One global each for two subtypes of a common supertype, and one for the
 ;; supertype.
 (module
