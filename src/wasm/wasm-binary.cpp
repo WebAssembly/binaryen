@@ -1784,11 +1784,8 @@ void WasmBinaryReader::read() {
     // note the section in the list of seen sections, as almost no sections can
     // appear more than once, and verify those that shouldn't do not.
     if (sectionCode != BinaryConsts::Section::Custom &&
-        sectionCode != BinaryConsts::Section::Code) {
-      if (!seenSections.insert(BinaryConsts::Section(sectionCode)).second) {
-        throwError("section seen more than once: " +
-                   std::to_string(sectionCode));
-      }
+        !seenSections.insert(sectionCode).second) {
+      throwError("section seen more than once: " + std::to_string(sectionCode));
     }
 
     switch (sectionCode) {
@@ -1837,7 +1834,7 @@ void WasmBinaryReader::read() {
       case BinaryConsts::Section::Tag:
         readTags();
         break;
-      default: {
+      case BinaryConsts::Section::Custom: {
         readCustomSection(payloadLen);
         if (pos > oldPos + payloadLen) {
           throwError("bad user section size, started at " +
@@ -1846,7 +1843,11 @@ void WasmBinaryReader::read() {
                      " not being equal to new position " + std::to_string(pos));
         }
         pos = oldPos + payloadLen;
+        break;
       }
+      default:
+        throwError(std::string("unrecognized section ID: ") +
+                   std::to_string(sectionCode));
     }
 
     // make sure we advanced exactly past this section

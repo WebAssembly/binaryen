@@ -1453,7 +1453,7 @@ class WasmBinaryReader {
   Index startIndex = -1;
   std::set<Function::DebugLocation> debugLocation;
   size_t codeSectionLocation;
-  std::set<BinaryConsts::Section> seenSections;
+  std::unordered_set<uint8_t> seenSections;
 
   // All types defined in the type section
   std::vector<HeapType> types;
