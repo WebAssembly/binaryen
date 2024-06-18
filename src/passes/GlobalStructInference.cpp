@@ -50,6 +50,7 @@
 
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/possible-constant.h"
 #include "ir/subtypes.h"
 #include "ir/utils.h"
@@ -269,25 +270,26 @@ struct GlobalStructInference : public Pass {
       std::vector<Name> globals;
     };
 
-    // Optimize based on the above. Define a walker that finds the places to
-    // optimize, which we will run in parallel later. The walker will only find
-    // the work we need to do, and leave the actual work for a non-parallel
-    // phase after, as that work may involve global changes.
-    struct WorkItem {
-      // The pointer to the struct.get we want to optimize/replace.
-      Expression** structGetPtr;
-      // Information about the possible values being read here.
-      std::vector<Value> values;
+    struct GlobalToUnnest {
+      // The global we want to refer to a nested part of, by un-nesting it. The
+      // global contains a struct.new, and we want to refer to one of the
+      // operands of the struct.new directly, which we can do by moving it out
+      // to its own new global.
+      Name global;
+      // The index of the struct.new we care about.
+      Index index;
+      // The global.get that should refer to the new global.
+      GlobalGet* get;
     };
-    using Work = std::vector<WorkItem>;
+    using GlobalsToUnnest = std::vector<GlobalToUnnest>;
 
     struct FunctionOptimizer : PostWalker<FunctionOptimizer> {
     private:
       GlobalStructInference& parent;
-      Work& work;
+      GlobalsToUnnest& globalsToUnnest;
 
     public:
-      FunctionOptimizer(GlobalStructInference& parent, Work& work) : parent(parent), work(work) {}
+      FunctionOptimizer(GlobalStructInference& parent, GlobalsToUnnest& globalsToUnnest) : parent(parent), globalsToUnnest(globalsToUnnest) {}
 
       bool refinalize = false;
 
@@ -391,24 +393,71 @@ struct GlobalStructInference : public Pass {
           }
         }
 
+        // Helper for optimization: Given a Value, returns what we should read
+        // for it.
+        auto getReadValue = [&](const Value& value) {
+          if (value.constant.isConstant()) {
+            // This is known to be a constant, so simply emit an expression for
+            // that constant.
+            return value.makeExpression(wasm);
+          }
+
+          // Otherwise, this is non-constant, so we are in the situation where
+          // we want to un-nest the value out of the struct.new it is in. Note
+          // that for later work, as we cannot add a global in parallel.
+
+          // There can only be one global in a value that is not constant, which
+          // is the global we want to read from. There must also be a pointer to
+          // the expression we want to read (if not, there is no such operand as
+          // this is a struct.new_default, but in that case we'd be constant).
+          assert(value.globals.size() == 1);
+          assert(value.ptr);
+
+          // Create a global.get with temporary name, leaving only the updating
+          // of the name to later work.
+          auto* get = builder.makeGlobalGet(value.globals[0],
+                                            (*value.ptr)->type);
+
+          globalsToUnnest.emplace_back({value.globals[0], fieldIndex, get});
+        };
+
         // We have some globals (at least 2), and so must have at least one
         // value. And we have already exited if we have more than 2 values (see
-        // the early return above) so that only leaves 1 and 2. The case of one
-        // value can always be optimized (just read the one possible value), but
-        // with two we need to be more careful.
-        auto numValues = values.size();
-        assert(numValues == 1 || numValues == 2);
-        if (numValues == 2 && values[0].globals.size() > 1 &&
-            values[1].globals.size() > 1) {
-          // Both values have more than one global, so we'd need more than one
-          // comparison. That is, we cannot just check if we are reading from
-          // global1 or global2. Give up.
+        // the early return above) so that only leaves 1 and 2.
+        if (values.size() == 1) {
+          // The case of 1 value is simple: trap if the ref is null, and
+          // otherwise return the value.
+          replaceCurrent(builder.makeSequence(
+            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
+            getReadValue(values[0])));
+          return;
+        }
+        assert(values.size() == 2);
+
+        // We have two values. Check that we can pick between them using a
+        // single comparison. While doing so, ensure that the index we can check
+        // on is 0, that is, the first value has a single global.
+        if (globalsForValue[0].size() == 1) {
+          // The checked global is already in index 0.
+        } else if (globalsForValue[1].size() == 1) {
+          std::swap(values[0], values[1]);
+          std::swap(globalsForValue[0], globalsForValue[1]);
+        } else {
+          // Both indexes have more than one option, so we'd need more than one
+          // comparison. Give up.
           return;
         }
 
-        // We ruled out all the problems, and can optimize! Stash the work for
-        // later.
-        work.emplace_back({getCurrentPointer(), std::move(values)});
+        // Excellent, we can optimize here! Emit a select.
+        //
+        // Note that we must trap on null, so add a ref.as_non_null here.
+        auto checkGlobal = globalsForValue[0][0];
+        replaceCurrent(builder.makeSelect(
+          builder.makeRefEq(builder.makeRefAs(RefAsNonNull, curr->ref),
+                            builder.makeGlobalGet(
+                              checkGlobal, wasm.getGlobal(checkGlobal)->type)),
+          getReadValue(values[0]),
+          getReadValue(values[1])));
       }
 
       void visitFunction(Function* func) {
@@ -429,48 +478,41 @@ struct GlobalStructInference : public Pass {
         optimizer.walkFunction(func);
       });
 
-    // Optimize the opportunities we found. Use the deterministic order of the
+    // Un-nest any globals as needed, using the deterministic order of the
     // functions in the module.
+    Builder builder(*module);
+    auto addedGlobals = false;
     for (auto& func : module->functions) {
-      auto& work = optimization.map[func.get()];
-      for (auto& [structGetPtr, values] : work) {
-XXX
-        if (values.size() == 1) {
-          // The case of 1 value is simple: trap if the ref is null, and
-          // otherwise return the value.
-          replaceCurrent(builder.makeSequence(
-            builder.makeDrop(builder.makeRefAs(RefAsNonNull, curr->ref)),
-            values[0].makeExpression(wasm)));
-          return;
-        }
-        assert(values.size() == 2);
+      // Each work item here is a global with a struct.new, from which we want
+      // to read a particular index, from a particular global.get.
+      for (auto& [globalName, index, get] : optimization.map[func.get()]) {
+        auto* global = module->getGlobal(globalName);
+        auto* structNew = global->init->cast<StructNew>();
+        assert(index < structNew->operands.size());
+        auto*& operand = structNew->operands[index];
 
-        // We have two values. Check that we can pick between them using a
-        // single comparison. While doing so, ensure that the index we can check
-        // on is 0, that is, the first value has a single global.
-        if (globalsForValue[0].size() == 1) {
-          // The checked global is already in index 0.
-        } else if (globalsForValue[1].size() == 1) {
-          std::swap(values[0], values[1]);
-          std::swap(globalsForValue[0], globalsForValue[1]);
+        // If we already un-nested this then we don't need to repeat that work.
+        if (auto* nestedGet = operand->dynCast<GlobalGet>()) {
+          // We already un-nested, and this global.get refers to the new global.
+          // Simply copy the target.
+          get->name = nestedGet->name;
+          assert(get->type == nestedGet->type);
         } else {
-abort();
-          // Both indexes have more than one option, so we'd need more than one
-          // comparison. Give up.
-          return;
+          // Add a new global, initialized to the operand.
+          auto newName = Names::getValidGlobalName(*module, global->name.toString + ".unnested." + std::to_string(index));
+          auto* newGlobal = module->addGlobal(builder.makeGlobal(newName, get->type, operand, Immutable));
+          // Replace the operand with a get of that new global, and update the
+          // original get to read the same.
+          operand = builder.makeGlobalGet(newName, get->type);
+          get->name = newName;
+          addedGlobals = true;
         }
+      }
+    }
 
-        // Excellent, we can optimize here! Emit a select.
-        //
-        // Note that we must trap on null, so add a ref.as_non_null here.
-        auto checkGlobal = globalsForValue[0][0];
-        replaceCurrent(builder.makeSelect(
-          builder.makeRefEq(builder.makeRefAs(RefAsNonNull, curr->ref),
-                            builder.makeGlobalGet(
-                              checkGlobal, wasm.getGlobal(checkGlobal)->type)),
-          values[0].makeExpression(wasm),
-          values[1].makeExpression(wasm)));
-
+    if (addedGlobals) {
+      // Sort the globals so that added ones appear before their uses.
+    }
   }
 };
 
