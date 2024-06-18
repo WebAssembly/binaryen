@@ -841,18 +841,22 @@
   )
 )
 
-;; One global has a non-constant field, so we cannot optimize.
+;; One global has a non-constant field. We can still optimize, if we move that
+;; field out into another global, that is, if we un-nest it. The select will
+;; then pick either the constant or a global.get of the new un-nested global.
 (module
   ;; CHECK:      (type $struct (struct (field i32)))
   (type $struct (struct i32))
 
   ;; CHECK:      (type $1 (func (param (ref null $struct))))
 
+  ;; CHECK:      (global $global1.unnested.0 i32 (i32.add
+  ;; CHECK-NEXT:  (i32.const 41)
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: ))
+
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
-  ;; CHECK-NEXT:  (i32.add
-  ;; CHECK-NEXT:   (i32.const 41)
-  ;; CHECK-NEXT:   (i32.const 1)
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (global.get $global1.unnested.0)
   ;; CHECK-NEXT: ))
   (global $global1 (ref $struct) (struct.new $struct
     (i32.add
@@ -870,8 +874,15 @@
 
   ;; CHECK:      (func $test (type $1) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $struct 0
-  ;; CHECK-NEXT:    (local.get $struct)
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (global.get $global1.unnested.0)
+  ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
