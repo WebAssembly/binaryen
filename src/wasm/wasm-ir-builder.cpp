@@ -410,8 +410,8 @@ private:
             // No more available values. This is valid iff we are reaching past
             // an unreachable, but we still need the fallback behavior to ensure
             // the input unreachable instruction is executed first. If we are
-            // not reaching past an unreachable, the error will be caught we
-            // when pop.
+            // not reaching past an unreachable, the error will be caught when
+            // we pop.
             needUnreachableFallback = true;
             goto pop;
           }
