@@ -102,16 +102,22 @@ template<typename T, typename MiniT> struct LEB {
       bool last = !(byte & 128);
       T payload = byte & 127;
       using mask_type = typename std::make_unsigned<T>::type;
-      auto shift_mask = 0 == shift
-                          ? ~mask_type(0)
-                          : ((mask_type(1) << (sizeof(T) * 8 - shift)) - 1u);
-      T significant_payload = payload & shift_mask;
-      if (significant_payload != payload) {
-        if (!(std::is_signed<T>::value && last)) {
-          throw ParseException("LEB dropped bits only valid for signed LEB");
+      auto payload_mask = 0 == shift
+                            ? ~mask_type(0)
+                            : ((mask_type(1) << (sizeof(T) * 8 - shift)) - 1u);
+      T significant_payload = payload_mask & payload;
+      value |= significant_payload << shift;
+      T unused_bits_mask = ~payload_mask & 0x7F;
+      T unused_bits = payload & unused_bits_mask;
+      if (std::is_signed_v<T> && value < 0) {
+        if (unused_bits != unused_bits_mask) {
+          throw ParseException("Unused negative LEB bits must be 1s");
+        }
+      } else {
+        if (unused_bits != 0) {
+          throw ParseException("Unused non-negative LEB bits must be 0s");
         }
       }
-      value |= significant_payload << shift;
       if (last) {
         break;
       }
@@ -120,9 +126,8 @@ template<typename T, typename MiniT> struct LEB {
         throw ParseException("LEB overflow");
       }
     }
-    // If signed LEB, then we might need to sign-extend. (compile should
-    // optimize this out if not needed).
-    if (std::is_signed<T>::value) {
+    // If signed LEB, then we might need to sign-extend.
+    if constexpr (std::is_signed_v<T>) {
       shift += 7;
       if ((byte & 64) && size_t(shift) < 8 * sizeof(T)) {
         size_t sext_bits = 8 * sizeof(T) - size_t(shift);
