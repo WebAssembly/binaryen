@@ -365,7 +365,10 @@ struct GlobalStructInference : public Pass {
             value.constant.note(Literal::makeZero(fieldType));
           } else {
             value.ptr = &structNew->operands[fieldIndex];
-            value.constant.note(*value);
+            value.constant.note(*value.ptr, wasm);
+          }
+          if (!value.constant.isConstant()) {
+            continue; // XXX
           }
 
           // If the value is constant, it may be grouped as mentioned before.
@@ -399,7 +402,7 @@ struct GlobalStructInference : public Pass {
           if (value.constant.isConstant()) {
             // This is known to be a constant, so simply emit an expression for
             // that constant.
-            return value.makeExpression(wasm);
+            return value.constant.makeExpression(wasm);
           }
 
           // Otherwise, this is non-constant, so we are in the situation where
@@ -418,7 +421,8 @@ struct GlobalStructInference : public Pass {
           auto* get = builder.makeGlobalGet(value.globals[0],
                                             (*value.ptr)->type);
 
-          globalsToUnnest.emplace_back({value.globals[0], fieldIndex, get});
+          globalsToUnnest.emplace_back(GlobalToUnnest{value.globals[0], fieldIndex, get});
+          return get;
         };
 
         // We have some globals (at least 2), and so must have at least one
@@ -437,11 +441,11 @@ struct GlobalStructInference : public Pass {
         // We have two values. Check that we can pick between them using a
         // single comparison. While doing so, ensure that the index we can check
         // on is 0, that is, the first value has a single global.
-        if (globalsForValue[0].size() == 1) {
+        if (values[0].globals.size() == 1) {
           // The checked global is already in index 0.
-        } else if (globalsForValue[1].size() == 1) {
+        } else if (values[1].globals.size() == 1) {
+          // Flip so the value to check is in index 0.
           std::swap(values[0], values[1]);
-          std::swap(globalsForValue[0], globalsForValue[1]);
         } else {
           // Both indexes have more than one option, so we'd need more than one
           // comparison. Give up.
@@ -451,7 +455,7 @@ struct GlobalStructInference : public Pass {
         // Excellent, we can optimize here! Emit a select.
         //
         // Note that we must trap on null, so add a ref.as_non_null here.
-        auto checkGlobal = globalsForValue[0][0];
+        auto checkGlobal = values[0].globals[0];
         replaceCurrent(builder.makeSelect(
           builder.makeRefEq(builder.makeRefAs(RefAsNonNull, curr->ref),
                             builder.makeGlobalGet(
@@ -468,13 +472,13 @@ struct GlobalStructInference : public Pass {
     };
 
     // Find the optimization opportunitites in parallel.
-    ModuleUtils::ParallelFunctionAnalysis<Work> optimization(
-      *module, [&](Function* func, Work& work) {
+    ModuleUtils::ParallelFunctionAnalysis<GlobalsToUnnest> optimization(
+      *module, [&](Function* func, GlobalsToUnnest& globalsToUnnest) {
         if (func->imported()) {
           return;
         }
 
-        FunctionOptimizer optimizer(*this, work);
+        FunctionOptimizer optimizer(*this, globalsToUnnest);
         optimizer.walkFunction(func);
       });
 
@@ -499,8 +503,8 @@ struct GlobalStructInference : public Pass {
           assert(get->type == nestedGet->type);
         } else {
           // Add a new global, initialized to the operand.
-          auto newName = Names::getValidGlobalName(*module, global->name.toString + ".unnested." + std::to_string(index));
-          auto* newGlobal = module->addGlobal(builder.makeGlobal(newName, get->type, operand, Immutable));
+          auto newName = Names::getValidGlobalName(*module, global->name.toString() + ".unnested." + std::to_string(index));
+          module->addGlobal(builder.makeGlobal(newName, get->type, operand, Builder::Immutable));
           // Replace the operand with a get of that new global, and update the
           // original get to read the same.
           operand = builder.makeGlobalGet(newName, get->type);
