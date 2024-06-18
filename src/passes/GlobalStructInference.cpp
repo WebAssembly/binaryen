@@ -512,6 +512,10 @@ struct GlobalStructInference : public Pass {
 
     if (addedGlobals) {
       // Sort the globals so that added ones appear before their uses.
+      PassRunner runner(module);
+      runner.add("reorder-globals-always");
+      runner.setIsNested(true);
+      runner.run();
     }
   }
 };
