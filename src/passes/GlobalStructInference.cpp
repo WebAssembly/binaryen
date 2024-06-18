@@ -385,16 +385,14 @@ struct GlobalStructInference : public Pass {
               value.content = ptr;
             }
           }
-          if (!value.isConstant()) {
-            return; // XXX
-          }
 
           // If the value is constant, it may be grouped as mentioned before.
           // See if it matches anything we've seen before.
           bool grouped = false;
           if (value.isConstant()) {
             for (auto& oldValue : values) {
-              if (value.getConstant() == oldValue.getConstant()) {
+              if (oldValue.isConstant() &&
+                  oldValue.getConstant() == value.getConstant()) {
                 // Add us to this group.
                 oldValue.globals.push_back(global);
                 grouped = true;
