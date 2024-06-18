@@ -398,7 +398,7 @@ struct GlobalStructInference : public Pass {
 
         // Helper for optimization: Given a Value, returns what we should read
         // for it.
-        auto getReadValue = [&](const Value& value) {
+        auto getReadValue = [&](const Value& value) -> Expression* {
           if (value.constant.isConstant()) {
             // This is known to be a constant, so simply emit an expression for
             // that constant.
