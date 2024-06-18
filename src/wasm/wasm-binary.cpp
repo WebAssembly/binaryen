@@ -2584,6 +2584,9 @@ void WasmBinaryReader::readImports() {
         Name name(std::string("gimport$") + std::to_string(globalCounter++));
         auto type = getConcreteType();
         auto mutable_ = getU32LEB();
+        if (mutable_ & ~1) {
+          throwError("Global mutability must be 0 or 1");
+        }
         auto curr =
           builder.makeGlobal(name,
                              type,
