@@ -1783,11 +1783,9 @@ void WasmBinaryReader::read() {
 
     // note the section in the list of seen sections, as almost no sections can
     // appear more than once, and verify those that shouldn't do not.
-    if (sectionCode != BinaryConsts::Section::Custom) {
-      if (!seenSections.insert(sectionCode).second) {
-        throwError("section seen more than once: " +
-                   std::to_string(sectionCode));
-      }
+    if (sectionCode != BinaryConsts::Section::Custom &&
+        !seenSections.insert(sectionCode).second) {
+      throwError("section seen more than once: " + std::to_string(sectionCode));
     }
 
     switch (sectionCode) {
