@@ -479,7 +479,7 @@ struct GlobalStructInference : public Pass {
         }
 
         FunctionOptimizer optimizer(*this, globalsToUnnest);
-        optimizer.walkFunction(func);
+        optimizer.walkFunctionInModule(func, module);
       });
 
     // Un-nest any globals as needed, using the deterministic order of the
