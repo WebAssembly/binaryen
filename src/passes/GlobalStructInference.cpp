@@ -246,7 +246,9 @@ struct GlobalStructInference : public Pass {
       // TODO: SmallVector?
       std::vector<Name> globals;
 
-      bool isConstant() const { return std::get_if<PossibleConstantValues>(&content); }
+      bool isConstant() const {
+        return std::get_if<PossibleConstantValues>(&content);
+      }
 
       const PossibleConstantValues& getConstant() const {
         assert(isConstant());
@@ -267,7 +269,7 @@ struct GlobalStructInference : public Pass {
     //    (struct.new $T ..)
     //
     // We have a nested struct.new here. That is not a constant value, but we
-    //can turn it into a global.get:
+    // can turn it into a global.get:
     //
     //  (global $g.nested (struct.new $T ..)
     //  (global $g (struct.new $S
@@ -302,7 +304,9 @@ struct GlobalStructInference : public Pass {
       GlobalsToUnnest& globalsToUnnest;
 
     public:
-      FunctionOptimizer(GlobalStructInference& parent, GlobalsToUnnest& globalsToUnnest) : parent(parent), globalsToUnnest(globalsToUnnest) {}
+      FunctionOptimizer(GlobalStructInference& parent,
+                        GlobalsToUnnest& globalsToUnnest)
+        : parent(parent), globalsToUnnest(globalsToUnnest) {}
 
       bool refinalize = false;
 
@@ -433,7 +437,8 @@ struct GlobalStructInference : public Pass {
           auto* get = builder.makeGlobalGet(value.globals[0],
                                             (*value.getPointer())->type);
 
-          globalsToUnnest.emplace_back(GlobalToUnnest{value.globals[0], fieldIndex, get});
+          globalsToUnnest.emplace_back(
+            GlobalToUnnest{value.globals[0], fieldIndex, get});
           return get;
         };
 
@@ -515,8 +520,11 @@ struct GlobalStructInference : public Pass {
           assert(get->type == nestedGet->type);
         } else {
           // Add a new global, initialized to the operand.
-          auto newName = Names::getValidGlobalName(*module, global->name.toString() + ".unnested." + std::to_string(index));
-          module->addGlobal(builder.makeGlobal(newName, get->type, operand, Builder::Immutable));
+          auto newName = Names::getValidGlobalName(
+            *module,
+            global->name.toString() + ".unnested." + std::to_string(index));
+          module->addGlobal(builder.makeGlobal(
+            newName, get->type, operand, Builder::Immutable));
           // Replace the operand with a get of that new global, and update the
           // original get to read the same.
           operand = builder.makeGlobalGet(newName, get->type);
