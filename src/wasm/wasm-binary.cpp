@@ -23,6 +23,7 @@
 #include "ir/type-updating.h"
 #include "support/bits.h"
 #include "support/debug.h"
+#include "support/stdckdint.h"
 #include "support/string.h"
 #include "wasm-binary.h"
 #include "wasm-debug.h"
@@ -2759,10 +2760,15 @@ void WasmBinaryReader::readFunctions() {
 }
 
 void WasmBinaryReader::readVars() {
+  uint32_t totalVars = 0;
   size_t numLocalTypes = getU32LEB();
   for (size_t t = 0; t < numLocalTypes; t++) {
     auto num = getU32LEB();
+    if (std::ckd_add(&totalVars, totalVars, num)) {
+      throwError("unaddressable number of locals");
+    }
     auto type = getConcreteType();
+
     while (num > 0) {
       currFunction->vars.push_back(type);
       num--;
@@ -3227,6 +3233,10 @@ Expression* WasmBinaryReader::popTypedExpression(Type type) {
 void WasmBinaryReader::validateBinary() {
   if (hasDataCount && wasm.dataSegments.size() != dataCount) {
     throwError("Number of segments does not agree with DataCount section");
+  }
+
+  if (functionTypes.size() != wasm.functions.size()) {
+    throwError("function section without code section");
   }
 }
 
