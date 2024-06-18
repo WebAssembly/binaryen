@@ -212,12 +212,11 @@ struct GlobalStructInference : public Pass {
       std::sort(globals.begin(), globals.end());
     }
 
-    // We are looking for the case where we can pick between two values
-    // using a single comparison. More than two values, or more than a
-    // single comparison, add tradeoffs that may not be worth it, and a
-    // single value (or no value) is already handled by other passes.
+    // We are looking for the case where we can pick between two values using a
+    // single comparison. More than two values, or more than a single
+    // comparison, lead to tradeoffs that may not be worth it.
     //
-    // That situation may involve more than two globals. For example we may
+    // Note that situation may involve more than two globals. For example we may
     // have three relevant globals, but two may have the same value. In that
     // case we can compare against the third:
     //
@@ -231,54 +230,57 @@ struct GlobalStructInference : public Pass {
     //   (i32.const 1337)
     //   (i32.const 42)
     //   (ref.eq (ref) $global2))
-
-    // First, find the values that would be read, and the globals
-    // corresponding to them. If the values are constant then we can "group"
-    // them together: imagine we have 3 globals, but two would read the
-    // constant 42, then we just need a single check against the other
-    // global in order to know which value is read (either 42, or the value
-    // of the other global).
+    //
+    // To discover these situations, we compute and group the possible values
+    // that can be read from a particular struct.get, using the following data
+    // structure.
     struct Value {
-      // The pointer to the expression. This is nullptr for
-      // struct.new_default (in which case |constant| below would be a zero
-      // literal for the proper type). We must track Expression** here as we
-      // may need to modify it later: consider if the global we read from is
-      //
-      //  (global $g (struct.new $S
-      //    (struct.new $T ..)
-      //
-      // We have a nested struct.new here. That is not a constant value, but
-      // we can turn it into a global.get:
-      //
-      //  (global $g.nested (struct.new $T ..)
-      //  (global $g (struct.new $S
-      //    (global.get $g.nested)
-      //
-      // This un-nesting adds globals and may increase code size slightly,
-      // but if it lets us infer constant values that may lead to
-      // devirtualization and other large benefits. Later passes can also
-      // re-nest.
-      //
-      // As mentioned before we can group constants, but if we un-nest like
-      // this then there is no constant value, and each such Value ends up
-      // in its own group.
-      Expression** ptr;
-      // The possible constant value represented there.
+      // The possible constant value of this value.
       PossibleConstantValues constant;
-      // The globals that have this Value.
+      // If this is *not* a constant then it is some more complex expression,
+      // and we point directly to it here. (We can still handle non-constant
+      // expressions, see GlobalToUnnest, next.) If this is a constant then it
+      // is nullptr.
+      Expression** ptr = nullptr;
+      // The list of globals that have this Value. In the example from above,
+      // the Value for 42 would list globals = [$global0, $global1].
       // TODO: SmallVector?
       std::vector<Name> globals;
     };
 
+    // Constant expressions are easy to handle, and we can emit a select as in
+    // the last example. But we can handle non-constant ones too, by un-nesting
+    // the relevant global. Imagine we have this:
+    //
+    //  (global $g (struct.new $S
+    //    (struct.new $T ..)
+    //
+    // We have a nested struct.new here. That is not a constant value, but we
+    //can turn it into a global.get:
+    //
+    //  (global $g.nested (struct.new $T ..)
+    //  (global $g (struct.new $S
+    //    (global.get $g.nested)
+    //
+    // After this un-nesting we end up with a global.get of an immutable global,
+    // which is constant. Note that this adds a globalsand may increase code
+    // size slightly, but if it lets us infer constant values that may lead to
+    // devirtualization and other large benefits. Later passes can also re-nest.
+    //
+    // We do most of our optimization work in parallel, but we cannot add
+    // globals in parallel, so instead we note the places we need to un-nest in
+    // this data structure and process them at the end.
     struct GlobalToUnnest {
       // The global we want to refer to a nested part of, by un-nesting it. The
       // global contains a struct.new, and we want to refer to one of the
       // operands of the struct.new directly, which we can do by moving it out
       // to its own new global.
       Name global;
-      // The index of the struct.new we care about.
+      // The index of the struct.new in the global named |global|.
       Index index;
-      // The global.get that should refer to the new global.
+      // The global.get that should refer to the new global. At the end, after
+      // we create a new global and have a name for it, we update this get to
+      // point to it.
       GlobalGet* get;
     };
     using GlobalsToUnnest = std::vector<GlobalToUnnest>;
@@ -361,11 +363,16 @@ struct GlobalStructInference : public Pass {
           // Find the value read from the struct and represent it as a Value.
           PossibleConstantValues constant;
           if (structNew->isWithDefault()) {
-            value.ptr = nullptr;
             value.constant.note(Literal::makeZero(fieldType));
           } else {
             value.ptr = &structNew->operands[fieldIndex];
             value.constant.note(*value.ptr, wasm);
+            if (value.constant.isConstant()) {
+              // We do not need to track |ptr|, as this is just a constant: We
+              // want to group multiple ptrs in this value, that all have the
+              // same constant value.
+              value.ptr = nullptr;
+            }
           }
           if (!value.constant.isConstant()) {
             return; // XXX
@@ -386,9 +393,8 @@ struct GlobalStructInference : public Pass {
           }
           if (!grouped) {
             // This is a new value, so create a new group, unless we've seen too
-            // many unique values.
+            // many unique values. In that case, give up.
             if (values.size() == 2) {
-              // Adding this value would mean we have too many, so give up.
               return;
             }
             value.globals.push_back(global);
