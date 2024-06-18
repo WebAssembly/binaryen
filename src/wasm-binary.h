@@ -107,7 +107,7 @@ template<typename T, typename MiniT> struct LEB {
                             : ((mask_type(1) << (sizeof(T) * 8 - shift)) - 1u);
       T significant_payload = payload_mask & payload;
       value |= significant_payload << shift;
-      T unused_bits_mask = ~payload_mask & 0x7F;
+      T unused_bits_mask = ~payload_mask & 127;
       T unused_bits = payload & unused_bits_mask;
       if (std::is_signed_v<T> && value < 0) {
         if (unused_bits != unused_bits_mask) {
