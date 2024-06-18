@@ -211,16 +211,83 @@ struct GlobalStructInference : public Pass {
       std::sort(globals.begin(), globals.end());
     }
 
-    // Optimize based on the above.
-    struct FunctionOptimizer
-      : public WalkerPass<PostWalker<FunctionOptimizer>> {
-      bool isFunctionParallel() override { return true; }
+    // We are looking for the case where we can pick between two values
+    // using a single comparison. More than two values, or more than a
+    // single comparison, add tradeoffs that may not be worth it, and a
+    // single value (or no value) is already handled by other passes.
+    //
+    // That situation may involve more than two globals. For example we may
+    // have three relevant globals, but two may have the same value. In that
+    // case we can compare against the third:
+    //
+    //  $global0: (struct.new $Type (i32.const 42))
+    //  $global1: (struct.new $Type (i32.const 42))
+    //  $global2: (struct.new $Type (i32.const 1337))
+    //
+    // (struct.get $Type (ref))
+    //   =>
+    // (select
+    //   (i32.const 1337)
+    //   (i32.const 42)
+    //   (ref.eq (ref) $global2))
 
-      std::unique_ptr<Pass> create() override {
-        return std::make_unique<FunctionOptimizer>(parent);
-      }
+    // First, find the values that would be read, and the globals
+    // corresponding to them. If the values are constant then we can "group"
+    // them together: imagine we have 3 globals, but two would read the
+    // constant 42, then we just need a single check against the other
+    // global in order to know which value is read (either 42, or the value
+    // of the other global).
+    struct Value {
+      // The pointer to the expression. This is nullptr for
+      // struct.new_default (in which case |constant| below would be a zero
+      // literal for the proper type). We must track Expression** here as we
+      // may need to modify it later: consider if the global we read from is
+      //
+      //  (global $g (struct.new $S
+      //    (struct.new $T ..)
+      //
+      // We have a nested struct.new here. That is not a constant value, but
+      // we can turn it into a global.get:
+      //
+      //  (global $g.nested (struct.new $T ..)
+      //  (global $g (struct.new $S
+      //    (global.get $g.nested)
+      //
+      // This un-nesting adds globals and may increase code size slightly,
+      // but if it lets us infer constant values that may lead to
+      // devirtualization and other large benefits. Later passes can also
+      // re-nest.
+      //
+      // As mentioned before we can group constants, but if we un-nest like
+      // this then there is no constant value, and each such Value ends up
+      // in its own group.
+      Expression** ptr;
+      // The possible constant value represented there.
+      PossibleConstantValues constant;
+      // The globals that have this Value.
+      // TODO: SmallVector?
+      std::vector<Name> globals;
+    };
 
-      FunctionOptimizer(GlobalStructInference& parent) : parent(parent) {}
+    // Optimize based on the above. Define a walker that finds the places to
+    // optimize, which we will run in parallel later. The walker will only find
+    // the work we need to do, and leave the actual work for a non-parallel
+    // phase after, as that work may involve global changes.
+    struct WorkItem {
+      // The pointer to the struct.get we want to optimize/replace.
+      Expression** structGetPtr;
+      // Information about the possible values being read here.
+      std::vector<Value> values;
+    };
+    using Work = std::vector<WorkItem>;
+
+    struct FunctionOptimizer : PostWalker<FunctionOptimizer> {
+    private:
+      GlobalStructInference& parent;
+      Work& work;
+
+    public:
+      FunctionOptimizer(GlobalStructInference& parent, Work& work) : parent(parent), work(work) {}
 
       bool refinalize = false;
 
@@ -278,63 +345,6 @@ struct GlobalStructInference : public Pass {
           return;
         }
 
-        // We are looking for the case where we can pick between two values
-        // using a single comparison. More than two values, or more than a
-        // single comparison, add tradeoffs that may not be worth it, and a
-        // single value (or no value) is already handled by other passes.
-        //
-        // That situation may involve more than two globals. For example we may
-        // have three relevant globals, but two may have the same value. In that
-        // case we can compare against the third:
-        //
-        //  $global0: (struct.new $Type (i32.const 42))
-        //  $global1: (struct.new $Type (i32.const 42))
-        //  $global2: (struct.new $Type (i32.const 1337))
-        //
-        // (struct.get $Type (ref))
-        //   =>
-        // (select
-        //   (i32.const 1337)
-        //   (i32.const 42)
-        //   (ref.eq (ref) $global2))
-
-        // First, find the values that would be read, and the globals
-        // corresponding to them. If the values are constant then we can "group"
-        // them together: imagine we have 3 globals, but two would read the
-        // constant 42, then we just need a single check against the other
-        // global in order to know which value is read (either 42, or the value
-        // of the other global).
-        struct Value {
-          // The pointer to the expression. This is nullptr for
-          // struct.new_default (in which case |constant| below would be a zero
-          // literal for the proper type). We must track Expression** here as we
-          // may need to modify it later: consider if the global we read from is
-          //
-          //  (global $g (struct.new $S
-          //    (struct.new $T ..)
-          //
-          // We have a nested struct.new here. That is not a constant value, but
-          // we can turn it into a global.get:
-          //
-          //  (global $g.nested (struct.new $T ..)
-          //  (global $g (struct.new $S
-          //    (global.get $g.nested)
-          //
-          // This un-nesting adds globals and may increase code size slightly,
-          // but if it lets us infer constant values that may lead to
-          // devirtualization and other large benefits. Later passes can also
-          // re-nest.
-          //
-          // As mentioned before we can group constants, but if we un-nest like
-          // this then there is no constant value, and each such Value ends up
-          // in its own group.
-          Expression** ptr;
-          // The possible constant value represented there.
-          PossibleConstantValues constant;
-          // The globals that have this Value.
-          // TODO: SmallVector?
-          std::vector<Name> globals;
-        };
         // TODO: SmallVector?
         std::vector<Value> values;
 
@@ -381,10 +391,50 @@ struct GlobalStructInference : public Pass {
           }
         }
 
-        XXX utility to add a global, or do makeExpression... but multithreadingg
         // We have some globals (at least 2), and so must have at least one
         // value. And we have already exited if we have more than 2 values (see
-        // the early return above) so that only leaves 1 and 2.
+        // the early return above) so that only leaves 1 and 2. The case of one
+        // value can always be optimized (just read the one possible value), but
+        // with two we need to be more careful.
+        auto numValues = values.size();
+        assert(numValues == 1 || numValues == 2);
+        if (numValues == 2 && values[0].globals.size() > 1 &&
+            values[1].globals.size() > 1) {
+          // Both values have more than one global, so we'd need more than one
+          // comparison. That is, we cannot just check if we are reading from
+          // global1 or global2. Give up.
+          return;
+        }
+
+        // We ruled out all the problems, and can optimize! Stash the work for
+        // later.
+        work.emplace_back({getCurrentPointer(), std::move(values)});
+      }
+
+      void visitFunction(Function* func) {
+        if (refinalize) {
+          ReFinalize().walkFunctionInModule(func, getModule());
+        }
+      }
+    };
+
+    // Find the optimization opportunitites in parallel.
+    ModuleUtils::ParallelFunctionAnalysis<Work> optimization(
+      *module, [&](Function* func, Work& work) {
+        if (func->imported()) {
+          return;
+        }
+
+        FunctionOptimizer optimizer(*this, work);
+        optimizer.walkFunction(func);
+      });
+
+    // Optimize the opportunities we found. Use the deterministic order of the
+    // functions in the module.
+    for (auto& func : module->functions) {
+      auto& work = optimization.map[func.get()];
+      for (auto& [structGetPtr, values] : work) {
+XXX
         if (values.size() == 1) {
           // The case of 1 value is simple: trap if the ref is null, and
           // otherwise return the value.
@@ -404,6 +454,7 @@ struct GlobalStructInference : public Pass {
           std::swap(values[0], values[1]);
           std::swap(globalsForValue[0], globalsForValue[1]);
         } else {
+abort();
           // Both indexes have more than one option, so we'd need more than one
           // comparison. Give up.
           return;
@@ -419,19 +470,7 @@ struct GlobalStructInference : public Pass {
                               checkGlobal, wasm.getGlobal(checkGlobal)->type)),
           values[0].makeExpression(wasm),
           values[1].makeExpression(wasm)));
-      }
 
-      void visitFunction(Function* func) {
-        if (refinalize) {
-          ReFinalize().walkFunctionInModule(func, getModule());
-        }
-      }
-
-    private:
-      GlobalStructInference& parent;
-    };
-
-    FunctionOptimizer(*this).run(getPassRunner(), module);
   }
 };
 
