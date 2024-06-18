@@ -2728,6 +2728,42 @@
   br 0
  )
 
+ ;; CHECK:      (func $br-mismatch-after (type $1) (result i32)
+ ;; CHECK-NEXT:  (block $label (result i32)
+ ;; CHECK-NEXT:   (i32.add
+ ;; CHECK-NEXT:    (br $label
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-mismatch-after (result i32)
+  i32.const 1
+  br 0
+  i32.add
+ )
+
+ ;; CHECK:      (func $br-mismatch-after-extra (type $1) (result i32)
+ ;; CHECK-NEXT:  (block $label (result i32)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i64.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.add
+ ;; CHECK-NEXT:    (br $label
+ ;; CHECK-NEXT:     (i32.const 1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $br-mismatch-after-extra (result i32)
+  i64.const 0
+  i32.const 1
+  br 0
+  i32.add
+ )
+
  ;; CHECK:      (func $br_if (type $0)
  ;; CHECK-NEXT:  (block $l
  ;; CHECK-NEXT:   (br_if $l
@@ -3669,7 +3705,7 @@
  (func $ref-func
   ref.func $ref-func
   drop
-  ref.func 159
+  ref.func 161
   drop
  )
 

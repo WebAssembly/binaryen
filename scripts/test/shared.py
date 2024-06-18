@@ -417,9 +417,6 @@ SPEC_TESTS_TO_SKIP = [
     'type.wast',
     'unreached-invalid.wast',
 
-    # WAT parser error
-    'unwind.wast',
-
     # WAST parser error
     'binary.wast',
 
