@@ -48,6 +48,8 @@
 // TODO: Only do the case with a select when shrinkLevel == 0?
 //
 
+#include <variant>
+
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -235,17 +237,26 @@ struct GlobalStructInference : public Pass {
     // that can be read from a particular struct.get, using the following data
     // structure.
     struct Value {
-      // The possible constant value of this value.
-      PossibleConstantValues constant;
-      // If this is *not* a constant then it is some more complex expression,
-      // and we point directly to it here. (We can still handle non-constant
-      // expressions, see GlobalToUnnest, next.) If this is a constant then it
-      // is nullptr.
-      Expression** ptr = nullptr;
+      // A value is either a constant, or if not, then we point to whatever
+      // expression it is (we use ** there as we may need to update it later,
+      // see below regarding un-nesting).
+      std::variant<PossibleConstantValues, Expression**> content;
       // The list of globals that have this Value. In the example from above,
       // the Value for 42 would list globals = [$global0, $global1].
       // TODO: SmallVector?
       std::vector<Name> globals;
+
+      bool isConstant() const { return std::get_if<PossibleConstantValues>(&content); }
+
+      const PossibleConstantValues& getConstant() const {
+        assert(isConstant());
+        return std::get<PossibleConstantValues>(content);
+      }
+
+      Expression** getPointer() const {
+        assert(!isConstant());
+        return std::get<Expression**>(content);
+      }
     };
 
     // Constant expressions are easy to handle, and we can emit a select as in
@@ -363,27 +374,27 @@ struct GlobalStructInference : public Pass {
           // Find the value read from the struct and represent it as a Value.
           PossibleConstantValues constant;
           if (structNew->isWithDefault()) {
-            value.constant.note(Literal::makeZero(fieldType));
+            constant.note(Literal::makeZero(fieldType));
+            value.content = constant;
           } else {
-            value.ptr = &structNew->operands[fieldIndex];
-            value.constant.note(*value.ptr, wasm);
-            if (value.constant.isConstant()) {
-              // We do not need to track |ptr|, as this is just a constant: We
-              // want to group multiple ptrs in this value, that all have the
-              // same constant value.
-              value.ptr = nullptr;
+            Expression** ptr = &structNew->operands[fieldIndex];
+            constant.note(*ptr, wasm);
+            if (constant.isConstant()) {
+              value.content = constant;
+            } else {
+              value.content = ptr;
             }
           }
-          if (!value.constant.isConstant()) {
+          if (!value.isConstant()) {
             return; // XXX
           }
 
           // If the value is constant, it may be grouped as mentioned before.
           // See if it matches anything we've seen before.
           bool grouped = false;
-          if (value.constant.isConstant()) {
+          if (value.isConstant()) {
             for (auto& oldValue : values) {
-              if (value.constant == oldValue.constant) {
+              if (value.getConstant() == oldValue.getConstant()) {
                 // Add us to this group.
                 oldValue.globals.push_back(global);
                 grouped = true;
@@ -405,10 +416,10 @@ struct GlobalStructInference : public Pass {
         // Helper for optimization: Given a Value, returns what we should read
         // for it.
         auto getReadValue = [&](const Value& value) -> Expression* {
-          if (value.constant.isConstant()) {
+          if (value.isConstant()) {
             // This is known to be a constant, so simply emit an expression for
             // that constant.
-            return value.constant.makeExpression(wasm);
+            return value.getConstant().makeExpression(wasm);
           }
 
           // Otherwise, this is non-constant, so we are in the situation where
@@ -416,16 +427,13 @@ struct GlobalStructInference : public Pass {
           // that for later work, as we cannot add a global in parallel.
 
           // There can only be one global in a value that is not constant, which
-          // is the global we want to read from. There must also be a pointer to
-          // the expression we want to read (if not, there is no such operand as
-          // this is a struct.new_default, but in that case we'd be constant).
+          // is the global we want to read from.
           assert(value.globals.size() == 1);
-          assert(value.ptr);
 
           // Create a global.get with temporary name, leaving only the updating
           // of the name to later work.
           auto* get = builder.makeGlobalGet(value.globals[0],
-                                            (*value.ptr)->type);
+                                            (*value.getPointer())->type);
 
           globalsToUnnest.emplace_back(GlobalToUnnest{value.globals[0], fieldIndex, get});
           return get;
