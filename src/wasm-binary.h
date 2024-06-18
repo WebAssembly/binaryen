@@ -1583,7 +1583,7 @@ public:
   void readVars();
 
   std::map<Export*, Index> exportIndices;
-  std::vector<Export*> exportOrder;
+  std::vector<std::unique_ptr<Export>> exportOrder;
   void readExports();
 
   // The strings in the strings section (which are referred to by StringConst).

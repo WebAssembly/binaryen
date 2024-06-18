@@ -2682,10 +2682,10 @@ void WasmBinaryReader::readFunctions() {
     }
     endOfFunction = pos + size;
 
-    auto* func = new Function;
+    auto func = std::make_unique<Function>();
     func->name = Name::fromInt(i);
     func->type = getTypeByFunctionIndex(numImports + i);
-    currFunction = func;
+    currFunction = func.get();
 
     if (DWARF) {
       func->funcLocation = BinaryLocations::FunctionLocations{
@@ -2749,12 +2749,12 @@ void WasmBinaryReader::readFunctions() {
       }
     }
 
-    TypeUpdating::handleNonDefaultableLocals(func, wasm);
+    TypeUpdating::handleNonDefaultableLocals(func.get(), wasm);
 
     std::swap(func->epilogLocation, debugLocation);
     currFunction = nullptr;
     debugLocation.clear();
-    wasm.addFunction(func);
+    wasm.addFunction(std::move(func));
   }
   BYN_TRACE(" end function bodies\n");
 }
@@ -2786,15 +2786,15 @@ void WasmBinaryReader::readExports() {
   std::unordered_set<Name> names;
   for (size_t i = 0; i < num; i++) {
     BYN_TRACE("read one\n");
-    auto curr = new Export;
+    auto curr = std::make_unique<Export>();
     curr->name = getInlineString();
     if (!names.emplace(curr->name).second) {
       throwError("duplicate export name");
     }
     curr->kind = (ExternalKind)getU32LEB();
     auto index = getU32LEB();
-    exportIndices[curr] = index;
-    exportOrder.push_back(curr);
+    exportIndices[curr.get()] = index;
+    exportOrder.push_back(std::move(curr));
   }
 }
 
@@ -3250,8 +3250,8 @@ void WasmBinaryReader::processNames() {
     wasm.start = getFunctionName(startIndex);
   }
 
-  for (auto* curr : exportOrder) {
-    auto index = exportIndices[curr];
+  for (auto& curr : exportOrder) {
+    auto index = exportIndices[curr.get()];
     switch (curr->kind) {
       case ExternalKind::Function: {
         curr->value = getFunctionName(index);
@@ -3272,7 +3272,7 @@ void WasmBinaryReader::processNames() {
       default:
         throwError("bad export kind");
     }
-    wasm.addExport(curr);
+    wasm.addExport(std::move(curr));
   }
 
   for (auto& [index, refs] : functionRefs) {
