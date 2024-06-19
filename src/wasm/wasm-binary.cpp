@@ -1538,8 +1538,8 @@ void WasmBinaryWriter::writeType(Type type) {
       WASM_UNREACHABLE("bad type without GC");
     }
     auto heapType = type.getHeapType();
-    if (heapType.isBasic() && type.isNullable()) {
-      switch (heapType.getBasic()) {
+    if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
+      switch (heapType.getBasic(Unshared)) {
         case HeapType::ext:
           o << S32LEB(BinaryConsts::EncodedType::externref);
           return;
@@ -1644,14 +1644,16 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
     }
   }
 
-  if (type.isSignature() || type.isContinuation() || type.isStruct() ||
-      type.isArray()) {
+  if (!type.isBasic()) {
     o << S64LEB(getTypeIndex(type)); // TODO: Actually s33
     return;
   }
+
   int ret = 0;
-  assert(type.isBasic());
-  switch (type.getBasic()) {
+  if (type.isShared()) {
+    o << S32LEB(BinaryConsts::EncodedType::Shared);
+  }
+  switch (type.getBasic(Unshared)) {
     case HeapType::ext:
       ret = BinaryConsts::EncodedHeapType::ext;
       break;
@@ -2083,7 +2085,7 @@ bool WasmBinaryReader::getBasicHeapType(int64_t code, HeapType& out) {
       out = HeapType::func;
       return true;
     case BinaryConsts::EncodedHeapType::cont:
-      out = HeapType::func;
+      out = HeapType::cont;
       return true;
     case BinaryConsts::EncodedHeapType::ext:
       out = HeapType::ext;
@@ -2168,9 +2170,14 @@ HeapType WasmBinaryReader::getHeapType() {
     }
     return types[type];
   }
+  auto share = Unshared;
+  if (type == BinaryConsts::EncodedType::Shared) {
+    share = Shared;
+    type = getS64LEB(); // TODO: Actually s33
+  }
   HeapType ht;
   if (getBasicHeapType(type, ht)) {
-    return ht;
+    return ht.getBasic(share);
   } else {
     throwError("invalid wasm heap type: " + std::to_string(type));
   }

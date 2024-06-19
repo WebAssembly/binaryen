@@ -27,10 +27,10 @@ namespace wasm::analysis {
 
 // A lattice whose elements are a single ascending chain in lattice `L`.
 // Internally, there is only ever a single monotonically increasing element of L
-// materialized. Dereferencing any element of the Shared lattice will produce
-// the current value of that single element of L, which is generally safe
-// because the current value always overapproximates (i.e. is higher in the
-// lattice than) the value at the time of the Shared element's construction.
+// materialized. Dereferencing any element of the SharedPath lattice will
+// produce the current value of that single element of L, which is generally
+// safe because the current value always overapproximates (i.e. is higher in the
+// lattice than) the value at the time of the SharedPath element's construction.
 //
 // Each element of this lattice maintains a sequence number that corresponds to
 // a value the shared underlying element has had at some point in time. Higher
@@ -38,7 +38,7 @@ namespace wasm::analysis {
 // Elements of this lattice are compared and joined using these sequence
 // numbers, so blocks will correctly be re-analyzed if the value has increased
 // since the last time they were analyzed.
-template<Lattice L> struct Shared {
+template<Lattice L> struct SharedPath {
   // If we ever have extremely long-running analyses, this may need to be
   // changed to uint64_t.
   using Seq = uint32_t;
@@ -70,7 +70,7 @@ template<Lattice L> struct Shared {
       return !(*this == other);
     }
 
-    friend Shared;
+    friend SharedPath;
   };
 
   L lattice;
@@ -84,7 +84,7 @@ template<Lattice L> struct Shared {
   mutable typename L::Element val;
   mutable Seq seq = 0;
 
-  Shared(L&& l) : lattice(std::move(l)), val(lattice.getBottom()) {}
+  SharedPath(L&& l) : lattice(std::move(l)), val(lattice.getBottom()) {}
 
   // TODO: Delete the move constructor and the move assignment operator. This
   // requires fixing the lattice fuzzer first, since it depends on lattices
@@ -119,10 +119,10 @@ template<Lattice L> struct Shared {
 };
 
 // Deduction guide.
-template<typename L> Shared(L&&) -> Shared<L>;
+template<typename L> SharedPath(L&&) -> SharedPath<L>;
 
 #if __cplusplus >= 202002L
-static_assert(Lattice<Shared<Bool>>);
+static_assert(Lattice<SharedPath<Bool>>);
 #endif // __cplusplus >= 202002L
 
 } // namespace wasm::analysis

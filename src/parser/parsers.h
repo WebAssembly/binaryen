@@ -27,6 +27,8 @@ namespace wasm::WATParser {
 using namespace std::string_view_literals;
 
 // Types
+template<typename Ctx>
+Result<typename Ctx::HeapTypeT> absheaptype(Ctx&, Shareability);
 template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::RefTypeT> maybeRefType(Ctx&);
 template<typename Ctx> Result<typename Ctx::RefTypeT> reftype(Ctx&);
@@ -358,58 +360,73 @@ template<typename Ctx> Result<> module(Ctx&);
 // Types
 // =====
 
-// heaptype ::= x:typeidx => types[x]
-//            | 'func'    => func
-//            | 'extern'  => extern
-template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
+// absheaptype ::= 'func' | 'extern' | ...
+template<typename Ctx>
+Result<typename Ctx::HeapTypeT> absheaptype(Ctx& ctx, Shareability share) {
   if (ctx.in.takeKeyword("func"sv)) {
-    return ctx.makeFuncType();
+    return ctx.makeFuncType(share);
   }
   if (ctx.in.takeKeyword("any"sv)) {
-    return ctx.makeAnyType();
+    return ctx.makeAnyType(share);
   }
   if (ctx.in.takeKeyword("extern"sv)) {
-    return ctx.makeExternType();
+    return ctx.makeExternType(share);
   }
   if (ctx.in.takeKeyword("eq"sv)) {
-    return ctx.makeEqType();
+    return ctx.makeEqType(share);
   }
   if (ctx.in.takeKeyword("i31"sv)) {
-    return ctx.makeI31Type();
+    return ctx.makeI31Type(share);
   }
   if (ctx.in.takeKeyword("struct"sv)) {
-    return ctx.makeStructType();
+    return ctx.makeStructType(share);
   }
   if (ctx.in.takeKeyword("array"sv)) {
-    return ctx.makeArrayType();
+    return ctx.makeArrayType(share);
   }
   if (ctx.in.takeKeyword("exn"sv)) {
-    return ctx.makeExnType();
+    return ctx.makeExnType(share);
   }
   if (ctx.in.takeKeyword("string"sv)) {
-    return ctx.makeStringType();
+    return ctx.makeStringType(share);
   }
   if (ctx.in.takeKeyword("cont"sv)) {
-    return ctx.makeContType();
+    return ctx.makeContType(share);
   }
   if (ctx.in.takeKeyword("none"sv)) {
-    return ctx.makeNoneType();
+    return ctx.makeNoneType(share);
   }
   if (ctx.in.takeKeyword("noextern"sv)) {
-    return ctx.makeNoextType();
+    return ctx.makeNoextType(share);
   }
   if (ctx.in.takeKeyword("nofunc"sv)) {
-    return ctx.makeNofuncType();
+    return ctx.makeNofuncType(share);
   }
   if (ctx.in.takeKeyword("noexn"sv)) {
-    return ctx.makeNoexnType();
+    return ctx.makeNoexnType(share);
   }
   if (ctx.in.takeKeyword("nocont"sv)) {
-    return ctx.makeNocontType();
+    return ctx.makeNocontType(share);
   }
-  auto type = typeidx(ctx);
-  CHECK_ERR(type);
-  return *type;
+  return ctx.in.err("expected abstract heap type");
+}
+
+// heaptype ::= x:typeidx                      => types[x]
+//            | t:absheaptype                  => unshared t
+//            | '(' 'shared' t:absheaptype ')' => shared t
+template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
+  if (auto t = maybeTypeidx(ctx)) {
+    CHECK_ERR(t);
+    return *t;
+  }
+
+  auto share = ctx.in.takeSExprStart("shared"sv) ? Shared : Unshared;
+  auto t = absheaptype(ctx, share);
+  CHECK_ERR(t);
+  if (share == Shared && !ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of shared abstract heap type");
+  }
+  return *t;
 }
 
 // reftype ::= 'funcref'   => funcref
@@ -422,49 +439,49 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
 //           | '(' ref null? t:heaptype ')' => ref null? t
 template<typename Ctx> MaybeResult<typename Ctx::TypeT> maybeReftype(Ctx& ctx) {
   if (ctx.in.takeKeyword("funcref"sv)) {
-    return ctx.makeRefType(ctx.makeFuncType(), Nullable);
+    return ctx.makeRefType(ctx.makeFuncType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("externref"sv)) {
-    return ctx.makeRefType(ctx.makeExternType(), Nullable);
+    return ctx.makeRefType(ctx.makeExternType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("anyref"sv)) {
-    return ctx.makeRefType(ctx.makeAnyType(), Nullable);
+    return ctx.makeRefType(ctx.makeAnyType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("eqref"sv)) {
-    return ctx.makeRefType(ctx.makeEqType(), Nullable);
+    return ctx.makeRefType(ctx.makeEqType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("i31ref"sv)) {
-    return ctx.makeRefType(ctx.makeI31Type(), Nullable);
+    return ctx.makeRefType(ctx.makeI31Type(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("structref"sv)) {
-    return ctx.makeRefType(ctx.makeStructType(), Nullable);
+    return ctx.makeRefType(ctx.makeStructType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("arrayref"sv)) {
-    return ctx.makeRefType(ctx.makeArrayType(), Nullable);
+    return ctx.makeRefType(ctx.makeArrayType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("exnref"sv)) {
-    return ctx.makeRefType(ctx.makeExnType(), Nullable);
+    return ctx.makeRefType(ctx.makeExnType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("stringref"sv)) {
-    return ctx.makeRefType(ctx.makeStringType(), Nullable);
+    return ctx.makeRefType(ctx.makeStringType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("contref"sv)) {
-    return ctx.makeRefType(ctx.makeContType(), Nullable);
+    return ctx.makeRefType(ctx.makeContType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("nullref"sv)) {
-    return ctx.makeRefType(ctx.makeNoneType(), Nullable);
+    return ctx.makeRefType(ctx.makeNoneType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("nullexternref"sv)) {
-    return ctx.makeRefType(ctx.makeNoextType(), Nullable);
+    return ctx.makeRefType(ctx.makeNoextType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("nullfuncref"sv)) {
-    return ctx.makeRefType(ctx.makeNofuncType(), Nullable);
+    return ctx.makeRefType(ctx.makeNofuncType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("nullexnref"sv)) {
-    return ctx.makeRefType(ctx.makeNoexnType(), Nullable);
+    return ctx.makeRefType(ctx.makeNoexnType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("nullcontref"sv)) {
-    return ctx.makeRefType(ctx.makeNocontType(), Nullable);
+    return ctx.makeRefType(ctx.makeNocontType(Unshared), Nullable);
   }
 
   if (!ctx.in.takeSExprStart("ref"sv)) {
