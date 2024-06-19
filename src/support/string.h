@@ -99,6 +99,9 @@ bool convertWTF16ToWTF8(std::ostream& os, std::string_view str);
 // unit. Returns `true` if the input was valid UTF-16.
 bool convertUTF16ToUTF8(std::ostream& os, std::string_view str);
 
+// Whether the string is valid UTF-8.
+bool isUTF8(std::string_view str);
+
 } // namespace wasm::String
 
 #endif // wasm_support_string_h

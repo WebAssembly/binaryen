@@ -400,10 +400,6 @@ os.chdir(options.out_dir)
 # expected-output/ if any.
 SPEC_TESTS_TO_SKIP = [
     # Malformed module accepted
-    'utf8-custom-section-id.wast',
-    'utf8-import-field.wast',
-    'utf8-import-module.wast',
-    'utf8-invalid-encoding.wast',
     'const.wast',
     'address.wast',
 

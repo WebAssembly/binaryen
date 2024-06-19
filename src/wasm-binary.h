@@ -1505,7 +1505,7 @@ public:
   HeapType getIndexedHeapType();
 
   Type getConcreteType();
-  Name getInlineString();
+  Name getInlineString(bool requireValid = true);
   void verifyInt8(int8_t x);
   void verifyInt16(int16_t x);
   void verifyInt32(int32_t x);
