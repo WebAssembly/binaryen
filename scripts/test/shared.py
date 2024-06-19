@@ -406,8 +406,6 @@ SPEC_TESTS_TO_SKIP = [
     'linking.wast',
 
     # Invalid module accepted
-    'func.wast',
-    'type.wast',
     'unreached-invalid.wast',
 
     # Test invalid
