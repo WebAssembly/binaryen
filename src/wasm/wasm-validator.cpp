@@ -3465,8 +3465,9 @@ void FunctionValidator::visitFunction(Function* curr) {
 void FunctionValidator::validateOffset(Address offset,
                                        Memory* mem,
                                        Expression* curr) {
-  shouldBeTrue(
-    mem->is64() || offset < (1ull << 32), curr, "offset must be u32");
+  shouldBeTrue(mem->is64() || offset <= std::numeric_limits<uint32_t>::max(),
+               curr,
+               "offset must be u32");
 }
 
 void FunctionValidator::validateAlignment(
