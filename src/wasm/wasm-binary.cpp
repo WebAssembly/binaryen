@@ -2201,11 +2201,13 @@ Type WasmBinaryReader::getConcreteType() {
   return type;
 }
 
-Name WasmBinaryReader::getInlineString() {
+Name WasmBinaryReader::getInlineString(bool requireValid) {
   BYN_TRACE("<==\n");
   auto len = getU32LEB();
   auto data = getByteView(len);
-
+  if (requireValid && !String::isUTF8(data)) {
+    throwError("invalid UTF-8 string");
+  }
   BYN_TRACE("getInlineString: " << data << " ==>\n");
   return Name(data);
 }
@@ -3027,7 +3029,7 @@ void WasmBinaryReader::readStrings() {
   }
   size_t num = getU32LEB();
   for (size_t i = 0; i < num; i++) {
-    auto string = getInlineString();
+    auto string = getInlineString(false);
     // Re-encode from WTF-8 to WTF-16.
     std::stringstream wtf16;
     if (!String::convertWTF8ToWTF16(wtf16, string.str)) {
