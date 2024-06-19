@@ -38,7 +38,11 @@ struct PassRegistry {
 
   using Creator = std::function<Pass*()>;
 
-  void registerPass(const char* name, const char* description, Creator create);
+  void registerPass(const char* name,
+                    const char* description,
+                    Creator create,
+                    bool allowMultipleInstancesWithArgs = false);
+  ;
   // Register a pass that's used for internal testing. These passes do not show
   // up in --help.
   void
@@ -47,6 +51,7 @@ struct PassRegistry {
   std::vector<std::string> getRegisteredNames();
   std::string getPassDescription(std::string name);
   bool isPassHidden(std::string name);
+  bool doesPassAllowMultipleInstancesWithArgs(std::string name);
 
 private:
   void registerPasses();
@@ -55,9 +60,14 @@ private:
     std::string description;
     Creator create;
     bool hidden;
+    bool allowMultipleInstancesWithArgs;
     PassInfo() = default;
-    PassInfo(std::string description, Creator create, bool hidden = false)
-      : description(description), create(create), hidden(hidden) {}
+    PassInfo(std::string description,
+             Creator create,
+             bool hidden = false,
+             bool allowMultipleInstancesWithArgs = false)
+      : description(description), create(create), hidden(hidden),
+        allowMultipleInstancesWithArgs(allowMultipleInstancesWithArgs) {}
   };
   std::map<std::string, PassInfo> passInfos;
 };
@@ -322,9 +332,8 @@ struct PassRunner {
   }
 
   // Add a pass using its name.
-  void add(std::string passName) {
-    doAdd(PassRegistry::get()->createPass(passName));
-  }
+  void add(std::string passName,
+           std::optional<std::string> passArg = std::optional<std::string>());
 
   // Add a pass given an instance.
   void add(std::unique_ptr<Pass> pass) { doAdd(std::move(pass)); }
@@ -486,6 +495,8 @@ public:
   // to imports must override this to return true.
   virtual bool addsEffects() { return false; }
 
+  void setPassArg(std::string value) { passArg = value; }
+
   std::string name;
 
   PassRunner* getPassRunner() { return runner; }
@@ -497,6 +508,8 @@ public:
   PassOptions& getPassOptions() { return runner->options; }
 
 protected:
+  std::optional<std::string> passArg;
+
   Pass() = default;
   Pass(const Pass&) = default;
   Pass(Pass&&) = default;

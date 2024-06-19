@@ -48,8 +48,10 @@ struct NoInline : public Pass {
   NoInline(NoInlineMode mode) : mode(mode) {}
 
   void run(Module* module) override {
-    std::string pattern = getPassOptions().getArgument(
-      name, "Usage usage:  wasm-opt --" + name + "=WILDCARD");
+    std::string pattern =
+      passArg ? *passArg
+              : getPassOptions().getArgument(
+                  name, "Usage usage:  wasm-opt --" + name + "=WILDCARD");
 
     for (auto& func : module->functions) {
       if (!String::wildcardMatch(pattern, func->name.toString())) {
