@@ -51,6 +51,8 @@ struct OptimizationOptions : public ToolOptions {
     // The name of the pass to run.
     std::string name;
 
+    std::optional<std::string> argument;
+
     // The optimize and shrink levels to run the pass with, if specified. If not
     // specified then the defaults are used.
     std::optional<int> optimizeLevel;
@@ -330,13 +332,18 @@ struct OptimizationOptions : public ToolOptions {
         //   --foo --pass-arg=foo@ARG
         Options::Arguments::Optional,
         [this, p](Options*, const std::string& arg) {
+          PassInfo info(p);
           if (!arg.empty()) {
-            if (passOptions.arguments.count(p)) {
+            if (passOptions.arguments.count(p) &&
+                !PassRegistry::get()->doesPassAllowMultipleInstancesWithArgs(
+                  p)) {
               Fatal() << "Cannot pass multiple pass arguments to " << p;
             }
             passOptions.arguments[p] = arg;
+            info.argument = arg;
           }
-          passes.push_back(p);
+
+          passes.push_back(info);
         },
         PassRegistry::get()->isPassHidden(p));
     }
@@ -393,7 +400,7 @@ struct OptimizationOptions : public ToolOptions {
         passRunner.options.shrinkLevel = passOptions.shrinkLevel;
       } else {
         // This is a normal pass. Add it to the queue for execution.
-        passRunner.add(pass.name);
+        passRunner.add(pass.name, pass.argument);
 
         // Normal passes do not set their own optimize/shrinkLevels.
         assert(!pass.optimizeLevel);

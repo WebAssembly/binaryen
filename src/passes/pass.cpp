@@ -43,9 +43,11 @@ PassRegistry* PassRegistry::get() { return &singleton; }
 
 void PassRegistry::registerPass(const char* name,
                                 const char* description,
-                                Creator create) {
+                                Creator create,
+                                bool allowMultipleInstancesWithArgs) {
   assert(passInfos.find(name) == passInfos.end());
-  passInfos[name] = PassInfo(description, create);
+  passInfos[name] =
+    PassInfo(description, create, false, allowMultipleInstancesWithArgs);
 }
 
 void PassRegistry::registerTestPass(const char* name,
@@ -81,6 +83,12 @@ std::string PassRegistry::getPassDescription(std::string name) {
 bool PassRegistry::isPassHidden(std::string name) {
   assert(passInfos.find(name) != passInfos.end());
   return passInfos[name].hidden;
+}
+
+bool PassRegistry::doesPassAllowMultipleInstancesWithArgs(std::string name) {
+  assert(passInfos.find(name) != passInfos.end());
+
+  return passInfos[name].allowMultipleInstancesWithArgs;
 }
 
 // PassRunner
@@ -307,7 +315,8 @@ void PassRegistry::registerPasses() {
     createMultiMemoryLoweringWithBoundsChecksPass);
   registerPass("nm", "name list", createNameListPass);
   registerPass("name-types", "(re)name all heap types", createNameTypesPass);
-  registerPass("no-inline", "mark functions as no-inline", createNoInlinePass);
+  registerPass(
+    "no-inline", "mark functions as no-inline", createNoInlinePass, true);
   registerPass("no-full-inline",
                "mark functions as no-inline (for full inlining only)",
                createNoFullInlinePass);
@@ -713,6 +722,15 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   //       discard in addDefaultGlobalOptimizationPostPasses? the benefit seems
   //       quite minor so far, except perhaps when using call.without.effects
   //       which can lead to more opportunities for global effects to matter.
+}
+
+void PassRunner::add(std::string passName, std::optional<std::string> passArg) {
+  auto pass = PassRegistry::get()->createPass(passName);
+  if (passArg) {
+    pass->setPassArg(*passArg);
+  }
+
+  doAdd(std::move(pass));
 }
 
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
