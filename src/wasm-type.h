@@ -731,7 +731,7 @@ struct TypeBuilder {
       builder.setOpen(index, open);
       return *this;
     }
-    Entry& setShared(Shareability share = Unshared) {
+    Entry& setShared(Shareability share = Shared) {
       builder.setShared(index, share);
       return *this;
     }
