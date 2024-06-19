@@ -23,6 +23,7 @@
 #include "ir/type-updating.h"
 #include "support/bits.h"
 #include "support/debug.h"
+#include "support/stdckdint.h"
 #include "support/string.h"
 #include "wasm-binary.h"
 #include "wasm-debug.h"
@@ -2688,10 +2689,10 @@ void WasmBinaryReader::readFunctions() {
     }
     endOfFunction = pos + size;
 
-    auto* func = new Function;
+    auto func = std::make_unique<Function>();
     func->name = Name::fromInt(i);
     func->type = getTypeByFunctionIndex(numImports + i);
-    currFunction = func;
+    currFunction = func.get();
 
     if (DWARF) {
       func->funcLocation = BinaryLocations::FunctionLocations{
@@ -2755,21 +2756,29 @@ void WasmBinaryReader::readFunctions() {
       }
     }
 
-    TypeUpdating::handleNonDefaultableLocals(func, wasm);
+    TypeUpdating::handleNonDefaultableLocals(func.get(), wasm);
 
     std::swap(func->epilogLocation, debugLocation);
     currFunction = nullptr;
     debugLocation.clear();
-    wasm.addFunction(func);
+    wasm.addFunction(std::move(func));
   }
   BYN_TRACE(" end function bodies\n");
 }
 
 void WasmBinaryReader::readVars() {
+  uint32_t totalVars = 0;
   size_t numLocalTypes = getU32LEB();
   for (size_t t = 0; t < numLocalTypes; t++) {
     auto num = getU32LEB();
+    // The core spec allows up to 2^32 locals, but to avoid allocation failures,
+    // we additionally impose a much smaller limit, matching the JS embedding.
+    if (std::ckd_add(&totalVars, totalVars, num) ||
+        totalVars > WebLimitations::MaxFunctionLocals) {
+      throwError("too many locals");
+    }
     auto type = getConcreteType();
+
     while (num > 0) {
       currFunction->vars.push_back(type);
       num--;
@@ -2784,15 +2793,15 @@ void WasmBinaryReader::readExports() {
   std::unordered_set<Name> names;
   for (size_t i = 0; i < num; i++) {
     BYN_TRACE("read one\n");
-    auto curr = new Export;
+    auto curr = std::make_unique<Export>();
     curr->name = getInlineString();
     if (!names.emplace(curr->name).second) {
       throwError("duplicate export name");
     }
     curr->kind = (ExternalKind)getU32LEB();
     auto index = getU32LEB();
-    exportIndices[curr] = index;
-    exportOrder.push_back(curr);
+    exportIndices[curr.get()] = index;
+    exportOrder.push_back(std::move(curr));
   }
 }
 
@@ -3235,6 +3244,10 @@ void WasmBinaryReader::validateBinary() {
   if (hasDataCount && wasm.dataSegments.size() != dataCount) {
     throwError("Number of segments does not agree with DataCount section");
   }
+
+  if (functionTypes.size() != wasm.functions.size()) {
+    throwError("function section without code section");
+  }
 }
 
 void WasmBinaryReader::processNames() {
@@ -3244,8 +3257,8 @@ void WasmBinaryReader::processNames() {
     wasm.start = getFunctionName(startIndex);
   }
 
-  for (auto* curr : exportOrder) {
-    auto index = exportIndices[curr];
+  for (auto& curr : exportOrder) {
+    auto index = exportIndices[curr.get()];
     switch (curr->kind) {
       case ExternalKind::Function: {
         curr->value = getFunctionName(index);
@@ -3266,7 +3279,7 @@ void WasmBinaryReader::processNames() {
       default:
         throwError("bad export kind");
     }
-    wasm.addExport(curr);
+    wasm.addExport(std::move(curr));
   }
 
   for (auto& [index, refs] : functionRefs) {
