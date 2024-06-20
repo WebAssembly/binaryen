@@ -1008,6 +1008,162 @@
   )
 )
 
+;; Multiple and overlapping un-nesting situations.
+(module
+  ;; CHECK:      (type $struct (struct (field i32) (field i32)))
+  (type $struct (struct i32 i32))
+
+  ;; CHECK:      (type $1 (func (param (ref null $struct))))
+
+  ;; CHECK:      (global $global1.unnested.0 i32 (i32.add
+  ;; CHECK-NEXT:  (i32.const 13)
+  ;; CHECK-NEXT:  (i32.const 37)
+  ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (global $global1.unnested.1 i32 (i32.add
+  ;; CHECK-NEXT:  (i32.const 99)
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (global.get $global1.unnested.0)
+  ;; CHECK-NEXT:  (global.get $global1.unnested.1)
+  ;; CHECK-NEXT: ))
+  (global $global1 (ref $struct) (struct.new $struct
+    (i32.add
+      (i32.const 13)
+      (i32.const 37)
+    )
+    (i32.add
+      (i32.const 99)
+      (i32.const 1)
+    )
+  ))
+
+  ;; CHECK:      (global $global2.unnested.0 i32 (i32.add
+  ;; CHECK-NEXT:  (i32.const 41)
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (global $global2.unnested.1 i32 (i32.add
+  ;; CHECK-NEXT:  (i32.const 100)
+  ;; CHECK-NEXT:  (i32.const 2)
+  ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (global $global2 (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (global.get $global2.unnested.0)
+  ;; CHECK-NEXT:  (global.get $global2.unnested.1)
+  ;; CHECK-NEXT: ))
+  (global $global2 (ref $struct) (struct.new $struct
+    (i32.add
+      (i32.const 41)
+      (i32.const 1)
+    )
+    (i32.add
+      (i32.const 100)
+      (i32.const 2)
+    )
+  ))
+
+  ;; CHECK:      (func $test (type $1) (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (global.get $global1.unnested.0)
+  ;; CHECK-NEXT:    (global.get $global2.unnested.0)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (global.get $global1.unnested.0)
+  ;; CHECK-NEXT:    (global.get $global2.unnested.0)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (param $struct (ref null $struct))
+    ;; We only need to un-nest once for these two.
+    (drop
+      (struct.get $struct 0
+        (local.get $struct)
+      )
+    )
+    (drop
+      (struct.get $struct 0
+        (local.get $struct)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $test2 (type $1) (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (global.get $global1.unnested.0)
+  ;; CHECK-NEXT:    (global.get $global2.unnested.0)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (global.get $global1.unnested.1)
+  ;; CHECK-NEXT:    (global.get $global2.unnested.1)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (select
+  ;; CHECK-NEXT:    (global.get $global1.unnested.1)
+  ;; CHECK-NEXT:    (global.get $global2.unnested.1)
+  ;; CHECK-NEXT:    (ref.eq
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (local.get $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (global.get $global1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test2 (param $struct (ref null $struct))
+    ;; Add another get of 0 in another function.
+    (drop
+      (struct.get $struct 0
+        (local.get $struct)
+      )
+    )
+    ;; Add gets of the second field in the struct.
+    (drop
+      (struct.get $struct 1
+        (local.get $struct)
+      )
+    )
+    (drop
+      (struct.get $struct 1
+        (local.get $struct)
+      )
+    )
+  )
+)
+
 ;; Three globals with non-constant fields. We do not optimize as we cannot pick
 ;; between three values with a single comparison.
 (module
