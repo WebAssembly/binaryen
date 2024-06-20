@@ -1,4 +1,6 @@
 (module
+  (type $func (func (result funcref)))
+
   (global $global (mut anyref) (ref.null any))
 
   (global $global-ref (mut funcref) (ref.func $use-global-ref))
@@ -79,6 +81,26 @@
           )
         )
       )
+    )
+  )
+
+  (func $named_type_temps (export "named_type_temps") (result funcref)
+    ;; This nested expression ends up needing to use temp vars, and one such
+    ;; name contains the type $func. We should emit that in form that is
+    ;; mangled for JS, without '(' which appears in the stringified name of the
+    ;; type, "(ref null $func)".
+    (select (result (ref null $func))
+      (ref.null nofunc)
+      (if (result (ref $func))
+        (i32.const 1)
+        (then
+          (ref.func $named_type_temps)
+        )
+        (else
+          (unreachable)
+        )
+      )
+      (i32.const 0)
     )
   )
 )

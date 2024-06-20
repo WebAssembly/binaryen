@@ -61,6 +61,12 @@ function asmFunc(imports) {
   funcref_temps(funcref_temps, +(+((wasm2js_funcref$0 = $2, wasm2js_funcref$1 = $3 || wasm2js_trap(), wasm2js_i32$0 = 0, wasm2js_i32$0 ? wasm2js_funcref$0 : wasm2js_funcref$1) == null | 0)));
  }
  
+ function named_type_temps() {
+  var $0 = null, wasm2js__ref_null_$func_0_$0 = null, wasm2js__ref_null_$func_0_$1 = null, wasm2js_i32$0 = 0;
+  $0 = named_type_temps;
+  return wasm2js_(ref null $func.0)$0 = null, wasm2js_(ref null $func.0)$1 = $0 || wasm2js_trap(), wasm2js_i32$0 = 0, wasm2js_i32$0 ? wasm2js_(ref null $func.0)$0 : wasm2js_(ref null $func.0)$1;
+ }
+ 
  return {
   "null_": null_, 
   "is_null": is_null, 
@@ -69,7 +75,8 @@ function asmFunc(imports) {
   "ref_as": ref_as, 
   "use_global": use_global, 
   "use_global_ref": use_global_ref, 
-  "funcref_temps": funcref_temps
+  "funcref_temps": funcref_temps, 
+  "named_type_temps": named_type_temps
  };
 }
 
@@ -83,3 +90,4 @@ export var ref_as = retasmFunc.ref_as;
 export var use_global = retasmFunc.use_global;
 export var use_global_ref = retasmFunc.use_global_ref;
 export var funcref_temps = retasmFunc.funcref_temps;
+export var named_type_temps = retasmFunc.named_type_temps;

@@ -217,6 +217,7 @@ public:
                      std::to_string(index))
                       .c_str(),
                     false);
+//      ret = fromName(ret, NameScope::Local);
     }
     if (func->localIndices.find(ret) == func->localIndices.end()) {
       Builder::addVar(func, ret, type);
