@@ -433,8 +433,8 @@ struct GlobalStructInference : public Pass {
 
           // Create a global.get with temporary name, leaving only the updating
           // of the name to later work.
-          auto* get = builder.makeGlobalGet(value.globals[0],
-                                            value.getPointer()->type);
+          auto* get =
+            builder.makeGlobalGet(value.globals[0], value.getPointer()->type);
 
           globalsToUnnest.emplace_back(
             GlobalToUnnest{value.globals[0], fieldIndex, get});
