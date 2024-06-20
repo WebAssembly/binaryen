@@ -399,9 +399,8 @@ os.chdir(options.out_dir)
 # delete the old file, make sure you rename the corresponding .wast.log file in
 # expected-output/ if any.
 SPEC_TESTS_TO_SKIP = [
-    # Malformed module accepted
+    # Requires us to write our own floating point parser
     'const.wast',
-    'address.wast',
 
     # Unlinkable module accepted
     'linking.wast',

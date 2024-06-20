@@ -526,6 +526,7 @@ private:
     return info.shouldBeSubType(left, right, curr, text, getFunction());
   }
 
+  void validateOffset(Address offset, Memory* mem, Expression* curr);
   void validateAlignment(
     size_t align, Type type, Index bytes, bool isAtomic, Expression* curr);
   void validateMemBytes(uint8_t bytes, Type type, Expression* curr);
@@ -1046,6 +1047,7 @@ void FunctionValidator::visitLoad(Load* curr) {
                  "SIMD operations require SIMD [--enable-simd]");
   }
   validateMemBytes(curr->bytes, curr->type, curr);
+  validateOffset(curr->offset, memory, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
@@ -1077,6 +1079,7 @@ void FunctionValidator::visitStore(Store* curr) {
                  "SIMD operations require SIMD [--enable-simd]");
   }
   validateMemBytes(curr->bytes, curr->valueType, curr);
+  validateOffset(curr->offset, memory, curr);
   validateAlignment(
     curr->align, curr->valueType, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(
@@ -1370,6 +1373,7 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
       break;
   }
   Index bytes = curr->getMemBytes();
+  validateOffset(curr->offset, memory, curr);
   validateAlignment(curr->align, memAlignType, bytes, /*isAtomic=*/false, curr);
 }
 
@@ -1423,6 +1427,7 @@ void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
       WASM_UNREACHABLE("Unexpected SIMDLoadStoreLane op");
   }
   Index bytes = curr->getMemBytes();
+  validateOffset(curr->offset, memory, curr);
   validateAlignment(curr->align, memAlignType, bytes, /*isAtomic=*/false, curr);
   shouldBeTrue(curr->index < lanes, curr, "invalid lane index");
 }
@@ -3455,6 +3460,14 @@ void FunctionValidator::visitFunction(Function* curr) {
     assert(rethrowTargetNames.empty());
     labelNames.clear();
   }
+}
+
+void FunctionValidator::validateOffset(Address offset,
+                                       Memory* mem,
+                                       Expression* curr) {
+  shouldBeTrue(mem->is64() || offset <= std::numeric_limits<uint32_t>::max(),
+               curr,
+               "offset must be u32");
 }
 
 void FunctionValidator::validateAlignment(
