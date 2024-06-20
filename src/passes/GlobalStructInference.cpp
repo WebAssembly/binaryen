@@ -275,7 +275,7 @@ struct GlobalStructInference : public Pass {
     //    (global.get $g.nested)
     //
     // After this un-nesting we end up with a global.get of an immutable global,
-    // which is constant. Note that this adds a globalsand may increase code
+    // which is constant. Note that this adds a global and may increase code
     // size slightly, but if it lets us infer constant values that may lead to
     // devirtualization and other large benefits. Later passes can also re-nest.
     //
