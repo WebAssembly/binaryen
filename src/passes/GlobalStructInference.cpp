@@ -238,9 +238,8 @@ struct GlobalStructInference : public Pass {
     // structure.
     struct Value {
       // A value is either a constant, or if not, then we point to whatever
-      // expression it is (we use ** there as we may need to update it later,
-      // see below regarding un-nesting).
-      std::variant<PossibleConstantValues, Expression**> content;
+      // expression it is.
+      std::variant<PossibleConstantValues, Expression*> content;
       // The list of globals that have this Value. In the example from above,
       // the Value for 42 would list globals = [$global0, $global1].
       // TODO: SmallVector?
@@ -255,9 +254,9 @@ struct GlobalStructInference : public Pass {
         return std::get<PossibleConstantValues>(content);
       }
 
-      Expression** getPointer() const {
+      Expression* getPointer() const {
         assert(!isConstant());
-        return std::get<Expression**>(content);
+        return std::get<Expression*>(content);
       }
     };
 
@@ -381,12 +380,12 @@ struct GlobalStructInference : public Pass {
             constant.note(Literal::makeZero(fieldType));
             value.content = constant;
           } else {
-            Expression** ptr = &structNew->operands[fieldIndex];
-            constant.note(*ptr, wasm);
+            Expression* operand = structNew->operands[fieldIndex];
+            constant.note(operand, wasm);
             if (constant.isConstant()) {
               value.content = constant;
             } else {
-              value.content = ptr;
+              value.content = operand;
             }
           }
 
@@ -435,7 +434,7 @@ struct GlobalStructInference : public Pass {
           // Create a global.get with temporary name, leaving only the updating
           // of the name to later work.
           auto* get = builder.makeGlobalGet(value.globals[0],
-                                            (*value.getPointer())->type);
+                                            value.getPointer()->type);
 
           globalsToUnnest.emplace_back(
             GlobalToUnnest{value.globals[0], fieldIndex, get});
