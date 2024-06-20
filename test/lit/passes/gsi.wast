@@ -955,14 +955,14 @@
 
   ;; CHECK:      (type $1 (func (param (ref null $struct))))
 
-  ;; CHECK:      (global $global2.unnested.0 i32 (i32.add
-  ;; CHECK-NEXT:  (i32.const 41)
-  ;; CHECK-NEXT:  (i32.const 1)
-  ;; CHECK-NEXT: ))
-
   ;; CHECK:      (global $global1.unnested.0 i32 (i32.add
   ;; CHECK-NEXT:  (i32.const 13)
   ;; CHECK-NEXT:  (i32.const 37)
+  ;; CHECK-NEXT: ))
+
+  ;; CHECK:      (global $global2.unnested.0 i32 (i32.add
+  ;; CHECK-NEXT:  (i32.const 41)
+  ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: ))
 
   ;; CHECK:      (global $global1 (ref $struct) (struct.new $struct
@@ -1020,6 +1020,11 @@
   ;; CHECK-NEXT:  (i32.const 37)
   ;; CHECK-NEXT: ))
 
+  ;; CHECK:      (global $global2.unnested.0 i32 (i32.add
+  ;; CHECK-NEXT:  (i32.const 41)
+  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT: ))
+
   ;; CHECK:      (global $global1.unnested.1 i32 (i32.add
   ;; CHECK-NEXT:  (i32.const 99)
   ;; CHECK-NEXT:  (i32.const 1)
@@ -1039,11 +1044,6 @@
       (i32.const 1)
     )
   ))
-
-  ;; CHECK:      (global $global2.unnested.0 i32 (i32.add
-  ;; CHECK-NEXT:  (i32.const 41)
-  ;; CHECK-NEXT:  (i32.const 1)
-  ;; CHECK-NEXT: ))
 
   ;; CHECK:      (global $global2.unnested.1 i32 (i32.add
   ;; CHECK-NEXT:  (i32.const 100)

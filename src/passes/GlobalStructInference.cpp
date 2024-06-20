@@ -470,15 +470,19 @@ struct GlobalStructInference : public Pass {
         }
 
         // Excellent, we can optimize here! Emit a select.
-        //
-        // Note that we must trap on null, so add a ref.as_non_null here.
+
         auto checkGlobal = values[0].globals[0];
+        // Compute the left and right values before the next line, as the order
+        // of their execution matters (they may note globals for un-nesting).
+        auto* left = getReadValue(values[0]);
+        auto* right = getReadValue(values[1]);
+        // Note that we must trap on null, so add a ref.as_non_null here.
         replaceCurrent(builder.makeSelect(
           builder.makeRefEq(builder.makeRefAs(RefAsNonNull, curr->ref),
                             builder.makeGlobalGet(
                               checkGlobal, wasm.getGlobal(checkGlobal)->type)),
-          getReadValue(values[0]),
-          getReadValue(values[1])));
+          left,
+          right));
       }
 
       void visitFunction(Function* func) {
