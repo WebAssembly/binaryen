@@ -254,7 +254,7 @@ struct GlobalStructInference : public Pass {
         return std::get<PossibleConstantValues>(content);
       }
 
-      Expression* getPointer() const {
+      Expression* getExpression() const {
         assert(!isConstant());
         return std::get<Expression*>(content);
       }
@@ -434,7 +434,7 @@ struct GlobalStructInference : public Pass {
           // Create a global.get with temporary name, leaving only the updating
           // of the name to later work.
           auto* get =
-            builder.makeGlobalGet(value.globals[0], value.getPointer()->type);
+            builder.makeGlobalGet(value.globals[0], value.getExpression()->type);
 
           globalsToUnnest.emplace_back(
             GlobalToUnnest{value.globals[0], fieldIndex, get});
