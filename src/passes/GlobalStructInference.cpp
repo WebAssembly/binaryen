@@ -438,6 +438,7 @@ struct GlobalStructInference : public Pass {
 
           globalsToUnnest.emplace_back(
             GlobalToUnnest{value.globals[0], fieldIndex, get});
+
           return get;
         };
 
