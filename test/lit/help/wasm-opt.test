@@ -103,6 +103,9 @@
 ;; CHECK-NEXT:   --cfp                                         propagate constant struct field
 ;; CHECK-NEXT:                                                 values
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --cfp-reftest                                 propagate constant struct field
+;; CHECK-NEXT:                                                 values, using ref.test
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --coalesce-locals                             reduce # of locals by coalescing
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --coalesce-locals-learning                    reduce # of locals by coalescing
