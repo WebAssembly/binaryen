@@ -58,6 +58,7 @@
 #include "ir/struct-utils.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/small_vector.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -202,15 +203,34 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       return;
     }
 
-    // We seek two possible values, and we track which types each use.
-    PossibleConstantValues values[2];
-    // TODO: SmallVector
-    std::vector<HeapType> valueTypes[2];
+    // We seek two possible constant values. For each we track the constant and
+    // the types that have that constant. For example, if we have types A, B, C
+    // and A and B have 42 in their field, and C has 1337, then we'd have this:
+    //
+    //  values = [ { 42, [A, B] }, { 1337, [C] } ];
+    struct Value {
+      PossibleConstantValues constant;
+      // Use a SmallVector as we'll only have 2 Values, and so the stack usage
+      // here is fixed.
+      SmallVector<HeapType, 10> types;
+
+      // Whether this slot is used. If so, |constant| has a value, and |types|
+      // is not empty.
+      bool used() const {
+        if (constant.hasNoted()) {
+          assert(!types.empty());
+          return true;
+        }
+        assert(types.empty());
+        return false;
+      }
+    } values[2];
 
     auto fail = false;
     auto handleType = [&](HeapType type, Index depth) {
       if (fail) {
-        // TODO: Add a mechanism to halt the iteration in the middle.
+        // TODO: Add a mechanism to halt |iterSubTypes| in the middle, as once
+        //       we fail there is no point to further iterating.
         return;
       }
 
@@ -229,17 +249,19 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 
       // Consider the constant value compared to previous ones.
       for (Index i = 0; i < 2; i++) {
-        if (!values[i].hasNoted()) {
+        if (!values[i].used()) {
           // There is nothing in this slot: place this value there.
-          values[i] = value;
-          valueTypes[i].push_back(type);
+          values[i].constant = value;
+          values[i].types.push_back(type);
           break;
         }
-        if (values[i] == value) {
-          // This value is the same as a previous one. Note the type.
-          valueTypes[i].push_back(type);
+
+        // There is something in this slot. If we have the same value, append.
+        if (values[i].constant == value) {
+          values[i].types.push_back(type);
           break;
         }
+
         // Otherwise, this value is different than values[i], which is fine:
         // we can add it as the second value in the next loop iteration - at
         // least, we can do that if there is another iteration: If it's already
@@ -256,32 +278,32 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       return;
     }
 
-    if (!values[1].hasNoted()) {
+    // If we filled slot 1 then we must have filled slot 0 before.
+    assert(values[1].used() ? values[0].used : true);
+
+    if (!values[1].used()) {
       // We did not see two constant values (we might have seen just one, or
       // even no constant values at all).
       return;
     }
-    // If we notes in index 1, we must have in 0, and also we must have types
-    // for both.
-    assert(values[0].hasNoted());
-    assert(!valueTypes[0].empty() && !valueTypes[1].empty());
 
     // We have exactly two values to pick between. We can pick between those
     // values using a single ref.test if the two sets of types are actually
     // disjoint. In general we could compute the LUB of each set and see if it
     // overlaps with the other, but for efficiency we only want to do this
-    // optimization if the type we test on is closed/final: ref.test on a final
-    // type is very fast and in constant time, and anything else is risky. Given
-    // that, we can simply see if one of the sets contains a single type that is
-    // final.
+    // optimization if the type we test on is closed/final, since ref.test on a
+    // final type can be fairly fast (perhaps constant time). We therefore look
+    // if one of the sets of types contains a single type and it is final, and
+    // if so then we'll test on it. (However, see a few lines below on how we
+    // test for finality.)
     // TODO: Consider adding a variation on this pass that uses non-final types.
-    auto isProperTestType = [&](Index index) -> std::optional<HeapType> {
-      auto& types = valueTypes[index];
+    auto isProperTestType = [&](const Value& value) -> std::optional<HeapType> {
+      auto& types = value.types;
       if (types.size() == 1) {
         auto type = types[0];
         // Do not test finality using isOpen(), as that may only be applied late
         // in the optimization pipeline. We are in closed-world here, so just
-        // see if there are subtypes if practice (if not, this can be marked as
+        // see if there are subtypes in practice (if not, this can be marked as
         // final later, and we assume optimistically that it will).
         if (subTypes.getImmediateSubTypes(type).empty()) {
           return type;
@@ -290,16 +312,13 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       return {};
     };
 
-    Index testIndex = -1;
-    HeapType testType;
-    for (Index i = 0; i < 2; i++) {
-      if (auto test = isProperTestType(i)) {
-        testType = *test;
-        testIndex = i;
-        break;
-      }
-    }
-    if (testIndex == Index(-1)) {
+    // Look for the index in |values| to test on.
+    Index testIndex;
+    if (auto test = isProperTestType(values[0])) {
+      testIndex = 0;
+    } if (auto test = isProperTestType(values[1])) {
+      testIndex = 1;
+    } else {
       // We failed to find a simple way to separate the types.
       return;
     }
@@ -307,11 +326,18 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // Success! We can replace the struct.get with a select over the two values
     // (and a trap on null) with the proper ref.test.
     Builder builder(*getModule());
+
+    auto& testIndexTypes = values[testIndex].types;
+    assert(testIndexTypes.size() == 1);
+    auto testType = testIndexTypes[0];
+
     auto* nnRef = builder.makeRefAs(RefAsNonNull, curr->ref);
+
     replaceCurrent(builder.makeSelect(
-      builder.makeRefTest(nnRef, Type(testType, NonNullable)),
-      makeExpression(values[testIndex], refHeapType, curr),
-      makeExpression(values[1 - testIndex], refHeapType, curr)));
+      builder.makeRefTest(nnRef, Type(*testType, NonNullable)),
+      makeExpression(values[testIndex].constant, refHeapType, curr),
+      makeExpression(values[1 - testIndex].constant, refHeapType, curr)));
+
     changed = true;
   }
 
