@@ -123,7 +123,7 @@ void PassRegistry::registerPasses() {
                createConstantFieldPropagationPass);
   registerPass("cfp-reftest",
                "propagate constant struct field values, using ref.test",
-               createConstantFieldPropagationPass);
+               createConstantFieldPropagationRefTestPass);
   registerPass(
     "dce", "removes unreachable code", createDeadCodeEliminationPass);
   registerPass("dealign",
