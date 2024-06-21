@@ -102,14 +102,15 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
   // subtyping and new infos (information about struct.news).
   std::unique_ptr<Pass> create() override {
     return std::make_unique<FunctionOptimizer>(
-      propagatedInfos, subTypes, rawNewInfos);
+      propagatedInfos, subTypes, rawNewInfos, refTest);
   }
 
   FunctionOptimizer(const PCVStructValuesMap& propagatedInfos,
                     const SubTypes& subTypes,
-                    const PCVStructValuesMap& rawNewInfos)
+                    const PCVStructValuesMap& rawNewInfos,
+                    bool refTest)
     : propagatedInfos(propagatedInfos), subTypes(subTypes),
-      rawNewInfos(rawNewInfos) {}
+      rawNewInfos(rawNewInfos), refTest(refTest) {}
 
   void visitStructGet(StructGet* curr) {
     auto type = curr->ref->type;
@@ -316,6 +317,7 @@ private:
   const PCVStructValuesMap& propagatedInfos;
   const SubTypes& subTypes;
   const PCVStructValuesMap& rawNewInfos;
+  const bool refTest;
 
   bool changed = false;
 };
@@ -366,7 +368,7 @@ struct ConstantFieldPropagation : public Pass {
   bool requiresNonNullableLocalFixups() override { return false; }
 
   // Whether we are optimizing using ref.test, see above.
-  bool refTest;
+  const bool refTest;
 
   ConstantFieldPropagation(bool refTest) : refTest(refTest) {}
 
@@ -467,7 +469,7 @@ struct ConstantFieldPropagation : public Pass {
 
     // Optimize.
     // TODO: Skip this if we cannot optimize anything
-    FunctionOptimizer(combinedInfos, subTypes, rawNewInfos).run(runner, module);
+    FunctionOptimizer(combinedInfos, subTypes, rawNewInfos, refTest).run(runner, module);
   }
 };
 
