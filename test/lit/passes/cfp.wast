@@ -775,12 +775,7 @@
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (sub $struct (struct i32 f64)))
 
-  ;; Add a subtype to avoid $substruct looking like it could be final; see
-  ;; below.
   ;; CHECK:      (type $3 (func (param (ref null $struct))))
-
-  ;; CHECK:      (type $subsubstruct (sub $substruct (struct (field i32) (field f64))))
-  (type $subsubstruct (sub $substruct (struct i32 f64)))
 
   ;; CHECK:      (func $create (type $1)
   ;; CHECK-NEXT:  (drop
@@ -809,7 +804,6 @@
     )
   )
   ;; CHECK:      (func $get (type $3) (param $struct (ref null $struct))
-  ;; CHECK-NEXT:  (local $x (ref $subsubstruct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $struct 0
   ;; CHECK-NEXT:    (local.get $struct)
@@ -817,11 +811,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get (param $struct (ref null $struct))
-    ;; Keep this type alive. When it exists it proves that $substruct cannot be
-    ;; a final type, as it has a child, and so we do not optimize using a
-    ;; select here. We leave select optimizations to cfp-select.wast.
-    (local $x (ref $subsubstruct))
-
     (drop
       (struct.get $struct 0
         (local.get $struct)
@@ -1106,9 +1095,6 @@
 
   ;; CHECK:      (type $4 (func (param (ref null $struct1) (ref null $struct2) (ref null $struct3))))
 
-  ;; CHECK:      (type $struct4 (sub $struct3 (struct (field i32) (field i32) (field f64) (field f64) (field anyref) (field anyref))))
-  (type $struct4 (sub $struct3 (struct i32 i32 f64 f64 anyref anyref)))
-
   ;; CHECK:      (func $create (type $3) (param $any anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct1
@@ -1147,7 +1133,6 @@
     )
   )
   ;; CHECK:      (func $get (type $4) (param $struct1 (ref null $struct1)) (param $struct2 (ref null $struct2)) (param $struct3 (ref null $struct3))
-  ;; CHECK-NEXT:  (local $x (ref $struct4))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -1260,11 +1245,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $get (param $struct1 (ref null $struct1)) (param $struct2 (ref null $struct2)) (param $struct3 (ref null $struct3))
-    ;; Keep this type alive. When it exists it proves that $struct3 cannot be
-    ;; a final type, as it has a child, and so we do not optimize using a
-    ;; select here. We leave select optimizations to cfp-select.wast.
-    (local $x (ref $struct4))
-
     ;; Get all the fields of all the structs.
     (drop
       (struct.get $struct1 0
