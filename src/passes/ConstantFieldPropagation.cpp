@@ -316,7 +316,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     Index testIndex;
     if (auto test = isProperTestType(values[0])) {
       testIndex = 0;
-    } if (auto test = isProperTestType(values[1])) {
+    } else if (auto test = isProperTestType(values[1])) {
       testIndex = 1;
     } else {
       // We failed to find a simple way to separate the types.
