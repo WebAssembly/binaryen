@@ -41,7 +41,11 @@
 // This is valid if, of all the subtypes of $T, those that pass the test have
 // constant1 in that field, and those that fail the test have constant2. For
 // example, a simple case is where $T has two subtypes, $T is never created
-// itself, and each of the two subtypes has a different constant value.
+// itself, and each of the two subtypes has a different constant value. (Note
+// that we do similar things in e.g. GlobalStructInference, where we turn a
+// struct.get into a select, but the risk there is much lower since the
+// condition for the select is something like a ref.eq - very cheap - while here
+// we emit a ref.test which in general is as expensive as a cast.)
 //
 // FIXME: This pass assumes a closed world. When we start to allow multi-module
 //        wasm GC programs we need to check for type escaping.
