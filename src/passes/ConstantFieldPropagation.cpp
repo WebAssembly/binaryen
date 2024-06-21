@@ -476,7 +476,7 @@ struct ConstantFieldPropagation : public Pass {
 } // anonymous namespace
 
 Pass* createConstantFieldPropagationPass() {
-  return new ConstantFieldPropagation();
+  return new ConstantFieldPropagation(false);
 }
 
 Pass* createConstantFieldPropagationRefTestPass() {
