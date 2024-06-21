@@ -190,15 +190,15 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
 
     // We only handle immutable fields in this function, as we will be looking
     // at |rawNewInfos|. That is, we are trying to see when a type and its
-    // subtypes/sibling types have different values (so that we can
-    // differentiate between them using a ref.test), and the those differences
-    // are lost in |propagatedInfos|, which has propagated to relevant types so
-    // that we can do a single check to see what value could be there. So we
-    // need to use something more precise, |rawNewInfos|, which tracks the
-    // values written to struct.news, where we know the type precisely. But for
-    // that reason the field must be immutable, for it to be valid to only look
-    // at the struct.news. (A more complex flow analysis could do better here,
-    // but would be far beyond the scope of this pass.)
+    // subtypes have different values (so that we can differentiate between them
+    // using a ref.test), and those differences are lost in |propagatedInfos|,
+    // which has propagated to relevant types so that we can do a single check
+    // to see what value could be there. So we need to use something more
+    // precise, |rawNewInfos|, which tracks the values written to struct.news,
+    // where we know the type exactly (unlike with a struct.set). But for that
+    // reason the field must be immutable, so that it is valid to only look at
+    // the struct.news. (A more complex flow analysis could do better here, but
+    // would be far beyond the scope of this pass.)
     if (GCTypeUtils::getField(refType, curr->index)->mutable_ == Mutable) {
       return;
     }
