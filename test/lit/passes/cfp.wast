@@ -770,7 +770,7 @@
 ;;
 ;; Note that this may be optimized using a ref.test, in --cfp-reftest, but not
 ;; in --cfp. This gives us coverage that --cfp does not do the things that
-;; --cfp-reftest does.
+;; --cfp-reftest does (how --cfp-reftest works is tested in cfp-reftest.wast).
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
