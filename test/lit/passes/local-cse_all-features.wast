@@ -64,25 +64,30 @@
   ;; CHECK:      (type $B (array (mut i32)))
   (type $B (array (mut i32)))
 
-  (type $C (array (mut funcref)))
-
-  (memory $memory 1)
-
-  (data $data "abcdefg")
-
-  (table $table 10 funcref)
-
-  (elem $elem (i32.const 0) (ref.func $creations))
-
   ;; CHECK:      (type $2 (func (param (ref $A))))
 
   ;; CHECK:      (type $3 (func))
 
-  ;; CHECK:      (type $4 (func (param (ref null $A))))
+  ;; CHECK:      (type $C (array (mut funcref)))
+  (type $C (array (mut funcref)))
 
-  ;; CHECK:      (type $5 (func (param (ref null $B) (ref $A))))
+  ;; CHECK:      (type $5 (func (param (ref null $A))))
 
-  ;; CHECK:      (func $struct-gets-nullable (type $4) (param $ref (ref null $A))
+  ;; CHECK:      (type $6 (func (param (ref null $B) (ref $A))))
+
+  ;; CHECK:      (memory $memory 1)
+  (memory $memory 1)
+
+  ;; CHECK:      (data $data "abcdefg")
+  (data $data "abcdefg")
+
+  ;; CHECK:      (table $table 10 funcref)
+  (table $table 10 funcref)
+
+  ;; CHECK:      (elem $elem (i32.const 0) $creations)
+  (elem $elem (i32.const 0) funcref (ref.func $creations))
+
+  ;; CHECK:      (func $struct-gets-nullable (type $5) (param $ref (ref null $A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -214,6 +219,40 @@
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_data $B $data
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_data $B $data
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_elem $C $elem
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_elem $C $elem
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_fixed $B 1
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_fixed $B 1
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $creations
     ;; Allocating GC data has no side effects, but each allocation is unique
@@ -241,25 +280,25 @@
       )
     )
     (drop
-      (array.new_data $B $memory
+      (array.new_data $B $data
         (i32.const 1)
         (i32.const 5)
       )
     )
     (drop
-      (array.new_data $B $memory
+      (array.new_data $B $data
         (i32.const 1)
         (i32.const 5)
       )
     )
     (drop
-      (array.new_elem $C $table
+      (array.new_elem $C $elem
         (i32.const 1)
         (i32.const 5)
       )
     )
     (drop
-      (array.new_elem $C $table
+      (array.new_elem $C $elem
         (i32.const 1)
         (i32.const 5)
       )
@@ -306,7 +345,7 @@
     )
   )
 
-  ;; CHECK:      (func $structs-and-arrays-do-not-alias (type $5) (param $array (ref null $B)) (param $struct (ref $A))
+  ;; CHECK:      (func $structs-and-arrays-do-not-alias (type $6) (param $array (ref null $B)) (param $struct (ref $A))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (array.set $B
   ;; CHECK-NEXT:   (local.get $array)
