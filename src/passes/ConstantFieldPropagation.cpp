@@ -23,6 +23,26 @@
 // write to that field of a different value (even using a subtype of T), then
 // anywhere we see a get of that field we can place a ref.func of F.
 //
+// A variation of this pass also uses ref.test to optimize. This is riskier, as
+// adding a ref.test means we are adding a non-trivial amount of work, and
+// whether it helps overall depends on subsequent optimizations, so we do not do
+// it by default. In this variation, if we inferred a field has exactly two
+// possible values, and we can differentiate between them using a ref.test, then
+// we do
+//
+//   (struct.get $T x (..ref..))
+//     =>
+//   (select
+//     (..constant1..)
+//     (..constant2..)
+//     (ref.test $U (..ref..))
+//   )
+//
+// This is valid if, of all the subtypes of $T, those that pass the test have
+// constant1 in that field, and those that fail the test have constant2. For
+// example, a simple case is where $T has two subtypes, $T is never created
+// itself, and each of the two subtypes has a different constant value.
+//
 // FIXME: This pass assumes a closed world. When we start to allow multi-module
 //        wasm GC programs we need to check for type escaping.
 //
@@ -126,9 +146,10 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     }
 
     // If the value is not a constant, then it is unknown and we must give up
-    // on simply applying a constant. However, we can try to use subtyping.
-    if (!info.isConstant()) {
-      optimizeUsingSubTyping(curr);
+    // on simply applying a constant. However, we can try to use a ref.test, if
+    // that is allowed.
+    if (!info.isConstant() && refTest) {
+      optimizeUsingRefTest(curr);
       return;
     }
 
@@ -155,30 +176,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     return value;
   }
 
-  // If a field has more than one possible value based on our propagation of
-  // subtype values, we can try to look at subtypes in a more sophisticated
-  // manner. For example, consider types A :> B1, B2 (B1, B2 are sibling
-  // subtypes of A). If we have a struct.get of A, and B1 and B2 have different
-  // values for the field, then we do not have one possible value as we look for
-  // above. But imagine that A is never constructed - it is an abstract type -
-  // and the field is immutable and constant in each of B1 and B2, such as for
-  // example a vtable often is (as instances of a class always get the same
-  // vtable, in several toolchains). Then we can replace the struct.get with
-  // this:
-  //
-  //  (select
-  //    (global.get $B1$vtable)
-  //    (global.get $B2$vtable)
-  //    (ref.test $B1 (..ref..))
-  //  )
-  //
-  // That is, we need to differentiate between the two types in order to pick
-  // between two values, and we can do that with a ref.test. By itself this is
-  // likely not faster than just doing a struct.get, but imagine that the parent
-  // of the select is an itable call (another get, and then a call_ref): then
-  // having a select here allows us to further optimize all the way down into a
-  // ref.test that picks between two *direct* calls.
-  void optimizeUsingSubTyping(StructGet* curr) {
+  void optimizeUsingRefTest(StructGet* curr) {
     auto refType = curr->ref->type;
     auto refHeapType = refType.getHeapType();
 
@@ -363,6 +361,11 @@ struct ConstantFieldPropagation : public Pass {
   // Only modifies struct.get operations.
   bool requiresNonNullableLocalFixups() override { return false; }
 
+  // Whether we are optimizing using ref.test, see above.
+  bool refTest;
+
+  ConstantFieldPropagation(bool refTest) : refTest(refTest) {}
+
   void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
@@ -468,6 +471,10 @@ struct ConstantFieldPropagation : public Pass {
 
 Pass* createConstantFieldPropagationPass() {
   return new ConstantFieldPropagation();
+}
+
+Pass* createConstantFieldPropagationRefTestPass() {
+  return new ConstantFieldPropagation(true);
 }
 
 } // namespace wasm
