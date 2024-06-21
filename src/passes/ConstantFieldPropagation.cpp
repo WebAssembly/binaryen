@@ -153,8 +153,10 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // If the value is not a constant, then it is unknown and we must give up
     // on simply applying a constant. However, we can try to use a ref.test, if
     // that is allowed.
-    if (!info.isConstant() && refTest) {
-      optimizeUsingRefTest(curr);
+    if (!info.isConstant()) {
+      if (refTest) {
+        optimizeUsingRefTest(curr);
+      }
       return;
     }
 
