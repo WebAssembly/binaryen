@@ -64,6 +64,15 @@
   ;; CHECK:      (type $B (array (mut i32)))
   (type $B (array (mut i32)))
 
+  (type $C (array (mut funcref)))
+
+  (memory $memory 1)
+
+  (data $data "abcdefg")
+
+  (table $table 10 funcref)
+
+  (elem $elem (i32.const 0) (ref.func $creations))
 
   ;; CHECK:      (type $2 (func (param (ref $A))))
 
@@ -228,6 +237,40 @@
     (drop
       (array.new $B
         (i32.const 1)
+        (i32.const 1)
+      )
+    )
+    (drop
+      (array.new_data $B $memory
+        (i32.const 1)
+        (i32.const 5)
+      )
+    )
+    (drop
+      (array.new_data $B $memory
+        (i32.const 1)
+        (i32.const 5)
+      )
+    )
+    (drop
+      (array.new_elem $C $table
+        (i32.const 1)
+        (i32.const 5)
+      )
+    )
+    (drop
+      (array.new_elem $C $table
+        (i32.const 1)
+        (i32.const 5)
+      )
+    )
+    (drop
+      (array.new_fixed $B 1
+        (i32.const 1)
+      )
+    )
+    (drop
+      (array.new_fixed $B 1
         (i32.const 1)
       )
     )
