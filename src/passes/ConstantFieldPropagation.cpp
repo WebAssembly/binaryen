@@ -226,6 +226,9 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       }
     } values[2];
 
+    // Handle one of the subtypes of the relevant type. We check what value it
+    // has for the field, and update |values|. If we hit a problem, we mark us
+    // as having failed.
     auto fail = false;
     auto handleType = [&](HeapType type, Index depth) {
       if (fail) {
