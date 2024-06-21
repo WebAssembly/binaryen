@@ -471,7 +471,8 @@ struct ConstantFieldPropagation : public Pass {
 
     // Optimize.
     // TODO: Skip this if we cannot optimize anything
-    FunctionOptimizer(combinedInfos, subTypes, rawNewInfos, refTest).run(runner, module);
+    FunctionOptimizer(combinedInfos, subTypes, rawNewInfos, refTest)
+      .run(runner, module);
   }
 };
 
