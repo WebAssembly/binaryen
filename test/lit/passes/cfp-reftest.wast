@@ -644,6 +644,7 @@
   ;; CHECK:      (type $4 (func (param (ref null $struct)) (result i32)))
 
   ;; CHECK:      (func $create (type $3)
+  ;; CHECK-NEXT:  (local $keepalive (ref $substruct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
@@ -658,12 +659,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
+    (local $keepalive (ref $substruct))
     (drop
       (struct.new $struct
         (i32.const 10)
       )
     )
-    ;; We never create $substruct, so it doesn't matter.
+    ;; We never create $substruct, so it doesn't matter (we use a local to
+    ;; keep it alive).
     (drop
       (struct.new $subsubstruct
         (i32.const 30)
@@ -989,6 +992,7 @@
   ;; CHECK:      (type $4 (func (param (ref null $struct)) (result i32)))
 
   ;; CHECK:      (func $create (type $2)
+  ;; CHECK-NEXT:  (local $keepalive (ref $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $substruct.A
   ;; CHECK-NEXT:    (i32.const 20)
@@ -1004,6 +1008,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
+    (local $keepalive (ref $struct))
     ;; $struct is never created.
     (drop
       (struct.new $substruct.A
@@ -1043,16 +1048,19 @@
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
-  (type $substruct.A (sub $struct (struct i32 f64)))
-
   ;; CHECK:      (type $substruct.B (sub $struct (struct (field i32) (field f64) (field anyref))))
-  (type $substruct.B (sub $struct (struct i32 f64 anyref)))
 
   ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (type $3 (func (param (ref null $struct)) (result i32)))
+  ;; CHECK:      (type $substruct.A (sub $struct (struct (field i32) (field f64))))
+  (type $substruct.A (sub $struct (struct i32 f64)))
+
+  (type $substruct.B (sub $struct (struct i32 f64 anyref)))
+
+  ;; CHECK:      (type $4 (func (param (ref null $struct)) (result i32)))
 
   ;; CHECK:      (func $create (type $2)
+  ;; CHECK-NEXT:  (local $keepalive (ref $substruct.A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
@@ -1067,6 +1075,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
+    (local $keepalive (ref $substruct.A))
     (drop
       (struct.new $struct
         (i32.const 10)
@@ -1081,7 +1090,7 @@
       )
     )
   )
-  ;; CHECK:      (func $get (type $3) (param $struct (ref null $struct)) (result i32)
+  ;; CHECK:      (func $get (type $4) (param $struct (ref null $struct)) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.const 30)
   ;; CHECK-NEXT:   (i32.const 10)
@@ -1108,13 +1117,15 @@
   ;; CHECK:      (type $substruct.A (sub $struct (struct (field i32) (field f64))))
   (type $substruct.A (sub $struct (struct i32 f64)))
 
-  (type $substruct.B (sub $struct (struct i32 f64 anyref)))
-
   ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (type $3 (func (param (ref null $struct)) (result i32)))
+  ;; CHECK:      (type $substruct.B (sub $struct (struct (field i32) (field f64) (field anyref))))
+  (type $substruct.B (sub $struct (struct i32 f64 anyref)))
+
+  ;; CHECK:      (type $4 (func (param (ref null $struct)) (result i32)))
 
   ;; CHECK:      (func $create (type $2)
+  ;; CHECK-NEXT:  (local $keepalive (ref $substruct.B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
@@ -1128,6 +1139,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
+    (local $keepalive (ref $substruct.B))
     (drop
       (struct.new $struct
         (i32.const 10)
@@ -1141,7 +1153,7 @@
     )
     ;; $substruct.B is never created.
   )
-  ;; CHECK:      (func $get (type $3) (param $struct (ref null $struct)) (result i32)
+  ;; CHECK:      (func $get (type $4) (param $struct (ref null $struct)) (result i32)
   ;; CHECK-NEXT:  (select
   ;; CHECK-NEXT:   (i32.const 20)
   ;; CHECK-NEXT:   (i32.const 10)
