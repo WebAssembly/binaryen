@@ -58,7 +58,7 @@ using TypeRequirement = Inverted<ValType>;
 
 // Record a type requirement for each local variable. Shared the requirements
 // across basic blocks.
-using LocalTypeRequirements = Shared<Vector<TypeRequirement>>;
+using LocalTypeRequirements = SharedPath<Vector<TypeRequirement>>;
 
 // The type requirements for each reference-typed value on the stack at a
 // particular location.
@@ -75,7 +75,8 @@ struct State : StateLattice {
   static constexpr int LocalsIndex = 0;
   static constexpr int StackIndex = 1;
 
-  State(Function* func) : StateLattice{Shared{initLocals(func)}, initStack()} {}
+  State(Function* func)
+    : StateLattice{SharedPath{initLocals(func)}, initStack()} {}
 
   void push(Element& elem, Type type) const noexcept {
     stackLattice().push(stack(elem), std::move(type));
@@ -109,7 +110,7 @@ struct State : StateLattice {
 
 private:
   static LocalTypeRequirements initLocals(Function* func) noexcept {
-    return Shared{Vector{Inverted{ValType{}}, func->getNumLocals()}};
+    return SharedPath{Vector{Inverted{ValType{}}, func->getNumLocals()}};
   }
 
   static ValueStackTypeRequirements initStack() noexcept {

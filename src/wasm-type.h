@@ -310,6 +310,8 @@ public:
   const Type& operator[](size_t i) const { return *Iterator{{this, i}}; }
 };
 
+enum Shareability { Shared, Unshared };
+
 class HeapType {
   // Unlike `Type`, which represents the types of values on the WebAssembly
   // stack, `HeapType` is used to describe the structures that reference types
@@ -318,24 +320,26 @@ class HeapType {
   uintptr_t id;
 
 public:
+  // Bit zero indicates whether the type is `shared`, so we need to leave it
+  // free.
   enum BasicHeapType : uint32_t {
-    ext,
-    func,
-    cont,
-    any,
-    eq,
-    i31,
-    struct_,
-    array,
-    exn,
-    string,
-    none,
-    noext,
-    nofunc,
-    nocont,
-    noexn,
+    ext = 0 << 1,
+    func = 1 << 1,
+    cont = 2 << 1,
+    any = 3 << 1,
+    eq = 4 << 1,
+    i31 = 5 << 1,
+    struct_ = 6 << 1,
+    array = 7 << 1,
+    exn = 8 << 1,
+    string = 9 << 1,
+    none = 10 << 1,
+    noext = 11 << 1,
+    nofunc = 12 << 1,
+    nocont = 13 << 1,
+    noexn = 14 << 1,
   };
-  static constexpr BasicHeapType _last_basic_type = noexn;
+  static constexpr BasicHeapType _last_basic_type = BasicHeapType(noexn + 1);
 
   // BasicHeapType can be implicitly upgraded to HeapType
   constexpr HeapType(BasicHeapType id) : id(id) {}
@@ -377,6 +381,9 @@ public:
   bool isString() const;
   bool isBottom() const;
   bool isOpen() const;
+  bool isShared() const { return getShared() == Shared; }
+
+  Shareability getShared() const;
 
   Signature getSignature() const;
   Continuation getContinuation() const;
@@ -398,19 +405,27 @@ public:
   size_t getDepth() const;
 
   // Get the bottom heap type for this heap type's hierarchy.
-  BasicHeapType getBottom() const;
+  BasicHeapType getUnsharedBottom() const;
+  BasicHeapType getBottom() const {
+    return HeapType(getUnsharedBottom()).getBasic(getShared());
+  }
 
   // Get the top heap type for this heap type's hierarchy.
-  BasicHeapType getTop() const;
+  BasicHeapType getUnsharedTop() const;
+  BasicHeapType getTop() const {
+    return HeapType(getUnsharedTop()).getBasic(getShared());
+  }
 
   // Get the recursion group for this non-basic type.
   RecGroup getRecGroup() const;
   size_t getRecGroupIndex() const;
 
   constexpr TypeID getID() const { return id; }
-  constexpr BasicHeapType getBasic() const {
-    assert(isBasic() && "Basic heap type expected");
-    return static_cast<BasicHeapType>(id);
+
+  // Get the shared or unshared version of this basic heap type.
+  constexpr BasicHeapType getBasic(Shareability share) const {
+    assert(isBasic());
+    return BasicHeapType(share == Shared ? (id | 1) : (id & ~1));
   }
 
   // (In)equality must be defined for both HeapType and BasicHeapType because it
@@ -456,6 +471,26 @@ public:
 };
 
 inline bool Type::isNull() const { return isRef() && getHeapType().isBottom(); }
+
+namespace HeapTypes {
+
+constexpr HeapType ext = HeapType::ext;
+constexpr HeapType func = HeapType::func;
+constexpr HeapType cont = HeapType::cont;
+constexpr HeapType any = HeapType::any;
+constexpr HeapType eq = HeapType::eq;
+constexpr HeapType i31 = HeapType::i31;
+constexpr HeapType struct_ = HeapType::struct_;
+constexpr HeapType array = HeapType::array;
+constexpr HeapType exn = HeapType::exn;
+constexpr HeapType string = HeapType::string;
+constexpr HeapType none = HeapType::none;
+constexpr HeapType noext = HeapType::noext;
+constexpr HeapType nofunc = HeapType::nofunc;
+constexpr HeapType nocont = HeapType::nocont;
+constexpr HeapType noexn = HeapType::noexn;
+
+} // namespace HeapTypes
 
 // A recursion group consisting of one or more HeapTypes. HeapTypes with single
 // members are encoded without using any additional memory, which is why
@@ -614,9 +649,8 @@ struct TypeBuilder {
   Type getTempTupleType(const Tuple&);
   Type getTempRefType(HeapType heapType, Nullability nullable);
 
-  // In nominal mode, or for nominal types, declare the HeapType being built at
-  // index `i` to be an immediate subtype of the given HeapType. Does nothing
-  // for equirecursive types.
+  // Declare the HeapType being built at index `i` to be an immediate subtype of
+  // the given HeapType.
   void setSubType(size_t i, HeapType super);
 
   // Create a new recursion group covering slots [i, i + length). Groups must
@@ -624,6 +658,7 @@ struct TypeBuilder {
   void createRecGroup(size_t i, size_t length);
 
   void setOpen(size_t i, bool open = true);
+  void setShared(size_t i, Shareability share = Shared);
 
   enum class ErrorReason {
     // There is a cycle in the supertype relation.
@@ -694,6 +729,10 @@ struct TypeBuilder {
     }
     Entry& setOpen(bool open = true) {
       builder.setOpen(index, open);
+      return *this;
+    }
+    Entry& setShared(Shareability share = Shared) {
+      builder.setShared(index, share);
       return *this;
     }
   };

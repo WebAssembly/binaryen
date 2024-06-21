@@ -195,9 +195,21 @@ std::optional<uint32_t> takeWTF8CodePoint(std::string_view& str) {
   }
 
   str = str.substr(1 + trailingBytes);
+
   if (!valid) {
     return std::nullopt;
   }
+
+  size_t expectedTrailing = u < 0x80       ? 0
+                            : u < 0x800    ? 1
+                            : u < 0x10000  ? 2
+                            : u < 0x110000 ? 3
+                                           : -1;
+  if (trailingBytes != expectedTrailing) {
+    // Overlong encoding or overlarge code point.
+    return std::nullopt;
+  }
+
   return u;
 }
 
@@ -306,6 +318,9 @@ std::ostream& writeWTF16CodePoint(std::ostream& os, uint32_t u) {
   return os;
 }
 
+#pragma GCC diagnostic push
+#pragma GCC diagnostic ignored "-Wmaybe-uninitialized"
+
 bool convertWTF8ToWTF16(std::ostream& os, std::string_view str) {
   bool valid = true;
   bool lastWasLeadingSurrogate = false;
@@ -330,6 +345,8 @@ bool convertWTF8ToWTF16(std::ostream& os, std::string_view str) {
 
   return valid;
 }
+
+#pragma GCC diagnostic pop
 
 bool convertWTF16ToWTF8(std::ostream& os, std::string_view str) {
   return doConvertWTF16ToWTF8(os, str, true);
@@ -402,6 +419,16 @@ std::ostream& printEscapedJSON(std::ostream& os, std::string_view str) {
     }
   }
   return os << '"';
+}
+
+bool isUTF8(std::string_view str) {
+  while (str.size()) {
+    auto u = takeWTF8CodePoint(str);
+    if (!u || (0xD800 <= *u && *u < 0xE000)) {
+      return false;
+    }
+  }
+  return true;
 }
 
 } // namespace wasm::String

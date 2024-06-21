@@ -399,57 +399,17 @@ os.chdir(options.out_dir)
 # delete the old file, make sure you rename the corresponding .wast.log file in
 # expected-output/ if any.
 SPEC_TESTS_TO_SKIP = [
-    # Stacky code / notation
-    'block.wast',
-    'call.wast',
-    'float_exprs.wast',
-    'globals.wast',
-    'loop.wast',
-    'nop.wast',
-    'select.wast',
-    'stack.wast',
-    'unwind.wast',
+    # Requires us to write our own floating point parser
+    'const.wast',
 
-    # Binary module
-    'binary.wast',
-    'binary-leb128.wast',
-    'custom.wast',
-
-    # Empty 'then' or 'else' in 'if'
-    'if.wast',
-    'local_set.wast',
-    'store.wast',
-
-    # No module in a file
-    'token.wast',
-    'utf8-custom-section-id.wast',
-    'utf8-import-field.wast',
-    'utf8-import-module.wast',
-    'utf8-invalid-encoding.wast',
-
-    # 'register' command
+    # Unlinkable module accepted
     'linking.wast',
 
-    # Misc. unsupported constructs
-    'call_indirect.wast',  # Empty (param) and (result)
-    'const.wast',  # Unparenthesized expression
-    'data.wast',  # Various unsupported (data) notations
-    'elem.wast',  # Unsupported 'offset' syntax in (elem)
-    'exports.wast',  # Multiple inlined exports for a function
-    'func.wast',  # Forward named type reference
-    'skip-stack-guard-page.wast',  # Hexadecimal style (0x..) in memory offset
+    # Invalid module accepted
+    'unreached-invalid.wast',
 
-    # Untriaged: We don't know the cause of the error yet
-    'address.wast',  # wasm2js 'assert_return' failure
-    'br_if.wast',  # Validation error
-    'float_literals.wast',  # 'assert_return' failure
-    'int_literals.wast',  # 'assert_return' failure
-    'local_tee.wast',  # Validation failure
-    'memory_grow.wast',  # 'assert_return' failure
-    'start.wast',  # Assertion failure
-    'type.wast',  # 'assertion_invalid' failure
-    'unreachable.wast',  # Validation failure
-    'unreached-invalid.wast'  # 'assert_invalid' failure
+    # Test invalid
+    'elem.wast',
 ]
 options.spec_tests = [t for t in options.spec_tests if os.path.basename(t) not
                       in SPEC_TESTS_TO_SKIP]

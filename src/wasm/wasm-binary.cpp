@@ -23,6 +23,7 @@
 #include "ir/type-updating.h"
 #include "support/bits.h"
 #include "support/debug.h"
+#include "support/stdckdint.h"
 #include "support/string.h"
 #include "wasm-binary.h"
 #include "wasm-debug.h"
@@ -284,6 +285,9 @@ void WasmBinaryWriter::writeTypes() {
       } else {
         o << U32LEB(0);
       }
+    }
+    if (type.isShared()) {
+      o << S32LEB(BinaryConsts::EncodedType::Shared);
     }
     if (type.isSignature()) {
       o << S32LEB(BinaryConsts::EncodedType::Func);
@@ -1319,9 +1323,14 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::MultiMemoryFeature;
       case FeatureSet::TypedContinuations:
         return BinaryConsts::CustomSections::TypedContinuationsFeature;
-      default:
-        WASM_UNREACHABLE("unexpected feature flag");
+      case FeatureSet::SharedEverything:
+        return BinaryConsts::CustomSections::SharedEverythingFeature;
+      case FeatureSet::None:
+      case FeatureSet::Default:
+      case FeatureSet::All:
+        break;
     }
+    WASM_UNREACHABLE("unexpected feature flag");
   };
 
   std::vector<const char*> features;
@@ -1530,8 +1539,8 @@ void WasmBinaryWriter::writeType(Type type) {
       WASM_UNREACHABLE("bad type without GC");
     }
     auto heapType = type.getHeapType();
-    if (heapType.isBasic() && type.isNullable()) {
-      switch (heapType.getBasic()) {
+    if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
+      switch (heapType.getBasic(Unshared)) {
         case HeapType::ext:
           o << S32LEB(BinaryConsts::EncodedType::externref);
           return;
@@ -1636,14 +1645,16 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
     }
   }
 
-  if (type.isSignature() || type.isContinuation() || type.isStruct() ||
-      type.isArray()) {
+  if (!type.isBasic()) {
     o << S64LEB(getTypeIndex(type)); // TODO: Actually s33
     return;
   }
+
   int ret = 0;
-  assert(type.isBasic());
-  switch (type.getBasic()) {
+  if (type.isShared()) {
+    o << S32LEB(BinaryConsts::EncodedType::Shared);
+  }
+  switch (type.getBasic(Unshared)) {
     case HeapType::ext:
       ret = BinaryConsts::EncodedHeapType::ext;
       break;
@@ -1776,11 +1787,8 @@ void WasmBinaryReader::read() {
     // note the section in the list of seen sections, as almost no sections can
     // appear more than once, and verify those that shouldn't do not.
     if (sectionCode != BinaryConsts::Section::Custom &&
-        sectionCode != BinaryConsts::Section::Code) {
-      if (!seenSections.insert(BinaryConsts::Section(sectionCode)).second) {
-        throwError("section seen more than once: " +
-                   std::to_string(sectionCode));
-      }
+        !seenSections.insert(sectionCode).second) {
+      throwError("section seen more than once: " + std::to_string(sectionCode));
     }
 
     switch (sectionCode) {
@@ -1829,7 +1837,7 @@ void WasmBinaryReader::read() {
       case BinaryConsts::Section::Tag:
         readTags();
         break;
-      default: {
+      case BinaryConsts::Section::Custom: {
         readCustomSection(payloadLen);
         if (pos > oldPos + payloadLen) {
           throwError("bad user section size, started at " +
@@ -1838,7 +1846,11 @@ void WasmBinaryReader::read() {
                      " not being equal to new position " + std::to_string(pos));
         }
         pos = oldPos + payloadLen;
+        break;
       }
+      default:
+        throwError(std::string("unrecognized section ID: ") +
+                   std::to_string(sectionCode));
     }
 
     // make sure we advanced exactly past this section
@@ -2074,7 +2086,7 @@ bool WasmBinaryReader::getBasicHeapType(int64_t code, HeapType& out) {
       out = HeapType::func;
       return true;
     case BinaryConsts::EncodedHeapType::cont:
-      out = HeapType::func;
+      out = HeapType::cont;
       return true;
     case BinaryConsts::EncodedHeapType::ext:
       out = HeapType::ext;
@@ -2159,9 +2171,14 @@ HeapType WasmBinaryReader::getHeapType() {
     }
     return types[type];
   }
+  auto share = Unshared;
+  if (type == BinaryConsts::EncodedType::Shared) {
+    share = Shared;
+    type = getS64LEB(); // TODO: Actually s33
+  }
   HeapType ht;
   if (getBasicHeapType(type, ht)) {
-    return ht;
+    return ht.getBasic(share);
   } else {
     throwError("invalid wasm heap type: " + std::to_string(type));
   }
@@ -2184,11 +2201,13 @@ Type WasmBinaryReader::getConcreteType() {
   return type;
 }
 
-Name WasmBinaryReader::getInlineString() {
+Name WasmBinaryReader::getInlineString(bool requireValid) {
   BYN_TRACE("<==\n");
   auto len = getU32LEB();
   auto data = getByteView(len);
-
+  if (requireValid && !String::isUTF8(data)) {
+    throwError("invalid UTF-8 string");
+  }
   BYN_TRACE("getInlineString: " << data << " ==>\n");
   return Name(data);
 }
@@ -2386,6 +2405,10 @@ void WasmBinaryReader::readTypes() {
       }
       form = getS32LEB();
     }
+    if (form == BinaryConsts::Shared) {
+      builder[i].setShared();
+      form = getS32LEB();
+    }
     if (form == BinaryConsts::EncodedType::Func) {
       builder[i] = readSignatureDef();
     } else if (form == BinaryConsts::EncodedType::Cont) {
@@ -2570,6 +2593,9 @@ void WasmBinaryReader::readImports() {
         Name name(std::string("gimport$") + std::to_string(globalCounter++));
         auto type = getConcreteType();
         auto mutable_ = getU32LEB();
+        if (mutable_ & ~1) {
+          throwError("Global mutability must be 0 or 1");
+        }
         auto curr =
           builder.makeGlobal(name,
                              type,
@@ -2668,10 +2694,10 @@ void WasmBinaryReader::readFunctions() {
     }
     endOfFunction = pos + size;
 
-    auto* func = new Function;
+    auto func = std::make_unique<Function>();
     func->name = Name::fromInt(i);
     func->type = getTypeByFunctionIndex(numImports + i);
-    currFunction = func;
+    currFunction = func.get();
 
     if (DWARF) {
       func->funcLocation = BinaryLocations::FunctionLocations{
@@ -2735,21 +2761,29 @@ void WasmBinaryReader::readFunctions() {
       }
     }
 
-    TypeUpdating::handleNonDefaultableLocals(func, wasm);
+    TypeUpdating::handleNonDefaultableLocals(func.get(), wasm);
 
     std::swap(func->epilogLocation, debugLocation);
     currFunction = nullptr;
     debugLocation.clear();
-    wasm.addFunction(func);
+    wasm.addFunction(std::move(func));
   }
   BYN_TRACE(" end function bodies\n");
 }
 
 void WasmBinaryReader::readVars() {
+  uint32_t totalVars = 0;
   size_t numLocalTypes = getU32LEB();
   for (size_t t = 0; t < numLocalTypes; t++) {
     auto num = getU32LEB();
+    // The core spec allows up to 2^32 locals, but to avoid allocation failures,
+    // we additionally impose a much smaller limit, matching the JS embedding.
+    if (std::ckd_add(&totalVars, totalVars, num) ||
+        totalVars > WebLimitations::MaxFunctionLocals) {
+      throwError("too many locals");
+    }
     auto type = getConcreteType();
+
     while (num > 0) {
       currFunction->vars.push_back(type);
       num--;
@@ -2764,15 +2798,15 @@ void WasmBinaryReader::readExports() {
   std::unordered_set<Name> names;
   for (size_t i = 0; i < num; i++) {
     BYN_TRACE("read one\n");
-    auto curr = new Export;
+    auto curr = std::make_unique<Export>();
     curr->name = getInlineString();
     if (!names.emplace(curr->name).second) {
       throwError("duplicate export name");
     }
     curr->kind = (ExternalKind)getU32LEB();
     auto index = getU32LEB();
-    exportIndices[curr] = index;
-    exportOrder.push_back(curr);
+    exportIndices[curr.get()] = index;
+    exportOrder.push_back(std::move(curr));
   }
 }
 
@@ -2995,7 +3029,7 @@ void WasmBinaryReader::readStrings() {
   }
   size_t num = getU32LEB();
   for (size_t i = 0; i < num; i++) {
-    auto string = getInlineString();
+    auto string = getInlineString(false);
     // Re-encode from WTF-8 to WTF-16.
     std::stringstream wtf16;
     if (!String::convertWTF8ToWTF16(wtf16, string.str)) {
@@ -3215,6 +3249,10 @@ void WasmBinaryReader::validateBinary() {
   if (hasDataCount && wasm.dataSegments.size() != dataCount) {
     throwError("Number of segments does not agree with DataCount section");
   }
+
+  if (functionTypes.size() != wasm.functions.size()) {
+    throwError("function section without code section");
+  }
 }
 
 void WasmBinaryReader::processNames() {
@@ -3224,8 +3262,8 @@ void WasmBinaryReader::processNames() {
     wasm.start = getFunctionName(startIndex);
   }
 
-  for (auto* curr : exportOrder) {
-    auto index = exportIndices[curr];
+  for (auto& curr : exportOrder) {
+    auto index = exportIndices[curr.get()];
     switch (curr->kind) {
       case ExternalKind::Function: {
         curr->value = getFunctionName(index);
@@ -3246,7 +3284,7 @@ void WasmBinaryReader::processNames() {
       default:
         throwError("bad export kind");
     }
-    wasm.addExport(curr);
+    wasm.addExport(std::move(curr));
   }
 
   for (auto& [index, refs] : functionRefs) {
@@ -3688,7 +3726,7 @@ void WasmBinaryReader::readNames(size_t payloadLen) {
         auto rawName = getInlineString();
         auto name = processor.process(rawName);
         if (index < wasm.dataSegments.size()) {
-          wasm.dataSegments[i]->setExplicitName(name);
+          wasm.dataSegments[index]->setExplicitName(name);
         } else {
           std::cerr << "warning: data index out of bounds in name section, "
                        "data subsection: "
@@ -3825,6 +3863,8 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
     } else if (name ==
                BinaryConsts::CustomSections::TypedContinuationsFeature) {
       feature = FeatureSet::TypedContinuations;
+    } else if (name == BinaryConsts::CustomSections::SharedEverythingFeature) {
+      feature = FeatureSet::SharedEverything;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).

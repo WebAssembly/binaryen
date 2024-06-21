@@ -17,6 +17,7 @@
 #include <limits>
 
 #include "optimizer.h"
+#include "shared-constants.h"
 #include "support/safe_integer.h"
 
 using namespace cashew;
@@ -33,17 +34,14 @@ Ref makeJsCoercedZero(JsType type) {
   switch (type) {
     case JS_INT:
       return ValueBuilder::makeNum(0);
-      break;
     case JS_DOUBLE:
       return ValueBuilder::makeUnary(PLUS, ValueBuilder::makeNum(0));
-      break;
     case JS_FLOAT: {
       if (!JS_FLOAT_ZERO.isNull()) {
         return ValueBuilder::makeName(JS_FLOAT_ZERO);
       } else {
         return ValueBuilder::makeCall(MATH_FROUND, ValueBuilder::makeNum(0));
       }
-      break;
     }
     case JS_FLOAT32X4: {
       return ValueBuilder::makeCall(SIMD_FLOAT32X4,
@@ -51,12 +49,10 @@ Ref makeJsCoercedZero(JsType type) {
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0));
-      break;
     }
     case JS_FLOAT64X2: {
       return ValueBuilder::makeCall(
         SIMD_FLOAT64X2, ValueBuilder::makeNum(0), ValueBuilder::makeNum(0));
-      break;
     }
     case JS_INT8X16: {
       return ValueBuilder::makeCall(SIMD_INT8X16,
@@ -76,7 +72,6 @@ Ref makeJsCoercedZero(JsType type) {
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0));
-      break;
     }
     case JS_INT16X8: {
       return ValueBuilder::makeCall(SIMD_INT16X8,
@@ -88,7 +83,6 @@ Ref makeJsCoercedZero(JsType type) {
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0));
-      break;
     }
     case JS_INT32X4: {
       return ValueBuilder::makeCall(SIMD_INT32X4,
@@ -96,12 +90,19 @@ Ref makeJsCoercedZero(JsType type) {
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0),
                                     ValueBuilder::makeNum(0));
-      break;
+    }
+    case JS_REF: {
+      return ValueBuilder::makeName(wasm::NULL_);
     }
     default:
       assert(0);
   }
   abort();
+}
+
+bool needsJsCoercion(JsType type) {
+  // References need no coercion, but everything else does.
+  return type != JS_REF;
 }
 
 Ref makeJsCoercion(Ref node, JsType type) {
@@ -122,10 +123,11 @@ Ref makeJsCoercion(Ref node, JsType type) {
       return ValueBuilder::makeCall(SIMD_INT16X8_CHECK, node);
     case JS_INT32X4:
       return ValueBuilder::makeCall(SIMD_INT32X4_CHECK, node);
+    case JS_REF:
     case JS_NONE:
     default:
-      // non-validating code, emit nothing XXX this is dangerous, we should only
-      // allow this when we know we are not validating
+      // No coercion is needed.
+      // TODO see if JS_NONE is actually used here.
       return node;
   }
 }

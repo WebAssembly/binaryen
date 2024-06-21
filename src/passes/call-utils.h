@@ -19,6 +19,7 @@
 
 #include <variant>
 
+#include "ir/debuginfo.h"
 #include "ir/type-updating.h"
 #include "wasm.h"
 
@@ -130,14 +131,17 @@ convertToDirectCalls(T* curr,
   };
 
   auto makeCall = [&](IndirectCallInfo info) -> Expression* {
+    Expression* ret;
     if (std::get_if<Trap>(&info)) {
-      return builder.makeUnreachable();
+      ret = builder.makeUnreachable();
     } else {
-      return builder.makeCall(std::get<Known>(info).target,
-                              getOperands(),
-                              curr->type,
-                              curr->isReturn);
+      ret = builder.makeCall(std::get<Known>(info).target,
+                             getOperands(),
+                             curr->type,
+                             curr->isReturn);
     }
+    debuginfo::copyOriginalToReplacement(curr, ret, &func);
+    return ret;
   };
   auto* ifTrueCall = makeCall(ifTrueCallInfo);
   auto* ifFalseCall = makeCall(ifFalseCallInfo);

@@ -21,16 +21,16 @@ BinaryenPackedTypeNotPacked: 0
 BinaryenPackedTypeInt8: 1
 BinaryenPackedTypeInt16: 2
 BinaryenHeapTypeExt: 0
-BinaryenHeapTypeFunc: 1
-BinaryenHeapTypeAny: 3
-BinaryenHeapTypeEq: 4
-BinaryenHeapTypeI31: 5
-BinaryenHeapTypeStruct: 6
-BinaryenHeapTypeArray: 7
-BinaryenHeapTypeString: 9
-BinaryenHeapTypeNone: 10
-BinaryenHeapTypeNoext: 11
-BinaryenHeapTypeNofunc: 12
+BinaryenHeapTypeFunc: 2
+BinaryenHeapTypeAny: 6
+BinaryenHeapTypeEq: 8
+BinaryenHeapTypeI31: 10
+BinaryenHeapTypeStruct: 12
+BinaryenHeapTypeArray: 14
+BinaryenHeapTypeString: 18
+BinaryenHeapTypeNone: 20
+BinaryenHeapTypeNoext: 22
+BinaryenHeapTypeNofunc: 24
 BinaryenFeatureMVP: 0
 BinaryenFeatureAtomics: 1
 BinaryenFeatureBulkMemory: 16
@@ -47,7 +47,7 @@ BinaryenFeatureMemory64: 2048
 BinaryenFeatureRelaxedSIMD: 4096
 BinaryenFeatureExtendedConst: 8192
 BinaryenFeatureStrings: 16384
-BinaryenFeatureAll: 131071
+BinaryenFeatureAll: 262143
 (f32.neg
  (f32.const -33.61199951171875)
 )

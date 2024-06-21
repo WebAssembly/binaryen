@@ -1,5 +1,5 @@
 /*
- * Copyright 2019 WebAssembly Community Group participants
+ * Copyright 2024 WebAssembly Community Group participants
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,16 +14,13 @@
  * limitations under the License.
  */
 
-#ifndef wasm_ir_debug_h
-#define wasm_ir_debug_h
+#include "ir/debuginfo.h"
+#include "wasm-traversal.h"
+#include "wasm.h"
 
-#include <wasm-traversal.h>
+namespace wasm::debuginfo {
 
-namespace wasm::debug {
-
-// Given an expression and a copy of it in another function, copy the debug
-// info into the second function.
-inline void copyDebugInfo(Expression* origin,
+void copyBetweenFunctions(Expression* origin,
                           Expression* copy,
                           Function* originFunc,
                           Function* copyFunc) {
@@ -52,8 +49,6 @@ inline void copyDebugInfo(Expression* origin,
       copyDebug[copyList.list[i]] = location;
     }
   }
-};
+}
 
-} // namespace wasm::debug
-
-#endif // wasm_ir_debug_h
+} // namespace wasm::debuginfo

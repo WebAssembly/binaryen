@@ -284,6 +284,21 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] calling slice-ordering
+  ;; CHECK-NEXT: [fuzz-exec] note result: slice-ordering => string("h")
+  (func $slice-ordering (export "slice-ordering") (result (ref string))
+    (local $0 i32)
+    (stringview_wtf16.slice
+      (string.const "hello")
+      ;; If we were to defer emitting this get in the binary writer, it would
+      ;; end up with the wrong value.
+      (local.get $0)
+      (local.tee $0
+        (i32.const 1)
+      )
+    )
+  )
+
   ;; CHECK:      [fuzz-exec] calling new_empty
   ;; CHECK-NEXT: [fuzz-exec] note result: new_empty => string("")
   (func $new_empty (export "new_empty") (result stringref)
@@ -536,6 +551,9 @@
 ;; CHECK:      [fuzz-exec] calling slice-big
 ;; CHECK-NEXT: [fuzz-exec] note result: slice-big => string("defgh")
 
+;; CHECK:      [fuzz-exec] calling slice-ordering
+;; CHECK-NEXT: [fuzz-exec] note result: slice-ordering => string("h")
+
 ;; CHECK:      [fuzz-exec] calling new_empty
 ;; CHECK-NEXT: [fuzz-exec] note result: new_empty => string("")
 
@@ -620,6 +638,7 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] comparing slice
 ;; CHECK-NEXT: [fuzz-exec] comparing slice-big
+;; CHECK-NEXT: [fuzz-exec] comparing slice-ordering
 ;; CHECK-NEXT: [fuzz-exec] comparing slice-unicode
 ;; CHECK-NEXT: [fuzz-exec] comparing string.from_code_point
 ;; CHECK-NEXT: [fuzz-exec] comparing string.measure

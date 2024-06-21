@@ -20,14 +20,18 @@
 #include "common.h"
 #include "contexts.h"
 #include "lexer.h"
+#include "wat-parser-internal.h"
 
 namespace wasm::WATParser {
 
 using namespace std::string_view_literals;
 
 // Types
+template<typename Ctx>
+Result<typename Ctx::HeapTypeT> absheaptype(Ctx&, Shareability);
 template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx&);
-template<typename Ctx> MaybeResult<typename Ctx::RefTypeT> reftype(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::RefTypeT> maybeRefType(Ctx&);
+template<typename Ctx> Result<typename Ctx::RefTypeT> reftype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::TypeT> tupletype(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx&);
 template<typename Ctx>
@@ -304,7 +308,8 @@ Result<> ignore(Ctx&, Index, const std::vector<Annotation>&) {
 }
 
 // Modules
-template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx);
+template<typename Ctx>
+MaybeResult<typename Ctx::HeapTypeT> maybeTypeidx(Ctx& ctx);
 template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx&);
 template<typename Ctx>
 Result<typename Ctx::FieldIdxT> fieldidx(Ctx&, typename Ctx::HeapTypeT);
@@ -330,7 +335,8 @@ template<typename Ctx>
 Result<typename Ctx::TypeUseT> typeuse(Ctx&, bool allowNames = true);
 MaybeResult<ImportNames> inlineImport(Lexer&);
 Result<std::vector<Name>> inlineExports(Lexer&);
-template<typename Ctx> Result<> strtype(Ctx&);
+template<typename Ctx> Result<> comptype(Ctx&);
+template<typename Ctx> Result<> sharecomptype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::ModuleNameT> subtype(Ctx&);
 template<typename Ctx> MaybeResult<> deftype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx&);
@@ -350,88 +356,77 @@ template<typename Ctx> MaybeResult<> tag(Ctx&);
 template<typename Ctx> MaybeResult<> modulefield(Ctx&);
 template<typename Ctx> Result<> module(Ctx&);
 
-// =========
-// Utilities
-// =========
-
-// RAII utility for temporarily changing the parsing position of a parsing
-// context.
-template<typename Ctx> struct WithPosition {
-  Ctx& ctx;
-  Index original;
-  std::vector<Annotation> annotations;
-
-  WithPosition(Ctx& ctx, Index pos)
-    : ctx(ctx), original(ctx.in.getPos()),
-      annotations(ctx.in.takeAnnotations()) {
-    ctx.in.setPos(pos);
-  }
-
-  ~WithPosition() {
-    ctx.in.setPos(original);
-    ctx.in.setAnnotations(std::move(annotations));
-  }
-};
-
-// Deduction guide to satisfy -Wctad-maybe-unsupported.
-template<typename Ctx> WithPosition(Ctx& ctx, Index) -> WithPosition<Ctx>;
-
 // =====
 // Types
 // =====
 
-// heaptype ::= x:typeidx => types[x]
-//            | 'func'    => func
-//            | 'extern'  => extern
-template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
+// absheaptype ::= 'func' | 'extern' | ...
+template<typename Ctx>
+Result<typename Ctx::HeapTypeT> absheaptype(Ctx& ctx, Shareability share) {
   if (ctx.in.takeKeyword("func"sv)) {
-    return ctx.makeFuncType();
+    return ctx.makeFuncType(share);
   }
   if (ctx.in.takeKeyword("any"sv)) {
-    return ctx.makeAnyType();
+    return ctx.makeAnyType(share);
   }
   if (ctx.in.takeKeyword("extern"sv)) {
-    return ctx.makeExternType();
+    return ctx.makeExternType(share);
   }
   if (ctx.in.takeKeyword("eq"sv)) {
-    return ctx.makeEqType();
+    return ctx.makeEqType(share);
   }
   if (ctx.in.takeKeyword("i31"sv)) {
-    return ctx.makeI31Type();
+    return ctx.makeI31Type(share);
   }
   if (ctx.in.takeKeyword("struct"sv)) {
-    return ctx.makeStructType();
+    return ctx.makeStructType(share);
   }
   if (ctx.in.takeKeyword("array"sv)) {
-    return ctx.makeArrayType();
+    return ctx.makeArrayType(share);
   }
   if (ctx.in.takeKeyword("exn"sv)) {
-    return ctx.makeExnType();
+    return ctx.makeExnType(share);
   }
   if (ctx.in.takeKeyword("string"sv)) {
-    return ctx.makeStringType();
+    return ctx.makeStringType(share);
   }
   if (ctx.in.takeKeyword("cont"sv)) {
-    return ctx.makeContType();
+    return ctx.makeContType(share);
   }
   if (ctx.in.takeKeyword("none"sv)) {
-    return ctx.makeNoneType();
+    return ctx.makeNoneType(share);
   }
   if (ctx.in.takeKeyword("noextern"sv)) {
-    return ctx.makeNoextType();
+    return ctx.makeNoextType(share);
   }
   if (ctx.in.takeKeyword("nofunc"sv)) {
-    return ctx.makeNofuncType();
+    return ctx.makeNofuncType(share);
   }
   if (ctx.in.takeKeyword("noexn"sv)) {
-    return ctx.makeNoexnType();
+    return ctx.makeNoexnType(share);
   }
   if (ctx.in.takeKeyword("nocont"sv)) {
-    return ctx.makeNocontType();
+    return ctx.makeNocontType(share);
   }
-  auto type = typeidx(ctx);
-  CHECK_ERR(type);
-  return *type;
+  return ctx.in.err("expected abstract heap type");
+}
+
+// heaptype ::= x:typeidx                      => types[x]
+//            | t:absheaptype                  => unshared t
+//            | '(' 'shared' t:absheaptype ')' => shared t
+template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
+  if (auto t = maybeTypeidx(ctx)) {
+    CHECK_ERR(t);
+    return *t;
+  }
+
+  auto share = ctx.in.takeSExprStart("shared"sv) ? Shared : Unshared;
+  auto t = absheaptype(ctx, share);
+  CHECK_ERR(t);
+  if (share == Shared && !ctx.in.takeRParen()) {
+    return ctx.in.err("expected end of shared abstract heap type");
+  }
+  return *t;
 }
 
 // reftype ::= 'funcref'   => funcref
@@ -442,51 +437,51 @@ template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx& ctx) {
 //           | 'structref' => structref
 //           | 'arrayref'  => arrayref
 //           | '(' ref null? t:heaptype ')' => ref null? t
-template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
+template<typename Ctx> MaybeResult<typename Ctx::TypeT> maybeReftype(Ctx& ctx) {
   if (ctx.in.takeKeyword("funcref"sv)) {
-    return ctx.makeRefType(ctx.makeFuncType(), Nullable);
+    return ctx.makeRefType(ctx.makeFuncType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("externref"sv)) {
-    return ctx.makeRefType(ctx.makeExternType(), Nullable);
+    return ctx.makeRefType(ctx.makeExternType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("anyref"sv)) {
-    return ctx.makeRefType(ctx.makeAnyType(), Nullable);
+    return ctx.makeRefType(ctx.makeAnyType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("eqref"sv)) {
-    return ctx.makeRefType(ctx.makeEqType(), Nullable);
+    return ctx.makeRefType(ctx.makeEqType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("i31ref"sv)) {
-    return ctx.makeRefType(ctx.makeI31Type(), Nullable);
+    return ctx.makeRefType(ctx.makeI31Type(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("structref"sv)) {
-    return ctx.makeRefType(ctx.makeStructType(), Nullable);
+    return ctx.makeRefType(ctx.makeStructType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("arrayref"sv)) {
-    return ctx.makeRefType(ctx.makeArrayType(), Nullable);
+    return ctx.makeRefType(ctx.makeArrayType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("exnref"sv)) {
-    return ctx.makeRefType(ctx.makeExnType(), Nullable);
+    return ctx.makeRefType(ctx.makeExnType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("stringref"sv)) {
-    return ctx.makeRefType(ctx.makeStringType(), Nullable);
+    return ctx.makeRefType(ctx.makeStringType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("contref"sv)) {
-    return ctx.makeRefType(ctx.makeContType(), Nullable);
+    return ctx.makeRefType(ctx.makeContType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("nullref"sv)) {
-    return ctx.makeRefType(ctx.makeNoneType(), Nullable);
+    return ctx.makeRefType(ctx.makeNoneType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("nullexternref"sv)) {
-    return ctx.makeRefType(ctx.makeNoextType(), Nullable);
+    return ctx.makeRefType(ctx.makeNoextType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("nullfuncref"sv)) {
-    return ctx.makeRefType(ctx.makeNofuncType(), Nullable);
+    return ctx.makeRefType(ctx.makeNofuncType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("nullexnref"sv)) {
-    return ctx.makeRefType(ctx.makeNoexnType(), Nullable);
+    return ctx.makeRefType(ctx.makeNoexnType(Unshared), Nullable);
   }
   if (ctx.in.takeKeyword("nullcontref"sv)) {
-    return ctx.makeRefType(ctx.makeNocontType(), Nullable);
+    return ctx.makeRefType(ctx.makeNocontType(Unshared), Nullable);
   }
 
   if (!ctx.in.takeSExprStart("ref"sv)) {
@@ -503,6 +498,14 @@ template<typename Ctx> MaybeResult<typename Ctx::TypeT> reftype(Ctx& ctx) {
   }
 
   return ctx.makeRefType(*type, nullability);
+}
+
+template<typename Ctx> Result<typename Ctx::TypeT> reftype(Ctx& ctx) {
+  if (auto t = maybeReftype(ctx)) {
+    CHECK_ERR(t);
+    return *t;
+  }
+  return ctx.in.err("expected reftype");
 }
 
 // tupletype ::= '(' 'tuple' valtype* ')'
@@ -543,7 +546,7 @@ template<typename Ctx> Result<typename Ctx::TypeT> singlevaltype(Ctx& ctx) {
     return ctx.makeF64();
   } else if (ctx.in.takeKeyword("v128"sv)) {
     return ctx.makeV128();
-  } else if (auto type = reftype(ctx)) {
+  } else if (auto type = maybeReftype(ctx)) {
     CHECK_ERR(type);
     return *type;
   } else {
@@ -811,10 +814,6 @@ Result<typename Ctx::TableTypeT> tabletypeContinued(Ctx& ctx, Type indexType) {
   CHECK_ERR(limits);
   auto type = reftype(ctx);
   CHECK_ERR(type);
-
-  if (!type) {
-    return ctx.in.err("expected reftype");
-  }
   return ctx.makeTableType(indexType, *limits, *type);
 }
 
@@ -2460,23 +2459,24 @@ makeSuspend(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
 
 // typeidx ::= x:u32 => x
 //           | v:id  => x (if types[x] = v)
-template<typename Ctx> MaybeResult<Index> maybeTypeidx(Ctx& ctx) {
+template<typename Ctx>
+MaybeResult<typename Ctx::HeapTypeT> maybeTypeidx(Ctx& ctx) {
   if (auto x = ctx.in.takeU32()) {
-    return *x;
+    return ctx.getHeapTypeFromIdx(*x);
   }
   if (auto id = ctx.in.takeID()) {
     // TODO: Fix position to point to start of id, not next element.
     auto idx = ctx.getTypeIndex(*id);
     CHECK_ERR(idx);
-    return *idx;
+    return ctx.getHeapTypeFromIdx(*idx);
   }
   return {};
 }
 
 template<typename Ctx> Result<typename Ctx::HeapTypeT> typeidx(Ctx& ctx) {
-  if (auto idx = maybeTypeidx(ctx)) {
-    CHECK_ERR(idx);
-    return ctx.getHeapTypeFromIdx(*idx);
+  if (auto t = maybeTypeidx(ctx)) {
+    CHECK_ERR(t);
+    return *t;
   }
   return ctx.in.err("expected type index or identifier");
 }
@@ -2699,7 +2699,7 @@ Result<typename Ctx::TypeUseT> typeuse(Ctx& ctx, bool allowNames) {
 }
 
 // ('(' 'import' mod:name nm:name ')')?
-MaybeResult<ImportNames> inlineImport(Lexer& in) {
+inline MaybeResult<ImportNames> inlineImport(Lexer& in) {
   if (!in.takeSExprStart("import"sv)) {
     return {};
   }
@@ -2719,7 +2719,7 @@ MaybeResult<ImportNames> inlineImport(Lexer& in) {
 }
 
 // ('(' 'export' name ')')*
-Result<std::vector<Name>> inlineExports(Lexer& in) {
+inline Result<std::vector<Name>> inlineExports(Lexer& in) {
   std::vector<Name> exports;
   while (in.takeSExprStart("export"sv)) {
     auto name = in.takeName();
@@ -2734,11 +2734,11 @@ Result<std::vector<Name>> inlineExports(Lexer& in) {
   return exports;
 }
 
-// strtype ::= ft:functype   => ft
-//           | ct:conttype   => ct
-//           | st:structtype => st
-//           | at:arraytype  => at
-template<typename Ctx> Result<> strtype(Ctx& ctx) {
+// comptype ::= ft:functype   => ft
+//            | ct:conttype   => ct
+//            | st:structtype => st
+//            | at:arraytype  => at
+template<typename Ctx> Result<> comptype(Ctx& ctx) {
   if (auto type = functype(ctx)) {
     CHECK_ERR(type);
     ctx.addFuncType(*type);
@@ -2762,8 +2762,23 @@ template<typename Ctx> Result<> strtype(Ctx& ctx) {
   return ctx.in.err("expected type description");
 }
 
-// subtype ::= '(' 'type' id? '(' 'sub' typeidx? strtype ')' ')'
-//           | '(' 'type' id? strtype ')'
+// sharecomptype ::= '(' 'shared' t:comptype ')' => shared t
+//                 | t:comptype => unshared t
+template<typename Ctx> Result<> sharecomptype(Ctx& ctx) {
+  if (ctx.in.takeSExprStart("shared"sv)) {
+    ctx.setShared();
+    CHECK_ERR(comptype(ctx));
+    if (!ctx.in.takeRParen()) {
+      return ctx.in.err("expected end of shared comptype");
+    }
+  } else {
+    CHECK_ERR(comptype(ctx));
+  }
+  return Ok{};
+}
+
+// subtype ::= '(' 'type' id? '(' 'sub' typeidx? sharecomptype ')' ')'
+//           | '(' 'type' id? sharecomptype ')'
 template<typename Ctx> MaybeResult<> subtype(Ctx& ctx) {
   auto pos = ctx.in.getPos();
 
@@ -2785,13 +2800,13 @@ template<typename Ctx> MaybeResult<> subtype(Ctx& ctx) {
       CHECK_ERR(ctx.addSubtype(*super));
     }
 
-    CHECK_ERR(strtype(ctx));
+    CHECK_ERR(sharecomptype(ctx));
 
     if (!ctx.in.takeRParen()) {
       return ctx.in.err("expected end of subtype definition");
     }
   } else {
-    CHECK_ERR(strtype(ctx));
+    CHECK_ERR(sharecomptype(ctx));
   }
 
   if (!ctx.in.takeRParen()) {
@@ -3006,7 +3021,7 @@ template<typename Ctx> MaybeResult<> table(Ctx& ctx) {
   }
 
   // Reftype if we have inline elements.
-  auto type = reftype(ctx);
+  auto type = maybeReftype(ctx);
   CHECK_ERR(type);
 
   std::optional<typename Ctx::TableTypeT> ttype;
@@ -3253,7 +3268,8 @@ MaybeResult<typename Ctx::ExprT> maybeElemexpr(Ctx& ctx) {
 //            | funcidx* (iff the tableuse is omitted)
 template<typename Ctx>
 Result<typename Ctx::ElemListT> elemlist(Ctx& ctx, bool legacy) {
-  if (auto type = reftype(ctx)) {
+  if (auto type = maybeReftype(ctx)) {
+    CHECK_ERR(type);
     auto res = ctx.makeElemList(*type);
     while (auto elem = maybeElemexpr(ctx)) {
       CHECK_ERR(elem);

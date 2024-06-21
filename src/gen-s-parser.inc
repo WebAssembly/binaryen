@@ -2,8 +2,14 @@
 
 // clang-format off
 
+// NOLINTBEGIN
+
 auto op = *keyword;
 char buf[33] = {};
+// Ensure we do not copy more than the buffer can hold
+if (op.size() >= sizeof(buf)) {
+  goto parse_error;
+}
 memcpy(buf, op.data(), op.size());
 switch (buf[0]) {
   case 'a': {
@@ -5150,5 +5156,7 @@ switch (buf[0]) {
 }
 parse_error:
   return ctx.in.err(pos, "unrecognized instruction");
+
+// NOLINTEND
 
 // clang-format on
