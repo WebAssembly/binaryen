@@ -382,6 +382,12 @@ struct EscapeAnalyzer {
       void visitLocalSet(LocalSet* curr) { escapes = false; }
 
       // Reference operations. TODO add more
+      void visitRefEq(RefEq* curr) {
+        // The reference is compared for identity, but nothing more.
+        escapes = false;
+        fullyConsumes = true;
+      }
+
       void visitRefAs(RefAs* curr) {
         // TODO General OptimizeInstructions integration, that is, since we know
         //      that our allocation is what flows into this RefAs, we can
@@ -719,6 +725,24 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // the allocation reaches, we will handle that.
     contents.push_back(builder.makeRefNull(allocation->type.getHeapType()));
     replaceCurrent(builder.makeBlock(contents));
+  }
+
+  void visitRefEq(RefEq* curr) {
+    if (!analyzer.reached.count(curr)) {
+      return;
+    }
+
+    // If our reference is compared to itself, the result is 1. If it is
+    // compared to something else, the result must be 0, as our reference does
+    // not escape to any other place.
+    int32_t result = analyzer.reached.count(curr->left) > 0 &&
+                     analyzer.reached.count(curr->right) > 0;
+    auto* block = builder.makeBlock({
+      builder.makeDrop(curr->left),
+      builder.makeDrop(curr->right),
+      builder.makeConst(Literal(result))
+    });
+    replaceCurrent(block);
   }
 
   void visitRefAs(RefAs* curr) {

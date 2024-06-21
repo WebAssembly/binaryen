@@ -13,9 +13,9 @@
 
   ;; CHECK:      (type $struct.recursive (struct (field (mut (ref null $struct.recursive)))))
 
-  ;; CHECK:      (type $4 (func (param (ref null $struct.A))))
+  ;; CHECK:      (type $4 (func (result i32)))
 
-  ;; CHECK:      (type $5 (func (result i32)))
+  ;; CHECK:      (type $5 (func (param (ref null $struct.A))))
 
   ;; CHECK:      (type $6 (func (result anyref)))
 
@@ -35,6 +35,8 @@
   ;; CHECK:      (type $10 (func (param (ref $struct.A))))
 
   ;; CHECK:      (type $11 (func (param i32)))
+
+  ;; CHECK:      (type $12 (func (param eqref) (result i32)))
 
   ;; CHECK:      (func $simple (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
@@ -474,7 +476,7 @@
     )
   )
 
-  ;; CHECK:      (func $send-ref (type $4) (param $0 (ref null $struct.A))
+  ;; CHECK:      (func $send-ref (type $5) (param $0 (ref null $struct.A))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $send-ref (param (ref null $struct.A))
@@ -887,7 +889,7 @@
     )
   )
 
-  ;; CHECK:      (func $tee (type $5) (result i32)
+  ;; CHECK:      (func $tee (type $4) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -1786,7 +1788,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-as-non-null-through-local (type $5) (result i32)
+  ;; CHECK:      (func $ref-as-non-null-through-local (type $4) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
@@ -1959,7 +1961,7 @@
    (local.get $0)
   )
 
-  ;; CHECK:      (func $to-param (type $4) (param $ref (ref null $struct.A))
+  ;; CHECK:      (func $to-param (type $5) (param $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 f64)
   ;; CHECK-NEXT:  (drop
@@ -2006,7 +2008,7 @@
     )
   )
 
-  ;; CHECK:      (func $to-param-loop (type $4) (param $ref (ref null $struct.A))
+  ;; CHECK:      (func $to-param-loop (type $5) (param $ref (ref null $struct.A))
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (struct.get $struct.A 0
@@ -2046,7 +2048,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-cast (type $5) (result i32)
+  ;; CHECK:      (func $ref-cast (type $4) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -2078,6 +2080,110 @@
           (f64.const 0)
         )
       )
+    )
+  )
+
+  ;; CHECK:      (func $ref-eq (type $4) (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $0
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $ref-eq (result i32)
+    ;; Comparing an allocation to something else results in 0, and we can
+    ;; optimize away the allocation.
+    (ref.eq
+      (struct.new $struct.A
+        (i32.const 0)
+        (f64.const 0)
+      )
+      (ref.null eq)
+    )
+  )
+
+  ;; CHECK:      (func $ref-eq-flip (type $12) (param $other eqref) (result i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $4)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $ref-eq-flip (param $other eqref) (result i32)
+    ;; As above, but flipped, and compared to a local.
+    (ref.eq
+      (ref.null eq)
+      (struct.new $struct.A
+        (i32.const 0)
+        (f64.const 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-eq-self (type $4) (result i32)
+  ;; CHECK-NEXT:  (local $eq eqref)
+  ;; CHECK-NEXT:  (ref.eq
+  ;; CHECK-NEXT:   (local.tee $eq
+  ;; CHECK-NEXT:    (struct.new $struct.A
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.get $eq)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-eq-self (result i32)
+    (local $eq eqref)
+    ;; Comparing to oneself results in 1, and we can optimize away the
+    ;; allocation.
+    (ref.eq
+      (local.tee $eq
+        (struct.new $struct.A
+          (i32.const 0)
+          (f64.const 0)
+        )
+      )
+      (local.get $eq)
     )
   )
 )
