@@ -279,7 +279,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     }
 
     // If we filled slot 1 then we must have filled slot 0 before.
-    assert(values[1].used() ? values[0].used : true);
+    assert(values[1].used() ? values[0].used() : true);
 
     if (!values[1].used()) {
       // We did not see two constant values (we might have seen just one, or
@@ -334,7 +334,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     auto* nnRef = builder.makeRefAs(RefAsNonNull, curr->ref);
 
     replaceCurrent(builder.makeSelect(
-      builder.makeRefTest(nnRef, Type(*testType, NonNullable)),
+      builder.makeRefTest(nnRef, Type(testType, NonNullable)),
       makeExpression(values[testIndex].constant, refHeapType, curr),
       makeExpression(values[1 - testIndex].constant, refHeapType, curr)));
 
