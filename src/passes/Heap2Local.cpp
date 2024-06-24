@@ -264,6 +264,7 @@ struct EscapeAnalyzer {
       auto seenBefore = !seen.emplace(parent).second;
       auto reachedInThisAllocation = reached.count(parent) > 0;
       if (seenBefore && !reachedInThisAllocation) {
+      // XXX struct.set can be from different allocations!
         return true;
       }
 
