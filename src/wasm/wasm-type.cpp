@@ -1697,6 +1697,8 @@ std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
       return os << "Heap type has an undeclared child";
     case TypeBuilder::ErrorReason::InvalidFuncType:
       return os << "Continuation has invalid function type";
+    case TypeBuilder::ErrorReason::InvalidFieldType:
+      return os << "Heap type has an invalid field type";
   }
   WASM_UNREACHABLE("Unexpected error reason");
 }
@@ -2628,6 +2630,53 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
   WASM_UNREACHABLE("unknown kind");
 }
 
+std::optional<TypeBuilder::ErrorReason>
+validateType(HeapTypeInfo& info, std::unordered_set<HeapType>& seenTypes) {
+  if (auto* super = info.supertype) {
+    // The supertype must be canonical (i.e. defined in a previous rec group)
+    // or have already been defined in this rec group.
+    if (super->isTemp && !seenTypes.count(HeapType(uintptr_t(super)))) {
+      return TypeBuilder::ErrorReason::ForwardSupertypeReference;
+    }
+    // The supertype must have a valid structure.
+    if (!isValidSupertype(info, *super)) {
+      return TypeBuilder::ErrorReason::InvalidSupertype;
+    }
+  }
+  if (info.isContinuation()) {
+    if (!info.continuation.type.isSignature()) {
+      return TypeBuilder::ErrorReason::InvalidFuncType;
+    }
+  }
+  if (info.share == Shared) {
+    switch (info.kind) {
+      case HeapTypeInfo::SignatureKind:
+        // TODO: Figure out and enforce shared function rules.
+        break;
+      case HeapTypeInfo::ContinuationKind:
+        if (!info.continuation.type.isShared()) {
+          return TypeBuilder::ErrorReason::InvalidFuncType;
+        }
+        break;
+      case HeapTypeInfo::StructKind:
+        for (auto& field : info.struct_.fields) {
+          if (field.type.isRef() && !field.type.getHeapType().isShared()) {
+            return TypeBuilder::ErrorReason::InvalidFieldType;
+          }
+        }
+        break;
+      case HeapTypeInfo::ArrayKind: {
+        auto elem = info.array.element.type;
+        if (elem.isRef() && !elem.getHeapType().isShared()) {
+          return TypeBuilder::ErrorReason::InvalidFieldType;
+        }
+        break;
+      }
+    }
+  }
+  return std::nullopt;
+}
+
 void updateReferencedHeapTypes(
   std::unique_ptr<HeapTypeInfo>& info,
   const std::unordered_map<HeapType, HeapType>& canonicalized) {
@@ -2695,24 +2744,8 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
   std::unordered_set<HeapType> seenTypes;
   for (size_t i = 0; i < typeInfos.size(); ++i) {
     auto& info = typeInfos[i];
-    if (auto* super = info->supertype) {
-      // The supertype must be canonical (i.e. defined in a previous rec group)
-      // or have already been defined in this rec group.
-      if (super->isTemp && !seenTypes.count(HeapType(uintptr_t(super)))) {
-        return {TypeBuilder::Error{
-          i, TypeBuilder::ErrorReason::ForwardSupertypeReference}};
-      }
-      // The supertype must have a valid structure.
-      if (!isValidSupertype(*info, *super)) {
-        return {
-          TypeBuilder::Error{i, TypeBuilder::ErrorReason::InvalidSupertype}};
-      }
-    }
-    if (info->isContinuation()) {
-      if (!info->continuation.type.isSignature()) {
-        return {
-          TypeBuilder::Error{i, TypeBuilder::ErrorReason::InvalidFuncType}};
-      }
+    if (auto err = validateType(*info, seenTypes)) {
+      return {TypeBuilder::Error{i, *err}};
     }
     seenTypes.insert(asHeapType(info));
   }
