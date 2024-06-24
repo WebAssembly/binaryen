@@ -714,13 +714,14 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
     // If our reference is compared to itself, the result is 1. If it is
     // compared to something else, the result must be 0, as our reference does
-    // not escape to any other place.
+    // not escape to any other place. Note that we need no special handling for
+    // unreachability here: if one arm is unreachable, then the result does not
+    // matter.
     int32_t result = analyzer.reached.count(curr->left) > 0 &&
                      analyzer.reached.count(curr->right) > 0;
-    auto* block = builder.makeBlock({builder.makeDrop(curr->left),
-                                     builder.makeDrop(curr->right),
-                                     builder.makeConst(Literal(result))});
-    replaceCurrent(block);
+    // For simplicity, simply drop the RefEq and put a constant result after.
+    replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
+                                        builder.makeConst(Literal(result))));
   }
 
   void visitRefAs(RefAs* curr) {
