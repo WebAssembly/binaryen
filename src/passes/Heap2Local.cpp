@@ -187,8 +187,8 @@ struct EscapeAnalyzer {
                  const BranchUtils::BranchTargets& branchTargets,
                  const PassOptions& passOptions,
                  Module& wasm)
-    : localGraph(localGraph), parents(parents),
-      branchTargets(branchTargets), passOptions(passOptions), wasm(wasm) {}
+    : localGraph(localGraph), parents(parents), branchTargets(branchTargets),
+      passOptions(passOptions), wasm(wasm) {}
 
   // We must track all the local.sets that write the allocation, to verify
   // exclusivity.
@@ -717,11 +717,9 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // not escape to any other place.
     int32_t result = analyzer.reached.count(curr->left) > 0 &&
                      analyzer.reached.count(curr->right) > 0;
-    auto* block = builder.makeBlock({
-      builder.makeDrop(curr->left),
-      builder.makeDrop(curr->right),
-      builder.makeConst(Literal(result))
-    });
+    auto* block = builder.makeBlock({builder.makeDrop(curr->left),
+                                     builder.makeDrop(curr->right),
+                                     builder.makeConst(Literal(result))});
     replaceCurrent(block);
   }
 
