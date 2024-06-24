@@ -7343,6 +7343,9 @@ bool WasmBinaryReader::maybeVisitStructNew(Expression*& out, uint32_t code) {
   if (code == BinaryConsts::StructNew ||
       code == BinaryConsts::StructNewDefault) {
     auto heapType = getIndexedHeapType();
+    if (!heapType.isStruct()) {
+      throwError("Expected struct heaptype");
+    }
     std::vector<Expression*> operands;
     if (code == BinaryConsts::StructNew) {
       auto numOperands = heapType.getStruct().fields.size();
@@ -7390,6 +7393,9 @@ bool WasmBinaryReader::maybeVisitStructSet(Expression*& out, uint32_t code) {
   }
   auto* curr = allocator.alloc<StructSet>();
   auto heapType = getIndexedHeapType();
+  if (!heapType.isStruct()) {
+    throwError("Expected struct heaptype");
+  }
   curr->index = getU32LEB();
   curr->value = popNonVoidExpression();
   curr->ref = popNonVoidExpression();
@@ -7402,6 +7408,9 @@ bool WasmBinaryReader::maybeVisitStructSet(Expression*& out, uint32_t code) {
 bool WasmBinaryReader::maybeVisitArrayNewData(Expression*& out, uint32_t code) {
   if (code == BinaryConsts::ArrayNew || code == BinaryConsts::ArrayNewDefault) {
     auto heapType = getIndexedHeapType();
+    if (!heapType.isArray()) {
+      throwError("Expected array heaptype");
+    }
     auto* size = popNonVoidExpression();
     Expression* init = nullptr;
     if (code == BinaryConsts::ArrayNew) {
@@ -7418,6 +7427,9 @@ bool WasmBinaryReader::maybeVisitArrayNewElem(Expression*& out, uint32_t code) {
       code == BinaryConsts::ArrayNewElem) {
     auto isData = code == BinaryConsts::ArrayNewData;
     auto heapType = getIndexedHeapType();
+    if (!heapType.isArray()) {
+      throwError("Expected array heaptype");
+    }
     auto segIdx = getU32LEB();
     auto* size = popNonVoidExpression();
     auto* offset = popNonVoidExpression();
@@ -7441,6 +7453,9 @@ bool WasmBinaryReader::maybeVisitArrayNewFixed(Expression*& out,
                                                uint32_t code) {
   if (code == BinaryConsts::ArrayNewFixed) {
     auto heapType = getIndexedHeapType();
+    if (!heapType.isArray()) {
+      throwError("Expected array heaptype");
+    }
     auto size = getU32LEB();
     std::vector<Expression*> values(size);
     for (size_t i = 0; i < size; i++) {
@@ -7481,6 +7496,9 @@ bool WasmBinaryReader::maybeVisitArraySet(Expression*& out, uint32_t code) {
     return false;
   }
   auto heapType = getIndexedHeapType();
+  if (!heapType.isArray()) {
+    throwError("Expected array heaptype");
+  }
   auto* value = popNonVoidExpression();
   auto* index = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
@@ -7503,7 +7521,13 @@ bool WasmBinaryReader::maybeVisitArrayCopy(Expression*& out, uint32_t code) {
     return false;
   }
   auto destHeapType = getIndexedHeapType();
+  if (!destHeapType.isArray()) {
+    throwError("Expected array heaptype");
+  }
   auto srcHeapType = getIndexedHeapType();
+  if (!srcHeapType.isArray()) {
+    throwError("Expected array heaptype");
+  }
   auto* length = popNonVoidExpression();
   auto* srcIndex = popNonVoidExpression();
   auto* srcRef = popNonVoidExpression();
@@ -7521,6 +7545,9 @@ bool WasmBinaryReader::maybeVisitArrayFill(Expression*& out, uint32_t code) {
     return false;
   }
   auto heapType = getIndexedHeapType();
+  if (!heapType.isArray()) {
+    throwError("Expected array heaptype");
+  }
   auto* size = popNonVoidExpression();
   auto* value = popNonVoidExpression();
   auto* index = popNonVoidExpression();
@@ -7542,6 +7569,9 @@ bool WasmBinaryReader::maybeVisitArrayInit(Expression*& out, uint32_t code) {
       return false;
   }
   auto heapType = getIndexedHeapType();
+  if (!heapType.isArray()) {
+    throwError("Expected array heaptype");
+  }
   Index segIdx = getU32LEB();
   auto* size = popNonVoidExpression();
   auto* offset = popNonVoidExpression();
