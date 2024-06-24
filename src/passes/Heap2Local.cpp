@@ -170,16 +170,8 @@ namespace {
 // Core analysis that provides an escapes() method to check if an allocation
 // escapes in a way that prevents optimizing it away as described above. It also
 // stashes information about the relevant expressions as it goes, which helps
-// optimization later (|seen| and |reached|).
+// optimization later (|reached|).
 struct EscapeAnalyzer {
-  // All the expressions that have already been seen by the optimizer, see the
-  // comment above on exclusivity: once we have seen something when analyzing
-  // one allocation, if we reach it again then we can exit early since seeing it
-  // a second time proves we lost exclusivity. We must track this across
-  // multiple instances of EscapeAnalyzer as each handles a particular
-  // allocation.
-  std::unordered_set<Expression*>& seen;
-
   // To find what escapes, we need to follow where values flow, both up to
   // parents, and via branches, and through locals.
   // TODO: for efficiency, only scan reference types in LocalGraph
@@ -190,14 +182,13 @@ struct EscapeAnalyzer {
   const PassOptions& passOptions;
   Module& wasm;
 
-  EscapeAnalyzer(std::unordered_set<Expression*>& seen,
-                 const LocalGraph& localGraph,
+  EscapeAnalyzer(const LocalGraph& localGraph,
                  const Parents& parents,
                  const BranchUtils::BranchTargets& branchTargets,
                  const PassOptions& passOptions,
                  Module& wasm)
-    : seen(seen), localGraph(localGraph), parents(parents),
-      branchTargets(branchTargets), passOptions(passOptions), wasm(wasm) {}
+    : localGraph(localGraph), parents(parents), branchTargets(branchTargets),
+      passOptions(passOptions), wasm(wasm) {}
 
   // We must track all the local.sets that write the allocation, to verify
   // exclusivity.
@@ -260,30 +251,6 @@ struct EscapeAnalyzer {
       // we can proceed here, hopefully.
       assert(interaction == ParentChildInteraction::FullyConsumes ||
              interaction == ParentChildInteraction::Flows);
-
-      // If we've already seen an expression, stop since we cannot optimize
-      // things that overlap in any way (see the notes on exclusivity, above).
-      // Note that we use a nonrepeating queue here, so we already do not visit
-      // the same thing more than once; what this check does is verify we don't
-      // look at something that another allocation reached, which would be in a
-      // different call to this function and use a different queue (any overlap
-      // between calls would prove non-exclusivity).
-      //
-      // Note that we do this after the check for Escapes/Mixes above: it is
-      // possible for a parent to receive two children and handle them
-      // differently:
-      //
-      //  (struct.set
-      //    (local.get $ref)
-      //    (local.get $value)
-      //  )
-      //
-      // The value escapes, but the ref does not, and might be optimized. If we
-      // added the parent to |seen| for both children, the reference would get
-      // blocked from being optimized.
-      if (!seen.emplace(parent).second) {
-        return true;
-      }
 
       // We can proceed, as the parent interacts with us properly, and we are
       // the only allocation to get here.
@@ -1027,10 +994,6 @@ struct Heap2Local {
     // flow to.
     localGraph.computeSetInfluences();
 
-    // All the expressions we have already looked at. We use this to avoid
-    // repeated work, see above.
-    std::unordered_set<Expression*> seen;
-
     // Find all the relevant allocations in the function: StructNew, ArrayNew,
     // ArrayNewFixed.
     struct AllocationFinder : public PostWalker<AllocationFinder> {
@@ -1090,7 +1053,7 @@ struct Heap2Local {
       }
 
       EscapeAnalyzer analyzer(
-        seen, localGraph, parents, branchTargets, passOptions, wasm);
+        localGraph, parents, branchTargets, passOptions, wasm);
       if (!analyzer.escapes(allocation)) {
         // Convert the allocation and all its uses into a struct. Then convert
         // the struct into locals.
@@ -1110,7 +1073,7 @@ struct Heap2Local {
       // Check for escaping, noting relevant information as we go. If this does
       // not escape, optimize it into locals.
       EscapeAnalyzer analyzer(
-        seen, localGraph, parents, branchTargets, passOptions, wasm);
+        localGraph, parents, branchTargets, passOptions, wasm);
       if (!analyzer.escapes(allocation)) {
         Struct2Local(allocation, analyzer, func, wasm);
       }
