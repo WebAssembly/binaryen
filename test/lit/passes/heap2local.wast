@@ -2162,15 +2162,31 @@
 
   ;; CHECK:      (func $ref-eq-self (type $4) (result i32)
   ;; CHECK-NEXT:  (local $eq eqref)
-  ;; CHECK-NEXT:  (ref.eq
-  ;; CHECK-NEXT:   (local.tee $eq
-  ;; CHECK-NEXT:    (struct.new $struct.A
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $3
   ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $4
   ;; CHECK-NEXT:     (f64.const 0)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $3)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $4)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.get $eq)
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.null none)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 1)
   ;; CHECK-NEXT: )
   (func $ref-eq-self (result i32)
     (local $eq eqref)

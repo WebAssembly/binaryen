@@ -248,6 +248,19 @@ struct EscapeAnalyzer {
       auto* child = flow.first;
       auto* parent = flow.second;
 
+      auto interaction = getParentChildInteraction(allocation, parent, child);
+      if (interaction == ParentChildInteraction::Escapes ||
+          interaction == ParentChildInteraction::Mixes) {
+        // If the parent may let us escape, or the parent mixes other values
+        // up with us, give up.
+        return true;
+      }
+
+      // The parent either fully consumes us, or flows us onwards; either way,
+      // we can proceed here, hopefully.
+      assert(interaction == ParentChildInteraction::FullyConsumes ||
+             interaction == ParentChildInteraction::Flows);
+
       // If we've already seen an expression, stop since we cannot optimize
       // things that overlap in any way (see the notes on exclusivity, above).
       // Note that we use a nonrepeating queue here, so we already do not visit
@@ -267,19 +280,6 @@ struct EscapeAnalyzer {
       // XXX struct.set can be from different allocations!
         return true;
       }
-
-      auto interaction = getParentChildInteraction(allocation, parent, child);
-      if (interaction == ParentChildInteraction::Escapes ||
-          interaction == ParentChildInteraction::Mixes) {
-        // If the parent may let us escape, or the parent mixes other values
-        // up with us, give up.
-        return true;
-      }
-
-      // The parent either fully consumes us, or flows us onwards; either way,
-      // we can proceed here, hopefully.
-      assert(interaction == ParentChildInteraction::FullyConsumes ||
-             interaction == ParentChildInteraction::Flows);
 
       // We can proceed, as the parent interacts with us properly, and we are
       // the only allocation to get here.
