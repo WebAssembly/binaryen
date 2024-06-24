@@ -6865,7 +6865,11 @@ void WasmBinaryReader::visitSelect(Select* curr, uint8_t code) {
     size_t numTypes = getU32LEB();
     std::vector<Type> types;
     for (size_t i = 0; i < numTypes; i++) {
-      types.push_back(getType());
+      auto t = getType();
+      if (!t.isConcrete()) {
+        throwError("bad select type");
+      }
+      types.push_back(t);
     }
     curr->type = Type(types);
   }
