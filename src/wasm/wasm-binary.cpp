@@ -7320,9 +7320,6 @@ bool WasmBinaryReader::maybeVisitBrOn(Expression*& out, uint32_t code) {
   }
   auto name = getBreakTarget(getU32LEB()).name;
   auto* ref = popNonVoidExpression();
-  if (!ref->type.isRef() && ref->type != Type::unreachable) {
-    throwError("bad input type for br_on*");
-  }
   if (isCast) {
     auto inputNullability = (flags & 1) ? Nullable : NonNullable;
     auto castNullability = (flags & 2) ? Nullable : NonNullable;
