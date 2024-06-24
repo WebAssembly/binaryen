@@ -248,6 +248,25 @@ struct EscapeAnalyzer {
       auto* child = flow.first;
       auto* parent = flow.second;
 
+      // If we've already seen an expression, stop since we cannot optimize
+      // things that overlap in any way (see the notes on exclusivity, above).
+      // Note that we use a nonrepeating queue here, so we already do not visit
+      // the same thing more than once; what this check does is verify we don't
+      // look at something that another allocation reached, which would be in a
+      // different call to this function and use a different queue (any overlap
+      // between calls would prove non-exclusivity).
+      //
+      // It is ok, however, to see a parent more than once, if the allocation
+      // flows to it from two children, as is the case for ref.eq. Likewise, for
+      // struct.set, where we also have different considerations for the two
+      // children (the reference does not escape, but the value does). We only
+      // stop here if we've seen this parent in a *different* allocation.
+      auto seenBefore = !seen.emplace(parent).second;
+      auto reachedInThisAllocation = reached.count(parent) > 0;
+      if (seenBefore && !reachedInThisAllocation) {
+        return true;
+      }
+
       auto interaction = getParentChildInteraction(allocation, parent, child);
       if (interaction == ParentChildInteraction::Escapes ||
           interaction == ParentChildInteraction::Mixes) {
@@ -260,30 +279,6 @@ struct EscapeAnalyzer {
       // we can proceed here, hopefully.
       assert(interaction == ParentChildInteraction::FullyConsumes ||
              interaction == ParentChildInteraction::Flows);
-
-      // If we've already seen an expression, stop since we cannot optimize
-      // things that overlap in any way (see the notes on exclusivity, above).
-      // Note that we use a nonrepeating queue here, so we already do not visit
-      // the same thing more than once; what this check does is verify we don't
-      // look at something that another allocation reached, which would be in a
-      // different call to this function and use a different queue (any overlap
-      // between calls would prove non-exclusivity).
-      //
-      // Note that we do this after the check for Escapes/Mixes above: it is
-      // possible for a parent to receive two children and handle them
-      // differently:
-      //
-      //  (struct.set
-      //    (local.get $ref)
-      //    (local.get $value)
-      //  )
-      //
-      // The value escapes, but the ref does not, and might be optimized. If we
-      // added the parent to |seen| for both children, the reference would get
-      // blocked from being optimized.
-      if (!seen.emplace(parent).second) {
-        return true;
-      }
 
       // We can proceed, as the parent interacts with us properly, and we are
       // the only allocation to get here.
@@ -546,14 +541,18 @@ struct EscapeAnalyzer {
 //       efficient, but it would need to be more complex.
 struct Struct2Local : PostWalker<Struct2Local> {
   StructNew* allocation;
-  const EscapeAnalyzer& analyzer;
+
+  // The analyzer is not |const| because we update |analyzer.reached| as we go
+  // (see replaceCurrent, below).
+  EscapeAnalyzer& analyzer;
+
   Function* func;
   Module& wasm;
   Builder builder;
   const FieldList& fields;
 
   Struct2Local(StructNew* allocation,
-               const EscapeAnalyzer& analyzer,
+               EscapeAnalyzer& analyzer,
                Function* func,
                Module& wasm)
     : allocation(allocation), analyzer(analyzer), func(func), wasm(wasm),
@@ -577,6 +576,15 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
   // In rare cases we may need to refinalize, see below.
   bool refinalize = false;
+
+  Expression* replaceCurrent(Expression* expression) {
+    PostWalker<Struct2Local>::replaceCurrent(expression);
+    // Also update |reached|: we are replacing something that was reached, so
+    // logically the replacement is also reached. This update is necessary if
+    // the parent of an expression cares about whether a child was reached.
+    analyzer.reached.insert(expression);
+    return expression;
+  }
 
   // Rewrite the code in visit* methods. The general approach taken is to
   // replace the allocation with a null reference (which may require changing
