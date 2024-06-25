@@ -43,11 +43,9 @@ PassRegistry* PassRegistry::get() { return &singleton; }
 
 void PassRegistry::registerPass(const char* name,
                                 const char* description,
-                                Creator create,
-                                bool allowMultipleInstancesWithArgs) {
+                                Creator create) {
   assert(passInfos.find(name) == passInfos.end());
-  passInfos[name] =
-    PassInfo(description, create, false, allowMultipleInstancesWithArgs);
+  passInfos[name] = PassInfo(description, create, false);
 }
 
 void PassRegistry::registerTestPass(const char* name,
@@ -83,12 +81,6 @@ std::string PassRegistry::getPassDescription(std::string name) {
 bool PassRegistry::isPassHidden(std::string name) {
   assert(passInfos.find(name) != passInfos.end());
   return passInfos[name].hidden;
-}
-
-bool PassRegistry::doesPassAllowMultipleInstancesWithArgs(std::string name) {
-  assert(passInfos.find(name) != passInfos.end());
-
-  return passInfos[name].allowMultipleInstancesWithArgs;
 }
 
 // PassRunner
@@ -315,8 +307,7 @@ void PassRegistry::registerPasses() {
     createMultiMemoryLoweringWithBoundsChecksPass);
   registerPass("nm", "name list", createNameListPass);
   registerPass("name-types", "(re)name all heap types", createNameTypesPass);
-  registerPass(
-    "no-inline", "mark functions as no-inline", createNoInlinePass, true);
+  registerPass("no-inline", "mark functions as no-inline", createNoInlinePass);
   registerPass("no-full-inline",
                "mark functions as no-inline (for full inlining only)",
                createNoFullInlinePass);
@@ -1041,6 +1032,30 @@ bool PassRunner::shouldPreserveDWARF() {
   }
 
   return true;
+}
+
+bool Pass::hasArgument(const std::string& key) {
+  return (key == name) ? passArg.has_value()
+                       : getPassOptions().hasArgument(key);
+}
+
+std::string Pass::getArgument(const std::string& key,
+                              const std::string& errorTextIfMissing) {
+  if (!hasArgument(key)) {
+    Fatal() << errorTextIfMissing;
+  }
+
+  return (key == name) ? *passArg
+                       : getPassOptions().getArgument(key, errorTextIfMissing);
+}
+
+std::string Pass::getArgumentOrDefault(const std::string& key,
+                                       const std::string& defaultValue) {
+  if (key == name) {
+    return passArg.value_or(defaultValue);
+  }
+
+  return getPassOptions().getArgumentOrDefault(key, defaultValue);
 }
 
 } // namespace wasm

@@ -46,8 +46,7 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
   bool addsEffects() override { return true; }
 
   void run(Module* module) override {
-    auto& options = getPassOptions();
-    loggerModule = options.getArgumentOrDefault("log-execution", "");
+    loggerModule = getArgumentOrDefault("log-execution", "");
     super::run(module);
   }
 

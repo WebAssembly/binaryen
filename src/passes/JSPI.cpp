@@ -83,18 +83,17 @@ struct JSPI : public Pass {
   void run(Module* module) override {
     Builder builder(*module);
 
-    auto& options = getPassOptions();
     // Find which imports can suspend.
-    auto stateChangingImports = String::trim(read_possible_response_file(
-      options.getArgumentOrDefault("jspi-imports", "")));
+    auto stateChangingImports = String::trim(
+      read_possible_response_file(getArgumentOrDefault("jspi-imports", "")));
     String::Split listedImports(stateChangingImports, ",");
 
     // Find which exports should create a promise.
-    auto stateChangingExports = String::trim(read_possible_response_file(
-      options.getArgumentOrDefault("jspi-exports", "")));
+    auto stateChangingExports = String::trim(
+      read_possible_response_file(getArgumentOrDefault("jspi-exports", "")));
     String::Split listedExports(stateChangingExports, ",");
 
-    bool wasmSplit = options.hasArgument("jspi-split-module");
+    bool wasmSplit = hasArgument("jspi-split-module");
     if (wasmSplit) {
       // Make an import for the load secondary module function so a JSPI wrapper
       // version will be created.

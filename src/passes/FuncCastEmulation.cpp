@@ -157,8 +157,7 @@ struct FuncCastEmulation : public Pass {
   bool addsEffects() override { return true; }
 
   void run(Module* module) override {
-    Index numParams = std::stoul(
-      getPassOptions().getArgumentOrDefault("max-func-params", "16"));
+    Index numParams = std::stoul(getArgumentOrDefault("max-func-params", "16"));
     // we just need the one ABI function type for all indirect calls
     HeapType ABIType(
       Signature(Type(std::vector<Type>(numParams, Type::i64)), Type::i64));

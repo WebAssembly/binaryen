@@ -33,14 +33,14 @@ struct SeparateDataSegments : public Pass {
 
   void run(Module* module) override {
     std::string outfileName =
-      getPassOptions().getArgument("separate-data-segments",
-                                   "SeparateDataSegments usage: wasm-opt "
-                                   "--separate-data-segments@FILENAME");
+      getArgument("separate-data-segments",
+                  "SeparateDataSegments usage: wasm-opt "
+                  "--separate-data-segments@FILENAME");
     Output outfile(outfileName, Flags::Binary);
-    std::string baseStr = getPassOptions().getArgument(
-      "separate-data-segments-global-base",
-      "SeparateDataSegments usage: wasm-opt "
-      "--pass-arg=separate-data-segments-global-base@NUMBER");
+    std::string baseStr =
+      getArgument("separate-data-segments-global-base",
+                  "SeparateDataSegments usage: wasm-opt "
+                  "--pass-arg=separate-data-segments-global-base@NUMBER");
     Address base = std::stoi(baseStr);
     size_t lastEnd = 0;
     for (auto& seg : module->dataSegments) {
