@@ -38,10 +38,7 @@ struct PassRegistry {
 
   using Creator = std::function<Pass*()>;
 
-  void registerPass(const char* name,
-                    const char* description,
-                    Creator create,
-                    bool allowMultipleInstancesWithArgs = false);
+  void registerPass(const char* name, const char* description, Creator create);
   ;
   // Register a pass that's used for internal testing. These passes do not show
   // up in --help.
@@ -51,7 +48,6 @@ struct PassRegistry {
   std::vector<std::string> getRegisteredNames();
   std::string getPassDescription(std::string name);
   bool isPassHidden(std::string name);
-  bool doesPassAllowMultipleInstancesWithArgs(std::string name);
 
 private:
   void registerPasses();
@@ -60,14 +56,9 @@ private:
     std::string description;
     Creator create;
     bool hidden;
-    bool allowMultipleInstancesWithArgs;
     PassInfo() = default;
-    PassInfo(std::string description,
-             Creator create,
-             bool hidden = false,
-             bool allowMultipleInstancesWithArgs = false)
-      : description(description), create(create), hidden(hidden),
-        allowMultipleInstancesWithArgs(allowMultipleInstancesWithArgs) {}
+    PassInfo(std::string description, Creator create, bool hidden = false)
+      : description(description), create(create), hidden(hidden) {}
   };
   std::map<std::string, PassInfo> passInfos;
 };
@@ -495,7 +486,7 @@ public:
   // to imports must override this to return true.
   virtual bool addsEffects() { return false; }
 
-  void setPassArg(std::string value) { passArg = value; }
+  void setPassArg(const std::string& value) { passArg = value; }
 
   std::string name;
 
@@ -508,6 +499,12 @@ public:
   PassOptions& getPassOptions() { return runner->options; }
 
 protected:
+  bool hasArgument(const std::string& key);
+  std::string getArgument(const std::string& key,
+                          const std::string& errorTextIfMissing);
+  std::string getArgumentOrDefault(const std::string& key,
+                                   const std::string& defaultValue);
+
   std::optional<std::string> passArg;
 
   Pass() = default;

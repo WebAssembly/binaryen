@@ -1608,54 +1608,49 @@ struct Asyncify : public Pass {
   bool addsEffects() override { return true; }
 
   void run(Module* module) override {
-    auto& options = getPassOptions();
-    bool optimize = options.optimizeLevel > 0;
+    bool optimize = getPassOptions().optimizeLevel > 0;
 
     // Find which things can change the state.
     auto stateChangingImports = String::trim(read_possible_response_file(
-      options.getArgumentOrDefault("asyncify-imports", "")));
-    auto ignoreImports =
-      options.getArgumentOrDefault("asyncify-ignore-imports", "");
+      getArgumentOrDefault("asyncify-imports", "")));
+    auto ignoreImports = getArgumentOrDefault("asyncify-ignore-imports", "");
     bool allImportsCanChangeState =
       stateChangingImports == "" && ignoreImports == "";
     String::Split listedImports(stateChangingImports,
                                 String::Split::NewLineOr(","));
     // canIndirectChangeState is the default.  asyncify-ignore-indirect sets it
     // to false.
-    auto canIndirectChangeState =
-      !options.hasArgument("asyncify-ignore-indirect");
+    auto canIndirectChangeState = !hasArgument("asyncify-ignore-indirect");
     std::string removeListInput =
-      options.getArgumentOrDefault("asyncify-removelist", "");
+      getArgumentOrDefault("asyncify-removelist", "");
     if (removeListInput.empty()) {
       // Support old name for now to avoid immediate breakage TODO remove
-      removeListInput = options.getArgumentOrDefault("asyncify-blacklist", "");
+      removeListInput = getArgumentOrDefault("asyncify-blacklist", "");
     }
     String::Split removeList(
       String::trim(read_possible_response_file(removeListInput)),
       String::Split::NewLineOr(","));
-    String::Split addList(
-      String::trim(read_possible_response_file(
-        options.getArgumentOrDefault("asyncify-addlist", ""))),
-      String::Split::NewLineOr(","));
-    std::string onlyListInput =
-      options.getArgumentOrDefault("asyncify-onlylist", "");
+    String::Split addList(String::trim(read_possible_response_file(
+                            getArgumentOrDefault("asyncify-addlist", ""))),
+                          String::Split::NewLineOr(","));
+    std::string onlyListInput = getArgumentOrDefault("asyncify-onlylist", "");
     if (onlyListInput.empty()) {
       // Support old name for now to avoid immediate breakage TODO remove
-      onlyListInput = options.getArgumentOrDefault("asyncify-whitelist", "");
+      onlyListInput = getArgumentOrDefault("asyncify-whitelist", "");
     }
     String::Split onlyList(
       String::trim(read_possible_response_file(onlyListInput)),
       String::Split::NewLineOr(","));
-    auto asserts = options.hasArgument("asyncify-asserts");
-    auto verbose = options.hasArgument("asyncify-verbose");
-    auto relocatable = options.hasArgument("asyncify-relocatable");
-    auto secondaryMemory = options.hasArgument("asyncify-in-secondary-memory");
-    auto propagateAddList = options.hasArgument("asyncify-propagate-addlist");
+    auto asserts = hasArgument("asyncify-asserts");
+    auto verbose = hasArgument("asyncify-verbose");
+    auto relocatable = hasArgument("asyncify-relocatable");
+    auto secondaryMemory = hasArgument("asyncify-in-secondary-memory");
+    auto propagateAddList = hasArgument("asyncify-propagate-addlist");
 
     // Ensure there is a memory, as we need it.
     if (secondaryMemory) {
       auto secondaryMemorySizeString =
-        options.getArgumentOrDefault("asyncify-secondary-memory-size", "1");
+        getArgumentOrDefault("asyncify-secondary-memory-size", "1");
       Address secondaryMemorySize = std::stoi(secondaryMemorySizeString);
       asyncifyMemory = createSecondaryMemory(module, secondaryMemorySize);
     } else {

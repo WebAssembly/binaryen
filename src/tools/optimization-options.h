@@ -334,12 +334,6 @@ struct OptimizationOptions : public ToolOptions {
         [this, p](Options*, const std::string& arg) {
           PassInfo info(p);
           if (!arg.empty()) {
-            if (passOptions.arguments.count(p) &&
-                !PassRegistry::get()->doesPassAllowMultipleInstancesWithArgs(
-                  p)) {
-              Fatal() << "Cannot pass multiple pass arguments to " << p;
-            }
-            passOptions.arguments[p] = arg;
             info.argument = arg;
           }
 
