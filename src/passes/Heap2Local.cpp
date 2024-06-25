@@ -382,6 +382,8 @@ struct EscapeAnalyzer {
         }
       }
 
+      // TODO: RefTest
+
       // GC operations.
       void visitStructSet(StructSet* curr) {
         // The reference does not escape (but the value is stored to memory and
