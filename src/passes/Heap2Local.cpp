@@ -725,8 +725,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
     // The result must be 0, since the allocation is not null. Drop the RefIs
     // and append that.
-    replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
-                                        builder.makeConst(Literal(int32_t(0)))));
+    replaceCurrent(builder.makeSequence(
+      builder.makeDrop(curr), builder.makeConst(Literal(int32_t(0)))));
   }
 
   void visitRefEq(RefEq* curr) {
