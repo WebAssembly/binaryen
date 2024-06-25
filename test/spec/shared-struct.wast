@@ -67,3 +67,26 @@
 (module
   (type (struct (ref null (shared any))))
 )
+
+;; Struct instructions work on shared structs.
+(module
+  (type $i8 (shared (struct (mut i8))))
+  (type $i32 (shared (struct (mut i32))))
+  (type $unshared (struct (mut i8)))
+
+  (func (struct.new $i8 (i32.const 0)) (drop))
+
+  (func (struct.new_default $i8) (drop))
+
+  (func (param (ref null $i8))
+    (struct.get_s $i8 0 (local.get 0)) (drop))
+
+  (func (param (ref null $i8))
+    (struct.get_u $i8 0 (local.get 0)) (drop))
+
+  (func (param (ref null $i32))
+    (struct.get $i32 0 (local.get 0)) (drop))
+
+  (func (param (ref null $i8))
+    (struct.set $i8 0 (local.get 0) (i32.const 0)))
+)
