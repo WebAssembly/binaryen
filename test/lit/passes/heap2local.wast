@@ -2129,7 +2129,7 @@
   ;; CHECK-NEXT:  (local $4 f64)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:    (local.get $other)
   ;; CHECK-NEXT:    (block (result nullref)
   ;; CHECK-NEXT:     (local.set $3
   ;; CHECK-NEXT:      (i32.const 0)
@@ -2152,7 +2152,7 @@
   (func $ref-eq-flip (param $other eqref) (result i32)
     ;; As above, but flipped, and compared to a local.
     (ref.eq
-      (ref.null eq)
+      (local.get $other)
       (struct.new $struct.A
         (i32.const 0)
         (f64.const 0)
