@@ -79,11 +79,11 @@
 (module
  ;; Shared and unshared basic heap types similarly cannot be merged.
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $A' (shared (struct (field anyref))))
+ ;; CHECK-NEXT:  (type $A' (struct (field anyref)))
 
- ;; CHECK:       (type $A (shared (struct (field (ref null (shared any))))))
- (type $A (shared (struct (ref null (shared any)))))
- (type $A' (shared (struct (ref null any))))
+ ;; CHECK:       (type $A (struct (field (ref null (shared any)))))
+ (type $A (struct (ref null (shared any))))
+ (type $A' (struct (ref null any)))
 
  ;; CHECK:       (type $2 (func))
 

@@ -1697,8 +1697,8 @@ std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
       return os << "Heap type has an undeclared child";
     case TypeBuilder::ErrorReason::InvalidFuncType:
       return os << "Continuation has invalid function type";
-    case TypeBuilder::ErrorReason::InvalidFieldType:
-      return os << "Heap type has an invalid field type";
+    case TypeBuilder::ErrorReason::InvalidUnsharedField:
+      return os << "Heap type has an invalid unshared field";
   }
   WASM_UNREACHABLE("Unexpected error reason");
 }
@@ -2661,14 +2661,14 @@ validateType(HeapTypeInfo& info, std::unordered_set<HeapType>& seenTypes) {
       case HeapTypeInfo::StructKind:
         for (auto& field : info.struct_.fields) {
           if (field.type.isRef() && !field.type.getHeapType().isShared()) {
-            return TypeBuilder::ErrorReason::InvalidFieldType;
+            return TypeBuilder::ErrorReason::InvalidUnsharedField;
           }
         }
         break;
       case HeapTypeInfo::ArrayKind: {
         auto elem = info.array.element.type;
         if (elem.isRef() && !elem.getHeapType().isShared()) {
-          return TypeBuilder::ErrorReason::InvalidFieldType;
+          return TypeBuilder::ErrorReason::InvalidUnsharedField;
         }
         break;
       }

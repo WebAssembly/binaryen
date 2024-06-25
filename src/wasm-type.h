@@ -672,7 +672,7 @@ struct TypeBuilder {
     // A continuation reference that does not refer to a function type.
     InvalidFuncType,
     // A non-shared field of a shared heap type.
-    InvalidFieldType,
+    InvalidUnsharedField,
   };
 
   struct Error {
