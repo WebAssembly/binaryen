@@ -771,8 +771,10 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // GCTypeUtils::evaluateCastCheck because we know the allocation's type
     // precisely (it cannot be a strict subtype of the type - it is the type).
     int32_t result = Type::isSubType(allocation->type, curr->castType);
-    // For simplicity, simply drop the RefEq and put a constant result after.
-    replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
+    // Remove the RefTest and leave only its reference child. If we kept it,
+    // we'd need to refinalize (as the input to the test changes, since the
+    // reference becomes a null, which has a different type).
+    replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
                                         builder.makeConst(Literal(result))));
   }
 
