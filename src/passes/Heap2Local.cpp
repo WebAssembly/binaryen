@@ -373,6 +373,11 @@ struct EscapeAnalyzer {
         }
       }
 
+      void visitRefTest(RefTest* curr) {
+        escapes = false;
+        fullyConsumes = true;
+      }
+
       void visitRefCast(RefCast* curr) {
         // As it is our allocation that flows through here, we need to
         // check that the cast will not trap, so that we can continue
@@ -381,8 +386,6 @@ struct EscapeAnalyzer {
           escapes = false;
         }
       }
-
-      // TODO: RefTest
 
       // GC operations.
       void visitStructSet(StructSet* curr) {
@@ -756,6 +759,21 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // contains our allocation, and so cannot trap.
     assert(curr->op == RefAsNonNull);
     replaceCurrent(curr->value);
+  }
+
+  void visitRefTest(RefTest* curr) {
+    if (!analyzer.reached.count(curr)) {
+      return;
+    }
+
+    // This test operates on the allocation, which means we can compute whether
+    // it will succeed statically. We do not even need
+    // GCTypeUtils::evaluateCastCheck because we know the allocation's type
+    // precisely (it cannot be a strict subtype of the type - it is the type).
+    int32_t result = Type::isSubType(allocation->type, curr->castType);
+    // For simplicity, simply drop the RefEq and put a constant result after.
+    replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
+                                        builder.makeConst(Literal(result))));
   }
 
   void visitRefCast(RefCast* curr) {

@@ -7,6 +7,8 @@
   ;; CHECK:      (type $struct.A (struct (field (mut i32)) (field (mut f64))))
   (type $struct.A (struct (field (mut i32)) (field (mut f64))))
 
+  (type $struct.B (sub $struct.A (struct (field (mut i32)) (field (mut f64)))))
+
   ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (type $2 (func (result f64)))
@@ -2432,6 +2434,61 @@
       (struct.new $struct.A
         (i32.const 0)
         (f64.const 0)
+      )
+    )
+  )
+
+  (func $ref-test (param $x anyref)
+    ;; This cast must succeed (it tests the exact type), and we can remove the
+    ;; allocation.
+    (drop
+      (ref.test (ref $struct.A)
+        (struct.new $struct.A
+          (i32.const 0)
+          (f64.const 0)
+        )
+      )
+    )
+    ;; Testing a supertype also works.
+    (drop
+      (ref.test (ref null $struct.A)
+        (struct.new $struct.A
+          (i32.const 1)
+          (f64.const 2.2)
+        )
+      )
+    )
+    (drop
+      (ref.test (ref null any)
+        (struct.new $struct.A
+          (i32.const 3)
+          (f64.const 4.4)
+        )
+      )
+    )
+  )
+  (func $ref-test-bad
+    ;; We know nothing about this cast.
+    (drop
+      (ref.test (ref $struct.A)
+        (local.get $x)
+      )
+    )
+    ;; These casts must fail, but we can remove the allocation.
+    (drop
+      (ref.test (ref $struct.B)
+        (struct.new $struct.A
+          (i32.const 0)
+          (f64.const 0)
+        )
+      )
+    )
+    (drop
+      (ref.test (ref null $struct.B)
+        (struct.new $struct.A
+          (i32.const 1)
+          (f64.const 2.2)
+        )
       )
     )
   )
