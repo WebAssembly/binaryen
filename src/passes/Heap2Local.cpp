@@ -349,6 +349,12 @@ struct EscapeAnalyzer {
       void visitLocalSet(LocalSet* curr) { escapes = false; }
 
       // Reference operations. TODO add more
+      void visitRefIsNull(RefIsNull* curr) {
+        // The reference is compared to null, but nothing more.
+        escapes = false;
+        fullyConsumes = true;
+      }
+
       void visitRefEq(RefEq* curr) {
         // The reference is compared for identity, but nothing more.
         escapes = false;
@@ -705,6 +711,17 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // the allocation reaches, we will handle that.
     contents.push_back(builder.makeRefNull(allocation->type.getHeapType()));
     replaceCurrent(builder.makeBlock(contents));
+  }
+
+  void visitRefIsNull(RefIsNull* curr) {
+    if (!analyzer.reached.count(curr)) {
+      return;
+    }
+
+    // The result must be 0, since the allocation is not null. Drop the RefIs
+    // and append that.
+    replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
+                                        builder.makeConst(Literal(int32_t(0)))));
   }
 
   void visitRefEq(RefEq* curr) {
