@@ -2277,13 +2277,42 @@
   )
 
   ;; CHECK:      (func $ref-eq-unrelated (type $13) (param $x eqref) (param $y eqref) (result i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 f64)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (local.set $4
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $5
+  ;; CHECK-NEXT:     (f64.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $4)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (local.get $5)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (ref.eq
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (local.get $y)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $ref-eq-unrelated (param $x eqref) (param $y eqref) (result i32)
-    ;; We know nothing about either arm, and do nothing.
+    ;; We know nothing about either ref.eq arm, and do nothing, despite
+    ;; another allocation in the function (which ensures we enter the
+    ;; optimization part of the pass; that other allocation can be removed).
+    (drop
+      (struct.new $struct.A
+        (i32.const 0)
+        (f64.const 0)
+      )
+    )
     (ref.eq
       (local.get $x)
       (local.get $y)
