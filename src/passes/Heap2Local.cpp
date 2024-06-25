@@ -857,12 +857,15 @@ struct Array2Struct : PostWalker<Array2Struct> {
   EscapeAnalyzer& analyzer;
   Function* func;
   Builder builder;
+  // The original type of the allocation, before we turn it into a struct.
+  Type originalType;
 
   Array2Struct(Expression* allocation,
                EscapeAnalyzer& analyzer,
                Function* func,
                Module& wasm)
-    : allocation(allocation), analyzer(analyzer), func(func), builder(wasm) {
+    : allocation(allocation), analyzer(analyzer), func(func), builder(wasm),
+      originalType(allocation->type) {
 
     // Build the struct type we need: as many fields as the size of the array,
     // all of the same type as the array's element.
@@ -1024,6 +1027,25 @@ struct Array2Struct : PostWalker<Array2Struct> {
     replaceCurrent(
       builder.makeStructGet(index, curr->ref, curr->type, curr->signed_));
     noteCurrentIsReached();
+  }
+
+  // Some additional operations need special handling
+  void visitRefTest(RefTest* curr) {
+    if (!analyzer.reached.count(curr)) {
+      return;
+    }
+
+    // When we ref.test an array allocation, we cannot simply turn the array
+    // into a struct, as then the test will behave different. (Note that this is
+    // not a problem for ref.*cast*, as the cast simply goes away when the value
+    // flows through, and we verify it will do so in the escape analysis.) To
+    // handle this, check if the test succeeds or not, and write out the outcome
+    // here (similar to Struct2Local::visitRefTest). Note that we test on
+    // |originalType| here and not |allocation->type|, as the allocation has
+    // been turned into a struct.
+    int32_t result = Type::isSubType(originalType, curr->castType);
+    replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
+                                        builder.makeConst(Literal(result))));
   }
 
   // Get the value in an expression we know must contain a constant index.
