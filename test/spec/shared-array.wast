@@ -67,3 +67,49 @@
 (module
   (type (array (ref null (shared any))))
 )
+
+;; Array instructions work on shared arrays.
+(module
+  (type $i8 (shared (array (mut i8))))
+  (type $i32 (shared (array (mut i32))))
+  (type $unshared (array (mut i8)))
+
+  (data)
+  (elem)
+
+  (func (array.new $i8 (i32.const 0) (i32.const 0)) (drop))
+
+  (func (array.new_default $i8 (i32.const 0)) (drop))
+
+  (func (array.new_fixed $i8 0) (drop))
+
+  (func (param (ref null $i8))
+    (array.get_s $i8 (local.get 0) (i32.const 0)) (drop))
+
+  (func (param (ref null $i8))
+    (array.get_u $i8 (local.get 0) (i32.const 0)) (drop))
+
+  (func (param (ref null $i32))
+    (array.get $i32 (local.get 0) (i32.const 0)) (drop))
+
+  (func (param (ref null $i8))
+    (array.set $i8 (local.get 0) (i32.const 0) (i32.const 0)))
+
+  (func (param (ref null $i8) (ref null $i8))
+    (array.copy $i8 $i8 (local.get 0) (i32.const 0) (local.get 1) (i32.const 0) (i32.const 0)))
+
+  (func (param (ref null $i8) (ref null $unshared))
+    (array.copy $i8 $unshared (local.get 0) (i32.const 0) (local.get 1) (i32.const 0) (i32.const 0)))
+
+  (func (param (ref null $unshared) (ref null $i8))
+    (array.copy $unshared $i8 (local.get 0) (i32.const 0) (local.get 1) (i32.const 0) (i32.const 0)))
+
+  (func (param (ref null $i8))
+    (array.fill $i8 (local.get 0) (i32.const 0) (i32.const 0) (i32.const 0)))
+
+  (func (param (ref null $i8))
+    (array.init_data $i8 0 (local.get 0) (i32.const 0) (i32.const 0) (i32.const 0)))
+
+  (func (param (ref null $i8))
+    (array.init_data $i8 0 (local.get 0) (i32.const 0) (i32.const 0) (i32.const 0)))
+)

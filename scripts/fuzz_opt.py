@@ -353,6 +353,7 @@ INITIAL_CONTENTS_IGNORE = [
     # Shared types implementation in progress
     'type-merging-shared.wast',
     'shared-types.wast',
+    'shared-polymorphism.wast',
     'shared-struct.wast',
 ]
 
