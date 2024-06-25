@@ -3188,7 +3188,7 @@ void FunctionValidator::visitArrayInit(ArrayInit* curr) {
   const char* mustBeArray =
     "array.init_* destination must be an array reference";
   if (curr->type == Type::unreachable ||
-      shouldBeTrue(curr->ref->type.isRef(), curr, mustBeArray) ||
+      !shouldBeTrue(curr->ref->type.isRef(), curr, mustBeArray) ||
       curr->ref->type.getHeapType().isBottom() ||
       !shouldBeTrue(curr->ref->type.isArray(), curr, mustBeArray)) {
     return;
