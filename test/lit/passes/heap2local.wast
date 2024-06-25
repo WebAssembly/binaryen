@@ -38,6 +38,8 @@
 
   ;; CHECK:      (type $12 (func (param eqref) (result i32)))
 
+  ;; CHECK:      (type $13 (func (param eqref eqref) (result i32)))
+
   ;; CHECK:      (func $simple (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
@@ -2270,6 +2272,84 @@
       (struct.new $struct.A
         (i32.const 0)
         (f64.const 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-eq-unrelated (type $13) (param $x eqref) (param $y eqref) (result i32)
+  ;; CHECK-NEXT:  (ref.eq
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (local.get $y)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-eq-unrelated (param $x eqref) (param $y eqref) (result i32)
+    ;; We know nothing about either arm, and do nothing.
+    (ref.eq
+      (local.get $x)
+      (local.get $y)
+    )
+  )
+
+  ;; CHECK:      (func $ref-eq-two (type $4) (result i32)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 f64)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 f64)
+  ;; CHECK-NEXT:  (local $6 i32)
+  ;; CHECK-NEXT:  (local $7 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.eq
+  ;; CHECK-NEXT:      (block (result nullref)
+  ;; CHECK-NEXT:       (local.set $2
+  ;; CHECK-NEXT:        (i32.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $3
+  ;; CHECK-NEXT:        (f64.const 0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $0
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $1
+  ;; CHECK-NEXT:        (local.get $3)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (block (result nullref)
+  ;; CHECK-NEXT:       (local.set $6
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $7
+  ;; CHECK-NEXT:        (f64.const 2.2)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $4
+  ;; CHECK-NEXT:        (local.get $6)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $5
+  ;; CHECK-NEXT:        (local.get $7)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: )
+  (func $ref-eq-two (result i32)
+    ;; Two separate allocations. We can optimize them away, and the result is 0.
+    (ref.eq
+      (struct.new $struct.A
+        (i32.const 0)
+        (f64.const 0)
+      )
+      (struct.new $struct.A
+        (i32.const 1)
+        (f64.const 2.2)
       )
     )
   )
