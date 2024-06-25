@@ -40,6 +40,8 @@
 
   ;; CHECK:      (type $13 (func (param eqref eqref) (result i32)))
 
+  ;; CHECK:      (type $14 (func (param anyref) (result i32)))
+
   ;; CHECK:      (func $simple (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 f64)
@@ -2379,6 +2381,57 @@
       (struct.new $struct.A
         (i32.const 1)
         (f64.const 2.2)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-is (type $14) (param $x anyref) (result i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $3
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $4
+  ;; CHECK-NEXT:       (f64.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (local.get $3)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (local.get $4)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-is (param $x anyref) (result i32)
+    ;; A ref.is that we can do nothing for, and should not modify, even though
+    ;; we optimize later.
+    (drop
+      (ref.is_null
+        (local.get $x)
+      )
+    )
+    ;; The result is 0 as the allocation is not null, and we can remove the
+    ;; allocation.
+    (ref.is_null
+      (struct.new $struct.A
+        (i32.const 0)
+        (f64.const 0)
       )
     )
   )
