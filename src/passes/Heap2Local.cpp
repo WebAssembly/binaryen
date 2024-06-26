@@ -349,6 +349,12 @@ struct EscapeAnalyzer {
       void visitLocalSet(LocalSet* curr) { escapes = false; }
 
       // Reference operations. TODO add more
+      void visitRefEq(RefEq* curr) {
+        // The reference is compared for identity, but nothing more.
+        escapes = false;
+        fullyConsumes = true;
+      }
+
       void visitRefAs(RefAs* curr) {
         // TODO General OptimizeInstructions integration, that is, since we know
         //      that our allocation is what flows into this RefAs, we can
@@ -507,14 +513,18 @@ struct EscapeAnalyzer {
 //       efficient, but it would need to be more complex.
 struct Struct2Local : PostWalker<Struct2Local> {
   StructNew* allocation;
-  const EscapeAnalyzer& analyzer;
+
+  // The analyzer is not |const| because we update |analyzer.reached| as we go
+  // (see replaceCurrent, below).
+  EscapeAnalyzer& analyzer;
+
   Function* func;
   Module& wasm;
   Builder builder;
   const FieldList& fields;
 
   Struct2Local(StructNew* allocation,
-               const EscapeAnalyzer& analyzer,
+               EscapeAnalyzer& analyzer,
                Function* func,
                Module& wasm)
     : allocation(allocation), analyzer(analyzer), func(func), wasm(wasm),
@@ -538,6 +548,15 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
   // In rare cases we may need to refinalize, see below.
   bool refinalize = false;
+
+  Expression* replaceCurrent(Expression* expression) {
+    PostWalker<Struct2Local>::replaceCurrent(expression);
+    // Also update |reached|: we are replacing something that was reached, so
+    // logically the replacement is also reached. This update is necessary if
+    // the parent of an expression cares about whether a child was reached.
+    analyzer.reached.insert(expression);
+    return expression;
+  }
 
   // Rewrite the code in visit* methods. The general approach taken is to
   // replace the allocation with a null reference (which may require changing
@@ -686,6 +705,27 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // the allocation reaches, we will handle that.
     contents.push_back(builder.makeRefNull(allocation->type.getHeapType()));
     replaceCurrent(builder.makeBlock(contents));
+  }
+
+  void visitRefEq(RefEq* curr) {
+    if (!analyzer.reached.count(curr)) {
+      return;
+    }
+
+    if (curr->type == Type::unreachable) {
+      // The result does not matter. Leave things as they are (and let DCE
+      // handle it).
+      return;
+    }
+
+    // If our reference is compared to itself, the result is 1. If it is
+    // compared to something else, the result must be 0, as our reference does
+    // not escape to any other place.
+    int32_t result = analyzer.reached.count(curr->left) > 0 &&
+                     analyzer.reached.count(curr->right) > 0;
+    // For simplicity, simply drop the RefEq and put a constant result after.
+    replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
+                                        builder.makeConst(Literal(result))));
   }
 
   void visitRefAs(RefAs* curr) {
