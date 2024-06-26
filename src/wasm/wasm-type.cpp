@@ -1551,8 +1551,7 @@ FeatureSet HeapType::getFeatures() const {
             return;
           case HeapType::exn:
           case HeapType::noexn:
-            feats |=
-              FeatureSet::ExceptionHandling | FeatureSet::ReferenceTypes;
+            feats |= FeatureSet::ExceptionHandling | FeatureSet::ReferenceTypes;
             return;
           case HeapType::cont:
           case HeapType::nocont:
