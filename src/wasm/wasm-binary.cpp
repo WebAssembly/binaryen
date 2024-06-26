@@ -2272,11 +2272,16 @@ void WasmBinaryReader::readTypes() {
   TypeBuilder builder(getU32LEB());
   BYN_TRACE("num: " << builder.size() << std::endl);
 
-  auto readHeapType = [&]() {
+  auto readHeapType = [&]() -> HeapType {
     int64_t htCode = getS64LEB(); // TODO: Actually s33
+    auto share = Unshared;
+    if (htCode == BinaryConsts::EncodedType::Shared) {
+      share = Shared;
+      htCode = getS64LEB(); // TODO: Actually s33
+    }
     HeapType ht;
     if (getBasicHeapType(htCode, ht)) {
-      return ht;
+      return ht.getBasic(share);
     }
     if (size_t(htCode) >= builder.size()) {
       throwError("invalid type index: " + std::to_string(htCode));
