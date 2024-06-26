@@ -179,8 +179,7 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     auto* value = info.makeExpression(*getModule());
     auto field = GCTypeUtils::getField(type, curr->index);
     assert(field);
-    return
-      Bits::makePackedFieldGet(value, *field, curr->signed_, *getModule());
+    return Bits::makePackedFieldGet(value, *field, curr->signed_, *getModule());
   }
 
   void optimizeUsingRefTest(StructGet* curr) {
