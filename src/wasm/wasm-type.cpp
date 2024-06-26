@@ -1599,8 +1599,12 @@ FeatureSet HeapType::getFeatures() const {
   };
 
   ReferenceFeatureCollector collector;
-  collector.walkRoot(this);
-  collector.noteChild(this);
+  // For internals reaosns, the walkRoot/noteChild APIs all require non-const
+  // pointers. We only use them to scan the type, so it is safe for us to
+  // send |this| there from a |const| method.
+  auto* unconst = const_cast<HeapType*>(this);
+  collector.walkRoot(unconst);
+  collector.noteChild(unconst);
   return collector.feats;
 }
 
