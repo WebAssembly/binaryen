@@ -440,8 +440,14 @@ struct ConstantFieldPropagation : public Pass {
     functionCopyInfos.combineInto(combinedCopyInfos);
 
     // Prepare data we will need later.
-    auto rawNewInfos = combinedNewInfos;
     SubTypes subTypes(*module);
+
+    PCVStructValuesMap rawNewInfos;
+    if (refTest) {
+      // The refTest optimizations require the raw new infos (see above), but we
+      // can skip copying here if we'll never read this.
+      rawNewInfos = combinedNewInfos;
+    }
 
     // Handle subtyping. |combinedInfo| so far contains data that represents
     // each struct.new and struct.set's operation on the struct type used in
