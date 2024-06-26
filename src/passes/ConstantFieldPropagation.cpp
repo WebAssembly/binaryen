@@ -301,17 +301,23 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
     // TODO: Consider adding a variation on this pass that uses non-final types.
     auto isProperTestType = [&](const Value& value) -> std::optional<HeapType> {
       auto& types = value.types;
-      if (types.size() == 1) {
-        auto type = types[0];
-        // Do not test finality using isOpen(), as that may only be applied late
-        // in the optimization pipeline. We are in closed-world here, so just
-        // see if there are subtypes in practice (if not, this can be marked as
-        // final later, and we assume optimistically that it will).
-        if (subTypes.getImmediateSubTypes(type).empty()) {
-          return type;
-        }
+      if (types.size() != 1) {
+        // Too many types.
+        return {};
       }
-      return {};
+
+      auto type = types[0];
+      // Do not test finality using isOpen(), as that may only be applied late
+      // in the optimization pipeline. We are in closed-world here, so just
+      // see if there are subtypes in practice (if not, this can be marked as
+      // final later, and we assume optimistically that it will).
+      if (!subTypes.getImmediateSubTypes(type).empty()) {
+        // There are subtypes.
+        return {};
+      }
+
+      // Success, we can test on this.
+      return type;
     };
 
     // Look for the index in |values| to test on.
