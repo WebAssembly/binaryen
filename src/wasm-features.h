@@ -193,8 +193,11 @@ struct FeatureSet {
     return *this;
   }
 
-  FeatureSet operator-(FeatureSet& other) const {
+  FeatureSet operator-(const FeatureSet& other) const {
     return features & ~other.features;
+  }
+  FeatureSet operator-(Feature other) const {
+    return *this - FeatureSet(other);
   }
 
   uint32_t features;
