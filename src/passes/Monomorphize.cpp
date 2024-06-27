@@ -80,6 +80,7 @@
 
 #include "ir/cost.h"
 #include "ir/find_all.h"
+#include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/type-updating.h"
@@ -138,9 +139,13 @@ struct CallContext {
   //    ..
   //
   // The $int param is no longer a parameter, and it is set in a local at the
-  // top. The $ref parameter is likewise removed. We have a new parameter for
-  // the internal part of the struct.new that we could not handle, and the call
-  // would send only that:
+  // top. The $ref parameter is likewise removed. Note how, effectively, we have
+  // "reverse-inlined" code from the calling function into the caller, that is,
+  // we pull the context into the called function, where it is now alongside the
+  // code that we hope optimizes well with it.
+  //
+  // We also have a new parameter for the internal part of the struct.new that
+  // we could not handle, and the call would send only that:
   //
   //  (call $foo-monomorphized
   //    (..something complicated..)
@@ -216,13 +221,13 @@ struct Monomorphize : public Pass {
           continue;
         }
 
-        processCall(call, module);
+        processCall(call, *module);
       }
     }
   }
 
   // Try to optimize a call.
-  void processCall(Call* call, Module* module) {
+  void processCall(Call* call, Module& wasm) {
     auto target = call->target;
     auto* func = module->getFunction(target);
     if (func->imported()) {
@@ -238,7 +243,17 @@ struct Monomorphize : public Pass {
     std::vector<Expression*> newOperands;
     //auto params = func->getParams();
     for (auto* operand : call->operands) {
-      ..
+      // Process the operand, generating the generalized one. This is a copy
+      // operation, as so long as we find things that we can "reverse-inline"
+      // into the called function, we continue to do so. When we cannot move
+      // code in that manner then we emit a local.get, as that is a new
+      // parameter.
+      context.operands = ExpressionManipulator::flexibleCopy(operand, wasm, [&](Expression*) {
+      });
+
+
+..
+
     for (Index i = 0; i < call->operands.size(); i++) {
       if (call->operands[i]->type != params[i]) {
         hasRefinedParam = true;
