@@ -644,7 +644,6 @@
   ;; CHECK:      (type $4 (func (param (ref null $struct)) (result i32)))
 
   ;; CHECK:      (func $create (type $3)
-  ;; CHECK-NEXT:  (local $keepalive (ref $substruct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
@@ -659,7 +658,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $create
-    (local $keepalive (ref $substruct))
     (drop
       (struct.new $struct
         (i32.const 10)
