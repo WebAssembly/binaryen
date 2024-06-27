@@ -159,6 +159,26 @@ struct CallContext {
   bool dropped;
 
   CallContext(std::vector<Expression*> operands, bool dropped) : operands(operands), dropped(dropped) {}
+
+  bool operator==(const CallContext& other) const {
+    // We consider logically equivalent expressions as equal (rather than raw
+    // pointers), so that contexts with functionally identical shape are
+    // treated the same.
+    if (operands.size() != other.operands.size()) {
+      return false;
+    }
+    for (Index i = 0; i < operands.size(); i++) {
+      if (!ExpressionAnalyzer::equal(operands[i], other.operands[i])) {
+        return false;
+      }
+    }
+
+    return dropped = other.dropped;
+  }
+
+  bool operator!=(const CallContext& other) const {
+    return !(*this == other);
+  }
 };
 
 } // anonymous namespace
@@ -235,6 +255,10 @@ struct Monomorphize : public Pass {
       return target;
     }
 
+    // TODO: igmore calls with unreachable operands for simplicty
+
+    Builder builder(wasm);
+
     // Compute the call context. This builds up the generalized parameters as
     // explained in the comments on CallContext, and sets up the operands for
     // the new call (which may have less, more, or different parameters than the
@@ -245,33 +269,33 @@ struct Monomorphize : public Pass {
     for (auto* operand : call->operands) {
       // Process the operand, generating the generalized one. This is a copy
       // operation, as so long as we find things that we can "reverse-inline"
-      // into the called function, we continue to do so. When we cannot move
-      // code in that manner then we emit a local.get, as that is a new
-      // parameter.
-      context.operands = ExpressionManipulator::flexibleCopy(operand, wasm, [&](Expression*) {
+      // into the called function as part of the call context then we continue
+      // to do so. When we cannot move code in that manner then we emit a
+      // local.get, as that is a new parameter.
+      context.operands = ExpressionManipulator::flexibleCopy(operand, wasm, [&](Expression* child) {
+        if (canBeMovedWithContext(child)) {
+          // This can be moved, great: let the copy happen.
+          return nullptr;
+        }
+
+        // This cannot be moved, so we stop here: this is a value that is sent
+        // into the monomorphized function. It is a new operand in the call,
+        // and in the context operands it is a local.get, that reads that value.
+        auto paramIndex = newOperands.size();
+        newOperands.push(child);
+        // TODO: If one operand is a tee and another a get, we could actually
+        //       reuse the local, effectively showing the monomorphized
+        //       function that the values are the same.
+        return builder.makeLocalGet(paramIndex, child->type);
       });
-
-
-..
-
-    for (Index i = 0; i < call->operands.size(); i++) {
-      if (call->operands[i]->type != params[i]) {
-        hasRefinedParam = true;
-        break;
-      }
-    }
-    if (!hasRefinedParam) {
-      // Nothing to do since all params are fully refined already.
-      return target;
     }
 
-    std::vector<Type> refinedTypes;
-    for (auto* operand : call->operands) {
-      refinedTypes.push_back(operand->type);
-    }
-    auto refinedParams = Type(refinedTypes);
-    auto iter = funcParamMap.find({target, refinedParams});
-    if (iter != funcParamMap.end()) {
+    // TODO: handle drop
+    context.dropped = false;
+
+    // See if we've already computed this call context.
+    auto iter = funcContextMap.find({target, context});
+    if (iter != funcContextMap.end()) {
       return iter->second;
     }
 
@@ -330,7 +354,7 @@ struct Monomorphize : public Pass {
 
     // Mark the chosen target in the map, so we don't do this work again: every
     // pair of target and refinedParams is only considered once.
-    funcParamMap[{target, refinedParams}] = chosenTarget;
+    funcContextMap[{target, refinedParams}] = chosenTarget;
 
     return chosenTarget;
   }
@@ -363,11 +387,11 @@ struct Monomorphize : public Pass {
   // Maps [func name, call info] to the name of a new function which is
   // specialized to that call info.
   //
-  // Note that this can contain funcParamMap{A, ...} = A, that is, that maps
+  // Note that this can contain funcContextMap{A, ...} = A, that is, that maps
   // a function name to itself. That indicates we found no benefit from
   // refining with those particular types, and saves us from computing it again
   // later on.
-  std::unordered_map<std::pair<Name, CallContext>, Name> funcParamMap;
+  std::unordered_map<std::pair<Name, CallContext>, Name> funcContextMap;
 };
 
 } // anonymous namespace
