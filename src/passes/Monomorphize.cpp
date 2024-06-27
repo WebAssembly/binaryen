@@ -296,12 +296,21 @@ struct Monomorphize : public Pass {
     // See if we've already computed this call context.
     auto iter = funcContextMap.find({target, context});
     if (iter != funcContextMap.end()) {
-      return iter->second;
+      auto newTarget = iter->second;
+      if (newTarget != target) {
+        // When we computed this before, we found a benefit to optimizing, and
+        // created a new monomorphized function to call. Use it by simply
+        // applying the new operands we computed, and adjusting the call target.
+        call->operands = newOperands;
+        call->target = newTarget;
+      }
+      return;
     }
 
     // This is the first time we see this situation. Let's see if it is worth
     // monomorphizing.
 
+    // TODO: helper to maek contex
     // Create a new function with refined parameters as a copy of the original.
     auto refinedTarget = Names::getValidFunctionName(*module, target);
     auto* refinedFunc = ModuleUtils::copyFunction(func, *module, refinedTarget);
