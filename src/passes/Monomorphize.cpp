@@ -93,9 +93,9 @@ namespace {
 
 // Relevant information about a call for purposes of monomorphization.
 struct CallInfo {
-  // The operands the call sends as parameters, in a general form. Each
-  // local.get here is of a parameter, and these operands appear in the called
-  // function. For example, consider this call, and the function it calls:
+  // The operands the call sends as parameters, in a general form. This form is
+  // in fact the exact code that will appear in the specialized called function.
+  // An example may help:
   //
   //  (call $foo
   //    (i32.const 10)
@@ -116,18 +116,23 @@ struct CallInfo {
   //    )
   //  ]
   //
-  // We can then optimize a version of $foo that looks like this:
+  // Note how the inner part of the struct.new is a local.get. That is a
+  // local.get of a parameter to the specialized function, which looks like
+  // this:
   //
   //  (func $foo-monomorphized (param $0 ..)
   //    (..local defs..)
+  //    ;; Apply the first operand.
   //    (local.set $int
   //      (i32.const 10)
   //    )
+  //    ;; Apply the second operand.
   //    (local.set $ref
   //      (struct.new $struct
-  //        (local.get $0)
+  //        (local.get $0)  ;; Read the new parameter.
   //      )
   //    )
+  //    ;; The original body.
   //    ..
   //
   // The $int param is no longer a parameter, and it is set in a local at the
@@ -140,10 +145,7 @@ struct CallInfo {
   //  )
   //
   // $foo-monomorphized is now a version of $monomorphized that has "pulled in"
-  // parts of the call, which may allow it to get optimized better.
-  //
-  // Note how local.gets in this list correspond to gets of the *new*
-  // parameters.  
+  // parts of the call context, which may allow it to get optimized better.
   std::vector<Expression*> operands;
 
   // Whether the call is dropped.
