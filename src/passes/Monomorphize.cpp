@@ -16,15 +16,16 @@
 
 //
 // When we see a call, see if the information at the callsite can allow us to
-// optimize. This is related to inlining, as when we inline the calling function
-// then optimizes the inlined code together with the code around the callsite;
-// in monomorphization we handle cases that inlining cannot do, by creating a
-// specialized version of the called function tuned for the particular call. In
-// particular, we may benefit from monomorphizing in the following cases:
+// optimize. This is related to inlining: when we inline, the calling function
+// then optimizes the inlined code together with the code around the callsite,
+// while in monomorphization we handle cases that inlining cannot do, by
+// creating a specialized version of the called function tuned for the
+// particular call. In particular, we may benefit from monomorphizing in the
+// following cases:
 //
 //  * If a call provides a more refined type than the function declares for a
 //    parameter.
-//  * If a call provides a constant as a parameter. TODO
+//  * If a call provides a constant as a parameter.
 //  * If a call provides a GC allocation as a parameter. TODO
 //  * If a call is dropped. TODO also other stuff on the outside?
 //
@@ -35,15 +36,24 @@
 // drop inside the function then all the computation of that result may be
 // removed.
 //
+// As this monormophization uses callsite context (the parameters, where the
+// result flows to), we call it "Contextual Monomorphization." We do not just
+// monomorphize the called function itself but in combination with that
+// context.
+//
 // To see when monomorphizing makes sense, this optimizes the target function
-// both with and without the callsite info. Note that while doing so
-// we keep the optimization results of the version without - there is no reason
-// to forget them since we've gone to the trouble anyhow. So this pass may have
-// the side effect of performing minor optimizations on functions. There is also
-// a variant of the pass that always monomorphizes, even when it does not seem
-// helpful, which is useful for testing, and possibly in cases where we need
-// more than just local optimizations to see the benefit - for example, perhaps
-// GUFA ends up more powerful later on.
+// together with the callsite context, and then measures how much we benefit.
+// This is a "try it and see" approach, so we call it "Empirical Contextual
+// Monomorphization." Seeing how well the callsite + called function optimize
+// together is a general approach that reduces the need for heuristics. For
+// example, rather than have a heuristic for "see if a constant parameter flows
+// into a conditional branch," we simply run the optimizer and let it optimize
+// that case. All other cases handled by the optimizer work as well, without
+// needing to specify them as heuristics, and this gets smarter as the optimizer
+// does.
+//
+// There are two versions of this pass, the normal one and one that always
+// monomorphizes, which is useful for testing.
 //
 // TODO: When we optimize we could run multiple cycles: A calls B calls C might
 //       end up with the refined+optimized B now having refined types in its
@@ -252,7 +262,14 @@ struct Monomorphize : public Pass {
     if (onlyWhenHelpful) {
       // Optimize both functions using minimal opts, hopefully enough to see if
       // there is a benefit to the refined types (such as the new types allowing
-      // a cast to be removed).
+      // a cast to be removed). We optimize both to avoid confusion from the
+      // function benefiting from just another cycle of optimization, regardless
+      // or monomorphization.
+      //
+      // Note that we do *not* discard the optimizations to the original
+      // function if we decide not to optimize. We've already done them, and the
+      // function is improved, so we may as well keep them.
+      //
       // TODO: Atm this can be done many times per function as it is once per
       //       function and per set of types sent to it. Perhaps have some
       //       total limit to avoid slow runtimes.
