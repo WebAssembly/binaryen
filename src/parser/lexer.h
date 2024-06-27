@@ -25,6 +25,7 @@
 
 #include "support/name.h"
 #include "support/result.h"
+#include "support/string.h"
 
 #ifndef parser_lexer_h
 #define parser_lexer_h
@@ -124,11 +125,11 @@ public:
   std::optional<std::string> takeString();
 
   std::optional<Name> takeName() {
-    // TODO: Validate UTF.
-    if (auto str = takeString()) {
-      return Name(*str);
+    auto str = takeString();
+    if (!str || !String::isUTF8(*str)) {
+      return std::nullopt;
     }
-    return std::nullopt;
+    return Name(*str);
   }
 
   bool takeSExprStart(std::string_view expected) {

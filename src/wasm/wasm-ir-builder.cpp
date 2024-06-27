@@ -407,9 +407,12 @@ private:
           --stackTupleIndex;
         } else {
           if (stackIndex == 0) {
-            // No more available values. This is fine iff we are reaching past
-            // an unreachable. Any error will be caught later when we are
-            // popping.
+            // No more available values. This is valid iff we are reaching past
+            // an unreachable, but we still need the fallback behavior to ensure
+            // the input unreachable instruction is executed first. If we are
+            // not reaching past an unreachable, the error will be caught when
+            // we pop.
+            needUnreachableFallback = true;
             goto pop;
           }
           --stackIndex;
@@ -458,18 +461,20 @@ private:
     // We have checked all the constraints, so we are ready to pop children.
     for (int i = children.size() - 1; i >= 0; --i) {
       if (needUnreachableFallback &&
-          scope.exprStack.size() == *unreachableIndex + 1) {
-        // The expressions remaining on the stack may be executed, but they do
-        // not satisfy the requirements to be children of the current parent.
-        // Explicitly drop them so they will still be executed for their side
-        // effects and so the remaining children will be filled with
-        // unreachables.
-        assert(scope.exprStack.back()->type == Type::unreachable);
-        for (auto& expr : scope.exprStack) {
-          expr = Builder(builder.wasm).dropIfConcretelyTyped(expr);
-        }
+          scope.exprStack.size() == *unreachableIndex + 1 && i > 0) {
+        // The next item on the stack is the unreachable instruction we must
+        // not pop past. We cannot insert unreachables in front of it because
+        // it might be a branch we actually have to execute, so this next item
+        // must be child 0. But we are not ready to pop child 0 yet, so
+        // synthesize an unreachable instead of popping. The deeper
+        // instructions that would otherwise have been popped will remain on
+        // the stack to become prior children of future expressions or to be
+        // implicitly dropped at the end of the scope.
+        *children[i].childp = builder.builder.makeUnreachable();
+        continue;
       }
 
+      // Pop a child normally.
       auto val = pop(children[i].constraint.size());
       CHECK_ERR(val);
       *children[i].childp = *val;

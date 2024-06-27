@@ -169,3 +169,8 @@
   )
   "common supertype"
 )
+
+(assert_malformed
+  (module quote "(func (ref.cast i32 (unreachable)))")
+  "expected reftype"
+)
