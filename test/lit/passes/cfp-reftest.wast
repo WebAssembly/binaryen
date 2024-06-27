@@ -1301,3 +1301,158 @@
   )
 )
 
+;; Three top-level struct hierarchies.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct (field i32))))
+    (type $A (sub (struct i32)))
+    ;; CHECK:       (type $subA (sub $A (struct (field i32) (field f64))))
+    (type $subA (sub $A (struct i32 f64)))
+
+    ;; CHECK:       (type $B (sub (struct (field i32))))
+    (type $B (sub (struct i32)))
+
+    ;; CHECK:       (type $subB (sub $B (struct (field i32) (field f64))))
+    (type $subB (sub $B (struct i32 f64)))
+
+    ;; CHECK:       (type $C (sub (struct (field i32))))
+    (type $C (sub (struct i32)))
+
+    ;; CHECK:       (type $subC (sub $C (struct (field i32) (field f64))))
+    (type $subC (sub $C (struct i32 f64)))
+  )
+
+  ;; CHECK:      (type $6 (func))
+
+  ;; CHECK:      (type $7 (func (param (ref null $A)) (result i32)))
+
+  ;; CHECK:      (type $8 (func (param (ref null $B)) (result i32)))
+
+  ;; CHECK:      (type $9 (func (param (ref null $C)) (result i32)))
+
+  ;; CHECK:      (func $create (type $6)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $subA
+  ;; CHECK-NEXT:    (i32.const 20)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (i32.const 30)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $subB
+  ;; CHECK-NEXT:    (i32.const 40)
+  ;; CHECK-NEXT:    (f64.const 2.61828)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $C
+  ;; CHECK-NEXT:    (i32.add
+  ;; CHECK-NEXT:     (i32.const 1000)
+  ;; CHECK-NEXT:     (i32.const 2000)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $subC
+  ;; CHECK-NEXT:    (i32.const 50)
+  ;; CHECK-NEXT:    (f64.const 999999.9)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $create
+    (drop
+      (struct.new $A
+        (i32.const 10)
+      )
+    )
+    (drop
+      (struct.new $subA
+        (i32.const 20)
+        (f64.const 3.14159)
+      )
+    )
+    (drop
+      (struct.new $B
+        (i32.const 30)
+      )
+    )
+    (drop
+      (struct.new $subB
+        (i32.const 40)
+        (f64.const 2.61828)
+      )
+    )
+    (drop
+      (struct.new $C
+        ;; Something not constant enough for us to reason about
+        (i32.add
+          (i32.const 1000)
+          (i32.const 2000)
+        )
+      )
+    )
+    (drop
+      (struct.new $subC
+        (i32.const 50)
+        (f64.const 999999.9)
+      )
+    )
+  )
+  ;; CHECK:      (func $get-A (type $7) (param $A (ref null $A)) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 20)
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:   (ref.test (ref $subA)
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-A (param $A (ref null $A)) (result i32)
+    ;; We can optimize here, picking 10 or 20.
+    (struct.get $A 0
+      (local.get $A)
+    )
+  )
+
+  ;; CHECK:      (func $get-B (type $8) (param $B (ref null $B)) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.const 40)
+  ;; CHECK-NEXT:   (i32.const 30)
+  ;; CHECK-NEXT:   (ref.test (ref $subB)
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (local.get $B)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-B (param $B (ref null $B)) (result i32)
+    ;; We can optimize here, picking 30 or 40.
+    (struct.get $B 0
+      (local.get $B)
+    )
+  )
+
+  ;; CHECK:      (func $get-C (type $9) (param $C (ref null $C)) (result i32)
+  ;; CHECK-NEXT:  (struct.get $C 0
+  ;; CHECK-NEXT:   (local.get $C)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $get-C (param $C (ref null $C)) (result i32)
+    ;; We can't optimize here.
+    (struct.get $C 0
+      (local.get $C)
+    )
+  )
+)
