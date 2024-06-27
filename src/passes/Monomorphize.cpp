@@ -53,7 +53,8 @@
 // does.
 //
 // There are two versions of this pass, the normal one and one that always
-// monomorphizes, which is useful for testing.
+// monomorphizes (even if empirically it doesn't look helpful), which is useful
+// for testing.
 //
 // TODO: When we optimize we could run multiple cycles: A calls B calls C might
 //       end up with the refined+optimized B now having refined types in its
@@ -84,6 +85,7 @@
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/hash.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -92,7 +94,7 @@ namespace wasm {
 namespace {
 
 // Relevant information about a call for purposes of monomorphization.
-struct CallInfo {
+struct CallContext {
   // The operands the call sends as parameters, in a general form. This form is
   // in fact the exact code that will appear in the specialized called function.
   // An example may help:
@@ -151,7 +153,7 @@ struct CallInfo {
   // Whether the call is dropped.
   bool dropped;
 
-  CallInfo(std::vector<Expression*> operands, bool dropped) : operands(operands), dropped(dropped) {}
+  CallContext(std::vector<Expression*> operands, bool dropped) : operands(operands), dropped(dropped) {}
 };
 
 } // anonymous namespace
@@ -160,10 +162,14 @@ struct CallInfo {
 
 namespace std {
 
-template<> struct hash<wasm::CallInfo> {
-  size_t operator()(const wasm::CallInfo& info) const {
-    return std::hash<std::pair<wasm::CallInfo, bool>>{}(
-      {info.operands, info.dropped});
+template<> struct hash<wasm::CallContext> {
+  size_t operator()(const wasm::CallContext& info) const {
+    size_t digest = std::hash<bool>(info.dropped);
+
+    rehash(digest, info.operands.size());
+    for (auto* operand : info.operands) {
+      hash_combine(digest, ExpressionAnalyzer::hash(operand));
+    }
   }
 };
 
@@ -210,24 +216,29 @@ struct Monomorphize : public Pass {
           continue;
         }
 
-        call->target = getRefinedTarget(call, module);
+        processCall(call, module);
       }
     }
   }
 
-  // Given a call, make a copy of the function it is calling that has more
-  // refined arguments that fit the arguments being passed perfectly. Returns
-  // the new call target (which may be the old call target, if we found no way
-  // to improve).
-  Name getRefinedTarget(Call* call, Module* module) {
+  // Try to optimize a call.
+  void processCall(Call* call, Module* module) {
     auto target = call->target;
     auto* func = module->getFunction(target);
     if (func->imported()) {
       // Nothing to do since this calls outside of the module.
       return target;
     }
-    auto params = func->getParams();
-    bool hasRefinedParam = false;
+
+    // Compute the call context. This builds up the generalized parameters as
+    // explained in the comments on CallContext, and sets up the operands for
+    // the new call (which may have less, more, or different parameters than the
+    // original).
+    CallContext context;
+    std::vector<Expression*> newOperands;
+    //auto params = func->getParams();
+    for (auto* operand : call->operands) {
+      ..
     for (Index i = 0; i < call->operands.size(); i++) {
       if (call->operands[i]->type != params[i]) {
         hasRefinedParam = true;
@@ -341,7 +352,7 @@ struct Monomorphize : public Pass {
   // a function name to itself. That indicates we found no benefit from
   // refining with those particular types, and saves us from computing it again
   // later on.
-  std::unordered_map<std::pair<Name, CallInfo>, Name> funcParamMap;
+  std::unordered_map<std::pair<Name, CallContext>, Name> funcParamMap;
 };
 
 } // anonymous namespace
