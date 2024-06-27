@@ -279,8 +279,9 @@ struct FunctionOptimizer : public WalkerPass<PostWalker<FunctionOptimizer>> {
       return;
     }
 
-    // If we filled slot 1 then we must have filled slot 0 before.
-    assert(values[1].used() ? values[0].used() : true);
+    // We either filled slot 0, or we did not, and if we did not then cannot
+    // have filled slot 1 after it.
+    assert(values[0].used() || !values[1].used());
 
     if (!values[1].used()) {
       // We did not see two constant values (we might have seen just one, or
