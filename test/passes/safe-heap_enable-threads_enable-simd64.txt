@@ -198,18 +198,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.shr_s
@@ -236,18 +243,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_s
@@ -268,18 +282,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.atomic.load8_u
@@ -300,18 +321,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_u
@@ -332,18 +360,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_s align=1
@@ -364,18 +399,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -413,18 +455,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -456,18 +505,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_u align=1
@@ -488,18 +544,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -531,18 +594,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -574,18 +644,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load align=1
@@ -606,18 +683,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -649,18 +733,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -692,18 +783,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -735,18 +833,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.shr_s
@@ -773,18 +878,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_s
@@ -805,18 +917,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.atomic.load8_u
@@ -837,18 +956,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_u
@@ -869,18 +995,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_s align=1
@@ -901,18 +1034,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -950,18 +1090,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -993,18 +1140,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_u align=1
@@ -1025,18 +1179,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1068,18 +1229,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1111,18 +1279,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_s align=1
@@ -1143,18 +1318,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1186,18 +1368,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1235,18 +1424,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1278,18 +1474,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_u align=1
@@ -1310,18 +1513,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1353,18 +1563,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1396,18 +1613,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1439,18 +1663,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load align=1
@@ -1471,18 +1702,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1514,18 +1752,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1557,18 +1802,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1600,18 +1852,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1643,18 +1902,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.load align=1
@@ -1675,18 +1941,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1718,18 +1991,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1761,18 +2041,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.load align=1
@@ -1793,18 +2080,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1836,18 +2130,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1879,18 +2180,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1922,18 +2230,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (v128.load align=1
@@ -1954,18 +2269,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -1997,18 +2319,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2040,18 +2369,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2083,18 +2419,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2126,18 +2469,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.atomic.store8
@@ -2159,18 +2509,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store8
@@ -2192,18 +2549,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store16 align=1
@@ -2225,18 +2589,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2269,18 +2640,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2313,18 +2691,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store align=1
@@ -2346,18 +2731,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2390,18 +2782,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2434,18 +2833,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2478,18 +2884,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.atomic.store8
@@ -2511,18 +2924,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store8
@@ -2544,18 +2964,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store16 align=1
@@ -2577,18 +3004,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2621,18 +3055,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2665,18 +3106,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store32 align=1
@@ -2698,18 +3146,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2742,18 +3197,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2786,18 +3248,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2830,18 +3299,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store align=1
@@ -2863,18 +3339,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2907,18 +3390,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2951,18 +3441,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -2995,18 +3492,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3039,18 +3543,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.store align=1
@@ -3072,18 +3583,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3116,18 +3634,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3160,18 +3685,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.store align=1
@@ -3193,18 +3725,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3237,18 +3776,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3281,18 +3827,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3325,18 +3878,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (v128.store align=1
@@ -3358,18 +3918,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3402,18 +3969,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3446,18 +4020,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3490,18 +4071,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3560,18 +4148,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_s
@@ -3592,18 +4187,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_u
@@ -3624,18 +4226,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_s align=1
@@ -3656,18 +4265,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3699,18 +4315,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_u align=1
@@ -3731,18 +4354,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3774,18 +4404,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load align=1
@@ -3806,18 +4443,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3849,18 +4493,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -3892,18 +4543,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_s
@@ -3924,18 +4582,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_u
@@ -3956,18 +4621,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_s align=1
@@ -3988,18 +4660,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4031,18 +4710,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_u align=1
@@ -4063,18 +4749,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4106,18 +4799,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_s align=1
@@ -4138,18 +4838,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4181,18 +4888,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4224,18 +4938,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_u align=1
@@ -4256,18 +4977,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4299,18 +5027,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4342,18 +5077,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load align=1
@@ -4374,18 +5116,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4417,18 +5166,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4460,18 +5216,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4503,18 +5266,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.load align=1
@@ -4535,18 +5305,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4578,18 +5355,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4621,18 +5405,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.load align=1
@@ -4653,18 +5444,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4696,18 +5494,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4739,18 +5544,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4782,18 +5594,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (v128.load align=1
@@ -4814,18 +5633,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4857,18 +5683,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4900,18 +5733,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4943,18 +5783,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -4986,18 +5833,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store8
@@ -5019,18 +5873,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store16 align=1
@@ -5052,18 +5913,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5096,18 +5964,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store align=1
@@ -5129,18 +6004,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5173,18 +6055,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5217,18 +6106,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store8
@@ -5250,18 +6146,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store16 align=1
@@ -5283,18 +6186,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5327,18 +6237,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store32 align=1
@@ -5360,18 +6277,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5404,18 +6328,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5448,18 +6379,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store align=1
@@ -5481,18 +6419,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5525,18 +6470,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5569,18 +6521,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5613,18 +6572,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.store align=1
@@ -5646,18 +6612,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5690,18 +6663,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5734,18 +6714,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.store align=1
@@ -5767,18 +6754,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5811,18 +6805,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5855,18 +6856,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5899,18 +6907,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (v128.store align=1
@@ -5932,18 +6947,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -5976,18 +6998,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6020,18 +7049,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6064,18 +7100,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $emscripten_get_sbrk_ptr)
+      )
      )
-     (i64.load
-      (call $emscripten_get_sbrk_ptr)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6139,18 +7182,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.shr_s
@@ -6177,18 +7227,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_s
@@ -6209,18 +7266,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.atomic.load8_u
@@ -6241,18 +7305,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load8_u
@@ -6273,18 +7344,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_s align=1
@@ -6305,18 +7383,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6354,18 +7439,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6397,18 +7489,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load16_u align=1
@@ -6429,18 +7528,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6472,18 +7578,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6515,18 +7628,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.load align=1
@@ -6547,18 +7667,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6590,18 +7717,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6633,18 +7767,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6676,18 +7817,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.shr_s
@@ -6714,18 +7862,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_s
@@ -6746,18 +7901,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.atomic.load8_u
@@ -6778,18 +7940,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load8_u
@@ -6810,18 +7979,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_s align=1
@@ -6842,18 +8018,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6891,18 +8074,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -6934,18 +8124,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load16_u align=1
@@ -6966,18 +8163,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7009,18 +8213,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7052,18 +8263,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_s align=1
@@ -7084,18 +8302,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7127,18 +8352,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7176,18 +8408,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7219,18 +8458,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load32_u align=1
@@ -7251,18 +8497,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7294,18 +8547,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7337,18 +8597,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7380,18 +8647,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.load align=1
@@ -7412,18 +8686,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7455,18 +8736,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7498,18 +8786,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7541,18 +8836,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7584,18 +8886,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.load align=1
@@ -7616,18 +8925,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7659,18 +8975,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7702,18 +9025,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.load align=1
@@ -7734,18 +9064,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7777,18 +9114,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7820,18 +9164,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7863,18 +9214,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (v128.load align=1
@@ -7895,18 +9253,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7938,18 +9303,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -7981,18 +9353,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8024,18 +9403,25 @@
      (local.get $2)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $2)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $2)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $2)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8067,18 +9453,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.atomic.store8
@@ -8100,18 +9493,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store8
@@ -8133,18 +9533,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store16 align=1
@@ -8166,18 +9573,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8210,18 +9624,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8254,18 +9675,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i32.store align=1
@@ -8287,18 +9715,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8331,18 +9766,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8375,18 +9817,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8419,18 +9868,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.atomic.store8
@@ -8452,18 +9908,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 1)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 1)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store8
@@ -8485,18 +9948,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store16 align=1
@@ -8518,18 +9988,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8562,18 +10039,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 2)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 2)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8606,18 +10090,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store32 align=1
@@ -8639,18 +10130,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8683,18 +10181,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8727,18 +10232,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8771,18 +10283,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (i64.store align=1
@@ -8804,18 +10323,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8848,18 +10374,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8892,18 +10425,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8936,18 +10476,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -8980,18 +10527,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f32.store align=1
@@ -9013,18 +10567,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9057,18 +10618,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 4)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 4)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9101,18 +10669,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (f64.store align=1
@@ -9134,18 +10709,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9178,18 +10760,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9222,18 +10811,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 8)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 8)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9266,18 +10862,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (v128.store align=1
@@ -9299,18 +10902,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9343,18 +10953,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9387,18 +11004,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
@@ -9431,18 +11055,25 @@
      (local.get $3)
      (i64.const 0)
     )
-    (i64.gt_u
-     (i64.add
-      (local.get $3)
-      (i64.const 16)
+    (i32.or
+     (i64.gt_u
+      (i64.add
+       (local.get $3)
+       (i64.const 16)
+      )
+      (i64.load
+       (call $foo)
+      )
      )
-     (i64.load
-      (call $foo)
+     (i64.lt_u
+      (local.get $3)
+      (local.get $0)
      )
     )
    )
    (then
     (call $segfault)
+    (unreachable)
    )
   )
   (if
