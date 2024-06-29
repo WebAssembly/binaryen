@@ -343,6 +343,27 @@ struct OptimizationOptions : public ToolOptions {
     }
   }
 
+  void addPassArg(const std::string& key, const std::string& value) override {
+    for (auto iPass = passes.rbegin(); iPass != passes.rend(); iPass++) {
+      if (iPass->name != key) {
+        continue;
+      }
+
+      if (iPass->argument.has_value()) {
+        Fatal() << iPass->name << " already set to " << *(iPass->argument);
+      }
+
+      iPass->argument = value;
+      return;
+    }
+
+    if (!PassRegistry::get()->containsPass(key)) {
+      return ToolOptions::addPassArg(key, value);
+    }
+
+    Fatal() << "can't set " << key << ": pass not enabled";
+  }
+
   bool runningDefaultOptimizationPasses() {
     for (auto& pass : passes) {
       if (pass.name == DEFAULT_OPT_PASSES) {

@@ -73,6 +73,16 @@ std::vector<std::string> PassRegistry::getRegisteredNames() {
   return ret;
 }
 
+bool PassRegistry::containsPass(const std::string& name) {
+  for (auto& [passName, _] : passInfos) {
+    if (passName == name) {
+      return true;
+    }
+  }
+
+  return false;
+}
+
 std::string PassRegistry::getPassDescription(std::string name) {
   assert(passInfos.find(name) != passInfos.end());
   return passInfos[name].description;

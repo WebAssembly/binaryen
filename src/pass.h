@@ -46,6 +46,7 @@ struct PassRegistry {
   registerTestPass(const char* name, const char* description, Creator create);
   std::unique_ptr<Pass> createPass(std::string name);
   std::vector<std::string> getRegisteredNames();
+  bool containsPass(const std::string& name);
   std::string getPassDescription(std::string name);
   bool isPassHidden(std::string name);
 
