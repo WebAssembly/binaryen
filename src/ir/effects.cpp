@@ -66,9 +66,6 @@ std::ostream& operator<<(std::ostream& o, wasm::EffectAnalyzer& effects) {
   if (effects.trap) {
     o << "trap\n";
   }
-  if (effects.implicitTrap) {
-    o << "implicitTrap\n";
-  }
   if (effects.isAtomic) {
     o << "isAtomic\n";
   }

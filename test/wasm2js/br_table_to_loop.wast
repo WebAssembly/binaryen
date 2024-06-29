@@ -1,8 +1,8 @@
 (module
  (func $exp1 (export "exp1")
   (block $block
-   ;; An infinite loop. When optimizing, wasm2js enables ignore-implicit-traps
-   ;; and so it can simplify this.
+   ;; An infinite loop. When optimizing, wasm2js enables traps-never-happen,
+   ;; so it can simplify this.
    (loop $loop
     (br_table $block $loop $block (i32.const 1))
    )

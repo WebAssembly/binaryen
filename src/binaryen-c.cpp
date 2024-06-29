@@ -5940,10 +5940,6 @@ BinaryenSideEffects BinaryenSideEffectWritesTable(void) {
   return static_cast<BinaryenSideEffects>(
     EffectAnalyzer::SideEffects::WritesTable);
 }
-BinaryenSideEffects BinaryenSideEffectImplicitTrap(void) {
-  return static_cast<BinaryenSideEffects>(
-    EffectAnalyzer::SideEffects::ImplicitTrap);
-}
 BinaryenSideEffects BinaryenSideEffectTrapsNeverHappen(void) {
   return static_cast<BinaryenSideEffects>(
     EffectAnalyzer::SideEffects::TrapsNeverHappen);
