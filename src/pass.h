@@ -105,6 +105,8 @@ class EffectAnalyzer;
 using FuncEffectsMap = std::unordered_map<Name, EffectAnalyzer>;
 
 struct PassOptions {
+  friend Pass;
+
   // Run passes in debug mode, doing extra validation and timing checks.
   bool debug = false;
   // Whether to run the validator to check for errors.
@@ -271,6 +273,7 @@ struct PassOptions {
     return PassOptions(); // defaults are to not optimize
   }
 
+private:
   bool hasArgument(std::string key) { return arguments.count(key) > 0; }
 
   std::string getArgument(std::string key, std::string errorTextIfMissing) {
