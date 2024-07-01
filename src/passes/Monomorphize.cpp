@@ -273,7 +273,7 @@ struct Monomorphize : public Pass {
       // into the called function as part of the call context then we continue
       // to do so. When we cannot move code in that manner then we emit a
       // local.get, as that is a new parameter.
-      context.operands = ExpressionManipulator::flexibleCopy(
+      context.operands.push_back(ExpressionManipulator::flexibleCopy(
         operand, wasm, [&](Expression* child) -> Expression* {
           if (canBeMovedIntoContext(child)) {
             // This can be moved, great: let the copy happen.
@@ -290,7 +290,7 @@ struct Monomorphize : public Pass {
           //       reuse the local, effectively showing the monomorphized
           //       function that the values are the same.
           return builder.makeLocalGet(paramIndex, child->type);
-        });
+        }));
     }
 
     // TODO: handle drop
@@ -304,7 +304,7 @@ struct Monomorphize : public Pass {
         // When we computed this before, we found a benefit to optimizing, and
         // created a new monomorphized function to call. Use it by simply
         // applying the new operands we computed, and adjusting the call target.
-        call->operands = newOperands;
+        call->operands.set(newOperands);
         call->target = newTarget;
       }
       return;
@@ -314,7 +314,7 @@ struct Monomorphize : public Pass {
     // monomorphizing. First, create the refined function that has includes the
     // call context.
     std::unique_ptr<Function> refinedFunc =
-      makeRefinedFunctionWithContext(func, context, *module);
+      makeRefinedFunctionWithContext(func, context, wasm);
 
     // Assume we'll choose to use the refined target, but if we are being
     // careful then we might change our mind.
@@ -348,18 +348,17 @@ struct Monomorphize : public Pass {
       //       keep optimizing from the current contents as we go. It's not
       //       obvious which approach is best here.
       doMinimalOpts(func);
-      doMinimalOpts(refinedFunc);
+      doMinimalOpts(refinedFunc.get());
 
       auto costBefore = CostAnalyzer(func->body).cost;
       auto costAfter = CostAnalyzer(refinedFunc->body).cost;
       if (costAfter >= costBefore) {
-        // We failed to improve.
-        module->removeFunction(refinedTarget);
+        // We failed to improve; use the original target instead.
         chosenTarget = target;
       }
     }
 
-    if (chosenTarget == refinedTarget) {
+    if (chosenTarget == refinedFunc->name) {
       // We are using the refined function, so add it to the module.
       wasm.addFunction(refinedFunc);
     }
