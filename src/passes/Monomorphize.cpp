@@ -158,8 +158,8 @@ struct CallContext {
   // Whether the call is dropped.
   bool dropped;
 
-  CallContext(std::vector<Expression*> operands, bool dropped)
-    : operands(operands), dropped(dropped) {}
+  //CallContext(std::vector<Expression*> operands, bool dropped)
+  //  : operands(operands), dropped(dropped) {}
 
   bool operator==(const CallContext& other) const {
     // We consider logically equivalent expressions as equal (rather than raw
@@ -174,7 +174,7 @@ struct CallContext {
       }
     }
 
-    return dropped = other.dropped;
+    return dropped == other.dropped;
   }
 
   bool operator!=(const CallContext& other) const { return !(*this == other); }
@@ -188,12 +188,14 @@ namespace std {
 
 template<> struct hash<wasm::CallContext> {
   size_t operator()(const wasm::CallContext& info) const {
-    size_t digest = std::hash<bool>(info.dropped);
+    size_t digest = hash<bool>{}(info.dropped);
 
-    rehash(digest, info.operands.size());
+    wasm::rehash(digest, info.operands.size());
     for (auto* operand : info.operands) {
-      hash_combine(digest, ExpressionAnalyzer::hash(operand));
+      wasm::hash_combine(digest, wasm::ExpressionAnalyzer::hash(operand));
     }
+
+    return digest;
   }
 };
 
@@ -248,10 +250,10 @@ struct Monomorphize : public Pass {
   // Try to optimize a call.
   void processCall(Call* call, Module& wasm) {
     auto target = call->target;
-    auto* func = module->getFunction(target);
+    auto* func = wasm.getFunction(target);
     if (func->imported()) {
       // Nothing to do since this calls outside of the module.
-      return target;
+      return;
     }
 
     // TODO: igmore calls with unreachable operands for simplicty
@@ -273,7 +275,7 @@ struct Monomorphize : public Pass {
       // local.get, as that is a new parameter.
       context.operands = ExpressionManipulator::flexibleCopy(
         operand, wasm, [&](Expression* child) {
-          if (canBeMovedWithContext(child)) {
+          if (canBeMovedIntoContext(child)) {
             // This can be moved, great: let the copy happen.
             return nullptr;
           }
@@ -473,6 +475,15 @@ struct Monomorphize : public Pass {
     runner.addDefaultFunctionOptimizationPasses();
     runner.setIsNested(true);
     runner.runOnFunction(func);
+  }
+
+  // Checks whether an expression can be moved into the context. Things that can
+  // be, become part of the context, and so they become part of the refined
+  // functions that we create with the context.
+  bool canBeMovedIntoContext(Expression* curr) {
+    // Constant numbers, funcs, strings, etc. can all be copied, so it is ok to
+    // add them to the context.
+    return Properties::isSingleConstantExpression(curr);
   }
 
   // Maps [func name, call info] to the name of a new function which is
