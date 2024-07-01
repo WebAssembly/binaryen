@@ -274,7 +274,7 @@ struct Monomorphize : public Pass {
       // to do so. When we cannot move code in that manner then we emit a
       // local.get, as that is a new parameter.
       context.operands = ExpressionManipulator::flexibleCopy(
-        operand, wasm, [&](Expression* child) {
+        operand, wasm, [&](Expression* child) -> Expression* {
           if (canBeMovedIntoContext(child)) {
             // This can be moved, great: let the copy happen.
             return nullptr;
@@ -285,7 +285,7 @@ struct Monomorphize : public Pass {
           // and in the context operands it is a local.get, that reads that
           // value.
           auto paramIndex = newOperands.size();
-          newOperands.push(child);
+          newOperands.push_back(child);
           // TODO: If one operand is a tee and another a get, we could actually
           //       reuse the local, effectively showing the monomorphized
           //       function that the values are the same.
