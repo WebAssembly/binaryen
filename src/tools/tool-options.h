@@ -139,7 +139,8 @@ struct ToolOptions : public Options {
                key = argument.substr(0, colon);
                value = argument.substr(colon + 1);
              }
-             passOptions.arguments[key] = value;
+
+             addPassArg(key, value);
            })
       .add(
         "--closed-world",
@@ -212,6 +213,12 @@ struct ToolOptions : public Options {
     module.features.enable(enabledFeatures);
     module.features.disable(disabledFeatures);
   }
+
+  virtual void addPassArg(const std::string& key, const std::string& value) {
+    passOptions.arguments[key] = value;
+  }
+
+  virtual ~ToolOptions() = default;
 
 private:
   FeatureSet enabledFeatures = FeatureSet::Default;

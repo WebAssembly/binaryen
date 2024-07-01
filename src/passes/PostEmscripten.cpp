@@ -214,8 +214,7 @@ struct PostEmscripten : public Pass {
     std::vector<Address> segmentOffsets; // segment index => address offset
     calcSegmentOffsets(module, segmentOffsets);
 
-    auto& options = getPassOptions();
-    auto sideModule = options.hasArgument("post-emscripten-side-module");
+    auto sideModule = hasArgument("post-emscripten-side-module");
     if (!sideModule) {
       removeData(module, segmentOffsets, "__start_em_asm", "__stop_em_asm");
       removeData(module, segmentOffsets, "__start_em_js", "__stop_em_js");
@@ -235,8 +234,7 @@ struct PostEmscripten : public Pass {
   }
 
   void removeEmJsExports(Module& module) {
-    auto& options = getPassOptions();
-    auto sideModule = options.hasArgument("post-emscripten-side-module");
+    auto sideModule = hasArgument("post-emscripten-side-module");
     EmJsWalker walker(sideModule);
     walker.walkModule(&module);
     for (const Export& exp : walker.toRemove) {

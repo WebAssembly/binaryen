@@ -5451,7 +5451,10 @@ void BinaryenModuleRunPasses(BinaryenModuleRef module,
   PassRunner passRunner((Module*)module);
   passRunner.options = globalPassOptions;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
-    passRunner.add(passes[i]);
+    passRunner.add(passes[i],
+                   globalPassOptions.arguments.count(passes[i]) > 0
+                     ? globalPassOptions.arguments[passes[i]]
+                     : std::optional<std::string>());
   }
   passRunner.run();
 }
@@ -5696,7 +5699,10 @@ void BinaryenFunctionRunPasses(BinaryenFunctionRef func,
   PassRunner passRunner((Module*)module);
   passRunner.options = globalPassOptions;
   for (BinaryenIndex i = 0; i < numPasses; i++) {
-    passRunner.add(passes[i]);
+    passRunner.add(passes[i],
+                   globalPassOptions.arguments.count(passes[i]) > 0
+                     ? globalPassOptions.arguments[passes[i]]
+                     : std::optional<std::string>());
   }
   passRunner.runOnFunction((Function*)func);
 }

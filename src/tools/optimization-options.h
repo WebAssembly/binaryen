@@ -46,6 +46,8 @@ struct OptimizationOptions : public ToolOptions {
     // The name of the pass to run.
     std::string name;
 
+    std::optional<std::string> argument;
+
     // The optimize and shrink levels to run the pass with, if specified. If not
     // specified then the defaults are used.
     std::optional<int> optimizeLevel;
@@ -315,16 +317,36 @@ struct OptimizationOptions : public ToolOptions {
         //   --foo --pass-arg=foo@ARG
         Options::Arguments::Optional,
         [this, p](Options*, const std::string& arg) {
+          PassInfo info(p);
           if (!arg.empty()) {
-            if (passOptions.arguments.count(p)) {
-              Fatal() << "Cannot pass multiple pass arguments to " << p;
-            }
-            passOptions.arguments[p] = arg;
+            info.argument = arg;
           }
-          passes.push_back(p);
+
+          passes.push_back(info);
         },
         PassRegistry::get()->isPassHidden(p));
     }
+  }
+
+  void addPassArg(const std::string& key, const std::string& value) override {
+    for (auto iPass = passes.rbegin(); iPass != passes.rend(); iPass++) {
+      if (iPass->name != key) {
+        continue;
+      }
+
+      if (iPass->argument.has_value()) {
+        Fatal() << iPass->name << " already set to " << *(iPass->argument);
+      }
+
+      iPass->argument = value;
+      return;
+    }
+
+    if (!PassRegistry::get()->containsPass(key)) {
+      return ToolOptions::addPassArg(key, value);
+    }
+
+    Fatal() << "can't set " << key << ": pass not enabled";
   }
 
   bool runningDefaultOptimizationPasses() {
@@ -378,7 +400,7 @@ struct OptimizationOptions : public ToolOptions {
         passRunner.options.shrinkLevel = passOptions.shrinkLevel;
       } else {
         // This is a normal pass. Add it to the queue for execution.
-        passRunner.add(pass.name);
+        passRunner.add(pass.name, pass.argument);
 
         // Normal passes do not set their own optimize/shrinkLevels.
         assert(!pass.optimizeLevel);

@@ -45,7 +45,7 @@ void PassRegistry::registerPass(const char* name,
                                 const char* description,
                                 Creator create) {
   assert(passInfos.find(name) == passInfos.end());
-  passInfos[name] = PassInfo(description, create);
+  passInfos[name] = PassInfo(description, create, false);
 }
 
 void PassRegistry::registerTestPass(const char* name,
@@ -71,6 +71,16 @@ std::vector<std::string> PassRegistry::getRegisteredNames() {
     ret.push_back(name);
   }
   return ret;
+}
+
+bool PassRegistry::containsPass(const std::string& name) {
+  for (auto& [passName, _] : passInfos) {
+    if (passName == name) {
+      return true;
+    }
+  }
+
+  return false;
 }
 
 std::string PassRegistry::getPassDescription(std::string name) {
@@ -715,6 +725,15 @@ void PassRunner::addDefaultGlobalOptimizationPrePasses() {
   //       which can lead to more opportunities for global effects to matter.
 }
 
+void PassRunner::add(std::string passName, std::optional<std::string> passArg) {
+  auto pass = PassRegistry::get()->createPass(passName);
+  if (passArg) {
+    pass->setPassArg(*passArg);
+  }
+
+  doAdd(std::move(pass));
+}
+
 void PassRunner::addDefaultGlobalOptimizationPostPasses() {
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues("dae-optimizing");
@@ -1023,6 +1042,30 @@ bool PassRunner::shouldPreserveDWARF() {
   }
 
   return true;
+}
+
+bool Pass::hasArgument(const std::string& key) {
+  return (key == name) ? passArg.has_value()
+                       : getPassOptions().hasArgument(key);
+}
+
+std::string Pass::getArgument(const std::string& key,
+                              const std::string& errorTextIfMissing) {
+  if (!hasArgument(key)) {
+    Fatal() << errorTextIfMissing;
+  }
+
+  return (key == name) ? *passArg
+                       : getPassOptions().getArgument(key, errorTextIfMissing);
+}
+
+std::string Pass::getArgumentOrDefault(const std::string& key,
+                                       const std::string& defaultValue) {
+  if (key == name) {
+    return passArg.value_or(defaultValue);
+  }
+
+  return getPassOptions().getArgumentOrDefault(key, defaultValue);
 }
 
 } // namespace wasm
