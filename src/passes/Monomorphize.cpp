@@ -311,11 +311,12 @@ struct Monomorphize : public Pass {
     // This is the first time we see this situation. Let's see if it is worth
     // monomorphizing. First, create the refined function that has includes the
     // call context.
-    auto refinedTarget = makeRefinedFunctionWithContext(func, context, *module);
+    std::unique_ptr<Function> refinedFunc =
+      makeRefinedFunctionWithContext(func, context, *module);
 
     // Assume we'll choose to use the refined target, but if we are being
     // careful then we might change our mind.
-    auto chosenTarget = refinedTarget;
+    auto chosenTarget = refinedFunc->name;
     if (onlyWhenHelpful) {
       // Optimize both functions using minimal opts, hopefully enough to see if
       // there is a benefit to the refined types (such as the new types allowing
@@ -350,11 +351,15 @@ struct Monomorphize : public Pass {
       auto costBefore = CostAnalyzer(func->body).cost;
       auto costAfter = CostAnalyzer(refinedFunc->body).cost;
       if (costAfter >= costBefore) {
-        // We failed to improve. Remove the new function and return the old
-        // target.
+        // We failed to improve.
         module->removeFunction(refinedTarget);
         chosenTarget = target;
       }
+    }
+
+    if (chosenTarget == refinedTarget) {
+      // We are using the refined function, so add it to the module.
+      wasm.addFunction(refinedFunc);
     }
 
     // Mark the chosen target in the map, so we don't do this work again: every
@@ -441,7 +446,7 @@ struct Monomorphize : public Pass {
     }
     newFunc->body = newBody;
 
-    return std::move(newFunc);
+    return newFunc;
   }
 
   // Run minimal function-level optimizations on a function. This optimizes at
