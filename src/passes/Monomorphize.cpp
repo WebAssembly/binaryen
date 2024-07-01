@@ -158,9 +158,6 @@ struct CallContext {
   // Whether the call is dropped.
   bool dropped;
 
-  //CallContext(std::vector<Expression*> operands, bool dropped)
-  //  : operands(operands), dropped(dropped) {}
-
   bool operator==(const CallContext& other) const {
     // We consider logically equivalent expressions as equal (rather than raw
     // pointers), so that contexts with functionally identical shape are
@@ -178,6 +175,32 @@ struct CallContext {
   }
 
   bool operator!=(const CallContext& other) const { return !(*this == other); }
+
+  // Check if a context is trivial relative to a call, that is, the context
+  // contains no information that can allow optimization at all. Such contexts
+  // can be dismissed early.
+  bool isTrivial(Call* call) {
+    // Dropped contexts are not trivial.
+    if (dropped) {
+      return false;
+    }
+
+    // If the context simply passes through all the operands, without adding or
+    // removing any, and without even refining a type, then it is trivial.
+    if (operands.size() != call->operands.size()) {
+      return false;
+    }
+    for (Index i = 0; i < operands.size(); i++) {
+      // A local.get of the same type implies we just pass through the value.
+      if (!operands[i]->is<LocalGet>() ||
+          operands[i]->type != call->operands[i]->type) {
+        return false;
+      }
+    }
+
+    // We found nothing interesting, so this is trivial.
+    return true;
+  }
 };
 
 } // anonymous namespace
@@ -264,6 +287,7 @@ struct Monomorphize : public Pass {
     // explained in the comments on CallContext, and sets up the operands for
     // the new call (which may have less, more, or different parameters than the
     // original).
+    // TODO: make this a helper func on CallContext, returning newOperands
     CallContext context;
     std::vector<Expression*> newOperands;
     // auto params = func->getParams();
@@ -311,8 +335,17 @@ struct Monomorphize : public Pass {
     }
 
     // This is the first time we see this situation. Let's see if it is worth
-    // monomorphizing. First, create the refined function that has includes the
-    // call context.
+    // monomorphizing.
+    
+    // Check if it the context is trivial and has no opportunities for
+    // optimization.
+    if (context.isTrivial(call)) {
+      // Memoize the failure, and stop.
+      funcContextMap[{target, context}] = target;
+      return;
+    }
+
+    // Create the refined function that has includes the call context.
     std::unique_ptr<Function> refinedFunc =
       makeRefinedFunctionWithContext(func, context, wasm);
 
@@ -358,14 +391,18 @@ struct Monomorphize : public Pass {
       }
     }
 
-    if (chosenTarget == refinedFunc->name) {
-      // We are using the refined function, so add it to the module.
-      wasm.addFunction(std::move(refinedFunc));
-    }
-
-    // Mark the chosen target in the map, so we don't do this work again: every
-    // pair of target and refinedParams is only considered once.
+    // Mark the chosen target in the map, so we don't do this work again,
+    // memoizing both success and failure.
     funcContextMap[{target, context}] = chosenTarget;
+
+    if (chosenTarget == refinedFunc->name) {
+      // We are using the refined function, so add it to the module, and update
+      // the call.
+      wasm.addFunction(std::move(refinedFunc));
+
+      call->operands.set(newOperands);
+      call->target = chosenTarget;
+    }
   }
 
   // Creates a refined function from the original + the call context. The
