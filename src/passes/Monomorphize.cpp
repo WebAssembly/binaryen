@@ -360,32 +360,30 @@ struct Monomorphize : public Pass {
 
     if (chosenTarget == refinedFunc->name) {
       // We are using the refined function, so add it to the module.
-      wasm.addFunction(refinedFunc);
+      wasm.addFunction(std::move(refinedFunc));
     }
 
     // Mark the chosen target in the map, so we don't do this work again: every
     // pair of target and refinedParams is only considered once.
-    funcContextMap[{target, refinedParams}] = chosenTarget;
-
-    return chosenTarget;
+    funcContextMap[{target, context}] = chosenTarget;
   }
 
   // Creates a refined function from the original + the call context. The
   // refined one may have different parameters, results, and may include parts
   // of the call context.
   std::unique_ptr<Function> makeRefinedFunctionWithContext(
-    Function* original, const CallContext& context, Module& wasm) {
+    Function* func, const CallContext& context, Module& wasm) {
     // Pick a new name.
-    auto newName = Names::getValidFunctionName(wasm, original->name);
+    auto newName = Names::getValidFunctionName(wasm, func->name);
 
     // Generate the new signature.
-    std::vector<Type> newParams, newResults;
+    std::vector<Type> newParams;
     for (auto* operand : context.operands) {
       newParams.push_back(operand->type);
     }
     // TODO: support changes to results.
-    newResults = original->getResults();
-    auto newType = HeapType(Signature(newParams, newResults));
+    auto newResults = func->getResults();
+    auto newType = HeapType(Signature(Type(newParams), newResults));
 
     // Make the new function.
     Builder builder(wasm);
@@ -419,7 +417,7 @@ struct Monomorphize : public Pass {
     // We write the refined actual param into a local that replaces the old
     // param (and we then let optimizations propagate the refined type).
     std::vector<Expression*> pre;
-    assert(context.operands.size() == func->getParams().size());
+    assert(context.operands.size() == func->getNumParams());
     for (Index i = 0; i < context.operands.size(); i++) {
       auto* operand = context.operands[i];
       auto oldType = func->getLocalType(i);
@@ -438,7 +436,7 @@ struct Monomorphize : public Pass {
     }
 
     // The main body of the function is simply copied from the original.
-    auto* newBody = ExpressionManipulator::copy(original->body, wasm);
+    auto* newBody = ExpressionManipulator::copy(func->body, wasm);
 
     // If there is content we need before, combine it.
     if (!pre.empty()) {
