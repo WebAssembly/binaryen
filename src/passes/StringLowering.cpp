@@ -283,7 +283,7 @@ struct StringLowering : public StringGathering {
     // explained we cannot do that - or before it, which is what we do here).
     for (auto& func : module->functions) {
       if (func->type.getRecGroup().size() != 1 ||
-          !Type(func->type, Nullable).getFeatures().hasStrings()) {
+          !func->type.getFeatures().hasStrings()) {
         continue;
       }
 

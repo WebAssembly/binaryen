@@ -451,6 +451,9 @@ public:
   // Return the LUB of two HeapTypes, which may or may not exist.
   static std::optional<HeapType> getLeastUpperBound(HeapType a, HeapType b);
 
+  // Returns the feature set required to use this type.
+  FeatureSet getFeatures() const;
+
   // Helper allowing the value of `print(...)` to be sent to an ostream. Stores
   // a `TypeID` because `Type` is incomplete at this point and using a reference
   // makes it less convenient to use.
