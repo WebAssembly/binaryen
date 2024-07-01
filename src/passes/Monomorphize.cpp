@@ -268,6 +268,7 @@ template<> struct hash<wasm::CallContext> {
   }
 };
 
+[[maybe_unused]]
 std::ostream& operator<<(std::ostream& o, wasm::CallContext& context) {
   o << "CallContext{\n";
   for (auto* operand : context.operands) {
