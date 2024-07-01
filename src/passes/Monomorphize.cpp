@@ -473,6 +473,8 @@ struct Monomorphize : public Pass {
       if (func->isParam(i)) {
         // Old params become new vars inside the function. Later, we'll copy the
         // proper values into these vars.
+        // TODO: We could avoid this copy when it is trivial (atm we rely on
+        //       optimizations to remove it).
         auto local = Builder::addVar(newFunc.get(), func->getLocalType(i));
         mappedLocals[i] = local;
       } else {
