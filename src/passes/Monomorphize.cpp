@@ -482,6 +482,21 @@ struct Monomorphize : public Pass {
       }
     }
 
+    // Copy over local names to help debugging.
+    if (!func->localNames.empty()) {
+      for (Index i = 0; i < func->getNumLocals(); i++) {
+        auto oldName = func->getLocalNameOrDefault(i);
+        if (oldName.isNull()) {
+          continue;
+        }
+
+        auto newIndex = mappedLocals[i];
+        auto newName = Names::getValidLocalName(*newFunc.get(), oldName);
+        newFunc->localNames[newIndex] = newName;
+        newFunc->localIndices[newName] = newIndex;
+      }
+    };
+
 //for (auto [k, v] : mappedLocals) std::cout << "map " << k << " to " << v << '\n';
 
     // Surrounding the main body is the reverse-inlined content from the call
