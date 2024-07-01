@@ -448,9 +448,32 @@ std::cout << "memo " << chosenTarget << "\n";
     auto newResults = func->getResults();
     auto newType = HeapType(Signature(Type(newParams), newResults));
 
+    // Copy the function's vars, though below we will need to re-index them, as
+    // we are adjusting params.
+    auto newVars = func->vars;
+
     // Make the new function.
     Builder builder(wasm);
-    auto newFunc = builder.makeFunction(newName, newType, {});
+    auto newFunc = builder.makeFunction(newName, newType, newVars);
+
+    // We must update local indexes: the new function has a XXX
+    // potentially different number of parameters, which are at the bottom of
+    // the local index space. We are also replacing old params with vars. To
+    // track this, map each old index to the new one.
+    std::unordered_map<Index, Index> mappedLocals;
+    auto newParamsMinusOld = newFunc->getParams().size() - func->getParams().size();
+    for (Index i = 0; i < func->getNumLocals(); i++) {
+      if (func->isParam(i)) {
+        // Old params become new vars inside the function. We'll copy the proper
+        // values into these vars in the next step.
+        auto local = Builder::addVar(newFunc.get(), func->getLocalType(i));
+        mappedLocals[i] = local;
+      } else {
+        // This is a var. The only thing to adjust here is that the parameters
+        // are changing.
+        mappedLocals[i] += newParamsMinusOld;
+      }
+    }
 
     // Surrounding the main body is the reverse-inlined content from the call
     // context, like this:
@@ -478,22 +501,18 @@ std::cout << "memo " << chosenTarget << "\n";
     //    (local.set $super (local.get $sub))
     //
     // We write the refined actual param into a local that replaces the old
-    // param (and we then let optimizations propagate the refined type).
+    // param (and we then let optimizations propagate the refined type). To do
+    // this, we build up a list of the expressions we will prepend:
     std::vector<Expression*> pre;
+
     assert(context.operands.size() == func->getNumParams());
     for (Index i = 0; i < context.operands.size(); i++) {
       auto* operand = context.operands[i];
       auto oldType = func->getLocalType(i);
       auto newType = operand->type;
 
-      // If this is a local.get of the same type then we are using the parameter
-      // exactly as it was before, so we do not need to make any changes.
-      if (operand->is<LocalGet>() && newType == oldType) {
-        continue;
-      }
-
-      // Add a local to store this in, and store it.
-      auto local = Builder::addVar(newFunc.get(), oldType);
+      // We've allocated a local for this, which we can write to.
+      auto local = mappedLocals.at(i);
       auto* value = ExpressionManipulator::copy(operand, wasm);
       pre.push_back(builder.makeLocalSet(local, value));
     }
@@ -501,8 +520,22 @@ std::cout << "memo " << chosenTarget << "\n";
     // The main body of the function is simply copied from the original.
     auto* newBody = ExpressionManipulator::copy(func->body, wasm);
 
-    // If there is content we need before, combine it.
+    // Map locals.
+    struct LocalUpdater : public PostWalker<LocalUpdater> {
+      const std::unordered_map<Index, Index>& mappedLocals;
+      LocalUpdater(const std::unordered_map<Index, Index>& mappedLocals) : mappedLocals(mappedLocals) {}
+      void visitLocalGet(LocalGet* curr) { updateIndex(curr->index); }
+      void visitLocalSet(LocalSet* curr) { updateIndex(curr->index); }
+      void updateIndex(Index& index) {
+        auto iter = mappedLocals.find(index);
+        assert(iter != mappedLocals.end());
+        index = iter->second;
+      }
+    } localUpdater(mappedLocals);
+    localUpdater.walk(newBody);
+
     if (!pre.empty()) {
+      // Add the block after the prepends.
       pre.push_back(newBody);
       newBody = builder.makeBlock(pre);
     }
