@@ -343,15 +343,15 @@ struct Monomorphize : public Pass {
     CallContext context;
     std::vector<Expression*> newOperands;
     context.buildFromCall(call, newOperands, wasm);
-std::cout << "eval " << *call << " : " << context << '\n';
+//std::cout << "eval " << *call << " : " << context << '\n';
     // See if we've already evaluated this function + call context. If so, that
     // is in the map, whether we decided to optimize or not.
     auto iter = funcContextMap.find({target, context});
     if (iter != funcContextMap.end()) {
-std::cout << "old\n";
+//std::cout << "old\n";
       auto newTarget = iter->second;
       if (newTarget != target) {
-std::cout << " good\n";
+//std::cout << " good\n";
         // When we computed this before, we found a benefit to optimizing, and
         // created a new monomorphized function to call. Use it by simply
         // applying the new operands we computed, and adjusting the call target.
@@ -364,7 +364,7 @@ std::cout << " good\n";
     // This is the first time we see this situation. Firs, check if it the
     // context is trivial and has no opportunities for optimization.
     if (context.isTrivial(call, wasm)) {
-std::cout << "triv\n";
+//std::cout << "triv\n";
       // Memoize the failure, and stop.
       funcContextMap[{target, context}] = target;
       return;
@@ -416,7 +416,7 @@ std::cout << "triv\n";
       }
     }
 
-std::cout << "memo " << chosenTarget << "\n";
+//std::cout << "memo " << chosenTarget << "\n";
     // Mark the chosen target in the map, so we don't do this work again,
     // memoizing both success and failure.
     funcContextMap[{target, context}] = chosenTarget;
@@ -471,9 +471,11 @@ std::cout << "memo " << chosenTarget << "\n";
       } else {
         // This is a var. The only thing to adjust here is that the parameters
         // are changing.
-        mappedLocals[i] += newParamsMinusOld;
+        mappedLocals[i] = i + newParamsMinusOld;
       }
     }
+
+//for (auto [k, v] : mappedLocals) std::cout << "map " << k << " to " << v << '\n';
 
     // Surrounding the main body is the reverse-inlined content from the call
     // context, like this:
