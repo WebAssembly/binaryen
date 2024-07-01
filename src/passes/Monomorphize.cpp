@@ -224,7 +224,7 @@ struct CallContext {
   // Check if a context is trivial relative to a call, that is, the context
   // contains no information that can allow optimization at all. Such contexts
   // can be dismissed early.
-  bool isTrivial(Call* call) {
+  bool isTrivial(Call* call, Module& wasm) {
     // Dropped contexts are not trivial.
     if (dropped) {
       return false;
@@ -235,10 +235,11 @@ struct CallContext {
     if (operands.size() != call->operands.size()) {
       return false;
     }
+    auto callParams = wasm.getFunction(call->target)->getParams();
     for (Index i = 0; i < operands.size(); i++) {
       // A local.get of the same type implies we just pass through the value.
       if (!operands[i]->is<LocalGet>() ||
-          operands[i]->type != call->operands[i]->type) {
+          operands[i]->type != callParams[i]) {
         return false;
       }
     }
@@ -266,6 +267,18 @@ template<> struct hash<wasm::CallContext> {
     return digest;
   }
 };
+
+std::ostream& operator<<(std::ostream& o, wasm::CallContext& context) {
+  o << "CallContext{\n";
+  for (auto* operand : context.operands) {
+    o << "  " << *operand << '\n';
+  }
+  if (context.dropped) {
+    o << "  dropped\n";
+  }
+  o << "}\n";
+  return o;
+}
 
 } // namespace std
 
@@ -330,12 +343,15 @@ struct Monomorphize : public Pass {
     CallContext context;
     std::vector<Expression*> newOperands;
     context.buildFromCall(call, newOperands, wasm);
-    
-    // See if we've already computed this call context.
+std::cout << "eval " << *call << " : " << context << '\n';
+    // See if we've already evaluated this function + call context. If so, that
+    // is in the map, whether we decided to optimize or not.
     auto iter = funcContextMap.find({target, context});
     if (iter != funcContextMap.end()) {
+std::cout << "old\n";
       auto newTarget = iter->second;
       if (newTarget != target) {
+std::cout << " good\n";
         // When we computed this before, we found a benefit to optimizing, and
         // created a new monomorphized function to call. Use it by simply
         // applying the new operands we computed, and adjusting the call target.
@@ -347,7 +363,8 @@ struct Monomorphize : public Pass {
 
     // This is the first time we see this situation. Firs, check if it the
     // context is trivial and has no opportunities for optimization.
-    if (context.isTrivial(call)) {
+    if (context.isTrivial(call, wasm)) {
+std::cout << "triv\n";
       // Memoize the failure, and stop.
       funcContextMap[{target, context}] = target;
       return;
@@ -399,6 +416,7 @@ struct Monomorphize : public Pass {
       }
     }
 
+std::cout << "memo " << chosenTarget << "\n";
     // Mark the chosen target in the map, so we don't do this work again,
     // memoizing both success and failure.
     funcContextMap[{target, context}] = chosenTarget;
