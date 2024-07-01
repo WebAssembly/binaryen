@@ -158,7 +158,8 @@ struct CallContext {
   // Whether the call is dropped.
   bool dropped;
 
-  CallContext(std::vector<Expression*> operands, bool dropped) : operands(operands), dropped(dropped) {}
+  CallContext(std::vector<Expression*> operands, bool dropped)
+    : operands(operands), dropped(dropped) {}
 
   bool operator==(const CallContext& other) const {
     // We consider logically equivalent expressions as equal (rather than raw
@@ -176,9 +177,7 @@ struct CallContext {
     return dropped = other.dropped;
   }
 
-  bool operator!=(const CallContext& other) const {
-    return !(*this == other);
-  }
+  bool operator!=(const CallContext& other) const { return !(*this == other); }
 };
 
 } // anonymous namespace
@@ -198,7 +197,7 @@ template<> struct hash<wasm::CallContext> {
   }
 };
 
-}
+} // namespace std
 
 namespace wasm {
 
@@ -265,29 +264,31 @@ struct Monomorphize : public Pass {
     // original).
     CallContext context;
     std::vector<Expression*> newOperands;
-    //auto params = func->getParams();
+    // auto params = func->getParams();
     for (auto* operand : call->operands) {
       // Process the operand, generating the generalized one. This is a copy
       // operation, as so long as we find things that we can "reverse-inline"
       // into the called function as part of the call context then we continue
       // to do so. When we cannot move code in that manner then we emit a
       // local.get, as that is a new parameter.
-      context.operands = ExpressionManipulator::flexibleCopy(operand, wasm, [&](Expression* child) {
-        if (canBeMovedWithContext(child)) {
-          // This can be moved, great: let the copy happen.
-          return nullptr;
-        }
+      context.operands = ExpressionManipulator::flexibleCopy(
+        operand, wasm, [&](Expression* child) {
+          if (canBeMovedWithContext(child)) {
+            // This can be moved, great: let the copy happen.
+            return nullptr;
+          }
 
-        // This cannot be moved, so we stop here: this is a value that is sent
-        // into the monomorphized function. It is a new operand in the call,
-        // and in the context operands it is a local.get, that reads that value.
-        auto paramIndex = newOperands.size();
-        newOperands.push(child);
-        // TODO: If one operand is a tee and another a get, we could actually
-        //       reuse the local, effectively showing the monomorphized
-        //       function that the values are the same.
-        return builder.makeLocalGet(paramIndex, child->type);
-      });
+          // This cannot be moved, so we stop here: this is a value that is sent
+          // into the monomorphized function. It is a new operand in the call,
+          // and in the context operands it is a local.get, that reads that
+          // value.
+          auto paramIndex = newOperands.size();
+          newOperands.push(child);
+          // TODO: If one operand is a tee and another a get, we could actually
+          //       reuse the local, effectively showing the monomorphized
+          //       function that the values are the same.
+          return builder.makeLocalGet(paramIndex, child->type);
+        });
     }
 
     // TODO: handle drop
@@ -366,7 +367,8 @@ struct Monomorphize : public Pass {
   // Creates a refined function from the original + the call context. The
   // refined one may have different parameters, results, and may include parts
   // of the call context.
-  std::unique_ptr<Function> makeRefinedFunctionWithContext(Function* original, const CallContext& context, Module& wasm) {
+  std::unique_ptr<Function> makeRefinedFunctionWithContext(
+    Function* original, const CallContext& context, Module& wasm) {
     // Pick a new name.
     auto newName = Names::getValidFunctionName(wasm, original->name);
 
