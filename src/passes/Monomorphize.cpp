@@ -449,7 +449,12 @@ struct Monomorphize : public Pass {
     // Generate the new signature.
     std::vector<Type> newParams;
     for (auto* operand : context.operands) {
-      newParams.push_back(operand->type);
+      // A local.get is a value that arrives in a parameter. Anything else is
+      // something that we are reverse-inlining into the function, so we don't
+      // need a param for it.
+      if (operand->is<LocalGet>()) {
+        newParams.push_back(operand->type);
+      }
     }
     // TODO: support changes to results.
     auto newResults = func->getResults();
