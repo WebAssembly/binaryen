@@ -454,7 +454,7 @@ std::cout << "memo " << chosenTarget << "\n";
 
     // Make the new function.
     Builder builder(wasm);
-    auto newFunc = builder.makeFunction(newName, newType, newVars);
+    auto newFunc = builder.makeFunction(newName, newType, std::move(newVars));
 
     // We must update local indexes: the new function has a XXX
     // potentially different number of parameters, which are at the bottom of
@@ -508,8 +508,6 @@ std::cout << "memo " << chosenTarget << "\n";
     assert(context.operands.size() == func->getNumParams());
     for (Index i = 0; i < context.operands.size(); i++) {
       auto* operand = context.operands[i];
-      auto oldType = func->getLocalType(i);
-      auto newType = operand->type;
 
       // We've allocated a local for this, which we can write to.
       auto local = mappedLocals.at(i);
