@@ -608,3 +608,34 @@
     )
   )
 )
+
+(module
+  ;; Test that constants are monomorphized.
+
+  (func $calls
+    ;; All but the eqz parameter are constants that can be handled.
+    (call $target
+      (i32.const 1)
+      (i32.eqz
+        (i32.const 2)
+      )
+      (ref.func $calls)
+      (string.const "foo")
+    )
+  )
+
+  (func $target (param $x i32) (param $y i32) (param $func funcref) (param $str stringref)
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $y)
+    )
+    (drop
+      (local.get $func)
+    )
+    (drop
+      (local.get $str)
+    )
+  )
+)
