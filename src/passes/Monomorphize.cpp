@@ -176,6 +176,51 @@ struct CallContext {
 
   bool operator!=(const CallContext& other) const { return !(*this == other); }
 
+  // Build the context from a given call. This builds up the generalized
+  // parameters as explained in the comments above, and generates the new
+  // operands for the call to have (through the out param).
+  void buildFromCall(Call* call, std::vector<Expression*>& newOperands, Module& wasm) {
+    Builder builder(wasm);
+
+    for (auto* operand : call->operands) {
+      // Process the operand, generating the generalized one. This is a copy
+      // operation, as so long as we find things that we can "reverse-inline"
+      // into the called function as part of the call context then we continue
+      // to do so. When we cannot move code in that manner then we emit a
+      // local.get, as that is a new parameter.
+      operands.push_back(ExpressionManipulator::flexibleCopy(
+        operand, wasm, [&](Expression* child) -> Expression* {
+          if (canBeMovedIntoContext(child)) {
+            // This can be moved, great: let the copy happen.
+            return nullptr;
+          }
+
+          // This cannot be moved, so we stop here: this is a value that is sent
+          // into the monomorphized function. It is a new operand in the call,
+          // and in the context operands it is a local.get, that reads that
+          // value.
+          auto paramIndex = newOperands.size();
+          newOperands.push_back(child);
+          // TODO: If one operand is a tee and another a get, we could actually
+          //       reuse the local, effectively showing the monomorphized
+          //       function that the values are the same.
+          return builder.makeLocalGet(paramIndex, child->type);
+        }));
+    }
+
+    // TODO: handle drop
+    dropped = false;
+  }
+
+  // Checks whether an expression can be moved into the context. Things that can
+  // be, become part of the context, and so they become part of the refined
+  // functions that we create with the context.
+  bool canBeMovedIntoContext(Expression* curr) {
+    // Constant numbers, funcs, strings, etc. can all be copied, so it is ok to
+    // add them to the context.
+    return Properties::isSingleConstantExpression(curr);
+  }
+
   // Check if a context is trivial relative to a call, that is, the context
   // contains no information that can allow optimization at all. Such contexts
   // can be dismissed early.
@@ -281,45 +326,11 @@ struct Monomorphize : public Pass {
 
     // TODO: igmore calls with unreachable operands for simplicty
 
-    Builder builder(wasm);
-
-    // Compute the call context. This builds up the generalized parameters as
-    // explained in the comments on CallContext, and sets up the operands for
-    // the new call (which may have less, more, or different parameters than the
-    // original).
-    // TODO: make this a helper func on CallContext, returning newOperands
+    // Compute the call context.
     CallContext context;
     std::vector<Expression*> newOperands;
-    // auto params = func->getParams();
-    for (auto* operand : call->operands) {
-      // Process the operand, generating the generalized one. This is a copy
-      // operation, as so long as we find things that we can "reverse-inline"
-      // into the called function as part of the call context then we continue
-      // to do so. When we cannot move code in that manner then we emit a
-      // local.get, as that is a new parameter.
-      context.operands.push_back(ExpressionManipulator::flexibleCopy(
-        operand, wasm, [&](Expression* child) -> Expression* {
-          if (canBeMovedIntoContext(child)) {
-            // This can be moved, great: let the copy happen.
-            return nullptr;
-          }
-
-          // This cannot be moved, so we stop here: this is a value that is sent
-          // into the monomorphized function. It is a new operand in the call,
-          // and in the context operands it is a local.get, that reads that
-          // value.
-          auto paramIndex = newOperands.size();
-          newOperands.push_back(child);
-          // TODO: If one operand is a tee and another a get, we could actually
-          //       reuse the local, effectively showing the monomorphized
-          //       function that the values are the same.
-          return builder.makeLocalGet(paramIndex, child->type);
-        }));
-    }
-
-    // TODO: handle drop
-    context.dropped = false;
-
+    context.buildFromCall(call, newOperands, wasm);
+    
     // See if we've already computed this call context.
     auto iter = funcContextMap.find({target, context});
     if (iter != funcContextMap.end()) {
@@ -334,11 +345,8 @@ struct Monomorphize : public Pass {
       return;
     }
 
-    // This is the first time we see this situation. Let's see if it is worth
-    // monomorphizing.
-    
-    // Check if it the context is trivial and has no opportunities for
-    // optimization.
+    // This is the first time we see this situation. Firs, check if it the
+    // context is trivial and has no opportunities for optimization.
     if (context.isTrivial(call)) {
       // Memoize the failure, and stop.
       funcContextMap[{target, context}] = target;
@@ -509,15 +517,6 @@ struct Monomorphize : public Pass {
     runner.addDefaultFunctionOptimizationPasses();
     runner.setIsNested(true);
     runner.runOnFunction(func);
-  }
-
-  // Checks whether an expression can be moved into the context. Things that can
-  // be, become part of the context, and so they become part of the refined
-  // functions that we create with the context.
-  bool canBeMovedIntoContext(Expression* curr) {
-    // Constant numbers, funcs, strings, etc. can all be copied, so it is ok to
-    // add them to the context.
-    return Properties::isSingleConstantExpression(curr);
   }
 
   // Maps [func name, call info] to the name of a new function which is
