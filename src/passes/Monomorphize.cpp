@@ -308,14 +308,9 @@ struct Monomorphize : public Pass {
     }
 
     // This is the first time we see this situation. Let's see if it is worth
-    // monomorphizing.
-
-    // TODO: helper to maek contex
-    // Create a new function with refined parameters as a copy of the original.
-    auto refinedTarget = Names::getValidFunctionName(*module, target);
-    auto* refinedFunc = ModuleUtils::copyFunction(func, *module, refinedTarget);
-    TypeUpdating::updateParamTypes(refinedFunc, refinedTypes, *module);
-    refinedFunc->type = HeapType(Signature(refinedParams, func->getResults()));
+    // monomorphizing. First, create the refined function that has includes the
+    // call context.
+    auto refinedTarget = makeRefinedFunctionWithContext(func, context, *module);
 
     // Assume we'll choose to use the refined target, but if we are being
     // careful then we might change our mind.
@@ -368,6 +363,85 @@ struct Monomorphize : public Pass {
     return chosenTarget;
   }
 
+  // Creates a refined function from the original + the call context. The
+  // refined one may have different parameters, results, and may include parts
+  // of the call context.
+  std::unique_ptr<Function> makeRefinedFunctionWithContext(Function* original, const CallContext& context, Module& wasm) {
+    // Pick a new name.
+    auto newName = Names::getValidFunctionName(wasm, original->name);
+
+    // Generate the new signature.
+    std::vector<Type> newParams, newResults;
+    for (auto* operand : context.operands) {
+      newParams.push_back(operand->type);
+    }
+    // TODO: support changes to results.
+    newResults = original->getResults();
+    auto newType = HeapType(Signature(newParams, newResults));
+
+    // Make the new function.
+    Builder builder(wasm);
+    auto newFunc = builder.makeFunction(newName, newType, {});
+
+    // Surrounding the main body is the reverse-inlined content from the call
+    // context, like this:
+    //
+    //  (func $refined
+    //    (..reverse-inlined parameter..)
+    //    (..old body..)
+    //  )
+    //
+    // For example, if a function that simply returns its input is called with a
+    // constant parameter, it will end up like this:
+    //
+    //  (func $refined
+    //    (local $param i32)
+    //    (local.set $param (i32.const 42))  ;; reverse-inlined parameter
+    //    (local.get $param)                 ;; copied old body
+    //  )
+    //
+    // We need to add such an entry for a parameter when it changes, like in the
+    // example above, where a constant param turns from a param into a local. We
+    // must also do so when the type changes, resulting in this:
+    //
+    //  (func $refined (param $param (ref $sub))
+    //    (local $original (ref $super))
+    //    (local.set $super (local.get $sub))
+    //
+    // We write the refined actual param into a local that replaces the old
+    // param (and we then let optimizations propagate the refined type).
+    std::vector<Expression*> pre;
+    assert(context.operands.size() == func->getParams().size());
+    for (Index i = 0; i < context.operands.size(); i++) {
+      auto* operand = context.operands[i];
+      auto oldType = func->getLocalType(i);
+      auto newType = operand->type;
+
+      // If this is a local.get of the same type then we are using the parameter
+      // exactly as it was before, so we do not need to make any changes.
+      if (operand->is<LocalGet>() && newType == oldType) {
+        continue;
+      }
+
+      // Add a local to store this in, and store it.
+      auto local = Builder::addVar(newFunc.get(), oldType);
+      auto* value = ExpressionManipulator::copy(operand, wasm);
+      pre.push_back(builder.makeLocalSet(local, value));
+    }
+
+    // The main body of the function is simply copied from the original.
+    auto* newBody = ExpressionManipulator::copy(original->body, wasm);
+
+    // If there is content we need before, combine it.
+    if (!pre.empty()) {
+      pre.push_back(newBody);
+      newBody = builder.makeBlock(pre);
+    }
+    newFunc->body = newBody;
+
+    return std::move(newFunc);
+  }
+
   // Run minimal function-level optimizations on a function. This optimizes at
   // -O1 which is very fast and runs in linear time basically, and so it should
   // be reasonable to run as part of this pass: -O1 is several times faster than
@@ -386,8 +460,9 @@ struct Monomorphize : public Pass {
     // Local subtyping is not run in -O1, but we really do want it here since
     // the entire point is that parameters now have more refined types, which
     // can lead to locals reading them being refinable as well.
+    // TODO: propagate-locals too.
     runner.add("local-subtyping");
-    // TODO Heap2Local if there is a struct.new in the new operands
+    // TODO Heap2Local and more of -O2+...
     runner.addDefaultFunctionOptimizationPasses();
     runner.setIsNested(true);
     runner.runOnFunction(func);
