@@ -437,6 +437,12 @@ struct Monomorphize : public Pass {
   // of the call context.
   std::unique_ptr<Function> makeRefinedFunctionWithContext(
     Function* func, const CallContext& context, Module& wasm) {
+
+    // The context has an operand for each param in the old function, each of
+    // which may contain reverse-inlined content. A mismatch here means we did
+    // not build the context right, or are using it with the wrong function.
+    assert(context.operands.size() == func->getNumParams());
+
     // Pick a new name.
     auto newName = Names::getValidFunctionName(wasm, func->name);
 
@@ -465,8 +471,8 @@ struct Monomorphize : public Pass {
     auto newParamsMinusOld = newFunc->getParams().size() - func->getParams().size();
     for (Index i = 0; i < func->getNumLocals(); i++) {
       if (func->isParam(i)) {
-        // Old params become new vars inside the function. We'll copy the proper
-        // values into these vars in the next step.
+        // Old params become new vars inside the function. Later, we'll copy the
+        // proper values into these vars.
         auto local = Builder::addVar(newFunc.get(), func->getLocalType(i));
         mappedLocals[i] = local;
       } else {
@@ -508,7 +514,6 @@ struct Monomorphize : public Pass {
     // this, we build up a list of the expressions we will prepend:
     std::vector<Expression*> pre;
 
-    assert(context.operands.size() == func->getNumParams());
     for (Index i = 0; i < context.operands.size(); i++) {
       auto* operand = context.operands[i];
 
