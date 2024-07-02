@@ -12,86 +12,86 @@
 ;; RUN: foreach %s %t wasm-opt --monomorphize        -all -S -o - | filecheck %s --check-prefix CAREFUL
 
 (module
-  ;; ALWAYS:      (elem declare func $calls)
+  ;; ALWAYS:      (type $0 (func (result i32)))
 
-  ;; ALWAYS:      (func $calls (type $2)
-  ;; ALWAYS-NEXT:  (call $target_8
-  ;; ALWAYS-NEXT:   (i32.eqz
-  ;; ALWAYS-NEXT:    (i32.const 2)
-  ;; ALWAYS-NEXT:   )
-  ;; ALWAYS-NEXT:  )
-  ;; ALWAYS-NEXT:  (call $target_8
-  ;; ALWAYS-NEXT:   (i32.eqz
-  ;; ALWAYS-NEXT:    (i32.const 3)
-  ;; ALWAYS-NEXT:   )
-  ;; ALWAYS-NEXT:  )
-  ;; ALWAYS-NEXT:  (call $target_9
+  ;; ALWAYS:      (type $1 (func (param i32 i32) (result i32)))
+
+  ;; ALWAYS:      (type $2 (func (param i32) (result i32)))
+
+  ;; ALWAYS:      (func $call (type $0) (result i32)
+  ;; ALWAYS-NEXT:  (call $target_2
   ;; ALWAYS-NEXT:   (i32.eqz
   ;; ALWAYS-NEXT:    (i32.const 2)
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (elem declare func $calls)
+  ;; CAREFUL:      (type $0 (func (result i32)))
 
-  ;; CAREFUL:      (func $calls (type $2)
+  ;; CAREFUL:      (type $1 (func (param i32 i32) (result i32)))
+
+  ;; CAREFUL:      (func $call (type $0) (result i32)
   ;; CAREFUL-NEXT:  (call $target
-  ;; CAREFUL-NEXT:   (i32.const 1)
   ;; CAREFUL-NEXT:   (i32.eqz
   ;; CAREFUL-NEXT:    (i32.const 2)
   ;; CAREFUL-NEXT:   )
-  ;; CAREFUL-NEXT:   (ref.func $calls)
-  ;; CAREFUL-NEXT:   (string.const "foo")
-  ;; CAREFUL-NEXT:  )
-  ;; CAREFUL-NEXT:  (call $target
   ;; CAREFUL-NEXT:   (i32.const 1)
-  ;; CAREFUL-NEXT:   (i32.eqz
-  ;; CAREFUL-NEXT:    (i32.const 3)
-  ;; CAREFUL-NEXT:   )
-  ;; CAREFUL-NEXT:   (ref.func $calls)
-  ;; CAREFUL-NEXT:   (string.const "foo")
-  ;; CAREFUL-NEXT:  )
-  ;; CAREFUL-NEXT:  (call $target
-  ;; CAREFUL-NEXT:   (i32.const 3)
-  ;; CAREFUL-NEXT:   (i32.eqz
-  ;; CAREFUL-NEXT:    (i32.const 2)
-  ;; CAREFUL-NEXT:   )
-  ;; CAREFUL-NEXT:   (ref.func $calls)
-  ;; CAREFUL-NEXT:   (string.const "foo")
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
-  (func $call
-    ;; The first parameter can be monomorphized.
+  (func $call (result i32)
+    ;; The second parameter can be monomorphized.
     (call $target
-      (i32.const 1)
       (i32.eqz
         (i32.const 2)
       )
+      (i32.const 1)
     )
+  )
 
-  ;; ALWAYS:      (func $target (type $1) (param $x i32) (param $y i32) (param $func funcref) (param $str stringref)
-  ;; ALWAYS-NEXT:  (drop
+  ;; ALWAYS:      (func $target (type $1) (param $x i32) (param $y i32) (result i32)
+  ;; ALWAYS-NEXT:  (i32.add
   ;; ALWAYS-NEXT:   (local.get $x)
-  ;; ALWAYS-NEXT:  )
-  ;; ALWAYS-NEXT:  (drop
-  ;; ALWAYS-NEXT:   (local.get $y)
-  ;; ALWAYS-NEXT:  )
-  ;; ALWAYS-NEXT:  (drop
-  ;; ALWAYS-NEXT:   (local.get $func)
-  ;; ALWAYS-NEXT:  )
-  ;; ALWAYS-NEXT:  (drop
-  ;; ALWAYS-NEXT:   (local.get $str)
+  ;; ALWAYS-NEXT:   (i32.mul
+  ;; ALWAYS-NEXT:    (local.get $y)
+  ;; ALWAYS-NEXT:    (local.get $y)
+  ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $target (type $0) (param $0 i32) (param $1 i32) (param $2 funcref) (param $3 stringref)
-  ;; CAREFUL-NEXT:  (nop)
+  ;; CAREFUL:      (func $target (type $1) (param $0 i32) (param $1 i32) (result i32)
+  ;; CAREFUL-NEXT:  (i32.add
+  ;; CAREFUL-NEXT:   (local.get $0)
+  ;; CAREFUL-NEXT:   (i32.mul
+  ;; CAREFUL-NEXT:    (local.get $1)
+  ;; CAREFUL-NEXT:    (local.get $1)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
-  (func $target (param $x i32) (param $y i32)
-    (drop
+  (func $target (param $x i32) (param $y i32) (result i32)
+    (i32.add
+      ;; After monomorphization $x is unknown but we can compute the multiply of
+      ;; $y, which makes this worthwhile.
       (local.get $x)
-    )
-    (drop
-      (local.get $y)
+      (i32.mul
+        (local.get $y)
+        (local.get $y)
+      )
     )
   )
 )
 
+;; ALWAYS:      (func $target_2 (type $2) (param $0 i32) (result i32)
+;; ALWAYS-NEXT:  (local $x i32)
+;; ALWAYS-NEXT:  (local $y i32)
+;; ALWAYS-NEXT:  (local.set $x
+;; ALWAYS-NEXT:   (local.get $0)
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (local.set $y
+;; ALWAYS-NEXT:   (i32.const 1)
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (i32.add
+;; ALWAYS-NEXT:   (local.get $x)
+;; ALWAYS-NEXT:   (i32.mul
+;; ALWAYS-NEXT:    (local.get $y)
+;; ALWAYS-NEXT:    (local.get $y)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT: )
