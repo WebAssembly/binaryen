@@ -106,12 +106,35 @@
   )
 
   ;; ALWAYS:      (func $more-calls (type $0)
-  ;; ALWAYS-NEXT:  (nop)
+  ;; ALWAYS-NEXT:  (call $target_3
+  ;; ALWAYS-NEXT:   (i32.eqz
+  ;; ALWAYS-NEXT:    (i32.const 999)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $more-calls (type $0)
-  ;; CAREFUL-NEXT:  (nop)
+  ;; CAREFUL-NEXT:  (call $target
+  ;; CAREFUL-NEXT:   (i32.const 1)
+  ;; CAREFUL-NEXT:   (i32.eqz
+  ;; CAREFUL-NEXT:    (i32.const 999)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (ref.func $calls)
+  ;; CAREFUL-NEXT:   (string.const "foo")
+  ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
   (func $more-calls
+    ;; Identical to the first call in the previous function (except for the non-
+    ;; constant second param, which is ok to be different). We should call the
+    ;; same refined function before, even though we are in a different
+    ;; function here.
+    (call $target
+      (i32.const 1)
+      (i32.eqz
+        (i32.const 999)
+      )
+      (ref.func $calls)
+      (string.const "foo")
+    )
   )
 
   ;; ALWAYS:      (func $target (type $2) (param $x i32) (param $y i32) (param $func funcref) (param $str stringref)
