@@ -15,12 +15,10 @@
  */
 
 //
-// When we see a call, see if the information at the callsite can allow us to
-// optimize. This is related to inlining: when we inline, the calling function
-// then optimizes the inlined code together with the code around the callsite,
-// while in monomorphization we handle cases that inlining cannot do, by
-// creating a specialized version of the called function tuned for the
-// particular call. In particular, we may benefit from monomorphizing in the
+// Monomorphization of code based on callsite context: When we see a call, see
+// if the information at the callsite can help us optimize. For example, if a
+// parameter is constant, then using that constant in the called function may
+// unlock a lot of improvements. We may benefit from monomorphizing in the
 // following cases:
 //
 //  * If a call provides a more refined type than the function declares for a
@@ -29,32 +27,46 @@
 //  * If a call provides a GC allocation as a parameter. TODO
 //  * If a call is dropped. TODO also other stuff on the outside?
 //
-// For example, if a call provides a constant then the call + called function
-// may optimize well together if constant propagation leads to removal of code.
-// GC allocations may also be useful as Heap2Local may operate (if the
-// allocation does not escape). And for a dropped call, if we optimize with the
-// drop inside the function then all the computation of that result may be
-// removed.
+// We realize the benefit by creating a monomorphized (specialized/refined)
+// version of the function, and call that instead. For example, if we have
+//
+//  function foo(x) { return x + 22; }
+//  foo(7);
+//
+// then monomorphization leads to this:
+//
+//  function foo(x)  { return x + 22; } // original unmodified function
+//  foo_b();                            // now calls foo_b
+//  function foo_b() { return 7 + 22; } // monomorphized, constant 7 applied
+//
+// This is related to inlining both conceptually and practically. Conceptually,
+// one of inlining's big advantages is that we then optimize the called code
+// together with the code around the call, and monomorphization does something
+// similar. And, this pass does so by "reverse-inlining" content from the
+// caller to the monomorphized function: the constant 7 in the example above has
+// been "pulled in" from the caller into the callee. Larger amounts of code can
+// be moved in that manner, both values sent to the function, and the code that
+// receives it (see the mention of dropped calls, before).
 //
 // As this monormophization uses callsite context (the parameters, where the
-// result flows to), we call it "Contextual Monomorphization." We do not just
-// monomorphize the called function itself but in combination with that
-// context.
+// result flows to), we call it "Contextual Monomorphization." The full name is
+// "Empirical Contextural Monomorphization" because we decide where to optimize
+// based on a "try it and see" (empirical) approach, that measures the benefit.
+// That is, we generate the monomorphized function as explained, then optimize
+// that function, which contains the original code + code from the callsite
+// context that we pulled in. If the optimizer manages to improve that combined
+// code in a useful way then we apply the optimization, and if not then we undo.
 //
-// To see when monomorphizing makes sense, this optimizes the target function
-// together with the callsite context, and then measures how much we benefit.
-// This is a "try it and see" approach, so we call it "Empirical Contextual
-// Monomorphization." Seeing how well the callsite + called function optimize
-// together is a general approach that reduces the need for heuristics. For
+// The empirical approach significantly reduces the need for heuristics. For
 // example, rather than have a heuristic for "see if a constant parameter flows
 // into a conditional branch," we simply run the optimizer and let it optimize
 // that case. All other cases handled by the optimizer work as well, without
-// needing to specify them as heuristics, and this gets smarter as the optimizer
+// needing to specify them as heuristics, so this gets smarter as the optimizer
 // does.
 //
-// There are two versions of this pass, the normal one and one that always
-// monomorphizes (even if empirically it doesn't look helpful), which is useful
-// for testing.
+// Aside from the main version of this pass there is also a variant useful for
+// testing that always monomorphizes non-trivial callsites, without checking if
+// the optimizer can help or not (that makes writing testcases simpler).
 //
 // TODO: When we optimize we could run multiple cycles: A calls B calls C might
 //       end up with the refined+optimized B now having refined types in its
@@ -69,9 +81,6 @@
 //       end on leaves. That would make it more likely for a single iteration to
 //       do more work, as if A->B->C then we'd do A->B and optimize B and only
 //       then look at B->C.
-// TODO: Also run the result-refining part of SignatureRefining, as if we
-//       refine the result then callers of the function may benefit, even if
-//       there is no benefit in the function itself.
 // TODO: If this is too slow, we could "group" things, for example we could
 //       compute the LUB of a bunch of calls to a target and then investigate
 //       that one case and use it in all those callers.
