@@ -8,8 +8,8 @@
 ;; of the pass benefits from other features, but we should still do work in
 ;; MVP).
 
-;; RUN: foreach %s %t wasm-opt --monomorphize-always -all -S -o - | filecheck %s --check-prefix ALWAYS
-;; RUN: foreach %s %t wasm-opt --monomorphize        -all -S -o - | filecheck %s --check-prefix CAREFUL
+;; RUN: foreach %s %t wasm-opt --monomorphize-always -S -o - | filecheck %s --check-prefix ALWAYS
+;; RUN: foreach %s %t wasm-opt --monomorphize        -S -o - | filecheck %s --check-prefix CAREFUL
 
 (module
   ;; ALWAYS:      (type $0 (func (result i32)))
@@ -18,7 +18,7 @@
 
   ;; ALWAYS:      (type $2 (func (param i32) (result i32)))
 
-  ;; ALWAYS:      (func $call (type $0) (result i32)
+  ;; ALWAYS:      (func $call (result i32)
   ;; ALWAYS-NEXT:  (call $target_2
   ;; ALWAYS-NEXT:   (i32.eqz
   ;; ALWAYS-NEXT:    (i32.const 2)
@@ -29,12 +29,13 @@
 
   ;; CAREFUL:      (type $1 (func (param i32 i32) (result i32)))
 
-  ;; CAREFUL:      (func $call (type $0) (result i32)
-  ;; CAREFUL-NEXT:  (call $target
+  ;; CAREFUL:      (type $2 (func (param i32) (result i32)))
+
+  ;; CAREFUL:      (func $call (result i32)
+  ;; CAREFUL-NEXT:  (call $target_2
   ;; CAREFUL-NEXT:   (i32.eqz
   ;; CAREFUL-NEXT:    (i32.const 2)
   ;; CAREFUL-NEXT:   )
-  ;; CAREFUL-NEXT:   (i32.const 1)
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
   (func $call (result i32)
@@ -47,38 +48,32 @@
     )
   )
 
-  ;; ALWAYS:      (func $target (type $1) (param $x i32) (param $y i32) (result i32)
-  ;; ALWAYS-NEXT:  (i32.add
+  ;; ALWAYS:      (func $target (param $x i32) (param $y i32) (result i32)
+  ;; ALWAYS-NEXT:  (select
   ;; ALWAYS-NEXT:   (local.get $x)
-  ;; ALWAYS-NEXT:   (i32.mul
-  ;; ALWAYS-NEXT:    (local.get $y)
-  ;; ALWAYS-NEXT:    (local.get $y)
-  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:   (i32.const 42)
+  ;; ALWAYS-NEXT:   (local.get $y)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $target (type $1) (param $0 i32) (param $1 i32) (result i32)
-  ;; CAREFUL-NEXT:  (i32.add
+  ;; CAREFUL:      (func $target (param $0 i32) (param $1 i32) (result i32)
+  ;; CAREFUL-NEXT:  (select
   ;; CAREFUL-NEXT:   (local.get $0)
-  ;; CAREFUL-NEXT:   (i32.mul
-  ;; CAREFUL-NEXT:    (local.get $1)
-  ;; CAREFUL-NEXT:    (local.get $1)
-  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (i32.const 42)
+  ;; CAREFUL-NEXT:   (local.get $1)
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
   (func $target (param $x i32) (param $y i32) (result i32)
-    (i32.add
-      ;; After monomorphization $x is unknown but we can compute the multiply of
-      ;; $y, which makes this worthwhile.
+    ;; The monomorphized copies of this function will be able to remove the
+    ;; select, in CAREFUL (which optimizes).
+    (select
       (local.get $x)
-      (i32.mul
-        (local.get $y)
-        (local.get $y)
-      )
+      (i32.const 42)
+      (local.get $y)
     )
   )
 )
 
-;; ALWAYS:      (func $target_2 (type $2) (param $0 i32) (result i32)
+;; ALWAYS:      (func $target_2 (param $0 i32) (result i32)
 ;; ALWAYS-NEXT:  (local $x i32)
 ;; ALWAYS-NEXT:  (local $y i32)
 ;; ALWAYS-NEXT:  (local.set $x
@@ -87,11 +82,13 @@
 ;; ALWAYS-NEXT:  (local.set $y
 ;; ALWAYS-NEXT:   (i32.const 1)
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (i32.add
+;; ALWAYS-NEXT:  (select
 ;; ALWAYS-NEXT:   (local.get $x)
-;; ALWAYS-NEXT:   (i32.mul
-;; ALWAYS-NEXT:    (local.get $y)
-;; ALWAYS-NEXT:    (local.get $y)
-;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:   (i32.const 42)
+;; ALWAYS-NEXT:   (local.get $y)
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
+
+;; CAREFUL:      (func $target_2 (param $0 i32) (result i32)
+;; CAREFUL-NEXT:  (local.get $0)
+;; CAREFUL-NEXT: )

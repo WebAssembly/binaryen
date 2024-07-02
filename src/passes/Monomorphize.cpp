@@ -407,6 +407,7 @@ struct Monomorphize : public Pass {
 
       auto costBefore = CostAnalyzer(func->body).cost;
       auto costAfter = CostAnalyzer(refinedFunc->body).cost;
+std::cout << costBefore << " : " << costAfter << '\n' << *func->body << " => " << *refinedFunc->body << '\n';;
       if (costAfter >= costBefore) {
         // We failed to improve; use the original target instead.
         chosenTarget = target;
