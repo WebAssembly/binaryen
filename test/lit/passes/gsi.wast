@@ -26,14 +26,19 @@
   (global $global-other i32 (i32.const 123456))
 
   ;; CHECK:      (func $test (type $1) (param $struct (ref null $struct))
+  ;; CHECK-NEXT:  ;;@ drop.c:10:1
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   ;;@ struct.c:20:2
   ;; CHECK-NEXT:   (select
   ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:    (i32.const 1337)
+  ;; CHECK-NEXT:    ;;@
   ;; CHECK-NEXT:    (ref.eq
   ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      ;;@ local.c:30:3
   ;; CHECK-NEXT:      (local.get $struct)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     ;;@
   ;; CHECK-NEXT:     (global.get $global1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
