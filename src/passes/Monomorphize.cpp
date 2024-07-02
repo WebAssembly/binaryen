@@ -267,6 +267,7 @@ template<> struct hash<wasm::CallContext> {
   }
 };
 
+// Useful for debugging.
 [[maybe_unused]]
 std::ostream& operator<<(std::ostream& o, wasm::CallContext& context) {
   o << "CallContext{\n";
@@ -287,8 +288,8 @@ namespace wasm {
 namespace {
 
 struct Monomorphize : public Pass {
-  // If set, we run some opts to see if monomorphization helps, and skip it if
-  // not.
+  // If set, we run some opts to see if monomorphization helps, and skip cases
+  // where we do not help out.
   bool onlyWhenHelpful;
 
   Monomorphize(bool onlyWhenHelpful) : onlyWhenHelpful(onlyWhenHelpful) {}
