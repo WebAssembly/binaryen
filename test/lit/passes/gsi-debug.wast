@@ -38,9 +38,9 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   ;;@ struct.c:20:2
   ;; CHECK-NEXT:   (select
-  ;; CHECK-NEXT:    ;;@
+  ;; CHECK-NEXT:    ;;@ struct.c:20:2
   ;; CHECK-NEXT:    (i32.const 42) (; i32 ;)
-  ;; CHECK-NEXT:    ;;@
+  ;; CHECK-NEXT:    ;;@ struct.c:20:2
   ;; CHECK-NEXT:    (i32.const 1337) (; i32 ;)
   ;; CHECK-NEXT:    ;;@
   ;; CHECK-NEXT:    (ref.eq
