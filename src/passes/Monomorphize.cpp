@@ -365,7 +365,7 @@ struct Monomorphize : public Pass {
       return;
     }
 
-    // Create the refined function that has includes the call context.
+    // Create the refined function that includes the call context.
     std::unique_ptr<Function> refinedFunc =
       makeRefinedFunctionWithContext(func, context, wasm);
 
