@@ -369,9 +369,9 @@ struct Monomorphize : public Pass {
     std::unique_ptr<Function> monoFunc =
       makeMonoFunctionWithContext(func, context, wasm);
 
-    // Assume we'll choose to use the monomorphized target, but if we are being
-    // careful then we might change our mind.
-    auto chosenTarget = monoFunc->name;
+    // Assume we'll choose to use the monomorphized target in our call, but if
+    // we are being careful then we might change our mind.
+    auto chosenTarget = monoFunc->name; // optional? XXX
     if (onlyWhenHelpful) {
       // Optimize both functions using minimal opts, hopefully enough to see if
       // there is a benefit to the context. We optimize both to avoid confusion
