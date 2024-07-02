@@ -178,18 +178,17 @@ struct CallContext {
 
   bool operator!=(const CallContext& other) const { return !(*this == other); }
 
-  // Build the context from a given call. This builds up the generalized
-  // parameters as explained in the comments above, and generates the new
-  // operands for the call to have (through the out param).
+  // Build the context from a given call. This builds up the context operands as
+  // as explained in the comments above, and updates the call to send any
+  // remaining values (we update |newOperands|).
   void buildFromCall(Call* call, std::vector<Expression*>& newOperands, Module& wasm) {
     Builder builder(wasm);
 
     for (auto* operand : call->operands) {
-      // Process the operand, generating the generalized one. This is a copy
-      // operation, as so long as we find things that we can "reverse-inline"
-      // into the called function as part of the call context then we continue
-      // to do so. When we cannot move code in that manner then we emit a
-      // local.get, as that is a new parameter.
+      // Process the operand. This is a copy operation, as we are trying to move
+      // (copy) code from the callsite into the called function. When we find we
+      // can copy then we do so, and when we cannot that value remains as a
+      // value sent from the call.
       operands.push_back(ExpressionManipulator::flexibleCopy(
         operand, wasm, [&](Expression* child) -> Expression* {
           if (canBeMovedIntoContext(child)) {
@@ -205,7 +204,8 @@ struct CallContext {
           newOperands.push_back(child);
           // TODO: If one operand is a tee and another a get, we could actually
           //       reuse the local, effectively showing the monomorphized
-          //       function that the values are the same.
+          //       function that the values are the same. (But then the checks
+          //       later down to is<LocalGet> would need to check index too.)
           return builder.makeLocalGet(paramIndex, child->type);
         }));
     }
@@ -214,9 +214,7 @@ struct CallContext {
     dropped = false;
   }
 
-  // Checks whether an expression can be moved into the context. Things that can
-  // be, become part of the context, and so they become part of the refined
-  // functions that we create with the context.
+  // Checks whether an expression can be moved into the context.
   bool canBeMovedIntoContext(Expression* curr) {
     // Constant numbers, funcs, strings, etc. can all be copied, so it is ok to
     // add them to the context.
@@ -224,19 +222,18 @@ struct CallContext {
   }
 
   // Check if a context is trivial relative to a call, that is, the context
-  // contains no information that can allow optimization at all. Such contexts
-  // can be dismissed early.
+  // contains no information that can allow optimization at all. Such trivial
+  // contexts can be dismissed early.
   bool isTrivial(Call* call, Module& wasm) {
     // Dropped contexts are not trivial.
     if (dropped) {
       return false;
     }
 
-    // If the context simply passes through all the operands, without adding or
-    // removing any, and without even refining a type, then it is trivial.
-    if (operands.size() != call->operands.size()) {
-      return false;
-    }
+    // The context must match the call for us to compare them.
+    assert(operands.size() == call->operands.size());
+
+    // If an operand is not simply passed through, then we are not trivial.
     auto callParams = wasm.getFunction(call->target)->getParams();
     for (Index i = 0; i < operands.size(); i++) {
       // A local.get of the same type implies we just pass through the value.
