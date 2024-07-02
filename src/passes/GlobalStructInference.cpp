@@ -445,7 +445,7 @@ struct GlobalStructInference : public Pass {
 
           // This value replaces the struct.get, so it should have the same
           // source location.
-          debuginfo::copyOriginalToReplacement(curr, ret, getFunction());
+//          debuginfo::copyOriginalToReplacement(curr, ret, getFunction());
 
           return ret;
         };
