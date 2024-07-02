@@ -103,29 +103,27 @@ namespace wasm {
 
 namespace {
 
-// Relevant information about a call for purposes of monomorphization.
+// Relevant information about a callsite for purposes of monomorphization.
 struct CallContext {
-  // The operands the call sends as parameters, in a general form. This form is
-  // in fact the exact code that will appear in the specialized called function.
-  // An example may help:
+  // The operands of the call, processed to leave the parts that make sense to
+  // keep in the context. That is, the operands of the CallContext are the exact
+  // code that will appear at the start of the specialized function. For
+  // example:
   //
   //  (call $foo
   //    (i32.const 10)
-  //    (struct.new $struct
-  //      (..something complicated..)
-  //    )
+  //    (..something complicated..)
   //  )
-  //
-  //  (func $foo (param $int i32) (param $ref (ref $struct))
+  //  (func $foo (param $int i32) (param $complex f64)
   //    ..
   //
-  // The generalized operands are
+  // The context operands are
   //
   //  [
-  //    (i32.const 10)       ;; unchanged
-  //    (struct.new $struct  ;; the struct.new can be handled
-  //      (local.get $0)     ;; the complicated child cannot; make it a param
-  //    )
+  //    (i32.const 10)       ;; Unchanged: this can be pulled into the called
+  //                         ;; function, and removed from the caller side.
+  //    (local.get $0)       ;; The complicated child cannot; keep it as a value
+  //                         ;; sent from the caller, which we will local.get.
   //  ]
   //
   // Note how the inner part of the struct.new is a local.get. That is a
@@ -134,37 +132,32 @@ struct CallContext {
   //
   //  (func $foo-monomorphized (param $0 ..)
   //    (..local defs..)
-  //    ;; Apply the first operand.
+  //    ;; Apply the first operand, which was pulled into here.
   //    (local.set $int
   //      (i32.const 10)
   //    )
-  //    ;; Apply the second operand.
-  //    (local.set $ref
-  //      (struct.new $struct
-  //        (local.get $0)  ;; Read the new parameter.
-  //      )
+  //    ;; Read the second, which remains a parameter to the function.
+  //    (local.set $complex
+  //      (local.get $0)
   //    )
   //    ;; The original body.
   //    ..
   //
   // The $int param is no longer a parameter, and it is set in a local at the
-  // top. The $ref parameter is likewise removed. Note how, effectively, we have
-  // "reverse-inlined" code from the calling function into the caller, that is,
-  // we pull the context into the called function, where it is now alongside the
-  // code that we hope optimizes well with it.
-  //
-  // We also have a new parameter for the internal part of the struct.new that
-  // we could not handle, and the call would send only that:
+  // top: we have "reverse-inlined" code from the calling function into the
+  // caller, pulling the constant 10 into here. The second parameter cannot be
+  // pulled in, so we must still send it:
   //
   //  (call $foo-monomorphized
-  //    (..something complicated..)
+  //    (..something complicated..)  ;; This is still sent.
   //  )
   //
-  // $foo-monomorphized is now a version of $monomorphized that has "pulled in"
-  // parts of the call context, which may allow it to get optimized better.
+  // We mark that value as a local.get among the context operands, because that
+  // is exactly what we do to receive it in the called function: we local.get
+  // it, as can be seen in the code above.
   std::vector<Expression*> operands;
 
-  // Whether the call is dropped.
+  // Whether the call is dropped. TODO
   bool dropped;
 
   bool operator==(const CallContext& other) const {
@@ -416,6 +409,9 @@ struct Monomorphize : public Pass {
 
       auto costBefore = CostAnalyzer(func->body).cost;
       auto costAfter = CostAnalyzer(refinedFunc->body).cost;
+      // TODO: check for either a size decrease (always good) or a significant
+      //       speed increase (as a tiny one, in a huge function, can lead to
+      //       wasteful duplicated code)
       if (costAfter >= costBefore) {
         // We failed to improve; use the original target instead.
         chosenTarget = target;
