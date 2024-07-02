@@ -42,9 +42,13 @@
   (func $test (param $struct (ref null $struct))
     ;; We can infer that this get can reference either $global1 or $global2,
     ;; and nothing else (aside from a null), and can emit a select between
-    ;; those values.
+    ;; those values. While doing so we copy the debug info as well to the
+    ;; values in the select.
+    ;;@ drop.c:10:1
     (drop
+      ;;@ struct.c:20:2
       (struct.get $struct 0
+        ;;@ local.c:30:3
         (local.get $struct)
       )
     )

@@ -50,6 +50,7 @@
 
 #include <variant>
 
+#include "ir/debuginfo.h"
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -417,29 +418,35 @@ struct GlobalStructInference : public Pass {
         // Helper for optimization: Given a Value, returns what we should read
         // for it.
         auto getReadValue = [&](const Value& value) -> Expression* {
+          Expression* ret;
           if (value.isConstant()) {
             // This is known to be a constant, so simply emit an expression for
             // that constant.
-            return value.getConstant().makeExpression(wasm);
+            ret = value.getConstant().makeExpression(wasm);
+          } else {
+            // Otherwise, this is non-constant, so we are in the situation where
+            // we want to un-nest the value out of the struct.new it is in. Note
+            // that for later work, as we cannot add a global in parallel.
+
+            // There can only be one global in a value that is not constant,
+            // which is the global we want to read from.
+            assert(value.globals.size() == 1);
+
+            // Create a global.get with temporary name, leaving only the
+            // updating of the name to later work.
+            auto* get = builder.makeGlobalGet(value.globals[0],
+                                              value.getExpression()->type);
+
+            globalsToUnnest.emplace_back(
+              GlobalToUnnest{value.globals[0], fieldIndex, get});
+
+            ret = get;
           }
 
-          // Otherwise, this is non-constant, so we are in the situation where
-          // we want to un-nest the value out of the struct.new it is in. Note
-          // that for later work, as we cannot add a global in parallel.
+          // This value replaces the struct.get
+//          debuginfo::copyOriginalToReplacement(curr, ret, getFunction());
 
-          // There can only be one global in a value that is not constant, which
-          // is the global we want to read from.
-          assert(value.globals.size() == 1);
-
-          // Create a global.get with temporary name, leaving only the updating
-          // of the name to later work.
-          auto* get = builder.makeGlobalGet(value.globals[0],
-                                            value.getExpression()->type);
-
-          globalsToUnnest.emplace_back(
-            GlobalToUnnest{value.globals[0], fieldIndex, get});
-
-          return get;
+          return ret;
         };
 
         // We have some globals (at least 2), and so must have at least one
