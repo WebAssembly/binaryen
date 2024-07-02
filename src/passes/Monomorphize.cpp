@@ -107,7 +107,7 @@ namespace {
 struct CallContext {
   // The operands of the call, processed to leave the parts that make sense to
   // keep in the context. That is, the operands of the CallContext are the exact
-  // code that will appear at the start of the specialized function. For
+  // code that will appear at the start of the monomorphized function. For
   // example:
   //
   //  (call $foo
@@ -127,7 +127,7 @@ struct CallContext {
   //  ]
   //
   // Note how the inner part of the struct.new is a local.get. That is a
-  // local.get of a parameter to the specialized function, which looks like
+  // local.get of a parameter to the monomorphized function, which looks like
   // this:
   //
   //  (func $foo-monomorphized (param $0 ..)
@@ -304,7 +304,7 @@ struct Monomorphize : public Pass {
       *module, [&](Function* func) { funcNames.push_back(func->name); });
 
     // Find the calls in each function and optimize where we can, changing them
-    // to call more refined targets.
+    // to call the monomorphized targets.
     for (auto name : funcNames) {
       auto* func = module->getFunction(name);
       for (auto* call : FindAll<Call>(func->body).list) {
@@ -365,19 +365,18 @@ struct Monomorphize : public Pass {
       return;
     }
 
-    // Create the refined function that includes the call context.
-    std::unique_ptr<Function> refinedFunc =
-      makeRefinedFunctionWithContext(func, context, wasm);
+    // Create the monomorphized function that includes the call context.
+    std::unique_ptr<Function> monoFunc =
+      makeMonoFunctionWithContext(func, context, wasm);
 
-    // Assume we'll choose to use the refined target, but if we are being
+    // Assume we'll choose to use the monomorphized target, but if we are being
     // careful then we might change our mind.
-    auto chosenTarget = refinedFunc->name;
+    auto chosenTarget = monoFunc->name;
     if (onlyWhenHelpful) {
       // Optimize both functions using minimal opts, hopefully enough to see if
-      // there is a benefit to the refined types (such as the new types allowing
-      // a cast to be removed). We optimize both to avoid confusion from the
-      // function benefiting from just another cycle of optimization, regardless
-      // or monomorphization.
+      // there is a benefit to the context. We optimize both to avoid confusion
+      // from the function benefiting from simply running another cycle of
+      // optimization.
       //
       // Note that we do *not* discard the optimizations to the original
       // function if we decide not to optimize. We've already done them, and the
@@ -401,10 +400,10 @@ struct Monomorphize : public Pass {
       //       keep optimizing from the current contents as we go. It's not
       //       obvious which approach is best here.
       doMinimalOpts(func);
-      doMinimalOpts(refinedFunc.get());
+      doMinimalOpts(monoFunc.get());
 
       auto costBefore = CostAnalyzer(func->body).cost;
-      auto costAfter = CostAnalyzer(refinedFunc->body).cost;
+      auto costAfter = CostAnalyzer(monoFunc->body).cost;
       // TODO: check for either a size decrease (always good) or a significant
       //       speed increase (as a tiny one, in a huge function, can lead to
       //       wasteful duplicated code)
@@ -419,20 +418,20 @@ struct Monomorphize : public Pass {
     // memoizing both success and failure.
     funcContextMap[{target, context}] = chosenTarget;
 
-    if (chosenTarget == refinedFunc->name) {
-      // We are using the refined function, so add it to the module, and update
-      // the call.
-      wasm.addFunction(std::move(refinedFunc));
+    if (chosenTarget == monoFunc->name) {
+      // We are using the monomorphized function, so add it to the module, and
+      // update the call.
+      wasm.addFunction(std::move(monoFunc));
 
       call->operands.set(newOperands);
       call->target = chosenTarget;
     }
   }
 
-  // Creates a refined function from the original + the call context. The
-  // refined one may have different parameters, results, and may include parts
-  // of the call context.
-  std::unique_ptr<Function> makeRefinedFunctionWithContext(
+  // Creates a monomorphized function from the original + the call context. It
+  // may have different parameters, results, and may include parts of the call
+  // context.
+  std::unique_ptr<Function> makeMonoFunctionWithContext(
     Function* func, const CallContext& context, Module& wasm) {
 
     // The context has an operand for each param in the old function, each of
@@ -501,12 +500,10 @@ struct Monomorphize : public Pass {
       }
     };
 
-//for (auto [k, v] : mappedLocals) std::cout << "map " << k << " to " << v << '\n';
-
     // Surrounding the main body is the reverse-inlined content from the call
     // context, like this:
     //
-    //  (func $refined
+    //  (func $monomorphized
     //    (..reverse-inlined parameter..)
     //    (..old body..)
     //  )
@@ -514,7 +511,7 @@ struct Monomorphize : public Pass {
     // For example, if a function that simply returns its input is called with a
     // constant parameter, it will end up like this:
     //
-    //  (func $refined
+    //  (func $monomorphized
     //    (local $param i32)
     //    (local.set $param (i32.const 42))  ;; reverse-inlined parameter
     //    (local.get $param)                 ;; copied old body
@@ -524,7 +521,7 @@ struct Monomorphize : public Pass {
     // example above, where a constant param turns from a param into a local. We
     // must also do so when the type changes, resulting in this:
     //
-    //  (func $refined (param $param (ref $sub))
+    //  (func $monomorphized (param $param (ref $sub))
     //    (local $original (ref $super))
     //    (local.set $super (local.get $sub))
     //
@@ -592,8 +589,8 @@ struct Monomorphize : public Pass {
     runner.runOnFunction(func);
   }
 
-  // Maps [func name, call info] to the name of a new function which is
-  // specialized to that call info.
+  // Maps [func name, call info] to the name of a new function which is a
+  // monomorphization of that function, specialized to that call info.
   //
   // Note that this can contain funcContextMap{A, ...} = A, that is, that maps
   // a function name to itself. That indicates we found no benefit from
