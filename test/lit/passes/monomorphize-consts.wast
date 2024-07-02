@@ -10,26 +10,26 @@
 (module
   ;; Test that constants are monomorphized.
 
-  ;; ALWAYS:      (type $0 (func))
+  ;; ALWAYS:      (type $0 (func (param i32)))
 
-  ;; ALWAYS:      (type $1 (func (param i32)))
+  ;; ALWAYS:      (type $1 (func))
 
   ;; ALWAYS:      (type $2 (func (param i32 i32 funcref stringref)))
 
   ;; ALWAYS:      (elem declare func $calls)
 
-  ;; ALWAYS:      (func $calls (type $0)
-  ;; ALWAYS-NEXT:  (call $target_3
+  ;; ALWAYS:      (func $calls (type $1)
+  ;; ALWAYS-NEXT:  (call $target_4
   ;; ALWAYS-NEXT:   (i32.eqz
   ;; ALWAYS-NEXT:    (i32.const 2)
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
-  ;; ALWAYS-NEXT:  (call $target_3
+  ;; ALWAYS-NEXT:  (call $target_4
   ;; ALWAYS-NEXT:   (i32.eqz
   ;; ALWAYS-NEXT:    (i32.const 3)
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
-  ;; ALWAYS-NEXT:  (call $target_4
+  ;; ALWAYS-NEXT:  (call $target_5
   ;; ALWAYS-NEXT:   (i32.eqz
   ;; ALWAYS-NEXT:    (i32.const 2)
   ;; ALWAYS-NEXT:   )
@@ -105,8 +105,13 @@
     )
   )
 
-  ;; ALWAYS:      (func $more-calls (type $0)
-  ;; ALWAYS-NEXT:  (call $target_3
+  ;; ALWAYS:      (func $more-calls (type $1)
+  ;; ALWAYS-NEXT:  (call $target_4
+  ;; ALWAYS-NEXT:   (i32.eqz
+  ;; ALWAYS-NEXT:    (i32.const 999)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT:  (call $other-target_6
   ;; ALWAYS-NEXT:   (i32.eqz
   ;; ALWAYS-NEXT:    (i32.const 999)
   ;; ALWAYS-NEXT:   )
@@ -121,6 +126,14 @@
   ;; CAREFUL-NEXT:   (ref.func $calls)
   ;; CAREFUL-NEXT:   (string.const "foo")
   ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT:  (call $other-target
+  ;; CAREFUL-NEXT:   (i32.const 1)
+  ;; CAREFUL-NEXT:   (i32.eqz
+  ;; CAREFUL-NEXT:    (i32.const 999)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (ref.func $calls)
+  ;; CAREFUL-NEXT:   (string.const "foo")
+  ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
   (func $more-calls
     ;; Identical to the first call in the previous function (except for the non-
@@ -128,6 +141,18 @@
     ;; same refined function before, even though we are in a different
     ;; function here.
     (call $target
+      (i32.const 1)
+      (i32.eqz
+        (i32.const 999)
+      )
+      (ref.func $calls)
+      (string.const "foo")
+    )
+
+    ;; Call a different function but with the exact same params. This tests that
+    ;; we handle identical contexts but with different functions. This will call
+    ;; a different refined function than before
+    (call $other-target
       (i32.const 1)
       (i32.eqz
         (i32.const 999)
@@ -168,8 +193,41 @@
       (local.get $str)
     )
   )
+
+  ;; ALWAYS:      (func $other-target (type $2) (param $x i32) (param $y i32) (param $func funcref) (param $str stringref)
+  ;; ALWAYS-NEXT:  (drop
+  ;; ALWAYS-NEXT:   (local.get $func)
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT:  (drop
+  ;; ALWAYS-NEXT:   (local.get $str)
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT:  (drop
+  ;; ALWAYS-NEXT:   (local.get $x)
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT:  (drop
+  ;; ALWAYS-NEXT:   (local.get $y)
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $other-target (type $1) (param $0 i32) (param $1 i32) (param $2 funcref) (param $3 stringref)
+  ;; CAREFUL-NEXT:  (nop)
+  ;; CAREFUL-NEXT: )
+  (func $other-target (param $x i32) (param $y i32) (param $func funcref) (param $str stringref)
+    ;; Similar to $target, but the inside is a little reordered.
+    (drop
+      (local.get $func)
+    )
+    (drop
+      (local.get $str)
+    )
+    (drop
+      (local.get $x)
+    )
+    (drop
+      (local.get $y)
+    )
+  )
 )
-;; ALWAYS:      (func $target_3 (type $1) (param $0 i32)
+;; ALWAYS:      (func $target_4 (type $0) (param $0 i32)
 ;; ALWAYS-NEXT:  (local $x i32)
 ;; ALWAYS-NEXT:  (local $y i32)
 ;; ALWAYS-NEXT:  (local $func funcref)
@@ -202,7 +260,7 @@
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; ALWAYS:      (func $target_4 (type $1) (param $0 i32)
+;; ALWAYS:      (func $target_5 (type $0) (param $0 i32)
 ;; ALWAYS-NEXT:  (local $x i32)
 ;; ALWAYS-NEXT:  (local $y i32)
 ;; ALWAYS-NEXT:  (local $func funcref)
@@ -231,6 +289,39 @@
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:   (drop
 ;; ALWAYS-NEXT:    (local.get $str)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT: )
+
+;; ALWAYS:      (func $other-target_6 (type $0) (param $0 i32)
+;; ALWAYS-NEXT:  (local $x i32)
+;; ALWAYS-NEXT:  (local $y i32)
+;; ALWAYS-NEXT:  (local $func funcref)
+;; ALWAYS-NEXT:  (local $str stringref)
+;; ALWAYS-NEXT:  (local.set $x
+;; ALWAYS-NEXT:   (i32.const 1)
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (local.set $y
+;; ALWAYS-NEXT:   (local.get $0)
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (local.set $func
+;; ALWAYS-NEXT:   (ref.func $calls)
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (local.set $str
+;; ALWAYS-NEXT:   (string.const "foo")
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (block
+;; ALWAYS-NEXT:   (drop
+;; ALWAYS-NEXT:    (local.get $func)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:   (drop
+;; ALWAYS-NEXT:    (local.get $str)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:   (drop
+;; ALWAYS-NEXT:    (local.get $x)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:   (drop
+;; ALWAYS-NEXT:    (local.get $y)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
