@@ -336,20 +336,19 @@ struct Monomorphize : public Pass {
 
     // TODO: igmore calls with unreachable operands for simplicty
 
-    // Compute the call context.
+    // Compute the call context, and the new operands that the call would send
+    // if we use that context.
     CallContext context;
     std::vector<Expression*> newOperands;
     context.buildFromCall(call, newOperands, wasm);
-//std::cout << "eval " << *call << " : " << context << '\n';
-    // See if we've already evaluated this function + call context. If so, that
-    // is in the map, whether we decided to optimize or not.
+
+    // See if we've already evaluated this function + call context. If so, then
+    // we've memoized the result.
     auto iter = funcContextMap.find({target, context});
     if (iter != funcContextMap.end()) {
-//std::cout << "old\n";
       auto newTarget = iter->second;
       if (newTarget != target) {
-//std::cout << " good\n";
-        // When we computed this before, we found a benefit to optimizing, and
+        // When we computed this before we found a benefit to optimizing, and
         // created a new monomorphized function to call. Use it by simply
         // applying the new operands we computed, and adjusting the call target.
         call->operands.set(newOperands);
@@ -358,10 +357,9 @@ struct Monomorphize : public Pass {
       return;
     }
 
-    // This is the first time we see this situation. Firs, check if it the
-    // context is trivial and has no opportunities for optimization.
+    // This is the first time we see this situation. First, check if the context
+    // is trivial and has no opportunities for optimization.
     if (context.isTrivial(call, wasm)) {
-//std::cout << "triv\n";
       // Memoize the failure, and stop.
       funcContextMap[{target, context}] = target;
       return;
