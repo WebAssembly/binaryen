@@ -295,10 +295,6 @@ struct Monomorphize : public Pass {
   Monomorphize(bool onlyWhenHelpful) : onlyWhenHelpful(onlyWhenHelpful) {}
 
   void run(Module* module) override {
-    if (!module->features.hasGC()) {
-      return;
-    }
-
     // TODO: parallelize, see comments below
 
     // Note the list of all functions. We'll be adding more, and do not want to
