@@ -12,14 +12,24 @@
 
   ;; ALWAYS:      (type $0 (func))
 
-  ;; ALWAYS:      (type $1 (func (param i32 i32 funcref stringref)))
+  ;; ALWAYS:      (type $1 (func (param i32)))
 
-  ;; ALWAYS:      (type $2 (func (param i32)))
+  ;; ALWAYS:      (type $2 (func (param i32 i32 funcref stringref)))
 
   ;; ALWAYS:      (elem declare func $calls)
 
   ;; ALWAYS:      (func $calls (type $0)
-  ;; ALWAYS-NEXT:  (call $target_2
+  ;; ALWAYS-NEXT:  (call $target_3
+  ;; ALWAYS-NEXT:   (i32.eqz
+  ;; ALWAYS-NEXT:    (i32.const 2)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT:  (call $target_3
+  ;; ALWAYS-NEXT:   (i32.eqz
+  ;; ALWAYS-NEXT:    (i32.const 3)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT:  (call $target_4
   ;; ALWAYS-NEXT:   (i32.eqz
   ;; ALWAYS-NEXT:    (i32.const 2)
   ;; ALWAYS-NEXT:   )
@@ -40,6 +50,22 @@
   ;; CAREFUL-NEXT:   (ref.func $calls)
   ;; CAREFUL-NEXT:   (string.const "foo")
   ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT:  (call $target
+  ;; CAREFUL-NEXT:   (i32.const 1)
+  ;; CAREFUL-NEXT:   (i32.eqz
+  ;; CAREFUL-NEXT:    (i32.const 3)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (ref.func $calls)
+  ;; CAREFUL-NEXT:   (string.const "foo")
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT:  (call $target
+  ;; CAREFUL-NEXT:   (i32.const 3)
+  ;; CAREFUL-NEXT:   (i32.eqz
+  ;; CAREFUL-NEXT:    (i32.const 2)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (ref.func $calls)
+  ;; CAREFUL-NEXT:   (string.const "foo")
+  ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
   (func $calls
     ;; All but the eqz parameter are constants that can be handled. In ALWAYS
@@ -54,9 +80,41 @@
       (ref.func $calls)
       (string.const "foo")
     )
+
+    ;; This has the same effective call context, as the constants are identical,
+    ;; and the non-constant is different, which we keep as a variable anyhow.
+    ;; This will call the same refined function as the previous call.
+    (call $target
+      (i32.const 1)
+      (i32.eqz
+        (i32.const 3)  ;; this changed
+      )
+      (ref.func $calls)
+      (string.const "foo")
+    )
+
+    ;; This has a different call context: one constant is different, so we'll
+    ;; call a different refined function.
+    (call $target
+      (i32.const 3)  ;; this changed
+      (i32.eqz
+        (i32.const 2)
+      )
+      (ref.func $calls)
+      (string.const "foo")
+    )
   )
 
-  ;; ALWAYS:      (func $target (type $1) (param $x i32) (param $y i32) (param $func funcref) (param $str stringref)
+  ;; ALWAYS:      (func $more-calls (type $0)
+  ;; ALWAYS-NEXT:  (nop)
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $more-calls (type $0)
+  ;; CAREFUL-NEXT:  (nop)
+  ;; CAREFUL-NEXT: )
+  (func $more-calls
+  )
+
+  ;; ALWAYS:      (func $target (type $2) (param $x i32) (param $y i32) (param $func funcref) (param $str stringref)
   ;; ALWAYS-NEXT:  (drop
   ;; ALWAYS-NEXT:   (local.get $x)
   ;; ALWAYS-NEXT:  )
@@ -88,13 +146,46 @@
     )
   )
 )
-;; ALWAYS:      (func $target_2 (type $2) (param $0 i32)
+;; ALWAYS:      (func $target_3 (type $1) (param $0 i32)
 ;; ALWAYS-NEXT:  (local $x i32)
 ;; ALWAYS-NEXT:  (local $y i32)
 ;; ALWAYS-NEXT:  (local $func funcref)
 ;; ALWAYS-NEXT:  (local $str stringref)
 ;; ALWAYS-NEXT:  (local.set $x
 ;; ALWAYS-NEXT:   (i32.const 1)
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (local.set $y
+;; ALWAYS-NEXT:   (local.get $0)
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (local.set $func
+;; ALWAYS-NEXT:   (ref.func $calls)
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (local.set $str
+;; ALWAYS-NEXT:   (string.const "foo")
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (block
+;; ALWAYS-NEXT:   (drop
+;; ALWAYS-NEXT:    (local.get $x)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:   (drop
+;; ALWAYS-NEXT:    (local.get $y)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:   (drop
+;; ALWAYS-NEXT:    (local.get $func)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:   (drop
+;; ALWAYS-NEXT:    (local.get $str)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT: )
+
+;; ALWAYS:      (func $target_4 (type $1) (param $0 i32)
+;; ALWAYS-NEXT:  (local $x i32)
+;; ALWAYS-NEXT:  (local $y i32)
+;; ALWAYS-NEXT:  (local $func funcref)
+;; ALWAYS-NEXT:  (local $str stringref)
+;; ALWAYS-NEXT:  (local.set $x
+;; ALWAYS-NEXT:   (i32.const 3)
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (local.set $y
 ;; ALWAYS-NEXT:   (local.get $0)
