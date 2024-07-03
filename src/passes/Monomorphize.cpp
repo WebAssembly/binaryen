@@ -235,6 +235,7 @@ struct CallContext {
     auto callParams = wasm.getFunction(call->target)->getParams();
     for (Index i = 0; i < operands.size(); i++) {
       // A local.get of the same type implies we just pass through the value.
+      // Anything else is not trivial.
       if (!operands[i]->is<LocalGet>() || operands[i]->type != callParams[i]) {
         return false;
       }
