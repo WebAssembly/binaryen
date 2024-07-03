@@ -369,9 +369,8 @@ struct Monomorphize : public Pass {
     std::unique_ptr<Function> monoFunc =
       makeMonoFunctionWithContext(func, context, wasm);
 
-    // Assume we'll choose to use the monomorphized target in our call, but if
-    // we are being careful then we might change our mind.
-    auto chosenTarget = monoFunc->name; // optional? XXX
+    // Decide whether it is worth using the monomorphized function.
+    auto worthwhile = true;
     if (onlyWhenHelpful) {
       // Optimize both functions using minimal opts, hopefully enough to see if
       // there is a benefit to the context. We optimize both to avoid confusion
@@ -408,33 +407,30 @@ struct Monomorphize : public Pass {
       //       speed increase (as a tiny one, in a huge function, can lead to
       //       wasteful duplicated code)
       if (costAfter >= costBefore) {
-        // We failed to improve; use the original target instead.
-        chosenTarget = target;
+        worthwhile = false;
       }
     }
 
-//std::cout << "memo " << chosenTarget << "\n";
-    // Mark the chosen target in the map, so we don't do this work again,
-    // memoizing both success and failure.
-    funcContextMap[{target, context}] = chosenTarget;
+    // Memoize what we decided to call here.
+    funcContextMap[{target, context}] = worthwhile ? monoFunc->name : target;
 
-    if (chosenTarget == monoFunc->name) {
+    if (worthwhile) {
       // We are using the monomorphized function, so add it to the module, and
       // update the call.
       wasm.addFunction(std::move(monoFunc));
 
       call->operands.set(newOperands);
-      call->target = chosenTarget;
+      call->target = monoFunc->name;
     }
   }
 
-  // Creates a monomorphized function from the original + the call context. It
+  // Create a monomorphized function from the original + the call context. It
   // may have different parameters, results, and may include parts of the call
   // context.
   std::unique_ptr<Function> makeMonoFunctionWithContext(
     Function* func, const CallContext& context, Module& wasm) {
 
-    // The context has an operand for each param in the old function, each of
+    // The context has an operand for each one in the old function, each of
     // which may contain reverse-inlined content. A mismatch here means we did
     // not build the context right, or are using it with the wrong function.
     assert(context.operands.size() == func->getNumParams());
@@ -454,27 +450,27 @@ struct Monomorphize : public Pass {
     }
     // TODO: support changes to results.
     auto newResults = func->getResults();
-    auto newType = HeapType(Signature(Type(newParams), newResults));
+    HeapType newType = Signature(Type(newParams), newResults);
 
-    // Copy the function's vars, though below we will need to re-index them, as
-    // we are adjusting params.
+    // Copy the function's vars (though below we will need to re-index them, as
+    // we are adjusting params, see later).
     auto newVars = func->vars;
 
     // Make the new function.
     Builder builder(wasm);
     auto newFunc = builder.makeFunction(newName, newType, std::move(newVars));
 
-    // We must update local indexes: the new function has a XXX
-    // potentially different number of parameters, which are at the bottom of
+    // We must update local indexes: the new function has a  potentially
+    // different number of parameters, and parameters are at the very bottom of
     // the local index space. We are also replacing old params with vars. To
     // track this, map each old index to the new one.
     std::unordered_map<Index, Index> mappedLocals;
     auto newParamsMinusOld = newFunc->getParams().size() - func->getParams().size();
     for (Index i = 0; i < func->getNumLocals(); i++) {
       if (func->isParam(i)) {
-        // Old params become new vars inside the function. Later, we'll copy the
+        // Old params become new vars inside the function. Below we'll copy the
         // proper values into these vars.
-        // TODO: We could avoid this copy when it is trivial (atm we rely on
+        // TODO: We could avoid a var + copy when it is trivial (atm we rely on
         //       optimizations to remove it).
         auto local = Builder::addVar(newFunc.get(), func->getLocalType(i));
         mappedLocals[i] = local;
@@ -517,23 +513,14 @@ struct Monomorphize : public Pass {
     //    (local.get $param)                 ;; copied old body
     //  )
     //
-    // We need to add such an entry for a parameter when it changes, like in the
-    // example above, where a constant param turns from a param into a local. We
-    // must also do so when the type changes, resulting in this:
-    //
-    //  (func $monomorphized (param $param (ref $sub))
-    //    (local $original (ref $super))
-    //    (local.set $super (local.get $sub))
-    //
-    // We write the refined actual param into a local that replaces the old
-    // param (and we then let optimizations propagate the refined type). To do
-    // this, we build up a list of the expressions we will prepend:
+    // We need to add such an local.set in the prelude of the function for each
+    // operand in the context.
     std::vector<Expression*> pre;
-
     for (Index i = 0; i < context.operands.size(); i++) {
       auto* operand = context.operands[i];
 
-      // We've allocated a local for this, which we can write to.
+      // Write the context operand (the reverse-inlined content) to the local
+      // we've allocated for this, 
       auto local = mappedLocals.at(i);
       auto* value = ExpressionManipulator::copy(operand, wasm);
       pre.push_back(builder.makeLocalSet(local, value));
@@ -557,7 +544,7 @@ struct Monomorphize : public Pass {
     localUpdater.walk(newBody);
 
     if (!pre.empty()) {
-      // Add the block after the prepends.
+      // Add the block after the prelude.
       pre.push_back(newBody);
       newBody = builder.makeBlock(pre);
     }
