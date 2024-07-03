@@ -4,8 +4,10 @@
 ;; RUN: foreach %s %t wasm-opt -all --remove-unused-names --heap2local -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $struct.A (struct (field (mut i32)) (field (mut f64))))
-  (type $struct.A (struct (field (mut i32)) (field (mut f64))))
+  ;; CHECK:      (type $struct.A (sub (struct (field (mut i32)) (field (mut f64)))))
+  (type $struct.A (sub (struct (field (mut i32)) (field (mut f64)))))
+
+  (type $struct.B (sub $struct.A (struct (field (mut i32)) (field (mut f64)))))
 
   ;; CHECK:      (type $1 (func))
 
@@ -39,6 +41,10 @@
   ;; CHECK:      (type $12 (func (param eqref) (result i32)))
 
   ;; CHECK:      (type $13 (func (param eqref eqref) (result i32)))
+
+  ;; CHECK:      (type $14 (func (param anyref) (result i32)))
+
+  ;; CHECK:      (type $15 (func (param anyref)))
 
   ;; CHECK:      (func $simple (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
@@ -2382,6 +2388,251 @@
       )
     )
   )
+
+  ;; CHECK:      (func $ref-is (type $14) (param $x anyref) (result i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.is_null
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block (result i32)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.is_null
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $3
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $4
+  ;; CHECK-NEXT:       (f64.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (local.get $3)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (local.get $4)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-is (param $x anyref) (result i32)
+    ;; A ref.is that we can do nothing for, and should not modify, even though
+    ;; we optimize later.
+    (drop
+      (ref.is_null
+        (local.get $x)
+      )
+    )
+    ;; The result is 0 as the allocation is not null, and we can remove the
+    ;; allocation.
+    (ref.is_null
+      (struct.new $struct.A
+        (i32.const 0)
+        (f64.const 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $ref-test (type $1)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 f64)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 f64)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 f64)
+  ;; CHECK-NEXT:  (local $6 i32)
+  ;; CHECK-NEXT:  (local $7 f64)
+  ;; CHECK-NEXT:  (local $8 i32)
+  ;; CHECK-NEXT:  (local $9 f64)
+  ;; CHECK-NEXT:  (local $10 i32)
+  ;; CHECK-NEXT:  (local $11 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $3
+  ;; CHECK-NEXT:       (f64.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (local.get $3)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $6
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $7
+  ;; CHECK-NEXT:       (f64.const 2.2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $4
+  ;; CHECK-NEXT:       (local.get $6)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $5
+  ;; CHECK-NEXT:       (local.get $7)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $10
+  ;; CHECK-NEXT:       (i32.const 3)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $11
+  ;; CHECK-NEXT:       (f64.const 4.4)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $8
+  ;; CHECK-NEXT:       (local.get $10)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $9
+  ;; CHECK-NEXT:       (local.get $11)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-test
+    ;; This cast must succeed (it tests the exact type), and we can remove the
+    ;; allocation.
+    (drop
+      (ref.test (ref $struct.A)
+        (struct.new $struct.A
+          (i32.const 0)
+          (f64.const 0)
+        )
+      )
+    )
+    ;; Testing a supertype also works.
+    (drop
+      (ref.test (ref null $struct.A)
+        (struct.new $struct.A
+          (i32.const 1)
+          (f64.const 2.2)
+        )
+      )
+    )
+    (drop
+      (ref.test (ref null any)
+        (struct.new $struct.A
+          (i32.const 3)
+          (f64.const 4.4)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $ref-test-bad (type $15) (param $x anyref)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 f64)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 f64)
+  ;; CHECK-NEXT:  (local $5 i32)
+  ;; CHECK-NEXT:  (local $6 f64)
+  ;; CHECK-NEXT:  (local $7 i32)
+  ;; CHECK-NEXT:  (local $8 f64)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test (ref $struct.A)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $3
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $4
+  ;; CHECK-NEXT:       (f64.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (local.get $3)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (local.get $4)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $7
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $8
+  ;; CHECK-NEXT:       (f64.const 2.2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $5
+  ;; CHECK-NEXT:       (local.get $7)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $6
+  ;; CHECK-NEXT:       (local.get $8)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-test-bad (param $x anyref)
+    ;; We know nothing about this cast.
+    (drop
+      (ref.test (ref $struct.A)
+        (local.get $x)
+      )
+    )
+    ;; These casts must fail, but we can remove the allocation.
+    (drop
+      (ref.test (ref $struct.B)
+        (struct.new $struct.A
+          (i32.const 0)
+          (f64.const 0)
+        )
+      )
+    )
+    (drop
+      (ref.test (ref null $struct.B)
+        (struct.new $struct.A
+          (i32.const 1)
+          (f64.const 2.2)
+        )
+      )
+    )
+  )
 )
 
 (module
@@ -2736,9 +2987,9 @@
 
   ;; CHECK:      (type $1 (struct (field (mut i32))))
 
-  ;; CHECK:      (type $2 (func (result i32)))
+  ;; CHECK:      (type $2 (func))
 
-  ;; CHECK:      (type $3 (func))
+  ;; CHECK:      (type $3 (func (result i32)))
 
   ;; CHECK:      (type $4 (func (param i32) (result i32)))
 
@@ -2752,7 +3003,9 @@
 
   ;; CHECK:      (type $9 (struct (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32))))
 
-  ;; CHECK:      (func $array.new_default (type $3)
+  ;; CHECK:      (type $10 (func (param anyref)))
+
+  ;; CHECK:      (func $array.new_default (type $2)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -2892,7 +3145,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.new (type $2) (result i32)
+  ;; CHECK:      (func $array.new (type $3) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -3074,7 +3327,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.local.super (type $3)
+  ;; CHECK:      (func $array.local.super (type $2)
   ;; CHECK-NEXT:  (local $temp anyref)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -3123,7 +3376,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.folded (type $2) (result i32)
+  ;; CHECK:      (func $array.folded (type $3) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -3204,7 +3457,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.folded.multiple (type $3)
+  ;; CHECK:      (func $array.folded.multiple (type $2)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -3457,7 +3710,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.nested.refinalize.get (type $2) (result i32)
+  ;; CHECK:      (func $array.nested.refinalize.get (type $3) (result i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (ref.null none)
@@ -3477,7 +3730,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.nested.refinalize.set (type $3)
+  ;; CHECK:      (func $array.nested.refinalize.set (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
   ;; CHECK-NEXT:    (ref.null none)
@@ -3499,7 +3752,7 @@
     )
   )
 
-  ;; CHECK:      (func $array.flowing.type (type $2) (result i32)
+  ;; CHECK:      (func $array.flowing.type (type $3) (result i32)
   ;; CHECK-NEXT:  (local $temp (ref $array))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 i32)
@@ -3585,12 +3838,122 @@
     )
   )
 
-  ;; CHECK:      (func $get-i32 (type $2) (result i32)
+  ;; CHECK:      (func $get-i32 (type $3) (result i32)
   ;; CHECK-NEXT:  (i32.const 1337)
   ;; CHECK-NEXT: )
   (func $get-i32 (result i32)
     ;; Helper for the above.
     (i32.const 1337)
+  )
+
+  ;; CHECK:      (func $ref-test (type $2)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (local.set $0
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (local.set $1
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (local.set $2
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-test
+    ;; This cast must succeed (it tests the exact type), and we can remove the
+    ;; allocation.
+    (drop
+      (ref.test (ref $array)
+        (array.new_default $array
+          (i32.const 1)
+        )
+      )
+    )
+    ;; Testing a supertype also works.
+    (drop
+      (ref.test (ref null any)
+        (array.new_default $array
+          (i32.const 2)
+        )
+      )
+    )
+  )
+  ;; CHECK:      (func $ref-test-bad (type $10) (param $x anyref)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.test (ref $array)
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result i32)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (local.set $1
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (local.set $2
+  ;; CHECK-NEXT:         (i32.const 0)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $ref-test-bad (param $x anyref)
+    ;; We know nothing about this cast.
+    (drop
+      (ref.test (ref $array)
+        (local.get $x)
+      )
+    )
+    ;; This cast fails, but we can remove the allocation.
+    (drop
+      (ref.test (ref struct)
+        (array.new_default $array
+          (i32.const 2)
+        )
+      )
+    )
   )
 )
 
