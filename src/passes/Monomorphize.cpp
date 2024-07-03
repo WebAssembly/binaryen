@@ -332,7 +332,7 @@ struct Monomorphize : public Pass {
       return;
     }
 
-    // TODO: igmore calls with unreachable operands for simplicty
+    // TODO: ignore calls with unreachable operands for simplicty
 
     // Compute the call context, and the new operands that the call would send
     // if we use that context.
