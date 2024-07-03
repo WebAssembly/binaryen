@@ -520,7 +520,7 @@ struct Monomorphize : public Pass {
       auto* operand = context.operands[i];
 
       // Write the context operand (the reverse-inlined content) to the local
-      // we've allocated for this, 
+      // we've allocated for this.
       auto local = mappedLocals.at(i);
       auto* value = ExpressionManipulator::copy(operand, wasm);
       pre.push_back(builder.makeLocalSet(local, value));
