@@ -370,6 +370,12 @@ struct EscapeAnalyzer {
       void visitRefCast(RefCast* curr) {
         // Whether the cast succeeds or fails, it does not escape.
         escapes = false;
+
+        // If the cast fails then the allocation is fully consumed and does not
+        // flow any further (instead, we trap).
+        if (!Type::isSubType(allocation->type, curr->type)) {
+          fullyConsumes = true;
+        }
       }
 
       // GC operations.
@@ -775,8 +781,6 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return;
     }
 
-    // XXX the test fails as this assumes we read something valid, but the
-    //     allocation may not reach it, if it goes through a failed cast
     auto& field = fields[curr->index];
     auto type = field.type;
     if (type != curr->type) {
