@@ -174,7 +174,9 @@ struct CallContext {
 
   // Build the context from a given call. This builds up the context operands as
   // as explained in the comments above, and updates the call to send any
-  // remaining values (we update |newOperands|).
+  // remaining values by updating |newOperands| (for example, if all the values
+  // sent are constants, then |newOperands| will end up empty, as we have
+  // nothing left to send).
   void buildFromCall(Call* call,
                      std::vector<Expression*>& newOperands,
                      Module& wasm) {
