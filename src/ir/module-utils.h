@@ -34,11 +34,11 @@ copyFunction(Function* func,
              std::optional<std::vector<Index>> fileIndexMap = std::nullopt);
 
 // As above, but does not add the copy to the module.
-std::unique_ptr<Function>
-copyFunctionWithoutAdd(Function* func,
-                       Module& out,
-                       Name newName = Name(),
-                       std::optional<std::vector<Index>> fileIndexMap = std::nullopt);
+std::unique_ptr<Function> copyFunctionWithoutAdd(
+  Function* func,
+  Module& out,
+  Name newName = Name(),
+  std::optional<std::vector<Index>> fileIndexMap = std::nullopt);
 
 Global* copyGlobal(Global* global, Module& out);
 
