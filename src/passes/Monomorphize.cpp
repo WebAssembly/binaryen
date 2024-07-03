@@ -436,7 +436,10 @@ struct Monomorphize : public Pass {
     // Pick a new name.
     auto newName = Names::getValidFunctionName(wasm, func->name);
 
-    // Generate the new signature.
+    // Copy the function as the base for the new one.
+    auto newFunc = ModuleUtils::copyFunctionWithoutAdd(func, wasm, newName);
+
+    // Generate the new signature, and apply it to the new function.
     std::vector<Type> newParams;
     for (auto* operand : context.operands) {
       // A local.get is a value that arrives in a parameter. Anything else is
@@ -448,15 +451,7 @@ struct Monomorphize : public Pass {
     }
     // TODO: support changes to results.
     auto newResults = func->getResults();
-    HeapType newType = Signature(Type(newParams), newResults);
-
-    // Copy the function's vars (though below we will need to re-index them, as
-    // we are adjusting params, see later).
-    auto newVars = func->vars;
-
-    // Make the new function.
-    Builder builder(wasm);
-    auto newFunc = builder.makeFunction(newName, newType, std::move(newVars));
+    newFunc->type = Signature(Type(newParams), newResults);
 
     // We must update local indexes: the new function has a  potentially
     // different number of parameters, and parameters are at the very bottom of
@@ -482,6 +477,8 @@ struct Monomorphize : public Pass {
 
     // Copy over local names to help debugging.
     if (!func->localNames.empty()) {
+      newFunc->localNames.clear();
+      newFunc->localIndices.clear();
       for (Index i = 0; i < func->getNumLocals(); i++) {
         auto oldName = func->getLocalNameOrDefault(i);
         if (oldName.isNull()) {
@@ -494,6 +491,8 @@ struct Monomorphize : public Pass {
         newFunc->localIndices[newName] = newIndex;
       }
     };
+
+    Builder builder(wasm);
 
     // Surrounding the main body is the reverse-inlined content from the call
     // context, like this:
