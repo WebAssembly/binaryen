@@ -343,7 +343,13 @@ struct OptimizationOptions : public ToolOptions {
     }
   }
 
+  // Pass arguments with the same name as the pass are stored per-instance on
+  // PassInfo, while all other arguments are stored globally on
+  // passOptions.arguments (which is what the overriden method on ToolOptions
+  // does).
   void addPassArg(const std::string& key, const std::string& value) override {
+    // Scan the current pass list for the last defined instance of a pass named
+    // like the argument under consideration.
     for (auto i = passes.rbegin(); i != passes.rend(); i++) {
       if (i->name != key) {
         continue;
@@ -353,14 +359,17 @@ struct OptimizationOptions : public ToolOptions {
         Fatal() << i->name << " already set to " << *(i->argument);
       }
 
+      // Found? Store the argument value there and return.
       i->argument = value;
       return;
     }
 
+    // Not found? Store it globally if there is no pass with the same name.
     if (!PassRegistry::get()->containsPass(key)) {
       return ToolOptions::addPassArg(key, value);
     }
 
+    // Not found, but we have a pass with the same name? Bail out.
     Fatal() << "can't set " << key << ": pass not enabled";
   }
 
