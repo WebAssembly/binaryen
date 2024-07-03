@@ -447,29 +447,32 @@
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $refinable (type $4) (param $0 (ref $A))
-  ;; CAREFUL-NEXT:  (local $1 (ref $B))
-  ;; CAREFUL-NEXT:  (local $2 (ref $B))
+  ;; CAREFUL-NEXT:  (local $1 (ref $A))
   ;; CAREFUL-NEXT:  (call $import
-  ;; CAREFUL-NEXT:   (local.tee $1
-  ;; CAREFUL-NEXT:    (ref.cast (ref $B)
-  ;; CAREFUL-NEXT:     (local.get $0)
+  ;; CAREFUL-NEXT:   (ref.cast (ref $B)
+  ;; CAREFUL-NEXT:    (local.get $0)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT:  (call $import
+  ;; CAREFUL-NEXT:   (ref.cast (ref $B)
+  ;; CAREFUL-NEXT:    (local.tee $1
+  ;; CAREFUL-NEXT:     (select (result (ref $A))
+  ;; CAREFUL-NEXT:      (local.get $0)
+  ;; CAREFUL-NEXT:      (struct.new_default $B)
+  ;; CAREFUL-NEXT:      (global.get $global)
+  ;; CAREFUL-NEXT:     )
   ;; CAREFUL-NEXT:    )
   ;; CAREFUL-NEXT:   )
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT:  (call $import
-  ;; CAREFUL-NEXT:   (local.tee $2
-  ;; CAREFUL-NEXT:    (select (result (ref $B))
-  ;; CAREFUL-NEXT:     (local.get $1)
-  ;; CAREFUL-NEXT:     (struct.new_default $B)
-  ;; CAREFUL-NEXT:     (global.get $global)
-  ;; CAREFUL-NEXT:    )
+  ;; CAREFUL-NEXT:   (ref.cast (ref $B)
+  ;; CAREFUL-NEXT:    (local.get $1)
   ;; CAREFUL-NEXT:   )
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT:  (call $import
-  ;; CAREFUL-NEXT:   (local.get $2)
-  ;; CAREFUL-NEXT:  )
-  ;; CAREFUL-NEXT:  (call $import
-  ;; CAREFUL-NEXT:   (local.get $1)
+  ;; CAREFUL-NEXT:   (ref.cast (ref $B)
+  ;; CAREFUL-NEXT:    (local.get $0)
+  ;; CAREFUL-NEXT:   )
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
   (func $refinable (param $ref (ref $A))

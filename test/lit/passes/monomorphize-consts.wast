@@ -29,8 +29,6 @@
 
   ;; CAREFUL:      (type $3 (func (param i32) (result i32)))
 
-  ;; CAREFUL:      (type $4 (func (result i32)))
-
   ;; CAREFUL:      (import "a" "b" (func $import (type $1) (param i32)))
   (import "a" "b" (func $import (param i32)))
 
@@ -266,7 +264,9 @@
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $mutual-recursion-b (type $3) (param $0 i32) (result i32)
   ;; CAREFUL-NEXT:  (i32.add
-  ;; CAREFUL-NEXT:   (call $mutual-recursion-a_9)
+  ;; CAREFUL-NEXT:   (call $mutual-recursion-a
+  ;; CAREFUL-NEXT:    (i32.const 0)
+  ;; CAREFUL-NEXT:   )
   ;; CAREFUL-NEXT:   (i32.const 1337)
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
@@ -582,8 +582,4 @@
 ;; CAREFUL-NEXT:  (call $import
 ;; CAREFUL-NEXT:   (local.get $0)
 ;; CAREFUL-NEXT:  )
-;; CAREFUL-NEXT: )
-
-;; CAREFUL:      (func $mutual-recursion-a_9 (type $4) (result i32)
-;; CAREFUL-NEXT:  (i32.const 42)
 ;; CAREFUL-NEXT: )
