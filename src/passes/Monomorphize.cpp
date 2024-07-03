@@ -583,7 +583,7 @@ struct Monomorphize : public Pass {
   //
   // Note that this can contain funcContextMap{A, ...} = A, that is, that maps
   // a function name to itself. That indicates we found no benefit from
-  // refining with those particular types, and saves us from computing it again
+  // monomorphizing with that context, and saves us from computing it again
   // later on.
   std::unordered_map<std::pair<Name, CallContext>, Name> funcContextMap;
 };
