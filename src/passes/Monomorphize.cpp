@@ -126,9 +126,8 @@ struct CallContext {
   //                         ;; sent from the caller, which we will local.get.
   //  ]
   //
-  // Note how the inner part of the struct.new is a local.get. That is a
-  // local.get of a parameter to the monomorphized function, which looks like
-  // this:
+  // Both the const and the local.get are simply used in the monomorphized
+  // function, like this:
   //
   //  (func $foo-monomorphized (param $0 ..)
   //    (..local defs..)
@@ -146,15 +145,10 @@ struct CallContext {
   // The $int param is no longer a parameter, and it is set in a local at the
   // top: we have "reverse-inlined" code from the calling function into the
   // caller, pulling the constant 10 into here. The second parameter cannot be
-  // pulled in, so we must still send it:
-  //
-  //  (call $foo-monomorphized
-  //    (..something complicated..)  ;; This is still sent.
-  //  )
-  //
-  // We mark that value as a local.get among the context operands, because that
-  // is exactly what we do to receive it in the called function: we local.get
-  // it, as can be seen in the code above.
+  // pulled in, so we must still send it, but we still have a local.set there to
+  // copy it into a local (this does not matter in this case, but does if the
+  // sent value is more refined; always using a local.set is simpler and more
+  // regular).
   std::vector<Expression*> operands;
 
   // Whether the call is dropped. TODO
