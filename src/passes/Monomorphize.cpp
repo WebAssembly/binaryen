@@ -567,10 +567,12 @@ struct Monomorphize : public Pass {
   //       mattering a lot here.
   void doMinimalOpts(Function* func) {
     PassRunner runner(getPassRunner());
-    // Run with a good amount of optimizations, to allow us to discover
-    // opportunities anywhere in the optimizer. TODO: perhaps less, if the
-    // function is large?
-    runner.options.optimizeLevel = 3;
+    runner.options.optimizeLevel = 1;
+    // Local subtyping is not run in -O1, but we really do want it here since
+    // the entire point is that parameters now have more refined types, which
+    // can lead to locals reading them being refinable as well.
+    runner.add("local-subtyping");
+    // TODO: we need local propagation and escape analysis etc. -O3?
     runner.addDefaultFunctionOptimizationPasses();
     runner.setIsNested(true);
     runner.runOnFunction(func);
