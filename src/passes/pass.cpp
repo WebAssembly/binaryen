@@ -45,7 +45,7 @@ void PassRegistry::registerPass(const char* name,
                                 const char* description,
                                 Creator create) {
   assert(passInfos.find(name) == passInfos.end());
-  passInfos[name] = PassInfo(description, create, false);
+  passInfos[name] = PassInfo(description, create);
 }
 
 void PassRegistry::registerTestPass(const char* name,
@@ -74,13 +74,7 @@ std::vector<std::string> PassRegistry::getRegisteredNames() {
 }
 
 bool PassRegistry::containsPass(const std::string& name) {
-  for (auto& [passName, _] : passInfos) {
-    if (passName == name) {
-      return true;
-    }
-  }
-
-  return false;
+  return passInfos.count(name) > 0;
 }
 
 std::string PassRegistry::getPassDescription(std::string name) {
@@ -1045,8 +1039,9 @@ bool PassRunner::shouldPreserveDWARF() {
 }
 
 bool Pass::hasArgument(const std::string& key) {
-  return (key == name) ? passArg.has_value()
-                       : getPassOptions().hasArgument(key);
+  // An argument with the name of the pass is stored on the instance. Other
+  // arguments are in the global storage.
+  return key == name ? passArg.has_value() : getPassOptions().hasArgument(key);
 }
 
 std::string Pass::getArgument(const std::string& key,

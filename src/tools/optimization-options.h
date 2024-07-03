@@ -344,16 +344,16 @@ struct OptimizationOptions : public ToolOptions {
   }
 
   void addPassArg(const std::string& key, const std::string& value) override {
-    for (auto iPass = passes.rbegin(); iPass != passes.rend(); iPass++) {
-      if (iPass->name != key) {
+    for (auto i = passes.rbegin(); i != passes.rend(); i++) {
+      if (i->name != key) {
         continue;
       }
 
-      if (iPass->argument.has_value()) {
-        Fatal() << iPass->name << " already set to " << *(iPass->argument);
+      if (i->argument.has_value()) {
+        Fatal() << i->name << " already set to " << *(i->argument);
       }
 
-      iPass->argument = value;
+      i->argument = value;
       return;
     }
 

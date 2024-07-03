@@ -39,7 +39,7 @@ struct PassRegistry {
   using Creator = std::function<Pass*()>;
 
   void registerPass(const char* name, const char* description, Creator create);
-  ;
+
   // Register a pass that's used for internal testing. These passes do not show
   // up in --help.
   void
@@ -328,7 +328,7 @@ struct PassRunner {
 
   // Add a pass using its name.
   void add(std::string passName,
-           std::optional<std::string> passArg = std::optional<std::string>());
+           std::optional<std::string> passArg = std::nullopt);
 
   // Add a pass given an instance.
   void add(std::unique_ptr<Pass> pass) { doAdd(std::move(pass)); }
