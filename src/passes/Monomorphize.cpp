@@ -181,7 +181,9 @@ struct CallContext {
   // Build the context from a given call. This builds up the context operands as
   // as explained in the comments above, and updates the call to send any
   // remaining values (we update |newOperands|).
-  void buildFromCall(Call* call, std::vector<Expression*>& newOperands, Module& wasm) {
+  void buildFromCall(Call* call,
+                     std::vector<Expression*>& newOperands,
+                     Module& wasm) {
     Builder builder(wasm);
 
     for (auto* operand : call->operands) {
@@ -237,8 +239,7 @@ struct CallContext {
     auto callParams = wasm.getFunction(call->target)->getParams();
     for (Index i = 0; i < operands.size(); i++) {
       // A local.get of the same type implies we just pass through the value.
-      if (!operands[i]->is<LocalGet>() ||
-          operands[i]->type != callParams[i]) {
+      if (!operands[i]->is<LocalGet>() || operands[i]->type != callParams[i]) {
         return false;
       }
     }
@@ -268,8 +269,8 @@ template<> struct hash<wasm::CallContext> {
 };
 
 // Useful for debugging.
-[[maybe_unused]]
-std::ostream& operator<<(std::ostream& o, wasm::CallContext& context) {
+[[maybe_unused]] std::ostream& operator<<(std::ostream& o,
+                                          wasm::CallContext& context) {
   o << "CallContext{\n";
   for (auto* operand : context.operands) {
     o << "  " << *operand << '\n';
@@ -465,7 +466,8 @@ struct Monomorphize : public Pass {
     // the local index space. We are also replacing old params with vars. To
     // track this, map each old index to the new one.
     std::unordered_map<Index, Index> mappedLocals;
-    auto newParamsMinusOld = newFunc->getParams().size() - func->getParams().size();
+    auto newParamsMinusOld =
+      newFunc->getParams().size() - func->getParams().size();
     for (Index i = 0; i < func->getNumLocals(); i++) {
       if (func->isParam(i)) {
         // Old params become new vars inside the function. Below we'll copy the
@@ -532,7 +534,8 @@ struct Monomorphize : public Pass {
     // Map locals.
     struct LocalUpdater : public PostWalker<LocalUpdater> {
       const std::unordered_map<Index, Index>& mappedLocals;
-      LocalUpdater(const std::unordered_map<Index, Index>& mappedLocals) : mappedLocals(mappedLocals) {}
+      LocalUpdater(const std::unordered_map<Index, Index>& mappedLocals)
+        : mappedLocals(mappedLocals) {}
       void visitLocalGet(LocalGet* curr) { updateIndex(curr->index); }
       void visitLocalSet(LocalSet* curr) { updateIndex(curr->index); }
       void updateIndex(Index& index) {
