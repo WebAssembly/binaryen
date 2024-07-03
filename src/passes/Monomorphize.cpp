@@ -415,12 +415,12 @@ struct Monomorphize : public Pass {
     funcContextMap[{target, context}] = worthwhile ? monoFunc->name : target;
 
     if (worthwhile) {
-      // We are using the monomorphized function, so add it to the module, and
-      // update the call.
-      wasm.addFunction(std::move(monoFunc));
-
+      // We are using the monomorphized function, so update the call and add it
+      // to the module.
       call->operands.set(newOperands);
       call->target = monoFunc->name;
+
+      wasm.addFunction(std::move(monoFunc));
     }
   }
 
