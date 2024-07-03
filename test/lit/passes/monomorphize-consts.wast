@@ -12,40 +12,40 @@
 
   ;; ALWAYS:      (type $0 (func (param i32)))
 
-  ;; ALWAYS:      (type $1 (func (param i32 i32 funcref stringref)))
+  ;; ALWAYS:      (type $1 (func))
 
-  ;; ALWAYS:      (type $2 (func))
+  ;; ALWAYS:      (type $2 (func (param i32 i32 funcref stringref)))
 
   ;; ALWAYS:      (type $3 (func (param i32) (result i32)))
 
   ;; ALWAYS:      (type $4 (func (result i32)))
 
   ;; ALWAYS:      (import "a" "b" (func $import (type $0) (param i32)))
-  ;; CAREFUL:      (type $0 (func (param i32 i32 funcref stringref)))
+  ;; CAREFUL:      (type $0 (func))
 
-  ;; CAREFUL:      (type $1 (func (param i32)))
+  ;; CAREFUL:      (type $1 (func (param i32 i32 funcref stringref)))
 
-  ;; CAREFUL:      (type $2 (func))
+  ;; CAREFUL:      (type $2 (func (param i32)))
 
   ;; CAREFUL:      (type $3 (func (param i32) (result i32)))
 
-  ;; CAREFUL:      (import "a" "b" (func $import (type $1) (param i32)))
+  ;; CAREFUL:      (import "a" "b" (func $import (type $2) (param i32)))
   (import "a" "b" (func $import (param i32)))
 
   ;; ALWAYS:      (elem declare func $calls)
 
-  ;; ALWAYS:      (func $calls (type $2)
-  ;; ALWAYS-NEXT:  (call $target_8
+  ;; ALWAYS:      (func $calls (type $1)
+  ;; ALWAYS-NEXT:  (call $target_9
   ;; ALWAYS-NEXT:   (i32.eqz
   ;; ALWAYS-NEXT:    (i32.const 2)
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
-  ;; ALWAYS-NEXT:  (call $target_8
+  ;; ALWAYS-NEXT:  (call $target_9
   ;; ALWAYS-NEXT:   (i32.eqz
   ;; ALWAYS-NEXT:    (i32.const 3)
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
-  ;; ALWAYS-NEXT:  (call $target_9
+  ;; ALWAYS-NEXT:  (call $target_10
   ;; ALWAYS-NEXT:   (i32.eqz
   ;; ALWAYS-NEXT:    (i32.const 2)
   ;; ALWAYS-NEXT:   )
@@ -53,7 +53,7 @@
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (elem declare func $calls)
 
-  ;; CAREFUL:      (func $calls (type $2)
+  ;; CAREFUL:      (func $calls (type $0)
   ;; CAREFUL-NEXT:  (call $target
   ;; CAREFUL-NEXT:   (i32.const 1)
   ;; CAREFUL-NEXT:   (i32.eqz
@@ -117,24 +117,24 @@
     )
   )
 
-  ;; ALWAYS:      (func $more-calls (type $2)
-  ;; ALWAYS-NEXT:  (call $target_8
+  ;; ALWAYS:      (func $more-calls (type $1)
+  ;; ALWAYS-NEXT:  (call $target_9
   ;; ALWAYS-NEXT:   (i32.eqz
   ;; ALWAYS-NEXT:    (i32.const 999)
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
-  ;; ALWAYS-NEXT:  (call $other-target_10
+  ;; ALWAYS-NEXT:  (call $other-target_11
   ;; ALWAYS-NEXT:   (i32.eqz
   ;; ALWAYS-NEXT:    (i32.const 999)
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
-  ;; ALWAYS-NEXT:  (call $work_11
+  ;; ALWAYS-NEXT:  (call $work_12
   ;; ALWAYS-NEXT:   (i32.eqz
   ;; ALWAYS-NEXT:    (i32.const 999)
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $more-calls (type $2)
+  ;; CAREFUL:      (func $more-calls (type $0)
   ;; CAREFUL-NEXT:  (call $target
   ;; CAREFUL-NEXT:   (i32.const 1)
   ;; CAREFUL-NEXT:   (i32.eqz
@@ -151,7 +151,7 @@
   ;; CAREFUL-NEXT:   (ref.func $calls)
   ;; CAREFUL-NEXT:   (string.const "foo")
   ;; CAREFUL-NEXT:  )
-  ;; CAREFUL-NEXT:  (call $work_8
+  ;; CAREFUL-NEXT:  (call $work_9
   ;; CAREFUL-NEXT:   (i32.eqz
   ;; CAREFUL-NEXT:    (i32.const 999)
   ;; CAREFUL-NEXT:   )
@@ -196,6 +196,56 @@
     )
   )
 
+  ;; ALWAYS:      (func $fail (type $1)
+  ;; ALWAYS-NEXT:  (call $target
+  ;; ALWAYS-NEXT:   (i32.eqz
+  ;; ALWAYS-NEXT:    (i32.const 1)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:   (i32.eqz
+  ;; ALWAYS-NEXT:    (i32.const 999)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:   (block (result funcref)
+  ;; ALWAYS-NEXT:    (ref.func $calls)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:   (block (result stringref)
+  ;; ALWAYS-NEXT:    (string.const "foo")
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $fail (type $0)
+  ;; CAREFUL-NEXT:  (call $target
+  ;; CAREFUL-NEXT:   (i32.eqz
+  ;; CAREFUL-NEXT:    (i32.const 1)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (i32.eqz
+  ;; CAREFUL-NEXT:    (i32.const 999)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (block (result funcref)
+  ;; CAREFUL-NEXT:    (ref.func $calls)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (block (result stringref)
+  ;; CAREFUL-NEXT:    (string.const "foo")
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $fail
+    ;; No operand is a constant here, so we do nothing.
+    (call $target
+      (i32.eqz
+        (i32.const 1)
+      )
+      (i32.eqz
+        (i32.const 999)
+      )
+      (block (result funcref)
+        (ref.func $calls)
+      )
+      (block (result stringref)
+        (string.const "foo")
+      )
+    )
+  )
+
   ;; ALWAYS:      (func $mutual-recursion-a (type $3) (param $x i32) (result i32)
   ;; ALWAYS-NEXT:  (if (result i32)
   ;; ALWAYS-NEXT:   (local.get $x)
@@ -204,7 +254,7 @@
   ;; ALWAYS-NEXT:     (call $mutual-recursion-b
   ;; ALWAYS-NEXT:      (local.get $x)
   ;; ALWAYS-NEXT:     )
-  ;; ALWAYS-NEXT:     (call $mutual-recursion-b_12)
+  ;; ALWAYS-NEXT:     (call $mutual-recursion-b_13)
   ;; ALWAYS-NEXT:    )
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:   (else
@@ -258,7 +308,7 @@
 
   ;; ALWAYS:      (func $mutual-recursion-b (type $3) (param $x i32) (result i32)
   ;; ALWAYS-NEXT:  (i32.add
-  ;; ALWAYS-NEXT:   (call $mutual-recursion-a_13)
+  ;; ALWAYS-NEXT:   (call $mutual-recursion-a_14)
   ;; ALWAYS-NEXT:   (i32.const 1337)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
@@ -281,7 +331,7 @@
     )
   )
 
-  ;; ALWAYS:      (func $target (type $1) (param $x i32) (param $y i32) (param $func funcref) (param $str stringref)
+  ;; ALWAYS:      (func $target (type $2) (param $x i32) (param $y i32) (param $func funcref) (param $str stringref)
   ;; ALWAYS-NEXT:  (drop
   ;; ALWAYS-NEXT:   (local.get $x)
   ;; ALWAYS-NEXT:  )
@@ -295,7 +345,7 @@
   ;; ALWAYS-NEXT:   (local.get $str)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $target (type $0) (param $0 i32) (param $1 i32) (param $2 funcref) (param $3 stringref)
+  ;; CAREFUL:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 funcref) (param $3 stringref)
   ;; CAREFUL-NEXT:  (nop)
   ;; CAREFUL-NEXT: )
   (func $target (param $x i32) (param $y i32) (param $func funcref) (param $str stringref)
@@ -313,7 +363,7 @@
     )
   )
 
-  ;; ALWAYS:      (func $other-target (type $1) (param $x i32) (param $y i32) (param $func funcref) (param $str stringref)
+  ;; ALWAYS:      (func $other-target (type $2) (param $x i32) (param $y i32) (param $func funcref) (param $str stringref)
   ;; ALWAYS-NEXT:  (drop
   ;; ALWAYS-NEXT:   (local.get $func)
   ;; ALWAYS-NEXT:  )
@@ -327,7 +377,7 @@
   ;; ALWAYS-NEXT:   (local.get $y)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $other-target (type $0) (param $0 i32) (param $1 i32) (param $2 funcref) (param $3 stringref)
+  ;; CAREFUL:      (func $other-target (type $1) (param $0 i32) (param $1 i32) (param $2 funcref) (param $3 stringref)
   ;; CAREFUL-NEXT:  (nop)
   ;; CAREFUL-NEXT: )
   (func $other-target (param $x i32) (param $y i32) (param $func funcref) (param $str stringref)
@@ -346,7 +396,7 @@
     )
   )
 
-  ;; ALWAYS:      (func $work (type $1) (param $x i32) (param $y i32) (param $func funcref) (param $str stringref)
+  ;; ALWAYS:      (func $work (type $2) (param $x i32) (param $y i32) (param $func funcref) (param $str stringref)
   ;; ALWAYS-NEXT:  (call $import
   ;; ALWAYS-NEXT:   (i32.add
   ;; ALWAYS-NEXT:    (local.get $x)
@@ -364,7 +414,7 @@
   ;; ALWAYS-NEXT:   (local.get $y)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $work (type $0) (param $0 i32) (param $1 i32) (param $2 funcref) (param $3 stringref)
+  ;; CAREFUL:      (func $work (type $1) (param $0 i32) (param $1 i32) (param $2 funcref) (param $3 stringref)
   ;; CAREFUL-NEXT:  (call $import
   ;; CAREFUL-NEXT:   (i32.add
   ;; CAREFUL-NEXT:    (local.get $0)
@@ -405,7 +455,7 @@
     )
   )
 )
-;; ALWAYS:      (func $target_8 (type $0) (param $0 i32)
+;; ALWAYS:      (func $target_9 (type $0) (param $0 i32)
 ;; ALWAYS-NEXT:  (local $x i32)
 ;; ALWAYS-NEXT:  (local $y i32)
 ;; ALWAYS-NEXT:  (local $func funcref)
@@ -438,7 +488,7 @@
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; ALWAYS:      (func $target_9 (type $0) (param $0 i32)
+;; ALWAYS:      (func $target_10 (type $0) (param $0 i32)
 ;; ALWAYS-NEXT:  (local $x i32)
 ;; ALWAYS-NEXT:  (local $y i32)
 ;; ALWAYS-NEXT:  (local $func funcref)
@@ -471,7 +521,7 @@
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; ALWAYS:      (func $other-target_10 (type $0) (param $0 i32)
+;; ALWAYS:      (func $other-target_11 (type $0) (param $0 i32)
 ;; ALWAYS-NEXT:  (local $x i32)
 ;; ALWAYS-NEXT:  (local $y i32)
 ;; ALWAYS-NEXT:  (local $func funcref)
@@ -504,7 +554,7 @@
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; ALWAYS:      (func $work_11 (type $0) (param $0 i32)
+;; ALWAYS:      (func $work_12 (type $0) (param $0 i32)
 ;; ALWAYS-NEXT:  (local $x i32)
 ;; ALWAYS-NEXT:  (local $y i32)
 ;; ALWAYS-NEXT:  (local $func funcref)
@@ -541,7 +591,7 @@
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; ALWAYS:      (func $mutual-recursion-b_12 (type $4) (result i32)
+;; ALWAYS:      (func $mutual-recursion-b_13 (type $4) (result i32)
 ;; ALWAYS-NEXT:  (local $x i32)
 ;; ALWAYS-NEXT:  (local.set $x
 ;; ALWAYS-NEXT:   (i32.const 0)
@@ -554,7 +604,7 @@
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; ALWAYS:      (func $mutual-recursion-a_13 (type $4) (result i32)
+;; ALWAYS:      (func $mutual-recursion-a_14 (type $4) (result i32)
 ;; ALWAYS-NEXT:  (local $x i32)
 ;; ALWAYS-NEXT:  (local.set $x
 ;; ALWAYS-NEXT:   (i32.const 0)
@@ -566,7 +616,7 @@
 ;; ALWAYS-NEXT:     (call $mutual-recursion-b
 ;; ALWAYS-NEXT:      (local.get $x)
 ;; ALWAYS-NEXT:     )
-;; ALWAYS-NEXT:     (call $mutual-recursion-b_12)
+;; ALWAYS-NEXT:     (call $mutual-recursion-b_13)
 ;; ALWAYS-NEXT:    )
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:   (else
@@ -575,7 +625,7 @@
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; CAREFUL:      (func $work_8 (type $1) (param $0 i32)
+;; CAREFUL:      (func $work_9 (type $2) (param $0 i32)
 ;; CAREFUL-NEXT:  (call $import
 ;; CAREFUL-NEXT:   (i32.const 3)
 ;; CAREFUL-NEXT:  )
