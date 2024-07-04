@@ -51,6 +51,7 @@ struct OptimizationOptions : public ToolOptions {
     // The name of the pass to run.
     std::string name;
 
+    // The main argument of the pass, if applicable.
     std::optional<std::string> argument;
 
     // The optimize and shrink levels to run the pass with, if specified. If not

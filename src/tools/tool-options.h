@@ -126,7 +126,9 @@ struct ToolOptions : public Options {
       .add("--pass-arg",
            "-pa",
            "An argument passed along to optimization passes being run. Must be "
-           "in the form KEY@VALUE",
+           "in the form KEY@VALUE. If a pass --somepass is specified "
+           "multiple times, --pass-arg=somepass will apply to the closest "
+           "instance to the left. All other options apply to all instances.",
            ToolOptionsCategory,
            Options::Arguments::N,
            [this](Options*, const std::string& argument) {

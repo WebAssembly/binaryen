@@ -509,6 +509,11 @@ protected:
   std::string getArgumentOrDefault(const std::string& key,
                                    const std::string& defaultValue);
 
+  // The main argument of the pass, which can be specified individually for
+  // every pass . getArgument() and friends will refer to this value if queried
+  // for a key that matches the pass name. All other arguments are taken from
+  // the runner / passOptions and therefore are global for all instances of a
+  // pass.
   std::optional<std::string> passArg;
 
   Pass() = default;
