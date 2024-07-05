@@ -11,9 +11,7 @@
 ;; RUN: not wasm-split %t.instrumented.wasm --profile=%t.prof -o1 %t.1.wasm -o2 %t.2.wasm \
 ;; RUN:   2>&1 | filecheck %s
 
-;; CHECK:      error: checksum in profile does not match module checksum.
-;; CHECK-SAME: The split module must be the original module that was instrumented
-;; CHECK-SAME: to generate the profile.
+;; CHECK:      error: checksum in profile does not match module checksum. The split module must be the original module that was instrumented to generate the profile.
 
 ;; Check that the matching module succeeds
 ;; RUN: wasm-split %s --profile=%t.prof -o1 %t.1.wasm -o2 %t.2.wasm
