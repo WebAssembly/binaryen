@@ -1451,7 +1451,7 @@ console.log("# RefAs");
   assert(theRefAs.value === value);
   assert(theRefAs.type !== binaryen.i32); // TODO: === (ref any)
 
-  theRefAs.op = op = binaryen.Operations.RefAsExternExternalize;
+  theRefAs.op = op = binaryen.Operations.RefAsExternConvertAny;
   assert(theRefAs.op === op);
   theRefAs.op = op = binaryen.Operations.RefAsNonNull;
   theRefAs.value = value = module.local.get(2, binaryen.anyref);
@@ -1467,7 +1467,7 @@ console.log("# RefAs");
     "(ref.as_non_null\n (local.get $2)\n)\n"
   );
 
-  // TODO: extern.externalize and extern.internalize
+  // TODO: extern.convert_any and any.convert_extern
 
   module.dispose();
 })();

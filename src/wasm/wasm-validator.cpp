@@ -2215,30 +2215,30 @@ void FunctionValidator::visitRefAs(RefAs* curr) {
     default:
       // TODO: validate all the other ref.as_*
       break;
-    case ExternInternalize: {
+    case AnyConvertExtern: {
       shouldBeTrue(getModule()->features.hasGC(),
                    curr,
-                   "extern.internalize requries GC [--enable-gc]");
+                   "any.convert_extern requries GC [--enable-gc]");
       if (curr->type == Type::unreachable) {
         return;
       }
       shouldBeSubType(curr->value->type,
                       Type(HeapType::ext, Nullable),
                       curr->value,
-                      "extern.internalize value should be an externref");
+                      "any.convert_extern value should be an externref");
       break;
     }
-    case ExternExternalize: {
+    case ExternConvertAny: {
       shouldBeTrue(getModule()->features.hasGC(),
                    curr,
-                   "extern.externalize requries GC [--enable-gc]");
+                   "extern.convert_any requries GC [--enable-gc]");
       if (curr->type == Type::unreachable) {
         return;
       }
       shouldBeSubType(curr->value->type,
                       Type(HeapType::any, Nullable),
                       curr->value,
-                      "extern.externalize value should be an anyref");
+                      "extern.convert_any value should be an anyref");
       break;
     }
   }

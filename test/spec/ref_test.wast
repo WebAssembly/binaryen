@@ -19,8 +19,8 @@
     (table.set $ta (i32.const 3) (ref.i31 (i32.const 7)))
     (table.set $ta (i32.const 4) (struct.new_default $st))
     (table.set $ta (i32.const 5) (array.new_default $at (i32.const 0)))
-    (table.set $ta (i32.const 6) (extern.internalize (extern.externalize (ref.i31 (i32.const 0)))))
-    (table.set $ta (i32.const 7) (extern.internalize (ref.null extern)))
+    (table.set $ta (i32.const 6) (any.convert_extern (extern.convert_any (ref.i31 (i32.const 0)))))
+    (table.set $ta (i32.const 7) (any.convert_extern (ref.null extern)))
 
     (table.set $tf (i32.const 0) (ref.null nofunc))
     (table.set $tf (i32.const 1) (ref.null func))
@@ -28,10 +28,10 @@
 
     (table.set $te (i32.const 0) (ref.null noextern))
     (table.set $te (i32.const 1) (ref.null extern))
-    (table.set $te (i32.const 2) (extern.externalize (ref.i31 (i32.const 0))))
-    (table.set $te (i32.const 3) (extern.externalize (ref.i31 (i32.const 8))))
-    (table.set $te (i32.const 4) (extern.externalize (struct.new_default $st)))
-    (table.set $te (i32.const 5) (extern.externalize (ref.null any)))
+    (table.set $te (i32.const 2) (extern.convert_any (ref.i31 (i32.const 0))))
+    (table.set $te (i32.const 3) (extern.convert_any (ref.i31 (i32.const 8))))
+    (table.set $te (i32.const 4) (extern.convert_any (struct.new_default $st)))
+    (table.set $te (i32.const 5) (extern.convert_any (ref.null any)))
   )
 
   (func (export "ref_test_null_data") (param $i i32) (result i32)

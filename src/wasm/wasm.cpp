@@ -1231,10 +1231,10 @@ void RefAs::finalize() {
     case RefAsNonNull:
       type = Type(value->type.getHeapType(), NonNullable);
       break;
-    case ExternInternalize:
+    case AnyConvertExtern:
       type = Type(HeapType::any, value->type.getNullability());
       break;
-    case ExternExternalize:
+    case ExternConvertAny:
       type = Type(HeapType::ext, value->type.getNullability());
       break;
     default:

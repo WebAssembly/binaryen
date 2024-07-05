@@ -678,6 +678,8 @@ BINARYEN_API BinaryenOp BinaryenDotI8x16I7x16SToVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenRefAsNonNull(void);
 BINARYEN_API BinaryenOp BinaryenRefAsExternInternalize(void);
 BINARYEN_API BinaryenOp BinaryenRefAsExternExternalize(void);
+BINARYEN_API BinaryenOp BinaryenRefAsAnyConvertExtern(void);
+BINARYEN_API BinaryenOp BinaryenRefAsExternConvertAny(void);
 BINARYEN_API BinaryenOp BinaryenBrOnNull(void);
 BINARYEN_API BinaryenOp BinaryenBrOnNonNull(void);
 BINARYEN_API BinaryenOp BinaryenBrOnCast(void);

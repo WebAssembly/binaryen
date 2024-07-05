@@ -2334,13 +2334,13 @@ void BinaryInstWriter::visitRefAs(RefAs* curr) {
     case RefAsNonNull:
       o << int8_t(BinaryConsts::RefAsNonNull);
       break;
-    case ExternInternalize:
+    case AnyConvertExtern:
       o << int8_t(BinaryConsts::GCPrefix)
-        << U32LEB(BinaryConsts::ExternInternalize);
+        << U32LEB(BinaryConsts::AnyConvertExtern);
       break;
-    case ExternExternalize:
+    case ExternConvertAny:
       o << int8_t(BinaryConsts::GCPrefix)
-        << U32LEB(BinaryConsts::ExternExternalize);
+        << U32LEB(BinaryConsts::ExternConvertAny);
       break;
     default:
       WASM_UNREACHABLE("invalid ref.as_*");

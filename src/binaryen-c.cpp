@@ -1012,8 +1012,10 @@ BinaryenOp BinaryenDotI8x16I7x16SToVecI16x8(void) {
   return DotI8x16I7x16SToVecI16x8;
 }
 BinaryenOp BinaryenRefAsNonNull(void) { return RefAsNonNull; }
-BinaryenOp BinaryenRefAsExternInternalize(void) { return ExternInternalize; }
-BinaryenOp BinaryenRefAsExternExternalize(void) { return ExternExternalize; }
+BinaryenOp BinaryenRefAsExternInternalize(void) { return AnyConvertExtern; }
+BinaryenOp BinaryenRefAsExternExternalize(void) { return ExternConvertAny; }
+BinaryenOp BinaryenRefAsAnyConvertExtern(void) { return AnyConvertExtern; }
+BinaryenOp BinaryenRefAsExternConvertAny(void) { return ExternConvertAny; }
 BinaryenOp BinaryenBrOnNull(void) { return BrOnNull; }
 BinaryenOp BinaryenBrOnNonNull(void) { return BrOnNonNull; }
 BinaryenOp BinaryenBrOnCast(void) { return BrOnCast; }

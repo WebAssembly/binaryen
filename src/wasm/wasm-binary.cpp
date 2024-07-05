@@ -4329,8 +4329,8 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       if (maybeVisitStringSliceWTF(curr, opcode)) {
         break;
       }
-      if (opcode == BinaryConsts::ExternInternalize ||
-          opcode == BinaryConsts::ExternExternalize) {
+      if (opcode == BinaryConsts::AnyConvertExtern ||
+          opcode == BinaryConsts::ExternConvertAny) {
         visitRefAs((curr = allocator.alloc<RefAs>())->cast<RefAs>(), opcode);
         break;
       }
@@ -7730,11 +7730,11 @@ void WasmBinaryReader::visitRefAs(RefAs* curr, uint8_t code) {
     case BinaryConsts::RefAsNonNull:
       curr->op = RefAsNonNull;
       break;
-    case BinaryConsts::ExternInternalize:
-      curr->op = ExternInternalize;
+    case BinaryConsts::AnyConvertExtern:
+      curr->op = AnyConvertExtern;
       break;
-    case BinaryConsts::ExternExternalize:
-      curr->op = ExternExternalize;
+    case BinaryConsts::ExternConvertAny:
+      curr->op = ExternConvertAny;
       break;
     default:
       WASM_UNREACHABLE("invalid code for ref.as_*");

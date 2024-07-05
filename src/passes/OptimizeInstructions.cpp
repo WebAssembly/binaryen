@@ -2440,7 +2440,7 @@ struct OptimizeInstructions
       return;
     }
 
-    if (curr->op == ExternExternalize || curr->op == ExternInternalize) {
+    if (curr->op == ExternConvertAny || curr->op == AnyConvertExtern) {
       // We can't optimize these. Even removing a non-null cast is not valid as
       // they allow nulls to filter through, unlike other RefAs*.
       return;

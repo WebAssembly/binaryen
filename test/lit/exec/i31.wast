@@ -91,7 +91,7 @@
   ;; CHECK-NEXT: [fuzz-exec] note result: return-exted-i31 => i31ref(42)
   (func $return-exted-i31 (export "return-exted-i31") (result externref)
     ;; Even an externalized i31 is logged out using its integer value.
-    (extern.externalize
+    (extern.convert_any
       (ref.i31
         (i32.const 42)
       )
