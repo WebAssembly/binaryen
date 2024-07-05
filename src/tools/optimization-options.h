@@ -293,7 +293,7 @@ struct OptimizationOptions : public ToolOptions {
            "-sp",
            "Skip a pass (do not run it)",
            OptimizationOptionsCategory,
-           Options::Arguments::One,
+           Options::Arguments::N,
            [this](Options*, const std::string& pass) {
              passOptions.passesToSkip.insert(pass);
            });
