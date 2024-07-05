@@ -5371,6 +5371,18 @@ bool BinaryenGetDebugInfo(void) { return globalPassOptions.debugInfo; }
 
 void BinaryenSetDebugInfo(bool on) { globalPassOptions.debugInfo = on != 0; }
 
+bool BinaryenGetTrapsNeverHappen(void) {
+  return globalPassOptions.trapsNeverHappen;
+}
+
+void BinaryenSetTrapsNeverHappen(bool on) {
+  globalPassOptions.trapsNeverHappen = on;
+}
+
+bool BinaryenGetClosedWorld(void) { return globalPassOptions.closedWorld; }
+
+void BinaryenSetClosedWorld(bool on) { globalPassOptions.closedWorld = on; }
+
 bool BinaryenGetLowMemoryUnused(void) {
   return globalPassOptions.lowMemoryUnused;
 }
@@ -5390,6 +5402,22 @@ void BinaryenSetZeroFilledMemory(bool on) {
 bool BinaryenGetFastMath(void) { return globalPassOptions.fastMath; }
 
 void BinaryenSetFastMath(bool value) { globalPassOptions.fastMath = value; }
+
+bool BinaryenGetGenerateStackIR(void) {
+  return globalPassOptions.generateStackIR;
+}
+
+void BinaryenSetGenerateStackIR(bool on) {
+  globalPassOptions.generateStackIR = on;
+}
+
+bool BinaryenGetOptimizeStackIR(void) {
+  return globalPassOptions.optimizeStackIR;
+}
+
+void BinaryenSetOptimizeStackIR(bool on) {
+  globalPassOptions.optimizeStackIR = on;
+}
 
 const char* BinaryenGetPassArgument(const char* key) {
   assert(key);
@@ -5412,6 +5440,18 @@ void BinaryenSetPassArgument(const char* key, const char* value) {
 }
 
 void BinaryenClearPassArguments(void) { globalPassOptions.arguments.clear(); }
+
+bool BinaryenTestPassToSkip(const char* pass) {
+  assert(pass);
+  return globalPassOptions.passesToSkip.count(pass);
+}
+
+void BinaryenAddPassToSkip(const char* pass) {
+  assert(pass);
+  globalPassOptions.passesToSkip.insert(pass);
+}
+
+void BinaryenClearPassesToSkip(void) { globalPassOptions.passesToSkip.clear(); }
 
 BinaryenIndex BinaryenGetAlwaysInlineMaxSize(void) {
   return globalPassOptions.inlining.alwaysInlineMaxSize;

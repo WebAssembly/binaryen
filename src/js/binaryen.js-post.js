@@ -3410,6 +3410,30 @@ Module['setDebugInfo'] = function(on) {
   Module['_BinaryenSetDebugInfo'](on);
 };
 
+// Gets whether no traps can be considered reached at runtime when optimizing.
+Module['getTrapsNeverHappen'] = function() {
+  return Boolean(Module['_BinaryenGetTrapsNeverHappen']());
+};
+
+// Enables or disables whether no traps can be considered reached at
+// runtime when optimizing.
+Module['setTrapsNeverHappen'] = function(on) {
+  Module['_BinaryenSetTrapsNeverHappen'](on);
+};
+
+// Gets whether considering that the code outside of the module does
+// not inspect or interact with GC and function references.
+Module['getClosedWorld'] = function() {
+  return Boolean(Module['_BinaryenGetClosedWorld']());
+};
+
+// Enables or disables whether considering that the code outside of
+// the module does not inspect or interact with GC and function
+// references.
+Module['setClosedWorld'] = function(on) {
+  Module['_BinaryenSetClosedWorld'](on);
+};
+
 // Gets whether the low 1K of memory can be considered unused when optimizing.
 Module['getLowMemoryUnused'] = function() {
   return Boolean(Module['_BinaryenGetLowMemoryUnused']());
@@ -3443,6 +3467,26 @@ Module['setFastMath'] = function(value) {
   Module['_BinaryenSetFastMath'](value);
 };
 
+// Gets whether to generate StackIR during binary writing.
+Module['getGenerateStackIR'] = function() {
+  return Boolean(Module['_BinaryenGetGenerateStackIR']());
+};
+
+// Enable or disable StackIR generation during binary writing.
+Module['setGenerateStackIR'] = function(value) {
+  Module['_BinaryenSetGenerateStackIR'](value);
+};
+
+// Gets whether to optimize StackIR during binary writing.
+Module['getOptimizeStackIR'] = function() {
+  return Boolean(Module['_BinaryenGetOptimizeStackIR']());
+};
+
+// Enable or disable StackIR optimisation during binary writing.
+Module['setOptimizeStackIR'] = function(value) {
+  Module['_BinaryenSetOptimizeStackIR'](value);
+};
+
 // Gets the value of the specified arbitrary pass argument.
 Module['getPassArgument'] = function(key) {
   return preserveStack(() => {
@@ -3460,6 +3504,23 @@ Module['setPassArgument'] = function (key, value) {
 // Clears all arbitrary pass arguments.
 Module['clearPassArguments'] = function() {
   Module['_BinaryenClearPassArguments']();
+};
+
+// Test whether a pass is in the set of passes to skip.
+Module['testPassToSkip'] = function(pass) {
+  return preserveStack(() => {
+    return Boolean(Module['_BinaryenTestPassToSkip'](strToStack(pass)));
+  });
+};
+
+// Add a pass to the set of passes to skip.
+Module['addPassToSkip'] = function (pass) {
+  preserveStack(() => { Module['_BinaryenAddPassToSkip'](strToStack(pass)) });
+};
+
+// Clears the set of passes to skip.
+Module['clearPassesToSkip'] = function() {
+  Module['_BinaryenClearPassesToSkip']();
 };
 
 // Gets the function size at which we always inline.
