@@ -3053,3 +3053,13 @@ module with recursive GC types:
   (unreachable)
  )
 )
+module with a call_ref:
+(module
+ (type $0 (func))
+ (elem declare func $tiny)
+ (func $tiny (type $0)
+  (call_ref $0
+   (ref.func $tiny)
+  )
+ )
+)

@@ -2194,6 +2194,32 @@ void test_typebuilder() {
   BinaryenModuleDispose(module);
 }
 
+void test_callref() {
+  BinaryenModuleRef module = BinaryenModuleCreate();
+  BinaryenModuleSetFeatures(module, BinaryenFeatureAll());
+
+  // Create a tiny function.
+  BinaryenFunctionRef tiny = BinaryenAddFunction(
+    module, "tiny", BinaryenTypeNone(), BinaryenTypeNone(), NULL, 0, BinaryenNop(module));
+
+  // Add a CallRef, using a reference to the function we just made.
+  BinaryenHeapType funcType = BinaryenTypeFromHeapType(BinaryenFunctionGetType(tiny), false);
+  BinaryenExpressionRef callRef =
+    BinaryenCallRef(module,
+      BinaryenRefFunc(module, "tiny", funcType),
+      NULL,
+      0,
+      BinaryenTypeNone(),
+      false);
+  BinaryenFunctionSetBody(tiny, callRef);
+
+  bool didValidate = BinaryenModuleValidate(module);
+  assert(didValidate);
+  printf("module with a call_ref:\n");
+  BinaryenModulePrint(module);
+  BinaryenModuleDispose(module);
+}
+
 int main() {
   test_types();
   test_features();
@@ -2207,6 +2233,7 @@ int main() {
   test_for_each();
   test_func_opt();
   test_typebuilder();
+  test_callref();
 
   return 0;
 }
