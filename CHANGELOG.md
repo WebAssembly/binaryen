@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v118
+----
+
  - StackIR is now handled entirely during binary writing. This is mostly not
    noticeable, except that:
    - Text output no longer notes `(; has Stack IR ;)` (as Stack IR only exists
