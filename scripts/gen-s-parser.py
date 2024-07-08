@@ -603,8 +603,8 @@ instructions = [
     ("array.init_data",      "makeArrayInitData()"),
     ("array.init_elem",      "makeArrayInitElem()"),
     ("ref.as_non_null",      "makeRefAs(RefAsNonNull)"),
-    ("extern.internalize",   "makeRefAs(AnyConvertExtern)"),
-    ("extern.externalize",   "makeRefAs(ExternConvertAny)"),
+    ("extern.internalize",   "makeRefAs(AnyConvertExtern)"),  # Deprecated
+    ("extern.externalize",   "makeRefAs(ExternConvertAny)"),  # Deprecated
     ("any.convert_extern",   "makeRefAs(AnyConvertExtern)"),
     ("extern.convert_any",   "makeRefAs(ExternConvertAny)"),
     ("string.new_lossy_utf8_array",  "makeStringNew(StringNewLossyUTF8Array)"),
