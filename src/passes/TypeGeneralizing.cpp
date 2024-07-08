@@ -850,10 +850,10 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
       case RefAsNonNull:
         push(Type(type.getHeapType(), Nullable));
         return;
-      case ExternInternalize:
+      case AnyConvertExtern:
         push(Type(HeapType::ext, type.getNullability()));
         return;
-      case ExternExternalize:
+      case ExternConvertAny:
         push(Type(HeapType::any, type.getNullability()));
         return;
     }

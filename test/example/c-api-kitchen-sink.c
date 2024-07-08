@@ -1050,10 +1050,10 @@ void test_core() {
                   BinaryenRefAsNonNull(),
                   BinaryenRefNull(module, BinaryenTypeNullref())),
     BinaryenRefAs(module,
-                  BinaryenRefAsExternInternalize(),
+                  BinaryenRefAsAnyConvertExtern(),
                   BinaryenRefNull(module, BinaryenTypeNullExternref())),
     BinaryenRefAs(module,
-                  BinaryenRefAsExternExternalize(),
+                  BinaryenRefAsExternConvertAny(),
                   BinaryenRefNull(module, BinaryenTypeNullref())),
     // Exception handling
     BinaryenTry(module, NULL, tryBody, catchTags, 1, catchBodies, 2, NULL),

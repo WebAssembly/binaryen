@@ -65,7 +65,7 @@ static bool isValidInConstantExpression(Module& wasm, Expression* expr) {
   }
 
   if (auto* refAs = expr->dynCast<RefAs>()) {
-    if (refAs->op == ExternExternalize || refAs->op == ExternInternalize) {
+    if (refAs->op == ExternConvertAny || refAs->op == AnyConvertExtern) {
       return true;
     }
   }

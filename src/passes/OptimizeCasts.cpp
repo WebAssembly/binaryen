@@ -90,7 +90,7 @@
 //  )
 //
 // Note that right now, we only consider RefAs with op RefAsNonNull as a cast.
-// RefAs with ExternInternalize and ExternExternalize are not considered casts
+// RefAs with AnyConvertExtern and ExternConvertAny are not considered casts
 // when obtaining fallthroughs, and so are ignored.
 //
 // TODO: Look past individual basic blocks? This may be worth considering

@@ -916,7 +916,7 @@ public:
     if (original != value) {
       // The original is externalized.
       assert(original.type.getHeapType() == HeapType::ext);
-      ret = builder.makeRefAs(ExternExternalize, ret);
+      ret = builder.makeRefAs(ExternConvertAny, ret);
     }
     return ret;
   }

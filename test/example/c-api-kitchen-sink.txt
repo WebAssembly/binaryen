@@ -2137,12 +2137,12 @@ BinaryenFeatureAll: 262143
        )
       )
       (drop
-       (extern.internalize
+       (any.convert_extern
         (ref.null noextern)
        )
       )
       (drop
-       (extern.externalize
+       (extern.convert_any
         (ref.null none)
        )
       )

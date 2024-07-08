@@ -697,7 +697,7 @@ struct InfoCollector
     receiveChildValue(curr->ref, curr);
   }
   void visitRefAs(RefAs* curr) {
-    if (curr->op == ExternExternalize || curr->op == ExternInternalize) {
+    if (curr->op == ExternConvertAny || curr->op == AnyConvertExtern) {
       // The external conversion ops emit something of a completely different
       // type, which we must mark as a root.
       addRoot(curr);

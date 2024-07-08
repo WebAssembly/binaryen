@@ -770,7 +770,7 @@
  ;; CHECK-NEXT:  (local.set $var
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (extern.internalize
+ ;; CHECK-NEXT:  (any.convert_extern
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -780,7 +780,7 @@
    (local.get $x)
   )
   ;; Require that typeof($var) <: externref.
-  (extern.internalize
+  (any.convert_extern
    (local.get $var)
   )
  )
@@ -790,7 +790,7 @@
  ;; CHECK-NEXT:  (local.set $var
  ;; CHECK-NEXT:   (local.get $x)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (extern.internalize
+ ;; CHECK-NEXT:  (any.convert_extern
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -800,7 +800,7 @@
    (local.get $x)
   )
   ;; Require that typeof($var) <: (ref extern).
-  (extern.internalize
+  (any.convert_extern
    (local.get $var)
   )
  )
@@ -812,7 +812,7 @@
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (extern.externalize
+ ;; CHECK-NEXT:  (extern.convert_any
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -824,7 +824,7 @@
    )
   )
   ;; Require that typeof($var) <: anyref.
-  (extern.externalize
+  (extern.convert_any
    (local.get $var)
   )
  )
@@ -836,7 +836,7 @@
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (extern.externalize
+ ;; CHECK-NEXT:  (extern.convert_any
  ;; CHECK-NEXT:   (local.get $var)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -848,7 +848,7 @@
    )
   )
   ;; Require that typeof($var) <: anyref.
-  (extern.externalize
+  (extern.convert_any
    (local.get $var)
   )
  )

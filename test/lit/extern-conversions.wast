@@ -11,29 +11,48 @@
 
  ;; CHECK:      (type $1 (func (param externref) (result anyref)))
 
- ;; CHECK:      (export "ext" (func $extern.externalize))
+ ;; CHECK:      (type $2 (func (param externref) (result externref)))
 
- ;; CHECK:      (export "int" (func $extern.internalize))
+ ;; CHECK:      (export "ext" (func $extern.convert_any))
 
- ;; CHECK:      (func $extern.externalize (type $0) (param $0 (ref any)) (result (ref extern))
- ;; CHECK-NEXT:  (extern.externalize
+ ;; CHECK:      (export "int" (func $any.convert_extern))
+
+ ;; CHECK:      (export "legacy" (func $legacy_notation))
+
+ ;; CHECK:      (func $extern.convert_any (type $0) (param $0 (ref any)) (result (ref extern))
+ ;; CHECK-NEXT:  (extern.convert_any
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $extern.externalize (export "ext") (param $x (ref any)) (result (ref extern))
-  (extern.externalize
+ (func $extern.convert_any (export "ext") (param $x (ref any)) (result (ref extern))
+  (extern.convert_any
    (local.get $x)
   )
  )
 
- ;; CHECK:      (func $extern.internalize (type $1) (param $0 externref) (result anyref)
- ;; CHECK-NEXT:  (extern.internalize
+ ;; CHECK:      (func $any.convert_extern (type $1) (param $0 externref) (result anyref)
+ ;; CHECK-NEXT:  (any.convert_extern
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $extern.internalize (export "int") (param $x (ref null extern)) (result (ref null any))
-  (extern.internalize
+ (func $any.convert_extern (export "int") (param $x (ref null extern)) (result (ref null any))
+  (any.convert_extern
    (local.get $x)
+  )
+ )
+
+ ;; CHECK:      (func $legacy_notation (type $2) (param $0 externref) (result externref)
+ ;; CHECK-NEXT:  (extern.convert_any
+ ;; CHECK-NEXT:   (any.convert_extern
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $legacy_notation (export "legacy") (param $x (ref null extern)) (result (ref null extern))
+  (extern.externalize
+   (extern.internalize
+    (local.get $x)
+   )
   )
  )
 )

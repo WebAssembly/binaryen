@@ -926,7 +926,7 @@ private:
     void visitArrayInitData(ArrayInitData* curr) { visitArrayInit(curr); }
     void visitArrayInitElem(ArrayInitElem* curr) { visitArrayInit(curr); }
     void visitRefAs(RefAs* curr) {
-      if (curr->op == ExternInternalize || curr->op == ExternExternalize) {
+      if (curr->op == AnyConvertExtern || curr->op == ExternConvertAny) {
         // These conversions are infallible.
         return;
       }
