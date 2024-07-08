@@ -2199,22 +2199,28 @@ void test_callref_and_types() {
   BinaryenModuleSetFeatures(module, BinaryenFeatureAll());
 
   // Create a tiny function.
-  BinaryenFunctionRef tiny = BinaryenAddFunction(
-    module, "tiny", BinaryenTypeNone(), BinaryenTypeNone(), NULL, 0, BinaryenNop(module));
+  BinaryenFunctionRef tiny = BinaryenAddFunction(module,
+                                                 "tiny",
+                                                 BinaryenTypeNone(),
+                                                 BinaryenTypeNone(),
+                                                 NULL,
+                                                 0,
+                                                 BinaryenNop(module));
 
   // Get a non-nullable type with that function's heap type.
-  BinaryenHeapType funcType = BinaryenTypeFromHeapType(BinaryenFunctionGetType(tiny), false);
+  BinaryenHeapType funcType =
+    BinaryenTypeFromHeapType(BinaryenFunctionGetType(tiny), false);
 
   // Add a CallRef with that function and that type. Note that the RefFunc must
   // use that type (and not generic funcref, as in the IR the type must always
   // be precise).
   BinaryenExpressionRef callRef =
     BinaryenCallRef(module,
-      BinaryenRefFunc(module, "tiny", funcType),
-      NULL,
-      0,
-      BinaryenTypeNone(),
-      false);
+                    BinaryenRefFunc(module, "tiny", funcType),
+                    NULL,
+                    0,
+                    BinaryenTypeNone(),
+                    false);
   BinaryenFunctionSetBody(tiny, callRef);
 
   bool didValidate = BinaryenModuleValidate(module);

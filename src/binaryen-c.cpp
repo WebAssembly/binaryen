@@ -5682,12 +5682,10 @@ void BinaryenFunctionSetBody(BinaryenFunctionRef func,
   assert(body);
   ((Function*)func)->body = (Expression*)body;
 }
-BinaryenHeapType
-BinaryenFunctionGetType(BinaryenFunctionRef func) {
+BinaryenHeapType BinaryenFunctionGetType(BinaryenFunctionRef func) {
   return ((Function*)func)->type.getID();
 }
-void
-BinaryenFunctionSetType(BinaryenFunctionRef func, BinaryenHeapType type) {
+void BinaryenFunctionSetType(BinaryenFunctionRef func, BinaryenHeapType type) {
   ((Function*)func)->type = HeapType(type);
 }
 void BinaryenFunctionOptimize(BinaryenFunctionRef func,
