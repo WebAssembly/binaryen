@@ -249,8 +249,10 @@ void splitModule(const WasmSplitOptions& options) {
         }
       } else {
         if (!options.quiet && keepFuncs.count(func) > 0) {
-          std::cerr << "warning: function " << func << " was to be kept in primary module. " 
-                    << "However it will now be splited out into secondary module.\n";
+          std::cerr
+            << "warning: function " << func
+            << " was to be kept in primary module. "
+            << "However it will now be splited out into secondary module.\n";
         }
 
         splitFuncs.insert(func);
@@ -260,7 +262,8 @@ void splitModule(const WasmSplitOptions& options) {
 
     if (keepFuncs.empty()) {
       // could be the case where every function has been split out
-      // or when `splitFuncs` is used standalone, which is the case we'll cover here
+      // or when `splitFuncs` is used standalone, which is the case we'll cover
+      // here
       for (auto& func : wasm.functions) {
         if (splitFuncs.count(func->name) == 0) {
           keepFuncs.insert(func->name);
