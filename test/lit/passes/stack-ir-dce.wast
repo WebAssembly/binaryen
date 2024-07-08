@@ -22,4 +22,97 @@
     )
     (unreachable)
   )
+
+  ;; CHECK:      (func $unreachable (type $0) (result i32)
+  ;; CHECK-NEXT:  unreachable
+  ;; CHECK-NEXT: )
+  ;; ROUNDTRIP:      (func $unreachable (type $0) (result i32)
+  ;; ROUNDTRIP-NEXT:  (unreachable)
+  ;; ROUNDTRIP-NEXT: )
+  (func $unreachable (result i32)
+    ;; An unreachable with nothing before it. Check we do not error here.
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $unreachable-non-drop (type $1)
+  ;; CHECK-NEXT:  call $unreachable-non-drop
+  ;; CHECK-NEXT:  unreachable
+  ;; CHECK-NEXT: )
+  ;; ROUNDTRIP:      (func $unreachable-non-drop (type $1)
+  ;; ROUNDTRIP-NEXT:  (call $unreachable-non-drop)
+  ;; ROUNDTRIP-NEXT:  (unreachable)
+  ;; ROUNDTRIP-NEXT: )
+  (func $unreachable-non-drop
+    ;; An unreachable with something other than a drop before it. Check we do
+    ;; not error here.
+    (call $unreachable-non-drop)
+    (unreachable)
+  )
+
+  ;; CHECK:      (func $many-drop-unreachable (type $0) (result i32)
+  ;; CHECK-NEXT:  i32.const 1
+  ;; CHECK-NEXT:  if (result i32)
+  ;; CHECK-NEXT:   call $drop-unreachable
+  ;; CHECK-NEXT:   unreachable
+  ;; CHECK-NEXT:  else
+  ;; CHECK-NEXT:   call $drop-unreachable
+  ;; CHECK-NEXT:   unreachable
+  ;; CHECK-NEXT:  end
+  ;; CHECK-NEXT:  drop
+  ;; CHECK-NEXT:  call $drop-unreachable
+  ;; CHECK-NEXT:  unreachable
+  ;; CHECK-NEXT: )
+  ;; ROUNDTRIP:      (func $many-drop-unreachable (type $0) (result i32)
+  ;; ROUNDTRIP-NEXT:  (drop
+  ;; ROUNDTRIP-NEXT:   (if (result i32)
+  ;; ROUNDTRIP-NEXT:    (i32.const 1)
+  ;; ROUNDTRIP-NEXT:    (then
+  ;; ROUNDTRIP-NEXT:     (drop
+  ;; ROUNDTRIP-NEXT:      (call $drop-unreachable)
+  ;; ROUNDTRIP-NEXT:     )
+  ;; ROUNDTRIP-NEXT:     (unreachable)
+  ;; ROUNDTRIP-NEXT:    )
+  ;; ROUNDTRIP-NEXT:    (else
+  ;; ROUNDTRIP-NEXT:     (drop
+  ;; ROUNDTRIP-NEXT:      (call $drop-unreachable)
+  ;; ROUNDTRIP-NEXT:     )
+  ;; ROUNDTRIP-NEXT:     (unreachable)
+  ;; ROUNDTRIP-NEXT:    )
+  ;; ROUNDTRIP-NEXT:   )
+  ;; ROUNDTRIP-NEXT:  )
+  ;; ROUNDTRIP-NEXT:  (drop
+  ;; ROUNDTRIP-NEXT:   (call $drop-unreachable)
+  ;; ROUNDTRIP-NEXT:  )
+  ;; ROUNDTRIP-NEXT:  (unreachable)
+  ;; ROUNDTRIP-NEXT: )
+  (func $many-drop-unreachable (result i32)
+    ;; Two drop-unreachables in an if. The drop on the if can remain, but all
+    ;; others are removable.
+    (drop
+      (if (result i32)
+        (i32.const 1)
+        (then
+          (drop
+            (call $drop-unreachable)
+          )
+          (unreachable)
+        )
+        (else
+          (drop
+            (call $drop-unreachable)
+          )
+          (unreachable)
+        )
+      )
+    )
+    ;;  Two more outside the if.
+    (drop
+      (call $drop-unreachable)
+    )
+    (unreachable)
+    (drop
+      (call $drop-unreachable)
+    )
+    (unreachable)
+  )
 )

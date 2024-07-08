@@ -86,7 +86,13 @@ void StackIROptimizer::dce() {
       continue;
     }
 
-    auto*& prev = insts[i - 1];
+    // Look back past nulls.
+    Index j = i - 1;
+    while (j > 0 && !insts[j]) {
+      j--;
+    }
+
+    auto*& prev = insts[j];
     if (prev && prev->op == StackInst::Basic && prev->origin->is<Drop>()) {
       prev = nullptr;
     }
