@@ -79,6 +79,10 @@ void StackIROptimizer::dce() {
   // everything else. A drop followed by an unreachable is the only thing that
   // pass cannot handle, as the structured form of Binaryen IR does not allow
   // removing such a drop, and so we can only do it here in StackIR.
+  //
+  // TODO: We can look even further back, say if there is another drop of
+  //       something before, then we can remove that drop as well. To do that
+  //       we'd need to inspect the stack going backwards.
   for (Index i = 1; i < insts.size(); i++) {
     auto* inst = insts[i];
     if (!inst || inst->op != StackInst::Basic ||
