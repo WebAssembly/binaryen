@@ -2194,6 +2194,42 @@ void test_typebuilder() {
   BinaryenModuleDispose(module);
 }
 
+void test_callref_and_types() {
+  BinaryenModuleRef module = BinaryenModuleCreate();
+  BinaryenModuleSetFeatures(module, BinaryenFeatureAll());
+
+  // Create a tiny function.
+  BinaryenFunctionRef tiny = BinaryenAddFunction(module,
+                                                 "tiny",
+                                                 BinaryenTypeNone(),
+                                                 BinaryenTypeNone(),
+                                                 NULL,
+                                                 0,
+                                                 BinaryenNop(module));
+
+  // Get a non-nullable type with that function's heap type.
+  BinaryenHeapType funcType =
+    BinaryenTypeFromHeapType(BinaryenFunctionGetType(tiny), false);
+
+  // Add a CallRef with that function and that type. Note that the RefFunc must
+  // use that type (and not generic funcref, as in the IR the type must always
+  // be precise).
+  BinaryenExpressionRef callRef =
+    BinaryenCallRef(module,
+                    BinaryenRefFunc(module, "tiny", funcType),
+                    NULL,
+                    0,
+                    BinaryenTypeNone(),
+                    false);
+  BinaryenFunctionSetBody(tiny, callRef);
+
+  bool didValidate = BinaryenModuleValidate(module);
+  assert(didValidate);
+  printf("module with a call_ref:\n");
+  BinaryenModulePrint(module);
+  BinaryenModuleDispose(module);
+}
+
 int main() {
   test_types();
   test_features();
@@ -2207,6 +2243,7 @@ int main() {
   test_for_each();
   test_func_opt();
   test_typebuilder();
+  test_callref_and_types();
 
   return 0;
 }

@@ -3136,6 +3136,11 @@ BinaryenFunctionGetBody(BinaryenFunctionRef func);
 // Sets the body of the specified `Function`.
 BINARYEN_API void BinaryenFunctionSetBody(BinaryenFunctionRef func,
                                           BinaryenExpressionRef body);
+// Gets the type of the specified `Function`.
+BINARYEN_API BinaryenHeapType BinaryenFunctionGetType(BinaryenFunctionRef func);
+// Sets the type of the specified `Function`.
+BINARYEN_API void BinaryenFunctionSetType(BinaryenFunctionRef func,
+                                          BinaryenHeapType type);
 
 // Runs the standard optimization passes on the function. Uses the currently set
 // global optimize and shrink level.
