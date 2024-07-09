@@ -15,7 +15,9 @@
 ;; As above, but disallow it. This does not optimize.
 ;; RUN: wasm-opt %s -O --no-stack-ir -all --print-stack-ir | filecheck %s --check-prefix=O__DENIED
 
-;; As above, but flip it. ???
+;; As above, but flip it. This still does not optimize, as the global state of
+;; --no-stack-ir is not overridden (before we explicitly overrode it, while here
+;; we -O only requests StackIR if allowed).
 ;; RUN: wasm-opt %s --no-stack-ir -O -all --print-stack-ir | filecheck %s --check-prefix=O_REALLOW
 
 (module
