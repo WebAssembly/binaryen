@@ -41,6 +41,12 @@ v118
  - The build-time option to use legacy WasmGC opcodes is removed.
  - The strings in `string.const` instructions must now be valid WTF-8.
  - The `TraverseCalls` flag for `ExpressionRunner` is removed.
+ - Passes can now be specified several times on the command line. The "main"
+   argument (the one that has the same name like the pass) can be specified
+   individually for every instance; all other arguments for that pass apply
+   globally to all instances. In particular, this allows to specify
+   `--no-inline` several times to exclude functions that match one of multiple
+   patterns from inlining.
 
 v117
 ----
