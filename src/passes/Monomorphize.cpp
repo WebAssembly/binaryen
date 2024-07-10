@@ -220,6 +220,8 @@ struct CallContext {
   bool canBeMovedIntoContext(Expression* curr) {
     // Constant numbers, funcs, strings, etc. can all be copied, so it is ok to
     // add them to the context.
+    // TODO: Allow global.get as well, and anything else that is purely
+    //       copyable.
     return Properties::isSingleConstantExpression(curr);
   }
 
