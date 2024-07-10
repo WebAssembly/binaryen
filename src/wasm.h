@@ -561,8 +561,8 @@ enum SIMDTernaryOp {
 
 enum RefAsOp {
   RefAsNonNull,
-  ExternInternalize,
-  ExternExternalize,
+  AnyConvertExtern,
+  ExternConvertAny,
 };
 
 enum BrOnOp {
@@ -573,59 +573,24 @@ enum BrOnOp {
 };
 
 enum StringNewOp {
-  // Linear memory
-  StringNewUTF8,
-  StringNewWTF8,
-  StringNewLossyUTF8,
-  StringNewWTF16,
-  // GC
-  StringNewUTF8Array,
-  StringNewWTF8Array,
   StringNewLossyUTF8Array,
   StringNewWTF16Array,
-  // Other
   StringNewFromCodePoint,
 };
 
 enum StringMeasureOp {
   StringMeasureUTF8,
-  StringMeasureWTF8,
   StringMeasureWTF16,
-  StringMeasureIsUSV,
-  StringMeasureWTF16View,
-  StringMeasureHash,
 };
 
 enum StringEncodeOp {
-  StringEncodeUTF8,
-  StringEncodeLossyUTF8,
-  StringEncodeWTF8,
-  StringEncodeWTF16,
-  StringEncodeUTF8Array,
   StringEncodeLossyUTF8Array,
-  StringEncodeWTF8Array,
   StringEncodeWTF16Array,
 };
 
 enum StringEqOp {
   StringEqEqual,
   StringEqCompare,
-};
-
-enum StringAsOp {
-  StringAsWTF8,
-  StringAsWTF16,
-  StringAsIter,
-};
-
-enum StringIterMoveOp {
-  StringIterMoveAdvance,
-  StringIterMoveRewind,
-};
-
-enum StringSliceWTFOp {
-  StringSliceWTF8,
-  StringSliceWTF16,
 };
 
 //
@@ -736,14 +701,12 @@ public:
     StringEncodeId,
     StringConcatId,
     StringEqId,
-    StringAsId,
-    StringWTF8AdvanceId,
     StringWTF16GetId,
-    StringIterNextId,
-    StringIterMoveId,
     StringSliceWTFId,
-    StringSliceIterId,
+    ContBindId,
+    ContNewId,
     ResumeId,
+    SuspendId,
     NumExpressionIds
   };
   Id _id;
@@ -1302,10 +1265,8 @@ public:
   MemorySize() { type = Type::i32; }
   MemorySize(MixedArena& allocator) : MemorySize() {}
 
-  Type ptrType = Type::i32;
   Name memory;
 
-  void make64();
   void finalize();
 };
 
@@ -1315,10 +1276,8 @@ public:
   MemoryGrow(MixedArena& allocator) : MemoryGrow() {}
 
   Expression* delta = nullptr;
-  Type ptrType = Type::i32;
   Name memory;
 
-  void make64();
   void finalize();
 };
 
@@ -1822,20 +1781,13 @@ public:
 
   StringNewOp op;
 
-  // In linear memory variations this is the pointer in linear memory. In the
-  // GC variations this is an Array. In from_codepoint this is the code point.
-  Expression* ptr;
-
-  // Used only in linear memory variations.
-  Expression* length = nullptr;
+  // In the GC variations this is an Array. In from_codepoint this is the code
+  // point.
+  Expression* ref;
 
   // Used only in GC variations.
   Expression* start = nullptr;
   Expression* end = nullptr;
-
-  // The "try" variants will return null if an encoding error happens, rather
-  // than trap.
-  bool try_ = false;
 
   void finalize();
 };
@@ -1871,16 +1823,9 @@ public:
   StringEncode(MixedArena& allocator) {}
 
   StringEncodeOp op;
-
-  Expression* ref;
-
-  // In linear memory variations this is the pointer in linear memory. In the
-  // GC variations this is an Array.
-  Expression* ptr;
-
-  // Used only in GC variations, where it is the index in |ptr| to start
-  // encoding from.
-  Expression* start = nullptr;
+  Expression* str;
+  Expression* array;
+  Expression* start;
 
   void finalize();
 };
@@ -1909,31 +1854,6 @@ public:
   void finalize();
 };
 
-class StringAs : public SpecificExpression<Expression::StringAsId> {
-public:
-  StringAs() = default;
-  StringAs(MixedArena& allocator) {}
-
-  StringAsOp op;
-
-  Expression* ref;
-
-  void finalize();
-};
-
-class StringWTF8Advance
-  : public SpecificExpression<Expression::StringWTF8AdvanceId> {
-public:
-  StringWTF8Advance() = default;
-  StringWTF8Advance(MixedArena& allocator) {}
-
-  Expression* ref;
-  Expression* pos;
-  Expression* bytes;
-
-  void finalize();
-};
-
 class StringWTF16Get : public SpecificExpression<Expression::StringWTF16GetId> {
 public:
   StringWTF16Get() = default;
@@ -1945,38 +1865,10 @@ public:
   void finalize();
 };
 
-class StringIterNext : public SpecificExpression<Expression::StringIterNextId> {
-public:
-  StringIterNext() = default;
-  StringIterNext(MixedArena& allocator) {}
-
-  Expression* ref;
-
-  void finalize();
-};
-
-class StringIterMove : public SpecificExpression<Expression::StringIterMoveId> {
-public:
-  StringIterMove() = default;
-  StringIterMove(MixedArena& allocator) {}
-
-  // Whether the movement is to advance or reverse.
-  StringIterMoveOp op;
-
-  Expression* ref;
-
-  // How many codepoints to advance or reverse.
-  Expression* num;
-
-  void finalize();
-};
-
 class StringSliceWTF : public SpecificExpression<Expression::StringSliceWTFId> {
 public:
   StringSliceWTF() = default;
   StringSliceWTF(MixedArena& allocator) {}
-
-  StringSliceWTFOp op;
 
   Expression* ref;
   Expression* start;
@@ -1985,14 +1877,25 @@ public:
   void finalize();
 };
 
-class StringSliceIter
-  : public SpecificExpression<Expression::StringSliceIterId> {
+class ContBind : public SpecificExpression<Expression::ContBindId> {
 public:
-  StringSliceIter() = default;
-  StringSliceIter(MixedArena& allocator) {}
+  ContBind(MixedArena& allocator) : operands(allocator) {}
 
-  Expression* ref;
-  Expression* num;
+  HeapType contTypeBefore;
+  HeapType contTypeAfter;
+  ExpressionList operands;
+  Expression* cont;
+
+  void finalize();
+};
+
+class ContNew : public SpecificExpression<Expression::ContNewId> {
+public:
+  ContNew() = default;
+  ContNew(MixedArena& allocator) {}
+
+  HeapType contType;
+  Expression* func;
 
   void finalize();
 };
@@ -2021,6 +1924,19 @@ public:
   // This information is cached here in order not to query the module
   // every time we query the sent types.
   ArenaVector<Type> sentTypes;
+};
+
+class Suspend : public SpecificExpression<Expression::SuspendId> {
+public:
+  Suspend(MixedArena& allocator) : operands(allocator) {}
+
+  Name tag;
+  ExpressionList operands;
+
+  // We need access to the module to obtain the signature of the tag,
+  // which determines this node's type.
+  // If no module is given, then the type must have been set already.
+  void finalize(Module* wasm = nullptr);
 };
 
 // Globals
@@ -2097,14 +2013,6 @@ struct BinaryLocations {
   std::unordered_map<Function*, FunctionLocations> functions;
 };
 
-// Forward declarations of Stack IR, as functions can contain it, see
-// the stackIR property.
-// Stack IR is a secondary IR to the main IR defined in this file (Binaryen
-// IR). See wasm-stack.h.
-class StackInst;
-
-using StackIR = std::vector<StackInst*>;
-
 class Function : public Importable {
 public:
   HeapType type = HeapType(Signature()); // parameters and return value
@@ -2113,16 +2021,6 @@ public:
 
   // The body of the function
   Expression* body = nullptr;
-
-  // If present, this stack IR was generated from the main Binaryen IR body,
-  // and possibly optimized. If it is present when writing to wasm binary,
-  // it will be emitted instead of the main Binaryen IR.
-  //
-  // Note that no special care is taken to synchronize the two IRs - if you
-  // emit stack IR and then optimize the main IR, you need to recompute the
-  // stack IR. The Pass system will throw away Stack IR if a pass is run
-  // that declares it may modify Binaryen IR.
-  std::unique_ptr<StackIR> stackIR;
 
   // local names. these are optional.
   std::unordered_map<Index, Name> localNames;
@@ -2146,7 +2044,9 @@ public:
                    : columnNumber < other.columnNumber;
     }
   };
-  std::unordered_map<Expression*, DebugLocation> debugLocations;
+  // One can explicitly set the debug location of an expression to
+  // nullopt to stop the propagation of debug locations.
+  std::unordered_map<Expression*, std::optional<DebugLocation>> debugLocations;
   std::set<DebugLocation> prologLocation;
   std::set<DebugLocation> epilogLocation;
 
@@ -2255,9 +2155,11 @@ public:
 
   Address initial = 0;
   Address max = kMaxSize;
+  Type indexType = Type::i32;
   Type type = Type(HeapType::func, Nullable);
 
   bool hasMax() { return max != kUnlimitedSize; }
+  bool is64() { return indexType == Type::i64; }
   void clear() {
     name = "";
     initial = 0;
@@ -2472,8 +2374,6 @@ std::ostream& operator<<(std::ostream& o, wasm::Function& func);
 std::ostream& operator<<(std::ostream& o, wasm::Expression& expression);
 std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair);
 std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression);
-std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst);
-std::ostream& operator<<(std::ostream& o, wasm::StackIR& ir);
 
 } // namespace std
 

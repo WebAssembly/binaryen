@@ -508,7 +508,7 @@
 
   ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
@@ -516,14 +516,14 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
@@ -767,6 +767,10 @@
 ;; Subtyping: Create both a subtype and a supertype, with different constants
 ;;            for the shared field, preventing optimization, as a get of the
 ;;            supertype may receive an instance of the subtype.
+;;
+;; Note that this may be optimized using a ref.test, in --cfp-reftest, but not
+;; in --cfp. This gives us coverage that --cfp does not do the things that
+;; --cfp-reftest does (how --cfp-reftest works is tested in cfp-reftest.wast).
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
@@ -2222,6 +2226,87 @@
     ;; value at compile time, but which we know must be masked as well.
     (drop
       (struct.get_u $B_16 0
+        (struct.new $B_16
+          (global.get $g)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $test_signed (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.new $A_8
+  ;; CHECK-NEXT:       (i32.const 305419896)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (i32.shl
+  ;; CHECK-NEXT:      (i32.const 305419896)
+  ;; CHECK-NEXT:      (i32.const 24)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 24)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.new $A_16
+  ;; CHECK-NEXT:       (i32.const 305419896)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (i32.shl
+  ;; CHECK-NEXT:      (i32.const 305419896)
+  ;; CHECK-NEXT:      (i32.const 16)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 16)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.as_non_null
+  ;; CHECK-NEXT:      (struct.new $B_16
+  ;; CHECK-NEXT:       (global.get $g)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.shr_s
+  ;; CHECK-NEXT:     (i32.shl
+  ;; CHECK-NEXT:      (global.get $g)
+  ;; CHECK-NEXT:      (i32.const 16)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 16)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test_signed
+    ;; As above, but with signed gets.
+    (drop
+      (struct.get_s $A_8 0
+        (struct.new $A_8
+          (i32.const 0x12345678)
+        )
+      )
+    )
+    (drop
+      (struct.get_s $A_16 0
+        (struct.new $A_16
+          (i32.const 0x12345678)
+        )
+      )
+    )
+    (drop
+      (struct.get_s $B_16 0
         (struct.new $B_16
           (global.get $g)
         )

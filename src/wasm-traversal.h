@@ -27,6 +27,7 @@
 #ifndef wasm_wasm_traversal_h
 #define wasm_wasm_traversal_h
 
+#include "ir/debuginfo.h"
 #include "support/small_vector.h"
 #include "support/threads.h"
 #include "wasm.h"
@@ -123,36 +124,8 @@ struct Walker : public VisitorType {
   Expression* replaceCurrent(Expression* expression) {
     // Copy debug info, if present.
     if (currFunction) {
-      auto& debugLocations = currFunction->debugLocations;
-      // Early exit if there is no debug info at all. Also, leave if we already
-      // have debug info on the new expression, which we don't want to trample:
-      // if there is no debug info we do want to copy, as a replacement
-      // operation suggests the new code plays the same role (it is an optimized
-      // version of the old), but if the code is already annotated, trust that.
-      if (!debugLocations.empty() && !debugLocations.count(expression)) {
-        auto* curr = getCurrent();
-        auto iter = debugLocations.find(curr);
-        if (iter != debugLocations.end()) {
-          debugLocations[expression] = iter->second;
-          // Note that we do *not* erase the debug info of the expression being
-          // replaced, because it may still exist: we might replace
-          //
-          //  (call
-          //    (block ..
-          //
-          // with
-          //
-          //  (block
-          //    (call ..
-          //
-          // We still want the call here to have its old debug info.
-          //
-          // (In most cases, of course, we do remove the replaced expression,
-          // which means we accumulate unused garbage in debugLocations, but
-          // that's not that bad; we use arena allocation for Expressions, after
-          // all.)
-        }
-      }
+      debuginfo::copyOriginalToReplacement(
+        getCurrent(), expression, currFunction);
     }
     return *replacep = expression;
   }
@@ -256,17 +229,17 @@ struct Walker : public VisitorType {
         self->walkTag(curr.get());
       }
     }
-    for (auto& curr : module->tables) {
-      self->walkTable(curr.get());
-    }
     for (auto& curr : module->elementSegments) {
       self->walkElementSegment(curr.get());
     }
-    for (auto& curr : module->memories) {
-      self->walkMemory(curr.get());
+    for (auto& curr : module->tables) {
+      self->walkTable(curr.get());
     }
     for (auto& curr : module->dataSegments) {
       self->walkDataSegment(curr.get());
+    }
+    for (auto& curr : module->memories) {
+      self->walkMemory(curr.get());
     }
   }
 
@@ -534,6 +507,53 @@ struct ExpressionStackWalker : public PostWalker<SubType, VisitorType> {
     // also update the stack
     expressionStack.back() = expression;
     return expression;
+  }
+};
+
+// Traversal keeping track of try depth
+
+// This is used to keep track of whether we are in the scope of an
+// exception handler. This matters since return_call is not equivalent
+// to return + call within an exception handler. If another kind of
+// handler scope is added, this code will need to be updated.
+template<typename SubType, typename VisitorType = Visitor<SubType>>
+struct TryDepthWalker : public PostWalker<SubType, VisitorType> {
+  TryDepthWalker() = default;
+
+  size_t tryDepth = 0;
+
+  static void doEnterTry(SubType* self, Expression** currp) {
+    self->tryDepth++;
+  }
+
+  static void doLeaveTry(SubType* self, Expression** currp) {
+    self->tryDepth--;
+  }
+
+  static void scan(SubType* self, Expression** currp) {
+    auto* curr = *currp;
+
+    if (curr->is<Try>()) {
+      self->pushTask(SubType::doVisitTry, currp);
+      auto& catchBodies = curr->cast<Try>()->catchBodies;
+      for (int i = int(catchBodies.size()) - 1; i >= 0; i--) {
+        self->pushTask(SubType::scan, &catchBodies[i]);
+      }
+      self->pushTask(SubType::doLeaveTry, currp);
+      self->pushTask(SubType::scan, &curr->cast<Try>()->body);
+      self->pushTask(SubType::doEnterTry, currp);
+      return;
+    }
+
+    if (curr->is<TryTable>()) {
+      self->pushTask(SubType::doLeaveTry, currp);
+    }
+
+    PostWalker<SubType, VisitorType>::scan(self, currp);
+
+    if (curr->is<TryTable>()) {
+      self->pushTask(SubType::doEnterTry, currp);
+    }
   }
 };
 

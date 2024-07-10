@@ -57,6 +57,9 @@
 ;; CHECK-NEXT:   --cfp                                         propagate constant struct field
 ;; CHECK-NEXT:                                                 values
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --cfp-reftest                                 propagate constant struct field
+;; CHECK-NEXT:                                                 values, using ref.test
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --coalesce-locals                             reduce # of locals by coalescing
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --coalesce-locals-learning                    reduce # of locals by coalescing
@@ -132,8 +135,6 @@
 ;; CHECK-NEXT:                                                 without JavaScript BigInt
 ;; CHECK-NEXT:                                                 support).
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --generate-stack-ir                           generate Stack IR
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --global-refining                             refine the types of globals
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --gsi                                         globally optimize struct values
@@ -179,13 +180,11 @@
 ;; CHECK-NEXT:   --jspi                                        wrap imports and exports for
 ;; CHECK-NEXT:                                                 JavaScript promise integration
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --legalize-and-prune-js-interface             legalizes the import/export
+;; CHECK-NEXT:                                                 boundary and prunes when needed
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --legalize-js-interface                       legalizes i64 types on the
 ;; CHECK-NEXT:                                                 import/export boundary
-;; CHECK-NEXT:
-;; CHECK-NEXT:   --legalize-js-interface-minimally             legalizes i64 types on the
-;; CHECK-NEXT:                                                 import/export boundary in a
-;; CHECK-NEXT:                                                 minimal manner, only on things
-;; CHECK-NEXT:                                                 only JS will call
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --licm                                        loop invariant code motion
 ;; CHECK-NEXT:
@@ -285,8 +284,6 @@
 ;; CHECK-NEXT:   --optimize-j2cl                               optimizes J2CL specific
 ;; CHECK-NEXT:                                                 constructs.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --optimize-stack-ir                           optimize Stack IR
-;; CHECK-NEXT:
 ;; CHECK-NEXT:   --outlining                                   outline instructions
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --pick-load-signs                             pick load signs based on their
@@ -321,8 +318,9 @@
 ;; CHECK-NEXT:   --print-minified                              print in minified s-expression
 ;; CHECK-NEXT:                                                 format
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --print-stack-ir                              print out Stack IR (useful for
-;; CHECK-NEXT:                                                 internal debugging)
+;; CHECK-NEXT:   --propagate-debug-locs                        propagate debug location from
+;; CHECK-NEXT:                                                 parents or previous siblings to
+;; CHECK-NEXT:                                                 child nodes
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --propagate-globals-globally                  propagate global values to other
 ;; CHECK-NEXT:                                                 globals (useful for tests)
@@ -434,6 +432,10 @@
 ;; CHECK-NEXT:   --string-lowering                             lowers wasm strings and
 ;; CHECK-NEXT:                                                 operations to imports
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --string-lowering-magic-imports               same as string-lowering, but
+;; CHECK-NEXT:                                                 encodes well-formed strings as
+;; CHECK-NEXT:                                                 magic imports
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip                                       deprecated; same as strip-debug
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip-debug                                 strip debug info (including the
@@ -453,8 +455,18 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --symbolmap                                   (alias for print-function-map)
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --translate-to-new-eh                         translate old EH instructions to
-;; CHECK-NEXT:                                                 new ones
+;; CHECK-NEXT:   --table64-lowering                            lower 64-bit tables 32-bit ones
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --trace-calls                                 instrument the build with code
+;; CHECK-NEXT:                                                 to intercept specific function
+;; CHECK-NEXT:                                                 calls
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --translate-to-exnref                         translate old Phase 3 EH
+;; CHECK-NEXT:                                                 instructions to new ones with
+;; CHECK-NEXT:                                                 exnref
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --translate-to-new-eh                         deprecated; same as
+;; CHECK-NEXT:                                                 translate-to-exnref
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --trap-mode-clamp                             replace trapping operations with
 ;; CHECK-NEXT:                                                 clamping semantics
@@ -670,6 +682,11 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-typed-continuations                 Disable typed continuations
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-shared-everything                    Enable shared-everything threads
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-shared-everything                   Disable shared-everything
+;; CHECK-NEXT:                                                 threads
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references            Deprecated compatibility flag
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-typed-function-references           Deprecated compatibility flag
@@ -689,6 +706,12 @@
 ;; CHECK-NEXT:                                                 on to them and pass them back
 ;; CHECK-NEXT:                                                 in, but not inspect their
 ;; CHECK-NEXT:                                                 contents or call them.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --generate-stack-ir                           generate StackIR during writing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --optimize-stack-ir                           optimize StackIR during writing
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --print-stack-ir                              print StackIR during writing
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:

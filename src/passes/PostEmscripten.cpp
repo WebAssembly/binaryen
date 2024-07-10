@@ -287,11 +287,11 @@ struct PostEmscripten : public Pass {
       });
 
     // Assume a non-direct call might throw.
-    analyzer.propagateBack(
-      [](const Info& info) { return info.canThrow; },
-      [](const Info& info) { return true; },
-      [](Info& info, Function* reason) { info.canThrow = true; },
-      analyzer.NonDirectCallsHaveProperty);
+    analyzer.propagateBack([](const Info& info) { return info.canThrow; },
+                           [](const Info& info) { return true; },
+                           [](Info& info) { info.canThrow = true; },
+                           [](const Info& info, Function* reason) {},
+                           analyzer.NonDirectCallsHaveProperty);
 
     // Apply the information.
     struct OptimizeInvokes : public WalkerPass<PostWalker<OptimizeInvokes>> {

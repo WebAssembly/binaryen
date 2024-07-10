@@ -750,7 +750,7 @@
  ;; CHECK-NEXT:   (ref.null none)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
@@ -787,7 +787,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (ref.null none)
  ;; CHECK-NEXT:    )
@@ -851,7 +851,7 @@
  )
 
  ;; CHECK:      (func $new_block_unreachable (type $8) (result anyref)
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable StructNew we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block
  ;; CHECK-NEXT:     (unreachable)

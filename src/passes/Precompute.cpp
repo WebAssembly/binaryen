@@ -27,7 +27,6 @@
 // looked at.
 //
 
-#include "ir/effects.h"
 #include "ir/iteration.h"
 #include "ir/literal-utils.h"
 #include "ir/local-graph.h"
@@ -194,6 +193,36 @@ public:
       *canonical = *newGCData;
     }
     return Literal(canonical, curr->type.getHeapType());
+  }
+
+  Flow visitStringNew(StringNew* curr) {
+    if (curr->op != StringNewWTF16Array) {
+      // TODO: handle other string ops. For now we focus on JS-like strings.
+      return Flow(NONCONSTANT_FLOW);
+    }
+
+    // string.encode_wtf16_array is effectively an Array read operation, so
+    // just like ArrayGet above we must check for immutability.
+    auto refType = curr->ref->type;
+    if (refType.isRef()) {
+      auto heapType = refType.getHeapType();
+      if (heapType.isArray()) {
+        if (heapType.getArray().element.mutable_ == Immutable) {
+          return Super::visitStringNew(curr);
+        }
+      }
+    }
+
+    // Otherwise, this is mutable or unreachable or otherwise uninteresting.
+    return Flow(NONCONSTANT_FLOW);
+  }
+
+  Flow visitStringEncode(StringEncode* curr) {
+    // string.encode_wtf16_array is effectively an Array write operation, so
+    // just like ArraySet and ArrayCopy above we must mark it as disallowed
+    // (due to side effects). (And we do not support other operations than
+    // string.encode_wtf16_array anyhow.)
+    return Flow(NONCONSTANT_FLOW);
   }
 };
 
@@ -829,7 +858,8 @@ private:
     }
 
     auto* child = stack[index];
-    for (auto** currChild : ChildIterator(stack[index - 1]).children) {
+    auto childIterator = ChildIterator(stack[index - 1]);
+    for (auto** currChild : childIterator.children) {
       if (*currChild == child) {
         return currChild;
       }

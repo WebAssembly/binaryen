@@ -176,7 +176,7 @@
   ;; CHECK:      (func $unreachable (type $2)
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (local.tee $ref-imm
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
@@ -223,7 +223,7 @@
   ;; CHECK:      (func $local-null (type $2)
   ;; CHECK-NEXT:  (local $ref-imm (ref null $struct-imm))
   ;; CHECK-NEXT:  (call $helper
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructGet we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (ref.null none)
   ;; CHECK-NEXT:    )

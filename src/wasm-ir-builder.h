@@ -56,6 +56,10 @@ public:
   // any children or refinalization.
   void push(Expression*);
 
+  // Set the debug location to be attached to the next visited, created, or
+  // pushed instruction.
+  void setDebugLocation(const std::optional<Function::DebugLocation>&);
+
   // Handle the boundaries of control flow structures. Users may choose to use
   // the corresponding `makeXYZ` function below instead of `visitXYZStart`, but
   // either way must call `visitEnd` and friends at the appropriate times.
@@ -71,6 +75,15 @@ public:
   [[nodiscard]] Result<> visitTryTableStart(TryTable* trytable,
                                             Name label = {});
   [[nodiscard]] Result<> visitEnd();
+
+  // Used to visit break nodes when traversing a single block without its
+  // context. The type indicates how many values the break carries to its
+  // destination.
+  [[nodiscard]] Result<> visitBreakWithType(Break*, Type);
+  // Used to visit switch nodes when traversing a single block without its
+  // context. The type indicates how many values the switch carries to its
+  // destination.
+  [[nodiscard]] Result<> visitSwitchWithType(Switch*, Type);
 
   // Binaryen IR uses names to refer to branch targets, but in general there may
   // be branches to constructs that do not yet have names, so in IRBuilder we
@@ -193,55 +206,50 @@ public:
   [[nodiscard]] Result<> makeArrayInitData(HeapType type, Name data);
   [[nodiscard]] Result<> makeArrayInitElem(HeapType type, Name elem);
   [[nodiscard]] Result<> makeRefAs(RefAsOp op);
-  [[nodiscard]] Result<> makeStringNew(StringNewOp op, bool try_, Name mem);
+  [[nodiscard]] Result<> makeStringNew(StringNewOp op);
   [[nodiscard]] Result<> makeStringConst(Name string);
   [[nodiscard]] Result<> makeStringMeasure(StringMeasureOp op);
-  [[nodiscard]] Result<> makeStringEncode(StringEncodeOp op, Name mem);
+  [[nodiscard]] Result<> makeStringEncode(StringEncodeOp op);
   [[nodiscard]] Result<> makeStringConcat();
   [[nodiscard]] Result<> makeStringEq(StringEqOp op);
-  [[nodiscard]] Result<> makeStringAs(StringAsOp op);
   [[nodiscard]] Result<> makeStringWTF8Advance();
   [[nodiscard]] Result<> makeStringWTF16Get();
   [[nodiscard]] Result<> makeStringIterNext();
-  [[nodiscard]] Result<> makeStringIterMove(StringIterMoveOp op);
-  [[nodiscard]] Result<> makeStringSliceWTF(StringSliceWTFOp op);
-  [[nodiscard]] Result<> makeStringSliceIter();
+  [[nodiscard]] Result<> makeStringSliceWTF();
+  [[nodiscard]] Result<> makeContBind(HeapType contTypeBefore,
+                                      HeapType contTypeAfter);
+  [[nodiscard]] Result<> makeContNew(HeapType ct);
   [[nodiscard]] Result<> makeResume(HeapType ct,
                                     const std::vector<Name>& tags,
                                     const std::vector<Index>& labels);
+  [[nodiscard]] Result<> makeSuspend(Name tag);
 
   // Private functions that must be public for technical reasons.
   [[nodiscard]] Result<> visitExpression(Expression*);
-  [[nodiscard]] Result<>
-  visitDrop(Drop*, std::optional<uint32_t> arity = std::nullopt);
-  [[nodiscard]] Result<> visitIf(If*);
-  [[nodiscard]] Result<> visitReturn(Return*);
-  [[nodiscard]] Result<> visitStructNew(StructNew*);
-  [[nodiscard]] Result<> visitArrayNew(ArrayNew*);
-  [[nodiscard]] Result<> visitArrayNewFixed(ArrayNewFixed*);
-  [[nodiscard]] Result<> visitBreak(Break*,
-                                    std::optional<Index> label = std::nullopt);
-  [[nodiscard]] Result<>
-  visitSwitch(Switch*, std::optional<Index> defaultLabel = std::nullopt);
-  [[nodiscard]] Result<> visitCall(Call*);
-  [[nodiscard]] Result<> visitCallIndirect(CallIndirect*);
-  [[nodiscard]] Result<> visitCallRef(CallRef*);
-  [[nodiscard]] Result<> visitLocalSet(LocalSet*);
-  [[nodiscard]] Result<> visitGlobalSet(GlobalSet*);
-  [[nodiscard]] Result<> visitThrow(Throw*);
-  [[nodiscard]] Result<> visitStringNew(StringNew*);
-  [[nodiscard]] Result<> visitStringEncode(StringEncode*);
-  [[nodiscard]] Result<> visitResume(Resume*);
-  [[nodiscard]] Result<> visitTupleMake(TupleMake*);
-  [[nodiscard]] Result<>
-  visitTupleExtract(TupleExtract*,
-                    std::optional<uint32_t> arity = std::nullopt);
-  [[nodiscard]] Result<> visitPop(Pop*);
+
+  // Do not push pops onto the stack since we generate our own pops as necessary
+  // when visiting the beginnings of try blocks.
+  [[nodiscard]] Result<> visitPop(Pop*) { return Ok{}; }
 
 private:
   Module& wasm;
   Function* func;
   Builder builder;
+
+  // The location lacks debug info as it was marked as not having it.
+  struct NoDebug : public std::monostate {};
+  // The location lacks debug info, but was not marked as not having
+  // it, and it can receive it from the parent or its previous sibling
+  // (if it has one).
+  struct CanReceiveDebug : public std::monostate {};
+  using DebugVariant =
+    std::variant<NoDebug, CanReceiveDebug, Function::DebugLocation>;
+
+  DebugVariant debugLoc;
+
+  struct ChildPopper;
+
+  void applyDebugLoc(Expression* expr);
 
   // The context for a single block scope, including the instructions parsed
   // inside that scope so far and the ultimate result type we expect this block
@@ -297,6 +305,10 @@ private:
 
     // The branch label name for this scope. Always fresh, never shadowed.
     Name label;
+    // For Try/Catch/CatchAll scopes, we need to separately track a label used
+    // for branches, since the normal label is only used for delegates.
+    Name branchLabel;
+
     bool labelUsed = false;
 
     std::vector<Expression*> exprStack;
@@ -306,7 +318,11 @@ private:
 
     ScopeCtx() : scope(NoScope{}) {}
     ScopeCtx(Scope scope) : scope(scope) {}
-    ScopeCtx(Scope scope, Name label) : scope(scope), label(label) {}
+    ScopeCtx(Scope scope, Name label, bool labelUsed)
+      : scope(scope), label(label), labelUsed(labelUsed) {}
+    ScopeCtx(Scope scope, Name label, bool labelUsed, Name branchLabel)
+      : scope(scope), label(label), branchLabel(branchLabel),
+        labelUsed(labelUsed) {}
 
     static ScopeCtx makeFunc(Function* func) {
       return ScopeCtx(FuncScope{func});
@@ -317,18 +333,29 @@ private:
     static ScopeCtx makeIf(If* iff, Name originalLabel = {}) {
       return ScopeCtx(IfScope{iff, originalLabel});
     }
-    static ScopeCtx makeElse(If* iff, Name originalLabel, Name label) {
-      return ScopeCtx(ElseScope{iff, originalLabel}, label);
+    static ScopeCtx
+    makeElse(If* iff, Name originalLabel, Name label, bool labelUsed) {
+      return ScopeCtx(ElseScope{iff, originalLabel}, label, labelUsed);
     }
     static ScopeCtx makeLoop(Loop* loop) { return ScopeCtx(LoopScope{loop}); }
     static ScopeCtx makeTry(Try* tryy, Name originalLabel = {}) {
       return ScopeCtx(TryScope{tryy, originalLabel});
     }
-    static ScopeCtx makeCatch(Try* tryy, Name originalLabel, Name label) {
-      return ScopeCtx(CatchScope{tryy, originalLabel}, label);
+    static ScopeCtx makeCatch(Try* tryy,
+                              Name originalLabel,
+                              Name label,
+                              bool labelUsed,
+                              Name branchLabel) {
+      return ScopeCtx(
+        CatchScope{tryy, originalLabel}, label, labelUsed, branchLabel);
     }
-    static ScopeCtx makeCatchAll(Try* tryy, Name originalLabel, Name label) {
-      return ScopeCtx(CatchAllScope{tryy, originalLabel}, label);
+    static ScopeCtx makeCatchAll(Try* tryy,
+                                 Name originalLabel,
+                                 Name label,
+                                 bool labelUsed,
+                                 Name branchLabel) {
+      return ScopeCtx(
+        CatchAllScope{tryy, originalLabel}, label, labelUsed, branchLabel);
     }
     static ScopeCtx makeTryTable(TryTable* trytable, Name originalLabel = {}) {
       return ScopeCtx(TryTableScope{trytable, originalLabel});
@@ -460,9 +487,13 @@ private:
   std::unordered_map<Name, std::vector<Index>> labelDepths;
 
   Name makeFresh(Name label) {
-    return Names::getValidName(label, [&](Name candidate) {
-      return labelDepths.insert({candidate, {}}).second;
-    });
+    return Names::getValidName(
+      label,
+      [&](Name candidate) {
+        return labelDepths.insert({candidate, {}}).second;
+      },
+      0,
+      "");
   }
 
   void pushScope(ScopeCtx scope) {
@@ -502,10 +533,12 @@ private:
   // `block`, but otherwise we will have to allocate a new block.
   Result<Expression*> finishScope(Block* block = nullptr);
 
-  [[nodiscard]] Result<Name> getLabelName(Index label);
-  [[nodiscard]] Result<Name> getDelegateLabelName(Index label);
+  [[nodiscard]] Result<Name> getLabelName(Index label,
+                                          bool forDelegate = false);
+  [[nodiscard]] Result<Name> getDelegateLabelName(Index label) {
+    return getLabelName(label, true);
+  }
   [[nodiscard]] Result<Index> addScratchLocal(Type);
-  [[nodiscard]] Result<Expression*> pop(size_t size = 1);
 
   struct HoistedVal {
     // The index in the stack of the original value-producing expression.
@@ -527,8 +560,8 @@ private:
   [[nodiscard]] Result<> packageHoistedValue(const HoistedVal&,
                                              size_t sizeHint = 1);
 
-  [[nodiscard]] Result<Expression*> getBranchValue(Name labelName,
-                                                   std::optional<Index> label);
+  [[nodiscard]] Result<Type> getLabelType(Index label);
+  [[nodiscard]] Result<Type> getLabelType(Name labelName);
 
   void dump();
 };

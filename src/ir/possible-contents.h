@@ -76,6 +76,9 @@ class PossibleContents {
     // The contents flowing out will be a Global, but of a non-nullable type,
     // unlike the original global.
     Type type;
+    // TODO: Consider adding a depth here, or merging this with ConeType in some
+    //       way. In principle, not having depth info can lead to loss of
+    //       precision.
     bool operator==(const GlobalInfo& other) const {
       return name == other.name && type == other.type;
     }
@@ -305,8 +308,9 @@ public:
       // Nothing to add.
     } else if (isLiteral()) {
       rehash(ret, getLiteral());
-    } else if (isGlobal()) {
-      rehash(ret, getGlobal());
+    } else if (auto* global = std::get_if<GlobalInfo>(&value)) {
+      rehash(ret, global->name);
+      rehash(ret, global->type);
     } else if (auto* coneType = std::get_if<ConeType>(&value)) {
       rehash(ret, coneType->type);
       rehash(ret, coneType->depth);
@@ -442,6 +446,11 @@ struct SignatureResultLocation {
 // The location of contents in a struct or array (i.e., things that can fit in a
 // dataref). Note that this is specific to this type - it does not include data
 // about subtypes or supertypes.
+//
+// We store the truncated bits here when the field is packed. That is, if -1 is
+// written to an i8 then the value here will be 0xff. StructGet/ArrayGet
+// operations that read a signed value must then perform a sign-extend
+// operation.
 struct DataLocation {
   HeapType type;
   // The index of the field in a struct, or 0 for an array (where we do not

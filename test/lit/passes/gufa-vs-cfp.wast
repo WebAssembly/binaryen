@@ -459,19 +459,19 @@
 
   ;; CHECK:      (func $test (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 10)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (i32.const 10)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block ;; (replaces unreachable StructNew we can't emit)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:    (block ;; (replaces unreachable StructGet we can't emit)
   ;; CHECK-NEXT:     (drop
   ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )

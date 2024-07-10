@@ -260,10 +260,8 @@ int main(int argc, const char* argv[]) {
   }
 
   // Legalize the wasm, if BigInts don't make that moot.
-  if (!bigInt) {
-    passRunner.add(ABI::getLegalizationPass(
-      legalizeJavaScriptFFI ? ABI::LegalizationLevel::Full
-                            : ABI::LegalizationLevel::Minimal));
+  if (!bigInt && legalizeJavaScriptFFI) {
+    passRunner.add("legalize-js-interface");
   }
 
   passRunner.add("strip-target-features");
@@ -281,7 +279,7 @@ int main(int argc, const char* argv[]) {
 
   if (writeOutput) {
     Output output(outfile, emitBinary ? Flags::Binary : Flags::Text);
-    ModuleWriter writer;
+    ModuleWriter writer(options.passOptions);
     writer.setDebugInfo(debugInfo);
     // writer.setSymbolMap(symbolMap);
     writer.setBinary(emitBinary);

@@ -1915,7 +1915,7 @@
   ;; CHECK-NEXT:  (throw $nothing
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -1941,7 +1941,7 @@
   ;; CHECK-NEXT:  (throw $something
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (try $try0
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -2012,7 +2012,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (try $try (result i32)
+  ;; CHECK-NEXT:     (try (result i32)
   ;; CHECK-NEXT:      (do
   ;; CHECK-NEXT:       (i32.const 0)
   ;; CHECK-NEXT:      )
@@ -2028,7 +2028,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (try $try1 (result i32)
+  ;; CHECK-NEXT:   (try (result i32)
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (i32.const 42)
   ;; CHECK-NEXT:    )
@@ -2041,7 +2041,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (try $try2 (result i32)
+  ;; CHECK-NEXT:   (try (result i32)
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -2054,7 +2054,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (try $try3 (result i32)
+  ;; CHECK-NEXT:   (try (result i32)
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
@@ -2144,7 +2144,7 @@
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:   (struct.new_default $struct)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (try $try
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -2162,7 +2162,7 @@
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (try $try0
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
@@ -4567,7 +4567,7 @@
   )
 
   ;; CHECK:      (func $call_ref-nofunc (type $2)
-  ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
@@ -5243,12 +5243,12 @@
     (i32.const 42)
   ))
 
-  ;; CHECK:      (export "mut_A" (global $mut_A))
-  (export "mut_A" (global $mut_A))
-
   ;; CHECK:      (export "yes" (func $yes))
 
   ;; CHECK:      (export "no" (func $no))
+
+  ;; CHECK:      (export "mut_A" (global $mut_A))
+  (export "mut_A" (global $mut_A))
 
   ;; CHECK:      (func $yes (type $2) (param $A (ref $A))
   ;; CHECK-NEXT:  (drop
@@ -5622,6 +5622,267 @@
   )
 )
 
+;; Packed fields with signed gets.
+(module
+  ;; CHECK:      (type $array (array (mut i8)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (type $struct (struct (field i16)))
+  (type $struct (struct (field i16)))
+
+  (type $array (array (mut i8)))
+
+  ;; CHECK:      (func $test-struct (type $1)
+  ;; CHECK-NEXT:  (local $x (ref $struct))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const -1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (i32.const 65535)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-struct
+    (local $x (ref $struct))
+    (local.set $x
+      (struct.new $struct
+        (i32.const -1)
+      )
+    )
+    ;; This reads -1.
+    (drop
+      (struct.get_s $struct 0
+        (local.get $x)
+      )
+    )
+    ;; This reads 65535, as the other bits were truncated.
+    (drop
+      (struct.get_u $struct 0
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $test-array (type $1)
+  ;; CHECK-NEXT:  (local $x (ref $array))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (array.new_fixed $array 1
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (array.get_s $array
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (array.get_u $array
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-array
+    (local $x (ref $array))
+    (local.set $x
+      (array.new_fixed $array 1
+        (i32.const -1)
+      )
+    )
+    ;; This reads -1.
+    (drop
+      (array.get_s $array
+        (local.get $x)
+        (i32.const 0)
+      )
+    )
+    ;; This reads 255, as the other bits were truncated.
+    (drop
+      (array.get_u $array
+        (local.get $x)
+        (i32.const 0)
+      )
+    )
+  )
+)
+
+;; Packed fields with conflicting sets.
+(module
+
+  ;; CHECK:      (type $struct (struct (field i16)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (import "a" "b" (global $import i32))
+  (import "a" "b" (global $import i32))
+
+  (type $struct (struct (field i16)))
+
+  ;; CHECK:      (func $test-struct (type $1)
+  ;; CHECK-NEXT:  (local $x (ref null $struct))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $import)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const -1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get_s $struct 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get_u $struct 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-struct
+    (local $x (ref null $struct))
+    (if
+      (global.get $import)
+      (then
+        (local.set $x
+          (struct.new $struct
+            (i32.const -1)
+          )
+        )
+      )
+      (else
+        (local.set $x
+          (struct.new $struct
+            (i32.const 42)
+          )
+        )
+      )
+    )
+    ;; We cannot infer anything for these reads.
+    (drop
+      (struct.get_s $struct 0
+        (local.get $x)
+      )
+    )
+    (drop
+      (struct.get_u $struct 0
+        (local.get $x)
+      )
+    )
+  )
+)
+
+;; Packed fields with different sets that actually do not conflict.
+(module
+
+  ;; CHECK:      (type $struct (struct (field i16)))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (import "a" "b" (global $import i32))
+  (import "a" "b" (global $import i32))
+
+  (type $struct (struct (field i16)))
+
+  ;; CHECK:      (func $test-struct (type $1)
+  ;; CHECK-NEXT:  (local $x (ref null $struct))
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (global.get $import)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const -1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (else
+  ;; CHECK-NEXT:    (local.set $x
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (i32.const 65535)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get_s $struct 0
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const -1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (struct.get_u $struct 0
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 65535)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test-struct
+    (local $x (ref null $struct))
+    (if
+      (global.get $import)
+      (then
+        (local.set $x
+          (struct.new $struct
+            (i32.const -1)
+          )
+        )
+      )
+      (else
+        (local.set $x
+          (struct.new $struct
+            (i32.const 65535)
+          )
+        )
+      )
+    )
+    ;; We can infer here because -1 and 65535 are actually the same, after
+    ;; truncation.
+    (drop
+      (struct.get_s $struct 0
+        (local.get $x)
+      )
+    )
+    (drop
+      (struct.get_u $struct 0
+        (local.get $x)
+      )
+    )
+  )
+)
+
 ;; Test that we do not error on array.init of a bottom type.
 (module
   (type $"[mut:i32]" (array (mut i32)))
@@ -5632,11 +5893,20 @@
   (data $0 "")
 
   ;; CHECK:      (func $test (type $0)
-  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayInitData we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test
@@ -5784,5 +6054,43 @@
         (ref.null none)
       )
     )
+  )
+)
+
+(module
+  ;; CHECK:      (type $array (sub (array (mut i8))))
+  (type $array (sub (array (mut i8))))
+
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (global $global (ref null $array) (array.new_fixed $array 0))
+  (global $global (ref null $array) (array.new_fixed $array 0))
+
+  ;; CHECK:      (func $test (type $1)
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (ref.cast nullref
+  ;; CHECK-NEXT:     (global.get $global)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    ;; We should not error on sets to bottom types, even if they are cast from
+    ;; valid values.
+    (array.set $array
+     (ref.cast nullref
+       (global.get $global)
+     )
+     (i32.const 0)
+     (i32.const 0)
+   )
   )
 )

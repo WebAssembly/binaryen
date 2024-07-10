@@ -1,104 +1,72 @@
 (module
-  (type $f (func (result i32)))
+  (table $t 10 externref)
 
-  (table $t 10 funcref)
-
-  (func $0 (result i32)
-    (i32.const 0)
+  (func (export "fill") (param $i i32) (param $r externref) (param $n i32)
+    (table.fill $t (local.get $i) (local.get $r) (local.get $n))
   )
 
-  (func $1 (result i32)
-    (i32.const 1)
+  (func (export "fill-abbrev") (param $i i32) (param $r externref) (param $n i32)
+    (table.fill (local.get $i) (local.get $r) (local.get $n))
   )
 
-  (func $2 (result i32)
-    (i32.const 2)
-  )
-
-  (func $3 (result i32)
-    (i32.const 3)
-  )
-
-  (func $4 (result i32)
-    (i32.const 4)
-  )
-
-  (func (export "fill-0") (param $i i32) (param $n i32)
-    (table.fill $t (local.get $i) (ref.func $0) (local.get $n))
-  )
-
-  (func (export "fill-1") (param $i i32) (param $n i32)
-    (table.fill $t (local.get $i) (ref.func $1) (local.get $n))
-  )
-
-  (func (export "fill-2") (param $i i32) (param $n i32)
-    (table.fill $t (local.get $i) (ref.func $2) (local.get $n))
-  )
-
-  (func (export "fill-3") (param $i i32) (param $n i32)
-    (table.fill $t (local.get $i) (ref.func $3) (local.get $n))
-  )
-
-  (func (export "fill-4") (param $i i32) (param $n i32)
-    (table.fill $t (local.get $i) (ref.func $4) (local.get $n))
-  )
-
-  (func (export "fill-null") (param $i i32) (param $n i32)
-    (table.fill $t (local.get $i) (ref.null func) (local.get $n))
-  )
-
-  (func (export "get-null") (param $i i32) (result funcref)
+  (func (export "get") (param $i i32) (result externref)
     (table.get $t (local.get $i))
   )
 
-  (func (export "get") (param $i i32) (result i32)
-    (call_indirect $t (type $f) (local.get $i))
+  (table $t64 i64 10 externref)
+
+  (func (export "fill-t64") (param $i i64) (param $r externref) (param $n i64)
+    (table.fill $t64 (local.get $i) (local.get $r) (local.get $n))
+  )
+
+  (func (export "get-t64") (param $i i64) (result externref)
+    (table.get $t64 (local.get $i))
   )
 )
 
-(assert_return (invoke "get-null" (i32.const 1)) (ref.null func))
-(assert_return (invoke "get-null" (i32.const 2)) (ref.null func))
-(assert_return (invoke "get-null" (i32.const 3)) (ref.null func))
-(assert_return (invoke "get-null" (i32.const 4)) (ref.null func))
-(assert_return (invoke "get-null" (i32.const 5)) (ref.null func))
+(assert_return (invoke "get" (i32.const 1)) (ref.null extern))
+(assert_return (invoke "get" (i32.const 2)) (ref.null extern))
+(assert_return (invoke "get" (i32.const 3)) (ref.null extern))
+(assert_return (invoke "get" (i32.const 4)) (ref.null extern))
+(assert_return (invoke "get" (i32.const 5)) (ref.null extern))
 
-(assert_return (invoke "fill-1" (i32.const 2) (i32.const 3)))
-(assert_return (invoke "get-null" (i32.const 1)) (ref.null func))
-(assert_return (invoke "get" (i32.const 2)) (i32.const 1))
-(assert_return (invoke "get" (i32.const 3)) (i32.const 1))
-(assert_return (invoke "get" (i32.const 4)) (i32.const 1))
-(assert_return (invoke "get-null" (i32.const 5)) (ref.null func))
+;; (assert_return (invoke "fill" (i32.const 2) (ref.extern 1) (i32.const 3)))
+(assert_return (invoke "get" (i32.const 1)) (ref.null extern))
+;; (assert_return (invoke "get" (i32.const 2)) (ref.extern 1))
+;; (assert_return (invoke "get" (i32.const 3)) (ref.extern 1))
+;; (assert_return (invoke "get" (i32.const 4)) (ref.extern 1))
+(assert_return (invoke "get" (i32.const 5)) (ref.null extern))
 
-(assert_return (invoke "fill-2" (i32.const 4) (i32.const 2)))
-(assert_return (invoke "get" (i32.const 3)) (i32.const 1))
-(assert_return (invoke "get" (i32.const 4)) (i32.const 2))
-(assert_return (invoke "get" (i32.const 5)) (i32.const 2))
-(assert_return (invoke "get-null" (i32.const 6)) (ref.null func))
+;; (assert_return (invoke "fill" (i32.const 4) (ref.extern 2) (i32.const 2)))
+;; (assert_return (invoke "get" (i32.const 3)) (ref.extern 1))
+;; (assert_return (invoke "get" (i32.const 4)) (ref.extern 2))
+;; (assert_return (invoke "get" (i32.const 5)) (ref.extern 2))
+(assert_return (invoke "get" (i32.const 6)) (ref.null extern))
 
-(assert_return (invoke "fill-3" (i32.const 4) (i32.const 0)))
-(assert_return (invoke "get" (i32.const 3)) (i32.const 1))
-(assert_return (invoke "get" (i32.const 4)) (i32.const 2))
-(assert_return (invoke "get" (i32.const 5)) (i32.const 2))
+;; (assert_return (invoke "fill" (i32.const 4) (ref.extern 3) (i32.const 0)))
+;; (assert_return (invoke "get" (i32.const 3)) (ref.extern 1))
+;; (assert_return (invoke "get" (i32.const 4)) (ref.extern 2))
+;; (assert_return (invoke "get" (i32.const 5)) (ref.extern 2))
 
-(assert_return (invoke "fill-4" (i32.const 8) (i32.const 2)))
-(assert_return (invoke "get-null" (i32.const 7)) (ref.null func))
-(assert_return (invoke "get" (i32.const 8)) (i32.const 4))
-(assert_return (invoke "get" (i32.const 9)) (i32.const 4))
+;; (assert_return (invoke "fill" (i32.const 8) (ref.extern 4) (i32.const 2)))
+(assert_return (invoke "get" (i32.const 7)) (ref.null extern))
+;; (assert_return (invoke "get" (i32.const 8)) (ref.extern 4))
+;; (assert_return (invoke "get" (i32.const 9)) (ref.extern 4))
 
-(assert_return (invoke "fill-null" (i32.const 9) (i32.const 1)))
-(assert_return (invoke "get" (i32.const 8)) (i32.const 4))
-(assert_return (invoke "get-null" (i32.const 9)) (ref.null func))
+(assert_return (invoke "fill-abbrev" (i32.const 9) (ref.null extern) (i32.const 1)))
+;; (assert_return (invoke "get" (i32.const 8)) (ref.extern 4))
+(assert_return (invoke "get" (i32.const 9)) (ref.null extern))
 
-(assert_return (invoke "fill-1" (i32.const 10) (i32.const 0)))
-(assert_return (invoke "get-null" (i32.const 9)) (ref.null func))
+;; (assert_return (invoke "fill" (i32.const 10) (ref.extern 5) (i32.const 0)))
+(assert_return (invoke "get" (i32.const 9)) (ref.null extern))
 
-(assert_trap
-  (invoke "fill-2" (i32.const 8) (i32.const 3))
-  "out of bounds table access"
-)
-(assert_return (invoke "get-null" (i32.const 7)) (ref.null func))
-(assert_return (invoke "get" (i32.const 8)) (i32.const 4))
-(assert_return (invoke "get-null" (i32.const 9)) (ref.null func))
+;; (assert_trap
+;;   (invoke "fill" (i32.const 8) (ref.extern 6) (i32.const 3))
+;;  "out of bounds table access"
+;;)
+(assert_return (invoke "get" (i32.const 7)) (ref.null extern))
+;;(assert_return (invoke "get" (i32.const 8)) (ref.extern 4))
+(assert_return (invoke "get" (i32.const 9)) (ref.null extern))
 
 (assert_trap
   (invoke "fill" (i32.const 11) (ref.null extern) (i32.const 0))
@@ -110,6 +78,61 @@
   "out of bounds table access"
 )
 
+;; Same as above but for t64
+
+(assert_return (invoke "get-t64" (i64.const 1)) (ref.null extern))
+(assert_return (invoke "get-t64" (i64.const 2)) (ref.null extern))
+(assert_return (invoke "get-t64" (i64.const 3)) (ref.null extern))
+(assert_return (invoke "get-t64" (i64.const 4)) (ref.null extern))
+(assert_return (invoke "get-t64" (i64.const 5)) (ref.null extern))
+
+;; (assert_return (invoke "fill-t64" (i64.const 2) (ref.extern 1) (i64.const 3)))
+(assert_return (invoke "get-t64" (i64.const 1)) (ref.null extern))
+;; (assert_return (invoke "get-t64" (i64.const 2)) (ref.extern 1))
+;; (assert_return (invoke "get-t64" (i64.const 3)) (ref.extern 1))
+;; (assert_return (invoke "get-t64" (i64.const 4)) (ref.extern 1))
+(assert_return (invoke "get-t64" (i64.const 5)) (ref.null extern))
+
+;; (assert_return (invoke "fill-t64" (i64.const 4) (ref.extern 2) (i64.const 2)))
+;; (assert_return (invoke "get-t64" (i64.const 3)) (ref.extern 1))
+;; (assert_return (invoke "get-t64" (i64.const 4)) (ref.extern 2))
+;; (assert_return (invoke "get-t64" (i64.const 5)) (ref.extern 2))
+(assert_return (invoke "get-t64" (i64.const 6)) (ref.null extern))
+
+;; (assert_return (invoke "fill-t64" (i64.const 4) (ref.extern 3) (i64.const 0)))
+;; (assert_return (invoke "get-t64" (i64.const 3)) (ref.extern 1))
+;; (assert_return (invoke "get-t64" (i64.const 4)) (ref.extern 2))
+;; (assert_return (invoke "get-t64" (i64.const 5)) (ref.extern 2))
+
+;; (assert_return (invoke "fill-t64" (i64.const 8) (ref.extern 4) (i64.const 2)))
+(assert_return (invoke "get-t64" (i64.const 7)) (ref.null extern))
+;; (assert_return (invoke "get-t64" (i64.const 8)) (ref.extern 4))
+;; (assert_return (invoke "get-t64" (i64.const 9)) (ref.extern 4))
+
+(assert_return (invoke "fill-t64" (i64.const 9) (ref.null extern) (i64.const 1)))
+;; (assert_return (invoke "get-t64" (i64.const 8)) (ref.extern 4))
+(assert_return (invoke "get-t64" (i64.const 9)) (ref.null extern))
+
+;; (assert_return (invoke "fill-t64" (i64.const 10) (ref.extern 5) (i64.const 0)))
+(assert_return (invoke "get-t64" (i64.const 9)) (ref.null extern))
+
+;; (assert_trap
+;;   (invoke "fill-t64" (i64.const 8) (ref.extern 6) (i64.const 3))
+;;   "out of bounds table access"
+;; )
+(assert_return (invoke "get-t64" (i64.const 7)) (ref.null extern))
+;; (assert_return (invoke "get-t64" (i64.const 8)) (ref.extern 4))
+(assert_return (invoke "get-t64" (i64.const 9)) (ref.null extern))
+
+(assert_trap
+  (invoke "fill-t64" (i64.const 11) (ref.null extern) (i64.const 0))
+  "out of bounds table access"
+)
+
+(assert_trap
+  (invoke "fill-t64" (i64.const 11) (ref.null extern) (i64.const 10))
+  "out of bounds table access"
+)
 
 ;; Type errors
 

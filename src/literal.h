@@ -85,7 +85,7 @@ public:
     assert(type.isSignature());
   }
   explicit Literal(std::shared_ptr<GCData> gcData, HeapType type);
-  explicit Literal(std::string string);
+  explicit Literal(std::string_view string);
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
   ~Literal();
@@ -347,6 +347,8 @@ public:
   bool operator!=(const Literal& other) const;
 
   bool isNaN();
+  bool isCanonicalNaN();
+  bool isArithmeticNaN();
 
   static uint32_t NaNPayload(float f);
   static uint64_t NaNPayload(double f);

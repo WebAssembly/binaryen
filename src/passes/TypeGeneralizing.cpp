@@ -58,7 +58,7 @@ using TypeRequirement = Inverted<ValType>;
 
 // Record a type requirement for each local variable. Shared the requirements
 // across basic blocks.
-using LocalTypeRequirements = Shared<Vector<TypeRequirement>>;
+using LocalTypeRequirements = SharedPath<Vector<TypeRequirement>>;
 
 // The type requirements for each reference-typed value on the stack at a
 // particular location.
@@ -75,7 +75,8 @@ struct State : StateLattice {
   static constexpr int LocalsIndex = 0;
   static constexpr int StackIndex = 1;
 
-  State(Function* func) : StateLattice{Shared{initLocals(func)}, initStack()} {}
+  State(Function* func)
+    : StateLattice{SharedPath{initLocals(func)}, initStack()} {}
 
   void push(Element& elem, Type type) const noexcept {
     stackLattice().push(stack(elem), std::move(type));
@@ -109,7 +110,7 @@ struct State : StateLattice {
 
 private:
   static LocalTypeRequirements initLocals(Function* func) noexcept {
-    return Shared{Vector{Inverted{ValType{}}, func->getNumLocals()}};
+    return SharedPath{Vector{Inverted{ValType{}}, func->getNumLocals()}};
   }
 
   static ValueStackTypeRequirements initStack() noexcept {
@@ -849,10 +850,10 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
       case RefAsNonNull:
         push(Type(type.getHeapType(), Nullable));
         return;
-      case ExternInternalize:
+      case AnyConvertExtern:
         push(Type(HeapType::ext, type.getNullability()));
         return;
-      case ExternExternalize:
+      case ExternConvertAny:
         push(Type(HeapType::any, type.getNullability()));
         return;
     }
@@ -865,17 +866,13 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
   void visitStringEncode(StringEncode* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStringConcat(StringConcat* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStringEq(StringEq* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringAs(StringAs* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringWTF8Advance(StringWTF8Advance* curr) {
-    WASM_UNREACHABLE("TODO");
-  }
   void visitStringWTF16Get(StringWTF16Get* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringIterNext(StringIterNext* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringIterMove(StringIterMove* curr) { WASM_UNREACHABLE("TODO"); }
   void visitStringSliceWTF(StringSliceWTF* curr) { WASM_UNREACHABLE("TODO"); }
-  void visitStringSliceIter(StringSliceIter* curr) { WASM_UNREACHABLE("TODO"); }
 
+  void visitContBind(ContBind* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitContNew(ContNew* curr) { WASM_UNREACHABLE("TODO"); }
   void visitResume(Resume* curr) { WASM_UNREACHABLE("TODO"); }
+  void visitSuspend(Suspend* curr) { WASM_UNREACHABLE("TODO"); }
 };
 
 struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {

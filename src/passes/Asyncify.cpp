@@ -273,6 +273,13 @@
 //      some indirect calls that *do* need to be instrumented, or if you will
 //      do some later transform of the code that adds more call paths, etc.
 //
+//   --pass-arg=asyncify-propagate-addlist
+//
+//      The default behaviour of the addlist does not propagate instrumentation
+//      status. If this option is set then functions which call a function in
+//      the addlist will also be instrumented, and those that call them and so
+//      on.
+//
 //   --pass-arg=asyncify-onlylist@name1,name2,name3
 //
 //      If the "only-list" is provided, then *only* the functions in the list
@@ -534,6 +541,7 @@ public:
                  bool canIndirectChangeState,
                  const String::Split& removeListInput,
                  const String::Split& addListInput,
+                 bool propagateAddList,
                  const String::Split& onlyListInput,
                  bool verbose)
     : module(module), canIndirectChangeState(canIndirectChangeState),
@@ -675,20 +683,61 @@ public:
       module.removeFunction(name);
     }
 
+    auto handleAddList = [&](ModuleAnalyzer::Map& map) {
+      if (!addListInput.empty()) {
+        for (auto& func : module.functions) {
+          if (addList.match(func->name) && removeList.match(func->name)) {
+            Fatal() << func->name
+                    << " is found in the add-list and in the remove-list";
+          }
+
+          if (!func->imported() && addList.match(func->name)) {
+            auto& info = map[func.get()];
+            if (verbose && !info.canChangeState) {
+              std::cout << "[asyncify] " << func->name
+                        << " is in the add-list, add\n";
+            }
+            info.canChangeState = true;
+            info.addedFromList = true;
+          }
+        }
+      }
+    };
+
+    // When propagateAddList is enabled, we should check a add-list before
+    // scannerpropagateBack so that callers of functions in add-list should also
+    // be instrumented.
+    if (propagateAddList) {
+      handleAddList(scanner.map);
+    }
+
+    // The order of propagation in |propagateBack| is non-deterministic, so sort
+    // the loggings we intend to do.
+    std::vector<std::string> loggings;
+
     scanner.propagateBack([](const Info& info) { return info.canChangeState; },
                           [](const Info& info) {
                             return !info.isBottomMostRuntime &&
                                    !info.inRemoveList;
                           },
-                          [verbose](Info& info, Function* reason) {
-                            if (verbose && !info.canChangeState) {
-                              std::cout << "[asyncify] " << info.name
-                                        << " can change the state due to "
-                                        << reason->name << "\n";
+                          [](Info& info) { info.canChangeState = true; },
+                          [&](const Info& info, Function* reason) {
+                            if (verbose) {
+                              std::stringstream str;
+                              str << "[asyncify] " << info.name
+                                  << " can change the state due to "
+                                  << reason->name << "\n";
+                              loggings.push_back(str.str());
                             }
-                            info.canChangeState = true;
                           },
                           scanner.IgnoreNonDirectCalls);
+
+    if (!loggings.empty()) {
+      std::sort(loggings.begin(), loggings.end());
+      for (auto& logging : loggings) {
+        std::cout << logging;
+      }
+    }
 
     map.swap(scanner.map);
 
@@ -711,18 +760,10 @@ public:
       }
     }
 
-    if (!addListInput.empty()) {
-      for (auto& func : module.functions) {
-        if (!func->imported() && addList.match(func->name)) {
-          auto& info = map[func.get()];
-          if (verbose && !info.canChangeState) {
-            std::cout << "[asyncify] " << func->name
-                      << " is in the add-list, add\n";
-          }
-          info.canChangeState = true;
-          info.addedFromList = true;
-        }
-      }
+    // When propagateAddList is disabled, which is default behavior,
+    // functions in add-list are just prepended to instrumented functions.
+    if (!propagateAddList) {
+      handleAddList(map);
     }
 
     removeList.checkPatternsMatches();
@@ -1609,6 +1650,7 @@ struct Asyncify : public Pass {
     auto verbose = options.hasArgument("asyncify-verbose");
     auto relocatable = options.hasArgument("asyncify-relocatable");
     auto secondaryMemory = options.hasArgument("asyncify-in-secondary-memory");
+    auto propagateAddList = options.hasArgument("asyncify-propagate-addlist");
 
     // Ensure there is a memory, as we need it.
     if (secondaryMemory) {
@@ -1651,6 +1693,7 @@ struct Asyncify : public Pass {
                             canIndirectChangeState,
                             removeList,
                             addList,
+                            propagateAddList,
                             onlyList,
                             verbose);
 

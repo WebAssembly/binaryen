@@ -12,15 +12,23 @@
  ;; CHECK:      (table $0 5 5 funcref)
  ;; IMMUT:      (table $0 5 5 funcref)
  (table $0 5 5 funcref)
- (elem (i32.const 1) $foo)
+ ;; CHECK:      (table $t64 i64 5 5 funcref)
 
- ;; CHECK:      (elem $0 (i32.const 1) $foo)
+ ;; CHECK:      (elem $elem (table $0) (i32.const 1) func $foo)
+ ;; IMMUT:      (table $t64 i64 5 5 funcref)
+
+ ;; IMMUT:      (elem $elem (table $0) (i32.const 1) func $foo)
+ (elem $elem (i32.const 1) $foo)
+
+ (table $t64 i64 5 5 funcref)
+
+ ;; CHECK:      (elem $elem64 (table $t64) (i64.const 1) func $foo)
+ ;; IMMUT:      (elem $elem64 (table $t64) (i64.const 1) func $foo)
+ (elem $elem64 (table $t64) (i64.const 1) funcref (ref.func $foo))
 
  ;; CHECK:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
- ;; IMMUT:      (elem $0 (i32.const 1) $foo)
-
  ;; IMMUT:      (func $foo (type $ii) (param $0 i32) (param $1 i32)
  ;; IMMUT-NEXT:  (unreachable)
  ;; IMMUT-NEXT: )

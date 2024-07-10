@@ -166,14 +166,11 @@
     (i32.const 20)
    )
   )
-  (return
-   (block
-    (drop
-     (i32.const 10)
-    )
-    (unreachable)
-   )
+  (drop
+   (i32.const 10)
   )
+  (unreachable)
+  (return)
  )
  (func $binary (type $3)
   (drop

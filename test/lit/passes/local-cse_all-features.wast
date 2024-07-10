@@ -64,16 +64,30 @@
   ;; CHECK:      (type $B (array (mut i32)))
   (type $B (array (mut i32)))
 
-
   ;; CHECK:      (type $2 (func (param (ref $A))))
 
-  ;; CHECK:      (type $3 (func (param (ref null $A))))
+  ;; CHECK:      (type $3 (func))
 
-  ;; CHECK:      (type $4 (func))
+  ;; CHECK:      (type $C (array (mut funcref)))
+  (type $C (array (mut funcref)))
 
-  ;; CHECK:      (type $5 (func (param (ref null $B) (ref $A))))
+  ;; CHECK:      (type $5 (func (param (ref null $A))))
 
-  ;; CHECK:      (func $struct-gets-nullable (type $3) (param $ref (ref null $A))
+  ;; CHECK:      (type $6 (func (param (ref null $B) (ref $A))))
+
+  ;; CHECK:      (memory $memory 1)
+  (memory $memory 1)
+
+  ;; CHECK:      (data $data "abcdefg")
+  (data $data "abcdefg")
+
+  ;; CHECK:      (table $table 10 funcref)
+  (table $table 10 funcref)
+
+  ;; CHECK:      (elem $elem (i32.const 0) $creations)
+  (elem $elem (i32.const 0) funcref (ref.func $creations))
+
+  ;; CHECK:      (func $struct-gets-nullable (type $5) (param $ref (ref null $A))
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $1
@@ -182,7 +196,7 @@
     )
   )
 
-  ;; CHECK:      (func $creations (type $4)
+  ;; CHECK:      (func $creations (type $3)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $A
   ;; CHECK-NEXT:    (i32.const 1)
@@ -202,6 +216,40 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (array.new $B
   ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_data $B $data
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_data $B $data
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_elem $C $elem
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_elem $C $elem
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (i32.const 5)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_fixed $B 1
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_fixed $B 1
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -231,9 +279,73 @@
         (i32.const 1)
       )
     )
+    (drop
+      (array.new_data $B $data
+        (i32.const 1)
+        (i32.const 5)
+      )
+    )
+    (drop
+      (array.new_data $B $data
+        (i32.const 1)
+        (i32.const 5)
+      )
+    )
+    (drop
+      (array.new_elem $C $elem
+        (i32.const 1)
+        (i32.const 5)
+      )
+    )
+    (drop
+      (array.new_elem $C $elem
+        (i32.const 1)
+        (i32.const 5)
+      )
+    )
+    (drop
+      (array.new_fixed $B 1
+        (i32.const 1)
+      )
+    )
+    (drop
+      (array.new_fixed $B 1
+        (i32.const 1)
+      )
+    )
   )
 
-  ;; CHECK:      (func $structs-and-arrays-do-not-alias (type $5) (param $array (ref null $B)) (param $struct (ref $A))
+  ;; CHECK:      (func $nested-generativity (type $3)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:    (struct.new_default $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $nested-generativity
+    ;; Operations that include nested generativity are ignored.
+    (drop
+      (ref.eq
+        (struct.new_default $A)
+        (struct.new_default $A)
+      )
+    )
+    (drop
+      (ref.eq
+        (struct.new_default $A)
+        (struct.new_default $A)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $structs-and-arrays-do-not-alias (type $6) (param $array (ref null $B)) (param $struct (ref $A))
   ;; CHECK-NEXT:  (local $2 i32)
   ;; CHECK-NEXT:  (array.set $B
   ;; CHECK-NEXT:   (local.get $array)
@@ -348,5 +460,57 @@
         )
       )
     )
+  )
+)
+
+(module
+  ;; CHECK:      (type $struct (struct (field i32)))
+  (type $struct (struct (field i32)))
+
+  ;; CHECK:      (type $1 (func (param anyref)))
+
+  ;; CHECK:      (type $2 (func (param i32)))
+
+  ;; CHECK:      (func $caller (type $1) (param $x anyref)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (call $callee
+  ;; CHECK-NEXT:   (local.tee $1
+  ;; CHECK-NEXT:    (struct.get $struct 0
+  ;; CHECK-NEXT:     (ref.cast (ref $struct)
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (call $callee
+  ;; CHECK-NEXT:   (local.get $1)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller (param $x anyref)
+    (call $callee
+      (struct.get $struct 0
+        (ref.cast (ref $struct)
+          (local.get $x)
+        )
+      )
+    )
+    ;; The call in between the struct.get has effects, but they do not
+    ;; interfere: the struct.get reads locals and immutable data only, and we
+    ;; can ignore possible traps in both the call and the struct.get (as if
+    ;; anything traps we just don't reach the local.get that the optimization
+    ;; emits).
+    (call $callee
+      (struct.get $struct 0
+        (ref.cast (ref $struct)
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $callee (type $2) (param $x i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $callee (param $x i32)
   )
 )

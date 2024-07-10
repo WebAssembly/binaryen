@@ -25,6 +25,7 @@ namespace wasm {
 
 Name WASM("wasm");
 Name RETURN_FLOW("*return:)*");
+Name RETURN_CALL_FLOW("*return-call:)*");
 Name NONCONSTANT_FLOW("*nonconstant:)*");
 
 namespace BinaryConsts {
@@ -53,6 +54,7 @@ const char* ExtendedConstFeature = "extended-const";
 const char* StringsFeature = "strings";
 const char* MultiMemoryFeature = "multimemory";
 const char* TypedContinuationsFeature = "typed-continuations";
+const char* SharedEverythingFeature = "shared-everything";
 } // namespace CustomSections
 } // namespace BinaryConsts
 
@@ -760,7 +762,15 @@ void Binary::finalize() {
   }
 }
 
-void Select::finalize(Type type_) { type = type_; }
+void Select::finalize(Type type_) {
+  assert(ifTrue && ifFalse);
+  if (ifTrue->type == Type::unreachable || ifFalse->type == Type::unreachable ||
+      condition->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else {
+    type = type_;
+  }
+}
 
 void Select::finalize() {
   assert(ifTrue && ifFalse);
@@ -780,15 +790,11 @@ void Drop::finalize() {
   }
 }
 
-void MemorySize::make64() { type = ptrType = Type::i64; }
-void MemorySize::finalize() { type = ptrType; }
+void MemorySize::finalize() {}
 
-void MemoryGrow::make64() { type = ptrType = Type::i64; }
 void MemoryGrow::finalize() {
   if (delta->type == Type::unreachable) {
     type = Type::unreachable;
-  } else {
-    type = ptrType;
   }
 }
 
@@ -846,8 +852,6 @@ void TableSize::finalize() {
 void TableGrow::finalize() {
   if (delta->type == Type::unreachable || value->type == Type::unreachable) {
     type = Type::unreachable;
-  } else {
-    type = Type::i32;
   }
 }
 
@@ -1227,10 +1231,10 @@ void RefAs::finalize() {
     case RefAsNonNull:
       type = Type(value->type.getHeapType(), NonNullable);
       break;
-    case ExternInternalize:
+    case AnyConvertExtern:
       type = Type(HeapType::any, value->type.getNullability());
       break;
-    case ExternExternalize:
+    case ExternConvertAny:
       type = Type(HeapType::ext, value->type.getNullability());
       break;
     default:
@@ -1239,11 +1243,12 @@ void RefAs::finalize() {
 }
 
 void StringNew::finalize() {
-  if (ptr->type == Type::unreachable ||
-      (length && length->type == Type::unreachable)) {
+  if (ref->type == Type::unreachable ||
+      (start && start->type == Type::unreachable) ||
+      (end && end->type == Type::unreachable)) {
     type = Type::unreachable;
   } else {
-    type = Type(HeapType::string, try_ ? Nullable : NonNullable);
+    type = Type(HeapType::string, NonNullable);
   }
 }
 
@@ -1258,8 +1263,8 @@ void StringMeasure::finalize() {
 }
 
 void StringEncode::finalize() {
-  if (ref->type == Type::unreachable || ptr->type == Type::unreachable ||
-      (start && start->type == Type::unreachable)) {
+  if (str->type == Type::unreachable || array->type == Type::unreachable ||
+      start->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
     type = Type::i32;
@@ -1282,53 +1287,8 @@ void StringEq::finalize() {
   }
 }
 
-void StringAs::finalize() {
-  if (ref->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    switch (op) {
-      case StringAsWTF8:
-        type = Type(HeapType::stringview_wtf8, NonNullable);
-        break;
-      case StringAsWTF16:
-        type = Type(HeapType::stringview_wtf16, NonNullable);
-        break;
-      case StringAsIter:
-        type = Type(HeapType::stringview_iter, NonNullable);
-        break;
-      default:
-        WASM_UNREACHABLE("bad string.as");
-    }
-  }
-}
-
-void StringWTF8Advance::finalize() {
-  if (ref->type == Type::unreachable || pos->type == Type::unreachable ||
-      bytes->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type::i32;
-  }
-}
-
 void StringWTF16Get::finalize() {
   if (ref->type == Type::unreachable || pos->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type::i32;
-  }
-}
-
-void StringIterNext::finalize() {
-  if (ref->type == Type::unreachable) {
-    type = Type::unreachable;
-  } else {
-    type = Type::i32;
-  }
-}
-
-void StringIterMove::finalize() {
-  if (ref->type == Type::unreachable || num->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
     type = Type::i32;
@@ -1344,11 +1304,19 @@ void StringSliceWTF::finalize() {
   }
 }
 
-void StringSliceIter::finalize() {
-  if (ref->type == Type::unreachable || num->type == Type::unreachable) {
+void ContBind::finalize() {
+  if (cont->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (!handleUnreachableOperands(this)) {
+    type = Type(contTypeAfter, NonNullable);
+  }
+}
+
+void ContNew::finalize() {
+  if (func->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = Type(HeapType::string, NonNullable);
+    type = Type(contType, NonNullable);
   }
 }
 
@@ -1394,11 +1362,22 @@ static void populateResumeSentTypes(Resume* curr, Module* wasm) {
 }
 
 void Resume::finalize(Module* wasm) {
-  const Signature& contSig =
-    this->contType.getContinuation().type.getSignature();
-  type = contSig.results;
+  if (cont->type == Type::unreachable) {
+    type = Type::unreachable;
+  } else if (!handleUnreachableOperands(this)) {
+    const Signature& contSig =
+      this->contType.getContinuation().type.getSignature();
+    type = contSig.results;
+  }
 
   populateResumeSentTypes(this, wasm);
+}
+
+void Suspend::finalize(Module* wasm) {
+  if (!handleUnreachableOperands(this) && wasm) {
+    auto tag = wasm->getTag(this->tag);
+    type = tag->sig.results;
+  }
 }
 
 size_t Function::getNumParams() { return getParams().size(); }

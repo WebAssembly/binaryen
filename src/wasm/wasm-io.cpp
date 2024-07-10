@@ -29,25 +29,15 @@
 #include "support/debug.h"
 #include "support/path.h"
 #include "wasm-binary.h"
-#include "wasm-s-parser.h"
 
 namespace wasm {
-
-bool useNewWATParser = false;
 
 #define DEBUG_TYPE "writer"
 
 static void readTextData(std::string& input, Module& wasm, IRProfile profile) {
-  if (useNewWATParser) {
-    std::string_view in(input.c_str());
-    if (auto parsed = WATParser::parseModule(wasm, in);
-        auto err = parsed.getErr()) {
-      Fatal() << err->msg;
-    }
-  } else {
-    SExpressionParser parser(const_cast<char*>(input.c_str()));
-    Element& root = *parser.root;
-    SExpressionWasmBuilder builder(wasm, *root[0], profile);
+  if (auto parsed = WATParser::parseModule(wasm, input);
+      auto err = parsed.getErr()) {
+    Fatal() << err->msg;
   }
 }
 
@@ -130,7 +120,6 @@ void ModuleReader::readStdin(Module& wasm, std::string sourceMapFilename) {
   } else {
     std::ostringstream s;
     s.write(input.data(), input.size());
-    s << '\0';
     std::string input_str = s.str();
     readTextData(input_str, wasm, profile);
   }
@@ -151,7 +140,7 @@ void ModuleWriter::writeText(Module& wasm, std::string filename) {
 
 void ModuleWriter::writeBinary(Module& wasm, Output& output) {
   BufferWithRandomAccess buffer;
-  WasmBinaryWriter writer(&wasm, buffer);
+  WasmBinaryWriter writer(&wasm, buffer, options);
   // if debug info is used, then we want to emit the names section
   writer.setNamesSection(debugInfo);
   if (emitModuleName) {

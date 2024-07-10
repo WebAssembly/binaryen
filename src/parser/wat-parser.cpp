@@ -18,9 +18,10 @@
 #include "contexts.h"
 #include "ir/names.h"
 #include "lexer.h"
-#include "parsers.h"
+#include "pass.h"
 #include "wasm-type.h"
 #include "wasm.h"
+#include "wat-parser-internal.h"
 
 // The WebAssembly text format is recursive in the sense that elements may be
 // referred to before they are declared. Furthermore, elements may be referred
@@ -60,8 +61,7 @@ namespace wasm::WATParser {
 
 namespace {
 
-Result<IndexMap> createIndexMap(ParseInput& in,
-                                const std::vector<DefPos>& defs) {
+Result<IndexMap> createIndexMap(Lexer& in, const std::vector<DefPos>& defs) {
   IndexMap indices;
   for (auto& def : defs) {
     if (def.name.is()) {
@@ -73,146 +73,61 @@ Result<IndexMap> createIndexMap(ParseInput& in,
   return indices;
 }
 
-template<typename Ctx>
-Result<> parseDefs(Ctx& ctx,
-                   const std::vector<DefPos>& defs,
-                   MaybeResult<> (*parser)(Ctx&)) {
-  for (auto& def : defs) {
-    ctx.index = def.index;
-    WithPosition with(ctx, def.pos);
-    if (auto parsed = parser(ctx)) {
-      CHECK_ERR(parsed);
-    } else {
-      auto im = import_(ctx);
-      assert(im);
-      CHECK_ERR(im);
-    }
-  }
-  return Ok{};
+void propagateDebugLocations(Module& wasm) {
+  // Copy debug locations from parents or previous siblings to expressions that
+  // do not already have their own debug locations.
+  PassRunner runner(&wasm);
+  runner.add("propagate-debug-locs");
+  // The parser should not be responsible for validation.
+  runner.setIsNested(true);
+  runner.run();
 }
 
-// ================
-// Parser Functions
-// ================
+// Parse module-level declarations.
 
-} // anonymous namespace
+// Parse type definitions.
 
-Result<> parseModule(Module& wasm, std::string_view input) {
-  // Parse module-level declarations.
+// Parse implicit type definitions and map typeuses without explicit types to
+// the correct types.
+
+Result<> doParseModule(Module& wasm, Lexer& input, bool allowExtra) {
   ParseDeclsCtx decls(input, wasm);
-  CHECK_ERR(module(decls));
-  if (!decls.in.empty()) {
+  CHECK_ERR(parseDecls(decls));
+  if (!allowExtra && !decls.in.empty()) {
     return decls.in.err("Unexpected tokens after module");
   }
 
   auto typeIndices = createIndexMap(decls.in, decls.subtypeDefs);
   CHECK_ERR(typeIndices);
 
-  // Parse type definitions.
   std::vector<HeapType> types;
   std::unordered_map<HeapType, std::unordered_map<Name, Index>> typeNames;
-  {
-    TypeBuilder builder(decls.subtypeDefs.size());
-    ParseTypeDefsCtx ctx(input, builder, *typeIndices);
-    for (auto& typeDef : decls.typeDefs) {
-      WithPosition with(ctx, typeDef.pos);
-      CHECK_ERR(deftype(ctx));
-    }
-    auto built = builder.build();
-    if (auto* err = built.getError()) {
-      std::stringstream msg;
-      msg << "invalid type: " << err->reason;
-      return ctx.in.err(decls.typeDefs[err->index].pos, msg.str());
-    }
-    types = *built;
-    // Record type names on the module and in typeNames.
-    for (size_t i = 0; i < types.size(); ++i) {
-      auto& names = ctx.names[i];
-      auto& fieldNames = names.fieldNames;
-      if (names.name.is() || fieldNames.size()) {
-        wasm.typeNames.insert({types[i], names});
-        auto& fieldIdxMap = typeNames[types[i]];
-        for (auto [idx, name] : fieldNames) {
-          fieldIdxMap.insert({name, idx});
-        }
-      }
-    }
-  }
+  CHECK_ERR(parseTypeDefs(decls, input, *typeIndices, types, typeNames));
 
-  // Parse implicit type definitions and map typeuses without explicit types to
-  // the correct types.
   std::unordered_map<Index, HeapType> implicitTypes;
+  CHECK_ERR(
+    parseImplicitTypeDefs(decls, input, *typeIndices, types, implicitTypes));
 
-  {
-    ParseImplicitTypeDefsCtx ctx(input, types, implicitTypes, *typeIndices);
-    for (Index pos : decls.implicitTypeDefs) {
-      WithPosition with(ctx, pos);
-      CHECK_ERR(typeuse(ctx));
-    }
-  }
+  CHECK_ERR(parseModuleTypes(decls, input, *typeIndices, types, implicitTypes));
 
-  {
-    // Parse module-level types.
-    ParseModuleTypesCtx ctx(input,
-                            wasm,
-                            types,
-                            implicitTypes,
-                            decls.implicitElemIndices,
-                            *typeIndices);
-    CHECK_ERR(parseDefs(ctx, decls.funcDefs, func));
-    CHECK_ERR(parseDefs(ctx, decls.tableDefs, table));
-    CHECK_ERR(parseDefs(ctx, decls.memoryDefs, memory));
-    CHECK_ERR(parseDefs(ctx, decls.globalDefs, global));
-    CHECK_ERR(parseDefs(ctx, decls.elemDefs, elem));
-    CHECK_ERR(parseDefs(ctx, decls.tagDefs, tag));
-  }
-  {
-    // Parse definitions.
-    // TODO: Parallelize this.
-    ParseDefsCtx ctx(input,
-                     wasm,
-                     types,
-                     implicitTypes,
-                     typeNames,
-                     decls.implicitElemIndices,
-                     *typeIndices);
-    CHECK_ERR(parseDefs(ctx, decls.tableDefs, table));
-    CHECK_ERR(parseDefs(ctx, decls.globalDefs, global));
-    CHECK_ERR(parseDefs(ctx, decls.startDefs, start));
-    CHECK_ERR(parseDefs(ctx, decls.elemDefs, elem));
-    CHECK_ERR(parseDefs(ctx, decls.dataDefs, data));
+  CHECK_ERR(parseDefinitions(
+    decls, input, *typeIndices, types, implicitTypes, typeNames));
 
-    for (Index i = 0; i < decls.funcDefs.size(); ++i) {
-      ctx.index = i;
-      auto* f = wasm.functions[i].get();
-      if (!f->imported()) {
-        CHECK_ERR(ctx.visitFunctionStart(f));
-      }
-      WithPosition with(ctx, decls.funcDefs[i].pos);
-      if (auto parsed = func(ctx)) {
-        CHECK_ERR(parsed);
-      } else {
-        auto im = import_(ctx);
-        assert(im);
-        CHECK_ERR(im);
-      }
-      if (!f->imported()) {
-        CHECK_ERR(ctx.irBuilder.visitEnd());
-      }
-    }
-
-    // Parse exports.
-    // TODO: It would be more technically correct to interleave these properly
-    // with the implicit inline exports in other module field definitions.
-    for (auto pos : decls.exportDefs) {
-      WithPosition with(ctx, pos);
-      auto parsed = export_(ctx);
-      CHECK_ERR(parsed);
-      assert(parsed);
-    }
-  }
+  propagateDebugLocations(wasm);
+  input = decls.in;
 
   return Ok{};
+}
+
+} // anonymous namespace
+
+Result<> parseModule(Module& wasm, std::string_view in) {
+  Lexer lexer(in);
+  return doParseModule(wasm, lexer, false);
+}
+
+Result<> parseModule(Module& wasm, Lexer& lexer) {
+  return doParseModule(wasm, lexer, true);
 }
 
 } // namespace wasm::WATParser

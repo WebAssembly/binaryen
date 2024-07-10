@@ -30,7 +30,7 @@ constexpr int MAX_PARAMS = 10;
 constexpr int MAX_VARS = 20;
 
 // The maximum number of globals in a module.
-constexpr int MAX_GLOBALS = 20;
+constexpr int MAX_GLOBALS = 30;
 
 // The maximum number of tuple elements.
 constexpr int MAX_TUPLE_SIZE = 6;

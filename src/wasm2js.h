@@ -192,7 +192,10 @@ public:
 
   // The second pass on an expression: process it fully, generating
   // JS
-  Ref processFunctionBody(Module* m, Function* func, bool standalone);
+  Ref processExpression(Expression* curr,
+                        Module* m,
+                        Function* func = nullptr,
+                        bool standalone = false);
 
   Index getDataIndex(Name segment) {
     auto it = dataIndices.find(segment);
@@ -203,16 +206,18 @@ public:
   // Get a temp var.
   IString getTemp(Type type, Function* func) {
     IString ret;
-    TODO_SINGLE_COMPOUND(type);
-    if (frees[type.getBasic()].size() > 0) {
-      ret = frees[type.getBasic()].back();
-      frees[type.getBasic()].pop_back();
+    // TODO: handle tuples
+    assert(!type.isTuple() && "Unexpected tuple type");
+    if (frees[type].size() > 0) {
+      ret = frees[type].back();
+      frees[type].pop_back();
     } else {
-      size_t index = temps[type.getBasic()]++;
+      auto index = temps[type]++;
       ret = IString((std::string("wasm2js_") + type.toString() + "$" +
                      std::to_string(index))
                       .c_str(),
                     false);
+      ret = fromName(ret, NameScope::Local);
     }
     if (func->localIndices.find(ret) == func->localIndices.end()) {
       Builder::addVar(func, ret, type);
@@ -222,8 +227,9 @@ public:
 
   // Free a temp var.
   void freeTemp(Type type, IString temp) {
-    TODO_SINGLE_COMPOUND(type);
-    frees[type.getBasic()].push_back(temp);
+    // TODO: handle tuples
+    assert(!type.isTuple() && "Unexpected tuple type");
+    frees[type].push_back(temp);
   }
 
   // Generates a mangled name from `name` within the specified scope.
@@ -297,10 +303,10 @@ private:
   Flags flags;
   PassOptions options;
 
-  // How many temp vars we need
-  std::vector<size_t> temps; // type => num temps
-  // Which are currently free to use
-  std::vector<std::vector<IString>> frees; // type => list of free names
+  // How many temp vars we need for each type (type => num).
+  std::unordered_map<Type, Index> temps;
+  // Which temp vars are currently free to use for each type (type => freelist).
+  std::unordered_map<Type, std::vector<IString>> frees;
 
   // Mangled names cache by interned names.
   // Utilizes the usually reused underlying cstring's pointer as the key.
@@ -323,7 +329,7 @@ private:
   void addTable(Ref ast, Module* wasm);
   void addStart(Ref ast, Module* wasm);
   void addExports(Ref ast, Module* wasm);
-  void addGlobal(Ref ast, Global* global);
+  void addGlobal(Ref ast, Global* global, Module* module);
   void addMemoryFuncs(Ref ast, Module* wasm);
   void addMemoryGrowFunc(Ref ast, Module* wasm);
 
@@ -503,7 +509,7 @@ Ref Wasm2JSBuilder::processWasm(Module* wasm, Name funcName) {
   // globals
   bool generateFetchHighBits = false;
   ModuleUtils::iterDefinedGlobals(*wasm, [&](Global* global) {
-    addGlobal(asmFunc[3], global);
+    addGlobal(asmFunc[3], global, wasm);
     if (flags.allowAsserts && global->name == INT64_TO_32_HIGH_BITS) {
       generateFetchHighBits = true;
     }
@@ -672,12 +678,11 @@ void Wasm2JSBuilder::addTable(Ref ast, Module* wasm) {
     if (!table->imported()) {
       TableUtils::FlatTable flat(*wasm, *table);
       if (flat.valid) {
-        Name null("null");
         for (auto& name : flat.names) {
           if (name.is()) {
             name = fromName(name, NameScope::Top);
           } else {
-            name = null;
+            name = NULL_;
           }
           ValueBuilder::appendToArray(theArray, ValueBuilder::makeName(name));
         }
@@ -846,45 +851,12 @@ void Wasm2JSBuilder::addExports(Ref ast, Module* wasm) {
     ValueBuilder::makeStatement(ValueBuilder::makeReturn(exports)));
 }
 
-void Wasm2JSBuilder::addGlobal(Ref ast, Global* global) {
-  if (auto* const_ = global->init->dynCast<Const>()) {
-    Ref theValue;
-    TODO_SINGLE_COMPOUND(const_->type);
-    switch (const_->type.getBasic()) {
-      case Type::i32: {
-        theValue = ValueBuilder::makeInt(const_->value.geti32());
-        break;
-      }
-      case Type::f32: {
-        theValue = ValueBuilder::makeCall(
-          MATH_FROUND,
-          makeJsCoercion(ValueBuilder::makeDouble(const_->value.getf32()),
-                         JS_DOUBLE));
-        break;
-      }
-      case Type::f64: {
-        theValue = makeJsCoercion(
-          ValueBuilder::makeDouble(const_->value.getf64()), JS_DOUBLE);
-        break;
-      }
-      default: {
-        assert(false && "Top const type not supported");
-      }
-    }
-    Ref theVar = ValueBuilder::makeVar();
-    ast->push_back(theVar);
-    ValueBuilder::appendToVar(
-      theVar, fromName(global->name, NameScope::Top), theValue);
-  } else if (auto* get = global->init->dynCast<GlobalGet>()) {
-    Ref theVar = ValueBuilder::makeVar();
-    ast->push_back(theVar);
-    ValueBuilder::appendToVar(
-      theVar,
-      fromName(global->name, NameScope::Top),
-      ValueBuilder::makeName(fromName(get->name, NameScope::Top)));
-  } else {
-    assert(false && "Top init type not supported");
-  }
+void Wasm2JSBuilder::addGlobal(Ref ast, Global* global, Module* module) {
+  Ref theVar = ValueBuilder::makeVar();
+  ast->push_back(theVar);
+  Ref init = processExpression(global->init, module);
+  ValueBuilder::appendToVar(
+    theVar, fromName(global->name, NameScope::Top), init);
 }
 
 Ref Wasm2JSBuilder::processFunction(Module* m,
@@ -905,15 +877,15 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
     runner.runOnFunction(func);
   }
 
+  // We process multiple functions from a single Wasm2JSBuilder instance, so
+  // clean up the function-specific local state before each function.
+  frees.clear();
+  temps.clear();
+
   // We will be symbolically referring to all variables in the function, so make
   // sure that everything has a name and it's unique.
   Names::ensureNames(func);
   Ref ret = ValueBuilder::makeFunction(fromName(func->name, NameScope::Top));
-  frees.clear();
-  frees.resize(std::max(Type::i32, std::max(Type::f32, Type::f64)) + 1);
-  temps.clear();
-  temps.resize(std::max(Type::i32, std::max(Type::f32, Type::f64)) + 1);
-  temps[Type::i32] = temps[Type::f32] = temps[Type::f64] = 0;
   // arguments
   bool needCoercions = options.optimizeLevel == 0 || standaloneFunction ||
                        functionsCallableFromOutside.count(func->name);
@@ -921,18 +893,21 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
     IString name = fromName(func->getLocalNameOrGeneric(i), NameScope::Local);
     ValueBuilder::appendArgumentToFunction(ret, name);
     if (needCoercions) {
-      ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeBinary(
-        ValueBuilder::makeName(name),
-        SET,
-        makeJsCoercion(ValueBuilder::makeName(name),
-                       wasmToJsType(func->getLocalType(i))))));
+      auto jsType = wasmToJsType(func->getLocalType(i));
+      if (needsJsCoercion(jsType)) {
+        ret[3]->push_back(ValueBuilder::makeStatement(ValueBuilder::makeBinary(
+          ValueBuilder::makeName(name),
+          SET,
+          makeJsCoercion(ValueBuilder::makeName(name), jsType))));
+      }
     }
   }
   Ref theVar = ValueBuilder::makeVar();
   size_t theVarIndex = ret[3]->size();
   ret[3]->push_back(theVar);
   // body
-  flattenAppend(ret, processFunctionBody(m, func, standaloneFunction));
+  flattenAppend(ret,
+                processExpression(func->body, m, func, standaloneFunction));
   // vars, including new temp vars
   for (Index i = func->getVarIndexBase(); i < func->getNumLocals(); i++) {
     ValueBuilder::appendToVar(
@@ -943,16 +918,13 @@ Ref Wasm2JSBuilder::processFunction(Module* m,
   if (theVar[1]->size() == 0) {
     ret[3]->splice(theVarIndex, 1);
   }
-  // checks: all temp vars should be free at the end
-  assert(frees[Type::i32].size() == temps[Type::i32]);
-  assert(frees[Type::f32].size() == temps[Type::f32]);
-  assert(frees[Type::f64].size() == temps[Type::f64]);
   return ret;
 }
 
-Ref Wasm2JSBuilder::processFunctionBody(Module* m,
-                                        Function* func,
-                                        bool standaloneFunction) {
+Ref Wasm2JSBuilder::processExpression(Expression* curr,
+                                      Module* m,
+                                      Function* func,
+                                      bool standaloneFunction) {
   // Switches are tricky to handle - in wasm they often come with
   // massively-nested "towers" of blocks, which if naively translated
   // to JS may exceed parse recursion limits of VMs. Therefore even when
@@ -1090,9 +1062,9 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       : parent(parent), func(func), module(m),
         standaloneFunction(standaloneFunction) {}
 
-    Ref process() {
-      switchProcessor.walk(func->body);
-      return visit(func->body, NO_RESULT);
+    Ref process(Expression* curr) {
+      switchProcessor.walk(curr);
+      return visit(curr, NO_RESULT);
     }
 
     // A scoped temporary variable.
@@ -2219,45 +2191,55 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
                                     visit(curr->value, EXPRESSION_RESULT),
                                     visit(curr->size, EXPRESSION_RESULT));
     }
-    Ref visitRefNull(RefNull* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
+    Ref visitRefNull(RefNull* curr) { return ValueBuilder::makeName(NULL_); }
     Ref visitRefIsNull(RefIsNull* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeBinary(visit(curr->value, EXPRESSION_RESULT),
+                                      EQ,
+                                      ValueBuilder::makeName(NULL_));
     }
     Ref visitRefFunc(RefFunc* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeName(fromName(curr->func, NameScope::Top));
     }
     Ref visitRefEq(RefEq* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeBinary(visit(curr->left, EXPRESSION_RESULT),
+                                      EQ,
+                                      visit(curr->right, EXPRESSION_RESULT));
     }
     Ref visitTableGet(TableGet* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
+                                   visit(curr->index, EXPRESSION_RESULT));
     }
     Ref visitTableSet(TableSet* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      auto sub = ValueBuilder::makeSub(ValueBuilder::makeName(FUNCTION_TABLE),
+                                       visit(curr->index, EXPRESSION_RESULT));
+      auto value = visit(curr->value, EXPRESSION_RESULT);
+      return ValueBuilder::makeBinary(sub, SET, value);
     }
     Ref visitTableSize(TableSize* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      return ValueBuilder::makeDot(ValueBuilder::makeName(FUNCTION_TABLE),
+                                   ValueBuilder::makeName(LENGTH));
     }
     Ref visitTableGrow(TableGrow* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TABLE_GROW);
+      // Also ensure fill, as grow calls fill internally.
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TABLE_FILL);
+      return ValueBuilder::makeCall(ABI::wasm2js::TABLE_GROW,
+                                    visit(curr->value, EXPRESSION_RESULT),
+                                    visit(curr->delta, EXPRESSION_RESULT));
     }
     Ref visitTableFill(TableFill* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TABLE_FILL);
+      return ValueBuilder::makeCall(ABI::wasm2js::TABLE_FILL,
+                                    visit(curr->dest, EXPRESSION_RESULT),
+                                    visit(curr->value, EXPRESSION_RESULT),
+                                    visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitTableCopy(TableCopy* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TABLE_COPY);
+      return ValueBuilder::makeCall(ABI::wasm2js::TABLE_COPY,
+                                    visit(curr->dest, EXPRESSION_RESULT),
+                                    visit(curr->source, EXPRESSION_RESULT),
+                                    visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitTry(Try* curr) {
       unimplemented(curr);
@@ -2395,23 +2377,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitStringAs(StringAs* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
-    Ref visitStringWTF8Advance(StringWTF8Advance* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
     Ref visitStringWTF16Get(StringWTF16Get* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
-    Ref visitStringIterNext(StringIterNext* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
-    Ref visitStringIterMove(StringIterMove* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
@@ -2419,16 +2385,31 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
-    Ref visitStringSliceIter(StringSliceIter* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
-    }
     Ref visitRefAs(RefAs* curr) {
-      unimplemented(curr);
-      WASM_UNREACHABLE("unimp");
+      // TODO: support others
+      assert(curr->op == RefAsNonNull);
+
+      // value || trap()
+      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TRAP);
+      return ValueBuilder::makeBinary(
+        visit(curr->value, EXPRESSION_RESULT),
+        IString("||"),
+        ValueBuilder::makeCall(ABI::wasm2js::TRAP));
     }
 
+    Ref visitContBind(ContBind* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitContNew(ContNew* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitResume(Resume* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
+    Ref visitSuspend(Suspend* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");
     }
@@ -2449,7 +2430,7 @@ Ref Wasm2JSBuilder::processFunctionBody(Module* m,
     }
   };
 
-  return ExpressionProcessor(this, m, func, standaloneFunction).process();
+  return ExpressionProcessor(this, m, func, standaloneFunction).process(curr);
 }
 
 void Wasm2JSBuilder::addMemoryFuncs(Ref ast, Module* wasm) {
@@ -3032,6 +3013,36 @@ void Wasm2JSGlue::emitSpecialSupport() {
   function wasm2js_memory_copy(dest, source, size) {
     // TODO: traps on invalid things
     bufferView.copyWithin(dest, source, source + size);
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::TABLE_GROW) {
+      out << R"(
+  function wasm2js_table_grow(value, delta) {
+    // TODO: traps on invalid things
+    var oldSize = FUNCTION_TABLE.length;
+    FUNCTION_TABLE.length = oldSize + delta;
+    if (newSize > oldSize) {
+      __wasm_table_fill(oldSize, value, delta)
+    }
+    return oldSize;
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::TABLE_FILL) {
+      out << R"(
+  function __wasm_table_fill(dest, value, size) {
+    // TODO: traps on invalid things
+    for (var i = 0; i < size; i++) {
+      FUNCTION_TABLE[dest + i] = value;
+    }
+  }
+      )";
+    } else if (import->base == ABI::wasm2js::TABLE_COPY) {
+      out << R"(
+  function __wasm_table_copy(dest, source, size) {
+    // TODO: traps on invalid things
+    for (var i = 0; i < size; i++) {
+      FUNCTION_TABLE[dest + i] = FUNCTION_TABLE[source + i];
+    }
   }
       )";
     } else if (import->base == ABI::wasm2js::DATA_DROP) {

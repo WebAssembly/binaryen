@@ -83,7 +83,7 @@ inline bool isNamedControlFlow(Expression* curr) {
 // isValidInConstantExpression or find better names(#4845)
 inline bool isSingleConstantExpression(const Expression* curr) {
   if (auto* refAs = curr->dynCast<RefAs>()) {
-    if (refAs->op == ExternExternalize || refAs->op == ExternInternalize) {
+    if (refAs->op == ExternConvertAny || refAs->op == AnyConvertExtern) {
       return isSingleConstantExpression(refAs->value);
     }
   }
@@ -124,9 +124,9 @@ inline Literal getLiteral(const Expression* curr) {
   } else if (auto* s = curr->dynCast<StringConst>()) {
     return Literal(s->string.toString());
   } else if (auto* r = curr->dynCast<RefAs>()) {
-    if (r->op == ExternExternalize) {
+    if (r->op == ExternConvertAny) {
       return getLiteral(r->value).externalize();
-    } else if (r->op == ExternInternalize) {
+    } else if (r->op == AnyConvertExtern) {
       return getLiteral(r->value).internalize();
     }
   }
@@ -329,7 +329,7 @@ inline Expression** getImmediateFallthroughPtr(
     // Extern conversions are not casts and actually produce new values.
     // Treating them as fallthroughs would lead to misoptimizations of
     // subsequent casts.
-    if (as->op != ExternInternalize && as->op != ExternExternalize) {
+    if (as->op != AnyConvertExtern && as->op != ExternConvertAny) {
       return &as->value;
     }
   } else if (auto* br = curr->dynCast<BrOn>()) {
@@ -527,7 +527,10 @@ inline bool canEmitSelectWithArms(Expression* ifTrue, Expression* ifFalse) {
 //    the latter because calls are already handled best in other manners (using
 //    EffectAnalyzer).
 //
-bool isGenerative(Expression* curr, FeatureSet features);
+bool isGenerative(Expression* curr);
+
+// As above, but only checks |curr| and not children.
+bool isShallowlyGenerative(Expression* curr);
 
 // Whether this expression is valid in a context where WebAssembly requires a
 // constant expression, such as a global initializer.

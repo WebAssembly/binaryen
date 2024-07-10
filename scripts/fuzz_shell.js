@@ -38,13 +38,89 @@ var detrand = (function() {
   };
 })();
 
-// Fuzz integration.
-function logValue(x, y) {
+// Print out a value in a way that works well for fuzzing.
+function printed(x, y) {
   if (typeof y !== 'undefined') {
-    console.log('[LoggingExternalInterface logging ' + x + ' ' + y + ']');
+    // A pair of i32s which are a legalized i64.
+    return x + ' ' + y;
+  } else if (x === null) {
+    // JS has just one null. Print that out rather than typeof null which is
+    // 'object', below.
+    return 'null';
+  } else if (typeof x === 'string') {
+    // Emit a string in the same format as the binaryen interpreter. This
+    // escaping routine must be kept in sync with String::printEscapedJSON.
+    var escaped = '';
+    for (u of x) {
+      switch (u) {
+        case '"':
+          escaped += '\\"';
+          continue;
+        case '\\':
+          escaped += '\\\\';
+          continue;
+        case '\b':
+          escaped += '\\b';
+          continue;
+        case '\f':
+          escaped += '\\f';
+          continue;
+        case '\n':
+          escaped += '\\n';
+          continue;
+        case '\r':
+          escaped += '\\r';
+          continue;
+        case '\t':
+          escaped += '\\t';
+          continue;
+        default:
+          break;
+      }
+
+      var codePoint = u.codePointAt(0);
+      if (32 <= codePoint && codePoint < 127) {
+        escaped += u;
+        continue
+      }
+
+      var printEscape = (codePoint) => {
+        escaped += '\\u'
+        escaped += ((codePoint & 0xF000) >> 12).toString(16);
+        escaped += ((codePoint & 0x0F00) >> 8).toString(16);
+        escaped += ((codePoint & 0x00F0) >> 4).toString(16);
+        escaped += (codePoint & 0x000F).toString(16);
+      };
+
+      if (codePoint < 0x10000) {
+        printEscape(codePoint);
+      } else {
+        printEscape(0xD800 + ((codePoint - 0x10000) >> 10));
+        printEscape(0xDC00 + ((codePoint - 0x10000) & 0x3FF));
+      }
+    }
+    return 'string("' + escaped + '")';
+  } else if (typeof x === 'bigint') {
+    // Print bigints in legalized form, which is two 32-bit numbers of the low
+    // and high bits.
+    return (Number(x) | 0) + ' ' + (Number(x >> 32n) | 0)
+  } else if (typeof x !== 'number') {
+    // Something that is not a number or string, like a reference. We can't
+    // print a reference because it could look different after opts - imagine
+    // that a function gets renamed internally (that is, the problem is that
+    // JS printing will emit some info about the reference and not a stable
+    // external representation of it). In those cases just print the type,
+    // which will be 'object' or 'function'.
+    return typeof x;
   } else {
-    console.log('[LoggingExternalInterface logging ' + x + ']');
+    // A number. Print the whole thing.
+    return '' + x;
   }
+}
+
+// Fuzzer integration.
+function logValue(x, y) {
+  console.log('[LoggingExternalInterface logging ' + printed(x, y) + ']');
 }
 
 // Set up the imports.
@@ -54,6 +130,11 @@ var imports = {
     'log-i64': logValue,
     'log-f32': logValue,
     'log-f64': logValue,
+    // JS cannot log v128 values (we trap on the boundary), but we must still
+    // provide an import so that we do not trap during linking. (Alternatively,
+    // we could avoid running JS on code with SIMD in it, but it is useful to
+    // fuzz such code as much as we can.)
+    'log-v128': logValue,
   },
   'env': {
     'setTempRet0': function(x) { tempRet0 = x },
@@ -77,7 +158,7 @@ var instance;
 try {
   instance = new WebAssembly.Instance(module, imports);
 } catch (e) {
-  console.log('exception: failed to instantiate module');
+  console.log('exception thrown: failed to instantiate module');
   quit();
 }
 
@@ -94,21 +175,24 @@ function refreshView() {
 }
 
 // Run the wasm.
-var sortedExports = [];
 for (var e in exports) {
-  sortedExports.push(e);
-}
-sortedExports.sort();
-sortedExports.forEach(function(e) {
-  if (typeof exports[e] !== 'function') return;
+  if (typeof exports[e] !== 'function') {
+    continue;
+  }
+  // Send the function a null for each parameter. Null can be converted without
+  // error to both a number and a reference.
+  var func = exports[e];
+  var args = [];
+  for (var i = 0; i < func.length; i++) {
+    args.push(null);
+  }
   try {
     console.log('[fuzz-exec] calling ' + e);
-    var result = exports[e]();
+    var result = func.apply(null, args);
     if (typeof result !== 'undefined') {
-      console.log('[fuzz-exec] note result: $' + e + ' => ' + result);
+      console.log('[fuzz-exec] note result: ' + e + ' => ' + printed(result));
     }
   } catch (e) {
-    console.log('exception!');// + [e, e.stack]);
+    console.log('exception thrown: ' + e);
   }
-});
-
+}

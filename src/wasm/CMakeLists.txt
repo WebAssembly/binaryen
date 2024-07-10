@@ -9,8 +9,8 @@ set(wasm_SOURCES
   wasm-interpreter.cpp
   wasm-io.cpp
   wasm-ir-builder.cpp
-  wasm-s-parser.cpp
   wasm-stack.cpp
+  wasm-stack-opts.cpp
   wasm-type.cpp
   wasm-validator.cpp
   ${wasm_HEADERS}

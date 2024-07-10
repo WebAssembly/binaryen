@@ -14,10 +14,55 @@ full changeset diff at the end of each section.
 
 Current Trunk
 -------------
- - The `tuple.make` pseudoinstruction now requires an immediate giving its
-   arity. For example, to make a tuple of two elements, use `tuple.make 2`.
+
+v118
+----
+
+ - StackIR is now handled entirely during binary writing. This is mostly not
+   noticeable, except that:
+   - Text output no longer notes `(; has Stack IR ;)` (as Stack IR only exists
+     during binary writing).
+   - `--generate-stack-ir`, `--optimize-stack-ir`, and `--print-stack-ir` are
+     now flags and not passes. That means the order of operations may seem
+     different, as they apply during binary writing (or, if no binary is written
+     but we were still asked to print StackIR, `wasm-opt` does it at the very
+     end).
+   - Whether to generate, optimize, and print StackIR is now noted as part of
+     the PassOptions. As a result `BinaryenModulePrintStackIR` and similar APIs
+     do not receive an `optimize` flag, as they read the PassOption
+     `optimizeStackIR` instead.
+ - The new, standards-compliant text parser is now the default.
+ - Source map comments on `else` branches must now be placed above the
+   instruction inside the `else` branch rather than on the `else` branch itself.
+ - Source map locations from instructions are no longer automatically propagated
+   to function epilogues.
+ - Add a new `BinaryenModuleReadWithFeatures` function to the C API that allows
+   to configure which features to enable in the parser.
+ - The build-time option to use legacy WasmGC opcodes is removed.
+ - The strings in `string.const` instructions must now be valid WTF-8.
+ - The `TraverseCalls` flag for `ExpressionRunner` is removed.
+
+v117
+----
+
+ - Add a WebAssembly build to release (#6351)
+ - Add Linux aarch64 build to release (#6334).
+ - The text format for tuple instructions now requires immediates. For example,
+   to make a tuple of two elements, use `tuple.make 2` (#6169) (#6172) (#6170).
  - The text format for `if` expressions now requires `then` and `else` to
-   introduce the two branch arms, matching the spec.
+   introduce the two branch arms, matching the spec (#6201).
+ - Fuzzer: Remove --emit-js-shell logic and reuse fuzz_shell.js instead (#6310).
+ - [EH] Add --experimental-new-eh option to wasm-opt (#6270) (#6210).
+ - Add StringLowering pass, from stringref to imported-strings (#6271).
+ - C API: Add BinaryenFunctionAppendVar (#6213).
+ - Add J2CL optimization pass (#6151).
+ - Add no-inline IR annotation, and passes to set it based on function name
+   (#6146).
+ - C API: Add BinaryenTableGetType and BinaryenTableSetType (#6137).
+ - Add an Unsubtyping optimization (#5982).
+ - Compute full transitive closure in GlobalEffects (#5992).
+ - Add passes to finalize or unfinalize types (#5944).
+ - Add a tuple optimization pass (#5937).
 
 v116
 ----

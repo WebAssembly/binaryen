@@ -8,8 +8,6 @@
   (type $t0 (func (param i32) (result i32)))
   ;; CHECK:      (memory $memory 0)
 
-  ;; CHECK:      (export "memory" (memory $memory))
-
   ;; CHECK:      (export "fib" (func $fib))
 
   ;; CHECK:      (export "looped" (func $looped))
@@ -22,7 +20,9 @@
 
   ;; CHECK:      (export "t3" (func $t3))
 
-  ;; CHECK:      (func $fib (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK:      (export "memory" (memory $memory))
+
+  ;; CHECK:      (func $fib (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (if
   ;; CHECK-NEXT:   (i32.le_s
   ;; CHECK-NEXT:    (local.get $0)
@@ -76,7 +76,7 @@
       )
     )
   )
-  ;; CHECK:      (func $looped (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK:      (func $looped (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (loop $L0
   ;; CHECK-NEXT:   (if
   ;; CHECK-NEXT:    (i32.ge_s
@@ -123,7 +123,7 @@
     )
   )
 
-  ;; CHECK:      (func $t1 (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK:      (func $t1 (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (i32.add
   ;; CHECK-NEXT:    (local.get $0)
@@ -157,7 +157,7 @@
       )
     )
   )
-  ;; CHECK:      (func $t2 (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK:      (func $t2 (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (call $fib
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
@@ -168,7 +168,7 @@
     )
   )
 
-  ;; CHECK:      (func $t3 (; has Stack IR ;) (param $0 i32) (result i32)
+  ;; CHECK:      (func $t3 (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (call $fib
   ;; CHECK-NEXT:   (i32.add
   ;; CHECK-NEXT:    (local.get $0)

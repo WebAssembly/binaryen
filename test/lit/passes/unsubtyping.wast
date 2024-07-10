@@ -311,7 +311,7 @@
 
  ;; CHECK:      (func $loop (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (loop $loop-in (result (ref $sub))
+ ;; CHECK-NEXT:   (loop (result (ref $sub))
  ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -829,7 +829,7 @@
 
  ;; CHECK:      (func $try (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (try $try (result (ref $super))
+ ;; CHECK-NEXT:   (try (result (ref $super))
  ;; CHECK-NEXT:    (do
  ;; CHECK-NEXT:     (struct.new_default $sub)
  ;; CHECK-NEXT:    )
@@ -865,7 +865,7 @@
 
  ;; CHECK:      (func $try-catch (type $2)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (try $try (result (ref $super))
+ ;; CHECK-NEXT:   (try (result (ref $super))
  ;; CHECK-NEXT:    (do
  ;; CHECK-NEXT:     (struct.new_default $super)
  ;; CHECK-NEXT:    )
@@ -936,7 +936,7 @@
  ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:   (ref.func $call-ref)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
@@ -945,7 +945,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable CallRef we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
@@ -1122,7 +1122,7 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (struct.new_default $struct)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable StructNew we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
@@ -1165,7 +1165,7 @@
  ;; CHECK-NEXT:   (local.get $struct)
  ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
@@ -1174,7 +1174,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable StructSet we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
@@ -1229,7 +1229,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:   (block ;; (replaces unreachable ArrayNew we can't emit)
  ;; CHECK-NEXT:    (drop
  ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
@@ -1287,7 +1287,7 @@
  ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayNewElem we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
@@ -1332,7 +1332,7 @@
  ;; CHECK-NEXT:    (struct.new_default $sub)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayNewFixed we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
@@ -1371,7 +1371,7 @@
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (unreachable)
  ;; CHECK-NEXT:   )
@@ -1383,7 +1383,7 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block ;; (replaces something unreachable we can't emit)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (ref.null none)
  ;; CHECK-NEXT:   )
@@ -1441,19 +1441,41 @@
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayCopy we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (array.new_fixed $sub-array 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (array.new_fixed $sub-array 0)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (array.new_fixed $super-array 0)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (ref.null none)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayCopy we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (array.new_fixed $super-array 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $array-copy
@@ -1503,17 +1525,35 @@
  ;; CHECK-NEXT:   (struct.new_default $sub)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayFill we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (struct.new_default $sub)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (struct.new_default $sub)
- ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (ref.null none)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (struct.new_default $sub)
- ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayFill we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (struct.new_default $sub)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $array-fill
@@ -1564,17 +1604,35 @@
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayInitElem we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (ref.null none)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.const 0)
- ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayInitElem we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (ref.null none)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $array-init-elem

@@ -115,17 +115,8 @@ struct ExecutionResults {
           // ignore the result if we hit an unreachable and returned no value
           if (values->size() > 0) {
             std::cout << "[fuzz-exec] note result: " << exp->name << " => ";
-            auto resultType = func->getResults();
-            if (resultType.isRef() && !resultType.isString()) {
-              // Don't print reference values, as funcref(N) contains an index
-              // for example, which is not guaranteed to remain identical after
-              // optimizations.
-              std::cout << resultType << '\n';
-            } else {
-              // Non-references can be printed in full. So can strings, since we
-              // always know how to print them and there is just one string
-              // type.
-              std::cout << *values << '\n';
+            for (auto value : *values) {
+              printValue(value);
             }
           }
         }
@@ -140,6 +131,39 @@ struct ExecutionResults {
     }
   }
 
+  void printValue(Literal value) {
+    // Unwrap an externalized value to get the actual value.
+    if (Type::isSubType(value.type, Type(HeapType::ext, Nullable))) {
+      value = value.internalize();
+    }
+
+    // Don't print most reference values, as e.g. funcref(N) contains an index,
+    // which is not guaranteed to remain identical after optimizations. Do not
+    // print the type in detail (as even that may change due to closed-world
+    // optimizations); just print a simple type like JS does, 'object' or
+    // 'function', but also print null for a null (so a null function does not
+    // get printed as object, as in JS we have typeof null == 'object').
+    //
+    // The only references we print in full are strings and i31s, which have
+    // simple and stable internal structures that optimizations will not alter.
+    auto type = value.type;
+    if (type.isRef()) {
+      if (type.isString() || type.getHeapType() == HeapType::i31) {
+        std::cout << value << '\n';
+      } else if (value.isNull()) {
+        std::cout << "null\n";
+      } else if (type.isFunction()) {
+        std::cout << "function\n";
+      } else {
+        std::cout << "object\n";
+      }
+      return;
+    }
+
+    // Non-references can be printed in full.
+    std::cout << value << '\n';
+  }
+
   // get current results and check them against previous ones
   void check(Module& wasm) {
     ExecutionResults optimizedResults;
@@ -151,17 +175,21 @@ struct ExecutionResults {
   }
 
   bool areEqual(Literal a, Literal b) {
-    if (a.type.isRef()) {
-      // Don't compare references. There are several issues here that we can't
-      // fully handle, see https://github.com/WebAssembly/binaryen/issues/3378,
-      // but the core issue is that since we optimize assuming a closed world,
-      // the types and structure of GC data can arbitrarily change after
-      // optimizations, even in ways that are externally visible from outside
-      // the module.
-      //
-      // TODO: Once we support optimizing under some form of open-world
-      // assumption, we should be able to check that the types and/or structure
-      // of GC data passed out of the module does not change.
+    // Don't compare references. There are several issues here that we can't
+    // fully handle, see https://github.com/WebAssembly/binaryen/issues/3378,
+    // but the core issue is that since we optimize assuming a closed world, the
+    // types and structure of GC data can arbitrarily change after
+    // optimizations, even in ways that are externally visible from outside
+    // the module.
+    //
+    // We can, however, compare strings as they refer to simple data that has a
+    // consistent representation (the same reasons as why we can print them in
+    // printValue(), above).
+    //
+    // TODO: Once we support optimizing under some form of open-world
+    // assumption, we should be able to check that the types and/or structure of
+    // GC data passed out of the module does not change.
+    if (a.type.isRef() && !a.type.isString()) {
       return true;
     }
     if (a != b) {
