@@ -272,8 +272,8 @@ template<> struct hash<wasm::CallContext> {
 };
 
 // Useful for debugging.
-[[maybe_unused]] std::ostream& operator<<(std::ostream& o,
-                                          wasm::CallContext& context) {
+[[maybe_unused]] void dump(std::ostream& o,
+                           wasm::CallContext& context) {
   o << "CallContext{\n";
   for (auto* operand : context.operands) {
     o << "  " << *operand << '\n';
@@ -282,7 +282,6 @@ template<> struct hash<wasm::CallContext> {
     o << "  dropped\n";
   }
   o << "}\n";
-  return o;
 }
 
 } // namespace std
