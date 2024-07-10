@@ -759,6 +759,9 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --print-stack-ir                              print StackIR during writing
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-stack-ir                                 do not use StackIR (even when it
+;; CHECK-NEXT:                                                 is the default)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:
 ;; CHECK-NEXT: General options:
 ;; CHECK-NEXT: ----------------

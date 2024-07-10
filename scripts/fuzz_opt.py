@@ -1565,6 +1565,7 @@ opt_choices = [
     ('--merge-locals',),
     ('--monomorphize',),
     ('--monomorphize-always',),
+    ('--no-stack-ir',),
     ('--once-reduction',),
     ("--optimize-casts",),
     ("--optimize-instructions",),
