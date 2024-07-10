@@ -21,8 +21,41 @@
 ;; RUN: wasm-opt %s --no-stack-ir -O -all --print-stack-ir | filecheck %s --check-prefix=O_REALLOW
 
 (module
-  (import "a" "b" (func $import (result i32))
+  ;; REQUESTED:      (import "a" "b" (func $import (type $0) (result i32)))
+  ;; DISALLOWD:      (import "a" "b" (func $import (type $0) (result i32)))
+  ;; REALLOWED:      (import "a" "b" (func $import (type $0) (result i32)))
+  ;; O_DEFAULT:      (import "a" "b" (func $import (type $0) (result i32)))
+  ;; O__DENIED:      (import "a" "b" (func $import (type $0) (result i32)))
+  ;; O_REALLOW:      (import "a" "b" (func $import (type $0) (result i32)))
+  (import "a" "b" (func $import (result i32)))
 
+  ;; REQUESTED:      (func $func (type $0) (result i32)
+  ;; REQUESTED-NEXT:  call $import
+  ;; REQUESTED-NEXT:  unreachable
+  ;; REQUESTED-NEXT: )
+  ;; DISALLOWD:      (func $func (type $0) (result i32)
+  ;; DISALLOWD-NEXT:  call $import
+  ;; DISALLOWD-NEXT:  drop
+  ;; DISALLOWD-NEXT:  unreachable
+  ;; DISALLOWD-NEXT: )
+  ;; REALLOWED:      (func $func (type $0) (result i32)
+  ;; REALLOWED-NEXT:  call $import
+  ;; REALLOWED-NEXT:  unreachable
+  ;; REALLOWED-NEXT: )
+  ;; O_DEFAULT:      (func $func (type $0) (result i32)
+  ;; O_DEFAULT-NEXT:  call $import
+  ;; O_DEFAULT-NEXT:  unreachable
+  ;; O_DEFAULT-NEXT: )
+  ;; O__DENIED:      (func $func (type $0) (result i32)
+  ;; O__DENIED-NEXT:  call $import
+  ;; O__DENIED-NEXT:  drop
+  ;; O__DENIED-NEXT:  unreachable
+  ;; O__DENIED-NEXT: )
+  ;; O_REALLOW:      (func $func (type $0) (result i32)
+  ;; O_REALLOW-NEXT:  call $import
+  ;; O_REALLOW-NEXT:  drop
+  ;; O_REALLOW-NEXT:  unreachable
+  ;; O_REALLOW-NEXT: )
   (func $func (export "func") (result i32)
     ;; This drop can be removed when we optimize using StackIR.
     (drop

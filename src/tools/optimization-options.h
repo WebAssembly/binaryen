@@ -203,6 +203,8 @@ struct OptimizationOptions : public ToolOptions {
            Options::Arguments::Zero,
            [&](Options* o, const std::string& arguments) {
              allowStackIR = false;
+             passOptions.generateStackIR = false;
+             passOptions.optimizeStackIR = false;
            })
       .add("--always-inline-max-function-size",
            "-aimfs",
