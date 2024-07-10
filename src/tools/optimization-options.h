@@ -35,8 +35,8 @@ struct OptimizationOptions : public ToolOptions {
 
     // After parsing the arguments, update defaults based on the optimize/shrink
     // levels.
-    if (allowStackIR && (passOptions.optimizeLevel >= 2 ||
-                         passOptions.shrinkLevel >= 1)) {
+    if (allowStackIR &&
+        (passOptions.optimizeLevel >= 2 || passOptions.shrinkLevel >= 1)) {
       passOptions.generateStackIR = true;
       passOptions.optimizeStackIR = true;
     }
