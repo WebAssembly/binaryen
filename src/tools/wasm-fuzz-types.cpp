@@ -262,9 +262,10 @@ void Fuzzer::checkCanonicalization() {
         }
       }
 
-      // Set finality
+      // Set finality and shareability
       for (size_t i = 0; i < types.size(); ++i) {
         builder[i].setOpen(types[i].isOpen());
+        builder[i].setShared(types[i].getShared());
       }
 
       // Set up recursion groups and record group ends to ensure we only select

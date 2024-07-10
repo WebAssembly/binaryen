@@ -574,12 +574,12 @@ TEST(ValTypeLattice, Meet) {
 }
 
 TEST(SharedLattice, GetBottom) {
-  analysis::Shared<analysis::UInt32> shared{analysis::UInt32{}};
+  analysis::SharedPath<analysis::UInt32> shared{analysis::UInt32{}};
   EXPECT_EQ(*shared.getBottom(), 0u);
 }
 
 TEST(SharedLattice, Compare) {
-  analysis::Shared<analysis::UInt32> shared{analysis::UInt32{}};
+  analysis::SharedPath<analysis::UInt32> shared{analysis::UInt32{}};
 
   auto zero = shared.getBottom();
 
@@ -615,7 +615,7 @@ TEST(SharedLattice, Compare) {
 }
 
 TEST(SharedLattice, Join) {
-  analysis::Shared<analysis::UInt32> shared{analysis::UInt32{}};
+  analysis::SharedPath<analysis::UInt32> shared{analysis::UInt32{}};
 
   auto zero = shared.getBottom();
 
@@ -682,7 +682,7 @@ TEST(SharedLattice, Join) {
 
 TEST(SharedLattice, JoinVecSingleton) {
   using Vec = analysis::Vector<analysis::Bool>;
-  analysis::Shared<Vec> shared{analysis::Vector{analysis::Bool{}, 2}};
+  analysis::SharedPath<Vec> shared{analysis::Vector{analysis::Bool{}, 2}};
 
   auto elem = shared.getBottom();
   EXPECT_TRUE(shared.join(elem, Vec::SingletonElement(1, true)));
@@ -691,7 +691,7 @@ TEST(SharedLattice, JoinVecSingleton) {
 
 TEST(SharedLattice, JoinInvertedVecSingleton) {
   using Vec = analysis::Vector<analysis::Bool>;
-  analysis::Shared<analysis::Inverted<Vec>> shared{
+  analysis::SharedPath<analysis::Inverted<Vec>> shared{
     analysis::Inverted{analysis::Vector{analysis::Bool{}, 2}}};
 
   auto elem = shared.getBottom();

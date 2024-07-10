@@ -64,6 +64,10 @@ inline OutputType* convert(InputType* input, MixedArena& allocator) {
   return output;
 }
 
+// Copy using a flexible custom copy function. This function is called on each
+// expression before copying it. If it returns a non-null value then that is
+// used (effectively overriding the normal copy), and if it is null then we do a
+// normal copy.
 using CustomCopier = std::function<Expression*(Expression*)>;
 Expression*
 flexibleCopy(Expression* original, Module& wasm, CustomCopier custom);

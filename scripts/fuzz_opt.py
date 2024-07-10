@@ -350,6 +350,12 @@ INITIAL_CONTENTS_IGNORE = [
     'exception-handling.wast',
     'translate-to-new-eh.wast',
     'rse-eh.wast',
+    # Shared types implementation in progress
+    'type-merging-shared.wast',
+    'shared-types.wast',
+    'shared-polymorphism.wast',
+    'shared-struct.wast',
+    'shared-array.wast',
 ]
 
 

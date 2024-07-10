@@ -48,11 +48,16 @@ static std::ostream& printStackIR(StackIR* ir, PrintSExpression&);
 
 namespace {
 
-bool isFullForced() {
+bool checkIsFullForced() {
   if (getenv("BINARYEN_PRINT_FULL")) {
     return std::stoi(getenv("BINARYEN_PRINT_FULL")) != 0;
   }
   return false;
+}
+
+bool isFullForced() {
+  static bool full = checkIsFullForced();
+  return full;
 }
 
 std::ostream& printMemoryName(Name name, std::ostream& o, Module* wasm) {
@@ -409,11 +414,12 @@ struct PrintExpressionContents
   Function* currFunction = nullptr;
   std::ostream& o;
   FeatureSet features;
+  bool full;
 
   PrintExpressionContents(PrintSExpression& parent)
     : parent(parent), wasm(parent.currModule),
       currFunction(parent.currFunction), o(parent.o),
-      features(wasm ? wasm->features : FeatureSet::All) {}
+      features(wasm ? wasm->features : FeatureSet::All), full(isFullForced()) {}
 
   std::ostream& printType(Type type) { return parent.printType(type); }
 
@@ -517,6 +523,11 @@ struct PrintExpressionContents
       printMedium(o, "local.set ");
     }
     printLocal(curr->index, currFunction, o);
+    if (full && currFunction) {
+      o << " (; local type: ";
+      printType(currFunction->getLocalType(curr->index));
+      o << " ;)";
+    }
   }
   void visitGlobalGet(GlobalGet* curr) {
     printMedium(o, "global.get ");
@@ -2463,12 +2474,12 @@ void PrintSExpression::printFullLine(Expression* expression) {
   if (!minify) {
     doIndent(o, indent);
   }
-  if (full) {
-    o << "[";
-    printTypeOrName(expression->type, o, currModule);
-    o << "] ";
-  }
   visit(expression);
+  if (full) {
+    o << " (; ";
+    printTypeOrName(expression->type, o, currModule);
+    o << " ;)";
+  }
   o << maybeNewLine;
 }
 
@@ -2508,13 +2519,13 @@ void PrintSExpression::visitBlock(Block* curr) {
       printDebugLocation(curr);
     }
     stack.push_back(curr);
-    if (full) {
-      o << "[";
-      printTypeOrName(curr->type, o, currModule);
-      o << "]";
-    }
     o << '(';
     printExpressionContents(curr);
+    if (full) {
+      o << " (; ";
+      printTypeOrName(curr->type, o, currModule);
+      o << " ;)";
+    }
     incIndent();
     if (curr->list.size() > 0 && curr->list[0]->is<Block>()) {
       // recurse into the first element
@@ -3370,11 +3381,13 @@ static std::ostream& printExpression(Expression* expression,
   print.currModule = wasm;
   if (full || isFullForced()) {
     print.setFull(true);
-    o << "[";
-    printTypeOrName(expression->type, o, wasm);
-    o << "] ";
   }
   print.visit(expression);
+  if (full || isFullForced()) {
+    o << " (; ";
+    printTypeOrName(expression->type, o, wasm);
+    o << " ;)";
+  }
   return o;
 }
 

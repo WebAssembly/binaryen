@@ -15,7 +15,7 @@
  */
 
 #include "module-utils.h"
-#include "ir/debug.h"
+#include "ir/debuginfo.h"
 #include "ir/intrinsics.h"
 #include "ir/manipulation.h"
 #include "ir/properties.h"
@@ -46,6 +46,15 @@ Function* copyFunction(Function* func,
                        Module& out,
                        Name newName,
                        std::optional<std::vector<Index>> fileIndexMap) {
+  auto ret = copyFunctionWithoutAdd(func, out, newName, fileIndexMap);
+  return out.addFunction(std::move(ret));
+}
+
+std::unique_ptr<Function>
+copyFunctionWithoutAdd(Function* func,
+                       Module& out,
+                       Name newName,
+                       std::optional<std::vector<Index>> fileIndexMap) {
   auto ret = std::make_unique<Function>();
   ret->name = newName.is() ? newName : func->name;
   ret->hasExplicitName = func->hasExplicitName;
@@ -54,7 +63,7 @@ Function* copyFunction(Function* func,
   ret->localNames = func->localNames;
   ret->localIndices = func->localIndices;
   ret->body = ExpressionManipulator::copy(func->body, out);
-  debug::copyDebugInfo(func->body, ret->body, func, ret.get());
+  debuginfo::copyBetweenFunctions(func->body, ret->body, func, ret.get());
   ret->prologLocation = func->prologLocation;
   ret->epilogLocation = func->epilogLocation;
   // Update file indices if needed
@@ -71,7 +80,7 @@ Function* copyFunction(Function* func,
   ret->base = func->base;
   ret->noFullInline = func->noFullInline;
   ret->noPartialInline = func->noPartialInline;
-  return out.addFunction(std::move(ret));
+  return ret;
 }
 
 Global* copyGlobal(Global* global, Module& out) {

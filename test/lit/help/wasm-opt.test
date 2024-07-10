@@ -103,6 +103,9 @@
 ;; CHECK-NEXT:   --cfp                                         propagate constant struct field
 ;; CHECK-NEXT:                                                 values
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --cfp-reftest                                 propagate constant struct field
+;; CHECK-NEXT:                                                 values, using ref.test
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --coalesce-locals                             reduce # of locals by coalescing
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --coalesce-locals-learning                    reduce # of locals by coalescing
@@ -500,6 +503,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --table64-lowering                            lower 64-bit tables 32-bit ones
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --trace-calls                                 instrument the build with code
+;; CHECK-NEXT:                                                 to intercept specific function
+;; CHECK-NEXT:                                                 calls
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --translate-to-exnref                         translate old Phase 3 EH
 ;; CHECK-NEXT:                                                 instructions to new ones with
 ;; CHECK-NEXT:                                                 exnref
@@ -720,6 +727,11 @@
 ;; CHECK-NEXT:   --enable-typed-continuations                  Enable typed continuations
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-typed-continuations                 Disable typed continuations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-shared-everything                    Enable shared-everything threads
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-shared-everything                   Disable shared-everything
+;; CHECK-NEXT:                                                 threads
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references            Deprecated compatibility flag
 ;; CHECK-NEXT:

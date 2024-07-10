@@ -93,6 +93,7 @@ set(passes_SOURCES
   StringLowering.cpp
   Strip.cpp
   StripTargetFeatures.cpp
+  TraceCalls.cpp
   RedundantSetElimination.cpp
   RemoveImports.cpp
   RemoveMemory.cpp

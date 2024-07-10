@@ -77,6 +77,8 @@ Result<WASTModule> wastModule(Lexer& in, bool maybeInvalid = false) {
   if (!in.takeSExprStart("module"sv)) {
     return in.err("expected module");
   }
+  // TODO: use ID?
+  [[maybe_unused]] auto id = in.takeID();
   QuotedModuleType type;
   if (in.takeKeyword("quote"sv)) {
     type = QuotedModuleType::Text;

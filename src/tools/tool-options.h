@@ -94,6 +94,7 @@ struct ToolOptions : public Options {
       .addFeature(FeatureSet::Strings, "strings")
       .addFeature(FeatureSet::MultiMemory, "multimemory")
       .addFeature(FeatureSet::TypedContinuations, "typed continuations")
+      .addFeature(FeatureSet::SharedEverything, "shared-everything threads")
       .add("--enable-typed-function-references",
            "",
            "Deprecated compatibility flag",

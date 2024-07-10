@@ -209,6 +209,18 @@ struct ValidationInfo {
     fail(text, curr, func);
     return false;
   }
+
+  bool shouldBeSubTypeIgnoringShared(Type left,
+                                     Type right,
+                                     Expression* curr,
+                                     const char* text,
+                                     Function* func = nullptr) {
+    assert(right.isRef() && right.getHeapType().isBasic());
+    auto share = left.isRef() ? left.getHeapType().getShared() : Unshared;
+    auto ht = right.getHeapType();
+    auto matchedRight = Type(ht.getBasic(share), right.getNullability());
+    return shouldBeSubType(left, matchedRight, curr, text, func);
+  }
 };
 
 struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
@@ -526,6 +538,14 @@ private:
     return info.shouldBeSubType(left, right, curr, text, getFunction());
   }
 
+  bool shouldBeSubTypeIgnoringShared(Type left,
+                                     Type right,
+                                     Expression* curr,
+                                     const char* text) {
+    return info.shouldBeSubTypeIgnoringShared(left, right, curr, text);
+  }
+
+  void validateOffset(Address offset, Memory* mem, Expression* curr);
   void validateAlignment(
     size_t align, Type type, Index bytes, bool isAtomic, Expression* curr);
   void validateMemBytes(uint8_t bytes, Type type, Expression* curr);
@@ -1046,6 +1066,7 @@ void FunctionValidator::visitLoad(Load* curr) {
                  "SIMD operations require SIMD [--enable-simd]");
   }
   validateMemBytes(curr->bytes, curr->type, curr);
+  validateOffset(curr->offset, memory, curr);
   validateAlignment(curr->align, curr->type, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(
     curr->ptr->type,
@@ -1077,6 +1098,7 @@ void FunctionValidator::visitStore(Store* curr) {
                  "SIMD operations require SIMD [--enable-simd]");
   }
   validateMemBytes(curr->bytes, curr->valueType, curr);
+  validateOffset(curr->offset, memory, curr);
   validateAlignment(
     curr->align, curr->valueType, curr->bytes, curr->isAtomic, curr);
   shouldBeEqualOrFirstIsUnreachable(
@@ -1370,6 +1392,7 @@ void FunctionValidator::visitSIMDLoad(SIMDLoad* curr) {
       break;
   }
   Index bytes = curr->getMemBytes();
+  validateOffset(curr->offset, memory, curr);
   validateAlignment(curr->align, memAlignType, bytes, /*isAtomic=*/false, curr);
 }
 
@@ -1423,6 +1446,7 @@ void FunctionValidator::visitSIMDLoadStoreLane(SIMDLoadStoreLane* curr) {
       WASM_UNREACHABLE("Unexpected SIMDLoadStoreLane op");
   }
   Index bytes = curr->getMemBytes();
+  validateOffset(curr->offset, memory, curr);
   validateAlignment(curr->align, memAlignType, bytes, /*isAtomic=*/false, curr);
   shouldBeTrue(curr->index < lanes, curr, "invalid lane index");
 }
@@ -2251,14 +2275,16 @@ void FunctionValidator::visitRefEq(RefEq* curr) {
   Type eqref = Type(HeapType::eq, Nullable);
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.eq requires gc [--enable-gc]");
-  shouldBeSubType(curr->left->type,
-                  eqref,
-                  curr->left,
-                  "ref.eq's left argument should be a subtype of eqref");
-  shouldBeSubType(curr->right->type,
-                  eqref,
-                  curr->right,
-                  "ref.eq's right argument should be a subtype of eqref");
+  shouldBeSubTypeIgnoringShared(
+    curr->left->type,
+    eqref,
+    curr->left,
+    "ref.eq's left argument should be a subtype of eqref");
+  shouldBeSubTypeIgnoringShared(
+    curr->right->type,
+    eqref,
+    curr->right,
+    "ref.eq's right argument should be a subtype of eqref");
 }
 
 void FunctionValidator::visitTableGet(TableGet* curr) {
@@ -2684,10 +2710,10 @@ void FunctionValidator::visitI31Get(I31Get* curr) {
   shouldBeTrue(getModule()->features.hasGC(),
                curr,
                "i31.get_s/u requires gc [--enable-gc]");
-  shouldBeSubType(curr->i31->type,
-                  Type(HeapType::i31, Nullable),
-                  curr->i31,
-                  "i31.get_s/u's argument should be i31ref");
+  shouldBeSubTypeIgnoringShared(curr->i31->type,
+                                Type(HeapType::i31, Nullable),
+                                curr->i31,
+                                "i31.get_s/u's argument should be i31ref");
 }
 
 void FunctionValidator::visitRefTest(RefTest* curr) {
@@ -3003,24 +3029,15 @@ void FunctionValidator::visitArrayGet(ArrayGet* curr) {
     getModule()->features.hasGC(), curr, "array.get requires gc [--enable-gc]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->index->type, Type(Type::i32), curr, "array.get index must be an i32");
-  if (curr->type == Type::unreachable) {
-    return;
-  }
-  if (!shouldBeSubType(curr->ref->type,
-                       Type(HeapType::array, Nullable),
-                       curr,
-                       "array.get target should be an array reference")) {
+  const char* mustBeArray =
+    "array.get target should be a specific array reference";
+  if (curr->type == Type::unreachable ||
+      !shouldBeTrue(curr->ref->type.isRef(), curr, mustBeArray) ||
+      curr->ref->type.getHeapType().isBottom() ||
+      !shouldBeTrue(curr->ref->type.isArray(), curr, mustBeArray)) {
     return;
   }
   auto heapType = curr->ref->type.getHeapType();
-  if (heapType == HeapType::none) {
-    return;
-  }
-  if (!shouldBeTrue(heapType != HeapType::array,
-                    curr,
-                    "array.get target should be a specific array reference")) {
-    return;
-  }
   const auto& element = heapType.getArray().element;
   // If the type is not packed, it must be marked internally as unsigned, by
   // convention.
@@ -3039,19 +3056,11 @@ void FunctionValidator::visitArraySet(ArraySet* curr) {
   if (curr->type == Type::unreachable) {
     return;
   }
-  if (!shouldBeSubType(curr->ref->type,
-                       Type(HeapType::array, Nullable),
-                       curr,
-                       "array.set target should be an array reference")) {
-    return;
-  }
-  auto heapType = curr->ref->type.getHeapType();
-  if (heapType == HeapType::none) {
-    return;
-  }
-  if (!shouldBeTrue(heapType != HeapType::array,
-                    curr,
-                    "array.set target should be a specific array reference")) {
+  const char* mustBeArray = "array.set target should be an array reference";
+  if (curr->type == Type::unreachable ||
+      !shouldBeTrue(curr->ref->type.isRef(), curr, mustBeArray) ||
+      curr->ref->type.getHeapType().isBottom() ||
+      !shouldBeTrue(curr->ref->type.isArray(), curr, mustBeArray)) {
     return;
   }
   const auto& element = curr->ref->type.getHeapType().getArray().element;
@@ -3067,10 +3076,11 @@ void FunctionValidator::visitArrayLen(ArrayLen* curr) {
     getModule()->features.hasGC(), curr, "array.len requires gc [--enable-gc]");
   shouldBeEqualOrFirstIsUnreachable(
     curr->type, Type(Type::i32), curr, "array.len result must be an i32");
-  shouldBeSubType(curr->ref->type,
-                  Type(HeapType::array, Nullable),
-                  curr,
-                  "array.len argument must be an array reference");
+  shouldBeSubTypeIgnoringShared(
+    curr->ref->type,
+    Type(HeapType::array, Nullable),
+    curr,
+    "array.len argument must be an array reference");
 }
 
 void FunctionValidator::visitArrayCopy(ArrayCopy* curr) {
@@ -3140,22 +3150,15 @@ void FunctionValidator::visitArrayFill(ArrayFill* curr) {
                                     "array.fill index must be an i32");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type, Type(Type::i32), curr, "array.fill size must be an i32");
-  if (curr->type == Type::unreachable) {
-    return;
-  }
-  if (!shouldBeSubType(curr->ref->type,
-                       Type(HeapType::array, Nullable),
-                       curr,
-                       "array.fill destination should be an array reference")) {
+  const char* mustBeArray =
+    "array.fill destination should be an array reference";
+  if (curr->type == Type::unreachable ||
+      !shouldBeTrue(curr->ref->type.isRef(), curr, mustBeArray) ||
+      curr->ref->type.getHeapType().isBottom() ||
+      !shouldBeTrue(curr->ref->type.isArray(), curr, mustBeArray)) {
     return;
   }
   auto heapType = curr->ref->type.getHeapType();
-  if (heapType == HeapType::none ||
-      !shouldBeTrue(heapType.isArray(),
-                    curr,
-                    "array.fill destination should be an array reference")) {
-    return;
-  }
   auto element = heapType.getArray().element;
   shouldBeSubType(curr->value->type,
                   element.type,
@@ -3182,22 +3185,15 @@ void FunctionValidator::visitArrayInit(ArrayInit* curr) {
                                     Type(Type::i32),
                                     curr,
                                     "array.init_* size must be an i32");
-  if (curr->type == Type::unreachable) {
-    return;
-  }
-  if (!shouldBeSubType(curr->ref->type,
-                       Type(HeapType::array, Nullable),
-                       curr,
-                       "array.init_* destination must be an array reference")) {
+  const char* mustBeArray =
+    "array.init_* destination must be an array reference";
+  if (curr->type == Type::unreachable ||
+      !shouldBeTrue(curr->ref->type.isRef(), curr, mustBeArray) ||
+      curr->ref->type.getHeapType().isBottom() ||
+      !shouldBeTrue(curr->ref->type.isArray(), curr, mustBeArray)) {
     return;
   }
   auto heapType = curr->ref->type.getHeapType();
-  if (heapType == HeapType::none ||
-      !shouldBeTrue(heapType.isArray(),
-                    curr,
-                    "array.init_* destination must be an array reference")) {
-    return;
-  }
   auto element = heapType.getArray().element;
   shouldBeTrue(
     element.mutable_, curr, "array.init_* destination must be mutable");
@@ -3393,8 +3389,7 @@ void FunctionValidator::visitFunction(Function* curr) {
   // Check for things like having a rec group with GC enabled. The type we're
   // checking is a reference type even if this an MVP function type, so ignore
   // the reference types feature here.
-  features |=
-    (Type(curr->type, Nullable).getFeatures() & ~FeatureSet::ReferenceTypes);
+  features |= (curr->type.getFeatures() & ~FeatureSet::ReferenceTypes);
   for (const auto& param : curr->getParams()) {
     features |= param.getFeatures();
     shouldBeTrue(param.isConcrete(), curr, "params must be concretely typed");
@@ -3455,6 +3450,14 @@ void FunctionValidator::visitFunction(Function* curr) {
     assert(rethrowTargetNames.empty());
     labelNames.clear();
   }
+}
+
+void FunctionValidator::validateOffset(Address offset,
+                                       Memory* mem,
+                                       Expression* curr) {
+  shouldBeTrue(mem->is64() || offset <= std::numeric_limits<uint32_t>::max(),
+               curr,
+               "offset must be u32");
 }
 
 void FunctionValidator::validateAlignment(
@@ -3701,6 +3704,25 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
       seen.insert(curr);
     }
   });
+
+  // Check that globals have allowed types.
+  for (auto& g : module.globals) {
+    auto globalFeats = g->type.getFeatures();
+    if (!info.shouldBeTrue(globalFeats <= module.features, g->name, "")) {
+      auto& stream = info.getStream(nullptr);
+      stream << "global type requires additional features [";
+      bool first = true;
+      (globalFeats - module.features).iterFeatures([&](FeatureSet feat) {
+        if (first) {
+          first = false;
+        } else {
+          stream << " ";
+        }
+        stream << "--enable-" << feat.toString();
+      });
+      stream << "]\n";
+    }
+  }
 }
 
 static void validateMemories(Module& module, ValidationInfo& info) {

@@ -943,7 +943,9 @@
  (type $mid (sub $top (func (result eqref))))
  (type $bot (sub $mid (func (result i31ref))))
 
- ;; CHECK:      (func $call-ref-no-limit (type $top) (result anyref)
+ ;; CHECK:      (type $1 (func (result anyref)))
+
+ ;; CHECK:      (func $call-ref-no-limit (type $1) (result anyref)
  ;; CHECK-NEXT:  (local $f (ref null $top))
  ;; CHECK-NEXT:  (call_ref $top
  ;; CHECK-NEXT:   (local.get $f)

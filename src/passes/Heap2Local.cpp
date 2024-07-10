@@ -170,16 +170,8 @@ namespace {
 // Core analysis that provides an escapes() method to check if an allocation
 // escapes in a way that prevents optimizing it away as described above. It also
 // stashes information about the relevant expressions as it goes, which helps
-// optimization later (|seen| and |reached|).
+// optimization later (|reached|).
 struct EscapeAnalyzer {
-  // All the expressions that have already been seen by the optimizer, see the
-  // comment above on exclusivity: once we have seen something when analyzing
-  // one allocation, if we reach it again then we can exit early since seeing it
-  // a second time proves we lost exclusivity. We must track this across
-  // multiple instances of EscapeAnalyzer as each handles a particular
-  // allocation.
-  std::unordered_set<Expression*>& seen;
-
   // To find what escapes, we need to follow where values flow, both up to
   // parents, and via branches, and through locals.
   // TODO: for efficiency, only scan reference types in LocalGraph
@@ -190,14 +182,13 @@ struct EscapeAnalyzer {
   const PassOptions& passOptions;
   Module& wasm;
 
-  EscapeAnalyzer(std::unordered_set<Expression*>& seen,
-                 const LocalGraph& localGraph,
+  EscapeAnalyzer(const LocalGraph& localGraph,
                  const Parents& parents,
                  const BranchUtils::BranchTargets& branchTargets,
                  const PassOptions& passOptions,
                  Module& wasm)
-    : seen(seen), localGraph(localGraph), parents(parents),
-      branchTargets(branchTargets), passOptions(passOptions), wasm(wasm) {}
+    : localGraph(localGraph), parents(parents), branchTargets(branchTargets),
+      passOptions(passOptions), wasm(wasm) {}
 
   // We must track all the local.sets that write the allocation, to verify
   // exclusivity.
@@ -260,30 +251,6 @@ struct EscapeAnalyzer {
       // we can proceed here, hopefully.
       assert(interaction == ParentChildInteraction::FullyConsumes ||
              interaction == ParentChildInteraction::Flows);
-
-      // If we've already seen an expression, stop since we cannot optimize
-      // things that overlap in any way (see the notes on exclusivity, above).
-      // Note that we use a nonrepeating queue here, so we already do not visit
-      // the same thing more than once; what this check does is verify we don't
-      // look at something that another allocation reached, which would be in a
-      // different call to this function and use a different queue (any overlap
-      // between calls would prove non-exclusivity).
-      //
-      // Note that we do this after the check for Escapes/Mixes above: it is
-      // possible for a parent to receive two children and handle them
-      // differently:
-      //
-      //  (struct.set
-      //    (local.get $ref)
-      //    (local.get $value)
-      //  )
-      //
-      // The value escapes, but the ref does not, and might be optimized. If we
-      // added the parent to |seen| for both children, the reference would get
-      // blocked from being optimized.
-      if (!seen.emplace(parent).second) {
-        return true;
-      }
 
       // We can proceed, as the parent interacts with us properly, and we are
       // the only allocation to get here.
@@ -382,6 +349,12 @@ struct EscapeAnalyzer {
       void visitLocalSet(LocalSet* curr) { escapes = false; }
 
       // Reference operations. TODO add more
+      void visitRefEq(RefEq* curr) {
+        // The reference is compared for identity, but nothing more.
+        escapes = false;
+        fullyConsumes = true;
+      }
+
       void visitRefAs(RefAs* curr) {
         // TODO General OptimizeInstructions integration, that is, since we know
         //      that our allocation is what flows into this RefAs, we can
@@ -540,14 +513,18 @@ struct EscapeAnalyzer {
 //       efficient, but it would need to be more complex.
 struct Struct2Local : PostWalker<Struct2Local> {
   StructNew* allocation;
-  const EscapeAnalyzer& analyzer;
+
+  // The analyzer is not |const| because we update |analyzer.reached| as we go
+  // (see replaceCurrent, below).
+  EscapeAnalyzer& analyzer;
+
   Function* func;
   Module& wasm;
   Builder builder;
   const FieldList& fields;
 
   Struct2Local(StructNew* allocation,
-               const EscapeAnalyzer& analyzer,
+               EscapeAnalyzer& analyzer,
                Function* func,
                Module& wasm)
     : allocation(allocation), analyzer(analyzer), func(func), wasm(wasm),
@@ -571,6 +548,15 @@ struct Struct2Local : PostWalker<Struct2Local> {
 
   // In rare cases we may need to refinalize, see below.
   bool refinalize = false;
+
+  Expression* replaceCurrent(Expression* expression) {
+    PostWalker<Struct2Local>::replaceCurrent(expression);
+    // Also update |reached|: we are replacing something that was reached, so
+    // logically the replacement is also reached. This update is necessary if
+    // the parent of an expression cares about whether a child was reached.
+    analyzer.reached.insert(expression);
+    return expression;
+  }
 
   // Rewrite the code in visit* methods. The general approach taken is to
   // replace the allocation with a null reference (which may require changing
@@ -719,6 +705,27 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // the allocation reaches, we will handle that.
     contents.push_back(builder.makeRefNull(allocation->type.getHeapType()));
     replaceCurrent(builder.makeBlock(contents));
+  }
+
+  void visitRefEq(RefEq* curr) {
+    if (!analyzer.reached.count(curr)) {
+      return;
+    }
+
+    if (curr->type == Type::unreachable) {
+      // The result does not matter. Leave things as they are (and let DCE
+      // handle it).
+      return;
+    }
+
+    // If our reference is compared to itself, the result is 1. If it is
+    // compared to something else, the result must be 0, as our reference does
+    // not escape to any other place.
+    int32_t result = analyzer.reached.count(curr->left) > 0 &&
+                     analyzer.reached.count(curr->right) > 0;
+    // For simplicity, simply drop the RefEq and put a constant result after.
+    replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
+                                        builder.makeConst(Literal(result))));
   }
 
   void visitRefAs(RefAs* curr) {
@@ -1027,10 +1034,6 @@ struct Heap2Local {
     // flow to.
     localGraph.computeSetInfluences();
 
-    // All the expressions we have already looked at. We use this to avoid
-    // repeated work, see above.
-    std::unordered_set<Expression*> seen;
-
     // Find all the relevant allocations in the function: StructNew, ArrayNew,
     // ArrayNewFixed.
     struct AllocationFinder : public PostWalker<AllocationFinder> {
@@ -1090,7 +1093,7 @@ struct Heap2Local {
       }
 
       EscapeAnalyzer analyzer(
-        seen, localGraph, parents, branchTargets, passOptions, wasm);
+        localGraph, parents, branchTargets, passOptions, wasm);
       if (!analyzer.escapes(allocation)) {
         // Convert the allocation and all its uses into a struct. Then convert
         // the struct into locals.
@@ -1110,7 +1113,7 @@ struct Heap2Local {
       // Check for escaping, noting relevant information as we go. If this does
       // not escape, optimize it into locals.
       EscapeAnalyzer analyzer(
-        seen, localGraph, parents, branchTargets, passOptions, wasm);
+        localGraph, parents, branchTargets, passOptions, wasm);
       if (!analyzer.escapes(allocation)) {
         Struct2Local(allocation, analyzer, func, wasm);
       }

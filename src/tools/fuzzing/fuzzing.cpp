@@ -246,8 +246,11 @@ void TranslateToFuzzReader::setupHeapTypes() {
 
   // For GC, also generate random types.
   if (wasm.features.hasGC()) {
+    // Do not generate shared types until the fuzzer can be updated to handle
+    // them.
+    auto features = wasm.features - FeatureSet::SharedEverything;
     auto generator =
-      HeapTypeGenerator::create(random, wasm.features, upTo(MAX_NEW_GC_TYPES));
+      HeapTypeGenerator::create(random, features, upTo(MAX_NEW_GC_TYPES));
     auto result = generator.builder.build();
     if (auto* err = result.getError()) {
       Fatal() << "Failed to build heap types: " << err->reason << " at index "
@@ -2556,7 +2559,8 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
   auto heapType = type.getHeapType();
   assert(heapType.isBasic());
   assert(wasm.features.hasReferenceTypes());
-  switch (heapType.getBasic()) {
+  assert(!heapType.isShared() && "TODO: handle shared types");
+  switch (heapType.getBasic(Unshared)) {
     case HeapType::ext: {
       auto null = builder.makeRefNull(HeapType::ext);
       // TODO: support actual non-nullable externrefs via imported globals or
@@ -4233,7 +4237,8 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
     return type;
   }
   if (type.isBasic() && oneIn(2)) {
-    switch (type.getBasic()) {
+    assert(!type.isShared() && "TODO: handle shared types");
+    switch (type.getBasic(Unshared)) {
       case HeapType::func:
         // TODO: Typed function references.
         return pick(FeatureOptions<HeapType>()

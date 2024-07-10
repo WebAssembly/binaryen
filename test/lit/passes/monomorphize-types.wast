@@ -115,7 +115,11 @@
 )
 
 
-;; ALWAYS:      (func $refinable_4 (type $4) (param $ref (ref $B))
+;; ALWAYS:      (func $refinable_4 (type $4) (param $0 (ref $B))
+;; ALWAYS-NEXT:  (local $ref (ref $A))
+;; ALWAYS-NEXT:  (local.set $ref
+;; ALWAYS-NEXT:   (local.get $0)
+;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (drop
 ;; ALWAYS-NEXT:   (local.get $ref)
 ;; ALWAYS-NEXT:  )
@@ -186,17 +190,17 @@
 )
 
 
-;; ALWAYS:      (func $refinable_2 (type $4) (param $ref (ref $B))
+;; ALWAYS:      (func $refinable_2 (type $4) (param $0 (ref $B))
 ;; ALWAYS-NEXT:  (local $unref (ref $A))
-;; ALWAYS-NEXT:  (local $2 (ref $A))
-;; ALWAYS-NEXT:  (local.set $2
-;; ALWAYS-NEXT:   (local.get $ref)
+;; ALWAYS-NEXT:  (local $ref (ref $A))
+;; ALWAYS-NEXT:  (local.set $ref
+;; ALWAYS-NEXT:   (local.get $0)
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (block
 ;; ALWAYS-NEXT:   (local.set $unref
-;; ALWAYS-NEXT:    (local.get $2)
+;; ALWAYS-NEXT:    (local.get $ref)
 ;; ALWAYS-NEXT:   )
-;; ALWAYS-NEXT:   (local.set $2
+;; ALWAYS-NEXT:   (local.set $ref
 ;; ALWAYS-NEXT:    (local.get $unref)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
@@ -306,19 +310,31 @@
   )
 )
 
-;; ALWAYS:      (func $refinable1_4 (type $5) (param $ref (ref $B))
+;; ALWAYS:      (func $refinable1_4 (type $5) (param $0 (ref $B))
+;; ALWAYS-NEXT:  (local $ref (ref $A))
+;; ALWAYS-NEXT:  (local.set $ref
+;; ALWAYS-NEXT:   (local.get $0)
+;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (drop
 ;; ALWAYS-NEXT:   (local.get $ref)
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; ALWAYS:      (func $refinable1_5 (type $6) (param $ref (ref $C))
+;; ALWAYS:      (func $refinable1_5 (type $6) (param $0 (ref $C))
+;; ALWAYS-NEXT:  (local $ref (ref $A))
+;; ALWAYS-NEXT:  (local.set $ref
+;; ALWAYS-NEXT:   (local.get $0)
+;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (drop
 ;; ALWAYS-NEXT:   (local.get $ref)
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; ALWAYS:      (func $refinable2_6 (type $5) (param $ref (ref $B))
+;; ALWAYS:      (func $refinable2_6 (type $5) (param $0 (ref $B))
+;; ALWAYS-NEXT:  (local $ref (ref $A))
+;; ALWAYS-NEXT:  (local.set $ref
+;; ALWAYS-NEXT:   (local.get $0)
+;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (drop
 ;; ALWAYS-NEXT:   (local.get $ref)
 ;; ALWAYS-NEXT:  )
@@ -501,33 +517,39 @@
   )
 )
 
-;; ALWAYS:      (func $refinable_3 (type $2) (param $ref (ref $B))
+;; ALWAYS:      (func $refinable_3 (type $2) (param $0 (ref $B))
 ;; ALWAYS-NEXT:  (local $x (ref $A))
-;; ALWAYS-NEXT:  (call $import
-;; ALWAYS-NEXT:   (ref.cast (ref $B)
-;; ALWAYS-NEXT:    (local.get $ref)
-;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  (local $ref (ref $A))
+;; ALWAYS-NEXT:  (local.set $ref
+;; ALWAYS-NEXT:   (local.get $0)
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (local.set $x
-;; ALWAYS-NEXT:   (select (result (ref $B))
-;; ALWAYS-NEXT:    (local.get $ref)
-;; ALWAYS-NEXT:    (struct.new_default $B)
-;; ALWAYS-NEXT:    (global.get $global)
+;; ALWAYS-NEXT:  (block
+;; ALWAYS-NEXT:   (call $import
+;; ALWAYS-NEXT:    (ref.cast (ref $B)
+;; ALWAYS-NEXT:     (local.get $ref)
+;; ALWAYS-NEXT:    )
 ;; ALWAYS-NEXT:   )
-;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (call $import
-;; ALWAYS-NEXT:   (ref.cast (ref $B)
-;; ALWAYS-NEXT:    (local.get $x)
+;; ALWAYS-NEXT:   (local.set $x
+;; ALWAYS-NEXT:    (select (result (ref $A))
+;; ALWAYS-NEXT:     (local.get $ref)
+;; ALWAYS-NEXT:     (struct.new_default $B)
+;; ALWAYS-NEXT:     (global.get $global)
+;; ALWAYS-NEXT:    )
 ;; ALWAYS-NEXT:   )
-;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (call $import
-;; ALWAYS-NEXT:   (ref.cast (ref $B)
-;; ALWAYS-NEXT:    (local.get $x)
+;; ALWAYS-NEXT:   (call $import
+;; ALWAYS-NEXT:    (ref.cast (ref $B)
+;; ALWAYS-NEXT:     (local.get $x)
+;; ALWAYS-NEXT:    )
 ;; ALWAYS-NEXT:   )
-;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (call $import
-;; ALWAYS-NEXT:   (ref.cast (ref $B)
-;; ALWAYS-NEXT:    (local.get $ref)
+;; ALWAYS-NEXT:   (call $import
+;; ALWAYS-NEXT:    (ref.cast (ref $B)
+;; ALWAYS-NEXT:     (local.get $x)
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:   (call $import
+;; ALWAYS-NEXT:    (ref.cast (ref $B)
+;; ALWAYS-NEXT:     (local.get $ref)
+;; ALWAYS-NEXT:    )
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
@@ -586,3 +608,4 @@
     )
   )
 )
+

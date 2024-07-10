@@ -86,6 +86,7 @@ struct HeapTypeInfo {
   // global store.
   bool isTemp = false;
   bool isOpen = false;
+  Shareability share = Unshared;
   // The supertype of this HeapType, if it exists.
   HeapTypeInfo* supertype = nullptr;
   // The recursion group of this type or null if the recursion group is trivial
@@ -435,18 +436,18 @@ bool isTemp(HeapType type) {
 
 HeapType::BasicHeapType getBasicHeapSupertype(HeapType type) {
   if (type.isBasic()) {
-    return type.getBasic();
+    return HeapType::BasicHeapType(type.getID());
   }
   auto* info = getHeapTypeInfo(type);
   switch (info->kind) {
     case HeapTypeInfo::SignatureKind:
-      return HeapType::func;
+      return HeapTypes::func.getBasic(info->share);
     case HeapTypeInfo::ContinuationKind:
-      return HeapType::cont;
+      return HeapTypes::cont.getBasic(info->share);
     case HeapTypeInfo::StructKind:
-      return HeapType::struct_;
+      return HeapTypes::struct_.getBasic(info->share);
     case HeapTypeInfo::ArrayKind:
-      return HeapType::array;
+      return HeapTypes::array.getBasic(info->share);
   }
   WASM_UNREACHABLE("unexpected kind");
 };
@@ -469,42 +470,53 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
   if (unsigned(a) > unsigned(b)) {
     std::swap(a, b);
   }
-  switch (a) {
+  auto bUnshared = HeapType(b).getBasic(Unshared);
+  HeapType lubUnshared;
+  switch (HeapType(a).getBasic(Unshared)) {
     case HeapType::ext:
     case HeapType::func:
     case HeapType::cont:
     case HeapType::exn:
       return std::nullopt;
     case HeapType::any:
-      return {HeapType::any};
+      lubUnshared = HeapType::any;
+      break;
     case HeapType::eq:
-      if (b == HeapType::i31 || b == HeapType::struct_ ||
-          b == HeapType::array) {
-        return {HeapType::eq};
+      if (bUnshared == HeapType::i31 || bUnshared == HeapType::struct_ ||
+          bUnshared == HeapType::array) {
+        lubUnshared = HeapType::eq;
+      } else {
+        lubUnshared = HeapType::any;
       }
-      return {HeapType::any};
+      break;
     case HeapType::i31:
-      if (b == HeapType::struct_ || b == HeapType::array) {
-        return {HeapType::eq};
+      if (bUnshared == HeapType::struct_ || bUnshared == HeapType::array) {
+        lubUnshared = HeapType::eq;
+      } else {
+        lubUnshared = HeapType::any;
       }
-      return {HeapType::any};
+      break;
     case HeapType::struct_:
-      if (b == HeapType::array) {
-        return {HeapType::eq};
+      if (bUnshared == HeapType::array) {
+        lubUnshared = HeapType::eq;
+      } else {
+        lubUnshared = HeapType::any;
       }
-      return {HeapType::any};
+      break;
     case HeapType::array:
     case HeapType::string:
-      return {HeapType::any};
+      lubUnshared = HeapType::any;
+      break;
     case HeapType::none:
     case HeapType::noext:
     case HeapType::nofunc:
     case HeapType::nocont:
     case HeapType::noexn:
       // Bottom types already handled.
-      break;
+      WASM_UNREACHABLE("unexpected basic type");
   }
-  WASM_UNREACHABLE("unexpected basic type");
+  auto share = HeapType(a).getShared();
+  return {lubUnshared.getBasic(share)};
 }
 
 TypeInfo::TypeInfo(const TypeInfo& other) {
@@ -888,87 +900,9 @@ Type Type::reinterpret() const {
 FeatureSet Type::getFeatures() const {
   auto getSingleFeatures = [](Type t) -> FeatureSet {
     if (t.isRef()) {
-      // A reference type implies we need that feature. Some also require
-      // more, such as GC or exceptions, and may require us to look into child
-      // types.
-      struct ReferenceFeatureCollector
-        : HeapTypeChildWalker<ReferenceFeatureCollector> {
-        FeatureSet feats = FeatureSet::None;
-
-        void noteChild(HeapType* heapType) {
-          if (heapType->isBasic()) {
-            switch (heapType->getBasic()) {
-              case HeapType::ext:
-              case HeapType::func:
-                feats |= FeatureSet::ReferenceTypes;
-                return;
-              case HeapType::any:
-              case HeapType::eq:
-              case HeapType::i31:
-              case HeapType::struct_:
-              case HeapType::array:
-                feats |= FeatureSet::ReferenceTypes | FeatureSet::GC;
-                return;
-              case HeapType::string:
-                feats |= FeatureSet::ReferenceTypes | FeatureSet::Strings;
-                return;
-              case HeapType::none:
-              case HeapType::noext:
-              case HeapType::nofunc:
-                // Technically introduced in GC, but used internally as part of
-                // ref.null with just reference types.
-                feats |= FeatureSet::ReferenceTypes;
-                return;
-              case HeapType::exn:
-              case HeapType::noexn:
-                feats |=
-                  FeatureSet::ExceptionHandling | FeatureSet::ReferenceTypes;
-                return;
-              case HeapType::cont:
-              case HeapType::nocont:
-                feats |= FeatureSet::TypedContinuations;
-                return;
-            }
-          }
-
-          if (heapType->isStruct() || heapType->isArray() ||
-              heapType->getRecGroup().size() > 1 ||
-              heapType->getDeclaredSuperType() || heapType->isOpen()) {
-            feats |= FeatureSet::ReferenceTypes | FeatureSet::GC;
-          } else if (heapType->isSignature()) {
-            // This is a function reference, which requires reference types and
-            // possibly also multivalue (if it has multiple returns). Note that
-            // technically typed function references also require GC, however,
-            // we use these types internally regardless of the presence of GC
-            // (in particular, since during load of the wasm we don't know the
-            // features yet, so we apply the more refined types), so we don't
-            // add that in any case here.
-            feats |= FeatureSet::ReferenceTypes;
-            auto sig = heapType->getSignature();
-            if (sig.results.isTuple()) {
-              feats |= FeatureSet::Multivalue;
-            }
-          } else if (heapType->isContinuation()) {
-            feats |= FeatureSet::TypedContinuations;
-          }
-
-          // In addition, scan their non-ref children, to add dependencies on
-          // things like SIMD.
-          for (auto child : heapType->getTypeChildren()) {
-            if (!child.isRef()) {
-              feats |= child.getFeatures();
-            }
-          }
-        }
-      };
-
-      ReferenceFeatureCollector collector;
-      auto heapType = t.getHeapType();
-      collector.walkRoot(&heapType);
-      collector.noteChild(&heapType);
-      return collector.feats;
+      return t.getHeapType().getFeatures();
     }
-    TODO_SINGLE_COMPOUND(t);
+
     switch (t.getBasic()) {
       case Type::v128:
         return FeatureSet::SIMD;
@@ -1220,7 +1154,7 @@ bool HeapType::isString() const { return *this == HeapType::string; }
 
 bool HeapType::isBottom() const {
   if (isBasic()) {
-    switch (getBasic()) {
+    switch (getBasic(Unshared)) {
       case ext:
       case func:
       case cont:
@@ -1248,6 +1182,14 @@ bool HeapType::isOpen() const {
     return false;
   } else {
     return getHeapTypeInfo(*this)->isOpen;
+  }
+}
+
+Shareability HeapType::getShared() const {
+  if (isBasic()) {
+    return (id & 1) != 0 ? Shared : Unshared;
+  } else {
+    return getHeapTypeInfo(*this)->share;
   }
 }
 
@@ -1288,9 +1230,11 @@ std::optional<HeapType> HeapType::getSuperType() const {
     return ret;
   }
 
+  auto share = getShared();
+
   // There may be a basic supertype.
   if (isBasic()) {
-    switch (getBasic()) {
+    switch (getBasic(Unshared)) {
       case ext:
       case noext:
       case func:
@@ -1304,24 +1248,24 @@ std::optional<HeapType> HeapType::getSuperType() const {
       case string:
         return {};
       case eq:
-        return any;
+        return HeapType(any).getBasic(share);
       case i31:
       case struct_:
       case array:
-        return eq;
+        return HeapType(eq).getBasic(share);
     }
   }
 
   auto* info = getHeapTypeInfo(*this);
   switch (info->kind) {
     case HeapTypeInfo::SignatureKind:
-      return func;
+      return HeapType(func).getBasic(share);
     case HeapTypeInfo::ContinuationKind:
-      return cont;
+      return HeapType(cont).getBasic(share);
     case HeapTypeInfo::StructKind:
-      return struct_;
+      return HeapType(struct_).getBasic(share);
     case HeapTypeInfo::ArrayKind:
-      return array;
+      return HeapType(array).getBasic(share);
   }
   WASM_UNREACHABLE("unexpected kind");
 }
@@ -1348,7 +1292,7 @@ size_t HeapType::getDepth() const {
     }
   } else {
     // Some basic types have supers.
-    switch (getBasic()) {
+    switch (getBasic(Unshared)) {
       case HeapType::ext:
       case HeapType::func:
       case HeapType::cont:
@@ -1376,9 +1320,9 @@ size_t HeapType::getDepth() const {
   return depth;
 }
 
-HeapType::BasicHeapType HeapType::getBottom() const {
+HeapType::BasicHeapType HeapType::getUnsharedBottom() const {
   if (isBasic()) {
-    switch (getBasic()) {
+    switch (getBasic(Unshared)) {
       case ext:
         return noext;
       case func:
@@ -1418,8 +1362,8 @@ HeapType::BasicHeapType HeapType::getBottom() const {
   WASM_UNREACHABLE("unexpected kind");
 }
 
-HeapType::BasicHeapType HeapType::getTop() const {
-  switch (getBottom()) {
+HeapType::BasicHeapType HeapType::getUnsharedTop() const {
+  switch (getUnsharedBottom()) {
     case none:
       return any;
     case nofunc:
@@ -1575,6 +1519,95 @@ size_t HeapType::getRecGroupIndex() const {
   return getHeapTypeInfo(*this)->recGroupIndex;
 }
 
+FeatureSet HeapType::getFeatures() const {
+  // Collects features from a type + children.
+  struct ReferenceFeatureCollector
+    : HeapTypeChildWalker<ReferenceFeatureCollector> {
+    FeatureSet feats = FeatureSet::None;
+
+    void noteChild(HeapType* heapType) {
+      if (heapType->isBasic()) {
+        switch (heapType->getBasic(Unshared)) {
+          case HeapType::ext:
+          case HeapType::func:
+            feats |= FeatureSet::ReferenceTypes;
+            return;
+          case HeapType::any:
+          case HeapType::eq:
+          case HeapType::i31:
+          case HeapType::struct_:
+          case HeapType::array:
+            feats |= FeatureSet::ReferenceTypes | FeatureSet::GC;
+            return;
+          case HeapType::string:
+            feats |= FeatureSet::ReferenceTypes | FeatureSet::Strings;
+            return;
+          case HeapType::none:
+          case HeapType::noext:
+          case HeapType::nofunc:
+            // Technically introduced in GC, but used internally as part of
+            // ref.null with just reference types.
+            feats |= FeatureSet::ReferenceTypes;
+            return;
+          case HeapType::exn:
+          case HeapType::noexn:
+            feats |= FeatureSet::ExceptionHandling | FeatureSet::ReferenceTypes;
+            return;
+          case HeapType::cont:
+          case HeapType::nocont:
+            feats |= FeatureSet::TypedContinuations;
+            return;
+        }
+      }
+
+      if (heapType->getRecGroup().size() > 1 ||
+          heapType->getDeclaredSuperType() || heapType->isOpen()) {
+        feats |= FeatureSet::ReferenceTypes | FeatureSet::GC;
+      }
+
+      if (heapType->isShared()) {
+        feats |= FeatureSet::SharedEverything;
+      }
+
+      if (heapType->isStruct() || heapType->isArray()) {
+        feats |= FeatureSet::ReferenceTypes | FeatureSet::GC;
+      } else if (heapType->isSignature()) {
+        // This is a function reference, which requires reference types and
+        // possibly also multivalue (if it has multiple returns). Note that
+        // technically typed function references also require GC, however,
+        // we use these types internally regardless of the presence of GC
+        // (in particular, since during load of the wasm we don't know the
+        // features yet, so we apply the more refined types), so we don't
+        // add that in any case here.
+        feats |= FeatureSet::ReferenceTypes;
+        auto sig = heapType->getSignature();
+        if (sig.results.isTuple()) {
+          feats |= FeatureSet::Multivalue;
+        }
+      } else if (heapType->isContinuation()) {
+        feats |= FeatureSet::TypedContinuations;
+      }
+
+      // In addition, scan their non-ref children, to add dependencies on
+      // things like SIMD.
+      for (auto child : heapType->getTypeChildren()) {
+        if (!child.isRef()) {
+          feats |= child.getFeatures();
+        }
+      }
+    }
+  };
+
+  ReferenceFeatureCollector collector;
+  // For internal reasons, the walkRoot/noteChild APIs all require non-const
+  // pointers. We only use them to scan the type, so it is safe for us to
+  // send |this| there from a |const| method.
+  auto* unconst = const_cast<HeapType*>(this);
+  collector.walkRoot(unconst);
+  collector.noteChild(unconst);
+  return collector.feats;
+}
+
 HeapType RecGroup::Iterator::operator*() const {
   if (parent->id & 1) {
     // This is a trivial recursion group. Mask off the low bit to recover the
@@ -1668,6 +1701,8 @@ std::ostream& operator<<(std::ostream& os, TypeBuilder::ErrorReason reason) {
       return os << "Heap type has an undeclared child";
     case TypeBuilder::ErrorReason::InvalidFuncType:
       return os << "Continuation has invalid function type";
+    case TypeBuilder::ErrorReason::InvalidUnsharedField:
+      return os << "Heap type has an invalid unshared field";
   }
   WASM_UNREACHABLE("Unexpected error reason");
 }
@@ -1713,30 +1748,34 @@ bool SubTyper::isSubType(HeapType a, HeapType b) {
   if (a == b) {
     return true;
   }
+  if (a.isShared() != b.isShared()) {
+    return false;
+  }
   if (b.isBasic()) {
-    switch (b.getBasic()) {
+    auto aTop = a.getUnsharedTop();
+    auto aUnshared = a.isBasic() ? a.getBasic(Unshared) : a;
+    switch (b.getBasic(Unshared)) {
       case HeapType::ext:
-        return a.getTop() == HeapType::ext;
+        return aTop == HeapType::ext;
       case HeapType::func:
-        return a.getTop() == HeapType::func;
+        return aTop == HeapType::func;
       case HeapType::cont:
-        return a.getTop() == HeapType::cont;
+        return aTop == HeapType::cont;
       case HeapType::exn:
-        return a.getTop() == HeapType::exn;
+        return aTop == HeapType::exn;
       case HeapType::any:
-        return a.getTop() == HeapType::any;
+        return aTop == HeapType::any;
       case HeapType::eq:
-        return a == HeapType::i31 || a == HeapType::none ||
-               a == HeapType::struct_ || a == HeapType::array || a.isStruct() ||
-               a.isArray();
+        return aUnshared == HeapType::i31 || aUnshared == HeapType::none ||
+               aUnshared == HeapType::struct_ || aUnshared == HeapType::array ||
+               a.isStruct() || a.isArray();
       case HeapType::i31:
-        return a == HeapType::none;
-      case HeapType::struct_:
-        return a == HeapType::none || a.isStruct();
-      case HeapType::array:
-        return a == HeapType::none || a.isArray();
       case HeapType::string:
-        return a == HeapType::none;
+        return aUnshared == HeapType::none;
+      case HeapType::struct_:
+        return aUnshared == HeapType::none || a.isStruct();
+      case HeapType::array:
+        return aUnshared == HeapType::none || a.isArray();
       case HeapType::none:
       case HeapType::noext:
       case HeapType::nofunc:
@@ -1848,9 +1887,9 @@ std::ostream& TypePrinter::print(Type type) {
     print(type.getTuple());
   } else if (type.isRef()) {
     auto heapType = type.getHeapType();
-    if (heapType.isBasic() && type.isNullable()) {
+    if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
       // Print shorthands for certain basic heap types.
-      switch (heapType.getBasic()) {
+      switch (heapType.getBasic(Unshared)) {
         case HeapType::ext:
           return os << "externref";
         case HeapType::func:
@@ -1897,38 +1936,60 @@ std::ostream& TypePrinter::print(Type type) {
 
 std::ostream& TypePrinter::print(HeapType type) {
   if (type.isBasic()) {
-    switch (type.getBasic()) {
-      case HeapType::ext:
-        return os << "extern";
-      case HeapType::func:
-        return os << "func";
-      case HeapType::cont:
-        return os << "cont";
-      case HeapType::any:
-        return os << "any";
-      case HeapType::eq:
-        return os << "eq";
-      case HeapType::i31:
-        return os << "i31";
-      case HeapType::struct_:
-        return os << "struct";
-      case HeapType::array:
-        return os << "array";
-      case HeapType::exn:
-        return os << "exn";
-      case HeapType::string:
-        return os << "string";
-      case HeapType::none:
-        return os << "none";
-      case HeapType::noext:
-        return os << "noextern";
-      case HeapType::nofunc:
-        return os << "nofunc";
-      case HeapType::nocont:
-        return os << "nocont";
-      case HeapType::noexn:
-        return os << "noexn";
+    if (type.isShared()) {
+      os << "(shared ";
     }
+    switch (type.getBasic(Unshared)) {
+      case HeapType::ext:
+        os << "extern";
+        break;
+      case HeapType::func:
+        os << "func";
+        break;
+      case HeapType::cont:
+        os << "cont";
+        break;
+      case HeapType::any:
+        os << "any";
+        break;
+      case HeapType::eq:
+        os << "eq";
+        break;
+      case HeapType::i31:
+        os << "i31";
+        break;
+      case HeapType::struct_:
+        os << "struct";
+        break;
+      case HeapType::array:
+        os << "array";
+        break;
+      case HeapType::exn:
+        os << "exn";
+        break;
+      case HeapType::string:
+        os << "string";
+        break;
+      case HeapType::none:
+        os << "none";
+        break;
+      case HeapType::noext:
+        os << "noextern";
+        break;
+      case HeapType::nofunc:
+        os << "nofunc";
+        break;
+      case HeapType::nocont:
+        os << "nocont";
+        break;
+      case HeapType::noexn:
+        os << "noexn";
+        break;
+    }
+    if (type.isShared()) {
+      os << ')';
+    }
+    return os;
   }
 
   auto names = generator(type);
@@ -1953,6 +2014,9 @@ std::ostream& TypePrinter::print(HeapType type) {
       os << ' ';
     }
   }
+  if (type.isShared()) {
+    os << "(shared ";
+  }
   if (type.isSignature()) {
     print(type.getSignature());
   } else if (type.isContinuation()) {
@@ -1963,6 +2027,9 @@ std::ostream& TypePrinter::print(HeapType type) {
     print(type.getArray());
   } else {
     WASM_UNREACHABLE("unexpected type");
+  }
+  if (type.isShared()) {
+    os << ')';
   }
   if (useSub) {
     os << ')';
@@ -2121,6 +2188,7 @@ size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
     hash_combine(digest, hash(HeapType(uintptr_t(info.supertype))));
   }
   wasm::rehash(digest, info.isOpen);
+  wasm::rehash(digest, info.share);
   wasm::rehash(digest, info.kind);
   switch (info.kind) {
     case HeapTypeInfo::SignatureKind:
@@ -2255,6 +2323,9 @@ bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
     }
   }
   if (a.isOpen != b.isOpen) {
+    return false;
+  }
+  if (a.share != b.share) {
     return false;
   }
   if (a.kind != b.kind) {
@@ -2532,10 +2603,18 @@ void TypeBuilder::setOpen(size_t i, bool open) {
   impl->entries[i].info->isOpen = open;
 }
 
+void TypeBuilder::setShared(size_t i, Shareability share) {
+  assert(i < size() && "index out of bounds");
+  impl->entries[i].info->share = share;
+}
+
 namespace {
 
 bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
   if (!super.isOpen) {
+    return false;
+  }
+  if (sub.share != super.share) {
     return false;
   }
   if (sub.kind != super.kind) {
@@ -2553,6 +2632,53 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
       return typer.isSubType(sub.array, super.array);
   }
   WASM_UNREACHABLE("unknown kind");
+}
+
+std::optional<TypeBuilder::ErrorReason>
+validateType(HeapTypeInfo& info, std::unordered_set<HeapType>& seenTypes) {
+  if (auto* super = info.supertype) {
+    // The supertype must be canonical (i.e. defined in a previous rec group)
+    // or have already been defined in this rec group.
+    if (super->isTemp && !seenTypes.count(HeapType(uintptr_t(super)))) {
+      return TypeBuilder::ErrorReason::ForwardSupertypeReference;
+    }
+    // The supertype must have a valid structure.
+    if (!isValidSupertype(info, *super)) {
+      return TypeBuilder::ErrorReason::InvalidSupertype;
+    }
+  }
+  if (info.isContinuation()) {
+    if (!info.continuation.type.isSignature()) {
+      return TypeBuilder::ErrorReason::InvalidFuncType;
+    }
+  }
+  if (info.share == Shared) {
+    switch (info.kind) {
+      case HeapTypeInfo::SignatureKind:
+        // TODO: Figure out and enforce shared function rules.
+        break;
+      case HeapTypeInfo::ContinuationKind:
+        if (!info.continuation.type.isShared()) {
+          return TypeBuilder::ErrorReason::InvalidFuncType;
+        }
+        break;
+      case HeapTypeInfo::StructKind:
+        for (auto& field : info.struct_.fields) {
+          if (field.type.isRef() && !field.type.getHeapType().isShared()) {
+            return TypeBuilder::ErrorReason::InvalidUnsharedField;
+          }
+        }
+        break;
+      case HeapTypeInfo::ArrayKind: {
+        auto elem = info.array.element.type;
+        if (elem.isRef() && !elem.getHeapType().isShared()) {
+          return TypeBuilder::ErrorReason::InvalidUnsharedField;
+        }
+        break;
+      }
+    }
+  }
+  return std::nullopt;
 }
 
 void updateReferencedHeapTypes(
@@ -2622,24 +2748,8 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
   std::unordered_set<HeapType> seenTypes;
   for (size_t i = 0; i < typeInfos.size(); ++i) {
     auto& info = typeInfos[i];
-    if (auto* super = info->supertype) {
-      // The supertype must be canonical (i.e. defined in a previous rec group)
-      // or have already been defined in this rec group.
-      if (super->isTemp && !seenTypes.count(HeapType(uintptr_t(super)))) {
-        return {TypeBuilder::Error{
-          i, TypeBuilder::ErrorReason::ForwardSupertypeReference}};
-      }
-      // The supertype must have a valid structure.
-      if (!isValidSupertype(*info, *super)) {
-        return {
-          TypeBuilder::Error{i, TypeBuilder::ErrorReason::InvalidSupertype}};
-      }
-    }
-    if (info->isContinuation()) {
-      if (!info->continuation.type.isSignature()) {
-        return {
-          TypeBuilder::Error{i, TypeBuilder::ErrorReason::InvalidFuncType}};
-      }
+    if (auto err = validateType(*info, seenTypes)) {
+      return {TypeBuilder::Error{i, *err}};
     }
     seenTypes.insert(asHeapType(info));
   }

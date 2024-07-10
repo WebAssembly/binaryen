@@ -45,11 +45,12 @@ struct FeatureSet {
     Strings = 1 << 14,
     MultiMemory = 1 << 15,
     TypedContinuations = 1 << 16,
+    SharedEverything = 1 << 17,
     MVP = None,
     // Keep in sync with llvm default features:
     // https://github.com/llvm/llvm-project/blob/c7576cb89d6c95f03968076e902d3adfd1996577/clang/lib/Basic/Targets/WebAssembly.cpp#L150-L153
     Default = SignExt | MutableGlobals,
-    All = (1 << 17) - 1,
+    All = (1 << 18) - 1,
   };
 
   static std::string toString(Feature f) {
@@ -88,6 +89,8 @@ struct FeatureSet {
         return "multimemory";
       case TypedContinuations:
         return "typed-continuations";
+      case SharedEverything:
+        return "shared-everything";
       default:
         WASM_UNREACHABLE("unexpected feature");
     }
@@ -135,6 +138,9 @@ struct FeatureSet {
   bool hasTypedContinuations() const {
     return (features & TypedContinuations) != 0;
   }
+  bool hasSharedEverything() const {
+    return (features & SharedEverything) != 0;
+  }
   bool hasAll() const { return (features & All) != 0; }
 
   void set(FeatureSet f, bool v = true) {
@@ -157,6 +163,7 @@ struct FeatureSet {
   void setStrings(bool v = true) { set(Strings, v); }
   void setMultiMemory(bool v = true) { set(MultiMemory, v); }
   void setTypedContinuations(bool v = true) { set(TypedContinuations, v); }
+  void setSharedEverything(bool v = true) { set(SharedEverything, v); }
   void setMVP() { features = MVP; }
   void setAll() { features = All; }
 
@@ -184,6 +191,13 @@ struct FeatureSet {
   FeatureSet& operator|=(const FeatureSet& other) {
     features |= other.features;
     return *this;
+  }
+
+  FeatureSet operator-(const FeatureSet& other) const {
+    return features & ~other.features;
+  }
+  FeatureSet operator-(Feature other) const {
+    return *this - FeatureSet(other);
   }
 
   uint32_t features;
