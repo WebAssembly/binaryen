@@ -528,9 +528,6 @@ struct Monomorphize : public Pass {
       pre.push_back(builder.makeLocalSet(local, value));
     }
 
-    // The main body of the function is simply copied from the original.
-    auto* newBody = ExpressionManipulator::copy(func->body, wasm);
-
     // Map locals.
     struct LocalUpdater : public PostWalker<LocalUpdater> {
       const std::unordered_map<Index, Index>& mappedLocals;
@@ -544,14 +541,13 @@ struct Monomorphize : public Pass {
         index = iter->second;
       }
     } localUpdater(mappedLocals);
-    localUpdater.walk(newBody);
+    localUpdater.walk(newFunc->body);
 
     if (!pre.empty()) {
       // Add the block after the prelude.
-      pre.push_back(newBody);
-      newBody = builder.makeBlock(pre);
+      pre.push_back(newFunc->body);
+      newFunc->body = builder.makeBlock(pre);
     }
-    newFunc->body = newBody;
 
     return newFunc;
   }
