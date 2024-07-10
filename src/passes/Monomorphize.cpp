@@ -405,9 +405,9 @@ struct Monomorphize : public Pass {
 
       auto costBefore = CostAnalyzer(func->body).cost;
       auto costAfter = CostAnalyzer(monoFunc->body).cost;
-      // TODO: check for either a size decrease (always good) or a significant
-      //       speed increase (as a tiny one, in a huge function, can lead to
-      //       wasteful duplicated code)
+      // TODO: We should probably only accept improvements above some minimum,
+      //       to avoid optimizing cases where we duplicate a huge function but
+      //       only optimize a tiny part of it compared to the original.
       if (costAfter >= costBefore) {
         worthwhile = false;
       }
