@@ -47,6 +47,12 @@
 ;; RUN: wasm-dis %t.split-bar.1.wasm | filecheck %s --check-prefix KEEP-FOO-PRIMARY
 ;; RUN: wasm-dis %t.split-bar.2.wasm | filecheck %s --check-prefix KEEP-FOO-SECONDARY
 
+;; Check workflow where --split-funcs supersede --keep-funcs
+;; RUN: wasm-split %s --export-prefix='%' -g -o1 %t.split-bar.1.wasm -o2 %t.split-bar.2.wasm --keep-funcs=@%S/both.txt --split-funcs=bar -v 2>&1 \
+;; RUN:     | filecheck %s --check-prefix SPLIT-BAR-SUPERSEDE
+;; RUN: wasm-dis %t.split-bar.1.wasm | filecheck %s --check-prefix KEEP-FOO-PRIMARY
+;; RUN: wasm-dis %t.split-bar.2.wasm | filecheck %s --check-prefix KEEP-FOO-SECONDARY
+
 (module
  (table $table 1 1 funcref)
  (elem (i32.const 0) $foo)
@@ -170,3 +176,7 @@
 ;; KEEP-BOTH-SECONDARY:      (module
 ;; KEEP-BOTH-SECONDARY-NEXT:  (import "primary" "%table" (table $table 1 1 funcref))
 ;; KEEP-BOTH-SECONDARY-NEXT: )
+
+;; SPLIT-BAR-SUPERSEDE: warning: function bar was to be kept in primary module. However it will now be split out into secondary module.
+;; SPLIT-BAR-SUPERSEDE: Keeping functions: foo{{$}}
+;; SPLIT-BAR-SUPERSEDE: Splitting out functions: bar{{$}}

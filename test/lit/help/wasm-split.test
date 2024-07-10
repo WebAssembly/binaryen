@@ -30,17 +30,18 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --keep-funcs                         [split] Comma-separated list of functions
 ;; CHECK-NEXT:                                        to keep in the primary module. The rest
-;; CHECK-NEXT:                                        will be split out. Cannot be used with
-;; CHECK-NEXT:                                        --profile or --split-funcs. You can also
+;; CHECK-NEXT:                                        will be split out. Can be used alongside
+;; CHECK-NEXT:                                        --profile and --split-funcs. You can also
 ;; CHECK-NEXT:                                        pass a file with one function per line by
 ;; CHECK-NEXT:                                        passing @filename.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --split-funcs                        [split] Comma-separated list of functions
 ;; CHECK-NEXT:                                        to split out to the secondary module. The
-;; CHECK-NEXT:                                        rest will be kept. Cannot be used with
-;; CHECK-NEXT:                                        --profile or --keep-funcs. You can also
-;; CHECK-NEXT:                                        pass a file with one function per line by
-;; CHECK-NEXT:                                        passing @filename.
+;; CHECK-NEXT:                                        rest will be kept. Can be used alongside
+;; CHECK-NEXT:                                        --profile and --keep-funcs. This takes
+;; CHECK-NEXT:                                        precedence over other split options. You
+;; CHECK-NEXT:                                        can also pass a file with one function
+;; CHECK-NEXT:                                        per line by passing @filename.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --primary-output,-o1                 [split] Output file for the primary
 ;; CHECK-NEXT:                                        module.
