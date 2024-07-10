@@ -155,6 +155,10 @@ struct CallContext {
   bool dropped;
 
   bool operator==(const CallContext& other) const {
+    if (dropped != other.dropped) {
+      return false;
+    }
+
     // We consider logically equivalent expressions as equal (rather than raw
     // pointers), so that contexts with functionally identical shape are
     // treated the same.
@@ -167,7 +171,7 @@ struct CallContext {
       }
     }
 
-    return dropped == other.dropped;
+    return true;
   }
 
   bool operator!=(const CallContext& other) const { return !(*this == other); }
