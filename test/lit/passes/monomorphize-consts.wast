@@ -29,6 +29,8 @@
 
   ;; CAREFUL:      (type $3 (func (param i32) (result i32)))
 
+  ;; CAREFUL:      (type $4 (func (result i32)))
+
   ;; CAREFUL:      (import "a" "b" (func $import (type $2) (param i32)))
   (import "a" "b" (func $import (param i32)))
 
@@ -314,16 +316,13 @@
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $mutual-recursion-b (type $3) (param $0 i32) (result i32)
   ;; CAREFUL-NEXT:  (i32.add
-  ;; CAREFUL-NEXT:   (call $mutual-recursion-a
-  ;; CAREFUL-NEXT:    (i32.const 0)
-  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (call $mutual-recursion-a_10)
   ;; CAREFUL-NEXT:   (i32.const 1337)
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
   (func $mutual-recursion-b (param $x i32) (result i32)
     (i32.add
-      ;; This can be optimized (in ALWAYS; to see the benefit in CAREFUL, we
-      ;; need additional cycles, which we do not do yet).
+      ;; This can be optimized (as the constant 0 allows work to happen).
       (call $mutual-recursion-a
         (i32.const 0)
       )
@@ -632,4 +631,8 @@
 ;; CAREFUL-NEXT:  (call $import
 ;; CAREFUL-NEXT:   (local.get $0)
 ;; CAREFUL-NEXT:  )
+;; CAREFUL-NEXT: )
+
+;; CAREFUL:      (func $mutual-recursion-a_10 (type $4) (result i32)
+;; CAREFUL-NEXT:  (i32.const 42)
 ;; CAREFUL-NEXT: )
