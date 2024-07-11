@@ -103,6 +103,31 @@ namespace wasm {
 
 namespace {
 
+// Finds the calls and whether each one of them is dropped.
+struct CallFinder : public Walker<CallFinder> {
+  struct Info {
+    Call* call;
+    bool dropped;
+  };
+
+  std::vector<Info> infos;
+
+  void visitCall(Call* curr) {
+    // Add the call as non-dropped, and update the drop later if we are.
+    infos.push_back(Info{curr, false});
+  }
+
+  void visitDrop(Drop* curr) {
+    if (curr->value->is<Call>()) {
+      // The call we just added to |infos| is dropped.
+      assert(!infos.empty());
+      auto& back = infos.back();
+      assert(back->call == curr);
+      back->dropped = true;
+    }
+  }
+};
+
 // Relevant information about a callsite for purposes of monomorphization.
 struct CallContext {
   // The operands of the call, processed to leave the parts that make sense to
@@ -181,12 +206,12 @@ struct CallContext {
   // remaining values by updating |newOperands| (for example, if all the values
   // sent are constants, then |newOperands| will end up empty, as we have
   // nothing left to send).
-  void buildFromCall(Call* call,
+  void buildFromCall(CallFinder::Info& info,
                      std::vector<Expression*>& newOperands,
                      Module& wasm) {
     Builder builder(wasm);
 
-    for (auto* operand : call->operands) {
+    for (auto* operand : info.call->operands) {
       // Process the operand. This is a copy operation, as we are trying to move
       // (copy) code from the callsite into the called function. When we find we
       // can copy then we do so, and when we cannot that value remains as a
@@ -212,8 +237,7 @@ struct CallContext {
         }));
     }
 
-    // TODO: handle drop
-    dropped = false;
+    dropped = info.dropped;
   }
 
   // Checks whether an expression can be moved into the context.
@@ -309,27 +333,30 @@ struct Monomorphize : public Pass {
     // to call the monomorphized targets.
     for (auto name : funcNames) {
       auto* func = module->getFunction(name);
-      for (auto* call : FindAll<Call>(func->body).list) {
-        if (call->type == Type::unreachable) {
+
+      CallFinder callFinder;
+      callFinder.walk(func->body);
+      for (auto& info : callFinder.infos) {
+        if (info.call->type == Type::unreachable) {
           // Ignore unreachable code.
           // TODO: return_call?
           continue;
         }
 
-        if (call->target == name) {
+        if (info.call->target == name) {
           // Avoid recursion, which adds some complexity (as we'd be modifying
           // ourselves if we apply optimizations).
           continue;
         }
 
-        processCall(call, *module);
+        processCall(info, *module);
       }
     }
   }
 
   // Try to optimize a call.
-  void processCall(Call* call, Module& wasm) {
-    auto target = call->target;
+  void processCall(CallFinder::Info& info, Module& wasm) {
+    auto target = info.call->target;
     auto* func = wasm.getFunction(target);
     if (func->imported()) {
       // Nothing to do since this calls outside of the module.
@@ -342,7 +369,7 @@ struct Monomorphize : public Pass {
     // if we use that context.
     CallContext context;
     std::vector<Expression*> newOperands;
-    context.buildFromCall(call, newOperands, wasm);
+    context.buildFromCall(info, newOperands, wasm);
 
     // See if we've already evaluated this function + call context. If so, then
     // we've memoized the result.
