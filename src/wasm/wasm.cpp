@@ -1227,15 +1227,18 @@ void RefAs::finalize() {
     type = Type::unreachable;
     return;
   }
+  auto valHeapType = value->type.getHeapType();
   switch (op) {
     case RefAsNonNull:
-      type = Type(value->type.getHeapType(), NonNullable);
+      type = Type(valHeapType, NonNullable);
       break;
     case AnyConvertExtern:
-      type = Type(HeapType::any, value->type.getNullability());
+      type = Type(HeapTypes::any.getBasic(valHeapType.getShared()),
+                  value->type.getNullability());
       break;
     case ExternConvertAny:
-      type = Type(HeapType::ext, value->type.getNullability());
+      type = Type(HeapTypes::ext.getBasic(valHeapType.getShared()),
+                  value->type.getNullability());
       break;
     default:
       WASM_UNREACHABLE("invalid ref.as_*");
