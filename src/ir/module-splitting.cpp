@@ -147,15 +147,23 @@ void TableSlotManager::addSlot(Name func, Slot slot) {
 }
 
 TableSlotManager::TableSlotManager(Module& module) : module(module) {
+  if (module.features.hasReferenceTypes()) {
+    // Just create a new table to manage all primary-to-secondary calls lazily.
+    // Do not re-use slots for functions that will already be in existing
+    // tables, since that is not correct in the face of table mutations.
+    // TODO: Reduce overhead by creating a separate table for each function type
+    // if WasmGC is enabled.
+    return;
+  }
+
   // TODO: Reject or handle passive element segments
-  // TODO: If reference types are enabled, just create a fresh table to make bad
-  // interactions with user code impossible.
   auto funcref = Type(HeapType::func, Nullable);
   auto it = std::find_if(
     module.tables.begin(),
     module.tables.end(),
     [&](std::unique_ptr<Table>& table) { return table->type == funcref; });
   if (it == module.tables.end()) {
+    // There is no indirect function table, so we will create one lazily.
     return;
   }
 
