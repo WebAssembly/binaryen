@@ -120,8 +120,8 @@ struct CallFinder : public PostWalker<CallFinder> {
   std::vector<CallInfo> infos;
 
   void visitCall(Call* curr) {
-    // Add the call as non-dropped, and update the drop later if we are.
-    infos.push_back(CallInfo{curr, false});
+    // Add the call as not having a drop, and update the drop later if we are.
+    infos.push_back(CallInfo{curr, nullptr});
   }
 
   void visitDrop(Drop* curr) {
@@ -130,7 +130,7 @@ struct CallFinder : public PostWalker<CallFinder> {
       assert(!infos.empty());
       auto& back = infos.back();
       assert(back.call == curr->value);
-      back.dropped = true;
+      back.drop = getCurrentPointer();
     }
   }
 };
@@ -486,7 +486,7 @@ struct Monomorphize : public Pass {
     }
     // If we were dropped then we are pulling the drop into the monomorphized
     // function, which means we return nothing.
-    auto newResults = context.drop ? Type::none : func->getResults();
+    auto newResults = context.dropped ? Type::none : func->getResults();
     newFunc->type = Signature(Type(newParams), newResults);
 
     // We must update local indexes: the new function has a  potentially
@@ -581,7 +581,7 @@ struct Monomorphize : public Pass {
       newFunc->body = builder.makeBlock(pre);
     }
 
-    if (context.drop) {
+    if (context.dropped) {
       ReturnUtils::ReturnValueRemover().walkFunctionInModule(func, &wasm);
     }
 
@@ -594,13 +594,16 @@ struct Monomorphize : public Pass {
                   Name newTarget,
                   const std::vector<Expression*>& newOperands,
                   Module& wasm) {
-    call->target = newTarget;
-    call->operands.set(newOperands);
+    info.call->target = newTarget;
+    info.call->operands.set(newOperands);
 
     if (info.drop) {
       // Replace (drop (call)) with (call), that is, replace the drop with the
-      // (updated) call.
-      *info.drop = call;
+      // (updated) call which now has type none. Note we should have handled
+      // unreachability before getting here.
+      assert(info.call->type != Type::unreachable);
+      info.call->type = Type::none;
+      *info.drop = info.call;
     }
   }
 
