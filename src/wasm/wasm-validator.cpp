@@ -2222,10 +2222,11 @@ void FunctionValidator::visitRefAs(RefAs* curr) {
       if (curr->type == Type::unreachable) {
         return;
       }
-      shouldBeSubType(curr->value->type,
-                      Type(HeapType::ext, Nullable),
-                      curr->value,
-                      "any.convert_extern value should be an externref");
+      shouldBeSubTypeIgnoringShared(
+        curr->value->type,
+        Type(HeapType::ext, Nullable),
+        curr->value,
+        "any.convert_extern value should be an externref");
       break;
     }
     case ExternConvertAny: {
@@ -2235,10 +2236,11 @@ void FunctionValidator::visitRefAs(RefAs* curr) {
       if (curr->type == Type::unreachable) {
         return;
       }
-      shouldBeSubType(curr->value->type,
-                      Type(HeapType::any, Nullable),
-                      curr->value,
-                      "extern.convert_any value should be an anyref");
+      shouldBeSubTypeIgnoringShared(
+        curr->value->type,
+        Type(HeapType::any, Nullable),
+        curr->value,
+        "extern.convert_any value should be an anyref");
       break;
     }
   }
