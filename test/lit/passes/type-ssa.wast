@@ -382,15 +382,15 @@
   ;; CHECK:      (func $0 (type $2) (param $param anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (extern.externalize
+  ;; CHECK-NEXT:    (extern.convert_any
   ;; CHECK-NEXT:     (global.get $g)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (extern.internalize
-  ;; CHECK-NEXT:     (extern.externalize
+  ;; CHECK-NEXT:    (any.convert_extern
+  ;; CHECK-NEXT:     (extern.convert_any
   ;; CHECK-NEXT:      (global.get $g)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (extern.externalize
+  ;; CHECK-NEXT:    (extern.convert_any
   ;; CHECK-NEXT:     (local.get $param)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -400,17 +400,17 @@
     (drop
       (struct.new $struct
         ;; An externalized global.
-        (extern.externalize
+        (extern.convert_any
           (global.get $g)
         )
         ;; An externalized and then internalized global.
-        (extern.internalize
-          (extern.externalize
+        (any.convert_extern
+          (extern.convert_any
             (global.get $g)
           )
         )
         ;; An externalized parameter.
-        (extern.externalize
+        (extern.convert_any
           (local.get $param)
         )
       )

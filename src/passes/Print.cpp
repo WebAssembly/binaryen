@@ -2236,11 +2236,11 @@ struct PrintExpressionContents
       case RefAsNonNull:
         printMedium(o, "ref.as_non_null");
         break;
-      case ExternInternalize:
-        printMedium(o, "extern.internalize");
+      case AnyConvertExtern:
+        printMedium(o, "any.convert_extern");
         break;
-      case ExternExternalize:
-        printMedium(o, "extern.externalize");
+      case ExternConvertAny:
+        printMedium(o, "extern.convert_any");
         break;
       default:
         WASM_UNREACHABLE("invalid ref.is_*");

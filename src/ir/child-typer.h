@@ -949,10 +949,10 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       case RefAsNonNull:
         noteAnyReference(&curr->value);
         return;
-      case ExternInternalize:
+      case AnyConvertExtern:
         note(&curr->value, Type(HeapType::ext, Nullable));
         return;
-      case ExternExternalize:
+      case ExternConvertAny:
         note(&curr->value, Type(HeapType::any, Nullable));
         return;
     }

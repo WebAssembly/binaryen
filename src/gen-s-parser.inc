@@ -14,6 +14,12 @@ memcpy(buf, op.data(), op.size());
 switch (buf[0]) {
   case 'a': {
     switch (buf[1]) {
+      case 'n':
+        if (op == "any.convert_extern"sv) {
+          CHECK_ERR(makeRefAs(ctx, pos, annotations, AnyConvertExtern));
+          return Ok{};
+        }
+        goto parse_error;
       case 'r': {
         switch (buf[6]) {
           case 'c':
@@ -278,15 +284,21 @@ switch (buf[0]) {
   }
   case 'e': {
     switch (buf[7]) {
+      case 'c':
+        if (op == "extern.convert_any"sv) {
+          CHECK_ERR(makeRefAs(ctx, pos, annotations, ExternConvertAny));
+          return Ok{};
+        }
+        goto parse_error;
       case 'e':
         if (op == "extern.externalize"sv) {
-          CHECK_ERR(makeRefAs(ctx, pos, annotations, ExternExternalize));
+          CHECK_ERR(makeRefAs(ctx, pos, annotations, ExternConvertAny));
           return Ok{};
         }
         goto parse_error;
       case 'i':
         if (op == "extern.internalize"sv) {
-          CHECK_ERR(makeRefAs(ctx, pos, annotations, ExternInternalize));
+          CHECK_ERR(makeRefAs(ctx, pos, annotations, AnyConvertExtern));
           return Ok{};
         }
         goto parse_error;

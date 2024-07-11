@@ -564,6 +564,8 @@ function initializeConstants() {
     'RefAsNonNull',
     'RefAsExternInternalize',
     'RefAsExternExternalize',
+    'RefAsAnyConvertExtern',
+    'RefAsExternConvertAny',
     'BrOnNull',
     'BrOnNonNull',
     'BrOnCast',
@@ -2380,8 +2382,8 @@ function wrapModule(module, self = {}) {
     }
   };
 
-  // TODO: extern.internalize
-  // TODO: extern.externalize
+  // TODO: any.convert_extern
+  // TODO: extern.convert_any
   // TODO: ref.test
   // TODO: ref.cast
   // TODO: br_on_*

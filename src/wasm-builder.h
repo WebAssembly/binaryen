@@ -1233,7 +1233,7 @@ public:
       return makeStringConst(wtf16.str());
     }
     if (type.isRef() && type.getHeapType() == HeapType::ext) {
-      return makeRefAs(ExternExternalize,
+      return makeRefAs(ExternConvertAny,
                        makeConstantExpression(value.internalize()));
     }
     TODO_SINGLE_COMPOUND(type);

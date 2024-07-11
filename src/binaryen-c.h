@@ -678,6 +678,8 @@ BINARYEN_API BinaryenOp BinaryenDotI8x16I7x16SToVecI16x8(void);
 BINARYEN_API BinaryenOp BinaryenRefAsNonNull(void);
 BINARYEN_API BinaryenOp BinaryenRefAsExternInternalize(void);
 BINARYEN_API BinaryenOp BinaryenRefAsExternExternalize(void);
+BINARYEN_API BinaryenOp BinaryenRefAsAnyConvertExtern(void);
+BINARYEN_API BinaryenOp BinaryenRefAsExternConvertAny(void);
 BINARYEN_API BinaryenOp BinaryenBrOnNull(void);
 BINARYEN_API BinaryenOp BinaryenBrOnNonNull(void);
 BINARYEN_API BinaryenOp BinaryenBrOnCast(void);
@@ -3134,6 +3136,11 @@ BinaryenFunctionGetBody(BinaryenFunctionRef func);
 // Sets the body of the specified `Function`.
 BINARYEN_API void BinaryenFunctionSetBody(BinaryenFunctionRef func,
                                           BinaryenExpressionRef body);
+// Gets the type of the specified `Function`.
+BINARYEN_API BinaryenHeapType BinaryenFunctionGetType(BinaryenFunctionRef func);
+// Sets the type of the specified `Function`.
+BINARYEN_API void BinaryenFunctionSetType(BinaryenFunctionRef func,
+                                          BinaryenHeapType type);
 
 // Runs the standard optimization passes on the function. Uses the currently set
 // global optimize and shrink level.

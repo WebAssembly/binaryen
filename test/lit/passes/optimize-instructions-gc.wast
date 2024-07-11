@@ -2756,7 +2756,7 @@
   ;; CHECK:      (func $cast-internalized-extern (type $43) (param $externref externref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref $A)
-  ;; CHECK-NEXT:    (extern.internalize
+  ;; CHECK-NEXT:    (any.convert_extern
   ;; CHECK-NEXT:     (local.get $externref)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -2768,7 +2768,7 @@
     ;; the cast cannot succeed.
     (drop
       (ref.cast (ref $A)
-        (extern.internalize
+        (any.convert_extern
           (local.get $externref)
         )
       )

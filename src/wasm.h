@@ -561,8 +561,8 @@ enum SIMDTernaryOp {
 
 enum RefAsOp {
   RefAsNonNull,
-  ExternInternalize,
-  ExternExternalize,
+  AnyConvertExtern,
+  ExternConvertAny,
 };
 
 enum BrOnOp {

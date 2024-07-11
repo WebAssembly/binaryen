@@ -1012,8 +1012,10 @@ BinaryenOp BinaryenDotI8x16I7x16SToVecI16x8(void) {
   return DotI8x16I7x16SToVecI16x8;
 }
 BinaryenOp BinaryenRefAsNonNull(void) { return RefAsNonNull; }
-BinaryenOp BinaryenRefAsExternInternalize(void) { return ExternInternalize; }
-BinaryenOp BinaryenRefAsExternExternalize(void) { return ExternExternalize; }
+BinaryenOp BinaryenRefAsExternInternalize(void) { return AnyConvertExtern; }
+BinaryenOp BinaryenRefAsExternExternalize(void) { return ExternConvertAny; }
+BinaryenOp BinaryenRefAsAnyConvertExtern(void) { return AnyConvertExtern; }
+BinaryenOp BinaryenRefAsExternConvertAny(void) { return ExternConvertAny; }
 BinaryenOp BinaryenBrOnNull(void) { return BrOnNull; }
 BinaryenOp BinaryenBrOnNonNull(void) { return BrOnNonNull; }
 BinaryenOp BinaryenBrOnCast(void) { return BrOnCast; }
@@ -5681,6 +5683,12 @@ void BinaryenFunctionSetBody(BinaryenFunctionRef func,
                              BinaryenExpressionRef body) {
   assert(body);
   ((Function*)func)->body = (Expression*)body;
+}
+BinaryenHeapType BinaryenFunctionGetType(BinaryenFunctionRef func) {
+  return ((Function*)func)->type.getID();
+}
+void BinaryenFunctionSetType(BinaryenFunctionRef func, BinaryenHeapType type) {
+  ((Function*)func)->type = HeapType(type);
 }
 void BinaryenFunctionOptimize(BinaryenFunctionRef func,
                               BinaryenModuleRef module) {

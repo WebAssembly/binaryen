@@ -26,12 +26,17 @@
 namespace wasm {
 
 struct OptimizationOptions : public ToolOptions {
+  // By default we allow StackIR and enable it by default in higher optimization
+  // levels, but users can disallow it as well.
+  bool allowStackIR = true;
+
   void parse(int argc, const char* argv[]) {
     ToolOptions::parse(argc, argv);
 
     // After parsing the arguments, update defaults based on the optimize/shrink
     // levels.
-    if (passOptions.optimizeLevel >= 2 || passOptions.shrinkLevel >= 1) {
+    if (allowStackIR &&
+        (passOptions.optimizeLevel >= 2 || passOptions.shrinkLevel >= 1)) {
       passOptions.generateStackIR = true;
       passOptions.optimizeStackIR = true;
     }
@@ -190,6 +195,16 @@ struct OptimizationOptions : public ToolOptions {
            Options::Arguments::Zero,
            [&](Options* o, const std::string& arguments) {
              passOptions.debugInfo = true;
+           })
+      .add("--no-stack-ir",
+           "",
+           "do not use StackIR (even when it is the default)",
+           ToolOptionsCategory,
+           Options::Arguments::Zero,
+           [&](Options* o, const std::string& arguments) {
+             allowStackIR = false;
+             passOptions.generateStackIR = false;
+             passOptions.optimizeStackIR = false;
            })
       .add("--always-inline-max-function-size",
            "-aimfs",

@@ -4416,27 +4416,27 @@
 
  ;; CHECK:      (func $any-convert-extern (type $71) (param $0 externref)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (extern.internalize
+ ;; CHECK-NEXT:   (any.convert_extern
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $any-convert-extern (param externref)
   local.get 0
-  extern.internalize
+  any.convert_extern
   drop
  )
 
  ;; CHECK:      (func $extern-convert-any (type $9) (param $0 anyref)
  ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (extern.externalize
+ ;; CHECK-NEXT:   (extern.convert_any
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $extern-convert-any (param anyref)
   local.get 0
-  extern.externalize
+  extern.convert_any
   drop
  )
 

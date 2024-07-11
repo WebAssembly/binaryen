@@ -1858,9 +1858,9 @@ public:
           trap("null ref");
         }
         return value;
-      case ExternInternalize:
+      case AnyConvertExtern:
         return value.internalize();
-      case ExternExternalize:
+      case ExternConvertAny:
         return value.externalize();
     }
     WASM_UNREACHABLE("unimplemented ref.as_*");
@@ -2436,7 +2436,7 @@ public:
   }
   Flow visitRefAs(RefAs* curr) {
     // TODO: Remove this once interpretation is implemented.
-    if (curr->op == ExternInternalize || curr->op == ExternExternalize) {
+    if (curr->op == AnyConvertExtern || curr->op == ExternConvertAny) {
       return Flow(NONCONSTANT_FLOW);
     }
     return ExpressionRunner<SubType>::visitRefAs(curr);

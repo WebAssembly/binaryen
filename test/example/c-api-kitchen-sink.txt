@@ -2137,12 +2137,12 @@ BinaryenFeatureAll: 262143
        )
       )
       (drop
-       (extern.internalize
+       (any.convert_extern
         (ref.null noextern)
        )
       )
       (drop
-       (extern.externalize
+       (extern.convert_any
         (ref.null none)
        )
       )
@@ -3051,5 +3051,15 @@ module with recursive GC types:
  )
  (func $test2 (type $SomeSignature) (param $0 (ref null $SomeSignature)) (param $1 (ref null $SomeArray)) (result (ref null $SomeSignature))
   (unreachable)
+ )
+)
+module with a call_ref:
+(module
+ (type $0 (func))
+ (elem declare func $tiny)
+ (func $tiny (type $0)
+  (call_ref $0
+   (ref.func $tiny)
+  )
  )
 )

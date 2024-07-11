@@ -44,8 +44,9 @@ void StackIROptimizer::run() {
   vacuum();
 }
 
-// Remove unreachable code.
 void StackIROptimizer::dce() {
+  // Remove code after an unreachable instruction: anything after it, up to the
+  // next control flow barrier, can simply be removed.
   bool inUnreachableCode = false;
   for (Index i = 0; i < insts.size(); i++) {
     auto* inst = insts[i];
@@ -62,6 +63,42 @@ void StackIROptimizer::dce() {
       }
     } else if (inst->type == Type::unreachable) {
       inUnreachableCode = true;
+    }
+  }
+
+  // Remove code before an Unreachable. Consider this:
+  //
+  //  (drop
+  //   ..
+  //  )
+  //  (unreachable)
+  //
+  // The drop is not needed, as the unreachable puts the stack in the
+  // polymorphic state anyhow. Note that we don't need to optimize anything
+  // other than a drop here, as in general the Binaryen IR DCE pass will handle
+  // everything else. A drop followed by an unreachable is the only thing that
+  // pass cannot handle, as the structured form of Binaryen IR does not allow
+  // removing such a drop, and so we can only do it here in StackIR.
+  //
+  // TODO: We can look even further back, say if there is another drop of
+  //       something before, then we can remove that drop as well. To do that
+  //       we'd need to inspect the stack going backwards.
+  for (Index i = 1; i < insts.size(); i++) {
+    auto* inst = insts[i];
+    if (!inst || inst->op != StackInst::Basic ||
+        !inst->origin->is<Unreachable>()) {
+      continue;
+    }
+
+    // Look back past nulls.
+    Index j = i - 1;
+    while (j > 0 && !insts[j]) {
+      j--;
+    }
+
+    auto*& prev = insts[j];
+    if (prev && prev->op == StackInst::Basic && prev->origin->is<Drop>()) {
+      prev = nullptr;
     }
   }
 }
