@@ -104,18 +104,24 @@ namespace wasm {
 
 namespace {
 
+// Core information about a call: the call itself, and if it is dropped, the
+// drop.
+struct CallInfo {
+  Call* call;
+  // Store a reference to the drop's pointer so that we can replace it, as when
+  // we optimize a dropped call we need to replace (drop (call)) with (call).
+  // Or, if the call is not dropped, this is nullptr;
+  Expression** drop;
+};
+
 // Finds the calls and whether each one of them is dropped.
 struct CallFinder : public PostWalker<CallFinder> {
-  struct Info {
-    Call* call;
-    bool dropped;
-  };
 
-  std::vector<Info> infos;
+  std::vector<CallInfo> infos;
 
   void visitCall(Call* curr) {
     // Add the call as non-dropped, and update the drop later if we are.
-    infos.push_back(Info{curr, false});
+    infos.push_back(CallInfo{curr, false});
   }
 
   void visitDrop(Drop* curr) {
@@ -207,7 +213,7 @@ struct CallContext {
   // remaining values by updating |newOperands| (for example, if all the values
   // sent are constants, then |newOperands| will end up empty, as we have
   // nothing left to send).
-  void buildFromCall(CallFinder::Info& info,
+  void buildFromCall(CallInfo& info,
                      std::vector<Expression*>& newOperands,
                      Module& wasm) {
     Builder builder(wasm);
@@ -238,7 +244,7 @@ struct CallContext {
         }));
     }
 
-    dropped = info.dropped;
+    dropped = !!info.drop;
   }
 
   // Checks whether an expression can be moved into the context.
@@ -356,7 +362,7 @@ struct Monomorphize : public Pass {
   }
 
   // Try to optimize a call.
-  void processCall(CallFinder::Info& info, Module& wasm) {
+  void processCall(CallInfo& info, Module& wasm) {
     auto* call = info.call;
     auto target = call->target;
     auto* func = wasm.getFunction(target);
@@ -379,11 +385,8 @@ struct Monomorphize : public Pass {
     if (iter != funcContextMap.end()) {
       auto newTarget = iter->second;
       if (newTarget != target) {
-        // When we computed this before we found a benefit to optimizing, and
-        // created a new monomorphized function to call. Use it by simply
-        // applying the new operands we computed, and adjusting the call target.
-        call->operands.set(newOperands);
-        call->target = newTarget;
+        // We saw benefit to optimizing this case. Apply that.
+        updateCall(info, newTarget, newOperands, wasm);
       }
       return;
     }
@@ -448,8 +451,7 @@ struct Monomorphize : public Pass {
     if (worthwhile) {
       // We are using the monomorphized function, so update the call and add it
       // to the module.
-      call->operands.set(newOperands);
-      call->target = monoFunc->name;
+      updateCall(info, monoFunc->name, newOperands, wasm);
 
       wasm.addFunction(std::move(monoFunc));
     }
@@ -484,7 +486,7 @@ struct Monomorphize : public Pass {
     }
     // If we were dropped then we are pulling the drop into the monomorphized
     // function, which means we return nothing.
-    auto newResults = context.dropped ? Type::none : func->getResults();
+    auto newResults = context.drop ? Type::none : func->getResults();
     newFunc->type = Signature(Type(newParams), newResults);
 
     // We must update local indexes: the new function has a  potentially
@@ -579,11 +581,27 @@ struct Monomorphize : public Pass {
       newFunc->body = builder.makeBlock(pre);
     }
 
-    if (context.dropped) {
+    if (context.drop) {
       ReturnUtils::ReturnValueRemover().walkFunctionInModule(func, &wasm);
     }
 
     return newFunc;
+  }
+
+  // Given a call and a new target it should be calling, apply that new target,
+  // including updating the operands and handling dropping.
+  void updateCall(const CallInfo& info,
+                  Name newTarget,
+                  const std::vector<Expression*>& newOperands,
+                  Module& wasm) {
+    call->target = newTarget;
+    call->operands.set(newOperands);
+
+    if (info.drop) {
+      // Replace (drop (call)) with (call), that is, replace the drop with the
+      // (updated) call.
+      *info.drop = call;
+    }
   }
 
   // Run minimal function-level optimizations on a function. This optimizes at
