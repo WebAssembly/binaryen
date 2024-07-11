@@ -92,6 +92,7 @@
 #include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/return-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
@@ -480,8 +481,9 @@ struct Monomorphize : public Pass {
         newParams.push_back(operand->type);
       }
     }
-    // TODO: support changes to results.
-    auto newResults = func->getResults();
+    // If we were dropped then we are pulling the drop into the monomorphized
+    // function, which means we return nothing.
+    auto newResults = context.dropped ? Type::none : func->getResults();
     newFunc->type = Signature(Type(newParams), newResults);
 
     // We must update local indexes: the new function has a  potentially
@@ -574,6 +576,10 @@ struct Monomorphize : public Pass {
       // Add the block after the prelude.
       pre.push_back(newFunc->body);
       newFunc->body = builder.makeBlock(pre);
+    }
+
+    if (context.dropped) {
+      ReturnUtils::ReturnValueRemover().walkFunctionInModule(func, &wasm);
     }
 
     return newFunc;
