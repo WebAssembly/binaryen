@@ -54,9 +54,7 @@ struct ReturnValueRemover : public PostWalker<ReturnValueRemover> {
     handleReturnCall(curr, targetType.getHeapType().getSignature());
   }
 
-
-  template<typename T>
-  void handleReturnCall(T* curr, Signature sig) {
+  template<typename T> void handleReturnCall(T* curr, Signature sig) {
     if (curr->isReturn) {
       // This can no longer be a return call, as it calls something that returns
       // a value, and we do not. Update the type (note we must handle the case
