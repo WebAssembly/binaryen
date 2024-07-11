@@ -379,11 +379,13 @@ struct EscapeAnalyzer {
       }
 
       void visitRefCast(RefCast* curr) {
-        // As it is our allocation that flows through here, we need to
-        // check that the cast will not trap, so that we can continue
-        // to (hopefully) optimize this allocation.
-        if (Type::isSubType(allocation->type, curr->type)) {
-          escapes = false;
+        // Whether the cast succeeds or fails, it does not escape.
+        escapes = false;
+
+        // If the cast fails then the allocation is fully consumed and does not
+        // flow any further (instead, we trap).
+        if (!Type::isSubType(allocation->type, curr->type)) {
+          fullyConsumes = true;
         }
       }
 
@@ -783,24 +785,22 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return;
     }
 
-    // It is safe to optimize out this RefCast, since we proved it
-    // contains our allocation and we have checked that the type of
-    // the allocation is a subtype of the type of the cast, and so
-    // cannot trap.
-    replaceCurrent(curr->ref);
+    // We know this RefCast receives our allocation, so we can see whether it
+    // succeeds or fails.
+    if (Type::isSubType(allocation->type, curr->type)) {
+      // The cast succeeds, so it is a no-op, and we can skip it, since after we
+      // remove the allocation it will not even be needed for validation.
+      replaceCurrent(curr->ref);
+    } else {
+      // The cast fails, so this must trap.
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr->ref),
+                                          builder.makeUnreachable()));
+    }
 
-    // We need to refinalize after this, as while we know the cast is not
-    // logically needed - the value flowing through will not be used - we do
-    // need validation to succeed even before other optimizations remove the
-    // code. For example:
-    //
-    //  (block (result $B)
-    //   (ref.cast $B
-    //    (block (result $A)
-    //
-    // Without the cast this does not validate, so we need to refinalize
-    // (which will fix this, as we replace the unused value with a null, so
-    // that type will propagate out).
+    // Either way, we need to refinalize here (we either added an unreachable,
+    // or we replaced a cast with the value being cast, which may have a less-
+    // refined type - it will not be used after we remove the allocation, but we
+    // must still fix that up for validation).
     refinalize = true;
   }
 

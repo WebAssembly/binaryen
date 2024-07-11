@@ -2635,24 +2635,34 @@
   (type $A (sub (struct (field (ref null $A)))))
   ;; CHECK:      (type $1 (func (result anyref)))
 
-  ;; CHECK:      (type $B (sub $A (struct (field (ref $A)))))
-  (type $B (sub $A (struct (field (ref $A)))))
+  ;; CHECK:      (type $B (sub $A (struct (field (ref $A)) (field i32))))
+  (type $B (sub $A (struct (field (ref $A)) (field i32))))
+
+  ;; CHECK:      (type $3 (func (result i32)))
 
   ;; CHECK:      (func $func (type $1) (result anyref)
   ;; CHECK-NEXT:  (local $a (ref $A))
   ;; CHECK-NEXT:  (local $1 (ref $A))
-  ;; CHECK-NEXT:  (local $2 (ref $A))
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 (ref $A))
+  ;; CHECK-NEXT:  (local $4 i32)
   ;; CHECK-NEXT:  (ref.cast (ref $B)
   ;; CHECK-NEXT:   (block (result (ref $A))
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (block (result nullref)
-  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:      (local.set $3
   ;; CHECK-NEXT:       (struct.new $A
   ;; CHECK-NEXT:        (ref.null none)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $4
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (local.set $1
-  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:       (local.get $3)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $2
+  ;; CHECK-NEXT:       (local.get $4)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
@@ -2675,6 +2685,7 @@
             (struct.new $A
               (ref.null none)
             )
+            (i32.const 1)
           )
         )
       )
@@ -2683,16 +2694,24 @@
 
   ;; CHECK:      (func $cast-success (type $1) (result anyref)
   ;; CHECK-NEXT:  (local $0 (ref $A))
-  ;; CHECK-NEXT:  (local $1 (ref $A))
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 (ref $A))
+  ;; CHECK-NEXT:  (local $3 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result nullref)
-  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:    (local.set $2
   ;; CHECK-NEXT:     (struct.new $A
   ;; CHECK-NEXT:      (ref.null none)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $3
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:     (local.get $2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (local.get $3)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )
@@ -2706,25 +2725,80 @@
           (struct.new $A
             (ref.null none)
           )
+          (i32.const 1)
         )
       )
     )
   )
   ;; CHECK:      (func $cast-failure (type $1) (result anyref)
-  ;; CHECK-NEXT:  (struct.get $B 0
-  ;; CHECK-NEXT:   (ref.cast (ref $B)
-  ;; CHECK-NEXT:    (struct.new $A
-  ;; CHECK-NEXT:     (struct.new $A
-  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:  (local $0 (ref null $A))
+  ;; CHECK-NEXT:  (local $1 (ref null $A))
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructGet we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (block (result nullref)
+  ;; CHECK-NEXT:       (local.set $1
+  ;; CHECK-NEXT:        (struct.new $A
+  ;; CHECK-NEXT:         (ref.null none)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $0
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $cast-failure (result anyref)
     (struct.get $B 0
-      ;; The allocated $A arrives here, but the cast will fail, so we do not
-      ;; optimize.
+      ;; The allocated $A arrives here, but the cast will fail. We can remove
+      ;; the allocation and put an unreachable here. (Note that the inner
+      ;; struct.new survives, which would take another cycle to remove.)
+      (ref.cast (ref $B)
+        (struct.new $A
+          (struct.new $A
+            (ref.null none)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $cast-failure-nofield (type $3) (result i32)
+  ;; CHECK-NEXT:  (local $0 (ref null $A))
+  ;; CHECK-NEXT:  (local $1 (ref null $A))
+  ;; CHECK-NEXT:  (block ;; (replaces unreachable StructGet we can't emit)
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (block (result nullref)
+  ;; CHECK-NEXT:       (local.set $1
+  ;; CHECK-NEXT:        (struct.new $A
+  ;; CHECK-NEXT:         (ref.null none)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $0
+  ;; CHECK-NEXT:        (local.get $1)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $cast-failure-nofield (result i32)
+    ;; As above, but we read from a field that only exists in $B, despite the
+    ;; allocation that flows here being an $A. We should not error on that.
+    (struct.get $B 1  ;; this changes from 0 to 1
       (ref.cast (ref $B)
         (struct.new $A
           (struct.new $A
