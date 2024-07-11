@@ -745,9 +745,9 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // not escape to any other place.
     int32_t result = analyzer.reached.count(curr->left) > 0 &&
                      analyzer.reached.count(curr->right) > 0;
-    // For simplicity, simply drop the RefEq and put a constant result after.
-    replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
-                                        builder.makeConst(Literal(result))));
+    replaceCurrent(builder.makeBlock({builder.makeDrop(curr->left),
+                                      builder.makeDrop(curr->right),
+                                      builder.makeConst(Literal(result))}));
   }
 
   void visitRefAs(RefAs* curr) {
