@@ -79,23 +79,24 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     if (memory->is64()) {
       wrapAddress64(curr->delta, curr->memory);
       auto* size = static_cast<Expression*>(curr);
-      // MemoryGrow returns -1 in the case of failure
-      // so we need to handle that
-      // local.set $tmp memory.grow X
-      // local.get
-      // i32.const -1
-      // if i32.eq
-      //   i64.const -1
-      // else
-      //   local.get
-      //   i32.extend
+      // MemoryGrow returns -1 in case of failure.  We cannot just use
+      // extend_32_u in this case so we handle it as follows:
+      //
+      // (if (result i64)
+      //  (i32.eq (i32.const -1) (local.tee $tmp (memory.grow X)))
+      //  (then
+      //   (i64.const -1)
+      //  )
+      //  (else
+      //   (i32.extend_32_u (local.get $tmp))
+      //  )
+      // )
       Builder builder(module);
       auto tmp = builder.addVar(getFunction(), Type::i32);
-      auto setLocal = builder.makeLocalSet(tmp, size);
       Expression* isMinusOne =
         builder.makeBinary(EqInt32,
                            builder.makeConst(int32_t(-1)),
-                           builder.makeLocalGet(tmp, Type::i32));
+                           builder.makeLocalTee(tmp, size, Type::i32));
       auto* newSize = builder.makeLocalGet(tmp, Type::i32);
       builder.makeUnary(UnaryOp::ExtendUInt32, newSize);
       Expression* ifExp =
@@ -103,7 +104,7 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
                        builder.makeConst(int64_t(-1)),
                        builder.makeUnary(UnaryOp::ExtendUInt32, newSize));
       curr->type = Type::i32;
-      replaceCurrent(builder.blockify(setLocal, ifExp));
+      replaceCurrent(ifExp);
     }
   }
 

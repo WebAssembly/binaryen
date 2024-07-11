@@ -232,26 +232,23 @@
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.set $0
- ;; CHECK-NEXT:   (block (result i64)
- ;; CHECK-NEXT:    (local.set $1
- ;; CHECK-NEXT:     (memory.grow
- ;; CHECK-NEXT:      (i32.wrap_i64
- ;; CHECK-NEXT:       (i64.const 1)
+ ;; CHECK-NEXT:   (if (result i64)
+ ;; CHECK-NEXT:    (i32.eq
+ ;; CHECK-NEXT:     (i32.const -1)
+ ;; CHECK-NEXT:     (local.tee $1
+ ;; CHECK-NEXT:      (memory.grow
+ ;; CHECK-NEXT:       (i32.wrap_i64
+ ;; CHECK-NEXT:        (i64.const 1)
+ ;; CHECK-NEXT:       )
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (if (result i64)
- ;; CHECK-NEXT:     (i32.eq
- ;; CHECK-NEXT:      (i32.const -1)
+ ;; CHECK-NEXT:    (then
+ ;; CHECK-NEXT:     (i64.const -1)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (else
+ ;; CHECK-NEXT:     (i64.extend_i32_u
  ;; CHECK-NEXT:      (local.get $1)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (then
- ;; CHECK-NEXT:      (i64.const -1)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (else
- ;; CHECK-NEXT:      (i64.extend_i32_u
- ;; CHECK-NEXT:       (local.get $1)
- ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
