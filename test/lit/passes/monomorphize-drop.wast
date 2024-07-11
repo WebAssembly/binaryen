@@ -30,9 +30,9 @@
 
   ;; CAREFUL:      (type $2 (func (param i32)))
 
-  ;; CAREFUL:      (type $3 (func (param i32) (result i32)))
+  ;; CAREFUL:      (type $3 (func (result i32)))
 
-  ;; CAREFUL:      (type $4 (func (result i32)))
+  ;; CAREFUL:      (type $4 (func (param i32) (result i32)))
 
   ;; CAREFUL:      (type $5 (func (param i32 i32)))
 
@@ -140,7 +140,7 @@
   ;; ALWAYS-NEXT:   (local.get $x)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $call-undropped-trivial (type $3) (param $x i32) (result i32)
+  ;; CAREFUL:      (func $call-undropped-trivial (type $4) (param $x i32) (result i32)
   ;; CAREFUL-NEXT:  (call $work
   ;; CAREFUL-NEXT:   (local.get $x)
   ;; CAREFUL-NEXT:   (local.get $x)
@@ -158,17 +158,13 @@
   ;; ALWAYS:      (func $call-undropped (type $3) (result i32)
   ;; ALWAYS-NEXT:  (call $work_11)
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $call-undropped (type $4) (result i32)
-  ;; CAREFUL-NEXT:  (call $work
-  ;; CAREFUL-NEXT:   (i32.const 3)
-  ;; CAREFUL-NEXT:   (i32.const 4)
-  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL:      (func $call-undropped (type $3) (result i32)
+  ;; CAREFUL-NEXT:  (call $work_11)
   ;; CAREFUL-NEXT: )
   (func $call-undropped (result i32)
-    ;; As above but now with constant params. We can monomorphize here (there is
-    ;; no issue in optimizing here without a drop and with a drop elsewhere),
-    ;; but we only do so in ALWAYS as in CAREFUL mode we can't find enough to
-    ;; do (without the drop, we can't remove any code).
+    ;; As above but now with constant params. We can monomorphize here - there
+    ;; is no issue in optimizing here without a drop and with a drop elsewhere -
+    ;; but we do call a different function of course, that returns an i32.
     (call $work
       (i32.const 3)
       (i32.const 4)
@@ -390,4 +386,8 @@
 
 ;; CAREFUL:      (func $work_10 (type $5) (param $0 i32) (param $1 i32)
 ;; CAREFUL-NEXT:  (nop)
+;; CAREFUL-NEXT: )
+
+;; CAREFUL:      (func $work_11 (type $3) (result i32)
+;; CAREFUL-NEXT:  (i32.const 49)
 ;; CAREFUL-NEXT: )
