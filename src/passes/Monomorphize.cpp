@@ -110,7 +110,7 @@ struct CallInfo {
   Call* call;
   // Store a reference to the drop's pointer so that we can replace it, as when
   // we optimize a dropped call we need to replace (drop (call)) with (call).
-  // Or, if the call is not dropped, this is nullptr;
+  // Or, if the call is not dropped, this is nullptr.
   Expression** drop;
 };
 
