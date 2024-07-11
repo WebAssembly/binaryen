@@ -147,15 +147,23 @@ void TableSlotManager::addSlot(Name func, Slot slot) {
 }
 
 TableSlotManager::TableSlotManager(Module& module) : module(module) {
+  if (module.features.hasReferenceTypes()) {
+    // Just create a new table to manage all primary-to-secondary calls lazily.
+    // Do not re-use slots for functions that will already be in existing
+    // tables, since that is not correct in the face of table mutations.
+    // TODO: Reduce overhead by creating a separate table for each function type
+    // if WasmGC is enabled.
+    return;
+  }
+
   // TODO: Reject or handle passive element segments
-  // TODO: If reference types are enabled, just create a fresh table to make bad
-  // interactions with user code impossible.
   auto funcref = Type(HeapType::func, Nullable);
   auto it = std::find_if(
     module.tables.begin(),
     module.tables.end(),
     [&](std::unique_ptr<Table>& table) { return table->type == funcref; });
   if (it == module.tables.end()) {
+    // There is no indirect function table, so we will create one lazily.
     return;
   }
 
@@ -560,18 +568,15 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
   } gatherer(*this);
   gatherer.walkModule(&primary);
 
-  // Find all RefFuncs in active elementSegments, which we can ignore: tables
-  // are the means by which we connect the modules, and are handled directly.
-  // Passive segments, however, are like RefFuncs in code, and we need to not
-  // ignore them here.
+  // Ignore references to secondary functions that occur in the active segment
+  // that will contain the imported placeholders. Indirect calls to table slots
+  // initialized by that segment will already go to the right place once the
+  // secondary module has been loaded and the table has been patched.
   std::unordered_set<RefFunc*> ignore;
-  for (auto& seg : primary.elementSegments) {
-    if (!seg->table.is()) {
-      continue;
-    }
-    for (auto* curr : seg->data) {
-      if (auto* refFunc = curr->dynCast<RefFunc>()) {
-        ignore.insert(refFunc);
+  if (tableManager.activeSegment) {
+    for (auto* expr : tableManager.activeSegment->data) {
+      if (auto* ref = expr->dynCast<RefFunc>()) {
+        ignore.insert(ref);
       }
     }
   }
