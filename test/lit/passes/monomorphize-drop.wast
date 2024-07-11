@@ -13,33 +13,41 @@
 
   ;; ALWAYS:      (type $0 (func))
 
-  ;; ALWAYS:      (type $1 (func (param i32 i32) (result i32)))
+  ;; ALWAYS:      (type $iii (func (param i32 i32) (result i32)))
 
-  ;; ALWAYS:      (type $2 (func (param i32)))
+  ;; ALWAYS:      (type $i (func (result i32)))
+  ;; CAREFUL:      (type $0 (func))
 
-  ;; ALWAYS:      (type $3 (func (result i32)))
+  ;; CAREFUL:      (type $iii (func (param i32 i32) (result i32)))
+
+  ;; CAREFUL:      (type $i (func (result i32)))
+  (type $i (func (result i32)))
+
+  (type $iii (func (param i32 i32) (result i32)))
+
+  ;; ALWAYS:      (type $3 (func (param i32)))
 
   ;; ALWAYS:      (type $4 (func (param i32) (result i32)))
 
   ;; ALWAYS:      (type $5 (func (param i32 i32)))
 
-  ;; ALWAYS:      (import "a" "b" (func $import (type $1) (param i32 i32) (result i32)))
-  ;; CAREFUL:      (type $0 (func (param i32 i32) (result i32)))
-
-  ;; CAREFUL:      (type $1 (func))
-
-  ;; CAREFUL:      (type $2 (func (param i32)))
-
-  ;; CAREFUL:      (type $3 (func (result i32)))
+  ;; ALWAYS:      (import "a" "b" (func $import (type $iii) (param i32 i32) (result i32)))
+  ;; CAREFUL:      (type $3 (func (param i32)))
 
   ;; CAREFUL:      (type $4 (func (param i32) (result i32)))
 
   ;; CAREFUL:      (type $5 (func (param i32 i32)))
 
-  ;; CAREFUL:      (import "a" "b" (func $import (type $0) (param i32 i32) (result i32)))
+  ;; CAREFUL:      (import "a" "b" (func $import (type $iii) (param i32 i32) (result i32)))
   (import "a" "b" (func $import (param i32 i32) (result i32)))
 
-  ;; ALWAYS:      (func $work (type $1) (param $x i32) (param $y i32) (result i32)
+  ;; ALWAYS:      (table $table 10 10 funcref)
+  ;; CAREFUL:      (table $table 10 10 funcref)
+  (table $table 10 10 funcref)
+
+  ;; ALWAYS:      (elem declare func $import)
+
+  ;; ALWAYS:      (func $work (type $iii) (param $x i32) (param $y i32) (result i32)
   ;; ALWAYS-NEXT:  (i32.mul
   ;; ALWAYS-NEXT:   (i32.xor
   ;; ALWAYS-NEXT:    (local.get $x)
@@ -51,7 +59,7 @@
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $work (type $0) (param $0 i32) (param $1 i32) (result i32)
+  ;; CAREFUL:      (func $work (type $iii) (param $0 i32) (param $1 i32) (result i32)
   ;; CAREFUL-NEXT:  (i32.mul
   ;; CAREFUL-NEXT:   (i32.add
   ;; CAREFUL-NEXT:    (local.get $0)
@@ -78,24 +86,24 @@
     )
   )
 
-  ;; ALWAYS:      (func $calls (type $2) (param $x i32)
-  ;; ALWAYS-NEXT:  (call $work_8)
-  ;; ALWAYS-NEXT:  (call $work_8)
-  ;; ALWAYS-NEXT:  (call $work_9
+  ;; ALWAYS:      (func $calls (type $3) (param $x i32)
+  ;; ALWAYS-NEXT:  (call $work_10)
+  ;; ALWAYS-NEXT:  (call $work_10)
+  ;; ALWAYS-NEXT:  (call $work_11
   ;; ALWAYS-NEXT:   (local.get $x)
   ;; ALWAYS-NEXT:  )
-  ;; ALWAYS-NEXT:  (call $work_10
+  ;; ALWAYS-NEXT:  (call $work_12
   ;; ALWAYS-NEXT:   (local.get $x)
   ;; ALWAYS-NEXT:   (local.get $x)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $calls (type $2) (param $x i32)
-  ;; CAREFUL-NEXT:  (call $work_8)
-  ;; CAREFUL-NEXT:  (call $work_8)
-  ;; CAREFUL-NEXT:  (call $work_9
+  ;; CAREFUL:      (func $calls (type $3) (param $x i32)
+  ;; CAREFUL-NEXT:  (call $work_10)
+  ;; CAREFUL-NEXT:  (call $work_10)
+  ;; CAREFUL-NEXT:  (call $work_11
   ;; CAREFUL-NEXT:   (local.get $x)
   ;; CAREFUL-NEXT:  )
-  ;; CAREFUL-NEXT:  (call $work_10
+  ;; CAREFUL-NEXT:  (call $work_12
   ;; CAREFUL-NEXT:   (local.get $x)
   ;; CAREFUL-NEXT:   (local.get $x)
   ;; CAREFUL-NEXT:  )
@@ -155,11 +163,11 @@
     )
   )
 
-  ;; ALWAYS:      (func $call-undropped (type $3) (result i32)
-  ;; ALWAYS-NEXT:  (call $work_11)
+  ;; ALWAYS:      (func $call-undropped (type $i) (result i32)
+  ;; ALWAYS-NEXT:  (call $work_13)
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $call-undropped (type $3) (result i32)
-  ;; CAREFUL-NEXT:  (call $work_11)
+  ;; CAREFUL:      (func $call-undropped (type $i) (result i32)
+  ;; CAREFUL-NEXT:  (call $work_13)
   ;; CAREFUL-NEXT: )
   (func $call-undropped (result i32)
     ;; As above but now with constant params. We can monomorphize here - there
@@ -179,7 +187,7 @@
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $call-import (type $1)
+  ;; CAREFUL:      (func $call-import (type $0)
   ;; CAREFUL-NEXT:  (drop
   ;; CAREFUL-NEXT:   (call $import
   ;; CAREFUL-NEXT:    (i32.const 3)
@@ -197,7 +205,7 @@
     )
   )
 
-  ;; ALWAYS:      (func $import-work (type $1) (param $x i32) (param $y i32) (result i32)
+  ;; ALWAYS:      (func $import-work (type $iii) (param $x i32) (param $y i32) (result i32)
   ;; ALWAYS-NEXT:  (call $import
   ;; ALWAYS-NEXT:   (i32.xor
   ;; ALWAYS-NEXT:    (local.get $x)
@@ -209,7 +217,7 @@
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $import-work (type $0) (param $0 i32) (param $1 i32) (result i32)
+  ;; CAREFUL:      (func $import-work (type $iii) (param $0 i32) (param $1 i32) (result i32)
   ;; CAREFUL-NEXT:  (call $import
   ;; CAREFUL-NEXT:   (i32.xor
   ;; CAREFUL-NEXT:    (local.get $0)
@@ -236,9 +244,9 @@
   )
 
   ;; ALWAYS:      (func $call-import-work (type $0)
-  ;; ALWAYS-NEXT:  (call $import-work_12)
+  ;; ALWAYS-NEXT:  (call $import-work_14)
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $call-import-work (type $1)
+  ;; CAREFUL:      (func $call-import-work (type $0)
   ;; CAREFUL-NEXT:  (drop
   ;; CAREFUL-NEXT:   (call $import-work
   ;; CAREFUL-NEXT:    (i32.const 3)
@@ -258,8 +266,123 @@
       )
     )
   )
+
+  ;; ALWAYS:      (func $many-returns (type $i) (result i32)
+  ;; ALWAYS-NEXT:  (if
+  ;; ALWAYS-NEXT:   (call $import
+  ;; ALWAYS-NEXT:    (i32.const 1)
+  ;; ALWAYS-NEXT:    (i32.const 2)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:   (then
+  ;; ALWAYS-NEXT:    (return
+  ;; ALWAYS-NEXT:     (i32.const 3)
+  ;; ALWAYS-NEXT:    )
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:   (else
+  ;; ALWAYS-NEXT:    (return_call $import
+  ;; ALWAYS-NEXT:     (i32.const 4)
+  ;; ALWAYS-NEXT:     (i32.const 5)
+  ;; ALWAYS-NEXT:    )
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT:  (if
+  ;; ALWAYS-NEXT:   (call $import
+  ;; ALWAYS-NEXT:    (i32.const 6)
+  ;; ALWAYS-NEXT:    (i32.const 7)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:   (then
+  ;; ALWAYS-NEXT:    (return_call_indirect $table (type $i)
+  ;; ALWAYS-NEXT:     (i32.const 8)
+  ;; ALWAYS-NEXT:    )
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:   (else
+  ;; ALWAYS-NEXT:    (return_call_ref $iii
+  ;; ALWAYS-NEXT:     (i32.const 1)
+  ;; ALWAYS-NEXT:     (i32.const 2)
+  ;; ALWAYS-NEXT:     (ref.func $import)
+  ;; ALWAYS-NEXT:    )
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT:  (i32.const 4)
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $many-returns (type $i) (result i32)
+  ;; CAREFUL-NEXT:  (if (result i32)
+  ;; CAREFUL-NEXT:   (call $import
+  ;; CAREFUL-NEXT:    (i32.const 1)
+  ;; CAREFUL-NEXT:    (i32.const 2)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (then
+  ;; CAREFUL-NEXT:    (i32.const 3)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (else
+  ;; CAREFUL-NEXT:    (return_call $import
+  ;; CAREFUL-NEXT:     (i32.const 4)
+  ;; CAREFUL-NEXT:     (i32.const 5)
+  ;; CAREFUL-NEXT:    )
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $many-returns (result i32)
+    ;; This function returns in every possible way, which we need to handle in
+    ;; the monomorphized function (that no longer returns a value).
+    (if
+      (call $import
+        (i32.const 1)
+        (i32.const 2)
+      )
+      (then
+        (return
+          (i32.const 3)
+        )
+      )
+      (else
+        (return_call $import
+          (i32.const 4)
+          (i32.const 5)
+        )
+      )
+    )
+    (if
+      (call $import
+        (i32.const 6)
+        (i32.const 7)
+      )
+      (then
+        (return_call_indirect (type $i)
+          (i32.const 8)
+        )
+      )
+      (else
+        (return_call_ref $iii
+          (i32.const 1)
+          (i32.const 2)
+          (ref.func $import)
+        )
+      )
+    )
+    ;; Implicit return at the end.
+    (i32.const 4)
+  )
+
+  ;; ALWAYS:      (func $call-many-returns (type $0)
+  ;; ALWAYS-NEXT:  (call $many-returns_15)
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $call-many-returns (type $0)
+  ;; CAREFUL-NEXT:  (drop
+  ;; CAREFUL-NEXT:   (call $many-returns)
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $call-many-returns
+    ;; Call the above function to cause it to get monomorphized (only in ALWAYS,
+    ;; as there is no work we can remove).
+    ;;
+    ;; This also tests a function with no parameters being handled.
+    (drop
+      (call $many-returns)
+    )
+  )
 )
-;; ALWAYS:      (func $work_8 (type $0)
+;; ALWAYS:      (func $work_10 (type $0)
 ;; ALWAYS-NEXT:  (local $x i32)
 ;; ALWAYS-NEXT:  (local $y i32)
 ;; ALWAYS-NEXT:  (drop
@@ -284,7 +407,7 @@
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; ALWAYS:      (func $work_9 (type $2) (param $0 i32)
+;; ALWAYS:      (func $work_11 (type $3) (param $0 i32)
 ;; ALWAYS-NEXT:  (local $x i32)
 ;; ALWAYS-NEXT:  (local $y i32)
 ;; ALWAYS-NEXT:  (drop
@@ -309,7 +432,7 @@
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; ALWAYS:      (func $work_10 (type $5) (param $0 i32) (param $1 i32)
+;; ALWAYS:      (func $work_12 (type $5) (param $0 i32) (param $1 i32)
 ;; ALWAYS-NEXT:  (local $x i32)
 ;; ALWAYS-NEXT:  (local $y i32)
 ;; ALWAYS-NEXT:  (drop
@@ -334,7 +457,7 @@
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; ALWAYS:      (func $work_11 (type $3) (result i32)
+;; ALWAYS:      (func $work_13 (type $i) (result i32)
 ;; ALWAYS-NEXT:  (local $x i32)
 ;; ALWAYS-NEXT:  (local $y i32)
 ;; ALWAYS-NEXT:  (local.set $x
@@ -355,7 +478,7 @@
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; ALWAYS:      (func $import-work_12 (type $0)
+;; ALWAYS:      (func $import-work_14 (type $0)
 ;; ALWAYS-NEXT:  (local $x i32)
 ;; ALWAYS-NEXT:  (local $y i32)
 ;; ALWAYS-NEXT:  (drop
@@ -380,18 +503,68 @@
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; CAREFUL:      (func $work_8 (type $1)
+;; ALWAYS:      (func $many-returns_15 (type $0)
+;; ALWAYS-NEXT:  (drop
+;; ALWAYS-NEXT:   (block (result i32)
+;; ALWAYS-NEXT:    (if
+;; ALWAYS-NEXT:     (call $import
+;; ALWAYS-NEXT:      (i32.const 1)
+;; ALWAYS-NEXT:      (i32.const 2)
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:     (then
+;; ALWAYS-NEXT:      (drop
+;; ALWAYS-NEXT:       (i32.const 3)
+;; ALWAYS-NEXT:      )
+;; ALWAYS-NEXT:      (return)
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:     (else
+;; ALWAYS-NEXT:      (drop
+;; ALWAYS-NEXT:       (call $import
+;; ALWAYS-NEXT:        (i32.const 4)
+;; ALWAYS-NEXT:        (i32.const 5)
+;; ALWAYS-NEXT:       )
+;; ALWAYS-NEXT:      )
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:    (if
+;; ALWAYS-NEXT:     (call $import
+;; ALWAYS-NEXT:      (i32.const 6)
+;; ALWAYS-NEXT:      (i32.const 7)
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:     (then
+;; ALWAYS-NEXT:      (drop
+;; ALWAYS-NEXT:       (call_indirect $table (type $i)
+;; ALWAYS-NEXT:        (i32.const 8)
+;; ALWAYS-NEXT:       )
+;; ALWAYS-NEXT:      )
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:     (else
+;; ALWAYS-NEXT:      (drop
+;; ALWAYS-NEXT:       (call_ref $iii
+;; ALWAYS-NEXT:        (i32.const 1)
+;; ALWAYS-NEXT:        (i32.const 2)
+;; ALWAYS-NEXT:        (ref.func $import)
+;; ALWAYS-NEXT:       )
+;; ALWAYS-NEXT:      )
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:    (i32.const 4)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT: )
+
+;; CAREFUL:      (func $work_10 (type $0)
 ;; CAREFUL-NEXT:  (nop)
 ;; CAREFUL-NEXT: )
 
-;; CAREFUL:      (func $work_9 (type $2) (param $0 i32)
+;; CAREFUL:      (func $work_11 (type $3) (param $0 i32)
 ;; CAREFUL-NEXT:  (nop)
 ;; CAREFUL-NEXT: )
 
-;; CAREFUL:      (func $work_10 (type $5) (param $0 i32) (param $1 i32)
+;; CAREFUL:      (func $work_12 (type $5) (param $0 i32) (param $1 i32)
 ;; CAREFUL-NEXT:  (nop)
 ;; CAREFUL-NEXT: )
 
-;; CAREFUL:      (func $work_11 (type $3) (result i32)
+;; CAREFUL:      (func $work_13 (type $i) (result i32)
 ;; CAREFUL-NEXT:  (i32.const 49)
 ;; CAREFUL-NEXT: )
