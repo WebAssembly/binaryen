@@ -247,6 +247,10 @@
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
   (func $call-import-work
+    ;; This is monomorphized in ALWAYS (as the drop means the call context is
+    ;; not trivial), but not in CAREFUL mode (as there is no significant benefit
+    ;; from optimizations on the monomorphized function - the import is opaque
+    ;; work we cannot do anything with, even if we see it is handed consts).
     (drop
       (call $import-work
         (i32.const 3)
