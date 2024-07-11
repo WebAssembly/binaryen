@@ -105,7 +105,7 @@ namespace wasm {
 namespace {
 
 // Finds the calls and whether each one of them is dropped.
-struct CallFinder : public Walker<CallFinder> {
+struct CallFinder : public PostWalker<CallFinder> {
   struct Info {
     Call* call;
     bool dropped;
@@ -123,8 +123,8 @@ struct CallFinder : public Walker<CallFinder> {
       // The call we just added to |infos| is dropped.
       assert(!infos.empty());
       auto& back = infos.back();
-      assert(back->call == curr);
-      back->dropped = true;
+      assert(back.call == curr->value);
+      back.dropped = true;
     }
   }
 };
@@ -357,7 +357,8 @@ struct Monomorphize : public Pass {
 
   // Try to optimize a call.
   void processCall(CallFinder::Info& info, Module& wasm) {
-    auto target = info.call->target;
+    auto* call = info.call;
+    auto target = call->target;
     auto* func = wasm.getFunction(target);
     if (func->imported()) {
       // Nothing to do since this calls outside of the module.

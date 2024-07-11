@@ -17,6 +17,7 @@
 #ifndef wasm_ir_return_h
 #define wasm_ir_return_h
 
+#include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
 
@@ -30,13 +31,13 @@ struct ReturnValueRemover : public PostWalker<ReturnValueRemover> {
     auto* value = curr->value;
     assert(value);
     curr->value = nullptr;
-    Builder builder(*module);
+    Builder builder(*getModule());
     replaceCurrent(builder.makeSequence(builder.makeDrop(value), curr));
   }
 
   void visitFunction(Function* curr) {
     if (curr->body->type.isConcrete()) {
-      curr->body = Builder(*module).makeDrop(curr->body);
+      curr->body = Builder(*getModule()).makeDrop(curr->body);
     }
   }
 };
