@@ -582,7 +582,8 @@ struct Monomorphize : public Pass {
     }
 
     if (context.dropped) {
-      ReturnUtils::ReturnValueRemover().walkFunctionInModule(func, &wasm);
+      ReturnUtils::ReturnValueRemover().walkFunctionInModule(newFunc.get(),
+                                                             &wasm);
     }
 
     return newFunc;
