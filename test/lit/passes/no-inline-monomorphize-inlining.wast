@@ -3,9 +3,12 @@
 ;; Monomorphization creates a new function, which we can then inline. When we
 ;; mark the original as no-inline, we should not inline the copy, as the copy
 ;; inherits the metadata.
+;;
+;; Use --optimize-level=3 to ensure inlining works at the maximum (to avoid it
+;; not happening because of size limits etc.).
 
-;; RUN: foreach %s %t wasm-opt --no-inline=*noinline* --monomorphize-always --inlining -all -S -o - | filecheck %s --check-prefix NO_INLINE
-;; RUN: foreach %s %t wasm-opt                        --monomorphize-always --inlining -all -S -o - | filecheck %s --check-prefix YESINLINE
+;; RUN: foreach %s %t wasm-opt --no-inline=*noinline* --monomorphize-always --inlining --optimize-level=3 -all -S -o - | filecheck %s --check-prefix NO_INLINE
+;; RUN: foreach %s %t wasm-opt                        --monomorphize-always --inlining --optimize-level=3 -all -S -o - | filecheck %s --check-prefix YESINLINE
 
 (module
   ;; NO_INLINE:      (type $A (sub (struct )))
@@ -42,7 +45,9 @@
   ;; YESINLINE-NEXT:  (local $0 (ref $A))
   ;; YESINLINE-NEXT:  (local $1 (ref $A))
   ;; YESINLINE-NEXT:  (local $2 (ref $B))
-  ;; YESINLINE-NEXT:  (local $3 (ref $B))
+  ;; YESINLINE-NEXT:  (local $3 (ref $A))
+  ;; YESINLINE-NEXT:  (local $4 (ref $B))
+  ;; YESINLINE-NEXT:  (local $5 (ref $A))
   ;; YESINLINE-NEXT:  (block
   ;; YESINLINE-NEXT:   (block $__inlined_func$refinable_noinline
   ;; YESINLINE-NEXT:    (local.set $0
@@ -68,18 +73,28 @@
   ;; YESINLINE-NEXT:    (local.set $2
   ;; YESINLINE-NEXT:     (struct.new_default $B)
   ;; YESINLINE-NEXT:    )
-  ;; YESINLINE-NEXT:    (drop
-  ;; YESINLINE-NEXT:     (local.get $2)
+  ;; YESINLINE-NEXT:    (block
+  ;; YESINLINE-NEXT:     (local.set $3
+  ;; YESINLINE-NEXT:      (local.get $2)
+  ;; YESINLINE-NEXT:     )
+  ;; YESINLINE-NEXT:     (drop
+  ;; YESINLINE-NEXT:      (local.get $3)
+  ;; YESINLINE-NEXT:     )
   ;; YESINLINE-NEXT:    )
   ;; YESINLINE-NEXT:   )
   ;; YESINLINE-NEXT:  )
   ;; YESINLINE-NEXT:  (block
   ;; YESINLINE-NEXT:   (block $__inlined_func$refinable_noinline_2$3
-  ;; YESINLINE-NEXT:    (local.set $3
+  ;; YESINLINE-NEXT:    (local.set $4
   ;; YESINLINE-NEXT:     (struct.new_default $B)
   ;; YESINLINE-NEXT:    )
-  ;; YESINLINE-NEXT:    (drop
-  ;; YESINLINE-NEXT:     (local.get $3)
+  ;; YESINLINE-NEXT:    (block
+  ;; YESINLINE-NEXT:     (local.set $5
+  ;; YESINLINE-NEXT:      (local.get $4)
+  ;; YESINLINE-NEXT:     )
+  ;; YESINLINE-NEXT:     (drop
+  ;; YESINLINE-NEXT:      (local.get $5)
+  ;; YESINLINE-NEXT:     )
   ;; YESINLINE-NEXT:    )
   ;; YESINLINE-NEXT:   )
   ;; YESINLINE-NEXT:  )
@@ -118,7 +133,11 @@
     )
   )
 )
-;; NO_INLINE:      (func $refinable_noinline_2 (type $4) (param $ref (ref $B))
+;; NO_INLINE:      (func $refinable_noinline_2 (type $4) (param $0 (ref $B))
+;; NO_INLINE-NEXT:  (local $ref (ref $A))
+;; NO_INLINE-NEXT:  (local.set $ref
+;; NO_INLINE-NEXT:   (local.get $0)
+;; NO_INLINE-NEXT:  )
 ;; NO_INLINE-NEXT:  (drop
 ;; NO_INLINE-NEXT:   (local.get $ref)
 ;; NO_INLINE-NEXT:  )
