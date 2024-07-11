@@ -10,9 +10,9 @@
 (module
  ;; PRIMARY:      (type $0 (func))
 
- ;; PRIMARY:      (import "placeholder" "1" (func $placeholder_1 (type $0)))
-
  ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (type $0)))
+
+ ;; PRIMARY:      (import "placeholder" "1" (func $placeholder_1 (type $0)))
 
  ;; PRIMARY:      (global $glob1 (ref func) (ref.func $prime))
 
@@ -25,12 +25,12 @@
 
  (global $glob2 (ref func) (ref.func $second))
 
- ;; PRIMARY:      (table $1 1 funcref)
+ ;; PRIMARY:      (table $1 2 funcref)
 
- ;; PRIMARY:      (elem $elem (table $table) (i32.const 0) func $in-table $placeholder_1)
+ ;; PRIMARY:      (elem $elem (table $table) (i32.const 0) func $in-table $3)
  (elem $elem (i32.const 0) $in-table $second-in-table)
 
- ;; PRIMARY:      (elem $1 (table $1) (i32.const 0) func $placeholder_0)
+ ;; PRIMARY:      (elem $1 (table $1) (i32.const 0) func $placeholder_0 $placeholder_1)
 
  ;; PRIMARY:      (elem declare func $2 $prime)
 
@@ -63,7 +63,7 @@
 
  ;; SECONDARY:      (type $0 (func))
 
- ;; SECONDARY:      (import "primary" "table_2" (table $timport$0 1 funcref))
+ ;; SECONDARY:      (import "primary" "table_2" (table $timport$0 2 funcref))
 
  ;; SECONDARY:      (import "primary" "table" (table $table 1 1 funcref))
 
@@ -114,5 +114,11 @@
 ;; PRIMARY:      (func $2 (type $0)
 ;; PRIMARY-NEXT:  (call_indirect $1 (type $0)
 ;; PRIMARY-NEXT:   (i32.const 0)
+;; PRIMARY-NEXT:  )
+;; PRIMARY-NEXT: )
+
+;; PRIMARY:      (func $3 (type $0)
+;; PRIMARY-NEXT:  (call_indirect $1 (type $0)
+;; PRIMARY-NEXT:   (i32.const 1)
 ;; PRIMARY-NEXT:  )
 ;; PRIMARY-NEXT: )

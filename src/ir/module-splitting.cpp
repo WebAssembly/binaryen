@@ -568,18 +568,15 @@ void ModuleSplitter::indirectReferencesToSecondaryFunctions() {
   } gatherer(*this);
   gatherer.walkModule(&primary);
 
-  // Find all RefFuncs in active elementSegments, which we can ignore: tables
-  // are the means by which we connect the modules, and are handled directly.
-  // Passive segments, however, are like RefFuncs in code, and we need to not
-  // ignore them here.
+  // Ignore references to secondary functions that occur in the active segment
+  // that will contain the imported placeholders. Indirect calls to table slots
+  // initialized by that segment will already go to the right place once the
+  // secondary module has been loaded and the table has been patched.
   std::unordered_set<RefFunc*> ignore;
-  for (auto& seg : primary.elementSegments) {
-    if (!seg->table.is()) {
-      continue;
-    }
-    for (auto* curr : seg->data) {
-      if (auto* refFunc = curr->dynCast<RefFunc>()) {
-        ignore.insert(refFunc);
+  if (tableManager.activeSegment) {
+    for (auto* expr : tableManager.activeSegment->data) {
+      if (auto* ref = expr->dynCast<RefFunc>()) {
+        ignore.insert(ref);
       }
     }
   }
