@@ -788,7 +788,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // We know this RefCast receives our allocation, so we can see whether it
     // succeeds or fails.
     if (Type::isSubType(allocation->type, curr->type)) {
-      // The cast succeeds, so it is a no-op, and we can skip it.
+      // The cast succeeds, so it is a no-op, and we can skip it, since after we
+      // remove the allocation it will not even be needed for validation.
       replaceCurrent(curr->ref);
     } else {
       // The cast fails, so this must trap.
