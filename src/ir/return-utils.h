@@ -64,8 +64,8 @@ struct ReturnValueRemover : public PostWalker<ReturnValueRemover> {
 
       // Return after the dropped call.
       Builder builder(*getModule());
-      replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
-                                          builder.makeReturn()));
+      replaceCurrent(
+        builder.makeSequence(builder.makeDrop(curr), builder.makeReturn()));
     }
   }
 
