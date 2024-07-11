@@ -11,9 +11,11 @@
   ;; Test that dropped functions are monomorphized, and the drop is reverse-
   ;; inlined into the called function, enabling more optimizations.
 
-  ;; ALWAYS:      (type $0 (func))
+  ;; ALWAYS:      (type $0 (func (param i32)))
 
   ;; ALWAYS:      (type $1 (func (param i32 i32) (result i32)))
+
+  ;; ALWAYS:      (type $2 (func))
 
   ;; ALWAYS:      (func $work (type $1) (param $x i32) (param $y i32) (result i32)
   ;; ALWAYS-NEXT:  (i32.mul
@@ -27,9 +29,11 @@
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (type $0 (func))
+  ;; CAREFUL:      (type $0 (func (param i32)))
 
   ;; CAREFUL:      (type $1 (func (param i32 i32) (result i32)))
+
+  ;; CAREFUL:      (type $2 (func))
 
   ;; CAREFUL:      (func $work (type $1) (param $0 i32) (param $1 i32) (result i32)
   ;; CAREFUL-NEXT:  (i32.mul
@@ -58,15 +62,23 @@
     )
   )
 
-  ;; ALWAYS:      (func $calls (type $0)
+  ;; ALWAYS:      (func $calls (type $0) (param $x i32)
   ;; ALWAYS-NEXT:  (call $work_2)
   ;; ALWAYS-NEXT:  (call $work_2)
+  ;; ALWAYS-NEXT:  (call $work_3
+  ;; ALWAYS-NEXT:   (local.get $x)
+  ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $calls (type $0)
+  ;; CAREFUL:      (func $calls (type $0) (param $x i32)
   ;; CAREFUL-NEXT:  (call $work_2)
   ;; CAREFUL-NEXT:  (call $work_2)
+  ;; CAREFUL-NEXT:  (call $work_3
+  ;; CAREFUL-NEXT:   (local.get $x)
+  ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
-  (func $calls
+  (func $calls (param $x i32)
+    ;; Both of these can call the same monomorphized function. In CAREFUL mode
+    ;; that function's body can also be optimized into a nop.
     (drop
       (call $work
         (i32.const 3)
@@ -77,11 +89,20 @@
       (call $work
         (i32.const 3)
         (i32.const 4)
+      )
+    )
+    ;; Another call, now with an unknown parameter. This calls a different
+    ;; monomorphized function, but once again the body can be optimized into a
+    ;; nop in CAREFUL.
+    (drop
+      (call $work
+        (i32.const 3)
+        (local.get $x)
       )
     )
   )
 )
-;; ALWAYS:      (func $work_2 (type $0)
+;; ALWAYS:      (func $work_2 (type $2)
 ;; ALWAYS-NEXT:  (local $x i32)
 ;; ALWAYS-NEXT:  (local $y i32)
 ;; ALWAYS-NEXT:  (drop
@@ -106,6 +127,35 @@
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; CAREFUL:      (func $work_2 (type $0)
+;; ALWAYS:      (func $work_3 (type $0) (param $0 i32)
+;; ALWAYS-NEXT:  (local $x i32)
+;; ALWAYS-NEXT:  (local $y i32)
+;; ALWAYS-NEXT:  (drop
+;; ALWAYS-NEXT:   (block (result i32)
+;; ALWAYS-NEXT:    (local.set $x
+;; ALWAYS-NEXT:     (i32.const 3)
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:    (local.set $y
+;; ALWAYS-NEXT:     (local.get $0)
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:    (i32.mul
+;; ALWAYS-NEXT:     (i32.xor
+;; ALWAYS-NEXT:      (local.get $x)
+;; ALWAYS-NEXT:      (local.get $y)
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:     (i32.add
+;; ALWAYS-NEXT:      (local.get $x)
+;; ALWAYS-NEXT:      (local.get $y)
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT: )
+
+;; CAREFUL:      (func $work_2 (type $2)
+;; CAREFUL-NEXT:  (nop)
+;; CAREFUL-NEXT: )
+
+;; CAREFUL:      (func $work_3 (type $0) (param $0 i32)
 ;; CAREFUL-NEXT:  (nop)
 ;; CAREFUL-NEXT: )
