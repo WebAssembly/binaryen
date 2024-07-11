@@ -116,7 +116,6 @@ struct CallInfo {
 
 // Finds the calls and whether each one of them is dropped.
 struct CallFinder : public PostWalker<CallFinder> {
-
   std::vector<CallInfo> infos;
 
   void visitCall(Call* curr) {
