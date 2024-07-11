@@ -374,7 +374,7 @@ struct Monomorphize : public Pass {
     // Decide whether it is worth using the monomorphized function.
     auto worthwhile = true;
     if (onlyWhenHelpful) {
-      // Optimize both functions using minimal opts, hopefully enough to see if
+      // Run the optimizer on both functions, hopefully just enough to see if
       // there is a benefit to the context. We optimize both to avoid confusion
       // from the function benefiting from simply running another cycle of
       // optimization.
@@ -400,8 +400,8 @@ struct Monomorphize : public Pass {
       //       of the function, which uses memory, which is avoided if we just
       //       keep optimizing from the current contents as we go. It's not
       //       obvious which approach is best here.
-      doMinimalOpts(func);
-      doMinimalOpts(monoFunc.get());
+      doOpts(func);
+      doOpts(monoFunc.get());
 
       auto costBefore = CostAnalyzer(func->body).cost;
       auto costAfter = CostAnalyzer(monoFunc->body).cost;
@@ -552,26 +552,16 @@ struct Monomorphize : public Pass {
     return newFunc;
   }
 
-  // Run minimal function-level optimizations on a function. This optimizes at
-  // -O1 which is very fast and runs in linear time basically, and so it should
-  // be reasonable to run as part of this pass: -O1 is several times faster than
-  // a full -O2, in particular, and so if we run this as part of -O2 we should
-  // not be making it much slower overall.
-  // TODO: Perhaps we don't need all of -O1, and can focus on specific things we
-  //       expect to help. That would be faster, but we'd always run the risk of
-  //       missing things, especially as new passes are added later and we don't
-  //       think to add them here.
-  //       Alternatively, perhaps we should have a mode that does use -O1 or
-  //       even -O2 or above, as in theory any optimization could end up
-  //       mattering a lot here.
-  void doMinimalOpts(Function* func) {
+  // Run some function-level optimizations on a function. Ideally we would run a
+  // minimal amount of optimizations here, but we do want to give the optimizer
+  // as much of a chance to work as possible, so for now do all of -O3 (in
+  // particular, we really need to run --precompute-propagate so constants are
+  // applied in the optimized function).
+  // TODO: Perhaps run -O2 or even -O1 if the function is large (or has many
+  //       locals, etc.), to ensure linear time, but we could miss out.
+  void doOpts(Function* func) {
     PassRunner runner(getPassRunner());
-    runner.options.optimizeLevel = 1;
-    // Local subtyping is not run in -O1, but we really do want it here since
-    // the entire point is that parameters now have more refined types, which
-    // can lead to locals reading them being refinable as well.
-    runner.add("local-subtyping");
-    // TODO: we need local propagation and escape analysis etc. -O3?
+    runner.options.optimizeLevel = 3;
     runner.addDefaultFunctionOptimizationPasses();
     runner.setIsNested(true);
     runner.runOnFunction(func);
