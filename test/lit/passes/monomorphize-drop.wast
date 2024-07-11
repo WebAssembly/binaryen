@@ -524,6 +524,7 @@
 ;; ALWAYS-NEXT:        (i32.const 5)
 ;; ALWAYS-NEXT:       )
 ;; ALWAYS-NEXT:      )
+;; ALWAYS-NEXT:      (return)
 ;; ALWAYS-NEXT:     )
 ;; ALWAYS-NEXT:    )
 ;; ALWAYS-NEXT:    (if
@@ -537,6 +538,7 @@
 ;; ALWAYS-NEXT:        (i32.const 8)
 ;; ALWAYS-NEXT:       )
 ;; ALWAYS-NEXT:      )
+;; ALWAYS-NEXT:      (return)
 ;; ALWAYS-NEXT:     )
 ;; ALWAYS-NEXT:     (else
 ;; ALWAYS-NEXT:      (drop
@@ -546,6 +548,7 @@
 ;; ALWAYS-NEXT:        (ref.func $import)
 ;; ALWAYS-NEXT:       )
 ;; ALWAYS-NEXT:      )
+;; ALWAYS-NEXT:      (return)
 ;; ALWAYS-NEXT:     )
 ;; ALWAYS-NEXT:    )
 ;; ALWAYS-NEXT:    (i32.const 4)
