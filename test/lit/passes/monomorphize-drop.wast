@@ -41,6 +41,8 @@
   ;; CAREFUL:      (import "a" "b" (func $import (type $iii) (param i32 i32) (result i32)))
   (import "a" "b" (func $import (param i32 i32) (result i32)))
 
+  (import "a" "c" (func $import2))
+
   ;; ALWAYS:      (table $table 10 10 funcref)
   ;; CAREFUL:      (table $table 10 10 funcref)
   (table $table 10 10 funcref)
@@ -179,6 +181,18 @@
       (i32.const 3)
       (i32.const 4)
     )
+  )
+
+  (func $no-params (result i32)
+    ;; A function that will be dropped, and has no params.
+    (i32.const 42)
+  )
+
+  (func $call-no-params (result i32)
+    (drop
+      (call $no-params)
+    )
+    (call $no-params)
   )
 
   ;; ALWAYS:      (func $call-import (type $0)
@@ -345,65 +359,137 @@
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT:  (i32.const 4)
   ;; CAREFUL-NEXT: )
-  (func $many-returns (result i32)
-    ;; This function returns in every possible way, which we need to handle in
-    ;; the monomorphized function (that no longer returns a value).
+  (func $return-normal (param $x i32) (result i32)
+    ;; This function has a return, which needs to be handled in the
+    ;; monomorphized function, as we'll no longer return a value.
     (if
-      (call $import
-        (i32.const 1)
-        (i32.const 2)
-      )
+      (local.get $x)
       (then
+        (drop
+          (call $import2)
+        )
         (return
-          (i32.const 3)
-        )
-      )
-      (else
-        (return_call $import
-          (i32.const 4)
-          (i32.const 5)
+          (i32.const 0)
         )
       )
     )
-    (if
-      (call $import
-        (i32.const 6)
-        (i32.const 7)
-      )
-      (then
-        (return_call_indirect (type $i)
-          (i32.const 8)
-        )
-      )
-      (else
-        (return_call_ref $iii
-          (i32.const 1)
-          (i32.const 2)
-          (ref.func $import)
-        )
-      )
-    )
-    ;; Implicit return at the end.
-    (i32.const 4)
+    ;; Also return a value by flowing it out.
+    (i32.const 1)
   )
 
-  ;; ALWAYS:      (func $call-many-returns (type $0)
-  ;; ALWAYS-NEXT:  (drop
-  ;; ALWAYS-NEXT:   (call $many-returns)
-  ;; ALWAYS-NEXT:  )
-  ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $call-many-returns (type $2)
-  ;; CAREFUL-NEXT:  (drop
-  ;; CAREFUL-NEXT:   (call $many-returns)
-  ;; CAREFUL-NEXT:  )
-  ;; CAREFUL-NEXT: )
-  (func $call-many-returns
-    ;; Call the above function to cause it to get monomorphized (only in ALWAYS,
-    ;; as there is no work we can remove).
-    ;;
-    ;; This also tests a function with no parameters being handled.
+  (func $call-return-normal (param $x i32)
+    ;; Call the above function with 0, 1, and an unknown value, to test the two
+    ;; code paths there + the case of the input being unknown.
     (drop
-      (call $many-returns)
+      (call $return-normal
+        (i32.const 0)
+      )
+    )
+    (drop
+      (call $return-normal
+        (i32.const 1)
+      )
+    )
+    (drop
+      (call $return-normal
+        (local.get $x)
+      )
+    )
+  )
+
+  (func $return-call (param $x i32) (result i32)
+    ;; As above, but now with a return_call. We do not monomorphize the drop
+    ;; part, as if we included the drop we'd turn the call into a non-return
+    ;; call, which can break things.
+    (if
+      (local.get $x)
+      (then
+        (return_call
+          (call $import2)
+        )
+      )
+    )
+    (i32.const 1)
+  )
+
+  (func $call-return-call (param $x i32)
+    ;; As above, but due to the return call we won't monomorphize the drop.
+    (drop
+      (call $return-call
+        (i32.const 0)
+      )
+    )
+    (drop
+      (call $return-call
+        (i32.const 1)
+      )
+    )
+    (drop
+      (call $return-call
+        (local.get $x)
+      )
+    )
+  )
+
+  (func $return-call-indirect (param $x i32) (result i32)
+    ;; As above, but now with a return_call_indirect. The outcome is similar.
+    (if
+      (local.get $x)
+      (then
+        (return_call_indirect (type $i)
+          (call $import2)
+        )
+      )
+    )
+    (i32.const 1)
+  )
+
+  (func $call-return-call (param $x i32)
+    (drop
+      (call $return-call-indirect
+        (i32.const 0)
+      )
+    )
+    (drop
+      (call $return-call-indirect
+        (i32.const 1)
+      )
+    )
+    (drop
+      (call $return-call-indirect
+        (local.get $x)
+      )
+    )
+  )
+
+  (func $return-call-ref (param $x i32) (result i32)
+    ;; As above, but now with a return_call_ref. The outcome is similar.
+    (if
+      (local.get $x)
+      (then
+        (return_call_ref (type $i)
+          (ref.func $import2)
+        )
+      )
+    )
+    (i32.const 1)
+  )
+
+  (func $call-return-call (param $x i32)
+    (drop
+      (call $return-call-ref
+        (i32.const 0)
+      )
+    )
+    (drop
+      (call $return-call-ref
+        (i32.const 1)
+      )
+    )
+    (drop
+      (call $return-call-ref
+        (local.get $x)
+      )
     )
   )
 )
