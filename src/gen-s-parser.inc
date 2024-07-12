@@ -1811,27 +1811,16 @@ switch (buf[0]) {
       case '3': {
         switch (buf[2]) {
           case '1': {
-            switch (buf[4]) {
-              case 'g': {
-                switch (buf[8]) {
-                  case 's':
-                    if (op == "i31.get_s"sv) {
-                      CHECK_ERR(makeI31Get(ctx, pos, annotations, true));
-                      return Ok{};
-                    }
-                    goto parse_error;
-                  case 'u':
-                    if (op == "i31.get_u"sv) {
-                      CHECK_ERR(makeI31Get(ctx, pos, annotations, false));
-                      return Ok{};
-                    }
-                    goto parse_error;
-                  default: goto parse_error;
+            switch (buf[8]) {
+              case 's':
+                if (op == "i31.get_s"sv) {
+                  CHECK_ERR(makeI31Get(ctx, pos, annotations, true));
+                  return Ok{};
                 }
-              }
-              case 'n':
-                if (op == "i31.new"sv) {
-                  CHECK_ERR(makeRefI31(ctx, pos, annotations, Unshared));
+                goto parse_error;
+              case 'u':
+                if (op == "i31.get_u"sv) {
+                  CHECK_ERR(makeI31Get(ctx, pos, annotations, false));
                   return Ok{};
                 }
                 goto parse_error;
