@@ -195,6 +195,11 @@
     (call $no-params)
   )
 
+  (func $call-no-params-return (result i32)
+    ;; Return calls can be monomorphized too.
+    (return_call $import2)
+  )
+
   ;; ALWAYS:      (func $call-import (type $0)
   ;; ALWAYS-NEXT:  (drop
   ;; ALWAYS-NEXT:   (call $import
@@ -487,6 +492,32 @@
     (drop
       (call $return-call-ref
         (local.get $x)
+      )
+    )
+
+    ;; Also add some return calls here, to show that it is fine for the caller
+    ;; to have them: we can still monomorphize the previous calls (without their
+    ;; drops).
+    (if
+      (local.get $x)
+      (then
+        (return_call $import2)
+      )
+    )
+    (if
+      (local.get $x)
+      (then
+        (return_call_indirect (type $i)
+          (ref.func $import2)
+        )
+      )
+    )
+    (if
+      (local.get $x)
+      (then
+        (return_call_ref $i
+          (ref.func $import2)
+        )
       )
     )
   )
