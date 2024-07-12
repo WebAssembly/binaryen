@@ -42,6 +42,7 @@
 #include "ir/find_all.h"
 #include "ir/lubs.h"
 #include "ir/module-utils.h"
+#include "ir/return-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "param-utils.h"
@@ -358,23 +359,7 @@ private:
       }
     }
     // Remove any return values.
-    struct ReturnUpdater : public PostWalker<ReturnUpdater> {
-      Module* module;
-      ReturnUpdater(Function* func, Module* module) : module(module) {
-        walk(func->body);
-      }
-      void visitReturn(Return* curr) {
-        auto* value = curr->value;
-        assert(value);
-        curr->value = nullptr;
-        Builder builder(*module);
-        replaceCurrent(builder.makeSequence(builder.makeDrop(value), curr));
-      }
-    } returnUpdater(func, module);
-    // Remove any value flowing out.
-    if (func->body->type.isConcrete()) {
-      func->body = Builder(*module).makeDrop(func->body);
-    }
+    ReturnUtils::removeReturns(func, *module);
   }
 
   // Given a function and all the calls to it, see if we can refine the type of
