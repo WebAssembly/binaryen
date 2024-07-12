@@ -87,7 +87,7 @@ std::unordered_map<Function*, bool> findReturnCallers(Module& wasm) {
       hasReturnCall = finder.hasReturnCall;
     });
 
-  // Convert to an unordered map for fast lookups.
+  // Convert to an unordered map for fast lookups. TODO: Avoid a copy here.
   std::unordered_map<Function*, bool> ret;
   ret.reserve(analysis.map.size());
   for (auto& [k, v] : analysis.map) {
