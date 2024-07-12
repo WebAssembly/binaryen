@@ -59,6 +59,10 @@ void removeReturns(Function* func, Module& wasm) {
 std::unordered_map<Function*, bool> findReturnCallers(Module& wasm) {
   ModuleUtils::ParallelFunctionAnalysis<bool, Immutable, std::unordered_map>
     analysis(wasm, [&](Function* func, bool& hasReturnCall) {
+      if (func->imported()) {
+        return;
+      }
+
       struct Finder : PostWalker<Finder> {
         bool hasReturnCall = false;
 
