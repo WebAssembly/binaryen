@@ -22,44 +22,48 @@
 
 namespace wasm::ReturnUtils {
 
+namespace {
+
+struct ReturnValueRemover : public PostWalker<ReturnValueRemover> {
+  void visitReturn(Return* curr) {
+    auto* value = curr->value;
+    assert(value);
+    curr->value = nullptr;
+    Builder builder(*getModule());
+    replaceCurrent(builder.makeSequence(builder.makeDrop(value), curr));
+  }
+
+  void visitCall(Call* curr) {
+    handleReturnCall(curr);
+  }
+  void visitCallIndirect(CallIndirect* curr) {
+    handleReturnCall(curr);
+  }
+  void visitCallRef(CallRef* curr) {
+    handleReturnCall(curr);
+  }
+
+  template<typename T> void handleReturnCall(T* curr) {
+    if (curr->isReturn) {
+      Fatal() << "Cannot remove return_calls in ReturnValueRemover";
+    }
+  }
+
+  void visitFunction(Function* curr) {
+    if (curr->body->type.isConcrete()) {
+      curr->body = Builder(*getModule()).makeDrop(curr->body);
+    }
+  }
+};
+
+} // anonymous namespace
+
 void removeReturns(Function* func, Module& wasm) {
-  struct ReturnValueRemover : public PostWalker<ReturnValueRemover> {
-    void visitReturn(Return* curr) {
-      auto* value = curr->value;
-      assert(value);
-      curr->value = nullptr;
-      Builder builder(*getModule());
-      replaceCurrent(builder.makeSequence(builder.makeDrop(value), curr));
-    }
-
-    void visitCall(Call* curr) {
-      handleReturnCall(curr);
-    }
-    void visitCallIndirect(CallIndirect* curr) {
-      handleReturnCall(curr);
-    }
-    void visitCallRef(CallRef* curr) {
-      handleReturnCall(curr);
-    }
-
-    template<typename T> void handleReturnCall(T* curr, Signature sig) {
-      if (curr->isReturn) {
-        Fatal() << "Cannot remove return_calls in ReturnValueRemover";
-      }
-    }
-
-    void visitFunction(Function* curr) {
-      if (curr->body->type.isConcrete()) {
-        curr->body = Builder(*getModule()).makeDrop(curr->body);
-      }
-    }
-  };
-
   ReturnValueRemover().walkFunctionInModule(func, &wasm);
 }
 
-std::unordered_map<Function*, bool> findReturnCallers(Module& wasm);
-  ParallelFunctionAnalysis<bool> analysis(wasm, [&](Function* func, bool& hasReturnCall) {
+std::unordered_map<Function*, bool> findReturnCallers(Module& wasm) {
+  ModuleUtils::ParallelFunctionAnalysis<bool, Immutable, std::unordered_map> analysis(wasm, [&](Function* func, bool& hasReturnCall) {
     struct Finder : PostWalker<Finder> {
       bool hasReturnCall = false;
 
