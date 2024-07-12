@@ -41,7 +41,7 @@
   ;; CAREFUL:      (import "a" "b" (func $import (type $iii) (param i32 i32) (result i32)))
   (import "a" "b" (func $import (param i32 i32) (result i32)))
 
-  (import "a" "c" (func $import2))
+  (import "a" "c" (func $import2 (result i32)))
 
   ;; ALWAYS:      (table $table 10 10 funcref)
   ;; CAREFUL:      (table $table 10 10 funcref)
@@ -404,9 +404,7 @@
     (if
       (local.get $x)
       (then
-        (return_call
-          (call $import2)
-        )
+        (return_call $import2)
       )
     )
     (i32.const 1)
@@ -444,7 +442,7 @@
     (i32.const 1)
   )
 
-  (func $call-return-call (param $x i32)
+  (func $call-return-call-indirect (param $x i32)
     (drop
       (call $return-call-indirect
         (i32.const 0)
@@ -467,7 +465,7 @@
     (if
       (local.get $x)
       (then
-        (return_call_ref (type $i)
+        (return_call_ref $i
           (ref.func $import2)
         )
       )
@@ -475,7 +473,7 @@
     (i32.const 1)
   )
 
-  (func $call-return-call (param $x i32)
+  (func $call-return-call-ref (param $x i32)
     (drop
       (call $return-call-ref
         (i32.const 0)
