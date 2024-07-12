@@ -329,6 +329,11 @@ struct Monomorphize : public Pass {
   void run(Module* module) override {
     // TODO: parallelize, see comments below
 
+    // Find all the return-calling functions. We cannot remove their returns
+    // (because turning a return call into a normal call may break the program
+    // by using more stack).
+    auto returnCallersMap = ReturnUtils::findReturnCallers(*module);
+
     // Note the list of all functions. We'll be adding more, and do not want to
     // operate on those.
     std::vector<Name> funcNames;
@@ -355,13 +360,13 @@ struct Monomorphize : public Pass {
           continue;
         }
 
-        processCall(info, *module);
+        processCall(info, *module, returnCallersMap);
       }
     }
   }
 
   // Try to optimize a call.
-  void processCall(CallInfo& info, Module& wasm) {
+  void processCall(CallInfo& info, Module& wasm, ReturnCallersMap& returnCallersMap) {
     auto* call = info.call;
     auto target = call->target;
     auto* func = wasm.getFunction(target);
@@ -377,6 +382,14 @@ struct Monomorphize : public Pass {
     CallContext context;
     std::vector<Expression*> newOperands;
     context.buildFromCall(info, newOperands, wasm);
+
+    // If the called function does a return call, then as noted earlier we
+    // cannot remove its returns, so do not consider the drop part of the
+    // context in such cases (as if we reverse-inlined the drop into the target
+    // then we'd be removing the returns).
+    if (returnCallersMap[func]) {
+      context.dropped = false;
+    }
 
     // See if we've already evaluated this function + call context. If so, then
     // we've memoized the result.
@@ -581,8 +594,7 @@ struct Monomorphize : public Pass {
     }
 
     if (context.dropped) {
-      ReturnUtils::ReturnValueRemover().walkFunctionInModule(newFunc.get(),
-                                                             &wasm);
+      ReturnUtils::removeReturns(newFunc.get(), wasm);
     }
 
     return newFunc;

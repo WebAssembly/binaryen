@@ -359,7 +359,7 @@ private:
       }
     }
     // Remove any return values.
-    ReturnUtils::ReturnValueRemover().walkFunctionInModule(func, module);
+    ReturnUtils::removeReturns(func, *module);
   }
 
   // Given a function and all the calls to it, see if we can refine the type of

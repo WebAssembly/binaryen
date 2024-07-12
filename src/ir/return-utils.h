@@ -17,8 +17,6 @@
 #ifndef wasm_ir_return_h
 #define wasm_ir_return_h
 
-#include "wasm-builder.h"
-#include "wasm-traversal.h"
 #include "wasm.h"
 
 namespace wasm::ReturnUtils {
@@ -26,55 +24,15 @@ namespace wasm::ReturnUtils {
 // Removes values from both explicit returns and implicit ones (values that flow
 // from the body). This is useful after changing a function's type to no longer
 // return anything.
-struct ReturnValueRemover : public PostWalker<ReturnValueRemover> {
-  void visitReturn(Return* curr) {
-    auto* value = curr->value;
-    assert(value);
-    curr->value = nullptr;
-    Builder builder(*getModule());
-    replaceCurrent(builder.makeSequence(builder.makeDrop(value), curr));
-  }
+//
+// This does *not* handle return calls, and will error on them. Removing a
+// return call may change the semantics of the program, so we do not do it
+// automatically here.
+void removeReturns(Function* func, Module& wasm);
 
-  void visitCall(Call* curr) {
-    handleReturnCall(curr, getModule()->getFunction(curr->target)->getSig());
-  }
-
-  void visitCallIndirect(CallIndirect* curr) {
-    handleReturnCall(curr, curr->heapType.getSignature());
-  }
-
-  void visitCallRef(CallRef* curr) {
-    Type targetType = curr->target->type;
-    if (!targetType.isSignature()) {
-      // We don't know what type the call should return, but it will also never
-      // be reached, so we don't need to do anything here.
-      return;
-    }
-    handleReturnCall(curr, targetType.getHeapType().getSignature());
-  }
-
-  template<typename T> void handleReturnCall(T* curr, Signature sig) {
-    if (curr->isReturn) {
-      // This can no longer be a return call, as it calls something that returns
-      // a value, and we do not. Update the type (note we must handle the case
-      // of an unreachable child, so refinalize).
-      curr->isReturn = false;
-      curr->type = sig.results;
-      curr->finalize();
-
-      // Return after the dropped call.
-      Builder builder(*getModule());
-      replaceCurrent(
-        builder.makeSequence(builder.makeDrop(curr), builder.makeReturn()));
-    }
-  }
-
-  void visitFunction(Function* curr) {
-    if (curr->body->type.isConcrete()) {
-      curr->body = Builder(*getModule()).makeDrop(curr->body);
-    }
-  }
-};
+// Return a map of every function to whether it does a return call.
+using ReturnCallersMap = std::unordered_map<Function*, bool>;
+ReturnCallersMap findReturnCallers(Module& wasm);
 
 } // namespace wasm::ReturnUtils
 
