@@ -1514,6 +1514,7 @@ public:
   RefI31() = default;
   RefI31(MixedArena& allocator) {}
 
+  Shareability share;
   Expression* value;
 
   void finalize();

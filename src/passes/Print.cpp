@@ -2076,7 +2076,9 @@ struct PrintExpressionContents
     o << std::max(curr->tuple->type.size(), size_t(2)) << " ";
     o << curr->index;
   }
-  void visitRefI31(RefI31* curr) { printMedium(o, "ref.i31"); }
+  void visitRefI31(RefI31* curr) {
+    printMedium(o, curr->share == Shared ? "ref.i31_shared" : "ref.i31");
+  }
   void visitI31Get(I31Get* curr) {
     printMedium(o, curr->signed_ ? "i31.get_s" : "i31.get_u");
   }

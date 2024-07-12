@@ -207,6 +207,13 @@ Result<ExpectedResult> result(Lexer& in) {
     return RefResult{HeapType::func};
   }
 
+  if (in.takeSExprStart("ref.i31_shared")) {
+    if (!in.takeRParen()) {
+      return in.err("expected end of ref.i31_shared");
+    }
+    return RefResult{HeapTypes::i31.getBasic(Shared)};
+  }
+
   return in.err("unrecognized result");
 }
 

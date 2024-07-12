@@ -873,8 +873,9 @@ public:
     ret->finalize();
     return ret;
   }
-  RefI31* makeRefI31(Expression* value) {
+  RefI31* makeRefI31(Expression* value, Shareability share = Unshared) {
     auto* ret = wasm.allocator.alloc<RefI31>();
+    ret->share = share;
     ret->value = value;
     ret->finalize();
     return ret;

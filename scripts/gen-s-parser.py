@@ -572,8 +572,9 @@ instructions = [
     ("resume",               "makeResume()"),
     ("suspend",              "makeSuspend()"),
     # GC
-    ("i31.new",              "makeRefI31()"),  # deprecated
-    ("ref.i31",              "makeRefI31()"),
+    ("i31.new",              "makeRefI31(Unshared)"),  # deprecated
+    ("ref.i31",              "makeRefI31(Unshared)"),
+    ("ref.i31_shared",       "makeRefI31(Shared)"),
     ("i31.get_s",            "makeI31Get(true)"),
     ("i31.get_u",            "makeI31Get(false)"),
     ("ref.test",             "makeRefTest()"),

@@ -7244,10 +7244,19 @@ void WasmBinaryReader::visitCallRef(CallRef* curr) {
 }
 
 bool WasmBinaryReader::maybeVisitRefI31(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::RefI31) {
-    return false;
+  Shareability share;
+  switch (code) {
+    case BinaryConsts::RefI31:
+      share = Unshared;
+      break;
+    case BinaryConsts::RefI31Shared:
+      share = Shared;
+      break;
+    default:
+      return false;
   }
   auto* curr = allocator.alloc<RefI31>();
+  curr->share = share;
   curr->value = popNonVoidExpression();
   curr->finalize();
   out = curr;

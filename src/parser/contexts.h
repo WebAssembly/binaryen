@@ -695,7 +695,10 @@ struct NullInstrParserCtx {
   Result<> makeCallRef(Index, const std::vector<Annotation>&, HeapTypeT, bool) {
     return Ok{};
   }
-  Result<> makeRefI31(Index, const std::vector<Annotation>&) { return Ok{}; }
+  Result<>
+  makeRefI31(Index, const std::vector<Annotation>&, Shareability share) {
+    return Ok{};
+  }
   Result<> makeI31Get(Index, const std::vector<Annotation>&, bool) {
     return Ok{};
   }
@@ -2363,8 +2366,10 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     return withLoc(pos, irBuilder.makeCallRef(type, isReturn));
   }
 
-  Result<> makeRefI31(Index pos, const std::vector<Annotation>& annotations) {
-    return withLoc(pos, irBuilder.makeRefI31());
+  Result<> makeRefI31(Index pos,
+                      const std::vector<Annotation>& annotations,
+                      Shareability share) {
+    return withLoc(pos, irBuilder.makeRefI31(share));
   }
 
   Result<> makeI31Get(Index pos,

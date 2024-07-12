@@ -1605,10 +1605,10 @@ Result<> IRBuilder::makeTupleDrop(uint32_t arity) {
   return Ok{};
 }
 
-Result<> IRBuilder::makeRefI31() {
+Result<> IRBuilder::makeRefI31(Shareability share) {
   RefI31 curr;
   CHECK_ERR(visitRefI31(&curr));
-  push(builder.makeRefI31(curr.value));
+  push(builder.makeRefI31(curr.value, share));
   return Ok{};
 }
 
