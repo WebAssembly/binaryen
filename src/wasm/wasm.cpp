@@ -964,7 +964,8 @@ void RefI31::finalize() {
   if (value->type == Type::unreachable) {
     type = Type::unreachable;
   } else {
-    type = Type(HeapTypes::i31.getBasic(share), NonNullable);
+    assert(type.isRef() && type.getHeapType().isBasic() &&
+           type.getHeapType().getBasic(Unshared) == HeapType::i31);
   }
 }
 

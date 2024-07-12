@@ -7255,11 +7255,8 @@ bool WasmBinaryReader::maybeVisitRefI31(Expression*& out, uint32_t code) {
     default:
       return false;
   }
-  auto* curr = allocator.alloc<RefI31>();
-  curr->share = share;
-  curr->value = popNonVoidExpression();
-  curr->finalize();
-  out = curr;
+  auto* value = popNonVoidExpression();
+  out = Builder(wasm).makeRefI31(value, share);
   return true;
 }
 

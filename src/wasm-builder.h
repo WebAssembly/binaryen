@@ -875,8 +875,8 @@ public:
   }
   RefI31* makeRefI31(Expression* value, Shareability share = Unshared) {
     auto* ret = wasm.allocator.alloc<RefI31>();
-    ret->share = share;
     ret->value = value;
+    ret->type = Type(HeapTypes::i31.getBasic(share), NonNullable);
     ret->finalize();
     return ret;
   }

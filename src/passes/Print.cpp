@@ -2077,7 +2077,8 @@ struct PrintExpressionContents
     o << curr->index;
   }
   void visitRefI31(RefI31* curr) {
-    printMedium(o, curr->share == Shared ? "ref.i31_shared" : "ref.i31");
+    printMedium(
+      o, curr->type.getHeapType().isShared() ? "ref.i31_shared" : "ref.i31");
   }
   void visitI31Get(I31Get* curr) {
     printMedium(o, curr->signed_ ? "i31.get_s" : "i31.get_u");

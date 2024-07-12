@@ -1426,7 +1426,8 @@ public:
     }
     const auto& value = flow.getSingleValue();
     NOTE_EVAL1(value);
-    return Literal::makeI31(value.geti32(), curr->share);
+    return Literal::makeI31(value.geti32(),
+                            curr->type.getHeapType().getShared());
   }
   Flow visitI31Get(I31Get* curr) {
     NOTE_ENTER("I31Get");
