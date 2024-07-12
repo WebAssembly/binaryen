@@ -360,15 +360,21 @@ struct Monomorphize : public Pass {
           continue;
         }
 
-        processCall(info, *module, returnCallersMap);
+        // If the target function does a return call, then as noted earlier we
+        // cannot remove its returns, so do not consider the drop as part of the
+        // context in such cases (as if we reverse-inlined the drop into the
+        // target then we'd be removing the returns).
+        if (returnCallersMap[module->getFunction(info.call->target)]) {
+          info.drop = nullptr;
+        }
+
+        processCall(info, *module);
       }
     }
   }
 
   // Try to optimize a call.
-  void processCall(CallInfo& info,
-                   Module& wasm,
-                   ReturnUtils::ReturnCallersMap& returnCallersMap) {
+  void processCall(CallInfo& info, Module& wasm) {
     auto* call = info.call;
     auto target = call->target;
     auto* func = wasm.getFunction(target);
@@ -384,14 +390,6 @@ struct Monomorphize : public Pass {
     CallContext context;
     std::vector<Expression*> newOperands;
     context.buildFromCall(info, newOperands, wasm);
-
-    // If the called function does a return call, then as noted earlier we
-    // cannot remove its returns, so do not consider the drop part of the
-    // context in such cases (as if we reverse-inlined the drop into the target
-    // then we'd be removing the returns).
-    if (returnCallersMap[func]) {
-      context.dropped = false;
-    }
 
     // See if we've already evaluated this function + call context. If so, then
     // we've memoized the result.
