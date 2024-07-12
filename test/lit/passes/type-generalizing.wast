@@ -270,7 +270,7 @@
   (local $var i31ref)
   ;; Require that (ref i31) <: typeof($var).
   (local.set $var
-   (i31.new
+   (ref.i31
     (i32.const 0)
    )
   )
@@ -405,7 +405,7 @@
   (drop
    (local.tee $dest
     (local.tee $var
-     (i31.new
+     (ref.i31
       (i32.const 0)
      )
     )
@@ -439,7 +439,7 @@
   (local $nonnullable (ref i31))
   ;; Initialize the non-nullable local for validation purposes.
   (local.set $nonnullable
-   (i31.new
+   (ref.i31
     (i32.const 0)
    )
   )
@@ -819,7 +819,7 @@
  (func $extern-convert-any-nullable (result externref)
   (local $var (ref i31))
   (local.set $var
-   (i31.new
+   (ref.i31
     (i32.const 0)
    )
   )
@@ -843,7 +843,7 @@
  (func $extern-convert-any-non-nullable (result (ref extern))
   (local $var (ref i31))
   (local.set $var
-   (i31.new
+   (ref.i31
     (i32.const 0)
    )
   )
