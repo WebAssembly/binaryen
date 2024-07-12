@@ -1125,6 +1125,7 @@ enum ASTNodes {
   RefI31 = 0x1c,
   I31GetS = 0x1d,
   I31GetU = 0x1e,
+  RefI31Shared = 0x1f,
 
   // stringref opcodes
 

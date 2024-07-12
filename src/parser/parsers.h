@@ -221,7 +221,8 @@ template<typename Ctx>
 Result<>
 makeCallRef(Ctx&, Index, const std::vector<Annotation>&, bool isReturn);
 template<typename Ctx>
-Result<> makeRefI31(Ctx&, Index, const std::vector<Annotation>&);
+Result<>
+makeRefI31(Ctx&, Index, const std::vector<Annotation>&, Shareability share);
 template<typename Ctx>
 Result<> makeI31Get(Ctx&, Index, const std::vector<Annotation>&, bool signed_);
 template<typename Ctx>
@@ -2127,9 +2128,11 @@ Result<> makeCallRef(Ctx& ctx,
 }
 
 template<typename Ctx>
-Result<>
-makeRefI31(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
-  return ctx.makeRefI31(pos, annotations);
+Result<> makeRefI31(Ctx& ctx,
+                    Index pos,
+                    const std::vector<Annotation>& annotations,
+                    Shareability share) {
+  return ctx.makeRefI31(pos, annotations, share);
 }
 
 template<typename Ctx>

@@ -1831,7 +1831,7 @@ switch (buf[0]) {
               }
               case 'n':
                 if (op == "i31.new"sv) {
-                  CHECK_ERR(makeRefI31(ctx, pos, annotations));
+                  CHECK_ERR(makeRefI31(ctx, pos, annotations, Unshared));
                   return Ok{};
                 }
                 goto parse_error;
@@ -4505,12 +4505,23 @@ switch (buf[0]) {
             goto parse_error;
           case 'i': {
             switch (buf[5]) {
-              case '3':
-                if (op == "ref.i31"sv) {
-                  CHECK_ERR(makeRefI31(ctx, pos, annotations));
-                  return Ok{};
+              case '3': {
+                switch (buf[7]) {
+                  case '\0':
+                    if (op == "ref.i31"sv) {
+                      CHECK_ERR(makeRefI31(ctx, pos, annotations, Unshared));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  case '_':
+                    if (op == "ref.i31_shared"sv) {
+                      CHECK_ERR(makeRefI31(ctx, pos, annotations, Shared));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  default: goto parse_error;
                 }
-                goto parse_error;
+              }
               case 's':
                 if (op == "ref.is_null"sv) {
                   CHECK_ERR(makeRefIsNull(ctx, pos, annotations));

@@ -243,8 +243,8 @@ public:
   static Literal makeFunc(Name func, HeapType type) {
     return Literal(func, type);
   }
-  static Literal makeI31(int32_t value) {
-    auto lit = Literal(Type(HeapType::i31, NonNullable));
+  static Literal makeI31(int32_t value, Shareability share) {
+    auto lit = Literal(Type(HeapTypes::i31.getBasic(share), NonNullable));
     lit.i32 = value | 0x80000000;
     return lit;
   }
@@ -281,7 +281,7 @@ public:
     return i32;
   }
   int32_t geti31(bool signed_ = true) const {
-    assert(type.getHeapType() == HeapType::i31);
+    assert(type.getHeapType().getBasic(Unshared) == HeapType::i31);
     // Cast to unsigned for the left shift to avoid undefined behavior.
     return signed_ ? int32_t((uint32_t(i32) << 1)) >> 1 : (i32 & 0x7fffffff);
   }

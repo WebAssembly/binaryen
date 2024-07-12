@@ -119,7 +119,8 @@ inline Literal getLiteral(const Expression* curr) {
     return Literal(r->func, r->type.getHeapType());
   } else if (auto* i = curr->dynCast<RefI31>()) {
     if (auto* c = i->value->dynCast<Const>()) {
-      return Literal::makeI31(c->value.geti32());
+      return Literal::makeI31(c->value.geti32(),
+                              i->type.getHeapType().getShared());
     }
   } else if (auto* s = curr->dynCast<StringConst>()) {
     return Literal(s->string.toString());
