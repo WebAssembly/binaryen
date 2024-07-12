@@ -33,15 +33,15 @@
  ;; CHECK:      (table $table-3 10 (ref null $v3))
  (table $table-3 10 (ref null $v3))
 
- ;; CHECK:      (elem $elem-1 (table $table-1) (i32.const 0) (ref null $v1) (ref.func $helper-1))
+ ;; CHECK:      (elem $elem-1 (table $table-1) (i32.const 0) (ref null $v1) (item (ref.func $helper-1)))
  (elem $elem-1 (table $table-1) (i32.const 0) (ref null $v1)
   (ref.func $helper-1))
 
- ;; CHECK:      (elem $elem-2 (table $table-2) (i32.const 0) (ref null $v2) (ref.func $helper-2))
+ ;; CHECK:      (elem $elem-2 (table $table-2) (i32.const 0) (ref null $v2) (item (ref.func $helper-2)))
  (elem $elem-2 (table $table-2) (i32.const 0) (ref null $v2)
   (ref.func $helper-2))
 
- ;; CHECK:      (elem $elem-3 (table $table-3) (i32.const 0) (ref null $v3) (ref.func $helper-3))
+ ;; CHECK:      (elem $elem-3 (table $table-3) (i32.const 0) (ref null $v3) (item (ref.func $helper-3)))
  (elem $elem-3 (table $table-3) (i32.const 0) (ref null $v3)
   (ref.func $helper-3))
 

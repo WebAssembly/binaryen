@@ -12,11 +12,11 @@
 
   ;; CHECK:      (table $t32 10 100 funcref)
 
-  ;; CHECK:      (elem $elem64 (table $t64) (i32.const 0) funcref (ref.null nofunc))
+  ;; CHECK:      (elem $elem64 (table $t64) (i32.const 0) funcref (item (ref.null nofunc)))
   (elem $elem64 (table $t64) (i64.const 0) funcref (ref.null func))
 
   (table $t32 10 100 funcref)
-  ;; CHECK:      (elem $elem32 (table $t32) (i32.const 0) funcref (ref.null nofunc))
+  ;; CHECK:      (elem $elem32 (table $t32) (i32.const 0) funcref (item (ref.null nofunc)))
   (elem $elem32 (table $t32) (i32.const 0) funcref (ref.null func))
 
   ;; CHECK:      (func $test_call_indirect
