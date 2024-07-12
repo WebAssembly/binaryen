@@ -366,7 +366,9 @@ struct Monomorphize : public Pass {
   }
 
   // Try to optimize a call.
-  void processCall(CallInfo& info, Module& wasm, ReturnUtils::ReturnCallersMap& returnCallersMap) {
+  void processCall(CallInfo& info,
+                   Module& wasm,
+                   ReturnUtils::ReturnCallersMap& returnCallersMap) {
     auto* call = info.call;
     auto target = call->target;
     auto* func = wasm.getFunction(target);

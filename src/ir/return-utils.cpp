@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "ir/module-utils.h"
 #include "ir/return-utils.h"
+#include "ir/module-utils.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm.h"
@@ -33,15 +33,9 @@ struct ReturnValueRemover : public PostWalker<ReturnValueRemover> {
     replaceCurrent(builder.makeSequence(builder.makeDrop(value), curr));
   }
 
-  void visitCall(Call* curr) {
-    handleReturnCall(curr);
-  }
-  void visitCallIndirect(CallIndirect* curr) {
-    handleReturnCall(curr);
-  }
-  void visitCallRef(CallRef* curr) {
-    handleReturnCall(curr);
-  }
+  void visitCall(Call* curr) { handleReturnCall(curr); }
+  void visitCallIndirect(CallIndirect* curr) { handleReturnCall(curr); }
+  void visitCallRef(CallRef* curr) { handleReturnCall(curr); }
 
   template<typename T> void handleReturnCall(T* curr) {
     if (curr->isReturn) {
@@ -63,30 +57,31 @@ void removeReturns(Function* func, Module& wasm) {
 }
 
 std::unordered_map<Function*, bool> findReturnCallers(Module& wasm) {
-  ModuleUtils::ParallelFunctionAnalysis<bool, Immutable, std::unordered_map> analysis(wasm, [&](Function* func, bool& hasReturnCall) {
-    struct Finder : PostWalker<Finder> {
-      bool hasReturnCall = false;
+  ModuleUtils::ParallelFunctionAnalysis<bool, Immutable, std::unordered_map>
+    analysis(wasm, [&](Function* func, bool& hasReturnCall) {
+      struct Finder : PostWalker<Finder> {
+        bool hasReturnCall = false;
 
-      void visitCall(Call* curr) {
-        if (curr->isReturn) {
-          hasReturnCall = true;
+        void visitCall(Call* curr) {
+          if (curr->isReturn) {
+            hasReturnCall = true;
+          }
         }
-      }
-      void visitCallIndirect(CallIndirect* curr) {
-        if (curr->isReturn) {
-          hasReturnCall = true;
+        void visitCallIndirect(CallIndirect* curr) {
+          if (curr->isReturn) {
+            hasReturnCall = true;
+          }
         }
-      }
-      void visitCallRef(CallRef* curr) {
-        if (curr->isReturn) {
-          hasReturnCall = true;
+        void visitCallRef(CallRef* curr) {
+          if (curr->isReturn) {
+            hasReturnCall = true;
+          }
         }
-      }
-    } finder;
+      } finder;
 
-    finder.walk(func->body);
-    hasReturnCall = finder.hasReturnCall;
-  });
+      finder.walk(func->body);
+      hasReturnCall = finder.hasReturnCall;
+    });
   return std::move(analysis.map);
 }
 
