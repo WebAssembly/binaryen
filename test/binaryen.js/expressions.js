@@ -1777,9 +1777,6 @@ console.log("# RefI31");
 
   theRefI31.value = value = module.local.get(2, binaryen.i32);
   assert(theRefI31.value === value);
-  theRefI31.type = binaryen.f64;
-  theRefI31.finalize();
-  // assert(theRefI31.type === binaryen.?); // TODO: (ref i31)
 
   console.log(theRefI31.toText());
   assert(
