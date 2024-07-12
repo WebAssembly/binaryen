@@ -3089,8 +3089,9 @@ void PrintSExpression::visitElementSegment(ElementSegment* curr) {
     }
   } else {
     for (auto* entry : curr->data) {
-      o << ' ';
+      o << " (item ";
       visit(entry);
+      o << ')';
     }
   }
   o << ')' << maybeNewLine;

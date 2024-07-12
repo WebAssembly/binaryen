@@ -375,13 +375,13 @@
  (table $table-any anyref (elem (item i32.const 0 ref.i31) (ref.null any) (item (ref.i31 (i32.const 0)))))
 
  ;; elems
- ;; CHECK:      (elem $implicit-elem (table $table-any) (i32.const 0) anyref (ref.i31
+ ;; CHECK:      (elem $implicit-elem (table $table-any) (i32.const 0) anyref (item (ref.i31
  ;; CHECK-NEXT:  (i32.const 0)
- ;; CHECK-NEXT: ) (ref.null none) (ref.i31
+ ;; CHECK-NEXT: )) (item (ref.null none)) (item (ref.i31
  ;; CHECK-NEXT:  (i32.const 0)
- ;; CHECK-NEXT: ))
+ ;; CHECK-NEXT: )))
 
- ;; CHECK:      (elem $implicit-table (table $timport$0) (i32.const 0) funcref (ref.null nofunc) (ref.null nofunc) (ref.null nofunc))
+ ;; CHECK:      (elem $implicit-table (table $timport$0) (i32.const 0) funcref (item (ref.null nofunc)) (item (ref.null nofunc)) (item (ref.null nofunc)))
  (elem $implicit-table (offset i32.const 0) funcref (ref.null func) (item ref.null func) (item (ref.null func)))
 
  ;; CHECK:      (elem $implicit-table-2 (table $timport$0) (i32.const 1) func)
@@ -393,16 +393,16 @@
  ;; CHECK:      (elem $implicit-table-legacy-indices (table $timport$0) (i32.const 3) func $fimport$0 $fimport$1 $2 $f1)
  (elem $implicit-table-legacy-indices (i32.const 3) 0 1 2 3)
 
- ;; CHECK:      (elem $explicit-table (table $timport$0) (i32.const 0) funcref (ref.null nofunc))
+ ;; CHECK:      (elem $explicit-table (table $timport$0) (i32.const 0) funcref (item (ref.null nofunc)))
  (elem $explicit-table (table 0) (offset (i32.const 0)) funcref (item ref.null func))
 
  ;; CHECK:      (elem $explicit-table-named (table $table-any) (i32.const 1) anyref)
  (elem $explicit-table-named (table $table-any) (i32.const 1) anyref)
 
- ;; CHECK:      (elem $passive (ref null $s0) (struct.new_default $s0) (struct.new_default $s0))
+ ;; CHECK:      (elem $passive (ref null $s0) (item (struct.new_default $s0)) (item (struct.new_default $s0)))
  (elem $passive (ref null $s0) (item struct.new $s0) (struct.new $s0))
 
- ;; CHECK:      (elem $passive-2 anyref (struct.new_default $s0) (struct.new_default $s0))
+ ;; CHECK:      (elem $passive-2 anyref (item (struct.new_default $s0)) (item (struct.new_default $s0)))
  (elem $passive-2 anyref (item struct.new $s0) (struct.new $s0))
 
  ;; CHECK:      (elem declare func $ref-func $table-fill $table-grow $table-set)

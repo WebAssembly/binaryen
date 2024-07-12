@@ -23,7 +23,7 @@
 
  ;; CHECK:      (table $table-1 10 (ref null $i32_i32_=>_none))
  (table $table-1 10 (ref null $i32_i32_=>_none))
- ;; CHECK:      (elem $elem-1 (table $table-1) (i32.const 0) (ref null $i32_i32_=>_none) (ref.func $foo))
+ ;; CHECK:      (elem $elem-1 (table $table-1) (i32.const 0) (ref null $i32_i32_=>_none) (item (ref.func $foo)))
  (elem $elem-1 (table $table-1) (i32.const 0) (ref null $i32_i32_=>_none)
   (ref.func $foo))
 
