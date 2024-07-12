@@ -478,7 +478,7 @@
     (i32.const 1)
   )
 
-  (func $call-return-call-ref (param $x i32)
+  (func $call-return-call-ref (param $x i32) (result i32)
     (drop
       (call $return-call-ref
         (i32.const 0)
@@ -508,7 +508,7 @@
       (local.get $x)
       (then
         (return_call_indirect (type $i)
-          (ref.func $import2)
+          (i32.const 7)
         )
       )
     )
@@ -520,6 +520,7 @@
         )
       )
     )
+    (unreachable)
   )
 )
 ;; ALWAYS:      (func $work_10 (type $0)
