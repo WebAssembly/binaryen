@@ -57,7 +57,7 @@ void removeReturns(Function* func, Module& wasm) {
 }
 
 std::unordered_map<Function*, bool> findReturnCallers(Module& wasm) {
-  ModuleUtils::ParallelFunctionAnalysis<bool, Immutable, std::unordered_map>
+  ModuleUtils::ParallelFunctionAnalysis<bool>
     analysis(wasm, [&](Function* func, bool& hasReturnCall) {
       if (func->imported()) {
         return;
@@ -86,7 +86,14 @@ std::unordered_map<Function*, bool> findReturnCallers(Module& wasm) {
       finder.walk(func->body);
       hasReturnCall = finder.hasReturnCall;
     });
-  return std::move(analysis.map);
+
+  // Convert to an unordered map for fast lookups.
+  std::unordered_map<Function*, bool> ret;
+  ret.reserve(analysis.map.size());
+  for (auto& [k, v] : analysis.map) {
+    ret[k] = v;
+  }
+  return ret;
 }
 
 } // namespace wasm::ReturnUtils
