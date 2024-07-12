@@ -356,6 +356,7 @@ INITIAL_CONTENTS_IGNORE = [
     'shared-polymorphism.wast',
     'shared-struct.wast',
     'shared-array.wast',
+    'shared-i31.wast',
 ]
 
 
