@@ -2753,8 +2753,11 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
   // earlier), then the cast is unreachable because the cast type had no
   // common supertype with the ref, which is invalid. This is the same as the
   // check below us, but we must do it first (as getHeapType fails otherwise).
-  if (!shouldBeUnequal(curr->type, Type(Type::unreachable), curr,
-                       "ref.cast target type and ref type must have a common supertype")) {
+  if (!shouldBeUnequal(
+        curr->type,
+        Type(Type::unreachable),
+        curr,
+        "ref.cast target type and ref type must have a common supertype")) {
     return;
   }
   shouldBeEqual(
