@@ -2879,7 +2879,7 @@ void FunctionValidator::visitStructSet(StructSet* curr) {
     return;
   }
   auto type = curr->ref->type.getHeapType();
-  if (type == HeapType::none) {
+  if (type.isBasic() && type.getBasic(Unshared) == HeapType::none) {
     return;
   }
   if (!shouldBeTrue(

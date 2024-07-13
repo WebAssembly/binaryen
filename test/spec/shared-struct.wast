@@ -90,3 +90,11 @@
   (func (param (ref null $i8))
     (struct.set $i8 0 (local.get 0) (i32.const 0)))
 )
+
+;; Bottom types
+(module
+  (type $i8 (shared (struct (mut i8))))
+  (func (drop (struct.get_s $i8 0 (ref.null (shared none)))))
+  (func (drop (struct.get_u $i8 0 (ref.null (shared none)))))
+  (func (struct.set $i8 0 (ref.null (shared none)) (i32.const 0)))
+)
