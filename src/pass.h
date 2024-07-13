@@ -115,24 +115,16 @@ struct PassOptions {
   int shrinkLevel = 0;
   // Tweak thresholds for the Inlining pass.
   InliningOptions inlining;
-  // Optimize assuming things like div by 0, bad load/store, will not trap.
-  // This is deprecated in favor of trapsNeverHappen.
-  bool ignoreImplicitTraps = false;
-  // Optimize assuming a trap will never happen at runtime. This is similar to
-  // ignoreImplicitTraps, but different:
+  // Optimize assuming a trap will never happen at runtime. Specifically, we
+  // assume that if an instruction with a possible trap is reached, then it does
+  // not trap, and an (unreachable) - that always traps - is never reached.
   //
-  //  * ignoreImplicitTraps simply ignores the side effect of trapping when it
-  //    computes side effects, and then passes work with that data.
-  //  * trapsNeverHappen assumes that if an instruction with a possible trap is
-  //    reached, then it does not trap, and an (unreachable) - that always
-  //    traps - is never reached.
-  //
-  // The main difference is that in trapsNeverHappen mode we will not move
-  // around code that might trap, like this:
+  // This is different from just ignoring the traps effect, because of control
+  // flow. Consider this:
   //
   //  (if (condition) (code))
   //
-  // If (code) might trap, ignoreImplicitTraps ignores that trap, and it might
+  // If (code) might trap, blindly ingoring traps would ignore it, and we might
   // end up moving (code) to happen before the (condition), that is,
   // unconditionally. trapsNeverHappen, on the other hand, does not ignore the
   // side effect of the trap; instead, it will potentially remove the trapping
@@ -140,13 +132,9 @@ struct PassOptions {
   // as the traps are assumed to not happen. Where it cannot remove the side
   // effect, it will at least not move code around.
   //
-  // A consequence of this difference is that code that puts a possible trap
-  // behind a condition is unsafe in ignoreImplicitTraps, but safe in
-  // trapsNeverHappen. In general, trapsNeverHappen is safe on production code
-  // where traps are either fatal errors or assertions, and it is assumed
-  // neither of those can happen (and it is undefined behavior if they do).
-  //
-  // TODO: deprecate and remove ignoreImplicitTraps.
+  // In general, trapsNeverHappen is safe on production code where traps are
+  // either fatal errors or assertions, and it is assumed neither of those can
+  // happen (and it is undefined behavior if they do).
   //
   // Since trapsNeverHappen assumes a trap is never reached, it can in principle
   // remove code like this:

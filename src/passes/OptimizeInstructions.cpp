@@ -1179,7 +1179,7 @@ struct OptimizeInstructions
         // ref.as_non_null acts as a null check here, basically. If we are
         // ignoring such traps, we can remove it.
         auto& passOptions = getPassOptions();
-        if (passOptions.ignoreImplicitTraps || passOptions.trapsNeverHappen) {
+        if (passOptions.trapsNeverHappen) {
           curr->value = as->value;
         }
       }
@@ -4863,7 +4863,7 @@ private:
   Expression* optimizeMemoryCopy(MemoryCopy* memCopy) {
     auto& options = getPassOptions();
 
-    if (options.ignoreImplicitTraps || options.trapsNeverHappen) {
+    if (options.trapsNeverHappen) {
       if (areConsecutiveInputsEqual(memCopy->dest, memCopy->source)) {
         // memory.copy(x, x, sz)  ==>  {drop(x), drop(x), drop(sz)}
         Builder builder(*getModule());
@@ -4880,7 +4880,7 @@ private:
 
       switch (bytes) {
         case 0: {
-          if (options.ignoreImplicitTraps || options.trapsNeverHappen) {
+          if (options.trapsNeverHappen) {
             // memory.copy(dst, src, 0)  ==>  {drop(dst), drop(src)}
             return builder.makeBlock({builder.makeDrop(memCopy->dest),
                                       builder.makeDrop(memCopy->source)});
@@ -4963,8 +4963,7 @@ private:
     auto* csize = memFill->size->cast<Const>();
     auto bytes = csize->value.getInteger();
 
-    if (bytes == 0LL &&
-        (options.ignoreImplicitTraps || options.trapsNeverHappen)) {
+    if (bytes == 0LL && options.trapsNeverHappen) {
       // memory.fill(d, v, 0)  ==>  { drop(d), drop(v) }
       return builder.makeBlock(
         {builder.makeDrop(memFill->dest), builder.makeDrop(memFill->value)});

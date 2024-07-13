@@ -3301,7 +3301,6 @@ BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsMemory(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesMemory(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectReadsTable(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectWritesTable(void);
-BINARYEN_API BinaryenSideEffects BinaryenSideEffectImplicitTrap(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectTrapsNeverHappen(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectIsAtomic(void);
 BINARYEN_API BinaryenSideEffects BinaryenSideEffectThrows(void);
