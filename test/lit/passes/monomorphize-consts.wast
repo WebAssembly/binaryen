@@ -27,9 +27,9 @@
 
   ;; CAREFUL:      (type $2 (func (param i32) (result i32)))
 
-  ;; CAREFUL:      (type $3 (func (param i32 i32)))
+  ;; CAREFUL:      (type $3 (func (result i32)))
 
-  ;; CAREFUL:      (type $4 (func (result i32)))
+  ;; CAREFUL:      (type $4 (func (param i32 i32)))
 
   ;; CAREFUL:      (import "a" "b" (func $import (type $0) (param i32)))
   (import "a" "b" (func $import (param i32)))
@@ -49,31 +49,19 @@
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (elem declare func $calls)
 
-  ;; CAREFUL:      (func $calls (type $3) (param $x i32) (param $y i32)
-  ;; CAREFUL-NEXT:  (call $target
-  ;; CAREFUL-NEXT:   (i32.const 1)
+  ;; CAREFUL:      (func $calls (type $4) (param $x i32) (param $y i32)
+  ;; CAREFUL-NEXT:  (call $target_9
   ;; CAREFUL-NEXT:   (local.get $x)
-  ;; CAREFUL-NEXT:   (ref.func $calls)
-  ;; CAREFUL-NEXT:   (string.const "foo")
   ;; CAREFUL-NEXT:  )
-  ;; CAREFUL-NEXT:  (call $target
-  ;; CAREFUL-NEXT:   (i32.const 1)
+  ;; CAREFUL-NEXT:  (call $target_9
   ;; CAREFUL-NEXT:   (local.get $y)
-  ;; CAREFUL-NEXT:   (ref.func $calls)
-  ;; CAREFUL-NEXT:   (string.const "foo")
   ;; CAREFUL-NEXT:  )
-  ;; CAREFUL-NEXT:  (call $target
-  ;; CAREFUL-NEXT:   (i32.const 3)
+  ;; CAREFUL-NEXT:  (call $target_10
   ;; CAREFUL-NEXT:   (local.get $x)
-  ;; CAREFUL-NEXT:   (ref.func $calls)
-  ;; CAREFUL-NEXT:   (string.const "foo")
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
   (func $calls (param $x i32) (param $y i32)
-    ;; All but the parameter are constants that can be handled. In ALWAYS
-    ;; mode we optimize and remove all but that one. In CAREFUL mode we end up
-    ;; not doing anything, as the target function's body optimizes out anyhow
-    ;; (so there is no benefit from monomorphization, after opts).
+    ;; All but the parameter are constants that can be handled.
     (call $target
       (i32.const 1)
       (local.get $x)
@@ -113,19 +101,13 @@
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $more-calls (type $0) (param $x i32)
-  ;; CAREFUL-NEXT:  (call $target
-  ;; CAREFUL-NEXT:   (i32.const 1)
+  ;; CAREFUL-NEXT:  (call $target_9
   ;; CAREFUL-NEXT:   (local.get $x)
-  ;; CAREFUL-NEXT:   (ref.func $calls)
-  ;; CAREFUL-NEXT:   (string.const "foo")
   ;; CAREFUL-NEXT:  )
-  ;; CAREFUL-NEXT:  (call $other-target
-  ;; CAREFUL-NEXT:   (i32.const 1)
+  ;; CAREFUL-NEXT:  (call $other-target_11
   ;; CAREFUL-NEXT:   (local.get $x)
-  ;; CAREFUL-NEXT:   (ref.func $calls)
-  ;; CAREFUL-NEXT:   (string.const "foo")
   ;; CAREFUL-NEXT:  )
-  ;; CAREFUL-NEXT:  (call $work_9
+  ;; CAREFUL-NEXT:  (call $work_12
   ;; CAREFUL-NEXT:   (local.get $x)
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
@@ -224,9 +206,7 @@
   ;; CAREFUL-NEXT:     (call $mutual-recursion-b
   ;; CAREFUL-NEXT:      (local.get $0)
   ;; CAREFUL-NEXT:     )
-  ;; CAREFUL-NEXT:     (call $mutual-recursion-b
-  ;; CAREFUL-NEXT:      (i32.const 0)
-  ;; CAREFUL-NEXT:     )
+  ;; CAREFUL-NEXT:     (call $mutual-recursion-b_13)
   ;; CAREFUL-NEXT:    )
   ;; CAREFUL-NEXT:   )
   ;; CAREFUL-NEXT:   (else
@@ -268,7 +248,7 @@
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $mutual-recursion-b (type $2) (param $0 i32) (result i32)
   ;; CAREFUL-NEXT:  (i32.add
-  ;; CAREFUL-NEXT:   (call $mutual-recursion-a_10)
+  ;; CAREFUL-NEXT:   (call $mutual-recursion-a_14)
   ;; CAREFUL-NEXT:   (i32.const 1337)
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
@@ -576,7 +556,19 @@
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT: )
 
-;; CAREFUL:      (func $work_9 (type $0) (param $0 i32)
+;; CAREFUL:      (func $target_9 (type $0) (param $0 i32)
+;; CAREFUL-NEXT:  (nop)
+;; CAREFUL-NEXT: )
+
+;; CAREFUL:      (func $target_10 (type $0) (param $0 i32)
+;; CAREFUL-NEXT:  (nop)
+;; CAREFUL-NEXT: )
+
+;; CAREFUL:      (func $other-target_11 (type $0) (param $0 i32)
+;; CAREFUL-NEXT:  (nop)
+;; CAREFUL-NEXT: )
+
+;; CAREFUL:      (func $work_12 (type $0) (param $0 i32)
 ;; CAREFUL-NEXT:  (call $import
 ;; CAREFUL-NEXT:   (i32.const 3)
 ;; CAREFUL-NEXT:  )
@@ -585,6 +577,15 @@
 ;; CAREFUL-NEXT:  )
 ;; CAREFUL-NEXT: )
 
-;; CAREFUL:      (func $mutual-recursion-a_10 (type $4) (result i32)
+;; CAREFUL:      (func $mutual-recursion-b_13 (type $3) (result i32)
+;; CAREFUL-NEXT:  (i32.add
+;; CAREFUL-NEXT:   (call $mutual-recursion-a
+;; CAREFUL-NEXT:    (i32.const 0)
+;; CAREFUL-NEXT:   )
+;; CAREFUL-NEXT:   (i32.const 1337)
+;; CAREFUL-NEXT:  )
+;; CAREFUL-NEXT: )
+
+;; CAREFUL:      (func $mutual-recursion-a_14 (type $3) (result i32)
 ;; CAREFUL-NEXT:  (i32.const 42)
 ;; CAREFUL-NEXT: )

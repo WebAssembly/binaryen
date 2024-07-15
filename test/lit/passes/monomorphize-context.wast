@@ -15,15 +15,16 @@
   ;; ALWAYS:      (type $2 (func (param i32 i32 i32 i32 i32 i32)))
 
   ;; ALWAYS:      (type $struct (struct ))
-  ;; CAREFUL:      (type $0 (func (param i32) (result i32)))
-
-  ;; CAREFUL:      (type $struct (struct ))
   (type $struct (struct))
 
   (memory 10 20)
 
   ;; ALWAYS:      (global $imm i32 (i32.const 10))
-  ;; CAREFUL:      (type $2 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 anyref funcref i32 f64 i32 anyref anyref i32)))
+  ;; CAREFUL:      (type $0 (func (param i32) (result i32)))
+
+  ;; CAREFUL:      (type $1 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 anyref funcref i32 f64 i32 anyref anyref i32)))
+
+  ;; CAREFUL:      (type $2 (func (param i32 i32 i32 i32 i32 i32)))
 
   ;; CAREFUL:      (global $imm i32 (i32.const 10))
   (global $imm i32 (i32.const 10))
@@ -74,12 +75,10 @@
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (memory $0 10 20)
 
-  ;; CAREFUL:      (elem declare func $target)
-
   ;; CAREFUL:      (func $caller (type $0) (param $x i32) (result i32)
   ;; CAREFUL-NEXT:  (local $scratch i32)
   ;; CAREFUL-NEXT:  (block $out
-  ;; CAREFUL-NEXT:   (call $target
+  ;; CAREFUL-NEXT:   (call $target_2
   ;; CAREFUL-NEXT:    (block (result i32)
   ;; CAREFUL-NEXT:     (i32.const 0)
   ;; CAREFUL-NEXT:    )
@@ -99,30 +98,6 @@
   ;; CAREFUL-NEXT:    (local.tee $x
   ;; CAREFUL-NEXT:     (i32.const 5)
   ;; CAREFUL-NEXT:    )
-  ;; CAREFUL-NEXT:    (global.get $imm)
-  ;; CAREFUL-NEXT:    (global.get $mut)
-  ;; CAREFUL-NEXT:    (i32.load
-  ;; CAREFUL-NEXT:     (i32.const 6)
-  ;; CAREFUL-NEXT:    )
-  ;; CAREFUL-NEXT:    (i32.const 7)
-  ;; CAREFUL-NEXT:    (ref.null none)
-  ;; CAREFUL-NEXT:    (ref.func $target)
-  ;; CAREFUL-NEXT:    (i32.eqz
-  ;; CAREFUL-NEXT:     (i32.const 8)
-  ;; CAREFUL-NEXT:    )
-  ;; CAREFUL-NEXT:    (f64.add
-  ;; CAREFUL-NEXT:     (f64.const 2.71828)
-  ;; CAREFUL-NEXT:     (f64.const 3.14159)
-  ;; CAREFUL-NEXT:    )
-  ;; CAREFUL-NEXT:    (select
-  ;; CAREFUL-NEXT:     (i32.const 9)
-  ;; CAREFUL-NEXT:     (i32.const 10)
-  ;; CAREFUL-NEXT:     (i32.const 11)
-  ;; CAREFUL-NEXT:    )
-  ;; CAREFUL-NEXT:    (ref.cast nullref
-  ;; CAREFUL-NEXT:     (ref.null none)
-  ;; CAREFUL-NEXT:    )
-  ;; CAREFUL-NEXT:    (struct.new_default $struct)
   ;; CAREFUL-NEXT:    (block (result i32)
   ;; CAREFUL-NEXT:     (local.set $scratch
   ;; CAREFUL-NEXT:      (i32.const 12)
@@ -138,6 +113,16 @@
   ;; CAREFUL-NEXT: )
   (func $caller (param $x i32) (result i32)
     ;; Show the variety of things we can and cannot move into the call context.
+    ;;
+    ;; Note that in CAREFUL mode we only optimize here if we properly take into
+    ;; account the call context in the cost. The function we are calling has
+    ;; an empty body, so the monomorphized function will contain basically just
+    ;; the moved code from the call context. If we didn't measure that in the
+    ;; cost before monomorphization then it would seem like we went from cost 0
+    ;; (empty body) to the cost of the operations that remain after we
+    ;; optimize (which is the i32.load, which might trap so it remains). But if
+    ;; we take into account the context, then monomorphization definitely helps
+    ;; as it removes a bunch of constants.
     (block $out
       (call $target
         ;; We can't move control flow.
@@ -205,7 +190,7 @@
   ;; ALWAYS:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 anyref) (param $10 funcref) (param $11 i32) (param $12 f64) (param $13 i32) (param $14 anyref) (param $15 anyref) (param $16 i32)
   ;; ALWAYS-NEXT:  (nop)
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $target (type $2) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 anyref) (param $10 funcref) (param $11 i32) (param $12 f64) (param $13 i32) (param $14 anyref) (param $15 anyref) (param $16 i32)
+  ;; CAREFUL:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 anyref) (param $10 funcref) (param $11 i32) (param $12 f64) (param $13 i32) (param $14 anyref) (param $15 anyref) (param $16 i32)
   ;; CAREFUL-NEXT:  (nop)
   ;; CAREFUL-NEXT: )
   (func $target
@@ -315,3 +300,11 @@
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (nop)
 ;; ALWAYS-NEXT: )
+
+;; CAREFUL:      (func $target_2 (type $2) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32)
+;; CAREFUL-NEXT:  (drop
+;; CAREFUL-NEXT:   (i32.load
+;; CAREFUL-NEXT:    (i32.const 6)
+;; CAREFUL-NEXT:   )
+;; CAREFUL-NEXT:  )
+;; CAREFUL-NEXT: )

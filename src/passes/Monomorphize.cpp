@@ -469,9 +469,17 @@ struct Monomorphize : public Pass {
       doOpts(func);
       doOpts(monoFunc.get());
 
-      // TODO: Add context into cost! in 'before'
+      // The cost before monomorphization is the old body + the context
+      // operands. The operands will be *removed* from the calling code if we
+      // optimize, and moved into the monomorphized function, so the proper
+      // comparison is the context + the old body, versus the new body (which
+      // includes the reverse-inlined call context).
       auto costBefore = CostAnalyzer(func->body).cost;
+      for (auto* operand : context.operands) {
+        costBefore += CostAnalyzer(operand).cost;
+      }
       auto costAfter = CostAnalyzer(monoFunc->body).cost;
+
       // TODO: We should probably only accept improvements above some minimum,
       //       to avoid optimizing cases where we duplicate a huge function but
       //       only optimize a tiny part of it compared to the original.
