@@ -7,42 +7,6 @@
 ;; RUN: foreach %s %t wasm-opt --monomorphize-always -all -S -o - | filecheck %s --check-prefix ALWAYS
 ;; RUN: foreach %s %t wasm-opt --monomorphize        -all -S -o - | filecheck %s --check-prefix CAREFUL
 
-
-
-
-
-
-
-
-
-
-
-
-;; TODO: nesting inside, children that are some in and some out
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 (module
   ;; ALWAYS:      (type $0 (func (param i32) (result i32)))
 
@@ -697,6 +661,7 @@
   )
 )
 
+
 ;; ALWAYS:      (func $target_2 (type $2) (param $0 f64)
 ;; ALWAYS-NEXT:  (local $f32 f32)
 ;; ALWAYS-NEXT:  (local.set $f32
@@ -730,4 +695,259 @@
 ;; CAREFUL-NEXT:   (i32.const 42)
 ;; CAREFUL-NEXT:   (f32.const 0)
 ;; CAREFUL-NEXT:  )
+;; CAREFUL-NEXT: )
+(module
+  ;; ALWAYS:      (type $struct (struct (field (mut i32)) (field (mut i32))))
+  ;; CAREFUL:      (type $struct (struct (field (mut i32)) (field (mut i32))))
+  (type $struct (struct (field (mut i32)) (field (mut i32))))
+
+  ;; ALWAYS:      (type $1 (func (param i32) (result anyref)))
+
+  ;; ALWAYS:      (type $2 (func (param i32)))
+
+  ;; ALWAYS:      (type $3 (func (param (ref $struct)) (result anyref)))
+
+  ;; ALWAYS:      (func $caller (type $1) (param $x i32) (result anyref)
+  ;; ALWAYS-NEXT:  (call $target_4
+  ;; ALWAYS-NEXT:   (local.get $x)
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (type $1 (func (param i32) (result anyref)))
+
+  ;; CAREFUL:      (type $2 (func (param i32)))
+
+  ;; CAREFUL:      (type $3 (func (param (ref $struct)) (result anyref)))
+
+  ;; CAREFUL:      (func $caller (type $1) (param $x i32) (result anyref)
+  ;; CAREFUL-NEXT:  (call $target
+  ;; CAREFUL-NEXT:   (struct.new $struct
+  ;; CAREFUL-NEXT:    (local.get $x)
+  ;; CAREFUL-NEXT:    (i32.const 42)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $caller (param $x i32) (result anyref)
+    ;; We can reverse-inline the struct.new and the nested constant, leaving
+    ;; only the local.get as a remaining param. (In CAREFUL mode, however, this
+    ;; does not look promising enough to optimize.)
+    (call $target
+      (struct.new $struct
+        (local.get $x)
+        (i32.const 42)
+      )
+    )
+  )
+
+  ;; ALWAYS:      (func $caller-flip (type $1) (param $x i32) (result anyref)
+  ;; ALWAYS-NEXT:  (call $target_5
+  ;; ALWAYS-NEXT:   (local.get $x)
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $caller-flip (type $1) (param $x i32) (result anyref)
+  ;; CAREFUL-NEXT:  (call $target
+  ;; CAREFUL-NEXT:   (struct.new $struct
+  ;; CAREFUL-NEXT:    (i32.const 1337)
+  ;; CAREFUL-NEXT:    (local.get $x)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $caller-flip (param $x i32) (result anyref)
+    ;; As above, but with struct.new's children flipped (which does not change
+    ;; anything).
+    (call $target
+      (struct.new $struct
+        (i32.const 1337)
+        (local.get $x)
+      )
+    )
+  )
+
+  ;; ALWAYS:      (func $dropped-caller (type $2) (param $x i32)
+  ;; ALWAYS-NEXT:  (call $target_6
+  ;; ALWAYS-NEXT:   (local.get $x)
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $dropped-caller (type $2) (param $x i32)
+  ;; CAREFUL-NEXT:  (call $target_4
+  ;; CAREFUL-NEXT:   (local.get $x)
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $dropped-caller (param $x i32)
+    ;; As above, but the outcome is dropped. As the target function only does
+    ;; some struct.sets, escape analysis after monomorphization can prove that
+    ;; we can remove all the code.
+    (drop
+      (call $target
+        (struct.new $struct
+          (i32.const 1337)
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; ALWAYS:      (func $target (type $3) (param $ref (ref $struct)) (result anyref)
+  ;; ALWAYS-NEXT:  (struct.set $struct 0
+  ;; ALWAYS-NEXT:   (local.get $ref)
+  ;; ALWAYS-NEXT:   (i32.add
+  ;; ALWAYS-NEXT:    (struct.get $struct 1
+  ;; ALWAYS-NEXT:     (local.get $ref)
+  ;; ALWAYS-NEXT:    )
+  ;; ALWAYS-NEXT:    (i32.const 1)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT:  (struct.set $struct 1
+  ;; ALWAYS-NEXT:   (local.get $ref)
+  ;; ALWAYS-NEXT:   (i32.xor
+  ;; ALWAYS-NEXT:    (struct.get $struct 0
+  ;; ALWAYS-NEXT:     (local.get $ref)
+  ;; ALWAYS-NEXT:    )
+  ;; ALWAYS-NEXT:    (i32.const -1)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT:  (local.get $ref)
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $target (type $3) (param $0 (ref $struct)) (result anyref)
+  ;; CAREFUL-NEXT:  (struct.set $struct 0
+  ;; CAREFUL-NEXT:   (local.get $0)
+  ;; CAREFUL-NEXT:   (i32.add
+  ;; CAREFUL-NEXT:    (struct.get $struct 1
+  ;; CAREFUL-NEXT:     (local.get $0)
+  ;; CAREFUL-NEXT:    )
+  ;; CAREFUL-NEXT:    (i32.const 1)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT:  (struct.set $struct 1
+  ;; CAREFUL-NEXT:   (local.get $0)
+  ;; CAREFUL-NEXT:   (i32.xor
+  ;; CAREFUL-NEXT:    (struct.get $struct 0
+  ;; CAREFUL-NEXT:     (local.get $0)
+  ;; CAREFUL-NEXT:    )
+  ;; CAREFUL-NEXT:    (i32.const -1)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT:  (local.get $0)
+  ;; CAREFUL-NEXT: )
+  (func $target (param $ref (ref $struct)) (result anyref)
+    ;; Do some operations on the reference, but do not escape it.
+    (struct.set $struct 0
+      (local.get $ref)
+      (i32.add
+        (struct.get $struct 1
+          (local.get $ref)
+        )
+        (i32.const 1)
+      )
+    )
+    (struct.set $struct 1
+      (local.get $ref)
+      (i32.xor
+        (struct.get $struct 0
+          (local.get $ref)
+        )
+        (i32.const -1)
+      )
+    )
+    (local.get $ref)
+  )
+)
+;; ALWAYS:      (func $target_4 (type $1) (param $0 i32) (result anyref)
+;; ALWAYS-NEXT:  (local $ref (ref $struct))
+;; ALWAYS-NEXT:  (local.set $ref
+;; ALWAYS-NEXT:   (struct.new $struct
+;; ALWAYS-NEXT:    (local.get $0)
+;; ALWAYS-NEXT:    (i32.const 42)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (block (result anyref)
+;; ALWAYS-NEXT:   (struct.set $struct 0
+;; ALWAYS-NEXT:    (local.get $ref)
+;; ALWAYS-NEXT:    (i32.add
+;; ALWAYS-NEXT:     (struct.get $struct 1
+;; ALWAYS-NEXT:      (local.get $ref)
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:     (i32.const 1)
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:   (struct.set $struct 1
+;; ALWAYS-NEXT:    (local.get $ref)
+;; ALWAYS-NEXT:    (i32.xor
+;; ALWAYS-NEXT:     (struct.get $struct 0
+;; ALWAYS-NEXT:      (local.get $ref)
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:     (i32.const -1)
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:   (local.get $ref)
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT: )
+
+;; ALWAYS:      (func $target_5 (type $1) (param $0 i32) (result anyref)
+;; ALWAYS-NEXT:  (local $ref (ref $struct))
+;; ALWAYS-NEXT:  (local.set $ref
+;; ALWAYS-NEXT:   (struct.new $struct
+;; ALWAYS-NEXT:    (i32.const 1337)
+;; ALWAYS-NEXT:    (local.get $0)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (block (result anyref)
+;; ALWAYS-NEXT:   (struct.set $struct 0
+;; ALWAYS-NEXT:    (local.get $ref)
+;; ALWAYS-NEXT:    (i32.add
+;; ALWAYS-NEXT:     (struct.get $struct 1
+;; ALWAYS-NEXT:      (local.get $ref)
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:     (i32.const 1)
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:   (struct.set $struct 1
+;; ALWAYS-NEXT:    (local.get $ref)
+;; ALWAYS-NEXT:    (i32.xor
+;; ALWAYS-NEXT:     (struct.get $struct 0
+;; ALWAYS-NEXT:      (local.get $ref)
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:     (i32.const -1)
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:   (local.get $ref)
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT: )
+
+;; ALWAYS:      (func $target_6 (type $2) (param $0 i32)
+;; ALWAYS-NEXT:  (local $ref (ref $struct))
+;; ALWAYS-NEXT:  (drop
+;; ALWAYS-NEXT:   (block (result anyref)
+;; ALWAYS-NEXT:    (local.set $ref
+;; ALWAYS-NEXT:     (struct.new $struct
+;; ALWAYS-NEXT:      (i32.const 1337)
+;; ALWAYS-NEXT:      (local.get $0)
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:    (block (result anyref)
+;; ALWAYS-NEXT:     (struct.set $struct 0
+;; ALWAYS-NEXT:      (local.get $ref)
+;; ALWAYS-NEXT:      (i32.add
+;; ALWAYS-NEXT:       (struct.get $struct 1
+;; ALWAYS-NEXT:        (local.get $ref)
+;; ALWAYS-NEXT:       )
+;; ALWAYS-NEXT:       (i32.const 1)
+;; ALWAYS-NEXT:      )
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:     (struct.set $struct 1
+;; ALWAYS-NEXT:      (local.get $ref)
+;; ALWAYS-NEXT:      (i32.xor
+;; ALWAYS-NEXT:       (struct.get $struct 0
+;; ALWAYS-NEXT:        (local.get $ref)
+;; ALWAYS-NEXT:       )
+;; ALWAYS-NEXT:       (i32.const -1)
+;; ALWAYS-NEXT:      )
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:     (local.get $ref)
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT: )
+
+;; CAREFUL:      (func $target_4 (type $2) (param $0 i32)
+;; CAREFUL-NEXT:  (nop)
 ;; CAREFUL-NEXT: )
