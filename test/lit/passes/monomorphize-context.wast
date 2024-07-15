@@ -214,8 +214,6 @@
   )
 )
 
-;; TODO: nesting inside, children that are some in and some out
-
 ;; ALWAYS:      (func $target_2 (type $2) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32)
 ;; ALWAYS-NEXT:  (local $6 i32)
 ;; ALWAYS-NEXT:  (local $7 i32)
@@ -308,3 +306,6 @@
 ;; CAREFUL-NEXT:   )
 ;; CAREFUL-NEXT:  )
 ;; CAREFUL-NEXT: )
+
+;; TODO: nesting inside, children that are some in and some out
+
