@@ -114,7 +114,12 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --pass-arg,-pa                       An argument passed along to optimization
 ;; CHECK-NEXT:                                        passes being run. Must be in the form
-;; CHECK-NEXT:                                        KEY@VALUE
+;; CHECK-NEXT:                                        KEY@VALUE.  If KEY is the name of a pass
+;; CHECK-NEXT:                                        then it applies to the closest instance
+;; CHECK-NEXT:                                        of that pass before us. If KEY is not the
+;; CHECK-NEXT:                                        name of a pass then it is a global option
+;; CHECK-NEXT:                                        that applies to all pass instances that
+;; CHECK-NEXT:                                        read it.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --closed-world,-cw                   Assume code outside of the module does
 ;; CHECK-NEXT:                                        not inspect or interact with GC and

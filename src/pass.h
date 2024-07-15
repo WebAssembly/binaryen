@@ -39,12 +39,14 @@ struct PassRegistry {
   using Creator = std::function<Pass*()>;
 
   void registerPass(const char* name, const char* description, Creator create);
+
   // Register a pass that's used for internal testing. These passes do not show
   // up in --help.
   void
   registerTestPass(const char* name, const char* description, Creator create);
   std::unique_ptr<Pass> createPass(std::string name);
   std::vector<std::string> getRegisteredNames();
+  bool containsPass(const std::string& name);
   std::string getPassDescription(std::string name);
   bool isPassHidden(std::string name);
 
@@ -103,6 +105,8 @@ class EffectAnalyzer;
 using FuncEffectsMap = std::unordered_map<Name, EffectAnalyzer>;
 
 struct PassOptions {
+  friend Pass;
+
   // Run passes in debug mode, doing extra validation and timing checks.
   bool debug = false;
   // Whether to run the validator to check for errors.
@@ -269,6 +273,7 @@ struct PassOptions {
     return PassOptions(); // defaults are to not optimize
   }
 
+private:
   bool hasArgument(std::string key) { return arguments.count(key) > 0; }
 
   std::string getArgument(std::string key, std::string errorTextIfMissing) {
@@ -322,9 +327,8 @@ struct PassRunner {
   }
 
   // Add a pass using its name.
-  void add(std::string passName) {
-    doAdd(PassRegistry::get()->createPass(passName));
-  }
+  void add(std::string passName,
+           std::optional<std::string> passArg = std::nullopt);
 
   // Add a pass given an instance.
   void add(std::unique_ptr<Pass> pass) { doAdd(std::move(pass)); }
@@ -486,6 +490,8 @@ public:
   // to imports must override this to return true.
   virtual bool addsEffects() { return false; }
 
+  void setPassArg(const std::string& value) { passArg = value; }
+
   std::string name;
 
   PassRunner* getPassRunner() { return runner; }
@@ -497,6 +503,19 @@ public:
   PassOptions& getPassOptions() { return runner->options; }
 
 protected:
+  bool hasArgument(const std::string& key);
+  std::string getArgument(const std::string& key,
+                          const std::string& errorTextIfMissing);
+  std::string getArgumentOrDefault(const std::string& key,
+                                   const std::string& defaultValue);
+
+  // The main argument of the pass, which can be specified individually for
+  // every pass . getArgument() and friends will refer to this value if queried
+  // for a key that matches the pass name. All other arguments are taken from
+  // the runner / passOptions and therefore are global for all instances of a
+  // pass.
+  std::optional<std::string> passArg;
+
   Pass() = default;
   Pass(const Pass&) = default;
   Pass(Pass&&) = default;

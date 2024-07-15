@@ -126,7 +126,10 @@ struct ToolOptions : public Options {
       .add("--pass-arg",
            "-pa",
            "An argument passed along to optimization passes being run. Must be "
-           "in the form KEY@VALUE",
+           "in the form KEY@VALUE.  If KEY is the name of a pass then it "
+           "applies to the closest instance of that pass before us. If KEY is "
+           "not the name of a pass then it is a global option that applies to "
+           "all pass instances that read it.",
            ToolOptionsCategory,
            Options::Arguments::N,
            [this](Options*, const std::string& argument) {
@@ -139,7 +142,8 @@ struct ToolOptions : public Options {
                key = argument.substr(0, colon);
                value = argument.substr(colon + 1);
              }
-             passOptions.arguments[key] = value;
+
+             addPassArg(key, value);
            })
       .add(
         "--closed-world",
@@ -212,6 +216,12 @@ struct ToolOptions : public Options {
     module.features.enable(enabledFeatures);
     module.features.disable(disabledFeatures);
   }
+
+  virtual void addPassArg(const std::string& key, const std::string& value) {
+    passOptions.arguments[key] = value;
+  }
+
+  virtual ~ToolOptions() = default;
 
 private:
   FeatureSet enabledFeatures = FeatureSet::Default;
