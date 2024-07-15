@@ -16,7 +16,7 @@
 
   (global $mut (mut i32) (i32.const 20))
 
-  (func $caller (param $x i32)
+  (func $caller (param $x i32) (result i32)
     ;; Show the variety of things we can and cannot move into the call context.
     (block $out)
       (call $target
@@ -78,6 +78,27 @@
         (struct.new $struct)
       )
     )
+    (i32.const 13)
+  )
+
+  (func $target
+    (param i32)
+    (param i32)
+    (param i32)
+    (param i32)
+    (param i32)
+    (param i32)
+    (param i32)
+    (param i32)
+    (param i32)
+    (param anyref)
+    (param funcref)
+    (param i32)
+    (param f64)
+    (param i32)
+    (param i32)
+    (param anyref)
+    (param anyref)
   )
 )
 
