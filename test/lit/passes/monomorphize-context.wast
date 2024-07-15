@@ -18,7 +18,7 @@
 
   (func $caller (param $x i32) (result i32)
     ;; Show the variety of things we can and cannot move into the call context.
-    (block $out)
+    (block $out
       (call $target
         ;; We can't move control flow.
         (block (result i32)
