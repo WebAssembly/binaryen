@@ -517,6 +517,7 @@
 
 
 
+
 ;; ALWAYS:      (func $target_2 (type $2) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32)
 ;; ALWAYS-NEXT:  (local $6 i32)
 ;; ALWAYS-NEXT:  (local $7 i32)
@@ -611,5 +612,122 @@
 ;; CAREFUL-NEXT:   (i32.load
 ;; CAREFUL-NEXT:    (i32.const 6)
 ;; CAREFUL-NEXT:   )
+;; CAREFUL-NEXT:  )
+;; CAREFUL-NEXT: )
+(module
+  (memory 10 20)
+
+  ;; ALWAYS:      (type $0 (func))
+
+  ;; ALWAYS:      (type $1 (func (param f32)))
+
+  ;; ALWAYS:      (type $2 (func (param f64)))
+
+  ;; ALWAYS:      (memory $0 10 20)
+
+  ;; ALWAYS:      (func $caller (type $0)
+  ;; ALWAYS-NEXT:  (call $target_2
+  ;; ALWAYS-NEXT:   (block $label$1 (result f64)
+  ;; ALWAYS-NEXT:    (f64.const 0)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT:  (call $target_3)
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (type $0 (func))
+
+  ;; CAREFUL:      (type $1 (func (param f32)))
+
+  ;; CAREFUL:      (memory $0 10 20)
+
+  ;; CAREFUL:      (func $caller (type $0)
+  ;; CAREFUL-NEXT:  (call $target
+  ;; CAREFUL-NEXT:   (f32.demote_f64
+  ;; CAREFUL-NEXT:    (block $label$1 (result f64)
+  ;; CAREFUL-NEXT:     (f64.const 0)
+  ;; CAREFUL-NEXT:    )
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT:  (call $target_2)
+  ;; CAREFUL-NEXT: )
+  (func $caller
+    ;; Nesting: the f32.demote_f64 operation can be moved into the context, but
+    ;; its child cannot, so we stop there. (In CAREFUL mode, we end up doing
+    ;; nothing here, as the benefit of monomorphization is not worth it.)
+    (call $target
+      (f32.demote_f64
+        (block $label$1 (result f64)
+          (f64.const 0)
+        )
+      )
+    )
+
+    ;; Now the child is an f64.abs, which can be moved into the context, so it
+    ;; all is moved. This ends up worthwhile in CAREFUL mode (since we can
+    ;; optimize all the math here).
+    (call $target
+      (f32.demote_f64
+        (f64.abs         ;; this changed
+          (f64.const 0)
+        )
+      )
+    )
+  )
+
+  ;; ALWAYS:      (func $target (type $1) (param $f32 f32)
+  ;; ALWAYS-NEXT:  (f32.store
+  ;; ALWAYS-NEXT:   (i32.const 42)
+  ;; ALWAYS-NEXT:   (local.get $f32)
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $target (type $1) (param $0 f32)
+  ;; CAREFUL-NEXT:  (f32.store
+  ;; CAREFUL-NEXT:   (i32.const 42)
+  ;; CAREFUL-NEXT:   (local.get $0)
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $target (param $f32 f32)
+    ;; When monomorphized the first time, the param here will be f64 and not
+    ;; i32, showing we handle a type change.
+    ;;
+    ;; When monomorphized the second time, the param will go away entirely.
+    (f32.store
+      (i32.const 42)
+      (local.get $f32)
+    )
+  )
+)
+
+;; ALWAYS:      (func $target_2 (type $2) (param $0 f64)
+;; ALWAYS-NEXT:  (local $f32 f32)
+;; ALWAYS-NEXT:  (local.set $f32
+;; ALWAYS-NEXT:   (f32.demote_f64
+;; ALWAYS-NEXT:    (local.get $0)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (f32.store
+;; ALWAYS-NEXT:   (i32.const 42)
+;; ALWAYS-NEXT:   (local.get $f32)
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT: )
+
+;; ALWAYS:      (func $target_3 (type $0)
+;; ALWAYS-NEXT:  (local $f32 f32)
+;; ALWAYS-NEXT:  (local.set $f32
+;; ALWAYS-NEXT:   (f32.demote_f64
+;; ALWAYS-NEXT:    (f64.abs
+;; ALWAYS-NEXT:     (f64.const 0)
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (f32.store
+;; ALWAYS-NEXT:   (i32.const 42)
+;; ALWAYS-NEXT:   (local.get $f32)
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT: )
+
+;; CAREFUL:      (func $target_2 (type $0)
+;; CAREFUL-NEXT:  (f32.store
+;; CAREFUL-NEXT:   (i32.const 42)
+;; CAREFUL-NEXT:   (f32.const 0)
 ;; CAREFUL-NEXT:  )
 ;; CAREFUL-NEXT: )

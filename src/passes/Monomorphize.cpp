@@ -476,6 +476,11 @@ struct Monomorphize : public Pass {
       // includes the reverse-inlined call context).
       auto costBefore = CostAnalyzer(func->body).cost;
       for (auto* operand : context.operands) {
+        // Note that a slight oddity is that we have *not* optimized the
+        // operands before. We optimize func before and after, but the operands
+        // are in the calling function, which we are not modifying here. In
+        // theory that might lead to false positives, if the call's operands are
+        // very unoptimized.
         costBefore += CostAnalyzer(operand).cost;
       }
       auto costAfter = CostAnalyzer(monoFunc->body).cost;
@@ -517,14 +522,23 @@ struct Monomorphize : public Pass {
     // Copy the function as the base for the new one.
     auto newFunc = ModuleUtils::copyFunctionWithoutAdd(func, wasm, newName);
 
+    // A local.get is a value that arrives in a parameter. Anything else is
+    // something that we are reverse-inlining into the function, so we don't
+    // need a param for it. Note that we might have multiple gets nested here,
+    // if we are copying part of the original parameter but not all children.
+    // Find all such unknown values first and store them in a vector indexed by
+    // the context operands.
+    std::vector<FindAll<LocalGet>> operandGets; // TODO: it seems we use this oncen?
+    operandGets.reserve(context.operands.size());
+    for (auto* operand : context.operands) {
+      operandGets.emplace_back(operand);
+    }
+
     // Generate the new signature, and apply it to the new function.
     std::vector<Type> newParams;
-    for (auto* operand : context.operands) {
-      // A local.get is a value that arrives in a parameter. Anything else is
-      // something that we are reverse-inlining into the function, so we don't
-      // need a param for it.
-      if (operand->is<LocalGet>()) {
-        newParams.push_back(operand->type);
+    for (auto& gets : operandGets) {
+      for (auto* get : gets.list) {
+        newParams.push_back(get->type);
       }
     }
     // If we were dropped then we are pulling the drop into the monomorphized
@@ -532,7 +546,7 @@ struct Monomorphize : public Pass {
     auto newResults = context.dropped ? Type::none : func->getResults();
     newFunc->type = Signature(Type(newParams), newResults);
 
-    // We must update local indexes: the new function has a  potentially
+    // We must update local indexes: the new function has a potentially
     // different number of parameters, and parameters are at the very bottom of
     // the local index space. We are also replacing old params with vars. To
     // track this, map each old index to the new one.
@@ -590,7 +604,7 @@ struct Monomorphize : public Pass {
     //    (local.get $param)                 ;; copied old body
     //  )
     //
-    // We need to add such an local.set in the prelude of the function for each
+    // We need to add such a local.set in the prelude of the function for each
     // operand in the context.
     std::vector<Expression*> pre;
     for (Index i = 0; i < context.operands.size(); i++) {
