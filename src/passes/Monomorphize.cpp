@@ -88,10 +88,12 @@
 //
 
 #include "ir/cost.h"
+#include "ir/effects.h"
 #include "ir/find_all.h"
 #include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/properties.h"
 #include "ir/return-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -214,7 +216,8 @@ struct CallContext {
   // nothing left to send).
   void buildFromCall(CallInfo& info,
                      std::vector<Expression*>& newOperands,
-                     Module& wasm) {
+                     Module& wasm,
+                     const PassOptions& options) {
     Builder builder(wasm);
 
     for (auto* operand : info.call->operands) {
@@ -224,7 +227,7 @@ struct CallContext {
       // value sent from the call.
       operands.push_back(ExpressionManipulator::flexibleCopy(
         operand, wasm, [&](Expression* child) -> Expression* {
-          if (canBeMovedIntoContext(child)) {
+          if (canBeMovedIntoContext(child, wasm, options)) {
             // This can be moved, great: let the copy happen.
             return nullptr;
           }
@@ -247,12 +250,31 @@ struct CallContext {
   }
 
   // Checks whether an expression can be moved into the context.
-  bool canBeMovedIntoContext(Expression* curr) {
-    // Constant numbers, funcs, strings, etc. can all be copied, so it is ok to
-    // add them to the context.
-    // TODO: Allow global.get as well, and anything else that is purely
-    //       copyable.
-    return Properties::isSingleConstantExpression(curr);
+  bool canBeMovedIntoContext(Expression* curr, Module& wasm, const PassOptions& options) {
+    // Pretty much everything can be moved into the context if we can copy it
+    // between functions, such as constants, globals, etc. The things we cannot
+    // copy are now checked for.
+    ShallowEffectAnalyzer effects(options, wasm, curr);
+    if (effects.branchesOut || effects.hasExternalBreakTargets()) {
+      // This branches or returns. We can't move control flow between functions.
+      return false;
+    }
+    if (effects.accessesLocal()) {
+      // Reads/writes to local state cannot be moved around.
+      return false;
+    }
+    if (effects.calls) {
+      // We can in principle move calls, but for simplicity we avoid such
+      // situations.
+      return false;
+    }
+    if (Properties::isControlFlowStructure(curr)) {
+      // We can in principle move entire control flow structures with their
+      // children, but for simplicity stop when we see one rather than look
+      // inside to see if we could transfer all its contents.
+      return false;
+    }
+    return true;
   }
 
   // Check if a context is trivial relative to a call, that is, the context
@@ -389,7 +411,7 @@ struct Monomorphize : public Pass {
     // if we use that context.
     CallContext context;
     std::vector<Expression*> newOperands;
-    context.buildFromCall(info, newOperands, wasm);
+    context.buildFromCall(info, newOperands, wasm, getPassOptions());
 
     // See if we've already evaluated this function + call context. If so, then
     // we've memoized the result.
@@ -447,6 +469,7 @@ struct Monomorphize : public Pass {
       doOpts(func);
       doOpts(monoFunc.get());
 
+      // TODO: Add context into cost! in 'before'
       auto costBefore = CostAnalyzer(func->body).cost;
       auto costAfter = CostAnalyzer(monoFunc->body).cost;
       // TODO: We should probably only accept improvements above some minimum,
