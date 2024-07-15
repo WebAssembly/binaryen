@@ -8,4 +8,78 @@
 ;; RUN: foreach %s %t wasm-opt --monomorphize        -all -S -o - | filecheck %s --check-prefix CAREFUL
 
 (module
+  (type $struct (struct))
+
+  (memory 10 20)
+
+  (global $imm i32 (i32.const 10))
+
+  (global $mut (mut i32) (i32.const 20))
+
+  (func $caller (param $x i32)
+    ;; Show the variety of things we can and cannot move into the call context.
+    (block $out)
+      (call $target
+        ;; We can't move control flow.
+        (block (result i32)
+          (i32.const 0)
+        )
+        (if (result i32)
+          (i32.const 1)
+          (then
+            (i32.const 2)
+          )
+          (else
+            (i32.const 3)
+          )
+        )
+        ;; We don't move calls.
+        (call $caller
+          (i32.const 4)
+        )
+        ;; We can't move local operations.
+        (local.get $x)
+        (local.tee $x
+          (i32.const 5)
+        )
+        ;; We can move globals, even mutable.
+        (global.get $imm)
+        (global.get $mut)
+        ;; We can move loads and other options that might trap.
+        (i32.load
+          (i32.const 6)
+        )
+        ;; We can move constants.
+        (i32.const 7)
+        (ref.null any)
+        (ref.func $target)
+        ;; We can move math operations.
+        (i32.eqz
+          (i32.const 8)
+        )
+        (f64.add
+          (f64.const 2.71828)
+          (f64.const 3.14159)
+        )
+        ;; We can move selects.
+        (select
+          (i32.const 9)
+          (i32.const 10)
+          (i32.const 11)
+        )
+        ;; We can't move control flow.
+        (br_if $out
+          (i32.const 12)
+        )
+        ;; We can move GC operations.
+        (ref.cast (ref null none)
+          (ref.null none)
+        )
+        (struct.new $struct)
+      )
+    )
+  )
 )
+
+;; TODO: nesting inside, children that are some in and some out
+
