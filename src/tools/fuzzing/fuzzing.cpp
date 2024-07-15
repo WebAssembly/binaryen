@@ -2468,25 +2468,14 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
 
 Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
   auto heapType = type.getHeapType();
-  if (heapType == HeapType::func) {
-    // First set to target to the last created function, and try to select
-    // among other existing function if possible.
-    Function* target = funcContext ? funcContext->func : nullptr;
-    // If there is no last function, and we have others, pick between them. Also
-    // pick between them with some random probability even if there is a last
-    // function.
-    if (!wasm.functions.empty() && (!target || !oneIn(wasm.functions.size()))) {
-      target = pick(wasm.functions).get();
-    }
-    if (target) {
+  if (heapType.isBasic()) {
+    assert(heapType.getBasic(Unshared) == HeapType::func);
+    // With high probability, use the last created function if possible.
+    // Otherwise, continue on to select some other function.
+    if (funcContext && !oneIn(4)) {
+      auto* target = funcContext->func;
       return builder.makeRefFunc(target->name, target->type);
     }
-  }
-  if (heapType == HeapType::func) {
-    // From here on we need a specific signature type, as we want to create a
-    // RefFunc or even a Function out of it. Pick an arbitrary one if we only
-    // had generic 'func' here.
-    heapType = Signature(Type::none, Type::none);
   }
   // Look for a proper function starting from a random location, and loop from
   // there, wrapping around to 0.
@@ -2519,6 +2508,11 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
   // here (we might end up recursing). Note that a trap in the function lets us
   // execute more code then the ref.as_non_null path just before us, which traps
   // even if we never call the function.
+  if (heapType.isBasic()) {
+    // We need a specific signature type to create a function. Pick an arbitrary
+    // signature if we only had generic 'func' here.
+    heapType = Signature(Type::none, Type::none);
+  }
   auto* body = heapType.getSignature().results == Type::none
                  ? (Expression*)builder.makeNop()
                  : (Expression*)builder.makeUnreachable();
