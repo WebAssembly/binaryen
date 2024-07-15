@@ -51,6 +51,31 @@
         )
         ;; We can move constants.
         (i32.const 7)
+        (ref.null any)
+        (ref.func $target)
+        ;; We can move math operations.
+        (i32.eqz
+          (i32.const 8)
+        )
+        (f64.add
+          (f64.const 2.71828)
+          (f64.const 3.14159)
+        )
+        ;; We can move selects.
+        (select
+          (i32.const 9)
+          (i32.const 10)
+          (i32.const 11)
+        )
+        ;; We can't move control flow.
+        (br_if $out
+          (i32.const 12)
+        )
+        ;; We can move GC operations.
+        (ref.cast (ref null none)
+          (ref.null none)
+        )
+        (struct.new $struct)
       )
     )
     (i32.const 13)
@@ -66,6 +91,14 @@
     (param i32)
     (param i32)
     (param i32)
+    (param anyref)
+    (param funcref)
+    (param i32)
+    (param f64)
+    (param i32)
+    (param i32)
+    (param anyref)
+    (param anyref)
   )
 )
 
