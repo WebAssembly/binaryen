@@ -38,8 +38,7 @@
   ;; ALWAYS:      (elem declare func $target)
 
   ;; ALWAYS:      (func $caller (type $0) (param $x i32) (result i32)
-  ;; ALWAYS-NEXT:  (local $scratch i32)
-  ;; ALWAYS-NEXT:  (block $out
+  ;; ALWAYS-NEXT:  (block $out (result i32)
   ;; ALWAYS-NEXT:   (call $target_2
   ;; ALWAYS-NEXT:    (block (result i32)
   ;; ALWAYS-NEXT:     (i32.const 0)
@@ -60,24 +59,18 @@
   ;; ALWAYS-NEXT:    (local.tee $x
   ;; ALWAYS-NEXT:     (i32.const 5)
   ;; ALWAYS-NEXT:    )
-  ;; ALWAYS-NEXT:    (block (result i32)
-  ;; ALWAYS-NEXT:     (local.set $scratch
-  ;; ALWAYS-NEXT:      (i32.const 12)
-  ;; ALWAYS-NEXT:     )
-  ;; ALWAYS-NEXT:     (br_if $out
-  ;; ALWAYS-NEXT:      (i32.const 13)
-  ;; ALWAYS-NEXT:     )
-  ;; ALWAYS-NEXT:     (local.get $scratch)
+  ;; ALWAYS-NEXT:    (br_if $out
+  ;; ALWAYS-NEXT:     (i32.const 12)
+  ;; ALWAYS-NEXT:     (i32.const 13)
   ;; ALWAYS-NEXT:    )
   ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:   (i32.const 14)
   ;; ALWAYS-NEXT:  )
-  ;; ALWAYS-NEXT:  (i32.const 14)
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (memory $0 10 20)
 
   ;; CAREFUL:      (func $caller (type $0) (param $x i32) (result i32)
-  ;; CAREFUL-NEXT:  (local $scratch i32)
-  ;; CAREFUL-NEXT:  (block $out
+  ;; CAREFUL-NEXT:  (block $out (result i32)
   ;; CAREFUL-NEXT:   (call $target_2
   ;; CAREFUL-NEXT:    (block (result i32)
   ;; CAREFUL-NEXT:     (i32.const 0)
@@ -98,18 +91,13 @@
   ;; CAREFUL-NEXT:    (local.tee $x
   ;; CAREFUL-NEXT:     (i32.const 5)
   ;; CAREFUL-NEXT:    )
-  ;; CAREFUL-NEXT:    (block (result i32)
-  ;; CAREFUL-NEXT:     (local.set $scratch
-  ;; CAREFUL-NEXT:      (i32.const 12)
-  ;; CAREFUL-NEXT:     )
-  ;; CAREFUL-NEXT:     (br_if $out
-  ;; CAREFUL-NEXT:      (i32.const 13)
-  ;; CAREFUL-NEXT:     )
-  ;; CAREFUL-NEXT:     (local.get $scratch)
+  ;; CAREFUL-NEXT:    (br_if $out
+  ;; CAREFUL-NEXT:     (i32.const 12)
+  ;; CAREFUL-NEXT:     (i32.const 13)
   ;; CAREFUL-NEXT:    )
   ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (i32.const 14)
   ;; CAREFUL-NEXT:  )
-  ;; CAREFUL-NEXT:  (i32.const 14)
   ;; CAREFUL-NEXT: )
   (func $caller (param $x i32) (result i32)
     ;; Show the variety of things we can and cannot move into the call context.
@@ -123,7 +111,7 @@
     ;; optimize (which is the i32.load, which might trap so it remains). But if
     ;; we take into account the context, then monomorphization definitely helps
     ;; as it removes a bunch of constants.
-    (block $out
+    (block $out (result i32)
       (call $target
         ;; We can't move control flow.
         (block (result i32)
@@ -183,8 +171,8 @@
           (i32.const 13)
         )
       )
+      (i32.const 14)
     )
-    (i32.const 14)
   )
 
   ;; ALWAYS:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 anyref) (param $10 funcref) (param $11 i32) (param $12 f64) (param $13 i32) (param $14 anyref) (param $15 anyref) (param $16 i32)
@@ -213,6 +201,9 @@
     (param i32)
   )
 )
+
+
+;; TODO: nesting inside, children that are some in and some out
 
 ;; ALWAYS:      (func $target_2 (type $2) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32)
 ;; ALWAYS-NEXT:  (local $6 i32)
@@ -306,6 +297,3 @@
 ;; CAREFUL-NEXT:   )
 ;; CAREFUL-NEXT:  )
 ;; CAREFUL-NEXT: )
-
-;; TODO: nesting inside, children that are some in and some out
-
