@@ -141,8 +141,7 @@ struct StackCheck : public Pass {
     auto stackLimitName = Names::getValidGlobalName(*module, "__stack_limit");
 
     Name handler;
-    auto handlerName =
-      getPassOptions().getArgumentOrDefault("stack-check-handler", "");
+    auto handlerName = getArgumentOrDefault("stack-check-handler", "");
     if (handlerName != "") {
       handler = handlerName;
       importStackOverflowHandler(

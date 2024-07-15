@@ -124,10 +124,10 @@ struct TraceCalls : public Pass {
   bool addsEffects() override { return true; }
 
   void run(Module* module) override {
-    auto functionsDefinitions = getPassOptions().getArgument(
-      "trace-calls",
-      "TraceCalls usage: wasm-opt "
-      "--trace-calls=FUNCTION_TO_TRACE[:TRACER_NAME][,...]");
+    auto functionsDefinitions =
+      getArgument("trace-calls",
+                  "TraceCalls usage: wasm-opt "
+                  "--trace-calls=FUNCTION_TO_TRACE[:TRACER_NAME][,...]");
 
     auto tracedFunctions = parseArgument(functionsDefinitions);
 

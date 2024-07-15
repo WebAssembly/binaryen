@@ -41,6 +41,12 @@ v118
  - The build-time option to use legacy WasmGC opcodes is removed.
  - The strings in `string.const` instructions must now be valid WTF-8.
  - The `TraverseCalls` flag for `ExpressionRunner` is removed.
+ - Passes can now receive individual pass arguments, that is --foo=A --foo=B for
+   a pass foo will run the pass twice (which was possible before) and will now
+   run it first with argument A and second with B. --pass-arg=foo@BAR will now
+   apply to the most recent --foo pass on the commandline, if foo is a pass
+   (while global pass arguments - that are not the name of a pass - remain, as
+   before, global for all passes).
 
 v117
 ----

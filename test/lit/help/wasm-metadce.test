@@ -733,7 +733,14 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --pass-arg,-pa                                An argument passed along to
 ;; CHECK-NEXT:                                                 optimization passes being run.
-;; CHECK-NEXT:                                                 Must be in the form KEY@VALUE
+;; CHECK-NEXT:                                                 Must be in the form KEY@VALUE.
+;; CHECK-NEXT:                                                 If KEY is the name of a pass
+;; CHECK-NEXT:                                                 then it applies to the closest
+;; CHECK-NEXT:                                                 instance of that pass before us.
+;; CHECK-NEXT:                                                 If KEY is not the name of a pass
+;; CHECK-NEXT:                                                 then it is a global option that
+;; CHECK-NEXT:                                                 applies to all pass instances
+;; CHECK-NEXT:                                                 that read it.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --closed-world,-cw                            Assume code outside of the
 ;; CHECK-NEXT:                                                 module does not inspect or

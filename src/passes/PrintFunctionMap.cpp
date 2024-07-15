@@ -37,7 +37,7 @@ struct PrintFunctionMap : public Pass {
   void run(Module* module) override {
     // If an argument is provided, write to that file; otherwise write to
     // stdout.
-    auto outFile = getPassOptions().getArgumentOrDefault("symbolmap", "");
+    auto outFile = getArgumentOrDefault("symbolmap", "");
     Output output(outFile, Flags::Text);
     auto& o = output.getStream();
     Index i = 0;

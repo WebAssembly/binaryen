@@ -51,6 +51,9 @@ struct OptimizationOptions : public ToolOptions {
     // The name of the pass to run.
     std::string name;
 
+    // The main argument of the pass, if applicable.
+    std::optional<std::string> argument;
+
     // The optimize and shrink levels to run the pass with, if specified. If not
     // specified then the defaults are used.
     std::optional<int> optimizeLevel;
@@ -330,16 +333,45 @@ struct OptimizationOptions : public ToolOptions {
         //   --foo --pass-arg=foo@ARG
         Options::Arguments::Optional,
         [this, p](Options*, const std::string& arg) {
+          PassInfo info(p);
           if (!arg.empty()) {
-            if (passOptions.arguments.count(p)) {
-              Fatal() << "Cannot pass multiple pass arguments to " << p;
-            }
-            passOptions.arguments[p] = arg;
+            info.argument = arg;
           }
-          passes.push_back(p);
+
+          passes.push_back(info);
         },
         PassRegistry::get()->isPassHidden(p));
     }
+  }
+
+  // Pass arguments with the same name as the pass are stored per-instance on
+  // PassInfo, while all other arguments are stored globally on
+  // passOptions.arguments (which is what the overriden method on ToolOptions
+  // does).
+  void addPassArg(const std::string& key, const std::string& value) override {
+    // Scan the current pass list for the last defined instance of a pass named
+    // like the argument under consideration.
+    for (auto i = passes.rbegin(); i != passes.rend(); i++) {
+      if (i->name != key) {
+        continue;
+      }
+
+      if (i->argument.has_value()) {
+        Fatal() << i->name << " already set to " << *(i->argument);
+      }
+
+      // Found? Store the argument value there and return.
+      i->argument = value;
+      return;
+    }
+
+    // Not found? Store it globally if there is no pass with the same name.
+    if (!PassRegistry::get()->containsPass(key)) {
+      return ToolOptions::addPassArg(key, value);
+    }
+
+    // Not found, but we have a pass with the same name? Bail out.
+    Fatal() << "can't set " << key << ": pass not enabled";
   }
 
   bool runningDefaultOptimizationPasses() {
@@ -393,7 +425,7 @@ struct OptimizationOptions : public ToolOptions {
         passRunner.options.shrinkLevel = passOptions.shrinkLevel;
       } else {
         // This is a normal pass. Add it to the queue for execution.
-        passRunner.add(pass.name);
+        passRunner.add(pass.name, pass.argument);
 
         // Normal passes do not set their own optimize/shrinkLevels.
         assert(!pass.optimizeLevel);
