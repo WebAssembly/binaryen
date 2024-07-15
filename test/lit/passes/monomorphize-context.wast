@@ -855,6 +855,7 @@
     (local.get $ref)
   )
 )
+
 ;; ALWAYS:      (func $target_4 (type $1) (param $0 f32) (result anyref)
 ;; ALWAYS-NEXT:  (local $ref (ref $struct))
 ;; ALWAYS-NEXT:  (local.set $ref
@@ -953,5 +954,78 @@
 ;; ALWAYS-NEXT: )
 
 ;; CAREFUL:      (func $target_4 (type $1) (param $0 f64)
+;; CAREFUL-NEXT:  (nop)
+;; CAREFUL-NEXT: )
+(module
+  ;; ALWAYS:      (type $struct (struct (field i16) (field (mut i8)) (field (mut f64))))
+  ;; CAREFUL:      (type $0 (func))
+
+  ;; CAREFUL:      (type $struct (struct (field i16) (field (mut i8)) (field (mut f64))))
+  (type $struct (struct (field i16) (field (mut i8)) (field (mut f64))))
+
+  ;; ALWAYS:      (type $1 (func))
+
+  ;; ALWAYS:      (type $2 (func (param (ref $struct))))
+
+  ;; ALWAYS:      (type $3 (func (param i32 f64)))
+
+  ;; ALWAYS:      (func $caller (type $1)
+  ;; ALWAYS-NEXT:  (local $i32 i32)
+  ;; ALWAYS-NEXT:  (local $f64 f64)
+  ;; ALWAYS-NEXT:  (call $target_2
+  ;; ALWAYS-NEXT:   (local.get $i32)
+  ;; ALWAYS-NEXT:   (local.get $f64)
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (type $2 (func (param (ref $struct))))
+
+  ;; CAREFUL:      (type $3 (func (param i32 f64)))
+
+  ;; CAREFUL:      (func $caller (type $0)
+  ;; CAREFUL-NEXT:  (local $i32 i32)
+  ;; CAREFUL-NEXT:  (local $f64 f64)
+  ;; CAREFUL-NEXT:  (call $target_2
+  ;; CAREFUL-NEXT:   (local.get $i32)
+  ;; CAREFUL-NEXT:   (local.get $f64)
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $caller
+    (local $i32 i32)
+    (local $f64 f64)
+    ;; The first operand can be moved to the context, but not the other two. Of
+    ;; those two, the order of iteration matters, as they have different types
+    ;; (if we got mixed up and reordered them, we'd error).
+    (call $target
+      (struct.new $struct
+        (i32.const 0)
+        (local.get $i32)
+        (local.get $f64)
+      )
+    )
+  )
+
+  ;; ALWAYS:      (func $target (type $2) (param $0 (ref $struct))
+  ;; ALWAYS-NEXT:  (nop)
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $target (type $2) (param $0 (ref $struct))
+  ;; CAREFUL-NEXT:  (nop)
+  ;; CAREFUL-NEXT: )
+  (func $target (param (ref $struct))
+    (nop)
+  )
+)
+;; ALWAYS:      (func $target_2 (type $3) (param $0 i32) (param $1 f64)
+;; ALWAYS-NEXT:  (local $2 (ref $struct))
+;; ALWAYS-NEXT:  (local.set $2
+;; ALWAYS-NEXT:   (struct.new $struct
+;; ALWAYS-NEXT:    (i32.const 0)
+;; ALWAYS-NEXT:    (local.get $0)
+;; ALWAYS-NEXT:    (local.get $1)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (nop)
+;; ALWAYS-NEXT: )
+
+;; CAREFUL:      (func $target_2 (type $3) (param $0 i32) (param $1 f64)
 ;; CAREFUL-NEXT:  (nop)
 ;; CAREFUL-NEXT: )
