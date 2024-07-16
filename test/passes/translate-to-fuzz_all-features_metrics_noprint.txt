@@ -8,52 +8,54 @@ total
  [table-data]   : 3       
  [tables]       : 1       
  [tags]         : 1       
- [total]        : 750     
- [vars]         : 30      
+ [total]        : 846     
+ [vars]         : 38      
  ArrayCopy      : 1       
- ArrayGet       : 2       
+ ArrayGet       : 3       
  ArrayLen       : 5       
  ArrayNew       : 24      
  ArrayNewFixed  : 1       
  ArraySet       : 1       
  AtomicCmpxchg  : 1       
  AtomicFence    : 1       
+ AtomicNotify   : 1       
  AtomicRMW      : 1       
- Binary         : 84      
- Block          : 58      
- Break          : 12      
+ Binary         : 91      
+ Block          : 75      
+ Break          : 17      
  Call           : 13      
- Const          : 175     
- Drop           : 2       
- GlobalGet      : 45      
- GlobalSet      : 20      
+ Const          : 177     
+ Drop           : 3       
+ GlobalGet      : 50      
+ GlobalSet      : 26      
  I31Get         : 2       
- If             : 21      
- Load           : 20      
- LocalGet       : 70      
- LocalSet       : 46      
- Loop           : 7       
+ If             : 26      
+ Load           : 23      
+ LocalGet       : 79      
+ LocalSet       : 56      
+ Loop           : 10      
  MemoryCopy     : 1       
- Nop            : 11      
- Pop            : 3       
- RefAs          : 7       
+ Nop            : 13      
+ Pop            : 4       
+ RefAs          : 16      
  RefEq          : 1       
  RefFunc        : 5       
- RefI31         : 7       
- RefIsNull      : 3       
- RefNull        : 19      
+ RefI31         : 5       
+ RefIsNull      : 2       
+ RefNull        : 23      
  RefTest        : 3       
  Return         : 2       
  SIMDTernary    : 1       
- Select         : 3       
- Store          : 1       
- StringConst    : 8       
+ Select         : 4       
+ Store          : 2       
+ StringConst    : 6       
  StringEncode   : 1       
  StringMeasure  : 1       
  StringWTF16Get : 1       
  StructGet      : 1       
- StructNew      : 21      
- Try            : 3       
+ StructNew      : 14      
+ StructSet      : 1       
+ Try            : 4       
  TupleMake      : 6       
- Unary          : 19      
- Unreachable    : 10      
+ Unary          : 29      
+ Unreachable    : 13      
