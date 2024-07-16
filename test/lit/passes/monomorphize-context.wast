@@ -1014,6 +1014,7 @@
     (nop)
   )
 )
+
 ;; ALWAYS:      (func $target_2 (type $3) (param $0 i32) (param $1 f64)
 ;; ALWAYS-NEXT:  (local $2 (ref $struct))
 ;; ALWAYS-NEXT:  (local.set $2
@@ -1028,4 +1029,129 @@
 
 ;; CAREFUL:      (func $target_2 (type $3) (param $0 i32) (param $1 f64)
 ;; CAREFUL-NEXT:  (nop)
+;; CAREFUL-NEXT: )
+(module
+  ;; ALWAYS:      (type $array (sub (array (mut i8))))
+  (type $array (sub (array (mut i8))))
+
+  ;; ALWAYS:      (type $1 (func))
+
+  ;; ALWAYS:      (type $2 (func (param i32)))
+
+  ;; ALWAYS:      (type $3 (func (param anyref anyref) (result i32)))
+
+  ;; ALWAYS:      (type $4 (func (param i32 i32 i32)))
+
+  ;; ALWAYS:      (func $caller (type $1)
+  ;; ALWAYS-NEXT:  (call $target_3)
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (type $0 (func))
+
+  ;; CAREFUL:      (type $1 (func (param i32)))
+
+  ;; CAREFUL:      (type $2 (func (param anyref anyref) (result i32)))
+
+  ;; CAREFUL:      (type $3 (func (param i32 i32 i32)))
+
+  ;; CAREFUL:      (func $caller (type $0)
+  ;; CAREFUL-NEXT:  (call $target_3)
+  ;; CAREFUL-NEXT: )
+  (func $caller
+    ;; Call the target with array.new which has an optional child, the initial
+    ;; value. Set it in one and leave it as nullptr in the other to see we
+    ;; handle both properly when we move the array.new + children into the
+    ;; monomorphized function.
+    (drop
+      (call $target
+        (array.new_default $array
+          (i32.const 1)
+        )
+        (array.new $array
+          (i32.const 2)
+          (i32.const 3)
+        )
+      )
+    )
+  )
+
+  ;; ALWAYS:      (func $caller-unknown (type $2) (param $x i32)
+  ;; ALWAYS-NEXT:  (call $target_4
+  ;; ALWAYS-NEXT:   (local.get $x)
+  ;; ALWAYS-NEXT:   (local.get $x)
+  ;; ALWAYS-NEXT:   (local.get $x)
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $caller-unknown (type $1) (param $x i32)
+  ;; CAREFUL-NEXT:  (call $target_4
+  ;; CAREFUL-NEXT:   (local.get $x)
+  ;; CAREFUL-NEXT:   (local.get $x)
+  ;; CAREFUL-NEXT:   (local.get $x)
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $caller-unknown (param $x i32)
+    ;; As above, but now there are unknown children, which are not moved.
+    (drop
+      (call $target
+        (array.new_default $array
+          (local.get $x)
+        )
+        (array.new $array
+          (local.get $x)
+          (local.get $x)
+        )
+      )
+    )
+  )
+
+  ;; ALWAYS:      (func $target (type $3) (param $0 anyref) (param $1 anyref) (result i32)
+  ;; ALWAYS-NEXT:  (unreachable)
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $target (type $2) (param $0 anyref) (param $1 anyref) (result i32)
+  ;; CAREFUL-NEXT:  (unreachable)
+  ;; CAREFUL-NEXT: )
+  (func $target (param anyref) (param anyref) (result i32)
+    (unreachable)
+  )
+)
+
+;; ALWAYS:      (func $target_3 (type $1)
+;; ALWAYS-NEXT:  (local $0 anyref)
+;; ALWAYS-NEXT:  (local $1 anyref)
+;; ALWAYS-NEXT:  (local.set $0
+;; ALWAYS-NEXT:   (array.new_default $array
+;; ALWAYS-NEXT:    (i32.const 1)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (local.set $1
+;; ALWAYS-NEXT:   (array.new $array
+;; ALWAYS-NEXT:    (i32.const 2)
+;; ALWAYS-NEXT:    (i32.const 3)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (unreachable)
+;; ALWAYS-NEXT: )
+
+;; ALWAYS:      (func $target_4 (type $4) (param $0 i32) (param $1 i32) (param $2 i32)
+;; ALWAYS-NEXT:  (local $3 anyref)
+;; ALWAYS-NEXT:  (local $4 anyref)
+;; ALWAYS-NEXT:  (local.set $3
+;; ALWAYS-NEXT:   (array.new_default $array
+;; ALWAYS-NEXT:    (local.get $0)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (local.set $4
+;; ALWAYS-NEXT:   (array.new $array
+;; ALWAYS-NEXT:    (local.get $1)
+;; ALWAYS-NEXT:    (local.get $2)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (unreachable)
+;; ALWAYS-NEXT: )
+
+;; CAREFUL:      (func $target_3 (type $0)
+;; CAREFUL-NEXT:  (unreachable)
+;; CAREFUL-NEXT: )
+
+;; CAREFUL:      (func $target_4 (type $3) (param $0 i32) (param $1 i32) (param $2 i32)
+;; CAREFUL-NEXT:  (unreachable)
 ;; CAREFUL-NEXT: )

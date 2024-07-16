@@ -227,6 +227,12 @@ struct CallContext {
       // value sent from the call.
       operands.push_back(ExpressionManipulator::flexibleCopy(
         operand, wasm, [&](Expression* child) -> Expression* {
+          if (!child) {
+            // This is an optional child that is not present. Let the copy of
+            // the nullptr happen.
+            return nullptr;
+          }
+
           if (canBeMovedIntoContext(child, wasm, options)) {
             // This can be moved, great: let the copy happen.
             return nullptr;
