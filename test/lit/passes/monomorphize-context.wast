@@ -1590,9 +1590,6 @@
 
   ;; ALWAYS:      (func $caller (type $0)
   ;; ALWAYS-NEXT:  (call $target
-  ;; ALWAYS-NEXT:   (i32.load
-  ;; ALWAYS-NEXT:    (i32.const 0)
-  ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:   (block (result i32)
   ;; ALWAYS-NEXT:    (i32.store
   ;; ALWAYS-NEXT:     (i32.const 0)
@@ -1619,6 +1616,9 @@
   ;; ALWAYS-NEXT:     (i32.const -1)
   ;; ALWAYS-NEXT:    )
   ;; ALWAYS-NEXT:    (i32.const 11)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:   (i32.load
+  ;; ALWAYS-NEXT:    (i32.const 0)
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
@@ -1630,9 +1630,6 @@
 
   ;; CAREFUL:      (func $caller (type $0)
   ;; CAREFUL-NEXT:  (call $target
-  ;; CAREFUL-NEXT:   (i32.load
-  ;; CAREFUL-NEXT:    (i32.const 0)
-  ;; CAREFUL-NEXT:   )
   ;; CAREFUL-NEXT:   (block (result i32)
   ;; CAREFUL-NEXT:    (i32.store
   ;; CAREFUL-NEXT:     (i32.const 0)
@@ -1659,6 +1656,9 @@
   ;; CAREFUL-NEXT:     (i32.const -1)
   ;; CAREFUL-NEXT:    )
   ;; CAREFUL-NEXT:    (i32.const 11)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (i32.load
+  ;; CAREFUL-NEXT:    (i32.const 0)
   ;; CAREFUL-NEXT:   )
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
@@ -1666,7 +1666,8 @@
     ;; Similar to before, but with a sequence of interleaved things with
     ;; interactions. The same two items repeat three times. Any load cannot be
     ;; moved into the context if there is a store after it, which means that the
-    ;; last load could be optimized. However waka
+    ;; last load could be optimized. However, atm once we see any problem with
+    ;; effects we give up, so we do nothing here.
     (call $target
       (block (result i32)
         (i32.store
