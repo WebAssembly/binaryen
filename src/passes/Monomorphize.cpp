@@ -283,6 +283,12 @@ struct CallContext {
     // |first| and |a| after, so we cannot do this transformation if the order
     // of operations between them matters. To detect such problems, we
     // accumulate the effects that are being moved.
+    //
+    // Note that the copy is in *pre*-order, so we see parents before children.
+    // That works out ok, though: if a parent is not moved into the context then
+    // all children will remain with it in the call, and if the parent is moved
+    // then the parent executes after the child, which was the original order
+    // anyhow.
     EffectAnalyzer effectsMovedIntoContext(options, wasm);
     auto problemWithEffects = false;
 
