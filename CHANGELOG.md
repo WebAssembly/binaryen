@@ -21,6 +21,10 @@ Current Trunk
    apply to the most recent --foo pass on the commandline, if foo is a pass
    (while global pass arguments - that are not the name of a pass - remain, as
    before, global for all passes). (#6687)
+ - Add C and JS APIs to control more pass options (trapsNeverHappen,
+   closedWorld, generateStackIR, optimizeStackIR, and the list of skipped
+   passes). (#6713)
+ - A C APIs for getting/setting the type of Functions (#6721).
 
 v118
 ----
