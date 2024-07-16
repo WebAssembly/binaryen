@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s -all --dae -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $"{}" (sub (struct )))
+ ;; CHECK:      (type $"{}" (sub (struct)))
  (type $"{}" (sub (struct)))
 
  ;; CHECK:      (type $"return_{}" (func (result (ref $"{}"))))

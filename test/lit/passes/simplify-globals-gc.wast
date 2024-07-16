@@ -32,7 +32,7 @@
 )
 
 (module
- ;; CHECK:      (type $struct (struct ))
+ ;; CHECK:      (type $struct (struct))
  (type $struct (struct ))
 
  ;; CHECK:      (type $1 (func (result anyref)))

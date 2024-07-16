@@ -200,9 +200,9 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (struct )))
+    ;; CHECK-NEXT:  (type $A (sub (struct)))
     ;; TNH:      (rec
-    ;; TNH-NEXT:  (type $A (sub (struct )))
+    ;; TNH-NEXT:  (type $A (sub (struct)))
     (type $A (sub (struct )))
     ;; CHECK:       (type $B (sub $A (struct (field (ref null $A)))))
     ;; TNH:       (type $B (sub $A (struct (field (ref null $A)))))
@@ -210,8 +210,8 @@
     ;; CHECK:       (type $C (sub $B (struct (field (ref null $D)))))
     ;; TNH:       (type $C (sub $B (struct (field (ref null $D)))))
     (type $C (sub $B (struct (field (ref null $D)))))
-    ;; CHECK:       (type $D (sub $A (struct )))
-    ;; TNH:       (type $D (sub $A (struct )))
+    ;; CHECK:       (type $D (sub $A (struct)))
+    ;; TNH:       (type $D (sub $A (struct)))
     (type $D (sub $A (struct )))
   )
 

@@ -14,25 +14,25 @@
   ;; NO_TNH:      (rec
   ;; NO_TNH-NEXT:  (type $0 (func))
 
-  ;; NO_TNH:       (type $A (sub (struct )))
+  ;; NO_TNH:       (type $A (sub (struct)))
   (type $A (sub (struct)))
 
   ;; YESTNH:      (rec
   ;; YESTNH-NEXT:  (type $0 (func))
 
-  ;; YESTNH:       (type $B (sub (struct )))
-  ;; NO_TNH:       (type $B (sub $A (struct )))
+  ;; YESTNH:       (type $B (sub (struct)))
+  ;; NO_TNH:       (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
-  ;; YESTNH:       (type $C (sub $B (struct )))
-  ;; NO_TNH:       (type $C (sub $B (struct )))
+  ;; YESTNH:       (type $C (sub $B (struct)))
+  ;; NO_TNH:       (type $C (sub $B (struct)))
   (type $C (sub $B (struct)))
 
-  ;; NO_TNH:       (type $D (sub $C (struct )))
+  ;; NO_TNH:       (type $D (sub $C (struct)))
   (type $D (sub $C (struct)))
 
-  ;; YESTNH:       (type $E (sub $C (struct )))
-  ;; NO_TNH:       (type $E (sub $D (struct )))
+  ;; YESTNH:       (type $E (sub $C (struct)))
+  ;; NO_TNH:       (type $E (sub $D (struct)))
   (type $E (sub $D (struct)))
 
   ;; YESTNH:       (type $4 (func (param anyref)))
@@ -264,21 +264,21 @@
 (module
   (rec
     ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $A (sub (struct )))
+    ;; YESTNH-NEXT:  (type $A (sub (struct)))
     ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $A (sub (struct )))
+    ;; NO_TNH-NEXT:  (type $A (sub (struct)))
     (type $A (sub (struct)))
 
-    ;; YESTNH:       (type $B1 (sub $A (struct )))
+    ;; YESTNH:       (type $B1 (sub $A (struct)))
 
     ;; YESTNH:       (type $2 (func (param anyref)))
 
-    ;; YESTNH:       (type $B (sub $A (struct )))
-    ;; NO_TNH:       (type $B1 (sub $A (struct )))
+    ;; YESTNH:       (type $B (sub $A (struct)))
+    ;; NO_TNH:       (type $B1 (sub $A (struct)))
 
     ;; NO_TNH:       (type $2 (func (param anyref)))
 
-    ;; NO_TNH:       (type $B (sub $A (struct )))
+    ;; NO_TNH:       (type $B (sub $A (struct)))
     (type $B (sub $A (struct)))
 
     (type $B1 (sub $A (struct))) ;; this is a new type
@@ -362,14 +362,14 @@
 (module
   (rec
     ;; NO_TNH:      (rec
-    ;; NO_TNH-NEXT:  (type $A (sub (struct )))
+    ;; NO_TNH-NEXT:  (type $A (sub (struct)))
     (type $A (sub (struct)))
 
     (type $B (sub $A (struct)))
 
     ;; YESTNH:      (rec
-    ;; YESTNH-NEXT:  (type $B1 (sub (struct )))
-    ;; NO_TNH:       (type $B1 (sub $A (struct )))
+    ;; YESTNH-NEXT:  (type $B1 (sub (struct)))
+    ;; NO_TNH:       (type $B1 (sub $A (struct)))
     (type $B1 (sub $A (struct))) ;; this is a new type
   )
 
@@ -449,15 +449,15 @@
 ;; A chain, $A :> $B :> $C, where we can optimize $A all the way to $C.
 (module
   ;; NO_TNH:      (rec
-  ;; NO_TNH-NEXT:  (type $A (sub (struct )))
+  ;; NO_TNH-NEXT:  (type $A (sub (struct)))
   (type $A (sub (struct)))
 
-  ;; NO_TNH:       (type $B (sub $A (struct )))
+  ;; NO_TNH:       (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
   ;; YESTNH:      (rec
-  ;; YESTNH-NEXT:  (type $C (sub (struct )))
-  ;; NO_TNH:       (type $C (sub $B (struct )))
+  ;; YESTNH-NEXT:  (type $C (sub (struct)))
+  ;; NO_TNH:       (type $C (sub $B (struct)))
   (type $C (sub $B (struct)))
 
   ;; YESTNH:       (type $1 (func (param anyref)))
@@ -824,17 +824,17 @@
     ;; NO_TNH:      (rec
     ;; NO_TNH-NEXT:  (type $0 (func (param anyref)))
 
-    ;; NO_TNH:       (type $A (sub (struct )))
+    ;; NO_TNH:       (type $A (sub (struct)))
     (type $A (sub (struct)))
 
-    ;; NO_TNH:       (type $B (sub $A (struct )))
+    ;; NO_TNH:       (type $B (sub $A (struct)))
     (type $B (sub $A (struct)))
 
     ;; YESTNH:      (rec
     ;; YESTNH-NEXT:  (type $0 (func (param anyref)))
 
-    ;; YESTNH:       (type $C1 (sub (struct )))
-    ;; NO_TNH:       (type $C1 (sub $B (struct )))
+    ;; YESTNH:       (type $C1 (sub (struct)))
+    ;; NO_TNH:       (type $C1 (sub $B (struct)))
     (type $C1 (sub $B (struct)))
 
     (type $C2 (sub $B (struct)))

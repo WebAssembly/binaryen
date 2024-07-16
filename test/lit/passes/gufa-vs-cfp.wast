@@ -2348,7 +2348,7 @@
 )
 
 (module
-  ;; CHECK:      (type $A (struct ))
+  ;; CHECK:      (type $A (struct))
   (type $A (struct))
   (type $B (struct (ref $A)))
 

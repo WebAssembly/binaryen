@@ -61,9 +61,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; A function body requires subtyping
@@ -79,9 +79,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; A global initializer requires subtyping
@@ -91,11 +91,11 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
- ;; CHECK:       (type $subsub (sub $sub (struct )))
+ ;; CHECK:       (type $subsub (sub $sub (struct)))
  (type $subsub (sub $sub (struct)))
 
  ;; CHECK:      (table $t 1 1 (ref null $super))
@@ -109,9 +109,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $X (sub (struct )))
+ ;; CHECK-NEXT:  (type $X (sub (struct)))
  (type $X (sub (struct)))
- ;; CHECK:       (type $Y (sub $X (struct )))
+ ;; CHECK:       (type $Y (sub $X (struct)))
  (type $Y (sub $X (struct)))
 
  ;; CHECK:       (type $A (sub (struct (field (ref null $X)))))
@@ -126,9 +126,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $X (sub (struct )))
+ ;; CHECK-NEXT:  (type $X (sub (struct)))
  (type $X (sub (struct)))
- ;; CHECK:       (type $Y (sub $X (struct )))
+ ;; CHECK:       (type $Y (sub $X (struct)))
  (type $Y (sub $X (struct)))
 
  ;; CHECK:       (type $A (sub (array (ref null $X))))
@@ -146,14 +146,14 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $X (sub (struct )))
+  ;; CHECK-NEXT:  (type $X (sub (struct)))
   (type $X (sub (struct)))
-  ;; CHECK:       (type $Y (sub $X (struct )))
+  ;; CHECK:       (type $Y (sub $X (struct)))
   (type $Y (sub $X (struct)))
 
-  ;; CHECK:       (type $X' (sub (struct )))
+  ;; CHECK:       (type $X' (sub (struct)))
   (type $X' (sub (struct)))
-  ;; CHECK:       (type $Y' (sub $X' (struct )))
+  ;; CHECK:       (type $Y' (sub $X' (struct)))
   (type $Y' (sub $X' (struct)))
 
   ;; CHECK:       (type $A (sub (func (param (ref $Y')) (result (ref $X)))))
@@ -176,9 +176,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
@@ -216,9 +216,9 @@
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $opt (sub (struct (field i32))))
 
- ;; CHECK:       (type $super (sub (struct )))
+ ;; CHECK:       (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
  (type $opt (sub $super (struct i32)))
 
@@ -264,9 +264,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
@@ -302,9 +302,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
@@ -328,9 +328,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
@@ -370,9 +370,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
@@ -412,9 +412,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func (param (ref $super))))
@@ -434,9 +434,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func (result (ref $sub))))
@@ -461,9 +461,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func (param (ref $super))))
@@ -488,9 +488,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func (result (ref $sub))))
@@ -541,9 +541,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
@@ -565,9 +565,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
@@ -593,9 +593,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
@@ -618,11 +618,11 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
  ;; CHECK:       (type $sub2 (sub $super (struct (field i32))))
 
- ;; CHECK:       (type $sub1 (sub $super (struct )))
+ ;; CHECK:       (type $sub1 (sub $super (struct)))
  (type $sub1 (sub $super (struct)))
  (type $sub2 (sub $super (struct i32)))
 
@@ -651,9 +651,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func (result (ref $super))))
@@ -673,9 +673,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $sub (sub (struct )))
+ ;; CHECK-NEXT:  (type $sub (sub (struct)))
 
- ;; CHECK:       (type $super (sub (struct )))
+ ;; CHECK:       (type $super (sub (struct)))
  (type $super (sub (struct)))
  (type $sub (sub $super (struct)))
 
@@ -697,14 +697,14 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $super2 (sub (struct )))
+  ;; CHECK-NEXT:  (type $super2 (sub (struct)))
 
-  ;; CHECK:       (type $sub2 (sub $super2 (struct )))
+  ;; CHECK:       (type $sub2 (sub $super2 (struct)))
 
-  ;; CHECK:       (type $super1 (sub (struct )))
+  ;; CHECK:       (type $super1 (sub (struct)))
   (type $super1 (sub (struct)))
   (type $super2 (sub (struct)))
-  ;; CHECK:       (type $sub1 (sub $super1 (struct )))
+  ;; CHECK:       (type $sub1 (sub $super1 (struct)))
   (type $sub1 (sub $super1 (struct)))
   (type $sub2 (sub $super2 (struct)))
  )
@@ -732,9 +732,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
@@ -759,9 +759,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
@@ -790,9 +790,9 @@
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $0 (func))
 
- ;; CHECK:       (type $super (sub (struct )))
+ ;; CHECK:       (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:      (table $super 1 1 (ref null $super))
@@ -820,9 +820,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
@@ -856,9 +856,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
@@ -892,9 +892,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
@@ -921,9 +921,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $f (func (param (ref $super))))
@@ -976,9 +976,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $f (func (result (ref $sub))))
@@ -1010,9 +1010,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
@@ -1042,9 +1042,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
@@ -1072,9 +1072,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $2 (func))
@@ -1104,9 +1104,9 @@
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $struct (sub (struct (field (ref null $super)))))
 
- ;; CHECK:       (type $super (sub (struct )))
+ ;; CHECK:       (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  (type $struct (sub (struct (ref null $super))))
@@ -1151,9 +1151,9 @@
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $struct (sub (struct (field (mut (ref null $super))))))
 
- ;; CHECK:       (type $super (sub (struct )))
+ ;; CHECK:       (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  (type $struct (sub (struct (mut (ref null $super)))))
@@ -1207,9 +1207,9 @@
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $array (sub (array (ref null $super))))
 
- ;; CHECK:       (type $super (sub (struct )))
+ ;; CHECK:       (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  (type $array (sub (array (ref null $super))))
@@ -1270,9 +1270,9 @@
 
  ;; CHECK:       (type $1 (func))
 
- ;; CHECK:       (type $super (sub (struct )))
+ ;; CHECK:       (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  (type $array (sub (array (ref null $super))))
@@ -1317,9 +1317,9 @@
  ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $array (sub (array (ref null $super))))
 
- ;; CHECK:       (type $super (sub (struct )))
+ ;; CHECK:       (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  (type $array (sub (array (ref null $super))))
@@ -1355,9 +1355,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $array (sub (array (mut (ref null $super)))))
@@ -1420,9 +1420,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $sub-array (sub (array (mut (ref null $sub)))))
@@ -1508,9 +1508,9 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  ;; CHECK:       (type $array (sub (array (mut (ref null $super)))))
@@ -1587,9 +1587,9 @@
 
  ;; CHECK:       (type $1 (func))
 
- ;; CHECK:       (type $super (sub (struct )))
+ ;; CHECK:       (type $super (sub (struct)))
  (type $super (sub (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $super (struct)))
 
  (type $array (sub (array (mut (ref null $super)))))
@@ -1662,10 +1662,10 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $super (sub (struct )))
+ ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
  (type $mid (sub $super (struct)))
- ;; CHECK:       (type $sub (sub $super (struct )))
+ ;; CHECK:       (type $sub (sub $super (struct)))
  (type $sub (sub $mid (struct)))
 
  ;; $sub <: $super, but it no longer needs to be related to $mid.
@@ -1710,9 +1710,9 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $X (sub (struct )))
+  ;; CHECK-NEXT:  (type $X (sub (struct)))
   (type $X (sub (struct)))
-  ;; CHECK:       (type $Y (sub $X (struct )))
+  ;; CHECK:       (type $Y (sub $X (struct)))
   (type $Y (sub $X (struct)))
 
   ;; CHECK:       (type $super (sub (struct (field (ref null $mid)))))

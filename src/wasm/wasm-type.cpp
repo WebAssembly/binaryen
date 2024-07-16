@@ -2109,10 +2109,6 @@ TypePrinter::print(const Struct& struct_,
     print(struct_.fields[i]);
     os << ')';
   }
-  // TODO: Remove this extra space kept to minimize test diffs.
-  if (struct_.fields.size() == 0) {
-    os << ' ';
-  }
   return os << ")";
 }
 

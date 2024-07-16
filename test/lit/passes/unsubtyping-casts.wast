@@ -3,7 +3,7 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $top (sub (struct )))
+ ;; CHECK-NEXT:  (type $top (sub (struct)))
  (type $top (sub (struct)))
  (type $mid (sub $top (struct)))
  (type $bot (sub $mid (struct)))
@@ -31,11 +31,11 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $top (sub (struct )))
+ ;; CHECK-NEXT:  (type $top (sub (struct)))
  (type $top (sub (struct)))
- ;; CHECK:       (type $mid (sub $top (struct )))
+ ;; CHECK:       (type $mid (sub $top (struct)))
  (type $mid (sub $top (struct)))
- ;; CHECK:       (type $bot (sub $mid (struct )))
+ ;; CHECK:       (type $bot (sub $mid (struct)))
  (type $bot (sub $mid (struct)))
 
  ;; CHECK:       (type $3 (func))
@@ -69,11 +69,11 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $top (sub (struct )))
+ ;; CHECK-NEXT:  (type $top (sub (struct)))
  (type $top (sub (struct)))
- ;; CHECK:       (type $mid (sub $top (struct )))
+ ;; CHECK:       (type $mid (sub $top (struct)))
  (type $mid (sub $top (struct)))
- ;; CHECK:       (type $bot (sub $mid (struct )))
+ ;; CHECK:       (type $bot (sub $mid (struct)))
  (type $bot (sub $mid (struct)))
 
  ;; CHECK:       (type $3 (func))
@@ -106,11 +106,11 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $top (sub (struct )))
+ ;; CHECK-NEXT:  (type $top (sub (struct)))
  (type $top (sub (struct)))
- ;; CHECK:       (type $mid (sub $top (struct )))
+ ;; CHECK:       (type $mid (sub $top (struct)))
  (type $mid (sub $top (struct)))
- ;; CHECK:       (type $bot (sub $mid (struct )))
+ ;; CHECK:       (type $bot (sub $mid (struct)))
  (type $bot (sub $mid (struct)))
 
  ;; CHECK:       (type $3 (func))
@@ -153,11 +153,11 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $top (sub (struct )))
+ ;; CHECK-NEXT:  (type $top (sub (struct)))
  (type $top (sub (struct)))
- ;; CHECK:       (type $mid (sub $top (struct )))
+ ;; CHECK:       (type $mid (sub $top (struct)))
  (type $mid (sub $top (struct)))
- ;; CHECK:       (type $bot (sub $mid (struct )))
+ ;; CHECK:       (type $bot (sub $mid (struct)))
  (type $bot (sub $mid (struct)))
 
  ;; CHECK:       (type $3 (func))
@@ -272,11 +272,11 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $top (sub (struct )))
+ ;; CHECK-NEXT:  (type $top (sub (struct)))
  (type $top (sub (struct)))
- ;; CHECK:       (type $mid (sub (struct )))
+ ;; CHECK:       (type $mid (sub (struct)))
  (type $mid (sub $top (struct)))
- ;; CHECK:       (type $bot (sub $mid (struct )))
+ ;; CHECK:       (type $bot (sub $mid (struct)))
  (type $bot (sub $mid (struct)))
 
  ;; CHECK:       (type $3 (func))
@@ -312,11 +312,11 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $top (sub (struct )))
+  ;; CHECK-NEXT:  (type $top (sub (struct)))
   (type $top (sub (struct)))
-  ;; CHECK:       (type $mid (sub $top (struct )))
+  ;; CHECK:       (type $mid (sub $top (struct)))
   (type $mid (sub $top (struct)))
-  ;; CHECK:       (type $bot (sub (struct )))
+  ;; CHECK:       (type $bot (sub (struct)))
   (type $bot (sub $mid (struct)))
  )
 
@@ -381,11 +381,11 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $top (sub (struct )))
+  ;; CHECK-NEXT:  (type $top (sub (struct)))
   (type $top (sub (struct)))
-  ;; CHECK:       (type $mid (sub $top (struct )))
+  ;; CHECK:       (type $mid (sub $top (struct)))
   (type $mid (sub $top (struct)))
-  ;; CHECK:       (type $bot (sub (struct )))
+  ;; CHECK:       (type $bot (sub (struct)))
   (type $bot (sub $mid (struct)))
  )
 
@@ -478,11 +478,11 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $topC (sub (struct )))
+  ;; CHECK-NEXT:  (type $topC (sub (struct)))
   (type $topC (sub (struct)))
-  ;; CHECK:       (type $midC (sub $topC (struct )))
+  ;; CHECK:       (type $midC (sub $topC (struct)))
   (type $midC (sub $topC (struct)))
-  ;; CHECK:       (type $botC (sub $midC (struct )))
+  ;; CHECK:       (type $botC (sub $midC (struct)))
   (type $botC (sub $midC (struct)))
 
   ;; CHECK:       (type $topB (sub (struct (field (ref null $topC)))))
