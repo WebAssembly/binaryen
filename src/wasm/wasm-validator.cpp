@@ -223,6 +223,22 @@ struct ValidationInfo {
   }
 };
 
+std::string getMissingFeaturesList(Module& wasm, FeatureSet feats) {
+  std::stringstream ss;
+  bool first = true;
+  ss << '[';
+  (feats - wasm.features).iterFeatures([&](FeatureSet feat) {
+    if (first) {
+      first = false;
+    } else {
+      ss << " ";
+    }
+    ss << "--enable-" << feat.toString();
+  });
+  ss << ']';
+  return ss.str();
+}
+
 struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   bool isFunctionParallel() override { return true; }
 
@@ -2188,9 +2204,12 @@ void FunctionValidator::visitRefNull(RefNull* curr) {
   // If we are not in a function, this is a global location like a table. We
   // allow RefNull there as we represent tables that way regardless of what
   // features are enabled.
-  shouldBeTrue(!getFunction() || getModule()->features.hasReferenceTypes(),
-               curr,
-               "ref.null requires reference-types [--enable-reference-types]");
+  auto feats = curr->type.getFeatures();
+  if (!shouldBeTrue(!getFunction() || feats <= getModule()->features,
+                    curr,
+                    "ref.null requires additional features")) {
+    getStream() << getMissingFeaturesList(*getModule(), feats) << '\n';
+  }
   if (!shouldBeTrue(
         curr->type.isNullable(), curr, "ref.null types must be nullable")) {
     return;
@@ -3711,18 +3730,9 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
   for (auto& g : module.globals) {
     auto globalFeats = g->type.getFeatures();
     if (!info.shouldBeTrue(globalFeats <= module.features, g->name, "")) {
-      auto& stream = info.getStream(nullptr);
-      stream << "global type requires additional features [";
-      bool first = true;
-      (globalFeats - module.features).iterFeatures([&](FeatureSet feat) {
-        if (first) {
-          first = false;
-        } else {
-          stream << " ";
-        }
-        stream << "--enable-" << feat.toString();
-      });
-      stream << "]\n";
+      info.getStream(nullptr)
+        << "global type requires additional features "
+        << getMissingFeaturesList(module, globalFeats) << '\n';
     }
   }
 }
