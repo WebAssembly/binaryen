@@ -227,6 +227,60 @@ struct CallContext {
       // (copy) code from the callsite into the called function. When we find we
       // can copy then we do so, and when we cannot that value remains as a
       // value sent from the call.
+      //
+      // The copy operation works in pre-order, which allows us to override
+      // entire children as needed:
+      //
+      //  (call $foo
+      //    (problem
+      //      (a)
+      //    )
+      //    (later)
+      //  )
+      //
+      // We visit |problem| first, and if there is a problem that prevents us
+      // moving it into the context then we override the copy and then it and
+      // its child |a| remain in the caller (and |a| is never visited in the
+      // copy). We then continue onward to |later|.
+      //
+      // Note that each time we move code into the context we are pushing it
+      // into the called function, which changes the order of operations:
+      //
+      //  (call $foo
+      //    (first
+      //      (a)
+      //    )
+      //    (second
+      //      (b)
+      //    )
+      //  )
+      //
+      //  (func $foo (param $first) (param $second)
+      //  )
+      //
+      // If we move |first| and |a| into the context then we get this:
+      //
+      //  (call $foo
+      //    ;; |first| and |a| were removed from here.
+      //    (second
+      //      (b)
+      //    )
+      //  )
+      //
+      //  (func $foo (param $second)
+      //    ;; |first| is now a local, and we assign it inside the called func.
+      //    (local $first)
+      //    (local.set $first
+      //      (first
+      //        (a)
+      //      )
+      //    )
+      //  )
+      //
+      // After this code motion we execute |second| and |b| before the call, and
+      // |first| and |a| after, so we cannot do this transformation if the order
+      // of operations between them matters. To handle that, we accumulate the
+      // effects...
       operands.push_back(ExpressionManipulator::flexibleCopy(
         operand, wasm, [&](Expression* child) -> Expression* {
           if (!child) {
@@ -258,7 +312,9 @@ struct CallContext {
   }
 
   // Checks whether an expression can be moved into the context.
-  bool canBeMovedIntoContext(Expression* curr, Module& wasm, const PassOptions& options) {
+  bool canBeMovedIntoContext(Expression* curr,
+                             Module& wasm,
+                             const PassOptions& options) {
     // Pretty much everything can be moved into the context if we can copy it
     // between functions, such as constants, globals, etc. The things we cannot
     // copy are now checked for.
