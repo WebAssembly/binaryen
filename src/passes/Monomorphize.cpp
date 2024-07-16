@@ -288,7 +288,7 @@ struct CallContext {
     // note what will be moved and what won't (it is simpler to do so rather
     // than try to both build the context and compute that at the same time, in
     // particular as we are doing the copy in pre-order).
-    std::unordered_map<Expression*> movedIntoContext; // TODO: SmallMap?
+    std::unordered_set<Expression*> movedIntoContext; // TODO: SmallSet?
 
     for (auto* operand : info.call->operands) {
       operands.push_back(ExpressionManipulator::flexibleCopy(
@@ -330,45 +330,43 @@ struct CallContext {
     //  A, C, E  and, executing later in the monomorphized function:  B, D
     //
     // Then we must be able to move B past C and E, and D past E.
-    struct Checker : public PostWalker<Checker,
-                                       UnifiedExpressionVisitor<Checker>> {
-      const std::unordered_map<Expression*>& movedIntoContext;
-      Module& wasm,
-      const PassOptions& options;
-
-      // The accumulated moved effects so far.
-      EffectAnalyzer movedEffects;
-
-      // Whether we've seen a problem.
-      bool problem = false;
-
-      Checker(std::unordered_map<Expression*>& movedIntoContext,
-              Module& wasm,
-              const PassOptions& options) : wasm (wasm), options(options),
-              movedEffects(options, wasm) {}
+    //
+    // To compute this, first get the post-order list of expressions.
+    struct Lister : public PostWalker<Lister,
+                                       UnifiedExpressionVisitor<Lister>> {
+      SmallVector<Expression*, 10> list;
 
       void visitExpression(Expression* curr) {
-        if (movedIntoContext.count(curr)) {
-          movedEffects.visit(curr);
-          return;
-        }
-
-        // This is not moved, so anything before it that is being moved will
-        // cross over it.
-        ShallowEffectAnalyzer currEffects(options, wasm, curr);
-        if (currEffects.invalidates(movedEffects)) {
-          problem = true;
-        }
+        list.push_back(curr);
       }
-    } checker(movedIntoContext, wasm, options);
+    } lister;
 
     for (auto* operand : info.call->operands) {
-      checker.walk(operand);
-      if (checker.problem) {
-        // TODO: Rather than give up, we could try to
+      lister.walk(operand);
+    }
+
+    // Go in reverse while accumulating the effects that are not moving and
+    // checking for problems.
+    EffectAnalyzer nonMovingEffects(options, wasm);
+    for (auto i = int64_t(lister.list.size()) - 1; i >= 0; i--) {
+      auto* curr = lister.list[i];
+
+      if (!movedIntoContext.count(curr)) {
+        // Add the effects of this non-moving code.
+        nonMovingEffects.visit(curr);
+        continue;
+      }
+
+      // This is moved, so it must go past all the non-moving effects we've seen
+      // in our reverse iteration.
+      ShallowEffectAnalyzer currEffects(options, wasm, curr);
+      if (currEffects.invalidates(nonMovingEffects)) {
+        // TODO: Rather than give up, we could instead not move this (and all of
+        //       its children), if we did another pass here.
         return false;
       }
     }
+
     return true;
   }
 
