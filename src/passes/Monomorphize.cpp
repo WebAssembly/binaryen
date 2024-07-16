@@ -531,18 +531,14 @@ struct Monomorphize : public Pass {
     // A local.get is a value that arrives in a parameter. Anything else is
     // something that we are reverse-inlining into the function, so we don't
     // need a param for it. Note that we might have multiple gets nested here,
-    // if we are copying part of the original parameter but not all children.
-    // Find all such unknown values first and store them in a vector indexed by
-    // the context operands.
-    std::vector<FindAll<LocalGet>> operandGets; // TODO: it seems we use this oncen?
-    operandGets.reserve(context.operands.size());
-    for (auto* operand : context.operands) {
-      operandGets.emplace_back(operand);
-    }
-
-    // Generate the new signature, and apply it to the new function.
+    // if we are copying part of the original parameter but not all children, so
+    // we scan each operand for all such local.gets.
+    //
+    // Use this information to generate the new signature, and apply it to the
+    // new function.
     std::vector<Type> newParams;
-    for (auto& gets : operandGets) {
+    for (auto* operand : context.operands) {
+      FindAll<LocalGet> gets(operand);
       for (auto* get : gets.list) {
         newParams.push_back(get->type);
       }
