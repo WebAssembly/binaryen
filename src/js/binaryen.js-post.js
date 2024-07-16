@@ -3506,10 +3506,10 @@ Module['clearPassArguments'] = function() {
   Module['_BinaryenClearPassArguments']();
 };
 
-// Test whether a pass is in the set of passes to skip.
-Module['testPassToSkip'] = function(pass) {
+// Gets whether a pass is in the set of passes to skip.
+Module['hasPassToSkip'] = function(pass) {
   return preserveStack(() => {
-    return Boolean(Module['_BinaryenTestPassToSkip'](strToStack(pass)));
+    return Boolean(Module['_BinaryenHasPassToSkip'](strToStack(pass)));
   });
 };
 

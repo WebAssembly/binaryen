@@ -2994,9 +2994,9 @@ BINARYEN_API void BinaryenSetPassArgument(const char* name, const char* value);
 // Applies to all modules, globally.
 BINARYEN_API void BinaryenClearPassArguments();
 
-// Test whether a pass is in the set of passes to skip.
+// Gets whether a pass is in the set of passes to skip.
 // Applies to all modules, globally.
-BINARYEN_API bool BinaryenTestPassToSkip(const char* pass);
+BINARYEN_API bool BinaryenHasPassToSkip(const char* pass);
 
 // Add a pass to the set of passes to skip.
 // Applies to all modules, globally.

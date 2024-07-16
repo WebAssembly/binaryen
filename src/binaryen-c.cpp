@@ -5441,7 +5441,7 @@ void BinaryenSetPassArgument(const char* key, const char* value) {
 
 void BinaryenClearPassArguments(void) { globalPassOptions.arguments.clear(); }
 
-bool BinaryenTestPassToSkip(const char* pass) {
+bool BinaryenHasPassToSkip(const char* pass) {
   assert(pass);
   return globalPassOptions.passesToSkip.count(pass);
 }
