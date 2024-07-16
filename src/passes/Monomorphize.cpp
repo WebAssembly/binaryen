@@ -281,16 +281,14 @@ struct CallContext {
     //
     // After this code motion we execute |second| and |b| before the call, and
     // |first| and |a| after, so we cannot do this transformation if the order
-    // of operations between them matters. To detect such problems, we
-    // accumulate the effects that are being moved.
-    //
-    // Note that the copy is in *pre*-order, so we see parents before children.
-    // That works out ok, though: if a parent is not moved into the context then
-    // all children will remain with it in the call, and if the parent is moved
-    // then the parent executes after the child, which was the original order
-    // anyhow.
-    EffectAnalyzer effectsMovedIntoContext(options, wasm);
-    auto problemWithEffects = false;
+    // of operations between them matters. The key property here is that all
+    // things that are moved into the context (moved into the monomorphized
+    // function) remain ordered with respect to each other, but must be moved
+    // past all non-moving things after them. To compute that, initially we just
+    // note what will be moved and what won't (it is simpler to do so rather
+    // than try to both build the context and compute that at the same time, in
+    // particular as we are doing the copy in pre-order).
+    std::unordered_map<Expression*> movedIntoContext; // TODO: SmallMap?
 
     for (auto* operand : info.call->operands) {
       operands.push_back(ExpressionManipulator::flexibleCopy(
@@ -302,19 +300,9 @@ struct CallContext {
           }
 
           if (canBeMovedIntoContext(child, wasm, options)) {
-            // This can be moved. Note the effects we are moving.
-            effectsMovedIntoContext.visit(child);
-
-            // Let the copy happen.
+            // This can be moved. Note it, and let the copy happen.
+            movedIntoContext.insert(child);
             return nullptr;
-          }
-
-          // This cannot be moved, so we stop here: this is a value that is sent
-          // into the monomorphized function, the same as before. Any effects
-          // it has remain in the call; note if we see a problem there.
-          EffectAnalyzer remainingEffects(options, wasm, child);
-          if (remainingEffects.invalidates(effectsMovedIntoContext)) {
-            problemWithEffects = true;
           }
 
           // In the call context this is simply a local.get, that reads the
@@ -331,12 +319,57 @@ struct CallContext {
 
     dropped = !!info.drop;
 
-    // Report failure if we saw a problem with effects. TODO: We could try to
-    // handle the problem in a more sophisticated way by moving code around the
-    // call (but simply localizing all the call's operands so that they become
-    // local.gets will not work, as we do want to have code in the operands so
-    // we can move it; fixing this will require something more complex).
-    return !problemWithEffects;
+    // Check for problems with effects. As mentioned above, the key property is
+    // that everything that is moved will be moved past all the non-moved things
+    // after it. Say we move B and D in this list:
+    //
+    //  A, B, C, D, E
+    //
+    // Then we end up with this:
+    //
+    //  A, C, E  and, executing later in the monomorphized function:  B, D
+    //
+    // Then we must be able to move B past C and E, and D past E.
+    struct Checker : public PostWalker<Checker,
+                                       UnifiedExpressionVisitor<Checker>> {
+      const std::unordered_map<Expression*>& movedIntoContext;
+      Module& wasm,
+      const PassOptions& options;
+
+      // The accumulated moved effects so far.
+      EffectAnalyzer movedEffects;
+
+      // Whether we've seen a problem.
+      bool problem = false;
+
+      Checker(std::unordered_map<Expression*>& movedIntoContext,
+              Module& wasm,
+              const PassOptions& options) : wasm (wasm), options(options),
+              movedEffects(options, wasm) {}
+
+      void visitExpression(Expression* curr) {
+        if (movedIntoContext.count(curr)) {
+          movedEffects.visit(curr);
+          return;
+        }
+
+        // This is not moved, so anything before it that is being moved will
+        // cross over it.
+        ShallowEffectAnalyzer currEffects(options, wasm, curr);
+        if (currEffects.invalidates(movedEffects)) {
+          problem = true;
+        }
+      }
+    } checker(movedIntoContext, wasm, options);
+
+    for (auto* operand : info.call->operands) {
+      checker.walk(operand);
+      if (checker.problem) {
+        // TODO: Rather than give up, we could try to
+        return false;
+      }
+    }
+    return true;
   }
 
   // Checks whether an expression can be moved into the context.
