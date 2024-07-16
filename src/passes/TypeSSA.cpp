@@ -251,10 +251,13 @@ struct TypeSSA : public Pass {
       auto oldType = curr->type.getHeapType();
       if (oldType.isStruct()) {
         builder[i] = oldType.getStruct();
-      } else {
+      } else if (oldType.isArray()) {
         builder[i] = oldType.getArray();
+      } else {
+        WASM_UNREACHABLE("unexpected type kind");
       }
       builder[i].subTypeOf(oldType);
+      builder[i].setShared(oldType.getShared());
       builder[i].setOpen();
     }
     builder.createRecGroup(0, num);
