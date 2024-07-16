@@ -1114,6 +1114,7 @@
   )
 )
 
+
 ;; ALWAYS:      (func $target_3 (type $1)
 ;; ALWAYS-NEXT:  (local $0 anyref)
 ;; ALWAYS-NEXT:  (local $1 anyref)
@@ -1153,5 +1154,76 @@
 ;; CAREFUL-NEXT: )
 
 ;; CAREFUL:      (func $target_4 (type $3) (param $0 i32) (param $1 i32) (param $2 i32)
+;; CAREFUL-NEXT:  (unreachable)
+;; CAREFUL-NEXT: )
+(module
+  ;; ALWAYS:      (type $struct (struct (field anyref)))
+  (type $struct (struct (field anyref)))
+
+  ;; ALWAYS:      (type $1 (func (param anyref) (result anyref)))
+
+  ;; ALWAYS:      (func $caller (type $1) (param $x anyref) (result anyref)
+  ;; ALWAYS-NEXT:  (call $target_2
+  ;; ALWAYS-NEXT:   (local.get $x)
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (type $0 (func (param anyref) (result anyref)))
+
+  ;; CAREFUL:      (func $caller (type $0) (param $x anyref) (result anyref)
+  ;; CAREFUL-NEXT:  (call $target_2
+  ;; CAREFUL-NEXT:   (local.get $x)
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $caller (param $x anyref) (result anyref)
+    ;; A call with a deeply nested param. We can move all of it but the
+    ;; local.get into the monomorphized function.
+    (call $target
+      (struct.new $struct
+        (struct.new $struct
+          (struct.new $struct
+            (struct.new $struct
+              (struct.new $struct
+                (struct.new $struct
+                  (local.get $x)
+                )
+              )
+            )
+          )
+        )
+      )
+    )
+  )
+
+  ;; ALWAYS:      (func $target (type $1) (param $0 anyref) (result anyref)
+  ;; ALWAYS-NEXT:  (unreachable)
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $target (type $0) (param $0 anyref) (result anyref)
+  ;; CAREFUL-NEXT:  (unreachable)
+  ;; CAREFUL-NEXT: )
+  (func $target (param anyref) (result anyref)
+    (unreachable)
+  )
+)
+;; ALWAYS:      (func $target_2 (type $1) (param $0 anyref) (result anyref)
+;; ALWAYS-NEXT:  (local $1 anyref)
+;; ALWAYS-NEXT:  (local.set $1
+;; ALWAYS-NEXT:   (struct.new $struct
+;; ALWAYS-NEXT:    (struct.new $struct
+;; ALWAYS-NEXT:     (struct.new $struct
+;; ALWAYS-NEXT:      (struct.new $struct
+;; ALWAYS-NEXT:       (struct.new $struct
+;; ALWAYS-NEXT:        (struct.new $struct
+;; ALWAYS-NEXT:         (local.get $0)
+;; ALWAYS-NEXT:        )
+;; ALWAYS-NEXT:       )
+;; ALWAYS-NEXT:      )
+;; ALWAYS-NEXT:     )
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (unreachable)
+;; ALWAYS-NEXT: )
+
+;; CAREFUL:      (func $target_2 (type $0) (param $0 anyref) (result anyref)
 ;; CAREFUL-NEXT:  (unreachable)
 ;; CAREFUL-NEXT: )
