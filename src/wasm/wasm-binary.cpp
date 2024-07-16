@@ -2245,7 +2245,7 @@ void WasmBinaryReader::readHeader() {
   verifyInt32(BinaryConsts::Magic);
   auto version = getInt32();
   if (version != BinaryConsts::Version) {
-    if (version == 13) {
+    if (version == 0x1000d) {
       throwError("this looks like a wasm component, which Binaryen does not "
                  "support yet");
     }
