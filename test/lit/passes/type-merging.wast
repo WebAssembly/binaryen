@@ -157,7 +157,7 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $X (sub (struct )))
+  ;; CHECK-NEXT:  (type $X (sub (struct)))
   (type $X (sub (struct)))
   (type $Y (sub $X (struct)))
   ;; CHECK:       (type $A (sub (struct (field (ref null $X)))))
@@ -580,7 +580,7 @@
 
     ;; CHECK:       (type $D' (sub $C (struct (field (ref $A)) (field i32) (field i32))))
 
-    ;; CHECK:       (type $A (sub (struct )))
+    ;; CHECK:       (type $A (sub (struct)))
     (type $A (sub (struct)))
     (type $A' (sub $A (struct)))
 
@@ -625,7 +625,7 @@
 ;; Check that we refinalize properly.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
   (type $A (sub (struct)))
   (type $B (sub $A (struct)))
 
@@ -844,12 +844,12 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
   (type $A (sub (struct)))
   (type $B (sub $A (struct)))
   ;; CHECK:       (type $X (struct (field (ref $A))))
   (type $X (struct (ref $B)))
-  ;; CHECK:       (type $A' (struct ))
+  ;; CHECK:       (type $A' (struct))
   (type $A' (struct))
  )
  ;; CHECK:       (type $3 (func))
@@ -1022,9 +1022,9 @@
 ;; Check that a ref.test inhibits merging (ref.cast is already checked above).
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
   (type $A (sub (struct)))
-  ;; CHECK:       (type $B (sub $A (struct )))
+  ;; CHECK:       (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
   ;; CHECK:       (type $2 (func (param (ref $A)) (result i32)))
@@ -1044,9 +1044,9 @@
 ;; Check that a br_on_cast inhibits merging.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
   (type $A (sub (struct)))
-  ;; CHECK:       (type $B (sub $A (struct )))
+  ;; CHECK:       (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
   ;; CHECK:       (type $2 (func (param (ref $A)) (result (ref $B))))

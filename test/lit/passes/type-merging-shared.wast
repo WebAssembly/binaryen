@@ -10,9 +10,9 @@
 
  ;; CHECK:       (type $B (array i8))
 
- ;; CHECK:       (type $A' (shared (struct )))
+ ;; CHECK:       (type $A' (shared (struct)))
 
- ;; CHECK:       (type $A (struct ))
+ ;; CHECK:       (type $A (struct))
  (type $A (struct))
  (type $A' (shared (struct)))
  (type $B (array i8))
@@ -47,7 +47,7 @@
 
  ;; CHECK:       (type $B (shared (array i8)))
 
- ;; CHECK:       (type $A (shared (struct )))
+ ;; CHECK:       (type $A (shared (struct)))
  (type $A (shared (struct)))
  (type $A' (shared (struct)))
  (type $B (shared (array i8)))

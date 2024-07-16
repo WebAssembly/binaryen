@@ -5,11 +5,11 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (sub (struct )))
+  ;; CHECK-NEXT:  (type $struct (sub (struct)))
   (type $struct (sub (struct)))
-  ;; CHECK:       (type $struct2 (struct ))
+  ;; CHECK:       (type $struct2 (struct))
   (type $struct2 (struct))
-  ;; CHECK:       (type $substruct (sub $struct (struct )))
+  ;; CHECK:       (type $substruct (sub $struct (struct)))
   (type $substruct (sub $struct (struct)))
  )
 

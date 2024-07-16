@@ -71,7 +71,7 @@
 
 ;; Fields initialized to a non-default value shouldn't be hoisted.
 (module
-  ;; CHECK:      (type $A (struct ))
+  ;; CHECK:      (type $A (struct))
   (type $A (struct))
   ;; CHECK:      (type $1 (func))
 

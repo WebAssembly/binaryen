@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s --optimize-casts -all -tnh -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $A (sub (struct )))
+  ;; CHECK:      (type $A (sub (struct)))
   (type $A (sub (struct)))
 
   ;; CHECK:      (global $a (mut i32) (i32.const 0))

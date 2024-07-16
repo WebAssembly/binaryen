@@ -1980,10 +1980,10 @@
 (module
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $A (sub (struct )))
+  ;; CHECK:      (type $A (sub (struct)))
   (type $A (sub (struct)))
 
-  ;; CHECK:      (type $B (sub $A (struct )))
+  ;; CHECK:      (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
   ;; CHECK:      (type $3 (func (param (ref null $A))))

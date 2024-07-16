@@ -6,7 +6,7 @@
   ;; removed.
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (sub (struct )))
+  ;; CHECK-NEXT:  (type $struct (sub (struct)))
   (type $struct (sub (struct (field (mut funcref)))))
 
   ;; CHECK:       (type $1 (func (param (ref $struct))))
@@ -22,7 +22,7 @@
   ;; A write does not keep a field from being removed.
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (sub (struct )))
+  ;; CHECK-NEXT:  (type $struct (sub (struct)))
   (type $struct (sub (struct (field (mut funcref)))))
 
   ;; CHECK:       (type $1 (func (param (ref $struct))))
@@ -53,7 +53,7 @@
   ;; A new does not keep a field from being removed.
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (sub (struct )))
+  ;; CHECK-NEXT:  (type $struct (sub (struct)))
   (type $struct (sub (struct (field (mut funcref)))))
 
   ;; CHECK:       (type $1 (func (param (ref $struct))))
@@ -77,7 +77,7 @@
   ;; A new_default does not keep a field from being removed.
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (sub (struct )))
+  ;; CHECK-NEXT:  (type $struct (sub (struct)))
   (type $struct (sub (struct (field (mut funcref)))))
 
   ;; CHECK:       (type $1 (func (param (ref $struct))))
@@ -770,10 +770,10 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $parent (sub (struct )))
+    ;; CHECK-NEXT:  (type $parent (sub (struct)))
     (type $parent (sub (struct (field i32))))
 
-    ;; CHECK:       (type $child2 (sub $parent (struct )))
+    ;; CHECK:       (type $child2 (sub $parent (struct)))
 
     ;; CHECK:       (type $child1 (sub $parent (struct (field i32))))
     (type $child1 (sub $parent (struct (field i32))))
@@ -802,7 +802,7 @@
 
   ;; CHECK:       (type $2 (func))
 
-  ;; CHECK:       (type $"{mut:i8}" (sub (struct )))
+  ;; CHECK:       (type $"{mut:i8}" (sub (struct)))
   (type $"{mut:i8}" (sub (struct (field (mut i8)))))
 
   ;; CHECK:       (type $4 (func (param (ref null $"{mut:i8}"))))
@@ -928,7 +928,7 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (sub (struct )))
+  ;; CHECK-NEXT:  (type $struct (sub (struct)))
   (type $struct (sub (struct (field anyref) (field i32) (field f32) (field f64))))
 
   ;; CHECK:       (type $1 (func (result (ref $struct))))

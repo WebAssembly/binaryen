@@ -6,7 +6,7 @@
 ;; CHECK-NEXT:  (type $0 (sub (struct (field (mut i16)) (field (mut (ref $2))) (field (mut (ref null $2))))))
 ;; CHECK-NEXT:  (type $1 (sub (func (param (ref $1)) (result f64 (ref $0) f32 (ref null (shared eq))))))
 ;; CHECK-NEXT:  (type $2 (sub (shared (struct (field (mut (ref null (shared extern)))) (field (mut (ref null $2)))))))
-;; CHECK-NEXT:  (type $3 (sub (shared (struct ))))
+;; CHECK-NEXT:  (type $3 (sub (shared (struct))))
 ;; CHECK-NEXT: )
 ;; CHECK-NEXT: (rec
 ;; CHECK-NEXT:  (type $4 (sub (array i32)))
@@ -36,7 +36,7 @@
 ;; CHECK-NEXT:  (type $0 (sub (struct (field (mut i16)) (field (mut (ref $2))) (field (mut (ref null $2))))))
 ;; CHECK-NEXT:  (type $1 (sub (func (param (ref $1)) (result f64 (ref $0) f32 (ref null (shared eq))))))
 ;; CHECK-NEXT:  (type $2 (sub (shared (struct (field (mut (ref null (shared extern)))) (field (mut (ref null $2)))))))
-;; CHECK-NEXT:  (type $3 (sub (shared (struct ))))
+;; CHECK-NEXT:  (type $3 (sub (shared (struct)))
 ;; CHECK-NEXT: )
 ;; CHECK-NEXT: (rec
 ;; CHECK-NEXT:  (type $4 (sub (array i32)))

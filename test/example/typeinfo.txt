@@ -12,7 +12,7 @@ i31
 i31ref
 (ref i31)
 (func)
-(type $struct.0 (struct ))
+(type $struct.0 (struct))
 (type $array.0 (array i32))
 
 ;; Signature
@@ -24,7 +24,7 @@ i31ref
 (ref null $func.0)
 
 ;; Struct
-(type $struct.0 (struct ))
+(type $struct.0 (struct))
 (ref $struct.0)
 (ref null $struct.0)
 (type $struct.0 (struct (field i32) (field i64) (field (mut f32)) (field (mut f64))))

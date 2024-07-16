@@ -11,7 +11,7 @@
 
   ;; CHECK:      (type $3 (func (param anyref)))
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
   ;; CHECK:      (type $5 (func (param i64 i32 f64)))

@@ -296,13 +296,13 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $X (sub (struct )))
+    ;; CHECK-NEXT:  (type $X (sub (struct)))
     (type $X (sub (struct)))
 
-    ;; CHECK:       (type $Y1 (sub $X (struct )))
+    ;; CHECK:       (type $Y1 (sub $X (struct)))
     (type $Y1 (sub $X (struct)))
 
-    ;; CHECK:       (type $Y2 (sub $X (struct )))
+    ;; CHECK:       (type $Y2 (sub $X (struct)))
     (type $Y2 (sub $X (struct)))
 
     ;; CHECK:       (type $A (func (param anyref)))
@@ -421,13 +421,13 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $X (sub (struct )))
+    ;; CHECK-NEXT:  (type $X (sub (struct)))
     (type $X (sub (struct)))
 
-    ;; CHECK:       (type $Y1 (sub $X (struct )))
+    ;; CHECK:       (type $Y1 (sub $X (struct)))
     (type $Y1 (sub $X (struct)))
 
-    ;; CHECK:       (type $Y2 (sub $X (struct )))
+    ;; CHECK:       (type $Y2 (sub $X (struct)))
     (type $Y2 (sub $X (struct)))
 
     ;; CHECK:       (type $A (func (param anyref anyref)))
@@ -659,13 +659,13 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $X (sub (struct )))
+    ;; CHECK-NEXT:  (type $X (sub (struct)))
     (type $X (sub (struct)))
 
-    ;; CHECK:       (type $Y1 (sub $X (struct )))
+    ;; CHECK:       (type $Y1 (sub $X (struct)))
     (type $Y1 (sub $X (struct)))
 
-    ;; CHECK:       (type $Y2 (sub $X (struct )))
+    ;; CHECK:       (type $Y2 (sub $X (struct)))
     (type $Y2 (sub $X (struct)))
 
     ;; CHECK:       (type $A (func (param anyref anyref anyref anyref anyref anyref)))
@@ -885,13 +885,13 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $X (sub (struct )))
+    ;; CHECK-NEXT:  (type $X (sub (struct)))
     (type $X (sub (struct)))
 
-    ;; CHECK:       (type $Y1 (sub $X (struct )))
+    ;; CHECK:       (type $Y1 (sub $X (struct)))
     (type $Y1 (sub $X (struct)))
 
-    ;; CHECK:       (type $Y2 (sub $X (struct )))
+    ;; CHECK:       (type $Y2 (sub $X (struct)))
     (type $Y2 (sub $X (struct)))
 
     ;; CHECK:       (type $A (func (param (ref null $X) (ref null $X) (ref null $X))))
@@ -1041,13 +1041,13 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $X (sub (struct )))
+    ;; CHECK-NEXT:  (type $X (sub (struct)))
     (type $X (sub (struct)))
 
-    ;; CHECK:       (type $Y1 (sub $X (struct )))
+    ;; CHECK:       (type $Y1 (sub $X (struct)))
     (type $Y1 (sub $X (struct)))
 
-    ;; CHECK:       (type $Y2 (sub $X (struct )))
+    ;; CHECK:       (type $Y2 (sub $X (struct)))
     (type $Y2 (sub $X (struct)))
 
     ;; CHECK:       (type $A (func (param anyref)))

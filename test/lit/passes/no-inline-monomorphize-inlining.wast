@@ -11,12 +11,12 @@
 ;; RUN: foreach %s %t wasm-opt                        --monomorphize-always --inlining --optimize-level=3 -all -S -o - | filecheck %s --check-prefix YESINLINE
 
 (module
-  ;; NO_INLINE:      (type $A (sub (struct )))
-  ;; YESINLINE:      (type $A (sub (struct )))
+  ;; NO_INLINE:      (type $A (sub (struct)))
+  ;; YESINLINE:      (type $A (sub (struct)))
   (type $A (sub (struct)))
 
-  ;; NO_INLINE:      (type $B (sub $A (struct )))
-  ;; YESINLINE:      (type $B (sub $A (struct )))
+  ;; NO_INLINE:      (type $B (sub $A (struct)))
+  ;; YESINLINE:      (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
   ;; NO_INLINE:      (type $2 (func))
