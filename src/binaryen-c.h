@@ -2925,6 +2925,24 @@ BINARYEN_API bool BinaryenGetDebugInfo(void);
 // Applies to all modules, globally.
 BINARYEN_API void BinaryenSetDebugInfo(bool on);
 
+// Gets whether no traps can be considered reached at runtime when optimizing.
+// Applies to all modules, globally.
+BINARYEN_API bool BinaryenGetTrapsNeverHappen(void);
+
+// Enables or disables whether no traps can be considered reached at
+// runtime when optimizing. Applies to all modules, globally.
+BINARYEN_API void BinaryenSetTrapsNeverHappen(bool on);
+
+// Gets whether considering that the code outside of the module does
+// not inspect or interact with GC and function references. Applies to
+// all modules, globally.
+BINARYEN_API bool BinaryenGetClosedWorld(void);
+
+// Enables or disables whether considering that the code outside of
+// the module does not inspect or interact with GC and function
+// references. Applies to all modules, globally.
+BINARYEN_API void BinaryenSetClosedWorld(bool on);
+
 // Gets whether the low 1K of memory can be considered unused when optimizing.
 // Applies to all modules, globally.
 BINARYEN_API bool BinaryenGetLowMemoryUnused(void);
@@ -2950,6 +2968,22 @@ BINARYEN_API bool BinaryenGetFastMath(void);
 // Applies to all modules, globally.
 BINARYEN_API void BinaryenSetFastMath(bool value);
 
+// Gets whether to generate StackIR during binary writing.
+// Applies to all modules, globally.
+BINARYEN_API bool BinaryenGetGenerateStackIR(void);
+
+// Enable or disable StackIR generation during binary writing.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetGenerateStackIR(bool on);
+
+// Gets whether to optimize StackIR during binary writing.
+// Applies to all modules, globally.
+BINARYEN_API bool BinaryenGetOptimizeStackIR(void);
+
+// Enable or disable StackIR optimization during binary writing.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenSetOptimizeStackIR(bool on);
+
 // Gets the value of the specified arbitrary pass argument.
 // Applies to all modules, globally.
 BINARYEN_API const char* BinaryenGetPassArgument(const char* name);
@@ -2961,6 +2995,18 @@ BINARYEN_API void BinaryenSetPassArgument(const char* name, const char* value);
 // Clears all arbitrary pass arguments.
 // Applies to all modules, globally.
 BINARYEN_API void BinaryenClearPassArguments();
+
+// Gets whether a pass is in the set of passes to skip.
+// Applies to all modules, globally.
+BINARYEN_API bool BinaryenHasPassToSkip(const char* pass);
+
+// Add a pass to the set of passes to skip.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenAddPassToSkip(const char* pass);
+
+// Clears the set of passes to skip.
+// Applies to all modules, globally.
+BINARYEN_API void BinaryenClearPassesToSkip(void);
 
 // Gets the function size at which we always inline.
 // Applies to all modules, globally.
