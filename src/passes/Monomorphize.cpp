@@ -85,6 +85,8 @@
 //       compute the LUB of a bunch of calls to a target and then investigate
 //       that one case and use it in all those callers.
 // TODO: Not just direct calls? But updating vtables is complex.
+// TODO: Should we look at no-inline flags? We do move code between functions,
+//       but it isn't normal inlining.
 //
 
 #include "ir/cost.h"
