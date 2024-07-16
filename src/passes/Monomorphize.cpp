@@ -216,71 +216,77 @@ struct CallContext {
   // remaining values by updating |newOperands| (for example, if all the values
   // sent are constants, then |newOperands| will end up empty, as we have
   // nothing left to send).
-  void buildFromCall(CallInfo& info,
+  //
+  // Returns whether we succeeded in creating a valid call context. In some
+  // situations we hit issues with effect reorder, and return false (see below).
+  bool buildFromCall(CallInfo& info,
                      std::vector<Expression*>& newOperands,
                      Module& wasm,
                      const PassOptions& options) {
     Builder builder(wasm);
 
+    // Process the operand. This is a copy operation, as we are trying to move
+    // (copy) code from the callsite into the called function. When we find we
+    // can copy then we do so, and when we cannot that value remains as a
+    // value sent from the call.
+    //
+    // The copy operation works in pre-order, which allows us to override
+    // entire children as needed:
+    //
+    //  (call $foo
+    //    (problem
+    //      (a)
+    //    )
+    //    (later)
+    //  )
+    //
+    // We visit |problem| first, and if there is a problem that prevents us
+    // moving it into the context then we override the copy and then it and
+    // its child |a| remain in the caller (and |a| is never visited in the
+    // copy). We then continue onward to |later|.
+    //
+    // Note that each time we move code into the context we are pushing it
+    // into the called function, which changes the order of operations:
+    //
+    //  (call $foo
+    //    (first
+    //      (a)
+    //    )
+    //    (second
+    //      (b)
+    //    )
+    //  )
+    //
+    //  (func $foo (param $first) (param $second)
+    //  )
+    //
+    // If we move |first| and |a| into the context then we get this:
+    //
+    //  (call $foo
+    //    ;; |first| and |a| were removed from here.
+    //    (second
+    //      (b)
+    //    )
+    //  )
+    //
+    //  (func $foo (param $second)
+    //    ;; |first| is now a local, and we assign it inside the called func.
+    //    (local $first)
+    //    (local.set $first
+    //      (first
+    //        (a)
+    //      )
+    //    )
+    //  )
+    //
+    // After this code motion we execute |second| and |b| before the call, and
+    // |first| and |a| after, so we cannot do this transformation if the order
+    // of operations between them matters. To detect such problems, we
+    // accumulate the effects that are being moved.
+    EffectAnalyzer effectsMovedIntoContext(options, wasm);
+    auto problemWithEffects = false;
+
     for (auto* operand : info.call->operands) {
-      // Process the operand. This is a copy operation, as we are trying to move
-      // (copy) code from the callsite into the called function. When we find we
-      // can copy then we do so, and when we cannot that value remains as a
-      // value sent from the call.
-      //
-      // The copy operation works in pre-order, which allows us to override
-      // entire children as needed:
-      //
-      //  (call $foo
-      //    (problem
-      //      (a)
-      //    )
-      //    (later)
-      //  )
-      //
-      // We visit |problem| first, and if there is a problem that prevents us
-      // moving it into the context then we override the copy and then it and
-      // its child |a| remain in the caller (and |a| is never visited in the
-      // copy). We then continue onward to |later|.
-      //
-      // Note that each time we move code into the context we are pushing it
-      // into the called function, which changes the order of operations:
-      //
-      //  (call $foo
-      //    (first
-      //      (a)
-      //    )
-      //    (second
-      //      (b)
-      //    )
-      //  )
-      //
-      //  (func $foo (param $first) (param $second)
-      //  )
-      //
-      // If we move |first| and |a| into the context then we get this:
-      //
-      //  (call $foo
-      //    ;; |first| and |a| were removed from here.
-      //    (second
-      //      (b)
-      //    )
-      //  )
-      //
-      //  (func $foo (param $second)
-      //    ;; |first| is now a local, and we assign it inside the called func.
-      //    (local $first)
-      //    (local.set $first
-      //      (first
-      //        (a)
-      //      )
-      //    )
-      //  )
-      //
-      // After this code motion we execute |second| and |b| before the call, and
-      // |first| and |a| after, so we cannot do this transformation if the order
-      // of operations between them matters. To handle that, we accumulate the
-      // effects...
       operands.push_back(ExpressionManipulator::flexibleCopy(
         operand, wasm, [&](Expression* child) -> Expression* {
           if (!child) {
@@ -290,14 +296,23 @@ struct CallContext {
           }
 
           if (canBeMovedIntoContext(child, wasm, options)) {
-            // This can be moved, great: let the copy happen.
+            // This can be moved. Note the effects we are moving.
+            effectsMovedIntoContext.visit(child);
+
+            // Let the copy happen.
             return nullptr;
           }
 
           // This cannot be moved, so we stop here: this is a value that is sent
-          // into the monomorphized function. It is a new operand in the call,
-          // and in the context operands it is a local.get, that reads that
-          // value.
+          // into the monomorphized function, the same as before. Any effects
+          // it has remain in the call; note if we see a problem there.
+          EffectAnalyzer remainingEffects(options, wasm, child);
+          if (remainingEffects.invalidates(effectsMovedIntoContext)) {
+            problemWithEffects = true;
+          }
+
+          // In the call context this is simply a local.get, that reads the
+          // value sent through the call, as before.
           auto paramIndex = newOperands.size();
           newOperands.push_back(child);
           // TODO: If one operand is a tee and another a get, we could actually
@@ -309,6 +324,13 @@ struct CallContext {
     }
 
     dropped = !!info.drop;
+
+    // Report failure if we saw a problem with effects. TODO: We could try to
+    // handle the problem in a more sophisticated way by moving code around the
+    // call (but simply localizing all the call's operands so that they become
+    // local.gets will not work, as we do want to have code in the operands so
+    // we can move it; fixing this will require something more complex).
+    return !problemWithEffects;
   }
 
   // Checks whether an expression can be moved into the context.
@@ -475,7 +497,10 @@ struct Monomorphize : public Pass {
     // if we use that context.
     CallContext context;
     std::vector<Expression*> newOperands;
-    context.buildFromCall(info, newOperands, wasm, getPassOptions());
+    if (!context.buildFromCall(info, newOperands, wasm, getPassOptions())) {
+      // We failed to build the context.
+      return;
+    }
 
     // See if we've already evaluated this function + call context. If so, then
     // we've memoized the result.
