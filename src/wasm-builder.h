@@ -1217,8 +1217,10 @@ public:
     if (type.isFunction()) {
       return makeRefFunc(value.getFunc(), type.getHeapType());
     }
-    if (type.isRef() && type.getHeapType() == HeapType::i31) {
-      return makeRefI31(makeConst(value.geti31()));
+    if (type.isRef() && type.getHeapType().isBasic() &&
+        type.getHeapType().getBasic(Unshared) == HeapType::i31) {
+      return makeRefI31(makeConst(value.geti31()),
+                        type.getHeapType().getShared());
     }
     if (type.isString()) {
       // The string is already WTF-16, but we need to convert from `Literals` to
