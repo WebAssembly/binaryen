@@ -25,8 +25,8 @@ Current Trunk
 v118
 ----
 
- - StackIR is now handled entirely during binary writing. This is mostly not
-   noticeable, except that:
+ - StackIR is now handled entirely during binary writing (#6568). This is
+   mostly not noticeable, except that:
    - Text output no longer notes `(; has Stack IR ;)` (as Stack IR only exists
      during binary writing).
    - `--generate-stack-ir`, `--optimize-stack-ir`, and `--print-stack-ir` are
@@ -44,10 +44,15 @@ v118
  - Source map locations from instructions are no longer automatically propagated
    to function epilogues.
  - Add a new `BinaryenModuleReadWithFeatures` function to the C API that allows
-   to configure which features to enable in the parser.
- - The build-time option to use legacy WasmGC opcodes is removed.
+   to configure which features to enable in the parser. (#6380)
+ - The build-time option to use legacy WasmGC opcodes is removed. (#5874)
  - The strings in `string.const` instructions must now be valid WTF-8.
  - The `TraverseCalls` flag for `ExpressionRunner` is removed.
+ - C API: Support adding data segments individually (#6346)
+ - Add sourcemap support to wasm-metadce and wasm-merge (#6372).
+ - Fix semantics of return calls (#6448, #6451, #6464, #6470, #6474).
+ - Add table64 lowering pass (#6595).
+ - Add TraceCalls instrumentation pass (#6619).
 
 v117
 ----
