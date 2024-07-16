@@ -10,7 +10,7 @@
 (module
   ;; ALWAYS:      (type $0 (func (param i32) (result i32)))
 
-  ;; ALWAYS:      (type $1 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 anyref funcref i32 f64 i32 anyref anyref i32)))
+  ;; ALWAYS:      (type $1 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 anyref funcref i32 f64 i32 anyref anyref)))
 
   ;; ALWAYS:      (type $2 (func (param i32 i32 i32 i32 i32 i32)))
 
@@ -22,7 +22,7 @@
   ;; ALWAYS:      (global $imm i32 (i32.const 10))
   ;; CAREFUL:      (type $0 (func (param i32) (result i32)))
 
-  ;; CAREFUL:      (type $1 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 anyref funcref i32 f64 i32 anyref anyref i32)))
+  ;; CAREFUL:      (type $1 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 anyref funcref i32 f64 i32 anyref anyref)))
 
   ;; CAREFUL:      (type $2 (func (param i32 i32 i32 i32 i32 i32)))
 
@@ -40,6 +40,10 @@
   ;; ALWAYS:      (func $caller (type $0) (param $x i32) (result i32)
   ;; ALWAYS-NEXT:  (block $out (result i32)
   ;; ALWAYS-NEXT:   (call $target_2
+  ;; ALWAYS-NEXT:    (br_if $out
+  ;; ALWAYS-NEXT:     (i32.const 12)
+  ;; ALWAYS-NEXT:     (i32.const 13)
+  ;; ALWAYS-NEXT:    )
   ;; ALWAYS-NEXT:    (block (result i32)
   ;; ALWAYS-NEXT:     (i32.const 0)
   ;; ALWAYS-NEXT:    )
@@ -59,10 +63,6 @@
   ;; ALWAYS-NEXT:    (local.tee $x
   ;; ALWAYS-NEXT:     (i32.const 5)
   ;; ALWAYS-NEXT:    )
-  ;; ALWAYS-NEXT:    (br_if $out
-  ;; ALWAYS-NEXT:     (i32.const 12)
-  ;; ALWAYS-NEXT:     (i32.const 13)
-  ;; ALWAYS-NEXT:    )
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:   (i32.const 14)
   ;; ALWAYS-NEXT:  )
@@ -72,6 +72,10 @@
   ;; CAREFUL:      (func $caller (type $0) (param $x i32) (result i32)
   ;; CAREFUL-NEXT:  (block $out (result i32)
   ;; CAREFUL-NEXT:   (call $target_2
+  ;; CAREFUL-NEXT:    (br_if $out
+  ;; CAREFUL-NEXT:     (i32.const 12)
+  ;; CAREFUL-NEXT:     (i32.const 13)
+  ;; CAREFUL-NEXT:    )
   ;; CAREFUL-NEXT:    (block (result i32)
   ;; CAREFUL-NEXT:     (i32.const 0)
   ;; CAREFUL-NEXT:    )
@@ -90,10 +94,6 @@
   ;; CAREFUL-NEXT:    (local.get $x)
   ;; CAREFUL-NEXT:    (local.tee $x
   ;; CAREFUL-NEXT:     (i32.const 5)
-  ;; CAREFUL-NEXT:    )
-  ;; CAREFUL-NEXT:    (br_if $out
-  ;; CAREFUL-NEXT:     (i32.const 12)
-  ;; CAREFUL-NEXT:     (i32.const 13)
   ;; CAREFUL-NEXT:    )
   ;; CAREFUL-NEXT:   )
   ;; CAREFUL-NEXT:   (i32.const 14)
@@ -114,6 +114,11 @@
     (block $out (result i32)
       (call $target
         ;; We can't move control flow.
+        (br_if $out
+          (i32.const 12)
+          (i32.const 13)
+        )
+        ;; We can't move control flow structures.
         (block (result i32)
           (i32.const 0)
         )
@@ -165,23 +170,19 @@
           (ref.null none)
         )
         (struct.new $struct)
-        ;; We can't move control flow.
-        (br_if $out
-          (i32.const 12)
-          (i32.const 13)
-        )
       )
       (i32.const 14)
     )
   )
 
-  ;; ALWAYS:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 anyref) (param $10 funcref) (param $11 i32) (param $12 f64) (param $13 i32) (param $14 anyref) (param $15 anyref) (param $16 i32)
+  ;; ALWAYS:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 anyref) (param $11 funcref) (param $12 i32) (param $13 f64) (param $14 i32) (param $15 anyref) (param $16 anyref)
   ;; ALWAYS-NEXT:  (nop)
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 anyref) (param $10 funcref) (param $11 i32) (param $12 f64) (param $13 i32) (param $14 anyref) (param $15 anyref) (param $16 i32)
+  ;; CAREFUL:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 anyref) (param $11 funcref) (param $12 i32) (param $13 f64) (param $14 i32) (param $15 anyref) (param $16 anyref)
   ;; CAREFUL-NEXT:  (nop)
   ;; CAREFUL-NEXT: )
   (func $target
+    (param i32)
     (param i32)
     (param i32)
     (param i32)
@@ -198,14 +199,8 @@
     (param i32)
     (param anyref)
     (param anyref)
-    (param i32)
   )
 )
-
-
-;; TODO: nesting inside, children that are some in and some out
-
-
 
 ;; ALWAYS:      (func $target_2 (type $2) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32)
 ;; ALWAYS-NEXT:  (local $6 i32)
@@ -217,14 +212,14 @@
 ;; ALWAYS-NEXT:  (local $12 i32)
 ;; ALWAYS-NEXT:  (local $13 i32)
 ;; ALWAYS-NEXT:  (local $14 i32)
-;; ALWAYS-NEXT:  (local $15 anyref)
-;; ALWAYS-NEXT:  (local $16 funcref)
-;; ALWAYS-NEXT:  (local $17 i32)
-;; ALWAYS-NEXT:  (local $18 f64)
-;; ALWAYS-NEXT:  (local $19 i32)
-;; ALWAYS-NEXT:  (local $20 anyref)
+;; ALWAYS-NEXT:  (local $15 i32)
+;; ALWAYS-NEXT:  (local $16 anyref)
+;; ALWAYS-NEXT:  (local $17 funcref)
+;; ALWAYS-NEXT:  (local $18 i32)
+;; ALWAYS-NEXT:  (local $19 f64)
+;; ALWAYS-NEXT:  (local $20 i32)
 ;; ALWAYS-NEXT:  (local $21 anyref)
-;; ALWAYS-NEXT:  (local $22 i32)
+;; ALWAYS-NEXT:  (local $22 anyref)
 ;; ALWAYS-NEXT:  (local.set $6
 ;; ALWAYS-NEXT:   (local.get $0)
 ;; ALWAYS-NEXT:  )
@@ -241,53 +236,53 @@
 ;; ALWAYS-NEXT:   (local.get $4)
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (local.set $11
-;; ALWAYS-NEXT:   (global.get $imm)
+;; ALWAYS-NEXT:   (local.get $5)
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (local.set $12
-;; ALWAYS-NEXT:   (global.get $mut)
+;; ALWAYS-NEXT:   (global.get $imm)
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (local.set $13
+;; ALWAYS-NEXT:   (global.get $mut)
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (local.set $14
 ;; ALWAYS-NEXT:   (i32.load
 ;; ALWAYS-NEXT:    (i32.const 6)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (local.set $14
+;; ALWAYS-NEXT:  (local.set $15
 ;; ALWAYS-NEXT:   (i32.const 7)
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (local.set $15
+;; ALWAYS-NEXT:  (local.set $16
 ;; ALWAYS-NEXT:   (ref.null none)
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (local.set $16
+;; ALWAYS-NEXT:  (local.set $17
 ;; ALWAYS-NEXT:   (ref.func $target)
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (local.set $17
+;; ALWAYS-NEXT:  (local.set $18
 ;; ALWAYS-NEXT:   (i32.eqz
 ;; ALWAYS-NEXT:    (i32.const 8)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (local.set $18
+;; ALWAYS-NEXT:  (local.set $19
 ;; ALWAYS-NEXT:   (f64.add
 ;; ALWAYS-NEXT:    (f64.const 2.71828)
 ;; ALWAYS-NEXT:    (f64.const 3.14159)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (local.set $19
+;; ALWAYS-NEXT:  (local.set $20
 ;; ALWAYS-NEXT:   (select
 ;; ALWAYS-NEXT:    (i32.const 9)
 ;; ALWAYS-NEXT:    (i32.const 10)
 ;; ALWAYS-NEXT:    (i32.const 11)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (local.set $20
+;; ALWAYS-NEXT:  (local.set $21
 ;; ALWAYS-NEXT:   (ref.cast nullref
 ;; ALWAYS-NEXT:    (ref.null none)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (local.set $21
-;; ALWAYS-NEXT:   (struct.new_default $struct)
-;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (local.set $22
-;; ALWAYS-NEXT:   (local.get $5)
+;; ALWAYS-NEXT:   (struct.new_default $struct)
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (nop)
 ;; ALWAYS-NEXT: )
@@ -302,7 +297,7 @@
 (module
   ;; ALWAYS:      (type $0 (func (param i32) (result i32)))
 
-  ;; ALWAYS:      (type $1 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 anyref funcref i32 f64 i32 anyref anyref i32) (result i32)))
+  ;; ALWAYS:      (type $1 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 anyref funcref i32 f64 i32 anyref anyref) (result i32)))
 
   ;; ALWAYS:      (type $2 (func (param i32 i32 i32 i32 i32 i32)))
 
@@ -314,7 +309,7 @@
   ;; ALWAYS:      (global $imm i32 (i32.const 10))
   ;; CAREFUL:      (type $0 (func (param i32) (result i32)))
 
-  ;; CAREFUL:      (type $1 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 anyref funcref i32 f64 i32 anyref anyref i32) (result i32)))
+  ;; CAREFUL:      (type $1 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 anyref funcref i32 f64 i32 anyref anyref) (result i32)))
 
   ;; CAREFUL:      (type $2 (func (param i32 i32 i32 i32 i32 i32)))
 
@@ -332,6 +327,10 @@
   ;; ALWAYS:      (func $caller (type $0) (param $x i32) (result i32)
   ;; ALWAYS-NEXT:  (block $out (result i32)
   ;; ALWAYS-NEXT:   (call $target_2
+  ;; ALWAYS-NEXT:    (br_if $out
+  ;; ALWAYS-NEXT:     (i32.const 12)
+  ;; ALWAYS-NEXT:     (i32.const 13)
+  ;; ALWAYS-NEXT:    )
   ;; ALWAYS-NEXT:    (block (result i32)
   ;; ALWAYS-NEXT:     (i32.const 0)
   ;; ALWAYS-NEXT:    )
@@ -351,10 +350,6 @@
   ;; ALWAYS-NEXT:    (local.tee $x
   ;; ALWAYS-NEXT:     (i32.const 5)
   ;; ALWAYS-NEXT:    )
-  ;; ALWAYS-NEXT:    (br_if $out
-  ;; ALWAYS-NEXT:     (i32.const 12)
-  ;; ALWAYS-NEXT:     (i32.const 13)
-  ;; ALWAYS-NEXT:    )
   ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:   (i32.const 14)
   ;; ALWAYS-NEXT:  )
@@ -364,6 +359,10 @@
   ;; CAREFUL:      (func $caller (type $0) (param $x i32) (result i32)
   ;; CAREFUL-NEXT:  (block $out (result i32)
   ;; CAREFUL-NEXT:   (call $target_2
+  ;; CAREFUL-NEXT:    (br_if $out
+  ;; CAREFUL-NEXT:     (i32.const 12)
+  ;; CAREFUL-NEXT:     (i32.const 13)
+  ;; CAREFUL-NEXT:    )
   ;; CAREFUL-NEXT:    (block (result i32)
   ;; CAREFUL-NEXT:     (i32.const 0)
   ;; CAREFUL-NEXT:    )
@@ -383,10 +382,6 @@
   ;; CAREFUL-NEXT:    (local.tee $x
   ;; CAREFUL-NEXT:     (i32.const 5)
   ;; CAREFUL-NEXT:    )
-  ;; CAREFUL-NEXT:    (br_if $out
-  ;; CAREFUL-NEXT:     (i32.const 12)
-  ;; CAREFUL-NEXT:     (i32.const 13)
-  ;; CAREFUL-NEXT:    )
   ;; CAREFUL-NEXT:   )
   ;; CAREFUL-NEXT:   (i32.const 14)
   ;; CAREFUL-NEXT:  )
@@ -397,6 +392,10 @@
     (block $out (result i32)
       (drop
         (call $target
+          (br_if $out
+            (i32.const 12)
+            (i32.const 13)
+          )
           (block (result i32)
             (i32.const 0)
           )
@@ -440,23 +439,20 @@
             (ref.null none)
           )
           (struct.new $struct)
-          (br_if $out
-            (i32.const 12)
-            (i32.const 13)
-          )
         )
       )
       (i32.const 14)
     )
   )
 
-  ;; ALWAYS:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 anyref) (param $10 funcref) (param $11 i32) (param $12 f64) (param $13 i32) (param $14 anyref) (param $15 anyref) (param $16 i32) (result i32)
+  ;; ALWAYS:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 anyref) (param $11 funcref) (param $12 i32) (param $13 f64) (param $14 i32) (param $15 anyref) (param $16 anyref) (result i32)
   ;; ALWAYS-NEXT:  (local.get $7)
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 anyref) (param $10 funcref) (param $11 i32) (param $12 f64) (param $13 i32) (param $14 anyref) (param $15 anyref) (param $16 i32) (result i32)
+  ;; CAREFUL:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 anyref) (param $11 funcref) (param $12 i32) (param $13 f64) (param $14 i32) (param $15 anyref) (param $16 anyref) (result i32)
   ;; CAREFUL-NEXT:  (local.get $7)
   ;; CAREFUL-NEXT: )
   (func $target
+    (param i32)
     (param i32)
     (param i32)
     (param i32)
@@ -473,7 +469,6 @@
     (param i32)
     (param anyref)
     (param anyref)
-    (param i32)
     (result i32)
     (local.get 7)
   )
@@ -492,14 +487,14 @@
 ;; ALWAYS-NEXT:  (local $12 i32)
 ;; ALWAYS-NEXT:  (local $13 i32)
 ;; ALWAYS-NEXT:  (local $14 i32)
-;; ALWAYS-NEXT:  (local $15 anyref)
-;; ALWAYS-NEXT:  (local $16 funcref)
-;; ALWAYS-NEXT:  (local $17 i32)
-;; ALWAYS-NEXT:  (local $18 f64)
-;; ALWAYS-NEXT:  (local $19 i32)
-;; ALWAYS-NEXT:  (local $20 anyref)
+;; ALWAYS-NEXT:  (local $15 i32)
+;; ALWAYS-NEXT:  (local $16 anyref)
+;; ALWAYS-NEXT:  (local $17 funcref)
+;; ALWAYS-NEXT:  (local $18 i32)
+;; ALWAYS-NEXT:  (local $19 f64)
+;; ALWAYS-NEXT:  (local $20 i32)
 ;; ALWAYS-NEXT:  (local $21 anyref)
-;; ALWAYS-NEXT:  (local $22 i32)
+;; ALWAYS-NEXT:  (local $22 anyref)
 ;; ALWAYS-NEXT:  (drop
 ;; ALWAYS-NEXT:   (block (result i32)
 ;; ALWAYS-NEXT:    (local.set $6
@@ -518,53 +513,53 @@
 ;; ALWAYS-NEXT:     (local.get $4)
 ;; ALWAYS-NEXT:    )
 ;; ALWAYS-NEXT:    (local.set $11
-;; ALWAYS-NEXT:     (global.get $imm)
+;; ALWAYS-NEXT:     (local.get $5)
 ;; ALWAYS-NEXT:    )
 ;; ALWAYS-NEXT:    (local.set $12
-;; ALWAYS-NEXT:     (global.get $mut)
+;; ALWAYS-NEXT:     (global.get $imm)
 ;; ALWAYS-NEXT:    )
 ;; ALWAYS-NEXT:    (local.set $13
+;; ALWAYS-NEXT:     (global.get $mut)
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:    (local.set $14
 ;; ALWAYS-NEXT:     (i32.load
 ;; ALWAYS-NEXT:      (i32.const 6)
 ;; ALWAYS-NEXT:     )
 ;; ALWAYS-NEXT:    )
-;; ALWAYS-NEXT:    (local.set $14
+;; ALWAYS-NEXT:    (local.set $15
 ;; ALWAYS-NEXT:     (i32.const 7)
 ;; ALWAYS-NEXT:    )
-;; ALWAYS-NEXT:    (local.set $15
+;; ALWAYS-NEXT:    (local.set $16
 ;; ALWAYS-NEXT:     (ref.null none)
 ;; ALWAYS-NEXT:    )
-;; ALWAYS-NEXT:    (local.set $16
+;; ALWAYS-NEXT:    (local.set $17
 ;; ALWAYS-NEXT:     (ref.func $target)
 ;; ALWAYS-NEXT:    )
-;; ALWAYS-NEXT:    (local.set $17
+;; ALWAYS-NEXT:    (local.set $18
 ;; ALWAYS-NEXT:     (i32.eqz
 ;; ALWAYS-NEXT:      (i32.const 8)
 ;; ALWAYS-NEXT:     )
 ;; ALWAYS-NEXT:    )
-;; ALWAYS-NEXT:    (local.set $18
+;; ALWAYS-NEXT:    (local.set $19
 ;; ALWAYS-NEXT:     (f64.add
 ;; ALWAYS-NEXT:      (f64.const 2.71828)
 ;; ALWAYS-NEXT:      (f64.const 3.14159)
 ;; ALWAYS-NEXT:     )
 ;; ALWAYS-NEXT:    )
-;; ALWAYS-NEXT:    (local.set $19
+;; ALWAYS-NEXT:    (local.set $20
 ;; ALWAYS-NEXT:     (select
 ;; ALWAYS-NEXT:      (i32.const 9)
 ;; ALWAYS-NEXT:      (i32.const 10)
 ;; ALWAYS-NEXT:      (i32.const 11)
 ;; ALWAYS-NEXT:     )
 ;; ALWAYS-NEXT:    )
-;; ALWAYS-NEXT:    (local.set $20
+;; ALWAYS-NEXT:    (local.set $21
 ;; ALWAYS-NEXT:     (ref.cast nullref
 ;; ALWAYS-NEXT:      (ref.null none)
 ;; ALWAYS-NEXT:     )
 ;; ALWAYS-NEXT:    )
-;; ALWAYS-NEXT:    (local.set $21
-;; ALWAYS-NEXT:     (struct.new_default $struct)
-;; ALWAYS-NEXT:    )
 ;; ALWAYS-NEXT:    (local.set $22
-;; ALWAYS-NEXT:     (local.get $5)
+;; ALWAYS-NEXT:     (struct.new_default $struct)
 ;; ALWAYS-NEXT:    )
 ;; ALWAYS-NEXT:    (local.get $13)
 ;; ALWAYS-NEXT:   )
@@ -1233,14 +1228,17 @@
 
   ;; ALWAYS:      (type $0 (func))
 
-  ;; ALWAYS:      (type $1 (func (param i32)))
+  ;; ALWAYS:      (type $1 (func (param i32 i32)))
 
-  ;; ALWAYS:      (type $2 (func (param i32 i32)))
+  ;; ALWAYS:      (type $2 (func (param i32)))
 
   ;; ALWAYS:      (memory $0 10 20)
 
   ;; ALWAYS:      (func $caller (type $0)
-  ;; ALWAYS-NEXT:  (call $target_3
+  ;; ALWAYS-NEXT:  (call $target
+  ;; ALWAYS-NEXT:   (i32.load
+  ;; ALWAYS-NEXT:    (i32.const 0)
+  ;; ALWAYS-NEXT:   )
   ;; ALWAYS-NEXT:   (block (result i32)
   ;; ALWAYS-NEXT:    (i32.store
   ;; ALWAYS-NEXT:     (i32.const 0)
@@ -1292,7 +1290,7 @@
   )
 
   ;; ALWAYS:      (func $caller-flip (type $0)
-  ;; ALWAYS-NEXT:  (call $target_4
+  ;; ALWAYS-NEXT:  (call $target_3
   ;; ALWAYS-NEXT:   (block (result i32)
   ;; ALWAYS-NEXT:    (i32.store
   ;; ALWAYS-NEXT:     (i32.const 0)
@@ -1317,7 +1315,8 @@
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
   (func $caller-flip
-    ;; With the order reversed, there is no problem.
+    ;; With the order reversed, there is no problem: the load can be moved into
+    ;; the context (in ALWAYS, at least).
     (call $target
       (block (result i32)
         (i32.store
@@ -1332,7 +1331,7 @@
     )
   )
 
-  ;; ALWAYS:      (func $target (type $2) (param $0 i32) (param $1 i32)
+  ;; ALWAYS:      (func $target (type $1) (param $0 i32) (param $1 i32)
   ;; ALWAYS-NEXT:  (nop)
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (func $target (type $1) (param $0 i32) (param $1 i32)
@@ -1341,30 +1340,374 @@
   (func $target (param i32) (param i32)
   )
 )
-;; ALWAYS:      (func $target_3 (type $1) (param $0 i32)
+
+;; ALWAYS:      (func $target_3 (type $2) (param $0 i32)
 ;; ALWAYS-NEXT:  (local $1 i32)
 ;; ALWAYS-NEXT:  (local $2 i32)
 ;; ALWAYS-NEXT:  (local.set $1
+;; ALWAYS-NEXT:   (local.get $0)
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (local.set $2
 ;; ALWAYS-NEXT:   (i32.load
 ;; ALWAYS-NEXT:    (i32.const 0)
 ;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (local.set $2
-;; ALWAYS-NEXT:   (local.get $0)
+;; ALWAYS-NEXT:  (nop)
+;; ALWAYS-NEXT: )
+(module
+  (memory 10 20)
+
+  ;; ALWAYS:      (type $0 (func (param i32)))
+
+  ;; ALWAYS:      (type $1 (func))
+
+  ;; ALWAYS:      (memory $0 10 20)
+
+  ;; ALWAYS:      (func $caller (type $1)
+  ;; ALWAYS-NEXT:  (call $target_2
+  ;; ALWAYS-NEXT:   (block (result i32)
+  ;; ALWAYS-NEXT:    (i32.load
+  ;; ALWAYS-NEXT:     (i32.const 0)
+  ;; ALWAYS-NEXT:    )
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (type $0 (func))
+
+  ;; CAREFUL:      (type $1 (func (param i32)))
+
+  ;; CAREFUL:      (memory $0 10 20)
+
+  ;; CAREFUL:      (func $caller (type $0)
+  ;; CAREFUL-NEXT:  (call $target
+  ;; CAREFUL-NEXT:   (i32.atomic.rmw8.cmpxchg_u
+  ;; CAREFUL-NEXT:    (i32.const 0)
+  ;; CAREFUL-NEXT:    (block (result i32)
+  ;; CAREFUL-NEXT:     (i32.load
+  ;; CAREFUL-NEXT:      (i32.const 0)
+  ;; CAREFUL-NEXT:     )
+  ;; CAREFUL-NEXT:    )
+  ;; CAREFUL-NEXT:    (i32.const 1)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $caller
+    ;; Effect interaction between a parent and child: the child reads while the
+    ;; parent writes (and also reads), so they cannot be reordered. But the
+    ;; parent executes later anyhow, so it is fine to optimize the atomic
+    ;; operation into the context.
+    (call $target
+      (i32.atomic.rmw8.cmpxchg_u
+        (i32.const 0)
+        (block (result i32) ;; Use a block to prevent the child from being
+                            ;; moved into the context.
+          (i32.load
+            (i32.const 0)
+          )
+        )
+        (i32.const 1)
+      )
+    )
+    ;; Note that we cannot test the reverse, since if the block were on the
+    ;; outside then anything inside it would not be moved.
+  )
+
+  ;; ALWAYS:      (func $target (type $0) (param $0 i32)
+  ;; ALWAYS-NEXT:  (nop)
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $target (type $1) (param $0 i32)
+  ;; CAREFUL-NEXT:  (nop)
+  ;; CAREFUL-NEXT: )
+  (func $target (param i32)
+  )
+)
+
+;; ALWAYS:      (func $target_2 (type $0) (param $0 i32)
+;; ALWAYS-NEXT:  (local $1 i32)
+;; ALWAYS-NEXT:  (local.set $1
+;; ALWAYS-NEXT:   (i32.atomic.rmw8.cmpxchg_u
+;; ALWAYS-NEXT:    (i32.const 0)
+;; ALWAYS-NEXT:    (local.get $0)
+;; ALWAYS-NEXT:    (i32.const 1)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (nop)
+;; ALWAYS-NEXT: )
+(module
+  ;; ALWAYS:      (type $0 (func))
+
+  ;; ALWAYS:      (type $struct (struct (field i32) (field i32)))
+  ;; CAREFUL:      (type $0 (func))
+
+  ;; CAREFUL:      (type $struct (struct (field i32) (field i32)))
+  (type $struct (struct (field i32) (field i32)))
+
+  (memory 10 20)
+
+  ;; ALWAYS:      (type $2 (func (param anyref)))
+
+  ;; ALWAYS:      (type $3 (func (param i32)))
+
+  ;; ALWAYS:      (memory $0 10 20)
+
+  ;; ALWAYS:      (func $caller (type $0)
+  ;; ALWAYS-NEXT:  (call $target
+  ;; ALWAYS-NEXT:   (struct.new $struct
+  ;; ALWAYS-NEXT:    (i32.load
+  ;; ALWAYS-NEXT:     (i32.const 0)
+  ;; ALWAYS-NEXT:    )
+  ;; ALWAYS-NEXT:    (block (result i32)
+  ;; ALWAYS-NEXT:     (i32.store
+  ;; ALWAYS-NEXT:      (i32.const 0)
+  ;; ALWAYS-NEXT:      (i32.const 1)
+  ;; ALWAYS-NEXT:     )
+  ;; ALWAYS-NEXT:     (i32.const 2)
+  ;; ALWAYS-NEXT:    )
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (type $2 (func (param anyref)))
+
+  ;; CAREFUL:      (type $3 (func (param i32)))
+
+  ;; CAREFUL:      (memory $0 10 20)
+
+  ;; CAREFUL:      (func $caller (type $0)
+  ;; CAREFUL-NEXT:  (call $target
+  ;; CAREFUL-NEXT:   (struct.new $struct
+  ;; CAREFUL-NEXT:    (i32.load
+  ;; CAREFUL-NEXT:     (i32.const 0)
+  ;; CAREFUL-NEXT:    )
+  ;; CAREFUL-NEXT:    (block (result i32)
+  ;; CAREFUL-NEXT:     (i32.store
+  ;; CAREFUL-NEXT:      (i32.const 0)
+  ;; CAREFUL-NEXT:      (i32.const 1)
+  ;; CAREFUL-NEXT:     )
+  ;; CAREFUL-NEXT:     (i32.const 2)
+  ;; CAREFUL-NEXT:    )
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $caller
+    ;; Effect interaction between children of a call operand. The read and write
+    ;; cannot be reordered.
+    (call $target
+      (struct.new $struct
+        (i32.load
+          (i32.const 0)
+        )
+        (block (result i32) ;; Use a block to prevent the child from being
+                            ;; moved into the context.
+          (i32.store
+            (i32.const 0)
+            (i32.const 1)
+          )
+          (i32.const 2)
+        )
+      )
+    )
+  )
+
+  ;; ALWAYS:      (func $caller-flip (type $0)
+  ;; ALWAYS-NEXT:  (call $target_3
+  ;; ALWAYS-NEXT:   (block (result i32)
+  ;; ALWAYS-NEXT:    (i32.store
+  ;; ALWAYS-NEXT:     (i32.const 0)
+  ;; ALWAYS-NEXT:     (i32.const 1)
+  ;; ALWAYS-NEXT:    )
+  ;; ALWAYS-NEXT:    (i32.const 2)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $caller-flip (type $0)
+  ;; CAREFUL-NEXT:  (call $target_3
+  ;; CAREFUL-NEXT:   (block (result i32)
+  ;; CAREFUL-NEXT:    (i32.store
+  ;; CAREFUL-NEXT:     (i32.const 0)
+  ;; CAREFUL-NEXT:     (i32.const 1)
+  ;; CAREFUL-NEXT:    )
+  ;; CAREFUL-NEXT:    (i32.const 2)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $caller-flip
+    ;; With the order reversed, there is no problem.
+    (call $target
+      (struct.new $struct
+        (block (result i32)
+          (i32.store
+            (i32.const 0)
+            (i32.const 1)
+          )
+          (i32.const 2)
+        )
+        (i32.load
+          (i32.const 0)
+        )
+      )
+    )
+  )
+
+  ;; ALWAYS:      (func $target (type $2) (param $0 anyref)
+  ;; ALWAYS-NEXT:  (nop)
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $target (type $2) (param $0 anyref)
+  ;; CAREFUL-NEXT:  (nop)
+  ;; CAREFUL-NEXT: )
+  (func $target (param anyref)
+  )
+)
+
+
+;; ALWAYS:      (func $target_3 (type $3) (param $0 i32)
+;; ALWAYS-NEXT:  (local $1 anyref)
+;; ALWAYS-NEXT:  (local.set $1
+;; ALWAYS-NEXT:   (struct.new $struct
+;; ALWAYS-NEXT:    (local.get $0)
+;; ALWAYS-NEXT:    (i32.load
+;; ALWAYS-NEXT:     (i32.const 0)
+;; ALWAYS-NEXT:    )
+;; ALWAYS-NEXT:   )
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (nop)
 ;; ALWAYS-NEXT: )
 
-;; ALWAYS:      (func $target_4 (type $1) (param $0 i32)
-;; ALWAYS-NEXT:  (local $1 i32)
-;; ALWAYS-NEXT:  (local $2 i32)
-;; ALWAYS-NEXT:  (local.set $1
-;; ALWAYS-NEXT:   (local.get $0)
-;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (local.set $2
-;; ALWAYS-NEXT:   (i32.load
-;; ALWAYS-NEXT:    (i32.const 0)
-;; ALWAYS-NEXT:   )
-;; ALWAYS-NEXT:  )
-;; ALWAYS-NEXT:  (nop)
-;; ALWAYS-NEXT: )
+;; CAREFUL:      (func $target_3 (type $3) (param $0 i32)
+;; CAREFUL-NEXT:  (drop
+;; CAREFUL-NEXT:   (i32.load
+;; CAREFUL-NEXT:    (i32.const 0)
+;; CAREFUL-NEXT:   )
+;; CAREFUL-NEXT:  )
+;; CAREFUL-NEXT: )
+(module
+  (memory 10 20)
+
+  ;; ALWAYS:      (type $0 (func))
+
+  ;; ALWAYS:      (type $1 (func (param i32 i32 i32 i32 i32 i32)))
+
+  ;; ALWAYS:      (memory $0 10 20)
+
+  ;; ALWAYS:      (func $caller (type $0)
+  ;; ALWAYS-NEXT:  (call $target
+  ;; ALWAYS-NEXT:   (i32.load
+  ;; ALWAYS-NEXT:    (i32.const 0)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:   (block (result i32)
+  ;; ALWAYS-NEXT:    (i32.store
+  ;; ALWAYS-NEXT:     (i32.const 0)
+  ;; ALWAYS-NEXT:     (i32.const -1)
+  ;; ALWAYS-NEXT:    )
+  ;; ALWAYS-NEXT:    (i32.const 11)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:   (i32.load
+  ;; ALWAYS-NEXT:    (i32.const 0)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:   (block (result i32)
+  ;; ALWAYS-NEXT:    (i32.store
+  ;; ALWAYS-NEXT:     (i32.const 0)
+  ;; ALWAYS-NEXT:     (i32.const -1)
+  ;; ALWAYS-NEXT:    )
+  ;; ALWAYS-NEXT:    (i32.const 11)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:   (i32.load
+  ;; ALWAYS-NEXT:    (i32.const 0)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:   (block (result i32)
+  ;; ALWAYS-NEXT:    (i32.store
+  ;; ALWAYS-NEXT:     (i32.const 0)
+  ;; ALWAYS-NEXT:     (i32.const -1)
+  ;; ALWAYS-NEXT:    )
+  ;; ALWAYS-NEXT:    (i32.const 11)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (type $0 (func))
+
+  ;; CAREFUL:      (type $1 (func (param i32 i32 i32 i32 i32 i32)))
+
+  ;; CAREFUL:      (memory $0 10 20)
+
+  ;; CAREFUL:      (func $caller (type $0)
+  ;; CAREFUL-NEXT:  (call $target
+  ;; CAREFUL-NEXT:   (i32.load
+  ;; CAREFUL-NEXT:    (i32.const 0)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (block (result i32)
+  ;; CAREFUL-NEXT:    (i32.store
+  ;; CAREFUL-NEXT:     (i32.const 0)
+  ;; CAREFUL-NEXT:     (i32.const -1)
+  ;; CAREFUL-NEXT:    )
+  ;; CAREFUL-NEXT:    (i32.const 11)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (i32.load
+  ;; CAREFUL-NEXT:    (i32.const 0)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (block (result i32)
+  ;; CAREFUL-NEXT:    (i32.store
+  ;; CAREFUL-NEXT:     (i32.const 0)
+  ;; CAREFUL-NEXT:     (i32.const -1)
+  ;; CAREFUL-NEXT:    )
+  ;; CAREFUL-NEXT:    (i32.const 11)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (i32.load
+  ;; CAREFUL-NEXT:    (i32.const 0)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (block (result i32)
+  ;; CAREFUL-NEXT:    (i32.store
+  ;; CAREFUL-NEXT:     (i32.const 0)
+  ;; CAREFUL-NEXT:     (i32.const -1)
+  ;; CAREFUL-NEXT:    )
+  ;; CAREFUL-NEXT:    (i32.const 11)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $caller
+    ;; Similar to before, but with a sequence of interleaved things with
+    ;; interactions. The same two items repeat three times. Any load cannot be
+    ;; moved into the context if there is a store after it, which means that the
+    ;; last load could be optimized. However waka
+    (call $target
+      (block (result i32)
+        (i32.store
+          (i32.const 0)
+          (i32.const 0xffffffff)
+        )
+        (i32.const 11)
+      )
+      (i32.load
+        (i32.const 0)
+      )
+      (block (result i32)
+        (i32.store
+          (i32.const 0)
+          (i32.const 0xffffffff)
+        )
+        (i32.const 11)
+      )
+      (i32.load
+        (i32.const 0)
+      )
+      (block (result i32)
+        (i32.store
+          (i32.const 0)
+          (i32.const 0xffffffff)
+        )
+        (i32.const 11)
+      )
+      (i32.load
+        (i32.const 0)
+      )
+    )
+  )
+
+  ;; ALWAYS:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32)
+  ;; ALWAYS-NEXT:  (nop)
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32)
+  ;; CAREFUL-NEXT:  (nop)
+  ;; CAREFUL-NEXT: )
+  (func $target (param i32) (param i32) (param i32) (param i32) (param i32) (param i32)
+  )
+)
+
