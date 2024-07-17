@@ -360,6 +360,7 @@ INITIAL_CONTENTS_IGNORE = [
     'shared-null.wast',
     'shared-absheaptype.wast',
     'type-ssa-shared.wast',
+    'shared-ref_eq.wast',
 ]
 
 

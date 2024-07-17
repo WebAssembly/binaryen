@@ -2306,6 +2306,12 @@ void FunctionValidator::visitRefEq(RefEq* curr) {
     eqref,
     curr->right,
     "ref.eq's right argument should be a subtype of eqref");
+  if (curr->left->type.isRef() && curr->right->type.isRef()) {
+    shouldBeEqual(curr->left->type.getHeapType().getShared(),
+                  curr->right->type.getHeapType().getShared(),
+                  curr,
+                  "ref.eq operands must have the same shareability");
+  }
 }
 
 void FunctionValidator::visitTableGet(TableGet* curr) {
