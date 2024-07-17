@@ -298,36 +298,36 @@ struct CallContext {
     // Go in reverse post-order as explained earlier, noting what cannot be
     // moved into the context, and while accumulating the effects that are not
     // moving.
-    std::unordered_set<Expression*> unMovable;
+    std::unordered_set<Expression*> immovable;
     EffectAnalyzer nonMovingEffects(options, wasm);
     for (auto i = int64_t(lister.list.size()) - 1; i >= 0; i--) {
       auto* curr = lister.list[i];
 
-      // This may have been marked as unmovable because of the parent. We do
-      // that because if a parent is unmovable then we can't move the children
+      // This may have been marked as immovable because of the parent. We do
+      // that because if a parent is immovable then we can't move the children
       // into the context (if we did, they would execute after the parent, but
       // it needs their values).
-      auto currUnMovable = unMovable.count(curr) > 0;
-      if (!currUnMovable) {
-        // This might be movable or unmovable. Check both effect interactions
-        // (as described before, we want to move this past unmovable code) and
+      auto currImmovable = immovable.count(curr) > 0;
+      if (!currImmovable) {
+        // This might be movable or immovable. Check both effect interactions
+        // (as described before, we want to move this past immovable code) and
         // reasons intrinsic to the expression itself that might prevent moving.
         ShallowEffectAnalyzer currEffects(options, wasm, curr);
         if (currEffects.invalidates(nonMovingEffects) ||
             !canBeMovedIntoContext(curr, currEffects)) {
-          unMovable.insert(curr);
-          currUnMovable = true;
+          immovable.insert(curr);
+          currImmovable = true;
         }
       }
 
-      if (currUnMovable) {
-        // Regardless of whether this was marked unmovable because of the
+      if (currImmovable) {
+        // Regardless of whether this was marked immovable because of the
         // parent, or because we just found it cannot be moved, accumulate the
         // effects, and also mark its immediate children (so that we do the same
         // when we get to them).
         nonMovingEffects.visit(curr);
         for (auto* child : ChildIterator(curr)) {
-          unMovable.insert(child);
+          immovable.insert(child);
         }
       }
     }
@@ -360,7 +360,7 @@ struct CallContext {
             return nullptr;
           }
 
-          if (!unMovable.count(child)) {
+          if (!immovable.count(child)) {
             // This can be moved; let the copy happen.
             return nullptr;
           }
