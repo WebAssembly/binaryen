@@ -2,5 +2,5 @@
 
 ;; RUN: not wasm-opt %s.wasm 2>&1 | filecheck %s
 
-;; CHECK: this looks like a wasm component, which Binaryen does not support yet
+;; CHECK: this looks like a wasm component, which Binaryen does not support yet (see https://github.com/WebAssembly/binaryen/issues/6728)
 
