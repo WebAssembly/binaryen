@@ -4,8 +4,6 @@
 
 ;; Check that we can skip several passes. Note that no local.tee is introduced.
 
-;; There should also be no warning in the output.
-
 (module
  ;; CHECK:      (import "a" "b" (func $log (param i32 i32)))
  (import "a" "b" (func $log (param i32 i32)))
@@ -36,7 +34,7 @@
  ;; CHECK-NEXT: )
  (func $foo (export "foo") (param $p i32)
   ;; The locals $x and $y can be coalesced into a single local, but as
-  ;; we do not run that pass, they will not be. The could be
+  ;; we do not run that pass, they will not be. They could be
   ;; initialized using a tee but the passes that introduce tees are
   ;; not run either.
   (local $x i32)
