@@ -217,10 +217,7 @@ struct CallContext {
   // remaining values by updating |newOperands| (for example, if all the values
   // sent are constants, then |newOperands| will end up empty, as we have
   // nothing left to send).
-  //
-  // Returns whether we succeeded in creating a valid call context. In some
-  // situations we hit issues with effect reorder, and return false (see below).
-  bool buildFromCall(CallInfo& info,
+  void buildFromCall(CallInfo& info,
                      std::vector<Expression*>& newOperands,
                      Module& wasm,
                      const PassOptions& options) {
@@ -384,8 +381,6 @@ struct CallContext {
     }
 
     dropped = !!info.drop;
-
-    return true; // XXX
   }
 
   // Checks whether an expression can be moved into the context.
@@ -567,10 +562,7 @@ struct Monomorphize : public Pass {
     // if we use that context.
     CallContext context;
     std::vector<Expression*> newOperands;
-    if (!context.buildFromCall(info, newOperands, wasm, getPassOptions())) {
-      // We failed to build the context.
-      return;
-    }
+    context.buildFromCall(info, newOperands, wasm, getPassOptions());
 
     // See if we've already evaluated this function + call context. If so, then
     // we've memoized the result.
