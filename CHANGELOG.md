@@ -25,6 +25,7 @@ Current Trunk
    closedWorld, generateStackIR, optimizeStackIR, and the list of skipped
    passes). (#6713)
  - A C APIs for getting/setting the type of Functions (#6721).
+ - Allow using `--skip-pass` on the commandline multiple times (#6714).
 
 v118
 ----
