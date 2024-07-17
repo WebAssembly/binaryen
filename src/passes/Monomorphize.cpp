@@ -102,8 +102,6 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/hash.h"
-#include "support/small_set.h"
-#include "support/small_vector.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -287,9 +285,11 @@ struct CallContext {
     // reverse.
     struct Lister
       : public PostWalker<Lister, UnifiedExpressionVisitor<Lister>> {
-      SmallVector<Expression*, 10> list; // TODO tune
+      std::vector<Expression*> list;
       void visitExpression(Expression* curr) { list.push_back(curr); }
     } lister;
+    // As a quick estimate, we need space for at least the operands.
+    lister.list.reserve(operands.size());
 
     for (auto* operand : info.call->operands) {
       lister.walk(operand);
@@ -298,7 +298,7 @@ struct CallContext {
     // Go in reverse post-order as explained earlier, noting what cannot be
     // moved into the context, and while accumulating the effects that are not
     // moving.
-    SmallUnorderedSet<Expression*, 3> unMovable; // TODO tune
+    std::unordered_set<Expression*> unMovable;
     EffectAnalyzer nonMovingEffects(options, wasm);
     for (auto i = int64_t(lister.list.size()) - 1; i >= 0; i--) {
       auto* curr = lister.list[i];
