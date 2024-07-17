@@ -282,12 +282,10 @@ struct CallContext {
     // over all the non-moving effects we've seen so far. To compute this, first
     // list out the post-order of the expressions, and then we'll iterate in
     // reverse.
-    struct Lister : public PostWalker<Lister,
-                                       UnifiedExpressionVisitor<Lister>> {
+    struct Lister
+      : public PostWalker<Lister, UnifiedExpressionVisitor<Lister>> {
       SmallVector<Expression*, 10> list;
-      void visitExpression(Expression* curr) {
-        list.push_back(curr);
-      }
+      void visitExpression(Expression* curr) { list.push_back(curr); }
     } lister;
 
     for (auto* operand : info.call->operands) {
