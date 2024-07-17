@@ -2243,7 +2243,15 @@ void WasmBinaryReader::verifyInt64(int64_t x) {
 void WasmBinaryReader::readHeader() {
   BYN_TRACE("== readHeader\n");
   verifyInt32(BinaryConsts::Magic);
-  verifyInt32(BinaryConsts::Version);
+  auto version = getInt32();
+  if (version != BinaryConsts::Version) {
+    if (version == 0x1000d) {
+      throwError("this looks like a wasm component, which Binaryen does not "
+                 "support yet (see "
+                 "https://github.com/WebAssembly/binaryen/issues/6728)");
+    }
+    throwError("invalid version");
+  }
 }
 
 void WasmBinaryReader::readStart() {
