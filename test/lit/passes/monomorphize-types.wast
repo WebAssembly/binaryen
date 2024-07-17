@@ -10,7 +10,11 @@
   ;; ALWAYS:      (type $A (sub (struct)))
   ;; CAREFUL:      (type $A (sub (struct)))
   (type $A (sub (struct)))
+  ;; ALWAYS:      (type $1 (func (param (ref $A))))
+
   ;; ALWAYS:      (type $B (sub $A (struct)))
+  ;; CAREFUL:      (type $1 (func (param (ref $A))))
+
   ;; CAREFUL:      (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
@@ -127,8 +131,6 @@
   ;; requires a fixup.
 
   ;; ALWAYS:      (type $A (sub (struct)))
-  ;; CAREFUL:      (type $0 (func))
-
   ;; CAREFUL:      (type $A (sub (struct)))
   (type $A (sub (struct)))
   ;; ALWAYS:      (type $B (sub $A (struct)))
@@ -207,11 +209,11 @@
   ;; Multiple refinings of the same function, and of different functions.
 
   ;; ALWAYS:      (type $A (sub (struct)))
-  ;; CAREFUL:      (type $0 (func))
-
   ;; CAREFUL:      (type $A (sub (struct)))
   (type $A (sub (struct)))
   ;; ALWAYS:      (type $B (sub $A (struct)))
+  ;; CAREFUL:      (type $1 (func (param (ref $A))))
+
   ;; CAREFUL:      (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
@@ -220,7 +222,7 @@
   ;; ALWAYS:      (type $3 (func (param (ref $B))))
 
   ;; ALWAYS:      (type $C (sub $B (struct)))
-  ;; CAREFUL:      (type $3 (func (param (ref $A))))
+  ;; CAREFUL:      (type $3 (func (param (ref $A) (ref $B))))
 
   ;; CAREFUL:      (type $C (sub $B (struct)))
   (type $C (sub $B (struct)))
@@ -597,11 +599,7 @@
   ;; ALWAYS:      (type $A (sub (struct)))
   ;; CAREFUL:      (type $A (sub (struct)))
   (type $A (sub (struct)))
-  ;; ALWAYS:      (type $1 (func (param (ref $A))))
-
   ;; ALWAYS:      (type $B (sub $A (struct)))
-  ;; CAREFUL:      (type $1 (func (param (ref $A))))
-
   ;; CAREFUL:      (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 

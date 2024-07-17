@@ -14,7 +14,7 @@
 
   ;; ALWAYS:      (type $2 (func (param i32 i32 i32 i32 i32 i32)))
 
-  ;; ALWAYS:      (type $struct (struct ))
+  ;; ALWAYS:      (type $struct (struct))
   (type $struct (struct))
 
   (memory 10 20)
@@ -301,7 +301,7 @@
 
   ;; ALWAYS:      (type $2 (func (param i32 i32 i32 i32 i32 i32)))
 
-  ;; ALWAYS:      (type $struct (struct ))
+  ;; ALWAYS:      (type $struct (struct))
   (type $struct (struct))
 
   (memory 10 20)
