@@ -398,7 +398,7 @@ struct CallContext {
     }
     if (effects.calls) {
       // We can in principle move calls, but for simplicity we avoid such
-      // situations.
+      // situations (which might involve recursion etc.).
       return false;
     }
     if (Properties::isControlFlowStructure(curr)) {
@@ -411,13 +411,13 @@ struct CallContext {
       if (child->type.isTuple()) {
         // Consider this:
         //
-        //  (call $1
+        //  (call $target
         //    (tuple.extract 2 1
-        //      (local.get $5)
+        //      (local.get $tuple)
         //    )
         //  )
         //
-        // We couldn't move the tuple.extract into the context, because then the
+        // We cannot move the tuple.extract into the context, because then the
         // call would have a tuple param. While it is possible to split up the
         // tuple, or to check if we can also move the children with the parent,
         // for simplicity just ignore this rare situation.
