@@ -774,7 +774,7 @@
   (func $dropped-caller (param $x f64)
     ;; As above, but the outcome is dropped. As the target function only does
     ;; some struct.sets, escape analysis after monomorphization can prove that
-    ;; we can remove all the code.
+    ;; we can remove all the code, so this is optimized in CAREFUL mode.
     (drop
       (call $target
         (struct.new $struct
