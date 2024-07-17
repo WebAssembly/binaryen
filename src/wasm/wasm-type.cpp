@@ -1526,6 +1526,10 @@ FeatureSet HeapType::getFeatures() const {
     FeatureSet feats = FeatureSet::None;
 
     void noteChild(HeapType* heapType) {
+      if (heapType->isShared()) {
+        feats |= FeatureSet::SharedEverything;
+      }
+
       if (heapType->isBasic()) {
         switch (heapType->getBasic(Unshared)) {
           case HeapType::ext:
@@ -1563,10 +1567,6 @@ FeatureSet HeapType::getFeatures() const {
       if (heapType->getRecGroup().size() > 1 ||
           heapType->getDeclaredSuperType() || heapType->isOpen()) {
         feats |= FeatureSet::ReferenceTypes | FeatureSet::GC;
-      }
-
-      if (heapType->isShared()) {
-        feats |= FeatureSet::SharedEverything;
       }
 
       if (heapType->isStruct() || heapType->isArray()) {
