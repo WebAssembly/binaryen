@@ -102,6 +102,8 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/hash.h"
+#include "support/small_set.h"
+#include "support/small_vector.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
@@ -223,12 +225,12 @@ struct CallContext {
                      const PassOptions& options) {
     Builder builder(wasm);
 
-    // First, find the things we can move in the context and the things we
-    // can't. Some things simply cannot be moved out of the calling function,
+    // First, find the things we can move into the context and the things we
+    // cannot. Some things simply cannot be moved out of the calling function,
     // such as a local.set, but also we need to handle effect interactions among
     // the operands, because each time we move code into the context we are
     // pushing it into the called function, which changes the order of
-    // operations:
+    // operations, for example:
     //
     //  (call $foo
     //    (first
@@ -268,13 +270,14 @@ struct CallContext {
     // The key property here is that all things that are moved into the context
     // (moved into the monomorphized function) remain ordered with respect to
     // each other, but must be moved past all non-moving things after them. For
-    // example, say we want to move B and D in this list:
+    // example, say we want to move B and D in this list (of expressions in
+    // execution order):
     //
     //  A, B, C, D, E
     //
-    // Then we end up with this:
+    // After moving B and D we end up with this:
     //
-    //  A, C, E  and, executing later in the monomorphized function:  B, D
+    //  A, C, E  and executing later in the monomorphized function:  B, D
     //
     // Then we must be able to move B past C and E, and D past E. It is simplest
     // to compute this in reverse order, starting from E and going back, and
@@ -284,7 +287,7 @@ struct CallContext {
     // reverse.
     struct Lister
       : public PostWalker<Lister, UnifiedExpressionVisitor<Lister>> {
-      SmallVector<Expression*, 10> list;
+      SmallVector<Expression*, 10> list; // TODO tune
       void visitExpression(Expression* curr) { list.push_back(curr); }
     } lister;
 
@@ -299,8 +302,8 @@ struct CallContext {
     // Note that every unmovable expression forces its children to be unmovable
     // as well, as we cannot execute those children after the parent (since the
     // motion here is to push the code into the called monomorphized function),
-    // so as we go backwards we mark unmovable children as well.
-    std::unordered_set<Expression*> unMovable; // TODO: SmallSet?
+    // so we mark children as well, when we find something unmovable.
+    SmallUnorderedSet<Expression*, 3> unMovable; // TODO tune
     EffectAnalyzer nonMovingEffects(options, wasm);
     for (auto i = int64_t(lister.list.size()) - 1; i >= 0; i--) {
       auto* curr = lister.list[i];
