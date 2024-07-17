@@ -8,9 +8,9 @@
     ;; CHECK:      (type $0 (func))
 
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $final (shared (struct )))
+    ;; CHECK-NEXT:  (type $final (shared (struct)))
     (type $final (shared (struct)))
-    ;; CHECK:       (type $top (sub (shared (struct ))))
+    ;; CHECK:       (type $top (sub (shared (struct))))
     (type $top (sub (shared (struct))))
     ;; CHECK:       (type $mid (sub $top (shared (struct (field i32)))))
     (type $mid (sub $top (shared (struct i32))))

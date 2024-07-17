@@ -13,7 +13,7 @@
 
 ;; This is referred to by the type of a function export, but is still not allowed.
 ;; CHECK:      publicly exposed type disallowed with a closed world: $struct, on
-;; CHECK-NEXT: (struct )
+;; CHECK-NEXT: (struct)
 
 (module
   (type $struct (struct))

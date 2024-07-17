@@ -6,7 +6,7 @@
 ;; only used in that one place in the whole module.
 
 (module
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
   ;; CHECK:      (func $foo (type $0) (result anyref)

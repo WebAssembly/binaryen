@@ -7,15 +7,11 @@
 ;; RUN: foreach %s %t wasm-opt --monomorphize        -all -S -o - | filecheck %s --check-prefix CAREFUL
 
 (module
-  ;; ALWAYS:      (type $A (sub (struct )))
-  ;; CAREFUL:      (type $A (sub (struct )))
+  ;; ALWAYS:      (type $A (sub (struct)))
+  ;; CAREFUL:      (type $A (sub (struct)))
   (type $A (sub (struct)))
-  ;; ALWAYS:      (type $1 (func (param (ref $A))))
-
-  ;; ALWAYS:      (type $B (sub $A (struct )))
-  ;; CAREFUL:      (type $1 (func (param (ref $A))))
-
-  ;; CAREFUL:      (type $B (sub $A (struct )))
+  ;; ALWAYS:      (type $B (sub $A (struct)))
+  ;; CAREFUL:      (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
   ;; ALWAYS:      (type $3 (func (param (ref $B))))
@@ -130,11 +126,13 @@
   ;; As above, but now the refinable function uses the local in a way that
   ;; requires a fixup.
 
-  ;; ALWAYS:      (type $A (sub (struct )))
-  ;; CAREFUL:      (type $A (sub (struct )))
+  ;; ALWAYS:      (type $A (sub (struct)))
+  ;; CAREFUL:      (type $0 (func))
+
+  ;; CAREFUL:      (type $A (sub (struct)))
   (type $A (sub (struct)))
-  ;; ALWAYS:      (type $B (sub $A (struct )))
-  ;; CAREFUL:      (type $B (sub $A (struct )))
+  ;; ALWAYS:      (type $B (sub $A (struct)))
+  ;; CAREFUL:      (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
 
@@ -208,23 +206,23 @@
 (module
   ;; Multiple refinings of the same function, and of different functions.
 
-  ;; ALWAYS:      (type $A (sub (struct )))
-  ;; CAREFUL:      (type $A (sub (struct )))
-  (type $A (sub (struct)))
-  ;; ALWAYS:      (type $B (sub $A (struct )))
-  ;; CAREFUL:      (type $1 (func (param (ref $A))))
+  ;; ALWAYS:      (type $A (sub (struct)))
+  ;; CAREFUL:      (type $0 (func))
 
-  ;; CAREFUL:      (type $B (sub $A (struct )))
+  ;; CAREFUL:      (type $A (sub (struct)))
+  (type $A (sub (struct)))
+  ;; ALWAYS:      (type $B (sub $A (struct)))
+  ;; CAREFUL:      (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
   ;; ALWAYS:      (type $2 (func (param (ref $A))))
 
   ;; ALWAYS:      (type $3 (func (param (ref $B))))
 
-  ;; ALWAYS:      (type $C (sub $B (struct )))
-  ;; CAREFUL:      (type $3 (func (param (ref $A) (ref $B))))
+  ;; ALWAYS:      (type $C (sub $B (struct)))
+  ;; CAREFUL:      (type $3 (func (param (ref $A))))
 
-  ;; CAREFUL:      (type $C (sub $B (struct )))
+  ;; CAREFUL:      (type $C (sub $B (struct)))
   (type $C (sub $B (struct)))
 
   ;; ALWAYS:      (type $5 (func (param (ref $A) (ref $B))))
@@ -347,12 +345,12 @@
   ;; A case where even CAREFUL mode will monomorphize, as it helps the target
   ;; function get optimized better.
 
-  ;; ALWAYS:      (type $A (sub (struct )))
-  ;; CAREFUL:      (type $A (sub (struct )))
+  ;; ALWAYS:      (type $A (sub (struct)))
+  ;; CAREFUL:      (type $A (sub (struct)))
   (type $A (sub (struct)))
 
-  ;; ALWAYS:      (type $B (sub $A (struct )))
-  ;; CAREFUL:      (type $B (sub $A (struct )))
+  ;; ALWAYS:      (type $B (sub $A (struct)))
+  ;; CAREFUL:      (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
   ;; ALWAYS:      (type $2 (func (param (ref $A) (ref $B))))
@@ -596,11 +594,15 @@
 (module
   ;; Test that we avoid recursive calls.
 
-  ;; ALWAYS:      (type $A (sub (struct )))
-  ;; CAREFUL:      (type $A (sub (struct )))
+  ;; ALWAYS:      (type $A (sub (struct)))
+  ;; CAREFUL:      (type $A (sub (struct)))
   (type $A (sub (struct)))
-  ;; ALWAYS:      (type $B (sub $A (struct )))
-  ;; CAREFUL:      (type $B (sub $A (struct )))
+  ;; ALWAYS:      (type $1 (func (param (ref $A))))
+
+  ;; ALWAYS:      (type $B (sub $A (struct)))
+  ;; CAREFUL:      (type $1 (func (param (ref $A))))
+
+  ;; CAREFUL:      (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
 

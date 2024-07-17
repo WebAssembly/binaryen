@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s -all --ssa -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $A (struct ))
+ ;; CHECK:      (type $A (struct))
  (type $A (struct ))
 
  ;; CHECK:      (func $foo (type $1)

@@ -110,10 +110,10 @@
 
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   ;; CLOSD:      (type $0 (func))
 
-  ;; CLOSD:      (type $struct (struct ))
+  ;; CLOSD:      (type $struct (struct))
   (type $struct (struct))
   (type $array (array i8))
 

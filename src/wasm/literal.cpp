@@ -412,6 +412,14 @@ void Literal::getBits(uint8_t (&buf)[16]) const {
 }
 
 bool Literal::operator==(const Literal& other) const {
+  // As a special case, shared and unshared i31 can compare equal even if their
+  // types are different (because one is shared and the other is not).
+  if (type.isRef() && other.type.isRef() && type.getHeapType().isBasic() &&
+      other.type.getHeapType().isBasic() &&
+      type.getHeapType().getBasic(Unshared) == HeapType::i31 &&
+      other.type.getHeapType().getBasic(Unshared) == HeapType::i31) {
+    return i32 == other.i32;
+  }
   if (type != other.type) {
     return false;
   }
@@ -445,9 +453,7 @@ bool Literal::operator==(const Literal& other) const {
     if (type.isData()) {
       return gcData == other.gcData;
     }
-    if (type.getHeapType() == HeapType::i31) {
-      return i32 == other.i32;
-    }
+    // i31 already handled.
     WASM_UNREACHABLE("unexpected type");
   }
   WASM_UNREACHABLE("unexpected type");

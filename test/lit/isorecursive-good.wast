@@ -34,7 +34,7 @@
     (type $final-func (sub final $sub-func (func (param (ref $super-array)) (result (ref $final-array)))))
   )
 
-  ;; CHECK:      (type $final-root (struct ))
+  ;; CHECK:      (type $final-root (struct))
   (type $final-root (sub final (struct)))
 
   ;; CHECK:      (func $make-super-struct (type $6) (result (ref $super-struct))

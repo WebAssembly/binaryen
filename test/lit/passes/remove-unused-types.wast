@@ -7,13 +7,13 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $mutually-used-2 (struct (field (ref null $mutually-used-1))))
 
-  ;; CHECK:       (type $indirectly-used (struct ))
+  ;; CHECK:       (type $indirectly-used (struct))
 
   ;; CHECK:       (type $mutually-used-1 (struct (field (ref null $mutually-used-2))))
 
   ;; CHECK:       (type $directly-used (struct (field (ref null $indirectly-used))))
 
-  ;; CHECK:       (type $used (struct ))
+  ;; CHECK:       (type $used (struct))
   (type $used (struct))
   (type $unused (struct))
  )

@@ -6,7 +6,7 @@
  (type $obnoxious-super-long-type-name_____________________________1 (struct))
 
  ;; A reasonable name that will be kept.
- ;; CHECK:      (type $type_1 (struct ))
+ ;; CHECK:      (type $type_1 (struct))
 
  ;; CHECK:      (type $reasonable-name (struct (field i32)))
  (type $reasonable-name (struct (field i32)))

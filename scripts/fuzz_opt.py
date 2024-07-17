@@ -357,6 +357,9 @@ INITIAL_CONTENTS_IGNORE = [
     'shared-struct.wast',
     'shared-array.wast',
     'shared-i31.wast',
+    'shared-null.wast',
+    'shared-absheaptype.wast',
+    'type-ssa-shared.wast',
 ]
 
 

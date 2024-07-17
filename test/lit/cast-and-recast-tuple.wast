@@ -10,9 +10,9 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (struct )))
+    ;; CHECK-NEXT:  (type $A (sub (struct)))
     (type $A (sub (struct)))
-    ;; CHECK:       (type $B (sub $A (struct )))
+    ;; CHECK:       (type $B (sub $A (struct)))
     (type $B (sub $A (struct)))
   )
 

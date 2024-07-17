@@ -2,7 +2,7 @@
 ;; RUN: wasm-opt %s --vacuum -all -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $"{}" (struct ))
+  ;; CHECK:      (type $"{}" (struct))
 
   ;; CHECK:      (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (type $2) (param i32 i32 funcref) (result anyref)))
   (import "binaryen-intrinsics" "call.without.effects" (func $call.without.effects (param i32 i32 funcref) (result (ref null any))))
