@@ -307,7 +307,7 @@ struct CallContext {
       // that because if a parent is immovable then we can't move the children
       // into the context (if we did, they would execute after the parent, but
       // it needs their values).
-      auto currImmovable = immovable.count(curr) > 0;
+      bool currImmovable = immovable.count(curr) > 0;
       if (!currImmovable) {
         // This might be movable or immovable. Check both effect interactions
         // (as described before, we want to move this past immovable code) and
