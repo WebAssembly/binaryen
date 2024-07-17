@@ -226,92 +226,11 @@ struct CallContext {
     Builder builder(wasm);
 
     // First, find the things we can move in the context and the things we
-    // can't. It is simplest to do this in reverse-postorder. TODO
-    // Check for problems with effects. As mentioned above, the key property is
-    // that everything that is moved will be moved past all the non-moved things
-    // after it. Say we move B and D in this list:
-    //
-    //  A, B, C, D, E
-    //
-    // Then we end up with this:
-    //
-    //  A, C, E  and, executing later in the monomorphized function:  B, D
-    //
-    // Then we must be able to move B past C and E, and D past E.
-    //
-    // To compute this, first get the post-order list of expressions.
-    struct Lister : public PostWalker<Lister,
-                                       UnifiedExpressionVisitor<Lister>> {
-      SmallVector<Expression*, 10> list;
-
-      void visitExpression(Expression* curr) {
-        list.push_back(curr);
-      }
-    } lister;
-
-    for (auto* operand : info.call->operands) {
-      lister.walk(operand);
-    }
-
-    // Go in reverse post-order, noting what cannot be moved into the context,
-    // and while accumulating the effects that are not moving and checking for
-    // problems.
-    std::unordered_set<Expression*> unMovable; // TODO: SmallSet?
-    EffectAnalyzer nonMovingEffects(options, wasm);
-    for (auto i = int64_t(lister.list.size()) - 1; i >= 0; i--) {
-      auto* curr = lister.list[i];
-
-      if (unMovable.count(curr)) {
-        // This was marked as non-moving because of a parent. Just note the
-        // effects and continue.
-        nonMovingEffects.visit(curr);
-        for (auto* child : ChildIterator(curr)) {
-          unMovable.insert(child);
-        }
-        continue;
-      }
-
-      // See if this can be moved. It must go past all the non-moving effects
-      // we've seen so far in our reverse iteration. TODO and canbeMoved
-      ShallowEffectAnalyzer currEffects(options, wasm, curr);
-      if (currEffects.invalidates(nonMovingEffects) ||
-          !canBeMovedIntoContext(curr, wasm, options)) {
-        // This can't move. Note that, and note its effects, and mark all children for later
-        // (their effects, and their children, will be reached later).
-        unMovable.insert(curr);
-
-        nonMovingEffects.visit(curr);
-        for (auto* child : ChildIterator(curr)) {
-          unMovable.insert(child);
-        }
-      }
-    }
-
-    // We now know which code can be moved and which cannot, so we can do the
-    // final processing of the call operands. This is a copy operation TODO
-
-    // Process the operand. This is a copy operation, as we are trying to move
-    // (copy) code from the callsite into the called function. When we find we
-    // can copy then we do so, and when we cannot that value remains as a
-    // value sent from the call.
-    //
-    // The copy operation works in pre-order, which allows us to override
-    // entire children as needed:
-    //
-    //  (call $foo
-    //    (problem
-    //      (a)
-    //    )
-    //    (later)
-    //  )
-    //
-    // We visit |problem| first, and if there is a problem that prevents us
-    // moving it into the context then we override the copy and then it and
-    // its child |a| remain in the caller (and |a| is never visited in the
-    // copy). We then continue onward to |later|.
-    //
-    // Note that each time we move code into the context we are pushing it
-    // into the called function, which changes the order of operations:
+    // can't. Some things simply cannot be moved out of the calling function,
+    // such as a local.set, but also we need to handle effect interactions among
+    // the operands, because each time we move code into the context we are
+    // pushing it into the called function, which changes the order of
+    // operations:
     //
     //  (call $foo
     //    (first
@@ -344,15 +263,102 @@ struct CallContext {
     //    )
     //  )
     //
-    // After this code motion we execute |second| and |b| before the call, and
+    // After this code motion we execute |second| and |b| *before* the call, and
     // |first| and |a| after, so we cannot do this transformation if the order
-    // of operations between them matters. The key property here is that all
-    // things that are moved into the context (moved into the monomorphized
-    // function) remain ordered with respect to each other, but must be moved
-    // past all non-moving things after them. To compute that, initially we just
-    // note what will be moved and what won't (it is simpler to do so rather
-    // than try to both build the context and compute that at the same time, in
-    // particular as we are doing the copy in pre-order).
+    // of operations between them matters.
+    //
+    // The key property here is that all things that are moved into the context
+    // (moved into the monomorphized function) remain ordered with respect to
+    // each other, but must be moved past all non-moving things after them. For
+    // example, say we want to move B and D in this list:
+    //
+    //  A, B, C, D, E
+    //
+    // Then we end up with this:
+    //
+    //  A, C, E  and, executing later in the monomorphized function:  B, D
+    //
+    // Then we must be able to move B past C and E, and D past E. It is simplest
+    // to compute this in reverse order, starting from E and going back, and
+    // then each time we want to move something we can check if it can cross
+    // over all the non-moving effects we've seen so far. To compute this, first
+    // list out the post-order of the expressions, and then we'll iterate in
+    // reverse.
+    struct Lister : public PostWalker<Lister,
+                                       UnifiedExpressionVisitor<Lister>> {
+      SmallVector<Expression*, 10> list;
+      void visitExpression(Expression* curr) {
+        list.push_back(curr);
+      }
+    } lister;
+
+    for (auto* operand : info.call->operands) {
+      lister.walk(operand);
+    }
+
+    // Go in reverse post-order as explained earlier, noting what cannot be
+    // moved into the context, and while accumulating the effects that are not
+    // moving.
+    //
+    // Note that every unmovable expression forces its children to be unmovable
+    // as well, as we cannot execute those children after the parent (since the
+    // motion here is to push the code into the called monomorphized function),
+    // so as we go backwards we mark unmovable children as well.
+    std::unordered_set<Expression*> unMovable; // TODO: SmallSet?
+    EffectAnalyzer nonMovingEffects(options, wasm);
+    for (auto i = int64_t(lister.list.size()) - 1; i >= 0; i--) {
+      auto* curr = lister.list[i];
+
+      // This may have been marked as unmovable because of the parent.
+      auto currUnMovable = unMovable.count(curr) > 0;
+      if (!currUnMovable) {
+        // See if this can be moved. It must go past all the non-moving effects
+        // we've seen so far in our reverse iteration, and it must also not
+        // have any of the other intrinsic properties that prevent moving.
+        ShallowEffectAnalyzer currEffects(options, wasm, curr);
+        if (currEffects.invalidates(nonMovingEffects) ||
+            !canBeMovedIntoContext(curr, currEffects)) {
+          unMovable.insert(curr);
+          currUnMovable = true;
+        }
+      }
+
+      if (currUnMovable) {
+        // Regardless of whether this was marked unmovable because of the
+        // parent, or because we just found it cannot be moved, accumulate the
+        // effects, and also mark its immediate children (so that we do the same
+        // when we get to them).
+        nonMovingEffects.visit(curr);
+        for (auto* child : ChildIterator(curr)) {
+          unMovable.insert(child);
+        }
+      }
+    }
+
+    // We now know which code can be moved and which cannot, so we can do the
+    // final processing of the call operands. This is a copy operation TODO
+
+    // Process the operand. This is a copy operation, as we are trying to move
+    // (copy) code from the callsite into the called function. When we find we
+    // can copy then we do so, and when we cannot that value remains as a
+    // value sent from the call.
+    //
+    // The copy operation works in pre-order, which allows us to override
+    // entire children as needed:
+    //
+    //  (call $foo
+    //    (problem
+    //      (a)
+    //    )
+    //    (later)
+    //  )
+    //
+    // We visit |problem| first, and if there is a problem that prevents us
+    // moving it into the context then we override the copy and then it and
+    // its child |a| remain in the caller (and |a| is never visited in the
+    // copy). We then continue onward to |later|.
+    //
+
 
     for (auto* operand : info.call->operands) {
       operands.push_back(ExpressionManipulator::flexibleCopy(
@@ -387,12 +393,10 @@ struct CallContext {
 
   // Checks whether an expression can be moved into the context.
   bool canBeMovedIntoContext(Expression* curr,
-                             Module& wasm,
-                             const PassOptions& options) {
+                             const ShallowEffectAnalyzer& effects) {
     // Pretty much everything can be moved into the context if we can copy it
     // between functions, such as constants, globals, etc. The things we cannot
     // copy are now checked for.
-    ShallowEffectAnalyzer effects(options, wasm, curr);
     if (effects.branchesOut || effects.hasExternalBreakTargets()) {
       // This branches or returns. We can't move control flow between functions.
       return false;
