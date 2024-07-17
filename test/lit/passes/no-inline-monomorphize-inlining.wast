@@ -19,74 +19,59 @@
   ;; YESINLINE:      (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
-  ;; NO_INLINE:      (type $2 (func))
+  ;; NO_INLINE:      (type $2 (func (param (ref $A) (ref $B))))
 
   ;; NO_INLINE:      (type $3 (func (param (ref $A))))
 
   ;; NO_INLINE:      (type $4 (func (param (ref $B))))
 
-  ;; NO_INLINE:      (func $calls (type $2)
+  ;; NO_INLINE:      (func $calls (type $2) (param $A (ref $A)) (param $B (ref $B))
   ;; NO_INLINE-NEXT:  (call $refinable_noinline
-  ;; NO_INLINE-NEXT:   (struct.new_default $A)
+  ;; NO_INLINE-NEXT:   (local.get $A)
   ;; NO_INLINE-NEXT:  )
   ;; NO_INLINE-NEXT:  (call $refinable_noinline
-  ;; NO_INLINE-NEXT:   (struct.new_default $A)
+  ;; NO_INLINE-NEXT:   (local.get $A)
   ;; NO_INLINE-NEXT:  )
   ;; NO_INLINE-NEXT:  (call $refinable_noinline_2
-  ;; NO_INLINE-NEXT:   (struct.new_default $B)
+  ;; NO_INLINE-NEXT:   (local.get $B)
   ;; NO_INLINE-NEXT:  )
   ;; NO_INLINE-NEXT:  (call $refinable_noinline_2
-  ;; NO_INLINE-NEXT:   (struct.new_default $B)
+  ;; NO_INLINE-NEXT:   (local.get $B)
   ;; NO_INLINE-NEXT:  )
   ;; NO_INLINE-NEXT: )
-  ;; YESINLINE:      (type $2 (func))
+  ;; YESINLINE:      (type $2 (func (param (ref $A) (ref $B))))
 
-  ;; YESINLINE:      (func $calls (type $2)
-  ;; YESINLINE-NEXT:  (local $0 (ref $A))
-  ;; YESINLINE-NEXT:  (local $1 (ref $A))
-  ;; YESINLINE-NEXT:  (local $2 (ref $B))
+  ;; YESINLINE:      (func $calls (type $2) (param $A (ref $A)) (param $B (ref $B))
+  ;; YESINLINE-NEXT:  (local $2 (ref $A))
   ;; YESINLINE-NEXT:  (local $3 (ref $A))
   ;; YESINLINE-NEXT:  (local $4 (ref $B))
   ;; YESINLINE-NEXT:  (local $5 (ref $A))
+  ;; YESINLINE-NEXT:  (local $6 (ref $B))
+  ;; YESINLINE-NEXT:  (local $7 (ref $A))
   ;; YESINLINE-NEXT:  (block
   ;; YESINLINE-NEXT:   (block $__inlined_func$refinable_noinline
-  ;; YESINLINE-NEXT:    (local.set $0
-  ;; YESINLINE-NEXT:     (struct.new_default $A)
+  ;; YESINLINE-NEXT:    (local.set $2
+  ;; YESINLINE-NEXT:     (local.get $A)
   ;; YESINLINE-NEXT:    )
   ;; YESINLINE-NEXT:    (drop
-  ;; YESINLINE-NEXT:     (local.get $0)
+  ;; YESINLINE-NEXT:     (local.get $2)
   ;; YESINLINE-NEXT:    )
   ;; YESINLINE-NEXT:   )
   ;; YESINLINE-NEXT:  )
   ;; YESINLINE-NEXT:  (block
   ;; YESINLINE-NEXT:   (block $__inlined_func$refinable_noinline$1
-  ;; YESINLINE-NEXT:    (local.set $1
-  ;; YESINLINE-NEXT:     (struct.new_default $A)
+  ;; YESINLINE-NEXT:    (local.set $3
+  ;; YESINLINE-NEXT:     (local.get $A)
   ;; YESINLINE-NEXT:    )
   ;; YESINLINE-NEXT:    (drop
-  ;; YESINLINE-NEXT:     (local.get $1)
+  ;; YESINLINE-NEXT:     (local.get $3)
   ;; YESINLINE-NEXT:    )
   ;; YESINLINE-NEXT:   )
   ;; YESINLINE-NEXT:  )
   ;; YESINLINE-NEXT:  (block
   ;; YESINLINE-NEXT:   (block $__inlined_func$refinable_noinline_2$2
-  ;; YESINLINE-NEXT:    (local.set $2
-  ;; YESINLINE-NEXT:     (struct.new_default $B)
-  ;; YESINLINE-NEXT:    )
-  ;; YESINLINE-NEXT:    (block
-  ;; YESINLINE-NEXT:     (local.set $3
-  ;; YESINLINE-NEXT:      (local.get $2)
-  ;; YESINLINE-NEXT:     )
-  ;; YESINLINE-NEXT:     (drop
-  ;; YESINLINE-NEXT:      (local.get $3)
-  ;; YESINLINE-NEXT:     )
-  ;; YESINLINE-NEXT:    )
-  ;; YESINLINE-NEXT:   )
-  ;; YESINLINE-NEXT:  )
-  ;; YESINLINE-NEXT:  (block
-  ;; YESINLINE-NEXT:   (block $__inlined_func$refinable_noinline_2$3
   ;; YESINLINE-NEXT:    (local.set $4
-  ;; YESINLINE-NEXT:     (struct.new_default $B)
+  ;; YESINLINE-NEXT:     (local.get $B)
   ;; YESINLINE-NEXT:    )
   ;; YESINLINE-NEXT:    (block
   ;; YESINLINE-NEXT:     (local.set $5
@@ -98,8 +83,23 @@
   ;; YESINLINE-NEXT:    )
   ;; YESINLINE-NEXT:   )
   ;; YESINLINE-NEXT:  )
+  ;; YESINLINE-NEXT:  (block
+  ;; YESINLINE-NEXT:   (block $__inlined_func$refinable_noinline_2$3
+  ;; YESINLINE-NEXT:    (local.set $6
+  ;; YESINLINE-NEXT:     (local.get $B)
+  ;; YESINLINE-NEXT:    )
+  ;; YESINLINE-NEXT:    (block
+  ;; YESINLINE-NEXT:     (local.set $7
+  ;; YESINLINE-NEXT:      (local.get $6)
+  ;; YESINLINE-NEXT:     )
+  ;; YESINLINE-NEXT:     (drop
+  ;; YESINLINE-NEXT:      (local.get $7)
+  ;; YESINLINE-NEXT:     )
+  ;; YESINLINE-NEXT:    )
+  ;; YESINLINE-NEXT:   )
+  ;; YESINLINE-NEXT:  )
   ;; YESINLINE-NEXT: )
-  (func $calls
+  (func $calls (param $A (ref $A)) (param $B (ref $B))
     ;; Two calls with $A, two with $B. The calls to $B will both go to the
     ;; same new monomorphized function which has a refined parameter of $B.
     ;;
@@ -108,16 +108,16 @@
     ;; inline the monomorphized ones). In YESINLINE mode we will inline all 4.
     ;;
     (call $refinable_noinline
-      (struct.new $A)
+      (local.get $A)
     )
     (call $refinable_noinline
-      (struct.new $A)
+      (local.get $A)
     )
     (call $refinable_noinline
-      (struct.new $B)
+      (local.get $B)
     )
     (call $refinable_noinline
-      (struct.new $B)
+      (local.get $B)
     )
   )
 
