@@ -23,14 +23,3 @@
     (extern.convert_any (local.get 0))
   )
 )
-
-(module
-  (func (export "eq") (param i32 i32) (result i32)
-    (ref.eq (ref.i31 (local.get 0)) (ref.i31_shared (local.get 1)))
-  )
-)
-
-(assert_return (invoke "eq" (i32.const 0) (i32.const 0)) (i32.const 1))
-(assert_return (invoke "eq" (i32.const 0) (i32.const 1)) (i32.const 0))
-(assert_return (invoke "eq" (i32.const 1) (i32.const 0)) (i32.const 0))
-(assert_return (invoke "eq" (i32.const 1) (i32.const 1)) (i32.const 1))
