@@ -361,7 +361,7 @@ INITIAL_CONTENTS_IGNORE = [
     'shared-absheaptype.wast',
     'type-ssa-shared.wast',
     'shared-ref_eq.wast',
-    'shared-null-no-gc.wast',
+    'shared-types-no-gc.wast',
 ]
 
 
