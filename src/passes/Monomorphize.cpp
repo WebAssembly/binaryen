@@ -336,12 +336,9 @@ struct CallContext {
     }
 
     // We now know which code can be moved and which cannot, so we can do the
-    // final processing of the call operands. This is a copy operation TODO
-
-    // Process the operand. This is a copy operation, as we are trying to move
-    // (copy) code from the callsite into the called function. When we find we
-    // can copy then we do so, and when we cannot that value remains as a
-    // value sent from the call.
+    // final processing of the call operands. We do this as a copy operation,
+    // copying as much as possible into the call context. Code that cannot be
+    // moved ends up as values sent to the monomorphized function.
     //
     // The copy operation works in pre-order, which allows us to override
     // entire children as needed:
@@ -357,9 +354,6 @@ struct CallContext {
     // moving it into the context then we override the copy and then it and
     // its child |a| remain in the caller (and |a| is never visited in the
     // copy). We then continue onward to |later|.
-    //
-
-
     for (auto* operand : info.call->operands) {
       operands.push_back(ExpressionManipulator::flexibleCopy(
         operand, wasm, [&](Expression* child) -> Expression* {
@@ -374,8 +368,10 @@ struct CallContext {
             return nullptr;
           }
 
-          // In the call context this is simply a local.get, that reads the
-          // value sent through the call, as before.
+          // This cannot be moved. Do not copy it into the call context. In the
+          // example above, |problem| remains as an operand on the call (so we
+          // add it to |newOperands|), and in the call context all we have is a
+          // local.get that reads that sent value.
           auto paramIndex = newOperands.size();
           newOperands.push_back(child);
           // TODO: If one operand is a tee and another a get, we could actually
