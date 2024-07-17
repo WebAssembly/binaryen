@@ -298,22 +298,20 @@ struct CallContext {
     // Go in reverse post-order as explained earlier, noting what cannot be
     // moved into the context, and while accumulating the effects that are not
     // moving.
-    //
-    // Note that every unmovable expression forces its children to be unmovable
-    // as well, as we cannot execute those children after the parent (since the
-    // motion here is to push the code into the called monomorphized function),
-    // so we mark children as well, when we find something unmovable.
     SmallUnorderedSet<Expression*, 3> unMovable; // TODO tune
     EffectAnalyzer nonMovingEffects(options, wasm);
     for (auto i = int64_t(lister.list.size()) - 1; i >= 0; i--) {
       auto* curr = lister.list[i];
 
-      // This may have been marked as unmovable because of the parent.
+      // This may have been marked as unmovable because of the parent. We do
+      // that because if a parent is unmovable then we can't move the children
+      // into the context (if we did, they would execute after the parent, but
+      // it needs their values).
       auto currUnMovable = unMovable.count(curr) > 0;
       if (!currUnMovable) {
-        // See if this can be moved. It must go past all the non-moving effects
-        // we've seen so far in our reverse iteration, and it must also not
-        // have any of the other intrinsic properties that prevent moving.
+        // This might be movable or unmovable. Check both effect interactions
+        // (as described before, we want to move this past unmovable code) and
+        // reasons intrinsic to the expression itself that might prevent moving.
         ShallowEffectAnalyzer currEffects(options, wasm, curr);
         if (currEffects.invalidates(nonMovingEffects) ||
             !canBeMovedIntoContext(curr, currEffects)) {
@@ -352,7 +350,7 @@ struct CallContext {
     // We visit |problem| first, and if there is a problem that prevents us
     // moving it into the context then we override the copy and then it and
     // its child |a| remain in the caller (and |a| is never visited in the
-    // copy). We then continue onward to |later|.
+    // copy).
     for (auto* operand : info.call->operands) {
       operands.push_back(ExpressionManipulator::flexibleCopy(
         operand, wasm, [&](Expression* child) -> Expression* {
@@ -375,8 +373,8 @@ struct CallContext {
           newOperands.push_back(child);
           // TODO: If one operand is a tee and another a get, we could actually
           //       reuse the local, effectively showing the monomorphized
-          //       function that the values are the same. (But then the checks
-          //       later down to is<LocalGet> would need to check index too.)
+          //       function that the values are the same. EquivalentSets may
+          //       help here.
           return builder.makeLocalGet(paramIndex, child->type);
         }));
     }
