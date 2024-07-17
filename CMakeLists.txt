@@ -500,6 +500,9 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_wasm optimized "-Wno-error=closure")
   target_link_libraries(binaryen_wasm optimized "-flto")
   target_link_libraries(binaryen_wasm debug "--profiling")
+  # Avoid catching exit as that can confuse error reporting in Node,
+  # see https://github.com/emscripten-core/emscripten/issues/17228
+  target_link_libraries(binaryen_wasm "-sNODEJS_CATCH_EXIT=0")
   install(TARGETS binaryen_wasm DESTINATION ${CMAKE_INSTALL_BINDIR})
 
   # binaryen.js JavaScript variant
@@ -550,6 +553,9 @@ if(EMSCRIPTEN)
   target_link_libraries(binaryen_js optimized "-flto")
   target_link_libraries(binaryen_js debug "--profiling")
   target_link_libraries(binaryen_js debug "-sASSERTIONS")
+  # Avoid catching exit as that can confuse error reporting in Node,
+  # see https://github.com/emscripten-core/emscripten/issues/17228
+  target_link_libraries(binaryen_js "-sNODEJS_CATCH_EXIT=0")
   install(TARGETS binaryen_js DESTINATION ${CMAKE_INSTALL_BINDIR})
 endif()
 
