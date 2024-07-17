@@ -217,6 +217,46 @@ struct CallContext {
   // remaining values by updating |newOperands| (for example, if all the values
   // sent are constants, then |newOperands| will end up empty, as we have
   // nothing left to send).
+  //
+  // The approach implemented here tries to move as much code into the call
+  // context as possible. That may not always be helpful, say in situations like
+  // this:
+  //
+  //  (call $foo
+  //    (i32.add
+  //      (local.get $x)
+  //      (local.get $y)
+  //    )
+  //  )
+  //
+  // If we move the i32.add into $foo then it will still be adding two unknown
+  // values (which will be parameters rather than locals). Moving the add might
+  // just increase code size if so. However, there are many other situations
+  // where the more code, the better:
+  //
+  //  (call $foo
+  //    (i32.eqz
+  //      (local.get $x)
+  //    )
+  //  )
+  //
+  // While the value remains unknown, after moving the i32.eqz into the target
+  // function we may be able to use the fact that it has at most 1 bit set.
+  // Even larger benefits can happen in WasmGC:
+  //
+  //  (call $foo
+  //    (struct.new $T
+  //      (local.get $x)
+  //      (local.get $y)
+  //    )
+  //  )
+  //
+  // If the struct never escapes then we may be able to remove the allocation
+  // after monomorphization, even if we know nothing about the values in its
+  // fields.
+  //
+  // TODO: Explore other options that are more careful about how much code is
+  //       moved.
   void buildFromCall(CallInfo& info,
                      std::vector<Expression*>& newOperands,
                      Module& wasm,
@@ -404,7 +444,8 @@ struct CallContext {
     if (Properties::isControlFlowStructure(curr)) {
       // We can in principle move entire control flow structures with their
       // children, but for simplicity stop when we see one rather than look
-      // inside to see if we could transfer all its contents.
+      // inside to see if we could transfer all its contents. (We would also
+      // need to be careful when handling If arms, etc.)
       return false;
     }
     for (auto* child : ChildIterator(curr)) {
