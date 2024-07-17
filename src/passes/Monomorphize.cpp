@@ -92,6 +92,7 @@
 #include "ir/cost.h"
 #include "ir/effects.h"
 #include "ir/find_all.h"
+#include "ir/iteration.h"
 #include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
@@ -384,7 +385,7 @@ struct CallContext {
 
     dropped = !!info.drop;
 
-    return true;
+    return true; // XXX
   }
 
   // Checks whether an expression can be moved into the context.
@@ -411,6 +412,23 @@ struct CallContext {
       // children, but for simplicity stop when we see one rather than look
       // inside to see if we could transfer all its contents.
       return false;
+    }
+    for (auto* child : ChildIterator(curr)) {
+      if (child->type.isTuple()) {
+        // Consider this:
+        //
+        //  (call $1
+        //    (tuple.extract 2 1
+        //      (local.get $5)
+        //    )
+        //  )
+        //
+        // We couldn't move the tuple.extract into the context, because then the
+        // call would have a tuple param. While it is possible to split up the
+        // tuple, or to check if we can also move the children with the parent,
+        // for simplicity just ignore this rare situation.
+        return false;
+      }
     }
     return true;
   }

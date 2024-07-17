@@ -1727,6 +1727,7 @@
   )
 )
 
+
 ;; ALWAYS:      (func $target_2 (type $2) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
 ;; ALWAYS-NEXT:  (local $5 i32)
 ;; ALWAYS-NEXT:  (local $6 i32)
@@ -1756,3 +1757,49 @@
 ;; ALWAYS-NEXT:  )
 ;; ALWAYS-NEXT:  (nop)
 ;; ALWAYS-NEXT: )
+(module
+  ;; ALWAYS:      (type $0 (func))
+
+  ;; ALWAYS:      (type $1 (func (param f32)))
+
+  ;; ALWAYS:      (func $caller (type $0)
+  ;; ALWAYS-NEXT:  (local $tuple (tuple i32 f32))
+  ;; ALWAYS-NEXT:  (call $target
+  ;; ALWAYS-NEXT:   (tuple.extract 2 1
+  ;; ALWAYS-NEXT:    (local.get $tuple)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (type $0 (func))
+
+  ;; CAREFUL:      (type $1 (func (param f32)))
+
+  ;; CAREFUL:      (func $caller (type $0)
+  ;; CAREFUL-NEXT:  (local $tuple (tuple i32 f32))
+  ;; CAREFUL-NEXT:  (call $target
+  ;; CAREFUL-NEXT:   (tuple.extract 2 1
+  ;; CAREFUL-NEXT:    (local.get $tuple)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $caller
+    (local $tuple (tuple i32 f32))
+    ;; We cannot move the tuple.extract into the context, as that would mean the
+    ;; new call has a tuple param. Rather than handle that somehow, ignore it.
+    (call $target
+      (tuple.extract 2 1
+        (local.get $tuple)
+      )
+    )
+  )
+
+  ;; ALWAYS:      (func $target (type $1) (param $0 f32)
+  ;; ALWAYS-NEXT:  (nop)
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $target (type $1) (param $0 f32)
+  ;; CAREFUL-NEXT:  (nop)
+  ;; CAREFUL-NEXT: )
+  (func $target (param $0 f32)
+  )
+)
+
