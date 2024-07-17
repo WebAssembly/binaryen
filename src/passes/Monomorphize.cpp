@@ -225,6 +225,71 @@ struct CallContext {
                      const PassOptions& options) {
     Builder builder(wasm);
 
+    // First, find the things we can move in the context and the things we
+    // can't. It is simplest to do this in reverse-postorder. TODO
+    // Check for problems with effects. As mentioned above, the key property is
+    // that everything that is moved will be moved past all the non-moved things
+    // after it. Say we move B and D in this list:
+    //
+    //  A, B, C, D, E
+    //
+    // Then we end up with this:
+    //
+    //  A, C, E  and, executing later in the monomorphized function:  B, D
+    //
+    // Then we must be able to move B past C and E, and D past E.
+    //
+    // To compute this, first get the post-order list of expressions.
+    struct Lister : public PostWalker<Lister,
+                                       UnifiedExpressionVisitor<Lister>> {
+      SmallVector<Expression*, 10> list;
+
+      void visitExpression(Expression* curr) {
+        list.push_back(curr);
+      }
+    } lister;
+
+    for (auto* operand : info.call->operands) {
+      lister.walk(operand);
+    }
+
+    // Go in reverse post-order, noting what cannot be moved into the context,
+    // and while accumulating the effects that are not moving and checking for
+    // problems.
+    std::unordered_set<Expression*> unMovable; // TODO: SmallSet?
+    EffectAnalyzer nonMovingEffects(options, wasm);
+    for (auto i = int64_t(lister.list.size()) - 1; i >= 0; i--) {
+      auto* curr = lister.list[i];
+
+      if (unMovable.count(curr)) {
+        // This was marked as non-moving because of a parent. Just note the
+        // effects and continue.
+        nonMovingEffects.visit(curr);
+        for (auto* child : ChildIterator(curr)) {
+          unMovable.insert(child);
+        }
+        continue;
+      }
+
+      // See if this can be moved. It must go past all the non-moving effects
+      // we've seen so far in our reverse iteration. TODO and canbeMoved
+      ShallowEffectAnalyzer currEffects(options, wasm, curr);
+      if (currEffects.invalidates(nonMovingEffects) ||
+          !canBeMovedIntoContext(curr, wasm, options)) {
+        // This can't move. Note that, and note its effects, and mark all children for later
+        // (their effects, and their children, will be reached later).
+        unMovable.insert(curr);
+
+        nonMovingEffects.visit(curr);
+        for (auto* child : ChildIterator(curr)) {
+          unMovable.insert(child);
+        }
+      }
+    }
+
+    // We now know which code can be moved and which cannot, so we can do the
+    // final processing of the call operands. This is a copy operation TODO
+
     // Process the operand. This is a copy operation, as we are trying to move
     // (copy) code from the callsite into the called function. When we find we
     // can copy then we do so, and when we cannot that value remains as a
@@ -288,7 +353,6 @@ struct CallContext {
     // note what will be moved and what won't (it is simpler to do so rather
     // than try to both build the context and compute that at the same time, in
     // particular as we are doing the copy in pre-order).
-    std::unordered_set<Expression*> movedIntoContext; // TODO: SmallSet?
 
     for (auto* operand : info.call->operands) {
       operands.push_back(ExpressionManipulator::flexibleCopy(
@@ -299,9 +363,8 @@ struct CallContext {
             return nullptr;
           }
 
-          if (canBeMovedIntoContext(child, wasm, options)) {
-            // This can be moved. Note it, and let the copy happen.
-            movedIntoContext.insert(child);
+          if (!unMovable.count(child)) {
+            // This can be moved; let the copy happen.
             return nullptr;
           }
 
@@ -318,54 +381,6 @@ struct CallContext {
     }
 
     dropped = !!info.drop;
-
-    // Check for problems with effects. As mentioned above, the key property is
-    // that everything that is moved will be moved past all the non-moved things
-    // after it. Say we move B and D in this list:
-    //
-    //  A, B, C, D, E
-    //
-    // Then we end up with this:
-    //
-    //  A, C, E  and, executing later in the monomorphized function:  B, D
-    //
-    // Then we must be able to move B past C and E, and D past E.
-    //
-    // To compute this, first get the post-order list of expressions.
-    struct Lister : public PostWalker<Lister,
-                                       UnifiedExpressionVisitor<Lister>> {
-      SmallVector<Expression*, 10> list;
-
-      void visitExpression(Expression* curr) {
-        list.push_back(curr);
-      }
-    } lister;
-
-    for (auto* operand : info.call->operands) {
-      lister.walk(operand);
-    }
-
-    // Go in reverse while accumulating the effects that are not moving and
-    // checking for problems.
-    EffectAnalyzer nonMovingEffects(options, wasm);
-    for (auto i = int64_t(lister.list.size()) - 1; i >= 0; i--) {
-      auto* curr = lister.list[i];
-
-      if (!movedIntoContext.count(curr)) {
-        // Add the effects of this non-moving code.
-        nonMovingEffects.visit(curr);
-        continue;
-      }
-
-      // This is moved, so it must go past all the non-moving effects we've seen
-      // in our reverse iteration.
-      ShallowEffectAnalyzer currEffects(options, wasm, curr);
-      if (currEffects.invalidates(nonMovingEffects)) {
-        // TODO: Rather than give up, we could instead not move this (and all of
-        //       its children), if we did another pass here.
-        return false;
-      }
-    }
 
     return true;
   }
