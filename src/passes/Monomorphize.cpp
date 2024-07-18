@@ -102,12 +102,22 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/hash.h"
+#include "wasm-limits.h"
 #include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {
 
 namespace {
+
+// A limit on the number of parameters we are willing to have on monomorphized
+// functions. Large numbers can lead to large stack frames, which can be slow
+// and lead to stack overflows.
+// TODO: Tune this and perhaps make it a flag.
+const Index MaxParams = 20;
+// This must be less than the corresponding Web limitation, so we do not emit
+// invalid binaries.
+static_assert(MaxParams < WebLimitations::MaxFunctionParams);
 
 // Core information about a call: the call itself, and if it is dropped, the
 // drop.
@@ -627,6 +637,16 @@ struct Monomorphize : public Pass {
     // Create the monomorphized function that includes the call context.
     std::unique_ptr<Function> monoFunc =
       makeMonoFunctionWithContext(func, context, wasm);
+
+    // If we ended up with too many params, give up. In theory we could try to
+    // monomorphize in ways that use less params, but this is a rare situation
+    // that is not easy to handle (when we move something into the context, it
+    // *removes* a param, which is good, but if it has many children and end up
+    // not moved, that is where the problem happens, so we'd need to backtrack).
+    // TODO: Consider doing more here.
+    if (monoFunc->getNumParams() >= MaxParams) {
+      return;
+    }
 
     // Decide whether it is worth using the monomorphized function.
     auto worthwhile = true;
