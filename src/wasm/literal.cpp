@@ -57,8 +57,7 @@ Literal::Literal(Type type) : type(type) {
     return;
   }
 
-  if (type.isRef() && type.getHeapType().isBasic() &&
-      type.getHeapType().getBasic(Unshared) == HeapType::i31) {
+  if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::i31)) {
     assert(type.isNonNullable());
     i32 = 0;
     return;

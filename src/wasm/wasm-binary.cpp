@@ -1521,7 +1521,7 @@ void WasmBinaryWriter::writeType(Type type) {
     // those more refined types.
     if (!wasm->features.hasGC()) {
       auto ht = type.getHeapType();
-      if (ht.isBasic() && ht.getBasic(Unshared) == HeapType::string) {
+      if (ht.isMaybeShared(HeapType::string)) {
         // Do not overgeneralize stringref to anyref. We have tests that when a
         // stringref is expected, we actually get a stringref. If we see a
         // string, the stringref feature must be enabled.

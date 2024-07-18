@@ -1217,8 +1217,7 @@ public:
     if (type.isFunction()) {
       return makeRefFunc(value.getFunc(), type.getHeapType());
     }
-    if (type.isRef() && type.getHeapType().isBasic() &&
-        type.getHeapType().getBasic(Unshared) == HeapType::i31) {
+    if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::i31)) {
       return makeRefI31(makeConst(value.geti31()),
                         type.getHeapType().getShared());
     }

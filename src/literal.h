@@ -281,7 +281,7 @@ public:
     return i32;
   }
   int32_t geti31(bool signed_ = true) const {
-    assert(type.getHeapType().getBasic(Unshared) == HeapType::i31);
+    assert(type.getHeapType().isMaybeShared(HeapType::i31));
     // Cast to unsigned for the left shift to avoid undefined behavior.
     return signed_ ? int32_t((uint32_t(i32) << 1)) >> 1 : (i32 & 0x7fffffff);
   }
