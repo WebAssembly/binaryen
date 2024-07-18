@@ -1520,23 +1520,15 @@ void WasmBinaryWriter::writeType(Type type) {
     // internally use more refined versions of those types, but we cannot emit
     // those more refined types.
     if (!wasm->features.hasGC()) {
-      if (Type::isSubType(type, Type(HeapType::func, Nullable))) {
-        o << S32LEB(BinaryConsts::EncodedType::funcref);
-        return;
+      auto ht = type.getHeapType();
+      if (ht.isBasic() && ht.getBasic(Unshared) == HeapType::string) {
+        // Do not overgeneralize stringref to anyref. We have tests that when a
+        // stringref is expected, we actually get a stringref. If we see a
+        // string, the stringref feature must be enabled.
+        type = Type(HeapTypes::string.getBasic(ht.getShared()), Nullable);
+      } else {
+        type = Type(type.getHeapType().getTop(), Nullable);
       }
-      if (Type::isSubType(type, Type(HeapType::ext, Nullable))) {
-        o << S32LEB(BinaryConsts::EncodedType::externref);
-        return;
-      }
-      if (Type::isSubType(type, Type(HeapType::exn, Nullable))) {
-        o << S32LEB(BinaryConsts::EncodedType::exnref);
-        return;
-      }
-      if (Type::isSubType(type, Type(HeapType::string, Nullable))) {
-        o << S32LEB(BinaryConsts::EncodedType::stringref);
-        return;
-      }
-      WASM_UNREACHABLE("bad type without GC");
     }
     auto heapType = type.getHeapType();
     if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
