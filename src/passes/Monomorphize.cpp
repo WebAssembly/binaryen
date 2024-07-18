@@ -138,8 +138,8 @@ namespace {
 
 // Pass arguments. See descriptions in the comment above.
 Index MinPercentBenefit = 0;
-const Index MaxFunctionSize = 1000;
-const Index MaxCopies = 10;
+//const Index MaxFunctionSize = 1000;
+//const Index MaxCopies = 10;
 
 // A limit on the number of parameters we are willing to have on monomorphized
 // functions. Large numbers can lead to large stack frames, which can be slow
