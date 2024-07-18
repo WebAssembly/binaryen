@@ -110,6 +110,27 @@ namespace wasm {
 
 namespace {
 
+// The minimum amount of benefit we require in order to decide to optimize, as a
+// percentage of the original cost. If this is 0 then we always optimize, if the
+// cost improves by even 0.0001%. If this is 50 then we optimize only when the
+// optimized monomorphized function has half the cost of the original, and so
+// forth, that is higher values are more careful (and 100 will only optimize
+// when the cost goes to nothing at all).
+const Index MinPercentBenefit = 0;
+
+// The maximum function size above which we never try to monomorphize. This
+// avoids operating on large functions which may be very slow to optimize, and
+// this pass operates by optimizing code in order to decide what to do, so
+// optimizing large functions can be painful.
+const Index MaxFunctionSize = 1000;
+
+// The maximum amount of copies we will make of a function. If we monomorphize
+// once and call that many times that is fine, and not limited here, but if we
+// find many different call contexts for a function, then this sets a limit on
+// how many times the function is copied and monomorphized. This sets an
+// effective limit on the code size increase this pass can cause.
+const Index MaxCopies = 10;
+
 // A limit on the number of parameters we are willing to have on monomorphized
 // functions. Large numbers can lead to large stack frames, which can be slow
 // and lead to stack overflows.
@@ -678,14 +699,17 @@ struct Monomorphize : public Pass {
       //       keep optimizing from the current contents as we go. It's not
       //       obvious which approach is best here.
       doOpts(func);
-      doOpts(monoFunc.get());
 
       // The cost before monomorphization is the old body + the context
       // operands. The operands will be *removed* from the calling code if we
       // optimize, and moved into the monomorphized function, so the proper
       // comparison is the context + the old body, versus the new body (which
       // includes the reverse-inlined call context).
-      auto costBefore = CostAnalyzer(func->body).cost;
+      //
+      // Note that we use a double here because we are going to subtract and
+      // multiply this value later (and want to avoid unsigned interger
+      // overflow, etc.).
+      double costBefore = CostAnalyzer(func->body).cost;
       for (auto* operand : context.operands) {
         // Note that a slight oddity is that we have *not* optimized the
         // operands before. We optimize func before and after, but the operands
@@ -694,13 +718,21 @@ struct Monomorphize : public Pass {
         // very unoptimized.
         costBefore += CostAnalyzer(operand).cost;
       }
-      auto costAfter = CostAnalyzer(monoFunc->body).cost;
-
-      // TODO: We should probably only accept improvements above some minimum,
-      //       to avoid optimizing cases where we duplicate a huge function but
-      //       only optimize a tiny part of it compared to the original.
-      if (costAfter >= costBefore) {
+      if (costBefore == 0) {
+        // Nothing to optimize away here. (And it would be invalid to divide by
+        // this amount in the code below.)
         worthwhile = false;
+      } else {
+        // There is a point to optimizing the monomorphized function, do so.
+        doOpts(monoFunc.get());
+
+        double costAfter = CostAnalyzer(monoFunc->body).cost;
+
+        // Compute the percentage of benefit we see here.
+        auto benefit = 100 - ((100 * costAfter) / costBefore);
+        if (benefit <= MinPercentBenefit) {
+          worthwhile = false;
+        }
       }
     }
 
