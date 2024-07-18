@@ -4,26 +4,26 @@
 ;; monomorphizes, and in "careful" mode which does it only when it appears to
 ;; actually help.
 
-;; RUN: foreach %s %t wasm-opt --monomorphize-always -S -o - | filecheck %s --check-prefix ALWAYS
-;; RUN: foreach %s %t wasm-opt --monomorphize        -S -o - | filecheck %s --check-prefix CAREFUL
+;; RUN: foreach %s %t wasm-opt --monomorphize-always -all -S -o - | filecheck %s --check-prefix ALWAYS
+;; RUN: foreach %s %t wasm-opt --monomorphize        -all -S -o - | filecheck %s --check-prefix CAREFUL
 
 (module
   ;; ALWAYS:      (type $0 (func))
 
   ;; ALWAYS:      (type $1 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)))
 
-  ;; ALWAYS:      (func $caller-consts
+  ;; ALWAYS:      (func $caller-consts (type $0)
   ;; ALWAYS-NEXT:  (call $many-params_3)
   ;; ALWAYS-NEXT: )
   ;; CAREFUL:      (type $0 (func))
 
   ;; CAREFUL:      (type $1 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)))
 
-  ;; CAREFUL:      (func $caller-consts
+  ;; CAREFUL:      (func $caller-consts (type $0)
   ;; CAREFUL-NEXT:  (call $many-params_3)
   ;; CAREFUL-NEXT: )
   (func $caller-consts
-    ;; This function has a large number of params, in fact too many for us to
+    ;; The called func has a large number of params, in fact too many for us to
     ;; allow in monomorphized functions. However, all the params are constant,
     ;; so they go into the call context and are no longer params, and we can
     ;; optimize.
@@ -36,7 +36,7 @@
     )
   )
 
-  ;; ALWAYS:      (func $caller-locals (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 i32) (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32) (param $15 i32) (param $16 i32) (param $17 i32) (param $18 i32) (param $19 i32) (param $20 i32) (param $21 i32) (param $22 i32) (param $23 i32) (param $24 i32)
+  ;; ALWAYS:      (func $caller-locals (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 i32) (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32) (param $15 i32) (param $16 i32) (param $17 i32) (param $18 i32) (param $19 i32) (param $20 i32) (param $21 i32) (param $22 i32) (param $23 i32) (param $24 i32)
   ;; ALWAYS-NEXT:  (call $many-params
   ;; ALWAYS-NEXT:   (local.get $0)
   ;; ALWAYS-NEXT:   (local.get $1)
@@ -65,7 +65,7 @@
   ;; ALWAYS-NEXT:   (local.get $24)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $caller-locals (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 i32) (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32) (param $15 i32) (param $16 i32) (param $17 i32) (param $18 i32) (param $19 i32) (param $20 i32) (param $21 i32) (param $22 i32) (param $23 i32) (param $24 i32)
+  ;; CAREFUL:      (func $caller-locals (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 i32) (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32) (param $15 i32) (param $16 i32) (param $17 i32) (param $18 i32) (param $19 i32) (param $20 i32) (param $21 i32) (param $22 i32) (param $23 i32) (param $24 i32)
   ;; CAREFUL-NEXT:  (call $many-params
   ;; CAREFUL-NEXT:   (local.get $0)
   ;; CAREFUL-NEXT:   (local.get $1)
@@ -111,10 +111,10 @@
     )
   )
 
-  ;; ALWAYS:      (func $many-params (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 i32) (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32) (param $15 i32) (param $16 i32) (param $17 i32) (param $18 i32) (param $19 i32) (param $20 i32) (param $21 i32) (param $22 i32) (param $23 i32) (param $24 i32)
+  ;; ALWAYS:      (func $many-params (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 i32) (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32) (param $15 i32) (param $16 i32) (param $17 i32) (param $18 i32) (param $19 i32) (param $20 i32) (param $21 i32) (param $22 i32) (param $23 i32) (param $24 i32)
   ;; ALWAYS-NEXT:  (nop)
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (func $many-params (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 i32) (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32) (param $15 i32) (param $16 i32) (param $17 i32) (param $18 i32) (param $19 i32) (param $20 i32) (param $21 i32) (param $22 i32) (param $23 i32) (param $24 i32)
+  ;; CAREFUL:      (func $many-params (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 i32) (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32) (param $15 i32) (param $16 i32) (param $17 i32) (param $18 i32) (param $19 i32) (param $20 i32) (param $21 i32) (param $22 i32) (param $23 i32) (param $24 i32)
   ;; CAREFUL-NEXT:  (nop)
   ;; CAREFUL-NEXT: )
   (func $many-params
@@ -125,7 +125,8 @@
     (param i32) (param i32) (param i32) (param i32) (param i32)
   )
 )
-;; ALWAYS:      (func $many-params_3
+
+;; ALWAYS:      (func $many-params_3 (type $0)
 ;; ALWAYS-NEXT:  (local $0 i32)
 ;; ALWAYS-NEXT:  (local $1 i32)
 ;; ALWAYS-NEXT:  (local $2 i32)
@@ -229,6 +230,171 @@
 ;; ALWAYS-NEXT:  (nop)
 ;; ALWAYS-NEXT: )
 
-;; CAREFUL:      (func $many-params_3
+;; CAREFUL:      (func $many-params_3 (type $0)
+;; CAREFUL-NEXT:  (nop)
+;; CAREFUL-NEXT: )
+(module
+  ;; ALWAYS:      (type $array (array (mut i32)))
+  ;; CAREFUL:      (type $0 (func))
+
+  ;; CAREFUL:      (type $array (array (mut i32)))
+  (type $array (array (mut i32)))
+
+  ;; ALWAYS:      (type $1 (func))
+
+  ;; ALWAYS:      (type $2 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)))
+
+  ;; ALWAYS:      (type $3 (func (param (ref $array))))
+
+  ;; ALWAYS:      (func $caller-consts (type $1)
+  ;; ALWAYS-NEXT:  (call $target_3)
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (type $2 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)))
+
+  ;; CAREFUL:      (type $3 (func (param (ref $array))))
+
+  ;; CAREFUL:      (func $caller-consts (type $0)
+  ;; CAREFUL-NEXT:  (call $target_3)
+  ;; CAREFUL-NEXT: )
+  (func $caller-consts
+    ;; The called function has just one param, but the value sent has many
+    ;; children of its own. Here the children are constant, so they go into the
+    ;; call context, and we can optimize.
+    (call $target
+      (array.new_fixed $array 25
+        (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0) (i32.const 0)
+        (i32.const 5) (i32.const 5) (i32.const 5) (i32.const 5) (i32.const 5)
+        (i32.const 15) (i32.const 15) (i32.const 15) (i32.const 15) (i32.const 15)
+        (i32.const 20) (i32.const 20) (i32.const 20) (i32.const 20) (i32.const 20)
+        (i32.const 25) (i32.const 25) (i32.const 25) (i32.const 25) (i32.const 25)
+      )
+    )
+  )
+
+  ;; ALWAYS:      (func $caller-locals (type $2) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 i32) (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32) (param $15 i32) (param $16 i32) (param $17 i32) (param $18 i32) (param $19 i32) (param $20 i32) (param $21 i32) (param $22 i32) (param $23 i32) (param $24 i32)
+  ;; ALWAYS-NEXT:  (call $target
+  ;; ALWAYS-NEXT:   (array.new_fixed $array 25
+  ;; ALWAYS-NEXT:    (local.get $0)
+  ;; ALWAYS-NEXT:    (local.get $1)
+  ;; ALWAYS-NEXT:    (local.get $2)
+  ;; ALWAYS-NEXT:    (local.get $3)
+  ;; ALWAYS-NEXT:    (local.get $4)
+  ;; ALWAYS-NEXT:    (local.get $5)
+  ;; ALWAYS-NEXT:    (local.get $6)
+  ;; ALWAYS-NEXT:    (local.get $7)
+  ;; ALWAYS-NEXT:    (local.get $8)
+  ;; ALWAYS-NEXT:    (local.get $9)
+  ;; ALWAYS-NEXT:    (local.get $10)
+  ;; ALWAYS-NEXT:    (local.get $11)
+  ;; ALWAYS-NEXT:    (local.get $12)
+  ;; ALWAYS-NEXT:    (local.get $13)
+  ;; ALWAYS-NEXT:    (local.get $14)
+  ;; ALWAYS-NEXT:    (local.get $15)
+  ;; ALWAYS-NEXT:    (local.get $16)
+  ;; ALWAYS-NEXT:    (local.get $17)
+  ;; ALWAYS-NEXT:    (local.get $18)
+  ;; ALWAYS-NEXT:    (local.get $19)
+  ;; ALWAYS-NEXT:    (local.get $20)
+  ;; ALWAYS-NEXT:    (local.get $21)
+  ;; ALWAYS-NEXT:    (local.get $22)
+  ;; ALWAYS-NEXT:    (local.get $23)
+  ;; ALWAYS-NEXT:    (local.get $24)
+  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:  )
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $caller-locals (type $2) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32) (param $5 i32) (param $6 i32) (param $7 i32) (param $8 i32) (param $9 i32) (param $10 i32) (param $11 i32) (param $12 i32) (param $13 i32) (param $14 i32) (param $15 i32) (param $16 i32) (param $17 i32) (param $18 i32) (param $19 i32) (param $20 i32) (param $21 i32) (param $22 i32) (param $23 i32) (param $24 i32)
+  ;; CAREFUL-NEXT:  (call $target
+  ;; CAREFUL-NEXT:   (array.new_fixed $array 25
+  ;; CAREFUL-NEXT:    (local.get $0)
+  ;; CAREFUL-NEXT:    (local.get $1)
+  ;; CAREFUL-NEXT:    (local.get $2)
+  ;; CAREFUL-NEXT:    (local.get $3)
+  ;; CAREFUL-NEXT:    (local.get $4)
+  ;; CAREFUL-NEXT:    (local.get $5)
+  ;; CAREFUL-NEXT:    (local.get $6)
+  ;; CAREFUL-NEXT:    (local.get $7)
+  ;; CAREFUL-NEXT:    (local.get $8)
+  ;; CAREFUL-NEXT:    (local.get $9)
+  ;; CAREFUL-NEXT:    (local.get $10)
+  ;; CAREFUL-NEXT:    (local.get $11)
+  ;; CAREFUL-NEXT:    (local.get $12)
+  ;; CAREFUL-NEXT:    (local.get $13)
+  ;; CAREFUL-NEXT:    (local.get $14)
+  ;; CAREFUL-NEXT:    (local.get $15)
+  ;; CAREFUL-NEXT:    (local.get $16)
+  ;; CAREFUL-NEXT:    (local.get $17)
+  ;; CAREFUL-NEXT:    (local.get $18)
+  ;; CAREFUL-NEXT:    (local.get $19)
+  ;; CAREFUL-NEXT:    (local.get $20)
+  ;; CAREFUL-NEXT:    (local.get $21)
+  ;; CAREFUL-NEXT:    (local.get $22)
+  ;; CAREFUL-NEXT:    (local.get $23)
+  ;; CAREFUL-NEXT:    (local.get $24)
+  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:  )
+  ;; CAREFUL-NEXT: )
+  (func $caller-locals
+    (param i32) (param i32) (param i32) (param i32) (param i32)
+    (param i32) (param i32) (param i32) (param i32) (param i32)
+    (param i32) (param i32) (param i32) (param i32) (param i32)
+    (param i32) (param i32) (param i32) (param i32) (param i32)
+    (param i32) (param i32) (param i32) (param i32) (param i32)
+    ;; As above, but now we send unknown local values in the nested child. Those
+    ;; would remain as parameters, so we do not optimize.
+    (call $target
+      (array.new_fixed $array 25
+        (local.get 0) (local.get 1) (local.get 2) (local.get 3) (local.get 4)
+        (local.get 5) (local.get 6) (local.get 7) (local.get 8) (local.get 9)
+        (local.get 10) (local.get 11) (local.get 12) (local.get 13) (local.get 14)
+        (local.get 15) (local.get 16) (local.get 17) (local.get 18) (local.get 19)
+        (local.get 20) (local.get 21) (local.get 22) (local.get 23) (local.get 24)
+      )
+    )
+  )
+
+  ;; ALWAYS:      (func $target (type $3) (param $array (ref $array))
+  ;; ALWAYS-NEXT:  (nop)
+  ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (func $target (type $3) (param $0 (ref $array))
+  ;; CAREFUL-NEXT:  (nop)
+  ;; CAREFUL-NEXT: )
+  (func $target (param $array (ref $array))
+  )
+)
+;; ALWAYS:      (func $target_3 (type $1)
+;; ALWAYS-NEXT:  (local $array (ref $array))
+;; ALWAYS-NEXT:  (local.set $array
+;; ALWAYS-NEXT:   (array.new_fixed $array 25
+;; ALWAYS-NEXT:    (i32.const 0)
+;; ALWAYS-NEXT:    (i32.const 0)
+;; ALWAYS-NEXT:    (i32.const 0)
+;; ALWAYS-NEXT:    (i32.const 0)
+;; ALWAYS-NEXT:    (i32.const 0)
+;; ALWAYS-NEXT:    (i32.const 5)
+;; ALWAYS-NEXT:    (i32.const 5)
+;; ALWAYS-NEXT:    (i32.const 5)
+;; ALWAYS-NEXT:    (i32.const 5)
+;; ALWAYS-NEXT:    (i32.const 5)
+;; ALWAYS-NEXT:    (i32.const 15)
+;; ALWAYS-NEXT:    (i32.const 15)
+;; ALWAYS-NEXT:    (i32.const 15)
+;; ALWAYS-NEXT:    (i32.const 15)
+;; ALWAYS-NEXT:    (i32.const 15)
+;; ALWAYS-NEXT:    (i32.const 20)
+;; ALWAYS-NEXT:    (i32.const 20)
+;; ALWAYS-NEXT:    (i32.const 20)
+;; ALWAYS-NEXT:    (i32.const 20)
+;; ALWAYS-NEXT:    (i32.const 20)
+;; ALWAYS-NEXT:    (i32.const 25)
+;; ALWAYS-NEXT:    (i32.const 25)
+;; ALWAYS-NEXT:    (i32.const 25)
+;; ALWAYS-NEXT:    (i32.const 25)
+;; ALWAYS-NEXT:    (i32.const 25)
+;; ALWAYS-NEXT:   )
+;; ALWAYS-NEXT:  )
+;; ALWAYS-NEXT:  (nop)
+;; ALWAYS-NEXT: )
+
+;; CAREFUL:      (func $target_3 (type $0)
 ;; CAREFUL-NEXT:  (nop)
 ;; CAREFUL-NEXT: )
