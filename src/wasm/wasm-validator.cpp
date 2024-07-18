@@ -2727,6 +2727,12 @@ void FunctionValidator::visitCallRef(CallRef* curr) {
 void FunctionValidator::visitRefI31(RefI31* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.i31 requires gc [--enable-gc]");
+  if (curr->type.isRef() && curr->type.getHeapType().isShared()) {
+    shouldBeTrue(
+      getModule()->features.hasSharedEverything(),
+      curr,
+      "ref.i31_shared requires shared-everything [--enable-shared-everything]");
+  }
   shouldBeSubType(curr->value->type,
                   Type::i32,
                   curr->value,
