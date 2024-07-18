@@ -5,14 +5,294 @@
 ;; higher values demand more benefit before doing any work.
 
 ;; RUN: foreach %s %t wasm-opt --monomorphize                                -all -S -o - | filecheck %s --check-prefix DEFAULT
-;; RUN: foreach %s %t wasm-opt --monomorphize --monomorphize-min-benefit=0   -all -S -o - | filecheck %s --check-prefix ZERO___
-;; RUN: foreach %s %t wasm-opt --monomorphize --monomorphize-min-benefit=33  -all -S -o - | filecheck %s --check-prefix THIRD__
-;; RUN: foreach %s %t wasm-opt --monomorphize --monomorphize-min-benefit=66  -all -S -o - | filecheck %s --check-prefix 2THIRDS
-;; RUN: foreach %s %t wasm-opt --monomorphize --monomorphize-min-benefit=100 -all -S -o - | filecheck %s --check-prefix HUNDRED
+;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@0   -all -S -o - | filecheck %s --check-prefix ZERO___
+;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@33  -all -S -o - | filecheck %s --check-prefix THIRD__
+;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@66  -all -S -o - | filecheck %s --check-prefix 2THIRDS
+;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@100 -all -S -o - | filecheck %s --check-prefix HUNDRED
 
 (module
+  ;; DEFAULT:      (type $0 (func (param i32)))
+
+  ;; DEFAULT:      (type $1 (func (param i32 i32 i32 i32 i32)))
+
+  ;; DEFAULT:      (type $2 (func))
+
+  ;; DEFAULT:      (type $3 (func (param i32 i32)))
+
+  ;; DEFAULT:      (type $4 (func (param i32 i32 i32)))
+
+  ;; DEFAULT:      (type $5 (func (param i32 i32 i32 i32)))
+
+  ;; DEFAULT:      (import "a" "b" (func $import (type $0) (param i32)))
+  ;; ZERO___:      (type $0 (func (param i32)))
+
+  ;; ZERO___:      (type $1 (func (param i32 i32 i32 i32 i32)))
+
+  ;; ZERO___:      (type $2 (func))
+
+  ;; ZERO___:      (type $3 (func (param i32 i32)))
+
+  ;; ZERO___:      (type $4 (func (param i32 i32 i32)))
+
+  ;; ZERO___:      (type $5 (func (param i32 i32 i32 i32)))
+
+  ;; ZERO___:      (import "a" "b" (func $import (type $0) (param i32)))
+  ;; THIRD__:      (type $0 (func (param i32)))
+
+  ;; THIRD__:      (type $1 (func (param i32 i32 i32 i32 i32)))
+
+  ;; THIRD__:      (type $2 (func))
+
+  ;; THIRD__:      (type $3 (func (param i32 i32)))
+
+  ;; THIRD__:      (import "a" "b" (func $import (type $0) (param i32)))
+  ;; 2THIRDS:      (type $0 (func (param i32)))
+
+  ;; 2THIRDS:      (type $1 (func (param i32 i32 i32 i32 i32)))
+
+  ;; 2THIRDS:      (import "a" "b" (func $import (type $0) (param i32)))
+  ;; HUNDRED:      (type $0 (func (param i32)))
+
+  ;; HUNDRED:      (type $1 (func (param i32 i32 i32 i32 i32)))
+
+  ;; HUNDRED:      (import "a" "b" (func $import (type $0) (param i32)))
   (import "a" "b" (func $import (param i32)))
 
+  ;; DEFAULT:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
+  ;; DEFAULT-NEXT:  (call $import
+  ;; DEFAULT-NEXT:   (i32.div_s
+  ;; DEFAULT-NEXT:    (local.get $0)
+  ;; DEFAULT-NEXT:    (i32.add
+  ;; DEFAULT-NEXT:     (local.get $0)
+  ;; DEFAULT-NEXT:     (i32.const 1)
+  ;; DEFAULT-NEXT:    )
+  ;; DEFAULT-NEXT:   )
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $import
+  ;; DEFAULT-NEXT:   (i32.div_s
+  ;; DEFAULT-NEXT:    (local.get $1)
+  ;; DEFAULT-NEXT:    (i32.add
+  ;; DEFAULT-NEXT:     (local.get $1)
+  ;; DEFAULT-NEXT:     (i32.const 1)
+  ;; DEFAULT-NEXT:    )
+  ;; DEFAULT-NEXT:   )
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $import
+  ;; DEFAULT-NEXT:   (i32.div_s
+  ;; DEFAULT-NEXT:    (local.get $2)
+  ;; DEFAULT-NEXT:    (i32.add
+  ;; DEFAULT-NEXT:     (local.get $2)
+  ;; DEFAULT-NEXT:     (i32.const 1)
+  ;; DEFAULT-NEXT:    )
+  ;; DEFAULT-NEXT:   )
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $import
+  ;; DEFAULT-NEXT:   (i32.div_s
+  ;; DEFAULT-NEXT:    (local.get $3)
+  ;; DEFAULT-NEXT:    (i32.add
+  ;; DEFAULT-NEXT:     (local.get $3)
+  ;; DEFAULT-NEXT:     (i32.const 1)
+  ;; DEFAULT-NEXT:    )
+  ;; DEFAULT-NEXT:   )
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $import
+  ;; DEFAULT-NEXT:   (i32.div_s
+  ;; DEFAULT-NEXT:    (local.get $4)
+  ;; DEFAULT-NEXT:    (i32.add
+  ;; DEFAULT-NEXT:     (local.get $4)
+  ;; DEFAULT-NEXT:     (i32.const 1)
+  ;; DEFAULT-NEXT:    )
+  ;; DEFAULT-NEXT:   )
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT: )
+  ;; ZERO___:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
+  ;; ZERO___-NEXT:  (call $import
+  ;; ZERO___-NEXT:   (i32.div_s
+  ;; ZERO___-NEXT:    (local.get $0)
+  ;; ZERO___-NEXT:    (i32.add
+  ;; ZERO___-NEXT:     (local.get $0)
+  ;; ZERO___-NEXT:     (i32.const 1)
+  ;; ZERO___-NEXT:    )
+  ;; ZERO___-NEXT:   )
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $import
+  ;; ZERO___-NEXT:   (i32.div_s
+  ;; ZERO___-NEXT:    (local.get $1)
+  ;; ZERO___-NEXT:    (i32.add
+  ;; ZERO___-NEXT:     (local.get $1)
+  ;; ZERO___-NEXT:     (i32.const 1)
+  ;; ZERO___-NEXT:    )
+  ;; ZERO___-NEXT:   )
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $import
+  ;; ZERO___-NEXT:   (i32.div_s
+  ;; ZERO___-NEXT:    (local.get $2)
+  ;; ZERO___-NEXT:    (i32.add
+  ;; ZERO___-NEXT:     (local.get $2)
+  ;; ZERO___-NEXT:     (i32.const 1)
+  ;; ZERO___-NEXT:    )
+  ;; ZERO___-NEXT:   )
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $import
+  ;; ZERO___-NEXT:   (i32.div_s
+  ;; ZERO___-NEXT:    (local.get $3)
+  ;; ZERO___-NEXT:    (i32.add
+  ;; ZERO___-NEXT:     (local.get $3)
+  ;; ZERO___-NEXT:     (i32.const 1)
+  ;; ZERO___-NEXT:    )
+  ;; ZERO___-NEXT:   )
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $import
+  ;; ZERO___-NEXT:   (i32.div_s
+  ;; ZERO___-NEXT:    (local.get $4)
+  ;; ZERO___-NEXT:    (i32.add
+  ;; ZERO___-NEXT:     (local.get $4)
+  ;; ZERO___-NEXT:     (i32.const 1)
+  ;; ZERO___-NEXT:    )
+  ;; ZERO___-NEXT:   )
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT: )
+  ;; THIRD__:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
+  ;; THIRD__-NEXT:  (call $import
+  ;; THIRD__-NEXT:   (i32.div_s
+  ;; THIRD__-NEXT:    (local.get $0)
+  ;; THIRD__-NEXT:    (i32.add
+  ;; THIRD__-NEXT:     (local.get $0)
+  ;; THIRD__-NEXT:     (i32.const 1)
+  ;; THIRD__-NEXT:    )
+  ;; THIRD__-NEXT:   )
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (call $import
+  ;; THIRD__-NEXT:   (i32.div_s
+  ;; THIRD__-NEXT:    (local.get $1)
+  ;; THIRD__-NEXT:    (i32.add
+  ;; THIRD__-NEXT:     (local.get $1)
+  ;; THIRD__-NEXT:     (i32.const 1)
+  ;; THIRD__-NEXT:    )
+  ;; THIRD__-NEXT:   )
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (call $import
+  ;; THIRD__-NEXT:   (i32.div_s
+  ;; THIRD__-NEXT:    (local.get $2)
+  ;; THIRD__-NEXT:    (i32.add
+  ;; THIRD__-NEXT:     (local.get $2)
+  ;; THIRD__-NEXT:     (i32.const 1)
+  ;; THIRD__-NEXT:    )
+  ;; THIRD__-NEXT:   )
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (call $import
+  ;; THIRD__-NEXT:   (i32.div_s
+  ;; THIRD__-NEXT:    (local.get $3)
+  ;; THIRD__-NEXT:    (i32.add
+  ;; THIRD__-NEXT:     (local.get $3)
+  ;; THIRD__-NEXT:     (i32.const 1)
+  ;; THIRD__-NEXT:    )
+  ;; THIRD__-NEXT:   )
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (call $import
+  ;; THIRD__-NEXT:   (i32.div_s
+  ;; THIRD__-NEXT:    (local.get $4)
+  ;; THIRD__-NEXT:    (i32.add
+  ;; THIRD__-NEXT:     (local.get $4)
+  ;; THIRD__-NEXT:     (i32.const 1)
+  ;; THIRD__-NEXT:    )
+  ;; THIRD__-NEXT:   )
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT: )
+  ;; 2THIRDS:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
+  ;; 2THIRDS-NEXT:  (call $import
+  ;; 2THIRDS-NEXT:   (i32.div_s
+  ;; 2THIRDS-NEXT:    (local.get $0)
+  ;; 2THIRDS-NEXT:    (i32.add
+  ;; 2THIRDS-NEXT:     (local.get $0)
+  ;; 2THIRDS-NEXT:     (i32.const 1)
+  ;; 2THIRDS-NEXT:    )
+  ;; 2THIRDS-NEXT:   )
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (call $import
+  ;; 2THIRDS-NEXT:   (i32.div_s
+  ;; 2THIRDS-NEXT:    (local.get $1)
+  ;; 2THIRDS-NEXT:    (i32.add
+  ;; 2THIRDS-NEXT:     (local.get $1)
+  ;; 2THIRDS-NEXT:     (i32.const 1)
+  ;; 2THIRDS-NEXT:    )
+  ;; 2THIRDS-NEXT:   )
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (call $import
+  ;; 2THIRDS-NEXT:   (i32.div_s
+  ;; 2THIRDS-NEXT:    (local.get $2)
+  ;; 2THIRDS-NEXT:    (i32.add
+  ;; 2THIRDS-NEXT:     (local.get $2)
+  ;; 2THIRDS-NEXT:     (i32.const 1)
+  ;; 2THIRDS-NEXT:    )
+  ;; 2THIRDS-NEXT:   )
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (call $import
+  ;; 2THIRDS-NEXT:   (i32.div_s
+  ;; 2THIRDS-NEXT:    (local.get $3)
+  ;; 2THIRDS-NEXT:    (i32.add
+  ;; 2THIRDS-NEXT:     (local.get $3)
+  ;; 2THIRDS-NEXT:     (i32.const 1)
+  ;; 2THIRDS-NEXT:    )
+  ;; 2THIRDS-NEXT:   )
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (call $import
+  ;; 2THIRDS-NEXT:   (i32.div_s
+  ;; 2THIRDS-NEXT:    (local.get $4)
+  ;; 2THIRDS-NEXT:    (i32.add
+  ;; 2THIRDS-NEXT:     (local.get $4)
+  ;; 2THIRDS-NEXT:     (i32.const 1)
+  ;; 2THIRDS-NEXT:    )
+  ;; 2THIRDS-NEXT:   )
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT: )
+  ;; HUNDRED:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
+  ;; HUNDRED-NEXT:  (call $import
+  ;; HUNDRED-NEXT:   (i32.div_s
+  ;; HUNDRED-NEXT:    (local.get $0)
+  ;; HUNDRED-NEXT:    (i32.add
+  ;; HUNDRED-NEXT:     (local.get $0)
+  ;; HUNDRED-NEXT:     (i32.const 1)
+  ;; HUNDRED-NEXT:    )
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (call $import
+  ;; HUNDRED-NEXT:   (i32.div_s
+  ;; HUNDRED-NEXT:    (local.get $1)
+  ;; HUNDRED-NEXT:    (i32.add
+  ;; HUNDRED-NEXT:     (local.get $1)
+  ;; HUNDRED-NEXT:     (i32.const 1)
+  ;; HUNDRED-NEXT:    )
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (call $import
+  ;; HUNDRED-NEXT:   (i32.div_s
+  ;; HUNDRED-NEXT:    (local.get $2)
+  ;; HUNDRED-NEXT:    (i32.add
+  ;; HUNDRED-NEXT:     (local.get $2)
+  ;; HUNDRED-NEXT:     (i32.const 1)
+  ;; HUNDRED-NEXT:    )
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (call $import
+  ;; HUNDRED-NEXT:   (i32.div_s
+  ;; HUNDRED-NEXT:    (local.get $3)
+  ;; HUNDRED-NEXT:    (i32.add
+  ;; HUNDRED-NEXT:     (local.get $3)
+  ;; HUNDRED-NEXT:     (i32.const 1)
+  ;; HUNDRED-NEXT:    )
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (call $import
+  ;; HUNDRED-NEXT:   (i32.div_s
+  ;; HUNDRED-NEXT:    (local.get $4)
+  ;; HUNDRED-NEXT:    (i32.add
+  ;; HUNDRED-NEXT:     (local.get $4)
+  ;; HUNDRED-NEXT:     (i32.const 1)
+  ;; HUNDRED-NEXT:    )
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT: )
   (func $target (param $a i32) (param $b i32) (param $c i32) (param $d i32) (param $e i32)
     ;; This function takes five parameters and uses each one to do some work. In
     ;; Each of the following identical calls, when we know one of the five
@@ -64,8 +344,189 @@
     )
   )
 
+  ;; DEFAULT:      (func $calls (type $0) (param $x i32)
+  ;; DEFAULT-NEXT:  (call $target_3)
+  ;; DEFAULT-NEXT:  (call $target_4
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $target_5
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $target_6
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $target_7
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $target
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT: )
+  ;; ZERO___:      (func $calls (type $0) (param $x i32)
+  ;; ZERO___-NEXT:  (call $target_3)
+  ;; ZERO___-NEXT:  (call $target_4
+  ;; ZERO___-NEXT:   (local.get $x)
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $target_5
+  ;; ZERO___-NEXT:   (local.get $x)
+  ;; ZERO___-NEXT:   (local.get $x)
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $target_6
+  ;; ZERO___-NEXT:   (local.get $x)
+  ;; ZERO___-NEXT:   (local.get $x)
+  ;; ZERO___-NEXT:   (local.get $x)
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $target_7
+  ;; ZERO___-NEXT:   (local.get $x)
+  ;; ZERO___-NEXT:   (local.get $x)
+  ;; ZERO___-NEXT:   (local.get $x)
+  ;; ZERO___-NEXT:   (local.get $x)
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $target
+  ;; ZERO___-NEXT:   (local.get $x)
+  ;; ZERO___-NEXT:   (local.get $x)
+  ;; ZERO___-NEXT:   (local.get $x)
+  ;; ZERO___-NEXT:   (local.get $x)
+  ;; ZERO___-NEXT:   (local.get $x)
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT: )
+  ;; THIRD__:      (func $calls (type $0) (param $x i32)
+  ;; THIRD__-NEXT:  (call $target_3)
+  ;; THIRD__-NEXT:  (call $target_4
+  ;; THIRD__-NEXT:   (local.get $x)
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (call $target_5
+  ;; THIRD__-NEXT:   (local.get $x)
+  ;; THIRD__-NEXT:   (local.get $x)
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (call $target
+  ;; THIRD__-NEXT:   (local.get $x)
+  ;; THIRD__-NEXT:   (local.get $x)
+  ;; THIRD__-NEXT:   (local.get $x)
+  ;; THIRD__-NEXT:   (i32.const 42)
+  ;; THIRD__-NEXT:   (i32.const 42)
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (call $target
+  ;; THIRD__-NEXT:   (local.get $x)
+  ;; THIRD__-NEXT:   (local.get $x)
+  ;; THIRD__-NEXT:   (local.get $x)
+  ;; THIRD__-NEXT:   (local.get $x)
+  ;; THIRD__-NEXT:   (i32.const 42)
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (call $target
+  ;; THIRD__-NEXT:   (local.get $x)
+  ;; THIRD__-NEXT:   (local.get $x)
+  ;; THIRD__-NEXT:   (local.get $x)
+  ;; THIRD__-NEXT:   (local.get $x)
+  ;; THIRD__-NEXT:   (local.get $x)
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT: )
+  ;; 2THIRDS:      (func $calls (type $0) (param $x i32)
+  ;; 2THIRDS-NEXT:  (call $target
+  ;; 2THIRDS-NEXT:   (i32.const 42)
+  ;; 2THIRDS-NEXT:   (i32.const 42)
+  ;; 2THIRDS-NEXT:   (i32.const 42)
+  ;; 2THIRDS-NEXT:   (i32.const 42)
+  ;; 2THIRDS-NEXT:   (i32.const 42)
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (call $target
+  ;; 2THIRDS-NEXT:   (local.get $x)
+  ;; 2THIRDS-NEXT:   (i32.const 42)
+  ;; 2THIRDS-NEXT:   (i32.const 42)
+  ;; 2THIRDS-NEXT:   (i32.const 42)
+  ;; 2THIRDS-NEXT:   (i32.const 42)
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (call $target
+  ;; 2THIRDS-NEXT:   (local.get $x)
+  ;; 2THIRDS-NEXT:   (local.get $x)
+  ;; 2THIRDS-NEXT:   (i32.const 42)
+  ;; 2THIRDS-NEXT:   (i32.const 42)
+  ;; 2THIRDS-NEXT:   (i32.const 42)
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (call $target
+  ;; 2THIRDS-NEXT:   (local.get $x)
+  ;; 2THIRDS-NEXT:   (local.get $x)
+  ;; 2THIRDS-NEXT:   (local.get $x)
+  ;; 2THIRDS-NEXT:   (i32.const 42)
+  ;; 2THIRDS-NEXT:   (i32.const 42)
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (call $target
+  ;; 2THIRDS-NEXT:   (local.get $x)
+  ;; 2THIRDS-NEXT:   (local.get $x)
+  ;; 2THIRDS-NEXT:   (local.get $x)
+  ;; 2THIRDS-NEXT:   (local.get $x)
+  ;; 2THIRDS-NEXT:   (i32.const 42)
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (call $target
+  ;; 2THIRDS-NEXT:   (local.get $x)
+  ;; 2THIRDS-NEXT:   (local.get $x)
+  ;; 2THIRDS-NEXT:   (local.get $x)
+  ;; 2THIRDS-NEXT:   (local.get $x)
+  ;; 2THIRDS-NEXT:   (local.get $x)
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT: )
+  ;; HUNDRED:      (func $calls (type $0) (param $x i32)
+  ;; HUNDRED-NEXT:  (call $target
+  ;; HUNDRED-NEXT:   (i32.const 42)
+  ;; HUNDRED-NEXT:   (i32.const 42)
+  ;; HUNDRED-NEXT:   (i32.const 42)
+  ;; HUNDRED-NEXT:   (i32.const 42)
+  ;; HUNDRED-NEXT:   (i32.const 42)
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (call $target
+  ;; HUNDRED-NEXT:   (local.get $x)
+  ;; HUNDRED-NEXT:   (i32.const 42)
+  ;; HUNDRED-NEXT:   (i32.const 42)
+  ;; HUNDRED-NEXT:   (i32.const 42)
+  ;; HUNDRED-NEXT:   (i32.const 42)
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (call $target
+  ;; HUNDRED-NEXT:   (local.get $x)
+  ;; HUNDRED-NEXT:   (local.get $x)
+  ;; HUNDRED-NEXT:   (i32.const 42)
+  ;; HUNDRED-NEXT:   (i32.const 42)
+  ;; HUNDRED-NEXT:   (i32.const 42)
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (call $target
+  ;; HUNDRED-NEXT:   (local.get $x)
+  ;; HUNDRED-NEXT:   (local.get $x)
+  ;; HUNDRED-NEXT:   (local.get $x)
+  ;; HUNDRED-NEXT:   (i32.const 42)
+  ;; HUNDRED-NEXT:   (i32.const 42)
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (call $target
+  ;; HUNDRED-NEXT:   (local.get $x)
+  ;; HUNDRED-NEXT:   (local.get $x)
+  ;; HUNDRED-NEXT:   (local.get $x)
+  ;; HUNDRED-NEXT:   (local.get $x)
+  ;; HUNDRED-NEXT:   (i32.const 42)
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (call $target
+  ;; HUNDRED-NEXT:   (local.get $x)
+  ;; HUNDRED-NEXT:   (local.get $x)
+  ;; HUNDRED-NEXT:   (local.get $x)
+  ;; HUNDRED-NEXT:   (local.get $x)
+  ;; HUNDRED-NEXT:   (local.get $x)
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT: )
   (func $calls (param $x i32)
     ;; Call the target with an increasing amount of non-constant params, 0-5.
+    ;;
+    ;; With 5 unknowns, the call context is trivial and we do nothing. As a
+    ;; result, ZERO will monomorphize all but the last. THIRD requires a
+    ;; significant benefit, and will only optimize 3 out of the first 5.
+    ;; 2THIRDS and HUNDRED demand yet more and optimize nothing. XXX
+
     (call $target
       (i32.const 42)
       (i32.const 42)
@@ -110,3 +571,374 @@
     )
   )
 )
+;; DEFAULT:      (func $target_3 (type $2)
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.const 0)
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.const 0)
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.const 0)
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.const 0)
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.const 0)
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT: )
+
+;; DEFAULT:      (func $target_4 (type $0) (param $0 i32)
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.div_s
+;; DEFAULT-NEXT:    (local.get $0)
+;; DEFAULT-NEXT:    (i32.add
+;; DEFAULT-NEXT:     (local.get $0)
+;; DEFAULT-NEXT:     (i32.const 1)
+;; DEFAULT-NEXT:    )
+;; DEFAULT-NEXT:   )
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.const 0)
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.const 0)
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.const 0)
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.const 0)
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT: )
+
+;; DEFAULT:      (func $target_5 (type $3) (param $0 i32) (param $1 i32)
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.div_s
+;; DEFAULT-NEXT:    (local.get $0)
+;; DEFAULT-NEXT:    (i32.add
+;; DEFAULT-NEXT:     (local.get $0)
+;; DEFAULT-NEXT:     (i32.const 1)
+;; DEFAULT-NEXT:    )
+;; DEFAULT-NEXT:   )
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.div_s
+;; DEFAULT-NEXT:    (local.get $1)
+;; DEFAULT-NEXT:    (i32.add
+;; DEFAULT-NEXT:     (local.get $1)
+;; DEFAULT-NEXT:     (i32.const 1)
+;; DEFAULT-NEXT:    )
+;; DEFAULT-NEXT:   )
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.const 0)
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.const 0)
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.const 0)
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT: )
+
+;; DEFAULT:      (func $target_6 (type $4) (param $0 i32) (param $1 i32) (param $2 i32)
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.div_s
+;; DEFAULT-NEXT:    (local.get $0)
+;; DEFAULT-NEXT:    (i32.add
+;; DEFAULT-NEXT:     (local.get $0)
+;; DEFAULT-NEXT:     (i32.const 1)
+;; DEFAULT-NEXT:    )
+;; DEFAULT-NEXT:   )
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.div_s
+;; DEFAULT-NEXT:    (local.get $1)
+;; DEFAULT-NEXT:    (i32.add
+;; DEFAULT-NEXT:     (local.get $1)
+;; DEFAULT-NEXT:     (i32.const 1)
+;; DEFAULT-NEXT:    )
+;; DEFAULT-NEXT:   )
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.div_s
+;; DEFAULT-NEXT:    (local.get $2)
+;; DEFAULT-NEXT:    (i32.add
+;; DEFAULT-NEXT:     (local.get $2)
+;; DEFAULT-NEXT:     (i32.const 1)
+;; DEFAULT-NEXT:    )
+;; DEFAULT-NEXT:   )
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.const 0)
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.const 0)
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT: )
+
+;; DEFAULT:      (func $target_7 (type $5) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32)
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.div_s
+;; DEFAULT-NEXT:    (local.get $0)
+;; DEFAULT-NEXT:    (i32.add
+;; DEFAULT-NEXT:     (local.get $0)
+;; DEFAULT-NEXT:     (i32.const 1)
+;; DEFAULT-NEXT:    )
+;; DEFAULT-NEXT:   )
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.div_s
+;; DEFAULT-NEXT:    (local.get $1)
+;; DEFAULT-NEXT:    (i32.add
+;; DEFAULT-NEXT:     (local.get $1)
+;; DEFAULT-NEXT:     (i32.const 1)
+;; DEFAULT-NEXT:    )
+;; DEFAULT-NEXT:   )
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.div_s
+;; DEFAULT-NEXT:    (local.get $2)
+;; DEFAULT-NEXT:    (i32.add
+;; DEFAULT-NEXT:     (local.get $2)
+;; DEFAULT-NEXT:     (i32.const 1)
+;; DEFAULT-NEXT:    )
+;; DEFAULT-NEXT:   )
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.div_s
+;; DEFAULT-NEXT:    (local.get $3)
+;; DEFAULT-NEXT:    (i32.add
+;; DEFAULT-NEXT:     (local.get $3)
+;; DEFAULT-NEXT:     (i32.const 1)
+;; DEFAULT-NEXT:    )
+;; DEFAULT-NEXT:   )
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import
+;; DEFAULT-NEXT:   (i32.const 0)
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT: )
+
+;; ZERO___:      (func $target_3 (type $2)
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.const 0)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.const 0)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.const 0)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.const 0)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.const 0)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT: )
+
+;; ZERO___:      (func $target_4 (type $0) (param $0 i32)
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.div_s
+;; ZERO___-NEXT:    (local.get $0)
+;; ZERO___-NEXT:    (i32.add
+;; ZERO___-NEXT:     (local.get $0)
+;; ZERO___-NEXT:     (i32.const 1)
+;; ZERO___-NEXT:    )
+;; ZERO___-NEXT:   )
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.const 0)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.const 0)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.const 0)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.const 0)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT: )
+
+;; ZERO___:      (func $target_5 (type $3) (param $0 i32) (param $1 i32)
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.div_s
+;; ZERO___-NEXT:    (local.get $0)
+;; ZERO___-NEXT:    (i32.add
+;; ZERO___-NEXT:     (local.get $0)
+;; ZERO___-NEXT:     (i32.const 1)
+;; ZERO___-NEXT:    )
+;; ZERO___-NEXT:   )
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.div_s
+;; ZERO___-NEXT:    (local.get $1)
+;; ZERO___-NEXT:    (i32.add
+;; ZERO___-NEXT:     (local.get $1)
+;; ZERO___-NEXT:     (i32.const 1)
+;; ZERO___-NEXT:    )
+;; ZERO___-NEXT:   )
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.const 0)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.const 0)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.const 0)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT: )
+
+;; ZERO___:      (func $target_6 (type $4) (param $0 i32) (param $1 i32) (param $2 i32)
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.div_s
+;; ZERO___-NEXT:    (local.get $0)
+;; ZERO___-NEXT:    (i32.add
+;; ZERO___-NEXT:     (local.get $0)
+;; ZERO___-NEXT:     (i32.const 1)
+;; ZERO___-NEXT:    )
+;; ZERO___-NEXT:   )
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.div_s
+;; ZERO___-NEXT:    (local.get $1)
+;; ZERO___-NEXT:    (i32.add
+;; ZERO___-NEXT:     (local.get $1)
+;; ZERO___-NEXT:     (i32.const 1)
+;; ZERO___-NEXT:    )
+;; ZERO___-NEXT:   )
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.div_s
+;; ZERO___-NEXT:    (local.get $2)
+;; ZERO___-NEXT:    (i32.add
+;; ZERO___-NEXT:     (local.get $2)
+;; ZERO___-NEXT:     (i32.const 1)
+;; ZERO___-NEXT:    )
+;; ZERO___-NEXT:   )
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.const 0)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.const 0)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT: )
+
+;; ZERO___:      (func $target_7 (type $5) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32)
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.div_s
+;; ZERO___-NEXT:    (local.get $0)
+;; ZERO___-NEXT:    (i32.add
+;; ZERO___-NEXT:     (local.get $0)
+;; ZERO___-NEXT:     (i32.const 1)
+;; ZERO___-NEXT:    )
+;; ZERO___-NEXT:   )
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.div_s
+;; ZERO___-NEXT:    (local.get $1)
+;; ZERO___-NEXT:    (i32.add
+;; ZERO___-NEXT:     (local.get $1)
+;; ZERO___-NEXT:     (i32.const 1)
+;; ZERO___-NEXT:    )
+;; ZERO___-NEXT:   )
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.div_s
+;; ZERO___-NEXT:    (local.get $2)
+;; ZERO___-NEXT:    (i32.add
+;; ZERO___-NEXT:     (local.get $2)
+;; ZERO___-NEXT:     (i32.const 1)
+;; ZERO___-NEXT:    )
+;; ZERO___-NEXT:   )
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.div_s
+;; ZERO___-NEXT:    (local.get $3)
+;; ZERO___-NEXT:    (i32.add
+;; ZERO___-NEXT:     (local.get $3)
+;; ZERO___-NEXT:     (i32.const 1)
+;; ZERO___-NEXT:    )
+;; ZERO___-NEXT:   )
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import
+;; ZERO___-NEXT:   (i32.const 0)
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT: )
+
+;; THIRD__:      (func $target_3 (type $2)
+;; THIRD__-NEXT:  (call $import
+;; THIRD__-NEXT:   (i32.const 0)
+;; THIRD__-NEXT:  )
+;; THIRD__-NEXT:  (call $import
+;; THIRD__-NEXT:   (i32.const 0)
+;; THIRD__-NEXT:  )
+;; THIRD__-NEXT:  (call $import
+;; THIRD__-NEXT:   (i32.const 0)
+;; THIRD__-NEXT:  )
+;; THIRD__-NEXT:  (call $import
+;; THIRD__-NEXT:   (i32.const 0)
+;; THIRD__-NEXT:  )
+;; THIRD__-NEXT:  (call $import
+;; THIRD__-NEXT:   (i32.const 0)
+;; THIRD__-NEXT:  )
+;; THIRD__-NEXT: )
+
+;; THIRD__:      (func $target_4 (type $0) (param $0 i32)
+;; THIRD__-NEXT:  (call $import
+;; THIRD__-NEXT:   (i32.div_s
+;; THIRD__-NEXT:    (local.get $0)
+;; THIRD__-NEXT:    (i32.add
+;; THIRD__-NEXT:     (local.get $0)
+;; THIRD__-NEXT:     (i32.const 1)
+;; THIRD__-NEXT:    )
+;; THIRD__-NEXT:   )
+;; THIRD__-NEXT:  )
+;; THIRD__-NEXT:  (call $import
+;; THIRD__-NEXT:   (i32.const 0)
+;; THIRD__-NEXT:  )
+;; THIRD__-NEXT:  (call $import
+;; THIRD__-NEXT:   (i32.const 0)
+;; THIRD__-NEXT:  )
+;; THIRD__-NEXT:  (call $import
+;; THIRD__-NEXT:   (i32.const 0)
+;; THIRD__-NEXT:  )
+;; THIRD__-NEXT:  (call $import
+;; THIRD__-NEXT:   (i32.const 0)
+;; THIRD__-NEXT:  )
+;; THIRD__-NEXT: )
+
+;; THIRD__:      (func $target_5 (type $3) (param $0 i32) (param $1 i32)
+;; THIRD__-NEXT:  (call $import
+;; THIRD__-NEXT:   (i32.div_s
+;; THIRD__-NEXT:    (local.get $0)
+;; THIRD__-NEXT:    (i32.add
+;; THIRD__-NEXT:     (local.get $0)
+;; THIRD__-NEXT:     (i32.const 1)
+;; THIRD__-NEXT:    )
+;; THIRD__-NEXT:   )
+;; THIRD__-NEXT:  )
+;; THIRD__-NEXT:  (call $import
+;; THIRD__-NEXT:   (i32.div_s
+;; THIRD__-NEXT:    (local.get $1)
+;; THIRD__-NEXT:    (i32.add
+;; THIRD__-NEXT:     (local.get $1)
+;; THIRD__-NEXT:     (i32.const 1)
+;; THIRD__-NEXT:    )
+;; THIRD__-NEXT:   )
+;; THIRD__-NEXT:  )
+;; THIRD__-NEXT:  (call $import
+;; THIRD__-NEXT:   (i32.const 0)
+;; THIRD__-NEXT:  )
+;; THIRD__-NEXT:  (call $import
+;; THIRD__-NEXT:   (i32.const 0)
+;; THIRD__-NEXT:  )
+;; THIRD__-NEXT:  (call $import
+;; THIRD__-NEXT:   (i32.const 0)
+;; THIRD__-NEXT:  )
+;; THIRD__-NEXT: )
