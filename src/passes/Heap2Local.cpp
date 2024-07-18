@@ -931,6 +931,12 @@ struct Array2Struct : PostWalker<Array2Struct> {
     auto nullStruct = Type(structType, Nullable);
     auto nonNullStruct = Type(structType, NonNullable);
     for (auto* reached : analyzer.reached) {
+      if (reached->is<RefCast>()) {
+        // Casts must be handled later: We need to see the old type, and to
+        // potentially replace the cast based on that, see below.
+        continue;
+      }
+
       // We must check subtyping here because the allocation may be upcast as it
       // flows around. If we do see such upcasting then we are refining here and
       // must refinalize.
@@ -1032,6 +1038,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
   }
 
   // Some additional operations need special handling
+
   void visitRefTest(RefTest* curr) {
     if (!analyzer.reached.count(curr)) {
       return;
@@ -1048,6 +1055,21 @@ struct Array2Struct : PostWalker<Array2Struct> {
     int32_t result = Type::isSubType(originalType, curr->castType);
     replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
                                         builder.makeConst(Literal(result))));
+  }
+
+  void visitRefCast(RefCast* curr) {
+    if (!analyzer.reached.count(curr)) {
+      return;
+    }
+
+    // As with RefTest, we need to check if the cast succeeds with the array
+    // type before we turn it into a struct type (as after that change, the
+    // outcome of the cast will look different). If we fail here, ensure that we
+    // trap with an unreachable.
+    if (!Type::isSubType(originalType, curr->type)) {
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
+                                          builder.makeUnreachable()));
+    }
   }
 
   // Get the value in an expression we know must contain a constant index.

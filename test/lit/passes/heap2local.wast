@@ -3345,7 +3345,12 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
-  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (local.set $2
   ;; CHECK-NEXT:    (i32.const 100)
@@ -4300,6 +4305,115 @@
     (array.get $array16
       (local.get $temp)
       (i32.const 1)
+    )
+  )
+)
+
+;; Array casts to structs and arrays.
+(module
+ ;; CHECK:      (type $1 (func))
+
+ ;; CHECK:      (type $0 (func (result (ref struct))))
+ (type $0 (func (result (ref struct))))
+ ;; CHECK:      (type $3 (func (result (ref array))))
+
+ ;; CHECK:      (type $array (array i8))
+ (type $array (array i8))
+
+  ;; CHECK:      (func $array.cast.struct (type $0) (result (ref struct))
+  ;; CHECK-NEXT:  (local $eq (ref eq))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $array.cast.struct (result (ref struct))
+    (local $eq (ref eq))
+    ;; This cast will fail: we cast an array to struct. That we go through
+    ;; (ref eq) in the middle, which seems like it could cast to struct, should
+    ;; not confuse us. And, as the cast fails, the reference does not escape.
+    ;; We can optimize here and will emit an unreachable for the failing cast.
+    (ref.cast (ref struct)
+      (local.tee $eq
+        (array.new_fixed $array 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array.cast.array (type $3) (result (ref array))
+  ;; CHECK-NEXT:  (local $eq (ref eq))
+  ;; CHECK-NEXT:  (ref.cast (ref array)
+  ;; CHECK-NEXT:   (local.tee $eq
+  ;; CHECK-NEXT:    (array.new_fixed $array 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.cast.array (result (ref array))
+    (local $eq (ref eq))
+    ;; Now we cast to array, and the cast succeeds, so we escape, and do
+    ;; nothing to optimize.
+    (ref.cast (ref array)
+      (local.tee $eq
+        (array.new_fixed $array 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array.cast.array.set (type $1)
+  ;; CHECK-NEXT:  (local $eq (ref eq))
+  ;; CHECK-NEXT:  (local $array (ref array))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.cast.array.set
+    (local $eq (ref eq))
+    (local $array (ref array))
+    ;; As above, but now we store the result in a local rather than return it
+    ;; out, so it does not escape.
+    (local.set $array
+      (ref.cast (ref array)
+        (local.tee $eq
+          (array.new_fixed $array 0)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array.cast.struct.set (type $1)
+  ;; CHECK-NEXT:  (local $eq (ref eq))
+  ;; CHECK-NEXT:  (local $struct (ref struct))
+  ;; CHECK-NEXT:  (local.tee $struct
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array.cast.struct.set
+    (local $eq (ref eq))
+    (local $struct (ref struct))
+    ;; As above, but now the cast fails and is stored to struct. We do not
+    ;; escape and we emit an unreachable for the cast.
+    (local.set $struct
+      (ref.cast (ref struct)
+        (local.tee $eq
+          (array.new_fixed $array 0)
+        )
+      )
     )
   )
 )
