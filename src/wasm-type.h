@@ -385,6 +385,10 @@ public:
 
   Shareability getShared() const;
 
+  bool isMaybeShared(BasicHeapType type) {
+    return isBasic() && getBasic(Unshared) == type;
+  }
+
   Signature getSignature() const;
   Continuation getContinuation() const;
 
