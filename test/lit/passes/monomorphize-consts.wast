@@ -61,7 +61,7 @@
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
   (func $calls (param $x i32) (param $y i32)
-    ;; All but the parameter are constants that can be handled.
+    ;; All but the local.get are constants that can be handled.
     (call $target
       (i32.const 1)
       (local.get $x)
