@@ -614,16 +614,6 @@ struct Monomorphize : public Pass {
     std::vector<Expression*> newOperands;
     context.buildFromCall(info, newOperands, wasm, getPassOptions());
 
-    // If we ended up with too many operands, give up. In theory we could try to
-    // monomorphize in ways that use less params, but this is a rare situation
-    // that is not easy to handle (when we move something into the context, it
-    // *removes* a param, which is good, but if it has many children and end up
-    // not moved, that is where the problem happens, so we'd need to backtrack).
-    // TODO: Consider doing more here.
-    if (context.operands.size() >= MaxParams) {
-      return;
-    }
-
     // See if we've already evaluated this function + call context. If so, then
     // we've memoized the result.
     auto iter = funcContextMap.find({target, context});
@@ -647,6 +637,16 @@ struct Monomorphize : public Pass {
     // Create the monomorphized function that includes the call context.
     std::unique_ptr<Function> monoFunc =
       makeMonoFunctionWithContext(func, context, wasm);
+
+    // If we ended up with too many params, give up. In theory we could try to
+    // monomorphize in ways that use less params, but this is a rare situation
+    // that is not easy to handle (when we move something into the context, it
+    // *removes* a param, which is good, but if it has many children and end up
+    // not moved, that is where the problem happens, so we'd need to backtrack).
+    // TODO: Consider doing more here.
+    if (monoFunc->getNumParams() >= MaxParams) {
+      return;
+    }
 
     // Decide whether it is worth using the monomorphized function.
     auto worthwhile = true;
