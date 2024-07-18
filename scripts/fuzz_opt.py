@@ -147,8 +147,8 @@ def randomize_feature_opts():
         # code paths, and also allows all initial contents to run.
 
         # The shared-everything feature is new and we want to fuzz it, but it
-        # also currently disables fuzzing V8, so disable it half the time.
-        if random.random() < 0.5:
+        # also currently disables fuzzing V8, so disable it most of the time.
+        if random.random() < 0.9:
             FEATURE_OPTS.append('--disable-shared-everything')
 
     print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
