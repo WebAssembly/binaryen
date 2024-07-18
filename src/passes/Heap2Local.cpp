@@ -862,6 +862,11 @@ struct Array2Struct : PostWalker<Array2Struct> {
   // The original type of the allocation, before we turn it into a struct.
   Type originalType;
 
+  // The type of the struct we are changing to (nullable and non-nullable
+  // variations).
+  Type nullStruct;
+  Type nonNullStruct;
+
   Array2Struct(Expression* allocation,
                EscapeAnalyzer& analyzer,
                Function* func,
@@ -928,8 +933,8 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // lowered away to locals anyhow.
     auto nullArray = Type(arrayType, Nullable);
     auto nonNullArray = Type(arrayType, NonNullable);
-    auto nullStruct = Type(structType, Nullable);
-    auto nonNullStruct = Type(structType, NonNullable);
+    nullStruct = Type(structType, Nullable);
+    nonNullStruct = Type(structType, NonNullable);
     for (auto* reached : analyzer.reached) {
       if (reached->is<RefCast>()) {
         // Casts must be handled later: We need to see the old type, and to
@@ -1069,7 +1074,13 @@ struct Array2Struct : PostWalker<Array2Struct> {
     if (!Type::isSubType(originalType, curr->type)) {
       replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
                                           builder.makeUnreachable()));
+    } else {
+      // The cast succeeds. Update the type.
+      curr->type = nonNullStruct;
     }
+
+    // Regardless of how we altered the type here, refinalize.
+    refinalize = true;
   }
 
   // Get the value in an expression we know must contain a constant index.
