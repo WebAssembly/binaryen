@@ -4417,7 +4417,7 @@
   (func $array.cast.struct.set
     (local $eq (ref eq))
     (local $struct (ref struct))
-    ;; As above, but now the cast fails and is stored to struct. We do not
+    ;; As above, but now the cast fails and is stored to a struct local. We do not
     ;; escape and we emit an unreachable for the cast.
     (local.set $struct
       (ref.cast (ref struct)
