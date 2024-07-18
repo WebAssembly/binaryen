@@ -12,38 +12,28 @@
 ;; RUN: foreach %s %t wasm-opt --monomorphize        -S -o - | filecheck %s --check-prefix CAREFUL
 
 (module
-  ;; ALWAYS:      (type $0 (func (result i32)))
+  ;; ALWAYS:      (type $0 (func (param i32) (result i32)))
 
   ;; ALWAYS:      (type $1 (func (param i32 i32) (result i32)))
 
-  ;; ALWAYS:      (type $2 (func (param i32) (result i32)))
-
-  ;; ALWAYS:      (func $call (result i32)
+  ;; ALWAYS:      (func $call (param $x i32) (result i32)
   ;; ALWAYS-NEXT:  (call $target_2
-  ;; ALWAYS-NEXT:   (i32.eqz
-  ;; ALWAYS-NEXT:    (i32.const 2)
-  ;; ALWAYS-NEXT:   )
+  ;; ALWAYS-NEXT:   (local.get $x)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
-  ;; CAREFUL:      (type $0 (func (result i32)))
+  ;; CAREFUL:      (type $0 (func (param i32) (result i32)))
 
   ;; CAREFUL:      (type $1 (func (param i32 i32) (result i32)))
 
-  ;; CAREFUL:      (type $2 (func (param i32) (result i32)))
-
-  ;; CAREFUL:      (func $call (result i32)
+  ;; CAREFUL:      (func $call (param $x i32) (result i32)
   ;; CAREFUL-NEXT:  (call $target_2
-  ;; CAREFUL-NEXT:   (i32.eqz
-  ;; CAREFUL-NEXT:    (i32.const 2)
-  ;; CAREFUL-NEXT:   )
+  ;; CAREFUL-NEXT:   (local.get $x)
   ;; CAREFUL-NEXT:  )
   ;; CAREFUL-NEXT: )
-  (func $call (result i32)
+  (func $call (param $x i32) (result i32)
     ;; The second parameter can be monomorphized.
     (call $target
-      (i32.eqz
-        (i32.const 2)
-      )
+      (local.get $x)
       (i32.const 1)
     )
   )

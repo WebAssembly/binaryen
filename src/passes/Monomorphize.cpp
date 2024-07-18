@@ -85,13 +85,18 @@
 //       compute the LUB of a bunch of calls to a target and then investigate
 //       that one case and use it in all those callers.
 // TODO: Not just direct calls? But updating vtables is complex.
+// TODO: Should we look at no-inline flags? We do move code between functions,
+//       but it isn't normal inlining.
 //
 
 #include "ir/cost.h"
+#include "ir/effects.h"
 #include "ir/find_all.h"
+#include "ir/iteration.h"
 #include "ir/manipulation.h"
 #include "ir/module-utils.h"
 #include "ir/names.h"
+#include "ir/properties.h"
 #include "ir/return-utils.h"
 #include "ir/type-updating.h"
 #include "ir/utils.h"
@@ -212,33 +217,204 @@ struct CallContext {
   // remaining values by updating |newOperands| (for example, if all the values
   // sent are constants, then |newOperands| will end up empty, as we have
   // nothing left to send).
+  //
+  // The approach implemented here tries to move as much code into the call
+  // context as possible. That may not always be helpful, say in situations like
+  // this:
+  //
+  //  (call $foo
+  //    (i32.add
+  //      (local.get $x)
+  //      (local.get $y)
+  //    )
+  //  )
+  //
+  // If we move the i32.add into $foo then it will still be adding two unknown
+  // values (which will be parameters rather than locals). Moving the add might
+  // just increase code size if so. However, there are many other situations
+  // where the more code, the better:
+  //
+  //  (call $foo
+  //    (i32.eqz
+  //      (local.get $x)
+  //    )
+  //  )
+  //
+  // While the value remains unknown, after moving the i32.eqz into the target
+  // function we may be able to use the fact that it has at most 1 bit set.
+  // Even larger benefits can happen in WasmGC:
+  //
+  //  (call $foo
+  //    (struct.new $T
+  //      (local.get $x)
+  //      (local.get $y)
+  //    )
+  //  )
+  //
+  // If the struct never escapes then we may be able to remove the allocation
+  // after monomorphization, even if we know nothing about the values in its
+  // fields.
+  //
+  // TODO: Explore other options that are more careful about how much code is
+  //       moved.
   void buildFromCall(CallInfo& info,
                      std::vector<Expression*>& newOperands,
-                     Module& wasm) {
+                     Module& wasm,
+                     const PassOptions& options) {
     Builder builder(wasm);
 
+    // First, find the things we can move into the context and the things we
+    // cannot. Some things simply cannot be moved out of the calling function,
+    // such as a local.set, but also we need to handle effect interactions among
+    // the operands, because each time we move code into the context we are
+    // pushing it into the called function, which changes the order of
+    // operations, for example:
+    //
+    //  (call $foo
+    //    (first
+    //      (a)
+    //    )
+    //    (second
+    //      (b)
+    //    )
+    //  )
+    //
+    //  (func $foo (param $first) (param $second)
+    //  )
+    //
+    // If we move |first| and |a| into the context then we get this:
+    //
+    //  (call $foo
+    //    ;; |first| and |a| were removed from here.
+    //    (second
+    //      (b)
+    //    )
+    //  )
+    //
+    //  (func $foo (param $second)
+    //    ;; |first| is now a local, and we assign it inside the called func.
+    //    (local $first)
+    //    (local.set $first
+    //      (first
+    //        (a)
+    //      )
+    //    )
+    //  )
+    //
+    // After this code motion we execute |second| and |b| *before* the call, and
+    // |first| and |a| after, so we cannot do this transformation if the order
+    // of operations between them matters.
+    //
+    // The key property here is that all things that are moved into the context
+    // (moved into the monomorphized function) remain ordered with respect to
+    // each other, but must be moved past all non-moving things after them. For
+    // example, say we want to move B and D in this list (of expressions in
+    // execution order):
+    //
+    //  A, B, C, D, E
+    //
+    // After moving B and D we end up with this:
+    //
+    //  A, C, E  and executing later in the monomorphized function:  B, D
+    //
+    // Then we must be able to move B past C and E, and D past E. It is simplest
+    // to compute this in reverse order, starting from E and going back, and
+    // then each time we want to move something we can check if it can cross
+    // over all the non-moving effects we've seen so far. To compute this, first
+    // list out the post-order of the expressions, and then we'll iterate in
+    // reverse.
+    struct Lister
+      : public PostWalker<Lister, UnifiedExpressionVisitor<Lister>> {
+      std::vector<Expression*> list;
+      void visitExpression(Expression* curr) { list.push_back(curr); }
+    } lister;
+    // As a quick estimate, we need space for at least the operands.
+    lister.list.reserve(operands.size());
+
     for (auto* operand : info.call->operands) {
-      // Process the operand. This is a copy operation, as we are trying to move
-      // (copy) code from the callsite into the called function. When we find we
-      // can copy then we do so, and when we cannot that value remains as a
-      // value sent from the call.
+      lister.walk(operand);
+    }
+
+    // Go in reverse post-order as explained earlier, noting what cannot be
+    // moved into the context, and while accumulating the effects that are not
+    // moving.
+    std::unordered_set<Expression*> immovable;
+    EffectAnalyzer nonMovingEffects(options, wasm);
+    for (auto i = int64_t(lister.list.size()) - 1; i >= 0; i--) {
+      auto* curr = lister.list[i];
+
+      // This may have been marked as immovable because of the parent. We do
+      // that because if a parent is immovable then we can't move the children
+      // into the context (if we did, they would execute after the parent, but
+      // it needs their values).
+      bool currImmovable = immovable.count(curr) > 0;
+      if (!currImmovable) {
+        // This might be movable or immovable. Check both effect interactions
+        // (as described before, we want to move this past immovable code) and
+        // reasons intrinsic to the expression itself that might prevent moving.
+        ShallowEffectAnalyzer currEffects(options, wasm, curr);
+        if (currEffects.invalidates(nonMovingEffects) ||
+            !canBeMovedIntoContext(curr, currEffects)) {
+          immovable.insert(curr);
+          currImmovable = true;
+        }
+      }
+
+      if (currImmovable) {
+        // Regardless of whether this was marked immovable because of the
+        // parent, or because we just found it cannot be moved, accumulate the
+        // effects, and also mark its immediate children (so that we do the same
+        // when we get to them).
+        nonMovingEffects.visit(curr);
+        for (auto* child : ChildIterator(curr)) {
+          immovable.insert(child);
+        }
+      }
+    }
+
+    // We now know which code can be moved and which cannot, so we can do the
+    // final processing of the call operands. We do this as a copy operation,
+    // copying as much as possible into the call context. Code that cannot be
+    // moved ends up as values sent to the monomorphized function.
+    //
+    // The copy operation works in pre-order, which allows us to override
+    // entire children as needed:
+    //
+    //  (call $foo
+    //    (problem
+    //      (a)
+    //    )
+    //    (later)
+    //  )
+    //
+    // We visit |problem| first, and if there is a problem that prevents us
+    // moving it into the context then we override the copy and then it and
+    // its child |a| remain in the caller (and |a| is never visited in the
+    // copy).
+    for (auto* operand : info.call->operands) {
       operands.push_back(ExpressionManipulator::flexibleCopy(
         operand, wasm, [&](Expression* child) -> Expression* {
-          if (canBeMovedIntoContext(child)) {
-            // This can be moved, great: let the copy happen.
+          if (!child) {
+            // This is an optional child that is not present. Let the copy of
+            // the nullptr happen.
             return nullptr;
           }
 
-          // This cannot be moved, so we stop here: this is a value that is sent
-          // into the monomorphized function. It is a new operand in the call,
-          // and in the context operands it is a local.get, that reads that
-          // value.
+          if (!immovable.count(child)) {
+            // This can be moved; let the copy happen.
+            return nullptr;
+          }
+
+          // This cannot be moved. Do not copy it into the call context. In the
+          // example above, |problem| remains as an operand on the call (so we
+          // add it to |newOperands|), and in the call context all we have is a
+          // local.get that reads that sent value.
           auto paramIndex = newOperands.size();
           newOperands.push_back(child);
           // TODO: If one operand is a tee and another a get, we could actually
           //       reuse the local, effectively showing the monomorphized
-          //       function that the values are the same. (But then the checks
-          //       later down to is<LocalGet> would need to check index too.)
+          //       function that the values are the same. EquivalentSets may
+          //       help here.
           return builder.makeLocalGet(paramIndex, child->type);
         }));
     }
@@ -247,12 +423,49 @@ struct CallContext {
   }
 
   // Checks whether an expression can be moved into the context.
-  bool canBeMovedIntoContext(Expression* curr) {
-    // Constant numbers, funcs, strings, etc. can all be copied, so it is ok to
-    // add them to the context.
-    // TODO: Allow global.get as well, and anything else that is purely
-    //       copyable.
-    return Properties::isSingleConstantExpression(curr);
+  bool canBeMovedIntoContext(Expression* curr,
+                             const ShallowEffectAnalyzer& effects) {
+    // Pretty much everything can be moved into the context if we can copy it
+    // between functions, such as constants, globals, etc. The things we cannot
+    // copy are now checked for.
+    if (effects.branchesOut || effects.hasExternalBreakTargets()) {
+      // This branches or returns. We can't move control flow between functions.
+      return false;
+    }
+    if (effects.accessesLocal()) {
+      // Reads/writes to local state cannot be moved around.
+      return false;
+    }
+    if (effects.calls) {
+      // We can in principle move calls, but for simplicity we avoid such
+      // situations (which might involve recursion etc.).
+      return false;
+    }
+    if (Properties::isControlFlowStructure(curr)) {
+      // We can in principle move entire control flow structures with their
+      // children, but for simplicity stop when we see one rather than look
+      // inside to see if we could transfer all its contents. (We would also
+      // need to be careful when handling If arms, etc.)
+      return false;
+    }
+    for (auto* child : ChildIterator(curr)) {
+      if (child->type.isTuple()) {
+        // Consider this:
+        //
+        //  (call $target
+        //    (tuple.extract 2 1
+        //      (local.get $tuple)
+        //    )
+        //  )
+        //
+        // We cannot move the tuple.extract into the context, because then the
+        // call would have a tuple param. While it is possible to split up the
+        // tuple, or to check if we can also move the children with the parent,
+        // for simplicity just ignore this rare situation.
+        return false;
+      }
+    }
+    return true;
   }
 
   // Check if a context is trivial relative to a call, that is, the context
@@ -389,7 +602,7 @@ struct Monomorphize : public Pass {
     // if we use that context.
     CallContext context;
     std::vector<Expression*> newOperands;
-    context.buildFromCall(info, newOperands, wasm);
+    context.buildFromCall(info, newOperands, wasm, getPassOptions());
 
     // See if we've already evaluated this function + call context. If so, then
     // we've memoized the result.
@@ -447,8 +660,22 @@ struct Monomorphize : public Pass {
       doOpts(func);
       doOpts(monoFunc.get());
 
+      // The cost before monomorphization is the old body + the context
+      // operands. The operands will be *removed* from the calling code if we
+      // optimize, and moved into the monomorphized function, so the proper
+      // comparison is the context + the old body, versus the new body (which
+      // includes the reverse-inlined call context).
       auto costBefore = CostAnalyzer(func->body).cost;
+      for (auto* operand : context.operands) {
+        // Note that a slight oddity is that we have *not* optimized the
+        // operands before. We optimize func before and after, but the operands
+        // are in the calling function, which we are not modifying here. In
+        // theory that might lead to false positives, if the call's operands are
+        // very unoptimized.
+        costBefore += CostAnalyzer(operand).cost;
+      }
       auto costAfter = CostAnalyzer(monoFunc->body).cost;
+
       // TODO: We should probably only accept improvements above some minimum,
       //       to avoid optimizing cases where we duplicate a huge function but
       //       only optimize a tiny part of it compared to the original.
@@ -486,14 +713,19 @@ struct Monomorphize : public Pass {
     // Copy the function as the base for the new one.
     auto newFunc = ModuleUtils::copyFunctionWithoutAdd(func, wasm, newName);
 
-    // Generate the new signature, and apply it to the new function.
+    // A local.get is a value that arrives in a parameter. Anything else is
+    // something that we are reverse-inlining into the function, so we don't
+    // need a param for it. Note that we might have multiple gets nested here,
+    // if we are copying part of the original parameter but not all children, so
+    // we scan each operand for all such local.gets.
+    //
+    // Use this information to generate the new signature, and apply it to the
+    // new function.
     std::vector<Type> newParams;
     for (auto* operand : context.operands) {
-      // A local.get is a value that arrives in a parameter. Anything else is
-      // something that we are reverse-inlining into the function, so we don't
-      // need a param for it.
-      if (operand->is<LocalGet>()) {
-        newParams.push_back(operand->type);
+      FindAll<LocalGet> gets(operand);
+      for (auto* get : gets.list) {
+        newParams.push_back(get->type);
       }
     }
     // If we were dropped then we are pulling the drop into the monomorphized
@@ -501,7 +733,7 @@ struct Monomorphize : public Pass {
     auto newResults = context.dropped ? Type::none : func->getResults();
     newFunc->type = Signature(Type(newParams), newResults);
 
-    // We must update local indexes: the new function has a  potentially
+    // We must update local indexes: the new function has a potentially
     // different number of parameters, and parameters are at the very bottom of
     // the local index space. We are also replacing old params with vars. To
     // track this, map each old index to the new one.
@@ -559,7 +791,7 @@ struct Monomorphize : public Pass {
     //    (local.get $param)                 ;; copied old body
     //  )
     //
-    // We need to add such an local.set in the prelude of the function for each
+    // We need to add such a local.set in the prelude of the function for each
     // operand in the context.
     std::vector<Expression*> pre;
     for (Index i = 0; i < context.operands.size(); i++) {
