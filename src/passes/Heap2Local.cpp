@@ -1069,13 +1069,16 @@ struct Array2Struct : PostWalker<Array2Struct> {
 
     // As with RefTest, we need to check if the cast succeeds with the array
     // type before we turn it into a struct type (as after that change, the
-    // outcome of the cast will look different). If we fail here, ensure that we
-    // trap with an unreachable.
+    // outcome of the cast will look different).
     if (!Type::isSubType(originalType, curr->type)) {
+      // The cast fails, ensure we trap with an unreachable.
       replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
                                           builder.makeUnreachable()));
     } else {
-      // The cast succeeds. Update the type.
+      // The cast succeeds. Update the type. (It is ok to use the non-nullable
+      // type here unconditionally, since we know the allocation flows through
+      // here, and anyhow we will be removing the reference during Struct2Local,
+      // later.)
       curr->type = nonNullStruct;
     }
 
