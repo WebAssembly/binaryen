@@ -68,6 +68,32 @@
 // testing that always monomorphizes non-trivial callsites, without checking if
 // the optimizer can help or not (that makes writing testcases simpler).
 //
+// This pass takes several arguments:
+//
+//   --pass-arg=monomorphize-min-benefit@N
+//
+//      The minimum amount of benefit we require in order to decide to optimize,
+//      as a percentage of the original cost. If this is 0 then we always
+//      optimize, if the cost improves by even 0.0001%. If this is 50 then we
+//      optimize only when the optimized monomorphized function has half the
+//      cost of the original, and so forth, that is higher values are more
+//      careful (and 100 will only optimize when the cost goes to nothing at
+//      all).
+//
+// TODO
+// The maximum function size above which we never try to monomorphize. This
+// avoids operating on large functions which may be very slow to optimize, and
+// this pass operates by optimizing code in order to decide what to do, so
+// optimizing large functions can be painful.
+//const Index MaxFunctionSize = 1000;
+//
+// The maximum amount of copies we will make of a function. If we monomorphize
+// once and call that many times that is fine, and not limited here, but if we
+// find many different call contexts for a function, then this sets a limit on
+// how many times the function is copied and monomorphized. This sets an
+// effective limit on the code size increase this pass can cause.
+//const Index MaxCopies = 10;
+//
 // TODO: When we optimize we could run multiple cycles: A calls B calls C might
 //       end up with the refined+optimized B now having refined types in its
 //       call to C, which it did not have before. This is in fact the expected
@@ -110,25 +136,9 @@ namespace wasm {
 
 namespace {
 
-// The minimum amount of benefit we require in order to decide to optimize, as a
-// percentage of the original cost. If this is 0 then we always optimize, if the
-// cost improves by even 0.0001%. If this is 50 then we optimize only when the
-// optimized monomorphized function has half the cost of the original, and so
-// forth, that is higher values are more careful (and 100 will only optimize
-// when the cost goes to nothing at all).
-const Index MinPercentBenefit = 0;
-
-// The maximum function size above which we never try to monomorphize. This
-// avoids operating on large functions which may be very slow to optimize, and
-// this pass operates by optimizing code in order to decide what to do, so
-// optimizing large functions can be painful.
+// Pass arguments. See descriptions in the comment above.
+Index MinPercentBenefit = 0;
 const Index MaxFunctionSize = 1000;
-
-// The maximum amount of copies we will make of a function. If we monomorphize
-// once and call that many times that is fine, and not limited here, but if we
-// find many different call contexts for a function, then this sets a limit on
-// how many times the function is copied and monomorphized. This sets an
-// effective limit on the code size increase this pass can cause.
 const Index MaxCopies = 10;
 
 // A limit on the number of parameters we are willing to have on monomorphized
@@ -573,6 +583,8 @@ struct Monomorphize : public Pass {
   void run(Module* module) override {
     // TODO: parallelize, see comments below
 
+    applyArguments();
+
     // Find all the return-calling functions. We cannot remove their returns
     // (because turning a return call into a normal call may break the program
     // by using more stack).
@@ -615,6 +627,15 @@ struct Monomorphize : public Pass {
         processCall(info, *module);
       }
     }
+  }
+
+  void applyArguments() {
+    auto apply = [&](const char* argumentName, Index& value) {
+      value = getArgumentOrDefault(argumentName,
+                                   std::to_string(value));
+    };
+
+    apply("monomorphize-min-benefit", MinPercentBenefit);
   }
 
   // Try to optimize a call.
