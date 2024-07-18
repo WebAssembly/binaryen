@@ -1050,9 +1050,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
     }
 
     // When we ref.test an array allocation, we cannot simply turn the array
-    // into a struct, as then the test will behave different. (Note that this is
-    // not a problem for ref.*cast*, as the cast simply goes away when the value
-    // flows through, and we verify it will do so in the escape analysis.) To
+    // into a struct, as then the test will behave differently. To properly
     // handle this, check if the test succeeds or not, and write out the outcome
     // here (similar to Struct2Local::visitRefTest). Note that we test on
     // |originalType| here and not |allocation->type|, as the allocation has
