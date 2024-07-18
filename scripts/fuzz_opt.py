@@ -363,6 +363,7 @@ INITIAL_CONTENTS_IGNORE = [
     'shared-ref_eq.wast',
     'shared-types-no-gc.wast',
     'shared-ref-i31.wast',
+    'table-type.wast',
 ]
 
 
