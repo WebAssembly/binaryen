@@ -4310,7 +4310,9 @@
 
  ;; CHECK:      (type $0 (func (result (ref struct))))
  (type $0 (func (result (ref struct))))
- ;; CHECK:      (type $3 (func (result (ref array))))
+ ;; CHECK:      (type $3 (func (result structref)))
+
+ ;; CHECK:      (type $4 (func (result (ref array))))
 
  ;; CHECK:      (type $array (array i8))
  (type $array (array i8))
@@ -4337,7 +4339,26 @@
     )
   )
 
-  ;; CHECK:      (func $array.cast.array (type $3) (result (ref array))
+  ;; CHECK:      (func $array.cast.struct.null (type $3) (result structref)
+  ;; CHECK-NEXT:  (local $eq (ref eq))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block (result nullref)
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (unreachable)
+  ;; CHECK-NEXT: )
+  (func $array.cast.struct.null (result (ref null struct))
+    (local $eq (ref eq))
+    ;; As above but the cast is to a nullable type, which changes nothing.
+    (ref.cast (ref null struct)
+      (local.tee $eq
+        (array.new_fixed $array 0)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array.cast.array (type $4) (result (ref array))
   ;; CHECK-NEXT:  (local $eq (ref eq))
   ;; CHECK-NEXT:  (ref.cast (ref array)
   ;; CHECK-NEXT:   (local.tee $eq
