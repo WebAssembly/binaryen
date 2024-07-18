@@ -3877,6 +3877,14 @@ static void validateTables(Module& module, ValidationInfo& info) {
       segment->type.isNullable(),
       "elem",
       "Non-nullable reference types are not yet supported for tables");
+    auto typeFeats = segment->type.getFeatures();
+    if (!info.shouldBeTrue(
+          segment->type == funcref || typeFeats <= module.features,
+          "elem",
+          "element segment type requires additional features")) {
+      info.getStream(nullptr)
+        << getMissingFeaturesList(module, typeFeats) << '\n';
+    }
 
     bool isPassive = !segment->table.is();
     if (isPassive) {
