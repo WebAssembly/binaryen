@@ -2034,3 +2034,32 @@
     )
   )
 )
+
+(module
+ ;; CHECK:      (type $0 (func (param i32) (result (ref null (shared any)))))
+
+ ;; CHECK:      (table $0 3 3 (ref null (shared any)))
+ (table $0 3 3 (ref null (shared any)))
+ ;; CHECK:      (elem $0 (table $0) (i32.const 0) (ref null (shared i31)) (item (ref.i31_shared
+ ;; CHECK-NEXT:  (i32.const 999)
+ ;; CHECK-NEXT: )))
+ (elem $0 (table $0) (i32.const 0) (ref null (shared i31)) (item (ref.i31_shared (i32.const 999))))
+ ;; CHECK:      (export "get" (func $0))
+
+ ;; CHECK:      (func $0 (type $0) (param $0 i32) (result (ref null (shared any)))
+ ;; CHECK-NEXT:  (ref.cast (ref null (shared i31))
+ ;; CHECK-NEXT:   (table.get $0
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $0 (export "get") (param $0 i32) (result (ref null (shared any)))
+  ;; Regression test for a bug where subtypes.h did not handle shared types
+  ;; correctly, causing this example to be misoptimized to return null.
+  (ref.cast (ref null (shared i31))
+   (table.get $0
+    (i32.const 0)
+   )
+  )
+ )
+)
