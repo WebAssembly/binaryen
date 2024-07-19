@@ -5,6 +5,7 @@
  (export "f1" (func $0))
  (export "f2" (func $1))
  (export "f4" (func $2))
+ (export "f5" (func $3))
  (func $0
  )
  (func $1 (result i32)
@@ -21,6 +22,9 @@
    (call $1)
    (i32.const 1234)
   )
+ )
+ (func $3 (result i32)
+  (i32.const 1)
  )
 )
 
