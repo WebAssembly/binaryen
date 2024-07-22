@@ -283,7 +283,6 @@ else()
   add_compile_flag("-Wextra")
   add_compile_flag("-Wno-unused-parameter")
   add_compile_flag("-Wno-dangling-pointer") # false positive in gcc
-  add_compile_flag("-fno-omit-frame-pointer")
   add_compile_flag("-fno-rtti")
   # TODO(https://github.com/WebAssembly/binaryen/pull/2314): Remove these two
   # flags once we resolve the issue.
@@ -310,7 +309,7 @@ else()
     else()
       add_link_flag("-Wl,--stack,8388608")
     endif()
-  elseif(NOT EMSCRIPTEN)
+  elseif((NOT EMSCRIPTEN) AND (NOT BUILD_STATIC_LIB))
     add_compile_flag("-fPIC")
   endif()
   add_debug_compile_flag("-g3")
