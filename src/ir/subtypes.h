@@ -124,20 +124,27 @@ struct SubTypes {
     // Add the max depths of basic types.
     for (auto type : types) {
       HeapType basic;
+      auto share = type.getShared();
       if (type.isStruct()) {
-        basic = HeapType::struct_;
+        basic = HeapTypes::struct_.getBasic(share);
       } else if (type.isArray()) {
-        basic = HeapType::array;
+        basic = HeapTypes::array.getBasic(share);
       } else {
         assert(type.isSignature());
-        basic = HeapType::func;
+        basic = HeapTypes::func.getBasic(share);
       }
-      depths[basic] = std::max(depths[basic], depths[type] + 1);
+      auto& basicDepth = depths[basic];
+      basicDepth = std::max(basicDepth, depths[type] + 1);
     }
 
-    depths[HeapType::eq] =
-      std::max(depths[HeapType::struct_], depths[HeapType::array]) + 1;
-    depths[HeapType::any] = depths[HeapType::eq] + 1;
+    for (auto share : {Unshared, Shared}) {
+      depths[HeapTypes::eq.getBasic(share)] =
+        std::max(depths[HeapTypes::struct_.getBasic(share)],
+                 depths[HeapTypes::array.getBasic(share)]) +
+        1;
+      depths[HeapTypes::any.getBasic(share)] =
+        depths[HeapTypes::eq.getBasic(share)] + 1;
+    }
 
     return depths;
   }

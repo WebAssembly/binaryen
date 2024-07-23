@@ -1110,12 +1110,18 @@ TEST_F(TypeTest, TestSubtypeErrors) {
 TEST_F(TypeTest, TestSubTypes) {
   Type anyref = Type(HeapType::any, Nullable);
   Type eqref = Type(HeapType::eq, Nullable);
+  Type sharedAnyref = Type(HeapTypes::any.getBasic(Shared), Nullable);
+  Type sharedEqref = Type(HeapTypes::eq.getBasic(Shared), Nullable);
 
   // Build type types, the second of which is a subtype.
-  TypeBuilder builder(2);
+  TypeBuilder builder(4);
   builder[0].setOpen() = Struct({Field(anyref, Immutable)});
   builder[1].setOpen() = Struct({Field(eqref, Immutable)});
+  // Make shared versions, too.
+  builder[2].setOpen().setShared() = Array(Field(sharedAnyref, Immutable));
+  builder[3].setOpen().setShared() = Array(Field(sharedEqref, Immutable));
   builder[1].subTypeOf(builder[0]);
+  builder[3].subTypeOf(builder[2]);
 
   auto result = builder.build();
   ASSERT_TRUE(result);
@@ -1125,20 +1131,37 @@ TEST_F(TypeTest, TestSubTypes) {
   // SubTypes utility code.
   Module wasm;
   Builder wasmBuilder(wasm);
-  wasm.addFunction(wasmBuilder.makeFunction(
-    "func",
-    Signature(Type::none, Type::none),
-    {Type(built[0], Nullable), Type(built[1], Nullable)},
-    wasmBuilder.makeNop()));
+  wasm.addFunction(wasmBuilder.makeFunction("func",
+                                            Signature(Type::none, Type::none),
+                                            {Type(built[0], Nullable),
+                                             Type(built[1], Nullable),
+                                             Type(built[2], Nullable),
+                                             Type(built[3], Nullable)},
+                                            wasmBuilder.makeNop()));
   SubTypes subTypes(wasm);
-  auto subTypes0 = subTypes.getImmediateSubTypes(built[0]);
-  EXPECT_TRUE(subTypes0.size() == 1 && subTypes0[0] == built[1]);
-  auto subTypes0Inclusive = subTypes.getSubTypes(built[0]);
-  EXPECT_TRUE(subTypes0Inclusive.size() == 2 &&
-              subTypes0Inclusive[0] == built[1] &&
-              subTypes0Inclusive[1] == built[0]);
-  auto subTypes1 = subTypes.getImmediateSubTypes(built[1]);
-  EXPECT_EQ(subTypes1.size(), 0u);
+  auto immSubTypes0 = subTypes.getImmediateSubTypes(built[0]);
+  ASSERT_EQ(immSubTypes0.size(), 1u);
+  EXPECT_EQ(immSubTypes0[0], built[1]);
+  auto subTypes0 = subTypes.getSubTypes(built[0]);
+  ASSERT_EQ(subTypes0.size(), 2u);
+  EXPECT_EQ(subTypes0[0], built[1]);
+  EXPECT_EQ(subTypes0[1], built[0]);
+  auto immSubTypes1 = subTypes.getImmediateSubTypes(built[1]);
+  EXPECT_EQ(immSubTypes1.size(), 0u);
+
+  auto depths = subTypes.getMaxDepths();
+  EXPECT_EQ(depths[HeapTypes::any.getBasic(Unshared)], 4u);
+  EXPECT_EQ(depths[HeapTypes::any.getBasic(Shared)], 4u);
+  EXPECT_EQ(depths[HeapTypes::eq.getBasic(Unshared)], 3u);
+  EXPECT_EQ(depths[HeapTypes::eq.getBasic(Shared)], 3u);
+  EXPECT_EQ(depths[HeapTypes::struct_.getBasic(Unshared)], 2u);
+  EXPECT_EQ(depths[HeapTypes::struct_.getBasic(Shared)], 0u);
+  EXPECT_EQ(depths[HeapTypes::array.getBasic(Unshared)], 0u);
+  EXPECT_EQ(depths[HeapTypes::array.getBasic(Shared)], 2u);
+  EXPECT_EQ(depths[built[0]], 1u);
+  EXPECT_EQ(depths[built[1]], 0u);
+  EXPECT_EQ(depths[built[2]], 1u);
+  EXPECT_EQ(depths[built[3]], 0u);
 }
 
 // Test reuse of a previously built type as supertype.
