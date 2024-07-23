@@ -87,7 +87,6 @@
   )
 
   ;; The same computation, but using an and, so both tests always execute.
-  ;; And appears to be faster, and is smaller.
   (func $and (export "and") (param $list (ref $A)) (result i32)
     (call $iter
       (local.get $list)
