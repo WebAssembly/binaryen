@@ -7,10 +7,7 @@
 //    we use very specific optimizations in order to not optimize away the
 //    differences we care about).
 //  * d8 bench.js -- bench.wasm
-//    or
-//    spidermonkey bench.js bench.wasm
 //    etc.
-//  * profit
 //
 
 // Shell integration.
@@ -59,14 +56,9 @@ const benchmarkers = [
   makeBenchmarker('iff-both'),
   makeBenchmarker('or'),
   makeBenchmarker('iff-either'),
+  makeBenchmarker('select'),
+  makeBenchmarker('iff-nextor'),
 ];
-
-// Create a long linked list of objects of both type $A and $B.
-const N = 100;
-var list = null;
-for (var i = 0; i < N; i++) {
-  list = Math.random() < 0.5 ? exports.makeA(list) : exports.makeB(list);
-}
 
 // We'll call the benchmark functions in random orders.
 function makeOrders(prefix) {
@@ -104,8 +96,24 @@ function makeOrders(prefix) {
 
 const orders = makeOrders([]);
 
-// Call the benchmark functions.
+// Params.
 const M = 10000000;
+const N = 100;
+
+console.log('iters       :', M);
+console.log('list len    :', N);
+console.log('benchmarkers:', benchmarkers.length);
+console.log('orderings   :', orders.length);
+
+// Create a long linked list of objects of both type $A and $B.
+var list = null;
+for (var i = 0; i < N; i++) {
+  list = Math.random() < 0.5 ? exports.makeA(list) : exports.makeB(list);
+}
+
+console.log('benchmarking...');
+
+// Call the benchmark functions.
 
 for (var i = 0; i < M; i++) {
   const order = orders[Math.floor(Math.random() * orders.length)];
@@ -119,8 +127,12 @@ for (var i = 0; i < M; i++) {
   }
 }
 
-console.log('iters   :', M);
-console.log('list len:', N);
+for (var benchmarker of benchmarkers) {
+  if (benchmarker.iters != M) {
+    throw 'wat';
+  }
+}
+
 console.log();
 for (var benchmarker of benchmarkers) {
   console.log(`${benchmarker.name} time: ${benchmarker.time}`)
@@ -128,10 +140,6 @@ for (var benchmarker of benchmarkers) {
 console.log();
 for (var benchmarker of benchmarkers) {
   console.log(`${benchmarker.name} mean sum: ${benchmarker.sum / M}`)
-}
-console.log();
-for (var benchmarker of benchmarkers) {
-  console.log(`${benchmarker.name} iters: ${benchmarker.iters}`)
 }
 
 // TODO: the othre patterns too in o.diff on remote!!!1

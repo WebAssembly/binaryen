@@ -153,6 +153,52 @@
     )
   )
 
+  ;; Use a select to do a test of "is next null ? 0 : test curr".
+  (func $select (export "select") (param $list (ref $A)) (result i32)
+    (call $iter
+      (local.get $list)
+      (ref.func $do-select)
+    )
+  )
+  (func $do-select (param $list (ref $A)) (result i32)
+    (select
+      (i32.const 0)
+      (ref.test (ref $B)
+        (local.get $list)
+      )
+      (ref.is_null
+        (struct.get $A $next
+          (local.get $list)
+        )
+      )
+    )
+  )
+
+  ;; Use an iff to do the same.
+  (func $iff-nextor (export "iff-nextor") (param $list (ref $A)) (result i32)
+    (call $iter
+      (local.get $list)
+      (ref.func $do-iff-nextor)
+    )
+  )
+  (func $do-iff-nextor (param $list (ref $A)) (result i32)
+    (if (result i32)
+      (ref.is_null
+        (struct.get $A $next
+          (local.get $list)
+        )
+      )
+      (then
+        (i32.const 0)
+      )
+      (else
+        (ref.test (ref $B)
+          (local.get $list)
+        )
+      )
+    )
+  )
+
   ;; Creation functions.
 
   (func $makeA (export "makeA") (param $next (ref null $A)) (result anyref)
