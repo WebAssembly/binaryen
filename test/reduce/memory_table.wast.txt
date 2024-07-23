@@ -2,6 +2,12 @@
  (type $0 (func (result i32)))
  (type $1 (func))
  (memory $0 256 256)
+ (table $0 354 354 i31ref)
+ (elem $0 (table $0) (i32.const 0) i31ref (item (ref.i31
+  (i32.const 0)
+ )) (item (ref.i31
+  (i32.const 42)
+ )))
  (export "f1" (func $0))
  (export "f2" (func $1))
  (export "f4" (func $2))
@@ -24,7 +30,11 @@
   )
  )
  (func $3 (result i32)
-  (i32.const 1)
+  (i31.get_u
+   (table.get $0
+    (i32.const 1)
+   )
+  )
  )
 )
 

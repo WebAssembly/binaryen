@@ -4,7 +4,7 @@
  (table 481 481 funcref)
  (table 354 354 i31ref)
  (elem (i32.const 0) $f0 $f0 $f1 $f2 $f0 $f3 $f0)
- (elem (table 1) (i32.const 0) i31ref (item (ref.i31 (i32.const 0))) (item (ref.i31 (i32.const 1))))
+ (elem (table 1) (i32.const 0) i31ref (item (ref.i31 (i32.const 0))) (item (ref.i31 (i32.const 42))))
  (data (i32.const 0) "p\0bflkj")
  (data (i32.const 10960) "1234hello")
  (export "f1" (func $f1))
