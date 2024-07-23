@@ -2791,6 +2791,13 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
         "ref.cast target type and ref type must have a common supertype")) {
     return;
   }
+  // Also error (more generically) on i32 and anything else invalid here.
+  if (!shouldBeTrue(
+        curr->type.isRef(),
+        curr,
+        "ref.cast must have ref type")) {
+    return;
+  }
   shouldBeEqual(
     curr->type.getHeapType().getBottom(),
     curr->ref->type.getHeapType().getBottom(),
