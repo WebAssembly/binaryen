@@ -1,5 +1,5 @@
 
-// Benchmarking script. This runs on compild bench.wat and prints out timings.
+// Benchmarking script. This runs on compiled bench.wat and prints out timings.
 //
 // Usage:
 //
