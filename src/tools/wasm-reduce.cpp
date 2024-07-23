@@ -859,9 +859,8 @@ struct Reducer
             // We don't need to replace a ref.null.
             return true;
           }
-          // Replace the element if it is different from our first "zero"
-          // element.
-          return !ExpressionAnalyzer::equal(first, elem);
+          // Is the element equal to our first "zero" element?
+          return ExpressionAnalyzer::equal(first, elem);
         },
         1,
         shrank);
