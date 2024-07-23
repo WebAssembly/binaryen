@@ -223,6 +223,22 @@ struct ValidationInfo {
   }
 };
 
+std::string getMissingFeaturesList(Module& wasm, FeatureSet feats) {
+  std::stringstream ss;
+  bool first = true;
+  ss << '[';
+  (feats - wasm.features).iterFeatures([&](FeatureSet feat) {
+    if (first) {
+      first = false;
+    } else {
+      ss << " ";
+    }
+    ss << "--enable-" << feat.toString();
+  });
+  ss << ']';
+  return ss.str();
+}
+
 struct FunctionValidator : public WalkerPass<PostWalker<FunctionValidator>> {
   bool isFunctionParallel() override { return true; }
 
@@ -2188,9 +2204,12 @@ void FunctionValidator::visitRefNull(RefNull* curr) {
   // If we are not in a function, this is a global location like a table. We
   // allow RefNull there as we represent tables that way regardless of what
   // features are enabled.
-  shouldBeTrue(!getFunction() || getModule()->features.hasReferenceTypes(),
-               curr,
-               "ref.null requires reference-types [--enable-reference-types]");
+  auto feats = curr->type.getFeatures();
+  if (!shouldBeTrue(!getFunction() || feats <= getModule()->features,
+                    curr,
+                    "ref.null requires additional features")) {
+    getStream() << getMissingFeaturesList(*getModule(), feats) << '\n';
+  }
   if (!shouldBeTrue(
         curr->type.isNullable(), curr, "ref.null types must be nullable")) {
     return;
@@ -2287,6 +2306,12 @@ void FunctionValidator::visitRefEq(RefEq* curr) {
     eqref,
     curr->right,
     "ref.eq's right argument should be a subtype of eqref");
+  if (curr->left->type.isRef() && curr->right->type.isRef()) {
+    shouldBeEqual(curr->left->type.getHeapType().getShared(),
+                  curr->right->type.getHeapType().getShared(),
+                  curr,
+                  "ref.eq operands must have the same shareability");
+  }
 }
 
 void FunctionValidator::visitTableGet(TableGet* curr) {
@@ -2702,6 +2727,12 @@ void FunctionValidator::visitCallRef(CallRef* curr) {
 void FunctionValidator::visitRefI31(RefI31* curr) {
   shouldBeTrue(
     getModule()->features.hasGC(), curr, "ref.i31 requires gc [--enable-gc]");
+  if (curr->type.isRef() && curr->type.getHeapType().isShared()) {
+    shouldBeTrue(
+      getModule()->features.hasSharedEverything(),
+      curr,
+      "ref.i31_shared requires shared-everything [--enable-shared-everything]");
+  }
   shouldBeSubType(curr->value->type,
                   Type::i32,
                   curr->value,
@@ -2890,7 +2921,7 @@ void FunctionValidator::visitStructSet(StructSet* curr) {
     return;
   }
   auto type = curr->ref->type.getHeapType();
-  if (type == HeapType::none) {
+  if (type.isMaybeShared(HeapType::none)) {
     return;
   }
   if (!shouldBeTrue(
@@ -3722,18 +3753,9 @@ static void validateGlobals(Module& module, ValidationInfo& info) {
   for (auto& g : module.globals) {
     auto globalFeats = g->type.getFeatures();
     if (!info.shouldBeTrue(globalFeats <= module.features, g->name, "")) {
-      auto& stream = info.getStream(nullptr);
-      stream << "global type requires additional features [";
-      bool first = true;
-      (globalFeats - module.features).iterFeatures([&](FeatureSet feat) {
-        if (first) {
-          first = false;
-        } else {
-          stream << " ";
-        }
-        stream << "--enable-" << feat.toString();
-      });
-      stream << "]\n";
+      info.getStream(nullptr)
+        << "global type requires additional features "
+        << getMissingFeaturesList(module, globalFeats) << '\n';
     }
   }
 }
@@ -3834,8 +3856,7 @@ static void validateTables(Module& module, ValidationInfo& info) {
     }
   }
 
-  Type externref = Type(HeapType::ext, Nullable);
-  Type funcref = Type(HeapType::func, Nullable);
+  auto funcref = Type(HeapType::func, Nullable);
   for (auto& table : module.tables) {
     info.shouldBeTrue(table->initial <= table->max,
                       "table",
@@ -3844,17 +3865,13 @@ static void validateTables(Module& module, ValidationInfo& info) {
       table->type.isNullable(),
       "table",
       "Non-nullable reference types are not yet supported for tables");
-    if (!module.features.hasGC()) {
-      info.shouldBeTrue(table->type.isFunction() || table->type == externref,
-                        "table",
-                        "Only function reference types or externref are valid "
-                        "for table type (when GC is disabled)");
-    }
-    if (!module.features.hasGC()) {
-      info.shouldBeTrue(table->type == funcref || table->type == externref,
-                        "table",
-                        "Only funcref and externref are valid for table type "
-                        "(when gc is disabled)");
+    auto typeFeats = table->type.getFeatures();
+    if (!info.shouldBeTrue(table->type == funcref ||
+                             typeFeats <= module.features,
+                           "table",
+                           "table type requires additional features")) {
+      info.getStream(nullptr)
+        << getMissingFeaturesList(module, typeFeats) << '\n';
     }
     if (table->is64()) {
       info.shouldBeTrue(module.features.hasMemory64(),
@@ -3871,6 +3888,14 @@ static void validateTables(Module& module, ValidationInfo& info) {
       segment->type.isNullable(),
       "elem",
       "Non-nullable reference types are not yet supported for tables");
+    auto typeFeats = segment->type.getFeatures();
+    if (!info.shouldBeTrue(
+          segment->type == funcref || typeFeats <= module.features,
+          "elem",
+          "element segment type requires additional features")) {
+      info.getStream(nullptr)
+        << getMissingFeaturesList(module, typeFeats) << '\n';
+    }
 
     bool isPassive = !segment->table.is();
     if (isPassive) {

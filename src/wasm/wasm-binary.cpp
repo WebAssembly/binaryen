@@ -1520,23 +1520,15 @@ void WasmBinaryWriter::writeType(Type type) {
     // internally use more refined versions of those types, but we cannot emit
     // those more refined types.
     if (!wasm->features.hasGC()) {
-      if (Type::isSubType(type, Type(HeapType::func, Nullable))) {
-        o << S32LEB(BinaryConsts::EncodedType::funcref);
-        return;
+      auto ht = type.getHeapType();
+      if (ht.isMaybeShared(HeapType::string)) {
+        // Do not overgeneralize stringref to anyref. We have tests that when a
+        // stringref is expected, we actually get a stringref. If we see a
+        // string, the stringref feature must be enabled.
+        type = Type(HeapTypes::string.getBasic(ht.getShared()), Nullable);
+      } else {
+        type = Type(type.getHeapType().getTop(), Nullable);
       }
-      if (Type::isSubType(type, Type(HeapType::ext, Nullable))) {
-        o << S32LEB(BinaryConsts::EncodedType::externref);
-        return;
-      }
-      if (Type::isSubType(type, Type(HeapType::exn, Nullable))) {
-        o << S32LEB(BinaryConsts::EncodedType::exnref);
-        return;
-      }
-      if (Type::isSubType(type, Type(HeapType::string, Nullable))) {
-        o << S32LEB(BinaryConsts::EncodedType::stringref);
-        return;
-      }
-      WASM_UNREACHABLE("bad type without GC");
     }
     auto heapType = type.getHeapType();
     if (type.isNullable() && heapType.isBasic() && !heapType.isShared()) {
@@ -1629,20 +1621,7 @@ void WasmBinaryWriter::writeHeapType(HeapType type) {
   // only actually valid with GC. Otherwise, emit the corresponding valid top
   // types instead.
   if (!wasm->features.hasGC()) {
-    if (HeapType::isSubType(type, HeapType::func)) {
-      type = HeapType::func;
-    } else if (HeapType::isSubType(type, HeapType::ext)) {
-      type = HeapType::ext;
-    } else if (HeapType::isSubType(type, HeapType::exn)) {
-      type = HeapType::exn;
-    } else if (wasm->features.hasStrings()) {
-      // Strings are enabled, and this isn't a func or an ext, so it must be a
-      // string type (string or stringview), which we'll emit below, or a bottom
-      // type (which we must allow, because we wouldn't know whether to emit a
-      // string or stringview for it).
-    } else {
-      WASM_UNREACHABLE("invalid type without GC");
-    }
+    type = type.getTop();
   }
 
   if (!type.isBasic()) {
@@ -2243,7 +2222,15 @@ void WasmBinaryReader::verifyInt64(int64_t x) {
 void WasmBinaryReader::readHeader() {
   BYN_TRACE("== readHeader\n");
   verifyInt32(BinaryConsts::Magic);
-  verifyInt32(BinaryConsts::Version);
+  auto version = getInt32();
+  if (version != BinaryConsts::Version) {
+    if (version == 0x1000d) {
+      throwError("this looks like a wasm component, which Binaryen does not "
+                 "support yet (see "
+                 "https://github.com/WebAssembly/binaryen/issues/6728)");
+    }
+    throwError("invalid version");
+  }
 }
 
 void WasmBinaryReader::readStart() {
@@ -7244,13 +7231,19 @@ void WasmBinaryReader::visitCallRef(CallRef* curr) {
 }
 
 bool WasmBinaryReader::maybeVisitRefI31(Expression*& out, uint32_t code) {
-  if (code != BinaryConsts::RefI31) {
-    return false;
+  Shareability share;
+  switch (code) {
+    case BinaryConsts::RefI31:
+      share = Unshared;
+      break;
+    case BinaryConsts::RefI31Shared:
+      share = Shared;
+      break;
+    default:
+      return false;
   }
-  auto* curr = allocator.alloc<RefI31>();
-  curr->value = popNonVoidExpression();
-  curr->finalize();
-  out = curr;
+  auto* value = popNonVoidExpression();
+  out = Builder(wasm).makeRefI31(value, share);
   return true;
 }
 

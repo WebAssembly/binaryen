@@ -57,7 +57,7 @@ Literal::Literal(Type type) : type(type) {
     return;
   }
 
-  if (type.isRef() && type.getHeapType() == HeapType::i31) {
+  if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::i31)) {
     assert(type.isNonNullable());
     i32 = 0;
     return;
@@ -444,7 +444,8 @@ bool Literal::operator==(const Literal& other) const {
     if (type.isData()) {
       return gcData == other.gcData;
     }
-    if (type.getHeapType() == HeapType::i31) {
+    assert(type.getHeapType().isBasic());
+    if (type.getHeapType().getBasic(Unshared) == HeapType::i31) {
       return i32 == other.i32;
     }
     WASM_UNREACHABLE("unexpected type");

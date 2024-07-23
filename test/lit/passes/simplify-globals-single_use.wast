@@ -17,7 +17,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
   (global $single-use anyref (struct.new $A
-    (i31.new
+    (ref.i31
       (i32.const 42)
     )
   ))
@@ -59,7 +59,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
   (global $single-use anyref (struct.new $A
-    (i31.new
+    (ref.i31
       (i32.const 42)
     )
   ))
@@ -85,7 +85,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
   (global $single-use anyref (struct.new $A
-    (i31.new
+    (ref.i31
       (i32.const 42)
     )
   ))
@@ -131,7 +131,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
   (global $single-use anyref (struct.new $A
-    (i31.new
+    (ref.i31
       (i32.const 42)
     )
   ))
@@ -160,7 +160,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
   (global $single-use anyref (struct.new $A
-    (i31.new
+    (ref.i31
       (i32.const 42)
     )
   ))
@@ -188,7 +188,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
   (global $single-use1 anyref (struct.new $A
-    (i31.new
+    (ref.i31
       (i32.const 42)
     )
   ))
@@ -199,7 +199,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
   (global $single-use2 anyref (struct.new $A
-    (i31.new
+    (ref.i31
       (i32.const 1337)
     )
   ))
@@ -217,7 +217,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: ))
   (global $single-use3 anyref (struct.new $A
-    (i31.new
+    (ref.i31
       (i32.const 99999)
     )
   ))
@@ -250,7 +250,7 @@
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: ))
   (global $single-use1 anyref (struct.new $A
-    (i31.new
+    (ref.i31
       (i32.const 42)
     )
     (ref.null any)
@@ -264,7 +264,7 @@
   ;; CHECK-NEXT: ))
   (global $single-use2 anyref (struct.new $A
     (ref.null any)
-    (i31.new
+    (ref.i31
       (i32.const 1337)
     )
   ))
@@ -297,7 +297,7 @@
   ;; CHECK:      (global $single-use1 anyref (ref.i31
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: ))
-  (global $single-use1 anyref (i31.new
+  (global $single-use1 anyref (ref.i31
     (i32.const 42)
   ))
 

@@ -192,9 +192,8 @@ void getFunctionsToKeepAndSplit(Module& wasm,
 
 void writeSymbolMap(Module& wasm, std::string filename) {
   PassOptions options;
-  options.arguments["symbolmap"] = filename;
   PassRunner runner(&wasm, options);
-  runner.add("symbolmap");
+  runner.add("symbolmap", filename);
   runner.run();
 }
 

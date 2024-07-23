@@ -34,9 +34,9 @@
   ;; CHECK:      (type $12 (func (param i32 i64 v128)))
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $s0 (struct ))
+  ;; CHECK-NEXT:  (type $s0 (struct))
   (type $s0 (struct))
-  ;; CHECK:       (type $s1 (struct ))
+  ;; CHECK:       (type $s1 (struct))
   (type $s1 (struct (field)))
  )
 

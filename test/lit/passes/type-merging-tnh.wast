@@ -4,7 +4,7 @@
 ;; ref.cast does not inhibit merging if traps never happen.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
   (type $A (sub (struct)))
   (type $B (sub $A (struct)))
 
@@ -25,9 +25,9 @@
 ;; Check that a ref.test still inhibits merging with -tnh.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
   (type $A (sub (struct)))
-  ;; CHECK:       (type $B (sub $A (struct )))
+  ;; CHECK:       (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
   ;; CHECK:       (type $2 (func (param (ref $A)) (result i32)))
@@ -47,9 +47,9 @@
 ;; Check that a br_on_cast still inhibits merging with -tnh.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
   (type $A (sub (struct)))
-  ;; CHECK:       (type $B (sub $A (struct )))
+  ;; CHECK:       (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
   ;; CHECK:       (type $2 (func (param (ref $A)) (result (ref $B))))

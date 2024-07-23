@@ -873,9 +873,10 @@ public:
     ret->finalize();
     return ret;
   }
-  RefI31* makeRefI31(Expression* value) {
+  RefI31* makeRefI31(Expression* value, Shareability share = Unshared) {
     auto* ret = wasm.allocator.alloc<RefI31>();
     ret->value = value;
+    ret->type = Type(HeapTypes::i31.getBasic(share), NonNullable);
     ret->finalize();
     return ret;
   }
@@ -1216,8 +1217,9 @@ public:
     if (type.isFunction()) {
       return makeRefFunc(value.getFunc(), type.getHeapType());
     }
-    if (type.isRef() && type.getHeapType() == HeapType::i31) {
-      return makeRefI31(makeConst(value.geti31()));
+    if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::i31)) {
+      return makeRefI31(makeConst(value.geti31()),
+                        type.getHeapType().getShared());
     }
     if (type.isString()) {
       // The string is already WTF-16, but we need to convert from `Literals` to

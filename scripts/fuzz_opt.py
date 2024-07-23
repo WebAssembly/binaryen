@@ -145,7 +145,11 @@ def randomize_feature_opts():
         # 2/3 of the remaining 90% use them all. This is useful to maximize
         # coverage, as enabling more features enables more optimizations and
         # code paths, and also allows all initial contents to run.
-        pass
+
+        # The shared-everything feature is new and we want to fuzz it, but it
+        # also currently disables fuzzing V8, so disable it most of the time.
+        if random.random() < 0.9:
+            FEATURE_OPTS.append('--disable-shared-everything')
 
     print('randomized feature opts:', '\n  ' + '\n  '.join(FEATURE_OPTS))
 
@@ -350,12 +354,6 @@ INITIAL_CONTENTS_IGNORE = [
     'exception-handling.wast',
     'translate-to-new-eh.wast',
     'rse-eh.wast',
-    # Shared types implementation in progress
-    'type-merging-shared.wast',
-    'shared-types.wast',
-    'shared-polymorphism.wast',
-    'shared-struct.wast',
-    'shared-array.wast',
 ]
 
 
@@ -838,7 +836,10 @@ class CompareVMs(TestCaseHandler):
                 return run_vm([shared.V8, FUZZ_SHELL_JS] + shared.V8_OPTS + extra_d8_flags + ['--', wasm])
 
             def can_run(self, wasm):
-                return True
+                # V8 does not support shared memories when running with
+                # shared-everything enabled, so do not fuzz shared-everything
+                # for now.
+                return all_disallowed(['shared-everything'])
 
             def can_compare_to_self(self):
                 # With nans, VM differences can confuse us, so only very simple VMs

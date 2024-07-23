@@ -103,7 +103,7 @@ struct FunctionInfo {
   }
 
   // Provide an explicit = operator as the |refs| field lacks one by default.
-  FunctionInfo& operator=(FunctionInfo& other) {
+  FunctionInfo& operator=(const FunctionInfo& other) {
     refs = other.refs.load();
     size = other.size;
     hasCalls = other.hasCalls;

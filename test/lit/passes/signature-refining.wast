@@ -8,7 +8,7 @@
   ;; on the function (which are derived from the heap type).
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (struct ))
+  ;; CHECK-NEXT:  (type $struct (struct))
   (type $struct (struct))
 
   ;; CHECK:       (type $1 (func))
@@ -38,7 +38,7 @@
   ;; As above, but the call is via call_ref.
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (struct ))
+  ;; CHECK-NEXT:  (type $struct (struct))
   (type $struct (struct))
 
   ;; CHECK:       (type $1 (func))
@@ -74,7 +74,7 @@
   ;; is a nullable eqref.
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (struct ))
+  ;; CHECK-NEXT:  (type $struct (struct))
   (type $struct (struct))
 
   ;; CHECK:       (type $1 (func))
@@ -121,11 +121,11 @@
 
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (sub (struct )))
+    ;; CHECK-NEXT:  (type $struct (sub (struct)))
 
-    ;; CHECK:       (type $struct-sub2 (sub $struct (struct )))
+    ;; CHECK:       (type $struct-sub2 (sub $struct (struct)))
 
-    ;; CHECK:       (type $struct-sub1 (sub $struct (struct )))
+    ;; CHECK:       (type $struct-sub1 (sub $struct (struct)))
 
     ;; CHECK:       (type $3 (func))
 
@@ -174,7 +174,7 @@
   ;; updated, though, as they share a heap type.
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (struct ))
+  ;; CHECK-NEXT:  (type $struct (struct))
 
   ;; CHECK:       (type $1 (func))
 
@@ -277,7 +277,7 @@
   ;; param to be $struct.
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (struct ))
+  ;; CHECK-NEXT:  (type $struct (struct))
   (type $struct (struct))
 
   ;; CHECK:       (type $1 (func))
@@ -366,7 +366,7 @@
   ;; Test multiple fields in multiple types.
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (struct ))
+    ;; CHECK-NEXT:  (type $struct (struct))
     (type $struct (struct))
 
     ;; CHECK:       (type $1 (func))
@@ -447,7 +447,7 @@
 
   ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
   (table 1 1 anyref)
@@ -477,7 +477,7 @@
   ;; allows us to refine (but the new type must be nullable).
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (struct ))
+  ;; CHECK-NEXT:  (type $struct (struct))
 
   ;; CHECK:       (type $1 (func))
 
@@ -519,7 +519,7 @@
 
     ;; CHECK:       (type $sig-cannot-refine (sub (func (result (ref func)))))
 
-    ;; CHECK:       (type $struct (struct ))
+    ;; CHECK:       (type $struct (struct))
     (type $struct (struct))
 
     ;; This signature has a single function using it, which returns a more
@@ -625,7 +625,7 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $struct (struct ))
+  ;; CHECK-NEXT:  (type $struct (struct))
   (type $struct (struct))
 
   ;; This signature has multiple functions using it, and some of them have nulls
@@ -684,7 +684,7 @@
 
   ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
   (type $sig (sub (func (param anyref))))
@@ -728,7 +728,7 @@
 )
 
 (module
-  ;; CHECK:      (type $"{}" (struct ))
+  ;; CHECK:      (type $"{}" (struct))
   (type $"{}" (struct))
 
   ;; CHECK:      (type $1 (func (param (ref $"{}") i32)))
@@ -780,7 +780,7 @@
 
   ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
   ;; CHECK:      (import "a" "b" (func $import (type $0) (param structref)))
@@ -913,13 +913,13 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
   (type $A (sub (struct)))
 
-  ;; CHECK:       (type $B (sub $A (struct )))
+  ;; CHECK:       (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
-  ;; CHECK:       (type $C (sub $B (struct )))
+  ;; CHECK:       (type $C (sub $B (struct)))
   (type $C (sub $B (struct)))
 
   ;; CHECK:       (type $return_A_2 (func (result (ref $C))))
@@ -1013,13 +1013,13 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $A (sub (struct )))
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
   (type $A (sub (struct)))
 
-  ;; CHECK:       (type $B1 (sub $A (struct )))
+  ;; CHECK:       (type $B1 (sub $A (struct)))
   (type $B1 (sub $A (struct)))
 
-  ;; CHECK:       (type $B2 (sub $A (struct )))
+  ;; CHECK:       (type $B2 (sub $A (struct)))
   (type $B2 (sub $A (struct)))
  )
 
@@ -1070,10 +1070,10 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $0 (func (param (ref $B))))
 
-  ;; CHECK:       (type $A (sub (struct )))
+  ;; CHECK:       (type $A (sub (struct)))
   (type $A (sub (struct)))
 
-  ;; CHECK:       (type $B (sub $A (struct )))
+  ;; CHECK:       (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
  )
 

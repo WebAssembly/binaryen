@@ -382,7 +382,7 @@ enum EncodedType {
   Array = -0x22,    // 0x5e
   Sub = -0x30,      // 0x50
   SubFinal = -0x31, // 0x4f
-  Shared = -0x24,   // 0x65
+  Shared = -0x1b,   // 0x65
   // isorecursive recursion groups
   Rec = -0x32, // 0x4e
   // block_type
@@ -1125,6 +1125,7 @@ enum ASTNodes {
   RefI31 = 0x1c,
   I31GetS = 0x1d,
   I31GetU = 0x1e,
+  RefI31Shared = 0x1f,
 
   // stringref opcodes
 

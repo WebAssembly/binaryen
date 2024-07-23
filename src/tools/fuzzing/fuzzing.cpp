@@ -246,11 +246,8 @@ void TranslateToFuzzReader::setupHeapTypes() {
 
   // For GC, also generate random types.
   if (wasm.features.hasGC()) {
-    // Do not generate shared types until the fuzzer can be updated to handle
-    // them.
-    auto features = wasm.features - FeatureSet::SharedEverything;
     auto generator =
-      HeapTypeGenerator::create(random, features, upTo(MAX_NEW_GC_TYPES));
+      HeapTypeGenerator::create(random, wasm.features, upTo(MAX_NEW_GC_TYPES));
     auto result = generator.builder.build();
     if (auto* err = result.getError()) {
       Fatal() << "Failed to build heap types: " << err->reason << " at index "
@@ -288,10 +285,16 @@ void TranslateToFuzzReader::setupHeapTypes() {
     }
     // Basic types must be handled directly, since subTypes doesn't look at
     // those.
+    auto share = type.getShared();
+    auto struct_ = HeapTypes::struct_.getBasic(share);
+    auto array = HeapTypes::array.getBasic(share);
+    auto eq = HeapTypes::eq.getBasic(share);
+    auto any = HeapTypes::any.getBasic(share);
+    auto func = HeapTypes::func.getBasic(share);
     if (type.isStruct()) {
-      interestingHeapSubTypes[HeapType::struct_].push_back(type);
-      interestingHeapSubTypes[HeapType::eq].push_back(type);
-      interestingHeapSubTypes[HeapType::any].push_back(type);
+      interestingHeapSubTypes[struct_].push_back(type);
+      interestingHeapSubTypes[eq].push_back(type);
+      interestingHeapSubTypes[any].push_back(type);
 
       // Note the mutable fields.
       auto& fields = type.getStruct().fields;
@@ -301,15 +304,15 @@ void TranslateToFuzzReader::setupHeapTypes() {
         }
       }
     } else if (type.isArray()) {
-      interestingHeapSubTypes[HeapType::array].push_back(type);
-      interestingHeapSubTypes[HeapType::eq].push_back(type);
-      interestingHeapSubTypes[HeapType::any].push_back(type);
+      interestingHeapSubTypes[array].push_back(type);
+      interestingHeapSubTypes[eq].push_back(type);
+      interestingHeapSubTypes[any].push_back(type);
 
       if (type.getArray().element.mutable_) {
         mutableArrays.push_back(type);
       }
     } else if (type.isSignature()) {
-      interestingHeapSubTypes[HeapType::func].push_back(type);
+      interestingHeapSubTypes[func].push_back(type);
     }
   }
 
@@ -2468,25 +2471,16 @@ Literal TranslateToFuzzReader::makeLiteral(Type type) {
 
 Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
   auto heapType = type.getHeapType();
-  if (heapType == HeapType::func) {
-    // First set to target to the last created function, and try to select
-    // among other existing function if possible.
-    Function* target = funcContext ? funcContext->func : nullptr;
-    // If there is no last function, and we have others, pick between them. Also
-    // pick between them with some random probability even if there is a last
-    // function.
-    if (!wasm.functions.empty() && (!target || !oneIn(wasm.functions.size()))) {
-      target = pick(wasm.functions).get();
-    }
-    if (target) {
+  auto share = heapType.getShared();
+  if (heapType.isBasic()) {
+    assert(heapType.getBasic(Unshared) == HeapType::func);
+    // With high probability, use the last created function if possible.
+    // Otherwise, continue on to select some other function.
+    if (funcContext && funcContext->func->type.getShared() == share &&
+        !oneIn(4)) {
+      auto* target = funcContext->func;
       return builder.makeRefFunc(target->name, target->type);
     }
-  }
-  if (heapType == HeapType::func) {
-    // From here on we need a specific signature type, as we want to create a
-    // RefFunc or even a Function out of it. Pick an arbitrary one if we only
-    // had generic 'func' here.
-    heapType = Signature(Type::none, Type::none);
   }
   // Look for a proper function starting from a random location, and loop from
   // there, wrapping around to 0.
@@ -2507,7 +2501,7 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
   // here).
   if ((type.isNullable() && oneIn(2)) ||
       (type.isNonNullable() && oneIn(16) && funcContext)) {
-    Expression* ret = builder.makeRefNull(HeapType::nofunc);
+    Expression* ret = builder.makeRefNull(HeapTypes::nofunc.getBasic(share));
     if (!type.isNullable()) {
       assert(funcContext);
       ret = builder.makeRefAs(RefAsNonNull, ret);
@@ -2519,6 +2513,14 @@ Expression* TranslateToFuzzReader::makeRefFuncConst(Type type) {
   // here (we might end up recursing). Note that a trap in the function lets us
   // execute more code then the ref.as_non_null path just before us, which traps
   // even if we never call the function.
+  if (heapType.isBasic()) {
+    // We need a specific signature type to create a function. Pick an arbitrary
+    // signature if we only had generic 'func' here.
+    TypeBuilder builder(1);
+    builder[0] = Signature(Type::none, Type::none);
+    builder[0].setShared(share);
+    heapType = (*builder.build())[0];
+  }
   auto* body = heapType.getSignature().results == Type::none
                  ? (Expression*)builder.makeNop()
                  : (Expression*)builder.makeUnreachable();
@@ -2559,10 +2561,10 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
   auto heapType = type.getHeapType();
   assert(heapType.isBasic());
   assert(wasm.features.hasReferenceTypes());
-  assert(!heapType.isShared() && "TODO: handle shared types");
+  auto share = heapType.getShared();
   switch (heapType.getBasic(Unshared)) {
     case HeapType::ext: {
-      auto null = builder.makeRefNull(HeapType::ext);
+      auto null = builder.makeRefNull(HeapTypes::ext.getBasic(share));
       // TODO: support actual non-nullable externrefs via imported globals or
       // similar.
       if (!type.isNullable()) {
@@ -2581,12 +2583,16 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       // Choose a subtype we can materialize a constant for. We cannot
       // materialize non-nullable refs to func or i31 in global contexts.
       Nullability nullability = getSubType(type.getNullability());
-      auto subtype = pick(FeatureOptions<HeapType>()
-                            .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                                 HeapType::i31,
-                                 HeapType::struct_,
-                                 HeapType::array)
-                            .add(FeatureSet::Strings, HeapType::string));
+      auto subtypeOpts = FeatureOptions<HeapType>().add(
+        FeatureSet::ReferenceTypes | FeatureSet::GC,
+        HeapType::i31,
+        HeapType::struct_,
+        HeapType::array);
+      if (share == Unshared) {
+        // Shared strings not yet supported.
+        subtypeOpts.add(FeatureSet::Strings, HeapType::string);
+      }
+      auto subtype = pick(subtypeOpts).getBasic(share);
       return makeConst(Type(subtype, nullability));
     }
     case HeapType::eq: {
@@ -2595,7 +2601,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
         // a subtype of anyref, but we cannot create constants of it, except
         // for null.
         assert(type.isNullable());
-        return builder.makeRefNull(HeapType::none);
+        return builder.makeRefNull(HeapTypes::none.getBasic(share));
       }
       auto nullability = getSubType(type.getNullability());
       // ref.i31 is not allowed in initializer expressions.
@@ -2611,14 +2617,14 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
           subtype = HeapType::array;
           break;
       }
-      return makeConst(Type(subtype, nullability));
+      return makeConst(Type(subtype.getBasic(share), nullability));
     }
     case HeapType::i31: {
       assert(wasm.features.hasGC());
       if (type.isNullable() && oneIn(4)) {
-        return builder.makeRefNull(HeapType::none);
+        return builder.makeRefNull(HeapTypes::none.getBasic(share));
       }
-      return builder.makeRefI31(makeConst(Type::i32));
+      return builder.makeRefI31(makeConst(Type::i32), share);
     }
     case HeapType::struct_: {
       assert(wasm.features.hasGC());
@@ -2627,15 +2633,29 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
       // Use a local static to avoid the expense of canonicalizing a new type
       // every time.
       static HeapType trivialStruct = HeapType(Struct());
-      return builder.makeStructNew(trivialStruct, std::vector<Expression*>{});
+      static HeapType sharedTrivialStruct = []() {
+        TypeBuilder builder(1);
+        builder[0] = Struct{};
+        builder[0].setShared();
+        return (*builder.build())[0];
+      }();
+      auto ht = share == Shared ? sharedTrivialStruct : trivialStruct;
+      return builder.makeStructNew(ht, std::vector<Expression*>{});
     }
     case HeapType::array: {
       static HeapType trivialArray =
         HeapType(Array(Field(Field::PackedType::i8, Immutable)));
-      return builder.makeArrayNewFixed(trivialArray, {});
+      static HeapType sharedTrivialArray = []() {
+        TypeBuilder builder(1);
+        builder[0] = Array(Field(Field::PackedType::i8, Immutable));
+        builder[0].setShared();
+        return (*builder.build())[0];
+      }();
+      auto ht = share == Shared ? sharedTrivialArray : trivialArray;
+      return builder.makeArrayNewFixed(ht, {});
     }
     case HeapType::exn: {
-      auto null = builder.makeRefNull(HeapType::exn);
+      auto null = builder.makeRefNull(HeapTypes::exn.getBasic(share));
       if (!type.isNullable()) {
         assert(funcContext);
         return builder.makeRefAs(RefAsNonNull, null);
@@ -2644,6 +2664,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     }
     case HeapType::string: {
       // In non-function contexts all we can do is string.const.
+      assert(share == Unshared && "shared strings not supported");
       if (!funcContext) {
         return makeStringConst();
       }
@@ -2677,7 +2698,7 @@ Expression* TranslateToFuzzReader::makeBasicRef(Type type) {
     case HeapType::nofunc:
     case HeapType::nocont:
     case HeapType::noexn: {
-      auto null = builder.makeRefNull(heapType);
+      auto null = builder.makeRefNull(heapType.getBasic(share));
       if (!type.isNullable()) {
         assert(funcContext);
         return builder.makeRefAs(RefAsNonNull, null);
@@ -4237,48 +4258,56 @@ HeapType TranslateToFuzzReader::getSubType(HeapType type) {
     return type;
   }
   if (type.isBasic() && oneIn(2)) {
-    assert(!type.isShared() && "TODO: handle shared types");
+    auto share = type.getShared();
     switch (type.getBasic(Unshared)) {
       case HeapType::func:
         // TODO: Typed function references.
         return pick(FeatureOptions<HeapType>()
                       .add(FeatureSet::ReferenceTypes, HeapType::func)
-                      .add(FeatureSet::GC, HeapType::nofunc));
+                      .add(FeatureSet::GC, HeapType::nofunc))
+          .getBasic(share);
       case HeapType::cont:
-        return pick(HeapType::cont, HeapType::nocont);
+        return pick(HeapTypes::cont, HeapTypes::nocont).getBasic(share);
       case HeapType::ext:
         return pick(FeatureOptions<HeapType>()
                       .add(FeatureSet::ReferenceTypes, HeapType::ext)
-                      .add(FeatureSet::GC, HeapType::noext));
-      case HeapType::any:
+                      .add(FeatureSet::GC, HeapType::noext))
+          .getBasic(share);
+      case HeapType::any: {
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
-        return pick(FeatureOptions<HeapType>()
-                      .add(FeatureSet::GC,
-                           HeapType::any,
-                           HeapType::eq,
-                           HeapType::i31,
-                           HeapType::struct_,
-                           HeapType::array,
-                           HeapType::none)
-                      .add(FeatureSet::Strings, HeapType::string));
+        auto options = FeatureOptions<HeapType>().add(FeatureSet::GC,
+                                                      HeapType::any,
+                                                      HeapType::eq,
+                                                      HeapType::i31,
+                                                      HeapType::struct_,
+                                                      HeapType::array,
+                                                      HeapType::none);
+        if (share == Unshared) {
+          // Shared strings not yet supported.
+          options.add(FeatureSet::Strings, HeapType::string);
+        }
+        return pick(options).getBasic(share);
+      }
       case HeapType::eq:
         assert(wasm.features.hasReferenceTypes());
         assert(wasm.features.hasGC());
-        return pick(HeapType::eq,
-                    HeapType::i31,
-                    HeapType::struct_,
-                    HeapType::array,
-                    HeapType::none);
+        return pick(HeapTypes::eq,
+                    HeapTypes::i31,
+                    HeapTypes::struct_,
+                    HeapTypes::array,
+                    HeapTypes::none)
+          .getBasic(share);
       case HeapType::i31:
-        return pick(HeapType::i31, HeapType::none);
+        return pick(HeapTypes::i31, HeapTypes::none).getBasic(share);
       case HeapType::struct_:
-        return pick(HeapType::struct_, HeapType::none);
+        return pick(HeapTypes::struct_, HeapTypes::none).getBasic(share);
       case HeapType::array:
-        return pick(HeapType::array, HeapType::none);
+        return pick(HeapTypes::array, HeapTypes::none).getBasic(share);
       case HeapType::exn:
-        return HeapType::exn;
+        return HeapTypes::exn.getBasic(share);
       case HeapType::string:
+        assert(share == Unshared);
         return HeapType::string;
       case HeapType::none:
       case HeapType::noext:

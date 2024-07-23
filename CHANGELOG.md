@@ -15,11 +15,23 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - Passes can now receive individual pass arguments, that is --foo=A --foo=B for
+   a pass foo will run the pass twice (which was possible before) and will now
+   run it first with argument A and second with B. --pass-arg=foo@BAR will now
+   apply to the most recent --foo pass on the commandline, if foo is a pass
+   (while global pass arguments - that are not the name of a pass - remain, as
+   before, global for all passes). (#6687)
+ - Add C and JS APIs to control more pass options (trapsNeverHappen,
+   closedWorld, generateStackIR, optimizeStackIR, and the list of skipped
+   passes). (#6713)
+ - A C APIs for getting/setting the type of Functions (#6721).
+ - Allow using `--skip-pass` on the commandline multiple times (#6714).
+
 v118
 ----
 
- - StackIR is now handled entirely during binary writing. This is mostly not
-   noticeable, except that:
+ - StackIR is now handled entirely during binary writing (#6568). This is
+   mostly not noticeable, except that:
    - Text output no longer notes `(; has Stack IR ;)` (as Stack IR only exists
      during binary writing).
    - `--generate-stack-ir`, `--optimize-stack-ir`, and `--print-stack-ir` are
@@ -37,10 +49,15 @@ v118
  - Source map locations from instructions are no longer automatically propagated
    to function epilogues.
  - Add a new `BinaryenModuleReadWithFeatures` function to the C API that allows
-   to configure which features to enable in the parser.
- - The build-time option to use legacy WasmGC opcodes is removed.
+   to configure which features to enable in the parser. (#6380)
+ - The build-time option to use legacy WasmGC opcodes is removed. (#5874)
  - The strings in `string.const` instructions must now be valid WTF-8.
  - The `TraverseCalls` flag for `ExpressionRunner` is removed.
+ - C API: Support adding data segments individually (#6346)
+ - Add sourcemap support to wasm-metadce and wasm-merge (#6372).
+ - Fix semantics of return calls (#6448, #6451, #6464, #6470, #6474).
+ - Add table64 lowering pass (#6595).
+ - Add TraceCalls instrumentation pass (#6619).
 
 v117
 ----

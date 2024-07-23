@@ -1,59 +1,52 @@
 total
- [exports]      : 3       
- [funcs]        : 4       
- [globals]      : 24      
+ [exports]      : 5       
+ [funcs]        : 9       
+ [globals]      : 26      
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
  [table-data]   : 3       
  [tables]       : 1       
- [tags]         : 1       
- [total]        : 750     
- [vars]         : 30      
- ArrayCopy      : 1       
- ArrayGet       : 2       
- ArrayLen       : 5       
- ArrayNew       : 24      
- ArrayNewFixed  : 1       
- ArraySet       : 1       
+ [tags]         : 2       
+ [total]        : 669     
+ [vars]         : 27      
+ ArrayNew       : 16      
+ ArrayNewFixed  : 3       
  AtomicCmpxchg  : 1       
  AtomicFence    : 1       
- AtomicRMW      : 1       
- Binary         : 84      
- Block          : 58      
- Break          : 12      
- Call           : 13      
- Const          : 175     
- Drop           : 2       
- GlobalGet      : 45      
- GlobalSet      : 20      
- I31Get         : 2       
- If             : 21      
- Load           : 20      
- LocalGet       : 70      
- LocalSet       : 46      
- Loop           : 7       
- MemoryCopy     : 1       
- Nop            : 11      
- Pop            : 3       
- RefAs          : 7       
- RefEq          : 1       
+ Binary         : 75      
+ Block          : 70      
+ Break          : 7       
+ Call           : 26      
+ CallRef        : 1       
+ Const          : 143     
+ Drop           : 3       
+ GlobalGet      : 37      
+ GlobalSet      : 27      
+ I31Get         : 1       
+ If             : 20      
+ Load           : 21      
+ LocalGet       : 55      
+ LocalSet       : 40      
+ Loop           : 6       
+ Nop            : 5       
+ Pop            : 5       
+ RefAs          : 2       
+ RefEq          : 2       
  RefFunc        : 5       
- RefI31         : 7       
- RefIsNull      : 3       
- RefNull        : 19      
- RefTest        : 3       
- Return         : 2       
- SIMDTernary    : 1       
- Select         : 3       
- Store          : 1       
- StringConst    : 8       
- StringEncode   : 1       
+ RefI31         : 2       
+ RefNull        : 11      
+ RefTest        : 2       
+ Return         : 6       
+ Select         : 2       
+ StringConst    : 6       
+ StringEq       : 1       
  StringMeasure  : 1       
  StringWTF16Get : 1       
- StructGet      : 1       
- StructNew      : 21      
- Try            : 3       
- TupleMake      : 6       
- Unary          : 19      
- Unreachable    : 10      
+ StructNew      : 17      
+ StructSet      : 1       
+ Try            : 4       
+ TupleExtract   : 3       
+ TupleMake      : 5       
+ Unary          : 20      
+ Unreachable    : 15      

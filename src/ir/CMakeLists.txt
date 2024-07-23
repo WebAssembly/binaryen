@@ -17,6 +17,7 @@ set(ir_SOURCES
   LocalGraph.cpp
   LocalStructuralDominance.cpp
   ReFinalize.cpp
+  return-utils.cpp
   stack-utils.cpp
   table-utils.cpp
   type-updating.cpp

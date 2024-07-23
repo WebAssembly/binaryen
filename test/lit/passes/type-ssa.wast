@@ -366,10 +366,10 @@
 ;; turn into a simple Literal). (We do optimize $empty and generate $empty$1,
 ;; but that is not important here.)
 (module
-  ;; CHECK:      (type $empty (sub (struct )))
+  ;; CHECK:      (type $empty (sub (struct)))
   (type $empty (sub (struct)))
 
-  ;; CHECK:      (type $empty_1 (sub $empty (struct )))
+  ;; CHECK:      (type $empty_1 (sub $empty (struct)))
 
   ;; CHECK:      (type $2 (func (param anyref)))
 
@@ -452,10 +452,10 @@
 )
 
 (module
-  ;; CHECK:      (type $A (sub (struct )))
+  ;; CHECK:      (type $A (sub (struct)))
   (type $A (sub (struct)))
 
-  ;; CHECK:      (type $A_1 (sub $A (struct )))
+  ;; CHECK:      (type $A_1 (sub $A (struct)))
 
   ;; CHECK:      (type $2 (func (result (ref $A))))
 

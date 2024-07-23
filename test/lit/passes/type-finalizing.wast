@@ -58,17 +58,17 @@
 (module
   (rec
     ;; UNFINAL:      (rec
-    ;; UNFINAL-NEXT:  (type $parent (sub (struct )))
+    ;; UNFINAL-NEXT:  (type $parent (sub (struct)))
     ;; DOFINAL:      (rec
-    ;; DOFINAL-NEXT:  (type $parent (sub (struct )))
+    ;; DOFINAL-NEXT:  (type $parent (sub (struct)))
     (type $parent (sub (struct)))
 
-    ;; UNFINAL:       (type $child-open (sub $parent (struct )))
-    ;; DOFINAL:       (type $child-open (sub final $parent (struct )))
+    ;; UNFINAL:       (type $child-open (sub $parent (struct)))
+    ;; DOFINAL:       (type $child-open (sub final $parent (struct)))
     (type $child-open (sub $parent (struct)))
 
-    ;; UNFINAL:       (type $child-final (sub $parent (struct )))
-    ;; DOFINAL:       (type $child-final (sub final $parent (struct )))
+    ;; UNFINAL:       (type $child-final (sub $parent (struct)))
+    ;; DOFINAL:       (type $child-final (sub final $parent (struct)))
     (type $child-final (sub final $parent (struct)))
   )
 

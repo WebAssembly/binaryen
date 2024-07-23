@@ -459,10 +459,10 @@
 
     ;; CHECK:       (type $B (sub $A (struct (field (ref $Y)))))
 
-    ;; CHECK:       (type $X (sub (struct )))
+    ;; CHECK:       (type $X (sub (struct)))
     (type $X (sub (struct)))
 
-    ;; CHECK:       (type $Y (sub $X (struct )))
+    ;; CHECK:       (type $Y (sub $X (struct)))
     (type $Y (sub $X (struct)))
 
     (type $A (sub (struct (field (ref $X)))))
@@ -509,10 +509,10 @@
 
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $X (sub (struct )))
+    ;; CHECK-NEXT:  (type $X (sub (struct)))
     (type $X (sub (struct)))
 
-    ;; CHECK:       (type $Y (sub $X (struct )))
+    ;; CHECK:       (type $Y (sub $X (struct)))
     (type $Y (sub $X (struct)))
 
     ;; CHECK:       (type $A (sub (struct (field (ref $X)))))
@@ -542,14 +542,14 @@
 )
 
 (module
-  ;; CHECK:      (type $X (sub (struct )))
+  ;; CHECK:      (type $X (sub (struct)))
   (type $X (sub (struct)))
 
   ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (type $A (sub (struct (field (ref $X)))))
 
-  ;; CHECK:      (type $Y (sub $X (struct )))
+  ;; CHECK:      (type $Y (sub $X (struct)))
   (type $Y (sub $X (struct)))
 
   (type $A (sub (struct (field (ref $X)))))
@@ -819,7 +819,7 @@
   ;;                        -> Leaf2-Outer[Leaf2-Inner]
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $Root-Inner (sub (struct )))
+  ;; CHECK-NEXT:  (type $Root-Inner (sub (struct)))
   (type $Root-Inner (sub (struct)))
 
   ;; CHECK:       (type $Leaf1-Inner (sub $Root-Inner (struct (field i32))))
@@ -831,7 +831,7 @@
 
   ;; CHECK:       (type $Leaf2-Outer (sub $Root-Outer (struct (field (ref $Leaf2-Inner)))))
 
-  ;; CHECK:       (type $Leaf2-Inner (sub $Root-Inner (struct )))
+  ;; CHECK:       (type $Leaf2-Inner (sub $Root-Inner (struct)))
   (type $Leaf2-Inner (sub $Root-Inner (struct )))
 
   (type $Root-Outer (sub (struct (field (ref $Root-Inner)))))
@@ -1147,7 +1147,7 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $A (struct (field (ref $B))))
     (type $A (struct (field (ref struct))))
-    ;; CHECK:       (type $B (struct ))
+    ;; CHECK:       (type $B (struct))
     (type $B (struct))
   )
 

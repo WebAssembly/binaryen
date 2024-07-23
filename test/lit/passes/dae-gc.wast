@@ -2,7 +2,7 @@
 ;; RUN: foreach %s %t wasm-opt -all --dae -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $"{}" (struct ))
+ ;; CHECK:      (type $"{}" (struct))
  (type $"{}" (struct))
 
  ;; CHECK:      (func $foo (type $0)

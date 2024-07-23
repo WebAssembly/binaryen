@@ -2114,7 +2114,9 @@ void BinaryInstWriter::visitTupleExtract(TupleExtract* curr) {
 }
 
 void BinaryInstWriter::visitRefI31(RefI31* curr) {
-  o << int8_t(BinaryConsts::GCPrefix) << U32LEB(BinaryConsts::RefI31);
+  o << int8_t(BinaryConsts::GCPrefix)
+    << U32LEB(curr->type.getHeapType().isShared() ? BinaryConsts::RefI31Shared
+                                                  : BinaryConsts::RefI31);
 }
 
 void BinaryInstWriter::visitI31Get(I31Get* curr) {

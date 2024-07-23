@@ -759,7 +759,7 @@ void Inhabitator::markExternRefsNullable() {
     auto children = type.getTypeChildren();
     for (size_t i = 0; i < children.size(); ++i) {
       auto child = children[i];
-      if (child.isRef() && child.getHeapType() == HeapType::ext &&
+      if (child.isRef() && child.getHeapType().isMaybeShared(HeapType::ext) &&
           child.isNonNullable()) {
         markNullable({type, i});
       }

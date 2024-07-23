@@ -2,7 +2,7 @@
 ;; RUN: foreach %s %t wasm-opt -all --gufa -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
 
@@ -361,7 +361,7 @@
 )
 
 (module
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
   ;; CHECK:      (type $1 (func))
@@ -459,7 +459,7 @@
 (module
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
   ;; CHECK:      (global $A-null anyref (ref.null none))
@@ -569,7 +569,7 @@
 (module
   ;; CHECK:      (type $0 (func (param (ref any)) (result (ref any))))
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
   ;; CHECK:      (type $2 (func (param i32) (result i32)))
@@ -679,7 +679,7 @@
 
 ;; As above, but using indirect calls.
 (module
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
   ;; CHECK:      (type $two-params (func (param (ref $struct) (ref $struct))))
@@ -811,7 +811,7 @@
 
 ;; As above, but using call_ref.
 (module
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
   ;; CHECK:      (type $two-params (func (param (ref $struct) (ref $struct))))
@@ -923,7 +923,7 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $struct (sub (struct )))
+    ;; CHECK-NEXT:  (type $struct (sub (struct)))
     (type $struct (sub (struct)))
 
     ;; CHECK:       (type $parent (sub (struct (field (mut (ref null $struct))))))
@@ -931,7 +931,7 @@
     ;; CHECK:       (type $child (sub $parent (struct (field (mut (ref null $struct))) (field (mut (ref null $struct))))))
     (type $child (sub $parent (struct (field (mut (ref null $struct))) (field (mut (ref null $struct))))))
 
-    ;; CHECK:       (type $unrelated (struct ))
+    ;; CHECK:       (type $unrelated (struct))
     (type $unrelated (struct))
   )
 
@@ -1201,7 +1201,7 @@
 
 ;; Exact types: Writes to the parent class do not confuse us.
 (module
-  ;; CHECK:      (type $struct (sub (struct )))
+  ;; CHECK:      (type $struct (sub (struct)))
   (type $struct (sub (struct)))
   ;; CHECK:      (type $parent (sub (struct (field (mut (ref null $struct))))))
   (type $parent (sub (struct (field (mut (ref null $struct))))))
@@ -1557,7 +1557,7 @@
 
   ;; CHECK:      (type $4 (func))
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
   ;; CHECK:      (func $func (type $4)
@@ -1687,7 +1687,7 @@
 
   ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
   (type $storage (struct (field (mut (ref null any)))))
@@ -1831,7 +1831,7 @@
 
   ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
   (type $storage (struct (field (mut (ref null any)))))
@@ -1898,7 +1898,7 @@
 
   ;; CHECK:      (type $1 (func (param anyref)))
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
   ;; CHECK:      (tag $nothing (param anyref))
@@ -2132,7 +2132,7 @@
 
   ;; CHECK:      (type $1 (func))
 
-  ;; CHECK:      (type $struct (struct ))
+  ;; CHECK:      (type $struct (struct))
   (type $struct (struct))
 
   ;; CHECK:      (tag $tag (param anyref anyref))
@@ -2207,7 +2207,7 @@
 )
 
 (module
-  ;; CHECK:      (type $"{}" (sub (struct )))
+  ;; CHECK:      (type $"{}" (sub (struct)))
   (type $"{}" (sub (struct)))
 
   ;; CHECK:      (type $1 (func (result (ref $"{}"))))
@@ -2461,7 +2461,7 @@
 
   ;; CHECK:      (type $4 (func (param i32)))
 
-  ;; CHECK:      (type $other (sub (struct )))
+  ;; CHECK:      (type $other (sub (struct)))
   (type $other (sub (struct)))
 
   ;; CHECK:      (type $6 (func (result i32)))
@@ -5922,10 +5922,10 @@
 )
 
 (module
-  ;; CHECK:      (type $A (sub (struct )))
+  ;; CHECK:      (type $A (sub (struct)))
   (type $A (sub (struct)))
 
-  ;; CHECK:      (type $B (sub $A (struct )))
+  ;; CHECK:      (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
   ;; CHECK:      (type $2 (func (result (ref $A))))
@@ -6008,7 +6008,7 @@
 )
 
 (module
-  ;; CHECK:      (type $A (struct ))
+  ;; CHECK:      (type $A (struct))
   (type $A (struct))
 
   ;; CHECK:      (type $1 (func))

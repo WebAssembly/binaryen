@@ -181,7 +181,7 @@ public:
   [[nodiscard]] Result<> makeTupleMake(uint32_t arity);
   [[nodiscard]] Result<> makeTupleExtract(uint32_t arity, uint32_t index);
   [[nodiscard]] Result<> makeTupleDrop(uint32_t arity);
-  [[nodiscard]] Result<> makeRefI31();
+  [[nodiscard]] Result<> makeRefI31(Shareability share);
   [[nodiscard]] Result<> makeI31Get(bool signed_);
   [[nodiscard]] Result<> makeCallRef(HeapType type, bool isReturn);
   [[nodiscard]] Result<> makeRefTest(Type type);

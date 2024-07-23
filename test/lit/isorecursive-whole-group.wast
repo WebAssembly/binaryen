@@ -9,9 +9,9 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $used (sub (struct )))
+  ;; CHECK-NEXT:  (type $used (sub (struct)))
   (type $used (sub (struct)))
-  ;; CHECK:       (type $unused (sub (struct )))
+  ;; CHECK:       (type $unused (sub (struct)))
   (type $unused (sub (struct)))
  )
 
