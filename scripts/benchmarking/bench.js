@@ -7,6 +7,9 @@
 //    we use very specific optimizations in order to not optimize away the
 //    differences we care about).
 //  * d8 bench.js -- bench.wasm
+//    or
+//    spidermonkey bench.js bench.wasm
+//    etc.
 //  * profit
 //
 
@@ -53,7 +56,9 @@ function makeBenchmarker(name) {
 const benchmarkers = [
   makeBenchmarker('len'),
   makeBenchmarker('and'),
-  makeBenchmarker('iff'),
+  makeBenchmarker('iff-both'),
+  makeBenchmarker('or'),
+  makeBenchmarker('iff-either'),
 ];
 
 // Create a long linked list of objects of both type $A and $B.
@@ -64,21 +69,47 @@ for (var i = 0; i < N; i++) {
 }
 
 // We'll call the benchmark functions in random orders.
-const orders = [
-  [0, 1, 2],
-  [0, 2, 1],
-  [1, 0, 2],
-  [1, 2, 0],
-  [2, 0, 1],
-  [2, 1, 0],
-];
+function makeOrders(prefix) {
+  // Given a prefix of an order, like [] or [0, 3], return all the possible
+  // orders beginning with that prefix.
+
+  // We cannot repeat anything already seen.
+  const seen = new Set();
+  for (var x of prefix) {
+    seen.add(x);
+  }
+
+  // Starting from the prefix, extend it by one item in all valid ways.
+  const extensions = [];
+  for (var i = 0; i < benchmarkers.length; i++) {
+    if (!seen.has(i)) {
+      extensions.push(prefix.concat(i));
+    }
+  }
+
+  if (prefix.length == benchmarkers.length - 1) {
+    // The extensions are complete orders; stop the recursion.
+    return extensions;
+  }
+
+  // Recursively generate the full orders.
+  const ret = [];
+  for (var extension of extensions) {
+    for (var order of makeOrders(extension)) {
+      ret.push(order);
+    }
+  }
+  return ret;
+}
+
+const orders = makeOrders([]);
 
 // Call the benchmark functions.
 const M = 10000000;
 
 for (var i = 0; i < M; i++) {
   const order = orders[Math.floor(Math.random() * orders.length)];
-  for (var k = 0; k < 3; k++) {
+  for (var k = 0; k < benchmarkers.length; k++) {
     const benchmarker = benchmarkers[order[k]];
     const start = performance.now();
     const result = benchmarker.func(list);
