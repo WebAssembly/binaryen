@@ -1,9 +1,11 @@
 
 // Usage:
 //
-//  * wasm-opt bench.wat -O3 -o bench.wasm -all
+//  * wasm-opt bench.wat -o bench.wasm -all --inline-functions-with-loops --always-inline-max-function-size=1000 --inlining --precompute-propagate --optimize-instructions --inlining --simplify-locals -O3
 //  * Inspect the optimized wasm to see that inlining etc. worked properly
-//    (we rely on inlining to let us write bench.wat in a short/simple form).
+//    (we rely on inlining to let us write bench.wat in a short/simple form, and
+//    we use very specific optimizations in order to not optimize away the
+//    differences we care about).
 //  * d8 bench.js -- bench.wasm
 //  * profit
 //
@@ -37,61 +39,69 @@ const module = new WebAssembly.Module(binary);
 const instance = new WebAssembly.Instance(module, {});
 const exports = instance.exports;
 
-// Create objects of both type $A and $B.
-const N = 1000;
-const as = Array.from({ length: N }, () => exports.makeA());
-const bs = Array.from({ length: N }, () => exports.makeB());
+// Create the benchmarkers.
+function makeBenchmarker(name) {
+  return {
+    name: name,
+    func: exports[name],
+    time: 0,
+    sum: 0,
+    iters: 0,
+  };
+}
 
-// Call the benchmark functions with a mixture of as and bs.
-const M = 10000;
-var timeIff = 0, timeAnd = 0, timeLen = 0;
-var sum = 0, iters = 0;
+const benchmarkers = [
+  makeBenchmarker('len'),
+  makeBenchmarker('and'),
+  makeBenchmarker('iff'),
+];
 
+// Create a long linked list of objects of both type $A and $B.
+const N = 100;
+var list = null;
 for (var i = 0; i < N; i++) {
-  for (var j = 0; j < M; j++) {
-    iters++;
+  list = Math.random() < 0.5 ? exports.makeA(list) : exports.makeB(list);
+}
 
-    // Pick either an $A or a $B based on i and j.
-    const x = (i & 1) ? as[i] : bs[i];
-    const y = (j & 1) ? as[i] : bs[i];
+// We'll call the benchmark functions in random orders.
+const orders = [
+  [0, 1, 2],
+  [0, 2, 1],
+  [1, 0, 2],
+  [1, 2, 0],
+  [2, 0, 1],
+  [2, 1, 0],
+];
 
-    // Execute the exports.
-    var start = performance.now();
-    const resultIff = exports.iff(x, y);
-    timeIff += performance.now() - start;
+// Call the benchmark functions.
+const M = 10000000;
 
-    start = performance.now();
-    const resultAnd = exports.and(x, y);
-    timeAnd += performance.now() - start;
-
-    start = performance.now();
-    const resultLen = exports.len(x, y);
-    timeLen += performance.now() - start;
-
-    // The functions are computing the same thing.
-    if (resultIff !== resultAnd) throw 'wtf';
-    sum += resultIff;
+for (var i = 0; i < M; i++) {
+  const order = orders[Math.floor(Math.random() * orders.length)];
+  for (var k = 0; k < 3; k++) {
+    const benchmarker = benchmarkers[order[k]];
+    const start = performance.now();
+    const result = benchmarker.func(list);
+    benchmarker.time += performance.now() - start;
+    benchmarker.sum += result;
+    benchmarker.iters++;
   }
 }
 
-console.log('iters       :', iters);
-console.log('sum         :', sum);
-console.log('time for iff:', timeIff);
-console.log('time for and:', timeAnd);
-console.log('time for len:', timeLen);
+console.log('iters   :', M);
+console.log('list len:', N);
+console.log();
+for (var benchmarker of benchmarkers) {
+  console.log(`${benchmarker.name} time: ${benchmarker.time}`)
+}
+console.log();
+for (var benchmarker of benchmarkers) {
+  console.log(`${benchmarker.name} mean sum: ${benchmarker.sum / M}`)
+}
+console.log();
+for (var benchmarker of benchmarkers) {
+  console.log(`${benchmarker.name} iters: ${benchmarker.iters}`)
+}
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+// TODO: the othre patterns too in o.diff on remote!!!1
 

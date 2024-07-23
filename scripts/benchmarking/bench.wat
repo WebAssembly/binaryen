@@ -1,15 +1,15 @@
 (module
   ;; A chain of three types. Each type has a "next" field, so we can form linked
   ;; lists.
-  (type $A (sub (struct (field $next anyref))))
-  (type $B (sub $A (struct (field $next anyref))))
-  (type $C (sub $B (struct (field $next anyref))))
+  (type $A (sub (struct (field $next (ref null $A)))))
+  (type $B (sub $A (struct (field $next (ref null $A)))))
+  (type $C (sub $B (struct (field $next (ref null $A)))))
 
   (type $func (func (param (ref $A)) (result i32)))
 
   ;; Internal helper to iterate over a linked list and call a function on each
   ;; item, and return the sum of those calls' results.
-  (func $iter (param $list (ref $A)) (param $func (ref $func)) (result i32)
+  (func $iter (param $list (ref null $A)) (param $func (ref $func)) (result i32)
     (local $sum i32)
     (loop $loop
       (if
@@ -26,7 +26,9 @@
             (i32.add
               (local.get $sum)
               (call_ref $func
-                (local.get $list)
+                (ref.as_non_null
+                  (local.get $list)
+                )
                 (local.get $func)
               )
             )
@@ -104,19 +106,19 @@
 
   ;; Creation functions.
 
-  (func $makeA (export "makeA") (param $next anyref) (result anyref)
+  (func $makeA (export "makeA") (param $next (ref null $A)) (result anyref)
     (struct.new $A
       (local.get $next)
     )
   )
 
-  (func $makeB (export "makeA") (param $next anyref) (result anyref)
+  (func $makeB (export "makeB") (param $next (ref null $A)) (result anyref)
     (struct.new $B
       (local.get $next)
     )
   )
 
-  (func $makeC (export "makeA") (param $next anyref) (result anyref)
+  (func $makeC (export "makeC") (param $next (ref null $A)) (result anyref)
     (struct.new $C
       (local.get $next)
     )
