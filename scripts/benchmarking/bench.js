@@ -1,4 +1,6 @@
 
+// Benchmarking script. This runs on compild bench.wat and prints out timings.
+//
 // Usage:
 //
 //  * wasm-opt scripts/benchmarking/bench.wat -all --inline-functions-with-loops --always-inline-max-function-size=1000 --inlining --precompute-propagate --optimize-instructions --inlining --simplify-locals --coalesce-locals --vacuum --remove-unused-module-elements -o bench.wasm -g
@@ -143,6 +145,4 @@ console.log();
 for (var benchmarker of benchmarkers) {
   console.log(`${benchmarker.name} mean sum: \t${benchmarker.sum / M}`)
 }
-
-// TODO: the othre patterns too in o.diff on remote!!!1
 
