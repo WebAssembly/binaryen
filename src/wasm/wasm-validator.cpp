@@ -2792,10 +2792,7 @@ void FunctionValidator::visitRefCast(RefCast* curr) {
     return;
   }
   // Also error (more generically) on i32 and anything else invalid here.
-  if (!shouldBeTrue(
-        curr->type.isRef(),
-        curr,
-        "ref.cast must have ref type")) {
+  if (!shouldBeTrue(curr->type.isRef(), curr, "ref.cast must have ref type")) {
     return;
   }
   shouldBeEqual(
