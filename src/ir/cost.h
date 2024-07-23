@@ -620,9 +620,6 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   CostType visitRefI31(RefI31* curr) { return 3 + visit(curr->value); }
   CostType visitI31Get(I31Get* curr) { return 2 + visit(curr->i31); }
   CostType visitRefTest(RefTest* curr) {
-    // Casts have a very high cost because in the VM they end up implemented as
-    // a combination of loads and branches. Given they contain branches, we do
-    // not want to add any more such work.
     return CastCost + nullCheckCost(curr->ref) + visit(curr->ref);
   }
   CostType visitRefCast(RefCast* curr) {
