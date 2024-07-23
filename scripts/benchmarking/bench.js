@@ -1,7 +1,7 @@
 
 // Usage:
 //
-//  * wasm-opt bench.wat -o bench.wasm -all --inline-functions-with-loops --always-inline-max-function-size=1000 --inlining --precompute-propagate --optimize-instructions --inlining --simplify-locals -O3
+//  * wasm-opt scripts/benchmarking/bench.wat -all --inline-functions-with-loops --always-inline-max-function-size=1000 --inlining --precompute-propagate --optimize-instructions --inlining --simplify-locals --coalesce-locals --vacuum --remove-unused-module-elements -o bench.wasm -g
 //  * Inspect the optimized wasm to see that inlining etc. worked properly
 //    (we rely on inlining to let us write bench.wat in a short/simple form, and
 //    we use very specific optimizations in order to not optimize away the
@@ -58,6 +58,8 @@ const benchmarkers = [
   makeBenchmarker('iff-either'),
   makeBenchmarker('select'),
   makeBenchmarker('iff-nextor'),
+  makeBenchmarker('select-three'),
+  makeBenchmarker('iff-three'),
 ];
 
 // We'll call the benchmark functions in random orders.
@@ -135,11 +137,11 @@ for (var benchmarker of benchmarkers) {
 
 console.log();
 for (var benchmarker of benchmarkers) {
-  console.log(`${benchmarker.name} time: ${benchmarker.time}`)
+  console.log(`${benchmarker.name} time: \t${benchmarker.time}`)
 }
 console.log();
 for (var benchmarker of benchmarkers) {
-  console.log(`${benchmarker.name} mean sum: ${benchmarker.sum / M}`)
+  console.log(`${benchmarker.name} mean sum: \t${benchmarker.sum / M}`)
 }
 
 // TODO: the othre patterns too in o.diff on remote!!!1

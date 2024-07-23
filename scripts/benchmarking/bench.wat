@@ -199,6 +199,65 @@
     )
   )
 
+  ;; Use an if over three tests: "test if next is B or C depending on if curr is
+  ;; B."
+  (func $iff-three (export "iff-three") (param $list (ref $A)) (result i32)
+    (call $iter
+      (local.get $list)
+      (ref.func $do-iff-three)
+    )
+  )
+  (func $do-iff-three (param $list (ref $A)) (result i32)
+    (local $next (ref null $A))
+    (local.set $next
+      (struct.get $A $next
+        (local.get $list)
+      )
+    )
+    (if (result i32)
+      (ref.test (ref $B)
+        (local.get $list)
+      )
+      (then
+        (ref.test (ref $C)
+          (local.get $next)
+        )
+      )
+      (else
+        (ref.test (ref $B)
+          (local.get $next)
+        )
+      )
+    )
+  )
+
+  ;; Use a select for the same.
+  (func $select-three (export "select-three") (param $list (ref $A)) (result i32)
+    (call $iter
+      (local.get $list)
+      (ref.func $do-select-three)
+    )
+  )
+  (func $do-select-three (param $list (ref $A)) (result i32)
+    (local $next (ref null $A))
+    (local.set $next
+      (struct.get $A $next
+        (local.get $list)
+      )
+    )
+    (select
+      (ref.test (ref $C)
+        (local.get $next)
+      )
+      (ref.test (ref $B)
+        (local.get $next)
+      )
+      (ref.test (ref $B)
+        (local.get $list)
+      )
+    )
+  )
+
   ;; Creation functions.
 
   (func $makeA (export "makeA") (param $next (ref null $A)) (result anyref)

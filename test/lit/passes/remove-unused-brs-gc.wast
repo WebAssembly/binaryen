@@ -784,13 +784,17 @@
  )
 
  ;; CHECK:      (func $if-tests (type $10) (param $x (ref $struct)) (param $y (ref $struct)) (result i32)
- ;; CHECK-NEXT:  (select
- ;; CHECK-NEXT:   (ref.test (ref $substruct)
- ;; CHECK-NEXT:    (local.get $y)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  (if (result i32)
  ;; CHECK-NEXT:   (ref.test (ref $substruct)
  ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (ref.test (ref $substruct)
+ ;; CHECK-NEXT:     (local.get $y)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (i32.const 0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
@@ -813,15 +817,19 @@
  )
 
  ;; CHECK:      (func $if-tests-arms (type $11) (param $x (ref $struct)) (param $y (ref $struct)) (param $z (ref $struct)) (result i32)
- ;; CHECK-NEXT:  (select
- ;; CHECK-NEXT:   (ref.test (ref $substruct)
- ;; CHECK-NEXT:    (local.get $y)
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (ref.test (ref $substruct)
- ;; CHECK-NEXT:    (local.get $z)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  (if (result i32)
  ;; CHECK-NEXT:   (ref.test (ref $substruct)
  ;; CHECK-NEXT:    (local.get $x)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (ref.test (ref $substruct)
+ ;; CHECK-NEXT:     (local.get $y)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (ref.test (ref $substruct)
+ ;; CHECK-NEXT:     (local.get $z)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )

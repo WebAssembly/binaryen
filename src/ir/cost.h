@@ -41,7 +41,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
 
   // The cost of a cast. This can vary depending on the engine and on the type,
   // but usually requires some loads and comparisons.
-  static const CostType CastCost = 3;
+  static const CostType CastCost = 5;
 
   CostType maybeVisit(Expression* curr) { return curr ? visit(curr) : 0; }
 
