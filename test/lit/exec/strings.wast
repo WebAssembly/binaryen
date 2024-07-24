@@ -477,12 +477,16 @@
     )
   )
 
+  ;; CHECK:      [fuzz-exec] calling extern
+  ;; CHECK-NEXT: [fuzz-exec] note result: extern => string("string")
   (func $extern (export "extern") (result externref)
     (extern.convert_any
       (string.const "string")
     )
   )
 
+  ;; CHECK:      [fuzz-exec] calling extern-intern
+  ;; CHECK-NEXT: [fuzz-exec] note result: extern-intern => string("string")
   (func $extern-intern (export "extern-intern") (result anyref)
     (any.convert_extern
       (extern.convert_any
@@ -618,6 +622,12 @@
 
 ;; CHECK:      [fuzz-exec] calling string.measure
 ;; CHECK-NEXT: [fuzz-exec] note result: string.measure => 5
+
+;; CHECK:      [fuzz-exec] calling extern
+;; CHECK-NEXT: [fuzz-exec] note result: extern => string("string")
+
+;; CHECK:      [fuzz-exec] calling extern-intern
+;; CHECK-NEXT: [fuzz-exec] note result: extern-intern => string("string")
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.1
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.10
 ;; CHECK-NEXT: [fuzz-exec] comparing compare.2
@@ -638,6 +648,8 @@
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.3
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.4
 ;; CHECK-NEXT: [fuzz-exec] comparing eq.5
+;; CHECK-NEXT: [fuzz-exec] comparing extern
+;; CHECK-NEXT: [fuzz-exec] comparing extern-intern
 ;; CHECK-NEXT: [fuzz-exec] comparing get_codeunit
 ;; CHECK-NEXT: [fuzz-exec] comparing invalid_code_point
 ;; CHECK-NEXT: [fuzz-exec] comparing isolated_high_code_point

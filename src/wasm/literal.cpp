@@ -2691,8 +2691,8 @@ Literal Literal::externalize() const {
   }
   auto heapType = type.getHeapType();
   auto extType = HeapTypes::ext.getBasic(heapType.getShared());
-  if (gcData->type.isMaybeShared(HeapType::i31)) {
-    return Literal(std::make_shared<GCData>(gcData->type, Literals{*this}),
+  if (heapType.isMaybeShared(HeapType::i31)) {
+    return Literal(std::make_shared<GCData>(heapType, Literals{*this}),
                    extType);
   }
   return Literal(gcData, extType);
