@@ -2691,17 +2691,9 @@ Literal Literal::externalize() const {
   }
   auto heapType = type.getHeapType();
   auto extType = HeapTypes::ext.getBasic(heapType.getShared());
-  if (heapType.isBasic()) {
-    switch (heapType.getBasic(Unshared)) {
-      case HeapType::i31: {
-        return Literal(std::make_shared<GCData>(HeapType::i31, Literals{*this}),
-                       extType);
-      }
-      case HeapType::string:
-        WASM_UNREACHABLE("TODO: string literals");
-      default:
-        WASM_UNREACHABLE("unexpected type");
-    }
+  if (gcData->type.isMaybeShared(HeapType::i31)) {
+    return Literal(std::make_shared<GCData>(gcData->type, Literals{*this}),
+                   extType);
   }
   return Literal(gcData, extType);
 }
@@ -2712,8 +2704,8 @@ Literal Literal::internalize() const {
   if (isNull()) {
     return Literal(std::shared_ptr<GCData>{}, HeapType::none);
   }
-  if (gcData->type == HeapType::i31) {
-    assert(gcData->values[0].type.getHeapType() == HeapType::i31);
+  if (gcData->type.isMaybeShared(HeapType::i31)) {
+    assert(gcData->values[0].type.getHeapType().isMaybeShared(HeapType::i31));
     return gcData->values[0];
   }
   return Literal(gcData, gcData->type);

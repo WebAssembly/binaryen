@@ -476,6 +476,20 @@
       (string.const "five!")
     )
   )
+
+  (func $extern (export "extern") (result externref)
+    (extern.convert_any
+      (string.const "string")
+    )
+  )
+
+  (func $extern-intern (export "extern-intern") (result anyref)
+    (any.convert_extern
+      (extern.convert_any
+        (string.const "string")
+      )
+    )
+  )
 )
 ;; CHECK:      [fuzz-exec] calling new_wtf16_array
 ;; CHECK-NEXT: [fuzz-exec] note result: new_wtf16_array => string("ello")
