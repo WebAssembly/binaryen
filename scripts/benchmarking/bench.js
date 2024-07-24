@@ -64,7 +64,18 @@ const benchmarkers = [
   makeBenchmarker('iff-three'),
 ];
 
-// We'll call the benchmark functions in random orders.
+// We'll call the benchmark functions in random orders. Random orders avoid any
+// interaction between the benchmarks from causing bias in the results.
+//
+// An alternative to randomly ordering the benchmarks in each iteration would be
+// to fully benchmark one, then do the next, so there are large amounts of time
+// between them, but that also allows them to become more like microbenchmarks
+// where the branch predictor etc. might display very favorable behavior.
+// Interleaving them makes things slightly more realistic.
+//
+// If we have too many benchmarks then eventually computing all orders ahead of
+// time will not work, but so long as we can, it is faster this way rather than
+// to compute random orders on the fly as we go.
 function makeOrders(prefix) {
   // Given a prefix of an order, like [] or [0, 3], return all the possible
   // orders beginning with that prefix.

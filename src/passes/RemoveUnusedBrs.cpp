@@ -88,6 +88,15 @@ static bool canTurnIfIntoBrIf(Expression* ifCondition,
 //  * https://github.com/WebAssembly/binaryen/issues/5983
 const Index TooCostlyToRunUnconditionally = 8;
 
+// Some costs are known to be too high to move from conditional to unconditional
+// execution.
+static_assert(CostAnalyzer::AtomicCost > TooCostlyToRunUnconditionally,
+              "We never run atomics unconditionally");
+static_assert(CostAnalyzer::ThrowCost > TooCostlyToRunUnconditionally,
+              "We never run throws unconditionally");
+static_assert(CostAnalyzer::CastCost > TooCostlyToRunUnconditionally / 2,
+              "We only run casts unconditionally when optimizing for size");
+
 static bool tooCostlyToRunUnconditionally(const PassOptions& passOptions,
                                           Index cost) {
   if (passOptions.shrinkLevel == 0) {

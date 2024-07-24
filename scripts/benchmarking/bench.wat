@@ -272,6 +272,9 @@
   )
 
   (func $makeC (export "makeC") (param $next (ref null $A)) (result anyref)
+    ;; This function is not used in benchmarks yet, but it keeps the type $C
+    ;; alive, which prevents $B from looking like it could be final, which might
+    ;; allow the optimizer to simplify more than we want.
     (struct.new $C
       (local.get $next)
     )
