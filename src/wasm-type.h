@@ -385,6 +385,12 @@ public:
 
   Shareability getShared() const;
 
+  // Check if the type is a given basic heap type, while ignoring whether it is
+  // shared or not.
+  bool isMaybeShared(BasicHeapType type) {
+    return isBasic() && getBasic(Unshared) == type;
+  }
+
   Signature getSignature() const;
   Continuation getContinuation() const;
 

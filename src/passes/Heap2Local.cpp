@@ -862,6 +862,11 @@ struct Array2Struct : PostWalker<Array2Struct> {
   // The original type of the allocation, before we turn it into a struct.
   Type originalType;
 
+  // The type of the struct we are changing to (nullable and non-nullable
+  // variations).
+  Type nullStruct;
+  Type nonNullStruct;
+
   Array2Struct(Expression* allocation,
                EscapeAnalyzer& analyzer,
                Function* func,
@@ -928,9 +933,15 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // lowered away to locals anyhow.
     auto nullArray = Type(arrayType, Nullable);
     auto nonNullArray = Type(arrayType, NonNullable);
-    auto nullStruct = Type(structType, Nullable);
-    auto nonNullStruct = Type(structType, NonNullable);
+    nullStruct = Type(structType, Nullable);
+    nonNullStruct = Type(structType, NonNullable);
     for (auto* reached : analyzer.reached) {
+      if (reached->is<RefCast>()) {
+        // Casts must be handled later: We need to see the old type, and to
+        // potentially replace the cast based on that, see below.
+        continue;
+      }
+
       // We must check subtyping here because the allocation may be upcast as it
       // flows around. If we do see such upcasting then we are refining here and
       // must refinalize.
@@ -1032,15 +1043,14 @@ struct Array2Struct : PostWalker<Array2Struct> {
   }
 
   // Some additional operations need special handling
+
   void visitRefTest(RefTest* curr) {
     if (!analyzer.reached.count(curr)) {
       return;
     }
 
     // When we ref.test an array allocation, we cannot simply turn the array
-    // into a struct, as then the test will behave different. (Note that this is
-    // not a problem for ref.*cast*, as the cast simply goes away when the value
-    // flows through, and we verify it will do so in the escape analysis.) To
+    // into a struct, as then the test will behave differently. To properly
     // handle this, check if the test succeeds or not, and write out the outcome
     // here (similar to Struct2Local::visitRefTest). Note that we test on
     // |originalType| here and not |allocation->type|, as the allocation has
@@ -1048,6 +1058,30 @@ struct Array2Struct : PostWalker<Array2Struct> {
     int32_t result = Type::isSubType(originalType, curr->castType);
     replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
                                         builder.makeConst(Literal(result))));
+  }
+
+  void visitRefCast(RefCast* curr) {
+    if (!analyzer.reached.count(curr)) {
+      return;
+    }
+
+    // As with RefTest, we need to check if the cast succeeds with the array
+    // type before we turn it into a struct type (as after that change, the
+    // outcome of the cast will look different).
+    if (!Type::isSubType(originalType, curr->type)) {
+      // The cast fails, ensure we trap with an unreachable.
+      replaceCurrent(builder.makeSequence(builder.makeDrop(curr),
+                                          builder.makeUnreachable()));
+    } else {
+      // The cast succeeds. Update the type. (It is ok to use the non-nullable
+      // type here unconditionally, since we know the allocation flows through
+      // here, and anyhow we will be removing the reference during Struct2Local,
+      // later.)
+      curr->type = nonNullStruct;
+    }
+
+    // Regardless of how we altered the type here, refinalize.
+    refinalize = true;
   }
 
   // Get the value in an expression we know must contain a constant index.
