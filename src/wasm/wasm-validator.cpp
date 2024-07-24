@@ -2231,16 +2231,16 @@ void FunctionValidator::visitRefIsNull(RefIsNull* curr) {
 
 void FunctionValidator::visitRefAs(RefAs* curr) {
   if (curr->value->type != Type::unreachable &&
-      !shouldBeTrue(curr->value->type.isRef(),
-                    curr,
-                    "ref.as value must be reference")) {
+      !shouldBeTrue(
+        curr->value->type.isRef(), curr, "ref.as value must be reference")) {
     return;
   }
   switch (curr->op) {
     case RefAsNonNull: {
-      shouldBeTrue(getModule()->features.hasReferenceTypes(),
-                   curr,
-                   "ref.as requires reference-types [--enable-reference-types]");
+      shouldBeTrue(
+        getModule()->features.hasReferenceTypes(),
+        curr,
+        "ref.as requires reference-types [--enable-reference-types]");
       break;
     }
     case AnyConvertExtern: {
