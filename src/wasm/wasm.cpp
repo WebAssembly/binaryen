@@ -1223,7 +1223,13 @@ void ArrayInitElem::finalize() {
 }
 
 void RefAs::finalize() {
-  if (value->type == Type::unreachable) {
+  // An unreachable child means we are unreachable. Also set ourselves to
+  // unreachable when the child is invalid, which avoids getHeapType() erroring
+  // right after us (in this situation, the validator will report an error
+  // later).
+  // TODO: Remove that part when we solve the validation issue more generally,
+  //       see https://github.com/WebAssembly/binaryen/issues/6781
+  if (!value->type.isRef()) {
     type = Type::unreachable;
     return;
   }

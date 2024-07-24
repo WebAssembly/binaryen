@@ -2230,10 +2230,19 @@ void FunctionValidator::visitRefIsNull(RefIsNull* curr) {
 }
 
 void FunctionValidator::visitRefAs(RefAs* curr) {
+  if (curr->value->type != Type::unreachable &&
+      !shouldBeTrue(curr->value->type.isRef(),
+                    curr,
+                    "ref.as value must be reference")) {
+    return;
+  }
   switch (curr->op) {
-    default:
-      // TODO: validate all the other ref.as_*
+    case RefAsNonNull: {
+      shouldBeTrue(getModule()->features.hasReferenceTypes(),
+                   curr,
+                   "ref.as requires reference-types [--enable-reference-types]");
       break;
+    }
     case AnyConvertExtern: {
       shouldBeTrue(getModule()->features.hasGC(),
                    curr,
