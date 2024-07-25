@@ -3,12 +3,16 @@
 ;; Test optimization decisions while varying the minimum benefit percentage
 ;; parameter. Zero means any benefit, no matter how small, is worthwhile, while
 ;; higher values demand more benefit before doing any work.
+;;
+;; Test with --traps-never-happen (tnh) here so that we optimize more, making it
+;; easier to show the effects. This is also more realistic for toolchains like
+;; Java/Kotlin/Dart, which is good coverage.
 
-;; RUN: foreach %s %t wasm-opt --monomorphize                                -all -S -o - | filecheck %s --check-prefix DEFAULT
-;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@0   -all -S -o - | filecheck %s --check-prefix ZERO___
-;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@33  -all -S -o - | filecheck %s --check-prefix THIRD__
-;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@66  -all -S -o - | filecheck %s --check-prefix 2THIRDS
-;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@100 -all -S -o - | filecheck %s --check-prefix HUNDRED
+;; RUN: foreach %s %t wasm-opt --monomorphize                                         -all -tnh -S -o - | filecheck %s --check-prefix DEFAULT
+;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@0   -all -tnh -S -o - | filecheck %s --check-prefix ZERO___
+;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@33  -all -tnh -S -o - | filecheck %s --check-prefix THIRD__
+;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@66  -all -tnh -S -o - | filecheck %s --check-prefix 2THIRDS
+;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@100 -all -tnh -S -o - | filecheck %s --check-prefix HUNDRED
 
 (module
   (memory 10 20)
@@ -1065,3 +1069,130 @@
 ;; 2THIRDS-NEXT:   (i32.const 0)
 ;; 2THIRDS-NEXT:  )
 ;; 2THIRDS-NEXT: )
+
+(module
+  (type $A (sub (struct (field i32))))
+
+  (import "a" "b" (func $import))
+
+  (import "a" "c" (func $import2 (param i32)))
+
+  (func $target-long (param $any anyref) (result i32)
+    (local $A (ref $A))
+    ;; This function does a cast and then does a lot of other work before
+    ;; reading from the struct. The other work causes us to only optimize when
+    ;; we are ok with getting a very small % of improvement.
+    (local.set $A
+      (ref.cast (ref $A)
+        (local.get $any)
+      )
+    )
+    (call $import)
+    (call $import)
+    (call $import)
+    (call $import)
+    (call $import)
+    (call $import)
+    (struct.get $A 0
+      (local.get $A)
+    )
+  )
+
+  (func $target-short (param $any anyref) (result i32)
+    ;; As above, but without all the work in the middle: this is really just a
+    ;; simpler getter function, and we can remove almost all the work here when
+    ;; we remove the cast, meaning we optimize in most cases.
+    (struct.get $A 0
+      (ref.cast (ref $A)
+        (local.get $any)
+      )
+    )
+  )
+
+  (func $calls-long (param $x anyref) (param $y i32)
+    ;; Call with an unknown input and the output is sent to an import.
+    (call $import2
+      (call $target-long
+        (local.get $x)
+      )
+    )
+    ;; Ditto, but drop the output.
+    (drop
+      (call $target-long
+        (local.get $x)
+      )
+    )
+    ;; Calls with a struct.new input.
+    (call $import2
+      (call $target-long
+        (struct.new $A
+          (local.get $y)
+        )
+      )
+    )
+    (drop
+      (call $target-long
+        (struct.new $A
+          (local.get $y)
+        )
+      )
+    )
+    ;; Now the struct.new has a constant input.
+    (call $import2
+      (call $target-long
+        (struct.new $A
+          (i32.const 42)
+        )
+      )
+    )
+    (drop
+      (call $target-long
+        (struct.new $A
+          (i32.const 42)
+        )
+      )
+    )
+  )
+
+  (func $calls-short (param $x anyref) (param $y i32)
+    ;; As above, but now calling the short function.
+    (call $import2
+      (call $target-long
+        (local.get $x)
+      )
+    )
+    (drop
+      (call $target-long
+        (local.get $x)
+      )
+    )
+    (call $import2
+      (call $target-long
+        (struct.new $A
+          (local.get $y)
+        )
+      )
+    )
+    (drop
+      (call $target-long
+        (struct.new $A
+          (local.get $y)
+        )
+      )
+    )
+    (call $import2
+      (call $target-long
+        (struct.new $A
+          (i32.const 42)
+        )
+      )
+    )
+    (drop
+      (call $target-long
+        (struct.new $A
+          (i32.const 42)
+        )
+      )
+    )
+  )
+)
