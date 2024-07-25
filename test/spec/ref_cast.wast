@@ -170,6 +170,16 @@
   "common supertype"
 )
 
+(assert_invalid
+  (module
+    (type $t0 (struct))
+    (func (export "test-ref-cast-extern") (result anyref)
+      (ref.cast (ref extern) (struct.new $t0))
+    )
+  )
+  "common supertype"
+)
+
 (assert_malformed
   (module quote "(func (ref.cast i32 (unreachable)))")
   "expected reftype"
