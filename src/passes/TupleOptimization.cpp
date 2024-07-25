@@ -25,7 +25,7 @@
 //    (tuple.extract 3 0
 //      (local.get $tuple)))
 //
-// If there are no other uses, then we just need one of the three lanes. By
+// If there are no other uses, then we just need one of the three elements. By
 // lowing them to three separate locals, other passes can remove the other two.
 //
 // Specifically, this pass seeks out tuple locals that have these properties:
@@ -320,8 +320,13 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
         // we were confused earlier and the target should not be.
         assert(sourceBase);
 
+        // The source and target may have different element types due to
+        // subtyping (but their sizes must be equal).
+        auto sourceType = value->type;
+        assert(sourceType.size() == type.size());
+
         for (Index i = 0; i < type.size(); i++) {
-          auto* get = builder.makeLocalGet(sourceBase + i, type[i]);
+          auto* get = builder.makeLocalGet(sourceBase + i, sourceType[i]);
           contents.push_back(builder.makeLocalSet(targetBase + i, get));
         }
         replace(builder.makeBlock(contents));
