@@ -116,7 +116,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
     new (&gcData) std::shared_ptr<GCData>();
     return;
   }
-  if (other.isData() || other.type.getHeapType() == HeapType::ext) {
+  if (other.isData() || other.type.getHeapType().isMaybeShared(HeapType::ext)) {
     new (&gcData) std::shared_ptr<GCData>(other.gcData);
     return;
   }
