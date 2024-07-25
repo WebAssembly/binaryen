@@ -15,7 +15,7 @@
   ;; CHECK-NEXT: )
   (func $just-set
     (local $tuple (tuple i32 i32))
-    ;; This tuple local can be optimized into separate locals per lane. The
+    ;; This tuple local can be optimized into separate locals per element. The
     ;; tuple local itself then has no uses and other passes will remove it.
     (local.set $tuple
       (tuple.make 2
@@ -38,7 +38,7 @@
   ;; CHECK-NEXT: )
   (func $just-get
     (local $tuple (tuple i32 i32))
-    ;; The default value of the tuple lanes is used here in the new locals we
+    ;; The default value of the tuple elements is used here in the new locals we
     ;; add.
     (drop
       (tuple.extract 2 0
@@ -1027,7 +1027,7 @@
     )
   )
 
-  ;; CHECK:      (func $tuple.lane.subtyping (type $0)
+  ;; CHECK:      (func $tuple.element.subtyping (type $0)
   ;; CHECK-NEXT:  (local $tuple_null (tuple i32 nullref))
   ;; CHECK-NEXT:  (local $tuple_eq (tuple i32 eqref))
   ;; CHECK-NEXT:  (local $2 i32)
@@ -1049,12 +1049,12 @@
   ;; CHECK-NEXT:   (local.get $3)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $tuple.lane.subtyping
+  (func $tuple.element.subtyping
     (local $tuple_null (tuple i32 nullref))
     (local $tuple_eq (tuple i32 eqref))
-    ;; The tee emits a nullref in the second lane, which is written to a lane of
-    ;; eqref. That is, the source and the target do not have identical type,
-    ;; which we need to properly handle and not error.
+    ;; The tee emits a nullref in the second element, which is written to an
+    ;; element of eqref. That is, the source and the target do not have
+    ;; identical type, which we need to properly handle and not error.
     (local.set $tuple_eq
       (local.tee $tuple_null
         (tuple.make 2
