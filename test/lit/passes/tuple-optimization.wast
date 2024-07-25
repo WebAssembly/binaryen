@@ -1026,4 +1026,42 @@
       )
     )
   )
+
+  ;; CHECK:      (func $tuple.lane.subtyping (type $0)
+  ;; CHECK-NEXT:  (local $tuple_null (tuple i32 nullref))
+  ;; CHECK-NEXT:  (local $tuple_eq (tuple i32 eqref))
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 nullref)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 eqref)
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $2
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $3
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $4
+  ;; CHECK-NEXT:   (local.get $2)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $5
+  ;; CHECK-NEXT:   (local.get $3)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $tuple.lane.subtyping
+    (local $tuple_null (tuple i32 nullref))
+    (local $tuple_eq (tuple i32 eqref))
+    ;; The tee emits a nullref in the second lane, which is written to a lane of
+    ;; eqref. That is, the source and the target do not have identical type,
+    ;; which we need to properly handle and not error.
+    (local.set $tuple_eq
+      (local.tee $tuple_null
+        (tuple.make 2
+          (i32.const 0)
+          (ref.null none)
+        )
+      )
+    )
+  )
 )
