@@ -610,6 +610,7 @@
     )
   )
 )
+
 ;; DEFAULT:      (func $target_2 (type $2)
 ;; DEFAULT-NEXT:  (i32.store
 ;; DEFAULT-NEXT:   (i32.const 10)
@@ -1069,47 +1070,356 @@
 ;; 2THIRDS-NEXT:   (i32.const 0)
 ;; 2THIRDS-NEXT:  )
 ;; 2THIRDS-NEXT: )
-
 (module
+  ;; DEFAULT:      (type $A (sub (struct (field i32))))
+  ;; ZERO___:      (type $A (sub (struct (field i32))))
+  ;; THIRD__:      (type $A (sub (struct (field i32))))
+  ;; 2THIRDS:      (type $A (sub (struct (field i32))))
+  ;; HUNDRED:      (type $A (sub (struct (field i32))))
   (type $A (sub (struct (field i32))))
 
+  ;; DEFAULT:      (type $1 (func))
+
+  ;; DEFAULT:      (type $2 (func (param anyref) (result (ref $A))))
+
+  ;; DEFAULT:      (type $3 (func (param anyref i32)))
+
+  ;; DEFAULT:      (type $4 (func (param (ref $A))))
+
+  ;; DEFAULT:      (type $5 (func (param anyref)))
+
+  ;; DEFAULT:      (type $6 (func (param i32) (result (ref $A))))
+
+  ;; DEFAULT:      (type $7 (func (param i32)))
+
+  ;; DEFAULT:      (type $8 (func (result (ref $A))))
+
+  ;; DEFAULT:      (import "a" "b" (func $import (type $1)))
+  ;; ZERO___:      (type $1 (func))
+
+  ;; ZERO___:      (type $2 (func (param anyref) (result (ref $A))))
+
+  ;; ZERO___:      (type $3 (func (param anyref i32)))
+
+  ;; ZERO___:      (type $4 (func (param (ref $A))))
+
+  ;; ZERO___:      (type $5 (func (param anyref)))
+
+  ;; ZERO___:      (type $6 (func (param i32) (result (ref $A))))
+
+  ;; ZERO___:      (type $7 (func (param i32)))
+
+  ;; ZERO___:      (type $8 (func (result (ref $A))))
+
+  ;; ZERO___:      (import "a" "b" (func $import (type $1)))
+  ;; THIRD__:      (type $1 (func))
+
+  ;; THIRD__:      (type $2 (func (param anyref) (result (ref $A))))
+
+  ;; THIRD__:      (type $3 (func (param anyref i32)))
+
+  ;; THIRD__:      (type $4 (func (param (ref $A))))
+
+  ;; THIRD__:      (import "a" "b" (func $import (type $1)))
+  ;; 2THIRDS:      (type $1 (func (param anyref) (result (ref $A))))
+
+  ;; 2THIRDS:      (type $2 (func (param anyref i32)))
+
+  ;; 2THIRDS:      (type $3 (func))
+
+  ;; 2THIRDS:      (type $4 (func (param (ref $A))))
+
+  ;; 2THIRDS:      (import "a" "b" (func $import (type $3)))
+  ;; HUNDRED:      (type $1 (func (param anyref) (result (ref $A))))
+
+  ;; HUNDRED:      (type $2 (func (param anyref i32)))
+
+  ;; HUNDRED:      (type $3 (func))
+
+  ;; HUNDRED:      (type $4 (func (param (ref $A))))
+
+  ;; HUNDRED:      (import "a" "b" (func $import (type $3)))
   (import "a" "b" (func $import))
 
-  (import "a" "c" (func $import2 (param i32)))
+  ;; DEFAULT:      (import "a" "c" (func $import2 (type $4) (param (ref $A))))
+  ;; ZERO___:      (import "a" "c" (func $import2 (type $4) (param (ref $A))))
+  ;; THIRD__:      (import "a" "c" (func $import2 (type $4) (param (ref $A))))
+  ;; 2THIRDS:      (import "a" "c" (func $import2 (type $4) (param (ref $A))))
+  ;; HUNDRED:      (import "a" "c" (func $import2 (type $4) (param (ref $A))))
+  (import "a" "c" (func $import2 (param (ref $A))))
 
-  (func $target-long (param $any anyref) (result i32)
-    (local $A (ref $A))
-    ;; This function does a cast and then does a lot of other work before
-    ;; reading from the struct. The other work causes us to only optimize when
-    ;; we are ok with getting a very small % of improvement.
-    (local.set $A
-      (ref.cast (ref $A)
-        (local.get $any)
-      )
-    )
+  ;; DEFAULT:      (func $target-long (type $2) (param $0 anyref) (result (ref $A))
+  ;; DEFAULT-NEXT:  (call $import)
+  ;; DEFAULT-NEXT:  (call $import)
+  ;; DEFAULT-NEXT:  (call $import)
+  ;; DEFAULT-NEXT:  (call $import)
+  ;; DEFAULT-NEXT:  (call $import)
+  ;; DEFAULT-NEXT:  (call $import)
+  ;; DEFAULT-NEXT:  (ref.cast (ref $A)
+  ;; DEFAULT-NEXT:   (local.get $0)
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT: )
+  ;; ZERO___:      (func $target-long (type $2) (param $0 anyref) (result (ref $A))
+  ;; ZERO___-NEXT:  (call $import)
+  ;; ZERO___-NEXT:  (call $import)
+  ;; ZERO___-NEXT:  (call $import)
+  ;; ZERO___-NEXT:  (call $import)
+  ;; ZERO___-NEXT:  (call $import)
+  ;; ZERO___-NEXT:  (call $import)
+  ;; ZERO___-NEXT:  (ref.cast (ref $A)
+  ;; ZERO___-NEXT:   (local.get $0)
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT: )
+  ;; THIRD__:      (func $target-long (type $2) (param $0 anyref) (result (ref $A))
+  ;; THIRD__-NEXT:  (call $import)
+  ;; THIRD__-NEXT:  (call $import)
+  ;; THIRD__-NEXT:  (call $import)
+  ;; THIRD__-NEXT:  (call $import)
+  ;; THIRD__-NEXT:  (call $import)
+  ;; THIRD__-NEXT:  (call $import)
+  ;; THIRD__-NEXT:  (ref.cast (ref $A)
+  ;; THIRD__-NEXT:   (local.get $0)
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT: )
+  ;; 2THIRDS:      (func $target-long (type $1) (param $0 anyref) (result (ref $A))
+  ;; 2THIRDS-NEXT:  (call $import)
+  ;; 2THIRDS-NEXT:  (call $import)
+  ;; 2THIRDS-NEXT:  (call $import)
+  ;; 2THIRDS-NEXT:  (call $import)
+  ;; 2THIRDS-NEXT:  (call $import)
+  ;; 2THIRDS-NEXT:  (call $import)
+  ;; 2THIRDS-NEXT:  (ref.cast (ref $A)
+  ;; 2THIRDS-NEXT:   (local.get $0)
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT: )
+  ;; HUNDRED:      (func $target-long (type $1) (param $0 anyref) (result (ref $A))
+  ;; HUNDRED-NEXT:  (call $import)
+  ;; HUNDRED-NEXT:  (call $import)
+  ;; HUNDRED-NEXT:  (call $import)
+  ;; HUNDRED-NEXT:  (call $import)
+  ;; HUNDRED-NEXT:  (call $import)
+  ;; HUNDRED-NEXT:  (call $import)
+  ;; HUNDRED-NEXT:  (ref.cast (ref $A)
+  ;; HUNDRED-NEXT:   (local.get $0)
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT: )
+  (func $target-long (param $any anyref) (result (ref $A))
+    ;; This function does a cast, aside from a lot of other work. The other work
+    ;; causes us to only optimize when we are ok with getting a very small % of
+    ;; improvement.
     (call $import)
     (call $import)
     (call $import)
     (call $import)
     (call $import)
     (call $import)
-    (struct.get $A 0
-      (local.get $A)
+    (ref.cast (ref $A)
+      (local.get $any)
     )
   )
 
-  (func $target-short (param $any anyref) (result i32)
+  ;; DEFAULT:      (func $target-short (type $2) (param $any anyref) (result (ref $A))
+  ;; DEFAULT-NEXT:  (ref.cast (ref $A)
+  ;; DEFAULT-NEXT:   (local.get $any)
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT: )
+  ;; ZERO___:      (func $target-short (type $2) (param $any anyref) (result (ref $A))
+  ;; ZERO___-NEXT:  (ref.cast (ref $A)
+  ;; ZERO___-NEXT:   (local.get $any)
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT: )
+  ;; THIRD__:      (func $target-short (type $2) (param $any anyref) (result (ref $A))
+  ;; THIRD__-NEXT:  (ref.cast (ref $A)
+  ;; THIRD__-NEXT:   (local.get $any)
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT: )
+  ;; 2THIRDS:      (func $target-short (type $1) (param $any anyref) (result (ref $A))
+  ;; 2THIRDS-NEXT:  (ref.cast (ref $A)
+  ;; 2THIRDS-NEXT:   (local.get $any)
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT: )
+  ;; HUNDRED:      (func $target-short (type $1) (param $any anyref) (result (ref $A))
+  ;; HUNDRED-NEXT:  (ref.cast (ref $A)
+  ;; HUNDRED-NEXT:   (local.get $any)
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT: )
+  (func $target-short (param $any anyref) (result (ref $A))
     ;; As above, but without all the work in the middle: this is really just a
-    ;; simpler getter function, and we can remove almost all the work here when
-    ;; we remove the cast, meaning we optimize in most cases.
-    (struct.get $A 0
-      (ref.cast (ref $A)
-        (local.get $any)
-      )
+    ;; simpler casting function, and we can remove almost all the work here when
+    ;; we remove the cast, meaning we optimize in more cases.
+    (ref.cast (ref $A)
+      (local.get $any)
     )
   )
 
+  ;; DEFAULT:      (func $calls-long (type $3) (param $x anyref) (param $y i32)
+  ;; DEFAULT-NEXT:  (call $import2
+  ;; DEFAULT-NEXT:   (call $target-long
+  ;; DEFAULT-NEXT:    (local.get $x)
+  ;; DEFAULT-NEXT:   )
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $target-long_6
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $import2
+  ;; DEFAULT-NEXT:   (call $target-long_7
+  ;; DEFAULT-NEXT:    (local.get $y)
+  ;; DEFAULT-NEXT:   )
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $target-long_8
+  ;; DEFAULT-NEXT:   (local.get $y)
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $import2
+  ;; DEFAULT-NEXT:   (call $target-long_9)
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $target-long_10)
+  ;; DEFAULT-NEXT: )
+  ;; ZERO___:      (func $calls-long (type $3) (param $x anyref) (param $y i32)
+  ;; ZERO___-NEXT:  (call $import2
+  ;; ZERO___-NEXT:   (call $target-long
+  ;; ZERO___-NEXT:    (local.get $x)
+  ;; ZERO___-NEXT:   )
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $target-long_6
+  ;; ZERO___-NEXT:   (local.get $x)
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $import2
+  ;; ZERO___-NEXT:   (call $target-long_7
+  ;; ZERO___-NEXT:    (local.get $y)
+  ;; ZERO___-NEXT:   )
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $target-long_8
+  ;; ZERO___-NEXT:   (local.get $y)
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $import2
+  ;; ZERO___-NEXT:   (call $target-long_9)
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $target-long_10)
+  ;; ZERO___-NEXT: )
+  ;; THIRD__:      (func $calls-long (type $3) (param $x anyref) (param $y i32)
+  ;; THIRD__-NEXT:  (call $import2
+  ;; THIRD__-NEXT:   (call $target-long
+  ;; THIRD__-NEXT:    (local.get $x)
+  ;; THIRD__-NEXT:   )
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (drop
+  ;; THIRD__-NEXT:   (call $target-long
+  ;; THIRD__-NEXT:    (local.get $x)
+  ;; THIRD__-NEXT:   )
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (call $import2
+  ;; THIRD__-NEXT:   (call $target-long
+  ;; THIRD__-NEXT:    (struct.new $A
+  ;; THIRD__-NEXT:     (local.get $y)
+  ;; THIRD__-NEXT:    )
+  ;; THIRD__-NEXT:   )
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (drop
+  ;; THIRD__-NEXT:   (call $target-long
+  ;; THIRD__-NEXT:    (struct.new $A
+  ;; THIRD__-NEXT:     (local.get $y)
+  ;; THIRD__-NEXT:    )
+  ;; THIRD__-NEXT:   )
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (call $import2
+  ;; THIRD__-NEXT:   (call $target-long
+  ;; THIRD__-NEXT:    (struct.new $A
+  ;; THIRD__-NEXT:     (i32.const 42)
+  ;; THIRD__-NEXT:    )
+  ;; THIRD__-NEXT:   )
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (call $target-long_6)
+  ;; THIRD__-NEXT: )
+  ;; 2THIRDS:      (func $calls-long (type $2) (param $x anyref) (param $y i32)
+  ;; 2THIRDS-NEXT:  (call $import2
+  ;; 2THIRDS-NEXT:   (call $target-long
+  ;; 2THIRDS-NEXT:    (local.get $x)
+  ;; 2THIRDS-NEXT:   )
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (drop
+  ;; 2THIRDS-NEXT:   (call $target-long
+  ;; 2THIRDS-NEXT:    (local.get $x)
+  ;; 2THIRDS-NEXT:   )
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (call $import2
+  ;; 2THIRDS-NEXT:   (call $target-long
+  ;; 2THIRDS-NEXT:    (struct.new $A
+  ;; 2THIRDS-NEXT:     (local.get $y)
+  ;; 2THIRDS-NEXT:    )
+  ;; 2THIRDS-NEXT:   )
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (drop
+  ;; 2THIRDS-NEXT:   (call $target-long
+  ;; 2THIRDS-NEXT:    (struct.new $A
+  ;; 2THIRDS-NEXT:     (local.get $y)
+  ;; 2THIRDS-NEXT:    )
+  ;; 2THIRDS-NEXT:   )
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (call $import2
+  ;; 2THIRDS-NEXT:   (call $target-long
+  ;; 2THIRDS-NEXT:    (struct.new $A
+  ;; 2THIRDS-NEXT:     (i32.const 42)
+  ;; 2THIRDS-NEXT:    )
+  ;; 2THIRDS-NEXT:   )
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (drop
+  ;; 2THIRDS-NEXT:   (call $target-long
+  ;; 2THIRDS-NEXT:    (struct.new $A
+  ;; 2THIRDS-NEXT:     (i32.const 42)
+  ;; 2THIRDS-NEXT:    )
+  ;; 2THIRDS-NEXT:   )
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT: )
+  ;; HUNDRED:      (func $calls-long (type $2) (param $x anyref) (param $y i32)
+  ;; HUNDRED-NEXT:  (call $import2
+  ;; HUNDRED-NEXT:   (call $target-long
+  ;; HUNDRED-NEXT:    (local.get $x)
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (drop
+  ;; HUNDRED-NEXT:   (call $target-long
+  ;; HUNDRED-NEXT:    (local.get $x)
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (call $import2
+  ;; HUNDRED-NEXT:   (call $target-long
+  ;; HUNDRED-NEXT:    (struct.new $A
+  ;; HUNDRED-NEXT:     (local.get $y)
+  ;; HUNDRED-NEXT:    )
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (drop
+  ;; HUNDRED-NEXT:   (call $target-long
+  ;; HUNDRED-NEXT:    (struct.new $A
+  ;; HUNDRED-NEXT:     (local.get $y)
+  ;; HUNDRED-NEXT:    )
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (call $import2
+  ;; HUNDRED-NEXT:   (call $target-long
+  ;; HUNDRED-NEXT:    (struct.new $A
+  ;; HUNDRED-NEXT:     (i32.const 42)
+  ;; HUNDRED-NEXT:    )
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (drop
+  ;; HUNDRED-NEXT:   (call $target-long
+  ;; HUNDRED-NEXT:    (struct.new $A
+  ;; HUNDRED-NEXT:     (i32.const 42)
+  ;; HUNDRED-NEXT:    )
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT: )
   (func $calls-long (param $x anyref) (param $y i32)
+    ;; Various calls to $target-long. Because of the large amount of work that
+    ;; cannot be removed there, all we do here is:
+    ;;  * Optimize in all cases when the minimum benefit is 0% (except the
+    ;;    first call, which is a trivial call context). Removing a cast is
+    ;;    enough to justify optimizing.
+    ;;  * In 33% we optimize only the very last case. There we remove both a
+    ;;    cast and a struct.new, which ends up just over 33%.
+    ;;  * In 66% and 100% we optimize nothing at all.
+
     ;; Call with an unknown input and the output is sent to an import.
     (call $import2
       (call $target-long
@@ -1154,41 +1464,199 @@
     )
   )
 
+  ;; DEFAULT:      (func $calls-short (type $3) (param $x anyref) (param $y i32)
+  ;; DEFAULT-NEXT:  (call $import2
+  ;; DEFAULT-NEXT:   (call $target-long
+  ;; DEFAULT-NEXT:    (local.get $x)
+  ;; DEFAULT-NEXT:   )
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $target-long_6
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $import2
+  ;; DEFAULT-NEXT:   (call $target-long_7
+  ;; DEFAULT-NEXT:    (local.get $y)
+  ;; DEFAULT-NEXT:   )
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $target-long_8
+  ;; DEFAULT-NEXT:   (local.get $y)
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $import2
+  ;; DEFAULT-NEXT:   (call $target-long_9)
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $target-long_10)
+  ;; DEFAULT-NEXT: )
+  ;; ZERO___:      (func $calls-short (type $3) (param $x anyref) (param $y i32)
+  ;; ZERO___-NEXT:  (call $import2
+  ;; ZERO___-NEXT:   (call $target-long
+  ;; ZERO___-NEXT:    (local.get $x)
+  ;; ZERO___-NEXT:   )
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $target-long_6
+  ;; ZERO___-NEXT:   (local.get $x)
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $import2
+  ;; ZERO___-NEXT:   (call $target-long_7
+  ;; ZERO___-NEXT:    (local.get $y)
+  ;; ZERO___-NEXT:   )
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $target-long_8
+  ;; ZERO___-NEXT:   (local.get $y)
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $import2
+  ;; ZERO___-NEXT:   (call $target-long_9)
+  ;; ZERO___-NEXT:  )
+  ;; ZERO___-NEXT:  (call $target-long_10)
+  ;; ZERO___-NEXT: )
+  ;; THIRD__:      (func $calls-short (type $3) (param $x anyref) (param $y i32)
+  ;; THIRD__-NEXT:  (call $import2
+  ;; THIRD__-NEXT:   (call $target-long
+  ;; THIRD__-NEXT:    (local.get $x)
+  ;; THIRD__-NEXT:   )
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (drop
+  ;; THIRD__-NEXT:   (call $target-long
+  ;; THIRD__-NEXT:    (local.get $x)
+  ;; THIRD__-NEXT:   )
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (call $import2
+  ;; THIRD__-NEXT:   (call $target-long
+  ;; THIRD__-NEXT:    (struct.new $A
+  ;; THIRD__-NEXT:     (local.get $y)
+  ;; THIRD__-NEXT:    )
+  ;; THIRD__-NEXT:   )
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (drop
+  ;; THIRD__-NEXT:   (call $target-long
+  ;; THIRD__-NEXT:    (struct.new $A
+  ;; THIRD__-NEXT:     (local.get $y)
+  ;; THIRD__-NEXT:    )
+  ;; THIRD__-NEXT:   )
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (call $import2
+  ;; THIRD__-NEXT:   (call $target-long
+  ;; THIRD__-NEXT:    (struct.new $A
+  ;; THIRD__-NEXT:     (i32.const 42)
+  ;; THIRD__-NEXT:    )
+  ;; THIRD__-NEXT:   )
+  ;; THIRD__-NEXT:  )
+  ;; THIRD__-NEXT:  (call $target-long_6)
+  ;; THIRD__-NEXT: )
+  ;; 2THIRDS:      (func $calls-short (type $2) (param $x anyref) (param $y i32)
+  ;; 2THIRDS-NEXT:  (call $import2
+  ;; 2THIRDS-NEXT:   (call $target-long
+  ;; 2THIRDS-NEXT:    (local.get $x)
+  ;; 2THIRDS-NEXT:   )
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (drop
+  ;; 2THIRDS-NEXT:   (call $target-long
+  ;; 2THIRDS-NEXT:    (local.get $x)
+  ;; 2THIRDS-NEXT:   )
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (call $import2
+  ;; 2THIRDS-NEXT:   (call $target-long
+  ;; 2THIRDS-NEXT:    (struct.new $A
+  ;; 2THIRDS-NEXT:     (local.get $y)
+  ;; 2THIRDS-NEXT:    )
+  ;; 2THIRDS-NEXT:   )
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (drop
+  ;; 2THIRDS-NEXT:   (call $target-long
+  ;; 2THIRDS-NEXT:    (struct.new $A
+  ;; 2THIRDS-NEXT:     (local.get $y)
+  ;; 2THIRDS-NEXT:    )
+  ;; 2THIRDS-NEXT:   )
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (call $import2
+  ;; 2THIRDS-NEXT:   (call $target-long
+  ;; 2THIRDS-NEXT:    (struct.new $A
+  ;; 2THIRDS-NEXT:     (i32.const 42)
+  ;; 2THIRDS-NEXT:    )
+  ;; 2THIRDS-NEXT:   )
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT:  (drop
+  ;; 2THIRDS-NEXT:   (call $target-long
+  ;; 2THIRDS-NEXT:    (struct.new $A
+  ;; 2THIRDS-NEXT:     (i32.const 42)
+  ;; 2THIRDS-NEXT:    )
+  ;; 2THIRDS-NEXT:   )
+  ;; 2THIRDS-NEXT:  )
+  ;; 2THIRDS-NEXT: )
+  ;; HUNDRED:      (func $calls-short (type $2) (param $x anyref) (param $y i32)
+  ;; HUNDRED-NEXT:  (call $import2
+  ;; HUNDRED-NEXT:   (call $target-long
+  ;; HUNDRED-NEXT:    (local.get $x)
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (drop
+  ;; HUNDRED-NEXT:   (call $target-long
+  ;; HUNDRED-NEXT:    (local.get $x)
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (call $import2
+  ;; HUNDRED-NEXT:   (call $target-long
+  ;; HUNDRED-NEXT:    (struct.new $A
+  ;; HUNDRED-NEXT:     (local.get $y)
+  ;; HUNDRED-NEXT:    )
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (drop
+  ;; HUNDRED-NEXT:   (call $target-long
+  ;; HUNDRED-NEXT:    (struct.new $A
+  ;; HUNDRED-NEXT:     (local.get $y)
+  ;; HUNDRED-NEXT:    )
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (call $import2
+  ;; HUNDRED-NEXT:   (call $target-long
+  ;; HUNDRED-NEXT:    (struct.new $A
+  ;; HUNDRED-NEXT:     (i32.const 42)
+  ;; HUNDRED-NEXT:    )
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT:  (drop
+  ;; HUNDRED-NEXT:   (call $target-long
+  ;; HUNDRED-NEXT:    (struct.new $A
+  ;; HUNDRED-NEXT:     (i32.const 42)
+  ;; HUNDRED-NEXT:    )
+  ;; HUNDRED-NEXT:   )
+  ;; HUNDRED-NEXT:  )
+  ;; HUNDRED-NEXT: )
   (func $calls-short (param $x anyref) (param $y i32)
     ;; As above, but now calling the short function.
     (call $import2
-      (call $target-long
+      (call $target-short
         (local.get $x)
       )
     )
     (drop
-      (call $target-long
+      (call $target-short
         (local.get $x)
       )
     )
     (call $import2
-      (call $target-long
+      (call $target-short
         (struct.new $A
           (local.get $y)
         )
       )
     )
     (drop
-      (call $target-long
+      (call $target-short
         (struct.new $A
           (local.get $y)
         )
       )
     )
     (call $import2
-      (call $target-long
+      (call $target-short
         (struct.new $A
           (i32.const 42)
         )
       )
     )
     (drop
-      (call $target-long
+      (call $target-short
         (struct.new $A
           (i32.const 42)
         )
@@ -1196,3 +1664,129 @@
     )
   )
 )
+;; DEFAULT:      (func $target-long_6 (type $5) (param $0 anyref)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT: )
+
+;; DEFAULT:      (func $target-long_7 (type $6) (param $0 i32) (result (ref $A))
+;; DEFAULT-NEXT:  (local $1 (ref $A))
+;; DEFAULT-NEXT:  (local.set $1
+;; DEFAULT-NEXT:   (struct.new $A
+;; DEFAULT-NEXT:    (local.get $0)
+;; DEFAULT-NEXT:   )
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (local.get $1)
+;; DEFAULT-NEXT: )
+
+;; DEFAULT:      (func $target-long_8 (type $7) (param $0 i32)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT: )
+
+;; DEFAULT:      (func $target-long_9 (type $8) (result (ref $A))
+;; DEFAULT-NEXT:  (local $0 (ref $A))
+;; DEFAULT-NEXT:  (local.set $0
+;; DEFAULT-NEXT:   (struct.new $A
+;; DEFAULT-NEXT:    (i32.const 42)
+;; DEFAULT-NEXT:   )
+;; DEFAULT-NEXT:  )
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (local.get $0)
+;; DEFAULT-NEXT: )
+
+;; DEFAULT:      (func $target-long_10 (type $1)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT:  (call $import)
+;; DEFAULT-NEXT: )
+
+;; ZERO___:      (func $target-long_6 (type $5) (param $0 anyref)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT: )
+
+;; ZERO___:      (func $target-long_7 (type $6) (param $0 i32) (result (ref $A))
+;; ZERO___-NEXT:  (local $1 (ref $A))
+;; ZERO___-NEXT:  (local.set $1
+;; ZERO___-NEXT:   (struct.new $A
+;; ZERO___-NEXT:    (local.get $0)
+;; ZERO___-NEXT:   )
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (local.get $1)
+;; ZERO___-NEXT: )
+
+;; ZERO___:      (func $target-long_8 (type $7) (param $0 i32)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT: )
+
+;; ZERO___:      (func $target-long_9 (type $8) (result (ref $A))
+;; ZERO___-NEXT:  (local $0 (ref $A))
+;; ZERO___-NEXT:  (local.set $0
+;; ZERO___-NEXT:   (struct.new $A
+;; ZERO___-NEXT:    (i32.const 42)
+;; ZERO___-NEXT:   )
+;; ZERO___-NEXT:  )
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (local.get $0)
+;; ZERO___-NEXT: )
+
+;; ZERO___:      (func $target-long_10 (type $1)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT:  (call $import)
+;; ZERO___-NEXT: )
+
+;; THIRD__:      (func $target-long_6 (type $1)
+;; THIRD__-NEXT:  (call $import)
+;; THIRD__-NEXT:  (call $import)
+;; THIRD__-NEXT:  (call $import)
+;; THIRD__-NEXT:  (call $import)
+;; THIRD__-NEXT:  (call $import)
+;; THIRD__-NEXT:  (call $import)
+;; THIRD__-NEXT: )

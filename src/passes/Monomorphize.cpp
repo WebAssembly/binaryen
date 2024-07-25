@@ -132,6 +132,8 @@
 #include "wasm-type.h"
 #include "wasm.h"
 
+#define DEBUG_TYPE "monomorphize"
+
 namespace wasm {
 
 namespace {
