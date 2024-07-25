@@ -85,14 +85,14 @@
 // avoids operating on large functions which may be very slow to optimize, and
 // this pass operates by optimizing code in order to decide what to do, so
 // optimizing large functions can be painful.
-//const Index MaxFunctionSize = 1000;
+// const Index MaxFunctionSize = 1000;
 //
 // The maximum amount of copies we will make of a function. If we monomorphize
 // once and call that many times that is fine, and not limited here, but if we
 // find many different call contexts for a function, then this sets a limit on
 // how many times the function is copied and monomorphized. This sets an
 // effective limit on the code size increase this pass can cause.
-//const Index MaxCopies = 10;
+// const Index MaxCopies = 10;
 //
 // TODO: When we optimize we could run multiple cycles: A calls B calls C might
 //       end up with the refined+optimized B now having refined types in its
@@ -140,8 +140,8 @@ namespace {
 
 // Pass arguments. See descriptions in the comment above.
 Index MinPercentBenefit = 0;
-//const Index MaxFunctionSize = 1000;
-//const Index MaxCopies = 10;
+// const Index MaxFunctionSize = 1000;
+// const Index MaxCopies = 10;
 
 // A limit on the number of parameters we are willing to have on monomorphized
 // functions. Large numbers can lead to large stack frames, which can be slow
@@ -633,8 +633,8 @@ struct Monomorphize : public Pass {
 
   void applyArguments() {
     auto apply = [&](const char* argumentName, Index& value) {
-      value = std::stoul(getArgumentOrDefault(argumentName,
-                                              std::to_string(value)));
+      value =
+        std::stoul(getArgumentOrDefault(argumentName, std::to_string(value)));
     };
 
     apply("monomorphize-min-benefit", MinPercentBenefit);
