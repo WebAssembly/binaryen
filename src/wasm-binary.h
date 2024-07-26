@@ -1051,6 +1051,10 @@ enum ASTNodes {
   I16x8DotI8x16I7x16S = 0x112,
   I32x4DotI8x16I7x16AddS = 0x113,
 
+  // half precision opcodes
+  F32_F16LoadMem = 0x30,
+  F32_F16StoreMem = 0x31,
+
   // bulk memory opcodes
 
   MemoryInit = 0x08,
@@ -1703,8 +1707,12 @@ public:
   void visitLocalSet(LocalSet* curr, uint8_t code);
   void visitGlobalGet(GlobalGet* curr);
   void visitGlobalSet(GlobalSet* curr);
-  bool maybeVisitLoad(Expression*& out, uint8_t code, bool isAtomic);
-  bool maybeVisitStore(Expression*& out, uint8_t code, bool isAtomic);
+  bool maybeVisitLoad(Expression*& out,
+                      uint8_t code,
+                      std::optional<BinaryConsts::ASTNodes> prefix);
+  bool maybeVisitStore(Expression*& out,
+                       uint8_t code,
+                       std::optional<BinaryConsts::ASTNodes> prefix);
   bool maybeVisitNontrappingTrunc(Expression*& out, uint32_t code);
   bool maybeVisitAtomicRMW(Expression*& out, uint8_t code);
   bool maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code);

@@ -4137,10 +4137,10 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
     }
     case BinaryConsts::AtomicPrefix: {
       code = static_cast<uint8_t>(getU32LEB());
-      if (maybeVisitLoad(curr, code, /*isAtomic=*/true)) {
+      if (maybeVisitLoad(curr, code, BinaryConsts::AtomicPrefix)) {
         break;
       }
-      if (maybeVisitStore(curr, code, /*isAtomic=*/true)) {
+      if (maybeVisitStore(curr, code, BinaryConsts::AtomicPrefix)) {
         break;
       }
       if (maybeVisitAtomicRMW(curr, code)) {
@@ -4188,6 +4188,12 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
         break;
       }
       if (maybeVisitTableCopy(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitLoad(curr, opcode, BinaryConsts::MiscPrefix)) {
+        break;
+      }
+      if (maybeVisitStore(curr, opcode, BinaryConsts::MiscPrefix)) {
         break;
       }
       throwError("invalid code after misc prefix: " + std::to_string(opcode));
@@ -4330,10 +4336,10 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       if (maybeVisitConst(curr, code)) {
         break;
       }
-      if (maybeVisitLoad(curr, code, /*isAtomic=*/false)) {
+      if (maybeVisitLoad(curr, code, /*prefix=*/std::nullopt)) {
         break;
       }
-      if (maybeVisitStore(curr, code, /*isAtomic=*/false)) {
+      if (maybeVisitStore(curr, code, /*prefix=*/std::nullopt)) {
         break;
       }
       throwError("bad node code " + std::to_string(code));
@@ -4709,14 +4715,15 @@ Index WasmBinaryReader::readMemoryAccess(Address& alignment, Address& offset) {
   return memIdx;
 }
 
-bool WasmBinaryReader::maybeVisitLoad(Expression*& out,
-                                      uint8_t code,
-                                      bool isAtomic) {
+bool WasmBinaryReader::maybeVisitLoad(
+  Expression*& out,
+  uint8_t code,
+  std::optional<BinaryConsts::ASTNodes> prefix) {
   Load* curr;
   auto allocate = [&]() {
     curr = allocator.alloc<Load>();
   };
-  if (!isAtomic) {
+  if (!prefix) {
     switch (code) {
       case BinaryConsts::I32LoadMem8S:
         allocate();
@@ -4797,7 +4804,7 @@ bool WasmBinaryReader::maybeVisitLoad(Expression*& out,
         return false;
     }
     BYN_TRACE("zz node: Load\n");
-  } else {
+  } else if (prefix == BinaryConsts::AtomicPrefix) {
     switch (code) {
       case BinaryConsts::I32AtomicLoad8U:
         allocate();
@@ -4838,9 +4845,22 @@ bool WasmBinaryReader::maybeVisitLoad(Expression*& out,
         return false;
     }
     BYN_TRACE("zz node: AtomicLoad\n");
+  } else if (prefix == BinaryConsts::MiscPrefix) {
+    switch (code) {
+      case BinaryConsts::F32_F16LoadMem:
+        allocate();
+        curr->bytes = 2;
+        curr->type = Type::f32;
+        break;
+      default:
+        return false;
+    }
+    BYN_TRACE("zz node: Load\n");
+  } else {
+    return false;
   }
 
-  curr->isAtomic = isAtomic;
+  curr->isAtomic = prefix == BinaryConsts::AtomicPrefix;
   Index memIdx = readMemoryAccess(curr->align, curr->offset);
   memoryRefs[memIdx].push_back(&curr->memory);
   curr->ptr = popNonVoidExpression();
@@ -4849,11 +4869,12 @@ bool WasmBinaryReader::maybeVisitLoad(Expression*& out,
   return true;
 }
 
-bool WasmBinaryReader::maybeVisitStore(Expression*& out,
-                                       uint8_t code,
-                                       bool isAtomic) {
+bool WasmBinaryReader::maybeVisitStore(
+  Expression*& out,
+  uint8_t code,
+  std::optional<BinaryConsts::ASTNodes> prefix) {
   Store* curr;
-  if (!isAtomic) {
+  if (!prefix) {
     switch (code) {
       case BinaryConsts::I32StoreMem8:
         curr = allocator.alloc<Store>();
@@ -4903,7 +4924,7 @@ bool WasmBinaryReader::maybeVisitStore(Expression*& out,
       default:
         return false;
     }
-  } else {
+  } else if (prefix == BinaryConsts::AtomicPrefix) {
     switch (code) {
       case BinaryConsts::I32AtomicStore8:
         curr = allocator.alloc<Store>();
@@ -4943,9 +4964,21 @@ bool WasmBinaryReader::maybeVisitStore(Expression*& out,
       default:
         return false;
     }
+  } else if (prefix == BinaryConsts::MiscPrefix) {
+    switch (code) {
+      case BinaryConsts::F32_F16StoreMem:
+        curr = allocator.alloc<Store>();
+        curr->bytes = 2;
+        curr->valueType = Type::f32;
+        break;
+      default:
+        return false;
+    }
+  } else {
+    return false;
   }
 
-  curr->isAtomic = isAtomic;
+  curr->isAtomic = prefix == BinaryConsts::AtomicPrefix;
   BYN_TRACE("zz node: Store\n");
   Index memIdx = readMemoryAccess(curr->align, curr->offset);
   memoryRefs[memIdx].push_back(&curr->memory);
