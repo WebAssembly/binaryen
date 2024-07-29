@@ -3,8 +3,6 @@
 ;; RUN: wasm-opt %s -all --fuzz-exec-before -q -o /dev/null 2>&1 | filecheck %s
 
 (module
- ;; CHECK:      [fuzz-exec] calling shared-null
- ;; CHECK-NEXT: [fuzz-exec] note result: shared-null => null
  (func $shared-null (export "shared-null") (result (ref null (shared any)))
   ;; The shared null here should remain shared as we internalize it.
   (any.convert_extern
@@ -12,4 +10,6 @@
   )
  )
 )
+
+(assert_return (invoke "shared-null") (ref.null (shared any)))
 
