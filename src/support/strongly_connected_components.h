@@ -52,17 +52,29 @@ private:
     bool processedChildren = false;
   };
   std::vector<WorkItem> workStack;
+
   // The Tarjan's algorithm stack. Similar to a DFS stack, but elements are only
   // popped off once they are committed to a strongly connected component.
   // Elements stay on the stack after they are visited iff they have a back edge
   // to an element earlier in the stack.
   std::vector<T> stack;
-  std::unordered_set<T> stackElems;
-  // Indices assigned to each element in the order they are visited.
-  std::unordered_map<T, size_t> indices;
-  // The smallest index of the elements reachable from each element through
-  // its subtree.
-  std::unordered_map<T, size_t> minReachable;
+
+  struct ElementInfo {
+    // Index assigned based on element visitation order.
+    size_t index;
+    // The smallest index of the elements reachable from this element.
+    size_t lowlink;
+    // Whether this element is still on `stack`.
+    bool onStack;
+  };
+  std::unordered_map<T, ElementInfo> elementInfo;
+
+  // std::unordered_set<T> stackElems;
+  // // Indices assigned to each element in the order they are visited.
+  // std::unordered_map<T, size_t> indices;
+  // // The smallest index of the elements reachable from each element through
+  // // its subtree.
+  // std::unordered_map<T, size_t> minReachable;
 
   // The parent to record when calling into the subclass to push children.
   std::optional<T> currParent;
@@ -81,14 +93,13 @@ private:
         auto& item = work.item;
 
         if (!work.processedChildren) {
-          auto [it, inserted] = indices.insert({item, indices.size()});
-          auto index = it->second;
+          auto newIndex = elementInfo.size();
+          auto [it, inserted] =
+            elementInfo.insert({item, {newIndex, newIndex, true}});
           if (inserted) {
-            // This is a new item we have never seen before, so initialize its
-            // associated data and recurse.
-            minReachable[item] = index;
+            // This is a new item we have never seen before. We have already
+            // initialized its associated data.
             stack.push_back(item);
-            stackElems.insert(item);
 
             // Leave the element on the work stack because we will have to do
             // more work after we have finished processing its children.
@@ -101,13 +112,13 @@ private:
             continue;
           }
 
-          if (stackElems.count(item)) {
+          auto& info = it->second;
+          if (info.onStack) {
             assert(work.parent);
-            // Item is already in the current SCC. Update the parent's
-            // minReachable if this child has a smaller index than we have seen
-            // so far.
-            auto& min = minReachable[*work.parent];
-            min = std::min(min, index);
+            // Item is already in the current SCC. Update the parent's lowlink
+            // if this child has a smaller index than we have seen so far.
+            auto& parentLowlink = elementInfo[*work.parent].lowlink;
+            parentLowlink = std::min(parentLowlink, info.index);
           } else {
             // Item is in an SCC we have already processed, so ignore it
             // entirely.
@@ -119,14 +130,15 @@ private:
         }
 
         // We have finished processing the children for the current element, so
-        // we know it's final minReachable value. Use it to potentially update
-        // the parent's minReachable value.
+        // we know it's final lowlink value. Use it to potentially update the
+        // parent's lowlink value.
+        auto& info = elementInfo[item];
         if (work.parent) {
-          auto& parentMin = minReachable[*work.parent];
-          parentMin = std::min(parentMin, minReachable[item]);
+          auto& parentLowlink = elementInfo[*work.parent].lowlink;
+          parentLowlink = std::min(parentLowlink, info.lowlink);
         }
 
-        if (minReachable[item] == indices[item]) {
+        if (info.index == info.lowlink) {
           // This element reaches and is reachable by all shallower elements in
           // the stack (otherwise they would have already been popped) and does
           // not itself reach any deeper elements, so we have found an SCC and
@@ -149,7 +161,7 @@ private:
       // SCC now.
       currRoot = std::nullopt;
     }
-    stackElems.erase(stack.back());
+    elementInfo[stack.back()].onStack = false;
     stack.pop_back();
   }
 
