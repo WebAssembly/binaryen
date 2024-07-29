@@ -2685,9 +2685,7 @@ Literal Literal::relaxedFmsF64x2(const Literal& left,
 }
 
 Literal Literal::externalize() const {
-  auto heapType = type.getHeapType();
-  auto anyType = HeapTypes::any.getBasic(heapType.getShared());
-  assert(Type::isSubType(type, Type(anyType, Nullable)) &&
+  assert(type.isRef() && type.getHeapType().getTop().isMaybeShared(HeapType::any) &&
          "can only externalize internal references");
   if (isNull()) {
     return Literal(std::shared_ptr<GCData>{}, HeapType::noext);
