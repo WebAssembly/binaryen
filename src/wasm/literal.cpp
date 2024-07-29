@@ -161,7 +161,7 @@ Literal::~Literal() {
   if (type.isBasic()) {
     return;
   }
-  if (isNull() || isData() || type.getHeapType() == HeapType::ext) {
+  if (isNull() || isData() || type.getHeapType().isMaybeShared(HeapType::ext)) {
     gcData.~shared_ptr();
   }
 }
