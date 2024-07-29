@@ -2700,11 +2700,12 @@ Literal Literal::externalize() const {
 }
 
 Literal Literal::internalize() const {
-  auto extType = HeapTypes::ext.getBasic(type.getHeapType().getShared());
+  auto share = type.getHeapType().getShared();
+  auto extType = HeapTypes::ext.getBasic(share);
   assert(Type::isSubType(type, Type(extType, Nullable)) &&
          "can only internalize external references");
   if (isNull()) {
-    return Literal(std::shared_ptr<GCData>{}, HeapType::none);
+    return Literal(std::shared_ptr<GCData>{}, HeapTypes::none.getBasic(share));
   }
   if (gcData->type.isMaybeShared(HeapType::i31)) {
     assert(gcData->values[0].type.getHeapType().isMaybeShared(HeapType::i31));
