@@ -69,13 +69,6 @@ private:
   };
   std::unordered_map<T, ElementInfo> elementInfo;
 
-  // std::unordered_set<T> stackElems;
-  // // Indices assigned to each element in the order they are visited.
-  // std::unordered_map<T, size_t> indices;
-  // // The smallest index of the elements reachable from each element through
-  // // its subtree.
-  // std::unordered_map<T, size_t> minReachable;
-
   // The parent to record when calling into the subclass to push children.
   std::optional<T> currParent;
 
