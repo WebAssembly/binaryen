@@ -854,18 +854,13 @@ struct Reducer
       reduceByZeroing(
         segment.get(),
         first,
-        [&](Expression* entry) {
-          if (entry->is<RefNull>()) {
-            // we don't need to replace a ref.null
+        [&](Expression* elem) {
+          if (elem->is<RefNull>()) {
+            // We don't need to replace a ref.null.
             return true;
-          } else if (first->is<RefNull>()) {
-            return false;
-          } else {
-            // Both are ref.func
-            auto* f = first->cast<RefFunc>();
-            auto* e = entry->cast<RefFunc>();
-            return f->func == e->func;
           }
+          // Is the element equal to our first "zero" element?
+          return ExpressionAnalyzer::equal(first, elem);
         },
         1,
         shrank);
