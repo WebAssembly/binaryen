@@ -17,6 +17,15 @@
     (i32.const 42)
    )
   )
+  ;; Also externalizing and internalizing works: this code can be precomputed
+  ;; and hence removed.
+  (drop
+   (any.convert_extern
+    (extern.convert_any
+     (global.get $global)
+    )
+   )
+  )
   (global.get $global)
  )
 
