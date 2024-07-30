@@ -2687,11 +2687,12 @@ Literal Literal::relaxedFmsF64x2(const Literal& left,
 Literal Literal::externalize() const {
   assert(type.isRef() && type.getHeapType().getUnsharedTop() == HeapType::any &&
          "can only externalize internal references");
+  auto share = type.getHeapType().getShared();
   if (isNull()) {
-    return Literal(std::shared_ptr<GCData>{}, HeapType::noext);
+    return Literal(std::shared_ptr<GCData>{}, HeapTypes::noext.getBasic(share));
   }
   auto heapType = type.getHeapType();
-  auto extType = HeapTypes::ext.getBasic(heapType.getShared());
+  auto extType = HeapTypes::ext.getBasic(share);
   if (heapType.isMaybeShared(HeapType::i31)) {
     return Literal(std::make_shared<GCData>(heapType, Literals{*this}),
                    extType);
