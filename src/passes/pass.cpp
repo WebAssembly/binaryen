@@ -276,7 +276,7 @@ void PassRegistry::registerPasses() {
   registerPass(
     "merge-locals", "merges locals when beneficial", createMergeLocalsPass);
   registerPass("metrics",
-               "reports metrics (--metrics[=TITLE])",
+               "reports metrics (with an optional title, --metrics[=TITLE])",
                createMetricsPass);
   registerPass("minify-imports",
                "minifies import names (only those, and not export names), and "
