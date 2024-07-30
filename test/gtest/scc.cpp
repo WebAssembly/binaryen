@@ -212,7 +212,7 @@ TEST(SCCTest, TwoAndOne) {
 }
 
 TEST(SCCTest, TwoAndOneRedundant) {
-  // 0 <-> 1 => 2
+  // 2 <- 0 <-> 1 -> 2
   Graph graph(3);
   graph.addEdge(0, 1);
   graph.addEdge(1, 0);

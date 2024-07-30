@@ -123,7 +123,7 @@ private:
         }
 
         // We have finished processing the children for the current element, so
-        // we know it's final lowlink value. Use it to potentially update the
+        // we know its final lowlink value. Use it to potentially update the
         // parent's lowlink value.
         auto& info = elementInfo[item];
         if (work.parent) {
