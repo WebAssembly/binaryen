@@ -17,21 +17,13 @@
 (module
   (memory 10 20)
 
-  ;; DEFAULT:      (type $0 (func (param i32)))
+  ;; DEFAULT:      (type $0 (func (param i32 i32 i32 i32 i32)))
 
-  ;; DEFAULT:      (type $1 (func (param i32 i32 i32 i32 i32)))
-
-  ;; DEFAULT:      (type $2 (func))
-
-  ;; DEFAULT:      (type $3 (func (param i32 i32)))
-
-  ;; DEFAULT:      (type $4 (func (param i32 i32 i32)))
-
-  ;; DEFAULT:      (type $5 (func (param i32 i32 i32 i32)))
+  ;; DEFAULT:      (type $1 (func (param i32)))
 
   ;; DEFAULT:      (memory $0 10 20)
 
-  ;; DEFAULT:      (func $target (type $1) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
+  ;; DEFAULT:      (func $target (type $0) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
   ;; DEFAULT-NEXT:  (i32.store
   ;; DEFAULT-NEXT:   (i32.const 10)
   ;; DEFAULT-NEXT:   (i32.div_s
@@ -386,25 +378,41 @@
     )
   )
 
-  ;; DEFAULT:      (func $calls (type $0) (param $x i32)
-  ;; DEFAULT-NEXT:  (call $target_2)
-  ;; DEFAULT-NEXT:  (call $target_3
-  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT:      (func $calls (type $1) (param $x i32)
+  ;; DEFAULT-NEXT:  (call $target
+  ;; DEFAULT-NEXT:   (i32.const 42)
+  ;; DEFAULT-NEXT:   (i32.const 42)
+  ;; DEFAULT-NEXT:   (i32.const 42)
+  ;; DEFAULT-NEXT:   (i32.const 42)
+  ;; DEFAULT-NEXT:   (i32.const 42)
   ;; DEFAULT-NEXT:  )
-  ;; DEFAULT-NEXT:  (call $target_4
+  ;; DEFAULT-NEXT:  (call $target
   ;; DEFAULT-NEXT:   (local.get $x)
-  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:   (i32.const 42)
+  ;; DEFAULT-NEXT:   (i32.const 42)
+  ;; DEFAULT-NEXT:   (i32.const 42)
+  ;; DEFAULT-NEXT:   (i32.const 42)
   ;; DEFAULT-NEXT:  )
-  ;; DEFAULT-NEXT:  (call $target_5
+  ;; DEFAULT-NEXT:  (call $target
   ;; DEFAULT-NEXT:   (local.get $x)
   ;; DEFAULT-NEXT:   (local.get $x)
-  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:   (i32.const 42)
+  ;; DEFAULT-NEXT:   (i32.const 42)
+  ;; DEFAULT-NEXT:   (i32.const 42)
   ;; DEFAULT-NEXT:  )
-  ;; DEFAULT-NEXT:  (call $target_6
+  ;; DEFAULT-NEXT:  (call $target
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:   (i32.const 42)
+  ;; DEFAULT-NEXT:   (i32.const 42)
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (call $target
   ;; DEFAULT-NEXT:   (local.get $x)
   ;; DEFAULT-NEXT:   (local.get $x)
   ;; DEFAULT-NEXT:   (local.get $x)
   ;; DEFAULT-NEXT:   (local.get $x)
+  ;; DEFAULT-NEXT:   (i32.const 42)
   ;; DEFAULT-NEXT:  )
   ;; DEFAULT-NEXT:  (call $target
   ;; DEFAULT-NEXT:   (local.get $x)
@@ -610,181 +618,6 @@
     )
   )
 )
-
-;; DEFAULT:      (func $target_2 (type $2)
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 10)
-;; DEFAULT-NEXT:   (i32.const 0)
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 20)
-;; DEFAULT-NEXT:   (i32.const 0)
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 30)
-;; DEFAULT-NEXT:   (i32.const 0)
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 40)
-;; DEFAULT-NEXT:   (i32.const 0)
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 50)
-;; DEFAULT-NEXT:   (i32.const 0)
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT: )
-
-;; DEFAULT:      (func $target_3 (type $0) (param $0 i32)
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 10)
-;; DEFAULT-NEXT:   (i32.div_s
-;; DEFAULT-NEXT:    (local.get $0)
-;; DEFAULT-NEXT:    (i32.add
-;; DEFAULT-NEXT:     (local.get $0)
-;; DEFAULT-NEXT:     (i32.const 1)
-;; DEFAULT-NEXT:    )
-;; DEFAULT-NEXT:   )
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 20)
-;; DEFAULT-NEXT:   (i32.const 0)
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 30)
-;; DEFAULT-NEXT:   (i32.const 0)
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 40)
-;; DEFAULT-NEXT:   (i32.const 0)
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 50)
-;; DEFAULT-NEXT:   (i32.const 0)
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT: )
-
-;; DEFAULT:      (func $target_4 (type $3) (param $0 i32) (param $1 i32)
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 10)
-;; DEFAULT-NEXT:   (i32.div_s
-;; DEFAULT-NEXT:    (local.get $0)
-;; DEFAULT-NEXT:    (i32.add
-;; DEFAULT-NEXT:     (local.get $0)
-;; DEFAULT-NEXT:     (i32.const 1)
-;; DEFAULT-NEXT:    )
-;; DEFAULT-NEXT:   )
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 20)
-;; DEFAULT-NEXT:   (i32.div_s
-;; DEFAULT-NEXT:    (local.get $1)
-;; DEFAULT-NEXT:    (i32.add
-;; DEFAULT-NEXT:     (local.get $1)
-;; DEFAULT-NEXT:     (i32.const 1)
-;; DEFAULT-NEXT:    )
-;; DEFAULT-NEXT:   )
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 30)
-;; DEFAULT-NEXT:   (i32.const 0)
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 40)
-;; DEFAULT-NEXT:   (i32.const 0)
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 50)
-;; DEFAULT-NEXT:   (i32.const 0)
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT: )
-
-;; DEFAULT:      (func $target_5 (type $4) (param $0 i32) (param $1 i32) (param $2 i32)
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 10)
-;; DEFAULT-NEXT:   (i32.div_s
-;; DEFAULT-NEXT:    (local.get $0)
-;; DEFAULT-NEXT:    (i32.add
-;; DEFAULT-NEXT:     (local.get $0)
-;; DEFAULT-NEXT:     (i32.const 1)
-;; DEFAULT-NEXT:    )
-;; DEFAULT-NEXT:   )
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 20)
-;; DEFAULT-NEXT:   (i32.div_s
-;; DEFAULT-NEXT:    (local.get $1)
-;; DEFAULT-NEXT:    (i32.add
-;; DEFAULT-NEXT:     (local.get $1)
-;; DEFAULT-NEXT:     (i32.const 1)
-;; DEFAULT-NEXT:    )
-;; DEFAULT-NEXT:   )
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 30)
-;; DEFAULT-NEXT:   (i32.div_s
-;; DEFAULT-NEXT:    (local.get $2)
-;; DEFAULT-NEXT:    (i32.add
-;; DEFAULT-NEXT:     (local.get $2)
-;; DEFAULT-NEXT:     (i32.const 1)
-;; DEFAULT-NEXT:    )
-;; DEFAULT-NEXT:   )
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 40)
-;; DEFAULT-NEXT:   (i32.const 0)
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 50)
-;; DEFAULT-NEXT:   (i32.const 0)
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT: )
-
-;; DEFAULT:      (func $target_6 (type $5) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32)
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 10)
-;; DEFAULT-NEXT:   (i32.div_s
-;; DEFAULT-NEXT:    (local.get $0)
-;; DEFAULT-NEXT:    (i32.add
-;; DEFAULT-NEXT:     (local.get $0)
-;; DEFAULT-NEXT:     (i32.const 1)
-;; DEFAULT-NEXT:    )
-;; DEFAULT-NEXT:   )
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 20)
-;; DEFAULT-NEXT:   (i32.div_s
-;; DEFAULT-NEXT:    (local.get $1)
-;; DEFAULT-NEXT:    (i32.add
-;; DEFAULT-NEXT:     (local.get $1)
-;; DEFAULT-NEXT:     (i32.const 1)
-;; DEFAULT-NEXT:    )
-;; DEFAULT-NEXT:   )
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 30)
-;; DEFAULT-NEXT:   (i32.div_s
-;; DEFAULT-NEXT:    (local.get $2)
-;; DEFAULT-NEXT:    (i32.add
-;; DEFAULT-NEXT:     (local.get $2)
-;; DEFAULT-NEXT:     (i32.const 1)
-;; DEFAULT-NEXT:    )
-;; DEFAULT-NEXT:   )
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 40)
-;; DEFAULT-NEXT:   (i32.div_s
-;; DEFAULT-NEXT:    (local.get $3)
-;; DEFAULT-NEXT:    (i32.add
-;; DEFAULT-NEXT:     (local.get $3)
-;; DEFAULT-NEXT:     (i32.const 1)
-;; DEFAULT-NEXT:    )
-;; DEFAULT-NEXT:   )
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (i32.store
-;; DEFAULT-NEXT:   (i32.const 50)
-;; DEFAULT-NEXT:   (i32.const 0)
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT: )
 
 ;; ZERO___:      (func $target_2 (type $2)
 ;; ZERO___-NEXT:  (i32.store
@@ -1084,15 +917,11 @@
 
   ;; DEFAULT:      (type $3 (func (param anyref i32)))
 
-  ;; DEFAULT:      (type $4 (func (param anyref)))
+  ;; DEFAULT:      (type $4 (func (param (ref $A))))
 
-  ;; DEFAULT:      (type $5 (func (param i32) (result (ref $A))))
+  ;; DEFAULT:      (type $5 (func (param anyref)))
 
   ;; DEFAULT:      (type $6 (func (param i32)))
-
-  ;; DEFAULT:      (type $7 (func (result (ref $A))))
-
-  ;; DEFAULT:      (type $8 (func (param (ref $A))))
 
   ;; DEFAULT:      (import "a" "b" (func $import (type $1)))
   ;; ZERO___:      (type $1 (func))
@@ -1153,7 +982,7 @@
   ;; HUNDRED:      (import "a" "b" (func $import (type $3)))
   (import "a" "b" (func $import))
 
-  ;; DEFAULT:      (import "a" "c" (func $import2 (type $8) (param (ref $A))))
+  ;; DEFAULT:      (import "a" "c" (func $import2 (type $4) (param (ref $A))))
   ;; ZERO___:      (import "a" "c" (func $import2 (type $8) (param (ref $A))))
   ;; THIRD__:      (import "a" "c" (func $import2 (type $4) (param (ref $A))))
   ;; 2THIRDS:      (import "a" "c" (func $import2 (type $4) (param (ref $A))))
@@ -1270,21 +1099,39 @@
   ;; DEFAULT-NEXT:    (local.get $x)
   ;; DEFAULT-NEXT:   )
   ;; DEFAULT-NEXT:  )
-  ;; DEFAULT-NEXT:  (call $target-long_6
-  ;; DEFAULT-NEXT:   (local.get $x)
-  ;; DEFAULT-NEXT:  )
-  ;; DEFAULT-NEXT:  (call $import2
-  ;; DEFAULT-NEXT:   (call $target-long_7
-  ;; DEFAULT-NEXT:    (local.get $y)
+  ;; DEFAULT-NEXT:  (drop
+  ;; DEFAULT-NEXT:   (call $target-long
+  ;; DEFAULT-NEXT:    (local.get $x)
   ;; DEFAULT-NEXT:   )
   ;; DEFAULT-NEXT:  )
-  ;; DEFAULT-NEXT:  (call $target-long_8
-  ;; DEFAULT-NEXT:   (local.get $y)
+  ;; DEFAULT-NEXT:  (call $import2
+  ;; DEFAULT-NEXT:   (call $target-long
+  ;; DEFAULT-NEXT:    (struct.new $A
+  ;; DEFAULT-NEXT:     (local.get $y)
+  ;; DEFAULT-NEXT:    )
+  ;; DEFAULT-NEXT:   )
+  ;; DEFAULT-NEXT:  )
+  ;; DEFAULT-NEXT:  (drop
+  ;; DEFAULT-NEXT:   (call $target-long
+  ;; DEFAULT-NEXT:    (struct.new $A
+  ;; DEFAULT-NEXT:     (local.get $y)
+  ;; DEFAULT-NEXT:    )
+  ;; DEFAULT-NEXT:   )
   ;; DEFAULT-NEXT:  )
   ;; DEFAULT-NEXT:  (call $import2
-  ;; DEFAULT-NEXT:   (call $target-long_9)
+  ;; DEFAULT-NEXT:   (call $target-long
+  ;; DEFAULT-NEXT:    (struct.new $A
+  ;; DEFAULT-NEXT:     (i32.const 42)
+  ;; DEFAULT-NEXT:    )
+  ;; DEFAULT-NEXT:   )
   ;; DEFAULT-NEXT:  )
-  ;; DEFAULT-NEXT:  (call $target-long_10)
+  ;; DEFAULT-NEXT:  (drop
+  ;; DEFAULT-NEXT:   (call $target-long
+  ;; DEFAULT-NEXT:    (struct.new $A
+  ;; DEFAULT-NEXT:     (i32.const 42)
+  ;; DEFAULT-NEXT:    )
+  ;; DEFAULT-NEXT:   )
+  ;; DEFAULT-NEXT:  )
   ;; DEFAULT-NEXT: )
   ;; ZERO___:      (func $calls-long (type $3) (param $x anyref) (param $y i32)
   ;; ZERO___-NEXT:  (call $import2
@@ -1482,21 +1329,27 @@
   ;; DEFAULT-NEXT:    (local.get $x)
   ;; DEFAULT-NEXT:   )
   ;; DEFAULT-NEXT:  )
-  ;; DEFAULT-NEXT:  (call $target-short_11
+  ;; DEFAULT-NEXT:  (call $target-short_6
   ;; DEFAULT-NEXT:   (local.get $x)
   ;; DEFAULT-NEXT:  )
   ;; DEFAULT-NEXT:  (call $import2
-  ;; DEFAULT-NEXT:   (call $target-short_12
-  ;; DEFAULT-NEXT:    (local.get $y)
+  ;; DEFAULT-NEXT:   (call $target-short
+  ;; DEFAULT-NEXT:    (struct.new $A
+  ;; DEFAULT-NEXT:     (local.get $y)
+  ;; DEFAULT-NEXT:    )
   ;; DEFAULT-NEXT:   )
   ;; DEFAULT-NEXT:  )
-  ;; DEFAULT-NEXT:  (call $target-short_13
+  ;; DEFAULT-NEXT:  (call $target-short_7
   ;; DEFAULT-NEXT:   (local.get $y)
   ;; DEFAULT-NEXT:  )
   ;; DEFAULT-NEXT:  (call $import2
-  ;; DEFAULT-NEXT:   (call $target-short_14)
+  ;; DEFAULT-NEXT:   (call $target-short
+  ;; DEFAULT-NEXT:    (struct.new $A
+  ;; DEFAULT-NEXT:     (i32.const 42)
+  ;; DEFAULT-NEXT:    )
+  ;; DEFAULT-NEXT:   )
   ;; DEFAULT-NEXT:  )
-  ;; DEFAULT-NEXT:  (call $target-short_15)
+  ;; DEFAULT-NEXT:  (call $target-short_8)
   ;; DEFAULT-NEXT: )
   ;; ZERO___:      (func $calls-short (type $3) (param $x anyref) (param $y i32)
   ;; ZERO___-NEXT:  (call $import2
@@ -1658,86 +1511,15 @@
     )
   )
 )
-;; DEFAULT:      (func $target-long_6 (type $4) (param $0 anyref)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT: )
-
-;; DEFAULT:      (func $target-long_7 (type $5) (param $0 i32) (result (ref $A))
-;; DEFAULT-NEXT:  (local $1 (ref $A))
-;; DEFAULT-NEXT:  (local.set $1
-;; DEFAULT-NEXT:   (struct.new $A
-;; DEFAULT-NEXT:    (local.get $0)
-;; DEFAULT-NEXT:   )
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (local.get $1)
-;; DEFAULT-NEXT: )
-
-;; DEFAULT:      (func $target-long_8 (type $6) (param $0 i32)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT: )
-
-;; DEFAULT:      (func $target-long_9 (type $7) (result (ref $A))
-;; DEFAULT-NEXT:  (local $0 (ref $A))
-;; DEFAULT-NEXT:  (local.set $0
-;; DEFAULT-NEXT:   (struct.new $A
-;; DEFAULT-NEXT:    (i32.const 42)
-;; DEFAULT-NEXT:   )
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (local.get $0)
-;; DEFAULT-NEXT: )
-
-;; DEFAULT:      (func $target-long_10 (type $1)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT:  (call $import)
-;; DEFAULT-NEXT: )
-
-;; DEFAULT:      (func $target-short_11 (type $4) (param $0 anyref)
+;; DEFAULT:      (func $target-short_6 (type $5) (param $0 anyref)
 ;; DEFAULT-NEXT:  (nop)
 ;; DEFAULT-NEXT: )
 
-;; DEFAULT:      (func $target-short_12 (type $5) (param $0 i32) (result (ref $A))
-;; DEFAULT-NEXT:  (struct.new $A
-;; DEFAULT-NEXT:   (local.get $0)
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT: )
-
-;; DEFAULT:      (func $target-short_13 (type $6) (param $0 i32)
+;; DEFAULT:      (func $target-short_7 (type $6) (param $0 i32)
 ;; DEFAULT-NEXT:  (nop)
 ;; DEFAULT-NEXT: )
 
-;; DEFAULT:      (func $target-short_14 (type $7) (result (ref $A))
-;; DEFAULT-NEXT:  (struct.new $A
-;; DEFAULT-NEXT:   (i32.const 42)
-;; DEFAULT-NEXT:  )
-;; DEFAULT-NEXT: )
-
-;; DEFAULT:      (func $target-short_15 (type $1)
+;; DEFAULT:      (func $target-short_8 (type $1)
 ;; DEFAULT-NEXT:  (nop)
 ;; DEFAULT-NEXT: )
 
