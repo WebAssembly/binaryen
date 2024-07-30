@@ -8,6 +8,7 @@ set(unittest_SOURCES
   lattices.cpp
   possible-contents.cpp
   printing.cpp
+  scc.cpp
   stringify.cpp
   suffix_tree.cpp
   type-builder.cpp
