@@ -18,5 +18,5 @@
 ;; temp name.)
 
 ;; CHECK:       (global $global$1 i32 (i32.const 1))
-;; CHECK-NEXT:  (global $global$1.1 i32 (i32.const 0))
+;; CHECK-NEXT:  (global $global$1_1 i32 (i32.const 0))
 
