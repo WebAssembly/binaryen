@@ -45,6 +45,13 @@ struct Metrics
   }
 
   void doWalkModule(Module* module) {
+    std::string title = getArgumentOrDefault("metrics", "");
+    std::cout << "Metrics";
+    if (!title.empty()) {
+      std::cout << ": " << title;
+    }
+    std::cout << '\n';
+
     ImportInfo imports(*module);
 
     // global things

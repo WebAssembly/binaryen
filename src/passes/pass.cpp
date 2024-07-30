@@ -275,7 +275,9 @@ void PassRegistry::registerPasses() {
                createMergeSimilarFunctionsPass);
   registerPass(
     "merge-locals", "merges locals when beneficial", createMergeLocalsPass);
-  registerPass("metrics", "reports metrics", createMetricsPass);
+  registerPass("metrics",
+               "reports metrics (with an optional title, --metrics[=TITLE])",
+               createMetricsPass);
   registerPass("minify-imports",
                "minifies import names (only those, and not export names), and "
                "emits a mapping to the minified ones",

@@ -21,6 +21,9 @@ Current Trunk
    apply to the most recent --foo pass on the commandline, if foo is a pass
    (while global pass arguments - that are not the name of a pass - remain, as
    before, global for all passes). (#6687)
+ - The Metrics pass now takes an optional argument to use as the title,
+   `--metrics=text` will show that text before the metrics. Each instance of
+   Metrics can have unique text, `--metrics=before -O3 --metrics=after`. (#6792)
  - Add C and JS APIs to control more pass options (trapsNeverHappen,
    closedWorld, generateStackIR, optimizeStackIR, and the list of skipped
    passes). (#6713)
