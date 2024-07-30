@@ -25,7 +25,7 @@
 //    parameter.
 //  * If a call provides a constant as a parameter.
 //  * If a call provides a GC allocation as a parameter. TODO
-//  * If a call is dropped. TODO also other stuff on the outside?
+//  * If a call is dropped. TODO also other stuff on the outside, e.g. eqz?
 //
 // We realize the benefit by creating a monomorphized (specialized/refined)
 // version of the function, and call that instead. For example, if we have
@@ -747,7 +747,7 @@ struct Monomorphize : public Pass {
         auto benefit = 100 - ((100 * costAfter) / costBefore);
         if (benefit <= MinPercentBenefit) {
           worthwhile = false;
-        }
+        } else std::cerr << "monoing " << func->name << " with size " << Measurer::measure(func->body) << " => " << Measurer::measure(monoFunc->body) << '\n';
       }
     }
 
