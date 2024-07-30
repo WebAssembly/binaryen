@@ -87,6 +87,9 @@
 // optimizing large functions can be painful.
 // const Index MaxFunctionSize = 1000;
 //
+// TODO: Perhaps an argument for the maximum OUTPUT size, that is, max size of
+//       optimized monomorphized functions. That limits size increase.
+//
 // TODO: some kind of argument to control the maximum code size increase?
 //
 // TODO: When we optimize we could run multiple cycles: A calls B calls C might
@@ -747,7 +750,13 @@ struct Monomorphize : public Pass {
         auto benefit = 100 - ((100 * costAfter) / costBefore);
         if (benefit <= MinPercentBenefit) {
           worthwhile = false;
-        } else std::cerr << "monoing " << func->name << " with size " << Measurer::measure(func->body) << " => " << Measurer::measure(monoFunc->body) << '\n';
+        } else {
+          std::cerr << "monoing " << func->name << " with size " << Measurer::measure(func->body) << " => " << Measurer::measure(monoFunc->body) << " and cost goes from " << costBefore << " to " << costAfter << '\n';
+          if (func->name == "sqlite3CodeRowTrigger") {
+            std::cout << "PRE\n" << *func->body << "\nPOST\n" << *monoFunc->body << '\n';
+            // TWO nested loops end up x25ing the code inside them... should we measure code size as well? small code size change for big cost change is suspect..?
+          }
+        }
       }
     }
 
