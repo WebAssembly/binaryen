@@ -1,3 +1,4 @@
+Metrics
 total
  [exports]      : 1       
  [funcs]        : 1       
@@ -12,6 +13,7 @@ total
  Const          : 1       
  LocalGet       : 1       
  LocalSet       : 1       
+Metrics
 total
  [exports]      : 1       
  [funcs]        : 1       

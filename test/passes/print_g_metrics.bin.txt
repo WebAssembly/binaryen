@@ -66,6 +66,7 @@
   (nop)
  )
 )
+Metrics
 total
  [exports]      : 3       
  [funcs]        : 3       

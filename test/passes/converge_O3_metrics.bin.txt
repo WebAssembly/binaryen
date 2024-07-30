@@ -1,3 +1,4 @@
+Metrics
 total
  [exports]      : 2       
  [funcs]        : 6       
@@ -231,6 +232,7 @@ total
   (i32.const 0)
  )
 )
+Metrics
 total
  [exports]      : 2       
  [funcs]        : 6       
@@ -457,6 +459,7 @@ total
   (i32.const 0)
  )
 )
+Metrics
 total
  [exports]      : 2       
  [funcs]        : 6       
