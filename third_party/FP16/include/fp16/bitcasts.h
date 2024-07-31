@@ -8,7 +8,7 @@
 	#include <stdint.h>
 #endif
 
-#if defined(__INTEL_COMPILER)
+#if defined(__INTEL_COMPILER) || defined(_MSC_VER) && (_MSC_VER >= 1932) && (defined(_M_IX86) || defined(_M_X64))
 	#include <immintrin.h>
 #endif
 
