@@ -17,6 +17,7 @@
 ;; that we leave the name from the names section as it is, and only adjust the
 ;; temp name.)
 
-;; CHECK:       (global $global$1 i32 (i32.const 1))
-;; CHECK-NEXT:  (global $global$1_1 i32 (i32.const 0))
 
+;; CHECK:      (global $global$1 i32 (i32.const 1))
+
+;; CHECK:      (global $global$1_1 i32 (i32.const 0))
