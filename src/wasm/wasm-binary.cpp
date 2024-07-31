@@ -2939,13 +2939,20 @@ void WasmBinaryReader::readSourceMapHeader() {
   //       investigation (if it does, it will assert in readBase64VLQ, so it
   //       would not be a silent error at least).
   uint32_t position = readBase64VLQ(*sourceMap);
-  uint32_t fileIndex = readBase64VLQ(*sourceMap);
-  uint32_t lineNumber =
-    readBase64VLQ(*sourceMap) + 1; // adjust zero-based line number
-  uint32_t columnNumber = readBase64VLQ(*sourceMap);
   nextDebugPos = position;
-  nextDebugLocation = {fileIndex, lineNumber, columnNumber};
-  nextDebugLocationHasDebugInfo = true;
+
+  auto peek = sourceMap->peek();
+  if (peek == ',' || peek == '\"') {
+    // This is a 1-length entry, so the next location has no debug info.
+    nextDebugLocationHasDebugInfo = false;
+  } else {
+    uint32_t fileIndex = readBase64VLQ(*sourceMap);
+    uint32_t lineNumber =
+        readBase64VLQ(*sourceMap) + 1; // adjust zero-based line number
+    uint32_t columnNumber = readBase64VLQ(*sourceMap);
+    nextDebugLocation = {fileIndex, lineNumber, columnNumber};
+    nextDebugLocationHasDebugInfo = true;
+  }
 }
 
 void WasmBinaryReader::readNextDebugLocation() {
