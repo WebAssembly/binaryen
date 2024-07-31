@@ -19,6 +19,7 @@
 
 #include "ir/eh-utils.h"
 #include "ir/module-utils.h"
+#include "ir/names.h"
 #include "ir/table-utils.h"
 #include "ir/type-updating.h"
 #include "support/bits.h"
@@ -3551,14 +3552,8 @@ private:
   std::unordered_set<Name> usedNames;
 
   Name deduplicate(Name base) {
-    // TODO: Consider using Names::getValidNameGivenExisting but that does give
-    //       longer names, and it is very noticeable in this location, so
-    //       perhaps optimize that first.
-    Name name = base;
-    // De-duplicate names by appending .1, .2, etc.
-    for (int i = 1; !usedNames.insert(name).second; ++i) {
-      name = std::string(base.str) + std::string(".") + std::to_string(i);
-    }
+    auto name = Names::getValidNameGivenExisting(base, usedNames);
+    usedNames.insert(name);
     return name;
   }
 };
