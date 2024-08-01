@@ -50,9 +50,6 @@ TopologicalOrders::Selector::advance(TopologicalOrders& ctx) {
   for (auto child : ctx.graph[unselected]) {
     ++ctx.indegrees[child];
   }
-  for (size_t i = start + count; i < ctx.graph.size(); ++i) {
-    ctx.buf[i] = -1;
-  }
   if (index == count - 1) {
     // We are wrapping back to the original configuration. The current selection
     // element needs to go back on the end and everything else needs to be
