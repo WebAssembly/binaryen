@@ -18,6 +18,7 @@
 #define wasm_support_disjoint_sets_h
 
 #include <cassert>
+#include <cstddef>
 #include <vector>
 
 namespace wasm {
