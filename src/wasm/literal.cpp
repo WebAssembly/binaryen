@@ -2702,9 +2702,9 @@ Literal Literal::externalize() const {
 
 Literal Literal::internalize() const {
   auto share = type.getHeapType().getShared();
-  auto extType = HeapTypes::ext.getBasic(share);
-  assert(Type::isSubType(type, Type(extType, Nullable)) &&
-         "can only internalize external references");
+  assert(
+    Type::isSubType(type, Type(HeapTypes::ext.getBasic(share), Nullable)) &&
+    "can only internalize external references");
   if (isNull()) {
     return Literal(std::shared_ptr<GCData>{}, HeapTypes::none.getBasic(share));
   }
