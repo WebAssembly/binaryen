@@ -4,6 +4,7 @@ include_directories(../../src/wasm)
 set(unittest_SOURCES
   cfg.cpp
   dfa_minimization.cpp
+  disjoint_sets.cpp
   json.cpp
   lattices.cpp
   possible-contents.cpp
