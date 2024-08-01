@@ -23,7 +23,8 @@
 
 namespace wasm {
 
-// A disjoint set forest (a.k.a. union-find) implementation.
+// A disjoint set forest (a.k.a. union-find) implementation. See
+// https://en.wikipedia.org/wiki/Disjoint-set_data_structure.
 struct DisjointSets {
   struct ElemInfo {
     // The index of the parent element, or the index of the element itself if it
