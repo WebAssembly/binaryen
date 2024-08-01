@@ -187,6 +187,7 @@ template<typename CompareTypes> struct RecGroupComparator {
       if (indexA != indexB) {
         return indexA < indexB ? LT : GT;
       }
+      return EQ;
     }
     // These types are external to the group, so fall back to the provided
     // comparator.

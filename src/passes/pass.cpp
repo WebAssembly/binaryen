@@ -290,6 +290,9 @@ void PassRegistry::registerPasses() {
                "minifies both import and export names, and emits a mapping to "
                "the minified ones, and minifies the modules as well",
                createMinifyImportsAndExportsAndModulesPass);
+  registerPass("minimize-rec-groups",
+               "Split types into minimal recursion groups",
+               createMinimizeRecGroupsPass);
   registerPass("mod-asyncify-always-and-only-unwind",
                "apply the assumption that asyncify imports always unwind, "
                "and we never rewind",
