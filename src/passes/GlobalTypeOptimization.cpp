@@ -32,6 +32,7 @@
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm-type.h"
+#include "wasm-type-ordering.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -166,8 +167,11 @@ struct GlobalTypeOptimization : public Pass {
     auto subs = std::move(combinedSetGetInfos);
     propagator.propagateToSubTypes(subs);
 
-    // Process the propagated info.
-    for (auto type : propagator.subTypes.types) {
+    // Process the propagated info. We look at supertypes first, as the order of
+    // fields in a supertype is a constraint on what subtypes can do. That is,
+    // we decide for each supertype what the optimal order is, and consider that
+    // fixed, and then subtypes can decide how to sort fields that they append.
+    for (auto type : SupertypesFirst().sort(propagator.subTypes)) {
       if (!type.isStruct()) {
         continue;
       }
@@ -193,37 +197,44 @@ struct GlobalTypeOptimization : public Pass {
         vec[i] = true;
       }
 
-      // Process removability. We check separately for the ability to
-      // remove in a general way based on sub+super-propagated info (that is,
-      // fields that are not used in sub- or super-types, and so we can
-      // definitely remove them from all the relevant types) and also in the
-      // specific way that only works for removing at the end, which as
-      // mentioned above only looks at super-types.
+      // Process removability.
       std::set<Index> removableIndexes;
       for (Index i = 0; i < fields.size(); i++) {
-        if (!subSuper[i].hasRead) {
+        // If there is no read whatsoever, in either subs or supers, then we can
+        // remove the field. That is so even if there are writes (it would be a
+        // pointless"write-only-field").
+        auto hasNoReadsAnywhere = !subSuper[i].hasRead;
+
+        // If all reads and writes happen in our strict subtypes then those
+        // subtypes can define the field there, and we don't need it here.
+        auto hasNoOperationsInSupers = !sub[i].hasRead && !sub[i].hasWrite;
+
+        if (hasNoReadsAnywhere || hasNoOperationsInSupers) {
           removableIndexes.insert(i);
-        }
-      }
-      for (int i = int(fields.size()) - 1; i >= 0; i--) {
-        // Unlike above, a write would stop us here: above we propagated to both
-        // sub- and super-types, which means if we see no reads then there is no
-        // possible read of the data at all. But here we just propagated to
-        // subtypes, and so we need to care about the case where the parent
-        // writes to a field but does not read from it - we still need those
-        // writes to happen as children may read them. (Note that if no child
-        // reads this field, and since we check for reads in parents here, that
-        // means the field is not read anywhere at all, and we would have
-        // handled that case in the previous loop anyhow.)
-        if (!sub[i].hasRead && !sub[i].hasWrite) {
-          removableIndexes.insert(i);
-        } else {
-          // Once we see something we can't remove, we must stop, as we can only
-          // remove from the end in this case.
-          break;
         }
       }
       if (!removableIndexes.empty()) {
+        // We are removing fields. Reorder them to allow that, as in the general
+        // case we can only remove fields from the end, so that if our subtypes
+        // still need the fields they can append them. For example:
+        //
+        //  type A     = { x: i32, y: f64 };
+        //  type B : A = { x: 132, y: f64, z: v128 };
+        //
+        // If field x is used in B but never in A then we want to remove it, but
+        // we cannot end up with this:
+        //
+        //  type A     = { y: f64 };
+        //  type B : A = { x: 132, y: f64, z: v128 };
+        //
+        // Here B no longer extends A's fields. Instead, we reorder A, which
+        // then imposes the same order on B's fields:
+        //
+        //  type A     = { y: f64, x: i32 };
+        //  type B : A = { y: f64, x: i32, z: v128 };
+        //
+        // And after that, it is safe to remove x in A: B will then append it,
+        // just like it appends z.
         auto& indexesAfterRemoval = indexesAfterRemovals[type];
         indexesAfterRemoval.resize(fields.size());
         Index skip = 0;
