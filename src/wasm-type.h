@@ -170,7 +170,6 @@ public:
   bool isSignature() const;
   bool isStruct() const;
   bool isArray() const;
-  bool isException() const;
   bool isString() const;
   bool isDefaultable() const;
 
@@ -377,7 +376,6 @@ public:
   bool isContinuation() const;
   bool isStruct() const;
   bool isArray() const;
-  bool isException() const;
   bool isString() const;
   bool isBottom() const;
   bool isOpen() const;
