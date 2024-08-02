@@ -1031,7 +1031,8 @@ bool isUninhabitable(Type type,
                      std::unordered_set<HeapType>& visited,
                      std::unordered_set<HeapType>& visiting) {
   if (type.isRef() && type.isNonNullable()) {
-    if (type.getHeapType().isBottom() || type.getHeapType() == HeapType::ext) {
+    if (type.getHeapType().isBottom() ||
+        type.getHeapType().isMaybeShared(HeapType::ext)) {
       return true;
     }
     return isUninhabitable(type.getHeapType(), visited, visiting);
