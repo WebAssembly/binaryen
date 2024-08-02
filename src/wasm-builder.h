@@ -1217,26 +1217,28 @@ public:
     if (type.isFunction()) {
       return makeRefFunc(value.getFunc(), type.getHeapType());
     }
-    if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::i31)) {
-      return makeRefI31(makeConst(value.geti31()),
-                        type.getHeapType().getShared());
-    }
-    if (type.isString()) {
-      // The string is already WTF-16, but we need to convert from `Literals` to
-      // actual string.
-      std::stringstream wtf16;
-      for (auto c : value.getGCData()->values) {
-        auto u = c.getInteger();
-        assert(u < 0x10000);
-        wtf16 << uint8_t(u & 0xFF);
-        wtf16 << uint8_t(u >> 8);
+    if (type.isRef()) {
+      if (type.getHeapType().isMaybeShared(HeapType::i31)) {
+        return makeRefI31(makeConst(value.geti31()),
+                          type.getHeapType().getShared());
       }
-      // TODO: Use wtf16.view() once we have C++20.
-      return makeStringConst(wtf16.str());
-    }
-    if (type.isRef() && type.getHeapType() == HeapType::ext) {
-      return makeRefAs(ExternConvertAny,
-                       makeConstantExpression(value.internalize()));
+      if (type.getHeapType().isMaybeShared(HeapType::string)) {
+        // The string is already WTF-16, but we need to convert from `Literals`
+        // to actual string.
+        std::stringstream wtf16;
+        for (auto c : value.getGCData()->values) {
+          auto u = c.getInteger();
+          assert(u < 0x10000);
+          wtf16 << uint8_t(u & 0xFF);
+          wtf16 << uint8_t(u >> 8);
+        }
+        // TODO: Use wtf16.view() once we have C++20.
+        return makeStringConst(wtf16.str());
+      }
+      if (type.getHeapType().isMaybeShared(HeapType::ext)) {
+        return makeRefAs(ExternConvertAny,
+                         makeConstantExpression(value.internalize()));
+      }
     }
     TODO_SINGLE_COMPOUND(type);
     WASM_UNREACHABLE("unsupported constant expression");

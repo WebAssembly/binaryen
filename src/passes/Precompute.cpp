@@ -829,7 +829,8 @@ private:
       return true;
     }
     // We can emit a StringConst for a string constant.
-    if (type.isString()) {
+    if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::string)) {
+      assert(!type.getHeapType().isShared() && "TODO: shared string support");
       return true;
     }
     // All other reference types cannot be precomputed. Even an immutable GC

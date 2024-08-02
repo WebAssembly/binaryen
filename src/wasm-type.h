@@ -170,7 +170,6 @@ public:
   bool isSignature() const;
   bool isStruct() const;
   bool isArray() const;
-  bool isString() const;
   bool isDefaultable() const;
 
   Nullability getNullability() const;
@@ -376,7 +375,6 @@ public:
   bool isContinuation() const;
   bool isStruct() const;
   bool isArray() const;
-  bool isString() const;
   bool isBottom() const;
   bool isOpen() const;
   bool isShared() const { return getShared() == Shared; }

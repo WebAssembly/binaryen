@@ -2536,7 +2536,8 @@ Expression* TranslateToFuzzReader::makeConst(Type type) {
     if (type.isNullable() && oneIn(8)) {
       return builder.makeRefNull(type.getHeapType());
     }
-    if (type.getHeapType().isString()) {
+    if (type.getHeapType().isMaybeShared(HeapType::string)) {
+      assert(!type.getHeapType().isShared() && "TODO: shared strings");
       return makeStringConst();
     }
     if (type.getHeapType().isBasic()) {
