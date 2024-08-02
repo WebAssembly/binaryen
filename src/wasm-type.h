@@ -310,6 +310,14 @@ public:
 
 enum Shareability { Shared, Unshared };
 
+enum class HeapTypeKind {
+  Basic,
+  Func,
+  Struct,
+  Array,
+  Cont,
+};
+
 class HeapType {
   // Unlike `Type`, which represents the types of values on the WebAssembly
   // stack, `HeapType` is used to describe the structures that reference types
@@ -364,17 +372,21 @@ public:
   HeapType(Struct&& struct_);
   HeapType(Array array);
 
+  HeapTypeKind getKind() const;
+
   constexpr bool isBasic() const { return id <= _last_basic_type; }
-  bool isFunction() const;
-  bool isData() const;
-  bool isSignature() const;
-  // Indicates whether the given type was defined to be of the form
-  // `(cont $ft)`. Returns false for `cont`, the top type of the continuation
-  // type hierarchy (and all other types). In other words, this is analogous to
-  // `isSignature`, but for continuation types.
-  bool isContinuation() const;
-  bool isStruct() const;
-  bool isArray() const;
+  bool isFunction() const {
+    return isMaybeShared(func) || getKind() == HeapTypeKind::Func;
+  }
+  bool isData() const {
+    auto kind = getKind();
+    return isMaybeShared(string) || kind == HeapTypeKind::Struct ||
+           kind == HeapTypeKind::Array;
+  }
+  bool isSignature() const { return getKind() == HeapTypeKind::Func; }
+  bool isContinuation() const { return getKind() == HeapTypeKind::Cont; }
+  bool isStruct() const { return getKind() == HeapTypeKind::Struct; }
+  bool isArray() const { return getKind() == HeapTypeKind::Array; }
   bool isBottom() const;
   bool isOpen() const;
   bool isShared() const { return getShared() == Shared; }
@@ -383,7 +395,7 @@ public:
 
   // Check if the type is a given basic heap type, while ignoring whether it is
   // shared or not.
-  bool isMaybeShared(BasicHeapType type) {
+  bool isMaybeShared(BasicHeapType type) const {
     return isBasic() && getBasic(Unshared) == type;
   }
 
