@@ -520,6 +520,8 @@ void Fuzzer::checkRecGroupShapes() {
   std::unordered_map<HeapType, Index> typeIndices;
   for (auto type : types) {
     typeIndices.insert({type, typeIndices.size()});
+    // We know we are at the beginning of a new rec group when we see a type
+    // that is at index zero of its rec group.
     if (type.getRecGroupIndex() == 0) {
       groups.push_back({type});
     } else {
