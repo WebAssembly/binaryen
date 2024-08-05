@@ -205,11 +205,12 @@ struct GlobalTypeOptimization : public Pass {
         // pointless"write-only-field").
         auto hasNoReadsAnywhere = !subSuper[i].hasRead;
 
-        // If all reads and writes happen in our strict subtypes then those
+        // Check for reads or writes in ourselves and our supers. If there are
+        // none, then operations only happen in our strict subtypes, and those
         // subtypes can define the field there, and we don't need it here.
-        auto hasNoOperationsInSupers = !sub[i].hasRead && !sub[i].hasWrite;
+        auto hasNoReadsOrWritesInSupers = !sub[i].hasRead && !sub[i].hasWrite;
 
-        if (hasNoReadsAnywhere || hasNoOperationsInSupers) {
+        if (hasNoReadsAnywhere || hasNoReadsOrWritesInSupers) {
           removableIndexes.insert(i);
         }
       }
@@ -234,11 +235,39 @@ struct GlobalTypeOptimization : public Pass {
         //  type B : A = { y: f64, x: i32, z: v128 };
         //
         // And after that, it is safe to remove x in A: B will then append it,
-        // just like it appends z.
+        // just like it appends z, leading to this:
+        //
+        //  type A     = { y: f64 };
+        //  type B : A = { y: f64, x: i32, z: v128 };
+        //
         auto& indexesAfterRemoval = indexesAfterRemovals[type];
-        indexesAfterRemoval.resize(fields.size());
+        assert(indexesAfterRemoval.empty());
+
+        // How many fields were skipped over (removed). This is also the amount
+        // we must skip when assigning new indexes.
         Index skip = 0;
-        for (Index i = 0; i < fields.size(); i++) {
+
+        // If we have a super, then we extend it, and must match its fields.
+        // That is, we can only append fields: we cannot reorder or remove any
+        // field that is in the super.
+        if (auto super = type.getSuperType()) {
+          // We must have visited the super before.
+          assert(indexesAfterRemovals.count(*super));
+          auto& superIndexes = indexesAfterRemovals[*super];
+          indexesAfterRemoval = superIndexes;
+
+          // Update |skip| to reflect any removed fields.
+          if (!indexesAfterRemoval.empty()) {
+            // The maximum new index indicates how many fields remained.
+            auto remaining = std::max(indexesAfterRemoval) + 1; // Remvoedfield is -1!11
+            skip += indexesAfterRemoval.size() - remaining;
+          }
+        }
+XXX
+        // Add any additional fields on top of the super, as needed.
+        auto numSuperFields = indexesAfterRemoval.size();
+        indexesAfterRemoval.resize(fields.size());
+        for (Index i = numSuperFields; i < fields.size(); i++) {
           if (!removableIndexes.count(i)) {
             indexesAfterRemoval[i] = i - skip;
           } else {
