@@ -194,6 +194,10 @@ template<typename CompareTypes> struct RecGroupComparator {
   }
 };
 
+// Deduction guide to satisfy -Wctad-maybe-unsupported.
+template<typename CompareTypes>
+RecGroupComparator(CompareTypes) -> RecGroupComparator<CompareTypes>;
+
 struct RecGroupHasher {
   std::unordered_map<HeapType, Index> typeIndices;
 
