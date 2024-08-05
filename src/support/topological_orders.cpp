@@ -95,7 +95,7 @@ TopologicalOrders::TopologicalOrders(
   }
 }
 
-void TopologicalOrders::advance() {
+TopologicalOrders& TopologicalOrders::operator++() {
   // Find the last selector that can be advanced, popping any that cannot.
   std::optional<Selector> next;
   while (!selectors.empty() && !(next = selectors.back().advance(*this))) {
@@ -104,7 +104,7 @@ void TopologicalOrders::advance() {
   if (!next) {
     // No selector could be advanced, so we've seen every possible ordering.
     assert(selectors.empty());
-    return;
+    return *this;
   }
   // We've advanced the last selector on the stack, so initialize the
   // subsequent selectors.
@@ -113,6 +113,8 @@ void TopologicalOrders::advance() {
   while (selectors.size() < graph.size()) {
     selectors.push_back(selectors.back().select(*this));
   }
+
+  return *this;
 }
 
 } // namespace wasm
