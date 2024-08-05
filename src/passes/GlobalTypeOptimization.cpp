@@ -274,6 +274,12 @@ struct GlobalTypeOptimization : public Pass {
                 indexesAfterRemoval[i] = RemovedField;
                 skip++;
               }
+            } else {
+              // The super kept this field, so we must keep it as well, and with
+              // the same index so we remain compatible.
+              auto index = next++;
+              assert(index == superIndex);
+              indexesAfterRemoval[i] = index;
             }
           }
 
