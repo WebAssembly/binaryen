@@ -814,10 +814,6 @@ bool Type::isStruct() const { return isRef() && getHeapType().isStruct(); }
 
 bool Type::isArray() const { return isRef() && getHeapType().isArray(); }
 
-bool Type::isException() const {
-  return isRef() && getHeapType().isException();
-}
-
 bool Type::isString() const { return isRef() && getHeapType().isString(); }
 
 bool Type::isDefaultable() const {
@@ -1147,8 +1143,6 @@ bool HeapType::isArray() const {
     return getHeapTypeInfo(*this)->isArray();
   }
 }
-
-bool HeapType::isException() const { return *this == HeapType::exn; }
 
 bool HeapType::isString() const { return *this == HeapType::string; }
 
