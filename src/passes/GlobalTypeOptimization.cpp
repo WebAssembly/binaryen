@@ -22,7 +22,6 @@
 //  * Fields that are never read from can be removed entirely.
 //
 
-#include "ir/effects.h"
 #include "ir/localize.h"
 #include "ir/ordering.h"
 #include "ir/struct-utils.h"
@@ -410,34 +409,19 @@ struct GlobalTypeOptimization : public Pass {
         auto& operands = curr->operands;
         assert(indexesAfterRemoval.size() == operands.size());
 
-        // Check for side effects in removed fields. If there are any, we must
-        // use locals to save the values (while keeping them in order).
-        bool useLocals = false;
-        for (Index i = 0; i < operands.size(); i++) {
-          auto newIndex = indexesAfterRemoval[i];
-          if (newIndex == RemovedField &&
-              EffectAnalyzer(getPassOptions(), *getModule(), operands[i])
-                .hasUnremovableSideEffects()) {
-            useLocals = true;
-            break;
-          }
-        }
-        if (useLocals) {
-          auto* func = getFunction();
-          if (!func) {
-            Fatal() << "TODO: side effects in removed fields in globals\n";
-          }
-          ChildLocalizer localizer(curr, func, *getModule(), getPassOptions());
-          replaceCurrent(localizer.getReplacement());
-        }
+        // Ensure any children with non-trivial effects are replaced with
+        // local.gets, so that we can remove/reorder to our hearts' content.
+        ChildLocalizer localizer(curr, func, *getModule(), getPassOptions());
+        replaceCurrent(localizer.getReplacement());
 
-        // Remove the unneeded operands.
+        // Remove and reorder operands.
         Index removed = 0;
+        auto old = operands;
         for (Index i = 0; i < operands.size(); i++) {
           auto newIndex = indexesAfterRemoval[i];
           if (newIndex != RemovedField) {
             assert(newIndex < operands.size());
-            operands[newIndex] = operands[i];
+            operands[newIndex] = old[i];
           } else {
             removed++;
           }
