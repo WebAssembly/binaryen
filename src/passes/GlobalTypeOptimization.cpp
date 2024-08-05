@@ -242,37 +242,53 @@ struct GlobalTypeOptimization : public Pass {
         //
         auto& indexesAfterRemoval = indexesAfterRemovals[type];
         assert(indexesAfterRemoval.empty());
+        indexesAfterRemoval.resize(fields.size());
 
-        // How many fields were skipped over (removed). This is also the amount
-        // we must skip when assigning new indexes.
-        Index skip = 0;
+        // The next new index to use.
+        Index next = 0;
 
         // If we have a super, then we extend it, and must match its fields.
         // That is, we can only append fields: we cannot reorder or remove any
         // field that is in the super.
+        Index numSuperFields = 0;
         if (auto super = type.getSuperType()) {
           // We must have visited the super before.
           assert(indexesAfterRemovals.count(*super));
           auto& superIndexes = indexesAfterRemovals[*super];
-          indexesAfterRemoval = superIndexes;
+          numSuperFields = superIndexes.size();
 
-          // Update |skip| to reflect any removed fields.
-          if (!indexesAfterRemoval.empty()) {
-            // The maximum new index indicates how many fields remained.
-            auto remaining = std::max(indexesAfterRemoval) + 1; // Remvoedfield is -1!11
-            skip += indexesAfterRemoval.size() - remaining;
+          // Fields we keep but the super removed will be handled at the end.
+          std::vector<Index> keptFieldsNotInSuper;
+
+          // Go over the super fields and handle them.
+          for (Index i = 0; i < superIndexes.size(); ++i) {
+            auto superIndex = (*superIndexes)[i];
+            if (superIndex == RemovedField) {
+              if (!removableIndexes.count(i)) {
+                // This was removed in the super, but we actually need it. It
+                // must appear after all other super fields, when we get to the
+                // proper index for that, later. That is, we are reordering.
+                keptFieldsNotInSuper.push_back(i);
+              } else {
+                // This was removed in the super, and in us as well.
+                indexesAfterRemoval[i] = RemovedField;
+                skip++;
+              }
+            }
+          }
+
+          // Handle fields we keep but the super removed.
+          for (auto i : keptFieldsNotInSuper) {
+            indexesAfterRemoval[i] = next++;
           }
         }
-XXX
-        // Add any additional fields on top of the super, as needed.
-        auto numSuperFields = indexesAfterRemoval.size();
-        indexesAfterRemoval.resize(fields.size());
+
+        // Go over the fields only defined in us, and not in any super.
         for (Index i = numSuperFields; i < fields.size(); i++) {
           if (!removableIndexes.count(i)) {
-            indexesAfterRemoval[i] = i - skip;
+            indexesAfterRemoval[i] = next++;
           } else {
             indexesAfterRemoval[i] = RemovedField;
-            skip++;
           }
         }
       }
