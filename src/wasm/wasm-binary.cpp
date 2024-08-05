@@ -2239,13 +2239,17 @@ void WasmBinaryReader::readStart() {
   startIndex = getU32LEB();
 }
 
+static Name makeName(std::string prefix, size_t counter) {
+  return Name(prefix + std::to_string(counter));
+}
+
 void WasmBinaryReader::readMemories() {
   BYN_TRACE("== readMemories\n");
   auto num = getU32LEB();
   BYN_TRACE("num: " << num << std::endl);
   for (size_t i = 0; i < num; i++) {
     BYN_TRACE("read one\n");
-    auto memory = Builder::makeMemory(Name::fromInt(i));
+    auto memory = Builder::makeMemory(makeName("", i));
     getResizableLimits(memory->initial,
                        memory->max,
                        memory->shared,
@@ -2534,7 +2538,7 @@ void WasmBinaryReader::readImports() {
     // could occur later due to the names section.
     switch (kind) {
       case ExternalKind::Function: {
-        Name name(std::string("fimport$") + std::to_string(functionCounter++));
+        Name name = makeName("fimport$", functionCounter++);
         auto index = getU32LEB();
         functionTypes.push_back(getTypeByIndex(index));
         auto type = getTypeByIndex(index);
@@ -2550,8 +2554,7 @@ void WasmBinaryReader::readImports() {
         break;
       }
       case ExternalKind::Table: {
-        Name name(std::string("timport$") + std::to_string(tableCounter++));
-        auto table = builder.makeTable(name);
+        auto table = builder.makeTable(makeName("timport$", tableCounter++));
         table->module = module;
         table->base = base;
         table->type = getType();
@@ -2570,8 +2573,7 @@ void WasmBinaryReader::readImports() {
         break;
       }
       case ExternalKind::Memory: {
-        Name name(std::string("mimport$") + std::to_string(memoryCounter++));
-        auto memory = builder.makeMemory(name);
+        auto memory = builder.makeMemory(makeName("mimport$", memoryCounter++));
         memory->module = module;
         memory->base = base;
         getResizableLimits(memory->initial,
@@ -2583,14 +2585,13 @@ void WasmBinaryReader::readImports() {
         break;
       }
       case ExternalKind::Global: {
-        Name name(std::string("gimport$") + std::to_string(globalCounter++));
         auto type = getConcreteType();
         auto mutable_ = getU32LEB();
         if (mutable_ & ~1) {
           throwError("Global mutability must be 0 or 1");
         }
         auto curr =
-          builder.makeGlobal(name,
+          builder.makeGlobal(makeName("gimport$", globalCounter++),
                              type,
                              nullptr,
                              mutable_ ? Builder::Mutable : Builder::Immutable);
@@ -2600,7 +2601,7 @@ void WasmBinaryReader::readImports() {
         break;
       }
       case ExternalKind::Tag: {
-        Name name(std::string("eimport$") + std::to_string(tagCounter++));
+        Name name = makeName("eimport$", tagCounter++);
         getInt8(); // Reserved 'attribute' field
         auto index = getU32LEB();
         auto curr = builder.makeTag(name, getSignatureByTypeIndex(index));
@@ -2618,7 +2619,7 @@ void WasmBinaryReader::readImports() {
 
 Name WasmBinaryReader::getNextLabel() {
   requireFunctionContext("getting a label");
-  return Name("label$" + std::to_string(nextLabel++));
+  return makeName("label$", nextLabel++);
 }
 
 void WasmBinaryReader::requireFunctionContext(const char* error) {
@@ -2688,7 +2689,7 @@ void WasmBinaryReader::readFunctions() {
     endOfFunction = pos + size;
 
     auto func = std::make_unique<Function>();
-    func->name = Name::fromInt(i);
+    func->name = makeName("", i);
     func->type = getTypeByFunctionIndex(numImports + i);
     currFunction = func.get();
 
@@ -3046,7 +3047,7 @@ void WasmBinaryReader::readGlobals() {
     }
     auto* init = readExpression();
     wasm.addGlobal(
-      Builder::makeGlobal("global$" + std::to_string(i),
+      Builder::makeGlobal(makeName("global$", i),
                           type,
                           init,
                           mutable_ ? Builder::Mutable : Builder::Immutable));
@@ -3366,7 +3367,7 @@ void WasmBinaryReader::readTableDeclarations() {
     if (!elemType.isRef()) {
       throwError("Table type must be a reference type");
     }
-    auto table = Builder::makeTable(Name::fromInt(i), elemType);
+    auto table = Builder::makeTable(makeName("", i), elemType);
     bool is_shared;
     getResizableLimits(table->initial,
                        table->max,
@@ -3466,7 +3467,7 @@ void WasmBinaryReader::readTags() {
     BYN_TRACE("read one\n");
     getInt8(); // Reserved 'attribute' field
     auto typeIndex = getU32LEB();
-    wasm.addTag(Builder::makeTag("tag$" + std::to_string(i),
+    wasm.addTag(Builder::makeTag(makeName("tag$", i),
                                  getSignatureByTypeIndex(typeIndex)));
   }
 }
