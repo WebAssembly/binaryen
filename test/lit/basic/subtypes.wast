@@ -188,31 +188,31 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $12 (func (param (ref $0) (ref $1))))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $5) (param $0 (ref $2)) (param $1 (ref null $2))
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $5) (param $0 (ref $2)) (param $1 (ref null $2))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $8) (param $0 (ref $7)) (param $1 (ref $6))
+;; CHECK-BIN-NODEBUG:      (func $f1 (type $8) (param $0 (ref $7)) (param $1 (ref $6))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $9) (param $0 (ref $4)) (param $1 (ref $3))
+;; CHECK-BIN-NODEBUG:      (func $f2 (type $9) (param $0 (ref $4)) (param $1 (ref $3))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $11) (param $0 (ref $4)) (param $1 (ref $10))
+;; CHECK-BIN-NODEBUG:      (func $f3 (type $11) (param $0 (ref $4)) (param $1 (ref $10))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (type $12) (param $0 (ref $0)) (param $1 (ref $1))
+;; CHECK-BIN-NODEBUG:      (func $f4 (type $12) (param $0 (ref $0)) (param $1 (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )

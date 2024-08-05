@@ -28,7 +28,6 @@
   (type $3 (func (param i32 i32 i32) (result i32)))
   ;; CHECK-TEXT:      (memory $0 256 256)
   ;; CHECK-BIN:      (memory $0 256 256)
-  ;; CHECK-BIN-NODEBUG:      (memory $0 256 256)
   (memory $0 256 256)
   ;; CHECK-TEXT:      (export "floats" (func $floats))
   ;; CHECK-BIN:      (export "floats" (func $floats))
@@ -176,40 +175,41 @@
   ;; CHECK-BIN:      (func $f1 (type $3) (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
   ;; CHECK-BIN-NEXT:  (local.get $i3)
   ;; CHECK-BIN-NEXT: )
+  ;; CHECK-BIN-NODEBUG:      (memory $m0 256 256)
+
+  ;; CHECK-BIN-NODEBUG:      (export "floats" (func $f0))
+
+  ;; CHECK-BIN-NODEBUG:      (func $f0 (type $0) (param $0 f32) (result f32)
+  ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 f32)
+  ;; CHECK-BIN-NODEBUG-NEXT:  (f32.add
+  ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
+  ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+  ;; CHECK-BIN-NODEBUG-NEXT:  )
+  ;; CHECK-BIN-NODEBUG-NEXT: )
+
+  ;; CHECK-BIN-NODEBUG:      (func $f1 (type $1) (param $0 i32) (param $1 i32) (result f32)
+  ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 f32)
+  ;; CHECK-BIN-NODEBUG-NEXT:  (local.tee $2
+  ;; CHECK-BIN-NODEBUG-NEXT:   (f32.neg
+  ;; CHECK-BIN-NODEBUG-NEXT:    (block $label$1 (result f32)
+  ;; CHECK-BIN-NODEBUG-NEXT:     (i32.store
+  ;; CHECK-BIN-NODEBUG-NEXT:      (local.get $0)
+  ;; CHECK-BIN-NODEBUG-NEXT:      (local.get $1)
+  ;; CHECK-BIN-NODEBUG-NEXT:     )
+  ;; CHECK-BIN-NODEBUG-NEXT:     (f32.load
+  ;; CHECK-BIN-NODEBUG-NEXT:      (local.get $0)
+  ;; CHECK-BIN-NODEBUG-NEXT:     )
+  ;; CHECK-BIN-NODEBUG-NEXT:    )
+  ;; CHECK-BIN-NODEBUG-NEXT:   )
+  ;; CHECK-BIN-NODEBUG-NEXT:  )
+  ;; CHECK-BIN-NODEBUG-NEXT: )
   (func $f1 (type $3) (param $i1 i32) (param $i2 i32) (param $i3 i32) (result i32)
     (block $topmost (result i32)
       (local.get $i3)
     )
   )
 )
-;; CHECK-BIN-NODEBUG:      (export "floats" (func $0))
-
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (param $0 f32) (result f32)
-;; CHECK-BIN-NODEBUG-NEXT:  (local $1 f32)
-;; CHECK-BIN-NODEBUG-NEXT:  (f32.add
-;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
-;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT: )
-
-;; CHECK-BIN-NODEBUG:      (func $1 (type $1) (param $0 i32) (param $1 i32) (result f32)
-;; CHECK-BIN-NODEBUG-NEXT:  (local $2 f32)
-;; CHECK-BIN-NODEBUG-NEXT:  (local.tee $2
-;; CHECK-BIN-NODEBUG-NEXT:   (f32.neg
-;; CHECK-BIN-NODEBUG-NEXT:    (block $label$1 (result f32)
-;; CHECK-BIN-NODEBUG-NEXT:     (i32.store
-;; CHECK-BIN-NODEBUG-NEXT:      (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:      (local.get $1)
-;; CHECK-BIN-NODEBUG-NEXT:     )
-;; CHECK-BIN-NODEBUG-NEXT:     (f32.load
-;; CHECK-BIN-NODEBUG-NEXT:      (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:     )
-;; CHECK-BIN-NODEBUG-NEXT:    )
-;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT: )
-
-;; CHECK-BIN-NODEBUG:      (func $2 (type $2) (param $0 i32) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $f2 (type $2) (param $0 i32) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1 (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$2
 ;; CHECK-BIN-NODEBUG-NEXT:    (block $label$3
@@ -230,6 +230,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $3) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $f3 (type $3) (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT: )

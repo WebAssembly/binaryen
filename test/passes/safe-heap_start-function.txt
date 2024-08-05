@@ -12,7 +12,7 @@
  (import "env" "emscripten_get_sbrk_ptr" (func $emscripten_get_sbrk_ptr (result i32)))
  (import "env" "segfault" (func $segfault))
  (import "env" "alignfault" (func $alignfault))
- (memory $0 1 1)
+ (memory $m0 1 1)
  (start $mystart)
  (func $mystart
   (i32.store

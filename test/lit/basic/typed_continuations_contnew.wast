@@ -40,7 +40,7 @@
 
  ;; CHECK-BIN-NODEBUG:      (type $2 (func (result (ref $1))))
 
- ;; CHECK-BIN-NODEBUG:      (elem declare func $0)
+ ;; CHECK-BIN-NODEBUG:      (elem declare func $f0)
  (elem declare func $g)
 
  ;; CHECK-TEXT:      (func $h (type $2) (result (ref $ct))
@@ -58,12 +58,12 @@
  )
 
 )
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (param $0 i32) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $0) (param $0 i32) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i32.const 123)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $2) (result (ref $1))
+;; CHECK-BIN-NODEBUG:      (func $f1 (type $2) (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (cont.new $1
-;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $0)
+;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $f0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )

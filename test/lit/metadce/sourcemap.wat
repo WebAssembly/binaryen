@@ -25,9 +25,9 @@
 )
 ;; BIN:      (type $0 (func))
 
-;; BIN:      (export "f" (func $0))
+;; BIN:      (export "f" (func $f0))
 
-;; BIN:      (func $0
+;; BIN:      (func $f0
 ;; BIN-NEXT:  ;;@ a:2:1
 ;; BIN-NEXT:  (nop)
 ;; BIN-NEXT:  ;;@ a:3:1

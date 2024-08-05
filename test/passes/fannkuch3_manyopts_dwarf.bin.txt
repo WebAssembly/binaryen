@@ -4685,12 +4685,12 @@ file_names[  4]:
  (import "env" "puts" (func $puts (param i32) (result i32)))
  (import "env" "iprintf" (func $iprintf (param i32 i32) (result i32)))
  (import "env" "putchar" (func $putchar (param i32) (result i32)))
- (global $global$0 (mut i32) (i32.const 5243952))
- (global $global$1 i32 (i32.const 1066))
+ (global $g0 (mut i32) (i32.const 5243952))
+ (global $g1 i32 (i32.const 1066))
  (data $0 (i32.const 1024) "Pfannkuchen(%d) = %d.\n\00%d\00Wrong argument.\00")
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
- (export "__data_end" (global $global$1))
+ (export "__data_end" (global $g1))
  (func $__wasm_call_ctors
  )
  (func $fannkuch_worker\28void*\29 (param $0 i32) (result i32)
@@ -5872,13 +5872,13 @@ file_names[  4]:
   (local $9 i32)
   (local $10 i32)
   ;; code offset: 0x399
-  (global.set $global$0
+  (global.set $g0
    ;; code offset: 0x397
    (local.tee $8
     ;; code offset: 0x396
     (i32.sub
      ;; code offset: 0x392
-     (global.get $global$0)
+     (global.get $g0)
      ;; code offset: 0x394
      (i32.const 32)
     )
@@ -6821,7 +6821,7 @@ file_names[  4]:
    )
   )
   ;; code offset: 0x65d
-  (global.set $global$0
+  (global.set $g0
    ;; code offset: 0x65c
    (i32.add
     ;; code offset: 0x658

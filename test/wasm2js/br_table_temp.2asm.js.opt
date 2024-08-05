@@ -14,33 +14,33 @@ function asmFunc(imports) {
   
  }
  
- function $4() {
+ function f4() {
   return 1;
  }
  
- function $5() {
+ function f5() {
   return 2;
  }
  
- function $6() {
+ function f6() {
   return Math_fround(Math_fround(3.0));
  }
  
- function $7() {
+ function f7() {
   return 4.0;
  }
  
- function $8($0) {
+ function f8($0) {
   $0 = $0 | 0;
   return 22;
  }
  
- function $9($0) {
+ function f9($0) {
   $0 = $0 | 0;
   return 33;
  }
  
- function $10($0) {
+ function f10($0) {
   $0 = $0 | 0;
   if ($0) {
    return 20
@@ -48,7 +48,7 @@ function asmFunc(imports) {
   return 22;
  }
  
- function $11($0) {
+ function f11($0) {
   $0 = $0 | 0;
   if ($0) {
    $0 = 33
@@ -58,7 +58,7 @@ function asmFunc(imports) {
   return $0 | 0;
  }
  
- function $12($0) {
+ function f12($0) {
   $0 = $0 | 0;
   block3 : {
    switch ($0 | 0) {
@@ -77,7 +77,7 @@ function asmFunc(imports) {
   return 104;
  }
  
- function $13($0) {
+ function f13($0) {
   $0 = $0 | 0;
   block3 : {
    switch ($0 | 0) {
@@ -96,7 +96,7 @@ function asmFunc(imports) {
   return 214;
  }
  
- function $14($0) {
+ function f14($0) {
   $0 = $0 | 0;
   block0 : {
    switch ($0 | 0) {
@@ -12416,39 +12416,39 @@ function asmFunc(imports) {
   return 1;
  }
  
- function $19() {
+ function f19() {
   return 3;
  }
  
- function $20() {
+ function f20() {
   return 4;
  }
  
- function $21() {
+ function f21() {
   return 5;
  }
  
- function $22() {
+ function f22() {
   return 9;
  }
  
- function $24() {
+ function f24() {
   return 8;
  }
  
- function $27() {
+ function f27() {
   return 10;
  }
  
- function $28() {
+ function f28() {
   return 11;
  }
  
- function $29() {
+ function f29() {
   return 7;
  }
  
- function $31($0, $1) {
+ function f31($0, $1) {
   $0 = $0 | 0;
   $1 = $1 | 0;
   if ($0) {
@@ -12457,7 +12457,7 @@ function asmFunc(imports) {
   return $1 | 0;
  }
  
- function $32($0, $1) {
+ function f32($0, $1) {
   $0 = $0 | 0;
   $1 = $1 | 0;
   if (!$0) {
@@ -12466,91 +12466,91 @@ function asmFunc(imports) {
   return $1 | 0;
  }
  
- function $33($0, $1) {
+ function f33($0, $1) {
   $0 = $0 | 0;
   $1 = $1 | 0;
   return 5;
  }
  
- function $34($0, $1) {
+ function f34($0, $1) {
   $0 = $0 | 0;
   $1 = $1 | 0;
   return 6;
  }
  
- function $36() {
+ function f36() {
   return 12;
  }
  
- function $37() {
+ function f37() {
   return 13;
  }
  
- function $38() {
+ function f38() {
   return 14;
  }
  
- function $39() {
+ function f39() {
   return 20;
  }
  
- function $40() {
+ function f40() {
   return 21;
  }
  
- function $41() {
+ function f41() {
   return 22;
  }
  
- function $42() {
+ function f42() {
   return 23;
  }
  
- function $43() {
+ function f43() {
   return 17;
  }
  
- function $45() {
+ function f45() {
   return 30;
  }
  
- function $47() {
+ function f47() {
   return 31;
  }
  
- function $48() {
+ function f48() {
   return 32;
  }
  
- function $49() {
+ function f49() {
   return 33;
  }
  
- function $52() {
+ function f52() {
   return 45;
  }
  
- function $53() {
+ function f53() {
   return 44;
  }
  
- function $54() {
+ function f54() {
   return 43;
  }
  
- function $55() {
+ function f55() {
   return 42;
  }
  
- function $56() {
+ function f56() {
   return 41;
  }
  
- function $57() {
+ function f57() {
   return 40;
  }
  
- function $58($0) {
+ function f58($0) {
   $0 = $0 | 0;
   var $1 = 0;
   $1 = 16;
@@ -12568,7 +12568,7 @@ function asmFunc(imports) {
   return $1 | 0;
  }
  
- function $59($0) {
+ function f59($0) {
   $0 = $0 | 0;
   var $1 = 0;
   $1 = 8;
@@ -12586,7 +12586,7 @@ function asmFunc(imports) {
   return $1 | 0;
  }
  
- function $60($0) {
+ function f60($0) {
   $0 = $0 | 0;
   var $1 = 0;
   $1 = 8;
@@ -12604,7 +12604,7 @@ function asmFunc(imports) {
   return $1 | 0;
  }
  
- function $61($0) {
+ function f61($0) {
   $0 = $0 | 0;
   if (($0 | 0) == 1) {
    $0 = 8
@@ -12619,66 +12619,66 @@ function asmFunc(imports) {
   "type_i64": dummy, 
   "type_f32": dummy, 
   "type_f64": dummy, 
-  "type_i32_value": $4, 
-  "type_i64_value": $5, 
-  "type_f32_value": $6, 
-  "type_f64_value": $7, 
-  "empty": $8, 
-  "empty_value": $9, 
-  "singleton": $10, 
-  "singleton_value": $11, 
-  "multiple": $12, 
-  "multiple_value": $13, 
-  "large": $14, 
+  "type_i32_value": f4, 
+  "type_i64_value": f5, 
+  "type_f32_value": f6, 
+  "type_f64_value": f7, 
+  "empty": f8, 
+  "empty_value": f9, 
+  "singleton": f10, 
+  "singleton_value": f11, 
+  "multiple": f12, 
+  "multiple_value": f13, 
+  "large": f14, 
   "as_block_first": dummy, 
   "as_block_mid": dummy, 
   "as_block_last": dummy, 
-  "as_block_value": $5, 
-  "as_loop_first": $19, 
-  "as_loop_mid": $20, 
-  "as_loop_last": $21, 
-  "as_br_value": $22, 
+  "as_block_value": f5, 
+  "as_loop_first": f19, 
+  "as_loop_mid": f20, 
+  "as_loop_last": f21, 
+  "as_br_value": f22, 
   "as_br_if_cond": dummy, 
-  "as_br_if_value": $24, 
-  "as_br_if_value_cond": $22, 
+  "as_br_if_value": f24, 
+  "as_br_if_value_cond": f22, 
   "as_br_table_index": dummy, 
-  "as_br_table_value": $27, 
-  "as_br_table_value_index": $28, 
-  "as_return_value": $29, 
-  "as_if_cond": $5, 
-  "as_if_then": $31, 
-  "as_if_else": $32, 
-  "as_select_first": $33, 
-  "as_select_second": $34, 
-  "as_select_cond": $29, 
-  "as_call_first": $36, 
-  "as_call_mid": $37, 
-  "as_call_last": $38, 
-  "as_call_indirect_first": $39, 
-  "as_call_indirect_mid": $40, 
-  "as_call_indirect_last": $41, 
-  "as_call_indirect_func": $42, 
-  "as_local_set_value": $43, 
-  "as_load_address": $5, 
-  "as_loadN_address": $45, 
-  "as_store_address": $45, 
-  "as_store_value": $47, 
-  "as_storeN_address": $48, 
-  "as_storeN_value": $49, 
-  "as_unary_operand": $19, 
-  "as_binary_left": $19, 
-  "as_binary_right": $52, 
-  "as_test_operand": $53, 
-  "as_compare_left": $54, 
-  "as_compare_right": $55, 
-  "as_convert_operand": $56, 
-  "as_memory_grow_size": $57, 
-  "nested_block_value": $58, 
-  "nested_br_value": $59, 
-  "nested_br_if_value": $60, 
-  "nested_br_if_value_cond": $61, 
-  "nested_br_table_value": $60, 
-  "nested_br_table_value_index": $61
+  "as_br_table_value": f27, 
+  "as_br_table_value_index": f28, 
+  "as_return_value": f29, 
+  "as_if_cond": f5, 
+  "as_if_then": f31, 
+  "as_if_else": f32, 
+  "as_select_first": f33, 
+  "as_select_second": f34, 
+  "as_select_cond": f29, 
+  "as_call_first": f36, 
+  "as_call_mid": f37, 
+  "as_call_last": f38, 
+  "as_call_indirect_first": f39, 
+  "as_call_indirect_mid": f40, 
+  "as_call_indirect_last": f41, 
+  "as_call_indirect_func": f42, 
+  "as_local_set_value": f43, 
+  "as_load_address": f5, 
+  "as_loadN_address": f45, 
+  "as_store_address": f45, 
+  "as_store_value": f47, 
+  "as_storeN_address": f48, 
+  "as_storeN_value": f49, 
+  "as_unary_operand": f19, 
+  "as_binary_left": f19, 
+  "as_binary_right": f52, 
+  "as_test_operand": f53, 
+  "as_compare_left": f54, 
+  "as_compare_right": f55, 
+  "as_convert_operand": f56, 
+  "as_memory_grow_size": f57, 
+  "nested_block_value": f58, 
+  "nested_br_value": f59, 
+  "nested_br_if_value": f60, 
+  "nested_br_if_value_cond": f61, 
+  "nested_br_table_value": f60, 
+  "nested_br_table_value_index": f61
  };
 }
 

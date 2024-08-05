@@ -368,111 +368,111 @@
 
 ;; CHECK-BIN-NODEBUG:      (import "env" "memory" (memory $mimport$0 1 1))
 
-;; CHECK-BIN-NODEBUG:      (memory $0 1 500)
+;; CHECK-BIN-NODEBUG:      (memory $m0 1 500)
 
-;; CHECK-BIN-NODEBUG:      (memory $1 1 800)
+;; CHECK-BIN-NODEBUG:      (memory $m1 1 800)
 
-;; CHECK-BIN-NODEBUG:      (memory $2 1 400)
+;; CHECK-BIN-NODEBUG:      (memory $m2 1 400)
 
 ;; CHECK-BIN-NODEBUG:      (data $0 (i32.const 0) "abcd")
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (memory.fill $1
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (memory.fill $m1
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 2)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (memory.copy $1 $2
+;; CHECK-BIN-NODEBUG:      (func $f1 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (memory.copy $m1 $m2
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 512)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 12)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (memory.init $0 $0
+;; CHECK-BIN-NODEBUG:      (func $f2 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (memory.init $m0 $0
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 45)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $1) (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (memory.grow $2
+;; CHECK-BIN-NODEBUG:      (func $f3 (type $1) (result i32)
+;; CHECK-BIN-NODEBUG-NEXT:  (memory.grow $m2
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 10)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (type $1) (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (memory.size $2)
+;; CHECK-BIN-NODEBUG:      (func $f4 (type $1) (result i32)
+;; CHECK-BIN-NODEBUG-NEXT:  (memory.size $m2)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $5 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $f5 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.load $0
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.load $m0
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 12)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.load $2
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.load $m2
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 12)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.load16_s $1
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.load16_s $m1
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 12)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.load16_s $1
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.load16_s $m1
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 12)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.load8_s $2
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.load8_s $m2
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 12)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.load8_s $2
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.load8_s $m2
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 12)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.load16_u $0
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.load16_u $m0
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 12)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.load16_u $0
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.load16_u $m0
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 12)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.load8_u $1
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.load8_u $m1
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 12)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.load8_u $1
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.load8_u $m1
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 12)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $6 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (i32.store $0
+;; CHECK-BIN-NODEBUG:      (func $f6 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (i32.store $m0
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 12)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 115)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i32.store $0
+;; CHECK-BIN-NODEBUG-NEXT:  (i32.store $m0
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 12)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 115)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i32.store16 $1
+;; CHECK-BIN-NODEBUG-NEXT:  (i32.store16 $m1
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 20)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 31353)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
@@ -480,11 +480,11 @@
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 20)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 31353)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i32.store8 $2
+;; CHECK-BIN-NODEBUG-NEXT:  (i32.store8 $m2
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 23)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 120)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i32.store8 $2
+;; CHECK-BIN-NODEBUG-NEXT:  (i32.store8 $m2
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 23)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 120)
 ;; CHECK-BIN-NODEBUG-NEXT:  )

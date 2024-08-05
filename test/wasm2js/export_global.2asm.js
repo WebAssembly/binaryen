@@ -11,7 +11,7 @@ function asmFunc(imports) {
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  var global0 = 655360;
- function $0() {
+ function f0() {
   return 42 | 0;
  }
  
@@ -24,7 +24,7 @@ function asmFunc(imports) {
     global0 = _global0;
    }
   }, 
-  "helloWorld": $0
+  "helloWorld": f0
  };
 }
 

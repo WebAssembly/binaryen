@@ -5,7 +5,7 @@
   (data (i32.const 10) "_________________")
 
   (export "test1" (func $test1))
-  (export "memory" (memory $0))
+  (export "memory" (memory 0))
 
   (func $test1
     ;; A safe store, should alter memory

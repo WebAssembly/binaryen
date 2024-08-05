@@ -5,11 +5,11 @@
  (type $3 (func (result i32)))
  (type $4 (func (param i32)))
  (import "env" "memory" (memory $mimport$0 256 256))
- (global $global$0 (mut i32) (i32.const 5243904))
- (global $global$1 i32 (i32.const 1024))
+ (global $g0 (mut i32) (i32.const 5243904))
+ (global $g1 i32 (i32.const 1024))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
- (export "__data_end" (global $global$1))
+ (export "__data_end" (global $g1))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
@@ -87,11 +87,11 @@
  )
  (func $stackSave (result i32)
   ;; code offset: 0x37
-  (global.get $global$0)
+  (global.get $g0)
  )
  (func $stackAlloc (param $0 i32) (result i32)
   ;; code offset: 0x46
-  (global.set $global$0
+  (global.set $g0
    ;; code offset: 0x44
    (local.tee $0
     ;; code offset: 0x43
@@ -99,7 +99,7 @@
      ;; code offset: 0x40
      (i32.sub
       ;; code offset: 0x3c
-      (global.get $global$0)
+      (global.get $g0)
       ;; code offset: 0x3e
       (local.get $0)
      )
@@ -113,7 +113,7 @@
  )
  (func $stackRestore (param $0 i32)
   ;; code offset: 0x4f
-  (global.set $global$0
+  (global.set $g0
    ;; code offset: 0x4d
    (local.get $0)
   )
@@ -137,11 +137,11 @@
  (type $3 (func (result i32)))
  (type $4 (func (param i32)))
  (import "env" "memory" (memory $mimport$0 256 256))
- (global $global$0 (mut i32) (i32.const 5243904))
- (global $global$1 i32 (i32.const 1024))
+ (global $g0 (mut i32) (i32.const 5243904))
+ (global $g1 i32 (i32.const 1024))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
- (export "__data_end" (global $global$1))
+ (export "__data_end" (global $g1))
  (export "stackSave" (func $stackSave))
  (export "stackAlloc" (func $stackAlloc))
  (export "stackRestore" (func $stackRestore))
@@ -219,11 +219,11 @@
  )
  (func $stackSave (result i32)
   ;; code offset: 0x37
-  (global.get $global$0)
+  (global.get $g0)
  )
  (func $stackAlloc (param $0 i32) (result i32)
   ;; code offset: 0x46
-  (global.set $global$0
+  (global.set $g0
    ;; code offset: 0x44
    (local.tee $0
     ;; code offset: 0x43
@@ -231,7 +231,7 @@
      ;; code offset: 0x40
      (i32.sub
       ;; code offset: 0x3c
-      (global.get $global$0)
+      (global.get $g0)
       ;; code offset: 0x3e
       (local.get $0)
      )
@@ -245,7 +245,7 @@
  )
  (func $stackRestore (param $0 i32)
   ;; code offset: 0x4f
-  (global.set $global$0
+  (global.set $g0
    ;; code offset: 0x4d
    (local.get $0)
   )

@@ -5,13 +5,13 @@
  (type $3 (func (param i32 i32) (result i32)))
  (import "env" "memory" (memory $mimport$0 256 256))
  (import "env" "__indirect_function_table" (table $timport$0 1 funcref))
- (global $global$0 (mut i32) (i32.const 5244064))
- (global $global$1 i32 (i32.const 1172))
+ (global $g0 (mut i32) (i32.const 5244064))
+ (global $g1 i32 (i32.const 1172))
  (data $0 (i32.const 1024) "\nvoid used(int x) {\n  x++;\n  x--;\n  return x;\n}\n\nvoid unused(int x) {\n  x >>= 1;\n  x <<= 1;\n  return x;\n}\n\nint main() {\n  return used(42);\n}\n\00")
  (data $1 (i32.const 1168) "\00\04\00\00")
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
- (export "__data_end" (global $global$1))
+ (export "__data_end" (global $g1))
  (func $__wasm_call_ctors
  )
  (func $used\28int\29 (param $0 i32) (result i32)
@@ -28,7 +28,7 @@
   ;; code offset: 0xe
   (local.set $1
    ;; code offset: 0x8
-   (global.get $global$0)
+   (global.get $g0)
   )
   ;; code offset: 0x12
   (local.set $2
@@ -141,7 +141,7 @@
   ;; code offset: 0x69
   (local.set $0
    ;; code offset: 0x63
-   (global.get $global$0)
+   (global.get $g0)
   )
   ;; code offset: 0x6d
   (local.set $1
@@ -159,7 +159,7 @@
    )
   )
   ;; code offset: 0x78
-  (global.set $global$0
+  (global.set $g0
    ;; code offset: 0x76
    (local.get $2)
   )
@@ -227,7 +227,7 @@
    )
   )
   ;; code offset: 0xba
-  (global.set $global$0
+  (global.set $g0
    ;; code offset: 0xb8
    (local.get $10)
   )
@@ -828,13 +828,13 @@ file_names[  1]:
  (type $3 (func (param i32 i32) (result i32)))
  (import "env" "memory" (memory $mimport$0 256 256))
  (import "env" "__indirect_function_table" (table $timport$0 1 funcref))
- (global $global$0 (mut i32) (i32.const 5244064))
- (global $global$1 i32 (i32.const 1172))
+ (global $g0 (mut i32) (i32.const 5244064))
+ (global $g1 i32 (i32.const 1172))
  (data $0 (i32.const 1024) "\nvoid used(int x) {\n  x++;\n  x--;\n  return x;\n}\n\nvoid unused(int x) {\n  x >>= 1;\n  x <<= 1;\n  return x;\n}\n\nint main() {\n  return used(42);\n}\n\00")
  (data $1 (i32.const 1168) "\00\04\00\00")
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
- (export "__data_end" (global $global$1))
+ (export "__data_end" (global $g1))
  (func $__wasm_call_ctors
  )
  (func $used\28int\29 (param $0 i32) (result i32)
@@ -851,7 +851,7 @@ file_names[  1]:
   ;; code offset: 0x1c
   (local.set $1
    ;; code offset: 0x1a
-   (global.get $global$0)
+   (global.get $g0)
   )
   ;; code offset: 0x20
   (local.set $2
@@ -964,7 +964,7 @@ file_names[  1]:
   ;; code offset: 0x87
   (local.set $0
    ;; code offset: 0x85
-   (global.get $global$0)
+   (global.get $g0)
   )
   ;; code offset: 0x8b
   (local.set $1
@@ -982,7 +982,7 @@ file_names[  1]:
    )
   )
   ;; code offset: 0x96
-  (global.set $global$0
+  (global.set $g0
    ;; code offset: 0x94
    (local.get $2)
   )
@@ -1050,7 +1050,7 @@ file_names[  1]:
    )
   )
   ;; code offset: 0xcd
-  (global.set $global$0
+  (global.set $g0
    ;; code offset: 0xcb
    (local.get $10)
   )

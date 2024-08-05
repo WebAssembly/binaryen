@@ -2,7 +2,7 @@
  (type $0 (func (param i32)))
  (type $1 (func))
  (tag $tag$0 (param i32))
- (func $0
+ (func $f0
   (block $label$2
    (try $label$3
     (do

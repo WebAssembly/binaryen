@@ -10,49 +10,49 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $0(x, y) {
+ function f0(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
   return x == y | 0;
  }
  
- function $1(x, y) {
+ function f1(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
   return x != y | 0;
  }
  
- function $2(x, y) {
+ function f2(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
   return x < y | 0;
  }
  
- function $3(x, y) {
+ function f3(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
   return x <= y | 0;
  }
  
- function $4(x, y) {
+ function f4(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
   return x > y | 0;
  }
  
- function $5(x, y) {
+ function f5(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
   return x >= y | 0;
  }
  
  return {
-  "eq": $0, 
-  "ne": $1, 
-  "lt": $2, 
-  "le": $3, 
-  "gt": $4, 
-  "ge": $5
+  "eq": f0, 
+  "ne": f1, 
+  "lt": f2, 
+  "le": f3, 
+  "gt": f4, 
+  "ge": f5
  };
 }
 

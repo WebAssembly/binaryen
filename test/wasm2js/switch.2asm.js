@@ -14,7 +14,7 @@ function asmFunc(imports) {
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(i) {
+ function f0(i) {
   i = i | 0;
   var j = 0;
   j = 100;
@@ -46,7 +46,7 @@ function asmFunc(imports) {
   return j | 0;
  }
  
- function $1(i, i$hi) {
+ function f1(i, i$hi) {
   i = i | 0;
   i$hi = i$hi | 0;
   var i64toi32_i32$5 = 0, i64toi32_i32$2 = 0, $7 = 0, $7$hi = 0, j = 0, j$hi = 0;
@@ -92,7 +92,7 @@ function asmFunc(imports) {
   return i64toi32_i32$2 | 0;
  }
  
- function $2(i) {
+ function f2(i) {
   i = i | 0;
   var $5 = 0, $6 = 0, $7 = 0, $8 = 0, $9 = 0;
   $2 : {
@@ -124,19 +124,19 @@ function asmFunc(imports) {
   return $8 | 0;
  }
  
- function $3() {
+ function f3() {
   return 1 | 0;
  }
  
- function legalstub$1($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f1($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -153,9 +153,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $1(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f1(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -170,14 +170,14 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
  return {
-  "stmt": $0, 
-  "expr": legalstub$1, 
-  "arg": $2, 
-  "corner": $3
+  "stmt": f0, 
+  "expr": legalstub$f1, 
+  "arg": f2, 
+  "corner": f3
  };
 }
 

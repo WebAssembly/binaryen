@@ -65,9 +65,9 @@
 
 ;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $timport$0 9 9 funcref))
 
-;; CHECK-BIN-NODEBUG:      (export "call_indirect" (func $0))
+;; CHECK-BIN-NODEBUG:      (export "call_indirect" (func $f0))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (call_indirect $timport$0 (type $1)
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 10)

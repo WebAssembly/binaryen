@@ -32,7 +32,7 @@
 
  ;; CHECK-BIN:      (type $2 (func (param v128) (result v128)))
 
- ;; CHECK-BIN:      (memory $0 1 1)
+ ;; CHECK-BIN:      (memory $m0 1 1)
 
  ;; CHECK-BIN:      (func $i8x16.relaxed_swizzle (type $1) (param $0 v128) (param $1 v128) (result v128)
  ;; CHECK-BIN-NEXT:  (i8x16.relaxed_swizzle
@@ -429,40 +429,40 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $2 (func (param v128) (result v128)))
 
-;; CHECK-BIN-NODEBUG:      (memory $0 1 1)
+;; CHECK-BIN-NODEBUG:      (memory $m0 1 1)
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $1) (param $0 v128) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $1) (param $0 v128) (param $1 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i8x16.relaxed_swizzle
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $2) (param $0 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f1 (type $2) (param $0 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i32x4.relaxed_trunc_f32x4_s
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $2) (param $0 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f2 (type $2) (param $0 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i32x4.relaxed_trunc_f32x4_u
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $2) (param $0 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f3 (type $2) (param $0 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i32x4.relaxed_trunc_f64x2_s_zero
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (type $2) (param $0 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f4 (type $2) (param $0 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i32x4.relaxed_trunc_f64x2_u_zero
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $5 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f5 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (f32x4.relaxed_fma
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
@@ -470,7 +470,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $6 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f6 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (f32x4.relaxed_fms
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
@@ -478,7 +478,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $7 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f7 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (f64x2.relaxed_fma
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
@@ -486,7 +486,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $8 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f8 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (f64x2.relaxed_fms
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
@@ -494,7 +494,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $9 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f9 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i8x16.laneselect
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
@@ -502,7 +502,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $10 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f10 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i16x8.laneselect
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
@@ -510,7 +510,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $11 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f11 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i32x4.laneselect
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
@@ -518,7 +518,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $12 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f12 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i64x2.laneselect
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
@@ -526,49 +526,49 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $13 (type $1) (param $0 v128) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f13 (type $1) (param $0 v128) (param $1 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (f32x4.relaxed_min
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $14 (type $1) (param $0 v128) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f14 (type $1) (param $0 v128) (param $1 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (f32x4.relaxed_max
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $15 (type $1) (param $0 v128) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f15 (type $1) (param $0 v128) (param $1 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (f64x2.relaxed_min
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $16 (type $1) (param $0 v128) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f16 (type $1) (param $0 v128) (param $1 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (f64x2.relaxed_max
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $17 (type $1) (param $0 v128) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f17 (type $1) (param $0 v128) (param $1 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i16x8.relaxed_q15mulr_s
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $18 (type $1) (param $0 v128) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f18 (type $1) (param $0 v128) (param $1 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i16x8.dot_i8x16_i7x16_s
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $19 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+;; CHECK-BIN-NODEBUG:      (func $f19 (type $0) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i32x4.dot_i8x16_i7x16_add_s
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)

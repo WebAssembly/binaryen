@@ -3,8 +3,8 @@
  (type $2 (func (param i32 i32 f32)))
  (type $3 (func))
  (import "env" "invoke_vif" (func $invoke_vif (param i32 i32 f32)))
- (memory $0 256 256)
- (table $0 7 7 funcref)
+ (memory $m0 256 256)
+ (table $t0 7 7 funcref)
  (elem $0 (i32.const 1) $exc $other_safe $other_unsafe $deep_safe $deep_unsafe)
  (func $exc
   (call $other_safe
@@ -73,8 +73,8 @@
  (type $3 (func (param i32 f32)))
  (import "env" "glob" (global $glob i32))
  (import "env" "invoke_vif" (func $invoke_vif (param i32 i32 f32)))
- (memory $0 256 256)
- (table $0 7 7 funcref)
+ (memory $m0 256 256)
+ (table $t0 7 7 funcref)
  (elem $0 (global.get $glob) $other_safe)
  (func $exc
   (call $invoke_vif
@@ -93,8 +93,8 @@
  (type $2 (func (param i32 f32)))
  (import "env" "glob" (global $glob i32))
  (import "env" "invoke_vif" (func $invoke_vif (param i32 i32 f32)))
- (memory $0 256 256)
- (table $0 7 7 funcref)
+ (memory $m0 256 256)
+ (table $t0 7 7 funcref)
  (elem $0 (i32.const 0) $other_safe)
  (func $exc
   (call $invoke_vif

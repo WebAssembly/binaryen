@@ -1024,376 +1024,376 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $2 (func (param i32 v128) (result v128)))
 
-;; CHECK-BIN-NODEBUG:      (memory $0 1 1)
+;; CHECK-BIN-NODEBUG:      (memory $m0 1 1)
 
-;; CHECK-BIN-NODEBUG:      (memory $1 1 1)
+;; CHECK-BIN-NODEBUG:      (memory $m1 1 1)
 
-;; CHECK-BIN-NODEBUG:      (memory $2 1 1)
+;; CHECK-BIN-NODEBUG:      (memory $m2 1 1)
 
-;; CHECK-BIN-NODEBUG:      (memory $3 1 1)
+;; CHECK-BIN-NODEBUG:      (memory $m3 1 1)
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load $0
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load $m0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load $1
+;; CHECK-BIN-NODEBUG:      (func $f1 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load $m1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load8x8_s $2
+;; CHECK-BIN-NODEBUG:      (func $f2 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load8x8_s $m2
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load8x8_s $1
+;; CHECK-BIN-NODEBUG:      (func $f3 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load8x8_s $m1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load8x8_u $3
+;; CHECK-BIN-NODEBUG:      (func $f4 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load8x8_u $m3
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $5 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load8x8_u $3
+;; CHECK-BIN-NODEBUG:      (func $f5 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load8x8_u $m3
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $6 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load16x4_s $0
+;; CHECK-BIN-NODEBUG:      (func $f6 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load16x4_s $m0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $7 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load16x4_s $1
+;; CHECK-BIN-NODEBUG:      (func $f7 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load16x4_s $m1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $8 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load16x4_u $0
+;; CHECK-BIN-NODEBUG:      (func $f8 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load16x4_u $m0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $9 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load16x4_u $0
+;; CHECK-BIN-NODEBUG:      (func $f9 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load16x4_u $m0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $10 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32x2_s $2
+;; CHECK-BIN-NODEBUG:      (func $f10 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32x2_s $m2
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $11 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32x2_s $1
+;; CHECK-BIN-NODEBUG:      (func $f11 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32x2_s $m1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $12 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32x2_u $1
+;; CHECK-BIN-NODEBUG:      (func $f12 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32x2_u $m1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $13 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32x2_u $2
+;; CHECK-BIN-NODEBUG:      (func $f13 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32x2_u $m2
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $14 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load8_splat $1
+;; CHECK-BIN-NODEBUG:      (func $f14 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load8_splat $m1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $15 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load8_splat $1
+;; CHECK-BIN-NODEBUG:      (func $f15 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load8_splat $m1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $16 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load16_splat $0
+;; CHECK-BIN-NODEBUG:      (func $f16 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load16_splat $m0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $17 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load16_splat $0
+;; CHECK-BIN-NODEBUG:      (func $f17 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load16_splat $m0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $18 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32_splat $1
+;; CHECK-BIN-NODEBUG:      (func $f18 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32_splat $m1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $19 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32_splat $3
+;; CHECK-BIN-NODEBUG:      (func $f19 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32_splat $m3
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $20 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_splat $1
+;; CHECK-BIN-NODEBUG:      (func $f20 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_splat $m1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $21 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_splat $0
+;; CHECK-BIN-NODEBUG:      (func $f21 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_splat $m0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $22 (type $1) (param $0 i32) (param $1 v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.store $0
-;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
-;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT: )
-
-;; CHECK-BIN-NODEBUG:      (func $23 (type $1) (param $0 i32) (param $1 v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.store $1
+;; CHECK-BIN-NODEBUG:      (func $f22 (type $1) (param $0 i32) (param $1 v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.store $m0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $24 (type $2) (param $0 i32) (param $1 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load8_lane $0 0
+;; CHECK-BIN-NODEBUG:      (func $f23 (type $1) (param $0 i32) (param $1 v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.store $m1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $25 (type $2) (param $0 i32) (param $1 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load8_lane $1 0
+;; CHECK-BIN-NODEBUG:      (func $f24 (type $2) (param $0 i32) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load8_lane $m0 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $26 (type $2) (param $0 i32) (param $1 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load16_lane $1 0
+;; CHECK-BIN-NODEBUG:      (func $f25 (type $2) (param $0 i32) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load8_lane $m1 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $27 (type $2) (param $0 i32) (param $1 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load16_lane $3 0
+;; CHECK-BIN-NODEBUG:      (func $f26 (type $2) (param $0 i32) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load16_lane $m1 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $28 (type $2) (param $0 i32) (param $1 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32_lane $0 0
+;; CHECK-BIN-NODEBUG:      (func $f27 (type $2) (param $0 i32) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load16_lane $m3 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $29 (type $2) (param $0 i32) (param $1 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32_lane $1 0
+;; CHECK-BIN-NODEBUG:      (func $f28 (type $2) (param $0 i32) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32_lane $m0 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $30 (type $2) (param $0 i32) (param $1 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_lane $3 0
+;; CHECK-BIN-NODEBUG:      (func $f29 (type $2) (param $0 i32) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32_lane $m1 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $31 (type $2) (param $0 i32) (param $1 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_lane $1 0
+;; CHECK-BIN-NODEBUG:      (func $f30 (type $2) (param $0 i32) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_lane $m3 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $32 (type $2) (param $0 i32) (param $1 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_lane $0 align=1 0
+;; CHECK-BIN-NODEBUG:      (func $f31 (type $2) (param $0 i32) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_lane $m1 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $33 (type $2) (param $0 i32) (param $1 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_lane $1 align=1 0
+;; CHECK-BIN-NODEBUG:      (func $f32 (type $2) (param $0 i32) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_lane $m0 align=1 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $34 (type $2) (param $0 i32) (param $1 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_lane $2 offset=32 0
+;; CHECK-BIN-NODEBUG:      (func $f33 (type $2) (param $0 i32) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_lane $m1 align=1 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $35 (type $2) (param $0 i32) (param $1 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_lane $1 offset=32 0
+;; CHECK-BIN-NODEBUG:      (func $f34 (type $2) (param $0 i32) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_lane $m2 offset=32 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $36 (type $2) (param $0 i32) (param $1 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_lane $0 offset=32 align=1 0
+;; CHECK-BIN-NODEBUG:      (func $f35 (type $2) (param $0 i32) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_lane $m1 offset=32 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $37 (type $2) (param $0 i32) (param $1 v128) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_lane $3 offset=32 align=1 0
+;; CHECK-BIN-NODEBUG:      (func $f36 (type $2) (param $0 i32) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_lane $m0 offset=32 align=1 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $38 (type $1) (param $0 i32) (param $1 v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.store8_lane $0 0
+;; CHECK-BIN-NODEBUG:      (func $f37 (type $2) (param $0 i32) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_lane $m3 offset=32 align=1 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $39 (type $1) (param $0 i32) (param $1 v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.store8_lane $3 0
+;; CHECK-BIN-NODEBUG:      (func $f38 (type $1) (param $0 i32) (param $1 v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.store8_lane $m0 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $40 (type $1) (param $0 i32) (param $1 v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.store16_lane $0 0
+;; CHECK-BIN-NODEBUG:      (func $f39 (type $1) (param $0 i32) (param $1 v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.store8_lane $m3 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $41 (type $1) (param $0 i32) (param $1 v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.store16_lane $1 0
+;; CHECK-BIN-NODEBUG:      (func $f40 (type $1) (param $0 i32) (param $1 v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.store16_lane $m0 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $42 (type $1) (param $0 i32) (param $1 v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.store32_lane $1 0
+;; CHECK-BIN-NODEBUG:      (func $f41 (type $1) (param $0 i32) (param $1 v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.store16_lane $m1 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $43 (type $1) (param $0 i32) (param $1 v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.store32_lane $2 0
+;; CHECK-BIN-NODEBUG:      (func $f42 (type $1) (param $0 i32) (param $1 v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.store32_lane $m1 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $44 (type $1) (param $0 i32) (param $1 v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.store64_lane $2 0
+;; CHECK-BIN-NODEBUG:      (func $f43 (type $1) (param $0 i32) (param $1 v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.store32_lane $m2 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $45 (type $1) (param $0 i32) (param $1 v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.store64_lane $1 0
+;; CHECK-BIN-NODEBUG:      (func $f44 (type $1) (param $0 i32) (param $1 v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.store64_lane $m2 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $46 (type $1) (param $0 i32) (param $1 v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.store64_lane $1 align=1 0
+;; CHECK-BIN-NODEBUG:      (func $f45 (type $1) (param $0 i32) (param $1 v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.store64_lane $m1 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $47 (type $1) (param $0 i32) (param $1 v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.store64_lane $0 align=1 0
+;; CHECK-BIN-NODEBUG:      (func $f46 (type $1) (param $0 i32) (param $1 v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.store64_lane $m1 align=1 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $48 (type $1) (param $0 i32) (param $1 v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.store64_lane $3 offset=32 0
+;; CHECK-BIN-NODEBUG:      (func $f47 (type $1) (param $0 i32) (param $1 v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.store64_lane $m0 align=1 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $49 (type $1) (param $0 i32) (param $1 v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.store64_lane $0 offset=32 0
+;; CHECK-BIN-NODEBUG:      (func $f48 (type $1) (param $0 i32) (param $1 v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.store64_lane $m3 offset=32 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $50 (type $1) (param $0 i32) (param $1 v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.store64_lane $1 offset=32 align=1 0
+;; CHECK-BIN-NODEBUG:      (func $f49 (type $1) (param $0 i32) (param $1 v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.store64_lane $m0 offset=32 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $51 (type $1) (param $0 i32) (param $1 v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.store64_lane $3 offset=32 align=1 0
+;; CHECK-BIN-NODEBUG:      (func $f50 (type $1) (param $0 i32) (param $1 v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.store64_lane $m1 offset=32 align=1 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $52 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32_zero $0
+;; CHECK-BIN-NODEBUG:      (func $f51 (type $1) (param $0 i32) (param $1 v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.store64_lane $m3 offset=32 align=1 0
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $f52 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32_zero $m0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $53 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32_zero $1
+;; CHECK-BIN-NODEBUG:      (func $f53 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load32_zero $m1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $54 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_zero $1
+;; CHECK-BIN-NODEBUG:      (func $f54 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_zero $m1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $55 (type $0) (param $0 i32) (result v128)
-;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_zero $2
+;; CHECK-BIN-NODEBUG:      (func $f55 (type $0) (param $0 i32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (v128.load64_zero $m2
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )

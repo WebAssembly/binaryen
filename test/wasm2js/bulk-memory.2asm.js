@@ -47,16 +47,16 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $0($0_1, $1_1, $2) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
+ function f0($0, $1, $2) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
   $2 = $2 | 0;
-  wasm2js_memory_fill($0_1, $1_1, $2);
+  wasm2js_memory_fill($0, $1, $2);
  }
  
- function $1($0_1) {
-  $0_1 = $0_1 | 0;
-  return HEAPU8[$0_1 >> 0] | 0 | 0;
+ function f1($0) {
+  $0 = $0 | 0;
+  return HEAPU8[$0 >> 0] | 0 | 0;
  }
  
  bufferView = HEAPU8;
@@ -87,8 +87,8 @@ function asmFunc(imports) {
  }
  
  return {
-  "fill": $0, 
-  "load8_u": $1
+  "fill": f0, 
+  "load8_u": f1
  };
 }
 
@@ -147,16 +147,16 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $0($0_1, $1_1, $2) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
+ function f0($0, $1, $2) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
   $2 = $2 | 0;
-  wasm2js_memory_copy($0_1, $1_1, $2);
+  wasm2js_memory_copy($0, $1, $2);
  }
  
- function $1($0_1) {
-  $0_1 = $0_1 | 0;
-  return HEAPU8[$0_1 >> 0] | 0 | 0;
+ function f1($0) {
+  $0 = $0 | 0;
+  return HEAPU8[$0 >> 0] | 0 | 0;
  }
  
  bufferView = HEAPU8;
@@ -166,8 +166,8 @@ function asmFunc(imports) {
  }
  
  return {
-  "copy": $0, 
-  "load8_u": $1
+  "copy": f0, 
+  "load8_u": f1
  };
 }
 
@@ -225,16 +225,16 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $0($0_1, $1_1, $2) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
+ function f0($0, $1, $2) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
   $2 = $2 | 0;
-  wasm2js_memory_init(0, $0_1, $1_1, $2);
+  wasm2js_memory_init(0, $0, $1, $2);
  }
  
- function $1($0_1) {
-  $0_1 = $0_1 | 0;
-  return HEAPU8[$0_1 >> 0] | 0 | 0;
+ function f1($0) {
+  $0 = $0 | 0;
+  return HEAPU8[$0 >> 0] | 0 | 0;
  }
  
  bufferView = HEAPU8;
@@ -265,8 +265,8 @@ function asmFunc(imports) {
  }
  
  return {
-  "init": $0, 
-  "load8_u": $1
+  "init": f0, 
+  "load8_u": f1
  };
 }
 
@@ -332,19 +332,19 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $0() {
+ function f0() {
   wasm2js_data_drop(0);
  }
  
- function $1() {
+ function f1() {
   wasm2js_memory_init(0, 0, 0, 0);
  }
  
- function $2() {
+ function f2() {
   wasm2js_data_drop(1);
  }
  
- function $3() {
+ function f3() {
   wasm2js_memory_init(1, 0, 0, 0);
  }
  
@@ -377,10 +377,10 @@ function asmFunc(imports) {
  }
  
  return {
-  "drop_passive": $0, 
-  "init_passive": $1, 
-  "drop_active": $2, 
-  "init_active": $3
+  "drop_passive": f0, 
+  "init_passive": f1, 
+  "drop_active": f2, 
+  "init_active": f3
  };
 }
 

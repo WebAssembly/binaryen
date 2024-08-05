@@ -28,319 +28,319 @@ function asmFunc(imports) {
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0() {
+ function f0() {
   return 2143289344;
  }
  
- function $2() {
+ function f2() {
   return -4194304;
  }
  
- function $4() {
+ function f4() {
   return 2141192192;
  }
  
- function $5() {
+ function f5() {
   return -1;
  }
  
- function $6() {
+ function f6() {
   return 2139169605;
  }
  
- function $7() {
+ function f7() {
   return 2142257232;
  }
  
- function $8() {
+ function f8() {
   return -5587746;
  }
  
- function $9() {
+ function f9() {
   return 2139095040;
  }
  
- function $11() {
+ function f11() {
   return -8388608;
  }
  
- function $12() {
+ function f12() {
   return 0;
  }
  
- function $14() {
+ function f14() {
   return -2147483648;
  }
  
- function $15() {
+ function f15() {
   return 1086918619;
  }
  
- function $16() {
+ function f16() {
   return 1;
  }
  
- function $17() {
+ function f17() {
   return 8388608;
  }
  
- function $18() {
+ function f18() {
   return 2139095039;
  }
  
- function $19() {
+ function f19() {
   return 8388607;
  }
  
- function $20() {
+ function f20() {
   return 1149239296;
  }
  
- function $29() {
+ function f29() {
   return 1343554297;
  }
  
- function legalstub$30() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f30() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(NaN);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
- function legalstub$32() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f32() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(-NaN);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
- function legalstub$34() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f34() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(NaN);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
- function legalstub$35() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f35() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(-NaN);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
- function legalstub$36() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f36() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(NaN);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
- function legalstub$37() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f37() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(NaN);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
- function legalstub$38() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f38() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(-NaN);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
- function legalstub$39() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f39() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(Infinity);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
- function legalstub$41() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f41() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(-Infinity);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
- function legalstub$42() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f42() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(0.0);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
- function legalstub$44() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f44() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(-0.0);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
- function legalstub$45() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f45() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(6.283185307179586);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
- function legalstub$46() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f46() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(5.0e-324);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
- function legalstub$47() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f47() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(2.2250738585072014e-308);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
- function legalstub$48() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f48() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(2.225073858507201e-308);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
- function legalstub$49() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f49() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(1797693134862315708145274.0e284);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
- function legalstub$50() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f50() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(1267650600228229401496703.0e6);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
- function legalstub$59() {
-  var $0_1 = 0, $1 = 0;
+ function legalstub$f59() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(1.e+100);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
-  i64toi32_i32$HIGH_BITS = $0_1;
+  i64toi32_i32$HIGH_BITS = $0;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $1;
  }
  
  return {
-  "f32_nan": $0, 
-  "f32_positive_nan": $0, 
-  "f32_negative_nan": $2, 
-  "f32_plain_nan": $0, 
-  "f32_informally_known_as_plain_snan": $4, 
-  "f32_all_ones_nan": $5, 
-  "f32_misc_nan": $6, 
-  "f32_misc_positive_nan": $7, 
-  "f32_misc_negative_nan": $8, 
-  "f32_infinity": $9, 
-  "f32_positive_infinity": $9, 
-  "f32_negative_infinity": $11, 
-  "f32_zero": $12, 
-  "f32_positive_zero": $12, 
-  "f32_negative_zero": $14, 
-  "f32_misc": $15, 
-  "f32_min_positive": $16, 
-  "f32_min_normal": $17, 
-  "f32_max_finite": $18, 
-  "f32_max_subnormal": $19, 
-  "f32_trailing_dot": $20, 
-  "f32_dec_zero": $12, 
-  "f32_dec_positive_zero": $12, 
-  "f32_dec_negative_zero": $14, 
-  "f32_dec_misc": $15, 
-  "f32_dec_min_positive": $16, 
-  "f32_dec_min_normal": $17, 
-  "f32_dec_max_subnormal": $19, 
-  "f32_dec_max_finite": $18, 
-  "f32_dec_trailing_dot": $29, 
-  "f64_nan": legalstub$30, 
-  "f64_positive_nan": legalstub$30, 
-  "f64_negative_nan": legalstub$32, 
-  "f64_plain_nan": legalstub$30, 
-  "f64_informally_known_as_plain_snan": legalstub$34, 
-  "f64_all_ones_nan": legalstub$35, 
-  "f64_misc_nan": legalstub$36, 
-  "f64_misc_positive_nan": legalstub$37, 
-  "f64_misc_negative_nan": legalstub$38, 
-  "f64_infinity": legalstub$39, 
-  "f64_positive_infinity": legalstub$39, 
-  "f64_negative_infinity": legalstub$41, 
-  "f64_zero": legalstub$42, 
-  "f64_positive_zero": legalstub$42, 
-  "f64_negative_zero": legalstub$44, 
-  "f64_misc": legalstub$45, 
-  "f64_min_positive": legalstub$46, 
-  "f64_min_normal": legalstub$47, 
-  "f64_max_subnormal": legalstub$48, 
-  "f64_max_finite": legalstub$49, 
-  "f64_trailing_dot": legalstub$50, 
-  "f64_dec_zero": legalstub$42, 
-  "f64_dec_positive_zero": legalstub$42, 
-  "f64_dec_negative_zero": legalstub$44, 
-  "f64_dec_misc": legalstub$45, 
-  "f64_dec_min_positive": legalstub$46, 
-  "f64_dec_min_normal": legalstub$47, 
-  "f64_dec_max_subnormal": legalstub$48, 
-  "f64_dec_max_finite": legalstub$49, 
-  "f64_dec_trailing_dot": legalstub$59
+  "f32_nan": f0, 
+  "f32_positive_nan": f0, 
+  "f32_negative_nan": f2, 
+  "f32_plain_nan": f0, 
+  "f32_informally_known_as_plain_snan": f4, 
+  "f32_all_ones_nan": f5, 
+  "f32_misc_nan": f6, 
+  "f32_misc_positive_nan": f7, 
+  "f32_misc_negative_nan": f8, 
+  "f32_infinity": f9, 
+  "f32_positive_infinity": f9, 
+  "f32_negative_infinity": f11, 
+  "f32_zero": f12, 
+  "f32_positive_zero": f12, 
+  "f32_negative_zero": f14, 
+  "f32_misc": f15, 
+  "f32_min_positive": f16, 
+  "f32_min_normal": f17, 
+  "f32_max_finite": f18, 
+  "f32_max_subnormal": f19, 
+  "f32_trailing_dot": f20, 
+  "f32_dec_zero": f12, 
+  "f32_dec_positive_zero": f12, 
+  "f32_dec_negative_zero": f14, 
+  "f32_dec_misc": f15, 
+  "f32_dec_min_positive": f16, 
+  "f32_dec_min_normal": f17, 
+  "f32_dec_max_subnormal": f19, 
+  "f32_dec_max_finite": f18, 
+  "f32_dec_trailing_dot": f29, 
+  "f64_nan": legalstub$f30, 
+  "f64_positive_nan": legalstub$f30, 
+  "f64_negative_nan": legalstub$f32, 
+  "f64_plain_nan": legalstub$f30, 
+  "f64_informally_known_as_plain_snan": legalstub$f34, 
+  "f64_all_ones_nan": legalstub$f35, 
+  "f64_misc_nan": legalstub$f36, 
+  "f64_misc_positive_nan": legalstub$f37, 
+  "f64_misc_negative_nan": legalstub$f38, 
+  "f64_infinity": legalstub$f39, 
+  "f64_positive_infinity": legalstub$f39, 
+  "f64_negative_infinity": legalstub$f41, 
+  "f64_zero": legalstub$f42, 
+  "f64_positive_zero": legalstub$f42, 
+  "f64_negative_zero": legalstub$f44, 
+  "f64_misc": legalstub$f45, 
+  "f64_min_positive": legalstub$f46, 
+  "f64_min_normal": legalstub$f47, 
+  "f64_max_subnormal": legalstub$f48, 
+  "f64_max_finite": legalstub$f49, 
+  "f64_trailing_dot": legalstub$f50, 
+  "f64_dec_zero": legalstub$f42, 
+  "f64_dec_positive_zero": legalstub$f42, 
+  "f64_dec_negative_zero": legalstub$f44, 
+  "f64_dec_misc": legalstub$f45, 
+  "f64_dec_min_positive": legalstub$f46, 
+  "f64_dec_min_normal": legalstub$f47, 
+  "f64_dec_max_subnormal": legalstub$f48, 
+  "f64_dec_max_finite": legalstub$f49, 
+  "f64_dec_trailing_dot": legalstub$f59
  };
 }
 
