@@ -29,6 +29,7 @@
 #include "ir/type-updating.h"
 #include "ir/utils.h"
 #include "pass.h"
+#include "support/permutations.h"
 #include "wasm-builder.h"
 #include "wasm-type-ordering.h"
 #include "wasm-type.h"
@@ -259,11 +260,19 @@ struct GlobalTypeOptimization : public Pass {
         // field that is in the super.
         Index numSuperFields = 0;
         if (super) {
-          // We have visited the super before. Note that index info for the
-          // super may be empty, if we had nothing to process there (e.g. if it
-          // has no fields at all), but that changes nothing in the computation
-          // below.
-          auto& superIndexes = indexesAfterRemovals[*super];
+          // We have visited the super before. Get the information about its
+          // fields.
+          std::vector<Index> superIndexes;
+          auto iter = indexesAfterRemovals.find(*super);
+          if (iter != indexesAfterRemovals.end()) {
+            superIndexes = iter->second;
+          } else {
+            // We did not store any information about the parent, because we
+            // found nothing to optimize there. That means it is not removing or
+            // reordering anything, so its new indexes are trivial.
+            superIndexes = makeIdentity(super->getStruct().fields.size());
+          }
+
           numSuperFields = superIndexes.size();
 
           // Fields we keep but the super removed will be handled at the end.

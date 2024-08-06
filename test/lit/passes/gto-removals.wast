@@ -1306,3 +1306,49 @@
     (drop (struct.get $B 1 (local.get $x)))
   )
 )
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct (field i32))))
+    (type $A (sub (struct (field i32))))
+    ;; CHECK:       (type $B (sub $A (struct (field i32))))
+    (type $B (sub $A (struct (field i32) (field i32))))
+  )
+
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $x (ref null $A))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $x (ref null $A))
+    ;; We cannot remove anything from $A, but we can from $B. That $A is
+    ;; unchanged should not confuse us.
+    (drop
+      (struct.get $A 0
+        (local.get $x)
+      )
+    )
+    ;; $B reads field 0, but not its new field 1.
+    (drop
+      (struct.get $B 0
+        (ref.cast (ref $B)
+          (local.get $x)
+        )
+      )
+    )
+  )
+)
