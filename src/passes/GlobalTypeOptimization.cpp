@@ -214,7 +214,14 @@ struct GlobalTypeOptimization : public Pass {
           removableIndexes.insert(i);
         }
       }
-      if (!removableIndexes.empty()) {
+
+      // We need to compute the new set of indexes if we are removing fields, or
+      // if our parent removed fields. In the latter case, our parent may have
+      // reordered fields even if we ourselves are not removing anything, and we
+      // must update to match the parent's order.
+      auto super = type.getDeclaredSuperType();
+      auto superHasUpdates = super && indexesAfterRemovals.count(*super);
+      if (!removableIndexes.empty() || superHasUpdates) {
         // We are removing fields. Reorder them to allow that, as in the general
         // case we can only remove fields from the end, so that if our subtypes
         // still need the fields they can append them. For example:
@@ -251,7 +258,7 @@ struct GlobalTypeOptimization : public Pass {
         // That is, we can only append fields: we cannot reorder or remove any
         // field that is in the super.
         Index numSuperFields = 0;
-        if (auto super = type.getSuperType()) {
+        if (super) {
           // We must have visited the super before.
           assert(indexesAfterRemovals.count(*super));
           auto& superIndexes = indexesAfterRemovals[*super];
@@ -335,20 +342,25 @@ struct GlobalTypeOptimization : public Pass {
           }
         }
 
-        // Remove fields where we can.
+        // Remove/reorder fields where we can.
         auto remIter = parent.indexesAfterRemovals.find(oldStructType);
         if (remIter != parent.indexesAfterRemovals.end()) {
           auto& indexesAfterRemoval = remIter->second;
           Index removed = 0;
+          auto copy = newFields;
           for (Index i = 0; i < newFields.size(); i++) {
             auto newIndex = indexesAfterRemoval[i];
             if (newIndex != RemovedField) {
-              newFields[newIndex] = newFields[i];
+              newFields[newIndex] = copy[i];
             } else {
               removed++;
             }
           }
           newFields.resize(newFields.size() - removed);
+
+//std::cout << oldStructType << " => ";
+//for (auto& x : newFields) std::cout << x.type << ' ';
+//std::cout << '\n';
 
           // Update field names as well. The Type Rewriter cannot do this for
           // us, as it does not know which old fields map to which new ones (it
