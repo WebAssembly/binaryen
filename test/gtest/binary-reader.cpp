@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
-#include "gtest/gtest.h"
 #include "parser/wat-parser.h"
 #include "print-test.h"
 #include "wasm-binary.h"
+#include "gtest/gtest.h"
 
 using namespace wasm;
 
