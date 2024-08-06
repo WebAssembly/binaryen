@@ -548,13 +548,19 @@ struct PrintExpressionContents
       if (curr->bytes == 1) {
         o << '8';
       } else if (curr->bytes == 2) {
-        o << "16";
+        if (curr->type == Type::f32) {
+          o << "_f16";
+        } else {
+          o << "16";
+        }
       } else if (curr->bytes == 4) {
         o << "32";
       } else {
         abort();
       }
-      o << (curr->signed_ ? "_s" : "_u");
+      if (curr->type != Type::f32) {
+        o << (curr->signed_ ? "_s" : "_u");
+      }
     }
     restoreNormalColor(o);
     printMemoryName(curr->memory, o, wasm);
@@ -575,7 +581,11 @@ struct PrintExpressionContents
       if (curr->bytes == 1) {
         o << '8';
       } else if (curr->bytes == 2) {
-        o << "16";
+        if (curr->valueType == Type::f32) {
+          o << "_f16";
+        } else {
+          o << "16";
+        }
       } else if (curr->bytes == 4) {
         o << "32";
       } else {

@@ -93,12 +93,7 @@ struct HeapTypeInfo {
   // (i.e. contains only this type).
   RecGroupInfo* recGroup = nullptr;
   size_t recGroupIndex = 0;
-  enum Kind {
-    SignatureKind,
-    ContinuationKind,
-    StructKind,
-    ArrayKind,
-  } kind;
+  HeapTypeKind kind;
   union {
     Signature signature;
     Continuation continuation;
@@ -106,19 +101,20 @@ struct HeapTypeInfo {
     Array array;
   };
 
-  HeapTypeInfo(Signature sig) : kind(SignatureKind), signature(sig) {}
+  HeapTypeInfo(Signature sig) : kind(HeapTypeKind::Func), signature(sig) {}
   HeapTypeInfo(Continuation continuation)
-    : kind(ContinuationKind), continuation(continuation) {}
-  HeapTypeInfo(const Struct& struct_) : kind(StructKind), struct_(struct_) {}
+    : kind(HeapTypeKind::Cont), continuation(continuation) {}
+  HeapTypeInfo(const Struct& struct_)
+    : kind(HeapTypeKind::Struct), struct_(struct_) {}
   HeapTypeInfo(Struct&& struct_)
-    : kind(StructKind), struct_(std::move(struct_)) {}
-  HeapTypeInfo(Array array) : kind(ArrayKind), array(array) {}
+    : kind(HeapTypeKind::Struct), struct_(std::move(struct_)) {}
+  HeapTypeInfo(Array array) : kind(HeapTypeKind::Array), array(array) {}
   ~HeapTypeInfo();
 
-  constexpr bool isSignature() const { return kind == SignatureKind; }
-  constexpr bool isContinuation() const { return kind == ContinuationKind; }
-  constexpr bool isStruct() const { return kind == StructKind; }
-  constexpr bool isArray() const { return kind == ArrayKind; }
+  constexpr bool isSignature() const { return kind == HeapTypeKind::Func; }
+  constexpr bool isContinuation() const { return kind == HeapTypeKind::Cont; }
+  constexpr bool isStruct() const { return kind == HeapTypeKind::Struct; }
+  constexpr bool isArray() const { return kind == HeapTypeKind::Array; }
   constexpr bool isData() const { return isStruct() || isArray(); }
 };
 
@@ -440,14 +436,16 @@ HeapType::BasicHeapType getBasicHeapSupertype(HeapType type) {
   }
   auto* info = getHeapTypeInfo(type);
   switch (info->kind) {
-    case HeapTypeInfo::SignatureKind:
+    case HeapTypeKind::Func:
       return HeapTypes::func.getBasic(info->share);
-    case HeapTypeInfo::ContinuationKind:
+    case HeapTypeKind::Cont:
       return HeapTypes::cont.getBasic(info->share);
-    case HeapTypeInfo::StructKind:
+    case HeapTypeKind::Struct:
       return HeapTypes::struct_.getBasic(info->share);
-    case HeapTypeInfo::ArrayKind:
+    case HeapTypeKind::Array:
       return HeapTypes::array.getBasic(info->share);
+    case HeapTypeKind::Basic:
+      break;
   }
   WASM_UNREACHABLE("unexpected kind");
 };
@@ -572,18 +570,20 @@ bool TypeInfo::operator==(const TypeInfo& other) const {
 
 HeapTypeInfo::~HeapTypeInfo() {
   switch (kind) {
-    case SignatureKind:
+    case HeapTypeKind::Func:
       signature.~Signature();
       return;
-    case ContinuationKind:
+    case HeapTypeKind::Cont:
       continuation.~Continuation();
       return;
-    case StructKind:
+    case HeapTypeKind::Struct:
       struct_.~Struct();
       return;
-    case ArrayKind:
+    case HeapTypeKind::Array:
       array.~Array();
       return;
+    case HeapTypeKind::Basic:
+      break;
   }
   WASM_UNREACHABLE("unexpected kind");
 }
@@ -813,10 +813,6 @@ bool Type::isSignature() const {
 bool Type::isStruct() const { return isRef() && getHeapType().isStruct(); }
 
 bool Type::isArray() const { return isRef() && getHeapType().isArray(); }
-
-bool Type::isException() const {
-  return isRef() && getHeapType().isException();
-}
 
 bool Type::isString() const { return isRef() && getHeapType().isString(); }
 
@@ -1100,57 +1096,12 @@ HeapType::HeapType(Array array) {
     HeapType(globalRecGroupStore.insert(std::make_unique<HeapTypeInfo>(array)));
 }
 
-bool HeapType::isFunction() const {
+HeapTypeKind HeapType::getKind() const {
   if (isBasic()) {
-    return id == func;
-  } else {
-    return getHeapTypeInfo(*this)->isSignature();
+    return HeapTypeKind::Basic;
   }
+  return getHeapTypeInfo(*this)->kind;
 }
-
-bool HeapType::isData() const {
-  if (isBasic()) {
-    return id == struct_ || id == array || id == string;
-  } else {
-    return getHeapTypeInfo(*this)->isData();
-  }
-}
-
-bool HeapType::isSignature() const {
-  if (isBasic()) {
-    return false;
-  } else {
-    return getHeapTypeInfo(*this)->isSignature();
-  }
-}
-
-bool HeapType::isContinuation() const {
-  if (isBasic()) {
-    return false;
-  } else {
-    return getHeapTypeInfo(*this)->isContinuation();
-  }
-}
-
-bool HeapType::isStruct() const {
-  if (isBasic()) {
-    return false;
-  } else {
-    return getHeapTypeInfo(*this)->isStruct();
-  }
-}
-
-bool HeapType::isArray() const {
-  if (isBasic()) {
-    return false;
-  } else {
-    return getHeapTypeInfo(*this)->isArray();
-  }
-}
-
-bool HeapType::isException() const { return *this == HeapType::exn; }
-
-bool HeapType::isString() const { return *this == HeapType::string; }
 
 bool HeapType::isBottom() const {
   if (isBasic()) {
@@ -1258,14 +1209,16 @@ std::optional<HeapType> HeapType::getSuperType() const {
 
   auto* info = getHeapTypeInfo(*this);
   switch (info->kind) {
-    case HeapTypeInfo::SignatureKind:
+    case HeapTypeKind::Func:
       return HeapType(func).getBasic(share);
-    case HeapTypeInfo::ContinuationKind:
+    case HeapTypeKind::Cont:
       return HeapType(cont).getBasic(share);
-    case HeapTypeInfo::StructKind:
+    case HeapTypeKind::Struct:
       return HeapType(struct_).getBasic(share);
-    case HeapTypeInfo::ArrayKind:
+    case HeapTypeKind::Array:
       return HeapType(array).getBasic(share);
+    case HeapTypeKind::Basic:
+      break;
   }
   WASM_UNREACHABLE("unexpected kind");
 }
@@ -1351,13 +1304,15 @@ HeapType::BasicHeapType HeapType::getUnsharedBottom() const {
   }
   auto* info = getHeapTypeInfo(*this);
   switch (info->kind) {
-    case HeapTypeInfo::SignatureKind:
+    case HeapTypeKind::Func:
       return nofunc;
-    case HeapTypeInfo::ContinuationKind:
+    case HeapTypeKind::Cont:
       return nocont;
-    case HeapTypeInfo::StructKind:
-    case HeapTypeInfo::ArrayKind:
+    case HeapTypeKind::Struct:
+    case HeapTypeKind::Array:
       return none;
+    case HeapTypeKind::Basic:
+      break;
   }
   WASM_UNREACHABLE("unexpected kind");
 }
@@ -2187,18 +2142,20 @@ size_t RecGroupHasher::hash(const HeapTypeInfo& info) const {
   wasm::rehash(digest, info.share);
   wasm::rehash(digest, info.kind);
   switch (info.kind) {
-    case HeapTypeInfo::SignatureKind:
+    case HeapTypeKind::Func:
       hash_combine(digest, hash(info.signature));
       return digest;
-    case HeapTypeInfo::ContinuationKind:
+    case HeapTypeKind::Cont:
       hash_combine(digest, hash(info.continuation));
       return digest;
-    case HeapTypeInfo::StructKind:
+    case HeapTypeKind::Struct:
       hash_combine(digest, hash(info.struct_));
       return digest;
-    case HeapTypeInfo::ArrayKind:
+    case HeapTypeKind::Array:
       hash_combine(digest, hash(info.array));
       return digest;
+    case HeapTypeKind::Basic:
+      break;
   }
   WASM_UNREACHABLE("unexpected kind");
 }
@@ -2328,14 +2285,16 @@ bool RecGroupEquator::eq(const HeapTypeInfo& a, const HeapTypeInfo& b) const {
     return false;
   }
   switch (a.kind) {
-    case HeapTypeInfo::SignatureKind:
+    case HeapTypeKind::Func:
       return eq(a.signature, b.signature);
-    case HeapTypeInfo::ContinuationKind:
+    case HeapTypeKind::Cont:
       return eq(a.continuation, b.continuation);
-    case HeapTypeInfo::StructKind:
+    case HeapTypeKind::Struct:
       return eq(a.struct_, b.struct_);
-    case HeapTypeInfo::ArrayKind:
+    case HeapTypeKind::Array:
       return eq(a.array, b.array);
+    case HeapTypeKind::Basic:
+      break;
   }
   WASM_UNREACHABLE("unexpected kind");
 }
@@ -2442,23 +2401,25 @@ void TypeGraphWalkerBase<Self>::scanHeapType(HeapType* ht) {
   }
   auto* info = getHeapTypeInfo(*ht);
   switch (info->kind) {
-    case HeapTypeInfo::SignatureKind:
+    case HeapTypeKind::Func:
       taskList.push_back(Task::scan(&info->signature.results));
       taskList.push_back(Task::scan(&info->signature.params));
       break;
-    case HeapTypeInfo::ContinuationKind:
+    case HeapTypeKind::Cont:
       taskList.push_back(Task::scan(&info->continuation.type));
       break;
-    case HeapTypeInfo::StructKind: {
+    case HeapTypeKind::Struct: {
       auto& fields = info->struct_.fields;
       for (auto field = fields.rbegin(); field != fields.rend(); ++field) {
         taskList.push_back(Task::scan(&field->type));
       }
       break;
     }
-    case HeapTypeInfo::ArrayKind:
+    case HeapTypeKind::Array:
       taskList.push_back(Task::scan(&info->array.element.type));
       break;
+    case HeapTypeKind::Basic:
+      WASM_UNREACHABLE("unexpected kind");
   }
 }
 
@@ -2486,18 +2447,20 @@ struct TypeBuilder::Impl {
     void set(HeapTypeInfo&& hti) {
       info->kind = hti.kind;
       switch (info->kind) {
-        case HeapTypeInfo::SignatureKind:
+        case HeapTypeKind::Func:
           info->signature = hti.signature;
           break;
-        case HeapTypeInfo::ContinuationKind:
+        case HeapTypeKind::Cont:
           info->continuation = hti.continuation;
           break;
-        case HeapTypeInfo::StructKind:
+        case HeapTypeKind::Struct:
           info->struct_ = std::move(hti.struct_);
           break;
-        case HeapTypeInfo::ArrayKind:
+        case HeapTypeKind::Array:
           info->array = hti.array;
           break;
+        case HeapTypeKind::Basic:
+          WASM_UNREACHABLE("unexpected kind");
       }
       initialized = true;
     }
@@ -2618,14 +2581,16 @@ bool isValidSupertype(const HeapTypeInfo& sub, const HeapTypeInfo& super) {
   }
   SubTyper typer;
   switch (sub.kind) {
-    case HeapTypeInfo::SignatureKind:
+    case HeapTypeKind::Func:
       return typer.isSubType(sub.signature, super.signature);
-    case HeapTypeInfo::ContinuationKind:
+    case HeapTypeKind::Cont:
       return typer.isSubType(sub.continuation, super.continuation);
-    case HeapTypeInfo::StructKind:
+    case HeapTypeKind::Struct:
       return typer.isSubType(sub.struct_, super.struct_);
-    case HeapTypeInfo::ArrayKind:
+    case HeapTypeKind::Array:
       return typer.isSubType(sub.array, super.array);
+    case HeapTypeKind::Basic:
+      break;
   }
   WASM_UNREACHABLE("unknown kind");
 }
@@ -2650,28 +2615,30 @@ validateType(HeapTypeInfo& info, std::unordered_set<HeapType>& seenTypes) {
   }
   if (info.share == Shared) {
     switch (info.kind) {
-      case HeapTypeInfo::SignatureKind:
+      case HeapTypeKind::Func:
         // TODO: Figure out and enforce shared function rules.
         break;
-      case HeapTypeInfo::ContinuationKind:
+      case HeapTypeKind::Cont:
         if (!info.continuation.type.isShared()) {
           return TypeBuilder::ErrorReason::InvalidFuncType;
         }
         break;
-      case HeapTypeInfo::StructKind:
+      case HeapTypeKind::Struct:
         for (auto& field : info.struct_.fields) {
           if (field.type.isRef() && !field.type.getHeapType().isShared()) {
             return TypeBuilder::ErrorReason::InvalidUnsharedField;
           }
         }
         break;
-      case HeapTypeInfo::ArrayKind: {
+      case HeapTypeKind::Array: {
         auto elem = info.array.element.type;
         if (elem.isRef() && !elem.getHeapType().isShared()) {
           return TypeBuilder::ErrorReason::InvalidUnsharedField;
         }
         break;
       }
+      case HeapTypeKind::Basic:
+        WASM_UNREACHABLE("unexpected kind");
     }
   }
   return std::nullopt;

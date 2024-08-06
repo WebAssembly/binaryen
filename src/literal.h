@@ -770,7 +770,7 @@ template<> struct hash<wasm::Literal> {
         wasm::rehash(digest, a.getFunc());
         return digest;
       }
-      if (a.type.getHeapType() == wasm::HeapType::i31) {
+      if (a.type.getHeapType().isMaybeShared(wasm::HeapType::i31)) {
         wasm::rehash(digest, a.geti31(true));
         return digest;
       }
