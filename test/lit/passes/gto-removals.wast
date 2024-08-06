@@ -589,17 +589,23 @@
   )
 
   ;; CHECK:      (func $new-side-effect-in-kept (type $3) (param $any (ref any))
+  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (call $helper0
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (call $helper0
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (local.get $1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $new-side-effect-in-kept (param $any (ref any))
-    ;; Side effects appear in fields that we do *not* remove. In that case,
-    ;; we do not need to use locals.
+    ;; Side effects appear in fields that we do *not* remove. We do not need to
+    ;; use locals here, but for simplicity we do, and rely on later opts.
     (drop
       (struct.new $struct
         (call $helper0 (i32.const 0))
@@ -631,26 +637,27 @@
   )
 )
 
-;; We can remove fields from the end if they are only used in subtypes, because
-;; the subtypes can always add fields at the end (and only at the end).
+;; We can remove fields if they are only used in subtypes, because we can
+;; reorder the fields in the super and re-add them in the sub, appending on top
+;; of the now-shorter super.
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $parent (sub (struct (field i32) (field i64))))
+  ;; CHECK-NEXT:  (type $parent (sub (struct (field i64))))
   (type $parent (sub (struct (field i32) (field i64) (field f32) (field f64))))
 
-  ;; CHECK:       (type $child (sub $parent (struct (field i32) (field i64) (field f32) (field f64) (field anyref))))
+  ;; CHECK:       (type $child (sub $parent (struct (field i64) (field i32) (field f32) (field f64) (field anyref))))
   (type $child (sub $parent (struct (field i32) (field i64) (field f32) (field f64) (field anyref))))
 
   ;; CHECK:       (type $2 (func (param (ref $parent) (ref $child))))
 
   ;; CHECK:      (func $func (type $2) (param $x (ref $parent)) (param $y (ref $child))
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $parent 1
+  ;; CHECK-NEXT:   (struct.get $parent 0
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $child 0
+  ;; CHECK-NEXT:   (struct.get $child 1
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -672,9 +679,10 @@
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $parent)) (param $y (ref $child))
     ;; The parent has fields 0, 1, 2, 3 and the child adds 4.
-    ;; Use fields only 1 in the parent, and all the rest in the child. We can
-    ;; only remove from the end in the child, which means we can remove 2 and 3
-    ;; in the parent, but not 0.
+    ;; Use only field 1 in the parent, and all the rest in the child. We can
+    ;; reorder field 1 to the start of the parent (flipping its position with
+    ;; field 0) and then remove all the fields but the now-first. The child
+    ;; keeps all fields, but is reordered.
     (drop (struct.get $parent 1 (local.get $x)))
     (drop (struct.get $child  0 (local.get $y)))
     (drop (struct.get $child  2 (local.get $y)))
@@ -685,31 +693,31 @@
 
 (module
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $parent (sub (struct (field i32) (field i64) (field (mut f32)))))
+  ;; CHECK-NEXT:  (type $parent (sub (struct (field i64) (field (mut f32)))))
   (type $parent (sub (struct (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)))))
 
-  ;; CHECK:       (type $child (sub $parent (struct (field i32) (field i64) (field (mut f32)) (field f64) (field anyref))))
+  ;; CHECK:       (type $child (sub $parent (struct (field i64) (field (mut f32)) (field i32) (field f64) (field anyref))))
   (type $child (sub $parent (struct (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) (field (mut anyref)))))
 
   ;; CHECK:       (type $2 (func (param (ref $parent) (ref $child))))
 
   ;; CHECK:      (func $func (type $2) (param $x (ref $parent)) (param $y (ref $child))
-  ;; CHECK-NEXT:  (struct.set $parent 2
+  ;; CHECK-NEXT:  (struct.set $parent 1
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (f32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $parent 1
+  ;; CHECK-NEXT:   (struct.get $parent 0
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $child 0
+  ;; CHECK-NEXT:   (struct.get $child 2
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $child 2
+  ;; CHECK-NEXT:   (struct.get $child 1
   ;; CHECK-NEXT:    (local.get $y)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
