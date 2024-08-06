@@ -258,9 +258,20 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         }
         break;
       }
-      case Type::f32:
-        o << int8_t(BinaryConsts::F32LoadMem);
+      case Type::f32: {
+        switch (curr->bytes) {
+          case 2:
+            o << int8_t(BinaryConsts::MiscPrefix)
+              << U32LEB(BinaryConsts::F32_F16LoadMem);
+            break;
+          case 4:
+            o << int8_t(BinaryConsts::F32LoadMem);
+            break;
+          default:
+            WASM_UNREACHABLE("invalid load size");
+        }
         break;
+      }
       case Type::f64:
         o << int8_t(BinaryConsts::F64LoadMem);
         break;
@@ -359,9 +370,20 @@ void BinaryInstWriter::visitStore(Store* curr) {
         }
         break;
       }
-      case Type::f32:
-        o << int8_t(BinaryConsts::F32StoreMem);
+      case Type::f32: {
+        switch (curr->bytes) {
+          case 2:
+            o << int8_t(BinaryConsts::MiscPrefix)
+              << U32LEB(BinaryConsts::F32_F16StoreMem);
+            break;
+          case 4:
+            o << int8_t(BinaryConsts::F32StoreMem);
+            break;
+          default:
+            WASM_UNREACHABLE("invalid store size");
+        }
         break;
+      }
       case Type::f64:
         o << int8_t(BinaryConsts::F64StoreMem);
         break;

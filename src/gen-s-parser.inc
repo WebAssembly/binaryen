@@ -454,12 +454,23 @@ switch (buf[0]) {
                       return Ok{};
                     }
                     goto parse_error;
-                  case 'o':
-                    if (op == "f32.load"sv) {
-                      CHECK_ERR(makeLoad(ctx, pos, annotations, Type::f32, /*signed=*/false, 4, /*isAtomic=*/false));
-                      return Ok{};
+                  case 'o': {
+                    switch (buf[8]) {
+                      case '\0':
+                        if (op == "f32.load"sv) {
+                          CHECK_ERR(makeLoad(ctx, pos, annotations, Type::f32, /*signed=*/false, 4, /*isAtomic=*/false));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case '_':
+                        if (op == "f32.load_f16"sv) {
+                          CHECK_ERR(makeLoad(ctx, pos, annotations, Type::f32, /*signed=*/false, 2, /*isAtomic=*/false));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
                     }
-                    goto parse_error;
+                  }
                   case 't':
                     if (op == "f32.lt"sv) {
                       CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::LtFloat32));
@@ -529,12 +540,23 @@ switch (buf[0]) {
                       return Ok{};
                     }
                     goto parse_error;
-                  case 't':
-                    if (op == "f32.store"sv) {
-                      CHECK_ERR(makeStore(ctx, pos, annotations, Type::f32, 4, /*isAtomic=*/false));
-                      return Ok{};
+                  case 't': {
+                    switch (buf[9]) {
+                      case '\0':
+                        if (op == "f32.store"sv) {
+                          CHECK_ERR(makeStore(ctx, pos, annotations, Type::f32, 4, /*isAtomic=*/false));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case '_':
+                        if (op == "f32.store_f16"sv) {
+                          CHECK_ERR(makeStore(ctx, pos, annotations, Type::f32, 2, /*isAtomic=*/false));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
                     }
-                    goto parse_error;
+                  }
                   case 'u':
                     if (op == "f32.sub"sv) {
                       CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::SubFloat32));

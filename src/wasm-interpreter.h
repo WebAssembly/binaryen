@@ -28,6 +28,7 @@
 #include <sstream>
 #include <variant>
 
+#include "fp16.h"
 #include "ir/intrinsics.h"
 #include "ir/module-utils.h"
 #include "support/bits.h"
@@ -2540,8 +2541,22 @@ public:
           }
           break;
         }
-        case Type::f32:
-          return Literal(load32u(addr, memory)).castToF32();
+        case Type::f32: {
+          switch (load->bytes) {
+            case 2: {
+              // Convert the float16 to float32 and store the binary
+              // representation.
+              return Literal(bit_cast<int32_t>(
+                               fp16_ieee_to_fp32_value(load16u(addr, memory))))
+                .castToF32();
+            }
+            case 4:
+              return Literal(load32u(addr, memory)).castToF32();
+            default:
+              WASM_UNREACHABLE("invalid size");
+          }
+          break;
+        }
         case Type::f64:
           return Literal(load64u(addr, memory)).castToF64();
         case Type::v128:
@@ -2590,9 +2605,23 @@ public:
           break;
         }
         // write floats carefully, ensuring all bits reach memory
-        case Type::f32:
-          store32(addr, value.reinterpreti32(), memory);
+        case Type::f32: {
+          switch (store->bytes) {
+            case 2: {
+              float f32 = bit_cast<float>(value.reinterpreti32());
+              // Convert the float32 to float16 and store the binary
+              // representation.
+              store16(addr, fp16_ieee_from_fp32_value(f32), memory);
+              break;
+            }
+            case 4:
+              store32(addr, value.reinterpreti32(), memory);
+              break;
+            default:
+              WASM_UNREACHABLE("invalid store size");
+          }
           break;
+        }
         case Type::f64:
           store64(addr, value.reinterpreti64(), memory);
           break;

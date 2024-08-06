@@ -1579,8 +1579,9 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
                    "expected i64 operation to touch 1, 2, 4, or 8 bytes");
       break;
     case Type::f32:
-      shouldBeEqual(
-        bytes, uint8_t(4), curr, "expected f32 operation to touch 4 bytes");
+      shouldBeTrue(bytes == 2 || bytes == 4,
+                   curr,
+                   "expected f32 operation to touch 2 or 4 bytes");
       break;
     case Type::f64:
       shouldBeEqual(
