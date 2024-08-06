@@ -350,10 +350,20 @@ INITIAL_CONTENTS_IGNORE = [
     'typed_continuations_contnew.wast',
     'typed_continuations_contbind.wast',
     'typed_continuations_suspend.wast',
-    # New EH implementation is in progress
+    # TODO: make sure the fuzzer supports the new EH
+    'coalesce-locals-eh.wast',
+    'code-folding-eh.wast',
+    'code-pushing-eh.wast',
+    'dce-eh.wast',
+    'eh.wast',
+    'eh-gc.wast',
     'exception-handling.wast',
+    'global-effects.wast',
+    'local-subtyping.wast',
+    'renamings.wat',
     'translate-to-new-eh.wast',
     'rse-eh.wast',
+    'vacuum-eh.wast',
 ]
 
 

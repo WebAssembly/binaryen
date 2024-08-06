@@ -87,7 +87,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       // Some instructions have special handling in visit*, and we should do
       // nothing for them here.
       if (curr->is<Drop>() || curr->is<Block>() || curr->is<If>() ||
-          curr->is<Loop>() || curr->is<Try>()) {
+          curr->is<Loop>() || curr->is<Try>() || curr->is<TryTable>()) {
         return curr;
       }
       // Check if this expression itself has side effects, ignoring children.
@@ -433,6 +433,22 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
            .hasUnremovableSideEffects()) {
       ExpressionManipulator::nop(curr);
     }
+  }
+
+  void visitTryTable(TryTable* curr) {
+    // If try's body does not throw, the whole try_table can be replaced with
+    // the try's body.
+    if (!EffectAnalyzer(getPassOptions(), *getModule(), curr->body).throws()) {
+      replaceCurrent(curr->body);
+      return;
+    }
+
+    // TODO Should we attempt the same thing as in `visitTry` when the body
+    // only throws, and there is a catch_all? We cannot `nop` the `TryTable`,
+    // though. Instead, we should turn it into an unconditional `br` to the
+    // target of the `catch_all`. Also, for a `catch_all_ref`, we cannot do that
+    // optimization at all since we would not know how to create the correct
+    // `exnref`.
   }
 
   void visitFunction(Function* curr) {

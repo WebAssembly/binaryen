@@ -32,6 +32,7 @@ namespace wasm {
 
 class Literals;
 struct GCData;
+struct ExnData;
 
 class Literal {
   // store only integers, whose bits are deterministic. floats
@@ -44,6 +45,7 @@ class Literal {
     int64_t i64;
     uint8_t v128[16];
     // funcref function name. `isNull()` indicates a `null` value.
+    // TODO: handle cross-module calls using something other than a Name here.
     Name func;
     // A reference to GC data, either a Struct or an Array. For both of those we
     // store the referred data as a Literals object (which is natural for an
@@ -56,6 +58,8 @@ class Literal {
     // reference as its sole value even though internal i31 references do not
     // have a gcData.
     std::shared_ptr<GCData> gcData;
+    // A reference to Exn data.
+    std::shared_ptr<ExnData> exnData;
   };
 
 public:
@@ -85,6 +89,7 @@ public:
     assert(type.isSignature());
   }
   explicit Literal(std::shared_ptr<GCData> gcData, HeapType type);
+  explicit Literal(std::shared_ptr<ExnData> exnData);
   explicit Literal(std::string_view string);
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
@@ -96,6 +101,7 @@ public:
   // Whether this is GC data, that is, something stored on the heap (aside from
   // a null or i31). This includes structs, arrays, and also strings.
   bool isData() const { return type.isData(); }
+  bool isExn() const { return type.isExn(); }
   bool isString() const { return type.isString(); }
 
   bool isNull() const { return type.isNull(); }
@@ -303,6 +309,7 @@ public:
     return func;
   }
   std::shared_ptr<GCData> getGCData() const;
+  std::shared_ptr<ExnData> getExnData() const;
 
   // careful!
   int32_t* geti32Ptr() {
@@ -730,6 +737,18 @@ struct GCData {
   Literals values;
 
   GCData(HeapType type, Literals values) : type(type), values(values) {}
+};
+
+// The data of a (ref exn) literal.
+struct ExnData {
+  // The tag of this exn data.
+  // TODO: handle cross-module calls using something other than a Name here.
+  Name tag;
+
+  // The payload of this exn data.
+  Literals payload;
+
+  ExnData(Name tag, Literals payload) : tag(tag), payload(payload) {}
 };
 
 } // namespace wasm

@@ -47,6 +47,7 @@
 namespace wasm {
 
 struct WasmException {
+  // TODO: handle cross-module calls using something other than a Name here.
   Name tag;
   Literals values;
 };
@@ -202,6 +203,15 @@ protected:
     __lsan_ignore_object(allocation.get());
 #endif
     return Literal(allocation, type.getHeapType());
+  }
+
+  // Same as makeGCData but for ExnData.
+  Literal makeExnData(Name tag, const Literals& payload) {
+    auto allocation = std::make_shared<ExnData>(tag, payload);
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+    __lsan_ignore_object(allocation.get());
+#endif
+    return Literal(allocation);
   }
 
 public:
@@ -1418,7 +1428,26 @@ public:
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitThrowRef(ThrowRef* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitThrowRef(ThrowRef* curr) {
+    NOTE_ENTER("ThrowRef");
+    Flow flow = visit(curr->exnref);
+    if (flow.breaking()) {
+      return flow;
+    }
+    const auto& exnref = flow.getSingleValue();
+    NOTE_EVAL1(exnref);
+    if (exnref.isNull()) {
+      trap("null ref");
+    }
+    const auto& exnData = exnref.getExnData();
+    WasmException exn;
+    exn.tag = exnData->tag;
+    for (auto item : exnData->payload) {
+      exn.values.push_back(item);
+    }
+    throwException(exn);
+    WASM_UNREACHABLE("throw");
+  }
   Flow visitRefI31(RefI31* curr) {
     NOTE_ENTER("RefI31");
     Flow flow = visit(curr->value);
@@ -2430,6 +2459,10 @@ public:
   }
   Flow visitTry(Try* curr) {
     NOTE_ENTER("Try");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitTryTable(TryTable* curr) {
+    NOTE_ENTER("TryTable");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitRethrow(Rethrow* curr) {
@@ -4041,6 +4074,31 @@ public:
       }
       if (curr->isDelegate()) {
         scope->currDelegateTarget = curr->delegateTarget;
+      }
+      // This exception is not caught by this try-catch. Rethrow it.
+      throw;
+    }
+  }
+  Flow visitTryTable(TryTable* curr) {
+    NOTE_ENTER("TryTable");
+    try {
+      return self()->visit(curr->body);
+    } catch (const WasmException& e) {
+      for (size_t i = 0; i < curr->catchTags.size(); i++) {
+        auto catchTag = curr->catchTags[i];
+        if (!catchTag.is() || catchTag == e.tag) {
+          Flow ret;
+          ret.breakTo = curr->catchDests[i];
+          if (catchTag.is()) {
+            for (auto item : e.values) {
+              ret.values.push_back(item);
+            }
+          }
+          if (curr->catchRefs[i]) {
+            ret.values.push_back(self()->makeExnData(e.tag, e.values));
+          }
+          return ret;
+        }
       }
       // This exception is not caught by this try-catch. Rethrow it.
       throw;

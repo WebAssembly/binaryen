@@ -347,11 +347,12 @@ private:
         // out of the try scope changes the program's behavior, because the
         // expression that would otherwise have been caught by the try now
         // throws up to the next try scope or even up to the caller. We restrict
-        // the move if 'outOf' contains a 'try' anywhere in it. This is a
-        // conservative approximation because there can be cases that 'try' is
-        // within the expression that may throw so it is safe to take the
-        // expression out.
-        if (effects.throws() && !FindAll<Try>(outOf).list.empty()) {
+        // the move if 'outOf' contains a 'try' or 'try_table' anywhere in it.
+        // This is a conservative approximation because there can be cases that
+        // 'try'/'try_table' is within the expression that may throw so it is
+        // safe to take the expression out.
+        if (effects.throws() &&
+            (FindAll<Try>(outOf).has() || FindAll<TryTable>(outOf).has())) {
           return false;
         }
       }

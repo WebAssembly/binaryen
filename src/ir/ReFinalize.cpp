@@ -127,7 +127,12 @@ void ReFinalize::visitTableGrow(TableGrow* curr) { curr->finalize(); }
 void ReFinalize::visitTableFill(TableFill* curr) { curr->finalize(); }
 void ReFinalize::visitTableCopy(TableCopy* curr) { curr->finalize(); }
 void ReFinalize::visitTry(Try* curr) { curr->finalize(); }
-void ReFinalize::visitTryTable(TryTable* curr) { curr->finalize(); }
+void ReFinalize::visitTryTable(TryTable* curr) {
+  curr->finalize();
+  for (size_t i = 0; i < curr->catchDests.size(); i++) {
+    updateBreakValueType(curr->catchDests[i], curr->sentTypes[i]);
+  }
+}
 void ReFinalize::visitThrow(Throw* curr) { curr->finalize(); }
 void ReFinalize::visitRethrow(Rethrow* curr) { curr->finalize(); }
 void ReFinalize::visitThrowRef(ThrowRef* curr) { curr->finalize(); }
