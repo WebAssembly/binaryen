@@ -14,15 +14,24 @@
  * limitations under the License.
  */
 
-#include "wasm-binary.h"
 #include "gtest/gtest.h"
+#include "parser/wat-parser.h"
+#include "print-test.h"
+#include "wasm-binary.h"
 
 using namespace wasm;
 
+using BinaryReaderTest = PrintTest;
+
 // Check that debug location parsers can handle single-segment mappings.
-TEST(BinaryReaderTest, SourceMappingSingleSegment) {
-  std::vector<char> moduleBytes = {
-    0x00, 0x61, 0x73, 0x6d, 0x01, 0x00, 0x00, 0x00};
+TEST_F(BinaryReaderTest, SourceMappingSingleSegment) {
+  auto moduleText = "(module)";
+  Module module;
+  parseWast(module, moduleText);
+
+  BufferWithRandomAccess buffer;
+  WasmBinaryWriter(&module, buffer, PassOptions());
+  auto moduleBytes = buffer.getAsChars();
 
   // A single-segment mapping starting at offset 0.
   std::string sourceMap = R"(
