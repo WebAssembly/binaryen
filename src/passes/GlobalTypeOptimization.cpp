@@ -450,6 +450,8 @@ struct GlobalTypeOptimization : public Pass {
           }
         }
         operands.resize(operands.size() - removed);
+        // We should only get here if we did actual work.
+        assert(removed > 0);
       }
 
       void visitStructSet(StructSet* curr) {
