@@ -30,8 +30,8 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "wasm-builder.h"
-#include "wasm-type.h"
 #include "wasm-type-ordering.h"
+#include "wasm-type.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -358,10 +358,6 @@ struct GlobalTypeOptimization : public Pass {
           }
           newFields.resize(newFields.size() - removed);
 
-//std::cout << oldStructType << " => ";
-//for (auto& x : newFields) std::cout << x.type << ' ';
-//std::cout << '\n';
-
           // Update field names as well. The Type Rewriter cannot do this for
           // us, as it does not know which old fields map to which new ones (it
           // just keeps the names in sequence).
@@ -423,10 +419,8 @@ struct GlobalTypeOptimization : public Pass {
 
         // Ensure any children with non-trivial effects are replaced with
         // local.gets, so that we can remove/reorder to our hearts' content.
-        ChildLocalizer localizer(curr,
-                                 getFunction(),
-                                 *getModule(),
-                                 getPassOptions());
+        ChildLocalizer localizer(
+          curr, getFunction(), *getModule(), getPassOptions());
         replaceCurrent(localizer.getReplacement());
 
         // Remove and reorder operands.
