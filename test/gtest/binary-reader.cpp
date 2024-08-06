@@ -44,7 +44,8 @@ TEST_F(BinaryReaderTest, SourceMappingSingleSegment) {
   )";
   std::stringstream sourceMapStream(sourceMap);
 
-  // Test `readSourceMapHeader`.
+  // Test `readSourceMapHeader` (only check for errors, as there is no mapping
+  // to print).
   {
     Module module;
     WasmBinaryReader binaryReader(module, FeatureSet::All, moduleBytes);
