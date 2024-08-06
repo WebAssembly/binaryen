@@ -8,7 +8,7 @@
 ;; NO-EXTENDED: unexpected false: table segment offset must be constant
 
 ;; EXTENDED: (import "env" "global" (global $gimport$0 i32))
-;; EXTENDED: (global $1 i32 (i32.add
+;; EXTENDED: (global $global$1 i32 (i32.add
 ;; EXTENDED:  (global.get $gimport$0)
 ;; EXTENDED:  (i32.const 42)
 ;; EXTENDED: ))
