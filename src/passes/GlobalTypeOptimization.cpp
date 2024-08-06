@@ -281,11 +281,14 @@ struct GlobalTypeOptimization : public Pass {
                 indexesAfterRemoval[i] = RemovedField;
               }
             } else {
-              // The super kept this field, so we must keep it as well, and with
-              // the same index so we remain compatible.
-              auto index = next++;
-              assert(index == superIndex);
-              indexesAfterRemoval[i] = index;
+              // The super kept this field, so we must keep it as well.
+              assert(!removableIndexes.count(i));
+              // We need to keep it at the same index so we remain compatible.
+              indexesAfterRemoval[i] = superIndex;
+              // Update |next| to refer to the next available index. Due to
+              // possible reordering in the parent, we may not see indexes in
+              // order here, so just take the max at each point in time.
+              next = std::max(next, superIndex + 1);
             }
           }
 

@@ -1141,6 +1141,7 @@
 
 ;; As above, but instead of $A having children $B, $C, now they are a chain,
 ;;   $A :> $B :> $C
+;; $C must now also include $B's fields (specifically field 2, the f32).
 (module
   (rec
     ;; CHECK:      (rec
@@ -1150,7 +1151,7 @@
     ;; CHECK:       (type $B (sub $A (struct (field i64) (field v128) (field nullref) (field f32) (field anyref))))
     (type $B (sub $A (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field v128) (field nullref))))
 
-    ;; CHECK:       (type $C (sub $A (struct (field i64) (field v128) (field nullref) (field f64) (field anyref))))
+    ;; CHECK:       (type $C (sub $B (struct (field i64) (field v128) (field nullref) (field f32) (field anyref) (field f64))))
     (type $C (sub $B (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field v128) (field nullref))))
   )
 
@@ -1172,7 +1173,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.get $C 3
+  ;; CHECK-NEXT:   (struct.get $C 5
   ;; CHECK-NEXT:    (ref.cast (ref $C)
   ;; CHECK-NEXT:     (local.get $x)
   ;; CHECK-NEXT:    )
