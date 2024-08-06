@@ -2,6 +2,7 @@ include_directories(../../third_party/googletest/googletest/include)
 include_directories(../../src/wasm)
 
 set(unittest_SOURCES
+  binary-reader.cpp
   cfg.cpp
   dfa_minimization.cpp
   disjoint_sets.cpp
