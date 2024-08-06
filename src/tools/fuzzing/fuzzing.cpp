@@ -3579,6 +3579,7 @@ Expression* TranslateToFuzzReader::makeSIMDExtract(Type type) {
       break;
     case ExtractLaneSVecI16x8:
     case ExtractLaneUVecI16x8:
+    case ExtractLaneVecF16x8:
       index = upTo(8);
       break;
     case ExtractLaneVecI32x4:

@@ -590,6 +590,9 @@ void BinaryInstWriter::visitSIMDExtract(SIMDExtract* curr) {
     case ExtractLaneVecI64x2:
       o << U32LEB(BinaryConsts::I64x2ExtractLane);
       break;
+    case ExtractLaneVecF16x8:
+      o << U32LEB(BinaryConsts::F16x8ExtractLane);
+      break;
     case ExtractLaneVecF32x4:
       o << U32LEB(BinaryConsts::F32x4ExtractLane);
       break;
@@ -614,6 +617,9 @@ void BinaryInstWriter::visitSIMDReplace(SIMDReplace* curr) {
       break;
     case ReplaceLaneVecI64x2:
       o << U32LEB(BinaryConsts::I64x2ReplaceLane);
+      break;
+    case ReplaceLaneVecF16x8:
+      o << U32LEB(BinaryConsts::F16x8ReplaceLane);
       break;
     case ReplaceLaneVecF32x4:
       o << U32LEB(BinaryConsts::F32x4ReplaceLane);
@@ -1049,6 +1055,9 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       break;
     case SplatVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Splat);
+      break;
+    case SplatVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Splat);
       break;
     case SplatVecF32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Splat);

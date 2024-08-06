@@ -1272,6 +1272,10 @@ void FunctionValidator::visitSIMDExtract(SIMDExtract* curr) {
       lane_t = Type::i64;
       lanes = 2;
       break;
+    case ExtractLaneVecF16x8:
+      lane_t = Type::f32;
+      lanes = 8;
+      break;
     case ExtractLaneVecF32x4:
       lane_t = Type::f32;
       lanes = 4;
@@ -1317,6 +1321,10 @@ void FunctionValidator::visitSIMDReplace(SIMDReplace* curr) {
     case ReplaceLaneVecI64x2:
       lane_t = Type::i64;
       lanes = 2;
+      break;
+    case ReplaceLaneVecF16x8:
+      lane_t = Type::f32;
+      lanes = 8;
       break;
     case ReplaceLaneVecF32x4:
       lane_t = Type::f32;
@@ -2036,6 +2044,7 @@ void FunctionValidator::visitUnary(Unary* curr) {
       shouldBeEqual(
         curr->value->type, Type(Type::i64), curr, "expected i64 splat value");
       break;
+    case SplatVecF16x8:
     case SplatVecF32x4:
       shouldBeEqual(
         curr->type, Type(Type::v128), curr, "expected splat to have v128 type");

@@ -184,6 +184,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case SplatVecI16x8:
       case SplatVecI32x4:
       case SplatVecI64x2:
+      case SplatVecF16x8:
       case SplatVecF32x4:
       case SplatVecF64x2:
       case NotVec128:

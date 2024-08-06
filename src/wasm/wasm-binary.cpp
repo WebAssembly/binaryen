@@ -6239,6 +6239,10 @@ bool WasmBinaryReader::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = SplatVecI64x2;
       break;
+    case BinaryConsts::F16x8Splat:
+      curr = allocator.alloc<Unary>();
+      curr->op = SplatVecF16x8;
+      break;
     case BinaryConsts::F32x4Splat:
       curr = allocator.alloc<Unary>();
       curr->op = SplatVecF32x4;
@@ -6569,6 +6573,11 @@ bool WasmBinaryReader::maybeVisitSIMDExtract(Expression*& out, uint32_t code) {
       curr->op = ExtractLaneVecI64x2;
       curr->index = getLaneIndex(2);
       break;
+    case BinaryConsts::F16x8ExtractLane:
+      curr = allocator.alloc<SIMDExtract>();
+      curr->op = ExtractLaneVecF16x8;
+      curr->index = getLaneIndex(8);
+      break;
     case BinaryConsts::F32x4ExtractLane:
       curr = allocator.alloc<SIMDExtract>();
       curr->op = ExtractLaneVecF32x4;
@@ -6610,6 +6619,11 @@ bool WasmBinaryReader::maybeVisitSIMDReplace(Expression*& out, uint32_t code) {
       curr = allocator.alloc<SIMDReplace>();
       curr->op = ReplaceLaneVecI64x2;
       curr->index = getLaneIndex(2);
+      break;
+    case BinaryConsts::F16x8ReplaceLane:
+      curr = allocator.alloc<SIMDReplace>();
+      curr->op = ReplaceLaneVecF16x8;
+      curr->index = getLaneIndex(8);
       break;
     case BinaryConsts::F32x4ReplaceLane:
       curr = allocator.alloc<SIMDReplace>();
