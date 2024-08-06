@@ -782,7 +782,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $parent)) (param $y (ref $child))
-    ;; As above, but now we remove fields in the parent as well: 3 is not used.
+    ;; As above, but now we remove fields in the child as well: 3 is not used.
     (struct.set $parent 2 (local.get $x) (f32.const 0))
 
     (drop (struct.get $parent 1 (local.get $x)))
