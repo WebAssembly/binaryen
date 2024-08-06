@@ -148,8 +148,7 @@ struct ExecutionResults {
     // simple and stable internal structures that optimizations will not alter.
     auto type = value.type;
     if (type.isRef()) {
-      if (type.getHeapType().isMaybeShared(HeapType::string) ||
-          type.getHeapType().isMaybeShared(HeapType::i31)) {
+      if (type.isString() || type.getHeapType().isMaybeShared(HeapType::i31)) {
         std::cout << value << '\n';
       } else if (value.isNull()) {
         std::cout << "null\n";
@@ -190,8 +189,7 @@ struct ExecutionResults {
     // TODO: Once we support optimizing under some form of open-world
     // assumption, we should be able to check that the types and/or structure of
     // GC data passed out of the module does not change.
-    if (a.type.isRef() &&
-        !a.type.getHeapType().isMaybeShared(HeapType::string) &&
+    if (a.type.isRef() && !a.type.isString() &&
         !a.type.getHeapType().isMaybeShared(HeapType::i31)) {
       return true;
     }

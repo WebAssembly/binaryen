@@ -439,7 +439,7 @@ bool Literal::operator==(const Literal& other) const {
       assert(func.is() && other.func.is());
       return func == other.func;
     }
-    if (type.getHeapType().isMaybeShared(HeapType::string)) {
+    if (type.isString()) {
       return gcData->values == other.gcData->values;
     }
     if (type.isData()) {
