@@ -1138,3 +1138,105 @@
     (drop (struct.get $B 6 (ref.cast (ref $B) (local.get $x))))
   )
 )
+
+;; As above, but instead of $A having children $B, $C, now they are a chain,
+;;   $A :> $B :> $C
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct (field i64) (field v128) (field nullref))))
+    (type $A (sub (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field v128) (field nullref))))
+
+    ;; CHECK:       (type $B (sub $A (struct (field i64) (field v128) (field nullref) (field f32) (field anyref))))
+    (type $B (sub $A (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field v128) (field nullref))))
+
+    ;; CHECK:       (type $C (sub $A (struct (field i64) (field v128) (field nullref) (field f64) (field anyref))))
+    (type $C (sub $B (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field v128) (field nullref))))
+  )
+
+  ;; CHECK:       (type $3 (func (param anyref)))
+
+  ;; CHECK:      (func $func (type $3) (param $x anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 3
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $C 3
+  ;; CHECK-NEXT:    (ref.cast (ref $C)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 4
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $C 4
+  ;; CHECK-NEXT:    (ref.cast (ref $C)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 1
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $C 1
+  ;; CHECK-NEXT:    (ref.cast (ref $C)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 2
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 2
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x anyref)
+    ;; Same uses as before.
+
+    (drop (struct.get $A 1 (ref.cast (ref $A) (local.get $x))))
+
+    (drop (struct.get $B 2 (ref.cast (ref $B) (local.get $x))))
+
+    (drop (struct.get $C 3 (ref.cast (ref $C) (local.get $x))))
+
+    (drop (struct.get $B 4 (ref.cast (ref $B) (local.get $x))))
+    (drop (struct.get $C 4 (ref.cast (ref $C) (local.get $x))))
+
+    (drop (struct.get $A 5 (ref.cast (ref $A) (local.get $x))))
+    (drop (struct.get $C 5 (ref.cast (ref $C) (local.get $x))))
+
+    (drop (struct.get $A 6 (ref.cast (ref $A) (local.get $x))))
+    (drop (struct.get $B 6 (ref.cast (ref $B) (local.get $x))))
+  )
+)
