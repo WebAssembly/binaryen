@@ -589,17 +589,23 @@
   )
 
   ;; CHECK:      (func $new-side-effect-in-kept (type $3) (param $any (ref any))
+  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (struct.new $struct
-  ;; CHECK-NEXT:    (call $helper0
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:   (block (result (ref $struct))
+  ;; CHECK-NEXT:    (local.set $1
+  ;; CHECK-NEXT:     (call $helper0
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (local.get $1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $new-side-effect-in-kept (param $any (ref any))
-    ;; Side effects appear in fields that we do *not* remove. In that case,
-    ;; we do not need to use locals.
+    ;; Side effects appear in fields that we do *not* remove. We do not need to
+    ;; use locals here, but for simplicity we do, and rely on later opts.
     (drop
       (struct.new $struct
         (call $helper0 (i32.const 0))
