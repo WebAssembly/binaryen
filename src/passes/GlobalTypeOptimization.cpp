@@ -259,8 +259,10 @@ struct GlobalTypeOptimization : public Pass {
         // field that is in the super.
         Index numSuperFields = 0;
         if (super) {
-          // We must have visited the super before.
-          assert(indexesAfterRemovals.count(*super));
+          // We have visited the super before. Note that index info for the
+          // super may be empty, if we had nothing to process there (e.g. if it
+          // has no fields at all), but that changes nothing in the computation
+          // below.
           auto& superIndexes = indexesAfterRemovals[*super];
           numSuperFields = superIndexes.size();
 

@@ -1241,3 +1241,68 @@
     (drop (struct.get $B 6 (ref.cast (ref $B) (local.get $x))))
   )
 )
+
+;; The parent $A is an empty struct, with nothing to remove. See we do not error
+;; here.
+(module
+  ;; CHECK:      (type $A (sub (struct)))
+  (type $A (sub (struct)))
+
+  ;; CHECK:      (type $B (sub $A (struct)))
+  (type $B (sub $A (struct)))
+
+  ;; CHECK:      (type $2 (func (param (ref $B))))
+
+  ;; CHECK:      (func $func (type $2) (param $x (ref $B))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $B))
+    ;; Use $B to keep it alive, and lead us to process it and $A.
+  )
+)
+
+;; As above, but now $B has fields to remove.
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
+  (type $A (sub (struct)))
+
+  ;; CHECK:       (type $B (sub $A (struct)))
+  (type $B (sub $A (struct (field i32) (field i64))))
+
+  ;; CHECK:       (type $2 (func (param (ref $B))))
+
+  ;; CHECK:      (func $func (type $2) (param $x (ref $B))
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $B))
+  )
+)
+
+;; As above, but now $B's fields are used
+(module
+  ;; CHECK:      (type $A (sub (struct)))
+  (type $A (sub (struct)))
+
+  ;; CHECK:      (type $B (sub $A (struct (field i32) (field i64))))
+  (type $B (sub $A (struct (field i32) (field i64))))
+
+  ;; CHECK:      (type $2 (func (param (ref $B))))
+
+  ;; CHECK:      (func $func (type $2) (param $x (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 1
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $B))
+    (drop (struct.get $B 0 (local.get $x)))
+    (drop (struct.get $B 1 (local.get $x)))
+  )
+)
