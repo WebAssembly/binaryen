@@ -745,6 +745,54 @@
   )
 )
 
+(module
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $parent (sub (struct (field i64) (field (mut f32)))))
+  (type $parent (sub (struct (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)))))
+
+  ;; CHECK:       (type $child (sub $parent (struct (field i64) (field (mut f32)) (field i32) (field anyref))))
+  (type $child (sub $parent (struct (field (mut i32)) (field (mut i64)) (field (mut f32)) (field (mut f64)) (field (mut anyref)))))
+
+  ;; CHECK:       (type $2 (func (param (ref $parent) (ref $child))))
+
+  ;; CHECK:      (func $func (type $2) (param $x (ref $parent)) (param $y (ref $child))
+  ;; CHECK-NEXT:  (struct.set $parent 1
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (f32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $parent 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 2
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 1
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $child 3
+  ;; CHECK-NEXT:    (local.get $y)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x (ref $parent)) (param $y (ref $child))
+    ;; As above, but now we remove fields in the parent as well: 3 is not used.
+    (struct.set $parent 2 (local.get $x) (f32.const 0))
+
+    (drop (struct.get $parent 1 (local.get $x)))
+    (drop (struct.get $child  0 (local.get $y)))
+    (drop (struct.get $child  2 (local.get $y)))
+    ;; the read of 3 was removed here.
+    (drop (struct.get $child  4 (local.get $y)))
+  )
+)
+
 ;; A parent with two children, and there are only reads of the parent. Those
 ;; reads might be of data of either child, of course (as a refernce to the
 ;; parent might point to them), so we cannot optimize here.
