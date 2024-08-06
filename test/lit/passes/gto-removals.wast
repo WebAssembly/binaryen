@@ -1027,3 +1027,114 @@
     )
   )
 )
+
+;; A parent with two children, with fields used in various combinations.
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct (field i64) (field v128) (field nullref))))
+    (type $A (sub (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field v128) (field nullref))))
+
+    ;; CHECK:       (type $C (sub $A (struct (field i64) (field v128) (field nullref) (field f64) (field anyref))))
+    (type $C (sub $A (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field v128) (field nullref))))
+
+    ;; CHECK:       (type $B (sub $A (struct (field i64) (field v128) (field nullref) (field f32) (field anyref))))
+    (type $B (sub $A (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field v128) (field nullref))))
+  )
+
+  ;; CHECK:       (type $3 (func (param anyref)))
+
+  ;; CHECK:      (func $func (type $3) (param $x anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 0
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 3
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $C 3
+  ;; CHECK-NEXT:    (ref.cast (ref $C)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 4
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $C 4
+  ;; CHECK-NEXT:    (ref.cast (ref $C)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 1
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $C 1
+  ;; CHECK-NEXT:    (ref.cast (ref $C)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $A 2
+  ;; CHECK-NEXT:    (ref.cast (ref $A)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 2
+  ;; CHECK-NEXT:    (ref.cast (ref $B)
+  ;; CHECK-NEXT:     (local.get $x)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (param $x anyref)
+    ;; Field 0 (i32)     is used nowhere.
+    ;; Field 1 (i64)     is used only in $A.
+    ;; Field 2 (f32)     is used only in $B.
+    ;; Field 3 (f64)     is used only in $C.
+    ;; Field 4 (anyref)  is used only in $B and $C.
+    ;; Field 5 (v128)    is used only in $A and $C.
+    ;; Field 6 (nullref) is used only in $A and $B.
+    ;; As a result:
+    ;;   * A can keep only fields 1, 5, 6 (i64, v128, nullref).
+    ;;   * B keeps A's fields, and appends 2, 4 (f32, anyref).
+    ;;   * C keeps A's fields, and appends 3, 4 (f64, anyref).
+
+    (drop (struct.get $A 1 (ref.cast (ref $A) (local.get $x))))
+
+    (drop (struct.get $B 2 (ref.cast (ref $B) (local.get $x))))
+
+    (drop (struct.get $C 3 (ref.cast (ref $C) (local.get $x))))
+
+    (drop (struct.get $B 4 (ref.cast (ref $B) (local.get $x))))
+    (drop (struct.get $C 4 (ref.cast (ref $C) (local.get $x))))
+
+    (drop (struct.get $A 5 (ref.cast (ref $A) (local.get $x))))
+    (drop (struct.get $C 5 (ref.cast (ref $C) (local.get $x))))
+
+    (drop (struct.get $A 6 (ref.cast (ref $A) (local.get $x))))
+    (drop (struct.get $B 6 (ref.cast (ref $B) (local.get $x))))
+  )
+)
