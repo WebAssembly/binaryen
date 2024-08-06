@@ -814,6 +814,8 @@ bool Type::isStruct() const { return isRef() && getHeapType().isStruct(); }
 
 bool Type::isArray() const { return isRef() && getHeapType().isArray(); }
 
+bool Type::isString() const { return isRef() && getHeapType().isString(); }
+
 bool Type::isDefaultable() const {
   // A variable can get a default value if its type is concrete (unreachable
   // and none have no values, hence no default), and if it's a reference, it

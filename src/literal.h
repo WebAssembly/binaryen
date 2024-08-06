@@ -96,9 +96,7 @@ public:
   // Whether this is GC data, that is, something stored on the heap (aside from
   // a null or i31). This includes structs, arrays, and also strings.
   bool isData() const { return type.isData(); }
-  bool isString() const {
-    return type.isRef() && type.getHeapType().isMaybeShared(HeapType::string);
-  }
+  bool isString() const { return type.isString(); }
 
   bool isNull() const { return type.isNull(); }
 
@@ -772,11 +770,11 @@ template<> struct hash<wasm::Literal> {
         wasm::rehash(digest, a.getFunc());
         return digest;
       }
-      if (a.type.getHeapType().isMaybeShared(wasm::HeapType::i31)) {
+      if (a.type.getHeapType() == wasm::HeapType::i31) {
         wasm::rehash(digest, a.geti31(true));
         return digest;
       }
-      if (a.type.getHeapType().isMaybeShared(wasm::HeapType::string)) {
+      if (a.type.isString()) {
         auto& values = a.getGCData()->values;
         wasm::rehash(digest, values.size());
         for (auto c : values) {
