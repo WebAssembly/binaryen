@@ -170,7 +170,8 @@ struct GlobalTypeOptimization : public Pass {
     // fields in a supertype is a constraint on what subtypes can do. That is,
     // we decide for each supertype what the optimal order is, and consider that
     // fixed, and then subtypes can decide how to sort fields that they append.
-    for (auto type : SupertypesFirst().sort(propagator.subTypes)) {
+    HeapTypeOrdering::SupertypesFirst sorted;
+    for (auto type : sorted.sort(propagator.subTypes.types)) {
       if (!type.isStruct()) {
         continue;
       }
@@ -261,7 +262,7 @@ struct GlobalTypeOptimization : public Pass {
 
           // Go over the super fields and handle them.
           for (Index i = 0; i < superIndexes.size(); ++i) {
-            auto superIndex = (*superIndexes)[i];
+            auto superIndex = superIndexes[i];
             if (superIndex == RemovedField) {
               if (!removableIndexes.count(i)) {
                 // This was removed in the super, but we actually need it. It
@@ -271,7 +272,6 @@ struct GlobalTypeOptimization : public Pass {
               } else {
                 // This was removed in the super, and in us as well.
                 indexesAfterRemoval[i] = RemovedField;
-                skip++;
               }
             } else {
               // The super kept this field, so we must keep it as well, and with
@@ -411,12 +411,15 @@ struct GlobalTypeOptimization : public Pass {
 
         // Ensure any children with non-trivial effects are replaced with
         // local.gets, so that we can remove/reorder to our hearts' content.
-        ChildLocalizer localizer(curr, func, *getModule(), getPassOptions());
+        ChildLocalizer localizer(curr,
+                                 getFunction(),
+                                 *getModule(),
+                                 getPassOptions());
         replaceCurrent(localizer.getReplacement());
 
         // Remove and reorder operands.
         Index removed = 0;
-        auto old = operands;
+        std::vector<Expression*> old(operands.begin(), operands.end());
         for (Index i = 0; i < operands.size(); i++) {
           auto newIndex = indexesAfterRemoval[i];
           if (newIndex != RemovedField) {
