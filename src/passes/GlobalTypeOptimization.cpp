@@ -350,7 +350,7 @@ struct GlobalTypeOptimization : public Pass {
         // Localize things so that we can simply remove the operands we no
         // longer need.
         ChildLocalizer localizer(
-            curr, getFunction(), *getModule(), getPassOptions());
+          curr, getFunction(), *getModule(), getPassOptions());
         replaceCurrent(localizer.getReplacement());
 
         // Remove the unneeded operands.
