@@ -309,7 +309,7 @@ struct GlobalTypeOptimization : public Pass {
         }
 
         // Go over the fields only defined in us, and not in any super.
-        for (Index i = numSuperFields; i < fields.size(); i++) {
+        for (Index i = numSuperFields; i < fields.size(); ++i) {
           if (removableIndexes.count(i)) {
             indexesAfterRemoval[i] = RemovedField;
           } else {
