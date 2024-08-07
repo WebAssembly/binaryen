@@ -885,8 +885,8 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   Module& wasm;
 
   // The module element definitions we are parsing in this phase.
+  std::vector<DefPos> recTypeDefs;
   std::vector<DefPos> typeDefs;
-  std::vector<DefPos> subtypeDefs;
   std::vector<DefPos> funcDefs;
   std::vector<DefPos> tableDefs;
   std::vector<DefPos> memoryDefs;
@@ -939,15 +939,15 @@ struct ParseDeclsCtx : NullTypeParserCtx, NullInstrParserCtx {
   void setOpen() {}
   void setShared() {}
   Result<> addSubtype(HeapTypeT) { return Ok{}; }
-  void finishSubtype(Name name, Index pos) {
+  void finishTypeDef(Name name, Index pos) {
     // TODO: type annotations
-    subtypeDefs.push_back({name, pos, Index(subtypeDefs.size()), {}});
+    typeDefs.push_back({name, pos, Index(typeDefs.size()), {}});
   }
   size_t getRecGroupStartIndex() { return 0; }
   void addRecGroup(Index, size_t) {}
-  void finishDeftype(Index pos) {
+  void finishRectype(Index pos) {
     // TODO: type annotations
-    typeDefs.push_back({{}, pos, Index(typeDefs.size()), {}});
+    recTypeDefs.push_back({{}, pos, Index(recTypeDefs.size()), {}});
   }
 
   Limits makeLimits(uint64_t n, std::optional<uint64_t> m) {
@@ -1115,7 +1115,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
     return Ok{};
   }
 
-  void finishSubtype(Name name, Index pos) { names[index++].name = name; }
+  void finishTypeDef(Name name, Index pos) { names[index++].name = name; }
 
   size_t getRecGroupStartIndex() { return index; }
 
@@ -1123,7 +1123,7 @@ struct ParseTypeDefsCtx : TypeParserCtx<ParseTypeDefsCtx> {
     builder.createRecGroup(start, len);
   }
 
-  void finishDeftype(Index) {}
+  void finishRectype(Index) {}
 };
 
 // Phase 3: Parse type uses to find implicitly defined types.
