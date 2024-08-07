@@ -248,9 +248,7 @@ struct GlobalTypeOptimization : public Pass {
         //  type A     = { y: f64 };
         //  type B : A = { y: f64, x: i32, z: v128 };
         //
-        auto& indexesAfterRemoval = indexesAfterRemovals[type];
-        assert(indexesAfterRemoval.empty());
-        indexesAfterRemoval.resize(fields.size());
+        std::vector<Index> indexesAfterRemoval(fields.size());
 
         // The next new index to use.
         Index next = 0;
@@ -316,6 +314,14 @@ struct GlobalTypeOptimization : public Pass {
           } else {
             indexesAfterRemoval[i] = RemovedField;
           }
+        }
+
+        // Only store the new indexes we computed if we found something
+        // interesting. We might not, if e.g. our parent removes fields and we
+        // add them back in the exact order we started with. In such cases,
+        // avoid wasting memory and also time later.
+        if (indexesAfterRemoval != makeIdentity(indexesAfterRemoval.size())) {
+          indexesAfterRemovals[type] = indexesAfterRemoval;
         }
       }
     }
@@ -449,9 +455,14 @@ struct GlobalTypeOptimization : public Pass {
             removed++;
           }
         }
-        operands.resize(operands.size() - removed);
-        // We should only get here if we did actual work.
-        assert(removed > 0);
+        if (removed) {
+          operands.resize(operands.size() - removed);
+        } else {
+          // If we didn't remove anything then we must have reordered (or else
+          // we have done pointless work).
+          assert(indexesAfterRemoval !=
+                 makeIdentity(indexesAfterRemoval.size()));
+        }
       }
 
       void visitStructSet(StructSet* curr) {

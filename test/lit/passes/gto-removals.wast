@@ -1352,3 +1352,56 @@
     )
   )
 )
+
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $A (sub (struct)))
+    (type $A (sub (struct (field i32))))
+    ;; CHECK:       (type $B (sub $A (struct (field i32) (field f64))))
+    (type $B (sub $A (struct (field i32) (field f64))))
+  )
+
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $x (ref null $B))
+  ;; CHECK-NEXT:  (local.set $x
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (i32.const 42)
+  ;; CHECK-NEXT:    (f64.const 3.14159)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 0
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.get $B 1
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (local $x (ref null $B))
+    ;; We can remove everything from $A, but nothing from $B. That $A changes
+    ;; entirely, and $B changes not at all, should not cause any errors.
+    (local.set $x
+      (struct.new $B
+        (i32.const 42)
+        (f64.const 3.14159)
+      )
+    )
+    (drop
+      (struct.get $B 0
+        (local.get $x)
+      )
+    )
+    (drop
+      (struct.get $B 1
+        (local.get $x)
+      )
+    )
+  )
+)
