@@ -281,14 +281,14 @@ struct GlobalTypeOptimization : public Pass {
           for (Index i = 0; i < superIndexes.size(); ++i) {
             auto superIndex = superIndexes[i];
             if (superIndex == RemovedField) {
-              if (!removableIndexes.count(i)) {
+              if (removableIndexes.count(i)) {
+                // This was removed in the super, and in us as well.
+                indexesAfterRemoval[i] = RemovedField;
+              } else {
                 // This was removed in the super, but we actually need it. It
                 // must appear after all other super fields, when we get to the
                 // proper index for that, later. That is, we are reordering.
                 keptFieldsNotInSuper.push_back(i);
-              } else {
-                // This was removed in the super, and in us as well.
-                indexesAfterRemoval[i] = RemovedField;
               }
             } else {
               // The super kept this field, so we must keep it as well.
@@ -310,10 +310,10 @@ struct GlobalTypeOptimization : public Pass {
 
         // Go over the fields only defined in us, and not in any super.
         for (Index i = numSuperFields; i < fields.size(); i++) {
-          if (!removableIndexes.count(i)) {
-            indexesAfterRemoval[i] = next++;
-          } else {
+          if (removableIndexes.count(i)) {
             indexesAfterRemoval[i] = RemovedField;
+          } else {
+            indexesAfterRemoval[i] = next++;
           }
         }
 
