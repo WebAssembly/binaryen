@@ -203,7 +203,7 @@ struct GlobalTypeOptimization : public Pass {
       for (Index i = 0; i < fields.size(); i++) {
         // If there is no read whatsoever, in either subs or supers, then we can
         // remove the field. That is so even if there are writes (it would be a
-        // pointless"write-only-field").
+        // pointless "write-only field").
         auto hasNoReadsAnywhere = !subSuper[i].hasRead;
 
         // Check for reads or writes in ourselves and our supers. If there are
