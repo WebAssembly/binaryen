@@ -2038,13 +2038,11 @@ public:
       return !(*this == other);
     }
     bool operator<(const DebugLocation& other) const {
-      return fileIndex != other.fileIndex
-               ? fileIndex < other.fileIndex
-               : lineNumber != other.lineNumber
-                   ? lineNumber < other.lineNumber
-                   : columnNumber != other.columnNumber
-                       ? columnNumber < other.columnNumber
-                       : nameIndex < other.nameIndex;
+      return fileIndex != other.fileIndex     ? fileIndex < other.fileIndex
+             : lineNumber != other.lineNumber ? lineNumber < other.lineNumber
+             : columnNumber != other.columnNumber
+               ? columnNumber < other.columnNumber
+               : nameIndex < other.nameIndex;
     }
   };
   // One can explicitly set the debug location of an expression to

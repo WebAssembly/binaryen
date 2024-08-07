@@ -1261,14 +1261,12 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
       writeBase64VLQ(*sourceMap, int32_t(loc->lineNumber - lastLineNumber));
       lastLineNumber = loc->lineNumber;
 
-      writeBase64VLQ(*sourceMap,
-                     int32_t(loc->columnNumber - lastColumnNumber));
+      writeBase64VLQ(*sourceMap, int32_t(loc->columnNumber - lastColumnNumber));
       lastColumnNumber = loc->columnNumber;
 
       if (loc->nameIndex) {
-          writeBase64VLQ(*sourceMap,
-                         int32_t(*loc->nameIndex - lastNameIndex));
-          lastNameIndex = *loc->nameIndex;
+        writeBase64VLQ(*sourceMap, int32_t(*loc->nameIndex - lastNameIndex));
+        lastNameIndex = *loc->nameIndex;
       }
     }
   }
@@ -2966,7 +2964,7 @@ void WasmBinaryReader::readSourceMapHeader() {
     std::optional<BinaryLocation> nameIndex = std::nullopt;
     peek = sourceMap->peek();
     if (!(peek == ',' || peek == '\"')) {
-        nameIndex = readBase64VLQ(*sourceMap);
+      nameIndex = readBase64VLQ(*sourceMap);
     }
     nextDebugLocation = {fileIndex, lineNumber, columnNumber, nameIndex};
     nextDebugLocationHasDebugInfo = true;
@@ -3026,7 +3024,7 @@ void WasmBinaryReader::readNextDebugLocation() {
     std::optional<BinaryLocation> nameIndex = std::nullopt;
     peek = sourceMap->peek();
     if (!(peek == ',' || peek == '\"')) {
-        nameIndex = readBase64VLQ(*sourceMap);
+      nameIndex = readBase64VLQ(*sourceMap);
     }
 
     nextDebugLocation = {fileIndex, lineNumber, columnNumber, nameIndex};
