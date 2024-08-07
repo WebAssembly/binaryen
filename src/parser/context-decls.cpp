@@ -196,7 +196,8 @@ ParseDeclsCtx::addGlobalDecl(Index pos, Name name, ImportNames* importNames) {
     }
     g->setExplicitName(name);
   } else {
-    name = (importNames ? "gimport$" : "") + std::to_string(globalCounter++);
+    name =
+      (importNames ? "gimport$" : "global$") + std::to_string(globalCounter++);
     name = Names::getValidGlobalName(wasm, name);
     g->name = name;
   }
@@ -276,7 +277,7 @@ ParseDeclsCtx::addTagDecl(Index pos, Name name, ImportNames* importNames) {
     }
     t->setExplicitName(name);
   } else {
-    name = (importNames ? "timport$" : "") + std::to_string(tagCounter++);
+    name = (importNames ? "eimport$" : "tag$") + std::to_string(tagCounter++);
     name = Names::getValidTagName(wasm, name);
     t->name = name;
   }

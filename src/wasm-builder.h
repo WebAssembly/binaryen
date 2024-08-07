@@ -1234,7 +1234,7 @@ public:
       // TODO: Use wtf16.view() once we have C++20.
       return makeStringConst(wtf16.str());
     }
-    if (type.isRef() && type.getHeapType() == HeapType::ext) {
+    if (type.isRef() && type.getHeapType().isMaybeShared(HeapType::ext)) {
       return makeRefAs(ExternConvertAny,
                        makeConstantExpression(value.internalize()));
     }

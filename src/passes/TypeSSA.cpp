@@ -111,6 +111,7 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
           builder[i].subTypeOf(*super);
         }
         builder[i].setOpen(type.isOpen());
+        builder[i].setShared(type.getShared());
       }
 
       // Implement the hash as a struct with "random" fields, and add it.

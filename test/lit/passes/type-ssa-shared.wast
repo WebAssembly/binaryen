@@ -70,3 +70,42 @@
     )
   )
 )
+
+;; We end up needing to do some extra work to ensure types are in a new rec
+;; group, that is, that it does not overlap with an existing rec group. While
+;; doing so we should apply shareability properly and not error. (Specifically,
+;; when we create a new subtype of $A, it must differ from $B.)
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $A (sub (shared (array (mut i32)))))
+  (type $A (sub (shared (array (mut i32)))))
+  ;; CHECK:      (type $B (sub $A (shared (array (mut i32)))))
+  (type $B (sub $A (shared (array (mut i32)))))
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $A_1 (sub $A (shared (array (mut i32)))))
+
+  ;; CHECK:       (type $4 (struct (field (mut i32)) (field (mut i32)) (field (mut f64)) (field (mut f64)) (field (mut i32)) (field (mut f64)) (field (mut f64)) (field (mut i32)) (field (mut i32)) (field (mut i32)) (field (mut i32))))
+
+  ;; CHECK:      (func $func (type $0)
+  ;; CHECK-NEXT:  (local $local (ref $B))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (array.new_default $A_1
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    ;; Keep the type $B alive.
+    (local $local (ref $B))
+
+    ;; Create an $A, which TypeSSA can specialize.
+    (drop
+      (array.new_default $A
+        (i32.const 0)
+      )
+    )
+  )
+)
+
