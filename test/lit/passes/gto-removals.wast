@@ -1257,7 +1257,7 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $func (param $x (ref $B))
-    ;; Use $B to keep it alive, and lead us to process it and $A.
+    ;; Use $B in a param to keep it alive, and lead us to process it and $A.
   )
 )
 
@@ -1279,7 +1279,7 @@
   )
 )
 
-;; As above, but now $B's fields are used
+;; As above, but now $B's fields are used.
 (module
   ;; CHECK:      (type $A (sub (struct)))
   (type $A (sub (struct)))
@@ -1313,7 +1313,7 @@
     ;; CHECK-NEXT:  (type $A (sub (struct (field i32))))
     (type $A (sub (struct (field i32))))
     ;; CHECK:       (type $B (sub $A (struct (field i32))))
-    (type $B (sub $A (struct (field i32) (field i32))))
+    (type $B (sub $A (struct (field i32) (field f64))))
   )
 
   ;; CHECK:       (type $2 (func))
