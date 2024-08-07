@@ -24,6 +24,14 @@
 
 namespace wasm {
 
+// Provides hashing and equality comparison for a sequence of types. The hashing
+// and equality differentiate the top-level structure of each type in the
+// sequence and the equality of referenced heap types that are not in the
+// recursion group, but for references to types that are in the recursion group,
+// it considers only the index of the referenced type within the group. That
+// means that recursion groups containing different types can compare and hash
+// as equal as long as their internal structure and external references are the
+// same.
 struct RecGroupShape {
   const std::vector<HeapType>& types;
 
@@ -35,6 +43,9 @@ struct RecGroupShape {
   }
 };
 
+// Extends `RecGroupShape` with ordered comparison of rec group structures.
+// Requires the user to supply a global ordering on heap types to be able to
+// compare differing references to external types.
 // TODO: This can all be upgraded to use C++20 three-way comparisons.
 struct ComparableRecGroupShape : RecGroupShape {
   std::function<bool(HeapType, HeapType)> less;
