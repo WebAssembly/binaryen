@@ -343,7 +343,6 @@ void TranslateToFuzzReader::setupTables() {
   } else {
     auto tablePtr = builder.makeTable(
       Names::getValidTableName(wasm, "fuzzing_table"), funcref, 0, 0);
-    tablePtr->hasExplicitName = true;
     table = wasm.addTable(std::move(tablePtr));
   }
   funcrefTableName = table->name;

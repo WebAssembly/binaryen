@@ -49,7 +49,7 @@ public:
                                                 Expression* body = nullptr) {
     assert(type.isSignature());
     auto func = std::make_unique<Function>();
-    func->name = name;
+    func->setExplicitName(name);
     func->type = type;
     func->body = body;
     func->vars.swap(vars);
@@ -63,7 +63,7 @@ public:
                                                 Expression* body = nullptr) {
     assert(type.isSignature());
     auto func = std::make_unique<Function>();
-    func->name = name;
+    func->setExplicitName(name);
     func->type = type;
     func->body = body;
     for (size_t i = 0; i < params.size(); ++i) {
@@ -89,7 +89,7 @@ public:
                                           Address max = Table::kMaxSize,
                                           Type indexType = Type::i32) {
     auto table = std::make_unique<Table>();
-    table->name = name;
+    table->setExplicitName(name);
     table->type = type;
     table->indexType = indexType;
     table->initial = initial;
@@ -103,7 +103,7 @@ public:
                      Expression* offset = nullptr,
                      Type type = Type(HeapType::func, Nullable)) {
     auto seg = std::make_unique<ElementSegment>();
-    seg->name = name;
+    seg->setExplicitName(name);
     seg->table = table;
     seg->offset = offset;
     seg->type = type;
@@ -116,7 +116,7 @@ public:
                                             bool shared = false,
                                             Type indexType = Type::i32) {
     auto memory = std::make_unique<Memory>();
-    memory->name = name;
+    memory->setExplicitName(name);
     memory->initial = initial;
     memory->max = max;
     memory->shared = shared;
@@ -132,7 +132,7 @@ public:
                   const char* init = "",
                   Address size = 0) {
     auto seg = std::make_unique<DataSegment>();
-    seg->name = name;
+    seg->setExplicitName(name);
     seg->memory = memory;
     seg->isPassive = isPassive;
     seg->offset = offset;
@@ -155,7 +155,7 @@ public:
   static std::unique_ptr<Global>
   makeGlobal(Name name, Type type, Expression* init, Mutability mutable_) {
     auto glob = std::make_unique<Global>();
-    glob->name = name;
+    glob->setExplicitName(name);
     glob->type = type;
     glob->init = init;
     glob->mutable_ = mutable_ == Mutable;
@@ -164,7 +164,7 @@ public:
 
   static std::unique_ptr<Tag> makeTag(Name name, Signature sig) {
     auto tag = std::make_unique<Tag>();
-    tag->name = name;
+    tag->setExplicitName(name);
     tag->sig = sig;
     return tag;
   }

@@ -701,9 +701,9 @@ void ModuleSplitter::setupTablePatching() {
       auto placeholder = std::make_unique<Function>();
       placeholder->module = config.placeholderNamespace;
       placeholder->base = std::to_string(index);
-      placeholder->name = Names::getValidFunctionName(
+      auto name = Names::getValidFunctionName(
         primary, std::string("placeholder_") + placeholder->base.toString());
-      placeholder->hasExplicitName = true;
+      placeholder->setExplicitName(name);
       placeholder->type = secondaryFunc->type;
       elem = placeholder->name;
       primary.addFunction(std::move(placeholder));
@@ -804,8 +804,7 @@ void ModuleSplitter::shareImportableItems() {
                               Importable& secondaryItem,
                               const std::string& genericExportName,
                               ExternalKind kind) {
-    secondaryItem.name = primaryItem.name;
-    secondaryItem.hasExplicitName = primaryItem.hasExplicitName;
+    secondaryItem.setName(primaryItem.name, primaryItem.hasExplicitName);
     secondaryItem.module = config.importNamespace;
     auto exportIt = exports.find(std::make_pair(kind, primaryItem.name));
     if (exportIt != exports.end()) {

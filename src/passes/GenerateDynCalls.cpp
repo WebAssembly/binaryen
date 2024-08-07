@@ -158,7 +158,6 @@ void GenerateDynCalls::generateDynCallThunk(HeapType funcType) {
   }
   auto f = builder.makeFunction(
     name, std::move(namedParams), Signature(Type(params), sig.results), {});
-  f->hasExplicitName = true;
   Expression* fptr = builder.makeLocalGet(0, table->indexType);
   std::vector<Expression*> args;
   Index i = 0;

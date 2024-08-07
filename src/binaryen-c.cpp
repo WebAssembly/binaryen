@@ -4968,7 +4968,6 @@ BinaryenTableRef BinaryenAddTable(BinaryenModuleRef module,
                                   BinaryenIndex maximum,
                                   BinaryenType tableType) {
   auto table = Builder::makeTable(name, Type(tableType), initial, maximum);
-  table->hasExplicitName = true;
   return ((Module*)module)->addTable(std::move(table));
 }
 void BinaryenRemoveTable(BinaryenModuleRef module, const char* table) {
