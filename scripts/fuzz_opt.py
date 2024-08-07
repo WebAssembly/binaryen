@@ -294,6 +294,8 @@ def init_important_initial_contents():
 
 
 INITIAL_CONTENTS_IGNORE = [
+    # Float16 is still experimental.
+    'f16.wast',
     # not all relaxed SIMD instructions are implemented in the interpreter
     'relaxed-simd.wast',
     # TODO: fuzzer and interpreter support for strings
