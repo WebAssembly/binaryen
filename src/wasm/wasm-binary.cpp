@@ -2961,7 +2961,7 @@ void WasmBinaryReader::readSourceMapHeader() {
   } else {
     uint32_t fileIndex = readBase64VLQ(*sourceMap);
     uint32_t lineNumber =
-        readBase64VLQ(*sourceMap) + 1; // adjust zero-based line number
+      readBase64VLQ(*sourceMap) + 1; // adjust zero-based line number
     uint32_t columnNumber = readBase64VLQ(*sourceMap);
     std::optional<BinaryLocation> nameIndex = std::nullopt;
     peek = sourceMap->peek();
