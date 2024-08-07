@@ -34,7 +34,7 @@ Result<> parseTypeDefs(
   if (auto* err = built.getError()) {
     std::stringstream msg;
     msg << "invalid type: " << err->reason;
-    return ctx.in.err(decls.typeDefs[err->index].pos, msg.str());
+    return ctx.in.err(decls.subtypeDefs[err->index].pos, msg.str());
   }
   types = *built;
   // Record type names on the module and in typeNames.
