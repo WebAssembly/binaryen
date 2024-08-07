@@ -209,8 +209,8 @@ struct GlobalTypeOptimization : public Pass {
         // Check for reads or writes in ourselves and our supers. If there are
         // none, then operations only happen in our strict subtypes, and those
         // subtypes can define the field there, and we don't need it here.
-        auto hasNoReadsOrWritesInSupers = !dataFromSupers[i].hasRead &&
-                                          !dataFromSupers[i].hasWrite;
+        auto hasNoReadsOrWritesInSupers =
+          !dataFromSupers[i].hasRead && !dataFromSupers[i].hasWrite;
 
         if (hasNoReadsAnywhere || hasNoReadsOrWritesInSupers) {
           removableIndexes.insert(i);
