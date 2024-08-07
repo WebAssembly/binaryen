@@ -162,10 +162,10 @@ struct GlobalTypeOptimization : public Pass {
     //    immutable). Note that by making more things immutable we therefore
     //    make it possible to apply more specific subtypes in subtype fields.
     StructUtils::TypeHierarchyPropagator<FieldInfo> propagator(*module);
-    auto subSupers = combinedSetGetInfos;
-    propagator.propagateToSuperAndSubTypes(subSupers);
-    auto subs = std::move(combinedSetGetInfos);
-    propagator.propagateToSubTypes(subs);
+    auto dataFromSubsAndSupersMap = combinedSetGetInfos;
+    propagator.propagateToSuperAndSubTypes(dataFromSubsAndSupersMap);
+    auto dataFromSupersMap = std::move(combinedSetGetInfos);
+    propagator.propagateToSubTypes(dataFromSupersMap);
 
     // Process the propagated info. We look at supertypes first, as the order of
     // fields in a supertype is a constraint on what subtypes can do. That is,
@@ -177,8 +177,8 @@ struct GlobalTypeOptimization : public Pass {
         continue;
       }
       auto& fields = type.getStruct().fields;
-      auto& subSuper = subSupers[type];
-      auto& sub = subs[type];
+      auto& dataFromSubsAndSupers = dataFromSubsAndSupersMap[type];
+      auto& dataFromSupers = dataFromSupersMap[type];
 
       // Process immutability.
       for (Index i = 0; i < fields.size(); i++) {
@@ -187,7 +187,7 @@ struct GlobalTypeOptimization : public Pass {
           continue;
         }
 
-        if (subSuper[i].hasWrite) {
+        if (dataFromSubsAndSupers[i].hasWrite) {
           // A set exists.
           continue;
         }
@@ -204,12 +204,13 @@ struct GlobalTypeOptimization : public Pass {
         // If there is no read whatsoever, in either subs or supers, then we can
         // remove the field. That is so even if there are writes (it would be a
         // pointless "write-only field").
-        auto hasNoReadsAnywhere = !subSuper[i].hasRead;
+        auto hasNoReadsAnywhere = !dataFromSubsAndSupers[i].hasRead;
 
         // Check for reads or writes in ourselves and our supers. If there are
         // none, then operations only happen in our strict subtypes, and those
         // subtypes can define the field there, and we don't need it here.
-        auto hasNoReadsOrWritesInSupers = !sub[i].hasRead && !sub[i].hasWrite;
+        auto hasNoReadsOrWritesInSupers = !dataFromSupers[i].hasRead &&
+                                          !dataFromSupers[i].hasWrite;
 
         if (hasNoReadsAnywhere || hasNoReadsOrWritesInSupers) {
           removableIndexes.insert(i);
