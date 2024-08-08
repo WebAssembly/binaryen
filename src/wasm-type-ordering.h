@@ -68,9 +68,6 @@ struct SupertypesFirstBase
 };
 
 struct SupertypesFirst : SupertypesFirstBase<SupertypesFirst> {
-  template<typename T>
-  SupertypesFirst(const T& types) : SupertypesFirstBase(types) {}
-
   std::optional<HeapType> getDeclaredSuperType(HeapType type) {
     return type.getDeclaredSuperType();
   }
