@@ -1788,7 +1788,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       wasm.debugInfoFileNames.push_back(std::string(file));
     }
     irBuilder.setDebugLocation(
-      Function::DebugLocation({it->second, *line, *col}));
+      Function::DebugLocation({it->second, *line, *col, std::nullopt}));
   }
 
   Result<> makeBlock(Index pos,
