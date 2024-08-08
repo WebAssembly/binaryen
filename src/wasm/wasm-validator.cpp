@@ -2445,6 +2445,27 @@ void FunctionValidator::visitTableCopy(TableCopy* curr) {
     curr->size->type, Type(Type::i32), curr, "table.copy size must be i32");
 }
 
+void FunctionValidator::visitTableCopy(TableCopy* curr) {
+  shouldBeTrue(getModule()->features.hasBulkMemory(),
+               curr,
+               "table.init requires bulk-memory [--enable-bulk-memory]");
+  auto* segment = getModule()->getElementSegment(curr->segment);
+  auto* table = getModule()->getTableOrNull(curr->table);
+  if (shouldBeTrue(!!segment, curr, "table.init segment must exist") &&
+  if (shouldBeTrue(!!table, curr, "table.init table must exist")) {
+    shouldBeSubType(segment->type,
+                    table->type,
+                    curr,
+                    "table.init source must have right type for dest");
+  }
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->dest->type, Type(Type::i32), curr, "table.init dest must be i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->offset->type, Type(Type::i32), curr, "table.init offset must be i32");
+  shouldBeEqualOrFirstIsUnreachable(
+    curr->size->type, Type(Type::i32), curr, "table.init size must be i32");
+}
+
 void FunctionValidator::noteDelegate(Name name, Expression* curr) {
   if (name != DELEGATE_CALLER_TARGET) {
     shouldBeTrue(delegateTargetNames.count(name) != 0,

@@ -499,6 +499,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     // Cannot generalize table types yet.
   }
 
+  void visitTableInit(TableInit* curr) {}
+
   void visitTry(Try* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTryTable(TryTable* curr) { WASM_UNREACHABLE("TODO"); }
   void visitThrow(Throw* curr) { WASM_UNREACHABLE("TODO"); }
