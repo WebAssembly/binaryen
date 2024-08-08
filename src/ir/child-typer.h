@@ -738,7 +738,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
 
   void visitTableInit(TableInit* curr) {
     note(&curr->dest, Type::i32);
-    note(&curr->source, Type::i32);
+    note(&curr->offset, Type::i32);
     note(&curr->size, Type::i32);
   }
 

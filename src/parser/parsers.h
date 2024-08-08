@@ -2074,8 +2074,8 @@ Result<>
 makeTableInit(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   auto table = maybeTableidx(ctx);
   CHECK_ERR(table);
-  auto segment = elemidx(ctx);
-  CHECK_ERR(segment);
+  auto elem = elemidx(ctx);
+  CHECK_ERR(elem);
   return ctx.makeTableInit(pos, annotations, table.getPtr(), *elem);
 }
 
