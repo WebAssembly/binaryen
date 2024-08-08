@@ -5846,6 +5846,30 @@ bool WasmBinaryReader::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = GeSVecI64x2;
       break;
+    case BinaryConsts::F16x8Eq:
+      curr = allocator.alloc<Binary>();
+      curr->op = EqVecF16x8;
+      break;
+    case BinaryConsts::F16x8Ne:
+      curr = allocator.alloc<Binary>();
+      curr->op = NeVecF16x8;
+      break;
+    case BinaryConsts::F16x8Lt:
+      curr = allocator.alloc<Binary>();
+      curr->op = LtVecF16x8;
+      break;
+    case BinaryConsts::F16x8Gt:
+      curr = allocator.alloc<Binary>();
+      curr->op = GtVecF16x8;
+      break;
+    case BinaryConsts::F16x8Le:
+      curr = allocator.alloc<Binary>();
+      curr->op = LeVecF16x8;
+      break;
+    case BinaryConsts::F16x8Ge:
+      curr = allocator.alloc<Binary>();
+      curr->op = GeVecF16x8;
+      break;
     case BinaryConsts::F32x4Eq:
       curr = allocator.alloc<Binary>();
       curr->op = EqVecF32x4;

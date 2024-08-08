@@ -1689,6 +1689,24 @@ struct PrintExpressionContents
       case GeSVecI64x2:
         o << "i64x2.ge_s";
         break;
+      case EqVecF16x8:
+        o << "f16x8.eq";
+        break;
+      case NeVecF16x8:
+        o << "f16x8.ne";
+        break;
+      case LtVecF16x8:
+        o << "f16x8.lt";
+        break;
+      case GtVecF16x8:
+        o << "f16x8.gt";
+        break;
+      case LeVecF16x8:
+        o << "f16x8.le";
+        break;
+      case GeVecF16x8:
+        o << "f16x8.ge";
+        break;
       case EqVecF32x4:
         o << "f32x4.eq";
         break;

@@ -558,6 +558,12 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       case LeSVecI64x2:
       case GtSVecI64x2:
       case GeSVecI64x2:
+      case EqVecF16x8:
+      case NeVecF16x8:
+      case LtVecF16x8:
+      case LeVecF16x8:
+      case GtVecF16x8:
+      case GeVecF16x8:
       case EqVecF32x4:
       case NeVecF32x4:
       case LtVecF32x4:

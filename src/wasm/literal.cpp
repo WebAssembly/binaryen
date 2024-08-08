@@ -2209,6 +2209,24 @@ Literal Literal::geSI64x2(const Literal& other) const {
   return compare<2, &Literal::getLanesI64x2, &Literal::geS, int64_t>(*this,
                                                                      other);
 }
+Literal Literal::eqF16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesF16x8, &Literal::eq>(*this, other);
+}
+Literal Literal::neF16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesF16x8, &Literal::ne>(*this, other);
+}
+Literal Literal::ltF16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesF16x8, &Literal::lt>(*this, other);
+}
+Literal Literal::gtF16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesF16x8, &Literal::gt>(*this, other);
+}
+Literal Literal::leF16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesF16x8, &Literal::le>(*this, other);
+}
+Literal Literal::geF16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesF16x8, &Literal::ge>(*this, other);
+}
 Literal Literal::eqF32x4(const Literal& other) const {
   return compare<4, &Literal::getLanesF32x4, &Literal::eq>(*this, other);
 }

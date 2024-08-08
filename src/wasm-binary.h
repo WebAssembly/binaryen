@@ -1057,6 +1057,12 @@ enum ASTNodes {
   F16x8Splat = 0x120,
   F16x8ExtractLane = 0x121,
   F16x8ReplaceLane = 0x122,
+  F16x8Eq = 0x137,
+  F16x8Ne = 0x138,
+  F16x8Lt = 0x139,
+  F16x8Gt = 0x13a,
+  F16x8Le = 0x13b,
+  F16x8Ge = 0x13c,
 
   // bulk memory opcodes
 

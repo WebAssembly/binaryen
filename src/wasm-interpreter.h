@@ -864,6 +864,18 @@ public:
         return left.leSI64x2(right);
       case GeSVecI64x2:
         return left.geSI64x2(right);
+      case EqVecF16x8:
+        return left.eqF16x8(right);
+      case NeVecF16x8:
+        return left.neF16x8(right);
+      case LtVecF16x8:
+        return left.ltF16x8(right);
+      case GtVecF16x8:
+        return left.gtF16x8(right);
+      case LeVecF16x8:
+        return left.leF16x8(right);
+      case GeVecF16x8:
+        return left.geF16x8(right);
       case EqVecF32x4:
         return left.eqF32x4(right);
       case NeVecF32x4:
