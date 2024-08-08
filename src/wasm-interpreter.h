@@ -2814,23 +2814,24 @@ private:
       }
     }
 
+    Const zero;
+    zero.value = Literal(uint32_t(0));
+    zero.finalize();
+
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
-      Address offset =
-        (uint32_t)self()->visit(segment->offset).getSingleValue().geti32();
+      Const size;
+      size.value = Literal(uint32_t(segment->data.size()));
+      size.finalize();
 
-      Table* table = wasm.getTable(segment->table);
-      ExternalInterface* extInterface = externalInterface;
-      Name tableName = segment->table;
-      if (table->imported()) {
-        auto inst = linkedInstances.at(table->module);
-        extInterface = inst->externalInterface;
-        tableName = inst->wasm.getExport(table->base)->value;
-      }
+      TableInit init;
+      init.table = segment->table;
+      init.segment = segment->name;
+      init.dest = segment->offset;
+      init.offset = &zero;
+      init.size = &size;
+      init.finalize();
 
-      for (Index i = 0; i < segment->data.size(); ++i) {
-        Flow ret = self()->visit(segment->data[i]);
-        extInterface->tableStore(tableName, offset + i, ret.getSingleValue());
-      }
+      self()->visit(&init);
 
       droppedElementSegments.insert(segment->name);
     });
@@ -2858,9 +2859,10 @@ private:
 
   void initializeMemoryContents() {
     initializeMemorySizes();
-    Const offset;
-    offset.value = Literal(uint32_t(0));
-    offset.finalize();
+
+    Const zero;
+    zero.value = Literal(uint32_t(0));
+    zero.finalize();
 
     // apply active memory segments
     for (size_t i = 0, e = wasm.dataSegments.size(); i < e; ++i) {
@@ -2876,7 +2878,7 @@ private:
       init.memory = segment->memory;
       init.segment = segment->name;
       init.dest = segment->offset;
-      init.offset = &offset;
+      init.offset = &zero;
       init.size = &size;
       init.finalize();
 
