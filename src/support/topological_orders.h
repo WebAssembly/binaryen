@@ -28,35 +28,29 @@ namespace wasm {
 // https://en.wikipedia.org/wiki/Topological_sorting) that iteratively makes all
 // possible choices for each position of the output order.
 struct TopologicalOrders {
+  using value_type = const std::vector<size_t>;
+  using difference_type = std::ptrdiff_t;
+  using reference = const std::vector<size_t>&;
+  using pointer = const std::vector<size_t>*;
+  using iterator_category = std::input_iterator_tag;
+
   // Takes an adjacency list, where the list for each vertex is a sorted list of
   // the indices of its children, which will appear after it in the order.
   TopologicalOrders(const std::vector<std::vector<size_t>>& graph);
 
-  struct Iterator {
-    using value_type = const std::vector<size_t>;
-    using difference_type = std::ptrdiff_t;
-    using reference = const std::vector<size_t>&;
-    using pointer = const std::vector<size_t>*;
-    using iterator_category = std::input_iterator_tag;
+  TopologicalOrders begin() { return TopologicalOrders(graph); }
+  TopologicalOrders end() { return TopologicalOrders({}); }
 
-    TopologicalOrders* parent;
-
-    bool isEnd() const { return !parent || parent->selectors.empty(); }
-    bool operator==(const Iterator& other) const {
-      return isEnd() == other.isEnd();
-    }
-    bool operator!=(const Iterator& other) const { return !(*this == other); }
-    const std::vector<size_t>& operator*() { return parent->buf; }
-    const std::vector<size_t>* operator->() { return &parent->buf; }
-    Iterator& operator++() {
-      parent->advance();
-      return *this;
-    }
-    Iterator operator++(int) { return ++(*this); }
-  };
-
-  Iterator begin() { return {this}; }
-  Iterator end() { return {nullptr}; }
+  bool operator==(const TopologicalOrders& other) const {
+    return selectors.empty() == other.selectors.empty();
+  }
+  bool operator!=(const TopologicalOrders& other) const {
+    return !(*this == other);
+  }
+  const std::vector<size_t>& operator*() { return buf; }
+  const std::vector<size_t>* operator->() { return &buf; }
+  TopologicalOrders& operator++();
+  TopologicalOrders operator++(int) { return ++(*this); }
 
 private:
   // The input graph given as an adjacency list with edges from vertices to
@@ -95,8 +89,6 @@ private:
   // A stack of selectors, one for each vertex in a complete topological order.
   // Empty if we've already seen every possible ordering.
   std::vector<Selector> selectors;
-
-  void advance();
 };
 
 } // namespace wasm
