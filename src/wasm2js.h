@@ -2242,13 +2242,8 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
                                     visit(curr->size, EXPRESSION_RESULT));
     }
     Ref visitTableInit(TableInit* curr) {
-      ABI::wasm2js::ensureHelpers(module, ABI::wasm2js::TABLE_INIT);
-      return ValueBuilder::makeCall(
-        ABI::wasm2js::TABLE_INIT,
-        ValueBuilder::makeNum(parent->getElemIndex(curr->segment)),
-        visit(curr->dest, EXPRESSION_RESULT),
-        visit(curr->offset, EXPRESSION_RESULT),
-        visit(curr->size, EXPRESSION_RESULT));
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
     }
     Ref visitTry(Try* curr) {
       unimplemented(curr);
@@ -3052,13 +3047,6 @@ void Wasm2JSGlue::emitSpecialSupport() {
     for (var i = 0; i < size; i++) {
       FUNCTION_TABLE[dest + i] = FUNCTION_TABLE[source + i];
     }
-  }
-      )";
-    } else if (import->base == ABI::wasm2js::TABLE_INIT) {
-      out << R"(
-  function wasm2js_table_init(segment, dest, offset, size) {
-    // TODO: traps on invalid things
-    FUNCTION_TABLE.set(elementSegments[segment].subarray(offset, offset + size), dest);
   }
       )";
     } else if (import->base == ABI::wasm2js::DATA_DROP) {

@@ -3262,20 +3262,21 @@ public:
     NOTE_EVAL1(offset);
     NOTE_EVAL1(size);
 
-    auto* segment = wasm.getDataSegment(curr->segment);
+    auto* segment = wasm.getElementSegment(curr->segment);
 
     Address destVal(dest.getSingleValue().getUnsigned());
     Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
     Address sizeVal(uint32_t(size.getSingleValue().geti32()));
 
-    if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
+    if (offsetVal + sizeVal > 0 &&
+        droppedElementSegments.count(curr->segment)) {
       trap("out of bounds segment access in table.init");
     }
     if ((uint64_t)offsetVal + sizeVal > segment->data.size()) {
       trap("out of bounds segment access in table.init");
     }
     auto info = getTableInstanceInfo(curr->table);
-    auto tableSize = info.instance->getTableSize(info.name);
+    auto tableSize = info.interface()->tableSize(info.name);
     if (destVal + sizeVal > tableSize) {
       trap("out of bounds table access in table.init");
     }

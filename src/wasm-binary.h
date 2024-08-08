@@ -1746,6 +1746,7 @@ public:
   bool maybeVisitTableGrow(Expression*& out, uint32_t code);
   bool maybeVisitTableFill(Expression*& out, uint32_t code);
   bool maybeVisitTableCopy(Expression*& out, uint32_t code);
+  bool maybeVisitTableInit(Expression*& out, uint32_t code);
   bool maybeVisitRefI31(Expression*& out, uint32_t code);
   bool maybeVisitI31Get(Expression*& out, uint32_t code);
   bool maybeVisitRefTest(Expression*& out, uint32_t code);

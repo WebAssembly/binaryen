@@ -2073,13 +2073,9 @@ template<typename Ctx>
 Result<>
 makeTableInit(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   auto table = maybeTableidx(ctx);
-  if (table.getErr()) {
-    return retry();
-  }
-  auto elem = elemidx(ctx);
-  if (elem.getErr()) {
-    return retry();
-  }
+  CHECK_ERR(table);
+  auto segment = elemidx(ctx);
+  CHECK_ERR(segment);
   return ctx.makeTableInit(pos, annotations, table.getPtr(), *elem);
 }
 
