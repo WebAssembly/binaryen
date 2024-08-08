@@ -363,7 +363,8 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   }
 
   Index tableSize(Name tableName) override {
-    throw FailToEvalException("table size");
+    // See callTable above, we assume the table is not modified FIXME
+    return wasm->getTableOrNull(tableName)->initial;
   }
 
   Literal tableLoad(Name tableName, Index index) override {
