@@ -2439,11 +2439,11 @@ void FunctionValidator::visitTableCopy(TableCopy* curr) {
                     "table.copy source must have right type for dest");
   }
   shouldBeEqualOrFirstIsUnreachable(
-    curr->dest->type, Type(Type::i32), curr, "table.copy dest must be i32");
+    curr->dest->type, destTable->indexType, curr, "table.copy dest must be valid");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->source->type, Type(Type::i32), curr, "table.copy source must be i32");
+    curr->source->type, sourceTable->indexType, curr, "table.copy source must be valid");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->size->type, Type(Type::i32), curr, "table.copy size must be i32");
+    curr->size->type, destTable->indexType, curr, "table.copy size must be valid");
 }
 
 void FunctionValidator::visitTableInit(TableInit* curr) {
@@ -2460,11 +2460,11 @@ void FunctionValidator::visitTableInit(TableInit* curr) {
                     "table.init source must have right type for dest");
   }
   shouldBeEqualOrFirstIsUnreachable(
-    curr->dest->type, Type(Type::i32), curr, "table.init dest must be i32");
+    curr->dest->type, table->indexType, curr, "table.init dest must be valid");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->offset->type, Type(Type::i32), curr, "table.init offset must be i32");
+    curr->offset->type, table->indexType, curr, "table.init offset must be valid");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->size->type, Type(Type::i32), curr, "table.init size must be i32");
+    curr->size->type, table->indexType, curr, "table.init size must be valid");
 }
 
 void FunctionValidator::noteDelegate(Name name, Expression* curr) {
