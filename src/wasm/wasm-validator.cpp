@@ -2438,12 +2438,18 @@ void FunctionValidator::visitTableCopy(TableCopy* curr) {
                     curr,
                     "table.copy source must have right type for dest");
   }
-  shouldBeEqualOrFirstIsUnreachable(
-    curr->dest->type, destTable->indexType, curr, "table.copy dest must be valid");
-  shouldBeEqualOrFirstIsUnreachable(
-    curr->source->type, sourceTable->indexType, curr, "table.copy source must be valid");
-  shouldBeEqualOrFirstIsUnreachable(
-    curr->size->type, destTable->indexType, curr, "table.copy size must be valid");
+  shouldBeEqualOrFirstIsUnreachable(curr->dest->type,
+                                    destTable->indexType,
+                                    curr,
+                                    "table.copy dest must be valid");
+  shouldBeEqualOrFirstIsUnreachable(curr->source->type,
+                                    sourceTable->indexType,
+                                    curr,
+                                    "table.copy source must be valid");
+  shouldBeEqualOrFirstIsUnreachable(curr->size->type,
+                                    destTable->indexType,
+                                    curr,
+                                    "table.copy size must be valid");
 }
 
 void FunctionValidator::visitTableInit(TableInit* curr) {
@@ -2461,8 +2467,10 @@ void FunctionValidator::visitTableInit(TableInit* curr) {
   }
   shouldBeEqualOrFirstIsUnreachable(
     curr->dest->type, table->indexType, curr, "table.init dest must be valid");
-  shouldBeEqualOrFirstIsUnreachable(
-    curr->offset->type, table->indexType, curr, "table.init offset must be valid");
+  shouldBeEqualOrFirstIsUnreachable(curr->offset->type,
+                                    table->indexType,
+                                    curr,
+                                    "table.init offset must be valid");
   shouldBeEqualOrFirstIsUnreachable(
     curr->size->type, table->indexType, curr, "table.init size must be valid");
 }
