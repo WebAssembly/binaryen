@@ -775,6 +775,20 @@ public:
     ret->finalize();
     return ret;
   }
+  TableInit* makeTableInit(Name segment,
+                           Expression* dest,
+                           Expression* offset,
+                           Expression* size,
+                           Name table) {
+    auto* ret = wasm.allocator.alloc<TableInit>();
+    ret->segment = segment;
+    ret->dest = dest;
+    ret->offset = offset;
+    ret->size = size;
+    ret->table = table;
+    ret->finalize();
+    return ret;
+  }
 
 private:
   Try* makeTry(Name name,

@@ -1405,6 +1405,7 @@ public:
   Flow visitTableGrow(TableGrow* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableFill(TableFill* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableCopy(TableCopy* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableInit(TableInit* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTryTable(TryTable* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
@@ -2342,6 +2343,10 @@ public:
     NOTE_ENTER("TableCopy");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitTableInit(TableInit* curr) {
+    NOTE_ENTER("TableInit");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
     return Flow(NONCONSTANT_FLOW);
@@ -2809,23 +2814,24 @@ private:
       }
     }
 
+    Const zero;
+    zero.value = Literal(uint32_t(0));
+    zero.finalize();
+
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
-      Address offset =
-        (uint32_t)self()->visit(segment->offset).getSingleValue().geti32();
+      Const size;
+      size.value = Literal(uint32_t(segment->data.size()));
+      size.finalize();
 
-      Table* table = wasm.getTable(segment->table);
-      ExternalInterface* extInterface = externalInterface;
-      Name tableName = segment->table;
-      if (table->imported()) {
-        auto inst = linkedInstances.at(table->module);
-        extInterface = inst->externalInterface;
-        tableName = inst->wasm.getExport(table->base)->value;
-      }
+      TableInit init;
+      init.table = segment->table;
+      init.segment = segment->name;
+      init.dest = segment->offset;
+      init.offset = &zero;
+      init.size = &size;
+      init.finalize();
 
-      for (Index i = 0; i < segment->data.size(); ++i) {
-        Flow ret = self()->visit(segment->data[i]);
-        extInterface->tableStore(tableName, offset + i, ret.getSingleValue());
-      }
+      self()->visit(&init);
 
       droppedElementSegments.insert(segment->name);
     });
@@ -2853,9 +2859,10 @@ private:
 
   void initializeMemoryContents() {
     initializeMemorySizes();
-    Const offset;
-    offset.value = Literal(uint32_t(0));
-    offset.finalize();
+
+    Const zero;
+    zero.value = Literal(uint32_t(0));
+    zero.finalize();
 
     // apply active memory segments
     for (size_t i = 0, e = wasm.dataSegments.size(); i < e; ++i) {
@@ -2871,7 +2878,7 @@ private:
       init.memory = segment->memory;
       init.segment = segment->name;
       init.dest = segment->offset;
-      init.offset = &offset;
+      init.offset = &zero;
       init.size = &size;
       init.finalize();
 
@@ -3235,6 +3242,49 @@ public:
         destInfo.name,
         destVal + i,
         sourceInfo.interface()->tableLoad(sourceInfo.name, sourceVal + i));
+    }
+    return {};
+  }
+
+  Flow visitTableInit(TableInit* curr) {
+    NOTE_ENTER("TableInit");
+    Flow dest = self()->visit(curr->dest);
+    if (dest.breaking()) {
+      return dest;
+    }
+    Flow offset = self()->visit(curr->offset);
+    if (offset.breaking()) {
+      return offset;
+    }
+    Flow size = self()->visit(curr->size);
+    if (size.breaking()) {
+      return size;
+    }
+    NOTE_EVAL1(dest);
+    NOTE_EVAL1(offset);
+    NOTE_EVAL1(size);
+
+    auto* segment = wasm.getElementSegment(curr->segment);
+
+    Address destVal(dest.getSingleValue().getUnsigned());
+    Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
+    Address sizeVal(uint32_t(size.getSingleValue().geti32()));
+
+    if (offsetVal + sizeVal > 0 &&
+        droppedElementSegments.count(curr->segment)) {
+      trap("out of bounds segment access in table.init");
+    }
+    if ((uint64_t)offsetVal + sizeVal > segment->data.size()) {
+      trap("out of bounds segment access in table.init");
+    }
+    auto info = getTableInstanceInfo(curr->table);
+    auto tableSize = info.interface()->tableSize(info.name);
+    if (destVal + sizeVal > tableSize) {
+      trap("out of bounds table access in table.init");
+    }
+    for (size_t i = 0; i < sizeVal; ++i) {
+      auto value = self()->visit(segment->data[offsetVal + i]).getSingleValue();
+      info.interface()->tableStore(info.name, destVal + i, value);
     }
     return {};
   }

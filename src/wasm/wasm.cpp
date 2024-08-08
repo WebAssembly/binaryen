@@ -874,6 +874,14 @@ void TableCopy::finalize() {
   }
 }
 
+void TableInit::finalize() {
+  type = Type::none;
+  if (dest->type == Type::unreachable || offset->type == Type::unreachable ||
+      size->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
 void Try::finalize(std::optional<Type> type_) {
   if (type_) {
     type = *type_;

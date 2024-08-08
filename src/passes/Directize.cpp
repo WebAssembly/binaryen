@@ -266,6 +266,9 @@ struct Directize : public Pass {
           void visitTableCopy(TableCopy* curr) {
             tablesWithSet.insert(curr->destTable);
           }
+          void visitTableInit(TableInit* curr) {
+            tablesWithSet.insert(curr->table);
+          }
         };
 
         Finder(tablesWithSet).walkFunction(func);

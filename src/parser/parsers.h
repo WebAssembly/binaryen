@@ -206,6 +206,8 @@ Result<> makeTableFill(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeTableCopy(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
+Result<> makeTableInit(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
 Result<> makeThrow(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeRethrow(Ctx&, Index, const std::vector<Annotation>&);
@@ -2065,6 +2067,16 @@ makeTableCopy(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   }
   return ctx.makeTableCopy(
     pos, annotations, destTable.getPtr(), srcTable.getPtr());
+}
+
+template<typename Ctx>
+Result<>
+makeTableInit(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
+  auto table = maybeTableidx(ctx);
+  CHECK_ERR(table);
+  auto elem = elemidx(ctx);
+  CHECK_ERR(elem);
+  return ctx.makeTableInit(pos, annotations, table.getPtr(), *elem);
 }
 
 template<typename Ctx>
