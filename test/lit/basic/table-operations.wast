@@ -206,14 +206,14 @@
   )
 
   ;; CHECK-TEXT:      (func $table-init (type $1) (param $dest i32) (param $offset i32) (param $size i32)
-  ;; CHECK-TEXT-NEXT:  (table.init $table-1
+  ;; CHECK-TEXT-NEXT:  (table.init $table-1 $elem
   ;; CHECK-TEXT-NEXT:   (local.get $dest)
   ;; CHECK-TEXT-NEXT:   (local.get $offset)
   ;; CHECK-TEXT-NEXT:   (local.get $size)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $table-init (type $1) (param $dest i32) (param $offset i32) (param $size i32)
-  ;; CHECK-BIN-NEXT:  (table.init $table-1
+  ;; CHECK-BIN-NEXT:  (table.init $table-1 $elem
   ;; CHECK-BIN-NEXT:   (local.get $dest)
   ;; CHECK-BIN-NEXT:   (local.get $offset)
   ;; CHECK-BIN-NEXT:   (local.get $size)
@@ -304,7 +304,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $7 (type $1) (param $0 i32) (param $1 i32) (param $2 i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (table.init $0
+;; CHECK-BIN-NODEBUG-NEXT:  (table.init $0 $2
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)

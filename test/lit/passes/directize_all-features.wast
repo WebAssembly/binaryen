@@ -1650,14 +1650,14 @@
  )
 
  ;; CHECK:      (func $init (type $1)
- ;; CHECK-NEXT:  (table.init $table
+ ;; CHECK-NEXT:  (table.init $table $elem
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; IMMUT:      (func $init (type $1)
- ;; IMMUT-NEXT:  (table.init $table
+ ;; IMMUT-NEXT:  (table.init $table $elem
  ;; IMMUT-NEXT:   (i32.const 0)
  ;; IMMUT-NEXT:   (i32.const 0)
  ;; IMMUT-NEXT:   (i32.const 1)

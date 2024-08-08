@@ -69,7 +69,7 @@
   )
 
   ;; CHECK:      (func $test_table_init
-  ;; CHECK-NEXT:  (table.init $t64
+  ;; CHECK-NEXT:  (table.init $t64 $elem64
   ;; CHECK-NEXT:   (i32.wrap_i64
   ;; CHECK-NEXT:    (i64.const 0)
   ;; CHECK-NEXT:   )

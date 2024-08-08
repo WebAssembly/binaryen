@@ -834,7 +834,7 @@
  (elem $sub (ref null $sub))
 
  ;; CHECK:      (func $table-copy (type $0)
- ;; CHECK-NEXT:  (table.init $super
+ ;; CHECK-NEXT:  (table.init $super $sub
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:   (i32.const 0)
