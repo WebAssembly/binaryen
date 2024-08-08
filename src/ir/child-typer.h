@@ -228,6 +228,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       case ReplaceLaneVecI64x2:
         note(&curr->value, Type::i64);
         break;
+      case ReplaceLaneVecF16x8:
       case ReplaceLaneVecF32x4:
         note(&curr->value, Type::f32);
         break;
@@ -337,6 +338,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       case TruncSatUFloat32ToInt64:
       case ReinterpretFloat32:
       case PromoteFloat32:
+      case SplatVecF16x8:
       case SplatVecF32x4:
         note(&curr->value, Type::f32);
         break;

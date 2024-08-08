@@ -386,6 +386,7 @@ void SIMDExtract::finalize() {
     case ExtractLaneVecI64x2:
       type = Type::i64;
       break;
+    case ExtractLaneVecF16x8:
     case ExtractLaneVecF32x4:
       type = Type::f32;
       break;
@@ -636,6 +637,7 @@ void Unary::finalize() {
     case SplatVecI16x8:
     case SplatVecI32x4:
     case SplatVecI64x2:
+    case SplatVecF16x8:
     case SplatVecF32x4:
     case SplatVecF64x2:
     case NotVec128:

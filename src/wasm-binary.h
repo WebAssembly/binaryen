@@ -1054,6 +1054,9 @@ enum ASTNodes {
   // half precision opcodes
   F32_F16LoadMem = 0x30,
   F32_F16StoreMem = 0x31,
+  F16x8Splat = 0x120,
+  F16x8ExtractLane = 0x121,
+  F16x8ReplaceLane = 0x122,
 
   // bulk memory opcodes
 

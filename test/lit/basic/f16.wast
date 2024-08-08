@@ -17,6 +17,12 @@
 
  ;; CHECK-TEXT:      (type $1 (func (param i32 f32)))
 
+ ;; CHECK-TEXT:      (type $2 (func (param f32) (result v128)))
+
+ ;; CHECK-TEXT:      (type $3 (func (param v128) (result f32)))
+
+ ;; CHECK-TEXT:      (type $4 (func (param v128 f32) (result v128)))
+
  ;; CHECK-TEXT:      (memory $0 1 1)
 
  ;; CHECK-TEXT:      (func $f32.load_f16 (type $0) (param $0 i32) (result f32)
@@ -27,6 +33,12 @@
  ;; CHECK-BIN:      (type $0 (func (param i32) (result f32)))
 
  ;; CHECK-BIN:      (type $1 (func (param i32 f32)))
+
+ ;; CHECK-BIN:      (type $2 (func (param f32) (result v128)))
+
+ ;; CHECK-BIN:      (type $3 (func (param v128) (result f32)))
+
+ ;; CHECK-BIN:      (type $4 (func (param v128 f32) (result v128)))
 
  ;; CHECK-BIN:      (memory $0 1 1)
 
@@ -58,10 +70,68 @@
    (local.get $1)
   )
  )
+
+ ;; CHECK-TEXT:      (func $f16x8.splat (type $2) (param $0 f32) (result v128)
+ ;; CHECK-TEXT-NEXT:  (f16x8.splat
+ ;; CHECK-TEXT-NEXT:   (local.get $0)
+ ;; CHECK-TEXT-NEXT:  )
+ ;; CHECK-TEXT-NEXT: )
+ ;; CHECK-BIN:      (func $f16x8.splat (type $2) (param $0 f32) (result v128)
+ ;; CHECK-BIN-NEXT:  (f16x8.splat
+ ;; CHECK-BIN-NEXT:   (local.get $0)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT: )
+ (func $f16x8.splat (param $0 f32) (result v128)
+  (f16x8.splat
+   (local.get $0)
+  )
+ )
+
+  ;; CHECK-TEXT:      (func $f16x8.extract_lane (type $3) (param $0 v128) (result f32)
+  ;; CHECK-TEXT-NEXT:  (f16x8.extract_lane 0
+  ;; CHECK-TEXT-NEXT:   (local.get $0)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $f16x8.extract_lane (type $3) (param $0 v128) (result f32)
+  ;; CHECK-BIN-NEXT:  (f16x8.extract_lane 0
+  ;; CHECK-BIN-NEXT:   (local.get $0)
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $f16x8.extract_lane (param $0 v128) (result f32)
+  (f16x8.extract_lane 0
+   (local.get $0)
+  )
+ )
+
+  ;; CHECK-TEXT:      (func $f16x8.replace_lane (type $4) (param $0 v128) (param $1 f32) (result v128)
+  ;; CHECK-TEXT-NEXT:  (f16x8.replace_lane 0
+  ;; CHECK-TEXT-NEXT:   (local.get $0)
+  ;; CHECK-TEXT-NEXT:   (local.get $1)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $f16x8.replace_lane (type $4) (param $0 v128) (param $1 f32) (result v128)
+  ;; CHECK-BIN-NEXT:  (f16x8.replace_lane 0
+  ;; CHECK-BIN-NEXT:   (local.get $0)
+  ;; CHECK-BIN-NEXT:   (local.get $1)
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $f16x8.replace_lane (param $0 v128) (param $1 f32) (result v128)
+  (f16x8.replace_lane 0
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+
 )
 ;; CHECK-BIN-NODEBUG:      (type $0 (func (param i32) (result f32)))
 
 ;; CHECK-BIN-NODEBUG:      (type $1 (func (param i32 f32)))
+
+;; CHECK-BIN-NODEBUG:      (type $2 (func (param f32) (result v128)))
+
+;; CHECK-BIN-NODEBUG:      (type $3 (func (param v128) (result f32)))
+
+;; CHECK-BIN-NODEBUG:      (type $4 (func (param v128 f32) (result v128)))
 
 ;; CHECK-BIN-NODEBUG:      (memory $0 1 1)
 
@@ -73,6 +143,25 @@
 
 ;; CHECK-BIN-NODEBUG:      (func $1 (type $1) (param $0 i32) (param $1 f32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (f32.store_f16
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $2 (type $2) (param $0 f32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.splat
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $3 (type $3) (param $0 v128) (result f32)
+;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.extract_lane 0
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $4 (type $4) (param $0 v128) (param $1 f32) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.replace_lane 0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )

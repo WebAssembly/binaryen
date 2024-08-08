@@ -703,6 +703,9 @@ struct PrintExpressionContents
       case ExtractLaneVecI64x2:
         o << "i64x2.extract_lane";
         break;
+      case ExtractLaneVecF16x8:
+        o << "f16x8.extract_lane";
+        break;
       case ExtractLaneVecF32x4:
         o << "f32x4.extract_lane";
         break;
@@ -727,6 +730,9 @@ struct PrintExpressionContents
         break;
       case ReplaceLaneVecI64x2:
         o << "i64x2.replace_lane";
+        break;
+      case ReplaceLaneVecF16x8:
+        o << "f16x8.replace_lane";
         break;
       case ReplaceLaneVecF32x4:
         o << "f32x4.replace_lane";
@@ -1136,6 +1142,9 @@ struct PrintExpressionContents
         break;
       case SplatVecI64x2:
         o << "i64x2.splat";
+        break;
+      case SplatVecF16x8:
+        o << "f16x8.splat";
         break;
       case SplatVecF32x4:
         o << "f32x4.splat";

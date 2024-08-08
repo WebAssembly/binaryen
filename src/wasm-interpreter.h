@@ -479,6 +479,8 @@ public:
         return value.splatI32x4();
       case SplatVecI64x2:
         return value.splatI64x2();
+      case SplatVecF16x8:
+        return value.splatF16x8();
       case SplatVecF32x4:
         return value.splatF32x4();
       case SplatVecF64x2:
@@ -1070,6 +1072,8 @@ public:
         return vec.extractLaneI32x4(curr->index);
       case ExtractLaneVecI64x2:
         return vec.extractLaneI64x2(curr->index);
+      case ExtractLaneVecF16x8:
+        return vec.extractLaneF16x8(curr->index);
       case ExtractLaneVecF32x4:
         return vec.extractLaneF32x4(curr->index);
       case ExtractLaneVecF64x2:
@@ -1098,6 +1102,8 @@ public:
         return vec.replaceLaneI32x4(value, curr->index);
       case ReplaceLaneVecI64x2:
         return vec.replaceLaneI64x2(value, curr->index);
+      case ReplaceLaneVecF16x8:
+        return vec.replaceLaneF16x8(value, curr->index);
       case ReplaceLaneVecF32x4:
         return vec.replaceLaneF32x4(value, curr->index);
       case ReplaceLaneVecF64x2:

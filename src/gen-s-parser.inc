@@ -307,6 +307,29 @@ switch (buf[0]) {
   }
   case 'f': {
     switch (buf[1]) {
+      case '1': {
+        switch (buf[6]) {
+          case 'e':
+            if (op == "f16x8.extract_lane"sv) {
+              CHECK_ERR(makeSIMDExtract(ctx, pos, annotations, SIMDExtractOp::ExtractLaneVecF16x8, 8));
+              return Ok{};
+            }
+            goto parse_error;
+          case 'r':
+            if (op == "f16x8.replace_lane"sv) {
+              CHECK_ERR(makeSIMDReplace(ctx, pos, annotations, SIMDReplaceOp::ReplaceLaneVecF16x8, 8));
+              return Ok{};
+            }
+            goto parse_error;
+          case 's':
+            if (op == "f16x8.splat"sv) {
+              CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::SplatVecF16x8));
+              return Ok{};
+            }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
       case '3': {
         switch (buf[3]) {
           case '.': {

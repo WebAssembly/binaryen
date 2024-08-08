@@ -229,6 +229,9 @@ enum UnaryOp {
   RelaxedTruncZeroSVecF64x2ToVecI32x4,
   RelaxedTruncZeroUVecF64x2ToVecI32x4,
 
+  // Half precision SIMD
+  SplatVecF16x8,
+
   InvalidUnary
 };
 
@@ -490,6 +493,7 @@ enum SIMDExtractOp {
   ExtractLaneUVecI16x8,
   ExtractLaneVecI32x4,
   ExtractLaneVecI64x2,
+  ExtractLaneVecF16x8,
   ExtractLaneVecF32x4,
   ExtractLaneVecF64x2
 };
@@ -499,6 +503,7 @@ enum SIMDReplaceOp {
   ReplaceLaneVecI16x8,
   ReplaceLaneVecI32x4,
   ReplaceLaneVecI64x2,
+  ReplaceLaneVecF16x8,
   ReplaceLaneVecF32x4,
   ReplaceLaneVecF64x2,
 };
