@@ -736,6 +736,12 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
     note(&curr->size, Type::i32);
   }
 
+  void visitTableInit(TableInit* curr) {
+    note(&curr->dest, Type::i32);
+    note(&curr->source, Type::i32);
+    note(&curr->size, Type::i32);
+  }
+
   void visitTry(Try* curr) {
     note(&curr->body, curr->type);
     for (auto& expr : curr->catchBodies) {

@@ -674,6 +674,10 @@ struct NullInstrParserCtx {
   makeTableCopy(Index, const std::vector<Annotation>&, TableIdxT*, TableIdxT*) {
     return Ok{};
   }
+  Result<>
+  makeTableInit(Index, const std::vector<Annotation>&, TableIdxT*, ElemIdxT*) {
+    return Ok{};
+  }
   Result<> makeThrow(Index, const std::vector<Annotation>&, TagIdxT) {
     return Ok{};
   }

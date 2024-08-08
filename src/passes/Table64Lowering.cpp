@@ -91,6 +91,12 @@ struct Table64Lowering : public WalkerPass<PostWalker<Table64Lowering>> {
     wrapAddress64(curr->size, curr->destTable);
   }
 
+  void visitTableInit(TableInit* curr) {
+    wrapAddress64(curr->dest, curr->table);
+    wrapAddress64(curr->offset, curr->table);
+    wrapAddress64(curr->size, curr->table);
+  }
+
   void visitCallIndirect(CallIndirect* curr) {
     wrapAddress64(curr->target, curr->table);
   }
