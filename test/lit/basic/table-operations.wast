@@ -42,6 +42,8 @@
     (elem $bar $bar $bar)
   )
 
+  (elem $elem funcref)
+
   ;; CHECK-TEXT:      (elem $implicit-elem (table $table-1) (i32.const 0) func $foo)
 
   ;; CHECK-TEXT:      (elem $implicit-elem_1 (table $table-2) (i32.const 0) func $bar $bar $bar)
@@ -201,8 +203,8 @@
     )
   )
 
-  (func $table-init param $dest i32) (param $offset i32) (param $size i32)
-    (table.init $foo $table-1
+  (func $table-init (param $dest i32) (param $offset i32) (param $size i32)
+    (table.init $table-1 $elem
       (local.get $dest)
       (local.get $offset)
       (local.get $size)
