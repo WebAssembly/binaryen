@@ -158,6 +158,7 @@ def parse_output_modules(text):
 
 
 def parse_output_fuzz_exec(text):
+    print(text)
     # Returns the same data as `parse_output_modules`, but can't tell where
     # module boundaries are, so always just returns items for a single module.
     items = []
