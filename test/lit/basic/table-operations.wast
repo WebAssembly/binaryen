@@ -200,6 +200,14 @@
       (local.get $size)
     )
   )
+
+  (func $table-init param $dest i32) (param $offset i32) (param $size i32)
+    (table.init $foo $table-1
+      (local.get $dest)
+      (local.get $offset)
+      (local.get $size)
+    )
+  )
 )
 ;; CHECK-BIN-NODEBUG:      (type $0 (func))
 
