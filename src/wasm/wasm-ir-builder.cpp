@@ -1526,8 +1526,7 @@ Result<> IRBuilder::makeTableCopy(Name destTable, Name srcTable) {
 Result<> IRBuilder::makeTableInit(Name elem, Name table) {
   TableInit curr;
   CHECK_ERR(visitTableInit(&curr));
-  push(
-    builder.makeTableInit(elem, curr.dest, curr.offset, curr.size, table));
+  push(builder.makeTableInit(elem, curr.dest, curr.offset, curr.size, table));
   return Ok{};
 }
 
