@@ -2040,6 +2040,7 @@ struct PrintExpressionContents
   void visitTableInit(TableInit* curr) {
     printMedium(o, "table.init ");
     curr->table.print(o);
+    curr->segment.print(o);
   }
   void visitTry(Try* curr) {
     printMedium(o, "try");
