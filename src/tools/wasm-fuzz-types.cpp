@@ -23,6 +23,7 @@
 #include "tools/fuzzing/heap-types.h"
 #include "tools/fuzzing/random.h"
 #include "wasm-type-printing.h"
+#include "wasm-type-shape.h"
 
 namespace wasm {
 
@@ -54,6 +55,7 @@ struct Fuzzer {
   void checkLUBs() const;
   void checkCanonicalization();
   void checkInhabitable();
+  void checkRecGroupShapes();
 };
 
 void Fuzzer::run(uint64_t seed) {
@@ -88,6 +90,7 @@ void Fuzzer::run(uint64_t seed) {
   checkLUBs();
   checkCanonicalization();
   checkInhabitable();
+  checkRecGroupShapes();
 }
 
 void Fuzzer::printTypes(const std::vector<HeapType>& types) {
@@ -504,6 +507,97 @@ void Fuzzer::checkInhabitable() {
         IndexedTypeNameGenerator print(types);
         Fatal() << "makeInhabitable incorrectly changed type "
                 << print(types[i]);
+      }
+    }
+  }
+}
+
+void Fuzzer::checkRecGroupShapes() {
+  using ShapeHash = std::hash<RecGroupShape>;
+
+  // Collect the groups and order types by index.
+  std::vector<std::vector<HeapType>> groups;
+  std::unordered_map<HeapType, Index> typeIndices;
+  for (auto type : types) {
+    typeIndices.insert({type, typeIndices.size()});
+    // We know we are at the beginning of a new rec group when we see a type
+    // that is at index zero of its rec group.
+    if (type.getRecGroupIndex() == 0) {
+      groups.push_back({type});
+    } else {
+      assert(!groups.empty());
+      groups.back().push_back(type);
+    }
+  }
+
+  auto less = [&typeIndices](HeapType a, HeapType b) {
+    return typeIndices.at(a) < typeIndices.at(b);
+  };
+
+  for (size_t i = 0; i < groups.size(); ++i) {
+    ComparableRecGroupShape shape(groups[i], less);
+    // A rec group should compare equal to itself.
+    if (shape != shape) {
+      Fatal() << "Rec group shape " << i << " not equal to itself";
+    }
+
+    // Its hash should be deterministic
+    auto hash = ShapeHash{}(shape);
+    if (hash != ShapeHash{}(shape)) {
+      Fatal() << "Rec group shape " << i << " has non-deterministic hash";
+    }
+
+    // Check how it compares to other groups.
+    for (size_t j = i + 1; j < groups.size(); ++j) {
+      ComparableRecGroupShape other(groups[j], less);
+      bool isLess = shape < other;
+      bool isEq = shape == other;
+      bool isGreater = shape > other;
+      if (isLess + isEq + isGreater == 0) {
+        Fatal() << "Rec groups " << i << " and " << j
+                << " do not have comparable shapes";
+      }
+      if (isLess + isEq + isGreater > 1) {
+        std::string comparisons;
+        auto append = [&](std::string comp) {
+          comparisons = comparisons == "" ? comp : comparisons + ", " + comp;
+        };
+        if (isLess) {
+          append("<");
+        }
+        if (isEq) {
+          append("==");
+        }
+        if (isGreater) {
+          append(">");
+        }
+        Fatal() << "Rec groups " << i << " and " << j << " compare "
+                << comparisons;
+      }
+
+      auto otherHash = ShapeHash{}(other);
+      if (isEq) {
+        if (hash != otherHash) {
+          Fatal() << "Equivalent rec groups " << i << " and " << j
+                  << " do not have equivalent hashes";
+        }
+      } else {
+        // Hash collisions are technically possible, but should be rare enough
+        // that we can consider them bugs if the fuzzer finds them.
+        if (hash == otherHash) {
+          Fatal() << "Hash collision between rec groups " << i << " and " << j;
+        }
+      }
+
+      if (j + 1 < groups.size()) {
+        // Check transitivity.
+        RecGroupShape third(groups[j + 1]);
+        if ((isLess && other <= third && shape >= third) ||
+            (isEq && other == third && shape != third) ||
+            (isGreater && other >= third && shape <= third)) {
+          Fatal() << "Comparison between rec groups " << i << ", " << j
+                  << ", and " << (j + 1) << " is not transitive";
+        }
       }
     }
   }

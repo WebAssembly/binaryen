@@ -434,6 +434,8 @@ public:
 
   // Get the recursion group for this non-basic type.
   RecGroup getRecGroup() const;
+
+  // Get the index of this non-basic type within its recursion group.
   size_t getRecGroupIndex() const;
 
   constexpr TypeID getID() const { return id; }
