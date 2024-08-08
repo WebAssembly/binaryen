@@ -19,3 +19,34 @@
   (func $foo)
 )
 
+;; The table begins with a function that returns zero. table.init will replace
+;; it with one that returns 1.
+(module
+  (type $i (func (result i32)))
+
+  (table $table 10 funcref)
+  (elem $zero (i32.const 0) $zero)
+  (elem $one $one)
+
+  (func $call (export "call") (result i32)
+    (call_indirect (type $i) (i32.const 0))
+  )
+
+  (func $init (export "init") (result i32)
+    (table.init $table $one (i32.const 0) (i32.const 0) (i32.const 1))
+    (call $call)
+  )
+
+  (func $zero (result i32)
+    (i32.const 0)
+  )
+
+  (func $one (result i32)
+    (i32.const 1)
+  )
+)
+
+;; First we get 0, then 1.
+(assert_return (invoke "call") (i32.const 0))
+(assert_return (invoke "init") (i32.const 1))
+
