@@ -169,6 +169,7 @@ public:
   [[nodiscard]] Result<> makeTableGrow(Name table);
   [[nodiscard]] Result<> makeTableFill(Name table);
   [[nodiscard]] Result<> makeTableCopy(Name destTable, Name srcTable);
+  [[nodiscard]] Result<> makeTableInit(Name segment, Name table);
   [[nodiscard]] Result<> makeTry(Name label, Type type);
   [[nodiscard]] Result<> makeTryTable(Name label,
                                       Type type,

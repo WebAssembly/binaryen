@@ -115,6 +115,7 @@ IString MEMORY_COPY("wasm2js_memory_copy");
 IString TABLE_GROW("wasm2js_table_grow");
 IString TABLE_FILL("wasm2js_table_fill");
 IString TABLE_COPY("wasm2js_table_copy");
+IString TABLE_INIT("wasm2js_table_init");
 IString DATA_DROP("wasm2js_data_drop");
 IString ATOMIC_WAIT_I32("wasm2js_atomic_wait_i32");
 IString ATOMIC_RMW_I64("wasm2js_atomic_rmw_i64");

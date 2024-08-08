@@ -1405,6 +1405,7 @@ public:
   Flow visitTableGrow(TableGrow* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableFill(TableFill* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableCopy(TableCopy* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableInit(TableInit* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTryTable(TryTable* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
@@ -2342,6 +2343,10 @@ public:
     NOTE_ENTER("TableCopy");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitTableInit(TableInit* curr) {
+    NOTE_ENTER("TableInit");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
     return Flow(NONCONSTANT_FLOW);
@@ -3235,6 +3240,51 @@ public:
         destInfo.name,
         destVal + i,
         sourceInfo.interface()->tableLoad(sourceInfo.name, sourceVal + i));
+    }
+    return {};
+  }
+
+  Flow visitTableInit(TableInit* curr) {
+    NOTE_ENTER("TableInit");
+    Flow dest = self()->visit(curr->dest);
+    if (dest.breaking()) {
+      return dest;
+    }
+    Flow offset = self()->visit(curr->offset);
+    if (offset.breaking()) {
+      return offset;
+    }
+    Flow size = self()->visit(curr->size);
+    if (size.breaking()) {
+      return size;
+    }
+    NOTE_EVAL1(dest);
+    NOTE_EVAL1(offset);
+    NOTE_EVAL1(size);
+
+    auto* segment = wasm.getDataSegment(curr->segment);
+
+    Address destVal(dest.getSingleValue().getUnsigned());
+    Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
+    Address sizeVal(uint32_t(size.getSingleValue().geti32()));
+
+    if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
+      trap("out of bounds segment access in table.init");
+    }
+    if ((uint64_t)offsetVal + sizeVal > segment->data.size()) {
+      trap("out of bounds segment access in table.init");
+    }
+    auto info = getTableInstanceInfo(curr->table);
+    auto tableSize = info.instance->getTableSize(info.name);
+    if (destVal + sizeVal > tableSize) {
+      trap("out of bounds table access in table.init");
+    }
+    for (size_t i = 0; i < sizeVal; ++i) {
+      Literal addr(destVal + i);
+      info.interface()->tableStore(
+        info.instance->getFinalAddressWithoutOffset(addr, 1, tableSize),
+        segment->data[offsetVal + i],
+        info.name);
     }
     return {};
   }

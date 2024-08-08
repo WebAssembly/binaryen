@@ -39,6 +39,7 @@ extern IString MEMORY_COPY;
 extern IString TABLE_GROW;
 extern IString TABLE_FILL;
 extern IString TABLE_COPY;
+extern IString TABLE_INIT;
 extern IString DATA_DROP;
 extern IString ATOMIC_WAIT_I32;
 extern IString ATOMIC_RMW_I64;
