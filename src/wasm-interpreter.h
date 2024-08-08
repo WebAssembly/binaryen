@@ -3281,11 +3281,8 @@ public:
       trap("out of bounds table access in table.init");
     }
     for (size_t i = 0; i < sizeVal; ++i) {
-      Literal addr(destVal + i);
-      info.interface()->tableStore(
-        info.instance->getFinalAddressWithoutOffset(addr, 1, tableSize),
-        segment->data[offsetVal + i],
-        info.name);
+      auto value = self()->visit(segment->data[offsetVal + i]).getSingleValue();
+      info.interface()->tableStore(info.name, destVal + i, value);
     }
     return {};
   }
