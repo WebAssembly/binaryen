@@ -1,7 +1,7 @@
 (module
  (type $2 (func (result i32)))
  (type $1 (func))
- (memory $0 256 256)
+ (memory $m0 256 256)
  (func $b14 (result i32)
   (drop
    (select

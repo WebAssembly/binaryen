@@ -15,22 +15,22 @@
 
  ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0 (param i32) (result i32)))
 
- ;; PRIMARY:      (global $global$0 (mut i32) (i32.const 0))
+ ;; PRIMARY:      (global $g0 (mut i32) (i32.const 0))
 
- ;; PRIMARY:      (table $0 1 funcref)
+ ;; PRIMARY:      (table $t0 1 funcref)
 
  ;; PRIMARY:      (elem $0 (i32.const 0) $placeholder_0)
 
  ;; PRIMARY:      (export "foo" (func $foo))
  (export "foo" (func $foo))
- ;; PRIMARY:      (export "load_secondary_module_status" (global $global$0))
+ ;; PRIMARY:      (export "load_secondary_module_status" (global $g0))
 
- ;; PRIMARY:      (export "%table" (table $0))
+ ;; PRIMARY:      (export "%table" (table $t0))
 
  ;; PRIMARY:      (func $foo (param $0 i32) (result i32)
  ;; PRIMARY-NEXT:  (if
  ;; PRIMARY-NEXT:   (i32.eqz
- ;; PRIMARY-NEXT:    (global.get $global$0)
+ ;; PRIMARY-NEXT:    (global.get $g0)
  ;; PRIMARY-NEXT:   )
  ;; PRIMARY-NEXT:   (then
  ;; PRIMARY-NEXT:    (call $fimport$0)

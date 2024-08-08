@@ -1,14 +1,14 @@
 (module
  (type $0 (func))
  (type $1 (func (result i32)))
- (global $global$0 (mut i32) (i32.const 5243904))
- (global $global$1 i32 (i32.const 1024))
- (memory $0 256 256)
- (table $0 1 1 funcref)
- (export "memory" (memory $0))
+ (global $g0 (mut i32) (i32.const 5243904))
+ (global $g1 i32 (i32.const 1024))
+ (memory $m0 256 256)
+ (table $t0 1 1 funcref)
+ (export "memory" (memory $m0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "foo" (func $foo))
- (export "__data_end" (global $global$1))
+ (export "__data_end" (global $g1))
  (func $__wasm_call_ctors
  )
  (func $foo (result i32)
@@ -34,7 +34,7 @@
   (local $19 i32)
   (local $20 i32)
   (local.set $0
-   (global.get $global$0)
+   (global.get $g0)
   )
   (local.set $1
    (i32.const 16)
@@ -160,14 +160,14 @@
 (module
  (type $0 (func))
  (type $1 (func (result i32)))
- (global $global$0 (mut i32) (i32.const 5243904))
- (global $global$1 i32 (i32.const 1024))
- (memory $0 256 256)
- (table $0 1 1 funcref)
- (export "memory" (memory $0))
+ (global $g0 (mut i32) (i32.const 5243904))
+ (global $g1 i32 (i32.const 1024))
+ (memory $m0 256 256)
+ (table $t0 1 1 funcref)
+ (export "memory" (memory $m0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "foo" (func $foo))
- (export "__data_end" (global $global$1))
+ (export "__data_end" (global $g1))
  (func $__wasm_call_ctors
  )
  (func $foo (result i32)
@@ -195,7 +195,7 @@
   ;; code offset: 0x33
   (local.set $0
    ;; code offset: 0x31
-   (global.get $global$0)
+   (global.get $g0)
   )
   ;; code offset: 0x37
   (local.set $1
@@ -394,14 +394,14 @@
 (module
  (type $0 (func))
  (type $1 (func (result i32)))
- (global $global$0 (mut i32) (i32.const 5243904))
- (global $global$1 i32 (i32.const 1024))
- (memory $0 256 256)
- (table $0 1 1 funcref)
- (export "memory" (memory $0))
+ (global $g0 (mut i32) (i32.const 5243904))
+ (global $g1 i32 (i32.const 1024))
+ (memory $m0 256 256)
+ (table $t0 1 1 funcref)
+ (export "memory" (memory $m0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "foo" (func $foo))
- (export "__data_end" (global $global$1))
+ (export "__data_end" (global $g1))
  (func $__wasm_call_ctors
  )
  (func $foo (result i32)
@@ -427,7 +427,7 @@
   (local $19 f32)
   (local $20 f32)
   (local.set $0
-   (global.get $global$0)
+   (global.get $g0)
   )
   (local.set $1
    (i32.const 16)
@@ -549,14 +549,14 @@
 (module
  (type $0 (func))
  (type $1 (func (result i32)))
- (global $global$0 (mut i32) (i32.const 5243904))
- (global $global$1 i32 (i32.const 1024))
- (memory $0 256 256)
- (table $0 1 1 funcref)
- (export "memory" (memory $0))
+ (global $g0 (mut i32) (i32.const 5243904))
+ (global $g1 i32 (i32.const 1024))
+ (memory $m0 256 256)
+ (table $t0 1 1 funcref)
+ (export "memory" (memory $m0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "foo" (func $foo))
- (export "__data_end" (global $global$1))
+ (export "__data_end" (global $g1))
  (func $__wasm_call_ctors
  )
  (func $foo (result i32)
@@ -582,7 +582,7 @@
   (local $19 f32)
   (local $20 f32)
   (local.set $0
-   (global.get $global$0)
+   (global.get $g0)
   )
   (local.set $1
    (i32.const 16)

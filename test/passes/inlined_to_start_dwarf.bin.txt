@@ -415,18 +415,18 @@ file_names[  1]:
  (type $3 (func (param i32)))
  (type $4 (func (param i32) (result i32)))
  (import "env" "memory" (memory $mimport$0 256 256))
- (global $global$0 (mut i32) (i32.const 5243920))
- (global $global$1 i32 (i32.const 1028))
+ (global $g0 (mut i32) (i32.const 5243920))
+ (global $g1 i32 (i32.const 1028))
  (data $0 (i32.const 1024) "\00\00\00\00")
- (table $0 1 1 funcref)
- (export "__indirect_function_table" (table $0))
+ (table $t0 1 1 funcref)
+ (export "__indirect_function_table" (table $t0))
  (export "__wasm_call_ctors" (func $__wasm_call_ctors))
  (export "main" (func $main))
  (export "__errno_location" (func $__errno_location))
  (export "stackSave" (func $stackSave))
  (export "stackRestore" (func $stackRestore))
  (export "stackAlloc" (func $stackAlloc))
- (export "__data_end" (global $global$1))
+ (export "__data_end" (global $g1))
  (func $__wasm_call_ctors
  )
  (func $dsquare\28int\2c\20int\29 (param $0 i32) (param $1 i32) (result i32)
@@ -459,11 +459,11 @@ file_names[  1]:
  )
  (func $stackSave (result i32)
   ;; code offset: 0x1d
-  (global.get $global$0)
+  (global.get $g0)
  )
  (func $stackRestore (param $0 i32)
   ;; code offset: 0x24
-  (global.set $global$0
+  (global.set $g0
    ;; code offset: 0x22
    (local.get $0)
   )
@@ -472,7 +472,7 @@ file_names[  1]:
   (local $1 i32)
   (local $2 i32)
   ;; code offset: 0x37
-  (global.set $global$0
+  (global.set $g0
    ;; code offset: 0x35
    (local.tee $1
     ;; code offset: 0x34
@@ -480,7 +480,7 @@ file_names[  1]:
      ;; code offset: 0x31
      (i32.sub
       ;; code offset: 0x2d
-      (global.get $global$0)
+      (global.get $g0)
       ;; code offset: 0x2f
       (local.get $0)
      )

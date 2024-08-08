@@ -59,10 +59,10 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $3 (func (param contref nullcontref (ref cont) (ref nocont)) (result contref)))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $2) (param $0 (ref $1)) (result (ref $1))
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $2) (param $0 (ref $1)) (result (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $3) (param $0 contref) (param $1 nullcontref) (param $2 (ref cont)) (param $3 (ref nocont)) (result contref)
+;; CHECK-BIN-NODEBUG:      (func $f1 (type $3) (param $0 contref) (param $1 nullcontref) (param $2 (ref cont)) (param $3 (ref nocont)) (result contref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.get $3)
 ;; CHECK-BIN-NODEBUG-NEXT: )

@@ -39,8 +39,8 @@
 133
 (module
  (type $0 (func))
- (memory $0 1024 1024)
- (export "memory" (memory $0))
+ (memory $m0 1024 1024)
+ (export "memory" (memory $m0))
  (export "main" (func $main))
  (export "rust_entry" (func $__wasm_start))
  (func $main

@@ -12,7 +12,7 @@
  (type $10 (func (result f32)))
  (type $11 (func (param i32) (result f32)))
  (type $12 (func (param i32 f64 i32 f64 f32 f32) (result i32)))
- (memory $0 256 256)
+ (memory $m0 256 256)
  (func $b0-yes (param $i1 i32)
   (block $topmost
   )

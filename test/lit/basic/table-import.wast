@@ -32,13 +32,6 @@
   ;; CHECK-BIN:      (import "env" "table3" (table $timport$2 1 1 (ref null $0)))
 
   ;; CHECK-BIN:      (memory $0 0)
-  ;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $timport$0 1 1 funcref))
-
-  ;; CHECK-BIN-NODEBUG:      (import "env" "table2" (table $timport$1 1 1 anyref))
-
-  ;; CHECK-BIN-NODEBUG:      (import "env" "table3" (table $timport$2 1 1 (ref null $0)))
-
-  ;; CHECK-BIN-NODEBUG:      (memory $0 0)
   (memory $0 0)
 
   ;; CHECK-TEXT:      (elem $0 (table $timport$0) (i32.const 0) func $foo)
@@ -56,8 +49,16 @@
   )
 
 )
-;; CHECK-BIN-NODEBUG:      (elem $0 (table $timport$0) (i32.const 0) func $0)
+;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $timport$0 1 1 funcref))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (import "env" "table2" (table $timport$1 1 1 anyref))
+
+;; CHECK-BIN-NODEBUG:      (import "env" "table3" (table $timport$2 1 1 (ref null $0)))
+
+;; CHECK-BIN-NODEBUG:      (memory $m0 0)
+
+;; CHECK-BIN-NODEBUG:      (elem $0 (table $timport$0) (i32.const 0) func $f0)
+
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )

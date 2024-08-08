@@ -21,13 +21,13 @@
 ;; CHECK: (global $baz_timestamp (mut i32) (i32.const 0))
 
 ;; Check that a memory has been added
-;; CHECK: (memory $0 1 1)
+;; CHECK: (memory $m0 1 1)
 
 ;; And the profiling function is exported
 ;; CHECK: (export "__write_profile" (func $__write_profile))
 
 ;; And the memory has been exported
-;; CHECK: (export "profile-memory" (memory $0))
+;; CHECK: (export "profile-memory" (memory $m0))
 
 ;; Check that the function instrumentation is correct
 

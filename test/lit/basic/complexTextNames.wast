@@ -33,10 +33,10 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $0 (func))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (call $0)
+;; CHECK-BIN-NODEBUG:      (func $f1 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (call $f0)
 ;; CHECK-BIN-NODEBUG-NEXT: )

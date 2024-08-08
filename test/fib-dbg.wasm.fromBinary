@@ -17,30 +17,30 @@
  (import "global" "Infinity" (global $gimport$8 f64))
  (import "env" "memoryBase" (global $gimport$9 i32))
  (import "env" "tableBase" (global $gimport$10 i32))
- (global $global$0 (mut i32) (global.get $gimport$0))
- (global $global$1 (mut i32) (global.get $gimport$1))
- (global $global$2 (mut i32) (global.get $gimport$2))
- (global $global$3 (mut i32) (global.get $gimport$3))
- (global $global$4 (mut i32) (global.get $gimport$4))
- (global $global$5 (mut i32) (global.get $gimport$5))
- (global $global$6 (mut i32) (global.get $gimport$6))
- (global $global$7 (mut i32) (i32.const 0))
- (global $global$8 (mut i32) (i32.const 0))
- (global $global$9 (mut i32) (i32.const 0))
- (global $global$10 (mut i32) (i32.const 0))
- (global $global$11 (mut f64) (global.get $gimport$7))
- (global $global$12 (mut f64) (global.get $gimport$8))
- (global $global$13 (mut i32) (i32.const 0))
- (global $global$14 (mut i32) (i32.const 0))
- (global $global$15 (mut i32) (i32.const 0))
- (global $global$16 (mut i32) (i32.const 0))
- (global $global$17 (mut f64) (f64.const 0))
- (global $global$18 (mut i32) (i32.const 0))
- (global $global$19 (mut i32) (i32.const 0))
- (global $global$20 (mut i32) (i32.const 0))
- (global $global$21 (mut f64) (f64.const 0))
- (global $global$22 (mut i32) (i32.const 0))
- (global $global$23 (mut f64) (f64.const 0))
+ (global $g0 (mut i32) (global.get $gimport$0))
+ (global $g1 (mut i32) (global.get $gimport$1))
+ (global $g2 (mut i32) (global.get $gimport$2))
+ (global $g3 (mut i32) (global.get $gimport$3))
+ (global $g4 (mut i32) (global.get $gimport$4))
+ (global $g5 (mut i32) (global.get $gimport$5))
+ (global $g6 (mut i32) (global.get $gimport$6))
+ (global $g7 (mut i32) (i32.const 0))
+ (global $g8 (mut i32) (i32.const 0))
+ (global $g9 (mut i32) (i32.const 0))
+ (global $g10 (mut i32) (i32.const 0))
+ (global $g11 (mut f64) (global.get $gimport$7))
+ (global $g12 (mut f64) (global.get $gimport$8))
+ (global $g13 (mut i32) (i32.const 0))
+ (global $g14 (mut i32) (i32.const 0))
+ (global $g15 (mut i32) (i32.const 0))
+ (global $g16 (mut i32) (i32.const 0))
+ (global $g17 (mut f64) (f64.const 0))
+ (global $g18 (mut i32) (i32.const 0))
+ (global $g19 (mut i32) (i32.const 0))
+ (global $g20 (mut i32) (i32.const 0))
+ (global $g21 (mut f64) (f64.const 0))
+ (global $g22 (mut i32) (i32.const 0))
+ (global $g23 (mut f64) (f64.const 0))
  (export "setThrew" (func $setThrew))
  (export "runPostSets" (func $runPostSets))
  (export "establishStackSpace" (func $establishStackSpace))
@@ -52,18 +52,18 @@
   (local $1 i32)
   (block $label$1
    (local.set $1
-    (global.get $global$3)
+    (global.get $g3)
    )
-   (global.set $global$3
+   (global.set $g3
     (i32.add
-     (global.get $global$3)
+     (global.get $g3)
      (local.get $0)
     )
    )
-   (global.set $global$3
+   (global.set $g3
     (i32.and
      (i32.add
-      (global.get $global$3)
+      (global.get $g3)
       (i32.const 15)
      )
      (i32.const -16)
@@ -76,20 +76,20 @@
  )
  (func $stackSave (result i32)
   (return
-   (global.get $global$3)
+   (global.get $g3)
   )
  )
  (func $stackRestore (param $0 i32)
-  (global.set $global$3
+  (global.set $g3
    (local.get $0)
   )
  )
  (func $establishStackSpace (param $0 i32) (param $1 i32)
   (block $label$1
-   (global.set $global$3
+   (global.set $g3
     (local.get $0)
    )
-   (global.set $global$4
+   (global.set $g4
     (local.get $1)
    )
   )
@@ -97,14 +97,14 @@
  (func $setThrew (param $0 i32) (param $1 i32)
   (if
    (i32.eq
-    (global.get $global$7)
+    (global.get $g7)
     (i32.const 0)
    )
    (then
-    (global.set $global$7
+    (global.set $g7
      (local.get $0)
     )
-    (global.set $global$8
+    (global.set $g8
      (local.get $1)
     )
    )
@@ -124,7 +124,7 @@
   (local $11 i32)
   (block $label$1
    (local.set $11
-    (global.get $global$3)
+    (global.get $g3)
    )
    ;;@ fib.c:3:0
    (local.set $6

@@ -10,22 +10,22 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $0() {
+ function f0() {
   
  }
  
- function $1() {
+ function f1() {
   
  }
  
- function $2() {
+ function f2() {
   
  }
  
  return {
-  "br": $0, 
-  "br_if": $1, 
-  "br_table": $2
+  "br": f0, 
+  "br_if": f1, 
+  "br_table": f2
  };
 }
 

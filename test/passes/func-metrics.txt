@@ -39,9 +39,9 @@ func: ifs
  (type $1 (func))
  (type $0 (func (param i32)))
  (global $glob i32 (i32.const 1337))
- (memory $0 256 256)
+ (memory $m0 256 256)
  (data $0 (i32.const 0) "\ff\ef\0f\1f 0@P\99")
- (table $0 256 256 funcref)
+ (table $t0 256 256 funcref)
  (elem $0 (i32.const 0) $ifs $ifs $ifs)
  (func $empty
   (nop)

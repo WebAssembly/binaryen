@@ -10,20 +10,20 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function legalstub$0($0, $1, $2, $3, $4, $5) {
+ function legalstub$f0($0, $1, $2, $3, $4, $5) {
   $1 = $1 + $3 | 0;
   $0 = $0 + $2 | 0;
   $1 = $2 >>> 0 > $0 >>> 0 ? $1 + 1 | 0 : $1;
   return ($0 | 0) == ($4 | 0) & ($1 | 0) == ($5 | 0);
  }
  
- function legalstub$1($0, $1, $2, $3, $4, $5) {
+ function legalstub$f1($0, $1, $2, $3, $4, $5) {
   return ($4 | 0) == ($0 - $2 | 0) & ($5 | 0) == ($1 - (($0 >>> 0 < $2 >>> 0) + $3 | 0) | 0);
  }
  
  return {
-  "check_add_i64": legalstub$0, 
-  "check_sub_i64": legalstub$1
+  "check_add_i64": legalstub$f0, 
+  "check_sub_i64": legalstub$f1
  };
 }
 

@@ -16,7 +16,7 @@
 
  ;; PRIMARY:      (global $glob1 (ref func) (ref.func $prime))
 
- ;; PRIMARY:      (global $glob2 (ref func) (ref.func $2))
+ ;; PRIMARY:      (global $glob2 (ref func) (ref.func $f2))
 
  ;; PRIMARY:      (table $table 1 1 funcref)
  (table $table 1 1 funcref)
@@ -25,20 +25,20 @@
 
  (global $glob2 (ref func) (ref.func $second))
 
- ;; PRIMARY:      (table $1 2 funcref)
+ ;; PRIMARY:      (table $t1 2 funcref)
 
- ;; PRIMARY:      (elem $elem (table $table) (i32.const 0) func $in-table $3)
+ ;; PRIMARY:      (elem $elem (table $table) (i32.const 0) func $in-table $f3)
  (elem $elem (i32.const 0) $in-table $second-in-table)
 
- ;; PRIMARY:      (elem $1 (table $1) (i32.const 0) func $placeholder_0 $placeholder_1)
+ ;; PRIMARY:      (elem $1 (table $t1) (i32.const 0) func $placeholder_0 $placeholder_1)
 
- ;; PRIMARY:      (elem declare func $2 $prime)
+ ;; PRIMARY:      (elem declare func $f2 $prime)
 
  ;; PRIMARY:      (export "prime" (func $prime))
 
  ;; PRIMARY:      (export "table" (table $table))
 
- ;; PRIMARY:      (export "table_2" (table $1))
+ ;; PRIMARY:      (export "table_2" (table $t1))
 
  ;; PRIMARY:      (export "global" (global $glob1))
 
@@ -49,7 +49,7 @@
  ;; PRIMARY-NEXT:   (ref.func $prime)
  ;; PRIMARY-NEXT:  )
  ;; PRIMARY-NEXT:  (drop
- ;; PRIMARY-NEXT:   (ref.func $2)
+ ;; PRIMARY-NEXT:   (ref.func $f2)
  ;; PRIMARY-NEXT:  )
  ;; PRIMARY-NEXT: )
  (func $prime
@@ -111,14 +111,14 @@
   ;; (but we will get a placeholder, as all split-out functions do).
  )
 )
-;; PRIMARY:      (func $2 (type $0)
-;; PRIMARY-NEXT:  (call_indirect $1 (type $0)
+;; PRIMARY:      (func $f2 (type $0)
+;; PRIMARY-NEXT:  (call_indirect $t1 (type $0)
 ;; PRIMARY-NEXT:   (i32.const 0)
 ;; PRIMARY-NEXT:  )
 ;; PRIMARY-NEXT: )
 
-;; PRIMARY:      (func $3 (type $0)
-;; PRIMARY-NEXT:  (call_indirect $1 (type $0)
+;; PRIMARY:      (func $f3 (type $0)
+;; PRIMARY-NEXT:  (call_indirect $t1 (type $0)
 ;; PRIMARY-NEXT:   (i32.const 1)
 ;; PRIMARY-NEXT:  )
 ;; PRIMARY-NEXT: )

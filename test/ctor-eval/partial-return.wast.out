@@ -1,5 +1,5 @@
 (module
- (memory $0 256 256)
+ (memory $m0 256 256)
  (data $0 (i32.const 10) "__s______________")
- (export "memory" (memory $0))
+ (export "memory" (memory $m0))
 )

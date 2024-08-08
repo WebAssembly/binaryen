@@ -30,8 +30,8 @@ total
  LocalSet       : 1       
 (module
  (type $0 (func (result i32)))
- (export "foo" (func $0))
- (func $0 (result i32)
+ (export "foo" (func $f0))
+ (func $f0 (result i32)
   (local $0 i32)
   (local.set $0
    (i32.const 0)

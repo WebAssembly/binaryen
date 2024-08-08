@@ -14,27 +14,27 @@
 
    ;; CHECK:      (global $glob0 i32 (i32.const 0))
 
-   ;; CHECK:      (global $global$1 i32 (i32.const 0))
+   ;; CHECK:      (global $g1 i32 (i32.const 0))
 
    ;; CHECK:      (global $glob2 i32 (i32.const 0))
 
-   ;; CHECK:      (global $global$3 i32 (i32.const 0))
+   ;; CHECK:      (global $g3 i32 (i32.const 0))
 
    ;; CHECK:      (memory $mem0 0)
 
-   ;; CHECK:      (memory $1 0)
+   ;; CHECK:      (memory $m1 0)
 
    ;; CHECK:      (memory $mem2 0)
 
-   ;; CHECK:      (memory $3 0)
+   ;; CHECK:      (memory $m3 0)
 
    ;; CHECK:      (table $table0 1 funcref)
 
-   ;; CHECK:      (table $1 1 funcref)
+   ;; CHECK:      (table $t1 1 funcref)
 
    ;; CHECK:      (table $table2 1 funcref)
 
-   ;; CHECK:      (table $3 1 funcref)
+   ;; CHECK:      (table $t3 1 funcref)
 
    ;; CHECK:      (tag $tag0)
 
@@ -46,47 +46,47 @@
 
    ;; CHECK:      (export "f0" (func $func0))
 
-   ;; CHECK:      (export "f1" (func $1))
+   ;; CHECK:      (export "f1" (func $f1))
 
    ;; CHECK:      (export "t0" (table $table0))
 
-   ;; CHECK:      (export "t1" (table $1))
+   ;; CHECK:      (export "t1" (table $t1))
 
    ;; CHECK:      (export "g0" (global $glob0))
 
-   ;; CHECK:      (export "g1" (global $global$1))
+   ;; CHECK:      (export "g1" (global $g1))
 
    ;; CHECK:      (export "m0" (memory $mem0))
 
-   ;; CHECK:      (export "m1" (memory $1))
+   ;; CHECK:      (export "m1" (memory $m1))
 
    ;; CHECK:      (export "tag0" (tag $tag0))
 
    ;; CHECK:      (export "tag1" (tag $tag$1))
 
-   ;; CHECK:      (export "func" (func $2))
+   ;; CHECK:      (export "func" (func $f2))
 
    ;; CHECK:      (export "f2" (func $func2))
 
-   ;; CHECK:      (export "f3" (func $4))
+   ;; CHECK:      (export "f3" (func $f4))
 
    ;; CHECK:      (export "t2" (table $table2))
 
-   ;; CHECK:      (export "t3" (table $3))
+   ;; CHECK:      (export "t3" (table $t3))
 
    ;; CHECK:      (export "m2" (memory $mem2))
 
-   ;; CHECK:      (export "m3" (memory $3))
+   ;; CHECK:      (export "m3" (memory $m3))
 
    ;; CHECK:      (export "g2" (global $glob2))
 
-   ;; CHECK:      (export "g3" (global $global$3))
+   ;; CHECK:      (export "g3" (global $g3))
 
    ;; CHECK:      (export "tag2" (tag $tag2))
 
    ;; CHECK:      (export "tag3" (tag $tag$3))
 
-   ;; CHECK:      (export "func2" (func $5))
+   ;; CHECK:      (export "func2" (func $f5))
 
    ;; CHECK:      (func $func0 (type $0)
    ;; CHECK-NEXT:  (nop)
@@ -116,11 +116,11 @@
 
    (func (export "func") (param $x (ref $t)))
 )
-;; CHECK:      (func $1 (type $0)
+;; CHECK:      (func $f1 (type $0)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $2 (type $2) (param $x (ref $t))
+;; CHECK:      (func $f2 (type $2) (param $x (ref $t))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 
@@ -128,10 +128,10 @@
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $4 (type $0)
+;; CHECK:      (func $f4 (type $0)
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $5 (type $4) (param $0 (ref $u))
+;; CHECK:      (func $f5 (type $4) (param $0 (ref $u))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )

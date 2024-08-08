@@ -12,6 +12,6 @@
 (module
  ;; CHECK-TEXT:      (memory $0 23 256 shared)
  ;; CHECK-BIN:      (memory $0 23 256 shared)
- ;; CHECK-BIN-NODEBUG:      (memory $0 23 256 shared)
  (memory $0 23 256 shared)
 )
+;; CHECK-BIN-NODEBUG:      (memory $m0 23 256 shared)

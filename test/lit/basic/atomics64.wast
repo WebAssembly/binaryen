@@ -16,7 +16,6 @@
  (type $0 (func))
  ;; CHECK-TEXT:      (memory $0 i64 23 256 shared)
  ;; CHECK-BIN:      (memory $0 i64 23 256 shared)
- ;; CHECK-BIN-NODEBUG:      (memory $0 i64 23 256 shared)
  (memory $0 i64 23 256 shared)
 
  ;; CHECK-TEXT:      (func $atomic-loadstore (type $0)
@@ -576,7 +575,9 @@
   (atomic.fence)
  )
 )
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (memory $m0 i64 23 256 shared)
+
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
@@ -645,7 +646,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $f1 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
@@ -681,7 +682,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $f2 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
@@ -715,7 +716,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $f3 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
@@ -761,6 +762,6 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $f4 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (atomic.fence)
 ;; CHECK-BIN-NODEBUG-NEXT: )

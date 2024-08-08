@@ -8,7 +8,7 @@
   (type $2 (func (param i32) (result i32)))
   (type $2-dupe (func (param i32) (result i32)))
   (type $2-thrupe (func (param i32) (result i32)))
-  (export "memory" (memory $0))
+  (export "memory" (memory 0))
   (export "exported" (func $exported))
   (export "other1" (func $other1))
   (export "other2" (func $other2))

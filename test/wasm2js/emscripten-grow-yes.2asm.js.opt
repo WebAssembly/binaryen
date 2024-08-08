@@ -48,7 +48,7 @@ function asmFunc(imports) {
  var Math_sqrt = Math.sqrt;
  // EMSCRIPTEN_START_FUNCS
 ;
- function $0() {
+ function f0() {
   return __wasm_memory_size() | 0;
  }
  
@@ -84,7 +84,7 @@ function asmFunc(imports) {
  }
  
  return {
-  "get_size": $0, 
+  "get_size": f0, 
   "memory": Object.create(Object.prototype, {
    "grow": {
     "value": __wasm_memory_grow

@@ -13,11 +13,12 @@
   (table 0 0 funcref)
   ;; CHECK-TEXT:      (memory $0 0)
   ;; CHECK-BIN:      (memory $0 0)
-  ;; CHECK-BIN-NODEBUG:      (memory $0 0)
   (memory $0 0)
 )
 ;; CHECK-TEXT:      (table $0 0 0 funcref)
 
-;; CHECK-BIN:      (table $0 0 0 funcref)
+;; CHECK-BIN:      (table $t0 0 0 funcref)
 
-;; CHECK-BIN-NODEBUG:      (table $0 0 0 funcref)
+;; CHECK-BIN-NODEBUG:      (memory $m0 0)
+
+;; CHECK-BIN-NODEBUG:      (table $t0 0 0 funcref)

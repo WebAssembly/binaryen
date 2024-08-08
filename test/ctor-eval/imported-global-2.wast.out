@@ -1,7 +1,7 @@
 (module
  (type $0 (func (result i32)))
  (import "env" "imported" (global $imported i32))
- (memory $0 256 256)
+ (memory $m0 256 256)
  (export "test1" (func $test1))
  (export "keepalive" (func $keepalive))
  (func $test1 (type $0) (result i32)

@@ -10,171 +10,171 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $0(x, y) {
+ function f0(x, y) {
   x = x | 0;
   y = y | 0;
   return x + y | 0 | 0;
  }
  
- function $1(x, y) {
+ function f1(x, y) {
   x = x | 0;
   y = y | 0;
   return x - y | 0 | 0;
  }
  
- function $2(x, y) {
+ function f2(x, y) {
   x = x | 0;
   y = y | 0;
   return Math_imul(x, y) | 0;
  }
  
- function $3(x, y) {
+ function f3(x, y) {
   x = x | 0;
   y = y | 0;
   return (x | 0) / (y | 0) | 0 | 0;
  }
  
- function $4(x, y) {
+ function f4(x, y) {
   x = x | 0;
   y = y | 0;
   return (x >>> 0) / (y >>> 0) | 0 | 0;
  }
  
- function $5(x, y) {
+ function f5(x, y) {
   x = x | 0;
   y = y | 0;
   return (x | 0) % (y | 0) | 0 | 0;
  }
  
- function $6(x, y) {
+ function f6(x, y) {
   x = x | 0;
   y = y | 0;
   return (x >>> 0) % (y >>> 0) | 0 | 0;
  }
  
- function $7(x, y) {
+ function f7(x, y) {
   x = x | 0;
   y = y | 0;
   return x & y | 0 | 0;
  }
  
- function $8(x, y) {
+ function f8(x, y) {
   x = x | 0;
   y = y | 0;
   return x | y | 0 | 0;
  }
  
- function $9(x, y) {
+ function f9(x, y) {
   x = x | 0;
   y = y | 0;
   return x ^ y | 0 | 0;
  }
  
- function $10(x, y) {
+ function f10(x, y) {
   x = x | 0;
   y = y | 0;
   return x << y | 0 | 0;
  }
  
- function $11(x, y) {
+ function f11(x, y) {
   x = x | 0;
   y = y | 0;
   return x >> y | 0 | 0;
  }
  
- function $12(x, y) {
+ function f12(x, y) {
   x = x | 0;
   y = y | 0;
   return x >>> y | 0 | 0;
  }
  
- function $13(x, y) {
+ function f13(x, y) {
   x = x | 0;
   y = y | 0;
   return __wasm_rotl_i32(x | 0, y | 0) | 0 | 0;
  }
  
- function $14(x, y) {
+ function f14(x, y) {
   x = x | 0;
   y = y | 0;
   return __wasm_rotr_i32(x | 0, y | 0) | 0 | 0;
  }
  
- function $15(x) {
+ function f15(x) {
   x = x | 0;
   return Math_clz32(x) | 0;
  }
  
- function $16(x) {
+ function f16(x) {
   x = x | 0;
   return __wasm_ctz_i32(x | 0) | 0 | 0;
  }
  
- function $17(x) {
+ function f17(x) {
   x = x | 0;
   return __wasm_popcnt_i32(x | 0) | 0 | 0;
  }
  
- function $18(x) {
+ function f18(x) {
   x = x | 0;
   return !x | 0;
  }
  
- function $19(x, y) {
+ function f19(x, y) {
   x = x | 0;
   y = y | 0;
   return (x | 0) == (y | 0) | 0;
  }
  
- function $20(x, y) {
+ function f20(x, y) {
   x = x | 0;
   y = y | 0;
   return (x | 0) != (y | 0) | 0;
  }
  
- function $21(x, y) {
+ function f21(x, y) {
   x = x | 0;
   y = y | 0;
   return (x | 0) < (y | 0) | 0;
  }
  
- function $22(x, y) {
+ function f22(x, y) {
   x = x | 0;
   y = y | 0;
   return x >>> 0 < y >>> 0 | 0;
  }
  
- function $23(x, y) {
+ function f23(x, y) {
   x = x | 0;
   y = y | 0;
   return (x | 0) <= (y | 0) | 0;
  }
  
- function $24(x, y) {
+ function f24(x, y) {
   x = x | 0;
   y = y | 0;
   return x >>> 0 <= y >>> 0 | 0;
  }
  
- function $25(x, y) {
+ function f25(x, y) {
   x = x | 0;
   y = y | 0;
   return (x | 0) > (y | 0) | 0;
  }
  
- function $26(x, y) {
+ function f26(x, y) {
   x = x | 0;
   y = y | 0;
   return x >>> 0 > y >>> 0 | 0;
  }
  
- function $27(x, y) {
+ function f27(x, y) {
   x = x | 0;
   y = y | 0;
   return (x | 0) >= (y | 0) | 0;
  }
  
- function $28(x, y) {
+ function f28(x, y) {
   x = x | 0;
   y = y | 0;
   return x >>> 0 >= y >>> 0 | 0;
@@ -190,10 +190,10 @@ function asmFunc(imports) {
  
  function __wasm_popcnt_i32(var$0) {
   var$0 = var$0 | 0;
-  var var$1 = 0, $5_1 = 0;
+  var var$1 = 0, $5 = 0;
   label$1 : {
    label$2 : while (1) {
-    $5_1 = var$1;
+    $5 = var$1;
     if (!var$0) {
      break label$1
     }
@@ -202,7 +202,7 @@ function asmFunc(imports) {
     continue label$2;
    };
   }
-  return $5_1 | 0;
+  return $5 | 0;
  }
  
  function __wasm_rotl_i32(var$0, var$1) {
@@ -224,35 +224,35 @@ function asmFunc(imports) {
  }
  
  return {
-  "add": $0, 
-  "sub": $1, 
-  "mul": $2, 
-  "div_s": $3, 
-  "div_u": $4, 
-  "rem_s": $5, 
-  "rem_u": $6, 
-  "and": $7, 
-  "or": $8, 
-  "xor": $9, 
-  "shl": $10, 
-  "shr_s": $11, 
-  "shr_u": $12, 
-  "rotl": $13, 
-  "rotr": $14, 
-  "clz": $15, 
-  "ctz": $16, 
-  "popcnt": $17, 
-  "eqz": $18, 
-  "eq": $19, 
-  "ne": $20, 
-  "lt_s": $21, 
-  "lt_u": $22, 
-  "le_s": $23, 
-  "le_u": $24, 
-  "gt_s": $25, 
-  "gt_u": $26, 
-  "ge_s": $27, 
-  "ge_u": $28
+  "add": f0, 
+  "sub": f1, 
+  "mul": f2, 
+  "div_s": f3, 
+  "div_u": f4, 
+  "rem_s": f5, 
+  "rem_u": f6, 
+  "and": f7, 
+  "or": f8, 
+  "xor": f9, 
+  "shl": f10, 
+  "shr_s": f11, 
+  "shr_u": f12, 
+  "rotl": f13, 
+  "rotr": f14, 
+  "clz": f15, 
+  "ctz": f16, 
+  "popcnt": f17, 
+  "eqz": f18, 
+  "eq": f19, 
+  "ne": f20, 
+  "lt_s": f21, 
+  "lt_u": f22, 
+  "le_s": f23, 
+  "le_u": f24, 
+  "gt_s": f25, 
+  "gt_u": f26, 
+  "ge_s": f27, 
+  "ge_u": f28
  };
 }
 

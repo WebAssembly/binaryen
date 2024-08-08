@@ -16,7 +16,6 @@
   (type $0 (func))
   ;; CHECK-TEXT:      (memory $0 0)
   ;; CHECK-BIN:      (memory $0 0)
-  ;; CHECK-BIN-NODEBUG:      (memory $0 0)
   (memory $0 0)
 
   ;; CHECK-TEXT:      (func $0 (type $0)
@@ -43,18 +42,6 @@
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
-  ;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
-  ;; CHECK-BIN-NODEBUG-NEXT:  (if
-  ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
-  ;; CHECK-BIN-NODEBUG-NEXT:   (then
-  ;; CHECK-BIN-NODEBUG-NEXT:    (block $label$2
-  ;; CHECK-BIN-NODEBUG-NEXT:     (br_table $label$2
-  ;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 0)
-  ;; CHECK-BIN-NODEBUG-NEXT:     )
-  ;; CHECK-BIN-NODEBUG-NEXT:    )
-  ;; CHECK-BIN-NODEBUG-NEXT:   )
-  ;; CHECK-BIN-NODEBUG-NEXT:  )
-  ;; CHECK-BIN-NODEBUG-NEXT: )
   (func $0 (type $0)
     (if
       (i32.const 0)
@@ -68,3 +55,17 @@
     )
   )
 )
+;; CHECK-BIN-NODEBUG:      (memory $m0 0)
+
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (if
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
+;; CHECK-BIN-NODEBUG-NEXT:   (then
+;; CHECK-BIN-NODEBUG-NEXT:    (block $label$2
+;; CHECK-BIN-NODEBUG-NEXT:     (br_table $label$2
+;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 0)
+;; CHECK-BIN-NODEBUG-NEXT:     )
+;; CHECK-BIN-NODEBUG-NEXT:    )
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )

@@ -3,7 +3,7 @@
  (type $1 (func (param i32)))
  (import "env" "waka" (func $foo))
  (import "env" "waka" (func $wrong (param i32)))
- (table $0 2 2 funcref)
+ (table $t0 2 2 funcref)
  (elem $0 (i32.const 0) $foo $foo)
  (export "baz" (func $baz))
  (start $foo)

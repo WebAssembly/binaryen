@@ -34,7 +34,7 @@
   ;; CHECK:      (global $string-const stringref (string.const "string in a global \c2\a3_\e2\82\ac_\f0\90\8d\88 \01\00\t\t\n\n\r\r\"\"\'\'\\\\ "))
   (global $string-const stringref (string.const "string in a global \C2\A3_\E2\82\AC_\F0\90\8D\88 \01\00\t\t\n\n\r\r\"\"\'\'\\\\ "))
 
-  ;; CHECK:      (memory $0 10 10)
+  ;; CHECK:      (memory $m0 10 10)
 
   ;; CHECK:      (func $string.const (type $3) (param $param (ref string))
   ;; CHECK-NEXT:  (call $string.const

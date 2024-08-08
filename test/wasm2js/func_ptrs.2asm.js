@@ -13,30 +13,30 @@ function asmFunc(imports) {
  var Math_sqrt = Math.sqrt;
  var spectest = imports.spectest;
  var print = spectest.print_i32;
- function $2() {
+ function f2() {
   return 13 | 0;
  }
  
- function $3($0) {
+ function f3($0) {
   $0 = $0 | 0;
   return $0 + 1 | 0 | 0;
  }
  
- function $4(a) {
+ function f4(a) {
   a = a | 0;
   return a - 2 | 0 | 0;
  }
  
- function $5($0) {
+ function f5($0) {
   $0 = $0 | 0;
   print($0 | 0);
  }
  
  return {
-  "one": $2, 
-  "two": $3, 
-  "three": $4, 
-  "four": $5
+  "one": f2, 
+  "two": f3, 
+  "three": f4, 
+  "four": f5
  };
 }
 
@@ -79,20 +79,20 @@ function asmFunc(imports) {
   return 5 | 0;
  }
  
- function $0(i) {
+ function f0(i) {
   i = i | 0;
   return FUNCTION_TABLE[i | 0]() | 0 | 0;
  }
  
- function $1(i) {
+ function f1(i) {
   i = i | 0;
   return FUNCTION_TABLE[i | 0]() | 0 | 0;
  }
  
  var FUNCTION_TABLE = [t1, t2, t3, u1, u2, t1, t3];
  return {
-  "callt": $0, 
-  "callu": $1
+  "callt": f0, 
+  "callu": f1
  };
 }
 
@@ -120,14 +120,14 @@ function asmFunc(imports) {
   return 2 | 0;
  }
  
- function $0(i) {
+ function f0(i) {
   i = i | 0;
   return FUNCTION_TABLE[i | 0]() | 0 | 0;
  }
  
  var FUNCTION_TABLE = [t1, t2];
  return {
-  "callt": $0
+  "callt": f0
  };
 }
 

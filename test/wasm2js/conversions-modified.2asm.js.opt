@@ -44,83 +44,83 @@ function asmFunc(imports) {
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $3($0) {
+ function f3($0) {
   $0 = Math_fround($0);
   return ~~$0 | 0;
  }
  
- function $4($0) {
+ function f4($0) {
   $0 = Math_fround($0);
   return ~~$0 >>> 0 | 0;
  }
  
- function $5($0) {
+ function f5($0) {
   $0 = +$0;
   return ~~$0 | 0;
  }
  
- function $6($0) {
+ function f6($0) {
   $0 = +$0;
   return ~~$0 >>> 0 | 0;
  }
  
- function $11($0) {
+ function f11($0) {
   $0 = $0 | 0;
   return Math_fround(Math_fround($0 | 0));
  }
  
- function $13($0) {
+ function f13($0) {
   $0 = $0 | 0;
   return +($0 | 0);
  }
  
- function $15($0) {
+ function f15($0) {
   $0 = $0 | 0;
   return Math_fround(Math_fround($0 >>> 0));
  }
  
- function $17($0) {
+ function f17($0) {
   $0 = $0 | 0;
   return +($0 >>> 0);
  }
  
- function $19($0) {
+ function f19($0) {
   $0 = Math_fround($0);
   return +$0;
  }
  
- function $20($0) {
+ function f20($0) {
   $0 = +$0;
   return Math_fround(Math_fround($0));
  }
  
- function $21($0) {
+ function f21($0) {
   $0 = $0 | 0;
   return Math_fround((wasm2js_scratch_store_i32(2, $0), wasm2js_scratch_load_f32()));
  }
  
- function $23($0) {
+ function f23($0) {
   $0 = Math_fround($0);
   return (wasm2js_scratch_store_f32($0), wasm2js_scratch_load_i32(2)) | 0;
  }
  
- function legalstub$0($0) {
+ function legalstub$f0($0) {
   i64toi32_i32$HIGH_BITS = $0 >> 31;
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
   return $0;
  }
  
- function legalstub$1($0) {
+ function legalstub$f1($0) {
   i64toi32_i32$HIGH_BITS = 0;
   setTempRet0(0);
   return $0;
  }
  
- function legalstub$2($0, $1) {
+ function legalstub$f2($0, $1) {
   return $0;
  }
  
- function legalstub$7($0) {
+ function legalstub$f7($0) {
   var $1 = 0, $2 = 0;
   $2 = ~~$0 >>> 0;
   if (Math_fround(Math_abs($0)) >= Math_fround(1.0)) {
@@ -133,7 +133,7 @@ function asmFunc(imports) {
   return $2;
  }
  
- function legalstub$9($0) {
+ function legalstub$f9($0) {
   var $1 = 0, $2 = 0;
   $2 = ~~$0 >>> 0;
   if (Math_abs($0) >= 1.0) {
@@ -146,29 +146,29 @@ function asmFunc(imports) {
   return $2;
  }
  
- function legalstub$12($0, $1) {
+ function legalstub$f12($0, $1) {
   return Math_fround(+($0 >>> 0) + +($1 | 0) * 4294967296.0);
  }
  
- function legalstub$14($0, $1) {
+ function legalstub$f14($0, $1) {
   return +($0 >>> 0) + +($1 | 0) * 4294967296.0;
  }
  
- function legalstub$16($0, $1) {
+ function legalstub$f16($0, $1) {
   return Math_fround(+($0 >>> 0) + +($1 >>> 0) * 4294967296.0);
  }
  
- function legalstub$18($0, $1) {
+ function legalstub$f18($0, $1) {
   return +($0 >>> 0) + +($1 >>> 0) * 4294967296.0;
  }
  
- function legalstub$22($0, $1) {
+ function legalstub$f22($0, $1) {
   wasm2js_scratch_store_i32(0, $0 | 0);
   wasm2js_scratch_store_i32(1, $1 | 0);
   return +wasm2js_scratch_load_f64();
  }
  
- function legalstub$24($0) {
+ function legalstub$f24($0) {
   var $1 = 0, $2 = 0;
   wasm2js_scratch_store_f64(+$0);
   $1 = wasm2js_scratch_load_i32(1) | 0;
@@ -179,31 +179,31 @@ function asmFunc(imports) {
  }
  
  return {
-  "i64_extend_s_i32": legalstub$0, 
-  "i64_extend_u_i32": legalstub$1, 
-  "i32_wrap_i64": legalstub$2, 
-  "i32_trunc_s_f32": $3, 
-  "i32_trunc_u_f32": $4, 
-  "i32_trunc_s_f64": $5, 
-  "i32_trunc_u_f64": $6, 
-  "i64_trunc_s_f32": legalstub$7, 
-  "i64_trunc_u_f32": legalstub$7, 
-  "i64_trunc_s_f64": legalstub$9, 
-  "i64_trunc_u_f64": legalstub$9, 
-  "f32_convert_s_i32": $11, 
-  "f32_convert_s_i64": legalstub$12, 
-  "f64_convert_s_i32": $13, 
-  "f64_convert_s_i64": legalstub$14, 
-  "f32_convert_u_i32": $15, 
-  "f32_convert_u_i64": legalstub$16, 
-  "f64_convert_u_i32": $17, 
-  "f64_convert_u_i64": legalstub$18, 
-  "f64_promote_f32": $19, 
-  "f32_demote_f64": $20, 
-  "f32_reinterpret_i32": $21, 
-  "f64_reinterpret_i64": legalstub$22, 
-  "i32_reinterpret_f32": $23, 
-  "i64_reinterpret_f64": legalstub$24
+  "i64_extend_s_i32": legalstub$f0, 
+  "i64_extend_u_i32": legalstub$f1, 
+  "i32_wrap_i64": legalstub$f2, 
+  "i32_trunc_s_f32": f3, 
+  "i32_trunc_u_f32": f4, 
+  "i32_trunc_s_f64": f5, 
+  "i32_trunc_u_f64": f6, 
+  "i64_trunc_s_f32": legalstub$f7, 
+  "i64_trunc_u_f32": legalstub$f7, 
+  "i64_trunc_s_f64": legalstub$f9, 
+  "i64_trunc_u_f64": legalstub$f9, 
+  "f32_convert_s_i32": f11, 
+  "f32_convert_s_i64": legalstub$f12, 
+  "f64_convert_s_i32": f13, 
+  "f64_convert_s_i64": legalstub$f14, 
+  "f32_convert_u_i32": f15, 
+  "f32_convert_u_i64": legalstub$f16, 
+  "f64_convert_u_i32": f17, 
+  "f64_convert_u_i64": legalstub$f18, 
+  "f64_promote_f32": f19, 
+  "f32_demote_f64": f20, 
+  "f32_reinterpret_i32": f21, 
+  "f64_reinterpret_i64": legalstub$f22, 
+  "i32_reinterpret_f32": f23, 
+  "i64_reinterpret_f64": legalstub$f24
  };
 }
 

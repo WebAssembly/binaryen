@@ -211,64 +211,64 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $4 (func (param i32 i32 i32)))
 
-;; CHECK-BIN-NODEBUG:      (table $0 1 1 funcref)
+;; CHECK-BIN-NODEBUG:      (table $t0 1 1 funcref)
 
-;; CHECK-BIN-NODEBUG:      (table $1 3 3 funcref)
+;; CHECK-BIN-NODEBUG:      (table $t1 3 3 funcref)
 
-;; CHECK-BIN-NODEBUG:      (elem $0 (table $0) (i32.const 0) func $0)
+;; CHECK-BIN-NODEBUG:      (elem $0 (table $t0) (i32.const 0) func $f0)
 
-;; CHECK-BIN-NODEBUG:      (elem $1 (table $1) (i32.const 0) func $1 $1 $1)
+;; CHECK-BIN-NODEBUG:      (elem $1 (table $t1) (i32.const 0) func $f1 $f1 $f1)
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $f1 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (table.get $0
+;; CHECK-BIN-NODEBUG-NEXT:   (table.get $t0
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (table.get $1
+;; CHECK-BIN-NODEBUG-NEXT:   (table.get $t1
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 100)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (table.set $0
+;; CHECK-BIN-NODEBUG:      (func $f2 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (table.set $t0
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
-;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $0)
+;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $f0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (table.get $0
+;; CHECK-BIN-NODEBUG-NEXT:   (table.get $t0
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $1) (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (table.size $0)
+;; CHECK-BIN-NODEBUG:      (func $f3 (type $1) (result i32)
+;; CHECK-BIN-NODEBUG-NEXT:  (table.size $t0)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (type $2) (param $0 i32) (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (table.grow $0
+;; CHECK-BIN-NODEBUG:      (func $f4 (type $2) (param $0 i32) (result i32)
+;; CHECK-BIN-NODEBUG-NEXT:  (table.grow $t0
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null nofunc)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $5 (type $3) (param $0 i32) (param $1 funcref) (param $2 i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (table.fill $0
+;; CHECK-BIN-NODEBUG:      (func $f5 (type $3) (param $0 i32) (param $1 funcref) (param $2 i32)
+;; CHECK-BIN-NODEBUG-NEXT:  (table.fill $t0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $6 (type $4) (param $0 i32) (param $1 i32) (param $2 i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (table.copy $0 $1
+;; CHECK-BIN-NODEBUG:      (func $f6 (type $4) (param $0 i32) (param $1 i32) (param $2 i32)
+;; CHECK-BIN-NODEBUG-NEXT:  (table.copy $t0 $t1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)

@@ -65,7 +65,7 @@
 )
 ;; CHECK-BIN-NODEBUG:      (type $0 (func (result f32)))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (result f32)
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $0) (result f32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (if (result f32)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (then

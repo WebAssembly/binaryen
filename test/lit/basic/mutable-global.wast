@@ -45,7 +45,7 @@
 )
 ;; CHECK-BIN-NODEBUG:      (import "env" "global-mut" (global $gimport$0 (mut i32)))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (global.set $gimport$0
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.add
 ;; CHECK-BIN-NODEBUG-NEXT:    (global.get $gimport$0)

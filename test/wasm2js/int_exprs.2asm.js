@@ -10,24 +10,24 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $0(x, y) {
+ function f0(x, y) {
   x = x | 0;
   y = y | 0;
   return (x + 1 | 0 | 0) < (y + 1 | 0 | 0) | 0;
  }
  
- function $1(x, y) {
+ function f1(x, y) {
   x = x | 0;
   y = y | 0;
   return (x + 1 | 0) >>> 0 < (y + 1 | 0) >>> 0 | 0;
  }
  
- function $2(x, x$hi, y, y$hi) {
+ function f2(x, x$hi, y, y$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   y = y | 0;
   y$hi = y$hi | 0;
-  var i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, i64toi32_i32$5 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, $13 = 0, $14 = 0, $15 = 0, $3_1 = 0, $3$hi = 0, $5$hi = 0;
+  var i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, i64toi32_i32$5 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, $13 = 0, $14 = 0, $15 = 0, $3 = 0, $3$hi = 0, $5$hi = 0;
   i64toi32_i32$0 = x$hi;
   i64toi32_i32$2 = x;
   i64toi32_i32$1 = 0;
@@ -37,7 +37,7 @@ function asmFunc(imports) {
   if (i64toi32_i32$4 >>> 0 < i64toi32_i32$3 >>> 0) {
    i64toi32_i32$5 = i64toi32_i32$5 + 1 | 0
   }
-  $3_1 = i64toi32_i32$4;
+  $3 = i64toi32_i32$4;
   $3$hi = i64toi32_i32$5;
   i64toi32_i32$5 = y$hi;
   i64toi32_i32$0 = y;
@@ -50,7 +50,7 @@ function asmFunc(imports) {
   }
   $5$hi = i64toi32_i32$4;
   i64toi32_i32$4 = $3$hi;
-  i64toi32_i32$5 = $3_1;
+  i64toi32_i32$5 = $3;
   i64toi32_i32$0 = $5$hi;
   i64toi32_i32$3 = i64toi32_i32$1;
   if ((i64toi32_i32$4 | 0) < (i64toi32_i32$0 | 0)) {
@@ -71,12 +71,12 @@ function asmFunc(imports) {
   return $13 | 0;
  }
  
- function $3(x, x$hi, y, y$hi) {
+ function f3(x, x$hi, y, y$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   y = y | 0;
   y$hi = y$hi | 0;
-  var i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, i64toi32_i32$5 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, $3_1 = 0, $3$hi = 0, $5$hi = 0;
+  var i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, i64toi32_i32$5 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$2 = 0, $3 = 0, $3$hi = 0, $5$hi = 0;
   i64toi32_i32$0 = x$hi;
   i64toi32_i32$2 = x;
   i64toi32_i32$1 = 0;
@@ -86,7 +86,7 @@ function asmFunc(imports) {
   if (i64toi32_i32$4 >>> 0 < i64toi32_i32$3 >>> 0) {
    i64toi32_i32$5 = i64toi32_i32$5 + 1 | 0
   }
-  $3_1 = i64toi32_i32$4;
+  $3 = i64toi32_i32$4;
   $3$hi = i64toi32_i32$5;
   i64toi32_i32$5 = y$hi;
   i64toi32_i32$0 = y;
@@ -99,23 +99,23 @@ function asmFunc(imports) {
   }
   $5$hi = i64toi32_i32$4;
   i64toi32_i32$4 = $3$hi;
-  i64toi32_i32$5 = $3_1;
+  i64toi32_i32$5 = $3;
   i64toi32_i32$0 = $5$hi;
   i64toi32_i32$3 = i64toi32_i32$1;
   return i64toi32_i32$4 >>> 0 < i64toi32_i32$0 >>> 0 | ((i64toi32_i32$4 | 0) == (i64toi32_i32$0 | 0) & i64toi32_i32$5 >>> 0 < i64toi32_i32$3 >>> 0 | 0) | 0 | 0;
  }
  
- function legalstub$2($0_1, $1_1, $2_1, $3_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  $2_1 = $2_1 | 0;
-  $3_1 = $3_1 | 0;
+ function legalstub$f2($0, $1, $2, $3) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  $2 = $2 | 0;
+  $3 = $3 | 0;
   var i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $19 = 0, $20 = 0, $5 = 0, $5$hi = 0, $8$hi = 0, $9 = 0, $9$hi = 0, $11 = 0, $11$hi = 0, $14$hi = 0, $15 = 0, $15$hi = 0;
   i64toi32_i32$0 = 0;
-  $5 = $0_1;
+  $5 = $0;
   $5$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -135,10 +135,10 @@ function asmFunc(imports) {
   $9 = i64toi32_i32$0 | i64toi32_i32$3 | 0;
   $9$hi = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
-  $11 = $2_1;
+  $11 = $2;
   $11$hi = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
-  i64toi32_i32$1 = $3_1;
+  i64toi32_i32$1 = $3;
   i64toi32_i32$0 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -159,20 +159,20 @@ function asmFunc(imports) {
   $15$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $9$hi;
   i64toi32_i32$2 = $15$hi;
-  return $2($9 | 0, i64toi32_i32$1 | 0, $15 | 0, i64toi32_i32$2 | 0) | 0 | 0;
+  return f2($9 | 0, i64toi32_i32$1 | 0, $15 | 0, i64toi32_i32$2 | 0) | 0 | 0;
  }
  
- function legalstub$3($0_1, $1_1, $2_1, $3_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  $2_1 = $2_1 | 0;
-  $3_1 = $3_1 | 0;
+ function legalstub$f3($0, $1, $2, $3) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  $2 = $2 | 0;
+  $3 = $3 | 0;
   var i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, i64toi32_i32$0 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $19 = 0, $20 = 0, $5 = 0, $5$hi = 0, $8$hi = 0, $9 = 0, $9$hi = 0, $11 = 0, $11$hi = 0, $14$hi = 0, $15 = 0, $15$hi = 0;
   i64toi32_i32$0 = 0;
-  $5 = $0_1;
+  $5 = $0;
   $5$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -192,10 +192,10 @@ function asmFunc(imports) {
   $9 = i64toi32_i32$0 | i64toi32_i32$3 | 0;
   $9$hi = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
-  $11 = $2_1;
+  $11 = $2;
   $11$hi = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
-  i64toi32_i32$1 = $3_1;
+  i64toi32_i32$1 = $3;
   i64toi32_i32$0 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -216,14 +216,14 @@ function asmFunc(imports) {
   $15$hi = i64toi32_i32$1;
   i64toi32_i32$1 = $9$hi;
   i64toi32_i32$2 = $15$hi;
-  return $3($9 | 0, i64toi32_i32$1 | 0, $15 | 0, i64toi32_i32$2 | 0) | 0 | 0;
+  return f3($9 | 0, i64toi32_i32$1 | 0, $15 | 0, i64toi32_i32$2 | 0) | 0 | 0;
  }
  
  return {
-  "i32_no_fold_cmp_s_offset": $0, 
-  "i32_no_fold_cmp_u_offset": $1, 
-  "i64_no_fold_cmp_s_offset": legalstub$2, 
-  "i64_no_fold_cmp_u_offset": legalstub$3
+  "i32_no_fold_cmp_s_offset": f0, 
+  "i32_no_fold_cmp_u_offset": f1, 
+  "i64_no_fold_cmp_s_offset": legalstub$f2, 
+  "i64_no_fold_cmp_u_offset": legalstub$f3
  };
 }
 
@@ -249,7 +249,7 @@ function asmFunc(imports) {
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x, x$hi) {
+ function f0(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -260,12 +260,12 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function legalstub$0($0_1, $1) {
-  $0_1 = $0_1 | 0;
+ function legalstub$f0($0, $1) {
+  $0 = $0 | 0;
   $1 = $1 | 0;
   var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
   i64toi32_i32$2 = $1;
@@ -285,7 +285,7 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $0(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f0(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
@@ -306,7 +306,7 @@ function asmFunc(imports) {
  }
  
  return {
-  "i64_no_fold_wrap_extend_s": legalstub$0
+  "i64_no_fold_wrap_extend_s": legalstub$f0
  };
 }
 
@@ -330,7 +330,7 @@ function asmFunc(imports) {
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x, x$hi) {
+ function f0(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0;
@@ -340,12 +340,12 @@ function asmFunc(imports) {
   return x | 0;
  }
  
- function legalstub$0($0_1, $1) {
-  $0_1 = $0_1 | 0;
+ function legalstub$f0($0, $1) {
+  $0 = $0 | 0;
   $1 = $1 | 0;
   var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
   i64toi32_i32$2 = $1;
@@ -365,7 +365,7 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $0(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f0(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
@@ -386,7 +386,7 @@ function asmFunc(imports) {
  }
  
  return {
-  "i64_no_fold_wrap_extend_u": legalstub$0
+  "i64_no_fold_wrap_extend_u": legalstub$f0
  };
 }
 
@@ -410,17 +410,17 @@ function asmFunc(imports) {
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x) {
+ function f0(x) {
   x = x | 0;
   return (x << 1 | 0) >> 1 | 0 | 0;
  }
  
- function $1(x) {
+ function f1(x) {
   x = x | 0;
   return (x << 1 | 0) >>> 1 | 0 | 0;
  }
  
- function $2(x, x$hi) {
+ function f2(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$4 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, i64toi32_i32$0 = 0, i64toi32_i32$3 = 0, $7 = 0, $8 = 0;
@@ -452,7 +452,7 @@ function asmFunc(imports) {
   return i64toi32_i32$0 | 0;
  }
  
- function $3(x, x$hi) {
+ function f3(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$4 = 0, i64toi32_i32$2 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $7 = 0, $8 = 0;
@@ -484,15 +484,15 @@ function asmFunc(imports) {
   return i64toi32_i32$0 | 0;
  }
  
- function legalstub$2($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f2($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -509,9 +509,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -526,18 +526,18 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
- function legalstub$3($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f3($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -554,9 +554,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -571,14 +571,14 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
  return {
-  "i32_no_fold_shl_shr_s": $0, 
-  "i32_no_fold_shl_shr_u": $1, 
-  "i64_no_fold_shl_shr_s": legalstub$2, 
-  "i64_no_fold_shl_shr_u": legalstub$3
+  "i32_no_fold_shl_shr_s": f0, 
+  "i32_no_fold_shl_shr_u": f1, 
+  "i64_no_fold_shl_shr_s": legalstub$f2, 
+  "i64_no_fold_shl_shr_u": legalstub$f3
  };
 }
 
@@ -605,17 +605,17 @@ function asmFunc(imports) {
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x) {
+ function f0(x) {
   x = x | 0;
   return (x >> 1 | 0) << 1 | 0 | 0;
  }
  
- function $1(x) {
+ function f1(x) {
   x = x | 0;
   return (x >>> 1 | 0) << 1 | 0 | 0;
  }
  
- function $2(x, x$hi) {
+ function f2(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0, $7 = 0, $8 = 0;
@@ -647,7 +647,7 @@ function asmFunc(imports) {
   return i64toi32_i32$0 | 0;
  }
  
- function $3(x, x$hi) {
+ function f3(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$3 = 0, i64toi32_i32$1 = 0, $7 = 0, $8 = 0;
@@ -679,15 +679,15 @@ function asmFunc(imports) {
   return i64toi32_i32$0 | 0;
  }
  
- function legalstub$2($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f2($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -704,9 +704,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -721,18 +721,18 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
- function legalstub$3($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f3($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -749,9 +749,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -766,14 +766,14 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
  return {
-  "i32_no_fold_shr_s_shl": $0, 
-  "i32_no_fold_shr_u_shl": $1, 
-  "i64_no_fold_shr_s_shl": legalstub$2, 
-  "i64_no_fold_shr_u_shl": legalstub$3
+  "i32_no_fold_shr_s_shl": f0, 
+  "i32_no_fold_shr_u_shl": f1, 
+  "i64_no_fold_shr_s_shl": legalstub$f2, 
+  "i64_no_fold_shr_u_shl": legalstub$f3
  };
 }
 
@@ -802,17 +802,17 @@ function asmFunc(imports) {
  var __wasm_intrinsics_temp_i64 = 0;
  var __wasm_intrinsics_temp_i64$hi = 0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x) {
+ function f0(x) {
   x = x | 0;
   return Math_imul((x | 0) / (6 | 0) | 0, 6) | 0;
  }
  
- function $1(x) {
+ function f1(x) {
   x = x | 0;
   return Math_imul((x >>> 0) / (6 >>> 0) | 0, 6) | 0;
  }
  
- function $2(x, x$hi) {
+ function f2(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$1 = 0, i64toi32_i32$0 = 0, $4 = 0;
@@ -828,7 +828,7 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function $3(x, x$hi) {
+ function f3(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$1 = 0, i64toi32_i32$0 = 0, $4 = 0;
@@ -844,15 +844,15 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function legalstub$2($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f2($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -869,9 +869,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -886,18 +886,18 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
- function legalstub$3($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f3($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -914,9 +914,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -931,7 +931,7 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
  function _ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE(var$0, var$0$hi, var$1, var$1$hi) {
@@ -1580,10 +1580,10 @@ function asmFunc(imports) {
  }
  
  return {
-  "i32_no_fold_div_s_mul": $0, 
-  "i32_no_fold_div_u_mul": $1, 
-  "i64_no_fold_div_s_mul": legalstub$2, 
-  "i64_no_fold_div_u_mul": legalstub$3
+  "i32_no_fold_div_s_mul": f0, 
+  "i32_no_fold_div_u_mul": f1, 
+  "i64_no_fold_div_s_mul": legalstub$f2, 
+  "i64_no_fold_div_u_mul": legalstub$f3
  };
 }
 
@@ -1612,17 +1612,17 @@ function asmFunc(imports) {
  var __wasm_intrinsics_temp_i64 = 0;
  var __wasm_intrinsics_temp_i64$hi = 0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x) {
+ function f0(x) {
   x = x | 0;
   return (x | 0) / (x | 0) | 0 | 0;
  }
  
- function $1(x) {
+ function f1(x) {
   x = x | 0;
   return (x >>> 0) / (x >>> 0) | 0 | 0;
  }
  
- function $2(x, x$hi) {
+ function f2(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -1634,7 +1634,7 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function $3(x, x$hi) {
+ function f3(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -1646,15 +1646,15 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function legalstub$2($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f2($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -1671,9 +1671,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -1688,18 +1688,18 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
- function legalstub$3($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f3($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -1716,9 +1716,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -1733,7 +1733,7 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
  function _ZN17compiler_builtins3int4sdiv3Div3div17he78fc483e41d7ec7E(var$0, var$0$hi, var$1, var$1$hi) {
@@ -2296,10 +2296,10 @@ function asmFunc(imports) {
  }
  
  return {
-  "i32_no_fold_div_s_self": $0, 
-  "i32_no_fold_div_u_self": $1, 
-  "i64_no_fold_div_s_self": legalstub$2, 
-  "i64_no_fold_div_u_self": legalstub$3
+  "i32_no_fold_div_s_self": f0, 
+  "i32_no_fold_div_u_self": f1, 
+  "i64_no_fold_div_s_self": legalstub$f2, 
+  "i64_no_fold_div_u_self": legalstub$f3
  };
 }
 
@@ -2328,17 +2328,17 @@ function asmFunc(imports) {
  var __wasm_intrinsics_temp_i64 = 0;
  var __wasm_intrinsics_temp_i64$hi = 0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x) {
+ function f0(x) {
   x = x | 0;
   return (x | 0) % (x | 0) | 0 | 0;
  }
  
- function $1(x) {
+ function f1(x) {
   x = x | 0;
   return (x >>> 0) % (x >>> 0) | 0 | 0;
  }
  
- function $2(x, x$hi) {
+ function f2(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -2350,7 +2350,7 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function $3(x, x$hi) {
+ function f3(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -2362,15 +2362,15 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function legalstub$2($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f2($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -2387,9 +2387,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -2404,18 +2404,18 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
- function legalstub$3($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f3($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -2432,9 +2432,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -2449,7 +2449,7 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
  function _ZN17compiler_builtins3int4sdiv3Mod4mod_17h2cbb7bbf36e41d68E(var$0, var$0$hi, var$1, var$1$hi) {
@@ -2994,10 +2994,10 @@ function asmFunc(imports) {
  }
  
  return {
-  "i32_no_fold_rem_s_self": $0, 
-  "i32_no_fold_rem_u_self": $1, 
-  "i64_no_fold_rem_s_self": legalstub$2, 
-  "i64_no_fold_rem_u_self": legalstub$3
+  "i32_no_fold_rem_s_self": f0, 
+  "i32_no_fold_rem_u_self": f1, 
+  "i64_no_fold_rem_s_self": legalstub$f2, 
+  "i64_no_fold_rem_u_self": legalstub$f3
  };
 }
 
@@ -3026,17 +3026,17 @@ function asmFunc(imports) {
  var __wasm_intrinsics_temp_i64 = 0;
  var __wasm_intrinsics_temp_i64$hi = 0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x) {
+ function f0(x) {
   x = x | 0;
   return (Math_imul(x, 6) | 0) / (6 | 0) | 0 | 0;
  }
  
- function $1(x) {
+ function f1(x) {
   x = x | 0;
   return (Math_imul(x, 6) >>> 0) / (6 >>> 0) | 0 | 0;
  }
  
- function $2(x, x$hi) {
+ function f2(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$1 = 0, i64toi32_i32$0 = 0, $4 = 0;
@@ -3052,7 +3052,7 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function $3(x, x$hi) {
+ function f3(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$1 = 0, i64toi32_i32$0 = 0, $4 = 0;
@@ -3068,15 +3068,15 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function legalstub$2($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f2($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -3093,9 +3093,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -3110,18 +3110,18 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
- function legalstub$3($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f3($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -3138,9 +3138,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -3155,7 +3155,7 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
  function _ZN17compiler_builtins3int3mul3Mul3mul17h070e9a1c69faec5bE(var$0, var$0$hi, var$1, var$1$hi) {
@@ -3804,10 +3804,10 @@ function asmFunc(imports) {
  }
  
  return {
-  "i32_no_fold_mul_div_s": $0, 
-  "i32_no_fold_mul_div_u": $1, 
-  "i64_no_fold_mul_div_s": legalstub$2, 
-  "i64_no_fold_mul_div_u": legalstub$3
+  "i32_no_fold_mul_div_s": f0, 
+  "i32_no_fold_mul_div_u": f1, 
+  "i64_no_fold_mul_div_s": legalstub$f2, 
+  "i64_no_fold_mul_div_u": legalstub$f3
  };
 }
 
@@ -3836,12 +3836,12 @@ function asmFunc(imports) {
  var __wasm_intrinsics_temp_i64 = 0;
  var __wasm_intrinsics_temp_i64$hi = 0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x) {
+ function f0(x) {
   x = x | 0;
   return (x | 0) / (2 | 0) | 0 | 0;
  }
  
- function $1(x, x$hi) {
+ function f1(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -3853,15 +3853,15 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function legalstub$1($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
+ function legalstub$f1($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
   var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -3878,7 +3878,7 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $1(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f1(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
@@ -4458,8 +4458,8 @@ function asmFunc(imports) {
  }
  
  return {
-  "i32_no_fold_div_s_2": $0, 
-  "i64_no_fold_div_s_2": legalstub$1
+  "i32_no_fold_div_s_2": f0, 
+  "i64_no_fold_div_s_2": legalstub$f1
  };
 }
 
@@ -4486,12 +4486,12 @@ function asmFunc(imports) {
  var __wasm_intrinsics_temp_i64 = 0;
  var __wasm_intrinsics_temp_i64$hi = 0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x) {
+ function f0(x) {
   x = x | 0;
   return (x | 0) % (2 | 0) | 0 | 0;
  }
  
- function $1(x, x$hi) {
+ function f1(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -4503,15 +4503,15 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function legalstub$1($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
+ function legalstub$f1($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
   var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -4528,7 +4528,7 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $1(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f1(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
@@ -5090,8 +5090,8 @@ function asmFunc(imports) {
  }
  
  return {
-  "i32_no_fold_rem_s_2": $0, 
-  "i64_no_fold_rem_s_2": legalstub$1
+  "i32_no_fold_rem_s_2": f0, 
+  "i64_no_fold_rem_s_2": legalstub$f1
  };
 }
 
@@ -5118,17 +5118,17 @@ function asmFunc(imports) {
  var __wasm_intrinsics_temp_i64 = 0;
  var __wasm_intrinsics_temp_i64$hi = 0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x) {
+ function f0(x) {
   x = x | 0;
   return (x | 0) / (0 | 0) | 0 | 0;
  }
  
- function $1(x) {
+ function f1(x) {
   x = x | 0;
   return (x >>> 0) / (0 >>> 0) | 0 | 0;
  }
  
- function $2(x, x$hi) {
+ function f2(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -5140,7 +5140,7 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function $3(x, x$hi) {
+ function f3(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -5152,15 +5152,15 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function legalstub$2($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f2($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -5177,9 +5177,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -5194,18 +5194,18 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
- function legalstub$3($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f3($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -5222,9 +5222,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -5239,7 +5239,7 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
  function _ZN17compiler_builtins3int4sdiv3Div3div17he78fc483e41d7ec7E(var$0, var$0$hi, var$1, var$1$hi) {
@@ -5802,10 +5802,10 @@ function asmFunc(imports) {
  }
  
  return {
-  "i32_div_s_0": $0, 
-  "i32_div_u_0": $1, 
-  "i64_div_s_0": legalstub$2, 
-  "i64_div_u_0": legalstub$3
+  "i32_div_s_0": f0, 
+  "i32_div_u_0": f1, 
+  "i64_div_s_0": legalstub$f2, 
+  "i64_div_u_0": legalstub$f3
  };
 }
 
@@ -5834,17 +5834,17 @@ function asmFunc(imports) {
  var __wasm_intrinsics_temp_i64 = 0;
  var __wasm_intrinsics_temp_i64$hi = 0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x) {
+ function f0(x) {
   x = x | 0;
   return (x | 0) / (3 | 0) | 0 | 0;
  }
  
- function $1(x) {
+ function f1(x) {
   x = x | 0;
   return (x >>> 0) / (3 >>> 0) | 0 | 0;
  }
  
- function $2(x, x$hi) {
+ function f2(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -5856,7 +5856,7 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function $3(x, x$hi) {
+ function f3(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -5868,15 +5868,15 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function legalstub$2($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f2($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -5893,9 +5893,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -5910,18 +5910,18 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
- function legalstub$3($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f3($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -5938,9 +5938,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -5955,7 +5955,7 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
  function _ZN17compiler_builtins3int4sdiv3Div3div17he78fc483e41d7ec7E(var$0, var$0$hi, var$1, var$1$hi) {
@@ -6518,10 +6518,10 @@ function asmFunc(imports) {
  }
  
  return {
-  "i32_div_s_3": $0, 
-  "i32_div_u_3": $1, 
-  "i64_div_s_3": legalstub$2, 
-  "i64_div_u_3": legalstub$3
+  "i32_div_s_3": f0, 
+  "i32_div_u_3": f1, 
+  "i64_div_s_3": legalstub$f2, 
+  "i64_div_u_3": legalstub$f3
  };
 }
 
@@ -6550,17 +6550,17 @@ function asmFunc(imports) {
  var __wasm_intrinsics_temp_i64 = 0;
  var __wasm_intrinsics_temp_i64$hi = 0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x) {
+ function f0(x) {
   x = x | 0;
   return (x | 0) / (5 | 0) | 0 | 0;
  }
  
- function $1(x) {
+ function f1(x) {
   x = x | 0;
   return (x >>> 0) / (5 >>> 0) | 0 | 0;
  }
  
- function $2(x, x$hi) {
+ function f2(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -6572,7 +6572,7 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function $3(x, x$hi) {
+ function f3(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -6584,15 +6584,15 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function legalstub$2($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f2($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -6609,9 +6609,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -6626,18 +6626,18 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
- function legalstub$3($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f3($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -6654,9 +6654,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -6671,7 +6671,7 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
  function _ZN17compiler_builtins3int4sdiv3Div3div17he78fc483e41d7ec7E(var$0, var$0$hi, var$1, var$1$hi) {
@@ -7234,10 +7234,10 @@ function asmFunc(imports) {
  }
  
  return {
-  "i32_div_s_5": $0, 
-  "i32_div_u_5": $1, 
-  "i64_div_s_5": legalstub$2, 
-  "i64_div_u_5": legalstub$3
+  "i32_div_s_5": f0, 
+  "i32_div_u_5": f1, 
+  "i64_div_s_5": legalstub$f2, 
+  "i64_div_u_5": legalstub$f3
  };
 }
 
@@ -7266,17 +7266,17 @@ function asmFunc(imports) {
  var __wasm_intrinsics_temp_i64 = 0;
  var __wasm_intrinsics_temp_i64$hi = 0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x) {
+ function f0(x) {
   x = x | 0;
   return (x | 0) / (7 | 0) | 0 | 0;
  }
  
- function $1(x) {
+ function f1(x) {
   x = x | 0;
   return (x >>> 0) / (7 >>> 0) | 0 | 0;
  }
  
- function $2(x, x$hi) {
+ function f2(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -7288,7 +7288,7 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function $3(x, x$hi) {
+ function f3(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -7300,15 +7300,15 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function legalstub$2($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f2($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -7325,9 +7325,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -7342,18 +7342,18 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
- function legalstub$3($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f3($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -7370,9 +7370,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -7387,7 +7387,7 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
  function _ZN17compiler_builtins3int4sdiv3Div3div17he78fc483e41d7ec7E(var$0, var$0$hi, var$1, var$1$hi) {
@@ -7950,10 +7950,10 @@ function asmFunc(imports) {
  }
  
  return {
-  "i32_div_s_7": $0, 
-  "i32_div_u_7": $1, 
-  "i64_div_s_7": legalstub$2, 
-  "i64_div_u_7": legalstub$3
+  "i32_div_s_7": f0, 
+  "i32_div_u_7": f1, 
+  "i64_div_s_7": legalstub$f2, 
+  "i64_div_u_7": legalstub$f3
  };
 }
 
@@ -7982,17 +7982,17 @@ function asmFunc(imports) {
  var __wasm_intrinsics_temp_i64 = 0;
  var __wasm_intrinsics_temp_i64$hi = 0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x) {
+ function f0(x) {
   x = x | 0;
   return (x | 0) % (3 | 0) | 0 | 0;
  }
  
- function $1(x) {
+ function f1(x) {
   x = x | 0;
   return (x >>> 0) % (3 >>> 0) | 0 | 0;
  }
  
- function $2(x, x$hi) {
+ function f2(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -8004,7 +8004,7 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function $3(x, x$hi) {
+ function f3(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -8016,15 +8016,15 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function legalstub$2($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f2($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -8041,9 +8041,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -8058,18 +8058,18 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
- function legalstub$3($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f3($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -8086,9 +8086,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -8103,7 +8103,7 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
  function _ZN17compiler_builtins3int4sdiv3Mod4mod_17h2cbb7bbf36e41d68E(var$0, var$0$hi, var$1, var$1$hi) {
@@ -8648,10 +8648,10 @@ function asmFunc(imports) {
  }
  
  return {
-  "i32_rem_s_3": $0, 
-  "i32_rem_u_3": $1, 
-  "i64_rem_s_3": legalstub$2, 
-  "i64_rem_u_3": legalstub$3
+  "i32_rem_s_3": f0, 
+  "i32_rem_u_3": f1, 
+  "i64_rem_s_3": legalstub$f2, 
+  "i64_rem_u_3": legalstub$f3
  };
 }
 
@@ -8680,17 +8680,17 @@ function asmFunc(imports) {
  var __wasm_intrinsics_temp_i64 = 0;
  var __wasm_intrinsics_temp_i64$hi = 0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x) {
+ function f0(x) {
   x = x | 0;
   return (x | 0) % (5 | 0) | 0 | 0;
  }
  
- function $1(x) {
+ function f1(x) {
   x = x | 0;
   return (x >>> 0) % (5 >>> 0) | 0 | 0;
  }
  
- function $2(x, x$hi) {
+ function f2(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -8702,7 +8702,7 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function $3(x, x$hi) {
+ function f3(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -8714,15 +8714,15 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function legalstub$2($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f2($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -8739,9 +8739,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -8756,18 +8756,18 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
- function legalstub$3($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f3($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -8784,9 +8784,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -8801,7 +8801,7 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
  function _ZN17compiler_builtins3int4sdiv3Mod4mod_17h2cbb7bbf36e41d68E(var$0, var$0$hi, var$1, var$1$hi) {
@@ -9346,10 +9346,10 @@ function asmFunc(imports) {
  }
  
  return {
-  "i32_rem_s_5": $0, 
-  "i32_rem_u_5": $1, 
-  "i64_rem_s_5": legalstub$2, 
-  "i64_rem_u_5": legalstub$3
+  "i32_rem_s_5": f0, 
+  "i32_rem_u_5": f1, 
+  "i64_rem_s_5": legalstub$f2, 
+  "i64_rem_u_5": legalstub$f3
  };
 }
 
@@ -9378,17 +9378,17 @@ function asmFunc(imports) {
  var __wasm_intrinsics_temp_i64 = 0;
  var __wasm_intrinsics_temp_i64$hi = 0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x) {
+ function f0(x) {
   x = x | 0;
   return (x | 0) % (7 | 0) | 0 | 0;
  }
  
- function $1(x) {
+ function f1(x) {
   x = x | 0;
   return (x >>> 0) % (7 >>> 0) | 0 | 0;
  }
  
- function $2(x, x$hi) {
+ function f2(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -9400,7 +9400,7 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function $3(x, x$hi) {
+ function f3(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -9412,15 +9412,15 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function legalstub$2($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f2($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -9437,9 +9437,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f2(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -9454,18 +9454,18 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
- function legalstub$3($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
-  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2_1 = 0, $2$hi = 0;
+ function legalstub$f3($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
+  var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -9482,9 +9482,9 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f3(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
-  $2_1 = i64toi32_i32$2;
+  $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
   i64toi32_i32$1 = i64toi32_i32$2;
   i64toi32_i32$2 = 0;
@@ -9499,7 +9499,7 @@ function asmFunc(imports) {
   }
   setTempRet0($13 | 0);
   i64toi32_i32$2 = $2$hi;
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
  function _ZN17compiler_builtins3int4sdiv3Mod4mod_17h2cbb7bbf36e41d68E(var$0, var$0$hi, var$1, var$1$hi) {
@@ -10044,10 +10044,10 @@ function asmFunc(imports) {
  }
  
  return {
-  "i32_rem_s_7": $0, 
-  "i32_rem_u_7": $1, 
-  "i64_rem_s_7": legalstub$2, 
-  "i64_rem_u_7": legalstub$3
+  "i32_rem_s_7": f0, 
+  "i32_rem_u_7": f1, 
+  "i64_rem_s_7": legalstub$f2, 
+  "i64_rem_u_7": legalstub$f3
  };
 }
 
@@ -10076,12 +10076,12 @@ function asmFunc(imports) {
  var __wasm_intrinsics_temp_i64 = 0;
  var __wasm_intrinsics_temp_i64$hi = 0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0(x) {
+ function f0(x) {
   x = x | 0;
   return (x | 0) / (-1 | 0) | 0 | 0;
  }
  
- function $1(x, x$hi) {
+ function f1(x, x$hi) {
   x = x | 0;
   x$hi = x$hi | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$1 = 0;
@@ -10093,15 +10093,15 @@ function asmFunc(imports) {
   return i64toi32_i32$1 | 0;
  }
  
- function legalstub$1($0_1, $1_1) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
+ function legalstub$f1($0, $1) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
   var i64toi32_i32$2 = 0, i64toi32_i32$4 = 0, i64toi32_i32$0 = 0, i64toi32_i32$1 = 0, i64toi32_i32$3 = 0, $12 = 0, $13 = 0, $4 = 0, $4$hi = 0, $7$hi = 0, $2 = 0, $2$hi = 0;
   i64toi32_i32$0 = 0;
-  $4 = $0_1;
+  $4 = $0;
   $4$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -10118,7 +10118,7 @@ function asmFunc(imports) {
   i64toi32_i32$2 = $7$hi;
   i64toi32_i32$3 = $12;
   i64toi32_i32$2 = i64toi32_i32$1 | i64toi32_i32$2 | 0;
-  i64toi32_i32$2 = $1(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
+  i64toi32_i32$2 = f1(i64toi32_i32$0 | i64toi32_i32$3 | 0 | 0, i64toi32_i32$2 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   $2 = i64toi32_i32$2;
   $2$hi = i64toi32_i32$0;
@@ -10698,8 +10698,8 @@ function asmFunc(imports) {
  }
  
  return {
-  "i32_no_fold_div_neg1": $0, 
-  "i64_no_fold_div_neg1": legalstub$1
+  "i32_no_fold_div_neg1": f0, 
+  "i64_no_fold_div_neg1": legalstub$f1
  };
 }
 

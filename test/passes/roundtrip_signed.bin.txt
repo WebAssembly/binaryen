@@ -1,21 +1,21 @@
 (module
  (type $0 (func))
- (global $global$0 (mut i32) (i32.const 10))
- (memory $0 16 17)
- (export "as-br_table-index" (func $0))
- (export "as-local.set-value" (func $0))
- (func $0
+ (global $g0 (mut i32) (i32.const 10))
+ (memory $m0 16 17)
+ (export "as-br_table-index" (func $f0))
+ (export "as-local.set-value" (func $f0))
+ (func $f0
   (if
    (i32.eqz
-    (global.get $global$0)
+    (global.get $g0)
    )
    (then
     (return)
    )
   )
-  (global.set $global$0
+  (global.set $g0
    (i32.sub
-    (global.get $global$0)
+    (global.get $g0)
     (i32.const 1)
    )
   )

@@ -5,8 +5,8 @@
  (type $ii (func (param i32 i32)))
  (type $iii (func (param i32 i32 i32)))
  (type $5 (func (result f64)))
- (memory $0 256 256 shared)
- (table $0 1 1 funcref)
+ (memory $m0 256 256 shared)
+ (table $t0 1 1 funcref)
  (elem $0 (i32.const 0) $call-i)
  (func $call-i (type $i) (param $0 i32)
   (nop)
@@ -675,7 +675,7 @@
   (drop
    (i32.const 50)
   )
-  (call_indirect $0 (type $ii)
+  (call_indirect $t0 (type $ii)
    (i32.const 20)
    (i32.const 40)
    (i32.const 60)
@@ -686,7 +686,7 @@
   (drop
    (i32.const 50)
   )
-  (call_indirect $0 (type $ii)
+  (call_indirect $t0 (type $ii)
    (unreachable)
    (i32.const 40)
    (i32.const 60)
@@ -697,7 +697,7 @@
   (drop
    (i32.const 51)
   )
-  (call_indirect $0 (type $ii)
+  (call_indirect $t0 (type $ii)
    (i32.const 41)
    (unreachable)
    (i32.const 61)
@@ -708,7 +708,7 @@
   (drop
    (i32.const 52)
   )
-  (call_indirect $0 (type $ii)
+  (call_indirect $t0 (type $ii)
    (i32.const 42)
    (i32.const 62)
    (unreachable)

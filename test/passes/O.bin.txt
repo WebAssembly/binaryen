@@ -1,11 +1,11 @@
 (module
  (type $0 (func (param i64) (result i64)))
- (export "fac-rec" (func $0))
- (export "fac-rec-named" (func $1))
- (export "fac-iter" (func $2))
- (export "fac-iter-named" (func $3))
- (export "fac-opt" (func $4))
- (func $0 (param $0 i64) (result i64)
+ (export "fac-rec" (func $f0))
+ (export "fac-rec-named" (func $f1))
+ (export "fac-iter" (func $f2))
+ (export "fac-iter-named" (func $f3))
+ (export "fac-opt" (func $f4))
+ (func $f0 (param $0 i64) (result i64)
   (if (result i64)
    (i64.eqz
     (local.get $0)
@@ -15,7 +15,7 @@
    )
    (else
     (i64.mul
-     (call $0
+     (call $f0
       (i64.sub
        (local.get $0)
        (i64.const 1)
@@ -26,7 +26,7 @@
    )
   )
  )
- (func $1 (param $0 i64) (result i64)
+ (func $f1 (param $0 i64) (result i64)
   (if (result i64)
    (i64.eqz
     (local.get $0)
@@ -36,7 +36,7 @@
    )
    (else
     (i64.mul
-     (call $1
+     (call $f1
       (i64.sub
        (local.get $0)
        (i64.const 1)
@@ -47,10 +47,10 @@
    )
   )
  )
- (func $2 (param $0 i64) (result i64)
+ (func $f2 (param $0 i64) (result i64)
   (unreachable)
  )
- (func $3 (param $0 i64) (result i64)
+ (func $f3 (param $0 i64) (result i64)
   (local $1 i64)
   (local.set $1
    (i64.const 1)
@@ -81,7 +81,7 @@
   )
   (local.get $1)
  )
- (func $4 (param $0 i64) (result i64)
+ (func $f4 (param $0 i64) (result i64)
   (local $1 i64)
   (local.set $1
    (i64.const 1)

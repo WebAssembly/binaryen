@@ -134,7 +134,7 @@
 
 ;; CHECK-BIN-NODEBUG:      (tag $tag$0 (param i32) (result i32))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $3) (param $0 (ref $1)) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $3) (param $0 (ref $1)) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 (tuple i32 (ref $1)))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $1
