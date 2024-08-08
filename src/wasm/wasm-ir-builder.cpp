@@ -1523,6 +1523,14 @@ Result<> IRBuilder::makeTableCopy(Name destTable, Name srcTable) {
   return Ok{};
 }
 
+Result<> IRBuilder::makeTableInit(Name destTable, Name srcTable) {
+  TableInit curr;
+  CHECK_ERR(visitTableInit(&curr));
+  push(builder.makeTableInit(
+    curr.dest, curr.offset, curr.size, table, segment));
+  return Ok{};
+}
+
 Result<> IRBuilder::makeTry(Name label, Type type) {
   auto* tryy = wasm.allocator.alloc<Try>();
   tryy->type = type;

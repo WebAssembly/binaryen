@@ -469,6 +469,7 @@ public:
   void visitTableGrow(TableGrow* curr);
   void visitTableFill(TableFill* curr);
   void visitTableCopy(TableCopy* curr);
+  void visitTableInit(TableInit* curr);
   void noteDelegate(Name name, Expression* curr);
   void noteRethrow(Name name, Expression* curr);
   void visitTry(Try* curr);
@@ -2445,7 +2446,7 @@ void FunctionValidator::visitTableCopy(TableCopy* curr) {
     curr->size->type, Type(Type::i32), curr, "table.copy size must be i32");
 }
 
-void FunctionValidator::visitTableCopy(TableCopy* curr) {
+void FunctionValidator::visitTableInit(TableInit* curr) {
   shouldBeTrue(getModule()->features.hasBulkMemory(),
                curr,
                "table.init requires bulk-memory [--enable-bulk-memory]");
