@@ -2347,11 +2347,9 @@ struct PrintExpressionContents
     o << ' ';
     printHeapType(curr->contType);
 
-    // We deliberate keep all (tag ...) clauses on the same line as the resume
-    // itself to work around a quirk in update_lit_checks.py
     for (Index i = 0; i < curr->handlerTags.size(); i++) {
       o << " (";
-      printMedium(o, "tag ");
+      printMedium(o, "on ");
       curr->handlerTags[i].print(o);
       o << ' ';
       curr->handlerBlocks[i].print(o);

@@ -2426,7 +2426,7 @@ makeContNew(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   return ctx.makeContNew(pos, annotations, *type);
 }
 
-// resume ::= 'resume' typeidx ('(' 'tag' tagidx labelidx ')')*
+// resume ::= 'resume' typeidx ('(' 'on' tagidx labelidx ')')*
 template<typename Ctx>
 Result<>
 makeResume(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
@@ -2434,7 +2434,7 @@ makeResume(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   CHECK_ERR(type);
 
   auto tagLabels = ctx.makeTagLabelList();
-  while (ctx.in.takeSExprStart("tag"sv)) {
+  while (ctx.in.takeSExprStart("on"sv)) {
     auto tag = tagidx(ctx);
     CHECK_ERR(tag);
     auto label = labelidx(ctx);

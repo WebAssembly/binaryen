@@ -4868,7 +4868,7 @@
  ;; CHECK-NEXT:     (tuple.drop 3
  ;; CHECK-NEXT:      (block $block0 (type $36) (result i32 i64 (ref null $simple-cont))
  ;; CHECK-NEXT:       (local.set $f
- ;; CHECK-NEXT:        (resume $simple-cont (tag $empty $block) (tag $tag-pair-to-pair $block0)
+ ;; CHECK-NEXT:        (resume $simple-cont (on $empty $block) (on $tag-pair-to-pair $block0)
  ;; CHECK-NEXT:         (i32.const 0)
  ;; CHECK-NEXT:         (i64.const 1)
  ;; CHECK-NEXT:         (local.get $ct)
@@ -4890,7 +4890,7 @@
     i32.const 0
     i64.const 1
     local.get $ct
-    resume $simple-cont (tag $empty 1) (tag $tag-pair-to-pair 0)
+    resume $simple-cont (on $empty 1) (on $tag-pair-to-pair 0)
     local.set $f
     unreachable
    end
