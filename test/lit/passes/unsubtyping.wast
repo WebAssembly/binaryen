@@ -820,6 +820,38 @@
 
 (module
  ;; CHECK:      (rec
+ ;; CHECK-NEXT:  (type $0 (func))
+
+ ;; CHECK:       (type $super (sub (struct)))
+ (type $super (sub (struct)))
+ ;; CHECK:       (type $sub (sub $super (struct)))
+ (type $sub (sub $super (struct)))
+
+ ;; CHECK:      (table $super 1 1 (ref null $super))
+ (table $super 1 1 (ref null $super))
+
+ ;; CHECK:      (elem $sub (ref null $sub))
+ (elem $sub (ref null $sub))
+
+ ;; CHECK:      (func $table-copy (type $0)
+ ;; CHECK-NEXT:  (table.init $super
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:   (i32.const 0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $table-copy
+  ;; This requires $sub <: $super.
+  (table.init $super $sub
+   (i32.const 0)
+   (i32.const 0)
+   (i32.const 0)
+  )
+ )
+)
+
+(module
+ ;; CHECK:      (rec
  ;; CHECK-NEXT:  (type $super (sub (struct)))
  (type $super (sub (struct)))
  ;; CHECK:       (type $sub (sub $super (struct)))
