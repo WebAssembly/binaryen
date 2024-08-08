@@ -2453,7 +2453,7 @@ void FunctionValidator::visitTableInit(TableInit* curr) {
   auto* segment = getModule()->getElementSegment(curr->segment);
   auto* table = getModule()->getTableOrNull(curr->table);
   if (shouldBeTrue(!!segment, curr, "table.init segment must exist") &&
-  if (shouldBeTrue(!!table, curr, "table.init table must exist")) {
+      shouldBeTrue(!!table, curr, "table.init table must exist")) {
     shouldBeSubType(segment->type,
                     table->type,
                     curr,
