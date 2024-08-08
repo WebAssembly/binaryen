@@ -36,6 +36,7 @@ const char* Dylink = "dylink";
 const char* Dylink0 = "dylink.0";
 const char* Linking = "linking";
 const char* Producers = "producers";
+const char* BuildId = "build_id";
 const char* TargetFeatures = "target_features";
 const char* AtomicsFeature = "atomics";
 const char* BulkMemoryFeature = "bulk-memory";

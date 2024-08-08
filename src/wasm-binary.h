@@ -414,6 +414,7 @@ extern const char* Dylink;
 extern const char* Dylink0;
 extern const char* Linking;
 extern const char* Producers;
+extern const char* BuildId;
 extern const char* TargetFeatures;
 
 extern const char* AtomicsFeature;
