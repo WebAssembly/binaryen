@@ -206,6 +206,7 @@ private:
                            Signature(Type(thunkParams), Type::i64),
                            {}, // no vars
                            toABI(call, module));
+    thunkFunc->hasExplicitName = true;
     module->addFunction(std::move(thunkFunc));
     return thunk;
   }
