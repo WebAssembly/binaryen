@@ -3,8 +3,10 @@
 
 (module
   ;; CHECK:      (tag $e)
+  (tag $e)
 
   ;; CHECK:      (tag $any (param (ref any)))
+  (tag $any (param (ref any)))
 
   ;; CHECK:      (func $bar (type $2) (result i32)
   ;; CHECK-NEXT:  (i32.const 1984)
@@ -12,10 +14,6 @@
   (func $bar (result i32)
     (i32.const 1984)
   )
-
- (tag $e)
-
- (tag $any (param (ref any)))
 
   ;; CHECK:      (func $bug-cfg-traversal (type $3) (param $0 i32) (result i32)
   ;; CHECK-NEXT:  (try

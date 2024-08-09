@@ -80,6 +80,12 @@ Literal::Literal(std::shared_ptr<GCData> gcData, HeapType type)
          (type.isBottom() && !gcData));
 }
 
+Literal::Literal(std::shared_ptr<ExnData> exnData)
+  : exnData(exnData), type(HeapType::exn, NonNullable) {
+  // The data must not be null.
+  assert(exnData);
+}
+
 Literal::Literal(std::string_view string)
   : gcData(nullptr), type(Type(HeapType::string, NonNullable)) {
   // TODO: we could in theory internalize strings
@@ -136,6 +142,9 @@ Literal::Literal(const Literal& other) : type(other.type) {
         case HeapType::ext:
           gcData = other.gcData;
           return;
+        case HeapType::exn:
+          exnData = other.exnData;
+          return;
         case HeapType::none:
         case HeapType::noext:
         case HeapType::nofunc:
@@ -148,7 +157,6 @@ Literal::Literal(const Literal& other) : type(other.type) {
         case HeapType::cont:
         case HeapType::struct_:
         case HeapType::array:
-        case HeapType::exn:
           WASM_UNREACHABLE("invalid type");
         case HeapType::string:
           WASM_UNREACHABLE("TODO: string literals");
@@ -164,6 +172,8 @@ Literal::~Literal() {
   }
   if (isNull() || isData() || type.getHeapType().isMaybeShared(HeapType::ext)) {
     gcData.~shared_ptr();
+  } else if (isExn()) {
+    exnData.~shared_ptr();
   }
 }
 
@@ -329,6 +339,11 @@ std::array<uint8_t, 16> Literal::getv128() const {
 std::shared_ptr<GCData> Literal::getGCData() const {
   assert(isNull() || isData());
   return gcData;
+}
+
+std::shared_ptr<ExnData> Literal::getExnData() const {
+  assert(isExn());
+  return exnData;
 }
 
 Literal Literal::castToF32() {

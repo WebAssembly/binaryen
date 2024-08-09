@@ -18,49 +18,55 @@
   ;; CHECK-NEXT: )
   (func $try-test
     ;; When try body does not throw, try-body can be replaced with the try body
-    (try
-      (do
-        (drop (i32.const 0))
-      )
-      (catch $e
-        (drop (pop i32))
+    (block $tryend
+      (drop
+        (block $catch (result i32)
+          (try_table (catch $e $catch)
+            (drop (i32.const 0))
+          )
+          (br $tryend)
+        )
       )
     )
   )
 
   ;; CHECK:      (func $inner-try-catch_all-test (type $2) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (try
-  ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (throw $e
-  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block
+  ;; CHECK-NEXT:    (block $inner-catch
+  ;; CHECK-NEXT:     (try_table (catch_all $inner-catch)
+  ;; CHECK-NEXT:      (throw $e
+  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (catch_all
   ;; CHECK-NEXT:    (return
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (i32.const 2)
   ;; CHECK-NEXT: )
   (func $inner-try-catch_all-test (result i32)
     (local $0 i32)
     ;; The exception thrown in the inner try is caught by the inner catch_all,
     ;; so the outer try body does not throw and the outer try-catch can be
     ;; removed
-    (try
-      (do
-        (try
-          (do
-            (throw $e (i32.const 0))
-          )
-          (catch_all
+    (block $outer-tryend
+      (drop
+        (block $outer-catch (result i32)
+          (try_table (catch $e $outer-catch)
+            (block $inner-catch
+              (try_table (catch_all $inner-catch)
+                (throw $e (i32.const 0))
+              )
+              (unreachable)
+            )
             (return (i32.const 1))
           )
+          (br $outer-tryend)
         )
-      )
-      (catch $e
-        (drop (pop i32))
       )
     )
     (i32.const 2)
@@ -68,127 +74,85 @@
 
   ;; CHECK:      (func $inner-try-catch-test (type $void)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (try
-  ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (try
-  ;; CHECK-NEXT:     (do
-  ;; CHECK-NEXT:      (throw $e2
-  ;; CHECK-NEXT:       (i32.const 0)
+  ;; CHECK-NEXT:  (block $outer-tryend
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (block $outer-catch (result i32)
+  ;; CHECK-NEXT:     (try_table (catch $e $outer-catch)
+  ;; CHECK-NEXT:      (block $inner-tryend
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (block $inner-catch (result i32)
+  ;; CHECK-NEXT:         (try_table (catch $e $inner-catch)
+  ;; CHECK-NEXT:          (throw $e2
+  ;; CHECK-NEXT:           (i32.const 0)
+  ;; CHECK-NEXT:          )
+  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $0
+  ;; CHECK-NEXT:        (i32.const 1)
+  ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (catch $e
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (pop i32)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (local.set $0
-  ;; CHECK-NEXT:       (i32.const 1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (catch $e
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (pop i32)
+  ;; CHECK-NEXT:     (br $outer-tryend)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $inner-try-catch-test (local $0 i32)
     ;; The exception thrown in the inner try will not be caught by the inner
-    ;; catch, so the outer try-catch cannot be removed
-    (try
-      (do
-        (try
-          (do
-            (throw $e2 (i32.const 0))
+    ;; catch, so the outer try-catch cannot be removed.
+    (block $outer-tryend
+      (drop
+        (block $outer-catch (result i32)
+          (try_table (catch $e $outer-catch)
+            (block $inner-tryend
+              (drop
+                (block $inner-catch (result i32)
+                  (try_table (catch $e $inner-catch)
+                    (throw $e2 (i32.const 0))
+                  )
+                  (br $inner-tryend)
+                )
+              )
+              (local.set $0 (i32.const 1))
+            )
           )
-          (catch $e
-            (drop (pop i32))
-            (local.set $0 (i32.const 1))
-          )
+          (br $outer-tryend)
         )
-      )
-      (catch $e
-        (drop (pop i32))
       )
     )
   )
 
   ;; CHECK:      (func $br-in-catch (type $void)
-  ;; CHECK-NEXT:  (unreachable)
-  ;; CHECK-NEXT: )
-  (func $br-in-catch
-    ;; When catch body is removed, the removal of 'br' inside the catch body
-    ;; should be propagated up to the outer block, so that its type will be
-    ;; correctly updated to unreachable.
-    (block $label$1
-      (try
-        (do
-          (unreachable)
-        )
-        (catch $e
-          (drop (pop i32))
-          (br $label$1)
-        )
-      )
-    )
-  )
-
-  ;; CHECK:      (func $try-delegate-outer-target (type $void)
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (try $label$0
-  ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (try
-  ;; CHECK-NEXT:     (do
-  ;; CHECK-NEXT:      (try
-  ;; CHECK-NEXT:       (do
-  ;; CHECK-NEXT:        (throw $e
-  ;; CHECK-NEXT:         (i32.const 0)
-  ;; CHECK-NEXT:        )
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (delegate $label$0)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (catch_all
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $try-delegate-outer-target
-    (local $0 i32)
-    (try $label$0  ;; outer try
-      (do
-        ;; If it were not for the inner (delegate $label0), this middle try
-        ;; cannot throw even if there is a throw in the inner try, because this
-        ;; try has a catch_all. And Vacuum can replace the outer try-catch with
-        ;; the try's body if the body doesn't throw.
-        ;;
-        ;; But because the inner try has a delegate that targets the outer try,
-        ;; this middle try can throw, and we can't do the optimization for
-        ;; the outer try.
-        (try  ;; middle try
-          (do
-            (try  ;; inner try
-              (do
-                (throw $e
-                  (i32.const 0)
-                )
-              )
-              (delegate $label$0)
-            )
-          )
-          (catch_all)
+  (func $br-in-catch
+    ;; When the try_table removed, the removal of the implicit branch to the
+    ;; catch target should be registered so that its type will be correctly
+    ;; updated to unreachable.
+    (drop
+      (block $catch (result i32)
+        (try_table (catch $e $catch)
+          (unreachable)
         )
+        (unreachable)
       )
     )
   )
 
   ;; CHECK:      (func $trivial-catch-all-of-throw (type $void)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (try
-  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:  (block $catch
+  ;; CHECK-NEXT:   (try_table (catch_all $catch)
+  ;; CHECK-NEXT:    (throw $e
+  ;; CHECK-NEXT:     (i32.const 0)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block $catch0
+  ;; CHECK-NEXT:   (try_table (catch_all $catch0)
   ;; CHECK-NEXT:    (if
   ;; CHECK-NEXT:     (local.get $0)
   ;; CHECK-NEXT:     (then
@@ -201,23 +165,20 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (catch_all
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $trivial-catch-all-of-throw (local $0 i32)
     ;; This try-catch's body throws, but the catch-all catches it, so the entire
-    ;; try can be optimized out.
-    (try
-      (do
+    ;; try could be optimized out. We do this for `try` but not yet for
+    ;; `try_table`.
+    (block $catch
+      (try_table (catch_all $catch)
         (throw $e (i32.const 0))
       )
-      (catch_all)
     )
     ;; Here we also have a possible trap, so we can't do it.
-    (try
-      (do
+    (block $catch
+      (try_table (catch_all $catch)
         (if
           (local.get $0)
           (then
@@ -228,7 +189,6 @@
           )
         )
       )
-      (catch_all)
     )
   )
 
@@ -248,13 +208,12 @@
   ;; CHECK-NEXT:  (return_call $throw)
   ;; CHECK-NEXT: )
   (func $return-call-catch
-    (try
-      (do
+    (block $catch
+      (try_table (catch_all $catch)
         ;; This returns before it throws, so we can optimize out the surrounding
         ;; try-catch.
         (return_call $throw)
       )
-      (catch_all)
     )
   )
 
@@ -264,15 +223,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $return-call-indirect-catch
-    (try
-      (do
+    (block $catch
+      (try_table (catch_all $catch)
         ;; This returns before it throws, so we can optimize out the surrounding
         ;; try-catch.
         (return_call_indirect
           (i32.const 0)
         )
       )
-      (catch_all)
     )
   )
 
@@ -282,15 +240,14 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $return-call-ref-catch
-    (try
-      (do
+    (block $catch
+      (try_table (catch_all $catch)
         ;; This returns before it throws, so we can optimize out the surrounding
         ;; try-catch.
         (return_call_ref $void
           (ref.func $throw)
         )
       )
-      (catch_all)
     )
   )
 )

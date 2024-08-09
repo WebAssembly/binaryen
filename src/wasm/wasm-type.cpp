@@ -814,6 +814,8 @@ bool Type::isStruct() const { return isRef() && getHeapType().isStruct(); }
 
 bool Type::isArray() const { return isRef() && getHeapType().isArray(); }
 
+bool Type::isExn() const { return isRef() && getHeapType().isExn(); }
+
 bool Type::isString() const { return isRef() && getHeapType().isString(); }
 
 bool Type::isDefaultable() const {

@@ -170,6 +170,7 @@ public:
   bool isSignature() const;
   bool isStruct() const;
   bool isArray() const;
+  bool isExn() const;
   bool isString() const;
   bool isDefaultable() const;
 
@@ -388,6 +389,7 @@ public:
   bool isContinuation() const { return getKind() == HeapTypeKind::Cont; }
   bool isStruct() const { return getKind() == HeapTypeKind::Struct; }
   bool isArray() const { return getKind() == HeapTypeKind::Array; }
+  bool isExn() const { return isMaybeShared(HeapType::exn); }
   bool isString() const { return isMaybeShared(HeapType::string); }
   bool isBottom() const;
   bool isOpen() const;

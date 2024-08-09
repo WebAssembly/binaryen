@@ -431,6 +431,14 @@ private:
         self->pushTask(doStartTry, currp);
         return;
       }
+      if (auto* tryTable = curr->dynCast<TryTable>()) {
+        // We need to increment try depth before starting.
+        self->pushTask(doEndTryTable, currp);
+        self->pushTask(doVisitTryTable, currp);
+        self->pushTask(scan, &tryTable->body);
+        self->pushTask(doStartTryTable, currp);
+        return;
+      }
       PostWalker<InternalAnalyzer, OverriddenVisitor<InternalAnalyzer>>::scan(
         self, currp);
     }
@@ -470,6 +478,24 @@ private:
     static void doEndCatch(InternalAnalyzer* self, Expression** currp) {
       assert(self->parent.catchDepth > 0 && "catch depth cannot be negative");
       self->parent.catchDepth--;
+    }
+
+    static void doStartTryTable(InternalAnalyzer* self, Expression** currp) {
+      auto* curr = (*currp)->cast<TryTable>();
+      // We only count 'try_table's with a 'catch_all' because instructions
+      // within a 'try_table' without a 'catch_all' can still throw outside of
+      // the try.
+      if (curr->hasCatchAll()) {
+        self->parent.tryDepth++;
+      }
+    }
+
+    static void doEndTryTable(InternalAnalyzer* self, Expression** currp) {
+      auto* curr = (*currp)->cast<TryTable>();
+      if (curr->hasCatchAll()) {
+        assert(self->parent.tryDepth > 0 && "try depth cannot be negative");
+        self->parent.tryDepth--;
+      }
     }
 
     void visitBlock(Block* curr) {
