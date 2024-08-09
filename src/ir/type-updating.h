@@ -369,6 +369,11 @@ public:
   // not appear, it is mapped to itself.
   void mapTypes(const TypeMap& oldToNewTypes);
 
+  // Users of `mapTypes` may want to update the type names according to their
+  // mapping. This is not done automatically in `mapTypes` because other users
+  // may want the names to reflect that types have been replaced.
+  void mapTypeNames(const TypeMap& oldToNewTypes);
+
   // Subclasses can implement these methods to modify the new set of types that
   // we map to. By default, we simply copy over the types, and these functions
   // are the hooks to apply changes through. The methods receive as input the
