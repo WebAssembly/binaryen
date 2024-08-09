@@ -37,6 +37,7 @@
     (block $tryend
       (block $catch
         (try_table (catch_all $catch)
+          ;; Expressions that cannot throw can be taken out of 'try' scope.
           (drop (i32.const 1))
           (drop (i32.const 1))
           (return (i32.const 0))

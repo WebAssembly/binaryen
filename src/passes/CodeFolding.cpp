@@ -351,6 +351,7 @@ private:
         // This is a conservative approximation because there can be cases that
         // 'try'/'try_table' is within the expression that may throw so it is
         // safe to take the expression out.
+        // TODO: optimize this check to avoid two FindAlls.
         if (effects.throws() &&
             (FindAll<Try>(outOf).has() || FindAll<TryTable>(outOf).has())) {
           return false;

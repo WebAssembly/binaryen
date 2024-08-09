@@ -96,6 +96,7 @@
   (func $try-call-optimize-terminating-tails-success (result i32)
     (try
       (do
+        ;; Expressions that cannot throw can be taken out of 'try' scope.
         (drop (i32.const 1))
         (drop (i32.const 1))
         (return (i32.const 0))

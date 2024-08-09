@@ -28,7 +28,7 @@
   )
 
   (func $return-callee (result i32)
-   (throw $t)
+    (throw $t)
   )
 )
 

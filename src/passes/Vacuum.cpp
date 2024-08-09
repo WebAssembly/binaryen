@@ -448,7 +448,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
     // though. Instead, we should turn it into an unconditional `br` to the
     // target of the `catch_all`. Also, for a `catch_all_ref`, we cannot do that
     // optimization at all since we would not know how to create the correct
-    // `exnref`.
+    // `exnref`. Note: This optimization may make more sense in RemoveUnusedBrs.
   }
 
   void visitFunction(Function* curr) {

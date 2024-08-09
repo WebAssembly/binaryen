@@ -481,7 +481,7 @@ private:
     }
 
     static void doStartTryTable(InternalAnalyzer* self, Expression** currp) {
-      TryTable* curr = (*currp)->cast<TryTable>();
+      auto* curr = (*currp)->cast<TryTable>();
       // We only count 'try_table's with a 'catch_all' because instructions
       // within a 'try_table' without a 'catch_all' can still throw outside of
       // the try.
@@ -491,7 +491,7 @@ private:
     }
 
     static void doEndTryTable(InternalAnalyzer* self, Expression** currp) {
-      TryTable* curr = (*currp)->cast<TryTable>();
+      auto* curr = (*currp)->cast<TryTable>();
       if (curr->hasCatchAll()) {
         assert(self->parent.tryDepth > 0 && "try depth cannot be negative");
         self->parent.tryDepth--;

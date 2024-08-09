@@ -6,13 +6,12 @@
   (type $void (func))
 
   ;; CHECK:      (table $t 0 funcref)
+  (table $t 0 funcref)
 
   ;; CHECK:      (tag $e (param i32))
   (tag $e (param i32))
   ;; CHECK:      (tag $e2 (param i32))
   (tag $e2 (param i32))
-
-  (table $t 0 funcref)
 
   ;; CHECK:      (func $try-test (type $void)
   ;; CHECK-NEXT:  (nop)

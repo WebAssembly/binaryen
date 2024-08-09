@@ -358,12 +358,14 @@ INITIAL_CONTENTS_IGNORE = [
     'eh.wast',
     'eh-gc.wast',
     'exception-handling.wast',
-    'global-effects.wast',
-    'local-subtyping.wast',
-    'renamings.wat',
     'translate-to-new-eh.wast',
     'rse-eh.wast',
     'vacuum-eh.wast',
+    # These contain parts with new EH.
+    # TODO: split those parts out if we see that fuzzing new EH is far out.
+    'global-effects.wast',
+    'local-subtyping.wast',
+    'renamings.wat',
 ]
 
 
