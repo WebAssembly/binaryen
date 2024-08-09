@@ -39,7 +39,7 @@
  ;; CHECK-BINARY-NEXT:  (drop
  ;; CHECK-BINARY-NEXT:   (block $label$1 (result (ref $ct))
  ;; CHECK-BINARY-NEXT:    (return
- ;; CHECK-BINARY-NEXT:     (resume $ct (tag $t $label$1)
+ ;; CHECK-BINARY-NEXT:     (resume $ct (on $t $label$1)
  ;; CHECK-BINARY-NEXT:      (i32.const 123)
  ;; CHECK-BINARY-NEXT:      (local.get $x)
  ;; CHECK-BINARY-NEXT:     )
@@ -52,7 +52,7 @@
  ;; CHECK-TEXT-NEXT:  (tuple.extract 2 0
  ;; CHECK-TEXT-NEXT:   (block $handler (type $2) (result i32 (ref $ct))
  ;; CHECK-TEXT-NEXT:    (return
- ;; CHECK-TEXT-NEXT:     (resume $ct (tag $t $handler)
+ ;; CHECK-TEXT-NEXT:     (resume $ct (on $t $handler)
  ;; CHECK-TEXT-NEXT:      (i32.const 123)
  ;; CHECK-TEXT-NEXT:      (local.get $x)
  ;; CHECK-TEXT-NEXT:     )
@@ -66,7 +66,7 @@
  ;; CHECK-BIN-NEXT:  (local.set $1
  ;; CHECK-BIN-NEXT:   (block $label$1 (type $2) (result i32 (ref $ct))
  ;; CHECK-BIN-NEXT:    (return
- ;; CHECK-BIN-NEXT:     (resume $ct (tag $t $label$1)
+ ;; CHECK-BIN-NEXT:     (resume $ct (on $t $label$1)
  ;; CHECK-BIN-NEXT:      (i32.const 123)
  ;; CHECK-BIN-NEXT:      (local.get $x)
  ;; CHECK-BIN-NEXT:     )
@@ -92,7 +92,7 @@
    (block $handler (result i32 (ref $ct))
     (return
      (resume $ct
-      (tag $t $handler)
+      (on $t $handler)
       (i32.const 123)
       (local.get $x)
      )
@@ -115,7 +115,7 @@
 ;; CHECK-NODEBUG-NEXT:  (drop
 ;; CHECK-NODEBUG-NEXT:   (block $label$1 (result (ref $1))
 ;; CHECK-NODEBUG-NEXT:    (return
-;; CHECK-NODEBUG-NEXT:     (resume $1 (tag $tag$0 $label$1)
+;; CHECK-NODEBUG-NEXT:     (resume $1 (on $tag$0 $label$1)
 ;; CHECK-NODEBUG-NEXT:      (i32.const 123)
 ;; CHECK-NODEBUG-NEXT:      (local.get $0)
 ;; CHECK-NODEBUG-NEXT:     )
@@ -140,7 +140,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$1 (type $2) (result i32 (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:    (return
-;; CHECK-BIN-NODEBUG-NEXT:     (resume $1 (tag $tag$0 $label$1)
+;; CHECK-BIN-NODEBUG-NEXT:     (resume $1 (on $tag$0 $label$1)
 ;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 123)
 ;; CHECK-BIN-NODEBUG-NEXT:      (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
