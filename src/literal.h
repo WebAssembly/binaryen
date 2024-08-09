@@ -509,6 +509,12 @@ public:
   Literal gtSI64x2(const Literal& other) const;
   Literal leSI64x2(const Literal& other) const;
   Literal geSI64x2(const Literal& other) const;
+  Literal eqF16x8(const Literal& other) const;
+  Literal neF16x8(const Literal& other) const;
+  Literal ltF16x8(const Literal& other) const;
+  Literal gtF16x8(const Literal& other) const;
+  Literal leF16x8(const Literal& other) const;
+  Literal geF16x8(const Literal& other) const;
   Literal eqF32x4(const Literal& other) const;
   Literal neF32x4(const Literal& other) const;
   Literal ltF32x4(const Literal& other) const;
