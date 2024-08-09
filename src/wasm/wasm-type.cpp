@@ -2532,10 +2532,10 @@ Type TypeBuilder::getTempRefType(HeapType type, Nullability nullable) {
   return markTemp(impl->typeStore.insert(TypeInfo(type, nullable)));
 }
 
-void TypeBuilder::setSubType(size_t i, HeapType super) {
+void TypeBuilder::setSubType(size_t i, std::optional<HeapType> super) {
   assert(i < size() && "index out of bounds");
   HeapTypeInfo* sub = impl->entries[i].info.get();
-  sub->supertype = getHeapTypeInfo(super);
+  sub->supertype = super ? getHeapTypeInfo(*super) : nullptr;
 }
 
 void TypeBuilder::createRecGroup(size_t index, size_t length) {
