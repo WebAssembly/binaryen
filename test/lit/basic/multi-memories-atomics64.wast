@@ -1064,351 +1064,265 @@
   (atomic.fence)
  )
 )
-;; CHECK-BIN-NODEBUG:      (memory $0 i64 23 256 shared)
+;; CHECK-BIN-NODEBUG:      (memory $m0 i64 23 256 shared)
 
-;; CHECK-BIN-NODEBUG:      (memory $1 i64 23 256 shared)
+;; CHECK-BIN-NODEBUG:      (memory $m1 i64 23 256 shared)
 
-;; CHECK-BIN-NODEBUG:      (memory $2 i64 23 256 shared)
+;; CHECK-BIN-NODEBUG:      (memory $m2 i64 23 256 shared)
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.load8_u $0 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.load8_u $m0 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.load8_u $0 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.load8_u $m0 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.load16_u $1 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.load16_u $m1 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.load16_u $2 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.load16_u $m2 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.load $1 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.load $m1 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.load $0 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.load $m0 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.load8_u $0
+;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.load8_u $m0
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.load8_u $1
+;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.load8_u $m1
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.load16_u $0
+;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.load16_u $m0
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.load16_u $0
+;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.load16_u $m0
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.load32_u $2
+;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.load32_u $m2
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.load32_u $0
+;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.load32_u $m0
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.load $0
+;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.load $m0
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.load $2
+;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.load $m2
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i32.atomic.store $0 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:  (i32.atomic.store $m0 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i32.atomic.store $0 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:  (i32.atomic.store $m0 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i32.atomic.store8 $2 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:  (i32.atomic.store8 $m2 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i32.atomic.store8 $1 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:  (i32.atomic.store8 $m1 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i32.atomic.store16 $0 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:  (i32.atomic.store16 $m0 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i32.atomic.store16 $1 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:  (i32.atomic.store16 $m1 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i64.atomic.store $0 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:  (i64.atomic.store $m0 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i64.atomic.store $0 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:  (i64.atomic.store $m0 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i64.atomic.store8 $1 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:  (i64.atomic.store8 $m1 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i64.atomic.store8 $2 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:  (i64.atomic.store8 $m2 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i64.atomic.store16 $0 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:  (i64.atomic.store16 $m0 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i64.atomic.store16 $0 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:  (i64.atomic.store16 $m0 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i64.atomic.store32 $2 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:  (i64.atomic.store32 $m2 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (i64.atomic.store32 $1 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:  (i64.atomic.store32 $m1 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $f1 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw.add $1 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw.add $m1 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw.add $2 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw.add $m2 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw8.add_u $0 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw8.add_u $m0 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw8.add_u $0 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw8.add_u $m0 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw16.and_u $1
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw16.and_u $m1
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw16.and_u $2
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw16.and_u $m2
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.rmw32.or_u $0
+;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.rmw32.or_u $m0
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.rmw32.or_u $0
+;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.rmw32.or_u $m0
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw8.xchg_u $0
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw8.xchg_u $m0
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw8.xchg_u $1
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw8.xchg_u $m1
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $f2 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw.cmpxchg $0 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw.cmpxchg $m0 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw.cmpxchg $2 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw.cmpxchg $m2 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw8.cmpxchg_u $0
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw8.cmpxchg_u $m0
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw8.cmpxchg_u $0
+;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw8.cmpxchg_u $m0
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.rmw.cmpxchg $0 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.rmw.cmpxchg $m0 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.rmw.cmpxchg $1 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.rmw.cmpxchg $m1 offset=4
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.rmw32.cmpxchg_u $2
+;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.rmw32.cmpxchg_u $m2
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.rmw32.cmpxchg_u $1
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
-;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT: )
-
-;; CHECK-BIN-NODEBUG:      (func $3 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i64)
-;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
-;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.wait32 $1
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
-;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.wait32 $2
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
-;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.wait32 $0 offset=4
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
-;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.wait32 $2 offset=4
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
-;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.notify $1
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
-;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.notify $1
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
-;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.notify $0 offset=24
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
-;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.notify $1 offset=24
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
-;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.wait64 $2
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
-;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.wait64 $2
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
-;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.wait64 $0 offset=16
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
-;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.wait64 $0 offset=16
+;; CHECK-BIN-NODEBUG-NEXT:   (i64.atomic.rmw32.cmpxchg_u $m1
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
@@ -1416,6 +1330,92 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $f3 (type $0)
+;; CHECK-BIN-NODEBUG-NEXT:  (local $0 i64)
+;; CHECK-BIN-NODEBUG-NEXT:  (local $1 i64)
+;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.wait32 $m1
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.wait32 $m2
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.wait32 $m0 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.wait32 $m2 offset=4
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.notify $m1
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.notify $m1
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.notify $m0 offset=24
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.notify $m1 offset=24
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.wait64 $m2
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.wait64 $m2
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.wait64 $m0 offset=16
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (drop
+;; CHECK-BIN-NODEBUG-NEXT:   (memory.atomic.wait64 $m0 offset=16
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $f4 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (atomic.fence)
 ;; CHECK-BIN-NODEBUG-NEXT: )

@@ -10,63 +10,63 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $0(x, y) {
+ function f0(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
   return Math_fround(Math_fround(x + y));
  }
  
- function $1(x, y) {
+ function f1(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
   return Math_fround(Math_fround(x - y));
  }
  
- function $2(x, y) {
+ function f2(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
   return Math_fround(Math_fround(x * y));
  }
  
- function $3(x, y) {
+ function f3(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
   return Math_fround(Math_fround(x / y));
  }
  
- function $4(x) {
+ function f4(x) {
   x = Math_fround(x);
   return Math_fround(Math_fround(Math_sqrt(x)));
  }
  
- function $5(x, y) {
+ function f5(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
   return Math_fround(Math_fround(Math_min(x, y)));
  }
  
- function $6(x, y) {
+ function f6(x, y) {
   x = Math_fround(x);
   y = Math_fround(y);
   return Math_fround(Math_fround(Math_max(x, y)));
  }
  
- function $7(x) {
+ function f7(x) {
   x = Math_fround(x);
   return Math_fround(Math_fround(Math_ceil(x)));
  }
  
- function $8(x) {
+ function f8(x) {
   x = Math_fround(x);
   return Math_fround(Math_fround(Math_floor(x)));
  }
  
- function $9(x) {
+ function f9(x) {
   x = Math_fround(x);
   return Math_fround(Math_fround(Math_trunc(x)));
  }
  
- function $10(x) {
+ function f10(x) {
   x = Math_fround(x);
   return Math_fround(Math_fround(__wasm_nearest_f32(Math_fround(x))));
  }
@@ -88,17 +88,17 @@ function asmFunc(imports) {
  }
  
  return {
-  "add": $0, 
-  "sub": $1, 
-  "mul": $2, 
-  "div": $3, 
-  "sqrt": $4, 
-  "min": $5, 
-  "max": $6, 
-  "ceil": $7, 
-  "floor": $8, 
-  "trunc": $9, 
-  "nearest": $10
+  "add": f0, 
+  "sub": f1, 
+  "mul": f2, 
+  "div": f3, 
+  "sqrt": f4, 
+  "min": f5, 
+  "max": f6, 
+  "ceil": f7, 
+  "floor": f8, 
+  "trunc": f9, 
+  "nearest": f10
  };
 }
 

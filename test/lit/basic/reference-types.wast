@@ -92,7 +92,7 @@
 
   ;; CHECK-BIN:      (global $global_anyref2 (mut anyref) (ref.null none))
 
-  ;; CHECK-BIN:      (table $0 3 3 funcref)
+  ;; CHECK-BIN:      (table $t0 3 3 funcref)
 
   ;; CHECK-BIN:      (elem $0 (i32.const 0) $take_eqref $take_funcref $take_anyref)
 
@@ -156,21 +156,21 @@
 
   ;; CHECK-BIN-NODEBUG:      (import "env" "import_func" (func $fimport$0 (type $8) (param eqref) (result funcref)))
 
-  ;; CHECK-BIN-NODEBUG:      (global $global$0 (mut eqref) (ref.null none))
+  ;; CHECK-BIN-NODEBUG:      (global $g0 (mut eqref) (ref.null none))
 
-  ;; CHECK-BIN-NODEBUG:      (global $global$1 (mut funcref) (ref.null nofunc))
+  ;; CHECK-BIN-NODEBUG:      (global $g1 (mut funcref) (ref.null nofunc))
 
-  ;; CHECK-BIN-NODEBUG:      (global $global$2 (mut funcref) (ref.func $3))
+  ;; CHECK-BIN-NODEBUG:      (global $g2 (mut funcref) (ref.func $f3))
 
-  ;; CHECK-BIN-NODEBUG:      (global $global$3 (mut anyref) (ref.null none))
+  ;; CHECK-BIN-NODEBUG:      (global $g3 (mut anyref) (ref.null none))
 
-  ;; CHECK-BIN-NODEBUG:      (global $global$4 (mut anyref) (ref.null none))
+  ;; CHECK-BIN-NODEBUG:      (global $g4 (mut anyref) (ref.null none))
 
-  ;; CHECK-BIN-NODEBUG:      (table $0 3 3 funcref)
+  ;; CHECK-BIN-NODEBUG:      (table $t0 3 3 funcref)
 
-  ;; CHECK-BIN-NODEBUG:      (elem $0 (i32.const 0) $0 $1 $2)
+  ;; CHECK-BIN-NODEBUG:      (elem $0 (i32.const 0) $f0 $f1 $f2)
 
-  ;; CHECK-BIN-NODEBUG:      (elem declare func $23 $3)
+  ;; CHECK-BIN-NODEBUG:      (elem declare func $f23 $f3)
   (elem declare func $ref-taken-but-not-in-table)
 
   (export "export_func" (func $import_func))
@@ -843,55 +843,55 @@
   ;; CHECK-BIN-NEXT:  (call $take_anyref
   ;; CHECK-BIN-NEXT:   (ref.null none)
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (call_indirect $0 (type $sig_eqref)
+  ;; CHECK-BIN-NEXT:  (call_indirect $t0 (type $sig_eqref)
   ;; CHECK-BIN-NEXT:   (local.get $local_eqref)
   ;; CHECK-BIN-NEXT:   (i32.const 0)
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (call_indirect $0 (type $sig_eqref)
+  ;; CHECK-BIN-NEXT:  (call_indirect $t0 (type $sig_eqref)
   ;; CHECK-BIN-NEXT:   (global.get $global_eqref)
   ;; CHECK-BIN-NEXT:   (i32.const 0)
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (call_indirect $0 (type $sig_eqref)
+  ;; CHECK-BIN-NEXT:  (call_indirect $t0 (type $sig_eqref)
   ;; CHECK-BIN-NEXT:   (ref.null none)
   ;; CHECK-BIN-NEXT:   (i32.const 0)
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (call_indirect $0 (type $sig_funcref)
+  ;; CHECK-BIN-NEXT:  (call_indirect $t0 (type $sig_funcref)
   ;; CHECK-BIN-NEXT:   (local.get $local_funcref)
   ;; CHECK-BIN-NEXT:   (i32.const 1)
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (call_indirect $0 (type $sig_funcref)
+  ;; CHECK-BIN-NEXT:  (call_indirect $t0 (type $sig_funcref)
   ;; CHECK-BIN-NEXT:   (global.get $global_funcref)
   ;; CHECK-BIN-NEXT:   (i32.const 1)
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (call_indirect $0 (type $sig_funcref)
+  ;; CHECK-BIN-NEXT:  (call_indirect $t0 (type $sig_funcref)
   ;; CHECK-BIN-NEXT:   (ref.null nofunc)
   ;; CHECK-BIN-NEXT:   (i32.const 1)
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (call_indirect $0 (type $sig_funcref)
+  ;; CHECK-BIN-NEXT:  (call_indirect $t0 (type $sig_funcref)
   ;; CHECK-BIN-NEXT:   (ref.func $foo)
   ;; CHECK-BIN-NEXT:   (i32.const 1)
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (call_indirect $0 (type $sig_anyref)
+  ;; CHECK-BIN-NEXT:  (call_indirect $t0 (type $sig_anyref)
   ;; CHECK-BIN-NEXT:   (local.get $local_anyref)
   ;; CHECK-BIN-NEXT:   (i32.const 3)
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (call_indirect $0 (type $sig_anyref)
+  ;; CHECK-BIN-NEXT:  (call_indirect $t0 (type $sig_anyref)
   ;; CHECK-BIN-NEXT:   (global.get $global_anyref)
   ;; CHECK-BIN-NEXT:   (i32.const 3)
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (call_indirect $0 (type $sig_anyref)
+  ;; CHECK-BIN-NEXT:  (call_indirect $t0 (type $sig_anyref)
   ;; CHECK-BIN-NEXT:   (ref.null none)
   ;; CHECK-BIN-NEXT:   (i32.const 3)
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (call_indirect $0 (type $sig_anyref)
+  ;; CHECK-BIN-NEXT:  (call_indirect $t0 (type $sig_anyref)
   ;; CHECK-BIN-NEXT:   (local.get $local_eqref)
   ;; CHECK-BIN-NEXT:   (i32.const 3)
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (call_indirect $0 (type $sig_anyref)
+  ;; CHECK-BIN-NEXT:  (call_indirect $t0 (type $sig_anyref)
   ;; CHECK-BIN-NEXT:   (global.get $global_eqref)
   ;; CHECK-BIN-NEXT:   (i32.const 3)
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (call_indirect $0 (type $sig_anyref)
+  ;; CHECK-BIN-NEXT:  (call_indirect $t0 (type $sig_anyref)
   ;; CHECK-BIN-NEXT:   (ref.null none)
   ;; CHECK-BIN-NEXT:   (i32.const 3)
   ;; CHECK-BIN-NEXT:  )
@@ -1933,23 +1933,23 @@
 
 ;; CHECK-BIN-NODEBUG:      (export "export_global" (global $gimport$0))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $5) (param $0 eqref)
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $5) (param $0 eqref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $2) (param $0 funcref)
+;; CHECK-BIN-NODEBUG:      (func $f1 (type $2) (param $0 funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $1) (param $0 anyref)
+;; CHECK-BIN-NODEBUG:      (func $f2 (type $1) (param $0 anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $3)
+;; CHECK-BIN-NODEBUG:      (func $f3 (type $3)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (type $3)
+;; CHECK-BIN-NODEBUG:      (func $f4 (type $3)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 eqref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 anyref)
@@ -1957,7 +1957,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $0
-;; CHECK-BIN-NODEBUG-NEXT:   (global.get $global$0)
+;; CHECK-BIN-NODEBUG-NEXT:   (global.get $g0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $0
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
@@ -1966,19 +1966,19 @@
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $1
-;; CHECK-BIN-NODEBUG-NEXT:   (global.get $global$1)
+;; CHECK-BIN-NODEBUG-NEXT:   (global.get $g1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null nofunc)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $1
-;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $3)
+;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $f3)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $2
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $2
-;; CHECK-BIN-NODEBUG-NEXT:   (global.get $global$3)
+;; CHECK-BIN-NODEBUG-NEXT:   (global.get $g3)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $2
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
@@ -1987,138 +1987,138 @@
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $2
-;; CHECK-BIN-NODEBUG-NEXT:   (global.get $global$0)
+;; CHECK-BIN-NODEBUG-NEXT:   (global.get $g0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $2
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (global.set $global$0
-;; CHECK-BIN-NODEBUG-NEXT:   (global.get $global$0)
+;; CHECK-BIN-NODEBUG-NEXT:  (global.set $g0
+;; CHECK-BIN-NODEBUG-NEXT:   (global.get $g0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (global.set $global$0
+;; CHECK-BIN-NODEBUG-NEXT:  (global.set $g0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (global.set $global$0
+;; CHECK-BIN-NODEBUG-NEXT:  (global.set $g0
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (global.set $global$1
-;; CHECK-BIN-NODEBUG-NEXT:   (global.get $global$1)
+;; CHECK-BIN-NODEBUG-NEXT:  (global.set $g1
+;; CHECK-BIN-NODEBUG-NEXT:   (global.get $g1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (global.set $global$1
+;; CHECK-BIN-NODEBUG-NEXT:  (global.set $g1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (global.set $global$1
+;; CHECK-BIN-NODEBUG-NEXT:  (global.set $g1
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null nofunc)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (global.set $global$1
-;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $3)
+;; CHECK-BIN-NODEBUG-NEXT:  (global.set $g1
+;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $f3)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (global.set $global$3
-;; CHECK-BIN-NODEBUG-NEXT:   (global.get $global$3)
+;; CHECK-BIN-NODEBUG-NEXT:  (global.set $g3
+;; CHECK-BIN-NODEBUG-NEXT:   (global.get $g3)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (global.set $global$3
+;; CHECK-BIN-NODEBUG-NEXT:  (global.set $g3
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (global.set $global$3
+;; CHECK-BIN-NODEBUG-NEXT:  (global.set $g3
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (global.set $global$3
-;; CHECK-BIN-NODEBUG-NEXT:   (global.get $global$0)
+;; CHECK-BIN-NODEBUG-NEXT:  (global.set $g3
+;; CHECK-BIN-NODEBUG-NEXT:   (global.get $g0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (global.set $global$3
+;; CHECK-BIN-NODEBUG-NEXT:  (global.set $g3
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (global.set $global$3
+;; CHECK-BIN-NODEBUG-NEXT:  (global.set $g3
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call $0
+;; CHECK-BIN-NODEBUG-NEXT:  (call $f0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call $0
-;; CHECK-BIN-NODEBUG-NEXT:   (global.get $global$0)
+;; CHECK-BIN-NODEBUG-NEXT:  (call $f0
+;; CHECK-BIN-NODEBUG-NEXT:   (global.get $g0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call $0
+;; CHECK-BIN-NODEBUG-NEXT:  (call $f0
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call $1
+;; CHECK-BIN-NODEBUG-NEXT:  (call $f1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call $1
-;; CHECK-BIN-NODEBUG-NEXT:   (global.get $global$1)
+;; CHECK-BIN-NODEBUG-NEXT:  (call $f1
+;; CHECK-BIN-NODEBUG-NEXT:   (global.get $g1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call $1
+;; CHECK-BIN-NODEBUG-NEXT:  (call $f1
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null nofunc)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call $1
-;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $3)
+;; CHECK-BIN-NODEBUG-NEXT:  (call $f1
+;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $f3)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call $2
+;; CHECK-BIN-NODEBUG-NEXT:  (call $f2
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call $2
-;; CHECK-BIN-NODEBUG-NEXT:   (global.get $global$3)
+;; CHECK-BIN-NODEBUG-NEXT:  (call $f2
+;; CHECK-BIN-NODEBUG-NEXT:   (global.get $g3)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call $2
+;; CHECK-BIN-NODEBUG-NEXT:  (call $f2
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call $2
+;; CHECK-BIN-NODEBUG-NEXT:  (call $f2
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call $2
-;; CHECK-BIN-NODEBUG-NEXT:   (global.get $global$0)
+;; CHECK-BIN-NODEBUG-NEXT:  (call $f2
+;; CHECK-BIN-NODEBUG-NEXT:   (global.get $g0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call $2
+;; CHECK-BIN-NODEBUG-NEXT:  (call $f2
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $5)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $t0 (type $5)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $5)
-;; CHECK-BIN-NODEBUG-NEXT:   (global.get $global$0)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $t0 (type $5)
+;; CHECK-BIN-NODEBUG-NEXT:   (global.get $g0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $5)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $t0 (type $5)
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $2)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $t0 (type $2)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $2)
-;; CHECK-BIN-NODEBUG-NEXT:   (global.get $global$1)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $t0 (type $2)
+;; CHECK-BIN-NODEBUG-NEXT:   (global.get $g1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $2)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $t0 (type $2)
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null nofunc)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $2)
-;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $3)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $t0 (type $2)
+;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $f3)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $1)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $t0 (type $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 3)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $1)
-;; CHECK-BIN-NODEBUG-NEXT:   (global.get $global$3)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $t0 (type $1)
+;; CHECK-BIN-NODEBUG-NEXT:   (global.get $g3)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 3)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $1)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $t0 (type $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 3)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $1)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $t0 (type $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 3)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $1)
-;; CHECK-BIN-NODEBUG-NEXT:   (global.get $global$0)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $t0 (type $1)
+;; CHECK-BIN-NODEBUG-NEXT:   (global.get $g0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 3)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $0 (type $1)
+;; CHECK-BIN-NODEBUG-NEXT:  (call_indirect $t0 (type $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 3)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
@@ -2133,7 +2133,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$2 (result eqref)
 ;; CHECK-BIN-NODEBUG-NEXT:    (br_if $label$2
-;; CHECK-BIN-NODEBUG-NEXT:     (global.get $global$0)
+;; CHECK-BIN-NODEBUG-NEXT:     (global.get $g0)
 ;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
@@ -2159,7 +2159,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$5 (result funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:    (br_if $label$5
-;; CHECK-BIN-NODEBUG-NEXT:     (global.get $global$1)
+;; CHECK-BIN-NODEBUG-NEXT:     (global.get $g1)
 ;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
@@ -2178,7 +2178,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$7 (result funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:    (ref.cast (ref $3)
 ;; CHECK-BIN-NODEBUG-NEXT:     (br_if $label$7
-;; CHECK-BIN-NODEBUG-NEXT:      (ref.func $3)
+;; CHECK-BIN-NODEBUG-NEXT:      (ref.func $f3)
 ;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
@@ -2195,7 +2195,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$9 (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:    (br_if $label$9
-;; CHECK-BIN-NODEBUG-NEXT:     (global.get $global$3)
+;; CHECK-BIN-NODEBUG-NEXT:     (global.get $g3)
 ;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 1)
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
@@ -2237,7 +2237,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (loop $label$14 (result eqref)
-;; CHECK-BIN-NODEBUG-NEXT:    (global.get $global$0)
+;; CHECK-BIN-NODEBUG-NEXT:    (global.get $g0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
@@ -2252,7 +2252,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (loop $label$17 (result funcref)
-;; CHECK-BIN-NODEBUG-NEXT:    (global.get $global$1)
+;; CHECK-BIN-NODEBUG-NEXT:    (global.get $g1)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
@@ -2262,7 +2262,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (loop $label$19 (result funcref)
-;; CHECK-BIN-NODEBUG-NEXT:    (ref.func $3)
+;; CHECK-BIN-NODEBUG-NEXT:    (ref.func $f3)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
@@ -2272,7 +2272,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (loop $label$21 (result anyref)
-;; CHECK-BIN-NODEBUG-NEXT:    (global.get $global$3)
+;; CHECK-BIN-NODEBUG-NEXT:    (global.get $g3)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
@@ -2287,7 +2287,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (loop $label$24 (result anyref)
-;; CHECK-BIN-NODEBUG-NEXT:    (global.get $global$0)
+;; CHECK-BIN-NODEBUG-NEXT:    (global.get $g0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
@@ -2379,7 +2379,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (try $label$43 (result funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:    (do
-;; CHECK-BIN-NODEBUG-NEXT:     (ref.func $3)
+;; CHECK-BIN-NODEBUG-NEXT:     (ref.func $f3)
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:    (catch $tag$0
 ;; CHECK-BIN-NODEBUG-NEXT:     (drop
@@ -2452,7 +2452,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.is_null
-;; CHECK-BIN-NODEBUG-NEXT:    (global.get $global$0)
+;; CHECK-BIN-NODEBUG-NEXT:    (global.get $g0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
@@ -2467,7 +2467,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.is_null
-;; CHECK-BIN-NODEBUG-NEXT:    (global.get $global$1)
+;; CHECK-BIN-NODEBUG-NEXT:    (global.get $g1)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
@@ -2477,7 +2477,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.is_null
-;; CHECK-BIN-NODEBUG-NEXT:    (ref.func $3)
+;; CHECK-BIN-NODEBUG-NEXT:    (ref.func $f3)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
@@ -2487,7 +2487,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (ref.is_null
-;; CHECK-BIN-NODEBUG-NEXT:    (global.get $global$3)
+;; CHECK-BIN-NODEBUG-NEXT:    (global.get $g3)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
@@ -2497,84 +2497,84 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $5 (type $6) (result eqref)
+;; CHECK-BIN-NODEBUG:      (func $f5 (type $6) (result eqref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 eqref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $6 (type $6) (result eqref)
-;; CHECK-BIN-NODEBUG-NEXT:  (global.get $global$0)
+;; CHECK-BIN-NODEBUG:      (func $f6 (type $6) (result eqref)
+;; CHECK-BIN-NODEBUG-NEXT:  (global.get $g0)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $7 (type $6) (result eqref)
+;; CHECK-BIN-NODEBUG:      (func $f7 (type $6) (result eqref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $8 (type $4) (result funcref)
+;; CHECK-BIN-NODEBUG:      (func $f8 (type $4) (result funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $9 (type $4) (result funcref)
-;; CHECK-BIN-NODEBUG-NEXT:  (global.get $global$1)
+;; CHECK-BIN-NODEBUG:      (func $f9 (type $4) (result funcref)
+;; CHECK-BIN-NODEBUG-NEXT:  (global.get $g1)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $10 (type $4) (result funcref)
+;; CHECK-BIN-NODEBUG:      (func $f10 (type $4) (result funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (ref.null nofunc)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $11 (type $4) (result funcref)
-;; CHECK-BIN-NODEBUG-NEXT:  (ref.func $3)
+;; CHECK-BIN-NODEBUG:      (func $f11 (type $4) (result funcref)
+;; CHECK-BIN-NODEBUG-NEXT:  (ref.func $f3)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $12 (type $0) (result anyref)
+;; CHECK-BIN-NODEBUG:      (func $f12 (type $0) (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $13 (type $0) (result anyref)
-;; CHECK-BIN-NODEBUG-NEXT:  (global.get $global$3)
+;; CHECK-BIN-NODEBUG:      (func $f13 (type $0) (result anyref)
+;; CHECK-BIN-NODEBUG-NEXT:  (global.get $g3)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $14 (type $0) (result anyref)
+;; CHECK-BIN-NODEBUG:      (func $f14 (type $0) (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $15 (type $0) (result anyref)
+;; CHECK-BIN-NODEBUG:      (func $f15 (type $0) (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 eqref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $16 (type $0) (result anyref)
-;; CHECK-BIN-NODEBUG-NEXT:  (global.get $global$0)
+;; CHECK-BIN-NODEBUG:      (func $f16 (type $0) (result anyref)
+;; CHECK-BIN-NODEBUG-NEXT:  (global.get $g0)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $17 (type $0) (result anyref)
+;; CHECK-BIN-NODEBUG:      (func $f17 (type $0) (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (ref.null none)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $18 (type $6) (result eqref)
+;; CHECK-BIN-NODEBUG:      (func $f18 (type $6) (result eqref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 eqref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (return
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $19 (type $4) (result funcref)
+;; CHECK-BIN-NODEBUG:      (func $f19 (type $4) (result funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (return
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $20 (type $0) (result anyref)
+;; CHECK-BIN-NODEBUG:      (func $f20 (type $0) (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (return
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $21 (type $0) (result anyref)
+;; CHECK-BIN-NODEBUG:      (func $f21 (type $0) (result anyref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 eqref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 funcref)
 ;; CHECK-BIN-NODEBUG-NEXT:  (return
@@ -2582,12 +2582,12 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $22 (type $3)
+;; CHECK-BIN-NODEBUG:      (func $f22 (type $3)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $23)
+;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $f23)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $23 (type $3)
+;; CHECK-BIN-NODEBUG:      (func $f23 (type $3)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )

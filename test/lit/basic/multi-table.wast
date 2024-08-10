@@ -20,6 +20,13 @@
 
   ;; CHECK-TEXT:      (global $g1 (ref null $none_=>_none) (ref.func $f))
   ;; CHECK-BIN:      (global $g1 (ref null $none_=>_none) (ref.func $f))
+  ;; CHECK-BIN-NODEBUG:      (type $0 (func))
+
+  ;; CHECK-BIN-NODEBUG:      (import "a" "b" (table $timport$0 1 10 funcref))
+
+  ;; CHECK-BIN-NODEBUG:      (global $g0 (ref null $0) (ref.func $f0))
+
+  ;; CHECK-BIN-NODEBUG:      (global $g1 i32 (i32.const 0))
   (global $g1 (ref null $none_=>_none) (ref.func $f))
   ;; CHECK-TEXT:      (global $g2 i32 (i32.const 0))
   ;; CHECK-BIN:      (global $g2 i32 (i32.const 0))
@@ -27,9 +34,15 @@
 
   ;; CHECK-TEXT:      (table $t2 3 3 funcref)
   ;; CHECK-BIN:      (table $t2 3 3 funcref)
+  ;; CHECK-BIN-NODEBUG:      (table $t0 3 3 funcref)
+
+  ;; CHECK-BIN-NODEBUG:      (table $t1 4 4 funcref)
+
+  ;; CHECK-BIN-NODEBUG:      (table $t2 0 externref)
   (table $t2 3 3 funcref)
   ;; CHECK-TEXT:      (table $t3 4 4 funcref)
   ;; CHECK-BIN:      (table $t3 4 4 funcref)
+  ;; CHECK-BIN-NODEBUG:      (table $t3 5 5 (ref null $0))
   (table $t3 4 4 funcref)
   ;; CHECK-TEXT:      (table $textern 0 externref)
   ;; CHECK-BIN:      (table $textern 0 externref)
@@ -50,18 +63,18 @@
   ;; CHECK-TEXT:      (elem $1 (table $t2) (i32.const 0) func $f)
 
   ;; CHECK-TEXT:      (elem $activeNonZeroOffset (table $t2) (i32.const 1) func $f $g)
-  ;; CHECK-BIN:      (elem $0 (table $t1) (i32.const 0) func $f)
+  ;; CHECK-BIN:      (elem $0 (table $tspecial) (i32.const 0) func $f)
 
-  ;; CHECK-BIN:      (elem $1 (table $t2) (i32.const 0) func $f)
+  ;; CHECK-BIN:      (elem $1 (table $textern) (i32.const 0) func $f)
 
-  ;; CHECK-BIN:      (elem $activeNonZeroOffset (table $t2) (i32.const 1) func $f $g)
+  ;; CHECK-BIN:      (elem $activeNonZeroOffset (table $textern) (i32.const 1) func $f $g)
   (elem $activeNonZeroOffset (table $t2) (offset (i32.const 1)) func $f $g)
 
   ;; CHECK-TEXT:      (elem $e3-1 (table $t3) (global.get $g2) funcref (item (ref.func $f)) (item (ref.null nofunc)))
-  ;; CHECK-BIN:      (elem $e3-1 (table $t3) (global.get $g2) funcref (item (ref.func $f)) (item (ref.null nofunc)))
+  ;; CHECK-BIN:      (elem $e3-1 (table $tspecial) (global.get $g2) funcref (item (ref.func $f)) (item (ref.null nofunc)))
   (elem $e3-1 (table $t3) (global.get $g2) funcref (ref.func $f) (ref.null func))
   ;; CHECK-TEXT:      (elem $e3-2 (table $t3) (i32.const 2) (ref null $none_=>_none) (item (ref.func $f)) (item (ref.func $g)))
-  ;; CHECK-BIN:      (elem $e3-2 (table $t3) (i32.const 2) (ref null $none_=>_none) (item (ref.func $f)) (item (ref.func $g)))
+  ;; CHECK-BIN:      (elem $e3-2 (table $tspecial) (i32.const 2) (ref null $none_=>_none) (item (ref.func $f)) (item (ref.func $g)))
   (elem $e3-2 (table $t3) (offset (i32.const 2)) (ref null $none_=>_none) (item ref.func $f) (item (ref.func $g)))
 
   ;; CHECK-TEXT:      (elem $passive-1 func $f $g)
@@ -112,52 +125,36 @@
   ;; CHECK-BIN-NEXT: )
   (func $h)
 )
-;; CHECK-BIN-NODEBUG:      (type $0 (func))
+;; CHECK-BIN-NODEBUG:      (elem $0 (table $timport$0) (i32.const 0) func $f0)
 
-;; CHECK-BIN-NODEBUG:      (import "a" "b" (table $timport$0 1 10 funcref))
+;; CHECK-BIN-NODEBUG:      (elem $1 (table $t0) (i32.const 0) func $f0)
 
-;; CHECK-BIN-NODEBUG:      (global $global$0 (ref null $0) (ref.func $0))
+;; CHECK-BIN-NODEBUG:      (elem $2 (table $t0) (i32.const 1) func $f0 $f1)
 
-;; CHECK-BIN-NODEBUG:      (global $global$1 i32 (i32.const 0))
+;; CHECK-BIN-NODEBUG:      (elem $3 (table $t1) (global.get $g1) funcref (item (ref.func $f0)) (item (ref.null nofunc)))
 
-;; CHECK-BIN-NODEBUG:      (table $0 3 3 funcref)
+;; CHECK-BIN-NODEBUG:      (elem $4 (table $t1) (i32.const 2) (ref null $0) (item (ref.func $f0)) (item (ref.func $f1)))
 
-;; CHECK-BIN-NODEBUG:      (table $1 4 4 funcref)
+;; CHECK-BIN-NODEBUG:      (elem $5 func $f0 $f1)
 
-;; CHECK-BIN-NODEBUG:      (table $2 0 externref)
+;; CHECK-BIN-NODEBUG:      (elem $6 funcref (item (ref.func $f0)) (item (ref.func $f1)) (item (ref.null nofunc)))
 
-;; CHECK-BIN-NODEBUG:      (table $3 5 5 (ref null $0))
-
-;; CHECK-BIN-NODEBUG:      (elem $0 (table $timport$0) (i32.const 0) func $0)
-
-;; CHECK-BIN-NODEBUG:      (elem $1 (table $0) (i32.const 0) func $0)
-
-;; CHECK-BIN-NODEBUG:      (elem $2 (table $0) (i32.const 1) func $0 $1)
-
-;; CHECK-BIN-NODEBUG:      (elem $3 (table $1) (global.get $global$1) funcref (item (ref.func $0)) (item (ref.null nofunc)))
-
-;; CHECK-BIN-NODEBUG:      (elem $4 (table $1) (i32.const 2) (ref null $0) (item (ref.func $0)) (item (ref.func $1)))
-
-;; CHECK-BIN-NODEBUG:      (elem $5 func $0 $1)
-
-;; CHECK-BIN-NODEBUG:      (elem $6 funcref (item (ref.func $0)) (item (ref.func $1)) (item (ref.null nofunc)))
-
-;; CHECK-BIN-NODEBUG:      (elem $7 (ref null $0) (item (ref.func $0)) (item (ref.func $1)) (item (ref.null nofunc)) (item (global.get $global$0)))
+;; CHECK-BIN-NODEBUG:      (elem $7 (ref null $0) (item (ref.func $f0)) (item (ref.func $f1)) (item (ref.null nofunc)) (item (global.get $g0)))
 
 ;; CHECK-BIN-NODEBUG:      (elem $8 func)
 
-;; CHECK-BIN-NODEBUG:      (elem $9 (table $3) (i32.const 0) (ref null $0) (item (ref.func $0)) (item (ref.func $2)))
+;; CHECK-BIN-NODEBUG:      (elem $9 (table $t3) (i32.const 0) (ref null $0) (item (ref.func $f0)) (item (ref.func $f2)))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
-;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $2)
+;; CHECK-BIN-NODEBUG-NEXT:   (ref.func $f2)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $f1 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $0)
+;; CHECK-BIN-NODEBUG:      (func $f2 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )

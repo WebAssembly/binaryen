@@ -50,30 +50,30 @@ function asmFunc(imports) {
  var env = imports.env;
  var setTempRet0 = env.setTempRet0;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0() {
+ function f0() {
   return HEAPU8[0] | HEAPU8[1] << 8 | (HEAPU8[2] << 16 | HEAPU8[3] << 24);
  }
  
- function $2() {
+ function f2() {
   return Math_fround((wasm2js_scratch_store_i32(2, HEAPU8[0] | HEAPU8[1] << 8 | (HEAPU8[2] << 16 | HEAPU8[3] << 24)), wasm2js_scratch_load_f32()));
  }
  
- function $3() {
-  var $0_1 = 0;
-  $0_1 = HEAPU8[4] | HEAPU8[5] << 8 | (HEAPU8[6] << 16 | HEAPU8[7] << 24);
+ function f3() {
+  var $0 = 0;
+  $0 = HEAPU8[4] | HEAPU8[5] << 8 | (HEAPU8[6] << 16 | HEAPU8[7] << 24);
   wasm2js_scratch_store_i32(0, HEAPU8[0] | HEAPU8[1] << 8 | (HEAPU8[2] << 16 | HEAPU8[3] << 24));
-  wasm2js_scratch_store_i32(1, $0_1 | 0);
+  wasm2js_scratch_store_i32(1, $0 | 0);
   return +wasm2js_scratch_load_f64();
  }
  
- function $4() {
+ function f4() {
   HEAP8[0] = 0;
   HEAP8[1] = 0;
   HEAP8[2] = 0;
   HEAP8[3] = 0;
  }
  
- function $5() {
+ function f5() {
   HEAP8[0] = 0;
   HEAP8[1] = 0;
   HEAP8[2] = 0;
@@ -84,27 +84,27 @@ function asmFunc(imports) {
   HEAP8[7] = 0;
  }
  
- function $7() {
-  var $0_1 = 0, $1 = 0;
+ function f7() {
+  var $0 = 0, $1 = 0;
   wasm2js_scratch_store_f64(0.0);
-  $0_1 = wasm2js_scratch_load_i32(1) | 0;
+  $0 = wasm2js_scratch_load_i32(1) | 0;
   $1 = wasm2js_scratch_load_i32(0) | 0;
   HEAP8[0] = $1;
   HEAP8[1] = $1 >>> 8;
   HEAP8[2] = $1 >>> 16;
   HEAP8[3] = $1 >>> 24;
-  HEAP8[4] = $0_1;
-  HEAP8[5] = $0_1 >>> 8;
-  HEAP8[6] = $0_1 >>> 16;
-  HEAP8[7] = $0_1 >>> 24;
+  HEAP8[4] = $0;
+  HEAP8[5] = $0 >>> 8;
+  HEAP8[6] = $0 >>> 16;
+  HEAP8[7] = $0 >>> 24;
  }
  
- function legalstub$1() {
-  var $0_1 = 0;
+ function legalstub$f1() {
+  var $0 = 0;
   i64toi32_i32$HIGH_BITS = HEAPU8[4] | HEAPU8[5] << 8 | (HEAPU8[6] << 16 | HEAPU8[7] << 24);
-  $0_1 = HEAPU8[0] | HEAPU8[1] << 8 | (HEAPU8[2] << 16 | HEAPU8[3] << 24);
+  $0 = HEAPU8[0] | HEAPU8[1] << 8 | (HEAPU8[2] << 16 | HEAPU8[3] << 24);
   setTempRet0(i64toi32_i32$HIGH_BITS | 0);
-  return $0_1;
+  return $0;
  }
  
  bufferView = HEAPU8;
@@ -113,14 +113,14 @@ function asmFunc(imports) {
  }
  
  return {
-  "i32_load": $0, 
-  "i64_load": legalstub$1, 
-  "f32_load": $2, 
-  "f64_load": $3, 
-  "i32_store": $4, 
-  "i64_store": $5, 
-  "f32_store": $4, 
-  "f64_store": $7
+  "i32_load": f0, 
+  "i64_load": legalstub$f1, 
+  "f32_load": f2, 
+  "f64_load": f3, 
+  "i32_store": f4, 
+  "i64_store": f5, 
+  "f32_store": f4, 
+  "f64_store": f7
  };
 }
 

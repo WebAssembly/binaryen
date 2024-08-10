@@ -33,10 +33,10 @@
 )
 ;; CHECK-NODEBUG:      (type $0 (func (param i32 i32)))
 
-;; CHECK-NODEBUG:      (table $0 10 10 (ref null $0))
+;; CHECK-NODEBUG:      (table $t0 10 10 (ref null $0))
 
-;; CHECK-NODEBUG:      (elem $0 (table $0) (i32.const 0) (ref null $0))
+;; CHECK-NODEBUG:      (elem $0 (table $t0) (i32.const 0) (ref null $0))
 
-;; CHECK-NODEBUG:      (func $0 (type $0) (param $0 i32) (param $1 i32)
+;; CHECK-NODEBUG:      (func $f0 (type $0) (param $0 i32) (param $1 i32)
 ;; CHECK-NODEBUG-NEXT:  (nop)
 ;; CHECK-NODEBUG-NEXT: )

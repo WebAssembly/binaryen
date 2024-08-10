@@ -10,33 +10,33 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $0() {
-  var $0_1 = 0;
+ function f0() {
+  var $0 = 0;
   exit : {
-   $0_1 = 1;
+   $0 = 1;
    break exit;
   }
-  return $0_1 | 0;
+  return $0 | 0;
  }
  
- function $1() {
-  var i = 0, $6_1 = 0;
+ function f1() {
+  var i = 0, $6 = 0;
   i = 0;
   exit : {
    cont : while (1) {
     i = i + 1 | 0;
     if ((i | 0) == (5 | 0)) {
-     $6_1 = i;
+     $6 = i;
      break exit;
     }
     continue cont;
    };
   }
-  return $6_1 | 0;
+  return $6 | 0;
  }
  
- function $2() {
-  var i = 0, $8_1 = 0;
+ function f2() {
+  var i = 0, $8 = 0;
   i = 0;
   exit : {
    cont : while (1) {
@@ -45,72 +45,72 @@ function asmFunc(imports) {
      continue cont
     }
     if ((i | 0) == (8 | 0)) {
-     $8_1 = i;
+     $8 = i;
      break exit;
     }
     i = i + 1 | 0;
     continue cont;
    };
   }
-  return $8_1 | 0;
+  return $8 | 0;
  }
  
- function $3() {
-  var i = 0, $6_1 = 0;
+ function f3() {
+  var i = 0, $6 = 0;
   i = 0;
   exit : {
    cont : while (1) {
     i = i + 1 | 0;
     if ((i | 0) == (5 | 0)) {
-     $6_1 = i;
+     $6 = i;
      break exit;
     }
     break cont;
    };
-   $6_1 = i;
+   $6 = i;
   }
-  return $6_1 | 0;
+  return $6 | 0;
  }
  
- function $4(max) {
+ function f4(max) {
   max = max | 0;
-  var i = 0, $9_1 = 0;
+  var i = 0, $9 = 0;
   i = 1;
   exit : {
    cont : while (1) {
     i = i + i | 0;
     if (i >>> 0 > max >>> 0) {
-     $9_1 = i;
+     $9 = i;
      break exit;
     }
     continue cont;
    };
   }
-  return $9_1 | 0;
+  return $9 | 0;
  }
  
- function $5() {
-  var $0_1 = 0;
+ function f5() {
+  var $0 = 0;
   l : while (1) {
-   $0_1 = 1;
+   $0 = 1;
    break l;
   };
-  return $0_1 + 1 | 0 | 0;
+  return $0 + 1 | 0 | 0;
  }
  
- function $6() {
-  var $2_1 = 0;
+ function f6() {
+  var $2 = 0;
   label : while (1) {
    if (0) {
     continue label
    }
-   $2_1 = 3;
+   $2 = 3;
    break label;
   };
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
- function $7() {
+ function f7() {
   var i = 0;
   i = 0;
   l : {
@@ -136,7 +136,7 @@ function asmFunc(imports) {
   return i | 0;
  }
  
- function $8() {
+ function f8() {
   var i = 0;
   i = 0;
   label : {
@@ -162,36 +162,36 @@ function asmFunc(imports) {
   return i | 0;
  }
  
- function $9($0_1) {
-  $0_1 = $0_1 | 0;
-  var $2_1 = 0, $3_1 = 0;
+ function f9($0) {
+  $0 = $0 | 0;
+  var $2 = 0, $3 = 0;
   ret : {
    exit : {
     $0 : {
-     switch ($0_1 | 0) {
+     switch ($0 | 0) {
      case 1:
      case 2:
-      $2_1 = 2;
+      $2 = 2;
       break exit;
      case 3:
-      $3_1 = 3;
+      $3 = 3;
       break ret;
      default:
      case 0:
       break $0;
      };
     }
-    $2_1 = 5;
+    $2 = 5;
    }
-   $3_1 = Math_imul(10, $2_1);
+   $3 = Math_imul(10, $2);
   }
-  return $3_1 | 0;
+  return $3 | 0;
  }
  
- function $10($0_1) {
-  $0_1 = $0_1 | 0;
+ function f10($0) {
+  $0 = $0 | 0;
   $1 : {
-   switch ($0_1 | 0) {
+   switch ($0 | 0) {
    case 0:
     return 0 | 0;
    default:
@@ -201,8 +201,8 @@ function asmFunc(imports) {
   return 2 | 0;
  }
  
- function $11() {
-  var i = 0, $10_1 = 0;
+ function f11() {
+  var i = 0, $10 = 0;
   i = 0;
   outer : {
    inner : {
@@ -216,122 +216,122 @@ function asmFunc(imports) {
     i = i | 2 | 0;
    }
    i = i | 4 | 0;
-   $10_1 = i;
+   $10 = i;
    if (0) {
     break outer
    }
    i = i | 8 | 0;
    i = i | 16 | 0;
-   $10_1 = i;
+   $10 = i;
    if (1) {
     break outer
    }
    i = i | 32 | 0;
-   $10_1 = i;
+   $10 = i;
   }
-  return $10_1 | 0;
+  return $10 | 0;
  }
  
- function $12() {
-  var $2_1 = 0, $0_1 = 0;
+ function f12() {
+  var $2 = 0, $0 = 0;
   l0 : {
    l1 : {
-    $0_1 = 1;
+    $0 = 1;
     break l1;
    }
-   $2_1 = $0_1;
+   $2 = $0;
    if (1) {
     break l0
    }
-   $2_1 = 0;
+   $2 = 0;
   }
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
- function $13() {
-  var $2_1 = 0, $0_1 = 0;
+ function f13() {
+  var $2 = 0, $0 = 0;
   l0 : {
    l1 : {
-    $0_1 = 1;
+    $0 = 1;
     break l1;
    }
-   $2_1 = $0_1;
+   $2 = $0;
    if (1) {
     break l0
    }
-   $2_1 = 0;
+   $2 = 0;
   }
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
- function $14() {
-  var i1 = 0, $7_1 = 0, $3_1 = 0;
+ function f14() {
+  var i1 = 0, $7 = 0, $3 = 0;
   l0 : {
    i1 = 1;
-   $3_1 = i1;
+   $3 = i1;
    i1 = 2;
-   $7_1 = $3_1;
+   $7 = $3;
    if (i1) {
     break l0
    }
-   $7_1 = 0;
+   $7 = 0;
   }
   return i1 | 0;
  }
  
- function $15() {
-  var $2_1 = 0, $0_1 = 0, $3_1 = 0;
+ function f15() {
+  var $2 = 0, $0 = 0, $3 = 0;
   l0 : {
    l1 : {
-    $0_1 = 1;
+    $0 = 1;
     break l1;
    }
-   $2_1 = $0_1;
+   $2 = $0;
    break l0;
   }
-  return $2_1 | 0;
+  return $2 | 0;
  }
  
- function $16() {
-  var $0_1 = 0;
+ function f16() {
+  var $0 = 0;
   l1 : {
-   $0_1 = 1;
+   $0 = 1;
    break l1;
   }
-  return $0_1 | 0;
+  return $0 | 0;
  }
  
- function $17() {
-  var $1_1 = 0, $2_1 = 0;
+ function f17() {
+  var $1 = 0, $2 = 0;
   l1 : {
-   $1_1 = 2;
+   $1 = 2;
    l11 : {
-    $2_1 = 3;
+    $2 = 3;
     break l11;
    }
   }
-  return $1_1 + $2_1 | 0 | 0;
+  return $1 + $2 | 0 | 0;
  }
  
  return {
-  "block": $0, 
-  "loop1": $1, 
-  "loop2": $2, 
-  "loop3": $3, 
-  "loop4": $4, 
-  "loop5": $5, 
-  "loop6": $6, 
-  "if_": $7, 
-  "if2": $8, 
-  "switch_": $9, 
-  "return_": $10, 
-  "br_if0": $11, 
-  "br_if1": $12, 
-  "br_if2": $13, 
-  "br_if3": $14, 
-  "br": $15, 
-  "shadowing": $16, 
-  "redefinition": $17
+  "block": f0, 
+  "loop1": f1, 
+  "loop2": f2, 
+  "loop3": f3, 
+  "loop4": f4, 
+  "loop5": f5, 
+  "loop6": f6, 
+  "if_": f7, 
+  "if2": f8, 
+  "switch_": f9, 
+  "return_": f10, 
+  "br_if0": f11, 
+  "br_if1": f12, 
+  "br_if2": f13, 
+  "br_if3": f14, 
+  "br": f15, 
+  "shadowing": f16, 
+  "redefinition": f17
  };
 }
 

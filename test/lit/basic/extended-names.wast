@@ -34,7 +34,7 @@
   (data $passive_data "b")
   (data "c")
 )
-;; CHECK-BIN-NODEBUG:      (memory $0 1 1)
+;; CHECK-BIN-NODEBUG:      (memory $m0 1 1)
 
 ;; CHECK-BIN-NODEBUG:      (data $0 (i32.const 0) "a")
 
@@ -42,4 +42,4 @@
 
 ;; CHECK-BIN-NODEBUG:      (data $2 "c")
 
-;; CHECK-BIN-NODEBUG:      (table $0 1 funcref)
+;; CHECK-BIN-NODEBUG:      (table $t0 1 funcref)

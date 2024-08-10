@@ -1,6 +1,6 @@
 (module
  (type $0 (func))
- (func $0
+ (func $f0
   (block $label$0
    (br $label$0)
   )

@@ -15,9 +15,6 @@
  (type $i32_i32_=>_i32 (func (param i32 i32) (result i32)))
  ;; CHECK-TEXT:      (memory $0 256 256)
  ;; CHECK-BIN:      (memory $0 256 256)
- ;; CHECK-BIN-NODEBUG:      (type $0 (func (param i32 i32) (result i32)))
-
- ;; CHECK-BIN-NODEBUG:      (memory $0 256 256)
  (memory $0 256 256)
  ;; CHECK-TEXT:      (export "add" (func $add))
  ;; CHECK-BIN:      (export "add" (func $add))
@@ -41,9 +38,13 @@
   )
  )
 )
-;; CHECK-BIN-NODEBUG:      (export "add" (func $0))
+;; CHECK-BIN-NODEBUG:      (type $0 (func (param i32 i32) (result i32)))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (param $0 i32) (param $1 i32) (result i32)
+;; CHECK-BIN-NODEBUG:      (memory $m0 256 256)
+
+;; CHECK-BIN-NODEBUG:      (export "add" (func $f0))
+
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $0) (param $0 i32) (param $1 i32) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i32.add
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)

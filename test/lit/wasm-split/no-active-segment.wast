@@ -26,15 +26,15 @@
 
 ;; PRIMARY:      (import "placeholder" "0" (func $placeholder_0))
 
-;; PRIMARY:      (table $0 1 funcref)
+;; PRIMARY:      (table $t0 1 funcref)
 
 ;; PRIMARY:      (elem $0 (i32.const 0) $placeholder_0)
 
-;; PRIMARY:      (export "foo" (func $0))
+;; PRIMARY:      (export "foo" (func $f0))
 
-;; PRIMARY:      (export "table" (table $0))
+;; PRIMARY:      (export "table" (table $t0))
 
-;; PRIMARY:      (func $0
+;; PRIMARY:      (func $f0
 ;; PRIMARY-NEXT:  (call_indirect (type $0)
 ;; PRIMARY-NEXT:   (i32.const 0)
 ;; PRIMARY-NEXT:  )

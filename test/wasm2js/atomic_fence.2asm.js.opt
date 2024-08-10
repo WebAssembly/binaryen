@@ -10,12 +10,12 @@ function asmFunc(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $0() {
+ function f0() {
   
  }
  
  return {
-  "atomic_fence": $0
+  "atomic_fence": f0
  };
 }
 

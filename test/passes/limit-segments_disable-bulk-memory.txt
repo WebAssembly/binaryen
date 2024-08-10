@@ -1,5 +1,5 @@
 (module
- (memory $0 256 256)
+ (memory $m0 256 256)
  (data $0 (i32.const 0) "a")
  (data $1 (i32.const 3) "a")
  (data $2 (i32.const 6) "a")

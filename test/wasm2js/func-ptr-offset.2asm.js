@@ -22,14 +22,14 @@ function asmFunc(imports) {
   return 3 | 0;
  }
  
- function $0($0_1) {
-  $0_1 = $0_1 | 0;
-  return FUNCTION_TABLE[$0_1 | 0]() | 0 | 0;
+ function f0($0) {
+  $0 = $0 | 0;
+  return FUNCTION_TABLE[$0 | 0]() | 0 | 0;
  }
  
  var FUNCTION_TABLE = [null, t1, t2, t3];
  return {
-  "call": $0
+  "call": f0
  };
 }
 

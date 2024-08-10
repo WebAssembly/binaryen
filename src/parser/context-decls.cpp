@@ -20,6 +20,10 @@ namespace wasm::WATParser {
 
 namespace {
 
+Name makeName(std::string prefix, size_t counter) {
+  return Name(prefix + std::to_string(counter));
+}
+
 void applyImportNames(Importable& item, ImportNames* names) {
   if (names) {
     item.module = names->mod;
@@ -55,7 +59,7 @@ ParseDeclsCtx::addFuncDecl(Index pos, Name name, ImportNames* importNames) {
     }
     f->setExplicitName(name);
   } else {
-    name = (importNames ? "fimport$" : "") + std::to_string(funcCounter++);
+    name = makeName(importNames ? "fimport$" : "f", funcCounter++);
     name = Names::getValidFunctionName(wasm, name);
     f->name = name;
   }
@@ -95,7 +99,7 @@ Result<Table*> ParseDeclsCtx::addTableDecl(Index pos,
     }
     t->setExplicitName(name);
   } else {
-    name = (importNames ? "timport$" : "") + std::to_string(tableCounter++);
+    name = makeName(importNames ? "timport$" : "t", tableCounter++);
     name = Names::getValidTableName(wasm, name);
     t->name = name;
   }
@@ -151,7 +155,7 @@ Result<Memory*> ParseDeclsCtx::addMemoryDecl(Index pos,
     }
     m->setExplicitName(name);
   } else {
-    name = (importNames ? "mimport$" : "") + std::to_string(memoryCounter++);
+    name = makeName(importNames ? "mimport$" : "m", memoryCounter++);
     name = Names::getValidMemoryName(wasm, name);
     m->name = name;
   }
@@ -196,8 +200,7 @@ ParseDeclsCtx::addGlobalDecl(Index pos, Name name, ImportNames* importNames) {
     }
     g->setExplicitName(name);
   } else {
-    name =
-      (importNames ? "gimport$" : "global$") + std::to_string(globalCounter++);
+    name = makeName(importNames ? "gimport$" : "g", globalCounter++);
     name = Names::getValidGlobalName(wasm, name);
     g->name = name;
   }
@@ -277,7 +280,7 @@ ParseDeclsCtx::addTagDecl(Index pos, Name name, ImportNames* importNames) {
     }
     t->setExplicitName(name);
   } else {
-    name = (importNames ? "eimport$" : "tag$") + std::to_string(tagCounter++);
+    name = makeName(importNames ? "eimport$" : "tag$", tagCounter++);
     name = Names::getValidTagName(wasm, name);
     t->name = name;
   }

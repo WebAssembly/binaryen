@@ -33,7 +33,7 @@
  (import "env" "wasm2js_get_stashed_bits" (func $wasm2js_get_stashed_bits (result i32)))
  (import "env" "wasm2js_trap" (func $wasm2js_trap))
  (global $__wasm-intrinsics-temp-i64 (mut i64) (i64.const 0))
- (memory $0 1)
+ (memory $m0 1)
  (func $copysign64 (param $0 f64) (param $1 f64) (result f64)
   (f64.reinterpret_i64
    (i64.or

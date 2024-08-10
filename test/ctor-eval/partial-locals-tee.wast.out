@@ -2,7 +2,7 @@
  (type $0 (func (param i32 i32)))
  (type $1 (func))
  (import "import" "import" (func $import (type $0) (param i32 i32)))
- (memory $0 256 256)
+ (memory $m0 256 256)
  (data $0 (i32.const 10) "__s______________")
  (export "test1" (func $test1_2))
  (func $test1_2 (type $1)

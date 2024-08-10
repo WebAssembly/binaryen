@@ -35,7 +35,7 @@ total
  (import "env" "memory" (memory $mimport$0 256 256))
  (import "env" "table" (table $timport$0 478 478 funcref))
  (import "env" "___syscall146" (func $import$0 (param i32 i32) (result i32)))
- (global $global$0 (mut i32) (i32.const 1))
+ (global $g0 (mut i32) (i32.const 1))
  (data $0 (i32.const 2948) "\03")
  (data $1 (i32.const 6828) "\04")
  (data $2 (i32.const 7028) "\r\00\00\00\06")
@@ -159,7 +159,7 @@ total
   (i32.const 0)
  )
  (func $___stdout_write (param $0 i32) (param $1 i32) (param $2 i32) (result i32)
-  (global.set $global$0
+  (global.set $g0
    (i32.const 32)
   )
   (i32.store

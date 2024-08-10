@@ -11,10 +11,10 @@ function asmFunc(imports) {
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
  var i64toi32_i32$HIGH_BITS = 0;
- function $0($0_1, $0$hi, $1_1, $1$hi, $2, $2$hi) {
-  $0_1 = $0_1 | 0;
+ function f0($0, $0$hi, $1, $1$hi, $2, $2$hi) {
+  $0 = $0 | 0;
   $0$hi = $0$hi | 0;
-  $1_1 = $1_1 | 0;
+  $1 = $1 | 0;
   $1$hi = $1$hi | 0;
   $2 = $2 | 0;
   $2$hi = $2$hi | 0;
@@ -23,7 +23,7 @@ function asmFunc(imports) {
   i64toi32_i32$0 = $1$hi;
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$1 = $1$hi;
-  i64toi32_i32$1 = __wasm_rotl_i64($0_1 | 0, i64toi32_i32$0 | 0, $1_1 | 0, i64toi32_i32$1 | 0) | 0;
+  i64toi32_i32$1 = __wasm_rotl_i64($0 | 0, i64toi32_i32$0 | 0, $1 | 0, i64toi32_i32$1 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   $5$hi = i64toi32_i32$0;
   i64toi32_i32$0 = $2$hi;
@@ -33,10 +33,10 @@ function asmFunc(imports) {
   return (i64toi32_i32$2 | 0) == ($2 | 0) & (i64toi32_i32$0 | 0) == (i64toi32_i32$1 | 0) | 0 | 0;
  }
  
- function $1($0_1, $0$hi, $1_1, $1$hi, $2, $2$hi) {
-  $0_1 = $0_1 | 0;
+ function f1($0, $0$hi, $1, $1$hi, $2, $2$hi) {
+  $0 = $0 | 0;
   $0$hi = $0$hi | 0;
-  $1_1 = $1_1 | 0;
+  $1 = $1 | 0;
   $1$hi = $1$hi | 0;
   $2 = $2 | 0;
   $2$hi = $2$hi | 0;
@@ -45,7 +45,7 @@ function asmFunc(imports) {
   i64toi32_i32$0 = $1$hi;
   i64toi32_i32$0 = $0$hi;
   i64toi32_i32$1 = $1$hi;
-  i64toi32_i32$1 = __wasm_rotr_i64($0_1 | 0, i64toi32_i32$0 | 0, $1_1 | 0, i64toi32_i32$1 | 0) | 0;
+  i64toi32_i32$1 = __wasm_rotr_i64($0 | 0, i64toi32_i32$0 | 0, $1 | 0, i64toi32_i32$1 | 0) | 0;
   i64toi32_i32$0 = i64toi32_i32$HIGH_BITS;
   $5$hi = i64toi32_i32$0;
   i64toi32_i32$0 = $2$hi;
@@ -55,19 +55,19 @@ function asmFunc(imports) {
   return (i64toi32_i32$2 | 0) == ($2 | 0) & (i64toi32_i32$0 | 0) == (i64toi32_i32$1 | 0) | 0 | 0;
  }
  
- function legalstub$0($0_1, $1_1, $2, $3, $4, $5) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
+ function legalstub$f0($0, $1, $2, $3, $4, $5) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
   $2 = $2 | 0;
   $3 = $3 | 0;
   $4 = $4 | 0;
   $5 = $5 | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $26 = 0, $27 = 0, $28 = 0, $7 = 0, $7$hi = 0, $10$hi = 0, $11 = 0, $11$hi = 0, $13 = 0, $13$hi = 0, $16$hi = 0, $17 = 0, $17$hi = 0, $19 = 0, $19$hi = 0, $22$hi = 0, $23 = 0, $23$hi = 0;
   i64toi32_i32$0 = 0;
-  $7 = $0_1;
+  $7 = $0;
   $7$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -135,22 +135,22 @@ function asmFunc(imports) {
   i64toi32_i32$0 = $11$hi;
   i64toi32_i32$1 = $17$hi;
   i64toi32_i32$2 = $23$hi;
-  return $0($11 | 0, i64toi32_i32$0 | 0, $17 | 0, i64toi32_i32$1 | 0, $23 | 0, i64toi32_i32$2 | 0) | 0 | 0;
+  return f0($11 | 0, i64toi32_i32$0 | 0, $17 | 0, i64toi32_i32$1 | 0, $23 | 0, i64toi32_i32$2 | 0) | 0 | 0;
  }
  
- function legalstub$1($0_1, $1_1, $2, $3, $4, $5) {
-  $0_1 = $0_1 | 0;
-  $1_1 = $1_1 | 0;
+ function legalstub$f1($0, $1, $2, $3, $4, $5) {
+  $0 = $0 | 0;
+  $1 = $1 | 0;
   $2 = $2 | 0;
   $3 = $3 | 0;
   $4 = $4 | 0;
   $5 = $5 | 0;
   var i64toi32_i32$0 = 0, i64toi32_i32$2 = 0, i64toi32_i32$1 = 0, i64toi32_i32$4 = 0, i64toi32_i32$3 = 0, $26 = 0, $27 = 0, $28 = 0, $7 = 0, $7$hi = 0, $10$hi = 0, $11 = 0, $11$hi = 0, $13 = 0, $13$hi = 0, $16$hi = 0, $17 = 0, $17$hi = 0, $19 = 0, $19$hi = 0, $22$hi = 0, $23 = 0, $23$hi = 0;
   i64toi32_i32$0 = 0;
-  $7 = $0_1;
+  $7 = $0;
   $7$hi = i64toi32_i32$0;
   i64toi32_i32$0 = 0;
-  i64toi32_i32$2 = $1_1;
+  i64toi32_i32$2 = $1;
   i64toi32_i32$1 = 0;
   i64toi32_i32$3 = 32;
   i64toi32_i32$4 = i64toi32_i32$3 & 31 | 0;
@@ -218,7 +218,7 @@ function asmFunc(imports) {
   i64toi32_i32$0 = $11$hi;
   i64toi32_i32$1 = $17$hi;
   i64toi32_i32$2 = $23$hi;
-  return $1($11 | 0, i64toi32_i32$0 | 0, $17 | 0, i64toi32_i32$1 | 0, $23 | 0, i64toi32_i32$2 | 0) | 0 | 0;
+  return f1($11 | 0, i64toi32_i32$0 | 0, $17 | 0, i64toi32_i32$1 | 0, $23 | 0, i64toi32_i32$2 | 0) | 0 | 0;
  }
  
  function __wasm_rotl_i64(var$0, var$0$hi, var$1, var$1$hi) {
@@ -434,8 +434,8 @@ function asmFunc(imports) {
  }
  
  return {
-  "rotl": legalstub$0, 
-  "rotr": legalstub$1
+  "rotl": legalstub$f0, 
+  "rotr": legalstub$f1
  };
 }
 

@@ -38,26 +38,26 @@ function asmFunc0(imports) {
  var Math_ceil = Math.ceil;
  var Math_trunc = Math.trunc;
  var Math_sqrt = Math.sqrt;
- function $0() {
+ function f0() {
   
  }
  
- function $1(x, y) {
+ function f1(x, y) {
   x = x | 0;
   y = y | 0;
   return x + y | 0 | 0;
  }
  
- function $2(x, y) {
+ function f2(x, y) {
   x = x | 0;
   y = y | 0;
   return (x | 0) / (y | 0) | 0 | 0;
  }
  
  return {
-  "empty": $0, 
-  "add": $1, 
-  "div_s": $2
+  "empty": f0, 
+  "add": f1, 
+  "div_s": f2
  };
 }
 

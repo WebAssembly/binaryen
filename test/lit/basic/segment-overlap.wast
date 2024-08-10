@@ -12,7 +12,6 @@
 (module
  ;; CHECK-TEXT:      (memory $0 10)
  ;; CHECK-BIN:      (memory $0 10)
- ;; CHECK-BIN-NODEBUG:      (memory $0 10)
  (memory $0 10)
  (data (i32.const 100) "\ff\ff\ff\ff\ff\ff\ff\ff") ;; overlaps with the next
  (data (i32.const 104) "\00\00\00\00")
@@ -24,6 +23,8 @@
 ;; CHECK-BIN:      (data $0 (i32.const 100) "\ff\ff\ff\ff\ff\ff\ff\ff")
 
 ;; CHECK-BIN:      (data $1 (i32.const 104) "\00\00\00\00")
+
+;; CHECK-BIN-NODEBUG:      (memory $m0 10)
 
 ;; CHECK-BIN-NODEBUG:      (data $0 (i32.const 100) "\ff\ff\ff\ff\ff\ff\ff\ff")
 

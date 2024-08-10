@@ -5,7 +5,7 @@
  (type $3 (func (result i32 i64)))
  (type $4 (func (param i32 i32 i32) (result i32)))
  (type $5 (func (result v128)))
- (memory $0 10 10)
+ (memory $m0 10 10)
  (func $basic (type $0) (param $p i32)
   (local $x i32)
   (local.set $x

@@ -1,7 +1,7 @@
 (module
  (type $1 (func))
  (type $0 (func (param i32 i32)))
- (memory $0 256 256)
+ (memory $m0 256 256)
  (func $b0-yes (param $a i32) (param $b i32)
   (local $z i32)
   (local $y i32)

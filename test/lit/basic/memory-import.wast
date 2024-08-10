@@ -36,7 +36,7 @@
 )
 ;; CHECK-BIN-NODEBUG:      (import "env" "memory" (memory $mimport$0 1 1))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $0) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (i32.load offset=13
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 37)
 ;; CHECK-BIN-NODEBUG-NEXT:  )

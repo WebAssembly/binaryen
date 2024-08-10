@@ -16,7 +16,6 @@
   (type $0 (func (result i32)))
   ;; CHECK-TEXT:      (memory $0 4096 4096)
   ;; CHECK-BIN:      (memory $0 4096 4096)
-  ;; CHECK-BIN-NODEBUG:      (memory $0 4096 4096)
   (memory $0 4096 4096)
   (data (i32.const 1026) "\14\00")
 
@@ -2129,9 +2128,11 @@
     )
   )
 )
+;; CHECK-BIN-NODEBUG:      (memory $m0 4096 4096)
+
 ;; CHECK-BIN-NODEBUG:      (data $0 (i32.const 1026) "\14\00")
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $0) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.add
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 10)

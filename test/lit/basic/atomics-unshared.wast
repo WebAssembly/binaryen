@@ -16,9 +16,6 @@
  ;; CHECK-BIN:      (type $0 (func))
 
  ;; CHECK-BIN:      (memory $0 1 1)
- ;; CHECK-BIN-NODEBUG:      (type $0 (func))
-
- ;; CHECK-BIN-NODEBUG:      (memory $0 1 1)
  (memory $0 1 1)
 
  ;; CHECK-TEXT:      (func $foo (type $0)
@@ -47,7 +44,11 @@
   ))
  )
 )
-;; CHECK-BIN-NODEBUG:      (func $0 (type $0)
+;; CHECK-BIN-NODEBUG:      (type $0 (func))
+
+;; CHECK-BIN-NODEBUG:      (memory $m0 1 1)
+
+;; CHECK-BIN-NODEBUG:      (func $f0 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.atomic.rmw.cmpxchg
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 0)

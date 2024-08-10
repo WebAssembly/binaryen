@@ -2249,7 +2249,7 @@ void WasmBinaryReader::readMemories() {
   BYN_TRACE("num: " << num << std::endl);
   for (size_t i = 0; i < num; i++) {
     BYN_TRACE("read one\n");
-    auto memory = Builder::makeMemory(makeName("", i));
+    auto memory = Builder::makeMemory(makeName("m", i));
     getResizableLimits(memory->initial,
                        memory->max,
                        memory->shared,
@@ -2689,7 +2689,7 @@ void WasmBinaryReader::readFunctions() {
     endOfFunction = pos + size;
 
     auto func = std::make_unique<Function>();
-    func->name = makeName("", i);
+    func->name = makeName("f", i);
     func->type = getTypeByFunctionIndex(numImports + i);
     currFunction = func.get();
 
@@ -3054,7 +3054,7 @@ void WasmBinaryReader::readGlobals() {
     }
     auto* init = readExpression();
     wasm.addGlobal(
-      Builder::makeGlobal(makeName("global$", i),
+      Builder::makeGlobal(makeName("g", i),
                           type,
                           init,
                           mutable_ ? Builder::Mutable : Builder::Immutable));
@@ -3374,7 +3374,7 @@ void WasmBinaryReader::readTableDeclarations() {
     if (!elemType.isRef()) {
       throwError("Table type must be a reference type");
     }
-    auto table = Builder::makeTable(makeName("", i), elemType);
+    auto table = Builder::makeTable(makeName("t", i), elemType);
     bool is_shared;
     getResizableLimits(table->initial,
                        table->max,
