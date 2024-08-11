@@ -370,7 +370,7 @@ struct MinimizeRecGroups : Pass {
       return;
     }
 
-    // We have a conflict. There are four possibilities:
+    // We have a conflict. There are five possibilities:
     //
     //   1. We are trying to insert the next permutation of an existing
     //      equivalence class and have found that...
@@ -378,8 +378,11 @@ struct MinimizeRecGroups : Pass {
     //     A. The next permutation is an automorphism of some previous
     //        permutation of the same equivalence class.
     //
-    //     B. The next permutation is equivalent some other existing group shape
-    //        not yet included in the equivalence class.
+    //     B. The next permutation is equivalent to some other existing group
+    //        shape already in a different nontrivial equivalent class.
+    //
+    //     C. The next permutation is equivalent to some other existing group
+    //        shape not yet included in a nontrivial equivalence class.
     //
     //   2. We are inserting a new group shape as of yet unaffiliated with a
     //      nontrival equivalence class and have found that...
@@ -391,17 +394,18 @@ struct MinimizeRecGroups : Pass {
     //        with a nontrival equivalence class, so we have a new nontrivial
     //        equivalence class.
     //
-    // These four possibilities are handled in order below.
+    // These possibilities are handled in order below.
 
     size_t other = it->second;
 
     auto& groupInfo = groups[group];
     auto& otherInfo = groups[other];
 
-    // Case 1A: There is an automorphism. Skip the rest of the permutations,
-    // which will also be automorphic to previous permutations.
     size_t groupRep = equivalenceClasses.getRoot(group);
     size_t otherRep = equivalenceClasses.getRoot(other);
+
+    // Case 1A: There is an automorphism. Skip the rest of the permutations,
+    // which will also be automorphic to previous permutations.
     if (groupRep == otherRep) {
       assert(groups[groupRep].classInfo);
       auto& classInfo = *groups[groupRep].classInfo;
@@ -415,15 +419,24 @@ struct MinimizeRecGroups : Pass {
       return;
     }
 
-    // It is impossible by construction for both equivalence classes to be
-    // nontrivial since we canonicalize groups when an equivalence is first
-    // found. If the classes were equivalent, the groups in the second class
-    // would have already been added to the first class when the second class
-    // would otherwise have been formed.
-    assert((!groups[groupRep].classInfo && groupRep == group) ||
-           (!groups[otherRep].classInfo && otherRep == other));
+    // Case 1B: There is a conflict with a group from a different nontrivial
+    // equivalnece class. Because we canonicalize the shapes whenever we first
+    // create a nontrivial equivalence class, this is usually not possible
+    // because two equivalence classes with isomorphic types should actually be
+    // the same equivalence class. The exception is when the base shapes of two
+    // different equivalence classses are the same, but there is still a
+    // conflict due to brands in each class matching the base type of the other
+    // class. In this case we don't actually want to join the classes; we just
+    // want to advance to the next configuration to resolve the conflict.
+    if (groups[groupRep].classInfo && groups[otherRep].classInfo) {
+      auto& classInfo = *groups[groupRep].classInfo;
+      classInfo.advance();
+      classInfo.permute(groupInfo);
+      updateShape(group);
+      return;
+    }
 
-    // Case 1B: We have permuted ourselves into equivalence with some other
+    // Case 1C: We have permuted ourselves into equivalence with some other
     // group unaffiliated with a nontrivial equivalence class. Bring that other
     // group into our equivalence class and try the next permutation instead.
     if (groups[groupRep].classInfo) {

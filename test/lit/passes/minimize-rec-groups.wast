@@ -168,8 +168,45 @@
   (global $b (ref null $b) (ref.null none))
 )
 
-;; Same as above, but now the types have more fields, including one referring to
-;; a previous SCC.
+;; Now we have groups that match both the initial brand and the next one, so
+;; adding the brand will cause a conflict. We will have to go to the next brand.
+(module
+  (rec
+    ;; CHECK:      (type $a1 (struct))
+    (type $a1 (struct))
+    ;; CHECK:      (type $b1 (array (mut i8)))
+
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $2 (array (mut i8)))
+
+    ;; CHECK:       (type $a2 (struct))
+    (type $a2 (struct))
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $a3 (struct))
+    (type $a3 (struct))
+    (type $b1 (array (mut i8)))
+    ;; CHECK:       (type $5 (array (mut i8)))
+
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $6 (array i8))
+
+    ;; CHECK:       (type $b2 (array (mut i8)))
+    (type $b2 (array (mut i8)))
+  )
+
+  ;; CHECK:      (global $a1 (ref null $a1) (ref.null none))
+  (global $a1 (ref null $a1) (ref.null none))
+  ;; CHECK:      (global $a2 (ref null $a2) (ref.null none))
+  (global $a2 (ref null $a2) (ref.null none))
+  ;; CHECK:      (global $a3 (ref null $a3) (ref.null none))
+  (global $a3 (ref null $a3) (ref.null none))
+  ;; CHECK:      (global $b1 (ref null $b1) (ref.null none))
+  (global $b1 (ref null $b1) (ref.null none))
+  ;; CHECK:      (global $b2 (ref null $b2) (ref.null none))
+  (global $b2 (ref null $b2) (ref.null none))
+)
+
+;; Now the types have more fields, including one referring to a previous SCC.
 (module
   (rec
     ;; CHECK:      (type $other (struct (field i32)))
