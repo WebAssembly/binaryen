@@ -695,8 +695,6 @@ struct MinimizeRecGroups : Pass {
 
 } // anonymous namespace
 
-Pass* createMinimizeRecGroupsPass() {
-  return new MinimizeRecGroups();
-}
+Pass* createMinimizeRecGroupsPass() { return new MinimizeRecGroups(); }
 
 } // namespace wasm
