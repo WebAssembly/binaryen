@@ -2194,7 +2194,7 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.null none)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (i32.const 1)
+  ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
   (func $ref-eq-self (result i32)
     (local $eq eqref)
@@ -4424,6 +4424,65 @@
         (local.tee $eq
           (array.new_fixed $array 0)
         )
+      )
+    )
+  )
+)
+
+(module
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $A (sub (struct (field structref))))
+  (type $A (sub (struct (field structref))))
+
+  ;; CHECK:      (export "1" (func $1))
+
+  ;; CHECK:      (func $1 (type $0)
+  ;; CHECK-NEXT:  (local $x (ref $A))
+  ;; CHECK-NEXT:  (local $1 structref)
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (block (result i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result structref)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (block (result nullref)
+  ;; CHECK-NEXT:        (local.set $1
+  ;; CHECK-NEXT:         (ref.null none)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (unreachable)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $1 (export "1")
+    (local $x (ref $A))
+    ;; This ref.eq ends up comparing the tee'd allocation with a read of null
+    ;; from the allocation's field, which returns 0. This tests that we can
+    ;; differentiate when the allocation gets somewhere vs when it flows out
+    ;; from that place, as the allocation does reach the struct.get - hence we
+    ;; need to update it, when we optimize - but it does not flow it back out.
+    (if
+      (ref.eq
+        (struct.get $A 0
+          (local.tee $x
+            (struct.new_default $A)
+          )
+        )
+        (local.get $x)
+      )
+      (then
+        (unreachable)
       )
     )
   )

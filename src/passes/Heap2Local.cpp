@@ -194,11 +194,6 @@ struct EscapeAnalyzer {
   // exclusivity.
   std::unordered_set<LocalSet*> sets;
 
-  // All the expressions we reached during the flow analysis. That is exactly
-  // all the places where our allocation is used. We track these so that we
-  // can fix them up at the end, if the optimization ends up possible.
-  std::unordered_set<Expression*> reached;
-
   enum class ParentChildInteraction {
     // The parent lets the child escape. E.g. the parent is a call.
     Escapes,
@@ -218,6 +213,12 @@ struct EscapeAnalyzer {
     // is not used in an exclusive way, and we cannot optimize it.
     Mixes,
   };
+
+  // All the expressions we reached during the flow analysis. That is exactly
+  // all the places where our allocation is used. We track these so that we
+  // can fix them up at the end, if the optimization ends up possible.
+  // TODO: now this is a mapp
+  std::unordered_map<Expression*, ParentChildInteraction> reached;
 
   // Analyze an allocation to see if it escapes or not.
   bool escapes(Expression* allocation) {
@@ -285,8 +286,8 @@ struct EscapeAnalyzer {
       // If we got to here, then we can continue to hope that we can optimize
       // this allocation. Mark the parent and child as reached by it, and
       // continue.
-      reached.insert(parent);
-      reached.insert(child);
+      assert(reached.count(parent));
+      reached[child] = interaction;
     }
 
     // We finished the loop over the flows. Do the final checks.
@@ -300,7 +301,7 @@ struct EscapeAnalyzer {
 
   ParentChildInteraction getParentChildInteraction(Expression* allocation,
                                                    Expression* parent,
-                                                   Expression* child) {
+                                                   Expression* child) const {
     // If there is no parent then we are the body of the function, and that
     // means we escape by flowing to the caller.
     if (!parent) {
@@ -563,11 +564,16 @@ struct Struct2Local : PostWalker<Struct2Local> {
   bool refinalize = false;
 
   Expression* replaceCurrent(Expression* expression) {
+    // We should only be replacing things that are reached.
+    auto* curr = getCurrent();
+    assert(analyzer.reached.count(curr));
+    auto interaction = analyzer.reached[curr];
+
     PostWalker<Struct2Local>::replaceCurrent(expression);
     // Also update |reached|: we are replacing something that was reached, so
     // logically the replacement is also reached. This update is necessary if
     // the parent of an expression cares about whether a child was reached.
-    analyzer.reached.insert(expression);
+    analyzer.reached[expression] = interaction;
     return expression;
   }
 
@@ -745,8 +751,18 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // If our reference is compared to itself, the result is 1. If it is
     // compared to something else, the result must be 0, as our reference does
     // not escape to any other place.
-    int32_t result = analyzer.reached.count(curr->left) > 0 &&
-                     analyzer.reached.count(curr->right) > 0;
+    auto isTheAllocation = [&](Expression* child) {
+      // To be our allocation, we must have seen the allocation reach it, and
+      // also it must not be consumed there - the allocation must flow out.
+      auto iter = analyzer.reached.find(child);
+      if (iter == analyzer.reached.end()) {
+        return false;
+      }
+      return iter->second == EscapeAnalyzer::ParentChildInteraction::Flows;
+    };
+
+    int32_t result = isTheAllocation(curr->left) &&
+                     isTheAllocation(curr->right);
     replaceCurrent(builder.makeBlock({builder.makeDrop(curr->left),
                                       builder.makeDrop(curr->right),
                                       builder.makeConst(Literal(result))}));
@@ -935,7 +951,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
     auto nonNullArray = Type(arrayType, NonNullable);
     nullStruct = Type(structType, Nullable);
     nonNullStruct = Type(structType, NonNullable);
-    for (auto* reached : analyzer.reached) {
+    for (auto& [reached, _] : analyzer.reached) {
       if (reached->is<RefCast>()) {
         // Casts must be handled later: We need to see the old type, and to
         // potentially replace the cast based on that, see below.
@@ -1092,9 +1108,14 @@ struct Array2Struct : PostWalker<Array2Struct> {
   // Inform the analyzer that the current expression (which we just replaced)
   // has been reached in its analysis. We are replacing something it reached,
   // and want it to consider it as its equivalent.
+  // TODO rename
   void noteCurrentIsReached() { noteIsReached(getCurrent()); }
 
-  void noteIsReached(Expression* curr) { analyzer.reached.insert(curr); }
+  void noteIsReached(Expression* curr) {
+    // We mark the allocation itself and its replacement here, so the allocation
+    // flows through them all.
+    analyzer.reached[curr] = EscapeAnalyzer::ParentChildInteraction::Flows;
+  }
 
   // Given an ArrayNew or ArrayNewFixed, return the size of the array that is
   // being allocated.
