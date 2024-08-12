@@ -286,8 +286,8 @@ struct EscapeAnalyzer {
       // If we got to here, then we can continue to hope that we can optimize
       // this allocation. Mark the parent and child as reached by it, and
       // continue.
-      assert(reached.count(parent));
-      reached[child] = interaction;
+      reached[child] = ParentChildInteraction::Flows;
+      reached[parent] = interaction;
     }
 
     // We finished the loop over the flows. Do the final checks.
