@@ -216,8 +216,8 @@ struct EscapeAnalyzer {
 
   // A map of every expression we reached during the flow analysis (which is
   // exactly all the places where our allocation is used) to the interaction of
-  // the allocation there. Anything in this map will be fixed up at the end if
-  // we optimize, and how we fix it up may depend on the interaction,
+  // the allocation there. If we optimize, anything in this map will be fixed up
+  // at the end, and how we fix it up may depend on the interaction,
   // specifically, it can matter if the allocations flows out of here (Flows,
   // which is the case for e.g. a Block that we flow through) or if it is fully
   // consumed (FullyConsumes, e.g. for a struct.get).
