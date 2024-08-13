@@ -2329,6 +2329,7 @@ Result<> makeArrayInitElem(Ctx& ctx,
   auto type = typeidx(ctx);
   CHECK_ERR(type);
   auto elem = elemidx(ctx);
+  CHECK_ERR(elem);
   return ctx.makeArrayInitElem(pos, annotations, *type, *elem);
 }
 
