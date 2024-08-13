@@ -526,7 +526,7 @@ struct EscapeAnalyzer {
   // Helper function for Struct2Local and Array2Struct. Given an old expression
   // that is being replaced by a new one, add the proper interaction for the
   // replacement.
-  void updateInteractionsMap(Expression* old, Expression* rep) {
+  void applyOldInteractionToReplacement(Expression* old, Expression* rep) {
     // We can only replace something relevant that we found in the analysis.
     // (Not only would anything else be invalid to process, but also we wouldn't
     // know what interaction to give the replacement.)
@@ -588,7 +588,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   bool refinalize = false;
 
   Expression* replaceCurrent(Expression* expression) {
-    analyzer.updateInteractionsMap(getCurrent(), expression);
+    analyzer.applyOldInteractionToReplacement(getCurrent(), expression);
     PostWalker<Struct2Local>::replaceCurrent(expression);
     return expression;
   }
@@ -1012,7 +1012,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
 
   // As in Struct2Local, when we replace something, copy the interaction.
   Expression* replaceCurrent(Expression* expression) {
-    analyzer.updateInteractionsMap(getCurrent(), expression);
+    analyzer.applyOldInteractionToReplacement(getCurrent(), expression);
     PostWalker<Array2Struct>::replaceCurrent(expression);
     return expression;
   }
