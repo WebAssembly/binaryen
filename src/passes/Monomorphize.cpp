@@ -741,20 +741,6 @@ struct Monomorphize : public Pass {
         auto benefit = 100 - ((100 * costAfter) / costBefore);
         if (benefit <= MinPercentBenefit) {
           worthwhile = false;
-        } else {
-          std::cerr << "monoing " << func->name << " with size "
-                    << Measurer::measure(func->body) << " => "
-                    << Measurer::measure(monoFunc->body)
-                    << " and cost goes from " << costBefore << " to "
-                    << costAfter << '\n';
-          if (func->name == "sqlite3CodeRowTrigger") {
-            std::cout << "PRE\n"
-                      << *func->body << "\nPOST\n"
-                      << *monoFunc->body << '\n';
-            // TWO nested loops end up x25ing the code inside them... should we
-            // measure code size as well? small code size change for big cost
-            // change is suspect..?
-          }
         }
       }
     }
