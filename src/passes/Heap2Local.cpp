@@ -784,8 +784,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
       return iter->second == EscapeAnalyzer::ParentChildInteraction::Flows;
     };
 
-    int32_t result = isTheAllocation(curr->left) &&
-                     isTheAllocation(curr->right);
+    int32_t result =
+      isTheAllocation(curr->left) && isTheAllocation(curr->right);
     replaceCurrent(builder.makeBlock({builder.makeDrop(curr->left),
                                       builder.makeDrop(curr->right),
                                       builder.makeConst(Literal(result))}));
@@ -959,7 +959,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // there is no harm to doing this twice in that case.
     analyzer.reachedInteractions[structNew] =
       analyzer.reachedInteractions[arrayNewReplacement] =
-      EscapeAnalyzer::ParentChildInteraction::Flows;
+        EscapeAnalyzer::ParentChildInteraction::Flows;
 
     // Update types along the path reached by the allocation: whenever we see
     // the array type, it should be the struct type. Note that we do this before
