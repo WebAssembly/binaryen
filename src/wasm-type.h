@@ -685,7 +685,7 @@ struct TypeBuilder {
         for (auto elem : t) {
           elems.push_back(copySingleType(elem));
         }
-        return getTempTupleType(Tuple(elems));
+        return getTempTupleType(elems);
       }
       return copySingleType(t);
     };
