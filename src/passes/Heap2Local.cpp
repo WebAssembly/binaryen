@@ -523,9 +523,8 @@ struct EscapeAnalyzer {
     return true;
   }
 
-  // Helper function for Struct2Local and Array2Struct. Given a map of
-  // expressions to their ParentChildInteraction, and an old expression that is
-  // being replaced by a new one, add the proper interaction for the
+  // Helper function for Struct2Local and Array2Struct. Given an old expression
+  // that is being replaced by a new one, add the proper interaction for the
   // replacement.
   void updateInteractionsMap(Expression* old, Expression* rep) {
     // We can only replace something relevant that we found in the analysis.
