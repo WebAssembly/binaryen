@@ -195,7 +195,6 @@ struct GroupClassInfo {
         RecGroupShape({**brand}) == RecGroupShape({*singletonType})) {
       ++*brand;
     }
-    // The brand type must be distinct from
     // Start back at the initial order with the new brand.
     orders.~TopologicalOrders();
     new (&orders) TopologicalOrders(subtypeGraph);
