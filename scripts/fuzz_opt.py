@@ -1655,6 +1655,9 @@ def get_random_opts():
                 print('avoiding --flatten due to multivalue + reference types not supporting it (spilling of non-nullable tuples)')
                 print('TODO: Resolving https://github.com/WebAssembly/binaryen/issues/4824 may fix this')
                 continue
+            if '--enable-exception-handling' in FEATURE_OPTS:
+                print('avoiding --flatten due to exception-handling not supporting it (requires blocks with results)')
+                continue
             if '--gc' not in FEATURE_OPTS:
                 print('avoiding --flatten due to GC not supporting it (spilling of non-nullable locals)')
                 continue
@@ -1713,7 +1716,7 @@ print('FEATURE_DISABLE_FLAGS:', FEATURE_DISABLE_FLAGS)
 # some features depend on other features, so if a required feature is
 # disabled, its dependent features need to be disabled as well.
 IMPLIED_FEATURE_OPTS = {
-    '--disable-reference-types': ['--disable-gc', '--disable-strings'],
+    '--disable-reference-types': ['--disable-gc', '--disable-exception-handling', '--disable-strings'],
     '--disable-gc': ['--disable-strings'],
 }
 
