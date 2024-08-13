@@ -1086,7 +1086,7 @@
   ;; HUNDRED-NEXT: )
   (func $target-short (param $any anyref) (result (ref $A))
     ;; As above, but without all the work in the middle: this is really just a
-    ;; simpler casting function, and we can remove almost all the work here when
+    ;; simple casting function, and we can remove almost all the work here when
     ;; we remove the cast, meaning we optimize in more cases.
     (ref.cast (ref $A)
       (local.get $any)
