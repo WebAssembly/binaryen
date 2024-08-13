@@ -129,7 +129,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $br-in-catch
-    ;; When the try_table removed, the removal of the implicit branch to the
+    ;; When the try_table is removed, the removal of the implicit branch to the
     ;; catch target should be registered so that its type will be correctly
     ;; updated to unreachable.
     (drop

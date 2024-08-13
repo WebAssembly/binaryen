@@ -174,6 +174,7 @@ struct LinearExecutionWalker : public PostWalker<SubType, VisitorType> {
       case Expression::Id::TryTableId: {
         self->pushTask(SubType::doVisitTryTable, currp);
         self->pushTask(SubType::doNoteNonLinear, currp);
+        self->pushTask(SubType::scan, &curr->cast<TryTable>()->body);
         break;
       }
       case Expression::Id::ThrowId: {

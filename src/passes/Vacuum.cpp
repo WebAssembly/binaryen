@@ -436,8 +436,8 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
   }
 
   void visitTryTable(TryTable* curr) {
-    // If try's body does not throw, the whole try_table can be replaced with
-    // the try's body.
+    // If try_table's body does not throw, the whole try_table can be replaced
+    // with the try_table's body.
     if (!EffectAnalyzer(getPassOptions(), *getModule(), curr->body).throws()) {
       replaceCurrent(curr->body);
       return;
