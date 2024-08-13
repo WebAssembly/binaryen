@@ -660,6 +660,67 @@ struct TypeBuilder {
   void setHeapType(size_t i, Struct&& struct_);
   void setHeapType(size_t i, Array array);
 
+  // Sets the heap type at index `i` to be a copy of the given heap type with
+  // its referenced HeapTypes to be replaced according to the provided mapping
+  // function.
+  template<typename F> void copyHeapType(size_t i, HeapType type, F map) {
+    assert(!type.isBasic());
+    if (auto super = type.getDeclaredSuperType()) {
+      setSubType(i, map(*super));
+    }
+    setOpen(i, type.isOpen());
+    setShared(i, type.getShared());
+
+    auto copySingleType = [&](Type t) -> Type {
+      if (t.isBasic()) {
+        return t;
+      }
+      assert(t.isRef());
+      return getTempRefType(map(t.getHeapType()), t.getNullability());
+    };
+    auto copyType = [&](Type t) -> Type {
+      if (t.isTuple()) {
+        std::vector<Type> elems;
+        elems.reserve(t.size());
+        for (auto elem : t) {
+          elems.push_back(copySingleType(elem));
+        }
+        return getTempTupleType(elems);
+      }
+      return copySingleType(t);
+    };
+    switch (type.getKind()) {
+      case HeapTypeKind::Func: {
+        auto sig = type.getSignature();
+        setHeapType(i, Signature(copyType(sig.params), copyType(sig.results)));
+        return;
+      }
+      case HeapTypeKind::Struct: {
+        const auto& struct_ = type.getStruct();
+        std::vector<Field> fields;
+        fields.reserve(struct_.fields.size());
+        for (auto field : struct_.fields) {
+          field.type = copyType(field.type);
+          fields.push_back(field);
+        }
+        setHeapType(i, Struct(fields));
+        return;
+      }
+      case HeapTypeKind::Array: {
+        auto elem = type.getArray().element;
+        elem.type = copyType(elem.type);
+        // MSVC gets confused without this disambiguation.
+        setHeapType(i, wasm::Array(elem));
+        return;
+      }
+      case HeapTypeKind::Cont:
+        setHeapType(i, Continuation(map(type.getContinuation().type)));
+        return;
+      case HeapTypeKind::Basic:
+        WASM_UNREACHABLE("unexpected kind");
+    }
+  }
+
   // Gets the temporary HeapType at index `i`. This HeapType should only be used
   // to construct temporary Types using the methods below.
   HeapType getTempHeapType(size_t i);
@@ -672,7 +733,7 @@ struct TypeBuilder {
 
   // Declare the HeapType being built at index `i` to be an immediate subtype of
   // the given HeapType.
-  void setSubType(size_t i, HeapType super);
+  void setSubType(size_t i, std::optional<HeapType> super);
 
   // Create a new recursion group covering slots [i, i + length). Groups must
   // not overlap or go out of bounds.
@@ -746,7 +807,7 @@ struct TypeBuilder {
       builder.setHeapType(index, array);
       return *this;
     }
-    Entry& subTypeOf(HeapType other) {
+    Entry& subTypeOf(std::optional<HeapType> other) {
       builder.setSubType(index, other);
       return *this;
     }
@@ -757,6 +818,13 @@ struct TypeBuilder {
     Entry& setShared(Shareability share = Shared) {
       builder.setShared(index, share);
       return *this;
+    }
+    template<typename F> Entry& copy(HeapType type, F map) {
+      builder.copyHeapType(index, type, map);
+      return *this;
+    }
+    Entry& copy(HeapType type) {
+      return copy(type, [](HeapType t) { return t; });
     }
   };
 

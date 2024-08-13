@@ -98,20 +98,7 @@ std::vector<HeapType> ensureTypesAreInNewRecGroup(RecGroup recGroup,
       // Make a builder and add a slot for the hash.
       TypeBuilder builder(num + 1);
       for (Index i = 0; i < num; i++) {
-        auto type = types[i];
-        if (type.isStruct()) {
-          builder[i] = type.getStruct();
-        } else {
-          // Atm this pass only needs struct and array types. If we refactor
-          // this function to be general purpose we'd need to extend that. TODO
-          assert(type.isArray());
-          builder[i] = type.getArray();
-        }
-        if (auto super = type.getDeclaredSuperType()) {
-          builder[i].subTypeOf(*super);
-        }
-        builder[i].setOpen(type.isOpen());
-        builder[i].setShared(type.getShared());
+        builder[i].copy(types[i]);
       }
 
       // Implement the hash as a struct with "random" fields, and add it.
