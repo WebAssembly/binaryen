@@ -201,8 +201,8 @@ struct GroupClassInfo {
     new (&orders) TopologicalOrders(subtypeGraph);
   }
 
-  // Update permute the types in the given group to match the current
-  // configuration in this GroupClassInfo.
+  // Permute the types in the given group to match the current configuration in
+  // this GroupClassInfo.
   void permute(RecGroupInfo&);
 };
 
