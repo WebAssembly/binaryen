@@ -298,11 +298,14 @@ Type GlobalTypeRewriter::getTempType(Type type) {
     return type;
   }
   if (type.isRef()) {
-    auto ht = type.getHeapType();
-    if (auto it = typeIndices.find(ht); it != typeIndices.end()) {
-      ht = typeBuilder[it->second];
+    auto heapType = type.getHeapType();
+    if (auto it = typeIndices.find(heapType); it != typeIndices.end()) {
+      return typeBuilder.getTempRefType(typeBuilder[it->second],
+                                        type.getNullability());
     }
-    return typeBuilder.getTempRefType(ht, type.getNullability());
+    // This type is not one that is eligible for optimizing. That is fine; just
+    // use it unmodified.
+    return type;
   }
   if (type.isTuple()) {
     auto newTuple = type.getTuple();
