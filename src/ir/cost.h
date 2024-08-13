@@ -184,6 +184,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case SplatVecI16x8:
       case SplatVecI32x4:
       case SplatVecI64x2:
+      case SplatVecF16x8:
       case SplatVecF32x4:
       case SplatVecF64x2:
       case NotVec128:
@@ -397,6 +398,12 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case LeSVecI64x2:
       case GtSVecI64x2:
       case GeSVecI64x2:
+      case EqVecF16x8:
+      case NeVecF16x8:
+      case LtVecF16x8:
+      case LeVecF16x8:
+      case GtVecF16x8:
+      case GeVecF16x8:
       case EqVecF32x4:
       case NeVecF32x4:
       case LtVecF32x4:

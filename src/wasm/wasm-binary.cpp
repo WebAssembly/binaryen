@@ -2239,13 +2239,17 @@ void WasmBinaryReader::readStart() {
   startIndex = getU32LEB();
 }
 
+static Name makeName(std::string prefix, size_t counter) {
+  return Name(prefix + std::to_string(counter));
+}
+
 void WasmBinaryReader::readMemories() {
   BYN_TRACE("== readMemories\n");
   auto num = getU32LEB();
   BYN_TRACE("num: " << num << std::endl);
   for (size_t i = 0; i < num; i++) {
     BYN_TRACE("read one\n");
-    auto memory = Builder::makeMemory(Name::fromInt(i));
+    auto memory = Builder::makeMemory(makeName("", i));
     getResizableLimits(memory->initial,
                        memory->max,
                        memory->shared,
@@ -2534,7 +2538,7 @@ void WasmBinaryReader::readImports() {
     // could occur later due to the names section.
     switch (kind) {
       case ExternalKind::Function: {
-        Name name(std::string("fimport$") + std::to_string(functionCounter++));
+        Name name = makeName("fimport$", functionCounter++);
         auto index = getU32LEB();
         functionTypes.push_back(getTypeByIndex(index));
         auto type = getTypeByIndex(index);
@@ -2550,8 +2554,7 @@ void WasmBinaryReader::readImports() {
         break;
       }
       case ExternalKind::Table: {
-        Name name(std::string("timport$") + std::to_string(tableCounter++));
-        auto table = builder.makeTable(name);
+        auto table = builder.makeTable(makeName("timport$", tableCounter++));
         table->module = module;
         table->base = base;
         table->type = getType();
@@ -2570,8 +2573,7 @@ void WasmBinaryReader::readImports() {
         break;
       }
       case ExternalKind::Memory: {
-        Name name(std::string("mimport$") + std::to_string(memoryCounter++));
-        auto memory = builder.makeMemory(name);
+        auto memory = builder.makeMemory(makeName("mimport$", memoryCounter++));
         memory->module = module;
         memory->base = base;
         getResizableLimits(memory->initial,
@@ -2583,14 +2585,13 @@ void WasmBinaryReader::readImports() {
         break;
       }
       case ExternalKind::Global: {
-        Name name(std::string("gimport$") + std::to_string(globalCounter++));
         auto type = getConcreteType();
         auto mutable_ = getU32LEB();
         if (mutable_ & ~1) {
           throwError("Global mutability must be 0 or 1");
         }
         auto curr =
-          builder.makeGlobal(name,
+          builder.makeGlobal(makeName("gimport$", globalCounter++),
                              type,
                              nullptr,
                              mutable_ ? Builder::Mutable : Builder::Immutable);
@@ -2600,7 +2601,7 @@ void WasmBinaryReader::readImports() {
         break;
       }
       case ExternalKind::Tag: {
-        Name name(std::string("eimport$") + std::to_string(tagCounter++));
+        Name name = makeName("eimport$", tagCounter++);
         getInt8(); // Reserved 'attribute' field
         auto index = getU32LEB();
         auto curr = builder.makeTag(name, getSignatureByTypeIndex(index));
@@ -2618,7 +2619,7 @@ void WasmBinaryReader::readImports() {
 
 Name WasmBinaryReader::getNextLabel() {
   requireFunctionContext("getting a label");
-  return Name("label$" + std::to_string(nextLabel++));
+  return makeName("label$", nextLabel++);
 }
 
 void WasmBinaryReader::requireFunctionContext(const char* error) {
@@ -2688,7 +2689,7 @@ void WasmBinaryReader::readFunctions() {
     endOfFunction = pos + size;
 
     auto func = std::make_unique<Function>();
-    func->name = Name::fromInt(i);
+    func->name = makeName("", i);
     func->type = getTypeByFunctionIndex(numImports + i);
     currFunction = func.get();
 
@@ -2940,13 +2941,20 @@ void WasmBinaryReader::readSourceMapHeader() {
   //       investigation (if it does, it will assert in readBase64VLQ, so it
   //       would not be a silent error at least).
   uint32_t position = readBase64VLQ(*sourceMap);
-  uint32_t fileIndex = readBase64VLQ(*sourceMap);
-  uint32_t lineNumber =
-    readBase64VLQ(*sourceMap) + 1; // adjust zero-based line number
-  uint32_t columnNumber = readBase64VLQ(*sourceMap);
   nextDebugPos = position;
-  nextDebugLocation = {fileIndex, lineNumber, columnNumber};
-  nextDebugLocationHasDebugInfo = true;
+
+  auto peek = sourceMap->peek();
+  if (peek == ',' || peek == '\"') {
+    // This is a 1-length entry, so the next location has no debug info.
+    nextDebugLocationHasDebugInfo = false;
+  } else {
+    uint32_t fileIndex = readBase64VLQ(*sourceMap);
+    uint32_t lineNumber =
+      readBase64VLQ(*sourceMap) + 1; // adjust zero-based line number
+    uint32_t columnNumber = readBase64VLQ(*sourceMap);
+    nextDebugLocation = {fileIndex, lineNumber, columnNumber};
+    nextDebugLocationHasDebugInfo = true;
+  }
 }
 
 void WasmBinaryReader::readNextDebugLocation() {
@@ -3046,7 +3054,7 @@ void WasmBinaryReader::readGlobals() {
     }
     auto* init = readExpression();
     wasm.addGlobal(
-      Builder::makeGlobal("global$" + std::to_string(i),
+      Builder::makeGlobal(makeName("global$", i),
                           type,
                           init,
                           mutable_ ? Builder::Mutable : Builder::Immutable));
@@ -3366,7 +3374,7 @@ void WasmBinaryReader::readTableDeclarations() {
     if (!elemType.isRef()) {
       throwError("Table type must be a reference type");
     }
-    auto table = Builder::makeTable(Name::fromInt(i), elemType);
+    auto table = Builder::makeTable(makeName("", i), elemType);
     bool is_shared;
     getResizableLimits(table->initial,
                        table->max,
@@ -3466,7 +3474,7 @@ void WasmBinaryReader::readTags() {
     BYN_TRACE("read one\n");
     getInt8(); // Reserved 'attribute' field
     auto typeIndex = getU32LEB();
-    wasm.addTag(Builder::makeTag("tag$" + std::to_string(i),
+    wasm.addTag(Builder::makeTag(makeName("tag$", i),
                                  getSignatureByTypeIndex(typeIndex)));
   }
 }
@@ -4137,10 +4145,10 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
     }
     case BinaryConsts::AtomicPrefix: {
       code = static_cast<uint8_t>(getU32LEB());
-      if (maybeVisitLoad(curr, code, /*isAtomic=*/true)) {
+      if (maybeVisitLoad(curr, code, BinaryConsts::AtomicPrefix)) {
         break;
       }
-      if (maybeVisitStore(curr, code, /*isAtomic=*/true)) {
+      if (maybeVisitStore(curr, code, BinaryConsts::AtomicPrefix)) {
         break;
       }
       if (maybeVisitAtomicRMW(curr, code)) {
@@ -4188,6 +4196,12 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
         break;
       }
       if (maybeVisitTableCopy(curr, opcode)) {
+        break;
+      }
+      if (maybeVisitLoad(curr, opcode, BinaryConsts::MiscPrefix)) {
+        break;
+      }
+      if (maybeVisitStore(curr, opcode, BinaryConsts::MiscPrefix)) {
         break;
       }
       throwError("invalid code after misc prefix: " + std::to_string(opcode));
@@ -4330,10 +4344,10 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       if (maybeVisitConst(curr, code)) {
         break;
       }
-      if (maybeVisitLoad(curr, code, /*isAtomic=*/false)) {
+      if (maybeVisitLoad(curr, code, /*prefix=*/std::nullopt)) {
         break;
       }
-      if (maybeVisitStore(curr, code, /*isAtomic=*/false)) {
+      if (maybeVisitStore(curr, code, /*prefix=*/std::nullopt)) {
         break;
       }
       throwError("bad node code " + std::to_string(code));
@@ -4709,14 +4723,15 @@ Index WasmBinaryReader::readMemoryAccess(Address& alignment, Address& offset) {
   return memIdx;
 }
 
-bool WasmBinaryReader::maybeVisitLoad(Expression*& out,
-                                      uint8_t code,
-                                      bool isAtomic) {
+bool WasmBinaryReader::maybeVisitLoad(
+  Expression*& out,
+  uint8_t code,
+  std::optional<BinaryConsts::ASTNodes> prefix) {
   Load* curr;
   auto allocate = [&]() {
     curr = allocator.alloc<Load>();
   };
-  if (!isAtomic) {
+  if (!prefix) {
     switch (code) {
       case BinaryConsts::I32LoadMem8S:
         allocate();
@@ -4797,7 +4812,7 @@ bool WasmBinaryReader::maybeVisitLoad(Expression*& out,
         return false;
     }
     BYN_TRACE("zz node: Load\n");
-  } else {
+  } else if (prefix == BinaryConsts::AtomicPrefix) {
     switch (code) {
       case BinaryConsts::I32AtomicLoad8U:
         allocate();
@@ -4838,9 +4853,22 @@ bool WasmBinaryReader::maybeVisitLoad(Expression*& out,
         return false;
     }
     BYN_TRACE("zz node: AtomicLoad\n");
+  } else if (prefix == BinaryConsts::MiscPrefix) {
+    switch (code) {
+      case BinaryConsts::F32_F16LoadMem:
+        allocate();
+        curr->bytes = 2;
+        curr->type = Type::f32;
+        break;
+      default:
+        return false;
+    }
+    BYN_TRACE("zz node: Load\n");
+  } else {
+    return false;
   }
 
-  curr->isAtomic = isAtomic;
+  curr->isAtomic = prefix == BinaryConsts::AtomicPrefix;
   Index memIdx = readMemoryAccess(curr->align, curr->offset);
   memoryRefs[memIdx].push_back(&curr->memory);
   curr->ptr = popNonVoidExpression();
@@ -4849,11 +4877,12 @@ bool WasmBinaryReader::maybeVisitLoad(Expression*& out,
   return true;
 }
 
-bool WasmBinaryReader::maybeVisitStore(Expression*& out,
-                                       uint8_t code,
-                                       bool isAtomic) {
+bool WasmBinaryReader::maybeVisitStore(
+  Expression*& out,
+  uint8_t code,
+  std::optional<BinaryConsts::ASTNodes> prefix) {
   Store* curr;
-  if (!isAtomic) {
+  if (!prefix) {
     switch (code) {
       case BinaryConsts::I32StoreMem8:
         curr = allocator.alloc<Store>();
@@ -4903,7 +4932,7 @@ bool WasmBinaryReader::maybeVisitStore(Expression*& out,
       default:
         return false;
     }
-  } else {
+  } else if (prefix == BinaryConsts::AtomicPrefix) {
     switch (code) {
       case BinaryConsts::I32AtomicStore8:
         curr = allocator.alloc<Store>();
@@ -4943,9 +4972,21 @@ bool WasmBinaryReader::maybeVisitStore(Expression*& out,
       default:
         return false;
     }
+  } else if (prefix == BinaryConsts::MiscPrefix) {
+    switch (code) {
+      case BinaryConsts::F32_F16StoreMem:
+        curr = allocator.alloc<Store>();
+        curr->bytes = 2;
+        curr->valueType = Type::f32;
+        break;
+      default:
+        return false;
+    }
+  } else {
+    return false;
   }
 
-  curr->isAtomic = isAtomic;
+  curr->isAtomic = prefix == BinaryConsts::AtomicPrefix;
   BYN_TRACE("zz node: Store\n");
   Index memIdx = readMemoryAccess(curr->align, curr->offset);
   memoryRefs[memIdx].push_back(&curr->memory);
@@ -5805,6 +5846,30 @@ bool WasmBinaryReader::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = GeSVecI64x2;
       break;
+    case BinaryConsts::F16x8Eq:
+      curr = allocator.alloc<Binary>();
+      curr->op = EqVecF16x8;
+      break;
+    case BinaryConsts::F16x8Ne:
+      curr = allocator.alloc<Binary>();
+      curr->op = NeVecF16x8;
+      break;
+    case BinaryConsts::F16x8Lt:
+      curr = allocator.alloc<Binary>();
+      curr->op = LtVecF16x8;
+      break;
+    case BinaryConsts::F16x8Gt:
+      curr = allocator.alloc<Binary>();
+      curr->op = GtVecF16x8;
+      break;
+    case BinaryConsts::F16x8Le:
+      curr = allocator.alloc<Binary>();
+      curr->op = LeVecF16x8;
+      break;
+    case BinaryConsts::F16x8Ge:
+      curr = allocator.alloc<Binary>();
+      curr->op = GeVecF16x8;
+      break;
     case BinaryConsts::F32x4Eq:
       curr = allocator.alloc<Binary>();
       curr->op = EqVecF32x4;
@@ -6198,6 +6263,10 @@ bool WasmBinaryReader::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = SplatVecI64x2;
       break;
+    case BinaryConsts::F16x8Splat:
+      curr = allocator.alloc<Unary>();
+      curr->op = SplatVecF16x8;
+      break;
     case BinaryConsts::F32x4Splat:
       curr = allocator.alloc<Unary>();
       curr->op = SplatVecF32x4;
@@ -6528,6 +6597,11 @@ bool WasmBinaryReader::maybeVisitSIMDExtract(Expression*& out, uint32_t code) {
       curr->op = ExtractLaneVecI64x2;
       curr->index = getLaneIndex(2);
       break;
+    case BinaryConsts::F16x8ExtractLane:
+      curr = allocator.alloc<SIMDExtract>();
+      curr->op = ExtractLaneVecF16x8;
+      curr->index = getLaneIndex(8);
+      break;
     case BinaryConsts::F32x4ExtractLane:
       curr = allocator.alloc<SIMDExtract>();
       curr->op = ExtractLaneVecF32x4;
@@ -6569,6 +6643,11 @@ bool WasmBinaryReader::maybeVisitSIMDReplace(Expression*& out, uint32_t code) {
       curr = allocator.alloc<SIMDReplace>();
       curr->op = ReplaceLaneVecI64x2;
       curr->index = getLaneIndex(2);
+      break;
+    case BinaryConsts::F16x8ReplaceLane:
+      curr = allocator.alloc<SIMDReplace>();
+      curr->op = ReplaceLaneVecF16x8;
+      curr->index = getLaneIndex(8);
       break;
     case BinaryConsts::F32x4ReplaceLane:
       curr = allocator.alloc<SIMDReplace>();

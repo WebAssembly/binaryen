@@ -28,6 +28,7 @@
 #include <sstream>
 #include <variant>
 
+#include "fp16.h"
 #include "ir/intrinsics.h"
 #include "ir/module-utils.h"
 #include "support/bits.h"
@@ -478,6 +479,8 @@ public:
         return value.splatI32x4();
       case SplatVecI64x2:
         return value.splatI64x2();
+      case SplatVecF16x8:
+        return value.splatF16x8();
       case SplatVecF32x4:
         return value.splatF32x4();
       case SplatVecF64x2:
@@ -861,6 +864,18 @@ public:
         return left.leSI64x2(right);
       case GeSVecI64x2:
         return left.geSI64x2(right);
+      case EqVecF16x8:
+        return left.eqF16x8(right);
+      case NeVecF16x8:
+        return left.neF16x8(right);
+      case LtVecF16x8:
+        return left.ltF16x8(right);
+      case GtVecF16x8:
+        return left.gtF16x8(right);
+      case LeVecF16x8:
+        return left.leF16x8(right);
+      case GeVecF16x8:
+        return left.geF16x8(right);
       case EqVecF32x4:
         return left.eqF32x4(right);
       case NeVecF32x4:
@@ -1069,6 +1084,8 @@ public:
         return vec.extractLaneI32x4(curr->index);
       case ExtractLaneVecI64x2:
         return vec.extractLaneI64x2(curr->index);
+      case ExtractLaneVecF16x8:
+        return vec.extractLaneF16x8(curr->index);
       case ExtractLaneVecF32x4:
         return vec.extractLaneF32x4(curr->index);
       case ExtractLaneVecF64x2:
@@ -1097,6 +1114,8 @@ public:
         return vec.replaceLaneI32x4(value, curr->index);
       case ReplaceLaneVecI64x2:
         return vec.replaceLaneI64x2(value, curr->index);
+      case ReplaceLaneVecF16x8:
+        return vec.replaceLaneF16x8(value, curr->index);
       case ReplaceLaneVecF32x4:
         return vec.replaceLaneF32x4(value, curr->index);
       case ReplaceLaneVecF64x2:
@@ -2540,8 +2559,22 @@ public:
           }
           break;
         }
-        case Type::f32:
-          return Literal(load32u(addr, memory)).castToF32();
+        case Type::f32: {
+          switch (load->bytes) {
+            case 2: {
+              // Convert the float16 to float32 and store the binary
+              // representation.
+              return Literal(bit_cast<int32_t>(
+                               fp16_ieee_to_fp32_value(load16u(addr, memory))))
+                .castToF32();
+            }
+            case 4:
+              return Literal(load32u(addr, memory)).castToF32();
+            default:
+              WASM_UNREACHABLE("invalid size");
+          }
+          break;
+        }
         case Type::f64:
           return Literal(load64u(addr, memory)).castToF64();
         case Type::v128:
@@ -2590,9 +2623,23 @@ public:
           break;
         }
         // write floats carefully, ensuring all bits reach memory
-        case Type::f32:
-          store32(addr, value.reinterpreti32(), memory);
+        case Type::f32: {
+          switch (store->bytes) {
+            case 2: {
+              float f32 = bit_cast<float>(value.reinterpreti32());
+              // Convert the float32 to float16 and store the binary
+              // representation.
+              store16(addr, fp16_ieee_from_fp32_value(f32), memory);
+              break;
+            }
+            case 4:
+              store32(addr, value.reinterpreti32(), memory);
+              break;
+            default:
+              WASM_UNREACHABLE("invalid store size");
+          }
           break;
+        }
         case Type::f64:
           store64(addr, value.reinterpreti64(), memory);
           break;

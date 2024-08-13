@@ -223,8 +223,8 @@ public:
   // Iterate over the strongly connected components of the graph.
   struct Iterator {
     using value_type = SCC;
-    using different_type = std::ptrdiff_t;
-    using reference = SCC;
+    using difference_type = std::ptrdiff_t;
+    using reference = SCC&;
     using pointer = SCC*;
     using iterator_category = std::input_iterator_tag;
 

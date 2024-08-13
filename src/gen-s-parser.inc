@@ -307,6 +307,80 @@ switch (buf[0]) {
   }
   case 'f': {
     switch (buf[1]) {
+      case '1': {
+        switch (buf[6]) {
+          case 'e': {
+            switch (buf[7]) {
+              case 'q':
+                if (op == "f16x8.eq"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::EqVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'x':
+                if (op == "f16x8.extract_lane"sv) {
+                  CHECK_ERR(makeSIMDExtract(ctx, pos, annotations, SIMDExtractOp::ExtractLaneVecF16x8, 8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 'g': {
+            switch (buf[7]) {
+              case 'e':
+                if (op == "f16x8.ge"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::GeVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 't':
+                if (op == "f16x8.gt"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::GtVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 'l': {
+            switch (buf[7]) {
+              case 'e':
+                if (op == "f16x8.le"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::LeVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 't':
+                if (op == "f16x8.lt"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::LtVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 'n':
+            if (op == "f16x8.ne"sv) {
+              CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::NeVecF16x8));
+              return Ok{};
+            }
+            goto parse_error;
+          case 'r':
+            if (op == "f16x8.replace_lane"sv) {
+              CHECK_ERR(makeSIMDReplace(ctx, pos, annotations, SIMDReplaceOp::ReplaceLaneVecF16x8, 8));
+              return Ok{};
+            }
+            goto parse_error;
+          case 's':
+            if (op == "f16x8.splat"sv) {
+              CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::SplatVecF16x8));
+              return Ok{};
+            }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
       case '3': {
         switch (buf[3]) {
           case '.': {
@@ -454,12 +528,23 @@ switch (buf[0]) {
                       return Ok{};
                     }
                     goto parse_error;
-                  case 'o':
-                    if (op == "f32.load"sv) {
-                      CHECK_ERR(makeLoad(ctx, pos, annotations, Type::f32, /*signed=*/false, 4, /*isAtomic=*/false));
-                      return Ok{};
+                  case 'o': {
+                    switch (buf[8]) {
+                      case '\0':
+                        if (op == "f32.load"sv) {
+                          CHECK_ERR(makeLoad(ctx, pos, annotations, Type::f32, /*signed=*/false, 4, /*isAtomic=*/false));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case '_':
+                        if (op == "f32.load_f16"sv) {
+                          CHECK_ERR(makeLoad(ctx, pos, annotations, Type::f32, /*signed=*/false, 2, /*isAtomic=*/false));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
                     }
-                    goto parse_error;
+                  }
                   case 't':
                     if (op == "f32.lt"sv) {
                       CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::LtFloat32));
@@ -529,12 +614,23 @@ switch (buf[0]) {
                       return Ok{};
                     }
                     goto parse_error;
-                  case 't':
-                    if (op == "f32.store"sv) {
-                      CHECK_ERR(makeStore(ctx, pos, annotations, Type::f32, 4, /*isAtomic=*/false));
-                      return Ok{};
+                  case 't': {
+                    switch (buf[9]) {
+                      case '\0':
+                        if (op == "f32.store"sv) {
+                          CHECK_ERR(makeStore(ctx, pos, annotations, Type::f32, 4, /*isAtomic=*/false));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      case '_':
+                        if (op == "f32.store_f16"sv) {
+                          CHECK_ERR(makeStore(ctx, pos, annotations, Type::f32, 2, /*isAtomic=*/false));
+                          return Ok{};
+                        }
+                        goto parse_error;
+                      default: goto parse_error;
                     }
-                    goto parse_error;
+                  }
                   case 'u':
                     if (op == "f32.sub"sv) {
                       CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::SubFloat32));

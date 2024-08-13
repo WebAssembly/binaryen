@@ -258,9 +258,20 @@ void BinaryInstWriter::visitLoad(Load* curr) {
         }
         break;
       }
-      case Type::f32:
-        o << int8_t(BinaryConsts::F32LoadMem);
+      case Type::f32: {
+        switch (curr->bytes) {
+          case 2:
+            o << int8_t(BinaryConsts::MiscPrefix)
+              << U32LEB(BinaryConsts::F32_F16LoadMem);
+            break;
+          case 4:
+            o << int8_t(BinaryConsts::F32LoadMem);
+            break;
+          default:
+            WASM_UNREACHABLE("invalid load size");
+        }
         break;
+      }
       case Type::f64:
         o << int8_t(BinaryConsts::F64LoadMem);
         break;
@@ -359,9 +370,20 @@ void BinaryInstWriter::visitStore(Store* curr) {
         }
         break;
       }
-      case Type::f32:
-        o << int8_t(BinaryConsts::F32StoreMem);
+      case Type::f32: {
+        switch (curr->bytes) {
+          case 2:
+            o << int8_t(BinaryConsts::MiscPrefix)
+              << U32LEB(BinaryConsts::F32_F16StoreMem);
+            break;
+          case 4:
+            o << int8_t(BinaryConsts::F32StoreMem);
+            break;
+          default:
+            WASM_UNREACHABLE("invalid store size");
+        }
         break;
+      }
       case Type::f64:
         o << int8_t(BinaryConsts::F64StoreMem);
         break;
@@ -568,6 +590,9 @@ void BinaryInstWriter::visitSIMDExtract(SIMDExtract* curr) {
     case ExtractLaneVecI64x2:
       o << U32LEB(BinaryConsts::I64x2ExtractLane);
       break;
+    case ExtractLaneVecF16x8:
+      o << U32LEB(BinaryConsts::F16x8ExtractLane);
+      break;
     case ExtractLaneVecF32x4:
       o << U32LEB(BinaryConsts::F32x4ExtractLane);
       break;
@@ -592,6 +617,9 @@ void BinaryInstWriter::visitSIMDReplace(SIMDReplace* curr) {
       break;
     case ReplaceLaneVecI64x2:
       o << U32LEB(BinaryConsts::I64x2ReplaceLane);
+      break;
+    case ReplaceLaneVecF16x8:
+      o << U32LEB(BinaryConsts::F16x8ReplaceLane);
       break;
     case ReplaceLaneVecF32x4:
       o << U32LEB(BinaryConsts::F32x4ReplaceLane);
@@ -1027,6 +1055,9 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       break;
     case SplatVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2Splat);
+      break;
+    case SplatVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Splat);
       break;
     case SplatVecF32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Splat);
@@ -1611,6 +1642,24 @@ void BinaryInstWriter::visitBinary(Binary* curr) {
       break;
     case GeSVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::I64x2GeS);
+      break;
+    case EqVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Eq);
+      break;
+    case NeVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Ne);
+      break;
+    case LtVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Lt);
+      break;
+    case GtVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Gt);
+      break;
+    case LeVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Le);
+      break;
+    case GeVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Ge);
       break;
     case EqVecF32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Eq);

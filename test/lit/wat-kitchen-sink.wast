@@ -302,11 +302,11 @@
 
  ;; CHECK:      (import "mod" "t0" (tag $imported (param i32 i64)))
 
- ;; CHECK:      (import "mod" "t1" (tag $timport$0))
+ ;; CHECK:      (import "mod" "t1" (tag $eimport$0))
 
- ;; CHECK:      (import "mod" "imported-tag" (tag $timport$1))
+ ;; CHECK:      (import "mod" "imported-tag" (tag $eimport$1))
 
- ;; CHECK:      (global $2 (mut i32) (i32.const 0))
+ ;; CHECK:      (global $global$2 (mut i32) (i32.const 0))
 
  ;; CHECK:      (global $i32 i32 (i32.const 42))
  (global $i32 i32 i32.const 42)
@@ -413,7 +413,7 @@
  ;; tags
  (tag)
 
- ;; CHECK:      (tag $2)
+ ;; CHECK:      (tag $tag$2)
 
  ;; CHECK:      (tag $empty)
  (tag $empty)
@@ -1919,7 +1919,7 @@
  ;; CHECK-NEXT:   (catch $empty
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (catch $timport$0
+ ;; CHECK-NEXT:   (catch $eimport$0
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (catch_all
@@ -2228,7 +2228,7 @@
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (catch $timport$0
+ ;; CHECK-NEXT:   (catch $eimport$0
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:    (nop)
  ;; CHECK-NEXT:   )
@@ -3710,7 +3710,7 @@
  )
 
  ;; CHECK:      (func $throw (type $0)
- ;; CHECK-NEXT:  (throw $timport$1)
+ ;; CHECK-NEXT:  (throw $eimport$1)
  ;; CHECK-NEXT:  (throw $tag-i32
  ;; CHECK-NEXT:   (i32.const 0)
  ;; CHECK-NEXT:  )
@@ -4868,7 +4868,7 @@
  ;; CHECK-NEXT:     (tuple.drop 3
  ;; CHECK-NEXT:      (block $block0 (type $36) (result i32 i64 (ref null $simple-cont))
  ;; CHECK-NEXT:       (local.set $f
- ;; CHECK-NEXT:        (resume $simple-cont (tag $empty $block) (tag $tag-pair-to-pair $block0)
+ ;; CHECK-NEXT:        (resume $simple-cont (on $empty $block) (on $tag-pair-to-pair $block0)
  ;; CHECK-NEXT:         (i32.const 0)
  ;; CHECK-NEXT:         (i64.const 1)
  ;; CHECK-NEXT:         (local.get $ct)
@@ -4890,7 +4890,7 @@
     i32.const 0
     i64.const 1
     local.get $ct
-    resume $simple-cont (tag $empty 1) (tag $tag-pair-to-pair 0)
+    resume $simple-cont (on $empty 1) (on $tag-pair-to-pair 0)
     local.set $f
     unreachable
    end

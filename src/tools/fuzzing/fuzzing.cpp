@@ -3288,6 +3288,13 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
                                LeUVecI32x4,
                                GeSVecI32x4,
                                GeUVecI32x4,
+                               EqVecF16x8,
+                               EqVecF16x8,
+                               NeVecF16x8,
+                               LtVecF16x8,
+                               GtVecF16x8,
+                               LeVecF16x8,
+                               GeVecF16x8,
                                EqVecF32x4,
                                NeVecF32x4,
                                LtVecF32x4,
@@ -3579,6 +3586,7 @@ Expression* TranslateToFuzzReader::makeSIMDExtract(Type type) {
       break;
     case ExtractLaneSVecI16x8:
     case ExtractLaneUVecI16x8:
+    case ExtractLaneVecF16x8:
       index = upTo(8);
       break;
     case ExtractLaneVecI32x4:

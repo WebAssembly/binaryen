@@ -1272,6 +1272,10 @@ void FunctionValidator::visitSIMDExtract(SIMDExtract* curr) {
       lane_t = Type::i64;
       lanes = 2;
       break;
+    case ExtractLaneVecF16x8:
+      lane_t = Type::f32;
+      lanes = 8;
+      break;
     case ExtractLaneVecF32x4:
       lane_t = Type::f32;
       lanes = 4;
@@ -1317,6 +1321,10 @@ void FunctionValidator::visitSIMDReplace(SIMDReplace* curr) {
     case ReplaceLaneVecI64x2:
       lane_t = Type::i64;
       lanes = 2;
+      break;
+    case ReplaceLaneVecF16x8:
+      lane_t = Type::f32;
+      lanes = 8;
       break;
     case ReplaceLaneVecF32x4:
       lane_t = Type::f32;
@@ -1579,8 +1587,9 @@ void FunctionValidator::validateMemBytes(uint8_t bytes,
                    "expected i64 operation to touch 1, 2, 4, or 8 bytes");
       break;
     case Type::f32:
-      shouldBeEqual(
-        bytes, uint8_t(4), curr, "expected f32 operation to touch 4 bytes");
+      shouldBeTrue(bytes == 2 || bytes == 4,
+                   curr,
+                   "expected f32 operation to touch 2 or 4 bytes");
       break;
     case Type::f64:
       shouldBeEqual(
@@ -1734,6 +1743,12 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case LeSVecI64x2:
     case GtSVecI64x2:
     case GeSVecI64x2:
+    case EqVecF16x8:
+    case NeVecF16x8:
+    case LtVecF16x8:
+    case LeVecF16x8:
+    case GtVecF16x8:
+    case GeVecF16x8:
     case EqVecF32x4:
     case NeVecF32x4:
     case LtVecF32x4:
@@ -2035,6 +2050,7 @@ void FunctionValidator::visitUnary(Unary* curr) {
       shouldBeEqual(
         curr->value->type, Type(Type::i64), curr, "expected i64 splat value");
       break;
+    case SplatVecF16x8:
     case SplatVecF32x4:
       shouldBeEqual(
         curr->type, Type(Type::v128), curr, "expected splat to have v128 type");

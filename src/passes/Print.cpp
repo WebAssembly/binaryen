@@ -548,13 +548,19 @@ struct PrintExpressionContents
       if (curr->bytes == 1) {
         o << '8';
       } else if (curr->bytes == 2) {
-        o << "16";
+        if (curr->type == Type::f32) {
+          o << "_f16";
+        } else {
+          o << "16";
+        }
       } else if (curr->bytes == 4) {
         o << "32";
       } else {
         abort();
       }
-      o << (curr->signed_ ? "_s" : "_u");
+      if (curr->type != Type::f32) {
+        o << (curr->signed_ ? "_s" : "_u");
+      }
     }
     restoreNormalColor(o);
     printMemoryName(curr->memory, o, wasm);
@@ -575,7 +581,11 @@ struct PrintExpressionContents
       if (curr->bytes == 1) {
         o << '8';
       } else if (curr->bytes == 2) {
-        o << "16";
+        if (curr->valueType == Type::f32) {
+          o << "_f16";
+        } else {
+          o << "16";
+        }
       } else if (curr->bytes == 4) {
         o << "32";
       } else {
@@ -693,6 +703,9 @@ struct PrintExpressionContents
       case ExtractLaneVecI64x2:
         o << "i64x2.extract_lane";
         break;
+      case ExtractLaneVecF16x8:
+        o << "f16x8.extract_lane";
+        break;
       case ExtractLaneVecF32x4:
         o << "f32x4.extract_lane";
         break;
@@ -717,6 +730,9 @@ struct PrintExpressionContents
         break;
       case ReplaceLaneVecI64x2:
         o << "i64x2.replace_lane";
+        break;
+      case ReplaceLaneVecF16x8:
+        o << "f16x8.replace_lane";
         break;
       case ReplaceLaneVecF32x4:
         o << "f32x4.replace_lane";
@@ -1126,6 +1142,9 @@ struct PrintExpressionContents
         break;
       case SplatVecI64x2:
         o << "i64x2.splat";
+        break;
+      case SplatVecF16x8:
+        o << "f16x8.splat";
         break;
       case SplatVecF32x4:
         o << "f32x4.splat";
@@ -1669,6 +1688,24 @@ struct PrintExpressionContents
         break;
       case GeSVecI64x2:
         o << "i64x2.ge_s";
+        break;
+      case EqVecF16x8:
+        o << "f16x8.eq";
+        break;
+      case NeVecF16x8:
+        o << "f16x8.ne";
+        break;
+      case LtVecF16x8:
+        o << "f16x8.lt";
+        break;
+      case GtVecF16x8:
+        o << "f16x8.gt";
+        break;
+      case LeVecF16x8:
+        o << "f16x8.le";
+        break;
+      case GeVecF16x8:
+        o << "f16x8.ge";
         break;
       case EqVecF32x4:
         o << "f32x4.eq";
@@ -2337,11 +2374,9 @@ struct PrintExpressionContents
     o << ' ';
     printHeapType(curr->contType);
 
-    // We deliberate keep all (tag ...) clauses on the same line as the resume
-    // itself to work around a quirk in update_lit_checks.py
     for (Index i = 0; i < curr->handlerTags.size(); i++) {
       o << " (";
-      printMedium(o, "tag ");
+      printMedium(o, "on ");
       curr->handlerTags[i].print(o);
       o << ' ';
       curr->handlerBlocks[i].print(o);

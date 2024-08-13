@@ -275,9 +275,11 @@ private:
     legalIm->name = Name(std::string("legalimport$") + im->name.toString());
     legalIm->module = im->module;
     legalIm->base = im->base;
+    legalIm->hasExplicitName = true;
     auto stub = std::make_unique<Function>();
     stub->name = Name(std::string("legalfunc$") + im->name.toString());
     stub->type = im->type;
+    stub->hasExplicitName = true;
 
     auto* call = module->allocator.alloc<Call>();
     call->target = legalIm->name;
