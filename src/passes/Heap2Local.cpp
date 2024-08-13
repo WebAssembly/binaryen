@@ -1011,7 +1011,6 @@ struct Array2Struct : PostWalker<Array2Struct> {
     }
   }
 
-  // As in Struct2Local, when we replace something, copy the interaction.
   Expression* replaceCurrent(Expression* expression) {
     analyzer.applyOldInteractionToReplacement(getCurrent(), expression);
     PostWalker<Array2Struct>::replaceCurrent(expression);
