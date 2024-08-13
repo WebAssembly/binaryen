@@ -4435,9 +4435,7 @@
   ;; CHECK:      (type $A (sub (struct (field structref))))
   (type $A (sub (struct (field structref))))
 
-  ;; CHECK:      (export "1" (func $1))
-
-  ;; CHECK:      (func $1 (type $0)
+  ;; CHECK:      (func $struct.get-ref.eq (type $0)
   ;; CHECK-NEXT:  (local $x (ref $A))
   ;; CHECK-NEXT:  (local $1 structref)
   ;; CHECK-NEXT:  (if
@@ -4465,7 +4463,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $1 (export "1")
+  (func $struct.get-ref.eq
     (local $x (ref $A))
     ;; This ref.eq ends up comparing the tee'd allocation with a read of null
     ;; from the allocation's field, which returns 0. This tests that we can
