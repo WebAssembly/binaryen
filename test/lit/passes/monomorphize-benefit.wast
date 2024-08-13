@@ -11,7 +11,7 @@
 ;; RUN: foreach %s %t wasm-opt --monomorphize                                         -all -tnh -S -o - | filecheck %s --check-prefix DEFAULT
 ;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@0   -all -tnh -S -o - | filecheck %s --check-prefix ZERO___
 ;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@33  -all -tnh -S -o - | filecheck %s --check-prefix THIRD__
-;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@66  -all -tnh -S -o - | filecheck %s --check-prefix 2THIRDS
+;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@66  -all -tnh -S -o - | filecheck %s --check-prefix TWOTRDS
 ;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@100 -all -tnh -S -o - | filecheck %s --check-prefix HUNDRED
 
 (module
@@ -203,66 +203,66 @@
   ;; THIRD__-NEXT:   )
   ;; THIRD__-NEXT:  )
   ;; THIRD__-NEXT: )
-  ;; 2THIRDS:      (type $0 (func (param i32 i32 i32 i32 i32)))
+  ;; TWOTRDS:      (type $0 (func (param i32 i32 i32 i32 i32)))
 
-  ;; 2THIRDS:      (type $1 (func (param i32)))
+  ;; TWOTRDS:      (type $1 (func (param i32)))
 
-  ;; 2THIRDS:      (type $2 (func))
+  ;; TWOTRDS:      (type $2 (func))
 
-  ;; 2THIRDS:      (memory $0 10 20)
+  ;; TWOTRDS:      (memory $0 10 20)
 
-  ;; 2THIRDS:      (func $target (type $0) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
-  ;; 2THIRDS-NEXT:  (i32.store
-  ;; 2THIRDS-NEXT:   (i32.const 10)
-  ;; 2THIRDS-NEXT:   (i32.div_s
-  ;; 2THIRDS-NEXT:    (local.get $0)
-  ;; 2THIRDS-NEXT:    (i32.add
-  ;; 2THIRDS-NEXT:     (local.get $0)
-  ;; 2THIRDS-NEXT:     (i32.const 1)
-  ;; 2THIRDS-NEXT:    )
-  ;; 2THIRDS-NEXT:   )
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (i32.store
-  ;; 2THIRDS-NEXT:   (i32.const 20)
-  ;; 2THIRDS-NEXT:   (i32.div_s
-  ;; 2THIRDS-NEXT:    (local.get $1)
-  ;; 2THIRDS-NEXT:    (i32.add
-  ;; 2THIRDS-NEXT:     (local.get $1)
-  ;; 2THIRDS-NEXT:     (i32.const 1)
-  ;; 2THIRDS-NEXT:    )
-  ;; 2THIRDS-NEXT:   )
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (i32.store
-  ;; 2THIRDS-NEXT:   (i32.const 30)
-  ;; 2THIRDS-NEXT:   (i32.div_s
-  ;; 2THIRDS-NEXT:    (local.get $2)
-  ;; 2THIRDS-NEXT:    (i32.add
-  ;; 2THIRDS-NEXT:     (local.get $2)
-  ;; 2THIRDS-NEXT:     (i32.const 1)
-  ;; 2THIRDS-NEXT:    )
-  ;; 2THIRDS-NEXT:   )
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (i32.store
-  ;; 2THIRDS-NEXT:   (i32.const 40)
-  ;; 2THIRDS-NEXT:   (i32.div_s
-  ;; 2THIRDS-NEXT:    (local.get $3)
-  ;; 2THIRDS-NEXT:    (i32.add
-  ;; 2THIRDS-NEXT:     (local.get $3)
-  ;; 2THIRDS-NEXT:     (i32.const 1)
-  ;; 2THIRDS-NEXT:    )
-  ;; 2THIRDS-NEXT:   )
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (i32.store
-  ;; 2THIRDS-NEXT:   (i32.const 50)
-  ;; 2THIRDS-NEXT:   (i32.div_s
-  ;; 2THIRDS-NEXT:    (local.get $4)
-  ;; 2THIRDS-NEXT:    (i32.add
-  ;; 2THIRDS-NEXT:     (local.get $4)
-  ;; 2THIRDS-NEXT:     (i32.const 1)
-  ;; 2THIRDS-NEXT:    )
-  ;; 2THIRDS-NEXT:   )
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT: )
+  ;; TWOTRDS:      (func $target (type $0) (param $0 i32) (param $1 i32) (param $2 i32) (param $3 i32) (param $4 i32)
+  ;; TWOTRDS-NEXT:  (i32.store
+  ;; TWOTRDS-NEXT:   (i32.const 10)
+  ;; TWOTRDS-NEXT:   (i32.div_s
+  ;; TWOTRDS-NEXT:    (local.get $0)
+  ;; TWOTRDS-NEXT:    (i32.add
+  ;; TWOTRDS-NEXT:     (local.get $0)
+  ;; TWOTRDS-NEXT:     (i32.const 1)
+  ;; TWOTRDS-NEXT:    )
+  ;; TWOTRDS-NEXT:   )
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (i32.store
+  ;; TWOTRDS-NEXT:   (i32.const 20)
+  ;; TWOTRDS-NEXT:   (i32.div_s
+  ;; TWOTRDS-NEXT:    (local.get $1)
+  ;; TWOTRDS-NEXT:    (i32.add
+  ;; TWOTRDS-NEXT:     (local.get $1)
+  ;; TWOTRDS-NEXT:     (i32.const 1)
+  ;; TWOTRDS-NEXT:    )
+  ;; TWOTRDS-NEXT:   )
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (i32.store
+  ;; TWOTRDS-NEXT:   (i32.const 30)
+  ;; TWOTRDS-NEXT:   (i32.div_s
+  ;; TWOTRDS-NEXT:    (local.get $2)
+  ;; TWOTRDS-NEXT:    (i32.add
+  ;; TWOTRDS-NEXT:     (local.get $2)
+  ;; TWOTRDS-NEXT:     (i32.const 1)
+  ;; TWOTRDS-NEXT:    )
+  ;; TWOTRDS-NEXT:   )
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (i32.store
+  ;; TWOTRDS-NEXT:   (i32.const 40)
+  ;; TWOTRDS-NEXT:   (i32.div_s
+  ;; TWOTRDS-NEXT:    (local.get $3)
+  ;; TWOTRDS-NEXT:    (i32.add
+  ;; TWOTRDS-NEXT:     (local.get $3)
+  ;; TWOTRDS-NEXT:     (i32.const 1)
+  ;; TWOTRDS-NEXT:    )
+  ;; TWOTRDS-NEXT:   )
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (i32.store
+  ;; TWOTRDS-NEXT:   (i32.const 50)
+  ;; TWOTRDS-NEXT:   (i32.div_s
+  ;; TWOTRDS-NEXT:    (local.get $4)
+  ;; TWOTRDS-NEXT:    (i32.add
+  ;; TWOTRDS-NEXT:     (local.get $4)
+  ;; TWOTRDS-NEXT:     (i32.const 1)
+  ;; TWOTRDS-NEXT:    )
+  ;; TWOTRDS-NEXT:   )
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT: )
   ;; HUNDRED:      (type $0 (func (param i32 i32 i32 i32 i32)))
 
   ;; HUNDRED:      (type $1 (func (param i32)))
@@ -481,44 +481,44 @@
   ;; THIRD__-NEXT:   (local.get $x)
   ;; THIRD__-NEXT:  )
   ;; THIRD__-NEXT: )
-  ;; 2THIRDS:      (func $calls (type $1) (param $x i32)
-  ;; 2THIRDS-NEXT:  (call $target_2)
-  ;; 2THIRDS-NEXT:  (call $target
-  ;; 2THIRDS-NEXT:   (local.get $x)
-  ;; 2THIRDS-NEXT:   (i32.const 42)
-  ;; 2THIRDS-NEXT:   (i32.const 42)
-  ;; 2THIRDS-NEXT:   (i32.const 42)
-  ;; 2THIRDS-NEXT:   (i32.const 42)
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (call $target
-  ;; 2THIRDS-NEXT:   (local.get $x)
-  ;; 2THIRDS-NEXT:   (local.get $x)
-  ;; 2THIRDS-NEXT:   (i32.const 42)
-  ;; 2THIRDS-NEXT:   (i32.const 42)
-  ;; 2THIRDS-NEXT:   (i32.const 42)
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (call $target
-  ;; 2THIRDS-NEXT:   (local.get $x)
-  ;; 2THIRDS-NEXT:   (local.get $x)
-  ;; 2THIRDS-NEXT:   (local.get $x)
-  ;; 2THIRDS-NEXT:   (i32.const 42)
-  ;; 2THIRDS-NEXT:   (i32.const 42)
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (call $target
-  ;; 2THIRDS-NEXT:   (local.get $x)
-  ;; 2THIRDS-NEXT:   (local.get $x)
-  ;; 2THIRDS-NEXT:   (local.get $x)
-  ;; 2THIRDS-NEXT:   (local.get $x)
-  ;; 2THIRDS-NEXT:   (i32.const 42)
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (call $target
-  ;; 2THIRDS-NEXT:   (local.get $x)
-  ;; 2THIRDS-NEXT:   (local.get $x)
-  ;; 2THIRDS-NEXT:   (local.get $x)
-  ;; 2THIRDS-NEXT:   (local.get $x)
-  ;; 2THIRDS-NEXT:   (local.get $x)
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT: )
+  ;; TWOTRDS:      (func $calls (type $1) (param $x i32)
+  ;; TWOTRDS-NEXT:  (call $target_2)
+  ;; TWOTRDS-NEXT:  (call $target
+  ;; TWOTRDS-NEXT:   (local.get $x)
+  ;; TWOTRDS-NEXT:   (i32.const 42)
+  ;; TWOTRDS-NEXT:   (i32.const 42)
+  ;; TWOTRDS-NEXT:   (i32.const 42)
+  ;; TWOTRDS-NEXT:   (i32.const 42)
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (call $target
+  ;; TWOTRDS-NEXT:   (local.get $x)
+  ;; TWOTRDS-NEXT:   (local.get $x)
+  ;; TWOTRDS-NEXT:   (i32.const 42)
+  ;; TWOTRDS-NEXT:   (i32.const 42)
+  ;; TWOTRDS-NEXT:   (i32.const 42)
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (call $target
+  ;; TWOTRDS-NEXT:   (local.get $x)
+  ;; TWOTRDS-NEXT:   (local.get $x)
+  ;; TWOTRDS-NEXT:   (local.get $x)
+  ;; TWOTRDS-NEXT:   (i32.const 42)
+  ;; TWOTRDS-NEXT:   (i32.const 42)
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (call $target
+  ;; TWOTRDS-NEXT:   (local.get $x)
+  ;; TWOTRDS-NEXT:   (local.get $x)
+  ;; TWOTRDS-NEXT:   (local.get $x)
+  ;; TWOTRDS-NEXT:   (local.get $x)
+  ;; TWOTRDS-NEXT:   (i32.const 42)
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (call $target
+  ;; TWOTRDS-NEXT:   (local.get $x)
+  ;; TWOTRDS-NEXT:   (local.get $x)
+  ;; TWOTRDS-NEXT:   (local.get $x)
+  ;; TWOTRDS-NEXT:   (local.get $x)
+  ;; TWOTRDS-NEXT:   (local.get $x)
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT: )
   ;; HUNDRED:      (func $calls (type $1) (param $x i32)
   ;; HUNDRED-NEXT:  (call $target
   ;; HUNDRED-NEXT:   (i32.const 42)
@@ -571,7 +571,7 @@
     ;;
     ;;  * ZERO monomorphizes all of  0-4.
     ;;  * THIRD monomorphizes only   0-2.
-    ;;  * 2THIRDS monomorphizes just   0.
+    ;;  * TWOTRDS monomorphizes just   0.
     ;;  * HUNDRED monomorphizes none at all.
 
     (call $target
@@ -881,33 +881,33 @@
 ;; THIRD__-NEXT:  )
 ;; THIRD__-NEXT: )
 
-;; 2THIRDS:      (func $target_2 (type $2)
-;; 2THIRDS-NEXT:  (i32.store
-;; 2THIRDS-NEXT:   (i32.const 10)
-;; 2THIRDS-NEXT:   (i32.const 0)
-;; 2THIRDS-NEXT:  )
-;; 2THIRDS-NEXT:  (i32.store
-;; 2THIRDS-NEXT:   (i32.const 20)
-;; 2THIRDS-NEXT:   (i32.const 0)
-;; 2THIRDS-NEXT:  )
-;; 2THIRDS-NEXT:  (i32.store
-;; 2THIRDS-NEXT:   (i32.const 30)
-;; 2THIRDS-NEXT:   (i32.const 0)
-;; 2THIRDS-NEXT:  )
-;; 2THIRDS-NEXT:  (i32.store
-;; 2THIRDS-NEXT:   (i32.const 40)
-;; 2THIRDS-NEXT:   (i32.const 0)
-;; 2THIRDS-NEXT:  )
-;; 2THIRDS-NEXT:  (i32.store
-;; 2THIRDS-NEXT:   (i32.const 50)
-;; 2THIRDS-NEXT:   (i32.const 0)
-;; 2THIRDS-NEXT:  )
-;; 2THIRDS-NEXT: )
+;; TWOTRDS:      (func $target_2 (type $2)
+;; TWOTRDS-NEXT:  (i32.store
+;; TWOTRDS-NEXT:   (i32.const 10)
+;; TWOTRDS-NEXT:   (i32.const 0)
+;; TWOTRDS-NEXT:  )
+;; TWOTRDS-NEXT:  (i32.store
+;; TWOTRDS-NEXT:   (i32.const 20)
+;; TWOTRDS-NEXT:   (i32.const 0)
+;; TWOTRDS-NEXT:  )
+;; TWOTRDS-NEXT:  (i32.store
+;; TWOTRDS-NEXT:   (i32.const 30)
+;; TWOTRDS-NEXT:   (i32.const 0)
+;; TWOTRDS-NEXT:  )
+;; TWOTRDS-NEXT:  (i32.store
+;; TWOTRDS-NEXT:   (i32.const 40)
+;; TWOTRDS-NEXT:   (i32.const 0)
+;; TWOTRDS-NEXT:  )
+;; TWOTRDS-NEXT:  (i32.store
+;; TWOTRDS-NEXT:   (i32.const 50)
+;; TWOTRDS-NEXT:   (i32.const 0)
+;; TWOTRDS-NEXT:  )
+;; TWOTRDS-NEXT: )
 (module
   ;; DEFAULT:      (type $A (sub (struct (field i32))))
   ;; ZERO___:      (type $A (sub (struct (field i32))))
   ;; THIRD__:      (type $A (sub (struct (field i32))))
-  ;; 2THIRDS:      (type $A (sub (struct (field i32))))
+  ;; TWOTRDS:      (type $A (sub (struct (field i32))))
   ;; HUNDRED:      (type $A (sub (struct (field i32))))
   (type $A (sub (struct (field i32))))
 
@@ -958,19 +958,19 @@
   ;; THIRD__:      (type $8 (func (result (ref $A))))
 
   ;; THIRD__:      (import "a" "b" (func $import (type $1)))
-  ;; 2THIRDS:      (type $1 (func))
+  ;; TWOTRDS:      (type $1 (func))
 
-  ;; 2THIRDS:      (type $2 (func (param anyref) (result (ref $A))))
+  ;; TWOTRDS:      (type $2 (func (param anyref) (result (ref $A))))
 
-  ;; 2THIRDS:      (type $3 (func (param anyref i32)))
+  ;; TWOTRDS:      (type $3 (func (param anyref i32)))
 
-  ;; 2THIRDS:      (type $4 (func (param (ref $A))))
+  ;; TWOTRDS:      (type $4 (func (param (ref $A))))
 
-  ;; 2THIRDS:      (type $5 (func (param anyref)))
+  ;; TWOTRDS:      (type $5 (func (param anyref)))
 
-  ;; 2THIRDS:      (type $6 (func (param i32)))
+  ;; TWOTRDS:      (type $6 (func (param i32)))
 
-  ;; 2THIRDS:      (import "a" "b" (func $import (type $1)))
+  ;; TWOTRDS:      (import "a" "b" (func $import (type $1)))
   ;; HUNDRED:      (type $1 (func (param anyref) (result (ref $A))))
 
   ;; HUNDRED:      (type $2 (func (param anyref i32)))
@@ -985,7 +985,7 @@
   ;; DEFAULT:      (import "a" "c" (func $import2 (type $4) (param (ref $A))))
   ;; ZERO___:      (import "a" "c" (func $import2 (type $8) (param (ref $A))))
   ;; THIRD__:      (import "a" "c" (func $import2 (type $4) (param (ref $A))))
-  ;; 2THIRDS:      (import "a" "c" (func $import2 (type $4) (param (ref $A))))
+  ;; TWOTRDS:      (import "a" "c" (func $import2 (type $4) (param (ref $A))))
   ;; HUNDRED:      (import "a" "c" (func $import2 (type $4) (param (ref $A))))
   (import "a" "c" (func $import2 (param (ref $A))))
 
@@ -1022,17 +1022,17 @@
   ;; THIRD__-NEXT:   (local.get $0)
   ;; THIRD__-NEXT:  )
   ;; THIRD__-NEXT: )
-  ;; 2THIRDS:      (func $target-long (type $2) (param $0 anyref) (result (ref $A))
-  ;; 2THIRDS-NEXT:  (call $import)
-  ;; 2THIRDS-NEXT:  (call $import)
-  ;; 2THIRDS-NEXT:  (call $import)
-  ;; 2THIRDS-NEXT:  (call $import)
-  ;; 2THIRDS-NEXT:  (call $import)
-  ;; 2THIRDS-NEXT:  (call $import)
-  ;; 2THIRDS-NEXT:  (ref.cast (ref $A)
-  ;; 2THIRDS-NEXT:   (local.get $0)
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT: )
+  ;; TWOTRDS:      (func $target-long (type $2) (param $0 anyref) (result (ref $A))
+  ;; TWOTRDS-NEXT:  (call $import)
+  ;; TWOTRDS-NEXT:  (call $import)
+  ;; TWOTRDS-NEXT:  (call $import)
+  ;; TWOTRDS-NEXT:  (call $import)
+  ;; TWOTRDS-NEXT:  (call $import)
+  ;; TWOTRDS-NEXT:  (call $import)
+  ;; TWOTRDS-NEXT:  (ref.cast (ref $A)
+  ;; TWOTRDS-NEXT:   (local.get $0)
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT: )
   ;; HUNDRED:      (func $target-long (type $1) (param $0 anyref) (result (ref $A))
   ;; HUNDRED-NEXT:  (call $import)
   ;; HUNDRED-NEXT:  (call $import)
@@ -1074,11 +1074,11 @@
   ;; THIRD__-NEXT:   (local.get $0)
   ;; THIRD__-NEXT:  )
   ;; THIRD__-NEXT: )
-  ;; 2THIRDS:      (func $target-short (type $2) (param $0 anyref) (result (ref $A))
-  ;; 2THIRDS-NEXT:  (ref.cast (ref $A)
-  ;; 2THIRDS-NEXT:   (local.get $0)
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT: )
+  ;; TWOTRDS:      (func $target-short (type $2) (param $0 anyref) (result (ref $A))
+  ;; TWOTRDS-NEXT:  (ref.cast (ref $A)
+  ;; TWOTRDS-NEXT:   (local.get $0)
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT: )
   ;; HUNDRED:      (func $target-short (type $1) (param $0 anyref) (result (ref $A))
   ;; HUNDRED-NEXT:  (ref.cast (ref $A)
   ;; HUNDRED-NEXT:   (local.get $0)
@@ -1189,46 +1189,46 @@
   ;; THIRD__-NEXT:  )
   ;; THIRD__-NEXT:  (call $target-long_6)
   ;; THIRD__-NEXT: )
-  ;; 2THIRDS:      (func $calls-long (type $3) (param $x anyref) (param $y i32)
-  ;; 2THIRDS-NEXT:  (call $import2
-  ;; 2THIRDS-NEXT:   (call $target-long
-  ;; 2THIRDS-NEXT:    (local.get $x)
-  ;; 2THIRDS-NEXT:   )
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (drop
-  ;; 2THIRDS-NEXT:   (call $target-long
-  ;; 2THIRDS-NEXT:    (local.get $x)
-  ;; 2THIRDS-NEXT:   )
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (call $import2
-  ;; 2THIRDS-NEXT:   (call $target-long
-  ;; 2THIRDS-NEXT:    (struct.new $A
-  ;; 2THIRDS-NEXT:     (local.get $y)
-  ;; 2THIRDS-NEXT:    )
-  ;; 2THIRDS-NEXT:   )
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (drop
-  ;; 2THIRDS-NEXT:   (call $target-long
-  ;; 2THIRDS-NEXT:    (struct.new $A
-  ;; 2THIRDS-NEXT:     (local.get $y)
-  ;; 2THIRDS-NEXT:    )
-  ;; 2THIRDS-NEXT:   )
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (call $import2
-  ;; 2THIRDS-NEXT:   (call $target-long
-  ;; 2THIRDS-NEXT:    (struct.new $A
-  ;; 2THIRDS-NEXT:     (i32.const 42)
-  ;; 2THIRDS-NEXT:    )
-  ;; 2THIRDS-NEXT:   )
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (drop
-  ;; 2THIRDS-NEXT:   (call $target-long
-  ;; 2THIRDS-NEXT:    (struct.new $A
-  ;; 2THIRDS-NEXT:     (i32.const 42)
-  ;; 2THIRDS-NEXT:    )
-  ;; 2THIRDS-NEXT:   )
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT: )
+  ;; TWOTRDS:      (func $calls-long (type $3) (param $x anyref) (param $y i32)
+  ;; TWOTRDS-NEXT:  (call $import2
+  ;; TWOTRDS-NEXT:   (call $target-long
+  ;; TWOTRDS-NEXT:    (local.get $x)
+  ;; TWOTRDS-NEXT:   )
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (drop
+  ;; TWOTRDS-NEXT:   (call $target-long
+  ;; TWOTRDS-NEXT:    (local.get $x)
+  ;; TWOTRDS-NEXT:   )
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (call $import2
+  ;; TWOTRDS-NEXT:   (call $target-long
+  ;; TWOTRDS-NEXT:    (struct.new $A
+  ;; TWOTRDS-NEXT:     (local.get $y)
+  ;; TWOTRDS-NEXT:    )
+  ;; TWOTRDS-NEXT:   )
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (drop
+  ;; TWOTRDS-NEXT:   (call $target-long
+  ;; TWOTRDS-NEXT:    (struct.new $A
+  ;; TWOTRDS-NEXT:     (local.get $y)
+  ;; TWOTRDS-NEXT:    )
+  ;; TWOTRDS-NEXT:   )
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (call $import2
+  ;; TWOTRDS-NEXT:   (call $target-long
+  ;; TWOTRDS-NEXT:    (struct.new $A
+  ;; TWOTRDS-NEXT:     (i32.const 42)
+  ;; TWOTRDS-NEXT:    )
+  ;; TWOTRDS-NEXT:   )
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (drop
+  ;; TWOTRDS-NEXT:   (call $target-long
+  ;; TWOTRDS-NEXT:    (struct.new $A
+  ;; TWOTRDS-NEXT:     (i32.const 42)
+  ;; TWOTRDS-NEXT:    )
+  ;; TWOTRDS-NEXT:   )
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT: )
   ;; HUNDRED:      (func $calls-long (type $2) (param $x anyref) (param $y i32)
   ;; HUNDRED-NEXT:  (call $import2
   ;; HUNDRED-NEXT:   (call $target-long
@@ -1395,34 +1395,34 @@
   ;; THIRD__-NEXT:  )
   ;; THIRD__-NEXT:  (call $target-short_11)
   ;; THIRD__-NEXT: )
-  ;; 2THIRDS:      (func $calls-short (type $3) (param $x anyref) (param $y i32)
-  ;; 2THIRDS-NEXT:  (call $import2
-  ;; 2THIRDS-NEXT:   (call $target-short
-  ;; 2THIRDS-NEXT:    (local.get $x)
-  ;; 2THIRDS-NEXT:   )
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (call $target-short_6
-  ;; 2THIRDS-NEXT:   (local.get $x)
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (call $import2
-  ;; 2THIRDS-NEXT:   (call $target-short
-  ;; 2THIRDS-NEXT:    (struct.new $A
-  ;; 2THIRDS-NEXT:     (local.get $y)
-  ;; 2THIRDS-NEXT:    )
-  ;; 2THIRDS-NEXT:   )
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (call $target-short_7
-  ;; 2THIRDS-NEXT:   (local.get $y)
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (call $import2
-  ;; 2THIRDS-NEXT:   (call $target-short
-  ;; 2THIRDS-NEXT:    (struct.new $A
-  ;; 2THIRDS-NEXT:     (i32.const 42)
-  ;; 2THIRDS-NEXT:    )
-  ;; 2THIRDS-NEXT:   )
-  ;; 2THIRDS-NEXT:  )
-  ;; 2THIRDS-NEXT:  (call $target-short_8)
-  ;; 2THIRDS-NEXT: )
+  ;; TWOTRDS:      (func $calls-short (type $3) (param $x anyref) (param $y i32)
+  ;; TWOTRDS-NEXT:  (call $import2
+  ;; TWOTRDS-NEXT:   (call $target-short
+  ;; TWOTRDS-NEXT:    (local.get $x)
+  ;; TWOTRDS-NEXT:   )
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (call $target-short_6
+  ;; TWOTRDS-NEXT:   (local.get $x)
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (call $import2
+  ;; TWOTRDS-NEXT:   (call $target-short
+  ;; TWOTRDS-NEXT:    (struct.new $A
+  ;; TWOTRDS-NEXT:     (local.get $y)
+  ;; TWOTRDS-NEXT:    )
+  ;; TWOTRDS-NEXT:   )
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (call $target-short_7
+  ;; TWOTRDS-NEXT:   (local.get $y)
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (call $import2
+  ;; TWOTRDS-NEXT:   (call $target-short
+  ;; TWOTRDS-NEXT:    (struct.new $A
+  ;; TWOTRDS-NEXT:     (i32.const 42)
+  ;; TWOTRDS-NEXT:    )
+  ;; TWOTRDS-NEXT:   )
+  ;; TWOTRDS-NEXT:  )
+  ;; TWOTRDS-NEXT:  (call $target-short_8)
+  ;; TWOTRDS-NEXT: )
   ;; HUNDRED:      (func $calls-short (type $2) (param $x anyref) (param $y i32)
   ;; HUNDRED-NEXT:  (call $import2
   ;; HUNDRED-NEXT:   (call $target-short
@@ -1639,14 +1639,14 @@
 ;; THIRD__-NEXT:  (nop)
 ;; THIRD__-NEXT: )
 
-;; 2THIRDS:      (func $target-short_6 (type $5) (param $0 anyref)
-;; 2THIRDS-NEXT:  (nop)
-;; 2THIRDS-NEXT: )
+;; TWOTRDS:      (func $target-short_6 (type $5) (param $0 anyref)
+;; TWOTRDS-NEXT:  (nop)
+;; TWOTRDS-NEXT: )
 
-;; 2THIRDS:      (func $target-short_7 (type $6) (param $0 i32)
-;; 2THIRDS-NEXT:  (nop)
-;; 2THIRDS-NEXT: )
+;; TWOTRDS:      (func $target-short_7 (type $6) (param $0 i32)
+;; TWOTRDS-NEXT:  (nop)
+;; TWOTRDS-NEXT: )
 
-;; 2THIRDS:      (func $target-short_8 (type $1)
-;; 2THIRDS-NEXT:  (nop)
-;; 2THIRDS-NEXT: )
+;; TWOTRDS:      (func $target-short_8 (type $1)
+;; TWOTRDS-NEXT:  (nop)
+;; TWOTRDS-NEXT: )
