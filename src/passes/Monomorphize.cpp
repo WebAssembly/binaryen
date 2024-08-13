@@ -68,7 +68,7 @@
 // testing that always monomorphizes non-trivial callsites, without checking if
 // the optimizer can help or not (that makes writing testcases simpler).
 //
-// This pass takes several arguments:
+// This pass takes an argument:
 //
 //   --pass-arg=monomorphize-min-benefit@N
 //
@@ -80,17 +80,13 @@
 //      careful (and 100 will only optimize when the cost goes to nothing at
 //      all).
 //
-// TODO
-// The maximum function size above which we never try to monomorphize. This
-// avoids operating on large functions which may be very slow to optimize, and
-// this pass operates by optimizing code in order to decide what to do, so
-// optimizing large functions can be painful.
-// const Index MaxFunctionSize = 1000;
-//
-// TODO: Perhaps an argument for the maximum OUTPUT size, that is, max size of
-//       optimized monomorphized functions. That limits size increase.
-//
-// TODO: some kind of argument to control the maximum code size increase?
+// TODO: We may also want more arguments here:
+//  * Max function size on which to operate (to not even try to optimize huge
+//    functions, which could be slow).
+//  * Max optimized size (if the max optimized size is less than the size we
+//    inline, then all optimized cases would end up inlined; that would also
+//    put a limit on the size increase).
+//  * Max absolute size increase (total of all added code).
 //
 // TODO: When we optimize we could run multiple cycles: A calls B calls C might
 //       end up with the refined+optimized B now having refined types in its
