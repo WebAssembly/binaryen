@@ -145,31 +145,7 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   for (auto [type, index] : typeIndices) {
     oldToNewTypes[type] = newTypes[index];
   }
-
-  // Update type names to avoid duplicates.
-  std::unordered_set<Name> typeNames;
-  for (auto& [type, info] : wasm.typeNames) {
-    typeNames.insert(info.name);
-  }
-  for (auto& [old, new_] : oldToNewTypes) {
-    if (old == new_) {
-      // The type is being mapped to itself; no need to rename anything.
-      continue;
-    }
-
-    if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
-      wasm.typeNames[new_] = wasm.typeNames[old];
-      // Use the existing name in the new type, as usually it completely
-      // replaces the old. Rename the old name in a unique way to avoid
-      // confusion in the case that it remains used.
-      auto deduped =
-        Names::getValidName(wasm.typeNames[old].name,
-                            [&](Name test) { return !typeNames.count(test); });
-      wasm.typeNames[old].name = deduped;
-      typeNames.insert(deduped);
-    }
-  }
-
+  mapTypeNames(oldToNewTypes);
   return oldToNewTypes;
 }
 
@@ -290,6 +266,32 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
   }
   for (auto& tag : wasm.tags) {
     tag->sig = updater.getNew(tag->sig);
+  }
+}
+
+void GlobalTypeRewriter::mapTypeNames(const TypeMap& oldToNewTypes) {
+  // Update type names to avoid duplicates.
+  std::unordered_set<Name> typeNames;
+  for (auto& [type, info] : wasm.typeNames) {
+    typeNames.insert(info.name);
+  }
+  for (auto& [old, new_] : oldToNewTypes) {
+    if (old == new_) {
+      // The type is being mapped to itself; no need to rename anything.
+      continue;
+    }
+
+    if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
+      wasm.typeNames[new_] = wasm.typeNames[old];
+      // Use the existing name in the new type, as usually it completely
+      // replaces the old. Rename the old name in a unique way to avoid
+      // confusion in the case that it remains used.
+      auto deduped =
+        Names::getValidName(wasm.typeNames[old].name,
+                            [&](Name test) { return !typeNames.count(test); });
+      wasm.typeNames[old].name = deduped;
+      typeNames.insert(deduped);
+    }
   }
 }
 
