@@ -316,6 +316,12 @@ struct MinimizeRecGroups : Pass {
   // representative to use to disambiguate the groups.
   DisjointSets equivalenceClasses;
 
+  // When we see a new group, we have to make sure its shape doesn't conflict
+  // with any existing group. If it does conflict, we need to update its shape
+  // and try again. Maintain a stack of group indices whose shapes we need to
+  // check for uniqueness to avoid deep recursions.
+  std::vector<size_t> shapesToUpdate;
+
   void run(Module* module) override {
     // There are no recursion groups to minimize if GC is not enabled.
     if (!module->features.hasGC()) {
@@ -349,7 +355,9 @@ struct MinimizeRecGroups : Pass {
       for (size_t i = 0; i < sccTypes.size(); ++i) {
         groups.back().group[i] = sccTypes[permutation[i]];
       }
-      updateShape(index);
+      assert(shapesToUpdate.empty());
+      shapesToUpdate.push_back(index);
+      updateShapes();
     }
 
     rewriteTypes(*module);
@@ -362,6 +370,14 @@ struct MinimizeRecGroups : Pass {
       BrandTypeIterator::initFieldOptions();
       return true;
     }();
+  }
+
+  void updateShapes() {
+    while (!shapesToUpdate.empty()) {
+      auto index = shapesToUpdate.back();
+      shapesToUpdate.pop_back();
+      updateShape(index);
+    }
   }
 
   void updateShape(size_t group) {
@@ -417,7 +433,7 @@ struct MinimizeRecGroups : Pass {
       classInfo.advanceBrand();
       classInfo.permute(groupInfo);
 
-      updateShape(group);
+      shapesToUpdate.push_back(group);
       return;
     }
 
@@ -434,7 +450,7 @@ struct MinimizeRecGroups : Pass {
       auto& classInfo = *groups[groupRep].classInfo;
       classInfo.advance();
       classInfo.permute(groupInfo);
-      updateShape(group);
+      shapesToUpdate.push_back(group);
       return;
     }
 
@@ -455,7 +471,7 @@ struct MinimizeRecGroups : Pass {
       classInfo.advance();
       classInfo.permute(groupInfo);
 
-      updateShape(group);
+      shapesToUpdate.push_back(group);
       return;
     }
 
@@ -476,7 +492,7 @@ struct MinimizeRecGroups : Pass {
       classInfo.advance();
       classInfo.permute(groupInfo);
 
-      updateShape(group);
+      shapesToUpdate.push_back(group);
       return;
     }
 
@@ -507,8 +523,8 @@ struct MinimizeRecGroups : Pass {
     // and `group` will subsequently be added to that same existing class, or
     // alternatively it may be inserted as the representative element of a new
     // class to which `group` will subsequently be joined.
-    updateShape(other);
-    updateShape(group);
+    shapesToUpdate.push_back(group);
+    shapesToUpdate.push_back(other);
   }
 
   std::vector<size_t>
