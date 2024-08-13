@@ -358,6 +358,7 @@ INITIAL_CONTENTS_IGNORE = [
     'eh.wast',
     'eh-gc.wast',
     'exception-handling.wast',
+    'gufa-eh.wast',
     'translate-to-new-eh.wast',
     'rse-eh.wast',
     'vacuum-eh.wast',

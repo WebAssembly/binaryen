@@ -1134,8 +1134,37 @@ struct InfoCollector
     }
   }
   void visitTryTable(TryTable* curr) {
-    // TODO: optimize when possible
-    addRoot(curr);
+    receiveChildValue(curr->body, curr);
+
+    // Connect caught tags with their branch targets, and materialize non-null
+    // exnref values.
+    auto numTags = curr->catchTags.size();
+    for (Index tagIndex = 0; tagIndex < numTags; tagIndex++) {
+      auto tag = curr->catchTags[tagIndex];
+      auto target = curr->catchDests[tagIndex];
+
+      Index exnrefIndex = 0;
+      if (tag.is()) {
+        auto params = getModule()->getTag(tag)->sig.params;
+
+        for (Index i = 0; i < params.size(); i++) {
+          if (isRelevant(params[i])) {
+            info.links.push_back(
+              {TagLocation{tag, i}, BreakTargetLocation{getFunction(), target, i}});
+          }
+        }
+
+        exnrefIndex = params.size();
+      }
+
+      if (curr->catchRefs[tagIndex]) {
+        Location location = CaughtExnRefLocation{};
+        addRoot(location,
+          PossibleContents::fromType(Type(HeapType::exn, NonNullable)));
+        info.links.push_back(
+          {location, BreakTargetLocation{getFunction(), target, exnrefIndex}});
+      }
+    }
   }
   void visitThrow(Throw* curr) {
     auto& operands = curr->operands;
