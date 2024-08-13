@@ -822,6 +822,9 @@ struct TypeBuilder {
       builder.copyHeapType(index, type, map);
       return *this;
     }
+    Entry& copy(HeapType type) {
+      return copy(type, [](HeapType t) { return t; });
+    }
   };
 
   Entry operator[](size_t i) { return Entry{*this, i}; }
