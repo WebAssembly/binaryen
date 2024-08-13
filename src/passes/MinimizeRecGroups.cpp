@@ -96,7 +96,7 @@ struct BrandTypeIterator {
     }
   };
 
-  bool useArray;
+  bool useArray = false;
   std::vector<FieldInfo> fields;
 
   HeapType operator*() const {
