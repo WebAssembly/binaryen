@@ -426,10 +426,10 @@ struct MinimizeRecGroups : Pass {
     // create a nontrivial equivalence class, this is usually not possible
     // because two equivalence classes with isomorphic types should actually be
     // the same equivalence class. The exception is when the base shapes of two
-    // different equivalence classses are the same, but there is still a
-    // conflict due to brands in each class matching the base type of the other
-    // class. In this case we don't actually want to join the classes; we just
-    // want to advance to the next configuration to resolve the conflict.
+    // different equivalence classes are the same, but there is still a conflict
+    // due to brands in each class matching the base type of the other class. In
+    // this case we don't actually want to join the classes; we just want to
+    // advance to the next configuration to resolve the conflict.
     if (groups[groupRep].classInfo && groups[otherRep].classInfo) {
       auto& classInfo = *groups[groupRep].classInfo;
       classInfo.advance();
