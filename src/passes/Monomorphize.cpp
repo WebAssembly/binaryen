@@ -622,12 +622,8 @@ struct Monomorphize : public Pass {
   }
 
   void applyArguments() {
-    auto apply = [&](const char* argumentName, Index& value) {
-      value =
-        std::stoul(getArgumentOrDefault(argumentName, std::to_string(value)));
-    };
-
-    apply("monomorphize-min-benefit", MinPercentBenefit);
+    MinPercentBenefit =
+      std::stoul(getArgumentOrDefault("monomorphize-min-benefit", std::to_string(MinPercentBenefit)));
   }
 
   // Try to optimize a call.
