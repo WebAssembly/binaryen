@@ -47,9 +47,7 @@
 namespace wasm {
 
 struct WasmException {
-  // TODO: handle cross-module calls using something other than a Name here.
-  Name tag;
-  Literals values;
+  Literal exn;
 };
 std::ostream& operator<<(std::ostream& o, const WasmException& exn);
 
@@ -1419,12 +1417,7 @@ public:
       return flow;
     }
     NOTE_EVAL1(curr->tag);
-    WasmException exn;
-    exn.tag = curr->tag;
-    for (auto item : arguments) {
-      exn.values.push_back(item);
-    }
-    throwException(exn);
+    throwException(WasmException{makeExnData(curr->tag, arguments)});
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
@@ -1439,13 +1432,8 @@ public:
     if (exnref.isNull()) {
       trap("null ref");
     }
-    const auto& exnData = exnref.getExnData();
-    WasmException exn;
-    exn.tag = exnData->tag;
-    for (auto item : exnData->payload) {
-      exn.values.push_back(item);
-    }
-    throwException(exn);
+    assert(exnref.isExn());
+    throwException(WasmException{exnref});
     WASM_UNREACHABLE("throw");
   }
   Flow visitRefI31(RefI31* curr) {
@@ -4063,9 +4051,10 @@ public:
         return ret;
       };
 
+      auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
-        if (curr->catchTags[i] == e.tag) {
-          multiValues.push_back(e.values);
+        if (curr->catchTags[i] == exnData->tag) {
+          multiValues.push_back(exnData->payload);
           return processCatchBody(curr->catchBodies[i]);
         }
       }
@@ -4084,18 +4073,19 @@ public:
     try {
       return self()->visit(curr->body);
     } catch (const WasmException& e) {
+      auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
         auto catchTag = curr->catchTags[i];
-        if (!catchTag.is() || catchTag == e.tag) {
+        if (!catchTag.is() || catchTag == exnData->tag) {
           Flow ret;
           ret.breakTo = curr->catchDests[i];
           if (catchTag.is()) {
-            for (auto item : e.values) {
+            for (auto item : exnData->payload) {
               ret.values.push_back(item);
             }
           }
           if (curr->catchRefs[i]) {
-            ret.values.push_back(self()->makeExnData(e.tag, e.values));
+            ret.values.push_back(e.exn);
           }
           return ret;
         }
