@@ -622,8 +622,8 @@ struct Monomorphize : public Pass {
   }
 
   void applyArguments() {
-    MinPercentBenefit =
-      std::stoul(getArgumentOrDefault("monomorphize-min-benefit", std::to_string(MinPercentBenefit)));
+    MinPercentBenefit = std::stoul(getArgumentOrDefault(
+      "monomorphize-min-benefit", std::to_string(MinPercentBenefit)));
   }
 
   // Try to optimize a call.
@@ -742,10 +742,18 @@ struct Monomorphize : public Pass {
         if (benefit <= MinPercentBenefit) {
           worthwhile = false;
         } else {
-          std::cerr << "monoing " << func->name << " with size " << Measurer::measure(func->body) << " => " << Measurer::measure(monoFunc->body) << " and cost goes from " << costBefore << " to " << costAfter << '\n';
+          std::cerr << "monoing " << func->name << " with size "
+                    << Measurer::measure(func->body) << " => "
+                    << Measurer::measure(monoFunc->body)
+                    << " and cost goes from " << costBefore << " to "
+                    << costAfter << '\n';
           if (func->name == "sqlite3CodeRowTrigger") {
-            std::cout << "PRE\n" << *func->body << "\nPOST\n" << *monoFunc->body << '\n';
-            // TWO nested loops end up x25ing the code inside them... should we measure code size as well? small code size change for big cost change is suspect..?
+            std::cout << "PRE\n"
+                      << *func->body << "\nPOST\n"
+                      << *monoFunc->body << '\n';
+            // TWO nested loops end up x25ing the code inside them... should we
+            // measure code size as well? small code size change for big cost
+            // change is suspect..?
           }
         }
       }
