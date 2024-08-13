@@ -214,11 +214,14 @@ struct EscapeAnalyzer {
     Mixes,
   };
 
-  // All the expressions we reached during the flow analysis. That is exactly
-  // all the places where our allocation is used. We track these so that we
-  // can fix them up at the end, if the optimization ends up possible.
-  // TODO: now this is a mapp
-  std::unordered_map<Expression*, ParentChildInteraction> reached;
+  // A map of every expression we reached during the flow analysis (which is
+  // exactly all the places where our allocation is used) to the interaction of
+  // the allocation there. Anything in this map will be fixed up at the end if
+  // we optimize, and how we fix it up may depend on the interaction,
+  // specifically, it can matter if the allocations flows out of here (Flows,
+  // which is the case for e.g. a Block that we flow through) or if it is fully
+  // consumed (FullyConsumes, e.g. for a struct.get).
+  std::unordered_map<Expression*, ParentChildInteraction> reachedInteractions;
 
   // Analyze an allocation to see if it escapes or not.
   bool escapes(Expression* allocation) {
@@ -285,9 +288,10 @@ struct EscapeAnalyzer {
 
       // If we got to here, then we can continue to hope that we can optimize
       // this allocation. Mark the parent and child as reached by it, and
-      // continue.
-      reached[child] = ParentChildInteraction::Flows;
-      reached[parent] = interaction;
+      // continue. The child flows the value to the parent, and the parent's
+      // behavior was computed before.
+      reachedInteractions[child] = ParentChildInteraction::Flows;
+      reachedInteractions[parent] = interaction;
     }
 
     // We finished the loop over the flows. Do the final checks.
@@ -528,8 +532,8 @@ struct EscapeAnalyzer {
 struct Struct2Local : PostWalker<Struct2Local> {
   StructNew* allocation;
 
-  // The analyzer is not |const| because we update |analyzer.reached| as we go
-  // (see replaceCurrent, below).
+  // The analyzer is not |const| because we update
+  // |analyzer.reachedInteractions| as we go (see replaceCurrent, below).
   EscapeAnalyzer& analyzer;
 
   Function* func;
@@ -566,14 +570,15 @@ struct Struct2Local : PostWalker<Struct2Local> {
   Expression* replaceCurrent(Expression* expression) {
     // We should only be replacing things that are reached.
     auto* curr = getCurrent();
-    assert(analyzer.reached.count(curr));
-    auto interaction = analyzer.reached[curr];
+    assert(analyzer.reachedInteractions.count(curr));
+    auto interaction = analyzer.reachedInteractions[curr];
 
     PostWalker<Struct2Local>::replaceCurrent(expression);
-    // Also update |reached|: we are replacing something that was reached, so
-    // logically the replacement is also reached. This update is necessary if
-    // the parent of an expression cares about whether a child was reached.
-    analyzer.reached[expression] = interaction;
+    // Also update |reachedInteractions|: we are replacing something that was
+    // reached, so logically the replacement is also reached, and it has the
+    // same interaction with its parent. This update is necessary if the parent
+    //of an expression cares about whether a child was reached.
+    analyzer.reachedInteractions[expression] = interaction;
     return expression;
   }
 
@@ -589,7 +594,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   // Adjust the type that flows through an expression, updating that type as
   // necessary.
   void adjustTypeFlowingThrough(Expression* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (!analyzer.reachedInteractions.count(curr)) {
       return;
     }
 
@@ -609,7 +614,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   void visitLoop(Loop* curr) { adjustTypeFlowingThrough(curr); }
 
   void visitLocalSet(LocalSet* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (!analyzer.reachedInteractions.count(curr)) {
       return;
     }
 
@@ -623,7 +628,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitLocalGet(LocalGet* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (!analyzer.reachedInteractions.count(curr)) {
       return;
     }
 
@@ -645,7 +650,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitBreak(Break* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (!analyzer.reachedInteractions.count(curr)) {
       return;
     }
 
@@ -727,7 +732,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefIsNull(RefIsNull* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (!analyzer.reachedInteractions.count(curr)) {
       return;
     }
 
@@ -738,7 +743,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefEq(RefEq* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (!analyzer.reachedInteractions.count(curr)) {
       return;
     }
 
@@ -754,8 +759,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
     auto isTheAllocation = [&](Expression* child) {
       // To be our allocation, we must have seen the allocation reach it, and
       // also it must not be consumed there - the allocation must flow out.
-      auto iter = analyzer.reached.find(child);
-      if (iter == analyzer.reached.end()) {
+      auto iter = analyzer.reachedInteractions.find(child);
+      if (iter == analyzer.reachedInteractions.end()) {
         return false;
       }
       return iter->second == EscapeAnalyzer::ParentChildInteraction::Flows;
@@ -769,7 +774,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefAs(RefAs* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (!analyzer.reachedInteractions.count(curr)) {
       return;
     }
 
@@ -780,7 +785,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefTest(RefTest* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (!analyzer.reachedInteractions.count(curr)) {
       return;
     }
 
@@ -797,7 +802,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefCast(RefCast* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (!analyzer.reachedInteractions.count(curr)) {
       return;
     }
 
@@ -821,7 +826,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitStructSet(StructSet* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (!analyzer.reachedInteractions.count(curr)) {
       return;
     }
 
@@ -833,7 +838,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitStructGet(StructGet* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (!analyzer.reachedInteractions.count(curr)) {
       return;
     }
 
@@ -951,7 +956,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
     auto nonNullArray = Type(arrayType, NonNullable);
     nullStruct = Type(structType, Nullable);
     nonNullStruct = Type(structType, NonNullable);
-    for (auto& [reached, _] : analyzer.reached) {
+    for (auto& [reached, _] : analyzer.reachedInteractions) {
       if (reached->is<RefCast>()) {
         // Casts must be handled later: We need to see the old type, and to
         // potentially replace the cast based on that, see below.
@@ -1017,7 +1022,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
   }
 
   void visitArraySet(ArraySet* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (!analyzer.reachedInteractions.count(curr)) {
       return;
     }
 
@@ -1038,7 +1043,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
   }
 
   void visitArrayGet(ArrayGet* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (!analyzer.reachedInteractions.count(curr)) {
       return;
     }
 
@@ -1061,7 +1066,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
   // Some additional operations need special handling
 
   void visitRefTest(RefTest* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (!analyzer.reachedInteractions.count(curr)) {
       return;
     }
 
@@ -1077,7 +1082,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
   }
 
   void visitRefCast(RefCast* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (!analyzer.reachedInteractions.count(curr)) {
       return;
     }
 
@@ -1114,7 +1119,8 @@ struct Array2Struct : PostWalker<Array2Struct> {
   void noteIsReached(Expression* curr) {
     // We mark the allocation itself and its replacement here, so the allocation
     // flows through them all.
-    analyzer.reached[curr] = EscapeAnalyzer::ParentChildInteraction::Flows;
+    analyzer.reachedInteractions[curr] =
+      EscapeAnalyzer::ParentChildInteraction::Flows;
   }
 
   // Given an ArrayNew or ArrayNewFixed, return the size of the array that is
