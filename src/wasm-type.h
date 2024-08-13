@@ -709,7 +709,8 @@ struct TypeBuilder {
       case HeapTypeKind::Array: {
         auto elem = type.getArray().element;
         elem.type = copyType(elem.type);
-        setHeapType(i, Array(elem));
+        // MSVC gets confused without this disambiguation.
+        setHeapType(i, wasm::Array(elem));
         return;
       }
       case HeapTypeKind::Cont:
