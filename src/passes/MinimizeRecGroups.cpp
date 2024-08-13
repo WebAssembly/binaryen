@@ -69,6 +69,7 @@ struct TypeSCCs
 // new brand type. This iterator provides an infinite sequence of possible brand
 // types, prioritizing those with the most compact encoding.
 struct BrandTypeIterator {
+  // See `initFieldOptions` for the 18 options.
   static constexpr size_t optionCount = 18;
   static std::array<Field, optionCount> fieldOptions;
   static void initFieldOptions();
@@ -145,8 +146,8 @@ struct RecGroupInfo;
 
 // As we iterate through the strongly connected components, we may find
 // components that have the same shape. When we find such a collision, we merge
-// the components into a single equivalence class where we track how we have
-// disambiguated all such isomorphic components.
+// the groups for the components into a single equivalence class where we track
+// how we have disambiguated all such isomorphic groups.
 struct GroupClassInfo {
   // If the group has just a single type, record it so we can make sure the
   // brand is not identical to it.
@@ -200,6 +201,8 @@ struct GroupClassInfo {
     new (&orders) TopologicalOrders(subtypeGraph);
   }
 
+  // Update permute the types in the given group to match the current
+  // configuration in this GroupClassInfo.
   void permute(RecGroupInfo&);
 };
 
