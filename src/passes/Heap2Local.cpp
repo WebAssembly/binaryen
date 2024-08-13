@@ -522,6 +522,27 @@ struct EscapeAnalyzer {
 
     return true;
   }
+
+  // Helper function for Struct2Local and Array2Struct. Given a map of
+  // expressions to their ParentChildInteraction, and an old expression that is
+  // being replaced by a new one, add the proper interaction for the
+  // replacement.
+  void updateInteractionsMap(Expression* old, Expression* rep) {
+    // We can only replace something relevant that we found in the analysis.
+    // (Not only would anything else be invalid to process, but also we wouldn't
+    // know what interaction to give the replacement.)
+    assert(reachedInteractions.count(old));
+
+    // The replacement should have the same interaction as the thing it
+    // replaces, since it is a drop-in replacement for it. The one exception is
+    // when we replace with something unreachable, which is the result of us
+    // figuring out that some code will trap at runtime. In that case, we've
+    // made the code unreachable and the allocation does not interact with that
+    // code at all.
+    if (rep->type != Type::unreachable) {
+      reachedInteractions[rep] = reachedInteractions[old];
+    }
+  }
 };
 
 // An optimizer that handles the rewriting to turn a struct allocation into
@@ -568,17 +589,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
   bool refinalize = false;
 
   Expression* replaceCurrent(Expression* expression) {
-    // We should only be replacing things that are reached.
-    auto* curr = getCurrent();
-    assert(analyzer.reachedInteractions.count(curr));
-    auto interaction = analyzer.reachedInteractions[curr];
-
+    analyzer.updateInteractionsMap(getCurrent(), expression);
     PostWalker<Struct2Local>::replaceCurrent(expression);
-    // Also update |reachedInteractions|: we are replacing something that was
-    // reached, so logically the replacement is also reached, and it has the
-    // same interaction with its parent. This update is necessary if the parent
-    //of an expression cares about whether a child was reached.
-    analyzer.reachedInteractions[expression] = interaction;
     return expression;
   }
 
@@ -594,7 +606,13 @@ struct Struct2Local : PostWalker<Struct2Local> {
   // Adjust the type that flows through an expression, updating that type as
   // necessary.
   void adjustTypeFlowingThrough(Expression* curr) {
-    if (!analyzer.reachedInteractions.count(curr)) {
+    auto iter = analyzer.reachedInteractions.find(curr);
+    if (iter == analyzer.reachedInteractions.end()) {
+      // This is not interacted with.
+      return;
+    }
+    if (iter->second != EscapeAnalyzer::ParentChildInteraction::Flows) {
+      // This does not flow the allocation through.
       return;
     }
 
@@ -934,13 +952,14 @@ struct Array2Struct : PostWalker<Array2Struct> {
       WASM_UNREACHABLE("bad allocation");
     }
 
-    // Mark the new expressions we created as reached by the analysis. We need
-    // to inform the analysis of this because Struct2Local will only process
-    // such code (it depends on the analysis to tell it what the allocation is
-    // and where it flowed). Note that the two values here may be identical but
-    // there is no harm to calling it twice in that case.
-    noteIsReached(structNew);
-    noteIsReached(arrayNewReplacement);
+    // Mark new expressions we created as flowing out the allocation. We need to
+    // inform the analysis of this because Struct2Local will only process such
+    // code (it depends on the analysis to tell it what the allocation is and
+    // where it flowed). Note that the two values here may be identical but
+    // there is no harm to doing this twice in that case.
+    analyzer.reachedInteractions[structNew] =
+      analyzer.reachedInteractions[arrayNewReplacement] =
+      EscapeAnalyzer::ParentChildInteraction::Flows;
 
     // Update types along the path reached by the allocation: whenever we see
     // the array type, it should be the struct type. Note that we do this before
@@ -992,6 +1011,13 @@ struct Array2Struct : PostWalker<Array2Struct> {
     }
   }
 
+  // As in Struct2Local, when we replace something, copy the interaction.
+  Expression* replaceCurrent(Expression* expression) {
+    analyzer.updateInteractionsMap(getCurrent(), expression);
+    PostWalker<Array2Struct>::replaceCurrent(expression);
+    return expression;
+  }
+
   // In rare cases we may need to refinalize, as with Struct2Local.
   bool refinalize = false;
 
@@ -1010,14 +1036,12 @@ struct Array2Struct : PostWalker<Array2Struct> {
   void visitArrayNew(ArrayNew* curr) {
     if (curr == allocation) {
       replaceCurrent(arrayNewReplacement);
-      noteCurrentIsReached();
     }
   }
 
   void visitArrayNewFixed(ArrayNewFixed* curr) {
     if (curr == allocation) {
       replaceCurrent(arrayNewReplacement);
-      noteCurrentIsReached();
     }
   }
 
@@ -1039,7 +1063,6 @@ struct Array2Struct : PostWalker<Array2Struct> {
 
     // Convert the ArraySet into a StructSet.
     replaceCurrent(builder.makeStructSet(index, curr->ref, curr->value));
-    noteCurrentIsReached();
   }
 
   void visitArrayGet(ArrayGet* curr) {
@@ -1060,7 +1083,6 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // Convert the ArrayGet into a StructGet.
     replaceCurrent(
       builder.makeStructGet(index, curr->ref, curr->type, curr->signed_));
-    noteCurrentIsReached();
   }
 
   // Some additional operations need special handling
@@ -1108,19 +1130,6 @@ struct Array2Struct : PostWalker<Array2Struct> {
   // Get the value in an expression we know must contain a constant index.
   Index getIndex(Expression* curr) {
     return curr->cast<Const>()->value.getUnsigned();
-  }
-
-  // Inform the analyzer that the current expression (which we just replaced)
-  // has been reached in its analysis. We are replacing something it reached,
-  // and want it to consider it as its equivalent.
-  // TODO rename
-  void noteCurrentIsReached() { noteIsReached(getCurrent()); }
-
-  void noteIsReached(Expression* curr) {
-    // We mark the allocation itself and its replacement here, so the allocation
-    // flows through them all.
-    analyzer.reachedInteractions[curr] =
-      EscapeAnalyzer::ParentChildInteraction::Flows;
   }
 
   // Given an ArrayNew or ArrayNewFixed, return the size of the array that is
