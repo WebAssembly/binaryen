@@ -167,6 +167,30 @@ namespace wasm {
 
 namespace {
 
+// Interactions between a child and a parent, with regard to the behavior of the
+// allocation.
+enum class ParentChildInteraction : int8_t {
+  // The parent lets the child escape. E.g. the parent is a call.
+  Escapes,
+  // The parent fully consumes the child in a safe, non-escaping way, and
+  // after consuming it nothing remains to flow further through the parent.
+  // E.g. the parent is a struct.get, which reads from the allocated heap
+  // value and does nothing more with the reference.
+  FullyConsumes,
+  // The parent flows the child out, that is, the child is the single value
+  // that can flow out from the parent. E.g. the parent is a block with no
+  // branches and the child is the final value that is returned.
+  Flows,
+  // The parent does not consume the child completely, so the child's value
+  // can be used through it. However the child does not flow cleanly through.
+  // E.g. the parent is a block with branches, and the value on them may be
+  // returned from the block and not only the child. This means the allocation
+  // is not used in an exclusive way, and we cannot optimize it.
+  Mixes,
+  // No interaction (not relevant to the analysis).
+  None,
+};
+
 // Core analysis that provides an escapes() method to check if an allocation
 // escapes in a way that prevents optimizing it away as described above. It also
 // stashes information about the relevant expressions as it goes, which helps
@@ -193,26 +217,6 @@ struct EscapeAnalyzer {
   // We must track all the local.sets that write the allocation, to verify
   // exclusivity.
   std::unordered_set<LocalSet*> sets;
-
-  enum class ParentChildInteraction {
-    // The parent lets the child escape. E.g. the parent is a call.
-    Escapes,
-    // The parent fully consumes the child in a safe, non-escaping way, and
-    // after consuming it nothing remains to flow further through the parent.
-    // E.g. the parent is a struct.get, which reads from the allocated heap
-    // value and does nothing more with the reference.
-    FullyConsumes,
-    // The parent flows the child out, that is, the child is the single value
-    // that can flow out from the parent. E.g. the parent is a block with no
-    // branches and the child is the final value that is returned.
-    Flows,
-    // The parent does not consume the child completely, so the child's value
-    // can be used through it. However the child does not flow cleanly through.
-    // E.g. the parent is a block with branches, and the value on them may be
-    // returned from the block and not only the child. This means the allocation
-    // is not used in an exclusive way, and we cannot optimize it.
-    Mixes,
-  };
 
   // A map of every expression we reached during the flow analysis (which is
   // exactly all the places where our allocation is used) to the interaction of
@@ -542,6 +546,16 @@ struct EscapeAnalyzer {
       reachedInteractions[rep] = reachedInteractions[old];
     }
   }
+
+  // Get the interaction of an expression.
+  ParentChildInteraction getInteraction(Expression* curr) {
+    auto iter = reachedInteractions.find(curr);
+    if (iter == reachedInteractions.end()) {
+      // This is not interacted with.
+      return ParentChildInteraction::None;
+    }
+    return iter->second;
+  }
 };
 
 // An optimizer that handles the rewriting to turn a struct allocation into
@@ -605,13 +619,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
   // Adjust the type that flows through an expression, updating that type as
   // necessary.
   void adjustTypeFlowingThrough(Expression* curr) {
-    auto iter = analyzer.reachedInteractions.find(curr);
-    if (iter == analyzer.reachedInteractions.end()) {
-      // This is not interacted with.
-      return;
-    }
-    if (iter->second != EscapeAnalyzer::ParentChildInteraction::Flows) {
-      // This does not flow the allocation through.
+    if (analyzer.getInteraction(curr) !=
+        ParentChildInteraction::Flows) {
       return;
     }
 
@@ -631,7 +640,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
   void visitLoop(Loop* curr) { adjustTypeFlowingThrough(curr); }
 
   void visitLocalSet(LocalSet* curr) {
-    if (!analyzer.reachedInteractions.count(curr)) {
+    if (analyzer.getInteraction(curr) ==
+        ParentChildInteraction::None) {
       return;
     }
 
@@ -645,7 +655,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitLocalGet(LocalGet* curr) {
-    if (!analyzer.reachedInteractions.count(curr)) {
+    if (analyzer.getInteraction(curr) ==
+        ParentChildInteraction::None) {
       return;
     }
 
@@ -667,7 +678,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitBreak(Break* curr) {
-    if (!analyzer.reachedInteractions.count(curr)) {
+    if (analyzer.getInteraction(curr) ==
+        ParentChildInteraction::None) {
       return;
     }
 
@@ -749,7 +761,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefIsNull(RefIsNull* curr) {
-    if (!analyzer.reachedInteractions.count(curr)) {
+    if (analyzer.getInteraction(curr) ==
+        ParentChildInteraction::None) {
       return;
     }
 
@@ -760,7 +773,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefEq(RefEq* curr) {
-    if (!analyzer.reachedInteractions.count(curr)) {
+    if (analyzer.getInteraction(curr) ==
+        ParentChildInteraction::None) {
       return;
     }
 
@@ -773,25 +787,19 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // If our reference is compared to itself, the result is 1. If it is
     // compared to something else, the result must be 0, as our reference does
     // not escape to any other place.
-    auto isTheAllocation = [&](Expression* child) {
-      // To be our allocation, we must have seen the allocation reach it, and
-      // also it must not be consumed there - the allocation must flow out.
-      auto iter = analyzer.reachedInteractions.find(child);
-      if (iter == analyzer.reachedInteractions.end()) {
-        return false;
-      }
-      return iter->second == EscapeAnalyzer::ParentChildInteraction::Flows;
-    };
-
     int32_t result =
-      isTheAllocation(curr->left) && isTheAllocation(curr->right);
+      analyzer.getInteraction(curr->left) ==
+        ParentChildInteraction::Flows &&
+      analyzer.getInteraction(curr->right) ==
+        ParentChildInteraction::Flows;
     replaceCurrent(builder.makeBlock({builder.makeDrop(curr->left),
                                       builder.makeDrop(curr->right),
                                       builder.makeConst(Literal(result))}));
   }
 
   void visitRefAs(RefAs* curr) {
-    if (!analyzer.reachedInteractions.count(curr)) {
+    if (analyzer.getInteraction(curr) ==
+        ParentChildInteraction::None) {
       return;
     }
 
@@ -802,7 +810,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefTest(RefTest* curr) {
-    if (!analyzer.reachedInteractions.count(curr)) {
+    if (analyzer.getInteraction(curr) ==
+        ParentChildInteraction::None) {
       return;
     }
 
@@ -819,7 +828,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefCast(RefCast* curr) {
-    if (!analyzer.reachedInteractions.count(curr)) {
+    if (analyzer.getInteraction(curr) ==
+        ParentChildInteraction::None) {
       return;
     }
 
@@ -843,7 +853,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitStructSet(StructSet* curr) {
-    if (!analyzer.reachedInteractions.count(curr)) {
+    if (analyzer.getInteraction(curr) ==
+        ParentChildInteraction::None) {
       return;
     }
 
@@ -855,7 +866,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitStructGet(StructGet* curr) {
-    if (!analyzer.reachedInteractions.count(curr)) {
+    if (analyzer.getInteraction(curr) ==
+        ParentChildInteraction::None) {
       return;
     }
 
@@ -958,7 +970,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // there is no harm to doing this twice in that case.
     analyzer.reachedInteractions[structNew] =
       analyzer.reachedInteractions[arrayNewReplacement] =
-        EscapeAnalyzer::ParentChildInteraction::Flows;
+        ParentChildInteraction::Flows;
 
     // Update types along the path reached by the allocation: whenever we see
     // the array type, it should be the struct type. Note that we do this before
@@ -1045,7 +1057,8 @@ struct Array2Struct : PostWalker<Array2Struct> {
   }
 
   void visitArraySet(ArraySet* curr) {
-    if (!analyzer.reachedInteractions.count(curr)) {
+    if (analyzer.getInteraction(curr) ==
+        ParentChildInteraction::None) {
       return;
     }
 
@@ -1065,7 +1078,8 @@ struct Array2Struct : PostWalker<Array2Struct> {
   }
 
   void visitArrayGet(ArrayGet* curr) {
-    if (!analyzer.reachedInteractions.count(curr)) {
+    if (analyzer.getInteraction(curr) ==
+        ParentChildInteraction::None) {
       return;
     }
 
@@ -1087,7 +1101,8 @@ struct Array2Struct : PostWalker<Array2Struct> {
   // Some additional operations need special handling
 
   void visitRefTest(RefTest* curr) {
-    if (!analyzer.reachedInteractions.count(curr)) {
+    if (analyzer.getInteraction(curr) ==
+        ParentChildInteraction::None) {
       return;
     }
 
@@ -1103,7 +1118,8 @@ struct Array2Struct : PostWalker<Array2Struct> {
   }
 
   void visitRefCast(RefCast* curr) {
-    if (!analyzer.reachedInteractions.count(curr)) {
+    if (analyzer.getInteraction(curr) ==
+        ParentChildInteraction::None) {
       return;
     }
 
