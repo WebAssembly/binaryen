@@ -619,8 +619,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   // Adjust the type that flows through an expression, updating that type as
   // necessary.
   void adjustTypeFlowingThrough(Expression* curr) {
-    if (analyzer.getInteraction(curr) !=
-        ParentChildInteraction::Flows) {
+    if (analyzer.getInteraction(curr) != ParentChildInteraction::Flows) {
       return;
     }
 
@@ -640,8 +639,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   void visitLoop(Loop* curr) { adjustTypeFlowingThrough(curr); }
 
   void visitLocalSet(LocalSet* curr) {
-    if (analyzer.getInteraction(curr) ==
-        ParentChildInteraction::None) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -655,8 +653,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitLocalGet(LocalGet* curr) {
-    if (analyzer.getInteraction(curr) ==
-        ParentChildInteraction::None) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -678,8 +675,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitBreak(Break* curr) {
-    if (analyzer.getInteraction(curr) ==
-        ParentChildInteraction::None) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -761,8 +757,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefIsNull(RefIsNull* curr) {
-    if (analyzer.getInteraction(curr) ==
-        ParentChildInteraction::None) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -773,8 +768,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefEq(RefEq* curr) {
-    if (analyzer.getInteraction(curr) ==
-        ParentChildInteraction::None) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -788,18 +782,15 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // compared to something else, the result must be 0, as our reference does
     // not escape to any other place.
     int32_t result =
-      analyzer.getInteraction(curr->left) ==
-        ParentChildInteraction::Flows &&
-      analyzer.getInteraction(curr->right) ==
-        ParentChildInteraction::Flows;
+      analyzer.getInteraction(curr->left) == ParentChildInteraction::Flows &&
+      analyzer.getInteraction(curr->right) == ParentChildInteraction::Flows;
     replaceCurrent(builder.makeBlock({builder.makeDrop(curr->left),
                                       builder.makeDrop(curr->right),
                                       builder.makeConst(Literal(result))}));
   }
 
   void visitRefAs(RefAs* curr) {
-    if (analyzer.getInteraction(curr) ==
-        ParentChildInteraction::None) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -810,8 +801,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefTest(RefTest* curr) {
-    if (analyzer.getInteraction(curr) ==
-        ParentChildInteraction::None) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -828,8 +818,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefCast(RefCast* curr) {
-    if (analyzer.getInteraction(curr) ==
-        ParentChildInteraction::None) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -853,8 +842,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitStructSet(StructSet* curr) {
-    if (analyzer.getInteraction(curr) ==
-        ParentChildInteraction::None) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -866,8 +854,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitStructGet(StructGet* curr) {
-    if (analyzer.getInteraction(curr) ==
-        ParentChildInteraction::None) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -1057,8 +1044,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
   }
 
   void visitArraySet(ArraySet* curr) {
-    if (analyzer.getInteraction(curr) ==
-        ParentChildInteraction::None) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -1078,8 +1064,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
   }
 
   void visitArrayGet(ArrayGet* curr) {
-    if (analyzer.getInteraction(curr) ==
-        ParentChildInteraction::None) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -1101,8 +1086,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
   // Some additional operations need special handling
 
   void visitRefTest(RefTest* curr) {
-    if (analyzer.getInteraction(curr) ==
-        ParentChildInteraction::None) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -1118,8 +1102,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
   }
 
   void visitRefCast(RefCast* curr) {
-    if (analyzer.getInteraction(curr) ==
-        ParentChildInteraction::None) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
