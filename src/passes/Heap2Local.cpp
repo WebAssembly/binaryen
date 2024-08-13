@@ -224,7 +224,9 @@ struct EscapeAnalyzer {
   // at the end, and how we fix it up may depend on the interaction,
   // specifically, it can matter if the allocations flows out of here (Flows,
   // which is the case for e.g. a Block that we flow through) or if it is fully
-  // consumed (FullyConsumes, e.g. for a struct.get).
+  // consumed (FullyConsumes, e.g. for a struct.get). We do not store irrelevant
+  // things here (that is, anything not in the map has the interaction |None|,
+  // implicitly).
   std::unordered_map<Expression*, ParentChildInteraction> reachedInteractions;
 
   // Analyze an allocation to see if it escapes or not.
