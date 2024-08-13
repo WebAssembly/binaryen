@@ -716,8 +716,8 @@ struct Monomorphize : public Pass {
       // includes the reverse-inlined call context).
       //
       // Note that we use a double here because we are going to subtract and
-      // multiply this value later (and want to avoid unsigned interger
-      // overflow, etc.).
+      // multiply this value later (and want to avoid unsigned integer overflow,
+      // etc.).
       double costBefore = CostAnalyzer(func->body).cost;
       for (auto* operand : context.operands) {
         // Note that a slight oddity is that we have *not* optimized the
