@@ -4,7 +4,7 @@
 ;; RUN: wasm-opt %s --enable-reference-types --enable-gc --enable-shared-everything -o - -S | filecheck %s --check-prefix SHARED
 
 ;; NO-SHARED: ref.null requires additional features
-;; NO-SHARED: [--enable-reference-types --enable-shared-everything]
+;; NO-SHARED: [--enable-reference-types --enable-gc --enable-shared-everything]
 ;; SHARED: (ref.null (shared none))
 
 (module

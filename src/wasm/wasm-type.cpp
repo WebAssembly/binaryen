@@ -1496,12 +1496,12 @@ FeatureSet HeapType::getFeatures() const {
           case HeapType::i31:
           case HeapType::struct_:
           case HeapType::array:
+          case HeapType::none:
             feats |= FeatureSet::ReferenceTypes | FeatureSet::GC;
             return;
           case HeapType::string:
             feats |= FeatureSet::ReferenceTypes | FeatureSet::Strings;
             return;
-          case HeapType::none:
           case HeapType::noext:
           case HeapType::nofunc:
             // Technically introduced in GC, but used internally as part of
