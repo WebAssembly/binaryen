@@ -1150,7 +1150,8 @@ struct InfoCollector
         for (Index i = 0; i < params.size(); i++) {
           if (isRelevant(params[i])) {
             info.links.push_back(
-              {TagLocation{tag, i}, BreakTargetLocation{getFunction(), target, i}});
+              {TagLocation{tag, i},
+               BreakTargetLocation{getFunction(), target, i}});
           }
         }
 
@@ -1160,7 +1161,7 @@ struct InfoCollector
       if (curr->catchRefs[tagIndex]) {
         Location location = CaughtExnRefLocation{};
         addRoot(location,
-          PossibleContents::fromType(Type(HeapType::exn, NonNullable)));
+                PossibleContents::fromType(Type(HeapType::exn, NonNullable)));
         info.links.push_back(
           {location, BreakTargetLocation{getFunction(), target, exnrefIndex}});
       }

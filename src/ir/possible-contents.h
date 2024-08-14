@@ -476,9 +476,7 @@ struct TagLocation {
 // The location of an exnref materialized by a catch_ref or catch_all_ref clause
 // of a try_table.
 struct CaughtExnRefLocation {
-  bool operator==(const CaughtExnRefLocation& other) const {
-    return true;
-  }
+  bool operator==(const CaughtExnRefLocation& other) const { return true; }
 };
 
 // A null value. This is used as the location of the default value of a var in a
@@ -618,9 +616,7 @@ template<> struct hash<wasm::TagLocation> {
 };
 
 template<> struct hash<wasm::CaughtExnRefLocation> {
-  size_t operator()(const wasm::CaughtExnRefLocation& loc) const {
-    return 0;
-  }
+  size_t operator()(const wasm::CaughtExnRefLocation& loc) const { return 0; }
 };
 
 template<> struct hash<wasm::NullLocation> {
