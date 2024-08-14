@@ -5,8 +5,5 @@
 (module
  (func $0
   (local $0 stringref)
-  (local.set $0
-   (ref.null none)
-  )
  )
 )
