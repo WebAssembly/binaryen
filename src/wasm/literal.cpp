@@ -142,7 +142,7 @@ Literal::Literal(const Literal& other) : type(other.type) {
           gcData = other.gcData;
           return;
         case HeapType::exn:
-          exnData = other.exnData;
+          new (&exnData) std::shared_ptr<ExnData>(other.exnData);
           return;
         case HeapType::none:
         case HeapType::noext:
@@ -342,6 +342,7 @@ std::shared_ptr<GCData> Literal::getGCData() const {
 
 std::shared_ptr<ExnData> Literal::getExnData() const {
   assert(isExn());
+  assert(exnData);
   return exnData;
 }
 
