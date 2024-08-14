@@ -1566,7 +1566,10 @@ opt_choices = [
     ("--memory-packing",),
     ("--merge-blocks",),
     ('--merge-locals',),
-    ('--monomorphize',),
+    # test a few monomorphization levels, and also -always
+    ('--monomorphize', '--pass-arg=monomorphize-min-benefit@0'),
+    ('--monomorphize', '--pass-arg=monomorphize-min-benefit@50'),
+    ('--monomorphize', '--pass-arg=monomorphize-min-benefit@95'),
     ('--monomorphize-always',),
     ('--no-stack-ir',),
     ('--once-reduction',),

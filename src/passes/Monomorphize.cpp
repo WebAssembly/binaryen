@@ -25,7 +25,7 @@
 //    parameter.
 //  * If a call provides a constant as a parameter.
 //  * If a call provides a GC allocation as a parameter. TODO
-//  * If a call is dropped. TODO also other stuff on the outside?
+//  * If a call is dropped. TODO also other stuff on the outside, e.g. eqz?
 //
 // We realize the benefit by creating a monomorphized (specialized/refined)
 // version of the function, and call that instead. For example, if we have
@@ -68,6 +68,26 @@
 // testing that always monomorphizes non-trivial callsites, without checking if
 // the optimizer can help or not (that makes writing testcases simpler).
 //
+// This pass takes an argument:
+//
+//   --pass-arg=monomorphize-min-benefit@N
+//
+//      The minimum amount of benefit we require in order to decide to optimize,
+//      as a percentage of the original cost. If this is 0 then we always
+//      optimize, if the cost improves by even 0.0001%. If this is 50 then we
+//      optimize only when the optimized monomorphized function has half the
+//      cost of the original, and so forth, that is higher values are more
+//      careful (and 100 will only optimize when the cost goes to nothing at
+//      all).
+//
+// TODO: We may also want more arguments here:
+//  * Max function size on which to operate (to not even try to optimize huge
+//    functions, which could be slow).
+//  * Max optimized size (if the max optimized size is less than the size we
+//    inline, then all optimized cases would end up inlined; that would also
+//    put a limit on the size increase).
+//  * Max absolute size increase (total of all added code).
+//
 // TODO: When we optimize we could run multiple cycles: A calls B calls C might
 //       end up with the refined+optimized B now having refined types in its
 //       call to C, which it did not have before. This is in fact the expected
@@ -109,6 +129,9 @@
 namespace wasm {
 
 namespace {
+
+// Pass arguments. See descriptions in the comment above.
+Index MinPercentBenefit = 95;
 
 // A limit on the number of parameters we are willing to have on monomorphized
 // functions. Large numbers can lead to large stack frames, which can be slow
@@ -552,6 +575,8 @@ struct Monomorphize : public Pass {
   void run(Module* module) override {
     // TODO: parallelize, see comments below
 
+    applyArguments();
+
     // Find all the return-calling functions. We cannot remove their returns
     // (because turning a return call into a normal call may break the program
     // by using more stack).
@@ -594,6 +619,11 @@ struct Monomorphize : public Pass {
         processCall(info, *module);
       }
     }
+  }
+
+  void applyArguments() {
+    MinPercentBenefit = std::stoul(getArgumentOrDefault(
+      "monomorphize-min-benefit", std::to_string(MinPercentBenefit)));
   }
 
   // Try to optimize a call.
@@ -678,14 +708,17 @@ struct Monomorphize : public Pass {
       //       keep optimizing from the current contents as we go. It's not
       //       obvious which approach is best here.
       doOpts(func);
-      doOpts(monoFunc.get());
 
       // The cost before monomorphization is the old body + the context
       // operands. The operands will be *removed* from the calling code if we
       // optimize, and moved into the monomorphized function, so the proper
       // comparison is the context + the old body, versus the new body (which
       // includes the reverse-inlined call context).
-      auto costBefore = CostAnalyzer(func->body).cost;
+      //
+      // Note that we use a double here because we are going to subtract and
+      // multiply this value later (and want to avoid unsigned integer overflow,
+      // etc.).
+      double costBefore = CostAnalyzer(func->body).cost;
       for (auto* operand : context.operands) {
         // Note that a slight oddity is that we have *not* optimized the
         // operands before. We optimize func before and after, but the operands
@@ -694,13 +727,21 @@ struct Monomorphize : public Pass {
         // very unoptimized.
         costBefore += CostAnalyzer(operand).cost;
       }
-      auto costAfter = CostAnalyzer(monoFunc->body).cost;
-
-      // TODO: We should probably only accept improvements above some minimum,
-      //       to avoid optimizing cases where we duplicate a huge function but
-      //       only optimize a tiny part of it compared to the original.
-      if (costAfter >= costBefore) {
+      if (costBefore == 0) {
+        // Nothing to optimize away here. (And it would be invalid to divide by
+        // this amount in the code below.)
         worthwhile = false;
+      } else {
+        // There is a point to optimizing the monomorphized function, do so.
+        doOpts(monoFunc.get());
+
+        double costAfter = CostAnalyzer(monoFunc->body).cost;
+
+        // Compute the percentage of benefit we see here.
+        auto benefit = 100 - ((100 * costAfter) / costBefore);
+        if (benefit <= MinPercentBenefit) {
+          worthwhile = false;
+        }
       }
     }
 
