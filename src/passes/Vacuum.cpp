@@ -442,13 +442,6 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       replaceCurrent(curr->body);
       return;
     }
-
-    // TODO Should we attempt the same thing as in `visitTry` when the body
-    // only throws, and there is a catch_all? We cannot `nop` the `TryTable`,
-    // though. Instead, we should turn it into an unconditional `br` to the
-    // target of the `catch_all`. Also, for a `catch_all_ref`, we cannot do that
-    // optimization at all since we would not know how to create the correct
-    // `exnref`. Note: This optimization may make more sense in RemoveUnusedBrs.
   }
 
   void visitFunction(Function* curr) {
