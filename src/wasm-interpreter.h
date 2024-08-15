@@ -3274,7 +3274,7 @@ public:
         droppedElementSegments.count(curr->segment)) {
       trap("out of bounds segment access in table.init");
     }
-    if ((uint64_t)offsetVal + sizeVal > segment->data.size()) {
+    if (offsetVal + sizeVal > segment->data.size()) {
       trap("out of bounds segment access in table.init");
     }
     auto info = getTableInstanceInfo(curr->table);
@@ -3784,7 +3784,7 @@ public:
     if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
       trap("out of bounds segment access in memory.init");
     }
-    if ((uint64_t)offsetVal + sizeVal > segment->data.size()) {
+    if (offsetVal + sizeVal > segment->data.size()) {
       trap("out of bounds segment access in memory.init");
     }
     auto info = getMemoryInstanceInfo(curr->memory);
