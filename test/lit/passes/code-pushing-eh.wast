@@ -97,7 +97,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $can-push-past-try
+  (func $can-push-past-try_table
     (local $x i32)
     (block $out
       ;; This local.set can be pushed down, because the 'throw' below is going
@@ -149,7 +149,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cannot-push-past-try
+  (func $cannot-push-past-try_table
     (local $x i32)
     (block $out
       ;; This local.set cannot be pushed down, because the exception thrown by
@@ -200,7 +200,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $cannot-push-past-throw-ref-within-catch
+  (func $cannot-push-past-throw_ref-within-catch
     (local $x i32)
     (block $out
       ;; This local.set cannot be pushed down, because there is 'throw_ref'

@@ -31,7 +31,7 @@
   ;; CHECK-NEXT: )
   (func $bug-cfg-traversal (param $0 i32) (result i32)
     (local $x i32)
-    ;; This is a regrssion test case for a bug in cfg-traversal for EH.
+    ;; This is a regression test case for a bug in cfg-traversal for EH.
     ;; See https://github.com/WebAssembly/binaryen/pull/3594
     (block $tryend
       (block $catch

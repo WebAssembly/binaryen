@@ -24,7 +24,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
-  (func $try-table-target-block-is-not-unreachable (result i32)
+  (func $try_table-target-block-is-not-unreachable (result i32)
     ;; Ensure that try_table connects caught tags with their branch targets.
     (block $catch (result i32)
       (try_table (catch $e $catch)
@@ -44,7 +44,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $try-table-materializes-exnref
+  (func $try_table-materializes-exnref
     ;; Ensure that catch_all_ref materializes a non-null exnref value.
     (drop
       (block $catch (result exnref)

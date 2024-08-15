@@ -12,7 +12,7 @@
     (throw $e-i32-f32 (i32.const 3) (f32.const 3.5))
   )
 
-  (func (export "try_nothrow") (result i32)
+  (func (export "try_table_nothrow") (result i32)
     (block $tryend (result i32)
       (drop
         (block $catch (result i32)
@@ -27,7 +27,7 @@
     )
   )
 
-  (func (export "try_throw_catch") (result i32)
+  (func (export "try_table_throw_catch") (result i32)
     (block $tryend (result i32)
       (drop
         (block $catch (result i32)
@@ -42,7 +42,7 @@
     )
   )
 
-  (func (export "try_throw_nocatch") (result i32)
+  (func (export "try_table_throw_nocatch") (result i32)
     (block $tryend (result i32)
       (drop
         (block $catch (result f32)
@@ -57,7 +57,7 @@
     )
   )
 
-  (func (export "try_throw_catchall") (result i32)
+  (func (export "try_table_throw_catchall") (result i32)
     (block $tryend (result i32)
       (block $catch-all
         (drop
@@ -75,7 +75,7 @@
     )
   )
 
-  (func (export "try_call_catch") (result i32)
+  (func (export "try_table_call_catch") (result i32)
     (block $tryend (result i32)
       (block $catch (result i32)
         (br $tryend
@@ -88,7 +88,7 @@
     )
   )
 
-  (func (export "try_throw_multivalue_catch") (result i32) (local $x (tuple i32 f32))
+  (func (export "try_table_throw_multivalue_catch") (result i32) (local $x (tuple i32 f32))
     (block $tryend (result i32)
       (local.set $x
         (block $catch (result i32) (result f32)
@@ -105,7 +105,7 @@
     )
   )
 
-  (func (export "try_throw_rethrow") (local $x (tuple i32 exnref))
+  (func (export "try_table_throw_throw_ref") (local $x (tuple i32 exnref))
     (block $tryend
       (local.set $x
         (block $catch (result i32) (result exnref)
@@ -123,7 +123,7 @@
     )
   )
 
-  (func (export "try_call_rethrow")
+  (func (export "try_table_call_throw_ref")
     (block $tryend
       (throw_ref
         (block $catch (result exnref)
@@ -139,14 +139,14 @@
 
 (assert_exception (invoke "throw_single_value"))
 (assert_exception (invoke "throw_multiple_values"))
-(assert_return (invoke "try_nothrow") (i32.const 3))
-(assert_return (invoke "try_throw_catch") (i32.const 3))
-(assert_exception (invoke "try_throw_nocatch"))
-(assert_return (invoke "try_throw_catchall") (i32.const 3))
-(assert_return (invoke "try_call_catch") (i32.const 5))
-(assert_return (invoke "try_throw_multivalue_catch") (i32.const 5))
-(assert_exception (invoke "try_throw_rethrow"))
-(assert_exception (invoke "try_call_rethrow"))
+(assert_return (invoke "try_table_nothrow") (i32.const 3))
+(assert_return (invoke "try_table_throw_catch") (i32.const 3))
+(assert_exception (invoke "try_table_throw_nocatch"))
+(assert_return (invoke "try_table_throw_catchall") (i32.const 3))
+(assert_return (invoke "try_table_call_catch") (i32.const 5))
+(assert_return (invoke "try_table_throw_multivalue_catch") (i32.const 5))
+(assert_exception (invoke "try_table_throw_throw_ref"))
+(assert_exception (invoke "try_table_call_throw_ref"))
 
 (assert_invalid
   (module

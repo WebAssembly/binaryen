@@ -12,7 +12,7 @@
   )
 
   ;; CHECK:      [fuzz-exec] calling try-catch
-  (func $try-catch (export "try-catch")
+  (func $try_table-catch (export "try_table-catch")
     (block $tryend
       (drop
         (block $catch (result i32)
@@ -27,7 +27,7 @@
 
   ;; CHECK:      [fuzz-exec] calling catchless-try
   ;; CHECK-NEXT: [exception thrown: e-i32 3]
-  (func $catchless-try (export "catchless-try")
+  (func $catchless-try_table (export "catchless-try_table")
     (try_table
       (throw $e-i32 (i32.const 3))
     )

@@ -209,7 +209,7 @@
     (block $tryend
       (try_table (catch_all $tryend)
         ;; This call cannot be optimized out, as the target throws. However, the
-        ;; entire try-catch could be, since the call's only effect is to throw,
+        ;; entire try_table could be, since the call's only effect is to throw,
         ;; and the catch_all catches that. We do this for `try` but not yet for
         ;; `try_table`.
         (call $throw)
@@ -233,9 +233,9 @@
     (block $tryend
       (try_table (catch_all $tryend)
         ;; This call cannot be optimized out, as the target throws. However, the
-        ;; surrounding try-catch can be removed even without global effects
+        ;; surrounding try_table can be removed even without global effects
         ;; because the throw from the return_call is never observed by this
-        ;; try-catch.
+        ;; try_table.
         (return_call $throw)
       )
     )
@@ -255,7 +255,7 @@
     (block $tryend
       (try_table (catch_all $tryend)
         ;; This call cannot be optimized out, as the target may throw. However,
-        ;; the surrounding try-catch can be removed even without global effects
+        ;; the surrounding try_table can be removed even without global effects
         ;; because the throw from the return_call is never observed by this
         ;; try-catch.
         (return_call_indirect
@@ -279,7 +279,7 @@
     (block $tryend
       (try_table (catch_all $tryend)
         ;; This call cannot be optimized out, as the target may throw. However,
-        ;; the surrounding try-catch can be removed even without global effects
+        ;; the surrounding try_table can be removed even without global effects
         ;; because the throw from the return_call is never observed by this
         ;; try-catch.
         (return_call_ref $void
@@ -332,9 +332,9 @@
   (func $call-return-call-throw-and-catch
     (block $tryend
       (try_table (catch_all $tryend)
-        ;; Even though the body of the previous function is a try-catch_all, the
+        ;; Even though the body of the previous function has a catch_all, the
         ;; function still throws because of its return_call, so this cannot be
-        ;; optimized out, but once again the entire try-catch could be. Again,
+        ;; optimized out, but once again the entire try_table could be. Again,
         ;; this is something we do for `try` for not yet for `try_table`.
         (call $return-call-throw-and-catch)
       )
@@ -411,7 +411,7 @@
   ;; INCLUDE-NEXT:  )
   ;; INCLUDE-NEXT: )
   (func $call-throw-or-unreachable-and-catch (param $x i32)
-    ;; This try-catch-all's body will either call a throw or an unreachable.
+    ;; This try_table's body will either call a throw or an unreachable.
     ;; Since we have both possible effects, we cannot optimize anything here.
     (block $tryend
       (try_table (catch_all $tryend)

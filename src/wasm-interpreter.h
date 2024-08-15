@@ -4090,7 +4090,7 @@ public:
           return ret;
         }
       }
-      // This exception is not caught by this try-catch. Rethrow it.
+      // This exception is not caught by this try_table. Rethrow it.
       throw;
     }
   }

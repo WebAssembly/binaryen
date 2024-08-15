@@ -582,7 +582,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $try-table-catch-result
+  (func $try_table-catch-result
     (drop
       ;; Must not be refined to nullref.
       ;; An anyref comes from the tag's payload because it is not a catch_all.
@@ -605,7 +605,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $try-table-ref
+  (func $try_table-ref
     (drop
       ;; Must not be refined to nullexnref.
       ;; An exnref comes from the catch_all_ref.

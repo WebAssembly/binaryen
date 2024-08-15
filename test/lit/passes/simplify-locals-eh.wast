@@ -28,10 +28,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $call-cannot-be-sinked-into-try (local $0 i32)
+  (func $call-cannot-be-sinked-into-try_table (local $0 i32)
     (drop
-      ;; This local.tee should NOT be sinked into 'try' below, because it may
-      ;; throw
+      ;; This local.tee should NOT be sinked into 'try_table' below, because it
+      ;; may throw
       (local.tee $0 (call $bar))
     )
     (block $tryend
@@ -62,9 +62,10 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $non-call-can-be-sinked-into-try (local $0 i32)
+  (func $non-call-can-be-sinked-into-try_table (local $0 i32)
     (drop
-      ;; This local.tee can be sinked into 'try' below, because it cannot throw
+      ;; This local.tee can be sinked into 'try_table' below, because it cannot
+      ;; throw
       (local.tee $0 (i32.const 3))
     )
     (block $tryend
@@ -99,7 +100,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $return-call-can-be-sinked-into-try (result i32)
+  (func $return-call-can-be-sinked-into-try_table (result i32)
     (local $0 i32)
     (drop
       ;; This cannot throw either, so it can be sunk. Wrap the return_call in an
@@ -108,7 +109,7 @@
         (if (result i32)
           (i32.const 0)
           (then
-            (return_call $return-call-can-be-sinked-into-try)
+            (return_call $return-call-can-be-sinked-into-try_table)
           )
           (else
             (i32.const 1)

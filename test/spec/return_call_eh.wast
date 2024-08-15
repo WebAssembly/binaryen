@@ -7,7 +7,7 @@
     (block $catch
       (return
         (try_table (result i32) (catch_all $catch)
-          (call $return-call-in-try)
+          (call $return-call-in-try_table)
         )
       )
     )
@@ -15,7 +15,7 @@
     (i32.const 42)
   )
 
-  (func $return-call-in-try (result i32)
+  (func $return-call-in-try_table (result i32)
     (block $catch
       (try_table (catch_all $catch)
         (return_call $return-callee)

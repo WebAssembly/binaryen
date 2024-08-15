@@ -33,7 +33,7 @@
   ;; CHECK-NEXT:   (i32.const 0)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $try-call-optimize-terminating-tails-success (result i32)
+  (func $try_table-call-optimize-terminating-tails-success (result i32)
     (block $tryend
       (block $catch
         (try_table (catch_all $catch)
@@ -81,7 +81,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
-  (func $try-call-optimize-terminating-tails (result i32)
+  (func $try_table-call-optimize-terminating-tails (result i32)
     (block $tryend
       (block $catch
         (try_table (catch_all $catch)
@@ -138,7 +138,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 0)
   ;; CHECK-NEXT: )
-  (func $try-call-optimize-terminating-tails-call-return (result i32)
+  (func $try_table-call-optimize-terminating-tails-call-return (result i32)
     (block $tryend
       (block $catch
         (try_table (catch_all $catch)
@@ -184,7 +184,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (return_call $foo-i32)
   ;; CHECK-NEXT: )
-  (func $try-call-optimize-terminating-tails-return-call (result i32)
+  (func $try_table-call-optimize-terminating-tails-return-call (result i32)
     (block $tryend
       (block $catch
         (try_table (catch_all $catch)
@@ -226,7 +226,7 @@
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $try-call-optimize-expression-tails-success
+  (func $try_table-call-optimize-expression-tails-success
     (block $x
       (block $tryend
         (block $catch
@@ -267,7 +267,7 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $try-call-optimize-expression-tails
+  (func $try_table-call-optimize-expression-tails
     (block $x
       (block $tryend
         (block $catch

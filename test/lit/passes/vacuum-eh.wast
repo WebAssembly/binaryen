@@ -16,8 +16,9 @@
   ;; CHECK:      (func $try-test (type $void)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  (func $try-test
-    ;; When try body does not throw, try-body can be replaced with the try body
+  (func $try_table-test
+    ;; When try_table body does not throw, the try_table can be replaced with    
+    ;; its body  
     (block $tryend
       (drop
         (block $catch (result i32)
@@ -48,11 +49,11 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (i32.const 2)
   ;; CHECK-NEXT: )
-  (func $inner-try-catch_all-test (result i32)
+  (func $inner-try_table-catch_all-test (result i32)
     (local $0 i32)
-    ;; The exception thrown in the inner try is caught by the inner catch_all,
-    ;; so the outer try body does not throw and the outer try-catch can be
-    ;; removed
+    ;; The exception thrown in the inner try_table is caught by the inner
+    ;; catch_all, so the outer try_table body does not throw and the outer
+    ;; try_table can be removed
     (block $outer-tryend
       (drop
         (block $outer-catch (result i32)
@@ -98,9 +99,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $inner-try-catch-test (local $0 i32)
-    ;; The exception thrown in the inner try will not be caught by the inner
-    ;; catch, so the outer try-catch cannot be removed.
+  (func $inner-try_table-catch-test (local $0 i32)
+    ;; The exception thrown in the inner try_table will not be caught by the
+    ;; inner catch, so the outer try_table cannot be removed.
     (block $outer-tryend
       (drop
         (block $outer-catch (result i32)
@@ -168,8 +169,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $trivial-catch-all-of-throw (local $0 i32)
-    ;; This try-catch's body throws, but the catch-all catches it, so the entire
-    ;; try could be optimized out. We do this for `try` but not yet for
+    ;; This try_table's body throws, but the catch_all catches it, so the entire
+    ;; try_table could be optimized out. We do this for `try` but not yet for
     ;; `try_table`.
     (block $catch
       (try_table (catch_all $catch)
@@ -211,7 +212,7 @@
     (block $catch
       (try_table (catch_all $catch)
         ;; This returns before it throws, so we can optimize out the surrounding
-        ;; try-catch.
+        ;; try_table.
         (return_call $throw)
       )
     )
@@ -226,7 +227,7 @@
     (block $catch
       (try_table (catch_all $catch)
         ;; This returns before it throws, so we can optimize out the surrounding
-        ;; try-catch.
+        ;; try_table.
         (return_call_indirect
           (i32.const 0)
         )
@@ -243,7 +244,7 @@
     (block $catch
       (try_table (catch_all $catch)
         ;; This returns before it throws, so we can optimize out the surrounding
-        ;; try-catch.
+        ;; try_table.
         (return_call_ref $void
           (ref.func $throw)
         )
