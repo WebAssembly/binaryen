@@ -73,15 +73,11 @@
   ;; CHECK-NEXT:   (i32.wrap_i64
   ;; CHECK-NEXT:    (i64.const 0)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.wrap_i64
-  ;; CHECK-NEXT:    (i64.const 5)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.wrap_i64
-  ;; CHECK-NEXT:    (i64.const 10)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 5)
+  ;; CHECK-NEXT:   (i32.const 10)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $test_table_init
-    (table.init $t64 $elem64 (i64.const 0) (i64.const 5) (i64.const 10))
+    (table.init $t64 $elem64 (i64.const 0) (i32.const 5) (i32.const 10))
   )
 )

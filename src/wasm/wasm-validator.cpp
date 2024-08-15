@@ -2468,11 +2468,11 @@ void FunctionValidator::visitTableInit(TableInit* curr) {
   shouldBeEqualOrFirstIsUnreachable(
     curr->dest->type, table->indexType, curr, "table.init dest must be valid");
   shouldBeEqualOrFirstIsUnreachable(curr->offset->type,
-                                    table->indexType,
+                                    Type(Type::i32),
                                     curr,
                                     "table.init offset must be valid");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->size->type, table->indexType, curr, "table.init size must be valid");
+    curr->size->type, Type(Type::i32), curr, "table.init size must be valid");
 }
 
 void FunctionValidator::noteDelegate(Name name, Expression* curr) {
