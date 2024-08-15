@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <iomanip>
 
 #include "ir/eh-utils.h"
 #include "ir/module-utils.h"
@@ -1212,7 +1213,31 @@ void WasmBinaryWriter::initializeDebugInfo() {
 }
 
 void WasmBinaryWriter::writeSourceMapProlog() {
-  *sourceMap << "{\"version\":3,\"sources\":[";
+  *sourceMap << "{\"version\":3,";
+
+  for (const auto& section : wasm->customSections) {
+    if (section.name == BinaryConsts::CustomSections::BuildId) {
+      U32LEB ret;
+      size_t pos = 0;
+      ret.read([&]() { return section.data[pos++]; });
+
+      if (section.data.size() != pos + ret.value) {
+        std::cerr
+          << "warning: build id section with an incorrect size detected!\n";
+        break;
+      }
+
+      *sourceMap << "\"debugId\":\"";
+      for (size_t i = pos; i < section.data.size(); i++) {
+        *sourceMap << std::setfill('0') << std::setw(2) << std::hex
+                   << static_cast<int>(static_cast<uint8_t>(section.data[i]));
+      }
+      *sourceMap << "\",";
+      break;
+    }
+  }
+
+  *sourceMap << "\"sources\":[";
   for (size_t i = 0; i < wasm->debugInfoFileNames.size(); i++) {
     if (i > 0) {
       *sourceMap << ",";
