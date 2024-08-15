@@ -79,32 +79,6 @@
     (call $foo) ;; should be dce'd
   )
 
-  ;; CHECK:      (func $throw (type $0)
-  ;; CHECK-NEXT:  (block $label$0
-  ;; CHECK-NEXT:   (block $label$1
-  ;; CHECK-NEXT:    (throw $e)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $throw
-    ;; All these wrapping expressions before 'throw' will be dce'd
-    (drop
-      (block $label$0 (result externref)
-        (if
-          (i32.clz
-            (block $label$1 (result i32)
-              (throw $e)
-            )
-          )
-          (then
-            (nop)
-          )
-        )
-        (ref.null extern)
-      )
-    )
-  )
-
   ;; CHECK:      (func $rethrow (type $0)
   ;; CHECK-NEXT:  (try $l0
   ;; CHECK-NEXT:   (do

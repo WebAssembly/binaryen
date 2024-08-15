@@ -191,6 +191,9 @@
           (drop (i32.const 1))
           (drop (i32.const 1))
           (drop (i32.const 1))
+          ;; return_call executes the call after returning from this function.
+          ;; This try_table cannot catch exceptions it throws, so we can fold it
+          ;; out of the try_table.
           (return_call $foo-i32)
         )
         (br $tryend)
@@ -231,6 +234,8 @@
       (block $tryend
         (block $catch
           (try_table (catch_all $catch)
+            ;; Expressions that cannot throw can be taken out of 'try_table'
+            ;; scope.
             (drop (i32.const 1))
             (drop (i32.const 1))
             (drop (i32.const 1))

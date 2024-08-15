@@ -244,6 +244,9 @@
         (drop (i32.const 1))
         (drop (i32.const 1))
         (drop (i32.const 1))
+        ;; return_call executes the call after returning from this function.
+        ;; This try cannot catch exceptions it throws, so we can fold it out of
+        ;; the try.
         (return_call $foo-i32)
       )
       (catch_all
@@ -282,6 +285,7 @@
     (block $x
       (try
         (do
+          ;; Expressions that cannot throw can be taken out of 'try' scope.
           (drop (i32.const 1))
           (drop (i32.const 1))
           (drop (i32.const 1))
