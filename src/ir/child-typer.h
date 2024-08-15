@@ -737,7 +737,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   }
 
   void visitTableInit(TableInit* curr) {
-    note(&curr->dest, Type::i32);
+    note(&curr->dest, wasm.getTable(curr->table)->indexType);
     note(&curr->offset, Type::i32);
     note(&curr->size, Type::i32);
   }
