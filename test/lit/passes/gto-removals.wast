@@ -1032,14 +1032,14 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (struct (field i64) (field v128) (field nullref))))
-    (type $A (sub (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field v128) (field nullref))))
+    ;; CHECK-NEXT:  (type $A (sub (struct (field i64) (field eqref) (field nullref))))
+    (type $A (sub (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field eqref) (field nullref))))
 
-    ;; CHECK:       (type $C (sub $A (struct (field i64) (field v128) (field nullref) (field f64) (field anyref))))
-    (type $C (sub $A (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field v128) (field nullref))))
+    ;; CHECK:       (type $C (sub $A (struct (field i64) (field eqref) (field nullref) (field f64) (field anyref))))
+    (type $C (sub $A (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field eqref) (field nullref))))
 
-    ;; CHECK:       (type $B (sub $A (struct (field i64) (field v128) (field nullref) (field f32) (field anyref))))
-    (type $B (sub $A (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field v128) (field nullref))))
+    ;; CHECK:       (type $B (sub $A (struct (field i64) (field eqref) (field nullref) (field f32) (field anyref))))
+    (type $B (sub $A (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field eqref) (field nullref))))
   )
 
   ;; CHECK:       (type $3 (func (param anyref)))
@@ -1115,10 +1115,10 @@
     ;; Field 2 (f32)     is used only in $B.
     ;; Field 3 (f64)     is used only in $C.
     ;; Field 4 (anyref)  is used only in $B and $C.
-    ;; Field 5 (v128)    is used only in $A and $C.
+    ;; Field 5 (eqref)   is used only in $A and $C.
     ;; Field 6 (nullref) is used only in $A and $B.
     ;; As a result:
-    ;;   * A can keep only fields 1, 5, 6 (i64, v128, nullref).
+    ;;   * A can keep only fields 1, 5, 6 (i64, eqref, nullref).
     ;;   * B keeps A's fields, and appends 2, 4 (f32, anyref).
     ;;   * C keeps A's fields, and appends 3, 4 (f64, anyref).
 
@@ -1145,14 +1145,14 @@
 (module
   (rec
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (struct (field i64) (field v128) (field nullref))))
-    (type $A (sub (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field v128) (field nullref))))
+    ;; CHECK-NEXT:  (type $A (sub (struct (field i64) (field eqref) (field nullref))))
+    (type $A (sub (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field eqref) (field nullref))))
 
-    ;; CHECK:       (type $B (sub $A (struct (field i64) (field v128) (field nullref) (field f32) (field anyref))))
-    (type $B (sub $A (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field v128) (field nullref))))
+    ;; CHECK:       (type $B (sub $A (struct (field i64) (field eqref) (field nullref) (field f32) (field anyref))))
+    (type $B (sub $A (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field eqref) (field nullref))))
 
-    ;; CHECK:       (type $C (sub $B (struct (field i64) (field v128) (field nullref) (field f32) (field anyref) (field f64))))
-    (type $C (sub $B (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field v128) (field nullref))))
+    ;; CHECK:       (type $C (sub $B (struct (field i64) (field eqref) (field nullref) (field f32) (field anyref) (field f64))))
+    (type $C (sub $B (struct (field i32) (field i64) (field f32) (field f64) (field anyref) (field eqref) (field nullref))))
   )
 
   ;; CHECK:       (type $3 (func (param anyref)))
