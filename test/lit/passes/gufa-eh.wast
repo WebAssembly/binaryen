@@ -12,7 +12,7 @@
   ;; CHECK:      (tag $e (param i32))
   (tag $e (param i32))
 
-  ;; CHECK:      (func $try-table-target-block-is-not-unreachable (type $1) (result i32)
+  ;; CHECK:      (func $try_table-target-block-is-not-unreachable (type $1) (result i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $catch (result i32)
   ;; CHECK-NEXT:    (try_table (catch $e $catch)
@@ -33,7 +33,7 @@
     )
   )
 
-  ;; CHECK:      (func $try-table-materializes-exnref (type $2)
+  ;; CHECK:      (func $try_table-materializes-exnref (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $catch (result exnref)
   ;; CHECK-NEXT:    (try_table (catch_all_ref $catch)

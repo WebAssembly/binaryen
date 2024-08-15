@@ -13,12 +13,12 @@
   ;; CHECK:      (tag $e2 (param i32))
   (tag $e2 (param i32))
 
-  ;; CHECK:      (func $try-test (type $void)
+  ;; CHECK:      (func $try_table-test (type $void)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $try_table-test
-    ;; When try_table body does not throw, the try_table can be replaced with    
-    ;; its body  
+    ;; When try_table body does not throw, the try_table can be replaced with
+    ;; its body
     (block $tryend
       (drop
         (block $catch (result i32)
@@ -31,7 +31,7 @@
     )
   )
 
-  ;; CHECK:      (func $inner-try-catch_all-test (type $2) (result i32)
+  ;; CHECK:      (func $inner-try_table-catch_all-test (type $2) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block
@@ -73,7 +73,7 @@
     (i32.const 2)
   )
 
-  ;; CHECK:      (func $inner-try-catch-test (type $void)
+  ;; CHECK:      (func $inner-try_table-catch-test (type $void)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (block $outer-tryend
   ;; CHECK-NEXT:   (drop

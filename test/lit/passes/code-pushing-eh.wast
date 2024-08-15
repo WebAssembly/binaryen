@@ -70,7 +70,7 @@
     )
   )
 
-  ;; CHECK:      (func $can-push-past-try (type $0)
+  ;; CHECK:      (func $can-push-past-try_table (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (block $tryend
@@ -122,7 +122,7 @@
   ;; CHECK-NEXT: )
   (func $foo)
 
-  ;; CHECK:      (func $cannot-push-past-try (type $0)
+  ;; CHECK:      (func $cannot-push-past-try_table (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (local.set $x
@@ -171,7 +171,7 @@
     )
   )
 
-  ;; CHECK:      (func $cannot-push-past-throw-ref-within-catch (type $0)
+  ;; CHECK:      (func $cannot-push-past-throw_ref-within-catch (type $0)
   ;; CHECK-NEXT:  (local $x i32)
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (local.set $x

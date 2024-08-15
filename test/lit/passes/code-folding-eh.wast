@@ -6,7 +6,7 @@
   ;; CHECK:      (tag $e-i32 (param i32))
   (tag $e-i32 (param i32))
 
-  ;; CHECK:      (func $try-call-optimize-terminating-tails-success (type $0) (result i32)
+  ;; CHECK:      (func $try_table-call-optimize-terminating-tails-success (type $0) (result i32)
   ;; CHECK-NEXT:  (block $folding-inner0
   ;; CHECK-NEXT:   (return
   ;; CHECK-NEXT:    (block (result i32)
@@ -57,7 +57,7 @@
   ;; CHECK-NEXT: )
   (func $foo)
 
-  ;; CHECK:      (func $try-call-optimize-terminating-tails (type $0) (result i32)
+  ;; CHECK:      (func $try_table-call-optimize-terminating-tails (type $0) (result i32)
   ;; CHECK-NEXT:  (block $tryend
   ;; CHECK-NEXT:   (block $catch
   ;; CHECK-NEXT:    (try_table (catch_all $catch)
@@ -110,7 +110,7 @@
     (i32.const 0)
   )
 
-  ;; CHECK:      (func $try-call-optimize-terminating-tails-call-return (type $0) (result i32)
+  ;; CHECK:      (func $try_table-call-optimize-terminating-tails-call-return (type $0) (result i32)
   ;; CHECK-NEXT:  (block $tryend
   ;; CHECK-NEXT:   (block $catch
   ;; CHECK-NEXT:    (try_table (catch_all $catch)
@@ -156,7 +156,7 @@
     (i32.const 0)
   )
 
-  ;; CHECK:      (func $try-call-optimize-terminating-tails-return-call (type $0) (result i32)
+  ;; CHECK:      (func $try_table-call-optimize-terminating-tails-return-call (type $0) (result i32)
   ;; CHECK-NEXT:  (block $folding-inner0
   ;; CHECK-NEXT:   (return
   ;; CHECK-NEXT:    (block (result i32)
@@ -203,7 +203,7 @@
     (i32.const 0)
   )
 
-  ;; CHECK:      (func $try-call-optimize-expression-tails-success (type $1)
+  ;; CHECK:      (func $try_table-call-optimize-expression-tails-success (type $1)
   ;; CHECK-NEXT:  (block $x
   ;; CHECK-NEXT:   (block $tryend
   ;; CHECK-NEXT:    (block $catch
@@ -247,7 +247,7 @@
     )
   )
 
-  ;; CHECK:      (func $try-call-optimize-expression-tails (type $1)
+  ;; CHECK:      (func $try_table-call-optimize-expression-tails (type $1)
   ;; CHECK-NEXT:  (block $x
   ;; CHECK-NEXT:   (block $tryend
   ;; CHECK-NEXT:    (block $catch

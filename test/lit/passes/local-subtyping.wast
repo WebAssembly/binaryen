@@ -572,7 +572,7 @@
     )
   )
 
-  ;; CHECK:      (func $try-table-catch-result (type $0)
+  ;; CHECK:      (func $try_table-catch-result (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $catch (result anyref)
   ;; CHECK-NEXT:    (try_table (catch $e-anyref $catch)
@@ -595,7 +595,7 @@
     )
   )
 
-  ;; CHECK:      (func $try-table-ref (type $0)
+  ;; CHECK:      (func $try_table-ref (type $0)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $catch (result exnref)
   ;; CHECK-NEXT:    (try_table (catch_all_ref $catch)

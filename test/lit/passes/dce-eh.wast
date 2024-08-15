@@ -15,7 +15,7 @@
   ;; CHECK-NEXT: )
   (func $foo)
 
-  ;; CHECK:      (func $try_unreachable (type $0)
+  ;; CHECK:      (func $try_table_unreachable (type $0)
   ;; CHECK-NEXT:  (block $catch
   ;; CHECK-NEXT:   (try_table (catch_all $catch)
   ;; CHECK-NEXT:    (unreachable)
@@ -103,7 +103,7 @@
     )
   )
 
-  ;; CHECK:      (func $throw-ref (type $0)
+  ;; CHECK:      (func $throw_ref (type $0)
   ;; CHECK-NEXT:  (local $ex exnref)
   ;; CHECK-NEXT:  (block $tryend
   ;; CHECK-NEXT:   (local.set $ex

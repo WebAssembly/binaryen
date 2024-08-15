@@ -10,7 +10,7 @@
   ;; CHECK-NEXT: )
   (func $bar (result i32) (i32.const 3))
 
-  ;; CHECK:      (func $call-cannot-be-sinked-into-try (type $2)
+  ;; CHECK:      (func $call-cannot-be-sinked-into-try_table (type $2)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (local.set $0
   ;; CHECK-NEXT:   (call $bar)
@@ -46,7 +46,7 @@
     )
   )
 
-  ;; CHECK:      (func $non-call-can-be-sinked-into-try (type $2)
+  ;; CHECK:      (func $non-call-can-be-sinked-into-try_table (type $2)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (block $tryend
@@ -80,7 +80,7 @@
     )
   )
 
-  ;; CHECK:      (func $return-call-can-be-sinked-into-try (type $1) (result i32)
+  ;; CHECK:      (func $return-call-can-be-sinked-into-try_table (type $1) (result i32)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  (block $tryend (result i32)
@@ -89,7 +89,7 @@
   ;; CHECK-NEXT:     (if (result i32)
   ;; CHECK-NEXT:      (i32.const 0)
   ;; CHECK-NEXT:      (then
-  ;; CHECK-NEXT:       (return_call $return-call-can-be-sinked-into-try)
+  ;; CHECK-NEXT:       (return_call $return-call-can-be-sinked-into-try_table)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:      (else
   ;; CHECK-NEXT:       (i32.const 1)
