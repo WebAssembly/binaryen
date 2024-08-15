@@ -2446,8 +2446,9 @@ void FunctionValidator::visitTableCopy(TableCopy* curr) {
                                     sourceTable->indexType,
                                     curr,
                                     "table.copy source must be valid");
+  Type sizeType = sourceTable->is64() && destTable->is64() ? Type::i64 : Type::i32;
   shouldBeEqualOrFirstIsUnreachable(curr->size->type,
-                                    destTable->indexType,
+                                    sizeType,
                                     curr,
                                     "table.copy size must be valid");
 }
