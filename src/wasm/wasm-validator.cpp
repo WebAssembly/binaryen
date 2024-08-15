@@ -3593,7 +3593,7 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
       ReFinalizeNode().visit(curr);
       auto newType = curr->type;
       // It's ok for types to be further refinable, but they must admit a
-      // supertype of the values allowed by the most precise possible type, i.e.
+      // superset of the values allowed by the most precise possible type, i.e.
       // they must not be strict subtypes of or unrelated to the refined type.
       if (!Type::isSubType(newType, oldType)) {
         std::ostringstream ss;
