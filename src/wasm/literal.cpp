@@ -117,7 +117,11 @@ Literal::Literal(const Literal& other) : type(other.type) {
     new (&gcData) std::shared_ptr<GCData>();
     return;
   }
-  if (other.isData() || other.type.getHeapType().isMaybeShared(HeapType::ext)) {
+  // After handling nulls, only non-nullable Literals remain.
+  assert(!type.isNullable());
+
+  auto heapType = type.getHeapType();
+  if (other.isData() || heapType.isMaybeShared(HeapType::ext)) {
     new (&gcData) std::shared_ptr<GCData>(other.gcData);
     return;
   }
@@ -125,35 +129,28 @@ Literal::Literal(const Literal& other) : type(other.type) {
     func = other.func;
     return;
   }
-  if (type.isRef()) {
-    assert(!type.isNullable());
-    auto heapType = type.getHeapType();
-    if (heapType.isBasic()) {
-      switch (heapType.getBasic(Unshared)) {
-        case HeapType::i31:
-          i32 = other.i32;
-          return;
-        case HeapType::ext:
-          gcData = other.gcData;
-          return;
-        case HeapType::none:
-        case HeapType::noext:
-        case HeapType::nofunc:
-        case HeapType::noexn:
-        case HeapType::nocont:
-          WASM_UNREACHABLE("null literals should already have been handled");
-        case HeapType::any:
-        case HeapType::eq:
-        case HeapType::func:
-        case HeapType::cont:
-        case HeapType::struct_:
-        case HeapType::array:
-        case HeapType::exn:
-          WASM_UNREACHABLE("invalid type");
-        case HeapType::string:
-          WASM_UNREACHABLE("TODO: string literals");
-      }
-    }
+  switch (heapType.getBasic(Unshared)) {
+    case HeapType::i31:
+      i32 = other.i32;
+      return;
+    case HeapType::ext:
+      WASM_UNREACHABLE("handled above with isData()");
+    case HeapType::none:
+    case HeapType::noext:
+    case HeapType::nofunc:
+    case HeapType::noexn:
+    case HeapType::nocont:
+      WASM_UNREACHABLE("null literals should already have been handled");
+    case HeapType::any:
+    case HeapType::eq:
+    case HeapType::func:
+    case HeapType::cont:
+    case HeapType::struct_:
+    case HeapType::array:
+    case HeapType::exn:
+      WASM_UNREACHABLE("invalid type");
+    case HeapType::string:
+      WASM_UNREACHABLE("TODO: string literals");
   }
 }
 
