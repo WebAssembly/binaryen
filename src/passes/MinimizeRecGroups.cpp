@@ -539,7 +539,7 @@ struct MinimizeRecGroups : Pass {
     // from the map under its current shape.
     groupShapeIndices.erase(it);
 
-    // Put the types for both groups in to the canonical order.
+    // Put the types for both groups into the canonical order.
     auto permutation = getCanonicalPermutation(groupInfo.group);
     groupInfo.permutation = otherInfo.permutation = std::move(permutation);
 
