@@ -3283,6 +3283,11 @@ public:
       trap("out of bounds table access in table.init");
     }
     for (size_t i = 0; i < sizeVal; ++i) {
+      // FIXME: We should not call visit() here more than once at runtime. The
+      //        values in the segment should be computed once during startup,
+      //        and then read here as needed. For example, if we had a
+      //        struct.new here then we should not allocate a new struct each
+      //        time we table.init that data.
       auto value = self()->visit(segment->data[offsetVal + i]).getSingleValue();
       info.interface()->tableStore(info.name, destVal + i, value);
     }
