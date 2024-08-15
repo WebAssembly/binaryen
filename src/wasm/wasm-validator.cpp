@@ -3592,31 +3592,16 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
       auto oldType = curr->type;
       ReFinalizeNode().visit(curr);
       auto newType = curr->type;
-      if (newType != oldType) {
-        // We accept concrete => undefined on control flow structures:
-        // e.g.
-        //
-        //  (drop (block (result i32) (unreachable)))
-        //
-        // The block has a type annotated on it, which can make its unreachable
-        // contents have a concrete type. Refinalize will make it unreachable,
-        // so both are valid here.
-        bool validControlFlowStructureChange =
-          Properties::isControlFlowStructure(curr) && oldType.isConcrete() &&
-          newType == Type::unreachable;
-        // It's ok in general for types to get refined as long as they don't
-        // become unreachable.
-        bool validRefinement =
-          Type::isSubType(newType, oldType) && newType != Type::unreachable;
-        if (!validRefinement && !validControlFlowStructureChange) {
-          std::ostringstream ss;
-          ss << "stale type found in " << scope << " on " << curr
-             << "\n(marked as " << oldType << ", should be " << newType
-             << ")\n";
-          info.fail(ss.str(), curr, getFunction());
-        }
-        curr->type = oldType;
+      // It's ok for types to be further refinable, but they must admit a
+      // supertype of the values allowed by the most precise possible type, i.e.
+      // they must not be strict subtypes of or unrelated to the refined type.
+      if (!Type::isSubType(newType, oldType)) {
+        std::ostringstream ss;
+        ss << "stale type found in " << scope << " on " << curr
+           << "\n(marked as " << oldType << ", should be " << newType << ")\n";
+        info.fail(ss.str(), curr, getFunction());
       }
+      curr->type = oldType;
       // check if a node is a duplicate - expressions must not be seen more than
       // once
       if (!seen.insert(curr).second) {
