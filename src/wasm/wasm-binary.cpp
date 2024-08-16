@@ -291,30 +291,37 @@ void WasmBinaryWriter::writeTypes() {
     if (type.isShared()) {
       o << S32LEB(BinaryConsts::EncodedType::Shared);
     }
-    if (type.isSignature()) {
-      o << S32LEB(BinaryConsts::EncodedType::Func);
-      auto sig = type.getSignature();
-      for (auto& sigType : {sig.params, sig.results}) {
-        o << U32LEB(sigType.size());
-        for (const auto& type : sigType) {
-          writeType(type);
+    switch (type.getKind()) {
+      case HeapTypeKind::Func: {
+        o << S32LEB(BinaryConsts::EncodedType::Func);
+        auto sig = type.getSignature();
+        for (auto& sigType : {sig.params, sig.results}) {
+          o << U32LEB(sigType.size());
+          for (const auto& type : sigType) {
+            writeType(type);
+          }
         }
+        break;
       }
-    } else if (type.isContinuation()) {
-      o << S32LEB(BinaryConsts::EncodedType::Cont);
-      writeHeapType(type.getContinuation().type);
-    } else if (type.isStruct()) {
-      o << S32LEB(BinaryConsts::EncodedType::Struct);
-      auto fields = type.getStruct().fields;
-      o << U32LEB(fields.size());
-      for (const auto& field : fields) {
-        writeField(field);
+      case HeapTypeKind::Struct: {
+        o << S32LEB(BinaryConsts::EncodedType::Struct);
+        auto fields = type.getStruct().fields;
+        o << U32LEB(fields.size());
+        for (const auto& field : fields) {
+          writeField(field);
+        }
+        break;
       }
-    } else if (type.isArray()) {
-      o << S32LEB(BinaryConsts::EncodedType::Array);
-      writeField(type.getArray().element);
-    } else {
-      WASM_UNREACHABLE("TODO GC type writing");
+      case HeapTypeKind::Array:
+        o << S32LEB(BinaryConsts::EncodedType::Array);
+        writeField(type.getArray().element);
+        break;
+      case HeapTypeKind::Cont:
+        o << S32LEB(BinaryConsts::EncodedType::Cont);
+        writeHeapType(type.getContinuation().type);
+        break;
+      case HeapTypeKind::Basic:
+        WASM_UNREACHABLE("unexpected kind");
     }
   }
   finishSection(start);

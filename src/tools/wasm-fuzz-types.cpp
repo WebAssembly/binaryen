@@ -297,15 +297,22 @@ void Fuzzer::checkCanonicalization() {
       // Copy the original types
       for (; index < types.size(); ++index) {
         auto type = types[index];
-        if (type.isSignature()) {
-          builder[index] = getSignature(type.getSignature());
-        } else if (type.isStruct()) {
-          builder[index] = getStruct(type.getStruct());
-        } else if (type.isArray()) {
-          builder[index] = getArray(type.getArray());
-        } else {
-          WASM_UNREACHABLE("unexpected type kind");
+        switch (type.getKind()) {
+          case HeapTypeKind::Func:
+            builder[index] = getSignature(type.getSignature());
+            continue;
+          case HeapTypeKind::Struct:
+            builder[index] = getStruct(type.getStruct());
+            continue;
+          case HeapTypeKind::Array:
+            builder[index] = getArray(type.getArray());
+            continue;
+          case HeapTypeKind::Cont:
+            WASM_UNREACHABLE("TODO: cont");
+          case HeapTypeKind::Basic:
+            break;
         }
+        WASM_UNREACHABLE("unexpected type kind");
       }
     }
 

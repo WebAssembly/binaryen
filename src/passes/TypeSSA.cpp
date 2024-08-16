@@ -237,12 +237,17 @@ struct TypeSSA : public Pass {
     for (Index i = 0; i < num; i++) {
       auto* curr = newsToModify[i];
       auto oldType = curr->type.getHeapType();
-      if (oldType.isStruct()) {
-        builder[i] = oldType.getStruct();
-      } else if (oldType.isArray()) {
-        builder[i] = oldType.getArray();
-      } else {
-        WASM_UNREACHABLE("unexpected type kind");
+      switch (oldType.getKind()) {
+        case HeapTypeKind::Struct:
+          builder[i] = oldType.getStruct();
+          break;
+        case HeapTypeKind::Array:
+          builder[i] = oldType.getArray();
+          break;
+        case HeapTypeKind::Func:
+        case HeapTypeKind::Cont:
+        case HeapTypeKind::Basic:
+          WASM_UNREACHABLE("unexpected kind");
       }
       builder[i].subTypeOf(oldType);
       builder[i].setShared(oldType.getShared());
