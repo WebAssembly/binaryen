@@ -4936,6 +4936,12 @@ switch (buf[0]) {
               default: goto parse_error;
             }
           }
+          case 'i':
+            if (op == "table.init"sv) {
+              CHECK_ERR(makeTableInit(ctx, pos, annotations));
+              return Ok{};
+            }
+            goto parse_error;
           case 's': {
             switch (buf[7]) {
               case 'e':

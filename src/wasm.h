@@ -678,6 +678,7 @@ public:
     TableGrowId,
     TableFillId,
     TableCopyId,
+    TableInitId,
     TryId,
     TryTableId,
     ThrowId,
@@ -1417,6 +1418,20 @@ public:
   Expression* size;
   Name destTable;
   Name sourceTable;
+
+  void finalize();
+};
+
+class TableInit : public SpecificExpression<Expression::TableInitId> {
+public:
+  TableInit() = default;
+  TableInit(MixedArena& allocator) : TableInit() {}
+
+  Name segment;
+  Expression* dest;
+  Expression* offset;
+  Expression* size;
+  Name table;
 
   void finalize();
 };

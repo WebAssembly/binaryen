@@ -2053,6 +2053,12 @@ void BinaryInstWriter::visitTableCopy(TableCopy* curr) {
   o << U32LEB(parent.getTableIndex(curr->sourceTable));
 }
 
+void BinaryInstWriter::visitTableInit(TableInit* curr) {
+  o << int8_t(BinaryConsts::MiscPrefix) << U32LEB(BinaryConsts::TableInit);
+  o << U32LEB(parent.getElementSegmentIndex(curr->segment));
+  o << U32LEB(parent.getTableIndex(curr->table));
+}
+
 void BinaryInstWriter::visitTry(Try* curr) {
   breakStack.push_back(curr->name);
   o << int8_t(BinaryConsts::Try);

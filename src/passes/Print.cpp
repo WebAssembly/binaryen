@@ -2055,6 +2055,12 @@ struct PrintExpressionContents
     o << ' ';
     curr->sourceTable.print(o);
   }
+  void visitTableInit(TableInit* curr) {
+    printMedium(o, "table.init ");
+    curr->table.print(o);
+    o << ' ';
+    curr->segment.print(o);
+  }
   void visitTry(Try* curr) {
     printMedium(o, "try");
     if (curr->name.is()) {

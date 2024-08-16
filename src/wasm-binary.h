@@ -1078,6 +1078,7 @@ enum ASTNodes {
   TableSize = 0x10,
   TableFill = 0x11,
   TableCopy = 0x0e,
+  TableInit = 0x0c,
   RefNull = 0xd0,
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
@@ -1752,6 +1753,7 @@ public:
   bool maybeVisitTableGrow(Expression*& out, uint32_t code);
   bool maybeVisitTableFill(Expression*& out, uint32_t code);
   bool maybeVisitTableCopy(Expression*& out, uint32_t code);
+  bool maybeVisitTableInit(Expression*& out, uint32_t code);
   bool maybeVisitRefI31(Expression*& out, uint32_t code);
   bool maybeVisitI31Get(Expression*& out, uint32_t code);
   bool maybeVisitRefTest(Expression*& out, uint32_t code);

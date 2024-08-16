@@ -4223,6 +4223,9 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       if (maybeVisitTableCopy(curr, opcode)) {
         break;
       }
+      if (maybeVisitTableInit(curr, opcode)) {
+        break;
+      }
       if (maybeVisitLoad(curr, opcode, BinaryConsts::MiscPrefix)) {
         break;
       }
@@ -5643,6 +5646,23 @@ bool WasmBinaryReader::maybeVisitTableCopy(Expression*& out, uint32_t code) {
   tableRefs[destTableIdx].push_back(&ret->destTable);
   tableRefs[sourceTableIdx].push_back(&ret->sourceTable);
   out = ret;
+  return true;
+}
+
+bool WasmBinaryReader::maybeVisitTableInit(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::TableInit) {
+    return false;
+  }
+  auto* curr = allocator.alloc<TableInit>();
+  curr->size = popNonVoidExpression();
+  curr->offset = popNonVoidExpression();
+  curr->dest = popNonVoidExpression();
+  Index segIdx = getU32LEB();
+  elemRefs[segIdx].push_back(&curr->segment);
+  Index memIdx = getU32LEB();
+  tableRefs[memIdx].push_back(&curr->table);
+  curr->finalize();
+  out = curr;
   return true;
 }
 
