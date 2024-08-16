@@ -576,7 +576,7 @@ struct MinimizeRecGroups : Pass {
     //     Proof: By contradiction. Assume there are two cycles of different
     //     sizes. Because the SCC is fully connected, there is a path from an
     //     element in the smaller of these cycles to an element in the larger.
-    //     This path must contain an edge between two edges in cycles of
+    //     This path must contain an edge between two vertices in cycles of
     //     different sizes N and M such that N < M. Apply the automorphism N
     //     times. The source of this edge has been cycled back to its original
     //     index, but the destination is not yet back at its original index, so
@@ -589,15 +589,16 @@ struct MinimizeRecGroups : Pass {
     // trivial or all the cycles have some other size and there are no
     // stationary elements.
     //
-    // Corollary 1.2: All orderings with the same first element are distinct
-    // since no nontrivial automorphism can keep the first element stationary.
+    // Corollary 1.2: No two isomorphic SCCs with the same first element are the
+    // same since no nontrivial automorphism can keep the first element
+    // stationary.
     //
-    // Theorem 2: Graphs with initial elements that are not in an automorphism
-    // cycle with each other are not automorphic.
+    // Theorem 2: SCCs with initial elements that are not in an automorphism
+    // cycle with each other are not automorphic to each other.
     //
-    //     Proof: By contradiction. Assume two such orderings are automorphic.
-    //     Then their initial elements must be in the same automorphism cycle
-    //     because they occupy the same index in two automorphic orderings.
+    //     Proof: By contradiction. Assume two such SCCs are automorphic to each
+    //     other. Then their initial elements must be in the same automorphism
+    //     cycle because they occupy the same index in two automorphic graphs.
     //
     // Find a canonical ordering of the types in this group. The ordering must
     // be independent of the initial order of the types. To do so, consider the
@@ -610,7 +611,7 @@ struct MinimizeRecGroups : Pass {
     // These equivalence classes each correspond to a cycle in an automorphism
     // of the graph because their elements are vertices that can all occupy the
     // initial index of the graph without the graph structure changing. We can
-    // choose an arbitrary ordering from the least equivalent class as a
+    // choose an arbitrary ordering from the least equivalence class as a
     // canonical ordering because all orderings in that class describe the same
     // graph.
     //
