@@ -593,13 +593,6 @@ struct MinimizeRecGroups : Pass {
     // element are automorphic to each other since no nontrivial automorphism
     // can keep the first element stationary.
     //
-    // Theorem 2: SCCs with initial elements that are not in an automorphism
-    // cycle with each other are not automorphic to each other.
-    //
-    //     Proof: By contradiction. Assume two such SCCs are automorphic to each
-    //     other. Then their initial elements must be in the same automorphism
-    //     cycle because they occupy the same index in two automorphic graphs.
-    //
     // Find a canonical ordering of the types in this group. The ordering must
     // be independent of the initial order of the types. To do so, consider the
     // orderings given by visitation order on a tree search rooted at each type
@@ -656,13 +649,15 @@ struct MinimizeRecGroups : Pass {
     // of any equivalence class. Since our utility for enumerating the
     // topological sorts of the canonical order keeps the initial element fixed
     // as long as possible before moving to the next one, by Corollary 1.2 and
-    // Theorem 2 above, this will maximize the number of distinct graphs it
-    // emits before starting to emit automorphisms of previously emitted graphs.
-    // Since all the type equivalence classes are the same size by Theorem 1, we
-    // can assemble the final order by striping across the equivalence classes.
-    // We determine the order of types taken from each equivalence class by
-    // sorting them by order of appearance in the least order, which ensures the
-    // final order remains independent of the initial order.
+    // because isomorphisms that begin with types in different equivalence class
+    // cannot be automorphic to each other, this will maximize the number of
+    // distinct graphs the utility emits before starting to emit automorphisms
+    // of previously emitted graphs. Since all the type equivalence classes are
+    // the same size by Theorem 1, we can assemble the final order by striping
+    // across the equivalence classes. We determine the order of types taken
+    // from each equivalence class by sorting them by order of appearance in the
+    // least order, which ensures the final order remains independent of the
+    // initial order.
     std::unordered_map<HeapType, size_t> indexInLeastOrder;
     for (auto type : leastOrder) {
       indexInLeastOrder.insert({type, indexInLeastOrder.size()});
