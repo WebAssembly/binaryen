@@ -444,7 +444,7 @@ bool Literal::operator==(const Literal& other) const {
       return gcData == other.gcData;
     }
     assert(type.getHeapType().isBasic());
-    if (type.getHeapType().getBasic(Unshared) == HeapType::i31) {
+    if (type.getHeapType().isMaybeShared(HeapType::i31)) {
       return i32 == other.i32;
     }
     WASM_UNREACHABLE("unexpected type");

@@ -829,11 +829,13 @@ public:
     // logic here, we save the original (possible externalized) value, and then
     // look at the internals from here on out.
     Literal original = value;
-    if (value.type.isRef() && value.type.getHeapType() == HeapType::ext) {
+    if (value.type.isRef() &&
+        value.type.getHeapType().isMaybeShared(HeapType::ext)) {
       value = value.internalize();
 
       // We cannot serialize truly external things, only data and i31s.
-      assert(value.isData() || value.type.getHeapType() == HeapType::i31);
+      assert(value.isData() ||
+             value.type.getHeapType().isMaybeShared(HeapType::i31));
     }
 
     // GC data (structs and arrays) must be handled with the special global-
@@ -915,7 +917,7 @@ public:
     Expression* ret = builder.makeGlobalGet(definingGlobalName, value.type);
     if (original != value) {
       // The original is externalized.
-      assert(original.type.getHeapType() == HeapType::ext);
+      assert(original.type.getHeapType().isMaybeShared(HeapType::ext));
       ret = builder.makeRefAs(ExternConvertAny, ret);
     }
     return ret;

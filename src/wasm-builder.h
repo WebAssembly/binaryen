@@ -1373,8 +1373,10 @@ public:
     if (curr->type.isNullable() && curr->type.isNull()) {
       return ExpressionManipulator::refNull(curr, curr->type);
     }
-    if (curr->type.isRef() && curr->type.getHeapType() == HeapType::i31) {
-      Expression* ret = makeRefI31(makeConst(0));
+    if (curr->type.isRef() &&
+        curr->type.getHeapType().isMaybeShared(HeapType::i31)) {
+      Expression* ret =
+        makeRefI31(makeConst(0), curr->type.getHeapType().getShared());
       if (curr->type.isNullable()) {
         // To keep the type identical, wrap it in a block that adds nullability.
         ret = makeBlock({ret}, curr->type);

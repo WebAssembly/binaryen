@@ -293,7 +293,7 @@ struct Precompute
             return;
           }
         } else if (singleValue.type.isRef() &&
-                   singleValue.type.getHeapType() == HeapType::func) {
+                   singleValue.type.getHeapType().isSignature()) {
           if (auto* r = curr->value->template dynCast<RefFunc>()) {
             r->func = singleValue.getFunc();
             r->finalize();

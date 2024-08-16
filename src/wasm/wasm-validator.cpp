@@ -2739,7 +2739,7 @@ void FunctionValidator::visitCallRef(CallRef* curr) {
     getModule()->features.hasGC(), curr, "call_ref requires gc [--enable-gc]");
   if (curr->target->type == Type::unreachable ||
       (curr->target->type.isRef() &&
-       curr->target->type.getHeapType() == HeapType::nofunc)) {
+       curr->target->type.getHeapType().isMaybeShared(HeapType::nofunc))) {
     return;
   }
   if (shouldBeTrue(curr->target->type.isFunction(),
