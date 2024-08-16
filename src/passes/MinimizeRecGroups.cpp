@@ -589,9 +589,9 @@ struct MinimizeRecGroups : Pass {
     // trivial or all the cycles have some other size and there are no
     // stationary elements.
     //
-    // Corollary 1.2: No two isomorphic SCCs with the same first element are the
-    // same since no nontrivial automorphism can keep the first element
-    // stationary.
+    // Corollary 1.2: No two distinct isomorphisms of an SCC with the same first
+    // element are automorphic to each other since no nontrivial automorphism
+    // can keep the first element stationary.
     //
     // Theorem 2: SCCs with initial elements that are not in an automorphism
     // cycle with each other are not automorphic to each other.
