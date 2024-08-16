@@ -125,6 +125,7 @@ Pass* createPrintFeaturesPass();
 Pass* createPrintFunctionMapPass();
 Pass* createPropagateGlobalsGloballyPass();
 Pass* createRemoveNonJSOpsPass();
+Pass* createRemoveExportsPass();
 Pass* createRemoveImportsPass();
 Pass* createRemoveMemoryPass();
 Pass* createRemoveUnusedBrsPass();

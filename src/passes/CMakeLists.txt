@@ -95,6 +95,7 @@ set(passes_SOURCES
   StripTargetFeatures.cpp
   TraceCalls.cpp
   RedundantSetElimination.cpp
+  RemoveExports.cpp
   RemoveImports.cpp
   RemoveMemory.cpp
   RemoveNonJSOps.cpp
