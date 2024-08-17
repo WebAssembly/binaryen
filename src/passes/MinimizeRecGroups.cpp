@@ -645,15 +645,15 @@ struct MinimizeRecGroups : Pass {
     const auto& leastOrder = typeClasses.begin()->first.types;
 
     // We want our canonical ordering to have the additional property that it
-    // contains with one type from each equivalence class before a second type
-    // of any equivalence class. Since our utility for enumerating the
-    // topological sorts of the canonical order keeps the initial element fixed
-    // as long as possible before moving to the next one, by Corollary 1.2 and
-    // because isomorphisms that begin with types in different equivalence class
-    // cannot be automorphic to each other, this will maximize the number of
-    // distinct graphs the utility emits before starting to emit automorphisms
-    // of previously emitted graphs. Since all the type equivalence classes are
-    // the same size by Theorem 1, we can assemble the final order by striping
+    // contains one type from each equivalence class before a second type of any
+    // equivalence class. Since our utility for enumerating the topological
+    // sorts of the canonical order keeps the initial element fixed as long as
+    // possible before moving to the next one, by Corollary 1.2 and because
+    // isomorphisms that begin with types in different equivalence class cannot
+    // be automorphic to each other, this will maximize the number of distinct
+    // graphs the utility emits before starting to emit automorphisms of
+    // previously emitted graphs. Since all the type equivalence classes are the
+    // same size by Theorem 1, we can assemble the final order by striping
     // across the equivalence classes. We determine the order of types taken
     // from each equivalence class by sorting them by order of appearance in the
     // least order, which ensures the final order remains independent of the
