@@ -269,6 +269,9 @@
 ;; CHECK-NEXT:                                                 the minified ones, and minifies
 ;; CHECK-NEXT:                                                 the modules as well
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --minimize-rec-groups                         Split types into minimal
+;; CHECK-NEXT:                                                 recursion groups
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --mod-asyncify-always-and-only-unwind         apply the assumption that
 ;; CHECK-NEXT:                                                 asyncify imports always unwind,
 ;; CHECK-NEXT:                                                 and we never rewind

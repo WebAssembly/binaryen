@@ -1571,6 +1571,7 @@ opt_choices = [
     ('--monomorphize', '--pass-arg=monomorphize-min-benefit@50'),
     ('--monomorphize', '--pass-arg=monomorphize-min-benefit@95'),
     ('--monomorphize-always',),
+    ('--minimize-rec-groups',),
     ('--no-stack-ir',),
     ('--once-reduction',),
     ("--optimize-casts",),
