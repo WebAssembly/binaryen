@@ -606,9 +606,13 @@ private:
                     Type(Type::unreachable),
                     printable,
                     "return_call* should have unreachable type");
+      auto* func = getFunction();
+      if (!shouldBeTrue(!!func, curr, "function not defined")) {
+        return;
+      }
       shouldBeSubType(
         sig.results,
-        getFunction()->getResults(),
+        func->getResults(),
         printable,
         "return_call* callee return type must match caller return type");
     } else {
@@ -696,7 +700,12 @@ void FunctionValidator::visitBlock(Block* curr) {
     }
     breakTypes.erase(iter);
   }
-  switch (getFunction()->profile) {
+
+  auto* func = getFunction();
+  if (!shouldBeTrue(!!func, curr, "function not defined")) {
+    return;
+  }
+  switch (func->profile) {
     case IRProfile::Normal:
       validateNormalBlockElements(curr);
       break;
