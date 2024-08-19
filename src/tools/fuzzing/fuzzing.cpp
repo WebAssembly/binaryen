@@ -291,28 +291,35 @@ void TranslateToFuzzReader::setupHeapTypes() {
     auto eq = HeapTypes::eq.getBasic(share);
     auto any = HeapTypes::any.getBasic(share);
     auto func = HeapTypes::func.getBasic(share);
-    if (type.isStruct()) {
-      interestingHeapSubTypes[struct_].push_back(type);
-      interestingHeapSubTypes[eq].push_back(type);
-      interestingHeapSubTypes[any].push_back(type);
-
-      // Note the mutable fields.
-      auto& fields = type.getStruct().fields;
-      for (Index i = 0; i < fields.size(); i++) {
-        if (fields[i].mutable_) {
-          mutableStructFields.push_back(StructField{type, i});
+    switch (type.getKind()) {
+      case HeapTypeKind::Func:
+        interestingHeapSubTypes[func].push_back(type);
+        break;
+      case HeapTypeKind::Struct: {
+        interestingHeapSubTypes[struct_].push_back(type);
+        interestingHeapSubTypes[eq].push_back(type);
+        interestingHeapSubTypes[any].push_back(type);
+        // Note the mutable fields.
+        auto& fields = type.getStruct().fields;
+        for (Index i = 0; i < fields.size(); i++) {
+          if (fields[i].mutable_) {
+            mutableStructFields.push_back(StructField{type, i});
+          }
         }
+        break;
       }
-    } else if (type.isArray()) {
-      interestingHeapSubTypes[array].push_back(type);
-      interestingHeapSubTypes[eq].push_back(type);
-      interestingHeapSubTypes[any].push_back(type);
-
-      if (type.getArray().element.mutable_) {
-        mutableArrays.push_back(type);
-      }
-    } else if (type.isSignature()) {
-      interestingHeapSubTypes[func].push_back(type);
+      case HeapTypeKind::Array:
+        interestingHeapSubTypes[array].push_back(type);
+        interestingHeapSubTypes[eq].push_back(type);
+        interestingHeapSubTypes[any].push_back(type);
+        if (type.getArray().element.mutable_) {
+          mutableArrays.push_back(type);
+        }
+        break;
+      case HeapTypeKind::Cont:
+        WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Basic:
+        WASM_UNREACHABLE("unexpected kind");
     }
   }
 
@@ -2757,43 +2764,49 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
     return funcContext ? make(type) : makeTrivial(type);
   };
 
-  if (heapType.isSignature()) {
-    return makeRefFuncConst(type);
-  } else if (type.isStruct()) {
-    auto& fields = heapType.getStruct().fields;
-    std::vector<Expression*> values;
-    // If there is a nondefaultable field, we must provide the value and not
-    // depend on defaults. Also do that randomly half the time.
-    if (std::any_of(
-          fields.begin(),
-          fields.end(),
-          [&](const Field& field) { return !field.type.isDefaultable(); }) ||
-        oneIn(2)) {
-      for (auto& field : fields) {
-        values.push_back(makeChild(field.type));
+  switch (heapType.getKind()) {
+    case HeapTypeKind::Func:
+      return makeRefFuncConst(type);
+    case HeapTypeKind::Struct: {
+      auto& fields = heapType.getStruct().fields;
+      std::vector<Expression*> values;
+      // If there is a nondefaultable field, we must provide the value and not
+      // depend on defaults. Also do that randomly half the time.
+      if (std::any_of(
+            fields.begin(),
+            fields.end(),
+            [&](const Field& field) { return !field.type.isDefaultable(); }) ||
+          oneIn(2)) {
+        for (auto& field : fields) {
+          values.push_back(makeChild(field.type));
+        }
+        // Add more nesting manually, as we can easily get exponential blowup
+        // here. This nesting makes it much less likely for a recursive data
+        // structure to end up as a massive tree of struct.news, since the
+        // nesting limitation code at the top of this function will kick in.
+        if (!values.empty()) {
+          // Subtract 1 since if there is a single value there cannot be
+          // exponential blowup.
+          nester.add(values.size() - 1);
+        }
       }
-      // Add more nesting manually, as we can easily get exponential blowup
-      // here. This nesting makes it much less likely for a recursive data
-      // structure to end up as a massive tree of struct.news, since the nesting
-      // limitation code at the top of this function will kick in.
-      if (!values.empty()) {
-        // Subtract 1 since if there is a single value there cannot be
-        // exponential blowup.
-        nester.add(values.size() - 1);
+      return builder.makeStructNew(heapType, values);
+    }
+    case HeapTypeKind::Array: {
+      auto element = heapType.getArray().element;
+      Expression* init = nullptr;
+      if (!element.type.isDefaultable() || oneIn(2)) {
+        init = makeChild(element.type);
       }
+      auto* count = builder.makeConst(int32_t(upTo(MAX_ARRAY_SIZE)));
+      return builder.makeArrayNew(type.getHeapType(), count, init);
     }
-    return builder.makeStructNew(heapType, values);
-  } else if (type.isArray()) {
-    auto element = heapType.getArray().element;
-    Expression* init = nullptr;
-    if (!element.type.isDefaultable() || oneIn(2)) {
-      init = makeChild(element.type);
-    }
-    auto* count = builder.makeConst(int32_t(upTo(MAX_ARRAY_SIZE)));
-    return builder.makeArrayNew(type.getHeapType(), count, init);
-  } else {
-    WASM_UNREACHABLE("bad user-defined ref type");
+    case HeapTypeKind::Cont:
+      WASM_UNREACHABLE("TODO: cont");
+    case HeapTypeKind::Basic:
+      break;
   }
+  WASM_UNREACHABLE("unexpected kind");
 }
 
 Expression* TranslateToFuzzReader::makeStringNewArray() {

@@ -1233,42 +1233,46 @@ size_t HeapType::getDepth() const {
   // In addition to the explicit supertypes we just traversed over, there is
   // implicit supertyping wrt basic types. A signature type always has one more
   // super, HeapType::func, etc.
-  if (!isBasic()) {
-    if (isFunction() || isContinuation()) {
-      depth++;
-    } else if (isStruct()) {
+  switch (getKind()) {
+    case HeapTypeKind::Basic:
+      // Some basic types have supers.
+      switch (getBasic(Unshared)) {
+        case HeapType::ext:
+        case HeapType::func:
+        case HeapType::cont:
+        case HeapType::any:
+        case HeapType::exn:
+          break;
+        case HeapType::eq:
+          depth++;
+          break;
+        case HeapType::i31:
+        case HeapType::struct_:
+        case HeapType::array:
+        case HeapType::string:
+          depth += 2;
+          break;
+        case HeapType::none:
+        case HeapType::nofunc:
+        case HeapType::nocont:
+        case HeapType::noext:
+        case HeapType::noexn:
+          // Bottom types are infinitely deep.
+          depth = size_t(-1l);
+      }
+      break;
+    case HeapTypeKind::Func:
+    case HeapTypeKind::Cont:
+      ++depth;
+      break;
+    case HeapTypeKind::Struct:
       // specific struct types <: struct <: eq <: any
       depth += 3;
-    } else if (isArray()) {
+      break;
+    case HeapTypeKind::Array:
       // specific array types <: array <: eq <: any
       depth += 3;
-    }
-  } else {
-    // Some basic types have supers.
-    switch (getBasic(Unshared)) {
-      case HeapType::ext:
-      case HeapType::func:
-      case HeapType::cont:
-      case HeapType::any:
-      case HeapType::exn:
-        break;
-      case HeapType::eq:
-        depth++;
-        break;
-      case HeapType::i31:
-      case HeapType::struct_:
-      case HeapType::array:
-      case HeapType::string:
-        depth += 2;
-        break;
-      case HeapType::none:
-      case HeapType::nofunc:
-      case HeapType::nocont:
-      case HeapType::noext:
-      case HeapType::noexn:
-        // Bottom types are infinitely deep.
-        depth = size_t(-1l);
-    }
+      break;
   }
   return depth;
 }
@@ -1353,31 +1357,30 @@ bool HeapType::isSubType(HeapType left, HeapType right) {
 }
 
 std::vector<Type> HeapType::getTypeChildren() const {
-  if (isBasic()) {
-    return {};
-  }
-  if (isStruct()) {
-    std::vector<Type> children;
-    for (auto& field : getStruct().fields) {
-      children.push_back(field.type);
-    }
-    return children;
-  }
-  if (isArray()) {
-    return {getArray().element.type};
-  }
-  if (isSignature()) {
-    std::vector<Type> children;
-    auto sig = getSignature();
-    for (auto tuple : {sig.params, sig.results}) {
-      for (auto t : tuple) {
-        children.push_back(t);
+  switch (getKind()) {
+    case HeapTypeKind::Basic:
+      return {};
+    case HeapTypeKind::Func: {
+      std::vector<Type> children;
+      auto sig = getSignature();
+      for (auto tuple : {sig.params, sig.results}) {
+        for (auto t : tuple) {
+          children.push_back(t);
+        }
       }
+      return children;
     }
-    return children;
-  }
-  if (isContinuation()) {
-    return {};
+    case HeapTypeKind::Struct: {
+      std::vector<Type> children;
+      for (auto& field : getStruct().fields) {
+        children.push_back(field.type);
+      }
+      return children;
+    }
+    case HeapTypeKind::Array:
+      return {getArray().element.type};
+    case HeapTypeKind::Cont:
+      return {};
   }
   WASM_UNREACHABLE("unexpected kind");
 }
@@ -1586,16 +1589,21 @@ TypeNames DefaultTypeNameGenerator::getNames(HeapType type) {
   if (inserted) {
     // Generate a new name for this type we have not previously seen.
     std::stringstream stream;
-    if (type.isSignature()) {
-      stream << "func." << funcCount++;
-    } else if (type.isContinuation()) {
-      stream << "cont." << contCount++;
-    } else if (type.isStruct()) {
-      stream << "struct." << structCount++;
-    } else if (type.isArray()) {
-      stream << "array." << arrayCount++;
-    } else {
-      WASM_UNREACHABLE("unexpected kind");
+    switch (type.getKind()) {
+      case HeapTypeKind::Func:
+        stream << "func." << funcCount++;
+        break;
+      case HeapTypeKind::Struct:
+        stream << "struct." << structCount++;
+        break;
+      case HeapTypeKind::Array:
+        stream << "array." << arrayCount++;
+        break;
+      case HeapTypeKind::Cont:
+        stream << "cont." << contCount++;
+        break;
+      case HeapTypeKind::Basic:
+        WASM_UNREACHABLE("unexpected kind");
     }
     it->second = {stream.str(), {}};
   }
@@ -1972,16 +1980,21 @@ std::ostream& TypePrinter::print(HeapType type) {
   if (type.isShared()) {
     os << "(shared ";
   }
-  if (type.isSignature()) {
-    print(type.getSignature());
-  } else if (type.isContinuation()) {
-    print(type.getContinuation());
-  } else if (type.isStruct()) {
-    print(type.getStruct(), names.fieldNames);
-  } else if (type.isArray()) {
-    print(type.getArray());
-  } else {
-    WASM_UNREACHABLE("unexpected type");
+  switch (type.getKind()) {
+    case HeapTypeKind::Func:
+      print(type.getSignature());
+      break;
+    case HeapTypeKind::Struct:
+      print(type.getStruct(), names.fieldNames);
+      break;
+    case HeapTypeKind::Array:
+      print(type.getArray());
+      break;
+    case HeapTypeKind::Cont:
+      print(type.getContinuation());
+      break;
+    case HeapTypeKind::Basic:
+      WASM_UNREACHABLE("unexpected kind");
   }
   if (type.isShared()) {
     os << ')';
