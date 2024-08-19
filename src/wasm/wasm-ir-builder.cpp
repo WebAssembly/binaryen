@@ -1801,6 +1801,16 @@ Result<> IRBuilder::makeArrayInitData(HeapType type, Name data) {
 }
 
 Result<> IRBuilder::makeArrayInitElem(HeapType type, Name elem) {
+  // Validate the elem type, too, before we potentially forget the type
+  // annotation.
+  if (!type.isArray()) {
+    return Err{"expected array type annotation on array.init_elem"};
+  }
+  if (!Type::isSubType(wasm.getElementSegment(elem)->type,
+                       type.getArray().element.type)) {
+    return Err{"element segment type must be a subtype of array element type "
+               "on array.init_elem"};
+  }
   ArrayInitElem curr;
   CHECK_ERR(ChildPopper{*this}.visitArrayInitElem(&curr, type));
   CHECK_ERR(validateTypeAnnotation(type, curr.ref));

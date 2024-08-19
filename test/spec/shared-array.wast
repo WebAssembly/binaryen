@@ -122,7 +122,7 @@
   (type $funcs (shared (array (mut (ref null (shared func))))))
 
   (data)
-  (elem (ref null (shared any)))
+  (elem (ref null (shared func)))
 
   (func (array.get_s $i8 (ref.null (shared none)) (i32.const 0)) (drop))
   (func (array.get_u $i8 (ref.null (shared none)) (i32.const 0)) (drop))
@@ -136,4 +136,14 @@
   (func (array.fill $i8 (ref.null (shared none)) (i32.const 0) (i32.const 0) (i32.const 0)))
   (func (array.init_data $i8 0 (ref.null (shared none)) (i32.const 0) (i32.const 0) (i32.const 0)))
   (func (array.init_elem $funcs 0 (ref.null (shared none)) (i32.const 0) (i32.const 0) (i32.const 0)))
+)
+
+;; Check validation of element segments
+(assert_invalid
+  (module
+    (type $array (shared (array (mut (ref null (shared any))))))
+    (elem (ref null (shared func)))
+    (func (array.init_elem $array 0 (ref.null (shared none)) (i32.const 0) (i32.const 0) (i32.const 0)))
+  )
+  "invalid field type"
 )
