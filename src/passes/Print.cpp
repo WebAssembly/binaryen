@@ -2804,13 +2804,21 @@ bool PrintSExpression::maybePrintUnreachableOrNullReplacement(Expression* curr,
   return maybePrintUnreachableReplacement(curr, type);
 }
 
+static bool requiresExplicitFuncType(HeapType type) {
+  // When the `(type $f)` in a function's typeuse is omitted, the typeuse
+  // matches or declares an MVP function type. When the intended type is not an
+  // MVP function type, we therefore need the explicit `(type $f)`.
+  return type.isOpen() || type.isShared() || type.getRecGroup().size() > 1;
+}
+
 void PrintSExpression::handleSignature(HeapType curr, Name name) {
   Signature sig = curr.getSignature();
   o << "(func";
   if (name.is()) {
     o << ' ';
     name.print(o);
-    if (currModule && currModule->features.hasGC()) {
+    if ((currModule && currModule->features.hasGC()) ||
+        requiresExplicitFuncType(curr)) {
       o << " (type ";
       printHeapType(curr) << ')';
     }
@@ -2947,7 +2955,8 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
   o << '(';
   printMajor(o, "func ");
   curr->name.print(o);
-  if (currModule && currModule->features.hasGC()) {
+  if ((currModule && currModule->features.hasGC()) ||
+      requiresExplicitFuncType(curr->type)) {
     o << " (type ";
     printHeapType(curr->type) << ')';
   }
