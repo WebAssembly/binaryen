@@ -1813,7 +1813,7 @@ Result<> IRBuilder::makeArrayInitElem(HeapType type, Name elem) {
   }
   ArrayInitElem curr;
   CHECK_ERR(ChildPopper{*this}.visitArrayInitElem(&curr, type));
-  CHECK_ERR(validateTypeAnnotation(type, curr.ref, true));
+  CHECK_ERR(validateTypeAnnotation(type, curr.ref));
   push(builder.makeArrayInitElem(
     elem, curr.ref, curr.index, curr.offset, curr.size));
   return Ok{};
