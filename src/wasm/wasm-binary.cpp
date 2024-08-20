@@ -4741,7 +4741,7 @@ Index WasmBinaryReader::readMemoryAccess(Address& alignment, Address& offset) {
     rawAlignment = rawAlignment & ~(1 << 6);
   }
 
-  if (rawAlignment >= 8) {
+  if (rawAlignment > 8) {
     throwError("Alignment must be of a reasonable size");
   }
 
