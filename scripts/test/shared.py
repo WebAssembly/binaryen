@@ -416,7 +416,6 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'align.wast',    # Alignment bit 6 used by multi-memory
     'binary.wast',   # memory.grow reserved byte a LEB in multi-memory
     'block.wast',    # Requires block parameters
-    'br_table.wast',  # Requires ref.extern wast constants
     'bulk.wast',     # Requires table.init abbreviation with implicit table
     'comments.wast',  # Issue with carriage returns being treated as newlines
     'const.wast',    # Hex float constant not recognized as out of range
@@ -429,7 +428,7 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'float_exprs.wast',  # Adding 0 and NaN should give canonical NaN
     'float_misc.wast',   # Rounding wrong on f64.sqrt
     'func.wast',    # Duplicate parameter names not properly rejected
-    'global.wast',  # Requires ref.extern wast constants
+    'global.wast',  # Globals allowed to refer to previous globals by GC
     'if.wast',      # Requires block parameters (on an if)
     'imports.wast',  # Requires wast `register` support
     'linking.wast',  # Requires wast `register` support
@@ -444,12 +443,12 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'try_table.wast',  # Requires try_table interpretation
     'br_on_non_null.wast',  # Requires sending values on br_on_non_null
     'br_on_null.wast',      # Requires sending values on br_on_null
-    'local_init.wast',  # Requires ref.extern wast constants
+    'local_init.wast',  # Requires local validation to respect unnamed blocks
     'ref_func.wast',   # Requires rejecting undeclared functions references
-    'ref_is_null.wast',  # Requires ref.extern wast constants
+    'ref_is_null.wast',  # Requires ref.null wast constants
     'ref_null.wast',     # Requires ref.null wast constants
     'return_call_indirect.wast',  # Requires more precise unreachable validation
-    'select.wast',  # Requires ref.extern wast constants
+    'select.wast',  # Requires ref.null wast constants
     'table.wast',  # Requires support for table default elements
     'type-equivalence.wast',  # Recursive types allowed by GC
     'unreached-invalid.wast',  # Requires more precise unreachable validation
@@ -458,20 +457,16 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'br_if.wast',  # Requires more precise branch validation
     'br_on_cast.wast',  # Requires sending values on br_on_cast
     'br_on_cast_fail.wast',  # Requires sending values on br_on_cast_fail
-    'extern.wast',    # Requires ref.extern wast constants
+    'extern.wast',    # Requires ref.host wast constants
     'i31.wast',       # Requires ref.i31 wast constants
-    'ref_cast.wast',  # Requires ref.extern wast constants
-    'ref_test.wast',  # Requires ref.extern wast constants
+    'ref_cast.wast',  # Requires host references to not be externalized i31refs
+    'ref_test.wast',  # Requires host references to not be externalized i31refs
     'struct.wast',    # Requires ref.struct wast constants
     'type-rec.wast',  # Requires wast `register` support
     'type-subtyping.wast',  # ShellExternalInterface::callTable does not handle subtyping
     'call_indirect.wast',   # Bug with 64-bit inline element segment parsing
     'memory64.wast',        # Multiple memories now allowed
-    'table_fill.wast',      # Requires ref.extern wast constants
-    'table_get.wast',       # Requires ref.extern wast constants
-    'table_grow.wast',      # Requires ref.extern wast constants
     'table_init.wast',      # Requires support for elem.drop
-    'table_set.wast',       # Requires ref.extern wast constants
     'imports0.wast',        # Requires wast `register` support
     'imports2.wast',        # Requires wast `register` support
     'imports3.wast',        # Requires wast `register` support

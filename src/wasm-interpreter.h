@@ -3172,16 +3172,16 @@ public:
     }
     auto info = getTableInstanceInfo(curr->table);
 
-    Index tableSize = info.interface()->tableSize(info.name);
+    uint64_t tableSize = info.interface()->tableSize(info.name);
     auto* table = info.instance->wasm.getTable(info.name);
     Flow ret = Literal::makeFromInt64(tableSize, table->indexType);
     Flow fail = Literal::makeFromInt64(-1, table->indexType);
-    Index delta = deltaFlow.getSingleValue().geti32();
+    uint64_t delta = deltaFlow.getSingleValue().getUnsigned();
 
-    if (tableSize >= uint32_t(-1) - delta) {
+    if (tableSize + delta < tableSize) {
       return fail;
     }
-    if (uint64_t(tableSize) + uint64_t(delta) > uint64_t(table->max)) {
+    if (tableSize + delta > table->max) {
       return fail;
     }
     Index newSize = tableSize + delta;

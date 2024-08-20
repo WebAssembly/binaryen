@@ -318,7 +318,8 @@ struct Shell {
           return Err{err.str()};
         }
       } else if (auto* ref = std::get_if<RefResult>(&expected)) {
-        if (!val.type.isRef() || val.type.getHeapType() != ref->type) {
+        if (!val.type.isRef() ||
+            !HeapType::isSubType(val.type.getHeapType(), ref->type)) {
           err << "expected " << ref->type << " reference, got " << val
               << atIndex();
           return Err{err.str()};

@@ -25,7 +25,17 @@ using namespace std::string_view_literals;
 namespace {
 
 Result<Literal> const_(Lexer& in) {
-  // TODO: handle `ref.extern n` as well.
+  if (in.takeSExprStart("ref.extern"sv)) {
+    auto n = in.takeI32();
+    if (!n) {
+      return in.err("expected host reference payload");
+    }
+    if (!in.takeRParen()) {
+      return in.err("expected end of ref.extern");
+    }
+    // Represent host references as externalized i31s.
+    return Literal::makeI31(*n, Unshared).externalize();
+  }
   return parseConst(in);
 }
 
@@ -144,6 +154,7 @@ Result<ExpectedResult> result(Lexer& in) {
 
   // If we failed to parse a constant, we must have either a nan pattern or a
   // reference.
+
   if (in.takeSExprStart("f32.const"sv)) {
     auto kind = nan(in);
     CHECK_ERR(kind);
