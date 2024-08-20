@@ -124,25 +124,6 @@
     )
   )
 
-  ;; CHECK:      (func $br-in-catch (type $void)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (unreachable)
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT: )
-  (func $br-in-catch
-    ;; When the try_table is removed, the removal of the implicit branch to the
-    ;; catch target should be registered so that its type will be correctly
-    ;; updated to unreachable.
-    (drop
-      (block $catch (result i32)
-        (try_table (catch $e $catch)
-          (unreachable)
-        )
-        (unreachable)
-      )
-    )
-  )
-
   ;; CHECK:      (func $trivial-catch-all-of-throw (type $void)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (block $catch

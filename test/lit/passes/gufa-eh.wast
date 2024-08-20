@@ -45,7 +45,10 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $try_table-materializes-exnref
-    ;; Ensure that catch_all_ref materializes a non-null exnref value.
+    ;; Ensure that catch_all_ref materializes a non-null exnref value. If we do
+    ;; not connect a non-null exnref value to the branch target, GUFA will think
+    ;; no value can possibly get out of that block, and will insert an
+    ;; unreachable instruction after the block.
     (drop
       (block $catch (result exnref)
         (try_table (catch_all_ref $catch)

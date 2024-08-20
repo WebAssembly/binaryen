@@ -584,8 +584,7 @@
   ;; CHECK-NEXT: )
   (func $try_table-catch-result
     (drop
-      ;; Must not be refined to nullref.
-      ;; An anyref comes from the tag's payload because it is not a catch_all.
+      ;; Must not be refined to (result nullref).
       (block $catch (result anyref)
         (try_table (catch $e-anyref $catch)
           (nop)

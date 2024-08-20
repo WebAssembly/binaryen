@@ -69,7 +69,7 @@
             )
           )
         )
-        (br $tryend (i32.const 3))
+        (br $tryend (i32.const 4))
       )
       (i32.const 3)
     )

@@ -474,7 +474,10 @@ struct TagLocation {
 };
 
 // The location of an exnref materialized by a catch_ref or catch_all_ref clause
-// of a try_table.
+// of a try_table. No data is stored here. exnrefs contain a tag and a payload
+// at run-time, as well as potential metadata such as stack traces, but we don't
+// track that. So this is the same as NullLocation in a way: we just need *a*
+// source of contents for places that receive an exnref.
 struct CaughtExnRefLocation {
   bool operator==(const CaughtExnRefLocation& other) const { return true; }
 };
@@ -616,7 +619,9 @@ template<> struct hash<wasm::TagLocation> {
 };
 
 template<> struct hash<wasm::CaughtExnRefLocation> {
-  size_t operator()(const wasm::CaughtExnRefLocation& loc) const { return 0; }
+  size_t operator()(const wasm::CaughtExnRefLocation& loc) const {
+    return std::hash<const char*>()("caught-exnref-location");
+  }
 };
 
 template<> struct hash<wasm::NullLocation> {

@@ -1160,7 +1160,7 @@ struct InfoCollector
       }
 
       if (curr->catchRefs[tagIndex]) {
-        Location location = CaughtExnRefLocation{};
+        auto location = CaughtExnRefLocation{};
         addRoot(location,
                 PossibleContents::fromType(Type(HeapType::exn, NonNullable)));
         info.links.push_back(
