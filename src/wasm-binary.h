@@ -376,15 +376,15 @@ enum EncodedType {
   // string reference types
   stringref = -0x19, // 0x67
   // type forms
-  Func = -0x20,     // 0x60
-  Cont = -0x23,     // 0x5d
-  Struct = -0x21,   // 0x5f
-  Array = -0x22,    // 0x5e
-  Sub = -0x30,      // 0x50
-  SubFinal = -0x31, // 0x4f
-  Shared = -0x1b,   // 0x65
-  // isorecursive recursion groups
-  Rec = -0x32, // 0x4e
+  Func = 0x60,
+  Cont = 0x5d,
+  Struct = 0x5f,
+  Array = 0x5e,
+  Sub = 0x50,
+  SubFinal = 0x4f,
+  SharedDef = 0x65,
+  Shared = -0x1b, // Also 0x65 as an SLEB128
+  Rec = 0x4e,
   // block_type
   Empty = -0x40, // 0x40
 };
