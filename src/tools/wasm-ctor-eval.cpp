@@ -86,13 +86,6 @@ public:
 
     return ModuleRunnerBase<EvallingModuleRunner>::visitGlobalGet(curr);
   }
-
-  Flow visitTableSet(TableSet* curr) {
-    // TODO: Full dynamic table support. For now we stop evalling when we see a
-    //       table.set. (To support this we need to track sets and add code to
-    //       serialize them.)
-    throw FailToEvalException("table.set: TODO");
-  }
 };
 
 // Build an artificial `env` module based on a module's imports, so that the
@@ -173,6 +166,9 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   // itself is not aware of all the globals that belong to it (those that have
   // not yet been re-added are a blind spot for it).
   std::unordered_set<Name> usedGlobalNames;
+
+  // Set to true after we create the instance.
+  bool instanceInitialized = false;
 
   CtorEvalExternalInterface(
     std::map<Name, std::shared_ptr<EvallingModuleRunner>> linkedInstances_ =
@@ -363,7 +359,8 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   }
 
   Index tableSize(Name tableName) override {
-    throw FailToEvalException("table size");
+    // See callTable above, we assume the table is not modified FIXME
+    return wasm->getTableOrNull(tableName)->initial;
   }
 
   Literal tableLoad(Name tableName, Index index) override {
@@ -371,7 +368,15 @@ struct CtorEvalExternalInterface : EvallingModuleRunner::ExternalInterface {
   }
 
   // called during initialization
-  void tableStore(Name tableName, Index index, const Literal& value) override {}
+  void tableStore(Name tableName, Index index, const Literal& value) override {
+    // We allow stores to the table during initialization, but not after, as we
+    // assume the table does not change at runtime.
+    // TODO: Allow table changes by updating the table later like we do with the
+    //       memory, by tracking and serializing them.
+    if (instanceInitialized) {
+      throw FailToEvalException("tableStore after init: TODO");
+    }
+  }
 
   int8_t load8s(Address addr, Name memoryName) override {
     return doLoad<int8_t>(addr, memoryName);
@@ -829,11 +834,13 @@ public:
     // logic here, we save the original (possible externalized) value, and then
     // look at the internals from here on out.
     Literal original = value;
-    if (value.type.isRef() && value.type.getHeapType() == HeapType::ext) {
+    if (value.type.isRef() &&
+        value.type.getHeapType().isMaybeShared(HeapType::ext)) {
       value = value.internalize();
 
       // We cannot serialize truly external things, only data and i31s.
-      assert(value.isData() || value.type.getHeapType() == HeapType::i31);
+      assert(value.isData() ||
+             value.type.getHeapType().isMaybeShared(HeapType::i31));
     }
 
     // GC data (structs and arrays) must be handled with the special global-
@@ -915,7 +922,7 @@ public:
     Expression* ret = builder.makeGlobalGet(definingGlobalName, value.type);
     if (original != value) {
       // The original is externalized.
-      assert(original.type.getHeapType() == HeapType::ext);
+      assert(original.type.getHeapType().isMaybeShared(HeapType::ext));
       ret = builder.makeRefAs(ExternConvertAny, ret);
     }
     return ret;
@@ -1294,6 +1301,7 @@ void evalCtors(Module& wasm,
   try {
     // create an instance for evalling
     EvallingModuleRunner instance(wasm, &interface, linkedInstances);
+    interface.instanceInitialized = true;
     // go one by one, in order, until we fail
     // TODO: if we knew priorities, we could reorder?
     for (auto& ctor : ctors) {

@@ -298,6 +298,9 @@ instructions = [
     ("i64x2.splat",          "makeUnary(UnaryOp::SplatVecI64x2)"),
     ("i64x2.extract_lane",   "makeSIMDExtract(SIMDExtractOp::ExtractLaneVecI64x2, 2)"),
     ("i64x2.replace_lane",   "makeSIMDReplace(SIMDReplaceOp::ReplaceLaneVecI64x2, 2)"),
+    ("f16x8.splat",          "makeUnary(UnaryOp::SplatVecF16x8)"),
+    ("f16x8.extract_lane",   "makeSIMDExtract(SIMDExtractOp::ExtractLaneVecF16x8, 8)"),
+    ("f16x8.replace_lane",   "makeSIMDReplace(SIMDReplaceOp::ReplaceLaneVecF16x8, 8)"),
     ("f32x4.splat",          "makeUnary(UnaryOp::SplatVecF32x4)"),
     ("f32x4.extract_lane",   "makeSIMDExtract(SIMDExtractOp::ExtractLaneVecF32x4, 4)"),
     ("f32x4.replace_lane",   "makeSIMDReplace(SIMDReplaceOp::ReplaceLaneVecF32x4, 4)"),
@@ -340,6 +343,12 @@ instructions = [
     ("i64x2.gt_s",           "makeBinary(BinaryOp::GtSVecI64x2)"),
     ("i64x2.le_s",           "makeBinary(BinaryOp::LeSVecI64x2)"),
     ("i64x2.ge_s",           "makeBinary(BinaryOp::GeSVecI64x2)"),
+    ("f16x8.eq",             "makeBinary(BinaryOp::EqVecF16x8)"),
+    ("f16x8.ne",             "makeBinary(BinaryOp::NeVecF16x8)"),
+    ("f16x8.lt",             "makeBinary(BinaryOp::LtVecF16x8)"),
+    ("f16x8.gt",             "makeBinary(BinaryOp::GtVecF16x8)"),
+    ("f16x8.le",             "makeBinary(BinaryOp::LeVecF16x8)"),
+    ("f16x8.ge",             "makeBinary(BinaryOp::GeVecF16x8)"),
     ("f32x4.eq",             "makeBinary(BinaryOp::EqVecF32x4)"),
     ("f32x4.ne",             "makeBinary(BinaryOp::NeVecF32x4)"),
     ("f32x4.lt",             "makeBinary(BinaryOp::LtVecF32x4)"),
@@ -551,9 +560,7 @@ instructions = [
     ("table.grow",           "makeTableGrow()"),
     ("table.fill",           "makeTableFill()"),
     ("table.copy",           "makeTableCopy()"),
-    # TODO:
-    # table.init
-    #
+    ("table.init",           "makeTableInit()"),
     # exception handling instructions
     ("try",                  "makeTry()"),
     ("try_table",            "makeTryTable()"),

@@ -131,14 +131,20 @@ struct HeapTypeGeneratorImpl {
       } else {
         // We have a supertype, so create a subtype.
         HeapType supertype = builder[*supertypeIndices[index]];
-        if (supertype.isSignature()) {
-          builder[index] = generateSubSignature(supertype.getSignature());
-        } else if (supertype.isStruct()) {
-          builder[index] = generateSubStruct(supertype.getStruct(), share);
-        } else if (supertype.isArray()) {
-          builder[index] = generateSubArray(supertype.getArray());
-        } else {
-          WASM_UNREACHABLE("unexpected kind");
+        switch (supertype.getKind()) {
+          case wasm::HeapTypeKind::Func:
+            builder[index] = generateSubSignature(supertype.getSignature());
+            break;
+          case wasm::HeapTypeKind::Struct:
+            builder[index] = generateSubStruct(supertype.getStruct(), share);
+            break;
+          case wasm::HeapTypeKind::Array:
+            builder[index] = generateSubArray(supertype.getArray());
+            break;
+          case wasm::HeapTypeKind::Cont:
+            WASM_UNREACHABLE("TODO: cont");
+          case wasm::HeapTypeKind::Basic:
+            WASM_UNREACHABLE("unexpected kind");
         }
       }
     }
@@ -879,38 +885,44 @@ std::vector<HeapType> Inhabitator::build() {
 
   for (size_t i = 0; i < types.size(); ++i) {
     auto type = types[i];
-    if (type.isStruct()) {
-      Struct copy = type.getStruct();
-      for (size_t j = 0; j < copy.fields.size(); ++j) {
-        updateType({type, j}, copy.fields[j].type);
+    switch (type.getKind()) {
+      case HeapTypeKind::Func: {
+        auto sig = type.getSignature();
+        size_t j = 0;
+        std::vector<Type> params;
+        for (auto param : sig.params) {
+          params.push_back(param);
+          updateType({type, j++}, params.back());
+        }
+        std::vector<Type> results;
+        for (auto result : sig.results) {
+          results.push_back(result);
+          updateType({type, j++}, results.back());
+        }
+        builder[i] = Signature(builder.getTempTupleType(params),
+                               builder.getTempTupleType(results));
+        continue;
       }
-      builder[i] = copy;
-      continue;
-    }
-    if (type.isArray()) {
-      Array copy = type.getArray();
-      updateType({type, 0}, copy.element.type);
-      builder[i] = copy;
-      continue;
-    }
-    if (type.isSignature()) {
-      auto sig = type.getSignature();
-      size_t j = 0;
-      std::vector<Type> params;
-      for (auto param : sig.params) {
-        params.push_back(param);
-        updateType({type, j++}, params.back());
+      case HeapTypeKind::Struct: {
+        Struct copy = type.getStruct();
+        for (size_t j = 0; j < copy.fields.size(); ++j) {
+          updateType({type, j}, copy.fields[j].type);
+        }
+        builder[i] = copy;
+        continue;
       }
-      std::vector<Type> results;
-      for (auto result : sig.results) {
-        results.push_back(result);
-        updateType({type, j++}, results.back());
+      case HeapTypeKind::Array: {
+        Array copy = type.getArray();
+        updateType({type, 0}, copy.element.type);
+        builder[i] = copy;
+        continue;
       }
-      builder[i] = Signature(builder.getTempTupleType(params),
-                             builder.getTempTupleType(results));
-      continue;
+      case HeapTypeKind::Cont:
+        WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Basic:
+        break;
     }
-    WASM_UNREACHABLE("unexpected type kind");
+    WASM_UNREACHABLE("unexpected kind");
   }
 
   // Establish rec groups.
@@ -994,35 +1006,43 @@ bool isUninhabitable(Type type,
 bool isUninhabitable(HeapType type,
                      std::unordered_set<HeapType>& visited,
                      std::unordered_set<HeapType>& visiting) {
-  if (type.isBasic()) {
-    return false;
-  }
-  if (type.isSignature()) {
-    // Function types are always inhabitable.
-    return false;
+  switch (type.getKind()) {
+    case HeapTypeKind::Basic:
+      return false;
+    case HeapTypeKind::Func:
+    case HeapTypeKind::Cont:
+      // Function types are always inhabitable.
+      return false;
+    case HeapTypeKind::Struct:
+    case HeapTypeKind::Array:
+      break;
   }
   if (visited.count(type)) {
     return false;
   }
-
-  if (!visiting.insert(type).second) {
+  auto [it, inserted] = visiting.insert(type);
+  if (!inserted) {
     return true;
   }
-
-  if (type.isStruct()) {
-    for (auto& field : type.getStruct().fields) {
-      if (isUninhabitable(field.type, visited, visiting)) {
+  switch (type.getKind()) {
+    case HeapTypeKind::Struct:
+      for (auto& field : type.getStruct().fields) {
+        if (isUninhabitable(field.type, visited, visiting)) {
+          return true;
+        }
+      }
+      break;
+    case HeapTypeKind::Array:
+      if (isUninhabitable(type.getArray().element.type, visited, visiting)) {
         return true;
       }
-    }
-  } else if (type.isArray()) {
-    if (isUninhabitable(type.getArray().element.type, visited, visiting)) {
-      return true;
-    }
-  } else {
-    WASM_UNREACHABLE("unexpected type kind");
+      break;
+    case HeapTypeKind::Basic:
+    case HeapTypeKind::Func:
+    case HeapTypeKind::Cont:
+      WASM_UNREACHABLE("unexpected kind");
   }
-  visiting.erase(type);
+  visiting.erase(it);
   visited.insert(type);
   return false;
 }

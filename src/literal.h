@@ -451,6 +451,7 @@ public:
   std::array<Literal, 8> getLanesUI16x8() const;
   std::array<Literal, 4> getLanesI32x4() const;
   std::array<Literal, 2> getLanesI64x2() const;
+  std::array<Literal, 8> getLanesF16x8() const;
   std::array<Literal, 4> getLanesF32x4() const;
   std::array<Literal, 2> getLanesF64x2() const;
 
@@ -470,6 +471,9 @@ public:
   Literal splatI64x2() const;
   Literal extractLaneI64x2(uint8_t index) const;
   Literal replaceLaneI64x2(const Literal& other, uint8_t index) const;
+  Literal splatF16x8() const;
+  Literal extractLaneF16x8(uint8_t index) const;
+  Literal replaceLaneF16x8(const Literal& other, uint8_t index) const;
   Literal splatF32x4() const;
   Literal extractLaneF32x4(uint8_t index) const;
   Literal replaceLaneF32x4(const Literal& other, uint8_t index) const;
@@ -512,6 +516,12 @@ public:
   Literal gtSI64x2(const Literal& other) const;
   Literal leSI64x2(const Literal& other) const;
   Literal geSI64x2(const Literal& other) const;
+  Literal eqF16x8(const Literal& other) const;
+  Literal neF16x8(const Literal& other) const;
+  Literal ltF16x8(const Literal& other) const;
+  Literal gtF16x8(const Literal& other) const;
+  Literal leF16x8(const Literal& other) const;
+  Literal geF16x8(const Literal& other) const;
   Literal eqF32x4(const Literal& other) const;
   Literal neF32x4(const Literal& other) const;
   Literal ltF32x4(const Literal& other) const;

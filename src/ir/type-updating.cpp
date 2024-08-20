@@ -88,55 +88,47 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
 
   // Create the temporary heap types.
   i = 0;
+  auto map = [&](HeapType type) -> HeapType {
+    if (auto it = typeIndices.find(type); it != typeIndices.end()) {
+      return typeBuilder[it->second];
+    }
+    return type;
+  };
   for (auto [type, _] : typeIndices) {
-    typeBuilder[i].setOpen(type.isOpen());
-    typeBuilder[i].setShared(type.getShared());
-    if (type.isSignature()) {
-      auto sig = type.getSignature();
-      TypeList newParams, newResults;
-      for (auto t : sig.params) {
-        newParams.push_back(getTempType(t));
+    typeBuilder[i].copy(type, map);
+    switch (type.getKind()) {
+      case HeapTypeKind::Func: {
+        auto newSig = HeapType(typeBuilder[i]).getSignature();
+        modifySignature(type, newSig);
+        typeBuilder[i] = newSig;
+        break;
       }
-      for (auto t : sig.results) {
-        newResults.push_back(getTempType(t));
+      case HeapTypeKind::Struct: {
+        auto newStruct = HeapType(typeBuilder[i]).getStruct();
+        modifyStruct(type, newStruct);
+        typeBuilder[i] = newStruct;
+        break;
       }
-      Signature newSig(typeBuilder.getTempTupleType(newParams),
-                       typeBuilder.getTempTupleType(newResults));
-      modifySignature(type, newSig);
-      typeBuilder[i] = newSig;
-    } else if (type.isStruct()) {
-      auto struct_ = type.getStruct();
-      // Start with a copy to get mutability/packing/etc.
-      auto newStruct = struct_;
-      for (auto& field : newStruct.fields) {
-        field.type = getTempType(field.type);
+      case HeapTypeKind::Array: {
+        auto newArray = HeapType(typeBuilder[i]).getArray();
+        modifyArray(type, newArray);
+        typeBuilder[i] = newArray;
+        break;
       }
-      modifyStruct(type, newStruct);
-      typeBuilder[i] = newStruct;
-    } else if (type.isArray()) {
-      auto array = type.getArray();
-      // Start with a copy to get mutability/packing/etc.
-      auto newArray = array;
-      newArray.element.type = getTempType(newArray.element.type);
-      modifyArray(type, newArray);
-      typeBuilder[i] = newArray;
-    } else {
-      WASM_UNREACHABLE("bad type");
+      case HeapTypeKind::Cont:
+        WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Basic:
+        WASM_UNREACHABLE("unexpected kind");
     }
 
-    // Apply a super, if there is one
     if (auto super = getDeclaredSuperType(type)) {
-      if (auto it = typeIndices.find(*super); it != typeIndices.end()) {
-        assert(it->second < i);
-        typeBuilder[i].subTypeOf(typeBuilder[it->second]);
-      } else {
-        typeBuilder[i].subTypeOf(*super);
-      }
+      typeBuilder[i].subTypeOf(map(*super));
+    } else {
+      typeBuilder[i].subTypeOf(std::nullopt);
     }
 
     modifyTypeBuilderEntry(typeBuilder, i, type);
-
-    i++;
+    ++i;
   }
 
   auto buildResults = typeBuilder.build();
@@ -153,31 +145,7 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   for (auto [type, index] : typeIndices) {
     oldToNewTypes[type] = newTypes[index];
   }
-
-  // Update type names to avoid duplicates.
-  std::unordered_set<Name> typeNames;
-  for (auto& [type, info] : wasm.typeNames) {
-    typeNames.insert(info.name);
-  }
-  for (auto& [old, new_] : oldToNewTypes) {
-    if (old == new_) {
-      // The type is being mapped to itself; no need to rename anything.
-      continue;
-    }
-
-    if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
-      wasm.typeNames[new_] = wasm.typeNames[old];
-      // Use the existing name in the new type, as usually it completely
-      // replaces the old. Rename the old name in a unique way to avoid
-      // confusion in the case that it remains used.
-      auto deduped =
-        Names::getValidName(wasm.typeNames[old].name,
-                            [&](Name test) { return !typeNames.count(test); });
-      wasm.typeNames[old].name = deduped;
-      typeNames.insert(deduped);
-    }
-  }
-
+  mapTypeNames(oldToNewTypes);
   return oldToNewTypes;
 }
 
@@ -301,6 +269,32 @@ void GlobalTypeRewriter::mapTypes(const TypeMap& oldToNewTypes) {
   }
 }
 
+void GlobalTypeRewriter::mapTypeNames(const TypeMap& oldToNewTypes) {
+  // Update type names to avoid duplicates.
+  std::unordered_set<Name> typeNames;
+  for (auto& [type, info] : wasm.typeNames) {
+    typeNames.insert(info.name);
+  }
+  for (auto& [old, new_] : oldToNewTypes) {
+    if (old == new_) {
+      // The type is being mapped to itself; no need to rename anything.
+      continue;
+    }
+
+    if (auto it = wasm.typeNames.find(old); it != wasm.typeNames.end()) {
+      wasm.typeNames[new_] = wasm.typeNames[old];
+      // Use the existing name in the new type, as usually it completely
+      // replaces the old. Rename the old name in a unique way to avoid
+      // confusion in the case that it remains used.
+      auto deduped =
+        Names::getValidName(wasm.typeNames[old].name,
+                            [&](Name test) { return !typeNames.count(test); });
+      wasm.typeNames[old].name = deduped;
+      typeNames.insert(deduped);
+    }
+  }
+}
+
 Type GlobalTypeRewriter::getTempType(Type type) {
   if (type.isBasic()) {
     return type;
@@ -316,8 +310,7 @@ Type GlobalTypeRewriter::getTempType(Type type) {
     return type;
   }
   if (type.isTuple()) {
-    auto& tuple = type.getTuple();
-    auto newTuple = tuple;
+    auto newTuple = type.getTuple();
     for (auto& t : newTuple) {
       t = getTempType(t);
     }

@@ -206,6 +206,8 @@ Result<> makeTableFill(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeTableCopy(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
+Result<> makeTableInit(Ctx&, Index, const std::vector<Annotation>&);
+template<typename Ctx>
 Result<> makeThrow(Ctx&, Index, const std::vector<Annotation>&);
 template<typename Ctx>
 Result<> makeRethrow(Ctx&, Index, const std::vector<Annotation>&);
@@ -338,8 +340,9 @@ MaybeResult<ImportNames> inlineImport(Lexer&);
 Result<std::vector<Name>> inlineExports(Lexer&);
 template<typename Ctx> Result<> comptype(Ctx&);
 template<typename Ctx> Result<> sharecomptype(Ctx&);
-template<typename Ctx> MaybeResult<typename Ctx::ModuleNameT> subtype(Ctx&);
-template<typename Ctx> MaybeResult<> deftype(Ctx&);
+template<typename Ctx> Result<> subtype(Ctx&);
+template<typename Ctx> MaybeResult<> typedef_(Ctx&);
+template<typename Ctx> MaybeResult<> rectype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::LocalsT> locals(Ctx&);
 template<typename Ctx> MaybeResult<> import_(Ctx&);
 template<typename Ctx> MaybeResult<> func(Ctx&);
@@ -2068,6 +2071,16 @@ makeTableCopy(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
 
 template<typename Ctx>
 Result<>
+makeTableInit(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
+  auto table = maybeTableidx(ctx);
+  CHECK_ERR(table);
+  auto elem = elemidx(ctx);
+  CHECK_ERR(elem);
+  return ctx.makeTableInit(pos, annotations, table.getPtr(), *elem);
+}
+
+template<typename Ctx>
+Result<>
 makeThrow(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   auto tag = tagidx(ctx);
   CHECK_ERR(tag);
@@ -2328,6 +2341,7 @@ Result<> makeArrayInitElem(Ctx& ctx,
   auto type = typeidx(ctx);
   CHECK_ERR(type);
   auto elem = elemidx(ctx);
+  CHECK_ERR(elem);
   return ctx.makeArrayInitElem(pos, annotations, *type, *elem);
 }
 
@@ -2425,7 +2439,7 @@ makeContNew(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   return ctx.makeContNew(pos, annotations, *type);
 }
 
-// resume ::= 'resume' typeidx ('(' 'tag' tagidx labelidx ')')*
+// resume ::= 'resume' typeidx ('(' 'on' tagidx labelidx ')')*
 template<typename Ctx>
 Result<>
 makeResume(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
@@ -2433,7 +2447,7 @@ makeResume(Ctx& ctx, Index pos, const std::vector<Annotation>& annotations) {
   CHECK_ERR(type);
 
   auto tagLabels = ctx.makeTagLabelList();
-  while (ctx.in.takeSExprStart("tag"sv)) {
+  while (ctx.in.takeSExprStart("on"sv)) {
     auto tag = tagidx(ctx);
     CHECK_ERR(tag);
     auto label = labelidx(ctx);
@@ -2780,20 +2794,8 @@ template<typename Ctx> Result<> sharecomptype(Ctx& ctx) {
   return Ok{};
 }
 
-// subtype ::= '(' 'type' id? '(' 'sub' typeidx? sharecomptype ')' ')'
-//           | '(' 'type' id? sharecomptype ')'
-template<typename Ctx> MaybeResult<> subtype(Ctx& ctx) {
-  auto pos = ctx.in.getPos();
-
-  if (!ctx.in.takeSExprStart("type"sv)) {
-    return {};
-  }
-
-  Name name;
-  if (auto id = ctx.in.takeID()) {
-    name = *id;
-  }
-
+// subtype ::= '(' 'sub' typeidx? sharecomptype ')'  | sharecomptype
+template<typename Ctx> Result<> subtype(Ctx& ctx) {
   if (ctx.in.takeSExprStart("sub"sv)) {
     if (!ctx.in.takeKeyword("final"sv)) {
       ctx.setOpen();
@@ -2811,24 +2813,42 @@ template<typename Ctx> MaybeResult<> subtype(Ctx& ctx) {
   } else {
     CHECK_ERR(sharecomptype(ctx));
   }
+  return Ok{};
+}
+
+// typedef ::= '(' 'type' id? subtype ')'
+template<typename Ctx> MaybeResult<> typedef_(Ctx& ctx) {
+  auto pos = ctx.in.getPos();
+
+  if (!ctx.in.takeSExprStart("type"sv)) {
+    return {};
+  }
+
+  Name name;
+  if (auto id = ctx.in.takeID()) {
+    name = *id;
+  }
+
+  auto sub = subtype(ctx);
+  CHECK_ERR(sub);
 
   if (!ctx.in.takeRParen()) {
     return ctx.in.err("expected end of type definition");
   }
 
-  ctx.finishSubtype(name, pos);
+  ctx.finishTypeDef(name, pos);
   return Ok{};
 }
 
-// deftype ::= '(' 'rec' subtype* ')'
+// rectype ::= '(' 'rec' subtype* ')'
 //           | subtype
-template<typename Ctx> MaybeResult<> deftype(Ctx& ctx) {
+template<typename Ctx> MaybeResult<> rectype(Ctx& ctx) {
   auto pos = ctx.in.getPos();
 
   if (ctx.in.takeSExprStart("rec"sv)) {
     size_t startIndex = ctx.getRecGroupStartIndex();
     size_t groupLen = 0;
-    while (auto type = subtype(ctx)) {
+    while (auto type = typedef_(ctx)) {
       CHECK_ERR(type);
       ++groupLen;
     }
@@ -2836,13 +2856,13 @@ template<typename Ctx> MaybeResult<> deftype(Ctx& ctx) {
       return ctx.in.err("expected type definition or end of recursion group");
     }
     ctx.addRecGroup(startIndex, groupLen);
-  } else if (auto type = subtype(ctx)) {
+  } else if (auto type = typedef_(ctx)) {
     CHECK_ERR(type);
   } else {
     return {};
   }
 
-  ctx.finishDeftype(pos);
+  ctx.finishRectype(pos);
   return Ok{};
 }
 
@@ -3464,7 +3484,7 @@ template<typename Ctx> MaybeResult<> modulefield(Ctx& ctx) {
   if (ctx.in.empty() || ctx.in.peekRParen()) {
     return {};
   }
-  if (auto res = deftype(ctx)) {
+  if (auto res = rectype(ctx)) {
     CHECK_ERR(res);
     return Ok{};
   }

@@ -195,10 +195,10 @@ NATIVECC = (os.environ.get('CC') or which('mingw32-gcc') or
             which('gcc') or which('clang'))
 NATIVEXX = (os.environ.get('CXX') or which('mingw32-g++') or
             which('g++') or which('clang++'))
-NODEJS = os.getenv('NODE', which('node') or which('nodejs'))
+NODEJS = os.environ.get('NODE') or which('node') or which('nodejs')
 MOZJS = which('mozjs') or which('spidermonkey')
 
-V8 = which('v8') or which('d8')
+V8 = os.environ.get('V8') or which('v8') or which('d8')
 
 BINARYEN_INSTALL_DIR = os.path.dirname(options.binaryen_bin)
 WASM_OPT = [os.path.join(options.binaryen_bin, 'wasm-opt')]

@@ -414,6 +414,7 @@ extern const char* Dylink;
 extern const char* Dylink0;
 extern const char* Linking;
 extern const char* Producers;
+extern const char* BuildId;
 extern const char* TargetFeatures;
 
 extern const char* AtomicsFeature;
@@ -1054,6 +1055,15 @@ enum ASTNodes {
   // half precision opcodes
   F32_F16LoadMem = 0x30,
   F32_F16StoreMem = 0x31,
+  F16x8Splat = 0x120,
+  F16x8ExtractLane = 0x121,
+  F16x8ReplaceLane = 0x122,
+  F16x8Eq = 0x137,
+  F16x8Ne = 0x138,
+  F16x8Lt = 0x139,
+  F16x8Gt = 0x13a,
+  F16x8Le = 0x13b,
+  F16x8Ge = 0x13c,
 
   // bulk memory opcodes
 
@@ -1068,6 +1078,7 @@ enum ASTNodes {
   TableSize = 0x10,
   TableFill = 0x11,
   TableCopy = 0x0e,
+  TableInit = 0x0c,
   RefNull = 0xd0,
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
@@ -1742,6 +1753,7 @@ public:
   bool maybeVisitTableGrow(Expression*& out, uint32_t code);
   bool maybeVisitTableFill(Expression*& out, uint32_t code);
   bool maybeVisitTableCopy(Expression*& out, uint32_t code);
+  bool maybeVisitTableInit(Expression*& out, uint32_t code);
   bool maybeVisitRefI31(Expression*& out, uint32_t code);
   bool maybeVisitI31Get(Expression*& out, uint32_t code);
   bool maybeVisitRefTest(Expression*& out, uint32_t code);

@@ -469,6 +469,7 @@ public:
   void visitTableGrow(TableGrow* curr);
   void visitTableFill(TableFill* curr);
   void visitTableCopy(TableCopy* curr);
+  void visitTableInit(TableInit* curr);
   void noteDelegate(Name name, Expression* curr);
   void noteRethrow(Name name, Expression* curr);
   void visitTry(Try* curr);
@@ -1272,6 +1273,10 @@ void FunctionValidator::visitSIMDExtract(SIMDExtract* curr) {
       lane_t = Type::i64;
       lanes = 2;
       break;
+    case ExtractLaneVecF16x8:
+      lane_t = Type::f32;
+      lanes = 8;
+      break;
     case ExtractLaneVecF32x4:
       lane_t = Type::f32;
       lanes = 4;
@@ -1317,6 +1322,10 @@ void FunctionValidator::visitSIMDReplace(SIMDReplace* curr) {
     case ReplaceLaneVecI64x2:
       lane_t = Type::i64;
       lanes = 2;
+      break;
+    case ReplaceLaneVecF16x8:
+      lane_t = Type::f32;
+      lanes = 8;
       break;
     case ReplaceLaneVecF32x4:
       lane_t = Type::f32;
@@ -1735,6 +1744,12 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case LeSVecI64x2:
     case GtSVecI64x2:
     case GeSVecI64x2:
+    case EqVecF16x8:
+    case NeVecF16x8:
+    case LtVecF16x8:
+    case LeVecF16x8:
+    case GtVecF16x8:
+    case GeVecF16x8:
     case EqVecF32x4:
     case NeVecF32x4:
     case LtVecF32x4:
@@ -2036,6 +2051,7 @@ void FunctionValidator::visitUnary(Unary* curr) {
       shouldBeEqual(
         curr->value->type, Type(Type::i64), curr, "expected i64 splat value");
       break;
+    case SplatVecF16x8:
     case SplatVecF32x4:
       shouldBeEqual(
         curr->type, Type(Type::v128), curr, "expected splat to have v128 type");
@@ -2428,12 +2444,41 @@ void FunctionValidator::visitTableCopy(TableCopy* curr) {
                     curr,
                     "table.copy source must have right type for dest");
   }
+  shouldBeEqualOrFirstIsUnreachable(curr->dest->type,
+                                    destTable->indexType,
+                                    curr,
+                                    "table.copy dest must be valid");
+  shouldBeEqualOrFirstIsUnreachable(curr->source->type,
+                                    sourceTable->indexType,
+                                    curr,
+                                    "table.copy source must be valid");
+  Type sizeType =
+    sourceTable->is64() && destTable->is64() ? Type::i64 : Type::i32;
   shouldBeEqualOrFirstIsUnreachable(
-    curr->dest->type, Type(Type::i32), curr, "table.copy dest must be i32");
+    curr->size->type, sizeType, curr, "table.copy size must be valid");
+}
+
+void FunctionValidator::visitTableInit(TableInit* curr) {
+  shouldBeTrue(getModule()->features.hasBulkMemory(),
+               curr,
+               "table.init requires bulk-memory [--enable-bulk-memory]");
+  auto* segment = getModule()->getElementSegment(curr->segment);
+  auto* table = getModule()->getTableOrNull(curr->table);
+  if (shouldBeTrue(!!segment, curr, "table.init segment must exist") &&
+      shouldBeTrue(!!table, curr, "table.init table must exist")) {
+    shouldBeSubType(segment->type,
+                    table->type,
+                    curr,
+                    "table.init source must have right type for dest");
+  }
   shouldBeEqualOrFirstIsUnreachable(
-    curr->source->type, Type(Type::i32), curr, "table.copy source must be i32");
+    curr->dest->type, table->indexType, curr, "table.init dest must be valid");
+  shouldBeEqualOrFirstIsUnreachable(curr->offset->type,
+                                    Type(Type::i32),
+                                    curr,
+                                    "table.init offset must be valid");
   shouldBeEqualOrFirstIsUnreachable(
-    curr->size->type, Type(Type::i32), curr, "table.copy size must be i32");
+    curr->size->type, Type(Type::i32), curr, "table.init size must be valid");
 }
 
 void FunctionValidator::noteDelegate(Name name, Expression* curr) {
@@ -2724,7 +2769,7 @@ void FunctionValidator::visitCallRef(CallRef* curr) {
     getModule()->features.hasGC(), curr, "call_ref requires gc [--enable-gc]");
   if (curr->target->type == Type::unreachable ||
       (curr->target->type.isRef() &&
-       curr->target->type.getHeapType() == HeapType::nofunc)) {
+       curr->target->type.getHeapType().isMaybeShared(HeapType::nofunc))) {
     return;
   }
   if (shouldBeTrue(curr->target->type.isFunction(),
@@ -3577,31 +3622,16 @@ static void validateBinaryenIR(Module& wasm, ValidationInfo& info) {
       auto oldType = curr->type;
       ReFinalizeNode().visit(curr);
       auto newType = curr->type;
-      if (newType != oldType) {
-        // We accept concrete => undefined on control flow structures:
-        // e.g.
-        //
-        //  (drop (block (result i32) (unreachable)))
-        //
-        // The block has a type annotated on it, which can make its unreachable
-        // contents have a concrete type. Refinalize will make it unreachable,
-        // so both are valid here.
-        bool validControlFlowStructureChange =
-          Properties::isControlFlowStructure(curr) && oldType.isConcrete() &&
-          newType == Type::unreachable;
-        // It's ok in general for types to get refined as long as they don't
-        // become unreachable.
-        bool validRefinement =
-          Type::isSubType(newType, oldType) && newType != Type::unreachable;
-        if (!validRefinement && !validControlFlowStructureChange) {
-          std::ostringstream ss;
-          ss << "stale type found in " << scope << " on " << curr
-             << "\n(marked as " << oldType << ", should be " << newType
-             << ")\n";
-          info.fail(ss.str(), curr, getFunction());
-        }
-        curr->type = oldType;
+      // It's ok for types to be further refinable, but they must admit a
+      // superset of the values allowed by the most precise possible type, i.e.
+      // they must not be strict subtypes of or unrelated to the refined type.
+      if (!Type::isSubType(newType, oldType)) {
+        std::ostringstream ss;
+        ss << "stale type found in " << scope << " on " << curr
+           << "\n(marked as " << oldType << ", should be " << newType << ")\n";
+        info.fail(ss.str(), curr, getFunction());
       }
+      curr->type = oldType;
       // check if a node is a duplicate - expressions must not be seen more than
       // once
       if (!seen.insert(curr).second) {

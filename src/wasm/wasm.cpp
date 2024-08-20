@@ -36,6 +36,7 @@ const char* Dylink = "dylink";
 const char* Dylink0 = "dylink.0";
 const char* Linking = "linking";
 const char* Producers = "producers";
+const char* BuildId = "build_id";
 const char* TargetFeatures = "target_features";
 const char* AtomicsFeature = "atomics";
 const char* BulkMemoryFeature = "bulk-memory";
@@ -386,6 +387,7 @@ void SIMDExtract::finalize() {
     case ExtractLaneVecI64x2:
       type = Type::i64;
       break;
+    case ExtractLaneVecF16x8:
     case ExtractLaneVecF32x4:
       type = Type::f32;
       break;
@@ -636,6 +638,7 @@ void Unary::finalize() {
     case SplatVecI16x8:
     case SplatVecI32x4:
     case SplatVecI64x2:
+    case SplatVecF16x8:
     case SplatVecF32x4:
     case SplatVecF64x2:
     case NotVec128:
@@ -867,6 +870,14 @@ void TableFill::finalize() {
 void TableCopy::finalize() {
   type = Type::none;
   if (dest->type == Type::unreachable || source->type == Type::unreachable ||
+      size->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
+void TableInit::finalize() {
+  type = Type::none;
+  if (dest->type == Type::unreachable || offset->type == Type::unreachable ||
       size->type == Type::unreachable) {
     type = Type::unreachable;
   }

@@ -2241,6 +2241,10 @@ Ref Wasm2JSBuilder::processExpression(Expression* curr,
                                     visit(curr->source, EXPRESSION_RESULT),
                                     visit(curr->size, EXPRESSION_RESULT));
     }
+    Ref visitTableInit(TableInit* curr) {
+      unimplemented(curr);
+      WASM_UNREACHABLE("unimp");
+    }
     Ref visitTry(Try* curr) {
       unimplemented(curr);
       WASM_UNREACHABLE("unimp");

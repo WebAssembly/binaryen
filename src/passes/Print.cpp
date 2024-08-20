@@ -703,6 +703,9 @@ struct PrintExpressionContents
       case ExtractLaneVecI64x2:
         o << "i64x2.extract_lane";
         break;
+      case ExtractLaneVecF16x8:
+        o << "f16x8.extract_lane";
+        break;
       case ExtractLaneVecF32x4:
         o << "f32x4.extract_lane";
         break;
@@ -727,6 +730,9 @@ struct PrintExpressionContents
         break;
       case ReplaceLaneVecI64x2:
         o << "i64x2.replace_lane";
+        break;
+      case ReplaceLaneVecF16x8:
+        o << "f16x8.replace_lane";
         break;
       case ReplaceLaneVecF32x4:
         o << "f32x4.replace_lane";
@@ -1136,6 +1142,9 @@ struct PrintExpressionContents
         break;
       case SplatVecI64x2:
         o << "i64x2.splat";
+        break;
+      case SplatVecF16x8:
+        o << "f16x8.splat";
         break;
       case SplatVecF32x4:
         o << "f32x4.splat";
@@ -1680,6 +1689,24 @@ struct PrintExpressionContents
       case GeSVecI64x2:
         o << "i64x2.ge_s";
         break;
+      case EqVecF16x8:
+        o << "f16x8.eq";
+        break;
+      case NeVecF16x8:
+        o << "f16x8.ne";
+        break;
+      case LtVecF16x8:
+        o << "f16x8.lt";
+        break;
+      case GtVecF16x8:
+        o << "f16x8.gt";
+        break;
+      case LeVecF16x8:
+        o << "f16x8.le";
+        break;
+      case GeVecF16x8:
+        o << "f16x8.ge";
+        break;
       case EqVecF32x4:
         o << "f32x4.eq";
         break;
@@ -2028,6 +2055,12 @@ struct PrintExpressionContents
     o << ' ';
     curr->sourceTable.print(o);
   }
+  void visitTableInit(TableInit* curr) {
+    printMedium(o, "table.init ");
+    curr->table.print(o);
+    o << ' ';
+    curr->segment.print(o);
+  }
   void visitTry(Try* curr) {
     printMedium(o, "try");
     if (curr->name.is()) {
@@ -2347,11 +2380,9 @@ struct PrintExpressionContents
     o << ' ';
     printHeapType(curr->contType);
 
-    // We deliberate keep all (tag ...) clauses on the same line as the resume
-    // itself to work around a quirk in update_lit_checks.py
     for (Index i = 0; i < curr->handlerTags.size(); i++) {
       o << " (";
-      printMedium(o, "tag ");
+      printMedium(o, "on ");
       curr->handlerTags[i].print(o);
       o << ' ';
       curr->handlerBlocks[i].print(o);
@@ -2773,13 +2804,21 @@ bool PrintSExpression::maybePrintUnreachableOrNullReplacement(Expression* curr,
   return maybePrintUnreachableReplacement(curr, type);
 }
 
+static bool requiresExplicitFuncType(HeapType type) {
+  // When the `(type $f)` in a function's typeuse is omitted, the typeuse
+  // matches or declares an MVP function type. When the intended type is not an
+  // MVP function type, we therefore need the explicit `(type $f)`.
+  return type.isOpen() || type.isShared() || type.getRecGroup().size() > 1;
+}
+
 void PrintSExpression::handleSignature(HeapType curr, Name name) {
   Signature sig = curr.getSignature();
   o << "(func";
   if (name.is()) {
     o << ' ';
     name.print(o);
-    if (currModule && currModule->features.hasGC()) {
+    if ((currModule && currModule->features.hasGC()) ||
+        requiresExplicitFuncType(curr)) {
       o << " (type ";
       printHeapType(curr) << ')';
     }
@@ -2916,7 +2955,8 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
   o << '(';
   printMajor(o, "func ");
   curr->name.print(o);
-  if (currModule && currModule->features.hasGC()) {
+  if ((currModule && currModule->features.hasGC()) ||
+      requiresExplicitFuncType(curr->type)) {
     o << " (type ";
     printHeapType(curr->type) << ')';
   }

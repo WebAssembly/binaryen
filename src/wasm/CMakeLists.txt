@@ -12,6 +12,7 @@ set(wasm_SOURCES
   wasm-stack.cpp
   wasm-stack-opts.cpp
   wasm-type.cpp
+  wasm-type-shape.cpp
   wasm-validator.cpp
   ${wasm_HEADERS}
 )

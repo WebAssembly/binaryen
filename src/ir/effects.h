@@ -778,6 +778,10 @@ private:
       parent.writesTable = true;
       parent.implicitTrap = true;
     }
+    void visitTableInit(TableInit* curr) {
+      parent.writesTable = true;
+      parent.implicitTrap = true;
+    }
     void visitTry(Try* curr) {
       if (curr->delegateTarget.is()) {
         parent.delegateTargets.insert(curr->delegateTarget);

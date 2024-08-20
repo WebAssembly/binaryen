@@ -516,11 +516,7 @@ InsertOrderedMap<HeapType, size_t> getHeapTypeCounts(Module& wasm,
       if (auto super = ht.getDeclaredSuperType()) {
         if (!counts.counts.count(*super)) {
           noteNewType(*super);
-          // We should unconditionally count supertypes, but while the type
-          // system is in flux, skip counting them to keep the type orderings in
-          // nominal test outputs more similar to the orderings in the
-          // equirecursive outputs. FIXME
-          counts.include(*super);
+          counts.note(*super);
         }
       }
 

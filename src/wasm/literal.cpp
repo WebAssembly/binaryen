@@ -20,6 +20,7 @@
 #include <cmath>
 
 #include "emscripten-optimizer/simple_ast.h"
+#include "fp16.h"
 #include "ir/bits.h"
 #include "pretty_printing.h"
 #include "support/bits.h"
@@ -122,7 +123,11 @@ Literal::Literal(const Literal& other) : type(other.type) {
     new (&gcData) std::shared_ptr<GCData>();
     return;
   }
-  if (other.isData() || other.type.getHeapType().isMaybeShared(HeapType::ext)) {
+  // After handling nulls, only non-nullable Literals remain.
+  assert(!type.isNullable());
+
+  auto heapType = type.getHeapType();
+  if (other.isData() || heapType.isMaybeShared(HeapType::ext)) {
     new (&gcData) std::shared_ptr<GCData>(other.gcData);
     return;
   }
@@ -130,37 +135,30 @@ Literal::Literal(const Literal& other) : type(other.type) {
     func = other.func;
     return;
   }
-  if (type.isRef()) {
-    assert(!type.isNullable());
-    auto heapType = type.getHeapType();
-    if (heapType.isBasic()) {
-      switch (heapType.getBasic(Unshared)) {
-        case HeapType::i31:
-          i32 = other.i32;
-          return;
-        case HeapType::ext:
-          gcData = other.gcData;
-          return;
-        case HeapType::exn:
-          new (&exnData) std::shared_ptr<ExnData>(other.exnData);
-          return;
-        case HeapType::none:
-        case HeapType::noext:
-        case HeapType::nofunc:
-        case HeapType::noexn:
-        case HeapType::nocont:
-          WASM_UNREACHABLE("null literals should already have been handled");
-        case HeapType::any:
-        case HeapType::eq:
-        case HeapType::func:
-        case HeapType::cont:
-        case HeapType::struct_:
-        case HeapType::array:
-          WASM_UNREACHABLE("invalid type");
-        case HeapType::string:
-          WASM_UNREACHABLE("TODO: string literals");
-      }
-    }
+  switch (heapType.getBasic(Unshared)) {
+    case HeapType::i31:
+      i32 = other.i32;
+      return;
+    case HeapType::exn:
+      new (&exnData) std::shared_ptr<ExnData>(other.exnData);
+      return;
+    case HeapType::ext:
+      WASM_UNREACHABLE("handled above with isData()");
+    case HeapType::none:
+    case HeapType::noext:
+    case HeapType::nofunc:
+    case HeapType::noexn:
+    case HeapType::nocont:
+      WASM_UNREACHABLE("null literals should already have been handled");
+    case HeapType::any:
+    case HeapType::eq:
+    case HeapType::func:
+    case HeapType::cont:
+    case HeapType::struct_:
+    case HeapType::array:
+      WASM_UNREACHABLE("invalid type");
+    case HeapType::string:
+      WASM_UNREACHABLE("TODO: string literals");
   }
 }
 
@@ -462,7 +460,7 @@ bool Literal::operator==(const Literal& other) const {
       return gcData == other.gcData;
     }
     assert(type.getHeapType().isBasic());
-    if (type.getHeapType().getBasic(Unshared) == HeapType::i31) {
+    if (type.getHeapType().isMaybeShared(HeapType::i31)) {
       return i32 == other.i32;
     }
     WASM_UNREACHABLE("unexpected type");
@@ -1745,6 +1743,13 @@ LaneArray<4> Literal::getLanesI32x4() const {
 LaneArray<2> Literal::getLanesI64x2() const {
   return getLanes<int64_t, 2>(*this);
 }
+LaneArray<8> Literal::getLanesF16x8() const {
+  auto lanes = getLanesUI16x8();
+  for (size_t i = 0; i < lanes.size(); ++i) {
+    lanes[i] = Literal(fp16_ieee_to_fp32_value(lanes[i].geti32()));
+  }
+  return lanes;
+}
 LaneArray<4> Literal::getLanesF32x4() const {
   auto lanes = getLanesI32x4();
   for (size_t i = 0; i < lanes.size(); ++i) {
@@ -1782,6 +1787,10 @@ Literal Literal::splatI8x16() const { return splat<Type::i32, 16>(*this); }
 Literal Literal::splatI16x8() const { return splat<Type::i32, 8>(*this); }
 Literal Literal::splatI32x4() const { return splat<Type::i32, 4>(*this); }
 Literal Literal::splatI64x2() const { return splat<Type::i64, 2>(*this); }
+Literal Literal::splatF16x8() const {
+  uint16_t f16 = fp16_ieee_from_fp32_value(getf32());
+  return splat<Type::i32, 8>(Literal(f16));
+}
 Literal Literal::splatF32x4() const { return splat<Type::f32, 4>(*this); }
 Literal Literal::splatF64x2() const { return splat<Type::f64, 2>(*this); }
 
@@ -1802,6 +1811,9 @@ Literal Literal::extractLaneI32x4(uint8_t index) const {
 }
 Literal Literal::extractLaneI64x2(uint8_t index) const {
   return getLanesI64x2().at(index);
+}
+Literal Literal::extractLaneF16x8(uint8_t index) const {
+  return getLanesF16x8().at(index);
 }
 Literal Literal::extractLaneF32x4(uint8_t index) const {
   return getLanesF32x4().at(index);
@@ -1830,6 +1842,10 @@ Literal Literal::replaceLaneI32x4(const Literal& other, uint8_t index) const {
 }
 Literal Literal::replaceLaneI64x2(const Literal& other, uint8_t index) const {
   return replace<2, &Literal::getLanesI64x2>(*this, other, index);
+}
+Literal Literal::replaceLaneF16x8(const Literal& other, uint8_t index) const {
+  return replace<8, &Literal::getLanesF16x8>(
+    *this, Literal(fp16_ieee_from_fp32_value(other.getf32())), index);
 }
 Literal Literal::replaceLaneF32x4(const Literal& other, uint8_t index) const {
   return replace<4, &Literal::getLanesF32x4>(*this, other, index);
@@ -2205,6 +2221,24 @@ Literal Literal::leSI64x2(const Literal& other) const {
 Literal Literal::geSI64x2(const Literal& other) const {
   return compare<2, &Literal::getLanesI64x2, &Literal::geS, int64_t>(*this,
                                                                      other);
+}
+Literal Literal::eqF16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesF16x8, &Literal::eq>(*this, other);
+}
+Literal Literal::neF16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesF16x8, &Literal::ne>(*this, other);
+}
+Literal Literal::ltF16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesF16x8, &Literal::lt>(*this, other);
+}
+Literal Literal::gtF16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesF16x8, &Literal::gt>(*this, other);
+}
+Literal Literal::leF16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesF16x8, &Literal::le>(*this, other);
+}
+Literal Literal::geF16x8(const Literal& other) const {
+  return compare<8, &Literal::getLanesF16x8, &Literal::ge>(*this, other);
 }
 Literal Literal::eqF32x4(const Literal& other) const {
   return compare<4, &Literal::getLanesF32x4, &Literal::eq>(*this, other);

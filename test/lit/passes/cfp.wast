@@ -658,17 +658,17 @@
 ;;            reference to the subtype (we never create a supertype) and so we
 ;;            can optimize.
 (module
-  ;; CHECK:      (type $0 (func))
-
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
+
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (sub $struct (struct i32 f64)))
 
   ;; CHECK:      (type $3 (func (param (ref null $struct))))
 
-  ;; CHECK:      (func $create (type $0)
+  ;; CHECK:      (func $create (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $substruct
   ;; CHECK-NEXT:    (i32.const 10)

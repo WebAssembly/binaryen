@@ -125,13 +125,20 @@ struct SubTypes {
     for (auto type : types) {
       HeapType basic;
       auto share = type.getShared();
-      if (type.isStruct()) {
-        basic = HeapTypes::struct_.getBasic(share);
-      } else if (type.isArray()) {
-        basic = HeapTypes::array.getBasic(share);
-      } else {
-        assert(type.isSignature());
-        basic = HeapTypes::func.getBasic(share);
+      switch (type.getKind()) {
+        case HeapTypeKind::Func:
+          basic = HeapTypes::func.getBasic(share);
+          break;
+        case HeapTypeKind::Struct:
+          basic = HeapTypes::struct_.getBasic(share);
+          break;
+        case HeapTypeKind::Array:
+          basic = HeapTypes::array.getBasic(share);
+          break;
+        case HeapTypeKind::Cont:
+          WASM_UNREACHABLE("TODO: cont");
+        case HeapTypeKind::Basic:
+          WASM_UNREACHABLE("unexpected kind");
       }
       auto& basicDepth = depths[basic];
       basicDepth = std::max(basicDepth, depths[type] + 1);

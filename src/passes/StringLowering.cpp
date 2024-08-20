@@ -291,8 +291,9 @@ struct StringLowering : public StringGathering {
       // singleton rec group.
       std::vector<Type> params, results;
       auto fix = [](Type t) {
-        if (t.isRef() && t.getHeapType() == HeapType::string) {
-          t = Type(HeapType::ext, t.getNullability());
+        if (t.isRef() && t.getHeapType().isMaybeShared(HeapType::string)) {
+          auto share = t.getHeapType().getShared();
+          t = Type(HeapTypes::ext.getBasic(share), t.getNullability());
         }
         return t;
       };
@@ -495,9 +496,13 @@ struct StringLowering : public StringGathering {
       void noteSubtype(Expression* a, Type b) {
         // This is the case we care about: if |a| is a null that must be a
         // subtype of ext then we fix that up.
-        if (b.isRef() && b.getHeapType().getTop() == HeapType::ext) {
+        if (!b.isRef()) {
+          return;
+        }
+        HeapType top = b.getHeapType().getTop();
+        if (top.isMaybeShared(HeapType::ext)) {
           if (auto* null = a->dynCast<RefNull>()) {
-            null->finalize(HeapType::noext);
+            null->finalize(HeapTypes::noext.getBasic(top.getShared()));
           }
         }
       }

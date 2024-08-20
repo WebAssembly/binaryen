@@ -229,6 +229,9 @@ enum UnaryOp {
   RelaxedTruncZeroSVecF64x2ToVecI32x4,
   RelaxedTruncZeroUVecF64x2ToVecI32x4,
 
+  // Half precision SIMD
+  SplatVecF16x8,
+
   InvalidUnary
 };
 
@@ -378,6 +381,12 @@ enum BinaryOp {
   GtSVecI64x2,
   LeSVecI64x2,
   GeSVecI64x2,
+  EqVecF16x8,
+  NeVecF16x8,
+  LtVecF16x8,
+  GtVecF16x8,
+  LeVecF16x8,
+  GeVecF16x8,
   EqVecF32x4,
   NeVecF32x4,
   LtVecF32x4,
@@ -490,6 +499,7 @@ enum SIMDExtractOp {
   ExtractLaneUVecI16x8,
   ExtractLaneVecI32x4,
   ExtractLaneVecI64x2,
+  ExtractLaneVecF16x8,
   ExtractLaneVecF32x4,
   ExtractLaneVecF64x2
 };
@@ -499,6 +509,7 @@ enum SIMDReplaceOp {
   ReplaceLaneVecI16x8,
   ReplaceLaneVecI32x4,
   ReplaceLaneVecI64x2,
+  ReplaceLaneVecF16x8,
   ReplaceLaneVecF32x4,
   ReplaceLaneVecF64x2,
 };
@@ -667,6 +678,7 @@ public:
     TableGrowId,
     TableFillId,
     TableCopyId,
+    TableInitId,
     TryId,
     TryTableId,
     ThrowId,
@@ -1406,6 +1418,20 @@ public:
   Expression* size;
   Name destTable;
   Name sourceTable;
+
+  void finalize();
+};
+
+class TableInit : public SpecificExpression<Expression::TableInitId> {
+public:
+  TableInit() = default;
+  TableInit(MixedArena& allocator) : TableInit() {}
+
+  Name segment;
+  Expression* dest;
+  Expression* offset;
+  Expression* size;
+  Name table;
 
   void finalize();
 };

@@ -487,6 +487,8 @@ public:
         return value.splatI32x4();
       case SplatVecI64x2:
         return value.splatI64x2();
+      case SplatVecF16x8:
+        return value.splatF16x8();
       case SplatVecF32x4:
         return value.splatF32x4();
       case SplatVecF64x2:
@@ -870,6 +872,18 @@ public:
         return left.leSI64x2(right);
       case GeSVecI64x2:
         return left.geSI64x2(right);
+      case EqVecF16x8:
+        return left.eqF16x8(right);
+      case NeVecF16x8:
+        return left.neF16x8(right);
+      case LtVecF16x8:
+        return left.ltF16x8(right);
+      case GtVecF16x8:
+        return left.gtF16x8(right);
+      case LeVecF16x8:
+        return left.leF16x8(right);
+      case GeVecF16x8:
+        return left.geF16x8(right);
       case EqVecF32x4:
         return left.eqF32x4(right);
       case NeVecF32x4:
@@ -1078,6 +1092,8 @@ public:
         return vec.extractLaneI32x4(curr->index);
       case ExtractLaneVecI64x2:
         return vec.extractLaneI64x2(curr->index);
+      case ExtractLaneVecF16x8:
+        return vec.extractLaneF16x8(curr->index);
       case ExtractLaneVecF32x4:
         return vec.extractLaneF32x4(curr->index);
       case ExtractLaneVecF64x2:
@@ -1106,6 +1122,8 @@ public:
         return vec.replaceLaneI32x4(value, curr->index);
       case ReplaceLaneVecI64x2:
         return vec.replaceLaneI64x2(value, curr->index);
+      case ReplaceLaneVecF16x8:
+        return vec.replaceLaneF16x8(value, curr->index);
       case ReplaceLaneVecF32x4:
         return vec.replaceLaneF32x4(value, curr->index);
       case ReplaceLaneVecF64x2:
@@ -1407,6 +1425,7 @@ public:
   Flow visitTableGrow(TableGrow* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableFill(TableFill* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableCopy(TableCopy* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableInit(TableInit* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTryTable(TryTable* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
@@ -2353,6 +2372,10 @@ public:
     NOTE_ENTER("TableCopy");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitTableInit(TableInit* curr) {
+    NOTE_ENTER("TableInit");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
     return Flow(NONCONSTANT_FLOW);
@@ -2824,23 +2847,24 @@ private:
       }
     }
 
+    Const zero;
+    zero.value = Literal(uint32_t(0));
+    zero.finalize();
+
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
-      Address offset =
-        (uint32_t)self()->visit(segment->offset).getSingleValue().geti32();
+      Const size;
+      size.value = Literal(uint32_t(segment->data.size()));
+      size.finalize();
 
-      Table* table = wasm.getTable(segment->table);
-      ExternalInterface* extInterface = externalInterface;
-      Name tableName = segment->table;
-      if (table->imported()) {
-        auto inst = linkedInstances.at(table->module);
-        extInterface = inst->externalInterface;
-        tableName = inst->wasm.getExport(table->base)->value;
-      }
+      TableInit init;
+      init.table = segment->table;
+      init.segment = segment->name;
+      init.dest = segment->offset;
+      init.offset = &zero;
+      init.size = &size;
+      init.finalize();
 
-      for (Index i = 0; i < segment->data.size(); ++i) {
-        Flow ret = self()->visit(segment->data[i]);
-        extInterface->tableStore(tableName, offset + i, ret.getSingleValue());
-      }
+      self()->visit(&init);
 
       droppedElementSegments.insert(segment->name);
     });
@@ -2868,9 +2892,10 @@ private:
 
   void initializeMemoryContents() {
     initializeMemorySizes();
-    Const offset;
-    offset.value = Literal(uint32_t(0));
-    offset.finalize();
+
+    Const zero;
+    zero.value = Literal(uint32_t(0));
+    zero.finalize();
 
     // apply active memory segments
     for (size_t i = 0, e = wasm.dataSegments.size(); i < e; ++i) {
@@ -2886,7 +2911,7 @@ private:
       init.memory = segment->memory;
       init.segment = segment->name;
       init.dest = segment->offset;
-      init.offset = &offset;
+      init.offset = &zero;
       init.size = &size;
       init.finalize();
 
@@ -3250,6 +3275,54 @@ public:
         destInfo.name,
         destVal + i,
         sourceInfo.interface()->tableLoad(sourceInfo.name, sourceVal + i));
+    }
+    return {};
+  }
+
+  Flow visitTableInit(TableInit* curr) {
+    NOTE_ENTER("TableInit");
+    Flow dest = self()->visit(curr->dest);
+    if (dest.breaking()) {
+      return dest;
+    }
+    Flow offset = self()->visit(curr->offset);
+    if (offset.breaking()) {
+      return offset;
+    }
+    Flow size = self()->visit(curr->size);
+    if (size.breaking()) {
+      return size;
+    }
+    NOTE_EVAL1(dest);
+    NOTE_EVAL1(offset);
+    NOTE_EVAL1(size);
+
+    auto* segment = wasm.getElementSegment(curr->segment);
+
+    Address destVal(dest.getSingleValue().getUnsigned());
+    Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
+    Address sizeVal(uint32_t(size.getSingleValue().geti32()));
+
+    if (offsetVal + sizeVal > 0 &&
+        droppedElementSegments.count(curr->segment)) {
+      trap("out of bounds segment access in table.init");
+    }
+    if (offsetVal + sizeVal > segment->data.size()) {
+      trap("out of bounds segment access in table.init");
+    }
+    auto info = getTableInstanceInfo(curr->table);
+    auto tableSize = info.interface()->tableSize(info.name);
+    if (destVal + sizeVal > tableSize) {
+      trap("out of bounds table access in table.init");
+    }
+    for (size_t i = 0; i < sizeVal; ++i) {
+      // FIXME: We should not call visit() here more than once at runtime. The
+      //        values in the segment should be computed once during startup,
+      //        and then read here as needed. For example, if we had a
+      //        struct.new here then we should not allocate a new struct each
+      //        time we table.init that data.
+      auto value = self()->visit(segment->data[offsetVal + i]).getSingleValue();
+      info.interface()->tableStore(info.name, destVal + i, value);
     }
     return {};
   }
@@ -3744,7 +3817,7 @@ public:
     if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
       trap("out of bounds segment access in memory.init");
     }
-    if ((uint64_t)offsetVal + sizeVal > segment->data.size()) {
+    if (offsetVal + sizeVal > segment->data.size()) {
       trap("out of bounds segment access in memory.init");
     }
     auto info = getMemoryInstanceInfo(curr->memory);

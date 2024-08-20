@@ -544,14 +544,22 @@ bool shapeEq(HeapType a, HeapType b) {
   if (a.isShared() != b.isShared()) {
     return false;
   }
-  if (a.isStruct() && b.isStruct()) {
-    return shapeEq(a.getStruct(), b.getStruct());
+  auto aKind = a.getKind();
+  auto bKind = b.getKind();
+  if (aKind != bKind) {
+    return false;
   }
-  if (a.isArray() && b.isArray()) {
-    return shapeEq(a.getArray(), b.getArray());
-  }
-  if (a.isSignature() && b.isSignature()) {
-    return shapeEq(a.getSignature(), b.getSignature());
+  switch (aKind) {
+    case HeapTypeKind::Func:
+      return shapeEq(a.getSignature(), b.getSignature());
+    case HeapTypeKind::Struct:
+      return shapeEq(a.getStruct(), b.getStruct());
+    case HeapTypeKind::Array:
+      return shapeEq(a.getArray(), b.getArray());
+    case HeapTypeKind::Cont:
+      WASM_UNREACHABLE("TODO: cont");
+    case HeapTypeKind::Basic:
+      WASM_UNREACHABLE("unexpected kind");
   }
   return false;
 }
@@ -559,19 +567,24 @@ bool shapeEq(HeapType a, HeapType b) {
 size_t shapeHash(HeapType a) {
   size_t digest = hash(a.isOpen());
   rehash(digest, a.isShared());
-  if (a.isStruct()) {
-    rehash(digest, 0);
-    hash_combine(digest, shapeHash(a.getStruct()));
-  } else if (a.isArray()) {
-    rehash(digest, 1);
-    hash_combine(digest, shapeHash(a.getArray()));
-  } else if (a.isSignature()) {
-    rehash(digest, 2);
-    hash_combine(digest, shapeHash(a.getSignature()));
-  } else {
-    WASM_UNREACHABLE("unexpected kind");
+  auto kind = a.getKind();
+  rehash(digest, kind);
+  switch (kind) {
+    case HeapTypeKind::Func:
+      hash_combine(digest, shapeHash(a.getSignature()));
+      return digest;
+    case HeapTypeKind::Struct:
+      hash_combine(digest, shapeHash(a.getStruct()));
+      return digest;
+    case HeapTypeKind::Array:
+      hash_combine(digest, shapeHash(a.getArray()));
+      return digest;
+    case HeapTypeKind::Cont:
+      WASM_UNREACHABLE("TODO: cont");
+    case HeapTypeKind::Basic:
+      break;
   }
-  return digest;
+  WASM_UNREACHABLE("unexpected kind");
 }
 
 bool shapeEq(const Struct& a, const Struct& b) {

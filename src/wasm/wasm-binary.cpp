@@ -16,6 +16,7 @@
 
 #include <algorithm>
 #include <fstream>
+#include <iomanip>
 
 #include "ir/eh-utils.h"
 #include "ir/module-utils.h"
@@ -290,30 +291,37 @@ void WasmBinaryWriter::writeTypes() {
     if (type.isShared()) {
       o << S32LEB(BinaryConsts::EncodedType::Shared);
     }
-    if (type.isSignature()) {
-      o << S32LEB(BinaryConsts::EncodedType::Func);
-      auto sig = type.getSignature();
-      for (auto& sigType : {sig.params, sig.results}) {
-        o << U32LEB(sigType.size());
-        for (const auto& type : sigType) {
-          writeType(type);
+    switch (type.getKind()) {
+      case HeapTypeKind::Func: {
+        o << S32LEB(BinaryConsts::EncodedType::Func);
+        auto sig = type.getSignature();
+        for (auto& sigType : {sig.params, sig.results}) {
+          o << U32LEB(sigType.size());
+          for (const auto& type : sigType) {
+            writeType(type);
+          }
         }
+        break;
       }
-    } else if (type.isContinuation()) {
-      o << S32LEB(BinaryConsts::EncodedType::Cont);
-      writeHeapType(type.getContinuation().type);
-    } else if (type.isStruct()) {
-      o << S32LEB(BinaryConsts::EncodedType::Struct);
-      auto fields = type.getStruct().fields;
-      o << U32LEB(fields.size());
-      for (const auto& field : fields) {
-        writeField(field);
+      case HeapTypeKind::Struct: {
+        o << S32LEB(BinaryConsts::EncodedType::Struct);
+        auto fields = type.getStruct().fields;
+        o << U32LEB(fields.size());
+        for (const auto& field : fields) {
+          writeField(field);
+        }
+        break;
       }
-    } else if (type.isArray()) {
-      o << S32LEB(BinaryConsts::EncodedType::Array);
-      writeField(type.getArray().element);
-    } else {
-      WASM_UNREACHABLE("TODO GC type writing");
+      case HeapTypeKind::Array:
+        o << S32LEB(BinaryConsts::EncodedType::Array);
+        writeField(type.getArray().element);
+        break;
+      case HeapTypeKind::Cont:
+        o << S32LEB(BinaryConsts::EncodedType::Cont);
+        writeHeapType(type.getContinuation().type);
+        break;
+      case HeapTypeKind::Basic:
+        WASM_UNREACHABLE("unexpected kind");
     }
   }
   finishSection(start);
@@ -1212,7 +1220,31 @@ void WasmBinaryWriter::initializeDebugInfo() {
 }
 
 void WasmBinaryWriter::writeSourceMapProlog() {
-  *sourceMap << "{\"version\":3,\"sources\":[";
+  *sourceMap << "{\"version\":3,";
+
+  for (const auto& section : wasm->customSections) {
+    if (section.name == BinaryConsts::CustomSections::BuildId) {
+      U32LEB ret;
+      size_t pos = 0;
+      ret.read([&]() { return section.data[pos++]; });
+
+      if (section.data.size() != pos + ret.value) {
+        std::cerr
+          << "warning: build id section with an incorrect size detected!\n";
+        break;
+      }
+
+      *sourceMap << "\"debugId\":\"";
+      for (size_t i = pos; i < section.data.size(); i++) {
+        *sourceMap << std::setfill('0') << std::setw(2) << std::hex
+                   << static_cast<int>(static_cast<uint8_t>(section.data[i]));
+      }
+      *sourceMap << "\",";
+      break;
+    }
+  }
+
+  *sourceMap << "\"sources\":[";
   for (size_t i = 0; i < wasm->debugInfoFileNames.size(); i++) {
     if (i > 0) {
       *sourceMap << ",";
@@ -4198,6 +4230,9 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       if (maybeVisitTableCopy(curr, opcode)) {
         break;
       }
+      if (maybeVisitTableInit(curr, opcode)) {
+        break;
+      }
       if (maybeVisitLoad(curr, opcode, BinaryConsts::MiscPrefix)) {
         break;
       }
@@ -5621,6 +5656,23 @@ bool WasmBinaryReader::maybeVisitTableCopy(Expression*& out, uint32_t code) {
   return true;
 }
 
+bool WasmBinaryReader::maybeVisitTableInit(Expression*& out, uint32_t code) {
+  if (code != BinaryConsts::TableInit) {
+    return false;
+  }
+  auto* curr = allocator.alloc<TableInit>();
+  curr->size = popNonVoidExpression();
+  curr->offset = popNonVoidExpression();
+  curr->dest = popNonVoidExpression();
+  Index segIdx = getU32LEB();
+  elemRefs[segIdx].push_back(&curr->segment);
+  Index memIdx = getU32LEB();
+  tableRefs[memIdx].push_back(&curr->table);
+  curr->finalize();
+  out = curr;
+  return true;
+}
+
 bool WasmBinaryReader::maybeVisitBinary(Expression*& out, uint8_t code) {
   Binary* curr;
 #define INT_TYPED_CODE(code)                                                   \
@@ -5845,6 +5897,30 @@ bool WasmBinaryReader::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
     case BinaryConsts::I64x2GeS:
       curr = allocator.alloc<Binary>();
       curr->op = GeSVecI64x2;
+      break;
+    case BinaryConsts::F16x8Eq:
+      curr = allocator.alloc<Binary>();
+      curr->op = EqVecF16x8;
+      break;
+    case BinaryConsts::F16x8Ne:
+      curr = allocator.alloc<Binary>();
+      curr->op = NeVecF16x8;
+      break;
+    case BinaryConsts::F16x8Lt:
+      curr = allocator.alloc<Binary>();
+      curr->op = LtVecF16x8;
+      break;
+    case BinaryConsts::F16x8Gt:
+      curr = allocator.alloc<Binary>();
+      curr->op = GtVecF16x8;
+      break;
+    case BinaryConsts::F16x8Le:
+      curr = allocator.alloc<Binary>();
+      curr->op = LeVecF16x8;
+      break;
+    case BinaryConsts::F16x8Ge:
+      curr = allocator.alloc<Binary>();
+      curr->op = GeVecF16x8;
       break;
     case BinaryConsts::F32x4Eq:
       curr = allocator.alloc<Binary>();
@@ -6239,6 +6315,10 @@ bool WasmBinaryReader::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = SplatVecI64x2;
       break;
+    case BinaryConsts::F16x8Splat:
+      curr = allocator.alloc<Unary>();
+      curr->op = SplatVecF16x8;
+      break;
     case BinaryConsts::F32x4Splat:
       curr = allocator.alloc<Unary>();
       curr->op = SplatVecF32x4;
@@ -6569,6 +6649,11 @@ bool WasmBinaryReader::maybeVisitSIMDExtract(Expression*& out, uint32_t code) {
       curr->op = ExtractLaneVecI64x2;
       curr->index = getLaneIndex(2);
       break;
+    case BinaryConsts::F16x8ExtractLane:
+      curr = allocator.alloc<SIMDExtract>();
+      curr->op = ExtractLaneVecF16x8;
+      curr->index = getLaneIndex(8);
+      break;
     case BinaryConsts::F32x4ExtractLane:
       curr = allocator.alloc<SIMDExtract>();
       curr->op = ExtractLaneVecF32x4;
@@ -6610,6 +6695,11 @@ bool WasmBinaryReader::maybeVisitSIMDReplace(Expression*& out, uint32_t code) {
       curr = allocator.alloc<SIMDReplace>();
       curr->op = ReplaceLaneVecI64x2;
       curr->index = getLaneIndex(2);
+      break;
+    case BinaryConsts::F16x8ReplaceLane:
+      curr = allocator.alloc<SIMDReplace>();
+      curr->op = ReplaceLaneVecF16x8;
+      curr->index = getLaneIndex(8);
       break;
     case BinaryConsts::F32x4ReplaceLane:
       curr = allocator.alloc<SIMDReplace>();

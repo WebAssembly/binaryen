@@ -307,6 +307,80 @@ switch (buf[0]) {
   }
   case 'f': {
     switch (buf[1]) {
+      case '1': {
+        switch (buf[6]) {
+          case 'e': {
+            switch (buf[7]) {
+              case 'q':
+                if (op == "f16x8.eq"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::EqVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'x':
+                if (op == "f16x8.extract_lane"sv) {
+                  CHECK_ERR(makeSIMDExtract(ctx, pos, annotations, SIMDExtractOp::ExtractLaneVecF16x8, 8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 'g': {
+            switch (buf[7]) {
+              case 'e':
+                if (op == "f16x8.ge"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::GeVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 't':
+                if (op == "f16x8.gt"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::GtVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 'l': {
+            switch (buf[7]) {
+              case 'e':
+                if (op == "f16x8.le"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::LeVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 't':
+                if (op == "f16x8.lt"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::LtVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 'n':
+            if (op == "f16x8.ne"sv) {
+              CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::NeVecF16x8));
+              return Ok{};
+            }
+            goto parse_error;
+          case 'r':
+            if (op == "f16x8.replace_lane"sv) {
+              CHECK_ERR(makeSIMDReplace(ctx, pos, annotations, SIMDReplaceOp::ReplaceLaneVecF16x8, 8));
+              return Ok{};
+            }
+            goto parse_error;
+          case 's':
+            if (op == "f16x8.splat"sv) {
+              CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::SplatVecF16x8));
+              return Ok{};
+            }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
       case '3': {
         switch (buf[3]) {
           case '.': {
@@ -4862,6 +4936,12 @@ switch (buf[0]) {
               default: goto parse_error;
             }
           }
+          case 'i':
+            if (op == "table.init"sv) {
+              CHECK_ERR(makeTableInit(ctx, pos, annotations));
+              return Ok{};
+            }
+            goto parse_error;
           case 's': {
             switch (buf[7]) {
               case 'e':

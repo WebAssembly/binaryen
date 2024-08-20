@@ -88,6 +88,7 @@ Pass* createMinifiedPrinterPass();
 Pass* createMinifyImportsPass();
 Pass* createMinifyImportsAndExportsPass();
 Pass* createMinifyImportsAndExportsAndModulesPass();
+Pass* createMinimizeRecGroupsPass();
 Pass* createMetricsPass();
 Pass* createMonomorphizePass();
 Pass* createMonomorphizeAlwaysPass();

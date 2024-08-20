@@ -2,10 +2,11 @@
 
 ;; As in monomorphize-types.wast, test in both "always" mode, which always
 ;; monomorphizes, and in "careful" mode which does it only when it appears to
-;; actually help.
+;; actually help, and use a minimum benefit of 0 to make it easy to write
+;; small testcases.
 
-;; RUN: foreach %s %t wasm-opt --monomorphize-always -all -S -o - | filecheck %s --check-prefix ALWAYS
-;; RUN: foreach %s %t wasm-opt --monomorphize        -all -S -o - | filecheck %s --check-prefix CAREFUL
+;; RUN: foreach %s %t wasm-opt --monomorphize-always                                -all -S -o - | filecheck %s --check-prefix ALWAYS
+;; RUN: foreach %s %t wasm-opt --monomorphize --pass-arg=monomorphize-min-benefit@0 -all -S -o - | filecheck %s --check-prefix CAREFUL
 
 (module
   ;; Test that constants are monomorphized.
