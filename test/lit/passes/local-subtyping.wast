@@ -24,6 +24,9 @@
   ;; CHECK:      (import "out" "i64" (func $i64 (type $6) (result i64)))
   (import "out" "i64" (func $i64 (result i64)))
 
+  ;; CHECK:      (tag $e-anyref (param anyref))
+  (tag $e-anyref (param anyref))
+
   ;; Refinalization can find a more specific type, where the declared type was
   ;; not the optimal LUB.
   ;; CHECK:      (func $refinalize (type $2) (param $x i32)
@@ -80,7 +83,7 @@
   ;; A simple case where a local has a single assignment that we can use as a
   ;; more specific type. A similar thing with a parameter, however, is not a
   ;; thing we can optimize. Also, ignore a local with zero assignments.
-  ;; CHECK:      (func $simple-local-but-not-param (type $7) (param $x funcref)
+  ;; CHECK:      (func $simple-local-but-not-param (type $8) (param $x funcref)
   ;; CHECK-NEXT:  (local $y (ref $1))
   ;; CHECK-NEXT:  (local $unused funcref)
   ;; CHECK-NEXT:  (local.set $x
@@ -101,7 +104,7 @@
     )
   )
 
-  ;; CHECK:      (func $locals-with-multiple-assignments (type $8) (param $struct structref)
+  ;; CHECK:      (func $locals-with-multiple-assignments (type $9) (param $struct structref)
   ;; CHECK-NEXT:  (local $x eqref)
   ;; CHECK-NEXT:  (local $y (ref i31))
   ;; CHECK-NEXT:  (local $z structref)
@@ -566,6 +569,51 @@
     )
     (drop
       (local.get $x)
+    )
+  )
+
+  ;; CHECK:      (func $try_table-catch-result (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $catch (result anyref)
+  ;; CHECK-NEXT:    (try_table (catch $e-anyref $catch)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null none)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $try_table-catch-result
+    (drop
+      ;; Must not be refined to (result nullref).
+      (block $catch (result anyref)
+        (try_table (catch $e-anyref $catch)
+          (nop)
+        )
+        (ref.null none)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $try_table-ref (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $catch (result exnref)
+  ;; CHECK-NEXT:    (try_table (catch_all_ref $catch)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null noexn)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $try_table-ref
+    (drop
+      ;; Must not be refined to nullexnref.
+      ;; An exnref comes from the catch_all_ref.
+      (block $catch (result exnref)
+        (try_table (catch_all_ref $catch)
+          (nop)
+        )
+        (ref.null exn)
+      )
     )
   )
 )

@@ -185,6 +185,12 @@ struct DeadCodeElimination
           tryy->body->type == Type::unreachable && allCatchesUnreachable) {
         typeUpdater.changeType(tryy, Type::unreachable);
       }
+    } else if (auto* tryTable = curr->dynCast<TryTable>()) {
+      // try_table can finish normally only if its body finishes normally.
+      if (tryTable->type != Type::unreachable &&
+          tryTable->body->type == Type::unreachable) {
+        typeUpdater.changeType(tryTable, Type::unreachable);
+      }
     } else {
       WASM_UNREACHABLE("unimplemented DCE control flow structure");
     }

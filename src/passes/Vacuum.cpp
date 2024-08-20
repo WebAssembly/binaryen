@@ -87,7 +87,7 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
       // Some instructions have special handling in visit*, and we should do
       // nothing for them here.
       if (curr->is<Drop>() || curr->is<Block>() || curr->is<If>() ||
-          curr->is<Loop>() || curr->is<Try>()) {
+          curr->is<Loop>() || curr->is<Try>() || curr->is<TryTable>()) {
         return curr;
       }
       // Check if this expression itself has side effects, ignoring children.
@@ -432,6 +432,15 @@ struct Vacuum : public WalkerPass<ExpressionStackWalker<Vacuum>> {
         !EffectAnalyzer(getPassOptions(), *getModule(), curr)
            .hasUnremovableSideEffects()) {
       ExpressionManipulator::nop(curr);
+    }
+  }
+
+  void visitTryTable(TryTable* curr) {
+    // If try_table's body does not throw, the whole try_table can be replaced
+    // with the try_table's body.
+    if (!EffectAnalyzer(getPassOptions(), *getModule(), curr->body).throws()) {
+      replaceCurrent(curr->body);
+      return;
     }
   }
 

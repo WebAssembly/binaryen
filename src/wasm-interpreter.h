@@ -47,8 +47,7 @@
 namespace wasm {
 
 struct WasmException {
-  Name tag;
-  Literals values;
+  Literal exn;
 };
 std::ostream& operator<<(std::ostream& o, const WasmException& exn);
 
@@ -202,6 +201,15 @@ protected:
     __lsan_ignore_object(allocation.get());
 #endif
     return Literal(allocation, type.getHeapType());
+  }
+
+  // Same as makeGCData but for ExnData.
+  Literal makeExnData(Name tag, const Literals& payload) {
+    auto allocation = std::make_shared<ExnData>(tag, payload);
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+    __lsan_ignore_object(allocation.get());
+#endif
+    return Literal(allocation);
   }
 
 public:
@@ -1428,16 +1436,25 @@ public:
       return flow;
     }
     NOTE_EVAL1(curr->tag);
-    WasmException exn;
-    exn.tag = curr->tag;
-    for (auto item : arguments) {
-      exn.values.push_back(item);
-    }
-    throwException(exn);
+    throwException(WasmException{makeExnData(curr->tag, arguments)});
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitThrowRef(ThrowRef* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitThrowRef(ThrowRef* curr) {
+    NOTE_ENTER("ThrowRef");
+    Flow flow = visit(curr->exnref);
+    if (flow.breaking()) {
+      return flow;
+    }
+    const auto& exnref = flow.getSingleValue();
+    NOTE_EVAL1(exnref);
+    if (exnref.isNull()) {
+      trap("null ref");
+    }
+    assert(exnref.isExn());
+    throwException(WasmException{exnref});
+    WASM_UNREACHABLE("throw");
+  }
   Flow visitRefI31(RefI31* curr) {
     NOTE_ENTER("RefI31");
     Flow flow = visit(curr->value);
@@ -2453,6 +2470,10 @@ public:
   }
   Flow visitTry(Try* curr) {
     NOTE_ENTER("Try");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitTryTable(TryTable* curr) {
+    NOTE_ENTER("TryTable");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitRethrow(Rethrow* curr) {
@@ -4103,9 +4124,10 @@ public:
         return ret;
       };
 
+      auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
-        if (curr->catchTags[i] == e.tag) {
-          multiValues.push_back(e.values);
+        if (curr->catchTags[i] == exnData->tag) {
+          multiValues.push_back(exnData->payload);
           return processCatchBody(curr->catchBodies[i]);
         }
       }
@@ -4116,6 +4138,32 @@ public:
         scope->currDelegateTarget = curr->delegateTarget;
       }
       // This exception is not caught by this try-catch. Rethrow it.
+      throw;
+    }
+  }
+  Flow visitTryTable(TryTable* curr) {
+    NOTE_ENTER("TryTable");
+    try {
+      return self()->visit(curr->body);
+    } catch (const WasmException& e) {
+      auto exnData = e.exn.getExnData();
+      for (size_t i = 0; i < curr->catchTags.size(); i++) {
+        auto catchTag = curr->catchTags[i];
+        if (!catchTag.is() || catchTag == exnData->tag) {
+          Flow ret;
+          ret.breakTo = curr->catchDests[i];
+          if (catchTag.is()) {
+            for (auto item : exnData->payload) {
+              ret.values.push_back(item);
+            }
+          }
+          if (curr->catchRefs[i]) {
+            ret.values.push_back(e.exn);
+          }
+          return ret;
+        }
+      }
+      // This exception is not caught by this try_table. Rethrow it.
       throw;
     }
   }

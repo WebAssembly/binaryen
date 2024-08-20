@@ -182,44 +182,49 @@
   )
 
   ;; WITHOUT:      (func $call-throw-and-catch (type $void)
-  ;; WITHOUT-NEXT:  (block $tryend
-  ;; WITHOUT-NEXT:   (try_table (catch_all $tryend)
+  ;; WITHOUT-NEXT:  (try
+  ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $throw)
   ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:   (catch_all
+  ;; WITHOUT-NEXT:    (nop)
+  ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
-  ;; WITHOUT-NEXT:  (block $tryend0
-  ;; WITHOUT-NEXT:   (try_table (catch_all $tryend0)
+  ;; WITHOUT-NEXT:  (try
+  ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $throw-and-import)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:   (catch_all
+  ;; WITHOUT-NEXT:    (nop)
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (func $call-throw-and-catch (type $void)
-  ;; INCLUDE-NEXT:  (block $tryend
-  ;; INCLUDE-NEXT:   (try_table (catch_all $tryend)
-  ;; INCLUDE-NEXT:    (call $throw)
-  ;; INCLUDE-NEXT:   )
-  ;; INCLUDE-NEXT:  )
-  ;; INCLUDE-NEXT:  (block $tryend0
-  ;; INCLUDE-NEXT:   (try_table (catch_all $tryend0)
+  ;; INCLUDE-NEXT:  (try
+  ;; INCLUDE-NEXT:   (do
   ;; INCLUDE-NEXT:    (call $throw-and-import)
+  ;; INCLUDE-NEXT:   )
+  ;; INCLUDE-NEXT:   (catch_all
+  ;; INCLUDE-NEXT:    (nop)
   ;; INCLUDE-NEXT:   )
   ;; INCLUDE-NEXT:  )
   ;; INCLUDE-NEXT: )
   (func $call-throw-and-catch
-    (block $tryend
-      (try_table (catch_all $tryend)
+    (try
+      (do
         ;; This call cannot be optimized out, as the target throws. However, the
-        ;; entire try_table could be, since the call's only effect is to throw,
-        ;; and the catch_all catches that. We do this for `try` but not yet for
-        ;; `try_table`.
+        ;; entire try-catch can be, since the call's only effect is to throw,
+        ;; and the catch_all catches that.
         (call $throw)
       )
+      (catch_all)
     )
-    (block $tryend
-      (try_table (catch_all $tryend)
+    (try
+      (do
         ;; This call both throws and calls an import, and cannot be removed.
         (call $throw-and-import)
       )
+      (catch_all)
     )
   )
 
@@ -230,14 +235,15 @@
   ;; INCLUDE-NEXT:  (return_call $throw)
   ;; INCLUDE-NEXT: )
   (func $return-call-throw-and-catch
-    (block $tryend
-      (try_table (catch_all $tryend)
+    (try
+      (do
         ;; This call cannot be optimized out, as the target throws. However, the
-        ;; surrounding try_table can be removed even without global effects
+        ;; surrounding try-catch can be removed even without global effects
         ;; because the throw from the return_call is never observed by this
-        ;; try_table.
+        ;; try-catch.
         (return_call $throw)
       )
+      (catch_all)
     )
   )
 
@@ -252,16 +258,17 @@
   ;; INCLUDE-NEXT:  )
   ;; INCLUDE-NEXT: )
   (func $return-call-indirect-throw-and-catch
-    (block $tryend
-      (try_table (catch_all $tryend)
+    (try
+      (do
         ;; This call cannot be optimized out, as the target may throw. However,
-        ;; the surrounding try_table can be removed even without global effects
+        ;; the surrounding try-catch can be removed even without global effects
         ;; because the throw from the return_call is never observed by this
         ;; try-catch.
         (return_call_indirect
           (i32.const 0)
         )
       )
+      (catch_all)
     )
   )
 
@@ -276,33 +283,43 @@
   ;; INCLUDE-NEXT:  )
   ;; INCLUDE-NEXT: )
   (func $return-call-ref-throw-and-catch
-    (block $tryend
-      (try_table (catch_all $tryend)
+    (try
+      (do
         ;; This call cannot be optimized out, as the target may throw. However,
-        ;; the surrounding try_table can be removed even without global effects
+        ;; the surrounding try-catch can be removed even without global effects
         ;; because the throw from the return_call is never observed by this
         ;; try-catch.
         (return_call_ref $void
           (ref.func $throw)
         )
       )
+      (catch_all)
     )
   )
 
   ;; WITHOUT:      (func $call-return-call-throw-and-catch (type $void)
-  ;; WITHOUT-NEXT:  (block $tryend
-  ;; WITHOUT-NEXT:   (try_table (catch_all $tryend)
+  ;; WITHOUT-NEXT:  (try
+  ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $return-call-throw-and-catch)
   ;; WITHOUT-NEXT:   )
-  ;; WITHOUT-NEXT:  )
-  ;; WITHOUT-NEXT:  (block $tryend0
-  ;; WITHOUT-NEXT:   (try_table (catch_all $tryend0)
-  ;; WITHOUT-NEXT:    (call $return-call-indirect-throw-and-catch)
+  ;; WITHOUT-NEXT:   (catch_all
+  ;; WITHOUT-NEXT:    (nop)
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
-  ;; WITHOUT-NEXT:  (block $tryend1
-  ;; WITHOUT-NEXT:   (try_table (catch_all $tryend1)
+  ;; WITHOUT-NEXT:  (try
+  ;; WITHOUT-NEXT:   (do
+  ;; WITHOUT-NEXT:    (call $return-call-indirect-throw-and-catch)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:   (catch_all
+  ;; WITHOUT-NEXT:    (nop)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:  )
+  ;; WITHOUT-NEXT:  (try
+  ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $return-call-ref-throw-and-catch)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:   (catch_all
+  ;; WITHOUT-NEXT:    (nop)
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT:  (call $return-call-throw-and-catch)
@@ -310,19 +327,20 @@
   ;; WITHOUT-NEXT:  (call $return-call-ref-throw-and-catch)
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (func $call-return-call-throw-and-catch (type $void)
-  ;; INCLUDE-NEXT:  (block $tryend
-  ;; INCLUDE-NEXT:   (try_table (catch_all $tryend)
-  ;; INCLUDE-NEXT:    (call $return-call-throw-and-catch)
-  ;; INCLUDE-NEXT:   )
-  ;; INCLUDE-NEXT:  )
-  ;; INCLUDE-NEXT:  (block $tryend0
-  ;; INCLUDE-NEXT:   (try_table (catch_all $tryend0)
+  ;; INCLUDE-NEXT:  (try
+  ;; INCLUDE-NEXT:   (do
   ;; INCLUDE-NEXT:    (call $return-call-indirect-throw-and-catch)
   ;; INCLUDE-NEXT:   )
+  ;; INCLUDE-NEXT:   (catch_all
+  ;; INCLUDE-NEXT:    (nop)
+  ;; INCLUDE-NEXT:   )
   ;; INCLUDE-NEXT:  )
-  ;; INCLUDE-NEXT:  (block $tryend1
-  ;; INCLUDE-NEXT:   (try_table (catch_all $tryend1)
+  ;; INCLUDE-NEXT:  (try
+  ;; INCLUDE-NEXT:   (do
   ;; INCLUDE-NEXT:    (call $return-call-ref-throw-and-catch)
+  ;; INCLUDE-NEXT:   )
+  ;; INCLUDE-NEXT:   (catch_all
+  ;; INCLUDE-NEXT:    (nop)
   ;; INCLUDE-NEXT:   )
   ;; INCLUDE-NEXT:  )
   ;; INCLUDE-NEXT:  (call $return-call-throw-and-catch)
@@ -330,27 +348,29 @@
   ;; INCLUDE-NEXT:  (call $return-call-ref-throw-and-catch)
   ;; INCLUDE-NEXT: )
   (func $call-return-call-throw-and-catch
-    (block $tryend
-      (try_table (catch_all $tryend)
-        ;; Even though the body of the previous function has a catch_all, the
+    (try
+      (do
+        ;; Even though the body of the previous function is a try-catch_all, the
         ;; function still throws because of its return_call, so this cannot be
-        ;; optimized out, but once again the entire try_table could be. Again,
-        ;; this is something we do for `try` for not yet for `try_table`.
+        ;; optimized out, but once again the entire try-catch can be.
         (call $return-call-throw-and-catch)
       )
+      (catch_all)
     )
-    (block $tryend
-      (try_table (catch_all $tryend)
+    (try
+      (do
         ;; This would be the same, except since it performs an indirect call, we
         ;; conservatively assume it could have any effect, so we can't optimize.
         (call $return-call-indirect-throw-and-catch)
       )
+      (catch_all)
     )
-    (block $tryend
-      (try_table (catch_all $tryend)
+    (try
+      (do
         ;; Same here.
         (call $return-call-ref-throw-and-catch)
       )
+      (catch_all)
     )
 
     ;; These cannot be optimized out at all.
@@ -360,9 +380,12 @@
   )
 
   ;; WITHOUT:      (func $call-unreachable-and-catch (type $void)
-  ;; WITHOUT-NEXT:  (block $tryend
-  ;; WITHOUT-NEXT:   (try_table (catch_all $tryend)
+  ;; WITHOUT-NEXT:  (try
+  ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (call $unreachable)
+  ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:   (catch_all
+  ;; WITHOUT-NEXT:    (nop)
   ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
@@ -370,19 +393,20 @@
   ;; INCLUDE-NEXT:  (call $unreachable)
   ;; INCLUDE-NEXT: )
   (func $call-unreachable-and-catch
-    (block $tryend
-      (try_table (catch_all $tryend)
+    (try
+      (do
         ;; This call has a non-throw effect. We can optimize away the try-catch
         ;; (since no exception can be thrown anyhow), but we must leave the
         ;; call.
         (call $unreachable)
       )
+      (catch_all)
     )
   )
 
   ;; WITHOUT:      (func $call-throw-or-unreachable-and-catch (type $2) (param $x i32)
-  ;; WITHOUT-NEXT:  (block $tryend
-  ;; WITHOUT-NEXT:   (try_table (catch_all $tryend)
+  ;; WITHOUT-NEXT:  (try
+  ;; WITHOUT-NEXT:   (do
   ;; WITHOUT-NEXT:    (if
   ;; WITHOUT-NEXT:     (local.get $x)
   ;; WITHOUT-NEXT:     (then
@@ -393,11 +417,14 @@
   ;; WITHOUT-NEXT:     )
   ;; WITHOUT-NEXT:    )
   ;; WITHOUT-NEXT:   )
+  ;; WITHOUT-NEXT:   (catch_all
+  ;; WITHOUT-NEXT:    (nop)
+  ;; WITHOUT-NEXT:   )
   ;; WITHOUT-NEXT:  )
   ;; WITHOUT-NEXT: )
   ;; INCLUDE:      (func $call-throw-or-unreachable-and-catch (type $2) (param $x i32)
-  ;; INCLUDE-NEXT:  (block $tryend
-  ;; INCLUDE-NEXT:   (try_table (catch_all $tryend)
+  ;; INCLUDE-NEXT:  (try
+  ;; INCLUDE-NEXT:   (do
   ;; INCLUDE-NEXT:    (if
   ;; INCLUDE-NEXT:     (local.get $x)
   ;; INCLUDE-NEXT:     (then
@@ -408,13 +435,16 @@
   ;; INCLUDE-NEXT:     )
   ;; INCLUDE-NEXT:    )
   ;; INCLUDE-NEXT:   )
+  ;; INCLUDE-NEXT:   (catch_all
+  ;; INCLUDE-NEXT:    (nop)
+  ;; INCLUDE-NEXT:   )
   ;; INCLUDE-NEXT:  )
   ;; INCLUDE-NEXT: )
   (func $call-throw-or-unreachable-and-catch (param $x i32)
-    ;; This try_table's body will either call a throw or an unreachable.
+    ;; This try-catch-all's body will either call a throw or an unreachable.
     ;; Since we have both possible effects, we cannot optimize anything here.
-    (block $tryend
-      (try_table (catch_all $tryend)
+    (try
+      (do
         (if
           (local.get $x)
           (then
@@ -425,6 +455,7 @@
           )
         )
       )
+      (catch_all)
     )
   )
 

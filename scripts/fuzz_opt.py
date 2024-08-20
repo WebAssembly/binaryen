@@ -352,10 +352,6 @@ INITIAL_CONTENTS_IGNORE = [
     'typed_continuations_contnew.wast',
     'typed_continuations_contbind.wast',
     'typed_continuations_suspend.wast',
-    # New EH implementation is in progress
-    'exception-handling.wast',
-    'translate-to-new-eh.wast',
-    'rse-eh.wast',
 ]
 
 
@@ -841,7 +837,9 @@ class CompareVMs(TestCaseHandler):
                 # V8 does not support shared memories when running with
                 # shared-everything enabled, so do not fuzz shared-everything
                 # for now.
-                return all_disallowed(['shared-everything'])
+                # Due to the V8 bug https://issues.chromium.org/issues/332931390
+                # we do not fuzz exception-handling either.
+                return all_disallowed(['shared-everything', 'exception-handling'])
 
             def can_compare_to_self(self):
                 # With nans, VM differences can confuse us, so only very simple VMs
@@ -1649,6 +1647,9 @@ def get_random_opts():
                 print('avoiding --flatten due to multivalue + reference types not supporting it (spilling of non-nullable tuples)')
                 print('TODO: Resolving https://github.com/WebAssembly/binaryen/issues/4824 may fix this')
                 continue
+            if '--enable-exception-handling' in FEATURE_OPTS:
+                print('avoiding --flatten due to exception-handling not supporting it (requires blocks with results)')
+                continue
             if '--gc' not in FEATURE_OPTS:
                 print('avoiding --flatten due to GC not supporting it (spilling of non-nullable locals)')
                 continue
@@ -1707,7 +1708,7 @@ print('FEATURE_DISABLE_FLAGS:', FEATURE_DISABLE_FLAGS)
 # some features depend on other features, so if a required feature is
 # disabled, its dependent features need to be disabled as well.
 IMPLIED_FEATURE_OPTS = {
-    '--disable-reference-types': ['--disable-gc', '--disable-strings'],
+    '--disable-reference-types': ['--disable-gc', '--disable-exception-handling', '--disable-strings'],
     '--disable-gc': ['--disable-strings'],
 }
 
