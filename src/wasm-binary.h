@@ -1063,6 +1063,14 @@ enum ASTNodes {
   F16x8Gt = 0x13a,
   F16x8Le = 0x13b,
   F16x8Ge = 0x13c,
+  F16x8Add = 0x13d,
+  F16x8Sub = 0x13e,
+  F16x8Mul = 0x13f,
+  F16x8Div = 0x140,
+  F16x8Min = 0x141,
+  F16x8Max = 0xe142,
+  F16x8Pmin = 0x143,
+  F16x8Pmax = 0x144,
 
   // bulk memory opcodes
 

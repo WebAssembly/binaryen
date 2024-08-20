@@ -309,6 +309,18 @@ switch (buf[0]) {
     switch (buf[1]) {
       case '1': {
         switch (buf[6]) {
+          case 'a':
+            if (op == "f16x8.add"sv) {
+              CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::AddVecF16x8));
+              return Ok{};
+            }
+            goto parse_error;
+          case 'd':
+            if (op == "f16x8.div"sv) {
+              CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::DivVecF16x8));
+              return Ok{};
+            }
+            goto parse_error;
           case 'e': {
             switch (buf[7]) {
               case 'q':
@@ -360,24 +372,75 @@ switch (buf[0]) {
               default: goto parse_error;
             }
           }
+          case 'm': {
+            switch (buf[7]) {
+              case 'a':
+                if (op == "f16x8.max"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::MaxVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'i':
+                if (op == "f16x8.min"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::MinVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'u':
+                if (op == "f16x8.mul"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::MulVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
           case 'n':
             if (op == "f16x8.ne"sv) {
               CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::NeVecF16x8));
               return Ok{};
             }
             goto parse_error;
+          case 'p': {
+            switch (buf[8]) {
+              case 'a':
+                if (op == "f16x8.pmax"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::PMaxVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'i':
+                if (op == "f16x8.pmin"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::PMinVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
           case 'r':
             if (op == "f16x8.replace_lane"sv) {
               CHECK_ERR(makeSIMDReplace(ctx, pos, annotations, SIMDReplaceOp::ReplaceLaneVecF16x8, 8));
               return Ok{};
             }
             goto parse_error;
-          case 's':
-            if (op == "f16x8.splat"sv) {
-              CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::SplatVecF16x8));
-              return Ok{};
+          case 's': {
+            switch (buf[7]) {
+              case 'p':
+                if (op == "f16x8.splat"sv) {
+                  CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::SplatVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'u':
+                if (op == "f16x8.sub"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::SubVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
             }
-            goto parse_error;
+          }
           default: goto parse_error;
         }
       }

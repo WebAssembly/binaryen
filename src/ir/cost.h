@@ -475,6 +475,22 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case ExtMulHighSVecI64x2:
       case ExtMulLowUVecI64x2:
       case ExtMulHighUVecI64x2:
+      case AddVecF16x8:
+      case SubVecF16x8:
+        ret = 1;
+        break;
+      case MulVecF16x8:
+        ret = 2;
+        break;
+      case DivVecF16x8:
+        ret = 3;
+        break;
+      case MinVecF16x8:
+      case MaxVecF16x8:
+      case PMinVecF16x8:
+      case PMaxVecF16x8:
+        ret = 1;
+        break;
       case AddVecF32x4:
       case SubVecF32x4:
         ret = 1;

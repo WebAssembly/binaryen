@@ -6122,6 +6122,38 @@ bool WasmBinaryReader::maybeVisitSIMDBinary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Binary>();
       curr->op = ExtMulHighUVecI64x2;
       break;
+    case BinaryConsts::F16x8Add:
+      curr = allocator.alloc<Binary>();
+      curr->op = AddVecF16x8;
+      break;
+    case BinaryConsts::F16x8Sub:
+      curr = allocator.alloc<Binary>();
+      curr->op = SubVecF16x8;
+      break;
+    case BinaryConsts::F16x8Mul:
+      curr = allocator.alloc<Binary>();
+      curr->op = MulVecF16x8;
+      break;
+    case BinaryConsts::F16x8Div:
+      curr = allocator.alloc<Binary>();
+      curr->op = DivVecF16x8;
+      break;
+    case BinaryConsts::F16x8Min:
+      curr = allocator.alloc<Binary>();
+      curr->op = MinVecF16x8;
+      break;
+    case BinaryConsts::F16x8Max:
+      curr = allocator.alloc<Binary>();
+      curr->op = MaxVecF16x8;
+      break;
+    case BinaryConsts::F16x8Pmin:
+      curr = allocator.alloc<Binary>();
+      curr->op = PMinVecF16x8;
+      break;
+    case BinaryConsts::F16x8Pmax:
+      curr = allocator.alloc<Binary>();
+      curr->op = PMaxVecF16x8;
+      break;
     case BinaryConsts::F32x4Add:
       curr = allocator.alloc<Binary>();
       curr->op = AddVecF32x4;

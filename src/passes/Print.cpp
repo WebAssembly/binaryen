@@ -1901,6 +1901,31 @@ struct PrintExpressionContents
         o << "i64x2.extmul_high_i32x4_u";
         break;
 
+      case AddVecF16x8:
+        o << "f16x8.add";
+        break;
+      case SubVecF16x8:
+        o << "f16x8.sub";
+        break;
+      case MulVecF16x8:
+        o << "f16x8.mul";
+        break;
+      case DivVecF16x8:
+        o << "f16x8.div";
+        break;
+      case MinVecF16x8:
+        o << "f16x8.min";
+        break;
+      case MaxVecF16x8:
+        o << "f16x8.max";
+        break;
+      case PMinVecF16x8:
+        o << "f16x8.pmin";
+        break;
+      case PMaxVecF16x8:
+        o << "f16x8.pmax";
+        break;
+
       case AddVecF32x4:
         o << "f32x4.add";
         break;

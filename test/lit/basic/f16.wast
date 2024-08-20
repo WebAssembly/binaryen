@@ -233,7 +233,150 @@
    (local.get $1)
   )
  )
-
+ ;; CHECK-TEXT:      (func $f16x8.add (type $0) (param $0 v128) (param $1 v128) (result v128)
+ ;; CHECK-TEXT-NEXT:  (f16x8.add
+ ;; CHECK-TEXT-NEXT:   (local.get $0)
+ ;; CHECK-TEXT-NEXT:   (local.get $1)
+ ;; CHECK-TEXT-NEXT:  )
+ ;; CHECK-TEXT-NEXT: )
+ ;; CHECK-BIN:      (func $f16x8.add (type $0) (param $0 v128) (param $1 v128) (result v128)
+ ;; CHECK-BIN-NEXT:  (f16x8.add
+ ;; CHECK-BIN-NEXT:   (local.get $0)
+ ;; CHECK-BIN-NEXT:   (local.get $1)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT: )
+ (func $f16x8.add (param $0 v128) (param $1 v128) (result v128)
+  (f16x8.add
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+  ;; CHECK-TEXT:      (func $f16x8.sub (type $0) (param $0 v128) (param $1 v128) (result v128)
+  ;; CHECK-TEXT-NEXT:  (f16x8.sub
+  ;; CHECK-TEXT-NEXT:   (local.get $0)
+  ;; CHECK-TEXT-NEXT:   (local.get $1)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $f16x8.sub (type $0) (param $0 v128) (param $1 v128) (result v128)
+  ;; CHECK-BIN-NEXT:  (f16x8.sub
+  ;; CHECK-BIN-NEXT:   (local.get $0)
+  ;; CHECK-BIN-NEXT:   (local.get $1)
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $f16x8.sub (param $0 v128) (param $1 v128) (result v128)
+  (f16x8.sub
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+  ;; CHECK-TEXT:      (func $f16x8.mul (type $0) (param $0 v128) (param $1 v128) (result v128)
+  ;; CHECK-TEXT-NEXT:  (f16x8.mul
+  ;; CHECK-TEXT-NEXT:   (local.get $0)
+  ;; CHECK-TEXT-NEXT:   (local.get $1)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $f16x8.mul (type $0) (param $0 v128) (param $1 v128) (result v128)
+  ;; CHECK-BIN-NEXT:  (f16x8.mul
+  ;; CHECK-BIN-NEXT:   (local.get $0)
+  ;; CHECK-BIN-NEXT:   (local.get $1)
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $f16x8.mul (param $0 v128) (param $1 v128) (result v128)
+  (f16x8.mul
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+  ;; CHECK-TEXT:      (func $f16x8.div (type $0) (param $0 v128) (param $1 v128) (result v128)
+  ;; CHECK-TEXT-NEXT:  (f16x8.div
+  ;; CHECK-TEXT-NEXT:   (local.get $0)
+  ;; CHECK-TEXT-NEXT:   (local.get $1)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $f16x8.div (type $0) (param $0 v128) (param $1 v128) (result v128)
+  ;; CHECK-BIN-NEXT:  (f16x8.div
+  ;; CHECK-BIN-NEXT:   (local.get $0)
+  ;; CHECK-BIN-NEXT:   (local.get $1)
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $f16x8.div (param $0 v128) (param $1 v128) (result v128)
+  (f16x8.div
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+  ;; CHECK-TEXT:      (func $f16x8.min (type $0) (param $0 v128) (param $1 v128) (result v128)
+  ;; CHECK-TEXT-NEXT:  (f16x8.min
+  ;; CHECK-TEXT-NEXT:   (local.get $0)
+  ;; CHECK-TEXT-NEXT:   (local.get $1)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $f16x8.min (type $0) (param $0 v128) (param $1 v128) (result v128)
+  ;; CHECK-BIN-NEXT:  (f16x8.min
+  ;; CHECK-BIN-NEXT:   (local.get $0)
+  ;; CHECK-BIN-NEXT:   (local.get $1)
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $f16x8.min (param $0 v128) (param $1 v128) (result v128)
+  (f16x8.min
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+  ;; CHECK-TEXT:      (func $f16x8.max (type $0) (param $0 v128) (param $1 v128) (result v128)
+  ;; CHECK-TEXT-NEXT:  (f16x8.max
+  ;; CHECK-TEXT-NEXT:   (local.get $0)
+  ;; CHECK-TEXT-NEXT:   (local.get $1)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $f16x8.max (type $0) (param $0 v128) (param $1 v128) (result v128)
+  ;; CHECK-BIN-NEXT:  (f16x8.max
+  ;; CHECK-BIN-NEXT:   (local.get $0)
+  ;; CHECK-BIN-NEXT:   (local.get $1)
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $f16x8.max (param $0 v128) (param $1 v128) (result v128)
+  (f16x8.max
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+  ;; CHECK-TEXT:      (func $f16x8.pmin (type $0) (param $0 v128) (param $1 v128) (result v128)
+  ;; CHECK-TEXT-NEXT:  (f16x8.pmin
+  ;; CHECK-TEXT-NEXT:   (local.get $0)
+  ;; CHECK-TEXT-NEXT:   (local.get $1)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $f16x8.pmin (type $0) (param $0 v128) (param $1 v128) (result v128)
+  ;; CHECK-BIN-NEXT:  (f16x8.pmin
+  ;; CHECK-BIN-NEXT:   (local.get $0)
+  ;; CHECK-BIN-NEXT:   (local.get $1)
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $f16x8.pmin (param $0 v128) (param $1 v128) (result v128)
+  (f16x8.pmin
+   (local.get $0)
+   (local.get $1)
+  )
+ )
+  ;; CHECK-TEXT:      (func $f16x8.pmax (type $0) (param $0 v128) (param $1 v128) (result v128)
+  ;; CHECK-TEXT-NEXT:  (f16x8.pmax
+  ;; CHECK-TEXT-NEXT:   (local.get $0)
+  ;; CHECK-TEXT-NEXT:   (local.get $1)
+  ;; CHECK-TEXT-NEXT:  )
+  ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (func $f16x8.pmax (type $0) (param $0 v128) (param $1 v128) (result v128)
+  ;; CHECK-BIN-NEXT:  (f16x8.pmax
+  ;; CHECK-BIN-NEXT:   (local.get $0)
+  ;; CHECK-BIN-NEXT:   (local.get $1)
+  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT: )
+  (func $f16x8.pmax (param $0 v128) (param $1 v128) (result v128)
+  (f16x8.pmax
+   (local.get $0)
+   (local.get $1)
+  )
+ )
 )
 ;; CHECK-BIN-NODEBUG:      (type $0 (func (param v128 v128) (result v128)))
 
@@ -318,6 +461,62 @@
 
 ;; CHECK-BIN-NODEBUG:      (func $10 (type $0) (param $0 v128) (param $1 v128) (result v128)
 ;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.ge
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $11 (type $0) (param $0 v128) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.add
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $12 (type $0) (param $0 v128) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.sub
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $13 (type $0) (param $0 v128) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.mul
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $14 (type $0) (param $0 v128) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.div
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $15 (type $0) (param $0 v128) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.min
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $16 (type $0) (param $0 v128) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.max
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $17 (type $0) (param $0 v128) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.pmin
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $18 (type $0) (param $0 v128) (param $1 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.pmax
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
