@@ -495,8 +495,9 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'simd_f64x2.wast',
     'simd_f64x2_arith.wast',
     'simd_f64x2_rounding.wast',
-    'simd_i32x4_cmp.wast',     # UBSan error on integer overflow
-    'simd_i32x4_arith2.wast',  # UBSan error on integer overflow
+    'simd_i32x4_cmp.wast',        # UBSan error on integer overflow
+    'simd_i32x4_arith2.wast',     # UBSan error on integer overflow
+    'simd_i32x4_dot_i16x8.wast',  # UBSan error on integer overflow
     'token.wast',
 ]
 options.spec_tests = [t for t in options.spec_tests if os.path.basename(t) not
