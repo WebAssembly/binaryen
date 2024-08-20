@@ -352,24 +352,6 @@ INITIAL_CONTENTS_IGNORE = [
     'typed_continuations_contnew.wast',
     'typed_continuations_contbind.wast',
     'typed_continuations_suspend.wast',
-    # TODO: make sure the fuzzer supports the new EH
-    'coalesce-locals-eh.wast',
-    'code-folding-eh.wast',
-    'code-pushing-eh.wast',
-    'dce-eh.wast',
-    'eh.wast',
-    'eh-gc.wast',
-    'exception-handling.wast',
-    'gufa-eh.wast',
-    'simplify-locals-eh.wast',
-    'translate-to-new-eh.wast',
-    'rse-eh.wast',
-    'vacuum-eh.wast',
-    # These contain parts with new EH.
-    # TODO: split those parts out if we see that fuzzing new EH is far out.
-    'global-effects.wast',
-    'local-subtyping.wast',
-    'renamings.wat',
 ]
 
 
