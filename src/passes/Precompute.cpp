@@ -424,7 +424,7 @@ struct Precompute
     }
 
     // Otherwise, precompute normally like all other expressions.
-    visitExpression(curr); // TODO fuzz to find any differenceses
+    visitExpression(curr);
   }
 
   // If we failed to precompute a constant, perhaps we can still precompute part
