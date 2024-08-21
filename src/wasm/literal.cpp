@@ -463,6 +463,9 @@ bool Literal::operator==(const Literal& other) const {
     if (type.getHeapType().isMaybeShared(HeapType::i31)) {
       return i32 == other.i32;
     }
+    if (type.getHeapType().isMaybeShared(HeapType::ext)) {
+      return internalize() == other.internalize();
+    }
     WASM_UNREACHABLE("unexpected type");
   }
   WASM_UNREACHABLE("unexpected type");

@@ -30,6 +30,7 @@ assert_tests = ['wasm2js.wast.asserts']
 wasm2js_skipped_tests = [
     'empty_imported_table.wast',
     'br.wast',  # depends on multivalue
+    'br_table.wast',  # needs support for externref in assert_return
 ]
 
 
