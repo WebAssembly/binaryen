@@ -2273,15 +2273,15 @@ Literal Literal::geF64x2(const Literal& other) const {
                                                                     other);
 }
 
-static Literal PassThrough(const Literal& literal) { return literal; }
-static Literal ToFP16(const Literal& literal) {
+static Literal passThrough(const Literal& literal) { return literal; }
+static Literal toFP16(const Literal& literal) {
   return literal.convertF32ToF16();
 }
 
 template<int Lanes,
          LaneArray<Lanes> (Literal::*IntoLanes)() const,
          Literal (Literal::*BinaryOp)(const Literal&) const,
-         Literal (*Convert)(const Literal&) = PassThrough>
+         Literal (*Convert)(const Literal&) = passThrough>
 static Literal binary(const Literal& val, const Literal& other) {
   LaneArray<Lanes> lanes = (val.*IntoLanes)();
   LaneArray<Lanes> other_lanes = (other.*IntoLanes)();
@@ -2412,35 +2412,35 @@ Literal Literal::mulI64x2(const Literal& other) const {
   return binary<2, &Literal::getLanesI64x2, &Literal::mul>(*this, other);
 }
 Literal Literal::addF16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesF16x8, &Literal::add, &ToFP16>(*this,
+  return binary<8, &Literal::getLanesF16x8, &Literal::add, &toFP16>(*this,
                                                                     other);
 }
 Literal Literal::subF16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesF16x8, &Literal::sub, &ToFP16>(*this,
+  return binary<8, &Literal::getLanesF16x8, &Literal::sub, &toFP16>(*this,
                                                                     other);
 }
 Literal Literal::mulF16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesF16x8, &Literal::mul, &ToFP16>(*this,
+  return binary<8, &Literal::getLanesF16x8, &Literal::mul, &toFP16>(*this,
                                                                     other);
 }
 Literal Literal::divF16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesF16x8, &Literal::div, &ToFP16>(*this,
+  return binary<8, &Literal::getLanesF16x8, &Literal::div, &toFP16>(*this,
                                                                     other);
 }
 Literal Literal::minF16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesF16x8, &Literal::min, &ToFP16>(*this,
+  return binary<8, &Literal::getLanesF16x8, &Literal::min, &toFP16>(*this,
                                                                     other);
 }
 Literal Literal::maxF16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesF16x8, &Literal::max, &ToFP16>(*this,
+  return binary<8, &Literal::getLanesF16x8, &Literal::max, &toFP16>(*this,
                                                                     other);
 }
 Literal Literal::pminF16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesF16x8, &Literal::pmin, &ToFP16>(*this,
+  return binary<8, &Literal::getLanesF16x8, &Literal::pmin, &toFP16>(*this,
                                                                      other);
 }
 Literal Literal::pmaxF16x8(const Literal& other) const {
-  return binary<8, &Literal::getLanesF16x8, &Literal::pmax, &ToFP16>(*this,
+  return binary<8, &Literal::getLanesF16x8, &Literal::pmax, &toFP16>(*this,
                                                                      other);
 }
 Literal Literal::addF32x4(const Literal& other) const {
