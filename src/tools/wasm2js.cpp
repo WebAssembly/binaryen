@@ -809,6 +809,9 @@ void AssertionEmitter::emit() {
           // Skip other action assertions.
           continue;
         }
+      } else if (std::get_if<AssertModule>(assn)) {
+        // Skip module assertions
+        continue;
       } else {
         Fatal() << "unsupported assertion on line " << script[i].line;
       }
