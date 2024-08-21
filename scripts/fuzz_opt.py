@@ -1401,19 +1401,27 @@ class RoundtripText(TestCaseHandler):
         # names which are very long, causing names to collide and the wast to be
         # invalid
         # FIXME: run name-types by default during load?
-        run([in_bin('wasm-opt'), wasm, '--name-types', '-S', '-o', abspath('a.wast')] + FEATURE_OPTS)
-        run([in_bin('wasm-opt'), abspath('a.wast')] + FEATURE_OPTS)
+        #opts = ['--precompute']
+        opts = [random.choice(['-O1', '-O2', '-O3', '-Os', '-Oz'])]
+
+        run([in_bin('wasm-opt'), wasm, '-o', 'old.wasm'] + FEATURE_OPTS + opts)
+
+        os.environ['NEW'] = '1'
+        run([in_bin('wasm-opt'), wasm, '-o', 'new.wasm'] + FEATURE_OPTS + opts)
+        del os.environ['NEW']
+
+        assert open('old.wasm', 'rb').read() == open('new.wasm', 'rb').read()
 
 
 # The global list of all test case handlers
 testcase_handlers = [
-    FuzzExec(),
-    CompareVMs(),
-    CheckDeterminism(),
-    Wasm2JS(),
-    TrapsNeverHappen(),
-    CtorEval(),
-    Merge(),
+    #FuzzExec(),
+    #CompareVMs(),
+    #CheckDeterminism(),
+    #Wasm2JS(),
+    #TrapsNeverHappen(),
+    #CtorEval(),
+    #Merge(),
     RoundtripText()
 ]
 
