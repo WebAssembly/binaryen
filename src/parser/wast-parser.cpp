@@ -154,7 +154,6 @@ Result<ExpectedResult> result(Lexer& in) {
 
   // If we failed to parse a constant, we must have either a nan pattern or a
   // reference.
-
   if (in.takeSExprStart("f32.const"sv)) {
     auto kind = nan(in);
     CHECK_ERR(kind);
