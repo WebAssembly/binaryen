@@ -412,9 +412,8 @@ SPEC_TESTS_TO_SKIP = [
     'elem.wast',
 ]
 SPEC_TESTSUITE_TESTS_TO_SKIP = [
-    'address.wast',
-    'align.wast',
-    'binary-leb128.wast',
+    'address.wast',  # 64-bit offset allowed by memory64
+    'align.wast',    # Alignment bit 6 used by multi-memory
     'binary.wast',
     'block.wast',
     'br_table.wast',

@@ -269,7 +269,7 @@ void WasmBinaryWriter::writeTypes() {
     // size 1 are implicit, so only emit a group header for larger groups.
     auto currGroup = type.getRecGroup();
     if (lastGroup != currGroup && currGroup.size() > 1) {
-      o << S32LEB(BinaryConsts::EncodedType::Rec) << U32LEB(currGroup.size());
+      o << uint8_t(BinaryConsts::EncodedType::Rec) << U32LEB(currGroup.size());
     }
     lastGroup = currGroup;
     // Emit the type definition.
@@ -277,9 +277,9 @@ void WasmBinaryWriter::writeTypes() {
     auto super = type.getDeclaredSuperType();
     if (super || type.isOpen()) {
       if (type.isOpen()) {
-        o << S32LEB(BinaryConsts::EncodedType::Sub);
+        o << uint8_t(BinaryConsts::EncodedType::Sub);
       } else {
-        o << S32LEB(BinaryConsts::EncodedType::SubFinal);
+        o << uint8_t(BinaryConsts::EncodedType::SubFinal);
       }
       if (super) {
         o << U32LEB(1);
@@ -289,11 +289,11 @@ void WasmBinaryWriter::writeTypes() {
       }
     }
     if (type.isShared()) {
-      o << S32LEB(BinaryConsts::EncodedType::Shared);
+      o << uint8_t(BinaryConsts::EncodedType::SharedDef);
     }
     switch (type.getKind()) {
       case HeapTypeKind::Func: {
-        o << S32LEB(BinaryConsts::EncodedType::Func);
+        o << uint8_t(BinaryConsts::EncodedType::Func);
         auto sig = type.getSignature();
         for (auto& sigType : {sig.params, sig.results}) {
           o << U32LEB(sigType.size());
@@ -304,7 +304,7 @@ void WasmBinaryWriter::writeTypes() {
         break;
       }
       case HeapTypeKind::Struct: {
-        o << S32LEB(BinaryConsts::EncodedType::Struct);
+        o << uint8_t(BinaryConsts::EncodedType::Struct);
         auto fields = type.getStruct().fields;
         o << U32LEB(fields.size());
         for (const auto& field : fields) {
@@ -313,11 +313,11 @@ void WasmBinaryWriter::writeTypes() {
         break;
       }
       case HeapTypeKind::Array:
-        o << S32LEB(BinaryConsts::EncodedType::Array);
+        o << uint8_t(BinaryConsts::EncodedType::Array);
         writeField(type.getArray().element);
         break;
       case HeapTypeKind::Cont:
-        o << S32LEB(BinaryConsts::EncodedType::Cont);
+        o << uint8_t(BinaryConsts::EncodedType::Cont);
         writeHeapType(type.getContinuation().type);
         break;
       case HeapTypeKind::Basic:
@@ -2405,7 +2405,7 @@ void WasmBinaryReader::readTypes() {
 
   for (size_t i = 0; i < builder.size(); i++) {
     BYN_TRACE("read one\n");
-    auto form = getS32LEB();
+    auto form = getInt8();
     if (form == BinaryConsts::EncodedType::Rec) {
       uint32_t groupSize = getU32LEB();
       if (groupSize == 0u) {
@@ -2416,7 +2416,7 @@ void WasmBinaryReader::readTypes() {
       // allocate space for the extra types.
       builder.grow(groupSize - 1);
       builder.createRecGroup(i, groupSize);
-      form = getS32LEB();
+      form = getInt8();
     }
     std::optional<uint32_t> superIndex;
     if (form == BinaryConsts::EncodedType::Sub ||
@@ -2432,11 +2432,11 @@ void WasmBinaryReader::readTypes() {
         }
         superIndex = getU32LEB();
       }
-      form = getS32LEB();
+      form = getInt8();
     }
-    if (form == BinaryConsts::Shared) {
+    if (form == BinaryConsts::SharedDef) {
       builder[i].setShared();
-      form = getS32LEB();
+      form = getInt8();
     }
     if (form == BinaryConsts::EncodedType::Func) {
       builder[i] = readSignatureDef();
