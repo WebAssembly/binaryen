@@ -363,6 +363,73 @@ struct Precompute
     }
   }
 
+  void visitBlock(Block* curr) {
+    // When block precomputation fails, it can lead to quadratic slowness due to
+    // the "tower of blocks" pattern used to implement switches:
+    //
+    //  (block
+    //    (block
+    //      ...
+    //        (block
+    //          (br_table ..
+    //
+    // If we try to precompute each block here, and fail on each, then we end up
+    // doing quadratic work. This is also wasted work as once a nested block
+    // fails to precompute there is not really a chance to succeed on the
+    // parent. If we do *not* fail to precompute, however, then we do want to
+    // precompute such nested blocks, e.g.:
+    //
+    //  (block $out
+    //    (block
+    //      (br $out)
+    //    )
+    //  )
+    //
+    // Here we *can* precompute the inner block, so when we get to the outer one
+    // we see this:
+    //
+    //  (block $out
+    //    (br $out)
+    //  )
+    //
+    // And that precomputes to nothing. Therefore when we see a child of the
+    // block that is another block (it failed to precompute to something
+    // simpler) then we leave early here.
+    //
+    // Note that in theory we could still precompute here if wasm had
+    // instructions that allow such things, e.g.:
+    //
+    //  (block $out
+    //    (block
+    //      (cause side effect1)
+    //      (cause side effect2)
+    //    )
+    //    (undo those side effects exactly)
+    //  )
+    //
+    // We are forced to invent a side effect that we can precisely undo (unlike,
+    // say locals - a local.set would persist outside of the block, and even if
+    // we did another set to the original value, this pass doesn't track values
+    // that way). Only with that can we make the inner block un-precomputable
+    // (because there are side effects) but the outer one is (because those
+    // effects are undone). Note that it is critical that we have two things in
+    // the block, so that we can't precompute it to one of them (which is what
+    // we did to the br in the previous example). Note also that this is still
+    // optimizable using other passes, as merge-blocks will fold the two blocks
+    // together.
+    if (!curr->list.empty() && curr->list[0]->is<Block>()) {
+      // The first child is a block, that is, it could not be simplified, so
+      // this looks like the "tower of blocks" pattern. Avoid quadratic time
+      // here as explained above. (We could also look at other children of the
+      // block, but the only real-world pattern identified so far is on the
+      // first child, so keep things simple here.)
+      return;
+    }
+
+    // Otherwise, precompute normally like all other expressions.
+    visitExpression(curr);
+  }
+
   // If we failed to precompute a constant, perhaps we can still precompute part
   // of an expression. Specifically, consider this case:
   //
