@@ -35,9 +35,16 @@
 ;; RUN: wasm-opt %s --string-lowering-magic-imports -all -S -o - \
 ;; RUN:     | filecheck %s --check-prefix=MAGIC
 ;;
+;; If we use magic imports with asserts, we should get an error.
+;;
+;; RUN: not wasm-opt %s --string-lowering-magic-imports-assert -all -S -o - \
+;; RUN:     2>&1 | filecheck %s --check-prefix=ASSERT
+;;
 ;; CHECK: custom section "string.consts", size 136, contents: "[\"bar\",\"foo\",\"needs\\tescaping\\u0000.'#%\\\"- .\\r\\n\\\\08\\f\\n\\r\\t.\\ua66e\",\"unpaired high surrogate \\ud800 \",\"unpaired low surrogate \\udf48 \"]"
 ;;
 ;; MAGIC: custom section "string.consts", size 68, contents: "[\"unpaired high surrogate \\ud800 \",\"unpaired low surrogate \\udf48 \"]"
+;;
+;; ASSERT: Fatal: Cannot lower non-UTF-16 string "unpaired high surrogate \ef\bf\bd "
 
 ;; The custom section should parse OK using JSON.parse from node.
 ;; (Note we run --remove-unused-module-elements to remove externref-using

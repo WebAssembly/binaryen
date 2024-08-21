@@ -503,6 +503,10 @@ void PassRegistry::registerPasses() {
     "string-lowering-magic-imports",
     "same as string-lowering, but encodes well-formed strings as magic imports",
     createStringLoweringMagicImportPass);
+  registerPass("string-lowering-magic-imports-assert",
+               "same as string-lowering-magic-imports, but raise a fatal error "
+               "if there are invalid strings",
+               createStringLoweringMagicImportAssertPass);
   registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
   registerPass("stack-check",

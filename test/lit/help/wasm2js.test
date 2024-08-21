@@ -441,6 +441,11 @@
 ;; CHECK-NEXT:                                                 encodes well-formed strings as
 ;; CHECK-NEXT:                                                 magic imports
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --string-lowering-magic-imports-assert        same as
+;; CHECK-NEXT:                                                 string-lowering-magic-imports,
+;; CHECK-NEXT:                                                 but raise a fatal error if there
+;; CHECK-NEXT:                                                 are invalid strings
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip                                       deprecated; same as strip-debug
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip-debug                                 strip debug info (including the

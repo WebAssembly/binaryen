@@ -194,8 +194,12 @@ struct StringLowering : public StringGathering {
   // instead of emitting them into the JSON custom section.
   bool useMagicImports;
 
-  StringLowering(bool useMagicImports = false)
-    : useMagicImports(useMagicImports) {}
+  // Whether to throw a fatal error on non-UTF8 strings that would not be able
+  // to use the "magic import" mechanism.
+  bool assertUTF8;
+
+  StringLowering(bool useMagicImports = false, bool assertUTF8 = false)
+    : useMagicImports(useMagicImports), assertUTF8(assertUTF8) {}
 
   void run(Module* module) override {
     if (!module->features.has(FeatureSet::Strings)) {
@@ -238,6 +242,12 @@ struct StringLowering : public StringGathering {
             global->module = "'";
             global->base = Name(utf8.str());
           } else {
+            if (useMagicImports && assertUTF8) {
+              std::stringstream escaped;
+              String::printEscaped(escaped, utf8.str());
+              Fatal() << "Cannot lower non-UTF-16 string " << escaped.str()
+                      << '\n';
+            }
             global->module = "string.const";
             global->base = std::to_string(jsonImportIndex);
             if (first) {
@@ -534,5 +544,8 @@ struct StringLowering : public StringGathering {
 Pass* createStringGatheringPass() { return new StringGathering(); }
 Pass* createStringLoweringPass() { return new StringLowering(); }
 Pass* createStringLoweringMagicImportPass() { return new StringLowering(true); }
+Pass* createStringLoweringMagicImportAssertPass() {
+  return new StringLowering(true, true);
+}
 
 } // namespace wasm
