@@ -620,7 +620,7 @@ template<> struct hash<wasm::TagLocation> {
 
 template<> struct hash<wasm::CaughtExnRefLocation> {
   size_t operator()(const wasm::CaughtExnRefLocation& loc) const {
-    return std::hash<const char*>()("caught-exnref-location");
+    return std::hash<const void*>()("caught-exnref-location");
   }
 };
 
