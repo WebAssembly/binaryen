@@ -627,6 +627,14 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       case ExtMulHighSVecI64x2:
       case ExtMulLowUVecI64x2:
       case ExtMulHighUVecI64x2:
+      case AddVecF16x8:
+      case SubVecF16x8:
+      case MulVecF16x8:
+      case DivVecF16x8:
+      case MinVecF16x8:
+      case MaxVecF16x8:
+      case PMinVecF16x8:
+      case PMaxVecF16x8:
       case AddVecF32x4:
       case SubVecF32x4:
       case MulVecF32x4:
