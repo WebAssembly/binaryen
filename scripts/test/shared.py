@@ -414,90 +414,89 @@ SPEC_TESTS_TO_SKIP = [
 SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'address.wast',  # 64-bit offset allowed by memory64
     'align.wast',    # Alignment bit 6 used by multi-memory
-    'binary.wast',
-    'block.wast',
-    'br_table.wast',
-    'bulk.wast',
-    'comments.wast',
-    'const.wast',
-    'conversions.wast',
-    'data.wast',
-    'elem.wast',
-    'f32.wast',
-    'f64.wast',
-    'fac.wast',
-    'float_exprs.wast',
-    'float_misc.wast',
-    'func.wast',
-    'global.wast',
-    'if.wast',
-    'imports.wast',
-    'linking.wast',
-    'loop.wast',
-    'memory.wast',
-    'annotations.wast',
-    'id.wast',
-    'throw.wast',
-    'try_catch.wast',
-    'tag.wast',
-    'throw_ref.wast',
-    'try_table.wast',
-    'br_on_non_null.wast',
-    'br_on_null.wast',
-    'local_init.wast',
-    'ref_func.wast',
-    'ref_is_null.wast',
-    'ref_null.wast',
-    'return_call_indirect.wast',
-    'select.wast',
-    'table.wast',
-    'type-equivalence.wast',
-    'unreached-invalid.wast',
-    'array.wast',
-    'array_init_elem.wast',
-    'br_if.wast',
-    'br_on_cast.wast',
-    'br_on_cast_fail.wast',
-    'extern.wast',
-    'i31.wast',
-    'ref_cast.wast',
-    'ref_test.wast',
-    'struct.wast',
-    'type-rec.wast',
-    'type-subtyping.wast',
-    'call_indirect.wast',
-    'memory64.wast',
-    'table_fill.wast',
-    'table_get.wast',
-    'table_grow.wast',
-    'table_init.wast',
-    'table_set.wast',
-    'imports0.wast',
-    'imports2.wast',
-    'imports3.wast',
-    'linking0.wast',
-    'linking3.wast',
-    'i16x8_relaxed_q15mulr_s.wast',
-    'i32x4_relaxed_trunc.wast',
-    'i8x16_relaxed_swizzle.wast',
-    'relaxed_dot_product.wast',
-    'relaxed_laneselect.wast',
-    'relaxed_madd_nmadd.wast',
-    'relaxed_min_max.wast',
-    'simd_address.wast',
-    'simd_boolean.wast',
-    'simd_const.wast',
-    'simd_conversions.wast',
-    'simd_f32x4.wast',
-    'simd_f32x4_arith.wast',
-    'simd_f32x4_rounding.wast',
-    'simd_f64x2.wast',
-    'simd_f64x2_arith.wast',
-    'simd_f64x2_rounding.wast',
+    'binary.wast',   # memory.grow reserved byte a LEB in multi-memory
+    'block.wast',    # Requires block parameters
+    'br_table.wast',  # Requires ref.extern wast constants
+    'bulk.wast',     # Requires table.init abbreviation with implicit table
+    'comments.wast',  # Issue with carriage returns being treated as newlines
+    'const.wast',    # Hex float constant not recognized as out of range
+    'conversions.wast',  # Promoted NaN should be canonical
+    'data.wast',    # Constant global references allowed by GC
+    'elem.wast',    # Requires table.init abbreviation with implicit table
+    'f32.wast',     # Adding -0 and -nan should give a canonical NaN
+    'f64.wast',     # Adding -0 and -nan should give a canonical NaN
+    'fac.wast',     # Requires block parameters (on a loop)
+    'float_exprs.wast',  # Adding 0 and NaN should give canonical NaN
+    'float_misc.wast',   # Rounding wrong on f64.sqrt
+    'func.wast',    # Duplicate parameter names not properly rejected
+    'global.wast',  # Requires ref.extern wast constants
+    'if.wast',      # Requires block parameters (on an if)
+    'imports.wast',  # Requires wast `register` support
+    'linking.wast',  # Requires wast `register` support
+    'loop.wast',     # Requires block parameters (on a loop)
+    'memory.wast',   # Multiple memories now allowed
+    'annotations.wast',  # String annotations IDs should be allowed
+    'id.wast',       # Empty IDs should be disallowed
+    'throw.wast',    # Requires try_table interpretation
+    'try_catch.wast',  # Requires wast `register` support
+    'tag.wast',      # Non-empty tag results allowed by stack switching
+    'throw_ref.wast',  # Requires block parameters (on an if)
+    'try_table.wast',  # Requires try_table interpretation
+    'br_on_non_null.wast',  # Requires sending values on br_on_non_null
+    'br_on_null.wast',      # Requires sending values on br_on_null
+    'local_init.wast',  # Requires ref.extern wast constants
+    'ref_func.wast',   # Requires rejecting undeclared functions references
+    'ref_is_null.wast',  # Requires ref.extern wast constants
+    'ref_null.wast',     # Requires ref.null wast constants
+    'return_call_indirect.wast',  # Requires more precise unreachable validation
+    'select.wast',  # Requires ref.extern wast constants
+    'table.wast',  # Requires support for table default elements
+    'type-equivalence.wast',  # Recursive types allowed by GC
+    'unreached-invalid.wast',  # Requires more precise unreachable validation
+    'array.wast',  # Requires ref.array wast constants
+    'array_init_elem.wast',  # Requires support for elem.drop
+    'br_if.wast',  # Requires more precise branch validation
+    'br_on_cast.wast',  # Requires sending values on br_on_cast
+    'br_on_cast_fail.wast',  # Requires sending values on br_on_cast_fail
+    'extern.wast',    # Requires ref.extern wast constants
+    'i31.wast',       # Requires ref.i31 wast constants
+    'ref_cast.wast',  # Requires ref.extern wast constants
+    'ref_test.wast',  # Requires ref.extern wast constants
+    'struct.wast',    # Requires ref.struct wast constants
+    'type-rec.wast',  # Requires wast `register` support
+    'type-subtyping.wast',  # ShellExternalInterface::callTable does not handle subtyping
+    'call_indirect.wast',   # Bug with 64-bit inline element segment parsing
+    'memory64.wast',        # Multiple memories now allowed
+    'table_fill.wast',      # Requires ref.extern wast constants
+    'table_get.wast',       # Requires ref.extern wast constants
+    'table_grow.wast',      # Requires ref.extern wast constants
+    'table_init.wast',      # Requires support for elem.drop
+    'table_set.wast',       # Requires ref.extern wast constants
+    'imports0.wast',        # Requires wast `register` support
+    'imports2.wast',        # Requires wast `register` support
+    'imports3.wast',        # Requires wast `register` support
+    'linking0.wast',        # Requires wast `register` support
+    'linking3.wast',        # Requires wast `register` support
+    'i16x8_relaxed_q15mulr_s.wast',  # Requires wast `either` support
+    'i32x4_relaxed_trunc.wast',      # Requires wast `either` support
+    'i8x16_relaxed_swizzle.wast',    # Requires wast `either` support
+    'relaxed_dot_product.wast',   # Requires wast `either` support
+    'relaxed_laneselect.wast',    # Requires wast `either` support
+    'relaxed_madd_nmadd.wast',    # Requires wast `either` support
+    'relaxed_min_max.wast',       # Requires wast `either` support
+    'simd_address.wast',          # 64-bit offset allowed by memory64
+    'simd_const.wast',            # Hex float constant not recognized as out of range
+    'simd_conversions.wast',      # Promoted NaN should be canonical
+    'simd_f32x4.wast',            # Min of 0 and NaN should give a canonical NaN
+    'simd_f32x4_arith.wast',      # Adding inf and -inf should give a canonical NaN
+    'simd_f32x4_rounding.wast',   # Ceil of NaN should give a canonical NaN
+    'simd_f64x2.wast',            # Min of 0 and NaN should give a canonical NaN
+    'simd_f64x2_arith.wast',      # Adding inf and -inf should give a canonical NaN
+    'simd_f64x2_rounding.wast',   # Ceil of NaN should give a canonical NaN
     'simd_i32x4_cmp.wast',        # UBSan error on integer overflow
     'simd_i32x4_arith2.wast',     # UBSan error on integer overflow
     'simd_i32x4_dot_i16x8.wast',  # UBSan error on integer overflow
-    'token.wast',
+    'token.wast',                 # Lexer should require spaces between strings and non-paren tokens
 ]
 options.spec_tests = [t for t in options.spec_tests if os.path.basename(t) not
                       in (SPEC_TESTSUITE_TESTS_TO_SKIP if 'testsuite' in t
