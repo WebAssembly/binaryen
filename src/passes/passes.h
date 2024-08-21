@@ -158,6 +158,7 @@ Pass* createStackCheckPass();
 Pass* createStringGatheringPass();
 Pass* createStringLoweringPass();
 Pass* createStringLoweringMagicImportPass();
+Pass* createStringLoweringMagicImportAssertPass();
 Pass* createStripDebugPass();
 Pass* createStripDWARFPass();
 Pass* createStripProducersPass();
