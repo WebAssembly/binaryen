@@ -195,11 +195,15 @@ struct StringLowering : public StringGathering {
   bool useMagicImports;
 
   // Whether to throw a fatal error on non-UTF8 strings that would not be able
-  // to use the "magic import" mechanism.
+  // to use the "magic import" mechanism. Only usable in conjunction with magic
+  // imports.
   bool assertUTF8;
 
   StringLowering(bool useMagicImports = false, bool assertUTF8 = false)
-    : useMagicImports(useMagicImports), assertUTF8(assertUTF8) {}
+    : useMagicImports(useMagicImports), assertUTF8(assertUTF8) {
+    // If we are asserting valid UTF-8, we must be using magic imports.
+    assert(!assertUTF8 || useMagicImports);
+  }
 
   void run(Module* module) override {
     if (!module->features.has(FeatureSet::Strings)) {
@@ -242,7 +246,7 @@ struct StringLowering : public StringGathering {
             global->module = "'";
             global->base = Name(utf8.str());
           } else {
-            if (useMagicImports && assertUTF8) {
+            if (assertUTF8) {
               std::stringstream escaped;
               String::printEscaped(escaped, utf8.str());
               Fatal() << "Cannot lower non-UTF-16 string " << escaped.str()
