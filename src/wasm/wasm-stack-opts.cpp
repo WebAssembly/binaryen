@@ -278,9 +278,8 @@ void StackIROptimizer::removeUnneededBlocks() {
   std::unordered_set<Name> targets;
   for (auto*& inst : insts) {
     if (inst) {
-      BranchUtils::operateOnScopeNameUses(inst->origin, [&](Name& name) {
-        targets.insert(name);
-      });
+      BranchUtils::operateOnScopeNameUses(
+        inst->origin, [&](Name& name) { targets.insert(name); });
     }
   }
 
