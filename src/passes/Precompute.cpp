@@ -364,19 +364,8 @@ struct Precompute
   }
 
   void visitBlock(Block* curr) {
-    // Blocks can only rarely be precomputed in a useful manner. For example,
-    //
-    //  (block
-    //    (nop)
-    //    (i32.const 42)
-    //  )
-    //
-    // can be precomputed, but other passes will do the same (vacuum will remove
-    // the nop and also the block). Blocks by themselves do not do actual
-    // computation, but just pass around values, so this is not surprising. It
-    // is best to avoid precomputing here because it may be very slow, in
-    // particular in the common "tower of blocks" pattern used to implement
-    // switches,
+    // When block precomputation fails, it can lead to quadratic slowness due to
+    // the "tower of blocks" pattern used to implement switches:
     //
     //  (block
     //    (block
@@ -384,12 +373,54 @@ struct Precompute
     //        (block
     //          (br_table ..
     //
-    // If we try to precompute each block here then we'll end up doing quadratic
-    // work. Instead, [..]
-    if (getenv("NEW")) {
-      if (!curr->list.empty() && curr->list[0]->is<Block>()) {
-        return;
-      }
+    // If we try to precompute each block here, and fail on each, then we end up
+    // doing quadratic work. This is also wasted work as once a nested block
+    // fails to precompute there is not really a chance to succeed on the
+    // parent. If we do *not* fail to precompute, however, then we do want to
+    // precompute such nested blocks, e.g.:
+    //
+    //  (block $out
+    //    (block
+    //      (br $out)
+    //    )
+    //  )
+    //
+    // Here we *can* precompute the inner block, so when we get to the outer one
+    // we see this:
+    //
+    //  (block $out
+    //    (br $out)
+    //  )
+    //
+    // And that precomputes to nothing. Therefore when we see a child of the
+    // block that is another block (it failed to precompute to something
+    // simpler) then we leave early here.
+    //
+    // Note that in theory we could still precompute here if wasm had
+    // instructions that allow such things, e.g.:
+    //
+    //  (block $out
+    //    (block
+    //      (cause side effect)
+    //      (br $out)
+    //    )
+    //    (undo that side effect exactly, and nothing more)
+    //  )
+    //
+    // In this situation we can remove the outer block and everything inside it,
+    // because it has no side effects at all, when seen as a whole (but not when
+    // considering the inner block by itself). However, wasm does not atm have
+    // such instructions: side effects like locals would persist outside of the
+    // block. In theory we could set a local and unset it before leaving the
+    // block, but tracking that level of effects is not something that this pass
+    // does.
+    if (!curr->list.empty() && curr->list[0]->is<Block>()) {
+      // The first child is a block, that is, it could not be simplified, so
+      // this looks like the "tower of blocks" pattern. Avoid quadratic time
+      // here as explained above. (We could also look at other children of the
+      // block, but the only real-world pattern identified so far is on the
+      // first child, so keep things simple here.)
+      return;
     }
 
     // Otherwise, precompute normally like all other expressions.
