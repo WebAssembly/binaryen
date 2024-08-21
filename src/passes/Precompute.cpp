@@ -363,6 +363,39 @@ struct Precompute
     }
   }
 
+  void visitBlock(Block* curr) {
+    // Blocks can only rarely be precomputed in a useful manner. For example,
+    //
+    //  (block
+    //    (nop)
+    //    (i32.const 42)
+    //  )
+    //
+    // can be precomputed, but other passes will do the same (vacuum will remove
+    // the nop and also the block). Blocks by themselves do not do actual
+    // computation, but just pass around values, so this is not surprising. It
+    // is best to avoid precomputing here because it may be very slow, in
+    // particular in the common "tower of blocks" pattern used to implement
+    // switches,
+    //
+    //  (block
+    //    (block
+    //      ...
+    //        (block
+    //          (br_table ..
+    //
+    // If we try to precompute each block here then we'll end up doing quadratic
+    // work. Instead, [..]
+    if (getenv("NEW")) {
+      if (!curr->list.empty() && curr->list[0]->is<Block>()) {
+        return;
+      }
+    }
+
+    // Otherwise, precompute normally like all other expressions.
+    visitExpression(curr); // TODO fuzz to find any differenceses
+  }
+
   // If we failed to precompute a constant, perhaps we can still precompute part
   // of an expression. Specifically, consider this case:
   //
