@@ -31,16 +31,16 @@ namespace wasm::ParamUtils {
 std::unordered_set<Index> getUsedParams(Function* func) {
   // To find which params are used, compute liveness at the entry.
   struct ParamLiveness : public LivenessWalker<ParamLiveness, Visitor<ParamLiveness>> {
-    auto Super = LivenessWalker<ParamLiveness, Visitor<ParamLiveness>>;
+    using Super = LivenessWalker<ParamLiveness, Visitor<ParamLiveness>>;
 
     // Ignore non-params.
-    static void doVisitLocalGet(SubType* self, Expression** currp) {
+    static void doVisitLocalGet(ParamLiveness* self, Expression** currp) {
       auto* get = (*currp)->cast<LocalGet>();
       if (self->getFunction()->isParam(get->index)) {
         Super::doVisitLocalGet(self, currp);
       }
     }
-    static void doVisitLocalSet(SubType* self, Expression** currp) {
+    static void doVisitLocalSet(ParamLiveness* self, Expression** currp) {
       auto* set = (*currp)->cast<LocalSet>();
       if (self->getFunction()->isParam(set->index)) {
         Super::doVisitLocalSet(self, currp);
@@ -55,10 +55,11 @@ std::unordered_set<Index> getUsedParams(Function* func) {
   }
 
   auto& livenessAtEntry = walker.entry->contents.start;
+  std::unordered_set<Index> usedParams;
 
   for (Index i = 0; i < func->getNumParams(); i++) {
-    if (livenessAtEntry.count(i)) {
-      usedParams.insert(get->index);
+    if (livenessAtEntry.has(i)) {
+      usedParams.insert(i);
     }
   }
 
