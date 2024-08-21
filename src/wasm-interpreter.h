@@ -3178,14 +3178,11 @@ public:
     Flow fail = Literal::makeFromInt64(-1, table->indexType);
     uint64_t delta = deltaFlow.getSingleValue().getUnsigned();
 
-    if (tableSize + delta < tableSize) {
+    uint64_t newSize;
+    if (std::ckd_add(&newSize, tableSize, delta)) {
       return fail;
     }
-    if (tableSize + delta > table->max) {
-      return fail;
-    }
-    Index newSize = tableSize + delta;
-    if (newSize > WebLimitations::MaxTableSize) {
+    if (newSize > table->max || newSize > WebLimitations::MaxTableSize) {
       return fail;
     }
     if (!info.interface()->growTable(
