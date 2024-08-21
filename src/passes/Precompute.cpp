@@ -401,19 +401,22 @@ struct Precompute
     //
     //  (block $out
     //    (block
-    //      (cause side effect)
-    //      (br $out)
+    //      (cause side effect1)
+    //      (cause side effect2)
     //    )
-    //    (undo that side effect exactly, and nothing more)
+    //    (undo those side effects exactly)
     //  )
     //
-    // In this situation we can remove the outer block and everything inside it,
-    // because it has no side effects at all, when seen as a whole (but not when
-    // considering the inner block by itself). However, wasm does not atm have
-    // such instructions: side effects like locals would persist outside of the
-    // block. In theory we could set a local and unset it before leaving the
-    // block, but tracking that level of effects is not something that this pass
-    // does.
+    // We are forced to invent a side effect that we can precisely undo (unlike,
+    // say locals - a local.set would persist outside of the block, and even if
+    // we did another set to the original value, this pass doesn't track values
+    // that way). Only with that can we make the inner block un-precomputable
+    // (because there are side effects) but the outer one is (because those
+    // effects are undone). Note that it is critical that we have two things in
+    // the block, so that we can't precompute it to one of them (which is what
+    // we did to the br in the previous example). Note also that this is still
+    // optimizable using other passes, as merge-blocks will fold the two blocks
+    // together.
     if (!curr->list.empty() && curr->list[0]->is<Block>()) {
       // The first child is a block, that is, it could not be simplified, so
       // this looks like the "tower of blocks" pattern. Avoid quadratic time
