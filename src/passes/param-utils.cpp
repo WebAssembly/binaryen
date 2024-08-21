@@ -14,10 +14,10 @@
  * limitations under the License.
  */
 
+#include "cfg/liveness-traversal.h"
 #include "passes/param-utils.h"
 #include "ir/eh-utils.h"
 #include "ir/function-utils.h"
-#include "ir/local-graph.h"
 #include "ir/localize.h"
 #include "ir/possible-constant.h"
 #include "ir/type-updating.h"
@@ -29,21 +29,36 @@
 namespace wasm::ParamUtils {
 
 std::unordered_set<Index> getUsedParams(Function* func) {
-  LocalGraph localGraph(func);
+  // To find which params are used, compute liveness at the entry.
+  struct ParamLiveness : public LivenessWalker<ParamLiveness, Visitor<ParamLiveness>> {
+    auto Super = LivenessWalker<ParamLiveness, Visitor<ParamLiveness>>;
 
-  std::unordered_set<Index> usedParams;
-
-  for (auto& [get, sets] : localGraph.getSetses) {
-    if (!func->isParam(get->index)) {
-      continue;
-    }
-
-    for (auto* set : sets) {
-      // A nullptr value indicates there is no LocalSet* that sets the value,
-      // so it must be the parameter value.
-      if (!set) {
-        usedParams.insert(get->index);
+    // Ignore non-params.
+    static void doVisitLocalGet(SubType* self, Expression** currp) {
+      auto* get = (*currp)->cast<LocalGet>();
+      if (self->getFunction()->isParam(get->index)) {
+        Super::doVisitLocalGet(self, currp);
       }
+    }
+    static void doVisitLocalSet(SubType* self, Expression** currp) {
+      auto* set = (*currp)->cast<LocalSet>();
+      if (self->getFunction()->isParam(set->index)) {
+        Super::doVisitLocalSet(self, currp);
+      }
+    }
+  } walker;
+  walker.walkFunction(func);
+
+  if (!walker.entry) {
+    // Empty function.
+    return {};
+  }
+
+  auto& livenessAtEntry = walker.entry->contents.start;
+
+  for (Index i = 0; i < func->getNumParams(); i++) {
+    if (livenessAtEntry.count(i)) {
+      usedParams.insert(get->index);
     }
   }
 
