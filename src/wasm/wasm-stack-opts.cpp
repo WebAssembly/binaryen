@@ -18,6 +18,7 @@
 // Operations on Stack IR.
 //
 
+#include "ir/branch-utils.h"
 #include "ir/iteration.h"
 #include "ir/local-graph.h"
 #include "pass.h"
@@ -269,17 +270,26 @@ void StackIROptimizer::local2Stack() {
   }
 }
 
-// There may be unnecessary blocks we can remove: blocks
-// without branches to them are always ok to remove.
-// TODO: a branch to a block in an if body can become
-//       a branch to that if body
+// There may be unnecessary blocks we can remove: blocks without arriving
+// branches are always ok to remove.
+// TODO: A branch to a block in an if body can become a branch to that if body.
 void StackIROptimizer::removeUnneededBlocks() {
+  // First, find all branch targets.
+  std::unordered_set<Name> targets;
+  for (auto*& inst : insts) {
+    if (inst) {
+      BranchUtils::operateOnScopeNameUses(
+        inst->origin, [&](Name& name) { targets.insert(name); });
+    }
+  }
+
+  // Remove untargeted blocks.
   for (auto*& inst : insts) {
     if (!inst) {
       continue;
     }
     if (auto* block = inst->origin->dynCast<Block>()) {
-      if (!BranchUtils::BranchSeeker::has(block, block->name)) {
+      if (!block->name.is() || !targets.count(block->name)) {
         // TODO optimize, maybe run remove-unused-names
         inst = nullptr;
       }
