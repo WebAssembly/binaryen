@@ -58,7 +58,7 @@ namespace wasm {
 struct DAEFunctionInfo {
   // Whether this needs to be recomputed. This begins as true for the first
   // computation, and we reset it every time we touch the function.
-  bool stale;
+  bool stale = true;
   // The unused parameters, if any.
   SortedVector unusedParams;
   // Maps a function name to the calls going to it.
@@ -76,26 +76,16 @@ struct DAEFunctionInfo {
   // removed as well.
   bool hasTailCalls = false;
   std::unordered_set<Name> tailCallees;
-  // Whether the function can be called from places that
-  // affect what we can do. For now, any call we don't
-  // see inhibits our optimizations, but TODO: an export
-  // could be worked around by exporting a thunk that
-  // adds the parameter.
-  // This is atomic so that we can write to it from any function at any time
-  // during the parallel analysis phase which is run in DAEScanner.
-  std::atomic<bool> hasUnseenCalls;
-
-  DAEFunctionInfo() { clear(); }
+  // Whether the function can be called from places that affect what we can do.
+  // For now, any call we don't see inhibits our optimizations, but TODO: an
+  // export could be worked around by exporting a thunk that adds the parameter.
+  //
+  // This built up in parallel in each function, and combined at the end.
+  std::unordered_set<Name> hasUnseenCalls;
 
   // Clears all data, which marks us as stale and in need of recomputation.
   void clear() {
-    stale = true;
-    unusedParams.clear();
-    calls.clear();
-    droppedCalls.clear();
-    hasTailCalls = false;
-    tailCallees.clear();
-    hasUnseenCalls = false;
+    *this = DAEFunctionInfo();
   }
 
   void markStale() {
@@ -118,10 +108,9 @@ struct DAEScanner
   // The map of all infos for all functions.
   DAEFunctionInfoMap* infoMap;
 
-  // The info for the function this instance operates on.
-  DAEFunctionInfo* info;
-
-  Index numParams;
+  // The info for the function this instance operates on. We stash this as an
+  // optimization.
+  DAEFunctionInfo* info = nullptr;
 
   void visitCall(Call* curr) {
     if (!getModule()->getFunction(curr->target)->imported()) {
@@ -152,14 +141,16 @@ struct DAEScanner
   }
 
   void visitRefFunc(RefFunc* curr) {
-    // We can't modify another function in parallel.
-    assert((*infoMap).count(curr->func));
+    // RefFunc may be visited from either a function, in which case |info| was
+    // set, or module-level code.
+    auto* currInfo = info ? info : &(*infoMap)[Name()];
+
     // Treat a ref.func as an unseen call, preventing us from changing the
     // function's type. If we did change it, it could be an observable
     // difference from the outside, if the reference escapes, for example.
     // TODO: look for actual escaping?
     // TODO: create a thunk for external uses that allow internal optimizations
-    (*infoMap)[curr->func].hasUnseenCalls = true;
+    currInfo->hasUnseenCalls.insert(curr->func);
   }
 
   // main entry point
@@ -177,19 +168,12 @@ struct DAEScanner
     info->clear();
     info->stale = false;
 
-    numParams = func->getNumParams();
+    auto numParams = func->getNumParams();
     PostWalker<DAEScanner, Visitor<DAEScanner>>::doWalkFunction(func);
-    // If there are relevant params, check if they are used. If we can't
-    // optimize the function anyhow, there's no point (note that our check here
-    // is technically racy - another thread could update hasUnseenCalls to true
-    // around when we check it - but that just means that we might or might not
-    // do some extra work, as we'll ignore the results later if we have unseen
-    // calls. That is, the check for hasUnseenCalls here is just a minor
-    // optimization to avoid pointless work. We can avoid that work if either
-    // we know there is an unseen call before the parallel analysis that we are
-    // part of, say if we are exported, or if another parallel function finds a
-    // RefFunc to us and updates it before we check it).
-    if (numParams > 0 && !info->hasUnseenCalls) {
+    // If there are params, check if they are used.
+    // TODO: This work could be avoided if we cannot optimize for other reasons.
+    //       That would require deferring this to later and checking that.
+    if (numParams > 0) {
       auto usedParams = ParamUtils::getUsedParams(func);
       for (Index i = 0; i < numParams; i++) {
         if (usedParams.count(i) == 0) {
@@ -214,6 +198,8 @@ struct DAE : public Pass {
     for (auto& func : module->functions) {
       infoMap[func->name];
     }
+    // The null name represents module-level code (not in a function).
+    infoMap[Name()];
 
     // Iterate to convergence.
     while (1) {
@@ -228,16 +214,12 @@ struct DAE : public Pass {
 
     DAEScanner scanner(&infoMap);
     scanner.walkModuleCode(module);
-    for (auto& curr : module->exports) {
-      if (curr->kind == ExternalKind::Function) {
-        infoMap[curr->value].hasUnseenCalls = true;
-      }
-    }
     // Scan all the functions.
     scanner.run(getPassRunner(), module);
     // Combine all the info.
     std::map<Name, std::vector<Call*>> allCalls;
     std::unordered_set<Name> tailCallees;
+    std::unordered_set<Name> hasUnseenCalls;
     for (auto& [_, info] : infoMap) {
       for (auto& [name, calls] : info.calls) {
         auto& allCallsToName = allCalls[name];
@@ -248,6 +230,15 @@ struct DAE : public Pass {
       }
       for (auto& [name, calls] : info.droppedCalls) {
         allDroppedCalls[name] = calls;
+      }
+      for (auto& name : info.hasUnseenCalls) {
+        hasUnseenCalls.insert(name);
+      }
+    }
+    // Exports are considered unseen calls.
+    for (auto& curr : module->exports) {
+      if (curr->kind == ExternalKind::Function) {
+        hasUnseenCalls.insert(curr->value);
       }
     }
 
@@ -276,7 +267,7 @@ struct DAE : public Pass {
     // for optimization opportunities.
     for (auto& [name, calls] : allCalls) {
       // We can only optimize if we see all the calls and can modify them.
-      if (infoMap[name].hasUnseenCalls) {
+      if (hasUnseenCalls.count(name)) {
         continue;
       }
       auto* func = module->getFunction(name);
@@ -311,7 +302,7 @@ struct DAE : public Pass {
     }
     // We now know which parameters are unused, and can potentially remove them.
     for (auto& [name, calls] : allCalls) {
-      if (infoMap[name].hasUnseenCalls) {
+      if (hasUnseenCalls.count(name)) {
         continue;
       }
       auto* func = module->getFunction(name);
@@ -344,7 +335,7 @@ struct DAE : public Pass {
           continue;
         }
         auto name = func->name;
-        if (infoMap[name].hasUnseenCalls) {
+        if (hasUnseenCalls.count(name)) {
           continue;
         }
         if (infoMap[name].hasTailCalls) {
