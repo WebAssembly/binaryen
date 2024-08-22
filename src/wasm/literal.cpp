@@ -294,24 +294,6 @@ Literal Literal::makeFromMemory(void* p, Type type) {
   }
 }
 
-Literal Literal::makeFromMemory(void* p, const Field& field) {
-  switch (field.packedType) {
-    case Field::not_packed:
-      return makeFromMemory(p, field.type);
-    case Field::i8: {
-      int8_t i;
-      memcpy(&i, p, sizeof(i));
-      return Literal(int32_t(i));
-    }
-    case Field::i16: {
-      int16_t i;
-      memcpy(&i, p, sizeof(i));
-      return Literal(int32_t(i));
-    }
-  }
-  WASM_UNREACHABLE("unexpected type");
-}
-
 Literal Literal::standardizeNaN(const Literal& input) {
   if (!std::isnan(input.getFloat())) {
     return input;
