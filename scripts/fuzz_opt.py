@@ -1400,7 +1400,7 @@ class FindChanges(TestCaseHandler):
     def handle(self, wasm):
         opts = [random.choice(['--dae', '--dae-optimizing', '-O2'])]
 
-        run([os.path.join(os.environ.get('OLD'), 'wasm-opt'), wasm, '-o', 'old.wasm'] + FEATURE_OPTS + opts)
+        run([os.environ.get('OLD') + '/bin/wasm-opt'), wasm, '-o', 'old.wasm'] + FEATURE_OPTS + opts)
 
         run([in_bin('wasm-opt'), wasm, '-o', 'new.wasm'] + FEATURE_OPTS + opts)
 
