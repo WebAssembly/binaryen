@@ -50,7 +50,7 @@ std::unordered_set<Index> getUsedParams(Function* func) {
   walker.walkFunction(func);
 
   if (!walker.entry) {
-    // Empty function.
+    // Empty function: nothing is used.
     return {};
   }
 
