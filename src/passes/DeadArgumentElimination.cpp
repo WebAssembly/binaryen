@@ -58,7 +58,7 @@ namespace wasm {
 struct DAEFunctionInfo {
   // Whether this needs to be recomputed. This begins as true for the first
   // computation, and we reset it every time we touch the function.
-  bool stale = true;
+  bool stale;
   // The unused parameters, if any.
   SortedVector unusedParams;
   // Maps a function name to the calls going to it.
@@ -85,11 +85,17 @@ struct DAEFunctionInfo {
   // during the parallel analysis phase which is run in DAEScanner.
   std::atomic<bool> hasUnseenCalls;
 
-  DAEFunctionInfo() { hasUnseenCalls = false; }
+  DAEFunctionInfo() { clear(); }
 
-  void markStale() {
-    // Restore all the default values in the simplest and safest manner.
-    *this = DAEFunctionInfo();
+  // Clears all data, which marks us as stale and in need of recomputation.
+  void clear() {
+    stale = true;
+    unusedParams.clear();
+    calls.clear();
+    droppedCalls.clear();
+    hasTailCalls = false;
+    tailCallees.clear();
+    hasUnseenCalls = false;
   }
 };
 
@@ -271,12 +277,12 @@ struct DAE : public Pass {
       // where possible.
       if (refineArgumentTypes(func, calls, module, infoMap[name])) {
         changed.insert(func);
-        infoMap[func->name].markStale();
+        infoMap[func->name].clear();
       }
       // Refine return types as well.
       if (refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
-        infoMap[func->name].markStale();
+        infoMap[func->name].clear();
       }
       auto optimizedIndexes =
         ParamUtils::applyConstantValues({func}, calls, {}, module);
@@ -286,7 +292,7 @@ struct DAE : public Pass {
         infoMap[name].unusedParams.insert(i);
       }
       if (!optimizedIndexes.empty()) {
-        infoMap[func->name].markStale();
+        infoMap[func->name].clear();
       }
     }
     if (refinedReturnTypes) {
@@ -311,9 +317,9 @@ struct DAE : public Pass {
         // Success!
         changed.insert(func);
         // Both the called function and all callers have been modified.
-        infoMap[func->name].markStale();
+        infoMap[func->name].clear();
         for (auto* call : calls) {
-          infoMap[call->target].markStale();
+          infoMap[call->target].clear();
         }
       }
       if (outcome == ParamUtils::RemovalOutcome::Failure) {
@@ -356,16 +362,16 @@ struct DAE : public Pass {
         // callers.
         changed.insert(func.get());
         // Both the called function and all callers have been modified.
-        infoMap[func->name].markStale();
+        infoMap[func->name].clear();
         for (auto* call : calls) {
-          infoMap[call->target].markStale();
+          infoMap[call->target].clear();
         }
       }
     }
     if (!callTargetsToLocalize.empty()) {
       ParamUtils::localizeCallsTo(
         callTargetsToLocalize, *module, getPassRunner(), [&](Function* func) {
-        infoMap[func->name].markStale();
+        infoMap[func->name].clear();
       });
     }
     if (optimize && !changed.empty()) {

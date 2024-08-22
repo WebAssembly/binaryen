@@ -302,7 +302,7 @@ void localizeCallsTo(const std::unordered_set<Name>& callTargets,
     }
   };
 
-  LocalizerPass(callTargets).run(runner, &wasm);
+  LocalizerPass(callTargets, onChange).run(runner, &wasm);
 }
 
 void localizeCallsTo(const std::unordered_set<HeapType>& callTargets,
