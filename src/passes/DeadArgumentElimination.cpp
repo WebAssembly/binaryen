@@ -212,24 +212,40 @@ struct DAE : public Pass {
   bool iteration(Module* module, DAEFunctionInfoMap& infoMap) {
     allDroppedCalls.clear();
 
+if (getenv("ALWAYS")) {
+  for (auto& [_, info] : infoMap) {
+    info.markStale();
+  }
+}
+
     DAEScanner scanner(&infoMap);
     scanner.walkModuleCode(module);
     // Scan all the functions.
     scanner.run(getPassRunner(), module);
     // Combine all the info.
+    struct CallContext {
+      Call* call;
+      Function* func;
+    };
     std::map<Name, std::vector<Call*>> allCalls;
     std::unordered_set<Name> tailCallees;
     std::unordered_set<Name> hasUnseenCalls;
-    for (auto& [_, info] : infoMap) {
+    // Track the function in which relevant expressions exist. When we modify
+    // those expressions we will need to mark the function's info as stale.
+    std::unordered_map<Expression*, Name> expressionFuncs;
+    for (auto& [func, info] : infoMap) {
       for (auto& [name, calls] : info.calls) {
         auto& allCallsToName = allCalls[name];
         allCallsToName.insert(allCallsToName.end(), calls.begin(), calls.end());
+        for (auto* call : calls) {
+          expressionFuncs[call] = func;
+        }
       }
       for (auto& callee : info.tailCallees) {
         tailCallees.insert(callee);
       }
-      for (auto& [name, calls] : info.droppedCalls) {
-        allDroppedCalls[name] = calls;
+      for (auto& [call, dropp] : info.droppedCalls) {
+        allDroppedCalls[call] = dropp;
       }
       for (auto& name : info.hasUnseenCalls) {
         hasUnseenCalls.insert(name);
@@ -263,6 +279,20 @@ struct DAE : public Pass {
     // This set tracks the functions for whom calls to it should be modified.
     std::unordered_set<Name> callTargetsToLocalize;
 
+    // As we optimize, we mark things as stale.
+    auto markStale = [&](Name func) {
+      // We only ever mark function stale (not the global scope, which we never
+      // modify). An attempt to modify the global scope, identified by a null
+      // function name, is a logic bug.
+      assert(func.is());
+      infoMap[func].markStale();
+    };
+    auto markCallersStale = [&](const std::vector<Call*>& calls) {
+      for (auto* call : calls) {
+        markStale(expressionFuncs[call]);
+      }
+    };
+
     // We now have a mapping of all call sites for each function, and can look
     // for optimization opportunities.
     for (auto& [name, calls] : allCalls) {
@@ -276,12 +306,13 @@ struct DAE : public Pass {
       // where possible.
       if (refineArgumentTypes(func, calls, module, infoMap[name])) {
         changed.insert(func);
-        infoMap[func->name].markStale();
+        markStale(func->name);
       }
       // Refine return types as well.
       if (refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
-        infoMap[func->name].markStale();
+        markStale(func->name);
+        markCallersStale(calls);
       }
       auto optimizedIndexes =
         ParamUtils::applyConstantValues({func}, calls, {}, module);
@@ -291,7 +322,7 @@ struct DAE : public Pass {
         infoMap[name].unusedParams.insert(i);
       }
       if (!optimizedIndexes.empty()) {
-        infoMap[func->name].markStale();
+        markStale(func->name);
       }
     }
     if (refinedReturnTypes) {
@@ -315,11 +346,8 @@ struct DAE : public Pass {
       if (!removedIndexes.empty()) {
         // Success!
         changed.insert(func);
-        // Both the called function and all callers have been modified.
-        infoMap[func->name].markStale();
-        for (auto* call : calls) {
-          infoMap[call->target].markStale();
-        }
+        markStale(func->name);
+        markCallersStale(calls);
       }
       if (outcome == ParamUtils::RemovalOutcome::Failure) {
         callTargetsToLocalize.insert(name);
@@ -360,17 +388,14 @@ struct DAE : public Pass {
         // TODO Removing a drop may also open optimization opportunities in the
         // callers.
         changed.insert(func.get());
-        // Both the called function and all callers have been modified.
-        infoMap[func->name].markStale();
-        for (auto* call : calls) {
-          infoMap[call->target].markStale();
-        }
+        markStale(func->name);
+        markCallersStale(calls);
       }
     }
     if (!callTargetsToLocalize.empty()) {
       ParamUtils::localizeCallsTo(
         callTargetsToLocalize, *module, getPassRunner(), [&](Function* func) {
-        infoMap[func->name].markStale();
+        markStale(func->name);
       });
     }
     if (optimize && !changed.empty()) {
