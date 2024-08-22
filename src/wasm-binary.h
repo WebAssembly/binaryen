@@ -436,6 +436,7 @@ extern const char* StringsFeature;
 extern const char* MultiMemoryFeature;
 extern const char* TypedContinuationsFeature;
 extern const char* SharedEverythingFeature;
+extern const char* FP16Feature;
 
 enum Subsection {
   NameModule = 0,

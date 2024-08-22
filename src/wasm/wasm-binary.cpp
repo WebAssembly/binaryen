@@ -1358,6 +1358,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::TypedContinuationsFeature;
       case FeatureSet::SharedEverything:
         return BinaryConsts::CustomSections::SharedEverythingFeature;
+      case FeatureSet::FP16:
+        return BinaryConsts::CustomSections::FP16Feature;
       case FeatureSet::None:
       case FeatureSet::Default:
       case FeatureSet::All:
@@ -3892,6 +3894,8 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
       feature = FeatureSet::TypedContinuations;
     } else if (name == BinaryConsts::CustomSections::SharedEverythingFeature) {
       feature = FeatureSet::SharedEverything;
+    } else if (name == BinaryConsts::CustomSections::FP16Feature) {
+      feature = FeatureSet::FP16;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).

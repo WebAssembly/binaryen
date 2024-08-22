@@ -426,4 +426,5 @@ class TargetFeaturesSectionTest(utils.BinaryenTestCase):
             '--enable-multimemory',
             '--enable-typed-continuations',
             '--enable-shared-everything',
+            '--enable-fp16',
         ], p2.stdout.splitlines())
