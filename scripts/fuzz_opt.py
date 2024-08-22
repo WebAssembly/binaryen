@@ -1392,31 +1392,29 @@ class Merge(TestCaseHandler):
         compare_between_vms(output, merged_output, 'Merge')
 
 
-# Checks for changes between two builds. The old bin dir should be provided as
-# the OLD env var.
-class FindChanges(TestCaseHandler):
-    frequency = 1
+# Check that the text format round-trips without error.
+class RoundtripText(TestCaseHandler):
+    frequency = 0.05
 
     def handle(self, wasm):
-        opts = [random.choice(['--dae', '--dae-optimizing', '-O2'])]
-
-        run([os.environ.get('OLD') + '/bin/wasm-opt'), wasm, '-o', 'old.wasm'] + FEATURE_OPTS + opts)
-
-        run([in_bin('wasm-opt'), wasm, '-o', 'new.wasm'] + FEATURE_OPTS + opts)
-
-        assert open('old.wasm', 'rb').read() == open('new.wasm', 'rb').read()
+        # use name-types because in wasm GC we can end up truncating the default
+        # names which are very long, causing names to collide and the wast to be
+        # invalid
+        # FIXME: run name-types by default during load?
+        run([in_bin('wasm-opt'), wasm, '--name-types', '-S', '-o', abspath('a.wast')] + FEATURE_OPTS)
+        run([in_bin('wasm-opt'), abspath('a.wast')] + FEATURE_OPTS)
 
 
 # The global list of all test case handlers
 testcase_handlers = [
-    #FuzzExec(),
-    #CompareVMs(),
-    #CheckDeterminism(),
-    #Wasm2JS(),
-    #TrapsNeverHappen(),
-    #CtorEval(),
-    #Merge(),
-    FindChanges()
+    FuzzExec(),
+    CompareVMs(),
+    CheckDeterminism(),
+    Wasm2JS(),
+    TrapsNeverHappen(),
+    CtorEval(),
+    Merge(),
+    RoundtripText()
 ]
 
 
