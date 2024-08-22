@@ -30,6 +30,11 @@ namespace wasm::ParamUtils {
 
 std::unordered_set<Index> getUsedParams(Function* func) {
   // To find which params are used, compute liveness at the entry.
+  // TODO: We could write bespoke code here rather than reuse LivenessWalker, as
+  //       we only need liveness at the entry. The code below computes it for
+  //       the param indexes in the entire function. However, there are usually
+  //       very few params (compared to locals, which we ignore here), so this
+  //       may be fast enough, and is very simple.
   struct ParamLiveness
     : public LivenessWalker<ParamLiveness, Visitor<ParamLiveness>> {
     using Super = LivenessWalker<ParamLiveness, Visitor<ParamLiveness>>;
