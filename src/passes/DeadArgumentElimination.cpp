@@ -138,7 +138,8 @@ struct DAEScanner
 
   void visitRefFunc(RefFunc* curr) {
     // RefFunc may be visited from either a function, in which case |info| was
-    // set, or module-level code.
+    // set, or module-level code (in which case we use the null function name in
+    // the infoMap).
     auto* currInfo = info ? info : &(*infoMap)[Name()];
 
     // Treat a ref.func as an unseen call, preventing us from changing the
@@ -189,7 +190,7 @@ struct DAE : public Pass {
 
   void run(Module* module) override {
     DAEFunctionInfoMap infoMap;
-    // Ensure they all exist so the parallel threads don't modify the data
+    // Ensure all entries exist so the parallel threads don't modify the data
     // structure.
     for (auto& func : module->functions) {
       infoMap[func->name];
@@ -285,7 +286,7 @@ struct DAE : public Pass {
 
     // As we optimize, we mark things as stale.
     auto markStale = [&](Name func) {
-      // We only ever mark function stale (not the global scope, which we never
+      // We only ever mark functions stale (not the global scope, which we never
       // modify). An attempt to modify the global scope, identified by a null
       // function name, is a logic bug.
       assert(func.is());
