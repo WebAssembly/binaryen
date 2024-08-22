@@ -97,6 +97,10 @@ struct DAEFunctionInfo {
     tailCallees.clear();
     hasUnseenCalls = false;
   }
+
+  void markStale() {
+    stale = true;
+  }
 };
 
 using DAEFunctionInfoMap = std::unordered_map<Name, DAEFunctionInfo>;
@@ -168,6 +172,9 @@ struct DAEScanner
       // Nothing changed since last time.
       return;
     }
+
+    // Clear the data, mark us as no longer stale, and recompute everything.
+    info->clear();
     info->stale = false;
 
     numParams = func->getNumParams();
@@ -278,12 +285,12 @@ struct DAE : public Pass {
       // where possible.
       if (refineArgumentTypes(func, calls, module, infoMap[name])) {
         changed.insert(func);
-        infoMap[func->name].clear();
+        infoMap[func->name].markStale();
       }
       // Refine return types as well.
       if (refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
-        infoMap[func->name].clear();
+        infoMap[func->name].markStale();
       }
       auto optimizedIndexes =
         ParamUtils::applyConstantValues({func}, calls, {}, module);
@@ -293,7 +300,7 @@ struct DAE : public Pass {
         infoMap[name].unusedParams.insert(i);
       }
       if (!optimizedIndexes.empty()) {
-        infoMap[func->name].clear();
+        infoMap[func->name].markStale();
       }
     }
     if (refinedReturnTypes) {
@@ -318,9 +325,9 @@ struct DAE : public Pass {
         // Success!
         changed.insert(func);
         // Both the called function and all callers have been modified.
-        infoMap[func->name].clear();
+        infoMap[func->name].markStale();
         for (auto* call : calls) {
-          infoMap[call->target].clear();
+          infoMap[call->target].markStale();
         }
       }
       if (outcome == ParamUtils::RemovalOutcome::Failure) {
@@ -363,16 +370,16 @@ struct DAE : public Pass {
         // callers.
         changed.insert(func.get());
         // Both the called function and all callers have been modified.
-        infoMap[func->name].clear();
+        infoMap[func->name].markStale();
         for (auto* call : calls) {
-          infoMap[call->target].clear();
+          infoMap[call->target].markStale();
         }
       }
     }
     if (!callTargetsToLocalize.empty()) {
       ParamUtils::localizeCallsTo(
         callTargetsToLocalize, *module, getPassRunner(), [&](Function* func) {
-        infoMap[func->name].clear();
+        infoMap[func->name].markStale();
       });
     }
     if (optimize && !changed.empty()) {
