@@ -54,15 +54,13 @@ std::unordered_set<Index> getUsedParams(Function* func) {
     return {};
   }
 
-  auto& livenessAtEntry = walker.entry->contents.start;
+  // We now have a sorted vector of the live params at the entry. Convert that
+  // to a set.
+  auto& sortedLiveness = walker.entry->contents.start;
   std::unordered_set<Index> usedParams;
-
-  for (Index i = 0; i < func->getNumParams(); i++) {
-    if (livenessAtEntry.has(i)) {
-      usedParams.insert(i);
-    }
+  for (auto live : sortedLiveness) {
+    usedParams.insert(live);
   }
-
   return usedParams;
 }
 

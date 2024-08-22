@@ -24,25 +24,18 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (local.tee $0
- ;; CHECK-NEXT:   (unreachable)
- ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (unreachable)
  ;; CHECK-NEXT: )
  (func $bar (param $0 i31ref)
   (drop
-   ;; after the parameter is removed, we create a nullable local to replace it,
-   ;; and must update the tee's type accordingly to avoid a validation error,
-   ;; and also add a ref.as_non_null so that the outside still receives the
-   ;; same type as before
+   ;; After the parameter is removed, we create a nullable local to replace it.
    (local.tee $0
     (ref.i31
      (i32.const 2)
     )
    )
   )
-  ;; test for an unreachable tee, whose type must be unreachable even after
-  ;; the change (the tee would need to be dropped if it were not unreachable,
-  ;; so the correctness in this case is visible in the output)
+  ;; Test we do not error on an unreachable tee (we can simply remove it).
   (local.tee $0
    (unreachable)
   )
