@@ -158,7 +158,7 @@ struct DAEScanner
     // part of, say if we are exported, or if another parallel function finds a
     // RefFunc to us and updates it before we check it).
     if (numParams > 0 && !info->hasUnseenCalls) {
-      auto usedParams = ParamUtils::getUsedParams(func);
+      auto usedParams = ParamUtils::getUsedParams(func, getModule());
       for (Index i = 0; i < numParams; i++) {
         if (usedParams.count(i) == 0) {
           info->unusedParams.insert(i);

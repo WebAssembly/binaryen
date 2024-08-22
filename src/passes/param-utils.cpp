@@ -28,7 +28,7 @@
 
 namespace wasm::ParamUtils {
 
-std::unordered_set<Index> getUsedParams(Function* func) {
+std::unordered_set<Index> getUsedParams(Function* func, Module* module) {
   // To find which params are used, compute liveness at the entry.
   // TODO: We could write bespoke code here rather than reuse LivenessWalker, as
   //       we only need liveness at the entry. The code below computes it for
@@ -38,6 +38,10 @@ std::unordered_set<Index> getUsedParams(Function* func) {
   struct ParamLiveness
     : public LivenessWalker<ParamLiveness, Visitor<ParamLiveness>> {
     using Super = LivenessWalker<ParamLiveness, Visitor<ParamLiveness>>;
+
+    // Branches outside of the function can be ignored, as we only look at
+    // locals, which vanish when we leave.
+    bool ignoreBranchesOutsideOfFunc = true;
 
     // Ignore unreachable code and non-params.
     static void doVisitLocalGet(ParamLiveness* self, Expression** currp) {
@@ -53,6 +57,7 @@ std::unordered_set<Index> getUsedParams(Function* func) {
       }
     }
   } walker;
+  walker.setModule(module);
   walker.walkFunction(func);
 
   if (!walker.entry) {
