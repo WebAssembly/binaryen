@@ -168,6 +168,7 @@ struct DAEScanner
       // Nothing changed since last time.
       return;
     }
+    info->stale = false;
 
     numParams = func->getNumParams();
     PostWalker<DAEScanner, Visitor<DAEScanner>>::doWalkFunction(func);
