@@ -56,6 +56,9 @@ namespace wasm {
 
 // Information for a function
 struct DAEFunctionInfo {
+  // Whether this needs to be recomputed. This begins as true for the first
+  // computation, and we reset it every time we touch the function.
+  bool stale = true;
   // The unused parameters, if any.
   SortedVector unusedParams;
   // Maps a function name to the calls going to it.
@@ -83,6 +86,11 @@ struct DAEFunctionInfo {
   std::atomic<bool> hasUnseenCalls;
 
   DAEFunctionInfo() { hasUnseenCalls = false; }
+
+  void markStale() {
+    // Restore all the default values in the simplest and safest manner.
+    *this = DAEFunctionInfo();
+  }
 };
 
 using DAEFunctionInfoMap = std::unordered_map<Name, DAEFunctionInfo>;
@@ -97,7 +105,10 @@ struct DAEScanner
 
   DAEScanner(DAEFunctionInfoMap* infoMap) : infoMap(infoMap) {}
 
+  // The map of all infos for all functions.
   DAEFunctionInfoMap* infoMap;
+
+  // The info for the function this instance operates on.
   DAEFunctionInfo* info;
 
   Index numParams;
@@ -144,8 +155,15 @@ struct DAEScanner
   // main entry point
 
   void doWalkFunction(Function* func) {
-    numParams = func->getNumParams();
+    // Set the info for this function.
     info = &((*infoMap)[func->name]);
+
+    if (!info->stale) {
+      // Nothing changed since last time.
+      return;
+    }
+
+    numParams = func->getNumParams();
     PostWalker<DAEScanner, Visitor<DAEScanner>>::doWalkFunction(func);
     // If there are relevant params, check if they are used. If we can't
     // optimize the function anyhow, there's no point (note that our check here
@@ -176,23 +194,24 @@ struct DAE : public Pass {
   bool optimize = false;
 
   void run(Module* module) override {
-    // Iterate to convergence.
-    while (1) {
-      if (!iteration(module)) {
-        break;
-      }
-    }
-  }
-
-  bool iteration(Module* module) {
-    allDroppedCalls.clear();
-
     DAEFunctionInfoMap infoMap;
     // Ensure they all exist so the parallel threads don't modify the data
     // structure.
     for (auto& func : module->functions) {
       infoMap[func->name];
     }
+
+    // Iterate to convergence.
+    while (1) {
+      if (!iteration(module, infoMap)) {
+        break;
+      }
+    }
+  }
+
+  bool iteration(Module* module, DAEFunctionInfoMap& infoMap) {
+    allDroppedCalls.clear();
+
     DAEScanner scanner(&infoMap);
     scanner.walkModuleCode(module);
     for (auto& curr : module->exports) {
@@ -218,7 +237,9 @@ struct DAE : public Pass {
       }
     }
 
-    // Track which functions we changed, and optimize them later if necessary.
+    // Track which functions we changed that are worth re-optimizing at the end.
+    // (This is not the set of all changed functions, as some changes are
+    // trivial and not likely to lead to optimization opportunities.)
     std::unordered_set<Function*> changed;
 
     // If we refine return types then we will need to do more type updating
@@ -250,10 +271,12 @@ struct DAE : public Pass {
       // where possible.
       if (refineArgumentTypes(func, calls, module, infoMap[name])) {
         changed.insert(func);
+        infoMap[func->name].markStale();
       }
       // Refine return types as well.
       if (refineReturnTypes(func, calls, module)) {
         refinedReturnTypes = true;
+        infoMap[func->name].markStale();
       }
       auto optimizedIndexes =
         ParamUtils::applyConstantValues({func}, calls, {}, module);
@@ -261,6 +284,9 @@ struct DAE : public Pass {
         // Mark it as unused, which we know it now is (no point to re-scan just
         // for that).
         infoMap[name].unusedParams.insert(i);
+      }
+      if (!optimizedIndexes.empty()) {
+        infoMap[func->name].markStale();
       }
     }
     if (refinedReturnTypes) {
@@ -284,6 +310,11 @@ struct DAE : public Pass {
       if (!removedIndexes.empty()) {
         // Success!
         changed.insert(func);
+        // Both the called function and all callers have been modified.
+        infoMap[func->name].markStale();
+        for (auto* call : calls) {
+          infoMap[call->target].markStale();
+        }
       }
       if (outcome == ParamUtils::RemovalOutcome::Failure) {
         callTargetsToLocalize.insert(name);
@@ -324,15 +355,23 @@ struct DAE : public Pass {
         // TODO Removing a drop may also open optimization opportunities in the
         // callers.
         changed.insert(func.get());
+        // Both the called function and all callers have been modified.
+        infoMap[func->name].markStale();
+        for (auto* call : calls) {
+          infoMap[call->target].markStale();
+        }
       }
     }
     if (!callTargetsToLocalize.empty()) {
       ParamUtils::localizeCallsTo(
-        callTargetsToLocalize, *module, getPassRunner());
+        callTargetsToLocalize, *module, getPassRunner(), [&](Function* func) {
+        infoMap[func->name].markStale();
+      });
     }
     if (optimize && !changed.empty()) {
       OptUtils::optimizeAfterInlining(changed, module, getPassRunner());
     }
+
     return !changed.empty() || refinedReturnTypes ||
            !callTargetsToLocalize.empty();
   }
