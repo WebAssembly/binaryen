@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#include "cfg/liveness-traversal.h"
 #include "passes/param-utils.h"
+#include "cfg/liveness-traversal.h"
 #include "ir/eh-utils.h"
 #include "ir/function-utils.h"
 #include "ir/localize.h"
@@ -30,7 +30,8 @@ namespace wasm::ParamUtils {
 
 std::unordered_set<Index> getUsedParams(Function* func) {
   // To find which params are used, compute liveness at the entry.
-  struct ParamLiveness : public LivenessWalker<ParamLiveness, Visitor<ParamLiveness>> {
+  struct ParamLiveness
+    : public LivenessWalker<ParamLiveness, Visitor<ParamLiveness>> {
     using Super = LivenessWalker<ParamLiveness, Visitor<ParamLiveness>>;
 
     // Ignore unreachable code and non-params.
