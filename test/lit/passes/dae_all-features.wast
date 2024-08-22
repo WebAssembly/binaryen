@@ -940,3 +940,21 @@
   (unreachable)
  )
 )
+
+(module
+ ;; CHECK:      (type $0 (func (param f64 f32)))
+
+ ;; CHECK:      (func $0 (type $0) (param $0 f64) (param $1 f32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $0 (param $0 f64) (param $1 f32)
+  ;; Both parameters here are unused: there is a get, but it is unreachable.
+  (unreachable)
+  (drop
+   (local.get $0)
+  )
+ )
+)

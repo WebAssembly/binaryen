@@ -33,16 +33,16 @@ std::unordered_set<Index> getUsedParams(Function* func) {
   struct ParamLiveness : public LivenessWalker<ParamLiveness, Visitor<ParamLiveness>> {
     using Super = LivenessWalker<ParamLiveness, Visitor<ParamLiveness>>;
 
-    // Ignore non-params.
+    // Ignore unreachable code and non-params.
     static void doVisitLocalGet(ParamLiveness* self, Expression** currp) {
       auto* get = (*currp)->cast<LocalGet>();
-      if (self->getFunction()->isParam(get->index)) {
+      if (self->currBasicBlock && self->getFunction()->isParam(get->index)) {
         Super::doVisitLocalGet(self, currp);
       }
     }
     static void doVisitLocalSet(ParamLiveness* self, Expression** currp) {
       auto* set = (*currp)->cast<LocalSet>();
-      if (self->getFunction()->isParam(set->index)) {
+      if (self->currBasicBlock && self->getFunction()->isParam(set->index)) {
         Super::doVisitLocalSet(self, currp);
       }
     }

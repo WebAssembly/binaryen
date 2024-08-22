@@ -24,7 +24,9 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (local.tee $0
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $bar (param $0 i31ref)
   (drop
