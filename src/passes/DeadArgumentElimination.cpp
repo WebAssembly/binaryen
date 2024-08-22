@@ -84,13 +84,9 @@ struct DAEFunctionInfo {
   std::unordered_set<Name> hasUnseenCalls;
 
   // Clears all data, which marks us as stale and in need of recomputation.
-  void clear() {
-    *this = DAEFunctionInfo();
-  }
+  void clear() { *this = DAEFunctionInfo(); }
 
-  void markStale() {
-    stale = true;
-  }
+  void markStale() { stale = true; }
 };
 
 using DAEFunctionInfoMap = std::unordered_map<Name, DAEFunctionInfo>;
@@ -212,11 +208,11 @@ struct DAE : public Pass {
   bool iteration(Module* module, DAEFunctionInfoMap& infoMap) {
     allDroppedCalls.clear();
 
-if (getenv("ALWAYS")) {
-  for (auto& [_, info] : infoMap) {
-    info.markStale();
-  }
-}
+    if (getenv("ALWAYS")) {
+      for (auto& [_, info] : infoMap) {
+        info.markStale();
+      }
+    }
 
     DAEScanner scanner(&infoMap);
     scanner.walkModuleCode(module);
@@ -395,8 +391,8 @@ if (getenv("ALWAYS")) {
     if (!callTargetsToLocalize.empty()) {
       ParamUtils::localizeCallsTo(
         callTargetsToLocalize, *module, getPassRunner(), [&](Function* func) {
-        markStale(func->name);
-      });
+          markStale(func->name);
+        });
     }
     if (optimize && !changed.empty()) {
       OptUtils::optimizeAfterInlining(changed, module, getPassRunner());
