@@ -267,7 +267,7 @@ void localizeCallsTo(const std::unordered_set<Name>& callTargets,
     bool isFunctionParallel() override { return true; }
 
     std::unique_ptr<Pass> create() override {
-      return std::make_unique<LocalizerPass>(callTargets);
+      return std::make_unique<LocalizerPass>(callTargets, onChange);
     }
 
     const std::unordered_set<Name>& callTargets;
