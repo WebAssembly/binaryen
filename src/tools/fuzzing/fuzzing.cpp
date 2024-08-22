@@ -3109,31 +3109,42 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
         case 3:
           return buildUnary({SplatVecF64x2, make(Type::f64)});
         case 4:
-          return buildUnary({pick(NotVec128,
-                                  // TODO: add additional SIMD instructions
-                                  NegVecI8x16,
-                                  NegVecI16x8,
-                                  NegVecI32x4,
-                                  NegVecI64x2,
-                                  AbsVecF32x4,
-                                  NegVecF32x4,
-                                  SqrtVecF32x4,
-                                  AbsVecF64x2,
-                                  NegVecF64x2,
-                                  SqrtVecF64x2,
-                                  TruncSatSVecF32x4ToVecI32x4,
-                                  TruncSatUVecF32x4ToVecI32x4,
-                                  ConvertSVecI32x4ToVecF32x4,
-                                  ConvertUVecI32x4ToVecF32x4,
-                                  ExtendLowSVecI8x16ToVecI16x8,
-                                  ExtendHighSVecI8x16ToVecI16x8,
-                                  ExtendLowUVecI8x16ToVecI16x8,
-                                  ExtendHighUVecI8x16ToVecI16x8,
-                                  ExtendLowSVecI16x8ToVecI32x4,
-                                  ExtendHighSVecI16x8ToVecI32x4,
-                                  ExtendLowUVecI16x8ToVecI32x4,
-                                  ExtendHighUVecI16x8ToVecI32x4),
-                             make(Type::v128)});
+          return buildUnary(
+            {pick(FeatureOptions<UnaryOp>()
+                    .add(FeatureSet::SIMD,
+                         NotVec128,
+                         // TODO: add additional SIMD instructions
+                         NegVecI8x16,
+                         NegVecI16x8,
+                         NegVecI32x4,
+                         NegVecI64x2,
+                         AbsVecF32x4,
+                         NegVecF32x4,
+                         SqrtVecF32x4,
+                         AbsVecF64x2,
+                         NegVecF64x2,
+                         SqrtVecF64x2,
+                         TruncSatSVecF32x4ToVecI32x4,
+                         TruncSatUVecF32x4ToVecI32x4,
+                         ConvertSVecI32x4ToVecF32x4,
+                         ConvertUVecI32x4ToVecF32x4,
+                         ExtendLowSVecI8x16ToVecI16x8,
+                         ExtendHighSVecI8x16ToVecI16x8,
+                         ExtendLowUVecI8x16ToVecI16x8,
+                         ExtendHighUVecI8x16ToVecI16x8,
+                         ExtendLowSVecI16x8ToVecI32x4,
+                         ExtendHighSVecI16x8ToVecI32x4,
+                         ExtendLowUVecI16x8ToVecI32x4,
+                         ExtendHighUVecI16x8ToVecI32x4)
+                    .add(FeatureSet::FP16,
+                         AbsVecF16x8,
+                         NegVecF16x8,
+                         SqrtVecF16x8,
+                         CeilVecF16x8,
+                         FloorVecF16x8,
+                         TruncVecF16x8,
+                         NearestVecF16x8)),
+             make(Type::v128)});
       }
       WASM_UNREACHABLE("invalid value");
     }

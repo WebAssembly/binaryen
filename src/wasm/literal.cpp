@@ -1860,13 +1860,19 @@ Literal Literal::replaceLaneF64x2(const Literal& other, uint8_t index) const {
   return replace<2, &Literal::getLanesF64x2>(*this, other, index);
 }
 
+static Literal passThrough(const Literal& literal) { return literal; }
+static Literal toFP16(const Literal& literal) {
+  return literal.convertF32ToF16();
+}
+
 template<int Lanes,
          LaneArray<Lanes> (Literal::*IntoLanes)() const,
-         Literal (Literal::*UnaryOp)(void) const>
+         Literal (Literal::*UnaryOp)(void) const,
+         Literal (*Convert)(const Literal&) = passThrough>
 static Literal unary(const Literal& val) {
   LaneArray<Lanes> lanes = (val.*IntoLanes)();
   for (size_t i = 0; i < Lanes; ++i) {
-    lanes[i] = (lanes[i].*UnaryOp)();
+    lanes[i] = Convert((lanes[i].*UnaryOp)());
   }
   return Literal(lanes);
 }
@@ -1902,6 +1908,27 @@ Literal Literal::negI32x4() const {
 }
 Literal Literal::negI64x2() const {
   return unary<2, &Literal::getLanesI64x2, &Literal::neg>(*this);
+}
+Literal Literal::absF16x8() const {
+  return unary<8, &Literal::getLanesF16x8, &Literal::abs, &toFP16>(*this);
+}
+Literal Literal::negF16x8() const {
+  return unary<8, &Literal::getLanesF16x8, &Literal::neg, &toFP16>(*this);
+}
+Literal Literal::sqrtF16x8() const {
+  return unary<8, &Literal::getLanesF16x8, &Literal::sqrt, &toFP16>(*this);
+}
+Literal Literal::ceilF16x8() const {
+  return unary<8, &Literal::getLanesF16x8, &Literal::ceil, &toFP16>(*this);
+}
+Literal Literal::floorF16x8() const {
+  return unary<8, &Literal::getLanesF16x8, &Literal::floor, &toFP16>(*this);
+}
+Literal Literal::truncF16x8() const {
+  return unary<8, &Literal::getLanesF16x8, &Literal::trunc, &toFP16>(*this);
+}
+Literal Literal::nearestF16x8() const {
+  return unary<8, &Literal::getLanesF16x8, &Literal::nearbyint, &toFP16>(*this);
 }
 Literal Literal::absF32x4() const {
   return unary<4, &Literal::getLanesF32x4, &Literal::abs>(*this);
@@ -2287,11 +2314,6 @@ Literal Literal::leF64x2(const Literal& other) const {
 Literal Literal::geF64x2(const Literal& other) const {
   return compare<2, &Literal::getLanesF64x2, &Literal::ge, int64_t>(*this,
                                                                     other);
-}
-
-static Literal passThrough(const Literal& literal) { return literal; }
-static Literal toFP16(const Literal& literal) {
-  return literal.convertF32ToF16();
 }
 
 template<int Lanes,

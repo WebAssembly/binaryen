@@ -1209,6 +1209,27 @@ struct PrintExpressionContents
       case BitmaskVecI64x2:
         o << "i64x2.bitmask";
         break;
+      case AbsVecF16x8:
+        o << "f16x8.abs";
+        break;
+      case NegVecF16x8:
+        o << "f16x8.neg";
+        break;
+      case SqrtVecF16x8:
+        o << "f16x8.sqrt";
+        break;
+      case CeilVecF16x8:
+        o << "f16x8.ceil";
+        break;
+      case FloorVecF16x8:
+        o << "f16x8.floor";
+        break;
+      case TruncVecF16x8:
+        o << "f16x8.trunc";
+        break;
+      case NearestVecF16x8:
+        o << "f16x8.nearest";
+        break;
       case AbsVecF32x4:
         o << "f32x4.abs";
         break;

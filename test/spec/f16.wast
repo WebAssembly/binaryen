@@ -25,6 +25,13 @@
   (func (export "f16x8.max") (param $0 v128) (param $1 v128) (result v128) (f16x8.max (local.get $0) (local.get $1)))
   (func (export "f16x8.pmin") (param $0 v128) (param $1 v128) (result v128) (f16x8.pmin (local.get $0) (local.get $1)))
   (func (export "f16x8.pmax") (param $0 v128) (param $1 v128) (result v128) (f16x8.pmax (local.get $0) (local.get $1)))
+  (func (export "f16x8.abs") (param $0 v128) (result v128) (f16x8.abs (local.get $0)))
+  (func (export "f16x8.neg") (param $0 v128) (result v128) (f16x8.neg (local.get $0)))
+  (func (export "f16x8.sqrt") (param $0 v128) (result v128) (f16x8.sqrt (local.get $0)))
+  (func (export "f16x8.ceil") (param $0 v128) (result v128) (f16x8.ceil (local.get $0)))
+  (func (export "f16x8.floor") (param $0 v128) (result v128) (f16x8.floor (local.get $0)))
+  (func (export "f16x8.trunc") (param $0 v128) (result v128) (f16x8.trunc (local.get $0)))
+  (func (export "f16x8.nearest") (param $0 v128) (result v128) (f16x8.nearest (local.get $0)))
 )
 
 (assert_return (invoke "f32.load_f16") (f32.const 42.0))
@@ -147,3 +154,36 @@
     (v128.const i16x8 0x5140 0xfe00  0x7c00 0x3e00 0      0x3c00 0      0x3c00))
     ;;                nan    -nan    inf    1.5    0      1      1      1
     (v128.const i16x8 0x7e00 0xfe00  0x7c00 0x3e00 0      0x3c00 0x3c00 0x3c00))
+
+;; unary arithmetic
+(assert_return (invoke "f16x8.abs"
+    ;;                nan    -nan    inf    -inf   -1     1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
+    ;;                nan    nan     inf    inf    1      1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0x7e00  0x7c00 0x7c00 0x3c00 0x3c00 0x3e00 0x3ccd))
+(assert_return (invoke "f16x8.neg"
+    ;;                nan    -nan    inf    -inf   -1     1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
+    ;;                -nan   nan     -inf   inf    1      -1     -1.5   -1.2...
+    (v128.const i16x8 0xfe00 0x7e00  0xfc00 0x7c00 0x3c00 0xbc00 0xbe00 0xbccd))
+;; XXX the result of some of these is -nan, is this deterministic?
+(assert_return (invoke "f16x8.sqrt"
+    ;;                nan    -nan    inf    -inf   -1     1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
+    ;;                nan    -nan    inf    -nan   -nan   1      1.22.. 1.09...
+    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfe00 0xfe00 0x3c00 0x3ce6 0x3c62))
+(assert_return (invoke "f16x8.ceil"
+    ;;                nan    -nan    inf    -inf   -1     1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
+    ;;                nan    -nan    inf    -inf   -1     1      2      2
+    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x4000 0x4000))
+(assert_return (invoke "f16x8.floor"
+    ;;                nan    -nan    inf    -inf   -1     1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
+    ;;                nan    -nan    inf    -inf   -1     1      1      1
+    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x3c00 0x3c00))
+(assert_return (invoke "f16x8.nearest"
+    ;;                nan    -nan    inf    -inf   -1     1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
+    ;;                nan    -nan    inf    -inf   -1     1      2      1
+    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x4000 0x3c00))
