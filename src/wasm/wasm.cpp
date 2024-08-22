@@ -56,6 +56,7 @@ const char* StringsFeature = "strings";
 const char* MultiMemoryFeature = "multimemory";
 const char* TypedContinuationsFeature = "typed-continuations";
 const char* SharedEverythingFeature = "shared-everything";
+const char* FP16Feature = "fp16";
 } // namespace CustomSections
 } // namespace BinaryConsts
 
