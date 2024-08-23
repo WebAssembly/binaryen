@@ -166,24 +166,24 @@
     (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
     ;;                -nan   nan     -inf   inf    1      -1     -1.5   -1.2...
     (v128.const i16x8 0xfe00 0x7e00  0xfc00 0x7c00 0x3c00 0xbc00 0xbe00 0xbccd))
-;; XXX the result of some of these is -nan, is this deterministic?
+;; XXX Avoid tests that return -nan since it's non-deterministic.
 (assert_return (invoke "f16x8.sqrt"
-    ;;                nan    -nan    inf    -inf   -1     1      1.5    1.2...
-    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
-    ;;                nan    -nan    inf    -nan   -nan   1      1.22.. 1.09...
-    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfe00 0xfe00 0x3c00 0x3ce6 0x3c62))
+    ;;                nan    0       inf    4      16     1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0       0x7c00 0x4400 0x4c00 0x3c00 0x3e00 0x3ccd))
+    ;;                nan    0       inf    2      4      1      1.22.. 1.09...
+    (v128.const i16x8 0x7e00 0       0x7c00 0x4000 0x4400 0x3c00 0x3ce6 0x3c62))
 (assert_return (invoke "f16x8.ceil"
-    ;;                nan    -nan    inf    -inf   -1     1      1.5    1.2...
-    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
-    ;;                nan    -nan    inf    -inf   -1     1      2      2
-    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x4000 0x4000))
+    ;;                nan    0       inf    -inf   -1     1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0       0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
+    ;;                nan    0       inf    -inf   -1     1      2      2
+    (v128.const i16x8 0x7e00 0       0x7c00 0xfc00 0xbc00 0x3c00 0x4000 0x4000))
 (assert_return (invoke "f16x8.floor"
-    ;;                nan    -nan    inf    -inf   -1     1      1.5    1.2...
-    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
-    ;;                nan    -nan    inf    -inf   -1     1      1      1
-    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x3c00 0x3c00))
+    ;;                nan    0       inf    -inf   -1     1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0       0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
+    ;;                nan    0       inf    -inf   -1     1      1      1
+    (v128.const i16x8 0x7e00 0       0x7c00 0xfc00 0xbc00 0x3c00 0x3c00 0x3c00))
 (assert_return (invoke "f16x8.nearest"
-    ;;                nan    -nan    inf    -inf   -1     1      1.5    1.2...
-    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
-    ;;                nan    -nan    inf    -inf   -1     1      2      1
-    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x4000 0x3c00))
+    ;;                nan    0       inf    -inf   -1     1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0       0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
+    ;;                nan    0       inf    -inf   -1     1      2      1
+    (v128.const i16x8 0x7e00 0       0x7c00 0xfc00 0xbc00 0x3c00 0x4000 0x3c00))
