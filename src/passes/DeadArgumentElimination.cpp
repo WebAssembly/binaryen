@@ -80,7 +80,7 @@ struct DAEFunctionInfo {
   // For now, any call we don't see inhibits our optimizations, but TODO: an
   // export could be worked around by exporting a thunk that adds the parameter.
   //
-  // This built up in parallel in each function, and combined at the end.
+  // This is built up in parallel in each function, and combined at the end.
   std::unordered_set<Name> hasUnseenCalls;
 
   // Clears all data, which marks us as stale and in need of recomputation.
