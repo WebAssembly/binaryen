@@ -8,11 +8,7 @@
 	#include <stdint.h>
 #endif
 
-#if defined(__INTEL_COMPILER) || defined(_MSC_VER) && (_MSC_VER >= 1932) && (defined(_M_IX86) || defined(_M_X64))
-	#include <immintrin.h>
-#endif
-
-#if defined(_MSC_VER) && !defined(__clang__) && (defined(_M_ARM) || defined(_M_ARM64))
+#if (defined(_MSC_VER) && !defined(__clang__) && (defined(_M_ARM) || defined(_M_ARM64))) || defined(__INTEL_COMPILER) || (defined(_MSC_VER) && (_MSC_VER >= 1932) && (defined(_M_IX86) || defined(_M_X64)))
 	#include <intrin.h>
 #endif
 
