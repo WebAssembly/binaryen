@@ -96,7 +96,7 @@ struct SignaturePruning : public Pass {
 
         info.calls = std::move(FindAll<Call>(func->body).list);
         info.callRefs = std::move(FindAll<CallRef>(func->body).list);
-        info.usedParams = ParamUtils::getUsedParams(func);
+        info.usedParams = ParamUtils::getUsedParams(func, module);
       });
 
     // A map of types to all the information combined over all the functions
