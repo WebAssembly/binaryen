@@ -211,7 +211,6 @@ public:
   }
 
   static Literal makeFromMemory(void* p, Type type);
-  static Literal makeFromMemory(void* p, const Field& field);
 
   static Literal makeSignedMin(Type type) {
     switch (type.getBasic()) {

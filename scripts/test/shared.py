@@ -452,16 +452,16 @@ SPEC_TESTSUITE_TESTS_TO_SKIP = [
     'table.wast',  # Requires support for table default elements
     'type-equivalence.wast',  # Recursive types allowed by GC
     'unreached-invalid.wast',  # Requires more precise unreachable validation
-    'array.wast',  # Requires ref.array wast constants
+    'array.wast',  # Requires support for table default elements
     'array_init_elem.wast',  # Requires support for elem.drop
     'br_if.wast',  # Requires more precise branch validation
     'br_on_cast.wast',  # Requires sending values on br_on_cast
     'br_on_cast_fail.wast',  # Requires sending values on br_on_cast_fail
     'extern.wast',    # Requires ref.host wast constants
-    'i31.wast',       # Requires ref.i31 wast constants
+    'i31.wast',       # Requires support for table default elements
     'ref_cast.wast',  # Requires host references to not be externalized i31refs
     'ref_test.wast',  # Requires host references to not be externalized i31refs
-    'struct.wast',    # Requires ref.struct wast constants
+    'struct.wast',    # Duplicate field names not properly rejected
     'type-rec.wast',  # Requires wast `register` support
     'type-subtyping.wast',  # ShellExternalInterface::callTable does not handle subtyping
     'call_indirect.wast',   # Bug with 64-bit inline element segment parsing

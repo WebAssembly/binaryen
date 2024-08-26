@@ -2196,7 +2196,7 @@ public:
     WASM_UNREACHABLE("unimp");
   }
 
-private:
+protected:
   // Truncate the value if we need to. The storage is just a list of Literals,
   // so we can't just write the value like we would to a C struct field and
   // expect it to truncate for us. Instead, we truncate so the stored value is
@@ -2230,6 +2230,24 @@ private:
       }
     }
     return value;
+  }
+
+  Literal makeFromMemory(void* p, Field field) {
+    switch (field.packedType) {
+      case Field::not_packed:
+        return Literal::makeFromMemory(p, field.type);
+      case Field::i8: {
+        int8_t i;
+        memcpy(&i, p, sizeof(i));
+        return truncateForPacking(Literal(int32_t(i)), field);
+      }
+      case Field::i16: {
+        int16_t i;
+        memcpy(&i, p, sizeof(i));
+        return truncateForPacking(Literal(int32_t(i)), field);
+      }
+    }
+    WASM_UNREACHABLE("unexpected type");
   }
 };
 
@@ -3972,7 +3990,7 @@ public:
     contents.reserve(size);
     for (Index i = offset; i < end; i += elemBytes) {
       auto addr = (void*)&seg.data[i];
-      contents.push_back(Literal::makeFromMemory(addr, element));
+      contents.push_back(this->makeFromMemory(addr, element));
     }
     return self()->makeGCData(contents, curr->type);
   }
@@ -4052,7 +4070,7 @@ public:
     }
     for (size_t i = 0; i < sizeVal; i++) {
       void* addr = (void*)&seg->data[offsetVal + i * elemSize];
-      data->values[indexVal + i] = Literal::makeFromMemory(addr, elem);
+      data->values[indexVal + i] = this->makeFromMemory(addr, elem);
     }
     return {};
   }

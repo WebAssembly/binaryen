@@ -217,6 +217,34 @@ Result<ExpectedResult> result(Lexer& in) {
     return RefResult{HeapType::func};
   }
 
+  if (in.takeSExprStart("ref.struct")) {
+    if (!in.takeRParen()) {
+      return in.err("expected end of ref.struct");
+    }
+    return RefResult{HeapType::struct_};
+  }
+
+  if (in.takeSExprStart("ref.array")) {
+    if (!in.takeRParen()) {
+      return in.err("expected end of ref.array");
+    }
+    return RefResult{HeapType::array};
+  }
+
+  if (in.takeSExprStart("ref.eq")) {
+    if (!in.takeRParen()) {
+      return in.err("expected end of ref.eq");
+    }
+    return RefResult{HeapType::eq};
+  }
+
+  if (in.takeSExprStart("ref.i31")) {
+    if (!in.takeRParen()) {
+      return in.err("expected end of ref.i31");
+    }
+    return RefResult{HeapType::i31};
+  }
+
   if (in.takeSExprStart("ref.i31_shared")) {
     if (!in.takeRParen()) {
       return in.err("expected end of ref.i31_shared");
