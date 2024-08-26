@@ -76,7 +76,7 @@ struct DAEFunctionInfo {
   // removed as well.
   bool hasTailCalls = false;
   std::unordered_set<Name> tailCallees;
-  // Whether the function can be called from places that affect what we can do.
+  // The set of functions that have calls from places that limit what we can do.
   // For now, any call we don't see inhibits our optimizations, but TODO: an
   // export could be worked around by exporting a thunk that adds the parameter.
   //
