@@ -1984,6 +1984,14 @@ struct OptimizeInstructions
       return false;
     }
 
+    // The set value must also not transfer control flow. In the example above,
+    // imagine that X' branches out, then before the transform we still execute
+    // the struct.new and the local.set/tee, and we must not change that (but if
+    // we optimized, then X' branching out would skip the local.set).
+    if (setValueEffects.transfersControlFlowInsideFunction()) {
+      return false;
+    }
+
     // We must move the set's value past indexes greater than it (Y and Z in
     // the example in the comment on this function). If this is not with_default
     // then we must check for effects.

@@ -81,7 +81,7 @@ public:
 
     // Effects of return-called functions will be visible to the caller.
     if (hasReturnCallThrow) {
-      throws_ = true;
+      throwsOutsideFunction = true;
     }
 
     // We can ignore branching out of the function body - this can only be
@@ -141,13 +141,17 @@ public:
   // An atomic load/store/RMW/Cmpxchg or an operator that has a defined ordering
   // wrt atomics (e.g. memory.grow)
   bool isAtomic = false;
-  bool throws_ = false;
+  // Whether the expression may throw. We track separately whether it can throw
+  // to a place inside the current function, and outside of it.
+  bool throwsInsideFunction = false;
+  bool throwsOutsideFunction = false;
   // The nested depth of try-catch_all. If an instruction that may throw is
-  // inside an inner try-catch_all, we don't mark it as 'throws_', because it
-  // will be caught by an inner catch_all. We only count 'try's with a
-  // 'catch_all' because instructions within a 'try' without a 'catch_all' can
-  // still throw outside of the try.
-  size_t tryDepth = 0;
+  // inside an inner try-catch_all, we don't mark it as throwing.
+  size_t tryCatchAllDepth = 0;
+  // The nested depth of all try/try_table instructions. This is used to tell
+  // when a throw may reach a position inside the function (as opposed to
+  // outside, which matters for transfersControlFlowInsideFunction).
+  size_t tryCatchDepth = 0;
   // The nested depth of catch. This is necessary to track danglng pops.
   size_t catchDepth = 0;
   // If this expression contains 'pop's that are not enclosed in 'catch' body.
@@ -187,7 +191,7 @@ public:
     return calls || readsMutableStruct || writesStruct;
   }
   bool accessesArray() const { return calls || readsArray || writesArray; }
-  bool throws() const { return throws_ || !delegateTargets.empty(); }
+  bool throws() const { return throwsOutsideFunction || throwsInsideFunction || !delegateTargets.empty(); }
   // Check whether this may transfer control flow to somewhere outside of this
   // expression (aside from just flowing out normally). That includes a break
   // or a throw (if the throw is not known to be caught inside this expression;
@@ -197,6 +201,15 @@ public:
   // transferred inside the function, but this expression does not know that).
   bool transfersControlFlow() const {
     return branchesOut || throws() || hasExternalBreakTargets();
+  }
+
+  // As transfersControlFlow, but returns true only when we may transfer control
+  // flow to a place *inside the current function*. That is, it ignores jumps
+  // outside of the function (e.g. by a return). This can be useful to check
+  // when the only effect we care about involves local state (like the value of
+  // a local) - local state changes cannot be observed if we jump outside.
+  // TODO: Use this in invalidates().
+  bool transfersControlFlowInsideFunction() const {
   }
 
   // Changes something in globally-stored state.
@@ -362,7 +375,8 @@ public:
     implicitTrap = implicitTrap || other.implicitTrap;
     trapsNeverHappen = trapsNeverHappen || other.trapsNeverHappen;
     isAtomic = isAtomic || other.isAtomic;
-    throws_ = throws_ || other.throws_;
+    throwsOutsideFunction = throwsOutsideFunction || other.throwsOutsideFunction;
+    throwsInsideFunction = throwsInsideFunction || other.throwsInsideFunction;
     danglingPop = danglingPop || other.danglingPop;
     mayNotReturn = mayNotReturn || other.mayNotReturn;
     for (auto i : other.localsRead) {
@@ -445,11 +459,10 @@ private:
 
     static void doStartTry(InternalAnalyzer* self, Expression** currp) {
       Try* curr = (*currp)->cast<Try>();
-      // We only count 'try's with a 'catch_all' because instructions within a
-      // 'try' without a 'catch_all' can still throw outside of the try.
       if (curr->hasCatchAll()) {
-        self->parent.tryDepth++;
+        self->parent.tryCatchAllDepth++;
       }
+      self->parent.tryCatchDepth++;
     }
 
     static void doStartCatch(InternalAnalyzer* self, Expression** currp) {
@@ -461,16 +474,16 @@ private:
       // whether the original try-delegate's body throws or not at this point.
       if (curr->name.is()) {
         if (self->parent.delegateTargets.count(curr->name) &&
-            self->parent.tryDepth == 0) {
-          self->parent.throws_ = true;
+            self->parent.tryCatchAllDepth == 0) {
+          self->parent.throws_ = true; XXX from here
         }
         self->parent.delegateTargets.erase(curr->name);
       }
       // We only count 'try's with a 'catch_all' because instructions within a
       // 'try' without a 'catch_all' can still throw outside of the try.
       if (curr->hasCatchAll()) {
-        assert(self->parent.tryDepth > 0 && "try depth cannot be negative");
-        self->parent.tryDepth--;
+        assert(self->parent.tryCatchAllDepth > 0 && "try depth cannot be negative");
+        self->parent.tryCatchAllDepth--;
       }
       self->parent.catchDepth++;
     }
@@ -482,20 +495,20 @@ private:
 
     static void doStartTryTable(InternalAnalyzer* self, Expression** currp) {
       auto* curr = (*currp)->cast<TryTable>();
-      // We only count 'try_table's with a 'catch_all' because instructions
-      // within a 'try_table' without a 'catch_all' can still throw outside of
-      // the try.
       if (curr->hasCatchAll()) {
-        self->parent.tryDepth++;
+        self->parent.tryCatchAllDepth++;
       }
+      self->parent.tryCatchDepth++;
     }
 
     static void doEndTryTable(InternalAnalyzer* self, Expression** currp) {
       auto* curr = (*currp)->cast<TryTable>();
       if (curr->hasCatchAll()) {
-        assert(self->parent.tryDepth > 0 && "try depth cannot be negative");
-        self->parent.tryDepth--;
+        assert(self->parent.tryCatchAllDepth > 0 && "try depth cannot be negative");
+        self->parent.tryCatchAllDepth--;
       }
+      assert(self->parent.tryCatchDepth > 0 && "try depth cannot be negative");
+      self->parent.tryCatchDepth++;
     }
 
     void visitBlock(Block* curr) {
@@ -549,7 +562,7 @@ private:
         // captured by `branchesOut`, which models the return, and
         // `hasReturnCallThrow`, which models the throw that will happen after
         // the return.
-        if (targetEffects->throws_ && (parent.tryDepth > 0 || curr->isReturn)) {
+        if (targetEffects->throws_ && (parent.tryCatchAllDepth > 0 || curr->isReturn)) {
           auto filteredEffects = *targetEffects;
           filteredEffects.throws_ = false;
           parent.mergeIn(filteredEffects);
@@ -564,7 +577,7 @@ private:
       // When EH is enabled, any call can throw. Skip this for return calls
       // because the throw is already more precisely captured by the combination
       // of `hasReturnCallThrow` and `branchesOut`.
-      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0 &&
+      if (parent.features.hasExceptionHandling() && parent.tryCatchAllDepth == 0 &&
           !curr->isReturn) {
         parent.throws_ = true;
       }
@@ -578,7 +591,7 @@ private:
         }
       }
       if (parent.features.hasExceptionHandling() &&
-          (parent.tryDepth == 0 && !curr->isReturn)) {
+          (parent.tryCatchAllDepth == 0 && !curr->isReturn)) {
         parent.throws_ = true;
       }
     }
@@ -793,17 +806,17 @@ private:
       }
     }
     void visitThrow(Throw* curr) {
-      if (parent.tryDepth == 0) {
+      if (parent.tryCatchAllDepth == 0) {
         parent.throws_ = true;
       }
     }
     void visitRethrow(Rethrow* curr) {
-      if (parent.tryDepth == 0) {
+      if (parent.tryCatchAllDepth == 0) {
         parent.throws_ = true;
       }
     }
     void visitThrowRef(ThrowRef* curr) {
-      if (parent.tryDepth == 0) {
+      if (parent.tryCatchAllDepth == 0) {
         parent.throws_ = true;
       }
       // traps when the arg is null
@@ -843,7 +856,7 @@ private:
 
       parent.calls = true;
       if (parent.features.hasExceptionHandling() &&
-          (parent.tryDepth == 0 && !curr->isReturn)) {
+          (parent.tryCatchAllDepth == 0 && !curr->isReturn)) {
         parent.throws_ = true;
       }
     }
@@ -1024,7 +1037,7 @@ private:
       // on null.
       parent.implicitTrap = true;
 
-      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+      if (parent.features.hasExceptionHandling() && parent.tryCatchAllDepth == 0) {
         parent.throws_ = true;
       }
     }
@@ -1032,7 +1045,7 @@ private:
       // Similar to resume/call: Suspending means that we execute arbitrary
       // other code before we may resume here.
       parent.calls = true;
-      if (parent.features.hasExceptionHandling() && parent.tryDepth == 0) {
+      if (parent.features.hasExceptionHandling() && parent.tryCatchAllDepth == 0) {
         parent.throws_ = true;
       }
     }
@@ -1139,7 +1152,8 @@ public:
 
 private:
   void post() {
-    assert(tryDepth == 0);
+    assert(tryCatchAllDepth == 0);
+    assert(tryCatchDepth == 0);
 
     if (ignoreImplicitTraps) {
       implicitTrap = false;
