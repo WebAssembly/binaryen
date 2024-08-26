@@ -42,7 +42,11 @@
 
 ;; XXX optimizeSubsequentStructSet should be moved out of OptimizeInstructions
 ;; and to a place that does a CFG + ignorebranchesoutsidefunc = true. that's the
-;; ony way to really do this
+;; ony way to really do this.
+;; Or... we could do a simple pass outside of OptimizeInstructions without a
+;; CFG but with a check for parent Try.
+;; Note CodePushing has some similar logic for seeing if a local is used past a
+;; branch, which is what we care about too.
 (module
  (type $struct (sub (struct (field (mut i32)))))
 
