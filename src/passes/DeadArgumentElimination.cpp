@@ -264,9 +264,7 @@ struct DAE : public Pass {
     }
 
     // Track which functions we changed that are worth re-optimizing at the end.
-    // (This is not the set of all changed functions, as some changes are
-    // trivial and not likely to lead to optimization opportunities.)
-    std::unordered_set<Function*> changed;
+    std::unordered_set<Function*> worthOptimizing;
 
     // If we refine return types then we will need to do more type updating
     // at the end.
@@ -310,7 +308,7 @@ struct DAE : public Pass {
       // affect whether an argument is used or not, it just refines the type
       // where possible.
       if (refineArgumentTypes(func, calls, module, infoMap[name])) {
-        changed.insert(func);
+        worthOptimizing.insert(func);
         markStale(func->name);
       }
       // Refine return types as well.
@@ -350,7 +348,7 @@ struct DAE : public Pass {
         {func}, infoMap[name].unusedParams, calls, {}, module, getPassRunner());
       if (!removedIndexes.empty()) {
         // Success!
-        changed.insert(func);
+        worthOptimizing.insert(func);
         markStale(func->name);
         markCallersStale(calls);
       }
@@ -362,7 +360,7 @@ struct DAE : public Pass {
     // that we can't do this if we changed anything so far, as we may have
     // modified allCalls (we can't modify a call site twice in one iteration,
     // once to remove a param, once to drop the return value).
-    if (changed.empty()) {
+    if (worthOptimizing.empty()) {
       for (auto& func : module->functions) {
         if (func->getResults() == Type::none) {
           continue;
@@ -392,7 +390,7 @@ struct DAE : public Pass {
         removeReturnValue(func.get(), calls, module);
         // TODO Removing a drop may also open optimization opportunities in the
         // callers.
-        changed.insert(func.get());
+        worthOptimizing.insert(func.get());
         markStale(func->name);
         markCallersStale(calls);
       }
@@ -403,11 +401,11 @@ struct DAE : public Pass {
           markStale(func->name);
         });
     }
-    if (optimize && !changed.empty()) {
-      OptUtils::optimizeAfterInlining(changed, module, getPassRunner());
+    if (optimize && !worthOptimizing.empty()) {
+      OptUtils::optimizeAfterInlining(worthOptimizing, module, getPassRunner());
     }
 
-    return !changed.empty() || refinedReturnTypes ||
+    return !worthOptimizing.empty() || refinedReturnTypes ||
            !callTargetsToLocalize.empty();
   }
 
