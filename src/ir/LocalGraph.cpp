@@ -176,20 +176,10 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
     assert(entryFlowBlock != nullptr);
   }
 
-  // When the LocalGraph is in lazy mode we do not compute all of getSetsMap
-  // initially, but instead fill in these data structures that let us do so
-  // later for individual gets. Specifically we need to find the location of a
-  // local.get in the CFG.
-  struct BlockLocation {
-    // The basic block an item is in.
-    FlowBlock* block;
-    // The index in that block that the item is at.
-    Index index;
-  };
-  std::unordered_map<LocalGet*, BlockLocation> getLocations;
-
-  // Flow all the data. This is used in eager mode.
+  // Flow all the data.
   void flow() {
+    assert(mode == Mode::Eager);
+
     prepareFlowBlocks();
 
     auto numLocals = func->getNumLocals();
@@ -308,8 +298,38 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
     currentIteration++;
   }
 
+  // When the LocalGraph is in lazy mode we do not compute all of getSetsMap
+  // initially, but instead fill in these data structures that let us do so
+  // later for individual gets. Specifically we need to find the location of a
+  // local.get in the CFG.
+  struct BlockLocation {
+    // The basic block an item is in.
+    FlowBlock* block;
+    // The index in that block that the item is at.
+    Index index;
+  };
+  std::unordered_map<LocalGet*, BlockLocation> getLocations;
+
+  // Set up getLocations using the flow blocks, so that we are ready to handle
+  // later lazy requests for the sets of particular gets.
   void prepareLaziness() {
-    abort();
+    assert(mode == Mode::Lazy);
+
+    prepareFlowBlocks();
+
+    for (auto& block : flowBlocks) {
+      const auto& actions = block.actions;
+      for (Index i = 0; i < actions.size(); i++) {
+        if (auto* get = actions[i]->dynCast<LocalGet>()) {
+          getLocations[get] = BlockLocation{&block, i};
+        }
+      }
+    }
+  }
+
+  // Flow a specific get.
+  void flowGet(LocalGet* get) {
+    assert(mode == Mode::Lazy);
   }
 };
 
@@ -421,7 +441,7 @@ void LocalGraph::computeSSAIndexes() {
 bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
 
 void LocalGraph::computeGetSets(LocalGet* get) {
-  abort();
+  flowGet(get);
 }
 
 } // namespace wasm
