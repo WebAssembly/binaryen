@@ -1671,7 +1671,7 @@ Literal Literal::copysign(const Literal& other) const {
   }
 }
 
-Literal Literal::fma(const Literal& left, const Literal& right) const {
+Literal Literal::madd(const Literal& left, const Literal& right) const {
   switch (type.getBasic()) {
     case Type::f32:
       return Literal(::fmaf(left.getf32(), right.getf32(), getf32()));
@@ -1684,7 +1684,7 @@ Literal Literal::fma(const Literal& left, const Literal& right) const {
   }
 }
 
-Literal Literal::fms(const Literal& left, const Literal& right) const {
+Literal Literal::nmadd(const Literal& left, const Literal& right) const {
   switch (type.getBasic()) {
     case Type::f32:
       return Literal(::fmaf(-left.getf32(), right.getf32(), getf32()));
@@ -2762,24 +2762,28 @@ static Literal ternary(const Literal& a, const Literal& b, const Literal& c) {
 }
 } // namespace
 
-Literal Literal::relaxedFmaF32x4(const Literal& left,
-                                 const Literal& right) const {
-  return ternary<4, &Literal::getLanesF32x4, &Literal::fma>(*this, left, right);
+Literal Literal::relaxedMaddF32x4(const Literal& left,
+                                  const Literal& right) const {
+  return ternary<4, &Literal::getLanesF32x4, &Literal::madd>(
+    *this, left, right);
 }
 
-Literal Literal::relaxedFmsF32x4(const Literal& left,
-                                 const Literal& right) const {
-  return ternary<4, &Literal::getLanesF32x4, &Literal::fms>(*this, left, right);
+Literal Literal::relaxedNmaddF32x4(const Literal& left,
+                                   const Literal& right) const {
+  return ternary<4, &Literal::getLanesF32x4, &Literal::nmadd>(
+    *this, left, right);
 }
 
-Literal Literal::relaxedFmaF64x2(const Literal& left,
-                                 const Literal& right) const {
-  return ternary<2, &Literal::getLanesF64x2, &Literal::fma>(*this, left, right);
+Literal Literal::relaxedMaddF64x2(const Literal& left,
+                                  const Literal& right) const {
+  return ternary<2, &Literal::getLanesF64x2, &Literal::madd>(
+    *this, left, right);
 }
 
-Literal Literal::relaxedFmsF64x2(const Literal& left,
-                                 const Literal& right) const {
-  return ternary<2, &Literal::getLanesF64x2, &Literal::fms>(*this, left, right);
+Literal Literal::relaxedNmaddF64x2(const Literal& left,
+                                   const Literal& right) const {
+  return ternary<2, &Literal::getLanesF64x2, &Literal::nmadd>(
+    *this, left, right);
 }
 
 Literal Literal::externalize() const {
