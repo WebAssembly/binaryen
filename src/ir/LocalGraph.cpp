@@ -429,6 +429,9 @@ bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
 }
 
 void LocalGraph::computeSetInfluences() {
+  // We must be in eager mode so that all of getSetsMap is filled in.
+  assert(mode == Mode::Eager);
+
   for (auto& [curr, _] : locations) {
     if (auto* get = curr->dynCast<LocalGet>()) {
       for (auto* set : getSetsMap[get]) {
