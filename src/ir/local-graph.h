@@ -66,7 +66,8 @@ struct LocalGraph {
   // If this LocalGraph is in lazy mode then this may perform the computation
   // of sets at this time. As a result, the returned Sets from this function
   // should be considered invalidated by other calls to getSets (the same as if
-  // you read from a std::unordered_map and then modified that map).
+  // you read from a std::unordered_map and then modified that map). The const
+  // version of this method has no such issue, of course.
   using Sets = SmallSet<LocalSet*, 2>;
   const Sets& getSets(LocalGet* get) {
     if (mode == Mode::Lazy) {
@@ -81,6 +82,12 @@ struct LocalGraph {
       return empty;
     }
     return iter->second;
+  }
+
+  const Sets& getSets(LocalGet* get) const {
+    // In eager mode, the non-const version makes no changes.
+    assert(mode == Mode::Eager);
+    return const_cast<LocalGraph*>(this)->getSets(get);
   }
 
   // Where each get and set is. We compute this while doing the main computation
