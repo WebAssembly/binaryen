@@ -476,7 +476,7 @@ void LocalGraph::computeSSAIndexes() {
 bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
 
 void LocalGraph::computeGetSets(LocalGet* get) {
-  flowGet(get);
+  flower->flowGet(get);
 }
 
 } // namespace wasm
