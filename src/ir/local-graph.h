@@ -39,10 +39,21 @@ namespace wasm {
 // code will be removed anyhow).
 //
 struct LocalGraph {
+  // A LocalGraph can be instantiated in either eager or lazy mode. In eager
+  // mode we compute all possible results of getSets() in advance, which is a
+  // little more efficient if they are all needed. In lazy mode they are
+  // computed on demand, which is better if only a few will be queried.
+  enum Mode {
+    Eager,
+    Lazy
+  };
+
   // If a module is passed in, it is used to find which features are needed in
   // the computation (for example, if exception handling is disabled, then we
   // can generate a simpler CFG, as calls cannot throw).
-  LocalGraph(Function* func, Module* module = nullptr);
+  LocalGraph(Function* func,
+             Module* module = nullptr,
+             Mode mode = Mode::Eager);
 
   // Get the sets relevant for a local.get.
   //
@@ -51,8 +62,17 @@ struct LocalGraph {
   // for a param.
   //
   // Often there is a single set, or a phi or two items, so we use a small set.
+  //
+  // If this LocalGraph is in lazy mode then this may perform the computation
+  // of sets at this time. As a result, the returned Sets from this function
+  // should be considered invalidated by other calls to getSets (the same as if
+  // you read from a std::unordered_map and then modified that map).
   using Sets = SmallSet<LocalSet*, 2>;
-  const Sets& getSets(LocalGet* get) const {
+  const Sets& getSets(LocalGet* get) {
+    if (mode == Mode::Lazy) {
+      computeGetSets(get);
+    }
+
     // When we return an empty result, use a canonical constant empty set to
     // avoid allocation.
     static const Sets empty;
@@ -118,11 +138,22 @@ struct LocalGraph {
   using GetSetsMap = std::unordered_map<LocalGet*, Sets>;
 
 private:
+  Mode mode;
   Function* func;
   std::set<Index> SSAIndexes;
 
   // A map of each get to the sets relevant to it.
   GetSetsMap getSetsMap;
+
+  // The internal implementation of the flow analysis used to compute
+  // getSetsMap.
+  struct LocalGraphFlower;
+  // This could be a unique_ptr, but the forward declaration is not compatible
+  // with that. As this is a singleton allocation, it doesn't really matter.
+  std::shared_ptr<LocalGraphFlower> flower;
+
+  // Compute the sets for a get and store them on getSetsMap.
+  void computeGetSets(LocalGet* get);
 };
 
 } // namespace wasm

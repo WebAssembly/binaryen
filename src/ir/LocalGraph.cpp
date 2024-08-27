@@ -23,7 +23,7 @@
 
 namespace wasm {
 
-namespace LocalGraphInternal {
+namespace {
 
 // Information about a basic block.
 struct Info {
@@ -37,13 +37,15 @@ struct Info {
   }
 };
 
+} // anonymous namespace
+
 // flow helper class. flows the gets to their sets
 
-struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
+struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlower, Visitor<LocalGraph::LocalGraphFlower>, Info> {
   LocalGraph::GetSetsMap& getSetsMap;
   LocalGraph::Locations& locations;
 
-  Flower(LocalGraph::GetSetsMap& getSetsMap,
+  LocalGraphFlower(LocalGraph::GetSetsMap& getSetsMap,
          LocalGraph::Locations& locations,
          Function* func,
          Module* module)
@@ -51,9 +53,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     setFunction(func);
     setModule(module);
     // create the CFG by walking the IR
-    CFGWalker<Flower, Visitor<Flower>, Info>::doWalkFunction(func);
-    // flow gets across blocks
-    flow(func);
+    CFGWalker<LocalGraphFlower, Visitor<LocalGraphFlower>, Info>::doWalkFunction(func);
   }
 
   BasicBlock* makeBasicBlock() { return new BasicBlock(); }
@@ -64,7 +64,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 
   // cfg traversal work
 
-  static void doVisitLocalGet(Flower* self, Expression** currp) {
+  static void doVisitLocalGet(LocalGraphFlower* self, Expression** currp) {
     auto* curr = (*currp)->cast<LocalGet>();
     // if in unreachable code, skip
     if (!self->currBasicBlock) {
@@ -74,7 +74,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     self->locations[curr] = currp;
   }
 
-  static void doVisitLocalSet(Flower* self, Expression** currp) {
+  static void doVisitLocalSet(LocalGraphFlower* self, Expression** currp) {
     auto* curr = (*currp)->cast<LocalSet>();
     // if in unreachable code, skip
     if (!self->currBasicBlock) {
@@ -256,12 +256,14 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
   }
 };
 
-} // namespace LocalGraphInternal
-
 // LocalGraph implementation
 
-LocalGraph::LocalGraph(Function* func, Module* module) : func(func) {
-  LocalGraphInternal::Flower flower(getSetsMap, locations, func, module);
+LocalGraph::LocalGraph(Function* func, Module* module, Mode mode) : mode(mode), func(func) {
+  flower = std::make_shared<LocalGraphFlower>(getSetsMap, locations, func, module);
+
+  if (mode == Mode::Eager) {
+    flower->flow(func);
+  }
 
 #ifdef LOCAL_GRAPH_DEBUG
   std::cout << "LocalGraph::dump\n";
@@ -358,5 +360,9 @@ void LocalGraph::computeSSAIndexes() {
 }
 
 bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
+
+void LocalGraph::computeGetSets(LocalGet* get) {
+  abort();
+}
 
 } // namespace wasm
