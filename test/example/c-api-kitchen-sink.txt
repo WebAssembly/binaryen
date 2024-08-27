@@ -1884,28 +1884,28 @@ BinaryenFeatureAll: 524287
        )
       )
       (drop
-       (f32x4.relaxed_fma
+       (f32x4.relaxed_madd
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (f32x4.relaxed_fms
+       (f32x4.relaxed_nmadd
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (f64x2.relaxed_fma
+       (f64x2.relaxed_madd
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (f64x2.relaxed_fms
+       (f64x2.relaxed_nmadd
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)

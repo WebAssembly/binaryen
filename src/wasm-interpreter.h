@@ -1201,14 +1201,14 @@ public:
       case LaneselectI64x2:
         return c.bitselectV128(a, b);
 
-      case RelaxedFmaVecF32x4:
-        return a.relaxedFmaF32x4(b, c);
-      case RelaxedFmsVecF32x4:
-        return a.relaxedFmsF32x4(b, c);
-      case RelaxedFmaVecF64x2:
-        return a.relaxedFmaF64x2(b, c);
-      case RelaxedFmsVecF64x2:
-        return a.relaxedFmsF64x2(b, c);
+      case RelaxedMaddVecF32x4:
+        return a.relaxedMaddF32x4(b, c);
+      case RelaxedNmaddVecF32x4:
+        return a.relaxedNmaddF32x4(b, c);
+      case RelaxedMaddVecF64x2:
+        return a.relaxedMaddF64x2(b, c);
+      case RelaxedNmaddVecF64x2:
+        return a.relaxedNmaddF64x2(b, c);
       default:
         // TODO: implement signselect and dot_add
         WASM_UNREACHABLE("not implemented");

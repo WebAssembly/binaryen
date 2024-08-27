@@ -952,31 +952,25 @@ switch (buf[0]) {
                 switch (buf[8]) {
                   case 'l': {
                     switch (buf[14]) {
-                      case 'f': {
-                        switch (buf[16]) {
-                          case 'a':
-                            if (op == "f32x4.relaxed_fma"sv) {
-                              CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedFmaVecF32x4));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          case 's':
-                            if (op == "f32x4.relaxed_fms"sv) {
-                              CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedFmsVecF32x4));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
                       case 'm': {
                         switch (buf[15]) {
-                          case 'a':
-                            if (op == "f32x4.relaxed_max"sv) {
-                              CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::RelaxedMaxVecF32x4));
-                              return Ok{};
+                          case 'a': {
+                            switch (buf[16]) {
+                              case 'd':
+                                if (op == "f32x4.relaxed_madd"sv) {
+                                  CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedMaddVecF32x4));
+                                  return Ok{};
+                                }
+                                goto parse_error;
+                              case 'x':
+                                if (op == "f32x4.relaxed_max"sv) {
+                                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::RelaxedMaxVecF32x4));
+                                  return Ok{};
+                                }
+                                goto parse_error;
+                              default: goto parse_error;
                             }
-                            goto parse_error;
+                          }
                           case 'i':
                             if (op == "f32x4.relaxed_min"sv) {
                               CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::RelaxedMinVecF32x4));
@@ -986,6 +980,12 @@ switch (buf[0]) {
                           default: goto parse_error;
                         }
                       }
+                      case 'n':
+                        if (op == "f32x4.relaxed_nmadd"sv) {
+                          CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedNmaddVecF32x4));
+                          return Ok{};
+                        }
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
@@ -1462,31 +1462,25 @@ switch (buf[0]) {
                 switch (buf[8]) {
                   case 'l': {
                     switch (buf[14]) {
-                      case 'f': {
-                        switch (buf[16]) {
-                          case 'a':
-                            if (op == "f64x2.relaxed_fma"sv) {
-                              CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedFmaVecF64x2));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          case 's':
-                            if (op == "f64x2.relaxed_fms"sv) {
-                              CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedFmsVecF64x2));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
                       case 'm': {
                         switch (buf[15]) {
-                          case 'a':
-                            if (op == "f64x2.relaxed_max"sv) {
-                              CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::RelaxedMaxVecF64x2));
-                              return Ok{};
+                          case 'a': {
+                            switch (buf[16]) {
+                              case 'd':
+                                if (op == "f64x2.relaxed_madd"sv) {
+                                  CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedMaddVecF64x2));
+                                  return Ok{};
+                                }
+                                goto parse_error;
+                              case 'x':
+                                if (op == "f64x2.relaxed_max"sv) {
+                                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::RelaxedMaxVecF64x2));
+                                  return Ok{};
+                                }
+                                goto parse_error;
+                              default: goto parse_error;
                             }
-                            goto parse_error;
+                          }
                           case 'i':
                             if (op == "f64x2.relaxed_min"sv) {
                               CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::RelaxedMinVecF64x2));
@@ -1496,6 +1490,12 @@ switch (buf[0]) {
                           default: goto parse_error;
                         }
                       }
+                      case 'n':
+                        if (op == "f64x2.relaxed_nmadd"sv) {
+                          CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedNmaddVecF64x2));
+                          return Ok{};
+                        }
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
