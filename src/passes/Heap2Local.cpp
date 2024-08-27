@@ -517,9 +517,7 @@ struct EscapeAnalyzer {
 
     // Check that the gets can only read from the specific known sets.
     for (auto* get : gets) {
-      auto iter = localGraph.getSetses.find(get);
-      assert(iter != localGraph.getSetses.end());
-      for (auto* set : iter->second) {
+      for (auto* set : localGraph.getSets(get)) {
         if (sets.count(set) == 0) {
           return false;
         }

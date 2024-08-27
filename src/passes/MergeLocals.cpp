@@ -123,9 +123,9 @@ struct MergeLocals
           // however, it may depend on other writes too, if there is a
           // merge/phi, and in that case we can't do anything
           assert(influencedGet->index == trivial->index);
-          if (preGraph.getSetses[influencedGet].size() == 1) {
+          if (preGraph.getSet(influencedGet).size() == 1) {
             // this is ok
-            assert(*preGraph.getSetses[influencedGet].begin() == trivial);
+            assert(*preGraph.getSets(influencedGet).begin() == trivial);
             // If local types are different (when one is a subtype of the
             // other), don't optimize
             if (func->getLocalType(copy->index) != influencedGet->type) {
@@ -161,9 +161,9 @@ struct MergeLocals
             for (auto* influencedGet : copyInfluences) {
               // as above, avoid merges/phis
               assert(influencedGet->index == copy->index);
-              if (preGraph.getSetses[influencedGet].size() == 1) {
+              if (preGraph.getSets(influencedGet).size() == 1) {
                 // this is ok
-                assert(*preGraph.getSetses[influencedGet].begin() == copy);
+                assert(*preGraph.getSets(influencedGet).begin() == copy);
                 // If local types are different (when one is a subtype of the
                 // other), don't optimize
                 if (func->getLocalType(trivial->index) != influencedGet->type) {
@@ -199,7 +199,7 @@ struct MergeLocals
         auto& trivialInfluences = preGraph.setInfluences[trivial];
         for (auto* influencedGet : trivialInfluences) {
           // verify the set
-          auto& sets = postGraph.getSetses[influencedGet];
+          auto& sets = postGraph.getSets(influencedGet);
           if (sets.size() != 1 || *sets.begin() != copy) {
             // not good, undo all the changes for this copy
             for (auto* undo : trivialInfluences) {
@@ -213,7 +213,7 @@ struct MergeLocals
         auto& copyInfluences = preGraph.setInfluences[copy];
         for (auto* influencedGet : copyInfluences) {
           // verify the set
-          auto& sets = postGraph.getSetses[influencedGet];
+          auto& sets = postGraph.getSets(influencedGet);
           if (sets.size() != 1 || *sets.begin() != trivial) {
             // not good, undo all the changes for this copy
             for (auto* undo : copyInfluences) {

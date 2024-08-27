@@ -225,7 +225,7 @@ void StackIROptimizer::local2Stack() {
             if (set->index == get->index) {
               // This might be a proper set-get pair, where the set is
               // used by this get and nothing else, check that.
-              auto& sets = localGraph.getSetses[get];
+              auto& sets = localGraph.getSets(get);
               if (sets.size() == 1 && *sets.begin() == set) {
                 auto& setInfluences = localGraph.setInfluences[set];
                 // If this has the proper value of 1, also do the potentially-

@@ -39,37 +39,42 @@ namespace wasm {
 // code will be removed anyhow).
 //
 struct LocalGraph {
-  // main API
-
-  // The constructor computes getSetses, the sets affecting each get.
-  //
   // If a module is passed in, it is used to find which features are needed in
   // the computation (for example, if exception handling is disabled, then we
   // can generate a simpler CFG, as calls cannot throw).
   LocalGraph(Function* func, Module* module = nullptr);
 
-  // The local.sets relevant for an index or a get. The most common case is to
-  // have a single set; after that, to be a phi of 2 items, so we use a small
-  // set of size 2 to avoid allocations there.
+  // Get the sets relevant for a local.get.
+  //
+  // A nullptr set means there is no local.set for that value, which means it is
+  // the initial value from the function entry: 0 for a var, the received value
+  // for a param.
+  //
+  // Often there is a single set, or a phi or two items, so we use a small set.
   using Sets = SmallSet<LocalSet*, 2>;
+  const Sets& getSets(LocalGet* get) {
+    // When we return an empty result, use a canonical constant empty vec to
+    // avoid allocation.
+    static const Sets empty;
+    auto iter = getSetsMap.find(get);
+    if (iter == getSetsMap.end()) {
+      return empty;
+    }
+    return iter->second;
+  }
 
-  using GetSetses = std::unordered_map<LocalGet*, Sets>;
-
+  // Where each get and set is. We compute this while doing the main computation
+  // and make it accessible for users, for easy replacing of things without
+  // extra work.
   using Locations = std::map<Expression*, Expression**>;
-
-  // externally useful information
-  GetSetses getSetses; // the sets affecting each get. a nullptr set means the
-                       // initial value (0 for a var, the received value for a
-                       // param)
-  Locations locations; // where each get and set is (for easy replacing)
+  Locations locations;
 
   // Checks if two gets are equivalent, that is, definitely have the same
   // value.
   bool equivalent(LocalGet* a, LocalGet* b);
 
-  // Optional: compute the influence graphs between sets and gets
-  // (useful for algorithms that propagate changes).
-
+  // Optional: compute the influence graphs between sets and gets (useful for
+  // algorithms that propagate changes).
   void computeSetInfluences();
   void computeGetInfluences();
 
@@ -109,9 +114,15 @@ struct LocalGraph {
 
   bool isSSA(Index x);
 
+  // Defined publicly as other utilities need similar data layouts.
+  using GetSetsMap = std::unordered_map<LocalGet*, Sets>;
+
 private:
   Function* func;
   std::set<Index> SSAIndexes;
+
+  // A map of each get to the sets relevant to it.
+  GetSetsMap getSetsMap;
 };
 
 } // namespace wasm
