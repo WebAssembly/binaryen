@@ -574,6 +574,8 @@ enum SIMDTernaryOp {
   Bitselect,
 
   // Relaxed SIMD
+  RelaxedMaddVecF16x8,
+  RelaxedNmaddVecF16x8,
   RelaxedMaddVecF32x4,
   RelaxedNmaddVecF32x4,
   RelaxedMaddVecF64x2,

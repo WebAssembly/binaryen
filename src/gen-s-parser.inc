@@ -458,12 +458,34 @@ switch (buf[0]) {
               default: goto parse_error;
             }
           }
-          case 'r':
-            if (op == "f16x8.replace_lane"sv) {
-              CHECK_ERR(makeSIMDReplace(ctx, pos, annotations, SIMDReplaceOp::ReplaceLaneVecF16x8, 8));
-              return Ok{};
+          case 'r': {
+            switch (buf[8]) {
+              case 'l': {
+                switch (buf[14]) {
+                  case 'm':
+                    if (op == "f16x8.relaxed_madd"sv) {
+                      CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedMaddVecF16x8));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  case 'n':
+                    if (op == "f16x8.relaxed_nmadd"sv) {
+                      CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedNmaddVecF16x8));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              case 'p':
+                if (op == "f16x8.replace_lane"sv) {
+                  CHECK_ERR(makeSIMDReplace(ctx, pos, annotations, SIMDReplaceOp::ReplaceLaneVecF16x8, 8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
             }
-            goto parse_error;
+          }
           case 's': {
             switch (buf[7]) {
               case 'p':
