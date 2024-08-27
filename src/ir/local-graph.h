@@ -76,6 +76,7 @@ struct LocalGraph {
 
     // When we return an empty result, use a canonical constant empty set to
     // avoid allocation.
+    // TODO: do we need this? just for unreachable..? even then?
     static const Sets empty;
     auto iter = getSetsMap.find(get);
     if (iter == getSetsMap.end()) {
@@ -85,7 +86,8 @@ struct LocalGraph {
   }
 
   const Sets& getSets(LocalGet* get) const {
-    // In eager mode, the non-const version makes no changes.
+    // In eager mode, the non-const version makes no changes, so we can call it
+    // from this const one.
     assert(mode == Mode::Eager);
     return const_cast<LocalGraph*>(this)->getSets(get);
   }
