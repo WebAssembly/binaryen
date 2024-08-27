@@ -177,10 +177,8 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
     assert(entryFlowBlock != nullptr);
   }
 
-  // Flow all the data.
+  // Flow all the data. This is done in eager mode.
   void flow() {
-    assert(mode == Mode::Eager);
-
     prepareFlowBlocks();
 
     auto numLocals = func->getNumLocals();
@@ -312,10 +310,9 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
   std::unordered_map<LocalGet*, BlockLocation> getLocations;
 
   // Set up getLocations using the flow blocks, so that we are ready to handle
-  // later lazy requests for the sets of particular gets.
+  // later lazy requests for the sets of particular gets. This is done in lazy
+  // mode.
   void prepareLaziness() {
-    assert(mode == Mode::Lazy);
-
     prepareFlowBlocks();
 
     for (auto& block : flowBlocks) {
@@ -328,9 +325,8 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
     }
   }
 
-  // Flow a specific get.
+  // Flow a specific get. This is done in lazy mode.
   void flowGet(LocalGet* get) {
-    assert(mode == Mode::Lazy);
 
     auto index = get->index;
 
