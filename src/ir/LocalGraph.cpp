@@ -250,18 +250,18 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
           continue;
         }
 
-        flowBackFromStartOfBlock(&block, gets);
+        flowBackFromStartOfBlock(&block, index, gets);
       }
     }
   }
 
-  // Given a flow block and a set of gets, begin at the start of the block and
+  // Given a flow block and a set of gets all of the same index, begin at the start of the block and
   // flow backwards to find the sets affecting them. This does not look into
   // |block| itself (unless we are in a loop, and reach it again), that is, it
   // is a utility that is called when we are ready to do a cross-block flow.
   //
   // All the sets we find are applied to all the gets we are given.
-  void flowBackFromStartOfBlock(FlowBlock* block, const std::vector<LocalGet*>& gets) {
+  void flowBackFromStartOfBlock(FlowBlock* block, Index index, const std::vector<LocalGet*>& gets) {
     std::vector<FlowBlock*> work; // TODO: UniqueDeferredQueue
     work.push_back(block);
     // Note that we may need to revisit the later parts of this initial
