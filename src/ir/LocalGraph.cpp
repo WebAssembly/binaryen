@@ -99,6 +99,7 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
 
     static const size_t NULL_ITERATION = -1;
 
+    // TODO: this could be by local index?
     std::vector<Expression*> actions;
     std::vector<FlowBlock*> in;
     // Sor each index, the last local.set for it
@@ -304,7 +305,7 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
   // local.get in the CFG.
   struct BlockLocation {
     // The basic block an item is in.
-    FlowBlock* block;
+    FlowBlock* block = nullptr;
     // The index in that block that the item is at.
     Index index;
   };
@@ -330,6 +331,44 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
   // Flow a specific get.
   void flowGet(LocalGet* get) {
     assert(mode == Mode::Lazy);
+
+    auto index = get->index;
+
+    auto [block, blockIndex] = getLocations[get];
+    // We must have found the location of this get.
+    assert(block);
+
+    // We must have the get at that location.
+    assert(blockIndex < block->actions.size());
+    assert(block->actions[blockIndex] == get);
+
+    // Go backwards in this flow block, from the get
+    while (blockIndex > 0) {
+      blockIndex--;
+      auto* curr = block->actions[blockIndex];
+      if (auto* otherGet = curr->dynCast<LocalGet>()) {
+        if (otherGet->index == index) {
+          // This is another get of the same index. If we've already computed it, then we can just
+          // use that, as they must have the same sets.
+          auto iter = getSetsMap.find(otherGet);
+          if (iter != getSetsMap.end()) {
+            getSetsMap[get] = getSetsMap[otherGet];
+            return;
+          }
+        }
+      } else {
+        // This is a set.
+        auto* set = curr->cast<LocalSet>();
+        if (set->index == index) {
+          // This is the only set writing to this get.
+          getSetsMap[get].insert(set);
+          return;
+        }
+      }
+    }
+
+    // We must do an inter-block flow.
+    flowBackFromStartOfBlock(block, index, { get });
   }
 };
 
