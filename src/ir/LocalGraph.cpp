@@ -97,7 +97,7 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
     // lookup into container, ...)
     size_t lastTraversedIteration;
 
-    const size_t NULL_ITERATION = -1;
+    static const size_t NULL_ITERATION = -1;
 
     std::vector<Expression*> actions;
     std::vector<FlowBlock*> in;
@@ -125,6 +125,14 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
   // We note which local indexes have local.sets, as that can help us
   // optimize later (if there are none at all, we do not need to flow).
   std::vector<bool> hasSet;
+
+  // Each time we flow a get (or set of gets) to find its sets, we mark a
+  // different iteration number. This lets us memoize the current iteration on
+  // blocks as we pass them, allow us to quickly skip them in that iteration
+  // (another option would be a set of blocks we've visited, but storing the
+  // iteration number on blocks is faster since we are already processing that
+  // FlowBlock already, meaning it is likely in cache, and avoids a set lookup).
+  size_t currentIteration = 0;
 
   // Fill in flowBlocks and basicToFlowMap.
   void prepareFlowBlocks() {
@@ -186,7 +194,6 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
 
     auto numLocals = func->getNumLocals();
 
-    size_t currentIteration = 0;
     for (auto& block : flowBlocks) {
 #ifdef LOCAL_GRAPH_DEBUG
       std::cout << "basic block " << &block << " :\n";
@@ -256,7 +263,7 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
   // All the sets we find are applied to all the gets we are given.
   void flowBackFromStartOfBlock(FlowBlock* block, const std::vector<LocalGet*>& gets) {
     std::vector<FlowBlock*> work; // TODO: UniqueDeferredQueue
-    work.push_back(&block);
+    work.push_back(block);
     // Note that we may need to revisit the later parts of this initial
     // block, if we are in a loop, so don't mark it as seen.
     while (!work.empty()) {
