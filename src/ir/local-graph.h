@@ -52,7 +52,7 @@ struct LocalGraph {
   //
   // Often there is a single set, or a phi or two items, so we use a small set.
   using Sets = SmallSet<LocalSet*, 2>;
-  const Sets& getSets(LocalGet* get) {
+  const Sets& getSets(LocalGet* get) const {
     // When we return an empty result, use a canonical constant empty vec to
     // avoid allocation.
     static const Sets empty;

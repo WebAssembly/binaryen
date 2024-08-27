@@ -1245,8 +1245,7 @@ struct InfoCollector
     // the type must be the same for all gets of that local.)
     LocalGraph localGraph(func, getModule());
 
-    for (auto** currp : localGraph.locations) {
-      auto* curr = *currp;
+    for (auto& [curr, _] : localGraph.locations) {
       auto* get = curr->dynCast<LocalGet>();
       if (!get) {
         continue;
