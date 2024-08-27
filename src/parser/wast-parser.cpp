@@ -49,7 +49,7 @@ Result<Literals> consts(Lexer& in) {
   return lits;
 }
 
-MaybeResult<Action> action(Lexer& in) {
+MaybeResult<Action> maybeAction(Lexer& in) {
   if (in.takeSExprStart("invoke"sv)) {
     auto id = in.takeID();
     auto name = in.takeName();
@@ -77,6 +77,14 @@ MaybeResult<Action> action(Lexer& in) {
   }
 
   return {};
+}
+
+Result<Action> action(Lexer& in) {
+  if (auto a = maybeAction(in)) {
+    CHECK_ERR(a);
+    return *a;
+  }
+  return in.err("expected action");
 }
 
 // (module id? binary string*)
@@ -348,7 +356,7 @@ MaybeResult<Assertion> assertTrap(Lexer& in) {
     return {};
   }
   auto pos = in.getPos();
-  if (auto a = action(in)) {
+  if (auto a = maybeAction(in)) {
     CHECK_ERR(a);
     auto msg = in.takeString();
     if (!msg) {
@@ -423,7 +431,7 @@ Result<WASTCommand> command(Lexer& in) {
     CHECK_ERR(cmd);
     return *cmd;
   }
-  if (auto cmd = action(in)) {
+  if (auto cmd = maybeAction(in)) {
     CHECK_ERR(cmd);
     return *cmd;
   }
