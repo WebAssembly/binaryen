@@ -1132,6 +1132,28 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I64x2Bitmask);
       break;
+    case AbsVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Abs);
+      break;
+    case NegVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Neg);
+      break;
+    case SqrtVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Sqrt);
+      break;
+    case CeilVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Ceil);
+      break;
+    case FloorVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Floor);
+      break;
+    case TruncVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Trunc);
+      break;
+    case NearestVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F16x8Nearest);
+      break;
     case AbsVecF32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Abs);
       break;

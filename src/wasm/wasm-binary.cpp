@@ -6439,6 +6439,34 @@ bool WasmBinaryReader::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = BitmaskVecI64x2;
       break;
+    case BinaryConsts::F16x8Abs:
+      curr = allocator.alloc<Unary>();
+      curr->op = AbsVecF16x8;
+      break;
+    case BinaryConsts::F16x8Neg:
+      curr = allocator.alloc<Unary>();
+      curr->op = NegVecF16x8;
+      break;
+    case BinaryConsts::F16x8Sqrt:
+      curr = allocator.alloc<Unary>();
+      curr->op = SqrtVecF16x8;
+      break;
+    case BinaryConsts::F16x8Ceil:
+      curr = allocator.alloc<Unary>();
+      curr->op = CeilVecF16x8;
+      break;
+    case BinaryConsts::F16x8Floor:
+      curr = allocator.alloc<Unary>();
+      curr->op = FloorVecF16x8;
+      break;
+    case BinaryConsts::F16x8Trunc:
+      curr = allocator.alloc<Unary>();
+      curr->op = TruncVecF16x8;
+      break;
+    case BinaryConsts::F16x8Nearest:
+      curr = allocator.alloc<Unary>();
+      curr->op = NearestVecF16x8;
+      break;
     case BinaryConsts::F32x4Abs:
       curr = allocator.alloc<Unary>();
       curr->op = AbsVecF32x4;

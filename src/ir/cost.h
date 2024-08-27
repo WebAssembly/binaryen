@@ -206,6 +206,13 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case NegVecI64x2:
       case AllTrueVecI64x2:
       case BitmaskVecI64x2:
+      case AbsVecF16x8:
+      case NegVecF16x8:
+      case SqrtVecF16x8:
+      case CeilVecF16x8:
+      case FloorVecF16x8:
+      case TruncVecF16x8:
+      case NearestVecF16x8:
       case AbsVecF32x4:
       case NegVecF32x4:
       case SqrtVecF32x4:

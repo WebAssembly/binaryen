@@ -618,6 +618,9 @@ public:
   Literal extMulHighSI64x2(const Literal& other) const;
   Literal extMulLowUI64x2(const Literal& other) const;
   Literal extMulHighUI64x2(const Literal& other) const;
+  Literal absF16x8() const;
+  Literal negF16x8() const;
+  Literal sqrtF16x8() const;
   Literal addF16x8(const Literal& other) const;
   Literal subF16x8(const Literal& other) const;
   Literal mulF16x8(const Literal& other) const;
@@ -626,6 +629,10 @@ public:
   Literal maxF16x8(const Literal& other) const;
   Literal pminF16x8(const Literal& other) const;
   Literal pmaxF16x8(const Literal& other) const;
+  Literal ceilF16x8() const;
+  Literal floorF16x8() const;
+  Literal truncF16x8() const;
+  Literal nearestF16x8() const;
   Literal absF32x4() const;
   Literal negF32x4() const;
   Literal sqrtF32x4() const;

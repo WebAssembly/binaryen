@@ -2095,6 +2095,17 @@ void FunctionValidator::visitUnary(Unary* curr) {
       shouldBeEqual(
         curr->value->type, Type(Type::f64), curr, "expected f64 splat value");
       break;
+    case AbsVecF16x8:
+    case NegVecF16x8:
+    case SqrtVecF16x8:
+    case CeilVecF16x8:
+    case FloorVecF16x8:
+    case TruncVecF16x8:
+    case NearestVecF16x8:
+      shouldBeTrue(getModule()->features.hasFP16(),
+                   curr,
+                   "FP16 operations require FP16 [--enable-fp16]");
+      [[fallthrough]];
     case NotVec128:
     case PopcntVecI8x16:
     case AbsVecI8x16:

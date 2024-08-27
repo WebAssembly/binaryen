@@ -531,6 +531,20 @@ public:
         return value.allTrueI64x2();
       case BitmaskVecI64x2:
         return value.bitmaskI64x2();
+      case AbsVecF16x8:
+        return value.absF16x8();
+      case NegVecF16x8:
+        return value.negF16x8();
+      case SqrtVecF16x8:
+        return value.sqrtF16x8();
+      case CeilVecF16x8:
+        return value.ceilF16x8();
+      case FloorVecF16x8:
+        return value.floorF16x8();
+      case TruncVecF16x8:
+        return value.truncF16x8();
+      case NearestVecF16x8:
+        return value.nearestF16x8();
       case AbsVecF32x4:
         return value.absF32x4();
       case NegVecF32x4:
