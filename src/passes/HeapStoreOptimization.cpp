@@ -27,7 +27,8 @@
 
 namespace wasm {
 
-struct HeapStoreOptimization : public WalkerPass<PostWalker<HeapStoreOptimization>> {
+struct HeapStoreOptimization
+  : public WalkerPass<PostWalker<HeapStoreOptimization>> {
   bool isFunctionParallel() override { return true; }
 
   // Locals are not modified here.
@@ -240,4 +241,3 @@ struct HeapStoreOptimization : public WalkerPass<PostWalker<HeapStoreOptimizatio
 Pass* createHeapStoreOptimizationPass() { return new HeapStoreOptimization(); }
 
 } // namespace wasm
-
