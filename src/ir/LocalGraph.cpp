@@ -432,8 +432,8 @@ LocalGraph::~LocalGraph() {
 }
 
 bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
-  auto& aSets = getSetsMap[a];
-  auto& bSets = getSetsMap[b];
+  auto& aSets = getSets(a);
+  auto& bSets = getSets(b);
   // The simple case of one set dominating two gets easily proves that they must
   // have the same value. (Note that we can infer dominance from the fact that
   // there is a single set: if the set did not dominate one of the gets then
@@ -493,6 +493,9 @@ void LocalGraph::computeGetInfluences() {
 }
 
 void LocalGraph::computeSSAIndexes() {
+  // We must be in eager mode so that all of getSetsMap is filled in.
+  assert(mode == Mode::Eager);
+
   std::unordered_map<Index, std::set<LocalSet*>> indexSets;
   for (auto& [get, sets] : getSetsMap) {
     for (auto* set : sets) {
