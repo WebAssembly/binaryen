@@ -191,7 +191,7 @@
     (v128.const i16x8 0x7e00 0       0x7c00 0xfc00 0xbc00 0x3c00 0x4000 0x3c00))
 ;; ternary operations
 (assert_return (invoke "f16x8.relaxed_madd"
-    ;; Lane 0 illustrates when difference between fused/unfused. e.g.
+    ;; Lane 0 illustrates the difference between fused/unfused. e.g.
     ;; fused: (positive overflow) + -inf = -inf
     ;; unfused: (inf) + -inf = NaN
     ;;
@@ -204,7 +204,7 @@
     ;;                -inf   inf    0       0      2      4.25   -7     0
     (v128.const i16x8 0xfc00 0x7c00 0       0      0x4000 0x4440 0xc700 0))
 (assert_return (invoke "f16x8.relaxed_nmadd"
-    ;; Lane 0 illustrates when difference between fused/unfused. e.g.
+    ;; Lane 0 illustrates the difference between fused/unfused. e.g.
     ;; fused: -(positive overflow) + inf = inf
     ;; unfused: (-inf) + -inf = NaN
     ;;
