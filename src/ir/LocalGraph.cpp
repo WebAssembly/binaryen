@@ -334,17 +334,17 @@ struct LocalGraph::LocalGraphFlower
     // know we computed it.
     auto& sets = getSetsMap[get];
 
-    if (!hasSet[index]) {
-      // As in flow(), when there is no local.set for an index we can just mark
-      // the only writer as the default value.
-      sets.insert(nullptr);
-      return;
-    }
-
     auto [block, blockIndex] = getLocations[get];
     if (!block) {
       // We did not find location info for this get, which means it is
       // unreachable.
+      return;
+    }
+
+    if (!hasSet[index]) {
+      // As in flow(), when there is no local.set for an index we can just mark
+      // the only writer as the default value.
+      sets.insert(nullptr);
       return;
     }
 
