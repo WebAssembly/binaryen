@@ -442,8 +442,8 @@ public:
 
   // Fused multiply add and subtract.
   // Computes this + (left * right) to infinite precision then round once.
-  Literal fma(const Literal& left, const Literal& right) const;
-  Literal fms(const Literal& left, const Literal& right) const;
+  Literal madd(const Literal& left, const Literal& right) const;
+  Literal nmadd(const Literal& left, const Literal& right) const;
 
   std::array<Literal, 16> getLanesSI8x16() const;
   std::array<Literal, 16> getLanesUI8x16() const;
@@ -694,10 +694,10 @@ public:
   Literal demoteZeroToF32x4() const;
   Literal promoteLowToF64x2() const;
   Literal swizzleI8x16(const Literal& other) const;
-  Literal relaxedFmaF32x4(const Literal& left, const Literal& right) const;
-  Literal relaxedFmsF32x4(const Literal& left, const Literal& right) const;
-  Literal relaxedFmaF64x2(const Literal& left, const Literal& right) const;
-  Literal relaxedFmsF64x2(const Literal& left, const Literal& right) const;
+  Literal relaxedMaddF32x4(const Literal& left, const Literal& right) const;
+  Literal relaxedNmaddF32x4(const Literal& left, const Literal& right) const;
+  Literal relaxedMaddF64x2(const Literal& left, const Literal& right) const;
+  Literal relaxedNmaddF64x2(const Literal& left, const Literal& right) const;
 
   Literal externalize() const;
   Literal internalize() const;

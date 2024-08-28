@@ -582,10 +582,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case LaneselectI16x8:
       case LaneselectI32x4:
       case LaneselectI64x2:
-      case RelaxedFmaVecF32x4:
-      case RelaxedFmsVecF32x4:
-      case RelaxedFmaVecF64x2:
-      case RelaxedFmsVecF64x2:
+      case RelaxedMaddVecF32x4:
+      case RelaxedNmaddVecF32x4:
+      case RelaxedMaddVecF64x2:
+      case RelaxedNmaddVecF64x2:
       case DotI8x16I7x16AddSToVecI32x4:
         ret = 1;
         break;
