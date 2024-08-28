@@ -327,7 +327,6 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
 
   // Flow a specific get. This is done in lazy mode.
   void flowGet(LocalGet* get) {
-
     auto index = get->index;
 
     auto [block, blockIndex] = getLocations[get];
@@ -338,7 +337,11 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
     assert(blockIndex < block->actions.size());
     assert(block->actions[blockIndex] == get);
 
-    // Go backwards in this flow block, from the get
+    // Go backwards in this flow block, from the get. If we see other gets that
+    // have not been computed then we can accumulate them as well, as the
+    // results we compute apply to them too.
+    std::vector<LocalGet*> gets;
+    gets.push_back(get);
     while (blockIndex > 0) {
       blockIndex--;
       auto* curr = block->actions[blockIndex];
@@ -351,20 +354,26 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
             getSetsMap[get] = getSetsMap[otherGet];
             return;
           }
+
+          // This is a get of the same index, but which has not been computed.
+          // It will have the same sets as us.
+          gets.push_back(otherGet);
         }
       } else {
         // This is a set.
         auto* set = curr->cast<LocalSet>();
         if (set->index == index) {
-          // This is the only set writing to this get.
-          getSetsMap[get].insert(set);
+          // This is the only set writing to our gets.
+          for (auto* get : gets) {
+            getSetsMap[get].insert(set);
+          }
           return;
         }
       }
     }
 
     // We must do an inter-block flow.
-    flowBackFromStartOfBlock(block, index, { get });
+    flowBackFromStartOfBlock(block, index, gets);
   }
 };
 
