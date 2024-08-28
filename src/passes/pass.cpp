@@ -612,7 +612,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   addIfNoDWARFIssues("remove-unused-names");
   addIfNoDWARFIssues("optimize-instructions");
   if (wasm->features.hasGC()) {
-    hso? or later?
+//    hso? or later?
   }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("pick-load-signs");

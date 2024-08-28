@@ -20,6 +20,7 @@
 // TODO: Add dead store elimination / load forwarding here.
 //
 
+#include "ir/effects.h"
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
@@ -118,6 +119,36 @@ struct HeapStoreOptimization : public WalkerPass<PostWalker<HeapStoreOptimizatio
     }
   }
 
+  // Helper function for optimizeHeapStores. Tries pushing the struct.new at
+  // index i down to index j, swapping it with the instruction already at j, so
+  // that it is closer to (potential) later struct.sets.
+  bool trySwap(ExpressionList& list, Index i, Index j) {
+    if (j == list.size() - 1) {
+      // There is no reason to swap with the last element of the list as it
+      // won't match the pattern because there wont be anything after. This also
+      // avoids swapping an instruction that does not leave anything in the
+      // stack by one that could leave something, and that which would be
+      // incorrect.
+      return false;
+    }
+
+    if (list[j]->is<LocalSet>() &&
+        list[j]->dynCast<LocalSet>()->value->is<StructNew>()) {
+      // Don't swap two struct.new instructions to avoid going back and forth.
+      return false;
+    }
+    // Check if the two expressions can be swapped safely considering their
+    // effects.
+    auto firstEffects = effects(list[i]);
+    auto secondEffects = effects(list[j]);
+    if (secondEffects.invalidates(firstEffects)) {
+      return false;
+    }
+
+    std::swap(list[i], list[j]);
+    return true;
+  }
+
   // Given a struct.new and a struct.set that occurs right after it, and that
   // applies to the same data, try to apply the set during the new. This can be
   // either with a nested tee:
@@ -199,6 +230,10 @@ struct HeapStoreOptimization : public WalkerPass<PostWalker<HeapStoreOptimizatio
     }
 
     return true;
+  }
+
+  EffectAnalyzer effects(Expression* expr) {
+    return EffectAnalyzer(getPassOptions(), *getModule(), expr);
   }
 };
 
