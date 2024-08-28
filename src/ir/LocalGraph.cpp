@@ -92,7 +92,7 @@ struct LocalGraph::LocalGraphFlower
 
   // Each time we flow a get (or set of gets) to find its sets, we mark a
   // different iteration number. This lets us memoize the current iteration on
-  // blocks as we pass them, allow us to quickly skip them in that iteration
+  // blocks as we pass them, allowing us to quickly skip them in that iteration
   // (another option would be a set of blocks we've visited, but storing the
   // iteration number on blocks is faster since we are already processing that
   // FlowBlock already, meaning it is likely in cache, and avoids a set lookup).
