@@ -240,3 +240,47 @@ struct HeapStoreOptimization : public WalkerPass<PostWalker<HeapStoreOptimizatio
 Pass* createHeapStoreOptimizationPass() { return new HeapStoreOptimization(); }
 
 } // namespace wasm
+
+/*
+;; XXX optimizeSubsequentStructSet should be moved out of OptimizeInstructions
+;; and to a place that does a CFG + ignorebranchesoutsidefunc = true. that's the
+;; ony way to really do this.
+;; Or... we could do a simple pass outside of OptimizeInstructions without a
+;; CFG but with a check for parent Try.
+;; Note CodePushing has some similar logic for seeing if a local is used past a
+;; branch, which is what we care about too.
+(module
+ (type $struct (sub (struct (field (mut i32)))))
+
+ (export "func" (func $func))
+
+ (func $func (result i32)
+  (local $ref (ref null $struct))
+  (block $label
+   (struct.set $struct 0
+    (local.tee $ref
+     (struct.new $struct
+      (i32.const 1)
+     )
+    )
+    (if (result i32)
+     (i32.const 1)
+     (then
+      ;; This conditional break happens after the local.tee of $ref.
+      (br $label)
+     )
+     (else
+      (i32.const 42)
+     )
+    )
+   )
+  )
+  ;; We did not reach the struct.set, but we did reach the local.tee, so this
+  ;; reads the initial value of 1 (and does not trap on a nullref).
+  (struct.get $struct 0
+   (local.get $ref)
+  )
+ )
+)
+*/
+
