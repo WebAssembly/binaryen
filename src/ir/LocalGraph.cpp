@@ -404,6 +404,9 @@ LocalGraph::LocalGraph(Function* func, Module* module, Mode mode)
 
   if (mode == Mode::Eager) {
     flower->flow();
+
+    // We will never use it again.
+    flower.reset();
   } else {
     flower->prepareLaziness();
   }
