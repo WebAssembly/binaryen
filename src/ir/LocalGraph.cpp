@@ -41,20 +41,24 @@ struct Info {
 
 // flow helper class. flows the gets to their sets
 
-struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlower, Visitor<LocalGraph::LocalGraphFlower>, Info> {
+struct LocalGraph::LocalGraphFlower
+  : public CFGWalker<LocalGraph::LocalGraphFlower,
+                     Visitor<LocalGraph::LocalGraphFlower>,
+                     Info> {
   LocalGraph::GetSetsMap& getSetsMap;
   LocalGraph::Locations& locations;
   Function* func;
 
   LocalGraphFlower(LocalGraph::GetSetsMap& getSetsMap,
-         LocalGraph::Locations& locations,
-         Function* func,
-         Module* module)
+                   LocalGraph::Locations& locations,
+                   Function* func,
+                   Module* module)
     : getSetsMap(getSetsMap), locations(locations), func(func) {
     setFunction(func);
     setModule(module);
     // create the CFG by walking the IR
-    CFGWalker<LocalGraphFlower, Visitor<LocalGraphFlower>, Info>::doWalkFunction(func);
+    CFGWalker<LocalGraphFlower, Visitor<LocalGraphFlower>, Info>::
+      doWalkFunction(func);
   }
 
   BasicBlock* makeBasicBlock() { return new BasicBlock(); }
@@ -244,13 +248,16 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
     }
   }
 
-  // Given a flow block and a set of gets all of the same index, begin at the start of the block and
-  // flow backwards to find the sets affecting them. This does not look into
-  // |block| itself (unless we are in a loop, and reach it again), that is, it
-  // is a utility that is called when we are ready to do a cross-block flow.
+  // Given a flow block and a set of gets all of the same index, begin at the
+  // start of the block and flow backwards to find the sets affecting them. This
+  // does not look into |block| itself (unless we are in a loop, and reach it
+  // again), that is, it is a utility that is called when we are ready to do a
+  // cross-block flow.
   //
   // All the sets we find are applied to all the gets we are given.
-  void flowBackFromStartOfBlock(FlowBlock* block, Index index, const std::vector<LocalGet*>& gets) {
+  void flowBackFromStartOfBlock(FlowBlock* block,
+                                Index index,
+                                const std::vector<LocalGet*>& gets) {
     std::vector<FlowBlock*> work; // TODO: UniqueDeferredQueue
     work.push_back(block);
     // Note that we may need to revisit the later parts of this initial
@@ -274,12 +281,11 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
             continue;
           }
           pred->lastTraversedIteration = currentIteration;
-          auto lastSet =
-            std::find_if(pred->lastSets.begin(),
-                         pred->lastSets.end(),
-                         [&](std::pair<Index, LocalSet*>& value) {
-                           return value.first == index;
-                         });
+          auto lastSet = std::find_if(pred->lastSets.begin(),
+                                      pred->lastSets.end(),
+                                      [&](std::pair<Index, LocalSet*>& value) {
+                                        return value.first == index;
+                                      });
           if (lastSet != pred->lastSets.end()) {
             // There is a set here, apply it, and stop the flow.
             for (auto* get : gets) {
@@ -347,8 +353,8 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
       auto* curr = block->actions[blockIndex];
       if (auto* otherGet = curr->dynCast<LocalGet>()) {
         if (otherGet->index == index) {
-          // This is another get of the same index. If we've already computed it, then we can just
-          // use that, as they must have the same sets.
+          // This is another get of the same index. If we've already computed
+          // it, then we can just use that, as they must have the same sets.
           auto iter = getSetsMap.find(otherGet);
           if (iter != getSetsMap.end()) {
             getSetsMap[get] = getSetsMap[otherGet];
@@ -379,8 +385,10 @@ struct LocalGraph::LocalGraphFlower : public CFGWalker<LocalGraph::LocalGraphFlo
 
 // LocalGraph implementation
 
-LocalGraph::LocalGraph(Function* func, Module* module, Mode mode) : mode(mode), func(func) {
-  flower = std::make_shared<LocalGraphFlower>(getSetsMap, locations, func, module);
+LocalGraph::LocalGraph(Function* func, Module* module, Mode mode)
+  : mode(mode), func(func) {
+  flower =
+    std::make_shared<LocalGraphFlower>(getSetsMap, locations, func, module);
 
   if (mode == Mode::Eager) {
     flower->flow();
@@ -487,8 +495,6 @@ void LocalGraph::computeSSAIndexes() {
 
 bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
 
-void LocalGraph::computeGetSets(LocalGet* get) {
-  flower->flowGet(get);
-}
+void LocalGraph::computeGetSets(LocalGet* get) { flower->flowGet(get); }
 
 } // namespace wasm

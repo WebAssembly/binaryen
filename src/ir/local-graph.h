@@ -43,17 +43,12 @@ struct LocalGraph {
   // mode we compute all possible results of getSets() in advance, which is a
   // little more efficient if they are all needed. In lazy mode they are
   // computed on demand, which is better if only a few will be queried.
-  enum Mode {
-    Eager,
-    Lazy
-  };
+  enum Mode { Eager, Lazy };
 
   // If a module is passed in, it is used to find which features are needed in
   // the computation (for example, if exception handling is disabled, then we
   // can generate a simpler CFG, as calls cannot throw).
-  LocalGraph(Function* func,
-             Module* module = nullptr,
-             Mode mode = Mode::Eager);
+  LocalGraph(Function* func, Module* module = nullptr, Mode mode = Mode::Eager);
 
   // Get the sets relevant for a local.get.
   //
