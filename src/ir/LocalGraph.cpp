@@ -399,14 +399,16 @@ struct LocalGraph::LocalGraphFlower
 
 LocalGraph::LocalGraph(Function* func, Module* module, Mode mode)
   : mode(mode), func(func) {
-  flower =
-    std::make_shared<LocalGraphFlower>(getSetsMap, locations, func, module);
+  // See comment on the declaration of this field for why we use a raw
+  // allocation.
+  flower = new LocalGraphFlower(getSetsMap, locations, func, module);
 
   if (mode == Mode::Eager) {
     flower->flow();
 
     // We will never use it again.
-    flower.reset();
+    delete flower;
+    flower = nullptr;
   } else {
     flower->prepareLaziness();
   }
@@ -421,6 +423,12 @@ LocalGraph::LocalGraph(Function* func, Module* module, Mode mode)
   }
   std::cout << "total locations: " << locations.size() << '\n';
 #endif
+}
+
+LocalGraph::~LocalGraph() {
+  if (flower) {
+    delete flower;
+  }
 }
 
 bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {

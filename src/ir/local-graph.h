@@ -49,6 +49,7 @@ struct LocalGraph {
   // the computation (for example, if exception handling is disabled, then we
   // can generate a simpler CFG, as calls cannot throw).
   LocalGraph(Function* func, Module* module = nullptr, Mode mode = Mode::Eager);
+  ~LocalGraph();
 
   // Get the sets relevant for a local.get.
   //
@@ -147,8 +148,9 @@ private:
   // getSetsMap.
   struct LocalGraphFlower;
   // This could be a unique_ptr, but the forward declaration is not compatible
-  // with that. As this is a singleton allocation, it doesn't really matter.
-  std::shared_ptr<LocalGraphFlower> flower;
+  // with that. It could alternatively be a shared_ptr, but that runs into what
+  // seems to be a false positive of clang's (but not gcc's) UBSan.
+  LocalGraphFlower* flower = nullptr;
 
   // Compute the sets for a get and store them on getSetsMap.
   void computeGetSets(LocalGet* get) const;
