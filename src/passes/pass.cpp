@@ -210,6 +210,8 @@ void PassRegistry::registerPasses() {
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
   registerPass(
+    "hso", "optimize heap (GC) stores", createHeapStoreOptimizationPass);
+  registerPass(
     "inline-main", "inline __original_main into main", createInlineMainPass);
   registerPass("inlining",
                "inline functions (you probably want inlining-optimizing)",
@@ -609,6 +611,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   addIfNoDWARFIssues("remove-unused-brs");
   addIfNoDWARFIssues("remove-unused-names");
   addIfNoDWARFIssues("optimize-instructions");
+  if (wasm->features.hasGC()) {
+    hso? or later?
+  }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("pick-load-signs");
   }
