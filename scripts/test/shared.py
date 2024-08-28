@@ -257,6 +257,7 @@ V8_OPTS = [
     '--experimental-wasm-compilation-hints',
     '--experimental-wasm-memory64',
     '--experimental-wasm-stringref',
+    '--experimental-wasm-fp16',
 ]
 
 # external tools
