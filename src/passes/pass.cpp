@@ -611,6 +611,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   addIfNoDWARFIssues("remove-unused-brs");
   addIfNoDWARFIssues("remove-unused-names");
   addIfNoDWARFIssues("optimize-instructions");
+  if (wasm->features.hasGC()) {
+    addIfNoDWARFIssues("hso");
+  }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("pick-load-signs");
   }
@@ -644,10 +647,7 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   // simplify-locals opens opportunities for optimizations
   addIfNoDWARFIssues("remove-unused-brs");
   if (options.optimizeLevel > 1 && wasm->features.hasGC()) {
-    // Remove heap allocations that we can replace with locals.
     addIfNoDWARFIssues("heap2local");
-    // After the above, optimize the remaining heap stores.
-    addIfNoDWARFIssues("hso");
   }
   // if we are willing to work hard, also optimize copies before coalescing
   if (options.optimizeLevel >= 3 || options.shrinkLevel >= 2) {
@@ -686,6 +686,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     addIfNoDWARFIssues("precompute");
   }
   addIfNoDWARFIssues("optimize-instructions");
+  if (wasm->features.hasGC()) {
+    addIfNoDWARFIssues("hso");
+  }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues(
       "rse"); // after all coalesce-locals, and before a final vacuum
