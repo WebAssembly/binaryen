@@ -330,17 +330,21 @@ struct LocalGraph::LocalGraphFlower
   void flowGet(LocalGet* get) {
     auto index = get->index;
 
+    // Regardless of what we do below, ensure an entry for this get, so that we
+    // know we computed it.
+    auto& sets = getSetsMap[get];
+
     if (!hasSet[index]) {
       // As in flow(), when there is no local.set for an index we can just mark
       // the only writer as the default value.
-      getSetsMap[get].insert(nullptr);
+      sets.insert(nullptr);
       return;
     }
 
     auto [block, blockIndex] = getLocations[get];
     if (!block) {
       // We did not find location info for this get, which means it is
-      // unreachable. There is nothing to do in that case.
+      // unreachable.
       return;
     }
 
@@ -362,7 +366,10 @@ struct LocalGraph::LocalGraphFlower
           // it, then we can just use that, as they must have the same sets.
           auto iter = getSetsMap.find(otherGet);
           if (iter != getSetsMap.end()) {
-            getSetsMap[get] = getSetsMap[otherGet];
+            auto& otherSets = iter->second;
+            for (auto* get : gets) {
+              getSetsMap[get] = otherSets;
+            }
             return;
           }
 
