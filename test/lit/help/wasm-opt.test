@@ -202,6 +202,8 @@
 ;; CHECK-NEXT:   --heap2local                                  replace GC allocations with
 ;; CHECK-NEXT:                                                 locals
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --hso                                         optimize heap (GC) stores
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --i64-to-i32-lowering                         lower all uses of i64s to use
 ;; CHECK-NEXT:                                                 i32s instead
 ;; CHECK-NEXT:
