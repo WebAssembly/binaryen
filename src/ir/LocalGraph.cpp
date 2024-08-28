@@ -341,16 +341,16 @@ struct LocalGraph::LocalGraphFlower
       return;
     }
 
+    // We must have the get at that location.
+    assert(blockIndex < block->actions.size());
+    assert(block->actions[blockIndex] == get);
+
     if (!hasSet[index]) {
       // As in flow(), when there is no local.set for an index we can just mark
       // the only writer as the default value.
       sets.insert(nullptr);
       return;
     }
-
-    // We must have the get at that location.
-    assert(blockIndex < block->actions.size());
-    assert(block->actions[blockIndex] == get);
 
     // Go backwards in this flow block, from the get. If we see other gets that
     // have not been computed then we can accumulate them as well, as the
