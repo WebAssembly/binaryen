@@ -822,4 +822,37 @@
   (func $helper-i32 (param $x i32) (result i32)
     (i32.const 42)
   )
+
+  (func $control-flow-in-set-value (result i32)
+    ;; Test we handle control flow in the struct.set's value when we combine a
+    ;; struct.set with a struct.new.
+    (local $ref (ref null $struct))
+    (block $label
+      (struct.set $struct 0
+        (local.tee $ref
+          (struct.new $struct
+            (i32.const 1)
+          )
+        )
+        (if (result i32)
+          (i32.const 1)
+          (then
+            ;; This conditional break happens *after* the local.tee of $ref. We
+            ;; must not move code around that reorders it, since there is a us
+            ;; of the local below that could notice changes.
+            (br $label)
+          )
+          (else
+            (i32.const 42)
+          )
+        )
+      )
+    )
+    ;; We did not reach the struct.set, but we did reach the local.tee, so this
+    ;; reads the initial value of 1 (and does not trap on a nullref).
+    (struct.get $struct 0
+      (local.get $ref)
+    )
+  )
 )
+
