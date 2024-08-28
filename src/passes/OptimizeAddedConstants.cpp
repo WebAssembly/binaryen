@@ -79,7 +79,7 @@ public:
       //
       // This is only valid if y does not change in the middle!
       if (auto* get = curr->ptr->template dynCast<LocalGet>()) {
-        auto& sets = localGraph->getSetses[get];
+        auto& sets = localGraph->getSets(get);
         if (sets.size() == 1) {
           auto* set = *sets.begin();
           // May be a zero-init (in which case, we can ignore it). Must also be

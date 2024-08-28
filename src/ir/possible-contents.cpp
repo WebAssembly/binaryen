@@ -1245,7 +1245,12 @@ struct InfoCollector
     // the type must be the same for all gets of that local.)
     LocalGraph localGraph(func, getModule());
 
-    for (auto& [get, setsForGet] : localGraph.getSetses) {
+    for (auto& [curr, _] : localGraph.locations) {
+      auto* get = curr->dynCast<LocalGet>();
+      if (!get) {
+        continue;
+      }
+
       auto index = get->index;
       auto type = func->getLocalType(index);
       if (!isRelevant(type)) {
@@ -1253,7 +1258,7 @@ struct InfoCollector
       }
 
       // Each get reads from its relevant sets.
-      for (auto* set : setsForGet) {
+      for (auto* set : localGraph.getSets(get)) {
         for (Index i = 0; i < type.size(); i++) {
           Location source;
           if (set) {
