@@ -90,15 +90,18 @@ struct LocalGraph::LocalGraphFlower
     self->locations[curr] = currp;
   }
 
+  // Each time we flow a get (or set of gets) to find its sets, we mark a
+  // different iteration number. This lets us memoize the current iteration on
+  // blocks as we pass them, allow us to quickly skip them in that iteration
+  // (another option would be a set of blocks we've visited, but storing the
+  // iteration number on blocks is faster since we are already processing that
+  // FlowBlock already, meaning it is likely in cache, and avoids a set lookup).
+  size_t currentIteration = 0;
+
   // This block struct is optimized for this flow process (Minimal
   // information, iteration index).
   struct FlowBlock {
-    // Last Traversed Iteration: This value helps us to find if this block has
-    // been seen while traversing blocks. We compare this value to the current
-    // iteration index in order to determine if we already process this block
-    // in the current iteration. This speeds up the processing compared to
-    // unordered_set or other struct usage. (No need to reset internal values,
-    // lookup into container, ...)
+    // See currentIteration, above.
     size_t lastTraversedIteration;
 
     static const size_t NULL_ITERATION = -1;
@@ -130,14 +133,6 @@ struct LocalGraph::LocalGraphFlower
   // We note which local indexes have local.sets, as that can help us
   // optimize later (if there are none at all, we do not need to flow).
   std::vector<bool> hasSet;
-
-  // Each time we flow a get (or set of gets) to find its sets, we mark a
-  // different iteration number. This lets us memoize the current iteration on
-  // blocks as we pass them, allow us to quickly skip them in that iteration
-  // (another option would be a set of blocks we've visited, but storing the
-  // iteration number on blocks is faster since we are already processing that
-  // FlowBlock already, meaning it is likely in cache, and avoids a set lookup).
-  size_t currentIteration = 0;
 
   // Fill in flowBlocks and basicToFlowMap.
   void prepareFlowBlocks() {
@@ -334,6 +329,13 @@ struct LocalGraph::LocalGraphFlower
   // Flow a specific get. This is done in lazy mode.
   void flowGet(LocalGet* get) {
     auto index = get->index;
+
+    if (!hasSet[index]) {
+      // As in flow(), when there is no local.set for an index we can just mark
+      // the only writer as the default value.
+      getSetsMap[get].insert(nullptr);
+      return;
+    }
 
     auto [block, blockIndex] = getLocations[get];
     if (!block) {

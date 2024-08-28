@@ -65,17 +65,22 @@ struct LocalGraph {
   // version of this method has no such issue, of course.
   using Sets = SmallSet<LocalSet*, 2>;
   const Sets& getSets(LocalGet* get) {
-    if (mode == Mode::Lazy) {
-      computeGetSets(get);
-    }
-
-    // When we return an empty result, use a canonical constant empty set to
-    // avoid allocation.
-    // TODO: do we need this? just for unreachable..? even then?
-    static const Sets empty;
     auto iter = getSetsMap.find(get);
     if (iter == getSetsMap.end()) {
-      return empty;
+      if (mode == Mode::Lazy) {
+        // In lazy mode, a missing entry means we did not do the computation
+        // yet. Do it now.
+        computeGetSets(get);
+        iter = getSetsMap.find(get);
+        assert(iter != getSetsMap.end());
+      } else {
+        // In eager mode, a missing entry means there is nothing there (and we
+        // saved a little space by not putting something there).
+        //
+        // Use a canonical constant empty set to avoid allocation.
+        static const Sets empty;
+        return empty;
+      }
     }
     return iter->second;
   }
