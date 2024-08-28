@@ -336,8 +336,11 @@ struct LocalGraph::LocalGraphFlower
     auto index = get->index;
 
     auto [block, blockIndex] = getLocations[get];
-    // We must have found the location of this get.
-    assert(block);
+    if (!block) {
+      // We did not find location info for this get, which means it is
+      // unreachable. There is nothing to do in that case.
+      return;
+    }
 
     // We must have the get at that location.
     assert(blockIndex < block->actions.size());
