@@ -510,6 +510,10 @@ void LocalGraph::computeSSAIndexes() {
 
 bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
 
-void LocalGraph::computeGetSets(LocalGet* get) { flower->flowGet(get); }
+void LocalGraph::computeGetSets(LocalGet* get) const {
+  assert(mode == Mode::Lazy);
+
+  flower->flowGet(get);
+}
 
 } // namespace wasm

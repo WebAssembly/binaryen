@@ -57,14 +57,8 @@ struct LocalGraph {
   // for a param.
   //
   // Often there is a single set, or a phi or two items, so we use a small set.
-  //
-  // If this LocalGraph is in lazy mode then this may perform the computation
-  // of sets at this time. As a result, the returned Sets from this function
-  // should be considered invalidated by other calls to getSets (the same as if
-  // you read from a std::unordered_map and then modified that map). The const
-  // version of this method has no such issue, of course.
   using Sets = SmallSet<LocalSet*, 2>;
-  const Sets& getSets(LocalGet* get) {
+  const Sets& getSets(LocalGet* get) const {
     auto iter = getSetsMap.find(get);
     if (iter == getSetsMap.end()) {
       if (mode == Mode::Lazy) {
@@ -83,13 +77,6 @@ struct LocalGraph {
       }
     }
     return iter->second;
-  }
-
-  const Sets& getSets(LocalGet* get) const {
-    // In eager mode, the non-const version makes no changes, so we can call it
-    // from this const one.
-    assert(mode == Mode::Eager);
-    return const_cast<LocalGraph*>(this)->getSets(get);
   }
 
   // Where each get and set is. We compute this while doing the main computation
@@ -151,8 +138,10 @@ private:
   Function* func;
   std::set<Index> SSAIndexes;
 
-  // A map of each get to the sets relevant to it.
-  GetSetsMap getSetsMap;
+  // A map of each get to the sets relevant to it. This is mutable so that
+  // getSets() can be const: in eager mode no changes to this are ever made in
+  // getSets(), while in lazy mode any changes are just memoization.
+  mutable GetSetsMap getSetsMap;
 
   // The internal implementation of the flow analysis used to compute
   // getSetsMap.
@@ -162,7 +151,7 @@ private:
   std::shared_ptr<LocalGraphFlower> flower;
 
   // Compute the sets for a get and store them on getSetsMap.
-  void computeGetSets(LocalGet* get);
+  void computeGetSets(LocalGet* get) const;
 };
 
 } // namespace wasm
