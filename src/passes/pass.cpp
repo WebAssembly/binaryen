@@ -204,6 +204,9 @@ void PassRegistry::registerPasses() {
                createGUFAOptimizingPass);
   registerPass(
     "optimize-j2cl", "optimizes J2CL specific constructs.", createJ2CLOptsPass);
+  registerPass("merge-j2cl-itables",
+               "Merges itable structures into vtables to use less memory.",
+               createJ2CLItableMergingPass);
   registerPass("type-refining",
                "apply more specific subtypes to type fields where possible",
                createTypeRefiningPass);
