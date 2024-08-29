@@ -67,7 +67,7 @@ struct HeapStoreOptimization
         if (auto* set = curr->dynCast<StructSet>()) {
           optimizeStructSet(set, currp);
         } else if (auto* block = curr->dynCast<Block>()) {
-          optimizeBlock(block, currp);
+          optimizeBlock(block);
         } else {
           WASM_UNREACHABLE("bad action");
         }
@@ -75,6 +75,8 @@ struct HeapStoreOptimization
     }
   }
 
+  // Optimize a struct.set. Receives also a pointer to where it is referred to,
+  // so we can replace it (which we do if we optimize).
   void optimizeStructSet(StructSet* curr, Expression** currp) {
     // If our reference is a tee of a struct.new, we may be able to fold the
     // stored value into the new itself:
@@ -89,7 +91,7 @@ struct HeapStoreOptimization
           // Success, so we do not need the struct.set any more, and the tee
           // can just be a set instead of us.
           tee->makeSet();
-          replaceCurrent(tee); XXX
+          *currp = tee;
         }
       }
     }
@@ -106,13 +108,8 @@ struct HeapStoreOptimization
   // We also handle other struct.sets immediately after this one. If the
   // instruction following the new is not a struct.set we push the new down if
   // possible.
-  void optimizeBlock(Block* curr, Expression** currp) {
-    if (getModule()->features.hasGC()) {
-      optimizeHeapStores(curr->list);
-    }
-  }
-XXX
-  void optimizeHeapStores(ExpressionList& list) {
+  void optimizeBlock(Block* curr) {
+    auto& list = curr->list;
     for (Index i = 0; i < list.size(); i++) {
       auto* localSet = list[i]->dynCast<LocalSet>();
       if (!localSet) {
