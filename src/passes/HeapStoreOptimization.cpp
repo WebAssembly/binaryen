@@ -23,6 +23,7 @@
 #include "cfg/cfg-traversal.h"
 #include "ir/effects.h"
 #include "pass.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -52,22 +53,38 @@ struct HeapStoreOptimization
   // store elimination.)
   bool ignoreBranchesOutsideOfFunc = true;
 
+  // Track the parent block of expressions we care about.
+  std::unordered_map<Expression*, BasicBlock*> expressionBlocks;
+
   // Store the actions we can optimize for later processing.
-  void addAction() {
+  bool addAction() {
     if (currBasicBlock) {
       currBasicBlock->contents.actions.push_back(getCurrentPointer());
+      expressionBlocks[getCurrent()] = currBasicBlock;
+      return true;
     }
+    return false;
   }
   void visitStructSet(StructSet* curr) {
-    addAction();
+    if (addAction()) {
+      // Also note the basic block of the reference. We will care about where
+      // control goes right after it (from the value).
+      expressionBlocks[curr->ref] = currBasicBlock;
+    }
   }
   void visitBlock(Block* curr) {
     addAction();
   }
 
+  // As we optimize we mark blocks we've reached. This is done in post-order,
+  // and allows us to check for forward branches in a useful manner, see
+  // optimizeSubsequentStructSet().
+  std::unordered_set<BasicBlock*> seenBlocks;
+
   void visitFunction(Function* curr) {
     // Now that the walk is complete and we have a CFG, find things to optimize.
     for (auto& block : basicBlocks) {
+      seenBlocks.insert(block.get());
       for (auto** currp : block->contents.actions) {
         auto* curr = *currp;
         if (auto* set = curr->dynCast<StructSet>()) {
@@ -252,7 +269,7 @@ struct HeapStoreOptimization
     //
     //  (block $out
     //    (local.set $x (struct.new X Y Z))
-    //    (struct.set (local.get $x) (..br $out..))
+    //    (struct.set (local.get $x) (..br $out..))  ;; X' here has a br
     //  )
     //  ..use $x..
     //
@@ -265,6 +282,49 @@ struct HeapStoreOptimization
     //
     // Now the br happens first, skipping the local.set entirely, and the use
     // later down will not get the proper value.
+    //
+    // To check for this problem, see which basic blocks can be reached from the
+    // value. The structured IR limits what is possible here, since we know that
+    // the struct.set follows the local.set: the only problem is one like we
+    // showed in the example, where we branch to something after the
+    // struct.set's basic block, in post-order. As we are processing the blocks
+    // in that same order, we just need to see that we cannot reach any block we
+    // have yet to see.
+    //
+    // Note that there may be more basic blocks after the struct.set, but they
+    // cannot be reached due to the structured control flow:
+    //
+    //  (block $out
+    //    (local.set ..
+    //    (struct.set ..
+    //    (if
+    //      ..more control flow..
+    //    )
+    //  )
+    //
+    // At this point in the traversal we have reached the block, so we've seen
+    // the if's basic blocks. But nothing in the struct.set's value can branch
+    // to them: there is no way to jump into the middle of a block.
+    UniqueNonrepeatingDeferredQueue<BasicBlock*> reached;
+    // We start the flow from right before the value, which means the end of the
+    // reference.
+    auto* blockBeforeValue = expressionBlocks[set->ref];
+    // We must know that block.
+    assert(blockBeforeValue);
+    // It must have already been reached, since we've processed the struct.set.
+    assert(seenBlocks.count(blockBeforeValue));
+    reached.push(blockBeforeValue);
+    while (!reached.empty()) {
+      // Flow to the successors.
+      auto* block = reached.pop();
+      for (auto* out : block->out) {
+        if (!seenBlocks.count(out)) {
+          // This is a dangerous jump forward, as described above. Give up.
+          return false;
+        }
+        reached.push(out);
+      }
+    }
 
     // We can optimize here!
     Builder builder(*getModule());

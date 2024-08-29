@@ -826,16 +826,19 @@
   ;; CHECK:      (func $control-flow-in-set-value (type $5) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (block $label
-  ;; CHECK-NEXT:   (local.set $ref
-  ;; CHECK-NEXT:    (struct.new $struct
-  ;; CHECK-NEXT:     (if (result i32)
+  ;; CHECK-NEXT:   (struct.set $struct 0
+  ;; CHECK-NEXT:    (local.tee $ref
+  ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:      (then
-  ;; CHECK-NEXT:       (br $label)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (else
-  ;; CHECK-NEXT:       (i32.const 42)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $label)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (i32.const 42)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
