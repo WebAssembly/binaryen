@@ -37,7 +37,7 @@ struct Info {
 };
 
 struct HeapStoreOptimization
-  : public WalkerPass<CFGWalker<HeapStoreOptimization>> {
+  : public WalkerPass<CFGWalker<HeapStoreOptimization, Visitor<HeapStoreOptimization>, Info>> {
   bool isFunctionParallel() override { return true; }
 
   // Locals are not modified here.
@@ -48,15 +48,16 @@ struct HeapStoreOptimization
   }
 
   // Store struct.sets and blocks, as we can find patterns among those.
-  void visitStructSet(StructSet* curr) {
+  void addAction() {
     if (currBasicBlock) {
-      currBasicBlock->contents.actions.push_back(curr);
+      currBasicBlock->contents.actions.push_back(getCurrentPointer());
     }
   }
+  void visitStructSet(StructSet* curr) {
+    addAction();
+  }
   void visitBlock(Block* curr) {
-    if (currBasicBlock) {
-      currBasicBlock->contents.actions.push_back(curr);
-    }
+    addAction();
   }
 
   void visitFunction(Function* curr) {
