@@ -7,12 +7,18 @@
 
 (module
   ;; CHECK:      (type $struct (struct (field (mut i32))))
-  (type $struct (struct (field (mut i32))))
 
   ;; CHECK:      (type $struct2 (struct (field (mut i32)) (field (mut i32))))
-  (type $struct2 (struct (field (mut i32)) (field (mut i32))))
 
   ;; CHECK:      (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
+
+  ;; CHECK:      (tag $tag)
+  (tag $tag)
+
+  (type $struct (struct (field (mut i32))))
+
+  (type $struct2 (struct (field (mut i32)) (field (mut i32))))
+
   (type $struct3 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
 
   ;; CHECK:      (func $tee (type $1)
@@ -954,6 +960,47 @@
           )
         )
         (call $helper-i32 (i32.const 42))  ;; the if was replaced by this call
+      )
+    )
+    (struct.get $struct 0
+      (local.get $ref)
+    )
+  )
+
+  ;; CHECK:      (func $control-flow-in-set-value-unsafe-call (type $4) (result i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (block $label
+  ;; CHECK-NEXT:   (try_table (catch $tag $label)
+  ;; CHECK-NEXT:    (struct.set $struct 0
+  ;; CHECK-NEXT:     (local.tee $ref
+  ;; CHECK-NEXT:      (struct.new $struct
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $helper-i32
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.get $struct 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $control-flow-in-set-value-unsafe-call (result i32)
+    ;; As above, but now the call's possible throw could be caught *inside* the
+    ;; function, which means it is dangerous, and we do not optimize.
+    (local $ref (ref null $struct))
+    (block $label
+      (try_table (catch $tag $label)  ;; this try was added
+        (struct.set $struct 0
+          (local.tee $ref
+            (struct.new $struct
+              (i32.const 1)
+            )
+          )
+          (call $helper-i32 (i32.const 42))
+        )
       )
     )
     (struct.get $struct 0
