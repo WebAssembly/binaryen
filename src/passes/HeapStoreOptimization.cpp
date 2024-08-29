@@ -47,7 +47,7 @@ struct HeapStoreOptimization
     return std::make_unique<HeapStoreOptimization>();
   }
 
-  // Store the actions we can optimize for later processing.
+  // Store struct.sets and blocks, as we can find patterns among those.
   void addAction() {
     if (currBasicBlock) {
       currBasicBlock->contents.actions.push_back(getCurrentPointer());
@@ -242,24 +242,6 @@ struct HeapStoreOptimization
         }
       }
     }
-
-    // We must also be careful of branches out from the value. For example:
-    //
-    //  (block $out
-    //    (local.set $x (struct.new X Y Z))
-    //    (struct.set (local.get $x) (..br $out..))
-    //  )
-    //  ..use $x..
-    //
-    // Note how we do the local.set first. Imagine we optimized to this:
-    //
-    //  (block $out
-    //    (local.set $x (struct.new (..br $out..) Y Z))
-    //  )
-    //  ..use $x..
-    //
-    // Now the br happens first, skipping the local.set entirely, and the use
-    // later down will not get the proper value.
 
     // We can optimize here!
     Builder builder(*getModule());
