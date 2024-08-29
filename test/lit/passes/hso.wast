@@ -1007,4 +1007,51 @@
       (local.get $ref)
     )
   )
+
+  ;; CHECK:      (func $control-flow-later (type $6) (param $x i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (struct.set $struct 0
+  ;; CHECK-NEXT:   (local.tee $ref
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (block $out
+  ;; CHECK-NEXT:   (br_if $out
+  ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (if
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (then
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $control-flow-later (param $x i32)
+    (local $ref (ref null $struct))
+    (struct.set $struct 0
+      (local.tee $ref
+        (struct.new $struct
+          (i32.const 1)
+        )
+      )
+      (i32.const 42)
+    )
+    ;; This later control flow should not prevent optimizing the struct.set
+    ;; before it.
+    (block $out
+      (br_if $out
+        (local.get $x)
+      )
+    )
+    (if
+      (local.get $x)
+      (then
+        (nop)
+      )
+    )
+  )
 )
