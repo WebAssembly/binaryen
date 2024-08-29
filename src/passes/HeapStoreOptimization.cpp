@@ -355,6 +355,8 @@ struct HeapStoreOptimization
       for (auto* out : block->out) {
         if (!seenBlocks.count(out)) {
           // This is a dangerous jump forward, as described above. Give up.
+          // TODO: We could be more precise and look for actual local.gets of
+          //       our value. If no such gets exist, this is still safe.
           return false;
         }
         reached.push(out);
