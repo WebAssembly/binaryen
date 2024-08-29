@@ -153,6 +153,7 @@ struct HeapStoreOptimization
   // possible.
   void optimizeBlock(Block* curr) {
     auto& list = curr->list;
+
     for (Index i = 0; i < list.size(); i++) {
       auto* localSet = list[i]->dynCast<LocalSet>();
       if (!localSet) {
