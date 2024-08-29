@@ -816,14 +816,14 @@
     )
   )
 
-  ;; CHECK:      (func $helper-i32 (type $4) (param $x i32) (result i32)
+  ;; CHECK:      (func $helper-i32 (type $5) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )
   (func $helper-i32 (param $x i32) (result i32)
     (i32.const 42)
   )
 
-  ;; CHECK:      (func $control-flow-in-set-value (type $5) (result i32)
+  ;; CHECK:      (func $control-flow-in-set-value (type $4) (result i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (block $label
   ;; CHECK-NEXT:   (struct.set $struct 0
@@ -850,7 +850,6 @@
   (func $control-flow-in-set-value (result i32)
     ;; Test we handle control flow in the struct.set's value when we combine a
     ;; struct.set with a struct.new.
-    ;; XXX The output above is wrong atm, and the pass needs fixing!
     (local $ref (ref null $struct))
     (block $label
       (struct.set $struct 0
@@ -863,7 +862,7 @@
           (i32.const 1)
           (then
             ;; This conditional break happens *after* the local.tee of $ref. We
-            ;; must not move code around that reorders it, since there is a us
+            ;; must not move code around that reorders it, since there is a use
             ;; of the local below that could notice changes.
             (br $label)
           )
@@ -879,5 +878,52 @@
       (local.get $ref)
     )
   )
-)
 
+  ;; CHECK:      (func $control-flow-in-set-value-safe (type $4) (result i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $ref
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (if (result i32)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (i32.const 1337)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (else
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.get $struct 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $control-flow-in-set-value-safe (result i32)
+    ;; As above, but now the control flow in the value is safe: it does not
+    ;; escape out. We should optimize here.
+    (local $ref (ref null $struct))
+    (block $label
+      (struct.set $struct 0
+        (local.tee $ref
+          (struct.new $struct
+            (i32.const 1)
+          )
+        )
+        (if (result i32)
+          (i32.const 1)
+          (then
+            (i32.const 1337)  ;; the break to $out was replaced
+          )
+          (else
+            (i32.const 42)
+          )
+        )
+      )
+    )
+    (struct.get $struct 0
+      (local.get $ref)
+    )
+  )
+)
