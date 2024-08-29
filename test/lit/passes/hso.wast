@@ -1010,17 +1010,14 @@
 
   ;; CHECK:      (func $control-flow-later (type $6) (param $x i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
-  ;; CHECK-NEXT:  (struct.set $struct 0
-  ;; CHECK-NEXT:   (local.tee $ref
-  ;; CHECK-NEXT:    (struct.new $struct
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (i32.const 42)
-  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (br_if $out
   ;; CHECK-NEXT:    (local.get $x)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (if

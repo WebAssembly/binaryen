@@ -341,12 +341,12 @@ struct HeapStoreOptimization
     while (!reached.empty()) {
       // Flow to the successors.
       auto* block = reached.pop();
+      if (block == structSetBlock) {
+        // This is the normal place control flow should get to, the struct.set
+        // that is the parent of the value.
+        continue;
+      }
       for (auto* out : block->out) {
-        if (out == structSetBlock) {
-          // This is the normal place control flow should get to, the struct.set
-          // that is the parent of the value.
-          continue;
-        }
         if (!seenBlocks.count(out)) {
           // This is a dangerous jump forward, as described above. Give up.
           return false;
