@@ -319,7 +319,7 @@ struct J2CLItableMerging : public Pass {
     };
 
     Rerouter rerouter(*this);
-    rerouter.run(getPassRunner(), &wasm);
+    rerouter.run(getPassRunner(),  &wasm);
     rerouter.runOnModuleCode(getPassRunner(), &wasm);
   }
 
