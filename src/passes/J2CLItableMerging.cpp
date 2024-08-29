@@ -60,9 +60,10 @@ struct StructInfo {
   HeapType itable;
   HeapType vtable;
 
-  StructInfo(const HeapType& javaClass, const HeapType& vtable,
+  StructInfo(const HeapType& javaClass,
+             const HeapType& vtable,
              const HeapType& itable)
-      : javaClass(javaClass), itable(itable), vtable(vtable) {}
+    : javaClass(javaClass), itable(itable), vtable(vtable) {}
 
   void print(std::unordered_map<HeapType, TypeNames> typeNames) {
     std::cout << "javaClass: " << typeNames[javaClass].name << " ("
@@ -142,7 +143,7 @@ struct J2CLItableMerging : public Pass {
       }
 
       structInfos.push_back(
-          StructInfo(tn.first, vtabletype->first, itabletype->first));
+        StructInfo(tn.first, vtabletype->first, itabletype->first));
       structInfoByVtableType[vtabletype->first] = &structInfos.back();
       structInfoByITableType[itabletype->first] = &structInfos.back();
     }
@@ -189,7 +190,7 @@ struct J2CLItableMerging : public Pass {
         }
 
         auto it =
-            parent.structInfoByVtableType.find(curr->ref->type.getHeapType());
+          parent.structInfoByVtableType.find(curr->ref->type.getHeapType());
         if (it == parent.structInfoByVtableType.end()) {
           return;
         }
@@ -236,7 +237,7 @@ struct J2CLItableMerging : public Pass {
         }
         auto& itableFieldInitializers = itableStructNew->operands;
         auto itableSize =
-            itableStructNew->type.getHeapType().getStruct().fields.size();
+          itableStructNew->type.getHeapType().getStruct().fields.size();
 
         if (itableSize == 0) {
           // Itables are empty. Nothing to do.
@@ -261,16 +262,16 @@ struct J2CLItableMerging : public Pass {
             // The itable was initialized with a struct.new, copy the
             // initialization values.
             curr->operands[i] = ExpressionManipulator::copy(
-                itableFieldInitializers[i], *getModule());
+              itableFieldInitializers[i], *getModule());
           } else {
             // The itable was initialized with struct.new_default. So use
             // null values to initialize the itable fields.
             Builder builder(*getModule());
             curr->operands[i] =
-                builder.makeRefNull(itableStructNew->type.getHeapType()
-                                        .getStruct()
-                                        .fields[i]
-                                        .type.getHeapType());
+              builder.makeRefNull(itableStructNew->type.getHeapType()
+                                    .getStruct()
+                                    .fields[i]
+                                    .type.getHeapType());
           }
         }
       }
@@ -302,16 +303,17 @@ struct J2CLItableMerging : public Pass {
 
         if (curr->type.isStruct() &&
             parent.structInfoByITableType.find(curr->type.getHeapType()) !=
-                parent.structInfoByITableType.end()) {
+              parent.structInfoByITableType.end()) {
           // This is struct.get that returns an itable type;
           // Change to return the corresponding vtable type.
           Builder builder(*getModule());
           replaceCurrent(builder.makeStructGet(
-              0, curr->ref,
-              parent.structInfoByITableType[curr->type.getHeapType()]
-                  ->javaClass.getStruct()
-                  .fields[0]
-                  .type));
+            0,
+            curr->ref,
+            parent.structInfoByITableType[curr->type.getHeapType()]
+              ->javaClass.getStruct()
+              .fields[0]
+              .type));
 
           return;
         }
@@ -319,7 +321,7 @@ struct J2CLItableMerging : public Pass {
     };
 
     Rerouter rerouter(*this);
-    rerouter.run(getPassRunner(),  &wasm);
+    rerouter.run(getPassRunner(), &wasm);
     rerouter.runOnModuleCode(getPassRunner(), &wasm);
   }
 
@@ -329,9 +331,9 @@ struct J2CLItableMerging : public Pass {
     class TypeRewriter : public GlobalTypeRewriter {
       J2CLItableMerging& parent;
 
-     public:
+    public:
       TypeRewriter(Module& wasm, J2CLItableMerging& parent)
-          : GlobalTypeRewriter(wasm), parent(parent) {}
+        : GlobalTypeRewriter(wasm), parent(parent) {}
 
       void modifyStruct(HeapType oldStructType, Struct& struct_) override {
         if (parent.structInfoByVtableType.find(oldStructType) !=
@@ -362,8 +364,9 @@ struct J2CLItableMerging : public Pass {
             // itable fields do not have names (in the original .wat file they
             // are accessed by index).
             for (Index i = 0; i < oldFieldNames.size(); i++) {
-              nameInfo.fieldNames[i + structInfo->itable.getStruct()
-                                          .fields.size()] = oldFieldNames[i];
+              nameInfo
+                .fieldNames[i + structInfo->itable.getStruct().fields.size()] =
+                oldFieldNames[i];
             }
           }
         }
@@ -374,7 +377,7 @@ struct J2CLItableMerging : public Pass {
   }
 };
 
-}  // anonymous namespace
+} // anonymous namespace
 
 Pass* createJ2CLItableMergingPass() { return new J2CLItableMerging(); }
-}  // namespace wasm
+} // namespace wasm
