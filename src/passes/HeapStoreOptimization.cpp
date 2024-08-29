@@ -47,6 +47,11 @@ struct HeapStoreOptimization
     return std::make_unique<HeapStoreOptimization>();
   }
 
+  // Branches outside of the function can be ignored, as we only look at local
+  // state in the function. (This may need to change if we do more general dead
+  // store elimination.)
+  bool ignoreBranchesOutsideOfFunc = true;
+
   // Store struct.sets and blocks, as we can find patterns among those.
   void addAction() {
     if (currBasicBlock) {
