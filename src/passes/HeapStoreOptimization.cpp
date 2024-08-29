@@ -329,14 +329,20 @@ struct HeapStoreOptimization
     // We start the flow from right before the value, which means the end of the
     // reference.
     auto* blockBeforeValue = expressionBlocks[set->ref];
-    // We must know that block.
-    assert(blockBeforeValue);
+    if (!blockBeforeValue) {
+      // We are in unreachable code.
+      return false;
+    }
     // It must have already been reached, since we've processed the struct.set.
     assert(seenBlocks.count(blockBeforeValue));
     reached.push(blockBeforeValue);
     // We will stop the flow when we reach the struct.set itself: it is fine for
     // control flow to get there, that is what normally happens.
     auto* structSetBlock = expressionBlocks[set];
+    if (!structSetBlock) {
+      // We are in unreachable code.
+      return false;
+    }
     assert(seenBlocks.count(structSetBlock));
     while (!reached.empty()) {
       // Flow to the successors.
