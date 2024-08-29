@@ -70,9 +70,7 @@ struct HeapStoreOptimization
   // instruction following the new is not a struct.set we push the new down if
   // possible.
   void visitBlock(Block* curr) {
-    if (getModule()->features.hasGC()) {
-      optimizeHeapStores(curr->list);
-    }
+    optimizeHeapStores(curr->list);
   }
 
   void optimizeHeapStores(ExpressionList& list) {
