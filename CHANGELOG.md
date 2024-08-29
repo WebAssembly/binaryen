@@ -29,6 +29,8 @@ Current Trunk
    passes). (#6713)
  - A C APIs for getting/setting the type of Functions (#6721).
  - Allow using `--skip-pass` on the commandline multiple times (#6714).
+ - The instructions relaxed_fma and relaxed_fnma have been renamed to
+   relaxed_madd and relaxed_nmadd.
 
 v118
 ----

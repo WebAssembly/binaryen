@@ -171,7 +171,7 @@ struct DAEScanner
     // TODO: This work could be avoided if we cannot optimize for other reasons.
     //       That would require deferring this to later and checking that.
     if (numParams > 0) {
-      auto usedParams = ParamUtils::getUsedParams(func);
+      auto usedParams = ParamUtils::getUsedParams(func, getModule());
       for (Index i = 0; i < numParams; i++) {
         if (usedParams.count(i) == 0) {
           info->unusedParams.insert(i);

@@ -42,7 +42,7 @@ namespace wasm::ParamUtils {
 // function foo(x) {
 //   bar(x); // read of a param value
 // }
-std::unordered_set<Index> getUsedParams(Function* func);
+std::unordered_set<Index> getUsedParams(Function* func, Module* module);
 
 // The outcome of an attempt to remove a parameter(s).
 enum RemovalOutcome {

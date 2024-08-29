@@ -40,14 +40,14 @@ struct Info {
 // flow helper class. flows the gets to their sets
 
 struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
-  LocalGraph::GetSetses& getSetses;
+  LocalGraph::GetSetsMap& getSetsMap;
   LocalGraph::Locations& locations;
 
-  Flower(LocalGraph::GetSetses& getSetses,
+  Flower(LocalGraph::GetSetsMap& getSetsMap,
          LocalGraph::Locations& locations,
          Function* func,
          Module* module)
-    : getSetses(getSetses), locations(locations) {
+    : getSetsMap(getSetsMap), locations(locations) {
     setFunction(func);
     setModule(module);
     // create the CFG by walking the IR
@@ -183,7 +183,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
           auto* set = action->cast<LocalSet>();
           auto& gets = allGets[set->index];
           for (auto* get : gets) {
-            getSetses[get].insert(set);
+            getSetsMap[get].insert(set);
           }
           gets.clear();
         }
@@ -206,7 +206,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
           // confusing when debugging, but it does not have any downside for
           // optimization (since unreachable code should be removed anyhow).
           for (auto* get : gets) {
-            getSetses[get].insert(nullptr);
+            getSetsMap[get].insert(nullptr);
           }
           continue;
         }
@@ -222,7 +222,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
             if (curr == entryFlowBlock) {
               // These receive a param or zero init value.
               for (auto* get : gets) {
-                getSetses[get].insert(nullptr);
+                getSetsMap[get].insert(nullptr);
               }
             }
           } else {
@@ -241,7 +241,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
               if (lastSet != pred->lastSets.end()) {
                 // There is a set here, apply it, and stop the flow.
                 for (auto* get : gets) {
-                  getSetses[get].insert(lastSet->second);
+                  getSetsMap[get].insert(lastSet->second);
                 }
               } else {
                 // Keep on flowing.
@@ -261,11 +261,11 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 // LocalGraph implementation
 
 LocalGraph::LocalGraph(Function* func, Module* module) : func(func) {
-  LocalGraphInternal::Flower flower(getSetses, locations, func, module);
+  LocalGraphInternal::Flower flower(getSetsMap, locations, func, module);
 
 #ifdef LOCAL_GRAPH_DEBUG
   std::cout << "LocalGraph::dump\n";
-  for (auto& [get, sets] : getSetses) {
+  for (auto& [get, sets] : getSetsMap) {
     std::cout << "GET\n" << get << " is influenced by\n";
     for (auto* set : sets) {
       std::cout << set << '\n';
@@ -276,8 +276,8 @@ LocalGraph::LocalGraph(Function* func, Module* module) : func(func) {
 }
 
 bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
-  auto& aSets = getSetses[a];
-  auto& bSets = getSetses[b];
+  auto& aSets = getSetsMap[a];
+  auto& bSets = getSetsMap[b];
   // The simple case of one set dominating two gets easily proves that they must
   // have the same value. (Note that we can infer dominance from the fact that
   // there is a single set: if the set did not dominate one of the gets then
@@ -315,7 +315,7 @@ bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
 void LocalGraph::computeSetInfluences() {
   for (auto& [curr, _] : locations) {
     if (auto* get = curr->dynCast<LocalGet>()) {
-      for (auto* set : getSetses[get]) {
+      for (auto* set : getSetsMap[get]) {
         setInfluences[set].insert(get);
       }
     }
@@ -335,7 +335,7 @@ void LocalGraph::computeGetInfluences() {
 
 void LocalGraph::computeSSAIndexes() {
   std::unordered_map<Index, std::set<LocalSet*>> indexSets;
-  for (auto& [get, sets] : getSetses) {
+  for (auto& [get, sets] : getSetsMap) {
     for (auto* set : sets) {
       indexSets[get->index].insert(set);
     }

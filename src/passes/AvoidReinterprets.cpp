@@ -44,7 +44,7 @@ static Load* getSingleLoad(LocalGraph* localGraph,
   std::set<LocalGet*> seen;
   seen.insert(get);
   while (1) {
-    auto& sets = localGraph->getSetses[get];
+    auto& sets = localGraph->getSets(get);
     if (sets.size() != 1) {
       return nullptr;
     }

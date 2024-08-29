@@ -211,7 +211,6 @@ public:
   }
 
   static Literal makeFromMemory(void* p, Type type);
-  static Literal makeFromMemory(void* p, const Field& field);
 
   static Literal makeSignedMin(Type type) {
     switch (type.getBasic()) {
@@ -443,8 +442,8 @@ public:
 
   // Fused multiply add and subtract.
   // Computes this + (left * right) to infinite precision then round once.
-  Literal fma(const Literal& left, const Literal& right) const;
-  Literal fms(const Literal& left, const Literal& right) const;
+  Literal madd(const Literal& left, const Literal& right) const;
+  Literal nmadd(const Literal& left, const Literal& right) const;
 
   std::array<Literal, 16> getLanesSI8x16() const;
   std::array<Literal, 16> getLanesUI8x16() const;
@@ -619,6 +618,9 @@ public:
   Literal extMulHighSI64x2(const Literal& other) const;
   Literal extMulLowUI64x2(const Literal& other) const;
   Literal extMulHighUI64x2(const Literal& other) const;
+  Literal absF16x8() const;
+  Literal negF16x8() const;
+  Literal sqrtF16x8() const;
   Literal addF16x8(const Literal& other) const;
   Literal subF16x8(const Literal& other) const;
   Literal mulF16x8(const Literal& other) const;
@@ -627,6 +629,10 @@ public:
   Literal maxF16x8(const Literal& other) const;
   Literal pminF16x8(const Literal& other) const;
   Literal pmaxF16x8(const Literal& other) const;
+  Literal ceilF16x8() const;
+  Literal floorF16x8() const;
+  Literal truncF16x8() const;
+  Literal nearestF16x8() const;
   Literal absF32x4() const;
   Literal negF32x4() const;
   Literal sqrtF32x4() const;
@@ -688,10 +694,10 @@ public:
   Literal demoteZeroToF32x4() const;
   Literal promoteLowToF64x2() const;
   Literal swizzleI8x16(const Literal& other) const;
-  Literal relaxedFmaF32x4(const Literal& left, const Literal& right) const;
-  Literal relaxedFmsF32x4(const Literal& left, const Literal& right) const;
-  Literal relaxedFmaF64x2(const Literal& left, const Literal& right) const;
-  Literal relaxedFmsF64x2(const Literal& left, const Literal& right) const;
+  Literal relaxedMaddF32x4(const Literal& left, const Literal& right) const;
+  Literal relaxedNmaddF32x4(const Literal& left, const Literal& right) const;
+  Literal relaxedMaddF64x2(const Literal& left, const Literal& right) const;
+  Literal relaxedNmaddF64x2(const Literal& left, const Literal& right) const;
 
   Literal externalize() const;
   Literal internalize() const;

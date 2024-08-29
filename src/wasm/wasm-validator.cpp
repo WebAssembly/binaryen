@@ -606,9 +606,13 @@ private:
                     Type(Type::unreachable),
                     printable,
                     "return_call* should have unreachable type");
+      auto* func = getFunction();
+      if (!shouldBeTrue(!!func, curr, "function not defined")) {
+        return;
+      }
       shouldBeSubType(
         sig.results,
-        getFunction()->getResults(),
+        func->getResults(),
         printable,
         "return_call* callee return type must match caller return type");
     } else {
@@ -696,7 +700,12 @@ void FunctionValidator::visitBlock(Block* curr) {
     }
     breakTypes.erase(iter);
   }
-  switch (getFunction()->profile) {
+
+  auto* func = getFunction();
+  if (!shouldBeTrue(!!func, curr, "function not defined")) {
+    return;
+  }
+  switch (func->profile) {
     case IRProfile::Normal:
       validateNormalBlockElements(curr);
       break;
@@ -1274,6 +1283,9 @@ void FunctionValidator::visitSIMDExtract(SIMDExtract* curr) {
       lanes = 2;
       break;
     case ExtractLaneVecF16x8:
+      shouldBeTrue(getModule()->features.hasFP16(),
+                   curr,
+                   "FP16 operations require FP16 [--enable-fp16]");
       lane_t = Type::f32;
       lanes = 8;
       break;
@@ -1324,6 +1336,9 @@ void FunctionValidator::visitSIMDReplace(SIMDReplace* curr) {
       lanes = 2;
       break;
     case ReplaceLaneVecF16x8:
+      shouldBeTrue(getModule()->features.hasFP16(),
+                   curr,
+                   "FP16 operations require FP16 [--enable-fp16]");
       lane_t = Type::f32;
       lanes = 8;
       break;
@@ -1708,6 +1723,24 @@ void FunctionValidator::visitBinary(Binary* curr) {
         curr->left->type, Type(Type::f64), curr, "f64 op");
       break;
     }
+    case EqVecF16x8:
+    case NeVecF16x8:
+    case LtVecF16x8:
+    case LeVecF16x8:
+    case GtVecF16x8:
+    case GeVecF16x8:
+    case AddVecF16x8:
+    case SubVecF16x8:
+    case MulVecF16x8:
+    case DivVecF16x8:
+    case MinVecF16x8:
+    case MaxVecF16x8:
+    case PMinVecF16x8:
+    case PMaxVecF16x8:
+      shouldBeTrue(getModule()->features.hasFP16(),
+                   curr,
+                   "FP16 operations require FP16 [--enable-fp16]");
+      [[fallthrough]];
     case EqVecI8x16:
     case NeVecI8x16:
     case LtSVecI8x16:
@@ -1744,12 +1777,6 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case LeSVecI64x2:
     case GtSVecI64x2:
     case GeSVecI64x2:
-    case EqVecF16x8:
-    case NeVecF16x8:
-    case LtVecF16x8:
-    case LeVecF16x8:
-    case GtVecF16x8:
-    case GeVecF16x8:
     case EqVecF32x4:
     case NeVecF32x4:
     case LtVecF32x4:
@@ -1813,14 +1840,6 @@ void FunctionValidator::visitBinary(Binary* curr) {
     case ExtMulHighSVecI64x2:
     case ExtMulLowUVecI64x2:
     case ExtMulHighUVecI64x2:
-    case AddVecF16x8:
-    case SubVecF16x8:
-    case MulVecF16x8:
-    case DivVecF16x8:
-    case MinVecF16x8:
-    case MaxVecF16x8:
-    case PMinVecF16x8:
-    case PMaxVecF16x8:
     case AddVecF32x4:
     case SubVecF32x4:
     case MulVecF32x4:
@@ -2060,6 +2079,10 @@ void FunctionValidator::visitUnary(Unary* curr) {
         curr->value->type, Type(Type::i64), curr, "expected i64 splat value");
       break;
     case SplatVecF16x8:
+      shouldBeTrue(getModule()->features.hasFP16(),
+                   curr,
+                   "FP16 operations require FP16 [--enable-fp16]");
+      [[fallthrough]];
     case SplatVecF32x4:
       shouldBeEqual(
         curr->type, Type(Type::v128), curr, "expected splat to have v128 type");
@@ -2072,6 +2095,17 @@ void FunctionValidator::visitUnary(Unary* curr) {
       shouldBeEqual(
         curr->value->type, Type(Type::f64), curr, "expected f64 splat value");
       break;
+    case AbsVecF16x8:
+    case NegVecF16x8:
+    case SqrtVecF16x8:
+    case CeilVecF16x8:
+    case FloorVecF16x8:
+    case TruncVecF16x8:
+    case NearestVecF16x8:
+      shouldBeTrue(getModule()->features.hasFP16(),
+                   curr,
+                   "FP16 operations require FP16 [--enable-fp16]");
+      [[fallthrough]];
     case NotVec128:
     case PopcntVecI8x16:
     case AbsVecI8x16:

@@ -829,7 +829,7 @@ struct LivenessChecker {
 // Struct to set up and check reaching definitions analysis lattice and transfer
 // function.
 struct ReachingDefinitionsChecker {
-  LocalGraph::GetSetses getSetses;
+  LocalGraph::GetSetsMap getSetsMap;
   LocalGraph::Locations locations;
   ReachingDefinitionsTransferFunction txfn;
   AnalysisChecker<FinitePowersetLattice<LocalSet*>,
@@ -838,7 +838,7 @@ struct ReachingDefinitionsChecker {
   ReachingDefinitionsChecker(Function* func,
                              uint64_t latticeElementSeed,
                              Name funcName)
-    : txfn(func, getSetses, locations),
+    : txfn(func, getSetsMap, locations),
       checker(txfn.lattice,
               txfn,
               "FinitePowersetLattice<LocalSet*>",
