@@ -860,7 +860,7 @@
           (i32.const 1)
           (then
             ;; This conditional break happens *after* the local.tee of $ref. We
-            ;; must not move code around that reorders it, since there is a us
+            ;; must not move code around that reorders it, since there is a use
             ;; of the local below that could notice changes.
             (br $label)
           )
