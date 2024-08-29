@@ -48,9 +48,8 @@ struct LoopInvariantCodeMotion
   LocalGraph* localGraph;
 
   void doWalkFunction(Function* func) {
-    // Prepare to compute the local dependencies we care about. We may only need
-    // very few, so use a lazy LocalGraph.
-    LocalGraph localGraphInstance(func, getModule(), LocalGraph::Lazy);
+    // Compute all local dependencies first.
+    LocalGraph localGraphInstance(func, getModule());
     localGraph = &localGraphInstance;
     // Traverse the function.
     super::doWalkFunction(func);

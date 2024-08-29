@@ -39,16 +39,10 @@ namespace wasm {
 // code will be removed anyhow).
 //
 struct LocalGraph {
-  // A LocalGraph can be instantiated in either eager or lazy mode. In eager
-  // mode we compute all possible results of getSets() in advance, which is a
-  // little more efficient if they are all needed. In lazy mode they are
-  // computed on demand, which is better if only a few will be queried.
-  enum Mode { Eager, Lazy };
-
   // If a module is passed in, it is used to find which features are needed in
   // the computation (for example, if exception handling is disabled, then we
   // can generate a simpler CFG, as calls cannot throw).
-  LocalGraph(Function* func, Module* module = nullptr, Mode mode = Mode::Eager);
+  LocalGraph(Function* func, Module* module = nullptr);
   ~LocalGraph();
 
   // Get the sets relevant for a local.get.
@@ -62,20 +56,9 @@ struct LocalGraph {
   const Sets& getSets(LocalGet* get) const {
     auto iter = getSetsMap.find(get);
     if (iter == getSetsMap.end()) {
-      if (mode == Mode::Lazy) {
-        // In lazy mode, a missing entry means we did not do the computation
-        // yet. Do it now.
-        computeGetSets(get);
-        iter = getSetsMap.find(get);
-        assert(iter != getSetsMap.end());
-      } else {
-        // In eager mode, a missing entry means there is nothing there (and we
-        // saved a little space by not putting something there).
-        //
-        // Use a canonical constant empty set to avoid allocation.
-        static const Sets empty;
-        return empty;
-      }
+      // Use a canonical constant empty set to avoid allocation.
+      static const Sets empty;
+      return empty;
     }
     return iter->second;
   }
@@ -135,13 +118,11 @@ struct LocalGraph {
   using GetSetsMap = std::unordered_map<LocalGet*, Sets>;
 
 private:
-  Mode mode;
   Function* func;
   std::set<Index> SSAIndexes;
 
   // A map of each get to the sets relevant to it. This is mutable so that
-  // getSets() can be const: in eager mode no changes to this are ever made in
-  // getSets(), while in lazy mode any changes are just memoization.
+  // getSets() can be const.
   mutable GetSetsMap getSetsMap;
 
   // The internal implementation of the flow analysis used to compute
@@ -151,9 +132,6 @@ private:
   // with that. It could alternatively be a shared_ptr, but that runs into what
   // seems to be a false positive of clang's (but not gcc's) UBSan.
   LocalGraphFlower* flower = nullptr;
-
-  // Compute the sets for a get and store them on getSetsMap.
-  void computeGetSets(LocalGet* get) const;
 };
 
 } // namespace wasm

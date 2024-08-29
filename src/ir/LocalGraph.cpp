@@ -90,6 +90,10 @@ struct LocalGraph::LocalGraphFlower
     self->locations[curr] = currp;
   }
 
+  // The below class-level items (currentIteration, FlowBlock, etc.) would more
+  // properly belong inside flow(), as they are only needed there, but flow() is
+  // split up into two parts in service of a future user of only part of flow().
+
   // Each time we flow a get (or set of gets) to find its sets, we mark a
   // different iteration number. This lets us memoize the current iteration on
   // blocks as we pass them, allowing us to quickly skip them in that iteration
@@ -176,7 +180,7 @@ struct LocalGraph::LocalGraphFlower
     assert(entryFlowBlock != nullptr);
   }
 
-  // Flow all the data. This is done in eager mode.
+  // Flow all the data.
   void flow() {
     prepareFlowBlocks();
 
@@ -297,121 +301,22 @@ struct LocalGraph::LocalGraphFlower
     // Bump the current iteration for the next time we are called.
     currentIteration++;
   }
-
-  // When the LocalGraph is in lazy mode we do not compute all of getSetsMap
-  // initially, but instead fill in these data structures that let us do so
-  // later for individual gets. Specifically we need to find the location of a
-  // local.get in the CFG.
-  struct BlockLocation {
-    // The basic block an item is in.
-    FlowBlock* block = nullptr;
-    // The index in that block that the item is at.
-    Index index;
-  };
-  std::unordered_map<LocalGet*, BlockLocation> getLocations;
-
-  // Set up getLocations using the flow blocks, so that we are ready to handle
-  // later lazy requests for the sets of particular gets. This is done in lazy
-  // mode.
-  void prepareLaziness() {
-    prepareFlowBlocks();
-
-    for (auto& block : flowBlocks) {
-      const auto& actions = block.actions;
-      for (Index i = 0; i < actions.size(); i++) {
-        if (auto* get = actions[i]->dynCast<LocalGet>()) {
-          getLocations[get] = BlockLocation{&block, i};
-        }
-      }
-    }
-  }
-
-  // Flow a specific get. This is done in lazy mode.
-  void flowGet(LocalGet* get) {
-    auto index = get->index;
-
-    // Regardless of what we do below, ensure an entry for this get, so that we
-    // know we computed it.
-    auto& sets = getSetsMap[get];
-
-    auto [block, blockIndex] = getLocations[get];
-    if (!block) {
-      // We did not find location info for this get, which means it is
-      // unreachable.
-      return;
-    }
-
-    // We must have the get at that location.
-    assert(blockIndex < block->actions.size());
-    assert(block->actions[blockIndex] == get);
-
-    if (!hasSet[index]) {
-      // As in flow(), when there is no local.set for an index we can just mark
-      // the only writer as the default value.
-      sets.insert(nullptr);
-      return;
-    }
-
-    // Go backwards in this flow block, from the get. If we see other gets that
-    // have not been computed then we can accumulate them as well, as the
-    // results we compute apply to them too.
-    std::vector<LocalGet*> gets;
-    gets.push_back(get);
-    while (blockIndex > 0) {
-      blockIndex--;
-      auto* curr = block->actions[blockIndex];
-      if (auto* otherGet = curr->dynCast<LocalGet>()) {
-        if (otherGet->index == index) {
-          // This is another get of the same index. If we've already computed
-          // it, then we can just use that, as they must have the same sets.
-          auto iter = getSetsMap.find(otherGet);
-          if (iter != getSetsMap.end()) {
-            auto& otherSets = iter->second;
-            for (auto* get : gets) {
-              getSetsMap[get] = otherSets;
-            }
-            return;
-          }
-
-          // This is a get of the same index, but which has not been computed.
-          // It will have the same sets as us.
-          gets.push_back(otherGet);
-        }
-      } else {
-        // This is a set.
-        auto* set = curr->cast<LocalSet>();
-        if (set->index == index) {
-          // This is the only set writing to our gets.
-          for (auto* get : gets) {
-            getSetsMap[get].insert(set);
-          }
-          return;
-        }
-      }
-    }
-
-    // We must do an inter-block flow.
-    flowBackFromStartOfBlock(block, index, gets);
-  }
 };
 
 // LocalGraph implementation
 
-LocalGraph::LocalGraph(Function* func, Module* module, Mode mode)
-  : mode(mode), func(func) {
+LocalGraph::LocalGraph(Function* func, Module* module) : func(func) {
   // See comment on the declaration of this field for why we use a raw
-  // allocation.
+  // allocation. Note that since we just call flow() and delete it, this is not
+  // really needed, but it sets the stage for a later PR that will do other work
+  // here (related to the splitting up of flow() that is mentioned earlier).
   flower = new LocalGraphFlower(getSetsMap, locations, func, module);
 
-  if (mode == Mode::Eager) {
-    flower->flow();
+  flower->flow();
 
-    // We will never use it again.
-    delete flower;
-    flower = nullptr;
-  } else {
-    flower->prepareLaziness();
-  }
+  // We will never use it again.
+  delete flower;
+  flower = nullptr;
 
 #ifdef LOCAL_GRAPH_DEBUG
   std::cout << "LocalGraph::dump\n";
@@ -469,9 +374,6 @@ bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
 }
 
 void LocalGraph::computeSetInfluences() {
-  // We must be in eager mode so that all of getSetsMap is filled in.
-  assert(mode == Mode::Eager);
-
   for (auto& [curr, _] : locations) {
     if (auto* get = curr->dynCast<LocalGet>()) {
       for (auto* set : getSetsMap[get]) {
@@ -493,9 +395,6 @@ void LocalGraph::computeGetInfluences() {
 }
 
 void LocalGraph::computeSSAIndexes() {
-  // We must be in eager mode so that all of getSetsMap is filled in.
-  assert(mode == Mode::Eager);
-
   std::unordered_map<Index, std::set<LocalSet*>> indexSets;
   for (auto& [get, sets] : getSetsMap) {
     for (auto* set : sets) {
@@ -520,11 +419,5 @@ void LocalGraph::computeSSAIndexes() {
 }
 
 bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
-
-void LocalGraph::computeGetSets(LocalGet* get) const {
-  assert(mode == Mode::Lazy);
-
-  flower->flowGet(get);
-}
 
 } // namespace wasm
