@@ -99,3 +99,58 @@ TEST(TopologicalOrdersTest, Diamond) {
   };
   EXPECT_EQ(results, expected);
 }
+
+TEST(MinTopologicalSortTest, Empty) {
+  Graph graph(0);
+  EXPECT_EQ(*MinTopologicalSort(graph), std::vector<size_t>{});
+}
+
+TEST(MinTopologicalSortTest, Unconstrained) {
+  Graph graph(3);
+  MinTopologicalSort order(graph);
+  std::vector<size_t> expected{0, 1, 2};
+  EXPECT_EQ(*MinTopologicalSort(graph), expected);
+}
+
+TEST(MinTopologicalSortTest, Reversed) {
+  Graph graph(3);
+  graph[2].push_back(1);
+  graph[1].push_back(0);
+  std::vector<size_t> expected{2, 1, 0};
+  EXPECT_EQ(*MinTopologicalSort(graph), expected);
+}
+
+TEST(MinTopologicalSortTest, OneBeforeZero) {
+  Graph graph(3);
+  graph[1].push_back(0);
+  // 2 last because it is greater than 1 and 0
+  std::vector<size_t> expected{1, 0, 2};
+  EXPECT_EQ(*MinTopologicalSort(graph), expected);
+}
+
+TEST(MinTopologicalSortTest, TwoBeforeOne) {
+  Graph graph(3);
+  graph[2].push_back(1);
+  // 0 first because it is less than 2 and 1
+  std::vector<size_t> expected{0, 2, 1};
+  EXPECT_EQ(*MinTopologicalSort(graph), expected);
+}
+
+TEST(MinTopologicalSortTest, TwoBeforeZero) {
+  Graph graph(3);
+  graph[2].push_back(0);
+  // 1 first because it is less than 2 and zero is not eligible.
+  std::vector<size_t> expected{1, 2, 0};
+  EXPECT_EQ(*MinTopologicalSort(graph), expected);
+}
+
+TEST(MinTopologicalSortTest, Strings) {
+  std::map<std::string, std::vector<std::string>> graph{
+    {"animal", {"mammal"}},
+    {"cat", {}},
+    {"dog", {}},
+    {"mammal", {"cat", "dog"}}};
+  std::vector<std::string> expected{"animal", "mammal", "cat", "dog"};
+  EXPECT_EQ(*MinTopologicalSortOf<std::string>(graph.begin(), graph.end()),
+            expected);
+}

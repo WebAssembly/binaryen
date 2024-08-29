@@ -14,6 +14,7 @@
  * limitations under the License.
  */
 
+#include <algorithm>
 #include <cassert>
 
 #include "topological_orders.h"
@@ -21,9 +22,13 @@
 namespace wasm {
 
 TopologicalOrders::Selector
-TopologicalOrders::Selector::select(TopologicalOrders& ctx) {
+TopologicalOrders::Selector::select(TopologicalOrders& ctx,
+                                    SelectionMethod method = InPlace) {
   assert(count >= 1);
   assert(start + count <= ctx.buf.size());
+  if (method == MinHeap) {
+    ctx.buf[start] = ctx.popChoice();
+  }
   auto selection = ctx.buf[start];
   // The next selector will select the next index and will not be able to choose
   // the vertex we just selected.
@@ -33,7 +38,12 @@ TopologicalOrders::Selector::select(TopologicalOrders& ctx) {
   for (auto child : ctx.graph[selection]) {
     assert(ctx.indegrees[child] > 0);
     if (--ctx.indegrees[child] == 0) {
-      ctx.buf[next.start + next.count++] = child;
+      if (method == MinHeap) {
+        ctx.pushChoice(child);
+      } else {
+        ctx.buf[next.start + next.count] = child;
+      }
+      ++next.count;
     }
   }
   return next;
@@ -69,7 +79,7 @@ TopologicalOrders::Selector::advance(TopologicalOrders& ctx) {
 }
 
 TopologicalOrders::TopologicalOrders(
-  const std::vector<std::vector<size_t>>& graph)
+  const std::vector<std::vector<size_t>>& graph, SelectionMethod method)
   : graph(graph), indegrees(graph.size()), buf(graph.size()) {
   if (graph.size() == 0) {
     return;
@@ -86,13 +96,19 @@ TopologicalOrders::TopologicalOrders(
   auto& first = selectors.back();
   for (size_t i = 0; i < graph.size(); ++i) {
     if (indegrees[i] == 0) {
-      buf[first.count++] = i;
+      if (method == MinHeap) {
+        pushChoice(i);
+      } else {
+        buf[first.count] = i;
+      }
+      ++first.count;
     }
   }
   // Initialize the full stack of selectors.
   while (selectors.size() < graph.size()) {
-    selectors.push_back(selectors.back().select(*this));
+    selectors.push_back(selectors.back().select(*this, method));
   }
+  selectors.back().select(*this, method);
 }
 
 TopologicalOrders& TopologicalOrders::operator++() {
@@ -115,6 +131,18 @@ TopologicalOrders& TopologicalOrders::operator++() {
   }
 
   return *this;
+}
+
+void TopologicalOrders::pushChoice(size_t choice) {
+  choiceHeap.push_back(choice);
+  std::push_heap(choiceHeap.begin(), choiceHeap.end(), std::greater<size_t>{});
+}
+
+size_t TopologicalOrders::popChoice() {
+  std::pop_heap(choiceHeap.begin(), choiceHeap.end(), std::greater<size_t>{});
+  auto choice = choiceHeap.back();
+  choiceHeap.pop_back();
+  return choice;
 }
 
 } // namespace wasm
