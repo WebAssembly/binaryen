@@ -35,7 +35,7 @@
 
 #include "ir/find_all.h"
 #include "pass.h"
-#include "support/topological_sort.h"
+#include "support/topological_orders.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -75,8 +75,8 @@ struct ReorderGlobals : public Pass {
 
   // For efficiency we will use global indices rather than names. That is, we
   // use the index of the global in the original ordering to identify each
-  // global. A different ordering is then a vector of new indices, saying where
-  // each one moves, which is logically a mapping between indices.
+  // global. A different ordering is then a vector of old indices, saying where
+  // each element comes from, which is logically a mapping between indices.
   using IndexIndexMap = std::vector<Index>;
 
   // We will also track counts of uses for each global. We use floating-point
@@ -190,26 +190,16 @@ struct ReorderGlobals : public Pass {
     double const EXPONENTIAL_FACTOR = 0.095;
     IndexCountMap sumCounts(globals.size()), exponentialCounts(globals.size());
 
-    struct Sort : public TopologicalSort<Index, Sort> {
-      const Dependencies& deps;
-
-      Sort(Index numGlobals, const Dependencies& deps) : deps(deps) {
-        for (Index i = 0; i < numGlobals; i++) {
-          push(i);
+    std::vector<std::vector<size_t>> dependenceGraph(globals.size());
+    for (size_t i = 0; i < globals.size(); ++i) {
+      if (auto it = deps.dependsOn.find(i); it != deps.dependsOn.end()) {
+        for (auto dep : it->second) {
+          dependenceGraph[i].push_back(dep);
         }
       }
+    }
 
-      void pushPredecessors(Index global) {
-        auto iter = deps.dependedUpon.find(global);
-        if (iter == deps.dependedUpon.end()) {
-          return;
-        }
-        for (auto dep : iter->second) {
-          push(dep);
-        }
-      }
-    } sort(globals.size(), deps);
-
+    auto sort = *TopologicalSort(dependenceGraph);
     for (auto global : sort) {
       // We can compute this global's count as in the sorted order all the
       // values it cares about are resolved. Start with the self-count, then
@@ -236,160 +226,91 @@ struct ReorderGlobals : public Pass {
     }
 
     // Apply the indices we computed.
-    std::vector<std::unique_ptr<Global>> old(std::move(globals));
+    auto old = std::move(globals);
     globals.resize(old.size());
     for (Index i = 0; i < old.size(); i++) {
-      globals[(*best)[i]] = std::move(old[i]);
+      globals[i] = std::move(old[(*best)[i]]);
     }
     module->updateMaps();
   }
 
   IndexIndexMap doSort(const IndexCountMap& counts,
-                       const Dependencies& originalDeps,
+                       const Dependencies& deps,
                        Module* module) {
     auto& globals = module->globals;
-
-    // Copy the deps as we will operate on them as we go.
-    auto deps = originalDeps;
 
     // To sort the globals we do a simple greedy approach of always picking the
     // global with the highest count at every point in time, subject to the
     // constraint that we can only emit globals that have all of their
-    // dependencies already emitted. To do so we keep a list of the "available"
-    // globals, which are those with no remaining dependencies. Then by keeping
-    // the list of available globals in heap form we can simply pop the largest
-    // from the heap each time, and add new available ones as they become so.
+    // dependencies already emitted.
     //
-    // Other approaches here could be to do a topological sort, but the optimal
-    // order may not require strict ordering by topological depth, e.g.:
-    /*
-    //     $c - $a
-    //    /
-    //  $e
-    //    \
-    //     $d - $b
-    */
-    // Here $e depends on $c and $d, $c depends on $a, and $d on $b. This is a
-    // partial order, as $d can be before or after $a, for example. As a result,
-    // if we sorted topologically by sub-trees here then we'd keep $c and $a
-    // together, and $d and $b, but a better order might interleave them. A good
-    // order also may not keep topological depths separated, e.g. we may want to
-    // put $a in between $c and $d despite it having a greater depth.
+    // The greedy approach here may also be suboptimal, however. Consider that
+    // we might see that the best available global is $a, but if we instead
+    // selected some other global $b, that would allow us to select a third
+    // global $c that depends on $b, and $c might have a much higher use count
+    // than $a. For that reason we try several variations of this with different
+    // counts, see earlier.
     //
-    // The greedy approach here may also be unoptimal, however. Consider that we
-    // might see that the best available global is $a, but if we popped $b
-    // instead that could unlock $c which depends on $b, and $c may have a much
-    // higher use count than $a. For that reason we try several variations of
-    // this with different counts, see earlier.
-    std::vector<Index> availableHeap;
-
-    // Comparison function. Given a and b, returns if a should be before b. This
-    // is used in a heap, where "highest" means "popped first", so see the notes
-    // below on how we order.
-    auto cmp = [&](Index a, Index b) {
-      // Imports always go first. The binary writer takes care of this itself
-      // anyhow, but it is better to do it here in the IR so we can actually
-      // see what the final layout will be.
-      auto aImported = globals[a]->imported();
-      auto bImported = globals[b]->imported();
-      // The highest items will be popped first off the heap, so we want imports
-      // to be at higher indexes, that is,
-      //
-      //  unimported, unimported, imported, imported.
-      //
-      // Then the imports are popped first.
-      if (aImported != bImported) {
-        return bImported;
-      }
-
-      // Sort by the counts. We want higher counts at higher indexes so they are
-      // popped first, that is,
-      //
-      //  10, 20, 30, 40
-      //
-      auto aCount = counts[a];
-      auto bCount = counts[b];
-      if (aCount != bCount) {
-        return aCount < bCount;
-      }
-
-      // Break ties using the original order, which means just using the
-      // indices we have. We need lower indexes at the top so they are popped
-      // first, that is,
-      //
-      //  3, 2, 1, 0
-      //
-      return a > b;
-    };
-
-    // Push an item that just became available to the available heap.
-    auto push = [&](Index global) {
-      availableHeap.push_back(global);
-      std::push_heap(availableHeap.begin(), availableHeap.end(), cmp);
-    };
-
-    // The initially available globals are those with no dependencies.
-    for (Index i = 0; i < globals.size(); i++) {
-      if (deps.dependsOn[i].empty()) {
-        push(i);
-      }
+    // Sort the globals into the optimal order based on the counts, ignoring
+    // dependencies for now.
+    std::vector<Index> sortedGlobals;
+    sortedGlobals.resize(globals.size());
+    for (Index i = 0; i < globals.size(); ++i) {
+      sortedGlobals[i] = i;
     }
-
-    // Pop off the heap: Emit the global and its final, sorted index. Keep
-    // doing that until we finish processing all the globals.
-    IndexIndexMap sortedindices(globals.size());
-    Index numSortedindices = 0;
-    while (!availableHeap.empty()) {
-      std::pop_heap(availableHeap.begin(), availableHeap.end(), cmp);
-      auto global = availableHeap.back();
-      sortedindices[global] = numSortedindices++;
-      availableHeap.pop_back();
-
-      // Each time we pop we emit the global, which means anything that only
-      // depended on it becomes available to be popped as well.
-      for (auto other : deps.dependedUpon[global]) {
-        assert(deps.dependsOn[other].count(global));
-        deps.dependsOn[other].erase(global);
-        if (deps.dependsOn[other].empty()) {
-          push(other);
+    std::sort(
+      sortedGlobals.begin(), sortedGlobals.end(), [&](Index a, Index b) {
+        // Imports always go first. The binary writer takes care of this itself
+        // anyhow, but it is better to do it here in the IR so we can actually
+        // see what the final layout will be.
+        auto aImported = globals[a]->imported();
+        auto bImported = globals[b]->imported();
+        if (aImported != bImported) {
+          return aImported;
         }
+
+        // Sort by the counts. Higher counts come first.
+        auto aCount = counts[a];
+        auto bCount = counts[b];
+        if (aCount != bCount) {
+          return aCount > bCount;
+        }
+
+        // Break ties using the original order, which means just using the
+        // indices we have.
+        return a < b;
+      });
+
+    // Now use that optimal order to create an ordered graph that includes the
+    // dependencies. The final order will be the minimum topological sort of
+    // this graph.
+    std::vector<std::pair<Index, std::vector<Index>>> graph;
+    graph.reserve(globals.size());
+    for (auto i : sortedGlobals) {
+      std::vector<Index> children;
+      if (auto it = deps.dependedUpon.find(i); it != deps.dependedUpon.end()) {
+        children = std::vector<Index>(it->second.begin(), it->second.end());
       }
+      graph.emplace_back(i, std::move(children));
     }
 
-    // All globals must have been handled. Cycles would prevent this, but they
-    // cannot exist in valid IR.
-    assert(numSortedindices == globals.size());
-
-    return sortedindices;
+    return *MinTopologicalSortOf<Index>(graph.begin(), graph.end());
   }
 
   // Given an indexing of the globals and the counts of how many times each is
   // used, estimate the size of relevant parts of the wasm binary (that is, of
   // LEBs in global.gets).
   double computeSize(IndexIndexMap& indices, IndexCountMap& counts) {
-    // |indices| maps each old index to its new position in the sort. We need
-    // the reverse map here, which at index 0 has the old index of the global
-    // that will be first, and so forth.
-    IndexIndexMap actualOrder(indices.size());
-    for (Index i = 0; i < indices.size(); i++) {
-      // Each global has a unique index, so we only replace 0's here, and they
-      // must be in bounds.
-      assert(indices[i] < indices.size());
-      assert(actualOrder[indices[i]] == 0);
-
-      actualOrder[indices[i]] = i;
-    }
-
     if (always) {
       // In this mode we gradually increase the cost of later globals, in an
       // unrealistic but smooth manner.
       double total = 0;
-      for (Index i = 0; i < actualOrder.size(); i++) {
+      for (Index i = 0; i < indices.size(); i++) {
         // Multiply the count for this global by a smoothed LEB factor, which
         // starts at 1 (for 1 byte) at index 0, and then increases linearly with
         // i, so that after 128 globals we reach 2 (which is the true index at
         // which the LEB size normally jumps from 1 to 2), and so forth.
-        total += counts[actualOrder[i]] * (1.0 + (i / 128.0));
+        total += counts[indices[i]] * (1.0 + (i / 128.0));
       }
       return total;
     }
@@ -401,7 +322,7 @@ struct ReorderGlobals : public Pass {
     // forth.
     size_t sizeInBits = 0;
     size_t nextSizeIncrease = 0;
-    for (Index i = 0; i < actualOrder.size(); i++) {
+    for (Index i = 0; i < indices.size(); i++) {
       if (i == nextSizeIncrease) {
         sizeInBits++;
         // At the current size we have 7 * sizeInBits bits to use.  For example,
@@ -410,7 +331,7 @@ struct ReorderGlobals : public Pass {
         // larger LEB.
         nextSizeIncrease = 1 << (7 * sizeInBits);
       }
-      total += counts[actualOrder[i]] * sizeInBits;
+      total += counts[indices[i]] * sizeInBits;
     }
     return total;
   }
