@@ -20,6 +20,7 @@
 // TODO: Add dead store elimination / load forwarding here.
 //
 
+#include "cfg/cfg-traversal.h"
 #include "ir/effects.h"
 #include "pass.h"
 #include "wasm-builder.h"
@@ -27,8 +28,16 @@
 
 namespace wasm {
 
+namespace {
+
+// In each basic block we will store the relevant heap store operations and
+// other actions that matter to our analysis.
+struct Info {
+  std::vector<Expression**> actions;
+};
+
 struct HeapStoreOptimization
-  : public WalkerPass<PostWalker<HeapStoreOptimization>> {
+  : public WalkerPass<CFGWalker<HeapStoreOptimization>> {
   bool isFunctionParallel() override { return true; }
 
   // Locals are not modified here.
@@ -38,7 +47,35 @@ struct HeapStoreOptimization
     return std::make_unique<HeapStoreOptimization>();
   }
 
+  // Store struct.sets and blocks, as we can find patterns among those.
   void visitStructSet(StructSet* curr) {
+    if (currBasicBlock) {
+      currBasicBlock->contents.actions.push_back(curr);
+    }
+  }
+  void visitBlock(Block* curr) {
+    if (currBasicBlock) {
+      currBasicBlock->contents.actions.push_back(curr);
+    }
+  }
+
+  void visitFunction(Function* curr) {
+    // Now that the walk is complete and we have a CFG, find things to optimize.
+    for (auto& block : basicBlocks) {
+      for (auto** currp : block->contents.actions) {
+        auto* curr = *currp;
+        if (auto* set = curr->dynCast<StructSet>()) {
+          optimizeStructSet(set, currp);
+        } else if (auto* block = curr->dynCast<Block>()) {
+          optimizeBlock(block, currp);
+        } else {
+          WASM_UNREACHABLE("bad action");
+        }
+      }
+    }
+  }
+
+  void optimizeStructSet(StructSet* curr, Expression** currp) {
     // If our reference is a tee of a struct.new, we may be able to fold the
     // stored value into the new itself:
     //
@@ -52,7 +89,7 @@ struct HeapStoreOptimization
           // Success, so we do not need the struct.set any more, and the tee
           // can just be a set instead of us.
           tee->makeSet();
-          replaceCurrent(tee);
+          replaceCurrent(tee); XXX
         }
       }
     }
@@ -69,12 +106,12 @@ struct HeapStoreOptimization
   // We also handle other struct.sets immediately after this one. If the
   // instruction following the new is not a struct.set we push the new down if
   // possible.
-  void visitBlock(Block* curr) {
+  void optimizeBlock(Block* curr, Expression** currp) {
     if (getModule()->features.hasGC()) {
       optimizeHeapStores(curr->list);
     }
   }
-
+XXX
   void optimizeHeapStores(ExpressionList& list) {
     for (Index i = 0; i < list.size(); i++) {
       auto* localSet = list[i]->dynCast<LocalSet>();
@@ -237,6 +274,8 @@ struct HeapStoreOptimization
     return EffectAnalyzer(getPassOptions(), *getModule(), expr);
   }
 };
+
+} // anonymous namespace
 
 Pass* createHeapStoreOptimizationPass() { return new HeapStoreOptimization(); }
 
