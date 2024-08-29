@@ -39,6 +39,7 @@ struct Info {
 
 struct HeapStoreOptimization
   : public WalkerPass<CFGWalker<HeapStoreOptimization, Visitor<HeapStoreOptimization>, Info>> {
+
   bool isFunctionParallel() override { return true; }
 
   // Locals are not modified here.
@@ -47,6 +48,8 @@ struct HeapStoreOptimization
   std::unique_ptr<Pass> create() override {
     return std::make_unique<HeapStoreOptimization>();
   }
+
+  using Super = WalkerPass<CFGWalker<HeapStoreOptimization, Visitor<HeapStoreOptimization>, Info>>;
 
   // Branches outside of the function can be ignored, as we only look at local
   // state in the function. (This may need to change if we do more general dead
@@ -57,23 +60,40 @@ struct HeapStoreOptimization
   std::unordered_map<Expression*, BasicBlock*> expressionBlocks;
 
   // Store the actions we can optimize for later processing.
-  bool addAction() {
+  void addAction() {
     if (currBasicBlock) {
       currBasicBlock->contents.actions.push_back(getCurrentPointer());
       expressionBlocks[getCurrent()] = currBasicBlock;
-      return true;
     }
-    return false;
   }
   void visitStructSet(StructSet* curr) {
-    if (addAction()) {
-      // Also note the basic block of the reference. We will care about where
-      // control goes right after it (from the value).
-      expressionBlocks[curr->ref] = currBasicBlock;
-    }
+    addAction();
   }
   void visitBlock(Block* curr) {
     addAction();
+  }
+
+  // Override scan so we can note the basic block that struct.set's values are
+  // in (we will need that later to check for safety, see
+  // optimizeSubsequentStructSet).
+  static void scan(HeapStoreOptimization* self, Expression** currp) {
+    if (auto* set = (*currp)->dynCast<StructSet>()) {
+      self->pushTask(HeapStoreOptimization::doVisitStructSet, currp);
+      self->pushTask(HeapStoreOptimization::scan, &set->value);
+      self->pushTask(HeapStoreOptimization::notePreSetValue, currp);
+      self->pushTask(HeapStoreOptimization::scan, &set->ref);
+    } else {
+      super::scan(self, currp);
+    }
+  }
+  static void notePreSetValue(HeapStoreOptimization* self, Expression** currp) {
+    // We are just about to process the struct.set's value, so the current basic
+    // block is where the set's reference just ended, which is where the set's
+    // value will begin.
+    if (self->currBasicBlock) {
+      auto* set = (*currp)->cast<StructSet>();
+      self->expressionBlocks[set->ref] = self->currBasicBlock;
+    }
   }
 
   // As we optimize we mark blocks we've reached. This is done in post-order,
@@ -314,10 +334,19 @@ struct HeapStoreOptimization
     // It must have already been reached, since we've processed the struct.set.
     assert(seenBlocks.count(blockBeforeValue));
     reached.push(blockBeforeValue);
+    // We will stop the flow when we reach the struct.set itself: it is fine for
+    // control flow to get there, that is what normally happens.
+    auto* structSetBlock = expressionBlocks[set];
+    assert(seenBlocks.count(structSetBlock));
     while (!reached.empty()) {
       // Flow to the successors.
       auto* block = reached.pop();
       for (auto* out : block->out) {
+        if (out == structSetBlock) {
+          // This is the normal place control flow should get to, the struct.set
+          // that is the parent of the value.
+          continue;
+        }
         if (!seenBlocks.count(out)) {
           // This is a dangerous jump forward, as described above. Give up.
           return false;
