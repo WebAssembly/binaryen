@@ -926,4 +926,38 @@
       (local.get $ref)
     )
   )
+
+  ;; CHECK:      (func $control-flow-in-set-value-safe-call (type $4) (result i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (block
+  ;; CHECK-NEXT:   (local.set $ref
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (call $helper-i32
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (struct.get $struct 0
+  ;; CHECK-NEXT:   (local.get $ref)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $control-flow-in-set-value-safe-call (result i32)
+    ;; As above, but now the possible control flow is a call. It may throw, but
+    ;; that would go outside of the function, which is fine.
+    (local $ref (ref null $struct))
+    (block $label
+      (struct.set $struct 0
+        (local.tee $ref
+          (struct.new $struct
+            (i32.const 1)
+          )
+        )
+        (call $helper-i32 (i32.const 42))  ;; the if was replaced by this call
+      )
+    )
+    (struct.get $struct 0
+      (local.get $ref)
+    )
+  )
 )
