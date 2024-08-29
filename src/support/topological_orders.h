@@ -39,7 +39,7 @@ struct TopologicalOrders {
   // Takes an adjacency list, where the list for each vertex is a sorted list of
   // the indices of its children, which will appear after it in the order.
   TopologicalOrders(const std::vector<std::vector<size_t>>& graph)
-    : TopologicalOrders(graph, false) {}
+    : TopologicalOrders(graph, InPlace) {}
 
   TopologicalOrders begin() { return TopologicalOrders(graph); }
   TopologicalOrders end() { return TopologicalOrders({}); }
@@ -56,8 +56,9 @@ struct TopologicalOrders {
   TopologicalOrders operator++(int) { return ++(*this); }
 
 protected:
+  enum SelectionMethod { InPlace, MinHeap };
   TopologicalOrders(const std::vector<std::vector<size_t>>& graph,
-                    bool minOrder);
+                    SelectionMethod method);
 
 private:
   // The input graph given as an adjacency list with edges from vertices to
@@ -88,7 +89,7 @@ private:
 
     // Select the next available vertex, decrement in-degrees, and update the
     // sequence of available vertices. Return the Selector for the next vertex.
-    Selector select(TopologicalOrders& ctx, bool minOrder);
+    Selector select(TopologicalOrders& ctx, SelectionMethod method);
 
     // Undo the current selection, move the next selection into the first
     // position and return the new selector for the next position. Returns
@@ -107,7 +108,7 @@ private:
 // A utility for finding a single topological order of a graph.
 struct TopologicalSort : private TopologicalOrders {
   TopologicalSort(const std::vector<std::vector<size_t>>& graph)
-    : TopologicalOrders(graph, false) {}
+    : TopologicalOrders(graph) {}
 
   const std::vector<size_t>& operator*() const {
     return TopologicalOrders::operator*();
@@ -119,7 +120,7 @@ struct TopologicalSort : private TopologicalOrders {
 // available next element.
 struct MinTopologicalSort : private TopologicalOrders {
   MinTopologicalSort(const std::vector<std::vector<size_t>>& graph)
-    : TopologicalOrders(graph, true) {}
+    : TopologicalOrders(graph, MinHeap) {}
 
   const std::vector<size_t>& operator*() const {
     return TopologicalOrders::operator*();

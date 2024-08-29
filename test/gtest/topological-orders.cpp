@@ -123,6 +123,7 @@ TEST(MinTopologicalSortTest, Reversed) {
 TEST(MinTopologicalSortTest, OneBeforeZero) {
   Graph graph(3);
   graph[1].push_back(0);
+  // 2 last because it is greater than 1 and 0
   std::vector<size_t> expected{1, 0, 2};
   EXPECT_EQ(*MinTopologicalSort(graph), expected);
 }
@@ -130,6 +131,7 @@ TEST(MinTopologicalSortTest, OneBeforeZero) {
 TEST(MinTopologicalSortTest, TwoBeforeOne) {
   Graph graph(3);
   graph[2].push_back(1);
+  // 0 first because it is less than 2 and 1
   std::vector<size_t> expected{0, 2, 1};
   EXPECT_EQ(*MinTopologicalSort(graph), expected);
 }
@@ -137,6 +139,7 @@ TEST(MinTopologicalSortTest, TwoBeforeOne) {
 TEST(MinTopologicalSortTest, TwoBeforeZero) {
   Graph graph(3);
   graph[2].push_back(0);
+  // 1 first because it is less than 2 and zero is not eligible.
   std::vector<size_t> expected{1, 2, 0};
   EXPECT_EQ(*MinTopologicalSort(graph), expected);
 }

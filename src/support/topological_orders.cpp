@@ -23,10 +23,10 @@ namespace wasm {
 
 TopologicalOrders::Selector
 TopologicalOrders::Selector::select(TopologicalOrders& ctx,
-                                    bool minOrder = false) {
+                                    SelectionMethod method = InPlace) {
   assert(count >= 1);
   assert(start + count <= ctx.buf.size());
-  if (minOrder) {
+  if (method == MinHeap) {
     ctx.buf[start] = ctx.popChoice();
   }
   auto selection = ctx.buf[start];
@@ -38,7 +38,7 @@ TopologicalOrders::Selector::select(TopologicalOrders& ctx,
   for (auto child : ctx.graph[selection]) {
     assert(ctx.indegrees[child] > 0);
     if (--ctx.indegrees[child] == 0) {
-      if (minOrder) {
+      if (method == MinHeap) {
         ctx.pushChoice(child);
       } else {
         ctx.buf[next.start + next.count] = child;
@@ -79,7 +79,7 @@ TopologicalOrders::Selector::advance(TopologicalOrders& ctx) {
 }
 
 TopologicalOrders::TopologicalOrders(
-  const std::vector<std::vector<size_t>>& graph, bool minOrder)
+  const std::vector<std::vector<size_t>>& graph, SelectionMethod method)
   : graph(graph), indegrees(graph.size()), buf(graph.size()) {
   if (graph.size() == 0) {
     return;
@@ -96,7 +96,7 @@ TopologicalOrders::TopologicalOrders(
   auto& first = selectors.back();
   for (size_t i = 0; i < graph.size(); ++i) {
     if (indegrees[i] == 0) {
-      if (minOrder) {
+      if (method == MinHeap) {
         pushChoice(i);
       } else {
         buf[first.count] = i;
@@ -106,9 +106,9 @@ TopologicalOrders::TopologicalOrders(
   }
   // Initialize the full stack of selectors.
   while (selectors.size() < graph.size()) {
-    selectors.push_back(selectors.back().select(*this, minOrder));
+    selectors.push_back(selectors.back().select(*this, method));
   }
-  selectors.back().select(*this, minOrder);
+  selectors.back().select(*this, method);
 }
 
 TopologicalOrders& TopologicalOrders::operator++() {
