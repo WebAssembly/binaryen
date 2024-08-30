@@ -22,11 +22,10 @@
 namespace wasm {
 
 TopologicalOrders::Selector
-TopologicalOrders::Selector::select(TopologicalOrders& ctx,
-                                    SelectionMethod method = InPlace) {
+TopologicalOrders::Selector::select(TopologicalOrders& ctx) {
   assert(count >= 1);
   assert(start + count <= ctx.buf.size());
-  if (method == MinHeap) {
+  if (ctx.cmp) {
     ctx.buf[start] = ctx.popChoice();
   }
   auto selection = ctx.buf[start];
@@ -38,7 +37,7 @@ TopologicalOrders::Selector::select(TopologicalOrders& ctx,
   for (auto child : ctx.graph[selection]) {
     assert(ctx.indegrees[child] > 0);
     if (--ctx.indegrees[child] == 0) {
-      if (method == MinHeap) {
+      if (ctx.cmp) {
         ctx.pushChoice(child);
       } else {
         ctx.buf[next.start + next.count] = child;
@@ -78,8 +77,9 @@ TopologicalOrders::Selector::advance(TopologicalOrders& ctx) {
   return select(ctx);
 }
 
-TopologicalOrders::TopologicalOrders(const Graph& graph, SelectionMethod method)
-  : graph(graph), indegrees(graph.size()), buf(graph.size()) {
+TopologicalOrders::TopologicalOrders(const Graph& graph,
+                                     std::function<bool(size_t, size_t)> cmp)
+  : graph(graph), indegrees(graph.size()), buf(graph.size()), cmp(cmp) {
   if (graph.size() == 0) {
     return;
   }
@@ -95,7 +95,7 @@ TopologicalOrders::TopologicalOrders(const Graph& graph, SelectionMethod method)
   auto& first = selectors.back();
   for (size_t i = 0; i < graph.size(); ++i) {
     if (indegrees[i] == 0) {
-      if (method == MinHeap) {
+      if (cmp) {
         pushChoice(i);
       } else {
         buf[first.count] = i;
@@ -105,9 +105,9 @@ TopologicalOrders::TopologicalOrders(const Graph& graph, SelectionMethod method)
   }
   // Initialize the full stack of selectors.
   while (selectors.size() < graph.size()) {
-    selectors.push_back(selectors.back().select(*this, method));
+    selectors.push_back(selectors.back().select(*this));
   }
-  selectors.back().select(*this, method);
+  selectors.back().select(*this);
 }
 
 TopologicalOrders& TopologicalOrders::operator++() {
@@ -134,11 +134,15 @@ TopologicalOrders& TopologicalOrders::operator++() {
 
 void TopologicalOrders::pushChoice(size_t choice) {
   choiceHeap.push_back(choice);
-  std::push_heap(choiceHeap.begin(), choiceHeap.end(), std::greater<size_t>{});
+  std::push_heap(choiceHeap.begin(), choiceHeap.end(), [&](size_t a, size_t b) {
+    return cmp(b, a);
+  });
 }
 
 size_t TopologicalOrders::popChoice() {
-  std::pop_heap(choiceHeap.begin(), choiceHeap.end(), std::greater<size_t>{});
+  std::pop_heap(choiceHeap.begin(), choiceHeap.end(), [&](size_t a, size_t b) {
+    return cmp(b, a);
+  });
   auto choice = choiceHeap.back();
   choiceHeap.pop_back();
   return choice;
@@ -147,11 +151,12 @@ size_t TopologicalOrders::popChoice() {
 namespace TopologicalSort {
 
 std::vector<size_t> sort(const Graph& graph) {
-  return *TopologicalOrders(graph, TopologicalOrders::InPlace);
+  return *TopologicalOrders(graph);
 }
 
-std::vector<size_t> minSort(const Graph& graph) {
-  return *TopologicalOrders(graph, TopologicalOrders::MinHeap);
+std::vector<size_t> minSort(const Graph& graph,
+                            std::function<bool(size_t, size_t)> cmp) {
+  return *TopologicalOrders(graph, cmp);
 }
 
 } // namespace TopologicalSort

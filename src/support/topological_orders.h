@@ -19,6 +19,7 @@
 
 #include <cassert>
 #include <cstddef>
+#include <functional>
 #include <optional>
 #include <type_traits>
 #include <unordered_map>
@@ -34,15 +35,10 @@ using Graph = std::vector<std::vector<size_t>>;
 // Return a topological sort of the vertices in the given adjacency graph.
 std::vector<size_t> sort(const Graph& graph);
 
-// Return the topological sort of the vertices in the given adjacency graph that
-// is closest to their original order. Implemented using a min-heap internally.
-std::vector<size_t> minSort(const Graph& graph);
-
 // A utility that finds a topological sort of a graph with arbitrary element
 // types. The provided iterators must be to pairs of elements and collections of
 // their children.
-template<typename It, std::vector<size_t> (*TopoSort)(const Graph&) = sort>
-decltype(auto) sortOf(It begin, It end) {
+template<typename It> decltype(auto) sortOf(It begin, It end) {
   using T = std::remove_cv_t<typename It::value_type::first_type>;
   std::unordered_map<T, size_t> indices;
   std::vector<T> elements;
@@ -64,18 +60,20 @@ decltype(auto) sortOf(It begin, It end) {
   // Compute the topological order and convert back to original elements.
   std::vector<T> order;
   order.reserve(elements.size());
-  auto indexOrder = TopoSort(indexGraph);
-  for (auto i : indexOrder) {
+  for (auto i : sort(indexGraph)) {
     order.emplace_back(std::move(elements[i]));
   }
   return order;
 }
 
-// Find the topological sort of a graph with arbitrary element types that is
-// closest to their original order.
-template<typename It> decltype(auto) minSortOf(It begin, It end) {
-  return sortOf<It, minSort>(begin, end);
-}
+// Return the topological sort of the vertices in the given adjacency graph that
+// is lexicographically minimal with respect to the provided comparator.
+// Implemented using a min-heap internally.
+std::vector<size_t> minSort(
+  const Graph& graph,
+  std::function<bool(size_t, size_t)> cmp = [](size_t a, size_t b) {
+    return a < b;
+  });
 
 } // namespace TopologicalSort
 
@@ -93,7 +91,7 @@ struct TopologicalOrders {
 
   // Takes an adjacency list, where the list for each vertex is a sorted list of
   // the indices of its children, which will appear after it in the order.
-  TopologicalOrders(const Graph& graph) : TopologicalOrders(graph, InPlace) {}
+  TopologicalOrders(const Graph& graph) : TopologicalOrders(graph, {}) {}
 
   TopologicalOrders begin() { return TopologicalOrders(graph); }
   TopologicalOrders end() { return TopologicalOrders({}); }
@@ -110,8 +108,8 @@ struct TopologicalOrders {
   TopologicalOrders operator++(int) { return ++(*this); }
 
 private:
-  enum SelectionMethod { InPlace, MinHeap };
-  TopologicalOrders(const Graph& graph, SelectionMethod method);
+  TopologicalOrders(const Graph& graph,
+                    std::function<bool(size_t, size_t)> cmp);
 
   // The input graph given as an adjacency list with edges from vertices to
   // their dependent children.
@@ -124,9 +122,13 @@ private:
   // sequence of selected vertices followed by a sequence of possible choices
   // for the next vertex.
   std::vector<size_t> buf;
-  // When we are finding the minimal topological order, store the possible
+  // When we are finding a minimal topological order, store the possible
   // choices in this separate min-heap instead of directly in `buf`.
   std::vector<size_t> choiceHeap;
+  // When we are finding a minimal topological order, use this function to
+  // compare possible choices. Empty iff we are not finding a minimal
+  // topological order.
+  std::function<bool(size_t, size_t)> cmp;
 
   // The state for tracking the possible choices for a single vertex in the
   // output order.
@@ -141,7 +143,7 @@ private:
 
     // Select the next available vertex, decrement in-degrees, and update the
     // sequence of available vertices. Return the Selector for the next vertex.
-    Selector select(TopologicalOrders& ctx, SelectionMethod method);
+    Selector select(TopologicalOrders& ctx);
 
     // Undo the current selection, move the next selection into the first
     // position and return the new selector for the next position. Returns
@@ -156,8 +158,8 @@ private:
   // Empty if we've already seen every possible ordering.
   std::vector<Selector> selectors;
 
-  friend std::vector<size_t> TopologicalSort::sort(const Graph&);
-  friend std::vector<size_t> TopologicalSort::minSort(const Graph&);
+  friend std::vector<size_t>
+  TopologicalSort::minSort(const Graph&, std::function<bool(size_t, size_t)>);
 };
 
 } // namespace wasm
