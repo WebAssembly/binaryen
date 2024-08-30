@@ -78,8 +78,7 @@ TopologicalOrders::Selector::advance(TopologicalOrders& ctx) {
   return select(ctx);
 }
 
-TopologicalOrders::TopologicalOrders(
-  const std::vector<std::vector<size_t>>& graph, SelectionMethod method)
+TopologicalOrders::TopologicalOrders(const Graph& graph, SelectionMethod method)
   : graph(graph), indegrees(graph.size()), buf(graph.size()) {
   if (graph.size() == 0) {
     return;
@@ -144,5 +143,17 @@ size_t TopologicalOrders::popChoice() {
   choiceHeap.pop_back();
   return choice;
 }
+
+namespace TopologicalSort {
+
+std::vector<size_t> sort(const Graph& graph) {
+  return *TopologicalOrders(graph, TopologicalOrders::InPlace);
+}
+
+std::vector<size_t> minSort(const Graph& graph) {
+  return *TopologicalOrders(graph, TopologicalOrders::MinHeap);
+}
+
+} // namespace TopologicalSort
 
 } // namespace wasm
