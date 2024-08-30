@@ -10,11 +10,7 @@
 ;; RUN: wasm-opt %s -all -S -o - | wasm-opt -all -S -o - | filecheck %s
 
 (module
- ;; CHECK:      (type $0 (func (param arrayref) (result i32)))
-
  ;; CHECK:      (type $byte-array (array (mut i8)))
- ;; ROUNDTRIP:      (type $0 (func (param arrayref) (result i32)))
-
  ;; ROUNDTRIP:      (type $byte-array (array (mut i8)))
  (type $byte-array (array (mut i8)))
  ;; CHECK:      (type $func-array (array (mut funcref)))
@@ -24,6 +20,8 @@
  (data "hello")
  (elem func $len $impossible-len $unreachable-len)
 
+
+ ;; CHECK:      (type $2 (func (param arrayref) (result i32)))
 
  ;; CHECK:      (type $3 (func (param (ref array)) (result i32)))
 
@@ -42,6 +40,8 @@
  ;; CHECK-NEXT:   (local.get $a)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
+ ;; ROUNDTRIP:      (type $2 (func (param arrayref) (result i32)))
+
  ;; ROUNDTRIP:      (type $3 (func (param (ref array)) (result i32)))
 
  ;; ROUNDTRIP:      (type $4 (func (param nullref) (result i32)))
@@ -81,12 +81,12 @@
   )
  )
 
- ;; CHECK:      (func $unreachable-len (type $0) (param $a arrayref) (result i32)
+ ;; CHECK:      (func $unreachable-len (type $2) (param $a arrayref) (result i32)
  ;; CHECK-NEXT:  (array.len
  ;; CHECK-NEXT:   (unreachable)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; ROUNDTRIP:      (func $unreachable-len (type $0) (param $a arrayref) (result i32)
+ ;; ROUNDTRIP:      (func $unreachable-len (type $2) (param $a arrayref) (result i32)
  ;; ROUNDTRIP-NEXT:  (unreachable)
  ;; ROUNDTRIP-NEXT: )
  (func $unreachable-len (param $a arrayref) (result i32)
@@ -95,12 +95,12 @@
   )
  )
 
- ;; CHECK:      (func $unannotated-len (type $0) (param $a arrayref) (result i32)
+ ;; CHECK:      (func $unannotated-len (type $2) (param $a arrayref) (result i32)
  ;; CHECK-NEXT:  (array.len
  ;; CHECK-NEXT:   (local.get $a)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- ;; ROUNDTRIP:      (func $unannotated-len (type $0) (param $a arrayref) (result i32)
+ ;; ROUNDTRIP:      (func $unannotated-len (type $2) (param $a arrayref) (result i32)
  ;; ROUNDTRIP-NEXT:  (array.len
  ;; ROUNDTRIP-NEXT:   (local.get $a)
  ;; ROUNDTRIP-NEXT:  )

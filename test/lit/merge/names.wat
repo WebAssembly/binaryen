@@ -6,9 +6,9 @@
 
    ;; CHECK:      (type $t (struct (field $a i32) (field $b i32)))
 
-   ;; CHECK:      (type $2 (func (param (ref $t))))
-
    ;; CHECK:      (type $u (struct (field $c i64) (field $d i32)))
+
+   ;; CHECK:      (type $3 (func (param (ref $t))))
 
    ;; CHECK:      (type $4 (func (param (ref $u))))
 
@@ -120,7 +120,7 @@
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $2 (type $2) (param $x (ref $t))
+;; CHECK:      (func $2 (type $3) (param $x (ref $t))
 ;; CHECK-NEXT:  (nop)
 ;; CHECK-NEXT: )
 

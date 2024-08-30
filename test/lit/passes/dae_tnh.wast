@@ -3,14 +3,14 @@
 ;; RUN: foreach %s %t wasm-opt --dae --all-features -tnh -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $0 (func))
-
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct (field i32))))
 
+  ;; CHECK:      (type $1 (func))
+
   ;; CHECK:      (type $2 (func (param (ref null $struct))))
 
-  ;; CHECK:      (func $target (type $0)
+  ;; CHECK:      (func $target (type $1)
   ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )

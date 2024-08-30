@@ -1978,17 +1978,17 @@
 
 ;; Control flow around calls.
 (module
-  ;; CHECK:      (type $0 (func))
-
   ;; CHECK:      (type $A (sub (struct)))
   (type $A (sub (struct)))
+
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
 
   ;; CHECK:      (type $3 (func (param (ref null $A))))
 
-  ;; CHECK:      (import "a" "b" (func $import-throw (type $0)))
+  ;; CHECK:      (import "a" "b" (func $import-throw (type $1)))
   (import "a" "b" (func $import-throw))
 
   ;; CHECK:      (export "a" (func $caller))
@@ -2013,7 +2013,7 @@
     )
   )
 
-  ;; CHECK:      (func $caller (type $0)
+  ;; CHECK:      (func $caller (type $1)
   ;; CHECK-NEXT:  (call $called
   ;; CHECK-NEXT:   (struct.new_default $B)
   ;; CHECK-NEXT:  )
