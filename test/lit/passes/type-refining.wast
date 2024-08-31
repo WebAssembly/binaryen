@@ -457,10 +457,10 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $A (sub (struct (field (ref $Y)))))
 
-    ;; CHECK:       (type $B (sub $A (struct (field (ref $Y)))))
-
     ;; CHECK:       (type $X (sub (struct)))
     (type $X (sub (struct)))
+
+    ;; CHECK:       (type $B (sub $A (struct (field (ref $Y)))))
 
     ;; CHECK:       (type $Y (sub $X (struct)))
     (type $Y (sub $X (struct)))
@@ -822,10 +822,10 @@
   ;; CHECK-NEXT:  (type $Root-Inner (sub (struct)))
   (type $Root-Inner (sub (struct)))
 
+  ;; CHECK:       (type $Root-Outer (sub (struct (field (ref $Leaf2-Inner)))))
+
   ;; CHECK:       (type $Leaf1-Inner (sub $Root-Inner (struct (field i32))))
   (type $Leaf1-Inner (sub $Root-Inner (struct (field i32))))
-
-  ;; CHECK:       (type $Root-Outer (sub (struct (field (ref $Leaf2-Inner)))))
 
   ;; CHECK:       (type $Leaf1-Outer (sub $Root-Outer (struct (field (ref $Leaf2-Inner)))))
 

@@ -36,7 +36,7 @@
 #include "support/colors.h"
 #include "support/file.h"
 #include "support/insert_ordered.h"
-#include "support/old_topological_sort.h"
+#include "support/topological_sort.h"
 #include "support/small_set.h"
 #include "support/string.h"
 #include "tool-options.h"
@@ -609,9 +609,9 @@ private:
     Builder builder(*wasm);
 
     // First, find what constraints we have on the ordering of the globals. We
-    // will build up a map of each global to the globals it must be after.
-    using MustBeAfter = InsertOrderedMap<Name, InsertOrderedSet<Name>>;
-    MustBeAfter mustBeAfter;
+    // will build up a map of each global to the globals it must be before.
+    using MustBeBefore = InsertOrderedMap<Name, InsertOrderedSet<Name>>;
+    MustBeBefore mustBeBefore;
 
     for (auto& global : wasm->globals) {
       if (!global->init) {
@@ -672,31 +672,12 @@ private:
 
       // Any global.gets that cannot be fixed up are constraints.
       for (auto* get : scanner.unfixableGets) {
-        mustBeAfter[global->name].insert(get->name);
+        mustBeBefore[global->name];
+        mustBeBefore[get->name].insert(global->name);
       }
     }
 
-    if (!mustBeAfter.empty()) {
-      // We found constraints that require reordering, so do so.
-      struct MustBeAfterSort : OldTopologicalSort<Name, MustBeAfterSort> {
-        MustBeAfter& mustBeAfter;
-
-        MustBeAfterSort(MustBeAfter& mustBeAfter) : mustBeAfter(mustBeAfter) {
-          for (auto& [global, _] : mustBeAfter) {
-            push(global);
-          }
-        }
-
-        void pushPredecessors(Name global) {
-          auto iter = mustBeAfter.find(global);
-          if (iter != mustBeAfter.end()) {
-            for (auto other : iter->second) {
-              push(other);
-            }
-          }
-        }
-      };
-
+    if (!mustBeBefore.empty()) {
       auto oldGlobals = std::move(wasm->globals);
       // After clearing the globals vector, clear the map as well.
       wasm->updateMaps();
@@ -706,7 +687,8 @@ private:
         globalIndexes[oldGlobals[i]->name] = i;
       }
       // Add the globals that had an important ordering, in the right order.
-      for (auto global : MustBeAfterSort(mustBeAfter)) {
+      for (auto global :
+           TopologicalSort::sortOf(mustBeBefore.begin(), mustBeBefore.end())) {
         wasm->addGlobal(std::move(oldGlobals[globalIndexes[global]]));
       }
       // Add all other globals after them.

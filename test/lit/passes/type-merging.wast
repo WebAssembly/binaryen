@@ -234,10 +234,10 @@
 
 (module
   (rec
-    ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $A (sub (struct (field (ref null $A)))))
     (type $A (sub (struct    (ref null $X))))
     (type $B (sub $A (struct (ref null $Y))))
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $X (sub (struct (field (ref null $X)))))
     (type $X (sub (struct    (ref null $A))))
     (type $Y (sub $X (struct (ref null $B))))
   )
@@ -245,10 +245,10 @@
   ;; CHECK:       (type $1 (func))
 
   ;; CHECK:      (func $foo (type $1)
-  ;; CHECK-NEXT:  (local $a (ref null $A))
-  ;; CHECK-NEXT:  (local $b (ref null $A))
-  ;; CHECK-NEXT:  (local $x (ref null $A))
-  ;; CHECK-NEXT:  (local $y (ref null $A))
+  ;; CHECK-NEXT:  (local $a (ref null $X))
+  ;; CHECK-NEXT:  (local $b (ref null $X))
+  ;; CHECK-NEXT:  (local $x (ref null $X))
+  ;; CHECK-NEXT:  (local $y (ref null $X))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
@@ -263,21 +263,21 @@
 
 (module
   (rec
-    (type $A (struct (ref null $X) i32))
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $B (struct (field (ref null $Y)) (field i32)))
+    ;; CHECK-NEXT:  (type $A (struct (field (ref null $X)) (field i32)))
+    (type $A (struct (ref null $X) i32))
     (type $B (struct (ref null $Y) i32))
+    ;; CHECK:       (type $X (struct (field (ref null $A)) (field f32)))
     (type $X (struct (ref null $A) f32))
-    ;; CHECK:       (type $Y (struct (field (ref null $B)) (field f32)))
     (type $Y (struct (ref null $B) f32))
   )
   ;; CHECK:       (type $2 (func))
 
   ;; CHECK:      (func $foo (type $2)
-  ;; CHECK-NEXT:  (local $a (ref null $B))
-  ;; CHECK-NEXT:  (local $b (ref null $B))
-  ;; CHECK-NEXT:  (local $x (ref null $Y))
-  ;; CHECK-NEXT:  (local $y (ref null $Y))
+  ;; CHECK-NEXT:  (local $a (ref null $A))
+  ;; CHECK-NEXT:  (local $b (ref null $A))
+  ;; CHECK-NEXT:  (local $x (ref null $X))
+  ;; CHECK-NEXT:  (local $y (ref null $X))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
@@ -293,19 +293,19 @@
 (module
   (rec
     (type $A (struct (ref null $X)))
-    ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $B (struct (field (ref null $B))))
     (type $B (struct (ref null $Y)))
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $X (struct (field (ref null $X))))
     (type $X (struct (ref null $A)))
     (type $Y (struct (ref null $B)))
   )
   ;; CHECK:       (type $1 (func))
 
   ;; CHECK:      (func $foo (type $1)
-  ;; CHECK-NEXT:  (local $a (ref null $B))
-  ;; CHECK-NEXT:  (local $b (ref null $B))
-  ;; CHECK-NEXT:  (local $x (ref null $B))
-  ;; CHECK-NEXT:  (local $y (ref null $B))
+  ;; CHECK-NEXT:  (local $a (ref null $X))
+  ;; CHECK-NEXT:  (local $b (ref null $X))
+  ;; CHECK-NEXT:  (local $x (ref null $X))
+  ;; CHECK-NEXT:  (local $y (ref null $X))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
@@ -495,8 +495,8 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $A (sub (struct (field anyref))))
     (type $A (sub (struct    anyref)))
+    ;; CHECK:       (type $B (sub $A (struct (field eqref))))
     (type $B (sub $A (struct eqref)))
-    ;; CHECK:       (type $C (sub $A (struct (field eqref))))
     (type $C (sub $A (struct eqref)))
   )
 
@@ -504,8 +504,8 @@
 
   ;; CHECK:      (func $foo (type $2)
   ;; CHECK-NEXT:  (local $a (ref null $A))
-  ;; CHECK-NEXT:  (local $b (ref null $C))
-  ;; CHECK-NEXT:  (local $c (ref null $C))
+  ;; CHECK-NEXT:  (local $b (ref null $B))
+  ;; CHECK-NEXT:  (local $c (ref null $B))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
@@ -524,8 +524,8 @@
     (type $A (sub (struct    anyref)))
     (type $B (sub $A (struct anyref)))
     (type $C (sub $A (struct anyref)))
+    ;; CHECK:       (type $D (sub $A (struct (field eqref))))
     (type $D (sub $B (struct eqref)))
-    ;; CHECK:       (type $E (sub $A (struct (field eqref))))
     (type $E (sub $C (struct eqref)))
   )
 
@@ -535,8 +535,8 @@
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $b (ref null $A))
   ;; CHECK-NEXT:  (local $c (ref null $A))
-  ;; CHECK-NEXT:  (local $d (ref null $E))
-  ;; CHECK-NEXT:  (local $e (ref null $E))
+  ;; CHECK-NEXT:  (local $d (ref null $D))
+  ;; CHECK-NEXT:  (local $e (ref null $D))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo
@@ -561,18 +561,18 @@
     (type $A' (sub $A (struct)))
 
     ;; These siblings will be merged only after $a and $a' are merged.
+    ;; CHECK:       (type $B (sub (struct (field (ref $A)))))
     (type $B (sub (struct (ref $A))))
-    ;; CHECK:       (type $B' (sub (struct (field (ref $A)))))
     (type $B' (sub (struct (ref $A'))))
 
     ;; These will get merged only after $b and $b' are merged.
-    ;; CHECK:       (type $C (sub $B' (struct (field (ref $A)) (field i32))))
+    ;; CHECK:       (type $C (sub $B (struct (field (ref $A)) (field i32))))
     (type $C (sub $B (struct (ref $A) i32)))
     (type $C' (sub $B' (struct (ref $A') i32)))
 
     ;; These will get merged only after $c and $c' are merged.
+    ;; CHECK:       (type $D (sub $C (struct (field (ref $A)) (field i32) (field i32))))
     (type $D (sub $C (struct (ref $A) i32 i32)))
-    ;; CHECK:       (type $D' (sub $C (struct (field (ref $A)) (field i32) (field i32))))
     (type $D' (sub $C' (struct (ref $A') i32 i32)))
   )
 
@@ -581,12 +581,12 @@
   ;; CHECK:      (func $foo (type $4)
   ;; CHECK-NEXT:  (local $a (ref null $A))
   ;; CHECK-NEXT:  (local $a' (ref null $A))
-  ;; CHECK-NEXT:  (local $b (ref null $B'))
-  ;; CHECK-NEXT:  (local $b' (ref null $B'))
+  ;; CHECK-NEXT:  (local $b (ref null $B))
+  ;; CHECK-NEXT:  (local $b' (ref null $B))
   ;; CHECK-NEXT:  (local $c (ref null $C))
   ;; CHECK-NEXT:  (local $c' (ref null $C))
-  ;; CHECK-NEXT:  (local $d (ref null $D'))
-  ;; CHECK-NEXT:  (local $d' (ref null $D'))
+  ;; CHECK-NEXT:  (local $d (ref null $D))
+  ;; CHECK-NEXT:  (local $d' (ref null $D))
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $foo

@@ -237,10 +237,11 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $unrelated (sub (func)))
+  ;; CHECK-NEXT:  (type $top (sub (func)))
+
+  ;; CHECK:       (type $unrelated (sub (func)))
   (type $unrelated (sub (func)))
 
-  ;; CHECK:       (type $top (sub (func)))
   (type $top (sub (func)))
   ;; CHECK:       (type $bot (sub $top (func)))
   (type $bot (sub $top (func)))
@@ -272,9 +273,10 @@
 
 (module
  ;; CHECK:      (rec
- ;; CHECK-NEXT:  (type $top (sub (struct)))
+ ;; CHECK-NEXT:  (type $mid (sub (struct)))
+
+ ;; CHECK:       (type $top (sub (struct)))
  (type $top (sub (struct)))
- ;; CHECK:       (type $mid (sub (struct)))
  (type $mid (sub $top (struct)))
  ;; CHECK:       (type $bot (sub $mid (struct)))
  (type $bot (sub $mid (struct)))
@@ -480,21 +482,25 @@
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $topC (sub (struct)))
   (type $topC (sub (struct)))
+  ;; CHECK:       (type $topB (sub (struct (field (ref null $topC)))))
+
+  ;; CHECK:       (type $topA (sub (struct (field (ref null $topB)))))
+
   ;; CHECK:       (type $midC (sub $topC (struct)))
   (type $midC (sub $topC (struct)))
+  ;; CHECK:       (type $midB (sub $topB (struct (field (ref null $botC)))))
+
+  ;; CHECK:       (type $midA (sub $topA (struct (field (ref null $botB)))))
+
   ;; CHECK:       (type $botC (sub $midC (struct)))
   (type $botC (sub $midC (struct)))
 
-  ;; CHECK:       (type $topB (sub (struct (field (ref null $topC)))))
   (type $topB (sub (struct (ref null $topC))))
-  ;; CHECK:       (type $midB (sub $topB (struct (field (ref null $botC)))))
   (type $midB (sub $topB (struct (ref null $botC))))
   ;; CHECK:       (type $botB (sub $midB (struct (field (ref null $botC)))))
   (type $botB (sub $midB (struct (ref null $botC))))
 
-  ;; CHECK:       (type $topA (sub (struct (field (ref null $topB)))))
   (type $topA (sub (struct (ref null $topB))))
-  ;; CHECK:       (type $midA (sub $topA (struct (field (ref null $botB)))))
   (type $midA (sub $topA (struct (ref null $botB))))
   ;; CHECK:       (type $botA (sub $midA (struct (field (ref null $botB)))))
   (type $botA (sub $midA (struct (ref null $botB))))

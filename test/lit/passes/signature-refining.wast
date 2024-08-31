@@ -1068,10 +1068,10 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $0 (func (param (ref $B))))
-
-  ;; CHECK:       (type $A (sub (struct)))
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
   (type $A (sub (struct)))
+
+  ;; CHECK:       (type $1 (func (param (ref $B))))
 
   ;; CHECK:       (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
@@ -1108,7 +1108,7 @@
   )
  )
 
- ;; CHECK:      (func $target (type $0) (param $x (ref $B))
+ ;; CHECK:      (func $target (type $1) (param $x (ref $B))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $target (param $x (ref $A))

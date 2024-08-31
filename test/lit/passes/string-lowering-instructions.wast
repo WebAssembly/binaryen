@@ -13,7 +13,9 @@
     ;; CHECK:      (type $3 (func (param externref externref) (result i32)))
 
     ;; CHECK:      (rec
-    ;; CHECK-NEXT:  (type $4 (func (param externref)))
+    ;; CHECK-NEXT:  (type $array16-open (sub (array (mut i16))))
+
+    ;; CHECK:       (type $5 (func (param externref)))
 
     ;; CHECK:       (type $struct-of-string (struct (field externref) (field i32) (field anyref)))
     (type $struct-of-string (struct (field stringref) (field i32) (field anyref)))
@@ -27,7 +29,6 @@
     ;; CHECK:       (type $array32 (array (mut i32)))
     (type $array32 (array (mut i32)))
 
-    ;; CHECK:       (type $array16-open (sub (array (mut i16))))
     (type $array16-open (sub (array (mut i16))))
 
     ;; CHECK:       (type $array16-child (sub $array16-open (array (mut i16))))
@@ -398,7 +399,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-param-null (type $4) (param $str externref)
+  ;; CHECK:      (func $call-param-null (type $5) (param $str externref)
   ;; CHECK-NEXT:  (call $call-param-null
   ;; CHECK-NEXT:   (ref.null noextern)
   ;; CHECK-NEXT:  )

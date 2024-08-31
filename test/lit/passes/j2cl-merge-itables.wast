@@ -11,19 +11,20 @@
       (field $vtable (ref $Object.vtable))
       (field $itable (ref $Object.itable)))))
 
+    ;; CHECK:       (type $Object.vtable (sub (struct (field structref))))
+
     ;; CHECK:       (type $SubObject (sub $Object (struct (field $vtable (ref $SubObject.vtable)) (field $itable (ref $Object.itable)))))
     (type $SubObject (sub $Object (struct
       (field $vtable (ref $SubObject.vtable))
       (field $itable (ref $Object.itable)))))
 
-    ;; CHECK:       (type $2 (func))
+    ;; CHECK:       (type $3 (func))
 
     ;; CHECK:       (type $function (func))
     (type $function (func))
 
     ;; The $Object.itable field (a structref) will be added as a field to
     ;; the beginning of this vtable.
-    ;; CHECK:       (type $Object.vtable (sub (struct (field structref))))
     (type $Object.vtable (sub (struct)))
 
     ;; The $Object.itable field (a structref) will be added as a field to
@@ -70,7 +71,7 @@
     (type $function)
   )
 
-  ;; CHECK:      (func $usages (type $2)
+  ;; CHECK:      (func $usages (type $3)
   ;; CHECK-NEXT:  (local $o (ref null $SubObject))
   ;; CHECK-NEXT:  (local.set $o
   ;; CHECK-NEXT:   (struct.new $SubObject
@@ -123,17 +124,20 @@
       (field $vtable (ref $Object.vtable))
       (field $itable (ref $Object.itable)))))
 
+    ;; CHECK:       (type $Object.itable (sub (struct (field structref))))
+
+    ;; CHECK:       (type $Object.vtable (sub (struct (field structref))))
+
     ;; CHECK:       (type $SubObject (sub $Object (struct (field $vtable (ref $SubObject.vtable)) (field $itable (ref $SubObject.itable)))))
     (type $SubObject (sub $Object (struct
       (field $vtable (ref $SubObject.vtable))
       (field $itable (ref $SubObject.itable)))))
 
-    ;; CHECK:       (type $2 (func))
+    ;; CHECK:       (type $4 (func))
 
     ;; CHECK:       (type $function (func))
     (type $function (func))
 
-    ;; CHECK:       (type $Object.itable (sub (struct (field structref))))
     (type $Object.itable (sub (struct
 		  (field (ref null struct)))))
 
@@ -143,7 +147,6 @@
 
     ;; The $Object.itable field (a structref) will be added as a field to
     ;; the beginning of this vtable.
-    ;; CHECK:       (type $Object.vtable (sub (struct (field structref))))
     (type $Object.vtable (sub (struct)))
 
     ;; The $SubObject.itable field (a structref) will be added as a field to
@@ -185,7 +188,7 @@
     (type $function)
   )
 
-  ;; CHECK:      (func $usages (type $2)
+  ;; CHECK:      (func $usages (type $4)
   ;; CHECK-NEXT:  (local $o (ref null $SubObject))
   ;; CHECK-NEXT:  (local.set $o
   ;; CHECK-NEXT:   (struct.new $SubObject

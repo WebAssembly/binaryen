@@ -1,15 +1,15 @@
 (module
  (type $struct (sub (struct (field i32))))
  (type $1 (func (result i32)))
- (global $ctor-eval$global_4 (ref $struct) (struct.new $struct
-  (i32.const 9999)
- ))
- (global $global3 (ref $struct) (global.get $ctor-eval$global_4))
- (global $global2 (mut (ref null $struct)) (global.get $ctor-eval$global_4))
  (global $ctor-eval$global (ref $struct) (struct.new $struct
   (i32.const 1337)
  ))
+ (global $ctor-eval$global_4 (ref $struct) (struct.new $struct
+  (i32.const 9999)
+ ))
  (global $global1 (ref any) (global.get $ctor-eval$global))
+ (global $global2 (mut (ref null $struct)) (global.get $ctor-eval$global_4))
+ (global $global3 (ref $struct) (global.get $ctor-eval$global_4))
  (export "keepalive" (func $keepalive))
  (func $keepalive (type $1) (result i32)
   (select

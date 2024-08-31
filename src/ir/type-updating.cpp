@@ -20,7 +20,6 @@
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/utils.h"
-#include "support/topological_sort.h"
 #include "wasm-type-ordering.h"
 #include "wasm-type.h"
 #include "wasm.h"
@@ -40,53 +39,44 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   // world scenario, don't modify public types because we assume that they may
   // be reflected on or used for linking. Figure out where each private type
   // will be located in the builder.
-  //
-  // There are two code paths here: a new one that is used when there are type
-  // indices to preserve and an old one that is used otherwise. The old code
-  // path is kept around to avoid unnecessary changes to test outputs while we
-  // incrementally add --preserve-type-order to tests that could benefit from
-  // it. Once we are done adding --preserve-type-order to tests, we should
-  // remove the old code path here since the new code path is strictly better.
-  if (wasm.typeIndices.size()) {
-    // New code path, currently used only with --preserve-type-order.
-    auto typeInfo = ModuleUtils::collectHeapTypeInfo(
-      wasm,
-      ModuleUtils::TypeInclusion::UsedIRTypes,
-      ModuleUtils::VisibilityHandling::FindVisibility);
+  auto typeInfo = ModuleUtils::collectHeapTypeInfo(
+    wasm,
+    ModuleUtils::TypeInclusion::UsedIRTypes,
+    ModuleUtils::VisibilityHandling::FindVisibility);
 
-    std::unordered_set<HeapType> additionalSet(additionalPrivateTypes.begin(),
-                                               additionalPrivateTypes.end());
+  std::unordered_set<HeapType> additionalSet(additionalPrivateTypes.begin(),
+                                             additionalPrivateTypes.end());
 
-    std::vector<std::pair<HeapType, SmallVector<HeapType, 1>>>
+  std::vector<std::pair<HeapType, SmallVector<HeapType, 1>>>
       privateSupertypes;
-    privateSupertypes.reserve(typeInfo.size());
-    for (auto& [type, info] : typeInfo) {
-      if (info.visibility != ModuleUtils::Visibility::Private &&
-          !additionalSet.count(type)) {
-        continue;
-      }
-      privateSupertypes.push_back({type, {}});
+  privateSupertypes.reserve(typeInfo.size());
+  for (auto& [type, info] : typeInfo) {
+    if (info.visibility != ModuleUtils::Visibility::Private &&
+        !additionalSet.count(type)) {
+      continue;
+    }
+    privateSupertypes.push_back({type, {}});
 
-      if (auto super = getDeclaredSuperType(type)) {
-        auto it = typeInfo.find(*super);
-        // Record the supertype only if it is among the private types.
-        if ((it != typeInfo.end() &&
-             it->second.visibility == ModuleUtils::Visibility::Private) ||
-            additionalSet.count(*super)) {
-          privateSupertypes.back().second.push_back(*super);
-        }
+    if (auto super = getDeclaredSuperType(type)) {
+      auto it = typeInfo.find(*super);
+      // Record the supertype only if it is among the private types.
+      if ((it != typeInfo.end() &&
+           it->second.visibility == ModuleUtils::Visibility::Private) ||
+          additionalSet.count(*super)) {
+        privateSupertypes.back().second.push_back(*super);
       }
     }
+  }
 
-    // Topological sort to have subtypes first. This is the opposite of the
-    // order we need, so the comparison is the opposite of what we ultimately
-    // want.
-    std::vector<HeapType> sorted;
-    if (wasm.typeIndices.empty()) {
-      sorted = TopologicalSort::sortOf(privateSupertypes.begin(),
-                                       privateSupertypes.end());
-    } else {
-      sorted =
+  // Topological sort to have subtypes first. This is the opposite of the
+  // order we need, so the comparison is the opposite of what we ultimately
+  // want.
+  std::vector<HeapType> sorted;
+  if (wasm.typeIndices.empty()) {
+    sorted = TopologicalSort::sortOf(privateSupertypes.begin(),
+                                     privateSupertypes.end());
+  } else {
+    sorted =
         TopologicalSort::minSortOf(privateSupertypes.begin(),
                                    privateSupertypes.end(),
                                    [&](Index a, Index b) {
@@ -111,47 +101,11 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
                                      // have collected the types in.
                                      return a > b;
                                    });
-    }
-    std::reverse(sorted.begin(), sorted.end());
-    Index i = 0;
-    for (auto type : sorted) {
-      typeIndices[type] = i++;
-    }
-  } else {
-    // Old code path.
-
-    auto privateTypes = ModuleUtils::getPrivateHeapTypes(wasm);
-
-    if (!additionalPrivateTypes.empty()) {
-      // Only add additional private types that are not already in the list.
-      std::unordered_set<HeapType> privateTypesSet(privateTypes.begin(),
-                                                   privateTypes.end());
-
-      for (auto t : additionalPrivateTypes) {
-        if (!privateTypesSet.count(t)) {
-          privateTypes.push_back(t);
-          privateTypesSet.insert(t);
-        }
-      }
-    }
-
-    // Topological sort to have supertypes first, but we have to account for the
-    // fact that we may be replacing the supertypes to get the order correct.
-    struct SupertypesFirst
-      : HeapTypeOrdering::SupertypesFirstBase<SupertypesFirst> {
-      GlobalTypeRewriter& parent;
-
-      SupertypesFirst(GlobalTypeRewriter& parent) : parent(parent) {}
-      std::optional<HeapType> getDeclaredSuperType(HeapType type) {
-        return parent.getDeclaredSuperType(type);
-      }
-    };
-
-    SupertypesFirst sortedTypes(*this);
-    Index i = 0;
-    for (auto type : sortedTypes.sort(privateTypes)) {
-      typeIndices[type] = i++;
-    }
+  }
+  std::reverse(sorted.begin(), sorted.end());
+  Index i = 0;
+  for (auto type : sorted) {
+    typeIndices[type] = i++;
   }
 
   if (typeIndices.size() == 0) {
@@ -168,7 +122,7 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   typeBuilder.createRecGroup(0, typeBuilder.size());
 
   // Create the temporary heap types.
-  Index i = 0;
+  i = 0;
   auto map = [&](HeapType type) -> HeapType {
     if (auto it = typeIndices.find(type); it != typeIndices.end()) {
       return typeBuilder[it->second];
