@@ -19,21 +19,7 @@
 // optimized.
 //
 // Embeds itables into vtables to reduce memory usage.
-//
-// 1. Collect all structs that have both vtable and itable fields.
-//   - sanity check that the transformation can be done.
-// 2. For each struct that has a vtable and an itable field:
-//   - prepend all the fields in the itable into the vtable
-//   - modify the initialization of the vtable instances to include
-//     the itable initialization.
-//   - rewrite all accesses to vtable fields to account for the offsets due
-//     to the itable fields.
-// 3. Replace the itable types with the corresponding vtable type in all
-// the code.
-// 4. Rewrite all struct.get of itable fields to use vtable fields instead.
-//
-// The removal of unused itable fields is expected to be done by running gto.
-//
+
 
 #include <unordered_map>
 #include <unordered_set>
@@ -64,15 +50,6 @@ struct StructInfo {
              const HeapType& vtable,
              const HeapType& itable)
     : javaClass(javaClass), itable(itable), vtable(vtable) {}
-
-  void print(std::unordered_map<HeapType, TypeNames> typeNames) {
-    std::cout << "javaClass: " << typeNames[javaClass].name << " ("
-              << javaClass.getID() << ")" << std::endl;
-    std::cout << "vtable: " << typeNames[vtable].name << " (" << vtable.getID()
-              << ")" << std::endl;
-    std::cout << "itable: " << typeNames[itable].name << " (" << itable.getID()
-              << ")" << std::endl;
-  }
 };
 
 struct J2CLItableMerging : public Pass {
@@ -92,7 +69,7 @@ struct J2CLItableMerging : public Pass {
     }
 
     if (!getPassOptions().closedWorld) {
-      Fatal() << "j2cl-optimize-memory requires --closed-world";
+      Fatal() << "--merge-j2cl-itables requires --closed-world";
     }
 
     collectVtableAndItableTypes(*module);
@@ -111,39 +88,45 @@ struct J2CLItableMerging : public Pass {
   // Collects all structs corresponding to Java classes, their vtables and
   // their itables. This is very tied to the way j2cl emits these constructs.
   void collectVtableAndItableTypes(Module& wasm) {
-    const auto emptyItableSize = std::numeric_limits<Index>::max();
+    unsigned long itableSize = 0;
+
     // 1. Collect all structs that correspond that a Java type.
-    unsigned long itableSize = emptyItableSize;
     for (auto tn : wasm.typeNames) {
-      if (!tn.first.isStruct()) {
+      auto heapType = tn.first;
+      auto typeNameInfo = tn.second;
+
+      if (!heapType.isStruct()) {
         continue;
       }
 
-      auto type = tn.first.getStruct();
-      if (tn.second.fieldNames.empty() ||
-          !tn.second.fieldNames[0].equals("vtable")) {
+      auto type = heapType.getStruct();
+      if (typeNameInfo.fieldNames.empty() ||
+          !typeNameInfo.fieldNames[0].equals("vtable")) {
         continue;
       }
-      if (tn.second.fieldNames.size() < 1 ||
-          !tn.second.fieldNames[1].equals("itable")) {
+      if (typeNameInfo.fieldNames.size() < 1 ||
+          !typeNameInfo.fieldNames[1].equals("itable")) {
         continue;
       }
 
       auto vtabletype = wasm.typeNames.find(type.fields[0].type.getHeapType());
       auto itabletype = wasm.typeNames.find(type.fields[1].type.getHeapType());
 
-      auto currentItableSize = itabletype->first.getStruct().fields.size();
-      if (itableSize == emptyItableSize) {
-        itableSize = currentItableSize;
-      }
+      auto structItableSize = itabletype->first.getStruct().fields.size();
 
-      if (itableSize != currentItableSize) {
-        Fatal() << "j2cl-optimize-memory needs to be the first pass to run "
+      if (itableSize !=0 && itableSize != structItableSize) {
+        Fatal() << "--merge-j2cl-itables needs to be the first pass to run "
                 << "on j2cl output. (found itables with different sizes)";
       }
 
+      itableSize = structItableSize;
+
+      // Add a new StructInfo to the list by value so that its memory gets
+      // reclaimed automatically on exit.
       structInfos.push_back(
-        StructInfo(tn.first, vtabletype->first, itabletype->first));
+        StructInfo(heapType, vtabletype->first, itabletype->first));
+      // Point to the StructInfo just added to the list to be able to look it
+      // up by its vtable and itable types.
       structInfoByVtableType[vtabletype->first] = &structInfos.back();
       structInfoByITableType[itabletype->first] = &structInfos.back();
     }
@@ -162,8 +145,8 @@ struct J2CLItableMerging : public Pass {
       }
     }
 
-    if (itableSize == emptyItableSize) {
-      Fatal() << "j2cl-optimize-memory needs to be the first pass to run "
+    if (itableSize == 0) {
+      Fatal() << "--merge-j2cl-itables needs to be the first pass to run "
               << "on j2cl output. (no Java classes found)";
     }
   }
@@ -232,7 +215,7 @@ struct J2CLItableMerging : public Pass {
         }
 
         if (!itableStructNew) {
-          Fatal() << "j2cl-optimize-memory needs to be the first pass to run "
+          Fatal() << "--merge-j2cl-itables needs to be the first pass to run "
                   << "on j2cl output. (itable initializer not found)";
         }
         auto& itableFieldInitializers = itableStructNew->operands;
