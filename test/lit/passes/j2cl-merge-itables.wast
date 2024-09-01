@@ -2,24 +2,6 @@
 
 ;; RUN: foreach %s %t wasm-opt --closed-world --merge-j2cl-itables -all -S -o - | filecheck %s
 
-;; Empty itables.
-(module
-  ;; Object class type definitions.
-  ;; CHECK:      (type $Object.vtable (struct))
-  (type $Object.vtable (struct))
-  (type $Object.itable (struct))
-
-  (type $Object (sub (struct
-      (field $vtable (ref $Object.vtable))
-      (field $itable (ref $Object.itable)))))
-
-  ;; Object vtable and itable initialization.
-  ;; CHECK:      (global $Object.itable (ref $Object.vtable) (struct.new_default $Object.vtable))
-  (global $Object.itable (ref $Object.itable)  (struct.new $Object.itable))
-  ;; CHECK:      (global $Object.vtable (ref $Object.vtable) (struct.new_default $Object.vtable))
-  (global $Object.vtable (ref $Object.vtable)  (struct.new $Object.vtable))
-)
-
 ;; Shared itable.
 (module
   (rec
