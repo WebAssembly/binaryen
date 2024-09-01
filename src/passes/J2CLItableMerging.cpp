@@ -20,7 +20,6 @@
 //
 // Embeds itables into vtables to reduce memory usage.
 
-
 #include <unordered_map>
 #include <unordered_set>
 
@@ -114,7 +113,7 @@ struct J2CLItableMerging : public Pass {
 
       auto structItableSize = itabletype->first.getStruct().fields.size();
 
-      if (itableSize !=0 && itableSize != structItableSize) {
+      if (itableSize != 0 && itableSize != structItableSize) {
         Fatal() << "--merge-j2cl-itables needs to be the first pass to run "
                 << "on j2cl output. (found itables with different sizes)";
       }
