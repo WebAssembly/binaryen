@@ -426,9 +426,6 @@ LocalGraph::LocalGraph(Function* func, Module* module, Mode mode)
 }
 
 LocalGraph::~LocalGraph() {
-  if (flower) {
-    delete flower;
-  }
 }
 
 bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {

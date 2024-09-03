@@ -1037,6 +1037,8 @@ enum ASTNodes {
   I32x4RelaxedTruncF32x4U = 0x102,
   I32x4RelaxedTruncF64x2SZero = 0x103,
   I32x4RelaxedTruncF64x2UZero = 0x104,
+  F16x8RelaxedMadd = 0x14e,
+  F16x8RelaxedNmadd = 0x14f,
   F32x4RelaxedMadd = 0x105,
   F32x4RelaxedNmadd = 0x106,
   F64x2RelaxedMadd = 0x107,
@@ -1077,7 +1079,7 @@ enum ASTNodes {
   F16x8Mul = 0x13f,
   F16x8Div = 0x140,
   F16x8Min = 0x141,
-  F16x8Max = 0xe142,
+  F16x8Max = 0x142,
   F16x8Pmin = 0x143,
   F16x8Pmax = 0x144,
 

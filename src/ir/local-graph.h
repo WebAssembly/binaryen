@@ -147,10 +147,7 @@ private:
   // The internal implementation of the flow analysis used to compute
   // getSetsMap.
   struct LocalGraphFlower;
-  // This could be a unique_ptr, but the forward declaration is not compatible
-  // with that. It could alternatively be a shared_ptr, but that runs into what
-  // seems to be a false positive of clang's (but not gcc's) UBSan.
-  LocalGraphFlower* flower = nullptr;
+  std::unique_ptr<LocalGraphFlower> flower;
 
   // Compute the sets for a get and store them on getSetsMap.
   void computeGetSets(LocalGet* get) const;
