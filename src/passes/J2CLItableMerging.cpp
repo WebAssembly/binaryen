@@ -32,7 +32,7 @@
 //     preserve proper subtyping.
 //   - embed the initialization of itable instances into their corresponding
 //     vtable instances.
-//   - update references to vtable fields (which are offeset by the itable
+//   - update references to vtable fields (which are offset by the itable
 //     size).
 //   - update reference to itable fields to be reference to the fields
 //     introduced in the vtables.
