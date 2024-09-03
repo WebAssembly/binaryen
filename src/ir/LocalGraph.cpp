@@ -23,7 +23,7 @@
 
 namespace wasm {
 
-namespace LocalGraphInternal {
+namespace {
 
 // Information about a basic block.
 struct Info {
@@ -37,23 +37,28 @@ struct Info {
   }
 };
 
+} // anonymous namespace
+
 // flow helper class. flows the gets to their sets
 
-struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
+struct LocalGraph::LocalGraphFlower
+  : public CFGWalker<LocalGraph::LocalGraphFlower,
+                     Visitor<LocalGraph::LocalGraphFlower>,
+                     Info> {
   LocalGraph::GetSetsMap& getSetsMap;
   LocalGraph::Locations& locations;
+  Function* func;
 
-  Flower(LocalGraph::GetSetsMap& getSetsMap,
-         LocalGraph::Locations& locations,
-         Function* func,
-         Module* module)
-    : getSetsMap(getSetsMap), locations(locations) {
+  LocalGraphFlower(LocalGraph::GetSetsMap& getSetsMap,
+                   LocalGraph::Locations& locations,
+                   Function* func,
+                   Module* module)
+    : getSetsMap(getSetsMap), locations(locations), func(func) {
     setFunction(func);
     setModule(module);
     // create the CFG by walking the IR
-    CFGWalker<Flower, Visitor<Flower>, Info>::doWalkFunction(func);
-    // flow gets across blocks
-    flow(func);
+    CFGWalker<LocalGraphFlower, Visitor<LocalGraphFlower>, Info>::
+      doWalkFunction(func);
   }
 
   BasicBlock* makeBasicBlock() { return new BasicBlock(); }
@@ -64,7 +69,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
 
   // cfg traversal work
 
-  static void doVisitLocalGet(Flower* self, Expression** currp) {
+  static void doVisitLocalGet(LocalGraphFlower* self, Expression** currp) {
     auto* curr = (*currp)->cast<LocalGet>();
     // if in unreachable code, skip
     if (!self->currBasicBlock) {
@@ -74,7 +79,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     self->locations[curr] = currp;
   }
 
-  static void doVisitLocalSet(Flower* self, Expression** currp) {
+  static void doVisitLocalSet(LocalGraphFlower* self, Expression** currp) {
     auto* curr = (*currp)->cast<LocalSet>();
     // if in unreachable code, skip
     if (!self->currBasicBlock) {
@@ -85,50 +90,70 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
     self->locations[curr] = currp;
   }
 
-  void flow(Function* func) {
-    // This block struct is optimized for this flow process (Minimal
-    // information, iteration index).
-    struct FlowBlock {
-      // Last Traversed Iteration: This value helps us to find if this block has
-      // been seen while traversing blocks. We compare this value to the current
-      // iteration index in order to determine if we already process this block
-      // in the current iteration. This speeds up the processing compared to
-      // unordered_set or other struct usage. (No need to reset internal values,
-      // lookup into container, ...)
-      size_t lastTraversedIteration;
-      std::vector<Expression*> actions;
-      std::vector<FlowBlock*> in;
-      // Sor each index, the last local.set for it
-      // The unordered_map from BasicBlock.Info is converted into a vector
-      // This speeds up search as there are usually few sets in a block, so just
-      // scanning them linearly is efficient, avoiding hash computations (while
-      // in Info, it's convenient to have a map so we can assign them easily,
-      // where the last one seen overwrites the previous; and, we do that O(1)).
-      std::vector<std::pair<Index, LocalSet*>> lastSets;
-    };
+  // The below class-level items (currentIteration, FlowBlock, etc.) would more
+  // properly belong inside flow(), as they are only needed there, but flow() is
+  // split up into two parts in service of a future user of only part of flow().
 
+  // Each time we flow a get (or set of gets) to find its sets, we mark a
+  // different iteration number. This lets us memoize the current iteration on
+  // blocks as we pass them, allowing us to quickly skip them in that iteration
+  // (another option would be a set of blocks we've visited, but storing the
+  // iteration number on blocks is faster since we are already processing that
+  // FlowBlock already, meaning it is likely in cache, and avoids a set lookup).
+  size_t currentIteration = 0;
+
+  // This block struct is optimized for this flow process (Minimal
+  // information, iteration index).
+  struct FlowBlock {
+    // See currentIteration, above.
+    size_t lastTraversedIteration;
+
+    static const size_t NULL_ITERATION = -1;
+
+    // TODO: this could be by local index?
+    std::vector<Expression*> actions;
+    std::vector<FlowBlock*> in;
+    // Sor each index, the last local.set for it
+    // The unordered_map from BasicBlock.Info is converted into a vector
+    // This speeds up search as there are usually few sets in a block, so just
+    // scanning them linearly is efficient, avoiding hash computations (while
+    // in Info, it's convenient to have a map so we can assign them easily,
+    // where the last one seen overwrites the previous; and, we do that O(1)).
+    // TODO: If we also stored gets here then we could use the sets for a get
+    //       we already computed, for a get that we are computing, and stop that
+    //       part of the flow.
+    std::vector<std::pair<Index, LocalSet*>> lastSets;
+  };
+
+  // All the flow blocks.
+  std::vector<FlowBlock> flowBlocks;
+
+  // A mapping of basic blocks to flow blocks.
+  std::unordered_map<BasicBlock*, FlowBlock*> basicToFlowMap;
+
+  // The flow block corresponding to the function entry block.
+  FlowBlock* entryFlowBlock = nullptr;
+
+  // We note which local indexes have local.sets, as that can help us
+  // optimize later (if there are none at all, we do not need to flow).
+  std::vector<bool> hasSet;
+
+  // Fill in flowBlocks and basicToFlowMap.
+  void prepareFlowBlocks() {
     auto numLocals = func->getNumLocals();
-    std::vector<FlowBlock*> work;
 
     // Convert input blocks (basicBlocks) into more efficient flow blocks to
     // improve memory access.
-    std::vector<FlowBlock> flowBlocks;
     flowBlocks.resize(basicBlocks.size());
 
+    hasSet.resize(numLocals, false);
+
     // Init mapping between basicblocks and flowBlocks
-    std::unordered_map<BasicBlock*, FlowBlock*> basicToFlowMap;
     for (Index i = 0; i < basicBlocks.size(); ++i) {
       auto* block = basicBlocks[i].get();
       basicToFlowMap[block] = &flowBlocks[i];
     }
 
-    // We note which local indexes have local.sets, as that can help us
-    // optimize later (if there are none at all).
-    std::vector<bool> hasSet(numLocals, false);
-
-    const size_t NULL_ITERATION = -1;
-
-    FlowBlock* entryFlowBlock = nullptr;
     for (Index i = 0; i < flowBlocks.size(); ++i) {
       auto& block = basicBlocks[i];
       auto& flowBlock = flowBlocks[i];
@@ -136,7 +161,7 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       if (block.get() == entry) {
         entryFlowBlock = &flowBlock;
       }
-      flowBlock.lastTraversedIteration = NULL_ITERATION;
+      flowBlock.lastTraversedIteration = FlowBlock::NULL_ITERATION;
       flowBlock.actions.swap(block->contents.actions);
       // Map in block to flow blocks
       auto& in = block->in;
@@ -153,8 +178,14 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
       }
     }
     assert(entryFlowBlock != nullptr);
+  }
 
-    size_t currentIteration = 0;
+  // Flow all the data.
+  void flow() {
+    prepareFlowBlocks();
+
+    auto numLocals = func->getNumLocals();
+
     for (auto& block : flowBlocks) {
 #ifdef LOCAL_GRAPH_DEBUG
       std::cout << "basic block " << &block << " :\n";
@@ -210,58 +241,82 @@ struct Flower : public CFGWalker<Flower, Visitor<Flower>, Info> {
           }
           continue;
         }
-        work.push_back(&block);
-        // Note that we may need to revisit the later parts of this initial
-        // block, if we are in a loop, so don't mark it as seen.
-        while (!work.empty()) {
-          auto* curr = work.back();
-          work.pop_back();
-          // We have gone through this block; now we must handle flowing to
-          // the inputs.
-          if (curr->in.empty()) {
-            if (curr == entryFlowBlock) {
-              // These receive a param or zero init value.
-              for (auto* get : gets) {
-                getSetsMap[get].insert(nullptr);
-              }
-            }
-          } else {
-            for (auto* pred : curr->in) {
-              if (pred->lastTraversedIteration == currentIteration) {
-                // We've already seen pred in this iteration.
-                continue;
-              }
-              pred->lastTraversedIteration = currentIteration;
-              auto lastSet =
-                std::find_if(pred->lastSets.begin(),
-                             pred->lastSets.end(),
-                             [&](std::pair<Index, LocalSet*>& value) {
-                               return value.first == index;
-                             });
-              if (lastSet != pred->lastSets.end()) {
-                // There is a set here, apply it, and stop the flow.
-                for (auto* get : gets) {
-                  getSetsMap[get].insert(lastSet->second);
-                }
-              } else {
-                // Keep on flowing.
-                work.push_back(pred);
-              }
-            }
-          }
-        }
-        currentIteration++;
+
+        flowBackFromStartOfBlock(&block, index, gets);
       }
     }
   }
-};
 
-} // namespace LocalGraphInternal
+  // Given a flow block and a set of gets all of the same index, begin at the
+  // start of the block and flow backwards to find the sets affecting them. This
+  // does not look into |block| itself (unless we are in a loop, and reach it
+  // again), that is, it is a utility that is called when we are ready to do a
+  // cross-block flow.
+  //
+  // All the sets we find are applied to all the gets we are given.
+  void flowBackFromStartOfBlock(FlowBlock* block,
+                                Index index,
+                                const std::vector<LocalGet*>& gets) {
+    std::vector<FlowBlock*> work; // TODO: UniqueDeferredQueue
+    work.push_back(block);
+    // Note that we may need to revisit the later parts of this initial
+    // block, if we are in a loop, so don't mark it as seen.
+    while (!work.empty()) {
+      auto* curr = work.back();
+      work.pop_back();
+      // We have gone through this block; now we must handle flowing to
+      // the inputs.
+      if (curr->in.empty()) {
+        if (curr == entryFlowBlock) {
+          // These receive a param or zero init value.
+          for (auto* get : gets) {
+            getSetsMap[get].insert(nullptr);
+          }
+        }
+      } else {
+        for (auto* pred : curr->in) {
+          if (pred->lastTraversedIteration == currentIteration) {
+            // We've already seen pred in this iteration.
+            continue;
+          }
+          pred->lastTraversedIteration = currentIteration;
+          auto lastSet = std::find_if(pred->lastSets.begin(),
+                                      pred->lastSets.end(),
+                                      [&](std::pair<Index, LocalSet*>& value) {
+                                        return value.first == index;
+                                      });
+          if (lastSet != pred->lastSets.end()) {
+            // There is a set here, apply it, and stop the flow.
+            for (auto* get : gets) {
+              getSetsMap[get].insert(lastSet->second);
+            }
+          } else {
+            // Keep on flowing.
+            work.push_back(pred);
+          }
+        }
+      }
+    }
+
+    // Bump the current iteration for the next time we are called.
+    currentIteration++;
+  }
+};
 
 // LocalGraph implementation
 
 LocalGraph::LocalGraph(Function* func, Module* module) : func(func) {
-  LocalGraphInternal::Flower flower(getSetsMap, locations, func, module);
+  // See comment on the declaration of this field for why we use a raw
+  // allocation. Note that since we just call flow() and delete it, this is not
+  // really needed, but it sets the stage for a later PR that will do other work
+  // here (related to the splitting up of flow() that is mentioned earlier).
+  flower =
+    std::make_unique<LocalGraphFlower>(getSetsMap, locations, func, module);
+
+  flower->flow();
+
+  // We will never use it again.
+  flower.reset();
 
 #ifdef LOCAL_GRAPH_DEBUG
   std::cout << "LocalGraph::dump\n";
@@ -275,9 +330,16 @@ LocalGraph::LocalGraph(Function* func, Module* module) : func(func) {
 #endif
 }
 
+LocalGraph::~LocalGraph() {
+  // We must declare a destructor here in the cpp file, even though it is empty
+  // and pointless, due to some C++ issue with our having a unique_ptr to a
+  // forward-declared class (LocalGraphFlower).
+  // https://stackoverflow.com/questions/13414652/forward-declaration-with-unique-ptr#comment110005453_13414884
+}
+
 bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
-  auto& aSets = getSetsMap[a];
-  auto& bSets = getSetsMap[b];
+  auto& aSets = getSets(a);
+  auto& bSets = getSets(b);
   // The simple case of one set dominating two gets easily proves that they must
   // have the same value. (Note that we can infer dominance from the fact that
   // there is a single set: if the set did not dominate one of the gets then

@@ -43,6 +43,7 @@ struct LocalGraph {
   // the computation (for example, if exception handling is disabled, then we
   // can generate a simpler CFG, as calls cannot throw).
   LocalGraph(Function* func, Module* module = nullptr);
+  ~LocalGraph();
 
   // Get the sets relevant for a local.get.
   //
@@ -53,11 +54,10 @@ struct LocalGraph {
   // Often there is a single set, or a phi or two items, so we use a small set.
   using Sets = SmallSet<LocalSet*, 2>;
   const Sets& getSets(LocalGet* get) const {
-    // When we return an empty result, use a canonical constant empty set to
-    // avoid allocation.
-    static const Sets empty;
     auto iter = getSetsMap.find(get);
     if (iter == getSetsMap.end()) {
+      // Use a canonical constant empty set to avoid allocation.
+      static const Sets empty;
       return empty;
     }
     return iter->second;
@@ -121,8 +121,17 @@ private:
   Function* func;
   std::set<Index> SSAIndexes;
 
-  // A map of each get to the sets relevant to it.
-  GetSetsMap getSetsMap;
+  // A map of each get to the sets relevant to it. This is mutable so that
+  // getSets() can be const.
+  mutable GetSetsMap getSetsMap;
+
+  // The internal implementation of the flow analysis used to compute
+  // getSetsMap.
+  struct LocalGraphFlower;
+  // This could be a unique_ptr, but the forward declaration is not compatible
+  // with that. It could alternatively be a shared_ptr, but that runs into what
+  // seems to be a false positive of clang's (but not gcc's) UBSan.
+  std::unique_ptr<LocalGraphFlower> flower;
 };
 
 } // namespace wasm
