@@ -53,13 +53,13 @@ struct LocalGraph {
 
   // Generic form of a getter that works differently in lazy vs eager mode.
   template<typename Key, typename Result, typename Storage, typename ComputeLazily>
-  const Result& getLazilyOrEagerly(Key* get, Result& empty, Storage& storage) const {
+  const Result& getLazilyOrEagerly(Key* get, Result& empty, Storage& storage, ComputeLazily computeLazily) const {
     auto iter = storage.find(get);
     if (iter == storage.end()) {
       if (mode == Mode::Lazy) {
         // In lazy mode, a missing entry means we did not do the computation
         // yet. Do it now.
-        ComputeLazily(get);
+        computeLazily(get);
         iter = storage.find(get);
         assert(iter != storage.end());
       } else {
@@ -83,7 +83,9 @@ struct LocalGraph {
   const Sets& getSets(LocalGet* get) const {
     // Use a canonical constant empty set to avoid allocation.
     static const Sets empty;
-    return getLazilyOrEagerly(get, empty, getSetsMap);
+    return getLazilyOrEagerly(get, empty, getSetsMap, [this](LocalGet* get) {
+      computeGetSets(get);
+    });
   }
 
   // Where each get and set is. We compute this while doing the main computation
@@ -116,13 +118,17 @@ struct LocalGraph {
   const SetInfluences& getSetInfluences(LocalSet* set) const {
     // Use a canonical constant empty set to avoid allocation.
     static const SetInfluences empty;
-    return getLazilyOrEagerly(set, empty, setInfluences);
+    return getLazilyOrEagerly(set, empty, setInfluences, [this](LocalSet* set) {
+      computeSetInfluences(set);
+    });
   }
 
   const GetInfluences& getGetInfluences(LocalGet* get) const {
     // Use a canonical constant empty set to avoid allocation.
     static const GetInfluences empty;
-    return getLazilyOrEagerly(get, empty, getInfluences);
+    return getLazilyOrEagerly(get, empty, getInfluences, [this](LocalGet* get) {
+      computeGetInfluences(get);
+    });
   }
 
   // Optional: Compute the local indexes that are SSA, in the sense of
