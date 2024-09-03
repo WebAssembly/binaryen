@@ -401,14 +401,13 @@ LocalGraph::LocalGraph(Function* func, Module* module, Mode mode)
   : mode(mode), func(func) {
   // See comment on the declaration of this field for why we use a raw
   // allocation.
-  flower = new LocalGraphFlower(getSetsMap, locations, func, module);
+  flower = std::make_unique<LocalGraphFlower>(getSetsMap, locations, func, module);
 
   if (mode == Mode::Eager) {
     flower->flow();
 
     // We will never use it again.
-    delete flower;
-    flower = nullptr;
+    flower.reset();
   } else {
     flower->prepareLaziness();
   }
@@ -426,6 +425,10 @@ LocalGraph::LocalGraph(Function* func, Module* module, Mode mode)
 }
 
 LocalGraph::~LocalGraph() {
+  // We must declare a destructor here in the cpp file, even though it is empty
+  // and pointless, due to some C++ issue with our having a unique_ptr to a
+  // forward-declared class (LocalGraphFlower).
+  // https://stackoverflow.com/questions/13414652/forward-declaration-with-unique-ptr#comment110005453_13414884
 }
 
 bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
