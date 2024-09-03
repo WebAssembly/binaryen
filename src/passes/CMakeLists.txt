@@ -47,6 +47,7 @@ set(passes_SOURCES
   hash-stringify-walker.cpp
   Outlining.cpp
   Heap2Local.cpp
+  HeapStoreOptimization.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
   InstrumentLocals.cpp
