@@ -69,9 +69,7 @@ struct HeapStoreOptimization
   // We also handle other struct.sets immediately after this one. If the
   // instruction following the new is not a struct.set we push the new down if
   // possible.
-  void visitBlock(Block* curr) {
-    optimizeHeapStores(curr->list);
-  }
+  void visitBlock(Block* curr) { optimizeHeapStores(curr->list); }
 
   void optimizeHeapStores(ExpressionList& list) {
     for (Index i = 0; i < list.size(); i++) {

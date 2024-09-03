@@ -209,9 +209,9 @@ void PassRegistry::registerPasses() {
                createTypeRefiningPass);
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
-  registerPass(
-    "heap-store-optimization",
-    "optimize heap (GC) stores", createHeapStoreOptimizationPass);
+  registerPass("heap-store-optimization",
+               "optimize heap (GC) stores",
+               createHeapStoreOptimizationPass);
   registerPass(
     "inline-main", "inline __original_main into main", createInlineMainPass);
   registerPass("inlining",
