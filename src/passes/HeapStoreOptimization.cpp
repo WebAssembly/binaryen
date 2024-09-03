@@ -49,7 +49,8 @@ struct HeapStoreOptimization
     return std::make_unique<HeapStoreOptimization>();
   }
 
-  using Super = WalkerPass<CFGWalker<HeapStoreOptimization, Visitor<HeapStoreOptimization>, Info>>;
+  using Super = WalkerPass<
+    CFGWalker<HeapStoreOptimization, Visitor<HeapStoreOptimization>, Info>>;
 
   // Branches outside of the function can be ignored, as we only look at local
   // state in the function. (This may need to change if we do more general dead
