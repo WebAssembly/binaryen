@@ -131,7 +131,7 @@ private:
   // This could be a unique_ptr, but the forward declaration is not compatible
   // with that. It could alternatively be a shared_ptr, but that runs into what
   // seems to be a false positive of clang's (but not gcc's) UBSan.
-  LocalGraphFlower* flower = nullptr;
+  std::unique_ptr<LocalGraphFlower> flower;
 };
 
 } // namespace wasm

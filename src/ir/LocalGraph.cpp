@@ -310,13 +310,13 @@ LocalGraph::LocalGraph(Function* func, Module* module) : func(func) {
   // allocation. Note that since we just call flow() and delete it, this is not
   // really needed, but it sets the stage for a later PR that will do other work
   // here (related to the splitting up of flow() that is mentioned earlier).
-  flower = new LocalGraphFlower(getSetsMap, locations, func, module);
+  flower =
+    std::make_unique<LocalGraphFlower>(getSetsMap, locations, func, module);
 
   flower->flow();
 
   // We will never use it again.
-  delete flower;
-  flower = nullptr;
+  flower.reset();
 
 #ifdef LOCAL_GRAPH_DEBUG
   std::cout << "LocalGraph::dump\n";
@@ -331,9 +331,10 @@ LocalGraph::LocalGraph(Function* func, Module* module) : func(func) {
 }
 
 LocalGraph::~LocalGraph() {
-  if (flower) {
-    delete flower;
-  }
+  // We must declare a destructor here in the cpp file, even though it is empty
+  // and pointless, due to some C++ issue with out having a unique_ptr to a
+  // forward-declared class (LocalGraphFlower).
+  // https://stackoverflow.com/questions/13414652/forward-declaration-with-unique-ptr#comment110005453_13414884
 }
 
 bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
