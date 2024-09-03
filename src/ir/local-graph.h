@@ -81,9 +81,7 @@ struct LocalGraph {
   using Sets = SmallSet<LocalSet*, 2>;
 
   const Sets& getSets(LocalGet* get) const {
-    // Use a canonical constant empty set to avoid allocation.
-    static const Sets empty;
-    return getLazilyOrEagerly(get, empty, getSetsMap, [this](LocalGet* get) {
+    return getLazilyOrEagerly(get, emptySets, getSetsMap, [this](LocalGet* get) {
       computeGetSets(get);
     });
   }
@@ -117,16 +115,14 @@ struct LocalGraph {
 
   const SetInfluences& getSetInfluences(LocalSet* set) const {
     // Use a canonical constant empty set to avoid allocation.
-    static const SetInfluences empty;
-    return getLazilyOrEagerly(set, empty, setInfluences, [this](LocalSet* set) {
+    return getLazilyOrEagerly(set, emptySetInfluences, setInfluences, [this](LocalSet* set) {
       computeSetInfluences(set);
     });
   }
 
   const GetInfluences& getGetInfluences(LocalGet* get) const {
     // Use a canonical constant empty set to avoid allocation.
-    static const GetInfluences empty;
-    return getLazilyOrEagerly(get, empty, getInfluences, [this](LocalGet* get) {
+    return getLazilyOrEagerly(get, emptyGetInfluences, getInfluences, [this](LocalGet* get) {
       computeGetInfluences(get);
     });
   }
@@ -188,6 +184,11 @@ private:
   // Compute the influences of a set/get and store them set/getInfluences.
   void computeSetInfluences(LocalSet* set) const;
   void computeGetInfluences(LocalGet* set) const;
+
+  // Use canonical constant empty sets to avoid allocation.
+  static const Sets empty;
+  static const SetInfluences emptySetInfluences;
+  static const GetInfluences emptyGetInfluences;
 };
 
 } // namespace wasm
