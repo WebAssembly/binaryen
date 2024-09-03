@@ -18,7 +18,24 @@
 // to be run at the beginning before structs corresponding to Java classes are
 // optimized.
 //
-// Embeds itables into vtables to reduce memory usage.
+// The motivation for embedding itables into vtables is to reduce memory usage.
+//
+// The idea is:
+//   - collect the types for structs that correspond to Java classes
+//     identtifyng the types corresponding to their vtable and itable structs;
+//     and the immutable globals that have the specific vtable and itable
+//     instances for that class (since for each class there are exactly one
+//     vtable and one itable instance). For the vtable instances there is a
+//     1-1 correspondence with the class, whereas the itable instances can be
+//     shared.
+//   - add the itable fields at the beginning of the vtable structure to
+//     preserve proper subtyping.
+//   - embed the initialization of itable instances into their corresponding
+//     vtable instances.
+//   - update references to vtable fields (which are offeset by the itable
+//     size).
+//   - update reference to itable fields to be reference to the fields
+//     introduced in the vtables.
 
 #include <unordered_map>
 #include <unordered_set>
@@ -42,13 +59,8 @@ namespace {
 // Information about the structs that have vtables and itables.
 struct StructInfo {
   HeapType javaClass;
-  HeapType itable;
   HeapType vtable;
-
-  StructInfo(const HeapType& javaClass,
-             const HeapType& vtable,
-             const HeapType& itable)
-    : javaClass(javaClass), itable(itable), vtable(vtable) {}
+  HeapType itable;
 };
 
 struct J2CLItableMerging : public Pass {
@@ -58,7 +70,7 @@ struct J2CLItableMerging : public Pass {
 
   // Globals that hold vtables and itables indexed by their heap type.
   // There is exactly 1 global for each vtable/itable type.
-  std::unordered_map<HeapType, std::unique_ptr<Global>*> tableGlobalsByType;
+  std::unordered_map<HeapType, Global*> tableGlobalsByType;
   std::unordered_map<HeapType, StructInfo*> structInfoByVtableType;
   std::unordered_map<HeapType, StructInfo*> structInfoByITableType;
 
@@ -123,7 +135,7 @@ struct J2CLItableMerging : public Pass {
       // Add a new StructInfo to the list by value so that its memory gets
       // reclaimed automatically on exit.
       structInfos.push_back(
-        StructInfo(heapType, vtabletype->first, itabletype->first));
+        StructInfo{heapType, vtabletype->first, itabletype->first});
       // Point to the StructInfo just added to the list to be able to look it
       // up by its vtable and itable types.
       structInfoByVtableType[vtabletype->first] = &structInfos.back();
@@ -135,12 +147,10 @@ struct J2CLItableMerging : public Pass {
       if (!g->type.isStruct()) {
         continue;
       }
-      if (structInfoByVtableType.find(g->type.getHeapType()) !=
-          structInfoByVtableType.end()) {
-        tableGlobalsByType[g->type.getHeapType()] = &g;
-      } else if (structInfoByITableType.find(g->type.getHeapType()) !=
-                 structInfoByITableType.end()) {
-        tableGlobalsByType[g->type.getHeapType()] = &g;
+      if (structInfoByVtableType.count(g->type.getHeapType())) {
+        tableGlobalsByType[g->type.getHeapType()] = g.get();
+      } else if (structInfoByITableType.count(g->type.getHeapType())) {
+        tableGlobalsByType[g->type.getHeapType()] = g.get();
       }
     }
 
@@ -200,16 +210,16 @@ struct J2CLItableMerging : public Pass {
         auto* itableGlobal = parent.tableGlobalsByType[structInfo->itable];
         StructNew* itableStructNew = nullptr;
 
-        if (itableGlobal && (*itableGlobal)->init) {
-          if ((*itableGlobal)->init->is<GlobalGet>()) {
+        if (itableGlobal && itableGlobal->init) {
+          if (itableGlobal->init->is<GlobalGet>()) {
             // The global might get initialized with the shared empty itable,
             // obtain the itable struct.new from the global.init.
-            auto* globalGet = (*itableGlobal)->init->dynCast<GlobalGet>();
+            auto* globalGet = itableGlobal->init->dynCast<GlobalGet>();
             auto* global = getModule()->getGlobal(globalGet->name);
             itableStructNew = global->init->dynCast<StructNew>();
           } else {
             // The global is initialized with a struct.new of the itable.
-            itableStructNew = (*itableGlobal)->init->dynCast<StructNew>();
+            itableStructNew = itableGlobal->init->dynCast<StructNew>();
           }
         }
 
@@ -284,9 +294,8 @@ struct J2CLItableMerging : public Pass {
         }
 
         if (curr->type.isStruct() &&
-            parent.structInfoByITableType.find(curr->type.getHeapType()) !=
-              parent.structInfoByITableType.end()) {
-          // This is struct.get that returns an itable type;
+            parent.structInfoByITableType.count(curr->type.getHeapType())) {
+          // This is a struct.get that returns an itable type;
           // Change to return the corresponding vtable type.
           Builder builder(*getModule());
           replaceCurrent(builder.makeStructGet(
@@ -318,8 +327,7 @@ struct J2CLItableMerging : public Pass {
         : GlobalTypeRewriter(wasm), parent(parent) {}
 
       void modifyStruct(HeapType oldStructType, Struct& struct_) override {
-        if (parent.structInfoByVtableType.find(oldStructType) !=
-            parent.structInfoByVtableType.end()) {
+        if (parent.structInfoByVtableType.count(oldStructType)) {
           auto& newFields = struct_.fields;
 
           auto structInfo = parent.structInfoByVtableType[oldStructType];
@@ -330,9 +338,9 @@ struct J2CLItableMerging : public Pass {
             newFields[0].type = getTempType(newFields[0].type);
           }
 
-          //  Update field names as well. The Type Rewriter cannot do this for
-          //  us, as it does not know which old fields map to which new ones
-          //  (it just keeps the names in sequence).
+          // Update field names as well. The Type Rewriter cannot do this for
+          // us, as it does not know which old fields map to which new ones
+          // (it just keeps the names in sequence).
           auto iter = wasm.typeNames.find(oldStructType);
           if (iter != wasm.typeNames.end()) {
             auto& nameInfo = iter->second;
