@@ -401,8 +401,7 @@ LocalGraph::LocalGraph(Function* func, Module* module, Mode mode)
   : mode(mode), func(func) {
   // See comment on the declaration of this field for why we use a raw
   // allocation.
-  flower =
-    std::make_unique<LocalGraphFlower>(getSetsMap, locations, func, module);
+  flower = std::make_unique<LocalGraphFlower>(getSetsMap, locations, func, module);
 
   if (mode == Mode::Eager) {
     flower->flow();
