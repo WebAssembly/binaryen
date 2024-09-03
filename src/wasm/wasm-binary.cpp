@@ -1358,6 +1358,8 @@ void WasmBinaryWriter::writeFeaturesSection() {
         return BinaryConsts::CustomSections::TypedContinuationsFeature;
       case FeatureSet::SharedEverything:
         return BinaryConsts::CustomSections::SharedEverythingFeature;
+      case FeatureSet::FP16:
+        return BinaryConsts::CustomSections::FP16Feature;
       case FeatureSet::None:
       case FeatureSet::Default:
       case FeatureSet::All:
@@ -3892,6 +3894,8 @@ void WasmBinaryReader::readFeatures(size_t payloadLen) {
       feature = FeatureSet::TypedContinuations;
     } else if (name == BinaryConsts::CustomSections::SharedEverythingFeature) {
       feature = FeatureSet::SharedEverything;
+    } else if (name == BinaryConsts::CustomSections::FP16Feature) {
+      feature = FeatureSet::FP16;
     } else {
       // Silently ignore unknown features (this may be and old binaryen running
       // on a new wasm).
@@ -6435,6 +6439,34 @@ bool WasmBinaryReader::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = BitmaskVecI64x2;
       break;
+    case BinaryConsts::F16x8Abs:
+      curr = allocator.alloc<Unary>();
+      curr->op = AbsVecF16x8;
+      break;
+    case BinaryConsts::F16x8Neg:
+      curr = allocator.alloc<Unary>();
+      curr->op = NegVecF16x8;
+      break;
+    case BinaryConsts::F16x8Sqrt:
+      curr = allocator.alloc<Unary>();
+      curr->op = SqrtVecF16x8;
+      break;
+    case BinaryConsts::F16x8Ceil:
+      curr = allocator.alloc<Unary>();
+      curr->op = CeilVecF16x8;
+      break;
+    case BinaryConsts::F16x8Floor:
+      curr = allocator.alloc<Unary>();
+      curr->op = FloorVecF16x8;
+      break;
+    case BinaryConsts::F16x8Trunc:
+      curr = allocator.alloc<Unary>();
+      curr->op = TruncVecF16x8;
+      break;
+    case BinaryConsts::F16x8Nearest:
+      curr = allocator.alloc<Unary>();
+      curr->op = NearestVecF16x8;
+      break;
     case BinaryConsts::F32x4Abs:
       curr = allocator.alloc<Unary>();
       curr->op = AbsVecF32x4;
@@ -6791,21 +6823,29 @@ bool WasmBinaryReader::maybeVisitSIMDTernary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<SIMDTernary>();
       curr->op = LaneselectI64x2;
       break;
-    case BinaryConsts::F32x4RelaxedFma:
+    case BinaryConsts::F16x8RelaxedMadd:
       curr = allocator.alloc<SIMDTernary>();
-      curr->op = RelaxedFmaVecF32x4;
+      curr->op = RelaxedMaddVecF16x8;
       break;
-    case BinaryConsts::F32x4RelaxedFms:
+    case BinaryConsts::F16x8RelaxedNmadd:
       curr = allocator.alloc<SIMDTernary>();
-      curr->op = RelaxedFmsVecF32x4;
+      curr->op = RelaxedNmaddVecF16x8;
       break;
-    case BinaryConsts::F64x2RelaxedFma:
+    case BinaryConsts::F32x4RelaxedMadd:
       curr = allocator.alloc<SIMDTernary>();
-      curr->op = RelaxedFmaVecF64x2;
+      curr->op = RelaxedMaddVecF32x4;
       break;
-    case BinaryConsts::F64x2RelaxedFms:
+    case BinaryConsts::F32x4RelaxedNmadd:
       curr = allocator.alloc<SIMDTernary>();
-      curr->op = RelaxedFmsVecF64x2;
+      curr->op = RelaxedNmaddVecF32x4;
+      break;
+    case BinaryConsts::F64x2RelaxedMadd:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = RelaxedMaddVecF64x2;
+      break;
+    case BinaryConsts::F64x2RelaxedNmadd:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = RelaxedNmaddVecF64x2;
       break;
     case BinaryConsts::I32x4DotI8x16I7x16AddS:
       curr = allocator.alloc<SIMDTernary>();

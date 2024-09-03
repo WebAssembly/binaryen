@@ -16,6 +16,7 @@
 --enable-multimemory
 --enable-typed-continuations
 --enable-shared-everything
+--enable-fp16
 (module
  (type $0 (func (result v128 externref)))
  (func $foo (type $0) (result v128 externref)

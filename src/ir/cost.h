@@ -206,6 +206,13 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case NegVecI64x2:
       case AllTrueVecI64x2:
       case BitmaskVecI64x2:
+      case AbsVecF16x8:
+      case NegVecF16x8:
+      case SqrtVecF16x8:
+      case CeilVecF16x8:
+      case FloorVecF16x8:
+      case TruncVecF16x8:
+      case NearestVecF16x8:
       case AbsVecF32x4:
       case NegVecF32x4:
       case SqrtVecF32x4:
@@ -575,10 +582,12 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case LaneselectI16x8:
       case LaneselectI32x4:
       case LaneselectI64x2:
-      case RelaxedFmaVecF32x4:
-      case RelaxedFmsVecF32x4:
-      case RelaxedFmaVecF64x2:
-      case RelaxedFmsVecF64x2:
+      case RelaxedMaddVecF16x8:
+      case RelaxedNmaddVecF16x8:
+      case RelaxedMaddVecF32x4:
+      case RelaxedNmaddVecF32x4:
+      case RelaxedMaddVecF64x2:
+      case RelaxedNmaddVecF64x2:
       case DotI8x16I7x16AddSToVecI32x4:
         ret = 1;
         break;

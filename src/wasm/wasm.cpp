@@ -56,6 +56,7 @@ const char* StringsFeature = "strings";
 const char* MultiMemoryFeature = "multimemory";
 const char* TypedContinuationsFeature = "typed-continuations";
 const char* SharedEverythingFeature = "shared-everything";
+const char* FP16Feature = "fp16";
 } // namespace CustomSections
 } // namespace BinaryConsts
 
@@ -651,6 +652,13 @@ void Unary::finalize() {
     case NegVecI16x8:
     case NegVecI32x4:
     case NegVecI64x2:
+    case AbsVecF16x8:
+    case NegVecF16x8:
+    case SqrtVecF16x8:
+    case CeilVecF16x8:
+    case FloorVecF16x8:
+    case TruncVecF16x8:
+    case NearestVecF16x8:
     case AbsVecF32x4:
     case NegVecF32x4:
     case SqrtVecF32x4:

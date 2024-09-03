@@ -228,7 +228,7 @@ struct LoopInvariantCodeMotion
   bool hasGetDependingOnLoopSet(Expression* curr, LoopSets& loopSets) {
     FindAll<LocalGet> gets(curr);
     for (auto* get : gets.list) {
-      auto& sets = localGraph->getSetses[get];
+      auto& sets = localGraph->getSets(get);
       for (auto* set : sets) {
         // nullptr means a parameter or zero-init value;
         // no danger to us.

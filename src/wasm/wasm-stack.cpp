@@ -657,17 +657,23 @@ void BinaryInstWriter::visitSIMDTernary(SIMDTernary* curr) {
     case LaneselectI64x2:
       o << U32LEB(BinaryConsts::I64x2Laneselect);
       break;
-    case RelaxedFmaVecF32x4:
-      o << U32LEB(BinaryConsts::F32x4RelaxedFma);
+    case RelaxedMaddVecF16x8:
+      o << U32LEB(BinaryConsts::F16x8RelaxedMadd);
       break;
-    case RelaxedFmsVecF32x4:
-      o << U32LEB(BinaryConsts::F32x4RelaxedFms);
+    case RelaxedNmaddVecF16x8:
+      o << U32LEB(BinaryConsts::F16x8RelaxedNmadd);
       break;
-    case RelaxedFmaVecF64x2:
-      o << U32LEB(BinaryConsts::F64x2RelaxedFma);
+    case RelaxedMaddVecF32x4:
+      o << U32LEB(BinaryConsts::F32x4RelaxedMadd);
       break;
-    case RelaxedFmsVecF64x2:
-      o << U32LEB(BinaryConsts::F64x2RelaxedFms);
+    case RelaxedNmaddVecF32x4:
+      o << U32LEB(BinaryConsts::F32x4RelaxedNmadd);
+      break;
+    case RelaxedMaddVecF64x2:
+      o << U32LEB(BinaryConsts::F64x2RelaxedMadd);
+      break;
+    case RelaxedNmaddVecF64x2:
+      o << U32LEB(BinaryConsts::F64x2RelaxedNmadd);
       break;
     case DotI8x16I7x16AddSToVecI32x4:
       o << U32LEB(BinaryConsts::I32x4DotI8x16I7x16AddS);
@@ -1131,6 +1137,28 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
     case BitmaskVecI64x2:
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I64x2Bitmask);
+      break;
+    case AbsVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Abs);
+      break;
+    case NegVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Neg);
+      break;
+    case SqrtVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Sqrt);
+      break;
+    case CeilVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Ceil);
+      break;
+    case FloorVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Floor);
+      break;
+    case TruncVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F16x8Trunc);
+      break;
+    case NearestVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F16x8Nearest);
       break;
     case AbsVecF32x4:
       o << int8_t(BinaryConsts::SIMDPrefix) << U32LEB(BinaryConsts::F32x4Abs);
