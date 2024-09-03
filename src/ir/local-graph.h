@@ -186,7 +186,7 @@ private:
   void computeGetInfluences(LocalGet* set) const;
 
   // Use canonical constant empty sets to avoid allocation.
-  static const Sets empty;
+  static const Sets emptySets;
   static const SetInfluences emptySetInfluences;
   static const GetInfluences emptyGetInfluences;
 };
