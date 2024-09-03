@@ -114,9 +114,12 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
 // The set of targets can be function names (the individual functions we want to
 // handle calls towards) or heap types (which will then include all functions
 // with those types).
+//
+// The onChange() callback is called when we modify a function.
 void localizeCallsTo(const std::unordered_set<Name>& callTargets,
                      Module& wasm,
-                     PassRunner* runner);
+                     PassRunner* runner,
+                     std::function<void(Function*)> onChange);
 void localizeCallsTo(const std::unordered_set<HeapType>& callTargets,
                      Module& wasm,
                      PassRunner* runner);

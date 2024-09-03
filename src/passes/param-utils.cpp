@@ -286,18 +286,21 @@ SortedVector applyConstantValues(const std::vector<Function*>& funcs,
 
 void localizeCallsTo(const std::unordered_set<Name>& callTargets,
                      Module& wasm,
-                     PassRunner* runner) {
+                     PassRunner* runner,
+                     std::function<void(Function*)> onChange) {
   struct LocalizerPass : public WalkerPass<PostWalker<LocalizerPass>> {
     bool isFunctionParallel() override { return true; }
 
     std::unique_ptr<Pass> create() override {
-      return std::make_unique<LocalizerPass>(callTargets);
+      return std::make_unique<LocalizerPass>(callTargets, onChange);
     }
 
     const std::unordered_set<Name>& callTargets;
+    std::function<void(Function*)> onChange;
 
-    LocalizerPass(const std::unordered_set<Name>& callTargets)
-      : callTargets(callTargets) {}
+    LocalizerPass(const std::unordered_set<Name>& callTargets,
+                  std::function<void(Function*)> onChange)
+      : callTargets(callTargets), onChange(onChange) {}
 
     void visitCall(Call* curr) {
       if (!callTargets.count(curr->target)) {
@@ -310,6 +313,7 @@ void localizeCallsTo(const std::unordered_set<Name>& callTargets,
       if (replacement != curr) {
         replaceCurrent(replacement);
         optimized = true;
+        onChange(getFunction());
       }
     }
 
@@ -323,7 +327,7 @@ void localizeCallsTo(const std::unordered_set<Name>& callTargets,
     }
   };
 
-  LocalizerPass(callTargets).run(runner, &wasm);
+  LocalizerPass(callTargets, onChange).run(runner, &wasm);
 }
 
 void localizeCallsTo(const std::unordered_set<HeapType>& callTargets,
