@@ -199,8 +199,7 @@ struct ReorderGlobals : public Pass {
       }
     }
 
-    auto sort = *TopologicalSort(dependenceGraph);
-    for (auto global : sort) {
+    for (auto global : TopologicalSort::sort(dependenceGraph)) {
       // We can compute this global's count as in the sorted order all the
       // values it cares about are resolved. Start with the self-count, then
       // add the deps.
@@ -294,7 +293,7 @@ struct ReorderGlobals : public Pass {
       graph.emplace_back(i, std::move(children));
     }
 
-    return *MinTopologicalSortOf<Index>(graph.begin(), graph.end());
+    return TopologicalSort::minSortOf(graph.begin(), graph.end());
   }
 
   // Given an indexing of the globals and the counts of how many times each is
