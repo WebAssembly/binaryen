@@ -211,7 +211,8 @@ struct DAE : public Pass {
 
 #if DAE_DEBUG
     // Enable this path to mark all contents as stale at the start of each
-    // iteration, which can be used to check for staleness bugs. Note, though,
+    // iteration, which can be used to check for staleness bugs (that is, bugs
+    // where something should have been marked stale, but wasn't). Note, though,
     // that staleness bugs can easily cause serious issues with validation (e.g.
     // if data is stale we may miss that there is an additional caller, that
     // prevents refining argument types etc.), so this may not be terribly
