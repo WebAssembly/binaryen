@@ -38,8 +38,8 @@ struct Info {
 };
 
 struct HeapStoreOptimization
-  : public WalkerPass<CFGWalker<HeapStoreOptimization, Visitor<HeapStoreOptimization>, Info>> {
-
+  : public WalkerPass<
+      CFGWalker<HeapStoreOptimization, Visitor<HeapStoreOptimization>, Info>> {
   bool isFunctionParallel() override { return true; }
 
   // Locals are not modified here.
@@ -66,12 +66,8 @@ struct HeapStoreOptimization
       expressionBlocks[getCurrent()] = currBasicBlock;
     }
   }
-  void visitStructSet(StructSet* curr) {
-    addAction();
-  }
-  void visitBlock(Block* curr) {
-    addAction();
-  }
+  void visitStructSet(StructSet* curr) { addAction(); }
+  void visitBlock(Block* curr) { addAction(); }
 
   // Override scan so we can note the basic block that struct.set's values are
   // in (we will need that later to check for safety, see

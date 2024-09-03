@@ -940,3 +940,34 @@
   (unreachable)
  )
 )
+
+(module
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (type $1 (func (param i32)))
+
+ ;; CHECK:      (func $target (type $0)
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $target (param $0 i32)
+  ;; The parameter here is unused: there is a get, but it is unreachable. We can
+  ;; remove the parameter here, and in the caller below.
+  (unreachable)
+  (drop
+   (local.get $0)
+  )
+ )
+
+ ;; CHECK:      (func $caller (type $1) (param $x i32)
+ ;; CHECK-NEXT:  (call $target)
+ ;; CHECK-NEXT: )
+ (func $caller (param $x i32)
+  (call $target
+   (local.get $x)
+  )
+ )
+)

@@ -105,6 +105,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-shared-everything          Disable shared-everything threads
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-fp16                        Enable float 16 operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-fp16                       Disable float 16 operations
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-typed-function-references  Deprecated compatibility flag

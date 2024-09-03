@@ -814,7 +814,7 @@ private:
         // for this get to have constant value, all sets must agree
         Literals values;
         bool first = true;
-        for (auto* set : localGraph.getSetses[get]) {
+        for (auto* set : localGraph.getSets(get)) {
           Literals curr;
           if (set == nullptr) {
             if (getFunction()->isVar(get->index)) {

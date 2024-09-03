@@ -25,6 +25,15 @@
   (func (export "f16x8.max") (param $0 v128) (param $1 v128) (result v128) (f16x8.max (local.get $0) (local.get $1)))
   (func (export "f16x8.pmin") (param $0 v128) (param $1 v128) (result v128) (f16x8.pmin (local.get $0) (local.get $1)))
   (func (export "f16x8.pmax") (param $0 v128) (param $1 v128) (result v128) (f16x8.pmax (local.get $0) (local.get $1)))
+  (func (export "f16x8.abs") (param $0 v128) (result v128) (f16x8.abs (local.get $0)))
+  (func (export "f16x8.neg") (param $0 v128) (result v128) (f16x8.neg (local.get $0)))
+  (func (export "f16x8.sqrt") (param $0 v128) (result v128) (f16x8.sqrt (local.get $0)))
+  (func (export "f16x8.ceil") (param $0 v128) (result v128) (f16x8.ceil (local.get $0)))
+  (func (export "f16x8.floor") (param $0 v128) (result v128) (f16x8.floor (local.get $0)))
+  (func (export "f16x8.trunc") (param $0 v128) (result v128) (f16x8.trunc (local.get $0)))
+  (func (export "f16x8.nearest") (param $0 v128) (result v128) (f16x8.nearest (local.get $0)))
+  (func (export "f16x8.relaxed_madd") (param $0 v128) (param $1 v128) (param $2 v128) (result v128) (f16x8.relaxed_madd (local.get $0) (local.get $1) (local.get $2)))
+  (func (export "f16x8.relaxed_nmadd") (param $0 v128) (param $1 v128) (param $2 v128) (result v128) (f16x8.relaxed_nmadd (local.get $0) (local.get $1) (local.get $2)))
 )
 
 (assert_return (invoke "f32.load_f16") (f32.const 42.0))
@@ -147,3 +156,63 @@
     (v128.const i16x8 0x5140 0xfe00  0x7c00 0x3e00 0      0x3c00 0      0x3c00))
     ;;                nan    -nan    inf    1.5    0      1      1      1
     (v128.const i16x8 0x7e00 0xfe00  0x7c00 0x3e00 0      0x3c00 0x3c00 0x3c00))
+
+;; unary arithmetic
+(assert_return (invoke "f16x8.abs"
+    ;;                nan    -nan    inf    -inf   -1     1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
+    ;;                nan    nan     inf    inf    1      1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0x7e00  0x7c00 0x7c00 0x3c00 0x3c00 0x3e00 0x3ccd))
+(assert_return (invoke "f16x8.neg"
+    ;;                nan    -nan    inf    -inf   -1     1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0xfe00  0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
+    ;;                -nan   nan     -inf   inf    1      -1     -1.5   -1.2...
+    (v128.const i16x8 0xfe00 0x7e00  0xfc00 0x7c00 0x3c00 0xbc00 0xbe00 0xbccd))
+;; XXX Avoid tests that return -nan since it's non-deterministic.
+(assert_return (invoke "f16x8.sqrt"
+    ;;                nan    0       inf    4      16     1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0       0x7c00 0x4400 0x4c00 0x3c00 0x3e00 0x3ccd))
+    ;;                nan    0       inf    2      4      1      1.22.. 1.09...
+    (v128.const i16x8 0x7e00 0       0x7c00 0x4000 0x4400 0x3c00 0x3ce6 0x3c62))
+(assert_return (invoke "f16x8.ceil"
+    ;;                nan    0       inf    -inf   -1     1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0       0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
+    ;;                nan    0       inf    -inf   -1     1      2      2
+    (v128.const i16x8 0x7e00 0       0x7c00 0xfc00 0xbc00 0x3c00 0x4000 0x4000))
+(assert_return (invoke "f16x8.floor"
+    ;;                nan    0       inf    -inf   -1     1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0       0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
+    ;;                nan    0       inf    -inf   -1     1      1      1
+    (v128.const i16x8 0x7e00 0       0x7c00 0xfc00 0xbc00 0x3c00 0x3c00 0x3c00))
+(assert_return (invoke "f16x8.nearest"
+    ;;                nan    0       inf    -inf   -1     1      1.5    1.2...
+    (v128.const i16x8 0x7e00 0       0x7c00 0xfc00 0xbc00 0x3c00 0x3e00 0x3ccd))
+    ;;                nan    0       inf    -inf   -1     1      2      1
+    (v128.const i16x8 0x7e00 0       0x7c00 0xfc00 0xbc00 0x3c00 0x4000 0x3c00))
+;; ternary operations
+(assert_return (invoke "f16x8.relaxed_madd"
+    ;; Lane 0 illustrates the difference between fused/unfused. e.g.
+    ;; fused: (positive overflow) + -inf = -inf
+    ;; unfused: (inf) + -inf = NaN
+    ;;
+    ;;                1e4    inf    -1      0      1      1.5    -2     1
+    (v128.const i16x8 0x70e2 0x7c00 0xbc00  0      0x3c00 0x3e00 0xc000 0x3c00)
+    ;;                1e4    inf    -1      0      1      1.5    4      1
+    (v128.const i16x8 0x70e2 0x7c00 0xbc00  0      0x3c00 0x3e00 0x4400 0x3c00)
+    ;;                -inf   inf    -1      0      1      2      1      -1
+    (v128.const i16x8 0xfc00 0x7c00 0xbc00  0      0x3c00 0x4000 0x3c00 0xbc00))
+    ;;                -inf   inf    0       0      2      4.25   -7     0
+    (v128.const i16x8 0xfc00 0x7c00 0       0      0x4000 0x4440 0xc700 0))
+(assert_return (invoke "f16x8.relaxed_nmadd"
+    ;; Lane 0 illustrates the difference between fused/unfused. e.g.
+    ;; fused: -(positive overflow) + inf = inf
+    ;; unfused: (-inf) + -inf = NaN
+    ;;
+    ;;                1e4    -inf   -1      0      1      1.5    -2     1
+    (v128.const i16x8 0x70e2 0xfc00 0xbc00  0      0x3c00 0x3e00 0xc000 0x3c00)
+    ;;                1e4    inf    -1      0      1      1.5    4      1
+    (v128.const i16x8 0x70e2 0x7c00 0xbc00  0      0x3c00 0x3e00 0x4400 0x3c00)
+    ;;                inf    inf    -1      0      1      2      1      -1
+    (v128.const i16x8 0x7c00 0x7c00 0xbc00  0      0x3c00 0x4000 0x3c00 0xbc00))
+    ;;                inf    inf    -2      0      0      -0.25  9      -2
+    (v128.const i16x8 0x7c00 0x7c00 0xc000  0      0      0xb400 0x4880 0xc000))

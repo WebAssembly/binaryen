@@ -7,7 +7,7 @@ config.test_format = lit.formats.ShTest()
 config.suffixes = ['.wat', '.wast', '.test']
 
 config.test_source_root = os.path.dirname(__file__)
-config.test_exec_root = os.path.join(config.binaryen_build_root, 'test')
+config.test_exec_root = os.path.join(config.binaryen_build_root, 'out', 'test')
 
 config.environment = dict(os.environ)
 
