@@ -6823,6 +6823,14 @@ bool WasmBinaryReader::maybeVisitSIMDTernary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<SIMDTernary>();
       curr->op = LaneselectI64x2;
       break;
+    case BinaryConsts::F16x8RelaxedMadd:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = RelaxedMaddVecF16x8;
+      break;
+    case BinaryConsts::F16x8RelaxedNmadd:
+      curr = allocator.alloc<SIMDTernary>();
+      curr->op = RelaxedNmaddVecF16x8;
+      break;
     case BinaryConsts::F32x4RelaxedMadd:
       curr = allocator.alloc<SIMDTernary>();
       curr->op = RelaxedMaddVecF32x4;

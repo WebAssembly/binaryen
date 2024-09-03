@@ -1674,23 +1674,25 @@ Literal Literal::copysign(const Literal& other) const {
 Literal Literal::madd(const Literal& left, const Literal& right) const {
   switch (type.getBasic()) {
     case Type::f32:
-      return Literal(::fmaf(left.getf32(), right.getf32(), getf32()));
+      return Literal(::fmaf(getf32(), left.getf32(), right.getf32()));
       break;
     case Type::f64:
-      return Literal(::fma(left.getf64(), right.getf64(), getf64()));
+      return Literal(::fma(getf64(), left.getf64(), right.getf64()));
       break;
     default:
       WASM_UNREACHABLE("unexpected type");
   }
 }
 
+// XXX: This is not an actual fused negated multiply implementation, but
+// the relaxed spec allows a double rounding implementation like below.
 Literal Literal::nmadd(const Literal& left, const Literal& right) const {
   switch (type.getBasic()) {
     case Type::f32:
-      return Literal(::fmaf(-left.getf32(), right.getf32(), getf32()));
+      return Literal(-(getf32() * left.getf32()) + right.getf32());
       break;
     case Type::f64:
-      return Literal(::fma(-left.getf64(), right.getf64(), getf64()));
+      return Literal(-(getf64() * left.getf64()) + right.getf64());
       break;
     default:
       WASM_UNREACHABLE("unexpected type");
@@ -2749,18 +2751,31 @@ Literal Literal::swizzleI8x16(const Literal& other) const {
 namespace {
 template<int Lanes,
          LaneArray<Lanes> (Literal::*IntoLanes)() const,
-         Literal (Literal::*TernaryOp)(const Literal&, const Literal&) const>
+         Literal (Literal::*TernaryOp)(const Literal&, const Literal&) const,
+         Literal (*Convert)(const Literal&) = passThrough>
 static Literal ternary(const Literal& a, const Literal& b, const Literal& c) {
   LaneArray<Lanes> x = (a.*IntoLanes)();
   LaneArray<Lanes> y = (b.*IntoLanes)();
   LaneArray<Lanes> z = (c.*IntoLanes)();
   LaneArray<Lanes> r;
   for (size_t i = 0; i < Lanes; ++i) {
-    r[i] = (x[i].*TernaryOp)(y[i], z[i]);
+    r[i] = Convert((x[i].*TernaryOp)(y[i], z[i]));
   }
   return Literal(r);
 }
 } // namespace
+
+Literal Literal::relaxedMaddF16x8(const Literal& left,
+                                  const Literal& right) const {
+  return ternary<8, &Literal::getLanesF16x8, &Literal::madd, &toFP16>(
+    *this, left, right);
+}
+
+Literal Literal::relaxedNmaddF16x8(const Literal& left,
+                                   const Literal& right) const {
+  return ternary<8, &Literal::getLanesF16x8, &Literal::nmadd, &toFP16>(
+    *this, left, right);
+}
 
 Literal Literal::relaxedMaddF32x4(const Literal& left,
                                   const Literal& right) const {

@@ -1201,6 +1201,10 @@ public:
       case LaneselectI64x2:
         return c.bitselectV128(a, b);
 
+      case RelaxedMaddVecF16x8:
+        return a.relaxedMaddF16x8(b, c);
+      case RelaxedNmaddVecF16x8:
+        return a.relaxedNmaddF16x8(b, c);
       case RelaxedMaddVecF32x4:
         return a.relaxedMaddF32x4(b, c);
       case RelaxedNmaddVecF32x4:
