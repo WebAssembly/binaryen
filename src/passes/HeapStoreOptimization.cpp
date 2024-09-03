@@ -37,7 +37,8 @@ struct Info {
 };
 
 struct HeapStoreOptimization
-  : public WalkerPass<CFGWalker<HeapStoreOptimization, Visitor<HeapStoreOptimization>, Info>> {
+  : public WalkerPass<
+      CFGWalker<HeapStoreOptimization, Visitor<HeapStoreOptimization>, Info>> {
   bool isFunctionParallel() override { return true; }
 
   // Locals are not modified here.
@@ -58,12 +59,8 @@ struct HeapStoreOptimization
       currBasicBlock->contents.actions.push_back(getCurrentPointer());
     }
   }
-  void visitStructSet(StructSet* curr) {
-    addAction();
-  }
-  void visitBlock(Block* curr) {
-    addAction();
-  }
+  void visitStructSet(StructSet* curr) { addAction(); }
+  void visitBlock(Block* curr) { addAction(); }
 
   void visitFunction(Function* curr) {
     // Now that the walk is complete and we have a CFG, find things to optimize.
