@@ -87,10 +87,10 @@ struct LocalGraph {
   using SetInfluences = std::unordered_set<LocalGet*>;
   using GetInfluences = std::unordered_set<LocalSet*>;
 
-  const& SetInfluences getSetInfluences(LocalSet* set) {
+  const SetInfluences& getSetInfluences(LocalSet* set) {
     return setInfluences[set];
   }
-  const& GetInfluences getGetInfluences(LocalGet* get) {
+  const GetInfluences& getGetInfluences(LocalGet* get) {
     return getInfluences[get];
   }
 
