@@ -86,8 +86,15 @@ struct J2CLItableMerging : public Pass {
     }
 
     collectVtableAndItableTypes(*module);
+    // Update the indices to access the functions in the vtables and update
+    // the construction of the vtable instances.
     updateVtableFieldsAccesses(*module);
+    // And now we can transform the accesses to the itable fields into their
+    // corresponding vtable fields. Needs to be done after
+    // updateVtableFieldsAccesses.
     rerouteItableAccess(*module);
+    // The type structures are updated last since types are used as keys in
+    // the maps used above.
     updateTypes(*module);
 
     // Since now vtables are initialized with `global.get` of the interface
@@ -118,10 +125,8 @@ struct J2CLItableMerging : public Pass {
         continue;
       }
 
-      auto& vtabletype =
-        wasm.typeNames.find(type.fields[0].type.getHeapType())->first;
-      auto& itabletype =
-        wasm.typeNames.find(type.fields[1].type.getHeapType())->first;
+      auto vtabletype = type.fields[0].type.getHeapType();
+      auto itabletype = type.fields[1].type.getHeapType();
 
       auto structItableSize = itabletype.getStruct().fields.size();
 
@@ -196,7 +201,6 @@ struct J2CLItableMerging : public Pass {
         }
 
         auto it = parent.structInfoByVtableType.find(curr->type.getHeapType());
-
         if (it == parent.structInfoByVtableType.end()) {
           return;
         }
@@ -227,6 +231,10 @@ struct J2CLItableMerging : public Pass {
                   << "on j2cl output. (itable initializer not found)";
         }
         auto& itableFieldInitializers = itableStructNew->operands;
+
+        // Manually move the operands corresponding to the field initializers
+        // since ArenaVector does not have an API to insert elements at the
+        // front.
 
         // Compute the new size of the vtable.
         Index newSize = curr->operands.size() + parent.itableSize;
