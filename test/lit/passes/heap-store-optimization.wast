@@ -822,7 +822,7 @@
     )
   )
 
-  ;; CHECK:      (func $helper-i32 (type $5) (param $x i32) (result i32)
+  ;; CHECK:      (func $helper-i32 (type $6) (param $x i32) (result i32)
   ;; CHECK-NEXT:  (i32.const 42)
   ;; CHECK-NEXT: )
   (func $helper-i32 (param $x i32) (result i32)
@@ -1008,7 +1008,7 @@
     )
   )
 
-  ;; CHECK:      (func $control-flow-later (type $6) (param $x i32)
+  ;; CHECK:      (func $control-flow-later (type $5) (param $x i32)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (block $out
   ;; CHECK-NEXT:   (br_if $out
@@ -1048,6 +1048,123 @@
       (local.get $x)
       (then
         (nop)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $loop (type $5) (param $x i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (struct.get $struct 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $ref XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (if (result i32)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (br $loop)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (else
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $loop (param $x i32)
+    (local $ref (ref null $struct))
+    (loop $loop
+      ;; There is a use of the reference at the top of the loop, and the br_if
+      ;; may get here, so this is a basic block before the struct.set that we
+      ;; need to be careful of reaching. We should not optimize here.
+      (drop
+        (struct.get $struct 0
+          (local.get $ref)
+        )
+      )
+      (struct.set $struct 0
+        (local.tee $ref
+          (struct.new $struct
+            (i32.const 1)
+          )
+        )
+        (if (result i32)
+          (i32.const 1)
+          (then
+            (br $loop)
+          )
+          (else
+            (i32.const 42)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $loop-more-flow (type $5) (param $x i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (loop $loop
+  ;; CHECK-NEXT:   (if
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:    (then
+  ;; CHECK-NEXT:     (br $loop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (struct.get $struct 0
+  ;; CHECK-NEXT:     (local.get $ref)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (local.set $ref XXXXXXXXXXXXXXXXXXXXX
+  ;; CHECK-NEXT:    (struct.new $struct
+  ;; CHECK-NEXT:     (if (result i32)
+  ;; CHECK-NEXT:      (i32.const 1)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (br $loop)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (else
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $loop-more-flow (param $x i32)
+    (local $ref (ref null $struct))
+    (loop $loop
+      ;; As above, but add this if which adds more control flow at the loop top.
+      ;; We should still not optimize here.
+      (if
+        (i32.const 1)
+        (then
+          (br $loop)
+        )
+      )
+      (drop
+        (struct.get $struct 0
+          (local.get $ref)
+        )
+      )
+      (struct.set $struct 0
+        (local.tee $ref
+          (struct.new $struct
+            (i32.const 1)
+          )
+        )
+        (if (result i32)
+          (i32.const 1)
+          (then
+            (br $loop)
+          )
+          (else
+            (i32.const 42)
+          )
+        )
       )
     )
   )
