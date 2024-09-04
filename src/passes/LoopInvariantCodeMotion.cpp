@@ -45,7 +45,7 @@ struct LoopInvariantCodeMotion
 
   // main entry point
 
-  LocalGraph* localGraph;
+  LazyLocalGraph* localGraph;
 
   void doWalkFunction(Function* func) {
     // Prepare to compute the local dependencies we care about. We may only need
