@@ -160,6 +160,9 @@ protected:
   // getSets() can be const in LazyLocalGraph (which does memoization, see
   // below).
   mutable GetSetsMap getSetsMap;
+
+  std::unordered_map<LocalSet*, SetInfluences> setInfluences;
+  std::unordered_map<LocalGet*, GetInfluences> getInfluences;
 };
 
 // The internal implementation of the flow analysis used to compute things. This
@@ -193,9 +196,6 @@ private:
 
   // This remains alive as long as we are, so that we can compute things lazily.
   std::unique_ptr<LocalGraphFlower> flower;
-
-  std::unordered_map<LocalSet*, SetInfluences> setInfluences;
-  std::unordered_map<LocalGet*, GetInfluences> getInfluences;
 };
 
 } // namespace wasm
