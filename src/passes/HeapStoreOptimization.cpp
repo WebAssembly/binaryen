@@ -283,82 +283,10 @@ struct HeapStoreOptimization
       }
     }
 
-    // We must also be careful of branches out from the value. For example:
-    //
-    //  (block $out
-    //    (local.set $x (struct.new X Y Z))
-    //    (struct.set (local.get $x) (..br $out..))  ;; X' here has a br
-    //  )
-    //  ..use $x..
-    //
-    // Note how we do the local.set first. Imagine we optimized to this:
-    //
-    //  (block $out
-    //    (local.set $x (struct.new (..br $out..) Y Z))
-    //  )
-    //  ..use $x..
-    //
-    // Now the br happens first, skipping the local.set entirely, and the use
-    // later down will not get the proper value.
-    //
-    // To check for this problem, see which basic blocks can be reached from the
-    // value. The structured IR limits what is possible here, since we know that
-    // the struct.set follows the local.set: the only problem is one like we
-    // showed in the example, where we branch to something after the
-    // struct.set's basic block, in post-order. As we are processing the blocks
-    // in that same order, we just need to see that we cannot reach any block we
-    // have yet to see.
-    //
-    // Note that there may be more basic blocks after the struct.set, but they
-    // cannot be reached due to the structured control flow:
-    //
-    //  (block $out
-    //    (local.set ..
-    //    (struct.set ..
-    //    (if
-    //      ..more control flow..
-    //    )
-    //  )
-    //
-    // At this point in the traversal we have reached the block, so we've seen
-    // the if's basic blocks. But nothing in the struct.set's value can branch
-    // to them: there is no way to jump into the middle of a block.
-    UniqueNonrepeatingDeferredQueue<BasicBlock*> reached;
-    // We start the flow from right before the value, which means the end of the
-    // reference.
-    auto* blockBeforeValue = expressionBlocks[set->ref];
-    if (!blockBeforeValue) {
-      // We are in unreachable code.
+    // We must also be careful of branches out from the value that skip the
+    // local.set, see below.
+    if (canSkipLocalSet(set)) {
       return false;
-    }
-    // It must have already been reached, since we've processed the struct.set.
-    assert(seenBlocks.count(blockBeforeValue));
-    reached.push(blockBeforeValue);
-    // We will stop the flow when we reach the struct.set itself: it is fine for
-    // control flow to get there, that is what normally happens.
-    auto* structSetBlock = expressionBlocks[set];
-    if (!structSetBlock) {
-      // We are in unreachable code.
-      return false;
-    }
-    assert(seenBlocks.count(structSetBlock));
-    while (!reached.empty()) {
-      // Flow to the successors.
-      auto* block = reached.pop();
-      if (block == structSetBlock) {
-        // This is the normal place control flow should get to, the struct.set
-        // that is the parent of the value.
-        continue;
-      }
-      for (auto* out : block->out) {
-        if (!seenBlocks.count(out)) {
-          // This is a dangerous jump forward, as described above. Give up.
-          // TODO: We could be more precise and look for actual local.gets of
-          //       our value. If no such gets exist, this is still safe.
-          return false;
-        }
-        reached.push(out);
-      }
     }
 
     // We can optimize here!
@@ -384,6 +312,89 @@ struct HeapStoreOptimization
     }
 
     return true;
+  }
+
+  // We must be careful of branches that skip the local.set. For example:
+  //
+  //  (block $out
+  //    (local.set $x (struct.new X Y Z))
+  //    (struct.set (local.get $x) (..br $out..))  ;; X' here has a br
+  //  )
+  //  ..use $x..
+  //
+  // Note how we do the local.set first. Imagine we optimized to this:
+  //
+  //  (block $out
+  //    (local.set $x (struct.new (..br $out..) Y Z))
+  //  )
+  //  ..use $x..
+  //
+  // Now the br happens first, skipping the local.set entirely, and the use
+  // later down will not get the proper value.
+  //
+  // To check for this problem, see which basic blocks can be reached from the
+  // value. The structured IR limits what is possible here, since we know that
+  // the struct.set follows the local.set: the only problem is one like we
+  // showed in the example, where we branch to something after the
+  // struct.set's basic block, in post-order. As we are processing the blocks
+  // in that same order, we just need to see that we cannot reach any block we
+  // have yet to see.
+  //
+  // Note that there may be more basic blocks after the struct.set, but they
+  // cannot be reached due to the structured control flow:
+  //
+  //  (block $out
+  //    (local.set ..
+  //    (struct.set ..
+  //    (if
+  //      ..more control flow..
+  //    )
+  //  )
+  //
+  // At this point in the traversal we have reached the block, so we've seen
+  // the if's basic blocks. But nothing in the struct.set's value can branch
+  // to them: there is no way to jump into the middle of a block.
+  bool canSkipLocalSet(StructSet* set) {
+    UniqueNonrepeatingDeferredQueue<BasicBlock*> reached;
+    // We start the flow from right before the value, which means the end of the
+    // reference.
+    auto* blockBeforeValue = expressionBlocks[set->ref];
+    if (!blockBeforeValue) {
+      // We are in unreachable code. Return that we are doing something
+      // dangerous, as this is not worth optimizing.
+      return true;
+    }
+    // It must have already been reached, since we've processed the struct.set.
+    assert(seenBlocks.count(blockBeforeValue));
+    reached.push(blockBeforeValue);
+    // We will stop the flow when we reach the struct.set itself: it is fine for
+    // control flow to get there, that is what normally happens.
+    auto* structSetBlock = expressionBlocks[set];
+    if (!structSetBlock) {
+      // We are in unreachable code.
+      return true;
+    }
+    assert(seenBlocks.count(structSetBlock));
+    while (!reached.empty()) {
+      // Flow to the successors.
+      auto* block = reached.pop();
+      if (block == structSetBlock) {
+        // This is the normal place control flow should get to, the struct.set
+        // that is the parent of the value.
+        continue;
+      }
+      for (auto* out : block->out) {
+        if (!seenBlocks.count(out)) {
+          // This is a dangerous jump forward, as described above. Give up.
+          // TODO: We could be more precise and look for actual local.gets of
+          //       our value. If no such gets exist, this is still safe.
+          return true;
+        }
+        reached.push(out);
+      }
+    }
+    // No problem!
+    return false;
   }
 
   EffectAnalyzer effects(Expression* expr) {
