@@ -347,7 +347,7 @@ struct LocalGraph::LocalGraphFlower
 
     if (!hasSet[index]) {
       // As in flow(), when there is no local.set for an index we can just mark
-      // the only writer as the default value.
+      // the default value as the only writer.
       sets.insert(nullptr);
       return;
     }
