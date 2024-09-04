@@ -209,6 +209,9 @@ void PassRegistry::registerPasses() {
                createTypeRefiningPass);
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
+  registerPass("heap-store-optimization",
+               "optimize heap (GC) stores",
+               createHeapStoreOptimizationPass);
   registerPass(
     "inline-main", "inline __original_main into main", createInlineMainPass);
   registerPass("inlining",
@@ -609,6 +612,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   addIfNoDWARFIssues("remove-unused-brs");
   addIfNoDWARFIssues("remove-unused-names");
   addIfNoDWARFIssues("optimize-instructions");
+  if (wasm->features.hasGC()) {
+    addIfNoDWARFIssues("heap-store-optimization");
+  }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("pick-load-signs");
   }
@@ -681,6 +687,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     addIfNoDWARFIssues("precompute");
   }
   addIfNoDWARFIssues("optimize-instructions");
+  if (wasm->features.hasGC()) {
+    addIfNoDWARFIssues("heap-store-optimization");
+  }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues(
       "rse"); // after all coalesce-locals, and before a final vacuum
