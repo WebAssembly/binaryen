@@ -108,7 +108,7 @@ struct TypeSCCs
 // with the most compact encoding.
 struct BrandTypeIterator {
   // See `initFieldOptions` for the 18 options.
-  static constexpr size_t optionCount = 18;
+  static constexpr Index optionCount = 18;
   static std::array<Field, optionCount> fieldOptions;
   static void initFieldOptions();
 
@@ -146,7 +146,7 @@ struct BrandTypeIterator {
   }
 
   BrandTypeIterator& operator++() {
-    for (size_t i = fields.size(); i > 0; --i) {
+    for (Index i = fields.size(); i > 0; --i) {
       if (fields[i - 1].advance()) {
         return *this;
       }
@@ -162,15 +162,15 @@ struct BrandTypeIterator {
 };
 
 // Create an adjacency list with edges from supertype to subtypes.
-std::vector<std::vector<size_t>>
+std::vector<std::vector<Index>>
 createSubtypeGraph(const std::vector<HeapType>& types) {
-  std::unordered_map<HeapType, size_t> indices;
+  std::unordered_map<HeapType, Index> indices;
   for (auto type : types) {
     indices.insert({type, indices.size()});
   }
 
-  std::vector<std::vector<size_t>> subtypeGraph(types.size());
-  for (size_t i = 0; i < types.size(); ++i) {
+  std::vector<std::vector<Index>> subtypeGraph(types.size());
+  for (Index i = 0; i < types.size(); ++i) {
     if (auto super = types[i].getDeclaredSuperType()) {
       if (auto it = indices.find(*super); it != indices.end()) {
         subtypeGraph[it->second].push_back(i);
@@ -199,13 +199,13 @@ struct GroupClassInfo {
   // group, offset by 1 iff there is a brand type. Used to ensure that we only
   // find emit permutations that respect the constraint that supertypes must be
   // ordered before subtypes.
-  std::vector<std::vector<size_t>> subtypeGraph;
+  std::vector<std::vector<Index>> subtypeGraph;
   // A generator of valid permutations of the components in this class.
   TopologicalOrders orders;
 
   // Initialize `subtypeGraph` and `orders` based on the canonical ordering
   // encoded by the group and permutation in `info`.
-  static std::vector<std::vector<size_t>> initSubtypeGraph(RecGroupInfo& info);
+  static std::vector<std::vector<Index>> initSubtypeGraph(RecGroupInfo& info);
   GroupClassInfo(RecGroupInfo& info);
 
   void advance() {
@@ -224,7 +224,7 @@ struct GroupClassInfo {
       // beginning of the canonical order.
       subtypeGraph.insert(subtypeGraph.begin(), {{}});
       // Adjust indices.
-      for (size_t i = 1; i < subtypeGraph.size(); ++i) {
+      for (Index i = 1; i < subtypeGraph.size(); ++i) {
         for (auto& edge : subtypeGraph[i]) {
           ++edge;
         }
@@ -255,7 +255,7 @@ struct RecGroupInfo {
   // get that other component's types into the canonical shape before using a
   // fresh permutation to re-shuffle them into their final shape. Only set for
   // groups belonging to nontrivial equivalence classes.
-  std::vector<size_t> permutation;
+  std::vector<Index> permutation;
   // Does this group include a brand type that does not correspond to a type in
   // the original module?
   bool hasBrand = false;
@@ -265,13 +265,13 @@ struct RecGroupInfo {
   std::optional<GroupClassInfo> classInfo;
 };
 
-std::vector<std::vector<size_t>>
+std::vector<std::vector<Index>>
 GroupClassInfo::initSubtypeGraph(RecGroupInfo& info) {
   assert(!info.classInfo);
   assert(info.permutation.size() == info.group.size());
 
   std::vector<HeapType> canonical(info.group.size());
-  for (size_t i = 0; i < info.group.size(); ++i) {
+  for (Index i = 0; i < info.group.size(); ++i) {
     canonical[info.permutation[i]] = info.group[i];
   }
 
@@ -291,7 +291,7 @@ void GroupClassInfo::permute(RecGroupInfo& info) {
   // First, un-permute the group to get back to the canonical order, offset by 1
   // if we are newly inserting a brand.
   std::vector<HeapType> canonical(info.group.size() + insertingBrand);
-  for (size_t i = 0; i < info.group.size(); ++i) {
+  for (Index i = 0; i < info.group.size(); ++i) {
     canonical[info.permutation[i] + insertingBrand] = info.group[i];
   }
   // Update the brand.
@@ -304,7 +304,7 @@ void GroupClassInfo::permute(RecGroupInfo& info) {
   }
   // Finally, re-permute with the new permutation..
   info.permutation = *orders;
-  for (size_t i = 0; i < info.group.size(); ++i) {
+  for (Index i = 0; i < info.group.size(); ++i) {
     info.group[i] = canonical[info.permutation[i]];
   }
 }
@@ -341,14 +341,14 @@ struct MinimizeRecGroups : Pass {
 
   // A global ordering on all types, including public types. Used to define a
   // total ordering on rec group shapes.
-  std::unordered_map<HeapType, size_t> typeIndices;
+  std::unordered_map<HeapType, Index> typeIndices;
 
   // As we process strongly connected components, we will construct output
   // recursion groups here.
   std::vector<RecGroupInfo> groups;
 
   // For each shape of rec group we have created, its index in `groups`.
-  std::unordered_map<RecGroupShape, size_t> groupShapeIndices;
+  std::unordered_map<RecGroupShape, Index> groupShapeIndices;
 
   // When we find that two groups are isomorphic to (i.e. permutations of) each
   // other, we combine their equivalence classes and choose a new class
@@ -360,7 +360,7 @@ struct MinimizeRecGroups : Pass {
   // with the shape of any existing group. If there is a conflict, we need to
   // update the group's shape and try again. Maintain a stack of group indices
   // whose shapes we need to check for uniqueness to avoid deep recursions.
-  std::vector<size_t> shapesToUpdate;
+  std::vector<Index> shapesToUpdate;
 
   void run(Module* module) override {
     // There are no recursion groups to minimize if GC is not enabled.
@@ -382,7 +382,7 @@ struct MinimizeRecGroups : Pass {
     // Compute the strongly connected components and ensure they form distinct
     // recursion groups.
     for (auto scc : TypeSCCs(types)) {
-      [[maybe_unused]] size_t index = equivalenceClasses.addSet();
+      [[maybe_unused]] Index index = equivalenceClasses.addSet();
       assert(index == groups.size());
       groups.emplace_back();
 
@@ -392,7 +392,7 @@ struct MinimizeRecGroups : Pass {
       auto deps = createSubtypeGraph(sccTypes);
       auto permutation = *TopologicalOrders(deps).begin();
       groups.back().group.resize(sccTypes.size());
-      for (size_t i = 0; i < sccTypes.size(); ++i) {
+      for (Index i = 0; i < sccTypes.size(); ++i) {
         groups.back().group[i] = sccTypes[permutation[i]];
       }
       assert(shapesToUpdate.empty());
@@ -420,7 +420,7 @@ struct MinimizeRecGroups : Pass {
     }
   }
 
-  void updateShape(size_t group) {
+  void updateShape(Index group) {
     auto [it, inserted] =
       groupShapeIndices.insert({RecGroupShape(groups[group].group), group});
     if (inserted) {
@@ -454,13 +454,13 @@ struct MinimizeRecGroups : Pass {
     //
     // These possibilities are handled in order below.
 
-    size_t other = it->second;
+    Index other = it->second;
 
     auto& groupInfo = groups[group];
     auto& otherInfo = groups[other];
 
-    size_t groupRep = equivalenceClasses.getRoot(group);
-    size_t otherRep = equivalenceClasses.getRoot(other);
+    Index groupRep = equivalenceClasses.getRoot(group);
+    Index otherRep = equivalenceClasses.getRoot(other);
 
     // Case 1A: We have found a permutation of this group that has the same
     // shape as a previous permutation of this group. Skip the rest of the
@@ -504,7 +504,7 @@ struct MinimizeRecGroups : Pass {
     if (groups[groupRep].classInfo) {
       auto& classInfo = *groups[groupRep].classInfo;
 
-      [[maybe_unused]] size_t unionRep =
+      [[maybe_unused]] Index unionRep =
         equivalenceClasses.getUnion(groupRep, otherRep);
       assert(groupRep == unionRep);
 
@@ -525,7 +525,7 @@ struct MinimizeRecGroups : Pass {
     if (groups[otherRep].classInfo) {
       auto& classInfo = *groups[otherRep].classInfo;
 
-      [[maybe_unused]] size_t unionRep =
+      [[maybe_unused]] Index unionRep =
         equivalenceClasses.getUnion(otherRep, groupRep);
       assert(otherRep == unionRep);
 
@@ -572,7 +572,7 @@ struct MinimizeRecGroups : Pass {
     shapesToUpdate.push_back(other);
   }
 
-  std::vector<size_t>
+  std::vector<Index>
   getCanonicalPermutation(const std::vector<HeapType>& types) {
     // The correctness of this part depends on some interesting properties of
     // strongly connected graphs with ordered, directed edges. A permutation of
@@ -664,7 +664,7 @@ struct MinimizeRecGroups : Pass {
     // Compute the orderings generated by DFS on each type.
     std::unordered_set<HeapType> typeSet(types.begin(), types.end());
     std::vector<std::vector<HeapType>> dfsOrders(types.size());
-    for (size_t i = 0; i < types.size(); ++i) {
+    for (Index i = 0; i < types.size(); ++i) {
       dfsOrders[i].reserve(types.size());
       std::vector<HeapType> workList;
       workList.push_back(types[i]);
@@ -712,7 +712,7 @@ struct MinimizeRecGroups : Pass {
     // taken from each equivalence class by sorting them by order of appearance
     // in the least order, which ensures the final order remains independent of
     // the initial order.
-    std::unordered_map<HeapType, size_t> indexInLeastOrder;
+    std::unordered_map<HeapType, Index> indexInLeastOrder;
     for (auto type : leastOrder) {
       indexInLeastOrder.insert({type, indexInLeastOrder.size()});
     }
@@ -725,7 +725,7 @@ struct MinimizeRecGroups : Pass {
     }
     std::vector<HeapType> finalOrder;
     finalOrder.reserve(types.size());
-    for (size_t i = 0; i < classSize; ++i) {
+    for (Index i = 0; i < classSize; ++i) {
       for (auto& [shape, members] : typeClasses) {
         finalOrder.push_back(members[i]);
       }
@@ -733,11 +733,11 @@ struct MinimizeRecGroups : Pass {
 
     // Now what we actually want is the permutation that takes us from the final
     // canonical order to the original order of the types.
-    std::unordered_map<HeapType, size_t> indexInFinalOrder;
+    std::unordered_map<HeapType, Index> indexInFinalOrder;
     for (auto type : finalOrder) {
       indexInFinalOrder.insert({type, indexInFinalOrder.size()});
     }
-    std::vector<size_t> permutation;
+    std::vector<Index> permutation;
     permutation.reserve(types.size());
     for (auto type : types) {
       permutation.push_back(indexInFinalOrder.at(type));
@@ -747,10 +747,10 @@ struct MinimizeRecGroups : Pass {
 
   void rewriteTypes(Module& wasm) {
     // Map types to indices in the builder.
-    std::unordered_map<HeapType, size_t> outputIndices;
-    size_t i = 0;
+    std::unordered_map<HeapType, Index> outputIndices;
+    Index i = 0;
     for (const auto& group : groups) {
-      for (size_t j = 0; j < group.group.size(); ++j) {
+      for (Index j = 0; j < group.group.size(); ++j) {
         // Skip the brand if it exists.
         if (!group.hasBrand || group.permutation[j] != 0) {
           outputIndices.insert({group.group[j], i});
@@ -781,7 +781,7 @@ struct MinimizeRecGroups : Pass {
     std::unordered_map<HeapType, HeapType> oldToNew;
     i = 0;
     for (const auto& group : groups) {
-      for (size_t j = 0; j < group.group.size(); ++j) {
+      for (Index j = 0; j < group.group.size(); ++j) {
         // Skip the brand again if it exists.
         if (!group.hasBrand || group.permutation[j] != 0) {
           oldToNew[group.group[j]] = newTypes[i];

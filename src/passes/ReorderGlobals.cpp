@@ -77,7 +77,7 @@ struct ReorderGlobals : public Pass {
   // use the index of the global in the original ordering to identify each
   // global. A different ordering is then a vector of old indices, saying where
   // each element comes from, which is logically a mapping between indices.
-  using IndexIndexMap = std::vector<size_t>;
+  using IndexIndexMap = std::vector<Index>;
 
   // We will also track counts of uses for each global. We use floating-point
   // values here since while the initial counts are integers, we will be
@@ -126,7 +126,7 @@ struct ReorderGlobals : public Pass {
     //   (global $b i32 (global.get $a)) ;; $b depends on $a; $a must be first
     //
     // To do so we construct a map from each global to those that depends on it.
-    std::vector<std::unordered_set<size_t>> dependentSets(globals.size());
+    std::vector<std::unordered_set<Index>> dependentSets(globals.size());
     for (Index i = 0; i < globals.size(); i++) {
       auto& global = globals[i];
       if (!global->imported()) {
@@ -138,7 +138,7 @@ struct ReorderGlobals : public Pass {
     }
     TopologicalSort::Graph deps;
     deps.reserve(globals.size());
-    for (size_t i = 0; i < globals.size(); ++i) {
+    for (Index i = 0; i < globals.size(); ++i) {
       deps.emplace_back(dependentSets[i].begin(), dependentSets[i].end());
     }
 
@@ -241,7 +241,7 @@ struct ReorderGlobals : public Pass {
     // Now use that optimal order to create an ordered graph that includes the
     // dependencies. The final order will be the minimum topological sort of
     // this graph.
-    return TopologicalSort::minSort(deps, [&](size_t a, size_t b) {
+    return TopologicalSort::minSort(deps, [&](Index a, Index b) {
       // Imports always go first. The binary writer takes care of this itself
       // anyhow, but it is better to do it here in the IR so we can actually
       // see what the final layout will be.
@@ -287,8 +287,8 @@ struct ReorderGlobals : public Pass {
     // Track the size in bits and the next index at which the size increases. At
     // the first iteration we'll compute the size of the LEB for index 0, and so
     // forth.
-    size_t sizeInBits = 0;
-    size_t nextSizeIncrease = 0;
+    Index sizeInBits = 0;
+    Index nextSizeIncrease = 0;
     for (Index i = 0; i < indices.size(); i++) {
       if (i == nextSizeIncrease) {
         sizeInBits++;

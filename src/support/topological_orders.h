@@ -27,22 +27,24 @@
 #include <variant>
 #include <vector>
 
+#include "support/index.h"
+
 namespace wasm {
 
 namespace TopologicalSort {
 
 // An adjacency list containing edges from vertices to their successors.
-using Graph = std::vector<std::vector<size_t>>;
+using Graph = std::vector<std::vector<Index>>;
 
 // Return a topological sort of the vertices in the given adjacency graph.
-inline std::vector<size_t> sort(const Graph& graph);
+inline std::vector<Index> sort(const Graph& graph);
 
 // A utility that finds a topological sort of a graph with arbitrary element
 // types. The provided iterators must be to pairs of elements and collections of
 // their children.
 template<typename It> decltype(auto) sortOf(It begin, It end) {
   using T = std::remove_cv_t<typename It::value_type::first_type>;
-  std::unordered_map<T, size_t> indices;
+  std::unordered_map<T, Index> indices;
   std::vector<T> elements;
   // Assign indices to each element.
   for (auto it = begin; it != end; ++it) {
@@ -71,8 +73,8 @@ template<typename It> decltype(auto) sortOf(It begin, It end) {
 // Return the topological sort of the vertices in the given adjacency graph that
 // is lexicographically minimal with respect to the provided comparator on
 // vertex indices. Implemented using a min-heap internally.
-template<typename F = std::less<size_t>>
-std::vector<size_t> minSort(const Graph& graph, F cmp = std::less<size_t>{});
+template<typename F = std::less<Index>>
+std::vector<Index> minSort(const Graph& graph, F cmp = std::less<Index>{});
 
 } // namespace TopologicalSort
 
@@ -88,10 +90,10 @@ using TopologicalOrders = TopologicalOrdersImpl<std::monostate>;
 // detail of `minSort`.
 template<typename Cmp> struct TopologicalOrdersImpl {
   using Graph = TopologicalSort::Graph;
-  using value_type = const std::vector<size_t>;
+  using value_type = const std::vector<Index>;
   using difference_type = std::ptrdiff_t;
-  using reference = const std::vector<size_t>&;
-  using pointer = const std::vector<size_t>*;
+  using reference = const std::vector<Index>&;
+  using pointer = const std::vector<Index>*;
   using iterator_category = std::input_iterator_tag;
 
   // Takes an adjacency list, where the list for each vertex is a sorted list of
@@ -108,8 +110,8 @@ template<typename Cmp> struct TopologicalOrdersImpl {
   bool operator!=(const TopologicalOrdersImpl& other) const {
     return !(*this == other);
   }
-  const std::vector<size_t>& operator*() const { return buf; }
-  const std::vector<size_t>* operator->() const { return &buf; }
+  const std::vector<Index>& operator*() const { return buf; }
+  const std::vector<Index>* operator->() const { return &buf; }
   TopologicalOrdersImpl& operator++() {
     // Find the last selector that can be advanced, popping any that cannot.
     std::optional<Selector> next;
@@ -149,7 +151,7 @@ private:
     selectors.reserve(graph.size());
     selectors.push_back({0, 0, 0});
     auto& first = selectors.back();
-    for (size_t i = 0; i < graph.size(); ++i) {
+    for (Index i = 0; i < graph.size(); ++i) {
       if (indegrees[i] == 0) {
         if constexpr (useMinHeap) {
           pushChoice(i);
@@ -172,14 +174,14 @@ private:
   // The current in-degrees for each vertex. When a vertex is appended to our
   // permutation, the in-degrees of its children are decremented and those that
   // go to zero become available for the next selection.
-  std::vector<size_t> indegrees;
+  std::vector<Index> indegrees;
   // The buffer in which we are constructing a permutation. It contains a
   // sequence of selected vertices followed by a sequence of possible choices
   // for the next vertex.
-  std::vector<size_t> buf;
+  std::vector<Index> buf;
   // When we are finding a minimal topological order, store the possible
   // choices in this separate min-heap instead of directly in `buf`.
-  std::vector<size_t> choiceHeap;
+  std::vector<Index> choiceHeap;
   // When we are finding a minimal topological order, use this function to
   // compare possible choices. Empty iff we are not finding a minimal
   // topological order.
@@ -192,11 +194,11 @@ private:
   struct Selector {
     // The start index of the sequence of available choices. Also the index
     // where we place the current choice.
-    size_t start;
+    Index start;
     // The number of choices we have.
-    size_t count;
+    Index count;
     // The index of the current choice in the original order.
-    size_t index;
+    Index index;
 
     // Select the next available vertex, decrement in-degrees, and update the
     // sequence of available vertices. Return the Selector for the next vertex.
@@ -246,7 +248,7 @@ private:
         // we leave everything how we found it so the previous selector can make
         // its next selection without observing anything having changed in the
         // meantime.
-        for (size_t i = 1; i < count; ++i) {
+        for (Index i = 1; i < count; ++i) {
           ctx.buf[start + i - 1] = ctx.buf[start + i];
         }
         ctx.buf[start + count - 1] = unselected;
@@ -259,16 +261,16 @@ private:
     }
   };
 
-  void pushChoice(size_t choice) {
+  void pushChoice(Index choice) {
     choiceHeap.push_back(choice);
-    std::push_heap(choiceHeap.begin(),
-                   choiceHeap.end(),
-                   [&](size_t a, size_t b) { return cmp(b, a); });
+    std::push_heap(choiceHeap.begin(), choiceHeap.end(), [&](Index a, Index b) {
+      return cmp(b, a);
+    });
   }
-  size_t popChoice() {
-    std::pop_heap(choiceHeap.begin(),
-                  choiceHeap.end(),
-                  [&](size_t a, size_t b) { return cmp(b, a); });
+  Index popChoice() {
+    std::pop_heap(choiceHeap.begin(), choiceHeap.end(), [&](Index a, Index b) {
+      return cmp(b, a);
+    });
     auto choice = choiceHeap.back();
     choiceHeap.pop_back();
     return choice;
@@ -278,17 +280,16 @@ private:
   // Empty if we've already seen every possible ordering.
   std::vector<Selector> selectors;
 
-  friend std::vector<size_t> TopologicalSort::minSort<Cmp>(const Graph&, Cmp);
+  friend std::vector<Index> TopologicalSort::minSort<Cmp>(const Graph&, Cmp);
 };
 
 namespace TopologicalSort {
 
-std::vector<size_t> sort(const Graph& graph) {
+std::vector<Index> sort(const Graph& graph) {
   return *TopologicalOrders(graph);
 }
 
-template<typename Cmp>
-std::vector<size_t> minSort(const Graph& graph, Cmp cmp) {
+template<typename Cmp> std::vector<Index> minSort(const Graph& graph, Cmp cmp) {
   return *TopologicalOrdersImpl<Cmp>(graph, cmp);
 }
 
