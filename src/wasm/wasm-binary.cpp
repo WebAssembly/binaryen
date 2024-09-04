@@ -3121,7 +3121,8 @@ void WasmBinaryReader::processExpressions() {
       }
       auto peek = input[pos];
       if (peek == BinaryConsts::End || peek == BinaryConsts::Else ||
-          peek == BinaryConsts::Catch_P3 || peek == BinaryConsts::CatchAll_P3 ||
+          peek == BinaryConsts::Catch_Legacy ||
+          peek == BinaryConsts::CatchAll_Legacy ||
           peek == BinaryConsts::Delegate) {
         BYN_TRACE("== processExpressions finished with unreachable"
                   << std::endl);
@@ -4070,8 +4071,8 @@ BinaryConsts::ASTNodes WasmBinaryReader::readExpression(Expression*& curr) {
       }
       break;
     case BinaryConsts::Else:
-    case BinaryConsts::Catch_P3:
-    case BinaryConsts::CatchAll_P3: {
+    case BinaryConsts::Catch_Legacy:
+    case BinaryConsts::CatchAll_Legacy: {
       curr = nullptr;
       if (DWARF && currFunction) {
         assert(!controlFlowStack.empty());
@@ -7213,9 +7214,9 @@ void WasmBinaryReader::visitTryOrTryInBlock(Expression*& out) {
   // here, then do that later.
   std::vector<Index> tagIndexes;
 
-  while (lastSeparator == BinaryConsts::Catch_P3 ||
-         lastSeparator == BinaryConsts::CatchAll_P3) {
-    if (lastSeparator == BinaryConsts::Catch_P3) {
+  while (lastSeparator == BinaryConsts::Catch_Legacy ||
+         lastSeparator == BinaryConsts::CatchAll_Legacy) {
+    if (lastSeparator == BinaryConsts::Catch_Legacy) {
       auto index = getU32LEB();
       if (index >= wasm.tags.size()) {
         throwError("bad tag index");

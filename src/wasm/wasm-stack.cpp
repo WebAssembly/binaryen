@@ -2142,7 +2142,7 @@ void BinaryInstWriter::emitCatch(Try* curr, Index i) {
   if (func && !sourceMap) {
     parent.writeExtraDebugLocation(curr, func, i);
   }
-  o << int8_t(BinaryConsts::Catch_P3)
+  o << int8_t(BinaryConsts::Catch_Legacy)
     << U32LEB(parent.getTagIndex(curr->catchTags[i]));
 }
 
@@ -2150,7 +2150,7 @@ void BinaryInstWriter::emitCatchAll(Try* curr) {
   if (func && !sourceMap) {
     parent.writeExtraDebugLocation(curr, func, curr->catchBodies.size());
   }
-  o << int8_t(BinaryConsts::CatchAll_P3);
+  o << int8_t(BinaryConsts::CatchAll_Legacy);
 }
 
 void BinaryInstWriter::emitDelegate(Try* curr) {

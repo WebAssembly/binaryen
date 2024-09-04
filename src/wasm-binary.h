@@ -1108,8 +1108,8 @@ enum ASTNodes {
   // exception handling opcodes
 
   Try = 0x06,
-  Catch_P3 = 0x07,    // Old Phase 3 'catch'
-  CatchAll_P3 = 0x19, // Old Phase 3 'catch_all'
+  Catch_Legacy = 0x07,    // Legacy 'catch'
+  CatchAll_Legacy = 0x19, // Legacy 'catch_all'
   Delegate = 0x18,
   Throw = 0x08,
   Rethrow = 0x09,
