@@ -2,65 +2,58 @@
 
 ;; RUN: foreach %s %t wasm-opt --closed-world --merge-j2cl-itables -all -S -o - | filecheck %s
 
-;; Shared itable.
+;; Shared itable instance.
 (module
   (rec
-    ;; Object class type definitions.
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $Object (sub (struct (field $vtable (ref $Object.vtable)) (field $itable (ref $Object.itable)))))
-
-    ;; CHECK:       (type $SubObject (sub $Object (struct (field $vtable (ref $SubObject.vtable)) (field $itable (ref $Object.itable)))))
-
-    ;; CHECK:       (type $2 (func))
-
-    ;; CHECK:       (type $function (func))
-
-    ;; CHECK:       (type $Object.vtable (sub (struct (field structref))))
-    (type $Object.vtable (sub (struct)))
-    ;; CHECK:       (type $SubObject.vtable (sub $Object.vtable (struct (field structref) (field (ref $function)))))
-
-    ;; CHECK:       (type $Object.itable (struct (field structref)))
-    (type $Object.itable (struct
-		  (field (ref null struct))))
-
     (type $Object (sub (struct
       (field $vtable (ref $Object.vtable))
       (field $itable (ref $Object.itable)))))
 
-    ;; SubObject class type definitions.
-    (type $SubObject.vtable (sub $Object.vtable (struct
-		  (field (ref $function)))))
-
+    ;; CHECK:       (type $SubObject (sub $Object (struct (field $vtable (ref $SubObject.vtable)) (field $itable (ref $Object.itable)))))
     (type $SubObject (sub $Object (struct
       (field $vtable (ref $SubObject.vtable))
       (field $itable (ref $Object.itable)))))
 
+    ;; CHECK:       (type $2 (func))
+
+    ;; CHECK:       (type $function (func))
     (type $function (func))
+
+    ;; CHECK:       (type $Object.vtable (sub (struct (field structref))))
+    (type $Object.vtable (sub (struct)))
+
+    ;; CHECK:       (type $SubObject.vtable (sub $Object.vtable (struct (field structref) (field (ref $function)))))
+    (type $SubObject.vtable (sub $Object.vtable (struct
+		  (field (ref $function)))))
+
+    ;; CHECK:       (type $Object.itable (struct (field structref)))
+    (type $Object.itable (struct
+		  (field (ref null struct))))
   )
 
-  ;; Object vtable and itable initialization.
   ;; CHECK:      (global $Object.itable (ref $Object.itable) (struct.new_default $Object.itable))
+  (global $Object.itable (ref $Object.itable)
+    (struct.new_default $Object.itable))
+
+  ;; CHECK:      (global $SubObject.itable (ref $Object.itable) (global.get $Object.itable))
+  (global $SubObject.itable (ref $Object.itable)
+    (global.get $Object.itable))  ;; uses shared empty itable instance.
 
   ;; CHECK:      (global $SubObject.vtable (ref $SubObject.vtable) (struct.new $SubObject.vtable
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT:  (ref.func $SubObject.f)
   ;; CHECK-NEXT: ))
+  (global $SubObject.vtable (ref $SubObject.vtable)
+    (struct.new $SubObject.vtable (ref.func $SubObject.f)))
 
-  ;; CHECK:      (global $SubObject.itable (ref $Object.itable) (global.get $Object.itable))
 
   ;; CHECK:      (global $Object.vtable (ref $Object.vtable) (struct.new $Object.vtable
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: ))
   (global $Object.vtable (ref $Object.vtable)
     (struct.new $Object.vtable))
-  (global $Object.itable (ref $Object.itable)
-    (struct.new_default $Object.itable))
-
-  ;; SubObject vtable and itable initialization. Shared empty itable.
-  (global $SubObject.vtable (ref $SubObject.vtable)
-    (struct.new $SubObject.vtable (ref.func $SubObject.f)))
-  (global $SubObject.itable (ref $Object.itable)
-    (global.get $Object.itable))
 
   ;; CHECK:      (func $SubObject.f (type $function)
   ;; CHECK-NEXT:  (nop)
@@ -109,46 +102,40 @@
   )
 )
 
-;; Separate itable.
+;; Each type has its own itable.
 (module
   (rec
     ;; Object class type definitions.
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $Object (sub (struct (field $vtable (ref $Object.vtable)) (field $itable (ref $Object.itable)))))
-
-    ;; CHECK:       (type $SubObject (sub $Object (struct (field $vtable (ref $SubObject.vtable)) (field $itable (ref $SubObject.itable)))))
-
-    ;; CHECK:       (type $2 (func))
-
-    ;; CHECK:       (type $function (func))
-
-    ;; CHECK:       (type $Object.itable (sub (struct (field structref))))
-
-    ;; CHECK:       (type $SubObject.itable (sub $Object.itable (struct (field structref))))
-
-    ;; CHECK:       (type $Object.vtable (sub (struct (field structref))))
-    (type $Object.vtable (sub (struct)))
-
-    (type $Object.itable (sub (struct
-		  (field (ref null struct)))))
-
     (type $Object (sub (struct
 			(field $vtable (ref $Object.vtable))
 			(field $itable (ref $Object.itable)))))
 
-    ;; SubObject class type definitions.
-    ;; CHECK:       (type $SubObject.vtable (sub $Object.vtable (struct (field structref) (field (ref $function)))))
-    (type $SubObject.vtable (sub $Object.vtable
-		  (struct (field (ref $function)))))
-
-    (type $SubObject.itable (sub $Object.itable
-			(struct (field (ref null struct)))))
-
+    ;; CHECK:       (type $SubObject (sub $Object (struct (field $vtable (ref $SubObject.vtable)) (field $itable (ref $SubObject.itable)))))
     (type $SubObject (sub $Object (struct
 			(field $vtable (ref $SubObject.vtable))
 			(field $itable (ref $SubObject.itable)))))
 
+    ;; CHECK:       (type $2 (func))
+
+    ;; CHECK:       (type $function (func))
     (type $function (func))
+
+    ;; CHECK:       (type $Object.itable (sub (struct (field structref))))
+    (type $Object.itable (sub (struct
+		  (field (ref null struct)))))
+
+    ;; CHECK:       (type $SubObject.itable (sub $Object.itable (struct (field structref))))
+    (type $SubObject.itable (sub $Object.itable
+			(struct (field (ref null struct)))))
+
+    ;; CHECK:       (type $Object.vtable (sub (struct (field structref))))
+    (type $Object.vtable (sub (struct)))
+
+    ;; CHECK:       (type $SubObject.vtable (sub $Object.vtable (struct (field structref) (field (ref $function)))))
+    (type $SubObject.vtable (sub $Object.vtable
+		  (struct (field (ref $function)))))
   )
 
   ;; Object vtable and itable initialization.
@@ -156,23 +143,22 @@
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT:  (ref.func $SubObject.f)
   ;; CHECK-NEXT: ))
+  (global $SubObject.vtable (ref $SubObject.vtable)
+		(struct.new $SubObject.vtable (ref.func $SubObject.f)))
 
   ;; CHECK:      (global $SubObject.itable (ref $SubObject.itable) (struct.new_default $SubObject.itable))
+  (global $SubObject.itable (ref $SubObject.itable)
+		(struct.new_default $SubObject.itable))
 
   ;; CHECK:      (global $Object.vtable (ref $Object.vtable) (struct.new $Object.vtable
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: ))
   (global $Object.vtable (ref $Object.vtable)
 		(struct.new $Object.vtable))
+
   ;; CHECK:      (global $Object.itable (ref $Object.itable) (struct.new_default $Object.itable))
   (global $Object.itable (ref $Object.itable)
 		(struct.new_default $Object.itable))
-
-  ;; SubObject vtable and itable initialization. Shared empty itable.
-  (global $SubObject.vtable (ref $SubObject.vtable)
-		(struct.new $SubObject.vtable (ref.func $SubObject.f)))
-  (global $SubObject.itable (ref $SubObject.itable)
-		(struct.new_default $SubObject.itable))
 
   ;; CHECK:      (func $SubObject.f (type $function)
   ;; CHECK-NEXT:  (nop)

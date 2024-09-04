@@ -74,6 +74,8 @@ struct J2CLItableMerging : public Pass {
   std::unordered_map<HeapType, StructInfo*> structInfoByVtableType;
   std::unordered_map<HeapType, StructInfo*> structInfoByITableType;
 
+  unsigned long itableSize = 0;
+
   void run(Module* module) override {
     if (!module->features.hasGC()) {
       return;
@@ -99,12 +101,8 @@ struct J2CLItableMerging : public Pass {
   // Collects all structs corresponding to Java classes, their vtables and
   // their itables. This is very tied to the way j2cl emits these constructs.
   void collectVtableAndItableTypes(Module& wasm) {
-    unsigned long itableSize = 0;
-
     // 1. Collect all structs that correspond that a Java type.
-    for (auto tn : wasm.typeNames) {
-      auto heapType = tn.first;
-      auto typeNameInfo = tn.second;
+    for (auto [heapType, typeNameInfo] : wasm.typeNames) {
 
       if (!heapType.isStruct()) {
         continue;
@@ -120,10 +118,12 @@ struct J2CLItableMerging : public Pass {
         continue;
       }
 
-      auto vtabletype = wasm.typeNames.find(type.fields[0].type.getHeapType());
-      auto itabletype = wasm.typeNames.find(type.fields[1].type.getHeapType());
+      auto& vtabletype =
+        wasm.typeNames.find(type.fields[0].type.getHeapType())->first;
+      auto& itabletype =
+        wasm.typeNames.find(type.fields[1].type.getHeapType())->first;
 
-      auto structItableSize = itabletype->first.getStruct().fields.size();
+      auto structItableSize = itabletype.getStruct().fields.size();
 
       if (itableSize != 0 && itableSize != structItableSize) {
         Fatal() << "--merge-j2cl-itables needs to be the first pass to run "
@@ -134,12 +134,11 @@ struct J2CLItableMerging : public Pass {
 
       // Add a new StructInfo to the list by value so that its memory gets
       // reclaimed automatically on exit.
-      structInfos.push_back(
-        StructInfo{heapType, vtabletype->first, itabletype->first});
+      structInfos.push_back(StructInfo{heapType, vtabletype, itabletype});
       // Point to the StructInfo just added to the list to be able to look it
       // up by its vtable and itable types.
-      structInfoByVtableType[vtabletype->first] = &structInfos.back();
-      structInfoByITableType[itabletype->first] = &structInfos.back();
+      structInfoByVtableType[vtabletype] = &structInfos.back();
+      structInfoByITableType[itabletype] = &structInfos.back();
     }
 
     // 2. Collect the globals for vtables and itables.
@@ -181,14 +180,14 @@ struct J2CLItableMerging : public Pass {
           return;
         }
 
-        auto it =
-          parent.structInfoByVtableType.find(curr->ref->type.getHeapType());
-        if (it == parent.structInfoByVtableType.end()) {
+        if (!parent.structInfoByVtableType.count(
+              curr->ref->type.getHeapType())) {
           return;
         }
+        // This is a struct.get on the vtable.
         // It is ok to just change the index since the field has moved but
         // the type is the same.
-        curr->index += it->second->itable.getStruct().fields.size();
+        curr->index += parent.itableSize;
       }
 
       void visitStructNew(StructNew* curr) {
@@ -228,28 +227,21 @@ struct J2CLItableMerging : public Pass {
                   << "on j2cl output. (itable initializer not found)";
         }
         auto& itableFieldInitializers = itableStructNew->operands;
-        auto itableSize =
-          itableStructNew->type.getHeapType().getStruct().fields.size();
-
-        if (itableSize == 0) {
-          // Itables are empty. Nothing to do.
-          return;
-        }
 
         // Compute the new size of the vtable.
-        Index newSize = curr->operands.size() + itableSize;
+        Index newSize = curr->operands.size() + parent.itableSize;
         // and resize the struct.new operands to accommodate the itable
         // fields.
         curr->operands.resize(newSize);
 
         // Move initialization for the existing vtable fields to their
         // new position.
-        for (Index i = newSize - 1; i >= itableSize; i--) {
-          curr->operands[i] = curr->operands[i - itableSize];
+        for (Index i = newSize - 1; i >= parent.itableSize; i--) {
+          curr->operands[i] = curr->operands[i - parent.itableSize];
         }
 
         // Add the initialization for the itable fields.
-        for (Index i = 0; i < itableSize; i++) {
+        for (Index i = 0; i < parent.itableSize; i++) {
           if (itableFieldInitializers.size() > i) {
             // The itable was initialized with a struct.new, copy the
             // initialization values.
@@ -293,21 +285,21 @@ struct J2CLItableMerging : public Pass {
           return;
         }
 
-        if (curr->type.isStruct() &&
-            parent.structInfoByITableType.count(curr->type.getHeapType())) {
-          // This is a struct.get that returns an itable type;
-          // Change to return the corresponding vtable type.
-          Builder builder(*getModule());
-          replaceCurrent(builder.makeStructGet(
-            0,
-            curr->ref,
-            parent.structInfoByITableType[curr->type.getHeapType()]
-              ->javaClass.getStruct()
-              .fields[0]
-              .type));
-
+        if (!curr->type.isStruct() ||
+            !parent.structInfoByITableType.count(curr->type.getHeapType())) {
           return;
         }
+
+        // This is a struct.get that returns an itable type;
+        // Change to return the corresponding vtable type.
+        Builder builder(*getModule());
+        replaceCurrent(builder.makeStructGet(
+          0,
+          curr->ref,
+          parent.structInfoByITableType[curr->type.getHeapType()]
+            ->javaClass.getStruct()
+            .fields[0]
+            .type));
       }
     };
 
@@ -345,7 +337,7 @@ struct J2CLItableMerging : public Pass {
           if (iter != wasm.typeNames.end()) {
             auto& nameInfo = iter->second;
 
-            // Make a copy of the old ones to base ourselves off of as we do
+            // Make a copy of the old ones before clearing them.
             auto oldFieldNames = nameInfo.fieldNames;
 
             // Clear the old names and write the new ones.
@@ -354,9 +346,7 @@ struct J2CLItableMerging : public Pass {
             // itable fields do not have names (in the original .wat file they
             // are accessed by index).
             for (Index i = 0; i < oldFieldNames.size(); i++) {
-              nameInfo
-                .fieldNames[i + structInfo->itable.getStruct().fields.size()] =
-                oldFieldNames[i];
+              nameInfo.fieldNames[i + parent.itableSize] = oldFieldNames[i];
             }
           }
         }
