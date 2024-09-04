@@ -191,7 +191,7 @@ struct StringGathering : public Pass {
 
 struct StringLowering : public StringGathering {
   // If true, then encode well-formed strings as (import "'" "string...")
-  // instead of emitting them into the JSON custom section.
+  // instead of emitting them into the x custom section.
   bool useMagicImports;
 
   // Whether to throw a fatal error on non-UTF8 strings that would not be able
@@ -266,11 +266,12 @@ struct StringLowering : public StringGathering {
       }
     }
 
-    if (json) {
+    auto jsonString = json.str();
+    if (!jsonString.empty()) {
       // If we are asserting UTF8, then we shouldn't be generating any JSON.
       assert(!assertUTF8);
       // Add a custom section with the JSON.
-      auto str = '[' + json.str() + ']';
+      auto str = '[' + jsonString + ']';
       auto vec = std::vector<char>(str.begin(), str.end());
       module->customSections.emplace_back(
         CustomSection{"string.consts", std::move(vec)});
