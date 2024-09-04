@@ -26,11 +26,11 @@
 
     ;; CHECK:       (type $SubObject.vtable (sub $Object.vtable (struct (field structref) (field (ref $function)))))
     (type $SubObject.vtable (sub $Object.vtable (struct
-		  (field (ref $function)))))
+      (field (ref $function)))))
 
     ;; CHECK:       (type $Object.itable (struct (field structref)))
     (type $Object.itable (struct
-		  (field (ref null struct))))
+	    (field (ref null struct))))
   )
 
   ;; CHECK:      (global $Object.itable (ref $Object.itable) (struct.new_default $Object.itable))
@@ -88,18 +88,18 @@
   (func $usages
     (local $o (ref null $SubObject))
     (local.set $o
-			(struct.new $SubObject
-				(global.get $SubObject.vtable)
-				(global.get $SubObject.itable)))
+      (struct.new $SubObject
+        (global.get $SubObject.vtable)
+        (global.get $SubObject.itable)))
     (drop
-			(struct.get $SubObject.vtable 0
-				(struct.get $SubObject $vtable
-					(local.get $o))))
+      (struct.get $SubObject.vtable 0
+        (struct.get $SubObject $vtable
+          (local.get $o))))
     (drop
-			(struct.get $Object.itable 0
-				(struct.get $SubObject $itable
-					(local.get $o))))
-  )
+      (struct.get $Object.itable 0
+        (struct.get $SubObject $itable
+          (local.get $o))))
+    )
 )
 
 ;; Each type has its own itable.
@@ -109,13 +109,13 @@
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $Object (sub (struct (field $vtable (ref $Object.vtable)) (field $itable (ref $Object.itable)))))
     (type $Object (sub (struct
-			(field $vtable (ref $Object.vtable))
-			(field $itable (ref $Object.itable)))))
+      (field $vtable (ref $Object.vtable))
+      (field $itable (ref $Object.itable)))))
 
     ;; CHECK:       (type $SubObject (sub $Object (struct (field $vtable (ref $SubObject.vtable)) (field $itable (ref $SubObject.itable)))))
     (type $SubObject (sub $Object (struct
-			(field $vtable (ref $SubObject.vtable))
-			(field $itable (ref $SubObject.itable)))))
+      (field $vtable (ref $SubObject.vtable))
+      (field $itable (ref $SubObject.itable)))))
 
     ;; CHECK:       (type $2 (func))
 
@@ -128,14 +128,14 @@
 
     ;; CHECK:       (type $SubObject.itable (sub $Object.itable (struct (field structref))))
     (type $SubObject.itable (sub $Object.itable
-			(struct (field (ref null struct)))))
+      (struct (field (ref null struct)))))
 
     ;; CHECK:       (type $Object.vtable (sub (struct (field structref))))
     (type $Object.vtable (sub (struct)))
 
     ;; CHECK:       (type $SubObject.vtable (sub $Object.vtable (struct (field structref) (field (ref $function)))))
     (type $SubObject.vtable (sub $Object.vtable
-		  (struct (field (ref $function)))))
+      (struct (field (ref $function)))))
   )
 
   ;; Object vtable and itable initialization.
@@ -144,27 +144,27 @@
   ;; CHECK-NEXT:  (ref.func $SubObject.f)
   ;; CHECK-NEXT: ))
   (global $SubObject.vtable (ref $SubObject.vtable)
-		(struct.new $SubObject.vtable (ref.func $SubObject.f)))
+    (struct.new $SubObject.vtable (ref.func $SubObject.f)))
 
   ;; CHECK:      (global $SubObject.itable (ref $SubObject.itable) (struct.new_default $SubObject.itable))
   (global $SubObject.itable (ref $SubObject.itable)
-		(struct.new_default $SubObject.itable))
+    (struct.new_default $SubObject.itable))
 
   ;; CHECK:      (global $Object.vtable (ref $Object.vtable) (struct.new $Object.vtable
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: ))
   (global $Object.vtable (ref $Object.vtable)
-		(struct.new $Object.vtable))
+    (struct.new $Object.vtable))
 
   ;; CHECK:      (global $Object.itable (ref $Object.itable) (struct.new_default $Object.itable))
   (global $Object.itable (ref $Object.itable)
-		(struct.new_default $Object.itable))
+    (struct.new_default $Object.itable))
 
   ;; CHECK:      (func $SubObject.f (type $function)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $SubObject.f
-		(type $function)
+    (type $function)
   )
 
   ;; CHECK:      (func $usages (type $2)
@@ -193,16 +193,16 @@
   (func $usages
     (local $o (ref null $SubObject))
     (local.set $o
-			(struct.new $SubObject
-				(global.get $SubObject.vtable)
-				(global.get $SubObject.itable)))
+      (struct.new $SubObject
+        (global.get $SubObject.vtable)
+        (global.get $SubObject.itable)))
     (drop
-			(struct.get $SubObject.vtable 0
-				(struct.get $SubObject $vtable
-					(local.get $o))))
+      (struct.get $SubObject.vtable 0
+        (struct.get $SubObject $vtable
+          (local.get $o))))
     (drop
-			(struct.get $Object.itable 0
-				(struct.get $SubObject $itable
-					(local.get $o))))
+      (struct.get $Object.itable 0
+        (struct.get $SubObject $itable
+          (local.get $o))))
   )
 )
