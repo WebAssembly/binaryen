@@ -112,7 +112,7 @@ TEST(MinTopologicalSortTest, SortStrings) {
 
 TEST(MinTopologicalSortTest, EmptyMinSort) {
   Graph graph(0);
-  EXPECT_EQ(TopologicalSort::minSort(graph), std::vector<size_t>{});
+  EXPECT_EQ(TopologicalSort::minSort<>(graph), std::vector<size_t>{});
 }
 
 TEST(MinTopologicalSortTest, UnconstrainedMinSort) {

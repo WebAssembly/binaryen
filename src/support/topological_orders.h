@@ -23,6 +23,7 @@
 #include <optional>
 #include <type_traits>
 #include <unordered_map>
+#include <variant>
 #include <vector>
 
 namespace wasm {
@@ -33,7 +34,7 @@ namespace TopologicalSort {
 using Graph = std::vector<std::vector<size_t>>;
 
 // Return a topological sort of the vertices in the given adjacency graph.
-std::vector<size_t> sort(const Graph& graph);
+inline std::vector<size_t> sort(const Graph& graph);
 
 // A utility that finds a topological sort of a graph with arbitrary element
 // types. The provided iterators must be to pairs of elements and collections of
@@ -67,21 +68,24 @@ template<typename It> decltype(auto) sortOf(It begin, It end) {
 }
 
 // Return the topological sort of the vertices in the given adjacency graph that
-// is lexicographically minimal with respect to the provided comparator.
-// Implemented using a min-heap internally.
-std::vector<size_t> minSort(
-  const Graph& graph,
-  std::function<bool(size_t, size_t)> cmp = [](size_t a, size_t b) {
-    return a < b;
-  });
+// is lexicographically minimal with respect to the provided comparator on
+// vertex indices. Implemented using a min-heap internally.
+template<typename F = std::less<size_t>>
+std::vector<size_t> minSort(const Graph& graph, F cmp = std::less<size_t>{});
 
 } // namespace TopologicalSort
+
+template<typename F = std::monostate> struct TopologicalOrdersImpl;
 
 // A utility for iterating through all possible topological orders in a graph
 // using an extension of Kahn's algorithm (see
 // https://en.wikipedia.org/wiki/Topological_sorting) that iteratively makes all
 // possible choices for each position of the output order.
-struct TopologicalOrders {
+using TopologicalOrders = TopologicalOrdersImpl<std::monostate>;
+
+// The template parameter `Cmp` is only used as in internal implementation
+// detail of `minSort`.
+template<typename Cmp> struct TopologicalOrdersImpl {
   using Graph = TopologicalSort::Graph;
   using value_type = const std::vector<size_t>;
   using difference_type = std::ptrdiff_t;
@@ -91,25 +95,75 @@ struct TopologicalOrders {
 
   // Takes an adjacency list, where the list for each vertex is a sorted list of
   // the indices of its children, which will appear after it in the order.
-  TopologicalOrders(const Graph& graph) : TopologicalOrders(graph, {}) {}
+  TopologicalOrdersImpl(const Graph& graph)
+    : TopologicalOrdersImpl(graph, {}) {}
 
-  TopologicalOrders begin() { return TopologicalOrders(graph); }
-  TopologicalOrders end() { return TopologicalOrders({}); }
+  TopologicalOrdersImpl begin() { return TopologicalOrdersImpl(graph); }
+  TopologicalOrdersImpl end() { return TopologicalOrdersImpl({}); }
 
-  bool operator==(const TopologicalOrders& other) const {
+  bool operator==(const TopologicalOrdersImpl& other) const {
     return selectors.empty() == other.selectors.empty();
   }
-  bool operator!=(const TopologicalOrders& other) const {
+  bool operator!=(const TopologicalOrdersImpl& other) const {
     return !(*this == other);
   }
   const std::vector<size_t>& operator*() const { return buf; }
   const std::vector<size_t>* operator->() const { return &buf; }
-  TopologicalOrders& operator++();
-  TopologicalOrders operator++(int) { return ++(*this); }
+  TopologicalOrdersImpl& operator++() {
+    // Find the last selector that can be advanced, popping any that cannot.
+    std::optional<Selector> next;
+    while (!selectors.empty() && !(next = selectors.back().advance(*this))) {
+      selectors.pop_back();
+    }
+    if (!next) {
+      // No selector could be advanced, so we've seen every possible ordering.
+      assert(selectors.empty());
+      return *this;
+    }
+    // We've advanced the last selector on the stack, so initialize the
+    // subsequent selectors.
+    assert(selectors.size() < graph.size());
+    selectors.push_back(*next);
+    while (selectors.size() < graph.size()) {
+      selectors.push_back(selectors.back().select(*this));
+    }
+
+    return *this;
+  }
+  TopologicalOrdersImpl operator++(int) { return ++(*this); }
 
 private:
-  TopologicalOrders(const Graph& graph,
-                    std::function<bool(size_t, size_t)> cmp);
+  TopologicalOrdersImpl(const Graph& graph, Cmp cmp)
+    : graph(graph), indegrees(graph.size()), buf(graph.size()), cmp(cmp) {
+    if (graph.size() == 0) {
+      return;
+    }
+    // Find the in-degree of each vertex.
+    for (const auto& vertex : graph) {
+      for (auto child : vertex) {
+        ++indegrees[child];
+      }
+    }
+    // Set up the first selector with its possible selections.
+    selectors.reserve(graph.size());
+    selectors.push_back({0, 0, 0});
+    auto& first = selectors.back();
+    for (size_t i = 0; i < graph.size(); ++i) {
+      if (indegrees[i] == 0) {
+        if constexpr (useMinHeap) {
+          pushChoice(i);
+        } else {
+          buf[first.count] = i;
+        }
+        ++first.count;
+      }
+    }
+    // Initialize the full stack of selectors.
+    while (selectors.size() < graph.size()) {
+      selectors.push_back(selectors.back().select(*this));
+    }
+    selectors.back().select(*this);
+  }
 
   // The input graph given as an adjacency list with edges from vertices to
   // their dependent children.
@@ -128,7 +182,9 @@ private:
   // When we are finding a minimal topological order, use this function to
   // compare possible choices. Empty iff we are not finding a minimal
   // topological order.
-  std::function<bool(size_t, size_t)> cmp;
+  Cmp cmp;
+
+  static constexpr bool useMinHeap = !std::is_same_v<Cmp, std::monostate>;
 
   // The state for tracking the possible choices for a single vertex in the
   // output order.
@@ -143,24 +199,99 @@ private:
 
     // Select the next available vertex, decrement in-degrees, and update the
     // sequence of available vertices. Return the Selector for the next vertex.
-    Selector select(TopologicalOrders& ctx);
+    Selector select(TopologicalOrdersImpl& ctx) {
+      assert(count >= 1);
+      assert(start + count <= ctx.buf.size());
+      if constexpr (ctx.useMinHeap) {
+        ctx.buf[start] = ctx.popChoice();
+      }
+      auto selection = ctx.buf[start];
+      // The next selector will select the next index and will not be able to
+      // choose the vertex we just selected.
+      Selector next = {start + 1, count - 1, 0};
+      // Append any child that this selection makes available to the choices for
+      // the next selector.
+      for (auto child : ctx.graph[selection]) {
+        assert(ctx.indegrees[child] > 0);
+        if (--ctx.indegrees[child] == 0) {
+          if constexpr (ctx.useMinHeap) {
+            ctx.pushChoice(child);
+          } else {
+            ctx.buf[next.start + next.count] = child;
+          }
+          ++next.count;
+        }
+      }
+      return next;
+    }
 
     // Undo the current selection, move the next selection into the first
     // position and return the new selector for the next position. Returns
     // nullopt if advancing wraps back around to the original configuration.
-    std::optional<Selector> advance(TopologicalOrders& ctx);
+    std::optional<Selector> advance(TopologicalOrdersImpl& ctx) {
+      assert(count >= 1);
+      // Undo the current selection. Backtrack by incrementing the in-degree for
+      // each child of the vertex we are unselecting. No need to remove the
+      // newly unavailable children from the buffer; they will be overwritten
+      // with valid selections.
+      auto unselected = ctx.buf[start];
+      for (auto child : ctx.graph[unselected]) {
+        ++ctx.indegrees[child];
+      }
+      if (index == count - 1) {
+        // We are wrapping back to the original configuration. The current
+        // selection element needs to go back on the end and everything else
+        // needs to be shifted back to its original location. This ensures that
+        // we leave everything how we found it so the previous selector can make
+        // its next selection without observing anything having changed in the
+        // meantime.
+        for (size_t i = 1; i < count; ++i) {
+          ctx.buf[start + i - 1] = ctx.buf[start + i];
+        }
+        ctx.buf[start + count - 1] = unselected;
+        return std::nullopt;
+      }
+      // Otherwise, just swap the next selection into the first position and
+      // finalize the selection.
+      std::swap(ctx.buf[start], ctx.buf[start + ++index]);
+      return select(ctx);
+    }
   };
 
-  void pushChoice(size_t);
-  size_t popChoice();
+  void pushChoice(size_t choice) {
+    choiceHeap.push_back(choice);
+    std::push_heap(choiceHeap.begin(),
+                   choiceHeap.end(),
+                   [&](size_t a, size_t b) { return cmp(b, a); });
+  }
+  size_t popChoice() {
+    std::pop_heap(choiceHeap.begin(),
+                  choiceHeap.end(),
+                  [&](size_t a, size_t b) { return cmp(b, a); });
+    auto choice = choiceHeap.back();
+    choiceHeap.pop_back();
+    return choice;
+  }
 
   // A stack of selectors, one for each vertex in a complete topological order.
   // Empty if we've already seen every possible ordering.
   std::vector<Selector> selectors;
 
-  friend std::vector<size_t>
-  TopologicalSort::minSort(const Graph&, std::function<bool(size_t, size_t)>);
+  friend std::vector<size_t> TopologicalSort::minSort<Cmp>(const Graph&, Cmp);
 };
+
+namespace TopologicalSort {
+
+std::vector<size_t> sort(const Graph& graph) {
+  return *TopologicalOrders(graph);
+}
+
+template<typename Cmp>
+std::vector<size_t> minSort(const Graph& graph, Cmp cmp) {
+  return *TopologicalOrdersImpl<Cmp>(graph, cmp);
+}
+
+} // namespace TopologicalSort
 
 } // namespace wasm
 
