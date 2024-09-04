@@ -729,13 +729,13 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
 
   // Experimentally determined to be pretty good for a variety of programs in
   // different languages.
-  constexpr float childFactor = 0.25;
+  constexpr double childFactor = 0.25;
 
   // Each rec group's weight, adjusted for its size and incorporating the weight
   // of its users.
-  std::vector<float> weights(groups.size());
+  std::vector<double> weights(groups.size());
   for (size_t i = 0; i < groups.size(); ++i) {
-    weights[i] = (float)groupCounts[i] / groups[i].size();
+    weights[i] = double(groupCounts[i]) / groups[i].size();
   }
   auto sorted = TopologicalSort::sort(deps);
   for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
