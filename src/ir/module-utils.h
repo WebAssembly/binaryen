@@ -18,6 +18,7 @@
 #define wasm_ir_module_h
 
 #include "pass.h"
+#include "support/insert_ordered.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
@@ -441,6 +442,22 @@ template<typename T> struct CallGraphPropertyAnalysis {
     }
   }
 };
+
+enum class TypeInclusion { AllTypes, UsedIRTypes, BinaryTypes };
+
+enum class ClassifyAction { NoClassify, Classify };
+
+enum class TypeClassification { Unknown, Public, Private };
+
+struct HeapTypeInfo {
+  Index useCount = 0;
+  TypeClassification classification = TypeClassification::Unknown;
+};
+
+InsertOrderedMap<HeapType, HeapTypeInfo>
+collectHeapTypeInfo(Module& wasm,
+                    TypeInclusion inclusion = TypeInclusion::AllTypes,
+                    ClassifyAction classify = ClassifyAction::NoClassify);
 
 // Helper function for collecting all the non-basic heap types used in the
 // module, i.e. the types that would appear in the type section.
