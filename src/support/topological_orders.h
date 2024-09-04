@@ -17,6 +17,7 @@
 #ifndef wasm_support_topological_orders_h
 #define wasm_support_topological_orders_h
 
+#include <algorithm>
 #include <cassert>
 #include <cstddef>
 #include <functional>
