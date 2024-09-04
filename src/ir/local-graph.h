@@ -44,6 +44,7 @@ public:
   // the computation (for example, if exception handling is disabled, then we
   // can generate a simpler CFG, as calls cannot throw).
   LocalGraph(Function* func, Module* module = nullptr);
+  virtual ~LocalGraph() {}
 
   // Get the sets relevant for a local.get.
   //
@@ -129,8 +130,9 @@ protected:
   // below).
   mutable GetSetsMap getSetsMap;
 
-  // Empty constructor that is only valid to call from LazyLocalGraph.
-  LocalGraph() {}
+  // Perform the computations we need done at startup. LazyLocalGraph
+  // customizes this.
+  virtual void startup(Module* module);
 };
 
 // The internal implementation of the flow analysis used to compute things. This
@@ -140,7 +142,7 @@ struct LocalGraphFlower;
 
 struct LazyLocalGraph : public LocalGraph {
   LazyLocalGraph(Function* func, Module* module = nullptr);
-  ~LazyLocalGraph();
+  virtual ~LazyLocalGraph();
 
   const Sets& getSets(LocalGet* get) const {
     auto iter = getSetsMap.find(get);
@@ -164,6 +166,9 @@ private:
 
   // This remains alive as long as we are, so that we can compute things lazily.
   std::unique_ptr<LocalGraphFlower> flower;
+
+protected:
+  virtual void startup(Module* module);
 };
 
 } // namespace wasm
