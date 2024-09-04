@@ -347,7 +347,7 @@ struct LocalGraph::LocalGraphFlower
 
     if (!hasSet[index]) {
       // As in flow(), when there is no local.set for an index we can just mark
-      // the only writer as the default value.
+      // the default value as the only writer.
       sets.insert(nullptr);
       return;
     }
@@ -355,8 +355,7 @@ struct LocalGraph::LocalGraphFlower
     // Go backwards in this flow block, from the get. If we see other gets that
     // have not been computed then we can accumulate them as well, as the
     // results we compute apply to them too.
-    std::vector<LocalGet*> gets;
-    gets.push_back(get);
+    std::vector<LocalGet*> gets = {get};
     while (blockIndex > 0) {
       blockIndex--;
       auto* curr = block->actions[blockIndex];
