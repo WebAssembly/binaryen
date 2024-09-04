@@ -202,7 +202,7 @@ private:
     Selector select(TopologicalOrdersImpl& ctx) {
       assert(count >= 1);
       assert(start + count <= ctx.buf.size());
-      if constexpr (ctx.useMinHeap) {
+      if constexpr (TopologicalOrdersImpl::useMinHeap) {
         ctx.buf[start] = ctx.popChoice();
       }
       auto selection = ctx.buf[start];
@@ -214,7 +214,7 @@ private:
       for (auto child : ctx.graph[selection]) {
         assert(ctx.indegrees[child] > 0);
         if (--ctx.indegrees[child] == 0) {
-          if constexpr (ctx.useMinHeap) {
+          if constexpr (TopologicalOrdersImpl::useMinHeap) {
             ctx.pushChoice(child);
           } else {
             ctx.buf[next.start + next.count] = child;
