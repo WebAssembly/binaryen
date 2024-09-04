@@ -115,7 +115,7 @@ struct MergeLocals
     for (auto* copy : copies) {
       auto* trivial = copy->value->cast<LocalSet>();
       bool canOptimizeToCopy = false;
-      auto& trivialInfluences = preGraph.setInfluences[trivial];
+      auto& trivialInfluences = preGraph.getSetInfluences(trivial);
       if (!trivialInfluences.empty()) {
         canOptimizeToCopy = true;
         for (auto* influencedGet : trivialInfluences) {
@@ -156,7 +156,7 @@ struct MergeLocals
 
         // if the trivial set we added has influences, it means $y lives on
         if (!trivialInfluences.empty()) {
-          auto& copyInfluences = preGraph.setInfluences[copy];
+          auto& copyInfluences = preGraph.getSetInfluences(copy);
           if (!copyInfluences.empty()) {
             bool canOptimizeToTrivial = true;
             for (auto* influencedGet : copyInfluences) {
@@ -198,7 +198,7 @@ struct MergeLocals
       LocalGraph postGraph(func, getModule());
       postGraph.computeSetInfluences();
       for (auto& [copy, trivial] : optimizedToCopy) {
-        auto& trivialInfluences = preGraph.setInfluences[trivial];
+        auto& trivialInfluences = preGraph.getSetInfluences(trivial);
         for (auto* influencedGet : trivialInfluences) {
           // verify the set
           auto& sets = postGraph.getSets(influencedGet);
@@ -212,7 +212,7 @@ struct MergeLocals
         }
       }
       for (auto& [copy, trivial] : optimizedToTrivial) {
-        auto& copyInfluences = preGraph.setInfluences[copy];
+        auto& copyInfluences = preGraph.getSetInfluences(copy);
         for (auto* influencedGet : copyInfluences) {
           // verify the set
           auto& sets = postGraph.getSets(influencedGet);

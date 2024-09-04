@@ -802,7 +802,7 @@ private:
         }
         setValues[set] = values;
         if (values.isConcrete()) {
-          for (auto* get : localGraph.setInfluences[set]) {
+          for (auto* get : localGraph.getSetInfluences(set)) {
             work.push(get);
           }
         }
@@ -861,7 +861,7 @@ private:
         if (values.isConcrete()) {
           // we did!
           getValues[get] = values;
-          for (auto* set : localGraph.getInfluences[get]) {
+          for (auto* set : localGraph.getGetInfluences(get)) {
             work.push(set);
           }
           propagated = true;
