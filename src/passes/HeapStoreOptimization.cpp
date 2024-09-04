@@ -80,7 +80,7 @@ struct HeapStoreOptimization
       self->pushTask(HeapStoreOptimization::notePreSetValue, currp);
       self->pushTask(HeapStoreOptimization::scan, &set->ref);
     } else {
-      super::scan(self, currp);
+      Super::scan(self, currp);
     }
   }
   static void notePreSetValue(HeapStoreOptimization* self, Expression** currp) {
