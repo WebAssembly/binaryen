@@ -87,11 +87,23 @@ struct LocalGraph {
   using SetInfluences = std::unordered_set<LocalGet*>;
   using GetInfluences = std::unordered_set<LocalSet*>;
 
-  const SetInfluences& getSetInfluences(LocalSet* set) {
-    return setInfluences[set];
+  const SetInfluences& getSetInfluences(LocalSet* set) const {
+    auto iter = setInfluences.find(set);
+    if (iter == setInfluences.end()) {
+      // Use a canonical constant empty set to avoid allocation.
+      static const SetInfluences empty;
+      return empty;
+    }
+    return iter->second;
   }
-  const GetInfluences& getGetInfluences(LocalGet* get) {
-    return getInfluences[get];
+  const GetInfluences& getGetInfluences(LocalGet* get) const {
+    auto iter = getInfluences.find(get);
+    if (iter == getInfluences.end()) {
+      // Use a canonical constant empty set to avoid allocation.
+      static const GetInfluences empty;
+      return empty;
+    }
+    return iter->second;
   }
 
   // Optional: Compute the local indexes that are SSA, in the sense of
