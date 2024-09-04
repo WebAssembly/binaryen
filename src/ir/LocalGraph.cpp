@@ -394,11 +394,12 @@ struct LocalGraphFlower
 
 // LocalGraph implementation
 
-LocalGraph::LocalGraph(Function* func, Module* module) : func(func) {
-  startup(module);
-}
+LocalGraph::LocalGraph(Function* func, Module* module, Mode mode) : func(func) {
+  if (mode == Mode::Lazy) {
+    // Do no eager work.
+    return;
+  }
 
-void LocalGraph::startup(Module* module) {
   // See comment on the declaration of this field for why we use a raw
   // allocation.
   LocalGraphFlower flower(getSetsMap, locations, func, module);
@@ -502,9 +503,8 @@ bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
 
 // LazyLocalGraph
 
-LazyLocalGraph::LazyLocalGraph(Function* func, Module* module) : LocalGraph(func, module) {}
-
-void LazyLocalGraph::startup(Module* module) {
+LazyLocalGraph::LazyLocalGraph(Function* func, Module* module)
+  : LocalGraph(func, module, Mode::Lazy) {
   flower =
     std::make_unique<LocalGraphFlower>(getSetsMap, locations, func, module);
 

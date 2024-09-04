@@ -39,12 +39,26 @@ namespace wasm {
 // code will be removed anyhow).
 //
 struct LocalGraph {
+protected:
+  // Internal mode (only passed in by subclasses, not users).
+  enum Mode {
+    // The normal behavior, where we compute eagerly in the constructor.
+    Eager,
+    // LazyLocalGraph passes this in to avoid that eager work.
+    Lazy,
+  };
+
 public:
   // If a module is passed in, it is used to find which features are needed in
   // the computation (for example, if exception handling is disabled, then we
   // can generate a simpler CFG, as calls cannot throw).
-  LocalGraph(Function* func, Module* module = nullptr);
-  virtual ~LocalGraph() {}
+  //
+  // The |mode| argument is of a protected type, so it can only be passed in by
+  // subclasses. This is necessary because we want to avoid eager computation by
+  // some subclasses. Another approach would be to use a virtual function to
+  // do the computation, but that then requires virtual destructors etc. and is
+  // overall no simpler, and is slower.
+  LocalGraph(Function* func, Module* module = nullptr, Mode mode = Mode::Eager);
 
   // Get the sets relevant for a local.get.
   //
@@ -129,10 +143,6 @@ protected:
   // getSets() can be const in LazyLocalGraph (which does memoization, see
   // below).
   mutable GetSetsMap getSetsMap;
-
-  // Perform the computations we need done at startup. LazyLocalGraph
-  // customizes this.
-  virtual void startup(Module* module);
 };
 
 // The internal implementation of the flow analysis used to compute things. This
@@ -142,7 +152,7 @@ struct LocalGraphFlower;
 
 struct LazyLocalGraph : public LocalGraph {
   LazyLocalGraph(Function* func, Module* module = nullptr);
-  virtual ~LazyLocalGraph();
+  ~LazyLocalGraph();
 
   const Sets& getSets(LocalGet* get) const {
     auto iter = getSetsMap.find(get);
@@ -166,9 +176,6 @@ private:
 
   // This remains alive as long as we are, so that we can compute things lazily.
   std::unique_ptr<LocalGraphFlower> flower;
-
-protected:
-  virtual void startup(Module* module);
 };
 
 } // namespace wasm
