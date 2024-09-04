@@ -92,7 +92,8 @@ public:
   bool equivalent(LocalGet* a, LocalGet* b);
 
   // Optional: compute the influence graphs between sets and gets (useful for
-  // algorithms that propagate changes).
+  // algorithms that propagate changes). Set influences are the gets that can
+  // read from it; get influences are the sets that can (directly) read from it.
   void computeSetInfluences();
   void computeGetInfluences();
 
@@ -101,11 +102,27 @@ public:
     computeGetInfluences();
   }
 
-  // for each get, the sets whose values are influenced by that get
-  using GetInfluences = std::unordered_set<LocalSet*>;
-  std::unordered_map<LocalGet*, GetInfluences> getInfluences;
   using SetInfluences = std::unordered_set<LocalGet*>;
-  std::unordered_map<LocalSet*, SetInfluences> setInfluences;
+  using GetInfluences = std::unordered_set<LocalSet*>;
+
+  const SetInfluences& getSetInfluences(LocalSet* set) const {
+    auto iter = setInfluences.find(set);
+    if (iter == setInfluences.end()) {
+      // Use a canonical constant empty set to avoid allocation.
+      static const SetInfluences empty;
+      return empty;
+    }
+    return iter->second;
+  }
+  const GetInfluences& getGetInfluences(LocalGet* get) const {
+    auto iter = getInfluences.find(get);
+    if (iter == getInfluences.end()) {
+      // Use a canonical constant empty set to avoid allocation.
+      static const GetInfluences empty;
+      return empty;
+    }
+    return iter->second;
+  }
 
   // Optional: Compute the local indexes that are SSA, in the sense of
   //  * a single set for all the gets for that local index
@@ -176,6 +193,9 @@ private:
 
   // This remains alive as long as we are, so that we can compute things lazily.
   std::unique_ptr<LocalGraphFlower> flower;
+
+  std::unordered_map<LocalSet*, SetInfluences> setInfluences;
+  std::unordered_map<LocalGet*, GetInfluences> getInfluences;
 };
 
 } // namespace wasm
