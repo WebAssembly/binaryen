@@ -235,8 +235,6 @@
 ;; CAREFUL-NEXT: )
 (module
   ;; ALWAYS:      (type $array (array (mut i32)))
-  ;; CAREFUL:      (type $0 (func))
-
   ;; CAREFUL:      (type $array (array (mut i32)))
   (type $array (array (mut i32)))
 
@@ -249,11 +247,13 @@
   ;; ALWAYS:      (func $caller-consts (type $1)
   ;; ALWAYS-NEXT:  (call $target_3)
   ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (type $1 (func))
+
   ;; CAREFUL:      (type $2 (func (param i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32 i32)))
 
   ;; CAREFUL:      (type $3 (func (param (ref $array))))
 
-  ;; CAREFUL:      (func $caller-consts (type $0)
+  ;; CAREFUL:      (func $caller-consts (type $1)
   ;; CAREFUL-NEXT:  (call $target_3)
   ;; CAREFUL-NEXT: )
   (func $caller-consts
@@ -395,6 +395,6 @@
 ;; ALWAYS-NEXT:  (nop)
 ;; ALWAYS-NEXT: )
 
-;; CAREFUL:      (func $target_3 (type $0)
+;; CAREFUL:      (func $target_3 (type $1)
 ;; CAREFUL-NEXT:  (nop)
 ;; CAREFUL-NEXT: )

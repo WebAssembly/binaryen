@@ -9,19 +9,19 @@
 
  ;; CHECK:      (type $1 (func (result i32)))
 
+ ;; CHECK:      (type $pair (struct (field $first (mut i32)) (field $second (mut i64))))
+
  ;; CHECK:      (type $ret2 (func (result i32 i32)))
  (type $ret2 (func (result i32 i32)))
 
  (rec
-  ;; CHECK:      (type $pair (struct (field $first (mut i32)) (field $second (mut i64))))
-
-  ;; CHECK:      (type $4 (func (result i32 i64)))
-
   ;; CHECK:      (type $void (sub (func)))
 
-  ;; CHECK:      (type $6 (func (param i32 i64)))
+  ;; CHECK:      (type $5 (func (result i32 i64)))
 
   ;; CHECK:      (type $a2 (array (mut f32)))
+
+  ;; CHECK:      (type $7 (func (param i32 i64)))
 
   ;; CHECK:      (type $a1 (array i64))
 
@@ -46,29 +46,29 @@
 
  ;; CHECK:      (type $many (sub (func (param i32 i64 f32 f64) (result anyref (ref func)))))
 
- ;; CHECK:      (type $17 (func (param i32)))
-
  ;; CHECK:      (type $a0 (array i32))
 
- ;; CHECK:      (type $19 (func (param i32 i64) (result i32 i64)))
-
- ;; CHECK:      (type $20 (func (result exnref)))
-
- ;; CHECK:      (type $21 (func (result i64)))
-
- ;; CHECK:      (type $22 (func (result i64 f32)))
-
- ;; CHECK:      (type $23 (func (param i32 i32 i32)))
-
- ;; CHECK:      (type $24 (func (param v128 i32) (result v128)))
-
- ;; CHECK:      (type $25 (func (param i32) (result i32)))
-
- ;; CHECK:      (type $26 (func (param i32) (result i32 i64)))
+ ;; CHECK:      (type $18 (func (param i32)))
 
  ;; CHECK:      (type $packed-i16 (array (mut i16)))
 
  ;; CHECK:      (type $any-array (array (mut anyref)))
+
+ ;; CHECK:      (type $21 (func (param i32 i64) (result i32 i64)))
+
+ ;; CHECK:      (type $22 (func (result exnref)))
+
+ ;; CHECK:      (type $23 (func (result i64)))
+
+ ;; CHECK:      (type $24 (func (result i64 f32)))
+
+ ;; CHECK:      (type $25 (func (param i32 i32 i32)))
+
+ ;; CHECK:      (type $26 (func (param v128 i32) (result v128)))
+
+ ;; CHECK:      (type $27 (func (param i32) (result i32)))
+
+ ;; CHECK:      (type $28 (func (param i32) (result i32 i64)))
 
  ;; CHECK:      (type $29 (func (param stringref stringref) (result i32)))
 
@@ -76,111 +76,17 @@
 
  ;; CHECK:      (type $31 (func (param i64 v128)))
 
+ ;; CHECK:      (type $32 (func (result structref arrayref)))
+
+ ;; CHECK:      (type $33 (func (result arrayref structref)))
+
+ ;; CHECK:      (type $34 (func (result i32 i64 (ref null $simple-cont))))
+
  ;; CHECK:      (type $cont-bind-before-func (func (param i32 i64 i32 i64) (result f32)))
 
  ;; CHECK:      (type $cont-bind-before (cont $cont-bind-before-func))
 
- ;; CHECK:      (type $34 (func (result structref arrayref)))
-
- ;; CHECK:      (type $35 (func (result arrayref structref)))
-
- ;; CHECK:      (type $36 (func (result i32 i64 (ref null $simple-cont))))
-
- ;; CHECK:      (type $37 (func (param i32 i32)))
-
- ;; CHECK:      (type $38 (func (param exnref)))
-
- ;; CHECK:      (type $39 (func (result anyref anyref)))
-
- ;; CHECK:      (type $40 (func (param i32 i32 f64 f64)))
-
- ;; CHECK:      (type $41 (func (param i64)))
-
- ;; CHECK:      (type $42 (func (param v128) (result i32)))
-
- ;; CHECK:      (type $43 (func (param v128 v128) (result v128)))
-
- ;; CHECK:      (type $44 (func (param v128 v128 v128) (result v128)))
-
- ;; CHECK:      (type $45 (func (param i32 i32 i64 i64)))
-
- ;; CHECK:      (type $46 (func (param i64) (result i32 i64)))
-
- ;; CHECK:      (type $47 (func (param anyref) (result i32)))
-
- ;; CHECK:      (type $48 (func (param eqref eqref) (result i32)))
-
- ;; CHECK:      (type $49 (func (param i32) (result i31ref)))
-
- ;; CHECK:      (type $50 (func (param i31ref)))
-
- ;; CHECK:      (type $51 (func (param i32 i64) (result (ref $pair))))
-
- ;; CHECK:      (type $52 (func (result (ref $pair))))
-
- ;; CHECK:      (type $53 (func (param (ref $pair)) (result i32)))
-
- ;; CHECK:      (type $54 (func (param (ref $pair)) (result i64)))
-
- ;; CHECK:      (type $55 (func (param (ref null $pair)) (result i32)))
-
- ;; CHECK:      (type $56 (func (param (ref $pair) i32)))
-
- ;; CHECK:      (type $57 (func (param (ref $pair) i64)))
-
- ;; CHECK:      (type $58 (func (param (ref null $pair) i64)))
-
- ;; CHECK:      (type $59 (func (param i64 i32) (result (ref $a1))))
-
- ;; CHECK:      (type $60 (func (param i32) (result (ref $a1))))
-
- ;; CHECK:      (type $61 (func (param i32 i32) (result (ref $a1))))
-
- ;; CHECK:      (type $62 (func (param (ref $a1) i32) (result i64)))
-
- ;; CHECK:      (type $63 (func (param (ref $packed-i8) i32) (result i32)))
-
- ;; CHECK:      (type $64 (func (param (ref $packed-i16) i32) (result i32)))
-
- ;; CHECK:      (type $65 (func (param (ref $a2) i32 f32)))
-
- ;; CHECK:      (type $66 (func (param arrayref) (result i32)))
-
- ;; CHECK:      (type $67 (func (param (ref $a2) i32 (ref $a2) i32 i32)))
-
- ;; CHECK:      (type $68 (func (param (ref $a2) i32 f32 i32)))
-
- ;; CHECK:      (type $69 (func (param (ref $a2) i32 i32 i32)))
-
- ;; CHECK:      (type $70 (func (param (ref $any-array) i32 i32 i32)))
-
- ;; CHECK:      (type $71 (func (param externref)))
-
- ;; CHECK:      (type $72 (func (param (ref $packed-i8) i32 i32) (result stringref)))
-
- ;; CHECK:      (type $73 (func (param i32) (result stringref)))
-
- ;; CHECK:      (type $74 (func (result (ref string))))
-
- ;; CHECK:      (type $75 (func (param stringref)))
-
- ;; CHECK:      (type $76 (func (param stringref (ref $packed-i8) i32) (result i32)))
-
- ;; CHECK:      (type $77 (func (param stringref stringref) (result (ref string))))
-
- ;; CHECK:      (type $78 (func (param stringref i32) (result i32)))
-
- ;; CHECK:      (type $79 (func (param stringref i32 i32) (result (ref string))))
-
- ;; CHECK:      (type $80 (func (param (ref $simple-cont))))
-
  ;; CHECK:      (type $to-f32 (func (result f32)))
-
- ;; CHECK:      (type $to-f32-cont (cont $to-f32))
-
- ;; CHECK:      (type $83 (func (param (ref $simple)) (result (ref $simple-cont))))
-
- ;; CHECK:      (type $84 (func (param (ref $cont-bind-before)) (result (ref $simple-cont))))
 
  ;; CHECK:      (type $s2 (struct (field i32)))
  (type $s2 (struct i32))
@@ -228,13 +134,103 @@
  (type $submany (sub final $many (func (param i32 i64 f32 f64) (result anyref (ref func)))))
 
  (type $simple-cont (cont $simple))
+ ;; CHECK:      (type $all-types (struct (field externref) (field (ref extern)) (field (ref null (shared extern))) (field (ref (shared extern))) (field funcref) (field (ref func)) (field (ref null (shared func))) (field (ref (shared func))) (field anyref) (field (ref any)) (field (ref null (shared any))) (field (ref (shared any))) (field eqref) (field (ref eq)) (field (ref null (shared eq))) (field (ref (shared eq))) (field i31ref) (field (ref i31)) (field (ref null (shared i31))) (field (ref (shared i31))) (field structref) (field (ref struct)) (field (ref null (shared struct))) (field (ref (shared struct))) (field arrayref) (field (ref array)) (field (ref null (shared array))) (field (ref (shared array))) (field exnref) (field (ref exn)) (field (ref null (shared exn))) (field (ref (shared exn))) (field stringref) (field (ref string)) (field (ref null (shared string))) (field (ref (shared string))) (field contref) (field (ref cont)) (field (ref null (shared cont))) (field (ref (shared cont))) (field nullref) (field (ref none)) (field (ref null (shared none))) (field (ref (shared none))) (field nullexternref) (field (ref noextern)) (field (ref null (shared noextern))) (field (ref (shared noextern))) (field nullfuncref) (field (ref nofunc)) (field (ref null (shared nofunc))) (field (ref (shared nofunc))) (field nullexnref) (field (ref noexn)) (field (ref null (shared noexn))) (field (ref (shared noexn))) (field nullcontref) (field (ref nocont)) (field (ref null (shared nocont))) (field (ref (shared nocont)))))
+
+ ;; CHECK:      (type $49 (func (param i32 i32)))
+
+ ;; CHECK:      (type $50 (func (param exnref)))
+
+ ;; CHECK:      (type $51 (func (result anyref anyref)))
+
+ ;; CHECK:      (type $52 (func (param i32 i32 f64 f64)))
+
+ ;; CHECK:      (type $53 (func (param i64)))
+
+ ;; CHECK:      (type $54 (func (param v128) (result i32)))
+
+ ;; CHECK:      (type $55 (func (param v128 v128) (result v128)))
+
+ ;; CHECK:      (type $56 (func (param v128 v128 v128) (result v128)))
+
+ ;; CHECK:      (type $57 (func (param i32 i32 i64 i64)))
+
+ ;; CHECK:      (type $58 (func (param i64) (result i32 i64)))
+
+ ;; CHECK:      (type $59 (func (param anyref) (result i32)))
+
+ ;; CHECK:      (type $60 (func (param eqref eqref) (result i32)))
+
+ ;; CHECK:      (type $61 (func (param i32) (result i31ref)))
+
+ ;; CHECK:      (type $62 (func (param i31ref)))
+
+ ;; CHECK:      (type $63 (func (param i32 i64) (result (ref $pair))))
+
+ ;; CHECK:      (type $64 (func (result (ref $pair))))
+
+ ;; CHECK:      (type $65 (func (param (ref $pair)) (result i32)))
+
+ ;; CHECK:      (type $66 (func (param (ref $pair)) (result i64)))
+
+ ;; CHECK:      (type $67 (func (param (ref null $pair)) (result i32)))
+
+ ;; CHECK:      (type $68 (func (param (ref $pair) i32)))
+
+ ;; CHECK:      (type $69 (func (param (ref $pair) i64)))
+
+ ;; CHECK:      (type $70 (func (param (ref null $pair) i64)))
+
+ ;; CHECK:      (type $71 (func (param i64 i32) (result (ref $a1))))
+
+ ;; CHECK:      (type $72 (func (param i32) (result (ref $a1))))
+
+ ;; CHECK:      (type $73 (func (param i32 i32) (result (ref $a1))))
+
+ ;; CHECK:      (type $74 (func (param (ref $a1) i32) (result i64)))
+
+ ;; CHECK:      (type $75 (func (param (ref $packed-i8) i32) (result i32)))
+
+ ;; CHECK:      (type $76 (func (param (ref $packed-i16) i32) (result i32)))
+
+ ;; CHECK:      (type $77 (func (param (ref $a2) i32 f32)))
+
+ ;; CHECK:      (type $78 (func (param arrayref) (result i32)))
+
+ ;; CHECK:      (type $79 (func (param (ref $a2) i32 (ref $a2) i32 i32)))
+
+ ;; CHECK:      (type $80 (func (param (ref $a2) i32 f32 i32)))
+
+ ;; CHECK:      (type $81 (func (param (ref $a2) i32 i32 i32)))
+
+ ;; CHECK:      (type $82 (func (param (ref $any-array) i32 i32 i32)))
+
+ ;; CHECK:      (type $83 (func (param externref)))
+
+ ;; CHECK:      (type $84 (func (param (ref $packed-i8) i32 i32) (result stringref)))
+
+ ;; CHECK:      (type $85 (func (param i32) (result stringref)))
+
+ ;; CHECK:      (type $86 (func (result (ref string))))
+
+ ;; CHECK:      (type $87 (func (param stringref)))
+
+ ;; CHECK:      (type $88 (func (param stringref (ref $packed-i8) i32) (result i32)))
+
+ ;; CHECK:      (type $89 (func (param stringref stringref) (result (ref string))))
+
+ ;; CHECK:      (type $90 (func (param stringref i32) (result i32)))
+
+ ;; CHECK:      (type $91 (func (param stringref i32 i32) (result (ref string))))
+
+ ;; CHECK:      (type $92 (func (param (ref $simple-cont))))
+
+ ;; CHECK:      (type $to-f32-cont (cont $to-f32))
  (type $to-f32-cont (cont $to-f32))
 
 
  (type $cont-bind-before-func (func (param i32) (param i64) (param i32) (param i64) (result f32)))
  (type $cont-bind-before (cont $cont-bind-before-func))
 
- ;; CHECK:      (type $all-types (struct (field externref) (field (ref extern)) (field (ref null (shared extern))) (field (ref (shared extern))) (field funcref) (field (ref func)) (field (ref null (shared func))) (field (ref (shared func))) (field anyref) (field (ref any)) (field (ref null (shared any))) (field (ref (shared any))) (field eqref) (field (ref eq)) (field (ref null (shared eq))) (field (ref (shared eq))) (field i31ref) (field (ref i31)) (field (ref null (shared i31))) (field (ref (shared i31))) (field structref) (field (ref struct)) (field (ref null (shared struct))) (field (ref (shared struct))) (field arrayref) (field (ref array)) (field (ref null (shared array))) (field (ref (shared array))) (field exnref) (field (ref exn)) (field (ref null (shared exn))) (field (ref (shared exn))) (field stringref) (field (ref string)) (field (ref null (shared string))) (field (ref (shared string))) (field contref) (field (ref cont)) (field (ref null (shared cont))) (field (ref (shared cont))) (field nullref) (field (ref none)) (field (ref null (shared none))) (field (ref (shared none))) (field nullexternref) (field (ref noextern)) (field (ref null (shared noextern))) (field (ref (shared noextern))) (field nullfuncref) (field (ref nofunc)) (field (ref null (shared nofunc))) (field (ref (shared nofunc))) (field nullexnref) (field (ref noexn)) (field (ref null (shared noexn))) (field (ref (shared noexn))) (field nullcontref) (field (ref nocont)) (field (ref null (shared nocont))) (field (ref (shared nocont)))))
  (type $all-types (struct externref (ref extern) (ref null (shared extern)) (ref (shared extern))
                           funcref (ref func) (ref null (shared func)) (ref (shared func))
                           anyref (ref any) (ref null (shared any)) (ref (shared any))
@@ -253,6 +249,10 @@
 
  ;; imported memories
  (memory (export "mem") (export "mem2") (import "" "mem") 0)
+ ;; CHECK:      (type $94 (func (param (ref $simple)) (result (ref $simple-cont))))
+
+ ;; CHECK:      (type $95 (func (param (ref $cont-bind-before)) (result (ref $simple-cont))))
+
  ;; CHECK:      (type $96 (func (param (ref $s0) (ref $s1) (ref $s2) (ref $s3) (ref $s4) (ref $s5) (ref $s6) (ref $s7) (ref $s8) (ref $a0) (ref $a1) (ref $a2) (ref $a3) (ref $subvoid) (ref $submany) (ref $all-types))))
 
  ;; CHECK:      (import "" "mem" (memory $mimport$0 0))
@@ -298,7 +298,7 @@
 
  ;; CHECK:      (import "mod" "f5" (func $fimport$0 (type $0)))
 
- ;; CHECK:      (import "mod" "imported-f" (func $fimport$1 (type $4) (result i32 i64)))
+ ;; CHECK:      (import "mod" "imported-f" (func $fimport$1 (type $5) (result i32 i64)))
 
  ;; CHECK:      (import "mod" "t0" (tag $imported (param i32 i64)))
 
@@ -478,11 +478,11 @@
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
 
- ;; CHECK:      (func $f1 (type $17) (param $0 i32)
+ ;; CHECK:      (func $f1 (type $18) (param $0 i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $f1 (param i32))
- ;; CHECK:      (func $f2 (type $17) (param $x i32)
+ ;; CHECK:      (func $f2 (type $18) (param $x i32)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $f2 (param $x i32))
@@ -925,7 +925,7 @@
   drop
  )
 
- ;; CHECK:      (func $locals (type $37) (param $0 i32) (param $x i32)
+ ;; CHECK:      (func $locals (type $49) (param $0 i32) (param $x i32)
  ;; CHECK-NEXT:  (local $2 i32)
  ;; CHECK-NEXT:  (local $y i32)
  ;; CHECK-NEXT:  (drop
@@ -1852,8 +1852,8 @@
   end
  )
 
- ;; CHECK:      (func $try-catch-params (type $4) (result i32 i64)
- ;; CHECK-NEXT:  (try (type $4) (result i32 i64)
+ ;; CHECK:      (func $try-catch-params (type $5) (result i32 i64)
+ ;; CHECK-NEXT:  (try (type $5) (result i32 i64)
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:    (tuple.make 2
  ;; CHECK-NEXT:     (i32.const 0)
@@ -1873,8 +1873,8 @@
   end
  )
 
- ;; CHECK:      (func $try-catch-pop (type $4) (result i32 i64)
- ;; CHECK-NEXT:  (try (type $4) (result i32 i64)
+ ;; CHECK:      (func $try-catch-pop (type $5) (result i32 i64)
+ ;; CHECK-NEXT:  (try (type $5) (result i32 i64)
  ;; CHECK-NEXT:   (do
  ;; CHECK-NEXT:    (tuple.make 2
  ;; CHECK-NEXT:     (i32.const 0)
@@ -2442,7 +2442,7 @@
   end
  )
 
- ;; CHECK:      (func $try-table-catch-ref (type $20) (result exnref)
+ ;; CHECK:      (func $try-table-catch-ref (type $22) (result exnref)
  ;; CHECK-NEXT:  (block $label (result exnref)
  ;; CHECK-NEXT:   (try_table (result exnref) (catch_ref $empty $label)
  ;; CHECK-NEXT:    (unreachable)
@@ -2468,7 +2468,7 @@
   end
  )
 
- ;; CHECK:      (func $try-table-catch-all-ref (type $20) (result exnref)
+ ;; CHECK:      (func $try-table-catch-all-ref (type $22) (result exnref)
  ;; CHECK-NEXT:  (block $label (result exnref)
  ;; CHECK-NEXT:   (try_table (result exnref) (catch_all_ref $label)
  ;; CHECK-NEXT:    (unreachable)
@@ -2542,7 +2542,7 @@
   )
  )
 
- ;; CHECK:      (func $try-table-throw-ref (type $38) (param $0 exnref)
+ ;; CHECK:      (func $try-table-throw-ref (type $50) (param $0 exnref)
  ;; CHECK-NEXT:  (throw_ref
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -2692,8 +2692,8 @@
   br 0
  )
 
- ;; CHECK:      (func $br-multivalue (type $4) (result i32 i64)
- ;; CHECK-NEXT:  (block $label (type $4) (result i32 i64)
+ ;; CHECK:      (func $br-multivalue (type $5) (result i32 i64)
+ ;; CHECK-NEXT:  (block $label (type $5) (result i32 i64)
  ;; CHECK-NEXT:   (br $label
  ;; CHECK-NEXT:    (tuple.make 2
  ;; CHECK-NEXT:     (i32.const 0)
@@ -2708,8 +2708,8 @@
   br 0
  )
 
- ;; CHECK:      (func $br-multivalue-drop (type $4) (result i32 i64)
- ;; CHECK-NEXT:  (block $label (type $4) (result i32 i64)
+ ;; CHECK:      (func $br-multivalue-drop (type $5) (result i32 i64)
+ ;; CHECK-NEXT:  (block $label (type $5) (result i32 i64)
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (f32.const 0)
  ;; CHECK-NEXT:   )
@@ -2804,7 +2804,7 @@
   br_if 0
  )
 
- ;; CHECK:      (func $br_if-value (type $21) (result i64)
+ ;; CHECK:      (func $br_if-value (type $23) (result i64)
  ;; CHECK-NEXT:  (block $l (result i64)
  ;; CHECK-NEXT:   (br_if $l
  ;; CHECK-NEXT:    (i64.const 0)
@@ -2820,8 +2820,8 @@
   end
  )
 
- ;; CHECK:      (func $br_if-multivalue (type $22) (result i64 f32)
- ;; CHECK-NEXT:  (block $l (type $22) (result i64 f32)
+ ;; CHECK:      (func $br_if-multivalue (type $24) (result i64 f32)
+ ;; CHECK-NEXT:  (block $l (type $24) (result i64 f32)
  ;; CHECK-NEXT:   (br_if $l
  ;; CHECK-NEXT:    (tuple.make 2
  ;; CHECK-NEXT:     (i64.const 0)
@@ -2840,7 +2840,7 @@
   end
  )
 
- ;; CHECK:      (func $br_if-loop (type $21) (result i64)
+ ;; CHECK:      (func $br_if-loop (type $23) (result i64)
  ;; CHECK-NEXT:  (local $scratch i64)
  ;; CHECK-NEXT:  (loop $l (result i64)
  ;; CHECK-NEXT:   (local.set $scratch
@@ -2944,9 +2944,9 @@
   end
  )
 
- ;; CHECK:      (func $br-table-multivalue (type $4) (result i32 i64)
- ;; CHECK-NEXT:  (block $a (type $4) (result i32 i64)
- ;; CHECK-NEXT:   (block $b (type $4) (result i32 i64)
+ ;; CHECK:      (func $br-table-multivalue (type $5) (result i32 i64)
+ ;; CHECK-NEXT:  (block $a (type $5) (result i32 i64)
+ ;; CHECK-NEXT:   (block $b (type $5) (result i32 i64)
  ;; CHECK-NEXT:    (br_table $a $b
  ;; CHECK-NEXT:     (tuple.make 2
  ;; CHECK-NEXT:      (i32.const 42)
@@ -2968,10 +2968,10 @@
   end
  )
 
- ;; CHECK:      (func $br-table-multivalue-glb (type $39) (result anyref anyref)
- ;; CHECK-NEXT:  (block $a (type $35) (result arrayref structref)
+ ;; CHECK:      (func $br-table-multivalue-glb (type $51) (result anyref anyref)
+ ;; CHECK-NEXT:  (block $a (type $33) (result arrayref structref)
  ;; CHECK-NEXT:   (return
- ;; CHECK-NEXT:    (block $b (type $34) (result structref arrayref)
+ ;; CHECK-NEXT:    (block $b (type $32) (result structref arrayref)
  ;; CHECK-NEXT:     (br_table $a $b
  ;; CHECK-NEXT:      (tuple.make 2
  ;; CHECK-NEXT:       (ref.null none)
@@ -3018,7 +3018,7 @@
   end
  )
 
- ;; CHECK:      (func $binary (type $40) (param $0 i32) (param $1 i32) (param $2 f64) (param $3 f64)
+ ;; CHECK:      (func $binary (type $52) (param $0 i32) (param $1 i32) (param $2 f64) (param $3 f64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.add
  ;; CHECK-NEXT:    (local.get $0)
@@ -3043,7 +3043,7 @@
   drop
  )
 
- ;; CHECK:      (func $unary (type $41) (param $0 i64)
+ ;; CHECK:      (func $unary (type $53) (param $0 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i64.eqz
  ;; CHECK-NEXT:    (local.get $0)
@@ -3056,7 +3056,7 @@
   drop
  )
 
- ;; CHECK:      (func $select (type $23) (param $0 i32) (param $1 i32) (param $2 i32)
+ ;; CHECK:      (func $select (type $25) (param $0 i32) (param $1 i32) (param $2 i32)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (select
  ;; CHECK-NEXT:    (local.get $0)
@@ -3129,7 +3129,7 @@
   drop
  )
 
- ;; CHECK:      (func $memory-grow (type $6) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $memory-grow (type $7) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (memory.grow $mimport$0
  ;; CHECK-NEXT:    (local.get $0)
@@ -3187,7 +3187,7 @@
   global.set $pair
  )
 
- ;; CHECK:      (func $load (type $6) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $load (type $7) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.load $mimport$0 offset=42
  ;; CHECK-NEXT:    (local.get $0)
@@ -3216,7 +3216,7 @@
   drop
  )
 
- ;; CHECK:      (func $store (type $6) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $store (type $7) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (i32.store $mimport$0 offset=42 align=1
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (i32.const 0)
@@ -3242,7 +3242,7 @@
   f32.store $mem-i64
  )
 
- ;; CHECK:      (func $atomic-rmw (type $6) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $atomic-rmw (type $7) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.atomic.rmw16.add_u $mimport$0
  ;; CHECK-NEXT:    (local.get $0)
@@ -3267,7 +3267,7 @@
   drop
  )
 
- ;; CHECK:      (func $atomic-cmpxchg (type $6) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $atomic-cmpxchg (type $7) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.atomic.rmw8.cmpxchg_u $mem
  ;; CHECK-NEXT:    (local.get $0)
@@ -3296,7 +3296,7 @@
   drop
  )
 
- ;; CHECK:      (func $atomic-wait (type $6) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $atomic-wait (type $7) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (memory.atomic.wait32 $mimport$0
  ;; CHECK-NEXT:    (local.get $0)
@@ -3325,7 +3325,7 @@
   drop
  )
 
- ;; CHECK:      (func $atomic-notify (type $6) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $atomic-notify (type $7) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (memory.atomic.notify $mimport$0 offset=8
  ;; CHECK-NEXT:    (local.get $0)
@@ -3392,7 +3392,7 @@
   drop
  )
 
- ;; CHECK:      (func $simd-extract (type $42) (param $0 v128) (result i32)
+ ;; CHECK:      (func $simd-extract (type $54) (param $0 v128) (result i32)
  ;; CHECK-NEXT:  (i32x4.extract_lane 3
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -3402,7 +3402,7 @@
   i32x4.extract_lane 3
  )
 
- ;; CHECK:      (func $simd-replace (type $24) (param $0 v128) (param $1 i32) (result v128)
+ ;; CHECK:      (func $simd-replace (type $26) (param $0 v128) (param $1 i32) (result v128)
  ;; CHECK-NEXT:  (i32x4.replace_lane 2
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -3414,7 +3414,7 @@
   i32x4.replace_lane 2
  )
 
- ;; CHECK:      (func $simd-shuffle (type $43) (param $0 v128) (param $1 v128) (result v128)
+ ;; CHECK:      (func $simd-shuffle (type $55) (param $0 v128) (param $1 v128) (result v128)
  ;; CHECK-NEXT:  (i8x16.shuffle 0 1 2 3 4 5 6 7 16 17 18 19 20 21 22 23
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -3426,7 +3426,7 @@
   i8x16.shuffle 0 1 2 3 4 5 6 7 16 17 18 19 20 21 22 23
  )
 
- ;; CHECK:      (func $simd-ternary (type $44) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
+ ;; CHECK:      (func $simd-ternary (type $56) (param $0 v128) (param $1 v128) (param $2 v128) (result v128)
  ;; CHECK-NEXT:  (v128.bitselect
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -3440,7 +3440,7 @@
   v128.bitselect
  )
 
- ;; CHECK:      (func $simd-shift (type $24) (param $0 v128) (param $1 i32) (result v128)
+ ;; CHECK:      (func $simd-shift (type $26) (param $0 v128) (param $1 i32) (result v128)
  ;; CHECK-NEXT:  (i8x16.shl
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -3452,7 +3452,7 @@
   i8x16.shl
  )
 
- ;; CHECK:      (func $simd-load (type $6) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $simd-load (type $7) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (v128.load8x8_s $mimport$0 offset=8
  ;; CHECK-NEXT:    (local.get $0)
@@ -3495,7 +3495,7 @@
   v128.store64_lane 5 align=4 0
  )
 
- ;; CHECK:      (func $memory-init (type $23) (param $0 i32) (param $1 i32) (param $2 i32)
+ ;; CHECK:      (func $memory-init (type $25) (param $0 i32) (param $1 i32) (param $2 i32)
  ;; CHECK-NEXT:  (memory.init $mem-i32 $passive
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -3536,7 +3536,7 @@
   data.drop $passive
  )
 
- ;; CHECK:      (func $memory-copy (type $45) (param $0 i32) (param $1 i32) (param $2 i64) (param $3 i64)
+ ;; CHECK:      (func $memory-copy (type $57) (param $0 i32) (param $1 i32) (param $2 i64) (param $3 i64)
  ;; CHECK-NEXT:  (memory.copy $mimport$0 $mimport$0
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -3568,7 +3568,7 @@
   memory.copy $mem-i64 5
  )
 
- ;; CHECK:      (func $memory-fill (type $6) (param $0 i32) (param $1 i64)
+ ;; CHECK:      (func $memory-fill (type $7) (param $0 i32) (param $1 i64)
  ;; CHECK-NEXT:  (memory.fill $mimport$0
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (i32.const 1)
@@ -3607,7 +3607,7 @@
   return
  )
 
- ;; CHECK:      (func $return-one (type $25) (param $0 i32) (result i32)
+ ;; CHECK:      (func $return-one (type $27) (param $0 i32) (result i32)
  ;; CHECK-NEXT:  (return
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -3617,7 +3617,7 @@
   return
  )
 
- ;; CHECK:      (func $return-two (type $19) (param $0 i32) (param $1 i64) (result i32 i64)
+ ;; CHECK:      (func $return-two (type $21) (param $0 i32) (param $1 i64) (result i32 i64)
  ;; CHECK-NEXT:  (return
  ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (local.get $0)
@@ -3631,7 +3631,7 @@
   return
  )
 
- ;; CHECK:      (func $return-two-first-unreachable (type $46) (param $0 i64) (result i32 i64)
+ ;; CHECK:      (func $return-two-first-unreachable (type $58) (param $0 i64) (result i32 i64)
  ;; CHECK-NEXT:  (return
  ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (unreachable)
@@ -3645,7 +3645,7 @@
   return
  )
 
- ;; CHECK:      (func $return-two-second-unreachable (type $26) (param $0 i32) (result i32 i64)
+ ;; CHECK:      (func $return-two-second-unreachable (type $28) (param $0 i32) (result i32 i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -3659,7 +3659,7 @@
   return
  )
 
- ;; CHECK:      (func $return-two-second-unreachable-tuple (type $26) (param $0 i32) (result i32 i64)
+ ;; CHECK:      (func $return-two-second-unreachable-tuple (type $28) (param $0 i32) (result i32 i64)
  ;; CHECK-NEXT:  (return
  ;; CHECK-NEXT:   (tuple.make 2
  ;; CHECK-NEXT:    (local.get $0)
@@ -3674,7 +3674,7 @@
   return
  )
 
- ;; CHECK:      (func $return-multivalue (type $4) (result i32 i64)
+ ;; CHECK:      (func $return-multivalue (type $5) (result i32 i64)
  ;; CHECK-NEXT:  (return
  ;; CHECK-NEXT:   (call $return-multivalue)
  ;; CHECK-NEXT:  )
@@ -3684,7 +3684,7 @@
   return
  )
 
- ;; CHECK:      (func $ref-is-null (type $47) (param $0 anyref) (result i32)
+ ;; CHECK:      (func $ref-is-null (type $59) (param $0 anyref) (result i32)
  ;; CHECK-NEXT:  (ref.is_null
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -3728,7 +3728,7 @@
   throw $tag-pair
  )
 
- ;; CHECK:      (func $ref-eq (type $48) (param $0 eqref) (param $1 eqref) (result i32)
+ ;; CHECK:      (func $ref-eq (type $60) (param $0 eqref) (param $1 eqref) (result i32)
  ;; CHECK-NEXT:  (ref.eq
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -3905,7 +3905,7 @@
   table.copy 2 $funcs
  )
 
- ;; CHECK:      (func $i31-new (type $49) (param $0 i32) (result i31ref)
+ ;; CHECK:      (func $i31-new (type $61) (param $0 i32) (result i31ref)
  ;; CHECK-NEXT:  (ref.i31
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -3915,7 +3915,7 @@
   ref.i31
  )
 
- ;; CHECK:      (func $i31-get (type $50) (param $0 i31ref)
+ ;; CHECK:      (func $i31-get (type $62) (param $0 i31ref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i31.get_s
  ;; CHECK-NEXT:    (local.get $0)
@@ -4134,7 +4134,7 @@
   drop
  )
 
- ;; CHECK:      (func $struct-new (type $51) (param $0 i32) (param $1 i64) (result (ref $pair))
+ ;; CHECK:      (func $struct-new (type $63) (param $0 i32) (param $1 i64) (result (ref $pair))
  ;; CHECK-NEXT:  (struct.new $pair
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4146,14 +4146,14 @@
   struct.new $pair
  )
 
- ;; CHECK:      (func $struct-new-default (type $52) (result (ref $pair))
+ ;; CHECK:      (func $struct-new-default (type $64) (result (ref $pair))
  ;; CHECK-NEXT:  (struct.new_default $pair)
  ;; CHECK-NEXT: )
  (func $struct-new-default (result (ref $pair))
   struct.new_default 14
  )
 
- ;; CHECK:      (func $struct-get-0 (type $53) (param $0 (ref $pair)) (result i32)
+ ;; CHECK:      (func $struct-get-0 (type $65) (param $0 (ref $pair)) (result i32)
  ;; CHECK-NEXT:  (struct.get $pair $first
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -4163,7 +4163,7 @@
   struct.get 14 0
  )
 
- ;; CHECK:      (func $struct-get-1 (type $54) (param $0 (ref $pair)) (result i64)
+ ;; CHECK:      (func $struct-get-1 (type $66) (param $0 (ref $pair)) (result i64)
  ;; CHECK-NEXT:  (struct.get $pair $second
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -4173,7 +4173,7 @@
   struct.get $pair 1
  )
 
- ;; CHECK:      (func $struct-get-named (type $55) (param $0 (ref null $pair)) (result i32)
+ ;; CHECK:      (func $struct-get-named (type $67) (param $0 (ref null $pair)) (result i32)
  ;; CHECK-NEXT:  (struct.get $pair $first
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -4183,7 +4183,7 @@
   struct.get $pair $first
  )
 
- ;; CHECK:      (func $struct-set-0 (type $56) (param $0 (ref $pair)) (param $1 i32)
+ ;; CHECK:      (func $struct-set-0 (type $68) (param $0 (ref $pair)) (param $1 i32)
  ;; CHECK-NEXT:  (struct.set $pair $first
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4195,7 +4195,7 @@
   struct.set $pair 0
  )
 
- ;; CHECK:      (func $struct-set-1 (type $57) (param $0 (ref $pair)) (param $1 i64)
+ ;; CHECK:      (func $struct-set-1 (type $69) (param $0 (ref $pair)) (param $1 i64)
  ;; CHECK-NEXT:  (struct.set $pair $second
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4207,7 +4207,7 @@
   struct.set 14 1
  )
 
- ;; CHECK:      (func $struct-set-named (type $58) (param $0 (ref null $pair)) (param $1 i64)
+ ;; CHECK:      (func $struct-set-named (type $70) (param $0 (ref null $pair)) (param $1 i64)
  ;; CHECK-NEXT:  (struct.set $pair $second
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4219,7 +4219,7 @@
   struct.set 14 $second
  )
 
- ;; CHECK:      (func $array-new (type $59) (param $0 i64) (param $1 i32) (result (ref $a1))
+ ;; CHECK:      (func $array-new (type $71) (param $0 i64) (param $1 i32) (result (ref $a1))
  ;; CHECK-NEXT:  (array.new $a1
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4231,7 +4231,7 @@
   array.new $a1
  )
 
- ;; CHECK:      (func $array-new-default (type $60) (param $0 i32) (result (ref $a1))
+ ;; CHECK:      (func $array-new-default (type $72) (param $0 i32) (result (ref $a1))
  ;; CHECK-NEXT:  (array.new_default $a1
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -4241,7 +4241,7 @@
   array.new_default 11
  )
 
- ;; CHECK:      (func $array-new-data (type $61) (param $0 i32) (param $1 i32) (result (ref $a1))
+ ;; CHECK:      (func $array-new-data (type $73) (param $0 i32) (param $1 i32) (result (ref $a1))
  ;; CHECK-NEXT:  (array.new_data $a1 $implicit-data
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4275,7 +4275,7 @@
   drop
  )
 
- ;; CHECK:      (func $array-get (type $62) (param $0 (ref $a1)) (param $1 i32) (result i64)
+ ;; CHECK:      (func $array-get (type $74) (param $0 (ref $a1)) (param $1 i32) (result i64)
  ;; CHECK-NEXT:  (array.get $a1
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4287,7 +4287,7 @@
   array.get $a1
  )
 
- ;; CHECK:      (func $array-get-s (type $63) (param $0 (ref $packed-i8)) (param $1 i32) (result i32)
+ ;; CHECK:      (func $array-get-s (type $75) (param $0 (ref $packed-i8)) (param $1 i32) (result i32)
  ;; CHECK-NEXT:  (array.get_s $packed-i8
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4299,7 +4299,7 @@
   array.get_s 15
  )
 
- ;; CHECK:      (func $array-get-u (type $64) (param $0 (ref $packed-i16)) (param $1 i32) (result i32)
+ ;; CHECK:      (func $array-get-u (type $76) (param $0 (ref $packed-i16)) (param $1 i32) (result i32)
  ;; CHECK-NEXT:  (array.get_u $packed-i16
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4311,7 +4311,7 @@
   array.get_u $packed-i16
  )
 
- ;; CHECK:      (func $array-set (type $65) (param $0 (ref $a2)) (param $1 i32) (param $2 f32)
+ ;; CHECK:      (func $array-set (type $77) (param $0 (ref $a2)) (param $1 i32) (param $2 f32)
  ;; CHECK-NEXT:  (array.set $a2
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4325,7 +4325,7 @@
   array.set $a2
  )
 
- ;; CHECK:      (func $array-len (type $66) (param $0 arrayref) (result i32)
+ ;; CHECK:      (func $array-len (type $78) (param $0 arrayref) (result i32)
  ;; CHECK-NEXT:  (array.len
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -4335,7 +4335,7 @@
   array.len
  )
 
- ;; CHECK:      (func $array-copy (type $67) (param $0 (ref $a2)) (param $1 i32) (param $2 (ref $a2)) (param $3 i32) (param $4 i32)
+ ;; CHECK:      (func $array-copy (type $79) (param $0 (ref $a2)) (param $1 i32) (param $2 (ref $a2)) (param $3 i32) (param $4 i32)
  ;; CHECK-NEXT:  (array.copy $a2 $a2
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4353,7 +4353,7 @@
   array.copy $a2 $a2
  )
 
- ;; CHECK:      (func $array-fill (type $68) (param $0 (ref $a2)) (param $1 i32) (param $2 f32) (param $3 i32)
+ ;; CHECK:      (func $array-fill (type $80) (param $0 (ref $a2)) (param $1 i32) (param $2 f32) (param $3 i32)
  ;; CHECK-NEXT:  (array.fill $a2
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4369,7 +4369,7 @@
   array.fill $a2
  )
 
- ;; CHECK:      (func $array-init-data (type $69) (param $0 (ref $a2)) (param $1 i32) (param $2 i32) (param $3 i32)
+ ;; CHECK:      (func $array-init-data (type $81) (param $0 (ref $a2)) (param $1 i32) (param $2 i32) (param $3 i32)
  ;; CHECK-NEXT:  (array.init_data $a2 $implicit-data
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4385,7 +4385,7 @@
   array.init_data $a2 0
  )
 
- ;; CHECK:      (func $array-init-elem (type $70) (param $0 (ref $any-array)) (param $1 i32) (param $2 i32) (param $3 i32)
+ ;; CHECK:      (func $array-init-elem (type $82) (param $0 (ref $any-array)) (param $1 i32) (param $2 i32) (param $3 i32)
  ;; CHECK-NEXT:  (array.init_elem $any-array $passive-2
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4414,7 +4414,7 @@
   drop
  )
 
- ;; CHECK:      (func $any-convert-extern (type $71) (param $0 externref)
+ ;; CHECK:      (func $any-convert-extern (type $83) (param $0 externref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (any.convert_extern
  ;; CHECK-NEXT:    (local.get $0)
@@ -4440,7 +4440,7 @@
   drop
  )
 
- ;; CHECK:      (func $string-new-gc (type $72) (param $0 (ref $packed-i8)) (param $1 i32) (param $2 i32) (result stringref)
+ ;; CHECK:      (func $string-new-gc (type $84) (param $0 (ref $packed-i8)) (param $1 i32) (param $2 i32) (result stringref)
  ;; CHECK-NEXT:  (string.new_lossy_utf8_array
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4454,7 +4454,7 @@
   string.new_lossy_utf8_array
  )
 
- ;; CHECK:      (func $string-new-code-point (type $73) (param $0 i32) (result stringref)
+ ;; CHECK:      (func $string-new-code-point (type $85) (param $0 i32) (result stringref)
  ;; CHECK-NEXT:  (string.from_code_point
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -4464,7 +4464,7 @@
   string.from_code_point
  )
 
- ;; CHECK:      (func $string-const (type $74) (result (ref string))
+ ;; CHECK:      (func $string-const (type $86) (result (ref string))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (string.const "foobar")
  ;; CHECK-NEXT:  )
@@ -4476,7 +4476,7 @@
   string.const "\00\00\00"
  )
 
- ;; CHECK:      (func $string-measure (type $75) (param $0 stringref)
+ ;; CHECK:      (func $string-measure (type $87) (param $0 stringref)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (string.measure_utf8
  ;; CHECK-NEXT:    (local.get $0)
@@ -4497,7 +4497,7 @@
   drop
  )
 
- ;; CHECK:      (func $string-encode-gc (type $76) (param $0 stringref) (param $1 (ref $packed-i8)) (param $2 i32) (result i32)
+ ;; CHECK:      (func $string-encode-gc (type $88) (param $0 stringref) (param $1 (ref $packed-i8)) (param $2 i32) (result i32)
  ;; CHECK-NEXT:  (string.encode_wtf16_array
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4511,7 +4511,7 @@
   string.encode_wtf16_array
  )
 
- ;; CHECK:      (func $string-concat (type $77) (param $0 stringref) (param $1 stringref) (result (ref string))
+ ;; CHECK:      (func $string-concat (type $89) (param $0 stringref) (param $1 stringref) (result (ref string))
  ;; CHECK-NEXT:  (string.concat
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4547,7 +4547,7 @@
   string.compare
  )
 
- ;; CHECK:      (func $string-get (type $78) (param $0 stringref) (param $1 i32) (result i32)
+ ;; CHECK:      (func $string-get (type $90) (param $0 stringref) (param $1 i32) (result i32)
  ;; CHECK-NEXT:  (stringview_wtf16.get_codeunit
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4559,7 +4559,7 @@
   stringview_wtf16.get_codeunit
  )
 
- ;; CHECK:      (func $string-slice (type $79) (param $0 stringref) (param $1 i32) (param $2 i32) (result (ref string))
+ ;; CHECK:      (func $string-slice (type $91) (param $0 stringref) (param $1 i32) (param $2 i32) (result (ref string))
  ;; CHECK-NEXT:  (stringview_wtf16.slice
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:   (local.get $1)
@@ -4860,13 +4860,13 @@
   )
  )
 
- ;; CHECK:      (func $resume (type $80) (param $ct (ref $simple-cont))
+ ;; CHECK:      (func $resume (type $92) (param $ct (ref $simple-cont))
  ;; CHECK-NEXT:  (local $f f32)
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block $block (result (ref $to-f32-cont))
  ;; CHECK-NEXT:     (tuple.drop 3
- ;; CHECK-NEXT:      (block $block0 (type $36) (result i32 i64 (ref null $simple-cont))
+ ;; CHECK-NEXT:      (block $block0 (type $34) (result i32 i64 (ref null $simple-cont))
  ;; CHECK-NEXT:       (local.set $f
  ;; CHECK-NEXT:        (resume $simple-cont (on $empty $block) (on $tag-pair-to-pair $block0)
  ;; CHECK-NEXT:         (i32.const 0)
@@ -4899,7 +4899,7 @@
   br 0
  )
 
- ;; CHECK:      (func $contnew (type $83) (param $f (ref $simple)) (result (ref $simple-cont))
+ ;; CHECK:      (func $contnew (type $94) (param $f (ref $simple)) (result (ref $simple-cont))
  ;; CHECK-NEXT:  (cont.new $simple-cont
  ;; CHECK-NEXT:   (local.get $f)
  ;; CHECK-NEXT:  )
@@ -4909,7 +4909,7 @@
    cont.new $simple-cont
  )
 
- ;; CHECK:      (func $contbind (type $84) (param $c (ref $cont-bind-before)) (result (ref $simple-cont))
+ ;; CHECK:      (func $contbind (type $95) (param $c (ref $cont-bind-before)) (result (ref $simple-cont))
  ;; CHECK-NEXT:  (cont.bind $cont-bind-before $simple-cont
  ;; CHECK-NEXT:   (i32.const 123)
  ;; CHECK-NEXT:   (i64.const 123)
@@ -4923,7 +4923,7 @@
    cont.bind $cont-bind-before $simple-cont
  )
 
- ;; CHECK:      (func $suspend (type $4) (result i32 i64)
+ ;; CHECK:      (func $suspend (type $5) (result i32 i64)
  ;; CHECK-NEXT:  (suspend $tag-pair-to-pair
  ;; CHECK-NEXT:   (i32.const 123)
  ;; CHECK-NEXT:   (i64.const 456)
@@ -5058,7 +5058,7 @@
 
  ;; The if is unreachable except through the break; make sure this is
  ;; parse correctly
- ;; CHECK:      (func $if-else-br-return (type $25) (param $a i32) (result i32)
+ ;; CHECK:      (func $if-else-br-return (type $27) (param $a i32) (result i32)
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (if
  ;; CHECK-NEXT:    (local.get $a)

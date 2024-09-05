@@ -545,8 +545,6 @@
   ;; CHECK:      (type $X (sub (struct)))
   (type $X (sub (struct)))
 
-  ;; CHECK:      (type $1 (func))
-
   ;; CHECK:      (type $A (sub (struct (field (ref $X)))))
 
   ;; CHECK:      (type $Y (sub $X (struct)))
@@ -554,10 +552,12 @@
 
   (type $A (sub (struct (field (ref $X)))))
 
+  ;; CHECK:      (type $3 (func))
+
   ;; CHECK:      (type $B (sub $A (struct (field (ref $Y)))))
   (type $B (sub $A (struct (field (ref $Y)))))
 
-  ;; CHECK:      (func $foo (type $1)
+  ;; CHECK:      (func $foo (type $3)
   ;; CHECK-NEXT:  (local $unused2 (ref null $B))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $A

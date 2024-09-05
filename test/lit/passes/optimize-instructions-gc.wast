@@ -122,7 +122,7 @@
   )
 
   ;; Similar, but for arrays.
-  ;; CHECK:      (func $store-trunc2 (type $15) (param $x (ref null $array))
+  ;; CHECK:      (func $store-trunc2 (type $16) (param $x (ref null $array))
   ;; CHECK-NEXT:  (array.set $array
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (i32.const 0)
@@ -139,7 +139,7 @@
 
   ;; ref.is_null is not needed on a non-nullable value, and if something is
   ;; cast to its own type, we don't need that either, etc.
-  ;; CHECK:      (func $unneeded_test (type $16) (param $struct (ref $struct)) (param $func (ref func)) (param $i31 (ref i31))
+  ;; CHECK:      (func $unneeded_test (type $17) (param $struct (ref $struct)) (param $func (ref func)) (param $i31 (ref i31))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -182,7 +182,7 @@
 
   ;; similar to $unneeded_is, but the values are nullable. we can at least
   ;; leave just the null check.
-  ;; CHECK:      (func $unneeded_test_null (type $17) (param $struct (ref null $struct)) (param $func funcref) (param $i31 i31ref)
+  ;; CHECK:      (func $unneeded_test_null (type $18) (param $struct (ref null $struct)) (param $func funcref) (param $i31 i31ref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.is_null
   ;; CHECK-NEXT:    (local.get $struct)
@@ -223,7 +223,7 @@
 
   ;; ref.as_non_null is not needed on a non-nullable value, and if something is
   ;; a func we don't need that either etc., and can just return the value.
-  ;; CHECK:      (func $unneeded_cast (type $16) (param $struct (ref $struct)) (param $func (ref func)) (param $i31 (ref i31))
+  ;; CHECK:      (func $unneeded_cast (type $17) (param $struct (ref $struct)) (param $func (ref func)) (param $i31 (ref i31))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.get $struct)
   ;; CHECK-NEXT:  )
@@ -251,7 +251,7 @@
 
   ;; similar to $unneeded_cast, but the values are nullable. we can turn the
   ;; more specific things into ref.as_non_null.
-  ;; CHECK:      (func $unneeded_cast_null (type $17) (param $struct (ref null $struct)) (param $func funcref) (param $i31 i31ref)
+  ;; CHECK:      (func $unneeded_cast_null (type $18) (param $struct (ref null $struct)) (param $func funcref) (param $i31 i31ref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.get $struct)
@@ -586,7 +586,7 @@
     )
   )
 
-  ;; CHECK:      (func $flip-cast-of-as-non-null (type $18) (param $x anyref)
+  ;; CHECK:      (func $flip-cast-of-as-non-null (type $19) (param $x anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref $struct)
   ;; CHECK-NEXT:    (local.get $x)
@@ -639,7 +639,7 @@
       )
     )
   )
-  ;; CHECK:      (func $flip-tee-of-as-non-null (type $18) (param $x anyref)
+  ;; CHECK:      (func $flip-tee-of-as-non-null (type $19) (param $x anyref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.as_non_null
   ;; CHECK-NEXT:    (local.tee $x
@@ -708,7 +708,7 @@
       )
     )
   )
-  ;; CHECK:      (func $select-identical-arms-but-side-effect (type $19) (param $x (ref null $struct)) (param $y (ref null $struct)) (param $z i32)
+  ;; CHECK:      (func $select-identical-arms-but-side-effect (type $20) (param $x (ref null $struct)) (param $y (ref null $struct)) (param $z i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (select
   ;; CHECK-NEXT:    (struct.get_u $struct $i8
@@ -760,7 +760,7 @@
       )
     )
   )
-  ;; CHECK:      (func $if-identical-arms-with-side-effect (type $19) (param $x (ref null $struct)) (param $y (ref null $struct)) (param $z i32)
+  ;; CHECK:      (func $if-identical-arms-with-side-effect (type $20) (param $x (ref null $struct)) (param $y (ref null $struct)) (param $z i32)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get_u $struct $i8
   ;; CHECK-NEXT:    (if (result (ref null $struct))
@@ -3129,7 +3129,7 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $array-copy-non-null (type $15) (param $x (ref null $array))
+  ;; CHECK:      (func $array-copy-non-null (type $16) (param $x (ref null $array))
   ;; CHECK-NEXT:  (block $block
   ;; CHECK-NEXT:   (array.copy $array $array
   ;; CHECK-NEXT:    (ref.as_non_null

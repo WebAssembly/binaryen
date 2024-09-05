@@ -20,7 +20,7 @@
 #include "ir/manipulation.h"
 #include "ir/properties.h"
 #include "support/insert_ordered.h"
-#include "support/topological_sort.h"
+#include "support/topological_orders.h"
 
 namespace wasm::ModuleUtils {
 
@@ -684,95 +684,81 @@ std::vector<HeapType> getPrivateHeapTypes(Module& wasm) {
 IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
   auto counts = getHeapTypeCounts(wasm);
 
-  // Types have to be arranged into topologically ordered recursion groups.
-  // Under isorecrsive typing, the topological sort has to take all referenced
-  // rec groups into account. First, sort the groups by average use count among
-  // their members so that the later topological sort will place frequently used
-  // types first.
-  struct GroupInfo {
-    size_t index;
-    double useCount = 0;
-    std::unordered_set<RecGroup> preds;
-    std::vector<RecGroup> sortedPreds;
-    GroupInfo(size_t index) : index(index) {}
-    bool operator<(const GroupInfo& other) const {
-      if (useCount != other.useCount) {
-        return useCount < other.useCount;
-      }
-      return index > other.index;
-    }
-  };
-
-  struct GroupInfoMap : std::unordered_map<RecGroup, GroupInfo> {
-    void sort(std::vector<RecGroup>& groups) {
-      std::sort(groups.begin(), groups.end(), [&](auto& a, auto& b) {
-        return this->at(a) < this->at(b);
-      });
-    }
-  };
-
-  // Collect the information that will be used to sort the recursion groups.
-  GroupInfoMap groupInfos;
+  // Collect the rec groups.
+  std::unordered_map<RecGroup, size_t> groupIndices;
+  std::vector<RecGroup> groups;
   for (auto& [type, _] : counts) {
-    RecGroup group = type.getRecGroup();
-    // Try to initialize a new info or get the existing info.
-    auto& info = groupInfos.insert({group, {groupInfos.size()}}).first->second;
-    // Update the reference count.
-    info.useCount += counts.at(type);
-    // Collect predecessor groups.
-    for (auto child : type.getReferencedHeapTypes()) {
-      if (!child.isBasic()) {
-        RecGroup otherGroup = child.getRecGroup();
-        if (otherGroup != group) {
-          info.preds.insert(otherGroup);
+    auto group = type.getRecGroup();
+    if (groupIndices.insert({group, groups.size()}).second) {
+      groups.push_back(group);
+    }
+  }
+
+  // Collect the total use counts for each group.
+  std::vector<size_t> groupCounts;
+  groupCounts.reserve(groups.size());
+  for (auto group : groups) {
+    size_t count = 0;
+    for (auto type : group) {
+      count += counts.at(type);
+    }
+    groupCounts.push_back(count);
+  }
+
+  // Collect the reverse dependencies of each group.
+  std::vector<std::unordered_set<size_t>> depSets(groups.size());
+  for (size_t i = 0; i < groups.size(); ++i) {
+    for (auto type : groups[i]) {
+      for (auto child : type.getReferencedHeapTypes()) {
+        if (child.isBasic()) {
+          continue;
         }
+        auto childGroup = child.getRecGroup();
+        if (childGroup == groups[i]) {
+          continue;
+        }
+        depSets[groupIndices.at(childGroup)].insert(i);
       }
     }
   }
-
-  // Fix up the use counts to be averages to ensure groups are used comensurate
-  // with the amount of index space they occupy. Skip this for nominal types
-  // since their internal group size is always 1.
-  for (auto& [group, info] : groupInfos) {
-    info.useCount /= group.size();
+  TopologicalSort::Graph deps;
+  deps.reserve(groups.size());
+  for (size_t i = 0; i < groups.size(); ++i) {
+    deps.emplace_back(depSets[i].begin(), depSets[i].end());
   }
 
-  // Sort the predecessors so the most used will be visited first.
-  for (auto& [group, info] : groupInfos) {
-    info.sortedPreds.insert(
-      info.sortedPreds.end(), info.preds.begin(), info.preds.end());
-    groupInfos.sort(info.sortedPreds);
-    info.preds.clear();
+  // Experimentally determined to be pretty good for a variety of programs in
+  // different languages.
+  constexpr double childFactor = 0.25;
+
+  // Each rec group's weight, adjusted for its size and incorporating the weight
+  // of its users.
+  std::vector<double> weights(groups.size());
+  for (size_t i = 0; i < groups.size(); ++i) {
+    weights[i] = double(groupCounts[i]) / groups[i].size();
+  }
+  auto sorted = TopologicalSort::sort(deps);
+  for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
+    for (auto user : deps[*it]) {
+      weights[*it] += childFactor * weights[user];
+    }
   }
 
-  struct RecGroupSort : TopologicalSort<RecGroup, RecGroupSort> {
-    GroupInfoMap& groupInfos;
-    RecGroupSort(GroupInfoMap& groupInfos) : groupInfos(groupInfos) {
-      // Sort all the groups so the topological sort visits the most used first.
-      std::vector<RecGroup> sortedGroups;
-      sortedGroups.reserve(groupInfos.size());
-      for (auto& [group, _] : groupInfos) {
-        sortedGroups.push_back(group);
-      }
-      groupInfos.sort(sortedGroups);
-      for (auto group : sortedGroups) {
-        push(group);
-      }
+  auto order = TopologicalSort::minSort(deps, [&](size_t a, size_t b) {
+    auto weightA = weights[a];
+    auto weightB = weights[b];
+    if (weightA != weightB) {
+      return weightA > weightB;
     }
+    return a < b;
+  });
 
-    void pushPredecessors(RecGroup group) {
-      for (auto pred : groupInfos.at(group).sortedPreds) {
-        push(pred);
-      }
-    }
-  };
-
-  // Perform the topological sort and collect the types.
   IndexedHeapTypes indexedTypes;
   indexedTypes.types.reserve(counts.size());
-  for (auto group : RecGroupSort(groupInfos)) {
-    for (auto member : group) {
-      indexedTypes.types.push_back(member);
+
+  for (auto groupIndex : order) {
+    for (auto type : groups[groupIndex]) {
+      indexedTypes.types.push_back(type);
     }
   }
   setIndices(indexedTypes);
