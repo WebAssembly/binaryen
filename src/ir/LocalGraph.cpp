@@ -41,10 +41,8 @@ struct Info {
 
 // flow helper class. flows the gets to their sets
 
-struct LocalGraph::LocalGraphFlower
-  : public CFGWalker<LocalGraph::LocalGraphFlower,
-                     Visitor<LocalGraph::LocalGraphFlower>,
-                     Info> {
+struct LocalGraphFlower
+  : public CFGWalker<LocalGraphFlower, Visitor<LocalGraphFlower>, Info> {
   LocalGraph::GetSetsMap& getSetsMap;
   LocalGraph::Locations& locations;
   Function* func;
@@ -89,10 +87,6 @@ struct LocalGraph::LocalGraphFlower
     self->currBasicBlock->contents.lastSets[curr->index] = curr;
     self->locations[curr] = currp;
   }
-
-  // The below class-level items (currentIteration, FlowBlock, etc.) would more
-  // properly belong inside flow(), as they are only needed there, but flow() is
-  // split up into two parts in service of a future user of only part of flow().
 
   // Each time we flow a get (or set of gets) to find its sets, we mark a
   // different iteration number. This lets us memoize the current iteration on
@@ -180,7 +174,7 @@ struct LocalGraph::LocalGraphFlower
     assert(entryFlowBlock != nullptr);
   }
 
-  // Flow all the data.
+  // Flow all the data. This is done in eager (i.e., non-lazy) mode.
   void flow() {
     prepareFlowBlocks();
 
@@ -301,22 +295,111 @@ struct LocalGraph::LocalGraphFlower
     // Bump the current iteration for the next time we are called.
     currentIteration++;
   }
+
+  // When the LocalGraph is in lazy mode we do not compute all of getSetsMap
+  // initially, but instead fill in these data structures that let us do so
+  // later for individual gets. Specifically we need to find the location of a
+  // local.get in the CFG.
+  struct BlockLocation {
+    // The basic block an item is in.
+    FlowBlock* block = nullptr;
+    // The index in that block that the item is at.
+    Index index;
+  };
+  std::unordered_map<LocalGet*, BlockLocation> getLocations;
+
+  // Set up getLocations using the flow blocks, so that we are ready to handle
+  // later lazy requests for the sets of particular gets. This is done in lazy
+  // mode.
+  void prepareLaziness() {
+    prepareFlowBlocks();
+
+    for (auto& block : flowBlocks) {
+      const auto& actions = block.actions;
+      for (Index i = 0; i < actions.size(); i++) {
+        if (auto* get = actions[i]->dynCast<LocalGet>()) {
+          getLocations[get] = BlockLocation{&block, i};
+        }
+      }
+    }
+  }
+
+  // Flow a specific get. This is done in lazy mode.
+  void flowGet(LocalGet* get) {
+    auto index = get->index;
+
+    // Regardless of what we do below, ensure an entry for this get, so that we
+    // know we computed it.
+    auto& sets = getSetsMap[get];
+
+    auto [block, blockIndex] = getLocations[get];
+    if (!block) {
+      // We did not find location info for this get, which means it is
+      // unreachable.
+      return;
+    }
+
+    // We must have the get at that location.
+    assert(blockIndex < block->actions.size());
+    assert(block->actions[blockIndex] == get);
+
+    if (!hasSet[index]) {
+      // As in flow(), when there is no local.set for an index we can just mark
+      // the default value as the only writer.
+      sets.insert(nullptr);
+      return;
+    }
+
+    // Go backwards in this flow block, from the get. If we see other gets that
+    // have not been computed then we can accumulate them as well, as the
+    // results we compute apply to them too.
+    std::vector<LocalGet*> gets = {get};
+    while (blockIndex > 0) {
+      blockIndex--;
+      auto* curr = block->actions[blockIndex];
+      if (auto* otherGet = curr->dynCast<LocalGet>()) {
+        if (otherGet->index == index) {
+          // This is another get of the same index. If we've already computed
+          // it, then we can just use that, as they must have the same sets.
+          auto iter = getSetsMap.find(otherGet);
+          if (iter != getSetsMap.end()) {
+            auto& otherSets = iter->second;
+            for (auto* get : gets) {
+              getSetsMap[get] = otherSets;
+            }
+            return;
+          }
+
+          // This is a get of the same index, but which has not been computed.
+          // It will have the same sets as us.
+          gets.push_back(otherGet);
+        }
+      } else {
+        // This is a set.
+        auto* set = curr->cast<LocalSet>();
+        if (set->index == index) {
+          // This is the only set writing to our gets.
+          for (auto* get : gets) {
+            getSetsMap[get].insert(set);
+          }
+          return;
+        }
+      }
+    }
+
+    // We must do an inter-block flow.
+    flowBackFromStartOfBlock(block, index, gets);
+  }
 };
 
 // LocalGraph implementation
 
-LocalGraph::LocalGraph(Function* func, Module* module) : func(func) {
+LocalGraph::LocalGraph(Function* func, Module* module)
+  : LocalGraphBase(func, module) {
   // See comment on the declaration of this field for why we use a raw
-  // allocation. Note that since we just call flow() and delete it, this is not
-  // really needed, but it sets the stage for a later PR that will do other work
-  // here (related to the splitting up of flow() that is mentioned earlier).
-  flower =
-    std::make_unique<LocalGraphFlower>(getSetsMap, locations, func, module);
-
-  flower->flow();
-
-  // We will never use it again.
-  flower.reset();
+  // allocation.
+  LocalGraphFlower flower(getSetsMap, locations, func, module);
+  flower.flow();
 
 #ifdef LOCAL_GRAPH_DEBUG
   std::cout << "LocalGraph::dump\n";
@@ -328,13 +411,6 @@ LocalGraph::LocalGraph(Function* func, Module* module) : func(func) {
   }
   std::cout << "total locations: " << locations.size() << '\n';
 #endif
-}
-
-LocalGraph::~LocalGraph() {
-  // We must declare a destructor here in the cpp file, even though it is empty
-  // and pointless, due to some C++ issue with our having a unique_ptr to a
-  // forward-declared class (LocalGraphFlower).
-  // https://stackoverflow.com/questions/13414652/forward-declaration-with-unique-ptr#comment110005453_13414884
 }
 
 bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
@@ -420,5 +496,37 @@ void LocalGraph::computeSSAIndexes() {
 }
 
 bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
+
+// LazyLocalGraph
+
+LazyLocalGraph::LazyLocalGraph(Function* func, Module* module)
+  : LocalGraphBase(func, module) {
+  flower =
+    std::make_unique<LocalGraphFlower>(getSetsMap, locations, func, module);
+
+  flower->prepareLaziness();
+
+#ifdef LOCAL_GRAPH_DEBUG
+  std::cout << "LazyLocalGraph::dump\n";
+  for (auto& [get, sets] : getSetsMap) {
+    std::cout << "GET\n" << get << " is influenced by\n";
+    for (auto* set : sets) {
+      std::cout << set << '\n';
+    }
+  }
+  std::cout << "total locations: " << locations.size() << '\n';
+#endif
+}
+
+LazyLocalGraph::~LazyLocalGraph() {
+  // We must declare a destructor here in the cpp file, even though it is empty
+  // and pointless, due to some C++ issue with our having a unique_ptr to a
+  // forward-declared class (LocalGraphFlower).
+  // https://stackoverflow.com/questions/13414652/forward-declaration-with-unique-ptr#comment110005453_13414884
+}
+
+void LazyLocalGraph::computeGetSets(LocalGet* get) const {
+  flower->flowGet(get);
+}
 
 } // namespace wasm

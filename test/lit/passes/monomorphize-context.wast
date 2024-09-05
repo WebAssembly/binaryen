@@ -954,8 +954,6 @@
 ;; CAREFUL-NEXT: )
 (module
   ;; ALWAYS:      (type $struct (struct (field i16) (field (mut i8)) (field (mut f64))))
-  ;; CAREFUL:      (type $0 (func))
-
   ;; CAREFUL:      (type $struct (struct (field i16) (field (mut i8)) (field (mut f64))))
   (type $struct (struct (field i16) (field (mut i8)) (field (mut f64))))
 
@@ -973,11 +971,13 @@
   ;; ALWAYS-NEXT:   (local.get $f64)
   ;; ALWAYS-NEXT:  )
   ;; ALWAYS-NEXT: )
+  ;; CAREFUL:      (type $1 (func))
+
   ;; CAREFUL:      (type $2 (func (param (ref $struct))))
 
   ;; CAREFUL:      (type $3 (func (param i32 f64)))
 
-  ;; CAREFUL:      (func $caller (type $0)
+  ;; CAREFUL:      (func $caller (type $1)
   ;; CAREFUL-NEXT:  (local $i32 i32)
   ;; CAREFUL-NEXT:  (local $f64 f64)
   ;; CAREFUL-NEXT:  (call $target_2

@@ -21,7 +21,7 @@
 
   ;; CHECK:      (import "out" "i32" (func $i32 (type $1) (result i32)))
   (import "out" "i32" (func $i32 (result i32)))
-  ;; CHECK:      (import "out" "i64" (func $i64 (type $6) (result i64)))
+  ;; CHECK:      (import "out" "i64" (func $i64 (type $4) (result i64)))
   (import "out" "i64" (func $i64 (result i64)))
 
   ;; CHECK:      (tag $e-anyref (param anyref))
@@ -210,7 +210,7 @@
   ;; Sometimes a refinalize is necessary in between the iterations.
   ;; CHECK:      (func $multiple-iterations-refinalize (type $2) (param $i i32)
   ;; CHECK-NEXT:  (local $x (ref $1))
-  ;; CHECK-NEXT:  (local $y (ref $6))
+  ;; CHECK-NEXT:  (local $y (ref $4))
   ;; CHECK-NEXT:  (local $z (ref func))
   ;; CHECK-NEXT:  (local.set $x
   ;; CHECK-NEXT:   (ref.func $i32)

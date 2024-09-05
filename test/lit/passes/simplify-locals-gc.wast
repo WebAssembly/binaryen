@@ -5,8 +5,12 @@
 
 (module
   ;; CHECK:      (type $A (sub (struct (field structref))))
+  (type $A (sub (struct (field (ref null struct)))))
 
+  ;; $B is a subtype of $A, and its field has a more refined type (it is non-
+  ;; nullable).
   ;; CHECK:      (type $B (sub $A (struct (field (ref struct)))))
+  (type $B (sub $A (struct (field (ref struct)))))
 
   ;; CHECK:      (type $struct (struct (field (mut i32))))
   (type $struct (struct (field (mut i32))))
@@ -14,14 +18,8 @@
   ;; CHECK:      (type $struct-immutable (struct (field i32)))
   (type $struct-immutable (struct (field i32)))
 
-  (type $A (sub (struct (field (ref null struct)))))
-
-  ;; $B is a subtype of $A, and its field has a more refined type (it is non-
-  ;; nullable).
-  (type $B (sub $A (struct (field (ref struct)))))
-
   ;; Writes to heap objects cannot be reordered with reads.
-  ;; CHECK:      (func $no-reorder-past-write (type $4) (param $x (ref $struct)) (result i32)
+  ;; CHECK:      (func $no-reorder-past-write (type $5) (param $x (ref $struct)) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (struct.get $struct 0
@@ -289,7 +287,7 @@
     )
   )
 
-  ;; CHECK:      (func $call-vs-mutable-read (type $4) (param $0 (ref $struct)) (result i32)
+  ;; CHECK:      (func $call-vs-mutable-read (type $5) (param $0 (ref $struct)) (result i32)
   ;; CHECK-NEXT:  (local $temp i32)
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (call $side-effect)

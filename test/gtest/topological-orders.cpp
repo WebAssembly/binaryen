@@ -23,29 +23,29 @@
 
 using namespace wasm;
 
-using Graph = std::vector<std::vector<size_t>>;
+using Graph = TopologicalSort::Graph;
 
-TEST(TopologicalOrdersTest, Empty) {
+TEST(TopologicalSortTest, Empty) {
   Graph graph;
   TopologicalOrders orders(graph);
   EXPECT_EQ(orders.begin(), orders.end());
 }
 
-TEST(TopologicalOrdersTest, Singleton) {
+TEST(TopologicalSortTest, Singleton) {
   Graph graph(1);
   TopologicalOrders orders(graph);
   auto it = orders.begin();
   ASSERT_NE(it, orders.end());
-  EXPECT_EQ(*it, std::vector<size_t>{0});
+  EXPECT_EQ(*it, std::vector<Index>{0});
   ++it;
   EXPECT_EQ(it, orders.end());
 }
 
-TEST(TopologicalOrdersTest, Permutations) {
+TEST(TopologicalSortTest, Permutations) {
   Graph graph(3);
   TopologicalOrders orders(graph);
-  std::set<std::vector<size_t>> results(orders.begin(), orders.end());
-  std::set<std::vector<size_t>> expected{
+  std::set<std::vector<Index>> results(orders.begin(), orders.end());
+  std::set<std::vector<Index>> expected{
     {0, 1, 2},
     {0, 2, 1},
     {1, 0, 2},
@@ -56,25 +56,25 @@ TEST(TopologicalOrdersTest, Permutations) {
   EXPECT_EQ(results, expected);
 }
 
-TEST(TopologicalOrdersTest, Chain) {
-  constexpr size_t n = 10;
+TEST(TopologicalSortTest, Chain) {
+  constexpr Index n = 10;
   Graph graph(n);
-  for (size_t i = 1; i < n; ++i) {
+  for (Index i = 1; i < n; ++i) {
     graph[i].push_back(i - 1);
   }
   TopologicalOrders orders(graph);
-  std::set<std::vector<size_t>> results(orders.begin(), orders.end());
-  std::set<std::vector<size_t>> expected{{9, 8, 7, 6, 5, 4, 3, 2, 1, 0}};
+  std::set<std::vector<Index>> results(orders.begin(), orders.end());
+  std::set<std::vector<Index>> expected{{9, 8, 7, 6, 5, 4, 3, 2, 1, 0}};
   EXPECT_EQ(results, expected);
 }
 
-TEST(TopologicalOrdersTest, TwoChains) {
+TEST(TopologicalSortTest, TwoChains) {
   Graph graph(4);
   graph[0].push_back(2);
   graph[1].push_back(3);
   TopologicalOrders orders(graph);
-  std::set<std::vector<size_t>> results(orders.begin(), orders.end());
-  std::set<std::vector<size_t>> expected{
+  std::set<std::vector<Index>> results(orders.begin(), orders.end());
+  std::set<std::vector<Index>> expected{
     {0, 1, 2, 3},
     {0, 1, 3, 2},
     {0, 2, 1, 3},
@@ -85,70 +85,70 @@ TEST(TopologicalOrdersTest, TwoChains) {
   EXPECT_EQ(results, expected);
 }
 
-TEST(TopologicalOrdersTest, Diamond) {
+TEST(TopologicalSortTest, Diamond) {
   Graph graph(4);
   graph[0].push_back(1);
   graph[0].push_back(2);
   graph[1].push_back(3);
   graph[2].push_back(3);
   TopologicalOrders orders(graph);
-  std::set<std::vector<size_t>> results(orders.begin(), orders.end());
-  std::set<std::vector<size_t>> expected{
+  std::set<std::vector<Index>> results(orders.begin(), orders.end());
+  std::set<std::vector<Index>> expected{
     {0, 1, 2, 3},
     {0, 2, 1, 3},
   };
   EXPECT_EQ(results, expected);
 }
 
-TEST(MinTopologicalSortTest, Empty) {
-  Graph graph(0);
-  EXPECT_EQ(TopologicalSort::minSort(graph), std::vector<size_t>{});
-}
-
-TEST(MinTopologicalSortTest, Unconstrained) {
-  Graph graph(3);
-  std::vector<size_t> expected{0, 1, 2};
-  EXPECT_EQ(TopologicalSort::minSort(graph), expected);
-}
-
-TEST(MinTopologicalSortTest, Reversed) {
-  Graph graph(3);
-  graph[2].push_back(1);
-  graph[1].push_back(0);
-  std::vector<size_t> expected{2, 1, 0};
-  EXPECT_EQ(TopologicalSort::minSort(graph), expected);
-}
-
-TEST(MinTopologicalSortTest, OneBeforeZero) {
-  Graph graph(3);
-  graph[1].push_back(0);
-  // 2 last because it is greater than 1 and 0
-  std::vector<size_t> expected{1, 0, 2};
-  EXPECT_EQ(TopologicalSort::minSort(graph), expected);
-}
-
-TEST(MinTopologicalSortTest, TwoBeforeOne) {
-  Graph graph(3);
-  graph[2].push_back(1);
-  // 0 first because it is less than 2 and 1
-  std::vector<size_t> expected{0, 2, 1};
-  EXPECT_EQ(TopologicalSort::minSort(graph), expected);
-}
-
-TEST(MinTopologicalSortTest, TwoBeforeZero) {
-  Graph graph(3);
-  graph[2].push_back(0);
-  // 1 first because it is less than 2 and zero is not eligible.
-  std::vector<size_t> expected{1, 2, 0};
-  EXPECT_EQ(TopologicalSort::minSort(graph), expected);
-}
-
-TEST(MinTopologicalSortTest, Strings) {
+TEST(MinTopologicalSortTest, SortStrings) {
   std::map<std::string, std::vector<std::string>> graph{
     {"animal", {"mammal"}},
     {"cat", {}},
     {"dog", {}},
     {"mammal", {"cat", "dog"}}};
   std::vector<std::string> expected{"animal", "mammal", "cat", "dog"};
-  EXPECT_EQ(TopologicalSort::minSortOf(graph.begin(), graph.end()), expected);
+  EXPECT_EQ(TopologicalSort::sortOf(graph.begin(), graph.end()), expected);
+}
+
+TEST(MinTopologicalSortTest, EmptyMinSort) {
+  Graph graph(0);
+  EXPECT_EQ(TopologicalSort::minSort<>(graph), std::vector<Index>{});
+}
+
+TEST(MinTopologicalSortTest, UnconstrainedMinSort) {
+  Graph graph(3);
+  std::vector<Index> expected{0, 1, 2};
+  EXPECT_EQ(TopologicalSort::minSort(graph), expected);
+}
+
+TEST(MinTopologicalSortTest, ReversedMinSort) {
+  Graph graph(3);
+  graph[2].push_back(1);
+  graph[1].push_back(0);
+  std::vector<Index> expected{2, 1, 0};
+  EXPECT_EQ(TopologicalSort::minSort(graph), expected);
+}
+
+TEST(MinTopologicalSortTest, OneBeforeZeroMinSort) {
+  Graph graph(3);
+  graph[1].push_back(0);
+  // 2 last because it is greater than 1 and 0
+  std::vector<Index> expected{1, 0, 2};
+  EXPECT_EQ(TopologicalSort::minSort(graph), expected);
+}
+
+TEST(MinTopologicalSortTest, TwoBeforeOneMinSort) {
+  Graph graph(3);
+  graph[2].push_back(1);
+  // 0 first because it is less than 2 and 1
+  std::vector<Index> expected{0, 2, 1};
+  EXPECT_EQ(TopologicalSort::minSort(graph), expected);
+}
+
+TEST(MinTopologicalSortTest, TwoBeforeZeroMinSort) {
+  Graph graph(3);
+  graph[2].push_back(0);
+  // 1 first because it is less than 2 and zero is not eligible.
+  std::vector<Index> expected{1, 2, 0};
+  EXPECT_EQ(TopologicalSort::minSort(graph), expected);
 }
