@@ -105,10 +105,12 @@ struct MergeLocals
     if (copies.empty()) {
       return;
     }
-    // compute all dependencies
     auto* func = getFunction();
-    LocalGraph preGraph(func, getModule());
-    preGraph.computeInfluences();
+
+    // Compute the local graph lazily. We only need to know about copies between
+    // locals, which iare not rare but most locals tend not to have them.
+    LazyLocalGraph preGraph(func, getModule());
+
     // optimize each copy
     std::unordered_map<LocalSet*, LocalSet*> optimizedToCopy,
       optimizedToTrivial;
@@ -195,8 +197,7 @@ struct MergeLocals
       // if one does not work, we need to undo all its siblings (don't extend
       // the live range unless we are definitely removing a conflict, same
       // logic as before).
-      LocalGraph postGraph(func, getModule());
-      postGraph.computeSetInfluences();
+      LazyLocalGraph postGraph(func, getModule());
       for (auto& [copy, trivial] : optimizedToCopy) {
         auto& trivialInfluences = preGraph.getSetInfluences(trivial);
         for (auto* influencedGet : trivialInfluences) {
