@@ -359,7 +359,7 @@ private:
             if (add->left->is<Const>() || add->right->is<Const>()) {
               // Looks like this might be relevant, check all uses.
               bool canPropagate = true;
-              for (auto* get : localGraph->setInfluences[set]) {
+              for (auto* get : localGraph->getSetInfluences(set)) {
                 auto* parent = parents.getParent(get);
                 // if this is at the top level, it's the whole body - no set can
                 // exist!

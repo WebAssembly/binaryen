@@ -279,10 +279,8 @@ struct EscapeAnalyzer {
         sets.insert(set);
 
         // We must also look at how the value flows from those gets.
-        if (auto* getsReached = getGetsReached(set)) {
-          for (auto* get : *getsReached) {
-            flows.push({get, parents.getParent(get)});
-          }
+        for (auto* get : localGraph.getSetInfluences(set)) {
+          flows.push({get, parents.getParent(get)});
         }
       }
 
@@ -479,14 +477,6 @@ struct EscapeAnalyzer {
     return ParentChildInteraction::Mixes;
   }
 
-  const LocalGraph::SetInfluences* getGetsReached(LocalSet* set) {
-    auto iter = localGraph.setInfluences.find(set);
-    if (iter != localGraph.setInfluences.end()) {
-      return &iter->second;
-    }
-    return nullptr;
-  }
-
   const BranchUtils::NameSet branchesSentByParent(Expression* child,
                                                   Expression* parent) {
     BranchUtils::NameSet names;
@@ -508,10 +498,8 @@ struct EscapeAnalyzer {
     // Find all the relevant gets (which may overlap between the sets).
     std::unordered_set<LocalGet*> gets;
     for (auto* set : sets) {
-      if (auto* getsReached = getGetsReached(set)) {
-        for (auto* get : *getsReached) {
-          gets.insert(get);
-        }
+      for (auto* get : localGraph.getSetInfluences(set)) {
+        gets.insert(get);
       }
     }
 
