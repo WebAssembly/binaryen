@@ -445,7 +445,7 @@ template<typename T> struct CallGraphPropertyAnalysis {
 
 // Which types to collect.
 //
-//   AllTypes - Any type anywhere reachable from anything
+//   AllTypes - Any type anywhere reachable from anything.
 //
 //   UsedIRTypes - Same as AllTypes, but excludes types reachable only because
 //   they are in a rec group with some other used type and types that are only
