@@ -456,21 +456,21 @@ template<typename T> struct CallGraphPropertyAnalysis {
 enum class TypeInclusion { AllTypes, UsedIRTypes, BinaryTypes };
 
 // Whether to classify collected types as public and private.
-enum class ClassifyAction { NoClassify, Classify };
+enum class VisibilityHandling { NoVisibility, FindVisibility };
 
 // Whether a type is public or private. If no classification occurs, the type
 // will be Unknown instead.
-enum class TypeClassification { Unknown, Public, Private };
+enum class Visibility { Unknown, Public, Private };
 
 struct HeapTypeInfo {
   Index useCount = 0;
-  TypeClassification classification = TypeClassification::Unknown;
+  Visibility visibility = Visibility::Unknown;
 };
 
-InsertOrderedMap<HeapType, HeapTypeInfo>
-collectHeapTypeInfo(Module& wasm,
-                    TypeInclusion inclusion = TypeInclusion::AllTypes,
-                    ClassifyAction classify = ClassifyAction::NoClassify);
+InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
+  Module& wasm,
+  TypeInclusion inclusion = TypeInclusion::AllTypes,
+  VisibilityHandling visibility = VisibilityHandling::NoVisibility);
 
 // Helper function for collecting all the non-basic heap types used in the
 // module, i.e. the types that would appear in the type section.

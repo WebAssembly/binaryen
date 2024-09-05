@@ -423,13 +423,13 @@ struct CodeScanner
   }
 };
 
-void classifyTypes(Module& wasm,
-                   InsertOrderedMap<HeapType, HeapTypeInfo>& types);
+void classifyTypeVisibility(Module& wasm,
+                            InsertOrderedMap<HeapType, HeapTypeInfo>& types);
 
 } // anonymous namespace
 
 InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
-  Module& wasm, TypeInclusion inclusion, ClassifyAction classify) {
+  Module& wasm, TypeInclusion inclusion, VisibilityHandling visibility) {
   // Collect module-level info.
   TypeInfos info;
   CodeScanner(wasm, info, inclusion).walkModuleCode(&wasm);
@@ -557,8 +557,8 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
     }
   }
 
-  if (classify == ClassifyAction::Classify) {
-    classifyTypes(wasm, info.info);
+  if (visibility == VisibilityHandling::FindVisibility) {
+    classifyTypeVisibility(wasm, info.info);
   }
 
   return std::move(info.info);
@@ -566,8 +566,8 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
 
 namespace {
 
-void classifyTypes(Module& wasm,
-                   InsertOrderedMap<HeapType, HeapTypeInfo>& types) {
+void classifyTypeVisibility(Module& wasm,
+                            InsertOrderedMap<HeapType, HeapTypeInfo>& types) {
   // We will need to traverse the types used by public types and mark them
   // public as well.
   std::vector<HeapType> workList;
@@ -580,12 +580,12 @@ void classifyTypes(Module& wasm,
     bool inserted = false;
     for (auto member : type.getRecGroup()) {
       if (auto it = types.find(member); it != types.end()) {
-        if (it->second.classification == TypeClassification::Public) {
+        if (it->second.visibility == Visibility::Public) {
           // Since we mark all elements of a group public at once, if there is a
           // member that is already public, all members must already be public.
           break;
         }
-        it->second.classification = TypeClassification::Public;
+        it->second.visibility = Visibility::Public;
         workList.push_back(member);
         inserted = true;
       }
@@ -658,8 +658,8 @@ void classifyTypes(Module& wasm,
   }
 
   for (auto& [_, info] : types) {
-    if (info.classification != TypeClassification::Public) {
-      info.classification = TypeClassification::Private;
+    if (info.visibility != Visibility::Public) {
+      info.visibility = Visibility::Private;
     }
   }
 
@@ -688,11 +688,11 @@ std::vector<HeapType> collectHeapTypes(Module& wasm) {
 
 std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
   auto info = collectHeapTypeInfo(
-    wasm, TypeInclusion::BinaryTypes, ClassifyAction::Classify);
+    wasm, TypeInclusion::BinaryTypes, VisibilityHandling::FindVisibility);
   std::vector<HeapType> types;
   types.reserve(info.size());
   for (auto& [type, typeInfo] : info) {
-    if (typeInfo.classification == TypeClassification::Public) {
+    if (typeInfo.visibility == Visibility::Public) {
       types.push_back(type);
     }
   }
@@ -701,11 +701,11 @@ std::vector<HeapType> getPublicHeapTypes(Module& wasm) {
 
 std::vector<HeapType> getPrivateHeapTypes(Module& wasm) {
   auto info = collectHeapTypeInfo(
-    wasm, TypeInclusion::UsedIRTypes, ClassifyAction::Classify);
+    wasm, TypeInclusion::UsedIRTypes, VisibilityHandling::FindVisibility);
   std::vector<HeapType> types;
   types.reserve(info.size());
   for (auto& [type, typeInfo] : info) {
-    if (typeInfo.classification == TypeClassification::Private) {
+    if (typeInfo.visibility == Visibility::Private) {
       types.push_back(type);
     }
   }
