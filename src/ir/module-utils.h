@@ -18,6 +18,7 @@
 #define wasm_ir_module_h
 
 #include "pass.h"
+#include "support/insert_ordered.h"
 #include "support/unique_deferring_queue.h"
 #include "wasm.h"
 
@@ -441,6 +442,35 @@ template<typename T> struct CallGraphPropertyAnalysis {
     }
   }
 };
+
+// Which types to collect.
+//
+//   AllTypes - Any type anywhere reachable from anything.
+//
+//   UsedIRTypes - Same as AllTypes, but excludes types reachable only because
+//   they are in a rec group with some other used type and types that are only
+//   used from other unreachable types.
+//
+//   BinaryTypes - Only types that need to appear in the module's type section.
+//
+enum class TypeInclusion { AllTypes, UsedIRTypes, BinaryTypes };
+
+// Whether to classify collected types as public and private.
+enum class VisibilityHandling { NoVisibility, FindVisibility };
+
+// Whether a type is public or private. If visibility is not analyzed, the
+// visibility will be Unknown instead.
+enum class Visibility { Unknown, Public, Private };
+
+struct HeapTypeInfo {
+  Index useCount = 0;
+  Visibility visibility = Visibility::Unknown;
+};
+
+InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
+  Module& wasm,
+  TypeInclusion inclusion = TypeInclusion::AllTypes,
+  VisibilityHandling visibility = VisibilityHandling::NoVisibility);
 
 // Helper function for collecting all the non-basic heap types used in the
 // module, i.e. the types that would appear in the type section.
