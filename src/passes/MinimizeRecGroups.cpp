@@ -350,6 +350,14 @@ struct MinimizeRecGroups : Pass {
   // For each shape of rec group we have created, its index in `groups`.
   std::unordered_map<RecGroupShape, Index> groupShapeIndices;
 
+  // A sentinel index for public group shapes, which are recorded in
+  // `groupShapeIndices` but not in `groups`.
+  static constexpr Index PublicGroupIndex = -1;
+
+  // Since we won't store public groups in `groups`, we need this separate place
+  // to store their types referred to by their `RecGroupShape`s.
+  std::vector<std::vector<HeapType>> publicGroupTypes;
+
   // When we find that two groups are isomorphic to (i.e. permutations of) each
   // other, we combine their equivalence classes and choose a new class
   // representative to use to disambiguate the groups and any further groups
@@ -370,9 +378,32 @@ struct MinimizeRecGroups : Pass {
 
     initBrandOptions();
 
-    types = ModuleUtils::getPrivateHeapTypes(*module);
-    for (auto type : ModuleUtils::collectHeapTypes(*module)) {
-      typeIndices.insert({type, typeIndices.size()});
+    auto typeInfo = ModuleUtils::collectHeapTypeInfo(
+      *module,
+      ModuleUtils::TypeInclusion::AllTypes,
+      ModuleUtils::VisibilityHandling::FindVisibility);
+
+    types.reserve(typeInfo.size());
+
+    // We cannot optimize public types, but we do need to make sure we don't
+    // generate new groups with the same shape.
+    InsertOrderedSet<RecGroup> publicGroups;
+    for (auto& [type, info] : typeInfo) {
+      if (info.visibility == ModuleUtils::Visibility::Private) {
+        // We can optimize private types.
+        types.push_back(type);
+        typeIndices.insert({type, typeIndices.size()});
+      } else {
+        publicGroups.insert(type.getRecGroup());
+      }
+    }
+
+    publicGroupTypes.reserve(publicGroups.size());
+    for (auto group : publicGroups) {
+      publicGroupTypes.emplace_back(group.begin(), group.end());
+      [[maybe_unused]] auto [it, inserted] = groupShapeIndices.insert(
+        {RecGroupShape(publicGroupTypes.back()), PublicGroupIndex});
+      assert(inserted);
     }
 
     // The number of types to optimize is an upper bound on the number of
@@ -428,7 +459,15 @@ struct MinimizeRecGroups : Pass {
       return;
     }
 
-    // We have a conflict. There are five possibilities:
+    // We have a conflict. There are seven possibilities:
+    //
+    //   0. We have a conflict with a public group and...
+    //
+    //     A. We are trying to insert the next permutation of an existing
+    //        equivalence class.
+    //
+    //     B. We are inserting a new group not yet affiliated with a nontrivial
+    //        equivalence class.
     //
     //   1. We are trying to insert the next permutation of an existing
     //      equivalence class and have found that...
@@ -454,12 +493,39 @@ struct MinimizeRecGroups : Pass {
     //
     // These possibilities are handled in order below.
 
+    auto& groupInfo = groups[group];
+    Index groupRep = equivalenceClasses.getRoot(group);
+
     Index other = it->second;
 
-    auto& groupInfo = groups[group];
-    auto& otherInfo = groups[other];
+    if (other == PublicGroupIndex) {
+      // The group currently has the same shape as some public group. We can't
+      // change the public group, so we need to change the shape of the current
+      // group.
+      //
+      // Case 0A: Since we already have a nontrivial equivalence class, we can
+      // try the next permutation to avoid conflict with the public group.
+      if (groups[groupRep].classInfo) {
+        // We have everything we need to generate the next permutation of this
+        // group.
+        auto& classInfo = *groups[groupRep].classInfo;
+        classInfo.advance();
+        classInfo.permute(groupInfo);
+        shapesToUpdate.push_back(group);
+        return;
+      }
 
-    Index groupRep = equivalenceClasses.getRoot(group);
+      // Case 0B: There is no nontrivial equivalence class yet. Create one so
+      // we have all the information we need to try a different permutation.
+      assert(group == groupRep);
+      groupInfo.permutation = getCanonicalPermutation(groupInfo.group);
+      groupInfo.classInfo.emplace(groupInfo);
+      groupInfo.classInfo->permute(groupInfo);
+      shapesToUpdate.push_back(group);
+      return;
+    }
+
+    auto& otherInfo = groups[other];
     Index otherRep = equivalenceClasses.getRoot(other);
 
     // Case 1A: We have found a permutation of this group that has the same
