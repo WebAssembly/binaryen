@@ -191,7 +191,7 @@ struct StringGathering : public Pass {
 
 struct StringLowering : public StringGathering {
   // If true, then encode well-formed strings as (import "'" "string...")
-  // instead of emitting them into the x custom section.
+  // instead of emitting them into the JSON custom section.
   bool useMagicImports;
 
   // Whether to throw a fatal error on non-UTF8 strings that would not be able
