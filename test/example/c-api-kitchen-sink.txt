@@ -3037,9 +3037,9 @@ TypeBuilderErrorReasonForwardSupertypeReference: 2
 TypeBuilderErrorReasonForwardChildReference: 3
 module with recursive GC types:
 (module
+ (type $SomeStruct (sub (struct (field $SomeField (mut (ref null $SomeStruct))))))
  (type $SomeArray (sub (array (mut (ref null $SomeArray)))))
  (type $SomeSignature (sub (func (param (ref null $SomeSignature) (ref null $SomeArray)) (result (ref null $SomeSignature)))))
- (type $SomeStruct (sub (struct (field $SomeField (mut (ref null $SomeStruct))))))
  (type $3 (func))
  (type $SomeSubStruct (sub $SomeStruct (struct (field $SomeField (mut (ref null $SomeStruct))) (field $SomePackedField i8))))
  (func $test (type $3)
