@@ -458,8 +458,8 @@ enum class TypeInclusion { AllTypes, UsedIRTypes, BinaryTypes };
 // Whether to classify collected types as public and private.
 enum class VisibilityHandling { NoVisibility, FindVisibility };
 
-// Whether a type is public or private. If no classification occurs, the type
-// will be Unknown instead.
+// Whether a type is public or private. If visibility is not analyzed, the
+// visibility will be Unknown instead.
 enum class Visibility { Unknown, Public, Private };
 
 struct HeapTypeInfo {
