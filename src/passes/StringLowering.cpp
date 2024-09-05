@@ -235,7 +235,6 @@ struct StringLowering : public StringGathering {
   void makeImports(Module* module) {
     Index jsonImportIndex = 0;
     std::stringstream json;
-    json << '[';
     bool first = true;
     for (auto& global : module->globals) {
       if (global->init) {
@@ -267,12 +266,16 @@ struct StringLowering : public StringGathering {
       }
     }
 
-    // Add a custom section with the JSON.
-    json << ']';
-    auto str = json.str();
-    auto vec = std::vector<char>(str.begin(), str.end());
-    module->customSections.emplace_back(
-      CustomSection{"string.consts", std::move(vec)});
+    auto jsonString = json.str();
+    if (!jsonString.empty()) {
+      // If we are asserting UTF8, then we shouldn't be generating any JSON.
+      assert(!assertUTF8);
+      // Add a custom section with the JSON.
+      auto str = '[' + jsonString + ']';
+      auto vec = std::vector<char>(str.begin(), str.end());
+      module->customSections.emplace_back(
+        CustomSection{"string.consts", std::move(vec)});
+    }
   }
 
   // Common types used in imports.
