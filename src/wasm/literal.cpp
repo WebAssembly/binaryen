@@ -1834,7 +1834,10 @@ Literal Literal::replaceLaneI64x2(const Literal& other, uint8_t index) const {
   return replace<2, &Literal::getLanesI64x2>(*this, other, index);
 }
 Literal Literal::replaceLaneF16x8(const Literal& other, uint8_t index) const {
-  return replace<8, &Literal::getLanesF16x8>(
+  // For F16 lane replacement we do not need to convert all the values to F32,
+  // instead keep the lanes as I32, and just replace the one lane with integer
+  // value of the F32.
+  return replace<8, &Literal::getLanesUI16x8>(
     *this, other.convertF32ToF16(), index);
 }
 Literal Literal::replaceLaneF32x4(const Literal& other, uint8_t index) const {
