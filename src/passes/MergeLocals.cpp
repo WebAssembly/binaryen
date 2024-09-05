@@ -202,7 +202,7 @@ struct MergeLocals
       // the live range unless we are definitely removing a conflict, same
       // logic as before).
       LocalGraph postGraph(func, getModule());
-      postGraph.computeInfluences();
+      postGraph.computeSetInfluences();
       for (auto& [copy, trivial] : optimizedToCopy) {
         auto& trivialInfluences = preGraph.getSetInfluences(trivial);
         for (auto* influencedGet : trivialInfluences) {
