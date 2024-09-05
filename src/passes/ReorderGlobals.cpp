@@ -84,19 +84,6 @@ struct ReorderGlobals : public Pass {
   // considering fractional sums of them later.
   using IndexCountMap = std::vector<double>;
 
-  // We must take into account dependencies, so that globals appear before
-  // their users in other globals:
-  //
-  //   (global $a i32 (i32.const 10))
-  //   (global $b i32 (global.get $a)) ;; $b depends on $a; $a must be first
-  //
-  // To do so we construct a map from each global to those it depends on. We
-  // also build the reverse map, of those that it is depended upon by.
-  struct Dependencies {
-    TopologicalSort::Graph dependsOn;
-    TopologicalSort::Graph dependedUpon;
-  };
-
   void run(Module* module) override {
     auto& globals = module->globals;
 
@@ -132,26 +119,27 @@ struct ReorderGlobals : public Pass {
       counts[originalIndices[name]] = count;
     }
 
-    // Compute dependencies.
-    std::vector<std::unordered_set<size_t>> dependsOn(globals.size()),
-      dependedUpon(globals.size());
+    // We must take into account dependencies, so that globals appear before
+    // their users in other globals:
+    //
+    //   (global $a i32 (i32.const 10))
+    //   (global $b i32 (global.get $a)) ;; $b depends on $a; $a must be first
+    //
+    // To do so we construct a map from each global to those that depends on it.
+    std::vector<std::unordered_set<size_t>> dependentSets(globals.size());
     for (Index i = 0; i < globals.size(); i++) {
       auto& global = globals[i];
       if (!global->imported()) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
           auto getIndex = originalIndices[get->name];
-          dependsOn[i].insert(getIndex);
-          dependedUpon[getIndex].insert(i);
+          dependentSets[getIndex].insert(i);
         }
       }
     }
-    Dependencies deps;
-    deps.dependsOn.reserve(globals.size());
-    deps.dependedUpon.reserve(globals.size());
+    TopologicalSort::Graph deps;
+    deps.reserve(globals.size());
     for (size_t i = 0; i < globals.size(); ++i) {
-      deps.dependsOn.emplace_back(dependsOn[i].begin(), dependsOn[i].end());
-      deps.dependedUpon.emplace_back(dependedUpon[i].begin(),
-                                     dependedUpon[i].end());
+      deps.emplace_back(dependentSets[i].begin(), dependentSets[i].end());
     }
 
     // Compute various sorting options. All the options use a variation of the
@@ -199,12 +187,14 @@ struct ReorderGlobals : public Pass {
     double const EXPONENTIAL_FACTOR = 0.095;
     IndexCountMap sumCounts(globals.size()), exponentialCounts(globals.size());
 
-    for (auto global : TopologicalSort::sort(deps.dependsOn)) {
+    auto sorted = TopologicalSort::sort(deps);
+    for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
+      auto global = *it;
       // We can compute this global's count as in the sorted order all the
       // values it cares about are resolved. Start with the self-count, then
       // add the deps.
       sumCounts[global] = exponentialCounts[global] = counts[global];
-      for (auto dep : deps.dependedUpon[global]) {
+      for (auto dep : deps[global]) {
         sumCounts[global] += sumCounts[dep];
         exponentialCounts[global] +=
           EXPONENTIAL_FACTOR * exponentialCounts[dep];
@@ -234,7 +224,7 @@ struct ReorderGlobals : public Pass {
   }
 
   IndexIndexMap doSort(const IndexCountMap& counts,
-                       const Dependencies& deps,
+                       const TopologicalSort::Graph& deps,
                        Module* module) {
     // To sort the globals we do a simple greedy approach of always picking the
     // global with the highest count at every point in time, subject to the
@@ -251,7 +241,7 @@ struct ReorderGlobals : public Pass {
     // Now use that optimal order to create an ordered graph that includes the
     // dependencies. The final order will be the minimum topological sort of
     // this graph.
-    return TopologicalSort::minSort(deps.dependedUpon, [&](size_t a, size_t b) {
+    return TopologicalSort::minSort(deps, [&](size_t a, size_t b) {
       // Imports always go first. The binary writer takes care of this itself
       // anyhow, but it is better to do it here in the IR so we can actually
       // see what the final layout will be.
