@@ -406,7 +406,8 @@ struct LocalGraphFlower
     flowBackFromStartOfBlock(block, index, gets);
   }
 
-  void computeSetInfluences(LocalSet* set, LocalGraphBase::SetInfluencesMap& setInfluences) {
+  void computeSetInfluences(LocalSet* set,
+                            LocalGraphBase::SetInfluencesMap& setInfluences) {
     auto index = set->index;
 
     // We must never repeat work.
