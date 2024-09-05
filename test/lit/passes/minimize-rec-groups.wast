@@ -485,7 +485,7 @@
   (global $a3 (ref null $a3) (ref.null none))
 )
 
-;; We must avoid conflicts with public types
+;; We must avoid conflicts with public types.
 (module
   ;; CHECK:      (type $public (struct))
   (type $public (struct))
