@@ -406,7 +406,7 @@ struct LocalGraphFlower
     flowBackFromStartOfBlock(block, index, gets);
   }
 
-  void computeSetInfluences(LocalSet* set) {
+  void computeSetInfluences(LocalSet* set, LocalGraphBase::SetInfluencesMap& setInfluences) {
     auto index = set->index;
 
     // We must never repeat work.
@@ -436,6 +436,10 @@ struct LocalGraphFlower
         setInfluences[set].insert(get);
       }
     }
+  }
+
+  void computeGetInfluences(LocalGet* get, LocalGraphBase::GetInfluencesMap& getInfluences) {
+    abort();
   }
 };
 
@@ -577,11 +581,11 @@ void LazyLocalGraph::computeGetSets(LocalGet* get) const {
 }
 
 void LazyLocalGraph::computeSetInfluences(LocalSet* set) const {
-  flower->computeSetInfluences(set);
+  flower->computeSetInfluences(set, setInfluences);
 }
 
 void LazyLocalGraph::computeGetInfluences(LocalGet* get) const {
-  flower->computeGetInfluences(get);
+  flower->computeGetInfluences(get, getInfluences);
 }
 
 } // namespace wasm
