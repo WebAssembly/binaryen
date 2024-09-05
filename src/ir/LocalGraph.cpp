@@ -431,6 +431,10 @@ struct LocalGraphFlower
       setInfluences[set];
     }
 
+    // Also ensure |set| itself, that we were originally asked about. It may be
+    // in unreachable code, which means it is not listed in setsByIndex.
+    setInfluences[set];
+
     // Apply the info from the gets to the sets.
     for (auto* get : getsByIndex[index]) {
       for (auto* set : getSetsMap[get]) {
