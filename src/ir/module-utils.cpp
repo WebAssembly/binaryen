@@ -581,7 +581,8 @@ void classifyTypes(Module& wasm,
     for (auto member : type.getRecGroup()) {
       if (auto it = types.find(member); it != types.end()) {
         if (it->second.classification == TypeClassification::Public) {
-          // We've already inserted this rec group.
+          // Since we mark all elements of a group public at once, if there is a
+          // member that is already public, all members must already be public.
           break;
         }
         it->second.classification = TypeClassification::Public;

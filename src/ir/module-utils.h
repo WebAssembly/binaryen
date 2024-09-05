@@ -443,10 +443,23 @@ template<typename T> struct CallGraphPropertyAnalysis {
   }
 };
 
+// Which types to collect.
+//
+//   AllTypes - Any type anywhere reachable from anything
+//
+//   UsedIRTypes - Same as AllTypes, but excludes types reachable only because
+//   they are in a rec group with some other used type and types that are only
+//   used from other unreachable types.
+//
+//   BinaryTypes - Only types that need to appear in the module's type section.
+//
 enum class TypeInclusion { AllTypes, UsedIRTypes, BinaryTypes };
 
+// Whether to classify collected types as public and private.
 enum class ClassifyAction { NoClassify, Classify };
 
+// Whether a type is public or private. If no classification occurs, the type
+// will be Unknown instead.
 enum class TypeClassification { Unknown, Public, Private };
 
 struct HeapTypeInfo {
