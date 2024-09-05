@@ -38,38 +38,56 @@ namespace wasm {
 // debugging etc.; and it has no downside for optimization, since unreachable
 // code will be removed anyhow).
 //
-struct LocalGraph {
-  // A LocalGraph can be instantiated in either eager or lazy mode. In eager
-  // mode we compute all possible results of getSets() in advance, which is a
-  // little more efficient if they are all needed. In lazy mode they are
-  // computed on demand, which is better if only a few will be queried.
-  enum Mode { Eager, Lazy };
+// There are two options here, the normal LocalGraph which is eager and computes
+// everything up front, which is faster if most things end up needed, and a lazy
+// one which computes on demand, which can be much faster if we only need a
+// small subset of queries.
+//
 
+// Base class for both LocalGraph and LazyLocalGraph (not meant for direct use).
+struct LocalGraphBase {
+protected:
   // If a module is passed in, it is used to find which features are needed in
   // the computation (for example, if exception handling is disabled, then we
   // can generate a simpler CFG, as calls cannot throw).
-  LocalGraph(Function* func, Module* module = nullptr, Mode mode = Mode::Eager);
-  ~LocalGraph();
+  LocalGraphBase(Function* func, Module* module = nullptr)
+    : func(func), module(module) {}
 
-  // Generic form of a getter that works differently in lazy vs eager mode.
-  template<typename Key, typename Result, typename Storage, typename ComputeLazily>
-  const Result& getLazilyOrEagerly(Key* get, Result& empty, Storage& storage, ComputeLazily computeLazily) const {
-    auto iter = storage.find(get);
-    if (iter == storage.end()) {
-      if (mode == Mode::Lazy) {
-        // In lazy mode, a missing entry means we did not do the computation
-        // yet. Do it now.
-        computeLazily(get);
-        iter = storage.find(get);
-        assert(iter != storage.end());
-      } else {
-        // In eager mode, a missing entry means there is nothing there (and we
-        // saved a little space by not putting something there).
-        return empty;
-      }
-    }
-    return iter->second;
-  }
+public:
+  // A set of sets, returned from the query about which sets can be read from a
+  // get. Typically only one or two apply there, so this is a small set.
+  using Sets = SmallSet<LocalSet*, 2>;
+
+  // Where each get and set is. We compute this while doing the main computation
+  // and make it accessible for users, for easy replacing of things without
+  // extra work.
+  using Locations = std::map<Expression*, Expression**>;
+  Locations locations;
+
+  // Sets of gets or sets, that are influenced, returned from get*Influences().
+  using SetInfluences = std::unordered_set<LocalGet*>;
+  using GetInfluences = std::unordered_set<LocalSet*>;
+
+  // Defined publicly as other utilities need similar data layouts.
+  using GetSetsMap = std::unordered_map<LocalGet*, Sets>;
+
+protected:
+  Function* func;
+  Module* module;
+
+  std::set<Index> SSAIndexes;
+
+  // A map of each get to the sets relevant to it. This is mutable so that
+  // getSets() can be const in LazyLocalGraph (which does memoization, see
+  // below).
+  mutable GetSetsMap getSetsMap;
+
+  std::unordered_map<LocalSet*, SetInfluences> setInfluences;
+  std::unordered_map<LocalGet*, GetInfluences> getInfluences;
+};
+
+struct LocalGraph : public LocalGraphBase {
+  LocalGraph(Function* func, Module* module = nullptr);
 
   // Get the sets relevant for a local.get.
   //
@@ -78,53 +96,51 @@ struct LocalGraph {
   // for a param.
   //
   // Often there is a single set, or a phi or two items, so we use a small set.
-  using Sets = SmallSet<LocalSet*, 2>;
-
   const Sets& getSets(LocalGet* get) const {
-    return getLazilyOrEagerly(get, emptySets, getSetsMap, [this](LocalGet* get) {
-      computeGetSets(get);
-    });
+    auto iter = getSetsMap.find(get);
+    if (iter == getSetsMap.end()) {
+      // A missing entry means there is nothing there (and we saved a little
+      // space by not putting something there).
+      //
+      // Use a canonical constant empty set to avoid allocation.
+      static const Sets empty;
+      return empty;
+    }
+    return iter->second;
   }
-
-  // Where each get and set is. We compute this while doing the main computation
-  // and make it accessible for users, for easy replacing of things without
-  // extra work.
-  using Locations = std::map<Expression*, Expression**>;
-  Locations locations;
 
   // Checks if two gets are equivalent, that is, definitely have the same
   // value.
   bool equivalent(LocalGet* a, LocalGet* b);
 
   // Optional: compute the influence graphs between sets and gets (useful for
-  // algorithms that propagate changes). How this works depends on the laziness
-  // mode, like getSets, and using the same flag (that is, the entire LocalGraph
-  // is either in eager or lazy mode). Specifically, when in eager mode, one
-  // must call the relevant compute*Influences() method before calling
-  // get*Influences(). In lazy mode, one can query without any such initial
-  // work, and it will be computed and memoized.
+  // algorithms that propagate changes). Set influences are the gets that can
+  // read from it; get influences are the sets that can (directly) read from it.
   void computeSetInfluences();
   void computeGetInfluences();
+
   void computeInfluences() {
     computeSetInfluences();
     computeGetInfluences();
   }
 
-  using SetInfluences = std::unordered_set<LocalGet*>;
-  using GetInfluences = std::unordered_set<LocalSet*>;
-
   const SetInfluences& getSetInfluences(LocalSet* set) const {
-    // Use a canonical constant empty set to avoid allocation.
-    return getLazilyOrEagerly(set, emptySetInfluences, setInfluences, [this](LocalSet* set) {
-      computeSetInfluences(set);
-    });
+    auto iter = setInfluences.find(set);
+    if (iter == setInfluences.end()) {
+      // Use a canonical constant empty set to avoid allocation.
+      static const SetInfluences empty;
+      return empty;
+    }
+    return iter->second;
   }
-
   const GetInfluences& getGetInfluences(LocalGet* get) const {
-    // Use a canonical constant empty set to avoid allocation.
-    return getLazilyOrEagerly(get, emptyGetInfluences, getInfluences, [this](LocalGet* get) {
-      computeGetInfluences(get);
-    });
+    auto iter = getInfluences.find(get);
+    if (iter == getInfluences.end()) {
+      // Use a canonical constant empty set to avoid allocation.
+      static const GetInfluences empty;
+      return empty;
+    }
+    return iter->second;
   }
 
   // Optional: Compute the local indexes that are SSA, in the sense of
@@ -151,44 +167,34 @@ struct LocalGraph {
   void computeSSAIndexes();
 
   bool isSSA(Index x);
+};
 
-  // Defined publicly as other utilities need similar data layouts.
-  using GetSetsMap = std::unordered_map<LocalGet*, Sets>;
+// The internal implementation of the flow analysis used to compute things. This
+// must be declared in the header so that LazyLocalGraph can declare a unique
+// ptr to it, below.
+struct LocalGraphFlower;
+
+struct LazyLocalGraph : public LocalGraphBase {
+  LazyLocalGraph(Function* func, Module* module = nullptr);
+  ~LazyLocalGraph();
+
+  const Sets& getSets(LocalGet* get) const {
+    auto iter = getSetsMap.find(get);
+    if (iter == getSetsMap.end()) {
+      // A missing entry means we did not do the computation yet. Do it now.
+      computeGetSets(get);
+      iter = getSetsMap.find(get);
+      assert(iter != getSetsMap.end());
+    }
+    return iter->second;
+  }
 
 private:
-  Mode mode;
-  Function* func;
-  std::set<Index> SSAIndexes;
-
-  // A map of each get to the sets relevant to it. This is mutable so that
-  // getSets() can be const: in eager mode no changes to this are ever made in
-  // getSets(), while in lazy mode any changes are just memoization.
-  mutable GetSetsMap getSetsMap;
-
-  // The internal implementation of the flow analysis used to compute
-  // getSetsMap.
-  struct LocalGraphFlower;
-  std::unique_ptr<LocalGraphFlower> flower;
-
   // Compute the sets for a get and store them on getSetsMap.
   void computeGetSets(LocalGet* get) const;
 
-  // Maps of each get to the sets it influences (i.e., sets that read that get).
-  // Similar to getSetsMap, this is mutable as the only change is memoization.
-  mutable std::unordered_map<LocalGet*, GetInfluences> getInfluences;
-  // Maps of each set to the gets it influences (i.e., that can read that set;
-  // the inverse of getSetsMap).
-  // Similar to getSetsMap, this is mutable as the only change is memoization.
-  mutable std::unordered_map<LocalSet*, SetInfluences> setInfluences;
-
-  // Compute the influences of a set/get and store them set/getInfluences.
-  void computeSetInfluences(LocalSet* set) const;
-  void computeGetInfluences(LocalGet* set) const;
-
-  // Use canonical constant empty sets to avoid allocation.
-  static const Sets emptySets;
-  static const SetInfluences emptySetInfluences;
-  static const GetInfluences emptyGetInfluences;
+  // This remains alive as long as we are, so that we can compute things lazily.
+  std::unique_ptr<LocalGraphFlower> flower;
 };
 
 } // namespace wasm

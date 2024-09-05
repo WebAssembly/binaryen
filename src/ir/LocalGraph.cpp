@@ -41,10 +41,8 @@ struct Info {
 
 // flow helper class. flows the gets to their sets
 
-struct LocalGraph::LocalGraphFlower
-  : public CFGWalker<LocalGraph::LocalGraphFlower,
-                     Visitor<LocalGraph::LocalGraphFlower>,
-                     Info> {
+struct LocalGraphFlower
+  : public CFGWalker<LocalGraphFlower, Visitor<LocalGraphFlower>, Info> {
   LocalGraph::GetSetsMap& getSetsMap;
   LocalGraph::Locations& locations;
   Function* func;
@@ -176,7 +174,7 @@ struct LocalGraph::LocalGraphFlower
     assert(entryFlowBlock != nullptr);
   }
 
-  // Flow all the data. This is done in eager mode.
+  // Flow all the data. This is done in eager (i.e., non-lazy) mode.
   void flow() {
     prepareFlowBlocks();
 
@@ -347,7 +345,7 @@ struct LocalGraph::LocalGraphFlower
 
     if (!hasSet[index]) {
       // As in flow(), when there is no local.set for an index we can just mark
-      // the only writer as the default value.
+      // the default value as the only writer.
       sets.insert(nullptr);
       return;
     }
@@ -355,8 +353,7 @@ struct LocalGraph::LocalGraphFlower
     // Go backwards in this flow block, from the get. If we see other gets that
     // have not been computed then we can accumulate them as well, as the
     // results we compute apply to them too.
-    std::vector<LocalGet*> gets;
-    gets.push_back(get);
+    std::vector<LocalGet*> gets = {get};
     while (blockIndex > 0) {
       blockIndex--;
       auto* curr = block->actions[blockIndex];
@@ -397,20 +394,12 @@ struct LocalGraph::LocalGraphFlower
 
 // LocalGraph implementation
 
-LocalGraph::LocalGraph(Function* func, Module* module, Mode mode)
-  : mode(mode), func(func) {
+LocalGraph::LocalGraph(Function* func, Module* module)
+  : LocalGraphBase(func, module) {
   // See comment on the declaration of this field for why we use a raw
   // allocation.
-  flower = std::make_unique<LocalGraphFlower>(getSetsMap, locations, func, module);
-
-  if (mode == Mode::Eager) {
-    flower->flow();
-
-    // We will never use it again.
-    flower.reset();
-  } else {
-    flower->prepareLaziness();
-  }
+  LocalGraphFlower flower(getSetsMap, locations, func, module);
+  flower.flow();
 
 #ifdef LOCAL_GRAPH_DEBUG
   std::cout << "LocalGraph::dump\n";
@@ -422,13 +411,6 @@ LocalGraph::LocalGraph(Function* func, Module* module, Mode mode)
   }
   std::cout << "total locations: " << locations.size() << '\n';
 #endif
-}
-
-LocalGraph::~LocalGraph() {
-  // We must declare a destructor here in the cpp file, even though it is empty
-  // and pointless, due to some C++ issue with our having a unique_ptr to a
-  // forward-declared class (LocalGraphFlower).
-  // https://stackoverflow.com/questions/13414652/forward-declaration-with-unique-ptr#comment110005453_13414884
 }
 
 bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
@@ -469,9 +451,6 @@ bool LocalGraph::equivalent(LocalGet* a, LocalGet* b) {
 }
 
 void LocalGraph::computeSetInfluences() {
-  // We must be in eager mode so that all of getSetsMap is filled in.
-  assert(mode == Mode::Eager);
-
   for (auto& [curr, _] : locations) {
     if (auto* get = curr->dynCast<LocalGet>()) {
       for (auto* set : getSetsMap[get]) {
@@ -493,9 +472,6 @@ void LocalGraph::computeGetInfluences() {
 }
 
 void LocalGraph::computeSSAIndexes() {
-  // We must be in eager mode so that all of getSetsMap is filled in.
-  assert(mode == Mode::Eager);
-
   std::unordered_map<Index, std::set<LocalSet*>> indexSets;
   for (auto& [get, sets] : getSetsMap) {
     for (auto* set : sets) {
@@ -521,9 +497,35 @@ void LocalGraph::computeSSAIndexes() {
 
 bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
 
-void LocalGraph::computeGetSets(LocalGet* get) const {
-  assert(mode == Mode::Lazy);
+// LazyLocalGraph
 
+LazyLocalGraph::LazyLocalGraph(Function* func, Module* module)
+  : LocalGraphBase(func, module) {
+  flower =
+    std::make_unique<LocalGraphFlower>(getSetsMap, locations, func, module);
+
+  flower->prepareLaziness();
+
+#ifdef LOCAL_GRAPH_DEBUG
+  std::cout << "LazyLocalGraph::dump\n";
+  for (auto& [get, sets] : getSetsMap) {
+    std::cout << "GET\n" << get << " is influenced by\n";
+    for (auto* set : sets) {
+      std::cout << set << '\n';
+    }
+  }
+  std::cout << "total locations: " << locations.size() << '\n';
+#endif
+}
+
+LazyLocalGraph::~LazyLocalGraph() {
+  // We must declare a destructor here in the cpp file, even though it is empty
+  // and pointless, due to some C++ issue with our having a unique_ptr to a
+  // forward-declared class (LocalGraphFlower).
+  // https://stackoverflow.com/questions/13414652/forward-declaration-with-unique-ptr#comment110005453_13414884
+}
+
+void LazyLocalGraph::computeGetSets(LocalGet* get) const {
   flower->flowGet(get);
 }
 
