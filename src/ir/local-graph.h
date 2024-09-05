@@ -222,6 +222,9 @@ private:
 
   std::unordered_map<LocalSet*, SetInfluences> setInfluences;
   std::unordered_map<LocalGet*, GetInfluences> getInfluences;
+
+  // This remains alive as long as we are, so that we can compute things lazily.
+  std::unique_ptr<LocalGraphFlower> flower;
 };
 
 } // namespace wasm
