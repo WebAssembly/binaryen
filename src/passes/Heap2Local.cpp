@@ -199,14 +199,14 @@ struct EscapeAnalyzer {
   // To find what escapes, we need to follow where values flow, both up to
   // parents, and via branches, and through locals.
   // TODO: for efficiency, only scan reference types in LocalGraph
-  const LocalGraph& localGraph;
+  const LazyLocalGraph& localGraph;
   const Parents& parents;
   const BranchUtils::BranchTargets& branchTargets;
 
   const PassOptions& passOptions;
   Module& wasm;
 
-  EscapeAnalyzer(const LocalGraph& localGraph,
+  EscapeAnalyzer(const LazyLocalGraph& localGraph,
                  const Parents& parents,
                  const BranchUtils::BranchTargets& branchTargets,
                  const PassOptions& passOptions,
@@ -1139,17 +1139,14 @@ struct Heap2Local {
   Module& wasm;
   const PassOptions& passOptions;
 
-  // TODO: construct this LocalGraph on demand
-  LocalGraph localGraph;
+  // TODO: construct this LocalGraph on demand entirely (not just lazy work)?
+  LazyLocalGraph localGraph;
   Parents parents;
   BranchUtils::BranchTargets branchTargets;
 
   Heap2Local(Function* func, Module& wasm, const PassOptions& passOptions)
     : func(func), wasm(wasm), passOptions(passOptions), localGraph(func, &wasm),
       parents(func->body), branchTargets(func->body) {
-    // We need to track what each set influences, to see where its value can
-    // flow to.
-    localGraph.computeSetInfluences();
 
     // Find all the relevant allocations in the function: StructNew, ArrayNew,
     // ArrayNewFixed.
