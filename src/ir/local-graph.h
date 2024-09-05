@@ -38,27 +38,54 @@ namespace wasm {
 // debugging etc.; and it has no downside for optimization, since unreachable
 // code will be removed anyhow).
 //
-struct LocalGraph {
-protected:
-  // Internal mode (only passed in by subclasses, not users).
-  enum Mode {
-    // The normal behavior, where we compute eagerly in the constructor.
-    Eager,
-    // LazyLocalGraph passes this in to avoid that eager work.
-    Lazy,
-  };
+// There are two options here, the normal LocalGraph which is eager and computes
+// everything up front, which is faster if most things end up needed, and a lazy
+// one which computes on demand, which can be much faster if we only need a
+// small subset of queries.
+//
 
-public:
+// Base class for both LocalGraph and LazyLocalGraph (not meant for direct use).
+struct LocalGraphBase {
   // If a module is passed in, it is used to find which features are needed in
   // the computation (for example, if exception handling is disabled, then we
   // can generate a simpler CFG, as calls cannot throw).
-  //
-  // The |mode| argument is of a protected type, so it can only be passed in by
-  // subclasses. This is necessary because we want to avoid eager computation by
-  // some subclasses. Another approach would be to use a virtual function to
-  // do the computation, but that then requires virtual destructors etc. and is
-  // overall no simpler, and is slower.
-  LocalGraph(Function* func, Module* module = nullptr, Mode mode = Mode::Eager);
+  LocalGraphBase(Function* func, Module* module = nullptr)
+    : func(func), module(module) {}
+
+  // A set of sets, returned from the query about which sets can be read from a
+  // get. Typically only one or two apply there, so this is a small set.
+  using Sets = SmallSet<LocalSet*, 2>;
+
+  // Where each get and set is. We compute this while doing the main computation
+  // and make it accessible for users, for easy replacing of things without
+  // extra work.
+  using Locations = std::map<Expression*, Expression**>;
+  Locations locations;
+
+  // Sets of gets or sets, that are influenced, returned from get*Influences().
+  using SetInfluences = std::unordered_set<LocalGet*>;
+  using GetInfluences = std::unordered_set<LocalSet*>;
+
+  // Defined publicly as other utilities need similar data layouts.
+  using GetSetsMap = std::unordered_map<LocalGet*, Sets>;
+
+protected:
+  Function* func;
+  Module* module;
+
+  std::set<Index> SSAIndexes;
+
+  // A map of each get to the sets relevant to it. This is mutable so that
+  // getSets() can be const in LazyLocalGraph (which does memoization, see
+  // below).
+  mutable GetSetsMap getSetsMap;
+
+  std::unordered_map<LocalSet*, SetInfluences> setInfluences;
+  std::unordered_map<LocalGet*, GetInfluences> getInfluences;
+};
+
+struct LocalGraph : public LocalGraphBase {
+  LocalGraph(Function* func, Module* module = nullptr);
 
   // Get the sets relevant for a local.get.
   //
@@ -67,7 +94,6 @@ public:
   // for a param.
   //
   // Often there is a single set, or a phi or two items, so we use a small set.
-  using Sets = SmallSet<LocalSet*, 2>;
   const Sets& getSets(LocalGet* get) const {
     auto iter = getSetsMap.find(get);
     if (iter == getSetsMap.end()) {
@@ -80,12 +106,6 @@ public:
     }
     return iter->second;
   }
-
-  // Where each get and set is. We compute this while doing the main computation
-  // and make it accessible for users, for easy replacing of things without
-  // extra work.
-  using Locations = std::map<Expression*, Expression**>;
-  Locations locations;
 
   // Checks if two gets are equivalent, that is, definitely have the same
   // value.
@@ -101,9 +121,6 @@ public:
     computeSetInfluences();
     computeGetInfluences();
   }
-
-  using SetInfluences = std::unordered_set<LocalGet*>;
-  using GetInfluences = std::unordered_set<LocalSet*>;
 
   const SetInfluences& getSetInfluences(LocalSet* set) const {
     auto iter = setInfluences.find(set);
@@ -148,21 +165,6 @@ public:
   void computeSSAIndexes();
 
   bool isSSA(Index x);
-
-  // Defined publicly as other utilities need similar data layouts.
-  using GetSetsMap = std::unordered_map<LocalGet*, Sets>;
-
-protected:
-  Function* func;
-  std::set<Index> SSAIndexes;
-
-  // A map of each get to the sets relevant to it. This is mutable so that
-  // getSets() can be const in LazyLocalGraph (which does memoization, see
-  // below).
-  mutable GetSetsMap getSetsMap;
-
-  std::unordered_map<LocalSet*, SetInfluences> setInfluences;
-  std::unordered_map<LocalGet*, GetInfluences> getInfluences;
 };
 
 // The internal implementation of the flow analysis used to compute things. This
@@ -170,7 +172,7 @@ protected:
 // ptr to it, below.
 struct LocalGraphFlower;
 
-struct LazyLocalGraph : public LocalGraph {
+struct LazyLocalGraph : public LocalGraphBase {
   LazyLocalGraph(Function* func, Module* module = nullptr);
   ~LazyLocalGraph();
 
@@ -184,11 +186,6 @@ struct LazyLocalGraph : public LocalGraph {
     }
     return iter->second;
   }
-
-  // Override parent APIs that are not yet lazy.
-  void computeSetInfluences() { WASM_UNREACHABLE("TODO: Lazify"); }
-  void computeGetInfluences() { WASM_UNREACHABLE("TODO: Lazify"); }
-  void computeSSAIndexes() { WASM_UNREACHABLE("TODO: Lazify"); }
 
 private:
   // Compute the sets for a get and store them on getSetsMap.
