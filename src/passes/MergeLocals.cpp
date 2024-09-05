@@ -107,9 +107,12 @@ struct MergeLocals
     }
     auto* func = getFunction();
 
-    // Compute the local graph lazily. We only need to know about copies between
-    // locals, which iare not rare but most locals tend not to have them.
-    LazyLocalGraph preGraph(func, getModule());
+    // Compute the local graph. Note that we *cannot* do this lazily, as we want
+    // to read from the original state of the function while we are doing
+    // changes on it. That is, using an eager graph makes a snapshot of the
+    // initial state, which is what we want. If we can avoid that, this pass can
+    // be sped up by around 25%.
+    LocalGraph preGraph(func, getModule());
 
     // optimize each copy
     std::unordered_map<LocalSet*, LocalSet*> optimizedToCopy,
@@ -197,7 +200,7 @@ struct MergeLocals
       // if one does not work, we need to undo all its siblings (don't extend
       // the live range unless we are definitely removing a conflict, same
       // logic as before).
-      LazyLocalGraph postGraph(func, getModule());
+      LocalGraph postGraph(func, getModule());
       for (auto& [copy, trivial] : optimizedToCopy) {
         auto& trivialInfluences = preGraph.getSetInfluences(trivial);
         for (auto* influencedGet : trivialInfluences) {
