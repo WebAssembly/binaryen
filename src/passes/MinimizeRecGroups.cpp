@@ -401,7 +401,7 @@ struct MinimizeRecGroups : Pass {
     publicGroupTypes.reserve(publicGroups.size());
     for (auto group : publicGroups) {
       publicGroupTypes.emplace_back(group.begin(), group.end());
-      [[maybe_unused]] auto [it, inserted] = groupShapeIndices.insert(
+      [[maybe_unused]] auto [_, inserted] = groupShapeIndices.insert(
         {RecGroupShape(publicGroupTypes.back()), PublicGroupIndex});
       assert(inserted);
     }
