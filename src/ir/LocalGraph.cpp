@@ -308,25 +308,40 @@ struct LocalGraphFlower
   };
   std::unordered_map<LocalGet*, BlockLocation> getLocations;
 
-  // Set up getLocations using the flow blocks, so that we are ready to handle
-  // later lazy requests for the sets of particular gets. This is done in lazy
-  // mode.
+  // In lazy mode we also need to categorize gets and sets by their index.
+  std::vector<std::vector<LocalGet*>> getsByIndex;
+  std::vector<std::vector<LocalSet*>> setsByIndex;
+
+  // Prepare for all later lazy work.
   void prepareLaziness() {
     prepareFlowBlocks();
+
+    // Set up getLocations, getsByIndex, and setsByIndex.
+    auto numLocals = func->getNumLocals();
+    getsByIndex.resize(numLocals);
+    setsByIndex.resize(numLocals);
 
     for (auto& block : flowBlocks) {
       const auto& actions = block.actions;
       for (Index i = 0; i < actions.size(); i++) {
         if (auto* get = actions[i]->dynCast<LocalGet>()) {
           getLocations[get] = BlockLocation{&block, i};
+          getsByIndex[get->index].push_back(get);
+        } else if (auto* set = actions[i]->dynCast<LocalSet>()) {
+          setsByIndex[set->index].push_back(set);
+        } else {
+          WASM_UNREACHABLE("bad action");
         }
       }
     }
   }
 
-  // Flow a specific get. This is done in lazy mode.
-  void flowGet(LocalGet* get) {
+  // Flow a specific get to its sets. This is done in lazy mode.
+  void computeGetSets(LocalGet* get) {
     auto index = get->index;
+
+    // We must never repeat work.
+    assert(!getSetsMap.count(get));
 
     // Regardless of what we do below, ensure an entry for this get, so that we
     // know we computed it.
@@ -389,6 +404,38 @@ struct LocalGraphFlower
 
     // We must do an inter-block flow.
     flowBackFromStartOfBlock(block, index, gets);
+  }
+
+  void computeSetInfluences(LocalSet* set) {
+    auto index = set->index;
+
+    // We must never repeat work.
+    assert(!setInfluences.count(set));
+
+    // In theory we could flow the set forward, but to keep things simple we
+    // reuse the logic for flowing gets backwards: We flow all the gets of the
+    // set's index, thus fully computing that index and all its sets, including
+    // this one. This is not 100% lazy, but still avoids extra work by never
+    // doing work for local indexes we don't care about.
+    for (auto* get : getsByIndex[index]) {
+      // Don't repeat work.
+      if (!getSetsMap.count(get)) {
+        computeGetSets(get);
+      }
+    }
+
+    // Ensure empty entries for each set of this index, to mark them as
+    // computed.
+    for (auto* set : setsByIndex[index]) {
+      setInfluences[set];
+    }
+
+    // Apply the info from the gets to the sets.
+    for (auto* get : getsByIndex[index]) {
+      for (auto* set : getSetsMap[get]) {
+        setInfluences[set].insert(get);
+      }
+    }
   }
 };
 
@@ -526,7 +573,15 @@ LazyLocalGraph::~LazyLocalGraph() {
 }
 
 void LazyLocalGraph::computeGetSets(LocalGet* get) const {
-  flower->flowGet(get);
+  flower->computeGetSets(get);
+}
+
+void LazyLocalGraph::computeSetInfluences(LocalSet* set) const {
+  flower->computeSetInfluences(set);
+}
+
+void LazyLocalGraph::computeGetInfluences(LocalGet* get) const {
+  flower->computeGetInfluences(get);
 }
 
 } // namespace wasm

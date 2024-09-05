@@ -178,13 +178,33 @@ struct LazyLocalGraph : public LocalGraphBase {
   LazyLocalGraph(Function* func, Module* module = nullptr);
   ~LazyLocalGraph();
 
+  // Similar APIs as in LocalGraph, but lazy versions. Each of them does a
+  // lookup, and if there is a missing entry then we did not do the computation
+  // yet, and then we do it and memoize it.
   const Sets& getSets(LocalGet* get) const {
     auto iter = getSetsMap.find(get);
     if (iter == getSetsMap.end()) {
-      // A missing entry means we did not do the computation yet. Do it now.
       computeGetSets(get);
       iter = getSetsMap.find(get);
       assert(iter != getSetsMap.end());
+    }
+    return iter->second;
+  }
+  const SetInfluences& getSetInfluences(LocalSet* set) const {
+    auto iter = setInfluences.find(set);
+    if (iter == setInfluences.end()) {
+      computeSetInfluences(set);
+      iter = setInfluences.find(get);
+      assert(iter != setInfluences.end());
+    }
+    return iter->second;
+  }
+  const GetInfluences& getGetInfluences(LocalGet* get) const {
+    auto iter = getInfluences.find(get);
+    if (iter == getInfluences.end()) {
+      computeGetInfluences(get);
+      iter = getInfluences.find(get);
+      assert(iter != getInfluences.end());
     }
     return iter->second;
   }
@@ -192,6 +212,10 @@ struct LazyLocalGraph : public LocalGraphBase {
 private:
   // Compute the sets for a get and store them on getSetsMap.
   void computeGetSets(LocalGet* get) const;
+  // Compute influences for a set and store them on setInfluences.
+  void computeSetInfluences(LocalSet* set) const;
+  // Compute influences for a get and store them on getInfluences.
+  void computeGetInfluences(LocalGet* get) const;
 
   // This remains alive as long as we are, so that we can compute things lazily.
   std::unique_ptr<LocalGraphFlower> flower;
