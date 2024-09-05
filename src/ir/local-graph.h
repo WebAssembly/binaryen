@@ -46,12 +46,14 @@ namespace wasm {
 
 // Base class for both LocalGraph and LazyLocalGraph (not meant for direct use).
 struct LocalGraphBase {
+protected:
   // If a module is passed in, it is used to find which features are needed in
   // the computation (for example, if exception handling is disabled, then we
   // can generate a simpler CFG, as calls cannot throw).
   LocalGraphBase(Function* func, Module* module = nullptr)
     : func(func), module(module) {}
 
+public:
   // A set of sets, returned from the query about which sets can be read from a
   // get. Typically only one or two apply there, so this is a small set.
   using Sets = SmallSet<LocalSet*, 2>;
