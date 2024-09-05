@@ -387,7 +387,7 @@ struct MinimizeRecGroups : Pass {
 
     // We cannot optimize public types, but we do need to make sure we don't
     // generate new groups with the same shape.
-    InsertOrderedSet<RecGroup> publicGroups;
+    std::unordered_set<RecGroup> publicGroups;
     for (auto& [type, info] : typeInfo) {
       if (info.visibility == ModuleUtils::Visibility::Private) {
         // We can optimize private types.
