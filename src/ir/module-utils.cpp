@@ -506,23 +506,12 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
   while (!newTypes.empty()) {
     while (!newTypes.empty()) {
       auto ht = newTypes.pop();
-      // TODO: Use getReferencedHeapTypes instead and remove separate
-      // consideration of supertypes below.
-      for (HeapType child : ht.getHeapTypeChildren()) {
+      for (HeapType child : ht.getReferencedHeapTypes()) {
         if (!child.isBasic()) {
           if (!info.contains(child)) {
             noteNewType(child);
           }
           info.note(child);
-        }
-      }
-
-      if (auto super = ht.getDeclaredSuperType()) {
-        if (!info.contains(*super)) {
-          noteNewType(*super);
-          // TODO: This should be unconditional for the count to be correct, but
-          // this will be moot once we use getReferencedHeapTypes above.
-          info.note(*super);
         }
       }
 

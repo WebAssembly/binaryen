@@ -4,21 +4,19 @@
 ;; RUN:   | filecheck %s
 
 (module
-  ;; CHECK:      (type $struct (struct (field (mut i32))))
-  (type $struct (struct (field (mut i32))))
-
   ;; CHECK:      (type $A (sub (struct (field structref))))
-
-  ;; CHECK:      (type $B (sub $A (struct (field (ref struct)))))
-
-  ;; CHECK:      (type $struct-immutable (struct (field i32)))
-  (type $struct-immutable (struct (field i32)))
-
   (type $A (sub (struct (field (ref null struct)))))
 
   ;; $B is a subtype of $A, and its field has a more refined type (it is non-
   ;; nullable).
+  ;; CHECK:      (type $B (sub $A (struct (field (ref struct)))))
   (type $B (sub $A (struct (field (ref struct)))))
+
+  ;; CHECK:      (type $struct (struct (field (mut i32))))
+  (type $struct (struct (field (mut i32))))
+
+  ;; CHECK:      (type $struct-immutable (struct (field i32)))
+  (type $struct-immutable (struct (field i32)))
 
   ;; Writes to heap objects cannot be reordered with reads.
   ;; CHECK:      (func $no-reorder-past-write (type $5) (param $x (ref $struct)) (result i32)
