@@ -437,10 +437,6 @@ struct LocalGraphFlower
       }
     }
   }
-
-  void computeGetInfluences(LocalGet* get, LocalGraphBase::GetInfluencesMap& getInfluences) {
-    abort();
-  }
 };
 
 // LocalGraph implementation
@@ -582,10 +578,6 @@ void LazyLocalGraph::computeGetSets(LocalGet* get) const {
 
 void LazyLocalGraph::computeSetInfluences(LocalSet* set) const {
   flower->computeSetInfluences(set, setInfluences);
-}
-
-void LazyLocalGraph::computeGetInfluences(LocalGet* get) const {
-  flower->computeGetInfluences(get, getInfluences);
 }
 
 } // namespace wasm

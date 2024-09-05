@@ -200,29 +200,17 @@ struct LazyLocalGraph : public LocalGraphBase {
     }
     return iter->second;
   }
-  const GetInfluences& getGetInfluences(LocalGet* get) const {
-    auto iter = getInfluences.find(get);
-    if (iter == getInfluences.end()) {
-      computeGetInfluences(get);
-      iter = getInfluences.find(get);
-      assert(iter != getInfluences.end());
-    }
-    return iter->second;
-  }
 
 private:
   // These data structures are mutable so that we can memoize.
   mutable GetSetsMap getSetsMap;
 
   mutable SetInfluencesMap setInfluences;
-  mutable GetInfluencesMap getInfluences;
 
   // Compute the sets for a get and store them on getSetsMap.
   void computeGetSets(LocalGet* get) const;
   // Compute influences for a set and store them on setInfluences.
   void computeSetInfluences(LocalSet* set) const;
-  // Compute influences for a get and store them on getInfluences.
-  void computeGetInfluences(LocalGet* get) const;
 
   // This remains alive as long as we are, so that we can compute things lazily.
   std::unique_ptr<LocalGraphFlower> flower;
