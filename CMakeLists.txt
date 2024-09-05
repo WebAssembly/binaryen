@@ -7,7 +7,7 @@ cmake_minimum_required(VERSION 3.10.2)
 # to reduce this for compatability with emsdk.
 set(CMAKE_OSX_DEPLOYMENT_TARGET "10.14" CACHE STRING "Minimum OS X deployment version")
 
-project(binaryen LANGUAGES C CXX VERSION 118)
+project(binaryen LANGUAGES C CXX VERSION 119)
 include(GNUInstallDirs)
 
 # The C++ standard whose features are required to build Binaryen.
