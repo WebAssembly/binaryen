@@ -19,7 +19,7 @@
     )
    )
   )
-  (local.get $y)
+  (local.get $x)
  )
  (func $test2 (type $1) (param $x i32) (param $y i32) (result i32)
   (drop
@@ -52,9 +52,9 @@
    )
   )
   (drop
-   (local.get $y)
+   (local.get $x)
   )
-  (local.get $y)
+  (local.get $x)
  )
  (func $test-just-some (type $1) (param $x i32) (param $y i32) (result i32)
   (drop
@@ -71,7 +71,7 @@
    )
   )
   (drop
-   (local.get $y)
+   (local.get $x)
   )
   (local.set $y
    (i32.const 200)
@@ -101,7 +101,7 @@
    )
    (else
     (drop
-     (local.get $y)
+     (local.get $x)
     )
    )
   )
@@ -209,12 +209,12 @@
      (i32.const 100)
     )
     (else
-     (local.get $x)
+     (local.get $y)
     )
    )
   )
   (drop
-   (local.get $x)
+   (local.get $y)
   )
   (if
    (i32.const 1)
@@ -274,7 +274,7 @@
      (i32.const 100)
     )
     (else
-     (local.get $x)
+     (local.get $y)
     )
    )
   )
@@ -552,7 +552,7 @@
    )
    (br_if $label$1
     (local.tee $unused
-     (local.get $result)
+     (local.get $param)
     )
    )
   )
