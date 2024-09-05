@@ -11,55 +11,49 @@
 
 ;; Test that we can roundtrip struct and array types
 (module
-  ;; Arrays
+  ;; Recursive structs
   ;; CHECK-TEXT:      (type $struct-rec-one (sub (struct (field (ref $struct-rec-one)))))
-
+  ;; CHECK-BIN:      (type $struct-rec-one (sub (struct (field (ref $struct-rec-one)))))
+  (type $struct-rec-one (sub (struct
+    (field (ref $struct-rec-one))
+  )))
   ;; CHECK-TEXT:      (type $struct-rec-two (sub $struct-rec-one (struct (field (ref $struct-rec-two)) (field (ref $struct-rec-two)))))
+  ;; CHECK-BIN:      (type $struct-rec-two (sub $struct-rec-one (struct (field (ref $struct-rec-two)) (field (ref $struct-rec-two)))))
+  (type $struct-rec-two (sub $struct-rec-one (struct
+    (field (ref $struct-rec-two))
+    (field (ref $struct-rec-two))
+ )))
+
+  ;; Non-recursive structs
+  ;; CHECK-TEXT:      (type $struct-any (sub (struct (field (ref any)))))
+  ;; CHECK-BIN:      (type $struct-any (sub (struct (field (ref any)))))
+  (type $struct-any (sub (struct
+    (field (ref any))
+  )))
+  ;; CHECK-TEXT:      (type $struct-i31 (sub $struct-any (struct (field (ref i31)))))
+  ;; CHECK-BIN:      (type $struct-i31 (sub $struct-any (struct (field (ref i31)))))
+  (type $struct-i31 (sub $struct-any (struct
+    (field (ref i31))
+ )))
+
+  ;; Arrays
+  ;; CHECK-TEXT:      (type $vector-any (sub (array (ref any))))
+  ;; CHECK-BIN:      (type $vector-any (sub (array (ref any))))
+  (type $vector-any (sub (array (ref any))))
 
   ;; CHECK-TEXT:      (type $vector-i32 (array i32))
-  ;; CHECK-BIN:      (type $struct-rec-one (sub (struct (field (ref $struct-rec-one)))))
-
-  ;; CHECK-BIN:      (type $struct-rec-two (sub $struct-rec-one (struct (field (ref $struct-rec-two)) (field (ref $struct-rec-two)))))
-
   ;; CHECK-BIN:      (type $vector-i32 (array i32))
   (type $vector-i32 (array i32))
 
-  ;; CHECK-TEXT:      (type $struct-any (sub (struct (field (ref any)))))
-
-  ;; CHECK-TEXT:      (type $struct-i31 (sub $struct-any (struct (field (ref i31)))))
-
-  ;; CHECK-TEXT:      (type $vector-any (sub (array (ref any))))
-  ;; CHECK-BIN:      (type $struct-any (sub (struct (field (ref any)))))
-
-  ;; CHECK-BIN:      (type $struct-i31 (sub $struct-any (struct (field (ref i31)))))
-
-  ;; CHECK-BIN:      (type $vector-any (sub (array (ref any))))
-  (type $vector-any (sub (array (ref any))))
   ;; CHECK-TEXT:      (type $vector-i31 (sub $vector-any (array (ref i31))))
   ;; CHECK-BIN:      (type $vector-i31 (sub $vector-any (array (ref i31))))
   (type $vector-i31 (sub $vector-any (array (ref i31))))
 
-  ;; Structs
-  (type $struct-any (sub (struct
-    (field (ref any))
-  )))
-  (type $struct-i31 (sub $struct-any (struct
-    (field (ref i31))
- )))
   ;; CHECK-TEXT:      (type $struct-i31_any (sub $struct-i31 (struct (field (ref i31)) (field (ref any)))))
   ;; CHECK-BIN:      (type $struct-i31_any (sub $struct-i31 (struct (field (ref i31)) (field (ref any)))))
   (type $struct-i31_any (sub $struct-i31(struct
     (field (ref i31))
     (field (ref any))
- )))
-
-  ;; Recursive structs
-  (type $struct-rec-one (sub (struct
-    (field (ref $struct-rec-one))
-  )))
-  (type $struct-rec-two (sub $struct-rec-one (struct
-    (field (ref $struct-rec-two))
-    (field (ref $struct-rec-two))
  )))
 
   ;; CHECK-TEXT:      (type $8 (func (param (ref $vector-i32) (ref null $vector-i32))))
@@ -166,47 +160,47 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $1 (sub $0 (struct (field (ref $1)) (field (ref $1)))))
 
-;; CHECK-BIN-NODEBUG:      (type $2 (array i32))
+;; CHECK-BIN-NODEBUG:      (type $2 (sub (struct (field (ref any)))))
 
-;; CHECK-BIN-NODEBUG:      (type $3 (sub (struct (field (ref any)))))
+;; CHECK-BIN-NODEBUG:      (type $3 (sub $2 (struct (field (ref i31)))))
 
-;; CHECK-BIN-NODEBUG:      (type $4 (sub $3 (struct (field (ref i31)))))
+;; CHECK-BIN-NODEBUG:      (type $4 (sub (array (ref any))))
 
-;; CHECK-BIN-NODEBUG:      (type $5 (sub (array (ref any))))
+;; CHECK-BIN-NODEBUG:      (type $5 (array i32))
 
-;; CHECK-BIN-NODEBUG:      (type $6 (sub $5 (array (ref i31))))
+;; CHECK-BIN-NODEBUG:      (type $6 (sub $4 (array (ref i31))))
 
-;; CHECK-BIN-NODEBUG:      (type $7 (sub $4 (struct (field (ref i31)) (field (ref any)))))
+;; CHECK-BIN-NODEBUG:      (type $7 (sub $3 (struct (field (ref i31)) (field (ref any)))))
 
-;; CHECK-BIN-NODEBUG:      (type $8 (func (param (ref $2) (ref null $2))))
+;; CHECK-BIN-NODEBUG:      (type $8 (func (param (ref $5) (ref null $5))))
 
-;; CHECK-BIN-NODEBUG:      (type $9 (func (param (ref $6) (ref $5))))
+;; CHECK-BIN-NODEBUG:      (type $9 (func (param (ref $6) (ref $4))))
 
-;; CHECK-BIN-NODEBUG:      (type $10 (func (param (ref $4) (ref $3))))
+;; CHECK-BIN-NODEBUG:      (type $10 (func (param (ref $3) (ref $2))))
 
-;; CHECK-BIN-NODEBUG:      (type $11 (func (param (ref $4) (ref $7))))
+;; CHECK-BIN-NODEBUG:      (type $11 (func (param (ref $3) (ref $7))))
 
 ;; CHECK-BIN-NODEBUG:      (type $12 (func (param (ref $0) (ref $1))))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $8) (param $0 (ref $2)) (param $1 (ref null $2))
+;; CHECK-BIN-NODEBUG:      (func $0 (type $8) (param $0 (ref $5)) (param $1 (ref null $5))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $9) (param $0 (ref $6)) (param $1 (ref $5))
+;; CHECK-BIN-NODEBUG:      (func $1 (type $9) (param $0 (ref $6)) (param $1 (ref $4))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $10) (param $0 (ref $4)) (param $1 (ref $3))
+;; CHECK-BIN-NODEBUG:      (func $2 (type $10) (param $0 (ref $3)) (param $1 (ref $2))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $11) (param $0 (ref $4)) (param $1 (ref $7))
+;; CHECK-BIN-NODEBUG:      (func $3 (type $11) (param $0 (ref $3)) (param $1 (ref $7))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )

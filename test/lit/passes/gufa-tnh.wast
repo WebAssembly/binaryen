@@ -1346,8 +1346,6 @@
   (type $A (sub (struct (field (mut i32)))))
 
   (rec
-    ;; CHECK:      (type $1 (func (param (ref null $A))))
-
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $B1 (sub $A (struct (field (mut i32)))))
     (type $B1 (sub $A (struct (field (mut i32)))))
@@ -1359,11 +1357,13 @@
     (type $C1 (sub $B1 (struct (field (mut i32)))))
   )
 
+  ;; CHECK:      (type $4 (func (param (ref null $A))))
+
   ;; CHECK:      (type $5 (func (param anyref)))
 
   ;; CHECK:      (export "caller" (func $caller))
 
-  ;; CHECK:      (func $called (type $1) (param $x (ref null $A))
+  ;; CHECK:      (func $called (type $4) (param $x (ref null $A))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast (ref $B1)
   ;; CHECK-NEXT:    (local.get $x)

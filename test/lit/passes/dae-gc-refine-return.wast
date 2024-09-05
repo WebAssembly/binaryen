@@ -55,7 +55,7 @@
  )
 
  ;; Refine the return type based on the value flowing out.
- ;; CHECK:      (func $refine-return-flow (type $3) (result i31ref)
+ ;; CHECK:      (func $refine-return-flow (type $4) (result i31ref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local $i31 i31ref)
  ;; CHECK-NEXT:  (local.set $temp
@@ -71,7 +71,7 @@
 
   (local.get $i31)
  )
- ;; CHECK:      (func $call-refine-return-flow (type $3) (result i31ref)
+ ;; CHECK:      (func $call-refine-return-flow (type $4) (result i31ref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local.set $temp
  ;; CHECK-NEXT:   (call $call-refine-return-flow)
@@ -105,7 +105,7 @@
  )
 
  ;; Refine the return type based on a return.
- ;; CHECK:      (func $refine-return-return (type $3) (result i31ref)
+ ;; CHECK:      (func $refine-return-return (type $4) (result i31ref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local $i31 i31ref)
  ;; CHECK-NEXT:  (local.set $temp
@@ -125,7 +125,7 @@
  )
 
  ;; Refine the return type based on multiple values.
- ;; CHECK:      (func $refine-return-many (type $3) (result i31ref)
+ ;; CHECK:      (func $refine-return-many (type $4) (result i31ref)
  ;; CHECK-NEXT:  (local $temp anyref)
  ;; CHECK-NEXT:  (local $i31 i31ref)
  ;; CHECK-NEXT:  (local.set $temp
@@ -353,7 +353,7 @@
   )
   (return_call $tail-callee)
  )
- ;; CHECK:      (func $tail-call-caller (type $4)
+ ;; CHECK:      (func $tail-call-caller (type $5)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $tail-caller-yes)
  ;; CHECK-NEXT:  )
@@ -410,7 +410,7 @@
   )
   (return_call_indirect (type $"return_{}") (i32.const 0))
  )
- ;; CHECK:      (func $tail-call-caller-indirect (type $4)
+ ;; CHECK:      (func $tail-call-caller-indirect (type $5)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $tail-caller-indirect-yes)
  ;; CHECK-NEXT:  )
@@ -484,7 +484,7 @@
   ;; should not hit an assertion on such things.
   (return_call_ref $"return_{}" (unreachable))
  )
- ;; CHECK:      (func $tail-call-caller-call_ref (type $4)
+ ;; CHECK:      (func $tail-call-caller-call_ref (type $5)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (call $tail-caller-call_ref-yes)
  ;; CHECK-NEXT:  )

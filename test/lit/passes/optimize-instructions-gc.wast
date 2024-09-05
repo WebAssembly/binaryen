@@ -89,7 +89,7 @@
   )
 
   ;; Stored values automatically truncate unneeded bytes.
-  ;; CHECK:      (func $store-trunc (type $10) (param $x (ref null $struct))
+  ;; CHECK:      (func $store-trunc (type $11) (param $x (ref null $struct))
   ;; CHECK-NEXT:  (struct.set $struct $i8
   ;; CHECK-NEXT:   (local.get $x)
   ;; CHECK-NEXT:   (i32.const 35)
@@ -402,7 +402,7 @@
     (unreachable)
   )
 
-  ;; CHECK:      (func $ref-eq (type $9) (param $x eqref) (param $y eqref)
+  ;; CHECK:      (func $ref-eq (type $10) (param $x eqref) (param $y eqref)
   ;; CHECK-NEXT:  (local $lx eqref)
   ;; CHECK-NEXT:  (local $ly eqref)
   ;; CHECK-NEXT:  (drop
@@ -920,7 +920,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-eq-possible (type $9) (param $x eqref) (param $y eqref)
+  ;; CHECK:      (func $ref-eq-possible (type $10) (param $x eqref) (param $y eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (ref.cast (ref null $struct)
@@ -947,7 +947,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-eq-impossible (type $9) (param $x eqref) (param $y eqref)
+  ;; CHECK:      (func $ref-eq-impossible (type $10) (param $x eqref) (param $y eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -1039,7 +1039,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-eq-possible-b (type $9) (param $x eqref) (param $y eqref)
+  ;; CHECK:      (func $ref-eq-possible-b (type $10) (param $x eqref) (param $y eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (ref.cast (ref $A)
@@ -1144,7 +1144,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-cast-of-null (type $10) (param $x (ref null $struct))
+  ;; CHECK:      (func $incompatible-cast-of-null (type $11) (param $x (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
@@ -1179,7 +1179,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-cast-of-unknown (type $10) (param $struct (ref null $struct))
+  ;; CHECK:      (func $incompatible-cast-of-unknown (type $11) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.cast nullref
   ;; CHECK-NEXT:    (local.get $struct)
@@ -1194,7 +1194,7 @@
     )
   )
 
-  ;; CHECK:      (func $incompatible-test (type $10) (param $struct (ref null $struct))
+  ;; CHECK:      (func $incompatible-test (type $11) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -2214,7 +2214,7 @@
     )
   )
 
-  ;; CHECK:      (func $ref-boolean (type $9) (param $x eqref) (param $y eqref)
+  ;; CHECK:      (func $ref-boolean (type $10) (param $x eqref) (param $y eqref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (ref.eq
   ;; CHECK-NEXT:    (local.get $x)
