@@ -84,19 +84,6 @@ struct ReorderGlobals : public Pass {
   // considering fractional sums of them later.
   using IndexCountMap = std::vector<double>;
 
-  // We must take into account dependencies, so that globals appear before
-  // their users in other globals:
-  //
-  //   (global $a i32 (i32.const 10))
-  //   (global $b i32 (global.get $a)) ;; $b depends on $a; $a must be first
-  //
-  // To do so we construct a map from each global to those it depends on. We
-  // also build the reverse map, of those that it is depended upon by.
-  struct Dependencies {
-    std::unordered_map<Index, std::unordered_set<Index>> dependsOn;
-    std::unordered_map<Index, std::unordered_set<Index>> dependedUpon;
-  };
-
   void run(Module* module) override {
     auto& globals = module->globals;
 
@@ -132,17 +119,27 @@ struct ReorderGlobals : public Pass {
       counts[originalIndices[name]] = count;
     }
 
-    // Compute dependencies.
-    Dependencies deps;
+    // We must take into account dependencies, so that globals appear before
+    // their users in other globals:
+    //
+    //   (global $a i32 (i32.const 10))
+    //   (global $b i32 (global.get $a)) ;; $b depends on $a; $a must be first
+    //
+    // To do so we construct a map from each global to those that depends on it.
+    std::vector<std::unordered_set<Index>> dependentSets(globals.size());
     for (Index i = 0; i < globals.size(); i++) {
       auto& global = globals[i];
       if (!global->imported()) {
         for (auto* get : FindAll<GlobalGet>(global->init).list) {
           auto getIndex = originalIndices[get->name];
-          deps.dependsOn[i].insert(getIndex);
-          deps.dependedUpon[getIndex].insert(i);
+          dependentSets[getIndex].insert(i);
         }
       }
+    }
+    TopologicalSort::Graph deps;
+    deps.reserve(globals.size());
+    for (Index i = 0; i < globals.size(); ++i) {
+      deps.emplace_back(dependentSets[i].begin(), dependentSets[i].end());
     }
 
     // Compute various sorting options. All the options use a variation of the
@@ -190,21 +187,14 @@ struct ReorderGlobals : public Pass {
     double const EXPONENTIAL_FACTOR = 0.095;
     IndexCountMap sumCounts(globals.size()), exponentialCounts(globals.size());
 
-    std::vector<std::vector<size_t>> dependenceGraph(globals.size());
-    for (size_t i = 0; i < globals.size(); ++i) {
-      if (auto it = deps.dependsOn.find(i); it != deps.dependsOn.end()) {
-        for (auto dep : it->second) {
-          dependenceGraph[i].push_back(dep);
-        }
-      }
-    }
-
-    for (auto global : TopologicalSort::sort(dependenceGraph)) {
+    auto sorted = TopologicalSort::sort(deps);
+    for (auto it = sorted.rbegin(); it != sorted.rend(); ++it) {
+      auto global = *it;
       // We can compute this global's count as in the sorted order all the
       // values it cares about are resolved. Start with the self-count, then
       // add the deps.
       sumCounts[global] = exponentialCounts[global] = counts[global];
-      for (auto dep : deps.dependedUpon[global]) {
+      for (auto dep : deps[global]) {
         sumCounts[global] += sumCounts[dep];
         exponentialCounts[global] +=
           EXPONENTIAL_FACTOR * exponentialCounts[dep];
@@ -234,10 +224,8 @@ struct ReorderGlobals : public Pass {
   }
 
   IndexIndexMap doSort(const IndexCountMap& counts,
-                       const Dependencies& deps,
+                       const TopologicalSort::Graph& deps,
                        Module* module) {
-    auto& globals = module->globals;
-
     // To sort the globals we do a simple greedy approach of always picking the
     // global with the highest count at every point in time, subject to the
     // constraint that we can only emit globals that have all of their
@@ -249,51 +237,31 @@ struct ReorderGlobals : public Pass {
     // global $c that depends on $b, and $c might have a much higher use count
     // than $a. For that reason we try several variations of this with different
     // counts, see earlier.
-    //
-    // Sort the globals into the optimal order based on the counts, ignoring
-    // dependencies for now.
-    std::vector<Index> sortedGlobals;
-    sortedGlobals.resize(globals.size());
-    for (Index i = 0; i < globals.size(); ++i) {
-      sortedGlobals[i] = i;
-    }
-    std::sort(
-      sortedGlobals.begin(), sortedGlobals.end(), [&](Index a, Index b) {
-        // Imports always go first. The binary writer takes care of this itself
-        // anyhow, but it is better to do it here in the IR so we can actually
-        // see what the final layout will be.
-        auto aImported = globals[a]->imported();
-        auto bImported = globals[b]->imported();
-        if (aImported != bImported) {
-          return aImported;
-        }
-
-        // Sort by the counts. Higher counts come first.
-        auto aCount = counts[a];
-        auto bCount = counts[b];
-        if (aCount != bCount) {
-          return aCount > bCount;
-        }
-
-        // Break ties using the original order, which means just using the
-        // indices we have.
-        return a < b;
-      });
 
     // Now use that optimal order to create an ordered graph that includes the
     // dependencies. The final order will be the minimum topological sort of
     // this graph.
-    std::vector<std::pair<Index, std::vector<Index>>> graph;
-    graph.reserve(globals.size());
-    for (auto i : sortedGlobals) {
-      std::vector<Index> children;
-      if (auto it = deps.dependedUpon.find(i); it != deps.dependedUpon.end()) {
-        children = std::vector<Index>(it->second.begin(), it->second.end());
+    return TopologicalSort::minSort(deps, [&](Index a, Index b) {
+      // Imports always go first. The binary writer takes care of this itself
+      // anyhow, but it is better to do it here in the IR so we can actually
+      // see what the final layout will be.
+      auto aImported = module->globals[a]->imported();
+      auto bImported = module->globals[b]->imported();
+      if (aImported != bImported) {
+        return aImported;
       }
-      graph.emplace_back(i, std::move(children));
-    }
 
-    return TopologicalSort::minSortOf(graph.begin(), graph.end());
+      // Sort by the counts. Higher counts come first.
+      auto aCount = counts[a];
+      auto bCount = counts[b];
+      if (aCount != bCount) {
+        return aCount > bCount;
+      }
+
+      // Break ties using the original order, which means just using the
+      // indices.
+      return a < b;
+    });
   }
 
   // Given an indexing of the globals and the counts of how many times each is
@@ -319,8 +287,8 @@ struct ReorderGlobals : public Pass {
     // Track the size in bits and the next index at which the size increases. At
     // the first iteration we'll compute the size of the LEB for index 0, and so
     // forth.
-    size_t sizeInBits = 0;
-    size_t nextSizeIncrease = 0;
+    Index sizeInBits = 0;
+    Index nextSizeIncrease = 0;
     for (Index i = 0; i < indices.size(); i++) {
       if (i == nextSizeIncrease) {
         sizeInBits++;

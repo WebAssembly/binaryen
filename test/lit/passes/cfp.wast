@@ -555,16 +555,16 @@
 ;;            subtype, the get must trap anyhow (the reference it receives can
 ;;            only be null in this closed world).
 (module
-  ;; CHECK:      (type $0 (func))
-
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32))))
   (type $substruct (sub $struct (struct i32)))
 
+  ;; CHECK:      (type $2 (func))
+
   ;; CHECK:      (type $3 (func (param (ref null $substruct))))
 
-  ;; CHECK:      (func $create (type $0)
+  ;; CHECK:      (func $create (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
@@ -604,14 +604,14 @@
 (module
   ;; CHECK:      (type $struct (sub (struct (field (mut i32)))))
   (type $struct (sub (struct (mut i32))))
-  ;; CHECK:      (type $1 (func (param (ref null $struct))))
-
   ;; CHECK:      (type $substruct (sub $struct (struct (field (mut i32)))))
   (type $substruct (sub $struct (struct (mut i32))))
 
+  ;; CHECK:      (type $2 (func (param (ref null $struct))))
+
   ;; CHECK:      (type $3 (func (param (ref null $substruct))))
 
-  ;; CHECK:      (func $create (type $1) (param $struct (ref null $struct))
+  ;; CHECK:      (func $create (type $2) (param $struct (ref null $struct))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)

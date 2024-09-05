@@ -133,10 +133,10 @@
 ;; Some of these are uninteresting and should not get a new type.
 (module
 
-  ;; CHECK:      (type $0 (func (param anyref arrayref)))
-
   ;; CHECK:      (type $struct (sub (struct (field anyref))))
   (type $struct (sub (struct (field (ref null any)))))
+
+  ;; CHECK:      (type $1 (func (param anyref arrayref)))
 
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $struct_1 (sub $struct (struct (field anyref))))
@@ -145,7 +145,7 @@
 
   ;; CHECK:       (type $struct_3 (sub $struct (struct (field anyref))))
 
-  ;; CHECK:      (func $foo (type $0) (param $any anyref) (param $array arrayref)
+  ;; CHECK:      (func $foo (type $1) (param $any anyref) (param $array arrayref)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new_default $struct_1)
   ;; CHECK-NEXT:  )

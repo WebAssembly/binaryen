@@ -28,14 +28,10 @@
 
   ;; CHECK-TEXT:      (type $struct-i31 (sub $struct-any (struct (field (ref i31)))))
 
-  ;; CHECK-TEXT:      (type $5 (func (param (ref $vector-i32) (ref null $vector-i32))))
-
   ;; CHECK-TEXT:      (type $vector-any (sub (array (ref any))))
   ;; CHECK-BIN:      (type $struct-any (sub (struct (field (ref any)))))
 
   ;; CHECK-BIN:      (type $struct-i31 (sub $struct-any (struct (field (ref i31)))))
-
-  ;; CHECK-BIN:      (type $5 (func (param (ref $vector-i32) (ref null $vector-i32))))
 
   ;; CHECK-BIN:      (type $vector-any (sub (array (ref any))))
   (type $vector-any (sub (array (ref any))))
@@ -50,15 +46,7 @@
   (type $struct-i31 (sub $struct-any (struct
     (field (ref i31))
  )))
-  ;; CHECK-TEXT:      (type $8 (func (param (ref $vector-i31) (ref $vector-any))))
-
-  ;; CHECK-TEXT:      (type $9 (func (param (ref $struct-i31) (ref $struct-any))))
-
   ;; CHECK-TEXT:      (type $struct-i31_any (sub $struct-i31 (struct (field (ref i31)) (field (ref any)))))
-  ;; CHECK-BIN:      (type $8 (func (param (ref $vector-i31) (ref $vector-any))))
-
-  ;; CHECK-BIN:      (type $9 (func (param (ref $struct-i31) (ref $struct-any))))
-
   ;; CHECK-BIN:      (type $struct-i31_any (sub $struct-i31 (struct (field (ref i31)) (field (ref any)))))
   (type $struct-i31_any (sub $struct-i31(struct
     (field (ref i31))
@@ -74,20 +62,32 @@
     (field (ref $struct-rec-two))
  )))
 
+  ;; CHECK-TEXT:      (type $8 (func (param (ref $vector-i32) (ref null $vector-i32))))
+
+  ;; CHECK-TEXT:      (type $9 (func (param (ref $vector-i31) (ref $vector-any))))
+
+  ;; CHECK-TEXT:      (type $10 (func (param (ref $struct-i31) (ref $struct-any))))
+
   ;; CHECK-TEXT:      (type $11 (func (param (ref $struct-i31) (ref $struct-i31_any))))
 
   ;; CHECK-TEXT:      (type $12 (func (param (ref $struct-rec-one) (ref $struct-rec-two))))
 
-  ;; CHECK-TEXT:      (func $foo (type $5) (param $no-null (ref $vector-i32)) (param $yes-null (ref null $vector-i32))
+  ;; CHECK-TEXT:      (func $foo (type $8) (param $no-null (ref $vector-i32)) (param $yes-null (ref null $vector-i32))
   ;; CHECK-TEXT-NEXT:  (local.set $yes-null
   ;; CHECK-TEXT-NEXT:   (local.get $no-null)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
+  ;; CHECK-BIN:      (type $8 (func (param (ref $vector-i32) (ref null $vector-i32))))
+
+  ;; CHECK-BIN:      (type $9 (func (param (ref $vector-i31) (ref $vector-any))))
+
+  ;; CHECK-BIN:      (type $10 (func (param (ref $struct-i31) (ref $struct-any))))
+
   ;; CHECK-BIN:      (type $11 (func (param (ref $struct-i31) (ref $struct-i31_any))))
 
   ;; CHECK-BIN:      (type $12 (func (param (ref $struct-rec-one) (ref $struct-rec-two))))
 
-  ;; CHECK-BIN:      (func $foo (type $5) (param $no-null (ref $vector-i32)) (param $yes-null (ref null $vector-i32))
+  ;; CHECK-BIN:      (func $foo (type $8) (param $no-null (ref $vector-i32)) (param $yes-null (ref null $vector-i32))
   ;; CHECK-BIN-NEXT:  (local.set $yes-null
   ;; CHECK-BIN-NEXT:   (local.get $no-null)
   ;; CHECK-BIN-NEXT:  )
@@ -98,12 +98,12 @@
     (local.set $yes-null (local.get $no-null))
   )
 
-  ;; CHECK-TEXT:      (func $bar (type $8) (param $v-i31 (ref $vector-i31)) (param $v-any (ref $vector-any))
+  ;; CHECK-TEXT:      (func $bar (type $9) (param $v-i31 (ref $vector-i31)) (param $v-any (ref $vector-any))
   ;; CHECK-TEXT-NEXT:  (local.set $v-any
   ;; CHECK-TEXT-NEXT:   (local.get $v-i31)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $bar (type $8) (param $v-i31 (ref $vector-i31)) (param $v-any (ref $vector-any))
+  ;; CHECK-BIN:      (func $bar (type $9) (param $v-i31 (ref $vector-i31)) (param $v-any (ref $vector-any))
   ;; CHECK-BIN-NEXT:  (local.set $v-any
   ;; CHECK-BIN-NEXT:   (local.get $v-i31)
   ;; CHECK-BIN-NEXT:  )
@@ -114,12 +114,12 @@
     (local.set $v-any (local.get $v-i31))
   )
 
-  ;; CHECK-TEXT:      (func $baz (type $9) (param $s-i31 (ref $struct-i31)) (param $s-any (ref $struct-any))
+  ;; CHECK-TEXT:      (func $baz (type $10) (param $s-i31 (ref $struct-i31)) (param $s-any (ref $struct-any))
   ;; CHECK-TEXT-NEXT:  (local.set $s-any
   ;; CHECK-TEXT-NEXT:   (local.get $s-i31)
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $baz (type $9) (param $s-i31 (ref $struct-i31)) (param $s-any (ref $struct-any))
+  ;; CHECK-BIN:      (func $baz (type $10) (param $s-i31 (ref $struct-i31)) (param $s-any (ref $struct-any))
   ;; CHECK-BIN-NEXT:  (local.set $s-any
   ;; CHECK-BIN-NEXT:   (local.get $s-i31)
   ;; CHECK-BIN-NEXT:  )
@@ -172,41 +172,41 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $4 (sub $3 (struct (field (ref i31)))))
 
-;; CHECK-BIN-NODEBUG:      (type $5 (func (param (ref $2) (ref null $2))))
+;; CHECK-BIN-NODEBUG:      (type $5 (sub (array (ref any))))
 
-;; CHECK-BIN-NODEBUG:      (type $6 (sub (array (ref any))))
+;; CHECK-BIN-NODEBUG:      (type $6 (sub $5 (array (ref i31))))
 
-;; CHECK-BIN-NODEBUG:      (type $7 (sub $6 (array (ref i31))))
+;; CHECK-BIN-NODEBUG:      (type $7 (sub $4 (struct (field (ref i31)) (field (ref any)))))
 
-;; CHECK-BIN-NODEBUG:      (type $8 (func (param (ref $7) (ref $6))))
+;; CHECK-BIN-NODEBUG:      (type $8 (func (param (ref $2) (ref null $2))))
 
-;; CHECK-BIN-NODEBUG:      (type $9 (func (param (ref $4) (ref $3))))
+;; CHECK-BIN-NODEBUG:      (type $9 (func (param (ref $6) (ref $5))))
 
-;; CHECK-BIN-NODEBUG:      (type $10 (sub $4 (struct (field (ref i31)) (field (ref any)))))
+;; CHECK-BIN-NODEBUG:      (type $10 (func (param (ref $4) (ref $3))))
 
-;; CHECK-BIN-NODEBUG:      (type $11 (func (param (ref $4) (ref $10))))
+;; CHECK-BIN-NODEBUG:      (type $11 (func (param (ref $4) (ref $7))))
 
 ;; CHECK-BIN-NODEBUG:      (type $12 (func (param (ref $0) (ref $1))))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $5) (param $0 (ref $2)) (param $1 (ref null $2))
+;; CHECK-BIN-NODEBUG:      (func $0 (type $8) (param $0 (ref $2)) (param $1 (ref null $2))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $8) (param $0 (ref $7)) (param $1 (ref $6))
+;; CHECK-BIN-NODEBUG:      (func $1 (type $9) (param $0 (ref $6)) (param $1 (ref $5))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $9) (param $0 (ref $4)) (param $1 (ref $3))
+;; CHECK-BIN-NODEBUG:      (func $2 (type $10) (param $0 (ref $4)) (param $1 (ref $3))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $1
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $11) (param $0 (ref $4)) (param $1 (ref $10))
+;; CHECK-BIN-NODEBUG:      (func $3 (type $11) (param $0 (ref $4)) (param $1 (ref $7))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $0
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
