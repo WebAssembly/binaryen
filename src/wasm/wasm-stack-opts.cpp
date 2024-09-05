@@ -138,7 +138,7 @@ void StackIROptimizer::local2Stack() {
   //
   // We use a lazy graph here as we only query in the rare case when we find a
   // set/get pair that looks optimizable.
-  LocalGraph localGraph(func);
+  LazyLocalGraph localGraph(func);
   localGraph.computeSetInfluences();
   // The binary writing of StringWTF16Get and StringSliceWTF is optimized to use
   // fewer scratch locals when their operands are already LocalGets. To avoid
