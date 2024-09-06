@@ -13,7 +13,7 @@ set(unittest_SOURCES
   scc.cpp
   stringify.cpp
   suffix_tree.cpp
-  topological-orders.cpp
+  topological-sort.cpp
   type-builder.cpp
   wat-lexer.cpp
   validator.cpp

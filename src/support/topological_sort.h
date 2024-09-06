@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_support_topological_orders_h
-#define wasm_support_topological_orders_h
+#ifndef wasm_support_topological_sort_h
+#define wasm_support_topological_sort_h
 
 #include <algorithm>
 #include <cassert>
@@ -300,4 +300,4 @@ template<typename Cmp> std::vector<Index> minSort(const Graph& graph, Cmp cmp) {
 
 } // namespace wasm
 
-#endif // wasm_support_topological_orders_h
+#endif // wasm_support_topological_sort_h
