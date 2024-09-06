@@ -398,29 +398,30 @@ struct HeapStoreOptimization
     Index maxIndex = structSetBlock->contents.index;
 
     // We start the flow from right before the value, which means the end of the
-    // reference.
+    // reference. Each block we reach in the flow is assumed to be ok, and we
+    // check its successors before pushing them into the flow.
     UniqueNonrepeatingDeferredQueue<BasicBlock*> reached;
     reached.push(blockBeforeValue);
 
     while (!reached.empty()) {
       // Flow to the successors.
       auto* block = reached.pop();
-      auto index = block->contents.index;
-      if (index == maxIndex) {
-        // This is the normal place control flow should get to, as mentioned
-        // above.
-        assert(block == structSetBlock);
-        continue;
-      }
-      // Test if we branch to a dangerous place. Note that we test <= for the
-      // minimum index, as if we branch there that means we are reaching the
-      // top of the basic block containing the value, which contains things
-      // before it (it might be a loop top).
-      if (index <= minIndex || index > maxIndex) {
-        // We branched to a dangerous place.
-        return true;
-      }
       for (auto* out : block->out) {
+        auto index = out->contents.index;
+        if (index == maxIndex) {
+          // This is the normal place control flow should get to, as mentioned
+          // above.
+          assert(out == structSetBlock);
+          continue;
+        }
+        // Test if we branch to a dangerous place. Note that we test <= for the
+        // minimum index, as if we branch there that means we are reaching the
+        // top of the basic block containing the value, which contains things
+        // before it (it might be a loop top).
+        if (index <= minIndex || index > maxIndex) {
+          // We branched to a dangerous place.
+          return true;
+        }
         reached.push(out);
       }
     }
