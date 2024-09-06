@@ -34,6 +34,9 @@
   (func (export "f16x8.nearest") (param $0 v128) (result v128) (f16x8.nearest (local.get $0)))
   (func (export "f16x8.relaxed_madd") (param $0 v128) (param $1 v128) (param $2 v128) (result v128) (f16x8.relaxed_madd (local.get $0) (local.get $1) (local.get $2)))
   (func (export "f16x8.relaxed_nmadd") (param $0 v128) (param $1 v128) (param $2 v128) (result v128) (f16x8.relaxed_nmadd (local.get $0) (local.get $1) (local.get $2)))
+  ;; Multiple operation tests:
+  (func (export "splat_replace") (result v128) (f16x8.replace_lane 0 (f16x8.splat (f32.const 1)) (f32.const 99))
+ )
 )
 
 (assert_return (invoke "f32.load_f16") (f32.const 42.0))
@@ -216,3 +219,7 @@
     (v128.const i16x8 0x7c00 0x7c00 0xbc00  0      0x3c00 0x4000 0x3c00 0xbc00))
     ;;                inf    inf    -2      0      0      -0.25  9      -2
     (v128.const i16x8 0x7c00 0x7c00 0xc000  0      0      0xb400 0x4880 0xc000))
+
+(assert_return (invoke "splat_replace")
+    (v128.const i16x8 0x5630 0x3c00 0x3c00 0x3c00 0x3c00 0x3c00 0x3c00 0x3c00)
+)
