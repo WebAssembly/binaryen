@@ -2308,6 +2308,7 @@ public:
   Name name;
 
   std::unordered_map<HeapType, TypeNames> typeNames;
+  std::unordered_map<HeapType, Index> typeIndices;
 
   MixedArena allocator;
 

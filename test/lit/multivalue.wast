@@ -64,7 +64,7 @@
   )
  )
 
- ;; CHECK:      (func $get-second (type $3) (result i64)
+ ;; CHECK:      (func $get-second (type $2) (result i64)
  ;; CHECK-NEXT:  (local $0 i64)
  ;; CHECK-NEXT:  (local $1 (tuple i32 i64 f32))
  ;; CHECK-NEXT:  (local $2 i64)
@@ -146,7 +146,7 @@
   )
  )
 
- ;; CHECK:      (func $reverse (type $4) (result f32 i64 i32)
+ ;; CHECK:      (func $reverse (type $3) (result f32 i64 i32)
  ;; CHECK-NEXT:  (local $x i32)
  ;; CHECK-NEXT:  (local $1 i64)
  ;; CHECK-NEXT:  (local $2 f32)
@@ -205,7 +205,7 @@
   )
  )
 
- ;; CHECK:      (func $unreachable (type $3) (result i64)
+ ;; CHECK:      (func $unreachable (type $2) (result i64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 42)
  ;; CHECK-NEXT:  )
@@ -465,10 +465,10 @@
   )
  )
 
- ;; CHECK:      (func $mv-if (type $2) (result i32 i64 externref)
+ ;; CHECK:      (func $mv-if (type $4) (result i32 i64 externref)
  ;; CHECK-NEXT:  (local $0 (tuple i32 i64 externref))
  ;; CHECK-NEXT:  (local.set $0
- ;; CHECK-NEXT:   (if (type $2) (result i32 i64 externref)
+ ;; CHECK-NEXT:   (if (type $4) (result i32 i64 externref)
  ;; CHECK-NEXT:    (i32.const 1)
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (tuple.make 3

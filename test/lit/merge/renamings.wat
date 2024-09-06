@@ -9,15 +9,15 @@
 
   ;; This tag has a conflict in second.wat, and so second.wat's $foo
   ;; will be renamed.
-  ;; CHECK:      (type $1 (func))
+  ;; CHECK:      (type $1 (func (param i32)))
 
-  ;; CHECK:      (type $2 (func (param f64)))
+  ;; CHECK:      (type $2 (func (param i64)))
 
-  ;; CHECK:      (type $3 (func (param (ref $array))))
+  ;; CHECK:      (type $3 (func))
 
-  ;; CHECK:      (type $4 (func (param i32)))
+  ;; CHECK:      (type $4 (func (param (ref $array))))
 
-  ;; CHECK:      (type $5 (func (param i64)))
+  ;; CHECK:      (type $5 (func (param f64)))
 
   ;; CHECK:      (type $6 (func (param f32)))
 
@@ -114,7 +114,7 @@
 
   ;; CHECK:      (export "other-b" (func $other))
 
-  ;; CHECK:      (func $foo (type $1)
+  ;; CHECK:      (func $foo (type $3)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 1)
   ;; CHECK-NEXT:  )
@@ -127,7 +127,7 @@
     )
   )
 
-  ;; CHECK:      (func $bar (type $1)
+  ;; CHECK:      (func $bar (type $3)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.const 2)
   ;; CHECK-NEXT:  )
@@ -138,7 +138,7 @@
     )
   )
 
-  ;; CHECK:      (func $uses (type $3) (param $array (ref $array))
+  ;; CHECK:      (func $uses (type $4) (param $array (ref $array))
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
@@ -308,19 +308,19 @@
     (call $bar)
   )
 )
-;; CHECK:      (func $foo_3 (type $1)
+;; CHECK:      (func $foo_3 (type $3)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 3)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $other (type $1)
+;; CHECK:      (func $other (type $3)
 ;; CHECK-NEXT:  (drop
 ;; CHECK-NEXT:   (i32.const 4)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $uses.second (type $3) (param $array (ref $array))
+;; CHECK:      (func $uses.second (type $4) (param $array (ref $array))
 ;; CHECK-NEXT:  (try
 ;; CHECK-NEXT:   (do
 ;; CHECK-NEXT:    (nop)

@@ -19,6 +19,10 @@
 ;; CHECK-NEXT:                                                 continuing while binary size
 ;; CHECK-NEXT:                                                 decreases
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --preserve-type-order                         Preserve the order of types from
+;; CHECK-NEXT:                                                 the input (useful for debugging
+;; CHECK-NEXT:                                                 and testing)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --fuzz-exec-before,-feh                       Execute functions before
 ;; CHECK-NEXT:                                                 optimization, helping fuzzing
 ;; CHECK-NEXT:                                                 find bugs

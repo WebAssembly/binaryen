@@ -30,9 +30,9 @@
   ;; CHECK-TEXT:      (tag $tag$1 (param i32))
 
   ;; CHECK-TEXT:      (tag $e (param i32 f32))
-  ;; CHECK-BIN:      (type $0 (func (param i32 f32)))
+  ;; CHECK-BIN:      (type $0 (func (param i32)))
 
-  ;; CHECK-BIN:      (type $1 (func (param i32)))
+  ;; CHECK-BIN:      (type $1 (func (param i32 f32)))
 
   ;; CHECK-BIN:      (type $2 (func))
 
@@ -67,9 +67,9 @@
   ;; CHECK-BIN:      (export "ex1" (tag $e))
   (export "ex1" (tag $e))
 )
-;; CHECK-BIN-NODEBUG:      (type $0 (func (param i32 f32)))
+;; CHECK-BIN-NODEBUG:      (type $0 (func (param i32)))
 
-;; CHECK-BIN-NODEBUG:      (type $1 (func (param i32)))
+;; CHECK-BIN-NODEBUG:      (type $1 (func (param i32 f32)))
 
 ;; CHECK-BIN-NODEBUG:      (type $2 (func))
 

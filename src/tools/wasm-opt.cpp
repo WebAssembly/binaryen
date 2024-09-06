@@ -77,6 +77,7 @@ int main(int argc, const char* argv[]) {
   Name entry;
   bool emitBinary = true;
   bool converge = false;
+  bool preserveTypeOrder = false;
   bool fuzzExecBefore = false;
   bool fuzzExecAfter = false;
   std::string extraFuzzCommand;
@@ -117,6 +118,15 @@ int main(int argc, const char* argv[]) {
          WasmOptOption,
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) { converge = true; })
+    .add("--preserve-type-order",
+         "",
+         "Preserve the order of types from the input (useful for debugging and "
+         "testing)",
+         WasmOptOption,
+         Options::Arguments::Zero,
+         [&](Options* o, const std::string& arguments) {
+           preserveTypeOrder = true;
+         })
     .add(
       "--fuzz-exec-before",
       "-feh",
@@ -292,6 +302,10 @@ int main(int argc, const char* argv[]) {
     } catch (std::bad_alloc&) {
       Fatal() << "error building module, std::bad_alloc (possibly invalid "
                  "request for silly amounts of memory)";
+    }
+
+    if (!preserveTypeOrder) {
+      wasm.typeIndices.clear();
     }
 
     if (options.passOptions.validate) {

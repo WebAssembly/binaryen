@@ -448,11 +448,11 @@
 ;; CHECK-NEXT: )
 (module
   ;; Return call to self with different params, then stop evaluating.
-  ;; CHECK:      (type $0 (func (param i32)))
+  ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (type $1 (func))
+  ;; CHECK:      (type $1 (func (param i32)))
 
-  ;; CHECK:      (import "env" "import" (func $import (type $1)))
+  ;; CHECK:      (import "env" "import" (func $import (type $0)))
   (import "env" "import" (func $import))
 
   ;; CHECK:      (global $g (mut i32) (i32.const 42))
@@ -460,7 +460,7 @@
 
   ;; CHECK:      (export "test" (func $test_2))
 
-  ;; CHECK:      (func $test (type $0) (param $0 i32)
+  ;; CHECK:      (func $test (type $1) (param $0 i32)
   ;; CHECK-NEXT:  (global.set $g
   ;; CHECK-NEXT:   (local.get $0)
   ;; CHECK-NEXT:  )
@@ -506,7 +506,7 @@
   )
 )
 
-;; CHECK:      (func $test_2 (type $0) (param $0 i32)
+;; CHECK:      (func $test_2 (type $1) (param $0 i32)
 ;; CHECK-NEXT:  (if
 ;; CHECK-NEXT:   (i32.eq
 ;; CHECK-NEXT:    (local.tee $0

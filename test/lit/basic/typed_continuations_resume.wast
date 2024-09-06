@@ -28,9 +28,9 @@
  ;; CHECK-TEXT:      (type $3 (func (param (ref $ct)) (result i32)))
 
  ;; CHECK-TEXT:      (tag $t (param i32) (result i32))
- ;; CHECK-BIN:      (type $2 (func (result i32 (ref $ct))))
+ ;; CHECK-BIN:      (type $2 (func (param (ref $ct)) (result i32)))
 
- ;; CHECK-BIN:      (type $3 (func (param (ref $ct)) (result i32)))
+ ;; CHECK-BIN:      (type $3 (func (result i32 (ref $ct))))
 
  ;; CHECK-BIN:      (tag $t (param i32) (result i32))
  (tag $t (param i32) (result i32))
@@ -60,11 +60,11 @@
  ;; CHECK-TEXT-NEXT:   )
  ;; CHECK-TEXT-NEXT:  )
  ;; CHECK-TEXT-NEXT: )
- ;; CHECK-BIN:      (func $go (type $3) (param $x (ref $ct)) (result i32)
+ ;; CHECK-BIN:      (func $go (type $2) (param $x (ref $ct)) (result i32)
  ;; CHECK-BIN-NEXT:  (local $1 (tuple i32 (ref $ct)))
  ;; CHECK-BIN-NEXT:  (local $2 i32)
  ;; CHECK-BIN-NEXT:  (local.set $1
- ;; CHECK-BIN-NEXT:   (block $label$1 (type $2) (result i32 (ref $ct))
+ ;; CHECK-BIN-NEXT:   (block $label$1 (type $3) (result i32 (ref $ct))
  ;; CHECK-BIN-NEXT:    (return
  ;; CHECK-BIN-NEXT:     (resume $ct (on $t $label$1)
  ;; CHECK-BIN-NEXT:      (i32.const 123)
@@ -128,17 +128,17 @@
 
 ;; CHECK-BIN-NODEBUG:      (type $1 (cont $0))
 
-;; CHECK-BIN-NODEBUG:      (type $2 (func (result i32 (ref $1))))
+;; CHECK-BIN-NODEBUG:      (type $2 (func (param (ref $1)) (result i32)))
 
-;; CHECK-BIN-NODEBUG:      (type $3 (func (param (ref $1)) (result i32)))
+;; CHECK-BIN-NODEBUG:      (type $3 (func (result i32 (ref $1))))
 
 ;; CHECK-BIN-NODEBUG:      (tag $tag$0 (param i32) (result i32))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $3) (param $0 (ref $1)) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $0 (type $2) (param $0 (ref $1)) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 (tuple i32 (ref $1)))
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local.set $1
-;; CHECK-BIN-NODEBUG-NEXT:   (block $label$1 (type $2) (result i32 (ref $1))
+;; CHECK-BIN-NODEBUG-NEXT:   (block $label$1 (type $3) (result i32 (ref $1))
 ;; CHECK-BIN-NODEBUG-NEXT:    (return
 ;; CHECK-BIN-NODEBUG-NEXT:     (resume $1 (on $tag$0 $label$1)
 ;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 123)
