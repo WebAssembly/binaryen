@@ -1052,7 +1052,7 @@
     )
   )
 
-  ;; CHECK:      (func $loop (type $5) (param $x i32)
+  ;; CHECK:      (func $loop (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (drop
@@ -1060,16 +1060,19 @@
   ;; CHECK-NEXT:     (local.get $ref)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $ref XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX
-  ;; CHECK-NEXT:    (struct.new $struct
-  ;; CHECK-NEXT:     (if (result i32)
+  ;; CHECK-NEXT:   (struct.set $struct 0
+  ;; CHECK-NEXT:    (local.tee $ref
+  ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:      (then
-  ;; CHECK-NEXT:       (br $loop)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (else
-  ;; CHECK-NEXT:       (i32.const 42)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $loop)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (i32.const 42)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1105,7 +1108,7 @@
     )
   )
 
-  ;; CHECK:      (func $loop-more-flow (type $5) (param $x i32)
+  ;; CHECK:      (func $loop-more-flow (type $1)
   ;; CHECK-NEXT:  (local $ref (ref null $struct))
   ;; CHECK-NEXT:  (loop $loop
   ;; CHECK-NEXT:   (if
@@ -1119,16 +1122,19 @@
   ;; CHECK-NEXT:     (local.get $ref)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (local.set $ref XXXXXXXXXXXXXXXXXXXXX
-  ;; CHECK-NEXT:    (struct.new $struct
-  ;; CHECK-NEXT:     (if (result i32)
+  ;; CHECK-NEXT:   (struct.set $struct 0
+  ;; CHECK-NEXT:    (local.tee $ref
+  ;; CHECK-NEXT:     (struct.new $struct
   ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:      (then
-  ;; CHECK-NEXT:       (br $loop)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (else
-  ;; CHECK-NEXT:       (i32.const 42)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (if (result i32)
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:     (then
+  ;; CHECK-NEXT:      (br $loop)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (else
+  ;; CHECK-NEXT:      (i32.const 42)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -1169,6 +1175,19 @@
     )
   )
 
+  ;; CHECK:      (func $loop-in-value (type $5) (param $x i32)
+  ;; CHECK-NEXT:  (local $ref (ref null $struct))
+  ;; CHECK-NEXT:  (local.set $ref
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (loop $loop (result i32)
+  ;; CHECK-NEXT:     (br_if $loop
+  ;; CHECK-NEXT:      (local.get $x)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $loop-in-value (param $x i32)
     (local $ref (ref null $struct))
     ;; The struct.set's value has a loop in it, but that is fine, as while there
