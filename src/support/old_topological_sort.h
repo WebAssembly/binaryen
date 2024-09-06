@@ -14,8 +14,8 @@
  * limitations under the License.
  */
 
-#ifndef wasm_support_topological_sort_h
-#define wasm_support_topological_sort_h
+#ifndef wasm_support_old_topological_sort_h
+#define wasm_support_old_topological_sort_h
 
 #include <cstddef>
 #include <iterator>
@@ -35,7 +35,7 @@ namespace wasm {
 // the immediate predecessors of `item`.
 //
 // Cycles in the graph are not detected and will result in an infinite loop.
-template<typename T, typename Subtype> struct TopologicalSort {
+template<typename T, typename Subtype> struct OldTopologicalSort {
 private:
   // The DFS work list.
   std::vector<T> workStack;
@@ -45,9 +45,10 @@ private:
 
   // Should be overridden by `Subtype`.
   void pushPredecessors(T item) {
-    static_assert(&TopologicalSort<T, Subtype>::pushPredecessors !=
-                    &Subtype::pushPredecessors,
-                  "TopologicalSort subclass must implement `pushPredecessors`");
+    static_assert(
+      &OldTopologicalSort<T, Subtype>::pushPredecessors !=
+        &Subtype::pushPredecessors,
+      "OldTopologicalSort subclass must implement `pushPredecessors`");
   }
 
   // Pop until the stack is empty or it has an unfinished item on top.
@@ -90,7 +91,7 @@ public:
     using pointer = T*;
     using iterator_category = std::input_iterator_tag;
 
-    TopologicalSort<T, Subtype>* parent;
+    OldTopologicalSort<T, Subtype>* parent;
 
     bool isEnd() const { return !parent || parent->workStack.empty(); }
     bool operator==(Iterator& other) const { return isEnd() == other.isEnd(); }
@@ -115,4 +116,4 @@ public:
 
 } // namespace wasm
 
-#endif // wasm_support_topological_sort_h
+#endif // wasm_support_old_topological_sort_h

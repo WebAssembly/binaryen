@@ -36,9 +36,9 @@
 #include "support/colors.h"
 #include "support/file.h"
 #include "support/insert_ordered.h"
+#include "support/old_topological_sort.h"
 #include "support/small_set.h"
 #include "support/string.h"
-#include "support/topological_sort.h"
 #include "tool-options.h"
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
@@ -678,7 +678,7 @@ private:
 
     if (!mustBeAfter.empty()) {
       // We found constraints that require reordering, so do so.
-      struct MustBeAfterSort : TopologicalSort<Name, MustBeAfterSort> {
+      struct MustBeAfterSort : OldTopologicalSort<Name, MustBeAfterSort> {
         MustBeAfter& mustBeAfter;
 
         MustBeAfterSort(MustBeAfter& mustBeAfter) : mustBeAfter(mustBeAfter) {
