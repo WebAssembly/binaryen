@@ -1075,7 +1075,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $loop (param $x i32)
+  (func $loop
     (local $ref (ref null $struct))
     (loop $loop
       ;; There is a use of the reference at the top of the loop, and the br_if
@@ -1134,7 +1134,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $loop-more-flow (param $x i32)
+  (func $loop-more-flow
     (local $ref (ref null $struct))
     (loop $loop
       ;; As above, but add this if which adds more control flow at the loop top.
@@ -1165,6 +1165,26 @@
             (i32.const 42)
           )
         )
+      )
+    )
+  )
+
+  (func $loop-in-value (param $x i32)
+    (local $ref (ref null $struct))
+    ;; The struct.set's value has a loop in it, but that is fine, as while there
+    ;; are backedges there, they are still contained in the value: we can't skip
+    ;; the struct.set. We can optimize here.
+    (struct.set $struct 0
+      (local.tee $ref
+        (struct.new $struct
+          (i32.const 1)
+        )
+      )
+      (loop $loop (result i32)
+        (br_if $loop
+          (local.get $x)
+        )
+        (i32.const 42)
       )
     )
   )

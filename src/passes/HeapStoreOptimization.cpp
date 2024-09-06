@@ -31,9 +31,13 @@ namespace wasm {
 
 namespace {
 
-// In each basic block we will store the relevant heap store operations and
-// other actions that matter to our analysis.
+// Information stored on each basic block.
 struct Info {
+  // A unique identifying index. As CFGWalker builds blocks in post-order, this
+  // is an increasing index in that ordering.
+  Index index;
+
+  // The relevant heap store operations appearing in the block.
   std::vector<Expression**> actions;
 };
 
@@ -56,6 +60,15 @@ struct HeapStoreOptimization
   // state in the function. (This may need to change if we do more general dead
   // store elimination.)
   bool ignoreBranchesOutsideOfFunc = true;
+
+  // Add the index to each block as we create it.
+  Index nextBlockIndex = 0;
+
+  BasicBlock* makeBasicBlock() {
+    auto* ret = new BasicBlock();
+    ret->index = nextBlockIndex++;
+    return ret;
+  }
 
   // Track the parent block of expressions we care about.
   std::unordered_map<Expression*, BasicBlock*> expressionBlocks;
@@ -93,15 +106,9 @@ struct HeapStoreOptimization
     }
   }
 
-  // As we optimize we mark blocks we've reached. This is done in post-order,
-  // and allows us to check for forward branches in a useful manner, see
-  // optimizeSubsequentStructSet().
-  std::unordered_set<BasicBlock*> seenBlocks;
-
   void visitFunction(Function* curr) {
     // Now that the walk is complete and we have a CFG, find things to optimize.
     for (auto& block : basicBlocks) {
-      seenBlocks.insert(block.get());
       for (auto** currp : block->contents.actions) {
         auto* curr = *currp;
         if (auto* set = curr->dynCast<StructSet>()) {
@@ -355,18 +362,12 @@ struct HeapStoreOptimization
   // the if's basic blocks. But nothing in the struct.set's value can branch
   // to them: there is no way to jump into the middle of a block.
   bool canSkipLocalSet(StructSet* set) {
-    UniqueNonrepeatingDeferredQueue<BasicBlock*> reached;
-    // We start the flow from right before the value, which means the end of the
-    // reference.
     auto* blockBeforeValue = expressionBlocks[set->ref];
     if (!blockBeforeValue) {
       // We are in unreachable code. Return that we are doing something
       // dangerous, as this is not worth optimizing.
       return true;
     }
-    // It must have already been reached, since we've processed the struct.set.
-    assert(seenBlocks.count(blockBeforeValue));
-    reached.push(blockBeforeValue);
     // We will stop the flow when we reach the struct.set itself: it is fine for
     // control flow to get there, that is what normally happens.
     auto* structSetBlock = expressionBlocks[set];
@@ -374,22 +375,48 @@ struct HeapStoreOptimization
       // We are in unreachable code.
       return true;
     }
-    assert(seenBlocks.count(structSetBlock));
+
+    if (blockBeforeValue == structSetBlock) {
+      // There is no control flow at all in the area we are concerned with, so
+      // there is no way to skip the local.set.
+      return false;
+    }
+
+    // Given those blocks, we can perform the following analysis: see if we can
+    // get out of the range of blocks [blockBeforeValue .. structSetBlock].
+    // Normal execution reaches structSetBlock if there is no branching, so that
+    // is what we expect; any branch further forward without going through that
+    // block is suspect. Likewise, any branch backwards to before the value is
+    // also suspect as it may reach a loop header (and there may be a local.get
+    // usage there).
+    //
+    // This is not entirely precise, as we do not search for actually dangerous
+    // local.gets, that is, this has false positives. But it is a simple
+    // analysis that works in almost all cases, and avoids potentially large
+    // amounts of flow work.
+    Index minIndex = blockBeforeValue->index;
+    Index maxIndex = structSetBlock->index;
+
+    // We start the flow from right before the value, which means the end of the
+    // reference.
+    UniqueNonrepeatingDeferredQueue<BasicBlock*> reached;
+    reached.push(blockBeforeValue);
+
     while (!reached.empty()) {
       // Flow to the successors.
       auto* block = reached.pop();
-      if (block == structSetBlock) {
-        // This is the normal place control flow should get to, the struct.set
-        // that is the parent of the value.
+      auto index = block->index;
+      if (index == maxIndex) {
+        // This is the normal place control flow should get to, as mentioned
+        // above.
+        assert(block == structSetBlock);
         continue;
       }
+      if (index < minIndex || index > maxIndex) {
+        // We branched to a dangerous place.
+        return true;
+      }
       for (auto* out : block->out) {
-        if (!seenBlocks.count(out)) {
-          // This is a dangerous jump forward, as described above. Give up.
-          // TODO: We could be more precise and look for actual local.gets of
-          //       our value. If no such gets exist, this is still safe.
-          return true;
-        }
         reached.push(out);
       }
     }
