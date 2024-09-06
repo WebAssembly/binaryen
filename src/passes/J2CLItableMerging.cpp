@@ -226,13 +226,16 @@ struct J2CLItableMerging : public Pass {
           if (itableFieldInitializers.size() >= i) {
             // The itable was initialized with a struct.new, copy the
             // initialization values.
-            curr->operands.insertAt(0, ExpressionManipulator::copy(
-              itableFieldInitializers[i - 1], *getModule()));
+            curr->operands.insertAt(
+              0,
+              ExpressionManipulator::copy(itableFieldInitializers[i - 1],
+                                          *getModule()));
           } else {
             // The itable was initialized with struct.new_default. So use
             // null values to initialize the itable fields.
             Builder builder(*getModule());
-            curr->operands.insertAt(0,
+            curr->operands.insertAt(
+              0,
               builder.makeRefNull(itableStructNew->type.getHeapType()
                                     .getStruct()
                                     .fields[i - 1]
