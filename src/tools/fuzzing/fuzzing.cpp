@@ -693,9 +693,71 @@ Expression* TranslateToFuzzReader::makeHangLimitCheck() {
 }
 
 Expression* TranslateToFuzzReader::makeLogging() {
-  auto type = getLoggableType();
-  return builder.makeCall(
-    std::string("log-") + type.toString(), {make(type)}, Type::none);
+  auto makeLoggingCall = [&](Expression* value) {
+    assert(isLoggableType(value->type));
+    return builder.makeCall(
+      std::string("log-") + value->type.toString(), {value}, Type::none);
+  };
+
+  // We may choose to log a local, if there are any.
+  auto* func = funcContext->func;
+  auto numLocals = func->getNumLocals();
+
+  auto choice = upTo(4);
+  if (choice < 2 || numLocals == 0) {
+    // 50% of the time, pick a loggable type and make something of that type
+    // to log. Also do so when there are no locals to log.
+    return makeLoggingCall(make(getLoggableType()));
+  }
+
+  // 50% of the time, pick a local and log it, either shallowly or deeply.
+  auto index = upTo(numLocals);
+  auto type = func->getLocalType(index);
+  if (isLoggableType(type)) {
+    // We can log this directly. Get it and log that.
+    return makeLoggingCall(builder.makeLocalGet(index, type));
+  }
+
+  if (type.isRef()) {
+    // This is a reference, which cannot be directly logged. We can at least
+    // "shallowly" log it by seeing if it is null.
+    auto* get = builder.makeLocalGet(index, type);
+    auto* isNull = builder.makeRefIsNull(get);
+    if (choice & 1) {
+      // Try to also "deeply" log it, by reading a value from it, if we can.
+      auto heapType = type.getHeapType();
+      if (heapType.isStruct()) {
+        auto& fields = heapType.getStruct().fields;
+        if (!fields.empty()) {
+          auto fieldIndex = upTo(fields.size());
+          auto fieldType = fields[fieldIndex].type;
+          if (isLoggableType(fieldType)) {
+            // Do a deep logging after a null check. Or, if non-nullable,
+            // without the null check.
+            auto* get2 = builder.makeLocalGet(index, type);
+            auto* structGet =
+              builder.makeStructGet(fieldIndex, get2, fieldType);
+            auto* ifNonNull = makeLoggingCall(structGet);
+            if (type.isNonNullable()) {
+              return ifNonNull;
+            }
+
+            // If the ref is null, log a random integer. The randomness is to
+            // avoid the risk of colliding with the value logged in the other
+            // arm.
+            auto* ifNull = makeLoggingCall(makeConst(Type::i32));
+            return builder.makeIf(isNull, ifNull, ifNonNull);
+          }
+        }
+      }
+    }
+
+    // All we can do is log the nullability as an i32.
+    return makeLoggingCall(isNull);
+  }
+
+  // For anything else, log something loggable from scratch.
+  return makeLoggingCall(make(getLoggableType()));
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
