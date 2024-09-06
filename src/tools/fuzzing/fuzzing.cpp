@@ -723,7 +723,8 @@ Expression* TranslateToFuzzReader::makeLogging() {
     // "shallowly" log it by seeing if it is null (if it is nullable - if not,
     // then there is no point to such a check).
     auto* get = builder.makeLocalGet(index, type);
-    auto* isNullCheck = type.isNullable() ? builder.makeRefIsNull(get) : nullptr;
+    auto* isNullCheck =
+      type.isNullable() ? builder.makeRefIsNull(get) : nullptr;
     if (choice & 1) {
       // Try to also "deeply" log it, by reading a value from it, if we can.
       auto heapType = type.getHeapType();
