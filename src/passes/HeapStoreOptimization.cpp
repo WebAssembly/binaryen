@@ -66,7 +66,7 @@ struct HeapStoreOptimization
 
   BasicBlock* makeBasicBlock() {
     auto* ret = new BasicBlock();
-    ret->index = nextBlockIndex++;
+    ret->contents.index = nextBlockIndex++;
     return ret;
   }
 
@@ -394,8 +394,8 @@ struct HeapStoreOptimization
     // local.gets, that is, this has false positives. But it is a simple
     // analysis that works in almost all cases, and avoids potentially large
     // amounts of flow work.
-    Index minIndex = blockBeforeValue->index;
-    Index maxIndex = structSetBlock->index;
+    Index minIndex = blockBeforeValue->contents.index;
+    Index maxIndex = structSetBlock->contents.index;
 
     // We start the flow from right before the value, which means the end of the
     // reference.
@@ -405,7 +405,7 @@ struct HeapStoreOptimization
     while (!reached.empty()) {
       // Flow to the successors.
       auto* block = reached.pop();
-      auto index = block->index;
+      auto index = block->contents.index;
       if (index == maxIndex) {
         // This is the normal place control flow should get to, as mentioned
         // above.
