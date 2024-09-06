@@ -20,22 +20,11 @@
 //
 // The motivation for embedding itables into vtables is to reduce memory usage.
 //
-// The idea is:
-//   - collect the types for structs that correspond to Java classes
-//     identtifyng the types corresponding to their vtable and itable structs;
-//     and the immutable globals that have the specific vtable and itable
-//     instances for that class (since for each class there are exactly one
-//     vtable and one itable instance). For the vtable instances there is a
-//     1-1 correspondence with the class, whereas the itable instances can be
-//     shared.
-//   - add the itable fields at the beginning of the vtable structure to
-//     preserve proper subtyping.
-//   - embed the initialization of itable instances into their corresponding
-//     vtable instances.
-//   - update references to vtable fields (which are offset by the itable
-//     size).
-//   - update reference to itable fields to be reference to the fields
-//     introduced in the vtables.
+// The pass makes the following transformation on the structs related to Java
+// classes. For given type `Foo` with `Foo[vtable] = { m1, m2, m3, ... }`
+// and  `Foo[itable] = { i1, i2, ...}`, this pass transforms it to
+// `Foo[vtable] = { i1, i2, ...., m1, m2, m3, ... }`, and fixes all accesses
+// and initializations accordinly.
 
 #include <unordered_map>
 #include <unordered_set>
@@ -205,7 +194,7 @@ struct J2CLItableMerging : public Pass {
           return;
         }
         // The struct.new is for a vtable type and structInfo has the
-        // information relating the struct types for the Java class, is vtable
+        // information relating the struct types for the Java class, its vtable
         // and its itable.
         auto structInfo = it->second;
 
@@ -232,38 +221,22 @@ struct J2CLItableMerging : public Pass {
         }
         auto& itableFieldInitializers = itableStructNew->operands;
 
-        // Manually move the operands corresponding to the field initializers
-        // since ArenaVector does not have an API to insert elements at the
-        // front.
-
-        // Compute the new size of the vtable.
-        Index newSize = curr->operands.size() + parent.itableSize;
-        // and resize the struct.new operands to accommodate the itable
-        // fields.
-        curr->operands.resize(newSize);
-
-        // Move initialization for the existing vtable fields to their
-        // new position.
-        for (Index i = newSize - 1; i >= parent.itableSize; i--) {
-          curr->operands[i] = curr->operands[i - parent.itableSize];
-        }
-
         // Add the initialization for the itable fields.
-        for (Index i = 0; i < parent.itableSize; i++) {
-          if (itableFieldInitializers.size() > i) {
+        for (Index i = parent.itableSize; i > 0; i--) {
+          if (itableFieldInitializers.size() >= i) {
             // The itable was initialized with a struct.new, copy the
             // initialization values.
-            curr->operands[i] = ExpressionManipulator::copy(
-              itableFieldInitializers[i], *getModule());
+            curr->operands.insertAt(0, ExpressionManipulator::copy(
+              itableFieldInitializers[i - 1], *getModule()));
           } else {
             // The itable was initialized with struct.new_default. So use
             // null values to initialize the itable fields.
             Builder builder(*getModule());
-            curr->operands[i] =
+            curr->operands.insertAt(0,
               builder.makeRefNull(itableStructNew->type.getHeapType()
                                     .getStruct()
-                                    .fields[i]
-                                    .type.getHeapType());
+                                    .fields[i - 1]
+                                    .type.getHeapType()));
           }
         }
       }

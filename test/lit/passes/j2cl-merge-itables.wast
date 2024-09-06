@@ -21,9 +21,13 @@
     ;; CHECK:       (type $function (func))
     (type $function (func))
 
+    ;; The $Object.itable field (a structref) will be added as a field to
+    ;; the beginning of this vtable.
     ;; CHECK:       (type $Object.vtable (sub (struct (field structref))))
     (type $Object.vtable (sub (struct)))
 
+    ;; The $Object.itable field (a structref) will be added as a field to
+    ;; the beginning of this vtable.
     ;; CHECK:       (type $SubObject.vtable (sub $Object.vtable (struct (field structref) (field (ref $function)))))
     (type $SubObject.vtable (sub $Object.vtable (struct
       (field (ref $function)))))
@@ -41,6 +45,8 @@
   (global $SubObject.itable (ref $Object.itable)
     (global.get $Object.itable))  ;; uses shared empty itable instance.
 
+  ;; The initialization for the itable field (null struct) will be added to this
+  ;; vtable instance.
   ;; CHECK:      (global $SubObject.vtable (ref $SubObject.vtable) (struct.new $SubObject.vtable
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT:  (ref.func $SubObject.f)
@@ -49,6 +55,8 @@
     (struct.new $SubObject.vtable (ref.func $SubObject.f)))
 
 
+  ;; The initialization for the itable field (null struct) will be added to this
+  ;; vtable instance.
   ;; CHECK:      (global $Object.vtable (ref $Object.vtable) (struct.new $Object.vtable
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: ))
@@ -92,10 +100,14 @@
         (global.get $SubObject.vtable)
         (global.get $SubObject.itable)))
     (drop
+      ;; The access to vtable field 0 is offset but the itable size and
+      ;; will be an access to field 1.
       (struct.get $SubObject.vtable 0
         (struct.get $SubObject $vtable
           (local.get $o))))
     (drop
+      ;; The access to itable field 0 will be rerouted to be an access to
+      ;; vtable field 0.
       (struct.get $Object.itable 0
         (struct.get $SubObject $itable
           (local.get $o))))
@@ -105,7 +117,6 @@
 ;; Each type has its own itable.
 (module
   (rec
-    ;; Object class type definitions.
     ;; CHECK:      (rec
     ;; CHECK-NEXT:  (type $Object (sub (struct (field $vtable (ref $Object.vtable)) (field $itable (ref $Object.itable)))))
     (type $Object (sub (struct
@@ -130,15 +141,20 @@
     (type $SubObject.itable (sub $Object.itable
       (struct (field (ref null struct)))))
 
+    ;; The $Object.itable field (a structref) will be added as a field to
+    ;; the beginning of this vtable.
     ;; CHECK:       (type $Object.vtable (sub (struct (field structref))))
     (type $Object.vtable (sub (struct)))
 
+    ;; The $SubObject.itable field (a structref) will be added as a field to
+    ;; the beginning of this vtable.
     ;; CHECK:       (type $SubObject.vtable (sub $Object.vtable (struct (field structref) (field (ref $function)))))
     (type $SubObject.vtable (sub $Object.vtable
       (struct (field (ref $function)))))
   )
 
-  ;; Object vtable and itable initialization.
+  ;; The initialization for the itable field (null struct) will be added to this
+  ;; vtable instance.
   ;; CHECK:      (global $SubObject.vtable (ref $SubObject.vtable) (struct.new $SubObject.vtable
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT:  (ref.func $SubObject.f)
@@ -150,6 +166,8 @@
   (global $SubObject.itable (ref $SubObject.itable)
     (struct.new_default $SubObject.itable))
 
+  ;; The initialization for the itable field (null struct) will be added to this
+  ;; vtable instance.
   ;; CHECK:      (global $Object.vtable (ref $Object.vtable) (struct.new $Object.vtable
   ;; CHECK-NEXT:  (ref.null none)
   ;; CHECK-NEXT: ))
@@ -197,10 +215,14 @@
         (global.get $SubObject.vtable)
         (global.get $SubObject.itable)))
     (drop
+      ;; The access to vtable field 0 is offset but the itable size and
+      ;; will be an access to field 1.
       (struct.get $SubObject.vtable 0
         (struct.get $SubObject $vtable
           (local.get $o))))
     (drop
+      ;; The access to itable field 0 will be rerouted to be an access to
+      ;; vtable field 0.
       (struct.get $Object.itable 0
         (struct.get $SubObject $itable
           (local.get $o))))
