@@ -24,7 +24,7 @@
 // classes. For given type `Foo` with `Foo[vtable] = { m1, m2, m3, ... }`
 // and  `Foo[itable] = { i1, i2, ...}`, this pass transforms it to
 // `Foo[vtable] = { i1, i2, ...., m1, m2, m3, ... }`, and fixes all accesses
-// and initializations accordinly.
+// and initializations accordingly.
 
 #include <unordered_map>
 #include <unordered_set>
@@ -317,21 +317,18 @@ struct J2CLItableMerging : public Pass {
           // Update field names as well. The Type Rewriter cannot do this for
           // us, as it does not know which old fields map to which new ones
           // (it just keeps the names in sequence).
-          auto iter = wasm.typeNames.find(oldStructType);
-          if (iter != wasm.typeNames.end()) {
-            auto& nameInfo = iter->second;
+          auto& nameInfo = wasm.typeNames[oldStructType];
 
-            // Make a copy of the old ones before clearing them.
-            auto oldFieldNames = nameInfo.fieldNames;
+          // Make a copy of the old ones before clearing them.
+          auto oldFieldNames = nameInfo.fieldNames;
 
-            // Clear the old names and write the new ones.
-            nameInfo.fieldNames.clear();
-            // Only need to preserve the field names for the vtable fields; the
-            // itable fields do not have names (in the original .wat file they
-            // are accessed by index).
-            for (Index i = 0; i < oldFieldNames.size(); i++) {
-              nameInfo.fieldNames[i + parent.itableSize] = oldFieldNames[i];
-            }
+          // Clear the old names and write the new ones.
+          nameInfo.fieldNames.clear();
+          // Only need to preserve the field names for the vtable fields; the
+          // itable fields do not have names (in the original .wat file they
+          // are accessed by index).
+          for (Index i = 0; i < oldFieldNames.size(); i++) {
+            nameInfo.fieldNames[i + parent.itableSize] = oldFieldNames[i];
           }
         }
       }
