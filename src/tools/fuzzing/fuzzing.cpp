@@ -720,9 +720,10 @@ Expression* TranslateToFuzzReader::makeLogging() {
 
   if (type.isRef()) {
     // This is a reference, which cannot be directly logged. We can at least
-    // "shallowly" log it by seeing if it is null.
+    // "shallowly" log it by seeing if it is null (if it is nullable - if not,
+    // then there is no point to such a check).
     auto* get = builder.makeLocalGet(index, type);
-    auto* isNull = builder.makeRefIsNull(get);
+    auto* isNullCheck = type.isNullable() ? builder.makeRefIsNull(get) : nullptr;
     if (choice & 1) {
       // Try to also "deeply" log it, by reading a value from it, if we can.
       auto heapType = type.getHeapType();
@@ -737,23 +738,27 @@ Expression* TranslateToFuzzReader::makeLogging() {
             auto* get2 = builder.makeLocalGet(index, type);
             auto* structGet =
               builder.makeStructGet(fieldIndex, get2, fieldType);
-            auto* ifNonNull = makeLoggingCall(structGet);
-            if (type.isNonNullable()) {
-              return ifNonNull;
+            auto* whenNonNull = makeLoggingCall(structGet);
+            if (!isNullCheck) {
+              assert(type.isNonNullable());
+              return whenNonNull;
             }
 
             // If the ref is null, log a random integer. The randomness is to
             // avoid the risk of colliding with the value logged in the other
             // arm.
-            auto* ifNull = makeLoggingCall(makeConst(Type::i32));
-            return builder.makeIf(isNull, ifNull, ifNonNull);
+            auto* whenNull = makeLoggingCall(makeConst(Type::i32));
+            return builder.makeIf(isNullCheck, whenNull, whenNonNull);
           }
         }
       }
     }
 
-    // All we can do is log the nullability as an i32.
-    return makeLoggingCall(isNull);
+    // All we can do is log the nullability as an i32 (if it is nullable; if
+    // not then we'd be logging 1 all the time).
+    if (isNullCheck) {
+      return makeLoggingCall(isNullCheck);
+    }
   }
 
   // For anything else, log something loggable from scratch.
