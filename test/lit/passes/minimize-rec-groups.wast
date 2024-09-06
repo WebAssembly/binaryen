@@ -484,3 +484,83 @@
   ;; CHECK:      (global $a3 (ref null $a3) (ref.null none))
   (global $a3 (ref null $a3) (ref.null none))
 )
+
+;; We must avoid conflicts with public types.
+(module
+  ;; CHECK:      (type $public (struct))
+  (type $public (struct))
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $1 (array (mut i8)))
+
+    ;; CHECK:       (type $private (struct))
+    (type $private (struct))
+    (type $other (struct (field (ref null $private))))
+  )
+
+  ;; CHECK:      (global $public (ref null $public) (ref.null none))
+  (global $public (export "g") (ref null $public) (ref.null none))
+
+  ;; CHECK:      (global $private (ref null $private) (ref.null none))
+  (global $private (ref null $private) (ref.null none))
+)
+
+;; Same as above, but now the public types are more complicated.
+;; CHECK:      (export "g" (global $public))
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $publicA (struct (field (ref null $publicB))))
+    (type $publicA (struct (field (ref null $publicB))))
+    ;; CHECK:       (type $publicB (struct (field (ref null $publicA))))
+    (type $publicB (struct (field (ref null $publicA))))
+  )
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $2 (struct))
+
+    ;; CHECK:       (type $privateB (struct (field (ref null $privateA))))
+
+    ;; CHECK:       (type $privateA (struct (field (ref null $privateB))))
+    (type $privateA (struct (field (ref null $privateB))))
+    (type $privateB (struct (field (ref null $privateA))))
+    (type $other (struct (field i32)))
+  )
+
+  ;; CHECK:      (global $public (ref null $publicA) (ref.null none))
+  (global $public (export "g") (ref null $publicA) (ref.null none))
+  ;; CHECK:      (global $private (ref null $privateA) (ref.null none))
+  (global $private (ref null $privateA) (ref.null none))
+)
+
+;; Now the conflict with the public type does not arise until we try to resolve
+;; a conflict between the private types.
+;; CHECK:      (export "g" (global $public))
+(module
+  (rec
+    ;; CHECK:      (type $privateA (struct (field i32) (field i64)))
+
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $publicBrand (struct))
+    (type $publicBrand (struct))
+    ;; CHECK:       (type $public (struct (field i32) (field i64)))
+    (type $public (struct (field i32 i64)))
+  )
+  (rec
+    (type $privateA (struct (field i32 i64)))
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $privateB (struct (field i32) (field i64)))
+    (type $privateB (struct (field i32 i64)))
+  )
+
+  ;; CHECK:       (type $4 (struct))
+
+  ;; CHECK:      (global $public (ref null $public) (ref.null none))
+  (global $public (export "g") (ref null $public) (ref.null none))
+
+  ;; CHECK:      (global $privateA (ref null $privateA) (ref.null none))
+  (global $privateA (ref null $privateA) (ref.null none))
+  ;; CHECK:      (global $privateB (ref null $privateB) (ref.null none))
+  (global $privateB (ref null $privateB) (ref.null none))
+)
+;; CHECK:      (export "g" (global $public))
