@@ -412,7 +412,11 @@ struct HeapStoreOptimization
         assert(block == structSetBlock);
         continue;
       }
-      if (index < minIndex || index > maxIndex) {
+      // Test if we branch to a dangerous place. Note that we test <= for the
+      // minimum index, as if we branch there that means we are reaching the
+      // top of the basic block containing the value, which contains things
+      // before it (it might be a loop top).
+      if (index <= minIndex || index > maxIndex) {
         // We branched to a dangerous place.
         return true;
       }
