@@ -35,7 +35,7 @@
 
 #include "ir/find_all.h"
 #include "pass.h"
-#include "support/topological_orders.h"
+#include "support/topological_sort.h"
 #include "wasm.h"
 
 namespace wasm {
