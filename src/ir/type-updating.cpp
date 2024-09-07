@@ -47,8 +47,7 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
   std::unordered_set<HeapType> additionalSet(additionalPrivateTypes.begin(),
                                              additionalPrivateTypes.end());
 
-  std::vector<std::pair<HeapType, SmallVector<HeapType, 1>>>
-      privateSupertypes;
+  std::vector<std::pair<HeapType, SmallVector<HeapType, 1>>> privateSupertypes;
   privateSupertypes.reserve(typeInfo.size());
   for (auto& [type, info] : typeInfo) {
     if (info.visibility != ModuleUtils::Visibility::Private &&
@@ -77,30 +76,30 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
                                      privateSupertypes.end());
   } else {
     sorted =
-        TopologicalSort::minSortOf(privateSupertypes.begin(),
-                                   privateSupertypes.end(),
-                                   [&](Index a, Index b) {
-                                     auto typeA = privateSupertypes[a].first;
-                                     auto typeB = privateSupertypes[b].first;
-                                     // Preserve type order.
-                                     auto itA = wasm.typeIndices.find(typeA);
-                                     auto itB = wasm.typeIndices.find(typeB);
-                                     bool hasA = itA != wasm.typeIndices.end();
-                                     bool hasB = itB != wasm.typeIndices.end();
-                                     if (hasA != hasB) {
-                                       // Types with preserved indices must be
-                                       // sorted before (after in this reversed
-                                       // comparison) types without indices to
-                                       // maintain transitivity.
-                                       return !hasA;
-                                     }
-                                     if (hasA && *itA != *itB) {
-                                       return !(itA->second < itB->second);
-                                     }
-                                     // Break ties by the arbitrary order we
-                                     // have collected the types in.
-                                     return a > b;
-                                   });
+      TopologicalSort::minSortOf(privateSupertypes.begin(),
+                                 privateSupertypes.end(),
+                                 [&](Index a, Index b) {
+                                   auto typeA = privateSupertypes[a].first;
+                                   auto typeB = privateSupertypes[b].first;
+                                   // Preserve type order.
+                                   auto itA = wasm.typeIndices.find(typeA);
+                                   auto itB = wasm.typeIndices.find(typeB);
+                                   bool hasA = itA != wasm.typeIndices.end();
+                                   bool hasB = itB != wasm.typeIndices.end();
+                                   if (hasA != hasB) {
+                                     // Types with preserved indices must be
+                                     // sorted before (after in this reversed
+                                     // comparison) types without indices to
+                                     // maintain transitivity.
+                                     return !hasA;
+                                   }
+                                   if (hasA && *itA != *itB) {
+                                     return !(itA->second < itB->second);
+                                   }
+                                   // Break ties by the arbitrary order we
+                                   // have collected the types in.
+                                   return a > b;
+                                 });
   }
   std::reverse(sorted.begin(), sorted.end());
   Index i = 0;
