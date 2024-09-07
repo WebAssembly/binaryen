@@ -1,3 +1,4 @@
+
 /*
  * Copyright 2024 WebAssembly Community Group participants
  *
@@ -81,13 +82,15 @@ decltype(auto) sortOfImpl(It begin, It end, Args... args) {
 }
 
 template<typename It> decltype(auto) sortOf(It begin, It end) {
-  return sortOfImpl<It, std::vector<Index>(const Graph&), sort>(begin, end);
+  return sortOfImpl<It, std::vector<Index> (&)(const Graph&), sort>(begin, end);
 }
 
 template<typename It, typename Cmp>
 decltype(auto) minSortOf(It begin, It end, Cmp cmp) {
-  return sortOfImpl<It, std::vector<Index>(const Graph&, Cmp), minSort, Cmp>(
-    begin, end, cmp);
+  return sortOfImpl<It,
+                    std::vector<Index> (&)(const Graph&, Cmp),
+                    minSort,
+                    Cmp>(begin, end, cmp);
 }
 
 } // namespace TopologicalSort
