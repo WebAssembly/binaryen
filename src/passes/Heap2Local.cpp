@@ -198,7 +198,9 @@ enum class ParentChildInteraction : int8_t {
 struct EscapeAnalyzer {
   // To find what escapes, we need to follow where values flow, both up to
   // parents, and via branches, and through locals.
-  // TODO: for efficiency, only scan reference types in LocalGraph
+  //
+  // We use a lazy graph here because we only need this for reference locals,
+  // and even among them, only ones we see an allocation is stored to.
   const LazyLocalGraph& localGraph;
   const Parents& parents;
   const BranchUtils::BranchTargets& branchTargets;
