@@ -20,7 +20,7 @@
 #include <unordered_set>
 
 #include "support/insert_ordered.h"
-#include "support/topological_sort.h"
+#include "support/old_topological_sort.h"
 #include "wasm-type.h"
 
 namespace wasm::HeapTypeOrdering {
@@ -30,7 +30,7 @@ namespace wasm::HeapTypeOrdering {
 // visited.
 template<typename SupertypeProvider>
 struct SupertypesFirstBase
-  : TopologicalSort<HeapType, SupertypesFirstBase<SupertypeProvider>> {
+  : OldTopologicalSort<HeapType, SupertypesFirstBase<SupertypeProvider>> {
   // For each type in the input collection, whether it is a supertype. Used to
   // track membership in the input collection.
   InsertOrderedMap<HeapType, bool> typeSet;

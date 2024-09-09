@@ -20,7 +20,6 @@
 #include "ir/module-utils.h"
 #include "ir/names.h"
 #include "ir/utils.h"
-#include "support/topological_sort.h"
 #include "wasm-type-ordering.h"
 #include "wasm-type.h"
 #include "wasm.h"

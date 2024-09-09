@@ -1145,10 +1145,10 @@
 ;; different values in the sub-most type. Create the top and bottom types, but
 ;; not the middle one.
 (module
-  ;; CHECK:      (type $0 (func))
-
   ;; CHECK:      (type $struct1 (sub (struct (field i32) (field i32))))
   (type $struct1 (sub (struct i32 i32)))
+
+  ;; CHECK:      (type $1 (func))
 
   ;; CHECK:      (type $struct2 (sub $struct1 (struct (field i32) (field i32) (field f64) (field f64))))
   (type $struct2 (sub $struct1 (struct i32 i32 f64 f64)))
@@ -1200,7 +1200,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-1 (type $0)
+  ;; CHECK:      (func $get-1 (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -1235,7 +1235,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-2 (type $0)
+  ;; CHECK:      (func $get-2 (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop
@@ -1295,7 +1295,7 @@
     )
   )
 
-  ;; CHECK:      (func $get-3 (type $0)
+  ;; CHECK:      (func $get-3 (type $1)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block (result i32)
   ;; CHECK-NEXT:    (drop

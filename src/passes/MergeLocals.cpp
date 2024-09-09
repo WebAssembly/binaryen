@@ -113,7 +113,7 @@ struct MergeLocals
     // initial state, which is what we want. If we can avoid that, this pass can
     // be sped up by around 25%.
     LocalGraph preGraph(func, getModule());
-    preGraph.computeInfluences();
+    preGraph.computeSetInfluences();
 
     // optimize each copy
     std::unordered_map<LocalSet*, LocalSet*> optimizedToCopy,
