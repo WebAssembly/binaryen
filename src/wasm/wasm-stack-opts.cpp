@@ -131,14 +131,14 @@ void StackIROptimizer::vacuum() {
 // no control flow branching out, we can remove both the set
 // and the get.
 void StackIROptimizer::local2Stack() {
-  // We use the localGraph to tell us if a get-set pair is indeed
-  // a set that is read by that get, and only that get. Note that we run
-  // this on the Binaryen IR, so we are assuming that no previous opt
-  // has changed the interaction of local operations.
-  // TODO: we can do this a lot faster, as we just care about linear
-  //       control flow.
-  LocalGraph localGraph(func);
-  localGraph.computeSetInfluences();
+  // We use the localGraph to tell us if a get-set pair is indeed a set that is
+  // read by that get, and only that get. Note that we run this on Binaryen IR,
+  // so we are assuming that no previous opt has changed the interaction of
+  // local operations.
+  //
+  // We use a lazy graph here as we only query in the rare case when we find a
+  // set/get pair that looks optimizable.
+  LazyLocalGraph localGraph(func);
   // The binary writing of StringWTF16Get and StringSliceWTF is optimized to use
   // fewer scratch locals when their operands are already LocalGets. To avoid
   // interfering with that optimization, we have to avoid removing such
