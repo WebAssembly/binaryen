@@ -743,17 +743,17 @@ private:
   // Propagates values around. Returns whether we propagated.
   bool propagateLocals(Function* func) {
     bool propagated = false;
-    // using the graph of get-set interactions, do a constant-propagation type
+    // Using the graph of get-set interactions, do a constant-propagation type
     // operation: note which sets are assigned locals, then see if that lets us
     // compute other sets as locals (since some of the gets they read may be
     // constant).
-    // compute all dependencies
-    LocalGraph localGraph(func, getModule());
-    localGraph.computeInfluences();
+    //
+    // We use a lazy graph because we only propagate when we find a constant.
+    LazyLocalGraph localGraph(func, getModule());
     // prepare the work list. we add things here that might change to a constant
     // initially, that means everything
     UniqueDeferredQueue<Expression*> work;
-    for (auto& [curr, _] : localGraph.locations) {
+    for (auto& [curr, _] : localGraph.getLocations()) {
       work.push(curr);
     }
     // the constant value, or none if not a constant
