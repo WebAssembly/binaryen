@@ -552,7 +552,14 @@ bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
 // LazyLocalGraph
 
 LazyLocalGraph::LazyLocalGraph(Function* func, Module* module)
-  : LocalGraphBase(func, module) {
+  : LocalGraphBase(func, module) {}
+
+void LazyLocalGraph::makeFlower() const {
+  // Lazy graphs do not provide |locations| publicly. TODO: perhaps refactor to
+  // avoid filling in this dummy data structure, but we may want to add a lazy
+  // version of it too, so see which makes sense first.
+  LocalGraph::Locations locations;
+
   flower =
     std::make_unique<LocalGraphFlower>(getSetsMap, locations, func, module);
 
@@ -578,10 +585,16 @@ LazyLocalGraph::~LazyLocalGraph() {
 }
 
 void LazyLocalGraph::computeGetSets(LocalGet* get) const {
+  if (!flower) {
+    makeFlower();
+  }
   flower->computeGetSets(get);
 }
 
 void LazyLocalGraph::computeSetInfluences(LocalSet* set) const {
+  if (!flower) {
+    makeFlower();
+  }
   flower->computeSetInfluences(set, setInfluences);
 }
 

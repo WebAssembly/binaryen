@@ -58,11 +58,8 @@ public:
   // get. Typically only one or two apply there, so this is a small set.
   using Sets = SmallSet<LocalSet*, 2>;
 
-  // Where each get and set is. We compute this while doing the main computation
-  // and make it accessible for users, for easy replacing of things without
-  // extra work.
+  // Where each get and set is.
   using Locations = std::map<Expression*, Expression**>;
-  Locations locations;
 
   // A map of each get to the sets relevant to it (i.e., that it can read from).
   using GetSetsMap = std::unordered_map<LocalGet*, Sets>;
@@ -103,6 +100,11 @@ struct LocalGraph : public LocalGraphBase {
     }
     return iter->second;
   }
+
+  // We compute the locations of gets and sets while doing the main computation
+  // and make it accessible for users, for easy replacing of things without
+  // extra work.
+  Locations locations;
 
   // Checks if two gets are equivalent, that is, definitely have the same
   // value.
@@ -213,7 +215,12 @@ private:
   void computeSetInfluences(LocalSet* set) const;
 
   // This remains alive as long as we are, so that we can compute things lazily.
-  std::unique_ptr<LocalGraphFlower> flower;
+  // It is mutable as when we construct this is an internal detail, that does
+  // not cause observable differences in API calls.
+  mutable std::unique_ptr<LocalGraphFlower> flower;
+
+  // We create |flower| lazily.
+  void makeFlower() const;
 };
 
 } // namespace wasm
