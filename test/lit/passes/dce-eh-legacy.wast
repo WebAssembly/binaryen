@@ -222,9 +222,6 @@
         )
         (i32.const 0)
       )
-      (catch_all
-        (i32.const 0)
-      )
     )
   )
 )
