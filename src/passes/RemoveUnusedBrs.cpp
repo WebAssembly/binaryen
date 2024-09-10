@@ -485,7 +485,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       self->pushTask(clear, currp); // clear all flow after the condition
       self->pushTask(scan, &iff->condition);
     } else {
-      super::scan(self, currp);
+      Super::scan(self, currp);
     }
   }
 
@@ -921,7 +921,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     // multiple cycles may be needed
     do {
       anotherCycle = false;
-      super::doWalkFunction(func);
+      Super::doWalkFunction(func);
       assert(ifStack.empty());
       // flows may contain returns, which are flowing out and so can be
       // optimized

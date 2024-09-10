@@ -250,7 +250,7 @@ struct Precompute
     canPartiallyPrecompute = getPassOptions().optimizeLevel >= 2;
 
     // Walk the function and precompute things.
-    super::doWalkFunction(func);
+    Super::doWalkFunction(func);
     partiallyPrecompute(func);
     if (!propagate) {
       return;
@@ -264,7 +264,7 @@ struct Precompute
       // We found constants to propagate and entered them in getValues. Do
       // another walk to apply them and perhaps other optimizations that are
       // unlocked.
-      super::doWalkFunction(func);
+      Super::doWalkFunction(func);
       // We could also try to partially precompute again, but that is a somewhat
       // heavy operation, so we only do it the first time, and leave such things
       // for later runs of this pass and for --converge.

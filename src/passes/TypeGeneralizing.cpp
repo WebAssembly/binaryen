@@ -908,7 +908,7 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
     }
 
     // Update gets and sets accordingly.
-    super::runOnFunction(wasm, func);
+    Super::runOnFunction(wasm, func);
 
     if (refinalize) {
       ReFinalize().walkFunctionInModule(func, wasm);

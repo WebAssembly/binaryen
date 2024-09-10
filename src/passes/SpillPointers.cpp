@@ -69,7 +69,7 @@ struct SpillPointers
   // main entry point
 
   void doWalkFunction(Function* func) {
-    super::doWalkFunction(func);
+    Super::doWalkFunction(func);
     spillPointers();
   }
 

@@ -42,7 +42,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $foo
-    ;; $A will remain the same.
+    ;; $A will remain the sam^e.
     (local $a (ref null $A))
     ;; $B can be merged into $A.
     (local $b (ref null $B))

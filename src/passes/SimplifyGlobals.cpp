@@ -336,7 +336,7 @@ struct ConstantGlobalApplier
   : public WalkerPass<
       LinearExecutionWalker<ConstantGlobalApplier,
                             UnifiedExpressionVisitor<ConstantGlobalApplier>>> {
-  using super = WalkerPass<
+  using Super = WalkerPass<
     LinearExecutionWalker<ConstantGlobalApplier,
                           UnifiedExpressionVisitor<ConstantGlobalApplier>>>;
 
@@ -361,7 +361,7 @@ struct ConstantGlobalApplier
       // This operation will change the type, so refinalize.
       refinalize = true;
     }
-    super::replaceCurrent(rep);
+    Super::replaceCurrent(rep);
   }
 
   void visitExpression(Expression* curr) {

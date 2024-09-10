@@ -806,7 +806,7 @@ struct TranslateToExnref : public WalkerPass<PostWalker<TranslateToExnref>> {
       delegateTargetToTrampoline[target] = labels->getUnique(target.toString());
     }
 
-    super::doWalkFunction(func);
+    Super::doWalkFunction(func);
 
     // Similar to processDelegateTarget(), but for the caller target.
     if (delegateTargetToTrampoline.find(DELEGATE_CALLER_TARGET) !=
