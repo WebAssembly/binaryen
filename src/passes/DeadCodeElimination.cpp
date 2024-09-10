@@ -57,6 +57,8 @@ struct DeadCodeElimination
   // as we remove code, we must keep the types of other nodes valid
   TypeUpdater typeUpdater;
 
+  bool needEHFixups = false;
+
   Expression* replaceCurrent(Expression* expression) {
     auto* old = getCurrent();
     if (old == expression) {
@@ -74,6 +76,13 @@ struct DeadCodeElimination
   }
 
   void visitExpression(Expression* curr) {
+    // We create new blocks in this function which can move 'pop's into blocks.
+    // So we conservatively run the EH fixup if we ever see a 'pop' in this
+    // function.
+    if (curr->is<Pop>()) {
+      needEHFixups = true;
+    }
+
     if (!Properties::isControlFlowStructure(curr)) {
       // Control flow structures require special handling, but others are
       // simple.
@@ -107,12 +116,6 @@ struct DeadCodeElimination
             replaceCurrent(remainingChildren[0]);
           } else {
             replaceCurrent(builder.makeBlock(remainingChildren));
-            if (getModule()->features.hasExceptionHandling() &&
-                !FindAll<Pop>(curr).list.empty()) {
-              // We are moving a pop into a new block we just created, which
-              // means we may need to fix things up here.
-              needEHFixups = true;
-            }
           }
         }
       }
@@ -193,8 +196,6 @@ struct DeadCodeElimination
       WASM_UNREACHABLE("unimplemented DCE control flow structure");
     }
   }
-
-  bool needEHFixups = false;
 
   void visitFunction(Function* curr) {
     if (needEHFixups) {
