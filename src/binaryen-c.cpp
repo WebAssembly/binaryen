@@ -5647,6 +5647,9 @@ BinaryenModuleRef BinaryenModuleReadWithFeatures(char* input,
     p.dump(std::cerr);
     Fatal() << "error in parsing wasm binary";
   }
+  // Do not regress code size by maintaining type order. TODO: Add an option to
+  // control this.
+  wasm->typeIndices.clear();
   return wasm;
 }
 
