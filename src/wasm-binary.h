@@ -242,9 +242,7 @@ public:
   }
   // writes out an LEB of normal size
   // returns how many bytes were written
-  size_t writeAt(size_t i, U32LEB x) {
-    return x.writeAt(this, i);
-  }
+  size_t writeAt(size_t i, U32LEB x) { return x.writeAt(this, i); }
 
   template<typename T> void writeTo(T& o) {
     for (auto c : *this) {
