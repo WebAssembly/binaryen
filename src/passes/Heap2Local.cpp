@@ -1141,7 +1141,6 @@ struct Heap2Local {
   Module& wasm;
   const PassOptions& passOptions;
 
-  // TODO: construct this LocalGraph on demand entirely (not just lazy work)?
   LazyLocalGraph localGraph;
   Parents parents;
   BranchUtils::BranchTargets branchTargets;
