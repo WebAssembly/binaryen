@@ -13,6 +13,8 @@
   ;; CHECK-TEXT:      (type $0 (func (result i32)))
 
   ;; CHECK-TEXT:      (type $FUNCSIG$ii (func (param i32) (result i32)))
+  ;; CHECK-BIN:      (type $0 (func (result i32)))
+
   ;; CHECK-BIN:      (type $FUNCSIG$ii (func (param i32) (result i32)))
   (type $FUNCSIG$ii (func (param i32) (result i32)))
   (import "env" "table" (table 9 9 funcref))
@@ -38,15 +40,13 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (type $1 (func (result i32)))
+  ;; CHECK-BIN:      (type $2 (func))
 
-  ;; CHECK-BIN:      (type $2 (func (param i32)))
-
-  ;; CHECK-BIN:      (type $3 (func))
+  ;; CHECK-BIN:      (type $3 (func (param i32)))
 
   ;; CHECK-BIN:      (import "env" "table" (table $timport$0 9 9 funcref))
 
-  ;; CHECK-BIN:      (func $break-and-binary (type $1) (result i32)
+  ;; CHECK-BIN:      (func $break-and-binary (type $0) (result i32)
   ;; CHECK-BIN-NEXT:  (block $label$1 (result i32)
   ;; CHECK-BIN-NEXT:   (unreachable)
   ;; CHECK-BIN-NEXT:  )
@@ -136,7 +136,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $tee (type $2) (param $x i32)
+  ;; CHECK-BIN:      (func $tee (type $3) (param $x i32)
   ;; CHECK-BIN-NEXT:  (local $y f32)
   ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
@@ -169,7 +169,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $tee2 (type $3)
+  ;; CHECK-BIN:      (func $tee2 (type $2)
   ;; CHECK-BIN-NEXT:  (local $0 f32)
   ;; CHECK-BIN-NEXT:  (if
   ;; CHECK-BIN-NEXT:   (i32.const 259)
@@ -201,7 +201,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $select (type $3)
+  ;; CHECK-BIN:      (func $select (type $2)
   ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $select
@@ -226,7 +226,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $untaken-break-should-have-value (type $1) (result i32)
+  ;; CHECK-BIN:      (func $untaken-break-should-have-value (type $0) (result i32)
   ;; CHECK-BIN-NEXT:  (block $label$1 (result i32)
   ;; CHECK-BIN-NEXT:   (block $label$2
   ;; CHECK-BIN-NEXT:    (drop
@@ -313,7 +313,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $br_table_unreachable_to_also_unreachable (type $1) (result i32)
+  ;; CHECK-BIN:      (func $br_table_unreachable_to_also_unreachable (type $0) (result i32)
   ;; CHECK-BIN-NEXT:  (block $label$1 (result i32)
   ;; CHECK-BIN-NEXT:   (block $label$2 (result i32)
   ;; CHECK-BIN-NEXT:    (unreachable)
@@ -351,7 +351,7 @@
   ;; CHECK-TEXT-NEXT:   )
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
-  ;; CHECK-BIN:      (func $untaken-br_if (type $1) (result i32)
+  ;; CHECK-BIN:      (func $untaken-br_if (type $0) (result i32)
   ;; CHECK-BIN-NEXT:  (block $label$1 (result i32)
   ;; CHECK-BIN-NEXT:   (block $label$2
   ;; CHECK-BIN-NEXT:    (if
@@ -388,32 +388,32 @@
     )
   )
 )
-;; CHECK-BIN-NODEBUG:      (type $0 (func (param i32) (result i32)))
+;; CHECK-BIN-NODEBUG:      (type $0 (func (result i32)))
 
-;; CHECK-BIN-NODEBUG:      (type $1 (func (result i32)))
+;; CHECK-BIN-NODEBUG:      (type $1 (func (param i32) (result i32)))
 
-;; CHECK-BIN-NODEBUG:      (type $2 (func (param i32)))
+;; CHECK-BIN-NODEBUG:      (type $2 (func))
 
-;; CHECK-BIN-NODEBUG:      (type $3 (func))
+;; CHECK-BIN-NODEBUG:      (type $3 (func (param i32)))
 
 ;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $timport$0 9 9 funcref))
 
-;; CHECK-BIN-NODEBUG:      (func $0 (type $1) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1 (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:   (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $1 (type $0) (param $0 i32) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $1 (type $1) (param $0 i32) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $2 (type $2) (param $0 i32)
+;; CHECK-BIN-NODEBUG:      (func $2 (type $3) (param $0 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $1 f32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $3 (type $3)
+;; CHECK-BIN-NODEBUG:      (func $3 (type $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  (local $0 f32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (if
 ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 259)
@@ -423,11 +423,11 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $4 (type $3)
+;; CHECK-BIN-NODEBUG:      (func $4 (type $2)
 ;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $5 (type $1) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $5 (type $0) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1 (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$2
 ;; CHECK-BIN-NODEBUG-NEXT:    (drop
@@ -439,7 +439,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $6 (type $0) (param $0 i32) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $6 (type $1) (param $0 i32) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (if
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (then
@@ -458,7 +458,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $7 (type $1) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $7 (type $0) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1 (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$2 (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:    (unreachable)
@@ -466,7 +466,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
-;; CHECK-BIN-NODEBUG:      (func $8 (type $1) (result i32)
+;; CHECK-BIN-NODEBUG:      (func $8 (type $0) (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1 (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:   (block $label$2
 ;; CHECK-BIN-NODEBUG-NEXT:    (if

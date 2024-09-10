@@ -734,6 +734,10 @@
 ;; CHECK-NEXT:                                                 in, but not inspect their
 ;; CHECK-NEXT:                                                 contents or call them.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --preserve-type-order                         Preserve the order of types from
+;; CHECK-NEXT:                                                 the input (useful for debugging
+;; CHECK-NEXT:                                                 and testing)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-stack-ir                           generate StackIR during writing
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --optimize-stack-ir                           optimize StackIR during writing
