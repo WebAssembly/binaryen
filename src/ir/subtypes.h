@@ -18,7 +18,7 @@
 #define wasm_ir_subtypes_h
 
 #include "ir/module-utils.h"
-#include "support/topological_sort.h"
+#include "support/old_topological_sort.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -80,7 +80,7 @@ struct SubTypes {
 
   // A topological sort that visits subtypes first.
   auto getSubTypesFirstSort() const {
-    struct SubTypesFirstSort : TopologicalSort<HeapType, SubTypesFirstSort> {
+    struct SubTypesFirstSort : OldTopologicalSort<HeapType, SubTypesFirstSort> {
       const SubTypes& parent;
 
       SubTypesFirstSort(const SubTypes& parent) : parent(parent) {

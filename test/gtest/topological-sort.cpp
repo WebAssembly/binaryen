@@ -18,7 +18,7 @@
 #include <optional>
 #include <vector>
 
-#include "support/topological_orders.h"
+#include "support/topological_sort.h"
 #include "gtest/gtest.h"
 
 using namespace wasm;

@@ -73,7 +73,7 @@ struct SignExtLowering : public WalkerPass<PostWalker<SignExtLowering>> {
     if (!module->features.has(FeatureSet::SignExt)) {
       return;
     }
-    super::run(module);
+    Super::run(module);
     module->features.disable(FeatureSet::SignExt);
   }
 };

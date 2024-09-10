@@ -20,7 +20,7 @@
 #include "ir/manipulation.h"
 #include "ir/properties.h"
 #include "support/insert_ordered.h"
-#include "support/topological_orders.h"
+#include "support/topological_sort.h"
 
 namespace wasm::ModuleUtils {
 

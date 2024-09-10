@@ -81,7 +81,7 @@ struct MergeLocals
     // have a new assignment of $y at the location of the copy,
     // which makes it easy for us to see if the value if $y
     // is still used after that point
-    super::doWalkFunction(func);
+    Super::doWalkFunction(func);
 
     // optimize the copies, merging when we can, and removing
     // the trivial assigns we added temporarily
@@ -105,10 +105,16 @@ struct MergeLocals
     if (copies.empty()) {
       return;
     }
-    // compute all dependencies
     auto* func = getFunction();
+
+    // Compute the local graph. Note that we *cannot* do this lazily, as we want
+    // to read from the original state of the function while we are doing
+    // changes on it. That is, using an eager graph makes a snapshot of the
+    // initial state, which is what we want. If we can avoid that, this pass can
+    // be sped up by around 25%.
     LocalGraph preGraph(func, getModule());
-    preGraph.computeInfluences();
+    preGraph.computeSetInfluences();
+
     // optimize each copy
     std::unordered_map<LocalSet*, LocalSet*> optimizedToCopy,
       optimizedToTrivial;

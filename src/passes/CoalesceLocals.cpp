@@ -112,7 +112,7 @@ private:
 };
 
 void CoalesceLocals::doWalkFunction(Function* func) {
-  super::doWalkFunction(func);
+  Super::doWalkFunction(func);
   // prioritize back edges
   increaseBackEdgePriorities();
   // use liveness to find interference

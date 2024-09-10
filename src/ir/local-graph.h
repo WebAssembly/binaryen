@@ -58,32 +58,24 @@ public:
   // get. Typically only one or two apply there, so this is a small set.
   using Sets = SmallSet<LocalSet*, 2>;
 
-  // Where each get and set is. We compute this while doing the main computation
-  // and make it accessible for users, for easy replacing of things without
-  // extra work.
+  // Where each get and set is.
   using Locations = std::map<Expression*, Expression**>;
-  Locations locations;
+
+  // A map of each get to the sets relevant to it (i.e., that it can read from).
+  using GetSetsMap = std::unordered_map<LocalGet*, Sets>;
 
   // Sets of gets or sets, that are influenced, returned from get*Influences().
   using SetInfluences = std::unordered_set<LocalGet*>;
   using GetInfluences = std::unordered_set<LocalSet*>;
 
-  // Defined publicly as other utilities need similar data layouts.
-  using GetSetsMap = std::unordered_map<LocalGet*, Sets>;
+  using SetInfluencesMap = std::unordered_map<LocalSet*, SetInfluences>;
+  using GetInfluencesMap = std::unordered_map<LocalGet*, GetInfluences>;
 
 protected:
   Function* func;
   Module* module;
 
   std::set<Index> SSAIndexes;
-
-  // A map of each get to the sets relevant to it. This is mutable so that
-  // getSets() can be const in LazyLocalGraph (which does memoization, see
-  // below).
-  mutable GetSetsMap getSetsMap;
-
-  std::unordered_map<LocalSet*, SetInfluences> setInfluences;
-  std::unordered_map<LocalGet*, GetInfluences> getInfluences;
 };
 
 struct LocalGraph : public LocalGraphBase {
@@ -108,6 +100,11 @@ struct LocalGraph : public LocalGraphBase {
     }
     return iter->second;
   }
+
+  // We compute the locations of gets and sets while doing the main computation
+  // and make it accessible for users, for easy replacing of things without
+  // extra work.
+  Locations locations;
 
   // Checks if two gets are equivalent, that is, definitely have the same
   // value.
@@ -167,6 +164,12 @@ struct LocalGraph : public LocalGraphBase {
   void computeSSAIndexes();
 
   bool isSSA(Index x);
+
+private:
+  GetSetsMap getSetsMap;
+
+  SetInfluencesMap setInfluences;
+  GetInfluencesMap getInfluences;
 };
 
 // The internal implementation of the flow analysis used to compute things. This
@@ -178,23 +181,46 @@ struct LazyLocalGraph : public LocalGraphBase {
   LazyLocalGraph(Function* func, Module* module = nullptr);
   ~LazyLocalGraph();
 
+  // Similar APIs as in LocalGraph, but lazy versions. Each of them does a
+  // lookup, and if there is a missing entry then we did not do the computation
+  // yet, and then we do it and memoize it.
   const Sets& getSets(LocalGet* get) const {
     auto iter = getSetsMap.find(get);
     if (iter == getSetsMap.end()) {
-      // A missing entry means we did not do the computation yet. Do it now.
       computeGetSets(get);
       iter = getSetsMap.find(get);
       assert(iter != getSetsMap.end());
     }
     return iter->second;
   }
+  const SetInfluences& getSetInfluences(LocalSet* set) const {
+    auto iter = setInfluences.find(set);
+    if (iter == setInfluences.end()) {
+      computeSetInfluences(set);
+      iter = setInfluences.find(set);
+      assert(iter != setInfluences.end());
+    }
+    return iter->second;
+  }
 
 private:
+  // These data structures are mutable so that we can memoize.
+  mutable GetSetsMap getSetsMap;
+
+  mutable SetInfluencesMap setInfluences;
+
   // Compute the sets for a get and store them on getSetsMap.
   void computeGetSets(LocalGet* get) const;
+  // Compute influences for a set and store them on setInfluences.
+  void computeSetInfluences(LocalSet* set) const;
 
   // This remains alive as long as we are, so that we can compute things lazily.
-  std::unique_ptr<LocalGraphFlower> flower;
+  // It is mutable as when we construct this is an internal detail, that does
+  // not cause observable differences in API calls.
+  mutable std::unique_ptr<LocalGraphFlower> flower;
+
+  // We create |flower| lazily.
+  void makeFlower() const;
 };
 
 } // namespace wasm

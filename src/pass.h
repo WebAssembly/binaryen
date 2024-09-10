@@ -530,7 +530,7 @@ template<typename WalkerType>
 class WalkerPass : public Pass, public WalkerType {
 
 protected:
-  using super = WalkerPass<WalkerType>;
+  using Super = WalkerPass<WalkerType>;
 
 public:
   void run(Module* module) override {

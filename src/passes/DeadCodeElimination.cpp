@@ -61,7 +61,7 @@ struct DeadCodeElimination
     if (old == expression) {
       return expression;
     }
-    super::replaceCurrent(expression);
+    Super::replaceCurrent(expression);
     // also update the type updater
     typeUpdater.noteReplacement(old, expression);
     return expression;
