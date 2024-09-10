@@ -200,7 +200,7 @@
       )
       (catch $e-eqref
         (drop
-          ;; This becomes after optimizations, moving the 'pop' inside a block,
+          ;; Optimization moves the 'pop' inside a block,
           ;; which needs to be extracted out of the block at the end.
           ;; (block
           ;;   (drop
