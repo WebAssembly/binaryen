@@ -292,6 +292,7 @@ struct OptimizeAddedConstants
 
     if (getModule()->memories.empty()) {
       // There can be no loads and stores without a memory.
+      return;
     }
 
     // Multiple passes may be needed if we have x + 4 + 8 etc. (nested structs
