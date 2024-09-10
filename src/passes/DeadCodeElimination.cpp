@@ -29,7 +29,6 @@
 //
 
 #include "ir/eh-utils.h"
-#include "ir/find_all.h"
 #include "ir/iteration.h"
 #include "ir/properties.h"
 #include "ir/type-updating.h"
