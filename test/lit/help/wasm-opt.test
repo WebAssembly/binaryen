@@ -257,7 +257,7 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --merge-blocks                                merges blocks to their parents
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --merge-j2cl-itables                          Merges itable structures into 
+;; CHECK-NEXT:   --merge-j2cl-itables                          Merges itable structures into
 ;; CHECK-NEXT:                                                 vtables to make types more
 ;; CHECK-NEXT:                                                 compact
 ;; CHECK-NEXT:
@@ -779,6 +779,10 @@
 ;; CHECK-NEXT:                                                 on to them and pass them back
 ;; CHECK-NEXT:                                                 in, but not inspect their
 ;; CHECK-NEXT:                                                 contents or call them.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --preserve-type-order                         Preserve the order of types from
+;; CHECK-NEXT:                                                 the input (useful for debugging
+;; CHECK-NEXT:                                                 and testing)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-stack-ir                           generate StackIR during writing
 ;; CHECK-NEXT:

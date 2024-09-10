@@ -2464,7 +2464,12 @@ void WasmBinaryReader::readTypes() {
   if (auto* err = result.getError()) {
     Fatal() << "Invalid type: " << err->reason << " at index " << err->index;
   }
-  types = *result;
+  types = std::move(*result);
+
+  // Record the type indices.
+  for (Index i = 0; i < types.size(); ++i) {
+    wasm.typeIndices.insert({types[i], i});
+  }
 }
 
 Name WasmBinaryReader::getFunctionName(Index index) {

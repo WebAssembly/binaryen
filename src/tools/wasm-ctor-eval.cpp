@@ -1445,7 +1445,7 @@ int main(int argc, const char* argv[]) {
   options.parse(argc, argv);
 
   Module wasm;
-  options.applyFeatures(wasm);
+  options.applyOptionsBeforeParse(wasm);
 
   {
     if (options.debug) {
@@ -1459,6 +1459,8 @@ int main(int argc, const char* argv[]) {
       Fatal() << "error in parsing input";
     }
   }
+
+  options.applyOptionsAfterParse(wasm);
 
   if (!WasmValidator().validate(wasm)) {
     std::cout << wasm << '\n';

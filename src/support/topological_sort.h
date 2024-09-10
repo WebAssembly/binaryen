@@ -42,10 +42,17 @@ using Graph = std::vector<std::vector<Index>>;
 // Return a topological sort of the vertices in the given adjacency graph.
 inline std::vector<Index> sort(const Graph& graph);
 
+// Return the topological sort of the vertices in the given adjacency graph that
+// is lexicographically minimal with respect to the provided comparator on
+// vertex indices. Implemented using a min-heap internally.
+template<typename F = std::less<Index>>
+std::vector<Index> minSort(const Graph& graph, F cmp = std::less<Index>{});
+
 // A utility that finds a topological sort of a graph with arbitrary element
 // types. The provided iterators must be to pairs of elements and collections of
 // their children.
-template<typename It> decltype(auto) sortOf(It begin, It end) {
+template<typename It, typename SortT, SortT Sort, typename... Args>
+decltype(auto) sortOfImpl(It begin, It end, Args... args) {
   using T = std::remove_cv_t<typename It::value_type::first_type>;
   std::unordered_map<T, Index> indices;
   std::vector<T> elements;
@@ -67,17 +74,23 @@ template<typename It> decltype(auto) sortOf(It begin, It end) {
   // Compute the topological order and convert back to original elements.
   std::vector<T> order;
   order.reserve(elements.size());
-  for (auto i : sort(indexGraph)) {
+  for (auto i : Sort(indexGraph, std::forward<Args>(args)...)) {
     order.emplace_back(std::move(elements[i]));
   }
   return order;
 }
 
-// Return the topological sort of the vertices in the given adjacency graph that
-// is lexicographically minimal with respect to the provided comparator on
-// vertex indices. Implemented using a min-heap internally.
-template<typename F = std::less<Index>>
-std::vector<Index> minSort(const Graph& graph, F cmp = std::less<Index>{});
+template<typename It> decltype(auto) sortOf(It begin, It end) {
+  return sortOfImpl<It, std::vector<Index> (&)(const Graph&), sort>(begin, end);
+}
+
+template<typename It, typename Cmp>
+decltype(auto) minSortOf(It begin, It end, Cmp cmp) {
+  return sortOfImpl<It,
+                    std::vector<Index> (&)(const Graph&, Cmp),
+                    minSort,
+                    Cmp>(begin, end, cmp);
+}
 
 } // namespace TopologicalSort
 

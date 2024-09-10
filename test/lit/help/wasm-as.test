@@ -139,6 +139,9 @@
 ;; CHECK-NEXT:                                        them and pass them back in, but not
 ;; CHECK-NEXT:                                        inspect their contents or call them.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --preserve-type-order                Preserve the order of types from the
+;; CHECK-NEXT:                                        input (useful for debugging and testing)
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-stack-ir                  generate StackIR during writing
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --optimize-stack-ir                  optimize StackIR during writing

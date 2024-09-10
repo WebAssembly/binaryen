@@ -486,7 +486,7 @@ int main(int argc, const char* argv[]) {
   }
 
   Module wasm;
-  options.applyFeatures(wasm);
+  options.applyOptionsBeforeParse(wasm);
 
   {
     if (options.debug) {
@@ -501,6 +501,8 @@ int main(int argc, const char* argv[]) {
       Fatal() << "error in parsing wasm input";
     }
   }
+
+  options.applyOptionsAfterParse(wasm);
 
   if (options.passOptions.validate) {
     if (!WasmValidator().validate(wasm)) {
