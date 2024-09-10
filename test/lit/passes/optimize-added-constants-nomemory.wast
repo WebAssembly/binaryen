@@ -6,4 +6,16 @@
 ;; nothing to do on.
 
 (module
+  ;; CHECK:      (func $do-stuff-without-a-memory (type $0) (param $x i32) (result i32)
+  ;; CHECK-NEXT:  (i32.add
+  ;; CHECK-NEXT:   (local.get $x)
+  ;; CHECK-NEXT:   (i32.const 42)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $do-stuff-without-a-memory (param $x i32) (result i32)
+    (i32.add
+      (local.get $x)
+      (i32.const 42)
+    )
+  )
 )
