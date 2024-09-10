@@ -378,9 +378,8 @@ void WasmBinaryWriter::writeFunctionSignatures() {
   }
   auto start = startSection(BinaryConsts::Section::Function);
   o << U32LEB(importInfo->getNumDefinedFunctions());
-  ModuleUtils::iterDefinedFunctions(*wasm, [&](Function* func) {
-    o << U32LEB(getTypeIndex(func->type));
-  });
+  ModuleUtils::iterDefinedFunctions(
+    *wasm, [&](Function* func) { o << U32LEB(getTypeIndex(func->type)); });
   finishSection(start);
 }
 
@@ -2208,9 +2207,7 @@ void WasmBinaryReader::readHeader() {
   }
 }
 
-void WasmBinaryReader::readStart() {
-  startIndex = getU32LEB();
-}
+void WasmBinaryReader::readStart() { startIndex = getU32LEB(); }
 
 static Name makeName(std::string prefix, size_t counter) {
   return Name(prefix + std::to_string(counter));
@@ -2662,7 +2659,6 @@ void WasmBinaryReader::readFunctions() {
     }
 
     readNextDebugLocation();
-
 
     readVars();
 
@@ -4648,9 +4644,7 @@ bool WasmBinaryReader::maybeVisitLoad(
   uint8_t code,
   std::optional<BinaryConsts::ASTNodes> prefix) {
   Load* curr;
-  auto allocate = [&]() {
-    curr = allocator.alloc<Load>();
-  };
+  auto allocate = [&]() { curr = allocator.alloc<Load>(); };
   if (!prefix) {
     switch (code) {
       case BinaryConsts::I32LoadMem8S:
@@ -6968,8 +6962,7 @@ void WasmBinaryReader::visitMemoryGrow(MemoryGrow* curr) {
 
 void WasmBinaryReader::visitNop(Nop* curr) {}
 
-void WasmBinaryReader::visitUnreachable(Unreachable* curr) {
-}
+void WasmBinaryReader::visitUnreachable(Unreachable* curr) {}
 
 void WasmBinaryReader::visitDrop(Drop* curr) {
   curr->value = popNonVoidExpression();
