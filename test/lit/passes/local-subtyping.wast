@@ -397,28 +397,18 @@
   )
 
   ;; CHECK:      (func $incompatible-sets (type $1) (result i32)
-  ;; CHECK-NEXT:  (local $temp (ref $1))
+  ;; CHECK-NEXT:  (local $temp (ref null $1))
   ;; CHECK-NEXT:  (local.set $temp
   ;; CHECK-NEXT:   (ref.func $incompatible-sets)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (local.tee $temp
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (drop
-  ;; CHECK-NEXT:      (ref.null nofunc)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (ref.null nofunc)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (local.tee $temp
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (ref.null nofunc)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (unreachable)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (local.set $temp
+  ;; CHECK-NEXT:   (ref.null nofunc)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
@@ -431,9 +421,8 @@
     ;; Make all code unreachable from here.
     (unreachable)
     ;; In unreachable code, assign values that are not compatible with the more
-    ;; specific type we will optimize to. Those cannot be left as they are, and
-    ;; will be fixed up so that they validate. (All we need is validation, as
-    ;; their contents do not matter, given they are not reached.)
+    ;; specific type we will optimize to. This prevents optimization here (we
+    ;; will optimize better after --dce is run).
     (drop
       (local.tee $temp
         (ref.null func)
