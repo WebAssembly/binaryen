@@ -1161,9 +1161,9 @@
 (module
   (rec
    ;; CHECK:      (rec
-   ;; CHECK-NEXT:  (type $much (func))
+   ;; CHECK-NEXT:  (type $0 (func))
 
-   ;; CHECK:       (type $1 (func))
+   ;; CHECK:       (type $much (func))
 
    ;; CHECK:      (rec
    ;; CHECK-NEXT:  (type $none (func))
@@ -1191,7 +1191,7 @@
   (func $unused-param (type $much) (param $param i32)
   )
 
-  ;; CHECK:      (func $caller (type $1)
+  ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (call $unused-param)
   ;; CHECK-NEXT: )
   (func $caller

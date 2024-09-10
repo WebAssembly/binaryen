@@ -18,7 +18,7 @@
 #define wasm_ir_subtypes_h
 
 #include "ir/module-utils.h"
-#include "support/old_topological_sort.h"
+#include "support/topological_sort.h"
 #include "wasm.h"
 
 namespace wasm {
@@ -79,29 +79,19 @@ struct SubTypes {
   }
 
   // A topological sort that visits subtypes first.
-  auto getSubTypesFirstSort() const {
-    struct SubTypesFirstSort : OldTopologicalSort<HeapType, SubTypesFirstSort> {
-      const SubTypes& parent;
-
-      SubTypesFirstSort(const SubTypes& parent) : parent(parent) {
-        for (auto type : parent.types) {
-          // The roots are types with no supertype.
-          if (!type.getDeclaredSuperType()) {
-            push(type);
-          }
-        }
+  std::vector<HeapType> getSubTypesFirstSort() const {
+    std::vector<std::pair<HeapType, std::vector<HeapType>>> graph;
+    graph.reserve(types.size());
+    for (auto type : types) {
+      if (auto it = typeSubTypes.find(type); it != typeSubTypes.end()) {
+        graph.emplace_back(*it);
+      } else {
+        graph.emplace_back(type, std::vector<HeapType>{});
       }
-
-      void pushPredecessors(HeapType type) {
-        // Things we need to process before each type are its subtypes. Once we
-        // know their depth, we can easily compute our own.
-        for (auto pred : parent.getImmediateSubTypes(type)) {
-          push(pred);
-        }
-      }
-    };
-
-    return SubTypesFirstSort(*this);
+    }
+    auto sorted = TopologicalSort::sortOf(graph.begin(), graph.end());
+    std::reverse(sorted.begin(), sorted.end());
+    return sorted;
   }
 
   // Computes the depth of children for each type. This is 0 if the type has no

@@ -429,10 +429,10 @@
   ;; optimize the field to be immutable.
 
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $0 (func (param (ref null $super) (ref null $sub))))
-
-  ;; CHECK:       (type $super (sub (struct (field i32))))
+  ;; CHECK-NEXT:  (type $super (sub (struct (field i32))))
   (type $super (sub (struct (field (mut i32)))))
+  ;; CHECK:       (type $1 (func (param (ref null $super) (ref null $sub))))
+
   ;; CHECK:       (type $sub (sub $super (struct (field i32))))
   (type $sub (sub $super (struct (field (mut i32)))))
 
@@ -464,7 +464,7 @@
     )
   )
 
-  ;; CHECK:      (func $field-keepalive (type $0) (param $super (ref null $super)) (param $sub (ref null $sub))
+  ;; CHECK:      (func $field-keepalive (type $1) (param $super (ref null $super)) (param $sub (ref null $sub))
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.get $super 0
   ;; CHECK-NEXT:    (local.get $super)

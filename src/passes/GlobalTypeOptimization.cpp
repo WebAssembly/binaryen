@@ -171,8 +171,8 @@ struct GlobalTypeOptimization : public Pass {
     // fields in a supertype is a constraint on what subtypes can do. That is,
     // we decide for each supertype what the optimal order is, and consider that
     // fixed, and then subtypes can decide how to sort fields that they append.
-    HeapTypeOrdering::SupertypesFirst sorted;
-    for (auto type : sorted.sort(propagator.subTypes.types)) {
+    for (auto type :
+         HeapTypeOrdering::supertypesFirst(propagator.subTypes.types)) {
       if (!type.isStruct()) {
         continue;
       }
