@@ -200,8 +200,8 @@
       )
       (catch $e-eqref
         (drop
-          ;; Optimization moves the 'pop' inside a block,
-          ;; which needs to be extracted out of the block at the end.
+          ;; Optimization moves the 'pop' inside a block, which needs to be
+          ;; extracted out of the block at the end.
           ;; (block
           ;;   (drop
           ;;     (struct.new $struct.0
