@@ -831,45 +831,35 @@ private:
               // This is a nondefaultable local that seems to read the default
               // value at the function entry. This is either an internal error
               // or a case of unreachable code; the latter is possible as
-              // LocalGraph is not precise in unreachable code.
-              //
-              // We cannot set zeros here (as applying them, even in
-              // unreachable code, would not validate), so just mark this as
-              // a hopeless case to ignore.
-              values = {};
+              // LocalGraph is not precise in unreachable code. Give up.
+              return;
             } else {
               curr = Literal::makeZeros(localType);
             }
           } else {
-            // it's a param, so it's hopeless
-            values = {};
-            break;
+            // It's a param, so the value is non-constant. Give up.
+            return;
           }
         } else {
           // If there is an entry for the set, use that constant. Otherwise, the
           // set is not constant, and we leave curr as none.
           auto iter = setValues.find(set);
-          if (iter != setValues.end()) {
-            curr = iter->second;
-            assert(curr.isConcrete());
+          if (iter == setValues.end()) {
+            return;
           }
-        }
-        if (curr.isNone()) {
-          // Not a constant, give up.
-          values = {};
-          break;
+          curr = iter->second;
         }
 
-        // We found a concrete value. Compare with the current one.
+        // We found a concrete value, so there is a chance, if it matches all
+        // the rest.
+        assert(curr.isConcrete());
         if (first) {
-          values = curr; // this is the first
+          // This is the first ever value we see. All later ones must match it.
+          values = curr;
           first = false;
-        } else {
-          if (values != curr) {
-            // not the same, give up
-            values = {};
-            break;
-          }
+        } else if (values != curr) {
+          // This later value is not the same as before, give up.
+          return;
         }
       }
 
@@ -878,6 +868,14 @@ private:
         getValues[get] = values;
         work.push_back(get);
         propagated = true;
+      } else {
+        // If it is not concrete then, since we early-exited before on any
+        // possible problem, there must be no sets for this get, which means it
+        // is in unreachable code. In that case, we never switched |first| from
+        // true to false.
+        assert(first == true);
+        // We could optimize using unreachability here, but we leave that for
+        // other passes.
       }
     };
 
