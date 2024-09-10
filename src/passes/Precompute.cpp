@@ -35,7 +35,7 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/insert_ordered.h"
-#include "support/unique_deferring_queue.h"
+#include "support/small_vector.h"
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
 #include "wasm.h"
@@ -758,8 +758,11 @@ private:
     std::unordered_map<LocalSet*, Literals> setValues;
 
     // The work list, which will contain sets and gets that have just been
-    // found to have a constant value.
-    UniqueDeferredQueue<Expression*> work;
+    // found to have a constant value. As we only add them to the list when they
+    // are found to be constant, each can only be added once, and a simple
+    // vector is enough here (which we can make a small vector to avoid any
+    // allocation in small-enough functions).
+    SmallVector<Expression*, 10> work;
 
     // Given a set, see if it has a constant value. If so, note that on
     // setValues and add to the work list.
@@ -805,7 +808,7 @@ private:
 
       if (values.isConcrete()) {
         setValues[set] = values;
-        work.push(set);
+        work.push_back(set);
       }
     };
 
@@ -873,7 +876,7 @@ private:
       if (values.isConcrete()) {
         // We found a constant value!
         getValues[get] = values;
-        work.push(get);
+        work.push_back(get);
         propagated = true;
       }
     };
@@ -890,7 +893,8 @@ private:
 
     // Propagate constant values while work remains.
     while (!work.empty()) {
-      auto* curr = work.pop();
+      auto* curr = work.back();
+      work.pop_back();
 
       // This get or set is a constant value. Check if the things it influences
       // become constant.
