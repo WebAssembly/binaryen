@@ -304,7 +304,7 @@ struct OptimizeAddedConstants
         localGraph->computeSSAIndexes();
         findPropagatable();
       }
-      super::doWalkFunction(func);
+      Super::doWalkFunction(func);
       if (!helperIndexes.empty()) {
         createHelperIndexes();
       }

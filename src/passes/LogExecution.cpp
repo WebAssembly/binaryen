@@ -47,7 +47,7 @@ struct LogExecution : public WalkerPass<PostWalker<LogExecution>> {
 
   void run(Module* module) override {
     loggerModule = getArgumentOrDefault("log-execution", "");
-    super::run(module);
+    Super::run(module);
   }
 
   void visitLoop(Loop* curr) { curr->body = makeLogCall(curr->body); }

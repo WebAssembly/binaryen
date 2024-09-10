@@ -238,7 +238,7 @@ struct OptimizeInstructions
     }
 
     // Main walk.
-    super::doWalkFunction(func);
+    Super::doWalkFunction(func);
 
     if (refinalize) {
       ReFinalize().walkFunctionInModule(func, getModule());

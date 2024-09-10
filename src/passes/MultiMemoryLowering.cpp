@@ -109,7 +109,7 @@ struct MultiMemoryLowering : public Pass {
           return;
         }
       }
-      super::walkFunction(func);
+      Super::walkFunction(func);
     }
 
     void visitMemoryGrow(MemoryGrow* curr) {

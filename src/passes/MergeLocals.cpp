@@ -81,7 +81,7 @@ struct MergeLocals
     // have a new assignment of $y at the location of the copy,
     // which makes it easy for us to see if the value if $y
     // is still used after that point
-    super::doWalkFunction(func);
+    Super::doWalkFunction(func);
 
     // optimize the copies, merging when we can, and removing
     // the trivial assigns we added temporarily
