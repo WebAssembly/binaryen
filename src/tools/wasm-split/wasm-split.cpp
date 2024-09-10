@@ -38,7 +38,7 @@ using namespace wasm;
 namespace {
 
 void parseInput(Module& wasm, const WasmSplitOptions& options) {
-  options.applyFeatures(wasm);
+  options.applyOptionsBeforeParse(wasm);
   ModuleReader reader;
   reader.setProfile(options.profile);
   try {
@@ -51,6 +51,8 @@ void parseInput(Module& wasm, const WasmSplitOptions& options) {
     Fatal() << "error building module, std::bad_alloc (possibly invalid "
                "request for silly amounts of memory)";
   }
+
+  options.applyOptionsAfterParse(wasm);
 
   if (options.passOptions.validate && !WasmValidator().validate(wasm)) {
     Fatal() << "error validating input";

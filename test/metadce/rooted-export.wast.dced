@@ -1,10 +1,10 @@
 (module
- (type $0 (func))
- (type $1 (func (param i32)))
+ (type $0 (func (param i32)))
+ (type $1 (func))
  (tag $b_wasm_tag (param i32))
  (export "wasm_func_b" (func $b_wasm_func))
  (export "wasm_tag_b" (tag $b_wasm_tag))
- (func $b_wasm_func (type $0)
+ (func $b_wasm_func (type $1)
   (unreachable)
  )
 )

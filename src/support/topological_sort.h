@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2024 WebAssembly Community Group participants
  *

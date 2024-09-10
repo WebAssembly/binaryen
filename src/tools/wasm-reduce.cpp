@@ -362,6 +362,9 @@ struct Reducer
 
   void loadWorking() {
     module = std::make_unique<Module>();
+
+    toolOptions.applyOptionsBeforeParse(*module);
+
     ModuleReader reader;
     try {
       reader.read(working, *module);
@@ -371,15 +374,14 @@ struct Reducer
       Fatal() << "error in parsing working wasm binary";
     }
 
+    toolOptions.applyOptionsAfterParse(*module);
+
     // If there is no features section, assume we may need them all (without
     // this, a module with no features section but that uses e.g. atomics and
     // bulk memory would not work).
     if (!module->hasFeaturesSection) {
       module->features = FeatureSet::All;
     }
-    // Apply features the user passed on the commandline.
-    toolOptions.applyFeatures(*module);
-
     builder = std::make_unique<Builder>(*module);
     setModule(module.get());
   }

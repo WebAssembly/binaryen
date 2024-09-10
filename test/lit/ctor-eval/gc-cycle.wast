@@ -1250,11 +1250,11 @@
  ;; CHECK:      (type $A (struct (field (mut (ref null $A)))))
  (type $A (struct (field (mut (ref null $A)))))
 
- ;; CHECK:      (type $1 (func (param anyref)))
+ ;; CHECK:      (type $1 (func))
 
- ;; CHECK:      (type $2 (func))
+ ;; CHECK:      (type $2 (func (param anyref)))
 
- ;; CHECK:      (import "a" "b" (func $import (type $1) (param anyref)))
+ ;; CHECK:      (import "a" "b" (func $import (type $2) (param anyref)))
  (import "a" "b" (func $import (param anyref)))
 
  (func $test (export "test")
@@ -1283,14 +1283,14 @@
 
 ;; CHECK:      (start $start)
 
-;; CHECK:      (func $start (type $2)
+;; CHECK:      (func $start (type $1)
 ;; CHECK-NEXT:  (struct.set $A 0
 ;; CHECK-NEXT:   (global.get $ctor-eval$global)
 ;; CHECK-NEXT:   (global.get $ctor-eval$global)
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )
 
-;; CHECK:      (func $test_3 (type $2)
+;; CHECK:      (func $test_3 (type $1)
 ;; CHECK-NEXT:  (call $import
 ;; CHECK-NEXT:   (global.get $ctor-eval$global)
 ;; CHECK-NEXT:  )

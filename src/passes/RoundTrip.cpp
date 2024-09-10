@@ -40,6 +40,11 @@ struct RoundTrip : public Pass {
     // the target features section has been stripped. We also need them in order
     // to tell the builder which features to build with.
     auto features = module->features;
+
+    // We need to know whether we should preserve the type order when we read
+    // the module back in.
+    bool preserveTypeOrder = !module->typeIndices.empty();
+
     // Write, clear, and read the module
     WasmBinaryWriter(module, buffer, getPassOptions()).write();
     ModuleUtils::clearModule(*module);
@@ -52,6 +57,10 @@ struct RoundTrip : public Pass {
       p.dump(std::cerr);
       std::cerr << '\n';
       Fatal() << "error in parsing wasm binary";
+    }
+
+    if (!preserveTypeOrder) {
+      module->typeIndices.clear();
     }
   }
 };

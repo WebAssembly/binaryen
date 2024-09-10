@@ -6,13 +6,13 @@
 
 (module
 
+ ;; PRIMARY:      (type $0 (func))
+
  ;; PRIMARY:      (type $data-array (array i8))
  (type $data-array (array i8))
 
  ;; PRIMARY:      (type $elem-array (array externref))
  (type $elem-array (array externref))
-
- ;; PRIMARY:      (type $2 (func))
 
  ;; PRIMARY:      (memory $mem 0)
  (memory $mem 0)
