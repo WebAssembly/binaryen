@@ -107,7 +107,8 @@ struct DeadCodeElimination
             replaceCurrent(remainingChildren[0]);
           } else {
             replaceCurrent(builder.makeBlock(remainingChildren));
-            if (!FindAll<Pop>(curr).list.empty()) {
+            if (getModule()->features.hasExceptionHandling() &&
+                !FindAll<Pop>(curr).list.empty()) {
               // We are moving a pop into a new block we just created, which
               // means we may need to fix things up here.
               needEHFixups = true;
