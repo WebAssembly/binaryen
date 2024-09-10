@@ -191,9 +191,6 @@
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (catch_all
-  ;; CHECK-NEXT:    (i32.const 0)
-  ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $pop-within-block (result i32)
