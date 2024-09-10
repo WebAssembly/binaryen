@@ -764,7 +764,39 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     }
   }
 
+  // If we've preserved the input type order on the module, we have to respect
+  // that first. Use the index of the first type from each group. In principle
+  // we could try to do something more robust like take the minimum index of all
+  // the types in the group, but if the groups haven't been preserved, then we
+  // won't be able to perfectly preserve the order anyway.
+  std::vector<std::optional<Index>> groupTypeIndices;
+  if (wasm.typeIndices.empty()) {
+    groupTypeIndices.resize(groups.size());
+  } else {
+    groupTypeIndices.reserve(groups.size());
+    for (auto group : groups) {
+      groupTypeIndices.emplace_back();
+      if (auto it = wasm.typeIndices.find(group[0]);
+          it != wasm.typeIndices.end()) {
+        groupTypeIndices.back() = it->second;
+      }
+    }
+  }
+
   auto order = TopologicalSort::minSort(deps, [&](size_t a, size_t b) {
+    auto indexA = groupTypeIndices[a];
+    auto indexB = groupTypeIndices[b];
+    // Groups with indices must be sorted before groups without indices to
+    // ensure transitivity of this comparison relation.
+    if (indexA.has_value() != indexB.has_value()) {
+      return indexA.has_value();
+    }
+    // Sort by preserved index if we can.
+    if (indexA && *indexA != *indexB) {
+      return *indexA < *indexB;
+    }
+    // Otherwise sort by weight and break ties by the arbitrary deterministic
+    // order in which we've collected types.
     auto weightA = weights[a];
     auto weightB = weights[b];
     if (weightA != weightB) {

@@ -857,7 +857,7 @@ struct MinimizeRecGroups : Pass {
     }
     GlobalTypeRewriter rewriter(wasm);
     rewriter.mapTypes(oldToNew);
-    rewriter.mapTypeNames(oldToNew);
+    rewriter.mapTypeNamesAndIndices(oldToNew);
   }
 };
 
