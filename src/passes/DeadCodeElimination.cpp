@@ -29,6 +29,7 @@
 //
 
 #include "ir/eh-utils.h"
+#include "ir/find_all.h"
 #include "ir/iteration.h"
 #include "ir/properties.h"
 #include "ir/type-updating.h"
@@ -90,11 +91,7 @@ struct DeadCodeElimination
           Builder builder(*getModule());
           std::vector<Expression*> remainingChildren;
           bool afterUnreachable = false;
-          bool hasPop = false;
           for (auto* child : ChildIterator(curr)) {
-            if (child->is<Pop>()) {
-              hasPop = true;
-            }
             if (afterUnreachable) {
               typeUpdater.noteRecursiveRemoval(child);
               continue;
@@ -110,7 +107,7 @@ struct DeadCodeElimination
             replaceCurrent(remainingChildren[0]);
           } else {
             replaceCurrent(builder.makeBlock(remainingChildren));
-            if (hasPop) {
+            if (!FindAll<Pop>(curr).list.empty()) {
               // We are moving a pop into a new block we just created, which
               // means we may need to fix things up here.
               needEHFixups = true;
