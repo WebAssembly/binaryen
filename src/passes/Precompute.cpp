@@ -43,7 +43,8 @@
 namespace wasm {
 
 // A map of gets to their constant values. If a get does not have a constant
-// value then it does not appear in the map.
+// value then it does not appear in the map (that avoids allocating for the
+//majority of gets).
 using GetValues = std::unordered_map<LocalGet*, Literals>;
 
 // A map of values on the heap. This maps the expressions that create the
@@ -753,8 +754,7 @@ private:
     localGraph.computeInfluences();
 
     // A map of sets to their constant values. If a set does not appear here
-    // then it is not constant (that avoids allocating for the majority of
-    // sets).
+    // then it is not constant, like |getValues|.
     std::unordered_map<LocalSet*, Literals> setValues;
 
     // The work list, which will contain sets and gets that have just been
