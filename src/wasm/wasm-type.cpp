@@ -756,38 +756,26 @@ Type::Type(HeapType heapType, Nullability nullable) {
   new (this) Type(globalTypeStore.insert(TypeInfo(heapType, nullable)));
 }
 
-bool Type::isTuple() const {
-  if (isBasic()) {
-    return false;
-  } else {
-    return getTypeInfo(*this)->isTuple();
-  }
+bool Type::isNonBasicTuple() const {
+  assert(!isBasic());
+  return getTypeInfo(*this)->isTuple();
 }
 
-bool Type::isRef() const {
-  if (isBasic()) {
-    return false;
-  } else {
-    return getTypeInfo(*this)->isRef();
-  }
+bool Type::isNonBasicRef() const {
+  assert(!isBasic());
+  return getTypeInfo(*this)->isRef();
 }
 
-bool Type::isFunction() const {
-  if (isBasic()) {
-    return false;
-  } else {
-    auto* info = getTypeInfo(*this);
-    return info->isRef() && info->ref.heapType.isFunction();
-  }
+bool Type::isNonBasicFunction() const {
+  assert(!isBasic());
+  auto* info = getTypeInfo(*this);
+  return info->isRef() && info->ref.heapType.isFunction();
 }
 
-bool Type::isData() const {
-  if (isBasic()) {
-    return false;
-  } else {
-    auto* info = getTypeInfo(*this);
-    return info->isRef() && info->ref.heapType.isData();
-  }
+bool Type::isNonBasicData() const {
+  assert(!isBasic());
+  auto* info = getTypeInfo(*this);
+  return info->isRef() && info->ref.heapType.isData();
 }
 
 bool Type::isNullable() const {

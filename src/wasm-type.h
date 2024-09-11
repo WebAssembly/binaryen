@@ -150,24 +150,58 @@ public:
   constexpr bool isFloat() const { return id == f32 || id == f64; }
   constexpr bool isVector() const { return id == v128; };
   constexpr bool isNumber() const { return id >= i32 && id <= v128; }
-  bool isTuple() const;
   bool isSingle() const { return isConcrete() && !isTuple(); }
-  bool isRef() const;
-  bool isFunction() const;
-  // See literal.h.
-  bool isData() const;
+
+  // Tuples, refs, etc. are quickly handled using isBasic(), leaving the non-
+  // basic case for the underlying implementation.
+
+  bool isTuple() const {
+    if (isBasic()) {
+      return false;
+    } else {
+      return isNonBasicTuple();
+    }
+  }
+
+  bool isRef() const {
+    if (isBasic()) {
+      return false;
+    } else {
+      return isNonBasicRef();
+    }
+  }
+
+  bool isFunction() const {
+    if (isBasic()) {
+      return false;
+    } else {
+      return isNonBasicFunction();
+    }
+  }
+
+  bool isData() const {
+    if (isBasic()) {
+      return false;
+    } else {
+      return isNonBasicData();
+    }
+  }
+
   // Checks whether a type is a reference and is nullable. This returns false
   // for a value that is not a reference, that is, for which nullability is
   // irrelevant.
   bool isNullable() const;
+
   // Checks whether a type is a reference and is non-nullable. This returns
   // false for a value that is not a reference, that is, for which nullability
   // is irrelevant. (For that reason, this is only the negation of isNullable()
   // on references, but both return false on non-references.)
   bool isNonNullable() const;
+
+  bool isSignature() const;
+
   // Whether this type is only inhabited by null values.
   bool isNull() const;
-  bool isSignature() const;
   bool isStruct() const;
   bool isArray() const;
   bool isExn() const;
@@ -177,6 +211,11 @@ public:
   Nullability getNullability() const;
 
 private:
+  bool isNonBasicTuple() const;
+  bool isNonBasicRef() const;
+  bool isNonBasicFunction() const;
+  bool isNonBasicData() const;
+
   template<bool (Type::*pred)() const> bool hasPredicate() {
     for (const auto& type : *this) {
       if ((type.*pred)()) {
