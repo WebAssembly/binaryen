@@ -796,7 +796,7 @@ private:
       // matter either, as if we managed to precompute it then the value had
       // the more specific (in this example, non-nullable) type. But there
       // is a situation where this can cause an issue: RefCast. An attempt to
-      // perform a "bad" cast, say of a function to a struct, is a case where
+      // perform a "bad" cast, say of a null to non-null, is a tricky case where
       // the fallthrough value's type is very different than the actually
       // returned value's type. To handle that, if we precomputed a value and
       // if it has the wrong type then precompute it again without looking
