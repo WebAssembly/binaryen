@@ -842,7 +842,7 @@ private:
           }
         } else {
           // If there is an entry for the set, use that constant. Otherwise, the
-          // set is not constant, and we leave curr as none.
+          // set is not constant, and we give up.
           auto iter = setValues.find(set);
           if (iter == setValues.end()) {
             return;
