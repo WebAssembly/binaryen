@@ -751,7 +751,7 @@ private:
     // compute other sets as locals (since some of the gets they read may be
     // constant). We do this lazily as most locals do not end up with constant
     // values that we can propagate.
-    LocalGraph localGraph(func, getModule());
+    LazyLocalGraph localGraph(func, getModule());
 
     // A map of sets to their constant values. If a set does not appear here
     // then it is not constant, like |getValues|.
