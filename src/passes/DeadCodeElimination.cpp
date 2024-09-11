@@ -57,9 +57,8 @@ struct DeadCodeElimination
   TypeUpdater typeUpdater;
 
   // Information used to decide whether we need EH fixups at the end
-  bool hasPop = false; // Do we have a 'pop' in this function?
+  bool hasPop = false;     // Do we have a 'pop' in this function?
   bool addedBlock = false; // Have we added blocks in this function?
-
 
   Expression* replaceCurrent(Expression* expression) {
     auto* old = getCurrent();
