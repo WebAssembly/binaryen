@@ -202,17 +202,43 @@ struct LazyLocalGraph : public LocalGraphBase {
     }
     return iter->second;
   }
+  const GetInfluences& getGetInfluences(LocalGet* get) const {
+    if (!getInfluences) {
+      computeGetInfluences();
+      assert(getInfluences);
+    }
+    return (*getInfluences)[get];
+  }
+
+  const Locations& getLocations() const {
+    if (!locations) {
+      computeLocations();
+      assert(locations);
+    }
+    return *locations;
+  }
 
 private:
   // These data structures are mutable so that we can memoize.
   mutable GetSetsMap getSetsMap;
 
   mutable SetInfluencesMap setInfluences;
+  // The entire |getInfluences| is computed once the first request for one
+  // arrives, so the entire thing is either present or not, unlike setInfluences
+  // which is fine-grained. The difference is that the influences of a get may
+  // include sets of other indexes, so there is no simple way to lazify that
+  // computation.
+  mutable std::optional<GetInfluencesMap> getInfluences;
+  mutable std::optional<Locations> locations;
 
   // Compute the sets for a get and store them on getSetsMap.
   void computeGetSets(LocalGet* get) const;
   // Compute influences for a set and store them on setInfluences.
   void computeSetInfluences(LocalSet* set) const;
+  // Compute influences for all gets and store them on getInfluences.
+  void computeGetInfluences() const;
+  // Compute locations and store them on getInfluences.
+  void computeLocations() const;
 
   // This remains alive as long as we are, so that we can compute things lazily.
   // It is mutable as when we construct this is an internal detail, that does

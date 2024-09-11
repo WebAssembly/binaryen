@@ -749,9 +749,9 @@ private:
     // Using the graph of get-set interactions, do a constant-propagation type
     // operation: note which sets are assigned locals, then see if that lets us
     // compute other sets as locals (since some of the gets they read may be
-    // constant). First, compute all influences/dependencies.
+    // constant). We do this lazily as most locals do not end up with constant
+    // values that we can propagate.
     LocalGraph localGraph(func, getModule());
-    localGraph.computeInfluences();
 
     // A map of sets to their constant values. If a set does not appear here
     // then it is not constant, like |getValues|.
@@ -875,7 +875,7 @@ private:
 
     // Check all gets and sets to find which are constant, mark them as such,
     // and add propagation work based on that.
-    for (auto& [curr, _] : localGraph.locations) {
+    for (auto& [curr, _] : localGraph.getLocations()) {
       if (auto* set = curr->dynCast<LocalSet>()) {
         checkConstantSet(set);
       } else {
