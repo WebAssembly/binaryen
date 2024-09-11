@@ -56,7 +56,10 @@ struct DeadCodeElimination
   // as we remove code, we must keep the types of other nodes valid
   TypeUpdater typeUpdater;
 
-  bool needEHFixups = false;
+  // Information used to decide whether we need EH fixups at the end
+  bool hasPop = false; // Do we have a 'pop' in this function?
+  bool addedBlock = false; // Have we added blocks in this function?
+
 
   Expression* replaceCurrent(Expression* expression) {
     auto* old = getCurrent();
@@ -75,11 +78,8 @@ struct DeadCodeElimination
   }
 
   void visitExpression(Expression* curr) {
-    // We create new blocks in this function which can move 'pop's into blocks.
-    // So we conservatively run the EH fixup if we ever see a 'pop' in this
-    // function.
     if (curr->is<Pop>()) {
-      needEHFixups = true;
+      hasPop = true;
     }
 
     if (!Properties::isControlFlowStructure(curr)) {
@@ -114,6 +114,7 @@ struct DeadCodeElimination
           if (remainingChildren.size() == 1) {
             replaceCurrent(remainingChildren[0]);
           } else {
+            addedBlock = true;
             replaceCurrent(builder.makeBlock(remainingChildren));
           }
         }
@@ -197,7 +198,10 @@ struct DeadCodeElimination
   }
 
   void visitFunction(Function* curr) {
-    if (needEHFixups) {
+    // We conservatively run the EH pop fixup if this function has a 'pop' and
+    // if we have ever added blocks in the optimization, which may have moved
+    // pops into the blocks.
+    if (hasPop && addedBlock) {
       EHUtils::handleBlockNestedPops(curr, *getModule());
     }
   }
