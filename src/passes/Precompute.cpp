@@ -44,7 +44,7 @@ namespace wasm {
 
 // A map of gets to their constant values. If a get does not have a constant
 // value then it does not appear in the map (that avoids allocating for the
-//majority of gets).
+// majority of gets).
 using GetValues = std::unordered_map<LocalGet*, Literals>;
 
 // A map of values on the heap. This maps the expressions that create the
