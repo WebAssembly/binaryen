@@ -1259,12 +1259,6 @@ struct ParseModuleTypesCtx : TypeParserCtx<ParseModuleTypesCtx>,
   }
 
   Result<HeapType> getBlockTypeFromTypeUse(Index pos, TypeUse use) {
-    assert(use.type.isSignature());
-    if (use.type.getSignature().params != Type::none) {
-      return in.err(pos, "block parameters not yet supported");
-    }
-    // TODO: Once we support block parameters, return an error here if any of
-    // them are named.
     return use.type;
   }
 
@@ -1451,6 +1445,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
   }
 
   Result<HeapType> getBlockTypeFromTypeUse(Index pos, HeapType type) {
+    assert(type.isSignature());
+    if (type.getSignature().params != Type::none) {
+      return in.err(pos, "block parameters not yet supported");
+    }
+    // TODO: Once we support block parameters, return an error here if any of
+    // them are named.
     return type;
   }
 
