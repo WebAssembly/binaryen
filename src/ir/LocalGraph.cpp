@@ -281,6 +281,8 @@ struct LocalGraphFlower
                                       });
           if (lastSet != pred->lastSets.end()) {
             // There is a set here, apply it, and stop the flow.
+            // TODO: If we find a computed get, apply its sets and stop? That
+            //       could help but it requires more info on FlowBlock.
             for (auto* get : gets) {
               getSetsMap[get].insert(lastSet->second);
             }
