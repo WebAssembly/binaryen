@@ -787,26 +787,20 @@ private:
       auto values = precomputeValue(
         Properties::getFallthrough(set->value, getPassOptions(), *getModule()));
 
-      // Fix up the value. The computation we just did was to look at the
-      // fallthrough, then precompute that; that looks through expressions
-      // that pass through the value. Normally that does not matter here,
-      // for example, (block .. (value)) returns the value unmodified.
-      // However, some things change the type, for example RefAsNonNull has
-      // a non-null type, while its input may be nullable. That does not
-      // matter either, as if we managed to precompute it then the value had
-      // the more specific (in this example, non-nullable) type. But there
-      // is a situation where this can cause an issue: RefCast. An attempt to
-      // perform a "bad" cast, say of a null to non-null, is a tricky case where
-      // the fallthrough value's type is very different than the actually
-      // returned value's type. To handle that, if we precomputed a value and
-      // if it has the wrong type then precompute it again without looking
-      // through to the fallthrough.
+      // We precomputed the *fallthrough* value (which allows us to look through
+      // some things that would otherwise block us). But in some cases, like a
+      // ref.cast, the fallthrough value can have an incompatible type for the
+      // entire expression, which would be invalid for us to propagate, e.g.:
+      //
+      //  (ref.cast (ref struct)
+      //    (ref.null any)
+      //  )
+      //
+      // In such a case the value cannot actually fall through. Ignore such
+      // cases (which other optimizations can handle) by making sure that we
+      // only propagate a valid subtype.
       if (values.isConcrete() &&
-          !Type::isSubType(values.getType(), set->value->type)) {
-        values = precomputeValue(set->value);
-      }
-
-      if (values.isConcrete()) {
+          Type::isSubType(values.getType(), set->value->type)) {
         setValues[set] = values;
         work.push_back(set);
       }
