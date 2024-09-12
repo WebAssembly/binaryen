@@ -281,6 +281,8 @@ struct LocalGraphFlower
                                       });
           if (lastSet != pred->lastSets.end()) {
             // There is a set here, apply it, and stop the flow.
+            // TODO: If we find a computed get, apply its sets and stop? That
+            //       could help but it requires more info on FlowBlock.
             for (auto* get : gets) {
               getSetsMap[get].insert(lastSet->second);
             }
@@ -512,7 +514,9 @@ void LocalGraph::computeSetInfluences() {
   }
 }
 
-void LocalGraph::computeGetInfluences() {
+static void
+doComputeGetInfluences(const LocalGraphBase::Locations& locations,
+                       LocalGraphBase::GetInfluencesMap& getInfluences) {
   for (auto& [curr, _] : locations) {
     if (auto* set = curr->dynCast<LocalSet>()) {
       FindAll<LocalGet> findAll(set->value);
@@ -521,6 +525,10 @@ void LocalGraph::computeGetInfluences() {
       }
     }
   }
+}
+
+void LocalGraph::computeGetInfluences() {
+  doComputeGetInfluences(locations, getInfluences);
 }
 
 void LocalGraph::computeSSAIndexes() {
@@ -555,13 +563,12 @@ LazyLocalGraph::LazyLocalGraph(Function* func, Module* module)
   : LocalGraphBase(func, module) {}
 
 void LazyLocalGraph::makeFlower() const {
-  // Lazy graphs do not provide |locations| publicly. TODO: perhaps refactor to
-  // avoid filling in this dummy data structure, but we may want to add a lazy
-  // version of it too, so see which makes sense first.
-  LocalGraph::Locations locations;
+  // |locations| is set here and filled in by |flower|.
+  assert(!locations);
+  locations.emplace();
 
   flower =
-    std::make_unique<LocalGraphFlower>(getSetsMap, locations, func, module);
+    std::make_unique<LocalGraphFlower>(getSetsMap, *locations, func, module);
 
   flower->prepareLaziness();
 
@@ -585,6 +592,9 @@ LazyLocalGraph::~LazyLocalGraph() {
 }
 
 void LazyLocalGraph::computeGetSets(LocalGet* get) const {
+  // We must never repeat work.
+  assert(!getSetsMap.count(get));
+
   if (!flower) {
     makeFlower();
   }
@@ -592,10 +602,40 @@ void LazyLocalGraph::computeGetSets(LocalGet* get) const {
 }
 
 void LazyLocalGraph::computeSetInfluences(LocalSet* set) const {
+  // We must never repeat work.
+  assert(!setInfluences.count(set));
+
   if (!flower) {
     makeFlower();
   }
   flower->computeSetInfluences(set, setInfluences);
+}
+
+void LazyLocalGraph::computeGetInfluences() const {
+  // We must never repeat work.
+  assert(!getInfluences);
+
+  // We do not need any flow for this, but we do need |locations| to be filled
+  // in.
+  getLocations();
+  assert(locations);
+
+  getInfluences.emplace();
+  doComputeGetInfluences(*locations, *getInfluences);
+}
+
+void LazyLocalGraph::computeLocations() const {
+  // We must never repeat work.
+  assert(!locations);
+
+  // |flower| fills in |locations| as it scans the function.
+  //
+  // In theory we could be even lazier here, but it is nice that flower will
+  // fill in the locations as it goes, avoiding an additional pass. And, in
+  // practice, if we ask for locations then we likely need other things anyhow.
+  if (!flower) {
+    makeFlower();
+  }
 }
 
 } // namespace wasm
