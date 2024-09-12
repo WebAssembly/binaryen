@@ -41,43 +41,6 @@ namespace wasm {
 
 namespace {
 
-struct TypeInfo {
-  using type_t = Type;
-  // Used in assertions to ensure that temporary types don't leak into the
-  // global store.
-  bool isTemp = false;
-  enum Kind {
-    TupleKind,
-    RefKind,
-  } kind;
-  struct Ref {
-    HeapType heapType;
-    Nullability nullability;
-  };
-  union {
-    Tuple tuple;
-    Ref ref;
-  };
-
-  TypeInfo(const Tuple& tuple) : kind(TupleKind), tuple(tuple) {}
-  TypeInfo(Tuple&& tuple) : kind(TupleKind), tuple(std::move(tuple)) {}
-  TypeInfo(HeapType heapType, Nullability nullable)
-    : kind(RefKind), ref{heapType, nullable} {}
-  TypeInfo(const TypeInfo& other);
-  ~TypeInfo();
-
-  constexpr bool isTuple() const { return kind == TupleKind; }
-  constexpr bool isRef() const { return kind == RefKind; }
-
-  // If this TypeInfo represents a Type that can be represented more simply,
-  // return that simpler Type. For example, this handles eliminating singleton
-  // tuple types.
-  std::optional<Type> getCanonical() const;
-
-  bool operator==(const TypeInfo& other) const;
-  bool operator!=(const TypeInfo& other) const { return !(*this == other); }
-};
-
 using RecGroupInfo = std::vector<HeapType>;
 
 struct HeapTypeInfo {
@@ -403,11 +366,6 @@ public:
 namespace wasm {
 namespace {
 
-TypeInfo* getTypeInfo(Type type) {
-  assert(!type.isBasic());
-  return (TypeInfo*)type.getID();
-}
-
 HeapTypeInfo* getHeapTypeInfo(HeapType ht) {
   assert(!ht.isBasic());
   return (HeapTypeInfo*)ht.getID();
@@ -419,12 +377,12 @@ HeapType asHeapType(std::unique_ptr<HeapTypeInfo>& info) {
 
 Type markTemp(Type type) {
   if (!type.isBasic()) {
-    getTypeInfo(type)->isTemp = true;
+    Type::getTypeInfo(type)->isTemp = true;
   }
   return type;
 }
 
-bool isTemp(Type type) { return !type.isBasic() && getTypeInfo(type)->isTemp; }
+bool isTemp(Type type) { return !type.isBasic() && Type::getTypeInfo(type)->isTemp; }
 
 bool isTemp(HeapType type) {
   return !type.isBasic() && getHeapTypeInfo(type)->isTemp;
@@ -517,6 +475,8 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
   return {lubUnshared.getBasic(share)};
 }
 
+} // anonymous namespace
+
 TypeInfo::TypeInfo(const TypeInfo& other) {
   kind = other.kind;
   switch (kind) {
@@ -587,6 +547,8 @@ HeapTypeInfo::~HeapTypeInfo() {
   }
   WASM_UNREACHABLE("unexpected kind");
 }
+
+namespace {
 
 struct TypeStore {
   std::recursive_mutex mutex;
@@ -756,48 +718,6 @@ Type::Type(HeapType heapType, Nullability nullable) {
   new (this) Type(globalTypeStore.insert(TypeInfo(heapType, nullable)));
 }
 
-bool Type::isNonBasicTuple() const {
-  assert(!isBasic());
-  return getTypeInfo(*this)->isTuple();
-}
-
-bool Type::isNonBasicRef() const {
-  assert(!isBasic());
-  return getTypeInfo(*this)->isRef();
-}
-
-bool Type::isNonBasicFunction() const {
-  assert(!isBasic());
-  auto* info = getTypeInfo(*this);
-  return info->isRef() && info->ref.heapType.isFunction();
-}
-
-bool Type::isNonBasicData() const {
-  assert(!isBasic());
-  auto* info = getTypeInfo(*this);
-  return info->isRef() && info->ref.heapType.isData();
-}
-
-bool Type::isNullable() const {
-  if (isRef()) {
-    return getTypeInfo(*this)->ref.nullability == Nullable;
-  } else {
-    return false;
-  }
-}
-
-bool Type::isNonNullable() const {
-  if (isRef()) {
-    return getTypeInfo(*this)->ref.nullability == NonNullable;
-  } else {
-    return false;
-  }
-}
-
-bool Type::isSignature() const {
-  return isRef() && getHeapType().isSignature();
-}
-
 bool Type::isStruct() const { return isRef() && getHeapType().isStruct(); }
 
 bool Type::isArray() const { return isRef() && getHeapType().isArray(); }
@@ -905,16 +825,6 @@ FeatureSet Type::getFeatures() const {
     return feats;
   }
   return getSingleFeatures(*this);
-}
-
-const Tuple& Type::getTuple() const {
-  assert(isTuple());
-  return getTypeInfo(*this)->tuple;
-}
-
-HeapType Type::getHeapType() const {
-  assert(isRef());
-  return getTypeInfo(*this)->ref.heapType;
 }
 
 Type Type::get(unsigned byteSize, bool float_) {
@@ -2099,7 +2009,7 @@ size_t RecGroupHasher::hash(Type type) const {
   if (type.isBasic()) {
     wasm::rehash(digest, type.getID());
   } else {
-    hash_combine(digest, hash(*getTypeInfo(type)));
+    hash_combine(digest, hash(*Type::getTypeInfo(type)));
   }
   return digest;
 }
@@ -2231,7 +2141,7 @@ bool RecGroupEquator::eq(Type a, Type b) const {
   if (a.isBasic() || b.isBasic()) {
     return a == b;
   }
-  return eq(*getTypeInfo(a), *getTypeInfo(b));
+  return eq(*Type::getTypeInfo(a), *Type::getTypeInfo(b));
 }
 
 bool RecGroupEquator::eq(HeapType a, HeapType b) const {
@@ -2381,7 +2291,7 @@ template<typename Self> void TypeGraphWalkerBase<Self>::scanType(Type* type) {
   if (type->isBasic()) {
     return;
   }
-  auto* info = getTypeInfo(*type);
+  auto* info = Type::getTypeInfo(*type);
   switch (info->kind) {
     case TypeInfo::TupleKind: {
       auto& types = info->tuple;
@@ -2787,7 +2697,7 @@ buildRecGroup(std::unique_ptr<RecGroupInfo>&& groupInfo,
   auto canonicalizeTypes = [&](bool tuples) {
     for (auto& [original, uses] : locations.types) {
       if (original.isTuple() == tuples) {
-        Type canonical = globalTypeStore.insert(*getTypeInfo(original));
+        Type canonical = globalTypeStore.insert(*Type::getTypeInfo(original));
         for (Type* use : uses) {
           *use = canonical;
         }
