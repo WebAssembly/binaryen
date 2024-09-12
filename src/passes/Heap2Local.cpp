@@ -1196,9 +1196,7 @@ struct Heap2Local {
       // Also note if pop exist here, as they may require fixups.
       bool hasPop = false;
 
-      void visitPop(Pop* curr) {
-        hasPop = true;
-      }
+      void visitPop(Pop* curr) { hasPop = true; }
     } finder;
     finder.walk(func->body);
 
