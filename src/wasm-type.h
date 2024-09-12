@@ -433,9 +433,7 @@ public:
     }
   }
 
-  bool isSignature() const {
-    return isRef() && getHeapType().isSignature();
-  }
+  bool isSignature() const { return isRef() && getHeapType().isSignature(); }
 
   // Whether this type is only inhabited by null values.
   bool isNull() const;
