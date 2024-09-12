@@ -1193,7 +1193,7 @@ struct Heap2Local {
         return size < 20;
       }
 
-      // Also note if pop exist here, as they may require fixups.
+      // Also note if a pop exists here, as they may require fixups.
       bool hasPop = false;
 
       void visitPop(Pop* curr) { hasPop = true; }
