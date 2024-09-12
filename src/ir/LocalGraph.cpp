@@ -514,8 +514,9 @@ void LocalGraph::computeSetInfluences() {
   }
 }
 
-static void doComputeGetInfluences(const LocalGraphBase::Locations& locations,
-                                   LocalGraphBase::GetInfluencesMap& getInfluences) {
+static void
+doComputeGetInfluences(const LocalGraphBase::Locations& locations,
+                       LocalGraphBase::GetInfluencesMap& getInfluences) {
   for (auto& [curr, _] : locations) {
     if (auto* set = curr->dynCast<LocalSet>()) {
       FindAll<LocalGet> findAll(set->value);
@@ -629,11 +630,9 @@ void LazyLocalGraph::computeLocations() const {
 
   // |flower| fills in |locations| as it scans the function.
   //
-  // In theory we could be even lazier here, but it is nice that flower will fill in
-  // the locations as it goes, avoiding an additional pass. And, in practice,
-  // if we ask for getInfluences then we must be propagating a get, which
-  // implies we are also doing set propagation, which means we need the full
-  // flower setup anyhow.
+  // In theory we could be even lazier here, but it is nice that flower will
+  // fill in the locations as it goes, avoiding an additional pass. And, in
+  // practice, if we ask for locations then we likely need other things anyhow.
   if (!flower) {
     makeFlower();
   }
