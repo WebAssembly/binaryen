@@ -17,14 +17,14 @@
 
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (global $string.const_bar (ref string) (string.const "bar"))
+  ;; CHECK:      (global $"string.const_\"bar\"" (ref string) (string.const "bar"))
 
-  ;; CHECK:      (global $string.const_other (ref string) (string.const "other"))
+  ;; CHECK:      (global $"string.const_\"other\"" (ref string) (string.const "other"))
 
   ;; CHECK:      (global $global (ref string) (string.const "foo"))
   (global $global (ref string) (string.const "foo"))
 
-  ;; CHECK:      (global $global2 stringref (global.get $string.const_bar))
+  ;; CHECK:      (global $global2 stringref (global.get $"string.const_\"bar\""))
   ;; LOWER:      (type $0 (array (mut i16)))
 
   ;; LOWER:      (type $1 (func))
@@ -45,9 +45,9 @@
 
   ;; LOWER:      (type $9 (func (param externref i32 i32) (result (ref extern))))
 
-  ;; LOWER:      (import "string.const" "0" (global $string.const_bar (ref extern)))
+  ;; LOWER:      (import "string.const" "0" (global $"string.const_\"bar\"" (ref extern)))
 
-  ;; LOWER:      (import "string.const" "1" (global $string.const_other (ref extern)))
+  ;; LOWER:      (import "string.const" "1" (global $"string.const_\"other\"" (ref extern)))
 
   ;; LOWER:      (import "string.const" "2" (global $global (ref extern)))
 
@@ -69,12 +69,12 @@
 
   ;; LOWER:      (import "wasm:js-string" "substring" (func $substring (type $9) (param externref i32 i32) (result (ref extern))))
 
-  ;; LOWER:      (global $global2 externref (global.get $string.const_bar))
+  ;; LOWER:      (global $global2 externref (global.get $"string.const_\"bar\""))
   (global $global2 (ref null string) (string.const "bar"))
 
   ;; CHECK:      (func $a (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $string.const_bar)
+  ;; CHECK-NEXT:   (global.get $"string.const_\"bar\"")
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $global)
@@ -82,7 +82,7 @@
   ;; CHECK-NEXT: )
   ;; LOWER:      (func $a (type $1)
   ;; LOWER-NEXT:  (drop
-  ;; LOWER-NEXT:   (global.get $string.const_bar)
+  ;; LOWER-NEXT:   (global.get $"string.const_\"bar\"")
   ;; LOWER-NEXT:  )
   ;; LOWER-NEXT:  (drop
   ;; LOWER-NEXT:   (global.get $global)
@@ -99,10 +99,10 @@
 
   ;; CHECK:      (func $b (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $string.const_bar)
+  ;; CHECK-NEXT:   (global.get $"string.const_\"bar\"")
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $string.const_other)
+  ;; CHECK-NEXT:   (global.get $"string.const_\"other\"")
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (global.get $global)
@@ -113,10 +113,10 @@
   ;; CHECK-NEXT: )
   ;; LOWER:      (func $b (type $1)
   ;; LOWER-NEXT:  (drop
-  ;; LOWER-NEXT:   (global.get $string.const_bar)
+  ;; LOWER-NEXT:   (global.get $"string.const_\"bar\"")
   ;; LOWER-NEXT:  )
   ;; LOWER-NEXT:  (drop
-  ;; LOWER-NEXT:   (global.get $string.const_other)
+  ;; LOWER-NEXT:   (global.get $"string.const_\"other\"")
   ;; LOWER-NEXT:  )
   ;; LOWER-NEXT:  (drop
   ;; LOWER-NEXT:   (global.get $global)
@@ -217,9 +217,9 @@
 (module
   ;; CHECK:      (type $0 (func))
 
-  ;; CHECK:      (global $string.const_foo (ref string) (string.const "foo"))
+  ;; CHECK:      (global $"string.const_\"foo\"" (ref string) (string.const "foo"))
 
-  ;; CHECK:      (global $global (mut (ref string)) (global.get $string.const_foo))
+  ;; CHECK:      (global $global (mut (ref string)) (global.get $"string.const_\"foo\""))
   ;; LOWER:      (type $0 (array (mut i16)))
 
   ;; LOWER:      (type $1 (func (param externref externref) (result i32)))
@@ -240,7 +240,7 @@
 
   ;; LOWER:      (type $9 (func (param externref i32 i32) (result (ref extern))))
 
-  ;; LOWER:      (import "string.const" "0" (global $string.const_foo (ref extern)))
+  ;; LOWER:      (import "string.const" "0" (global $"string.const_\"foo\"" (ref extern)))
 
   ;; LOWER:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $3) (param (ref null $0) i32 i32) (result (ref extern))))
 
@@ -260,17 +260,17 @@
 
   ;; LOWER:      (import "wasm:js-string" "substring" (func $substring (type $9) (param externref i32 i32) (result (ref extern))))
 
-  ;; LOWER:      (global $global (mut (ref extern)) (global.get $string.const_foo))
+  ;; LOWER:      (global $global (mut (ref extern)) (global.get $"string.const_\"foo\""))
   (global $global (mut (ref string)) (string.const "foo"))
 
   ;; CHECK:      (func $a (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (global.get $string.const_foo)
+  ;; CHECK-NEXT:   (global.get $"string.const_\"foo\"")
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   ;; LOWER:      (func $a (type $2)
   ;; LOWER-NEXT:  (drop
-  ;; LOWER-NEXT:   (global.get $string.const_foo)
+  ;; LOWER-NEXT:   (global.get $"string.const_\"foo\"")
   ;; LOWER-NEXT:  )
   ;; LOWER-NEXT: )
   (func $a
