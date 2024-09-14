@@ -329,6 +329,7 @@ void splitModule(const WasmSplitOptions& options) {
   if (options.exportPrefix.size()) {
     config.newExportPrefix = options.exportPrefix;
   }
+  config.usePlaceholders = options.usePlaceholders;
   config.minimizeNewExportNames = !options.passOptions.debugInfo;
   config.jspi = options.jspi;
   auto splitResults = ModuleSplitting::splitFunctions(wasm, config);

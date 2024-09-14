@@ -177,6 +177,15 @@ WasmSplitOptions::WasmSplitOptions()
          Options::Arguments::Zero,
          [&](Options* o, const std::string& argument) { symbolMap = true; })
     .add(
+      "--no-placeholders",
+      "",
+      "Do not import placeholder functions. Calls to secondary functions will "
+      "fail before the secondary module has been instantiated.",
+      WasmSplitOption,
+      {Mode::Split},
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { usePlaceholders = false; })
+    .add(
       "--placeholdermap",
       "",
       "Write a file mapping placeholder indices to the function names.",
