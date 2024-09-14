@@ -59,7 +59,6 @@ void Instrumenter::addGlobals(size_t numFuncs) {
       Type::i32,
       Builder(*wasm).makeConst(Literal::makeZero(Type::i32)),
       Builder::Mutable);
-    global->hasExplicitName = true;
     wasm->addGlobal(std::move(global));
   };
   addGlobal(counterGlobal);
@@ -204,7 +203,6 @@ void Instrumenter::addProfileExport(size_t numFuncs) {
   auto name = Names::getValidFunctionName(*wasm, config.profileExport);
   auto writeProfile =
     Builder::makeFunction(name, Signature({ptrType, Type::i32}, Type::i32), {});
-  writeProfile->hasExplicitName = true;
   writeProfile->setLocalName(0, "addr");
   writeProfile->setLocalName(1, "size");
 
