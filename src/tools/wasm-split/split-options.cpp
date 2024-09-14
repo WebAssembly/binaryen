@@ -61,6 +61,9 @@ std::ostream& operator<<(std::ostream& o, WasmSplitOptions::Mode& mode) {
     case WasmSplitOptions::Mode::Split:
       o << "split";
       break;
+    case WasmSplitOptions::Mode::MultiSplit:
+      o << "multi-split";
+      break;
     case WasmSplitOptions::Mode::Instrument:
       o << "instrument";
       break;
@@ -91,7 +94,14 @@ WasmSplitOptions::WasmSplitOptions()
          "Split an input module into two output modules. The default mode.",
          WasmSplitOption,
          Options::Arguments::Zero,
-         [&](Options* o, const std::string& arugment) { mode = Mode::Split; })
+         [&](Options* o, const std::string& argument) { mode = Mode::Split; })
+    .add(
+      "--multi-split",
+      "",
+      "Split an input module into an arbitrary number of output modules.",
+      WasmSplitOption,
+      Options::Arguments::Zero,
+      [&](Options* o, const std::string& argument) { mode = Mode::MultiSplit; })
     .add(
       "--instrument",
       "",
@@ -151,6 +161,25 @@ WasmSplitOptions::WasmSplitOptions()
          [&](Options* o, const std::string& argument) {
            splitFuncs = parseNameList(argument);
          })
+    .add(
+      "--manifest",
+      "",
+      "File describing the functions to be split into each module. Each "
+      "section separated by a blank line begins with the base name of an "
+      "output module, which is followed by a list of functions to place in "
+      "that module, one per line.",
+      WasmSplitOption,
+      {Mode::MultiSplit},
+      Options::Arguments::One,
+      [&](Options* o, const std::string& argument) { manifestFile = argument; })
+    .add("--out-prefix",
+         "",
+         "Prefix prepended to module names in the manifest file to create "
+         "output file names.",
+         WasmSplitOption,
+         {Mode::MultiSplit},
+         Options::Arguments::One,
+         [&](Options* o, const std::string& argument) { outPrefix = argument; })
     .add("--primary-output",
          "-o1",
          "Output file for the primary module.",
@@ -313,7 +342,7 @@ WasmSplitOptions::WasmSplitOptions()
          "-g",
          "Emit names section in wasm binary (or full debuginfo in wast)",
          WasmSplitOption,
-         {Mode::Split, Mode::Instrument},
+         {Mode::Split, Mode::MultiSplit, Mode::Instrument},
          Options::Arguments::Zero,
          [&](Options* o, const std::string& arguments) {
            passOptions.debugInfo = true;
@@ -322,7 +351,7 @@ WasmSplitOptions::WasmSplitOptions()
          "-o",
          "Output file.",
          WasmSplitOption,
-         {Mode::Instrument, Mode::MergeProfiles},
+         {Mode::Instrument, Mode::MergeProfiles, Mode::MultiSplit},
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) { output = argument; })
     .add("--unescape",
@@ -407,6 +436,7 @@ bool WasmSplitOptions::validate() {
   }
   switch (mode) {
     case Mode::Split:
+    case Mode::MultiSplit:
     case Mode::Instrument:
       if (inputFiles.size() > 1) {
         fail("Cannot have more than one input file.");

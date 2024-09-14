@@ -362,6 +362,82 @@ void splitModule(const WasmSplitOptions& options) {
   writeModule(*secondary, options.secondaryOutput, options);
 }
 
+void multiSplitModule(const WasmSplitOptions& options) {
+  if (options.manifestFile.empty()) {
+    Fatal() << "--multi-split requires --manifest";
+  }
+  if (options.output.empty()) {
+    Fatal() << "--multi-split requires --output";
+  }
+
+  std::ifstream manifest(options.manifestFile);
+  if (!manifest.is_open()) {
+    Fatal() << "File not found: " << options.manifestFile;
+  }
+
+  Module wasm;
+  parseInput(wasm, options);
+
+  std::map<std::string, std::unordered_set<std::string>> moduleFuncs;
+  std::string currModule;
+  std::unordered_set<std::string>* currFuncs = nullptr;
+  std::unordered_map<std::string, std::string> funcModules;
+
+  std::string line;
+  bool newSection = true;
+  while (std::getline(manifest, line)) {
+    if (line.empty()) {
+      newSection = true;
+      continue;
+    }
+    if (newSection) {
+      currModule = line;
+      currFuncs = &moduleFuncs[line];
+      newSection = false;
+      continue;
+    }
+    assert(currFuncs);
+    currFuncs->insert(line);
+    auto [it, inserted] = funcModules.insert({line, currModule});
+    if (!inserted && it->second != currModule) {
+      Fatal() << "Function " << line << "cannot be assigned to module "
+              << currModule << "; it is already assigned to module "
+              << it->second << '\n';
+    }
+    if (inserted && !options.quiet && !wasm.getFunctionOrNull(line)) {
+      std::cerr << "warning: Function " << line << " does not exist\n";
+    }
+  }
+
+  ModuleSplitting::Config config;
+  config.usePlaceholders = false;
+  config.importNamespace = "";
+  config.minimizeNewExportNames = true;
+  for (auto& func : wasm.functions) {
+    config.primaryFuncs.insert(func->name);
+  }
+  for (auto& [mod, funcs] : moduleFuncs) {
+    if (options.verbose) {
+      std::cerr << "Splitting module " << mod << '\n';
+    }
+    if (!options.quiet && funcs.empty()) {
+      std::cerr << "warning: Module " << mod << " will be empty\n";
+    }
+    for (auto& func : funcs) {
+      config.primaryFuncs.erase(Name(func));
+    }
+    auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
+    // TODO: symbolMap, placeholderMap, emitModuleNames
+    // TODO: Support --emit-text and use .wast in that case.
+    auto moduleName = options.outPrefix + mod + ".wasm";
+    PassRunner runner(&*splitResults.secondary);
+    runner.add("remove-unused-module-elements");
+    runner.run();
+    writeModule(*splitResults.secondary, moduleName, options);
+  }
+  writeModule(wasm, options.output, options);
+}
+
 void mergeProfiles(const WasmSplitOptions& options) {
   // Read the initial profile. We will merge other profiles into this one.
   ProfileData data = readProfile(options.inputFiles[0]);
@@ -502,6 +578,9 @@ int main(int argc, const char* argv[]) {
   switch (options.mode) {
     case WasmSplitOptions::Mode::Split:
       splitModule(options);
+      break;
+    case WasmSplitOptions::Mode::MultiSplit:
+      multiSplitModule(options);
       break;
     case WasmSplitOptions::Mode::Instrument:
       instrumentModule(options);
