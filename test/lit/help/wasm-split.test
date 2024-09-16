@@ -52,6 +52,11 @@
 ;; CHECK-NEXT:   --symbolmap                          [split] Write a symbol map file for each
 ;; CHECK-NEXT:                                        of the output modules.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --no-placeholders                    [split] Do not import placeholder
+;; CHECK-NEXT:                                        functions. Calls to secondary functions
+;; CHECK-NEXT:                                        will fail before the secondary module has
+;; CHECK-NEXT:                                        been instantiated.
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --placeholdermap                     [split] Write a file mapping placeholder
 ;; CHECK-NEXT:                                        indices to the function names.
 ;; CHECK-NEXT:

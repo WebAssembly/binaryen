@@ -94,10 +94,9 @@ template<class F> void forEachElement(Module& module, F f) {
     } else if (auto* g = segment->offset->dynCast<GlobalGet>()) {
       base = g->name;
     }
-    ElementUtils::iterElementSegmentFunctionNames(
-      segment, [&](Name& entry, Index i) {
-        f(segment->table, base, offset + i, entry);
-      });
+    for (Index i = 0; i < segment->data.size(); ++i) {
+      f(segment->table, base, offset + i, segment->data[i]);
+    }
   });
 }
 
@@ -209,9 +208,12 @@ TableSlotManager::TableSlotManager(Module& module) : module(module) {
   }
 
   // Initialize funcIndices with the functions already in the table.
-  forEachElement(module, [&](Name table, Name base, Index offset, Name func) {
-    addSlot(func, {table, base, offset});
-  });
+  forEachElement(module,
+                 [&](Name table, Name base, Index offset, Expression* elem) {
+                   if (auto* func = elem->dynCast<RefFunc>()) {
+                     addSlot(func->func, {table, base, offset});
+                   }
+                 });
 }
 
 Table* TableSlotManager::makeTable() {
@@ -693,21 +695,32 @@ void ModuleSplitter::setupTablePatching() {
   // Replace table references to secondary functions with an imported
   // placeholder that encodes the table index in its name:
   // `importNamespace`.`index`.
-  forEachElement(primary, [&](Name, Name, Index index, Name& elem) {
-    if (secondaryFuncs.count(elem)) {
-      placeholderMap[index] = elem;
-      auto* secondaryFunc = secondary.getFunction(elem);
-      replacedElems[index] = secondaryFunc;
-      auto placeholder = std::make_unique<Function>();
-      placeholder->module = config.placeholderNamespace;
-      placeholder->base = std::to_string(index);
-      placeholder->name = Names::getValidFunctionName(
-        primary, std::string("placeholder_") + placeholder->base.toString());
-      placeholder->hasExplicitName = true;
-      placeholder->type = secondaryFunc->type;
-      elem = placeholder->name;
-      primary.addFunction(std::move(placeholder));
+  forEachElement(primary, [&](Name, Name, Index index, Expression*& elem) {
+    auto* ref = elem->dynCast<RefFunc>();
+    if (!ref) {
+      return;
     }
+    if (!secondaryFuncs.count(ref->func)) {
+      return;
+    }
+    placeholderMap[index] = ref->func;
+    auto* secondaryFunc = secondary.getFunction(ref->func);
+    replacedElems[index] = secondaryFunc;
+    if (!config.usePlaceholders) {
+      // TODO: This can create active element segments with lots of nulls. We
+      // should optimize them like we do data segments with zeros.
+      elem = Builder(primary).makeRefNull(HeapType::nofunc);
+      return;
+    }
+    auto placeholder = std::make_unique<Function>();
+    placeholder->module = config.placeholderNamespace;
+    placeholder->base = std::to_string(index);
+    placeholder->name = Names::getValidFunctionName(
+      primary, std::string("placeholder_") + placeholder->base.toString());
+    placeholder->hasExplicitName = true;
+    placeholder->type = secondaryFunc->type;
+    elem = Builder(primary).makeRefFunc(placeholder->name, placeholder->type);
+    primary.addFunction(std::move(placeholder));
   });
 
   if (replacedElems.size() == 0) {
