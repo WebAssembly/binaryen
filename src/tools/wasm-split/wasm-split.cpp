@@ -378,9 +378,14 @@ void multiSplitModule(const WasmSplitOptions& options) {
   Module wasm;
   parseInput(wasm, options);
 
+  // Map module names to the functions that should be in the modules.
   std::map<std::string, std::unordered_set<std::string>> moduleFuncs;
+  // The module for which we are currently parsing a set of functions.
   std::string currModule;
+  // The set of functions we are currently inserting into.
   std::unordered_set<std::string>* currFuncs = nullptr;
+  // Map functions to their modules to ensure no function is assigned to
+  // multiple modules.
   std::unordered_map<std::string, std::string> funcModules;
 
   std::string line;
