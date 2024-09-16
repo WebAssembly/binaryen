@@ -175,6 +175,10 @@ GlobalTypeRewriter::TypeMap GlobalTypeRewriter::rebuildTypes(
 #endif
   auto& newTypes = *buildResults;
 
+  // TODO: It is possible that the newly built rec group matches some public rec
+  // group. If that is the case, we need to try a different permutation of the
+  // types or add a brand type to distinguish the private types.
+
   // Map the old types to the new ones.
   TypeMap oldToNewTypes;
   for (auto [type, index] : typeIndices) {
