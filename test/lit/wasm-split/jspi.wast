@@ -48,8 +48,6 @@
 
  ;; SECONDARY:      (import "primary" "%table" (table $timport$0 1 funcref))
 
- ;; SECONDARY:      (import "primary" "load_secondary_module_status" (global $gimport$0 (mut i32)))
-
  ;; SECONDARY:      (import "primary" "foo" (func $foo (param i32) (result i32)))
 
  ;; SECONDARY:      (elem $0 (i32.const 0) $bar)
