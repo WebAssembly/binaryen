@@ -50,6 +50,7 @@
 
 #include <variant>
 
+#include "ir/bits.h"
 #include "ir/debuginfo.h"
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
