@@ -3,9 +3,6 @@
 set -o errexit
 set -o pipefail
 
-set -e
-set -x
-
 if [ -n "$1" ]; then
   BRANCH="$1"
 elif [ -n "$GITHUB_BASE_REF" ]; then
