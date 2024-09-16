@@ -193,7 +193,7 @@ protected:
   // this function in LSan.
   //
   // This consumes the input |data| entirely.
-  Literal makeGCData(Literals& data, Type type) {
+  Literal makeGCData(Literals&& data, Type type) {
     auto allocation =
       std::make_shared<GCData>(type.getHeapType(), std::move(data));
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
