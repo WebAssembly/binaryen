@@ -78,238 +78,6 @@ using HeapTypeNameGenerator = std::function<TypeNames(HeapType)>;
 // HeapType.
 using TypeID = uint64_t;
 
-class Type {
-  // The `id` uniquely represents each type, so type equality is just a
-  // comparison of the ids. For basic types the `id` is just the `BasicType`
-  // enum value below, and for constructed types the `id` is the address of the
-  // canonical representation of the type, making lookups cheap for all types.
-  // Since `Type` is really just a single integer, it should be passed by value.
-  // This is a uintptr_t rather than a TypeID (uint64_t) to save memory on
-  // 32-bit platforms.
-  uintptr_t id;
-
-public:
-  enum BasicType : uint32_t {
-    none,
-    unreachable,
-    i32,
-    i64,
-    f32,
-    f64,
-    v128,
-  };
-  static constexpr BasicType _last_basic_type = v128;
-
-  Type() : id(none) {}
-
-  // BasicType can be implicitly upgraded to Type
-  constexpr Type(BasicType id) : id(id) {}
-
-  // But converting raw TypeID is more dangerous, so make it explicit
-  explicit Type(TypeID id) : id(id) {}
-
-  // Construct tuple from a list of single types
-  Type(std::initializer_list<Type>);
-
-  // Construct from tuple description
-  Type(const Tuple&);
-  Type(Tuple&&);
-
-  // Construct from a heap type description. Also covers construction from
-  // Signature, Struct or Array via implicit conversion to HeapType.
-  Type(HeapType, Nullability nullable);
-
-  // Predicates
-  //                 Compound Concrete
-  //   Type        Basic │ Single│
-  // ╒═════════════╦═│═╤═│═╤═│═╤═│═╤═══════╕
-  // │ none        ║ x │   │   │   │       │
-  // │ unreachable ║ x │   │   │   │       │
-  // ├─────────────╫───┼───┼───┼───┤───────┤
-  // │ i32         ║ x │   │ x │ x │ I     │ ┐ Number
-  // │ i64         ║ x │   │ x │ x │ I     │ │  I_nteger
-  // │ f32         ║ x │   │ x │ x │   F   │ │  F_loat
-  // │ f64         ║ x │   │ x │ x │   F   │ │  V_ector
-  // │ v128        ║ x │   │ x │ x │     V │ ┘
-  // ├─ Aliases ───╫───┼───┼───┼───┤───────┤
-  // │ funcref     ║ x │   │ x │ x │ f  n  │ ┐ Ref
-  // │ anyref      ║ x │   │ x │ x │ f? n  │ │  f_unc
-  // │ eqref       ║ x │   │ x │ x │    n  │ │  n_ullable
-  // │ i31ref      ║ x │   │ x │ x │    n  │ │
-  // │ structref   ║ x │   │ x │ x │    n  │ │
-  // │ arrayref    ║ x │   │ x │ x │    n  │ │
-  // │ exnref      ║ x │   │ x │ x │    n  │ │
-  // │ stringref   ║ x │   │ x │ x │    n  │ │
-  // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
-  // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
-  // │ Tuple       ║   │ x │   │ x │       │
-  // └─────────────╨───┴───┴───┴───┴───────┘
-  constexpr bool isBasic() const { return id <= _last_basic_type; }
-  constexpr bool isConcrete() const { return id >= i32; }
-  constexpr bool isInteger() const { return id == i32 || id == i64; }
-  constexpr bool isFloat() const { return id == f32 || id == f64; }
-  constexpr bool isVector() const { return id == v128; };
-  constexpr bool isNumber() const { return id >= i32 && id <= v128; }
-  bool isTuple() const;
-  bool isSingle() const { return isConcrete() && !isTuple(); }
-  bool isRef() const;
-  bool isFunction() const;
-  // See literal.h.
-  bool isData() const;
-  // Checks whether a type is a reference and is nullable. This returns false
-  // for a value that is not a reference, that is, for which nullability is
-  // irrelevant.
-  bool isNullable() const;
-  // Checks whether a type is a reference and is non-nullable. This returns
-  // false for a value that is not a reference, that is, for which nullability
-  // is irrelevant. (For that reason, this is only the negation of isNullable()
-  // on references, but both return false on non-references.)
-  bool isNonNullable() const;
-  // Whether this type is only inhabited by null values.
-  bool isNull() const;
-  bool isSignature() const;
-  bool isStruct() const;
-  bool isArray() const;
-  bool isExn() const;
-  bool isString() const;
-  bool isDefaultable() const;
-
-  Nullability getNullability() const;
-
-private:
-  template<bool (Type::*pred)() const> bool hasPredicate() {
-    for (const auto& type : *this) {
-      if ((type.*pred)()) {
-        return true;
-      }
-    }
-    return false;
-  }
-
-public:
-  bool hasVector() { return hasPredicate<&Type::isVector>(); }
-  bool hasRef() { return hasPredicate<&Type::isRef>(); }
-
-  constexpr TypeID getID() const { return id; }
-  constexpr BasicType getBasic() const {
-    assert(isBasic() && "Basic type expected");
-    return static_cast<BasicType>(id);
-  }
-
-  // (In)equality must be defined for both Type and BasicType because it is
-  // otherwise ambiguous whether to convert both this and other to int or
-  // convert other to Type.
-  bool operator==(const Type& other) const { return id == other.id; }
-  bool operator==(const BasicType& other) const { return id == other; }
-  bool operator!=(const Type& other) const { return id != other.id; }
-  bool operator!=(const BasicType& other) const { return id != other; }
-
-  // Returns the type size in bytes. Only single types are supported.
-  unsigned getByteSize() const;
-
-  // Returns whether the type has a size in bytes. This is the same as whether
-  // it can be stored in linear memory. Things like references do not have this
-  // property, while numbers do. Tuples may or may not depending on their
-  // contents.
-  unsigned hasByteSize() const;
-
-  // Reinterpret an integer type to a float type with the same size and vice
-  // versa. Only single integer and float types are supported.
-  Type reinterpret() const;
-
-  // Returns the feature set required to use this type.
-  FeatureSet getFeatures() const;
-
-  // Returns the tuple, assuming that this is a tuple type. Note that it is
-  // normally simpler to use operator[] and size() on the Type directly.
-  const Tuple& getTuple() const;
-
-  // Gets the heap type corresponding to this type, assuming that it is a
-  // reference type.
-  HeapType getHeapType() const;
-
-  // Returns a number type based on its size in bytes and whether it is a float
-  // type.
-  static Type get(unsigned byteSize, bool float_);
-
-  // Returns true if left is a subtype of right. Subtype includes itself.
-  static bool isSubType(Type left, Type right);
-
-  // Return the ordered HeapType children, looking through child Types.
-  std::vector<HeapType> getHeapTypeChildren();
-
-  // Computes the least upper bound from the type lattice.
-  // If one of the type is unreachable, the other type becomes the result. If
-  // the common supertype does not exist, returns none, a poison value.
-  static bool hasLeastUpperBound(Type a, Type b);
-  static Type getLeastUpperBound(Type a, Type b);
-  template<typename T> static bool hasLeastUpperBound(const T& types) {
-    auto first = types.begin(), end = types.end();
-    if (first == end) {
-      return false;
-    }
-    for (auto second = std::next(first); second != end;) {
-      if (!hasLeastUpperBound(*first++, *second++)) {
-        return false;
-      }
-    }
-    return true;
-  }
-  template<typename T> static Type getLeastUpperBound(const T& types) {
-    auto it = types.begin(), end = types.end();
-    if (it == end) {
-      return Type::none;
-    }
-    Type lub = *it++;
-    for (; it != end; ++it) {
-      lub = getLeastUpperBound(lub, *it);
-      if (lub == Type::none) {
-        return Type::none;
-      }
-    }
-    return lub;
-  }
-
-  static Type getGreatestLowerBound(Type a, Type b);
-
-  // Helper allowing the value of `print(...)` to be sent to an ostream. Stores
-  // a `TypeID` because `Type` is incomplete at this point and using a reference
-  // makes it less convenient to use.
-  struct Printed {
-    TypeID typeID;
-    HeapTypeNameGenerator generateName;
-  };
-
-  // Given a function for generating non-basic HeapType names, print this Type
-  // to `os`.`generateName` should return the same name each time it is called
-  // with the same HeapType and it should return different names for different
-  // types.
-  Printed print(HeapTypeNameGenerator generateName) {
-    return Printed{getID(), generateName};
-  }
-
-  std::string toString() const;
-
-  size_t size() const;
-
-  struct Iterator : ParentIndexIterator<const Type*, Iterator> {
-    using value_type = Type;
-    using pointer = const Type*;
-    using reference = const Type&;
-    reference operator*() const;
-  };
-
-  Iterator begin() const { return Iterator{{this, 0}}; }
-  Iterator end() const { return Iterator{{this, size()}}; }
-  std::reverse_iterator<Iterator> rbegin() const {
-    return std::make_reverse_iterator(end());
-  }
-  std::reverse_iterator<Iterator> rend() const {
-    return std::make_reverse_iterator(begin());
-  }
-  const Type& operator[](size_t i) const { return *Iterator{{this, i}}; }
-};
-
 enum Shareability { Shared, Unshared };
 
 enum class HeapTypeKind {
@@ -491,6 +259,335 @@ public:
   }
 
   std::string toString() const;
+};
+
+// Internal only.
+struct TypeInfo {
+  using type_t = Type;
+  // Used in assertions to ensure that temporary types don't leak into the
+  // global store.
+  bool isTemp = false;
+  enum Kind {
+    TupleKind,
+    RefKind,
+  } kind;
+  struct Ref {
+    HeapType heapType;
+    Nullability nullability;
+  };
+  union {
+    Tuple tuple;
+    Ref ref;
+  };
+
+  TypeInfo(const Tuple& tuple) : kind(TupleKind), tuple(tuple) {}
+  TypeInfo(Tuple&& tuple) : kind(TupleKind), tuple(std::move(tuple)) {}
+  TypeInfo(HeapType heapType, Nullability nullable)
+    : kind(RefKind), ref{heapType, nullable} {}
+  TypeInfo(const TypeInfo& other);
+  ~TypeInfo();
+
+  constexpr bool isTuple() const { return kind == TupleKind; }
+  constexpr bool isRef() const { return kind == RefKind; }
+
+  // If this TypeInfo represents a Type that can be represented more simply,
+  // return that simpler Type. For example, this handles eliminating singleton
+  // tuple types.
+  std::optional<Type> getCanonical() const;
+
+  bool operator==(const TypeInfo& other) const;
+  bool operator!=(const TypeInfo& other) const { return !(*this == other); }
+};
+
+class Type {
+  // The `id` uniquely represents each type, so type equality is just a
+  // comparison of the ids. For basic types the `id` is just the `BasicType`
+  // enum value below, and for constructed types the `id` is the address of the
+  // canonical representation of the type, making lookups cheap for all types.
+  // Since `Type` is really just a single integer, it should be passed by value.
+  // This is a uintptr_t rather than a TypeID (uint64_t) to save memory on
+  // 32-bit platforms.
+  uintptr_t id;
+
+public:
+  enum BasicType : uint32_t {
+    none,
+    unreachable,
+    i32,
+    i64,
+    f32,
+    f64,
+    v128,
+  };
+  static constexpr BasicType _last_basic_type = v128;
+
+  Type() : id(none) {}
+
+  // BasicType can be implicitly upgraded to Type
+  constexpr Type(BasicType id) : id(id) {}
+
+  // But converting raw TypeID is more dangerous, so make it explicit
+  explicit Type(TypeID id) : id(id) {}
+
+  // Construct tuple from a list of single types
+  Type(std::initializer_list<Type>);
+
+  // Construct from tuple description
+  Type(const Tuple&);
+  Type(Tuple&&);
+
+  // Construct from a heap type description. Also covers construction from
+  // Signature, Struct or Array via implicit conversion to HeapType.
+  Type(HeapType, Nullability nullable);
+
+  // Predicates
+  //                 Compound Concrete
+  //   Type        Basic │ Single│
+  // ╒═════════════╦═│═╤═│═╤═│═╤═│═╤═══════╕
+  // │ none        ║ x │   │   │   │       │
+  // │ unreachable ║ x │   │   │   │       │
+  // ├─────────────╫───┼───┼───┼───┤───────┤
+  // │ i32         ║ x │   │ x │ x │ I     │ ┐ Number
+  // │ i64         ║ x │   │ x │ x │ I     │ │  I_nteger
+  // │ f32         ║ x │   │ x │ x │   F   │ │  F_loat
+  // │ f64         ║ x │   │ x │ x │   F   │ │  V_ector
+  // │ v128        ║ x │   │ x │ x │     V │ ┘
+  // ├─ Aliases ───╫───┼───┼───┼───┤───────┤
+  // │ funcref     ║ x │   │ x │ x │ f  n  │ ┐ Ref
+  // │ anyref      ║ x │   │ x │ x │ f? n  │ │  f_unc
+  // │ eqref       ║ x │   │ x │ x │    n  │ │  n_ullable
+  // │ i31ref      ║ x │   │ x │ x │    n  │ │
+  // │ structref   ║ x │   │ x │ x │    n  │ │
+  // │ arrayref    ║ x │   │ x │ x │    n  │ │
+  // │ exnref      ║ x │   │ x │ x │    n  │ │
+  // │ stringref   ║ x │   │ x │ x │    n  │ │
+  // ├─ Compound ──╫───┼───┼───┼───┤───────┤ │
+  // │ Ref         ║   │ x │ x │ x │ f? n? │◄┘
+  // │ Tuple       ║   │ x │   │ x │       │
+  // └─────────────╨───┴───┴───┴───┴───────┘
+  constexpr bool isBasic() const { return id <= _last_basic_type; }
+  constexpr bool isConcrete() const { return id >= i32; }
+  constexpr bool isInteger() const { return id == i32 || id == i64; }
+  constexpr bool isFloat() const { return id == f32 || id == f64; }
+  constexpr bool isVector() const { return id == v128; };
+  constexpr bool isNumber() const { return id >= i32 && id <= v128; }
+  bool isSingle() const { return isConcrete() && !isTuple(); }
+
+  // Tuples, refs, etc. are quickly handled using isBasic(), leaving the non-
+  // basic case for the underlying implementation.
+
+  bool isTuple() const {
+    if (isBasic()) {
+      return false;
+    } else {
+      return getTypeInfo(*this)->isTuple();
+    }
+  }
+
+  bool isRef() const {
+    if (isBasic()) {
+      return false;
+    } else {
+      return getTypeInfo(*this)->isRef();
+    }
+  }
+
+  bool isFunction() const {
+    if (isBasic()) {
+      return false;
+    } else {
+      auto* info = getTypeInfo(*this);
+      return info->isRef() && info->ref.heapType.isFunction();
+    }
+  }
+
+  bool isData() const {
+    if (isBasic()) {
+      return false;
+    } else {
+      auto* info = getTypeInfo(*this);
+      return info->isRef() && info->ref.heapType.isData();
+    }
+  }
+
+  // Checks whether a type is a reference and is nullable. This returns false
+  // for a value that is not a reference, that is, for which nullability is
+  // irrelevant.
+  bool isNullable() const {
+    if (isRef()) {
+      return getTypeInfo(*this)->ref.nullability == Nullable;
+    } else {
+      return false;
+    }
+  }
+
+  // Checks whether a type is a reference and is non-nullable. This returns
+  // false for a value that is not a reference, that is, for which nullability
+  // is irrelevant. (For that reason, this is only the negation of isNullable()
+  // on references, but both return false on non-references.)
+  bool isNonNullable() const {
+    if (isRef()) {
+      return getTypeInfo(*this)->ref.nullability == NonNullable;
+    } else {
+      return false;
+    }
+  }
+
+  bool isSignature() const { return isRef() && getHeapType().isSignature(); }
+
+  // Whether this type is only inhabited by null values.
+  bool isNull() const;
+  bool isStruct() const;
+  bool isArray() const;
+  bool isExn() const;
+  bool isString() const;
+  bool isDefaultable() const;
+
+  Nullability getNullability() const;
+
+private:
+  template<bool (Type::*pred)() const> bool hasPredicate() {
+    for (const auto& type : *this) {
+      if ((type.*pred)()) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+public:
+  bool hasVector() { return hasPredicate<&Type::isVector>(); }
+  bool hasRef() { return hasPredicate<&Type::isRef>(); }
+
+  constexpr TypeID getID() const { return id; }
+  constexpr BasicType getBasic() const {
+    assert(isBasic() && "Basic type expected");
+    return static_cast<BasicType>(id);
+  }
+
+  // (In)equality must be defined for both Type and BasicType because it is
+  // otherwise ambiguous whether to convert both this and other to int or
+  // convert other to Type.
+  bool operator==(const Type& other) const { return id == other.id; }
+  bool operator==(const BasicType& other) const { return id == other; }
+  bool operator!=(const Type& other) const { return id != other.id; }
+  bool operator!=(const BasicType& other) const { return id != other; }
+
+  // Returns the type size in bytes. Only single types are supported.
+  unsigned getByteSize() const;
+
+  // Returns whether the type has a size in bytes. This is the same as whether
+  // it can be stored in linear memory. Things like references do not have this
+  // property, while numbers do. Tuples may or may not depending on their
+  // contents.
+  unsigned hasByteSize() const;
+
+  // Reinterpret an integer type to a float type with the same size and vice
+  // versa. Only single integer and float types are supported.
+  Type reinterpret() const;
+
+  // Returns the feature set required to use this type.
+  FeatureSet getFeatures() const;
+
+  // Returns the tuple, assuming that this is a tuple type. Note that it is
+  // normally simpler to use operator[] and size() on the Type directly.
+  HeapType getHeapType() const {
+    assert(isRef());
+    return getTypeInfo(*this)->ref.heapType;
+  }
+
+  // Gets the heap type corresponding to this type, assuming that it is a
+  // reference type.
+  const Tuple& getTuple() const {
+    assert(isTuple());
+    return getTypeInfo(*this)->tuple;
+  }
+
+  // Returns a number type based on its size in bytes and whether it is a float
+  // type.
+  static Type get(unsigned byteSize, bool float_);
+
+  // Returns true if left is a subtype of right. Subtype includes itself.
+  static bool isSubType(Type left, Type right);
+
+  // Return the ordered HeapType children, looking through child Types.
+  std::vector<HeapType> getHeapTypeChildren();
+
+  // Computes the least upper bound from the type lattice.
+  // If one of the type is unreachable, the other type becomes the result. If
+  // the common supertype does not exist, returns none, a poison value.
+  static bool hasLeastUpperBound(Type a, Type b);
+  static Type getLeastUpperBound(Type a, Type b);
+  template<typename T> static bool hasLeastUpperBound(const T& types) {
+    auto first = types.begin(), end = types.end();
+    if (first == end) {
+      return false;
+    }
+    for (auto second = std::next(first); second != end;) {
+      if (!hasLeastUpperBound(*first++, *second++)) {
+        return false;
+      }
+    }
+    return true;
+  }
+  template<typename T> static Type getLeastUpperBound(const T& types) {
+    auto it = types.begin(), end = types.end();
+    if (it == end) {
+      return Type::none;
+    }
+    Type lub = *it++;
+    for (; it != end; ++it) {
+      lub = getLeastUpperBound(lub, *it);
+      if (lub == Type::none) {
+        return Type::none;
+      }
+    }
+    return lub;
+  }
+
+  static Type getGreatestLowerBound(Type a, Type b);
+
+  // Helper allowing the value of `print(...)` to be sent to an ostream. Stores
+  // a `TypeID` because `Type` is incomplete at this point and using a reference
+  // makes it less convenient to use.
+  struct Printed {
+    TypeID typeID;
+    HeapTypeNameGenerator generateName;
+  };
+
+  // Given a function for generating non-basic HeapType names, print this Type
+  // to `os`.`generateName` should return the same name each time it is called
+  // with the same HeapType and it should return different names for different
+  // types.
+  Printed print(HeapTypeNameGenerator generateName) {
+    return Printed{getID(), generateName};
+  }
+
+  std::string toString() const;
+
+  size_t size() const;
+
+  struct Iterator : ParentIndexIterator<const Type*, Iterator> {
+    using value_type = Type;
+    using pointer = const Type*;
+    using reference = const Type&;
+    reference operator*() const;
+  };
+
+  Iterator begin() const { return Iterator{{this, 0}}; }
+  Iterator end() const { return Iterator{{this, size()}}; }
+  std::reverse_iterator<Iterator> rbegin() const {
+    return std::make_reverse_iterator(end());
+  }
+  std::reverse_iterator<Iterator> rend() const {
+    return std::make_reverse_iterator(begin());
+  }
+  const Type& operator[](size_t i) const { return *Iterator{{this, i}}; }
+
+  static TypeInfo* getTypeInfo(Type type) {
+    assert(!type.isBasic());
+    return (TypeInfo*)type.getID();
+  }
 };
 
 inline bool Type::isNull() const { return isRef() && getHeapType().isBottom(); }
