@@ -763,7 +763,8 @@ struct GCData {
   // The element or field values.
   Literals values;
 
-  GCData(HeapType type, Literals values) : type(type), values(values) {}
+  GCData(HeapType type, Literals&& values) : type(type),
+                                             values(std::move(values)) {}
 };
 
 // The data of a (ref exn) literal.

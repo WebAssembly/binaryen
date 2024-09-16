@@ -96,7 +96,7 @@ Literal::Literal(std::string_view string)
     int32_t u = uint8_t(string[i]) | (uint8_t(string[i + 1]) << 8);
     contents.push_back(Literal(u));
   }
-  gcData = std::make_shared<GCData>(HeapType::string, contents);
+  gcData = std::make_shared<GCData>(HeapType::string, std::move(contents));
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {

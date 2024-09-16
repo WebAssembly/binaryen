@@ -191,8 +191,10 @@ protected:
   // data, as we don't have a cycle collector. Those leaks are not a serious
   // problem as Binaryen is not really used in long-running tasks, so we ignore
   // this function in LSan.
-  Literal makeGCData(const Literals& data, Type type) {
-    auto allocation = std::make_shared<GCData>(type.getHeapType(), data);
+  //
+  // This consumes the input |data| entirely.
+  Literal makeGCData(Literals& data, Type type) {
+    auto allocation = std::make_shared<GCData>(type.getHeapType(), std::move(data));
 #if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
     // GC data with cycles will leak, since shared_ptrs do not handle cycles.
     // Binaryen is generally not used in long-running programs so we just ignore
