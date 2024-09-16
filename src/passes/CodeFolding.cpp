@@ -293,7 +293,7 @@ struct CodeFolding : public WalkerPass<ControlFlowWalker<CodeFolding>> {
     while (anotherPass) {
       anotherPass = false;
       needEHFixups = false;
-      super::doWalkFunction(func);
+      Super::doWalkFunction(func);
       optimizeTerminatingTails(unreachableTails);
       // optimize returns at the end, so we can benefit from a fallthrough if
       // there is a value TODO: separate passes for them?
@@ -343,15 +343,18 @@ private:
         if (effects.danglingPop) {
           return false;
         }
-        // When an expression can throw and it is within a try scope, taking it
-        // out of the try scope changes the program's behavior, because the
-        // expression that would otherwise have been caught by the try now
-        // throws up to the next try scope or even up to the caller. We restrict
-        // the move if 'outOf' contains a 'try' anywhere in it. This is a
-        // conservative approximation because there can be cases that 'try' is
-        // within the expression that may throw so it is safe to take the
-        // expression out.
-        if (effects.throws() && !FindAll<Try>(outOf).list.empty()) {
+        // When an expression can throw and it is within a try/try_table scope,
+        // taking it out of the try/try_table scope changes the program's
+        // behavior, because the expression that would otherwise have been
+        // caught by the try/try_table now throws up to the next try/try_table
+        // scope or even up to the caller. We restrict the move if 'outOf'
+        // contains a 'try' or 'try_table' anywhere in it. This is a
+        // conservative approximation because there can be cases that
+        // 'try'/'try_table' is within the expression that may throw so it is
+        // safe to take the expression out.
+        // TODO: optimize this check to avoid two FindAlls.
+        if (effects.throws() &&
+            (FindAll<Try>(outOf).has() || FindAll<TryTable>(outOf).has())) {
           return false;
         }
       }

@@ -24,17 +24,17 @@ Result<> parseTypeDefs(
   IndexMap& typeIndices,
   std::vector<HeapType>& types,
   std::unordered_map<HeapType, std::unordered_map<Name, Index>>& typeNames) {
-  TypeBuilder builder(decls.subtypeDefs.size());
+  TypeBuilder builder(decls.typeDefs.size());
   ParseTypeDefsCtx ctx(input, builder, typeIndices);
-  for (auto& typeDef : decls.typeDefs) {
-    WithPosition with(ctx, typeDef.pos);
-    CHECK_ERR(deftype(ctx));
+  for (auto& recType : decls.recTypeDefs) {
+    WithPosition with(ctx, recType.pos);
+    CHECK_ERR(rectype(ctx));
   }
   auto built = builder.build();
   if (auto* err = built.getError()) {
     std::stringstream msg;
     msg << "invalid type: " << err->reason;
-    return ctx.in.err(decls.subtypeDefs[err->index].pos, msg.str());
+    return ctx.in.err(decls.typeDefs[err->index].pos, msg.str());
   }
   types = *built;
   // Record type names on the module and in typeNames.

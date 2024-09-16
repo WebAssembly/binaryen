@@ -499,6 +499,8 @@ struct TransferFn : OverriddenVisitor<TransferFn> {
     // Cannot generalize table types yet.
   }
 
+  void visitTableInit(TableInit* curr) {}
+
   void visitTry(Try* curr) { WASM_UNREACHABLE("TODO"); }
   void visitTryTable(TryTable* curr) { WASM_UNREACHABLE("TODO"); }
   void visitThrow(Throw* curr) { WASM_UNREACHABLE("TODO"); }
@@ -906,7 +908,7 @@ struct TypeGeneralizing : WalkerPass<PostWalker<TypeGeneralizing>> {
     }
 
     // Update gets and sets accordingly.
-    super::runOnFunction(wasm, func);
+    Super::runOnFunction(wasm, func);
 
     if (refinalize) {
       ReFinalize().walkFunctionInModule(func, wasm);

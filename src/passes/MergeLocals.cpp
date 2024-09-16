@@ -81,7 +81,7 @@ struct MergeLocals
     // have a new assignment of $y at the location of the copy,
     // which makes it easy for us to see if the value if $y
     // is still used after that point
-    super::doWalkFunction(func);
+    Super::doWalkFunction(func);
 
     // optimize the copies, merging when we can, and removing
     // the trivial assigns we added temporarily
@@ -105,17 +105,23 @@ struct MergeLocals
     if (copies.empty()) {
       return;
     }
-    // compute all dependencies
     auto* func = getFunction();
+
+    // Compute the local graph. Note that we *cannot* do this lazily, as we want
+    // to read from the original state of the function while we are doing
+    // changes on it. That is, using an eager graph makes a snapshot of the
+    // initial state, which is what we want. If we can avoid that, this pass can
+    // be sped up by around 25%.
     LocalGraph preGraph(func, getModule());
-    preGraph.computeInfluences();
+    preGraph.computeSetInfluences();
+
     // optimize each copy
     std::unordered_map<LocalSet*, LocalSet*> optimizedToCopy,
       optimizedToTrivial;
     for (auto* copy : copies) {
       auto* trivial = copy->value->cast<LocalSet>();
       bool canOptimizeToCopy = false;
-      auto& trivialInfluences = preGraph.setInfluences[trivial];
+      auto& trivialInfluences = preGraph.getSetInfluences(trivial);
       if (!trivialInfluences.empty()) {
         canOptimizeToCopy = true;
         for (auto* influencedGet : trivialInfluences) {
@@ -123,9 +129,10 @@ struct MergeLocals
           // however, it may depend on other writes too, if there is a
           // merge/phi, and in that case we can't do anything
           assert(influencedGet->index == trivial->index);
-          if (preGraph.getSetses[influencedGet].size() == 1) {
+          auto& sets = preGraph.getSets(influencedGet);
+          if (sets.size() == 1) {
             // this is ok
-            assert(*preGraph.getSetses[influencedGet].begin() == trivial);
+            assert(*sets.begin() == trivial);
             // If local types are different (when one is a subtype of the
             // other), don't optimize
             if (func->getLocalType(copy->index) != influencedGet->type) {
@@ -155,15 +162,16 @@ struct MergeLocals
 
         // if the trivial set we added has influences, it means $y lives on
         if (!trivialInfluences.empty()) {
-          auto& copyInfluences = preGraph.setInfluences[copy];
+          auto& copyInfluences = preGraph.getSetInfluences(copy);
           if (!copyInfluences.empty()) {
             bool canOptimizeToTrivial = true;
             for (auto* influencedGet : copyInfluences) {
               // as above, avoid merges/phis
               assert(influencedGet->index == copy->index);
-              if (preGraph.getSetses[influencedGet].size() == 1) {
+              auto& sets = preGraph.getSets(influencedGet);
+              if (sets.size() == 1) {
                 // this is ok
-                assert(*preGraph.getSetses[influencedGet].begin() == copy);
+                assert(*sets.begin() == copy);
                 // If local types are different (when one is a subtype of the
                 // other), don't optimize
                 if (func->getLocalType(trivial->index) != influencedGet->type) {
@@ -196,10 +204,10 @@ struct MergeLocals
       LocalGraph postGraph(func, getModule());
       postGraph.computeSetInfluences();
       for (auto& [copy, trivial] : optimizedToCopy) {
-        auto& trivialInfluences = preGraph.setInfluences[trivial];
+        auto& trivialInfluences = preGraph.getSetInfluences(trivial);
         for (auto* influencedGet : trivialInfluences) {
           // verify the set
-          auto& sets = postGraph.getSetses[influencedGet];
+          auto& sets = postGraph.getSets(influencedGet);
           if (sets.size() != 1 || *sets.begin() != copy) {
             // not good, undo all the changes for this copy
             for (auto* undo : trivialInfluences) {
@@ -210,10 +218,10 @@ struct MergeLocals
         }
       }
       for (auto& [copy, trivial] : optimizedToTrivial) {
-        auto& copyInfluences = preGraph.setInfluences[copy];
+        auto& copyInfluences = preGraph.getSetInfluences(copy);
         for (auto* influencedGet : copyInfluences) {
           // verify the set
-          auto& sets = postGraph.getSetses[influencedGet];
+          auto& sets = postGraph.getSets(influencedGet);
           if (sets.size() != 1 || *sets.begin() != trivial) {
             // not good, undo all the changes for this copy
             for (auto* undo : copyInfluences) {

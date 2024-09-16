@@ -122,17 +122,17 @@
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
-  ;; CHECK:      (type $1 (func))
-
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (sub $struct (struct i32 f64)))
+
+  ;; CHECK:      (type $2 (func))
 
   ;; CHECK:      (type $3 (func (param (ref null $struct)) (result i32)))
 
   ;; CHECK:      (type $subsubstruct (sub $substruct (struct (field i32) (field f64))))
   (type $subsubstruct (sub $substruct (struct i32 f64)))
 
-  ;; CHECK:      (func $create (type $1)
+  ;; CHECK:      (func $create (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
@@ -421,17 +421,17 @@
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
-  ;; CHECK:      (type $1 (func))
-
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (sub $struct (struct i32 f64)))
+
+  ;; CHECK:      (type $2 (func))
 
   ;; CHECK:      (type $subsubstruct (sub $substruct (struct (field i32) (field f64) (field anyref))))
   (type $subsubstruct (sub $substruct (struct i32 f64 anyref)))
 
   ;; CHECK:      (type $4 (func (param (ref null $struct)) (result i32)))
 
-  ;; CHECK:      (func $create (type $1)
+  ;; CHECK:      (func $create (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 10)
@@ -490,17 +490,17 @@
 (module
   ;; CHECK:      (type $struct (sub (struct (field i32))))
   (type $struct (sub (struct i32)))
-  ;; CHECK:      (type $1 (func))
-
   ;; CHECK:      (type $substruct (sub $struct (struct (field i32) (field f64))))
   (type $substruct (sub $struct (struct i32 f64)))
+
+  ;; CHECK:      (type $2 (func))
 
   ;; CHECK:      (type $subsubstruct (sub $substruct (struct (field i32) (field f64) (field anyref))))
   (type $subsubstruct (sub $substruct (struct i32 f64 anyref)))
 
   ;; CHECK:      (type $4 (func (param (ref null $struct)) (result i32)))
 
-  ;; CHECK:      (func $create (type $1)
+  ;; CHECK:      (func $create (type $2)
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct
   ;; CHECK-NEXT:    (i32.const 20)

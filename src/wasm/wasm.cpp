@@ -36,6 +36,7 @@ const char* Dylink = "dylink";
 const char* Dylink0 = "dylink.0";
 const char* Linking = "linking";
 const char* Producers = "producers";
+const char* BuildId = "build_id";
 const char* TargetFeatures = "target_features";
 const char* AtomicsFeature = "atomics";
 const char* BulkMemoryFeature = "bulk-memory";
@@ -55,6 +56,7 @@ const char* StringsFeature = "strings";
 const char* MultiMemoryFeature = "multimemory";
 const char* TypedContinuationsFeature = "typed-continuations";
 const char* SharedEverythingFeature = "shared-everything";
+const char* FP16Feature = "fp16";
 } // namespace CustomSections
 } // namespace BinaryConsts
 
@@ -386,6 +388,7 @@ void SIMDExtract::finalize() {
     case ExtractLaneVecI64x2:
       type = Type::i64;
       break;
+    case ExtractLaneVecF16x8:
     case ExtractLaneVecF32x4:
       type = Type::f32;
       break;
@@ -636,6 +639,7 @@ void Unary::finalize() {
     case SplatVecI16x8:
     case SplatVecI32x4:
     case SplatVecI64x2:
+    case SplatVecF16x8:
     case SplatVecF32x4:
     case SplatVecF64x2:
     case NotVec128:
@@ -648,6 +652,13 @@ void Unary::finalize() {
     case NegVecI16x8:
     case NegVecI32x4:
     case NegVecI64x2:
+    case AbsVecF16x8:
+    case NegVecF16x8:
+    case SqrtVecF16x8:
+    case CeilVecF16x8:
+    case FloorVecF16x8:
+    case TruncVecF16x8:
+    case NearestVecF16x8:
     case AbsVecF32x4:
     case NegVecF32x4:
     case SqrtVecF32x4:
@@ -867,6 +878,14 @@ void TableFill::finalize() {
 void TableCopy::finalize() {
   type = Type::none;
   if (dest->type == Type::unreachable || source->type == Type::unreachable ||
+      size->type == Type::unreachable) {
+    type = Type::unreachable;
+  }
+}
+
+void TableInit::finalize() {
+  type = Type::none;
+  if (dest->type == Type::unreachable || offset->type == Type::unreachable ||
       size->type == Type::unreachable) {
     type = Type::unreachable;
   }

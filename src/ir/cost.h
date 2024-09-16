@@ -184,6 +184,7 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case SplatVecI16x8:
       case SplatVecI32x4:
       case SplatVecI64x2:
+      case SplatVecF16x8:
       case SplatVecF32x4:
       case SplatVecF64x2:
       case NotVec128:
@@ -205,6 +206,13 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case NegVecI64x2:
       case AllTrueVecI64x2:
       case BitmaskVecI64x2:
+      case AbsVecF16x8:
+      case NegVecF16x8:
+      case SqrtVecF16x8:
+      case CeilVecF16x8:
+      case FloorVecF16x8:
+      case TruncVecF16x8:
+      case NearestVecF16x8:
       case AbsVecF32x4:
       case NegVecF32x4:
       case SqrtVecF32x4:
@@ -397,6 +405,12 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case LeSVecI64x2:
       case GtSVecI64x2:
       case GeSVecI64x2:
+      case EqVecF16x8:
+      case NeVecF16x8:
+      case LtVecF16x8:
+      case LeVecF16x8:
+      case GtVecF16x8:
+      case GeVecF16x8:
       case EqVecF32x4:
       case NeVecF32x4:
       case LtVecF32x4:
@@ -468,6 +482,22 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case ExtMulHighSVecI64x2:
       case ExtMulLowUVecI64x2:
       case ExtMulHighUVecI64x2:
+      case AddVecF16x8:
+      case SubVecF16x8:
+        ret = 1;
+        break;
+      case MulVecF16x8:
+        ret = 2;
+        break;
+      case DivVecF16x8:
+        ret = 3;
+        break;
+      case MinVecF16x8:
+      case MaxVecF16x8:
+      case PMinVecF16x8:
+      case PMaxVecF16x8:
+        ret = 1;
+        break;
       case AddVecF32x4:
       case SubVecF32x4:
         ret = 1;
@@ -552,10 +582,12 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case LaneselectI16x8:
       case LaneselectI32x4:
       case LaneselectI64x2:
-      case RelaxedFmaVecF32x4:
-      case RelaxedFmsVecF32x4:
-      case RelaxedFmaVecF64x2:
-      case RelaxedFmsVecF64x2:
+      case RelaxedMaddVecF16x8:
+      case RelaxedNmaddVecF16x8:
+      case RelaxedMaddVecF32x4:
+      case RelaxedNmaddVecF32x4:
+      case RelaxedMaddVecF64x2:
+      case RelaxedNmaddVecF64x2:
       case DotI8x16I7x16AddSToVecI32x4:
         ret = 1;
         break;
@@ -587,6 +619,9 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
   }
   CostType visitTableCopy(TableCopy* curr) {
     return 6 + visit(curr->dest) + visit(curr->source) + visit(curr->size);
+  }
+  CostType visitTableInit(TableInit* curr) {
+    return 6 + visit(curr->dest) + visit(curr->offset) + visit(curr->size);
   }
   CostType visitTry(Try* curr) {
     // We assume no exception will be thrown in most cases

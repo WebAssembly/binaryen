@@ -14,7 +14,6 @@ set(support_SOURCES
   safe_integer.cpp
   string.cpp
   threads.cpp
-  topological_orders.cpp
   utilities.cpp
   ${support_HEADERS}
 )

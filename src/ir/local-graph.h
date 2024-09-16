@@ -38,38 +38,81 @@ namespace wasm {
 // debugging etc.; and it has no downside for optimization, since unreachable
 // code will be removed anyhow).
 //
-struct LocalGraph {
-  // main API
+// There are two options here, the normal LocalGraph which is eager and computes
+// everything up front, which is faster if most things end up needed, and a lazy
+// one which computes on demand, which can be much faster if we only need a
+// small subset of queries.
+//
 
-  // The constructor computes getSetses, the sets affecting each get.
-  //
+// Base class for both LocalGraph and LazyLocalGraph (not meant for direct use).
+struct LocalGraphBase {
+protected:
   // If a module is passed in, it is used to find which features are needed in
   // the computation (for example, if exception handling is disabled, then we
   // can generate a simpler CFG, as calls cannot throw).
-  LocalGraph(Function* func, Module* module = nullptr);
+  LocalGraphBase(Function* func, Module* module = nullptr)
+    : func(func), module(module) {}
 
-  // The local.sets relevant for an index or a get. The most common case is to
-  // have a single set; after that, to be a phi of 2 items, so we use a small
-  // set of size 2 to avoid allocations there.
+public:
+  // A set of sets, returned from the query about which sets can be read from a
+  // get. Typically only one or two apply there, so this is a small set.
   using Sets = SmallSet<LocalSet*, 2>;
 
-  using GetSetses = std::unordered_map<LocalGet*, Sets>;
-
+  // Where each get and set is.
   using Locations = std::map<Expression*, Expression**>;
 
-  // externally useful information
-  GetSetses getSetses; // the sets affecting each get. a nullptr set means the
-                       // initial value (0 for a var, the received value for a
-                       // param)
-  Locations locations; // where each get and set is (for easy replacing)
+  // A map of each get to the sets relevant to it (i.e., that it can read from).
+  using GetSetsMap = std::unordered_map<LocalGet*, Sets>;
+
+  // Sets of gets or sets, that are influenced, returned from get*Influences().
+  using SetInfluences = std::unordered_set<LocalGet*>;
+  using GetInfluences = std::unordered_set<LocalSet*>;
+
+  using SetInfluencesMap = std::unordered_map<LocalSet*, SetInfluences>;
+  using GetInfluencesMap = std::unordered_map<LocalGet*, GetInfluences>;
+
+protected:
+  Function* func;
+  Module* module;
+
+  std::set<Index> SSAIndexes;
+};
+
+struct LocalGraph : public LocalGraphBase {
+  LocalGraph(Function* func, Module* module = nullptr);
+
+  // Get the sets relevant for a local.get.
+  //
+  // A nullptr set means there is no local.set for that value, which means it is
+  // the initial value from the function entry: 0 for a var, the received value
+  // for a param.
+  //
+  // Often there is a single set, or a phi or two items, so we use a small set.
+  const Sets& getSets(LocalGet* get) const {
+    auto iter = getSetsMap.find(get);
+    if (iter == getSetsMap.end()) {
+      // A missing entry means there is nothing there (and we saved a little
+      // space by not putting something there).
+      //
+      // Use a canonical constant empty set to avoid allocation.
+      static const Sets empty;
+      return empty;
+    }
+    return iter->second;
+  }
+
+  // We compute the locations of gets and sets while doing the main computation
+  // and make it accessible for users, for easy replacing of things without
+  // extra work.
+  Locations locations;
 
   // Checks if two gets are equivalent, that is, definitely have the same
   // value.
   bool equivalent(LocalGet* a, LocalGet* b);
 
-  // Optional: compute the influence graphs between sets and gets
-  // (useful for algorithms that propagate changes).
-
+  // Optional: compute the influence graphs between sets and gets (useful for
+  // algorithms that propagate changes). Set influences are the gets that can
+  // read from it; get influences are the sets that can (directly) read from it.
   void computeSetInfluences();
   void computeGetInfluences();
 
@@ -78,11 +121,24 @@ struct LocalGraph {
     computeGetInfluences();
   }
 
-  // for each get, the sets whose values are influenced by that get
-  using GetInfluences = std::unordered_set<LocalSet*>;
-  std::unordered_map<LocalGet*, GetInfluences> getInfluences;
-  using SetInfluences = std::unordered_set<LocalGet*>;
-  std::unordered_map<LocalSet*, SetInfluences> setInfluences;
+  const SetInfluences& getSetInfluences(LocalSet* set) const {
+    auto iter = setInfluences.find(set);
+    if (iter == setInfluences.end()) {
+      // Use a canonical constant empty set to avoid allocation.
+      static const SetInfluences empty;
+      return empty;
+    }
+    return iter->second;
+  }
+  const GetInfluences& getGetInfluences(LocalGet* get) const {
+    auto iter = getInfluences.find(get);
+    if (iter == getInfluences.end()) {
+      // Use a canonical constant empty set to avoid allocation.
+      static const GetInfluences empty;
+      return empty;
+    }
+    return iter->second;
+  }
 
   // Optional: Compute the local indexes that are SSA, in the sense of
   //  * a single set for all the gets for that local index
@@ -110,8 +166,87 @@ struct LocalGraph {
   bool isSSA(Index x);
 
 private:
-  Function* func;
-  std::set<Index> SSAIndexes;
+  GetSetsMap getSetsMap;
+
+  SetInfluencesMap setInfluences;
+  GetInfluencesMap getInfluences;
+};
+
+// The internal implementation of the flow analysis used to compute things. This
+// must be declared in the header so that LazyLocalGraph can declare a unique
+// ptr to it, below.
+struct LocalGraphFlower;
+
+struct LazyLocalGraph : public LocalGraphBase {
+  LazyLocalGraph(Function* func, Module* module = nullptr);
+  ~LazyLocalGraph();
+
+  // Similar APIs as in LocalGraph, but lazy versions. Each of them does a
+  // lookup, and if there is a missing entry then we did not do the computation
+  // yet, and then we do it and memoize it.
+  const Sets& getSets(LocalGet* get) const {
+    auto iter = getSetsMap.find(get);
+    if (iter == getSetsMap.end()) {
+      computeGetSets(get);
+      iter = getSetsMap.find(get);
+      assert(iter != getSetsMap.end());
+    }
+    return iter->second;
+  }
+  const SetInfluences& getSetInfluences(LocalSet* set) const {
+    auto iter = setInfluences.find(set);
+    if (iter == setInfluences.end()) {
+      computeSetInfluences(set);
+      iter = setInfluences.find(set);
+      assert(iter != setInfluences.end());
+    }
+    return iter->second;
+  }
+  const GetInfluences& getGetInfluences(LocalGet* get) const {
+    if (!getInfluences) {
+      computeGetInfluences();
+      assert(getInfluences);
+    }
+    return (*getInfluences)[get];
+  }
+
+  const Locations& getLocations() const {
+    if (!locations) {
+      computeLocations();
+      assert(locations);
+    }
+    return *locations;
+  }
+
+private:
+  // These data structures are mutable so that we can memoize.
+  mutable GetSetsMap getSetsMap;
+
+  mutable SetInfluencesMap setInfluences;
+  // The entire |getInfluences| is computed once the first request for one
+  // arrives, so the entire thing is either present or not, unlike setInfluences
+  // which is fine-grained. The difference is that the influences of a get may
+  // include sets of other indexes, so there is no simple way to lazify that
+  // computation.
+  mutable std::optional<GetInfluencesMap> getInfluences;
+  mutable std::optional<Locations> locations;
+
+  // Compute the sets for a get and store them on getSetsMap.
+  void computeGetSets(LocalGet* get) const;
+  // Compute influences for a set and store them on setInfluences.
+  void computeSetInfluences(LocalSet* set) const;
+  // Compute influences for all gets and store them on getInfluences.
+  void computeGetInfluences() const;
+  // Compute locations and store them on getInfluences.
+  void computeLocations() const;
+
+  // This remains alive as long as we are, so that we can compute things lazily.
+  // It is mutable as when we construct this is an internal detail, that does
+  // not cause observable differences in API calls.
+  mutable std::unique_ptr<LocalGraphFlower> flower;
+
+  // We create |flower| lazily.
+  void makeFlower() const;
 };
 
 } // namespace wasm

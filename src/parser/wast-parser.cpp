@@ -25,7 +25,17 @@ using namespace std::string_view_literals;
 namespace {
 
 Result<Literal> const_(Lexer& in) {
-  // TODO: handle `ref.extern n` as well.
+  if (in.takeSExprStart("ref.extern"sv)) {
+    auto n = in.takeI32();
+    if (!n) {
+      return in.err("expected host reference payload");
+    }
+    if (!in.takeRParen()) {
+      return in.err("expected end of ref.extern");
+    }
+    // Represent host references as externalized i31s.
+    return Literal::makeI31(*n, Unshared).externalize();
+  }
   return parseConst(in);
 }
 
@@ -39,7 +49,7 @@ Result<Literals> consts(Lexer& in) {
   return lits;
 }
 
-MaybeResult<Action> action(Lexer& in) {
+MaybeResult<Action> maybeAction(Lexer& in) {
   if (in.takeSExprStart("invoke"sv)) {
     auto id = in.takeID();
     auto name = in.takeName();
@@ -67,6 +77,14 @@ MaybeResult<Action> action(Lexer& in) {
   }
 
   return {};
+}
+
+Result<Action> action(Lexer& in) {
+  if (auto a = maybeAction(in)) {
+    CHECK_ERR(a);
+    return *a;
+  }
+  return in.err("expected action");
 }
 
 // (module id? binary string*)
@@ -207,6 +225,34 @@ Result<ExpectedResult> result(Lexer& in) {
     return RefResult{HeapType::func};
   }
 
+  if (in.takeSExprStart("ref.struct")) {
+    if (!in.takeRParen()) {
+      return in.err("expected end of ref.struct");
+    }
+    return RefResult{HeapType::struct_};
+  }
+
+  if (in.takeSExprStart("ref.array")) {
+    if (!in.takeRParen()) {
+      return in.err("expected end of ref.array");
+    }
+    return RefResult{HeapType::array};
+  }
+
+  if (in.takeSExprStart("ref.eq")) {
+    if (!in.takeRParen()) {
+      return in.err("expected end of ref.eq");
+    }
+    return RefResult{HeapType::eq};
+  }
+
+  if (in.takeSExprStart("ref.i31")) {
+    if (!in.takeRParen()) {
+      return in.err("expected end of ref.i31");
+    }
+    return RefResult{HeapType::i31};
+  }
+
   if (in.takeSExprStart("ref.i31_shared")) {
     if (!in.takeRParen()) {
       return in.err("expected end of ref.i31_shared");
@@ -310,7 +356,7 @@ MaybeResult<Assertion> assertTrap(Lexer& in) {
     return {};
   }
   auto pos = in.getPos();
-  if (auto a = action(in)) {
+  if (auto a = maybeAction(in)) {
     CHECK_ERR(a);
     auto msg = in.takeString();
     if (!msg) {
@@ -385,7 +431,7 @@ Result<WASTCommand> command(Lexer& in) {
     CHECK_ERR(cmd);
     return *cmd;
   }
-  if (auto cmd = action(in)) {
+  if (auto cmd = maybeAction(in)) {
     CHECK_ERR(cmd);
     return *cmd;
   }

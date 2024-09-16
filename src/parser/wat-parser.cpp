@@ -97,7 +97,7 @@ Result<> doParseModule(Module& wasm, Lexer& input, bool allowExtra) {
     return decls.in.err("Unexpected tokens after module");
   }
 
-  auto typeIndices = createIndexMap(decls.in, decls.subtypeDefs);
+  auto typeIndices = createIndexMap(decls.in, decls.typeDefs);
   CHECK_ERR(typeIndices);
 
   std::vector<HeapType> types;

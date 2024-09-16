@@ -35,13 +35,16 @@
 #include "ir/utils.h"
 #include "pass.h"
 #include "support/insert_ordered.h"
-#include "support/unique_deferring_queue.h"
+#include "support/small_vector.h"
 #include "wasm-builder.h"
 #include "wasm-interpreter.h"
 #include "wasm.h"
 
 namespace wasm {
 
+// A map of gets to their constant values. If a get does not have a constant
+// value then it does not appear in the map (that avoids allocating for the
+// majority of gets).
 using GetValues = std::unordered_map<LocalGet*, Literals>;
 
 // A map of values on the heap. This maps the expressions that create the
@@ -81,7 +84,7 @@ class PrecomputingExpressionRunner
 
   // Concrete values of gets computed during the pass, which the runner does not
   // know about since it only records values of sets it visits.
-  GetValues& getValues;
+  const GetValues& getValues;
 
   HeapValues& heapValues;
 
@@ -99,7 +102,7 @@ class PrecomputingExpressionRunner
 
 public:
   PrecomputingExpressionRunner(Module* module,
-                               GetValues& getValues,
+                               const GetValues& getValues,
                                HeapValues& heapValues,
                                bool replaceExpression)
     : ConstantExpressionRunner<PrecomputingExpressionRunner>(
@@ -114,9 +117,8 @@ public:
     auto iter = getValues.find(curr);
     if (iter != getValues.end()) {
       auto values = iter->second;
-      if (values.isConcrete()) {
-        return Flow(values);
-      }
+      assert(values.isConcrete());
+      return Flow(values);
     }
     return ConstantExpressionRunner<
       PrecomputingExpressionRunner>::visitLocalGet(curr);
@@ -250,7 +252,7 @@ struct Precompute
     canPartiallyPrecompute = getPassOptions().optimizeLevel >= 2;
 
     // Walk the function and precompute things.
-    super::doWalkFunction(func);
+    Super::doWalkFunction(func);
     partiallyPrecompute(func);
     if (!propagate) {
       return;
@@ -264,7 +266,7 @@ struct Precompute
       // We found constants to propagate and entered them in getValues. Do
       // another walk to apply them and perhaps other optimizations that are
       // unlocked.
-      super::doWalkFunction(func);
+      Super::doWalkFunction(func);
       // We could also try to partially precompute again, but that is a somewhat
       // heavy operation, so we only do it the first time, and leave such things
       // for later runs of this pass and for --converge.
@@ -293,7 +295,7 @@ struct Precompute
             return;
           }
         } else if (singleValue.type.isRef() &&
-                   singleValue.type.getHeapType() == HeapType::func) {
+                   singleValue.type.getHeapType().isSignature()) {
           if (auto* r = curr->value->template dynCast<RefFunc>()) {
             r->func = singleValue.getFunc();
             r->finalize();
@@ -361,6 +363,73 @@ struct Precompute
     } else {
       ExpressionManipulator::nop(curr);
     }
+  }
+
+  void visitBlock(Block* curr) {
+    // When block precomputation fails, it can lead to quadratic slowness due to
+    // the "tower of blocks" pattern used to implement switches:
+    //
+    //  (block
+    //    (block
+    //      ...
+    //        (block
+    //          (br_table ..
+    //
+    // If we try to precompute each block here, and fail on each, then we end up
+    // doing quadratic work. This is also wasted work as once a nested block
+    // fails to precompute there is not really a chance to succeed on the
+    // parent. If we do *not* fail to precompute, however, then we do want to
+    // precompute such nested blocks, e.g.:
+    //
+    //  (block $out
+    //    (block
+    //      (br $out)
+    //    )
+    //  )
+    //
+    // Here we *can* precompute the inner block, so when we get to the outer one
+    // we see this:
+    //
+    //  (block $out
+    //    (br $out)
+    //  )
+    //
+    // And that precomputes to nothing. Therefore when we see a child of the
+    // block that is another block (it failed to precompute to something
+    // simpler) then we leave early here.
+    //
+    // Note that in theory we could still precompute here if wasm had
+    // instructions that allow such things, e.g.:
+    //
+    //  (block $out
+    //    (block
+    //      (cause side effect1)
+    //      (cause side effect2)
+    //    )
+    //    (undo those side effects exactly)
+    //  )
+    //
+    // We are forced to invent a side effect that we can precisely undo (unlike,
+    // say locals - a local.set would persist outside of the block, and even if
+    // we did another set to the original value, this pass doesn't track values
+    // that way). Only with that can we make the inner block un-precomputable
+    // (because there are side effects) but the outer one is (because those
+    // effects are undone). Note that it is critical that we have two things in
+    // the block, so that we can't precompute it to one of them (which is what
+    // we did to the br in the previous example). Note also that this is still
+    // optimizable using other passes, as merge-blocks will fold the two blocks
+    // together.
+    if (!curr->list.empty() && curr->list[0]->is<Block>()) {
+      // The first child is a block, that is, it could not be simplified, so
+      // this looks like the "tower of blocks" pattern. Avoid quadratic time
+      // here as explained above. (We could also look at other children of the
+      // block, but the only real-world pattern identified so far is on the
+      // first child, so keep things simple here.)
+      return;
+    }
+
+    // Otherwise, precompute normally like all other expressions.
+    visitExpression(curr);
   }
 
   // If we failed to precompute a constant, perhaps we can still precompute part
@@ -676,131 +745,163 @@ private:
   // Propagates values around. Returns whether we propagated.
   bool propagateLocals(Function* func) {
     bool propagated = false;
-    // using the graph of get-set interactions, do a constant-propagation type
+
+    // Using the graph of get-set interactions, do a constant-propagation type
     // operation: note which sets are assigned locals, then see if that lets us
     // compute other sets as locals (since some of the gets they read may be
-    // constant).
-    // compute all dependencies
-    LocalGraph localGraph(func, getModule());
-    localGraph.computeInfluences();
-    // prepare the work list. we add things here that might change to a constant
-    // initially, that means everything
-    UniqueDeferredQueue<Expression*> work;
-    for (auto& [curr, _] : localGraph.locations) {
-      work.push(curr);
-    }
-    // the constant value, or none if not a constant
+    // constant). We do this lazily as most locals do not end up with constant
+    // values that we can propagate.
+    LazyLocalGraph localGraph(func, getModule());
+
+    // A map of sets to their constant values. If a set does not appear here
+    // then it is not constant, like |getValues|.
     std::unordered_map<LocalSet*, Literals> setValues;
-    // propagate constant values
-    while (!work.empty()) {
-      auto* curr = work.pop();
-      // see if this set or get is actually a constant value, and if so,
-      // mark it as such and add everything it influences to the work list,
-      // as they may be constant too.
-      if (auto* set = curr->dynCast<LocalSet>()) {
-        if (setValues[set].isConcrete()) {
-          continue; // already known constant
-        }
-        // Precompute the value. Note that this executes the code from scratch
-        // each time we reach this point, and so we need to be careful about
-        // repeating side effects if those side effects are expressed *in the
-        // value*. A case where that can happen is GC data (each struct.new
-        // creates a new, unique struct, even if the data is equal), and so
-        // PrecomputingExpressionRunner has special logic to make sure that
-        // reference identity is preserved properly.
-        //
-        // (Other side effects are fine; if an expression does a call and we
-        // somehow know the entire expression precomputes to a 42, then we can
-        // propagate that 42 along to the users, regardless of whatever the call
-        // did globally.)
-        auto values = precomputeValue(Properties::getFallthrough(
-          set->value, getPassOptions(), *getModule()));
-        // Fix up the value. The computation we just did was to look at the
-        // fallthrough, then precompute that; that looks through expressions
-        // that pass through the value. Normally that does not matter here,
-        // for example, (block .. (value)) returns the value unmodified.
-        // However, some things change the type, for example RefAsNonNull has
-        // a non-null type, while its input may be nullable. That does not
-        // matter either, as if we managed to precompute it then the value had
-        // the more specific (in this example, non-nullable) type. But there
-        // is a situation where this can cause an issue: RefCast. An attempt to
-        // perform a "bad" cast, say of a function to a struct, is a case where
-        // the fallthrough value's type is very different than the actually
-        // returned value's type. To handle that, if we precomputed a value and
-        // if it has the wrong type then precompute it again without looking
-        // through to the fallthrough.
-        if (values.isConcrete() &&
-            !Type::isSubType(values.getType(), set->value->type)) {
-          values = precomputeValue(set->value);
-        }
+
+    // The work list, which will contain sets and gets that have just been
+    // found to have a constant value. As we only add them to the list when they
+    // are found to be constant, each can only be added once, and a simple
+    // vector is enough here (which we can make a small vector to avoid any
+    // allocation in small-enough functions).
+    SmallVector<Expression*, 10> work;
+
+    // Given a set, see if it has a constant value. If so, note that on
+    // setValues and add to the work list.
+    auto checkConstantSet = [&](LocalSet* set) {
+      if (setValues.count(set)) {
+        // Already known to be constant.
+        return;
+      }
+
+      // Precompute the value. Note that this executes the code from scratch
+      // each time we reach this point, and so we need to be careful about
+      // repeating side effects if those side effects are expressed *in the
+      // value*. A case where that can happen is GC data (each struct.new
+      // creates a new, unique struct, even if the data is equal), and so
+      // PrecomputingExpressionRunner has special logic to make sure that
+      // reference identity is preserved properly.
+      //
+      // (Other side effects are fine; if an expression does a call and we
+      // somehow know the entire expression precomputes to a 42, then we can
+      // propagate that 42 along to the users, regardless of whatever the call
+      // did globally.)
+      auto values = precomputeValue(
+        Properties::getFallthrough(set->value, getPassOptions(), *getModule()));
+
+      // We precomputed the *fallthrough* value (which allows us to look through
+      // some things that would otherwise block us). But in some cases, like a
+      // ref.cast, the fallthrough value can have an incompatible type for the
+      // entire expression, which would be invalid for us to propagate, e.g.:
+      //
+      //  (ref.cast (ref struct)
+      //    (ref.null any)
+      //  )
+      //
+      // In such a case the value cannot actually fall through. Ignore such
+      // cases (which other optimizations can handle) by making sure that we
+      // only propagate a valid subtype.
+      if (values.isConcrete() &&
+          Type::isSubType(values.getType(), set->value->type)) {
         setValues[set] = values;
-        if (values.isConcrete()) {
-          for (auto* get : localGraph.setInfluences[set]) {
-            work.push(get);
+        work.push_back(set);
+      }
+    };
+
+    // The same, for a get.
+    auto checkConstantGet = [&](LocalGet* get) {
+      if (getValues.count(get)) {
+        // Already known to be constant.
+        return;
+      }
+
+      // For this get to have constant value, all sets must agree on a constant.
+      Literals values;
+      bool first = true;
+      for (auto* set : localGraph.getSets(get)) {
+        Literals curr;
+        if (set == nullptr) {
+          if (getFunction()->isVar(get->index)) {
+            auto localType = getFunction()->getLocalType(get->index);
+            if (!localType.isDefaultable()) {
+              // This is a nondefaultable local that seems to read the default
+              // value at the function entry. This is either an internal error
+              // or a case of unreachable code; the latter is possible as
+              // LocalGraph is not precise in unreachable code. Give up.
+              return;
+            } else {
+              curr = Literal::makeZeros(localType);
+            }
+          } else {
+            // It's a param, so the value is non-constant. Give up.
+            return;
           }
+        } else {
+          // If there is an entry for the set, use that constant. Otherwise, the
+          // set is not constant, and we give up.
+          auto iter = setValues.find(set);
+          if (iter == setValues.end()) {
+            return;
+          }
+          curr = iter->second;
+        }
+
+        // We found a concrete value, so there is a chance, if it matches all
+        // the rest.
+        assert(curr.isConcrete());
+        if (first) {
+          // This is the first ever value we see. All later ones must match it.
+          values = curr;
+          first = false;
+        } else if (values != curr) {
+          // This later value is not the same as before, give up.
+          return;
+        }
+      }
+
+      if (values.isConcrete()) {
+        // We found a constant value!
+        getValues[get] = values;
+        work.push_back(get);
+        propagated = true;
+      } else {
+        // If it is not concrete then, since we early-exited before on any
+        // possible problem, there must be no sets for this get, which means it
+        // is in unreachable code. In that case, we never switched |first| from
+        // true to false.
+        assert(first == true);
+        // We could optimize using unreachability here, but we leave that for
+        // other passes.
+      }
+    };
+
+    // Check all gets and sets to find which are constant, mark them as such,
+    // and add propagation work based on that.
+    for (auto& [curr, _] : localGraph.getLocations()) {
+      if (auto* set = curr->dynCast<LocalSet>()) {
+        checkConstantSet(set);
+      } else {
+        checkConstantGet(curr->cast<LocalGet>());
+      }
+    }
+
+    // Propagate constant values while work remains.
+    while (!work.empty()) {
+      auto* curr = work.back();
+      work.pop_back();
+
+      // This get or set is a constant value. Check if the things it influences
+      // become constant.
+      if (auto* set = curr->dynCast<LocalSet>()) {
+        for (auto* get : localGraph.getSetInfluences(set)) {
+          checkConstantGet(get);
         }
       } else {
         auto* get = curr->cast<LocalGet>();
-        if (getValues[get].size() >= 1) {
-          continue; // already known constant
-        }
-        // for this get to have constant value, all sets must agree
-        Literals values;
-        bool first = true;
-        for (auto* set : localGraph.getSetses[get]) {
-          Literals curr;
-          if (set == nullptr) {
-            if (getFunction()->isVar(get->index)) {
-              auto localType = getFunction()->getLocalType(get->index);
-              if (!localType.isDefaultable()) {
-                // This is a nondefaultable local that seems to read the default
-                // value at the function entry. This is either an internal error
-                // or a case of unreachable code; the latter is possible as
-                // LocalGraph is not precise in unreachable code.
-                //
-                // We cannot set zeros here (as applying them, even in
-                // unreachable code, would not validate), so just mark this as
-                // a hopeless case to ignore.
-                values = {};
-              } else {
-                curr = Literal::makeZeros(localType);
-              }
-            } else {
-              // it's a param, so it's hopeless
-              values = {};
-              break;
-            }
-          } else {
-            curr = setValues[set];
-          }
-          if (curr.isNone()) {
-            // not a constant, give up
-            values = {};
-            break;
-          }
-          // we found a concrete value. compare with the current one
-          if (first) {
-            values = curr; // this is the first
-            first = false;
-          } else {
-            if (values != curr) {
-              // not the same, give up
-              values = {};
-              break;
-            }
-          }
-        }
-        // we may have found a value
-        if (values.isConcrete()) {
-          // we did!
-          getValues[get] = values;
-          for (auto* set : localGraph.getInfluences[get]) {
-            work.push(set);
-          }
-          propagated = true;
+        for (auto* set : localGraph.getGetInfluences(get)) {
+          checkConstantSet(set);
         }
       }
     }
+
     return propagated;
   }
 

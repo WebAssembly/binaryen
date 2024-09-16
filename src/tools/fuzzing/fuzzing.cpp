@@ -291,28 +291,35 @@ void TranslateToFuzzReader::setupHeapTypes() {
     auto eq = HeapTypes::eq.getBasic(share);
     auto any = HeapTypes::any.getBasic(share);
     auto func = HeapTypes::func.getBasic(share);
-    if (type.isStruct()) {
-      interestingHeapSubTypes[struct_].push_back(type);
-      interestingHeapSubTypes[eq].push_back(type);
-      interestingHeapSubTypes[any].push_back(type);
-
-      // Note the mutable fields.
-      auto& fields = type.getStruct().fields;
-      for (Index i = 0; i < fields.size(); i++) {
-        if (fields[i].mutable_) {
-          mutableStructFields.push_back(StructField{type, i});
+    switch (type.getKind()) {
+      case HeapTypeKind::Func:
+        interestingHeapSubTypes[func].push_back(type);
+        break;
+      case HeapTypeKind::Struct: {
+        interestingHeapSubTypes[struct_].push_back(type);
+        interestingHeapSubTypes[eq].push_back(type);
+        interestingHeapSubTypes[any].push_back(type);
+        // Note the mutable fields.
+        auto& fields = type.getStruct().fields;
+        for (Index i = 0; i < fields.size(); i++) {
+          if (fields[i].mutable_) {
+            mutableStructFields.push_back(StructField{type, i});
+          }
         }
+        break;
       }
-    } else if (type.isArray()) {
-      interestingHeapSubTypes[array].push_back(type);
-      interestingHeapSubTypes[eq].push_back(type);
-      interestingHeapSubTypes[any].push_back(type);
-
-      if (type.getArray().element.mutable_) {
-        mutableArrays.push_back(type);
-      }
-    } else if (type.isSignature()) {
-      interestingHeapSubTypes[func].push_back(type);
+      case HeapTypeKind::Array:
+        interestingHeapSubTypes[array].push_back(type);
+        interestingHeapSubTypes[eq].push_back(type);
+        interestingHeapSubTypes[any].push_back(type);
+        if (type.getArray().element.mutable_) {
+          mutableArrays.push_back(type);
+        }
+        break;
+      case HeapTypeKind::Cont:
+        WASM_UNREACHABLE("TODO: cont");
+      case HeapTypeKind::Basic:
+        WASM_UNREACHABLE("unexpected kind");
     }
   }
 
@@ -2757,43 +2764,49 @@ Expression* TranslateToFuzzReader::makeCompoundRef(Type type) {
     return funcContext ? make(type) : makeTrivial(type);
   };
 
-  if (heapType.isSignature()) {
-    return makeRefFuncConst(type);
-  } else if (type.isStruct()) {
-    auto& fields = heapType.getStruct().fields;
-    std::vector<Expression*> values;
-    // If there is a nondefaultable field, we must provide the value and not
-    // depend on defaults. Also do that randomly half the time.
-    if (std::any_of(
-          fields.begin(),
-          fields.end(),
-          [&](const Field& field) { return !field.type.isDefaultable(); }) ||
-        oneIn(2)) {
-      for (auto& field : fields) {
-        values.push_back(makeChild(field.type));
+  switch (heapType.getKind()) {
+    case HeapTypeKind::Func:
+      return makeRefFuncConst(type);
+    case HeapTypeKind::Struct: {
+      auto& fields = heapType.getStruct().fields;
+      std::vector<Expression*> values;
+      // If there is a nondefaultable field, we must provide the value and not
+      // depend on defaults. Also do that randomly half the time.
+      if (std::any_of(
+            fields.begin(),
+            fields.end(),
+            [&](const Field& field) { return !field.type.isDefaultable(); }) ||
+          oneIn(2)) {
+        for (auto& field : fields) {
+          values.push_back(makeChild(field.type));
+        }
+        // Add more nesting manually, as we can easily get exponential blowup
+        // here. This nesting makes it much less likely for a recursive data
+        // structure to end up as a massive tree of struct.news, since the
+        // nesting limitation code at the top of this function will kick in.
+        if (!values.empty()) {
+          // Subtract 1 since if there is a single value there cannot be
+          // exponential blowup.
+          nester.add(values.size() - 1);
+        }
       }
-      // Add more nesting manually, as we can easily get exponential blowup
-      // here. This nesting makes it much less likely for a recursive data
-      // structure to end up as a massive tree of struct.news, since the nesting
-      // limitation code at the top of this function will kick in.
-      if (!values.empty()) {
-        // Subtract 1 since if there is a single value there cannot be
-        // exponential blowup.
-        nester.add(values.size() - 1);
+      return builder.makeStructNew(heapType, values);
+    }
+    case HeapTypeKind::Array: {
+      auto element = heapType.getArray().element;
+      Expression* init = nullptr;
+      if (!element.type.isDefaultable() || oneIn(2)) {
+        init = makeChild(element.type);
       }
+      auto* count = builder.makeConst(int32_t(upTo(MAX_ARRAY_SIZE)));
+      return builder.makeArrayNew(type.getHeapType(), count, init);
     }
-    return builder.makeStructNew(heapType, values);
-  } else if (type.isArray()) {
-    auto element = heapType.getArray().element;
-    Expression* init = nullptr;
-    if (!element.type.isDefaultable() || oneIn(2)) {
-      init = makeChild(element.type);
-    }
-    auto* count = builder.makeConst(int32_t(upTo(MAX_ARRAY_SIZE)));
-    return builder.makeArrayNew(type.getHeapType(), count, init);
-  } else {
-    WASM_UNREACHABLE("bad user-defined ref type");
+    case HeapTypeKind::Cont:
+      WASM_UNREACHABLE("TODO: cont");
+    case HeapTypeKind::Basic:
+      break;
   }
+  WASM_UNREACHABLE("unexpected kind");
 }
 
 Expression* TranslateToFuzzReader::makeStringNewArray() {
@@ -3096,31 +3109,42 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
         case 3:
           return buildUnary({SplatVecF64x2, make(Type::f64)});
         case 4:
-          return buildUnary({pick(NotVec128,
-                                  // TODO: add additional SIMD instructions
-                                  NegVecI8x16,
-                                  NegVecI16x8,
-                                  NegVecI32x4,
-                                  NegVecI64x2,
-                                  AbsVecF32x4,
-                                  NegVecF32x4,
-                                  SqrtVecF32x4,
-                                  AbsVecF64x2,
-                                  NegVecF64x2,
-                                  SqrtVecF64x2,
-                                  TruncSatSVecF32x4ToVecI32x4,
-                                  TruncSatUVecF32x4ToVecI32x4,
-                                  ConvertSVecI32x4ToVecF32x4,
-                                  ConvertUVecI32x4ToVecF32x4,
-                                  ExtendLowSVecI8x16ToVecI16x8,
-                                  ExtendHighSVecI8x16ToVecI16x8,
-                                  ExtendLowUVecI8x16ToVecI16x8,
-                                  ExtendHighUVecI8x16ToVecI16x8,
-                                  ExtendLowSVecI16x8ToVecI32x4,
-                                  ExtendHighSVecI16x8ToVecI32x4,
-                                  ExtendLowUVecI16x8ToVecI32x4,
-                                  ExtendHighUVecI16x8ToVecI32x4),
-                             make(Type::v128)});
+          return buildUnary(
+            {pick(FeatureOptions<UnaryOp>()
+                    .add(FeatureSet::SIMD,
+                         NotVec128,
+                         // TODO: add additional SIMD instructions
+                         NegVecI8x16,
+                         NegVecI16x8,
+                         NegVecI32x4,
+                         NegVecI64x2,
+                         AbsVecF32x4,
+                         NegVecF32x4,
+                         SqrtVecF32x4,
+                         AbsVecF64x2,
+                         NegVecF64x2,
+                         SqrtVecF64x2,
+                         TruncSatSVecF32x4ToVecI32x4,
+                         TruncSatUVecF32x4ToVecI32x4,
+                         ConvertSVecI32x4ToVecF32x4,
+                         ConvertUVecI32x4ToVecF32x4,
+                         ExtendLowSVecI8x16ToVecI16x8,
+                         ExtendHighSVecI8x16ToVecI16x8,
+                         ExtendLowUVecI8x16ToVecI16x8,
+                         ExtendHighUVecI8x16ToVecI16x8,
+                         ExtendLowSVecI16x8ToVecI32x4,
+                         ExtendHighSVecI16x8ToVecI32x4,
+                         ExtendLowUVecI16x8ToVecI32x4,
+                         ExtendHighUVecI16x8ToVecI32x4)
+                    .add(FeatureSet::FP16,
+                         AbsVecF16x8,
+                         NegVecF16x8,
+                         SqrtVecF16x8,
+                         CeilVecF16x8,
+                         FloorVecF16x8,
+                         TruncVecF16x8,
+                         NearestVecF16x8)),
+             make(Type::v128)});
       }
       WASM_UNREACHABLE("invalid value");
     }
@@ -3258,103 +3282,119 @@ Expression* TranslateToFuzzReader::makeBinary(Type type) {
     }
     case Type::v128: {
       assert(wasm.features.hasSIMD());
-      return buildBinary({pick(EqVecI8x16,
-                               NeVecI8x16,
-                               LtSVecI8x16,
-                               LtUVecI8x16,
-                               GtSVecI8x16,
-                               GtUVecI8x16,
-                               LeSVecI8x16,
-                               LeUVecI8x16,
-                               GeSVecI8x16,
-                               GeUVecI8x16,
-                               EqVecI16x8,
-                               NeVecI16x8,
-                               LtSVecI16x8,
-                               LtUVecI16x8,
-                               GtSVecI16x8,
-                               GtUVecI16x8,
-                               LeSVecI16x8,
-                               LeUVecI16x8,
-                               GeSVecI16x8,
-                               GeUVecI16x8,
-                               EqVecI32x4,
-                               NeVecI32x4,
-                               LtSVecI32x4,
-                               LtUVecI32x4,
-                               GtSVecI32x4,
-                               GtUVecI32x4,
-                               LeSVecI32x4,
-                               LeUVecI32x4,
-                               GeSVecI32x4,
-                               GeUVecI32x4,
-                               EqVecF32x4,
-                               NeVecF32x4,
-                               LtVecF32x4,
-                               GtVecF32x4,
-                               LeVecF32x4,
-                               GeVecF32x4,
-                               EqVecF64x2,
-                               NeVecF64x2,
-                               LtVecF64x2,
-                               GtVecF64x2,
-                               LeVecF64x2,
-                               GeVecF64x2,
-                               AndVec128,
-                               OrVec128,
-                               XorVec128,
-                               AndNotVec128,
-                               AddVecI8x16,
-                               AddSatSVecI8x16,
-                               AddSatUVecI8x16,
-                               SubVecI8x16,
-                               SubSatSVecI8x16,
-                               SubSatUVecI8x16,
-                               MinSVecI8x16,
-                               MinUVecI8x16,
-                               MaxSVecI8x16,
-                               MaxUVecI8x16,
-                               // TODO: avgr_u
-                               // TODO: q15mulr_sat_s
-                               // TODO: extmul
-                               AddVecI16x8,
-                               AddSatSVecI16x8,
-                               AddSatUVecI16x8,
-                               SubVecI16x8,
-                               SubSatSVecI16x8,
-                               SubSatUVecI16x8,
-                               MulVecI16x8,
-                               MinSVecI16x8,
-                               MinUVecI16x8,
-                               MaxSVecI16x8,
-                               MaxUVecI16x8,
-                               AddVecI32x4,
-                               SubVecI32x4,
-                               MulVecI32x4,
-                               MinSVecI32x4,
-                               MinUVecI32x4,
-                               MaxSVecI32x4,
-                               MaxUVecI32x4,
-                               DotSVecI16x8ToVecI32x4,
-                               AddVecI64x2,
-                               SubVecI64x2,
-                               AddVecF32x4,
-                               SubVecF32x4,
-                               MulVecF32x4,
-                               DivVecF32x4,
-                               MinVecF32x4,
-                               MaxVecF32x4,
-                               AddVecF64x2,
-                               SubVecF64x2,
-                               MulVecF64x2,
-                               DivVecF64x2,
-                               MinVecF64x2,
-                               MaxVecF64x2,
-                               NarrowSVecI16x8ToVecI8x16,
-                               NarrowUVecI16x8ToVecI8x16,
-                               NarrowSVecI32x4ToVecI16x8,
-                               NarrowUVecI32x4ToVecI16x8,
-                               SwizzleVecI8x16),
+      return buildBinary({pick(FeatureOptions<BinaryOp>()
+                                 .add(FeatureSet::SIMD,
+                                      EqVecI8x16,
+                                      NeVecI8x16,
+                                      LtSVecI8x16,
+                                      LtUVecI8x16,
+                                      GtSVecI8x16,
+                                      GtUVecI8x16,
+                                      LeSVecI8x16,
+                                      LeUVecI8x16,
+                                      GeSVecI8x16,
+                                      GeUVecI8x16,
+                                      EqVecI16x8,
+                                      NeVecI16x8,
+                                      LtSVecI16x8,
+                                      LtUVecI16x8,
+                                      GtSVecI16x8,
+                                      GtUVecI16x8,
+                                      LeSVecI16x8,
+                                      LeUVecI16x8,
+                                      GeSVecI16x8,
+                                      GeUVecI16x8,
+                                      EqVecI32x4,
+                                      NeVecI32x4,
+                                      LtSVecI32x4,
+                                      LtUVecI32x4,
+                                      GtSVecI32x4,
+                                      GtUVecI32x4,
+                                      LeSVecI32x4,
+                                      LeUVecI32x4,
+                                      GeSVecI32x4,
+                                      GeUVecI32x4,
+                                      EqVecF32x4,
+                                      NeVecF32x4,
+                                      LtVecF32x4,
+                                      GtVecF32x4,
+                                      LeVecF32x4,
+                                      GeVecF32x4,
+                                      EqVecF64x2,
+                                      NeVecF64x2,
+                                      LtVecF64x2,
+                                      GtVecF64x2,
+                                      LeVecF64x2,
+                                      GeVecF64x2,
+                                      AndVec128,
+                                      OrVec128,
+                                      XorVec128,
+                                      AndNotVec128,
+                                      AddVecI8x16,
+                                      AddSatSVecI8x16,
+                                      AddSatUVecI8x16,
+                                      SubVecI8x16,
+                                      SubSatSVecI8x16,
+                                      SubSatUVecI8x16,
+                                      MinSVecI8x16,
+                                      MinUVecI8x16,
+                                      MaxSVecI8x16,
+                                      MaxUVecI8x16,
+                                      // TODO: avgr_u
+                                      // TODO: q15mulr_sat_s
+                                      // TODO: extmul
+                                      AddVecI16x8,
+                                      AddSatSVecI16x8,
+                                      AddSatUVecI16x8,
+                                      SubVecI16x8,
+                                      SubSatSVecI16x8,
+                                      SubSatUVecI16x8,
+                                      MulVecI16x8,
+                                      MinSVecI16x8,
+                                      MinUVecI16x8,
+                                      MaxSVecI16x8,
+                                      MaxUVecI16x8,
+                                      AddVecI32x4,
+                                      SubVecI32x4,
+                                      MulVecI32x4,
+                                      MinSVecI32x4,
+                                      MinUVecI32x4,
+                                      MaxSVecI32x4,
+                                      MaxUVecI32x4,
+                                      DotSVecI16x8ToVecI32x4,
+                                      AddVecI64x2,
+                                      SubVecI64x2,
+                                      AddVecF32x4,
+                                      SubVecF32x4,
+                                      MulVecF32x4,
+                                      DivVecF32x4,
+                                      MinVecF32x4,
+                                      MaxVecF32x4,
+                                      AddVecF64x2,
+                                      SubVecF64x2,
+                                      MulVecF64x2,
+                                      DivVecF64x2,
+                                      MinVecF64x2,
+                                      MaxVecF64x2,
+                                      NarrowSVecI16x8ToVecI8x16,
+                                      NarrowUVecI16x8ToVecI8x16,
+                                      NarrowSVecI32x4ToVecI16x8,
+                                      NarrowUVecI32x4ToVecI16x8,
+                                      SwizzleVecI8x16)
+                                 .add(FeatureSet::FP16,
+                                      EqVecF16x8,
+                                      EqVecF16x8,
+                                      NeVecF16x8,
+                                      LtVecF16x8,
+                                      GtVecF16x8,
+                                      LeVecF16x8,
+                                      GeVecF16x8,
+                                      AddVecF16x8,
+                                      SubVecF16x8,
+                                      MulVecF16x8,
+                                      DivVecF16x8,
+                                      MinVecF16x8,
+                                      MaxVecF16x8)),
                           make(Type::v128),
                           make(Type::v128)});
     }
@@ -3560,7 +3600,9 @@ Expression* TranslateToFuzzReader::makeSIMDExtract(Type type) {
       op = ExtractLaneVecI64x2;
       break;
     case Type::f32:
-      op = ExtractLaneVecF32x4;
+      op = pick(FeatureOptions<SIMDExtractOp>()
+                  .add(FeatureSet::SIMD, ExtractLaneVecF32x4)
+                  .add(FeatureSet::FP16, ExtractLaneVecF16x8));
       break;
     case Type::f64:
       op = ExtractLaneVecF64x2;
@@ -3579,6 +3621,7 @@ Expression* TranslateToFuzzReader::makeSIMDExtract(Type type) {
       break;
     case ExtractLaneSVecI16x8:
     case ExtractLaneUVecI16x8:
+    case ExtractLaneVecF16x8:
       index = upTo(8);
       break;
     case ExtractLaneVecI32x4:
@@ -3594,12 +3637,16 @@ Expression* TranslateToFuzzReader::makeSIMDExtract(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeSIMDReplace() {
-  SIMDReplaceOp op = pick(ReplaceLaneVecI8x16,
-                          ReplaceLaneVecI16x8,
-                          ReplaceLaneVecI32x4,
-                          ReplaceLaneVecI64x2,
-                          ReplaceLaneVecF32x4,
-                          ReplaceLaneVecF64x2);
+  SIMDReplaceOp op =
+    pick(FeatureOptions<SIMDReplaceOp>()
+           .add(FeatureSet::SIMD,
+                ReplaceLaneVecI8x16,
+                ReplaceLaneVecI16x8,
+                ReplaceLaneVecI32x4,
+                ReplaceLaneVecI64x2,
+                ReplaceLaneVecF32x4,
+                ReplaceLaneVecF64x2)
+           .add(FeatureSet::FeatureSet::FP16, ReplaceLaneVecF16x8));
   Expression* vec = make(Type::v128);
   uint8_t index;
   Type lane_t;
@@ -3619,6 +3666,10 @@ Expression* TranslateToFuzzReader::makeSIMDReplace() {
     case ReplaceLaneVecI64x2:
       index = upTo(2);
       lane_t = Type::i64;
+      break;
+    case ReplaceLaneVecF16x8:
+      index = upTo(8);
+      lane_t = Type::f32;
       break;
     case ReplaceLaneVecF32x4:
       index = upTo(4);

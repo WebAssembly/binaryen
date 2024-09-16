@@ -755,10 +755,10 @@ BinaryenOp BinaryenOrVec128(void) { return OrVec128; }
 BinaryenOp BinaryenXorVec128(void) { return XorVec128; }
 BinaryenOp BinaryenAndNotVec128(void) { return AndNotVec128; }
 BinaryenOp BinaryenBitselectVec128(void) { return Bitselect; }
-BinaryenOp BinaryenRelaxedFmaVecF32x4(void) { return RelaxedFmaVecF32x4; }
-BinaryenOp BinaryenRelaxedFmsVecF32x4(void) { return RelaxedFmsVecF32x4; }
-BinaryenOp BinaryenRelaxedFmaVecF64x2(void) { return RelaxedFmaVecF64x2; }
-BinaryenOp BinaryenRelaxedFmsVecF64x2(void) { return RelaxedFmsVecF64x2; }
+BinaryenOp BinaryenRelaxedMaddVecF32x4(void) { return RelaxedMaddVecF32x4; }
+BinaryenOp BinaryenRelaxedNmaddVecF32x4(void) { return RelaxedNmaddVecF32x4; }
+BinaryenOp BinaryenRelaxedMaddVecF64x2(void) { return RelaxedMaddVecF64x2; }
+BinaryenOp BinaryenRelaxedNmaddVecF64x2(void) { return RelaxedNmaddVecF64x2; }
 BinaryenOp BinaryenLaneselectI8x16(void) { return LaneselectI8x16; }
 BinaryenOp BinaryenLaneselectI16x8(void) { return LaneselectI16x8; }
 BinaryenOp BinaryenLaneselectI32x4(void) { return LaneselectI32x4; }
@@ -5647,6 +5647,9 @@ BinaryenModuleRef BinaryenModuleReadWithFeatures(char* input,
     p.dump(std::cerr);
     Fatal() << "error in parsing wasm binary";
   }
+  // Do not regress code size by maintaining type order. TODO: Add an option to
+  // control this.
+  wasm->typeIndices.clear();
   return wasm;
 }
 

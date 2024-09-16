@@ -195,10 +195,10 @@ NATIVECC = (os.environ.get('CC') or which('mingw32-gcc') or
             which('gcc') or which('clang'))
 NATIVEXX = (os.environ.get('CXX') or which('mingw32-g++') or
             which('g++') or which('clang++'))
-NODEJS = os.getenv('NODE', which('node') or which('nodejs'))
+NODEJS = os.environ.get('NODE') or which('node') or which('nodejs')
 MOZJS = which('mozjs') or which('spidermonkey')
 
-V8 = which('v8') or which('d8')
+V8 = os.environ.get('V8') or which('v8') or which('d8')
 
 BINARYEN_INSTALL_DIR = os.path.dirname(options.binaryen_bin)
 WASM_OPT = [os.path.join(options.binaryen_bin, 'wasm-opt')]
@@ -257,6 +257,7 @@ V8_OPTS = [
     '--experimental-wasm-compilation-hints',
     '--experimental-wasm-memory64',
     '--experimental-wasm-stringref',
+    '--experimental-wasm-fp16',
 ]
 
 # external tools
@@ -386,7 +387,7 @@ def get_tests(test_dir, extensions=[], recursive=False):
 if options.spec_tests:
     options.spec_tests = [os.path.abspath(t) for t in options.spec_tests]
 else:
-    options.spec_tests = get_tests(get_test_dir('spec'), ['.wast'])
+    options.spec_tests = get_tests(get_test_dir('spec'), ['.wast'], recursive=True)
 
 os.chdir(options.out_dir)
 
@@ -411,11 +412,94 @@ SPEC_TESTS_TO_SKIP = [
     # Test invalid
     'elem.wast',
 ]
+SPEC_TESTSUITE_TESTS_TO_SKIP = [
+    'address.wast',  # 64-bit offset allowed by memory64
+    'align.wast',    # Alignment bit 6 used by multi-memory
+    'binary.wast',   # memory.grow reserved byte a LEB in multi-memory
+    'block.wast',    # Requires block parameters
+    'bulk.wast',     # Requires table.init abbreviation with implicit table
+    'comments.wast',  # Issue with carriage returns being treated as newlines
+    'const.wast',    # Hex float constant not recognized as out of range
+    'conversions.wast',  # Promoted NaN should be canonical
+    'data.wast',    # Constant global references allowed by GC
+    'elem.wast',    # Requires table.init abbreviation with implicit table
+    'f32.wast',     # Adding -0 and -nan should give a canonical NaN
+    'f64.wast',     # Adding -0 and -nan should give a canonical NaN
+    'fac.wast',     # Requires block parameters (on a loop)
+    'float_exprs.wast',  # Adding 0 and NaN should give canonical NaN
+    'float_misc.wast',   # Rounding wrong on f64.sqrt
+    'func.wast',    # Duplicate parameter names not properly rejected
+    'global.wast',  # Globals allowed to refer to previous globals by GC
+    'if.wast',      # Requires block parameters (on an if)
+    'imports.wast',  # Requires wast `register` support
+    'linking.wast',  # Requires wast `register` support
+    'loop.wast',     # Requires block parameters (on a loop)
+    'memory.wast',   # Multiple memories now allowed
+    'annotations.wast',  # String annotations IDs should be allowed
+    'id.wast',       # Empty IDs should be disallowed
+    'throw.wast',    # Requires try_table interpretation
+    'try_catch.wast',  # Requires wast `register` support
+    'tag.wast',      # Non-empty tag results allowed by stack switching
+    'throw_ref.wast',  # Requires block parameters (on an if)
+    'try_table.wast',  # Requires try_table interpretation
+    'br_on_non_null.wast',  # Requires sending values on br_on_non_null
+    'br_on_null.wast',      # Requires sending values on br_on_null
+    'local_init.wast',  # Requires local validation to respect unnamed blocks
+    'ref_func.wast',   # Requires rejecting undeclared functions references
+    'ref_is_null.wast',  # Requires ref.null wast constants
+    'ref_null.wast',     # Requires ref.null wast constants
+    'return_call_indirect.wast',  # Requires more precise unreachable validation
+    'select.wast',  # Requires ref.null wast constants
+    'table.wast',  # Requires support for table default elements
+    'type-equivalence.wast',  # Recursive types allowed by GC
+    'unreached-invalid.wast',  # Requires more precise unreachable validation
+    'array.wast',  # Requires support for table default elements
+    'array_init_elem.wast',  # Requires support for elem.drop
+    'br_if.wast',  # Requires more precise branch validation
+    'br_on_cast.wast',  # Requires sending values on br_on_cast
+    'br_on_cast_fail.wast',  # Requires sending values on br_on_cast_fail
+    'extern.wast',    # Requires ref.host wast constants
+    'i31.wast',       # Requires support for table default elements
+    'ref_cast.wast',  # Requires host references to not be externalized i31refs
+    'ref_test.wast',  # Requires host references to not be externalized i31refs
+    'struct.wast',    # Duplicate field names not properly rejected
+    'type-rec.wast',  # Requires wast `register` support
+    'type-subtyping.wast',  # ShellExternalInterface::callTable does not handle subtyping
+    'call_indirect.wast',   # Bug with 64-bit inline element segment parsing
+    'memory64.wast',        # Multiple memories now allowed
+    'table_init.wast',      # Requires support for elem.drop
+    'imports0.wast',        # Requires wast `register` support
+    'imports2.wast',        # Requires wast `register` support
+    'imports3.wast',        # Requires wast `register` support
+    'linking0.wast',        # Requires wast `register` support
+    'linking3.wast',        # Requires wast `register` support
+    'i16x8_relaxed_q15mulr_s.wast',  # Requires wast `either` support
+    'i32x4_relaxed_trunc.wast',      # Requires wast `either` support
+    'i8x16_relaxed_swizzle.wast',    # Requires wast `either` support
+    'relaxed_dot_product.wast',   # Requires wast `either` support
+    'relaxed_laneselect.wast',    # Requires wast `either` support
+    'relaxed_madd_nmadd.wast',    # Requires wast `either` support
+    'relaxed_min_max.wast',       # Requires wast `either` support
+    'simd_address.wast',          # 64-bit offset allowed by memory64
+    'simd_const.wast',            # Hex float constant not recognized as out of range
+    'simd_conversions.wast',      # Promoted NaN should be canonical
+    'simd_f32x4.wast',            # Min of 0 and NaN should give a canonical NaN
+    'simd_f32x4_arith.wast',      # Adding inf and -inf should give a canonical NaN
+    'simd_f32x4_rounding.wast',   # Ceil of NaN should give a canonical NaN
+    'simd_f64x2.wast',            # Min of 0 and NaN should give a canonical NaN
+    'simd_f64x2_arith.wast',      # Adding inf and -inf should give a canonical NaN
+    'simd_f64x2_rounding.wast',   # Ceil of NaN should give a canonical NaN
+    'simd_i32x4_cmp.wast',        # UBSan error on integer overflow
+    'simd_i32x4_arith2.wast',     # UBSan error on integer overflow
+    'simd_i32x4_dot_i16x8.wast',  # UBSan error on integer overflow
+    'token.wast',                 # Lexer should require spaces between strings and non-paren tokens
+]
 options.spec_tests = [t for t in options.spec_tests if os.path.basename(t) not
-                      in SPEC_TESTS_TO_SKIP]
-
+                      in (SPEC_TESTSUITE_TESTS_TO_SKIP if 'testsuite' in t
+                          else SPEC_TESTS_TO_SKIP)]
 
 # check utilities
+
 
 def binary_format_check(wast, verify_final_result=True, wasm_as_args=['-g'],
                         binary_suffix='.fromBinary'):

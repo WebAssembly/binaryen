@@ -663,6 +663,7 @@ struct InfoCollector
   void visitTableGrow(TableGrow* curr) { addRoot(curr); }
   void visitTableFill(TableFill* curr) { addRoot(curr); }
   void visitTableCopy(TableCopy* curr) { addRoot(curr); }
+  void visitTableInit(TableInit* curr) {}
 
   void visitNop(Nop* curr) {}
   void visitUnreachable(Unreachable* curr) {}
@@ -1134,8 +1135,38 @@ struct InfoCollector
     }
   }
   void visitTryTable(TryTable* curr) {
-    // TODO: optimize when possible
-    addRoot(curr);
+    receiveChildValue(curr->body, curr);
+
+    // Connect caught tags with their branch targets, and materialize non-null
+    // exnref values.
+    auto numTags = curr->catchTags.size();
+    for (Index tagIndex = 0; tagIndex < numTags; tagIndex++) {
+      auto tag = curr->catchTags[tagIndex];
+      auto target = curr->catchDests[tagIndex];
+
+      Index exnrefIndex = 0;
+      if (tag.is()) {
+        auto params = getModule()->getTag(tag)->sig.params;
+
+        for (Index i = 0; i < params.size(); i++) {
+          if (isRelevant(params[i])) {
+            info.links.push_back(
+              {TagLocation{tag, i},
+               BreakTargetLocation{getFunction(), target, i}});
+          }
+        }
+
+        exnrefIndex = params.size();
+      }
+
+      if (curr->catchRefs[tagIndex]) {
+        auto location = CaughtExnRefLocation{};
+        addRoot(location,
+                PossibleContents::fromType(Type(HeapType::exn, NonNullable)));
+        info.links.push_back(
+          {location, BreakTargetLocation{getFunction(), target, exnrefIndex}});
+      }
+    }
   }
   void visitThrow(Throw* curr) {
     auto& operands = curr->operands;
@@ -1214,7 +1245,12 @@ struct InfoCollector
     // the type must be the same for all gets of that local.)
     LocalGraph localGraph(func, getModule());
 
-    for (auto& [get, setsForGet] : localGraph.getSetses) {
+    for (auto& [curr, _] : localGraph.locations) {
+      auto* get = curr->dynCast<LocalGet>();
+      if (!get) {
+        continue;
+      }
+
       auto index = get->index;
       auto type = func->getLocalType(index);
       if (!isRelevant(type)) {
@@ -1222,7 +1258,7 @@ struct InfoCollector
       }
 
       // Each get reads from its relevant sets.
-      for (auto* set : setsForGet) {
+      for (auto* set : localGraph.getSets(get)) {
         for (Index i = 0; i < type.size(); i++) {
           Location source;
           if (set) {

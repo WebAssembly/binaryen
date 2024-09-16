@@ -47,7 +47,7 @@ BinaryenFeatureMemory64: 2048
 BinaryenFeatureRelaxedSIMD: 4096
 BinaryenFeatureExtendedConst: 8192
 BinaryenFeatureStrings: 16384
-BinaryenFeatureAll: 262143
+BinaryenFeatureAll: 524287
 (f32.neg
  (f32.const -33.61199951171875)
 )
@@ -1884,28 +1884,28 @@ BinaryenFeatureAll: 262143
        )
       )
       (drop
-       (f32x4.relaxed_fma
+       (f32x4.relaxed_madd
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (f32x4.relaxed_fms
+       (f32x4.relaxed_nmadd
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (f64x2.relaxed_fma
+       (f64x2.relaxed_madd
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
        )
       )
       (drop
-       (f64x2.relaxed_fms
+       (f64x2.relaxed_nmadd
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
         (v128.const i32x4 0x04030201 0x08070605 0x0c0b0a09 0x100f0e0d)
@@ -3037,9 +3037,9 @@ TypeBuilderErrorReasonForwardSupertypeReference: 2
 TypeBuilderErrorReasonForwardChildReference: 3
 module with recursive GC types:
 (module
+ (type $SomeStruct (sub (struct (field $SomeField (mut (ref null $SomeStruct))))))
  (type $SomeArray (sub (array (mut (ref null $SomeArray)))))
  (type $SomeSignature (sub (func (param (ref null $SomeSignature) (ref null $SomeArray)) (result (ref null $SomeSignature)))))
- (type $SomeStruct (sub (struct (field $SomeField (mut (ref null $SomeStruct))))))
  (type $3 (func))
  (type $SomeSubStruct (sub $SomeStruct (struct (field $SomeField (mut (ref null $SomeStruct))) (field $SomePackedField i8))))
  (func $test (type $3)

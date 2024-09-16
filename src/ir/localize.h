@@ -130,6 +130,8 @@ struct ChildLocalizer {
       // effects we can't remove, or if it interacts with other children.
       bool needLocal = effects[i].hasUnremovableSideEffects();
       if (!needLocal) {
+        // TODO: Avoid quadratic time here by accumulating effects and checking
+        //       vs the accumulation.
         for (Index j = 0; j < num; j++) {
           if (j != i && effects[i].invalidates(effects[j])) {
             needLocal = true;

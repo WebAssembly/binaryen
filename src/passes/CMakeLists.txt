@@ -47,11 +47,13 @@ set(passes_SOURCES
   hash-stringify-walker.cpp
   Outlining.cpp
   Heap2Local.cpp
+  HeapStoreOptimization.cpp
   I64ToI32Lowering.cpp
   Inlining.cpp
   InstrumentLocals.cpp
   InstrumentMemory.cpp
   Intrinsics.cpp
+  J2CLItableMerging.cpp
   J2CLOpts.cpp
   JSPI.cpp
   LegalizeJSInterface.cpp
@@ -67,6 +69,7 @@ set(passes_SOURCES
   MergeLocals.cpp
   Metrics.cpp
   MinifyImportsAndExports.cpp
+  MinimizeRecGroups.cpp
   Monomorphize.cpp
   MultiMemoryLowering.cpp
   NameList.cpp

@@ -91,6 +91,10 @@ struct Table64Lowering : public WalkerPass<PostWalker<Table64Lowering>> {
     wrapAddress64(curr->size, curr->destTable);
   }
 
+  void visitTableInit(TableInit* curr) {
+    wrapAddress64(curr->dest, curr->table);
+  }
+
   void visitCallIndirect(CallIndirect* curr) {
     wrapAddress64(curr->target, curr->table);
   }
@@ -134,7 +138,7 @@ struct Table64Lowering : public WalkerPass<PostWalker<Table64Lowering>> {
   }
 
   void run(Module* module) override {
-    super::run(module);
+    Super::run(module);
     // Don't modify the tables themselves until after the traversal since we
     // that would require tables to be the last thing that get visited, and
     // we don't want to depend on that specific ordering.

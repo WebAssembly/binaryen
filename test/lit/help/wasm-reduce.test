@@ -141,6 +141,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-shared-everything          Disable shared-everything threads
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-fp16                        Enable float 16 operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-fp16                       Disable float 16 operations
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references   Deprecated compatibility flag
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-typed-function-references  Deprecated compatibility flag
@@ -163,6 +167,9 @@
 ;; CHECK-NEXT:                                        passed out. The outside may hold on to
 ;; CHECK-NEXT:                                        them and pass them back in, but not
 ;; CHECK-NEXT:                                        inspect their contents or call them.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --preserve-type-order                Preserve the order of types from the
+;; CHECK-NEXT:                                        input (useful for debugging and testing)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-stack-ir                  generate StackIR during writing
 ;; CHECK-NEXT:

@@ -38,7 +38,7 @@
     )
   )
 
-  ;; CHECK:      (func $vacuum-nonnull (type $0)
+  ;; CHECK:      (func $vacuum-nonnull (type $1)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $vacuum-nonnull
@@ -101,7 +101,7 @@
     )
   )
 
-  ;; CHECK:      (func $dropped-calls (type $0)
+  ;; CHECK:      (func $dropped-calls (type $1)
   ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (call $helper-i32)

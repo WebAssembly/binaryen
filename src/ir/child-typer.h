@@ -228,6 +228,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       case ReplaceLaneVecI64x2:
         note(&curr->value, Type::i64);
         break;
+      case ReplaceLaneVecF16x8:
       case ReplaceLaneVecF32x4:
         note(&curr->value, Type::f32);
         break;
@@ -337,6 +338,7 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       case TruncSatUFloat32ToInt64:
       case ReinterpretFloat32:
       case PromoteFloat32:
+      case SplatVecF16x8:
       case SplatVecF32x4:
         note(&curr->value, Type::f32);
         break;
@@ -370,6 +372,13 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       case NegVecI16x8:
       case NegVecI32x4:
       case NegVecI64x2:
+      case AbsVecF16x8:
+      case NegVecF16x8:
+      case SqrtVecF16x8:
+      case CeilVecF16x8:
+      case FloorVecF16x8:
+      case TruncVecF16x8:
+      case NearestVecF16x8:
       case AbsVecF32x4:
       case NegVecF32x4:
       case SqrtVecF32x4:
@@ -556,6 +565,12 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       case LeSVecI64x2:
       case GtSVecI64x2:
       case GeSVecI64x2:
+      case EqVecF16x8:
+      case NeVecF16x8:
+      case LtVecF16x8:
+      case LeVecF16x8:
+      case GtVecF16x8:
+      case GeVecF16x8:
       case EqVecF32x4:
       case NeVecF32x4:
       case LtVecF32x4:
@@ -619,6 +634,14 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
       case ExtMulHighSVecI64x2:
       case ExtMulLowUVecI64x2:
       case ExtMulHighUVecI64x2:
+      case AddVecF16x8:
+      case SubVecF16x8:
+      case MulVecF16x8:
+      case DivVecF16x8:
+      case MinVecF16x8:
+      case MaxVecF16x8:
+      case PMinVecF16x8:
+      case PMaxVecF16x8:
       case AddVecF32x4:
       case SubVecF32x4:
       case MulVecF32x4:
@@ -731,6 +754,12 @@ template<typename Subtype> struct ChildTyper : OverriddenVisitor<Subtype> {
   void visitTableCopy(TableCopy* curr) {
     note(&curr->dest, Type::i32);
     note(&curr->source, Type::i32);
+    note(&curr->size, Type::i32);
+  }
+
+  void visitTableInit(TableInit* curr) {
+    note(&curr->dest, wasm.getTable(curr->table)->indexType);
+    note(&curr->offset, Type::i32);
     note(&curr->size, Type::i32);
   }
 

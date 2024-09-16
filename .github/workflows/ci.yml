@@ -102,7 +102,7 @@ jobs:
       if: matrix.os != 'windows-latest'
 
     - name: Upload artifacts
-      uses: actions/upload-artifact@v1
+      uses: actions/upload-artifact@v4
       with:
         name: build-${{ matrix.os }}
         path: out/install

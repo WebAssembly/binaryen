@@ -14,14 +14,14 @@
   ;; YES:      (type $0 (func (result i32)))
 
   ;; YES:      (rec
-  ;; YES-NEXT:  (type $1 (func (param (ref $A))))
-
-  ;; YES:       (type $A (sub (struct)))
+  ;; YES-NEXT:  (type $A (sub (struct)))
   (type $A (sub (struct (field (mut i32)))))
 
   ;; NOP:      (type $2 (func (result i32)))
 
   ;; NOP:      (import "a" "b" (func $import (type $2) (result i32)))
+  ;; YES:       (type $2 (func (param (ref $A))))
+
   ;; YES:       (type $A_2 (sub $A (struct)))
 
   ;; YES:       (type $A_1 (sub $A (struct)))
@@ -92,7 +92,7 @@
   ;; NOP-NEXT:   (local.get $0)
   ;; NOP-NEXT:  )
   ;; NOP-NEXT: )
-  ;; YES:      (func $get-a-1 (type $1) (param $0 (ref $A))
+  ;; YES:      (func $get-a-1 (type $2) (param $0 (ref $A))
   ;; YES-NEXT:  (if
   ;; YES-NEXT:   (call $import)
   ;; YES-NEXT:   (then
@@ -134,7 +134,7 @@
   ;; NOP-NEXT:   (local.get $0)
   ;; NOP-NEXT:  )
   ;; NOP-NEXT: )
-  ;; YES:      (func $get-a-2 (type $1) (param $0 (ref $A))
+  ;; YES:      (func $get-a-2 (type $2) (param $0 (ref $A))
   ;; YES-NEXT:  (if
   ;; YES-NEXT:   (call $import)
   ;; YES-NEXT:   (then

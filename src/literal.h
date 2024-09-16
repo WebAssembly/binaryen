@@ -32,6 +32,7 @@ namespace wasm {
 
 class Literals;
 struct GCData;
+struct ExnData;
 
 class Literal {
   // store only integers, whose bits are deterministic. floats
@@ -44,6 +45,7 @@ class Literal {
     int64_t i64;
     uint8_t v128[16];
     // funcref function name. `isNull()` indicates a `null` value.
+    // TODO: handle cross-module calls using something other than a Name here.
     Name func;
     // A reference to GC data, either a Struct or an Array. For both of those we
     // store the referred data as a Literals object (which is natural for an
@@ -56,6 +58,8 @@ class Literal {
     // reference as its sole value even though internal i31 references do not
     // have a gcData.
     std::shared_ptr<GCData> gcData;
+    // A reference to Exn data.
+    std::shared_ptr<ExnData> exnData;
   };
 
 public:
@@ -85,6 +89,7 @@ public:
     assert(type.isSignature());
   }
   explicit Literal(std::shared_ptr<GCData> gcData, HeapType type);
+  explicit Literal(std::shared_ptr<ExnData> exnData);
   explicit Literal(std::string_view string);
   Literal(const Literal& other);
   Literal& operator=(const Literal& other);
@@ -96,6 +101,7 @@ public:
   // Whether this is GC data, that is, something stored on the heap (aside from
   // a null or i31). This includes structs, arrays, and also strings.
   bool isData() const { return type.isData(); }
+  bool isExn() const { return type.isExn(); }
   bool isString() const { return type.isString(); }
 
   bool isNull() const { return type.isNull(); }
@@ -205,7 +211,6 @@ public:
   }
 
   static Literal makeFromMemory(void* p, Type type);
-  static Literal makeFromMemory(void* p, const Field& field);
 
   static Literal makeSignedMin(Type type) {
     switch (type.getBasic()) {
@@ -303,6 +308,7 @@ public:
     return func;
   }
   std::shared_ptr<GCData> getGCData() const;
+  std::shared_ptr<ExnData> getExnData() const;
 
   // careful!
   int32_t* geti32Ptr() {
@@ -375,6 +381,7 @@ public:
   Literal convertUIToF32() const;
   Literal convertSIToF64() const;
   Literal convertUIToF64() const;
+  Literal convertF32ToF16() const;
 
   Literal truncSatToSI32() const;
   Literal truncSatToSI64() const;
@@ -435,8 +442,8 @@ public:
 
   // Fused multiply add and subtract.
   // Computes this + (left * right) to infinite precision then round once.
-  Literal fma(const Literal& left, const Literal& right) const;
-  Literal fms(const Literal& left, const Literal& right) const;
+  Literal madd(const Literal& left, const Literal& right) const;
+  Literal nmadd(const Literal& left, const Literal& right) const;
 
   std::array<Literal, 16> getLanesSI8x16() const;
   std::array<Literal, 16> getLanesUI8x16() const;
@@ -444,6 +451,7 @@ public:
   std::array<Literal, 8> getLanesUI16x8() const;
   std::array<Literal, 4> getLanesI32x4() const;
   std::array<Literal, 2> getLanesI64x2() const;
+  std::array<Literal, 8> getLanesF16x8() const;
   std::array<Literal, 4> getLanesF32x4() const;
   std::array<Literal, 2> getLanesF64x2() const;
 
@@ -463,6 +471,9 @@ public:
   Literal splatI64x2() const;
   Literal extractLaneI64x2(uint8_t index) const;
   Literal replaceLaneI64x2(const Literal& other, uint8_t index) const;
+  Literal splatF16x8() const;
+  Literal extractLaneF16x8(uint8_t index) const;
+  Literal replaceLaneF16x8(const Literal& other, uint8_t index) const;
   Literal splatF32x4() const;
   Literal extractLaneF32x4(uint8_t index) const;
   Literal replaceLaneF32x4(const Literal& other, uint8_t index) const;
@@ -505,6 +516,12 @@ public:
   Literal gtSI64x2(const Literal& other) const;
   Literal leSI64x2(const Literal& other) const;
   Literal geSI64x2(const Literal& other) const;
+  Literal eqF16x8(const Literal& other) const;
+  Literal neF16x8(const Literal& other) const;
+  Literal ltF16x8(const Literal& other) const;
+  Literal gtF16x8(const Literal& other) const;
+  Literal leF16x8(const Literal& other) const;
+  Literal geF16x8(const Literal& other) const;
   Literal eqF32x4(const Literal& other) const;
   Literal neF32x4(const Literal& other) const;
   Literal ltF32x4(const Literal& other) const;
@@ -601,6 +618,21 @@ public:
   Literal extMulHighSI64x2(const Literal& other) const;
   Literal extMulLowUI64x2(const Literal& other) const;
   Literal extMulHighUI64x2(const Literal& other) const;
+  Literal absF16x8() const;
+  Literal negF16x8() const;
+  Literal sqrtF16x8() const;
+  Literal addF16x8(const Literal& other) const;
+  Literal subF16x8(const Literal& other) const;
+  Literal mulF16x8(const Literal& other) const;
+  Literal divF16x8(const Literal& other) const;
+  Literal minF16x8(const Literal& other) const;
+  Literal maxF16x8(const Literal& other) const;
+  Literal pminF16x8(const Literal& other) const;
+  Literal pmaxF16x8(const Literal& other) const;
+  Literal ceilF16x8() const;
+  Literal floorF16x8() const;
+  Literal truncF16x8() const;
+  Literal nearestF16x8() const;
   Literal absF32x4() const;
   Literal negF32x4() const;
   Literal sqrtF32x4() const;
@@ -662,10 +694,12 @@ public:
   Literal demoteZeroToF32x4() const;
   Literal promoteLowToF64x2() const;
   Literal swizzleI8x16(const Literal& other) const;
-  Literal relaxedFmaF32x4(const Literal& left, const Literal& right) const;
-  Literal relaxedFmsF32x4(const Literal& left, const Literal& right) const;
-  Literal relaxedFmaF64x2(const Literal& left, const Literal& right) const;
-  Literal relaxedFmsF64x2(const Literal& left, const Literal& right) const;
+  Literal relaxedMaddF16x8(const Literal& left, const Literal& right) const;
+  Literal relaxedNmaddF16x8(const Literal& left, const Literal& right) const;
+  Literal relaxedMaddF32x4(const Literal& left, const Literal& right) const;
+  Literal relaxedNmaddF32x4(const Literal& left, const Literal& right) const;
+  Literal relaxedMaddF64x2(const Literal& left, const Literal& right) const;
+  Literal relaxedNmaddF64x2(const Literal& left, const Literal& right) const;
 
   Literal externalize() const;
   Literal internalize() const;
@@ -730,6 +764,18 @@ struct GCData {
   Literals values;
 
   GCData(HeapType type, Literals values) : type(type), values(values) {}
+};
+
+// The data of a (ref exn) literal.
+struct ExnData {
+  // The tag of this exn data.
+  // TODO: handle cross-module calls using something other than a Name here.
+  Name tag;
+
+  // The payload of this exn data.
+  Literals payload;
+
+  ExnData(Name tag, Literals payload) : tag(tag), payload(payload) {}
 };
 
 } // namespace wasm

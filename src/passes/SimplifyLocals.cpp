@@ -321,9 +321,9 @@ struct SimplifyLocals
            Expression** currp) {
     Expression* curr = *currp;
 
-    // Certain expressions cannot be sinked into 'try', and so at the start of
-    // 'try' we forget about them.
-    if (curr->is<Try>()) {
+    // Certain expressions cannot be sinked into 'try'/'try_table', and so at
+    // the start of 'try'/'try_table' we forget about them.
+    if (curr->is<Try>() || curr->is<TryTable>()) {
       std::vector<Index> invalidated;
       for (auto& [index, info] : self->sinkables) {
         // Expressions that may throw cannot be moved into a try (which might

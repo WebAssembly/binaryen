@@ -31,6 +31,7 @@ Toolchains using Binaryen as a **component** (typically running `wasm-opt`) incl
   * [`J2CL`](https://j2cl.io/) (Java; [`J2Wasm`](https://github.com/google/j2cl/tree/master/samples/wasm))
   * [`Kotlin`](https://kotl.in/wasmgc) (Kotlin/Wasm)
   * [`Dart`](https://flutter.dev/wasm) (Flutter)
+  * [`wasm_of_ocaml`](https://github.com/ocaml-wasm/wasm_of_ocaml) (OCaml)
 
 For more on how some of those work, see the toolchain architecture parts of
 the [V8 WasmGC porting blogpost](https://v8.dev/blog/wasm-gc-porting).

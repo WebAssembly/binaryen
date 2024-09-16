@@ -189,7 +189,7 @@ struct TranslateToExnref : public WalkerPass<PostWalker<TranslateToExnref>> {
   std::optional<TargetTryLabelScanner> labelScanner;
   std::optional<ExnrefLocalAssigner> localAssigner;
 
-  std::unordered_map<Name, Name> delegateTargetToBrTarget;
+  std::unordered_map<Name, Name> delegateTargetToTrampoline;
   // Scratch locals used to contain extracted values and (extracted values,
   // exnref) tuples for a short time.
   std::unordered_map<Type, Index> typeToScratchLocal;
@@ -228,7 +228,7 @@ struct TranslateToExnref : public WalkerPass<PostWalker<TranslateToExnref>> {
     //     ;; This had originally been an inner try~delegate and has been
     //     ;; already translated to try_table at this point. See
     //     ;; processDelegate() for how it is done.
-    //     (try_table (catch_all_ref $delegate_br_target)
+    //     (try_table (catch_all_ref $delegate_trampoline)
     //       ...
     //     )
     //     ...
@@ -244,9 +244,9 @@ struct TranslateToExnref : public WalkerPass<PostWalker<TranslateToExnref>> {
     //   (try (result sometype)
     //     (do
     //       (throw_ref
-    //         (block $delegate_br_target (result exnref)
+    //         (block $delegate_trampoline (result exnref)
     //           ...
-    //           (try_table (catch_all_ref $delegate_br_target)
+    //           (try_table (catch_all_ref $delegate_trampoline)
     //             ...
     //           )
     //           ...
@@ -265,10 +265,10 @@ struct TranslateToExnref : public WalkerPass<PostWalker<TranslateToExnref>> {
     //   (try (result sometype)
     //     (do
     //       (throw_ref
-    //         (block $delegate_br_target (result exnref)
+    //         (block $delegate_trampoline (result exnref)
     //           (br $outer ;; Now has the try_table as a child.
     //             ...
-    //             (try_table (catch_all_ref $delegate_br_target)
+    //             (try_table (catch_all_ref $delegate_trampoline)
     //               ...
     //             )
     //             ...
@@ -289,21 +289,23 @@ struct TranslateToExnref : public WalkerPass<PostWalker<TranslateToExnref>> {
     // Also note that even in case there are multiple inner try~delegates
     // targeting this try, we need to do this only once per try target. Those
     // multiple try~delegates that used to target the same delegate target now
-    // jump to the same $delegate_br_target using catch_all_ref.
-    Name delegateBrTarget = delegateTargetToBrTarget[curr->name];
+    // jump to the same $delegate_trampoline using catch_all_ref.
+    Name delegateTrampoline = delegateTargetToTrampoline[curr->name];
     Expression* innerBody = nullptr;
     if (curr->type.isConcrete()) {
       outerBlockUsedSoFar = true;
       auto* brToOuter = builder.makeBreak(outerBlock->name, curr->body);
       innerBody = builder.blockifyWithName(
-        brToOuter, delegateBrTarget, nullptr, Type(HeapType::exn, Nullable));
+        brToOuter, delegateTrampoline, nullptr, Type(HeapType::exn, Nullable));
     } else {
       outerBlockUsedSoFar = curr->body->type != Type::unreachable;
       auto* brToOuter = curr->body->type == Type::unreachable
                           ? nullptr
                           : builder.makeBreak(outerBlock->name);
-      innerBody = builder.blockifyWithName(
-        curr->body, delegateBrTarget, brToOuter, Type(HeapType::exn, Nullable));
+      innerBody = builder.blockifyWithName(curr->body,
+                                           delegateTrampoline,
+                                           brToOuter,
+                                           Type(HeapType::exn, Nullable));
     }
     curr->body = builder.makeThrowRef(innerBody);
   }
@@ -320,18 +322,18 @@ struct TranslateToExnref : public WalkerPass<PostWalker<TranslateToExnref>> {
     //
     // to =>
     //
-    // (try_table (catch_ref $delegate_br_target)
+    // (try_table (catch_ref $delegate_trampoline)
     //   ...
     // )
     //
-    // $delegate_br_target is a block label that will be created in
+    // $delegate_trampoline is a block label that will be created in
     // processDelegateTarget(), when we process the 'try' that is the target of
     // this try~delegate. See processDelegateTarget() for how the rest of the
     // conversion is completed.
     auto* tryTable =
       builder.makeTryTable(curr->body,
                            {Name()},
-                           {delegateTargetToBrTarget[curr->delegateTarget]},
+                           {delegateTargetToTrampoline[curr->delegateTarget]},
                            {true});
     // If we need an outer block for other reasons (if this is a target of a
     // delegate), we insert the new try_table into it. If not we just replace
@@ -687,14 +689,14 @@ struct TranslateToExnref : public WalkerPass<PostWalker<TranslateToExnref>> {
   void visitTry(Try* curr) {
     Builder builder(*getModule());
     Block* outerBlock = nullptr;
-    auto it = delegateTargetToBrTarget.find(curr->name);
-    if (it != delegateTargetToBrTarget.end() || curr->isCatch()) {
+    auto it = delegateTargetToTrampoline.find(curr->name);
+    if (it != delegateTargetToTrampoline.end() || curr->isCatch()) {
       outerBlock =
         builder.makeBlock(labels->getUnique("outer"), {}, curr->type);
     }
 
     bool outerBlockUsedSoFar = false;
-    if (it != delegateTargetToBrTarget.end()) {
+    if (it != delegateTargetToTrampoline.end()) {
       processDelegateTarget(curr, outerBlock, outerBlockUsedSoFar);
     }
     if (curr->isDelegate()) {
@@ -728,8 +730,8 @@ struct TranslateToExnref : public WalkerPass<PostWalker<TranslateToExnref>> {
   // Similar to processDelegateTarget(), but does it for the caller delegate
   // target, which means we should rethrow to the caller.
   void processCallerDelegateTarget() {
-    Name callerDelegateBrTarget =
-      delegateTargetToBrTarget[DELEGATE_CALLER_TARGET];
+    Name callerDelegateTrampoline =
+      delegateTargetToTrampoline[DELEGATE_CALLER_TARGET];
     Builder builder(*getModule());
     Function* func = getFunction();
 
@@ -741,7 +743,7 @@ struct TranslateToExnref : public WalkerPass<PostWalker<TranslateToExnref>> {
     //
     // (func $test (result sometype)
     //   ...
-    //   (try_table (catch_all_ref $caller_delegate_br_target)
+    //   (try_table (catch_all_ref $caller_delegate_trampoline)
     //     ...
     //   )
     //   ...
@@ -752,9 +754,9 @@ struct TranslateToExnref : public WalkerPass<PostWalker<TranslateToExnref>> {
     // If sometype (func's type) is none:
     // (func $test (result sometype)
     //   (throw_ref
-    //     (block $caller_delegate_br_target (result exnref)
+    //     (block $caller_delegate_trampoline (result exnref)
     //       ...
-    //       (try_table (catch_all_ref $caller_delegate_br_target)
+    //       (try_table (catch_all_ref $caller_delegate_trampoline)
     //         ...
     //       )
     //       ...
@@ -765,10 +767,10 @@ struct TranslateToExnref : public WalkerPass<PostWalker<TranslateToExnref>> {
     //
     // If sometype (func's type) is concrete:
     //   (throw_ref
-    //     (block $caller_delegate_br_target (result exnref)
+    //     (block $caller_delegate_trampoline (result exnref)
     //       (return
     //         ...
-    //         (try_table (catch_all_ref $caller_delegate_br_target)
+    //         (try_table (catch_all_ref $caller_delegate_trampoline)
     //           ...
     //         )
     //         ...
@@ -780,11 +782,13 @@ struct TranslateToExnref : public WalkerPass<PostWalker<TranslateToExnref>> {
     if (func->getResults().isConcrete()) {
       auto* ret = builder.makeReturn(func->body);
       innerBody = builder.blockifyWithName(
-        ret, callerDelegateBrTarget, nullptr, Type(HeapType::exn, Nullable));
+        ret, callerDelegateTrampoline, nullptr, Type(HeapType::exn, Nullable));
     } else {
       auto* ret = builder.makeReturn();
-      innerBody = builder.blockifyWithName(
-        func->body, callerDelegateBrTarget, ret, Type(HeapType::exn, Nullable));
+      innerBody = builder.blockifyWithName(func->body,
+                                           callerDelegateTrampoline,
+                                           ret,
+                                           Type(HeapType::exn, Nullable));
     }
     func->body = builder.makeThrowRef(innerBody);
   }
@@ -799,14 +803,14 @@ struct TranslateToExnref : public WalkerPass<PostWalker<TranslateToExnref>> {
     // because we are going to achieve 'delegate's effects with 'br's. See
     // processDelegateTarget() for details.
     for (auto& target : labelScanner->delegateTargets) {
-      delegateTargetToBrTarget[target] = labels->getUnique(target.toString());
+      delegateTargetToTrampoline[target] = labels->getUnique(target.toString());
     }
 
-    super::doWalkFunction(func);
+    Super::doWalkFunction(func);
 
     // Similar to processDelegateTarget(), but for the caller target.
-    if (delegateTargetToBrTarget.find(DELEGATE_CALLER_TARGET) !=
-        delegateTargetToBrTarget.end()) {
+    if (delegateTargetToTrampoline.find(DELEGATE_CALLER_TARGET) !=
+        delegateTargetToTrampoline.end()) {
       processCallerDelegateTarget();
     }
   }

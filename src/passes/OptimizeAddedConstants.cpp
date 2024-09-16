@@ -79,7 +79,7 @@ public:
       //
       // This is only valid if y does not change in the middle!
       if (auto* get = curr->ptr->template dynCast<LocalGet>()) {
-        auto& sets = localGraph->getSetses[get];
+        auto& sets = localGraph->getSets(get);
         if (sets.size() == 1) {
           auto* set = *sets.begin();
           // May be a zero-init (in which case, we can ignore it). Must also be
@@ -290,6 +290,11 @@ struct OptimizeAddedConstants
               << "--low-memory-unused flag is set.";
     }
 
+    if (getModule()->memories.empty()) {
+      // There can be no loads and stores without a memory.
+      return;
+    }
+
     // Multiple passes may be needed if we have x + 4 + 8 etc. (nested structs
     // in C can cause this, but it's rare). Note that we only need that for the
     // propagation case (as 4 + 8 would be optimized directly if it were
@@ -304,7 +309,7 @@ struct OptimizeAddedConstants
         localGraph->computeSSAIndexes();
         findPropagatable();
       }
-      super::doWalkFunction(func);
+      Super::doWalkFunction(func);
       if (!helperIndexes.empty()) {
         createHelperIndexes();
       }
@@ -359,7 +364,7 @@ private:
             if (add->left->is<Const>() || add->right->is<Const>()) {
               // Looks like this might be relevant, check all uses.
               bool canPropagate = true;
-              for (auto* get : localGraph->setInfluences[set]) {
+              for (auto* get : localGraph->getSetInfluences(set)) {
                 auto* parent = parents.getParent(get);
                 // if this is at the top level, it's the whole body - no set can
                 // exist!

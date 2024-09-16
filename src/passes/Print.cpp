@@ -703,6 +703,9 @@ struct PrintExpressionContents
       case ExtractLaneVecI64x2:
         o << "i64x2.extract_lane";
         break;
+      case ExtractLaneVecF16x8:
+        o << "f16x8.extract_lane";
+        break;
       case ExtractLaneVecF32x4:
         o << "f32x4.extract_lane";
         break;
@@ -727,6 +730,9 @@ struct PrintExpressionContents
         break;
       case ReplaceLaneVecI64x2:
         o << "i64x2.replace_lane";
+        break;
+      case ReplaceLaneVecF16x8:
+        o << "f16x8.replace_lane";
         break;
       case ReplaceLaneVecF32x4:
         o << "f32x4.replace_lane";
@@ -764,17 +770,23 @@ struct PrintExpressionContents
       case LaneselectI64x2:
         o << "i64x2.laneselect";
         break;
-      case RelaxedFmaVecF32x4:
-        o << "f32x4.relaxed_fma";
+      case RelaxedMaddVecF16x8:
+        o << "f16x8.relaxed_madd";
         break;
-      case RelaxedFmsVecF32x4:
-        o << "f32x4.relaxed_fms";
+      case RelaxedNmaddVecF16x8:
+        o << "f16x8.relaxed_nmadd";
         break;
-      case RelaxedFmaVecF64x2:
-        o << "f64x2.relaxed_fma";
+      case RelaxedMaddVecF32x4:
+        o << "f32x4.relaxed_madd";
         break;
-      case RelaxedFmsVecF64x2:
-        o << "f64x2.relaxed_fms";
+      case RelaxedNmaddVecF32x4:
+        o << "f32x4.relaxed_nmadd";
+        break;
+      case RelaxedMaddVecF64x2:
+        o << "f64x2.relaxed_madd";
+        break;
+      case RelaxedNmaddVecF64x2:
+        o << "f64x2.relaxed_nmadd";
         break;
       case DotI8x16I7x16AddSToVecI32x4:
         o << "i32x4.dot_i8x16_i7x16_add_s";
@@ -1137,6 +1149,9 @@ struct PrintExpressionContents
       case SplatVecI64x2:
         o << "i64x2.splat";
         break;
+      case SplatVecF16x8:
+        o << "f16x8.splat";
+        break;
       case SplatVecF32x4:
         o << "f32x4.splat";
         break;
@@ -1199,6 +1214,27 @@ struct PrintExpressionContents
         break;
       case BitmaskVecI64x2:
         o << "i64x2.bitmask";
+        break;
+      case AbsVecF16x8:
+        o << "f16x8.abs";
+        break;
+      case NegVecF16x8:
+        o << "f16x8.neg";
+        break;
+      case SqrtVecF16x8:
+        o << "f16x8.sqrt";
+        break;
+      case CeilVecF16x8:
+        o << "f16x8.ceil";
+        break;
+      case FloorVecF16x8:
+        o << "f16x8.floor";
+        break;
+      case TruncVecF16x8:
+        o << "f16x8.trunc";
+        break;
+      case NearestVecF16x8:
+        o << "f16x8.nearest";
         break;
       case AbsVecF32x4:
         o << "f32x4.abs";
@@ -1680,6 +1716,24 @@ struct PrintExpressionContents
       case GeSVecI64x2:
         o << "i64x2.ge_s";
         break;
+      case EqVecF16x8:
+        o << "f16x8.eq";
+        break;
+      case NeVecF16x8:
+        o << "f16x8.ne";
+        break;
+      case LtVecF16x8:
+        o << "f16x8.lt";
+        break;
+      case GtVecF16x8:
+        o << "f16x8.gt";
+        break;
+      case LeVecF16x8:
+        o << "f16x8.le";
+        break;
+      case GeVecF16x8:
+        o << "f16x8.ge";
+        break;
       case EqVecF32x4:
         o << "f32x4.eq";
         break;
@@ -1874,6 +1928,31 @@ struct PrintExpressionContents
         o << "i64x2.extmul_high_i32x4_u";
         break;
 
+      case AddVecF16x8:
+        o << "f16x8.add";
+        break;
+      case SubVecF16x8:
+        o << "f16x8.sub";
+        break;
+      case MulVecF16x8:
+        o << "f16x8.mul";
+        break;
+      case DivVecF16x8:
+        o << "f16x8.div";
+        break;
+      case MinVecF16x8:
+        o << "f16x8.min";
+        break;
+      case MaxVecF16x8:
+        o << "f16x8.max";
+        break;
+      case PMinVecF16x8:
+        o << "f16x8.pmin";
+        break;
+      case PMaxVecF16x8:
+        o << "f16x8.pmax";
+        break;
+
       case AddVecF32x4:
         o << "f32x4.add";
         break;
@@ -2027,6 +2106,12 @@ struct PrintExpressionContents
     curr->destTable.print(o);
     o << ' ';
     curr->sourceTable.print(o);
+  }
+  void visitTableInit(TableInit* curr) {
+    printMedium(o, "table.init ");
+    curr->table.print(o);
+    o << ' ';
+    curr->segment.print(o);
   }
   void visitTry(Try* curr) {
     printMedium(o, "try");
@@ -2347,11 +2432,9 @@ struct PrintExpressionContents
     o << ' ';
     printHeapType(curr->contType);
 
-    // We deliberate keep all (tag ...) clauses on the same line as the resume
-    // itself to work around a quirk in update_lit_checks.py
     for (Index i = 0; i < curr->handlerTags.size(); i++) {
       o << " (";
-      printMedium(o, "tag ");
+      printMedium(o, "on ");
       curr->handlerTags[i].print(o);
       o << ' ';
       curr->handlerBlocks[i].print(o);
@@ -2773,13 +2856,21 @@ bool PrintSExpression::maybePrintUnreachableOrNullReplacement(Expression* curr,
   return maybePrintUnreachableReplacement(curr, type);
 }
 
+static bool requiresExplicitFuncType(HeapType type) {
+  // When the `(type $f)` in a function's typeuse is omitted, the typeuse
+  // matches or declares an MVP function type. When the intended type is not an
+  // MVP function type, we therefore need the explicit `(type $f)`.
+  return type.isOpen() || type.isShared() || type.getRecGroup().size() > 1;
+}
+
 void PrintSExpression::handleSignature(HeapType curr, Name name) {
   Signature sig = curr.getSignature();
   o << "(func";
   if (name.is()) {
     o << ' ';
     name.print(o);
-    if (currModule && currModule->features.hasGC()) {
+    if ((currModule && currModule->features.hasGC()) ||
+        requiresExplicitFuncType(curr)) {
       o << " (type ";
       printHeapType(curr) << ')';
     }
@@ -2916,7 +3007,8 @@ void PrintSExpression::visitDefinedFunction(Function* curr) {
   o << '(';
   printMajor(o, "func ");
   curr->name.print(o);
-  if (currModule && currModule->features.hasGC()) {
+  if ((currModule && currModule->features.hasGC()) ||
+      requiresExplicitFuncType(curr->type)) {
     o << " (type ";
     printHeapType(curr->type) << ')';
   }

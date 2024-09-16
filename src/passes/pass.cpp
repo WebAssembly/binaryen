@@ -204,11 +204,18 @@ void PassRegistry::registerPasses() {
                createGUFAOptimizingPass);
   registerPass(
     "optimize-j2cl", "optimizes J2CL specific constructs.", createJ2CLOptsPass);
+  registerPass(
+    "merge-j2cl-itables",
+    "Merges itable structures into vtables to make types more compact",
+    createJ2CLItableMergingPass);
   registerPass("type-refining",
                "apply more specific subtypes to type fields where possible",
                createTypeRefiningPass);
   registerPass(
     "heap2local", "replace GC allocations with locals", createHeap2LocalPass);
+  registerPass("heap-store-optimization",
+               "optimize heap (GC) stores",
+               createHeapStoreOptimizationPass);
   registerPass(
     "inline-main", "inline __original_main into main", createInlineMainPass);
   registerPass("inlining",
@@ -290,6 +297,9 @@ void PassRegistry::registerPasses() {
                "minifies both import and export names, and emits a mapping to "
                "the minified ones, and minifies the modules as well",
                createMinifyImportsAndExportsAndModulesPass);
+  registerPass("minimize-rec-groups",
+               "Split types into minimal recursion groups",
+               createMinimizeRecGroupsPass);
   registerPass("mod-asyncify-always-and-only-unwind",
                "apply the assumption that asyncify imports always unwind, "
                "and we never rewind",
@@ -500,6 +510,10 @@ void PassRegistry::registerPasses() {
     "string-lowering-magic-imports",
     "same as string-lowering, but encodes well-formed strings as magic imports",
     createStringLoweringMagicImportPass);
+  registerPass("string-lowering-magic-imports-assert",
+               "same as string-lowering-magic-imports, but raise a fatal error "
+               "if there are invalid strings",
+               createStringLoweringMagicImportAssertPass);
   registerPass(
     "strip", "deprecated; same as strip-debug", createStripDebugPass);
   registerPass("stack-check",
@@ -602,6 +616,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
   addIfNoDWARFIssues("remove-unused-brs");
   addIfNoDWARFIssues("remove-unused-names");
   addIfNoDWARFIssues("optimize-instructions");
+  if (wasm->features.hasGC()) {
+    addIfNoDWARFIssues("heap-store-optimization");
+  }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 2) {
     addIfNoDWARFIssues("pick-load-signs");
   }
@@ -674,6 +691,9 @@ void PassRunner::addDefaultFunctionOptimizationPasses() {
     addIfNoDWARFIssues("precompute");
   }
   addIfNoDWARFIssues("optimize-instructions");
+  if (wasm->features.hasGC()) {
+    addIfNoDWARFIssues("heap-store-optimization");
+  }
   if (options.optimizeLevel >= 2 || options.shrinkLevel >= 1) {
     addIfNoDWARFIssues(
       "rse"); // after all coalesce-locals, and before a final vacuum

@@ -167,6 +167,30 @@ namespace wasm {
 
 namespace {
 
+// Interactions between a child and a parent, with regard to the behavior of the
+// allocation.
+enum class ParentChildInteraction : int8_t {
+  // The parent lets the child escape. E.g. the parent is a call.
+  Escapes,
+  // The parent fully consumes the child in a safe, non-escaping way, and
+  // after consuming it nothing remains to flow further through the parent.
+  // E.g. the parent is a struct.get, which reads from the allocated heap
+  // value and does nothing more with the reference.
+  FullyConsumes,
+  // The parent flows the child out, that is, the child is the single value
+  // that can flow out from the parent. E.g. the parent is a block with no
+  // branches and the child is the final value that is returned.
+  Flows,
+  // The parent does not consume the child completely, so the child's value
+  // can be used through it. However the child does not flow cleanly through.
+  // E.g. the parent is a block with branches, and the value on them may be
+  // returned from the block and not only the child. This means the allocation
+  // is not used in an exclusive way, and we cannot optimize it.
+  Mixes,
+  // No interaction (not relevant to the analysis).
+  None,
+};
+
 // Core analysis that provides an escapes() method to check if an allocation
 // escapes in a way that prevents optimizing it away as described above. It also
 // stashes information about the relevant expressions as it goes, which helps
@@ -174,15 +198,17 @@ namespace {
 struct EscapeAnalyzer {
   // To find what escapes, we need to follow where values flow, both up to
   // parents, and via branches, and through locals.
-  // TODO: for efficiency, only scan reference types in LocalGraph
-  const LocalGraph& localGraph;
+  //
+  // We use a lazy graph here because we only need this for reference locals,
+  // and even among them, only ones we see an allocation is stored to.
+  const LazyLocalGraph& localGraph;
   const Parents& parents;
   const BranchUtils::BranchTargets& branchTargets;
 
   const PassOptions& passOptions;
   Module& wasm;
 
-  EscapeAnalyzer(const LocalGraph& localGraph,
+  EscapeAnalyzer(const LazyLocalGraph& localGraph,
                  const Parents& parents,
                  const BranchUtils::BranchTargets& branchTargets,
                  const PassOptions& passOptions,
@@ -194,30 +220,16 @@ struct EscapeAnalyzer {
   // exclusivity.
   std::unordered_set<LocalSet*> sets;
 
-  // All the expressions we reached during the flow analysis. That is exactly
-  // all the places where our allocation is used. We track these so that we
-  // can fix them up at the end, if the optimization ends up possible.
-  std::unordered_set<Expression*> reached;
-
-  enum class ParentChildInteraction {
-    // The parent lets the child escape. E.g. the parent is a call.
-    Escapes,
-    // The parent fully consumes the child in a safe, non-escaping way, and
-    // after consuming it nothing remains to flow further through the parent.
-    // E.g. the parent is a struct.get, which reads from the allocated heap
-    // value and does nothing more with the reference.
-    FullyConsumes,
-    // The parent flows the child out, that is, the child is the single value
-    // that can flow out from the parent. E.g. the parent is a block with no
-    // branches and the child is the final value that is returned.
-    Flows,
-    // The parent does not consume the child completely, so the child's value
-    // can be used through it. However the child does not flow cleanly through.
-    // E.g. the parent is a block with branches, and the value on them may be
-    // returned from the block and not only the child. This means the allocation
-    // is not used in an exclusive way, and we cannot optimize it.
-    Mixes,
-  };
+  // A map of every expression we reached during the flow analysis (which is
+  // exactly all the places where our allocation is used) to the interaction of
+  // the allocation there. If we optimize, anything in this map will be fixed up
+  // at the end, and how we fix it up may depend on the interaction,
+  // specifically, it can matter if the allocations flows out of here (Flows,
+  // which is the case for e.g. a Block that we flow through) or if it is fully
+  // consumed (FullyConsumes, e.g. for a struct.get). We do not store irrelevant
+  // things here (that is, anything not in the map has the interaction |None|,
+  // implicitly).
+  std::unordered_map<Expression*, ParentChildInteraction> reachedInteractions;
 
   // Analyze an allocation to see if it escapes or not.
   bool escapes(Expression* allocation) {
@@ -269,10 +281,8 @@ struct EscapeAnalyzer {
         sets.insert(set);
 
         // We must also look at how the value flows from those gets.
-        if (auto* getsReached = getGetsReached(set)) {
-          for (auto* get : *getsReached) {
-            flows.push({get, parents.getParent(get)});
-          }
+        for (auto* get : localGraph.getSetInfluences(set)) {
+          flows.push({get, parents.getParent(get)});
         }
       }
 
@@ -284,9 +294,10 @@ struct EscapeAnalyzer {
 
       // If we got to here, then we can continue to hope that we can optimize
       // this allocation. Mark the parent and child as reached by it, and
-      // continue.
-      reached.insert(parent);
-      reached.insert(child);
+      // continue. The child flows the value to the parent, and the parent's
+      // behavior was computed before.
+      reachedInteractions[child] = ParentChildInteraction::Flows;
+      reachedInteractions[parent] = interaction;
     }
 
     // We finished the loop over the flows. Do the final checks.
@@ -300,7 +311,7 @@ struct EscapeAnalyzer {
 
   ParentChildInteraction getParentChildInteraction(Expression* allocation,
                                                    Expression* parent,
-                                                   Expression* child) {
+                                                   Expression* child) const {
     // If there is no parent then we are the body of the function, and that
     // means we escape by flowing to the caller.
     if (!parent) {
@@ -468,14 +479,6 @@ struct EscapeAnalyzer {
     return ParentChildInteraction::Mixes;
   }
 
-  const LocalGraph::SetInfluences* getGetsReached(LocalSet* set) {
-    auto iter = localGraph.setInfluences.find(set);
-    if (iter != localGraph.setInfluences.end()) {
-      return &iter->second;
-    }
-    return nullptr;
-  }
-
   const BranchUtils::NameSet branchesSentByParent(Expression* child,
                                                   Expression* parent) {
     BranchUtils::NameSet names;
@@ -497,18 +500,14 @@ struct EscapeAnalyzer {
     // Find all the relevant gets (which may overlap between the sets).
     std::unordered_set<LocalGet*> gets;
     for (auto* set : sets) {
-      if (auto* getsReached = getGetsReached(set)) {
-        for (auto* get : *getsReached) {
-          gets.insert(get);
-        }
+      for (auto* get : localGraph.getSetInfluences(set)) {
+        gets.insert(get);
       }
     }
 
     // Check that the gets can only read from the specific known sets.
     for (auto* get : gets) {
-      auto iter = localGraph.getSetses.find(get);
-      assert(iter != localGraph.getSetses.end());
-      for (auto* set : iter->second) {
+      for (auto* set : localGraph.getSets(get)) {
         if (sets.count(set) == 0) {
           return false;
         }
@@ -516,6 +515,36 @@ struct EscapeAnalyzer {
     }
 
     return true;
+  }
+
+  // Helper function for Struct2Local and Array2Struct. Given an old expression
+  // that is being replaced by a new one, add the proper interaction for the
+  // replacement.
+  void applyOldInteractionToReplacement(Expression* old, Expression* rep) {
+    // We can only replace something relevant that we found in the analysis.
+    // (Not only would anything else be invalid to process, but also we wouldn't
+    // know what interaction to give the replacement.)
+    assert(reachedInteractions.count(old));
+
+    // The replacement should have the same interaction as the thing it
+    // replaces, since it is a drop-in replacement for it. The one exception is
+    // when we replace with something unreachable, which is the result of us
+    // figuring out that some code will trap at runtime. In that case, we've
+    // made the code unreachable and the allocation does not interact with that
+    // code at all.
+    if (rep->type != Type::unreachable) {
+      reachedInteractions[rep] = reachedInteractions[old];
+    }
+  }
+
+  // Get the interaction of an expression.
+  ParentChildInteraction getInteraction(Expression* curr) {
+    auto iter = reachedInteractions.find(curr);
+    if (iter == reachedInteractions.end()) {
+      // This is not interacted with.
+      return ParentChildInteraction::None;
+    }
+    return iter->second;
   }
 };
 
@@ -527,8 +556,8 @@ struct EscapeAnalyzer {
 struct Struct2Local : PostWalker<Struct2Local> {
   StructNew* allocation;
 
-  // The analyzer is not |const| because we update |analyzer.reached| as we go
-  // (see replaceCurrent, below).
+  // The analyzer is not |const| because we update
+  // |analyzer.reachedInteractions| as we go (see replaceCurrent, below).
   EscapeAnalyzer& analyzer;
 
   Function* func;
@@ -563,11 +592,8 @@ struct Struct2Local : PostWalker<Struct2Local> {
   bool refinalize = false;
 
   Expression* replaceCurrent(Expression* expression) {
+    analyzer.applyOldInteractionToReplacement(getCurrent(), expression);
     PostWalker<Struct2Local>::replaceCurrent(expression);
-    // Also update |reached|: we are replacing something that was reached, so
-    // logically the replacement is also reached. This update is necessary if
-    // the parent of an expression cares about whether a child was reached.
-    analyzer.reached.insert(expression);
     return expression;
   }
 
@@ -583,7 +609,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   // Adjust the type that flows through an expression, updating that type as
   // necessary.
   void adjustTypeFlowingThrough(Expression* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (analyzer.getInteraction(curr) != ParentChildInteraction::Flows) {
       return;
     }
 
@@ -603,7 +629,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   void visitLoop(Loop* curr) { adjustTypeFlowingThrough(curr); }
 
   void visitLocalSet(LocalSet* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -617,7 +643,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitLocalGet(LocalGet* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -639,7 +665,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitBreak(Break* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -721,7 +747,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefIsNull(RefIsNull* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -732,7 +758,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefEq(RefEq* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -745,15 +771,16 @@ struct Struct2Local : PostWalker<Struct2Local> {
     // If our reference is compared to itself, the result is 1. If it is
     // compared to something else, the result must be 0, as our reference does
     // not escape to any other place.
-    int32_t result = analyzer.reached.count(curr->left) > 0 &&
-                     analyzer.reached.count(curr->right) > 0;
+    int32_t result =
+      analyzer.getInteraction(curr->left) == ParentChildInteraction::Flows &&
+      analyzer.getInteraction(curr->right) == ParentChildInteraction::Flows;
     replaceCurrent(builder.makeBlock({builder.makeDrop(curr->left),
                                       builder.makeDrop(curr->right),
                                       builder.makeConst(Literal(result))}));
   }
 
   void visitRefAs(RefAs* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -764,7 +791,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefTest(RefTest* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -781,7 +808,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitRefCast(RefCast* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -805,7 +832,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitStructSet(StructSet* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -817,7 +844,7 @@ struct Struct2Local : PostWalker<Struct2Local> {
   }
 
   void visitStructGet(StructGet* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -913,13 +940,14 @@ struct Array2Struct : PostWalker<Array2Struct> {
       WASM_UNREACHABLE("bad allocation");
     }
 
-    // Mark the new expressions we created as reached by the analysis. We need
-    // to inform the analysis of this because Struct2Local will only process
-    // such code (it depends on the analysis to tell it what the allocation is
-    // and where it flowed). Note that the two values here may be identical but
-    // there is no harm to calling it twice in that case.
-    noteIsReached(structNew);
-    noteIsReached(arrayNewReplacement);
+    // Mark new expressions we created as flowing out the allocation. We need to
+    // inform the analysis of this because Struct2Local will only process such
+    // code (it depends on the analysis to tell it what the allocation is and
+    // where it flowed). Note that the two values here may be identical but
+    // there is no harm to doing this twice in that case.
+    analyzer.reachedInteractions[structNew] =
+      analyzer.reachedInteractions[arrayNewReplacement] =
+        ParentChildInteraction::Flows;
 
     // Update types along the path reached by the allocation: whenever we see
     // the array type, it should be the struct type. Note that we do this before
@@ -935,7 +963,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
     auto nonNullArray = Type(arrayType, NonNullable);
     nullStruct = Type(structType, Nullable);
     nonNullStruct = Type(structType, NonNullable);
-    for (auto* reached : analyzer.reached) {
+    for (auto& [reached, _] : analyzer.reachedInteractions) {
       if (reached->is<RefCast>()) {
         // Casts must be handled later: We need to see the old type, and to
         // potentially replace the cast based on that, see below.
@@ -971,6 +999,12 @@ struct Array2Struct : PostWalker<Array2Struct> {
     }
   }
 
+  Expression* replaceCurrent(Expression* expression) {
+    analyzer.applyOldInteractionToReplacement(getCurrent(), expression);
+    PostWalker<Array2Struct>::replaceCurrent(expression);
+    return expression;
+  }
+
   // In rare cases we may need to refinalize, as with Struct2Local.
   bool refinalize = false;
 
@@ -989,19 +1023,17 @@ struct Array2Struct : PostWalker<Array2Struct> {
   void visitArrayNew(ArrayNew* curr) {
     if (curr == allocation) {
       replaceCurrent(arrayNewReplacement);
-      noteCurrentIsReached();
     }
   }
 
   void visitArrayNewFixed(ArrayNewFixed* curr) {
     if (curr == allocation) {
       replaceCurrent(arrayNewReplacement);
-      noteCurrentIsReached();
     }
   }
 
   void visitArraySet(ArraySet* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -1018,11 +1050,10 @@ struct Array2Struct : PostWalker<Array2Struct> {
 
     // Convert the ArraySet into a StructSet.
     replaceCurrent(builder.makeStructSet(index, curr->ref, curr->value));
-    noteCurrentIsReached();
   }
 
   void visitArrayGet(ArrayGet* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -1039,13 +1070,12 @@ struct Array2Struct : PostWalker<Array2Struct> {
     // Convert the ArrayGet into a StructGet.
     replaceCurrent(
       builder.makeStructGet(index, curr->ref, curr->type, curr->signed_));
-    noteCurrentIsReached();
   }
 
   // Some additional operations need special handling
 
   void visitRefTest(RefTest* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -1061,7 +1091,7 @@ struct Array2Struct : PostWalker<Array2Struct> {
   }
 
   void visitRefCast(RefCast* curr) {
-    if (!analyzer.reached.count(curr)) {
+    if (analyzer.getInteraction(curr) == ParentChildInteraction::None) {
       return;
     }
 
@@ -1089,13 +1119,6 @@ struct Array2Struct : PostWalker<Array2Struct> {
     return curr->cast<Const>()->value.getUnsigned();
   }
 
-  // Inform the analyzer that the current expression (which we just replaced)
-  // has been reached in its analysis. We are replacing something it reached,
-  // and want it to consider it as its equivalent.
-  void noteCurrentIsReached() { noteIsReached(getCurrent()); }
-
-  void noteIsReached(Expression* curr) { analyzer.reached.insert(curr); }
-
   // Given an ArrayNew or ArrayNewFixed, return the size of the array that is
   // being allocated.
   Index getArrayNewSize(Expression* allocation) {
@@ -1118,16 +1141,13 @@ struct Heap2Local {
   Module& wasm;
   const PassOptions& passOptions;
 
-  LocalGraph localGraph;
+  LazyLocalGraph localGraph;
   Parents parents;
   BranchUtils::BranchTargets branchTargets;
 
   Heap2Local(Function* func, Module& wasm, const PassOptions& passOptions)
     : func(func), wasm(wasm), passOptions(passOptions), localGraph(func, &wasm),
       parents(func->body), branchTargets(func->body) {
-    // We need to track what each set influences, to see where its value can
-    // flow to.
-    localGraph.computeSetInfluences();
 
     // Find all the relevant allocations in the function: StructNew, ArrayNew,
     // ArrayNewFixed.

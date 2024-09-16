@@ -45,14 +45,15 @@ struct LoopInvariantCodeMotion
 
   // main entry point
 
-  LocalGraph* localGraph;
+  LazyLocalGraph* localGraph;
 
   void doWalkFunction(Function* func) {
-    // Compute all local dependencies first.
-    LocalGraph localGraphInstance(func, getModule());
+    // Prepare to compute the local dependencies we care about. We may only need
+    // very few, so use a lazy LocalGraph.
+    LazyLocalGraph localGraphInstance(func, getModule());
     localGraph = &localGraphInstance;
     // Traverse the function.
-    super::doWalkFunction(func);
+    Super::doWalkFunction(func);
   }
 
   void visitLoop(Loop* loop) {
@@ -228,7 +229,7 @@ struct LoopInvariantCodeMotion
   bool hasGetDependingOnLoopSet(Expression* curr, LoopSets& loopSets) {
     FindAll<LocalGet> gets(curr);
     for (auto* get : gets.list) {
-      auto& sets = localGraph->getSetses[get];
+      auto& sets = localGraph->getSets(get);
       for (auto* set : sets) {
         // nullptr means a parameter or zero-init value;
         // no danger to us.

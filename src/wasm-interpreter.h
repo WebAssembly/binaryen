@@ -47,8 +47,7 @@
 namespace wasm {
 
 struct WasmException {
-  Name tag;
-  Literals values;
+  Literal exn;
 };
 std::ostream& operator<<(std::ostream& o, const WasmException& exn);
 
@@ -202,6 +201,15 @@ protected:
     __lsan_ignore_object(allocation.get());
 #endif
     return Literal(allocation, type.getHeapType());
+  }
+
+  // Same as makeGCData but for ExnData.
+  Literal makeExnData(Name tag, const Literals& payload) {
+    auto allocation = std::make_shared<ExnData>(tag, payload);
+#if __has_feature(leak_sanitizer) || __has_feature(address_sanitizer)
+    __lsan_ignore_object(allocation.get());
+#endif
+    return Literal(allocation);
   }
 
 public:
@@ -479,6 +487,8 @@ public:
         return value.splatI32x4();
       case SplatVecI64x2:
         return value.splatI64x2();
+      case SplatVecF16x8:
+        return value.splatF16x8();
       case SplatVecF32x4:
         return value.splatF32x4();
       case SplatVecF64x2:
@@ -521,6 +531,20 @@ public:
         return value.allTrueI64x2();
       case BitmaskVecI64x2:
         return value.bitmaskI64x2();
+      case AbsVecF16x8:
+        return value.absF16x8();
+      case NegVecF16x8:
+        return value.negF16x8();
+      case SqrtVecF16x8:
+        return value.sqrtF16x8();
+      case CeilVecF16x8:
+        return value.ceilF16x8();
+      case FloorVecF16x8:
+        return value.floorF16x8();
+      case TruncVecF16x8:
+        return value.truncF16x8();
+      case NearestVecF16x8:
+        return value.nearestF16x8();
       case AbsVecF32x4:
         return value.absF32x4();
       case NegVecF32x4:
@@ -862,6 +886,18 @@ public:
         return left.leSI64x2(right);
       case GeSVecI64x2:
         return left.geSI64x2(right);
+      case EqVecF16x8:
+        return left.eqF16x8(right);
+      case NeVecF16x8:
+        return left.neF16x8(right);
+      case LtVecF16x8:
+        return left.ltF16x8(right);
+      case GtVecF16x8:
+        return left.gtF16x8(right);
+      case LeVecF16x8:
+        return left.leF16x8(right);
+      case GeVecF16x8:
+        return left.geF16x8(right);
       case EqVecF32x4:
         return left.eqF32x4(right);
       case NeVecF32x4:
@@ -992,6 +1028,23 @@ public:
       case ExtMulHighUVecI64x2:
         return left.extMulHighUI64x2(right);
 
+      case AddVecF16x8:
+        return left.addF16x8(right);
+      case SubVecF16x8:
+        return left.subF16x8(right);
+      case MulVecF16x8:
+        return left.mulF16x8(right);
+      case DivVecF16x8:
+        return left.divF16x8(right);
+      case MinVecF16x8:
+        return left.minF16x8(right);
+      case MaxVecF16x8:
+        return left.maxF16x8(right);
+      case PMinVecF16x8:
+        return left.pminF16x8(right);
+      case PMaxVecF16x8:
+        return left.pmaxF16x8(right);
+
       case AddVecF32x4:
         return left.addF32x4(right);
       case SubVecF32x4:
@@ -1070,6 +1123,8 @@ public:
         return vec.extractLaneI32x4(curr->index);
       case ExtractLaneVecI64x2:
         return vec.extractLaneI64x2(curr->index);
+      case ExtractLaneVecF16x8:
+        return vec.extractLaneF16x8(curr->index);
       case ExtractLaneVecF32x4:
         return vec.extractLaneF32x4(curr->index);
       case ExtractLaneVecF64x2:
@@ -1098,6 +1153,8 @@ public:
         return vec.replaceLaneI32x4(value, curr->index);
       case ReplaceLaneVecI64x2:
         return vec.replaceLaneI64x2(value, curr->index);
+      case ReplaceLaneVecF16x8:
+        return vec.replaceLaneF16x8(value, curr->index);
       case ReplaceLaneVecF32x4:
         return vec.replaceLaneF32x4(value, curr->index);
       case ReplaceLaneVecF64x2:
@@ -1144,14 +1201,18 @@ public:
       case LaneselectI64x2:
         return c.bitselectV128(a, b);
 
-      case RelaxedFmaVecF32x4:
-        return a.relaxedFmaF32x4(b, c);
-      case RelaxedFmsVecF32x4:
-        return a.relaxedFmsF32x4(b, c);
-      case RelaxedFmaVecF64x2:
-        return a.relaxedFmaF64x2(b, c);
-      case RelaxedFmsVecF64x2:
-        return a.relaxedFmsF64x2(b, c);
+      case RelaxedMaddVecF16x8:
+        return a.relaxedMaddF16x8(b, c);
+      case RelaxedNmaddVecF16x8:
+        return a.relaxedNmaddF16x8(b, c);
+      case RelaxedMaddVecF32x4:
+        return a.relaxedMaddF32x4(b, c);
+      case RelaxedNmaddVecF32x4:
+        return a.relaxedNmaddF32x4(b, c);
+      case RelaxedMaddVecF64x2:
+        return a.relaxedMaddF64x2(b, c);
+      case RelaxedNmaddVecF64x2:
+        return a.relaxedNmaddF64x2(b, c);
       default:
         // TODO: implement signselect and dot_add
         WASM_UNREACHABLE("not implemented");
@@ -1399,6 +1460,7 @@ public:
   Flow visitTableGrow(TableGrow* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableFill(TableFill* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTableCopy(TableCopy* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitTableInit(TableInit* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTry(Try* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitTryTable(TryTable* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitThrow(Throw* curr) {
@@ -1409,16 +1471,25 @@ public:
       return flow;
     }
     NOTE_EVAL1(curr->tag);
-    WasmException exn;
-    exn.tag = curr->tag;
-    for (auto item : arguments) {
-      exn.values.push_back(item);
-    }
-    throwException(exn);
+    throwException(WasmException{makeExnData(curr->tag, arguments)});
     WASM_UNREACHABLE("throw");
   }
   Flow visitRethrow(Rethrow* curr) { WASM_UNREACHABLE("unimp"); }
-  Flow visitThrowRef(ThrowRef* curr) { WASM_UNREACHABLE("unimp"); }
+  Flow visitThrowRef(ThrowRef* curr) {
+    NOTE_ENTER("ThrowRef");
+    Flow flow = visit(curr->exnref);
+    if (flow.breaking()) {
+      return flow;
+    }
+    const auto& exnref = flow.getSingleValue();
+    NOTE_EVAL1(exnref);
+    if (exnref.isNull()) {
+      trap("null ref");
+    }
+    assert(exnref.isExn());
+    throwException(WasmException{exnref});
+    WASM_UNREACHABLE("throw");
+  }
   Flow visitRefI31(RefI31* curr) {
     NOTE_ENTER("RefI31");
     Flow flow = visit(curr->value);
@@ -2143,7 +2214,7 @@ public:
     WASM_UNREACHABLE("unimp");
   }
 
-private:
+protected:
   // Truncate the value if we need to. The storage is just a list of Literals,
   // so we can't just write the value like we would to a C struct field and
   // expect it to truncate for us. Instead, we truncate so the stored value is
@@ -2177,6 +2248,24 @@ private:
       }
     }
     return value;
+  }
+
+  Literal makeFromMemory(void* p, Field field) {
+    switch (field.packedType) {
+      case Field::not_packed:
+        return Literal::makeFromMemory(p, field.type);
+      case Field::i8: {
+        int8_t i;
+        memcpy(&i, p, sizeof(i));
+        return truncateForPacking(Literal(int32_t(i)), field);
+      }
+      case Field::i16: {
+        int16_t i;
+        memcpy(&i, p, sizeof(i));
+        return truncateForPacking(Literal(int32_t(i)), field);
+      }
+    }
+    WASM_UNREACHABLE("unexpected type");
   }
 };
 
@@ -2336,6 +2425,10 @@ public:
     NOTE_ENTER("TableCopy");
     return Flow(NONCONSTANT_FLOW);
   }
+  Flow visitTableInit(TableInit* curr) {
+    NOTE_ENTER("TableInit");
+    return Flow(NONCONSTANT_FLOW);
+  }
   Flow visitLoad(Load* curr) {
     NOTE_ENTER("Load");
     return Flow(NONCONSTANT_FLOW);
@@ -2430,6 +2523,10 @@ public:
   }
   Flow visitTry(Try* curr) {
     NOTE_ENTER("Try");
+    return Flow(NONCONSTANT_FLOW);
+  }
+  Flow visitTryTable(TryTable* curr) {
+    NOTE_ENTER("TryTable");
     return Flow(NONCONSTANT_FLOW);
   }
   Flow visitRethrow(Rethrow* curr) {
@@ -2803,23 +2900,24 @@ private:
       }
     }
 
+    Const zero;
+    zero.value = Literal(uint32_t(0));
+    zero.finalize();
+
     ModuleUtils::iterActiveElementSegments(wasm, [&](ElementSegment* segment) {
-      Address offset =
-        (uint32_t)self()->visit(segment->offset).getSingleValue().geti32();
+      Const size;
+      size.value = Literal(uint32_t(segment->data.size()));
+      size.finalize();
 
-      Table* table = wasm.getTable(segment->table);
-      ExternalInterface* extInterface = externalInterface;
-      Name tableName = segment->table;
-      if (table->imported()) {
-        auto inst = linkedInstances.at(table->module);
-        extInterface = inst->externalInterface;
-        tableName = inst->wasm.getExport(table->base)->value;
-      }
+      TableInit init;
+      init.table = segment->table;
+      init.segment = segment->name;
+      init.dest = segment->offset;
+      init.offset = &zero;
+      init.size = &size;
+      init.finalize();
 
-      for (Index i = 0; i < segment->data.size(); ++i) {
-        Flow ret = self()->visit(segment->data[i]);
-        extInterface->tableStore(tableName, offset + i, ret.getSingleValue());
-      }
+      self()->visit(&init);
 
       droppedElementSegments.insert(segment->name);
     });
@@ -2847,9 +2945,10 @@ private:
 
   void initializeMemoryContents() {
     initializeMemorySizes();
-    Const offset;
-    offset.value = Literal(uint32_t(0));
-    offset.finalize();
+
+    Const zero;
+    zero.value = Literal(uint32_t(0));
+    zero.finalize();
 
     // apply active memory segments
     for (size_t i = 0, e = wasm.dataSegments.size(); i < e; ++i) {
@@ -2865,7 +2964,7 @@ private:
       init.memory = segment->memory;
       init.segment = segment->name;
       init.dest = segment->offset;
-      init.offset = &offset;
+      init.offset = &zero;
       init.size = &size;
       init.finalize();
 
@@ -3126,20 +3225,17 @@ public:
     }
     auto info = getTableInstanceInfo(curr->table);
 
-    Index tableSize = info.interface()->tableSize(info.name);
+    uint64_t tableSize = info.interface()->tableSize(info.name);
     auto* table = info.instance->wasm.getTable(info.name);
     Flow ret = Literal::makeFromInt64(tableSize, table->indexType);
     Flow fail = Literal::makeFromInt64(-1, table->indexType);
-    Index delta = deltaFlow.getSingleValue().geti32();
+    uint64_t delta = deltaFlow.getSingleValue().getUnsigned();
 
-    if (tableSize >= uint32_t(-1) - delta) {
+    uint64_t newSize;
+    if (std::ckd_add(&newSize, tableSize, delta)) {
       return fail;
     }
-    if (uint64_t(tableSize) + uint64_t(delta) > uint64_t(table->max)) {
-      return fail;
-    }
-    Index newSize = tableSize + delta;
-    if (newSize > WebLimitations::MaxTableSize) {
+    if (newSize > table->max || newSize > WebLimitations::MaxTableSize) {
       return fail;
     }
     if (!info.interface()->growTable(
@@ -3229,6 +3325,54 @@ public:
         destInfo.name,
         destVal + i,
         sourceInfo.interface()->tableLoad(sourceInfo.name, sourceVal + i));
+    }
+    return {};
+  }
+
+  Flow visitTableInit(TableInit* curr) {
+    NOTE_ENTER("TableInit");
+    Flow dest = self()->visit(curr->dest);
+    if (dest.breaking()) {
+      return dest;
+    }
+    Flow offset = self()->visit(curr->offset);
+    if (offset.breaking()) {
+      return offset;
+    }
+    Flow size = self()->visit(curr->size);
+    if (size.breaking()) {
+      return size;
+    }
+    NOTE_EVAL1(dest);
+    NOTE_EVAL1(offset);
+    NOTE_EVAL1(size);
+
+    auto* segment = wasm.getElementSegment(curr->segment);
+
+    Address destVal(dest.getSingleValue().getUnsigned());
+    Address offsetVal(uint32_t(offset.getSingleValue().geti32()));
+    Address sizeVal(uint32_t(size.getSingleValue().geti32()));
+
+    if (offsetVal + sizeVal > 0 &&
+        droppedElementSegments.count(curr->segment)) {
+      trap("out of bounds segment access in table.init");
+    }
+    if (offsetVal + sizeVal > segment->data.size()) {
+      trap("out of bounds segment access in table.init");
+    }
+    auto info = getTableInstanceInfo(curr->table);
+    auto tableSize = info.interface()->tableSize(info.name);
+    if (destVal + sizeVal > tableSize) {
+      trap("out of bounds table access in table.init");
+    }
+    for (size_t i = 0; i < sizeVal; ++i) {
+      // FIXME: We should not call visit() here more than once at runtime. The
+      //        values in the segment should be computed once during startup,
+      //        and then read here as needed. For example, if we had a
+      //        struct.new here then we should not allocate a new struct each
+      //        time we table.init that data.
+      auto value = self()->visit(segment->data[offsetVal + i]).getSingleValue();
+      info.interface()->tableStore(info.name, destVal + i, value);
     }
     return {};
   }
@@ -3723,7 +3867,7 @@ public:
     if (offsetVal + sizeVal > 0 && droppedDataSegments.count(curr->segment)) {
       trap("out of bounds segment access in memory.init");
     }
-    if ((uint64_t)offsetVal + sizeVal > segment->data.size()) {
+    if (offsetVal + sizeVal > segment->data.size()) {
       trap("out of bounds segment access in memory.init");
     }
     auto info = getMemoryInstanceInfo(curr->memory);
@@ -3864,7 +4008,7 @@ public:
     contents.reserve(size);
     for (Index i = offset; i < end; i += elemBytes) {
       auto addr = (void*)&seg.data[i];
-      contents.push_back(Literal::makeFromMemory(addr, element));
+      contents.push_back(this->makeFromMemory(addr, element));
     }
     return self()->makeGCData(contents, curr->type);
   }
@@ -3944,7 +4088,7 @@ public:
     }
     for (size_t i = 0; i < sizeVal; i++) {
       void* addr = (void*)&seg->data[offsetVal + i * elemSize];
-      data->values[indexVal + i] = Literal::makeFromMemory(addr, elem);
+      data->values[indexVal + i] = this->makeFromMemory(addr, elem);
     }
     return {};
   }
@@ -4030,9 +4174,10 @@ public:
         return ret;
       };
 
+      auto exnData = e.exn.getExnData();
       for (size_t i = 0; i < curr->catchTags.size(); i++) {
-        if (curr->catchTags[i] == e.tag) {
-          multiValues.push_back(e.values);
+        if (curr->catchTags[i] == exnData->tag) {
+          multiValues.push_back(exnData->payload);
           return processCatchBody(curr->catchBodies[i]);
         }
       }
@@ -4043,6 +4188,32 @@ public:
         scope->currDelegateTarget = curr->delegateTarget;
       }
       // This exception is not caught by this try-catch. Rethrow it.
+      throw;
+    }
+  }
+  Flow visitTryTable(TryTable* curr) {
+    NOTE_ENTER("TryTable");
+    try {
+      return self()->visit(curr->body);
+    } catch (const WasmException& e) {
+      auto exnData = e.exn.getExnData();
+      for (size_t i = 0; i < curr->catchTags.size(); i++) {
+        auto catchTag = curr->catchTags[i];
+        if (!catchTag.is() || catchTag == exnData->tag) {
+          Flow ret;
+          ret.breakTo = curr->catchDests[i];
+          if (catchTag.is()) {
+            for (auto item : exnData->payload) {
+              ret.values.push_back(item);
+            }
+          }
+          if (curr->catchRefs[i]) {
+            ret.values.push_back(e.exn);
+          }
+          return ret;
+        }
+      }
+      // This exception is not caught by this try_table. Rethrow it.
       throw;
     }
   }

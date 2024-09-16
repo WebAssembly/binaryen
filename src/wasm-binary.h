@@ -28,13 +28,10 @@
 #include "ir/import-utils.h"
 #include "ir/module-utils.h"
 #include "parsing.h"
-#include "support/debug.h"
 #include "wasm-builder.h"
 #include "wasm-traversal.h"
 #include "wasm-validator.h"
 #include "wasm.h"
-
-#define DEBUG_TYPE "binary"
 
 namespace wasm {
 
@@ -158,18 +155,15 @@ public:
   BufferWithRandomAccess() = default;
 
   BufferWithRandomAccess& operator<<(int8_t x) {
-    BYN_TRACE("writeInt8: " << (int)(uint8_t)x << " (at " << size() << ")\n");
     push_back(x);
     return *this;
   }
   BufferWithRandomAccess& operator<<(int16_t x) {
-    BYN_TRACE("writeInt16: " << x << " (at " << size() << ")\n");
     push_back(x & 0xff);
     push_back(x >> 8);
     return *this;
   }
   BufferWithRandomAccess& operator<<(int32_t x) {
-    BYN_TRACE("writeInt32: " << x << " (at " << size() << ")\n");
     push_back(x & 0xff);
     x >>= 8;
     push_back(x & 0xff);
@@ -180,7 +174,6 @@ public:
     return *this;
   }
   BufferWithRandomAccess& operator<<(int64_t x) {
-    BYN_TRACE("writeInt64: " << x << " (at " << size() << ")\n");
     push_back(x & 0xff);
     x >>= 8;
     push_back(x & 0xff);
@@ -199,47 +192,19 @@ public:
     return *this;
   }
   BufferWithRandomAccess& operator<<(U32LEB x) {
-    [[maybe_unused]] size_t before = -1;
-    BYN_DEBUG(before = size(); std::cerr << "writeU32LEB: " << x.value
-                                         << " (at " << before << ")"
-                                         << std::endl;);
     x.write(this);
-    BYN_DEBUG(for (size_t i = before; i < size(); i++) {
-      std::cerr << "  " << (int)at(i) << " (at " << i << ")\n";
-    });
     return *this;
   }
   BufferWithRandomAccess& operator<<(U64LEB x) {
-    [[maybe_unused]] size_t before = -1;
-    BYN_DEBUG(before = size(); std::cerr << "writeU64LEB: " << x.value
-                                         << " (at " << before << ")"
-                                         << std::endl;);
     x.write(this);
-    BYN_DEBUG(for (size_t i = before; i < size(); i++) {
-      std::cerr << "  " << (int)at(i) << " (at " << i << ")\n";
-    });
     return *this;
   }
   BufferWithRandomAccess& operator<<(S32LEB x) {
-    [[maybe_unused]] size_t before = -1;
-    BYN_DEBUG(before = size(); std::cerr << "writeS32LEB: " << x.value
-                                         << " (at " << before << ")"
-                                         << std::endl;);
     x.write(this);
-    BYN_DEBUG(for (size_t i = before; i < size(); i++) {
-      std::cerr << "  " << (int)at(i) << " (at " << i << ")\n";
-    });
     return *this;
   }
   BufferWithRandomAccess& operator<<(S64LEB x) {
-    [[maybe_unused]] size_t before = -1;
-    BYN_DEBUG(before = size(); std::cerr << "writeS64LEB: " << x.value
-                                         << " (at " << before << ")"
-                                         << std::endl;);
     x.write(this);
-    BYN_DEBUG(for (size_t i = before; i < size(); i++) {
-      std::cerr << "  " << (int)at(i) << " (at " << i << ")\n";
-    });
     return *this;
   }
 
@@ -249,21 +214,17 @@ public:
   BufferWithRandomAccess& operator<<(uint64_t x) { return *this << (int64_t)x; }
 
   BufferWithRandomAccess& operator<<(float x) {
-    BYN_TRACE("writeFloat32: " << x << " (at " << size() << ")\n");
     return *this << Literal(x).reinterpreti32();
   }
   BufferWithRandomAccess& operator<<(double x) {
-    BYN_TRACE("writeFloat64: " << x << " (at " << size() << ")\n");
     return *this << Literal(x).reinterpreti64();
   }
 
   void writeAt(size_t i, uint16_t x) {
-    BYN_TRACE("backpatchInt16: " << x << " (at " << i << ")\n");
     (*this)[i] = x & 0xff;
     (*this)[i + 1] = x >> 8;
   }
   void writeAt(size_t i, uint32_t x) {
-    BYN_TRACE("backpatchInt32: " << x << " (at " << i << ")\n");
     (*this)[i] = x & 0xff;
     x >>= 8;
     (*this)[i + 1] = x & 0xff;
@@ -276,16 +237,12 @@ public:
   // writes out an LEB to an arbitrary location. this writes the LEB as a full
   // 5 bytes, the fixed amount that can easily be set aside ahead of time
   void writeAtFullFixedSize(size_t i, U32LEB x) {
-    BYN_TRACE("backpatchU32LEB: " << x.value << " (at " << i << ")\n");
     // fill all 5 bytes, we have to do this when backpatching
     x.writeAt(this, i, MaxLEB32Bytes);
   }
   // writes out an LEB of normal size
   // returns how many bytes were written
-  size_t writeAt(size_t i, U32LEB x) {
-    BYN_TRACE("writeAtU32LEB: " << x.value << " (at " << i << ")\n");
-    return x.writeAt(this, i);
-  }
+  size_t writeAt(size_t i, U32LEB x) { return x.writeAt(this, i); }
 
   template<typename T> void writeTo(T& o) {
     for (auto c : *this) {
@@ -376,15 +333,15 @@ enum EncodedType {
   // string reference types
   stringref = -0x19, // 0x67
   // type forms
-  Func = -0x20,     // 0x60
-  Cont = -0x23,     // 0x5d
-  Struct = -0x21,   // 0x5f
-  Array = -0x22,    // 0x5e
-  Sub = -0x30,      // 0x50
-  SubFinal = -0x31, // 0x4f
-  Shared = -0x1b,   // 0x65
-  // isorecursive recursion groups
-  Rec = -0x32, // 0x4e
+  Func = 0x60,
+  Cont = 0x5d,
+  Struct = 0x5f,
+  Array = 0x5e,
+  Sub = 0x50,
+  SubFinal = 0x4f,
+  SharedDef = 0x65,
+  Shared = -0x1b, // Also 0x65 as an SLEB128
+  Rec = 0x4e,
   // block_type
   Empty = -0x40, // 0x40
 };
@@ -414,6 +371,7 @@ extern const char* Dylink;
 extern const char* Dylink0;
 extern const char* Linking;
 extern const char* Producers;
+extern const char* BuildId;
 extern const char* TargetFeatures;
 
 extern const char* AtomicsFeature;
@@ -435,6 +393,7 @@ extern const char* StringsFeature;
 extern const char* MultiMemoryFeature;
 extern const char* TypedContinuationsFeature;
 extern const char* SharedEverythingFeature;
+extern const char* FP16Feature;
 
 enum Subsection {
   NameModule = 0,
@@ -1035,10 +994,12 @@ enum ASTNodes {
   I32x4RelaxedTruncF32x4U = 0x102,
   I32x4RelaxedTruncF64x2SZero = 0x103,
   I32x4RelaxedTruncF64x2UZero = 0x104,
-  F32x4RelaxedFma = 0x105,
-  F32x4RelaxedFms = 0x106,
-  F64x2RelaxedFma = 0x107,
-  F64x2RelaxedFms = 0x108,
+  F16x8RelaxedMadd = 0x14e,
+  F16x8RelaxedNmadd = 0x14f,
+  F32x4RelaxedMadd = 0x105,
+  F32x4RelaxedNmadd = 0x106,
+  F64x2RelaxedMadd = 0x107,
+  F64x2RelaxedNmadd = 0x108,
   I8x16Laneselect = 0x109,
   I16x8Laneselect = 0x10a,
   I32x4Laneselect = 0x10b,
@@ -1054,6 +1015,30 @@ enum ASTNodes {
   // half precision opcodes
   F32_F16LoadMem = 0x30,
   F32_F16StoreMem = 0x31,
+  F16x8Splat = 0x120,
+  F16x8ExtractLane = 0x121,
+  F16x8ReplaceLane = 0x122,
+  F16x8Abs = 0x130,
+  F16x8Neg = 0x131,
+  F16x8Sqrt = 0x132,
+  F16x8Ceil = 0x133,
+  F16x8Floor = 0x134,
+  F16x8Trunc = 0x135,
+  F16x8Nearest = 0x136,
+  F16x8Eq = 0x137,
+  F16x8Ne = 0x138,
+  F16x8Lt = 0x139,
+  F16x8Gt = 0x13a,
+  F16x8Le = 0x13b,
+  F16x8Ge = 0x13c,
+  F16x8Add = 0x13d,
+  F16x8Sub = 0x13e,
+  F16x8Mul = 0x13f,
+  F16x8Div = 0x140,
+  F16x8Min = 0x141,
+  F16x8Max = 0x142,
+  F16x8Pmin = 0x143,
+  F16x8Pmax = 0x144,
 
   // bulk memory opcodes
 
@@ -1068,6 +1053,7 @@ enum ASTNodes {
   TableSize = 0x10,
   TableFill = 0x11,
   TableCopy = 0x0e,
+  TableInit = 0x0c,
   RefNull = 0xd0,
   RefIsNull = 0xd1,
   RefFunc = 0xd2,
@@ -1079,8 +1065,8 @@ enum ASTNodes {
   // exception handling opcodes
 
   Try = 0x06,
-  Catch_P3 = 0x07,    // Old Phase 3 'catch'
-  CatchAll_P3 = 0x19, // Old Phase 3 'catch_all'
+  Catch_Legacy = 0x07,    // Legacy 'catch'
+  CatchAll_Legacy = 0x19, // Legacy 'catch_all'
   Delegate = 0x18,
   Throw = 0x08,
   Rethrow = 0x09,
@@ -1742,6 +1728,7 @@ public:
   bool maybeVisitTableGrow(Expression*& out, uint32_t code);
   bool maybeVisitTableFill(Expression*& out, uint32_t code);
   bool maybeVisitTableCopy(Expression*& out, uint32_t code);
+  bool maybeVisitTableInit(Expression*& out, uint32_t code);
   bool maybeVisitRefI31(Expression*& out, uint32_t code);
   bool maybeVisitI31Get(Expression*& out, uint32_t code);
   bool maybeVisitRefTest(Expression*& out, uint32_t code);

@@ -27,7 +27,11 @@ spec_tests = [t for t in spec_tests if '64.wast' not in t]
 wasm2js_tests = shared.get_tests(shared.get_test_dir('wasm2js'), ['.wast'])
 assert_tests = ['wasm2js.wast.asserts']
 # These tests exercise functionality not supported by wasm2js
-wasm2js_blacklist = ['empty_imported_table.wast']
+wasm2js_skipped_tests = [
+    'empty_imported_table.wast',
+    'br.wast',  # depends on multivalue
+    'br_table.wast',  # needs support for externref in assert_return
+]
 
 
 def check_for_stale_files():
@@ -52,7 +56,7 @@ def test_wasm2js_output():
     for opt in (0, 1):
         for t in basic_tests + spec_tests + wasm2js_tests:
             basename = os.path.basename(t)
-            if basename in wasm2js_blacklist:
+            if basename in wasm2js_skipped_tests:
                 continue
 
             asm = basename.replace('.wast', '.2asm.js')
@@ -158,7 +162,7 @@ def update_wasm2js_tests():
             if not wasm.endswith('.wast'):
                 continue
 
-            if os.path.basename(wasm) in wasm2js_blacklist:
+            if os.path.basename(wasm) in wasm2js_skipped_tests:
                 continue
 
             asm = os.path.basename(wasm).replace('.wast', '.2asm.js')

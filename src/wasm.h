@@ -179,6 +179,13 @@ enum UnaryOp {
   NegVecI64x2,
   AllTrueVecI64x2,
   BitmaskVecI64x2,
+  AbsVecF16x8,
+  NegVecF16x8,
+  SqrtVecF16x8,
+  CeilVecF16x8,
+  FloorVecF16x8,
+  TruncVecF16x8,
+  NearestVecF16x8,
   AbsVecF32x4,
   NegVecF32x4,
   SqrtVecF32x4,
@@ -228,6 +235,9 @@ enum UnaryOp {
   RelaxedTruncUVecF32x4ToVecI32x4,
   RelaxedTruncZeroSVecF64x2ToVecI32x4,
   RelaxedTruncZeroUVecF64x2ToVecI32x4,
+
+  // Half precision SIMD
+  SplatVecF16x8,
 
   InvalidUnary
 };
@@ -378,6 +388,12 @@ enum BinaryOp {
   GtSVecI64x2,
   LeSVecI64x2,
   GeSVecI64x2,
+  EqVecF16x8,
+  NeVecF16x8,
+  LtVecF16x8,
+  GtVecF16x8,
+  LeVecF16x8,
+  GeVecF16x8,
   EqVecF32x4,
   NeVecF32x4,
   LtVecF32x4,
@@ -443,6 +459,14 @@ enum BinaryOp {
   ExtMulHighSVecI64x2,
   ExtMulLowUVecI64x2,
   ExtMulHighUVecI64x2,
+  AddVecF16x8,
+  SubVecF16x8,
+  MulVecF16x8,
+  DivVecF16x8,
+  MinVecF16x8,
+  MaxVecF16x8,
+  PMinVecF16x8,
+  PMaxVecF16x8,
   AddVecF32x4,
   SubVecF32x4,
   MulVecF32x4,
@@ -490,6 +514,7 @@ enum SIMDExtractOp {
   ExtractLaneUVecI16x8,
   ExtractLaneVecI32x4,
   ExtractLaneVecI64x2,
+  ExtractLaneVecF16x8,
   ExtractLaneVecF32x4,
   ExtractLaneVecF64x2
 };
@@ -499,6 +524,7 @@ enum SIMDReplaceOp {
   ReplaceLaneVecI16x8,
   ReplaceLaneVecI32x4,
   ReplaceLaneVecI64x2,
+  ReplaceLaneVecF16x8,
   ReplaceLaneVecF32x4,
   ReplaceLaneVecF64x2,
 };
@@ -548,10 +574,12 @@ enum SIMDTernaryOp {
   Bitselect,
 
   // Relaxed SIMD
-  RelaxedFmaVecF32x4,
-  RelaxedFmsVecF32x4,
-  RelaxedFmaVecF64x2,
-  RelaxedFmsVecF64x2,
+  RelaxedMaddVecF16x8,
+  RelaxedNmaddVecF16x8,
+  RelaxedMaddVecF32x4,
+  RelaxedNmaddVecF32x4,
+  RelaxedMaddVecF64x2,
+  RelaxedNmaddVecF64x2,
   LaneselectI8x16,
   LaneselectI16x8,
   LaneselectI32x4,
@@ -667,6 +695,7 @@ public:
     TableGrowId,
     TableFillId,
     TableCopyId,
+    TableInitId,
     TryId,
     TryTableId,
     ThrowId,
@@ -1406,6 +1435,20 @@ public:
   Expression* size;
   Name destTable;
   Name sourceTable;
+
+  void finalize();
+};
+
+class TableInit : public SpecificExpression<Expression::TableInitId> {
+public:
+  TableInit() = default;
+  TableInit(MixedArena& allocator) : TableInit() {}
+
+  Name segment;
+  Expression* dest;
+  Expression* offset;
+  Expression* size;
+  Name table;
 
   void finalize();
 };
@@ -2266,6 +2309,7 @@ public:
   Name name;
 
   std::unordered_map<HeapType, TypeNames> typeNames;
+  std::unordered_map<HeapType, Index> typeIndices;
 
   MixedArena allocator;
 

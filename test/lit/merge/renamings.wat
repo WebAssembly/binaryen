@@ -160,6 +160,22 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $catch (result i32)
+  ;; CHECK-NEXT:    (try_table (catch $foo $catch)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i32.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $catch0 (result i64)
+  ;; CHECK-NEXT:    (try_table (catch $bar $catch0)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (i64.const 0)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (i32.load $foo
   ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
@@ -218,6 +234,22 @@
         (drop
           (pop i64)
         )
+      )
+    )
+    (drop
+      (block $catch (result i32)
+        (try_table (catch $foo $catch)
+          (nop)
+        )
+        (i32.const 0)
+      )
+    )
+    (drop
+      (block $catch (result i64)
+        (try_table (catch $bar $catch)
+          (nop)
+        )
+        (i64.const 0)
       )
     )
 
@@ -307,6 +339,22 @@
 ;; CHECK-NEXT:    (drop
 ;; CHECK-NEXT:     (pop f64)
 ;; CHECK-NEXT:    )
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (block $catch (result f32)
+;; CHECK-NEXT:    (try_table (catch $foo_2 $catch)
+;; CHECK-NEXT:     (nop)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (f32.const 0)
+;; CHECK-NEXT:   )
+;; CHECK-NEXT:  )
+;; CHECK-NEXT:  (drop
+;; CHECK-NEXT:   (block $catch0 (result f64)
+;; CHECK-NEXT:    (try_table (catch $other $catch0)
+;; CHECK-NEXT:     (nop)
+;; CHECK-NEXT:    )
+;; CHECK-NEXT:    (f64.const 0)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT:  (drop

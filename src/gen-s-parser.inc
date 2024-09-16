@@ -307,6 +307,217 @@ switch (buf[0]) {
   }
   case 'f': {
     switch (buf[1]) {
+      case '1': {
+        switch (buf[6]) {
+          case 'a': {
+            switch (buf[7]) {
+              case 'b':
+                if (op == "f16x8.abs"sv) {
+                  CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::AbsVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'd':
+                if (op == "f16x8.add"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::AddVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 'c':
+            if (op == "f16x8.ceil"sv) {
+              CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::CeilVecF16x8));
+              return Ok{};
+            }
+            goto parse_error;
+          case 'd':
+            if (op == "f16x8.div"sv) {
+              CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::DivVecF16x8));
+              return Ok{};
+            }
+            goto parse_error;
+          case 'e': {
+            switch (buf[7]) {
+              case 'q':
+                if (op == "f16x8.eq"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::EqVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'x':
+                if (op == "f16x8.extract_lane"sv) {
+                  CHECK_ERR(makeSIMDExtract(ctx, pos, annotations, SIMDExtractOp::ExtractLaneVecF16x8, 8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 'f':
+            if (op == "f16x8.floor"sv) {
+              CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::FloorVecF16x8));
+              return Ok{};
+            }
+            goto parse_error;
+          case 'g': {
+            switch (buf[7]) {
+              case 'e':
+                if (op == "f16x8.ge"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::GeVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 't':
+                if (op == "f16x8.gt"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::GtVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 'l': {
+            switch (buf[7]) {
+              case 'e':
+                if (op == "f16x8.le"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::LeVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 't':
+                if (op == "f16x8.lt"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::LtVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 'm': {
+            switch (buf[7]) {
+              case 'a':
+                if (op == "f16x8.max"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::MaxVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'i':
+                if (op == "f16x8.min"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::MinVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'u':
+                if (op == "f16x8.mul"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::MulVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 'n': {
+            switch (buf[8]) {
+              case '\0':
+                if (op == "f16x8.ne"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::NeVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'a':
+                if (op == "f16x8.nearest"sv) {
+                  CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::NearestVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'g':
+                if (op == "f16x8.neg"sv) {
+                  CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::NegVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 'p': {
+            switch (buf[8]) {
+              case 'a':
+                if (op == "f16x8.pmax"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::PMaxVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'i':
+                if (op == "f16x8.pmin"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::PMinVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 'r': {
+            switch (buf[8]) {
+              case 'l': {
+                switch (buf[14]) {
+                  case 'm':
+                    if (op == "f16x8.relaxed_madd"sv) {
+                      CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedMaddVecF16x8));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  case 'n':
+                    if (op == "f16x8.relaxed_nmadd"sv) {
+                      CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedNmaddVecF16x8));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              case 'p':
+                if (op == "f16x8.replace_lane"sv) {
+                  CHECK_ERR(makeSIMDReplace(ctx, pos, annotations, SIMDReplaceOp::ReplaceLaneVecF16x8, 8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 's': {
+            switch (buf[7]) {
+              case 'p':
+                if (op == "f16x8.splat"sv) {
+                  CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::SplatVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'q':
+                if (op == "f16x8.sqrt"sv) {
+                  CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::SqrtVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'u':
+                if (op == "f16x8.sub"sv) {
+                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::SubVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              default: goto parse_error;
+            }
+          }
+          case 't':
+            if (op == "f16x8.trunc"sv) {
+              CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::TruncVecF16x8));
+              return Ok{};
+            }
+            goto parse_error;
+          default: goto parse_error;
+        }
+      }
       case '3': {
         switch (buf[3]) {
           case '.': {
@@ -763,31 +974,25 @@ switch (buf[0]) {
                 switch (buf[8]) {
                   case 'l': {
                     switch (buf[14]) {
-                      case 'f': {
-                        switch (buf[16]) {
-                          case 'a':
-                            if (op == "f32x4.relaxed_fma"sv) {
-                              CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedFmaVecF32x4));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          case 's':
-                            if (op == "f32x4.relaxed_fms"sv) {
-                              CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedFmsVecF32x4));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
                       case 'm': {
                         switch (buf[15]) {
-                          case 'a':
-                            if (op == "f32x4.relaxed_max"sv) {
-                              CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::RelaxedMaxVecF32x4));
-                              return Ok{};
+                          case 'a': {
+                            switch (buf[16]) {
+                              case 'd':
+                                if (op == "f32x4.relaxed_madd"sv) {
+                                  CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedMaddVecF32x4));
+                                  return Ok{};
+                                }
+                                goto parse_error;
+                              case 'x':
+                                if (op == "f32x4.relaxed_max"sv) {
+                                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::RelaxedMaxVecF32x4));
+                                  return Ok{};
+                                }
+                                goto parse_error;
+                              default: goto parse_error;
                             }
-                            goto parse_error;
+                          }
                           case 'i':
                             if (op == "f32x4.relaxed_min"sv) {
                               CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::RelaxedMinVecF32x4));
@@ -797,6 +1002,12 @@ switch (buf[0]) {
                           default: goto parse_error;
                         }
                       }
+                      case 'n':
+                        if (op == "f32x4.relaxed_nmadd"sv) {
+                          CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedNmaddVecF32x4));
+                          return Ok{};
+                        }
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
@@ -1273,31 +1484,25 @@ switch (buf[0]) {
                 switch (buf[8]) {
                   case 'l': {
                     switch (buf[14]) {
-                      case 'f': {
-                        switch (buf[16]) {
-                          case 'a':
-                            if (op == "f64x2.relaxed_fma"sv) {
-                              CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedFmaVecF64x2));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          case 's':
-                            if (op == "f64x2.relaxed_fms"sv) {
-                              CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedFmsVecF64x2));
-                              return Ok{};
-                            }
-                            goto parse_error;
-                          default: goto parse_error;
-                        }
-                      }
                       case 'm': {
                         switch (buf[15]) {
-                          case 'a':
-                            if (op == "f64x2.relaxed_max"sv) {
-                              CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::RelaxedMaxVecF64x2));
-                              return Ok{};
+                          case 'a': {
+                            switch (buf[16]) {
+                              case 'd':
+                                if (op == "f64x2.relaxed_madd"sv) {
+                                  CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedMaddVecF64x2));
+                                  return Ok{};
+                                }
+                                goto parse_error;
+                              case 'x':
+                                if (op == "f64x2.relaxed_max"sv) {
+                                  CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::RelaxedMaxVecF64x2));
+                                  return Ok{};
+                                }
+                                goto parse_error;
+                              default: goto parse_error;
                             }
-                            goto parse_error;
+                          }
                           case 'i':
                             if (op == "f64x2.relaxed_min"sv) {
                               CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::RelaxedMinVecF64x2));
@@ -1307,6 +1512,12 @@ switch (buf[0]) {
                           default: goto parse_error;
                         }
                       }
+                      case 'n':
+                        if (op == "f64x2.relaxed_nmadd"sv) {
+                          CHECK_ERR(makeSIMDTernary(ctx, pos, annotations, SIMDTernaryOp::RelaxedNmaddVecF64x2));
+                          return Ok{};
+                        }
+                        goto parse_error;
                       default: goto parse_error;
                     }
                   }
@@ -4862,6 +5073,12 @@ switch (buf[0]) {
               default: goto parse_error;
             }
           }
+          case 'i':
+            if (op == "table.init"sv) {
+              CHECK_ERR(makeTableInit(ctx, pos, annotations));
+              return Ok{};
+            }
+            goto parse_error;
           case 's': {
             switch (buf[7]) {
               case 'e':

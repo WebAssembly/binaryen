@@ -18,6 +18,7 @@
 // Operations on Stack IR.
 //
 
+#include "ir/branch-utils.h"
 #include "ir/iteration.h"
 #include "ir/local-graph.h"
 #include "pass.h"
@@ -130,14 +131,14 @@ void StackIROptimizer::vacuum() {
 // no control flow branching out, we can remove both the set
 // and the get.
 void StackIROptimizer::local2Stack() {
-  // We use the localGraph to tell us if a get-set pair is indeed
-  // a set that is read by that get, and only that get. Note that we run
-  // this on the Binaryen IR, so we are assuming that no previous opt
-  // has changed the interaction of local operations.
-  // TODO: we can do this a lot faster, as we just care about linear
-  //       control flow.
-  LocalGraph localGraph(func);
-  localGraph.computeSetInfluences();
+  // We use the localGraph to tell us if a get-set pair is indeed a set that is
+  // read by that get, and only that get. Note that we run this on Binaryen IR,
+  // so we are assuming that no previous opt has changed the interaction of
+  // local operations.
+  //
+  // We use a lazy graph here as we only query in the rare case when we find a
+  // set/get pair that looks optimizable.
+  LazyLocalGraph localGraph(func);
   // The binary writing of StringWTF16Get and StringSliceWTF is optimized to use
   // fewer scratch locals when their operands are already LocalGets. To avoid
   // interfering with that optimization, we have to avoid removing such
@@ -224,9 +225,9 @@ void StackIROptimizer::local2Stack() {
             if (set->index == get->index) {
               // This might be a proper set-get pair, where the set is
               // used by this get and nothing else, check that.
-              auto& sets = localGraph.getSetses[get];
+              auto& sets = localGraph.getSets(get);
               if (sets.size() == 1 && *sets.begin() == set) {
-                auto& setInfluences = localGraph.setInfluences[set];
+                auto& setInfluences = localGraph.getSetInfluences(set);
                 // If this has the proper value of 1, also do the potentially-
                 // expensive check of whether we can remove this pair at all.
                 if (setInfluences.size() == 1 &&
@@ -269,17 +270,26 @@ void StackIROptimizer::local2Stack() {
   }
 }
 
-// There may be unnecessary blocks we can remove: blocks
-// without branches to them are always ok to remove.
-// TODO: a branch to a block in an if body can become
-//       a branch to that if body
+// There may be unnecessary blocks we can remove: blocks without arriving
+// branches are always ok to remove.
+// TODO: A branch to a block in an if body can become a branch to that if body.
 void StackIROptimizer::removeUnneededBlocks() {
+  // First, find all branch targets.
+  std::unordered_set<Name> targets;
+  for (auto*& inst : insts) {
+    if (inst) {
+      BranchUtils::operateOnScopeNameUses(
+        inst->origin, [&](Name& name) { targets.insert(name); });
+    }
+  }
+
+  // Remove untargeted blocks.
   for (auto*& inst : insts) {
     if (!inst) {
       continue;
     }
     if (auto* block = inst->origin->dynCast<Block>()) {
-      if (!BranchUtils::BranchSeeker::has(block, block->name)) {
+      if (!block->name.is() || !targets.count(block->name)) {
         // TODO optimize, maybe run remove-unused-names
         inst = nullptr;
       }

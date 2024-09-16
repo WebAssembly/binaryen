@@ -190,6 +190,8 @@
 ;; CHECK-NEXT:   --gufa-optimizing                             GUFA plus local optimizations in
 ;; CHECK-NEXT:                                                 functions we modified
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --heap-store-optimization                     optimize heap (GC) stores
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --heap2local                                  replace GC allocations with
 ;; CHECK-NEXT:                                                 locals
 ;; CHECK-NEXT:
@@ -246,6 +248,10 @@
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --merge-blocks                                merges blocks to their parents
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --merge-j2cl-itables                          Merges itable structures into
+;; CHECK-NEXT:                                                 vtables to make types more
+;; CHECK-NEXT:                                                 compact
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --merge-locals                                merges locals when beneficial
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --merge-similar-functions                     merges similar functions when
@@ -268,6 +274,9 @@
 ;; CHECK-NEXT:                                                 names, and emits a mapping to
 ;; CHECK-NEXT:                                                 the minified ones, and minifies
 ;; CHECK-NEXT:                                                 the modules as well
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --minimize-rec-groups                         Split types into minimal
+;; CHECK-NEXT:                                                 recursion groups
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --mod-asyncify-always-and-only-unwind         apply the assumption that
 ;; CHECK-NEXT:                                                 asyncify imports always unwind,
@@ -474,6 +483,11 @@
 ;; CHECK-NEXT:   --string-lowering-magic-imports               same as string-lowering, but
 ;; CHECK-NEXT:                                                 encodes well-formed strings as
 ;; CHECK-NEXT:                                                 magic imports
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --string-lowering-magic-imports-assert        same as
+;; CHECK-NEXT:                                                 string-lowering-magic-imports,
+;; CHECK-NEXT:                                                 but raise a fatal error if there
+;; CHECK-NEXT:                                                 are invalid strings
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --strip                                       deprecated; same as strip-debug
 ;; CHECK-NEXT:
@@ -726,6 +740,10 @@
 ;; CHECK-NEXT:   --disable-shared-everything                   Disable shared-everything
 ;; CHECK-NEXT:                                                 threads
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --enable-fp16                                 Enable float 16 operations
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --disable-fp16                                Disable float 16 operations
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --enable-typed-function-references            Deprecated compatibility flag
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --disable-typed-function-references           Deprecated compatibility flag
@@ -752,6 +770,10 @@
 ;; CHECK-NEXT:                                                 on to them and pass them back
 ;; CHECK-NEXT:                                                 in, but not inspect their
 ;; CHECK-NEXT:                                                 contents or call them.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --preserve-type-order                         Preserve the order of types from
+;; CHECK-NEXT:                                                 the input (useful for debugging
+;; CHECK-NEXT:                                                 and testing)
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --generate-stack-ir                           generate StackIR during writing
 ;; CHECK-NEXT:

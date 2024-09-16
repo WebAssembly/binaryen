@@ -18,10 +18,10 @@
   ;; TNH:      (type $other (struct (field i64) (field f32)))
   (type $other  (struct (field i64) (field f32)))
 
-  ;; CHECK:      (func $foo (type $2)
+  ;; CHECK:      (func $foo (type $3)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
-  ;; TNH:      (func $foo (type $2)
+  ;; TNH:      (func $foo (type $3)
   ;; TNH-NEXT:  (nop)
   ;; TNH-NEXT: )
   (func $foo)
