@@ -153,9 +153,12 @@ struct StringGathering : public Pass {
       [[maybe_unused]] bool valid =
         String::convertWTF16ToWTF8(wtf8, string.str);
       assert(valid);
-      // TODO: Use wtf8.view() once we have C++20.
+      // Then escape it because identifiers must be valid UTF-8.
+      // TODO: Use wtf8.view() and escaped.view() once we have C++20.
+      std::stringstream escaped;
+      String::printEscaped(escaped, wtf8.str());
       auto name = Names::getValidGlobalName(
-        *module, std::string("string.const_") + std::string(wtf8.str()));
+        *module, std::string("string.const_") + std::string(escaped.str()));
       globalName = name;
       newNames.insert(name);
       auto* stringConst = builder.makeStringConst(string);
