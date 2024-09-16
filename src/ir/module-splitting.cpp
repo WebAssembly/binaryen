@@ -316,7 +316,7 @@ struct ModuleSplitter {
   void exportImportCalledPrimaryFunctions();
   void setupTablePatching();
   void shareImportableItems();
-  void removeUnusedElements();
+  void removeUnusedSecondaryElements();
 
   ModuleSplitter(Module& primary, const Config& config)
     : config(config), secondaryPtr(initSecondary(primary)), primary(primary),
@@ -335,7 +335,7 @@ struct ModuleSplitter {
     exportImportCalledPrimaryFunctions();
     setupTablePatching();
     shareImportableItems();
-    removeUnusedElements();
+    removeUnusedSecondaryElements();
   }
 };
 
@@ -874,7 +874,7 @@ void ModuleSplitter::shareImportableItems() {
   }
 }
 
-void ModuleSplitter::removeUnusedElements() {
+void ModuleSplitter::removeUnusedSecondaryElements() {
   // TODO: It would be better to be more selective about only exporting and
   // importing those items that the secondary module needs. This would reduce
   // code size in the primary module as well.
