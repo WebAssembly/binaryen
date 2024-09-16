@@ -1658,7 +1658,7 @@ public:
         data[i] = truncateForPacking(value.getSingleValue(), field);
       }
     }
-    return makeGCData(data, curr->type);
+    return makeGCData(std::move(data), curr->type);
   }
   Flow visitStructGet(StructGet* curr) {
     NOTE_ENTER("StructGet");
@@ -1738,7 +1738,7 @@ public:
         data[i] = value;
       }
     }
-    return makeGCData(data, curr->type);
+    return makeGCData(std::move(data), curr->type);
   }
   Flow visitArrayNewData(ArrayNewData* curr) { WASM_UNREACHABLE("unimp"); }
   Flow visitArrayNewElem(ArrayNewElem* curr) { WASM_UNREACHABLE("unimp"); }
@@ -1769,7 +1769,7 @@ public:
       }
       data[i] = truncateForPacking(value.getSingleValue(), field);
     }
-    return makeGCData(data, curr->type);
+    return makeGCData(std::move(data), curr->type);
   }
   Flow visitArrayGet(ArrayGet* curr) {
     NOTE_ENTER("ArrayGet");
@@ -1974,7 +1974,7 @@ public:
             contents.push_back(ptrDataValues[i]);
           }
         }
-        return makeGCData(contents, curr->type);
+        return makeGCData(std::move(contents), curr->type);
       }
       case StringNewFromCodePoint: {
         uint32_t codePoint = ptr.getSingleValue().getUnsigned();
@@ -2044,7 +2044,7 @@ public:
       contents.push_back(l);
     }
 
-    return makeGCData(contents, curr->type);
+    return makeGCData(std::move(contents), curr->type);
   }
   Flow visitStringEncode(StringEncode* curr) {
     // For now we only support JS-style strings into arrays.
@@ -2206,7 +2206,7 @@ public:
         }
       }
     }
-    return makeGCData(contents, curr->type);
+    return makeGCData(std::move(contents), curr->type);
   }
 
   virtual void trap(const char* why) { WASM_UNREACHABLE("unimp"); }
@@ -4013,7 +4013,7 @@ public:
       auto addr = (void*)&seg.data[i];
       contents.push_back(this->makeFromMemory(addr, element));
     }
-    return self()->makeGCData(contents, curr->type);
+    return self()->makeGCData(std::move(contents), curr->type);
   }
   Flow visitArrayNewElem(ArrayNewElem* curr) {
     NOTE_ENTER("ArrayNewElem");
@@ -4044,7 +4044,7 @@ public:
       auto val = self()->visit(seg.data[i]).getSingleValue();
       contents.push_back(val);
     }
-    return self()->makeGCData(contents, curr->type);
+    return self()->makeGCData(std::move(contents), curr->type);
   }
   Flow visitArrayInitData(ArrayInitData* curr) {
     NOTE_ENTER("ArrayInit");
