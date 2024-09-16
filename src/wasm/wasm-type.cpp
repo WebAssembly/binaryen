@@ -2887,17 +2887,9 @@ void TypeBuilder::dump() {
 std::unordered_set<HeapType> getIgnorablePublicTypes() {
   auto array8 = Array(Field(Field::i8, Mutable));
   auto array16 = Array(Field(Field::i16, Mutable));
-  TypeBuilder builder(4);
-  // We handle final and non-final here, but should remove one of them
-  // eventually TODO
+  TypeBuilder builder(2);
   builder[0] = array8;
-  builder[0].setOpen(false);
   builder[1] = array16;
-  builder[1].setOpen(false);
-  builder[2] = array8;
-  builder[2].setOpen(true);
-  builder[3] = array16;
-  builder[3].setOpen(true);
   auto result = builder.build();
   assert(result);
   std::unordered_set<HeapType> ret;

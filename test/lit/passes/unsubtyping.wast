@@ -1747,3 +1747,35 @@
  ;; CHECK:      (global $g (ref $super) (struct.new_default $sub))
  (global $g (ref $super) (struct.new_default $sub))
 )
+
+;; Regression test for a bug where we considered $super to be a public type
+;; (because it was once in contention to appear in js-string-builtin
+;; signatures), so we only updated $sub, but that caused $sub and $super to be
+;; the same type, changing the behavior of the cast.
+(module
+ ;; CHECK:      (type $super (sub (array (mut i8))))
+ (type $super (sub (array (mut i8))))
+ (type $sub (sub $super (array (mut i8))))
+ ;; CHECK:      (type $1 (func))
+
+ ;; CHECK:      (export "test" (func $0))
+
+ ;; CHECK:      (func $0 (type $1)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.cast (ref none)
+ ;; CHECK-NEXT:    (array.new_default $super
+ ;; CHECK-NEXT:     (i32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $0 (export "test")
+  (drop
+   (ref.cast (ref $sub)
+    (array.new_default $super
+     (i32.const 0)
+    )
+   )
+  )
+ )
+)
