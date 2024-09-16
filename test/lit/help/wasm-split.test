@@ -15,6 +15,9 @@
 ;; CHECK-NEXT:   --split                              Split an input module into two output
 ;; CHECK-NEXT:                                        modules. The default mode.
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --multi-split                        Split an input module into an arbitrary
+;; CHECK-NEXT:                                        number of output modules.
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --instrument                         Instrument an input module to allow it to
 ;; CHECK-NEXT:                                        generate a profile that can be used to
 ;; CHECK-NEXT:                                        guide splitting.
@@ -42,6 +45,18 @@
 ;; CHECK-NEXT:                                        precedence over other split options. You
 ;; CHECK-NEXT:                                        can also pass a file with one function
 ;; CHECK-NEXT:                                        per line by passing @filename.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --manifest                           [multi-split] File describing the
+;; CHECK-NEXT:                                        functions to be split into each module.
+;; CHECK-NEXT:                                        Each section separated by a blank line
+;; CHECK-NEXT:                                        begins with the base name of an output
+;; CHECK-NEXT:                                        module, which is followed by a list of
+;; CHECK-NEXT:                                        functions to place in that module, one
+;; CHECK-NEXT:                                        per line.
+;; CHECK-NEXT:
+;; CHECK-NEXT:   --out-prefix                         [multi-split] Prefix prepended to module
+;; CHECK-NEXT:                                        names in the manifest file to create
+;; CHECK-NEXT:                                        output file names.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --primary-output,-o1                 [split] Output file for the primary
 ;; CHECK-NEXT:                                        module.
@@ -125,10 +140,12 @@
 ;; CHECK-NEXT:   --emit-text,-S                       [split, instrument] Emit text instead of
 ;; CHECK-NEXT:                                        binary for the output file or files.
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --debuginfo,-g                       [split, instrument] Emit names section in
-;; CHECK-NEXT:                                        wasm binary (or full debuginfo in wast)
+;; CHECK-NEXT:   --debuginfo,-g                       [split, multi-split, instrument] Emit
+;; CHECK-NEXT:                                        names section in wasm binary (or full
+;; CHECK-NEXT:                                        debuginfo in wast)
 ;; CHECK-NEXT:
-;; CHECK-NEXT:   --output,-o                          [instrument, merge-profiles] Output file.
+;; CHECK-NEXT:   --output,-o                          [instrument, merge-profiles, multi-split]
+;; CHECK-NEXT:                                        Output file.
 ;; CHECK-NEXT:
 ;; CHECK-NEXT:   --unescape,-u                        Un-escape function names (in
 ;; CHECK-NEXT:                                        print-profile output)
