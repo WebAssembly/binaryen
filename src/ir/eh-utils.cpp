@@ -64,7 +64,18 @@ getFirstPop(Expression* catchBody, bool& isPopNested, Expression**& popPtr) {
         // run more than once
         return nullptr;
       }
-      if (firstChild->is<Block>()) {
+      if (auto* block = firstChild->dynCast<Block>()) {
+        // Ignore nameless blocks, as they vanish in the binary format.
+        if (!block->name.is()) {
+          if (block->list.empty()) {
+            // No children.
+            return nullptr;
+          }
+          firstChild = block->list[0];
+          firstChildPtr = &block->list[0];
+          continue;
+        }
+
         // If there are no branches that targets the implicit block, it will be
         // removed when written back. But if there are branches that target the
         // implicit block,

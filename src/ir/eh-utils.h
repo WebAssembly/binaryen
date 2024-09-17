@@ -30,6 +30,8 @@ namespace EHUtils {
 //   whose tag type is void or a catch_all's body, this returns false.
 // - This returns true even if there are more pops after the first one within a
 //   catch body, which is invalid. That will be taken care of in validation.
+// - This ignores blocks without a name, as we never emit those in the binary
+//   format.
 bool containsValidDanglingPop(Expression* catchBody);
 
 // Given a 'Try' expression, fixes up 'pop's nested in blocks, which are
