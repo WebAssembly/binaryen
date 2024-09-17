@@ -20,7 +20,7 @@
 
  ;; CHECK-A:      (type $2 (func (result i32)))
 
- ;; CHECK-A:      (import "" "table" (table $timport$0 1 funcref))
+ ;; CHECK-A:      (import "" "c" (table $timport$0 1 funcref))
 
  ;; CHECK-A:      (import "" "a" (func $B (result i64)))
 
@@ -70,11 +70,11 @@
 
  ;; CHECK-B:      (type $2 (func (result i64)))
 
- ;; CHECK-B:      (import "" "table_4" (table $timport$0 1 funcref))
+ ;; CHECK-B:      (import "" "e" (table $timport$0 1 funcref))
 
  ;; CHECK-B:      (import "" "b" (func $C (result f32)))
 
- ;; CHECK-B:      (import "" "c" (func $fimport$1 (result i32)))
+ ;; CHECK-B:      (import "" "d" (func $fimport$1 (result i32)))
 
  ;; CHECK-B:      (elem $0 (i32.const 0) $B)
 
@@ -120,11 +120,11 @@
 
  ;; CHECK-C:      (type $2 (func (result f32)))
 
- ;; CHECK-C:      (import "" "table_6" (table $timport$0 1 funcref))
+ ;; CHECK-C:      (import "" "g" (table $timport$0 1 funcref))
 
- ;; CHECK-C:      (import "" "c" (func $fimport$0 (result i32)))
+ ;; CHECK-C:      (import "" "d" (func $fimport$0 (result i32)))
 
- ;; CHECK-C:      (import "" "d" (func $fimport$1 (result i64)))
+ ;; CHECK-C:      (import "" "f" (func $fimport$1 (result i64)))
 
  ;; CHECK-C:      (elem $0 (i32.const 0) $C)
 
@@ -181,15 +181,15 @@
 
 ;; PRIMARY:      (export "b" (func $3))
 
-;; PRIMARY:      (export "table" (table $0))
+;; PRIMARY:      (export "c" (table $0))
 
-;; PRIMARY:      (export "c" (func $0))
+;; PRIMARY:      (export "d" (func $0))
 
-;; PRIMARY:      (export "table_4" (table $1))
+;; PRIMARY:      (export "e" (table $1))
 
-;; PRIMARY:      (export "d" (func $2))
+;; PRIMARY:      (export "f" (func $2))
 
-;; PRIMARY:      (export "table_6" (table $2))
+;; PRIMARY:      (export "g" (table $2))
 
 ;; PRIMARY:      (func $0 (result i32)
 ;; PRIMARY-NEXT:  (call_indirect (type $ret-i32)
