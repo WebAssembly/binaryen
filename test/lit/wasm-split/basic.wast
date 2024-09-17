@@ -174,7 +174,6 @@
 ;; KEEP-BOTH-PRIMARY-NEXT: )
 
 ;; KEEP-BOTH-SECONDARY:      (module
-;; KEEP-BOTH-SECONDARY-NEXT:  (import "primary" "%table" (table $table 1 1 funcref))
 ;; KEEP-BOTH-SECONDARY-NEXT: )
 
 ;; SPLIT-BAR-SUPERSEDE: warning: function bar was to be kept in primary module. However it will now be split out into secondary module.

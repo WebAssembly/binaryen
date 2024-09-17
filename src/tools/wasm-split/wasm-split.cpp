@@ -69,11 +69,15 @@ uint64_t hashFile(const std::string& filename) {
   return uint64_t(digest);
 }
 
-void adjustTableSize(Module& wasm, int initialSize) {
+void adjustTableSize(Module& wasm, int initialSize, bool secondary = false) {
   if (initialSize < 0) {
     return;
   }
   if (wasm.tables.empty()) {
+    if (secondary) {
+      // It's not a problem if the table is not used in the secondary module.
+      return;
+    }
     Fatal() << "--initial-table used but there is no table";
   }
 
@@ -336,7 +340,7 @@ void splitModule(const WasmSplitOptions& options) {
   auto& secondary = splitResults.secondary;
 
   adjustTableSize(wasm, options.initialTableSize);
-  adjustTableSize(*secondary, options.initialTableSize);
+  adjustTableSize(*secondary, options.initialTableSize, /*secondary=*/true);
 
   if (options.symbolMap) {
     writeSymbolMap(wasm, options.primaryOutput + ".symbols");
@@ -435,9 +439,6 @@ void multiSplitModule(const WasmSplitOptions& options) {
     // TODO: symbolMap, placeholderMap, emitModuleNames
     // TODO: Support --emit-text and use .wast in that case.
     auto moduleName = options.outPrefix + mod + ".wasm";
-    PassRunner runner(&*splitResults.secondary);
-    runner.add("remove-unused-module-elements");
-    runner.run();
     writeModule(*splitResults.secondary, moduleName, options);
   }
   writeModule(wasm, options.output, options);
