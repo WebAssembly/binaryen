@@ -65,12 +65,32 @@ public:
   using value_type = T;
 
   SmallVector() {}
+  SmallVector(const SmallVector<T, N>& other)
+    : usedFixed(other.usedFixed), fixed(other.fixed), flexible(other.flexible) {
+  }
+  SmallVector(SmallVector<T, N>&& other)
+    : usedFixed(other.usedFixed), fixed(std::move(other.fixed)),
+      flexible(std::move(other.flexible)) {}
   SmallVector(std::initializer_list<T> init) {
     for (T item : init) {
       push_back(item);
     }
   }
   SmallVector(size_t initialSize) { resize(initialSize); }
+
+  SmallVector<T, N>& operator=(const SmallVector<T, N>& other) {
+    usedFixed = other.usedFixed;
+    fixed = other.fixed;
+    flexible = other.flexible;
+    return *this;
+  }
+
+  SmallVector<T, N>& operator=(SmallVector<T, N>&& other) {
+    usedFixed = other.usedFixed;
+    fixed = std::move(other.fixed);
+    flexible = std::move(other.flexible);
+    return *this;
+  }
 
   T& operator[](size_t i) {
     if (i < N) {
