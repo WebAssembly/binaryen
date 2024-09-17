@@ -826,8 +826,11 @@ void ModuleSplitter::shareImportableItems() {
     if (exportIt != exports.end()) {
       secondaryItem.base = exportIt->second;
     } else {
-      Name exportName = Names::getValidExportName(
-        primary, config.newExportPrefix + genericExportName);
+      std::string baseName =
+        config.newExportPrefix + (config.minimizeNewExportNames
+                                    ? minified.getName()
+                                    : genericExportName);
+      Name exportName = Names::getValidExportName(primary, baseName);
       primary.addExport(new Export{exportName, primaryItem.name, kind});
       secondaryItem.base = exportName;
     }
