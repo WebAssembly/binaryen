@@ -83,7 +83,6 @@
 ;; PROFILE_KEEP: Keeping functions: bar, bar_callee, shared_callee, uncalled
 ;; PROFILE_KEEP: Splitting out functions: deep_foo_callee, foo, foo_callee
 
-;; PROFILE_SPLIT: warning: function shared_callee was to be kept in primary module. However it will now be split out into secondary module.
 ;; PROFILE_SPLIT: Keeping functions: bar, bar_callee, deep_foo_callee, foo, foo_callee
 ;; PROFILE_SPLIT: Splitting out functions: shared_callee, uncalled
 
