@@ -85,6 +85,13 @@ public:
     return *this;
   }
 
+  SmallVector<T, N>& operator=(SmallVector<T, N>&& other) {
+    usedFixed = other.usedFixed;
+    fixed = std::move(other.fixed);
+    flexible = std::move(other.flexible);
+    return *this;
+  }
+
   T& operator[](size_t i) {
     if (i < N) {
       return fixed[i];
