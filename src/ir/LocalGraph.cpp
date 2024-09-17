@@ -624,6 +624,40 @@ void LazyLocalGraph::computeGetInfluences() const {
   doComputeGetInfluences(*locations, *getInfluences);
 }
 
+void LazyLocalGraph::computeSSA(Index index) const {
+  // We must never repeat work.
+  assert(!SSAIndexes.count(index));
+
+  if (!flower) {
+    makeFlower();
+  }
+
+  // Similar logic to LocalGraph::computeSSAIndexes(), but optimized for the
+  // case of a single index.
+
+  // All the sets for this index that we've seen. We'll add all relevant ones,
+  // and exit if we see more than one.
+  SmallUnorderedSet<LocalSet*, 2> sets;
+  for (auto* set : flower->setsByIndex[index]) {
+    sets.insert(set);
+    if (sets.size() > 1) {
+      SSAIndexes[index] = false;
+      return;
+    }
+  }
+  for (auto* get : flower->getsByIndex[index]) {
+    for (auto* set : getSets(get)) {
+      sets.insert(set);
+      if (sets.size() > 1) {
+        SSAIndexes[index] = false;
+        return;
+      }
+    }
+  }
+  // Finally, check that we have 1 and not 0 sets.
+  SSAIndexes[index] = (sets.size() == 1);
+}
+
 void LazyLocalGraph::computeLocations() const {
   // We must never repeat work.
   assert(!locations);

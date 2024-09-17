@@ -209,6 +209,15 @@ struct LazyLocalGraph : public LocalGraphBase {
     }
     return (*getInfluences)[get];
   }
+  bool isSSA(Index index) const {
+    auto iter = SSAIndexes.find(index);
+    if (iter == SSAIndexes.end()) {
+      computeSSA(index);
+      iter = SSAIndexes.find(index);
+      assert(iter != SSAIndexes.end());
+    }
+    return iter->second;
+  }
 
   const Locations& getLocations() const {
     if (!locations) {
@@ -229,6 +238,9 @@ private:
   // include sets of other indexes, so there is no simple way to lazify that
   // computation.
   mutable std::optional<GetInfluencesMap> getInfluences;
+  // A map if indexes to a bool indicating if the index is SSA. If there is no
+  // entry, it has not yet been computed.
+  mutable std::unordered_map<Index, bool> SSAIndexes;
   mutable std::optional<Locations> locations;
 
   // Compute the sets for a get and store them on getSetsMap.
@@ -237,6 +249,8 @@ private:
   void computeSetInfluences(LocalSet* set) const;
   // Compute influences for all gets and store them on getInfluences.
   void computeGetInfluences() const;
+  // Compute whether an index is SSA and store that on SSAIndexes.
+  void computeSSA(Index index) const;
   // Compute locations and store them on getInfluences.
   void computeLocations() const;
 
