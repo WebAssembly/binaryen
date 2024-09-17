@@ -28,14 +28,21 @@ void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
   valid = validator.validate(*primary);
   assert(valid && "before invalid!");
 
+  std::set<Name> splitFuncs;
+  for (auto& func : primary->functions) {
+    splitFuncs.insert(func->name);
+  }
+
   std::cout << "Before:\n";
   std::cout << *primary.get();
 
   std::cout << "Keeping: ";
   if (keptFuncs.size()) {
     auto it = keptFuncs.begin();
+    splitFuncs.erase(*it);
     std::cout << *it++;
     while (it != keptFuncs.end()) {
+      splitFuncs.erase(*it);
       std::cout << ", " << *it++;
     }
   } else {
@@ -44,7 +51,7 @@ void do_test(const std::set<Name>& keptFuncs, std::string&& module) {
   std::cout << "\n";
 
   ModuleSplitting::Config config;
-  config.primaryFuncs = keptFuncs;
+  config.secondaryFuncs = std::move(splitFuncs);
   config.newExportPrefix = "%";
   auto secondary = splitFunctions(*primary, config).secondary;
 
@@ -443,7 +450,6 @@ void test_minimized_exports() {
   Module primary;
   primary.features = FeatureSet::All;
 
-  std::set<Name> keep;
   Expression* callBody = nullptr;
 
   Builder builder(primary);
@@ -453,7 +459,6 @@ void test_minimized_exports() {
     Name name = std::to_string(i);
     primary.addFunction(
       Builder::makeFunction(name, funcType, {}, builder.makeNop()));
-    keep.insert(name);
     callBody =
       builder.blockify(callBody, builder.makeCall(name, {}, Type::none));
 
@@ -470,7 +475,7 @@ void test_minimized_exports() {
   primary.addFunction(Builder::makeFunction("call", funcType, {}, callBody));
 
   ModuleSplitting::Config config;
-  config.primaryFuncs = std::move(keep);
+  config.secondaryFuncs = {"call"};
   config.newExportPrefix = "%";
   config.minimizeNewExportNames = true;
 

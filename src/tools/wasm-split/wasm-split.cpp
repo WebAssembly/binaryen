@@ -221,7 +221,7 @@ void splitModule(const WasmSplitOptions& options) {
   std::set<Name> splitFuncs;
 
   if (options.profileFile.size()) {
-    // Use the profile to set `keepFuncs`.
+    // Use the profile to set `keepFuncs` and `splitFuncs`.
     uint64_t hash = hashFile(options.inputFiles[0]);
     getFunctionsToKeepAndSplit(
       wasm, hash, options.profileFile, keepFuncs, splitFuncs);
@@ -319,7 +319,7 @@ void splitModule(const WasmSplitOptions& options) {
 
   // Actually perform the splitting
   ModuleSplitting::Config config;
-  config.primaryFuncs = std::move(keepFuncs);
+  config.secondaryFuncs = std::move(splitFuncs);
   if (options.importNamespace.size()) {
     config.importNamespace = options.importNamespace;
   }
@@ -418,9 +418,6 @@ void multiSplitModule(const WasmSplitOptions& options) {
   config.usePlaceholders = false;
   config.importNamespace = "";
   config.minimizeNewExportNames = true;
-  for (auto& func : wasm.functions) {
-    config.primaryFuncs.insert(func->name);
-  }
   for (auto& [mod, funcs] : moduleFuncs) {
     if (options.verbose) {
       std::cerr << "Splitting module " << mod << '\n';
@@ -428,9 +425,7 @@ void multiSplitModule(const WasmSplitOptions& options) {
     if (!options.quiet && funcs.empty()) {
       std::cerr << "warning: Module " << mod << " will be empty\n";
     }
-    for (auto& func : funcs) {
-      config.primaryFuncs.erase(Name(func));
-    }
+    config.secondaryFuncs = std::set<Name>(funcs.begin(), funcs.end());
     auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
     // TODO: symbolMap, placeholderMap, emitModuleNames
     // TODO: Support --emit-text and use .wast in that case.

@@ -442,7 +442,7 @@ ModuleSplitter::classifyFunctions(Module& primary, const Config& config) {
     // module since that would make them async when they may not have the JSPI
     // wrapper. Exported JSPI functions can still benefit from splitting though
     // since only the JSPI wrapper stub will remain in the primary module.
-    if (func->imported() || config.primaryFuncs.count(func->name) ||
+    if (func->imported() || !config.secondaryFuncs.count(func->name) ||
         (config.jspi && ExportUtils::isExported(primary, *func)) ||
         segmentReferrers.count(func->name)) {
       primaryFuncs.insert(func->name);
