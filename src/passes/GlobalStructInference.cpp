@@ -50,6 +50,7 @@
 
 #include <variant>
 
+#include "ir/bits.h"
 #include "ir/debuginfo.h"
 #include "ir/find_all.h"
 #include "ir/module-utils.h"
@@ -421,8 +422,9 @@ struct GlobalStructInference : public Pass {
           Expression* ret;
           if (value.isConstant()) {
             // This is known to be a constant, so simply emit an expression for
-            // that constant.
-            ret = value.getConstant().makeExpression(wasm);
+            // that constant, and handle if the field is packed.
+            auto* expr = value.getConstant().makeExpression(wasm);
+            ret = Bits::makePackedFieldGet(expr, field, curr->signed_, wasm);
           } else {
             // Otherwise, this is non-constant, so we are in the situation where
             // we want to un-nest the value out of the struct.new it is in. Note
