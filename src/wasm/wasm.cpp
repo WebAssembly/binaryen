@@ -1008,7 +1008,18 @@ void CallRef::finalize() {
     return;
   }
   assert(target->type.isRef());
-  if (target->type.getHeapType().isBottom()) {
+  if (target->type.isNull()) {
+    // See StructRef for explanation.
+    if (type.isRef()) {
+      type = Type(type.getHeapType().getBottom(), NonNullable);
+    } else if (type.isTuple()) {
+      Tuple elems;
+      for (auto t : type) {
+        elems.push_back(
+          t.isRef() ? Type(t.getHeapType().getBottom(), NonNullable) : t);
+      }
+      type = Type(elems);
+    }
     return;
   }
   assert(target->type.getHeapType().isSignature());
@@ -1136,7 +1147,19 @@ void StructNew::finalize() {
 void StructGet::finalize() {
   if (ref->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (!ref->type.isNull()) {
+  } else if (ref->type.isNull()) {
+    // If this struct.get has been optimized to have a null reference, then it
+    // will definitely trap. We could update the type to be unreachable, but
+    // that would violate the invariant that non-branch instructions other than
+    // `unreachable` can only be unreachable if they have unreachable children.
+    // Make the result type as close to `unreachable` as possible without
+    // actually making it unreachable. TODO: consider just making this
+    // unreachable instead (and similar in other GC accessors), although this
+    // would currently cause the parser to admit more invalid modules.
+    if (type.isRef()) {
+      type = Type(type.getHeapType().getBottom(), NonNullable);
+    }
+  } else {
     type = ref->type.getHeapType().getStruct().fields[index].type;
   }
 }
@@ -1180,7 +1203,12 @@ void ArrayNewFixed::finalize() {
 void ArrayGet::finalize() {
   if (ref->type == Type::unreachable || index->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (!ref->type.isNull()) {
+  } else if (ref->type.isNull()) {
+    // See StructGet for explanation.
+    if (type.isRef()) {
+      type = Type(type.getHeapType().getBottom(), NonNullable);
+    }
+  } else {
     type = ref->type.getHeapType().getArray().element.type;
   }
 }

@@ -274,7 +274,7 @@
 
   ;; CHECK:      (func $multiple-iterations-refinalize-call-ref-bottom (type $0)
   ;; CHECK-NEXT:  (local $f nullfuncref)
-  ;; CHECK-NEXT:  (local $x anyref)
+  ;; CHECK-NEXT:  (local $x (ref none))
   ;; CHECK-NEXT:  (local.set $f
   ;; CHECK-NEXT:   (ref.null nofunc)
   ;; CHECK-NEXT:  )
