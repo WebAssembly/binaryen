@@ -9,7 +9,7 @@
 ;; PRIMARY-NEXT:   (export "baz" (func $2)
 ;; PRIMARY-NEXT:   (export "%a" (func $1))
 ;; PRIMARY-NEXT:   (export "%b" (func $0))
-;; PRIMARY-NEXT:   (export "%table" (table $0))
+;; PRIMARY-NEXT:   (export "%c" (table $0))
 ;; PRIMARY-NEXT:   (func $0
 ;; PRIMARY-NEXT:     (nop)
 ;; PRIMARY-NEXT:   )
@@ -25,7 +25,7 @@
 
 ;; SECONDARY:      (module
 ;; SECONDARY-NEXT:   (type $0 (func))
-;; SECONDARY-NEXT:   (import "primary" "%table" (table $timport$0 1 funcref))
+;; SECONDARY-NEXT:   (import "primary" "%c" (table $timport$0 1 funcref))
 ;; SECONDARY-NEXT:   (import "primary" "%a" (func $fimport$0))
 ;; SECONDARY-NEXT:   (import "primary" "%b" (func $fimport$1))
 ;; SECONDARY-NEXT:   (elem $0 (i32.const 0) $0)

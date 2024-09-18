@@ -147,6 +147,7 @@ WasmSplitOptions::WasmSplitOptions()
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            keepFuncs = parseNameList(argument);
+           hasKeepFuncs = true;
          })
     .add("--split-funcs",
          "",
@@ -160,6 +161,7 @@ WasmSplitOptions::WasmSplitOptions()
          Options::Arguments::One,
          [&](Options* o, const std::string& argument) {
            splitFuncs = parseNameList(argument);
+           hasSplitFuncs = true;
          })
     .add(
       "--manifest",

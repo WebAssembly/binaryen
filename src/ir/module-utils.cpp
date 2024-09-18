@@ -399,15 +399,10 @@ struct CodeScanner
       }
     } else if (auto* get = curr->dynCast<StructGet>()) {
       info.note(get->ref->type);
-      // TODO: Just include curr->type for AllTypes and UsedIRTypes to avoid
-      // this special case and to avoid emitting unnecessary types in binaries.
-      info.include(get->type);
     } else if (auto* set = curr->dynCast<StructSet>()) {
       info.note(set->ref->type);
     } else if (auto* get = curr->dynCast<ArrayGet>()) {
       info.note(get->ref->type);
-      // See above.
-      info.include(get->type);
     } else if (auto* set = curr->dynCast<ArraySet>()) {
       info.note(set->ref->type);
     } else if (auto* contBind = curr->dynCast<ContBind>()) {
@@ -465,20 +460,6 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
     }
     for (auto& [sig, count] : functionInfo.controlFlowSignatures) {
       info.controlFlowSignatures[sig] += count;
-    }
-  }
-
-  // TODO: Remove this once we remove the hack for StructGet and StructSet in
-  // CodeScanner.
-  if (inclusion == TypeInclusion::UsedIRTypes) {
-    auto it = info.info.begin();
-    while (it != info.info.end()) {
-      if (it->second.useCount == 0) {
-        auto deleted = it++;
-        info.info.erase(deleted);
-      } else {
-        ++it;
-      }
     }
   }
 

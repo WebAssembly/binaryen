@@ -216,65 +216,62 @@ void splitModule(const WasmSplitOptions& options) {
   Module wasm;
   parseInput(wasm, options);
 
+  // All defined functions will be in one set or the other.
   std::set<Name> keepFuncs;
   std::set<Name> splitFuncs;
 
   if (options.profileFile.size()) {
-    // Use the profile to set `keepFuncs`.
+    // Use the profile to set `keepFuncs` and `splitFuncs`.
     uint64_t hash = hashFile(options.inputFiles[0]);
     getFunctionsToKeepAndSplit(
       wasm, hash, options.profileFile, keepFuncs, splitFuncs);
-  }
-
-  if (options.keepFuncs.size()) {
-    // Use the explicitly provided `keepFuncs`.
-    for (auto& func : options.keepFuncs) {
-      if (!options.quiet && wasm.getFunctionOrNull(func) == nullptr) {
-        std::cerr << "warning: function " << func << " does not exist\n";
-        continue;
-      }
-
-      keepFuncs.insert(func);
-      splitFuncs.erase(func);
+  } else {
+    // Normally the default is to keep each function, but if --keep-funcs is the
+    // only thing specified, then all other functions will be split.
+    bool defaultSplit = options.hasKeepFuncs && !options.hasSplitFuncs;
+    if (defaultSplit) {
+      ModuleUtils::iterDefinedFunctions(
+        wasm, [&](Function* func) { splitFuncs.insert(func->name); });
+    } else {
+      ModuleUtils::iterDefinedFunctions(
+        wasm, [&](Function* func) { keepFuncs.insert(func->name); });
     }
   }
 
-  if (options.splitFuncs.size()) {
-    // Use the explicitly provided `splitFuncs`.
-    for (auto& func : options.splitFuncs) {
-      auto* function = wasm.getFunctionOrNull(func);
-      if (!options.quiet && function == nullptr) {
+  // Use the explicitly provided `keepFuncs`.
+  for (auto& func : options.keepFuncs) {
+    if (!wasm.getFunctionOrNull(func)) {
+      if (!options.quiet) {
         std::cerr << "warning: function " << func << " does not exist\n";
-        continue;
       }
-      if (function && function->imported()) {
-        if (!options.quiet) {
-          std::cerr << "warning: cannot split out imported function " << func
-                    << "\n";
-        }
-      } else {
-        if (!options.quiet && keepFuncs.count(func) > 0) {
-          std::cerr
-            << "warning: function " << func
-            << " was to be kept in primary module. "
-            << "However it will now be split out into secondary module.\n";
-        }
-
-        splitFuncs.insert(func);
-        keepFuncs.erase(func);
-      }
+      continue;
     }
+    keepFuncs.insert(func);
+    splitFuncs.erase(func);
+  }
 
-    if (keepFuncs.empty()) {
-      // could be the case where every function has been split out
-      // or when `splitFuncs` is used standalone, which is the case we'll cover
-      // here
-      for (auto& func : wasm.functions) {
-        if (splitFuncs.count(func->name) == 0) {
-          keepFuncs.insert(func->name);
-        }
+  // Use the explicitly provided `splitFuncs`.
+  for (auto& func : options.splitFuncs) {
+    auto* function = wasm.getFunctionOrNull(func);
+    if (!function) {
+      if (!options.quiet) {
+        std::cerr << "warning: function " << func << " does not exist\n";
       }
+      continue;
     }
+    if (function->imported()) {
+      if (!options.quiet) {
+        std::cerr << "warning: cannot split out imported function " << func
+                  << "\n";
+      }
+      continue;
+    }
+    if (!options.quiet && options.keepFuncs.count(func)) {
+      std::cerr << "warning: function " << func
+                << " was to be both kept and split. It will be split.\n";
+    }
+    splitFuncs.insert(func);
+    keepFuncs.erase(func);
   }
 
   if (!options.quiet && keepFuncs.size() == 0) {
@@ -284,46 +281,45 @@ void splitModule(const WasmSplitOptions& options) {
   if (options.jspi) {
     // The load secondary module function must be kept in the main module.
     keepFuncs.insert(ModuleSplitting::LOAD_SECONDARY_MODULE);
+    splitFuncs.erase(ModuleSplitting::LOAD_SECONDARY_MODULE);
   }
 
   // If warnings are enabled, check that any functions are being split out.
-  if (!options.quiet) {
-    std::set<Name> splitFuncs;
-    ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
-      if (keepFuncs.count(func->name) == 0) {
-        splitFuncs.insert(func->name);
-      }
-    });
-
-    if (splitFuncs.size() == 0) {
-      std::cerr
-        << "warning: not splitting any functions out to the secondary module\n";
-    }
-
-    // Dump the kept and split functions if we are verbose
-    if (options.verbose) {
-      auto printCommaSeparated = [&](auto funcs) {
-        for (auto it = funcs.begin(); it != funcs.end(); ++it) {
-          if (it != funcs.begin()) {
-            std::cout << ", ";
-          }
-          std::cout << *it;
-        }
-      };
-
-      std::cout << "Keeping functions: ";
-      printCommaSeparated(keepFuncs);
-      std::cout << "\n";
-
-      std::cout << "Splitting out functions: ";
-      printCommaSeparated(splitFuncs);
-      std::cout << "\n";
-    }
+  if (!options.quiet && splitFuncs.size() == 0) {
+    std::cerr
+      << "warning: not splitting any functions out to the secondary module\n";
   }
+
+  // Dump the kept and split functions if we are verbose.
+  if (options.verbose) {
+    auto printCommaSeparated = [&](auto funcs) {
+      for (auto it = funcs.begin(); it != funcs.end(); ++it) {
+        if (it != funcs.begin()) {
+          std::cout << ", ";
+        }
+        std::cout << *it;
+      }
+    };
+
+    std::cout << "Keeping functions: ";
+    printCommaSeparated(keepFuncs);
+    std::cout << "\n";
+
+    std::cout << "Splitting out functions: ";
+    printCommaSeparated(splitFuncs);
+    std::cout << "\n";
+  }
+
+#ifndef NDEBUG
+  // Check that all defined functions are in one set or the other.
+  ModuleUtils::iterDefinedFunctions(wasm, [&](Function* func) {
+    assert(keepFuncs.count(func->name) || splitFuncs.count(func->name));
+  });
+#endif // NDEBUG
 
   // Actually perform the splitting
   ModuleSplitting::Config config;
-  config.primaryFuncs = std::move(keepFuncs);
+  config.secondaryFuncs = std::move(splitFuncs);
   if (options.importNamespace.size()) {
     config.importNamespace = options.importNamespace;
   }
@@ -422,9 +418,6 @@ void multiSplitModule(const WasmSplitOptions& options) {
   config.usePlaceholders = false;
   config.importNamespace = "";
   config.minimizeNewExportNames = true;
-  for (auto& func : wasm.functions) {
-    config.primaryFuncs.insert(func->name);
-  }
   for (auto& [mod, funcs] : moduleFuncs) {
     if (options.verbose) {
       std::cerr << "Splitting module " << mod << '\n';
@@ -432,9 +425,7 @@ void multiSplitModule(const WasmSplitOptions& options) {
     if (!options.quiet && funcs.empty()) {
       std::cerr << "warning: Module " << mod << " will be empty\n";
     }
-    for (auto& func : funcs) {
-      config.primaryFuncs.erase(Name(func));
-    }
+    config.secondaryFuncs = std::set<Name>(funcs.begin(), funcs.end());
     auto splitResults = ModuleSplitting::splitFunctions(wasm, config);
     // TODO: symbolMap, placeholderMap, emitModuleNames
     // TODO: Support --emit-text and use .wast in that case.
