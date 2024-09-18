@@ -624,7 +624,7 @@ void LazyLocalGraph::computeGetInfluences() const {
   doComputeGetInfluences(*locations, *getInfluences);
 }
 
-void LazyLocalGraph::computeSSA(Index index) const {
+bool LazyLocalGraph::computeSSA(Index index) const {
   // We must never repeat work.
   assert(!SSAIndexes.count(index));
 
@@ -641,21 +641,19 @@ void LazyLocalGraph::computeSSA(Index index) const {
   for (auto* set : flower->setsByIndex[index]) {
     sets.insert(set);
     if (sets.size() > 1) {
-      SSAIndexes[index] = false;
-      return;
+      return SSAIndexes[index] = false;
     }
   }
   for (auto* get : flower->getsByIndex[index]) {
     for (auto* set : getSets(get)) {
       sets.insert(set);
       if (sets.size() > 1) {
-        SSAIndexes[index] = false;
-        return;
+        return SSAIndexes[index] = false;
       }
     }
   }
   // Finally, check that we have 1 and not 0 sets.
-  SSAIndexes[index] = (sets.size() == 1);
+  return SSAIndexes[index] = (sets.size() == 1);
 }
 
 void LazyLocalGraph::computeLocations() const {

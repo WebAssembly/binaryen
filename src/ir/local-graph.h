@@ -212,9 +212,7 @@ struct LazyLocalGraph : public LocalGraphBase {
   bool isSSA(Index index) const {
     auto iter = SSAIndexes.find(index);
     if (iter == SSAIndexes.end()) {
-      computeSSA(index);
-      iter = SSAIndexes.find(index);
-      assert(iter != SSAIndexes.end());
+      return computeSSA(index);
     }
     return iter->second;
   }
@@ -250,7 +248,7 @@ private:
   // Compute influences for all gets and store them on getInfluences.
   void computeGetInfluences() const;
   // Compute whether an index is SSA and store that on SSAIndexes.
-  void computeSSA(Index index) const;
+  bool computeSSA(Index index) const;
   // Compute locations and store them on getInfluences.
   void computeLocations() const;
 
