@@ -55,7 +55,7 @@ private:
   struct Inner : public ExpressionStackWalker<Inner> {
     void visitLocalGet(LocalGet* curr) { parentMap[curr] = getParent(); }
 
-    std::map<Expression*, Expression*> parentMap;
+    std::unordered_map<Expression*, Expression*> parentMap;
   } inner;
 };
 
