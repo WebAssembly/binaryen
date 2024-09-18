@@ -510,7 +510,6 @@ template<typename SubType, typename VisitorType = Visitor<SubType>>
 struct BreakTargetWalker : public PostWalker<SubType, VisitorType> {
   std::unordered_map<Name, Expression*> breakTargets;
 
-  // Uses the control flow stack to find the target of a break to a name
   Expression* findBreakTarget(Name name) { return breakTargets[name]; }
 
   static void scan(SubType* self, Expression** currp) {
