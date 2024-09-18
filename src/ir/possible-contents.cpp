@@ -503,12 +503,34 @@ struct CollectedFuncInfo {
   std::unordered_map<Expression*, Expression*> childParents;
 };
 
+// Does a walk while maintaining a map of names of branch targets to those
+// expressions, so they can be found by their name.
+// TODO: can this replace ControlFlowWalker in other places?
+template<typename SubType, typename VisitorType = Visitor<SubType>>
+struct BreakTargetWalker : public PostWalker<SubType, VisitorType> {
+  std::unordered_map<Name, Expression*> breakTargets;
+
+  // Uses the control flow stack to find the target of a break to a name
+  Expression* findBreakTarget(Name name) {
+    return breakTargets[name];
+  }
+
+  static void scan(SubType* self, Expression** currp) {
+    auto* curr = *currp;
+    BranchUtils::operateOnScopeNameDefs(curr, [&](Name name) {
+      self->breakTargets[name] = curr;
+    });
+
+    PostWalker<SubType, VisitorType>::scan(self, currp);
+  }
+};
+
 // Walk the wasm and find all the links we need to care about, and the locations
 // and roots related to them. This builds up a CollectedFuncInfo data structure.
 // After all InfoCollectors run, those data structures will be merged and the
 // main flow will begin.
 struct InfoCollector
-  : public PostWalker<InfoCollector, OverriddenVisitor<InfoCollector>> {
+  : public BreakTargetWalker<InfoCollector, OverriddenVisitor<InfoCollector>> {
   CollectedFuncInfo& info;
 
   InfoCollector(CollectedFuncInfo& info) : info(info) {}
@@ -552,9 +574,6 @@ struct InfoCollector
     if (curr->list.empty()) {
       return;
     }
-
-    // Values sent to breaks to this block must be received here.
-    handleBreakTarget(curr);
 
     // The final item in the block can flow a value to here as well.
     receiveChildValue(curr->list.back(), curr);
@@ -1152,7 +1171,7 @@ struct InfoCollector
           if (isRelevant(params[i])) {
             info.links.push_back(
               {TagLocation{tag, i},
-               BreakTargetLocation{getFunction(), target, i}});
+               getBreakTargetLocation(target, i)});
           }
         }
 
@@ -1164,7 +1183,7 @@ struct InfoCollector
         addRoot(location,
                 PossibleContents::fromType(Type(HeapType::exn, NonNullable)));
         info.links.push_back(
-          {location, BreakTargetLocation{getFunction(), target, exnrefIndex}});
+          {location, getBreakTargetLocation(target, exnrefIndex)});
       }
     }
   }
@@ -1279,6 +1298,13 @@ struct InfoCollector
 
   // Helpers
 
+  // Returns the location of a break target by the name (e.g. returns the
+  // location of a block, if the name is the name of a block). Also receives the
+  // index in a tuple, if this is part of a tuple value.
+  Location getBreakTargetLocation(Name target, Index i) {
+    return ExpressionLocation{findBreakTarget(target), i};
+  }
+
   // Handles the value sent in a break instruction. Does not handle anything
   // else like the condition etc.
   void handleBreakValue(Expression* curr) {
@@ -1290,22 +1316,10 @@ struct InfoCollector
             // that the break goes to.
             info.links.push_back(
               {ExpressionLocation{value, i},
-               BreakTargetLocation{getFunction(), target, i}});
+               getBreakTargetLocation(target, i)});
           }
         }
       });
-  }
-
-  // Handles receiving values from breaks at the target (as in a block).
-  void handleBreakTarget(Expression* curr) {
-    if (isRelevant(curr->type)) {
-      BranchUtils::operateOnScopeNameDefs(curr, [&](Name target) {
-        for (Index i = 0; i < curr->type.size(); i++) {
-          info.links.push_back({BreakTargetLocation{getFunction(), target, i},
-                                ExpressionLocation{curr, i}});
-        }
-      });
-    }
   }
 
   // Connect a child's value to the parent, that is, all content in the child is
@@ -2400,15 +2414,15 @@ bool Flower::updateContents(LocationIndex locationIndex,
     }
   }
 
-  // After filtering we should always have more precise information than "many"
-  // - in the worst case, we can have the type declared in the wasm.
-  assert(!contents.isMany());
-
 #if defined(POSSIBLE_CONTENTS_DEBUG) && POSSIBLE_CONTENTS_DEBUG >= 2
   std::cout << "  updateContents has something new\n";
   contents.dump(std::cout, &wasm);
   std::cout << '\n';
 #endif
+
+  // After filtering we should always have more precise information than "many"
+  // - in the worst case, we can have the type declared in the wasm.
+  assert(!contents.isMany());
 
   // Add a work item if there isn't already.
   workQueue.insert(locationIndex);
@@ -2896,9 +2910,6 @@ void Flower::dump(Location location) {
               << '\n';
   } else if (auto* loc = std::get_if<GlobalLocation>(&location)) {
     std::cout << "  globalloc " << loc->name << '\n';
-  } else if (auto* loc = std::get_if<BreakTargetLocation>(&location)) {
-    std::cout << "  branchloc " << loc->func->name << " : " << loc->target
-              << " tupleIndex " << loc->tupleIndex << '\n';
   } else if (std::get_if<SignatureParamLocation>(&location)) {
     std::cout << "  sigparamloc " << '\n';
   } else if (std::get_if<SignatureResultLocation>(&location)) {
