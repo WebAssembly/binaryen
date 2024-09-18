@@ -66,7 +66,7 @@ public:
   MemoryAccessOptimizer(P* parent,
                         T* curr,
                         Module* module,
-                        LocalGraph* localGraph)
+                        LazyLocalGraph* localGraph)
     : parent(parent), curr(curr), module(module), localGraph(localGraph) {
     memory64 = module->getMemory(curr->memory)->is64();
   }
@@ -133,7 +133,7 @@ private:
   P* parent;
   T* curr;
   Module* module;
-  LocalGraph* localGraph;
+  LazyLocalGraph* localGraph;
   bool memory64;
 
   void optimizeConstantPointer() {
@@ -326,9 +326,7 @@ struct OptimizeAddedConstants
       helperIndexes.clear();
       propagatable.clear();
       if (propagate) {
-        localGraph = std::make_unique<LocalGraph>(func, getModule());
-        localGraph->computeSetInfluences();
-        localGraph->computeSSAIndexes();
+        localGraph = std::make_unique<LazyLocalGraph>(func, getModule());
         findPropagatable();
       }
       Super::doWalkFunction(func);
@@ -362,7 +360,7 @@ struct OptimizeAddedConstants
 private:
   bool propagated;
 
-  std::unique_ptr<LocalGraph> localGraph;
+  std::unique_ptr<LazyLocalGraph> localGraph;
 
   // Whether a set is propagatable.
   std::set<LocalSet*> propagatable;
@@ -379,7 +377,7 @@ private:
     // but if x has other uses, then avoid doing so - we'll be doing that add
     // anyhow, so the load/store offset trick won't actually help.
     GetParents parents(getFunction()->body);
-    for (auto& [location, _] : localGraph->locations) {
+    for (auto& [location, _] : localGraph->getLocations()) {
       if (auto* set = location->dynCast<LocalSet>()) {
         if (auto* add = set->value->dynCast<Binary>()) {
           if (add->op == AddInt32) {
