@@ -511,15 +511,12 @@ struct BreakTargetWalker : public PostWalker<SubType, VisitorType> {
   std::unordered_map<Name, Expression*> breakTargets;
 
   // Uses the control flow stack to find the target of a break to a name
-  Expression* findBreakTarget(Name name) {
-    return breakTargets[name];
-  }
+  Expression* findBreakTarget(Name name) { return breakTargets[name]; }
 
   static void scan(SubType* self, Expression** currp) {
     auto* curr = *currp;
-    BranchUtils::operateOnScopeNameDefs(curr, [&](Name name) {
-      self->breakTargets[name] = curr;
-    });
+    BranchUtils::operateOnScopeNameDefs(
+      curr, [&](Name name) { self->breakTargets[name] = curr; });
 
     PostWalker<SubType, VisitorType>::scan(self, currp);
   }
@@ -1170,8 +1167,7 @@ struct InfoCollector
         for (Index i = 0; i < params.size(); i++) {
           if (isRelevant(params[i])) {
             info.links.push_back(
-              {TagLocation{tag, i},
-               getBreakTargetLocation(target, i)});
+              {TagLocation{tag, i}, getBreakTargetLocation(target, i)});
           }
         }
 
@@ -1314,9 +1310,8 @@ struct InfoCollector
           for (Index i = 0; i < value->type.size(); i++) {
             // Breaks send the contents of the break value to the branch target
             // that the break goes to.
-            info.links.push_back(
-              {ExpressionLocation{value, i},
-               getBreakTargetLocation(target, i)});
+            info.links.push_back({ExpressionLocation{value, i},
+                                  getBreakTargetLocation(target, i)});
           }
         }
       });
