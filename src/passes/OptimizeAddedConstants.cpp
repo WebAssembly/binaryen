@@ -32,12 +32,34 @@
 
 #include <ir/local-graph.h>
 #include <ir/local-utils.h>
-#include <ir/parents.h>
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm.h>
 
 namespace wasm {
+
+namespace {
+
+// Similar to Parents from parents.h, but we only care about gets, so it is much
+// more efficient to just collect their parents.
+struct GetParents {
+  GetParents(Expression* expr) { inner.walk(expr); }
+
+  Expression* getParent(LocalGet* curr) const {
+    auto iter = inner.parentMap.find(curr);
+    assert(iter != inner.parentMap.end());
+    return iter->second;
+  }
+
+private:
+  struct Inner : public ExpressionStackWalker<Inner> {
+    void visitLocalGet(LocalGet* curr) { parentMap[curr] = getParent(); }
+
+    std::unordered_map<Expression*, Expression*> parentMap;
+  } inner;
+};
+
+} // anonymous namespace
 
 template<typename P, typename T> class MemoryAccessOptimizer {
 public:
@@ -354,7 +376,7 @@ private:
     //  g(a, offset=10)
     // but if x has other uses, then avoid doing so - we'll be doing that add
     // anyhow, so the load/store offset trick won't actually help.
-    Parents parents(getFunction()->body);
+    GetParents parents(getFunction()->body);
     for (auto& [location, _] : localGraph->getLocations()) {
       if (auto* set = location->dynCast<LocalSet>()) {
         if (auto* add = set->value->dynCast<Binary>()) {
