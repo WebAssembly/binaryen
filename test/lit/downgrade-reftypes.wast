@@ -13,29 +13,29 @@
 
   ;; CHECK:      (func $foo (type $f)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $label$1 (result funcref)
-  ;; CHECK-NEXT:    (br $label$1
+  ;; CHECK-NEXT:   (block $block (result funcref)
+  ;; CHECK-NEXT:    (br $block
   ;; CHECK-NEXT:     (ref.func $foo)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $label$2 (result funcref)
-  ;; CHECK-NEXT:    (br $label$2
+  ;; CHECK-NEXT:   (block $block0 (result funcref)
+  ;; CHECK-NEXT:    (br $block0
   ;; CHECK-NEXT:     (ref.null nofunc)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $label$3 (result externref)
-  ;; CHECK-NEXT:    (br $label$3
+  ;; CHECK-NEXT:   (block $block1 (result externref)
+  ;; CHECK-NEXT:    (br $block1
   ;; CHECK-NEXT:     (ref.null noextern)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $label$4 (result stringref)
-  ;; CHECK-NEXT:    (br $label$4
+  ;; CHECK-NEXT:   (block $block2 (result stringref)
+  ;; CHECK-NEXT:    (br $block2
   ;; CHECK-NEXT:     (string.const "hello world")
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )

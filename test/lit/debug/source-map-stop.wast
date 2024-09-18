@@ -142,6 +142,8 @@
   ;; CHECK-NEXT:    (return)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  ;;@
+  ;; CHECK-NEXT:  (unreachable)
   ;; CHECK-NEXT: )
   (func $foo (param $x i32) (param $y i32)
     ;;@ src.cpp:90:1

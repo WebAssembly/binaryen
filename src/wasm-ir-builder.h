@@ -48,6 +48,10 @@ public:
   // of instructions after this is called.
   [[nodiscard]] Result<Expression*> build();
 
+  // If the IRBuilder is empty, then it's ready to parse a new self-contained
+  // sequence of instructions.
+  [[nodiscard]] bool empty() { return scopeStack.empty(); }
+
   // Call visit() on an existing Expression with its non-child fields
   // initialized to initialize the child fields and refinalize it.
   [[nodiscard]] Result<> visit(Expression*);

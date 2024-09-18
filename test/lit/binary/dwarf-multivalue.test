@@ -39,8 +39,8 @@
 ;;  (local $10 f32)
 
 ;; If we parse this wasm file into Binaryen IR, two locals are added in the
-;; process. Here $11 is added for tuple parsing and $12 is added for stacky IR
-;; resolving during binary reading process.
+;; process. Here $scratch is added for tuple parsing and $scratch_12 is added
+;; for stacky IR resolving during binary reading process.
 ;; RUN: wasm-dis %s.wasm -o - | filecheck %s --check-prefix=ORIG
 ;; ORIG:      (func $test
 ;; ORIG-NEXT:  (local $0 i32)
@@ -54,8 +54,8 @@
 ;; ORIG-NEXT:  (local $8 f32)
 ;; ORIG-NEXT:  (local $9 i32)
 ;; ORIG-NEXT:  (local $10 f32)
-;; ORIG-NEXT:  (local $11 (tuple i32 f32))
-;; ORIG-NEXT:  (local $12 i32)
+;; ORIG-NEXT:  (local $scratch (tuple i32 f32))
+;; ORIG-NEXT:  (local $scratch_12 i32)
 
 ;; If we write this IR into binary, even if this cannot be displayed in the wast
 ;; format, the local order of $test will look like this, because we don't

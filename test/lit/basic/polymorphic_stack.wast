@@ -47,9 +47,7 @@
   ;; CHECK-BIN:      (import "env" "table" (table $timport$0 9 9 funcref))
 
   ;; CHECK-BIN:      (func $break-and-binary (type $0) (result i32)
-  ;; CHECK-BIN-NEXT:  (block $label$1 (result i32)
-  ;; CHECK-BIN-NEXT:   (unreachable)
-  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $break-and-binary (result i32)
     (block $x (result i32)
@@ -227,15 +225,13 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $untaken-break-should-have-value (type $0) (result i32)
-  ;; CHECK-BIN-NEXT:  (block $label$1 (result i32)
-  ;; CHECK-BIN-NEXT:   (block $label$2
-  ;; CHECK-BIN-NEXT:    (drop
-  ;; CHECK-BIN-NEXT:     (i32.const 0)
-  ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:    (unreachable)
+  ;; CHECK-BIN-NEXT:  (block
+  ;; CHECK-BIN-NEXT:   (drop
+  ;; CHECK-BIN-NEXT:    (i32.const 0)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (unreachable)
   ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $untaken-break-should-have-value (result i32)
     (block $x (result i32)
@@ -275,7 +271,7 @@
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
-  ;; CHECK-BIN-NEXT:  (block $label$2 (result i32)
+  ;; CHECK-BIN-NEXT:  (block (result i32)
   ;; CHECK-BIN-NEXT:   (drop
   ;; CHECK-BIN-NEXT:    (i32.const 0)
   ;; CHECK-BIN-NEXT:   )
@@ -314,10 +310,8 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $br_table_unreachable_to_also_unreachable (type $0) (result i32)
-  ;; CHECK-BIN-NEXT:  (block $label$1 (result i32)
-  ;; CHECK-BIN-NEXT:   (block $label$2 (result i32)
-  ;; CHECK-BIN-NEXT:    (unreachable)
-  ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:  (block (result i32)
+  ;; CHECK-BIN-NEXT:   (unreachable)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
   (func $br_table_unreachable_to_also_unreachable (result i32)
@@ -352,20 +346,19 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $untaken-br_if (type $0) (result i32)
-  ;; CHECK-BIN-NEXT:  (block $label$1 (result i32)
-  ;; CHECK-BIN-NEXT:   (block $label$2
-  ;; CHECK-BIN-NEXT:    (if
-  ;; CHECK-BIN-NEXT:     (i32.const 0)
-  ;; CHECK-BIN-NEXT:     (then
-  ;; CHECK-BIN-NEXT:      (unreachable)
-  ;; CHECK-BIN-NEXT:     )
-  ;; CHECK-BIN-NEXT:     (else
-  ;; CHECK-BIN-NEXT:      (unreachable)
-  ;; CHECK-BIN-NEXT:     )
+  ;; CHECK-BIN-NEXT:  (block
+  ;; CHECK-BIN-NEXT:   (if
+  ;; CHECK-BIN-NEXT:    (i32.const 0)
+  ;; CHECK-BIN-NEXT:    (then
+  ;; CHECK-BIN-NEXT:     (unreachable)
+  ;; CHECK-BIN-NEXT:    )
+  ;; CHECK-BIN-NEXT:    (else
+  ;; CHECK-BIN-NEXT:     (unreachable)
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:   (unreachable)
   ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $untaken-br_if (result i32)
     (block $label$8 (result i32)
@@ -399,9 +392,7 @@
 ;; CHECK-BIN-NODEBUG:      (import "env" "table" (table $timport$0 9 9 funcref))
 
 ;; CHECK-BIN-NODEBUG:      (func $0 (type $0) (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1 (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:   (unreachable)
-;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $1 (type $1) (param $0 i32) (result i32)
@@ -428,15 +419,13 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $5 (type $0) (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1 (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:   (block $label$2
-;; CHECK-BIN-NODEBUG-NEXT:    (drop
-;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 0)
-;; CHECK-BIN-NODEBUG-NEXT:    )
-;; CHECK-BIN-NODEBUG-NEXT:    (unreachable)
+;; CHECK-BIN-NODEBUG-NEXT:  (block
+;; CHECK-BIN-NODEBUG-NEXT:   (drop
+;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $6 (type $1) (param $0 i32) (result i32)
@@ -448,7 +437,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
-;; CHECK-BIN-NODEBUG-NEXT:  (block $label$2 (result i32)
+;; CHECK-BIN-NODEBUG-NEXT:  (block (result i32)
 ;; CHECK-BIN-NODEBUG-NEXT:   (drop
 ;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 0)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
@@ -459,26 +448,23 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $7 (type $0) (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1 (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:   (block $label$2 (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:    (unreachable)
-;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:  (block (result i32)
+;; CHECK-BIN-NODEBUG-NEXT:   (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $8 (type $0) (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1 (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:   (block $label$2
-;; CHECK-BIN-NODEBUG-NEXT:    (if
-;; CHECK-BIN-NODEBUG-NEXT:     (i32.const 0)
-;; CHECK-BIN-NODEBUG-NEXT:     (then
-;; CHECK-BIN-NODEBUG-NEXT:      (unreachable)
-;; CHECK-BIN-NODEBUG-NEXT:     )
-;; CHECK-BIN-NODEBUG-NEXT:     (else
-;; CHECK-BIN-NODEBUG-NEXT:      (unreachable)
-;; CHECK-BIN-NODEBUG-NEXT:     )
+;; CHECK-BIN-NODEBUG-NEXT:  (block
+;; CHECK-BIN-NODEBUG-NEXT:   (if
+;; CHECK-BIN-NODEBUG-NEXT:    (i32.const 0)
+;; CHECK-BIN-NODEBUG-NEXT:    (then
+;; CHECK-BIN-NODEBUG-NEXT:     (unreachable)
+;; CHECK-BIN-NODEBUG-NEXT:    )
+;; CHECK-BIN-NODEBUG-NEXT:    (else
+;; CHECK-BIN-NODEBUG-NEXT:     (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:   (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )

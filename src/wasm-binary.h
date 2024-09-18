@@ -29,6 +29,7 @@
 #include "ir/module-utils.h"
 #include "parsing.h"
 #include "wasm-builder.h"
+#include "wasm-ir-builder.h"
 #include "wasm-traversal.h"
 #include "wasm-validator.h"
 #include "wasm.h"
@@ -1543,10 +1544,6 @@ public:
   Signature getSignatureByTypeIndex(Index index);
   Signature getSignatureByFunctionIndex(Index index);
 
-  size_t nextLabel;
-
-  Name getNextLabel();
-
   // We read functions, globals, etc. before we know their final names, so we
   // need to backpatch the names later. Map the original names to their indices
   // so we can find the final names based on index.
@@ -1559,17 +1556,13 @@ public:
   std::unordered_map<Name, Index> elemIndices;
 
   Function* currFunction = nullptr;
-  // before we see a function (like global init expressions), there is no end of
-  // function to check
-  Index endOfFunction = -1;
 
   std::map<Index, Name> elemTables;
 
-  // Throws a parsing error if we are not in a function context
-  void requireFunctionContext(const char* error);
-
   void readFunctions();
   void readVars();
+
+  [[nodiscard]] Result<> readInst();
 
   std::map<Export*, Index> exportIndices;
   std::vector<std::unique_ptr<Export>> exportOrder;
@@ -1578,62 +1571,12 @@ public:
   // The strings in the strings section (which are referred to by StringConst).
   std::vector<Name> strings;
   void readStrings();
+  Name getIndexedString();
 
   Expression* readExpression();
   void readGlobals();
 
-  struct BreakTarget {
-    Name name;
-    Type type;
-    BreakTarget(Name name, Type type) : name(name), type(type) {}
-  };
-  std::vector<BreakTarget> breakStack;
-  // the names that breaks target. this lets us know if a block has breaks to it
-  // or not.
-  std::unordered_set<Name> breakTargetNames;
-  // the names that delegates target.
-  std::unordered_set<Name> exceptionTargetNames;
-
-  std::vector<Expression*> expressionStack;
-
-  // Control flow structure parsing: these have not just the normal binary
-  // data for an instruction, but also some bytes later on like "end" or "else".
-  // We must be aware of the connection between those things, for debug info.
-  std::vector<Expression*> controlFlowStack;
-
-  // Called when we parse the beginning of a control flow structure.
-  void startControlFlow(Expression* curr);
-
-  // set when we know code is unreachable in the sense of the wasm spec: we are
-  // in a block and after an unreachable element. this helps parse stacky wasm
-  // code, which can be unsuitable for our IR when unreachable.
-  bool unreachableInTheWasmSense;
-
-  // set when the current code being processed will not be emitted in the
-  // output, which is the case when it is literally unreachable, for example,
-  // (block $a
-  //   (unreachable)
-  //   (block $b
-  //     ;; code here is reachable in the wasm sense, even though $b as a whole
-  //     ;; is not
-  //     (unreachable)
-  //     ;; code here is unreachable in the wasm sense
-  //   )
-  // )
-  bool willBeIgnored;
-
-  BinaryConsts::ASTNodes lastSeparator = BinaryConsts::End;
-
-  // process a block-type scope, until an end or else marker, or the end of the
-  // function
-  void processExpressions();
-  void skipUnreachableCode();
-
-  void pushExpression(Expression* curr);
-  Expression* popExpression();
-  Expression* popNonVoidExpression();
-  Expression* popTuple(size_t numElems);
-  Expression* popTypedExpression(Type type);
+  IRBuilder builder;
 
   void validateBinary(); // validations that cannot be performed on the Module
   void processNames();
@@ -1661,127 +1604,12 @@ public:
   void readNextDebugLocation();
   void readSourceMapHeader();
 
-  // AST reading
-  int depth = 0; // only for debugging
-
-  BinaryConsts::ASTNodes readExpression(Expression*& curr);
-  void pushBlockElements(Block* curr, Type type, size_t start);
-  void visitBlock(Block* curr);
-
-  // Gets a block of expressions. If it's just one, return that singleton.
-  Expression* getBlockOrSingleton(Type type);
-
-  BreakTarget getBreakTarget(int32_t offset);
-  Name getExceptionTargetName(int32_t offset);
-
   Index readMemoryAccess(Address& alignment, Address& offset);
+  std::tuple<Name, Address, Address> getMemarg();
 
-  void visitIf(If* curr);
-  void visitLoop(Loop* curr);
-  void visitBreak(Break* curr, uint8_t code);
-  void visitSwitch(Switch* curr);
-  void visitCall(Call* curr);
-  void visitCallIndirect(CallIndirect* curr);
-  void visitLocalGet(LocalGet* curr);
-  void visitLocalSet(LocalSet* curr, uint8_t code);
-  void visitGlobalGet(GlobalGet* curr);
-  void visitGlobalSet(GlobalSet* curr);
-  bool maybeVisitLoad(Expression*& out,
-                      uint8_t code,
-                      std::optional<BinaryConsts::ASTNodes> prefix);
-  bool maybeVisitStore(Expression*& out,
-                       uint8_t code,
-                       std::optional<BinaryConsts::ASTNodes> prefix);
-  bool maybeVisitNontrappingTrunc(Expression*& out, uint32_t code);
-  bool maybeVisitAtomicRMW(Expression*& out, uint8_t code);
-  bool maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code);
-  bool maybeVisitAtomicWait(Expression*& out, uint8_t code);
-  bool maybeVisitAtomicNotify(Expression*& out, uint8_t code);
-  bool maybeVisitAtomicFence(Expression*& out, uint8_t code);
-  bool maybeVisitConst(Expression*& out, uint8_t code);
-  bool maybeVisitUnary(Expression*& out, uint8_t code);
-  bool maybeVisitBinary(Expression*& out, uint8_t code);
-  bool maybeVisitTruncSat(Expression*& out, uint32_t code);
-  bool maybeVisitSIMDBinary(Expression*& out, uint32_t code);
-  bool maybeVisitSIMDUnary(Expression*& out, uint32_t code);
-  bool maybeVisitSIMDConst(Expression*& out, uint32_t code);
-  bool maybeVisitSIMDStore(Expression*& out, uint32_t code);
-  bool maybeVisitSIMDExtract(Expression*& out, uint32_t code);
-  bool maybeVisitSIMDReplace(Expression*& out, uint32_t code);
-  bool maybeVisitSIMDShuffle(Expression*& out, uint32_t code);
-  bool maybeVisitSIMDTernary(Expression*& out, uint32_t code);
-  bool maybeVisitSIMDShift(Expression*& out, uint32_t code);
-  bool maybeVisitSIMDLoad(Expression*& out, uint32_t code);
-  bool maybeVisitSIMDLoadStoreLane(Expression*& out, uint32_t code);
-  bool maybeVisitMemoryInit(Expression*& out, uint32_t code);
-  bool maybeVisitDataDrop(Expression*& out, uint32_t code);
-  bool maybeVisitMemoryCopy(Expression*& out, uint32_t code);
-  bool maybeVisitMemoryFill(Expression*& out, uint32_t code);
-  bool maybeVisitTableSize(Expression*& out, uint32_t code);
-  bool maybeVisitTableGrow(Expression*& out, uint32_t code);
-  bool maybeVisitTableFill(Expression*& out, uint32_t code);
-  bool maybeVisitTableCopy(Expression*& out, uint32_t code);
-  bool maybeVisitTableInit(Expression*& out, uint32_t code);
-  bool maybeVisitRefI31(Expression*& out, uint32_t code);
-  bool maybeVisitI31Get(Expression*& out, uint32_t code);
-  bool maybeVisitRefTest(Expression*& out, uint32_t code);
-  bool maybeVisitRefCast(Expression*& out, uint32_t code);
-  bool maybeVisitBrOn(Expression*& out, uint32_t code);
-  bool maybeVisitStructNew(Expression*& out, uint32_t code);
-  bool maybeVisitStructGet(Expression*& out, uint32_t code);
-  bool maybeVisitStructSet(Expression*& out, uint32_t code);
-  bool maybeVisitArrayNewData(Expression*& out, uint32_t code);
-  bool maybeVisitArrayNewElem(Expression*& out, uint32_t code);
-  bool maybeVisitArrayNewFixed(Expression*& out, uint32_t code);
-  bool maybeVisitArrayGet(Expression*& out, uint32_t code);
-  bool maybeVisitArraySet(Expression*& out, uint32_t code);
-  bool maybeVisitArrayLen(Expression*& out, uint32_t code);
-  bool maybeVisitArrayCopy(Expression*& out, uint32_t code);
-  bool maybeVisitArrayFill(Expression*& out, uint32_t code);
-  bool maybeVisitArrayInit(Expression*& out, uint32_t code);
-  bool maybeVisitStringNew(Expression*& out, uint32_t code);
-  bool maybeVisitStringAsWTF16(Expression*& out, uint32_t code);
-  bool maybeVisitStringConst(Expression*& out, uint32_t code);
-  bool maybeVisitStringMeasure(Expression*& out, uint32_t code);
-  bool maybeVisitStringEncode(Expression*& out, uint32_t code);
-  bool maybeVisitStringConcat(Expression*& out, uint32_t code);
-  bool maybeVisitStringEq(Expression*& out, uint32_t code);
-  bool maybeVisitStringWTF16Get(Expression*& out, uint32_t code);
-  bool maybeVisitStringSliceWTF(Expression*& out, uint32_t code);
-  void visitSelect(Select* curr, uint8_t code);
-  void visitReturn(Return* curr);
-  void visitMemorySize(MemorySize* curr);
-  void visitMemoryGrow(MemoryGrow* curr);
-  void visitNop(Nop* curr);
-  void visitUnreachable(Unreachable* curr);
-  void visitDrop(Drop* curr);
-  void visitRefNull(RefNull* curr);
-  void visitRefIsNull(RefIsNull* curr);
-  void visitRefFunc(RefFunc* curr);
-  void visitRefEq(RefEq* curr);
-  void visitTableGet(TableGet* curr);
-  void visitTableSet(TableSet* curr);
-  void visitTryOrTryInBlock(Expression*& out);
-  void visitTryTable(TryTable* curr);
-  void visitThrow(Throw* curr);
-  void visitRethrow(Rethrow* curr);
-  void visitThrowRef(ThrowRef* curr);
-  void visitCallRef(CallRef* curr);
-  void visitRefAsCast(RefCast* curr, uint32_t code);
-  void visitRefAs(RefAs* curr, uint8_t code);
-  void visitContNew(ContNew* curr);
-  void visitContBind(ContBind* curr);
-  void visitResume(Resume* curr);
-  void visitSuspend(Suspend* curr);
-
-  [[noreturn]] void throwError(std::string text);
-
-  // Struct/Array instructions have an unnecessary heap type that is just for
-  // validation (except for the case of unreachability, but that's not a problem
-  // anyhow, we can ignore it there). That is, we also have a reference typed
-  // child from which we can infer the type anyhow, and we just need to check
-  // that type is the same.
-  void validateHeapTypeUsingChild(Expression* child, HeapType heapType);
+  [[noreturn]] void throwError(std::string text) {
+    throw ParseException(text, 0, pos);
+  }
 
 private:
   bool hasDWARFSections();

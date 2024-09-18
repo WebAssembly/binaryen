@@ -35,8 +35,8 @@
   ;; CHECK-BIN-NEXT:  (if
   ;; CHECK-BIN-NEXT:   (i32.const 0)
   ;; CHECK-BIN-NEXT:   (then
-  ;; CHECK-BIN-NEXT:    (block $label$2
-  ;; CHECK-BIN-NEXT:     (br_table $label$2
+  ;; CHECK-BIN-NEXT:    (block $block
+  ;; CHECK-BIN-NEXT:     (br_table $block
   ;; CHECK-BIN-NEXT:      (i32.const 0)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
@@ -47,8 +47,8 @@
   ;; CHECK-BIN-NODEBUG-NEXT:  (if
   ;; CHECK-BIN-NODEBUG-NEXT:   (i32.const 0)
   ;; CHECK-BIN-NODEBUG-NEXT:   (then
-  ;; CHECK-BIN-NODEBUG-NEXT:    (block $label$2
-  ;; CHECK-BIN-NODEBUG-NEXT:     (br_table $label$2
+  ;; CHECK-BIN-NODEBUG-NEXT:    (block $block
+  ;; CHECK-BIN-NODEBUG-NEXT:     (br_table $block
   ;; CHECK-BIN-NODEBUG-NEXT:      (i32.const 0)
   ;; CHECK-BIN-NODEBUG-NEXT:     )
   ;; CHECK-BIN-NODEBUG-NEXT:    )

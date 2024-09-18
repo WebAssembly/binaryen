@@ -13,6 +13,7 @@
  (export "f4" (func $2))
  (export "f5" (func $3))
  (func $0
+  (nop)
  )
  (func $1 (result i32)
   (i32.store

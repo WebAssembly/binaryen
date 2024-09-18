@@ -15,7 +15,24 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (ref.null nofunc)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (local.get $x)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (ref.null nofunc)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (block ;; (replaces unreachable ArrayGet we can't emit)
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $double-unreachable (param $x (ref $array)) (result i32)
 

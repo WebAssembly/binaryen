@@ -5,9 +5,9 @@
  ;; CHECK:      (tag $tag (param i32))
  (tag $tag (param i32))
   ;; CHECK:      (func $delegate-child (type $1)
-  ;; CHECK-NEXT:  (try $label$9
+  ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
-  ;; CHECK-NEXT:    (try $label$7
+  ;; CHECK-NEXT:    (try
   ;; CHECK-NEXT:     (do
   ;; CHECK-NEXT:      (nop)
   ;; CHECK-NEXT:     )
@@ -15,7 +15,7 @@
   ;; CHECK-NEXT:      (drop
   ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (try $label$6
+  ;; CHECK-NEXT:      (try
   ;; CHECK-NEXT:       (do
   ;; CHECK-NEXT:        (nop)
   ;; CHECK-NEXT:       )

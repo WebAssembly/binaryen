@@ -3,16 +3,16 @@
  (memory $0 256 256)
  (export "add" (func $0))
  (func $0 (param $0 i32) (param $1 i32) (result i32)
-  (local $2 i32)
+  (local $scratch i32)
   (i32.add
    (block (result i32)
-    (local.set $2
+    (local.set $scratch
      (local.get $0)
     )
     (local.set $0
      (i32.const 100)
     )
-    (local.get $2)
+    (local.get $scratch)
    )
    (local.get $1)
   )

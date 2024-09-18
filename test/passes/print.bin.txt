@@ -27,8 +27,8 @@
     (i32.const 55)
    )
    (then
-    (loop $label$2
-     (br_if $label$2
+    (loop $label
+     (br_if $label
       (i32.ne
        (i32.rem_s
         (local.tee $0
@@ -120,8 +120,8 @@
     (i32.const 55)
    )
    (then
-    (loop $label$2
-     (br_if $label$2
+    (loop $label
+     (br_if $label
       (i32.ne
        (i32.rem_s
         (local.tee $0

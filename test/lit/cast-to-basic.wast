@@ -33,9 +33,9 @@
 
   ;; CHECK:      (func $br (type $0) (param $anyref anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $label$1 (result structref)
+  ;; CHECK-NEXT:   (block $block (result structref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast $label$1 anyref (ref struct)
+  ;; CHECK-NEXT:     (br_on_cast $block anyref (ref struct)
   ;; CHECK-NEXT:      (local.get $anyref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -58,9 +58,9 @@
 
   ;; CHECK:      (func $br-null (type $0) (param $anyref anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $label$1 (result structref)
+  ;; CHECK-NEXT:   (block $block (result structref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast $label$1 anyref structref
+  ;; CHECK-NEXT:     (br_on_cast $block anyref structref
   ;; CHECK-NEXT:      (local.get $anyref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -83,9 +83,9 @@
 
   ;; CHECK:      (func $br-fail-null (type $0) (param $anyref anyref)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $label$1 (result anyref)
+  ;; CHECK-NEXT:   (block $block (result anyref)
   ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (br_on_cast_fail $label$1 anyref structref
+  ;; CHECK-NEXT:     (br_on_cast_fail $block anyref structref
   ;; CHECK-NEXT:      (local.get $anyref)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )

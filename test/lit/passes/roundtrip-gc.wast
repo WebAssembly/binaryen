@@ -6,14 +6,14 @@
  ;; CHECK:      (export "export" (func $test))
  (export "export" (func $test))
  ;; CHECK:      (func $test (type $1)
- ;; CHECK-NEXT:  (local $0 (ref $\7bi32\7d))
+ ;; CHECK-NEXT:  (local $scratch (ref $\7bi32\7d))
  ;; CHECK-NEXT:  (call $help
  ;; CHECK-NEXT:   (block (result (ref $\7bi32\7d))
- ;; CHECK-NEXT:    (local.set $0
+ ;; CHECK-NEXT:    (local.set $scratch
  ;; CHECK-NEXT:     (struct.new_default $\7bi32\7d)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (call $other)
- ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:    (local.get $scratch)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (i32.const 1)
  ;; CHECK-NEXT:  )
@@ -32,12 +32,14 @@
   )
  )
  ;; CHECK:      (func $help (type $2) (param $3 (ref $\7bi32\7d)) (param $4 i32)
+ ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $help (param $3 (ref $"{i32}")) (param $4 i32)
   (nop)
  )
 
  ;; CHECK:      (func $other (type $1)
+ ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $other
  )

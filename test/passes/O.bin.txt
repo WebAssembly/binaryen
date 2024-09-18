@@ -55,7 +55,7 @@
   (local.set $1
    (i64.const 1)
   )
-  (loop $label$3
+  (loop $label
    (if
     (i32.eqz
      (i64.eqz
@@ -75,7 +75,7 @@
        (i64.const 1)
       )
      )
-     (br $label$3)
+     (br $label)
     )
    )
   )
@@ -92,14 +92,14 @@
     (i64.const 2)
    )
    (then
-    (loop $label$3
+    (loop $label
      (local.set $1
       (i64.mul
        (local.get $0)
        (local.get $1)
       )
      )
-     (br_if $label$3
+     (br_if $label
       (i64.gt_s
        (local.tee $0
         (i64.sub

@@ -48,8 +48,6 @@
         ;;@ src.cpp:40:1
         (local.get $y)
       )
-      ;; For the legacy parser
-      ;;@ src.cpp:50:1
       (then
         ;; For the new parser
         ;;@ src.cpp:50:1
@@ -68,10 +66,10 @@
 
   ;; CHECK:      (func $nested-blocks
   ;; CHECK-NEXT:  ;;@ src.cpp:2:1
-  ;; CHECK-NEXT:  (block $label$1
+  ;; CHECK-NEXT:  (block
   ;; CHECK-NEXT:   ;;@ src.cpp:2:2
-  ;; CHECK-NEXT:   (block $label$2
-  ;; CHECK-NEXT:    (br $label$2)
+  ;; CHECK-NEXT:   (block $block
+  ;; CHECK-NEXT:    (br $block)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  ;;@ src.cpp:3:1
