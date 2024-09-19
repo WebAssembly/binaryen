@@ -3235,6 +3235,11 @@ void PrintSExpression::visitMemory(Memory* curr) {
 }
 
 void PrintSExpression::visitDataSegment(DataSegment* curr) {
+  if (!curr->isPassive && !curr->offset) {
+    // This data segment must have been created from the datacount section but
+    // not parsed yet. Skip it.
+    return;
+  }
   doIndent(o, indent);
   o << '(';
   printMajor(o, "data ");
