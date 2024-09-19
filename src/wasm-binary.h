@@ -1547,35 +1547,23 @@ public:
 
   Name getNextLabel();
 
-  // We read functions and globals before we know their names, so we need to
-  // backpatch the names later
+  // We read functions, globals, etc. before we know their final names, so we
+  // need to backpatch the names later. Map the original names to their indices
+  // so we can find the final names based on index.
+  std::unordered_map<Name, Index> functionIndices;
+  std::unordered_map<Name, Index> tableIndices;
+  std::unordered_map<Name, Index> memoryIndices;
+  std::unordered_map<Name, Index> globalIndices;
+  std::unordered_map<Name, Index> tagIndices;
+  std::unordered_map<Name, Index> dataIndices;
+  std::unordered_map<Name, Index> elemIndices;
 
-  // at index i we have all refs to the function i
-  std::map<Index, std::vector<Name*>> functionRefs;
   Function* currFunction = nullptr;
   // before we see a function (like global init expressions), there is no end of
   // function to check
   Index endOfFunction = -1;
 
-  // at index i we have all references to the table i
-  std::map<Index, std::vector<Name*>> tableRefs;
-
   std::map<Index, Name> elemTables;
-
-  // at index i we have all references to the memory i
-  std::map<Index, std::vector<wasm::Name*>> memoryRefs;
-
-  // at index i we have all refs to the global i
-  std::map<Index, std::vector<Name*>> globalRefs;
-
-  // at index i we have all refs to the tag i
-  std::map<Index, std::vector<Name*>> tagRefs;
-
-  // at index i we have all refs to the data segment i
-  std::map<Index, std::vector<Name*>> dataRefs;
-
-  // at index i we have all refs to the element segment i
-  std::map<Index, std::vector<Name*>> elemRefs;
 
   // Throws a parsing error if we are not in a function context
   void requireFunctionContext(const char* error);
