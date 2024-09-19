@@ -1532,6 +1532,11 @@ public:
   // reconstructing the HeapTypes from the Signatures is expensive.
   std::vector<HeapType> functionTypes;
 
+  // Used to make sure the number of imported functions, signatures, and
+  // declared functions all match up.
+  Index numFuncImports = 0;
+  Index numFuncBodies = 0;
+
   void readFunctionSignatures();
   HeapType getTypeByIndex(Index index);
   HeapType getTypeByFunctionIndex(Index index);
