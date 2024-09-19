@@ -448,7 +448,10 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
       for (auto type : func->vars) {
         info.note(type);
       }
-      if (!func->imported()) {
+      // Don't just use `func->imported()` here because we also might be
+      // printing an error message on a partially parsed module whose declared
+      // function bodies have not all been parsed yet.
+      if (func->body) {
         CodeScanner(wasm, info, inclusion).walk(func->body);
       }
     });
