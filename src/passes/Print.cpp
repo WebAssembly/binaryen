@@ -2980,6 +2980,9 @@ void PrintSExpression::visitDefinedGlobal(Global* curr) {
 void PrintSExpression::visitFunction(Function* curr) {
   if (curr->imported()) {
     visitImportedFunction(curr);
+  } else if (curr->body == nullptr) {
+    // We are in the middle of parsing the module and have not parsed this
+    // function's code yet. Skip it.
   } else {
     visitDefinedFunction(curr);
   }
