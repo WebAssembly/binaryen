@@ -2604,13 +2604,9 @@ void WasmBinaryReader::readFunctionSignatures() {
     functionTypes.push_back(type);
     // Check that the type is a signature.
     getSignatureByTypeIndex(index);
-    // Create the function with a placeholder body so we don't trip over it if
-    // we have to print it as part of an error message.
-    Builder builder(wasm);
     auto name = makeName("", i);
     functionIndices[name] = wasm.functions.size();
-    wasm.addFunction(
-      builder.makeFunction(name, type, {}, builder.makeUnreachable()));
+    wasm.addFunction(Builder(wasm).makeFunction(name, type, {}, nullptr));
   }
 }
 
