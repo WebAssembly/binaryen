@@ -1221,7 +1221,17 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     // TODO respect JSON string encoding, e.g. quotes and control chars.
     *sourceMap << "\"" << wasm->debugInfoFileNames[i] << "\"";
   }
-  *sourceMap << "],\"names\":[],\"mappings\":\"";
+  *sourceMap << "],\"names\":[";
+
+  for (size_t i = 0; i < wasm->debugInfoSymbolNames.size(); i++) {
+    if (i > 0) {
+      *sourceMap << ",";
+    }
+    // TODO respect JSON string encoding, e.g. quotes and control chars.
+    *sourceMap << "\"" << wasm->debugInfoSymbolNames[i] << "\"";
+  }
+
+  *sourceMap << "],\"mappings\":\"";
 }
 
 static void writeBase64VLQ(std::ostream& out, int32_t n) {
@@ -1236,9 +1246,10 @@ static void writeBase64VLQ(std::ostream& out, int32_t n) {
     }
     // more VLG digit will follow -- add continuation bit (0x20),
     // base64 codes 'g'..'z', '0'..'9', '+', '/'
-    out << char(digit < 20
-                  ? 'g' + digit
-                  : digit < 30 ? '0' + digit - 20 : digit == 30 ? '+' : '/');
+    out << char(digit < 20    ? 'g' + digit
+                : digit < 30  ? '0' + digit - 20
+                : digit == 30 ? '+'
+                              : '/');
   }
 }
 
@@ -2884,6 +2895,21 @@ void WasmBinaryReader::readSourceMapHeader() {
       debugInfoFileIndices[file] = index;
     } while (maybeReadChar(','));
     mustReadChar(']');
+  }
+
+  if (findField("names")) {
+    skipWhitespace();
+    mustReadChar('[');
+    if (!maybeReadChar(']')) {
+      do {
+        std::string symbol;
+        readString(symbol);
+        Index index = wasm.debugInfoSymbolNames.size();
+        wasm.debugInfoSymbolNames.push_back(symbol);
+        debugInfoSymbolNameIndices[symbol] = index;
+      } while (maybeReadChar(','));
+      mustReadChar(']');
+    }
   }
 
   if (!findField("mappings")) {

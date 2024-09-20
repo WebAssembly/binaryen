@@ -181,6 +181,7 @@ void copyModuleItems(const Module& in, Module& out) {
   // to map file name indices from this modules to file name indices in
   // the target module.
   std::optional<std::vector<Index>> fileIndexMap;
+  // TODO: Update this with symbol names
   if (!in.debugInfoFileNames.empty()) {
     std::unordered_map<std::string, Index> debugInfoFileIndices;
     for (Index i = 0; i < out.debugInfoFileNames.size(); i++) {
@@ -241,6 +242,7 @@ void copyModule(const Module& in, Module& out) {
   out.start = in.start;
   out.customSections = in.customSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
+  out.debugInfoSymbolNames = in.debugInfoSymbolNames;
   out.features = in.features;
 }
 

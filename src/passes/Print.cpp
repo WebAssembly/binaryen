@@ -2504,7 +2504,14 @@ void PrintSExpression::printDebugLocation(
   } else {
     auto fileName = currModule->debugInfoFileNames[location->fileIndex];
     o << ";;@ " << fileName << ":" << location->lineNumber << ":"
-      << location->columnNumber << '\n';
+      << location->columnNumber;
+
+    if (location->nameIndex.has_value()) {
+        auto symbolName = currModule->debugInfoSymbolNames[*(location->nameIndex)];
+        o << ":" << symbolName;
+    }
+
+    o << '\n';
   }
   doIndent(o, indent);
 }

@@ -2297,6 +2297,7 @@ public:
 
   // Source maps debug info.
   std::vector<std::string> debugInfoFileNames;
+  std::vector<std::string> debugInfoSymbolNames;
 
   // `features` are the features allowed to be used in this module and should be
   // respected regardless of the value of`hasFeaturesSection`.

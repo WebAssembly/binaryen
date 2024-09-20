@@ -1398,6 +1398,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     typeNames;
   const std::unordered_map<Index, Index>& implicitElemIndices;
 
+  std::unordered_map<std::string_view, Index> debugSymbolNameIndices;
   std::unordered_map<std::string_view, Index> debugFileIndices;
 
   // The index of the current module element.
@@ -1781,6 +1782,18 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     auto col = lexer.takeU32();
     if (!col || !lexer.empty()) {
       return;
+    }
+
+    std::optional<BinaryLocation> nameIndex;
+    auto namePos = contents.find(':');
+    if (namePos != contents.npos) {
+        auto name = contents.substr(namePos + 1);
+        auto [it, inserted] =
+          debugSymbolNameIndices.insert({name, debugSymbolNameIndices.size()});
+          if (inserted) {
+            assert(wasm.debugInfoSymbolNames.size() == it->second);
+            wasm.debugInfoSymbolNames.push_back(std::string(file));
+          }
     }
 
     // TODO: If we ever parallelize the parse, access to
