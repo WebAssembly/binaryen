@@ -1259,7 +1259,7 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
   BinaryLocation lastFileIndex = 0;
   BinaryLocation lastLineNumber = 1;
   BinaryLocation lastColumnNumber = 0;
-  BinaryLocation lastNameIndex = 0;
+  BinaryLocation lastSymbolNameIndex = 0;
   for (const auto& [offset, loc] : sourceMapLocations) {
     if (lastOffset > 0) {
       *sourceMap << ",";
@@ -1276,9 +1276,10 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
       writeBase64VLQ(*sourceMap, int32_t(loc->columnNumber - lastColumnNumber));
       lastColumnNumber = loc->columnNumber;
 
-      if (loc->nameIndex) {
-        writeBase64VLQ(*sourceMap, int32_t(*loc->nameIndex - lastNameIndex));
-        lastNameIndex = *loc->nameIndex;
+      if (loc->symbolNameIndex) {
+        writeBase64VLQ(*sourceMap,
+                       int32_t(*loc->symbolNameIndex - lastSymbolNameIndex));
+        lastSymbolNameIndex = *loc->symbolNameIndex;
       }
     }
   }
@@ -2938,12 +2939,12 @@ void WasmBinaryReader::readSourceMapHeader() {
     uint32_t lineNumber =
       readBase64VLQ(*sourceMap) + 1; // adjust zero-based line number
     uint32_t columnNumber = readBase64VLQ(*sourceMap);
-    std::optional<BinaryLocation> nameIndex;
+    std::optional<BinaryLocation> symbolNameIndex;
     peek = sourceMap->peek();
     if (!(peek == ',' || peek == '\"')) {
-      nameIndex = readBase64VLQ(*sourceMap);
+      symbolNameIndex = readBase64VLQ(*sourceMap);
     }
-    nextDebugLocation = {fileIndex, lineNumber, columnNumber, nameIndex};
+    nextDebugLocation = {fileIndex, lineNumber, columnNumber, symbolNameIndex};
     nextDebugLocationHasDebugInfo = true;
   }
 }
@@ -2998,13 +2999,13 @@ void WasmBinaryReader::readNextDebugLocation() {
     int32_t columnNumberDelta = readBase64VLQ(*sourceMap);
     uint32_t columnNumber = nextDebugLocation.columnNumber + columnNumberDelta;
 
-    std::optional<BinaryLocation> nameIndex;
+    std::optional<BinaryLocation> symbolNameIndex;
     peek = sourceMap->peek();
     if (!(peek == ',' || peek == '\"')) {
-      nameIndex = readBase64VLQ(*sourceMap);
+      symbolNameIndex = readBase64VLQ(*sourceMap);
     }
 
-    nextDebugLocation = {fileIndex, lineNumber, columnNumber, nameIndex};
+    nextDebugLocation = {fileIndex, lineNumber, columnNumber, symbolNameIndex};
     nextDebugLocationHasDebugInfo = true;
   }
 }

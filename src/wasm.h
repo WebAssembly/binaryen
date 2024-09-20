@@ -2072,10 +2072,10 @@ public:
   // Source maps debugging info: map expression nodes to their file, line, col.
   struct DebugLocation {
     BinaryLocation fileIndex, lineNumber, columnNumber;
-    std::optional<BinaryLocation> nameIndex;
+    std::optional<BinaryLocation> symbolNameIndex;
     bool operator==(const DebugLocation& other) const {
       return fileIndex == other.fileIndex && lineNumber == other.lineNumber &&
-             columnNumber == other.columnNumber && nameIndex == other.nameIndex;
+             columnNumber == other.columnNumber && symbolNameIndex == other.symbolNameIndex;
     }
     bool operator!=(const DebugLocation& other) const {
       return !(*this == other);
@@ -2085,7 +2085,7 @@ public:
              : lineNumber != other.lineNumber ? lineNumber < other.lineNumber
              : columnNumber != other.columnNumber
                ? columnNumber < other.columnNumber
-               : nameIndex < other.nameIndex;
+               : symbolNameIndex < other.symbolNameIndex;
     }
   };
   // One can explicitly set the debug location of an expression to

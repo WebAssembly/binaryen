@@ -45,8 +45,10 @@ static void updateLocationSet(std::set<Function::DebugLocation>& locations,
 Function* copyFunction(Function* func,
                        Module& out,
                        Name newName,
-                       std::optional<std::vector<Index>> fileIndexMap) {
-  auto ret = copyFunctionWithoutAdd(func, out, newName, fileIndexMap);
+                       std::optional<std::vector<Index>> fileIndexMap,
+                       std::optional<std::vector<Index>> symbolNameIndexMap) {
+  auto ret = copyFunctionWithoutAdd(
+    func, out, newName, fileIndexMap, symbolNameIndexMap);
   return out.addFunction(std::move(ret));
 }
 
@@ -54,7 +56,8 @@ std::unique_ptr<Function>
 copyFunctionWithoutAdd(Function* func,
                        Module& out,
                        Name newName,
-                       std::optional<std::vector<Index>> fileIndexMap) {
+                       std::optional<std::vector<Index>> fileIndexMap,
+                       std::optional<std::vector<Index>> symbolNameIndexMap) {
   auto ret = std::make_unique<Function>();
   ret->name = newName.is() ? newName : func->name;
   ret->hasExplicitName = func->hasExplicitName;
@@ -75,6 +78,17 @@ copyFunctionWithoutAdd(Function* func,
     }
     updateLocationSet(ret->prologLocation, *fileIndexMap);
     updateLocationSet(ret->epilogLocation, *fileIndexMap);
+  }
+  if (symbolNameIndexMap) {
+    for (auto& iter : ret->debugLocations) {
+      if (iter.second) {
+        if (iter.second->symbolNameIndex.has_value()) {
+          iter.second->symbolNameIndex =
+            (*symbolNameIndexMap)[*(iter.second->symbolNameIndex)];
+        }
+      }
+    }
+    // TODO: Do we need something like updateLocationSet here?
   }
   ret->module = func->module;
   ret->base = func->base;
@@ -181,7 +195,6 @@ void copyModuleItems(const Module& in, Module& out) {
   // to map file name indices from this modules to file name indices in
   // the target module.
   std::optional<std::vector<Index>> fileIndexMap;
-  // TODO: Update this with symbol names
   if (!in.debugInfoFileNames.empty()) {
     std::unordered_map<std::string, Index> debugInfoFileIndices;
     for (Index i = 0; i < out.debugInfoFileNames.size(); i++) {
@@ -200,8 +213,27 @@ void copyModuleItems(const Module& in, Module& out) {
     }
   }
 
+  std::optional<std::vector<Index>> symbolNameIndexMap;
+  if (!in.debugInfoSymbolNames.empty()) {
+    std::unordered_map<std::string, Index> debugInfoSymbolNameIndices;
+    for (Index i = 0; i < out.debugInfoSymbolNames.size(); i++) {
+      debugInfoSymbolNameIndices[out.debugInfoSymbolNames[i]] = i;
+    }
+    symbolNameIndexMap.emplace();
+    for (Index i = 0; i < in.debugInfoSymbolNames.size(); i++) {
+      std::string file = in.debugInfoSymbolNames[i];
+      auto iter = debugInfoSymbolNameIndices.find(file);
+      if (iter == debugInfoSymbolNameIndices.end()) {
+        Index index = out.debugInfoSymbolNames.size();
+        out.debugInfoSymbolNames.push_back(file);
+        debugInfoSymbolNameIndices[file] = index;
+      }
+      symbolNameIndexMap->push_back(debugInfoSymbolNameIndices[file]);
+    }
+  }
+
   for (auto& curr : in.functions) {
-    copyFunction(curr.get(), out, Name(), fileIndexMap);
+    copyFunction(curr.get(), out, Name(), fileIndexMap, symbolNameIndexMap);
   }
   for (auto& curr : in.globals) {
     copyGlobal(curr.get(), out);
