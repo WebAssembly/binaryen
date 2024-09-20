@@ -1784,7 +1784,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       return;
     }
 
-    std::optional<BinaryLocation> nameIndex;
+    std::optional<BinaryLocation> symbolNameIndex;
     auto namePos = contents.find(':');
     if (namePos != contents.npos) {
       auto name = contents.substr(namePos + 1);
@@ -1794,6 +1794,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
         assert(wasm.debugInfoSymbolNames.size() == it->second);
         wasm.debugInfoSymbolNames.push_back(std::string(file));
       }
+      *symbolNameIndex = it->second;
     }
 
     // TODO: If we ever parallelize the parse, access to
@@ -1805,7 +1806,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       wasm.debugInfoFileNames.push_back(std::string(file));
     }
     irBuilder.setDebugLocation(
-      Function::DebugLocation({it->second, *line, *col, std::nullopt}));
+      Function::DebugLocation({it->second, *line, *col, symbolNameIndex}));
   }
 
   Result<> makeBlock(Index pos,
