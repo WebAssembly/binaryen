@@ -110,4 +110,17 @@
     ;;@ src.cpp:3
     (nop)
   )
+
+  ;; CHECK:      (func $5_segment_mappings
+  ;; CHECK-NEXT:  ;;@ /tmp/src.cpp:1:1:a
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  ;;@ ../src.cpp:2:2:b
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $5_segment_mappings
+    ;;@ /tmp/src.cpp:1:1:a
+    (nop)
+    ;;@ ../src.cpp:2:2:b
+    (nop)
+  )
 )
