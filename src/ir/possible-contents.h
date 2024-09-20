@@ -402,21 +402,6 @@ struct ResultLocation {
   }
 };
 
-// The location of a break target in a function, identified by its name.
-struct BreakTargetLocation {
-  Function* func;
-  Name target;
-  // As in ExpressionLocation, the index inside the tuple, or 0 if not a tuple.
-  // That is, if the branch target has a tuple type, then each branch to that
-  // location sends a tuple, and we'll have a separate BreakTargetLocation for
-  // each, indexed by the index in the tuple that the branch sends.
-  Index tupleIndex;
-  bool operator==(const BreakTargetLocation& other) const {
-    return func == other.func && target == other.target &&
-           tupleIndex == other.tupleIndex;
-  }
-};
-
 // The location of a global in the module.
 struct GlobalLocation {
   Name name;
@@ -523,7 +508,6 @@ using Location = std::variant<ExpressionLocation,
                               ParamLocation,
                               LocalLocation,
                               ResultLocation,
-                              BreakTargetLocation,
                               GlobalLocation,
                               SignatureParamLocation,
                               SignatureResultLocation,
@@ -574,13 +558,6 @@ template<> struct hash<wasm::ResultLocation> {
   size_t operator()(const wasm::ResultLocation& loc) const {
     return std::hash<std::pair<size_t, wasm::Index>>{}(
       {size_t(loc.func), loc.index});
-  }
-};
-
-template<> struct hash<wasm::BreakTargetLocation> {
-  size_t operator()(const wasm::BreakTargetLocation& loc) const {
-    return std::hash<std::tuple<size_t, wasm::Name, wasm::Index>>{}(
-      {size_t(loc.func), loc.target, loc.tupleIndex});
   }
 };
 

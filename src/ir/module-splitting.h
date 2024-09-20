@@ -47,16 +47,20 @@ namespace wasm::ModuleSplitting {
 static const Name LOAD_SECONDARY_MODULE("__load_secondary_module");
 
 struct Config {
-  // The set of functions to keep in the primary module. All others are split
-  // out into the new secondary module. Must include the start function if it
+  // The set of functions to split into the secondary module. All others are
+  // kept in the primary module. Must not include the start function if it
   // exists. May or may not include imported functions, which are always kept in
   // the primary module regardless.
-  std::set<Name> primaryFuncs;
+  std::set<Name> secondaryFuncs;
+  // Whether to import placeholder functions into the primary module that will
+  // be called when a secondary function is called before the secondary module
+  // has been loaded.
+  bool usePlaceholders = true;
   // The namespace from which to import primary functions into the secondary
   // module.
   Name importNamespace = "primary";
   // The namespace from which to import placeholder functions into the primary
-  // module.
+  // module. Ignored if `usePlaceholders` is false.
   Name placeholderNamespace = "placeholder";
   // The prefix to attach to the name of any newly created exports. This can be
   // used to differentiate between "real" exports of the module and exports that

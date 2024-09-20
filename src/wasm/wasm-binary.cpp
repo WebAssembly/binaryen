@@ -2587,6 +2587,7 @@ void WasmBinaryReader::readImports() {
       }
     }
   }
+  numFuncImports = wasm.functions.size();
 }
 
 Name WasmBinaryReader::getNextLabel() {
@@ -2604,9 +2605,12 @@ void WasmBinaryReader::readFunctionSignatures() {
   size_t num = getU32LEB();
   for (size_t i = 0; i < num; i++) {
     auto index = getU32LEB();
-    functionTypes.push_back(getTypeByIndex(index));
+    HeapType type = getTypeByIndex(index);
+    functionTypes.push_back(type);
     // Check that the type is a signature.
     getSignatureByTypeIndex(index);
+    wasm.addFunction(
+      Builder(wasm).makeFunction(makeName("", i), type, {}, nullptr));
   }
 }
 
@@ -2642,12 +2646,11 @@ Signature WasmBinaryReader::getSignatureByFunctionIndex(Index index) {
 }
 
 void WasmBinaryReader::readFunctions() {
-  auto numImports = wasm.functions.size();
-  size_t total = getU32LEB();
-  if (total != functionTypes.size() - numImports) {
+  numFuncBodies = getU32LEB();
+  if (numFuncBodies + numFuncImports != wasm.functions.size()) {
     throwError("invalid function section size, must equal types");
   }
-  for (size_t i = 0; i < total; i++) {
+  for (size_t i = 0; i < numFuncBodies; i++) {
     auto sizePos = pos;
     size_t size = getU32LEB();
     if (size == 0) {
@@ -2655,9 +2658,7 @@ void WasmBinaryReader::readFunctions() {
     }
     endOfFunction = pos + size;
 
-    auto func = std::make_unique<Function>();
-    func->name = makeName("", i);
-    func->type = getTypeByFunctionIndex(numImports + i);
+    auto& func = wasm.functions[numFuncImports + i];
     currFunction = func.get();
 
     if (DWARF) {
@@ -2724,7 +2725,6 @@ void WasmBinaryReader::readFunctions() {
     std::swap(func->epilogLocation, debugLocation);
     currFunction = nullptr;
     debugLocation.clear();
-    wasm.addFunction(std::move(func));
   }
 }
 
@@ -3212,8 +3212,8 @@ void WasmBinaryReader::validateBinary() {
     throwError("Number of segments does not agree with DataCount section");
   }
 
-  if (functionTypes.size() != wasm.functions.size()) {
-    throwError("function section without code section");
+  if (functionTypes.size() != numFuncImports + numFuncBodies) {
+    throwError("function and code sections have inconsistent lengths");
   }
 }
 
@@ -3293,18 +3293,37 @@ void WasmBinaryReader::processNames() {
 void WasmBinaryReader::readDataSegmentCount() {
   hasDataCount = true;
   dataCount = getU32LEB();
+  // Eagerly create the data segments so they are available during parsing of
+  // the code section.
+  for (size_t i = 0; i < dataCount; ++i) {
+    auto curr = Builder::makeDataSegment();
+    curr->setName(Name::fromInt(i), false);
+    wasm.addDataSegment(std::move(curr));
+  }
 }
 
 void WasmBinaryReader::readDataSegments() {
   auto num = getU32LEB();
+  if (hasDataCount) {
+    if (num != dataCount) {
+      throwError("data count and data sections disagree on size");
+    }
+  } else {
+    // We haven't already created the data segments, so create them now.
+    for (size_t i = 0; i < num; ++i) {
+      auto curr = Builder::makeDataSegment();
+      curr->setName(Name::fromInt(i), false);
+      wasm.addDataSegment(std::move(curr));
+    }
+  }
+  assert(wasm.dataSegments.size() == num);
   for (size_t i = 0; i < num; i++) {
-    auto curr = Builder::makeDataSegment();
+    auto& curr = wasm.dataSegments[i];
     uint32_t flags = getU32LEB();
     if (flags > 2) {
       throwError("bad segment flags, must be 0, 1, or 2, not " +
                  std::to_string(flags));
     }
-    curr->setName(Name::fromInt(i), false);
     curr->isPassive = flags & BinaryConsts::IsPassive;
     if (curr->isPassive) {
       curr->memory = Name();
@@ -3320,7 +3339,6 @@ void WasmBinaryReader::readDataSegments() {
     auto size = getU32LEB();
     auto data = getByteView(size);
     curr->data = {data.begin(), data.end()};
-    wasm.addDataSegment(std::move(curr));
   }
 }
 

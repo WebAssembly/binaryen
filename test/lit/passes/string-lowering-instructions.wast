@@ -65,9 +65,9 @@
 
   ;; CHECK:      (type $25 (func (param externref i32 i32) (result (ref extern))))
 
-  ;; CHECK:      (import "string.const" "0" (global $string.const_exported (ref extern)))
+  ;; CHECK:      (import "string.const" "0" (global $"string.const_\"exported\"" (ref extern)))
 
-  ;; CHECK:      (import "string.const" "1" (global $string.const_value (ref extern)))
+  ;; CHECK:      (import "string.const" "1" (global $"string.const_\"value\"" (ref extern)))
 
   ;; CHECK:      (import "colliding" "name" (func $fromCodePoint (type $0)))
   (import "colliding" "name" (func $fromCodePoint))
@@ -269,7 +269,7 @@
   )
 
   ;; CHECK:      (func $exported-string-returner (type $16) (result externref)
-  ;; CHECK-NEXT:  (global.get $string.const_exported)
+  ;; CHECK-NEXT:  (global.get $"string.const_\"exported\"")
   ;; CHECK-NEXT: )
   (func $exported-string-returner (export "export.1") (result stringref)
     ;; We should update the signature of this function even though it is public
@@ -368,7 +368,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (struct.new $struct-of-string
-  ;; CHECK-NEXT:    (global.get $string.const_value)
+  ;; CHECK-NEXT:    (global.get $"string.const_\"value\"")
   ;; CHECK-NEXT:    (i32.const 10)
   ;; CHECK-NEXT:    (ref.null none)
   ;; CHECK-NEXT:   )

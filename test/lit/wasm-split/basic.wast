@@ -1,11 +1,6 @@
 ;; RUN: not wasm-split %s --export-prefix='%' -g -o1 %t.none.1.wasm -o2 %t.none.2.wasm --keep-funcs=@failed-to-open.txt -v 2>&1 \
 ;; RUN:     | filecheck %s --check-prefix FAILED-TO-OPEN
 
-;; RUN: wasm-split %s --export-prefix='%' -g -o1 %t.none.1.wasm -o2 %t.none.2.wasm -v 2>&1 \
-;; RUN:     | filecheck %s --check-prefix KEEP-NONE
-;; RUN: wasm-dis %t.none.1.wasm | filecheck %s --check-prefix KEEP-NONE-PRIMARY
-;; RUN: wasm-dis %t.none.2.wasm | filecheck %s --check-prefix KEEP-NONE-SECONDARY
-
 ;; RUN: wasm-split %s --export-prefix='%' -g -o1 %t.none.1.wasm -o2 %t.none.2.wasm --keep-funcs=@%S/none.txt -v 2>&1 \
 ;; RUN:     | filecheck %s --check-prefix KEEP-NONE
 ;; RUN: wasm-dis %t.none.1.wasm | filecheck %s --check-prefix KEEP-NONE-PRIMARY
@@ -30,6 +25,11 @@
 ;; RUN:     | filecheck %s --check-prefix KEEP-BAR
 ;; RUN: wasm-dis %t.bar.1.wasm | filecheck %s --check-prefix KEEP-BAR-PRIMARY
 ;; RUN: wasm-dis %t.bar.2.wasm | filecheck %s --check-prefix KEEP-BAR-SECONDARY
+
+;; RUN: wasm-split %s --export-prefix='%' -g -o1 %t.none.1.wasm -o2 %t.none.2.wasm -v 2>&1 \
+;; RUN:     | filecheck %s --check-prefix KEEP-BOTH
+;; RUN: wasm-dis %t.none.1.wasm | filecheck %s --check-prefix KEEP-BOTH-PRIMARY
+;; RUN: wasm-dis %t.none.2.wasm | filecheck %s --check-prefix KEEP-BOTH-SECONDARY
 
 ;; RUN: wasm-split %s --export-prefix='%' -g -o1 %t.both.1.wasm -o2 %t.both.2.wasm --keep-funcs=foo,bar -v 2>&1 \
 ;; RUN:     | filecheck %s --check-prefix KEEP-BOTH
@@ -174,9 +174,8 @@
 ;; KEEP-BOTH-PRIMARY-NEXT: )
 
 ;; KEEP-BOTH-SECONDARY:      (module
-;; KEEP-BOTH-SECONDARY-NEXT:  (import "primary" "%table" (table $table 1 1 funcref))
 ;; KEEP-BOTH-SECONDARY-NEXT: )
 
-;; SPLIT-BAR-SUPERSEDE: warning: function bar was to be kept in primary module. However it will now be split out into secondary module.
+;; SPLIT-BAR-SUPERSEDE: warning: function bar was to be both kept and split. It will be split.
 ;; SPLIT-BAR-SUPERSEDE: Keeping functions: foo{{$}}
 ;; SPLIT-BAR-SUPERSEDE: Splitting out functions: bar{{$}}

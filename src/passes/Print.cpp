@@ -2980,6 +2980,9 @@ void PrintSExpression::visitDefinedGlobal(Global* curr) {
 void PrintSExpression::visitFunction(Function* curr) {
   if (curr->imported()) {
     visitImportedFunction(curr);
+  } else if (curr->body == nullptr) {
+    // We are in the middle of parsing the module and have not parsed this
+    // function's code yet. Skip it.
   } else {
     visitDefinedFunction(curr);
   }
@@ -3235,6 +3238,11 @@ void PrintSExpression::visitMemory(Memory* curr) {
 }
 
 void PrintSExpression::visitDataSegment(DataSegment* curr) {
+  if (!curr->isPassive && !curr->offset) {
+    // This data segment must have been created from the datacount section but
+    // not parsed yet. Skip it.
+    return;
+  }
   doIndent(o, indent);
   o << '(';
   printMajor(o, "data ");
