@@ -3273,18 +3273,37 @@ void WasmBinaryReader::processNames() {
 void WasmBinaryReader::readDataSegmentCount() {
   hasDataCount = true;
   dataCount = getU32LEB();
+  // Eagerly create the data segments so they are available during parsing of
+  // the code section.
+  for (size_t i = 0; i < dataCount; ++i) {
+    auto curr = Builder::makeDataSegment();
+    curr->setName(Name::fromInt(i), false);
+    wasm.addDataSegment(std::move(curr));
+  }
 }
 
 void WasmBinaryReader::readDataSegments() {
   auto num = getU32LEB();
+  if (hasDataCount) {
+    if (num != dataCount) {
+      throwError("data count and data sections disagree on size");
+    }
+  } else {
+    // We haven't already created the data segments, so create them now.
+    for (size_t i = 0; i < num; ++i) {
+      auto curr = Builder::makeDataSegment();
+      curr->setName(Name::fromInt(i), false);
+      wasm.addDataSegment(std::move(curr));
+    }
+  }
+  assert(wasm.dataSegments.size() == num);
   for (size_t i = 0; i < num; i++) {
-    auto curr = Builder::makeDataSegment();
+    auto& curr = wasm.dataSegments[i];
     uint32_t flags = getU32LEB();
     if (flags > 2) {
       throwError("bad segment flags, must be 0, 1, or 2, not " +
                  std::to_string(flags));
     }
-    curr->setName(Name::fromInt(i), false);
     curr->isPassive = flags & BinaryConsts::IsPassive;
     if (curr->isPassive) {
       curr->memory = Name();
@@ -3300,7 +3319,6 @@ void WasmBinaryReader::readDataSegments() {
     auto size = getU32LEB();
     auto data = getByteView(size);
     curr->data = {data.begin(), data.end()};
-    wasm.addDataSegment(std::move(curr));
   }
 }
 
