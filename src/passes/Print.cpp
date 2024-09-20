@@ -2507,8 +2507,9 @@ void PrintSExpression::printDebugLocation(
       << location->columnNumber;
 
     if (location->nameIndex.has_value()) {
-        auto symbolName = currModule->debugInfoSymbolNames[*(location->nameIndex)];
-        o << ":" << symbolName;
+      auto symbolName =
+        currModule->debugInfoSymbolNames[*(location->nameIndex)];
+      o << ":" << symbolName;
     }
 
     o << '\n';
