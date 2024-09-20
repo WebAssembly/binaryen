@@ -2578,6 +2578,7 @@ void WasmBinaryReader::readImports() {
       }
     }
   }
+  numFuncImports = wasm.functions.size();
 }
 
 Name WasmBinaryReader::getNextLabel() {
@@ -2595,9 +2596,12 @@ void WasmBinaryReader::readFunctionSignatures() {
   size_t num = getU32LEB();
   for (size_t i = 0; i < num; i++) {
     auto index = getU32LEB();
-    functionTypes.push_back(getTypeByIndex(index));
+    HeapType type = getTypeByIndex(index);
+    functionTypes.push_back(type);
     // Check that the type is a signature.
     getSignatureByTypeIndex(index);
+    wasm.addFunction(
+      Builder(wasm).makeFunction(makeName("", i), type, {}, nullptr));
   }
 }
 
@@ -2633,12 +2637,11 @@ Signature WasmBinaryReader::getSignatureByFunctionIndex(Index index) {
 }
 
 void WasmBinaryReader::readFunctions() {
-  auto numImports = wasm.functions.size();
-  size_t total = getU32LEB();
-  if (total != functionTypes.size() - numImports) {
+  numFuncBodies = getU32LEB();
+  if (numFuncBodies + numFuncImports != wasm.functions.size()) {
     throwError("invalid function section size, must equal types");
   }
-  for (size_t i = 0; i < total; i++) {
+  for (size_t i = 0; i < numFuncBodies; i++) {
     auto sizePos = pos;
     size_t size = getU32LEB();
     if (size == 0) {
@@ -2646,9 +2649,7 @@ void WasmBinaryReader::readFunctions() {
     }
     endOfFunction = pos + size;
 
-    auto func = std::make_unique<Function>();
-    func->name = makeName("", i);
-    func->type = getTypeByFunctionIndex(numImports + i);
+    auto& func = wasm.functions[numFuncImports + i];
     currFunction = func.get();
 
     if (DWARF) {
@@ -2715,7 +2716,6 @@ void WasmBinaryReader::readFunctions() {
     std::swap(func->epilogLocation, debugLocation);
     currFunction = nullptr;
     debugLocation.clear();
-    wasm.addFunction(std::move(func));
   }
 }
 
@@ -3192,8 +3192,8 @@ void WasmBinaryReader::validateBinary() {
     throwError("Number of segments does not agree with DataCount section");
   }
 
-  if (functionTypes.size() != wasm.functions.size()) {
-    throwError("function section without code section");
+  if (functionTypes.size() != numFuncImports + numFuncBodies) {
+    throwError("function and code sections have inconsistent lengths");
   }
 }
 
