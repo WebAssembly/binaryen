@@ -9,16 +9,16 @@
  ;; CHECK-NEXT:  (local $pair f32)
  ;; CHECK-NEXT:  (local $f32 f32)
  ;; CHECK-NEXT:  (local $2 i32)
- ;; CHECK-NEXT:  (local $3 f32)
+ ;; CHECK-NEXT:  (local $scratch f32)
  ;; CHECK-NEXT:  (local.set $pair
  ;; CHECK-NEXT:   (block (result f32)
- ;; CHECK-NEXT:    (local.set $3
+ ;; CHECK-NEXT:    (local.set $scratch
  ;; CHECK-NEXT:     (f32.const 0)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (local.set $2
  ;; CHECK-NEXT:     (i32.const 0)
  ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.get $3)
+ ;; CHECK-NEXT:    (local.get $scratch)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (local.set $f32

@@ -59,6 +59,7 @@
   ;; CHECK-BIN-NEXT:    (unreachable)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $b
     (if (i32.const 1)
@@ -118,6 +119,7 @@
   ;; CHECK-BIN-NEXT:    (unreachable)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $b-block
     (block
@@ -186,6 +188,7 @@
   ;; CHECK-BIN-NEXT:    (unreachable)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $b-prepost
     (nop)
@@ -260,6 +263,7 @@
   ;; CHECK-BIN-NEXT:    (unreachable)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT:  (unreachable)
   ;; CHECK-BIN-NEXT: )
   (func $b-block-prepost
     (nop)
@@ -289,9 +293,9 @@
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $recurse (type $0)
   ;; CHECK-BIN-NEXT:  (nop)
-  ;; CHECK-BIN-NEXT:  (block $label$1
+  ;; CHECK-BIN-NEXT:  (block $block
   ;; CHECK-BIN-NEXT:   (nop)
-  ;; CHECK-BIN-NEXT:   (br $label$1)
+  ;; CHECK-BIN-NEXT:   (br $block)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT:  (nop)
   ;; CHECK-BIN-NEXT: )
@@ -319,12 +323,13 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $recurse-b (type $0)
-  ;; CHECK-BIN-NEXT:  (block $label$1
+  ;; CHECK-BIN-NEXT:  (block $block
   ;; CHECK-BIN-NEXT:   (nop)
-  ;; CHECK-BIN-NEXT:   (block $label$2
+  ;; CHECK-BIN-NEXT:   (block
   ;; CHECK-BIN-NEXT:    (nop)
-  ;; CHECK-BIN-NEXT:    (br $label$1)
+  ;; CHECK-BIN-NEXT:    (br $block)
   ;; CHECK-BIN-NEXT:   )
+  ;; CHECK-BIN-NEXT:   (unreachable)
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
   (func $recurse-b
@@ -360,6 +365,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $2 (type $0)
@@ -381,6 +387,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $4 (type $0)
@@ -405,6 +412,7 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $6 (type $0)
@@ -429,23 +437,25 @@
 ;; CHECK-BIN-NODEBUG-NEXT:    (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $8 (type $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
-;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1
+;; CHECK-BIN-NODEBUG-NEXT:  (block $block
 ;; CHECK-BIN-NODEBUG-NEXT:   (nop)
-;; CHECK-BIN-NODEBUG-NEXT:   (br $label$1)
+;; CHECK-BIN-NODEBUG-NEXT:   (br $block)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT:  (nop)
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $9 (type $0)
-;; CHECK-BIN-NODEBUG-NEXT:  (block $label$1
+;; CHECK-BIN-NODEBUG-NEXT:  (block $block
 ;; CHECK-BIN-NODEBUG-NEXT:   (nop)
-;; CHECK-BIN-NODEBUG-NEXT:   (block $label$2
+;; CHECK-BIN-NODEBUG-NEXT:   (block
 ;; CHECK-BIN-NODEBUG-NEXT:    (nop)
-;; CHECK-BIN-NODEBUG-NEXT:    (br $label$1)
+;; CHECK-BIN-NODEBUG-NEXT:    (br $block)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
+;; CHECK-BIN-NODEBUG-NEXT:   (unreachable)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )

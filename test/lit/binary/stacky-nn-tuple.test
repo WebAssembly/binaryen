@@ -36,7 +36,7 @@
 #  )
 # )
 
-RUN: wasm-opt -all %s.wasm -all --print
+RUN: wasm-opt -all %s.wasm -all -S -o - | filecheck %s
 
 # CHECK:      (module
 # CHECK-NEXT:  (type ${mut:i32} (struct (field (mut i32))))

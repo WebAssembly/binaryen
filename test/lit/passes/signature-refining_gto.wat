@@ -17,7 +17,9 @@
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (unreachable)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (unreachable)
+ ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $struct.get (param $0 (ref $A))
   ;; This function is always called with a null, so the parameter type will be

@@ -4,10 +4,10 @@
  (func $0
   (nop)
   ;;@ src.cpp:2:1
-  (block $label$1
+  (block
    ;;@ src.cpp:2:2
-   (block $label$2
-    (br $label$2)
+   (block $block
+    (br $block)
    )
   )
   ;;@ src.cpp:3:1

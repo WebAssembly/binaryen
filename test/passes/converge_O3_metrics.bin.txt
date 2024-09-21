@@ -59,8 +59,8 @@ total
   (local.set $0
    (i32.const 10888)
   )
-  (loop $label$3
-   (br_if $label$3
+  (loop $label
+   (br_if $label
     (i32.load8_s
      (local.tee $0
       (i32.add
@@ -94,8 +94,8 @@ total
     )
    )
    (then
-    (block $label$2
-     (br_if $label$2
+    (block $block
+     (br_if $block
       (call_indirect (type $0)
        (local.get $1)
        (i32.const 10888)
@@ -113,8 +113,8 @@ total
     )
    )
   )
-  (block $label$1
-   (br_if $label$1
+  (block $block0
+   (br_if $block0
     (if (result i32)
      (i32.load
       (i32.add
@@ -291,8 +291,8 @@ total
   (local.set $0
    (i32.const 10888)
   )
-  (loop $label$3
-   (br_if $label$3
+  (loop $label
+   (br_if $label
     (i32.load8_s
      (local.tee $0
       (i32.add
@@ -326,8 +326,8 @@ total
     )
    )
    (then
-    (block $label$2
-     (br_if $label$2
+    (block $block
+     (br_if $block
       (call_indirect (type $0)
        (local.get $1)
        (i32.const 10888)
@@ -345,8 +345,8 @@ total
     )
    )
   )
-  (block $label$1
-   (br_if $label$1
+  (block $block0
+   (br_if $block0
     (if (result i32)
      (i32.load
       (i32.add
@@ -518,8 +518,8 @@ total
   (local.set $0
    (i32.const 10888)
   )
-  (loop $label$3
-   (br_if $label$3
+  (loop $label
+   (br_if $label
     (i32.load8_s
      (local.tee $0
       (i32.add
@@ -553,8 +553,8 @@ total
     )
    )
    (then
-    (block $label$2
-     (br_if $label$2
+    (block $block
+     (br_if $block
       (call_indirect (type $0)
        (local.get $1)
        (i32.const 10888)
@@ -572,8 +572,8 @@ total
     )
    )
   )
-  (block $label$1
-   (br_if $label$1
+  (block $block0
+   (br_if $block0
     (if (result i32)
      (i32.load
       (i32.add

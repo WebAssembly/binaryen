@@ -13,16 +13,14 @@
 ;; preserve declarative segments. This is fine, as we test that the
 ;; binary parser can parse it correctly.
 
-;; RUN: wasm-opt -all %s.wasm -all --print | filecheck %s
+;; RUN: wasm-opt -all %s.wasm -S -o - | filecheck %s
 
 ;; CHECK:      (module
 ;; CHECK-NEXT:  (type $0 (func))
 ;; CHECK-NEXT:  (elem declare func $0)
 ;; CHECK-NEXT:  (func $0 (type $0)
-;; CHECK-NEXT:   (block $label$1
-;; CHECK-NEXT:    (drop
-;; CHECK-NEXT:     (ref.func $0)
-;; CHECK-NEXT:    )
+;; CHECK-NEXT:   (drop
+;; CHECK-NEXT:    (ref.func $0)
 ;; CHECK-NEXT:   )
 ;; CHECK-NEXT:  )
 ;; CHECK-NEXT: )

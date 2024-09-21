@@ -25,30 +25,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; RTRIP:      (func $f1 (type $f1) (result (ref $f1) (ref $f2))
- ;; RTRIP-NEXT:  (local $0 (tuple (ref $f1) (ref $f2)))
- ;; RTRIP-NEXT:  (local $1 (tuple (ref $f1) (ref $f2)))
- ;; RTRIP-NEXT:  (local.set $1
- ;; RTRIP-NEXT:   (loop $label$1 (type $f1) (result (ref $f1) (ref $f2))
- ;; RTRIP-NEXT:    (local.set $0
- ;; RTRIP-NEXT:     (call $f1)
- ;; RTRIP-NEXT:    )
- ;; RTRIP-NEXT:    (tuple.make 2
- ;; RTRIP-NEXT:     (tuple.extract 2 0
- ;; RTRIP-NEXT:      (local.get $0)
- ;; RTRIP-NEXT:     )
- ;; RTRIP-NEXT:     (tuple.extract 2 1
- ;; RTRIP-NEXT:      (local.get $0)
- ;; RTRIP-NEXT:     )
- ;; RTRIP-NEXT:    )
- ;; RTRIP-NEXT:   )
- ;; RTRIP-NEXT:  )
- ;; RTRIP-NEXT:  (tuple.make 2
- ;; RTRIP-NEXT:   (tuple.extract 2 0
- ;; RTRIP-NEXT:    (local.get $1)
- ;; RTRIP-NEXT:   )
- ;; RTRIP-NEXT:   (tuple.extract 2 1
- ;; RTRIP-NEXT:    (local.get $1)
- ;; RTRIP-NEXT:   )
+ ;; RTRIP-NEXT:  (loop (type $f1) (result (ref $f1) (ref $f2))
+ ;; RTRIP-NEXT:   (call $f1)
  ;; RTRIP-NEXT:  )
  ;; RTRIP-NEXT: )
  (func $f1 (type $f1) (result (ref $f1) (ref $f2))
@@ -64,30 +42,8 @@
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  ;; RTRIP:      (func $f2 (type $f2) (result (ref $f2) (ref $f1))
- ;; RTRIP-NEXT:  (local $0 (tuple (ref $f2) (ref $f1)))
- ;; RTRIP-NEXT:  (local $1 (tuple (ref $f2) (ref $f1)))
- ;; RTRIP-NEXT:  (local.set $1
- ;; RTRIP-NEXT:   (loop $label$1 (type $f2) (result (ref $f2) (ref $f1))
- ;; RTRIP-NEXT:    (local.set $0
- ;; RTRIP-NEXT:     (call $f2)
- ;; RTRIP-NEXT:    )
- ;; RTRIP-NEXT:    (tuple.make 2
- ;; RTRIP-NEXT:     (tuple.extract 2 0
- ;; RTRIP-NEXT:      (local.get $0)
- ;; RTRIP-NEXT:     )
- ;; RTRIP-NEXT:     (tuple.extract 2 1
- ;; RTRIP-NEXT:      (local.get $0)
- ;; RTRIP-NEXT:     )
- ;; RTRIP-NEXT:    )
- ;; RTRIP-NEXT:   )
- ;; RTRIP-NEXT:  )
- ;; RTRIP-NEXT:  (tuple.make 2
- ;; RTRIP-NEXT:   (tuple.extract 2 0
- ;; RTRIP-NEXT:    (local.get $1)
- ;; RTRIP-NEXT:   )
- ;; RTRIP-NEXT:   (tuple.extract 2 1
- ;; RTRIP-NEXT:    (local.get $1)
- ;; RTRIP-NEXT:   )
+ ;; RTRIP-NEXT:  (loop (type $f2) (result (ref $f2) (ref $f1))
+ ;; RTRIP-NEXT:   (call $f2)
  ;; RTRIP-NEXT:  )
  ;; RTRIP-NEXT: )
  (func $f2 (type $f2) (result (ref $f2) (ref $f1))

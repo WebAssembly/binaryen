@@ -194,37 +194,36 @@
   ;; CHECK-TEXT-NEXT:  )
   ;; CHECK-TEXT-NEXT: )
   ;; CHECK-BIN:      (func $type-only-in-tuple-block (type $void)
-  ;; CHECK-BIN-NEXT:  (local $0 (tuple i32 (ref null $mixed_results) f64))
-  ;; CHECK-BIN-NEXT:  (local $1 (ref null $mixed_results))
-  ;; CHECK-BIN-NEXT:  (local $2 i32)
-  ;; CHECK-BIN-NEXT:  (local.set $0
-  ;; CHECK-BIN-NEXT:   (block $label$1 (type $3) (result i32 (ref null $mixed_results) f64)
-  ;; CHECK-BIN-NEXT:    (unreachable)
-  ;; CHECK-BIN-NEXT:   )
-  ;; CHECK-BIN-NEXT:  )
+  ;; CHECK-BIN-NEXT:  (local $scratch (tuple i32 (ref null $mixed_results) f64))
+  ;; CHECK-BIN-NEXT:  (local $scratch_1 (ref null $mixed_results))
+  ;; CHECK-BIN-NEXT:  (local $scratch_2 i32)
   ;; CHECK-BIN-NEXT:  (drop
   ;; CHECK-BIN-NEXT:   (block (result i32)
-  ;; CHECK-BIN-NEXT:    (local.set $2
+  ;; CHECK-BIN-NEXT:    (local.set $scratch_2
   ;; CHECK-BIN-NEXT:     (tuple.extract 3 0
-  ;; CHECK-BIN-NEXT:      (local.get $0)
+  ;; CHECK-BIN-NEXT:      (local.tee $scratch
+  ;; CHECK-BIN-NEXT:       (block (type $3) (result i32 (ref null $mixed_results) f64)
+  ;; CHECK-BIN-NEXT:        (unreachable)
+  ;; CHECK-BIN-NEXT:       )
+  ;; CHECK-BIN-NEXT:      )
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
   ;; CHECK-BIN-NEXT:    (drop
   ;; CHECK-BIN-NEXT:     (block (result (ref null $mixed_results))
-  ;; CHECK-BIN-NEXT:      (local.set $1
+  ;; CHECK-BIN-NEXT:      (local.set $scratch_1
   ;; CHECK-BIN-NEXT:       (tuple.extract 3 1
-  ;; CHECK-BIN-NEXT:        (local.get $0)
+  ;; CHECK-BIN-NEXT:        (local.get $scratch)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
   ;; CHECK-BIN-NEXT:      (drop
   ;; CHECK-BIN-NEXT:       (tuple.extract 3 2
-  ;; CHECK-BIN-NEXT:        (local.get $0)
+  ;; CHECK-BIN-NEXT:        (local.get $scratch)
   ;; CHECK-BIN-NEXT:       )
   ;; CHECK-BIN-NEXT:      )
-  ;; CHECK-BIN-NEXT:      (local.get $1)
+  ;; CHECK-BIN-NEXT:      (local.get $scratch_1)
   ;; CHECK-BIN-NEXT:     )
   ;; CHECK-BIN-NEXT:    )
-  ;; CHECK-BIN-NEXT:    (local.get $2)
+  ;; CHECK-BIN-NEXT:    (local.get $scratch_2)
   ;; CHECK-BIN-NEXT:   )
   ;; CHECK-BIN-NEXT:  )
   ;; CHECK-BIN-NEXT: )
@@ -432,37 +431,36 @@
 ;; CHECK-BIN-NODEBUG-NEXT: )
 
 ;; CHECK-BIN-NODEBUG:      (func $8 (type $2)
-;; CHECK-BIN-NODEBUG-NEXT:  (local $0 (tuple i32 (ref null $0) f64))
-;; CHECK-BIN-NODEBUG-NEXT:  (local $1 (ref null $0))
-;; CHECK-BIN-NODEBUG-NEXT:  (local $2 i32)
-;; CHECK-BIN-NODEBUG-NEXT:  (local.set $0
-;; CHECK-BIN-NODEBUG-NEXT:   (block $label$1 (type $3) (result i32 (ref null $0) f64)
-;; CHECK-BIN-NODEBUG-NEXT:    (unreachable)
-;; CHECK-BIN-NODEBUG-NEXT:   )
-;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT:  (local $scratch (tuple i32 (ref null $0) f64))
+;; CHECK-BIN-NODEBUG-NEXT:  (local $scratch_1 (ref null $0))
+;; CHECK-BIN-NODEBUG-NEXT:  (local $scratch_2 i32)
 ;; CHECK-BIN-NODEBUG-NEXT:  (drop
 ;; CHECK-BIN-NODEBUG-NEXT:   (block (result i32)
-;; CHECK-BIN-NODEBUG-NEXT:    (local.set $2
+;; CHECK-BIN-NODEBUG-NEXT:    (local.set $scratch_2
 ;; CHECK-BIN-NODEBUG-NEXT:     (tuple.extract 3 0
-;; CHECK-BIN-NODEBUG-NEXT:      (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:      (local.tee $scratch
+;; CHECK-BIN-NODEBUG-NEXT:       (block (type $3) (result i32 (ref null $0) f64)
+;; CHECK-BIN-NODEBUG-NEXT:        (unreachable)
+;; CHECK-BIN-NODEBUG-NEXT:       )
+;; CHECK-BIN-NODEBUG-NEXT:      )
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
 ;; CHECK-BIN-NODEBUG-NEXT:    (drop
 ;; CHECK-BIN-NODEBUG-NEXT:     (block (result (ref null $0))
-;; CHECK-BIN-NODEBUG-NEXT:      (local.set $1
+;; CHECK-BIN-NODEBUG-NEXT:      (local.set $scratch_1
 ;; CHECK-BIN-NODEBUG-NEXT:       (tuple.extract 3 1
-;; CHECK-BIN-NODEBUG-NEXT:        (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:        (local.get $scratch)
 ;; CHECK-BIN-NODEBUG-NEXT:       )
 ;; CHECK-BIN-NODEBUG-NEXT:      )
 ;; CHECK-BIN-NODEBUG-NEXT:      (drop
 ;; CHECK-BIN-NODEBUG-NEXT:       (tuple.extract 3 2
-;; CHECK-BIN-NODEBUG-NEXT:        (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:        (local.get $scratch)
 ;; CHECK-BIN-NODEBUG-NEXT:       )
 ;; CHECK-BIN-NODEBUG-NEXT:      )
-;; CHECK-BIN-NODEBUG-NEXT:      (local.get $1)
+;; CHECK-BIN-NODEBUG-NEXT:      (local.get $scratch_1)
 ;; CHECK-BIN-NODEBUG-NEXT:     )
 ;; CHECK-BIN-NODEBUG-NEXT:    )
-;; CHECK-BIN-NODEBUG-NEXT:    (local.get $2)
+;; CHECK-BIN-NODEBUG-NEXT:    (local.get $scratch_2)
 ;; CHECK-BIN-NODEBUG-NEXT:   )
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )

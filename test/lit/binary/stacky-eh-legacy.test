@@ -34,7 +34,7 @@
 ;; The fixup will hoist the 'pop' and create another local to store it right
 ;; after 'catch'.
 
-RUN: wasm-opt -all %s.wasm --print | filecheck %s
+RUN: wasm-opt -all %s.wasm -S -o - | filecheck %s
 
 ;; CHECK:      (func $0
 ;; CHECK-NEXT:  (local $0 i32)

@@ -4,8 +4,8 @@
  (export "f32.compute_radix" (func $0))
  (export "f64.compute_radix" (func $1))
  (func $0 (param $0 f32) (param $1 f32) (result f32)
-  (loop $label$2
-   (br_if $label$2
+  (loop $label
+   (br_if $label
     (f32.eq
      (f32.add
       (f32.sub
@@ -45,8 +45,8 @@
   )
  )
  (func $1 (param $0 f64) (param $1 f64) (result f64)
-  (loop $label$2
-   (br_if $label$2
+  (loop $label
+   (br_if $label
     (f64.eq
      (f64.add
       (f64.sub
@@ -67,8 +67,8 @@
     )
    )
   )
-  (loop $label$3
-   (br_if $label$3
+  (loop $label0
+   (br_if $label0
     (f64.ne
      (f64.sub
       (f64.sub

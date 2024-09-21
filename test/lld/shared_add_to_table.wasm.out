@@ -27,6 +27,7 @@
   (call $__wasm_apply_relocs)
  )
  (func $__wasm_apply_relocs
+  (nop)
  )
  (func $waka_func_mine\28int\29 (param $0 i32) (result i32)
   (i32.add
