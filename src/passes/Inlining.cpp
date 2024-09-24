@@ -635,6 +635,8 @@ static void doInlining(Module* module,
   TypeUpdating::handleNonDefaultableLocals(into, *module);
 }
 
+// A map of function names to the inlining actions we've decided to actually
+// perform in them.
 using ChosenActions = std::unordered_map<Name, std::vector<InliningAction>>;
 
 // A pass that calls doInlining() on a bunch of actions that were chosen to
@@ -654,6 +656,7 @@ struct DoInlining : public Pass {
     // We must be called on a function that we actually want to inline into.
     assert(iter != chosenActions.end());
     const auto& actions = iter->second;
+    assert(!actions.empty());
     for (auto action : actions) {
       doInlining(module, func, action, getPassOptions());
     }
@@ -1299,9 +1302,7 @@ struct Inlining : public Pass {
     Planner(&state).run(getPassRunner(), module);
 
     // Choose which inlinings to perform. We do this sequentially so that we
-    // can consider interactions between them, and avoid nondeterminism. The
-    // result of this process is a map of function names to the inlining actions
-    // we've decided to actually perform in them.
+    // can consider interactions between them, and avoid nondeterminism.
     ChosenActions chosenActions;
 
     // How many uses (calls of the function) we inlined.
