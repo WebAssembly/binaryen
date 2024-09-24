@@ -629,27 +629,26 @@ static void doInlining(Module* module,
   // New locals we added may require fixups for nondefaultability.
   // FIXME Is this not done automatically?
   TypeUpdating::handleNonDefaultableLocals(into, *module);
-  return block;
 }
 
-using ChosenActions = std::unordered_map<Name, InliningAction>;
+using ChosenActions = std::unordered_map<Name, std::vector<InliningAction>>;
 
 // A pass that calls doInlining() on a bunch of actions that were chosen to
 // perform.
-class DoInlining : public Pass {
+struct DoInlining : public Pass {
   virtual bool isFunctionParallel() { return true; }
 
   std::unique_ptr<Pass> create() override {
-    return std::make_unique<DoInlining>(infos);
+    return std::make_unique<DoInlining>(chosenActions);
   }
 
   DoInlining(const ChosenActions& chosenActions) : chosenActions(chosenActions) {}
 
   void runOnFunction(Module* module, Function* func) override {
+    auto iter = chosenActions.find(func->name);
     // We must be called on a function that we actually want to inline into.
-    assert(chosenActions.count(func->name));
-
-    const auto& actions = chosenActions[func->name];
+    assert(iter != chosenActions.end());
+    const auto& actions = iter->second;
     for (auto action : actions) {
       doInlining(module, func, action, getPassOptions());
     }
