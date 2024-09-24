@@ -244,14 +244,18 @@ struct InliningAction {
   Function* contents;
   bool insideATry;
 
-  // An optional name hint can be provided, which will then be used in the name of
-  // the block we put the inlined code in. Using a unique name hint in each inlining
-  // can reduce the risk of name overlaps (which cause fixup work
-  // in UniqueNameMapper::uniquify).
+  // An optional name hint can be provided, which will then be used in the name
+  // of the block we put the inlined code in. Using a unique name hint in each
+  // inlining can reduce the risk of name overlaps (which cause fixup work in
+  // UniqueNameMapper::uniquify).
   Index nameHint = 0;
 
-  InliningAction(Expression** callSite, Function* contents, bool insideATry, Index nameHint = 0)
-    : callSite(callSite), contents(contents), insideATry(insideATry), nameHint(nameHint) {}
+  InliningAction(Expression** callSite,
+                 Function* contents,
+                 bool insideATry,
+                 Index nameHint = 0)
+    : callSite(callSite), contents(contents), insideATry(insideATry),
+      nameHint(nameHint) {}
 };
 
 struct InliningState {
@@ -642,7 +646,8 @@ struct DoInlining : public Pass {
     return std::make_unique<DoInlining>(chosenActions);
   }
 
-  DoInlining(const ChosenActions& chosenActions) : chosenActions(chosenActions) {}
+  DoInlining(const ChosenActions& chosenActions)
+    : chosenActions(chosenActions) {}
 
   void runOnFunction(Module* module, Function* func) override {
     auto iter = chosenActions.find(func->name);
@@ -1296,7 +1301,7 @@ struct Inlining : public Pass {
     // Choose which inlinings to perform. We do this sequentially so that we
     // can consider interactions between them, and avoid nondeterminism. The
     // result of this process is a map of function names to the inlining actions
-    // we've decided to actually perform in them.    
+    // we've decided to actually perform in them.
     ChosenActions chosenActions;
 
     // How many uses (calls of the function) we inlined.
@@ -1354,7 +1359,8 @@ struct Inlining : public Pass {
     // inline into, but in parallel between them). If we are optimizing, do so
     // as well.
     {
-      PassUtils::FilteredPassRunner runner(module, inlinedInto, getPassRunner()->options);
+      PassUtils::FilteredPassRunner runner(
+        module, inlinedInto, getPassRunner()->options);
       runner.setIsNested(true);
       runner.add(std::make_unique<DoInlining>(chosenActions));
       if (optimize) {
