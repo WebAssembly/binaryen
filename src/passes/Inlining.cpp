@@ -640,7 +640,7 @@ using ChosenActions = std::unordered_map<Name, std::vector<InliningAction>>;
 // A pass that calls doInlining() on a bunch of actions that were chosen to
 // perform.
 struct DoInlining : public Pass {
-  virtual bool isFunctionParallel() { return true; }
+  bool isFunctionParallel() override { return true; }
 
   std::unique_ptr<Pass> create() override {
     return std::make_unique<DoInlining>(chosenActions);
