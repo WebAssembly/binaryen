@@ -503,23 +503,6 @@
 ;; (That avoids possible validation problems, and maximizes DCE.) To keep it
 ;; unreachable we'll add an unreachable instruction after the inlined code.
 (module
- ;; CHECK:      (type $0 (func (param f32)))
-
- ;; CHECK:      (type $1 (func))
-
- ;; CHECK:      (func $A (param $0 f32)
- ;; CHECK-NEXT:  (local $1 f32)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block (result f32)
- ;; CHECK-NEXT:    (block $__inlined_func$C (result f32)
- ;; CHECK-NEXT:     (local.set $1
- ;; CHECK-NEXT:      (local.get $0)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (local.get $1)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
  (func $A (param $0 f32)
   (drop
    (call $C
@@ -527,12 +510,16 @@
    )
   )
  )
+ ;; CHECK:      (type $0 (func))
+
  ;; CHECK:      (func $B
  ;; CHECK-NEXT:  (local $0 f32)
- ;; CHECK-NEXT:  (call $A
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (drop
+ ;; CHECK-NEXT:  (local $1 f32)
+ ;; CHECK-NEXT:  (local $2 f32)
+ ;; CHECK-NEXT:  (block
+ ;; CHECK-NEXT:   (block $__inlined_func$A$3
+ ;; CHECK-NEXT:    (local.set $1
+ ;; CHECK-NEXT:     (block (result f32)
  ;; CHECK-NEXT:      (block $__inlined_func$C$2 (result f32)
  ;; CHECK-NEXT:       (local.tee $0
  ;; CHECK-NEXT:        (block
@@ -544,7 +531,19 @@
  ;; CHECK-NEXT:       (local.get $0)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (local.set $2
+ ;; CHECK-NEXT:     (f32.const 0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result f32)
+ ;; CHECK-NEXT:      (block $__inlined_func$C (result f32)
+ ;; CHECK-NEXT:       (local.set $2
+ ;; CHECK-NEXT:        (local.get $1)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (local.get $2)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
