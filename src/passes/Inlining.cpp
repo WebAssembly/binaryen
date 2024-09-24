@@ -446,11 +446,11 @@ struct Updater : public TryDepthWalker<Updater> {
 };
 
 // Core inlining logic. Modifies the outside function (adding locals as
-// needed).
-static void doInlining(Module* module,
-                       Function* into,
-                       const InliningAction& action,
-                       PassOptions& options) {
+// needed) by copying the inlined code into it.
+static void doCodeInlining(Module* module,
+                           Function* into,
+                           const InliningAction& action,
+                           PassOptions& options) {
   Function* from = action.contents;
   auto* call = (*action.callSite)->cast<Call>();
 
@@ -622,6 +622,13 @@ static void doInlining(Module* module,
     }
     *action.callSite = builder.makeSequence(old, builder.makeUnreachable());
   }
+}
+
+// Updates the outer function after we inline into it. This is a general
+// operation that does not depend on what we inlined, it just makes sure that we
+// refinalize everything, have no duplicate break labels, etc.
+static void updateAfterInlining(Module* module,
+                                Function* into) {
   // Anything we inlined into may now have non-unique label names, fix it up.
   // Note that we must do this before refinalization, as otherwise duplicate
   // block labels can lead to errors (the IR must be valid before we
@@ -633,6 +640,14 @@ static void doInlining(Module* module,
   // New locals we added may require fixups for nondefaultability.
   // FIXME Is this not done automatically?
   TypeUpdating::handleNonDefaultableLocals(into, *module);
+}
+
+static void doInlining(Module* module,
+                       Function* into,
+                       const InliningAction& action,
+                       PassOptions& options) {
+  doCodeInlining(module, into, action, options);
+  updateAfterInlining(module, into);
 }
 
 // A map of function names to the inlining actions we've decided to actually
@@ -657,9 +672,13 @@ struct DoInlining : public Pass {
     assert(iter != chosenActions.end());
     const auto& actions = iter->second;
     assert(!actions.empty());
+
+    // Inline all the code first, then update func once at the end (which saves
+    // e.g. running ReFinalize after each action, of which there might be many).
     for (auto action : actions) {
-      doInlining(module, func, action, getPassOptions());
+      doCodeInlining(module, func, action, getPassOptions());
     }
+    updateAfterInlining(module, func);
   }
 
 private:
