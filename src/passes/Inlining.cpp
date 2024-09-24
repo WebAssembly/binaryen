@@ -627,8 +627,7 @@ static void doCodeInlining(Module* module,
 // Updates the outer function after we inline into it. This is a general
 // operation that does not depend on what we inlined, it just makes sure that we
 // refinalize everything, have no duplicate break labels, etc.
-static void updateAfterInlining(Module* module,
-                                Function* into) {
+static void updateAfterInlining(Module* module, Function* into) {
   // Anything we inlined into may now have non-unique label names, fix it up.
   // Note that we must do this before refinalization, as otherwise duplicate
   // block labels can lead to errors (the IR must be valid before we
