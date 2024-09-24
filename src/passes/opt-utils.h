@@ -28,15 +28,23 @@
 
 namespace wasm::OptUtils {
 
+// Given a PassRunner, applies a set of useful passes that make sense to run
+// after inlining.
+inline void addUsefulPassesAfterInlining(PassRunner& runner) {
+  // Propagating constants makes a lot of sense after inlining, as new constants
+  // may have arrived.
+  runner.add("precompute-propagate");
+  // Do all the usual stuff.
+  runner.addDefaultFunctionOptimizationPasses();
+}
+
 // Run useful optimizations after inlining new code into a set of functions.
 inline void optimizeAfterInlining(const PassUtils::FuncSet& funcs,
                                   Module* module,
                                   PassRunner* parentRunner) {
   PassUtils::FilteredPassRunner runner(module, funcs, parentRunner->options);
   runner.setIsNested(true);
-  // this is especially useful after inlining
-  runner.add("precompute-propagate");
-  runner.addDefaultFunctionOptimizationPasses(); // do all the usual stuff
+  addUsefulPassesAfterInlining(runner);
   runner.run();
 }
 
