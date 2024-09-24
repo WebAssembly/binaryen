@@ -1336,7 +1336,7 @@ struct Inlining : public Pass {
         std::cout << "inline " << inlinedName << " into " << func->name << '\n';
 #endif
 
-        // Update the action for the actual inlining we are chose to perform
+        // Update the action for the actual inlining we have chosen to perform
         // (when splitting, we will actually inline one of the split pieces and
         // not the original function itself; note how even if we do that then
         // we are still removing a call to the original function here, and so
