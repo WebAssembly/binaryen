@@ -112,19 +112,19 @@
   )
 
   ;; CHECK:      (func $symbolNames
-  ;; CHECK-NEXT:  ;;@ /tmp/src.cpp:1:1:MyClass.myMethod
+  ;; CHECK-NEXT:  ;;@ /tmp/src.cpp:1:2:MyClass.myMethod
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  ;;@ ../src.cpp:2:2:MyClass::myMethod
+  ;; CHECK-NEXT:  ;;@ ../src.cpp:3:4:MyClass::myMethod
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  ;;@ café.cpp:2:2:topLevelFunction
+  ;; CHECK-NEXT:  ;;@ café.cpp:5:6:topLevelFunction
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $symbolNames
-    ;;@ /tmp/src.cpp:1:1:MyClass.myMethod
+    ;;@ /tmp/src.cpp:1:2:MyClass.myMethod
     (nop)
-    ;;@ ../src.cpp:2:2:MyClass::myMethod
+    ;;@ ../src.cpp:3:4:MyClass::myMethod
     (nop)
-    ;;@ café.cpp:2:2:topLevelFunction
+    ;;@ café.cpp:5:6:topLevelFunction
     (nop)
   )
 )
