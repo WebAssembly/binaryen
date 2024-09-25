@@ -1797,12 +1797,12 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
 
     std::optional<BinaryLocation> symbolNameIndex;
     if (!contents.empty()) {
-      auto name = contents;
+      auto symbolName = contents;
       auto [it, inserted] =
-        debugSymbolNameIndices.insert({name, debugSymbolNameIndices.size()});
+        debugSymbolNameIndices.insert({symbolName, debugSymbolNameIndices.size()});
       if (inserted) {
         assert(wasm.debugInfoSymbolNames.size() == it->second);
-        wasm.debugInfoSymbolNames.push_back(std::string(file));
+        wasm.debugInfoSymbolNames.push_back(std::string(symbolName));
       }
       *symbolNameIndex = it->second;
     }
