@@ -3003,7 +3003,8 @@ void WasmBinaryReader::readNextDebugLocation() {
     peek = sourceMap->peek();
     if (!(peek == ',' || peek == '\"')) {
       int32_t symbolNameIndexDelta = readBase64VLQ(*sourceMap);
-      symbolNameIndex = nextDebugLocation.symbolNameIndex.value_or(0) + symbolNameIndexDelta;
+      symbolNameIndex =
+        nextDebugLocation.symbolNameIndex.value_or(0) + symbolNameIndexDelta;
     }
 
     nextDebugLocation = {fileIndex, lineNumber, columnNumber, symbolNameIndex};
