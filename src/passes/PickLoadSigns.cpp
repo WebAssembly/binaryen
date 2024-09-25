@@ -45,6 +45,11 @@ struct PickLoadSigns : public WalkerPass<ExpressionStackWalker<PickLoadSigns>> {
   std::unordered_map<Load*, Index> loads;
 
   void doWalkFunction(Function* func) {
+    if (getModule()->memories.empty()) {
+      // There can be no loads without a memory.
+      return;
+    }
+
     // prepare
     usages.resize(func->getNumLocals());
     // walk
