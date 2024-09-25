@@ -3002,7 +3002,8 @@ void WasmBinaryReader::readNextDebugLocation() {
     std::optional<BinaryLocation> symbolNameIndex;
     peek = sourceMap->peek();
     if (!(peek == ',' || peek == '\"')) {
-      symbolNameIndex = readBase64VLQ(*sourceMap);
+      int32_t symbolNameIndexDelta = readBase64VLQ(*sourceMap);
+      symbolNameIndex = nextDebugLocation.symbolNameIndex.value_or(0) + symbolNameIndexDelta;
     }
 
     nextDebugLocation = {fileIndex, lineNumber, columnNumber, symbolNameIndex};

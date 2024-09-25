@@ -116,7 +116,7 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT:  ;;@ ../src.cpp:2:2:MyClass::myMethod
   ;; CHECK-NEXT:  (nop)
-  ;; CHECK-NEXT:  ;;@ café.cpp:2:2:MyClass::myMethod
+  ;; CHECK-NEXT:  ;;@ café.cpp:2:2:topLevelFunction
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $symbolNames
