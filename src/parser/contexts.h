@@ -1778,16 +1778,26 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     }
     contents = contents.substr(lineSize + 1);
 
-    lexer = Lexer(contents);
+    auto colSize = contents.find(':');
+    auto rest = std::string_view();
+    if (colSize == contents.npos) {
+      colSize = contents.size();
+      if (colSize == 0) {
+        return;
+      }
+    } else {
+      rest = contents.substr(colSize + 1);
+    }
+    lexer = Lexer(contents.substr(0, colSize));
     auto col = lexer.takeU32();
-    if (!col || !lexer.empty()) {
+    if (!col && !lexer.empty()) {
       return;
     }
+    contents = rest;
 
     std::optional<BinaryLocation> symbolNameIndex;
-    auto namePos = contents.find(':');
-    if (namePos != contents.npos) {
-      auto name = contents.substr(namePos + 1);
+    if (!contents.empty()) {
+      auto name = contents;
       auto [it, inserted] =
         debugSymbolNameIndices.insert({name, debugSymbolNameIndices.size()});
       if (inserted) {
