@@ -1804,7 +1804,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
         assert(wasm.debugInfoSymbolNames.size() == it->second);
         wasm.debugInfoSymbolNames.push_back(std::string(symbolName));
       }
-      *symbolNameIndex = it->second;
+      symbolNameIndex = it->second;
     }
 
     // TODO: If we ever parallelize the parse, access to
