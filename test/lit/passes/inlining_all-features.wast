@@ -20,10 +20,8 @@
   (func $foo)
 
   ;; CHECK:      (func $ref_func_test (type $1) (result funcref)
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$foo
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (block $__inlined_func$foo
+  ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (ref.func $foo)
   ;; CHECK-NEXT: )

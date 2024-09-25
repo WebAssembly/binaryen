@@ -22,16 +22,14 @@
 
   ;; CHECK:      (func $caller-with-label (type $1) (param $x i32)
   ;; CHECK-NEXT:  (loop $label
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (block $__inlined_func$callee-with-label
-  ;; CHECK-NEXT:     (try $label0
-  ;; CHECK-NEXT:      (do
-  ;; CHECK-NEXT:       (nop)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (catch $tag$0
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (pop i32)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:   (block $__inlined_func$callee-with-label
+  ;; CHECK-NEXT:    (try $label0
+  ;; CHECK-NEXT:     (do
+  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (catch $tag$0
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -89,10 +87,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (delegate 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block (result i32)
-  ;; CHECK-NEXT:   (block $__inlined_func$callee-a$1 (result i32)
-  ;; CHECK-NEXT:    (i32.const 42)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (block $__inlined_func$callee-a$1 (result i32)
+  ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller-with-try-delegate (result i32)
@@ -109,22 +105,16 @@
 
   ;; CHECK:      (func $caller-with-pop (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag$0
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (block $__inlined_func$callee-b$2
-  ;; CHECK-NEXT:      (local.set $0
-  ;; CHECK-NEXT:       (local.get $1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:    (block $__inlined_func$callee-b$2
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (pop i32)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )

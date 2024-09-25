@@ -66,36 +66,32 @@
   ;; PARTIAL:      (func $call-pattern-A (type $0)
   ;; PARTIAL-NEXT:  (local $0 i32)
   ;; PARTIAL-NEXT:  (local $1 i32)
-  ;; PARTIAL-NEXT:  (block
-  ;; PARTIAL-NEXT:   (block $__inlined_func$byn-split-inlineable-A$pattern-A
-  ;; PARTIAL-NEXT:    (local.set $0
-  ;; PARTIAL-NEXT:     (i32.const 1)
+  ;; PARTIAL-NEXT:  (block $__inlined_func$byn-split-inlineable-A$pattern-A
+  ;; PARTIAL-NEXT:   (local.set $0
+  ;; PARTIAL-NEXT:    (i32.const 1)
+  ;; PARTIAL-NEXT:   )
+  ;; PARTIAL-NEXT:   (if
+  ;; PARTIAL-NEXT:    (i32.eqz
+  ;; PARTIAL-NEXT:     (local.get $0)
   ;; PARTIAL-NEXT:    )
-  ;; PARTIAL-NEXT:    (if
-  ;; PARTIAL-NEXT:     (i32.eqz
+  ;; PARTIAL-NEXT:    (then
+  ;; PARTIAL-NEXT:     (call $byn-split-outlined-A$pattern-A
   ;; PARTIAL-NEXT:      (local.get $0)
-  ;; PARTIAL-NEXT:     )
-  ;; PARTIAL-NEXT:     (then
-  ;; PARTIAL-NEXT:      (call $byn-split-outlined-A$pattern-A
-  ;; PARTIAL-NEXT:       (local.get $0)
-  ;; PARTIAL-NEXT:      )
   ;; PARTIAL-NEXT:     )
   ;; PARTIAL-NEXT:    )
   ;; PARTIAL-NEXT:   )
   ;; PARTIAL-NEXT:  )
-  ;; PARTIAL-NEXT:  (block
-  ;; PARTIAL-NEXT:   (block $__inlined_func$byn-split-inlineable-A$pattern-A$1
-  ;; PARTIAL-NEXT:    (local.set $1
-  ;; PARTIAL-NEXT:     (i32.const 2)
+  ;; PARTIAL-NEXT:  (block $__inlined_func$byn-split-inlineable-A$pattern-A$1
+  ;; PARTIAL-NEXT:   (local.set $1
+  ;; PARTIAL-NEXT:    (i32.const 2)
+  ;; PARTIAL-NEXT:   )
+  ;; PARTIAL-NEXT:   (if
+  ;; PARTIAL-NEXT:    (i32.eqz
+  ;; PARTIAL-NEXT:     (local.get $1)
   ;; PARTIAL-NEXT:    )
-  ;; PARTIAL-NEXT:    (if
-  ;; PARTIAL-NEXT:     (i32.eqz
+  ;; PARTIAL-NEXT:    (then
+  ;; PARTIAL-NEXT:     (call $byn-split-outlined-A$pattern-A
   ;; PARTIAL-NEXT:      (local.get $1)
-  ;; PARTIAL-NEXT:     )
-  ;; PARTIAL-NEXT:     (then
-  ;; PARTIAL-NEXT:      (call $byn-split-outlined-A$pattern-A
-  ;; PARTIAL-NEXT:       (local.get $1)
-  ;; PARTIAL-NEXT:      )
   ;; PARTIAL-NEXT:     )
   ;; PARTIAL-NEXT:    )
   ;; PARTIAL-NEXT:   )
@@ -155,50 +151,46 @@
   ;; PARTIAL-NEXT:  (local $0 i32)
   ;; PARTIAL-NEXT:  (local $1 i32)
   ;; PARTIAL-NEXT:  (drop
-  ;; PARTIAL-NEXT:   (block (result i32)
-  ;; PARTIAL-NEXT:    (block $__inlined_func$byn-split-inlineable-B$pattern-B$2 (result i32)
-  ;; PARTIAL-NEXT:     (local.set $0
-  ;; PARTIAL-NEXT:      (i32.const 1)
-  ;; PARTIAL-NEXT:     )
-  ;; PARTIAL-NEXT:     (block (result i32)
-  ;; PARTIAL-NEXT:      (if
-  ;; PARTIAL-NEXT:       (i32.eqz
-  ;; PARTIAL-NEXT:        (local.get $0)
-  ;; PARTIAL-NEXT:       )
-  ;; PARTIAL-NEXT:       (then
-  ;; PARTIAL-NEXT:        (br $__inlined_func$byn-split-inlineable-B$pattern-B$2
-  ;; PARTIAL-NEXT:         (call $byn-split-outlined-B$pattern-B
-  ;; PARTIAL-NEXT:          (local.get $0)
-  ;; PARTIAL-NEXT:         )
+  ;; PARTIAL-NEXT:   (block $__inlined_func$byn-split-inlineable-B$pattern-B$2 (result i32)
+  ;; PARTIAL-NEXT:    (local.set $0
+  ;; PARTIAL-NEXT:     (i32.const 1)
+  ;; PARTIAL-NEXT:    )
+  ;; PARTIAL-NEXT:    (block (result i32)
+  ;; PARTIAL-NEXT:     (if
+  ;; PARTIAL-NEXT:      (i32.eqz
+  ;; PARTIAL-NEXT:       (local.get $0)
+  ;; PARTIAL-NEXT:      )
+  ;; PARTIAL-NEXT:      (then
+  ;; PARTIAL-NEXT:       (br $__inlined_func$byn-split-inlineable-B$pattern-B$2
+  ;; PARTIAL-NEXT:        (call $byn-split-outlined-B$pattern-B
+  ;; PARTIAL-NEXT:         (local.get $0)
   ;; PARTIAL-NEXT:        )
   ;; PARTIAL-NEXT:       )
   ;; PARTIAL-NEXT:      )
-  ;; PARTIAL-NEXT:      (local.get $0)
   ;; PARTIAL-NEXT:     )
+  ;; PARTIAL-NEXT:     (local.get $0)
   ;; PARTIAL-NEXT:    )
   ;; PARTIAL-NEXT:   )
   ;; PARTIAL-NEXT:  )
   ;; PARTIAL-NEXT:  (drop
-  ;; PARTIAL-NEXT:   (block (result i32)
-  ;; PARTIAL-NEXT:    (block $__inlined_func$byn-split-inlineable-B$pattern-B$3 (result i32)
-  ;; PARTIAL-NEXT:     (local.set $1
-  ;; PARTIAL-NEXT:      (i32.const 2)
-  ;; PARTIAL-NEXT:     )
-  ;; PARTIAL-NEXT:     (block (result i32)
-  ;; PARTIAL-NEXT:      (if
-  ;; PARTIAL-NEXT:       (i32.eqz
-  ;; PARTIAL-NEXT:        (local.get $1)
-  ;; PARTIAL-NEXT:       )
-  ;; PARTIAL-NEXT:       (then
-  ;; PARTIAL-NEXT:        (br $__inlined_func$byn-split-inlineable-B$pattern-B$3
-  ;; PARTIAL-NEXT:         (call $byn-split-outlined-B$pattern-B
-  ;; PARTIAL-NEXT:          (local.get $1)
-  ;; PARTIAL-NEXT:         )
+  ;; PARTIAL-NEXT:   (block $__inlined_func$byn-split-inlineable-B$pattern-B$3 (result i32)
+  ;; PARTIAL-NEXT:    (local.set $1
+  ;; PARTIAL-NEXT:     (i32.const 2)
+  ;; PARTIAL-NEXT:    )
+  ;; PARTIAL-NEXT:    (block (result i32)
+  ;; PARTIAL-NEXT:     (if
+  ;; PARTIAL-NEXT:      (i32.eqz
+  ;; PARTIAL-NEXT:       (local.get $1)
+  ;; PARTIAL-NEXT:      )
+  ;; PARTIAL-NEXT:      (then
+  ;; PARTIAL-NEXT:       (br $__inlined_func$byn-split-inlineable-B$pattern-B$3
+  ;; PARTIAL-NEXT:        (call $byn-split-outlined-B$pattern-B
+  ;; PARTIAL-NEXT:         (local.get $1)
   ;; PARTIAL-NEXT:        )
   ;; PARTIAL-NEXT:       )
   ;; PARTIAL-NEXT:      )
-  ;; PARTIAL-NEXT:      (local.get $1)
   ;; PARTIAL-NEXT:     )
+  ;; PARTIAL-NEXT:     (local.get $1)
   ;; PARTIAL-NEXT:    )
   ;; PARTIAL-NEXT:   )
   ;; PARTIAL-NEXT:  )

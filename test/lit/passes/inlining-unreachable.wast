@@ -75,11 +75,9 @@
 
   ;; CHECK:      (func $caller (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (block $__inlined_func$callee
-  ;; CHECK-NEXT:     (call $imported
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (block $__inlined_func$callee
+  ;; CHECK-NEXT:    (call $imported
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -100,22 +98,20 @@
 
   ;; CHECK:      (func $caller-2 (type $0)
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (block $__inlined_func$callee-2$1
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (block $__return_call
-  ;; CHECK-NEXT:       (block
-  ;; CHECK-NEXT:        (try
-  ;; CHECK-NEXT:         (do
-  ;; CHECK-NEXT:          (unreachable)
-  ;; CHECK-NEXT:          (br $__return_call)
-  ;; CHECK-NEXT:         )
+  ;; CHECK-NEXT:   (block $__inlined_func$callee-2$1
+  ;; CHECK-NEXT:    (block
+  ;; CHECK-NEXT:     (block $__return_call
+  ;; CHECK-NEXT:      (block
+  ;; CHECK-NEXT:       (try
+  ;; CHECK-NEXT:        (do
+  ;; CHECK-NEXT:         (unreachable)
+  ;; CHECK-NEXT:         (br $__return_call)
   ;; CHECK-NEXT:        )
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (call $imported
-  ;; CHECK-NEXT:       (unreachable)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (call $imported
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -179,11 +175,9 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (return
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (block $__inlined_func$1
-  ;; CHECK-NEXT:     (block $block0
-  ;; CHECK-NEXT:      (unreachable)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (block $__inlined_func$1
+  ;; CHECK-NEXT:    (block $block0
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
