@@ -237,10 +237,8 @@ public:
       if (type.isConcrete() || curr->type.isConcrete()) {
 #if 1 // def WASM_INTERPRETER_DEBUG
         if (!Type::isSubType(type, curr->type)) {
-          std::cerr << "expected "
-                    << ModuleType(*module, curr->type) << ", seeing "
-                    << ModuleType(*module, type)
-                    << " from\n"
+          std::cerr << "expected " << ModuleType(*module, curr->type)
+                    << ", seeing " << ModuleType(*module, type) << " from\n"
                     << ModuleExpression(*module, curr) << '\n';
         }
 #endif
