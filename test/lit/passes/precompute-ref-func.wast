@@ -4,11 +4,10 @@
 (module
 
   ;; CHECK:      (type $shared-func (shared (func (result (ref null (shared func))))))
+  (type $shared-func (shared (func (result (ref null (shared func))))))
 
   ;; CHECK:      (type $func (func (result funcref)))
   (type $func (func (result funcref)))
-
-  (type $shared-func (shared (func (result (ref null (shared func))))))
 
   ;; CHECK:      (type $2 (func (result (ref $shared-func))))
 
