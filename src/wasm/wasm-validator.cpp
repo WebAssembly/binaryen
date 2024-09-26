@@ -2160,6 +2160,10 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case RelaxedTruncUVecF32x4ToVecI32x4:
     case RelaxedTruncZeroSVecF64x2ToVecI32x4:
     case RelaxedTruncZeroUVecF64x2ToVecI32x4:
+    case TruncSatSVecF16x8ToVecI16x8:
+    case TruncSatUVecF16x8ToVecI16x8:
+    case ConvertSVecI16x8ToVecF16x8:
+    case ConvertUVecI16x8ToVecF16x8:
       shouldBeEqual(curr->type, Type(Type::v128), curr, "expected v128 type");
       shouldBeEqual(
         curr->value->type, Type(Type::v128), curr, "expected v128 operand");

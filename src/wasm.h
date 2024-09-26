@@ -238,6 +238,10 @@ enum UnaryOp {
 
   // Half precision SIMD
   SplatVecF16x8,
+  TruncSatSVecF16x8ToVecI16x8,
+  TruncSatUVecF16x8ToVecI16x8,
+  ConvertSVecI16x8ToVecF16x8,
+  ConvertUVecI16x8ToVecF16x8,
 
   InvalidUnary
 };
