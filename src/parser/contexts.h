@@ -1790,7 +1790,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     }
     lexer = Lexer(contents.substr(0, colSize));
     auto col = lexer.takeU32();
-    if (!col && !lexer.empty()) {
+    if (!col) {
       return;
     }
     contents = rest;
