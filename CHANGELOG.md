@@ -15,6 +15,9 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - Many compile time speedups were implemented (2x overall improvement), see
+   https://github.com/WebAssembly/binaryen/issues/4165#issuecomment-2372548271
+
 v119
 ----
 
