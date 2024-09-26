@@ -38,6 +38,20 @@ static void updateLocationSet(std::set<Function::DebugLocation>& locations,
   std::swap(locations, updatedLocations);
 }
 
+static void updateSymbolSet(std::set<Function::DebugLocation>& locations,
+                            std::vector<Index>& symbolIndexMap) {
+  std::set<Function::DebugLocation> updatedLocations;
+
+  for (auto iter : locations) {
+    if (iter.symbolNameIndex.has_value()) {
+      iter.symbolNameIndex = symbolIndexMap[*iter.symbolNameIndex];
+    }
+    updatedLocations.insert(iter);
+  }
+  locations.clear();
+  std::swap(locations, updatedLocations);
+}
+
 // Copies a function into a module. If newName is provided it is used as the
 // name of the function (otherwise the original name is copied). If fileIndexMap
 // is specified, it is used to rename source map filename indices when copying
@@ -87,8 +101,9 @@ copyFunctionWithoutAdd(Function* func,
             (*symbolNameIndexMap)[*(iter.second->symbolNameIndex)];
         }
       }
+      updateSymbolSet(ret->prologLocation, *symbolNameIndexMap);
+      updateSymbolSet(ret->epilogLocation, *symbolNameIndexMap);
     }
-    // TODO: Do we need something like updateLocationSet here?
   }
   ret->module = func->module;
   ret->base = func->base;
