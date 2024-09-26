@@ -2,16 +2,19 @@
 ;; RUN: wasm-opt %s -all --precompute -S -o - | filecheck %s
 
 (module
-  ;; CHECK:      (type $0 (func (result funcref)))
-
-  (type $func (func (result funcref)))
 
   ;; CHECK:      (type $shared-func (shared (func (result (ref null (shared func))))))
+
+  ;; CHECK:      (type $func (func (result funcref)))
+  (type $func (func (result funcref)))
+
   (type $shared-func (shared (func (result (ref null (shared func))))))
+
+  ;; CHECK:      (type $2 (func (result (ref $shared-func))))
 
   ;; CHECK:      (elem declare func $test $test-shared)
 
-  ;; CHECK:      (func $test (type $0) (result funcref)
+  ;; CHECK:      (func $test (type $func) (result funcref)
   ;; CHECK-NEXT:  (return
   ;; CHECK-NEXT:   (ref.func $test)
   ;; CHECK-NEXT:  )
@@ -37,6 +40,9 @@
     )
   )
 
+  ;; CHECK:      (func $precompute-nested-brs (type $2) (result (ref $shared-func))
+  ;; CHECK-NEXT:  (ref.func $test-shared)
+  ;; CHECK-NEXT: )
   (func $precompute-nested-brs (result (ref $shared-func))
     ;; We have two nested brs here, and we can precompute it all. While doing so
     ;; we must not get confused between the targets and values: one sends a
