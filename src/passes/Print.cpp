@@ -1368,6 +1368,18 @@ struct PrintExpressionContents
       case RelaxedTruncZeroUVecF64x2ToVecI32x4:
         o << "i32x4.relaxed_trunc_f64x2_u_zero";
         break;
+      case TruncSatSVecF16x8ToVecI16x8:
+        o << "i16x8.trunc_sat_f16x8_s";
+        break;
+      case TruncSatUVecF16x8ToVecI16x8:
+        o << "i16x8.trunc_sat_f16x8_u";
+        break;
+      case ConvertSVecI16x8ToVecF16x8:
+        o << "f16x8.convert_i16x8_s";
+        break;
+      case ConvertUVecI16x8ToVecF16x8:
+        o << "f16x8.convert_i16x8_u";
+        break;
       case InvalidUnary:
         WASM_UNREACHABLE("unvalid unary operator");
     }
