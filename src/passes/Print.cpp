@@ -3702,4 +3702,9 @@ std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {
   return wasm::printStackInst(&inst, o);
 }
 
+std::ostream& operator<<(std::ostream& o, wasm::ModuleType pair) {
+  wasm::printTypeOrName(pair.second, o, &pair.first);
+  return o;
+}
+
 } // namespace std
