@@ -3143,7 +3143,11 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
                          CeilVecF16x8,
                          FloorVecF16x8,
                          TruncVecF16x8,
-                         NearestVecF16x8)),
+                         NearestVecF16x8,
+                         TruncSatSVecF16x8ToVecI16x8,
+                         TruncSatUVecF16x8ToVecI16x8,
+                         ConvertSVecI16x8ToVecF16x8,
+                         ConvertUVecI16x8ToVecF16x8)),
              make(Type::v128)});
       }
       WASM_UNREACHABLE("invalid value");

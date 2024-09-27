@@ -6571,6 +6571,22 @@ bool WasmBinaryReader::maybeVisitSIMDUnary(Expression*& out, uint32_t code) {
       curr = allocator.alloc<Unary>();
       curr->op = RelaxedTruncZeroUVecF64x2ToVecI32x4;
       break;
+    case BinaryConsts::I16x8TruncSatF16x8S:
+      curr = allocator.alloc<Unary>();
+      curr->op = TruncSatSVecF16x8ToVecI16x8;
+      break;
+    case BinaryConsts::I16x8TruncSatF16x8U:
+      curr = allocator.alloc<Unary>();
+      curr->op = TruncSatUVecF16x8ToVecI16x8;
+      break;
+    case BinaryConsts::F16x8ConvertI16x8S:
+      curr = allocator.alloc<Unary>();
+      curr->op = ConvertSVecI16x8ToVecF16x8;
+      break;
+    case BinaryConsts::F16x8ConvertI16x8U:
+      curr = allocator.alloc<Unary>();
+      curr->op = ConvertUVecI16x8ToVecF16x8;
+      break;
     default:
       return false;
   }

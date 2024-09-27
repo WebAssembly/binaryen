@@ -326,12 +326,34 @@ switch (buf[0]) {
               default: goto parse_error;
             }
           }
-          case 'c':
-            if (op == "f16x8.ceil"sv) {
-              CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::CeilVecF16x8));
-              return Ok{};
+          case 'c': {
+            switch (buf[7]) {
+              case 'e':
+                if (op == "f16x8.ceil"sv) {
+                  CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::CeilVecF16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'o': {
+                switch (buf[20]) {
+                  case 's':
+                    if (op == "f16x8.convert_i16x8_s"sv) {
+                      CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::ConvertSVecI16x8ToVecF16x8));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  case 'u':
+                    if (op == "f16x8.convert_i16x8_u"sv) {
+                      CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::ConvertUVecI16x8ToVecF16x8));
+                      return Ok{};
+                    }
+                    goto parse_error;
+                  default: goto parse_error;
+                }
+              }
+              default: goto parse_error;
             }
-            goto parse_error;
+          }
           case 'd':
             if (op == "f16x8.div"sv) {
               CHECK_ERR(makeBinary(ctx, pos, annotations, BinaryOp::DivVecF16x8));
@@ -2035,6 +2057,23 @@ switch (buf[0]) {
                   default: goto parse_error;
                 }
               }
+              default: goto parse_error;
+            }
+          }
+          case 't': {
+            switch (buf[22]) {
+              case 's':
+                if (op == "i16x8.trunc_sat_f16x8_s"sv) {
+                  CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::TruncSatSVecF16x8ToVecI16x8));
+                  return Ok{};
+                }
+                goto parse_error;
+              case 'u':
+                if (op == "i16x8.trunc_sat_f16x8_u"sv) {
+                  CHECK_ERR(makeUnary(ctx, pos, annotations, UnaryOp::TruncSatUVecF16x8ToVecI16x8));
+                  return Ok{};
+                }
+                goto parse_error;
               default: goto parse_error;
             }
           }

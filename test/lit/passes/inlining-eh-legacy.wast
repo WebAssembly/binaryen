@@ -22,16 +22,14 @@
 
   ;; CHECK:      (func $caller-with-label (type $1) (param $x i32)
   ;; CHECK-NEXT:  (loop $label
-  ;; CHECK-NEXT:   (block
-  ;; CHECK-NEXT:    (block $__inlined_func$callee-with-label
-  ;; CHECK-NEXT:     (try $label0
-  ;; CHECK-NEXT:      (do
-  ;; CHECK-NEXT:       (nop)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (catch $tag$0
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (pop i32)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:   (block $__inlined_func$callee-with-label
+  ;; CHECK-NEXT:    (try $label0
+  ;; CHECK-NEXT:     (do
+  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (catch $tag$0
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
@@ -89,10 +87,8 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (delegate 0)
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block (result i32)
-  ;; CHECK-NEXT:   (block $__inlined_func$callee-a$1 (result i32)
-  ;; CHECK-NEXT:    (i32.const 42)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (block $__inlined_func$callee-a$1 (result i32)
+  ;; CHECK-NEXT:   (i32.const 42)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller-with-try-delegate (result i32)
@@ -109,22 +105,16 @@
 
   ;; CHECK:      (func $caller-with-pop (type $0)
   ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (try
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $tag$0
-  ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (pop i32)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (block $__inlined_func$callee-b$2
-  ;; CHECK-NEXT:      (local.set $0
-  ;; CHECK-NEXT:       (local.get $1)
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:    (block $__inlined_func$callee-b$2
+  ;; CHECK-NEXT:     (local.set $0
+  ;; CHECK-NEXT:      (pop i32)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -133,12 +123,59 @@
     (try
       (do)
       (catch $tag$0
-        ;; After this $callee-b is inlined, there will be additional 'block's
-        ;; surrouding this 'pop', which makes its location invalid. We fix it by
+        ;; After this $callee-b is inlined, there will be an additional block
+        ;; surrouding this 'pop'. However, that block has no breaks to it, and
+        ;; will be considered the implicit block of the catch scope, so no
+        ;; fixups are done.
+        (call $callee-b
+          (pop i32)
+        )
+      )
+    )
+  )
+
+  (func $callee-c (param $x i32) (result i32)
+    (local.get $x)
+  )
+
+  ;; CHECK:      (func $caller-with-pop-twice (type $0)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $tag$0
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (pop i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block $__inlined_func$callee-b$4
+  ;; CHECK-NEXT:     (local.set $1
+  ;; CHECK-NEXT:      (block $__inlined_func$callee-c$3 (result i32)
+  ;; CHECK-NEXT:       (local.set $0
+  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.get $0)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller-with-pop-twice
+    (try
+      (do)
+      (catch $tag$0
+        ;; As above, but now with two calls here, both of whom will be inlined.
+        ;; As a result we have two blocks that nest the pops. We fix that by
         ;; creating a new local to set the result of 'pop' and later use
         ;; local.get to get the value within the inlined function body.
         (call $callee-b
-          (pop i32)
+          (call $callee-c
+            (pop i32)
+          )
         )
       )
     )

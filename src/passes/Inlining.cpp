@@ -290,15 +290,12 @@ struct Planner : public WalkerPass<TryDepthWalker<Planner>> {
     }
     if (state->inlinableFunctions.count(curr->target) && !isUnreachable &&
         curr->target != getFunction()->name) {
-      // nest the call in a block. that way the location of the pointer to the
-      // call will not change even if we inline multiple times into the same
-      // function, otherwise call1(call2()) might be a problem
-      auto* block = Builder(*getModule()).makeBlock(curr);
-      replaceCurrent(block);
       // can't add a new element in parallel
       assert(state->actionsForFunction.count(getFunction()->name) > 0);
       state->actionsForFunction[getFunction()->name].emplace_back(
-        &block->list[0], getModule()->getFunction(curr->target), tryDepth > 0);
+        getCurrentPointer(),
+        getModule()->getFunction(curr->target),
+        tryDepth > 0);
     }
   }
 
