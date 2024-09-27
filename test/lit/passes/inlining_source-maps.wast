@@ -19,18 +19,14 @@
  )
 
  ;; CHECK:      (func $2 (type $0)
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (block $__inlined_func$0
- ;; CHECK-NEXT:    ;;@ foo.cpp:1:2
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  (block $__inlined_func$0
+ ;; CHECK-NEXT:   ;;@ foo.cpp:1:2
+ ;; CHECK-NEXT:   (nop)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  ;;@
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (block $__inlined_func$1$1
- ;; CHECK-NEXT:    ;;@ bar.cpp:3:4:MyFunction
- ;; CHECK-NEXT:    (nop)
- ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  (block $__inlined_func$1$1
+ ;; CHECK-NEXT:   ;;@ bar.cpp:3:4:MyFunction
+ ;; CHECK-NEXT:   (nop)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $2
