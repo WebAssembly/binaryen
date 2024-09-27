@@ -2726,7 +2726,9 @@ void WasmBinaryReader::readFunctions() {
 void WasmBinaryReader::readVars() {
   uint32_t totalVars = 0;
   size_t numLocalTypes = getU32LEB();
-  std::vector<std::pair<uint32_t, Type>> decodedVars;
+  // Use a SmallVector as in the common (MVP) case there are only 4 possible
+  // types.
+  SmallVector<std::pair<uint32_t, Type>, 4> decodedVars;
   decodedVars.reserve(numLocalTypes);
   for (size_t t = 0; t < numLocalTypes; t++) {
     auto num = getU32LEB();
