@@ -15,6 +15,13 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+ - Many compile time speedups were implemented (2x overall improvement), see
+   https://github.com/WebAssembly/binaryen/issues/4165#issuecomment-2372548271
+ - [wasm-split] Add a multi-split mode. (#6943)
+ - Add a `--preserve-type-order` option that minimizes text format changes in
+   type ordering. (#6916)
+ - Add a J2CL specific pass that moves itable entries to vtables. (#6888)
+
 v119
 ----
 
