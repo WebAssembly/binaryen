@@ -464,10 +464,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
   }
 
   // A stack of try_tables that are parents of the current expression.
-  std::vector<TryTable> tryTables;
+  std::vector<TryTable*> tryTables;
 
   static void popTryTable(RemoveUnusedBrs* self, Expression** currp) {
-    assert(!self->tryTables.empty() && self->tryTables.back == *currp);
+    assert(!self->tryTables.empty() && self->tryTables.back() == *currp);
     self->tryTables.pop_back();
   }
 
@@ -493,9 +493,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // Get the dropped children while ignoring parent effects: the
             // parent is a throw, but we have proven we can remove those
             // effects.
-            replaceCurrent(getDroppedChildrenAndAppend(curr, *getModule(), getPassOptions(), br, DropMode::IgnoreParentEffects));
-            return;
+            auto* rep = getDroppedChildrenAndAppend(curr, *getModule(), getPassOptions(), br, DropMode::IgnoreParentEffects);
+            replaceCurrent(rep);
           }
+
+          // Return even if we did not optimize: we found our tag was caught.
+          return;
         }
       }
     }
@@ -522,7 +525,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       self->pushTask(clear, currp); // clear all flow after the condition
       self->pushTask(scan, &iff->condition);
       return;
-    } else if (auto* tryy = (*currp)->dynCast<TryTable>())
+    } else if (auto* tryy = (*currp)->dynCast<TryTable>()) {
       // Push the try we are reaching, and add a task to pop it, after all the
       // tasks that Super::scan will push for its children.
       self->tryTables.push_back(tryy);

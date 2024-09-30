@@ -4,5 +4,116 @@
 (module
   ;; CHECK:      (tag $e (param i32))
   (tag $e (param i32))
+  (tag $f (param i32))
 
+  (func $throw-caught-all
+    (block $catch
+      (try_table (catch_all $catch)
+        ;; This throw can be a br.
+        (throw $e (i32.const 0))
+      )
+    )
+  )
+
+  (func $throw-caught-all-more (param $x i32)
+    (block $catch
+      (try_table (catch_all $catch)
+        ;; Look into nested children.
+        (if
+          (local.get $x)
+          (then
+            (throw $e (i32.const 0))
+          )
+        )
+      )
+    )
+  )
+
+  (func $throw-caught-precise
+    (block $catch
+      ;; We can still optimize here, even though we replaced the catch_all with
+      ;; a precise tag, because the tag matches.
+      (try_table (catch $e $catch)
+        (throw $e (i32.const 0))
+      )
+    )
+  )
+
+  (func $throw-caught-precise-later
+    (block $fail
+      (block $catch
+        ;; We can still optimize here, by looking through the tags til we find
+        ;; ours.
+        (try_table (catch $f $fail) (catch $e $catch)
+          (throw $e (i32.const 0))
+        )
+      )
+    )
+  )
+
+  (func $throw-caught-all-later
+    (block $fail
+      (block $catch
+        ;; We can still optimize here, by looking through the tags til we find
+        ;; the catch_all
+        (try_table (catch $f $fail) (catch_all $catch)
+          (throw $e (i32.const 0))
+        )
+      )
+    )
+  )
+
+  (func $throw-caught-fail
+    (block $catch
+      ;; The tag does *not* match.
+      (try_table (catch $f $catch)
+        (throw $e (i32.const 0))
+      )
+    )
+  )
+
+  (func $throw-caught outer
+    (block $fail
+      (block $catch
+        (try_table (catch  $catch)
+          (try_table (catch $f $fail)
+            ;; This throw can be a br, thanks to the outer try.
+            (throw $e (i32.const 0))
+          )
+        )
+      )
+    )
+  )
+
+  (func $throw-catch-all-ref (result exnref)
+    (block $catch (result exnref)
+      (try_table (catch_all_ref $catch)
+        ;; This is caught with a ref, so we do not optimize.
+        (throw $e (i32.const 0))
+      )
+    )
+  )
+
+  (func $throw-caught-ref (result exnref)
+    (block $catch (result exnref)
+      (try_table (catch_ref $e $catch)
+        ;; As above, but without catch_all.
+        (throw $e (i32.const 0))
+      )
+    )
+  )
+
+  (func $throw-caught-ref-later-all (result exnref)
+    (block $outer (result exnref)
+      (block $catch
+        (try_table (catch_ref $e $outer) (catch_all $catch)
+          ;; This is caught with a ref, before we reach the catch all, so we do
+          ;; not optimize.
+          (throw $e (i32.const 0))
+        )
+      )
+      (unreachable)
+    )
+  )
 )
+
