@@ -68,9 +68,10 @@
   ;; CHECK-NEXT:  (block $fail
   ;; CHECK-NEXT:   (block $catch
   ;; CHECK-NEXT:    (try_table (catch $f $fail) (catch $e $catch)
-  ;; CHECK-NEXT:     (br $fail)
+  ;; CHECK-NEXT:     (br $catch)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $throw-caught-precise-later)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $throw-caught-precise-later
@@ -91,9 +92,10 @@
   ;; CHECK-NEXT:  (block $fail
   ;; CHECK-NEXT:   (block $catch
   ;; CHECK-NEXT:    (try_table (catch $f $fail) (catch_all $catch)
-  ;; CHECK-NEXT:     (br $fail)
+  ;; CHECK-NEXT:     (br $catch)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $throw-caught-precise-later)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $throw-caught-all-later
@@ -105,6 +107,8 @@
           (throw $e)
         )
       )
+      ;; Add an effect here, so the two blocks are not mergeable.
+      (call $throw-caught-precise-later)
     )
   )
 
@@ -129,10 +133,11 @@
   ;; CHECK-NEXT:   (block $catch
   ;; CHECK-NEXT:    (try_table (catch $e $catch)
   ;; CHECK-NEXT:     (try_table (catch $f $fail)
-  ;; CHECK-NEXT:      (br $fail)
+  ;; CHECK-NEXT:      (br $catch)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $throw-caught-precise-later)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $throw-caught-outer
@@ -145,6 +150,8 @@
           )
         )
       )
+      ;; Add an effect here, so the two blocks are not mergeable.
+      (call $throw-caught-precise-later)
     )
   )
 
@@ -174,7 +181,7 @@
   (func $throw-caught-ref (result exnref)
     (block $catch (result exnref)
       (try_table (catch_ref $e $catch)
-        ;; As above, but without catch_all.
+        ;; As above, but with catch_all.
         (throw $e)
       )
     )
@@ -225,7 +232,7 @@
   (func $throw-caught-all (param $x i32)
     (block $catch
       (try_table (catch_all $catch)
-        ;; This throw can be a br.
+        ;; This throw can be a br. The call must be kept in a drop.
         (throw $e
           (call $effect)
         )
