@@ -20,6 +20,7 @@
 
 #include <ir/branch-utils.h>
 #include <ir/cost.h>
+#include <ir/drop.h>
 #include <ir/effects.h>
 #include <ir/gc-type-utils.h>
 #include <ir/literal-utils.h>
@@ -260,7 +261,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     } else if (curr->is<Nop>()) {
       // ignore (could be result of a previous cycle)
       self->stopValueFlow();
-    } else if (curr->is<Loop>()) {
+    } else if (curr->is<Loop>()) { // TODO: eh
       // do nothing - it's ok for values to flow out
     } else if (auto* sw = curr->dynCast<Switch>()) {
       self->stopFlow();
@@ -462,13 +463,49 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     //       later down, see visitLocalSet.
   }
 
+  // A stack of try_tables that are parents of the current expression.
+  std::vector<TryTable> tryTables;
+
+  static void popTryTable(RemoveUnusedBrs* self, Expression** currp) {
+    assert(!self->tryTables.empty() && self->tryTables.back == *currp);
+    self->tryTables.pop_back();
+  }
+
+  void visitThrow(Throw* curr) {
+    // If a throw will definitely be caught, and it is not a catch with a
+    // reference, then it is just a branch (i.e. the code is using exceptions as
+    // control flow). Turn it into a branch here so that the rest of the pass
+    // can optimize it with all other branches.
+    //
+    // To do so, look at the closest try and see if it will catch us, and
+    // proceed outwards if not.
+    auto thrownTag = curr->tag;
+    for (int i = tryTables.size() - 1; i >= 0; i--) {
+      auto* tryy = tryTables[i];
+      for (Index j = 0; j < tryy->catchTags.size(); j++) {
+        auto tag = tryy->catchTags[j];
+        // The tag must match, or be a catch_all)
+        if (tag == thrownTag || tag.isNull()) {
+          // This must not be a catch with exnref.
+          if (!tryy->catchRefs[j]) {
+            // Success! Create a break.
+            auto* br = Builder(*getModule()).makeBreak(tryy->catchDests[j]);
+            // Get the dropped children while ignoring parent effects: the
+            // parent is a throw, but we have proven we can remove those
+            // effects.
+            replaceCurrent(getDroppedChildrenAndAppend(curr, *getModule(), getPassOptions(), br, DropMode::IgnoreParentEffects));
+            return;
+          }
+        }
+      }
+    }
+  }
+
   // override scan to add a pre and a post check task to all nodes
   static void scan(RemoveUnusedBrs* self, Expression** currp) {
     self->pushTask(visitAny, currp);
 
-    auto* iff = (*currp)->dynCast<If>();
-
-    if (iff) {
+    if (auto* iff = (*currp)->dynCast<If>()) {
       if (iff->condition->type == Type::unreachable) {
         // avoid trying to optimize this, we never reach it anyhow
         return;
@@ -484,9 +521,14 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       self->pushTask(scan, &iff->ifTrue);
       self->pushTask(clear, currp); // clear all flow after the condition
       self->pushTask(scan, &iff->condition);
-    } else {
-      Super::scan(self, currp);
+      return;
+    } else if (auto* tryy = (*currp)->dynCast<TryTable>())
+      // Push the try we are reaching, and add a task to pop it, after all the
+      // tasks that Super::scan will push for its children.
+      self->tryTables.push_back(tryy);
+      self->pushTask(popTryTable, currp);
     }
+    Super::scan(self, currp);
   }
 
   // optimizes a loop. returns true if we made changes
