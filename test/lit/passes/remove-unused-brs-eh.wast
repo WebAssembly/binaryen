@@ -6,6 +6,8 @@
   (tag $e)
   ;; CHECK:      (tag $f)
   (tag $f)
+  ;; CHECK:      (tag $g)
+  (tag $g)
 
   ;; CHECK:      (func $throw-caught-all (type $0)
   ;; CHECK-NEXT:  (block $catch
@@ -207,6 +209,39 @@
         )
       )
       (unreachable)
+    )
+  )
+
+  ;; CHECK:      (func $throw-multi (type $0)
+  ;; CHECK-NEXT:  (block $outer
+  ;; CHECK-NEXT:   (block $middle
+  ;; CHECK-NEXT:    (block $inner
+  ;; CHECK-NEXT:     (try_table (catch $e $outer) (catch $f $middle) (catch_all $inner)
+  ;; CHECK-NEXT:      (br $outer)
+  ;; CHECK-NEXT:      (br $middle)
+  ;; CHECK-NEXT:      (br $inner)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (call $throw-caught-precise-later)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (call $throw-caught-precise-later)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $throw-multi
+    (block $outer
+      (block $middle
+        (block $inner
+          (try_table (catch $e $outer) (catch $f $middle) (catch_all $inner)
+            ;; Multiple throws, optimizable in different ways.
+            (throw $e)
+            (throw $f)
+            (throw $g)
+          )
+        )
+        ;; Add an effect here, so the two blocks are not mergeable.
+        (call $throw-caught-precise-later)
+      )
+      (call $throw-caught-precise-later)
     )
   )
 )
