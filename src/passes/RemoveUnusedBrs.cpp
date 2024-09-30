@@ -493,7 +493,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // Get the dropped children while ignoring parent effects: the
             // parent is a throw, but we have proven we can remove those
             // effects.
-            auto* rep = getDroppedChildrenAndAppend(curr, *getModule(), getPassOptions(), br, DropMode::IgnoreParentEffects);
+            auto* rep =
+              getDroppedChildrenAndAppend(curr,
+                                          *getModule(),
+                                          getPassOptions(),
+                                          br,
+                                          DropMode::IgnoreParentEffects);
             replaceCurrent(rep);
           }
 
