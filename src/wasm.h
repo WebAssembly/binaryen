@@ -2404,6 +2404,9 @@ public:
 // Utility for printing an expression with named types.
 using ModuleExpression = std::pair<Module&, Expression*>;
 
+// Utility for printing an type with a name, if the module defines a name.
+using ModuleType = std::pair<Module&, Type>;
+
 // Utility for printing only the top level of an expression. Named types will be
 // used if `module` is non-null.
 struct ShallowExpression {
@@ -2425,6 +2428,7 @@ std::ostream& operator<<(std::ostream& o, wasm::Function& func);
 std::ostream& operator<<(std::ostream& o, wasm::Expression& expression);
 std::ostream& operator<<(std::ostream& o, wasm::ModuleExpression pair);
 std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression);
+std::ostream& operator<<(std::ostream& o, wasm::ModuleType pair);
 
 } // namespace std
 

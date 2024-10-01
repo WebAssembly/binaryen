@@ -472,6 +472,10 @@ void WasmBinaryWriter::writeFunctions() {
       std::cerr << "Some VMs may not accept this binary because it has a large "
                 << "number of parameters in function " << func->name << ".\n";
     }
+    if (func->getNumLocals() > WebLimitations::MaxFunctionLocals) {
+      std::cerr << "Some VMs may not accept this binary because it has a large "
+                << "number of locals in function " << func->name << ".\n";
+    }
   });
   finishSection(sectionStart);
 }
@@ -2742,16 +2746,20 @@ void WasmBinaryReader::readFunctions() {
 void WasmBinaryReader::readVars() {
   uint32_t totalVars = 0;
   size_t numLocalTypes = getU32LEB();
+  // Use a SmallVector as in the common (MVP) case there are only 4 possible
+  // types.
+  SmallVector<std::pair<uint32_t, Type>, 4> decodedVars;
+  decodedVars.reserve(numLocalTypes);
   for (size_t t = 0; t < numLocalTypes; t++) {
     auto num = getU32LEB();
-    // The core spec allows up to 2^32 locals, but to avoid allocation failures,
-    // we additionally impose a much smaller limit, matching the JS embedding.
-    if (std::ckd_add(&totalVars, totalVars, num) ||
-        totalVars > WebLimitations::MaxFunctionLocals) {
-      throwError("too many locals");
+    if (std::ckd_add(&totalVars, totalVars, num)) {
+      throwError("unaddressable number of locals");
     }
     auto type = getConcreteType();
-
+    decodedVars.emplace_back(num, type);
+  }
+  currFunction->vars.reserve(totalVars);
+  for (auto [num, type] : decodedVars) {
     while (num > 0) {
       currFunction->vars.push_back(type);
       num--;
