@@ -1020,22 +1020,21 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
     } while (anotherCycle);
 
-    // thread trivial jumps
+    // Thread trivial jumps.
     struct JumpThreader
       : public PostWalker<JumpThreader,
                           UnifiedExpressionVisitor<JumpThreader>> {
-      // map of all value-less breaks and switches going to a block (and not a
-      // loop)
+      // Map of all value-less breaks and switches going to a block. (For
+      // simplicitly, we store all break targets here, both blocks and loops,
+      // since blocks are 99% of the set of branch targets. Any loops added here
+      // are ignored later.)
       std::unordered_map<Name, std::vector<Expression*>> branchesToBlock;
 
       bool worked = false;
 
       void visitExpression(Expression* curr) {
         // Find the relevant targets: targets that (as mentioned above) have no
-        // value sent to them. (Note that we don't bother to check if the target
-        // is a block or not: we only care about blocks, and blocks are 99% of
-        // the set of branch targets, so it is simpler to just ignore loops
-        // later, which we do by not having any logic for loops.)
+        // value sent to them.
         SmallSet<Name, 2> relevantTargets;
         BranchUtils::operateOnScopeNameUsesAndSentTypes(
           curr, [&](Name name, Type sent) {
