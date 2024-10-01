@@ -57,7 +57,7 @@ static void updateSymbolSet(std::set<Function::DebugLocation>& locations,
 // Copies a function into a module. If newName is provided it is used as the
 // name of the function (otherwise the original name is copied). If fileIndexMap
 // is specified, it is used to rename source map filename indices when copying
-// the function from one module to another one. If symbolNameINdexMap is
+// the function from one module to another one. If symbolNameIndexMap is
 // specified, it is used to rename source map symbol name indices when copying
 // the function from one module to another one.
 Function* copyFunction(Function* func,
