@@ -154,7 +154,7 @@
     ;; try_table could be optimized out. We do this for `try` but not for
     ;; `try_table` - we leave such optimizations to --remove-unused-brs (that
     ;; pass can see that the throw can be converted to a br).
-    
+
     (block $catch
       (try_table (catch_all $catch)
         (throw $e (i32.const 0))
