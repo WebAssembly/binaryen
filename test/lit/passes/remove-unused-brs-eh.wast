@@ -254,6 +254,9 @@
   ;; CHECK:      (tag $e (param i32))
   (tag $e (param i32))
 
+  ;; CHECK:      (tag $multi (param i32 f64))
+  (tag $multi (param i32 f64))
+
   ;; CHECK:      (func $throw-caught-all (type $0) (param $x i32)
   ;; CHECK-NEXT:  (block $catch
   ;; CHECK-NEXT:   (try_table (catch_all $catch)
@@ -270,6 +273,51 @@
         ;; This throw can be a br. The call must be kept in a drop.
         (throw $e
           (call $effect)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $throw-br-contents (type $1) (result i32)
+  ;; CHECK-NEXT:  (block $catch (result i32)
+  ;; CHECK-NEXT:   (try_table (catch $e $catch)
+  ;; CHECK-NEXT:    (br $catch
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $throw-br-contents (result i32)
+    (block $catch (result i32)
+      (try_table (catch $e $catch)
+        ;; This throw is not caught by catch_all as above, so the value must be
+        ;; sent as a value on the br we optimize it to.
+        (throw $e
+          (i32.const 42)
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $throw-br-contents-multi (type $2) (result i32 f64)
+  ;; CHECK-NEXT:  (block $catch (type $2) (result i32 f64)
+  ;; CHECK-NEXT:   (try_table (catch $multi $catch)
+  ;; CHECK-NEXT:    (br $catch
+  ;; CHECK-NEXT:     (tuple.make 2
+  ;; CHECK-NEXT:      (i32.const 42)
+  ;; CHECK-NEXT:      (f64.const 3.14159)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $throw-br-contents-multi (result i32 f64)
+    ;; As above, but now with a multivalue tag.
+    (block $catch (result i32 f64)
+      (try_table (catch $multi $catch)
+        (throw $multi
+          (i32.const 42)
+          (f64.const 3.14159)
         )
       )
     )

@@ -488,14 +488,30 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         if (tag == thrownTag || tag.isNull()) {
           // This must not be a catch with exnref.
           if (!tryy->catchRefs[j]) {
-            // Success! Create a break.
-            auto* br = Builder(*getModule()).makeBreak(tryy->catchDests[j]);
-            // Get the dropped children while ignoring parent effects: the
-            // parent is a throw, but we have proven we can remove those
-            // effects.
+            // Success! Create a break to replace the throw.
+            auto dest = tryy->catchDests[j];
+            auto& wasm = *getModule();
+            Builder builder(wasm);
+            if (!tag.isNull()) {
+              // We are catching a specific tag, so values might be sent.
+              Expression* value = nullptr;
+              if (curr->operands.size() == 1) {
+                value = curr->operands[0];
+              } else if (curr->operands.size() > 1) {
+                value = builder.makeTupleMake(curr->operands);
+              }
+              auto* br = builder.makeBreak(dest, value);
+              replaceCurrent(br);
+              return;
+            }
+
+            // catch_all: no values are sent. Drop the throw's children (while
+            // ignoring parent effects: the parent is a throw, but we have
+            // proven we can remove that effects).
+            auto* br = builder.makeBreak(dest);
             auto* rep =
               getDroppedChildrenAndAppend(curr,
-                                          *getModule(),
+                                          wasm,
                                           getPassOptions(),
                                           br,
                                           DropMode::IgnoreParentEffects);

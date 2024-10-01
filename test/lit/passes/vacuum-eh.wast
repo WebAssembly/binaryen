@@ -151,8 +151,10 @@
   ;; CHECK-NEXT: )
   (func $trivial-catch-all-of-throw (local $0 i32)
     ;; This try_table's body throws, but the catch_all catches it, so the entire
-    ;; try_table could be optimized out. We do this for `try` but not yet for
-    ;; `try_table`.
+    ;; try_table could be optimized out. We do this for `try` but not for
+    ;; `try_table` - we leave such optimizations to --remove-unused-brs (that
+    ;; pass can see that the throw can be converted to a br).
+    
     (block $catch
       (try_table (catch_all $catch)
         (throw $e (i32.const 0))
