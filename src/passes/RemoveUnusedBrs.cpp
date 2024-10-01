@@ -484,7 +484,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       auto* tryy = tryTables[i];
       for (Index j = 0; j < tryy->catchTags.size(); j++) {
         auto tag = tryy->catchTags[j];
-        // The tag must match, or be a catch_all)
+        // The tag must match, or be a catch_all.
         if (tag == thrownTag || tag.isNull()) {
           // This must not be a catch with exnref.
           if (!tryy->catchRefs[j]) {
@@ -507,7 +507,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
             // catch_all: no values are sent. Drop the throw's children (while
             // ignoring parent effects: the parent is a throw, but we have
-            // proven we can remove that effects).
+            // proven we can remove that effect).
             auto* br = builder.makeBreak(dest);
             auto* rep =
               getDroppedChildrenAndAppend(curr,

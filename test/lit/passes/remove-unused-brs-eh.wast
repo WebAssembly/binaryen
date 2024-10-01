@@ -183,7 +183,7 @@
   (func $throw-caught-ref (result exnref)
     (block $catch (result exnref)
       (try_table (catch_ref $e $catch)
-        ;; As above, but with catch_all.
+        ;; As above, but without catch_all.
         (throw $e)
       )
     )
@@ -246,7 +246,6 @@
   )
 )
 
-;; Test dropping of throw children.
 (module
   ;; CHECK:      (import "a" "b" (func $effect (type $1) (result i32)))
   (import "a" "b" (func $effect (result i32)))
