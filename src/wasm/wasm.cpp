@@ -1863,6 +1863,9 @@ void Module::updateMaps() {
   assert(tagsMap.size() == tags.size());
 }
 
-void Module::clearDebugInfo() { debugInfoFileNames.clear(); }
+void Module::clearDebugInfo() {
+  debugInfoFileNames.clear();
+  debugInfoSymbolNames.clear();
+}
 
 } // namespace wasm
