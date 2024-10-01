@@ -5662,28 +5662,12 @@ void BinaryenModuleInterpret(BinaryenModuleRef module) {
   ModuleRunner instance(*(Module*)module, &interface, {});
 }
 
-BinaryenIndex BinaryenModuleAddDebugInfoSymbolName(BinaryenModuleRef module,
-                                                   const char* symbolname) {
-  auto& debugInfoSymbolNames = ((Module*)module)->debugInfoSymbolNames;
-  BinaryenIndex index = debugInfoSymbolNames.size();
-  debugInfoSymbolNames.push_back(symbolname);
-  return index;
-}
-
 BinaryenIndex BinaryenModuleAddDebugInfoFileName(BinaryenModuleRef module,
                                                  const char* filename) {
   auto& debugInfoFileNames = ((Module*)module)->debugInfoFileNames;
   BinaryenIndex index = debugInfoFileNames.size();
   debugInfoFileNames.push_back(filename);
   return index;
-}
-
-const char* BinaryenModuleGetDebugInfoSymbolName(BinaryenModuleRef module,
-                                                 BinaryenIndex index) {
-  const auto& debugInfoSymbolNames = ((Module*)module)->debugInfoSymbolNames;
-  return index < debugInfoSymbolNames.size()
-           ? debugInfoSymbolNames.at(index).c_str()
-           : nullptr;
 }
 
 const char* BinaryenModuleGetDebugInfoFileName(BinaryenModuleRef module,
