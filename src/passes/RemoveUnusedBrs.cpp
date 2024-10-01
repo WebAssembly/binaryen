@@ -1021,7 +1021,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     } while (anotherCycle);
 
     // thread trivial jumps
-    struct JumpThreader : public PostWalker<JumpThreader, UnifiedExpressionVisitor<JumpThreader>> {
+    struct JumpThreader
+      : public PostWalker<JumpThreader,
+                          UnifiedExpressionVisitor<JumpThreader>> {
       // map of all value-less breaks and switches going to a block (and not a
       // loop)
       std::unordered_map<Name, std::vector<Expression*>> branchesToBlock;
@@ -1035,11 +1037,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // the set of branch targets, so it is simpler to just ignore loops
         // later, which we do by not having any logic for loops.)
         SmallSet<Name, 2> relevantTargets;
-        BranchUtils::operateOnScopeNameUsesAndSentTypes(curr, [&](Name name, Type sent) {
-          if (sent == Type::none) {
-            relevantTargets.insert(name);
-          }
-        });
+        BranchUtils::operateOnScopeNameUsesAndSentTypes(
+          curr, [&](Name name, Type sent) {
+            if (sent == Type::none) {
+              relevantTargets.insert(name);
+            }
+          });
 
         // Note ourselves on all relevant targets.
         for (auto target : relevantTargets) {
