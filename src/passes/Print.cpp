@@ -2518,7 +2518,7 @@ void PrintSExpression::printDebugLocation(
     o << ";;@ " << fileName << ":" << location->lineNumber << ":"
       << location->columnNumber;
 
-    if (location->symbolNameIndex.has_value()) {
+    if (location->symbolNameIndex) {
       auto symbolName =
         currModule->debugInfoSymbolNames[*(location->symbolNameIndex)];
       o << ":" << symbolName;

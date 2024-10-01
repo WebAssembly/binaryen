@@ -2073,7 +2073,8 @@ public:
   std::unordered_map<Index, Name> localNames;
   std::unordered_map<Name, Index> localIndices;
 
-  // Source maps debugging info: map expression nodes to their file, line, col.
+  // Source maps debugging info: map expression nodes to their file, line, col,
+  // symbol name.
   struct DebugLocation {
     BinaryLocation fileIndex, lineNumber, columnNumber;
     std::optional<BinaryLocation> symbolNameIndex;

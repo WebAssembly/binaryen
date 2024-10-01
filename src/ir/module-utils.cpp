@@ -38,12 +38,14 @@ static void updateLocationSet(std::set<Function::DebugLocation>& locations,
   std::swap(locations, updatedLocations);
 }
 
+// Update the symbol name indices when moving a set of debug locations from one
+// module to another.
 static void updateSymbolSet(std::set<Function::DebugLocation>& locations,
                             std::vector<Index>& symbolIndexMap) {
   std::set<Function::DebugLocation> updatedLocations;
 
   for (auto iter : locations) {
-    if (iter.symbolNameIndex.has_value()) {
+    if (iter.symbolNameIndex) {
       iter.symbolNameIndex = symbolIndexMap[*iter.symbolNameIndex];
     }
     updatedLocations.insert(iter);
