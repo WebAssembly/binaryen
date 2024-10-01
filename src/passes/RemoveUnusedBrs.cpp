@@ -509,12 +509,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             // ignoring parent effects: the parent is a throw, but we have
             // proven we can remove that effect).
             auto* br = builder.makeBreak(dest);
-            auto* rep =
-              getDroppedChildrenAndAppend(curr,
-                                          wasm,
-                                          getPassOptions(),
-                                          br,
-                                          DropMode::IgnoreParentEffects);
+            auto* rep = getDroppedChildrenAndAppend(
+              curr, wasm, getPassOptions(), br, DropMode::IgnoreParentEffects);
             replaceCurrent(rep);
           }
 
