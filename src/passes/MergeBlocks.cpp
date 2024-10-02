@@ -200,7 +200,11 @@ static bool hasDeadCode(Block* block) {
 // Given a dropped block, see if we can simplify it by optimizing the drop into
 // the block, removing the return value while doin so. Returns whether we
 // succeeded.
-bool optimizeDroppedBlock(Drop* drop, Block* block, Module& wasm, PassOptions& options,                           BranchUtils::BranchSeekerCache& branchInfo) {
+bool optimizeDroppedBlock(Drop* drop,
+                          Block* block,
+                          Module& wasm,
+                          PassOptions& options,
+                          BranchUtils::BranchSeekerCache& branchInfo) {
   assert(drop->value == block);
   if (block->name.is()) {
     // There may be breaks: see if we can remove their values.
@@ -263,7 +267,8 @@ static void optimizeBlock(Block* curr,
               // dce should have been run anyhow
               continue;
             }
-            if (optimizeDroppedBlock(drop, childBlock, *module, passOptions, branchInfo)) {
+            if (optimizeDroppedBlock(
+                  drop, childBlock, *module, passOptions, branchInfo)) {
               child = list[i] = childBlock;
               more = true;
               changed = true;
