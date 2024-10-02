@@ -542,7 +542,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       self->pushTask(clear, currp); // clear all flow after the condition
       self->pushTask(scan, &iff->condition);
       return;
-    } else if (auto* tryy = (*currp)->dynCast<TryTable>()) {
+    }
+    if (auto* tryy = (*currp)->dynCast<TryTable>()) {
       // Push the try we are reaching, and add a task to pop it, after all the
       // tasks that Super::scan will push for its children.
       self->tryTables.push_back(tryy);
