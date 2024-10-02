@@ -2,6 +2,8 @@
 ;; RUN: wasm-opt %s -all --merge-blocks -all -S -o - | filecheck %s
 
 (module
+  (import "a" "b" (func $import))
+
   (tag $empty)
 
   (tag $i32 (param i32))
@@ -11,8 +13,8 @@
     ;; by replacing catch_all_ref with catch_all.
     (drop
       (block $catch (result exnref)
-        (try_table (catch_all_ref $empty $catch)
-          (throw $empty)
+        (try_table (catch_all_ref $catch)
+          (call $import)
         )
       )
     )
@@ -24,7 +26,7 @@
     (drop
       (block $catch (result exnref)
         (try_table (catch_ref $empty $catch)
-          (throw $empty)
+          (call $import)
         )
       )
     )
@@ -34,21 +36,8 @@
     ;; As above, but with two catches, both of whom can be optimized.
     (drop
       (block $catch (result exnref)
-        (try_table (catch_ref $empty $catch) (catch_all_ref $empty $catch)
-          (throw $empty)
-        )
-      )
-    )
-  )
-
-  (func $drop-block-try_catch_all_i32
-    ;; Now the tag has a value, but catch_all_ref can still be optimized.
-    (drop
-      (block $catch (result exnref)
-        (try_table (catch_all_ref $i32 $catch)
-          (throw $i32
-            (i32.const 42)
-          )
+        (try_table (catch_ref $empty $catch) (catch_all_ref $catch)
+          (call $import)
         )
       )
     )
@@ -60,9 +49,7 @@
     (tuple.drop 2
       (block $catch (result i32 exnref)
         (try_table (catch_ref $i32 $catch)
-          (throw $i32
-            (i32.const 42)
-          )
+          (call $import)
         )
       )
     )
@@ -75,7 +62,7 @@
         (drop
           (block $inner (result exnref)
             (try_table (catch_ref $i32 $outer) (catch_all_ref $inner)
-              (call $drop-block-try_catch_multi_partial)
+              (call $import)
             )
           )
         )
@@ -87,8 +74,8 @@
   (func $drop-block-try_catch_all
     ;; Without _ref, there is nothing to optimize (and we should not error).
     (block $catch
-      (try_table (catch_all $empty $catch)
-        (throw $empty)
+      (try_table (catch_all $catch)
+        (call $import)
       )
     )
   )
@@ -97,17 +84,18 @@
     ;; As above, without _all.
     (block $catch
       (try_table (catch $empty $catch)
-        (throw $empty)
+        (call $import)
       )
     )
   )
 
   (func $drop-block-try_catch_i32
-    ;; As above, with an i32. We could optimize here TODO
-    (block $catch
-      (try_table (catch $i32 $catch)
-        (throw $i32
-          (i32.const 42)
+    ;; As above, with an i32. We could optimize here, removing the tag's
+    ;; contents as opposed to the ref. TODO
+    (drop
+      (block $catch (result i32)
+        (try_table (catch $i32 $catch)
+          (call $import)
         )
       )
     )
