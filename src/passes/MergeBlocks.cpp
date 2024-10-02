@@ -273,7 +273,8 @@ static bool optimizeDroppedBlock(Drop* drop,
     drop->finalize();
     block->list.back() = drop;
   }
-  block->finalize();
+  // Remove the old type, which was from the value we just removed.
+  block->finalize(Type::none);
   return true;
 }
 
