@@ -212,6 +212,7 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
         // Remove the existing ref being sent.
         assert(curr->catchRefs[i]);
         curr->catchRefs[i] = false;
+        curr->sentTypes[i] = Type::none;
       }
     }
   }

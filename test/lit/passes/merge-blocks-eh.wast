@@ -12,12 +12,10 @@
   (tag $i32 (param i32))
 
   ;; CHECK:      (func $drop-block-try_catch_all_ref (type $0)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $catch (result exnref)
-  ;; CHECK-NEXT:    (try_table (catch_all_ref $catch)
-  ;; CHECK-NEXT:     (call $import)
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (block $catch
+  ;; CHECK-NEXT:   (try_table (catch_all $catch)
+  ;; CHECK-NEXT:    (call $import)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -35,12 +33,10 @@
   )
 
   ;; CHECK:      (func $drop-block-try_catch_ref (type $0)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $catch (result exnref)
-  ;; CHECK-NEXT:    (try_table (catch_ref $empty $catch)
-  ;; CHECK-NEXT:     (call $import)
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (block $catch
+  ;; CHECK-NEXT:   (try_table (catch $empty $catch)
+  ;; CHECK-NEXT:    (call $import)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -58,12 +54,10 @@
   )
 
   ;; CHECK:      (func $drop-block-try_catch_multi (type $0)
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block $catch (result exnref)
-  ;; CHECK-NEXT:    (try_table (catch_ref $empty $catch) (catch_all_ref $catch)
-  ;; CHECK-NEXT:     (call $import)
-  ;; CHECK-NEXT:     (unreachable)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (block $catch
+  ;; CHECK-NEXT:   (try_table (catch $empty $catch) (catch_all $catch)
+  ;; CHECK-NEXT:    (call $import)
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -105,12 +99,10 @@
   ;; CHECK:      (func $drop-block-try_catch_multi_partial (type $0)
   ;; CHECK-NEXT:  (tuple.drop 2
   ;; CHECK-NEXT:   (block $outer (type $1) (result i32 exnref)
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (block $inner (result exnref)
-  ;; CHECK-NEXT:      (try_table (catch_ref $i32 $outer) (catch_all_ref $inner)
-  ;; CHECK-NEXT:       (call $import)
-  ;; CHECK-NEXT:       (unreachable)
-  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:    (block $inner
+  ;; CHECK-NEXT:     (try_table (catch_ref $i32 $outer) (catch_all $inner)
+  ;; CHECK-NEXT:      (call $import)
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (unreachable)
