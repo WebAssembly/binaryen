@@ -15,7 +15,7 @@
 
  (type $array (array (mut i32)))
 
- ;; CHECK:      (func $br_on_to_drop (type $5)
+ ;; CHECK:      (func $br_on_to_drop (type $4)
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (block $label$1 (result i31ref)
@@ -43,7 +43,7 @@
   )
  )
 
- ;; CHECK:      (func $struct.set (type $4) (param $struct (ref null $struct))
+ ;; CHECK:      (func $struct.set (type $5) (param $struct (ref null $struct))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 1234)
@@ -68,7 +68,7 @@
   )
  )
 
- ;; CHECK:      (func $struct.get (type $4) (param $struct (ref null $struct))
+ ;; CHECK:      (func $struct.get (type $5) (param $struct (ref null $struct))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (i32.const 1234)
@@ -401,6 +401,26 @@
     (i32.const 4)
    )
    (i32.const 2)
+  )
+ )
+
+ ;; CHECK:      (func $toplevel (type $4)
+ ;; CHECK-NEXT:  (block $label
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (i32.const 42)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (br $label)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $toplevel
+  ;; Test we can remove a block value even when the drop is at the toplevel of
+  ;; a function.
+  (drop
+   (block $label (result i32)
+    (br $label
+     (i32.const 42)
+    )
+   )
   )
  )
 

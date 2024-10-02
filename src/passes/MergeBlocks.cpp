@@ -238,7 +238,46 @@ static bool hasDeadCode(Block* block) {
   return false;
 }
 
-// core block optimizer routine
+// Given a dropped block, see if we can simplify it by optimizing the drop into
+// the block, removing the return value while doin so. Returns whether we
+// succeeded.
+static bool optimizeDroppedBlock(Drop* drop,
+                                 Block* block,
+                                 Module& wasm,
+                                 PassOptions& options,
+                                 BranchUtils::BranchSeekerCache& branchInfo) {
+  assert(drop->value == block);
+  if (block->name.is()) {
+    // There may be breaks: see if we can remove their values.
+    Expression* expression = block;
+    ProblemFinder finder(options);
+    finder.setModule(&wasm);
+    finder.origin = block->name;
+    finder.walk(expression);
+    if (finder.found()) {
+      // We found a problem that blocks us.
+      return false;
+    }
+
+    // Success. Fix up breaks before continuing to handle the drop itself.
+    BreakValueDropper fixer(options, branchInfo);
+    fixer.origin = block->name;
+    fixer.setModule(&wasm);
+    fixer.walk(expression);
+  }
+
+  // Optimize by removing the block. Reuse the drop, if we still need it.
+  auto* last = block->list.back();
+  if (last->type.isConcrete()) {
+    drop->value = last;
+    drop->finalize();
+    block->list.back() = drop;
+  }
+  block->finalize();
+  return true;
+}
+
+// Core block optimizer routine.
 static void optimizeBlock(Block* curr,
                           Module* module,
                           PassOptions& passOptions,
@@ -259,8 +298,8 @@ static void optimizeBlock(Block* curr,
       Loop* loop = nullptr;
       // To to handle a non-block child.
       if (!childBlock) {
-        // if we have a child that is (drop (block ..)) then we can move the
-        // drop into the block, and remove br values. this allows more merging,
+        // Tf we have a child that is (drop (block ..)) then we can move the
+        // drop into the block, and remove br values. This allows more merging.
         if (auto* drop = list[i]->dynCast<Drop>()) {
           childBlock = drop->value->dynCast<Block>();
           if (childBlock) {
@@ -269,36 +308,13 @@ static void optimizeBlock(Block* curr,
               // dce should have been run anyhow
               continue;
             }
-            if (childBlock->name.is()) {
-              Expression* expression = childBlock;
-              // check if it's ok to remove the value from all breaks to us
-              ProblemFinder finder(passOptions);
-              finder.setModule(module);
-              finder.origin = childBlock->name;
-              finder.walk(expression);
-              if (finder.found()) {
-                childBlock = nullptr;
-              } else {
-                // fix up breaks
-                BreakValueDropper fixer(passOptions, branchInfo);
-                fixer.origin = childBlock->name;
-                fixer.setModule(module);
-                fixer.walk(expression);
-              }
-            }
-            if (childBlock) {
-              // we can do it!
-              // reuse the drop, if we still need it
-              auto* last = childBlock->list.back();
-              if (last->type.isConcrete()) {
-                drop->value = last;
-                drop->finalize();
-                childBlock->list.back() = drop;
-              }
-              childBlock->finalize();
+            if (optimizeDroppedBlock(
+                  drop, childBlock, *module, passOptions, branchInfo)) {
               child = list[i] = childBlock;
               more = true;
               changed = true;
+            } else {
+              childBlock = nullptr;
             }
           }
         } else if ((loop = list[i]->dynCast<Loop>())) {
@@ -457,6 +473,18 @@ struct MergeBlocks
 
   void visitBlock(Block* curr) {
     optimizeBlock(curr, getModule(), getPassOptions(), branchInfo);
+  }
+
+  void visitDrop(Drop* curr) {
+    if (auto* block = curr->value->dynCast<Block>()) {
+      if (optimizeDroppedBlock(curr,
+                               block,
+                               *getModule(),
+                               getPassOptions(),
+                               branchInfo)) {
+        replaceCurrent(block);
+      }
+    }
   }
 
   // given
