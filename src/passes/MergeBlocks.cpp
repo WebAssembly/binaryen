@@ -434,6 +434,18 @@ struct MergeBlocks
     optimizeBlock(curr, getModule(), getPassOptions(), branchInfo);
   }
 
+  void visitDrop(Drop* curr) {
+    if (auto* block = curr->value->dynCast<Block>()) {
+      if (optimizeDroppedBlock(curr,
+                               block,
+                               *getModule(),
+                               getPassOptions(),
+                               branchInfo)) {
+        replaceCurrent(block);
+      }
+    }
+  }
+
   // given
   // (curr
   //  (block=child
