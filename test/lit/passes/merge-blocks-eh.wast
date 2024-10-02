@@ -84,8 +84,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $drop-block-try_catch_all_i32
-    ;; As above but without _all, so there is a problem: we are sending more
-    ;; than the ref. TODO
+    ;; Send a tag value + exnref. We don't handle this yet TODO
     (tuple.drop 2
       (block $catch (result i32 exnref)
         (try_table (catch_ref $i32 $catch)
@@ -173,8 +172,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $drop-block-try_catch_i32
-    ;; As above, with an i32. We could optimize here, removing the tag's
-    ;; contents as opposed to the ref. TODO
+    ;; Send an i32 without a ref. We could optimize here TODO
     (drop
       (block $catch (result i32)
         (try_table (catch $i32 $catch)
