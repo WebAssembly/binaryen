@@ -83,9 +83,11 @@
 
 namespace wasm {
 
-// Looks for reasons we can't remove the values from breaks to an origin
-// For example, if there is a switch targeting us, we can't do it - we can't
-// remove the value from other targets
+// Looks for reasons we can't remove the values from breaks to an origin. This
+// is run when we know the value sent to that block is dropped, so the value is
+// not needed, but some corner cases stop us (for example, if there is a switch
+// targeting us, we can't do it - we can't remove the value from the switch's
+// other targets).
 struct ProblemFinder
   : public ControlFlowWalker<ProblemFinder,
                              UnifiedExpressionVisitor<ProblemFinder>> {
@@ -118,6 +120,34 @@ struct ProblemFinder
         if (EffectAnalyzer(passOptions, *getModule(), br->value)
               .hasSideEffects()) {
           foundProblem = true;
+        }
+      }
+      return;
+    }
+
+    if (auto* tryy = curr->dynCast<TryTable>()) {
+      auto num = tryy->catchTags.size();
+      for (Index i = 0; i < num; i++) {
+        if (tryy->catchDests[i] == origin) {
+          // This try_table branches to the origin we care about. We know the
+          // value being sent to the block is dropped, so we'd like to stop
+          // anything from being sent to it. One simple thing we can handle is
+          // to remove the exnref, so if that is the only value being sent, we
+          // can optimize. That is the case for catch_all_ref, and catch_ref
+          // where the tag is empty.
+          //
+          // TODO: We could also support cases where the target block has
+          //       multiple values, and the ref at the end is never used.
+          if (tryy->catchTags[i].isNull() ||
+              getModule()->getTag(tryy->catchTags[i])->sig.params.size() == 0) {
+            // There must be a ref here, otherwise there is no value being sent
+            // at all, and we should not be running ProblemFinder at all.
+            assert(tryy->catchRefs[i]);
+          } else {
+            // Anything else is a problem.
+            foundProblem = true;
+            return;
+          }
         }
       }
       return;
@@ -172,6 +202,17 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
     // of concrete values
     if (!curr->value->type.isConcrete()) {
       replaceCurrent(curr->value);
+    }
+  }
+
+  void visitTryTable(TryTable* curr) {
+    auto num = curr->catchTags.size();
+    for (Index i = 0; i < num; i++) {
+      if (curr->catchDests[i] == origin) {
+        // Remove the existing ref being sent.
+        assert(curr->catchRefs[i]);
+        curr->catchRefs[i] = false;
+      }
     }
   }
 };
