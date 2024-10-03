@@ -2516,7 +2516,15 @@ void PrintSExpression::printDebugLocation(
   } else {
     auto fileName = currModule->debugInfoFileNames[location->fileIndex];
     o << ";;@ " << fileName << ":" << location->lineNumber << ":"
-      << location->columnNumber << '\n';
+      << location->columnNumber;
+
+    if (location->symbolNameIndex) {
+      auto symbolName =
+        currModule->debugInfoSymbolNames[*(location->symbolNameIndex)];
+      o << ":" << symbolName;
+    }
+
+    o << '\n';
   }
   doIndent(o, indent);
 }

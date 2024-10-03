@@ -2073,22 +2073,25 @@ public:
   std::unordered_map<Index, Name> localNames;
   std::unordered_map<Name, Index> localIndices;
 
-  // Source maps debugging info: map expression nodes to their file, line, col.
+  // Source maps debugging info: map expression nodes to their file, line, col,
+  // symbol name.
   struct DebugLocation {
     BinaryLocation fileIndex, lineNumber, columnNumber;
+    std::optional<BinaryLocation> symbolNameIndex;
     bool operator==(const DebugLocation& other) const {
       return fileIndex == other.fileIndex && lineNumber == other.lineNumber &&
-             columnNumber == other.columnNumber;
+             columnNumber == other.columnNumber &&
+             symbolNameIndex == other.symbolNameIndex;
     }
     bool operator!=(const DebugLocation& other) const {
       return !(*this == other);
     }
     bool operator<(const DebugLocation& other) const {
-      return fileIndex != other.fileIndex
-               ? fileIndex < other.fileIndex
-               : lineNumber != other.lineNumber
-                   ? lineNumber < other.lineNumber
-                   : columnNumber < other.columnNumber;
+      return fileIndex != other.fileIndex     ? fileIndex < other.fileIndex
+             : lineNumber != other.lineNumber ? lineNumber < other.lineNumber
+             : columnNumber != other.columnNumber
+               ? columnNumber < other.columnNumber
+               : symbolNameIndex < other.symbolNameIndex;
     }
   };
   // One can explicitly set the debug location of an expression to
@@ -2300,6 +2303,7 @@ public:
 
   // Source maps debug info.
   std::vector<std::string> debugInfoFileNames;
+  std::vector<std::string> debugInfoSymbolNames;
 
   // `features` are the features allowed to be used in this module and should be
   // respected regardless of the value of`hasFeaturesSection`.

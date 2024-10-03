@@ -1398,6 +1398,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     typeNames;
   const std::unordered_map<Index, Index>& implicitElemIndices;
 
+  std::unordered_map<std::string_view, Index> debugSymbolNameIndices;
   std::unordered_map<std::string_view, Index> debugFileIndices;
 
   // The index of the current module element.
@@ -1777,10 +1778,30 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
     }
     contents = contents.substr(lineSize + 1);
 
-    lexer = Lexer(contents);
+    auto colSize = contents.find(':');
+    if (colSize == contents.npos) {
+      colSize = contents.size();
+      if (colSize == 0) {
+        return;
+      }
+    }
+    lexer = Lexer(contents.substr(0, colSize));
     auto col = lexer.takeU32();
-    if (!col || !lexer.empty()) {
+    if (!col) {
       return;
+    }
+
+    std::optional<BinaryLocation> symbolNameIndex;
+    if (colSize != contents.size()) {
+      contents = contents.substr(colSize + 1);
+      auto symbolName = contents;
+      auto [it, inserted] = debugSymbolNameIndices.insert(
+        {symbolName, debugSymbolNameIndices.size()});
+      if (inserted) {
+        assert(wasm.debugInfoSymbolNames.size() == it->second);
+        wasm.debugInfoSymbolNames.push_back(std::string(symbolName));
+      }
+      symbolNameIndex = it->second;
     }
 
     // TODO: If we ever parallelize the parse, access to
@@ -1792,7 +1813,7 @@ struct ParseDefsCtx : TypeParserCtx<ParseDefsCtx> {
       wasm.debugInfoFileNames.push_back(std::string(file));
     }
     irBuilder.setDebugLocation(
-      Function::DebugLocation({it->second, *line, *col}));
+      Function::DebugLocation({it->second, *line, *col, symbolNameIndex}));
   }
 
   Result<> makeBlock(Index pos,

@@ -1674,6 +1674,7 @@ public:
   // Debug information reading helpers
   void setDebugLocations(std::istream* sourceMap_) { sourceMap = sourceMap_; }
   std::unordered_map<std::string, Index> debugInfoFileIndices;
+  std::unordered_map<std::string, Index> debugInfoSymbolNameIndices;
   void readNextDebugLocation();
   void readSourceMapHeader();
 
