@@ -11,6 +11,9 @@
   ;; CHECK:      (tag $i32 (param i32))
   (tag $i32 (param i32))
 
+  ;; CHECK:      (tag $exnref (param exnref))
+  (tag $exnref (param exnref))
+
   ;; CHECK:      (func $drop-block-try_catch_all_ref (type $0)
   ;; CHECK-NEXT:  (block $catch
   ;; CHECK-NEXT:   (try_table (catch_all $catch)
@@ -121,6 +124,30 @@
           )
         )
         (unreachable)
+      )
+    )
+  )
+
+  ;; CHECK:      (func $drop-block_try_catch_multi-fail (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $catch (result exnref)
+  ;; CHECK-NEXT:    (try_table (catch $exnref $catch) (catch_all_ref $catch)
+  ;; CHECK-NEXT:     (call $import)
+  ;; CHECK-NEXT:     (unreachable)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $drop-block_try_catch_multi-fail
+    (drop
+      ;; This block is sent an exnref in two ways: once as the contents of a tag
+      ;; and once as the ref of a catch_all_ref. We can remove the latter but
+      ;; not the former, and they go to the same block, so we cannot optimize.
+      (block $catch (result exnref)
+        (try_table (catch $exnref $catch) (catch_all_ref $catch)
+          (call $import)
+          (unreachable)
+        )
       )
     )
   )
