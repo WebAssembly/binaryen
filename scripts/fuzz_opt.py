@@ -838,9 +838,7 @@ class CompareVMs(TestCaseHandler):
                 # V8 does not support shared memories when running with
                 # shared-everything enabled, so do not fuzz shared-everything
                 # for now.
-                # Due to the V8 bug https://issues.chromium.org/issues/332931390
-                # we do not fuzz exception-handling either.
-                return all_disallowed(['shared-everything', 'exception-handling'])
+                return all_disallowed(['shared-everything'])
 
             def can_compare_to_self(self):
                 # With nans, VM differences can confuse us, so only very simple VMs
