@@ -257,7 +257,7 @@ static void optimizeBlock(Block* curr,
       Loop* loop = nullptr;
       // To to handle a non-block child.
       if (!childBlock) {
-        // Tf we have a child that is (drop (block ..)) then we can move the
+        // If we have a child that is (drop (block ..)) then we can move the
         // drop into the block, and remove br values. This allows more merging.
         if (auto* drop = list[i]->dynCast<Drop>()) {
           childBlock = drop->value->dynCast<Block>();
