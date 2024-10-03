@@ -297,7 +297,7 @@
         (br $outer)
       )
       ;; Stop execution between middle and outer. We should still optimize
-      ;; inner to middle.
+      ;; inner to outer.
       (unreachable)
     )
   )
