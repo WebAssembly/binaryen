@@ -238,9 +238,9 @@
     (v128.const i16x8 0x5140 0x7e00 0x7c00 0xfc00 0x7bff 0xfbff 0 0))
     (v128.const i16x8 42     0      65535  0      65504  0      0 0))
 (assert_return (invoke "f16x8.convert_i16x8_s"
-    ;;
+    ;; 32767 is not representable as a whole integer in FP16, so it becomes 32768.
     (v128.const i16x8 0 1      -1     32767  -32768 0 0 0))
-    ;;                0 1      -1     32767  -32768 0 0 0
+    ;;                0 1      -1     32768  -32768 0 0 0
     (v128.const i16x8 0 0x3c00 0xbc00 0x7800 0xf800 0 0 0))
 (assert_return (invoke "f16x8.convert_i16x8_u"
     ;; Unlike f32/64, f16 can't represent the full 2^16 integer range so 2^16 becomes infinity.
