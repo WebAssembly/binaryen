@@ -172,7 +172,8 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $drop-block-try_catch_i32
-    ;; Send an i32 without a ref. We could optimize here TODO
+    ;; Send an i32 without a ref. We can't optimize here, as we can't prevent
+    ;; the i32 from being sent.
     (drop
       (block $catch (result i32)
         (try_table (catch $i32 $catch)

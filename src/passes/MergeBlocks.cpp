@@ -131,14 +131,19 @@ struct ProblemFinder
         if (tryy->catchDests[i] == origin) {
           // This try_table branches to the origin we care about. We know the
           // value being sent to the block is dropped, so we'd like to stop
-          // anything from being sent to it. One simple thing we can handle is
-          // to remove the exnref, so if that is the only value being sent, we
-          // can optimize. That is the case for catch_all_ref, and catch_ref
-          // where the tag is empty.
+          // anything from being sent to it. We can stop a ref from being sent,
+          // so if that is enough to remove all the values, then we can
+          // optimize here. In other words, if this is a catch_all (which can
+          // only send a ref) or this is a catch of a specific tag that has no
+          // contents (so if we remove the ref, nothing remains), then we can
+          // optimize, but if this is is a catch of a tag *with* contents then
+          // those contents stop us.
           //
           // TODO: We could also support cases where the target block has
-          //       multiple values, and the ref at the end is never used.
-          if (tryy->catchTags[i].isNull() ||
+          //       multiple values, and remove just ref at the end. That might
+          //       make more sense in TupleOptimization though as it would need
+          //       to track uses of parts of a tuple.
+          if (!tryy->catchTags[i] ||
               getModule()->getTag(tryy->catchTags[i])->sig.params.size() == 0) {
             // There must be a ref here, otherwise there is no value being sent
             // at all, and we should not be running ProblemFinder at all.
