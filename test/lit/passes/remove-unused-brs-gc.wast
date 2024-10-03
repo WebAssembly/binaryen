@@ -787,7 +787,7 @@
  ;; CHECK-NEXT:  (block $outer
  ;; CHECK-NEXT:   (block $inner
  ;; CHECK-NEXT:    (drop
- ;; CHECK-NEXT:     (br_on_null $inner
+ ;; CHECK-NEXT:     (br_on_null $outer
  ;; CHECK-NEXT:      (local.get $x)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
