@@ -10,7 +10,29 @@
 ;; dce to work first, to avoid generating invalid/stale code.
 
 (module
+ ;; CHECK:      (type $0 (func (param i32 i32) (result i32)))
  (type $0 (func (param i32 i32) (result i32)))
+ ;; CHECK:      (func $0 (type $0) (param $0 i32) (param $1 i32) (result i32)
+ ;; CHECK-NEXT:  (if
+ ;; CHECK-NEXT:   (i32.trunc_f32_s
+ ;; CHECK-NEXT:    (f32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (then
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (block (result i32)
+ ;; CHECK-NEXT:      (drop
+ ;; CHECK-NEXT:       (unreachable)
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:      (i32.const 0)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (else
+ ;; CHECK-NEXT:    (unreachable)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT:  (i32.const 0)
+ ;; CHECK-NEXT: )
  (func $0 (param $0 i32) (param $1 i32) (result i32)
   (if (result i32)
    (i32.trunc_f32_s
