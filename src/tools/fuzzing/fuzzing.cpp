@@ -1693,13 +1693,15 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
 
 Expression* TranslateToFuzzReader::makeTryTable(Type type) {
   if (funcContext->breakableStack.empty()) {
+    // Nothing to break to.
+    // TODO: Perhaps generate a block wrapping us?
     return makeTrivial(type);
   }
   if (wasm.tags.empty()) {
     addTag();
   }
 
-  // Add catches of specific tags, and possible a catch_all at the end. We use
+  // Add catches of specific tags, and possibly a catch_all at the end. We use
   // the last iteration of the loop for that.
   std::vector<Name> catchTags;
   std::vector<Name> catchDests;
@@ -1714,7 +1716,11 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
       tagName = tag->name;
       tagType = tag->sig.params;
     } else {
-      // Look for a catch_all at the end.
+      // Look for a catch_all at the end, some of the time (but all of the time
+      // if we have nothing else).
+      if (!catchTags.empty() && oneIn(2)) {
+        break;
+      }
       tagType = Type::none;
     }
 
