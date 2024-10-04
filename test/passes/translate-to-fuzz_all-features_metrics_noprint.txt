@@ -1,53 +1,42 @@
 Metrics
 total
- [exports]      : 5       
- [funcs]        : 9       
+ [exports]      : 8       
+ [funcs]        : 14      
  [globals]      : 26      
  [imports]      : 5       
  [memories]     : 1       
  [memory-data]  : 20      
- [table-data]   : 3       
+ [table-data]   : 6       
  [tables]       : 1       
  [tags]         : 2       
- [total]        : 669     
- [vars]         : 27      
- ArrayNew       : 16      
+ [total]        : 499     
+ [vars]         : 30      
+ ArrayNew       : 13      
  ArrayNewFixed  : 3       
  AtomicCmpxchg  : 1       
- AtomicFence    : 1       
- Binary         : 75      
- Block          : 70      
- Break          : 7       
- Call           : 26      
- CallRef        : 1       
- Const          : 143     
- Drop           : 3       
- GlobalGet      : 37      
- GlobalSet      : 27      
- I31Get         : 1       
- If             : 20      
- Load           : 21      
- LocalGet       : 55      
- LocalSet       : 40      
- Loop           : 6       
- Nop            : 5       
- Pop            : 5       
- RefAs          : 2       
- RefEq          : 2       
- RefFunc        : 5       
+ Binary         : 62      
+ Block          : 52      
+ Call           : 10      
+ Const          : 126     
+ Drop           : 6       
+ GlobalGet      : 34      
+ GlobalSet      : 24      
+ If             : 12      
+ Load           : 17      
+ LocalGet       : 34      
+ LocalSet       : 21      
+ Nop            : 4       
+ Pop            : 2       
+ RefAs          : 1       
+ RefFunc        : 7       
  RefI31         : 2       
- RefNull        : 11      
- RefTest        : 2       
- Return         : 6       
- Select         : 2       
- StringConst    : 6       
+ RefNull        : 7       
+ Return         : 4       
+ StringConst    : 4       
  StringEq       : 1       
- StringMeasure  : 1       
- StringWTF16Get : 1       
- StructNew      : 17      
- StructSet      : 1       
- Try            : 4       
- TupleExtract   : 3       
- TupleMake      : 5       
- Unary          : 20      
- Unreachable    : 15      
+ StructNew      : 12      
+ Try            : 1       
+ TupleExtract   : 2       
+ TupleMake      : 10      
+ Unary          : 13      
+ Unreachable    : 14      
