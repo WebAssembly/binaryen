@@ -1025,11 +1025,11 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     struct JumpThreader
       : public PostWalker<JumpThreader,
                           UnifiedExpressionVisitor<JumpThreader>> {
-      // Map of all value-less breaks and switches going to a block. (For
-      // simplicitly, we store all break targets here, both blocks and loops,
-      // since blocks are 99% of the set of branch targets. Any loops added here
-      // are ignored later.)
-      std::unordered_map<Name, std::vector<Expression*>> branchesToBlock;
+      // Map of all labels (branch targets) to the branches going to them. (We
+      // only care about blocks here, and not loops, but for simplicitly we
+      // store all branch targets since blocks are 99% of that set anyhow. Any
+      // loops are ignored later.)
+      std::unordered_map<Name, std::vector<Expression*>> labelToBranches;
 
       bool worked = false;
 
@@ -1046,7 +1046,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
 
         // Note ourselves on all relevant targets.
         for (auto target : relevantTargets) {
-          branchesToBlock[target].push_back(curr);
+          labelToBranches[target].push_back(curr);
         }
       }
 
@@ -1078,7 +1078,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
 
       void redirectBranches(Block* from, Name to) {
-        auto& branches = branchesToBlock[from->name];
+        auto& branches = labelToBranches[from->name];
         for (auto* branch : branches) {
           if (BranchUtils::replacePossibleTarget(branch, from->name, to)) {
             worked = true;
@@ -1087,7 +1087,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         // if the jump is to another block then we can update the list, and
         // maybe push it even more later
         for (auto* branch : branches) {
-          branchesToBlock[to].push_back(branch);
+          labelToBranches[to].push_back(branch);
         }
       }
 
