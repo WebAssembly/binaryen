@@ -1707,7 +1707,7 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
   auto numTags = upTo(MAX_TRY_CATCHES);
   for (Index i = 0; i <= numTags; i++) {
     Tag* tag;
-    auto tagType;
+    Type tagType;
     if (i < numTags) {
       // Look for a specific tag.
       tag = pick(wasm.tags).get();
