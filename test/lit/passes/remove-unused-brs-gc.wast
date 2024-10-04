@@ -782,4 +782,28 @@
    )
   )
  )
+
+ ;; CHECK:      (func $threading (type $10) (param $x anyref)
+ ;; CHECK-NEXT:  (block $outer
+ ;; CHECK-NEXT:   (block $inner
+ ;; CHECK-NEXT:    (drop
+ ;; CHECK-NEXT:     (br_on_null $outer
+ ;; CHECK-NEXT:      (local.get $x)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $threading (param $x anyref)
+  (block $outer
+   (block $inner
+    ;; This jump can go to $outer.
+    (drop
+     (br_on_null $inner
+      (local.get $x)
+     )
+    )
+   )
+  )
+ )
 )

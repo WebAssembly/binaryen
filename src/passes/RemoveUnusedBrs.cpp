@@ -27,6 +27,7 @@
 #include "ir/utils.h"
 #include "parsing.h"
 #include "pass.h"
+#include "support/small_set.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -1020,31 +1021,35 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
     } while (anotherCycle);
 
-    // thread trivial jumps
-    struct JumpThreader : public ControlFlowWalker<JumpThreader> {
-      // map of all value-less breaks and switches going to a block (and not a
-      // loop)
-      std::map<Block*, std::vector<Expression*>> branchesToBlock;
+    // Thread trivial jumps.
+    struct JumpThreader
+      : public PostWalker<JumpThreader,
+                          UnifiedExpressionVisitor<JumpThreader>> {
+      // Map of all labels (branch targets) to the branches going to them. (We
+      // only care about blocks here, and not loops, but for simplicitly we
+      // store all branch targets since blocks are 99% of that set anyhow. Any
+      // loops are ignored later.)
+      std::unordered_map<Name, std::vector<Expression*>> labelToBranches;
 
       bool worked = false;
 
-      void visitBreak(Break* curr) {
-        if (!curr->value) {
-          if (auto* target = findBreakTarget(curr->name)->dynCast<Block>()) {
-            branchesToBlock[target].push_back(curr);
-          }
-        }
-      }
-      void visitSwitch(Switch* curr) {
-        if (!curr->value) {
-          auto names = BranchUtils::getUniqueTargets(curr);
-          for (auto name : names) {
-            if (auto* target = findBreakTarget(name)->dynCast<Block>()) {
-              branchesToBlock[target].push_back(curr);
+      void visitExpression(Expression* curr) {
+        // Find the relevant targets: targets that (as mentioned above) have no
+        // value sent to them.
+        SmallSet<Name, 2> relevantTargets;
+        BranchUtils::operateOnScopeNameUsesAndSentTypes(
+          curr, [&](Name name, Type sent) {
+            if (sent == Type::none) {
+              relevantTargets.insert(name);
             }
-          }
+          });
+
+        // Note ourselves on all relevant targets.
+        for (auto target : relevantTargets) {
+          labelToBranches[target].push_back(curr);
         }
       }
+
       void visitBlock(Block* curr) {
         auto& list = curr->list;
         if (list.size() == 1 && curr->name.is()) {
@@ -1073,7 +1078,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
 
       void redirectBranches(Block* from, Name to) {
-        auto& branches = branchesToBlock[from];
+        auto& branches = labelToBranches[from->name];
         for (auto* branch : branches) {
           if (BranchUtils::replacePossibleTarget(branch, from->name, to)) {
             worked = true;
@@ -1081,10 +1086,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
         // if the jump is to another block then we can update the list, and
         // maybe push it even more later
-        if (auto* newTarget = findBreakTarget(to)->dynCast<Block>()) {
-          for (auto* branch : branches) {
-            branchesToBlock[newTarget].push_back(branch);
-          }
+        for (auto* branch : branches) {
+          labelToBranches[to].push_back(branch);
         }
       }
 
