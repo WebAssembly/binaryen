@@ -1706,15 +1706,15 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
   std::vector<bool> catchRefs;
   auto numTags = upTo(MAX_TRY_CATCHES);
   for (Index i = 0; i <= numTags; i++) {
-    Tag* tag;
+    Name tagName;
     Type tagType;
     if (i < numTags) {
       // Look for a specific tag.
-      tag = pick(wasm.tags).get();
+      auto& tag = pick(wasm.tags);
+      tagName = tag->name;
       tagType = tag->sig.params;
     } else {
       // Look for a catch_all at the end.
-      tag = nullptr;
       tagType = Type::none;
     }
 
@@ -1732,12 +1732,13 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
       auto name = getTargetName(target);
       auto valueType = getTargetType(target);
       if (valueType == tagType || valueType == tagTypeWithExn) {
-        catchTags.push_back(tag->name);
+        catchTags.push_back(tagName);
         catchDests.push_back(name);
         catchRefs.push_back(valueType == tagTypeWithExn);
         break;
       }
     }
+    // TODO: Perhaps generate a block wrapping us, if we fail to find a target?
   }
 
   // If we found nothing, give up.
