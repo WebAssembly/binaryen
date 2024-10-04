@@ -256,32 +256,11 @@ static void optimizeBlock(Block* curr,
       // those out would break things.
       Loop* loop = nullptr;
       // To to handle a non-block child.
-      if (!childBlock) {
-        // If we have a child that is (drop (block ..)) then we can move the
-        // drop into the block, and remove br values. This allows more merging.
-        if (auto* drop = list[i]->dynCast<Drop>()) {
-          childBlock = drop->value->dynCast<Block>();
-          if (childBlock) {
-            if (hasUnreachableChild(childBlock)) {
-              // don't move around unreachable code, as it can change types
-              // dce should have been run anyhow
-              continue;
-            }
-            if (optimizeDroppedBlock(
-                  drop, childBlock, *module, passOptions, branchInfo)) {
-              child = list[i] = childBlock;
-              more = true;
-              changed = true;
-            } else {
-              childBlock = nullptr;
-            }
-          }
-        } else if ((loop = list[i]->dynCast<Loop>())) {
-          // We can merge a loop's "tail" - if the body is a block and has
-          // instructions at the end that do not branch back.
-          childBlock = loop->body->dynCast<Block>();
-          // TODO: handle (loop (loop - the bodies of loops may not be blocks
-        }
+      if (!childBlock && (loop = list[i]->dynCast<Loop>())) {
+        // We can merge a loop's "tail" - if the body is a block and has
+        // instructions at the end that do not branch back.
+        childBlock = loop->body->dynCast<Block>();
+        // TODO: handle (loop (loop - the bodies of loops may not be blocks
       }
       // If no block, we can't do anything.
       if (!childBlock) {
