@@ -268,7 +268,7 @@ static void optimizeBlock(Block* curr,
           childBlock = drop->value->dynCast<Block>();
           if (childBlock &&
               optimizeDroppedBlock(
-                  drop, childBlock, *module, passOptions, branchInfo)) {
+                drop, childBlock, *module, passOptions, branchInfo)) {
             child = list[i] = childBlock;
             more = true;
             changed = true;
