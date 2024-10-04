@@ -1745,6 +1745,8 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
       }
     }
     // TODO: Perhaps generate a block wrapping us, if we fail to find a target?
+    // TODO: It takes a bit of luck to find a target with an exnref - perhaps
+    //       generate those?
   }
 
   // If we found nothing, give up.
