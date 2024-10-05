@@ -23,6 +23,7 @@
 #include "ir/names.h"
 #include "ir/table-utils.h"
 #include "ir/type-updating.h"
+#include "pass.h"
 #include "support/bits.h"
 #include "support/debug.h"
 #include "support/stdckdint.h"
@@ -2246,6 +2247,7 @@ void WasmBinaryReader::readMemories() {
                        memory->shared,
                        memory->indexType,
                        Memory::kUnlimitedSize);
+    memoryIndices[memory->name] = wasm.memories.size();
     wasm.addMemory(std::move(memory));
   }
 }
@@ -2511,11 +2513,6 @@ void WasmBinaryReader::getResizableLimits(Address& initial,
 void WasmBinaryReader::readImports() {
   size_t num = getU32LEB();
   Builder builder(wasm);
-  size_t tableCounter = 0;
-  size_t memoryCounter = 0;
-  size_t functionCounter = 0;
-  size_t globalCounter = 0;
-  size_t tagCounter = 0;
   for (size_t i = 0; i < num; i++) {
     auto module = getInlineString();
     auto base = getInlineString();
@@ -2525,7 +2522,7 @@ void WasmBinaryReader::readImports() {
     // could occur later due to the names section.
     switch (kind) {
       case ExternalKind::Function: {
-        Name name = makeName("fimport$", functionCounter++);
+        Name name = makeName("fimport$", wasm.functions.size());
         auto index = getU32LEB();
         functionTypes.push_back(getTypeByIndex(index));
         auto type = getTypeByIndex(index);
@@ -2537,11 +2534,13 @@ void WasmBinaryReader::readImports() {
         auto curr = builder.makeFunction(name, type, {});
         curr->module = module;
         curr->base = base;
+        functionIndices[name] = wasm.functions.size();
         wasm.addFunction(std::move(curr));
         break;
       }
       case ExternalKind::Table: {
-        auto table = builder.makeTable(makeName("timport$", tableCounter++));
+        Name name = makeName("timport$", wasm.tables.size());
+        auto table = builder.makeTable(name);
         table->module = module;
         table->base = base;
         table->type = getType();
@@ -2555,12 +2554,13 @@ void WasmBinaryReader::readImports() {
         if (is_shared) {
           throwError("Tables may not be shared");
         }
-
+        tableIndices[name] = wasm.tables.size();
         wasm.addTable(std::move(table));
         break;
       }
       case ExternalKind::Memory: {
-        auto memory = builder.makeMemory(makeName("mimport$", memoryCounter++));
+        Name name = makeName("mimport$", wasm.memories.size());
+        auto memory = builder.makeMemory(name);
         memory->module = module;
         memory->base = base;
         getResizableLimits(memory->initial,
@@ -2568,32 +2568,36 @@ void WasmBinaryReader::readImports() {
                            memory->shared,
                            memory->indexType,
                            Memory::kUnlimitedSize);
+        memoryIndices[name] = wasm.memories.size();
         wasm.addMemory(std::move(memory));
         break;
       }
       case ExternalKind::Global: {
+        Name name = makeName("gimport$", wasm.globals.size());
         auto type = getConcreteType();
         auto mutable_ = getU32LEB();
         if (mutable_ & ~1) {
           throwError("Global mutability must be 0 or 1");
         }
         auto curr =
-          builder.makeGlobal(makeName("gimport$", globalCounter++),
+          builder.makeGlobal(name,
                              type,
                              nullptr,
                              mutable_ ? Builder::Mutable : Builder::Immutable);
         curr->module = module;
         curr->base = base;
+        globalIndices[name] = wasm.globals.size();
         wasm.addGlobal(std::move(curr));
         break;
       }
       case ExternalKind::Tag: {
-        Name name = makeName("eimport$", tagCounter++);
+        Name name = makeName("eimport$", wasm.tags.size());
         getInt8(); // Reserved 'attribute' field
         auto index = getU32LEB();
         auto curr = builder.makeTag(name, getSignatureByTypeIndex(index));
         curr->module = module;
         curr->base = base;
+        tagIndices[name] = wasm.tags.size();
         wasm.addTag(std::move(curr));
         break;
       }
@@ -2624,8 +2628,9 @@ void WasmBinaryReader::readFunctionSignatures() {
     functionTypes.push_back(type);
     // Check that the type is a signature.
     getSignatureByTypeIndex(index);
-    wasm.addFunction(
-      Builder(wasm).makeFunction(makeName("", i), type, {}, nullptr));
+    auto name = makeName("", i);
+    functionIndices[name] = wasm.functions.size();
+    wasm.addFunction(Builder(wasm).makeFunction(name, type, {}, nullptr));
   }
 }
 
@@ -3057,11 +3062,13 @@ void WasmBinaryReader::readGlobals() {
       throwError("Global mutability must be 0 or 1");
     }
     auto* init = readExpression();
-    wasm.addGlobal(
+    auto global =
       Builder::makeGlobal(makeName("global$", i),
                           type,
                           init,
-                          mutable_ ? Builder::Mutable : Builder::Immutable));
+                          mutable_ ? Builder::Mutable : Builder::Immutable);
+    globalIndices[global->name] = wasm.globals.size();
+    wasm.addGlobal(std::move(global));
   }
 }
 
@@ -3254,7 +3261,112 @@ void WasmBinaryReader::validateBinary() {
 }
 
 void WasmBinaryReader::processNames() {
-  // now that we have names, apply things
+  // Now that we have final names for module elements, update the names used in
+  // expressions and anywhere else.
+  struct NameUpdater
+    : WalkerPass<
+        PostWalker<NameUpdater, UnifiedExpressionVisitor<NameUpdater>>> {
+    WasmBinaryReader& parent;
+    NameUpdater(WasmBinaryReader& parent) : parent(parent) {}
+    bool isFunctionParallel() override { return true; }
+    std::unique_ptr<Pass> create() override {
+      return std::make_unique<NameUpdater>(parent);
+    }
+
+    void visitExpression(Expression* curr) {
+      auto& wasm = *getModule();
+
+#define DELEGATE_ID curr->_id
+#define DELEGATE_START(id) [[maybe_unused]] auto* cast = curr->cast<id>();
+#define DELEGATE_GET_FIELD(id, field) cast->field
+#define DELEGATE_FIELD_TYPE(id, field)
+#define DELEGATE_FIELD_HEAPTYPE(id, field)
+#define DELEGATE_FIELD_CHILD(id, field)
+#define DELEGATE_FIELD_OPTIONAL_CHILD(id, field)
+#define DELEGATE_FIELD_INT(id, field)
+#define DELEGATE_FIELD_LITERAL(id, field)
+#define DELEGATE_FIELD_NAME(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_DEF(id, field)
+#define DELEGATE_FIELD_SCOPE_NAME_USE(id, field)
+#define DELEGATE_FIELD_ADDRESS(id, field)
+
+#define DELEGATE_FIELD_NAME_KIND(id, field, kind)                              \
+  switch (kind) {                                                              \
+    case ModuleItemKind::Function:                                             \
+      if (auto it = parent.functionIndices.find(cast->field);                  \
+          it != parent.functionIndices.end()) {                                \
+        cast->field = wasm.functions[it->second]->name;                        \
+      }                                                                        \
+      break;                                                                   \
+    case ModuleItemKind::Table:                                                \
+      if (auto it = parent.tableIndices.find(cast->field);                     \
+          it != parent.tableIndices.end()) {                                   \
+        cast->field = wasm.tables[it->second]->name;                           \
+      }                                                                        \
+      break;                                                                   \
+    case ModuleItemKind::Memory:                                               \
+      if (auto it = parent.memoryIndices.find(cast->field);                    \
+          it != parent.memoryIndices.end()) {                                  \
+        cast->field = wasm.memories[it->second]->name;                         \
+      }                                                                        \
+      break;                                                                   \
+    case ModuleItemKind::Global:                                               \
+      if (auto it = parent.globalIndices.find(cast->field);                    \
+          it != parent.globalIndices.end()) {                                  \
+        cast->field = wasm.globals[it->second]->name;                          \
+      }                                                                        \
+      break;                                                                   \
+    case ModuleItemKind::Tag:                                                  \
+      if (auto it = parent.tagIndices.find(cast->field);                       \
+          it != parent.tagIndices.end()) {                                     \
+        cast->field = wasm.tags[it->second]->name;                             \
+      }                                                                        \
+      break;                                                                   \
+    case ModuleItemKind::DataSegment:                                          \
+      if (auto it = parent.dataIndices.find(cast->field);                      \
+          it != parent.dataIndices.end()) {                                    \
+        cast->field = wasm.dataSegments[it->second]->name;                     \
+      }                                                                        \
+      break;                                                                   \
+    case ModuleItemKind::ElementSegment:                                       \
+      if (auto it = parent.elemIndices.find(cast->field);                      \
+          it != parent.elemIndices.end()) {                                    \
+        cast->field = wasm.elementSegments[it->second]->name;                  \
+      }                                                                        \
+      break;                                                                   \
+    case ModuleItemKind::Invalid:                                              \
+      WASM_UNREACHABLE("unexpected kind");                                     \
+  }
+#include "wasm-delegations-fields.def"
+    }
+  };
+
+  if (debugInfo) {
+    // Perform the replacement. Mark the runner nested to avoid unnecessary
+    // validation.
+    PassRunner runner(&wasm);
+    runner.setIsNested(true);
+    runner.add(std::make_unique<NameUpdater>(*this));
+    runner.run();
+    NameUpdater(*this).runOnModuleCode(&runner, &wasm);
+
+    for (auto& seg : wasm.elementSegments) {
+      if (seg->table) {
+        if (auto it = tableIndices.find(seg->table); it != tableIndices.end()) {
+          seg->table = wasm.tables[it->second]->name;
+        }
+      }
+    }
+
+    for (auto& seg : wasm.dataSegments) {
+      if (seg->memory) {
+        if (auto it = memoryIndices.find(seg->memory);
+            it != memoryIndices.end()) {
+          seg->memory = wasm.memories[it->second]->name;
+        }
+      }
+    }
+  }
 
   if (startIndex != static_cast<Index>(-1)) {
     wasm.start = getFunctionName(startIndex);
@@ -3285,44 +3397,7 @@ void WasmBinaryReader::processNames() {
     wasm.addExport(std::move(curr));
   }
 
-  for (auto& [index, refs] : functionRefs) {
-    for (auto* ref : refs) {
-      *ref = getFunctionName(index);
-    }
-  }
-  for (auto& [index, refs] : tableRefs) {
-    for (auto* ref : refs) {
-      *ref = getTableName(index);
-    }
-  }
-  for (auto& [index, refs] : memoryRefs) {
-    for (auto ref : refs) {
-      *ref = getMemoryName(index);
-    }
-  }
-  for (auto& [index, refs] : globalRefs) {
-    for (auto* ref : refs) {
-      *ref = getGlobalName(index);
-    }
-  }
-  for (auto& [index, refs] : tagRefs) {
-    for (auto* ref : refs) {
-      *ref = getTagName(index);
-    }
-  }
-  for (auto& [index, refs] : dataRefs) {
-    for (auto* ref : refs) {
-      *ref = getDataName(index);
-    }
-  }
-  for (auto& [index, refs] : elemRefs) {
-    for (auto* ref : refs) {
-      *ref = getElemName(index);
-    }
-  }
-
   // Everything now has its proper name.
-
   wasm.updateMaps();
 }
 
@@ -3334,6 +3409,7 @@ void WasmBinaryReader::readDataSegmentCount() {
   for (size_t i = 0; i < dataCount; ++i) {
     auto curr = Builder::makeDataSegment();
     curr->setName(Name::fromInt(i), false);
+    dataIndices[curr->name] = wasm.dataSegments.size();
     wasm.addDataSegment(std::move(curr));
   }
 }
@@ -3349,6 +3425,7 @@ void WasmBinaryReader::readDataSegments() {
     for (size_t i = 0; i < num; ++i) {
       auto curr = Builder::makeDataSegment();
       curr->setName(Name::fromInt(i), false);
+      dataIndices[curr->name] = wasm.dataSegments.size();
       wasm.addDataSegment(std::move(curr));
     }
   }
@@ -3369,7 +3446,7 @@ void WasmBinaryReader::readDataSegments() {
       if (flags & BinaryConsts::HasIndex) {
         memIdx = getU32LEB();
       }
-      memoryRefs[memIdx].push_back(&curr->memory);
+      curr->memory = getMemoryName(memIdx);
       curr->offset = readExpression();
     }
     auto size = getU32LEB();
@@ -3396,6 +3473,7 @@ void WasmBinaryReader::readTableDeclarations() {
     if (is_shared) {
       throwError("Tables may not be shared");
     }
+    tableIndices[table->name] = wasm.tables.size();
     wasm.addTable(std::move(table));
   }
 }
@@ -3466,13 +3544,12 @@ void WasmBinaryReader::readElementSegments() {
       for (Index j = 0; j < size; j++) {
         Index index = getU32LEB();
         auto sig = getTypeByFunctionIndex(index);
-        // Use a placeholder name for now
-        auto* refFunc = Builder(wasm).makeRefFunc(Name::fromInt(index), sig);
-        functionRefs[index].push_back(&refFunc->func);
+        auto* refFunc = Builder(wasm).makeRefFunc(getFunctionName(index), sig);
         segmentData.push_back(refFunc);
       }
     }
 
+    elemIndices[segment->name] = wasm.elementSegments.size();
     wasm.addElementSegment(std::move(segment));
   }
 }
@@ -3482,8 +3559,10 @@ void WasmBinaryReader::readTags() {
   for (size_t i = 0; i < numTags; i++) {
     getInt8(); // Reserved 'attribute' field
     auto typeIndex = getU32LEB();
-    wasm.addTag(Builder::makeTag(makeName("tag$", i),
-                                 getSignatureByTypeIndex(typeIndex)));
+    auto tag =
+      Builder::makeTag(makeName("tag$", i), getSignatureByTypeIndex(typeIndex));
+    tagIndices[tag->name] = wasm.tags.size();
+    wasm.addTag(std::move(tag));
   }
 }
 
@@ -4610,21 +4689,20 @@ void WasmBinaryReader::visitSwitch(Switch* curr) {
 void WasmBinaryReader::visitCall(Call* curr) {
   auto index = getU32LEB();
   auto sig = getSignatureByFunctionIndex(index);
+  curr->target = getFunctionName(index);
   auto num = sig.params.size();
   curr->operands.resize(num);
   for (size_t i = 0; i < num; i++) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
   curr->type = sig.results;
-  // We don't know function names yet.
-  functionRefs[index].push_back(&curr->target);
   curr->finalize();
 }
 
 void WasmBinaryReader::visitCallIndirect(CallIndirect* curr) {
   auto index = getU32LEB();
   curr->heapType = getTypeByIndex(index);
-  Index tableIdx = getU32LEB();
+  curr->table = getTableName(getU32LEB());
   // TODO: Handle error cases where `heapType` is not a signature?
   auto num = curr->heapType.getSignature().params.size();
   curr->operands.resize(num);
@@ -4632,8 +4710,6 @@ void WasmBinaryReader::visitCallIndirect(CallIndirect* curr) {
   for (size_t i = 0; i < num; i++) {
     curr->operands[num - i - 1] = popNonVoidExpression();
   }
-  // Defer setting the table name for later, when we know it.
-  tableRefs[tableIdx].push_back(&curr->table);
   curr->finalize();
 }
 
@@ -4670,7 +4746,6 @@ void WasmBinaryReader::visitGlobalGet(GlobalGet* curr) {
   auto* global = wasm.globals[index].get();
   curr->name = global->name;
   curr->type = global->type;
-  globalRefs[index].push_back(&curr->name); // we don't know the final name yet
 }
 
 void WasmBinaryReader::visitGlobalSet(GlobalSet* curr) {
@@ -4680,7 +4755,6 @@ void WasmBinaryReader::visitGlobalSet(GlobalSet* curr) {
   }
   curr->name = wasm.globals[index]->name;
   curr->value = popNonVoidExpression();
-  globalRefs[index].push_back(&curr->name); // we don't know the final name yet
   curr->finalize();
 }
 
@@ -4855,7 +4929,7 @@ bool WasmBinaryReader::maybeVisitLoad(
 
   curr->isAtomic = prefix == BinaryConsts::AtomicPrefix;
   Index memIdx = readMemoryAccess(curr->align, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;
@@ -4973,7 +5047,7 @@ bool WasmBinaryReader::maybeVisitStore(
 
   curr->isAtomic = prefix == BinaryConsts::AtomicPrefix;
   Index memIdx = readMemoryAccess(curr->align, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   curr->value = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
   curr->finalize();
@@ -5033,7 +5107,7 @@ bool WasmBinaryReader::maybeVisitAtomicRMW(Expression*& out, uint8_t code) {
 
   Address readAlign;
   Index memIdx = readMemoryAccess(readAlign, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   if (readAlign != curr->bytes) {
     throwError("Align of AtomicRMW must match size");
   }
@@ -5084,7 +5158,7 @@ bool WasmBinaryReader::maybeVisitAtomicCmpxchg(Expression*& out, uint8_t code) {
 
   Address readAlign;
   Index memIdx = readMemoryAccess(readAlign, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   if (readAlign != curr->bytes) {
     throwError("Align of AtomicCpxchg must match size");
   }
@@ -5119,7 +5193,7 @@ bool WasmBinaryReader::maybeVisitAtomicWait(Expression*& out, uint8_t code) {
   curr->ptr = popNonVoidExpression();
   Address readAlign;
   Index memIdx = readMemoryAccess(readAlign, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   if (readAlign != curr->expectedType.getByteSize()) {
     throwError("Align of AtomicWait must match size");
   }
@@ -5139,7 +5213,7 @@ bool WasmBinaryReader::maybeVisitAtomicNotify(Expression*& out, uint8_t code) {
   curr->ptr = popNonVoidExpression();
   Address readAlign;
   Index memIdx = readMemoryAccess(readAlign, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   if (readAlign != curr->type.getByteSize()) {
     throwError("Align of AtomicNotify must match size");
   }
@@ -5465,10 +5539,8 @@ bool WasmBinaryReader::maybeVisitMemoryInit(Expression*& out, uint32_t code) {
   curr->size = popNonVoidExpression();
   curr->offset = popNonVoidExpression();
   curr->dest = popNonVoidExpression();
-  Index segIdx = getU32LEB();
-  dataRefs[segIdx].push_back(&curr->segment);
-  Index memIdx = getU32LEB();
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->segment = getDataName(getU32LEB());
+  curr->memory = getMemoryName(getU32LEB());
   curr->finalize();
   out = curr;
   return true;
@@ -5479,8 +5551,7 @@ bool WasmBinaryReader::maybeVisitDataDrop(Expression*& out, uint32_t code) {
     return false;
   }
   auto* curr = allocator.alloc<DataDrop>();
-  Index segIdx = getU32LEB();
-  dataRefs[segIdx].push_back(&curr->segment);
+  curr->segment = getDataName(getU32LEB());
   curr->finalize();
   out = curr;
   return true;
@@ -5494,11 +5565,9 @@ bool WasmBinaryReader::maybeVisitMemoryCopy(Expression*& out, uint32_t code) {
   curr->size = popNonVoidExpression();
   curr->source = popNonVoidExpression();
   curr->dest = popNonVoidExpression();
-  Index destIdx = getU32LEB();
-  Index sourceIdx = getU32LEB();
+  curr->destMemory = getMemoryName(getU32LEB());
+  curr->sourceMemory = getMemoryName(getU32LEB());
   curr->finalize();
-  memoryRefs[destIdx].push_back(&curr->destMemory);
-  memoryRefs[sourceIdx].push_back(&curr->sourceMemory);
   out = curr;
   return true;
 }
@@ -5511,9 +5580,8 @@ bool WasmBinaryReader::maybeVisitMemoryFill(Expression*& out, uint32_t code) {
   curr->size = popNonVoidExpression();
   curr->value = popNonVoidExpression();
   curr->dest = popNonVoidExpression();
-  Index memIdx = getU32LEB();
+  curr->memory = getMemoryName(getU32LEB());
   curr->finalize();
-  memoryRefs[memIdx].push_back(&curr->memory);
   out = curr;
   return true;
 }
@@ -5522,17 +5590,13 @@ bool WasmBinaryReader::maybeVisitTableSize(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::TableSize) {
     return false;
   }
-  Index tableIdx = getU32LEB();
-  if (tableIdx >= wasm.tables.size()) {
-    throwError("bad table index");
-  }
   auto* curr = allocator.alloc<TableSize>();
+  Index tableIdx = getU32LEB();
+  curr->table = getTableName(tableIdx);
   if (getTable(tableIdx)->is64()) {
     curr->type = Type::i64;
   }
   curr->finalize();
-  // Defer setting the table name for later, when we know it.
-  tableRefs[tableIdx].push_back(&curr->table);
   out = curr;
   return true;
 }
@@ -5541,19 +5605,15 @@ bool WasmBinaryReader::maybeVisitTableGrow(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::TableGrow) {
     return false;
   }
-  Index tableIdx = getU32LEB();
-  if (tableIdx >= wasm.tables.size()) {
-    throwError("bad table index");
-  }
   auto* curr = allocator.alloc<TableGrow>();
+  Index tableIdx = getU32LEB();
+  curr->table = getTableName(tableIdx);
   curr->delta = popNonVoidExpression();
   curr->value = popNonVoidExpression();
   if (getTable(tableIdx)->is64()) {
     curr->type = Type::i64;
   }
   curr->finalize();
-  // Defer setting the table name for later, when we know it.
-  tableRefs[tableIdx].push_back(&curr->table);
   out = curr;
   return true;
 }
@@ -5562,16 +5622,11 @@ bool WasmBinaryReader::maybeVisitTableFill(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::TableFill) {
     return false;
   }
-  Index tableIdx = getU32LEB();
-  if (tableIdx >= wasm.tables.size()) {
-    throwError("bad table index");
-  }
+  auto table = getTableName(getU32LEB());
   auto* size = popNonVoidExpression();
   auto* value = popNonVoidExpression();
   auto* dest = popNonVoidExpression();
-  auto* ret = Builder(wasm).makeTableFill(Name(), dest, value, size);
-  tableRefs[tableIdx].push_back(&ret->table);
-  out = ret;
+  out = Builder(wasm).makeTableFill(table, dest, value, size);
   return true;
 }
 
@@ -5579,21 +5634,12 @@ bool WasmBinaryReader::maybeVisitTableCopy(Expression*& out, uint32_t code) {
   if (code != BinaryConsts::TableCopy) {
     return false;
   }
-  Index destTableIdx = getU32LEB();
-  if (destTableIdx >= wasm.tables.size()) {
-    throwError("bad table index");
-  }
-  Index sourceTableIdx = getU32LEB();
-  if (sourceTableIdx >= wasm.tables.size()) {
-    throwError("bad table index");
-  }
+  auto destTable = getTableName(getU32LEB());
+  auto srcTable = getTableName(getU32LEB());
   auto* size = popNonVoidExpression();
   auto* source = popNonVoidExpression();
   auto* dest = popNonVoidExpression();
-  auto* ret = Builder(wasm).makeTableCopy(dest, source, size, Name(), Name());
-  tableRefs[destTableIdx].push_back(&ret->destTable);
-  tableRefs[sourceTableIdx].push_back(&ret->sourceTable);
-  out = ret;
+  out = Builder(wasm).makeTableCopy(dest, source, size, destTable, srcTable);
   return true;
 }
 
@@ -5605,10 +5651,8 @@ bool WasmBinaryReader::maybeVisitTableInit(Expression*& out, uint32_t code) {
   curr->size = popNonVoidExpression();
   curr->offset = popNonVoidExpression();
   curr->dest = popNonVoidExpression();
-  Index segIdx = getU32LEB();
-  elemRefs[segIdx].push_back(&curr->segment);
-  Index memIdx = getU32LEB();
-  tableRefs[memIdx].push_back(&curr->table);
+  curr->segment = getElemName(getU32LEB());
+  curr->table = getTableName(getU32LEB());
   curr->finalize();
   out = curr;
   return true;
@@ -6622,7 +6666,7 @@ bool WasmBinaryReader::maybeVisitSIMDStore(Expression*& out, uint32_t code) {
   curr->bytes = 16;
   curr->valueType = Type::v128;
   Index memIdx = readMemoryAccess(curr->align, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   curr->isAtomic = false;
   curr->value = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
@@ -6880,7 +6924,7 @@ bool WasmBinaryReader::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
     curr->type = Type::v128;
     curr->bytes = 16;
     Index memIdx = readMemoryAccess(curr->align, curr->offset);
-    memoryRefs[memIdx].push_back(&curr->memory);
+    curr->memory = getMemoryName(memIdx);
     curr->isAtomic = false;
     curr->ptr = popNonVoidExpression();
     curr->finalize();
@@ -6941,7 +6985,7 @@ bool WasmBinaryReader::maybeVisitSIMDLoad(Expression*& out, uint32_t code) {
       return false;
   }
   Index memIdx = readMemoryAccess(curr->align, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   curr->ptr = popNonVoidExpression();
   curr->finalize();
   out = curr;
@@ -6991,7 +7035,7 @@ bool WasmBinaryReader::maybeVisitSIMDLoadStoreLane(Expression*& out,
   auto* curr = allocator.alloc<SIMDLoadStoreLane>();
   curr->op = op;
   Index memIdx = readMemoryAccess(curr->align, curr->offset);
-  memoryRefs[memIdx].push_back(&curr->memory);
+  curr->memory = getMemoryName(memIdx);
   curr->index = getLaneIndex(lanes);
   curr->vec = popNonVoidExpression();
   curr->ptr = popNonVoidExpression();
@@ -7034,20 +7078,21 @@ void WasmBinaryReader::visitReturn(Return* curr) {
 
 void WasmBinaryReader::visitMemorySize(MemorySize* curr) {
   Index index = getU32LEB();
+  curr->memory = getMemoryName(index);
   if (getMemory(index)->is64()) {
     curr->type = Type::i64;
   }
   curr->finalize();
-  memoryRefs[index].push_back(&curr->memory);
 }
 
 void WasmBinaryReader::visitMemoryGrow(MemoryGrow* curr) {
-  curr->delta = popNonVoidExpression();
   Index index = getU32LEB();
+  curr->memory = getMemoryName(index);
   if (getMemory(index)->is64()) {
     curr->type = Type::i64;
   }
-  memoryRefs[index].push_back(&curr->memory);
+  curr->delta = popNonVoidExpression();
+  curr->finalize();
 }
 
 void WasmBinaryReader::visitNop(Nop* curr) {}
@@ -7070,14 +7115,9 @@ void WasmBinaryReader::visitRefIsNull(RefIsNull* curr) {
 
 void WasmBinaryReader::visitRefFunc(RefFunc* curr) {
   Index index = getU32LEB();
-  // We don't know function names yet, so record this use to be updated later.
-  // Note that we do not need to check that 'index' is in bounds, as that will
-  // be verified in the next line. (Also, note that functionRefs[index] may
-  // write to an odd place in the functionRefs map if index is invalid, but that
-  // is harmless.)
-  functionRefs[index].push_back(&curr->func);
   // To support typed function refs, we give the reference not just a general
   // funcref, but a specific subtype with the actual signature.
+  curr->func = getFunctionName(index);
   curr->finalize(Type(getTypeByFunctionIndex(index), NonNullable));
 }
 
@@ -7089,26 +7129,18 @@ void WasmBinaryReader::visitRefEq(RefEq* curr) {
 
 void WasmBinaryReader::visitTableGet(TableGet* curr) {
   Index tableIdx = getU32LEB();
-  if (tableIdx >= wasm.tables.size()) {
-    throwError("bad table index");
-  }
+  curr->table = getTableName(tableIdx);
   curr->index = popNonVoidExpression();
   curr->type = wasm.tables[tableIdx]->type;
   curr->finalize();
-  // Defer setting the table name for later, when we know it.
-  tableRefs[tableIdx].push_back(&curr->table);
 }
 
 void WasmBinaryReader::visitTableSet(TableSet* curr) {
   Index tableIdx = getU32LEB();
-  if (tableIdx >= wasm.tables.size()) {
-    throwError("bad table index");
-  }
+  curr->table = getTableName(tableIdx);
   curr->value = popNonVoidExpression();
   curr->index = popNonVoidExpression();
   curr->finalize();
-  // Defer setting the table name for later, when we know it.
-  tableRefs[tableIdx].push_back(&curr->table);
 }
 
 void WasmBinaryReader::visitTryOrTryInBlock(Expression*& out) {
@@ -7145,11 +7177,6 @@ void WasmBinaryReader::visitTryOrTryInBlock(Expression*& out) {
     }
   };
 
-  // We cannot immediately update tagRefs in the loop below, as catchTags is
-  // being grown, an so references would get invalidated. Store the indexes
-  // here, then do that later.
-  std::vector<Index> tagIndexes;
-
   while (lastSeparator == BinaryConsts::Catch_Legacy ||
          lastSeparator == BinaryConsts::CatchAll_Legacy) {
     if (lastSeparator == BinaryConsts::Catch_Legacy) {
@@ -7157,7 +7184,6 @@ void WasmBinaryReader::visitTryOrTryInBlock(Expression*& out) {
       if (index >= wasm.tags.size()) {
         throwError("bad tag index");
       }
-      tagIndexes.push_back(index);
       auto* tag = wasm.tags[index].get();
       curr->catchTags.push_back(tag->name);
       readCatchBody(tag->sig.params);
@@ -7169,11 +7195,6 @@ void WasmBinaryReader::visitTryOrTryInBlock(Expression*& out) {
     }
   }
   breakStack.pop_back();
-
-  for (Index i = 0; i < tagIndexes.size(); i++) {
-    // We don't know the final name yet.
-    tagRefs[tagIndexes[i]].push_back(&curr->catchTags[i]);
-  }
 
   if (lastSeparator == BinaryConsts::Delegate) {
     curr->delegateTarget = getExceptionTargetName(getU32LEB());
@@ -7269,10 +7290,6 @@ void WasmBinaryReader::visitTryTable(TryTable* curr) {
   // within each try-body, and let branches target those inner blocks instead.
   curr->type = getType();
   auto numCatches = getU32LEB();
-  // We cannot immediately update tagRefs in the loop below, as catchTags is
-  // being grown, an so references would get invalidated. Store the indexes
-  // here, then do that later.
-  std::vector<Index> tagIndexes;
 
   for (size_t i = 0; i < numCatches; i++) {
     uint8_t code = getInt8();
@@ -7281,23 +7298,14 @@ void WasmBinaryReader::visitTryTable(TryTable* curr) {
       if (index >= wasm.tags.size()) {
         throwError("bad tag index");
       }
-      tagIndexes.push_back(index);
       auto* tag = wasm.tags[index].get();
       curr->catchTags.push_back(tag->name);
     } else {
-      tagIndexes.push_back(-1); // unused
       curr->catchTags.push_back(Name());
     }
     curr->catchDests.push_back(getBreakTarget(getU32LEB()).name);
     curr->catchRefs.push_back(code == BinaryConsts::CatchRef ||
                               code == BinaryConsts::CatchAllRef);
-  }
-
-  for (Index i = 0; i < tagIndexes.size(); i++) {
-    if (curr->catchTags[i]) {
-      // We don't know the final name yet.
-      tagRefs[tagIndexes[i]].push_back(&curr->catchTags[i]);
-    }
   }
 
   // catch_*** clauses should refer to block labels without entering the try
@@ -7314,7 +7322,6 @@ void WasmBinaryReader::visitThrow(Throw* curr) {
   }
   auto* tag = wasm.tags[index].get();
   curr->tag = tag->name;
-  tagRefs[index].push_back(&curr->tag); // we don't know the final name yet
   size_t num = tag->sig.params.size();
   curr->operands.resize(num);
   for (size_t i = 0; i < num; i++) {
@@ -7562,18 +7569,13 @@ bool WasmBinaryReader::maybeVisitArrayNewElem(Expression*& out, uint32_t code) {
       throwError("Expected array heaptype");
     }
     auto segIdx = getU32LEB();
+    auto segment = isData ? getDataName(segIdx) : getElemName(segIdx);
     auto* size = popNonVoidExpression();
     auto* offset = popNonVoidExpression();
     if (isData) {
-      auto* curr =
-        Builder(wasm).makeArrayNewData(heapType, Name(), offset, size);
-      dataRefs[segIdx].push_back(&curr->segment);
-      out = curr;
+      out = Builder(wasm).makeArrayNewData(heapType, segment, offset, size);
     } else {
-      auto* curr =
-        Builder(wasm).makeArrayNewElem(heapType, Name(), offset, size);
-      elemRefs[segIdx].push_back(&curr->segment);
-      out = curr;
+      out = Builder(wasm).makeArrayNewElem(heapType, segment, offset, size);
     }
     return true;
   }
@@ -7704,21 +7706,16 @@ bool WasmBinaryReader::maybeVisitArrayInit(Expression*& out, uint32_t code) {
     throwError("Expected array heaptype");
   }
   Index segIdx = getU32LEB();
+  auto segment = isData ? getDataName(segIdx) : getElemName(segIdx);
   auto* size = popNonVoidExpression();
   auto* offset = popNonVoidExpression();
   auto* index = popNonVoidExpression();
   auto* ref = popNonVoidExpression();
   validateHeapTypeUsingChild(ref, heapType);
   if (isData) {
-    auto* curr =
-      Builder(wasm).makeArrayInitData(Name(), ref, index, offset, size);
-    dataRefs[segIdx].push_back(&curr->segment);
-    out = curr;
+    out = Builder(wasm).makeArrayInitData(segment, ref, index, offset, size);
   } else {
-    auto* curr =
-      Builder(wasm).makeArrayInitElem(Name(), ref, index, offset, size);
-    elemRefs[segIdx].push_back(&curr->segment);
-    out = curr;
+    out = Builder(wasm).makeArrayInitElem(segment, ref, index, offset, size);
   }
   return true;
 }
@@ -7927,25 +7924,12 @@ void WasmBinaryReader::visitResume(Resume* curr) {
   }
 
   auto numHandlers = getU32LEB();
-
-  // We *must* bring the handlerTags vector to an appropriate size to ensure
-  // that we do not invalidate the pointers we add to tagRefs. They need to stay
-  // valid until processNames ran.
   curr->handlerTags.resize(numHandlers);
   curr->handlerBlocks.resize(numHandlers);
 
   for (size_t i = 0; i < numHandlers; i++) {
-    auto tagIndex = getU32LEB();
-    auto tag = getTagName(tagIndex);
-
-    auto handlerIndex = getU32LEB();
-    auto handler = getBreakTarget(handlerIndex).name;
-
-    curr->handlerTags[i] = tag;
-    curr->handlerBlocks[i] = handler;
-
-    // We don't know the final name yet
-    tagRefs[tagIndex].push_back(&curr->handlerTags[i]);
+    curr->handlerTags[i] = getTagName(getU32LEB());
+    curr->handlerBlocks[i] = getBreakTarget(getU32LEB()).name;
   }
 
   curr->cont = popNonVoidExpression();
@@ -7961,14 +7945,9 @@ void WasmBinaryReader::visitResume(Resume* curr) {
 }
 
 void WasmBinaryReader::visitSuspend(Suspend* curr) {
-
   auto tagIndex = getU32LEB();
-  if (tagIndex >= wasm.tags.size()) {
-    throwError("bad tag index");
-  }
+  curr->tag = getTagName(tagIndex);
   auto* tag = wasm.tags[tagIndex].get();
-  curr->tag = tag->name;
-  tagRefs[tagIndex].push_back(&curr->tag);
 
   auto numArgs = tag->sig.params.size();
   curr->operands.resize(numArgs);
