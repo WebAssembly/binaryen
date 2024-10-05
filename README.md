@@ -148,6 +148,9 @@ There are a few differences between Binaryen IR and the WebAssembly language:
       much about this when writing Binaryen passes. For more details see the
       `requiresNonNullableLocalFixups()` hook in `pass.h` and the
       `LocalStructuralDominance` class.
+  * Validation of the `pop` instruction in Wasm Exceptions will ignore nameless
+    blocks, similar to validation of non-nullable locals in the previous point
+    (and for the same reasons).
   * `br_if` output types are more refined in Binaryen IR: they have the type of
     the value, when a value flows in. In the wasm spec the type is that of the
     branch target, which may be less refined. Using the more refined type here

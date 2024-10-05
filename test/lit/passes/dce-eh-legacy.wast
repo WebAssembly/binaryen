@@ -122,23 +122,17 @@
   )
 
   ;; CHECK:      (func $call-pop-catch (type $0)
-  ;; CHECK-NEXT:  (local $0 i32)
   ;; CHECK-NEXT:  (block $label
   ;; CHECK-NEXT:   (try
   ;; CHECK-NEXT:    (do
   ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (catch $e-i32
-  ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (pop i32)
-  ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (block
-  ;; CHECK-NEXT:       (drop
-  ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (br $label)
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (pop i32)
   ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (br $label)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
@@ -151,8 +145,8 @@
          (nop)
        )
        (catch $e-i32
-         ;; This call is unreachable and can be removed. The pop, however, must
-         ;; be carefully handled while we do so, to not break validation.
+         ;; This call is unreachable and can be removed. A nameless block will
+         ;; be added around the pop, but that is ok.
          (call $helper-i32-i32
            (pop i32)
            (br $label)
@@ -171,24 +165,18 @@
   )
 
   ;; CHECK:      (func $pop-within-block (type $4) (result i32)
-  ;; CHECK-NEXT:  (local $0 eqref)
   ;; CHECK-NEXT:  (try (result i32)
   ;; CHECK-NEXT:   (do
   ;; CHECK-NEXT:    (i32.const 0)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (catch $e-eqref
-  ;; CHECK-NEXT:    (local.set $0
-  ;; CHECK-NEXT:     (pop eqref)
-  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (block
-  ;; CHECK-NEXT:     (block
-  ;; CHECK-NEXT:      (drop
-  ;; CHECK-NEXT:       (struct.new $struct
-  ;; CHECK-NEXT:        (local.get $0)
-  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:     (drop
+  ;; CHECK-NEXT:      (struct.new $struct
+  ;; CHECK-NEXT:       (pop eqref)
   ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (unreachable)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -200,16 +188,7 @@
       )
       (catch $e-eqref
         (drop
-          ;; Optimization moves the 'pop' inside a block, which needs to be
-          ;; extracted out of the block at the end.
-          ;; (block
-          ;;   (drop
-          ;;     (struct.new $struct.0
-          ;;       (pop eqref)
-          ;;     )
-          ;;   )
-          ;;   (unreachable)
-          ;; )
+          ;; Optimization moves the 'pop' inside a nameless block.
           (ref.eq
             (struct.new $struct
               (pop (ref null eq))
