@@ -1709,11 +1709,11 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
   std::vector<Name> catchTags;
   std::vector<Name> catchDests;
   std::vector<bool> catchRefs;
-  auto numTags = upTo(MAX_TRY_CATCHES);
-  for (Index i = 0; i <= numTags; i++) {
+  auto numCatches = upTo(MAX_TRY_CATCHES);
+  for (Index i = 0; i <= numCatches; i++) {
     Name tagName;
     Type tagType;
-    if (i < numTags) {
+    if (i < numCatches) {
       // Look for a specific tag.
       auto& tag = pick(wasm.tags);
       tagName = tag->name;
