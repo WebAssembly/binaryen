@@ -3,7 +3,8 @@
 ;;
 ;; GUFA manages to generate IR that makes merge-blocks leave a stale type, if we
 ;; are not careful. simplify-locals-notee then errors if that stale type is
-;; present, so all the passes are needed to hit this bizarre corner case.
+;; present, so we need to include all of the passes here in order to hit this
+;; bizarre corner case.
 ;;
 ;; The specific bug that happened here was that merge-blocks operated on
 ;; dead but not refinalized code. That pass should skip dead code and wait for
