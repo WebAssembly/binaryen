@@ -176,15 +176,6 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
   }
 };
 
-static bool hasUnreachableChild(Block* block) {
-  for (auto* test : block->list) {
-    if (test->type == Type::unreachable) {
-      return true;
-    }
-  }
-  return false;
-}
-
 // Checks for code after an unreachable element.
 static bool hasDeadCode(Block* block) {
   auto& list = block->list;
@@ -236,8 +227,8 @@ static bool optimizeDroppedBlock(Drop* drop,
   return true;
 }
 
-// Core block optimizer routine.
-static void optimizeBlock(Block* curr,
+// Core block optimizer routine. Returns true when we optimize.
+static bool optimizeBlock(Block* curr,
                           Module* module,
                           PassOptions& passOptions,
                           BranchUtils::BranchSeekerCache& branchInfo) {
@@ -413,6 +404,7 @@ static void optimizeBlock(Block* curr,
   if (changed) {
     curr->finalize(curr->type);
   }
+  return changed;
 }
 
 void BreakValueDropper::visitBlock(Block* curr) {
@@ -428,6 +420,8 @@ struct MergeBlocks
     return std::make_unique<MergeBlocks>();
   }
 
+  bool refinalize = false;
+
   BranchUtils::BranchSeekerCache branchInfo;
 
   void visitBlock(Block* curr) {
@@ -439,6 +433,7 @@ struct MergeBlocks
       if (optimizeDroppedBlock(
             curr, block, *getModule(), getPassOptions(), branchInfo)) {
         replaceCurrent(block);
+        refinalize = true;
       }
     }
   }
@@ -488,7 +483,7 @@ struct MergeBlocks
       if (!block->name.is() && block->list.size() >= 2) {
         // if we move around unreachable code, type changes could occur. avoid
         // that, as anyhow it means we should have run dce before getting here
-        if (curr->type == Type::none && hasUnreachableChild(block)) {
+        if (curr->type == Type::none) {
           // moving the block to the outside would replace a none with an
           // unreachable
           return outer;
@@ -511,6 +506,7 @@ struct MergeBlocks
           return outer;
         }
         child = back;
+        refinalize = true;
         if (outer == nullptr) {
           // reuse the block, move it out
           block->list.back() = curr;
@@ -601,8 +597,7 @@ struct MergeBlocks
       // too small for us to remove anything from (we cannot remove the last
       // element), or if it has unreachable code (leave that for dce), then give
       // up.
-      if (!block || block->name.is() || block->list.size() <= 1 ||
-          hasUnreachableChild(block)) {
+      if (!block || block->name.is() || block->list.size() <= 1) {
         continueEarly();
         continue;
       }
@@ -683,6 +678,7 @@ struct MergeBlocks
       outerBlock->list.push_back(curr);
       outerBlock->finalize(curr->type);
       replaceCurrent(outerBlock);
+      refinalize = true;
     }
   }
 
@@ -699,6 +695,12 @@ struct MergeBlocks
         return;
       }
       outer = optimize(curr, curr->operands[i], outer);
+    }
+  }
+
+  void visitFunction(Function* curr) {
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(curr, *getModule());
     }
   }
 };
