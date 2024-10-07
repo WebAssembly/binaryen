@@ -253,11 +253,6 @@ static bool optimizeBlock(Block* curr,
         if (auto* drop = list[i]->dynCast<Drop>()) {
           childBlock = drop->value->dynCast<Block>();
           if (childBlock) {
-            if (hasUnreachableChild(childBlock)) {
-              // don't move around unreachable code, as it can change types
-              // dce should have been run anyhow
-              continue;
-            }
             if (optimizeDroppedBlock(
                   drop, childBlock, *module, passOptions, branchInfo)) {
               child = list[i] = childBlock;
@@ -700,7 +695,7 @@ struct MergeBlocks
 
   void visitFunction(Function* curr) {
     if (refinalize) {
-      ReFinalize().walkFunctionInModule(curr, *getModule());
+      ReFinalize().walkFunctionInModule(curr, getModule());
     }
   }
 };
