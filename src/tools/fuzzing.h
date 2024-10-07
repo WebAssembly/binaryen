@@ -293,6 +293,7 @@ private:
   Expression* buildIf(const struct ThreeArgs& args, Type type);
   Expression* makeIf(Type type);
   Expression* makeTry(Type type);
+  Expression* makeTryTable(Type type);
   Expression* makeBreak(Type type);
   Expression* makeCall(Type type);
   Expression* makeCallIndirect(Type type);
