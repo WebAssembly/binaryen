@@ -1719,8 +1719,8 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
       tagName = tag->name;
       tagType = tag->sig.params;
     } else {
-      // Look for a catch_all at the end, some of the time (but all of the time
-      // if we have nothing else).
+      // Add a catch_all at the end, some of the time (but all of the time if we
+      // have nothing else).
       if (!catchTags.empty() && oneIn(2)) {
         break;
       }
@@ -1738,11 +1738,11 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
     int tries = TRIES;
     while (tries-- > 0) {
       auto* target = pick(funcContext->breakableStack);
-      auto name = getTargetName(target);
+      auto dest = getTargetName(target);
       auto valueType = getTargetType(target);
       if (valueType == tagType || valueType == tagTypeWithExn) {
         catchTags.push_back(tagName);
-        catchDests.push_back(name);
+        catchDests.push_back(dest);
         catchRefs.push_back(valueType == tagTypeWithExn);
         break;
       }
