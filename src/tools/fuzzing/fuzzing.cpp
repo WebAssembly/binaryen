@@ -1692,11 +1692,14 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
 }
 
 Expression* TranslateToFuzzReader::makeTryTable(Type type) {
+  auto* body = make(type);
+
   if (funcContext->breakableStack.empty()) {
-    // Nothing to break to.
+    // Nothing to break to, emit a trivial TryTable.
     // TODO: Perhaps generate a block wrapping us?
-    return makeTrivial(type);
+    return builder.makeTryTable(body, {}, {}, {});
   }
+
   if (wasm.tags.empty()) {
     addTag();
   }
@@ -1749,12 +1752,6 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
     //       generate those?
   }
 
-  // If we found nothing, give up.
-  if (catchTags.empty()) {
-    return makeTrivial(type);
-  }
-
-  auto* body = make(type);
   return builder.makeTryTable(body, catchTags, catchDests, catchRefs);
 }
 
