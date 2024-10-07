@@ -206,6 +206,11 @@ static bool optimizeDroppedBlock(Drop* drop,
                                  PassOptions& options,
                                  BranchUtils::BranchSeekerCache& branchInfo) {
   assert(drop->value == block);
+  if (hasUnreachableChild(block)) {
+    // Don't move around unreachable code, as it can change types (leave it for
+    // DCE).
+    return false;
+  }
   if (block->name.is()) {
     // There may be breaks: see if we can remove their values.
     Expression* expression = block;
@@ -261,20 +266,14 @@ static void optimizeBlock(Block* curr,
         // drop into the block, and remove br values. This allows more merging.
         if (auto* drop = list[i]->dynCast<Drop>()) {
           childBlock = drop->value->dynCast<Block>();
-          if (childBlock) {
-            if (hasUnreachableChild(childBlock)) {
-              // don't move around unreachable code, as it can change types
-              // dce should have been run anyhow
-              continue;
-            }
-            if (optimizeDroppedBlock(
-                  drop, childBlock, *module, passOptions, branchInfo)) {
-              child = list[i] = childBlock;
-              more = true;
-              changed = true;
-            } else {
-              childBlock = nullptr;
-            }
+          if (childBlock &&
+              optimizeDroppedBlock(
+                drop, childBlock, *module, passOptions, branchInfo)) {
+            child = list[i] = childBlock;
+            more = true;
+            changed = true;
+          } else {
+            childBlock = nullptr;
           }
         } else if ((loop = list[i]->dynCast<Loop>())) {
           // We can merge a loop's "tail" - if the body is a block and has

@@ -405,11 +405,12 @@
  )
 
  ;; CHECK:      (func $toplevel (type $4)
- ;; CHECK-NEXT:  (block $label
- ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (i32.const 42)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $label (result i32)
+ ;; CHECK-NEXT:    (br $label
+ ;; CHECK-NEXT:     (i32.const 42)
+ ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:   (br $label)
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $toplevel
