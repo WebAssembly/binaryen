@@ -329,6 +329,11 @@ struct Flatten
       }
     }
 
+    if (curr->is<BrOn>() || curr->is<TryTable>()) {
+      Fatal() << "Unsupported instruction for Flatten: "
+              << getExpressionName(curr);
+    }
+
     // continue for general handling of everything, control flow or otherwise
     curr = getCurrent(); // we may have replaced it
     // we have changed children
