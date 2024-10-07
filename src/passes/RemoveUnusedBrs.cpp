@@ -513,6 +513,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             auto* rep = getDroppedChildrenAndAppend(
               curr, wasm, getPassOptions(), br, DropMode::IgnoreParentEffects);
             replaceCurrent(rep);
+            // We modified the code here and may have added a drop, etc. Leave
+            // seeing if things can flow out of the new code to later
+            // iterations.
+            stopFlow();
           }
 
           // Return even if we did not optimize: we found our tag was caught.

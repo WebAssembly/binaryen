@@ -378,4 +378,44 @@
       )
     )
   )
+
+  ;; CHECK:      (func $no-flow-through-throw (type $4)
+  ;; CHECK-NEXT:  (block $label
+  ;; CHECK-NEXT:   (try_table (catch_all $label)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (if (result i32)
+  ;; CHECK-NEXT:      (i32.const 0)
+  ;; CHECK-NEXT:      (then
+  ;; CHECK-NEXT:       (br $label)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (else
+  ;; CHECK-NEXT:       (i32.const 42)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $label)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $no-flow-through-throw
+    ;; The throw here can turn into a break. While doing so, we must clear all
+    ;; the currently-flowing things, namely the br in the if arm. If we do not
+    ;; do so then it will try to flow out through the drop that we add for the
+    ;; throw's value, which is impossible.
+    (block $label
+      (try_table (catch_all $label)
+        (throw $e
+          (if (result i32)
+            (i32.const 0)
+            (then
+              (br $label)
+            )
+            (else
+              (i32.const 42)
+            )
+          )
+        )
+      )
+    )
+  )
 )
