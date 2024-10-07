@@ -464,12 +464,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     //       later down, see visitLocalSet.
   }
 
-  // A stack of try_tables that are parents of the current expression.
-  std::vector<TryTable*> tryTables;
+  // A stack of catching expressions that are parents of the current expression,
+  // that is, Try and TryTable.
+  std::vector<Expression*> catchers;
 
-  static void popTryTable(RemoveUnusedBrs* self, Expression** currp) {
-    assert(!self->tryTables.empty() && self->tryTables.back() == *currp);
-    self->tryTables.pop_back();
+  static void popCatcher(RemoveUnusedBrs* self, Expression** currp) {
+    assert(!self->catchers.empty() && self->catchers.back() == *currp);
+    self->catchers.pop_back();
   }
 
   void visitThrow(Throw* curr) {
@@ -481,8 +482,12 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     // To do so, look at the closest try and see if it will catch us, and
     // proceed outwards if not.
     auto thrownTag = curr->tag;
-    for (int i = tryTables.size() - 1; i >= 0; i--) {
-      auto* tryy = tryTables[i];
+    for (int i = catchers.size() - 1; i >= 0; i--) {
+      auto* tryy = catchers[i]->dynCast<TryTable>();
+      if (!tryy) {
+        // We do not handle mixtures of Try and TryTable.
+        return;
+      }
       for (Index j = 0; j < tryy->catchTags.size(); j++) {
         auto tag = tryy->catchTags[j];
         // The tag must match, or be a catch_all.
@@ -544,12 +549,13 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       self->pushTask(scan, &iff->condition);
       return;
     }
-    if (auto* tryy = (*currp)->dynCast<TryTable>()) {
+    if ((*currp)->is<TryTable>() || (*currp)->is<Try>()) {
       // Push the try we are reaching, and add a task to pop it, after all the
       // tasks that Super::scan will push for its children.
-      self->tryTables.push_back(tryy);
-      self->pushTask(popTryTable, currp);
+      self->catchers.push_back(*currp);
+      self->pushTask(popCatcher, currp);
     }
+
     Super::scan(self, currp);
   }
 
