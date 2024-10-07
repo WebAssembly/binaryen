@@ -244,6 +244,97 @@
       (call $throw-caught-precise-later)
     )
   )
+
+  ;; CHECK:      (func $throw-mixed (type $0)
+  ;; CHECK-NEXT:  (block $catch
+  ;; CHECK-NEXT:   (try_table (catch_all $catch)
+  ;; CHECK-NEXT:    (try
+  ;; CHECK-NEXT:     (do
+  ;; CHECK-NEXT:      (throw $e)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (catch_all
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $throw-mixed
+    ;; When we see mixed Trys and TryTables, we do not optimize (we would need
+    ;; to analyze if the Trys catch the exceptions and not the TryTables, but
+    ;; we don't bother to handle this odd case of mixing the old and new
+    ;; styles of code).
+    (block $catch
+      (try_table (catch_all $catch)
+        (try
+          (do
+            ;; This throw is caught by the Try, not the TryTable.
+            (throw $e)
+          )
+          (catch_all
+            (unreachable)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $threading (type $0)
+  ;; CHECK-NEXT:  (block $outer
+  ;; CHECK-NEXT:   (block $middle
+  ;; CHECK-NEXT:    (block $inner
+  ;; CHECK-NEXT:     (try_table (catch $e $outer) (catch $f $outer) (catch_all $outer)
+  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $threading
+    (block $outer
+      (block $middle
+        (block $inner
+          ;; All the branch targets here will turn into "outer", see below.
+          (try_table (catch $e $outer) (catch $f $middle) (catch_all $inner)
+          )
+        )
+        ;; Jumping to inner is the same as middle, as there is nothing
+        ;; between them.
+      )
+      ;; Jumping to middle is the same as outer, as we jump there anyhow.
+      (br $outer)
+    )
+  )
+
+  ;; CHECK:      (func $threading-2 (type $0)
+  ;; CHECK-NEXT:  (block $outer
+  ;; CHECK-NEXT:   (block $middle
+  ;; CHECK-NEXT:    (block $inner
+  ;; CHECK-NEXT:     (try_table (catch $e $outer) (catch $f $middle) (catch_all $outer)
+  ;; CHECK-NEXT:      (nop)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (br $outer)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $threading-2
+    (block $outer
+      (block $middle
+        (block $inner
+          (try_table (catch $e $outer) (catch $f $middle) (catch_all $inner)
+            ;; Only inner will turn into outer.
+          )
+        )
+        ;; Skip over middle, so jumps to inner go to outer.
+        (br $outer)
+      )
+      ;; Stop execution between middle and outer. We should still optimize
+      ;; inner to outer.
+      (unreachable)
+    )
+  )
 )
 
 (module
