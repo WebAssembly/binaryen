@@ -1729,21 +1729,22 @@ Expression* TranslateToFuzzReader::makeTryTable(Type type) {
 
     // We need to find a proper target to break to, which means a target that
     // has the type of the tag, or the tag + an exnref at the end.
-    std::vector<Type> vec;
-    for (auto t : tagType) {
-      vec.push_back(t);
-    }
-    vec.push_back(Type(HeapType::exn, Nullable)); // TODO: NonNullable?
+    std::vector<Type> vec(tagType.begin(), tagType.end());
+    // Use a non-nullable exnref here, and then the subtyping check below will
+    // also accept a target that is nullable.
+    vec.push_back(Type(HeapType::exn, NonNullable));
     auto tagTypeWithExn = Type(vec);
     int tries = TRIES;
     while (tries-- > 0) {
       auto* target = pick(funcContext->breakableStack);
       auto dest = getTargetName(target);
       auto valueType = getTargetType(target);
-      if (valueType == tagType || valueType == tagTypeWithExn) {
+      auto subOfTagType = Type::isSubType(tagType, valueType);
+      auto subOfTagTypeWithExn = Type::isSubType(tagTypeWithExn, valueType);
+      if (subOfTagType || subOfTagTypeWithExn) {
         catchTags.push_back(tagName);
         catchDests.push_back(dest);
-        catchRefs.push_back(valueType == tagTypeWithExn);
+        catchRefs.push_back(subOfTagTypeWithExn);
         break;
       }
     }
