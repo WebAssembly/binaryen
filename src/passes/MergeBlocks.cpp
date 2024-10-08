@@ -475,13 +475,6 @@ struct MergeBlocks
     }
     if (auto* block = child->dynCast<Block>()) {
       if (!block->name.is() && block->list.size() >= 2) {
-        // if we move around unreachable code, type changes could occur. avoid
-        // that, as anyhow it means we should have run dce before getting here
-        if (curr->type == Type::none) {
-          // moving the block to the outside would replace a none with an
-          // unreachable
-          return outer;
-        }
         auto* back = block->list.back();
         if (back->type == Type::unreachable) {
           // curr is not reachable, dce could remove it; don't try anything
