@@ -197,11 +197,6 @@ static bool optimizeDroppedBlock(Drop* drop,
                                  PassOptions& options,
                                  BranchUtils::BranchSeekerCache& branchInfo) {
   assert(drop->value == block);
-  if (hasUnreachableChild(block)) {
-    // Don't move around unreachable code, as it can change types (leave it for
-    // DCE).
-    return false;
-  }
   if (block->name.is()) {
     // There may be breaks: see if we can remove their values.
     Expression* expression = block;
