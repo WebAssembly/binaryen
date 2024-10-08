@@ -183,10 +183,14 @@
   (nop)
  )
  (func $br-on_non_null-2 (type $void_func)
-  (call $log
-   (i32.const 1)
+  (drop
+   (block
+    (call $log
+     (i32.const 1)
+    )
+    (unreachable)
+   )
   )
-  (unreachable)
  )
  (func $cast-on-func (type $void_func)
   (call $log

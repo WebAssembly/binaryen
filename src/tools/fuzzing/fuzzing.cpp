@@ -1366,6 +1366,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
            &Self::makeCall,
            &Self::makeCallIndirect)
       .add(FeatureSet::ExceptionHandling, &Self::makeTry)
+      .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
       .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
   }
   if (type.isSingle()) {
@@ -1451,6 +1452,8 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeGlobalSet)
     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
     .add(FeatureSet::Atomics, &Self::makeAtomic)
+    .add(FeatureSet::ExceptionHandling, &Self::makeTry)
+    .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeStructSet)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArraySet)
@@ -1686,6 +1689,71 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
   }
   // TODO: delegate stuff
   return builder.makeTry(body, catchTags, catchBodies);
+}
+
+Expression* TranslateToFuzzReader::makeTryTable(Type type) {
+  auto* body = make(type);
+
+  if (funcContext->breakableStack.empty()) {
+    // Nothing to break to, emit a trivial TryTable.
+    // TODO: Perhaps generate a block wrapping us?
+    return builder.makeTryTable(body, {}, {}, {});
+  }
+
+  if (wasm.tags.empty()) {
+    addTag();
+  }
+
+  // Add catches of specific tags, and possibly a catch_all at the end. We use
+  // the last iteration of the loop for that.
+  std::vector<Name> catchTags;
+  std::vector<Name> catchDests;
+  std::vector<bool> catchRefs;
+  auto numCatches = upTo(MAX_TRY_CATCHES);
+  for (Index i = 0; i <= numCatches; i++) {
+    Name tagName;
+    Type tagType;
+    if (i < numCatches) {
+      // Look for a specific tag.
+      auto& tag = pick(wasm.tags);
+      tagName = tag->name;
+      tagType = tag->sig.params;
+    } else {
+      // Add a catch_all at the end, some of the time (but all of the time if we
+      // have nothing else).
+      if (!catchTags.empty() && oneIn(2)) {
+        break;
+      }
+      tagType = Type::none;
+    }
+
+    // We need to find a proper target to break to, which means a target that
+    // has the type of the tag, or the tag + an exnref at the end.
+    std::vector<Type> vec(tagType.begin(), tagType.end());
+    // Use a non-nullable exnref here, and then the subtyping check below will
+    // also accept a target that is nullable.
+    vec.push_back(Type(HeapType::exn, NonNullable));
+    auto tagTypeWithExn = Type(vec);
+    int tries = TRIES;
+    while (tries-- > 0) {
+      auto* target = pick(funcContext->breakableStack);
+      auto dest = getTargetName(target);
+      auto valueType = getTargetType(target);
+      auto subOfTagType = Type::isSubType(tagType, valueType);
+      auto subOfTagTypeWithExn = Type::isSubType(tagTypeWithExn, valueType);
+      if (subOfTagType || subOfTagTypeWithExn) {
+        catchTags.push_back(tagName);
+        catchDests.push_back(dest);
+        catchRefs.push_back(subOfTagTypeWithExn);
+        break;
+      }
+    }
+    // TODO: Perhaps generate a block wrapping us, if we fail to find a target?
+    // TODO: It takes a bit of luck to find a target with an exnref - perhaps
+    //       generate those?
+  }
+
+  return builder.makeTryTable(body, catchTags, catchDests, catchRefs);
 }
 
 Expression* TranslateToFuzzReader::makeBreak(Type type) {

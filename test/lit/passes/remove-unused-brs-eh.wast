@@ -245,6 +245,40 @@
     )
   )
 
+  ;; CHECK:      (func $throw-mixed (type $0)
+  ;; CHECK-NEXT:  (block $catch
+  ;; CHECK-NEXT:   (try_table (catch_all $catch)
+  ;; CHECK-NEXT:    (try
+  ;; CHECK-NEXT:     (do
+  ;; CHECK-NEXT:      (throw $e)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:     (catch_all
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $throw-mixed
+    ;; When we see mixed Trys and TryTables, we do not optimize (we would need
+    ;; to analyze if the Trys catch the exceptions and not the TryTables, but
+    ;; we don't bother to handle this odd case of mixing the old and new
+    ;; styles of code).
+    (block $catch
+      (try_table (catch_all $catch)
+        (try
+          (do
+            ;; This throw is caught by the Try, not the TryTable.
+            (throw $e)
+          )
+          (catch_all
+            (unreachable)
+          )
+        )
+      )
+    )
+  )
+
   ;; CHECK:      (func $threading (type $0)
   ;; CHECK-NEXT:  (block $outer
   ;; CHECK-NEXT:   (block $middle
