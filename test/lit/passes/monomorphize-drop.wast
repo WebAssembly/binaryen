@@ -672,12 +672,7 @@
 
 ;; CAREFUL:      (func $return-normal_4 (type $1)
 ;; CAREFUL-NEXT:  (drop
-;; CAREFUL-NEXT:   (block
-;; CAREFUL-NEXT:    (drop
-;; CAREFUL-NEXT:     (call $import)
-;; CAREFUL-NEXT:    )
-;; CAREFUL-NEXT:    (return)
-;; CAREFUL-NEXT:   )
+;; CAREFUL-NEXT:   (call $import)
 ;; CAREFUL-NEXT:  )
 ;; CAREFUL-NEXT: )
 
