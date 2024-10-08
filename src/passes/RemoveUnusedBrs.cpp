@@ -513,9 +513,9 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             auto* rep = getDroppedChildrenAndAppend(
               curr, wasm, getPassOptions(), br, DropMode::IgnoreParentEffects);
             replaceCurrent(rep);
-            // We modified the code here and may have added a drop, etc. Leave
-            // seeing if things can flow out of the new code to later
-            // iterations.
+            // We modified the code here and may have added a drop, etc., so
+            // stop the flow (rather than re-scan it somehow). We leave
+            // optimizing anything that flows out for later iterations.
             stopFlow();
           }
 
