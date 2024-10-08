@@ -518,6 +518,10 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
             auto* rep = getDroppedChildrenAndAppend(
               curr, wasm, getPassOptions(), br, DropMode::IgnoreParentEffects);
             replaceCurrent(rep);
+            // We modified the code here and may have added a drop, etc., so
+            // stop the flow (rather than re-scan it somehow). We leave
+            // optimizing anything that flows out for later iterations.
+            stopFlow();
           }
 
           // Return even if we did not optimize: we found our tag was caught.
