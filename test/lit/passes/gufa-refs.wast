@@ -6058,15 +6058,17 @@
 )
 
 (module
+  ;; CHECK:      (type $0 (func (result i64 nullref i32)))
+
   ;; CHECK:      (type $array (sub (array (mut i8))))
   (type $array (sub (array (mut i8))))
 
-  ;; CHECK:      (type $1 (func))
+  ;; CHECK:      (type $2 (func))
 
   ;; CHECK:      (global $global (ref null $array) (array.new_fixed $array 0))
   (global $global (ref null $array) (array.new_fixed $array 0))
 
-  ;; CHECK:      (func $test (type $1)
+  ;; CHECK:      (func $test-set-bottom (type $2)
   ;; CHECK-NEXT:  (block ;; (replaces unreachable ArraySet we can't emit)
   ;; CHECK-NEXT:   (drop
   ;; CHECK-NEXT:    (ref.cast nullref
@@ -6082,15 +6084,58 @@
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
-  (func $test
+  (func $test-set-bottom
     ;; We should not error on sets to bottom types, even if they are cast from
     ;; valid values.
     (array.set $array
-     (ref.cast nullref
-       (global.get $global)
-     )
-     (i32.const 0)
-     (i32.const 0)
-   )
+      (ref.cast nullref
+        (global.get $global)
+      )
+      (i32.const 0)
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $loop-tuple-br_on (type $2)
+  ;; CHECK-NEXT:  (tuple.drop 3
+  ;; CHECK-NEXT:   (loop $loop (type $0) (result i64 nullref i32)
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block
+  ;; CHECK-NEXT:      (drop
+  ;; CHECK-NEXT:       (br_on_null $loop
+  ;; CHECK-NEXT:        (ref.null none)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (unreachable)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (tuple.make 3
+  ;; CHECK-NEXT:     (i64.const 1)
+  ;; CHECK-NEXT:     (ref.null none)
+  ;; CHECK-NEXT:     (i32.const 2)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $loop-tuple-br_on
+    ;; The br_on here does not send any values when it branches. This is a test
+    ;; for a bug where it did send the null along, which then caused an
+    ;; assertion when we tried to combine the null with the tuple that flows
+    ;; out.
+    (tuple.drop 3
+      (loop $loop (result i64 anyref i32)
+        (drop
+          ;; As this br always happens, we can add an unreachable after it.
+          (br_on_null $loop
+            (ref.null any)
+          )
+        )
+        (tuple.make 3
+          (i64.const 1)
+          (ref.null any)
+          (i32.const 2)
+        )
+      )
+    )
   )
 )
