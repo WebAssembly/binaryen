@@ -3996,72 +3996,23 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
     // BrOnNull is the only variant that sends no value.
     return fixFlowingType(builder.makeBrOn(BrOnNull, targetName, make(getReferenceType())));
   }
-    if (type.isConcrete()) {
-      // we are flowing out a value
-      if (valueType != type) {
-        // we need to break to a proper place
-        continue;
-      }
-      auto* ret = builder.makeBreak(name, make(type), condition);
-      funcContext->hangStack.pop_back();
-      return ret;
-    } else if (type == Type::none) {
-      if (valueType != Type::none) {
-        // we need to break to a proper place
-        continue;
-      }
-      auto* ret = builder.makeBreak(name, nullptr, condition);
-      funcContext->hangStack.pop_back();
-      return ret;
-    } else {
-      assert(type == Type::unreachable);
-      if (valueType != Type::none) {
-        // we need to break to a proper place
-        continue;
-      }
-      // we are about to make an *un*conditional break. if it is
-      // to a loop, we prefer there to be a condition along the
-      // way, to reduce the chance of infinite looping
-      size_t conditions = 0;
-      int i = funcContext->hangStack.size();
-      while (--i >= 0) {
-        auto* item = funcContext->hangStack[i];
-        if (item == nullptr) {
-          conditions++;
-        } else if (auto* loop = item->cast<Loop>()) {
-          if (loop->name == name) {
-            // we found the target, no more conditions matter
-            break;
-          }
-        }
-      }
-      switch (conditions) {
-        case 0: {
-          if (!oneIn(4)) {
-            continue;
-          }
-          break;
-        }
-        case 1: {
-          if (!oneIn(2)) {
-            continue;
-          }
-          break;
-        }
-        default: {
-          if (oneIn(conditions + 1)) {
-            continue;
-          }
-        }
-      }
-      return builder.makeBreak(name);
-    }
-  }
-  // we failed to find something
-  if (type != Type::unreachable) {
-    funcContext->hangStack.pop_back();
-  }
-  return makeTrivial(type);
+
+  // We are sending a reference type to the target. All other BrOn variants can
+  // do that.
+  assert(targetType.isRef());
+  auto op = pick({BrOnNonNull, BrOnCast, BrOnCastFail});
+  auto castType = Type::none;
+  Expression* ref;
+  switch (op) {
+    case BrOnNonNull:
+      // The sent type is the non-nullable version of the reference, so any ref
+      // of that type is ok, nullable or not.
+      ref = make(Type(targetType, getNullability()));
+      break;
+    case BrOnCast:
+    case BrOnCastFail:
+  };
+  return fixFlowingType(builder.makeBrOn(op, targetName, ref, castType));
 }
 
 bool TranslateToFuzzReader::maybeSignedGet(const Field& field) {
