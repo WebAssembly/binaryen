@@ -1413,8 +1413,7 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeRefCast);
   }
   if (wasm.features.hasGC()) {
-    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
-                &Self::makeBrOn);
+    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn);
     if (typeStructFields.find(type) != typeStructFields.end()) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeStructGet);
@@ -1460,8 +1459,8 @@ Expression* TranslateToFuzzReader::_makenone() {
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeStructSet)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArraySet)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn);
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes,
-         &Self::makeArrayBulkMemoryOp);
+  .add(FeatureSet::GC | FeatureSet::ReferenceTypes,
+       &Self::makeArrayBulkMemoryOp);
   return (this->*pick(options))(Type::none);
 }
 
@@ -3994,7 +3993,8 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
   // send.
   if (targetType == Type::none) {
     // BrOnNull is the only variant that sends no value.
-    return fixFlowingType(builder.makeBrOn(BrOnNull, targetName, make(getReferenceType())));
+    return fixFlowingType(
+      builder.makeBrOn(BrOnNull, targetName, make(getReferenceType())));
   }
 
   // We are sending a reference type to the target. All other BrOn variants can
@@ -4035,14 +4035,13 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
       castType = getSubType(refType);
       // There is no nullability to adjust: if targetType is non-nullable then
       // both refType and castType are as well, as subtypes of it.
-      }
-      break;
-    }
+    } break;
     default: {
       WASM_UNREACHABLE("bad br_on op");
     }
-  };
-  return fixFlowingType(builder.makeBrOn(op, targetName, make(refType), castType));
+  }
+  return fixFlowingType(
+    builder.makeBrOn(op, targetName, make(refType), castType));
 }
 
 bool TranslateToFuzzReader::maybeSignedGet(const Field& field) {
