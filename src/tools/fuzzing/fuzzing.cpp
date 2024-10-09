@@ -1458,9 +1458,9 @@ Expression* TranslateToFuzzReader::_makenone() {
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeStructSet)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArraySet)
-    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn);
-  .add(FeatureSet::GC | FeatureSet::ReferenceTypes,
-       &Self::makeArrayBulkMemoryOp);
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn)
+    .add(FeatureSet::GC | FeatureSet::ReferenceTypes,
+         &Self::makeArrayBulkMemoryOp);
   return (this->*pick(options))(Type::none);
 }
 
@@ -3972,7 +3972,7 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
     return makeTrivial(type);
   }
 
-  auto fixFlowingType = [&](Expression* brOn) {
+  auto fixFlowingType = [&](Expression* brOn) -> Expression* {
     if (Type::isSubType(brOn->type, type)) {
       // Already of the proper type.
       return brOn;
@@ -4000,14 +4000,14 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
   // We are sending a reference type to the target. All other BrOn variants can
   // do that.
   assert(targetType.isRef());
-  auto op = pick({BrOnNonNull, BrOnCast, BrOnCastFail});
-  auto castType = Type::none;
+  auto op = pick(BrOnNonNull, BrOnCast, BrOnCastFail);
+  Type castType = Type::none;
   Type refType;
   switch (op) {
     case BrOnNonNull: {
       // The sent type is the non-nullable version of the reference, so any ref
       // of that type is ok, nullable or not.
-      refType = Type(targetType, getNullability());
+      refType = Type(targetType.getHeapType(), getNullability());
       break;
     }
     case BrOnCast: {
@@ -4020,7 +4020,7 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
       if (targetType.isNonNullable()) {
         // And it must have the right nullability for the target, as mentioned
         // above.
-        refType = Type(refType.getHeapType, NonNullable);
+        refType = Type(refType.getHeapType(), NonNullable);
       }
       break;
     }
