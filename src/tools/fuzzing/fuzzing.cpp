@@ -1413,6 +1413,8 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeRefCast);
   }
   if (wasm.features.hasGC()) {
+    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
+                &Self::makeBrOn);
     if (typeStructFields.find(type) != typeStructFields.end()) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeStructGet);
@@ -1457,6 +1459,7 @@ Expression* TranslateToFuzzReader::_makenone() {
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeStructSet)
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArraySet)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn);
     .add(FeatureSet::GC | FeatureSet::ReferenceTypes,
          &Self::makeArrayBulkMemoryOp);
   return (this->*pick(options))(Type::none);
@@ -3942,6 +3945,123 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
       WASM_UNREACHABLE("bad case");
   }
   return builder.makeRefCast(make(refType), type);
+}
+
+Expression* TranslateToFuzzReader::makeBrOn(Type type) {
+  if (funcContext->breakableStack.empty()) {
+    return makeTrivial(type);
+  }
+  // We need to find a proper target to break to; try a few times. Finding the
+  // target is harder than flowing out the proper type, so focus on the target,
+  // and fix up the flowing type later. That is, once we find a target to break
+  // to, we can then either drop ourselves or wrap ourselves in a block +
+  // another value, so that we return the proper thing here (which is done below
+  // in fixFlowingType).
+  int tries = TRIES;
+  Name targetName;
+  Type targetType;
+  while (tries-- > 0) {
+    auto* target = pick(funcContext->breakableStack);
+    targetName = getTargetName(target);
+    targetType = getTargetType(target);
+    // We can send any reference type, or no value at all, but nothing else.
+    if (targetType.isRef() || targetType == Type::none) {
+      break;
+    }
+  }
+  if (tries == 0) {
+    return makeTrivial(type);
+  }
+
+  auto fixFlowingType = [&](Expression* brOn) {
+    if (Type::isSubType(brOn->type, type)) {
+      // Already of the proper type.
+      return brOn;
+    }
+    if (type == Type::none) {
+      // We just need to drop whatever it is.
+      return builder.makeDrop(brOn);
+    }
+    // We need to replace the type with something else. Drop the BrOn if we need
+    // to, and append a value with the proper type.
+    if (brOn->type != Type::none) {
+      brOn = builder.makeDrop(brOn);
+    }
+    return builder.makeSequence(brOn, make(type));
+  };
+
+  // We found something to break to. Figure out which BrOn variants we can
+  // send.
+  if (targetType == Type::none) {
+    // BrOnNull is the only variant that sends no value.
+    return fixFlowingType(builder.makeBrOn(BrOnNull, targetName, make(getReferenceType())));
+  }
+    if (type.isConcrete()) {
+      // we are flowing out a value
+      if (valueType != type) {
+        // we need to break to a proper place
+        continue;
+      }
+      auto* ret = builder.makeBreak(name, make(type), condition);
+      funcContext->hangStack.pop_back();
+      return ret;
+    } else if (type == Type::none) {
+      if (valueType != Type::none) {
+        // we need to break to a proper place
+        continue;
+      }
+      auto* ret = builder.makeBreak(name, nullptr, condition);
+      funcContext->hangStack.pop_back();
+      return ret;
+    } else {
+      assert(type == Type::unreachable);
+      if (valueType != Type::none) {
+        // we need to break to a proper place
+        continue;
+      }
+      // we are about to make an *un*conditional break. if it is
+      // to a loop, we prefer there to be a condition along the
+      // way, to reduce the chance of infinite looping
+      size_t conditions = 0;
+      int i = funcContext->hangStack.size();
+      while (--i >= 0) {
+        auto* item = funcContext->hangStack[i];
+        if (item == nullptr) {
+          conditions++;
+        } else if (auto* loop = item->cast<Loop>()) {
+          if (loop->name == name) {
+            // we found the target, no more conditions matter
+            break;
+          }
+        }
+      }
+      switch (conditions) {
+        case 0: {
+          if (!oneIn(4)) {
+            continue;
+          }
+          break;
+        }
+        case 1: {
+          if (!oneIn(2)) {
+            continue;
+          }
+          break;
+        }
+        default: {
+          if (oneIn(conditions + 1)) {
+            continue;
+          }
+        }
+      }
+      return builder.makeBreak(name);
+    }
+  }
+  // we failed to find something
+  if (type != Type::unreachable) {
+    funcContext->hangStack.pop_back();
+  }
+  return makeTrivial(type);
 }
 
 bool TranslateToFuzzReader::maybeSignedGet(const Field& field) {
