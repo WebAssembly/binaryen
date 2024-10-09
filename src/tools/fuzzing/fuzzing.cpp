@@ -3959,7 +3959,7 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
   int tries = TRIES;
   Name targetName;
   Type targetType;
-  while (tries-- > 0) {
+  while (--tries > 0) {
     auto* target = pick(funcContext->breakableStack);
     targetName = getTargetName(target);
     targetType = getTargetType(target);
