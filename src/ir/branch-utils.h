@@ -108,7 +108,8 @@ void operateOnScopeNameUsesAndSentValues(Expression* expr, T func) {
     } else if (auto* sw = expr->dynCast<Switch>()) {
       func(name, sw->value);
     } else if (auto* br = expr->dynCast<BrOn>()) {
-      func(name, br->ref);
+      // A value may not be sent (e.g. BrOnNull does *not* send a null).
+      func(name, br->getSentType() != Type::none ? br->ref : nullptr);
     } else if (expr->is<TryTable>()) {
       // The values are supplied by throwing instructions, so we are unable to
       // know what they will be here.
