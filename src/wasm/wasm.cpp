@@ -1523,7 +1523,7 @@ void Function::clearDebugInfo() {
 
 template<typename Map>
 typename Map::mapped_type&
-getModuleElement(Map& m, Name name, const std::string& funcName) {
+getModuleElement(Map& m, Name name, std::string_view funcName) {
   auto iter = m.find(name);
   if (iter == m.end()) {
     Fatal() << "Module::" << funcName << ": " << name << " does not exist";
