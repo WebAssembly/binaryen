@@ -12,16 +12,36 @@
   ;; CHECK:      (func $throw-caught-all (type $0)
   ;; CHECK-NEXT:  (block $catch
   ;; CHECK-NEXT:   (try_table (catch_all $catch)
-  ;; CHECK-NEXT:    (br $catch)
+  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $throw-caught-all
     (block $catch
       (try_table (catch_all $catch)
-        ;; This throw can be a br.
+        ;; This throw can be a br. After that, it can also be removed, as we
+        ;; flow to that block anyhow.
         (throw $e)
       )
+    )
+  )
+
+  ;; CHECK:      (func $throw-caught-all-no-flow (type $0)
+  ;; CHECK-NEXT:  (block $catch
+  ;; CHECK-NEXT:   (try_table (catch_all $catch)
+  ;; CHECK-NEXT:    (br $catch)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (unreachable)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $throw-caught-all-no-flow
+    (block $catch
+      (try_table (catch_all $catch)
+        (throw $e)
+      )
+      ;; Block the flow, so that after the throw is optimized to a br, the br
+      ;; remains.
+      (unreachable)
     )
   )
 
@@ -52,7 +72,7 @@
   ;; CHECK:      (func $throw-caught-precise (type $0)
   ;; CHECK-NEXT:  (block $catch
   ;; CHECK-NEXT:   (try_table (catch $e $catch)
-  ;; CHECK-NEXT:    (br $catch)
+  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -70,7 +90,7 @@
   ;; CHECK-NEXT:  (block $fail
   ;; CHECK-NEXT:   (block $catch
   ;; CHECK-NEXT:    (try_table (catch $f $fail) (catch $e $catch)
-  ;; CHECK-NEXT:     (br $catch)
+  ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call $throw-caught-precise-later)
@@ -94,7 +114,7 @@
   ;; CHECK-NEXT:  (block $fail
   ;; CHECK-NEXT:   (block $catch
   ;; CHECK-NEXT:    (try_table (catch $f $fail) (catch_all $catch)
-  ;; CHECK-NEXT:     (br $catch)
+  ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call $throw-caught-precise-later)
@@ -138,6 +158,7 @@
   ;; CHECK-NEXT:      (br $catch)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (call $throw-caught-precise-later)
   ;; CHECK-NEXT:  )
@@ -151,6 +172,8 @@
             (throw $e)
           )
         )
+        ;; Block the flow, so that the br above remains.
+        (unreachable)
       )
       ;; Add an effect here, so the two blocks are not mergeable.
       (call $throw-caught-precise-later)
@@ -195,6 +218,7 @@
   ;; CHECK-NEXT:    (try_table (catch_ref $e $outer) (catch_all $catch)
   ;; CHECK-NEXT:     (throw $e)
   ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (unreachable)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (unreachable)
   ;; CHECK-NEXT:  )
@@ -207,6 +231,7 @@
           ;; not optimize.
           (throw $e)
         )
+        (unreachable)
       )
       (unreachable)
     )
@@ -220,6 +245,7 @@
   ;; CHECK-NEXT:      (br $outer)
   ;; CHECK-NEXT:      (br $middle)
   ;; CHECK-NEXT:      (br $inner)
+  ;; CHECK-NEXT:      (unreachable)
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (call $throw-caught-precise-later)
@@ -236,6 +262,9 @@
             (throw $e)
             (throw $f)
             (throw $g)
+            ;; Prevent the br we optimize to at the end from getting optimized
+            ;; out.
+            (unreachable)
           )
         )
         ;; Add an effect here, so the two blocks are not mergeable.
@@ -338,7 +367,7 @@
 )
 
 (module
-  ;; CHECK:      (import "a" "b" (func $effect (type $1) (result i32)))
+  ;; CHECK:      (import "a" "b" (func $effect (type $2) (result i32)))
   (import "a" "b" (func $effect (result i32)))
 
   ;; CHECK:      (tag $e (param i32))
@@ -347,7 +376,7 @@
   ;; CHECK:      (tag $multi (param i32 f64))
   (tag $multi (param i32 f64))
 
-  ;; CHECK:      (func $throw-caught-all (type $0) (param $x i32)
+  ;; CHECK:      (func $throw-caught-all (type $1) (param $x i32)
   ;; CHECK-NEXT:  (block $catch
   ;; CHECK-NEXT:   (try_table (catch_all $catch)
   ;; CHECK-NEXT:    (drop
@@ -368,12 +397,10 @@
     )
   )
 
-  ;; CHECK:      (func $throw-br-contents (type $1) (result i32)
+  ;; CHECK:      (func $throw-br-contents (type $2) (result i32)
   ;; CHECK-NEXT:  (block $catch (result i32)
-  ;; CHECK-NEXT:   (try_table (catch $e $catch)
-  ;; CHECK-NEXT:    (br $catch
-  ;; CHECK-NEXT:     (i32.const 42)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (try_table (result i32) (catch $e $catch)
+  ;; CHECK-NEXT:    (i32.const 42)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -381,7 +408,8 @@
     (block $catch (result i32)
       (try_table (catch $e $catch)
         ;; This throw is not caught by catch_all as above, so the value must be
-        ;; sent as a value on the br we optimize it to.
+        ;; sent as a value on the br we optimize it to. That br can also be
+        ;; optimized away by letting the value flow out.
         (throw $e
           (i32.const 42)
         )
@@ -389,14 +417,12 @@
     )
   )
 
-  ;; CHECK:      (func $throw-br-contents-multi (type $2) (result i32 f64)
-  ;; CHECK-NEXT:  (block $catch (type $2) (result i32 f64)
-  ;; CHECK-NEXT:   (try_table (catch $multi $catch)
-  ;; CHECK-NEXT:    (br $catch
-  ;; CHECK-NEXT:     (tuple.make 2
-  ;; CHECK-NEXT:      (i32.const 42)
-  ;; CHECK-NEXT:      (f64.const 3.14159)
-  ;; CHECK-NEXT:     )
+  ;; CHECK:      (func $throw-br-contents-multi (type $0) (result i32 f64)
+  ;; CHECK-NEXT:  (block $catch (type $0) (result i32 f64)
+  ;; CHECK-NEXT:   (try_table (type $0) (result i32 f64) (catch $multi $catch)
+  ;; CHECK-NEXT:    (tuple.make 2
+  ;; CHECK-NEXT:     (i32.const 42)
+  ;; CHECK-NEXT:     (f64.const 3.14159)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
