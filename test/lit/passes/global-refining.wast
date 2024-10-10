@@ -221,3 +221,32 @@
   (func $func (type $sub)
   )
 )
+
+;; Mutability limits our ability to optimize in open world: mutable globals that
+;; are exported cannot be refined, as they might be modified in another module
+;; using the old type. In closed world, however, we can optimize both globals
+;; here, as mutability is not a concern. As a result, we can refine the
+;; (ref null func) to nullfuncref only when not exported, and if exported, then
+;; only when immutable in open world.
+(module
+  ;; CHECK:      (global $mut (mut nullfuncref) (ref.null nofunc))
+  ;; CLOSD:      (global $mut (mut nullfuncref) (ref.null nofunc))
+  (global $mut (mut (ref null func)) (ref.null nofunc))
+  ;; CHECK:      (global $imm nullfuncref (ref.null nofunc))
+  ;; CLOSD:      (global $imm nullfuncref (ref.null nofunc))
+  (global $imm (ref null func) (ref.null nofunc))
+  ;; CHECK:      (global $mut-exp (mut nullfuncref) (ref.null nofunc))
+  ;; CLOSD:      (global $mut-exp (mut funcref) (ref.null nofunc))
+  (global $mut-exp (mut (ref null func)) (ref.null nofunc))
+  ;; CHECK:      (global $imm-exp nullfuncref (ref.null nofunc))
+  ;; CLOSD:      (global $imm-exp funcref (ref.null nofunc))
+  (global $imm-exp (ref null func) (ref.null nofunc))
+
+  ;; CHECK:      (export "mut-exp" (global $mut-exp))
+  ;; CLOSD:      (export "mut-exp" (global $mut-exp))
+  (export "mut-exp" (global $mut-exp))
+  ;; CHECK:      (export "imm-exp" (global $imm-exp))
+  ;; CLOSD:      (export "imm-exp" (global $imm-exp))
+  (export "imm-exp" (global $imm-exp))
+)
+
