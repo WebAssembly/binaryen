@@ -279,3 +279,19 @@
     )
   )
 )
+
+;; A module where a string (in this case the empty string) appears twice, so we
+;; will use a single global for both. The first use of the string appears in a
+;; nested position, inside a struct constructor, so we cannot use that one as
+;; our defining global, but there is an appropriate global after it. We must be
+;; careful to then sort the globals, as $string must then appear before $struct.
+(module
+  (type $struct (struct (field anyref)))
+
+  (global $struct (ref $struct) (struct.new $struct
+   (string.const "")
+  ))
+
+  (global $string (ref string) (string.const ""))
+)
+
