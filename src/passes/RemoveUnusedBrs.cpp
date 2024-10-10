@@ -260,15 +260,16 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
       }
     } else if (curr->is<Nop>()) {
-      // ignore (could be result of a previous cycle)
+      // Ignore (could be result of a previous cycle).
       self->stopValueFlow();
-    } else if (curr->is<Loop>()) { // TODO: eh
-      // do nothing - it's ok for values to flow out
+    } else if (curr->is<Loop>() || curr->is<TryTable>()) {
+      // Do nothing - it's ok for values to flow out.
+      // TODO: Legacy Try as well?
     } else if (auto* sw = curr->dynCast<Switch>()) {
       self->stopFlow();
       self->optimizeSwitch(sw);
     } else {
-      // anything else stops the flow
+      // Anything else stops the flow.
       self->stopFlow();
     }
   }
