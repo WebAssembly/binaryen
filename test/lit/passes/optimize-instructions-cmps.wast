@@ -117,9 +117,15 @@
  )
 
  ;; CHECK:      (func $cmp5 (param $0 i32) (param $1 i32) (result i32)
- ;; CHECK-NEXT:  (i32.gt_u
- ;; CHECK-NEXT:   (local.get $0)
- ;; CHECK-NEXT:   (i32.const 255)
+ ;; CHECK-NEXT:  (i32.or
+ ;; CHECK-NEXT:   (i32.lt_s
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:    (i32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (i32.gt_s
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:    (i32.const 255)
+ ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
  (func $cmp5 (param $0 i32) (param $1 i32) (result i32)

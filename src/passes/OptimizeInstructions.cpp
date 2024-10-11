@@ -401,13 +401,13 @@ struct OptimizeInstructions
         Binary* bin;
         Expression *x_left, *x_right;
         Const* y;
-        // TODO: check if x_left === x_right
         if (matches(curr,
                     binary(&bin,
                            OrInt32,
                            binary(LtSInt32, pure(&x_left), i32(0)),
                            binary(GtSInt32, pure(&x_right), constant(&y)))) &&
-            y->type == Type::i32 && y->value.geti32() > 0) {
+            y->type == Type::i32 && y->value.geti32() > 0 &&
+            ExpressionAnalyzer::equal(x_left, x_right)) {
           bin->op = GtUInt32;
           bin->left = x_left;
           bin->right = y;
