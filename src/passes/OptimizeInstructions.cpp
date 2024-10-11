@@ -396,6 +396,25 @@ struct OptimizeInstructions
         }
       }
       {
+        // x < 0 || x > POSITIVE_CONST   ==>   x > POSITIVE_CONST (unsigned
+        // comparison)
+        Binary* bin;
+        Expression *x_left, *x_right;
+        Const* y;
+        // TODO: check if x_left === x_right
+        if (matches(curr,
+                    binary(&bin,
+                           OrInt32,
+                           binary(LtSInt32, pure(&x_left), i32(0)),
+                           binary(GtSInt32, pure(&x_right), constant(&y)))) &&
+            y->type == Type::i32 && y->value.geti32() > 0) {
+          bin->op = GtUInt32;
+          bin->left = x_left;
+          bin->right = y;
+          return;
+        }
+      }
+      {
         // x <<>> (C & (31 | 63))   ==>   x <<>> C'
         // x <<>> (y & (31 | 63))   ==>   x <<>> y
         // x <<>> (y & (32 | 64))   ==>   x
