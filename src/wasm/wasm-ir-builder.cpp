@@ -1441,17 +1441,29 @@ Result<> IRBuilder::makePop(Type type) {
   // already create them automatically when starting a legacy catch block that
   // needs one. Just verify that the Pop we are being asked to make is the same
   // type as the Pop we have already made.
-  auto& scope = getScope();
-  if (!scope.getCatch() || scope.exprStack.size() != 1 ||
-      !scope.exprStack[0]->is<Pop>()) {
-    return Err{
-      "pop instructions may only appear at the beginning of catch blocks"};
+  //
+  // We need to look up the scope stack, as we can look through nameless blocks.
+  Index i = 0;
+  while (1) {
+    auto scopeCheck = getScope(i++);
+    CHECK_ERR(scopeCheck);
+    auto& scope = **scopeCheck;
+    if (auto* block = scope.getBlock()) {
+      if (!block->name.is()) {
+        continue;
+      }
+    }
+    if (!scope.getCatch() || scope.exprStack.size() != 1 ||
+        !scope.exprStack[0]->is<Pop>()) {
+      return Err{
+        "pop instructions may only appear at the beginning of catch blocks"};
+    }
+    auto expectedType = scope.exprStack[0]->type;
+    if (!Type::isSubType(expectedType, type)) {
+      return Err{std::string("Expected pop of type ") + expectedType.toString()};
+    }
+    return Ok{};
   }
-  auto expectedType = scope.exprStack[0]->type;
-  if (!Type::isSubType(expectedType, type)) {
-    return Err{std::string("Expected pop of type ") + expectedType.toString()};
-  }
-  return Ok{};
 }
 
 Result<> IRBuilder::makeRefNull(HeapType type) {

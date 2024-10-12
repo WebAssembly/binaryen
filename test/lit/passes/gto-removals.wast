@@ -1405,3 +1405,54 @@
     )
   )
 )
+
+;; Test we handle a pop in a removed field properly without erroring.
+(module
+  ;; CHECK:      (type $0 (func (param eqref)))
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $struct (struct))
+  (type $struct (struct (field (mut eqref))))
+
+  ;; CHECK:       (type $2 (func))
+
+  ;; CHECK:       (type $3 (func (param eqref)))
+
+  ;; CHECK:      (tag $tag (param eqref))
+  (tag $tag (param eqref))
+
+  ;; CHECK:      (func $test (type $2)
+  ;; CHECK-NEXT:  (local $0 eqref)
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $tag
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref $struct))
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (pop eqref)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (struct.new_default $struct)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test
+    (try
+      (do
+        (nop)
+      )
+      (catch $tag
+        (drop
+          (struct.new $struct
+            ;; This field receives a pop, but can also be removed from the type.
+            (pop eqref)
+          )
+        )
+      )
+    )
+  )
+)
+
