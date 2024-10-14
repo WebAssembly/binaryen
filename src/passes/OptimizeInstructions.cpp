@@ -2266,9 +2266,19 @@ struct OptimizeInstructions
           refAsChild->value = curr;
           refAsChild->finalize();
           replaceCurrent(refAsChild);
+          return;
+        }
+
+        // We can optimize away externalizations of internalizations and vice
+        // versa.
+        if ((curr->op == ExternConvertAny &&
+             refAsChild->op == AnyConvertExtern) ||
+            (curr->op == AnyConvertExtern &&
+             refAsChild->op == ExternConvertAny)) {
+          curr->value = refAsChild->value;
+          return;
         }
       }
-      // TODO: optimize away ExternConvertAny of AnyConvertExtern, etc.
       return;
     }
 
