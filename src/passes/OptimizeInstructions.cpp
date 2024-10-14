@@ -2275,7 +2275,7 @@ struct OptimizeInstructions
              refAsChild->op == AnyConvertExtern) ||
             (curr->op == AnyConvertExtern &&
              refAsChild->op == ExternConvertAny)) {
-          curr->value = refAsChild->value;
+          replaceCurrent(refAsChild->value);
           return;
         }
       }
