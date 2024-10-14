@@ -85,4 +85,30 @@
       )
     )
   )
+
+  ;; CHECK:      (func $extern.intern (type $3) (param $ext externref) (param $any anyref)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $any)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (local.get $ext)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $extern.intern (param $ext externref) (param $any anyref)
+    ;; Internalize/externalize operations cancel out.
+    (drop
+      (any.convert_extern
+        (extern.convert_any
+          (local.get $any)
+        )
+      )
+    )
+    (drop
+      (extern.convert_any
+        (any.convert_extern
+          (local.get $ext)
+        )
+      )
+    )
+  )
 )
