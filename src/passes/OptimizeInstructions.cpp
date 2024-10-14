@@ -2250,9 +2250,9 @@ struct OptimizeInstructions
     if (curr->op == ExternConvertAny || curr->op == AnyConvertExtern) {
       // These pass nulls through, and we can reorder them with null traps:
       //
-      //  (ref.externalize/internalize (ref.as_non_null.. ))
+      //  (any.convert_extern/extern.convert_any (ref.as_non_null.. ))
       // =>
-      //  (ref.as_non_null (ref.externalize/internalize ..))
+      //  (ref.as_non_null (any.convert_extern/extern.convert_any ..))
       //
       // By moving the RefAsNonNull outside, it may reach a position where it
       // can be optimized (e.g. if the parent traps anyhow). And,
