@@ -83,9 +83,11 @@
 
 namespace wasm {
 
-// Looks for reasons we can't remove the values from breaks to an origin
-// For example, if there is a switch targeting us, we can't do it - we can't
-// remove the value from other targets
+// Looks for reasons we can't remove the values from breaks to an origin. This
+// is run when we know the value sent to that block is dropped, so the value is
+// not needed, but some corner cases stop us (for example, if there is a switch
+// targeting us, we can't do it - we can't remove the value from the switch's
+// other targets).
 struct ProblemFinder
   : public ControlFlowWalker<ProblemFinder,
                              UnifiedExpressionVisitor<ProblemFinder>> {
@@ -118,6 +120,39 @@ struct ProblemFinder
         if (EffectAnalyzer(passOptions, *getModule(), br->value)
               .hasSideEffects()) {
           foundProblem = true;
+        }
+      }
+      return;
+    }
+
+    if (auto* tryy = curr->dynCast<TryTable>()) {
+      auto num = tryy->catchTags.size();
+      for (Index i = 0; i < num; i++) {
+        if (tryy->catchDests[i] == origin) {
+          // This try_table branches to the origin we care about. We know the
+          // value being sent to the block is dropped, so we'd like to stop
+          // anything from being sent to it. We can stop a ref from being sent,
+          // so if that is enough to remove all the values, then we can
+          // optimize here. In other words, if this is a catch_all_ref (which
+          // can only send a ref) or this is a catch_ref of a specific tag that
+          // has no contents (so if we remove the ref, nothing remains), then we
+          // can optimize, but if this is is a catch of a tag *with* contents
+          // then those contents stop us.
+          //
+          // TODO: We could also support cases where the target block has
+          //       multiple values, and remove just ref at the end. That might
+          //       make more sense in TupleOptimization though as it would need
+          //       to track uses of parts of a tuple.
+          if (!tryy->catchTags[i] ||
+              getModule()->getTag(tryy->catchTags[i])->sig.params.size() == 0) {
+            // There must be a ref here, otherwise there is no value being sent
+            // at all, and we should not be running ProblemFinder at all.
+            assert(tryy->catchRefs[i]);
+          } else {
+            // Anything else is a problem.
+            foundProblem = true;
+            return;
+          }
         }
       }
       return;
@@ -174,16 +209,19 @@ struct BreakValueDropper : public ControlFlowWalker<BreakValueDropper> {
       replaceCurrent(curr->value);
     }
   }
-};
 
-static bool hasUnreachableChild(Block* block) {
-  for (auto* test : block->list) {
-    if (test->type == Type::unreachable) {
-      return true;
+  void visitTryTable(TryTable* curr) {
+    auto num = curr->catchTags.size();
+    for (Index i = 0; i < num; i++) {
+      if (curr->catchDests[i] == origin) {
+        // Remove the existing ref being sent.
+        assert(curr->catchRefs[i]);
+        curr->catchRefs[i] = false;
+        curr->sentTypes[i] = Type::none;
+      }
     }
   }
-  return false;
-}
+};
 
 // Checks for code after an unreachable element.
 static bool hasDeadCode(Block* block) {
@@ -206,11 +244,6 @@ static bool optimizeDroppedBlock(Drop* drop,
                                  PassOptions& options,
                                  BranchUtils::BranchSeekerCache& branchInfo) {
   assert(drop->value == block);
-  if (hasUnreachableChild(block)) {
-    // Don't move around unreachable code, as it can change types (leave it for
-    // DCE).
-    return false;
-  }
   if (block->name.is()) {
     // There may be breaks: see if we can remove their values.
     Expression* expression = block;
@@ -237,12 +270,13 @@ static bool optimizeDroppedBlock(Drop* drop,
     drop->finalize();
     block->list.back() = drop;
   }
-  block->finalize();
+  // Remove the old type, which was from the value we just removed.
+  block->finalize(Type::none);
   return true;
 }
 
-// Core block optimizer routine.
-static void optimizeBlock(Block* curr,
+// Core block optimizer routine. Returns true when we optimize.
+static bool optimizeBlock(Block* curr,
                           Module* module,
                           PassOptions& passOptions,
                           BranchUtils::BranchSeekerCache& branchInfo) {
@@ -412,6 +446,7 @@ static void optimizeBlock(Block* curr,
   if (changed) {
     curr->finalize(curr->type);
   }
+  return changed;
 }
 
 void BreakValueDropper::visitBlock(Block* curr) {
@@ -427,6 +462,8 @@ struct MergeBlocks
     return std::make_unique<MergeBlocks>();
   }
 
+  bool refinalize = false;
+
   BranchUtils::BranchSeekerCache branchInfo;
 
   void visitBlock(Block* curr) {
@@ -438,6 +475,7 @@ struct MergeBlocks
       if (optimizeDroppedBlock(
             curr, block, *getModule(), getPassOptions(), branchInfo)) {
         replaceCurrent(block);
+        refinalize = true;
       }
     }
   }
@@ -485,13 +523,6 @@ struct MergeBlocks
     }
     if (auto* block = child->dynCast<Block>()) {
       if (!block->name.is() && block->list.size() >= 2) {
-        // if we move around unreachable code, type changes could occur. avoid
-        // that, as anyhow it means we should have run dce before getting here
-        if (curr->type == Type::none && hasUnreachableChild(block)) {
-          // moving the block to the outside would replace a none with an
-          // unreachable
-          return outer;
-        }
         auto* back = block->list.back();
         if (back->type == Type::unreachable) {
           // curr is not reachable, dce could remove it; don't try anything
@@ -510,6 +541,7 @@ struct MergeBlocks
           return outer;
         }
         child = back;
+        refinalize = true;
         if (outer == nullptr) {
           // reuse the block, move it out
           block->list.back() = curr;
@@ -600,8 +632,7 @@ struct MergeBlocks
       // too small for us to remove anything from (we cannot remove the last
       // element), or if it has unreachable code (leave that for dce), then give
       // up.
-      if (!block || block->name.is() || block->list.size() <= 1 ||
-          hasUnreachableChild(block)) {
+      if (!block || block->name.is() || block->list.size() <= 1) {
         continueEarly();
         continue;
       }
@@ -682,6 +713,7 @@ struct MergeBlocks
       outerBlock->list.push_back(curr);
       outerBlock->finalize(curr->type);
       replaceCurrent(outerBlock);
+      refinalize = true;
     }
   }
 
@@ -698,6 +730,12 @@ struct MergeBlocks
         return;
       }
       outer = optimize(curr, curr->operands[i], outer);
+    }
+  }
+
+  void visitFunction(Function* curr) {
+    if (refinalize) {
+      ReFinalize().walkFunctionInModule(curr, getModule());
     }
   }
 };
