@@ -162,6 +162,7 @@
   ;; CHECK-NEXT: )
   (func $drop-block-try_catch_all
     ;; Without _ref, there is nothing to optimize (and we should not error).
+    ;; Also since there is no ref, there is no drop anyhow.
     (block $catch
       (try_table (catch_all $catch)
         (call $import)
