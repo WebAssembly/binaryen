@@ -133,11 +133,11 @@ struct ProblemFinder
           // value being sent to the block is dropped, so we'd like to stop
           // anything from being sent to it. We can stop a ref from being sent,
           // so if that is enough to remove all the values, then we can
-          // optimize here. In other words, if this is a catch_all (which can
-          // only send a ref) or this is a catch of a specific tag that has no
-          // contents (so if we remove the ref, nothing remains), then we can
-          // optimize, but if this is is a catch of a tag *with* contents then
-          // those contents stop us.
+          // optimize here. In other words, if this is a catch_all_ref (which
+          // can only send a ref) or this is a catch_ref of a specific tag that
+          // has no contents (so if we remove the ref, nothing remains), then we
+          // can optimize, but if this is is a catch of a tag *with* contents
+          // then those contents stop us.
           //
           // TODO: We could also support cases where the target block has
           //       multiple values, and remove just ref at the end. That might
