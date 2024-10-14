@@ -112,7 +112,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $drop-block-try_catch_multi_partial
-    ;; Two possible tags can be thrown and caught, and we can optimize one.
+    ;; Two catches, one of which we can optimize, but not both.
     (tuple.drop 2
       (block $outer (result i32 exnref)
         (drop
@@ -179,7 +179,7 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $drop-block-try_catch
-    ;; As above, without _all.
+    ;; As above, but with a catch instead of catch_all.
     (block $catch
       (try_table (catch $empty $catch)
         (call $import)
