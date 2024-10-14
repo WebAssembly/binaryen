@@ -7,19 +7,21 @@
 
 
 (module
- ;; CHECK:      (type $0 (func (param (ref any)) (result (ref extern))))
+ ;; CHECK:      (type $0 (func (param externref) (result anyref)))
 
- ;; CHECK:      (type $1 (func (param externref) (result anyref)))
+ ;; CHECK:      (type $1 (func (param (ref any)) (result (ref extern))))
 
- ;; CHECK:      (type $2 (func (param externref) (result externref)))
+ ;; CHECK:      (type $2 (func (param anyref) (result externref)))
 
  ;; CHECK:      (export "ext" (func $extern.convert_any))
 
  ;; CHECK:      (export "int" (func $any.convert_extern))
 
- ;; CHECK:      (export "legacy" (func $legacy_notation))
+ ;; CHECK:      (export "legacy.1" (func $legacy_notation.1))
 
- ;; CHECK:      (func $extern.convert_any (type $0) (param $0 (ref any)) (result (ref extern))
+ ;; CHECK:      (export "legacy.2" (func $legacy_notation.2))
+
+ ;; CHECK:      (func $extern.convert_any (type $1) (param $0 (ref any)) (result (ref extern))
  ;; CHECK-NEXT:  (extern.convert_any
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -30,7 +32,7 @@
   )
  )
 
- ;; CHECK:      (func $any.convert_extern (type $1) (param $0 externref) (result anyref)
+ ;; CHECK:      (func $any.convert_extern (type $0) (param $0 externref) (result anyref)
  ;; CHECK-NEXT:  (any.convert_extern
  ;; CHECK-NEXT:   (local.get $0)
  ;; CHECK-NEXT:  )
@@ -41,18 +43,30 @@
   )
  )
 
- ;; CHECK:      (func $legacy_notation (type $2) (param $0 externref) (result externref)
- ;; CHECK-NEXT:  (extern.convert_any
+ ;; CHECK:      (func $legacy_notation.1 (type $0) (param $0 externref) (result anyref)
+ ;; CHECK-NEXT:  (ref.as_non_null
  ;; CHECK-NEXT:   (any.convert_extern
  ;; CHECK-NEXT:    (local.get $0)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT: )
- (func $legacy_notation (export "legacy") (param $x (ref null extern)) (result (ref null extern))
-  (extern.externalize
-   (extern.internalize
+ (func $legacy_notation.1 (export "legacy.1") (param $x (ref null extern)) (result (ref null any))
+  (extern.internalize
+   (ref.as_non_null ;; Add this to avoid the entire function being merged with
+                    ;; another.
     (local.get $x)
    )
+  )
+ )
+
+ ;; CHECK:      (func $legacy_notation.2 (type $2) (param $0 anyref) (result externref)
+ ;; CHECK-NEXT:  (extern.convert_any
+ ;; CHECK-NEXT:   (local.get $0)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $legacy_notation.2 (export "legacy.2") (param $x (ref null any)) (result (ref null extern))
+  (extern.externalize
+   (local.get $x)
   )
  )
 )
