@@ -396,20 +396,19 @@ struct OptimizeInstructions
         }
       }
       {
-        // x < 0 || x > POSITIVE_CONST   ==>   x > POSITIVE_CONST (unsigned
-        // comparison)
+        // x < 0 || x > POSITIVE_CONST   ==>   unsigned(x) > POSITIVE_CONST
         Binary* bin;
-        Expression *x_left, *x_right;
+        Expression *xLeft, *xRight;
         Const* y;
         if (matches(curr,
                     binary(&bin,
                            OrInt32,
-                           binary(LtSInt32, pure(&x_left), i32(0)),
-                           binary(GtSInt32, pure(&x_right), constant(&y)))) &&
+                           binary(LtSInt32, any(&xLeft), i32(0)),
+                           binary(GtSInt32, any(&xRight), constant(&y)))) &&
             y->type == Type::i32 && y->value.geti32() > 0 &&
-            ExpressionAnalyzer::equal(x_left, x_right)) {
+            areConsecutiveInputsEqualAndFoldable(xLeft, xRight)) {
           bin->op = GtUInt32;
-          bin->left = x_left;
+          bin->left = xLeft;
           bin->right = y;
           return;
         }
