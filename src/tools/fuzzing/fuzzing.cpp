@@ -4015,8 +4015,14 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
       // nullability, so the combination of the two must be a subtype of
       // targetType.
       castType = getSubType(targetType);
-      // The ref's type must be castable to the target, or we'd not validate.
-      refType = getSuperType(castType);
+      // The ref's type must be castable to castType, or we'd not validate. But
+      // it can also be a subtype, which will trivially also succeed (so do that
+      // more rarely).
+      if (oneIn(10)) {
+        refType = getSubType(castType);
+      } else {
+        refType = getSuperType(castType);
+      }
       if (targetType.isNonNullable()) {
         // And it must have the right nullability for the target, as mentioned
         // above.
