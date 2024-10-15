@@ -24,8 +24,8 @@
 #include "ir/module-utils.h"
 #include "pass.h"
 #include "passes/pass-utils.h"
-#include "wasm.h"
 #include "wasm-validator.h"
+#include "wasm.h"
 
 namespace wasm::OptUtils {
 
