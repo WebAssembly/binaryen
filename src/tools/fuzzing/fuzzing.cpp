@@ -4017,9 +4017,8 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
       castType = getSubType(targetType);
       // The ref's type must be castable to castType, or we'd not validate. But
       // it can also be a subtype, which will trivially also succeed (so do that
-      // more rarely). We pick these with equal probability because on the one
-      // hand casts of supertypes might trap, but casts of subtypes are trivial.
-      refType = oneIn(2) ? getSuperType(castType) : getSubType(castType);
+      // more rarely). Pick subtypes rarely, as they make the cast trivial.
+      refType = oneIn(5) ? getSubType(castType) : getSuperType(castType);
       if (targetType.isNonNullable()) {
         // And it must have the right nullability for the target, as mentioned
         // above: if the target type is non-nullable then either the ref or the
@@ -4038,14 +4037,16 @@ Expression* TranslateToFuzzReader::makeBrOn(Type type) {
     case BrOnCastFail: {
       // The sent type is the ref's type, with adjusted nullability (if the cast
       // allows nulls then no null can fail the cast, and what is sent is non-
-      // nullable).
+      // nullable). First, pick a ref type that we can send to the target.
       refType = getSubType(targetType);
-      // The cast type is what flows out, which matters little here (as we fix
-      // up the flowing type anyhow), but the cast must be viable for
-      // validation, as with BrOnCast.
-      castType = getSubType(refType);
+      // See above on BrOnCast, but flipped.
+      castType = oneIn(5) ? getSuperType(refType) : getSubType(refType);
       // There is no nullability to adjust: if targetType is non-nullable then
-      // both refType and castType are as well, as subtypes of it.
+      // both refType and castType are as well, as subtypes of it. But we can
+      // also allow castType to be nullable (it is not sent to the target).
+      if (castType.isNonNullable() && oneIn(2)) {
+        castType = Type(castType.getHeapType(), Nullable);
+      }
     } break;
     default: {
       WASM_UNREACHABLE("bad br_on op");
