@@ -1367,7 +1367,8 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
            &Self::makeCallIndirect)
       .add(FeatureSet::ExceptionHandling, &Self::makeTry)
       .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
-      .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
+      .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef)
+      .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn);
   }
   if (type.isSingle()) {
     options
@@ -1413,7 +1414,6 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
                 &Self::makeRefCast);
   }
   if (wasm.features.hasGC()) {
-    options.add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn);
     if (typeStructFields.find(type) != typeStructFields.end()) {
       options.add(FeatureSet::ReferenceTypes | FeatureSet::GC,
                   &Self::makeStructGet);
@@ -1455,11 +1455,11 @@ Expression* TranslateToFuzzReader::_makenone() {
     .add(FeatureSet::Atomics, &Self::makeAtomic)
     .add(FeatureSet::ExceptionHandling, &Self::makeTry)
     .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeStructSet)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArraySet)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeStructSet)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeArraySet)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes,
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
          &Self::makeArrayBulkMemoryOp);
   return (this->*pick(options))(Type::none);
 }
@@ -1486,7 +1486,7 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
          &Self::makeDrop,
          &Self::makeReturn)
     .add(FeatureSet::ExceptionHandling, &Self::makeThrow)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef);
   return (this->*pick(options))(Type::unreachable);
 }
 
