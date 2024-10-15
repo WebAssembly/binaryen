@@ -1,7 +1,7 @@
 Metrics
 total
  [exports]      : 4       
- [funcs]        : 8       
+ [funcs]        : 7       
  [globals]      : 26      
  [imports]      : 5       
  [memories]     : 1       
@@ -9,43 +9,43 @@ total
  [table-data]   : 2       
  [tables]       : 1       
  [tags]         : 2       
- [total]        : 718     
- [vars]         : 30      
- ArrayNew       : 20      
- ArrayNewFixed  : 3       
+ [total]        : 510     
+ [vars]         : 15      
+ ArrayNew       : 14      
+ ArrayNewFixed  : 2       
  AtomicFence    : 1       
- Binary         : 77      
- Block          : 79      
- BrOn           : 1       
- Break          : 10      
- Call           : 17      
- CallRef        : 4       
- Const          : 164     
- Drop           : 6       
- GlobalGet      : 40      
- GlobalSet      : 28      
- If             : 22      
- Load           : 20      
- LocalGet       : 48      
- LocalSet       : 43      
- Loop           : 9       
- Nop            : 5       
- Pop            : 7       
- RefAs          : 4       
- RefCast        : 2       
- RefFunc        : 9       
- RefIsNull      : 1       
- RefNull        : 11      
- Return         : 6       
- SIMDExtract    : 2       
- StringConst    : 6       
+ Binary         : 64      
+ Block          : 45      
+ Break          : 2       
+ Call           : 8       
+ CallRef        : 2       
+ Const          : 127     
+ Drop           : 5       
+ GlobalGet      : 28      
+ GlobalSet      : 16      
+ If             : 12      
+ Load           : 18      
+ LocalGet       : 46      
+ LocalSet       : 29      
+ Loop           : 3       
+ MemoryCopy     : 1       
+ MemoryInit     : 1       
+ Nop            : 4       
+ Pop            : 2       
+ RefCast        : 1       
+ RefFunc        : 7       
+ RefNull        : 6       
+ Return         : 9       
+ SIMDExtract    : 1       
+ Store          : 1       
+ StringConst    : 7       
  StringEq       : 1       
- StructGet      : 2       
- StructNew      : 18      
- StructSet      : 1       
- Try            : 6       
- TryTable       : 2       
- TupleExtract   : 2       
- TupleMake      : 4       
- Unary          : 20      
- Unreachable    : 17      
+ StringMeasure  : 1       
+ StringSliceWTF : 1       
+ StructNew      : 14      
+ Try            : 2       
+ TryTable       : 1       
+ TupleExtract   : 3       
+ TupleMake      : 6       
+ Unary          : 9       
+ Unreachable    : 10      
