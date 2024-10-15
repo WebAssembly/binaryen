@@ -17,12 +17,12 @@
 
   ;; CHECK:      (type $0 (func))
 
+  ;; CHECK:      (global $global (ref string) (string.const "foo"))
+  (global $global (ref string) (string.const "foo"))
+
   ;; CHECK:      (global $"string.const_\"bar\"" (ref string) (string.const "bar"))
 
   ;; CHECK:      (global $"string.const_\"other\"" (ref string) (string.const "other"))
-
-  ;; CHECK:      (global $global (ref string) (string.const "foo"))
-  (global $global (ref string) (string.const "foo"))
 
   ;; CHECK:      (global $global2 stringref (global.get $"string.const_\"bar\""))
   ;; LOWER:      (type $0 (array (mut i16)))
@@ -45,11 +45,11 @@
 
   ;; LOWER:      (type $9 (func (param externref i32 i32) (result (ref extern))))
 
-  ;; LOWER:      (import "string.const" "0" (global $"string.const_\"bar\"" (ref extern)))
+  ;; LOWER:      (import "string.const" "0" (global $global (ref extern)))
 
-  ;; LOWER:      (import "string.const" "1" (global $"string.const_\"other\"" (ref extern)))
+  ;; LOWER:      (import "string.const" "1" (global $"string.const_\"bar\"" (ref extern)))
 
-  ;; LOWER:      (import "string.const" "2" (global $global (ref extern)))
+  ;; LOWER:      (import "string.const" "2" (global $"string.const_\"other\"" (ref extern)))
 
   ;; LOWER:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $3) (param (ref null $0) i32 i32) (result (ref extern))))
 
@@ -165,17 +165,19 @@
 
   ;; LOWER:      (type $8 (func (param externref i32 i32) (result (ref extern))))
 
+  ;; LOWER:      (import "string.const" "0" (global $global1 (ref extern)))
+
+  ;; LOWER:      (import "string.const" "1" (global $global4 (ref extern)))
+
   ;; LOWER:      (import "a" "b" (global $import (ref extern)))
   (import "a" "b" (global $import (ref string)))
 
   ;; CHECK:      (global $global1 (ref string) (string.const "foo"))
   (global $global1 (ref string) (string.const "foo"))
 
+  ;; CHECK:      (global $global4 (ref string) (string.const "bar"))
+
   ;; CHECK:      (global $global2 (ref string) (global.get $global1))
-  ;; LOWER:      (import "string.const" "0" (global $global1 (ref extern)))
-
-  ;; LOWER:      (import "string.const" "1" (global $global4 (ref extern)))
-
   ;; LOWER:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $2) (param (ref null $0) i32 i32) (result (ref extern))))
 
   ;; LOWER:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $3) (param i32) (result (ref extern))))
@@ -201,7 +203,6 @@
   ;; LOWER:      (global $global3 (ref extern) (global.get $global1))
   (global $global3 (ref string) (string.const "foo"))
 
-  ;; CHECK:      (global $global4 (ref string) (string.const "bar"))
   (global $global4 (ref string) (string.const "bar"))
 
   ;; CHECK:      (global $global5 (ref string) (global.get $global4))
@@ -279,3 +280,67 @@
     )
   )
 )
+
+;; A module where a string (in this case the empty string) appears twice, so we
+;; will use a single global for both. The first use of the string appears in a
+;; nested position, inside a struct constructor, so we cannot use that one as
+;; our defining global, but there is an appropriate global after it. We must be
+;; careful to then sort the globals, as $string must then appear before $struct.
+(module
+  ;; CHECK:      (type $struct (struct (field stringref)))
+  ;; LOWER:      (type $0 (array (mut i16)))
+
+  ;; LOWER:      (type $struct (struct (field externref)))
+  (type $struct (struct (field stringref)))
+
+  ;; CHECK:      (global $string (ref string) (string.const ""))
+
+  ;; CHECK:      (global $struct (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (global.get $string)
+  ;; CHECK-NEXT: ))
+  ;; LOWER:      (type $2 (func (param externref externref) (result i32)))
+
+  ;; LOWER:      (type $3 (func (param (ref null $0) i32 i32) (result (ref extern))))
+
+  ;; LOWER:      (type $4 (func (param i32) (result (ref extern))))
+
+  ;; LOWER:      (type $5 (func (param externref externref) (result (ref extern))))
+
+  ;; LOWER:      (type $6 (func (param externref (ref null $0) i32) (result i32)))
+
+  ;; LOWER:      (type $7 (func (param externref) (result i32)))
+
+  ;; LOWER:      (type $8 (func (param externref i32) (result i32)))
+
+  ;; LOWER:      (type $9 (func (param externref i32 i32) (result (ref extern))))
+
+  ;; LOWER:      (import "string.const" "0" (global $string (ref extern)))
+
+  ;; LOWER:      (import "wasm:js-string" "fromCharCodeArray" (func $fromCharCodeArray (type $3) (param (ref null $0) i32 i32) (result (ref extern))))
+
+  ;; LOWER:      (import "wasm:js-string" "fromCodePoint" (func $fromCodePoint (type $4) (param i32) (result (ref extern))))
+
+  ;; LOWER:      (import "wasm:js-string" "concat" (func $concat (type $5) (param externref externref) (result (ref extern))))
+
+  ;; LOWER:      (import "wasm:js-string" "intoCharCodeArray" (func $intoCharCodeArray (type $6) (param externref (ref null $0) i32) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "equals" (func $equals (type $2) (param externref externref) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "compare" (func $compare (type $2) (param externref externref) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "length" (func $length (type $7) (param externref) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "charCodeAt" (func $charCodeAt (type $8) (param externref i32) (result i32)))
+
+  ;; LOWER:      (import "wasm:js-string" "substring" (func $substring (type $9) (param externref i32 i32) (result (ref extern))))
+
+  ;; LOWER:      (global $struct (ref $struct) (struct.new $struct
+  ;; LOWER-NEXT:  (global.get $string)
+  ;; LOWER-NEXT: ))
+  (global $struct (ref $struct) (struct.new $struct
+   (string.const "")
+  ))
+
+  (global $string (ref string) (string.const ""))
+)
+
