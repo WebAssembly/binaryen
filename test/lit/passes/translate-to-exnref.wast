@@ -10,9 +10,9 @@
 
   ;; CHECK:      (type $2 (func (result i32)))
 
-  ;; CHECK:      (type $3 (func (result i32 exnref)))
+  ;; CHECK:      (type $3 (func (result i32 (ref exn))))
 
-  ;; CHECK:      (type $4 (func (result i32 i64 exnref)))
+  ;; CHECK:      (type $4 (func (result i32 i64 (ref exn))))
 
   ;; CHECK:      (type $5 (func (param i32)))
 
@@ -25,9 +25,9 @@
 
   ;; STACKIR-OPT:      (type $2 (func (result i32)))
 
-  ;; STACKIR-OPT:      (type $3 (func (result i32 exnref)))
+  ;; STACKIR-OPT:      (type $3 (func (result i32 (ref exn))))
 
-  ;; STACKIR-OPT:      (type $4 (func (result i32 i64 exnref)))
+  ;; STACKIR-OPT:      (type $4 (func (result i32 i64 (ref exn))))
 
   ;; STACKIR-OPT:      (type $5 (func (param i32)))
 
@@ -115,9 +115,9 @@
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (block $outer0
   ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:    (block $catch_all2 (result (ref exn))
   ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (block $catch1 (result exnref)
+  ;; CHECK-NEXT:      (block $catch1 (result (ref exn))
   ;; CHECK-NEXT:       (try_table (catch_ref $e-empty $catch1) (catch_all_ref $catch_all2)
   ;; CHECK-NEXT:        (call $foo)
   ;; CHECK-NEXT:       )
@@ -137,8 +137,8 @@
   ;; STACKIR-OPT:      (func $try-none-tag-none-with-rethrow (type $1)
   ;; STACKIR-OPT-NEXT:  (local $0 exnref)
   ;; STACKIR-OPT-NEXT:  block $outer0
-  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result exnref)
-  ;; STACKIR-OPT-NEXT:    block $catch1 (result exnref)
+  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result (ref exn))
+  ;; STACKIR-OPT-NEXT:    block $catch1 (result (ref exn))
   ;; STACKIR-OPT-NEXT:     try_table (catch_ref $e-empty $catch1) (catch_all_ref $catch_all2)
   ;; STACKIR-OPT-NEXT:      call $foo
   ;; STACKIR-OPT-NEXT:     end
@@ -220,12 +220,12 @@
   ;; CHECK:      (func $try-none-tag-single-with-rethrow (type $1)
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 (tuple i32 exnref))
+  ;; CHECK-NEXT:  (local $2 (tuple i32 (ref exn)))
   ;; CHECK-NEXT:  (block $outer0
   ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:    (block $catch_all2 (result (ref exn))
   ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (block $catch1 (type $3) (result i32 exnref)
+  ;; CHECK-NEXT:      (block $catch1 (type $3) (result i32 (ref exn))
   ;; CHECK-NEXT:       (try_table (catch_ref $e-i32 $catch1) (catch_all_ref $catch_all2)
   ;; CHECK-NEXT:        (call $foo)
   ;; CHECK-NEXT:       )
@@ -260,10 +260,10 @@
   ;; STACKIR-OPT:      (func $try-none-tag-single-with-rethrow (type $1)
   ;; STACKIR-OPT-NEXT:  (local $0 exnref)
   ;; STACKIR-OPT-NEXT:  (local $1 i32)
-  ;; STACKIR-OPT-NEXT:  (local $2 (tuple i32 exnref))
+  ;; STACKIR-OPT-NEXT:  (local $2 (tuple i32 (ref exn)))
   ;; STACKIR-OPT-NEXT:  block $outer0
-  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result exnref)
-  ;; STACKIR-OPT-NEXT:    block $catch1 (type $3) (result i32 exnref)
+  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result (ref exn))
+  ;; STACKIR-OPT-NEXT:    block $catch1 (type $3) (result i32 (ref exn))
   ;; STACKIR-OPT-NEXT:     try_table (catch_ref $e-i32 $catch1) (catch_all_ref $catch_all2)
   ;; STACKIR-OPT-NEXT:      call $foo
   ;; STACKIR-OPT-NEXT:     end
@@ -358,12 +358,12 @@
   ;; CHECK:      (func $try-none-tag-tuple-with-rethrow (type $1)
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 (tuple i32 i64))
-  ;; CHECK-NEXT:  (local $2 (tuple i32 i64 exnref))
+  ;; CHECK-NEXT:  (local $2 (tuple i32 i64 (ref exn)))
   ;; CHECK-NEXT:  (block $outer0
   ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:    (block $catch_all2 (result (ref exn))
   ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (block $catch1 (type $4) (result i32 i64 exnref)
+  ;; CHECK-NEXT:      (block $catch1 (type $4) (result i32 i64 (ref exn))
   ;; CHECK-NEXT:       (try_table (catch_ref $e-i32-i64 $catch1) (catch_all_ref $catch_all2)
   ;; CHECK-NEXT:        (call $foo)
   ;; CHECK-NEXT:       )
@@ -403,10 +403,10 @@
   ;; STACKIR-OPT:      (func $try-none-tag-tuple-with-rethrow (type $1)
   ;; STACKIR-OPT-NEXT:  (local $0 exnref)
   ;; STACKIR-OPT-NEXT:  (local $1 (tuple i32 i64))
-  ;; STACKIR-OPT-NEXT:  (local $2 (tuple i32 i64 exnref))
+  ;; STACKIR-OPT-NEXT:  (local $2 (tuple i32 i64 (ref exn)))
   ;; STACKIR-OPT-NEXT:  block $outer0
-  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result exnref)
-  ;; STACKIR-OPT-NEXT:    block $catch1 (type $4) (result i32 i64 exnref)
+  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result (ref exn))
+  ;; STACKIR-OPT-NEXT:    block $catch1 (type $4) (result i32 i64 (ref exn))
   ;; STACKIR-OPT-NEXT:     try_table (catch_ref $e-i32-i64 $catch1) (catch_all_ref $catch_all2)
   ;; STACKIR-OPT-NEXT:      call $foo
   ;; STACKIR-OPT-NEXT:     end
@@ -500,9 +500,9 @@
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (block $outer0 (result i32)
   ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:    (block $catch_all2 (result (ref exn))
   ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (block $catch1 (result exnref)
+  ;; CHECK-NEXT:      (block $catch1 (result (ref exn))
   ;; CHECK-NEXT:       (br $outer0
   ;; CHECK-NEXT:        (try_table (result i32) (catch_ref $e-empty $catch1) (catch_all_ref $catch_all2)
   ;; CHECK-NEXT:         (call $foo)
@@ -524,8 +524,8 @@
   ;; STACKIR-OPT:      (func $try-single-tag-none-with-rethrow (type $2) (result i32)
   ;; STACKIR-OPT-NEXT:  (local $0 exnref)
   ;; STACKIR-OPT-NEXT:  block $outer0 (result i32)
-  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result exnref)
-  ;; STACKIR-OPT-NEXT:    block $catch1 (result exnref)
+  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result (ref exn))
+  ;; STACKIR-OPT-NEXT:    block $catch1 (result (ref exn))
   ;; STACKIR-OPT-NEXT:     try_table (result i32) (catch_ref $e-empty $catch1) (catch_all_ref $catch_all2)
   ;; STACKIR-OPT-NEXT:      call $foo
   ;; STACKIR-OPT-NEXT:      i32.const 0
@@ -609,12 +609,12 @@
   ;; CHECK:      (func $try-single-tag-single-with-rethrow (type $2) (result i32)
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 (tuple i32 exnref))
+  ;; CHECK-NEXT:  (local $2 (tuple i32 (ref exn)))
   ;; CHECK-NEXT:  (block $outer0 (result i32)
   ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:    (block $catch_all2 (result (ref exn))
   ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (block $catch1 (type $3) (result i32 exnref)
+  ;; CHECK-NEXT:      (block $catch1 (type $3) (result i32 (ref exn))
   ;; CHECK-NEXT:       (br $outer0
   ;; CHECK-NEXT:        (try_table (result i32) (catch_ref $e-i32 $catch1) (catch_all_ref $catch_all2)
   ;; CHECK-NEXT:         (call $foo)
@@ -653,10 +653,10 @@
   ;; STACKIR-OPT:      (func $try-single-tag-single-with-rethrow (type $2) (result i32)
   ;; STACKIR-OPT-NEXT:  (local $0 exnref)
   ;; STACKIR-OPT-NEXT:  (local $1 i32)
-  ;; STACKIR-OPT-NEXT:  (local $2 (tuple i32 exnref))
+  ;; STACKIR-OPT-NEXT:  (local $2 (tuple i32 (ref exn)))
   ;; STACKIR-OPT-NEXT:  block $outer0 (result i32)
-  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result exnref)
-  ;; STACKIR-OPT-NEXT:    block $catch1 (type $3) (result i32 exnref)
+  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result (ref exn))
+  ;; STACKIR-OPT-NEXT:    block $catch1 (type $3) (result i32 (ref exn))
   ;; STACKIR-OPT-NEXT:     try_table (result i32) (catch_ref $e-i32 $catch1) (catch_all_ref $catch_all2)
   ;; STACKIR-OPT-NEXT:      call $foo
   ;; STACKIR-OPT-NEXT:      i32.const 0
@@ -764,12 +764,12 @@
   ;; CHECK:      (func $try-single-tag-tuple-with-rethrow (type $2) (result i32)
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 (tuple i32 i64))
-  ;; CHECK-NEXT:  (local $2 (tuple i32 i64 exnref))
+  ;; CHECK-NEXT:  (local $2 (tuple i32 i64 (ref exn)))
   ;; CHECK-NEXT:  (block $outer0 (result i32)
   ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:    (block $catch_all2 (result (ref exn))
   ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (block $catch1 (type $4) (result i32 i64 exnref)
+  ;; CHECK-NEXT:      (block $catch1 (type $4) (result i32 i64 (ref exn))
   ;; CHECK-NEXT:       (br $outer0
   ;; CHECK-NEXT:        (try_table (result i32) (catch_ref $e-i32-i64 $catch1) (catch_all_ref $catch_all2)
   ;; CHECK-NEXT:         (call $foo)
@@ -813,10 +813,10 @@
   ;; STACKIR-OPT:      (func $try-single-tag-tuple-with-rethrow (type $2) (result i32)
   ;; STACKIR-OPT-NEXT:  (local $0 exnref)
   ;; STACKIR-OPT-NEXT:  (local $1 (tuple i32 i64))
-  ;; STACKIR-OPT-NEXT:  (local $2 (tuple i32 i64 exnref))
+  ;; STACKIR-OPT-NEXT:  (local $2 (tuple i32 i64 (ref exn)))
   ;; STACKIR-OPT-NEXT:  block $outer0 (result i32)
-  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result exnref)
-  ;; STACKIR-OPT-NEXT:    block $catch1 (type $4) (result i32 i64 exnref)
+  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result (ref exn))
+  ;; STACKIR-OPT-NEXT:    block $catch1 (type $4) (result i32 i64 (ref exn))
   ;; STACKIR-OPT-NEXT:     try_table (result i32) (catch_ref $e-i32-i64 $catch1) (catch_all_ref $catch_all2)
   ;; STACKIR-OPT-NEXT:      call $foo
   ;; STACKIR-OPT-NEXT:      i32.const 0
@@ -937,9 +937,9 @@
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (block $outer0 (type $0) (result i32 i64)
   ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:    (block $catch_all2 (result (ref exn))
   ;; CHECK-NEXT:     (local.set $0
-  ;; CHECK-NEXT:      (block $catch1 (result exnref)
+  ;; CHECK-NEXT:      (block $catch1 (result (ref exn))
   ;; CHECK-NEXT:       (br $outer0
   ;; CHECK-NEXT:        (try_table (type $0) (result i32 i64) (catch_ref $e-empty $catch1) (catch_all_ref $catch_all2)
   ;; CHECK-NEXT:         (call $foo)
@@ -964,8 +964,8 @@
   ;; STACKIR-OPT:      (func $try-tuple-tag-none-with-rethrow (type $0) (result i32 i64)
   ;; STACKIR-OPT-NEXT:  (local $0 exnref)
   ;; STACKIR-OPT-NEXT:  block $outer0 (type $0) (result i32 i64)
-  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result exnref)
-  ;; STACKIR-OPT-NEXT:    block $catch1 (result exnref)
+  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result (ref exn))
+  ;; STACKIR-OPT-NEXT:    block $catch1 (result (ref exn))
   ;; STACKIR-OPT-NEXT:     try_table (type $0) (result i32 i64) (catch_ref $e-empty $catch1) (catch_all_ref $catch_all2)
   ;; STACKIR-OPT-NEXT:      call $foo
   ;; STACKIR-OPT-NEXT:      i32.const 0
@@ -1078,12 +1078,12 @@
   ;; CHECK:      (func $try-tuple-tag-single-with-rethrow (type $0) (result i32 i64)
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 i32)
-  ;; CHECK-NEXT:  (local $2 (tuple i32 exnref))
+  ;; CHECK-NEXT:  (local $2 (tuple i32 (ref exn)))
   ;; CHECK-NEXT:  (block $outer0 (type $0) (result i32 i64)
   ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:    (block $catch_all2 (result (ref exn))
   ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (block $catch1 (type $3) (result i32 exnref)
+  ;; CHECK-NEXT:      (block $catch1 (type $3) (result i32 (ref exn))
   ;; CHECK-NEXT:       (br $outer0
   ;; CHECK-NEXT:        (try_table (type $0) (result i32 i64) (catch_ref $e-i32 $catch1) (catch_all_ref $catch_all2)
   ;; CHECK-NEXT:         (call $foo)
@@ -1125,10 +1125,10 @@
   ;; STACKIR-OPT:      (func $try-tuple-tag-single-with-rethrow (type $0) (result i32 i64)
   ;; STACKIR-OPT-NEXT:  (local $0 exnref)
   ;; STACKIR-OPT-NEXT:  (local $1 i32)
-  ;; STACKIR-OPT-NEXT:  (local $2 (tuple i32 exnref))
+  ;; STACKIR-OPT-NEXT:  (local $2 (tuple i32 (ref exn)))
   ;; STACKIR-OPT-NEXT:  block $outer0 (type $0) (result i32 i64)
-  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result exnref)
-  ;; STACKIR-OPT-NEXT:    block $catch1 (type $3) (result i32 exnref)
+  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result (ref exn))
+  ;; STACKIR-OPT-NEXT:    block $catch1 (type $3) (result i32 (ref exn))
   ;; STACKIR-OPT-NEXT:     try_table (type $0) (result i32 i64) (catch_ref $e-i32 $catch1) (catch_all_ref $catch_all2)
   ;; STACKIR-OPT-NEXT:      call $foo
   ;; STACKIR-OPT-NEXT:      i32.const 0
@@ -1247,12 +1247,12 @@
   ;; CHECK:      (func $try-tuple-tag-tuple-with-rethrow (type $0) (result i32 i64)
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 (tuple i32 i64))
-  ;; CHECK-NEXT:  (local $2 (tuple i32 i64 exnref))
+  ;; CHECK-NEXT:  (local $2 (tuple i32 i64 (ref exn)))
   ;; CHECK-NEXT:  (block $outer0 (type $0) (result i32 i64)
   ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all2 (result exnref)
+  ;; CHECK-NEXT:    (block $catch_all2 (result (ref exn))
   ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (block $catch1 (type $4) (result i32 i64 exnref)
+  ;; CHECK-NEXT:      (block $catch1 (type $4) (result i32 i64 (ref exn))
   ;; CHECK-NEXT:       (br $outer0
   ;; CHECK-NEXT:        (try_table (type $0) (result i32 i64) (catch_ref $e-i32-i64 $catch1) (catch_all_ref $catch_all2)
   ;; CHECK-NEXT:         (call $foo)
@@ -1299,10 +1299,10 @@
   ;; STACKIR-OPT:      (func $try-tuple-tag-tuple-with-rethrow (type $0) (result i32 i64)
   ;; STACKIR-OPT-NEXT:  (local $0 exnref)
   ;; STACKIR-OPT-NEXT:  (local $1 (tuple i32 i64))
-  ;; STACKIR-OPT-NEXT:  (local $2 (tuple i32 i64 exnref))
+  ;; STACKIR-OPT-NEXT:  (local $2 (tuple i32 i64 (ref exn)))
   ;; STACKIR-OPT-NEXT:  block $outer0 (type $0) (result i32 i64)
-  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result exnref)
-  ;; STACKIR-OPT-NEXT:    block $catch1 (type $4) (result i32 i64 exnref)
+  ;; STACKIR-OPT-NEXT:   block $catch_all2 (result (ref exn))
+  ;; STACKIR-OPT-NEXT:    block $catch1 (type $4) (result i32 i64 (ref exn))
   ;; STACKIR-OPT-NEXT:     try_table (type $0) (result i32 i64) (catch_ref $e-i32-i64 $catch1) (catch_all_ref $catch_all2)
   ;; STACKIR-OPT-NEXT:      call $foo
   ;; STACKIR-OPT-NEXT:      i32.const 0
@@ -1375,17 +1375,17 @@
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (local $1 i32)
   ;; CHECK-NEXT:  (local $2 (tuple i32 i64))
-  ;; CHECK-NEXT:  (local $3 (tuple i32 exnref))
-  ;; CHECK-NEXT:  (local $4 (tuple i32 i64 exnref))
+  ;; CHECK-NEXT:  (local $3 (tuple i32 (ref exn)))
+  ;; CHECK-NEXT:  (local $4 (tuple i32 i64 (ref exn)))
   ;; CHECK-NEXT:  (block $outer0
   ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all4 (result exnref)
+  ;; CHECK-NEXT:    (block $catch_all4 (result (ref exn))
   ;; CHECK-NEXT:     (local.set $4
-  ;; CHECK-NEXT:      (block $catch3 (type $4) (result i32 i64 exnref)
+  ;; CHECK-NEXT:      (block $catch3 (type $4) (result i32 i64 (ref exn))
   ;; CHECK-NEXT:       (local.set $3
-  ;; CHECK-NEXT:        (block $catch2 (type $3) (result i32 exnref)
+  ;; CHECK-NEXT:        (block $catch2 (type $3) (result i32 (ref exn))
   ;; CHECK-NEXT:         (local.set $0
-  ;; CHECK-NEXT:          (block $catch1 (result exnref)
+  ;; CHECK-NEXT:          (block $catch1 (result (ref exn))
   ;; CHECK-NEXT:           (try_table (catch_ref $e-empty $catch1) (catch_ref $e-i32 $catch2) (catch_ref $e-i32-i64 $catch3) (catch_all_ref $catch_all4)
   ;; CHECK-NEXT:            (call $foo)
   ;; CHECK-NEXT:           )
@@ -1451,13 +1451,13 @@
   ;; STACKIR-OPT-NEXT:  (local $0 exnref)
   ;; STACKIR-OPT-NEXT:  (local $1 i32)
   ;; STACKIR-OPT-NEXT:  (local $2 (tuple i32 i64))
-  ;; STACKIR-OPT-NEXT:  (local $3 (tuple i32 exnref))
-  ;; STACKIR-OPT-NEXT:  (local $4 (tuple i32 i64 exnref))
+  ;; STACKIR-OPT-NEXT:  (local $3 (tuple i32 (ref exn)))
+  ;; STACKIR-OPT-NEXT:  (local $4 (tuple i32 i64 (ref exn)))
   ;; STACKIR-OPT-NEXT:  block $outer0
-  ;; STACKIR-OPT-NEXT:   block $catch_all4 (result exnref)
-  ;; STACKIR-OPT-NEXT:    block $catch3 (type $4) (result i32 i64 exnref)
-  ;; STACKIR-OPT-NEXT:     block $catch2 (type $3) (result i32 exnref)
-  ;; STACKIR-OPT-NEXT:      block $catch1 (result exnref)
+  ;; STACKIR-OPT-NEXT:   block $catch_all4 (result (ref exn))
+  ;; STACKIR-OPT-NEXT:    block $catch3 (type $4) (result i32 i64 (ref exn))
+  ;; STACKIR-OPT-NEXT:     block $catch2 (type $3) (result i32 (ref exn))
+  ;; STACKIR-OPT-NEXT:      block $catch1 (result (ref exn))
   ;; STACKIR-OPT-NEXT:       try_table (catch_ref $e-empty $catch1) (catch_ref $e-i32 $catch2) (catch_ref $e-i32-i64 $catch3) (catch_all_ref $catch_all4)
   ;; STACKIR-OPT-NEXT:        call $foo
   ;; STACKIR-OPT-NEXT:       end
@@ -1522,7 +1522,7 @@
   ;; CHECK-NEXT:  (local $1 exnref)
   ;; CHECK-NEXT:  (block $outer3
   ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch_all4 (result exnref)
+  ;; CHECK-NEXT:    (block $catch_all4 (result (ref exn))
   ;; CHECK-NEXT:     (try_table (catch_all_ref $catch_all4)
   ;; CHECK-NEXT:      (call $foo)
   ;; CHECK-NEXT:     )
@@ -1531,7 +1531,7 @@
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:   (block $outer0
   ;; CHECK-NEXT:    (local.set $1
-  ;; CHECK-NEXT:     (block $catch2 (result exnref)
+  ;; CHECK-NEXT:     (block $catch2 (result (ref exn))
   ;; CHECK-NEXT:      (block $catch1
   ;; CHECK-NEXT:       (try_table (catch $e-empty $catch1) (catch_ref $e-empty $catch2)
   ;; CHECK-NEXT:        (call $foo)
@@ -1553,7 +1553,7 @@
   ;; STACKIR-OPT-NEXT:  (local $0 exnref)
   ;; STACKIR-OPT-NEXT:  (local $1 exnref)
   ;; STACKIR-OPT-NEXT:  block $outer3
-  ;; STACKIR-OPT-NEXT:   block $catch_all4 (result exnref)
+  ;; STACKIR-OPT-NEXT:   block $catch_all4 (result (ref exn))
   ;; STACKIR-OPT-NEXT:    try_table (catch_all_ref $catch_all4)
   ;; STACKIR-OPT-NEXT:     call $foo
   ;; STACKIR-OPT-NEXT:    end
@@ -1561,7 +1561,7 @@
   ;; STACKIR-OPT-NEXT:   end
   ;; STACKIR-OPT-NEXT:   local.set $0
   ;; STACKIR-OPT-NEXT:   block $outer0
-  ;; STACKIR-OPT-NEXT:    block $catch2 (result exnref)
+  ;; STACKIR-OPT-NEXT:    block $catch2 (result (ref exn))
   ;; STACKIR-OPT-NEXT:     block $catch1
   ;; STACKIR-OPT-NEXT:      try_table (catch $e-empty $catch1) (catch_ref $e-empty $catch2)
   ;; STACKIR-OPT-NEXT:       call $foo
@@ -2216,7 +2216,7 @@
   ;; CHECK-NEXT:  (local $0 exnref)
   ;; CHECK-NEXT:  (block $outer2
   ;; CHECK-NEXT:   (local.set $0
-  ;; CHECK-NEXT:    (block $catch3 (result exnref)
+  ;; CHECK-NEXT:    (block $catch3 (result (ref exn))
   ;; CHECK-NEXT:     (try_table (catch_ref $e-empty $catch3)
   ;; CHECK-NEXT:      (call $foo)
   ;; CHECK-NEXT:     )
@@ -2245,7 +2245,7 @@
   ;; STACKIR-OPT:      (func $try-catch-rethrow-with-inner-delegate (type $1)
   ;; STACKIR-OPT-NEXT:  (local $0 exnref)
   ;; STACKIR-OPT-NEXT:  block $outer2
-  ;; STACKIR-OPT-NEXT:   block $catch3 (result exnref)
+  ;; STACKIR-OPT-NEXT:   block $catch3 (result (ref exn))
   ;; STACKIR-OPT-NEXT:    try_table (catch_ref $e-empty $catch3)
   ;; STACKIR-OPT-NEXT:     call $foo
   ;; STACKIR-OPT-NEXT:    end

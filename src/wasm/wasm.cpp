@@ -933,7 +933,7 @@ static void populateTryTableSentTypes(TryTable* curr, Module* wasm) {
     return;
   }
   curr->sentTypes.clear();
-  Type exnref = Type(HeapType::exn, Nullable);
+  Type exnref = Type(HeapType::exn, NonNullable);
   for (Index i = 0; i < curr->catchTags.size(); i++) {
     auto tagName = curr->catchTags[i];
     std::vector<Type> sentType;
