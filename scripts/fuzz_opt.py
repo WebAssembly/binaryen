@@ -1393,7 +1393,7 @@ class Merge(TestCaseHandler):
 
 # Tests wasm-split
 class Split(TestCaseHandler):
-    frequency = 0.15
+    frequency = 1 # TODO: adjust lower when we actually enable this
 
     def handle(self, wasm):
         # get the list of function names, some of which we will decide to split
@@ -1507,7 +1507,7 @@ testcase_handlers = [
     TrapsNeverHappen(),
     CtorEval(),
     Merge(),
-    # TODO: enable when stable enough
+    # TODO: enable when stable enough, and adjust |frequency| (see above)
     # Split(),
     RoundtripText()
 ]
