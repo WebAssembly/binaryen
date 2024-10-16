@@ -1461,10 +1461,11 @@ class Split(TestCaseHandler):
         if random.random() < 0.5:
             secondary = optimize(secondary)
 
-        # prepare the list of exports to call. if there are no exports then we
-        # must still pass in something, to override the default behavior of
-        # calling all exports; pass in '-' in that case.
-        exports_to_call = ','.join(exports) or '-'
+        # prepare the list of exports to call. the format is
+        #
+        #  exports:A,B,C
+        #
+        exports_to_call = 'exports:' + ','.join(exports)
 
         # get the output from the split modules, linking them using JS
         # TODO run liftoff/turboshaft/etc.

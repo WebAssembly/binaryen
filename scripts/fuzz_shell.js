@@ -38,8 +38,8 @@ if (argv[1]) {
 }
 
 var exportsToCall;
-if (argv[2]) {
-  exportsToCall = argv[2].split(',');
+if (argv[2] && argv[2].startsWith('exports:')) {
+  exportsToCall = argv[2].substr('exports:'.length).split(',');
 }
 
 // Utilities.
@@ -214,14 +214,6 @@ if (secondBinary) {
   } catch (e) {
     console.log('exception thrown: failed to instantiate second module');
     quit();
-  }
-}
-
-// Recreate the view. This is important both initially and after a growth.
-var view;
-function refreshView() {
-  if (exports.memory) {
-    view = new Int32Array(exports.memory.buffer);
   }
 }
 
