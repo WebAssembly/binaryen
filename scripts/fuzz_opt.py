@@ -1443,6 +1443,7 @@ class Split(TestCaseHandler):
              '--secondary-output', secondary] + split_feature_opts)
 
         # sometimes also optimize the split modules
+        optimized = False
         def optimize(name):
             # do not optimize if it would change the ABI
             if CLOSED_WORLD:
@@ -1454,6 +1455,7 @@ class Split(TestCaseHandler):
             opts = ['-O3']
             new_name = name + '.opt.wasm'
             run([in_bin('wasm-opt'), name, '-o', new_name, '-all'] + opts + split_feature_opts)
+            optimized = True
             return new_name
 
         if random.random() < 0.5:
@@ -1472,7 +1474,11 @@ class Split(TestCaseHandler):
         linked_output = run_d8_wasm(primary, args=[secondary, exports_to_call])
         linked_output = fix_output(linked_output)
 
-        compare_between_vms(output, linked_output, 'Split')
+        # see D8.can_compare_to_self: we cannot compare optimized outputs if
+        # NaNs are allowed, as the optimizer can modify NaNs differently than
+        # the JS engine.
+        if not NANS or not optimized:
+            compare_between_vms(output, linked_output, 'Split')
 
     def can_run_on_feature_opts(self, feature_opts):
         # to run the split wasm we use JS, that is, JS links the exports of one
@@ -1481,7 +1487,7 @@ class Split(TestCaseHandler):
         if not LEGALIZE:
             return False
 
-        # current v8 limitations (see D8.can_run)
+        # see D8.can_run
         return all_disallowed(['shared-everything'])
 
 
