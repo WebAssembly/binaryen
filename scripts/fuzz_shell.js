@@ -1,9 +1,4 @@
-// Shell integration.
-if (typeof console === 'undefined') {
-  console = { log: print };
-}
-var tempRet0;
-var binary;
+// Shell integration: find argv and set up readBinary().
 var argv;
 var readBinary;
 if (typeof process === 'object' && typeof require === 'function') {
@@ -30,33 +25,29 @@ if (typeof process === 'object' && typeof require === 'function') {
   };
 }
 
-binary = readBinary(argv[0]);
+// We are given the binary to run as a parameter.
+var binary = readBinary(argv[0]);
 
+// Normally we call all the exports of the given wasm file. But, if we are
+// passed a final parameter in the form of "exports:X,Y,Z" then we call
+// specifically the exports X, Y, and Z.
+var exportsToCall;
+if (argv[argv.length - 1].startsWith('exports:')) {
+  exportsToCall = argv[argv.length - 1].substr('exports:'.length).split(',');
+  argv.pop();
+}
+
+// If a second parameter is given, it is a second binary that we will link in
+// with it.
 var secondBinary;
 if (argv[1]) {
   secondBinary = readBinary(argv[1]);
-}
-
-var exportsToCall;
-if (argv[2] && argv[2].startsWith('exports:')) {
-  exportsToCall = argv[2].substr('exports:'.length).split(',');
 }
 
 // Utilities.
 function assert(x, y) {
   if (!x) throw (y || 'assertion failed');// + new Error().stack;
 }
-
-// Deterministic randomness.
-var detrand = (function() {
-  var hash = 5381; // TODO DET_RAND_SEED;
-  var x = 0;
-  return function() {
-    hash = (((hash << 5) + hash) ^ (x & 0xff)) >>> 0;
-    x = (x + 1) % 256;
-    return (hash % 256) / 256;
-  };
-})();
 
 // Print out a value in a way that works well for fuzzing.
 function printed(x, y) {
@@ -144,6 +135,7 @@ function logValue(x, y) {
 }
 
 // Set up the imports.
+var tempRet0;
 var imports = {
   'fuzzing-support': {
     'log-i32': logValue,
@@ -219,6 +211,7 @@ if (secondBinary) {
 
 // Run the wasm.
 if (!exportsToCall) {
+  // We were not told specific exports, so call them all.
   exportsToCall = [];
   for (var e in exports) {
     exportsToCall.push(e);
