@@ -44,8 +44,10 @@ inline void optimizeAfterInlining(const PassUtils::FuncSet& funcs,
                                   Module* module,
                                   PassRunner* parentRunner) {
   // In pass-debug mode, validate before and after these optimizations. This
-  // helps catch bugs in the middle of passes like inlining and dae.
-  if (PassRunner::getPassDebug()) {
+  // helps catch bugs in the middle of passes like inlining and dae. We do this
+  // at level 2+ and not 1 so that this extra validation is not added to the
+  // timings that level 1 reports.
+  if (PassRunner::getPassDebug() >= 2) {
     if (!WasmValidator().validate(*module, parentRunner->options)) {
       Fatal() << "invalid wasm before optimizeAfterInlining";
     }
@@ -54,7 +56,7 @@ inline void optimizeAfterInlining(const PassUtils::FuncSet& funcs,
   runner.setIsNested(true);
   addUsefulPassesAfterInlining(runner);
   runner.run();
-  if (PassRunner::getPassDebug()) {
+  if (PassRunner::getPassDebug() >= 2) {
     if (!WasmValidator().validate(*module, parentRunner->options)) {
       Fatal() << "invalid wasm after optimizeAfterInlining";
     }
