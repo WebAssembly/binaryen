@@ -1393,7 +1393,7 @@ class Merge(TestCaseHandler):
 
 # Tests wasm-split
 class Split(TestCaseHandler):
-    frequency = 1 # TODO: adjust lower when we actually enable this
+    frequency = 1  # TODO: adjust lower when we actually enable this
 
     def handle(self, wasm):
         # get the list of function names, some of which we will decide to split
@@ -1438,9 +1438,9 @@ class Split(TestCaseHandler):
         split_feature_opts = FEATURE_OPTS + ['--enable-reference-types']
 
         run([in_bin('wasm-split'), wasm, '--split',
-            '--split-funcs', ','.join(split_funcs),
-            '--primary-output', primary,
-            '--secondary-output', secondary] + split_feature_opts)
+             '--split-funcs', ','.join(split_funcs),
+             '--primary-output', primary,
+             '--secondary-output', secondary] + split_feature_opts)
 
         # sometimes also optimize the split modules
         def optimize(name):
