@@ -4,22 +4,42 @@ if (typeof console === 'undefined') {
 }
 var tempRet0;
 var binary;
-if (typeof process === 'object' && typeof require === 'function' /* node.js detection */) {
-  var args = process.argv.slice(2);
-  binary = require('fs').readFileSync(args[0]);
-  if (!binary.buffer) binary = new Uint8Array(binary);
+var argv;
+var readBinary;
+if (typeof process === 'object' && typeof require === 'function') {
+  // Node.js.
+  argv = process.argv.slice(2);
+  readBinary = function(name) {
+    var data = require('fs').readFileSync(name);
+    if (!data.buffer) data = new Uint8Array(data);
+    return data;
+  };
 } else {
-  var args;
+  // A shell like D8.
   if (typeof scriptArgs != 'undefined') {
-    args = scriptArgs;
+    argv = scriptArgs;
   } else if (typeof arguments != 'undefined') {
-    args = arguments;
+    argv = arguments;
   }
-  if (typeof readbuffer === 'function') {
-    binary = new Uint8Array(readbuffer(args[0]));
-  } else {
-    binary = read(args[0], 'binary');
-  }
+  readBinary = function(name) {
+    if (typeof readbuffer === 'function') {
+      return new Uint8Array(readbuffer(name));
+    } else {
+      return read(name, 'binary');
+    }
+  };
+}
+
+binary = readBinary(argv[0]);
+
+var secondBinary;
+if (argv[1]) {
+  secondBinary = readBinary(argv[1]);
+}
+
+var exportsToCall;
+if (argv[2]) {
+  exportsToCall = argv[2].split(',');
 }
 
 // Utilities.
@@ -151,6 +171,18 @@ if (typeof WebAssembly.Tag !== 'undefined') {
   };
 }
 
+// If a second binary will be linked in then set up the imports for
+// placeholders. Any import like  (import "placeholder" "0" (func ..  will be
+// provided by the secondary module, and must be called using an indirection.
+if (secondBinary) {
+  imports['placeholder'] = new Proxy({}, {
+    get(target, prop, receiver) {
+      // Return a function that does an indirect call using the exported table.
+      return (...args) => exports['table'].get(+prop)(...args);
+    }
+  });
+}
+
 // Create the wasm.
 var module = new WebAssembly.Module(binary);
 
@@ -165,9 +197,28 @@ try {
 // Handle the exports.
 var exports = instance.exports;
 
-var view;
+// Link in a second module, if one was provided.
+if (secondBinary) {
+  var secondModule = new WebAssembly.Module(secondBinary);
+
+  // Merge the original imports object with the exports from the first module.
+  // Note that, sadly, Object.assign does not work on wasm exports.
+  var combinedImports = Object.assign({}, imports);
+  combinedImports['primary'] = {};
+  for (var e in exports) {
+    combinedImports['primary'][e] = exports[e];
+  }
+  var secondInstance;
+  try {
+    secondInstance = new WebAssembly.Instance(secondModule, combinedImports);
+  } catch (e) {
+    console.log('exception thrown: failed to instantiate second module');
+    quit();
+  }
+}
 
 // Recreate the view. This is important both initially and after a growth.
+var view;
 function refreshView() {
   if (exports.memory) {
     view = new Int32Array(exports.memory.buffer);
@@ -175,7 +226,14 @@ function refreshView() {
 }
 
 // Run the wasm.
-for (var e in exports) {
+if (!exportsToCall) {
+  exportsToCall = [];
+  for (var e in exports) {
+    exportsToCall.push(e);
+  }
+}
+
+for (var e of exportsToCall) {
   if (typeof exports[e] !== 'function') {
     continue;
   }

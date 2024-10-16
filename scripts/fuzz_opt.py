@@ -743,8 +743,8 @@ def run_d8_js(js, args=[], liftoff=True):
 FUZZ_SHELL_JS = in_binaryen('scripts', 'fuzz_shell.js')
 
 
-def run_d8_wasm(wasm, liftoff=True):
-    return run_d8_js(FUZZ_SHELL_JS, [wasm], liftoff=liftoff)
+def run_d8_wasm(wasm, liftoff=True, args=[]):
+    return run_d8_js(FUZZ_SHELL_JS, [wasm] + args, liftoff=liftoff)
 
 
 def all_disallowed(features):
@@ -1391,6 +1391,99 @@ class Merge(TestCaseHandler):
         compare_between_vms(output, merged_output, 'Merge')
 
 
+# Tests wasm-split
+class Split(TestCaseHandler):
+    frequency = 0.15
+
+    def handle(self, wasm):
+        # get the list of function names, some of which we will decide to split
+        # out
+        wat = run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
+        all_funcs = re.findall(r'\n [(]func [$](\S+)', wat)
+
+        # get the original output before splitting
+        output = run_d8_wasm(wasm)
+        output = fix_output(output)
+
+        # find the names of the exports. we need this because when we split the
+        # module then new exports appear to connect the two halves of the
+        # original module. we do not want to call all the exports on the new
+        # primary module, but only the original ones.
+        exports = []
+        for line in output.splitlines():
+            if FUZZ_EXEC_CALL_PREFIX in line:
+                exports.append(get_export_from_call_line(line))
+
+        # pick which to split out, with a random rate of picking (biased towards
+        # 0.5).
+        rate = (random.random() + random.random()) / 2
+        split_funcs = []
+        for func in all_funcs:
+            if random.random() < rate:
+                split_funcs.append(func)
+
+        if not split_funcs:
+            # nothing to split out
+            return
+
+        # split the wasm into two
+        primary = wasm + '.primary.wasm'
+        secondary = wasm + '.secondary.wasm'
+
+        # we require reference types, because that allows us to create our own
+        # table. without that we use the existing table, and that may interact
+        # with user code in odd ways (it really only works with the particular
+        # form of table+segments that LLVM emits, and not with random fuzzer
+        # content).
+        split_feature_opts = FEATURE_OPTS + ['--enable-reference-types']
+
+        run([in_bin('wasm-split'), wasm, '--split',
+            '--split-funcs', ','.join(split_funcs),
+            '--primary-output', primary,
+            '--secondary-output', secondary] + split_feature_opts)
+
+        # sometimes also optimize the split modules
+        def optimize(name):
+            # do not optimize if it would change the ABI
+            if CLOSED_WORLD:
+                return name
+            # TODO: use other optimizations here, but we'd need to be careful of
+            #       anything that can alter the ABI, and also current
+            #       limitations of open-world optimizations (see discussion in
+            #       https://github.com/WebAssembly/binaryen/pull/6660)
+            opts = ['-O3']
+            new_name = name + '.opt.wasm'
+            run([in_bin('wasm-opt'), name, '-o', new_name, '-all'] + opts + split_feature_opts)
+            return new_name
+
+        if random.random() < 0.5:
+            primary = optimize(primary)
+        if random.random() < 0.5:
+            secondary = optimize(secondary)
+
+        # prepare the list of exports to call. if there are no exports then we
+        # must still pass in something, to override the default behavior of
+        # calling all exports; pass in '-' in that case.
+        exports_to_call = ','.join(exports) or '-'
+
+        # get the output from the split modules, linking them using JS
+        # TODO run liftoff/turboshaft/etc.
+        linked_output = run_d8_wasm(primary, args=[secondary, exports_to_call])
+        linked_output = fix_output(linked_output)
+
+        compare_between_vms(output, linked_output, 'Split')
+
+    def can_run_on_feature_opts(self, feature_opts):
+        # to run the split wasm we use JS, that is, JS links the exports of one
+        # to the imports of the other, etc. since we run in JS, the wasm must be
+        # valid for JS.
+        if not LEGALIZE:
+            return False
+
+        # current v8 limitations (see D8.can_run)
+        return all_disallowed(['shared-everything'])
+
+
 # Check that the text format round-trips without error.
 class RoundtripText(TestCaseHandler):
     frequency = 0.05
@@ -1413,6 +1506,8 @@ testcase_handlers = [
     TrapsNeverHappen(),
     CtorEval(),
     Merge(),
+    # TODO: enable when stable enough
+    # Split(),
     RoundtripText()
 ]
 
