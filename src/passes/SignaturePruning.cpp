@@ -162,11 +162,10 @@ struct SignaturePruning : public Pass {
       sigFuncs[func->type].push_back(func);
     }
 
-    // Exported functions cannot be modified.
-    for (auto& exp : module->exports) {
-      if (exp->kind == ExternalKind::Function) {
-        auto* func = module->getFunction(exp->value);
-        allInfo[func->type].optimizable = false;
+    // Find the public types, which cannot be modified.
+    for (auto type : ModuleUtils::getPublicHeapTypes(*module)) {
+      if (type.isFunction()) {
+        allInfo[type].optimizable = false;
       }
     }
 
@@ -291,16 +290,8 @@ struct SignaturePruning : public Pass {
       }
     }
 
-    // Rewrite the types. We pass in all the types we intend to modify as being
-    // "additional private types" because we have proven above that they are
-    // safe to modify, even if they are technically public (e.g. they may be in
-    // a singleton big rec group that is public because one member is public).
-    std::vector<HeapType> additionalPrivateTypes;
-    for (auto& [type, sig] : newSignatures) {
-      additionalPrivateTypes.push_back(type);
-    }
-    GlobalTypeRewriter::updateSignatures(
-      newSignatures, *module, additionalPrivateTypes);
+    // Rewrite the types.
+    GlobalTypeRewriter::updateSignatures(newSignatures, *module);
 
     if (callTargetsToLocalize.empty()) {
       return false;
