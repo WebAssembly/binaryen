@@ -365,9 +365,6 @@ int main(int argc, const char* argv[]) {
         }
       }
     };
-    PassRunner runner(&wasm, options.passOptions);
-    runner.add("llvm-nontrapping-fptoint-lowering");
-    //runner.run();
     runPasses();
     if (converge) {
       // Keep on running passes to convergence, defined as binary
