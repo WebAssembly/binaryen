@@ -1444,6 +1444,7 @@ class Split(TestCaseHandler):
 
         # sometimes also optimize the split modules
         optimized = False
+
         def optimize(name):
             # do not optimize if it would change the ABI
             if CLOSED_WORLD:
