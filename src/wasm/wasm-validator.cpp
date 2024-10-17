@@ -2658,7 +2658,7 @@ void FunctionValidator::visitTryTable(TryTable* curr) {
                 "the number of catch tags and sent types do not match");
 
   const char* invalidSentTypeMsg = "invalid catch sent type information";
-  Type exnref = Type(HeapType::exn, Nullable);
+  Type exnref = Type(HeapType::exn, NonNullable);
   for (Index i = 0; i < curr->catchTags.size(); i++) {
     auto sentType = curr->sentTypes[i];
     size_t tagTypeSize;

@@ -933,7 +933,11 @@ static void populateTryTableSentTypes(TryTable* curr, Module* wasm) {
     return;
   }
   curr->sentTypes.clear();
-  Type exnref = Type(HeapType::exn, Nullable);
+  // We always use the refined non-nullable type in our IR, which is what the
+  // wasm spec defines when GC is enabled (=== non-nullable types are allowed).
+  // If GC is not enabled then we emit a nullable type in the binary format in
+  // WasmBinaryWriter::writeType.
+  Type exnref = Type(HeapType::exn, NonNullable);
   for (Index i = 0; i < curr->catchTags.size(); i++) {
     auto tagName = curr->catchTags[i];
     std::vector<Type> sentType;
