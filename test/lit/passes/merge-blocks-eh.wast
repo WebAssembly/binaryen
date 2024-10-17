@@ -100,7 +100,7 @@
 
   ;; CHECK:      (func $drop-block-try_catch_multi_partial (type $0)
   ;; CHECK-NEXT:  (tuple.drop 2
-  ;; CHECK-NEXT:   (block $outer (type $1) (result i32 exnref)
+  ;; CHECK-NEXT:   (block $outer (type $2) (result i32 (ref exn))
   ;; CHECK-NEXT:    (block $inner
   ;; CHECK-NEXT:     (try_table (catch_ref $i32 $outer) (catch_all $inner)
   ;; CHECK-NEXT:      (call $import)
