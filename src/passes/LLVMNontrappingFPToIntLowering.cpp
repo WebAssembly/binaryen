@@ -34,7 +34,7 @@ struct LLVMNonTrappingFPToIntLowering
       case TruncSatUFloat64ToInt64:
         return UnaryOp::TruncUFloat64ToInt64;
       default:
-        assert(false); // throw?
+        WASM_UNREACHABLE("Unexpected opcode");
     }
   }
 
@@ -53,7 +53,7 @@ struct LLVMNonTrappingFPToIntLowering
         absOp = UnaryOp::AbsFloat64;
         break;
       default:
-        assert(false); // throw?
+        WASM_UNREACHABLE("Unexpected opcode");
     }
 
     Builder builder(*getModule());
@@ -87,7 +87,7 @@ struct LLVMNonTrappingFPToIntLowering
         geOp = BinaryOp::GeFloat64;
         break;
       default:
-        assert(false); // throw?
+        WASM_UNREACHABLE("Unexpected opcode");
     }
 
     Builder builder(*getModule());
@@ -131,7 +131,7 @@ struct LLVMNonTrappingFPToIntLowering
         ReplaceUnsigned<double, uint64_t>(curr);
         break;
       default:
-        assert(false); // throw?
+        WASM_UNREACHABLE("Unexpected opcode");
     }
   }
 
@@ -139,7 +139,7 @@ struct LLVMNonTrappingFPToIntLowering
     if (!module->features.hasTruncSat()) {
       return;
     }
-    super::run(module);
+    Super::run(module);
     module->features.disable(FeatureSet::TruncSat);
   }
 };
