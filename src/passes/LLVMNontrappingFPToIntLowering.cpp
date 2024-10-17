@@ -10,6 +10,14 @@
 // these instructions produce poison values. So we need only ensure that there
 // is no trap, but need not ensure any particular result.
 
+// For example, if a conversion is guarded by a range check in the source, LLVM
+// can move the conversion before the check (and instead guard the use of the
+// result, which may be poison). This is valid in LLVM and for the nontrapping
+// wasm fptoint instructions but not for the trapping conversions. The
+// transformation in this pass is valid only if the nontrapping conversions
+// in the wasm were generated from LLVM and implement LLVM's conversion
+// semantics.
+
 namespace wasm {
 struct LLVMNonTrappingFPToIntLowering
   : public WalkerPass<PostWalker<LLVMNonTrappingFPToIntLowering>> {
