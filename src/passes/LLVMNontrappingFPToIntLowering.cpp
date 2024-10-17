@@ -68,11 +68,11 @@ struct LLVMNonTrappingFPToIntLowering
     replaceCurrent(builder.makeIf(
       builder.makeBinary(
         ltOp,
-        builder.makeUnary(absOp,
-          builder.makeLocalTee(v, curr->value, curr->value->type)),
+        builder.makeUnary(
+          absOp, builder.makeLocalTee(v, curr->value, curr->value->type)),
         builder.makeConst(static_cast<From>(std::numeric_limits<To>::max()))),
       builder.makeUnary(getReplacementOp(curr->op),
-        builder.makeLocalGet(v, curr->value->type)),
+                        builder.makeLocalGet(v, curr->value->type)),
       builder.makeConst(std::numeric_limits<To>::min())));
   }
 
@@ -109,13 +109,11 @@ struct LLVMNonTrappingFPToIntLowering
           ltOp,
           builder.makeLocalTee(v, curr->value, curr->value->type),
           builder.makeConst(static_cast<From>(std::numeric_limits<To>::max()))),
-        builder.makeBinary(
-          geOp,
-          builder.makeLocalGet(v, curr->value->type),
-          builder.makeConst(static_cast<From>(0.0)))),
-      builder.makeUnary(
-        getReplacementOp(curr->op),
-        builder.makeLocalGet(v, curr->value->type)),
+        builder.makeBinary(geOp,
+                           builder.makeLocalGet(v, curr->value->type),
+                           builder.makeConst(static_cast<From>(0.0)))),
+      builder.makeUnary(getReplacementOp(curr->op),
+                        builder.makeLocalGet(v, curr->value->type)),
       builder.makeConst(static_cast<To>(0))));
   }
 
