@@ -303,9 +303,9 @@ struct GlobalTypeOptimization : public Pass {
               // propagate to both), except for the corner case of the parent
               // being public but us being private (the propagation does not
               // take into account visibility).
-              assert(!removableIndexes.count(i) ||
-                     (publicTypesSet.count(*super) &&
-                      !publicTypesSet.count(type)));
+              assert(
+                !removableIndexes.count(i) ||
+                (publicTypesSet.count(*super) && !publicTypesSet.count(type)));
               // We need to keep it at the same index so we remain compatible.
               indexesAfterRemoval[i] = superIndex;
               // Update |next| to refer to the next available index. Due to
