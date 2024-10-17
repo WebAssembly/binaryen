@@ -1455,6 +1455,7 @@ class Split(TestCaseHandler):
             opts = ['-O3']
             new_name = name + '.opt.wasm'
             run([in_bin('wasm-opt'), name, '-o', new_name, '-all'] + opts + split_feature_opts)
+            nonlocal optimized
             optimized = True
             return new_name
 
@@ -1477,7 +1478,7 @@ class Split(TestCaseHandler):
         # see D8.can_compare_to_self: we cannot compare optimized outputs if
         # NaNs are allowed, as the optimizer can modify NaNs differently than
         # the JS engine.
-        if not NANS or not optimized:
+        if not (NANS and optimized):
             compare_between_vms(output, linked_output, 'Split')
 
     def can_run_on_feature_opts(self, feature_opts):
