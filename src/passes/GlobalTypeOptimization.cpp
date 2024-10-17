@@ -23,6 +23,7 @@
 //
 
 #include "ir/localize.h"
+#include "ir/module-utils.h"
 #include "ir/ordering.h"
 #include "ir/struct-utils.h"
 #include "ir/subtypes.h"
@@ -167,13 +168,18 @@ struct GlobalTypeOptimization : public Pass {
     auto dataFromSupersMap = std::move(combinedSetGetInfos);
     propagator.propagateToSubTypes(dataFromSupersMap);
 
+    // Find the public types, which we must not modify.
+    auto publicTypes = ModuleUtils::getPublicHeapTypes(*module);
+    std::unordered_set<HeapType> publicTypesSet(publicTypes.begin(),
+                                                publicTypes.end());
+
     // Process the propagated info. We look at supertypes first, as the order of
     // fields in a supertype is a constraint on what subtypes can do. That is,
     // we decide for each supertype what the optimal order is, and consider that
     // fixed, and then subtypes can decide how to sort fields that they append.
     for (auto type :
          HeapTypeOrdering::supertypesFirst(propagator.subTypes.types)) {
-      if (!type.isStruct()) {
+      if (!type.isStruct() || publicTypesSet.count(type)) {
         continue;
       }
       auto& fields = type.getStruct().fields;
@@ -291,8 +297,15 @@ struct GlobalTypeOptimization : public Pass {
                 keptFieldsNotInSuper.push_back(i);
               }
             } else {
-              // The super kept this field, so we must keep it as well.
-              assert(!removableIndexes.count(i));
+              // The super kept this field, so we must keep it as well. The
+              // propagation analysis above ensures that we and the super are in
+              // agreement on keeping it (the reasons that prevent optimization
+              // propagate to both), except for the corner case of the parent
+              // being public but us being private (the propagation does not
+              // take into account visibility).
+              assert(!removableIndexes.count(i) ||
+                     (publicTypesSet.count(*super) &&
+                      !publicTypesSet.count(type)));
               // We need to keep it at the same index so we remain compatible.
               indexesAfterRemoval[i] = superIndex;
               // Update |next| to refer to the next available index. Due to
