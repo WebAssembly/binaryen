@@ -45,7 +45,7 @@ struct LLVMNonTrappingFPToIntLowering
     }
   }
 
-  template<typename From, typename To> void ReplaceSigned(Unary* curr) {
+  template<typename From, typename To> void replaceSigned(Unary* curr) {
     BinaryOp ltOp;
     UnaryOp absOp;
     switch (curr->op) {
@@ -76,7 +76,7 @@ struct LLVMNonTrappingFPToIntLowering
       builder.makeConst(std::numeric_limits<To>::min())));
   }
 
-  template<typename From, typename To> void ReplaceUnsigned(Unary* curr) {
+  template<typename From, typename To> void replaceUnsigned(Unary* curr) {
     BinaryOp ltOp, geOp;
 
     switch (curr->op) {
@@ -122,28 +122,28 @@ struct LLVMNonTrappingFPToIntLowering
   void visitUnary(Unary* curr) {
     switch (curr->op) {
       case TruncSatSFloat32ToInt32:
-        ReplaceSigned<float, int32_t>(curr);
+        replaceSigned<float, int32_t>(curr);
         break;
       case TruncSatSFloat64ToInt32:
-        ReplaceSigned<double, int32_t>(curr);
+        replaceSigned<double, int32_t>(curr);
         break;
       case TruncSatSFloat32ToInt64:
-        ReplaceSigned<float, int64_t>(curr);
+        replaceSigned<float, int64_t>(curr);
         break;
       case TruncSatSFloat64ToInt64:
-        ReplaceSigned<double, int64_t>(curr);
+        replaceSigned<double, int64_t>(curr);
         break;
       case TruncSatUFloat32ToInt32:
-        ReplaceUnsigned<float, uint32_t>(curr);
+        replaceUnsigned<float, uint32_t>(curr);
         break;
       case TruncSatUFloat64ToInt32:
-        ReplaceUnsigned<double, uint32_t>(curr);
+        replaceUnsigned<double, uint32_t>(curr);
         break;
       case TruncSatUFloat32ToInt64:
-        ReplaceUnsigned<float, uint64_t>(curr);
+        replaceUnsigned<float, uint64_t>(curr);
         break;
       case TruncSatUFloat64ToInt64:
-        ReplaceUnsigned<double, uint64_t>(curr);
+        replaceUnsigned<double, uint64_t>(curr);
         break;
       default:
         WASM_UNREACHABLE("Unexpected opcode");
