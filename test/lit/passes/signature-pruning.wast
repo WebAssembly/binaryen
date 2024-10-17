@@ -1229,7 +1229,6 @@
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $unused-param (type $much) (param $param i32)
-    ;; We can remove this param.
   )
 
   ;; CHECK:      (func $caller (type $0)
@@ -1238,7 +1237,6 @@
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller
-    ;; We can remove this param.
     (call $unused-param
       (i32.const 0)
     )
