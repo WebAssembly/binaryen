@@ -56,12 +56,15 @@ struct LLVMNonTrappingFPToIntLowering
     }
 
     Builder builder(*getModule());
+    Index v = Builder::addVar(getFunction(), curr->value->type);
     replaceCurrent(builder.makeIf(
       builder.makeBinary(
         ltOp,
-        builder.makeUnary(absOp, curr->value),
+        builder.makeUnary(absOp,
+          builder.makeLocalTee(v, curr->value, curr->value->type)),
         builder.makeConst(static_cast<From>(std::numeric_limits<To>::max()))),
-      builder.makeUnary(getReplacementOp(curr->op), curr->value),
+      builder.makeUnary(getReplacementOp(curr->op),
+        builder.makeLocalGet(v, curr->value->type)),
       builder.makeConst(std::numeric_limits<To>::min())));
   }
 
@@ -90,16 +93,21 @@ struct LLVMNonTrappingFPToIntLowering
     }
 
     Builder builder(*getModule());
+    Index v = Builder::addVar(getFunction(), curr->value->type);
     replaceCurrent(builder.makeIf(
       builder.makeBinary(
         BinaryOp::AndInt32,
         builder.makeBinary(
           ltOp,
-          curr->value,
+          builder.makeLocalTee(v, curr->value, curr->value->type),
           builder.makeConst(static_cast<From>(std::numeric_limits<To>::max()))),
         builder.makeBinary(
-          geOp, curr->value, builder.makeConst(static_cast<From>(0.0)))),
-      builder.makeUnary(getReplacementOp(curr->op), curr->value),
+          geOp,
+          builder.makeLocalGet(v, curr->value->type),
+          builder.makeConst(static_cast<From>(0.0)))),
+      builder.makeUnary(
+        getReplacementOp(curr->op),
+        builder.makeLocalGet(v, curr->value->type)),
       builder.makeConst(static_cast<To>(0))));
   }
 

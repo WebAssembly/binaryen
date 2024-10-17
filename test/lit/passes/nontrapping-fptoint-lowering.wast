@@ -8,17 +8,27 @@
  ;; CHECK:      (func $truncsat
  ;; CHECK-NEXT:  (local $0 f32)
  ;; CHECK-NEXT:  (local $1 f64)
+ ;; CHECK-NEXT:  (local $2 f32)
+ ;; CHECK-NEXT:  (local $3 f32)
+ ;; CHECK-NEXT:  (local $4 f64)
+ ;; CHECK-NEXT:  (local $5 f64)
+ ;; CHECK-NEXT:  (local $6 f32)
+ ;; CHECK-NEXT:  (local $7 f32)
+ ;; CHECK-NEXT:  (local $8 f64)
+ ;; CHECK-NEXT:  (local $9 f64)
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (f32.lt
  ;; CHECK-NEXT:     (f32.abs
- ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:      (local.tee $2
+ ;; CHECK-NEXT:       (local.get $0)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (f32.const 2147483648)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (i32.trunc_f32_s
- ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:      (local.get $2)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (else
@@ -30,13 +40,15 @@
  ;; CHECK-NEXT:   (if (result i64)
  ;; CHECK-NEXT:    (f32.lt
  ;; CHECK-NEXT:     (f32.abs
- ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:      (local.tee $3
+ ;; CHECK-NEXT:       (local.get $0)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (f32.const 9223372036854775808)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (i64.trunc_f32_s
- ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:      (local.get $3)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (else
@@ -48,13 +60,15 @@
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (f64.lt
  ;; CHECK-NEXT:     (f64.abs
- ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:      (local.tee $4
+ ;; CHECK-NEXT:       (local.get $1)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (f64.const 2147483647)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (i32.trunc_f64_s
- ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:      (local.get $4)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (else
@@ -66,13 +80,15 @@
  ;; CHECK-NEXT:   (if (result i64)
  ;; CHECK-NEXT:    (f64.lt
  ;; CHECK-NEXT:     (f64.abs
- ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:      (local.tee $5
+ ;; CHECK-NEXT:       (local.get $1)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (f64.const 9223372036854775808)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (i64.trunc_f64_s
- ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:      (local.get $5)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (else
@@ -84,17 +100,19 @@
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (i32.and
  ;; CHECK-NEXT:     (f32.lt
- ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:      (local.tee $6
+ ;; CHECK-NEXT:       (local.get $0)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (f32.const 4294967296)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (f32.ge
- ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:      (local.get $6)
  ;; CHECK-NEXT:      (f32.const 0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (i32.trunc_f32_u
- ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:      (local.get $6)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (else
@@ -106,17 +124,19 @@
  ;; CHECK-NEXT:   (if (result i64)
  ;; CHECK-NEXT:    (i32.and
  ;; CHECK-NEXT:     (f32.lt
- ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:      (local.tee $7
+ ;; CHECK-NEXT:       (local.get $0)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (f32.const 18446744073709551615)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (f32.ge
- ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:      (local.get $7)
  ;; CHECK-NEXT:      (f32.const 0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (i64.trunc_f32_u
- ;; CHECK-NEXT:      (local.get $0)
+ ;; CHECK-NEXT:      (local.get $7)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (else
@@ -128,17 +148,19 @@
  ;; CHECK-NEXT:   (if (result i32)
  ;; CHECK-NEXT:    (i32.and
  ;; CHECK-NEXT:     (f64.lt
- ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:      (local.tee $8
+ ;; CHECK-NEXT:       (local.get $1)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (f64.const 4294967295)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (f64.ge
- ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:      (local.get $8)
  ;; CHECK-NEXT:      (f64.const 0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (i32.trunc_f64_u
- ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:      (local.get $8)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (else
@@ -150,17 +172,19 @@
  ;; CHECK-NEXT:   (if (result i64)
  ;; CHECK-NEXT:    (i32.and
  ;; CHECK-NEXT:     (f64.lt
- ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:      (local.tee $9
+ ;; CHECK-NEXT:       (local.get $1)
+ ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:      (f64.const 18446744073709551615)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:     (f64.ge
- ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:      (local.get $9)
  ;; CHECK-NEXT:      (f64.const 0)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (then
  ;; CHECK-NEXT:     (i64.trunc_f64_u
- ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:      (local.get $9)
  ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:    (else
