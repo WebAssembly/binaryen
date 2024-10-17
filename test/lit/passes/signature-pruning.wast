@@ -1154,10 +1154,12 @@
 
 ;; $exported is exported. The entire rec group becomes exported as well, which
 ;; causes $unused-param's type to be public, which means we cannot normally
-;; modify it. However, in closed world we allow such changes, and we can remove
-;; the unused param there. What happens is that we keep the original public rec
-;; group as-is, and add a new rec group for private types, put the pruned type
-;; there, and use that pruned type on $unused-param.
+;; modify it. However, in closed world we could allow such changes, by keeping
+;; the original public rec group as-is, and add a new rec group for private
+;; types, put the pruned type there, and use that pruned type on $unused-param.
+;; That can work here, but not in the testcase after us. For now, we also do not
+;; optimize here, as figuring out when it is safe is very difficult, and may
+;; need a new design TODO
 (module
   (rec
    ;; CHECK:      (rec
