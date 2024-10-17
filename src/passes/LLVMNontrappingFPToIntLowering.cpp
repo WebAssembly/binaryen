@@ -15,7 +15,6 @@ struct LLVMNonTrappingFPToIntLowering
   : public WalkerPass<PostWalker<LLVMNonTrappingFPToIntLowering>> {
 
   UnaryOp getReplacementOp(UnaryOp op) {
-    abort();
     switch (op) {
       case TruncSatSFloat32ToInt32:
         return UnaryOp::TruncSFloat32ToInt32;
