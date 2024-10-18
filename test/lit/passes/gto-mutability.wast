@@ -652,3 +652,39 @@
     )
   )
 )
+
+;; The parent is public, which prevents us from making any field immutable in
+;; the child.
+(module
+  ;; CHECK:      (type $parent (sub (struct (field (mut i32)))))
+  (type $parent (sub (struct (field (mut i32)))))
+  ;; CHECK:      (type $1 (func))
+
+  ;; CHECK:      (type $child (sub $parent (struct (field (mut i32)))))
+  (type $child (sub $parent (struct (field (mut i32)))))
+
+  ;; CHECK:      (global $global (ref $parent) (struct.new $parent
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: ))
+  (global $global (ref $parent) (struct.new $parent
+    (i32.const 0)
+  ))
+
+  ;; Make the parent public by exporting the global.
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+
+  ;; CHECK:      (func $func (type $1)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $child)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func
+    ;; Create the child so the type is used. No sets to the fields exist, so
+    ;; in theory all fields could be immutable.
+    (drop
+      (struct.new_default $child)
+    )
+  )
+)
+

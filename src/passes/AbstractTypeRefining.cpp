@@ -106,6 +106,16 @@ struct AbstractTypeRefining : public Pass {
       }
     }
 
+    // Assume all public types are created, which makes them non-abstract and
+    // hence ignored below.
+    // TODO: In principle we could assume such types are not created outside the
+    //       module, given closed world, but we'd also need to make sure that
+    //       we don't need to make any changes to public types that refer to
+    //       them.
+    for (auto type : ModuleUtils::getPublicHeapTypes(*module)) {
+      createdTypes.insert(type);
+    }
+
     SubTypes subTypes(*module);
 
     // Compute createdTypesOrSubTypes by starting with the created types and

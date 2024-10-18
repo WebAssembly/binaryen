@@ -1304,3 +1304,55 @@
     )
   )
 )
+
+;; $A is never created, but $B is, so all appearances of $A, like in the cast
+;; and the struct field, could be replaced by $B, except that $A is a public type,
+;; so might be created outside the module.
+(module
+  (rec
+    ;; YESTNH:      (rec
+    ;; YESTNH-NEXT:  (type $A (sub (struct (field (ref null $A)))))
+    ;; NO_TNH:      (rec
+    ;; NO_TNH-NEXT:  (type $A (sub (struct (field (ref null $A)))))
+    (type $A (sub (struct (field (ref null $A)))))
+
+    ;; YESTNH:       (type $B (sub $A (struct (field (ref null $A)))))
+    ;; NO_TNH:       (type $B (sub $A (struct (field (ref null $A)))))
+    (type $B (sub $A (struct (field (ref null $A)))))
+  )
+
+  ;; YESTNH:      (type $2 (func (param anyref)))
+
+  ;; YESTNH:      (global $global (ref $B) (struct.new_default $B))
+  ;; NO_TNH:      (type $2 (func (param anyref)))
+
+  ;; NO_TNH:      (global $global (ref $B) (struct.new_default $B))
+  (global $global (ref $B) (struct.new_default $B))
+
+  ;; YESTNH:      (export "global" (global $global))
+  ;; NO_TNH:      (export "global" (global $global))
+  (export "global" (global $global))
+
+  ;; YESTNH:      (func $new (type $2) (param $x anyref)
+  ;; YESTNH-NEXT:  (drop
+  ;; YESTNH-NEXT:   (ref.cast (ref $A)
+  ;; YESTNH-NEXT:    (local.get $x)
+  ;; YESTNH-NEXT:   )
+  ;; YESTNH-NEXT:  )
+  ;; YESTNH-NEXT: )
+  ;; NO_TNH:      (func $new (type $2) (param $x anyref)
+  ;; NO_TNH-NEXT:  (drop
+  ;; NO_TNH-NEXT:   (ref.cast (ref $A)
+  ;; NO_TNH-NEXT:    (local.get $x)
+  ;; NO_TNH-NEXT:   )
+  ;; NO_TNH-NEXT:  )
+  ;; NO_TNH-NEXT: )
+  (func $new (param $x anyref)
+    (drop
+      (ref.cast (ref $A)
+        (local.get $x)
+      )
+    )
+  )
+)
+
