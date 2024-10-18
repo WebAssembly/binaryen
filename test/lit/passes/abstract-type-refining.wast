@@ -1306,8 +1306,8 @@
 )
 
 ;; $A is never created, but $B is, so all appearances of $A, like in the cast
-;; and the struct field, can be replaced by $B. However, these are public types,
-;; which we must not modify, so we do not.
+;; and the struct field, could be replaced by $B, except that $A is a public type,
+;; so might be created outside the module.
 (module
   (rec
     ;; YESTNH:      (rec
