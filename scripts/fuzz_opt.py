@@ -1391,6 +1391,9 @@ class Merge(TestCaseHandler):
         compare_between_vms(output, merged_output, 'Merge')
 
 
+FUNC_NAMES_REGEX = re.compile(r'\n [(]func [$](\S+)')
+
+
 # Tests wasm-split
 class Split(TestCaseHandler):
     frequency = 1  # TODO: adjust lower when we actually enable this
@@ -1399,7 +1402,7 @@ class Split(TestCaseHandler):
         # get the list of function names, some of which we will decide to split
         # out
         wat = run([in_bin('wasm-dis'), wasm] + FEATURE_OPTS)
-        all_funcs = re.findall(r'\n [(]func [$](\S+)', wat)
+        all_funcs = re.findall(FUNC_NAMES_REGEX, wat)
 
         # get the original output before splitting
         output = run_d8_wasm(wasm)
