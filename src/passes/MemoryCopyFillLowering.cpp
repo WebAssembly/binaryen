@@ -1,14 +1,9 @@
 #include "pass.h"
 #include "wasm-builder.h"
 #include "wasm.h"
-#include <limits>
 
-// By default LLVM emits nontrapping float-to-int instructions to implement its
-// fptoui/fptosi conversion instructions. This pass replaces these instructions
-// with code sequences which also implement LLVM's fptoui/fptosi, but which are
-// not semantically equivalent in wasm. This is because out-of-range inputs to
-// these instructions produce poison values. So we need only ensure that there
-// is no trap, but need not ensure any particular result.
+// Replace memory.copy and memory.fill with a call to a function that
+// implements the same semantics.
 
 namespace wasm {
 struct MemoryCopyFillLowering
@@ -92,14 +87,16 @@ struct MemoryCopyFillLowering
       // loop (
       body->list.push_back(
         b.makeLoop("copy", b.makeBlock({
-          // if dst > temp, then break
+          // if dst < temp, then break
           b.makeBreak("copy", nullptr,
-            b.makeBinary(BinaryOp::GeUInt32,
+            b.makeBinary(BinaryOp::LtUInt32,
               b.makeLocalGet(dst, Type::i32),
               b.makeLocalGet(temp, Type::i32))),
+          // *dst = *src
           b.makeStore(1, 0, 1, b.makeLocalGet(dst, Type::i32),
             b.makeLoad(1, false, 0, 1,
               b.makeLocalGet(src, Type::i32), Type::i32, memory), Type::i32, memory),
+          // --dst; --src;
           b.makeLocalSet(dst, 
             b.makeBinary(BinaryOp::SubInt32, b.makeLocalGet(dst, Type::i32), b.makeConst(1))),
           b.makeLocalSet(src,
@@ -120,8 +117,8 @@ struct MemoryCopyFillLowering
       local.set($dst, i32.add(local.get $dst, local.get $size))
       local.set($src, i32.add(local.get $src, local.get $size))
       loop (
-       br_if (i32.uge(local.get $dst, local.get $temp)
-       i32.store(local.get $dst, i32.load(get_local $src))
+       br_if (i32.ult(local.get $dst, local.get $temp)
+       i32.store8(local.get $dst, i32.load8_u(get_local $src))
        local.set($dst, i32.sub(local.get($dst), i32.const 1))
        local.set($src, i32.sub(local.get($src), i32.const 1))
       )
