@@ -199,16 +199,12 @@ var exports = instance.exports;
 if (secondBinary) {
   var secondModule = new WebAssembly.Module(secondBinary);
 
-  // Merge the original imports object with the exports from the first module.
-  // Note that, sadly, Object.assign does not work on wasm exports.
-  var combinedImports = Object.assign({}, imports);
-  combinedImports['primary'] = {};
-  for (var e in exports) {
-    combinedImports['primary'][e] = exports[e];
-  }
+  // The secondary module just needs to import the primary one: all original
+  // imports it might have needed were exported from there.
+  var secondImports = {'primary': exports};
   var secondInstance;
   try {
-    secondInstance = new WebAssembly.Instance(secondModule, combinedImports);
+    secondInstance = new WebAssembly.Instance(secondModule, secondImports);
   } catch (e) {
     console.log('exception thrown: failed to instantiate second module');
     quit();
