@@ -198,6 +198,20 @@ struct GlobalTypeOptimization : public Pass {
           continue;
         }
 
+        // The propagation analysis ensures we update immutability in all
+        // supers and subs in concert, but it does not take into account
+        // visibility, so do that here: we can only become immutable if the
+        // parent can as well.
+        auto super = type.getDeclaredSuperType();
+        if (super && !canBecomeImmutable.count(*super)) {
+          // No entry in canBecomeImmutable means nothing in the parent can
+          // become immutable. We don't need to check the specific field index,
+          // because visibility affects them all equally (i.e., if it is public
+          // then no field can be changed, and if it is private then this field
+          // can be changed, and perhaps more).
+          continue;
+        }
+
         // No set exists. Mark it as something we can make immutable.
         auto& vec = canBecomeImmutable[type];
         vec.resize(i + 1);
