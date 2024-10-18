@@ -106,6 +106,12 @@ struct AbstractTypeRefining : public Pass {
       }
     }
 
+    // Assume all public types are created, which makes them non-abstract and
+    // hence ignored below.
+    for (auto type : ModuleUtils::getPublicHeapTypes(*module)) {
+      createdTypes.insert(type);
+    }
+
     SubTypes subTypes(*module);
 
     // Compute createdTypesOrSubTypes by starting with the created types and
