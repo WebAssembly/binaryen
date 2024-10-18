@@ -169,8 +169,14 @@ if (typeof WebAssembly.Tag !== 'undefined') {
 if (secondBinary) {
   imports['placeholder'] = new Proxy({}, {
     get(target, prop, receiver) {
-      // Return a function that does an indirect call using the exported table.
-      return (...args) => exports['table'].get(+prop)(...args);
+      // Return a function that throws. We could do an indirect call using the
+      // exported table, but as we immediately link in the secondary module,
+      // these stubs will not be called (they are written to the table, and the
+      // secondary module overwrites them). We do need to return something so
+      // the primary module links without erroring, though.
+      return () => {
+        throw 'proxy stub should not be called';
+      }
     }
   });
 }
