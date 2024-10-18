@@ -23,6 +23,7 @@
 #include "cfg/cfg-traversal.h"
 #include "ir/effects.h"
 #include "pass.h"
+#include "support/unique_deferring_queue.h"
 #include "wasm-builder.h"
 #include "wasm.h"
 
@@ -30,9 +31,13 @@ namespace wasm {
 
 namespace {
 
-// In each basic block we will store the relevant heap store operations and
-// other actions that matter to our analysis.
+// Information stored on each basic block.
 struct Info {
+  // A unique identifying index. As CFGWalker builds blocks in post-order, this
+  // is an increasing index in that ordering.
+  Index index;
+
+  // The relevant heap store operations appearing in the block.
   std::vector<Expression**> actions;
 };
 
@@ -48,19 +53,58 @@ struct HeapStoreOptimization
     return std::make_unique<HeapStoreOptimization>();
   }
 
+  using Super = WalkerPass<
+    CFGWalker<HeapStoreOptimization, Visitor<HeapStoreOptimization>, Info>>;
+
   // Branches outside of the function can be ignored, as we only look at local
   // state in the function. (This may need to change if we do more general dead
   // store elimination.)
   bool ignoreBranchesOutsideOfFunc = true;
 
-  // Store struct.sets and blocks, as we can find patterns among those.
+  // Add the index to each block as we create it.
+  Index nextBlockIndex = 0;
+
+  BasicBlock* makeBasicBlock() {
+    auto* ret = new BasicBlock();
+    ret->contents.index = nextBlockIndex++;
+    return ret;
+  }
+
+  // Track the parent block of expressions we care about.
+  std::unordered_map<Expression*, BasicBlock*> expressionBlocks;
+
+  // Store the actions we can optimize for later processing.
   void addAction() {
     if (currBasicBlock) {
       currBasicBlock->contents.actions.push_back(getCurrentPointer());
+      expressionBlocks[getCurrent()] = currBasicBlock;
     }
   }
   void visitStructSet(StructSet* curr) { addAction(); }
   void visitBlock(Block* curr) { addAction(); }
+
+  // Override scan so we can note the basic block that struct.set's values are
+  // in (we will need that later to check for safety, see
+  // optimizeSubsequentStructSet).
+  static void scan(HeapStoreOptimization* self, Expression** currp) {
+    if (auto* set = (*currp)->dynCast<StructSet>()) {
+      self->pushTask(HeapStoreOptimization::doVisitStructSet, currp);
+      self->pushTask(HeapStoreOptimization::scan, &set->value);
+      self->pushTask(HeapStoreOptimization::notePreSetValue, currp);
+      self->pushTask(HeapStoreOptimization::scan, &set->ref);
+    } else {
+      Super::scan(self, currp);
+    }
+  }
+  static void notePreSetValue(HeapStoreOptimization* self, Expression** currp) {
+    // We are just about to process the struct.set's value, so the current basic
+    // block is where the set's reference just ended, which is where the set's
+    // value will begin.
+    if (self->currBasicBlock) {
+      auto* set = (*currp)->cast<StructSet>();
+      self->expressionBlocks[set->ref] = self->currBasicBlock;
+    }
+  }
 
   void visitFunction(Function* curr) {
     // Now that the walk is complete and we have a CFG, find things to optimize.
@@ -246,6 +290,12 @@ struct HeapStoreOptimization
       }
     }
 
+    // We must also be careful of branches out from the value that skip the
+    // local.set, see below.
+    if (canSkipLocalSet(set)) {
+      return false;
+    }
+
     // We can optimize here!
     Builder builder(*getModule());
 
@@ -269,6 +319,114 @@ struct HeapStoreOptimization
     }
 
     return true;
+  }
+
+  // We must be careful of branches that skip the local.set. For example:
+  //
+  //  (block $out
+  //    (local.set $x (struct.new X Y Z))
+  //    (struct.set (local.get $x) (..br $out..))  ;; X' here has a br
+  //  )
+  //  ..use $x..
+  //
+  // Note how we do the local.set first. Imagine we optimized to this:
+  //
+  //  (block $out
+  //    (local.set $x (struct.new (..br $out..) Y Z))
+  //  )
+  //  ..use $x..
+  //
+  // Now the br happens first, skipping the local.set entirely, and the use
+  // later down will not get the proper value.
+  //
+  // To check for this problem, see which basic blocks can be reached from the
+  // value. The structured IR limits what is possible here, since we know that
+  // the struct.set follows the local.set: the only problem is one like we
+  // showed in the example, where we branch to something after the
+  // struct.set's basic block, in post-order. As we are processing the blocks
+  // in that same order, we just need to see that we cannot reach any block we
+  // have yet to see.
+  //
+  // Note that there may be more basic blocks after the struct.set, but they
+  // cannot be reached due to the structured control flow:
+  //
+  //  (block $out
+  //    (local.set ..
+  //    (struct.set ..
+  //    (if
+  //      ..more control flow..
+  //    )
+  //  )
+  //
+  // At this point in the traversal we have reached the block, so we've seen
+  // the if's basic blocks. But nothing in the struct.set's value can branch
+  // to them: there is no way to jump into the middle of a block.
+  bool canSkipLocalSet(StructSet* set) {
+    auto* blockBeforeValue = expressionBlocks[set->ref];
+    if (!blockBeforeValue) {
+      // We are in unreachable code. Return that we are doing something
+      // dangerous, as this is not worth optimizing.
+      return true;
+    }
+    // We will stop the flow when we reach the struct.set itself: it is fine for
+    // control flow to get there, that is what normally happens.
+    auto* structSetBlock = expressionBlocks[set];
+    if (!structSetBlock) {
+      // We are in unreachable code.
+      return true;
+    }
+
+    if (blockBeforeValue == structSetBlock) {
+      // There is no control flow at all in the area we are concerned with, so
+      // there is no way to skip the local.set.
+      return false;
+    }
+
+    // Given those blocks, we can perform the following analysis: see if we can
+    // get out of the range of blocks [blockBeforeValue .. structSetBlock].
+    // Normal execution reaches structSetBlock if there is no branching, so that
+    // is what we expect; any branch further forward without going through that
+    // block is suspect. Likewise, any branch backwards to before the value is
+    // also suspect as it may reach a loop header (and there may be a local.get
+    // usage there).
+    //
+    // This is not entirely precise, as we do not search for actually dangerous
+    // local.gets, that is, this has false positives. But it is a simple
+    // analysis that works in almost all cases, and avoids potentially large
+    // amounts of flow work.
+    Index minIndex = blockBeforeValue->contents.index;
+    Index maxIndex = structSetBlock->contents.index;
+
+    // We start the flow from right before the value, which means the end of the
+    // reference. Each block we reach in the flow is assumed to be ok, and we
+    // check its successors before pushing them into the flow.
+    UniqueNonrepeatingDeferredQueue<BasicBlock*> reached;
+    reached.push(blockBeforeValue);
+
+    while (!reached.empty()) {
+      // Flow to the successors.
+      auto* block = reached.pop();
+      for (auto* out : block->out) {
+        auto index = out->contents.index;
+        if (index == maxIndex) {
+          // This is the normal place control flow should get to, as mentioned
+          // above.
+          assert(out == structSetBlock);
+          continue;
+        }
+        // Test if we branch to a dangerous place. Note that we test <= for the
+        // minimum index, as if we branch there that means we are reaching the
+        // top of the basic block containing the value, which contains things
+        // before it (it might be a loop top).
+        if (index <= minIndex || index > maxIndex) {
+          // We branched to a dangerous place.
+          return true;
+        }
+        reached.push(out);
+      }
+    }
+    // No problem!
+    return false;
   }
 
   EffectAnalyzer effects(Expression* expr) {
