@@ -114,26 +114,32 @@
    (local.get $0)
    (local.get $0)
   )
-  (i32.store offset=2
+  (i32.store
    (i32.add
+    (i32.const -9)
+    (local.get $0)
+   )
+   (local.get $0)
+  )
+  (i32.store
+   (i32.add
+    (local.get $0)
     (i32.const -11)
-    (local.get $0)
    )
    (local.get $0)
   )
-  (i32.store offset=2
+  (i32.store
    (i32.add
-    (local.get $0)
     (i32.const -13)
+    (i32.const 17)
    )
    (local.get $0)
   )
-  (i32.store offset=19
-   (i32.const -15)
-   (local.get $0)
-  )
-  (i32.store offset=21
-   (i32.const -21)
+  (i32.store
+   (i32.add
+    (i32.const -19)
+    (i32.const 19)
+   )
    (local.get $0)
   )
   (i32.store

@@ -33,6 +33,7 @@
 #include <ir/local-graph.h>
 #include <ir/local-utils.h>
 #include <pass.h>
+#include <utility>
 #include <wasm-builder.h>
 #include <wasm.h>
 
@@ -79,11 +80,18 @@ public:
       optimizeConstantPointer();
       return false;
     }
-    if (auto* add = curr->ptr->template dynCast<Binary>()) {
-      if (add->op == AddInt32 || add->op == AddInt64) {
+    if (auto* binary = curr->ptr->template dynCast<Binary>()) {
+      if (binary->op == AddInt32 || binary->op == AddInt64) {
         // Look for a constant on both sides.
-        if (tryToOptimizeConstant(add->right, add->left) ||
-            tryToOptimizeConstant(add->left, add->right)) {
+        if (tryToOptimizeConstantToOffset(binary->left, binary->right)) {
+          return false;
+        }
+        if (tryToOptimizeOffsetToConstant(binary->left, binary->right)) {
+          return false;
+        }
+      }
+      if (binary->op == SubInt32 || binary->op == SubInt64) {
+        if (tryToOptimizeOffsetToConstant(binary->left, binary->right)) {
           return false;
         }
       }
@@ -176,11 +184,22 @@ private:
     Result(Address total) : succeeded(true), total(total) {}
   };
 
+  static std::pair<Const*, Expression*> getConst(Expression* a, Expression* b) {
+    if (auto* constA = a->dynCast<Const>()) {
+      return {constA, b};
+    } else if (auto* constB = b->dynCast<Const>()) {
+      return {constB, a};
+    } else {
+      return {nullptr, nullptr};
+    }
+  }
+
   // See if we can optimize an offset from an expression. If we report
   // success, the returned offset can be added as a replacement for the
   // expression here.
-  bool tryToOptimizeConstant(Expression* oneSide, Expression* otherSide) {
-    if (auto* c = oneSide->dynCast<Const>()) {
+  bool tryToOptimizeConstantToOffset(Expression* left, Expression* right) {
+    auto [c, otherSide] = getConst(left, right);
+    if (c != nullptr) {
       auto result = canOptimizeConstant(c->value);
       if (result.succeeded) {
         curr->offset = result.total;
@@ -188,6 +207,22 @@ private:
         if (curr->ptr->template is<Const>()) {
           optimizeConstantPointer();
         }
+        return true;
+      }
+    }
+    return false;
+  }
+
+  bool tryToOptimizeOffsetToConstant(Expression* left, Expression* right) {
+    // left '-' right
+    auto [c, other] = getConst(left, right);
+    if (c != nullptr) {
+      if (curr->offset < PassOptions::LowMemoryBound) {
+        uint64_t value = c->value.getInteger();
+        uint64_t total = curr->offset + value;
+        curr->offset = 0;
+        c->value =
+          Literal::makeFromInt64(static_cast<int64_t>(total), c->value.type);
         return true;
       }
     }
