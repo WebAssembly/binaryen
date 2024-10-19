@@ -230,6 +230,11 @@
 ;; CHECK-NEXT:   --limit-segments                              attempt to merge segments to fit
 ;; CHECK-NEXT:                                                 within web limits
 ;; CHECK-NEXT:
+;; CHECK-NEXT:   --llvm-nontrapping-fptoint-lowering           lower nontrapping float-to-int
+;; CHECK-NEXT:                                                 operations to wasm mvp
+;; CHECK-NEXT:                                                 anddisable the nontrapping
+;; CHECK-NEXT:                                                 fptoint feature
+;; CHECK-NEXT:
 ;; CHECK-NEXT:   --local-cse                                   common subexpression elimination
 ;; CHECK-NEXT:                                                 inside basic blocks
 ;; CHECK-NEXT:
