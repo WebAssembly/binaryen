@@ -1533,14 +1533,13 @@
   (export "global" (global $global))
 )
 
-;; As above, but the f64 field is now on $B as well, so it is on the immediate
-;; parent, preventing removal in $C.
+;; As above, but the f64 field is now on $B as well. We can still remove it.
 (module
   ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
   (type $A (sub (struct (field (mut i32)))))
   ;; CHECK:      (rec
   ;; CHECK-NEXT:  (type $B (sub $A (struct (field (mut i32)))))
-  (type $B (sub $A (struct (field (mut i32)))))
+  (type $B (sub $A (struct (field (mut i32)) (field (mut f64)))))
   ;; CHECK:       (type $C (sub $B (struct (field (mut i32)))))
   (type $C (sub $B (struct (field (mut i32)) (field (mut f64)))))
 
@@ -1549,5 +1548,27 @@
 
   ;; CHECK:      (export "global" (global $global))
   (export "global" (global $global))
+)
+
+;; As above, but now $B is public as well. Now we cannot remove the f64.
+(module
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
+  ;; CHECK:      (type $B (sub $A (struct (field (mut i32)) (field (mut f64)))))
+  (type $B (sub $A (struct (field (mut i32)) (field (mut f64)))))
+  ;; CHECK:      (type $C (sub $B (struct (field (mut i32)) (field (mut f64)))))
+  (type $C (sub $B (struct (field (mut i32)) (field (mut f64)))))
+
+  ;; CHECK:      (global $global (ref $A) (struct.new_default $C))
+  (global $global (ref $A) (struct.new_default $C))
+
+  ;; CHECK:      (global $globalB (ref $B) (struct.new_default $C))
+  (global $globalB (ref $B) (struct.new_default $C))
+
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+
+  ;; CHECK:      (export "globalB" (global $globalB))
+  (export "globalB" (global $globalB))
 )
 
