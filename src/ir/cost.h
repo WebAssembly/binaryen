@@ -257,6 +257,10 @@ struct CostAnalyzer : public OverriddenVisitor<CostAnalyzer, CostType> {
       case RelaxedTruncUVecF32x4ToVecI32x4:
       case RelaxedTruncZeroSVecF64x2ToVecI32x4:
       case RelaxedTruncZeroUVecF64x2ToVecI32x4:
+      case TruncSatSVecF16x8ToVecI16x8:
+      case TruncSatUVecF16x8ToVecI16x8:
+      case ConvertSVecI16x8ToVecF16x8:
+      case ConvertUVecI16x8ToVecF16x8:
         ret = 1;
         break;
       case InvalidUnary:

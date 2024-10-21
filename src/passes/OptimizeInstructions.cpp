@@ -2248,8 +2248,37 @@ struct OptimizeInstructions
     }
 
     if (curr->op == ExternConvertAny || curr->op == AnyConvertExtern) {
-      // We can't optimize these. Even removing a non-null cast is not valid as
-      // they allow nulls to filter through, unlike other RefAs*.
+      // These pass nulls through, and we can reorder them with null traps:
+      //
+      //  (any.convert_extern/extern.convert_any (ref.as_non_null.. ))
+      // =>
+      //  (ref.as_non_null (any.convert_extern/extern.convert_any ..))
+      //
+      // By moving the RefAsNonNull outside, it may reach a position where it
+      // can be optimized (e.g. if the parent traps anyhow). And,
+      // ExternConvertAny/AnyConvertExtern cannot be folded with anything, so
+      // there is no harm to moving them inside.
+      if (auto* refAsChild = curr->value->dynCast<RefAs>()) {
+        if (refAsChild->op == RefAsNonNull) {
+          // Reorder and fix up the types.
+          curr->value = refAsChild->value;
+          curr->finalize();
+          refAsChild->value = curr;
+          refAsChild->finalize();
+          replaceCurrent(refAsChild);
+          return;
+        }
+
+        // We can optimize away externalizations of internalizations and vice
+        // versa.
+        if ((curr->op == ExternConvertAny &&
+             refAsChild->op == AnyConvertExtern) ||
+            (curr->op == AnyConvertExtern &&
+             refAsChild->op == ExternConvertAny)) {
+          replaceCurrent(refAsChild->value);
+          return;
+        }
+      }
       return;
     }
 

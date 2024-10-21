@@ -32,8 +32,10 @@ uint64_t toUInteger64(double x);
 int64_t toSInteger64(double x);
 // The isInRange* functions all expect to be passed the binary representation
 // of a float or double.
+bool isInRangeI16TruncS(int32_t i);
 bool isInRangeI32TruncS(int32_t i);
 bool isInRangeI64TruncS(int32_t i);
+bool isInRangeI16TruncU(int32_t i);
 bool isInRangeI32TruncU(int32_t i);
 bool isInRangeI64TruncU(int32_t i);
 bool isInRangeI32TruncS(int64_t i);

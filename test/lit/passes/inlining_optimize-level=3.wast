@@ -82,138 +82,106 @@
   )
   ;; CHECK:      (func $intoHere
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block $__inlined_func$yes$2 (result i32)
+  ;; CHECK-NEXT:   (block $__inlined_func$yes$2 (result i32)
+  ;; CHECK-NEXT:    (i32.const 1)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (block $__inlined_func$yes-big-but-single-use$3 (result i32)
+  ;; CHECK-NEXT:    (block (result i32)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
+  ;; CHECK-NEXT:     (nop)
   ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block $__inlined_func$yes-big-but-single-use$3 (result i32)
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (nop)
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (block $__inlined_func$no-calls$21 (result i32)
+  ;; CHECK-NEXT:    (block $__inlined_func$yes (result i32)
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (block $__inlined_func$no-calls$21 (result i32)
-  ;; CHECK-NEXT:      (block (result i32)
-  ;; CHECK-NEXT:       (block $__inlined_func$yes (result i32)
-  ;; CHECK-NEXT:        (i32.const 1)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (block $__inlined_func$no-calls$22 (result i32)
+  ;; CHECK-NEXT:    (block $__inlined_func$yes0 (result i32)
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (block $__inlined_func$no-calls$22 (result i32)
-  ;; CHECK-NEXT:      (block (result i32)
-  ;; CHECK-NEXT:       (block $__inlined_func$yes0 (result i32)
-  ;; CHECK-NEXT:        (i32.const 1)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (block $__inlined_func$yes-calls-but-one-use$23 (result i32)
+  ;; CHECK-NEXT:    (block $__inlined_func$yes$1 (result i32)
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block (result i32)
-  ;; CHECK-NEXT:     (block $__inlined_func$yes-calls-but-one-use$23 (result i32)
-  ;; CHECK-NEXT:      (block (result i32)
-  ;; CHECK-NEXT:       (block $__inlined_func$yes$1 (result i32)
-  ;; CHECK-NEXT:        (i32.const 1)
-  ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:      )
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (block $__inlined_func$no-loops$4 (result i32)
+  ;; CHECK-NEXT:    (loop (result i32)
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block $__inlined_func$no-loops$4 (result i32)
-  ;; CHECK-NEXT:     (loop (result i32)
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (block $__inlined_func$no-loops$5 (result i32)
+  ;; CHECK-NEXT:    (loop (result i32)
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block $__inlined_func$no-loops$5 (result i32)
-  ;; CHECK-NEXT:     (loop (result i32)
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (block $__inlined_func$yes-loops-but-one-use$6 (result i32)
+  ;; CHECK-NEXT:    (loop (result i32)
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block $__inlined_func$yes-loops-but-one-use$6 (result i32)
-  ;; CHECK-NEXT:     (loop (result i32)
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (block $__inlined_func$no-loops-but-one-use-but-exported$7 (result i32)
+  ;; CHECK-NEXT:    (loop (result i32)
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block $__inlined_func$no-loops-but-one-use-but-exported$7 (result i32)
-  ;; CHECK-NEXT:     (loop (result i32)
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (drop
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block $__inlined_func$no-loops-but-one-use-but-tabled$8 (result i32)
-  ;; CHECK-NEXT:     (loop (result i32)
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:   (block $__inlined_func$no-loops-but-one-use-but-tabled$8 (result i32)
+  ;; CHECK-NEXT:    (loop (result i32)
+  ;; CHECK-NEXT:     (i32.const 1)
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
@@ -243,10 +211,8 @@
   ;; CHECK-NEXT:   (local.set $1
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (call $recursive-inlining-1
-  ;; CHECK-NEXT:     (local.get $1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   (call $recursive-inlining-1
+  ;; CHECK-NEXT:    (local.get $1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -280,32 +246,24 @@
   ;; CHECK-NEXT:   (local.set $1
   ;; CHECK-NEXT:    (local.get $x)
   ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:   (block (result i32)
-  ;; CHECK-NEXT:    (block $__inlined_func$b-recursive-inlining-2$24 (result i32)
-  ;; CHECK-NEXT:     (local.set $2
-  ;; CHECK-NEXT:      (local.get $1)
+  ;; CHECK-NEXT:   (block $__inlined_func$b-recursive-inlining-2$24 (result i32)
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (local.get $1)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (block $__inlined_func$b-recursive-inlining-2$25 (result i32)
+  ;; CHECK-NEXT:     (local.set $3
+  ;; CHECK-NEXT:      (local.get $2)
   ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:     (block (result i32)
-  ;; CHECK-NEXT:      (block $__inlined_func$b-recursive-inlining-2$25 (result i32)
-  ;; CHECK-NEXT:       (local.set $3
-  ;; CHECK-NEXT:        (local.get $2)
+  ;; CHECK-NEXT:     (block $__inlined_func$b-recursive-inlining-2$26 (result i32)
+  ;; CHECK-NEXT:      (local.set $4
+  ;; CHECK-NEXT:       (local.get $3)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (block $__inlined_func$b-recursive-inlining-2$27 (result i32)
+  ;; CHECK-NEXT:       (local.set $5
+  ;; CHECK-NEXT:        (local.get $4)
   ;; CHECK-NEXT:       )
-  ;; CHECK-NEXT:       (block (result i32)
-  ;; CHECK-NEXT:        (block $__inlined_func$b-recursive-inlining-2$26 (result i32)
-  ;; CHECK-NEXT:         (local.set $4
-  ;; CHECK-NEXT:          (local.get $3)
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:         (block (result i32)
-  ;; CHECK-NEXT:          (block $__inlined_func$b-recursive-inlining-2$27 (result i32)
-  ;; CHECK-NEXT:           (local.set $5
-  ;; CHECK-NEXT:            (local.get $4)
-  ;; CHECK-NEXT:           )
-  ;; CHECK-NEXT:           (call $b-recursive-inlining-2
-  ;; CHECK-NEXT:            (local.get $5)
-  ;; CHECK-NEXT:           )
-  ;; CHECK-NEXT:          )
-  ;; CHECK-NEXT:         )
-  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       (call $b-recursive-inlining-2
+  ;; CHECK-NEXT:        (local.get $5)
   ;; CHECK-NEXT:       )
   ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
@@ -335,74 +293,54 @@
   ;; a single iteration (which is the usual case, and the case here).
 
   ;; CHECK:      (func $call-many-getters
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$getter$11
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (block $__inlined_func$getter$11
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$getter$12
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (block $__inlined_func$getter$12
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$getter$13
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (block $__inlined_func$getter$13
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$getter$14
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (block $__inlined_func$getter$14
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$getter$15
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (block $__inlined_func$getter$15
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$getter$16
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (block $__inlined_func$getter$16
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$getter$17
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (block $__inlined_func$getter$17
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$getter$18
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (block $__inlined_func$getter$18
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$getter$19
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (block $__inlined_func$getter$19
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$getter$20
-  ;; CHECK-NEXT:    (drop
-  ;; CHECK-NEXT:     (i32.const 1)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:  (block $__inlined_func$getter$20
+  ;; CHECK-NEXT:   (drop
+  ;; CHECK-NEXT:    (i32.const 1)
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
@@ -461,18 +399,16 @@
  ;; CHECK-NEXT:  (local $0 i32)
  ;; CHECK-NEXT:  (block $__inlined_func$0_0
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (block $__inlined_func$0_0_0
- ;; CHECK-NEXT:      (local.set $0
- ;; CHECK-NEXT:       (block (result i32)
- ;; CHECK-NEXT:        (br_if $__inlined_func$0_0
- ;; CHECK-NEXT:         (i32.const 10)
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:        (i32.const 0)
+ ;; CHECK-NEXT:    (block $__inlined_func$0_0_0
+ ;; CHECK-NEXT:     (local.set $0
+ ;; CHECK-NEXT:      (block (result i32)
+ ;; CHECK-NEXT:       (br_if $__inlined_func$0_0
+ ;; CHECK-NEXT:        (i32.const 10)
  ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:       (i32.const 0)
  ;; CHECK-NEXT:      )
- ;; CHECK-NEXT:      (unreachable)
  ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (unreachable)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -503,23 +439,6 @@
 ;; (That avoids possible validation problems, and maximizes DCE.) To keep it
 ;; unreachable we'll add an unreachable instruction after the inlined code.
 (module
- ;; CHECK:      (type $0 (func (param f32)))
-
- ;; CHECK:      (type $1 (func))
-
- ;; CHECK:      (func $A (param $0 f32)
- ;; CHECK-NEXT:  (local $1 f32)
- ;; CHECK-NEXT:  (drop
- ;; CHECK-NEXT:   (block (result f32)
- ;; CHECK-NEXT:    (block $__inlined_func$C (result f32)
- ;; CHECK-NEXT:     (local.set $1
- ;; CHECK-NEXT:      (local.get $0)
- ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (local.get $1)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:   )
- ;; CHECK-NEXT:  )
- ;; CHECK-NEXT: )
  (func $A (param $0 f32)
   (drop
    (call $C
@@ -527,24 +446,32 @@
    )
   )
  )
+ ;; CHECK:      (type $0 (func))
+
  ;; CHECK:      (func $B
  ;; CHECK-NEXT:  (local $0 f32)
- ;; CHECK-NEXT:  (call $A
- ;; CHECK-NEXT:   (block
- ;; CHECK-NEXT:    (block
- ;; CHECK-NEXT:     (drop
- ;; CHECK-NEXT:      (block $__inlined_func$C$2 (result f32)
- ;; CHECK-NEXT:       (local.tee $0
- ;; CHECK-NEXT:        (block
- ;; CHECK-NEXT:         (block $__inlined_func$D$1
- ;; CHECK-NEXT:          (unreachable)
- ;; CHECK-NEXT:         )
- ;; CHECK-NEXT:        )
- ;; CHECK-NEXT:       )
- ;; CHECK-NEXT:       (local.get $0)
+ ;; CHECK-NEXT:  (local $1 f32)
+ ;; CHECK-NEXT:  (local $2 f32)
+ ;; CHECK-NEXT:  (block $__inlined_func$A$3
+ ;; CHECK-NEXT:   (local.set $1
+ ;; CHECK-NEXT:    (block $__inlined_func$C$2 (result f32)
+ ;; CHECK-NEXT:     (local.tee $0
+ ;; CHECK-NEXT:      (block $__inlined_func$D$1
+ ;; CHECK-NEXT:       (unreachable)
  ;; CHECK-NEXT:      )
  ;; CHECK-NEXT:     )
- ;; CHECK-NEXT:     (unreachable)
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $2
+ ;; CHECK-NEXT:    (f32.const 0)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (drop
+ ;; CHECK-NEXT:    (block $__inlined_func$C (result f32)
+ ;; CHECK-NEXT:     (local.set $2
+ ;; CHECK-NEXT:      (local.get $1)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.get $2)
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
@@ -657,40 +584,36 @@
  ;; CHECK-NEXT:  (local $3 i32)
  ;; CHECK-NEXT:  (local $4 i32)
  ;; CHECK-NEXT:  (local $5 i32)
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (block $__inlined_func$middle1
- ;; CHECK-NEXT:    (local.set $0
- ;; CHECK-NEXT:     (i32.const 1)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.set $1
- ;; CHECK-NEXT:     (i32.const 2)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.set $2
- ;; CHECK-NEXT:     (i32.const 3)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (call $top
- ;; CHECK-NEXT:     (local.get $0)
- ;; CHECK-NEXT:     (local.get $1)
- ;; CHECK-NEXT:     (local.get $2)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:  (block $__inlined_func$middle1
+ ;; CHECK-NEXT:   (local.set $0
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $1
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $2
+ ;; CHECK-NEXT:    (i32.const 3)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (call $top
+ ;; CHECK-NEXT:    (local.get $0)
+ ;; CHECK-NEXT:    (local.get $1)
+ ;; CHECK-NEXT:    (local.get $2)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
- ;; CHECK-NEXT:  (block
- ;; CHECK-NEXT:   (block $__inlined_func$middle2$1
- ;; CHECK-NEXT:    (local.set $3
- ;; CHECK-NEXT:     (i32.const 1)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.set $4
- ;; CHECK-NEXT:     (i32.const 2)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (local.set $5
- ;; CHECK-NEXT:     (i32.const 3)
- ;; CHECK-NEXT:    )
- ;; CHECK-NEXT:    (call $top
- ;; CHECK-NEXT:     (local.get $5)
- ;; CHECK-NEXT:     (i32.const 42)
- ;; CHECK-NEXT:     (local.get $3)
- ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:  (block $__inlined_func$middle2$1
+ ;; CHECK-NEXT:   (local.set $3
+ ;; CHECK-NEXT:    (i32.const 1)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $4
+ ;; CHECK-NEXT:    (i32.const 2)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (local.set $5
+ ;; CHECK-NEXT:    (i32.const 3)
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (call $top
+ ;; CHECK-NEXT:    (local.get $5)
+ ;; CHECK-NEXT:    (i32.const 42)
+ ;; CHECK-NEXT:    (local.get $3)
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:  )
  ;; CHECK-NEXT:  (call $middle3

@@ -540,6 +540,10 @@ instructions = [
     ("i32x4.trunc_sat_f64x2_u_zero",  "makeUnary(UnaryOp::TruncSatZeroUVecF64x2ToVecI32x4)"),
     ("f32x4.demote_f64x2_zero",       "makeUnary(UnaryOp::DemoteZeroVecF64x2ToVecF32x4)"),
     ("f64x2.promote_low_f32x4",       "makeUnary(UnaryOp::PromoteLowVecF32x4ToVecF64x2)"),
+    ("i16x8.trunc_sat_f16x8_s",  "makeUnary(UnaryOp::TruncSatSVecF16x8ToVecI16x8)"),
+    ("i16x8.trunc_sat_f16x8_u",  "makeUnary(UnaryOp::TruncSatUVecF16x8ToVecI16x8)"),
+    ("f16x8.convert_i16x8_s",    "makeUnary(UnaryOp::ConvertSVecI16x8ToVecF16x8)"),
+    ("f16x8.convert_i16x8_u",    "makeUnary(UnaryOp::ConvertUVecI16x8ToVecF16x8)"),
 
     # relaxed SIMD ops
     ("i8x16.relaxed_swizzle", "makeBinary(BinaryOp::RelaxedSwizzleVecI8x16)"),

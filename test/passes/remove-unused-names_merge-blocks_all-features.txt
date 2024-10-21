@@ -286,26 +286,22 @@
    (i32.const 30)
   )
   (drop
-   (block
-    (drop
-     (i32.const 10)
-    )
-    (i32.add
-     (unreachable)
-     (i32.const 20)
-    )
-   )
+   (i32.const 10)
   )
-  (drop
+  (i32.add
+   (unreachable)
    (i32.const 20)
   )
-  (drop
-   (i32.add
-    (block (result i32)
-     (unreachable)
+  (block
+   (unreachable)
+   (drop
+    (i32.const 20)
+   )
+   (drop
+    (i32.add
      (i32.const 10)
+     (i32.const 30)
     )
-    (i32.const 30)
    )
   )
  )
@@ -413,20 +409,20 @@
     )
    )
   )
-  (drop
-   (i32.const 30)
-  )
-  (drop
-   (i32.const 50)
-  )
-  (drop
-   (select
-    (block (result i32)
-     (unreachable)
+  (block
+   (unreachable)
+   (drop
+    (i32.const 30)
+   )
+   (drop
+    (i32.const 50)
+   )
+   (drop
+    (select
      (i32.const 20)
+     (i32.const 40)
+     (i32.const 60)
     )
-    (i32.const 40)
-    (i32.const 60)
    )
   )
   (drop
@@ -437,7 +433,7 @@
   )
   (drop
    (select
-    (block (result i32)
+    (block
      (drop
       (i32.const 10)
      )
@@ -447,20 +443,20 @@
     (i32.const 60)
    )
   )
-  (drop
-   (i32.const 10)
-  )
-  (drop
-   (i32.const 50)
-  )
-  (drop
-   (select
-    (i32.const 20)
-    (block (result i32)
-     (unreachable)
+  (block
+   (drop
+    (i32.const 10)
+   )
+   (unreachable)
+   (drop
+    (i32.const 50)
+   )
+   (drop
+    (select
+     (i32.const 20)
      (i32.const 40)
+     (i32.const 60)
     )
-    (i32.const 60)
    )
   )
   (drop
@@ -472,7 +468,7 @@
   (drop
    (select
     (i32.const 20)
-    (block (result i32)
+    (block
      (drop
       (i32.const 30)
      )
@@ -481,18 +477,18 @@
     (i32.const 60)
    )
   )
-  (drop
-   (i32.const 10)
-  )
-  (drop
-   (i32.const 30)
-  )
-  (drop
-   (select
-    (i32.const 20)
-    (i32.const 40)
-    (block (result i32)
-     (unreachable)
+  (block
+   (drop
+    (i32.const 10)
+   )
+   (drop
+    (i32.const 30)
+   )
+   (unreachable)
+   (drop
+    (select
+     (i32.const 20)
+     (i32.const 40)
      (i32.const 60)
     )
    )
@@ -507,7 +503,7 @@
    (select
     (i32.const 20)
     (i32.const 40)
-    (block (result i32)
+    (block
      (drop
       (i32.const 50)
      )
@@ -597,21 +593,21 @@
    (i32.const 20)
    (i32.const 40)
   )
-  (drop
-   (i32.const 20)
-  )
-  (call $call-ii
-   (block (result i32)
-    (unreachable)
-    (i32.const 10)
+  (block
+   (unreachable)
+   (drop
+    (i32.const 20)
    )
-   (i32.const 30)
+   (call $call-ii
+    (i32.const 10)
+    (i32.const 30)
+   )
   )
   (drop
    (i32.const 20)
   )
   (call $call-ii
-   (block (result i32)
+   (block
     (drop
      (i32.const 10)
     )
@@ -619,13 +615,13 @@
    )
    (i32.const 30)
   )
-  (drop
-   (i32.const 10)
-  )
-  (call $call-ii
-   (i32.const 20)
-   (block (result i32)
-    (unreachable)
+  (block
+   (drop
+    (i32.const 10)
+   )
+   (unreachable)
+   (call $call-ii
+    (i32.const 20)
     (i32.const 30)
    )
   )
@@ -634,7 +630,7 @@
   )
   (call $call-ii
    (i32.const 20)
-   (block (result i32)
+   (block
     (drop
      (i32.const 30)
     )
@@ -807,32 +803,24 @@
  )
  (func $return-different-type (type $2) (result i32)
   (drop
-   (f64.abs
-    (block
-     (drop
-      (i32.const 2)
-     )
-     (return
-      (i32.const 1)
-     )
-    )
+   (i32.const 2)
+  )
+  (f64.abs
+   (return
+    (i32.const 1)
    )
   )
   (unreachable)
  )
  (func $drop-unreachable (type $2) (result i32)
   (local $0 i32)
-  (drop
-   (block (result i32)
-    (unreachable)
-   )
-  )
+  (unreachable)
   (unreachable)
  )
  (func $concrete_finale_in_unreachable (type $5) (result f64)
-  (drop
-   (block (result f64)
-    (unreachable)
+  (block
+   (unreachable)
+   (drop
     (f64.const 6.322092475576799e-96)
    )
   )
@@ -840,22 +828,16 @@
  )
  (func $dont-move-unreachable (type $3)
   (loop $label$0
+   (br $label$0)
    (drop
-    (block (result i32)
-     (br $label$0)
-     (i32.const 1)
-    )
+    (i32.const 1)
    )
   )
  )
  (func $dont-move-unreachable-last (type $3)
   (loop $label$0
-   (drop
-    (block (result i32)
-     (call $dont-move-unreachable-last)
-     (br $label$0)
-    )
-   )
+   (call $dont-move-unreachable-last)
+   (br $label$0)
   )
  )
  (func $move-around-unreachable-in-middle (type $3)
@@ -864,9 +846,11 @@
    (drop
     (block $label$3 (result i32)
      (drop
-      (br_if $label$3
+      (block
        (br $label$0)
-       (i32.const 0)
+       (drop
+        (i32.const 0)
+       )
       )
      )
      (i32.const 1)
@@ -876,16 +860,10 @@
  )
  (func $drop-unreachable-block-with-concrete-final (type $3)
   (drop
-   (block (result i32)
-    (drop
-     (block
-      (drop
-       (return)
-      )
-     )
-    )
-    (i32.const -452)
-   )
+   (return)
+  )
+  (drop
+   (i32.const -452)
   )
  )
  (func $merging-with-unreachable-in-middle (type $2) (result i32)
@@ -901,13 +879,9 @@
  )
  (func $remove-br-after-unreachable (type $3)
   (block $label$9
-   (drop
-    (block
-     (block
-      (return)
-      (br $label$9)
-     )
-    )
+   (block
+    (return)
+    (br $label$9)
    )
   )
  )

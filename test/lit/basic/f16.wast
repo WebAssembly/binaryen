@@ -534,6 +534,69 @@
    (local.get $2)
   )
  )
+ ;; CHECK-TEXT:      (func $i16x8.trunc_sat_f16x8_s (type $1) (param $0 v128) (result v128)
+ ;; CHECK-TEXT-NEXT:  (i16x8.trunc_sat_f16x8_s
+ ;; CHECK-TEXT-NEXT:   (local.get $0)
+ ;; CHECK-TEXT-NEXT:  )
+ ;; CHECK-TEXT-NEXT: )
+ ;; CHECK-BIN:      (func $i16x8.trunc_sat_f16x8_s (type $1) (param $0 v128) (result v128)
+ ;; CHECK-BIN-NEXT:  (i16x8.trunc_sat_f16x8_s
+ ;; CHECK-BIN-NEXT:   (local.get $0)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT: )
+ (func $i16x8.trunc_sat_f16x8_s (param $0 v128) (result v128)
+  (i16x8.trunc_sat_f16x8_s
+   (local.get $0)
+  )
+ )
+
+ ;; CHECK-TEXT:      (func $i16x8.trunc_sat_f16x8_u (type $1) (param $0 v128) (result v128)
+ ;; CHECK-TEXT-NEXT:  (i16x8.trunc_sat_f16x8_u
+ ;; CHECK-TEXT-NEXT:   (local.get $0)
+ ;; CHECK-TEXT-NEXT:  )
+ ;; CHECK-TEXT-NEXT: )
+ ;; CHECK-BIN:      (func $i16x8.trunc_sat_f16x8_u (type $1) (param $0 v128) (result v128)
+ ;; CHECK-BIN-NEXT:  (i16x8.trunc_sat_f16x8_u
+ ;; CHECK-BIN-NEXT:   (local.get $0)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT: )
+ (func $i16x8.trunc_sat_f16x8_u (param $0 v128) (result v128)
+  (i16x8.trunc_sat_f16x8_u
+   (local.get $0)
+  )
+ )
+
+ ;; CHECK-TEXT:      (func $f16x8.convert_i16x8_s (type $1) (param $0 v128) (result v128)
+ ;; CHECK-TEXT-NEXT:  (f16x8.convert_i16x8_s
+ ;; CHECK-TEXT-NEXT:   (local.get $0)
+ ;; CHECK-TEXT-NEXT:  )
+ ;; CHECK-TEXT-NEXT: )
+ ;; CHECK-BIN:      (func $f16x8.convert_i16x8_s (type $1) (param $0 v128) (result v128)
+ ;; CHECK-BIN-NEXT:  (f16x8.convert_i16x8_s
+ ;; CHECK-BIN-NEXT:   (local.get $0)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT: )
+ (func $f16x8.convert_i16x8_s (param $0 v128) (result v128)
+  (f16x8.convert_i16x8_s
+   (local.get $0)
+  )
+ )
+
+ ;; CHECK-TEXT:      (func $f16x8.convert_i16x8_u (type $1) (param $0 v128) (result v128)
+ ;; CHECK-TEXT-NEXT:  (f16x8.convert_i16x8_u
+ ;; CHECK-TEXT-NEXT:   (local.get $0)
+ ;; CHECK-TEXT-NEXT:  )
+ ;; CHECK-TEXT-NEXT: )
+ ;; CHECK-BIN:      (func $f16x8.convert_i16x8_u (type $1) (param $0 v128) (result v128)
+ ;; CHECK-BIN-NEXT:  (f16x8.convert_i16x8_u
+ ;; CHECK-BIN-NEXT:   (local.get $0)
+ ;; CHECK-BIN-NEXT:  )
+ ;; CHECK-BIN-NEXT: )
+ (func $f16x8.convert_i16x8_u (param $0 v128) (result v128)
+  (f16x8.convert_i16x8_u
+   (local.get $0)
+  )
+ )
 )
 ;; CHECK-BIN-NODEBUG:      (type $0 (func (param v128 v128) (result v128)))
 
@@ -738,5 +801,29 @@
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $1)
 ;; CHECK-BIN-NODEBUG-NEXT:   (local.get $2)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $28 (type $1) (param $0 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (i16x8.trunc_sat_f16x8_s
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $29 (type $1) (param $0 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (i16x8.trunc_sat_f16x8_u
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $30 (type $1) (param $0 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.convert_i16x8_s
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
+;; CHECK-BIN-NODEBUG-NEXT:  )
+;; CHECK-BIN-NODEBUG-NEXT: )
+
+;; CHECK-BIN-NODEBUG:      (func $31 (type $1) (param $0 v128) (result v128)
+;; CHECK-BIN-NODEBUG-NEXT:  (f16x8.convert_i16x8_u
+;; CHECK-BIN-NODEBUG-NEXT:   (local.get $0)
 ;; CHECK-BIN-NODEBUG-NEXT:  )
 ;; CHECK-BIN-NODEBUG-NEXT: )

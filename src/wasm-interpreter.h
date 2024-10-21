@@ -237,9 +237,9 @@ public:
       if (type.isConcrete() || curr->type.isConcrete()) {
 #if 1 // def WASM_INTERPRETER_DEBUG
         if (!Type::isSubType(type, curr->type)) {
-          std::cerr << "expected " << curr->type << ", seeing " << type
-                    << " from\n"
-                    << *curr << '\n';
+          std::cerr << "expected " << ModuleType(*module, curr->type)
+                    << ", seeing " << ModuleType(*module, type) << " from\n"
+                    << ModuleExpression(*module, curr) << '\n';
         }
 #endif
         assert(Type::isSubType(type, curr->type));
@@ -632,6 +632,14 @@ public:
         return value.demoteZeroToF32x4();
       case PromoteLowVecF32x4ToVecF64x2:
         return value.promoteLowToF64x2();
+      case TruncSatSVecF16x8ToVecI16x8:
+        return value.truncSatToSI16x8();
+      case TruncSatUVecF16x8ToVecI16x8:
+        return value.truncSatToUI16x8();
+      case ConvertSVecI16x8ToVecF16x8:
+        return value.convertSToF16x8();
+      case ConvertUVecI16x8ToVecF16x8:
+        return value.convertUToF16x8();
       case InvalidUnary:
         WASM_UNREACHABLE("invalid unary op");
     }

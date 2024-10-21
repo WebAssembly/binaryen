@@ -9,11 +9,11 @@
 ;; Test that sourcemap information is preserved
 
 (module
-  ;;@ a:1:1
+  ;;@ a:1:2
   (func (export "f")
-     ;;@ a:2:1
+     ;;@ a:3:4:myFunction
      (nop)
-     ;;@ a:3:1
+     ;;@ a:5:6
   )
 )
 ;; CHECK-TEXT:      (type $0 (func))
@@ -23,15 +23,15 @@
 ;; CHECK-TEXT:      (export "g" (func $0_1))
 
 ;; CHECK-TEXT:      (func $0
-;; CHECK-TEXT-NEXT:  ;;@ a:2:1
+;; CHECK-TEXT-NEXT:  ;;@ a:3:4:myFunction
 ;; CHECK-TEXT-NEXT:  (nop)
-;; CHECK-TEXT-NEXT:  ;;@ a:3:1
+;; CHECK-TEXT-NEXT:  ;;@ a:5:6
 ;; CHECK-TEXT-NEXT: )
 
 ;; CHECK-TEXT:      (func $0_1
-;; CHECK-TEXT-NEXT:  ;;@ b:2:2
+;; CHECK-TEXT-NEXT:  ;;@ b:9:10:MyClass::g
 ;; CHECK-TEXT-NEXT:  (nop)
-;; CHECK-TEXT-NEXT:  ;;@ b:3:2
+;; CHECK-TEXT-NEXT:  ;;@ b:11:12
 ;; CHECK-TEXT-NEXT: )
 
 ;; CHECK-BIN:      (type $0 (func))
@@ -41,13 +41,13 @@
 ;; CHECK-BIN:      (export "g" (func $1))
 
 ;; CHECK-BIN:      (func $0
-;; CHECK-BIN-NEXT:  ;;@ a:2:1
+;; CHECK-BIN-NEXT:  ;;@ a:3:4:myFunction
 ;; CHECK-BIN-NEXT:  (nop)
-;; CHECK-BIN-NEXT:  ;;@ a:3:1
+;; CHECK-BIN-NEXT:  ;;@ a:5:6
 ;; CHECK-BIN-NEXT: )
 
 ;; CHECK-BIN:      (func $1
-;; CHECK-BIN-NEXT:  ;;@ b:2:2
+;; CHECK-BIN-NEXT:  ;;@ b:9:10:MyClass::g
 ;; CHECK-BIN-NEXT:  (nop)
-;; CHECK-BIN-NEXT:  ;;@ b:3:2
+;; CHECK-BIN-NEXT:  ;;@ b:11:12
 ;; CHECK-BIN-NEXT: )

@@ -473,6 +473,10 @@ void WasmBinaryWriter::writeFunctions() {
       std::cerr << "Some VMs may not accept this binary because it has a large "
                 << "number of parameters in function " << func->name << ".\n";
     }
+    if (func->getNumLocals() > WebLimitations::MaxFunctionLocals) {
+      std::cerr << "Some VMs may not accept this binary because it has a large "
+                << "number of locals in function " << func->name << ".\n";
+    }
   });
   finishSection(sectionStart);
 }
@@ -1186,7 +1190,7 @@ void WasmBinaryWriter::writeSymbolMap() {
 }
 
 void WasmBinaryWriter::initializeDebugInfo() {
-  lastDebugLocation = {0, /* lineNumber = */ 1, 0};
+  lastDebugLocation = {0, /* lineNumber = */ 1, 0, std::nullopt};
 }
 
 void WasmBinaryWriter::writeSourceMapProlog() {
@@ -1222,7 +1226,17 @@ void WasmBinaryWriter::writeSourceMapProlog() {
     // TODO respect JSON string encoding, e.g. quotes and control chars.
     *sourceMap << "\"" << wasm->debugInfoFileNames[i] << "\"";
   }
-  *sourceMap << "],\"names\":[],\"mappings\":\"";
+  *sourceMap << "],\"names\":[";
+
+  for (size_t i = 0; i < wasm->debugInfoSymbolNames.size(); i++) {
+    if (i > 0) {
+      *sourceMap << ",";
+    }
+    // TODO respect JSON string encoding, e.g. quotes and control chars.
+    *sourceMap << "\"" << wasm->debugInfoSymbolNames[i] << "\"";
+  }
+
+  *sourceMap << "],\"mappings\":\"";
 }
 
 static void writeBase64VLQ(std::ostream& out, int32_t n) {
@@ -1246,7 +1260,10 @@ static void writeBase64VLQ(std::ostream& out, int32_t n) {
 void WasmBinaryWriter::writeSourceMapEpilog() {
   // write source map entries
   size_t lastOffset = 0;
-  Function::DebugLocation lastLoc = {0, /* lineNumber = */ 1, 0};
+  BinaryLocation lastFileIndex = 0;
+  BinaryLocation lastLineNumber = 1;
+  BinaryLocation lastColumnNumber = 0;
+  BinaryLocation lastSymbolNameIndex = 0;
   for (const auto& [offset, loc] : sourceMapLocations) {
     if (lastOffset > 0) {
       *sourceMap << ",";
@@ -1254,13 +1271,20 @@ void WasmBinaryWriter::writeSourceMapEpilog() {
     writeBase64VLQ(*sourceMap, int32_t(offset - lastOffset));
     lastOffset = offset;
     if (loc) {
-      // There is debug information for this location, so emit the next 3
-      // fields and update lastLoc.
-      writeBase64VLQ(*sourceMap, int32_t(loc->fileIndex - lastLoc.fileIndex));
-      writeBase64VLQ(*sourceMap, int32_t(loc->lineNumber - lastLoc.lineNumber));
-      writeBase64VLQ(*sourceMap,
-                     int32_t(loc->columnNumber - lastLoc.columnNumber));
-      lastLoc = *loc;
+      writeBase64VLQ(*sourceMap, int32_t(loc->fileIndex - lastFileIndex));
+      lastFileIndex = loc->fileIndex;
+
+      writeBase64VLQ(*sourceMap, int32_t(loc->lineNumber - lastLineNumber));
+      lastLineNumber = loc->lineNumber;
+
+      writeBase64VLQ(*sourceMap, int32_t(loc->columnNumber - lastColumnNumber));
+      lastColumnNumber = loc->columnNumber;
+
+      if (loc->symbolNameIndex) {
+        writeBase64VLQ(*sourceMap,
+                       int32_t(*loc->symbolNameIndex - lastSymbolNameIndex));
+        lastSymbolNameIndex = *loc->symbolNameIndex;
+      }
     }
   }
   *sourceMap << "\"}";
@@ -1521,9 +1545,9 @@ void WasmBinaryWriter::writeInlineBuffer(const char* data, size_t size) {
 
 void WasmBinaryWriter::writeType(Type type) {
   if (type.isRef()) {
-    // The only reference types allowed without GC are funcref and externref. We
-    // internally use more refined versions of those types, but we cannot emit
-    // those more refined types.
+    // The only reference types allowed without GC are funcref, externref, and
+    // exnref. We internally use more refined versions of those types, but we
+    // cannot emit those without GC.
     if (!wasm->features.hasGC()) {
       auto ht = type.getHeapType();
       if (ht.isMaybeShared(HeapType::string)) {
@@ -1532,6 +1556,8 @@ void WasmBinaryWriter::writeType(Type type) {
         // string, the stringref feature must be enabled.
         type = Type(HeapTypes::string.getBasic(ht.getShared()), Nullable);
       } else {
+        // Only the top type (func, extern, exn) is available, and only the
+        // nullable version.
         type = Type(type.getHeapType().getTop(), Nullable);
       }
     }
@@ -1713,7 +1739,7 @@ WasmBinaryReader::WasmBinaryReader(Module& wasm,
                                    FeatureSet features,
                                    const std::vector<char>& input)
   : wasm(wasm), allocator(wasm.allocator), input(input), sourceMap(nullptr),
-    nextDebugPos(0), nextDebugLocation{0, 0, 0},
+    nextDebugPos(0), nextDebugLocation{0, 0, 0, std::nullopt},
     nextDebugLocationHasDebugInfo(false), debugLocation(), builder(wasm) {
   wasm.features = features;
 }
@@ -2705,16 +2731,20 @@ void WasmBinaryReader::readFunctions() {
 void WasmBinaryReader::readVars() {
   uint32_t totalVars = 0;
   size_t numLocalTypes = getU32LEB();
+  // Use a SmallVector as in the common (MVP) case there are only 4 possible
+  // types.
+  SmallVector<std::pair<uint32_t, Type>, 4> decodedVars;
+  decodedVars.reserve(numLocalTypes);
   for (size_t t = 0; t < numLocalTypes; t++) {
     auto num = getU32LEB();
-    // The core spec allows up to 2^32 locals, but to avoid allocation failures,
-    // we additionally impose a much smaller limit, matching the JS embedding.
-    if (std::ckd_add(&totalVars, totalVars, num) ||
-        totalVars > WebLimitations::MaxFunctionLocals) {
-      throwError("too many locals");
+    if (std::ckd_add(&totalVars, totalVars, num)) {
+      throwError("unaddressable number of locals");
     }
     auto type = getConcreteType();
-
+    decodedVars.emplace_back(num, type);
+  }
+  currFunction->vars.reserve(totalVars);
+  for (auto [num, type] : decodedVars) {
     while (num > 0) {
       currFunction->vars.push_back(type);
       num--;
@@ -4216,6 +4246,21 @@ void WasmBinaryReader::readSourceMapHeader() {
     mustReadChar(']');
   }
 
+  if (findField("names")) {
+    skipWhitespace();
+    mustReadChar('[');
+    if (!maybeReadChar(']')) {
+      do {
+        std::string symbol;
+        readString(symbol);
+        Index index = wasm.debugInfoSymbolNames.size();
+        wasm.debugInfoSymbolNames.push_back(symbol);
+        debugInfoSymbolNameIndices[symbol] = index;
+      } while (maybeReadChar(','));
+      mustReadChar(']');
+    }
+  }
+
   if (!findField("mappings")) {
     throw MapParseException("cannot find the 'mappings' field in map");
   }
@@ -4242,7 +4287,12 @@ void WasmBinaryReader::readSourceMapHeader() {
     uint32_t lineNumber =
       readBase64VLQ(*sourceMap) + 1; // adjust zero-based line number
     uint32_t columnNumber = readBase64VLQ(*sourceMap);
-    nextDebugLocation = {fileIndex, lineNumber, columnNumber};
+    std::optional<BinaryLocation> symbolNameIndex;
+    peek = sourceMap->peek();
+    if (!(peek == ',' || peek == '\"')) {
+      symbolNameIndex = readBase64VLQ(*sourceMap);
+    }
+    nextDebugLocation = {fileIndex, lineNumber, columnNumber, symbolNameIndex};
     nextDebugLocationHasDebugInfo = true;
   }
 }
@@ -4297,7 +4347,15 @@ void WasmBinaryReader::readNextDebugLocation() {
     int32_t columnNumberDelta = readBase64VLQ(*sourceMap);
     uint32_t columnNumber = nextDebugLocation.columnNumber + columnNumberDelta;
 
-    nextDebugLocation = {fileIndex, lineNumber, columnNumber};
+    std::optional<BinaryLocation> symbolNameIndex;
+    peek = sourceMap->peek();
+    if (!(peek == ',' || peek == '\"')) {
+      int32_t symbolNameIndexDelta = readBase64VLQ(*sourceMap);
+      symbolNameIndex =
+        nextDebugLocation.symbolNameIndex.value_or(0) + symbolNameIndexDelta;
+    }
+
+    nextDebugLocation = {fileIndex, lineNumber, columnNumber, symbolNameIndex};
     nextDebugLocationHasDebugInfo = true;
   }
 }

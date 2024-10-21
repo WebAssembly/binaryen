@@ -280,7 +280,7 @@ struct TypeInfo {
     Ref ref;
   };
 
-  TypeInfo(const Tuple& tuple) : kind(TupleKind), tuple(tuple) {}
+  TypeInfo(const Tuple& tuple);
   TypeInfo(Tuple&& tuple) : kind(TupleKind), tuple(std::move(tuple)) {}
   TypeInfo(HeapType heapType, Nullability nullable)
     : kind(RefKind), ref{heapType, nullable} {}

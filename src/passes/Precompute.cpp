@@ -298,7 +298,8 @@ struct Precompute
                    singleValue.type.getHeapType().isSignature()) {
           if (auto* r = curr->value->template dynCast<RefFunc>()) {
             r->func = singleValue.getFunc();
-            r->finalize();
+            auto heapType = getModule()->getFunction(r->func)->type;
+            r->finalize(Type(heapType, NonNullable));
             curr->finalize();
             return;
           }
