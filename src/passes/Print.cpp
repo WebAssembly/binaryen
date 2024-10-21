@@ -1368,6 +1368,18 @@ struct PrintExpressionContents
       case RelaxedTruncZeroUVecF64x2ToVecI32x4:
         o << "i32x4.relaxed_trunc_f64x2_u_zero";
         break;
+      case TruncSatSVecF16x8ToVecI16x8:
+        o << "i16x8.trunc_sat_f16x8_s";
+        break;
+      case TruncSatUVecF16x8ToVecI16x8:
+        o << "i16x8.trunc_sat_f16x8_u";
+        break;
+      case ConvertSVecI16x8ToVecF16x8:
+        o << "f16x8.convert_i16x8_s";
+        break;
+      case ConvertUVecI16x8ToVecF16x8:
+        o << "f16x8.convert_i16x8_u";
+        break;
       case InvalidUnary:
         WASM_UNREACHABLE("unvalid unary operator");
     }
@@ -2504,7 +2516,15 @@ void PrintSExpression::printDebugLocation(
   } else {
     auto fileName = currModule->debugInfoFileNames[location->fileIndex];
     o << ";;@ " << fileName << ":" << location->lineNumber << ":"
-      << location->columnNumber << '\n';
+      << location->columnNumber;
+
+    if (location->symbolNameIndex) {
+      auto symbolName =
+        currModule->debugInfoSymbolNames[*(location->symbolNameIndex)];
+      o << ":" << symbolName;
+    }
+
+    o << '\n';
   }
   doIndent(o, indent);
 }
@@ -3700,6 +3720,11 @@ std::ostream& operator<<(std::ostream& o, wasm::ShallowExpression expression) {
 
 std::ostream& operator<<(std::ostream& o, wasm::StackInst& inst) {
   return wasm::printStackInst(&inst, o);
+}
+
+std::ostream& operator<<(std::ostream& o, wasm::ModuleType pair) {
+  wasm::printTypeOrName(pair.second, o, &pair.first);
+  return o;
 }
 
 } // namespace std

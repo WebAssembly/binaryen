@@ -249,7 +249,13 @@ struct SubtypingDiscoverer : public OverriddenVisitor<SubType> {
       self()->noteSubtype(body, curr);
     }
   }
-  void visitTryTable(TryTable* curr) { self()->noteSubtype(curr->body, curr); }
+  void visitTryTable(TryTable* curr) {
+    self()->noteSubtype(curr->body, curr);
+    for (Index i = 0; i < curr->catchTags.size(); i++) {
+      self()->noteSubtype(curr->sentTypes[i],
+                          self()->findBreakTarget(curr->catchDests[i]));
+    }
+  }
   void visitThrow(Throw* curr) {
     Type params = self()->getModule()->getTag(curr->tag)->sig.params;
     assert(params.size() == curr->operands.size());

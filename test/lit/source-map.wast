@@ -110,4 +110,21 @@
     ;;@ src.cpp:3
     (nop)
   )
+
+  ;; CHECK:      (func $symbolNames
+  ;; CHECK-NEXT:  ;;@ /tmp/src.cpp:1:2:MyClass.myMethod
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  ;;@ ../src.cpp:3:4:MyClass::myMethod
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT:  ;;@ café.cpp:5:6:topLevelFunction
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $symbolNames
+    ;;@ /tmp/src.cpp:1:2:MyClass.myMethod
+    (nop)
+    ;;@ ../src.cpp:3:4:MyClass::myMethod
+    (nop)
+    ;;@ café.cpp:5:6:topLevelFunction
+    (nop)
+  )
 )

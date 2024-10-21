@@ -1405,3 +1405,93 @@
     )
   )
 )
+
+;; Public types cannot be optimized. The function type here is public as the
+;; function is exported, and so the entire rec group is public, and cannot be
+;; modified. We cannot even optimize $child3 which is outside of the rec group,
+;; because its parent is inside. However, we can optimize $unrelated which is
+;; unrelated to them (and so we can remove the field there).
+(module
+  (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $parent (sub (struct (field (ref func)))))
+    (type $parent (sub (struct (field (ref func)))))
+    ;; CHECK:       (type $child1 (sub $parent (struct (field (ref func)))))
+    (type $child1 (sub $parent (struct (field (ref func)))))
+    ;; CHECK:       (type $child2 (sub $parent (struct (field (ref func)))))
+    (type $child2 (sub $parent (struct (field (ref func)))))
+
+    ;; CHECK:       (type $func (func (param (ref $child2))))
+    (type $func (func (param $child2 (ref $child2))))
+  )
+
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $unrelated (sub (struct)))
+
+  ;; CHECK:       (type $child3 (sub $parent (struct (field (ref func)))))
+  (type $child3 (sub $parent (struct (field (ref func)))))
+
+  (type $unrelated (sub (struct (field (ref func)))))
+
+  ;; CHECK:      (elem declare func $func)
+
+  ;; CHECK:      (export "func" (func $func))
+
+  ;; CHECK:      (func $func (type $func) (param $child2 (ref $child2))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $parent
+  ;; CHECK-NEXT:    (ref.func $func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $child1
+  ;; CHECK-NEXT:    (ref.func $func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $child2
+  ;; CHECK-NEXT:    (ref.func $func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $child3
+  ;; CHECK-NEXT:    (ref.func $func)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new_default $unrelated)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $func (export "func") (type $func) (param $child2 (ref $child2))
+    ;; Create all the types. Note that the value here is non-nullable, as is the
+    ;; field, so if we remove the field by mistake in GTO but leave it during
+    ;; TypeUpdater, we'd error (on providing a default value for a non-nullable
+    ;; field).
+    (drop
+      (struct.new $parent
+        (ref.func $func)
+      )
+    )
+    (drop
+      (struct.new $child1
+        (ref.func $func)
+      )
+    )
+    (drop
+      (struct.new $child2
+        (ref.func $func)
+      )
+    )
+    (drop
+      (struct.new $child3
+        (ref.func $func)
+      )
+    )
+    ;; We can optimize this one, and no other.
+    (drop
+      (struct.new $unrelated
+        (ref.func $func)
+      )
+    )
+  )
+)

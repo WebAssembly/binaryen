@@ -1324,6 +1324,22 @@ void BinaryInstWriter::visitUnary(Unary* curr) {
       o << int8_t(BinaryConsts::SIMDPrefix)
         << U32LEB(BinaryConsts::I32x4RelaxedTruncF64x2UZero);
       break;
+    case TruncSatSVecF16x8ToVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8TruncSatF16x8S);
+      break;
+    case TruncSatUVecF16x8ToVecI16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::I16x8TruncSatF16x8U);
+      break;
+    case ConvertSVecI16x8ToVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F16x8ConvertI16x8S);
+      break;
+    case ConvertUVecI16x8ToVecF16x8:
+      o << int8_t(BinaryConsts::SIMDPrefix)
+        << U32LEB(BinaryConsts::F16x8ConvertI16x8U);
+      break;
     case InvalidUnary:
       WASM_UNREACHABLE("invalid unary op");
   }

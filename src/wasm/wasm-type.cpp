@@ -479,6 +479,8 @@ std::optional<HeapType> getBasicHeapTypeLUB(HeapType::BasicHeapType a,
 
 } // anonymous namespace
 
+TypeInfo::TypeInfo(const Tuple& tuple) : kind(TupleKind), tuple(tuple) {}
+
 TypeInfo::TypeInfo(const TypeInfo& other) {
   kind = other.kind;
   switch (kind) {

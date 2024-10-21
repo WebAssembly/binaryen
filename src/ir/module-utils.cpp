@@ -38,15 +38,35 @@ static void updateLocationSet(std::set<Function::DebugLocation>& locations,
   std::swap(locations, updatedLocations);
 }
 
+// Update the symbol name indices when moving a set of debug locations from one
+// module to another.
+static void updateSymbolSet(std::set<Function::DebugLocation>& locations,
+                            std::vector<Index>& symbolIndexMap) {
+  std::set<Function::DebugLocation> updatedLocations;
+
+  for (auto iter : locations) {
+    if (iter.symbolNameIndex) {
+      iter.symbolNameIndex = symbolIndexMap[*iter.symbolNameIndex];
+    }
+    updatedLocations.insert(iter);
+  }
+  locations.clear();
+  std::swap(locations, updatedLocations);
+}
+
 // Copies a function into a module. If newName is provided it is used as the
 // name of the function (otherwise the original name is copied). If fileIndexMap
 // is specified, it is used to rename source map filename indices when copying
+// the function from one module to another one. If symbolNameIndexMap is
+// specified, it is used to rename source map symbol name indices when copying
 // the function from one module to another one.
 Function* copyFunction(Function* func,
                        Module& out,
                        Name newName,
-                       std::optional<std::vector<Index>> fileIndexMap) {
-  auto ret = copyFunctionWithoutAdd(func, out, newName, fileIndexMap);
+                       std::optional<std::vector<Index>> fileIndexMap,
+                       std::optional<std::vector<Index>> symbolNameIndexMap) {
+  auto ret = copyFunctionWithoutAdd(
+    func, out, newName, fileIndexMap, symbolNameIndexMap);
   return out.addFunction(std::move(ret));
 }
 
@@ -54,7 +74,8 @@ std::unique_ptr<Function>
 copyFunctionWithoutAdd(Function* func,
                        Module& out,
                        Name newName,
-                       std::optional<std::vector<Index>> fileIndexMap) {
+                       std::optional<std::vector<Index>> fileIndexMap,
+                       std::optional<std::vector<Index>> symbolNameIndexMap) {
   auto ret = std::make_unique<Function>();
   ret->name = newName.is() ? newName : func->name;
   ret->hasExplicitName = func->hasExplicitName;
@@ -75,6 +96,18 @@ copyFunctionWithoutAdd(Function* func,
     }
     updateLocationSet(ret->prologLocation, *fileIndexMap);
     updateLocationSet(ret->epilogLocation, *fileIndexMap);
+  }
+  if (symbolNameIndexMap) {
+    for (auto& iter : ret->debugLocations) {
+      if (iter.second) {
+        if (iter.second->symbolNameIndex.has_value()) {
+          iter.second->symbolNameIndex =
+            (*symbolNameIndexMap)[*(iter.second->symbolNameIndex)];
+        }
+      }
+      updateSymbolSet(ret->prologLocation, *symbolNameIndexMap);
+      updateSymbolSet(ret->epilogLocation, *symbolNameIndexMap);
+    }
   }
   ret->module = func->module;
   ret->base = func->base;
@@ -199,8 +232,27 @@ void copyModuleItems(const Module& in, Module& out) {
     }
   }
 
+  std::optional<std::vector<Index>> symbolNameIndexMap;
+  if (!in.debugInfoSymbolNames.empty()) {
+    std::unordered_map<std::string, Index> debugInfoSymbolNameIndices;
+    for (Index i = 0; i < out.debugInfoSymbolNames.size(); i++) {
+      debugInfoSymbolNameIndices[out.debugInfoSymbolNames[i]] = i;
+    }
+    symbolNameIndexMap.emplace();
+    for (Index i = 0; i < in.debugInfoSymbolNames.size(); i++) {
+      std::string file = in.debugInfoSymbolNames[i];
+      auto iter = debugInfoSymbolNameIndices.find(file);
+      if (iter == debugInfoSymbolNameIndices.end()) {
+        Index index = out.debugInfoSymbolNames.size();
+        out.debugInfoSymbolNames.push_back(file);
+        debugInfoSymbolNameIndices[file] = index;
+      }
+      symbolNameIndexMap->push_back(debugInfoSymbolNameIndices[file]);
+    }
+  }
+
   for (auto& curr : in.functions) {
-    copyFunction(curr.get(), out, Name(), fileIndexMap);
+    copyFunction(curr.get(), out, Name(), fileIndexMap, symbolNameIndexMap);
   }
   for (auto& curr : in.globals) {
     copyGlobal(curr.get(), out);
@@ -241,6 +293,7 @@ void copyModule(const Module& in, Module& out) {
   out.start = in.start;
   out.customSections = in.customSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
+  out.debugInfoSymbolNames = in.debugInfoSymbolNames;
   out.features = in.features;
 }
 

@@ -20,10 +20,8 @@
   (func $foo)
 
   ;; CHECK:      (func $ref_func_test (type $1) (result funcref)
-  ;; CHECK-NEXT:  (block
-  ;; CHECK-NEXT:   (block $__inlined_func$foo
-  ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  (block $__inlined_func$foo
+  ;; CHECK-NEXT:   (nop)
   ;; CHECK-NEXT:  )
   ;; CHECK-NEXT:  (ref.func $foo)
   ;; CHECK-NEXT: )
@@ -136,6 +134,41 @@
  (func $1 (result (ref func))
   (call $0
    (ref.func $1)
+  )
+ )
+)
+
+;; Test handling of nested inlined calls.
+(module
+ (func $callee-a (param i32))
+
+ (func $callee-b (param $x i32) (result i32)
+  (local.get $x)
+ )
+
+ ;; CHECK:      (type $0 (func))
+
+ ;; CHECK:      (func $caller-with-pop-twice (type $0)
+ ;; CHECK-NEXT:  (local $0 i32)
+ ;; CHECK-NEXT:  (local $1 i32)
+ ;; CHECK-NEXT:  (block $__inlined_func$callee-a$1
+ ;; CHECK-NEXT:   (local.set $1
+ ;; CHECK-NEXT:    (block $__inlined_func$callee-b (result i32)
+ ;; CHECK-NEXT:     (local.set $0
+ ;; CHECK-NEXT:      (i32.const 42)
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:     (local.get $0)
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:   (nop)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $caller-with-pop-twice
+  ;; Both these calls should be inlined.
+  (call $callee-a
+   (call $callee-b
+    (i32.const 42)
+   )
   )
  )
 )

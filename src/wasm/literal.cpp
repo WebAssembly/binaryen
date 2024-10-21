@@ -798,6 +798,20 @@ Literal Literal::wrapToI32() const {
   return Literal((int32_t)i64);
 }
 
+Literal Literal::convertSIToF16() const {
+  if (type == Type::i32) {
+    return Literal(fp16_ieee_from_fp32_value(float(i32)));
+  }
+  WASM_UNREACHABLE("invalid type");
+}
+
+Literal Literal::convertUIToF16() const {
+  if (type == Type::i32) {
+    return Literal(fp16_ieee_from_fp32_value(float(uint16_t(i32))));
+  }
+  WASM_UNREACHABLE("invalid type");
+}
+
 Literal Literal::convertSIToF32() const {
   if (type == Type::i32) {
     return Literal(float(i32));
@@ -861,6 +875,14 @@ static Literal saturating_trunc(typename AsInt<F>::type val) {
   return Literal(I(std::trunc(bit_cast<F>(val))));
 }
 
+Literal Literal::truncSatToSI16() const {
+  if (type == Type::f32) {
+    return saturating_trunc<float, int16_t, isInRangeI16TruncS>(
+      Literal(*this).castToI32().geti32());
+  }
+  WASM_UNREACHABLE("invalid type");
+}
+
 Literal Literal::truncSatToSI32() const {
   if (type == Type::f32) {
     return saturating_trunc<float, int32_t, isInRangeI32TruncS>(
@@ -881,6 +903,14 @@ Literal Literal::truncSatToSI64() const {
   if (type == Type::f64) {
     return saturating_trunc<double, int64_t, isInRangeI64TruncS>(
       Literal(*this).castToI64().geti64());
+  }
+  WASM_UNREACHABLE("invalid type");
+}
+
+Literal Literal::truncSatToUI16() const {
+  if (type == Type::f32) {
+    return saturating_trunc<float, uint16_t, isInRangeI16TruncU>(
+      Literal(*this).castToI32().geti32());
   }
   WASM_UNREACHABLE("invalid type");
 }
@@ -1995,6 +2025,19 @@ Literal Literal::convertSToF32x4() const {
 }
 Literal Literal::convertUToF32x4() const {
   return unary<4, &Literal::getLanesI32x4, &Literal::convertUIToF32>(*this);
+}
+
+Literal Literal::truncSatToSI16x8() const {
+  return unary<8, &Literal::getLanesF16x8, &Literal::truncSatToSI16>(*this);
+}
+Literal Literal::truncSatToUI16x8() const {
+  return unary<8, &Literal::getLanesF16x8, &Literal::truncSatToUI16>(*this);
+}
+Literal Literal::convertSToF16x8() const {
+  return unary<8, &Literal::getLanesSI16x8, &Literal::convertSIToF16>(*this);
+}
+Literal Literal::convertUToF16x8() const {
+  return unary<8, &Literal::getLanesSI16x8, &Literal::convertUIToF16>(*this);
 }
 
 Literal Literal::anyTrueV128() const {

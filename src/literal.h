@@ -377,14 +377,18 @@ public:
   Literal extendS32() const;
   Literal wrapToI32() const;
 
+  Literal convertSIToF16() const;
+  Literal convertUIToF16() const;
   Literal convertSIToF32() const;
   Literal convertUIToF32() const;
   Literal convertSIToF64() const;
   Literal convertUIToF64() const;
   Literal convertF32ToF16() const;
 
+  Literal truncSatToSI16() const;
   Literal truncSatToSI32() const;
   Literal truncSatToSI64() const;
+  Literal truncSatToUI16() const;
   Literal truncSatToUI32() const;
   Literal truncSatToUI64() const;
 
@@ -693,6 +697,10 @@ public:
   Literal truncSatZeroUToI32x4() const;
   Literal demoteZeroToF32x4() const;
   Literal promoteLowToF64x2() const;
+  Literal truncSatToSI16x8() const;
+  Literal truncSatToUI16x8() const;
+  Literal convertSToF16x8() const;
+  Literal convertUToF16x8() const;
   Literal swizzleI8x16(const Literal& other) const;
   Literal relaxedMaddF16x8(const Literal& left, const Literal& right) const;
   Literal relaxedNmaddF16x8(const Literal& left, const Literal& right) const;

@@ -148,6 +148,16 @@ There are a few differences between Binaryen IR and the WebAssembly language:
       much about this when writing Binaryen passes. For more details see the
       `requiresNonNullableLocalFixups()` hook in `pass.h` and the
       `LocalStructuralDominance` class.
+  * Binaryen IR uses the most refined types possible for references,
+    specifically:
+    * The IR type of a `ref.func` is always a specific function type, and not
+      plain `funcref`. It is also non-nullable.
+    * Non-nullable types are also used for the type that `try_table` sends
+      on branches (if we branch, a null is never sent), that is, it sends
+      (ref exn) and not (ref null exn).
+    In both cases if GC is not enabled then we emit the less-refined type in the
+    binary. When reading a binary, the more refined types will be applied as we
+    build the IR.
   * `br_if` output types are more refined in Binaryen IR: they have the type of
     the value, when a value flows in. In the wasm spec the type is that of the
     branch target, which may be less refined. Using the more refined type here
