@@ -176,10 +176,10 @@ void TranslateToFuzzReader::build() {
   setupGlobals();
   if (wasm.features.hasExceptionHandling()) {
     setupTags();
+    addImportThrowingSupport();
   }
   modifyInitialFunctions();
   addImportLoggingSupport();
-  addImportThrowingSupport();
   // keep adding functions until we run out of input
   while (!random.finished()) {
     auto* func = addFunction();
