@@ -104,6 +104,8 @@ private:
 
   Name funcrefTableName;
 
+  Name throwImportName;
+
   std::unordered_map<Type, std::vector<Name>> globalsByType;
   std::unordered_map<Type, std::vector<Name>> mutableGlobalsByType;
   std::unordered_map<Type, std::vector<Name>> immutableGlobalsByType;

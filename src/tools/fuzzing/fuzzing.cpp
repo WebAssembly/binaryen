@@ -599,10 +599,11 @@ void TranslateToFuzzReader::addImportThrowingSupport() {
   // TODO: Send an index, which is which exported wasm Tag we should throw, or
   //       something not exported if out of bounds. First we must also export
   //       tags sometimes.
+  throwImportName = Names::getValidFunctionName(wasm, "throw");
   auto* func = new Function;
-  func->name = "throw";
+  func->name = throwImportName;
   func->module = "fuzzing-support";
-  func->base = func->name;
+  func->base = "throw";
   func->type = Signature(Type::none, Type::none);
   wasm.addFunction(func);
 }
@@ -716,7 +717,9 @@ Expression* TranslateToFuzzReader::makeImportThrowing(Type type) {
   // We throw from the import, so this call appears to be none and not
   // unreachable.
   assert(type == Type::none);
-  return builder.makeCall("throw", {}, Type::none);
+
+  // TODO: This and makeThrow should probably be rare, as they halt the program.
+  return builder.makeCall(throwImportName, {}, Type::none);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
