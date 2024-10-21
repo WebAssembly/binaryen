@@ -150,7 +150,7 @@ var imports = {
     'log-v128': logValue,
 
     // Throw an exception from JS.
-    'throw': {
+    'throw': () => {
       throw 'some JS error';
     }
   },
