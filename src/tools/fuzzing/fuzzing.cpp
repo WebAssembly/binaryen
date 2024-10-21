@@ -602,7 +602,7 @@ void TranslateToFuzzReader::addImportThrowingSupport() {
   auto* func = new Function;
   func->name = "throw";
   func->module = "fuzzing-support";
-  func->base = name;
+  func->base = func->name;
   func->type = Signature(Type::none, Type::none);
   wasm.addFunction(func);
 }
