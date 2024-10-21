@@ -220,7 +220,10 @@ private:
   void finalizeTable();
   void prepareHangLimitSupport();
   void addHangLimitSupport();
+  // Imports that we call to log out values.
   void addImportLoggingSupport();
+  // An import that we call to throw a wasm exception from outside.
+  void addImportThrowingSupport();
   void addHashMemorySupport();
 
   // Special expression makers

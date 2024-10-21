@@ -138,6 +138,7 @@ function logValue(x, y) {
 var tempRet0;
 var imports = {
   'fuzzing-support': {
+    // Logging.
     'log-i32': logValue,
     'log-i64': logValue,
     'log-f32': logValue,
@@ -147,7 +148,13 @@ var imports = {
     // we could avoid running JS on code with SIMD in it, but it is useful to
     // fuzz such code as much as we can.)
     'log-v128': logValue,
+
+    // Throw an exception from JS.
+    'throw': {
+      throw 'some JS error';
+    }
   },
+  // Emscripten support.
   'env': {
     'setTempRet0': function(x) { tempRet0 = x },
     'getTempRet0': function() { return tempRet0 },

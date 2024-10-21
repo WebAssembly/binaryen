@@ -27,7 +27,11 @@ using Loggings = std::vector<Literal>;
 
 // Logs every relevant import call parameter.
 struct LoggingExternalInterface : public ShellExternalInterface {
+private:
   Loggings& loggings;
+
+  // A tag used for fuzzing support throwing.
+  Tag privateTag;
 
   struct State {
     // Legalization for JS emits get/setTempRet0 calls ("temp ret 0" means a
@@ -37,30 +41,39 @@ struct LoggingExternalInterface : public ShellExternalInterface {
     uint32_t tempRet0 = 0;
   } state;
 
-  LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
+public:
+  LoggingExternalInterface(Loggings& loggings) : loggings(loggings), privateTag(Signature(Type::none, Type::none)) {}
 
   Literals callImport(Function* import, const Literals& arguments) override {
     if (import->module == "fuzzing-support") {
-      std::cout << "[LoggingExternalInterface logging";
-      loggings.push_back(Literal()); // buffer with a None between calls
-      for (auto argument : arguments) {
-        if (argument.type == Type::i64) {
-          // To avoid JS legalization changing logging results, treat a logging
-          // of an i64 as two i32s (which is what legalization would turn us
-          // into).
-          auto low = Literal(int32_t(argument.getInteger()));
-          auto high = Literal(int32_t(argument.getInteger() >> int32_t(32)));
-          std::cout << ' ' << low;
-          loggings.push_back(low);
-          std::cout << ' ' << high;
-          loggings.push_back(high);
-        } else {
-          std::cout << ' ' << argument;
-          loggings.push_back(argument);
+      if (import->base.startsWith("log-")) {
+        // This is a logging function like log-i32 or log-f64
+        std::cout << "[LoggingExternalInterface logging";
+        loggings.push_back(Literal()); // buffer with a None between calls
+        for (auto argument : arguments) {
+          if (argument.type == Type::i64) {
+            // To avoid JS legalization changing logging results, treat a
+            // logging of an i64 as two i32s (which is what legalization would
+            // turn us into).
+            auto low = Literal(int32_t(argument.getInteger()));
+            auto high = Literal(int32_t(argument.getInteger() >> int32_t(32)));
+            std::cout << ' ' << low;
+            loggings.push_back(low);
+            std::cout << ' ' << high;
+            loggings.push_back(high);
+          } else {
+            std::cout << ' ' << argument;
+            loggings.push_back(argument);
+          }
         }
+        std::cout << "]\n";
+        return {};
+      } else if (import->base == "throw") {
+        // Throw something. We create a new Tag here, unrelated to those in the
+        // wasm.
+        auto payload = std::make_shared<ExnData>(privateTag, payload);
+        throwException(WasmException{payload});
       }
-      std::cout << "]\n";
-      return {};
     } else if (import->module == ENV) {
       if (import->base == "log_execution") {
         std::cout << "[LoggingExternalInterface log-execution";

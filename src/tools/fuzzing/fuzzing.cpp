@@ -179,6 +179,7 @@ void TranslateToFuzzReader::build() {
   }
   modifyInitialFunctions();
   addImportLoggingSupport();
+  addImportThrowingSupport();
   // keep adding functions until we run out of input
   while (!random.finished()) {
     auto* func = addFunction();
@@ -591,6 +592,19 @@ void TranslateToFuzzReader::addImportLoggingSupport() {
     func->type = Signature(type, Type::none);
     wasm.addFunction(func);
   }
+}
+
+void TranslateToFuzzReader::addImportThrowingSupport() {
+  // Throw some kind of exception from JS.
+  // TODO: Send an index, which is which exported wasm Tag we should throw, or
+  //       something not exported if out of bounds. First we must also export
+  //       tags sometimes.
+  auto* func = new Function;
+  func->name = "throw";
+  func->module = "fuzzing-support";
+  func->base = name;
+  func->type = Signature(Type::none, Type::none);
+  wasm.addFunction(func);
 }
 
 void TranslateToFuzzReader::addHashMemorySupport() {
