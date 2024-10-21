@@ -72,9 +72,11 @@ public:
         return {};
       } else if (import->base == "throw") {
         // Throw something. We create a new Tag here, unrelated to those in the
-        // wasm.
-        auto payload = std::make_shared<ExnData>(privateTag, payload);
-        throwException(WasmException{payload});
+        // wasm. XXX no need for tag, just name
+        Name name("private-tag");
+        Literals empty;
+        auto payload = std::make_shared<ExnData>(name, empty);
+        throwException(WasmException{Literal(payload)});
       }
     } else if (import->module == ENV) {
       if (import->base == "log_execution") {
