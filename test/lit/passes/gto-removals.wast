@@ -1495,3 +1495,27 @@
     )
   )
 )
+
+;; The type $A is public because it is on an exported global. As a result we
+;; cannot remove the unused i32 field from its child or grandchild.
+(module
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
+  ;; CHECK:      (type $B (sub $A (struct (field (mut i32)))))
+  (type $B (sub $A (struct (field (mut i32)))))
+  ;; CHECK:      (type $C (sub $B (struct (field (mut i32)))))
+  (type $C (sub $B (struct (field (mut i32)))))
+
+  ;; Use $C so it isn't removed trivially, which also keeps $B alive as its
+  ;; super.
+  ;; CHECK:      (global $global (ref $A) (struct.new $C
+  ;; CHECK-NEXT:  (i32.const 0)
+  ;; CHECK-NEXT: ))
+  (global $global (ref $A) (struct.new $C
+    (i32.const 0)
+  ))
+
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+)
+

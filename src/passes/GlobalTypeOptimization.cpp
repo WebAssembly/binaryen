@@ -314,12 +314,27 @@ struct GlobalTypeOptimization : public Pass {
               // The super kept this field, so we must keep it as well. The
               // propagation analysis above ensures that we and the super are in
               // agreement on keeping it (the reasons that prevent optimization
-              // propagate to both), except for the corner case of the parent
+              // propagate to both), except for the corner case of a parent
               // being public but us being private (the propagation does not
               // take into account visibility).
-              assert(
-                !removableIndexes.count(i) ||
-                (publicTypesSet.count(*super) && !publicTypesSet.count(type)));
+#ifndef NDEBUG
+              if (removableIndexes.count(i)) {
+                // We want to remove it, so as as just mentioned, a super must
+                // be public while we are private, or else |superIndexes| has
+                // invalid data.
+                assert(!publicTypesSet.count(type));
+                auto foundPublicSuper = false;
+                auto currSuper = super;
+                while (currSuper) {
+                  if (publicTypesSet.count(*currSuper)) {
+                    foundPublicSuper = true;
+                    break;
+                  }
+                  currSuper = currSuper->getDeclaredSuperType();
+                }
+                assert(foundPublicSuper);
+              }
+#endif
               // We need to keep it at the same index so we remain compatible.
               indexesAfterRemoval[i] = superIndex;
               // Update |next| to refer to the next available index. Due to
