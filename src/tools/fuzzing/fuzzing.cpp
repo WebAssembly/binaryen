@@ -706,10 +706,17 @@ Expression* TranslateToFuzzReader::makeHangLimitCheck() {
                          builder.makeConst(int32_t(1)))));
 }
 
-Expression* TranslateToFuzzReader::makeLogging() {
+Expression* TranslateToFuzzReader::makeImportLogging() {
   auto type = getLoggableType();
   return builder.makeCall(
     std::string("log-") + type.toString(), {make(type)}, Type::none);
+}
+
+Expression* TranslateToFuzzReader::makeImportThrowing(Type type) {
+  // We throw from the import, so this call appears to be none and not
+  // unreachable.
+  assert(type == Type::none);
+  return builder.makeCall("throw", {}, Type::none);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
@@ -1444,7 +1451,7 @@ Expression* TranslateToFuzzReader::_makenone() {
   auto choice = upTo(100);
   if (choice < LOGGING_PERCENT) {
     if (choice < LOGGING_PERCENT / 2) {
-      return makeLogging();
+      return makeImportLogging();
     } else {
       return makeMemoryHashLogging();
     }
@@ -1469,6 +1476,7 @@ Expression* TranslateToFuzzReader::_makenone() {
     .add(FeatureSet::Atomics, &Self::makeAtomic)
     .add(FeatureSet::ExceptionHandling, &Self::makeTry)
     .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
+    .add(FeatureSet::ExceptionHandling, &Self::makeImportThrowing)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeStructSet)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeArraySet)

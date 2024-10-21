@@ -228,7 +228,8 @@ private:
 
   // Special expression makers
   Expression* makeHangLimitCheck();
-  Expression* makeLogging();
+  Expression* makeImportLogging();
+  Expression* makeImportThrowing(Type type);
   Expression* makeMemoryHashLogging();
 
   // Function creation
