@@ -1508,12 +1508,44 @@
 
   ;; Use $C so it isn't removed trivially, which also keeps $B alive as its
   ;; super.
-  ;; CHECK:      (global $global (ref $A) (struct.new $C
-  ;; CHECK-NEXT:  (i32.const 0)
-  ;; CHECK-NEXT: ))
-  (global $global (ref $A) (struct.new $C
-    (i32.const 0)
-  ))
+  ;; CHECK:      (global $global (ref $A) (struct.new_default $C))
+  (global $global (ref $A) (struct.new_default $C))
+
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+)
+
+;; As above, but now there is an f64 field on $C that can be removed, since it
+;; is not on the parents.
+(module
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $B (sub $A (struct (field (mut i32)))))
+  (type $B (sub $A (struct (field (mut i32)))))
+  ;; CHECK:       (type $C (sub $B (struct (field (mut i32)))))
+  (type $C (sub $B (struct (field (mut i32)) (field (mut f64)))))
+
+  ;; CHECK:      (global $global (ref $A) (struct.new_default $C))
+  (global $global (ref $A) (struct.new_default $C))
+
+  ;; CHECK:      (export "global" (global $global))
+  (export "global" (global $global))
+)
+
+;; As above, but the f64 field is now on $B as well, so it is on the immediate
+;; parent, preventing removal in $C.
+(module
+  ;; CHECK:      (type $A (sub (struct (field (mut i32)))))
+  (type $A (sub (struct (field (mut i32)))))
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $B (sub $A (struct (field (mut i32)))))
+  (type $B (sub $A (struct (field (mut i32)))))
+  ;; CHECK:       (type $C (sub $B (struct (field (mut i32)))))
+  (type $C (sub $B (struct (field (mut i32)) (field (mut f64)))))
+
+  ;; CHECK:      (global $global (ref $A) (struct.new_default $C))
+  (global $global (ref $A) (struct.new_default $C))
 
   ;; CHECK:      (export "global" (global $global))
   (export "global" (global $global))
