@@ -30,9 +30,6 @@ struct LoggingExternalInterface : public ShellExternalInterface {
 private:
   Loggings& loggings;
 
-  // A tag used for fuzzing support throwing.
-  Tag privateTag;
-
   struct State {
     // Legalization for JS emits get/setTempRet0 calls ("temp ret 0" means a
     // temporary return value of 32 bits; "0" is the only important value for
