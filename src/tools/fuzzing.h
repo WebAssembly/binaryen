@@ -224,7 +224,7 @@ private:
   void addHangLimitSupport();
   // Imports that we call to log out values.
   void addImportLoggingSupport();
-  // An import that we call to throw a wasm exception from outside.
+  // An import that we call to throw an exception from outside.
   void addImportThrowingSupport();
   void addHashMemorySupport();
 
