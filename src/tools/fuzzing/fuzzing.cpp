@@ -178,8 +178,8 @@ void TranslateToFuzzReader::build() {
     setupTags();
     addImportThrowingSupport();
   }
-  modifyInitialFunctions();
   addImportLoggingSupport();
+  modifyInitialFunctions();
   // keep adding functions until we run out of input
   while (!random.finished()) {
     auto* func = addFunction();
