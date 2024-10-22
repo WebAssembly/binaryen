@@ -1194,7 +1194,7 @@
   (type $4 (func (param i32)))
   (type $5 (func (param i32) (result i32)))
   (type $6 (func (param i32 i32 i32 i32 i32 i32)))
-  (import "fuzzing-support" "log1" (func $fimport$0 (result i32)))
+  (import "env" "get1" (func $fimport$0 (result i32)))
   (import "fuzzing-support" "log2" (func $fimport$1 (param i32)))
   (import "fuzzing-support" "log3" (func $fimport$2 (param f32)))
   (memory 256 256 shared)
