@@ -1239,15 +1239,18 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
   // the end (currently that is not needed atm, but it might in the future).
   for (Index i = 0; i < wasm.functions.size(); i++) {
     auto* func = wasm.functions[i].get();
-    FunctionCreationContext context(*this, func);
     if (func->imported()) {
       // We can't allow extra imports, as the fuzzing infrastructure wouldn't
-      // know what to provide.
+      // know what to provide. Keep only our own fuzzer imports.
+      if (func->module == "fuzzing-support") {
+        continue;
+      }
       func->module = func->base = Name();
       func->body = make(func->getResults());
     }
     // Optionally, fuzz the function contents.
     if (upTo(RESOLUTION) >= chance) {
+      FunctionCreationContext context(*this, func);
       dropToLog(func);
       // Notice params as well as any locals generated above.
       // TODO add some locals? and the rest of addFunction's operations?
