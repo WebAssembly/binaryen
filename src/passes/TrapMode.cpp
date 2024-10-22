@@ -323,7 +323,7 @@ public:
   void doWalkModule(Module* module) {
     trappingFunctions =
       std::make_unique<TrappingFunctionContainer>(mode, *module);
-    super::doWalkModule(module);
+    Super::doWalkModule(module);
   }
 
 private:

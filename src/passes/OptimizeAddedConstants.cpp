@@ -32,19 +32,41 @@
 
 #include <ir/local-graph.h>
 #include <ir/local-utils.h>
-#include <ir/parents.h>
 #include <pass.h>
 #include <wasm-builder.h>
 #include <wasm.h>
 
 namespace wasm {
 
+namespace {
+
+// Similar to Parents from parents.h, but we only care about gets, so it is much
+// more efficient to just collect their parents.
+struct GetParents {
+  GetParents(Expression* expr) { inner.walk(expr); }
+
+  Expression* getParent(LocalGet* curr) const {
+    auto iter = inner.parentMap.find(curr);
+    assert(iter != inner.parentMap.end());
+    return iter->second;
+  }
+
+private:
+  struct Inner : public ExpressionStackWalker<Inner> {
+    void visitLocalGet(LocalGet* curr) { parentMap[curr] = getParent(); }
+
+    std::unordered_map<Expression*, Expression*> parentMap;
+  } inner;
+};
+
+} // anonymous namespace
+
 template<typename P, typename T> class MemoryAccessOptimizer {
 public:
   MemoryAccessOptimizer(P* parent,
                         T* curr,
                         Module* module,
-                        LocalGraph* localGraph)
+                        LazyLocalGraph* localGraph)
     : parent(parent), curr(curr), module(module), localGraph(localGraph) {
     memory64 = module->getMemory(curr->memory)->is64();
   }
@@ -111,7 +133,7 @@ private:
   P* parent;
   T* curr;
   Module* module;
-  LocalGraph* localGraph;
+  LazyLocalGraph* localGraph;
   bool memory64;
 
   void optimizeConstantPointer() {
@@ -290,6 +312,11 @@ struct OptimizeAddedConstants
               << "--low-memory-unused flag is set.";
     }
 
+    if (getModule()->memories.empty()) {
+      // There can be no loads and stores without a memory.
+      return;
+    }
+
     // Multiple passes may be needed if we have x + 4 + 8 etc. (nested structs
     // in C can cause this, but it's rare). Note that we only need that for the
     // propagation case (as 4 + 8 would be optimized directly if it were
@@ -299,12 +326,10 @@ struct OptimizeAddedConstants
       helperIndexes.clear();
       propagatable.clear();
       if (propagate) {
-        localGraph = std::make_unique<LocalGraph>(func, getModule());
-        localGraph->computeSetInfluences();
-        localGraph->computeSSAIndexes();
+        localGraph = std::make_unique<LazyLocalGraph>(func, getModule());
         findPropagatable();
       }
-      super::doWalkFunction(func);
+      Super::doWalkFunction(func);
       if (!helperIndexes.empty()) {
         createHelperIndexes();
       }
@@ -335,7 +360,7 @@ struct OptimizeAddedConstants
 private:
   bool propagated;
 
-  std::unique_ptr<LocalGraph> localGraph;
+  std::unique_ptr<LazyLocalGraph> localGraph;
 
   // Whether a set is propagatable.
   std::set<LocalSet*> propagatable;
@@ -351,8 +376,8 @@ private:
     //  g(a, offset=10)
     // but if x has other uses, then avoid doing so - we'll be doing that add
     // anyhow, so the load/store offset trick won't actually help.
-    Parents parents(getFunction()->body);
-    for (auto& [location, _] : localGraph->locations) {
+    GetParents parents(getFunction()->body);
+    for (auto& [location, _] : localGraph->getLocations()) {
       if (auto* set = location->dynCast<LocalSet>()) {
         if (auto* add = set->value->dynCast<Binary>()) {
           if (add->op == AddInt32) {

@@ -29,6 +29,10 @@ parseImplicitTypeDefs(ParseDeclsCtx& decls,
     WithPosition with(ctx, pos);
     CHECK_ERR(typeuse(ctx));
   }
+  // Record type indices now that all the types have been parsed.
+  for (Index i = 0; i < types.size(); ++i) {
+    decls.wasm.typeIndices.insert({types[i], i});
+  }
   return Ok{};
 }
 

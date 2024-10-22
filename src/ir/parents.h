@@ -37,7 +37,7 @@ private:
     : public ExpressionStackWalker<Inner, UnifiedExpressionVisitor<Inner>> {
     void visitExpression(Expression* curr) { parentMap[curr] = getParent(); }
 
-    std::map<Expression*, Expression*> parentMap;
+    std::unordered_map<Expression*, Expression*> parentMap;
   } inner;
 };
 

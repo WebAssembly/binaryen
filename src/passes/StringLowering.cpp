@@ -111,18 +111,15 @@ struct StringGathering : public Pass {
   // then we can just use that as the global for that string. This avoids
   // repeated executions of the pass adding more and more globals.
   //
-  // Note that we don't note these in newNames: They are already in the right
-  // sorted position, before any uses, as we use the first of them for each
-  // string. Only actually new names need sorting.
-  //
   // Any time we reuse a global, we must not modify its body (or else we'd
   // replace the global that all others read from); we note them here and
   // avoid them in replaceStrings later to avoid such trampling.
   std::unordered_set<Expression**> stringPtrsToPreserve;
 
   void addGlobals(Module* module) {
-    // Note all the new names we create for the sorting later.
-    std::unordered_set<Name> newNames;
+    // The names of the globals that define a string. Such globals may be
+    // referred to by others, and so we will need to sort them, later.
+    std::unordered_set<Name> definingNames;
 
     // Find globals to reuse (see comment on stringPtrsToPreserve for context).
     for (auto& global : module->globals) {
@@ -143,7 +140,8 @@ struct StringGathering : public Pass {
     for (Index i = 0; i < strings.size(); i++) {
       auto& globalName = stringToGlobalName[strings[i]];
       if (globalName.is()) {
-        // We are reusing a global for this one.
+        // We are reusing a global for this one, with its existing name.
+        definingNames.insert(globalName);
         continue;
       }
 
@@ -153,18 +151,21 @@ struct StringGathering : public Pass {
       [[maybe_unused]] bool valid =
         String::convertWTF16ToWTF8(wtf8, string.str);
       assert(valid);
-      // TODO: Use wtf8.view() once we have C++20.
+      // Then escape it because identifiers must be valid UTF-8.
+      // TODO: Use wtf8.view() and escaped.view() once we have C++20.
+      std::stringstream escaped;
+      String::printEscaped(escaped, wtf8.str());
       auto name = Names::getValidGlobalName(
-        *module, std::string("string.const_") + std::string(wtf8.str()));
+        *module, std::string("string.const_") + std::string(escaped.str()));
       globalName = name;
-      newNames.insert(name);
+      definingNames.insert(name);
       auto* stringConst = builder.makeStringConst(string);
       auto global =
         builder.makeGlobal(name, nnstringref, stringConst, Builder::Immutable);
       module->addGlobal(std::move(global));
     }
 
-    // Sort our new globals to the start, as other global initializers may use
+    // Sort defining globals to the start, as other global initializers may use
     // them (and it would be invalid for us to appear after a use). This sort is
     // a simple way to ensure that we validate, but it may be unoptimal (we
     // leave that for reorder-globals).
@@ -172,7 +173,7 @@ struct StringGathering : public Pass {
       module->globals.begin(),
       module->globals.end(),
       [&](const std::unique_ptr<Global>& a, const std::unique_ptr<Global>& b) {
-        return newNames.count(a->name) && !newNames.count(b->name);
+        return definingNames.count(a->name) && !definingNames.count(b->name);
       });
   }
 

@@ -102,7 +102,7 @@ struct TupleOptimization : public WalkerPass<PostWalker<TupleOptimization>> {
     copiedIndexes.resize(numLocals);
 
     // Walk the code to collect info.
-    super::doWalkFunction(func);
+    Super::doWalkFunction(func);
 
     // Analyze and optimize.
     optimize(func);

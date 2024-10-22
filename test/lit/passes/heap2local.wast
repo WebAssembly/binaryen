@@ -4485,3 +4485,127 @@
     )
   )
 )
+
+;; Pops require fixups.
+(module
+  (type $struct (struct (field (mut i32))))
+
+  (type $array (array (mut i32)))
+
+  ;; CHECK:      (type $0 (func))
+
+  ;; CHECK:      (type $1 (func (param i32)))
+
+  ;; CHECK:      (type $2 (struct (field (mut i32)) (field (mut i32)) (field (mut i32))))
+
+  ;; CHECK:      (tag $tag (param i32))
+  (tag $tag (param i32))
+
+  ;; CHECK:      (func $struct-with-pop (type $0)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $tag
+  ;; CHECK-NEXT:    (local.set $2
+  ;; CHECK-NEXT:     (pop i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result nullref)
+  ;; CHECK-NEXT:      (local.set $1
+  ;; CHECK-NEXT:       (local.get $2)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (local.get $1)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (ref.null none)
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $struct-with-pop
+    (try
+      (do
+        (nop)
+      )
+      (catch $tag
+        (drop
+          ;; We create a block when we replace the struct with locals, which the
+          ;; pop must be moved out of.
+          (struct.new $struct
+            (pop i32)
+          )
+        )
+      )
+    )
+  )
+
+  ;; CHECK:      (func $array-with-pop (type $0)
+  ;; CHECK-NEXT:  (local $0 i32)
+  ;; CHECK-NEXT:  (local $1 i32)
+  ;; CHECK-NEXT:  (local $2 i32)
+  ;; CHECK-NEXT:  (local $3 i32)
+  ;; CHECK-NEXT:  (local $4 i32)
+  ;; CHECK-NEXT:  (local $5 i32)
+  ;; CHECK-NEXT:  (local $6 i32)
+  ;; CHECK-NEXT:  (local $7 i32)
+  ;; CHECK-NEXT:  (try
+  ;; CHECK-NEXT:   (do
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (catch $tag
+  ;; CHECK-NEXT:    (local.set $7
+  ;; CHECK-NEXT:     (pop i32)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (drop
+  ;; CHECK-NEXT:     (block (result (ref null $2))
+  ;; CHECK-NEXT:      (local.set $0
+  ;; CHECK-NEXT:       (local.get $7)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:      (block (result nullref)
+  ;; CHECK-NEXT:       (local.set $4
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $5
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $6
+  ;; CHECK-NEXT:        (local.get $0)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $1
+  ;; CHECK-NEXT:        (local.get $4)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $2
+  ;; CHECK-NEXT:        (local.get $5)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (local.set $3
+  ;; CHECK-NEXT:        (local.get $6)
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (ref.null none)
+  ;; CHECK-NEXT:      )
+  ;; CHECK-NEXT:     )
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $array-with-pop
+    (try
+      (do
+        (nop)
+      )
+      (catch $tag
+        (drop
+          ;; As above, but with an array
+          (array.new $array
+            (pop i32)
+            (i32.const 3)
+          )
+        )
+      )
+    )
+  )
+)

@@ -31,6 +31,7 @@ struct ToolOptions : public Options {
   PassOptions passOptions;
 
   bool quiet = false;
+  bool preserveTypeOrder = false;
   IRProfile profile = IRProfile::Normal;
 
   constexpr static const char* ToolOptionsCategory = "Tool options";
@@ -158,6 +159,16 @@ struct ToolOptions : public Options {
         [this](Options*, const std::string&) {
           passOptions.closedWorld = true;
         })
+      .add(
+        "--preserve-type-order",
+        "",
+        "Preserve the order of types from the input (useful for debugging and "
+        "testing)",
+        ToolOptionsCategory,
+        Options::Arguments::Zero,
+        [&](Options* o, const std::string& arguments) {
+          preserveTypeOrder = true;
+        })
       .add("--generate-stack-ir",
            "",
            "generate StackIR during writing",
@@ -213,9 +224,15 @@ struct ToolOptions : public Options {
     return *this;
   }
 
-  void applyFeatures(Module& module) const {
+  void applyOptionsBeforeParse(Module& module) const {
     module.features.enable(enabledFeatures);
     module.features.disable(disabledFeatures);
+  }
+
+  void applyOptionsAfterParse(Module& module) const {
+    if (!preserveTypeOrder) {
+      module.typeIndices.clear();
+    }
   }
 
   virtual void addPassArg(const std::string& key, const std::string& value) {

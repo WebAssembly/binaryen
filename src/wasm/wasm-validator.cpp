@@ -63,7 +63,6 @@ struct ValidationInfo {
   bool validateWeb;
   bool validateGlobally;
   bool quiet;
-  bool closedWorld;
 
   std::atomic<bool> valid;
 
@@ -2160,6 +2159,10 @@ void FunctionValidator::visitUnary(Unary* curr) {
     case RelaxedTruncUVecF32x4ToVecI32x4:
     case RelaxedTruncZeroSVecF64x2ToVecI32x4:
     case RelaxedTruncZeroUVecF64x2ToVecI32x4:
+    case TruncSatSVecF16x8ToVecI16x8:
+    case TruncSatUVecF16x8ToVecI16x8:
+    case ConvertSVecI16x8ToVecF16x8:
+    case ConvertUVecI16x8ToVecF16x8:
       shouldBeEqual(curr->type, Type(Type::v128), curr, "expected v128 type");
       shouldBeEqual(
         curr->value->type, Type(Type::v128), curr, "expected v128 operand");
@@ -2654,7 +2657,7 @@ void FunctionValidator::visitTryTable(TryTable* curr) {
                 "the number of catch tags and sent types do not match");
 
   const char* invalidSentTypeMsg = "invalid catch sent type information";
-  Type exnref = Type(HeapType::exn, Nullable);
+  Type exnref = Type(HeapType::exn, NonNullable);
   for (Index i = 0; i < curr->catchTags.size(); i++) {
     auto sentType = curr->sentTypes[i];
     size_t tagTypeSize;
@@ -4131,46 +4134,6 @@ static void validateFeatures(Module& module, ValidationInfo& info) {
   }
 }
 
-static void validateClosedWorldInterface(Module& module, ValidationInfo& info) {
-  // Error if there are any publicly exposed heap types beyond the types of
-  // publicly exposed functions. Note that we must include all types in the rec
-  // groups that are used, as if a type if public then all types in its rec
-  // group are as well.
-  std::unordered_set<RecGroup> publicRecGroups;
-  ModuleUtils::iterImportedFunctions(module, [&](Function* func) {
-    publicRecGroups.insert(func->type.getRecGroup());
-  });
-  for (auto& ex : module.exports) {
-    if (ex->kind == ExternalKind::Function) {
-      publicRecGroups.insert(module.getFunction(ex->value)->type.getRecGroup());
-    }
-  }
-
-  std::unordered_set<HeapType> publicTypes;
-  for (auto& group : publicRecGroups) {
-    for (auto type : group) {
-      publicTypes.insert(type);
-    }
-  }
-
-  // Ignorable public types are public, but we can ignore them for purposes of
-  // erroring here: It is always ok that they are public.
-  auto ignorable = getIgnorablePublicTypes();
-
-  for (auto type : ModuleUtils::getPublicHeapTypes(module)) {
-    if (!publicTypes.count(type) && !ignorable.count(type)) {
-      auto name = type.toString();
-      if (auto it = module.typeNames.find(type); it != module.typeNames.end()) {
-        name = it->second.name.toString();
-      }
-      info.fail("publicly exposed type disallowed with a closed world: $" +
-                  name,
-                type,
-                nullptr);
-    }
-  }
-}
-
 // TODO: If we want the validator to be part of libwasm rather than libpasses,
 // then Using PassRunner::getPassDebug causes a circular dependence. We should
 // fix that, perhaps by moving some of the pass infrastructure into libsupport.
@@ -4179,7 +4142,6 @@ bool WasmValidator::validate(Module& module, Flags flags) {
   info.validateWeb = (flags & Web) != 0;
   info.validateGlobally = (flags & Globally) != 0;
   info.quiet = (flags & Quiet) != 0;
-  info.closedWorld = (flags & ClosedWorld) != 0;
 
   // Parallel function validation.
   PassRunner runner(&module);
@@ -4206,9 +4168,6 @@ bool WasmValidator::validate(Module& module, Flags flags) {
     validateStart(module, info);
     validateModuleMaps(module, info);
     validateFeatures(module, info);
-    if (info.closedWorld) {
-      validateClosedWorldInterface(module, info);
-    }
   }
 
   // Validate additional internal IR details when in pass-debug mode.
@@ -4227,11 +4186,7 @@ bool WasmValidator::validate(Module& module, Flags flags) {
 }
 
 bool WasmValidator::validate(Module& module, const PassOptions& options) {
-  Flags flags = options.validateGlobally ? Globally : Minimal;
-  if (options.closedWorld) {
-    flags |= ClosedWorld;
-  }
-  return validate(module, flags);
+  return validate(module, options.validateGlobally ? Globally : Minimal);
 }
 
 bool WasmValidator::validate(Function* func, Module& module, Flags flags) {

@@ -48,53 +48,45 @@
   ;; YESINLINE-NEXT:  (local $5 (ref $A))
   ;; YESINLINE-NEXT:  (local $6 (ref $B))
   ;; YESINLINE-NEXT:  (local $7 (ref $A))
-  ;; YESINLINE-NEXT:  (block
-  ;; YESINLINE-NEXT:   (block $__inlined_func$refinable_noinline
-  ;; YESINLINE-NEXT:    (local.set $2
-  ;; YESINLINE-NEXT:     (local.get $A)
+  ;; YESINLINE-NEXT:  (block $__inlined_func$refinable_noinline
+  ;; YESINLINE-NEXT:   (local.set $2
+  ;; YESINLINE-NEXT:    (local.get $A)
+  ;; YESINLINE-NEXT:   )
+  ;; YESINLINE-NEXT:   (drop
+  ;; YESINLINE-NEXT:    (local.get $2)
+  ;; YESINLINE-NEXT:   )
+  ;; YESINLINE-NEXT:  )
+  ;; YESINLINE-NEXT:  (block $__inlined_func$refinable_noinline$1
+  ;; YESINLINE-NEXT:   (local.set $3
+  ;; YESINLINE-NEXT:    (local.get $A)
+  ;; YESINLINE-NEXT:   )
+  ;; YESINLINE-NEXT:   (drop
+  ;; YESINLINE-NEXT:    (local.get $3)
+  ;; YESINLINE-NEXT:   )
+  ;; YESINLINE-NEXT:  )
+  ;; YESINLINE-NEXT:  (block $__inlined_func$refinable_noinline_2$2
+  ;; YESINLINE-NEXT:   (local.set $4
+  ;; YESINLINE-NEXT:    (local.get $B)
+  ;; YESINLINE-NEXT:   )
+  ;; YESINLINE-NEXT:   (block
+  ;; YESINLINE-NEXT:    (local.set $5
+  ;; YESINLINE-NEXT:     (local.get $4)
   ;; YESINLINE-NEXT:    )
   ;; YESINLINE-NEXT:    (drop
-  ;; YESINLINE-NEXT:     (local.get $2)
+  ;; YESINLINE-NEXT:     (local.get $5)
   ;; YESINLINE-NEXT:    )
   ;; YESINLINE-NEXT:   )
   ;; YESINLINE-NEXT:  )
-  ;; YESINLINE-NEXT:  (block
-  ;; YESINLINE-NEXT:   (block $__inlined_func$refinable_noinline$1
-  ;; YESINLINE-NEXT:    (local.set $3
-  ;; YESINLINE-NEXT:     (local.get $A)
+  ;; YESINLINE-NEXT:  (block $__inlined_func$refinable_noinline_2$3
+  ;; YESINLINE-NEXT:   (local.set $6
+  ;; YESINLINE-NEXT:    (local.get $B)
+  ;; YESINLINE-NEXT:   )
+  ;; YESINLINE-NEXT:   (block
+  ;; YESINLINE-NEXT:    (local.set $7
+  ;; YESINLINE-NEXT:     (local.get $6)
   ;; YESINLINE-NEXT:    )
   ;; YESINLINE-NEXT:    (drop
-  ;; YESINLINE-NEXT:     (local.get $3)
-  ;; YESINLINE-NEXT:    )
-  ;; YESINLINE-NEXT:   )
-  ;; YESINLINE-NEXT:  )
-  ;; YESINLINE-NEXT:  (block
-  ;; YESINLINE-NEXT:   (block $__inlined_func$refinable_noinline_2$2
-  ;; YESINLINE-NEXT:    (local.set $4
-  ;; YESINLINE-NEXT:     (local.get $B)
-  ;; YESINLINE-NEXT:    )
-  ;; YESINLINE-NEXT:    (block
-  ;; YESINLINE-NEXT:     (local.set $5
-  ;; YESINLINE-NEXT:      (local.get $4)
-  ;; YESINLINE-NEXT:     )
-  ;; YESINLINE-NEXT:     (drop
-  ;; YESINLINE-NEXT:      (local.get $5)
-  ;; YESINLINE-NEXT:     )
-  ;; YESINLINE-NEXT:    )
-  ;; YESINLINE-NEXT:   )
-  ;; YESINLINE-NEXT:  )
-  ;; YESINLINE-NEXT:  (block
-  ;; YESINLINE-NEXT:   (block $__inlined_func$refinable_noinline_2$3
-  ;; YESINLINE-NEXT:    (local.set $6
-  ;; YESINLINE-NEXT:     (local.get $B)
-  ;; YESINLINE-NEXT:    )
-  ;; YESINLINE-NEXT:    (block
-  ;; YESINLINE-NEXT:     (local.set $7
-  ;; YESINLINE-NEXT:      (local.get $6)
-  ;; YESINLINE-NEXT:     )
-  ;; YESINLINE-NEXT:     (drop
-  ;; YESINLINE-NEXT:      (local.get $7)
-  ;; YESINLINE-NEXT:     )
+  ;; YESINLINE-NEXT:     (local.get $7)
   ;; YESINLINE-NEXT:    )
   ;; YESINLINE-NEXT:   )
   ;; YESINLINE-NEXT:  )

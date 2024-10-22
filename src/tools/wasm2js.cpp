@@ -786,7 +786,9 @@ void AssertionEmitter::emit() {
     if (auto* mod = std::get_if<WASTModule>(&cmd)) {
       if (auto* w = std::get_if<std::shared_ptr<Module>>(mod)) {
         wasm = *w;
-        options.applyFeatures(*wasm);
+        // We have already done the parse, but we still do this to apply the
+        // features from the command line.
+        options.applyOptionsBeforeParse(*wasm);
         std::stringstream funcNameS;
         funcNameS << ASM_FUNC << i;
         std::stringstream moduleNameS;
@@ -928,6 +930,7 @@ int main(int argc, const char* argv[]) {
     // is defined.
     if (binaryInput) {
       wasm = std::make_shared<Module>();
+      options.applyOptionsBeforeParse(*wasm);
       ModuleReader reader;
       reader.read(input, *wasm, "");
     } else {
@@ -946,6 +949,9 @@ int main(int argc, const char* argv[]) {
       if (auto* mod = std::get_if<WASTModule>(&(*script)[0].cmd)) {
         if (auto* w = std::get_if<std::shared_ptr<Module>>(mod)) {
           wasm = *w;
+          // This isn't actually before the parse, but we can't apply the
+          // feature options any earlier. FIXME.
+          options.applyOptionsBeforeParse(*wasm);
         }
       }
       if (!wasm) {
@@ -965,7 +971,7 @@ int main(int argc, const char* argv[]) {
     Fatal() << "error: modules with multiple tables are not supported yet.";
   }
 
-  options.applyFeatures(*wasm);
+  options.applyOptionsAfterParse(*wasm);
   if (options.passOptions.validate) {
     if (!WasmValidator().validate(*wasm)) {
       std::cout << *wasm << '\n';

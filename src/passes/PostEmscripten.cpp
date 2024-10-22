@@ -27,6 +27,7 @@
 #include <ir/table-utils.h>
 #include <pass.h>
 #include <shared-constants.h>
+#include <support/debug.h>
 #include <wasm-builder.h>
 #include <wasm-emscripten.h>
 #include <wasm.h>

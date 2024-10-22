@@ -703,6 +703,10 @@ void Unary::finalize() {
     case RelaxedTruncUVecF32x4ToVecI32x4:
     case RelaxedTruncZeroSVecF64x2ToVecI32x4:
     case RelaxedTruncZeroUVecF64x2ToVecI32x4:
+    case TruncSatSVecF16x8ToVecI16x8:
+    case TruncSatUVecF16x8ToVecI16x8:
+    case ConvertSVecI16x8ToVecF16x8:
+    case ConvertUVecI16x8ToVecF16x8:
       type = Type::v128;
       break;
     case AnyTrueVec128:
@@ -929,7 +933,11 @@ static void populateTryTableSentTypes(TryTable* curr, Module* wasm) {
     return;
   }
   curr->sentTypes.clear();
-  Type exnref = Type(HeapType::exn, Nullable);
+  // We always use the refined non-nullable type in our IR, which is what the
+  // wasm spec defines when GC is enabled (=== non-nullable types are allowed).
+  // If GC is not enabled then we emit a nullable type in the binary format in
+  // WasmBinaryWriter::writeType.
+  Type exnref = Type(HeapType::exn, NonNullable);
   for (Index i = 0; i < curr->catchTags.size(); i++) {
     auto tagName = curr->catchTags[i];
     std::vector<Type> sentType;
@@ -1008,7 +1016,25 @@ void CallRef::finalize() {
     return;
   }
   assert(target->type.isRef());
-  if (target->type.getHeapType().isBottom()) {
+  if (target->type.isNull()) {
+    // If this call_ref has been optimized to have a null reference, then it
+    // will definitely trap. We could update the type to be unreachable, but
+    // that would violate the invariant that non-branch instructions other than
+    // `unreachable` can only be unreachable if they have unreachable children.
+    // Make the result type as close to `unreachable` as possible without
+    // actually making it unreachable. TODO: consider just making this
+    // unreachable instead (and similar in other GC accessors), although this
+    // would currently cause the parser to admit more invalid modules.
+    if (type.isRef()) {
+      type = Type(type.getHeapType().getBottom(), NonNullable);
+    } else if (type.isTuple()) {
+      Tuple elems;
+      for (auto t : type) {
+        elems.push_back(
+          t.isRef() ? Type(t.getHeapType().getBottom(), NonNullable) : t);
+      }
+      type = Type(elems);
+    }
     return;
   }
   assert(target->type.getHeapType().isSignature());
@@ -1136,7 +1162,12 @@ void StructNew::finalize() {
 void StructGet::finalize() {
   if (ref->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (!ref->type.isNull()) {
+  } else if (ref->type.isNull()) {
+    // See comment on CallRef for explanation.
+    if (type.isRef()) {
+      type = Type(type.getHeapType().getBottom(), NonNullable);
+    }
+  } else {
     type = ref->type.getHeapType().getStruct().fields[index].type;
   }
 }
@@ -1180,7 +1211,12 @@ void ArrayNewFixed::finalize() {
 void ArrayGet::finalize() {
   if (ref->type == Type::unreachable || index->type == Type::unreachable) {
     type = Type::unreachable;
-  } else if (!ref->type.isNull()) {
+  } else if (ref->type.isNull()) {
+    // See comment on CallRef for explanation.
+    if (type.isRef()) {
+      type = Type(type.getHeapType().getBottom(), NonNullable);
+    }
+  } else {
     type = ref->type.getHeapType().getArray().element.type;
   }
 }
@@ -1491,7 +1527,7 @@ void Function::clearDebugInfo() {
 
 template<typename Map>
 typename Map::mapped_type&
-getModuleElement(Map& m, Name name, const std::string& funcName) {
+getModuleElement(Map& m, Name name, std::string_view funcName) {
   auto iter = m.find(name);
   if (iter == m.end()) {
     Fatal() << "Module::" << funcName << ": " << name << " does not exist";
@@ -1831,6 +1867,9 @@ void Module::updateMaps() {
   assert(tagsMap.size() == tags.size());
 }
 
-void Module::clearDebugInfo() { debugInfoFileNames.clear(); }
+void Module::clearDebugInfo() {
+  debugInfoFileNames.clear();
+  debugInfoSymbolNames.clear();
+}
 
 } // namespace wasm

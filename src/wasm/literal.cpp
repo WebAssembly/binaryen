@@ -96,7 +96,7 @@ Literal::Literal(std::string_view string)
     int32_t u = uint8_t(string[i]) | (uint8_t(string[i + 1]) << 8);
     contents.push_back(Literal(u));
   }
-  gcData = std::make_shared<GCData>(HeapType::string, contents);
+  gcData = std::make_shared<GCData>(HeapType::string, std::move(contents));
 }
 
 Literal::Literal(const Literal& other) : type(other.type) {
@@ -798,6 +798,20 @@ Literal Literal::wrapToI32() const {
   return Literal((int32_t)i64);
 }
 
+Literal Literal::convertSIToF16() const {
+  if (type == Type::i32) {
+    return Literal(fp16_ieee_from_fp32_value(float(i32)));
+  }
+  WASM_UNREACHABLE("invalid type");
+}
+
+Literal Literal::convertUIToF16() const {
+  if (type == Type::i32) {
+    return Literal(fp16_ieee_from_fp32_value(float(uint16_t(i32))));
+  }
+  WASM_UNREACHABLE("invalid type");
+}
+
 Literal Literal::convertSIToF32() const {
   if (type == Type::i32) {
     return Literal(float(i32));
@@ -861,6 +875,14 @@ static Literal saturating_trunc(typename AsInt<F>::type val) {
   return Literal(I(std::trunc(bit_cast<F>(val))));
 }
 
+Literal Literal::truncSatToSI16() const {
+  if (type == Type::f32) {
+    return saturating_trunc<float, int16_t, isInRangeI16TruncS>(
+      Literal(*this).castToI32().geti32());
+  }
+  WASM_UNREACHABLE("invalid type");
+}
+
 Literal Literal::truncSatToSI32() const {
   if (type == Type::f32) {
     return saturating_trunc<float, int32_t, isInRangeI32TruncS>(
@@ -881,6 +903,14 @@ Literal Literal::truncSatToSI64() const {
   if (type == Type::f64) {
     return saturating_trunc<double, int64_t, isInRangeI64TruncS>(
       Literal(*this).castToI64().geti64());
+  }
+  WASM_UNREACHABLE("invalid type");
+}
+
+Literal Literal::truncSatToUI16() const {
+  if (type == Type::f32) {
+    return saturating_trunc<float, uint16_t, isInRangeI16TruncU>(
+      Literal(*this).castToI32().geti32());
   }
   WASM_UNREACHABLE("invalid type");
 }
@@ -1834,7 +1864,10 @@ Literal Literal::replaceLaneI64x2(const Literal& other, uint8_t index) const {
   return replace<2, &Literal::getLanesI64x2>(*this, other, index);
 }
 Literal Literal::replaceLaneF16x8(const Literal& other, uint8_t index) const {
-  return replace<8, &Literal::getLanesF16x8>(
+  // For F16 lane replacement we do not need to convert all the values to F32,
+  // instead keep the lanes as I32, and just replace the one lane with the
+  // integer value of the F32.
+  return replace<8, &Literal::getLanesUI16x8>(
     *this, other.convertF32ToF16(), index);
 }
 Literal Literal::replaceLaneF32x4(const Literal& other, uint8_t index) const {
@@ -1992,6 +2025,19 @@ Literal Literal::convertSToF32x4() const {
 }
 Literal Literal::convertUToF32x4() const {
   return unary<4, &Literal::getLanesI32x4, &Literal::convertUIToF32>(*this);
+}
+
+Literal Literal::truncSatToSI16x8() const {
+  return unary<8, &Literal::getLanesF16x8, &Literal::truncSatToSI16>(*this);
+}
+Literal Literal::truncSatToUI16x8() const {
+  return unary<8, &Literal::getLanesF16x8, &Literal::truncSatToUI16>(*this);
+}
+Literal Literal::convertSToF16x8() const {
+  return unary<8, &Literal::getLanesSI16x8, &Literal::convertSIToF16>(*this);
+}
+Literal Literal::convertUToF16x8() const {
+  return unary<8, &Literal::getLanesSI16x8, &Literal::convertUIToF16>(*this);
 }
 
 Literal Literal::anyTrueV128() const {

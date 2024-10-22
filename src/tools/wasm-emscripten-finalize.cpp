@@ -196,7 +196,7 @@ int main(int argc, const char* argv[]) {
   auto writeOutput = outfile.size() > 0 || !emitBinary;
 
   Module wasm;
-  options.applyFeatures(wasm);
+  options.applyOptionsBeforeParse(wasm);
   ModuleReader reader;
   // If we are not writing output then we definitely don't need to read debug
   // info. However, if we emit output then definitely load the names section so
@@ -225,6 +225,8 @@ int main(int argc, const char* argv[]) {
     std::cerr << '\n';
     Fatal() << "error in parsing wasm source map";
   }
+
+  options.applyOptionsAfterParse(wasm);
 
   BYN_TRACE_WITH_TYPE("emscripten-dump", "Module before:\n");
   BYN_DEBUG_WITH_TYPE("emscripten-dump", std::cerr << &wasm);

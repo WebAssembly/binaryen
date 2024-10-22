@@ -500,7 +500,7 @@ void MemoryPacking::optimizeSegmentOps(Module* module) {
     }
     void doWalkFunction(Function* func) {
       needsRefinalizing = false;
-      super::doWalkFunction(func);
+      Super::doWalkFunction(func);
       if (needsRefinalizing) {
         ReFinalize().walkFunctionInModule(func, getModule());
       }

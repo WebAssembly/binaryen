@@ -1068,10 +1068,10 @@
 (module
  (rec
   ;; CHECK:      (rec
-  ;; CHECK-NEXT:  (type $0 (func (param (ref $B))))
-
-  ;; CHECK:       (type $A (sub (struct)))
+  ;; CHECK-NEXT:  (type $A (sub (struct)))
   (type $A (sub (struct)))
+
+  ;; CHECK:       (type $1 (func (param (ref $B))))
 
   ;; CHECK:       (type $B (sub $A (struct)))
   (type $B (sub $A (struct)))
@@ -1108,7 +1108,7 @@
   )
  )
 
- ;; CHECK:      (func $target (type $0) (param $x (ref $B))
+ ;; CHECK:      (func $target (type $1) (param $x (ref $B))
  ;; CHECK-NEXT:  (nop)
  ;; CHECK-NEXT: )
  (func $target (param $x (ref $A))
@@ -1119,3 +1119,43 @@
   ;; (see tests above for how we handle refining of return values).
  )
 )
+
+;; Visibility: The type we'd like to refine, $sig, is in a rec group with a
+;; public type, so do not optimize.
+(module
+ (rec
+  ;; CHECK:      (rec
+  ;; CHECK-NEXT:  (type $sig (sub (func (param anyref))))
+  (type $sig (sub (func (param anyref))))
+
+  ;; CHECK:       (type $struct (struct))
+  (type $struct (struct))
+ )
+
+ ;; Export a global with $struct to make it public.
+ ;; CHECK:      (type $2 (func))
+
+ ;; CHECK:      (global $struct (ref $struct) (struct.new_default $struct))
+ (global $struct (ref $struct) (struct.new $struct))
+
+ ;; CHECK:      (export "struct" (global $struct))
+ (export "struct" (global $struct))
+
+ ;; CHECK:      (func $func (type $sig) (param $x anyref)
+ ;; CHECK-NEXT:  (nop)
+ ;; CHECK-NEXT: )
+ (func $func (type $sig) (param $x anyref)
+ )
+
+ ;; CHECK:      (func $caller (type $2)
+ ;; CHECK-NEXT:  (call $func
+ ;; CHECK-NEXT:   (struct.new_default $struct)
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $caller
+  (call $func
+   (struct.new $struct)
+  )
+ )
+)
+

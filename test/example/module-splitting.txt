@@ -33,11 +33,6 @@ After:
 )
 Secondary:
 (module
- (type $0 (func (param i32)))
- (import "primary" "%memory" (memory $mem 3 42 shared))
- (import "primary" "%table" (table $tab 3 42 funcref))
- (import "primary" "%global" (global $glob (mut i32)))
- (import "primary" "%tag" (tag $e (param i32)))
 )
 
 
@@ -64,11 +59,6 @@ After:
 )
 Secondary:
 (module
- (type $0 (func (param i32)))
- (import "primary" "%memory" (memory $mem 3 42 shared))
- (import "primary" "%table" (table $tab 3 42 funcref))
- (import "primary" "%global" (global $glob (mut i32)))
- (import "primary" "%tag" (tag $e (param i32)))
 )
 
 
@@ -99,11 +89,6 @@ After:
 )
 Secondary:
 (module
- (type $0 (func (param i32)))
- (import "primary" "mem" (memory $mem 3 42 shared))
- (import "primary" "tab" (table $tab 3 42 funcref))
- (import "primary" "glob" (global $glob (mut i32)))
- (import "primary" "e" (tag $e (param i32)))
 )
 
 
@@ -171,7 +156,6 @@ After:
 )
 Secondary:
 (module
- (import "primary" "%table" (table $table 1 funcref))
 )
 
 
@@ -197,7 +181,6 @@ After:
 )
 Secondary:
 (module
- (import "primary" "%table" (table $table 2 funcref))
 )
 
 
@@ -226,8 +209,6 @@ After:
 )
 Secondary:
 (module
- (import "primary" "%table" (table $table 1 funcref))
- (import "primary" "%global" (global $base i32))
 )
 
 
@@ -256,8 +237,6 @@ After:
 )
 Secondary:
 (module
- (import "primary" "%table" (table $table 2 funcref))
- (import "primary" "%global" (global $base i32))
 )
 
 
@@ -297,7 +276,6 @@ After:
 )
 Secondary:
 (module
- (import "primary" "%table" (table $table 1000 funcref))
 )
 
 
@@ -324,8 +302,6 @@ After:
 )
 Secondary:
 (module
- (import "primary" "%table" (table $table 1000 funcref))
- (import "primary" "%global" (global $base i32))
 )
 
 
@@ -342,10 +318,6 @@ After:
 )
 Secondary:
 (module
- (type $0 (func (param i32) (result i32)))
- (func $foo (type $0) (param $0 i32) (result i32)
-  (local.get $0)
- )
 )
 
 
@@ -415,8 +387,7 @@ Secondary:
 (module
  (type $0 (func (param i32) (result i32)))
  (import "primary" "%table_1" (table $0 1 funcref))
- (import "primary" "%table" (table $table 1 funcref))
- (elem $0 (table $0) (i32.const 0) func $foo)
+ (elem $0 (i32.const 0) $foo)
  (func $foo (type $0) (param $0 i32) (result i32)
   (local.get $0)
  )
@@ -454,8 +425,7 @@ Secondary:
 (module
  (type $0 (func (param i32) (result i32)))
  (import "primary" "%table_1" (table $0 1 funcref))
- (import "primary" "%table" (table $table 2 funcref))
- (elem $0 (table $0) (i32.const 0) func $foo)
+ (elem $0 (i32.const 0) $foo)
  (func $foo (type $0) (param $0 i32) (result i32)
   (local.get $0)
  )
@@ -501,8 +471,7 @@ Secondary:
 (module
  (type $0 (func (param i32) (result i32)))
  (import "primary" "%table_2" (table $0 1 funcref))
- (import "primary" "%table" (table $table 1000 funcref))
- (elem $0 (table $0) (i32.const 0) func $foo)
+ (elem $0 (i32.const 0) $foo)
  (func $foo (type $0) (param $0 i32) (result i32)
   (local.get $0)
  )
@@ -551,9 +520,7 @@ Secondary:
 (module
  (type $0 (func (param i32) (result i32)))
  (import "primary" "%table_2" (table $0 1 funcref))
- (import "primary" "%table" (table $table 1000 funcref))
- (import "primary" "%global" (global $base i32))
- (elem $0 (table $0) (i32.const 0) func $foo)
+ (elem $0 (i32.const 0) $foo)
  (func $foo (type $0) (param $0 i32) (result i32)
   (local.get $0)
  )
@@ -602,9 +569,7 @@ Secondary:
 (module
  (type $0 (func (param i32) (result i32)))
  (import "primary" "%table_2" (table $0 1 funcref))
- (import "primary" "%table" (table $table 1000 funcref))
- (import "primary" "%global" (global $base i32))
- (elem $0 (table $0) (i32.const 0) func $foo)
+ (elem $0 (i32.const 0) $foo)
  (func $foo (type $0) (param $0 i32) (result i32)
   (local.get $0)
  )
@@ -629,10 +594,10 @@ Before:
 Keeping: null
 After:
 (module
- (type $0 (func (param i32) (result i32)))
- (type $1 (func))
+ (type $0 (func))
+ (type $1 (func (param i32) (result i32)))
  (import "env" "base" (global $base i32))
- (import "placeholder" "0" (func $placeholder_0 (type $0) (param i32) (result i32)))
+ (import "placeholder" "0" (func $placeholder_0 (type $1) (param i32) (result i32)))
  (table $table 1000 funcref)
  (table $0 1 funcref)
  (elem $0 (table $table) (global.get $base) func $null $trampoline_foo)
@@ -641,17 +606,17 @@ After:
  (export "%table" (table $table))
  (export "%table_2" (table $0))
  (export "%global" (global $base))
- (func $null (type $1)
+ (func $null (type $0)
   (nop)
  )
- (func $foo (type $0) (param $0 i32) (result i32)
-  (call_indirect $0 (type $0)
+ (func $foo (type $1) (param $0 i32) (result i32)
+  (call_indirect $0 (type $1)
    (local.get $0)
    (i32.const 0)
   )
  )
- (func $trampoline_foo (type $0) (param $0 i32) (result i32)
-  (call_indirect $0 (type $0)
+ (func $trampoline_foo (type $1) (param $0 i32) (result i32)
+  (call_indirect $0 (type $1)
    (local.get $0)
    (i32.const 0)
   )
@@ -661,9 +626,7 @@ Secondary:
 (module
  (type $0 (func (param i32) (result i32)))
  (import "primary" "%table_2" (table $0 1 funcref))
- (import "primary" "%table" (table $table 1000 funcref))
- (import "primary" "%global" (global $base i32))
- (elem $0 (table $0) (i32.const 0) func $foo)
+ (elem $0 (i32.const 0) $foo)
  (func $foo (type $0) (param $0 i32) (result i32)
   (local.get $0)
  )
@@ -717,11 +680,6 @@ After:
 )
 Secondary:
 (module
- (type $0 (func))
- (import "primary" "%bar" (func $bar (type $0)))
- (func $foo (type $0)
-  (call $bar)
- )
 )
 
 
@@ -776,13 +734,6 @@ After:
 )
 Secondary:
 (module
- (type $0 (func))
- (func $bar (type $0)
-  (nop)
- )
- (func $foo (type $0)
-  (call $bar)
- )
 )
 
 
@@ -879,8 +830,7 @@ Secondary:
 (module
  (type $0 (func))
  (import "primary" "%table_1" (table $0 2 funcref))
- (import "primary" "%table" (table $table 4 funcref))
- (elem $0 (table $0) (i32.const 0) func $foo $baz)
+ (elem $0 (i32.const 0) $foo $baz)
  (func $baz (type $0)
   (nop)
  )
@@ -944,9 +894,7 @@ Secondary:
 (module
  (type $0 (func))
  (import "primary" "%table_1" (table $0 2 funcref))
- (import "primary" "%table" (table $table 4 funcref))
- (import "primary" "%global" (global $base i32))
- (elem $0 (table $0) (i32.const 0) func $foo $baz)
+ (elem $0 (i32.const 0) $foo $baz)
  (func $baz (type $0)
   (nop)
  )
@@ -1010,8 +958,7 @@ Secondary:
 (module
  (type $0 (func))
  (import "primary" "%table_1" (table $0 3 funcref))
- (import "primary" "%table" (table $table 4 funcref))
- (elem $0 (table $0) (i32.const 0) func $foo $bar $quux)
+ (elem $0 (i32.const 0) $foo $bar $quux)
  (func $bar (type $0)
   (nop)
  )
@@ -1081,9 +1028,7 @@ Secondary:
 (module
  (type $0 (func))
  (import "primary" "%table_1" (table $0 3 funcref))
- (import "primary" "%table" (table $table 4 funcref))
- (import "primary" "%global" (global $base i32))
- (elem $0 (table $0) (i32.const 0) func $foo $bar $quux)
+ (elem $0 (i32.const 0) $foo $bar $quux)
  (func $bar (type $0)
   (nop)
  )
@@ -1136,10 +1081,8 @@ Secondary:
 (module
  (type $0 (func))
  (import "primary" "%table_2" (table $0 1 funcref))
- (import "primary" "%table" (table $table 2 funcref))
- (import "primary" "%global" (global $base i32))
  (import "primary" "%foo" (func $foo (type $0)))
- (elem $0 (table $0) (i32.const 0) func $bar)
+ (elem $0 (i32.const 0) $bar)
  (func $bar (type $0)
   (call $foo)
  )
@@ -1185,9 +1128,8 @@ Secondary:
 (module
  (type $0 (func (param i32) (result i32)))
  (import "primary" "%table_2" (table $0 1 funcref))
- (import "primary" "%table" (table $table 1 1 funcref))
  (import "primary" "%foo" (func $foo (type $0) (param i32) (result i32)))
- (elem $0 (table $0) (i32.const 0) func $bar)
+ (elem $0 (i32.const 0) $bar)
  (func $bar (type $0) (param $0 i32) (result i32)
   (call $foo
    (i32.const 1)
@@ -1279,28 +1221,5 @@ Minimized names primary:
 
 Minimized names secondary:
 (module
- (type $0 (func))
- (import "primary" "%a" (func $0 (type $0)))
- (import "primary" "%c" (func $1 (type $0)))
- (import "primary" "%d" (func $2 (type $0)))
- (import "primary" "already_exported" (func $3 (type $0)))
- (import "primary" "%e" (func $4 (type $0)))
- (import "primary" "%f" (func $5 (type $0)))
- (import "primary" "%g" (func $6 (type $0)))
- (import "primary" "%b" (func $7 (type $0)))
- (import "primary" "%h" (func $8 (type $0)))
- (import "primary" "%i" (func $9 (type $0)))
- (func $call (type $0)
-  (call $0)
-  (call $1)
-  (call $2)
-  (call $3)
-  (call $4)
-  (call $5)
-  (call $6)
-  (call $7)
-  (call $8)
-  (call $9)
- )
 )
 

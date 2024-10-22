@@ -293,6 +293,7 @@ private:
   Expression* buildIf(const struct ThreeArgs& args, Type type);
   Expression* makeIf(Type type);
   Expression* makeTry(Type type);
+  Expression* makeTryTable(Type type);
   Expression* makeBreak(Type type);
   Expression* makeCall(Type type);
   Expression* makeCallIndirect(Type type);
@@ -365,6 +366,7 @@ private:
   Expression* makeRefEq(Type type);
   Expression* makeRefTest(Type type);
   Expression* makeRefCast(Type type);
+  Expression* makeBrOn(Type type);
 
   // Decide to emit a signed Struct/ArrayGet sometimes, when the field is
   // packed.

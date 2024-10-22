@@ -212,14 +212,6 @@ struct PassOptions {
   // but we also want to keep types of things on the boundary unchanged. For
   // example, we should not change an exported function's signature, as the
   // outside may need that type to properly call the export.
-  //
-  //   * Since the goal of closedWorld is to optimize types aggressively but
-  //     types on the module boundary cannot be changed, we assume the producer
-  //     has made a mistake and we consider it a validation error if any user
-  //     defined types besides the types of imported or exported functions
-  //     themselves appear on the module boundary. For example, no user defined
-  //     struct type may be a parameter or result of an exported function. This
-  //     error may be relaxed or made more configurable in the future.
   bool closedWorld = false;
   // Whether to try to preserve debug info through, which are special calls.
   bool debugInfo = false;
@@ -530,7 +522,7 @@ template<typename WalkerType>
 class WalkerPass : public Pass, public WalkerType {
 
 protected:
-  using super = WalkerPass<WalkerType>;
+  using Super = WalkerPass<WalkerType>;
 
 public:
   void run(Module* module) override {

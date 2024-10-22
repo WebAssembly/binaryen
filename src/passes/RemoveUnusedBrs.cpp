@@ -18,16 +18,18 @@
 // Removes branches for which we go to where they go anyhow
 //
 
-#include <ir/branch-utils.h>
-#include <ir/cost.h>
-#include <ir/effects.h>
-#include <ir/gc-type-utils.h>
-#include <ir/literal-utils.h>
-#include <ir/utils.h>
-#include <parsing.h>
-#include <pass.h>
-#include <wasm-builder.h>
-#include <wasm.h>
+#include "ir/branch-utils.h"
+#include "ir/cost.h"
+#include "ir/drop.h"
+#include "ir/effects.h"
+#include "ir/gc-type-utils.h"
+#include "ir/literal-utils.h"
+#include "ir/utils.h"
+#include "parsing.h"
+#include "pass.h"
+#include "support/small_set.h"
+#include "wasm-builder.h"
+#include "wasm.h"
 
 namespace wasm {
 
@@ -258,15 +260,16 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
       }
     } else if (curr->is<Nop>()) {
-      // ignore (could be result of a previous cycle)
+      // Ignore (could be result of a previous cycle).
       self->stopValueFlow();
-    } else if (curr->is<Loop>()) {
-      // do nothing - it's ok for values to flow out
+    } else if (curr->is<Loop>() || curr->is<TryTable>()) {
+      // Do nothing - it's ok for values to flow out.
+      // TODO: Legacy Try as well?
     } else if (auto* sw = curr->dynCast<Switch>()) {
       self->stopFlow();
       self->optimizeSwitch(sw);
     } else {
-      // anything else stops the flow
+      // Anything else stops the flow.
       self->stopFlow();
     }
   }
@@ -462,13 +465,78 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     //       later down, see visitLocalSet.
   }
 
+  // A stack of catching expressions that are parents of the current expression,
+  // that is, Try and TryTable.
+  std::vector<Expression*> catchers;
+
+  static void popCatcher(RemoveUnusedBrs* self, Expression** currp) {
+    assert(!self->catchers.empty() && self->catchers.back() == *currp);
+    self->catchers.pop_back();
+  }
+
+  void visitThrow(Throw* curr) {
+    // If a throw will definitely be caught, and it is not a catch with a
+    // reference, then it is just a branch (i.e. the code is using exceptions as
+    // control flow). Turn it into a branch here so that the rest of the pass
+    // can optimize it with all other branches.
+    //
+    // To do so, look at the closest try and see if it will catch us, and
+    // proceed outwards if not.
+    auto thrownTag = curr->tag;
+    for (int i = catchers.size() - 1; i >= 0; i--) {
+      auto* tryy = catchers[i]->dynCast<TryTable>();
+      if (!tryy) {
+        // We do not handle mixtures of Try and TryTable.
+        return;
+      }
+      for (Index j = 0; j < tryy->catchTags.size(); j++) {
+        auto tag = tryy->catchTags[j];
+        // The tag must match, or be a catch_all.
+        if (tag == thrownTag || tag.isNull()) {
+          // This must not be a catch with exnref.
+          if (!tryy->catchRefs[j]) {
+            // Success! Create a break to replace the throw.
+            auto dest = tryy->catchDests[j];
+            auto& wasm = *getModule();
+            Builder builder(wasm);
+            if (!tag.isNull()) {
+              // We are catching a specific tag, so values might be sent.
+              Expression* value = nullptr;
+              if (curr->operands.size() == 1) {
+                value = curr->operands[0];
+              } else if (curr->operands.size() > 1) {
+                value = builder.makeTupleMake(curr->operands);
+              }
+              auto* br = builder.makeBreak(dest, value);
+              replaceCurrent(br);
+              return;
+            }
+
+            // catch_all: no values are sent. Drop the throw's children (while
+            // ignoring parent effects: the parent is a throw, but we have
+            // proven we can remove that effect).
+            auto* br = builder.makeBreak(dest);
+            auto* rep = getDroppedChildrenAndAppend(
+              curr, wasm, getPassOptions(), br, DropMode::IgnoreParentEffects);
+            replaceCurrent(rep);
+            // We modified the code here and may have added a drop, etc., so
+            // stop the flow (rather than re-scan it somehow). We leave
+            // optimizing anything that flows out for later iterations.
+            stopFlow();
+          }
+
+          // Return even if we did not optimize: we found our tag was caught.
+          return;
+        }
+      }
+    }
+  }
+
   // override scan to add a pre and a post check task to all nodes
   static void scan(RemoveUnusedBrs* self, Expression** currp) {
     self->pushTask(visitAny, currp);
 
-    auto* iff = (*currp)->dynCast<If>();
-
-    if (iff) {
+    if (auto* iff = (*currp)->dynCast<If>()) {
       if (iff->condition->type == Type::unreachable) {
         // avoid trying to optimize this, we never reach it anyhow
         return;
@@ -484,9 +552,16 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       self->pushTask(scan, &iff->ifTrue);
       self->pushTask(clear, currp); // clear all flow after the condition
       self->pushTask(scan, &iff->condition);
-    } else {
-      super::scan(self, currp);
+      return;
     }
+    if ((*currp)->is<TryTable>() || (*currp)->is<Try>()) {
+      // Push the try we are reaching, and add a task to pop it, after all the
+      // tasks that Super::scan will push for its children.
+      self->catchers.push_back(*currp);
+      self->pushTask(popCatcher, currp);
+    }
+
+    Super::scan(self, currp);
   }
 
   // optimizes a loop. returns true if we made changes
@@ -921,7 +996,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
     // multiple cycles may be needed
     do {
       anotherCycle = false;
-      super::doWalkFunction(func);
+      Super::doWalkFunction(func);
       assert(ifStack.empty());
       // flows may contain returns, which are flowing out and so can be
       // optimized
@@ -957,31 +1032,35 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
     } while (anotherCycle);
 
-    // thread trivial jumps
-    struct JumpThreader : public ControlFlowWalker<JumpThreader> {
-      // map of all value-less breaks and switches going to a block (and not a
-      // loop)
-      std::map<Block*, std::vector<Expression*>> branchesToBlock;
+    // Thread trivial jumps.
+    struct JumpThreader
+      : public PostWalker<JumpThreader,
+                          UnifiedExpressionVisitor<JumpThreader>> {
+      // Map of all labels (branch targets) to the branches going to them. (We
+      // only care about blocks here, and not loops, but for simplicitly we
+      // store all branch targets since blocks are 99% of that set anyhow. Any
+      // loops are ignored later.)
+      std::unordered_map<Name, std::vector<Expression*>> labelToBranches;
 
       bool worked = false;
 
-      void visitBreak(Break* curr) {
-        if (!curr->value) {
-          if (auto* target = findBreakTarget(curr->name)->dynCast<Block>()) {
-            branchesToBlock[target].push_back(curr);
-          }
-        }
-      }
-      void visitSwitch(Switch* curr) {
-        if (!curr->value) {
-          auto names = BranchUtils::getUniqueTargets(curr);
-          for (auto name : names) {
-            if (auto* target = findBreakTarget(name)->dynCast<Block>()) {
-              branchesToBlock[target].push_back(curr);
+      void visitExpression(Expression* curr) {
+        // Find the relevant targets: targets that (as mentioned above) have no
+        // value sent to them.
+        SmallSet<Name, 2> relevantTargets;
+        BranchUtils::operateOnScopeNameUsesAndSentTypes(
+          curr, [&](Name name, Type sent) {
+            if (sent == Type::none) {
+              relevantTargets.insert(name);
             }
-          }
+          });
+
+        // Note ourselves on all relevant targets.
+        for (auto target : relevantTargets) {
+          labelToBranches[target].push_back(curr);
         }
       }
+
       void visitBlock(Block* curr) {
         auto& list = curr->list;
         if (list.size() == 1 && curr->name.is()) {
@@ -1010,7 +1089,7 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
       }
 
       void redirectBranches(Block* from, Name to) {
-        auto& branches = branchesToBlock[from];
+        auto& branches = labelToBranches[from->name];
         for (auto* branch : branches) {
           if (BranchUtils::replacePossibleTarget(branch, from->name, to)) {
             worked = true;
@@ -1018,10 +1097,8 @@ struct RemoveUnusedBrs : public WalkerPass<PostWalker<RemoveUnusedBrs>> {
         }
         // if the jump is to another block then we can update the list, and
         // maybe push it even more later
-        if (auto* newTarget = findBreakTarget(to)->dynCast<Block>()) {
-          for (auto* branch : branches) {
-            branchesToBlock[newTarget].push_back(branch);
-          }
+        for (auto* branch : branches) {
+          labelToBranches[to].push_back(branch);
         }
       }
 

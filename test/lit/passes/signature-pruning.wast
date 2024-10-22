@@ -1154,24 +1154,22 @@
 
 ;; $exported is exported. The entire rec group becomes exported as well, which
 ;; causes $unused-param's type to be public, which means we cannot normally
-;; modify it. However, in closed world we allow such changes, and we can remove
-;; the unused param there. What happens is that we keep the original public rec
-;; group as-is, and add a new rec group for private types, put the pruned type
-;; there, and use that pruned type on $unused-param.
+;; modify it. However, in closed world we could allow such changes, by keeping
+;; the original public rec group as-is, and add a new rec group for private
+;; types, put the pruned type there, and use that pruned type on $unused-param.
+;; That can work here, but not in the testcase after us. For now, we also do not
+;; optimize here, as figuring out when it is safe is very difficult, and may
+;; need a new design TODO
 (module
   (rec
    ;; CHECK:      (rec
-   ;; CHECK-NEXT:  (type $much (func))
-
-   ;; CHECK:       (type $1 (func))
-
-   ;; CHECK:      (rec
    ;; CHECK-NEXT:  (type $none (func))
    (type $none (func))
+   ;; CHECK:       (type $much (func (param i32)))
    (type $much (func (param i32)))
   )
 
-  ;; CHECK:       (type $much_0 (func (param i32)))
+  ;; CHECK:      (type $2 (func))
 
   ;; CHECK:      (export "exported" (func $exported))
 
@@ -1181,22 +1179,82 @@
   (func $exported (export "exported") (type $none)
   )
 
-  ;; CHECK:      (func $unused-param (type $much)
-  ;; CHECK-NEXT:  (local $0 i32)
-  ;; CHECK-NEXT:  (local.set $0
-  ;; CHECK-NEXT:   (i32.const 0)
-  ;; CHECK-NEXT:  )
+  ;; CHECK:      (func $unused-param (type $much) (param $param i32)
   ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $unused-param (type $much) (param $param i32)
   )
 
-  ;; CHECK:      (func $caller (type $1)
-  ;; CHECK-NEXT:  (call $unused-param)
+  ;; CHECK:      (func $caller (type $2)
+  ;; CHECK-NEXT:  (call $unused-param
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
   ;; CHECK-NEXT: )
   (func $caller
     (call $unused-param
       (i32.const 0)
+    )
+  )
+)
+
+;; As the previous testcase, but add another use of the type we want to prune,
+;; in a struct.new. The struct type is public, so we cannot modify it and
+;; replace the reference to the function type with the pruned version.
+(module
+  (rec
+    ;; CHECK:      (type $0 (func))
+
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $none (func))
+    (type $none (func))
+    ;; CHECK:       (type $much (func (param i32)))
+    (type $much (func (param i32)))
+
+    ;; CHECK:       (type $struct (struct (field (ref $much))))
+    (type $struct (struct (field (ref $much))))
+  )
+
+  ;; CHECK:      (elem declare func $unused-param)
+
+  ;; CHECK:      (export "exported" (func $exported))
+
+  ;; CHECK:      (func $exported (type $none)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $exported (export "exported") (type $none)
+    ;; This makes the rec group public.
+  )
+
+  ;; CHECK:      (func $unused-param (type $much) (param $param i32)
+  ;; CHECK-NEXT:  (nop)
+  ;; CHECK-NEXT: )
+  (func $unused-param (type $much) (param $param i32)
+  )
+
+  ;; CHECK:      (func $caller (type $0)
+  ;; CHECK-NEXT:  (call $unused-param
+  ;; CHECK-NEXT:   (i32.const 0)
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $caller
+    (call $unused-param
+      (i32.const 0)
+    )
+  )
+
+  ;; CHECK:      (func $struct.new (type $0)
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $struct
+  ;; CHECK-NEXT:    (ref.func $unused-param)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $struct.new
+    ;; This struct.new causes the problem mentioned above.
+    (drop
+      (struct.new $struct
+        (ref.func $unused-param)
+      )
     )
   )
 )

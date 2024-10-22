@@ -371,8 +371,9 @@ public:
 
   // Users of `mapTypes` may want to update the type names according to their
   // mapping. This is not done automatically in `mapTypes` because other users
-  // may want the names to reflect that types have been replaced.
-  void mapTypeNames(const TypeMap& oldToNewTypes);
+  // may want the names to reflect that types have been replaced. Do the same
+  // mapping for recorded type indices.
+  void mapTypeNamesAndIndices(const TypeMap& oldToNewTypes);
 
   // Subclasses can implement these methods to modify the new set of types that
   // we map to. By default, we simply copy over the types, and these functions

@@ -65,15 +65,9 @@
 
  ;; SECONDARY:      (import "primary" "table_2" (table $timport$0 2 funcref))
 
- ;; SECONDARY:      (import "primary" "table" (table $table 1 1 funcref))
-
- ;; SECONDARY:      (import "primary" "global" (global $glob1 (ref func)))
-
- ;; SECONDARY:      (import "primary" "global_4" (global $glob2 (ref func)))
-
  ;; SECONDARY:      (import "primary" "prime" (func $prime (type $0)))
 
- ;; SECONDARY:      (elem $0 (table $timport$0) (i32.const 0) func $second $second-in-table)
+ ;; SECONDARY:      (elem $0 (i32.const 0) $second $second-in-table)
 
  ;; SECONDARY:      (elem declare func $prime)
 

@@ -75,7 +75,7 @@
 #include "pass.h"
 #include "support/disjoint_sets.h"
 #include "support/strongly_connected_components.h"
-#include "support/topological_orders.h"
+#include "support/topological_sort.h"
 #include "wasm-type-shape.h"
 #include "wasm.h"
 
@@ -857,7 +857,7 @@ struct MinimizeRecGroups : Pass {
     }
     GlobalTypeRewriter rewriter(wasm);
     rewriter.mapTypes(oldToNew);
-    rewriter.mapTypeNames(oldToNew);
+    rewriter.mapTypeNamesAndIndices(oldToNew);
   }
 };
 

@@ -281,6 +281,8 @@ struct LocalGraphFlower
                                       });
           if (lastSet != pred->lastSets.end()) {
             // There is a set here, apply it, and stop the flow.
+            // TODO: If we find a computed get, apply its sets and stop? That
+            //       could help but it requires more info on FlowBlock.
             for (auto* get : gets) {
               getSetsMap[get].insert(lastSet->second);
             }
@@ -308,25 +310,40 @@ struct LocalGraphFlower
   };
   std::unordered_map<LocalGet*, BlockLocation> getLocations;
 
-  // Set up getLocations using the flow blocks, so that we are ready to handle
-  // later lazy requests for the sets of particular gets. This is done in lazy
-  // mode.
+  // In lazy mode we also need to categorize gets and sets by their index.
+  std::vector<std::vector<LocalGet*>> getsByIndex;
+  std::vector<std::vector<LocalSet*>> setsByIndex;
+
+  // Prepare for all later lazy work.
   void prepareLaziness() {
     prepareFlowBlocks();
+
+    // Set up getLocations, getsByIndex, and setsByIndex.
+    auto numLocals = func->getNumLocals();
+    getsByIndex.resize(numLocals);
+    setsByIndex.resize(numLocals);
 
     for (auto& block : flowBlocks) {
       const auto& actions = block.actions;
       for (Index i = 0; i < actions.size(); i++) {
         if (auto* get = actions[i]->dynCast<LocalGet>()) {
           getLocations[get] = BlockLocation{&block, i};
+          getsByIndex[get->index].push_back(get);
+        } else if (auto* set = actions[i]->dynCast<LocalSet>()) {
+          setsByIndex[set->index].push_back(set);
+        } else {
+          WASM_UNREACHABLE("bad action");
         }
       }
     }
   }
 
-  // Flow a specific get. This is done in lazy mode.
-  void flowGet(LocalGet* get) {
+  // Flow a specific get to its sets. This is done in lazy mode.
+  void computeGetSets(LocalGet* get) {
     auto index = get->index;
+
+    // We must never repeat work.
+    assert(!getSetsMap.count(get));
 
     // Regardless of what we do below, ensure an entry for this get, so that we
     // know we computed it.
@@ -389,6 +406,43 @@ struct LocalGraphFlower
 
     // We must do an inter-block flow.
     flowBackFromStartOfBlock(block, index, gets);
+  }
+
+  void computeSetInfluences(LocalSet* set,
+                            LocalGraphBase::SetInfluencesMap& setInfluences) {
+    auto index = set->index;
+
+    // We must never repeat work.
+    assert(!setInfluences.count(set));
+
+    // In theory we could flow the set forward, but to keep things simple we
+    // reuse the logic for flowing gets backwards: We flow all the gets of the
+    // set's index, thus fully computing that index and all its sets, including
+    // this one. This is not 100% lazy, but still avoids extra work by never
+    // doing work for local indexes we don't care about.
+    for (auto* get : getsByIndex[index]) {
+      // Don't repeat work.
+      if (!getSetsMap.count(get)) {
+        computeGetSets(get);
+      }
+    }
+
+    // Ensure empty entries for each set of this index, to mark them as
+    // computed.
+    for (auto* set : setsByIndex[index]) {
+      setInfluences[set];
+    }
+
+    // Also ensure |set| itself, that we were originally asked about. It may be
+    // in unreachable code, which means it is not listed in setsByIndex.
+    setInfluences[set];
+
+    // Apply the info from the gets to the sets.
+    for (auto* get : getsByIndex[index]) {
+      for (auto* set : getSetsMap[get]) {
+        setInfluences[set].insert(get);
+      }
+    }
   }
 };
 
@@ -460,7 +514,9 @@ void LocalGraph::computeSetInfluences() {
   }
 }
 
-void LocalGraph::computeGetInfluences() {
+static void
+doComputeGetInfluences(const LocalGraphBase::Locations& locations,
+                       LocalGraphBase::GetInfluencesMap& getInfluences) {
   for (auto& [curr, _] : locations) {
     if (auto* set = curr->dynCast<LocalSet>()) {
       FindAll<LocalGet> findAll(set->value);
@@ -469,6 +525,10 @@ void LocalGraph::computeGetInfluences() {
       }
     }
   }
+}
+
+void LocalGraph::computeGetInfluences() {
+  doComputeGetInfluences(locations, getInfluences);
 }
 
 void LocalGraph::computeSSAIndexes() {
@@ -500,9 +560,15 @@ bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
 // LazyLocalGraph
 
 LazyLocalGraph::LazyLocalGraph(Function* func, Module* module)
-  : LocalGraphBase(func, module) {
+  : LocalGraphBase(func, module) {}
+
+void LazyLocalGraph::makeFlower() const {
+  // |locations| is set here and filled in by |flower|.
+  assert(!locations);
+  locations.emplace();
+
   flower =
-    std::make_unique<LocalGraphFlower>(getSetsMap, locations, func, module);
+    std::make_unique<LocalGraphFlower>(getSetsMap, *locations, func, module);
 
   flower->prepareLaziness();
 
@@ -526,7 +592,82 @@ LazyLocalGraph::~LazyLocalGraph() {
 }
 
 void LazyLocalGraph::computeGetSets(LocalGet* get) const {
-  flower->flowGet(get);
+  // We must never repeat work.
+  assert(!getSetsMap.count(get));
+
+  if (!flower) {
+    makeFlower();
+  }
+  flower->computeGetSets(get);
+}
+
+void LazyLocalGraph::computeSetInfluences(LocalSet* set) const {
+  // We must never repeat work.
+  assert(!setInfluences.count(set));
+
+  if (!flower) {
+    makeFlower();
+  }
+  flower->computeSetInfluences(set, setInfluences);
+}
+
+void LazyLocalGraph::computeGetInfluences() const {
+  // We must never repeat work.
+  assert(!getInfluences);
+
+  // We do not need any flow for this, but we do need |locations| to be filled
+  // in.
+  getLocations();
+  assert(locations);
+
+  getInfluences.emplace();
+  doComputeGetInfluences(*locations, *getInfluences);
+}
+
+bool LazyLocalGraph::computeSSA(Index index) const {
+  // We must never repeat work.
+  assert(!SSAIndexes.count(index));
+
+  if (!flower) {
+    makeFlower();
+  }
+
+  // Similar logic to LocalGraph::computeSSAIndexes(), but optimized for the
+  // case of a single index.
+
+  // All the sets for this index that we've seen. We'll add all relevant ones,
+  // and exit if we see more than one.
+  SmallUnorderedSet<LocalSet*, 2> sets;
+  for (auto* set : flower->setsByIndex[index]) {
+    sets.insert(set);
+    if (sets.size() > 1) {
+      return SSAIndexes[index] = false;
+    }
+  }
+  for (auto* get : flower->getsByIndex[index]) {
+    for (auto* set : getSets(get)) {
+      sets.insert(set);
+      if (sets.size() > 1) {
+        return SSAIndexes[index] = false;
+      }
+    }
+  }
+  // Finally, check that we have 1 and not 0 sets.
+  return SSAIndexes[index] = (sets.size() == 1);
+}
+
+void LazyLocalGraph::computeLocations() const {
+  // We must never repeat work.
+  assert(!locations);
+
+  // |flower| fills in |locations| as it scans the function.
+  //
+  // In theory we could be even lazier here, but it is nice that flower will
+  // fill in the locations as it goes, avoiding an additional pass. And, in
+  // practice, if we ask for locations then we likely need other things anyhow.
+  if (!flower) {
+    makeFlower();
+  }
 }
 
 } // namespace wasm

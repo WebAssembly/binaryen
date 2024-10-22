@@ -695,7 +695,7 @@ Input source maps can be specified by adding an -ism option right after the modu
       currModule = laterInput.get();
     }
 
-    options.applyFeatures(*currModule);
+    options.applyOptionsBeforeParse(*currModule);
 
     ModuleReader reader;
     try {
@@ -704,6 +704,8 @@ Input source maps can be specified by adding an -ism option right after the modu
       p.dump(std::cerr);
       Fatal() << "error in parsing wasm input: " << inputFile;
     }
+
+    options.applyOptionsAfterParse(*currModule);
 
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(*currModule)) {

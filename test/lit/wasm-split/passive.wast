@@ -37,9 +37,7 @@
 
  ;; SECONDARY:      (import "primary" "table_1" (table $timport$0 1 funcref))
 
- ;; SECONDARY:      (import "primary" "table" (table $table 3 funcref))
-
- ;; SECONDARY:      (elem $0 (table $timport$0) (i32.const 0) func $second-in-table)
+ ;; SECONDARY:      (elem $0 (i32.const 0) $second-in-table)
 
  ;; SECONDARY:      (func $second-in-table (type $0)
  ;; SECONDARY-NEXT:  (nop)

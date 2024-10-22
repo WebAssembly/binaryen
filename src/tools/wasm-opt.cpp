@@ -243,7 +243,7 @@ int main(int argc, const char* argv[]) {
   options.parse(argc, argv);
 
   Module wasm;
-  options.applyFeatures(wasm);
+  options.applyOptionsBeforeParse(wasm);
 
   BYN_TRACE("reading...\n");
 
@@ -293,6 +293,8 @@ int main(int argc, const char* argv[]) {
       Fatal() << "error building module, std::bad_alloc (possibly invalid "
                  "request for silly amounts of memory)";
     }
+
+    options.applyOptionsAfterParse(wasm);
 
     if (options.passOptions.validate) {
       if (!WasmValidator().validate(wasm, options.passOptions)) {

@@ -25,53 +25,29 @@
 
 namespace wasm::HeapTypeOrdering {
 
-// Given a collection of types, iterate through it such that each type in the
-// collection is visited only after its immediate supertype in the collection is
-// visited.
-template<typename SupertypeProvider>
-struct SupertypesFirstBase
-  : TopologicalSort<HeapType, SupertypesFirstBase<SupertypeProvider>> {
-  // For each type in the input collection, whether it is a supertype. Used to
-  // track membership in the input collection.
-  InsertOrderedMap<HeapType, bool> typeSet;
+// Given a collection of types, return a sequence of the types such that each
+// type in the sequence comes only after its immediate supertype in the
+// collection is visited.
+template<typename T>
+std::vector<HeapType> supertypesFirst(
+  const T& types,
+  std::function<std::optional<HeapType>(HeapType)> getSuper =
+    [](HeapType type) { return type.getDeclaredSuperType(); }) {
 
-  SupertypeProvider& self() { return *static_cast<SupertypeProvider*>(this); }
-
-  template<typename T> SupertypeProvider& sort(const T& types) {
-    for (auto type : types) {
-      typeSet[type] = false;
-    }
-    // Find the supertypes that are in the collection.
-    for (auto [type, _] : typeSet) {
-      if (auto super = self().getDeclaredSuperType(type)) {
-        if (auto it = typeSet.find(*super); it != typeSet.end()) {
-          it->second = true;
-        }
+  InsertOrderedMap<HeapType, std::vector<HeapType>> subtypes;
+  for (auto type : types) {
+    subtypes.insert({type, {}});
+  }
+  // Find the supertypes that are in the collection.
+  for (auto [type, _] : subtypes) {
+    if (auto super = getSuper(type)) {
+      if (auto it = subtypes.find(*super); it != subtypes.end()) {
+        it->second.push_back(type);
       }
     }
-    // Types that are not supertypes of others are the roots.
-    for (auto [type, isSuper] : typeSet) {
-      if (!isSuper) {
-        this->push(type);
-      }
-    }
-    return self();
   }
-
-  void pushPredecessors(HeapType type) {
-    // Do not visit types that weren't in the input collection.
-    if (auto super = self().getDeclaredSuperType(type);
-        super && typeSet.count(*super)) {
-      this->push(*super);
-    }
-  }
-};
-
-struct SupertypesFirst : SupertypesFirstBase<SupertypesFirst> {
-  std::optional<HeapType> getDeclaredSuperType(HeapType type) {
-    return type.getDeclaredSuperType();
-  }
-};
+  return TopologicalSort::sortOf(subtypes.begin(), subtypes.end());
+}
 
 } // namespace wasm::HeapTypeOrdering
 

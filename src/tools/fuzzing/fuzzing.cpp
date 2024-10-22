@@ -1366,7 +1366,9 @@ Expression* TranslateToFuzzReader::_makeConcrete(Type type) {
            &Self::makeCall,
            &Self::makeCallIndirect)
       .add(FeatureSet::ExceptionHandling, &Self::makeTry)
-      .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
+      .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
+      .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef)
+      .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn);
   }
   if (type.isSingle()) {
     options
@@ -1451,10 +1453,13 @@ Expression* TranslateToFuzzReader::_makenone() {
          &Self::makeGlobalSet)
     .add(FeatureSet::BulkMemory, &Self::makeBulkMemory)
     .add(FeatureSet::Atomics, &Self::makeAtomic)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeStructSet)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeArraySet)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes,
+    .add(FeatureSet::ExceptionHandling, &Self::makeTry)
+    .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeStructSet)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeArraySet)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeBrOn)
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC,
          &Self::makeArrayBulkMemoryOp);
   return (this->*pick(options))(Type::none);
 }
@@ -1481,7 +1486,7 @@ Expression* TranslateToFuzzReader::_makeunreachable() {
          &Self::makeDrop,
          &Self::makeReturn)
     .add(FeatureSet::ExceptionHandling, &Self::makeThrow)
-    .add(FeatureSet::GC | FeatureSet::ReferenceTypes, &Self::makeCallRef);
+    .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef);
   return (this->*pick(options))(Type::unreachable);
 }
 
@@ -1686,6 +1691,71 @@ Expression* TranslateToFuzzReader::makeTry(Type type) {
   }
   // TODO: delegate stuff
   return builder.makeTry(body, catchTags, catchBodies);
+}
+
+Expression* TranslateToFuzzReader::makeTryTable(Type type) {
+  auto* body = make(type);
+
+  if (funcContext->breakableStack.empty()) {
+    // Nothing to break to, emit a trivial TryTable.
+    // TODO: Perhaps generate a block wrapping us?
+    return builder.makeTryTable(body, {}, {}, {});
+  }
+
+  if (wasm.tags.empty()) {
+    addTag();
+  }
+
+  // Add catches of specific tags, and possibly a catch_all at the end. We use
+  // the last iteration of the loop for that.
+  std::vector<Name> catchTags;
+  std::vector<Name> catchDests;
+  std::vector<bool> catchRefs;
+  auto numCatches = upTo(MAX_TRY_CATCHES);
+  for (Index i = 0; i <= numCatches; i++) {
+    Name tagName;
+    Type tagType;
+    if (i < numCatches) {
+      // Look for a specific tag.
+      auto& tag = pick(wasm.tags);
+      tagName = tag->name;
+      tagType = tag->sig.params;
+    } else {
+      // Add a catch_all at the end, some of the time (but all of the time if we
+      // have nothing else).
+      if (!catchTags.empty() && oneIn(2)) {
+        break;
+      }
+      tagType = Type::none;
+    }
+
+    // We need to find a proper target to break to, which means a target that
+    // has the type of the tag, or the tag + an exnref at the end.
+    std::vector<Type> vec(tagType.begin(), tagType.end());
+    // Use a non-nullable exnref here, and then the subtyping check below will
+    // also accept a target that is nullable.
+    vec.push_back(Type(HeapType::exn, NonNullable));
+    auto tagTypeWithExn = Type(vec);
+    int tries = TRIES;
+    while (tries-- > 0) {
+      auto* target = pick(funcContext->breakableStack);
+      auto dest = getTargetName(target);
+      auto valueType = getTargetType(target);
+      auto subOfTagType = Type::isSubType(tagType, valueType);
+      auto subOfTagTypeWithExn = Type::isSubType(tagTypeWithExn, valueType);
+      if (subOfTagType || subOfTagTypeWithExn) {
+        catchTags.push_back(tagName);
+        catchDests.push_back(dest);
+        catchRefs.push_back(subOfTagTypeWithExn);
+        break;
+      }
+    }
+    // TODO: Perhaps generate a block wrapping us, if we fail to find a target?
+    // TODO: It takes a bit of luck to find a target with an exnref - perhaps
+    //       generate those?
+  }
+
+  return builder.makeTryTable(body, catchTags, catchDests, catchRefs);
 }
 
 Expression* TranslateToFuzzReader::makeBreak(Type type) {
@@ -3143,7 +3213,11 @@ Expression* TranslateToFuzzReader::makeUnary(Type type) {
                          CeilVecF16x8,
                          FloorVecF16x8,
                          TruncVecF16x8,
-                         NearestVecF16x8)),
+                         NearestVecF16x8,
+                         TruncSatSVecF16x8ToVecI16x8,
+                         TruncSatUVecF16x8ToVecI16x8,
+                         ConvertSVecI16x8ToVecF16x8,
+                         ConvertUVecI16x8ToVecF16x8)),
              make(Type::v128)});
       }
       WASM_UNREACHABLE("invalid value");
@@ -3870,6 +3944,116 @@ Expression* TranslateToFuzzReader::makeRefCast(Type type) {
       WASM_UNREACHABLE("bad case");
   }
   return builder.makeRefCast(make(refType), type);
+}
+
+Expression* TranslateToFuzzReader::makeBrOn(Type type) {
+  if (funcContext->breakableStack.empty()) {
+    return makeTrivial(type);
+  }
+  // We need to find a proper target to break to; try a few times. Finding the
+  // target is harder than flowing out the proper type, so focus on the target,
+  // and fix up the flowing type later. That is, once we find a target to break
+  // to, we can then either drop ourselves or wrap ourselves in a block +
+  // another value, so that we return the proper thing here (which is done below
+  // in fixFlowingType).
+  int tries = TRIES;
+  Name targetName;
+  Type targetType;
+  while (--tries >= 0) {
+    auto* target = pick(funcContext->breakableStack);
+    targetName = getTargetName(target);
+    targetType = getTargetType(target);
+    // We can send any reference type, or no value at all, but nothing else.
+    if (targetType.isRef() || targetType == Type::none) {
+      break;
+    }
+  }
+  if (tries < 0) {
+    return makeTrivial(type);
+  }
+
+  auto fixFlowingType = [&](Expression* brOn) -> Expression* {
+    if (Type::isSubType(brOn->type, type)) {
+      // Already of the proper type.
+      return brOn;
+    }
+    if (type == Type::none) {
+      // We just need to drop whatever it is.
+      return builder.makeDrop(brOn);
+    }
+    // We need to replace the type with something else. Drop the BrOn if we need
+    // to, and append a value with the proper type.
+    if (brOn->type != Type::none) {
+      brOn = builder.makeDrop(brOn);
+    }
+    return builder.makeSequence(brOn, make(type));
+  };
+
+  // We found something to break to. Figure out which BrOn variants we can
+  // send.
+  if (targetType == Type::none) {
+    // BrOnNull is the only variant that sends no value.
+    return fixFlowingType(
+      builder.makeBrOn(BrOnNull, targetName, make(getReferenceType())));
+  }
+
+  // We are sending a reference type to the target. All other BrOn variants can
+  // do that.
+  assert(targetType.isRef());
+  auto op = pick(BrOnNonNull, BrOnCast, BrOnCastFail);
+  Type castType = Type::none;
+  Type refType;
+  switch (op) {
+    case BrOnNonNull: {
+      // The sent type is the non-nullable version of the reference, so any ref
+      // of that type is ok, nullable or not.
+      refType = Type(targetType.getHeapType(), getNullability());
+      break;
+    }
+    case BrOnCast: {
+      // The sent type is the heap type we cast to, with the input type's
+      // nullability, so the combination of the two must be a subtype of
+      // targetType.
+      castType = getSubType(targetType);
+      // The ref's type must be castable to castType, or we'd not validate. But
+      // it can also be a subtype, which will trivially also succeed (so do that
+      // more rarely). Pick subtypes rarely, as they make the cast trivial.
+      refType = oneIn(5) ? getSubType(castType) : getSuperType(castType);
+      if (targetType.isNonNullable()) {
+        // And it must have the right nullability for the target, as mentioned
+        // above: if the target type is non-nullable then either the ref or the
+        // cast types must be.
+        if (!refType.isNonNullable() && !castType.isNonNullable()) {
+          // Pick one to make non-nullable.
+          if (oneIn(2)) {
+            refType = Type(refType.getHeapType(), NonNullable);
+          } else {
+            castType = Type(castType.getHeapType(), NonNullable);
+          }
+        }
+      }
+      break;
+    }
+    case BrOnCastFail: {
+      // The sent type is the ref's type, with adjusted nullability (if the cast
+      // allows nulls then no null can fail the cast, and what is sent is non-
+      // nullable). First, pick a ref type that we can send to the target.
+      refType = getSubType(targetType);
+      // See above on BrOnCast, but flipped.
+      castType = oneIn(5) ? getSuperType(refType) : getSubType(refType);
+      // There is no nullability to adjust: if targetType is non-nullable then
+      // both refType and castType are as well, as subtypes of it. But we can
+      // also allow castType to be nullable (it is not sent to the target).
+      if (castType.isNonNullable() && oneIn(2)) {
+        castType = Type(castType.getHeapType(), Nullable);
+      }
+    } break;
+    default: {
+      WASM_UNREACHABLE("bad br_on op");
+    }
+  }
+  return fixFlowingType(
+    builder.makeBrOn(op, targetName, make(refType), castType));
 }
 
 bool TranslateToFuzzReader::maybeSignedGet(const Field& field) {

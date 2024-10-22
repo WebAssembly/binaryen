@@ -98,6 +98,11 @@ int64_t wasm::toSInteger64(double x) {
  * 1 11111111 111...11 => 0xffffffff => -nan(0x7fffff)
  */
 
+bool wasm::isInRangeI16TruncS(int32_t i) {
+  uint32_t u = i;
+  return (u < 0x47000000U) || (u >= 0x80000000U && u <= 0xc7000000U);
+}
+
 bool wasm::isInRangeI32TruncS(int32_t i) {
   uint32_t u = i;
   return (u < 0x4f000000U) || (u >= 0x80000000U && u <= 0xcf000000U);
@@ -106,6 +111,11 @@ bool wasm::isInRangeI32TruncS(int32_t i) {
 bool wasm::isInRangeI64TruncS(int32_t i) {
   uint32_t u = i;
   return (u < 0x5f000000U) || (u >= 0x80000000U && u <= 0xdf000000U);
+}
+
+bool wasm::isInRangeI16TruncU(int32_t i) {
+  uint32_t u = i;
+  return (u < 0x47800000) || (u >= 0x80000000U && u < 0xbf800000U);
 }
 
 bool wasm::isInRangeI32TruncU(int32_t i) {

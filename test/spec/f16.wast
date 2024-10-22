@@ -34,6 +34,13 @@
   (func (export "f16x8.nearest") (param $0 v128) (result v128) (f16x8.nearest (local.get $0)))
   (func (export "f16x8.relaxed_madd") (param $0 v128) (param $1 v128) (param $2 v128) (result v128) (f16x8.relaxed_madd (local.get $0) (local.get $1) (local.get $2)))
   (func (export "f16x8.relaxed_nmadd") (param $0 v128) (param $1 v128) (param $2 v128) (result v128) (f16x8.relaxed_nmadd (local.get $0) (local.get $1) (local.get $2)))
+  (func (export "i16x8.trunc_sat_f16x8_s") (param $0 v128) (result v128) (i16x8.trunc_sat_f16x8_s (local.get $0)))
+  (func (export "i16x8.trunc_sat_f16x8_u") (param $0 v128) (result v128) (i16x8.trunc_sat_f16x8_u (local.get $0)))
+  (func (export "f16x8.convert_i16x8_s") (param $0 v128) (result v128) (f16x8.convert_i16x8_s (local.get $0)))
+  (func (export "f16x8.convert_i16x8_u") (param $0 v128) (result v128) (f16x8.convert_i16x8_u (local.get $0)))
+  ;; Multiple operation tests:
+  (func (export "splat_replace") (result v128) (f16x8.replace_lane 0 (f16x8.splat (f32.const 1)) (f32.const 99))
+ )
 )
 
 (assert_return (invoke "f32.load_f16") (f32.const 42.0))
@@ -216,3 +223,27 @@
     (v128.const i16x8 0x7c00 0x7c00 0xbc00  0      0x3c00 0x4000 0x3c00 0xbc00))
     ;;                inf    inf    -2      0      0      -0.25  9      -2
     (v128.const i16x8 0x7c00 0x7c00 0xc000  0      0      0xb400 0x4880 0xc000))
+
+(assert_return (invoke "splat_replace")
+    (v128.const i16x8 0x5630 0x3c00 0x3c00 0x3c00 0x3c00 0x3c00 0x3c00 0x3c00)
+)
+
+;; conversions
+(assert_return (invoke "i16x8.trunc_sat_f16x8_s"
+    ;;                42     nan    inf    -inf   65504  -65504 0 0
+    (v128.const i16x8 0x5140 0x7e00 0x7c00 0xfc00 0x7bff 0xfbff 0 0))
+    (v128.const i16x8 42     0      32767  -32768 32767  -32768 0 0))
+(assert_return (invoke "i16x8.trunc_sat_f16x8_u"
+    ;;                42     nan    inf    -inf   65504  -65504 0 0
+    (v128.const i16x8 0x5140 0x7e00 0x7c00 0xfc00 0x7bff 0xfbff 0 0))
+    (v128.const i16x8 42     0      65535  0      65504  0      0 0))
+(assert_return (invoke "f16x8.convert_i16x8_s"
+    ;; 32767 is not representable as a whole integer in FP16, so it becomes 32768.
+    (v128.const i16x8 0 1      -1     32767  -32768 0 0 0))
+    ;;                0 1      -1     32768  -32768 0 0 0
+    (v128.const i16x8 0 0x3c00 0xbc00 0x7800 0xf800 0 0 0))
+(assert_return (invoke "f16x8.convert_i16x8_u"
+    ;; Unlike f32/64, f16 can't represent the full 2^16 integer range so 2^16 becomes infinity.
+    (v128.const i16x8 0 1      -1     -32    0 0 0 0))
+    ;;                  1      inf    65504
+    (v128.const i16x8 0 0x3c00 0x7c00 0x7bff 0 0 0 0))

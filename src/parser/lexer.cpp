@@ -280,6 +280,13 @@ struct LexStrResult : LexResult {
   // Allocate a string only if there are escape sequences, otherwise just use
   // the original string_view.
   std::optional<std::string> str;
+
+  std::string_view getStr() {
+    if (str) {
+      return *str;
+    }
+    return span;
+  }
 };
 
 struct LexStrCtx : LexCtx {
@@ -860,6 +867,9 @@ std::optional<LexIdResult> ident(std::string_view in) {
     return {};
   }
   if (auto s = str(ctx.next())) {
+    if (!String::isUTF8(s->getStr())) {
+      return {};
+    }
     ctx.isStr = true;
     ctx.str = s->str;
     ctx.take(*s);

@@ -181,7 +181,7 @@ struct Memory64Lowering : public WalkerPass<PostWalker<Memory64Lowering>> {
     if (!module->features.has(FeatureSet::Memory64)) {
       return;
     }
-    super::run(module);
+    Super::run(module);
     // Don't modify the memories themselves until after the traversal since we
     // that would require memories to be the last thing that get visited, and
     // we don't want to depend on that specific ordering.

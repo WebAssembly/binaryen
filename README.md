@@ -31,6 +31,7 @@ Toolchains using Binaryen as a **component** (typically running `wasm-opt`) incl
   * [`J2CL`](https://j2cl.io/) (Java; [`J2Wasm`](https://github.com/google/j2cl/tree/master/samples/wasm))
   * [`Kotlin`](https://kotl.in/wasmgc) (Kotlin/Wasm)
   * [`Dart`](https://flutter.dev/wasm) (Flutter)
+  * [`wasm_of_ocaml`](https://github.com/ocaml-wasm/wasm_of_ocaml) (OCaml)
 
 For more on how some of those work, see the toolchain architecture parts of
 the [V8 WasmGC porting blogpost](https://v8.dev/blog/wasm-gc-porting).
@@ -147,6 +148,16 @@ There are a few differences between Binaryen IR and the WebAssembly language:
       much about this when writing Binaryen passes. For more details see the
       `requiresNonNullableLocalFixups()` hook in `pass.h` and the
       `LocalStructuralDominance` class.
+  * Binaryen IR uses the most refined types possible for references,
+    specifically:
+    * The IR type of a `ref.func` is always a specific function type, and not
+      plain `funcref`. It is also non-nullable.
+    * Non-nullable types are also used for the type that `try_table` sends
+      on branches (if we branch, a null is never sent), that is, it sends
+      (ref exn) and not (ref null exn).
+    In both cases if GC is not enabled then we emit the less-refined type in the
+    binary. When reading a binary, the more refined types will be applied as we
+    build the IR.
   * `br_if` output types are more refined in Binaryen IR: they have the type of
     the value, when a value flows in. In the wasm spec the type is that of the
     branch target, which may be less refined. Using the more refined type here

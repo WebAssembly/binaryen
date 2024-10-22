@@ -107,12 +107,14 @@ int main(int argc, const char* argv[]) {
   auto input(read_file<std::string>(options.extra["infile"], Flags::Text));
 
   Module wasm;
-  options.applyFeatures(wasm);
+  options.applyOptionsBeforeParse(wasm);
 
   auto parsed = WATParser::parseModule(wasm, input);
   if (auto* err = parsed.getErr()) {
     Fatal() << err->msg;
   }
+
+  options.applyOptionsAfterParse(wasm);
 
   if (options.extra["validate"] != "none") {
     if (options.debug) {

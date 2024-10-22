@@ -1895,3 +1895,52 @@
     )
   )
 )
+
+;; Test packed fields.
+(module
+  ;; CHECK:      (type $struct (struct (field i8)))
+  (type $struct (struct (field i8)))
+
+  ;; CHECK:      (type $1 (func (result i32)))
+
+  ;; CHECK:      (global $A (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 257)
+  ;; CHECK-NEXT: ))
+  (global $A (ref $struct) (struct.new $struct
+    (i32.const 257)
+  ))
+
+  ;; CHECK:      (global $B (ref $struct) (struct.new $struct
+  ;; CHECK-NEXT:  (i32.const 258)
+  ;; CHECK-NEXT: ))
+  (global $B (ref $struct) (struct.new $struct
+    (i32.const 258)
+  ))
+
+  ;; CHECK:      (func $test (type $1) (result i32)
+  ;; CHECK-NEXT:  (select
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.const 257)
+  ;; CHECK-NEXT:    (i32.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (i32.and
+  ;; CHECK-NEXT:    (i32.const 258)
+  ;; CHECK-NEXT:    (i32.const 255)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:   (ref.eq
+  ;; CHECK-NEXT:    (ref.as_non_null
+  ;; CHECK-NEXT:     (global.get $A)
+  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (global.get $A)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
+  (func $test (result i32)
+    ;; We can infer this value is one of two things since only two objects exist
+    ;; of this type. We must emit the proper truncated value for them, as the
+    ;; values are truncated into i8.
+    (struct.get_u $struct 0
+     (global.get $A)
+    )
+  )
+)

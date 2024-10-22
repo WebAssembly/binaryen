@@ -20,7 +20,7 @@
 #include "ir/manipulation.h"
 #include "ir/properties.h"
 #include "support/insert_ordered.h"
-#include "support/topological_orders.h"
+#include "support/topological_sort.h"
 
 namespace wasm::ModuleUtils {
 
@@ -38,15 +38,35 @@ static void updateLocationSet(std::set<Function::DebugLocation>& locations,
   std::swap(locations, updatedLocations);
 }
 
+// Update the symbol name indices when moving a set of debug locations from one
+// module to another.
+static void updateSymbolSet(std::set<Function::DebugLocation>& locations,
+                            std::vector<Index>& symbolIndexMap) {
+  std::set<Function::DebugLocation> updatedLocations;
+
+  for (auto iter : locations) {
+    if (iter.symbolNameIndex) {
+      iter.symbolNameIndex = symbolIndexMap[*iter.symbolNameIndex];
+    }
+    updatedLocations.insert(iter);
+  }
+  locations.clear();
+  std::swap(locations, updatedLocations);
+}
+
 // Copies a function into a module. If newName is provided it is used as the
 // name of the function (otherwise the original name is copied). If fileIndexMap
 // is specified, it is used to rename source map filename indices when copying
+// the function from one module to another one. If symbolNameIndexMap is
+// specified, it is used to rename source map symbol name indices when copying
 // the function from one module to another one.
 Function* copyFunction(Function* func,
                        Module& out,
                        Name newName,
-                       std::optional<std::vector<Index>> fileIndexMap) {
-  auto ret = copyFunctionWithoutAdd(func, out, newName, fileIndexMap);
+                       std::optional<std::vector<Index>> fileIndexMap,
+                       std::optional<std::vector<Index>> symbolNameIndexMap) {
+  auto ret = copyFunctionWithoutAdd(
+    func, out, newName, fileIndexMap, symbolNameIndexMap);
   return out.addFunction(std::move(ret));
 }
 
@@ -54,7 +74,8 @@ std::unique_ptr<Function>
 copyFunctionWithoutAdd(Function* func,
                        Module& out,
                        Name newName,
-                       std::optional<std::vector<Index>> fileIndexMap) {
+                       std::optional<std::vector<Index>> fileIndexMap,
+                       std::optional<std::vector<Index>> symbolNameIndexMap) {
   auto ret = std::make_unique<Function>();
   ret->name = newName.is() ? newName : func->name;
   ret->hasExplicitName = func->hasExplicitName;
@@ -75,6 +96,18 @@ copyFunctionWithoutAdd(Function* func,
     }
     updateLocationSet(ret->prologLocation, *fileIndexMap);
     updateLocationSet(ret->epilogLocation, *fileIndexMap);
+  }
+  if (symbolNameIndexMap) {
+    for (auto& iter : ret->debugLocations) {
+      if (iter.second) {
+        if (iter.second->symbolNameIndex.has_value()) {
+          iter.second->symbolNameIndex =
+            (*symbolNameIndexMap)[*(iter.second->symbolNameIndex)];
+        }
+      }
+      updateSymbolSet(ret->prologLocation, *symbolNameIndexMap);
+      updateSymbolSet(ret->epilogLocation, *symbolNameIndexMap);
+    }
   }
   ret->module = func->module;
   ret->base = func->base;
@@ -199,8 +232,27 @@ void copyModuleItems(const Module& in, Module& out) {
     }
   }
 
+  std::optional<std::vector<Index>> symbolNameIndexMap;
+  if (!in.debugInfoSymbolNames.empty()) {
+    std::unordered_map<std::string, Index> debugInfoSymbolNameIndices;
+    for (Index i = 0; i < out.debugInfoSymbolNames.size(); i++) {
+      debugInfoSymbolNameIndices[out.debugInfoSymbolNames[i]] = i;
+    }
+    symbolNameIndexMap.emplace();
+    for (Index i = 0; i < in.debugInfoSymbolNames.size(); i++) {
+      std::string file = in.debugInfoSymbolNames[i];
+      auto iter = debugInfoSymbolNameIndices.find(file);
+      if (iter == debugInfoSymbolNameIndices.end()) {
+        Index index = out.debugInfoSymbolNames.size();
+        out.debugInfoSymbolNames.push_back(file);
+        debugInfoSymbolNameIndices[file] = index;
+      }
+      symbolNameIndexMap->push_back(debugInfoSymbolNameIndices[file]);
+    }
+  }
+
   for (auto& curr : in.functions) {
-    copyFunction(curr.get(), out, Name(), fileIndexMap);
+    copyFunction(curr.get(), out, Name(), fileIndexMap, symbolNameIndexMap);
   }
   for (auto& curr : in.globals) {
     copyGlobal(curr.get(), out);
@@ -241,6 +293,7 @@ void copyModule(const Module& in, Module& out) {
   out.start = in.start;
   out.customSections = in.customSections;
   out.debugInfoFileNames = in.debugInfoFileNames;
+  out.debugInfoSymbolNames = in.debugInfoSymbolNames;
   out.features = in.features;
 }
 
@@ -399,15 +452,10 @@ struct CodeScanner
       }
     } else if (auto* get = curr->dynCast<StructGet>()) {
       info.note(get->ref->type);
-      // TODO: Just include curr->type for AllTypes and UsedIRTypes to avoid
-      // this special case and to avoid emitting unnecessary types in binaries.
-      info.include(get->type);
     } else if (auto* set = curr->dynCast<StructSet>()) {
       info.note(set->ref->type);
     } else if (auto* get = curr->dynCast<ArrayGet>()) {
       info.note(get->ref->type);
-      // See above.
-      info.include(get->type);
     } else if (auto* set = curr->dynCast<ArraySet>()) {
       info.note(set->ref->type);
     } else if (auto* contBind = curr->dynCast<ContBind>()) {
@@ -453,7 +501,10 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
       for (auto type : func->vars) {
         info.note(type);
       }
-      if (!func->imported()) {
+      // Don't just use `func->imported()` here because we also might be
+      // printing an error message on a partially parsed module whose declared
+      // function bodies have not all been parsed yet.
+      if (func->body) {
         CodeScanner(wasm, info, inclusion).walk(func->body);
       }
     });
@@ -465,20 +516,6 @@ InsertOrderedMap<HeapType, HeapTypeInfo> collectHeapTypeInfo(
     }
     for (auto& [sig, count] : functionInfo.controlFlowSignatures) {
       info.controlFlowSignatures[sig] += count;
-    }
-  }
-
-  // TODO: Remove this once we remove the hack for StructGet and StructSet in
-  // CodeScanner.
-  if (inclusion == TypeInclusion::UsedIRTypes) {
-    auto it = info.info.begin();
-    while (it != info.info.end()) {
-      if (it->second.useCount == 0) {
-        auto deleted = it++;
-        info.info.erase(deleted);
-      } else {
-        ++it;
-      }
     }
   }
 
@@ -764,7 +801,39 @@ IndexedHeapTypes getOptimizedIndexedHeapTypes(Module& wasm) {
     }
   }
 
+  // If we've preserved the input type order on the module, we have to respect
+  // that first. Use the index of the first type from each group. In principle
+  // we could try to do something more robust like take the minimum index of all
+  // the types in the group, but if the groups haven't been preserved, then we
+  // won't be able to perfectly preserve the order anyway.
+  std::vector<std::optional<Index>> groupTypeIndices;
+  if (wasm.typeIndices.empty()) {
+    groupTypeIndices.resize(groups.size());
+  } else {
+    groupTypeIndices.reserve(groups.size());
+    for (auto group : groups) {
+      groupTypeIndices.emplace_back();
+      if (auto it = wasm.typeIndices.find(group[0]);
+          it != wasm.typeIndices.end()) {
+        groupTypeIndices.back() = it->second;
+      }
+    }
+  }
+
   auto order = TopologicalSort::minSort(deps, [&](size_t a, size_t b) {
+    auto indexA = groupTypeIndices[a];
+    auto indexB = groupTypeIndices[b];
+    // Groups with indices must be sorted before groups without indices to
+    // ensure transitivity of this comparison relation.
+    if (indexA.has_value() != indexB.has_value()) {
+      return indexA.has_value();
+    }
+    // Sort by preserved index if we can.
+    if (indexA && *indexA != *indexB) {
+      return *indexA < *indexB;
+    }
+    // Otherwise sort by weight and break ties by the arbitrary deterministic
+    // order in which we've collected types.
     auto weightA = weights[a];
     auto weightB = weights[b];
     if (weightA != weightB) {

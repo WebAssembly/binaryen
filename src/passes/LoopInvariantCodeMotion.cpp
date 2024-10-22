@@ -53,7 +53,7 @@ struct LoopInvariantCodeMotion
     LazyLocalGraph localGraphInstance(func, getModule());
     localGraph = &localGraphInstance;
     // Traverse the function.
-    super::doWalkFunction(func);
+    Super::doWalkFunction(func);
   }
 
   void visitLoop(Loop* loop) {

@@ -67,6 +67,7 @@ Pass* createI64ToI32LoweringPass();
 Pass* createInlineMainPass();
 Pass* createInliningPass();
 Pass* createInliningOptimizingPass();
+Pass* createJ2CLItableMergingPass();
 Pass* createJSPIPass();
 Pass* createJ2CLOptsPass();
 Pass* createLegalizeAndPruneJSInterfacePass();
