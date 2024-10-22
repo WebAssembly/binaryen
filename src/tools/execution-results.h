@@ -39,9 +39,7 @@ private:
   } state;
 
 public:
-  LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {
-    privateTag.sig = Signature(Type::none, Type::none);
-  }
+  LoggingExternalInterface(Loggings& loggings) : loggings(loggings) {}
 
   Literals callImport(Function* import, const Literals& arguments) override {
     if (import->module == "fuzzing-support") {
