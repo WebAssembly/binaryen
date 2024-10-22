@@ -1290,9 +1290,8 @@ void TranslateToFuzzReader::dropToLog(Function* func) {
     void visitDrop(Drop* curr) {
       if (parent.isLoggableType(curr->value->type) && parent.oneIn(2)) {
         auto target = parent.logImportNames[curr->value->type];
-        replaceCurrent(parent.builder.makeCall(target,
-                                               {curr->value},
-                                               Type::none));
+        replaceCurrent(
+          parent.builder.makeCall(target, {curr->value}, Type::none));
       }
     }
   };
