@@ -69,6 +69,8 @@ public:
         // Throw something. We use a (hopefully) private name here.
         auto payload = std::make_shared<ExnData>("__private", Literals{});
         throwException(WasmException{Literal(payload)});
+      } else {
+        WASM_UNREACHABLE("unknown fuzzer import");
       }
     } else if (import->module == ENV) {
       if (import->base == "log_execution") {

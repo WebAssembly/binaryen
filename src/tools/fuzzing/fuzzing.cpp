@@ -584,13 +584,13 @@ void TranslateToFuzzReader::addHangLimitSupport() {
 
 void TranslateToFuzzReader::addImportLoggingSupport() {
   for (auto type : loggableTypes) {
-    auto* func = new Function;
+    auto func = std::make_unique<Function>();
     Name name = std::string("log-") + type.toString();
     func->name = name;
     func->module = "fuzzing-support";
     func->base = name;
     func->type = Signature(type, Type::none);
-    wasm.addFunction(func);
+    wasm.addFunction(std::move(func));
   }
 }
 
@@ -600,12 +600,12 @@ void TranslateToFuzzReader::addImportThrowingSupport() {
   //       something not exported if out of bounds. First we must also export
   //       tags sometimes.
   throwImportName = Names::getValidFunctionName(wasm, "throw");
-  auto* func = new Function;
+  auto func = std::make_unique<Function>();
   func->name = throwImportName;
   func->module = "fuzzing-support";
   func->base = "throw";
   func->type = Signature(Type::none, Type::none);
-  wasm.addFunction(func);
+  wasm.addFunction(std::move(func));
 }
 
 void TranslateToFuzzReader::addHashMemorySupport() {
@@ -730,7 +730,8 @@ Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
 // TODO: return std::unique_ptr<Function>
 Function* TranslateToFuzzReader::addFunction() {
   LOGGING_PERCENT = upToSquared(100);
-  auto* func = new Function;
+  auto allocation = std::make_unique<Function>();
+  auto* func = allocation.get();
   func->name = Names::getValidFunctionName(wasm, "func");
   FunctionCreationContext context(*this, func);
   assert(funcContext->typeLocals.empty());
@@ -789,7 +790,7 @@ Function* TranslateToFuzzReader::addFunction() {
   }
 
   // Add hang limit checks after all other operations on the function body.
-  wasm.addFunction(func);
+  wasm.addFunction(std::move(allocation));
   // Export some functions, but not all (to allow inlining etc.). Try to export
   // at least one, though, to keep each testcase interesting. Only functions
   // with valid params and returns can be exported because the trap fuzzer
