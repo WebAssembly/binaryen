@@ -585,10 +585,11 @@ void TranslateToFuzzReader::addHangLimitSupport() {
 void TranslateToFuzzReader::addImportLoggingSupport() {
   for (auto type : loggableTypes) {
     auto func = std::make_unique<Function>();
-    Name name = std::string("log-") + type.toString();
-    func->name = name;
+    Name baseName = std::string("log-") + type.toString();
+    func->name = Names::getValidFunctionName(wasm, baseName);
+    logImportNames[type] = func->name;
     func->module = "fuzzing-support";
-    func->base = name;
+    func->base = baseName;
     func->type = Signature(type, Type::none);
     wasm.addFunction(std::move(func));
   }
@@ -709,8 +710,7 @@ Expression* TranslateToFuzzReader::makeHangLimitCheck() {
 
 Expression* TranslateToFuzzReader::makeImportLogging() {
   auto type = getLoggableType();
-  return builder.makeCall(
-    std::string("log-") + type.toString(), {make(type)}, Type::none);
+  return builder.makeCall(logImportNames[type], {make(type)}, Type::none);
 }
 
 Expression* TranslateToFuzzReader::makeImportThrowing(Type type) {
@@ -724,7 +724,7 @@ Expression* TranslateToFuzzReader::makeImportThrowing(Type type) {
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
   auto* hash = builder.makeCall(std::string("hashMemory"), {}, Type::i32);
-  return builder.makeCall(std::string("log-i32"), {hash}, Type::none);
+  return builder.makeCall(logImportNames[Type::i32], {hash}, Type::none);
 }
 
 // TODO: return std::unique_ptr<Function>
@@ -1289,8 +1289,8 @@ void TranslateToFuzzReader::dropToLog(Function* func) {
 
     void visitDrop(Drop* curr) {
       if (parent.isLoggableType(curr->value->type) && parent.oneIn(2)) {
-        replaceCurrent(parent.builder.makeCall(std::string("log-") +
-                                                 curr->value->type.toString(),
+        auto target = parent.logImportNames[curr->value->type];
+        replaceCurrent(parent.builder.makeCall(target,
                                                {curr->value},
                                                Type::none));
       }

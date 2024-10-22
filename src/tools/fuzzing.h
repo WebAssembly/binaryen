@@ -104,6 +104,8 @@ private:
 
   Name funcrefTableName;
 
+  std::unordered_map<Type, Name> logImportNames;
+
   Name throwImportName;
 
   std::unordered_map<Type, std::vector<Name>> globalsByType;
