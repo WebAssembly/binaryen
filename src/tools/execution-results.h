@@ -43,7 +43,7 @@ public:
 
   Literals callImport(Function* import, const Literals& arguments) override {
     if (import->module == "fuzzing-support") {
-      if (import->base.startsWith("log-")) {
+      if (import->base.startsWith("log")) {
         // This is a logging function like log-i32 or log-f64
         std::cout << "[LoggingExternalInterface logging";
         loggings.push_back(Literal()); // buffer with a None between calls
