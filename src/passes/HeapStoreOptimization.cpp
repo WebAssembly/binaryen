@@ -397,7 +397,6 @@ struct HeapStoreOptimization
     // TODO: Can we reuse the LocalGraph? Not really, as it is on the new,
     //       modified IR. So we are scanning the entire function each time here,
     //       which can be very slow... maybe a blocker
-    // TODO: ensure tests with sequences, br_if in the middle of the sequene of strut.sets
     LazyLocalGraph graph(getFunction(), getModule());
     auto foundProblem = false;
     for (auto* get : graph.getSetInfluences(localSet)) {
@@ -421,8 +420,6 @@ struct HeapStoreOptimization
       new_->operands[set->index] = new_->operands[set->index]->cast<Block>()->list[0];
     }
 
-
-    // No problem!
     return foundProblem;
   }
 
