@@ -394,10 +394,12 @@ struct HeapStoreOptimization
       new_->operands[set->index] = Builder(*getModule()).makeSequence(new_->operands[set->index], set->value);
       hasOldValue = true;
     }
-    // TODO: Can we reuse the LocalGraph?
+    // TODO: Can we reuse the LocalGraph? Not really, as it is on the new,
+    //       modified IR. So we are scanning the entire function each time here,
+    //       which can be very slow... maybe a blocker
     // TODO: ensure tests with sequences, br_if in the middle of the sequene of strut.sets
     LazyLocalGraph graph(getFunction(), getModule());
-
+    auto foundProblem = false;
     for (auto* get : graph.getSetInfluences(localSet)) {
       auto& sets = graph.getSets(get);
       // Our localSet must be present: these are the sets of a get influenced
@@ -405,21 +407,23 @@ struct HeapStoreOptimization
       assert(sets.count(localSet) == 1);
       // If there is anything other than us, there is dangerous mixing.
       if (sets.size() > 1) {
-        // Undo our changes and leave.
-        if (!hasOldValue) {
-          // Just remove the added operand.
-          new_->operands.pop_back();
-        } else {
-          // The old value is the first in the sequence.
-          new_->operands[set->index] = new_->operands[set->index]->cast<Block>()->list[0];
-        }
-        return true;
+        foundProblem = true;
+        break;
       }
+    }
+
+    // Undo the IR changes regardless.
+    if (!hasOldValue) {
+      // Just remove the added operand.
+      new_->operands.pop_back();
+    } else {
+      // The old value is the first in the sequence.
+      new_->operands[set->index] = new_->operands[set->index]->cast<Block>()->list[0];
     }
 
 
     // No problem!
-    return false;
+    return foundProblem;
   }
 
   EffectAnalyzer effects(Expression* expr) {
