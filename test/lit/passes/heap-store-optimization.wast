@@ -1207,4 +1207,151 @@
       )
     )
   )
+
+  (func $in-if-arm (param $x i32) (param $y i32) (result i32)
+    (local $ref (ref null $struct))
+    (if
+      (local.get $x)
+      (then
+        (block $out
+          ;; We cannot optimize here, as the struct.get outside of the loop can
+          ;; read different state if the br_if happens.
+          (struct.set $struct 0
+            (local.tee $ref
+              (struct.new $struct
+                (i32.const 1)
+              )
+            )
+            (block (result i32)
+              (br_if $out
+                (local.get $x)
+              )
+              (i32.const 42)
+            )
+          )
+        )
+      )
+    )
+    (struct.get $struct 0
+      (local.get $ref)
+    )
+  )
+
+  (func $in-if-arm-yes (param $x i32) (param $y i32) (result i32)
+    (local $ref (ref null $struct))
+    ;; As before, but he struct.set at the end is removed, so we can optimize.
+    (if
+      (local.get $x)
+      (then
+        (block $out
+          (struct.set $struct 0
+            (local.tee $ref
+              (struct.new $struct
+                (i32.const 1)
+              )
+            )
+            (block (result i32)
+              (br_if $out
+                (local.get $x)
+              )
+              (i32.const 42)
+            )
+          )
+        )
+      )
+    )
+    (i32.const 1337)
+  )
+
+  (func $control-flow-in-set-value-sequence (result i32)
+    (local $ref (ref null $struct))
+    (drop
+      (block $out (result i32)
+        (local.set $ref
+          ;; Also test struct.new_default here, with control flow.
+          (struct.new_default $struct)
+        )
+        ;; The struct.get outside is a problem, so we do not optimize here,
+        ;; nor the set after us.
+        (struct.set $struct 0
+          (br_if $out
+            (i32.const 1)
+            (i32.const 2)
+          )
+        )
+        (struct.set $struct 0
+          (i32.const 3)
+        )
+        ;; This struct.set is not a problem: if we branch, we don't reach it
+        ;; anyhow.
+        (drop
+          (struct.get $struct 0
+            (local.get $ref)
+          )
+        )
+      )
+    )
+    (struct.get $struct 0
+      (local.get $ref)
+    )
+  )
+
+  (func $control-flow-in-set-value-sequence-2 (result i32)
+    (local $ref (ref null $struct))
+    (drop
+      (block $out (result i32)
+        (local.set $ref
+          (struct.new_default $struct)
+        )
+        ;; As above, but the order of struct.sets is flipped. We can at least
+        ;; optimize the first here.
+        (struct.set $struct 0
+          (i32.const 3)
+        )
+        (struct.set $struct 0
+          (br_if $out
+            (i32.const 1)
+            (i32.const 2)
+          )
+        )
+        (drop
+          (struct.get $struct 0
+            (local.get $ref)
+          )
+        )
+      )
+    )
+    (struct.get $struct 0
+      (local.get $ref)
+    )
+  )
+
+  (func $control-flow-in-set-value-sequence-yes (result i32)
+    (local $ref (ref null $struct))
+    ;; As above, but the struct.get at the end is removed, allowing us to
+    ;; optimize it all.
+    (drop
+      (block $out (result i32)
+        (local.set $ref
+          (struct.new_default $struct)
+        )
+        (struct.set $struct 0
+          (i32.const 3)
+        )
+        (struct.set $struct 0
+          (br_if $out
+            (i32.const 1)
+            (i32.const 2)
+          )
+        )
+        ;; Note how this struct.get remains and does not stop us.
+        (drop
+          (struct.get $struct 0
+            (local.get $ref)
+          )
+        )
+      )
+    )
+    (i32.const 1337)
+  )
 )
