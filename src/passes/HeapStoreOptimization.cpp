@@ -91,7 +91,7 @@ struct HeapStoreOptimization
     //
     if (auto* tee = curr->ref->dynCast<LocalSet>()) {
       if (auto* new_ = tee->value->dynCast<StructNew>()) {
-        if (optimizeSubsequentStructSet(new_, curr, tee->index)) {
+        if (optimizeSubsequentStructSet(new_, curr, tee)) {
           // Success, so we do not need the struct.set any more, and the tee
           // can just be a set instead of us.
           tee->makeSet();
@@ -148,7 +148,7 @@ struct HeapStoreOptimization
         }
 
         // The pattern matches, try to optimize.
-        if (!optimizeSubsequentStructSet(new_, structSet, localGet->index)) {
+        if (!optimizeSubsequentStructSet(new_, structSet, localSet)) {
           break;
         } else {
           // Success. Replace the set with a nop, and continue to perhaps
@@ -210,7 +210,7 @@ struct HeapStoreOptimization
   // Returns true if we succeeded.
   bool optimizeSubsequentStructSet(StructNew* new_,
                                    StructSet* set,
-                                   Index refLocalIndex) {
+                                   LocalSet* localSet) {
     // Leave unreachable code for DCE, to avoid updating types here.
     if (new_->type == Type::unreachable || set->type == Type::unreachable) {
       return false;
@@ -218,7 +218,8 @@ struct HeapStoreOptimization
 
     auto index = set->index;
     auto& operands = new_->operands;
-
+    auto refLocalIndex = localSet->index;
+ 
     // Check for effects that prevent us moving the struct.set's value (X' in
     // the function comment) into its new position in the struct.new. First, it
     // must be ok to move it past the local.set (otherwise, it might read from
@@ -249,7 +250,7 @@ struct HeapStoreOptimization
 
     // We must also be careful of branches out from the value that skip the
     // local.set, see below.
-    if (canSkipLocalSet(set, setValueEffects)) {
+    if (canSkipLocalSet(set, setValueEffects, localSet)) {
       return false;
     }
 
@@ -297,9 +298,10 @@ struct HeapStoreOptimization
   // later down will not get the proper value. This is the problem we must
   // detect here.
   //
-  // We are given a struct.set and the computed effects of its value (the caller
-  // already has those, so this is an optimization to avoid recomputation).
-  bool canSkipLocalSet(StructSet* set, const EffectAnalyzer& setValueEffects) {
+  // We are given a struct.set, the computed effects of its value (the caller
+  // already has those, so this is an optimization to avoid recomputation), and
+  // the local.set.
+  bool canSkipLocalSet(StructSet* set, const EffectAnalyzer& setValueEffects, LocalSet* localSet) {
     // To detect the above problem, consider this code in more detail, where the
     // value being set is a br_if, which can branch:
     //
@@ -340,7 +342,8 @@ struct HeapStoreOptimization
     // that local before the code here. For C, this is because of the branch,
     // and for D, it was true even before the optimization, because of the if.
     // It is that mixing of our local.set with another that is a problem here,
-    // since it means we can read the value even if we branch.
+    // since it means we can read the value even if we branch. Note that we must
+    // compute the graph *after* the optimization .. ?
 
     // First, if the set's value cannot branch at all, then we have no problem.
     if (!setValueEffects.transfersControlFlow()) {
@@ -348,15 +351,15 @@ struct HeapStoreOptimization
     }
 
     // We may branch, so do the analysis above. As we only need one particular
-    // local.set, use a lazy graph. We can keep using the same one in each
+    // local.set, use a lazy graph. TODO We can keep using the same one in each
     // instance of this class, because there is no interaction between the sets
-    // (that is, if we optimize one, it means ...
-    LazyLocalGraph
-    
-    Need a way to UNDO the operation! but the caller should do it.
-    mybe a pre-call to note state before, then optimize (send in pre-call info)
-    then unto on the caller side if failure. yes
-    
+    // (that is, if we optimize one, it means ... XXX but we use the graph AFTER?
+    LazyLocalGraph graph(getFunction(), getModule());
+
+    for (auto* get : graph.getSetInfluences(localSet)) {
+      auto& sets = graph.getSets(get);
+      assert(sets.count(localSet
+    }
 
     // No problem!
     return false;
