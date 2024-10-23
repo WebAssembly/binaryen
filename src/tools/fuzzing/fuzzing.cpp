@@ -176,9 +176,10 @@ void TranslateToFuzzReader::build() {
   setupGlobals();
   if (wasm.features.hasExceptionHandling()) {
     setupTags();
+    addImportThrowingSupport();
   }
-  modifyInitialFunctions();
   addImportLoggingSupport();
+  modifyInitialFunctions();
   // keep adding functions until we run out of input
   while (!random.finished()) {
     auto* func = addFunction();
@@ -583,14 +584,29 @@ void TranslateToFuzzReader::addHangLimitSupport() {
 
 void TranslateToFuzzReader::addImportLoggingSupport() {
   for (auto type : loggableTypes) {
-    auto* func = new Function;
-    Name name = std::string("log-") + type.toString();
-    func->name = name;
+    auto func = std::make_unique<Function>();
+    Name baseName = std::string("log-") + type.toString();
+    func->name = Names::getValidFunctionName(wasm, baseName);
+    logImportNames[type] = func->name;
     func->module = "fuzzing-support";
-    func->base = name;
+    func->base = baseName;
     func->type = Signature(type, Type::none);
-    wasm.addFunction(func);
+    wasm.addFunction(std::move(func));
   }
+}
+
+void TranslateToFuzzReader::addImportThrowingSupport() {
+  // Throw some kind of exception from JS.
+  // TODO: Send an index, which is which exported wasm Tag we should throw, or
+  //       something not exported if out of bounds. First we must also export
+  //       tags sometimes.
+  throwImportName = Names::getValidFunctionName(wasm, "throw");
+  auto func = std::make_unique<Function>();
+  func->name = throwImportName;
+  func->module = "fuzzing-support";
+  func->base = "throw";
+  func->type = Signature(Type::none, Type::none);
+  wasm.addFunction(std::move(func));
 }
 
 void TranslateToFuzzReader::addHashMemorySupport() {
@@ -692,21 +708,30 @@ Expression* TranslateToFuzzReader::makeHangLimitCheck() {
                          builder.makeConst(int32_t(1)))));
 }
 
-Expression* TranslateToFuzzReader::makeLogging() {
+Expression* TranslateToFuzzReader::makeImportLogging() {
   auto type = getLoggableType();
-  return builder.makeCall(
-    std::string("log-") + type.toString(), {make(type)}, Type::none);
+  return builder.makeCall(logImportNames[type], {make(type)}, Type::none);
+}
+
+Expression* TranslateToFuzzReader::makeImportThrowing(Type type) {
+  // We throw from the import, so this call appears to be none and not
+  // unreachable.
+  assert(type == Type::none);
+
+  // TODO: This and makeThrow should probably be rare, as they halt the program.
+  return builder.makeCall(throwImportName, {}, Type::none);
 }
 
 Expression* TranslateToFuzzReader::makeMemoryHashLogging() {
   auto* hash = builder.makeCall(std::string("hashMemory"), {}, Type::i32);
-  return builder.makeCall(std::string("log-i32"), {hash}, Type::none);
+  return builder.makeCall(logImportNames[Type::i32], {hash}, Type::none);
 }
 
 // TODO: return std::unique_ptr<Function>
 Function* TranslateToFuzzReader::addFunction() {
   LOGGING_PERCENT = upToSquared(100);
-  auto* func = new Function;
+  auto allocation = std::make_unique<Function>();
+  auto* func = allocation.get();
   func->name = Names::getValidFunctionName(wasm, "func");
   FunctionCreationContext context(*this, func);
   assert(funcContext->typeLocals.empty());
@@ -765,7 +790,7 @@ Function* TranslateToFuzzReader::addFunction() {
   }
 
   // Add hang limit checks after all other operations on the function body.
-  wasm.addFunction(func);
+  wasm.addFunction(std::move(allocation));
   // Export some functions, but not all (to allow inlining etc.). Try to export
   // at least one, though, to keep each testcase interesting. Only functions
   // with valid params and returns can be exported because the trap fuzzer
@@ -1215,10 +1240,13 @@ void TranslateToFuzzReader::modifyInitialFunctions() {
   // the end (currently that is not needed atm, but it might in the future).
   for (Index i = 0; i < wasm.functions.size(); i++) {
     auto* func = wasm.functions[i].get();
+    // We can't allow extra imports, as the fuzzing infrastructure wouldn't
+    // know what to provide. Keep only our own fuzzer imports.
+    if (func->imported() && func->module == "fuzzing-support") {
+      continue;
+    }
     FunctionCreationContext context(*this, func);
     if (func->imported()) {
-      // We can't allow extra imports, as the fuzzing infrastructure wouldn't
-      // know what to provide.
       func->module = func->base = Name();
       func->body = make(func->getResults());
     }
@@ -1261,10 +1289,9 @@ void TranslateToFuzzReader::dropToLog(Function* func) {
 
     void visitDrop(Drop* curr) {
       if (parent.isLoggableType(curr->value->type) && parent.oneIn(2)) {
-        replaceCurrent(parent.builder.makeCall(std::string("log-") +
-                                                 curr->value->type.toString(),
-                                               {curr->value},
-                                               Type::none));
+        auto target = parent.logImportNames[curr->value->type];
+        replaceCurrent(
+          parent.builder.makeCall(target, {curr->value}, Type::none));
       }
     }
   };
@@ -1430,7 +1457,7 @@ Expression* TranslateToFuzzReader::_makenone() {
   auto choice = upTo(100);
   if (choice < LOGGING_PERCENT) {
     if (choice < LOGGING_PERCENT / 2) {
-      return makeLogging();
+      return makeImportLogging();
     } else {
       return makeMemoryHashLogging();
     }
@@ -1455,6 +1482,7 @@ Expression* TranslateToFuzzReader::_makenone() {
     .add(FeatureSet::Atomics, &Self::makeAtomic)
     .add(FeatureSet::ExceptionHandling, &Self::makeTry)
     .add(FeatureSet::ExceptionHandling, &Self::makeTryTable)
+    .add(FeatureSet::ExceptionHandling, &Self::makeImportThrowing)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeCallRef)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeStructSet)
     .add(FeatureSet::ReferenceTypes | FeatureSet::GC, &Self::makeArraySet)
