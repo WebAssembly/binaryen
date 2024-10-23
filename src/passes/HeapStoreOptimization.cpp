@@ -250,7 +250,7 @@ struct HeapStoreOptimization
 
     // We must also be careful of branches out from the value that skip the
     // local.set, see below.
-    if (canSkipLocalSet(set, setValueEffects, localSet)) {
+    if (canSkipLocalSet(new_, set, localSet, setValueEffects)) {
       return false;
     }
 
@@ -301,34 +301,41 @@ struct HeapStoreOptimization
   // We are given a struct.set, the computed effects of its value (the caller
   // already has those, so this is an optimization to avoid recomputation), and
   // the local.set.
-  bool canSkipLocalSet(StructSet* set, const EffectAnalyzer& setValueEffects, LocalSet* localSet) {
+  bool canSkipLocalSet(StructNew* new_,
+                       StructSet* set,
+                       LocalSet* localSet,
+                       const EffectAnalyzer& setValueEffects) {
     // To detect the above problem, consider this code in more detail, where the
     // value being set is a br_if, which can branch:
     //
     //  (if
     //    (..condition..)
-    //    (block $out
-    //      (local.set $x (struct.new X Y Z))
-    //      (struct.set (local.get $x) (br_if $out))  ;; A
-    //      (struct.set (local.get $x) (..))          ;; B
+    //    (then
+    //      (block $out
+    //        (local.set $x (struct.new X Y Z))
+    //        (struct.set (local.get $x) (br_if $out)) ;; A
+    //        (struct.set (local.get $x) (..))         ;; B
+    //      )
+    //      (struct.set (local.get $x) (..))           ;; C
     //    )
-    //    (struct.set (local.get $x) (..))            ;; C
     //  )
-    //  (struct.set (local.get $x) (..))              ;; D
+    //  (struct.set (local.get $x) (..))               ;; D
     //
     // We annotate the struct.sets here with A, B, C, D. If we optimize, we'd
     // move the br_if to the struct.new, and comment out A:
     //
     //  (if
     //    (..condition..)
-    //    (block $out
-    //      (local.set $x (struct.new (br_if $out) Y Z))  ;; br_if moved here
-    //      ;; (struct.set (local.get $x) )               ;; A is commented out
-    //      (struct.set (local.get $x) (..))              ;; B
+    //    (then
+    //      (block $out
+    //        (local.set $x (struct.new (br_if $out) Y Z)) ;; br_if moved here
+    //        ;; (struct.set (local.get $x) )              ;; A is commented out
+    //        (struct.set (local.get $x) (..))             ;; B
+    //      )
+    //      (struct.set (local.get $x) (..))               ;; C
     //    )
-    //    (struct.set (local.get $x) (..))                ;; C
     //  )
-    //  (struct.set (local.get $x) (..))                  ;; D
+    //  (struct.set (local.get $x) (..))                   ;; D
     //
     // No problem occurs on B: if we do not branch then we keep reading from
     // the struct.new, including the br_if value that was applied to it, and if
@@ -343,23 +350,73 @@ struct HeapStoreOptimization
     // and for D, it was true even before the optimization, because of the if.
     // It is that mixing of our local.set with another that is a problem here,
     // since it means we can read the value even if we branch. Note that we must
-    // compute the graph *after* the optimization .. ?
+    // compute the graph *after* the optimization, as C has no mixing before: it
+    // is the placing of the br_if in the struct.new that causes the mixing.
 
     // First, if the set's value cannot branch at all, then we have no problem.
     if (!setValueEffects.transfersControlFlow()) {
       return false;
     }
 
-    // We may branch, so do the analysis above. As we only need one particular
-    // local.set, use a lazy graph. TODO We can keep using the same one in each
-    // instance of this class, because there is no interaction between the sets
-    // (that is, if we optimize one, it means ... XXX but we use the graph AFTER?
+    // We may branch, so do the analysis above. As mentioned above, we must
+    // analyze the state after the optimization. We simulate that by moving the
+    // struct.set's value into the struct.new, and nothing else: the resulting
+    // IR is not fully valid, but it is enough for LocalGraph. Specifically we
+    // end up with this:
+    //
+    //  (if
+    //    (..condition..)
+    //    (then
+    //      (block $out
+    //        (local.set $x (struct.new (br_if $out) Y Z)) ;; br_if copied here
+    //        (struct.set (local.get $x) (br_if $out))     ;; A unchanged
+    //        (struct.set (local.get $x) (..))             ;; B
+    //      )
+    //      (struct.set (local.get $x) (..))               ;; C
+    //    )
+    //  )
+    //  (struct.set (local.get $x) (..))                   ;; D
+    //
+    // (This is invalid because we have two references to the value, and it is
+    // incorrect because we have the possible branch twice, but all we really
+    // need is to have the branch on the struct.new for us to see the effects.)
+    bool hasOldValue;
+    if (new_->isWithDefault()) {
+      // Place the value as the first item. It is in the wrong index, but that
+      // does not matter.
+      hasOldValue = false;
+      new_->operands.push_back(set->value);
+    } else {
+      // Combined the old and new values in a sequence (we don't want to just
+      // remove the old). Note that the sequence is not fully valid IR (the
+      // first element returns a value), but that does not matter in the
+      // analysis.
+      new_->operands[set->index] = Builder(*getModule()).makeSequence(new_->operands[set->index], set->value);
+      hasOldValue = true;
+    }
+    // TODO: Can we reuse the LocalGraph?
+    // TODO: ensure tests with sequences, br_if in the middle of the sequene of strut.sets
     LazyLocalGraph graph(getFunction(), getModule());
 
     for (auto* get : graph.getSetInfluences(localSet)) {
       auto& sets = graph.getSets(get);
-      assert(sets.count(localSet
+      // Our localSet must be present: these are the sets of a get influenced
+      // by it.
+      assert(sets.count(localSet) == 1);
+      // If there is anything other than us, there is dangerous mixing.
+      if (sets.size() > 1) {
+        // Undo our changes and leave.
+        if (!hasOldValue) {
+          // Just remove the added operand.
+          new_->operands.pop_back();
+        } else {
+          // The old value is the first in the sequence.
+          new_->operands[set->index] = new_->operands[set->index]->cast<Block>()->list[0];
+        }
+        return true;
+      }
     }
+
 
     // No problem!
     return false;
