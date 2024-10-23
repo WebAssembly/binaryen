@@ -219,7 +219,7 @@ struct HeapStoreOptimization
     auto index = set->index;
     auto& operands = new_->operands;
     auto refLocalIndex = localSet->index;
- 
+
     // Check for effects that prevent us moving the struct.set's value (X' in
     // the function comment) into its new position in the struct.new. First, it
     // must be ok to move it past the local.set (otherwise, it might read from
@@ -391,7 +391,9 @@ struct HeapStoreOptimization
       // remove the old). Note that the sequence is not fully valid IR (the
       // first element returns a value), but that does not matter in the
       // analysis.
-      new_->operands[set->index] = Builder(*getModule()).makeSequence(new_->operands[set->index], set->value);
+      new_->operands[set->index] =
+        Builder(*getModule())
+          .makeSequence(new_->operands[set->index], set->value);
       hasOldValue = true;
     }
     // TODO: Can we reuse the LocalGraph? Not really, as it is on the new,
@@ -417,7 +419,8 @@ struct HeapStoreOptimization
       new_->operands.pop_back();
     } else {
       // The old value is the first in the sequence.
-      new_->operands[set->index] = new_->operands[set->index]->cast<Block>()->list[0];
+      new_->operands[set->index] =
+        new_->operands[set->index]->cast<Block>()->list[0];
     }
 
     return foundProblem;
