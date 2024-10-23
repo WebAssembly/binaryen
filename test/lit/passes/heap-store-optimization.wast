@@ -1274,12 +1274,14 @@
         ;; The struct.get outside is a problem, so we do not optimize here,
         ;; nor the set after us.
         (struct.set $struct 0
+          (local.get $ref)
           (br_if $out
             (i32.const 1)
             (i32.const 2)
           )
         )
         (struct.set $struct 0
+          (local.get $ref)
           (i32.const 3)
         )
         ;; This struct.set is not a problem: if we branch, we don't reach it
@@ -1289,6 +1291,7 @@
             (local.get $ref)
           )
         )
+        (i32.const 42)
       )
     )
     (struct.get $struct 0
@@ -1306,9 +1309,11 @@
         ;; As above, but the order of struct.sets is flipped. We can at least
         ;; optimize the first here.
         (struct.set $struct 0
+          (local.get $ref)
           (i32.const 3)
         )
         (struct.set $struct 0
+          (local.get $ref)
           (br_if $out
             (i32.const 1)
             (i32.const 2)
@@ -1319,6 +1324,7 @@
             (local.get $ref)
           )
         )
+        (i32.const 42)
       )
     )
     (struct.get $struct 0
@@ -1336,9 +1342,11 @@
           (struct.new_default $struct)
         )
         (struct.set $struct 0
+          (local.get $ref)
           (i32.const 3)
         )
         (struct.set $struct 0
+          (local.get $ref)
           (br_if $out
             (i32.const 1)
             (i32.const 2)
@@ -1350,6 +1358,7 @@
             (local.get $ref)
           )
         )
+        (i32.const 42)
       )
     )
     (i32.const 1337)
