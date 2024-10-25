@@ -464,14 +464,7 @@ struct LocalGraphFlower
         while (index > 0) {
           index--;
           auto* action = block->actions[index];
-          if (auto* get = action->dynCast<LocalGet>()) {
-            // This is some get. If it is one of the gets we are scanning, then
-            // either we have processed it already, or will do so later, and we
-            // can halt.
-            if (gets.count(get)) {
-              break;
-            }
-          } else if (auto* otherSet = action->dynCast<LocalSet>()) {
+          if (auto* otherSet = action->dynCast<LocalSet>()) {
             if (otherSet == set) {
               // We arrived at the set: add this get and stop flowing it.
               ret.insert(get);
@@ -486,6 +479,10 @@ struct LocalGraphFlower
             // We ran into the obstacle. Halt this flow.
             break;
           }
+          // TODO: If the action it is one of the gets we are scanning, then
+          // either we have processed it already, or will do so later, and we
+          // can halt. As an optimization, we could check if we've processed
+          // it already and act accordingly.
 
           // If we finished scanning this block (we reached the top), flow to
           // predecessors.
@@ -499,7 +496,6 @@ struct LocalGraphFlower
       }
     }
 
-    // No get reached the set.
     return ret;
   }
 };
