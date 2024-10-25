@@ -29,27 +29,22 @@ TEST_F(LocalGraphTest, ObstacleBasics) {
 
   // Get access to the contents of the wasm.
   auto* func = wasm.functions[0].get();
-  auto* block = func->body;
-  auto* nopA = block->list[0];
-  EXPECT_TRUE(nopA->is<Nop>());
-  auto* set = block->list[0];
-  EXPECT_TRUE(set->is<LocalSet>());
-  auto* nopB = block->list[0];
-  EXPECT_TRUE(nopB->is<Nop>());
-  auto* get = block->list[0];
-  EXPECT_TRUE(get->is<LocalGet>());
+  auto* block = func->body->cast<Block>();
+  auto* nopA = block->list[0]->cast<Nop>();
+  auto* set = block->list[1]->cast<LocalSet>();
+  auto* nopB = block->list[2]->cast<Nop>();
 
   {
     LazyLocalGraph graph(func, &wasm);
     // The set has one get.
-    EXPECT_EQ(graph.getSetInfluences(set).size(), 1);
+    EXPECT_EQ(graph.getSetInfluences(set).size(), 1U);
   }
 
   {
     // Construct the graph with an obstacle class, Nop.
     LazyLocalGraph graph(func, &wasm, Nop::SpecificId);
     // The set has one get, like before.
-    EXPECT_EQ(graph.getSetInfluences(set).size(), 1);
+    EXPECT_EQ(graph.getSetInfluences(set).size(), 1U);
     // If the first nop is an obstacle, nothing changes: the path between the
     // set and get does not include it.
     EXPECT_TRUE(graph.setHasGetsDespiteObstacle(set, nopA));

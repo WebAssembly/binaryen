@@ -734,8 +734,7 @@ bool LazyLocalGraph::setHasGetsDespiteObstacle(LocalSet* set, Expression* obstac
 
   // Compute the gets that the set normally reaches. We will flow back from
   // those.
-  computeSetInfluences(set);
-  return flower->getReachesSetDespiteObstacle(setInfluences[set], set, obstacle);
+  return flower->getReachesSetDespiteObstacle(getSetInfluences(set), set, obstacle);
 }
 
 } // namespace wasm
