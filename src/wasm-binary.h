@@ -1156,10 +1156,7 @@ enum MemoryAccess {
 
 enum MemoryFlags { HasMaximum = 1 << 0, IsShared = 1 << 1, Is64 = 1 << 2 };
 
-enum FeaturePrefix {
-  FeatureUsed = '+',
-  FeatureDisallowed = '-'
-};
+enum FeaturePrefix { FeatureUsed = '+', FeatureDisallowed = '-' };
 
 } // namespace BinaryConsts
 
