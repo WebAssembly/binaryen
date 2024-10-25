@@ -441,6 +441,61 @@ struct LocalGraphFlower
       }
     }
   }
+
+  // Given a bunch of gets, see if any of them reach the given set despite the
+  // blocker expression stopping the flow whenever it is reached.
+  bool getReachesSetDespiteBlocker(const SetInfluences& gets, LocalSet* localSet, Expression* blocker) {
+    for (auto* get : gets) {
+      // TODO: rename "blocker" to avoid "block" similarity? Stopper? Obstacle?
+      auto& location = getLocations[get];
+      if (!location.block) {
+        // We did not find location info for this get, which means it is
+        // unreachable.
+        continue;
+      }
+
+      // Use a work queue of block locations to scan backwards from.
+      // Specifically we must scan the first index above it (i.e., the original
+      // location has a local.get there, so we start one before it).
+      UniqueDeferredNonrepeatingQueue<BlockLocation> work;
+      work.push(location);
+      while (!work.empty()) {
+        auto location = work.pop();
+
+        // Scan backwards through this block.
+        auto index = location.index;
+        while (blockIndex > 0) {
+          blockIndex--;
+          auto* action = block->actions[blockIndex];
+          if (auto* get = action->dynCast<LocalGet>()) {
+            // This is some get. If it is one of the gets we are scanning, then
+            // either we have processed it already, or will do so later, and we
+            // can halt.
+            if (gets.count(get)) {
+              break;
+            }
+          } else if (auto* set = action->dynCast<LocalSet>()) {
+            // We arrived at the set.
+            return true;
+          } else if (action == blocker) {
+            // We ran into the blocker. Halt this flow.
+            break;
+          }
+
+          // If we finished scanning this block (we reached the top), flow to
+          // predecessors.
+          if (blockIndex == 0) {
+            for (auto* pred : location.block->in) {
+              work.push(pred);
+            }
+          }
+        }
+      }
+    }
+
+    // No get reached the set.
+    return false;
+  }
 };
 
 // LocalGraph implementation
@@ -665,6 +720,22 @@ void LazyLocalGraph::computeLocations() const {
   if (!flower) {
     makeFlower();
   }
+}
+
+bool LazyLocalGraph::setHasGetsDespiteBlocker(LocalSet* localSet, Expression* blocker) {
+  // We must have been initialized with the proper blocker class, so that we
+  // prepared the flower (if it was computed before) with that class in the
+  // graph.
+  assert(blockerClass && blocker->_id == *blockerClass);
+
+  if (!flower) {
+    makeFlower();
+  }
+
+  // Compute the gets that the set normally reaches. We will flow back from
+  // those.
+  computeSetInfluences(set);
+  flower->getReachesSetDespiteBlocker(setInfluences[set], localSet, blocker);
 }
 
 } // namespace wasm
