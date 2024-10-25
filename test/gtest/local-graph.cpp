@@ -195,4 +195,46 @@ TEST_F(LocalGraphTest, ObstacleMultiSet) {
   EXPECT_FALSE(graph.setHasGetsDespiteObstacle(setB, nop));
 }
 
-// TODO sets in an if
+TEST_F(LocalGraphTest, ObstacleMultiSetIf) {
+  auto moduleText = R"wasm(
+    (module
+      (func $foo
+        ;; Two sets in an if.
+        (local $x i32)
+        (if
+          (i32.const 42)
+          (then
+            (local.set $x
+              (i32.const 10)
+            )
+          )
+          (else
+            (local.set $x
+              (i32.const 20)
+            )
+          )
+        )
+        (nop)
+        (drop
+          (local.get $x)
+        )
+      )
+    )
+  )wasm";
+  Module wasm;
+  WATParser::parseModule(wasm, moduleText);
+  auto* func = wasm.functions[0].get();
+  auto* block = func->body->cast<Block>();
+  auto* iff = block->list[0]->cast<If>();
+  auto* setA = iff->ifTrue->cast<LocalSet>();
+  auto* setB = iff->ifFalse->cast<LocalSet>();
+  auto* nop = block->list[1]->cast<Nop>();
+
+  LazyLocalGraph graph(func, &wasm, Nop::SpecificId);
+  // Both sets have a set.
+  EXPECT_EQ(graph.getSetInfluences(setA).size(), 1U);
+  EXPECT_EQ(graph.getSetInfluences(setB).size(), 1U);
+  // The nop blocks both.
+  EXPECT_FALSE(graph.setHasGetsDespiteObstacle(setA, nop));
+  EXPECT_FALSE(graph.setHasGetsDespiteObstacle(setB, nop));
+}
