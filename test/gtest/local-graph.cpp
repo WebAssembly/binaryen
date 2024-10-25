@@ -195,6 +195,53 @@ TEST_F(LocalGraphTest, ObstacleMultiSet) {
   EXPECT_FALSE(graph.setHasGetsDespiteObstacle(setB, nop));
 }
 
+TEST_F(LocalGraphTest, ObstacleMultiSetIndexes) {
+  auto moduleText = R"wasm(
+    (module
+      (func $foo
+        ;; Two sets of different indexes.
+        (local $x i32)
+        (local $y i32)
+        (local.set $x
+          (i32.const 10)
+        )
+        (local.set $y
+          (i32.const 20)
+        )
+        (nop)
+        (drop
+          (local.get $x)
+        )
+        (nop)
+        (drop
+          (local.get $y)
+        )
+        (nop)
+      )
+    )
+  )wasm";
+  Module wasm;
+  WATParser::parseModule(wasm, moduleText);
+  auto* func = wasm.functions[0].get();
+  auto* block = func->body->cast<Block>();
+  auto* setA = block->list[0]->cast<LocalSet>();
+  auto* setB = block->list[1]->cast<LocalSet>();
+  auto* nopA = block->list[2]->cast<Nop>();
+  auto* nopB = block->list[4]->cast<Nop>();
+  auto* nopC = block->list[6]->cast<Nop>();
+
+  LazyLocalGraph graph(func, &wasm, Nop::SpecificId);
+  // The first nop blocks them both.
+  EXPECT_FALSE(graph.setHasGetsDespiteObstacle(setA, nopA));
+  EXPECT_FALSE(graph.setHasGetsDespiteObstacle(setB, nopA));
+  // The second nop only blocks one.
+  EXPECT_TRUE(graph.setHasGetsDespiteObstacle(setA, nopB));
+  EXPECT_FALSE(graph.setHasGetsDespiteObstacle(setB, nopB));
+  // The last nop blocks nothing.
+  EXPECT_TRUE(graph.setHasGetsDespiteObstacle(setA, nopC));
+  EXPECT_TRUE(graph.setHasGetsDespiteObstacle(setB, nopC));
+}
+
 TEST_F(LocalGraphTest, ObstacleMultiSetIf) {
   auto moduleText = R"wasm(
     (module
