@@ -389,9 +389,8 @@ struct LocalGraphFlower
           // It will have the same sets as us.
           gets.push_back(otherGet);
         }
-      } else if (auto* set = action->dynCast<LocalSet>()) {
+      } else if (auto* set = curr->dynCast<LocalSet>()) {
         // This is a set.
-        auto* set = curr->cast<LocalSet>();
         if (set->index == index) {
           // This is the only set writing to our gets.
           for (auto* get : gets) {
