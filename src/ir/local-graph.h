@@ -180,7 +180,7 @@ struct LocalGraphFlower;
 struct LazyLocalGraph : public LocalGraphBase {
   // We optionally receive an expression class to consider relevant for blocker
   // queries.
-  LazyLocalGraph(Function* func, Module* module = nullptr, std::optional<Expression::Id> blocker = std::nullopt);
+  LazyLocalGraph(Function* func, Module* module = nullptr, std::optional<Expression::Id> blockerClass = std::nullopt);
   ~LazyLocalGraph();
 
   // Similar APIs as in LocalGraph, but lazy versions. Each of them does a
@@ -230,8 +230,12 @@ struct LazyLocalGraph : public LocalGraphBase {
     return *locations;
   }
 
+  // Query whether a set reaches any gets, under the assumption that a given
+  // expression blocks the flow. The blocker must be of the class blockerClass.
+  bool setHasGetsDespiteBlocker(LocalSet* localSet, Expression* blocker);
+
 private:
-  std::optional<Expression::Id> blocker;
+  std::optional<Expression::Id> blockerClass;
 
   // These data structures are mutable so that we can memoize.
   mutable GetSetsMap getSetsMap;

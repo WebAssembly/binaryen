@@ -46,14 +46,14 @@ struct LocalGraphFlower
   LocalGraph::GetSetsMap& getSetsMap;
   LocalGraph::Locations& locations;
   Function* func;
-  std::optional<Expression::Id> blocker;
+  std::optional<Expression::Id> blockerClass;
 
   LocalGraphFlower(LocalGraph::GetSetsMap& getSetsMap,
                    LocalGraph::Locations& locations,
                    Function* func,
                    Module* module,
-                   std::optional<Expression::Id> blocker = std::nullopt)
-    : getSetsMap(getSetsMap), locations(locations), func(func), blocker(blocker) {
+                   std::optional<Expression::Id> blockerClass = std::nullopt)
+    : getSetsMap(getSetsMap), locations(locations), func(func), blockerClass(blockerClass) {
     setFunction(func);
     setModule(module);
     // create the CFG by walking the IR
@@ -78,7 +78,7 @@ struct LocalGraphFlower
     // If this is a relevant action (a get or set, or there is a blocker class
     // and this is an instance of it) then note it.
     if (curr->is<LocalGet>() || curr->is<LocalSet>() ||
-        (blocker && curr->_id == *blocker)) {
+        (blockerClass && curr->_id == *blockerClass)) {
       currBasicBlock->contents.actions.emplace_back(curr);
       locations[curr] = getCurrentPointer();
       if (auto* set = curr->dynCast<LocalSet>()) {
@@ -556,8 +556,8 @@ bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
 
 // LazyLocalGraph
 
-LazyLocalGraph::LazyLocalGraph(Function* func, Module* module, std::optional<Expression::Id> blocker)
-  : LocalGraphBase(func, module), blocker(blocker) {}
+LazyLocalGraph::LazyLocalGraph(Function* func, Module* module, std::optional<Expression::Id> blockerClass)
+  : LocalGraphBase(func, module), blockerClass(blockerClass) {}
 
 void LazyLocalGraph::makeFlower() const {
   // |locations| is set here and filled in by |flower|.
@@ -565,7 +565,7 @@ void LazyLocalGraph::makeFlower() const {
   locations.emplace();
 
   flower =
-    std::make_unique<LocalGraphFlower>(getSetsMap, *locations, func, module, blocker);
+    std::make_unique<LocalGraphFlower>(getSetsMap, *locations, func, module, blockerClass);
 
   flower->prepareLaziness();
 

@@ -301,7 +301,7 @@ struct HeapStoreOptimization
   // We are given a struct.set, the computed effects of its value (the caller
   // already has those, so this is an optimization to avoid recomputation), and
   // the local.set.
-  bool canSkipLocalSet(StructNew* new_,
+  bool canSkipLocalSet(StructNew* new_, // XXX do we use these all?
                        StructSet* set,
                        LocalSet* localSet,
                        const EffectAnalyzer& setValueEffects) {
@@ -372,61 +372,7 @@ struct HeapStoreOptimization
 
     // TODO: reuse!!1
     LazyLocalGraph graph(getFunction(), getModule(), StructSet::Id);
-
-
-
-
-
-..
-    bool hasOldValue;
-    if (new_->isWithDefault()) {
-      // Place the value as the first item. It is in the wrong index, but that
-      // does not matter.
-      hasOldValue = false;
-      new_->operands.push_back(set->value);
-    } else {
-      // Combined the old and new values in a sequence (we don't want to just
-      // remove the old). Note that the sequence is not fully valid IR (the
-      // first element returns a value), but that does not matter in the
-      // analysis.
-      new_->operands[set->index] =
-        Builder(*getModule())
-          .makeSequence(new_->operands[set->index], set->value);
-      hasOldValue = true;
-    }
-    // TODO: Can we reuse the LocalGraph? Not really, as it is on the new,
-    //       modified IR. So we are scanning the entire function each time here,
-    //       which can be very slow... maybe a blocker
-    LazyLocalGraph graph(getFunction(), getModule());
-    auto foundProblem = false;
-    for (auto* get : graph.getSetInfluences(localSet)) {
-      auto& sets = graph.getSets(get);
-      // Our localSet must be present: these are the sets of a get influenced
-      // by it.
-      assert(sets.count(localSet) == 1);
-      // If there is anything other than us, there is dangerous mixing.
-      if (sets.size() > 1) {
-        foundProblem = true;
-        break;
-      }
-    }
-
-    // Undo the IR changes regardless.
-    if (!hasOldValue) {
-      // Just remove the added operand.
-      new_->operands.pop_back();
-    } else {
-      // The old value is the first in the sequence.
-      new_->operands[set->index] =
-        new_->operands[set->index]->cast<Block>()->list[0];
-    }
-..
-
-
-
-
-
-    return foundProblem;
+    return graph.setHasGetsDespiteBlocker(localSet, set);
   }
 
   EffectAnalyzer effects(Expression* expr) {
