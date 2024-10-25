@@ -178,7 +178,9 @@ private:
 struct LocalGraphFlower;
 
 struct LazyLocalGraph : public LocalGraphBase {
-  LazyLocalGraph(Function* func, Module* module = nullptr);
+  // We optionally receive an expression class to consider relevant for blocker
+  // queries.
+  LazyLocalGraph(Function* func, Module* module = nullptr, std::optional<Expression::Id> blocker = std::nullopt);
   ~LazyLocalGraph();
 
   // Similar APIs as in LocalGraph, but lazy versions. Each of them does a
@@ -229,6 +231,8 @@ struct LazyLocalGraph : public LocalGraphBase {
   }
 
 private:
+  std::optional<Expression::Id> blocker;
+
   // These data structures are mutable so that we can memoize.
   mutable GetSetsMap getSetsMap;
 

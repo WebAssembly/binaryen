@@ -42,20 +42,22 @@ struct Info {
 // flow helper class. flows the gets to their sets
 
 struct LocalGraphFlower
-  : public CFGWalker<LocalGraphFlower, Visitor<LocalGraphFlower>, Info> {
+  : public CFGWalker<LocalGraphFlower, UnifiedExpressionVisitor<LocalGraphFlower>, Info> {
   LocalGraph::GetSetsMap& getSetsMap;
   LocalGraph::Locations& locations;
   Function* func;
+  std::optional<Expression::Id> blocker;
 
   LocalGraphFlower(LocalGraph::GetSetsMap& getSetsMap,
                    LocalGraph::Locations& locations,
                    Function* func,
-                   Module* module)
-    : getSetsMap(getSetsMap), locations(locations), func(func) {
+                   Module* module,
+                   std::optional<Expression::Id> blocker = std::nullopt)
+    : getSetsMap(getSetsMap), locations(locations), func(func), blocker(blocker) {
     setFunction(func);
     setModule(module);
     // create the CFG by walking the IR
-    CFGWalker<LocalGraphFlower, Visitor<LocalGraphFlower>, Info>::
+    CFGWalker<LocalGraphFlower, UnifiedExpressionVisitor<LocalGraphFlower>, Info>::
       doWalkFunction(func);
   }
 
@@ -67,25 +69,22 @@ struct LocalGraphFlower
 
   // cfg traversal work
 
-  static void doVisitLocalGet(LocalGraphFlower* self, Expression** currp) {
-    auto* curr = (*currp)->cast<LocalGet>();
-    // if in unreachable code, skip
-    if (!self->currBasicBlock) {
+  void visitExpression(Expression* curr) {
+    // If in unreachable code, skip.
+    if (!currBasicBlock) {
       return;
     }
-    self->currBasicBlock->contents.actions.emplace_back(curr);
-    self->locations[curr] = currp;
-  }
 
-  static void doVisitLocalSet(LocalGraphFlower* self, Expression** currp) {
-    auto* curr = (*currp)->cast<LocalSet>();
-    // if in unreachable code, skip
-    if (!self->currBasicBlock) {
-      return;
+    // If this is a relevant action (a get or set, or there is a blocker class
+    // and this is an instance of it) then note it.
+    if (curr->is<LocalGet>() || curr->is<LocalSet>() ||
+        (blocker && curr->_id == *blocker)) {
+      currBasicBlock->contents.actions.emplace_back(curr);
+      locations[curr] = getCurrentPointer();
+      if (auto* set = curr->dynCast<LocalSet>()) {
+        currBasicBlock->contents.lastSets[set->index] = set;
+      }
     }
-    self->currBasicBlock->contents.actions.emplace_back(curr);
-    self->currBasicBlock->contents.lastSets[curr->index] = curr;
-    self->locations[curr] = currp;
   }
 
   // Each time we flow a get (or set of gets) to find its sets, we mark a
@@ -203,9 +202,8 @@ struct LocalGraphFlower
         auto* action = actions[i];
         if (auto* get = action->dynCast<LocalGet>()) {
           allGets[get->index].push_back(get);
-        } else {
+        } else if (auto* set = action->dynCast<LocalSet>()) {
           // This set is the only set for all those gets.
-          auto* set = action->cast<LocalSet>();
           auto& gets = allGets[set->index];
           for (auto* get : gets) {
             getSetsMap[get].insert(set);
@@ -391,7 +389,7 @@ struct LocalGraphFlower
           // It will have the same sets as us.
           gets.push_back(otherGet);
         }
-      } else {
+      } else if (auto* set = action->dynCast<LocalSet>()) {
         // This is a set.
         auto* set = curr->cast<LocalSet>();
         if (set->index == index) {
@@ -559,8 +557,8 @@ bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
 
 // LazyLocalGraph
 
-LazyLocalGraph::LazyLocalGraph(Function* func, Module* module)
-  : LocalGraphBase(func, module) {}
+LazyLocalGraph::LazyLocalGraph(Function* func, Module* module, std::optional<Expression::Id> blocker)
+  : LocalGraphBase(func, module), blocker(blocker) {}
 
 void LazyLocalGraph::makeFlower() const {
   // |locations| is set here and filled in by |flower|.
@@ -568,7 +566,7 @@ void LazyLocalGraph::makeFlower() const {
   locations.emplace();
 
   flower =
-    std::make_unique<LocalGraphFlower>(getSetsMap, *locations, func, module);
+    std::make_unique<LocalGraphFlower>(getSetsMap, *locations, func, module, blocker);
 
   flower->prepareLaziness();
 
