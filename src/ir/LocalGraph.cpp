@@ -65,27 +65,11 @@ struct FlowBlock {
 // initially, but instead fill in these data structures that let us do so
 // later for individual gets. Specifically we need to find the location of a
 // local.get in the CFG.
-struct BlockLocation {
-  // The basic block an item is in.
-  FlowBlock* block = nullptr;
-  // The index in that block that the item is at.
-  Index index;
-};
+using BlockLocation = std::pair<FlowBlock*, Index>;
 
 } // anonymous namespace
 
 } // namespace wasm
-
-namespace std {
-
-template<> struct hash<wasm::BlockLocation> {
-  size_t operator()(const wasm::BlockLocation& loc) const {
-    return std::hash<std::pair<size_t, wasm::Index>>{}(
-      {size_t(loc.block), loc.index});
-  }
-};
-
-} // namespace std
 
 namespace wasm {
 
@@ -463,8 +447,8 @@ struct LocalGraphFlower
   // obstacle expression stopping the flow whenever it is reached.
   bool getReachesSetDespiteObstacle(const LocalGraphBase::SetInfluences& gets, LocalSet* set, Expression* obstacle) {
     for (auto* get : gets) {
-      auto& location = getLocations[get];
-      if (!location.block) {
+      auto [block, index] = getLocations[get];
+      if (block) {
         // We did not find location info for this get, which means it is
         // unreachable.
         continue;
@@ -474,15 +458,14 @@ struct LocalGraphFlower
       // Specifically we must scan the first index above it (i.e., the original
       // location has a local.get there, so we start one before it).
       UniqueNonrepeatingDeferredQueue<BlockLocation> work;
-      work.push(location);
+      work.push(BlockLocation{block, index});
       while (!work.empty()) {
-        auto location = work.pop();
+        auto [block, index] = work.pop();
 
         // Scan backwards through this block.
-        auto blockIndex = location.index;
-        while (blockIndex > 0) {
-          blockIndex--;
-          auto* action = location.block->actions[blockIndex];
+        while (index > 0) {
+          index--;
+          auto* action = block->actions[index];
           if (auto* get = action->dynCast<LocalGet>()) {
             // This is some get. If it is one of the gets we are scanning, then
             // either we have processed it already, or will do so later, and we
@@ -506,8 +489,8 @@ struct LocalGraphFlower
 
           // If we finished scanning this block (we reached the top), flow to
           // predecessors.
-          if (blockIndex == 0) {
-            for (auto* pred : location.block->in) {
+          if (index == 0) {
+            for (auto* pred : block->in) {
               // We will scan pred from its very end.
               work.push(BlockLocation{pred, Index(pred->actions.size())});
             }
@@ -758,7 +741,7 @@ bool LazyLocalGraph::setHasGetsDespiteObstacle(LocalSet* set, Expression* obstac
   // Compute the gets that the set normally reaches. We will flow back from
   // those.
   computeSetInfluences(set);
-  flower->getReachesSetDespiteObstacle(setInfluences[set], set, obstacle);
+  return flower->getReachesSetDespiteObstacle(setInfluences[set], set, obstacle);
 }
 
 } // namespace wasm
