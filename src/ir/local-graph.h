@@ -232,7 +232,7 @@ struct LazyLocalGraph : public LocalGraphBase {
 
   // Query whether a set reaches any gets, under the assumption that a given
   // expression blocks the flow. The obstacle must be of the class obstacleClass.
-  bool setHasGetsDespiteObstacle(LocalSet* set, Expression* obstacle);
+  SetInfluences getSetInfluencesGivenObstacle(LocalSet* set, Expression* obstacle);
 
 private:
   std::optional<Expression::Id> obstacleClass;

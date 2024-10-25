@@ -439,7 +439,8 @@ struct LocalGraphFlower
 
   // Given a bunch of gets, see if any of them reach the given set despite the
   // obstacle expression stopping the flow whenever it is reached.
-  bool getReachesSetDespiteObstacle(const LocalGraphBase::SetInfluences& gets, LocalSet* set, Expression* obstacle) {
+  SetInfluences getSetInfluencesGivenObstacle(const LocalGraphBase::SetInfluences& gets, LocalSet* set, Expression* obstacle) {
+    SetInfluences ret;
     for (auto* get : gets) {
       auto [block, index] = getLocations[get];
       if (!block) {
@@ -453,7 +454,10 @@ struct LocalGraphFlower
       // location has a local.get there, so we start one before it).
       UniqueNonrepeatingDeferredQueue<BlockLocation> work;
       work.push(BlockLocation{block, index});
-      while (!work.empty()) {
+      auto foundSet = false;
+      // Flow while there is stuff to flow, and while we haven't found the set
+      // (once we find it, we add the get and can move on to the next get).
+      while (!work.empty() && !foundSet) {
         auto [block, index] = work.pop();
 
         // Scan backwards through this block.
@@ -469,8 +473,10 @@ struct LocalGraphFlower
             }
           } else if (auto* otherSet = action->dynCast<LocalSet>()) {
             if (otherSet == set) {
-              // We arrived at the set.
-              return true;
+              // We arrived at the set: add this get and stop flowing it.
+              ret.insert(get);
+              foundSet = true;
+              break;
             }
             if (otherSet->index == set->index) {
               // This is another set of the same index, which halts the flow.
@@ -494,7 +500,7 @@ struct LocalGraphFlower
     }
 
     // No get reached the set.
-    return false;
+    return ret;
   }
 };
 
@@ -722,7 +728,7 @@ void LazyLocalGraph::computeLocations() const {
   }
 }
 
-bool LazyLocalGraph::setHasGetsDespiteObstacle(LocalSet* set, Expression* obstacle) {
+SetInfluences LazyLocalGraph::getSetInfluencesGivenObstacle(LocalSet* set, Expression* obstacle) {
   // We must have been initialized with the proper obstacle class, so that we
   // prepared the flower (if it was computed before) with that class in the
   // graph.
@@ -734,7 +740,7 @@ bool LazyLocalGraph::setHasGetsDespiteObstacle(LocalSet* set, Expression* obstac
 
   // Compute the gets that the set normally reaches. We will flow back from
   // those.
-  return flower->getReachesSetDespiteObstacle(getSetInfluences(set), set, obstacle);
+  return flower->getSetInfluencesGivenObstacle(getSetInfluences(set), set, obstacle);
 }
 
 } // namespace wasm
