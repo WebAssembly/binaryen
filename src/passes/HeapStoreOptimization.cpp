@@ -360,19 +360,19 @@ struct HeapStoreOptimization
 
     // We may branch, so do the analysis above. As mentioned above, we must
     // analyze the state *after* the optimization. We simulate that by using the
-    // struct.set we are trying to optimize way as a blocker in a LocalGraph. In
+    // struct.set we are trying to optimize way as a obstacle in a LocalGraph. In
     // the above figures, the struct.set is on line A. If it blocks $x from
     // progress then the set of $x no longer reaches B at all. That is good, as
     // it shows that if the local.set were moved to the struct.set then we
     // would affect B in the same way. However, this blocking is not enough to
     // stop the set of $x from reaching C and D, because of the dangerous
-    // branch: The branch skips the struct.set (the blocker), which means the
+    // branch: The branch skips the struct.set (the obstacle), which means the
     // original local.set reaches a place that, if we optimized that set to the
-    // blocker, it would no longer reach.
+    // obstacle, it would no longer reach.
 
     // TODO: reuse!!1
-    LazyLocalGraph graph(getFunction(), getModule(), StructSet::Id);
-    return graph.setHasGetsDespiteBlocker(localSet, set);
+    LazyLocalGraph graph(getFunction(), getModule(), StructSet::SpecificId);
+    return graph.setHasGetsDespiteObstacle(localSet, set);
   }
 
   EffectAnalyzer effects(Expression* expr) {

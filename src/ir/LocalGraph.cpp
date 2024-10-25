@@ -16,10 +16,11 @@
 
 #include <iterator>
 
-#include <cfg/cfg-traversal.h>
-#include <ir/find_all.h>
-#include <ir/local-graph.h>
-#include <wasm-builder.h>
+#include "cfg/cfg-traversal.h"
+#include "ir/find_all.h"
+#include "ir/local-graph.h"
+#include "support/unique_deferring_queue.h"
+#include "wasm-builder.h"
 
 namespace wasm {
 
@@ -37,7 +38,56 @@ struct Info {
   }
 };
 
+// This block struct is optimized for this flow process (Minimal
+// information, iteration index).
+struct FlowBlock {
+  // See currentIteration, above.
+  size_t lastTraversedIteration;
+
+  static const size_t NULL_ITERATION = -1;
+
+  // TODO: this could be by local index?
+  std::vector<Expression*> actions;
+  std::vector<FlowBlock*> in;
+  // Sor each index, the last local.set for it
+  // The unordered_map from BasicBlock.Info is converted into a vector
+  // This speeds up search as there are usually few sets in a block, so just
+  // scanning them linearly is efficient, avoiding hash computations (while
+  // in Info, it's convenient to have a map so we can assign them easily,
+  // where the last one seen overwrites the previous; and, we do that O(1)).
+  // TODO: If we also stored gets here then we could use the sets for a get
+  //       we already computed, for a get that we are computing, and stop that
+  //       part of the flow.
+  std::vector<std::pair<Index, LocalSet*>> lastSets;
+};
+
+// When the LocalGraph is in lazy mode we do not compute all of getSetsMap
+// initially, but instead fill in these data structures that let us do so
+// later for individual gets. Specifically we need to find the location of a
+// local.get in the CFG.
+struct BlockLocation {
+  // The basic block an item is in.
+  FlowBlock* block = nullptr;
+  // The index in that block that the item is at.
+  Index index;
+};
+
 } // anonymous namespace
+
+} // namespace wasm
+
+namespace std {
+
+template<> struct hash<wasm::BlockLocation> {
+  size_t operator()(const wasm::BlockLocation& loc) const {
+    return std::hash<std::pair<size_t, wasm::Index>>{}(
+      {size_t(loc.block), loc.index});
+  }
+};
+
+} // namespace std
+
+namespace wasm {
 
 // flow helper class. flows the gets to their sets
 
@@ -94,29 +144,6 @@ struct LocalGraphFlower
   // iteration number on blocks is faster since we are already processing that
   // FlowBlock already, meaning it is likely in cache, and avoids a set lookup).
   size_t currentIteration = 0;
-
-  // This block struct is optimized for this flow process (Minimal
-  // information, iteration index).
-  struct FlowBlock {
-    // See currentIteration, above.
-    size_t lastTraversedIteration;
-
-    static const size_t NULL_ITERATION = -1;
-
-    // TODO: this could be by local index?
-    std::vector<Expression*> actions;
-    std::vector<FlowBlock*> in;
-    // Sor each index, the last local.set for it
-    // The unordered_map from BasicBlock.Info is converted into a vector
-    // This speeds up search as there are usually few sets in a block, so just
-    // scanning them linearly is efficient, avoiding hash computations (while
-    // in Info, it's convenient to have a map so we can assign them easily,
-    // where the last one seen overwrites the previous; and, we do that O(1)).
-    // TODO: If we also stored gets here then we could use the sets for a get
-    //       we already computed, for a get that we are computing, and stop that
-    //       part of the flow.
-    std::vector<std::pair<Index, LocalSet*>> lastSets;
-  };
 
   // All the flow blocks.
   std::vector<FlowBlock> flowBlocks;
@@ -296,16 +323,6 @@ struct LocalGraphFlower
     currentIteration++;
   }
 
-  // When the LocalGraph is in lazy mode we do not compute all of getSetsMap
-  // initially, but instead fill in these data structures that let us do so
-  // later for individual gets. Specifically we need to find the location of a
-  // local.get in the CFG.
-  struct BlockLocation {
-    // The basic block an item is in.
-    FlowBlock* block = nullptr;
-    // The index in that block that the item is at.
-    Index index;
-  };
   std::unordered_map<LocalGet*, BlockLocation> getLocations;
 
   // In lazy mode we also need to categorize gets and sets by their index.
@@ -444,7 +461,7 @@ struct LocalGraphFlower
 
   // Given a bunch of gets, see if any of them reach the given set despite the
   // obstacle expression stopping the flow whenever it is reached.
-  bool getReachesSetDespiteObstacle(const SetInfluences& gets, LocalSet* localSet, Expression* obstacle) {
+  bool getReachesSetDespiteObstacle(const LocalGraphBase::SetInfluences& gets, LocalSet* set, Expression* obstacle) {
     for (auto* get : gets) {
       auto& location = getLocations[get];
       if (!location.block) {
@@ -456,16 +473,16 @@ struct LocalGraphFlower
       // Use a work queue of block locations to scan backwards from.
       // Specifically we must scan the first index above it (i.e., the original
       // location has a local.get there, so we start one before it).
-      UniqueDeferredNonrepeatingQueue<BlockLocation> work;
+      UniqueNonrepeatingDeferredQueue<BlockLocation> work;
       work.push(location);
       while (!work.empty()) {
         auto location = work.pop();
 
         // Scan backwards through this block.
-        auto index = location.index;
+        auto blockIndex = location.index;
         while (blockIndex > 0) {
           blockIndex--;
-          auto* action = block->actions[blockIndex];
+          auto* action = location.block->actions[blockIndex];
           if (auto* get = action->dynCast<LocalGet>()) {
             // This is some get. If it is one of the gets we are scanning, then
             // either we have processed it already, or will do so later, and we
@@ -473,9 +490,15 @@ struct LocalGraphFlower
             if (gets.count(get)) {
               break;
             }
-          } else if (auto* set = action->dynCast<LocalSet>()) {
-            // We arrived at the set.
-            return true;
+          } else if (auto* otherSet = action->dynCast<LocalSet>()) {
+            if (otherSet == set) {
+              // We arrived at the set.
+              return true;
+            }
+            if (otherSet->index == set->index) {
+              // This is another set of the same index, which halts the flow.
+              break;
+            }
           } else if (action == obstacle) {
             // We ran into the obstacle. Halt this flow.
             break;
@@ -485,7 +508,8 @@ struct LocalGraphFlower
           // predecessors.
           if (blockIndex == 0) {
             for (auto* pred : location.block->in) {
-              work.push(pred);
+              // We will scan pred from its very end.
+              work.push(BlockLocation{pred, Index(pred->actions.size())});
             }
           }
         }
@@ -721,7 +745,7 @@ void LazyLocalGraph::computeLocations() const {
   }
 }
 
-bool LazyLocalGraph::setHasGetsDespiteobstacle(LocalSet* localSet, Expression* obstacle) {
+bool LazyLocalGraph::setHasGetsDespiteObstacle(LocalSet* set, Expression* obstacle) {
   // We must have been initialized with the proper obstacle class, so that we
   // prepared the flower (if it was computed before) with that class in the
   // graph.
@@ -734,7 +758,7 @@ bool LazyLocalGraph::setHasGetsDespiteobstacle(LocalSet* localSet, Expression* o
   // Compute the gets that the set normally reaches. We will flow back from
   // those.
   computeSetInfluences(set);
-  flower->getReachesSetDespiteObstacle(setInfluences[set], localSet, obstacle);
+  flower->getReachesSetDespiteObstacle(setInfluences[set], set, obstacle);
 }
 
 } // namespace wasm
