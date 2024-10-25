@@ -20,7 +20,9 @@ v120
 
  - Remove closed world validation checks. These checks were causing more harm
    than good. All valid code will now validate with `--closed-world` (but also
-   some invalid code as well; for the long-term plans, see #6965). (#7019)
+   it now provides fewer warnings to users that enable closed world on code
+   which does not conform to the requirements of that mode, which can lead to
+   changes in runtime behavior; for the long-term plans, see #6965). (#7019)
  - Many compile time speedups were implemented (2x overall improvement), see
    https://github.com/WebAssembly/binaryen/issues/4165#issuecomment-2372548271
  - Several `exnref` (newest version of Wasm EH) optimizations: #7013, #6996,
