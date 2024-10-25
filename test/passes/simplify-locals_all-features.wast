@@ -1194,9 +1194,9 @@
   (type $4 (func (param i32)))
   (type $5 (func (param i32) (result i32)))
   (type $6 (func (param i32 i32 i32 i32 i32 i32)))
-  (import "fuzzing-support" "log1" (func $fimport$0 (result i32)))
-  (import "fuzzing-support" "log2" (func $fimport$1 (param i32)))
-  (import "fuzzing-support" "log3" (func $fimport$2 (param f32)))
+  (import "env" "get1" (func $fimport$0 (result i32)))
+  (import "fuzzing-support" "log-i32" (func $fimport$1 (param i32)))
+  (import "fuzzing-support" "log-f32" (func $fimport$2 (param f32)))
   (memory 256 256 shared)
   (global $global$0 (mut i32) (i32.const 10))
   (func $nonatomics (result i32) ;; loads are reordered

@@ -311,15 +311,10 @@ struct GlobalTypeOptimization : public Pass {
                 keptFieldsNotInSuper.push_back(i);
               }
             } else {
-              // The super kept this field, so we must keep it as well. The
-              // propagation analysis above ensures that we and the super are in
-              // agreement on keeping it (the reasons that prevent optimization
-              // propagate to both), except for the corner case of the parent
-              // being public but us being private (the propagation does not
-              // take into account visibility).
-              assert(
-                !removableIndexes.count(i) ||
-                (publicTypesSet.count(*super) && !publicTypesSet.count(type)));
+              // The super kept this field, so we must keep it as well. This can
+              // happen when we need the field in both, but also in the corner
+              // case where we don't need the field but the super is public.
+
               // We need to keep it at the same index so we remain compatible.
               indexesAfterRemoval[i] = superIndex;
               // Update |next| to refer to the next available index. Due to
