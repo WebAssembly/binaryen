@@ -442,7 +442,7 @@ struct LocalGraphFlower
   bool getReachesSetDespiteObstacle(const LocalGraphBase::SetInfluences& gets, LocalSet* set, Expression* obstacle) {
     for (auto* get : gets) {
       auto [block, index] = getLocations[get];
-      if (block) {
+      if (!block) {
         // We did not find location info for this get, which means it is
         // unreachable.
         continue;
