@@ -985,6 +985,25 @@
  (global $g2 (ref $C') (struct.new_default $D2'))
 )
 
+;; Regression test for a bug where public types not directly reachable from
+;; private types were included as successors but not given states in the DFA.
+(module
+  ;; CHECK:      (type $public-child (struct))
+  (type $public-child (struct))
+  ;; CHECK:      (type $public (struct (field (ref $public-child))))
+  (type $public (struct (ref $public-child)))
+  ;; CHECK:      (type $private (struct (field (ref $public))))
+  (type $private (struct (ref $public)))
+
+  ;; CHECK:      (global $public (ref null $public) (ref.null none))
+  (global $public (ref null $public) (ref.null none))
+  ;; CHECK:      (global $private (ref null $private) (ref.null none))
+  (global $private (ref null $private) (ref.null none))
+
+  ;; CHECK:      (export "public" (global $public))
+  (export "public" (global $public))
+)
+
 ;; Check that a ref.test inhibits merging (ref.cast is already checked above).
 (module
   ;; CHECK:      (rec

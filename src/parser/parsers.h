@@ -30,7 +30,7 @@ using namespace std::string_view_literals;
 template<typename Ctx>
 Result<typename Ctx::HeapTypeT> absheaptype(Ctx&, Shareability);
 template<typename Ctx> Result<typename Ctx::HeapTypeT> heaptype(Ctx&);
-template<typename Ctx> MaybeResult<typename Ctx::RefTypeT> maybeRefType(Ctx&);
+template<typename Ctx> MaybeResult<typename Ctx::RefTypeT> maybeReftype(Ctx&);
 template<typename Ctx> Result<typename Ctx::RefTypeT> reftype(Ctx&);
 template<typename Ctx> MaybeResult<typename Ctx::TypeT> tupletype(Ctx&);
 template<typename Ctx> Result<typename Ctx::TypeT> valtype(Ctx&);
