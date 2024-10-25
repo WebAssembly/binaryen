@@ -46,14 +46,14 @@ struct LocalGraphFlower
   LocalGraph::GetSetsMap& getSetsMap;
   LocalGraph::Locations& locations;
   Function* func;
-  std::optional<Expression::Id> blockerClass;
+  std::optional<Expression::Id> obstacleClass;
 
   LocalGraphFlower(LocalGraph::GetSetsMap& getSetsMap,
                    LocalGraph::Locations& locations,
                    Function* func,
                    Module* module,
-                   std::optional<Expression::Id> blockerClass = std::nullopt)
-    : getSetsMap(getSetsMap), locations(locations), func(func), blockerClass(blockerClass) {
+                   std::optional<Expression::Id> obstacleClass = std::nullopt)
+    : getSetsMap(getSetsMap), locations(locations), func(func), obstacleClass(obstacleClass) {
     setFunction(func);
     setModule(module);
     // create the CFG by walking the IR
@@ -75,10 +75,10 @@ struct LocalGraphFlower
       return;
     }
 
-    // If this is a relevant action (a get or set, or there is a blocker class
+    // If this is a relevant action (a get or set, or there is a obstacle class
     // and this is an instance of it) then note it.
     if (curr->is<LocalGet>() || curr->is<LocalSet>() ||
-        (blockerClass && curr->_id == *blockerClass)) {
+        (obstacleClass && curr->_id == *obstacleClass)) {
       currBasicBlock->contents.actions.emplace_back(curr);
       locations[curr] = getCurrentPointer();
       if (auto* set = curr->dynCast<LocalSet>()) {
@@ -443,10 +443,9 @@ struct LocalGraphFlower
   }
 
   // Given a bunch of gets, see if any of them reach the given set despite the
-  // blocker expression stopping the flow whenever it is reached.
-  bool getReachesSetDespiteBlocker(const SetInfluences& gets, LocalSet* localSet, Expression* blocker) {
+  // obstacle expression stopping the flow whenever it is reached.
+  bool getReachesSetDespiteObstacle(const SetInfluences& gets, LocalSet* localSet, Expression* obstacle) {
     for (auto* get : gets) {
-      // TODO: rename "blocker" to avoid "block" similarity? Stopper? Obstacle?
       auto& location = getLocations[get];
       if (!location.block) {
         // We did not find location info for this get, which means it is
@@ -477,8 +476,8 @@ struct LocalGraphFlower
           } else if (auto* set = action->dynCast<LocalSet>()) {
             // We arrived at the set.
             return true;
-          } else if (action == blocker) {
-            // We ran into the blocker. Halt this flow.
+          } else if (action == obstacle) {
+            // We ran into the obstacle. Halt this flow.
             break;
           }
 
@@ -611,8 +610,8 @@ bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
 
 // LazyLocalGraph
 
-LazyLocalGraph::LazyLocalGraph(Function* func, Module* module, std::optional<Expression::Id> blockerClass)
-  : LocalGraphBase(func, module), blockerClass(blockerClass) {}
+LazyLocalGraph::LazyLocalGraph(Function* func, Module* module, std::optional<Expression::Id> obstacleClass)
+  : LocalGraphBase(func, module), obstacleClass(obstacleClass) {}
 
 void LazyLocalGraph::makeFlower() const {
   // |locations| is set here and filled in by |flower|.
@@ -620,7 +619,7 @@ void LazyLocalGraph::makeFlower() const {
   locations.emplace();
 
   flower =
-    std::make_unique<LocalGraphFlower>(getSetsMap, *locations, func, module, blockerClass);
+    std::make_unique<LocalGraphFlower>(getSetsMap, *locations, func, module, obstacleClass);
 
   flower->prepareLaziness();
 
@@ -722,11 +721,11 @@ void LazyLocalGraph::computeLocations() const {
   }
 }
 
-bool LazyLocalGraph::setHasGetsDespiteBlocker(LocalSet* localSet, Expression* blocker) {
-  // We must have been initialized with the proper blocker class, so that we
+bool LazyLocalGraph::setHasGetsDespiteobstacle(LocalSet* localSet, Expression* obstacle) {
+  // We must have been initialized with the proper obstacle class, so that we
   // prepared the flower (if it was computed before) with that class in the
   // graph.
-  assert(blockerClass && blocker->_id == *blockerClass);
+  assert(obstacleClass && obstacle->_id == *obstacleClass);
 
   if (!flower) {
     makeFlower();
@@ -735,7 +734,7 @@ bool LazyLocalGraph::setHasGetsDespiteBlocker(LocalSet* localSet, Expression* bl
   // Compute the gets that the set normally reaches. We will flow back from
   // those.
   computeSetInfluences(set);
-  flower->getReachesSetDespiteBlocker(setInfluences[set], localSet, blocker);
+  flower->getReachesSetDespiteObstacle(setInfluences[set], localSet, obstacle);
 }
 
 } // namespace wasm
