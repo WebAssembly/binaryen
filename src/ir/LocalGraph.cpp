@@ -43,7 +43,9 @@ struct Info {
 // flow helper class. flows the gets to their sets
 
 struct LocalGraphFlower
-  : public CFGWalker<LocalGraphFlower, UnifiedExpressionVisitor<LocalGraphFlower>, Info> {
+  : public CFGWalker<LocalGraphFlower,
+                     UnifiedExpressionVisitor<LocalGraphFlower>,
+                     Info> {
   LocalGraph::GetSetsMap& getSetsMap;
   LocalGraph::Locations& locations;
   Function* func;
@@ -54,12 +56,14 @@ struct LocalGraphFlower
                    Function* func,
                    Module* module,
                    std::optional<Expression::Id> obstacleClass = std::nullopt)
-    : getSetsMap(getSetsMap), locations(locations), func(func), obstacleClass(obstacleClass) {
+    : getSetsMap(getSetsMap), locations(locations), func(func),
+      obstacleClass(obstacleClass) {
     setFunction(func);
     setModule(module);
     // create the CFG by walking the IR
-    CFGWalker<LocalGraphFlower, UnifiedExpressionVisitor<LocalGraphFlower>, Info>::
-      doWalkFunction(func);
+    CFGWalker<LocalGraphFlower,
+              UnifiedExpressionVisitor<LocalGraphFlower>,
+              Info>::doWalkFunction(func);
   }
 
   BasicBlock* makeBasicBlock() { return new BasicBlock(); }
@@ -439,7 +443,10 @@ struct LocalGraphFlower
 
   // Given a bunch of gets, see if any of them reach the given set despite the
   // obstacle expression stopping the flow whenever it is reached.
-  LocalGraphBase::SetInfluences getSetInfluencesGivenObstacle(const LocalGraphBase::SetInfluences& gets, LocalSet* set, Expression* obstacle) {
+  LocalGraphBase::SetInfluences
+  getSetInfluencesGivenObstacle(const LocalGraphBase::SetInfluences& gets,
+                                LocalSet* set,
+                                Expression* obstacle) {
     LocalGraphBase::SetInfluences ret;
     for (auto* get : gets) {
       auto [block, index] = getLocations[get];
@@ -613,7 +620,9 @@ bool LocalGraph::isSSA(Index x) { return SSAIndexes.count(x); }
 
 // LazyLocalGraph
 
-LazyLocalGraph::LazyLocalGraph(Function* func, Module* module, std::optional<Expression::Id> obstacleClass)
+LazyLocalGraph::LazyLocalGraph(Function* func,
+                               Module* module,
+                               std::optional<Expression::Id> obstacleClass)
   : LocalGraphBase(func, module), obstacleClass(obstacleClass) {}
 
 void LazyLocalGraph::makeFlower() const {
@@ -621,8 +630,8 @@ void LazyLocalGraph::makeFlower() const {
   assert(!locations);
   locations.emplace();
 
-  flower =
-    std::make_unique<LocalGraphFlower>(getSetsMap, *locations, func, module, obstacleClass);
+  flower = std::make_unique<LocalGraphFlower>(
+    getSetsMap, *locations, func, module, obstacleClass);
 
   flower->prepareLaziness();
 
@@ -724,7 +733,9 @@ void LazyLocalGraph::computeLocations() const {
   }
 }
 
-LocalGraphBase::SetInfluences LazyLocalGraph::getSetInfluencesGivenObstacle(LocalSet* set, Expression* obstacle) {
+LocalGraphBase::SetInfluences
+LazyLocalGraph::getSetInfluencesGivenObstacle(LocalSet* set,
+                                              Expression* obstacle) {
   // We must have been initialized with the proper obstacle class, so that we
   // prepared the flower (if it was computed before) with that class in the
   // graph.
@@ -736,7 +747,8 @@ LocalGraphBase::SetInfluences LazyLocalGraph::getSetInfluencesGivenObstacle(Loca
 
   // Compute the gets that the set normally reaches. We will flow back from
   // those.
-  return flower->getSetInfluencesGivenObstacle(getSetInfluences(set), set, obstacle);
+  return flower->getSetInfluencesGivenObstacle(
+    getSetInfluences(set), set, obstacle);
 }
 
 } // namespace wasm
