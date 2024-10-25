@@ -326,8 +326,6 @@ struct LocalGraphFlower
           getsByIndex[get->index].push_back(get);
         } else if (auto* set = actions[i]->dynCast<LocalSet>()) {
           setsByIndex[set->index].push_back(set);
-        } else {
-          WASM_UNREACHABLE("bad action");
         }
       }
     }
