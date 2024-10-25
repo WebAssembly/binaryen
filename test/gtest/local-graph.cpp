@@ -93,3 +93,34 @@ TEST_F(LocalGraphTest, ObstacleMultiblock) {
   // But the nop after the if stops us.
   EXPECT_FALSE(graph.setHasGetsDespiteObstacle(set, nopC));
 }
+
+TEST_F(LocalGraphTest, ObstacleUnreachable) {
+  auto moduleText = R"wasm(
+    (module
+      (func $foo (result i32)
+        ;; An unreachable between the set and get.
+        (local $x i32)
+        (local.set $x
+          (i32.const 10)
+        )
+        (nop)
+        (unreachable)
+        (nop)
+        (local.get $x)
+      )
+    )
+  )wasm";
+  Module wasm;
+  WATParser::parseModule(wasm, moduleText);
+  auto* func = wasm.functions[0].get();
+  auto* block = func->body->cast<Block>();
+  auto* set = block->list[0]->cast<LocalSet>();
+  auto* nopA = block->list[1]->cast<Nop>();
+  auto* nopB = block->list[3]->cast<Nop>();
+
+  LazyLocalGraph graph(func, &wasm, Nop::SpecificId);
+  // The get is unreachable, and the set has no gets.
+  EXPECT_EQ(graph.getSetInfluences(set).size(), 0U);
+  EXPECT_FALSE(graph.setHasGetsDespiteObstacle(set, nopA));
+  EXPECT_FALSE(graph.setHasGetsDespiteObstacle(set, nopB));
+}
