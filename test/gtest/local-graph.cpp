@@ -52,3 +52,44 @@ TEST_F(LocalGraphTest, ObstacleBasics) {
     EXPECT_FALSE(graph.setHasGetsDespiteObstacle(set, nopB));
   }
 }
+
+TEST_F(LocalGraphTest, ObstacleMultiblock) {
+  auto moduleText = R"wasm(
+    (module
+      (func $foo (result i32)
+        ;; An if between the set and get.
+        (local $x i32)
+        (local.set $x
+          (i32.const 10)
+        )
+        (if
+          (i32.const 42)
+          (then
+            (nop)
+          )
+          (else
+            (nop)
+          )
+        )
+        (nop)
+        (local.get $x)
+      )
+    )
+  )wasm";
+  Module wasm;
+  WATParser::parseModule(wasm, moduleText);
+  auto* func = wasm.functions[0].get();
+  auto* block = func->body->cast<Block>();
+  auto* set = block->list[0]->cast<LocalSet>();
+  auto* iff = block->list[1]->cast<If>();
+  auto* nopA = iff->ifTrue->cast<Nop>();
+  auto* nopB = iff->ifTrue->cast<Nop>();
+  auto* nopC = block->list[2]->cast<Nop>();
+
+  LazyLocalGraph graph(func, &wasm, Nop::SpecificId);
+  // No matter which if arm is an obstacle, we we still connect.
+  EXPECT_TRUE(graph.setHasGetsDespiteObstacle(set, nopA));
+  EXPECT_TRUE(graph.setHasGetsDespiteObstacle(set, nopB));
+  // But the nop after the if stops us.
+  EXPECT_FALSE(graph.setHasGetsDespiteObstacle(set, nopC));
+}
