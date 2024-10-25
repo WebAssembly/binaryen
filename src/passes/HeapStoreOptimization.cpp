@@ -359,27 +359,25 @@ struct HeapStoreOptimization
     }
 
     // We may branch, so do the analysis above. As mentioned above, we must
-    // analyze the state after the optimization. We simulate that by moving the
-    // struct.set's value into the struct.new, and nothing else: the resulting
-    // IR is not fully valid, but it is enough for LocalGraph. Specifically we
-    // end up with this:
-    //
-    //  (if
-    //    (..condition..)
-    //    (then
-    //      (block $out
-    //        (local.set $x (struct.new (br_if $out) Y Z)) ;; br_if copied here
-    //        (struct.set (local.get $x) (br_if $out))     ;; A unchanged
-    //        (struct.set (local.get $x) (..))             ;; B
-    //      )
-    //      (struct.set (local.get $x) (..))               ;; C
-    //    )
-    //  )
-    //  (struct.set (local.get $x) (..))                   ;; D
-    //
-    // (This is invalid because we have two references to the value, and it is
-    // incorrect because we have the possible branch twice, but all we really
-    // need is to have the branch on the struct.new for us to see the effects.)
+    // analyze the state *after* the optimization. We simulate that by using the
+    // struct.set we are trying to optimize way as a blocker in a LocalGraph. In
+    // the above figures, the struct.set is on line A. If it blocks $x from
+    // progress then the set of $x no longer reaches B at all. That is good, as
+    // it shows that if the local.set were moved to the struct.set then we
+    // would affect B in the same way. However, this blocking is not enough to
+    // stop the set of $x from reaching C and D, because of the dangerous
+    // branch: The branch skips the struct.set (the blocker), which means the
+    // original local.set reaches a place that, if we optimized that set to the
+    // blocker, it would no longer reach.
+
+    // TODO: reuse!!1
+    LazyLocalGraph graph(getFunction(), getModule(), StructSet::Id);
+
+
+
+
+
+..
     bool hasOldValue;
     if (new_->isWithDefault()) {
       // Place the value as the first item. It is in the wrong index, but that
@@ -422,6 +420,11 @@ struct HeapStoreOptimization
       new_->operands[set->index] =
         new_->operands[set->index]->cast<Block>()->list[0];
     }
+..
+
+
+
+
 
     return foundProblem;
   }
