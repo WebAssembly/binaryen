@@ -158,9 +158,9 @@ TEST_F(LocalGraphTest, ObstacleMultiGet) {
   LazyLocalGraph graph(func, &wasm, Nop::SpecificId);
   // The first nop blocks them both, but not the second, and the third blocks
   // nothing.
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopA).size(), 0);
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopB).size(), 1);
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopC).size(), 2);
+  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopA).size(), 0U);
+  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopB).size(), 1U);
+  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(set, nopC).size(), 2U);
 }
 
 TEST_F(LocalGraphTest, ObstacleMultiSet) {
@@ -280,17 +280,17 @@ TEST_F(LocalGraphTest, ObstacleMultiSetIf) {
   auto* iff = block->list[0]->cast<If>();
   auto* setA = iff->ifTrue->cast<LocalSet>();
   auto* setB = iff->ifFalse->cast<LocalSet>();
-  auto* nop = block->list[1]->cast<Nop>();
-  auto* nop = block->list[3]->cast<Nop>();
+  auto* nopA = block->list[1]->cast<Nop>();
+  auto* nopB = block->list[3]->cast<Nop>();
 
   LazyLocalGraph graph(func, &wasm, Nop::SpecificId);
   // Both sets have a set.
   EXPECT_EQ(graph.getSetInfluences(setA).size(), 1U);
   EXPECT_EQ(graph.getSetInfluences(setB).size(), 1U);
   // The first nop blocks both.
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setA, nop).size(), 0U);
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setB, nop).size(), 0U);
+  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setA, nopA).size(), 0U);
+  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setB, nopA).size(), 0U);
   // The first nop blocks neither.
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setA, nop).size(), 1U);
-  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setB, nop).size(), 1U);
+  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setA, nopB).size(), 1U);
+  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setB, nopB).size(), 1U);
 }

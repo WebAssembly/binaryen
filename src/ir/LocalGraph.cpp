@@ -439,8 +439,8 @@ struct LocalGraphFlower
 
   // Given a bunch of gets, see if any of them reach the given set despite the
   // obstacle expression stopping the flow whenever it is reached.
-  SetInfluences getSetInfluencesGivenObstacle(const LocalGraphBase::SetInfluences& gets, LocalSet* set, Expression* obstacle) {
-    SetInfluences ret;
+  LocalGraphBase::SetInfluences getSetInfluencesGivenObstacle(const LocalGraphBase::SetInfluences& gets, LocalSet* set, Expression* obstacle) {
+    LocalGraphBase::SetInfluences ret;
     for (auto* get : gets) {
       auto [block, index] = getLocations[get];
       if (!block) {
@@ -728,7 +728,7 @@ void LazyLocalGraph::computeLocations() const {
   }
 }
 
-SetInfluences LazyLocalGraph::getSetInfluencesGivenObstacle(LocalSet* set, Expression* obstacle) {
+LocalGraphBase::SetInfluences LazyLocalGraph::getSetInfluencesGivenObstacle(LocalSet* set, Expression* obstacle) {
   // We must have been initialized with the proper obstacle class, so that we
   // prepared the flower (if it was computed before) with that class in the
   // graph.

@@ -372,7 +372,16 @@ struct HeapStoreOptimization
 
     // TODO: reuse!!1
     LazyLocalGraph graph(getFunction(), getModule(), StructSet::SpecificId);
-    return graph.setHasGetsDespiteObstacle(localSet, set);
+    auto gets = graph.getSetInfluencesGivenObstacle(localSet, set);
+    // It is ok to have a local.get in the struct.set itself: the value is
+    // after it. Only subsequent ones matter. TODO example
+    if (gets.size() == 0) {
+      return false;
+    }
+    if (gets.size() > 2) {
+      return true;
+    }
+    return *gets.begin() == set->ref;
   }
 
   EffectAnalyzer effects(Expression* expr) {
