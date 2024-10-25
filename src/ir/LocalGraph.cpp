@@ -38,40 +38,7 @@ struct Info {
   }
 };
 
-// This block struct is optimized for this flow process (Minimal
-// information, iteration index).
-struct FlowBlock {
-  // See currentIteration, above.
-  size_t lastTraversedIteration;
-
-  static const size_t NULL_ITERATION = -1;
-
-  // TODO: this could be by local index?
-  std::vector<Expression*> actions;
-  std::vector<FlowBlock*> in;
-  // Sor each index, the last local.set for it
-  // The unordered_map from BasicBlock.Info is converted into a vector
-  // This speeds up search as there are usually few sets in a block, so just
-  // scanning them linearly is efficient, avoiding hash computations (while
-  // in Info, it's convenient to have a map so we can assign them easily,
-  // where the last one seen overwrites the previous; and, we do that O(1)).
-  // TODO: If we also stored gets here then we could use the sets for a get
-  //       we already computed, for a get that we are computing, and stop that
-  //       part of the flow.
-  std::vector<std::pair<Index, LocalSet*>> lastSets;
-};
-
-// When the LocalGraph is in lazy mode we do not compute all of getSetsMap
-// initially, but instead fill in these data structures that let us do so
-// later for individual gets. Specifically we need to find the location of a
-// local.get in the CFG.
-using BlockLocation = std::pair<FlowBlock*, Index>;
-
 } // anonymous namespace
-
-} // namespace wasm
-
-namespace wasm {
 
 // flow helper class. flows the gets to their sets
 
@@ -128,6 +95,29 @@ struct LocalGraphFlower
   // iteration number on blocks is faster since we are already processing that
   // FlowBlock already, meaning it is likely in cache, and avoids a set lookup).
   size_t currentIteration = 0;
+
+  // This block struct is optimized for this flow process (Minimal
+  // information, iteration index).
+  struct FlowBlock {
+    // See currentIteration, above.
+    size_t lastTraversedIteration;
+
+    static const size_t NULL_ITERATION = -1;
+
+    // TODO: this could be by local index?
+    std::vector<Expression*> actions;
+    std::vector<FlowBlock*> in;
+    // Sor each index, the last local.set for it
+    // The unordered_map from BasicBlock.Info is converted into a vector
+    // This speeds up search as there are usually few sets in a block, so just
+    // scanning them linearly is efficient, avoiding hash computations (while
+    // in Info, it's convenient to have a map so we can assign them easily,
+    // where the last one seen overwrites the previous; and, we do that O(1)).
+    // TODO: If we also stored gets here then we could use the sets for a get
+    //       we already computed, for a get that we are computing, and stop that
+    //       part of the flow.
+    std::vector<std::pair<Index, LocalSet*>> lastSets;
+  };
 
   // All the flow blocks.
   std::vector<FlowBlock> flowBlocks;
@@ -306,6 +296,12 @@ struct LocalGraphFlower
     // Bump the current iteration for the next time we are called.
     currentIteration++;
   }
+
+  // When the LocalGraph is in lazy mode we do not compute all of getSetsMap
+  // initially, but instead fill in these data structures that let us do so
+  // later for individual gets. Specifically we need to find the location of a
+  // local.get in the CFG.
+  using BlockLocation = std::pair<FlowBlock*, Index>;
 
   std::unordered_map<LocalGet*, BlockLocation> getLocations;
 
