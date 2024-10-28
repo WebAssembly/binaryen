@@ -381,7 +381,7 @@ struct HeapStoreOptimization
     if (gets.size() > 2) {
       return true;
     }
-    return *gets.begin() == set->ref;
+    return *gets.begin() != set->ref;
   }
 
   EffectAnalyzer effects(Expression* expr) {

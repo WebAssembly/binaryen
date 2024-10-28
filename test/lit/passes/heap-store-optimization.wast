@@ -602,15 +602,12 @@
   ;; CHECK-NEXT:    (call $helper-i32
   ;; CHECK-NEXT:     (i32.const 0)
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (i32.const 10)
+  ;; CHECK-NEXT:    (call $helper-i32
+  ;; CHECK-NEXT:     (i32.const 1)
+  ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:   )
   ;; CHECK-NEXT:  )
-  ;; CHECK-NEXT:  (struct.set $struct2 1
-  ;; CHECK-NEXT:   (local.get $ref)
-  ;; CHECK-NEXT:   (call $helper-i32
-  ;; CHECK-NEXT:    (i32.const 1)
-  ;; CHECK-NEXT:   )
-  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (nop)
   ;; CHECK-NEXT: )
   (func $side-effect-subsequent-ok
     (local $ref (ref null $struct2))
@@ -855,7 +852,7 @@
   ;; CHECK-NEXT: )
   (func $control-flow-in-set-value (result i32)
     ;; Test we handle control flow in the struct.set's value when we combine a
-    ;; struct.set with a struct.new.
+    ;; struct.set with a struct.new. We should not optimize here.
     (local $ref (ref null $struct))
     (block $label
       (struct.set $struct 0
@@ -1303,19 +1300,20 @@
   ;; CHECK-NEXT:  (drop
   ;; CHECK-NEXT:   (block $out (result i32)
   ;; CHECK-NEXT:    (local.set $ref
-  ;; CHECK-NEXT:     (struct.new_default $struct)
-  ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.set $struct 0
-  ;; CHECK-NEXT:     (local.get $ref)
-  ;; CHECK-NEXT:     (br_if $out
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:      (i32.const 2)
+  ;; CHECK-NEXT:     (struct.new $struct
+  ;; CHECK-NEXT:      (block (result i32)
+  ;; CHECK-NEXT:       (drop
+  ;; CHECK-NEXT:        (br_if $out
+  ;; CHECK-NEXT:         (i32.const 1)
+  ;; CHECK-NEXT:         (i32.const 2)
+  ;; CHECK-NEXT:        )
+  ;; CHECK-NEXT:       )
+  ;; CHECK-NEXT:       (i32.const 3)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
-  ;; CHECK-NEXT:    (struct.set $struct 0
-  ;; CHECK-NEXT:     (local.get $ref)
-  ;; CHECK-NEXT:     (i32.const 3)
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (nop)
+  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct 0
   ;; CHECK-NEXT:      (local.get $ref)
@@ -1370,17 +1368,14 @@
   ;; CHECK-NEXT:   (block $out (result i32)
   ;; CHECK-NEXT:    (local.set $ref
   ;; CHECK-NEXT:     (struct.new $struct
-  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:      (br_if $out
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:       (i32.const 2)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:    (struct.set $struct 0
-  ;; CHECK-NEXT:     (local.get $ref)
-  ;; CHECK-NEXT:     (br_if $out
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:      (i32.const 2)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct 0
   ;; CHECK-NEXT:      (local.get $ref)
@@ -1432,17 +1427,14 @@
   ;; CHECK-NEXT:   (block $out (result i32)
   ;; CHECK-NEXT:    (local.set $ref
   ;; CHECK-NEXT:     (struct.new $struct
-  ;; CHECK-NEXT:      (i32.const 3)
+  ;; CHECK-NEXT:      (br_if $out
+  ;; CHECK-NEXT:       (i32.const 1)
+  ;; CHECK-NEXT:       (i32.const 2)
+  ;; CHECK-NEXT:      )
   ;; CHECK-NEXT:     )
   ;; CHECK-NEXT:    )
   ;; CHECK-NEXT:    (nop)
-  ;; CHECK-NEXT:    (struct.set $struct 0
-  ;; CHECK-NEXT:     (local.get $ref)
-  ;; CHECK-NEXT:     (br_if $out
-  ;; CHECK-NEXT:      (i32.const 1)
-  ;; CHECK-NEXT:      (i32.const 2)
-  ;; CHECK-NEXT:     )
-  ;; CHECK-NEXT:    )
+  ;; CHECK-NEXT:    (nop)
   ;; CHECK-NEXT:    (drop
   ;; CHECK-NEXT:     (struct.get $struct 0
   ;; CHECK-NEXT:      (local.get $ref)
