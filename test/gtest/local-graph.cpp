@@ -284,7 +284,7 @@ TEST_F(LocalGraphTest, ObstacleMultiSetIf) {
   auto* nopB = block->list[3]->cast<Nop>();
 
   LazyLocalGraph graph(func, &wasm, Nop::SpecificId);
-  // Both sets have a set.
+  // Both sets have a get.
   EXPECT_EQ(graph.getSetInfluences(setA).size(), 1U);
   EXPECT_EQ(graph.getSetInfluences(setB).size(), 1U);
   // The first nop blocks both.
@@ -293,4 +293,53 @@ TEST_F(LocalGraphTest, ObstacleMultiSetIf) {
   // The first nop blocks neither.
   EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setA, nopB).size(), 1U);
   EXPECT_EQ(graph.getSetInfluencesGivenObstacle(setB, nopB).size(), 1U);
+}
+
+TEST_F(LocalGraphTest, ObstacleStructSet) {
+  // Use something other than a nop to obstruct. Here we show a realistic
+  // situation using GC.
+  auto moduleText = R"wasm(
+    (module
+     (type $struct (struct (field (mut i32))))
+
+     (func $test
+      (local $struct (ref null $struct))
+      (block $label
+       ;; A struct.set that may be skipped by the br in the if.
+       (struct.set $struct 0
+        (local.tee $struct
+         (struct.new_default $struct)
+        )
+        (if (result i32)
+         (i32.const 1)
+         (then
+          (br $label)
+         )
+         (else
+          (i32.const 0)
+         )
+        )
+       )
+      )
+      (drop
+       (struct.get $struct 0
+        (local.get $struct)
+       )
+      )
+     )
+    )
+  )wasm";
+  Module wasm;
+  WATParser::parseModule(wasm, moduleText);
+  auto* func = wasm.functions[0].get();
+  auto* outerBlock = func->body->cast<Block>();
+  auto* block = outerBlock->list[0]->cast<Block>();
+  auto* structSet = block->list[0]->cast<StructSet>();
+  auto* tee = structSet->ref->cast<LocalSet>();
+
+  LazyLocalGraph graph(func, &wasm, StructSet::SpecificId);
+  // The tee has one get.
+  EXPECT_EQ(graph.getSetInfluences(tee).size(), 1U);
+  // The struct.set blocks one path, but not the path that skips it via the br.
+  EXPECT_EQ(graph.getSetInfluencesGivenObstacle(tee, structSet).size(), 1U);
 }

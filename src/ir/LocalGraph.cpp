@@ -468,7 +468,18 @@ struct LocalGraphFlower
         auto [block, index] = work.pop();
 
         // Scan backwards through this block.
-        while (index > 0) {
+        while (1) {
+          // If we finished scanning this block (we reached the top), flow to
+          // predecessors.
+          if (index == 0) {
+            for (auto* pred : block->in) {
+              // We will scan pred from its very end.
+              work.push(BlockLocation{pred, Index(pred->actions.size())});
+            }
+            break;
+          }
+
+          // Continue onwards.
           index--;
           auto* action = block->actions[index];
           if (auto* otherSet = action->dynCast<LocalSet>()) {
@@ -490,15 +501,6 @@ struct LocalGraphFlower
           // either we have processed it already, or will do so later, and we
           // can halt. As an optimization, we could check if we've processed
           // it already and act accordingly.
-
-          // If we finished scanning this block (we reached the top), flow to
-          // predecessors.
-          if (index == 0) {
-            for (auto* pred : block->in) {
-              // We will scan pred from its very end.
-              work.push(BlockLocation{pred, Index(pred->actions.size())});
-            }
-          }
         }
       }
     }
