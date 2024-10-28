@@ -15,8 +15,19 @@ full changeset diff at the end of each section.
 Current Trunk
 -------------
 
+v120
+----
+
+ - Remove closed world validation checks. These checks were causing more harm
+   than good. All valid code will now validate with `--closed-world` (but also
+   it now provides fewer warnings to users that enable closed world on code
+   which does not conform to the requirements of that mode, which can lead to
+   changes in runtime behavior; for the long-term plans, see #6965). (#7019)
  - Many compile time speedups were implemented (2x overall improvement), see
    https://github.com/WebAssembly/binaryen/issues/4165#issuecomment-2372548271
+ - Several `exnref` (newest version of Wasm EH) optimizations: #7013, #6996,
+   #6997, #6983, #6980
+ - Source Maps: Support 5 segment mappings. (#6795)
  - [wasm-split] Add a multi-split mode. (#6943)
  - Add a `--preserve-type-order` option that minimizes text format changes in
    type ordering. (#6916)
