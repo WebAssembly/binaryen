@@ -1385,27 +1385,56 @@
 )
 
 ;; We cannot refine the fields of public types. One of $A's children is public
-;; here, $B.
+;; here, $B. That makes $A public as well, preventing ...
 (module
+  ;; CHECK:      (type $A (sub (struct (field (mut anyref)))))
   (type $A (sub (struct (field (mut anyref)))))
 
   (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $B (sub $A (struct (field (mut anyref)))))
     (type $B (sub $A (struct (field (mut anyref)))))
+    ;; CHECK:       (type $brand (struct))
     (type $brand (struct))
   )
 
   (rec
+    ;; CHECK:      (rec
+    ;; CHECK-NEXT:  (type $C (sub $A (struct (field (mut anyref)))))
     (type $C (sub $A (struct (field (mut anyref)))))
+    ;; CHECK:       (type $brand2 (struct))
     (type $brand2 (struct))
+    ;; CHECK:       (type $brand3 (struct))
     (type $brand3 (struct))
   )
 
+  ;; CHECK:      (type $6 (func (param (ref any))))
+
+  ;; CHECK:      (global $global (ref null $B) (ref.null none))
   (global $global (ref null $B) (ref.null $B))
 
+  ;; CHECK:      (export "global" (global $global))
   (export "global" (global $global))
 
+  ;; CHECK:      (func $work (type $6) (param $nn (ref any))
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $A
+  ;; CHECK-NEXT:    (local.get $nn)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $B
+  ;; CHECK-NEXT:    (local.get $nn)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT:  (drop
+  ;; CHECK-NEXT:   (struct.new $C
+  ;; CHECK-NEXT:    (local.get $nn)
+  ;; CHECK-NEXT:   )
+  ;; CHECK-NEXT:  )
+  ;; CHECK-NEXT: )
   (func $work (param $nn (ref any))
-    ;; All the types look refinable, as write a non-null.
+    ;; All the types look refinable, as we write a non-nullable value.
     (drop
       (struct.new $A
         (local.get $nn)
