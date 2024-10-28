@@ -290,7 +290,8 @@
     )
    )
    (drop
-    ;; Still not taken.
+    ;; Still not taken. Note that we start by flowing out a non-nullable value,
+    ;; and will add a cast to ensure we still do after optimization.
     (br_on_cast $block anyref (ref null $struct)
      (local.tee $any (struct.new $struct2))
     )
@@ -836,7 +837,7 @@
   ;; non-null can flow out). We can see that the br_on_cast receives a non-
   ;; nullable value, even though it flows through a local.tee that un-refines
   ;; it. Using the non-nullability, we can refine the cast type (type sent on
-  ;; the branch to be non-nullable. But then the type of the br_on_cast itself
+  ;; the branch) to be non-nullable. But then the type of the br_on_cast itself
   ;; becomes nullable, since nulls no longer get sent on the branch, which
   ;; breaks the parent that must receive a non-nullable value.
   ;;
