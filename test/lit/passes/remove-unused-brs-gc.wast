@@ -13,6 +13,8 @@
   (type $substruct (sub $struct (struct)))
  )
 
+ (type $struct-nn (struct (field (ref any))))
+
  ;; CHECK:      (func $br_on-if (type $7) (param $0 (ref struct))
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (drop
@@ -801,6 +803,42 @@
     (drop
      (br_on_null $inner
       (local.get $x)
+     )
+    )
+   )
+  )
+ )
+
+ (func $test (param $x (ref any))
+  (local $temp anyref)
+  ;; Read the inline comments blow from the bottom to the top (order of
+  ;; execution). Basically, the story is that the br_on_cast begins as
+  ;; flowing out a non-nullable type, since the cast allows nulls (so only a
+  ;; non-null can flow out). We can see that the br_on_cast receives a non-
+  ;; nullable value, even though it flows through a local.tee that un-refines
+  ;; it. Using the non-nullability, we can refine the cast type (type sent on
+  ;; the branch to be non-nullable. But then the type of the br_on_cast itself
+  ;; becomes nullable, since nulls no longer get sent on the branch, which
+  ;; breaks the parent that must receive a non-nullable value.
+  ;;
+  ;; To fix this, we add a cast on the br's output, forcing it to the exact
+  ;; same type it had before.
+  (drop
+   (block $block (result anyref)
+    (struct.new $struct-nn                           ;; must provide a NON-
+                                                     ;; nullable value for the
+                                                     ;; struct field
+
+     (br_on_cast $block anyref (ref null $struct-nn) ;; GLB on the castType
+                                                     ;; makes it non-nullable,
+                                                     ;; which makes the type
+                                                     ;; of the br_on_cast
+                                                     ;; nullable
+
+      (local.tee $temp                               ;; nullable
+
+       (local.get $x)                                ;; non-nullable
+      )
      )
     )
    )
