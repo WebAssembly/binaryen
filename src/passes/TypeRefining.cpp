@@ -137,6 +137,11 @@ struct TypeRefining : public Pass {
     // that we can avoid wasteful work later if not.
     bool canOptimize = false;
 
+    // We cannot modify public types.
+    auto publicTypes = ModuleUtils::getPublicHeapTypes(*module);
+    std::unordered_set<HeapType> publicTypesSet(publicTypes.begin(),
+                                                publicTypes.end());
+
     // We have combined all the information we have about writes to the fields,
     // but we still need to make sure that the new types makes sense. In
     // particular, subtyping cares about things like mutability, and we also
@@ -154,6 +159,10 @@ struct TypeRefining : public Pass {
     }
     while (!work.empty()) {
       auto type = work.pop();
+
+      if (publicTypesSet.count(type)) {
+        continue;
+      }
 
       // First, find fields that have nothing written to them at all, and set
       // their value to their old type. We must pick some type for the field,

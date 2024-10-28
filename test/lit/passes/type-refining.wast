@@ -1383,3 +1383,43 @@
     )
   )
 )
+
+;; We cannot refine the fields of public types. One of $A's children is public
+;; here, $B.
+(module
+  (type $A (sub (struct (field (mut anyref)))))
+
+  (rec
+    (type $B (sub $A (struct (field (mut anyref)))))
+    (type $brand (struct))
+  )
+
+  (rec
+    (type $C (sub $A (struct (field (mut anyref)))))
+    (type $brand2 (struct))
+    (type $brand3 (struct))
+  )
+
+  (global $global (ref null $B) (ref.null $B))
+
+  (export "global" (global $global))
+
+  (func $work (param $nn (ref any))
+    ;; All the types look refinable, as write a non-null.
+    (drop
+      (struct.new $A
+        (local.get $nn)
+      )
+    )
+    (drop
+      (struct.new $B
+        (local.get $nn)
+      )
+    )
+    (drop
+      (struct.new $C
+        (local.get $nn)
+      )
+    )
+  )
+)
