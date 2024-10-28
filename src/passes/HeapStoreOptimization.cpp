@@ -378,7 +378,7 @@ struct HeapStoreOptimization
     if (gets.size() == 0) {
       return false;
     }
-    if (gets.size() > 2) {
+    if (gets.size() >= 2) {
       return true;
     }
     return *gets.begin() != set->ref;
