@@ -13,7 +13,10 @@
   (type $substruct (sub $struct (struct)))
  )
 
- ;; CHECK:      (func $br_on-if (type $7) (param $0 (ref struct))
+ ;; CHECK:      (type $struct-nn (struct (field (ref any))))
+ (type $struct-nn (struct (field (ref any))))
+
+ ;; CHECK:      (func $br_on-if (type $8) (param $0 (ref struct))
  ;; CHECK-NEXT:  (block $label
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (select (result (ref struct))
@@ -48,7 +51,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast (type $4) (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast (type $5) (result (ref $struct))
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
  ;; CHECK-NEXT:   (drop
@@ -99,7 +102,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast-fallthrough (type $4) (result (ref $struct))
+ ;; CHECK:      (func $br_on_cast-fallthrough (type $5) (result (ref $struct))
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (block $block (result (ref $struct))
@@ -162,7 +165,7 @@
   )
  )
 
- ;; CHECK:      (func $nested_br_on_cast (type $8) (result i31ref)
+ ;; CHECK:      (func $nested_br_on_cast (type $9) (result i31ref)
  ;; CHECK-NEXT:  (block $label$1 (result (ref i31))
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (br $label$1
@@ -190,7 +193,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_unrelated (type $5) (result (ref null $struct))
+ ;; CHECK:      (func $br_on_cast_unrelated (type $6) (result (ref null $struct))
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result nullref)
  ;; CHECK-NEXT:   (drop
@@ -244,7 +247,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast_unrelated-fallthrough (type $5) (result (ref null $struct))
+ ;; CHECK:      (func $br_on_cast_unrelated-fallthrough (type $6) (result (ref null $struct))
  ;; CHECK-NEXT:  (local $any anyref)
  ;; CHECK-NEXT:  (local $nullable-struct2 (ref null $struct2))
  ;; CHECK-NEXT:  (block $block (result nullref)
@@ -254,8 +257,10 @@
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
- ;; CHECK-NEXT:    (local.tee $any
- ;; CHECK-NEXT:     (struct.new_default $struct2)
+ ;; CHECK-NEXT:    (ref.as_non_null
+ ;; CHECK-NEXT:     (local.tee $any
+ ;; CHECK-NEXT:      (struct.new_default $struct2)
+ ;; CHECK-NEXT:     )
  ;; CHECK-NEXT:    )
  ;; CHECK-NEXT:   )
  ;; CHECK-NEXT:   (drop
@@ -285,7 +290,8 @@
     )
    )
    (drop
-    ;; Still not taken.
+    ;; Still not taken. Note that we start by flowing out a non-nullable value,
+    ;; and will add a cast to ensure we still do after optimization.
     (br_on_cast $block anyref (ref null $struct)
      (local.tee $any (struct.new $struct2))
     )
@@ -543,7 +549,7 @@
   )
  )
 
- ;; CHECK:      (func $br_on_cast-unreachable (type $6) (param $i31ref i31ref) (result anyref)
+ ;; CHECK:      (func $br_on_cast-unreachable (type $7) (param $i31ref i31ref) (result anyref)
  ;; CHECK-NEXT:  (block $block
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block
@@ -599,7 +605,7 @@
   )
  )
 
- ;; CHECK:      (func $fallthrough-unreachable (type $6) (param $0 i31ref) (result anyref)
+ ;; CHECK:      (func $fallthrough-unreachable (type $7) (param $0 i31ref) (result anyref)
  ;; CHECK-NEXT:  (block $outer
  ;; CHECK-NEXT:   (drop
  ;; CHECK-NEXT:    (block ;; (replaces unreachable RefCast we can't emit)
@@ -638,7 +644,7 @@
   )
  )
 
- ;; CHECK:      (func $casts-are-costly (type $9) (param $x i32)
+ ;; CHECK:      (func $casts-are-costly (type $10) (param $x i32)
  ;; CHECK-NEXT:  (local $struct (ref null $struct))
  ;; CHECK-NEXT:  (drop
  ;; CHECK-NEXT:   (if (result i32)
@@ -783,7 +789,7 @@
   )
  )
 
- ;; CHECK:      (func $threading (type $10) (param $x anyref)
+ ;; CHECK:      (func $threading (type $11) (param $x anyref)
  ;; CHECK-NEXT:  (block $outer
  ;; CHECK-NEXT:   (block $inner
  ;; CHECK-NEXT:    (drop
@@ -801,6 +807,58 @@
     (drop
      (br_on_null $inner
       (local.get $x)
+     )
+    )
+   )
+  )
+ )
+
+ ;; CHECK:      (func $test (type $12) (param $x (ref any))
+ ;; CHECK-NEXT:  (local $temp anyref)
+ ;; CHECK-NEXT:  (drop
+ ;; CHECK-NEXT:   (block $block (result (ref $struct-nn))
+ ;; CHECK-NEXT:    (struct.new $struct-nn
+ ;; CHECK-NEXT:     (ref.as_non_null
+ ;; CHECK-NEXT:      (br_on_cast $block anyref (ref $struct-nn)
+ ;; CHECK-NEXT:       (local.tee $temp
+ ;; CHECK-NEXT:        (local.get $x)
+ ;; CHECK-NEXT:       )
+ ;; CHECK-NEXT:      )
+ ;; CHECK-NEXT:     )
+ ;; CHECK-NEXT:    )
+ ;; CHECK-NEXT:   )
+ ;; CHECK-NEXT:  )
+ ;; CHECK-NEXT: )
+ (func $test (param $x (ref any))
+  (local $temp anyref)
+  ;; Read the inline comments blow from the bottom to the top (order of
+  ;; execution). Basically, the story is that the br_on_cast begins as
+  ;; flowing out a non-nullable type, since the cast allows nulls (so only a
+  ;; non-null can flow out). We can see that the br_on_cast receives a non-
+  ;; nullable value, even though it flows through a local.tee that un-refines
+  ;; it. Using the non-nullability, we can refine the cast type (type sent on
+  ;; the branch) to be non-nullable. But then the type of the br_on_cast itself
+  ;; becomes nullable, since nulls no longer get sent on the branch, which
+  ;; breaks the parent that must receive a non-nullable value.
+  ;;
+  ;; To fix this, we add a cast on the br's output, forcing it to the exact
+  ;; same type it had before.
+  (drop
+   (block $block (result anyref)
+    (struct.new $struct-nn                           ;; must provide a NON-
+                                                     ;; nullable value for the
+                                                     ;; struct field
+
+     (br_on_cast $block anyref (ref null $struct-nn) ;; GLB on the castType
+                                                     ;; makes it non-nullable,
+                                                     ;; which makes the type
+                                                     ;; of the br_on_cast
+                                                     ;; nullable
+
+      (local.tee $temp                               ;; nullable
+
+       (local.get $x)                                ;; non-nullable
+      )
      )
     )
    )
